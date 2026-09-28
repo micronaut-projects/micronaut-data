@@ -32,6 +32,8 @@ import java.util.List;
  * @param sequences The list of table sequences, can be null or empty. See {@link SqlSequenceMapping}
  * @param indexes The list of table indexes, can be null or empty. See {@link SqlIndexMapping}
  * @param auxiliaryStatements Optional additional statements associated with this table, emitted after table creation and before indexes
+ * @param uniqueConstraints The JPA unique constraints ({@code @Column(unique = true)}, {@code @Table(uniqueConstraints = ...)}) represented as unique indexes,
+ * created and validated only when enabled in the configuration. See {@link SqlIndexMapping}
  *
  * @author radovanradic
  * @since 4.13.0
@@ -47,13 +49,21 @@ public record SqlTableMapping(
     List<SqlColumnMapping> columns,
     List<SqlSequenceMapping> sequences,
     List<SqlIndexMapping> indexes,
-    List<String> auxiliaryStatements) {
+    List<String> auxiliaryStatements,
+    List<SqlIndexMapping> uniqueConstraints) {
+
+    public SqlTableMapping(@Nullable String schema, String name, boolean escape, TableType type, List<SqlColumnMapping> primaryKeyColumns,
+                           List<SqlColumnMapping> columns, List<SqlSequenceMapping> sequences, List<SqlIndexMapping> indexes,
+                           List<String> auxiliaryStatements) {
+        this(schema, name, escape, type, primaryKeyColumns, columns, sequences, indexes, auxiliaryStatements, List.of());
+    }
+
     public SqlTableMapping(@Nullable String schema, String name, boolean escape, TableType type, List<SqlColumnMapping> primaryKeyColumns, @Nullable List<SqlColumnMapping> columns) {
-        this(schema, name, escape, type, primaryKeyColumns, columns == null ? List.of() : columns, List.of(), List.of(), List.of());
+        this(schema, name, escape, type, primaryKeyColumns, columns == null ? List.of() : columns, List.of(), List.of(), List.of(), List.of());
     }
 
     public SqlTableMapping(@Nullable String schema, String name, boolean escape, TableType type, List<SqlColumnMapping> primaryKeyColumns, @Nullable List<SqlColumnMapping> columns, @Nullable List<SqlSequenceMapping> sequences) {
-        this(schema, name, escape, type, primaryKeyColumns, columns == null ? List.of() : columns, sequences == null ? List.of() : sequences, List.of(), List.of());
+        this(schema, name, escape, type, primaryKeyColumns, columns == null ? List.of() : columns, sequences == null ? List.of() : sequences, List.of(), List.of(), List.of());
     }
 
     /**

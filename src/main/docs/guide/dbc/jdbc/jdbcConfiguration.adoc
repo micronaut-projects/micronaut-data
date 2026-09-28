@@ -34,7 +34,18 @@ The `schema-generate` option is currently only recommended for simple applicatio
 
 ==== Unique Constraints
 
-JPA unique constraints are generated as unique indexes: a column annotated with `@Column(unique = true)` and the columns of `@Table(uniqueConstraints = @UniqueConstraint(...))`. The same can be declared with `@Index(unique = true)`.
+By default, JPA unique constraints are not generated. Set `schema-generate-unique-constraints=true` to create a unique index for every column annotated with `@Column(unique = true)` and for the columns of `@Table(uniqueConstraints = @UniqueConstraint(...))`, which can be any table column, including embedded and association columns. An unnamed constraint gets a generated name that fits the identifier length limit of all the supported databases. The unique indexes are created once all the tables exist, and with the option enabled the schema validation reports missing unique constraints.
+
+.Generating unique constraints
+[source,yaml]
+----
+datasources:
+  default:
+    schema-generate: create-drop
+    schema-generate-unique-constraints: true
+----
+
+NOTE: Unique indexes declared with `@Index(unique = true)` are always generated.
 
 ==== Schema Validation
 
@@ -43,7 +54,8 @@ All the problems found are reported together. The following differences are erro
 
 * A mapped entity or join table does not have a corresponding table in the schema
 * A mapped property does not have a column in the table
-* The column type is not compatible with the mapped type. Compatible types are accepted, for example a wider integral type, `TEXT` or `CLOB` for strings, or any type name synonym (`int4` for `INTEGER`). Columns with an explicit definition (`@MappedProperty(definition = "...")`) are compared by the type name of the definition. Vector and spatial types are always verified, including the vector dimension (Oracle, PostgreSQL and MySQL/MariaDB).
+* The column type is not compatible with the mapped type. Compatible types are accepted, for example a wider integral type, `TEXT` or `CLOB` for strings, or any type name synonym (`int4` for `INTEGER`). Columns with an explicit definition (`@MappedProperty(definition = "...")`) are compared by the type name of the definition. Vector and spatial types are always verified, including the vector dimension (Oracle, PostgreSQL and MySQL) and the Oracle vector storage (dense or sparse).
+* A `UUID` stored as a string in a column shorter than 36 characters
 * A sequence used to generate the identity values does not exist
 * An Oracle JSON relational duality view (`@JsonView`) does not exist, is not valid, has a different root table, or a JSON field of the view entity is missing or stored in a different column
 
@@ -52,7 +64,8 @@ The following differences are only logged as warnings, since they only fail for 
 * A column is shorter or has smaller precision than the mapped type
 * A column nullability is different from the mapped property nullability
 * The table primary key is different from the mapped identity
-* A declared index (`@Index`, `@VectorIndex`) or unique constraint does not exist
+* A declared index (`@Index`, `@VectorIndex`) does not exist. Spatial and vector indexes are matched by their name, the declared or the generated one, since the index method is not reported by the database metadata
+* A unique constraint does not exist, validated only when `schema-generate-unique-constraints` is enabled
 * A vector column has a different element format (for example `FLOAT64` instead of `FLOAT32`)
 * A JSON view allows different operations than declared, or has fields not mapped by the view entity
 

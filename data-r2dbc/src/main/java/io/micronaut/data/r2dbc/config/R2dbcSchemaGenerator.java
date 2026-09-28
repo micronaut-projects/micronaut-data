@@ -42,6 +42,7 @@ import reactor.core.publisher.Mono;
 import jakarta.annotation.PostConstruct;
 
 import java.lang.reflect.Modifier;
+import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.Collection;
 import java.util.Comparator;
@@ -115,7 +116,7 @@ public class R2dbcSchemaGenerator {
                             for (String schemaName : configuration.getSchemaGenerateNames()) {
                                 result = result.then(Mono.from(schemaHandler.createSchema(connection, dialect, schemaName)))
                                     .then(Mono.from(schemaHandler.useSchema(connection, dialect, schemaName)))
-                                    .then(generate(connection, schemaGenerate, entities, builder));
+                                    .then(generate(connection, configuration, entities, builder));
                             }
                             return result.then(Mono.from(connection.close()));
                         }
@@ -124,7 +125,7 @@ public class R2dbcSchemaGenerator {
                             result = Mono.from(schemaHandler.createSchema(connection, dialect, configuration.getSchemaGenerateName()))
                                 .then(Mono.from(schemaHandler.useSchema(connection, dialect, configuration.getSchemaGenerateName())));
                         }
-                        return result.then(generate(connection, schemaGenerate, entities, builder))
+                        return result.then(generate(connection, configuration, entities, builder))
                             .then(Mono.from(connection.close()));
                     }).block();
                 }
@@ -133,12 +134,17 @@ public class R2dbcSchemaGenerator {
     }
 
     private Mono<Void> generate(Connection connection,
-                                SchemaGenerate schemaGenerate,
+                                DataR2dbcConfiguration configuration,
                                 PersistentEntity[] entities,
                                 SqlQueryBuilder builder) {
-        List<String> createStatements = Arrays.asList(
+        SchemaGenerate schemaGenerate = configuration.getSchemaGenerate();
+        List<String> createStatements = new ArrayList<>(Arrays.asList(
             builder.buildCreateTableStatements(definitionProviders, entities, builder.getDialect())
-        );
+        ));
+        if (configuration.isSchemaGenerateUniqueConstraints()) {
+            // Unique constraints are added once all the tables exist
+            createStatements.addAll(Arrays.asList(builder.buildCreateUniqueConstraintStatements(definitionProviders, entities)));
+        }
         Flux<Void> createTablesFlow = Flux.fromIterable(createStatements)
                 .concatMap(sql -> {
                     if (DataSettings.QUERY_LOG.isDebugEnabled()) {

@@ -191,6 +191,58 @@ class H2SchemaValidationSpec extends Specification {
         validateLobItem(validator, mapping, [Types.CLOB, 'CHARACTER LARGE OBJECT', 0], [Types.BLOB, 'BINARY LARGE OBJECT', 0], [Types.CLOB, 'CLOB', 0]).errors.isEmpty()
         validateLobItem(validator, mapping, [Types.LONGVARCHAR, 'LONGTEXT', 0], [Types.LONGVARBINARY, 'LONGBLOB', 0]).errors.isEmpty()
         validateLobItem(validator, mapping, [Types.VARCHAR, 'text', Integer.MAX_VALUE], [Types.BINARY, 'bytea', Integer.MAX_VALUE]).errors.isEmpty()
+
+        and:"H2 character and binary columns without a length are reported with the maximal length"
+        validateLobItem(validator, mapping, [Types.VARCHAR, 'CHARACTER VARYING', 1_000_000_000], [Types.VARBINARY, 'BINARY VARYING', 1_000_000_000]).errors.isEmpty()
+    }
+
+    void 'UUID stored as a string requires the full length'() {
+        given:
+        def validator = context.getBeansOfType(SqlTableMappingValidator).find { it.supportedDialect == Dialect.MYSQL }
+        def mapping = new SqlTableMapping(null, 'uuid_item', false, SqlTableMapping.TableType.MAIN, [], [
+                new SqlColumnMapping('uuid_field', DataType.UUID, SqlDbType.UUID),
+                new SqlColumnMapping('name', DataType.STRING, SqlDbType.VARCHAR, false, 255, false, false, GeneratedValue.Type.AUTO, null)
+        ])
+
+        expect:"A UUID column too short for any UUID is an error, a shorter string column is a warning"
+        with(validateUuidItem(validator, mapping, 20, 100)) {
+            errors == ['Column [uuid_field] in table [uuid_item] has length [20] which is less than the mapped length [36]']
+            warnings == ['Column [name] in table [uuid_item] has length [100] which is less than the mapped length [255]']
+        }
+
+        and:"A longer UUID column is fine"
+        with(validateUuidItem(validator, mapping, 50, 255)) {
+            errors.isEmpty()
+            warnings.isEmpty()
+        }
+    }
+
+    void 'PostgreSQL truncated index name matches the expected name'() {
+        given:
+        def validator = context.getBeansOfType(SqlTableMappingValidator).find { it.supportedDialect == Dialect.POSTGRES }
+        def tableName = 'geo_item_with_a_very_long_table_name_to_exceed_the_identifier_limit'
+        def mapping = new SqlTableMapping(null, tableName, false, SqlTableMapping.TableType.MAIN, [], [], [],
+                [new SqlIndexMapping('', false, ['location'] as String[], true)], [])
+        def expectedName = 'idx_' + tableName + '_location'
+        def metadata = new SqlTableMetadata(null, null, tableName)
+        metadata.setIndexes([new SqlIndexMetadata(expectedName.substring(0, 63), false, ['location'])])
+        def result = new SchemaValidationResult()
+
+        when:
+        validator.validateTable(mapping, metadata, SqlDialectOptions.defaults(Dialect.POSTGRES), result)
+
+        then:
+        expectedName.length() > 63
+        result.warnings.isEmpty()
+    }
+
+    private static SchemaValidationResult validateUuidItem(SqlTableMappingValidator validator, SqlTableMapping mapping, int uuidLength, int nameLength) {
+        def metadata = new SqlTableMetadata(null, null, 'uuid_item')
+        metadata.addColumn(new SqlColumnMetadata('uuid_field', Types.VARCHAR, 'VARCHAR', uuidLength, 0, true))
+        metadata.addColumn(new SqlColumnMetadata('name', Types.VARCHAR, 'VARCHAR', nameLength, 0, true))
+        def result = new SchemaValidationResult()
+        validator.validateTable(mapping, metadata, SqlDialectOptions.defaults(Dialect.MYSQL), result)
+        return result
     }
 
     void 'spatial index only matches the expected index'() {

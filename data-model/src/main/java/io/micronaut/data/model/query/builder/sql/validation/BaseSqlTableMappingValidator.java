@@ -16,6 +16,7 @@
 package io.micronaut.data.model.query.builder.sql.validation;
 
 import io.micronaut.core.util.StringUtils;
+import io.micronaut.data.model.DataType;
 import io.micronaut.data.model.PersistentEntity;
 import io.micronaut.data.model.query.builder.sql.Dialect;
 import io.micronaut.data.model.query.builder.sql.SqlDialectOptions;
@@ -70,6 +71,13 @@ abstract class BaseSqlTableMappingValidator implements SqlTableMappingValidator 
     private static final Set<String> VECTOR_TYPES = Set.of("VECTOR", "SPARSEVEC", "HALFVEC");
 
     private static final String DENSE_VECTOR_STORAGE = "DENSE";
+
+    private static final int POSTGRES_MAX_IDENTIFIER_LENGTH = 63;
+
+    /**
+     * The column size reported for character and binary columns without a length limit (H2 reports its maximal length).
+     */
+    private static final int UNBOUNDED_COLUMN_SIZE = 1_000_000_000;
 
     /**
      * Keywords that can follow the type name in a column definition.
@@ -139,7 +147,7 @@ abstract class BaseSqlTableMappingValidator implements SqlTableMappingValidator 
             validateColumn(tableMapping, columnMapping, tableMetadata, dialectOptions, false, result);
         }
         validatePrimaryKey(tableMapping, tableMetadata, result);
-        validateIndexes(tableMapping, tableMetadata, result);
+        validateIndexes(tableMapping, tableMetadata, dialectOptions, result);
     }
 
     /**
@@ -277,17 +285,6 @@ abstract class BaseSqlTableMappingValidator implements SqlTableMappingValidator 
             name = name.substring(schemaSeparator + 1);
         }
         return TYPE_ALIASES.getOrDefault(name, name);
-    }
-
-    /**
-     * Checks if the given column metadata represents a VARCHAR column with a size of 36,
-     * typically used to store UUIDs.
-     *
-     * @param columnMetadata the SQL column metadata to check
-     * @return true if the column is a VARCHAR(36), false otherwise
-     */
-    protected static boolean uuidMatchesVarchar(SqlColumnMetadata columnMetadata) {
-        return columnMetadata.type() == Types.VARCHAR && columnMetadata.columnSize() == 36;
     }
 
     /**
@@ -463,8 +460,15 @@ abstract class BaseSqlTableMappingValidator implements SqlTableMappingValidator 
         switch (expectedType) {
             case "VARCHAR", "NVARCHAR", "CHAR" -> {
                 if (isCharacterType(columnMetadata.type()) && columnMetadata.columnSize() < expectedSize) {
-                    result.addWarning(String.format("Column [%s] in table [%s] has length [%d] which is less than the mapped length [%d]",
-                        columnMetadata.name(), tableName, columnMetadata.columnSize(), expectedSize));
+                    String message = String.format("Column [%s] in table [%s] has length [%d] which is less than the mapped length [%d]",
+                        columnMetadata.name(), tableName, columnMetadata.columnSize(), expectedSize);
+                    if (columnMapping.getDataType() == DataType.UUID) {
+                        // A UUID stored as a string always has the full length, no value can be stored
+                        result.addError(message);
+                    } else {
+                        // Only the values longer than the column length cannot be stored
+                        result.addWarning(message);
+                    }
                 }
             }
             case "NUMERIC" -> {
@@ -511,7 +515,10 @@ abstract class BaseSqlTableMappingValidator implements SqlTableMappingValidator 
         }
     }
 
-    private void validateIndexes(SqlTableMapping tableMapping, SqlTableMetadata tableMetadata, SchemaValidationResult result) {
+    private void validateIndexes(SqlTableMapping tableMapping,
+                                 SqlTableMetadata tableMetadata,
+                                 SqlDialectOptions dialectOptions,
+                                 SchemaValidationResult result) {
         List<SqlIndexMetadata> indexes = tableMetadata.getIndexes();
         if (indexes == null) {
             return;
@@ -525,7 +532,8 @@ abstract class BaseSqlTableMappingValidator implements SqlTableMappingValidator 
                 if (special) {
                     // The index method (spatial, vector) is not reported by the metadata and an ordinary index on the same column
                     // must not match, spatial and vector indexes are matched by the name, and by the columns when they are reported
-                    return expectedName.equalsIgnoreCase(index.name()) && (indexColumns.isEmpty() || indexColumns.containsAll(columns));
+                    return matchingIndexName(expectedName, index.name(), dialectOptions.dialect())
+                        && (indexColumns.isEmpty() || indexColumns.containsAll(columns));
                 }
                 return indexColumns.equals(columns) && (!indexMapping.unique() || index.unique());
             });
@@ -543,6 +551,21 @@ abstract class BaseSqlTableMappingValidator implements SqlTableMappingValidator 
                     kind, indexName, Arrays.toString(indexMapping.columns()), tableMapping.name()));
             }
         }
+    }
+
+    /**
+     * @return whether the index name matches the expected name, PostgreSQL silently truncates the longer identifiers
+     */
+    private static boolean matchingIndexName(String expectedName, @Nullable String indexName, Dialect dialect) {
+        if (indexName == null) {
+            return false;
+        }
+        if (expectedName.equalsIgnoreCase(indexName)) {
+            return true;
+        }
+        return dialect == Dialect.POSTGRES
+            && expectedName.length() > POSTGRES_MAX_IDENTIFIER_LENGTH
+            && expectedName.substring(0, POSTGRES_MAX_IDENTIFIER_LENGTH).equalsIgnoreCase(indexName);
     }
 
     private static Set<String> toLowerCaseSet(List<String> values) {
@@ -587,10 +610,11 @@ abstract class BaseSqlTableMappingValidator implements SqlTableMappingValidator 
     }
 
     /**
-     * @return whether the column has no length limit, for example PostgreSQL {@code text}/{@code bytea} or SQL Server {@code VARCHAR(MAX)}
+     * @return whether the column has no length limit, for example PostgreSQL {@code text}/{@code bytea}, SQL Server {@code VARCHAR(MAX)}
+     * or H2 {@code CHARACTER VARYING} without a length (reported with the maximal length of 1_000_000_000)
      */
     private static boolean isUnbounded(SqlColumnMetadata columnMetadata) {
-        return columnMetadata.columnSize() <= 0 || columnMetadata.columnSize() == Integer.MAX_VALUE;
+        return columnMetadata.columnSize() <= 0 || columnMetadata.columnSize() >= UNBOUNDED_COLUMN_SIZE;
     }
 
     private static boolean isCompatibleIntegralType(int typeCode1, int typeCode2) {

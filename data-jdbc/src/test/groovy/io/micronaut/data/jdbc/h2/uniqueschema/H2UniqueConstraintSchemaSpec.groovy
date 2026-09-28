@@ -49,7 +49,8 @@ class H2UniqueConstraintSchemaSpec extends Specification {
             'datasources.default.username'       : '',
             'datasources.default.password'       : '',
             'datasources.default.packages'       : 'io.micronaut.data.jdbc.h2.uniqueschema',
-            'datasources.default.driverClassName': 'org.h2.Driver'
+            'datasources.default.driverClassName': 'org.h2.Driver',
+            'datasources.default.schema-generate-unique-constraints': 'true'
     ]
 
     @Shared
@@ -59,9 +60,11 @@ class H2UniqueConstraintSchemaSpec extends Specification {
     void 'unique columns and unique constraints are mapped to unique indexes'() {
         when:
         def entity = context.getBean(RuntimeEntityRegistry).getEntity(H2UniqueItem)
-        def indexes = SqlSchemaUtils.getSqlTableMappings(entity, Dialect.H2).first().indexes()
+        def table = SqlSchemaUtils.getSqlTableMappings(entity, Dialect.H2).first()
+        def indexes = table.uniqueConstraints()
 
-        then:
+        then:"The unique constraints are kept apart from the declared indexes"
+        table.indexes().isEmpty()
         indexes.size() == 3
         indexes.collect { [it.name(), it.unique(), it.columns().toList()] }.containsAll([
                 ['UK_H2_UNIQUE_ITEM_CODE', true, ['code']],
@@ -100,6 +103,39 @@ class H2UniqueConstraintSchemaSpec extends Specification {
         noExceptionThrown()
     }
 
+    void 'unique constraints are not created by default'() {
+        given:
+        def properties = PROPERTIES + [
+                'datasources.default.url'                              : 'jdbc:h2:mem:uniqueSchemaDisabled;LOCK_TIMEOUT=10000;DB_CLOSE_ON_EXIT=FALSE;DB_CLOSE_DELAY=-1',
+                'datasources.default.schema-generate-unique-constraints': 'false'
+        ]
+        def disabledContext = ApplicationContext.run(properties)
+
+        when:
+        Set<String> uniqueIndexes = [] as Set
+        DelegatingDataSource.unwrapDataSource(disabledContext.getBean(DataSource)).connection.withCloseable { connection ->
+            ['h2_unique_item', 'H2_UNIQUE_ITEM'].each { tableName ->
+                connection.metaData.getIndexInfo(null, null, tableName, true, true).withCloseable { rs ->
+                    while (rs.next()) {
+                        uniqueIndexes << rs.getString('INDEX_NAME').toLowerCase(Locale.ENGLISH)
+                    }
+                }
+            }
+        }
+
+        then:"Only the primary key index is unique"
+        uniqueIndexes.every { !it.startsWith('uk_') }
+
+        when:"The schema is validated without the unique constraints"
+        ApplicationContext.run(properties + ['datasources.default.schema-generate': 'VALIDATE']).close()
+
+        then:
+        noExceptionThrown()
+
+        cleanup:
+        disabledContext?.close()
+    }
+
     void 'missing unique index is reported as a warning'() {
         given:
         def validator = context.getBeansOfType(SqlTableMappingValidator).find { it.supportedDialect == Dialect.H2 }
@@ -118,12 +154,19 @@ class H2UniqueConstraintSchemaSpec extends Specification {
         when:
         validator.validateTable(mapping, metadata, SqlDialectOptions.defaults(Dialect.H2), result)
 
+        then:"The unique constraints are not part of the table validation"
+        !result.hasErrors()
+        result.warnings.isEmpty()
+
+        when:
+        validator.validateUniqueConstraints(mapping, metadata, result)
+
         then:
         !result.hasErrors()
         result.warnings.size() == 3
         result.warnings.containsAll([
-                'Unique index [UK_H2_UNIQUE_ITEM_CODE] on columns [code] not found in table [h2_unique_item]',
-                'Unique index [uk_h2_unique_item_first_second] on columns [first_part, second_part] not found in table [h2_unique_item]'
+                'Unique constraint [UK_H2_UNIQUE_ITEM_CODE] on columns [code] not found in table [h2_unique_item]',
+                'Unique constraint [uk_h2_unique_item_first_second] on columns [first_part, second_part] not found in table [h2_unique_item]'
         ])
         result.warnings.any { it.contains('on columns [address_street, first_part] not found') }
     }

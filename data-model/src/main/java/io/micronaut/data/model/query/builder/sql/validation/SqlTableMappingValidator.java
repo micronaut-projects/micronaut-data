@@ -20,13 +20,18 @@ import io.micronaut.data.model.PersistentEntity;
 import io.micronaut.data.model.query.builder.sql.Dialect;
 import io.micronaut.data.model.query.builder.sql.SqlDialectOptions;
 import io.micronaut.data.model.query.builder.sql.SqlSchemaUtils;
+import io.micronaut.data.model.schema.sql.SqlIndexMapping;
 import io.micronaut.data.model.schema.sql.SqlSequenceMapping;
 import io.micronaut.data.model.schema.sql.SqlTableMapping;
+import io.micronaut.data.model.schema.sql.metadata.SqlIndexMetadata;
 import io.micronaut.data.model.schema.sql.metadata.SqlTableMetadata;
 import org.jspecify.annotations.Nullable;
 
+import java.util.Arrays;
+import java.util.List;
 import java.util.Locale;
 import java.util.Set;
+import java.util.stream.Collectors;
 
 /**
  * Validates SQL table mappings against the actual table metadata from the database.
@@ -104,6 +109,33 @@ public interface SqlTableMappingValidator {
             if (!sequenceNames.contains(sequenceName.toLowerCase(Locale.ENGLISH))) {
                 result.addError(String.format("Expected sequence [%s] for column [%s] in table [%s] not found",
                     sequenceName, sequence.columnName(), tableMapping.name()));
+            }
+        }
+    }
+
+    /**
+     * Validates that the JPA unique constraints of the table ({@link SqlTableMapping#uniqueConstraints()}) exist in the database
+     * as unique indexes or unique constraints (reported as unique indexes). Missing unique constraints are reported as warnings.
+     *
+     * @param tableMapping    The SQL table mapping from {@link PersistentEntity} to validate
+     * @param tableMetadata   The SQL table metadata from the database, see {@link SqlTableMetadata#getIndexes()}
+     * @param result          The validation result collecting the problems found
+     * @since 5.3.0
+     */
+    default void validateUniqueConstraints(SqlTableMapping tableMapping, SqlTableMetadata tableMetadata, SchemaValidationResult result) {
+        List<SqlIndexMetadata> indexes = tableMetadata.getIndexes();
+        if (indexes == null) {
+            return;
+        }
+        for (SqlIndexMapping uniqueConstraint : tableMapping.uniqueConstraints()) {
+            Set<String> columns = Arrays.stream(uniqueConstraint.columns())
+                .map(column -> column.toLowerCase(Locale.ENGLISH))
+                .collect(Collectors.toSet());
+            boolean found = indexes.stream().anyMatch(index -> index.unique()
+                && index.columns().stream().map(column -> column.toLowerCase(Locale.ENGLISH)).collect(Collectors.toSet()).equals(columns));
+            if (!found) {
+                result.addWarning(String.format("Unique constraint [%s] on columns %s not found in table [%s]",
+                    uniqueConstraint.name(), Arrays.toString(uniqueConstraint.columns()), tableMapping.name()));
             }
         }
     }

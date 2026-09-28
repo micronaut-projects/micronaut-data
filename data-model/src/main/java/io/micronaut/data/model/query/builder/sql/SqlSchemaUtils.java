@@ -279,12 +279,13 @@ public final class SqlSchemaUtils {
 
         List<SqlSequenceMapping> sequences = getSqlSequenceMappings(identities, namingStrategy);
         List<String> auxiliaryStatements = getAuxiliaryStatements(entity, tableName, namingStrategy, dialect);
-        List<SqlIndexMapping> indexes = getSqlIndexMappings(entity, dialect, sqlIndexDefinitionProviders,
+        List<SqlIndexMapping> indexes = getSqlIndexMappings(entity, dialect, sqlIndexDefinitionProviders);
+        List<SqlIndexMapping> uniqueConstraints = getSqlUniqueConstraintMappings(entity,
             Stream.concat(primaryKeyColumns.stream(), columns.stream()).map(SqlColumnMapping::getName).toList());
-        validateReservableColumns(entity, primaryKeyColumns, columns, indexes);
+        validateReservableColumns(entity, primaryKeyColumns, columns, Stream.concat(indexes.stream(), uniqueConstraints.stream()).toList());
 
         SqlTableMapping table = new SqlTableMapping(schema, tableName, escape, SqlTableMapping.TableType.MAIN, primaryKeyColumns, columns, sequences,
-            indexes, auxiliaryStatements);
+            indexes, auxiliaryStatements, uniqueConstraints);
         tables.add(table);
         return tables;
     }
@@ -789,14 +790,46 @@ public final class SqlSchemaUtils {
 
     private static List<SqlIndexMapping> getSqlIndexMappings(PersistentEntity entity,
                                                              Dialect dialect,
-                                                             List<SqlIndexDefinitionProvider> sqlIndexDefinitionProviders,
-                                                             List<String> tableColumns) {
+                                                             List<SqlIndexDefinitionProvider> sqlIndexDefinitionProviders) {
         NamingStrategy namingStrategy = entity.getNamingStrategy();
         Set<SqlIndexMapping> indexMappings = new LinkedHashSet<>();
-        String tableName = entity.getPersistedName();
-        addSqlIndexMappings(tableName, entity, namingStrategy, Collections.emptyList(), indexMappings, dialect, sqlIndexDefinitionProviders);
-        addJpaUniqueConstraints(entity, tableName, tableColumns, indexMappings);
+        addSqlIndexMappings(entity, namingStrategy, Collections.emptyList(), indexMappings, dialect, sqlIndexDefinitionProviders);
         return new ArrayList<>(indexMappings);
+    }
+
+    /**
+     * Returns the JPA unique constraints of the entity table as unique indexes: the {@code @Column(unique = true)} columns
+     * (including the columns of embedded values) and {@code @Table(uniqueConstraints = @UniqueConstraint(...))}.
+     *
+     * @param entity The entity
+     * @param tableColumns The table columns
+     * @return The unique constraints
+     */
+    private static List<SqlIndexMapping> getSqlUniqueConstraintMappings(PersistentEntity entity, List<String> tableColumns) {
+        String tableName = entity.getPersistedName();
+        Set<SqlIndexMapping> uniqueConstraints = new LinkedHashSet<>();
+        addUniqueColumns(tableName, entity, entity.getNamingStrategy(), Collections.emptyList(), uniqueConstraints);
+        addJpaUniqueConstraints(entity, tableName, tableColumns, uniqueConstraints);
+        return new ArrayList<>(uniqueConstraints);
+    }
+
+    private static void addUniqueColumns(String tableName,
+                                         PersistentEntity entity,
+                                         NamingStrategy namingStrategy,
+                                         List<Association> associations,
+                                         Set<SqlIndexMapping> uniqueConstraints) {
+        for (PersistentProperty property : entity.getPersistentProperties()) {
+            if (property instanceof Association association) {
+                if (association.getKind() == Relation.Kind.EMBEDDED) {
+                    List<Association> newAssociations = new ArrayList<>(associations);
+                    newAssociations.add(association);
+                    addUniqueColumns(tableName, association.getAssociatedEntity(), namingStrategy, newAssociations, uniqueConstraints);
+                }
+            } else if (SqlQueryBuilderUtils.isUniqueColumn(property.getAnnotationMetadata())) {
+                String columnName = namingStrategy.mappedName(associations, property);
+                uniqueConstraints.add(new SqlIndexMapping(uniqueConstraintName(tableName, List.of(columnName)), true, new String[]{columnName}));
+            }
+        }
     }
 
     /**
@@ -867,9 +900,8 @@ public final class SqlSchemaUtils {
         }
     }
 
-    @SuppressWarnings({"java:S3776", "java:S107"})
-    private static void addSqlIndexMappings(String tableName,
-                                            PersistentEntity entity,
+    @SuppressWarnings("java:S3776")
+    private static void addSqlIndexMappings(PersistentEntity entity,
                                             NamingStrategy namingStrategy,
                                             List<Association> associations,
                                             Set<SqlIndexMapping> indexMappings,
@@ -926,20 +958,12 @@ public final class SqlSchemaUtils {
             }
         }
 
-        // JPA @Column(unique = true) columns
-        for (PersistentProperty prop : entity.getPersistentProperties()) {
-            if (!(prop instanceof Association) && SqlQueryBuilderUtils.isUniqueColumn(prop.getAnnotationMetadata())) {
-                String columnName = namingStrategy.mappedName(associations, prop);
-                indexMappings.add(new SqlIndexMapping(uniqueConstraintName(tableName, List.of(columnName)), true, new String[]{columnName}));
-            }
-        }
-
         for (PersistentProperty property : entity.getPersistentProperties()) {
             if (property instanceof Association association && association.getKind() == Relation.Kind.EMBEDDED) {
                 PersistentEntity embeddedEntity = association.getAssociatedEntity();
                 List<Association> newAssociations = new ArrayList<>(associations);
                 newAssociations.add(association);
-                addSqlIndexMappings(tableName, embeddedEntity, namingStrategy, newAssociations, indexMappings, dialect, sqlIndexDefinitionProviders);
+                addSqlIndexMappings(embeddedEntity, namingStrategy, newAssociations, indexMappings, dialect, sqlIndexDefinitionProviders);
             }
         }
     }

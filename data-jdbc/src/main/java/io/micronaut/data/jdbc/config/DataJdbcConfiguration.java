@@ -46,6 +46,7 @@ public class DataJdbcConfiguration implements Named, Toggleable {
 
     private SchemaGenerate schemaGenerate = SchemaGenerate.NONE;
     private boolean batchGenerate = false;
+    private boolean schemaGenerateUniqueConstraints = false;
     private Dialect dialect = Dialect.ANSI;
     @ConfigurationBuilder(prefixes = "set", configurationPrefix = "dialect-options")
     private DialectOptionsConfiguration dialectOptions = new DialectOptionsConfiguration();
@@ -108,6 +109,26 @@ public class DataJdbcConfiguration implements Named, Toggleable {
      */
     public void setBatchGenerate(boolean batchGenerate) {
         this.batchGenerate = batchGenerate;
+    }
+
+    /**
+     * @return Whether the schema generation creates the JPA unique constraints and whether the schema validation checks them.
+     * @since 5.3.0
+     */
+    public boolean isSchemaGenerateUniqueConstraints() {
+        return schemaGenerateUniqueConstraints;
+    }
+
+    /**
+     * Sets whether the schema generation ({@link SchemaGenerate#CREATE} and {@link SchemaGenerate#CREATE_DROP}) creates
+     * unique indexes for the JPA unique constraints ({@code @Column(unique = true)} and {@code @Table(uniqueConstraints = ...)})
+     * and whether the schema validation ({@link SchemaGenerate#VALIDATE}) reports missing unique constraints. Default value is false.
+     *
+     * @param schemaGenerateUniqueConstraints Whether to generate unique constraints
+     * @since 5.3.0
+     */
+    public void setSchemaGenerateUniqueConstraints(boolean schemaGenerateUniqueConstraints) {
+        this.schemaGenerateUniqueConstraints = schemaGenerateUniqueConstraints;
     }
 
     /**

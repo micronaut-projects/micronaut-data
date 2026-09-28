@@ -264,7 +264,8 @@ final class JdbcSchemaMetadataReader {
 
     private void readPrimaryKeys(Map<String, SqlTableMetadata> tables) {
         Map<String, Map<Integer, String>> primaryKeys = new HashMap<>();
-        Set<String> readTables = readTablesMetadata("primary keys", tables, SqlSchemaUtils.TABLE_NAME_COLUMN,
+        Set<String> readTables = readTablesMetadata("primary keys", tables,
+            SqlSchemaUtils.TABLE_CATALOG_COLUMN, SqlSchemaUtils.TABLE_SCHEMA_COLUMN, SqlSchemaUtils.TABLE_NAME_COLUMN,
             (catalog, schema, table) -> metaData.getPrimaryKeys(catalog, schema, table),
             (tableKey, resultSet) -> primaryKeys.computeIfAbsent(tableKey, k -> new TreeMap<>())
                 .put(resultSet.getInt("KEY_SEQ"), resultSet.getString(SqlSchemaUtils.COLUMN_NAME_COLUMN)),
@@ -277,7 +278,8 @@ final class JdbcSchemaMetadataReader {
     private void readIndexes(Map<String, SqlTableMetadata> tables) {
         Map<String, Map<String, IndexColumns>> indexes = new HashMap<>();
         // approximate = true, some drivers (Oracle) would otherwise compute the table statistics
-        Set<String> readTables = readTablesMetadata("indexes", tables, SqlSchemaUtils.TABLE_NAME_COLUMN,
+        Set<String> readTables = readTablesMetadata("indexes", tables,
+            SqlSchemaUtils.TABLE_CATALOG_COLUMN, SqlSchemaUtils.TABLE_SCHEMA_COLUMN, SqlSchemaUtils.TABLE_NAME_COLUMN,
             (catalog, schema, table) -> metaData.getIndexInfo(catalog, schema, table, false, true),
             (tableKey, resultSet) -> {
                 String indexName = resultSet.getString("INDEX_NAME");
@@ -307,8 +309,11 @@ final class JdbcSchemaMetadataReader {
      *
      * @return The lower case names of the tables whose metadata was read
      */
+    @SuppressWarnings("java:S107")
     private Set<String> readTablesMetadata(String what,
                                            Map<String, SqlTableMetadata> tables,
+                                           String catalogColumn,
+                                           String schemaColumn,
                                            String tableNameColumn,
                                            MetadataCall call,
                                            TableRowReader rowReader,
@@ -319,8 +324,12 @@ final class JdbcSchemaMetadataReader {
             while (resultSet.next()) {
                 rowsRead = true;
                 String tableName = resultSet.getString(tableNameColumn);
-                String tableKey = tableName == null ? null : tableName.toLowerCase(Locale.ENGLISH);
-                if (tableKey != null && tables.containsKey(tableKey)) {
+                if (tableName == null) {
+                    continue;
+                }
+                String tableKey = tableName.toLowerCase(Locale.ENGLISH);
+                SqlTableMetadata table = tables.get(tableKey);
+                if (table != null && isSameSchema(table, resultSet.getString(catalogColumn), resultSet.getString(schemaColumn))) {
                     rowReader.read(tableKey, resultSet);
                 }
             }
@@ -348,6 +357,18 @@ final class JdbcSchemaMetadataReader {
             }
         }
         return readTables;
+    }
+
+    /**
+     * A row read for all the tables (null table name) can belong to a same-named table in another catalog or schema
+     * matched by the pattern. Some drivers don't report the catalog or schema, only a different reported value is a mismatch.
+     */
+    private static boolean isSameSchema(SqlTableMetadata table, @Nullable String catalog, @Nullable String schema) {
+        return sameOrUnknown(table.getCatalog(), catalog) && sameOrUnknown(table.getSchema(), schema);
+    }
+
+    private static boolean sameOrUnknown(@Nullable String expected, @Nullable String actual) {
+        return expected == null || actual == null || expected.equalsIgnoreCase(actual);
     }
 
     private @Nullable String apply(@Nullable String identifier) {

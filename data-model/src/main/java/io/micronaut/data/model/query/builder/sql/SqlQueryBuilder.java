@@ -575,6 +575,42 @@ public class SqlQueryBuilder extends AbstractSqlLikeQueryBuilder {
         return createStatements.toArray(new String[0]);
     }
 
+    /**
+     * Builds the statements creating the JPA unique constraints ({@code @Column(unique = true)} and
+     * {@code @Table(uniqueConstraints = ...)}) of the given entities as unique indexes.
+     * Designed for testing and not production usage. For production a SQL migration tool such as Flyway or Liquibase is recommended.
+     * <p>
+     * The statements are meant to be executed after the tables were created (see {@link #buildCreateTableStatements(List, PersistentEntity[], Dialect)}).
+     *
+     * @param definitionProviders The definition providers
+     * @param entities The entities
+     * @return The {@code CREATE UNIQUE INDEX} statements
+     * @since 5.3.0
+     */
+    @Experimental
+    public final String[] buildCreateUniqueConstraintStatements(List<DefinitionProvider> definitionProviders, PersistentEntity... entities) {
+        Map<String, SqlTableMapping> sqlTableMappingByTableName = CollectionUtils.newLinkedHashMap(entities.length);
+        for (PersistentEntity entity : entities) {
+            if (entity.getAnnotationMetadata().hasAnnotation(JsonView.class)) {
+                continue;
+            }
+            for (SqlTableMapping table : SqlSchemaUtils.getSqlTableMappings(definitionProviders, entity, dialect)) {
+                addTable(table, sqlTableMappingByTableName);
+            }
+        }
+        Boolean shouldEscapeDialect = shouldEscapeDialect(dialect);
+        List<String> statements = new ArrayList<>();
+        for (SqlTableMapping table : sqlTableMappingByTableName.values()) {
+            boolean escape = Objects.requireNonNullElseGet(shouldEscapeDialect, table::escape);
+            String tableName = getObjectName(table.schema(), table.name(), escape, true);
+            for (SqlIndexMapping uniqueConstraint : table.uniqueConstraints()) {
+                String indexName = createIndexName(table, uniqueConstraint, escape);
+                addToCollectionIfNotContains(statements, createIndexStatement(table, uniqueConstraint, indexName, tableName, escape));
+            }
+        }
+        return statements.toArray(new String[0]);
+    }
+
     private Optional<PersistentEntity> getJsonViewEntity(@NonNull PersistentEntity entity) {
         if (entity.getAnnotationMetadata().hasAnnotation(JsonView.class)) {
             return entity.getAnnotationMetadata().classValue(JsonView.class, "entity").map(c -> PersistentEntity.of(c));

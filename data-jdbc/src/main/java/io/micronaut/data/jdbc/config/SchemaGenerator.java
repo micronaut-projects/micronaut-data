@@ -42,6 +42,7 @@ import io.micronaut.data.model.query.builder.sql.validation.SqlJsonViewValidator
 import io.micronaut.data.model.query.builder.sql.validation.SqlTableMappingValidator;
 import io.micronaut.data.model.runtime.RuntimeEntityRegistry;
 import io.micronaut.data.model.runtime.convert.DefinitionProvider;
+import io.micronaut.data.model.schema.sql.SqlColumnMapping;
 import io.micronaut.data.model.schema.sql.SqlJsonViewMapping;
 import io.micronaut.data.model.schema.sql.SqlTableMapping;
 import io.micronaut.data.model.schema.sql.metadata.SqlJsonViewMetadata;
@@ -268,6 +269,23 @@ public class SchemaGenerator {
                     // do nothing
             }
         }
+        if (configuration.isSchemaGenerateUniqueConstraints()) {
+            // Unique constraints are added once all the tables exist, each one separately so that a failure
+            // (for example an existing index when using CREATE) doesn't prevent adding the others
+            for (String stmt : builder.buildCreateUniqueConstraintStatements(definitionProviders, entities)) {
+                stmt = resolveSql(propertyPlaceholderResolver, stmt);
+                if (DataSettings.QUERY_LOG.isDebugEnabled()) {
+                    DataSettings.QUERY_LOG.debug("Adding Unique Constraint: \n{}", stmt);
+                }
+                try (PreparedStatement ps = connection.prepareStatement(stmt)) {
+                    ps.executeUpdate();
+                } catch (SQLException e) {
+                    if (DataSettings.QUERY_LOG.isWarnEnabled()) {
+                        DataSettings.QUERY_LOG.warn("Unique Constraint Statement Unsuccessful: " + e.getMessage());
+                    }
+                }
+            }
+        }
     }
 
     @SuppressWarnings("java:S3776")
@@ -305,6 +323,9 @@ public class SchemaGenerator {
                     continue;
                 }
                 sqlTableMappingValidator.validateTable(sqlTableMapping, dbSqlTableMetadata, dialectOptions, result);
+                if (configuration.isSchemaGenerateUniqueConstraints()) {
+                    sqlTableMappingValidator.validateUniqueConstraints(sqlTableMapping, dbSqlTableMetadata, result);
+                }
                 if (sqlTableMapping.sequences().stream().anyMatch(sequence -> SqlSchemaUtils.requiresSequence(sequence, dialect))) {
                     if (!sequencesRead) {
                         sequenceNames = readSequenceNames(metadataReader, sqlTableMappingValidator, schemaTables.schema(), result);
@@ -317,10 +338,11 @@ public class SchemaGenerator {
             }
         }
         validateJsonViews(metadataReader, entities, dialect, result);
-        if (LOG.isWarnEnabled()) {
-            for (String warning : result.getWarnings()) {
-                LOG.warn("Schema validation warning for datasource [{}]: {}", configuration.getName(), warning);
-            }
+        List<String> warnings = result.getWarnings();
+        if (!warnings.isEmpty() && LOG.isWarnEnabled()) {
+            String separator = System.lineSeparator() + " - ";
+            LOG.warn("Schema validation of datasource [{}] found {} warning(s):{}{}", configuration.getName(), warnings.size(),
+                separator, String.join(separator, warnings));
         }
         result.throwIfErrors();
     }
@@ -416,7 +438,8 @@ public class SchemaGenerator {
     }
 
     private static boolean hasDefinedColumns(SqlTableMapping sqlTableMapping) {
-        return Stream.concat(sqlTableMapping.primaryKeyColumns().stream(), sqlTableMapping.columns().stream())
+        List<SqlColumnMapping> primaryKeyColumns = sqlTableMapping.primaryKeyColumns() == null ? List.of() : sqlTableMapping.primaryKeyColumns();
+        return Stream.concat(primaryKeyColumns.stream(), sqlTableMapping.columns().stream())
             .anyMatch(column -> StringUtils.isNotEmpty(column.getDefinition()));
     }
 
