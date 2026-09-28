@@ -201,8 +201,10 @@ abstract class BaseSqlTableMappingValidator implements SqlTableMappingValidator 
         if (!expectedType.isEmpty() && expectedType.equals(normalizeTypeName(columnMetadata.typeName()))) {
             return true;
         }
-        if (columnMapping.getDataType() == DataType.UUID && expectedType.contains("CHAR") && isCharacterType(columnMetadata.type())) {
-            // A UUID stored as a string (VARCHAR(36)) can use any character column, like CHAR(36), the length is validated separately
+        if (columnMapping.getDataType() == DataType.UUID && expectedType.contains("CHAR") && isCharacterType(columnMetadata.type())
+            && !isEnumColumn(columnMetadata)) {
+            // A UUID stored as a string (VARCHAR(36)) can use any character column, like CHAR(36), the length is validated separately.
+            // A MySQL ENUM column only accepts its listed values.
             return true;
         }
         return matchingDialectColumnType(columnMapping, columnMetadata, dialectOptions);
@@ -466,8 +468,9 @@ abstract class BaseSqlTableMappingValidator implements SqlTableMappingValidator 
         int expectedSize = Integer.parseInt(matcher.group(1));
         switch (expectedType) {
             case "VARCHAR", "NVARCHAR", "CHAR" -> {
-                // The MySQL ENUM column size is the length of the longest value, which fits the column by definition
-                if (isCharacterType(columnMetadata.type()) && columnMetadata.columnSize() < expectedSize && !isEnumColumn(columnMetadata)) {
+                // The MySQL ENUM column size is the length of the longest value, which fits an enum mapping by definition
+                boolean enumValues = isEnumColumn(columnMetadata) && columnMapping.getDataType() != DataType.UUID;
+                if (isCharacterType(columnMetadata.type()) && columnMetadata.columnSize() < expectedSize && !enumValues) {
                     String message = String.format("Column [%s] in table [%s] has length [%d] which is less than the mapped length [%d]",
                         columnMetadata.name(), tableName, columnMetadata.columnSize(), expectedSize);
                     if (columnMapping.getDataType() == DataType.UUID) {

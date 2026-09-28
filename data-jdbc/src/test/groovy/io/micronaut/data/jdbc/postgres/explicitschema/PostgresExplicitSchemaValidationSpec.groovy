@@ -91,9 +91,45 @@ class PostgresExplicitSchemaValidationSpec extends Specification implements Post
         context?.close()
     }
 
+    void 'the created schema is valid and its sequence is the one used by the inserts'() {
+        given:
+        def context = ApplicationContext.run(properties)
+        def dataSource = DelegatingDataSource.unwrapDataSource(context.getBean(DataSource))
+        execute(dataSource, 'DROP SCHEMA IF EXISTS "Foo" CASCADE')
+        execute(dataSource, 'DROP SCHEMA IF EXISTS foo CASCADE')
+
+        when:"The schema is created and validated"
+        ApplicationContext.run(properties + ['datasources.default.schema-generate': 'CREATE']).close()
+        ApplicationContext.run(properties + ['datasources.default.schema-generate': 'VALIDATE']).close()
+
+        then:
+        noExceptionThrown()
+
+        when:"The sequence is used the same way as the inserts, unquoted in nextval, which folds the case"
+        def nextValue = query(dataSource, "SELECT nextval('foo.Sequence_item_seq')")
+
+        then:
+        nextValue == 1L
+
+        cleanup:
+        execute(dataSource, 'DROP SCHEMA IF EXISTS "Foo" CASCADE')
+        execute(dataSource, 'DROP SCHEMA IF EXISTS foo CASCADE')
+        context?.close()
+    }
+
     private static void execute(DataSource dataSource, String sql) {
         dataSource.connection.withCloseable { connection ->
             connection.prepareStatement(sql).withCloseable { it.executeUpdate() }
+        }
+    }
+
+    private static Long query(DataSource dataSource, String sql) {
+        dataSource.connection.withCloseable { connection ->
+            connection.prepareStatement(sql).withCloseable { statement ->
+                statement.executeQuery().withCloseable { resultSet ->
+                    resultSet.next() ? resultSet.getLong(1) : null
+                }
+            }
         }
     }
 

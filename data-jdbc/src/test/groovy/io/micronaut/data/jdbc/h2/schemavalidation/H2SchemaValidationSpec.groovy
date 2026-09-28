@@ -277,6 +277,16 @@ class H2SchemaValidationSpec extends Specification {
         then:
         result.errors.isEmpty()
         result.warnings.isEmpty()
+
+        when:"A UUID is mapped to an ENUM column, which only accepts its listed values"
+        def uuidMapping = new SqlTableMapping(null, 'enum_item', false, SqlTableMapping.TableType.MAIN, [], [
+                new SqlColumnMapping('status', DataType.UUID, SqlDbType.UUID)
+        ])
+        def uuidResult = new SchemaValidationResult()
+        validator.validateTable(uuidMapping, metadata, SqlDialectOptions.defaults(Dialect.MYSQL), uuidResult)
+
+        then:
+        uuidResult.errors == ['Column [status] in table [enum_item] of type [ENUM] is mapped to [UUID]']
     }
 
     void 'identifiers are case-folded independently of the default locale'() {

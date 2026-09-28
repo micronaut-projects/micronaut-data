@@ -1173,7 +1173,15 @@ public class SqlQueryBuilder extends AbstractSqlLikeQueryBuilder {
     }
 
     private String createSequenceStmt(SqlTableMapping table, SqlSequenceMapping sequence, boolean escape) {
-        String sequenceName = getObjectName(table.schema(), resolveSequenceName(table, sequence), escape, true);
+        String sequenceName;
+        if (dialect == Dialect.POSTGRES) {
+            // The inserts refer to the sequence unquoted in nextval('schema.name'), which folds the case,
+            // the sequence is created with the same name, see getSequenceStatement
+            String schema = table.schema();
+            sequenceName = (StringUtils.isEmpty(schema) ? "" : schema + DOT) + resolveSequenceName(table, sequence);
+        } else {
+            sequenceName = getObjectName(table.schema(), resolveSequenceName(table, sequence), escape, true);
+        }
         final boolean isSqlServer = dialect == Dialect.SQL_SERVER;
         String createSequenceStmt = "CREATE SEQUENCE " + sequenceName;
         if (isSqlServer) {

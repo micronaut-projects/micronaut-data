@@ -16,6 +16,7 @@
 package io.micronaut.data.jdbc.h2.explicitschema
 
 import io.micronaut.context.ApplicationContext
+import io.micronaut.data.annotation.GeneratedValue
 import io.micronaut.data.annotation.Id
 import io.micronaut.data.annotation.MappedEntity
 import io.micronaut.data.connection.jdbc.advice.DelegatingDataSource
@@ -36,7 +37,8 @@ class H2ExplicitSchemaValidationSpec extends Specification {
             'datasources.default.password'       : '',
             'datasources.default.packages'       : 'io.micronaut.data.jdbc.h2.explicitschema',
             'datasources.default.driverClassName': 'org.h2.Driver',
-            'explicit.table.prefix'              : 'prefixed'
+            'explicit.table.prefix'              : 'prefixed',
+            'explicit.sequence.name'             : 'placeholder_seq'
     ]
 
     @Shared
@@ -63,6 +65,8 @@ class H2ExplicitSchemaValidationSpec extends Specification {
 
         and:"The table of the entity mapped with a property placeholder"
         execute(connection, 'CREATE TABLE foo.prefixed_item (id BIGINT NOT NULL PRIMARY KEY, name VARCHAR(255) NOT NULL)')
+        execute(connection, 'CREATE TABLE foo.placeholder_sequence_item (id BIGINT NOT NULL PRIMARY KEY, name VARCHAR(255) NOT NULL)')
+        execute(connection, 'CREATE SEQUENCE foo.placeholder_seq')
 
         when:
         ApplicationContext.run(PROPERTIES + ['datasources.default.schema-generate': 'VALIDATE']).close()
@@ -107,6 +111,14 @@ class PatternItem {
 @MappedEntity(value = '${explicit.table.prefix}_item', schema = "foo", escape = false)
 class PlaceholderItem {
     @Id
+    Long id
+    String name
+}
+
+@MappedEntity(value = "placeholder_sequence_item", schema = "foo", escape = false)
+class PlaceholderSequenceItem {
+    @Id
+    @GeneratedValue(value = GeneratedValue.Type.SEQUENCE, ref = '${explicit.sequence.name}')
     Long id
     String name
 }
