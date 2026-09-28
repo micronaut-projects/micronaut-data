@@ -88,7 +88,8 @@ final class OracleChangeNotificationRegistrar {
      * tracking and attempts to unregister it before propagating the failure.</p>
      *
      * @param subscription the subscription that owns the registration and receives its callbacks
-     * @return the registration and its locally calculated logical expiration deadline
+     * @return the registration lease, including its locally calculated expiration deadline and
+     *         post-recovery invalidation action
      * @throws RuntimeException if registration setup or query association fails
      */
     OracleRegistrationLease createRegistration(OracleChangeNotificationSubscription subscription) {
@@ -102,14 +103,15 @@ final class OracleChangeNotificationRegistrar {
             LOG.trace("Created DCN registration [{}] for datasource [{}] and listener method [{}]",
                 registration.getRegId(), dataSourceName, definition.method().getDescription(true));
             long logicalExpirationNanos = startedNanos + TimeUnit.SECONDS.toNanos(definition.renewalPolicy().timeoutSeconds());
-            OracleRegistrationLease lease = new OracleRegistrationLease(registration, logicalExpirationNanos);
             try {
-                registration.addListener(new OracleChangeNotificationDispatcher(
+                OracleChangeNotificationDispatcher dispatcher = new OracleChangeNotificationDispatcher(
                     dataSourceName, definition, registration, beanContext, blockingExecutor, taskTracker,
                     subscription::handleRegistrationPurged,
                     subscription::handleRegistrationDeregistered,
-                    subscription::handleQueryDeregistered
-                ));
+                    subscription::handleQueryDeregistered,
+                    subscription::handleDatabaseShutdown
+                );
+                registration.addListener(dispatcher);
                 subscription.track(registration);
                 registration.addFailureListener(failure -> subscription.handleRegistrationFailure(registration, failure));
                 try (Statement statement = connection.createStatement()) {
@@ -120,7 +122,8 @@ final class OracleChangeNotificationRegistrar {
                             registration.getRegId(), dataSourceName, definition.method().getDescription(true));
                     }
                 }
-                return lease;
+                return new OracleRegistrationLease(registration, logicalExpirationNanos,
+                    dispatcher::dispatchRecoveryInvalidation);
             } catch (SQLException | RuntimeException e) {
                 subscription.untrack(registration);
                 try {

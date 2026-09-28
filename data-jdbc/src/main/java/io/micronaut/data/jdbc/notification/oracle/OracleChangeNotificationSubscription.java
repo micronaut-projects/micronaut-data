@@ -77,6 +77,8 @@ final class OracleChangeNotificationSubscription {
     private State state = State.UNREGISTERED;
     private @Nullable OracleRegistrationLease currentLease;
     private @Nullable ScheduledFuture<?> renewalTask;
+    private boolean invalidationPending;
+    private long invalidationGeneration;
 
     /**
      * Creates a subscription for one listener definition and its datasource.
@@ -171,16 +173,18 @@ final class OracleChangeNotificationSubscription {
     }
 
     /**
-     * Handles a terminal failure of the driver's notification connection for a registration.
+     * Handles a terminal failure of the driver's notification connection or a database-wide
+     * shutdown for a registration.
      *
      * <p>The callback can arrive while a registration is still being associated, before its
      * lease becomes current. Such failures are held until activation. For an active lease, the
-     * subscription immediately starts asynchronous recovery: it attempts to remove the old
-     * database registration and creates a replacement. The Oracle registration timeout remains
-     * the fallback cleanup if explicit removal is not possible.</p>
+     * subscription marks an invalidation as pending and starts asynchronous recovery. The
+     * listener receives one invalidation only after a replacement registration has been associated
+     * and activated. The Oracle registration timeout remains the fallback cleanup if explicit
+     * removal is not possible.</p>
      *
      * @param registration the registration whose notification connection failed
-     * @param failure      the failure reported by the JDBC driver
+     * @param failure      the driver failure or lifecycle event that made the registration unavailable
      */
     void handleRegistrationFailure(DatabaseChangeRegistration registration, SQLException failure) {
         OracleRegistrationLease failedLease;
@@ -190,10 +194,12 @@ final class OracleChangeNotificationSubscription {
             }
             if (!isCurrent(registration)) {
                 if (isTracked(registration)) {
+                    markInvalidationPending();
                     pendingFailures.put(registration, failure);
                 }
                 return;
             }
+            markInvalidationPending();
             if (state != State.ACTIVE) {
                 return;
             }
@@ -204,9 +210,20 @@ final class OracleChangeNotificationSubscription {
             state = State.RECOVERING;
             cancelRenewal();
         }
-        LOG.error("DCN receiver failed for registration [{}], datasource [{}], and listener method [{}]; attempting recovery",
+        LOG.error("DCN registration [{}] became unavailable for datasource [{}] and listener method [{}]; attempting recovery",
             registration.getRegId(), dataSourceName, methodDescription, failure);
         submitFailureRecovery(failedLease);
+    }
+
+    /**
+     * Starts recovery when Oracle Database reports a database-wide shutdown. A startup notification
+     * may not arrive on the driver-owned notification connection after the shutdown.
+     *
+     * @param registration the registration that reported the shutdown
+     */
+    void handleDatabaseShutdown(DatabaseChangeRegistration registration) {
+        handleRegistrationFailure(registration,
+            new SQLException("Oracle Database reported a shutdown for this DCN registration"));
     }
 
     /**
@@ -377,18 +394,21 @@ final class OracleChangeNotificationSubscription {
     }
 
     /**
-     * Makes a newly created lease current and schedules its next renewal.
+     * Makes a newly created lease current and schedules its next renewal when it is healthy.
      *
      * <p>When renewal is disabled, activation keeps the lease without scheduling a replacement.
      * Activation is rejected if this subscription has closed, shutdown has started, or the
      * registration is no longer locally tracked. The check and state update are synchronized so a
-     * concurrent shutdown or callback cannot reactivate a closed subscription.</p>
+     * concurrent shutdown or callback cannot reactivate a closed subscription. A failure reported
+     * before activation starts recovery instead of scheduling renewal. If an invalidation is
+     * pending, it is dispatched after the replacement becomes current.</p>
      *
      * @param registrationLease the lease to activate
      * @return {@code true} if the lease became current; {@code false} if it is no longer eligible
      */
     private boolean activateLease(OracleRegistrationLease registrationLease) {
         SQLException pendingFailure;
+        long invalidationGenerationToDispatch = -1;
         synchronized (this) {
             pendingFailure = pendingFailures.remove(registrationLease.registration());
             if (state == State.CLOSED || taskTracker.isShutdownStarted() || !isTracked(registrationLease.registration())) {
@@ -400,15 +420,67 @@ final class OracleChangeNotificationSubscription {
             currentLease = registrationLease;
             renewalTask = nextRenewal;
             state = pendingFailure == null ? State.ACTIVE : State.RECOVERING;
-            LOG.trace("Activated DCN registration [{}] for datasource [{}], listener method [{}], and renewal mode [{}]",
-                registrationLease.registration().getRegId(), dataSourceName, methodDescription, renewalPolicy.mode());
+            if (pendingFailure == null && invalidationPending) {
+                invalidationGenerationToDispatch = invalidationGeneration;
+            }
+            if (pendingFailure == null) {
+                LOG.trace("Activated DCN registration [{}] for datasource [{}], listener method [{}], and renewal mode [{}]",
+                    registrationLease.registration().getRegId(), dataSourceName, methodDescription, renewalPolicy.mode());
+            }
         }
         if (pendingFailure != null) {
-            LOG.error("DCN receiver failed for registration [{}], datasource [{}], and listener method [{}] during activation; attempting recovery",
-                registrationLease.registration().getRegId(), dataSourceName, methodDescription, pendingFailure);
-            submitFailureRecovery(registrationLease);
+            recoverFailedLeaseDuringActivation(registrationLease, pendingFailure);
+        } else if (invalidationGenerationToDispatch >= 0) {
+            dispatchInvalidationIfCurrent(registrationLease, invalidationGenerationToDispatch);
         }
         return true;
+    }
+
+    /**
+     * Starts recovery when a registration failure was reported before its lease could be activated.
+     *
+     * @param registrationLease the lease whose registration failed
+     * @param failure the failure reported during registration setup
+     */
+    private void recoverFailedLeaseDuringActivation(OracleRegistrationLease registrationLease, SQLException failure) {
+        LOG.error("DCN registration [{}] became unavailable for datasource [{}] and listener method [{}] during activation; attempting recovery",
+            registrationLease.registration().getRegId(), dataSourceName, methodDescription, failure);
+        submitFailureRecovery(registrationLease);
+    }
+
+    /**
+     * Dispatches a pending invalidation if this lease and invalidation generation are still current.
+     *
+     * <p>The callback runs outside the subscription lock. The invalidation is cleared afterward
+     * only if no newer failure was observed while the callback ran.</p>
+     *
+     * @param registrationLease the lease that should be active for the invalidation
+     * @param invalidationGeneration the generation captured when the lease was activated
+     */
+    private void dispatchInvalidationIfCurrent(OracleRegistrationLease registrationLease, long invalidationGeneration) {
+        synchronized (this) {
+            // Skip this invalidation if the lease was replaced or a newer request superseded it.
+            if (state != State.ACTIVE || currentLease != registrationLease
+                || !invalidationPending || this.invalidationGeneration != invalidationGeneration) {
+                return;
+            }
+        }
+        registrationLease.invalidationAction().run();
+        synchronized (this) {
+            // Clear only the invalidation dispatched above; preserve any newer request raised during dispatch.
+            if (invalidationPending && this.invalidationGeneration == invalidationGeneration) {
+                invalidationPending = false;
+            }
+        }
+    }
+
+    /**
+     * Marks listener state for invalidation after a replacement registration becomes active.
+     * The generation ensures a later failure observed during dispatch remains pending.
+     */
+    private void markInvalidationPending() {
+        invalidationPending = true;
+        invalidationGeneration++;
     }
 
     /**
@@ -456,7 +528,8 @@ final class OracleChangeNotificationSubscription {
 
     /**
      * Claims a failed registration for best-effort cleanup, including when the driver marks it
-     * closed. Cleanup failures are logged; the database timeout remains the fallback.
+     * closed. Cleanup failures are logged. A finite registration timeout provides automatic
+     * cleanup only when one is configured; otherwise the registration may require manual removal.
      *
      * @param registration the registration whose receiver failed
      */
@@ -466,7 +539,7 @@ final class OracleChangeNotificationSubscription {
                 registrar.unregisterRegistrationAfterFailure(registration);
             } catch (RuntimeException cleanupFailure) {
                 LOG.warn("Unable to unregister failed DCN registration [{}] for datasource [{}] and listener method [{}]; "
-                        + "its Oracle Database timeout will provide fallback cleanup",
+                        + "it may remain in Oracle Database until a configured timeout expires or it is removed manually",
                     registration.getRegId(), dataSourceName, methodDescription, cleanupFailure);
             }
         }

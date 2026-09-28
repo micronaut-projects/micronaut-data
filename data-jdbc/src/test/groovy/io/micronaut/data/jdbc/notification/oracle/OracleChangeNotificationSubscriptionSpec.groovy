@@ -18,8 +18,11 @@ package io.micronaut.data.jdbc.notification.oracle
 import io.micronaut.context.BeanContext
 import io.micronaut.data.exceptions.DataAccessException
 import io.micronaut.data.jdbc.annotation.OracleChangeNotification
+import io.micronaut.data.jdbc.notification.ChangeEvent
+import io.micronaut.data.jdbc.notification.ChangeOperation
 import io.micronaut.data.jdbc.runtime.ConnectionCallback
 import io.micronaut.data.jdbc.runtime.JdbcOperations
+import io.micronaut.inject.BeanDefinition
 import io.micronaut.inject.ExecutableMethod
 import io.micronaut.scheduling.TaskScheduler
 import oracle.jdbc.OracleConnection
@@ -161,11 +164,14 @@ class OracleChangeNotificationSubscriptionSpec extends Specification {
         def taskTracker = new OracleChangeNotificationTaskTracker()
         def nanoTimeSupplier = new AtomicLong()
         def lifecycle = []
+        def listenerEvents = []
         def clock = { nanoTimeSupplier.get() } as LongSupplier
         def fixture = registrarFixture([original, replacement], clock, lifecycle)
         def subscription = subscription(fixture.registrar, scheduler, taskTracker, clock,
             new OracleChangeNotificationRenewalPolicy(
-                10, OracleChangeNotification.RenewalMode.OVERLAPPING, 2))
+                10, OracleChangeNotification.RenewalMode.OVERLAPPING, 2),
+            { Runnable command -> command.run() } as Executor,
+            { Object event -> listenerEvents << event.operation() })
         fixture.oracleConnection.unregisterDatabaseChangeNotification(original) >> {
             lifecycle << "unregister-1"
         }
@@ -177,6 +183,7 @@ class OracleChangeNotificationSubscriptionSpec extends Specification {
         then:
         scheduledDelays.first() == TimeUnit.SECONDS.toNanos(8)
         lifecycle == ['register-1', 'associate-1', 'register-2', 'associate-2', 'unregister-1']
+        listenerEvents.empty
     }
 
     void "replaces a registration after its notification connection fails"() {
@@ -188,13 +195,18 @@ class OracleChangeNotificationSubscriptionSpec extends Specification {
         def scheduler = scheduler(scheduledTasks, scheduledDelays)
         def taskTracker = new OracleChangeNotificationTaskTracker()
         def lifecycle = []
+        def listenerEvents = []
         def clock = { 0L } as LongSupplier
         def fixture = registrarFixture([original, replacement], clock, lifecycle)
         def queuedRecovery = []
         Executor executor = { Runnable command -> queuedRecovery << command } as Executor
         def subscription = subscription(fixture.registrar, scheduler, taskTracker, clock,
             new OracleChangeNotificationRenewalPolicy(
-                10, OracleChangeNotification.RenewalMode.OVERLAPPING, 2), executor)
+                10, OracleChangeNotification.RenewalMode.OVERLAPPING, 2), executor,
+            { Object event ->
+                listenerEvents << event.operation()
+                lifecycle << 'invalidate'
+            })
         fixture.oracleConnection.unregisterDatabaseChangeNotification(original) >> {
             lifecycle << 'unregister-1'
         }
@@ -207,6 +219,7 @@ class OracleChangeNotificationSubscriptionSpec extends Specification {
         then:
         queuedRecovery.size() == 1
         fixture.registrationIndex.get() == 1
+        listenerEvents.empty
         lifecycle == ['register-1', 'associate-1']
 
         when:
@@ -214,7 +227,8 @@ class OracleChangeNotificationSubscriptionSpec extends Specification {
 
         then:
         fixture.registrationIndex.get() == 2
-        lifecycle == ['register-1', 'associate-1', 'unregister-1', 'register-2', 'associate-2']
+        lifecycle == ['register-1', 'associate-1', 'unregister-1', 'register-2', 'associate-2', 'invalidate']
+        listenerEvents == [ChangeOperation.INVALIDATE]
         scheduledDelays == [TimeUnit.SECONDS.toNanos(8), TimeUnit.SECONDS.toNanos(8)]
         taskTracker.shutdownGracefully().toCompletableFuture().isDone()
     }
@@ -320,10 +334,13 @@ class OracleChangeNotificationSubscriptionSpec extends Specification {
         }
         def clock = { 0L } as LongSupplier
         def fixture = registrarFixture([original, discarded, replacement], clock, [])
+        def listenerEvents = []
         def subscription = subscription(fixture.registrar, scheduler,
             new OracleChangeNotificationTaskTracker(), clock,
             new OracleChangeNotificationRenewalPolicy(
-                10, OracleChangeNotification.RenewalMode.OVERLAPPING, 2))
+                10, OracleChangeNotification.RenewalMode.OVERLAPPING, 2),
+            { Runnable command -> command.run() } as Executor,
+            { Object event -> listenerEvents << event.operation() })
 
         when:
         subscription.start()
@@ -332,6 +349,7 @@ class OracleChangeNotificationSubscriptionSpec extends Specification {
         then:
         fixture.registrationIndex.get() == 2
         scheduledDelays == [TimeUnit.SECONDS.toNanos(8), TimeUnit.SECONDS.toNanos(5)]
+        listenerEvents.empty
         1 * fixture.oracleConnection.unregisterDatabaseChangeNotification(discarded)
 
         when:
@@ -340,6 +358,7 @@ class OracleChangeNotificationSubscriptionSpec extends Specification {
         then:
         fixture.registrationIndex.get() == 3
         scheduledDelays.last() == TimeUnit.SECONDS.toNanos(8)
+        listenerEvents == [ChangeOperation.INVALIDATE]
 
         when:
         subscription.stopRenewal()
@@ -535,6 +554,8 @@ class OracleChangeNotificationSubscriptionSpec extends Specification {
         def statement = Mock(Statement)
         def oracleStatement = Mock(OracleStatement)
         def resultSet = Mock(ResultSet)
+        def beanContext = Mock(BeanContext)
+        beanContext.getBean(_ as BeanDefinition) >> new Object()
         def registrationIndex = new AtomicInteger()
         def failureListeners = []
         operations.execute(_ as ConnectionCallback) >> { ConnectionCallback<?> callback -> callback.call(connection) }
@@ -557,11 +578,12 @@ class OracleChangeNotificationSubscriptionSpec extends Specification {
             }
         }
         def registrar = new OracleChangeNotificationRegistrar(
-            "inventory", operations, Mock(BeanContext),
+            "inventory", operations, beanContext,
             { Runnable command -> command.run() } as Executor,
             new OracleChangeNotificationTaskTracker(), nanoTimeSupplier)
         return [
             registrar: registrar,
+            beanContext: beanContext,
             oracleConnection: oracleConnection,
             registrationIndex: registrationIndex,
             failureListeners: failureListeners
@@ -584,11 +606,19 @@ class OracleChangeNotificationSubscriptionSpec extends Specification {
         OracleChangeNotificationTaskTracker taskTracker,
         LongSupplier nanoTimeSupplier,
         OracleChangeNotificationRenewalPolicy renewalPolicy,
-        Executor executor) {
+        Executor executor,
+        Closure<?> listenerInvocation = { Object ignored -> }) {
         def method = Mock(ExecutableMethod)
         method.getDescription(true) >> "void onChange(ChangeEvent<Book>)"
+        method.invoke(_, _) >> { Object[] arguments ->
+            def event = findChangeEvent(arguments)
+            if (event != null) {
+                listenerInvocation.call(event)
+            }
+            null
+        }
         def definition = new OracleChangeListenerDefinition(
-            null,
+            Mock(BeanDefinition),
             method,
             OracleTableIdentifier.parse("BOOK"),
             "SELECT * FROM BOOK",
@@ -598,6 +628,28 @@ class OracleChangeNotificationSubscriptionSpec extends Specification {
         )
         return new OracleChangeNotificationSubscription(
             "inventory", definition, registrar, executor, scheduler, taskTracker, nanoTimeSupplier)
+    }
+
+    private static Object findChangeEvent(Object value) {
+        if (value instanceof ChangeEvent) {
+            return value
+        }
+        if (value instanceof Object[]) {
+            for (Object element : (Object[]) value) {
+                def event = findChangeEvent(element)
+                if (event != null) {
+                    return event
+                }
+            }
+        } else if (value instanceof Iterable) {
+            for (Object element : (Iterable) value) {
+                def event = findChangeEvent(element)
+                if (event != null) {
+                    return event
+                }
+            }
+        }
+        return null
     }
 
     private TaskScheduler scheduler(List<Runnable> scheduledTasks, List<Long> scheduledDelays) {
