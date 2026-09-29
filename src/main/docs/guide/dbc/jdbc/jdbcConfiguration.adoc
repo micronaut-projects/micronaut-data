@@ -104,7 +104,7 @@ As seen in the configuration above you should also configure the dialect. Althou
 |SQLite (requires `io.micronaut.sql:micronaut-jdbc-sqlite`)
 |===
 
-IMPORTANT: To use SQLite, add the dependency `io.micronaut.sql:micronaut-sql-sqlite`, which adds the https://github.com/xerial/sqlite-jdbc[SQLite JDBC Driver] and configures a custom api:data.connection.ConnectionCapabilities[] implementation.
+IMPORTANT: To use SQLite, add the dependency `io.micronaut.sql:micronaut-jdbc-sqlite`, which adds the https://github.com/xerial/sqlite-jdbc[SQLite JDBC Driver] and configures a custom api:data.connection.ConnectionCapabilities[] implementation.
 
 IMPORTANT: The dialect setting in configuration does *not* replace the need to ensure the correct dialect is set at the repository. If the dialect is H2 in configuration, the repository should have `@JdbcRepository(dialect = Dialect.H2)` / `@R2dbcRepository(dialect = Dialect.H2)`. Because repositories are computed at compile time, the configuration value is not known at that time.
 
