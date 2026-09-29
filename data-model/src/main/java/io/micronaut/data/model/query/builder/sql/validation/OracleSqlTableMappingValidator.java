@@ -52,6 +52,16 @@ final class OracleSqlTableMappingValidator extends BaseSqlTableMappingValidator 
     }
 
     @Override
+    public String getPrimaryKeysQuery() {
+        // Oracle has no information schema, the driver returns no primary keys for a null table name
+        return """
+            SELECT cc.TABLE_NAME, cc.COLUMN_NAME, cc.POSITION
+            FROM ALL_CONSTRAINTS c
+            JOIN ALL_CONS_COLUMNS cc ON cc.OWNER = c.OWNER AND cc.CONSTRAINT_NAME = c.CONSTRAINT_NAME AND cc.TABLE_NAME = c.TABLE_NAME
+            WHERE c.CONSTRAINT_TYPE = 'P' AND c.OWNER = ?""";
+    }
+
+    @Override
     protected boolean matchingDialectColumnType(SqlColumnMapping columnMapping,
                                                 SqlColumnMetadata columnMetadata,
                                                 SqlDialectOptions dialectOptions) {

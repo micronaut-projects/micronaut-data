@@ -56,6 +56,19 @@ final class PostgresSqlTableMappingValidator extends BaseSqlTableMappingValidato
     }
 
     @Override
+    public String getPrimaryKeysQuery() {
+        // The catalog, the information schema only shows the constraints of the tables the user owns or can modify
+        return """
+            SELECT c.relname, a.attname, k.position
+            FROM pg_catalog.pg_constraint con
+            JOIN pg_catalog.pg_class c ON c.oid = con.conrelid
+            JOIN pg_catalog.pg_namespace n ON n.oid = c.relnamespace
+            CROSS JOIN LATERAL unnest(con.conkey) WITH ORDINALITY AS k(attnum, position)
+            JOIN pg_catalog.pg_attribute a ON a.attrelid = con.conrelid AND a.attnum = k.attnum
+            WHERE con.contype = 'p' AND n.nspname = ?""";
+    }
+
+    @Override
     protected boolean matchingDialectColumnType(SqlColumnMapping columnMapping, SqlColumnMetadata columnMetadata) {
         if (columnMapping.getDbType() == SqlDbType.JSON || columnMapping.getDbType() == SqlDbType.JSON_OBJECT) {
             return "json".equalsIgnoreCase(columnMetadata.typeName()) || "jsonb".equalsIgnoreCase(columnMetadata.typeName());

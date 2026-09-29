@@ -41,4 +41,9 @@ final class SqlServerTableMappingValidator extends BaseSqlTableMappingValidator 
     public String getSequenceNamesQuery() {
         return "SELECT s.name FROM sys.sequences s INNER JOIN sys.schemas sc ON s.schema_id = sc.schema_id WHERE sc.name = ?";
     }
+
+    @Override
+    public String getPrimaryKeysQuery() {
+        return INFORMATION_SCHEMA_PRIMARY_KEYS_QUERY;
+    }
 }

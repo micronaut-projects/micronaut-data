@@ -37,4 +37,9 @@ final class AnsiSqlTableMappingValidator extends BaseSqlTableMappingValidator {
     public String getSequenceNamesQuery() {
         return "SELECT SEQUENCE_NAME FROM INFORMATION_SCHEMA.SEQUENCES WHERE SEQUENCE_SCHEMA = ?";
     }
+
+    @Override
+    public String getPrimaryKeysQuery() {
+        return INFORMATION_SCHEMA_PRIMARY_KEYS_QUERY;
+    }
 }

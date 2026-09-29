@@ -50,6 +50,16 @@ class JdbcSchemaMetadataReaderSpec extends Specification {
         tables['READER_VIEW'].view
     }
 
+    void 'primary keys are read per table when the primary keys query fails'() {
+        when:
+        def tables = new JdbcSchemaMetadataReader(connection, Dialect.H2, 'SELECT * FROM MISSING_PRIMARY_KEYS WHERE S = ?')
+            .readTables(null, ['READER_ITEM', 'READER_PLAIN'] as Set, false).tables()
+
+        then:
+        tables['READER_ITEM'].primaryKeyColumns == ['ID']
+        tables['READER_PLAIN'].primaryKeyColumns == []
+    }
+
     void 'indexes are read only when requested'() {
         given:
         def reader = new JdbcSchemaMetadataReader(connection, Dialect.H2)

@@ -62,6 +62,17 @@ import java.util.stream.Collectors;
 abstract class BaseSqlTableMappingValidator implements SqlTableMappingValidator {
 
     /**
+     * The primary key columns of a schema from the standard information schema views, see {@link #getPrimaryKeysQuery()}.
+     */
+    static final String INFORMATION_SCHEMA_PRIMARY_KEYS_QUERY = """
+        SELECT kcu.TABLE_NAME, kcu.COLUMN_NAME, kcu.ORDINAL_POSITION
+        FROM INFORMATION_SCHEMA.TABLE_CONSTRAINTS tc
+        JOIN INFORMATION_SCHEMA.KEY_COLUMN_USAGE kcu
+          ON kcu.CONSTRAINT_SCHEMA = tc.CONSTRAINT_SCHEMA AND kcu.CONSTRAINT_NAME = tc.CONSTRAINT_NAME
+          AND kcu.TABLE_SCHEMA = tc.TABLE_SCHEMA AND kcu.TABLE_NAME = tc.TABLE_NAME
+        WHERE tc.CONSTRAINT_TYPE = 'PRIMARY KEY' AND tc.TABLE_SCHEMA = ?""";
+
+    /**
      * Types defined through a column definition (by a definition provider or a spatial type) that are verified strictly.
      * Other custom definitions are verified on the best effort basis and a difference is only reported as a warning.
      */

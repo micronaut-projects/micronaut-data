@@ -172,6 +172,19 @@ public interface SqlTableMappingValidator {
     }
 
     /**
+     * Returns the query selecting the primary key columns of all the tables of a schema, so that they are read with a single query
+     * instead of a {@link java.sql.DatabaseMetaData#getPrimaryKeys(String, String, String)} call per table (most drivers require the table name).
+     * The query has a single parameter, the schema name (the database name for MySQL), and selects the table name,
+     * the column name and the column position in the primary key.
+     *
+     * @return The query or null to read the primary keys per table
+     * @since 5.3.0
+     */
+    default @Nullable String getPrimaryKeysQuery() {
+        return null;
+    }
+
+    /**
      * Returns the SQL dialect supported by this validator.
      *
      * @return the supported SQL dialect, never null

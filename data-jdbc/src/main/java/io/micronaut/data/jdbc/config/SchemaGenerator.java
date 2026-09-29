@@ -285,15 +285,14 @@ public class SchemaGenerator {
             throw new IllegalStateException("There is no supported SqlTableMappingValidator for dialect " + dialect);
         }
         SchemaValidationResult result = new SchemaValidationResult();
-        JdbcSchemaMetadataReader metadataReader = new JdbcSchemaMetadataReader(connection, dialect);
+        JdbcSchemaMetadataReader metadataReader = new JdbcSchemaMetadataReader(connection, dialect, sqlTableMappingValidator.getPrimaryKeysQuery());
         // Tables grouped by the schema as stored in the database (empty for the connection default schema)
         Map<String, Map<String, SqlTableMapping>> sqlTableMappingsBySchema = getSqlTableMappingsBySchema(entities, dialect, metadataReader);
 
         for (Map.Entry<String, Map<String, SqlTableMapping>> schemaEntry : sqlTableMappingsBySchema.entrySet()) {
             Map<String, SqlTableMapping> sqlTableMappings = schemaEntry.getValue();
             String schema = sqlTableMappings.values().iterator().next().schema();
-            // The indexes are only read when some are validated, the drivers not supporting a single call for all the tables
-            // read them per table
+            // The indexes are only read when some are validated, they are read per table
             boolean readIndexes = sqlTableMappings.values().stream().anyMatch(mapping -> !mapping.indexes().isEmpty()
                 || (configuration.isSchemaGenerateUniqueConstraints() && !mapping.uniqueConstraints().isEmpty()));
             JdbcSchemaMetadataReader.SchemaTables schemaTables = metadataReader.readTables(

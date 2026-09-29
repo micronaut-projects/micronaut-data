@@ -53,6 +53,12 @@ final class MySqlTableMappingValidator extends BaseSqlTableMappingValidator {
     }
 
     @Override
+    public String getPrimaryKeysQuery() {
+        // Every MySQL primary key is named PRIMARY, the join also matches the table
+        return INFORMATION_SCHEMA_PRIMARY_KEYS_QUERY;
+    }
+
+    @Override
     protected boolean matchingDialectColumnType(SqlColumnMapping columnMapping, SqlColumnMetadata columnMetadata) {
         SqlDbType dbType = columnMapping.getDbType();
         if (dbType == SqlDbType.UUID) {

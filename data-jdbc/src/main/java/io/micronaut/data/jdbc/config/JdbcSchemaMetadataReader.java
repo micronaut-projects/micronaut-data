@@ -20,6 +20,7 @@ import io.micronaut.core.util.StringUtils;
 import io.micronaut.data.model.query.builder.sql.Dialect;
 import io.micronaut.data.model.query.builder.sql.IdentifierNamingStrategy;
 import io.micronaut.data.model.query.builder.sql.SqlSchemaUtils;
+import io.micronaut.data.model.query.builder.sql.validation.SqlTableMappingValidator;
 import io.micronaut.data.model.schema.sql.metadata.SqlColumnMetadata;
 import io.micronaut.data.model.schema.sql.metadata.SqlIdentifierMatcher;
 import io.micronaut.data.model.schema.sql.metadata.SqlIndexMetadata;
@@ -50,9 +51,11 @@ import java.util.TreeMap;
  * Reads the schema metadata used by the schema validation using JDBC {@link DatabaseMetaData}.
  * <p>
  * The metadata is read for the whole schema with as few database calls as possible and kept in memory:
- * the tables and their columns are read with a single call. Primary keys and indexes are
- * read with a single call for all the tables when the driver supports it (a null table name),
- * otherwise with a call per table. Entities can also be mapped to views, since the tables are resolved from the columns.
+ * the tables and their columns are read with a single call. The primary keys are read with a single dialect query
+ * for the schema (see {@link SqlTableMappingValidator#getPrimaryKeysQuery()}). The indexes, and the primary keys when
+ * there is no such query or it fails, are read with a call per table: the drivers require the table name, they either
+ * reject a null table name or return no rows for it. Entities can also be mapped to views, since the tables are
+ * resolved from the columns.
  *
  * @author radovanradic
  * @since 5.3.0
@@ -86,8 +89,21 @@ final class JdbcSchemaMetadataReader {
      * Whether the MySQL database is the catalog, the MySQL Connector/J option {@code databaseTerm=SCHEMA} reports it as the schema.
      */
     private final boolean databaseAsCatalog;
+    private final @Nullable String primaryKeysQuery;
 
     JdbcSchemaMetadataReader(Connection connection, Dialect dialect) throws SQLException {
+        this(connection, dialect, null);
+    }
+
+    /**
+     * @param connection The connection
+     * @param dialect The dialect
+     * @param primaryKeysQuery The query reading the primary keys of a schema, see {@link SqlTableMappingValidator#getPrimaryKeysQuery()},
+     * null to read them per table
+     * @throws SQLException If the database metadata cannot be read
+     */
+    JdbcSchemaMetadataReader(Connection connection, Dialect dialect, @Nullable String primaryKeysQuery) throws SQLException {
+        this.primaryKeysQuery = primaryKeysQuery;
         this.connection = connection;
         this.metaData = connection.getMetaData();
         this.identifierMatcher = SqlIdentifierMatcher.of(dialect, getIdentifierNamingStrategy(metaData), metaData.supportsMixedCaseIdentifiers());
@@ -287,7 +303,7 @@ final class JdbcSchemaMetadataReader {
         if (tables.isEmpty()) {
             return new SchemaTables(resolvedSchema, tables);
         }
-        readPrimaryKeys(tables);
+        readPrimaryKeys(resolvedSchema, tables);
         markViews(catalog, schema, tables);
         if (readIndexes) {
             readIndexes(tables);
@@ -334,14 +350,41 @@ final class JdbcSchemaMetadataReader {
         table.addColumn(new SqlColumnMetadata(columnName, columnType, typeName, columnSize, decimalDigits, nullable));
     }
 
-    private void readPrimaryKeys(Map<String, SqlTableMetadata> tables) {
+    /**
+     * Reads the primary keys with the dialect query for the schema, falls back to a call per table without it or when it fails.
+     */
+    private void readPrimaryKeys(@Nullable String schema, Map<String, SqlTableMetadata> tables) {
         Map<String, Map<Integer, String>> primaryKeys = new HashMap<>();
+        if (primaryKeysQuery != null && schema != null) {
+            try {
+                query(primaryKeysQuery, schema, resultSet -> {
+                    String tableName = resultSet.getString(1);
+                    String columnName = resultSet.getString(2);
+                    String tableKey = tableName == null ? null : identifierMatcher.tableKey(tableName);
+                    if (tableKey != null && columnName != null && tables.containsKey(tableKey)) {
+                        primaryKeys.computeIfAbsent(tableKey, k -> new TreeMap<>()).put(resultSet.getInt(3), columnName);
+                    }
+                });
+                setPrimaryKeys(tables, tables.keySet(), primaryKeys);
+                return;
+            } catch (SQLException | RuntimeException e) {
+                if (LOG.isDebugEnabled()) {
+                    LOG.debug("Unable to read the primary keys of schema [{}] with a single query, reading them per table: {}", schema, e.getMessage());
+                }
+                primaryKeys.clear();
+            }
+        }
         Set<String> readTables = readTablesMetadata("primary keys", tables,
-            SqlSchemaUtils.TABLE_CATALOG_COLUMN, SqlSchemaUtils.TABLE_SCHEMA_COLUMN, SqlSchemaUtils.TABLE_NAME_COLUMN,
-            (catalog, schema, table) -> metaData.getPrimaryKeys(catalog, schema, table),
+            (catalog, tableSchema, table) -> metaData.getPrimaryKeys(catalog, tableSchema, table),
             (tableKey, resultSet) -> primaryKeys.computeIfAbsent(tableKey, k -> new TreeMap<>())
-                .put(resultSet.getInt("KEY_SEQ"), resultSet.getString(SqlSchemaUtils.COLUMN_NAME_COLUMN)),
-            primaryKeys::clear);
+                .put(resultSet.getInt("KEY_SEQ"), resultSet.getString(SqlSchemaUtils.COLUMN_NAME_COLUMN)));
+        setPrimaryKeys(tables, readTables, primaryKeys);
+    }
+
+    /**
+     * Sets the primary key columns of the read tables, a table without a primary key has none.
+     */
+    private static void setPrimaryKeys(Map<String, SqlTableMetadata> tables, Set<String> readTables, Map<String, Map<Integer, String>> primaryKeys) {
         for (String tableKey : readTables) {
             Objects.requireNonNull(tables.get(tableKey)).setPrimaryKeyColumns(new ArrayList<>(primaryKeys.getOrDefault(tableKey, Map.of()).values()));
         }
@@ -351,7 +394,6 @@ final class JdbcSchemaMetadataReader {
         Map<String, Map<String, IndexColumns>> indexes = new HashMap<>();
         // approximate = true, some drivers (Oracle) would otherwise compute the table statistics
         Set<String> readTables = readTablesMetadata("indexes", tables,
-            SqlSchemaUtils.TABLE_CATALOG_COLUMN, SqlSchemaUtils.TABLE_SCHEMA_COLUMN, SqlSchemaUtils.TABLE_NAME_COLUMN,
             (catalog, schema, table) -> metaData.getIndexInfo(catalog, schema, table, false, true),
             (tableKey, resultSet) -> {
                 String indexName = resultSet.getString("INDEX_NAME");
@@ -365,8 +407,7 @@ final class JdbcSchemaMetadataReader {
                 if (columnName != null) {
                     index.columns().put(resultSet.getInt("ORDINAL_POSITION"), columnName);
                 }
-            },
-            indexes::clear);
+            });
         for (String tableKey : readTables) {
             List<SqlIndexMetadata> indexMetadata = new ArrayList<>();
             indexes.getOrDefault(tableKey, Map.of()).forEach((name, index) ->
@@ -376,44 +417,15 @@ final class JdbcSchemaMetadataReader {
     }
 
     /**
-     * Reads the table metadata for all the tables with a single call (null table name), which many drivers support.
-     * When the driver rejects it, or it returns no rows, the metadata is read with a call per table.
+     * Reads the table metadata with a call per table. A single call for all the tables (a null table name) is not
+     * used: H2, MySQL and MariaDB reject it, SQL Server and Oracle return no rows and PostgreSQL returns no indexes.
      *
      * @return The keys of the tables whose metadata was read
      */
-    @SuppressWarnings("java:S107")
     private Set<String> readTablesMetadata(String what,
                                            Map<String, SqlTableMetadata> tables,
-                                           String catalogColumn,
-                                           String schemaColumn,
-                                           String tableNameColumn,
                                            MetadataCall call,
-                                           TableRowReader rowReader,
-                                           Runnable reset) {
-        SqlTableMetadata anyTable = tables.values().iterator().next();
-        try (ResultSet resultSet = call.execute(anyTable.getCatalog(), anyTable.getSchema(), null)) {
-            boolean rowsRead = false;
-            while (resultSet.next()) {
-                rowsRead = true;
-                String tableName = resultSet.getString(tableNameColumn);
-                if (tableName == null) {
-                    continue;
-                }
-                String tableKey = identifierMatcher.tableKey(tableName);
-                SqlTableMetadata table = tables.get(tableKey);
-                if (table != null && isSameSchema(table, resultSet.getString(catalogColumn), resultSet.getString(schemaColumn))) {
-                    rowReader.read(tableKey, resultSet);
-                }
-            }
-            if (rowsRead) {
-                return tables.keySet();
-            }
-        } catch (SQLException | RuntimeException e) {
-            if (LOG.isDebugEnabled()) {
-                LOG.debug("Unable to read {} of all the tables with a single call, reading them per table: {}", what, e.getMessage());
-            }
-        }
-        reset.run();
+                                           TableRowReader rowReader) {
         Set<String> readTables = new LinkedHashSet<>();
         for (Map.Entry<String, SqlTableMetadata> entry : tables.entrySet()) {
             SqlTableMetadata table = entry.getValue();
@@ -432,8 +444,8 @@ final class JdbcSchemaMetadataReader {
     }
 
     /**
-     * A row read for all the tables (null table name) can belong to a same-named table in another catalog or schema
-     * matched by the pattern. Some drivers don't report the catalog or schema, only a different reported value is a mismatch.
+     * A row read for all the tables can belong to a same-named table in another catalog or schema matched by the pattern.
+     * Some drivers don't report the catalog or schema, only a different reported value is a mismatch.
      */
     private boolean isSameSchema(SqlTableMetadata table, @Nullable String catalog, @Nullable String schema) {
         return sameOrUnknown(table.getCatalog(), catalog) && sameOrUnknown(table.getSchema(), schema);
