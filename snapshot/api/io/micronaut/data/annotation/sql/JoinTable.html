@@ -77,9 +77,17 @@ loadScripts(document, 'script');</script>
 <div class="type-signature"><span class="annotations"><a href="https://docs.oracle.com/en/java/javase/25/docs/api/java.base/java/lang/annotation/Target.html" title="class or interface in java.lang.annotation" class="external-link">@Target</a>({<a href="https://docs.oracle.com/en/java/javase/25/docs/api/java.base/java/lang/annotation/ElementType.html#METHOD" title="class or interface in java.lang.annotation" class="external-link">METHOD</a>,<a href="https://docs.oracle.com/en/java/javase/25/docs/api/java.base/java/lang/annotation/ElementType.html#FIELD" title="class or interface in java.lang.annotation" class="external-link">FIELD</a>})
 <a href="https://docs.oracle.com/en/java/javase/25/docs/api/java.base/java/lang/annotation/Retention.html" title="class or interface in java.lang.annotation" class="external-link">@Retention</a>(<a href="https://docs.oracle.com/en/java/javase/25/docs/api/java.base/java/lang/annotation/RetentionPolicy.html#RUNTIME" title="class or interface in java.lang.annotation" class="external-link">RUNTIME</a>)
 </span><span class="modifiers">public @interface </span><span class="element-name type-name-label">JoinTable</span></div>
-<div class="block">Subset of the JPA join table annotation allowing support for bidirectional and unidirectional one-to-many join fetches only.
+<div class="block">Customizes the join table of a <code>ONE_TO_MANY</code> or <code>MANY_TO_MANY</code> association that is stored in a separate
+table. A join table (also called a link table) has one row per linked pair of entities, holding a foreign key to
+the owning entity and a foreign key to the associated entity.
 
-<p>Unlike the JPA version this is simplification and relies on a thid</p></div>
+<p>Without this annotation, the table name and the column names are derived from the entity and association names by
+the <a href="../../model/naming/NamingStrategy.html" title="interface in io.micronaut.data.model.naming"><code>NamingStrategy</code></a>. Use <a href="#name()"><code>name()</code></a> and <a href="#schema()"><code>schema()</code></a> to name the
+table, <a href="#joinColumns()"><code>joinColumns()</code></a> to name the columns that reference the owning entity and
+<a href="#inverseJoinColumns()"><code>inverseJoinColumns()</code></a> to name the columns that reference the associated entity. Place the annotation on the
+owning side of the association, that is the side without <code>mappedBy</code>.</p>
+
+<p>The JPA annotation <code>jakarta.persistence.JoinTable</code> can be used instead and is interpreted the same way.</p></div>
 <dl class="notes">
 <dt>Since:</dt>
 <dd>1.0.0</dd>

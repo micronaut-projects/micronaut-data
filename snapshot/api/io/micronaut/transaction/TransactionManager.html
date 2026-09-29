@@ -73,10 +73,11 @@ loadScripts(document, 'script');</script>
 <hr>
 <div class="horizontal-scroll">
 <div class="type-signature"><span class="modifiers">public interface </span><span class="element-name type-name-label">TransactionManager</span></div>
-<div class="block">NOTICE: This is a fork of Spring's <code>TransactionManager</code> modernizing it
-to use enums, SLF4J and decoupling from Spring.
-Marker interface for transaction manager implementations,
-either traditional or reactive.</div>
+<div class="block">Marker interface implemented by every transaction manager, whether it manages transactions for blocking code
+(<a href="SynchronousTransactionManager.html" title="interface in io.micronaut.transaction"><code>SynchronousTransactionManager</code></a>) or for reactive code. It declares no methods; the operations are
+defined by <a href="TransactionOperations.html" title="interface in io.micronaut.transaction"><code>TransactionOperations</code></a> and the reactive, async and synchronous sub-interfaces.
+
+<p>This type is derived from the Spring Framework's <code>TransactionManager</code> (Apache License 2.0).</p></div>
 <dl class="notes">
 <dt>Since:</dt>
 <dd>1.0</dd>

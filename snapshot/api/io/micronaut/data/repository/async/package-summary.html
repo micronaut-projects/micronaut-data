@@ -106,7 +106,8 @@ loadScripts(document, 'script');</script>
 <div class="table-header col-last">Description</div>
 <div class="col-first even-row-color class-summary class-summary-tab1"><a href="AsyncCrudRepository.html" title="interface in io.micronaut.data.repository.async">AsyncCrudRepository</a>&lt;E,<wbr>ID&gt;</div>
 <div class="col-last even-row-color class-summary class-summary-tab1">
-<div class="block">Asynchronous variation of <a href="../CrudRepository.html" title="interface in io.micronaut.data.repository"><code>CrudRepository</code></a>.</div>
+<div class="block">Asynchronous variation of <a href="../CrudRepository.html" title="interface in io.micronaut.data.repository"><code>CrudRepository</code></a>: every method returns a
+<a href="https://docs.oracle.com/en/java/javase/25/docs/api/java.base/java/util/concurrent/CompletableFuture.html" title="class or interface in java.util.concurrent" class="external-link"><code>CompletableFuture</code></a> instead of blocking the calling thread.</div>
 </div>
 <div class="col-first odd-row-color class-summary class-summary-tab1"><a href="AsyncPageableRepository.html" title="interface in io.micronaut.data.repository.async">AsyncPageableRepository</a>&lt;E,<wbr>ID&gt;</div>
 <div class="col-last odd-row-color class-summary class-summary-tab1">

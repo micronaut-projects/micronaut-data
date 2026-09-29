@@ -59,27 +59,13 @@ loadScripts(document, 'script');</script>
 <li><a href="#constructor-detail" tabindex="0">Constructor Details</a>
 <ol class="toc-list">
 <li><a href="#%3Cinit%3E(java.lang.String,java.lang.String,java.lang.String)" tabindex="0">SqlTableMetadata(String, String, String)</a></li>
-<li><a href="#%3Cinit%3E(java.lang.String,java.lang.String,java.lang.String,io.micronaut.data.model.schema.sql.metadata.SqlIdentifierMatcher)" tabindex="0">SqlTableMetadata(String, String, String, SqlIdentifierMatcher)</a></li>
 </ol>
 </li>
 <li><a href="#method-detail" tabindex="0">Method Details</a>
 <ol class="toc-list">
 <li><a href="#addColumn(io.micronaut.data.model.schema.sql.metadata.SqlColumnMetadata)" tabindex="0">addColumn(SqlColumnMetadata)</a></li>
-<li><a href="#getIdentifierMatcher()" tabindex="0">getIdentifierMatcher()</a></li>
-<li><a href="#isView()" tabindex="0">isView()</a></li>
-<li><a href="#setView(boolean)" tabindex="0">setView(boolean)</a></li>
-<li><a href="#getCatalog()" tabindex="0">getCatalog()</a></li>
-<li><a href="#getSchema()" tabindex="0">getSchema()</a></li>
 <li><a href="#getName()" tabindex="0">getName()</a></li>
 <li><a href="#getColumn(java.lang.String)" tabindex="0">getColumn(String)</a></li>
-<li><a href="#getMappedColumn(java.lang.String,boolean)" tabindex="0">getMappedColumn(String, boolean)</a></li>
-<li><a href="#getColumns()" tabindex="0">getColumns()</a></li>
-<li><a href="#setColumnTypeDefinition(java.lang.String,java.lang.String)" tabindex="0">setColumnTypeDefinition(String, String)</a></li>
-<li><a href="#getColumnTypeDefinition(java.lang.String)" tabindex="0">getColumnTypeDefinition(String)</a></li>
-<li><a href="#getPrimaryKeyColumns()" tabindex="0">getPrimaryKeyColumns()</a></li>
-<li><a href="#setPrimaryKeyColumns(java.util.List)" tabindex="0">setPrimaryKeyColumns(List)</a></li>
-<li><a href="#getIndexes()" tabindex="0">getIndexes()</a></li>
-<li><a href="#setIndexes(java.util.List)" tabindex="0">setIndexes(List)</a></li>
 </ol>
 </li>
 </ol>
@@ -111,17 +97,10 @@ loadScripts(document, 'script');</script>
 <div class="summary-table two-column-summary">
 <div class="table-header col-first">Constructor</div>
 <div class="table-header col-last">Description</div>
-<div class="col-constructor-name even-row-color"><code><a href="#%3Cinit%3E(java.lang.String,java.lang.String,java.lang.String)" class="member-name-link">SqlTableMetadata</a><wbr>(@Nullable <a href="https://docs.oracle.com/en/java/javase/25/docs/api/java.base/java/lang/String.html" title="class or interface in java.lang" class="external-link">String</a>&nbsp;catalog,
- @Nullable <a href="https://docs.oracle.com/en/java/javase/25/docs/api/java.base/java/lang/String.html" title="class or interface in java.lang" class="external-link">String</a>&nbsp;schema,
+<div class="col-constructor-name even-row-color"><code><a href="#%3Cinit%3E(java.lang.String,java.lang.String,java.lang.String)" class="member-name-link">SqlTableMetadata</a><wbr>(<a href="https://docs.oracle.com/en/java/javase/25/docs/api/java.base/java/lang/String.html" title="class or interface in java.lang" class="external-link">String</a>&nbsp;catalog,
+ <a href="https://docs.oracle.com/en/java/javase/25/docs/api/java.base/java/lang/String.html" title="class or interface in java.lang" class="external-link">String</a>&nbsp;schema,
  <a href="https://docs.oracle.com/en/java/javase/25/docs/api/java.base/java/lang/String.html" title="class or interface in java.lang" class="external-link">String</a>&nbsp;name)</code></div>
 <div class="col-last even-row-color">
-<div class="block">Constructs a new instance of SqlTableMetadata with the specified table name, the column names are compared case-insensitively.</div>
-</div>
-<div class="col-constructor-name odd-row-color"><code><a href="#%3Cinit%3E(java.lang.String,java.lang.String,java.lang.String,io.micronaut.data.model.schema.sql.metadata.SqlIdentifierMatcher)" class="member-name-link">SqlTableMetadata</a><wbr>(@Nullable <a href="https://docs.oracle.com/en/java/javase/25/docs/api/java.base/java/lang/String.html" title="class or interface in java.lang" class="external-link">String</a>&nbsp;catalog,
- @Nullable <a href="https://docs.oracle.com/en/java/javase/25/docs/api/java.base/java/lang/String.html" title="class or interface in java.lang" class="external-link">String</a>&nbsp;schema,
- <a href="https://docs.oracle.com/en/java/javase/25/docs/api/java.base/java/lang/String.html" title="class or interface in java.lang" class="external-link">String</a>&nbsp;name,
- <a href="SqlIdentifierMatcher.html" title="class in io.micronaut.data.model.schema.sql.metadata">SqlIdentifierMatcher</a>&nbsp;identifierMatcher)</code></div>
-<div class="col-last odd-row-color">
 <div class="block">Constructs a new instance of SqlTableMetadata with the specified table name.</div>
 </div>
 </div>
@@ -143,63 +122,16 @@ loadScripts(document, 'script');</script>
 <div class="col-last even-row-color method-summary-table method-summary-table-tab2 method-summary-table-tab4">
 <div class="block">Adds a new column to the table metadata.</div>
 </div>
-<div class="col-first odd-row-color method-summary-table method-summary-table-tab2 method-summary-table-tab4"><code>@Nullable <a href="https://docs.oracle.com/en/java/javase/25/docs/api/java.base/java/lang/String.html" title="class or interface in java.lang" class="external-link">String</a></code></div>
-<div class="col-second odd-row-color method-summary-table method-summary-table-tab2 method-summary-table-tab4"><code><a href="#getCatalog()" class="member-name-link">getCatalog</a>()</code></div>
-<div class="col-last odd-row-color method-summary-table method-summary-table-tab2 method-summary-table-tab4">&nbsp;</div>
-<div class="col-first even-row-color method-summary-table method-summary-table-tab2 method-summary-table-tab4"><code>@Nullable <a href="SqlColumnMetadata.html" title="class in io.micronaut.data.model.schema.sql.metadata">SqlColumnMetadata</a></code></div>
-<div class="col-second even-row-color method-summary-table method-summary-table-tab2 method-summary-table-tab4"><code><a href="#getColumn(java.lang.String)" class="member-name-link">getColumn</a><wbr>(<a href="https://docs.oracle.com/en/java/javase/25/docs/api/java.base/java/lang/String.html" title="class or interface in java.lang" class="external-link">String</a>&nbsp;name)</code></div>
-<div class="col-last even-row-color method-summary-table method-summary-table-tab2 method-summary-table-tab4">
-<div class="block">Retrieves the SQL column metadata associated with the specified column name.</div>
-</div>
-<div class="col-first odd-row-color method-summary-table method-summary-table-tab2 method-summary-table-tab4"><code><a href="https://docs.oracle.com/en/java/javase/25/docs/api/java.base/java/util/Collection.html" title="class or interface in java.util" class="external-link">Collection</a><wbr>&lt;<a href="SqlColumnMetadata.html" title="class in io.micronaut.data.model.schema.sql.metadata">SqlColumnMetadata</a>&gt;</code></div>
-<div class="col-second odd-row-color method-summary-table method-summary-table-tab2 method-summary-table-tab4"><code><a href="#getColumns()" class="member-name-link">getColumns</a>()</code></div>
-<div class="col-last odd-row-color method-summary-table method-summary-table-tab2 method-summary-table-tab4">&nbsp;</div>
-<div class="col-first even-row-color method-summary-table method-summary-table-tab2 method-summary-table-tab4"><code>@Nullable <a href="https://docs.oracle.com/en/java/javase/25/docs/api/java.base/java/lang/String.html" title="class or interface in java.lang" class="external-link">String</a></code></div>
-<div class="col-second even-row-color method-summary-table method-summary-table-tab2 method-summary-table-tab4"><code><a href="#getColumnTypeDefinition(java.lang.String)" class="member-name-link">getColumnTypeDefinition</a><wbr>(<a href="https://docs.oracle.com/en/java/javase/25/docs/api/java.base/java/lang/String.html" title="class or interface in java.lang" class="external-link">String</a>&nbsp;column)</code></div>
-<div class="col-last even-row-color method-summary-table method-summary-table-tab2 method-summary-table-tab4">&nbsp;</div>
-<div class="col-first odd-row-color method-summary-table method-summary-table-tab2 method-summary-table-tab4"><code><a href="SqlIdentifierMatcher.html" title="class in io.micronaut.data.model.schema.sql.metadata">SqlIdentifierMatcher</a></code></div>
-<div class="col-second odd-row-color method-summary-table method-summary-table-tab2 method-summary-table-tab4"><code><a href="#getIdentifierMatcher()" class="member-name-link">getIdentifierMatcher</a>()</code></div>
-<div class="col-last odd-row-color method-summary-table method-summary-table-tab2 method-summary-table-tab4">&nbsp;</div>
-<div class="col-first even-row-color method-summary-table method-summary-table-tab2 method-summary-table-tab4"><code>@Nullable <a href="https://docs.oracle.com/en/java/javase/25/docs/api/java.base/java/util/List.html" title="class or interface in java.util" class="external-link">List</a><wbr>&lt;<a href="SqlIndexMetadata.html" title="class in io.micronaut.data.model.schema.sql.metadata">SqlIndexMetadata</a>&gt;</code></div>
-<div class="col-second even-row-color method-summary-table method-summary-table-tab2 method-summary-table-tab4"><code><a href="#getIndexes()" class="member-name-link">getIndexes</a>()</code></div>
-<div class="col-last even-row-color method-summary-table method-summary-table-tab2 method-summary-table-tab4">&nbsp;</div>
 <div class="col-first odd-row-color method-summary-table method-summary-table-tab2 method-summary-table-tab4"><code>@Nullable <a href="SqlColumnMetadata.html" title="class in io.micronaut.data.model.schema.sql.metadata">SqlColumnMetadata</a></code></div>
-<div class="col-second odd-row-color method-summary-table method-summary-table-tab2 method-summary-table-tab4"><code><a href="#getMappedColumn(java.lang.String,boolean)" class="member-name-link">getMappedColumn</a><wbr>(<a href="https://docs.oracle.com/en/java/javase/25/docs/api/java.base/java/lang/String.html" title="class or interface in java.lang" class="external-link">String</a>&nbsp;name,
- boolean&nbsp;escape)</code></div>
+<div class="col-second odd-row-color method-summary-table method-summary-table-tab2 method-summary-table-tab4"><code><a href="#getColumn(java.lang.String)" class="member-name-link">getColumn</a><wbr>(<a href="https://docs.oracle.com/en/java/javase/25/docs/api/java.base/java/lang/String.html" title="class or interface in java.lang" class="external-link">String</a>&nbsp;name)</code></div>
 <div class="col-last odd-row-color method-summary-table method-summary-table-tab2 method-summary-table-tab4">
-<div class="block">Retrieves the SQL column metadata of the mapped column, resolved the same way as the generated SQL refers to it,
-see <a href="SqlIdentifierMatcher.html" title="class in io.micronaut.data.model.schema.sql.metadata"><code>SqlIdentifierMatcher</code></a>.</div>
+<div class="block">Retrieves the SQL column metadata associated with the specified column name.</div>
 </div>
 <div class="col-first even-row-color method-summary-table method-summary-table-tab2 method-summary-table-tab4"><code><a href="https://docs.oracle.com/en/java/javase/25/docs/api/java.base/java/lang/String.html" title="class or interface in java.lang" class="external-link">String</a></code></div>
 <div class="col-second even-row-color method-summary-table method-summary-table-tab2 method-summary-table-tab4"><code><a href="#getName()" class="member-name-link">getName</a>()</code></div>
 <div class="col-last even-row-color method-summary-table method-summary-table-tab2 method-summary-table-tab4">
 <div class="block">Returns the name of the SQL table represented by this metadata object.</div>
 </div>
-<div class="col-first odd-row-color method-summary-table method-summary-table-tab2 method-summary-table-tab4"><code>@Nullable <a href="https://docs.oracle.com/en/java/javase/25/docs/api/java.base/java/util/List.html" title="class or interface in java.util" class="external-link">List</a><wbr>&lt;<a href="https://docs.oracle.com/en/java/javase/25/docs/api/java.base/java/lang/String.html" title="class or interface in java.lang" class="external-link">String</a>&gt;</code></div>
-<div class="col-second odd-row-color method-summary-table method-summary-table-tab2 method-summary-table-tab4"><code><a href="#getPrimaryKeyColumns()" class="member-name-link">getPrimaryKeyColumns</a>()</code></div>
-<div class="col-last odd-row-color method-summary-table method-summary-table-tab2 method-summary-table-tab4">&nbsp;</div>
-<div class="col-first even-row-color method-summary-table method-summary-table-tab2 method-summary-table-tab4"><code>@Nullable <a href="https://docs.oracle.com/en/java/javase/25/docs/api/java.base/java/lang/String.html" title="class or interface in java.lang" class="external-link">String</a></code></div>
-<div class="col-second even-row-color method-summary-table method-summary-table-tab2 method-summary-table-tab4"><code><a href="#getSchema()" class="member-name-link">getSchema</a>()</code></div>
-<div class="col-last even-row-color method-summary-table method-summary-table-tab2 method-summary-table-tab4">&nbsp;</div>
-<div class="col-first odd-row-color method-summary-table method-summary-table-tab2 method-summary-table-tab4"><code>boolean</code></div>
-<div class="col-second odd-row-color method-summary-table method-summary-table-tab2 method-summary-table-tab4"><code><a href="#isView()" class="member-name-link">isView</a>()</code></div>
-<div class="col-last odd-row-color method-summary-table method-summary-table-tab2 method-summary-table-tab4">&nbsp;</div>
-<div class="col-first even-row-color method-summary-table method-summary-table-tab2 method-summary-table-tab4"><code>void</code></div>
-<div class="col-second even-row-color method-summary-table method-summary-table-tab2 method-summary-table-tab4"><code><a href="#setColumnTypeDefinition(java.lang.String,java.lang.String)" class="member-name-link">setColumnTypeDefinition</a><wbr>(<a href="https://docs.oracle.com/en/java/javase/25/docs/api/java.base/java/lang/String.html" title="class or interface in java.lang" class="external-link">String</a>&nbsp;column,
- <a href="https://docs.oracle.com/en/java/javase/25/docs/api/java.base/java/lang/String.html" title="class or interface in java.lang" class="external-link">String</a>&nbsp;typeDefinition)</code></div>
-<div class="col-last even-row-color method-summary-table method-summary-table-tab2 method-summary-table-tab4">
-<div class="block">Sets the full type definition of the column, including the type arguments which are not reported by the
-standard metadata (for example <code>VECTOR(3,FLOAT32,DENSE)</code> or <code>vector(3)</code>).</div>
-</div>
-<div class="col-first odd-row-color method-summary-table method-summary-table-tab2 method-summary-table-tab4"><code>void</code></div>
-<div class="col-second odd-row-color method-summary-table method-summary-table-tab2 method-summary-table-tab4"><code><a href="#setIndexes(java.util.List)" class="member-name-link">setIndexes</a><wbr>(<a href="https://docs.oracle.com/en/java/javase/25/docs/api/java.base/java/util/List.html" title="class or interface in java.util" class="external-link">List</a>&lt;<a href="SqlIndexMetadata.html" title="class in io.micronaut.data.model.schema.sql.metadata">SqlIndexMetadata</a>&gt;&nbsp;indexes)</code></div>
-<div class="col-last odd-row-color method-summary-table method-summary-table-tab2 method-summary-table-tab4">&nbsp;</div>
-<div class="col-first even-row-color method-summary-table method-summary-table-tab2 method-summary-table-tab4"><code>void</code></div>
-<div class="col-second even-row-color method-summary-table method-summary-table-tab2 method-summary-table-tab4"><code><a href="#setPrimaryKeyColumns(java.util.List)" class="member-name-link">setPrimaryKeyColumns</a><wbr>(<a href="https://docs.oracle.com/en/java/javase/25/docs/api/java.base/java/util/List.html" title="class or interface in java.util" class="external-link">List</a>&lt;<a href="https://docs.oracle.com/en/java/javase/25/docs/api/java.base/java/lang/String.html" title="class or interface in java.lang" class="external-link">String</a>&gt;&nbsp;primaryKeyColumns)</code></div>
-<div class="col-last even-row-color method-summary-table method-summary-table-tab2 method-summary-table-tab4">&nbsp;</div>
-<div class="col-first odd-row-color method-summary-table method-summary-table-tab2 method-summary-table-tab4"><code>void</code></div>
-<div class="col-second odd-row-color method-summary-table method-summary-table-tab2 method-summary-table-tab4"><code><a href="#setView(boolean)" class="member-name-link">setView</a><wbr>(boolean&nbsp;view)</code></div>
-<div class="col-last odd-row-color method-summary-table method-summary-table-tab2 method-summary-table-tab4">&nbsp;</div>
 </div>
 </div>
 </div>
@@ -221,36 +153,15 @@ standard metadata (for example <code>VECTOR(3,FLOAT32,DENSE)</code> or <code>vec
 <section class="detail" id="&lt;init&gt;(java.lang.String,java.lang.String,java.lang.String)">
 <h3>SqlTableMetadata</h3>
 <div class="horizontal-scroll">
-<div class="member-signature"><span class="modifiers">public</span>&nbsp;<span class="element-name">SqlTableMetadata</span><wbr><span class="parameters">(@Nullable <a href="https://docs.oracle.com/en/java/javase/25/docs/api/java.base/java/lang/String.html" title="class or interface in java.lang" class="external-link">String</a>&nbsp;catalog,
- @Nullable <a href="https://docs.oracle.com/en/java/javase/25/docs/api/java.base/java/lang/String.html" title="class or interface in java.lang" class="external-link">String</a>&nbsp;schema,
+<div class="member-signature"><span class="modifiers">public</span>&nbsp;<span class="element-name">SqlTableMetadata</span><wbr><span class="parameters">(<a href="https://docs.oracle.com/en/java/javase/25/docs/api/java.base/java/lang/String.html" title="class or interface in java.lang" class="external-link">String</a>&nbsp;catalog,
+ <a href="https://docs.oracle.com/en/java/javase/25/docs/api/java.base/java/lang/String.html" title="class or interface in java.lang" class="external-link">String</a>&nbsp;schema,
  <a href="https://docs.oracle.com/en/java/javase/25/docs/api/java.base/java/lang/String.html" title="class or interface in java.lang" class="external-link">String</a>&nbsp;name)</span></div>
-<div class="block">Constructs a new instance of SqlTableMetadata with the specified table name, the column names are compared case-insensitively.</div>
-<dl class="notes">
-<dt>Parameters:</dt>
-<dd><code>catalog</code> - the catalog where table belongs, can be null</dd>
-<dd><code>schema</code> - the schema where table belongs. can be null</dd>
-<dd><code>name</code> - the name of the SQL table</dd>
-</dl>
-</div>
-</section>
-</li>
-<li>
-<section class="detail" id="&lt;init&gt;(java.lang.String,java.lang.String,java.lang.String,io.micronaut.data.model.schema.sql.metadata.SqlIdentifierMatcher)">
-<h3>SqlTableMetadata</h3>
-<div class="horizontal-scroll">
-<div class="member-signature"><span class="modifiers">public</span>&nbsp;<span class="element-name">SqlTableMetadata</span><wbr><span class="parameters">(@Nullable <a href="https://docs.oracle.com/en/java/javase/25/docs/api/java.base/java/lang/String.html" title="class or interface in java.lang" class="external-link">String</a>&nbsp;catalog,
- @Nullable <a href="https://docs.oracle.com/en/java/javase/25/docs/api/java.base/java/lang/String.html" title="class or interface in java.lang" class="external-link">String</a>&nbsp;schema,
- <a href="https://docs.oracle.com/en/java/javase/25/docs/api/java.base/java/lang/String.html" title="class or interface in java.lang" class="external-link">String</a>&nbsp;name,
- <a href="SqlIdentifierMatcher.html" title="class in io.micronaut.data.model.schema.sql.metadata">SqlIdentifierMatcher</a>&nbsp;identifierMatcher)</span></div>
 <div class="block">Constructs a new instance of SqlTableMetadata with the specified table name.</div>
 <dl class="notes">
 <dt>Parameters:</dt>
 <dd><code>catalog</code> - the catalog where table belongs, can be null</dd>
 <dd><code>schema</code> - the schema where table belongs. can be null</dd>
 <dd><code>name</code> - the name of the SQL table</dd>
-<dd><code>identifierMatcher</code> - the matcher of the mapped names to the database names</dd>
-<dt>Since:</dt>
-<dd>5.3.0</dd>
 </dl>
 </div>
 </section>
@@ -277,76 +188,6 @@ standard metadata (for example <code>VECTOR(3,FLOAT32,DENSE)</code> or <code>vec
 </section>
 </li>
 <li>
-<section class="detail" id="getIdentifierMatcher()">
-<h3>getIdentifierMatcher</h3>
-<div class="horizontal-scroll">
-<div class="member-signature"><span class="modifiers">public</span>&nbsp;<span class="return-type"><a href="SqlIdentifierMatcher.html" title="class in io.micronaut.data.model.schema.sql.metadata">SqlIdentifierMatcher</a></span>&nbsp;<span class="element-name">getIdentifierMatcher</span>()</div>
-<dl class="notes">
-<dt>Returns:</dt>
-<dd>the matcher of the mapped names to the database names</dd>
-<dt>Since:</dt>
-<dd>5.3.0</dd>
-</dl>
-</div>
-</section>
-</li>
-<li>
-<section class="detail" id="isView()">
-<h3>isView</h3>
-<div class="horizontal-scroll">
-<div class="member-signature"><span class="modifiers">public</span>&nbsp;<span class="return-type">boolean</span>&nbsp;<span class="element-name">isView</span>()</div>
-<dl class="notes">
-<dt>Returns:</dt>
-<dd>whether the table is a view, which has no primary key, indexes or foreign keys</dd>
-<dt>Since:</dt>
-<dd>5.3.0</dd>
-</dl>
-</div>
-</section>
-</li>
-<li>
-<section class="detail" id="setView(boolean)">
-<h3>setView</h3>
-<div class="horizontal-scroll">
-<div class="member-signature"><span class="modifiers">public</span>&nbsp;<span class="return-type">void</span>&nbsp;<span class="element-name">setView</span><wbr><span class="parameters">(boolean&nbsp;view)</span></div>
-<dl class="notes">
-<dt>Parameters:</dt>
-<dd><code>view</code> - whether the table is a view</dd>
-<dt>Since:</dt>
-<dd>5.3.0</dd>
-</dl>
-</div>
-</section>
-</li>
-<li>
-<section class="detail" id="getCatalog()">
-<h3>getCatalog</h3>
-<div class="horizontal-scroll">
-<div class="member-signature"><span class="modifiers">public</span>&nbsp;<span class="return-type">@Nullable <a href="https://docs.oracle.com/en/java/javase/25/docs/api/java.base/java/lang/String.html" title="class or interface in java.lang" class="external-link">String</a></span>&nbsp;<span class="element-name">getCatalog</span>()</div>
-<dl class="notes">
-<dt>Returns:</dt>
-<dd>the catalog where table belongs, can be null</dd>
-<dt>Since:</dt>
-<dd>5.3.0</dd>
-</dl>
-</div>
-</section>
-</li>
-<li>
-<section class="detail" id="getSchema()">
-<h3>getSchema</h3>
-<div class="horizontal-scroll">
-<div class="member-signature"><span class="modifiers">public</span>&nbsp;<span class="return-type">@Nullable <a href="https://docs.oracle.com/en/java/javase/25/docs/api/java.base/java/lang/String.html" title="class or interface in java.lang" class="external-link">String</a></span>&nbsp;<span class="element-name">getSchema</span>()</div>
-<dl class="notes">
-<dt>Returns:</dt>
-<dd>the schema where table belongs, can be null</dd>
-<dt>Since:</dt>
-<dd>5.3.0</dd>
-</dl>
-</div>
-</section>
-</li>
-<li>
 <section class="detail" id="getName()">
 <h3>getName</h3>
 <div class="horizontal-scroll">
@@ -364,137 +205,12 @@ standard metadata (for example <code>VECTOR(3,FLOAT32,DENSE)</code> or <code>vec
 <h3>getColumn</h3>
 <div class="horizontal-scroll">
 <div class="member-signature"><span class="modifiers">public</span>&nbsp;<span class="return-type">@Nullable <a href="SqlColumnMetadata.html" title="class in io.micronaut.data.model.schema.sql.metadata">SqlColumnMetadata</a></span>&nbsp;<span class="element-name">getColumn</span><wbr><span class="parameters">(<a href="https://docs.oracle.com/en/java/javase/25/docs/api/java.base/java/lang/String.html" title="class or interface in java.lang" class="external-link">String</a>&nbsp;name)</span></div>
-<div class="block">Retrieves the SQL column metadata associated with the specified column name. The name is compared exactly
-when the column names are case-sensitive, and case-insensitively when there is no such column.</div>
+<div class="block">Retrieves the SQL column metadata associated with the specified column name.</div>
 <dl class="notes">
 <dt>Parameters:</dt>
 <dd><code>name</code> - the name of the column to retrieve</dd>
 <dt>Returns:</dt>
 <dd>the SQL column metadata, or null if no such column exists</dd>
-</dl>
-</div>
-</section>
-</li>
-<li>
-<section class="detail" id="getMappedColumn(java.lang.String,boolean)">
-<h3>getMappedColumn</h3>
-<div class="horizontal-scroll">
-<div class="member-signature"><span class="modifiers">public</span>&nbsp;<span class="return-type">@Nullable <a href="SqlColumnMetadata.html" title="class in io.micronaut.data.model.schema.sql.metadata">SqlColumnMetadata</a></span>&nbsp;<span class="element-name">getMappedColumn</span><wbr><span class="parameters">(<a href="https://docs.oracle.com/en/java/javase/25/docs/api/java.base/java/lang/String.html" title="class or interface in java.lang" class="external-link">String</a>&nbsp;name,
- boolean&nbsp;escape)</span></div>
-<div class="block">Retrieves the SQL column metadata of the mapped column, resolved the same way as the generated SQL refers to it,
-see <a href="SqlIdentifierMatcher.html" title="class in io.micronaut.data.model.schema.sql.metadata"><code>SqlIdentifierMatcher</code></a>.</div>
-<dl class="notes">
-<dt>Parameters:</dt>
-<dd><code>name</code> - the mapped column name</dd>
-<dd><code>escape</code> - whether the mapping escapes the names</dd>
-<dt>Returns:</dt>
-<dd>the SQL column metadata, or null if no such column exists</dd>
-<dt>Since:</dt>
-<dd>5.3.0</dd>
-</dl>
-</div>
-</section>
-</li>
-<li>
-<section class="detail" id="getColumns()">
-<h3>getColumns</h3>
-<div class="horizontal-scroll">
-<div class="member-signature"><span class="modifiers">public</span>&nbsp;<span class="return-type"><a href="https://docs.oracle.com/en/java/javase/25/docs/api/java.base/java/util/Collection.html" title="class or interface in java.util" class="external-link">Collection</a>&lt;<a href="SqlColumnMetadata.html" title="class in io.micronaut.data.model.schema.sql.metadata">SqlColumnMetadata</a>&gt;</span>&nbsp;<span class="element-name">getColumns</span>()</div>
-<dl class="notes">
-<dt>Returns:</dt>
-<dd>all table columns</dd>
-<dt>Since:</dt>
-<dd>5.3.0</dd>
-</dl>
-</div>
-</section>
-</li>
-<li>
-<section class="detail" id="setColumnTypeDefinition(java.lang.String,java.lang.String)">
-<h3>setColumnTypeDefinition</h3>
-<div class="horizontal-scroll">
-<div class="member-signature"><span class="modifiers">public</span>&nbsp;<span class="return-type">void</span>&nbsp;<span class="element-name">setColumnTypeDefinition</span><wbr><span class="parameters">(<a href="https://docs.oracle.com/en/java/javase/25/docs/api/java.base/java/lang/String.html" title="class or interface in java.lang" class="external-link">String</a>&nbsp;column,
- <a href="https://docs.oracle.com/en/java/javase/25/docs/api/java.base/java/lang/String.html" title="class or interface in java.lang" class="external-link">String</a>&nbsp;typeDefinition)</span></div>
-<div class="block">Sets the full type definition of the column, including the type arguments which are not reported by the
-standard metadata (for example <code>VECTOR(3,FLOAT32,DENSE)</code> or <code>vector(3)</code>).</div>
-<dl class="notes">
-<dt>Parameters:</dt>
-<dd><code>column</code> - the column name</dd>
-<dd><code>typeDefinition</code> - the full type definition</dd>
-<dt>Since:</dt>
-<dd>5.3.0</dd>
-</dl>
-</div>
-</section>
-</li>
-<li>
-<section class="detail" id="getColumnTypeDefinition(java.lang.String)">
-<h3>getColumnTypeDefinition</h3>
-<div class="horizontal-scroll">
-<div class="member-signature"><span class="modifiers">public</span>&nbsp;<span class="return-type">@Nullable <a href="https://docs.oracle.com/en/java/javase/25/docs/api/java.base/java/lang/String.html" title="class or interface in java.lang" class="external-link">String</a></span>&nbsp;<span class="element-name">getColumnTypeDefinition</span><wbr><span class="parameters">(<a href="https://docs.oracle.com/en/java/javase/25/docs/api/java.base/java/lang/String.html" title="class or interface in java.lang" class="external-link">String</a>&nbsp;column)</span></div>
-<dl class="notes">
-<dt>Parameters:</dt>
-<dd><code>column</code> - the column name as stored in the database, see <a href="SqlColumnMetadata.html#name()"><code>SqlColumnMetadata.name()</code></a></dd>
-<dt>Returns:</dt>
-<dd>the full type definition of the column, or null if it was not read</dd>
-<dt>Since:</dt>
-<dd>5.3.0</dd>
-</dl>
-</div>
-</section>
-</li>
-<li>
-<section class="detail" id="getPrimaryKeyColumns()">
-<h3>getPrimaryKeyColumns</h3>
-<div class="horizontal-scroll">
-<div class="member-signature"><span class="modifiers">public</span>&nbsp;<span class="return-type">@Nullable <a href="https://docs.oracle.com/en/java/javase/25/docs/api/java.base/java/util/List.html" title="class or interface in java.util" class="external-link">List</a>&lt;<a href="https://docs.oracle.com/en/java/javase/25/docs/api/java.base/java/lang/String.html" title="class or interface in java.lang" class="external-link">String</a>&gt;</span>&nbsp;<span class="element-name">getPrimaryKeyColumns</span>()</div>
-<dl class="notes">
-<dt>Returns:</dt>
-<dd>the primary key columns in key order, or null if the primary key was not read</dd>
-<dt>Since:</dt>
-<dd>5.3.0</dd>
-</dl>
-</div>
-</section>
-</li>
-<li>
-<section class="detail" id="setPrimaryKeyColumns(java.util.List)">
-<h3>setPrimaryKeyColumns</h3>
-<div class="horizontal-scroll">
-<div class="member-signature"><span class="modifiers">public</span>&nbsp;<span class="return-type">void</span>&nbsp;<span class="element-name">setPrimaryKeyColumns</span><wbr><span class="parameters">(<a href="https://docs.oracle.com/en/java/javase/25/docs/api/java.base/java/util/List.html" title="class or interface in java.util" class="external-link">List</a>&lt;<a href="https://docs.oracle.com/en/java/javase/25/docs/api/java.base/java/lang/String.html" title="class or interface in java.lang" class="external-link">String</a>&gt;&nbsp;primaryKeyColumns)</span></div>
-<dl class="notes">
-<dt>Parameters:</dt>
-<dd><code>primaryKeyColumns</code> - the primary key columns in key order</dd>
-<dt>Since:</dt>
-<dd>5.3.0</dd>
-</dl>
-</div>
-</section>
-</li>
-<li>
-<section class="detail" id="getIndexes()">
-<h3>getIndexes</h3>
-<div class="horizontal-scroll">
-<div class="member-signature"><span class="modifiers">public</span>&nbsp;<span class="return-type">@Nullable <a href="https://docs.oracle.com/en/java/javase/25/docs/api/java.base/java/util/List.html" title="class or interface in java.util" class="external-link">List</a>&lt;<a href="SqlIndexMetadata.html" title="class in io.micronaut.data.model.schema.sql.metadata">SqlIndexMetadata</a>&gt;</span>&nbsp;<span class="element-name">getIndexes</span>()</div>
-<dl class="notes">
-<dt>Returns:</dt>
-<dd>the table indexes, or null if the indexes were not read</dd>
-<dt>Since:</dt>
-<dd>5.3.0</dd>
-</dl>
-</div>
-</section>
-</li>
-<li>
-<section class="detail" id="setIndexes(java.util.List)">
-<h3>setIndexes</h3>
-<div class="horizontal-scroll">
-<div class="member-signature"><span class="modifiers">public</span>&nbsp;<span class="return-type">void</span>&nbsp;<span class="element-name">setIndexes</span><wbr><span class="parameters">(<a href="https://docs.oracle.com/en/java/javase/25/docs/api/java.base/java/util/List.html" title="class or interface in java.util" class="external-link">List</a>&lt;<a href="SqlIndexMetadata.html" title="class in io.micronaut.data.model.schema.sql.metadata">SqlIndexMetadata</a>&gt;&nbsp;indexes)</span></div>
-<dl class="notes">
-<dt>Parameters:</dt>
-<dd><code>indexes</code> - the table indexes</dd>
-<dt>Since:</dt>
-<dd>5.3.0</dd>
 </dl>
 </div>
 </section>

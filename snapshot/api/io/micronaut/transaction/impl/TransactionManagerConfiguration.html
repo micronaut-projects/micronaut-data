@@ -93,8 +93,22 @@ loadScripts(document, 'script');</script>
 <section class="class-description" id="class-description">
 <hr>
 <div class="horizontal-scroll">
-<div class="type-signature"><span class="modifiers">public class </span><span class="element-name type-name-label">TransactionManagerConfiguration</span>
+<div class="type-signature"><span class="annotations"><a href="https://docs.oracle.com/en/java/javase/25/docs/api/java.base/java/lang/Deprecated.html" title="class or interface in java.lang" class="external-link">@Deprecated</a>(<a href="https://docs.oracle.com/en/java/javase/25/docs/api/java.base/java/lang/Deprecated.html#forRemoval()" title="class or interface in java.lang" class="external-link">forRemoval</a>=true,
+            <a href="https://docs.oracle.com/en/java/javase/25/docs/api/java.base/java/lang/Deprecated.html#since()" title="class or interface in java.lang" class="external-link">since</a>="5.3")
+</span><span class="modifiers">public class </span><span class="element-name type-name-label">TransactionManagerConfiguration</span>
 <span class="extends-implements">extends <a href="https://docs.oracle.com/en/java/javase/25/docs/api/java.base/java/lang/Object.html" title="class or interface in java.lang" class="external-link">Object</a></span></div>
+<div class="deprecation-block"><span class="deprecated-label">Deprecated, for removal: This API element is subject to removal in a future version.</span>
+<div class="deprecation-comment">This class is not used by any Micronaut Data transaction manager: it is neither a configuration
+bean nor passed to the transaction managers, so none of its settings have any effect. In particular,
+<a href="#setNestedTransactionAllowed(boolean)"><code>nestedTransactionAllowed</code></a>,
+<a href="#setValidateExistingTransaction(boolean)"><code>validateExistingTransaction</code></a> and
+<a href="#setGlobalRollbackOnParticipationFailure(boolean)"><code>globalRollbackOnParticipationFailure</code></a> are not implemented:
+whether <code>NESTED</code> propagation is supported depends only on the transaction manager (the JDBC and Hibernate
+transaction managers use savepoints), the isolation level and read-only setting of a joined transaction are not
+validated, and a participating transaction that is rolled back marks the existing transaction rollback-only.
+Read-only enforcement is configured on
+<code>DataSourceTransactionManager#setEnforceReadOnly(boolean)</code>. This class will be removed in a future release.</div>
+</div>
 <div class="block">The transaction manager configuration.</div>
 <dl class="notes">
 <dt>Since:</dt>
@@ -115,7 +129,9 @@ loadScripts(document, 'script');</script>
 <div class="table-header col-first">Constructor</div>
 <div class="table-header col-last">Description</div>
 <div class="col-constructor-name even-row-color"><code><a href="#%3Cinit%3E()" class="member-name-link">TransactionManagerConfiguration</a>()</code></div>
-<div class="col-last even-row-color">&nbsp;</div>
+<div class="col-last even-row-color">
+<div class="block"><span class="deprecated-label">Deprecated, for removal: This API element is subject to removal in a future version.</span></div>
+&nbsp;</div>
 </div>
 </section>
 </li>
@@ -124,86 +140,111 @@ loadScripts(document, 'script');</script>
 <section class="method-summary" id="method-summary">
 <h2>Method Summary</h2>
 <div id="method-summary-table">
-<div class="table-tabs" role="tablist" aria-orientation="horizontal"><button id="method-summary-table-tab0" role="tab" aria-selected="true" aria-controls="method-summary-table.tabpanel" tabindex="0" onkeydown="switchTab(event)" onclick="show('method-summary-table', 'method-summary-table', 3)" class="active-table-tab">All Methods</button><button id="method-summary-table-tab2" role="tab" aria-selected="false" aria-controls="method-summary-table.tabpanel" tabindex="-1" onkeydown="switchTab(event)" onclick="show('method-summary-table', 'method-summary-table-tab2', 3)" class="table-tab">Instance Methods</button><button id="method-summary-table-tab4" role="tab" aria-selected="false" aria-controls="method-summary-table.tabpanel" tabindex="-1" onkeydown="switchTab(event)" onclick="show('method-summary-table', 'method-summary-table-tab4', 3)" class="table-tab">Concrete Methods</button></div>
+<div class="table-tabs" role="tablist" aria-orientation="horizontal"><button id="method-summary-table-tab0" role="tab" aria-selected="true" aria-controls="method-summary-table.tabpanel" tabindex="0" onkeydown="switchTab(event)" onclick="show('method-summary-table', 'method-summary-table', 3)" class="active-table-tab">All Methods</button><button id="method-summary-table-tab2" role="tab" aria-selected="false" aria-controls="method-summary-table.tabpanel" tabindex="-1" onkeydown="switchTab(event)" onclick="show('method-summary-table', 'method-summary-table-tab2', 3)" class="table-tab">Instance Methods</button><button id="method-summary-table-tab4" role="tab" aria-selected="false" aria-controls="method-summary-table.tabpanel" tabindex="-1" onkeydown="switchTab(event)" onclick="show('method-summary-table', 'method-summary-table-tab4', 3)" class="table-tab">Concrete Methods</button><button id="method-summary-table-tab6" role="tab" aria-selected="false" aria-controls="method-summary-table.tabpanel" tabindex="-1" onkeydown="switchTab(event)" onclick="show('method-summary-table', 'method-summary-table-tab6', 3)" class="table-tab">Deprecated Methods</button></div>
 <div id="method-summary-table.tabpanel" role="tabpanel" aria-labelledby="method-summary-table-tab0">
 <div class="summary-table three-column-summary">
 <div class="table-header col-first">Modifier and Type</div>
 <div class="table-header col-second">Method</div>
 <div class="table-header col-last">Description</div>
-<div class="col-first even-row-color method-summary-table method-summary-table-tab2 method-summary-table-tab4"><code><a href="https://docs.oracle.com/en/java/javase/25/docs/api/java.base/java/util/Optional.html" title="class or interface in java.util" class="external-link">Optional</a><wbr>&lt;<a href="https://docs.oracle.com/en/java/javase/25/docs/api/java.base/java/time/Duration.html" title="class or interface in java.time" class="external-link">Duration</a>&gt;</code></div>
-<div class="col-second even-row-color method-summary-table method-summary-table-tab2 method-summary-table-tab4"><code><a href="#determineTimeout(io.micronaut.transaction.TransactionDefinition)" class="member-name-link">determineTimeout</a><wbr>(<a href="../TransactionDefinition.html" title="interface in io.micronaut.transaction">TransactionDefinition</a>&nbsp;definition)</code></div>
-<div class="col-last even-row-color method-summary-table method-summary-table-tab2 method-summary-table-tab4">
+<div class="col-first even-row-color method-summary-table method-summary-table-tab2 method-summary-table-tab4 method-summary-table-tab6"><code><a href="https://docs.oracle.com/en/java/javase/25/docs/api/java.base/java/util/Optional.html" title="class or interface in java.util" class="external-link">Optional</a><wbr>&lt;<a href="https://docs.oracle.com/en/java/javase/25/docs/api/java.base/java/time/Duration.html" title="class or interface in java.time" class="external-link">Duration</a>&gt;</code></div>
+<div class="col-second even-row-color method-summary-table method-summary-table-tab2 method-summary-table-tab4 method-summary-table-tab6"><code><a href="#determineTimeout(io.micronaut.transaction.TransactionDefinition)" class="member-name-link">determineTimeout</a><wbr>(<a href="../TransactionDefinition.html" title="interface in io.micronaut.transaction">TransactionDefinition</a>&nbsp;definition)</code></div>
+<div class="col-last even-row-color method-summary-table method-summary-table-tab2 method-summary-table-tab4 method-summary-table-tab6">
+<div class="block"><span class="deprecated-label">Deprecated, for removal: This API element is subject to removal in a future version.</span></div>
 <div class="block">Determine the actual timeout to use for the given definition.</div>
 </div>
-<div class="col-first odd-row-color method-summary-table method-summary-table-tab2 method-summary-table-tab4"><code>final @NonNull <a href="https://docs.oracle.com/en/java/javase/25/docs/api/java.base/java/util/Optional.html" title="class or interface in java.util" class="external-link">Optional</a><wbr>&lt;<a href="https://docs.oracle.com/en/java/javase/25/docs/api/java.base/java/time/Duration.html" title="class or interface in java.time" class="external-link">Duration</a>&gt;</code></div>
-<div class="col-second odd-row-color method-summary-table method-summary-table-tab2 method-summary-table-tab4"><code><a href="#getDefaultTimeout()" class="member-name-link">getDefaultTimeout</a>()</code></div>
-<div class="col-last odd-row-color method-summary-table method-summary-table-tab2 method-summary-table-tab4">
+<div class="col-first odd-row-color method-summary-table method-summary-table-tab2 method-summary-table-tab4 method-summary-table-tab6"><code>final @NonNull <a href="https://docs.oracle.com/en/java/javase/25/docs/api/java.base/java/util/Optional.html" title="class or interface in java.util" class="external-link">Optional</a><wbr>&lt;<a href="https://docs.oracle.com/en/java/javase/25/docs/api/java.base/java/time/Duration.html" title="class or interface in java.time" class="external-link">Duration</a>&gt;</code></div>
+<div class="col-second odd-row-color method-summary-table method-summary-table-tab2 method-summary-table-tab4 method-summary-table-tab6"><code><a href="#getDefaultTimeout()" class="member-name-link">getDefaultTimeout</a>()</code></div>
+<div class="col-last odd-row-color method-summary-table method-summary-table-tab2 method-summary-table-tab4 method-summary-table-tab6">
+<div class="block"><span class="deprecated-label">Deprecated, for removal: This API element is subject to removal in a future version.</span></div>
 <div class="block">Return the default timeout that this transaction manager should apply
 if there is no timeout specified at the transaction level, in seconds.</div>
 </div>
-<div class="col-first even-row-color method-summary-table method-summary-table-tab2 method-summary-table-tab4"><code>boolean</code></div>
-<div class="col-second even-row-color method-summary-table method-summary-table-tab2 method-summary-table-tab4"><code><a href="#isEnforceReadOnly()" class="member-name-link">isEnforceReadOnly</a>()</code></div>
-<div class="col-last even-row-color method-summary-table method-summary-table-tab2 method-summary-table-tab4">&nbsp;</div>
-<div class="col-first odd-row-color method-summary-table method-summary-table-tab2 method-summary-table-tab4"><code>final boolean</code></div>
-<div class="col-second odd-row-color method-summary-table method-summary-table-tab2 method-summary-table-tab4"><code><a href="#isFailEarlyOnGlobalRollbackOnly()" class="member-name-link">isFailEarlyOnGlobalRollbackOnly</a>()</code></div>
-<div class="col-last odd-row-color method-summary-table method-summary-table-tab2 method-summary-table-tab4">&nbsp;</div>
-<div class="col-first even-row-color method-summary-table method-summary-table-tab2 method-summary-table-tab4"><code>final boolean</code></div>
-<div class="col-second even-row-color method-summary-table method-summary-table-tab2 method-summary-table-tab4"><code><a href="#isGlobalRollbackOnParticipationFailure()" class="member-name-link">isGlobalRollbackOnParticipationFailure</a>()</code></div>
-<div class="col-last even-row-color method-summary-table method-summary-table-tab2 method-summary-table-tab4">&nbsp;</div>
-<div class="col-first odd-row-color method-summary-table method-summary-table-tab2 method-summary-table-tab4"><code>final boolean</code></div>
-<div class="col-second odd-row-color method-summary-table method-summary-table-tab2 method-summary-table-tab4"><code><a href="#isNestedTransactionAllowed()" class="member-name-link">isNestedTransactionAllowed</a>()</code></div>
-<div class="col-last odd-row-color method-summary-table method-summary-table-tab2 method-summary-table-tab4">&nbsp;</div>
-<div class="col-first even-row-color method-summary-table method-summary-table-tab2 method-summary-table-tab4"><code>final boolean</code></div>
-<div class="col-second even-row-color method-summary-table method-summary-table-tab2 method-summary-table-tab4"><code><a href="#isRollbackOnCommitFailure()" class="member-name-link">isRollbackOnCommitFailure</a>()</code></div>
-<div class="col-last even-row-color method-summary-table method-summary-table-tab2 method-summary-table-tab4">&nbsp;</div>
-<div class="col-first odd-row-color method-summary-table method-summary-table-tab2 method-summary-table-tab4"><code>final boolean</code></div>
-<div class="col-second odd-row-color method-summary-table method-summary-table-tab2 method-summary-table-tab4"><code><a href="#isValidateExistingTransaction()" class="member-name-link">isValidateExistingTransaction</a>()</code></div>
-<div class="col-last odd-row-color method-summary-table method-summary-table-tab2 method-summary-table-tab4">
-<div class="block">Return whether existing transactions should be validated before participating
-in them.</div>
+<div class="col-first even-row-color method-summary-table method-summary-table-tab2 method-summary-table-tab4 method-summary-table-tab6"><code>boolean</code></div>
+<div class="col-second even-row-color method-summary-table method-summary-table-tab2 method-summary-table-tab4 method-summary-table-tab6"><code><a href="#isEnforceReadOnly()" class="member-name-link">isEnforceReadOnly</a>()</code></div>
+<div class="col-last even-row-color method-summary-table method-summary-table-tab2 method-summary-table-tab4 method-summary-table-tab6">
+<div class="block"><span class="deprecated-label">Deprecated, for removal: This API element is subject to removal in a future version.</span></div>
+&nbsp;</div>
+<div class="col-first odd-row-color method-summary-table method-summary-table-tab2 method-summary-table-tab4 method-summary-table-tab6"><code>final boolean</code></div>
+<div class="col-second odd-row-color method-summary-table method-summary-table-tab2 method-summary-table-tab4 method-summary-table-tab6"><code><a href="#isFailEarlyOnGlobalRollbackOnly()" class="member-name-link">isFailEarlyOnGlobalRollbackOnly</a>()</code></div>
+<div class="col-last odd-row-color method-summary-table method-summary-table-tab2 method-summary-table-tab4 method-summary-table-tab6">
+<div class="block"><span class="deprecated-label">Deprecated, for removal: This API element is subject to removal in a future version.</span></div>
+&nbsp;</div>
+<div class="col-first even-row-color method-summary-table method-summary-table-tab2 method-summary-table-tab4 method-summary-table-tab6"><code>final boolean</code></div>
+<div class="col-second even-row-color method-summary-table method-summary-table-tab2 method-summary-table-tab4 method-summary-table-tab6"><code><a href="#isGlobalRollbackOnParticipationFailure()" class="member-name-link">isGlobalRollbackOnParticipationFailure</a>()</code></div>
+<div class="col-last even-row-color method-summary-table method-summary-table-tab2 method-summary-table-tab4 method-summary-table-tab6">
+<div class="block"><span class="deprecated-label">Deprecated, for removal: This API element is subject to removal in a future version.</span>
+<div class="deprecation-comment">Has no effect: no transaction manager reads this setting and a participating transaction that is rolled back marks the existing transaction rollback-only.</div>
 </div>
-<div class="col-first even-row-color method-summary-table method-summary-table-tab2 method-summary-table-tab4"><code>final void</code></div>
-<div class="col-second even-row-color method-summary-table method-summary-table-tab2 method-summary-table-tab4"><code><a href="#setDefaultTimeout(java.time.Duration)" class="member-name-link">setDefaultTimeout</a><wbr>(<a href="https://docs.oracle.com/en/java/javase/25/docs/api/java.base/java/time/Duration.html" title="class or interface in java.time" class="external-link">Duration</a>&nbsp;defaultTimeout)</code></div>
-<div class="col-last even-row-color method-summary-table method-summary-table-tab2 method-summary-table-tab4">
+</div>
+<div class="col-first odd-row-color method-summary-table method-summary-table-tab2 method-summary-table-tab4 method-summary-table-tab6"><code>final boolean</code></div>
+<div class="col-second odd-row-color method-summary-table method-summary-table-tab2 method-summary-table-tab4 method-summary-table-tab6"><code><a href="#isNestedTransactionAllowed()" class="member-name-link">isNestedTransactionAllowed</a>()</code></div>
+<div class="col-last odd-row-color method-summary-table method-summary-table-tab2 method-summary-table-tab4 method-summary-table-tab6">
+<div class="block"><span class="deprecated-label">Deprecated, for removal: This API element is subject to removal in a future version.</span>
+<div class="deprecation-comment">Has no effect: no transaction manager reads this setting.</div>
+</div>
+</div>
+<div class="col-first even-row-color method-summary-table method-summary-table-tab2 method-summary-table-tab4 method-summary-table-tab6"><code>final boolean</code></div>
+<div class="col-second even-row-color method-summary-table method-summary-table-tab2 method-summary-table-tab4 method-summary-table-tab6"><code><a href="#isRollbackOnCommitFailure()" class="member-name-link">isRollbackOnCommitFailure</a>()</code></div>
+<div class="col-last even-row-color method-summary-table method-summary-table-tab2 method-summary-table-tab4 method-summary-table-tab6">
+<div class="block"><span class="deprecated-label">Deprecated, for removal: This API element is subject to removal in a future version.</span></div>
+&nbsp;</div>
+<div class="col-first odd-row-color method-summary-table method-summary-table-tab2 method-summary-table-tab4 method-summary-table-tab6"><code>final boolean</code></div>
+<div class="col-second odd-row-color method-summary-table method-summary-table-tab2 method-summary-table-tab4 method-summary-table-tab6"><code><a href="#isValidateExistingTransaction()" class="member-name-link">isValidateExistingTransaction</a>()</code></div>
+<div class="col-last odd-row-color method-summary-table method-summary-table-tab2 method-summary-table-tab4 method-summary-table-tab6">
+<div class="block"><span class="deprecated-label">Deprecated, for removal: This API element is subject to removal in a future version.</span>
+<div class="deprecation-comment">Has no effect: no transaction manager reads this setting and the isolation level and read-only setting of a joined transaction are not validated.</div>
+</div>
+</div>
+<div class="col-first even-row-color method-summary-table method-summary-table-tab2 method-summary-table-tab4 method-summary-table-tab6"><code>final void</code></div>
+<div class="col-second even-row-color method-summary-table method-summary-table-tab2 method-summary-table-tab4 method-summary-table-tab6"><code><a href="#setDefaultTimeout(java.time.Duration)" class="member-name-link">setDefaultTimeout</a><wbr>(<a href="https://docs.oracle.com/en/java/javase/25/docs/api/java.base/java/time/Duration.html" title="class or interface in java.time" class="external-link">Duration</a>&nbsp;defaultTimeout)</code></div>
+<div class="col-last even-row-color method-summary-table method-summary-table-tab2 method-summary-table-tab4 method-summary-table-tab6">
+<div class="block"><span class="deprecated-label">Deprecated, for removal: This API element is subject to removal in a future version.</span></div>
 <div class="block">Specify the default timeout that this transaction manager should apply
 if there is no timeout specified at the transaction level, in seconds.</div>
 </div>
-<div class="col-first odd-row-color method-summary-table method-summary-table-tab2 method-summary-table-tab4"><code>void</code></div>
-<div class="col-second odd-row-color method-summary-table method-summary-table-tab2 method-summary-table-tab4"><code><a href="#setEnforceReadOnly(boolean)" class="member-name-link">setEnforceReadOnly</a><wbr>(boolean&nbsp;enforceReadOnly)</code></div>
-<div class="col-last odd-row-color method-summary-table method-summary-table-tab2 method-summary-table-tab4">
+<div class="col-first odd-row-color method-summary-table method-summary-table-tab2 method-summary-table-tab4 method-summary-table-tab6"><code>void</code></div>
+<div class="col-second odd-row-color method-summary-table method-summary-table-tab2 method-summary-table-tab4 method-summary-table-tab6"><code><a href="#setEnforceReadOnly(boolean)" class="member-name-link">setEnforceReadOnly</a><wbr>(boolean&nbsp;enforceReadOnly)</code></div>
+<div class="col-last odd-row-color method-summary-table method-summary-table-tab2 method-summary-table-tab4 method-summary-table-tab6">
+<div class="block"><span class="deprecated-label">Deprecated, for removal: This API element is subject to removal in a future version.</span></div>
 <div class="block">Specify whether to enforce the read-only nature of a transaction
 (as indicated by <a href="../TransactionDefinition.html#isReadOnly()"><code>TransactionDefinition.isReadOnly()</code></a>)
 through an explicit statement on the transactional connection:
 "SET TRANSACTION READ ONLY" as understood by Oracle, MySQL and Postgres.</div>
 </div>
-<div class="col-first even-row-color method-summary-table method-summary-table-tab2 method-summary-table-tab4"><code>final void</code></div>
-<div class="col-second even-row-color method-summary-table method-summary-table-tab2 method-summary-table-tab4"><code><a href="#setFailEarlyOnGlobalRollbackOnly(boolean)" class="member-name-link">setFailEarlyOnGlobalRollbackOnly</a><wbr>(boolean&nbsp;failEarlyOnGlobalRollbackOnly)</code></div>
-<div class="col-last even-row-color method-summary-table method-summary-table-tab2 method-summary-table-tab4">
+<div class="col-first even-row-color method-summary-table method-summary-table-tab2 method-summary-table-tab4 method-summary-table-tab6"><code>final void</code></div>
+<div class="col-second even-row-color method-summary-table method-summary-table-tab2 method-summary-table-tab4 method-summary-table-tab6"><code><a href="#setFailEarlyOnGlobalRollbackOnly(boolean)" class="member-name-link">setFailEarlyOnGlobalRollbackOnly</a><wbr>(boolean&nbsp;failEarlyOnGlobalRollbackOnly)</code></div>
+<div class="col-last even-row-color method-summary-table method-summary-table-tab2 method-summary-table-tab4 method-summary-table-tab6">
+<div class="block"><span class="deprecated-label">Deprecated, for removal: This API element is subject to removal in a future version.</span></div>
 <div class="block">Set whether to fail early in case of the transaction being globally marked
 as rollback-only.</div>
 </div>
-<div class="col-first odd-row-color method-summary-table method-summary-table-tab2 method-summary-table-tab4"><code>final void</code></div>
-<div class="col-second odd-row-color method-summary-table method-summary-table-tab2 method-summary-table-tab4"><code><a href="#setGlobalRollbackOnParticipationFailure(boolean)" class="member-name-link">setGlobalRollbackOnParticipationFailure</a><wbr>(boolean&nbsp;globalRollbackOnParticipationFailure)</code></div>
-<div class="col-last odd-row-color method-summary-table method-summary-table-tab2 method-summary-table-tab4">
-<div class="block">Set whether to globally mark an existing transaction as rollback-only
-after a participating transaction failed.</div>
+<div class="col-first odd-row-color method-summary-table method-summary-table-tab2 method-summary-table-tab4 method-summary-table-tab6"><code>final void</code></div>
+<div class="col-second odd-row-color method-summary-table method-summary-table-tab2 method-summary-table-tab4 method-summary-table-tab6"><code><a href="#setGlobalRollbackOnParticipationFailure(boolean)" class="member-name-link">setGlobalRollbackOnParticipationFailure</a><wbr>(boolean&nbsp;globalRollbackOnParticipationFailure)</code></div>
+<div class="col-last odd-row-color method-summary-table method-summary-table-tab2 method-summary-table-tab4 method-summary-table-tab6">
+<div class="block"><span class="deprecated-label">Deprecated, for removal: This API element is subject to removal in a future version.</span>
+<div class="deprecation-comment">Has no effect: no transaction manager reads this setting and a participating transaction that is rolled back marks the existing transaction rollback-only.</div>
 </div>
-<div class="col-first even-row-color method-summary-table method-summary-table-tab2 method-summary-table-tab4"><code>final void</code></div>
-<div class="col-second even-row-color method-summary-table method-summary-table-tab2 method-summary-table-tab4"><code><a href="#setNestedTransactionAllowed(boolean)" class="member-name-link">setNestedTransactionAllowed</a><wbr>(boolean&nbsp;nestedTransactionAllowed)</code></div>
-<div class="col-last even-row-color method-summary-table method-summary-table-tab2 method-summary-table-tab4">
-<div class="block">Set whether nested transactions are allowed.</div>
 </div>
-<div class="col-first odd-row-color method-summary-table method-summary-table-tab2 method-summary-table-tab4"><code>final void</code></div>
-<div class="col-second odd-row-color method-summary-table method-summary-table-tab2 method-summary-table-tab4"><code><a href="#setRollbackOnCommitFailure(boolean)" class="member-name-link">setRollbackOnCommitFailure</a><wbr>(boolean&nbsp;rollbackOnCommitFailure)</code></div>
-<div class="col-last odd-row-color method-summary-table method-summary-table-tab2 method-summary-table-tab4">
+<div class="col-first even-row-color method-summary-table method-summary-table-tab2 method-summary-table-tab4 method-summary-table-tab6"><code>final void</code></div>
+<div class="col-second even-row-color method-summary-table method-summary-table-tab2 method-summary-table-tab4 method-summary-table-tab6"><code><a href="#setNestedTransactionAllowed(boolean)" class="member-name-link">setNestedTransactionAllowed</a><wbr>(boolean&nbsp;nestedTransactionAllowed)</code></div>
+<div class="col-last even-row-color method-summary-table method-summary-table-tab2 method-summary-table-tab4 method-summary-table-tab6">
+<div class="block"><span class="deprecated-label">Deprecated, for removal: This API element is subject to removal in a future version.</span>
+<div class="deprecation-comment">Has no effect: no transaction manager reads this setting.</div>
+</div>
+</div>
+<div class="col-first odd-row-color method-summary-table method-summary-table-tab2 method-summary-table-tab4 method-summary-table-tab6"><code>final void</code></div>
+<div class="col-second odd-row-color method-summary-table method-summary-table-tab2 method-summary-table-tab4 method-summary-table-tab6"><code><a href="#setRollbackOnCommitFailure(boolean)" class="member-name-link">setRollbackOnCommitFailure</a><wbr>(boolean&nbsp;rollbackOnCommitFailure)</code></div>
+<div class="col-last odd-row-color method-summary-table method-summary-table-tab2 method-summary-table-tab4 method-summary-table-tab6">
+<div class="block"><span class="deprecated-label">Deprecated, for removal: This API element is subject to removal in a future version.</span></div>
 <div class="block">Set whether <code>doRollback</code> should be performed on failure of the
 <code>doCommit</code> call.</div>
 </div>
-<div class="col-first even-row-color method-summary-table method-summary-table-tab2 method-summary-table-tab4"><code>final void</code></div>
-<div class="col-second even-row-color method-summary-table method-summary-table-tab2 method-summary-table-tab4"><code><a href="#setValidateExistingTransaction(boolean)" class="member-name-link">setValidateExistingTransaction</a><wbr>(boolean&nbsp;validateExistingTransaction)</code></div>
-<div class="col-last even-row-color method-summary-table method-summary-table-tab2 method-summary-table-tab4">
-<div class="block">Set whether existing transactions should be validated before participating
-in them.</div>
+<div class="col-first even-row-color method-summary-table method-summary-table-tab2 method-summary-table-tab4 method-summary-table-tab6"><code>final void</code></div>
+<div class="col-second even-row-color method-summary-table method-summary-table-tab2 method-summary-table-tab4 method-summary-table-tab6"><code><a href="#setValidateExistingTransaction(boolean)" class="member-name-link">setValidateExistingTransaction</a><wbr>(boolean&nbsp;validateExistingTransaction)</code></div>
+<div class="col-last even-row-color method-summary-table method-summary-table-tab2 method-summary-table-tab4 method-summary-table-tab6">
+<div class="block"><span class="deprecated-label">Deprecated, for removal: This API element is subject to removal in a future version.</span>
+<div class="deprecation-comment">Has no effect: no transaction manager reads this setting and the isolation level and read-only setting of a joined transaction are not validated.</div>
+</div>
 </div>
 </div>
 </div>
@@ -227,6 +268,7 @@ in them.</div>
 <h3>TransactionManagerConfiguration</h3>
 <div class="horizontal-scroll">
 <div class="member-signature"><span class="modifiers">public</span>&nbsp;<span class="element-name">TransactionManagerConfiguration</span>()</div>
+<div class="deprecation-block"><span class="deprecated-label">Deprecated, for removal: This API element is subject to removal in a future version.</span></div>
 </div>
 </section>
 </li>
@@ -243,6 +285,7 @@ in them.</div>
 <h3>setDefaultTimeout</h3>
 <div class="horizontal-scroll">
 <div class="member-signature"><span class="modifiers">public final</span>&nbsp;<span class="return-type">void</span>&nbsp;<span class="element-name">setDefaultTimeout</span><wbr><span class="parameters">(<a href="https://docs.oracle.com/en/java/javase/25/docs/api/java.base/java/time/Duration.html" title="class or interface in java.time" class="external-link">Duration</a>&nbsp;defaultTimeout)</span></div>
+<div class="deprecation-block"><span class="deprecated-label">Deprecated, for removal: This API element is subject to removal in a future version.</span></div>
 <div class="block">Specify the default timeout that this transaction manager should apply
 if there is no timeout specified at the transaction level, in seconds.
 <p>Default is the underlying transaction infrastructure's default timeout,
@@ -266,6 +309,7 @@ e.g. typically 30 seconds in case of a JTA provider, indicated by the
 <h3>getDefaultTimeout</h3>
 <div class="horizontal-scroll">
 <div class="member-signature"><span class="modifiers">public final</span>&nbsp;<span class="return-type">@NonNull <a href="https://docs.oracle.com/en/java/javase/25/docs/api/java.base/java/util/Optional.html" title="class or interface in java.util" class="external-link">Optional</a>&lt;<a href="https://docs.oracle.com/en/java/javase/25/docs/api/java.base/java/time/Duration.html" title="class or interface in java.time" class="external-link">Duration</a>&gt;</span>&nbsp;<span class="element-name">getDefaultTimeout</span>()</div>
+<div class="deprecation-block"><span class="deprecated-label">Deprecated, for removal: This API element is subject to removal in a future version.</span></div>
 <div class="block">Return the default timeout that this transaction manager should apply
 if there is no timeout specified at the transaction level, in seconds.
 <p>Returns <code>TransactionDefinition.TIMEOUT_DEFAULT</code> to indicate
@@ -281,7 +325,12 @@ the underlying transaction infrastructure's default timeout.</div>
 <section class="detail" id="setNestedTransactionAllowed(boolean)">
 <h3>setNestedTransactionAllowed</h3>
 <div class="horizontal-scroll">
-<div class="member-signature"><span class="modifiers">public final</span>&nbsp;<span class="return-type">void</span>&nbsp;<span class="element-name">setNestedTransactionAllowed</span><wbr><span class="parameters">(boolean&nbsp;nestedTransactionAllowed)</span></div>
+<div class="member-signature"><span class="annotations"><a href="https://docs.oracle.com/en/java/javase/25/docs/api/java.base/java/lang/Deprecated.html" title="class or interface in java.lang" class="external-link">@Deprecated</a>(<a href="https://docs.oracle.com/en/java/javase/25/docs/api/java.base/java/lang/Deprecated.html#forRemoval()" title="class or interface in java.lang" class="external-link">forRemoval</a>=true,
+            <a href="https://docs.oracle.com/en/java/javase/25/docs/api/java.base/java/lang/Deprecated.html#since()" title="class or interface in java.lang" class="external-link">since</a>="5.3")
+</span><span class="modifiers">public final</span>&nbsp;<span class="return-type">void</span>&nbsp;<span class="element-name">setNestedTransactionAllowed</span><wbr><span class="parameters">(boolean&nbsp;nestedTransactionAllowed)</span></div>
+<div class="deprecation-block"><span class="deprecated-label">Deprecated, for removal: This API element is subject to removal in a future version.</span>
+<div class="deprecation-comment">Has no effect: no transaction manager reads this setting. Whether <code>NESTED</code> propagation is supported depends only on the transaction manager.</div>
+</div>
 <div class="block">Set whether nested transactions are allowed. Default is "false".
 <p>Typically initialized with an appropriate default by the
 concrete transaction manager subclass.</div>
@@ -296,7 +345,12 @@ concrete transaction manager subclass.</div>
 <section class="detail" id="isNestedTransactionAllowed()">
 <h3>isNestedTransactionAllowed</h3>
 <div class="horizontal-scroll">
-<div class="member-signature"><span class="modifiers">public final</span>&nbsp;<span class="return-type">boolean</span>&nbsp;<span class="element-name">isNestedTransactionAllowed</span>()</div>
+<div class="member-signature"><span class="annotations"><a href="https://docs.oracle.com/en/java/javase/25/docs/api/java.base/java/lang/Deprecated.html" title="class or interface in java.lang" class="external-link">@Deprecated</a>(<a href="https://docs.oracle.com/en/java/javase/25/docs/api/java.base/java/lang/Deprecated.html#forRemoval()" title="class or interface in java.lang" class="external-link">forRemoval</a>=true,
+            <a href="https://docs.oracle.com/en/java/javase/25/docs/api/java.base/java/lang/Deprecated.html#since()" title="class or interface in java.lang" class="external-link">since</a>="5.3")
+</span><span class="modifiers">public final</span>&nbsp;<span class="return-type">boolean</span>&nbsp;<span class="element-name">isNestedTransactionAllowed</span>()</div>
+<div class="deprecation-block"><span class="deprecated-label">Deprecated, for removal: This API element is subject to removal in a future version.</span>
+<div class="deprecation-comment">Has no effect: no transaction manager reads this setting. Whether <code>NESTED</code> propagation is supported depends only on the transaction manager.</div>
+</div>
 <dl class="notes">
 <dt>Returns:</dt>
 <dd>Return whether nested transactions are allowed.</dd>
@@ -308,7 +362,12 @@ concrete transaction manager subclass.</div>
 <section class="detail" id="setValidateExistingTransaction(boolean)">
 <h3>setValidateExistingTransaction</h3>
 <div class="horizontal-scroll">
-<div class="member-signature"><span class="modifiers">public final</span>&nbsp;<span class="return-type">void</span>&nbsp;<span class="element-name">setValidateExistingTransaction</span><wbr><span class="parameters">(boolean&nbsp;validateExistingTransaction)</span></div>
+<div class="member-signature"><span class="annotations"><a href="https://docs.oracle.com/en/java/javase/25/docs/api/java.base/java/lang/Deprecated.html" title="class or interface in java.lang" class="external-link">@Deprecated</a>(<a href="https://docs.oracle.com/en/java/javase/25/docs/api/java.base/java/lang/Deprecated.html#forRemoval()" title="class or interface in java.lang" class="external-link">forRemoval</a>=true,
+            <a href="https://docs.oracle.com/en/java/javase/25/docs/api/java.base/java/lang/Deprecated.html#since()" title="class or interface in java.lang" class="external-link">since</a>="5.3")
+</span><span class="modifiers">public final</span>&nbsp;<span class="return-type">void</span>&nbsp;<span class="element-name">setValidateExistingTransaction</span><wbr><span class="parameters">(boolean&nbsp;validateExistingTransaction)</span></div>
+<div class="deprecation-block"><span class="deprecated-label">Deprecated, for removal: This API element is subject to removal in a future version.</span>
+<div class="deprecation-comment">Has no effect: no transaction manager reads this setting and the isolation level and read-only setting of a joined transaction are not validated.</div>
+</div>
 <div class="block">Set whether existing transactions should be validated before participating
 in them.
 <p>When participating in an existing transaction (e.g. with
@@ -333,7 +392,12 @@ Switch this flag to "true" in order to enforce strict validation.</div>
 <section class="detail" id="isValidateExistingTransaction()">
 <h3>isValidateExistingTransaction</h3>
 <div class="horizontal-scroll">
-<div class="member-signature"><span class="modifiers">public final</span>&nbsp;<span class="return-type">boolean</span>&nbsp;<span class="element-name">isValidateExistingTransaction</span>()</div>
+<div class="member-signature"><span class="annotations"><a href="https://docs.oracle.com/en/java/javase/25/docs/api/java.base/java/lang/Deprecated.html" title="class or interface in java.lang" class="external-link">@Deprecated</a>(<a href="https://docs.oracle.com/en/java/javase/25/docs/api/java.base/java/lang/Deprecated.html#forRemoval()" title="class or interface in java.lang" class="external-link">forRemoval</a>=true,
+            <a href="https://docs.oracle.com/en/java/javase/25/docs/api/java.base/java/lang/Deprecated.html#since()" title="class or interface in java.lang" class="external-link">since</a>="5.3")
+</span><span class="modifiers">public final</span>&nbsp;<span class="return-type">boolean</span>&nbsp;<span class="element-name">isValidateExistingTransaction</span>()</div>
+<div class="deprecation-block"><span class="deprecated-label">Deprecated, for removal: This API element is subject to removal in a future version.</span>
+<div class="deprecation-comment">Has no effect: no transaction manager reads this setting and the isolation level and read-only setting of a joined transaction are not validated.</div>
+</div>
 <div class="block">Return whether existing transactions should be validated before participating
 in them.</div>
 <dl class="notes">
@@ -349,7 +413,12 @@ in them.</div>
 <section class="detail" id="setGlobalRollbackOnParticipationFailure(boolean)">
 <h3>setGlobalRollbackOnParticipationFailure</h3>
 <div class="horizontal-scroll">
-<div class="member-signature"><span class="modifiers">public final</span>&nbsp;<span class="return-type">void</span>&nbsp;<span class="element-name">setGlobalRollbackOnParticipationFailure</span><wbr><span class="parameters">(boolean&nbsp;globalRollbackOnParticipationFailure)</span></div>
+<div class="member-signature"><span class="annotations"><a href="https://docs.oracle.com/en/java/javase/25/docs/api/java.base/java/lang/Deprecated.html" title="class or interface in java.lang" class="external-link">@Deprecated</a>(<a href="https://docs.oracle.com/en/java/javase/25/docs/api/java.base/java/lang/Deprecated.html#forRemoval()" title="class or interface in java.lang" class="external-link">forRemoval</a>=true,
+            <a href="https://docs.oracle.com/en/java/javase/25/docs/api/java.base/java/lang/Deprecated.html#since()" title="class or interface in java.lang" class="external-link">since</a>="5.3")
+</span><span class="modifiers">public final</span>&nbsp;<span class="return-type">void</span>&nbsp;<span class="element-name">setGlobalRollbackOnParticipationFailure</span><wbr><span class="parameters">(boolean&nbsp;globalRollbackOnParticipationFailure)</span></div>
+<div class="deprecation-block"><span class="deprecated-label">Deprecated, for removal: This API element is subject to removal in a future version.</span>
+<div class="deprecation-comment">Has no effect: no transaction manager reads this setting and a participating transaction that is rolled back marks the existing transaction rollback-only.</div>
+</div>
 <div class="block">Set whether to globally mark an existing transaction as rollback-only
 after a participating transaction failed.
 <p>Default is "true": If a participating transaction (e.g. with
@@ -366,8 +435,8 @@ failure: This is generally not the case for a Hibernate Session, for example;
 neither is it for a sequence of JDBC insert/update/delete operations.
 <p><b>Note:</b>This flag only applies to an explicit rollback attempt for a
 subtransaction, typically caused by an exception thrown by a data access operation
-(where TransactionInterceptor will trigger a <code>PlatformTransactionManager.rollback()</code>
-call according to a rollback rule). If the flag is off, the caller can handle the exception
+(where the <code>@Transactional</code> interceptor triggers a rollback according to the
+transaction's rollback rule). If the flag is off, the caller can handle the exception
 and decide on a rollback, independent of the rollback rules of the subtransaction.
 This flag does, however, <i>not</i> apply to explicit <code>setRollbackOnly</code>
 calls on a <code>TransactionStatus</code>, which will always cause an eventual
@@ -377,7 +446,7 @@ is a "nested transaction", where the global transaction can be rolled
 back to a savepoint taken at the beginning of the subtransaction.
 propagation NESTED provides exactly those semantics; however, it will
 only work when nested transaction support is available. This is the case
-with DataSourceTransactionManager, but not with JtaTransactionManager.</div>
+with the JDBC and Hibernate transaction managers.</div>
 <dl class="notes">
 <dt>Parameters:</dt>
 <dd><code>globalRollbackOnParticipationFailure</code> - Whether to globally mark transaction as rollback only</dd>
@@ -395,7 +464,12 @@ with DataSourceTransactionManager, but not with JtaTransactionManager.</div>
 <section class="detail" id="isGlobalRollbackOnParticipationFailure()">
 <h3>isGlobalRollbackOnParticipationFailure</h3>
 <div class="horizontal-scroll">
-<div class="member-signature"><span class="modifiers">public final</span>&nbsp;<span class="return-type">boolean</span>&nbsp;<span class="element-name">isGlobalRollbackOnParticipationFailure</span>()</div>
+<div class="member-signature"><span class="annotations"><a href="https://docs.oracle.com/en/java/javase/25/docs/api/java.base/java/lang/Deprecated.html" title="class or interface in java.lang" class="external-link">@Deprecated</a>(<a href="https://docs.oracle.com/en/java/javase/25/docs/api/java.base/java/lang/Deprecated.html#forRemoval()" title="class or interface in java.lang" class="external-link">forRemoval</a>=true,
+            <a href="https://docs.oracle.com/en/java/javase/25/docs/api/java.base/java/lang/Deprecated.html#since()" title="class or interface in java.lang" class="external-link">since</a>="5.3")
+</span><span class="modifiers">public final</span>&nbsp;<span class="return-type">boolean</span>&nbsp;<span class="element-name">isGlobalRollbackOnParticipationFailure</span>()</div>
+<div class="deprecation-block"><span class="deprecated-label">Deprecated, for removal: This API element is subject to removal in a future version.</span>
+<div class="deprecation-comment">Has no effect: no transaction manager reads this setting and a participating transaction that is rolled back marks the existing transaction rollback-only.</div>
+</div>
 <dl class="notes">
 <dt>Returns:</dt>
 <dd>Return whether to globally mark an existing transaction as rollback-only
@@ -409,6 +483,7 @@ after a participating transaction failed.</dd>
 <h3>setFailEarlyOnGlobalRollbackOnly</h3>
 <div class="horizontal-scroll">
 <div class="member-signature"><span class="modifiers">public final</span>&nbsp;<span class="return-type">void</span>&nbsp;<span class="element-name">setFailEarlyOnGlobalRollbackOnly</span><wbr><span class="parameters">(boolean&nbsp;failEarlyOnGlobalRollbackOnly)</span></div>
+<div class="deprecation-block"><span class="deprecated-label">Deprecated, for removal: This API element is subject to removal in a future version.</span></div>
 <div class="block">Set whether to fail early in case of the transaction being globally marked
 as rollback-only.
 <p>Default is "false", only causing an UnexpectedRollbackException at the
@@ -435,6 +510,7 @@ has been first detected, even from within an inner transaction boundary.</div>
 <h3>isFailEarlyOnGlobalRollbackOnly</h3>
 <div class="horizontal-scroll">
 <div class="member-signature"><span class="modifiers">public final</span>&nbsp;<span class="return-type">boolean</span>&nbsp;<span class="element-name">isFailEarlyOnGlobalRollbackOnly</span>()</div>
+<div class="deprecation-block"><span class="deprecated-label">Deprecated, for removal: This API element is subject to removal in a future version.</span></div>
 <dl class="notes">
 <dt>Returns:</dt>
 <dd>Return whether to fail early in case of the transaction being globally marked
@@ -450,6 +526,7 @@ as rollback-only.</dd>
 <h3>setRollbackOnCommitFailure</h3>
 <div class="horizontal-scroll">
 <div class="member-signature"><span class="modifiers">public final</span>&nbsp;<span class="return-type">void</span>&nbsp;<span class="element-name">setRollbackOnCommitFailure</span><wbr><span class="parameters">(boolean&nbsp;rollbackOnCommitFailure)</span></div>
+<div class="deprecation-block"><span class="deprecated-label">Deprecated, for removal: This API element is subject to removal in a future version.</span></div>
 <div class="block">Set whether <code>doRollback</code> should be performed on failure of the
 <code>doCommit</code> call. Typically not necessary and thus to be avoided,
 as it can potentially override the commit exception with a subsequent
@@ -467,6 +544,7 @@ rollback exception.
 <h3>isRollbackOnCommitFailure</h3>
 <div class="horizontal-scroll">
 <div class="member-signature"><span class="modifiers">public final</span>&nbsp;<span class="return-type">boolean</span>&nbsp;<span class="element-name">isRollbackOnCommitFailure</span>()</div>
+<div class="deprecation-block"><span class="deprecated-label">Deprecated, for removal: This API element is subject to removal in a future version.</span></div>
 <dl class="notes">
 <dt>Returns:</dt>
 <dd>Return whether <code>doRollback</code> should be performed on failure of the
@@ -480,6 +558,7 @@ rollback exception.
 <h3>determineTimeout</h3>
 <div class="horizontal-scroll">
 <div class="member-signature"><span class="modifiers">public</span>&nbsp;<span class="return-type"><a href="https://docs.oracle.com/en/java/javase/25/docs/api/java.base/java/util/Optional.html" title="class or interface in java.util" class="external-link">Optional</a>&lt;<a href="https://docs.oracle.com/en/java/javase/25/docs/api/java.base/java/time/Duration.html" title="class or interface in java.time" class="external-link">Duration</a>&gt;</span>&nbsp;<span class="element-name">determineTimeout</span><wbr><span class="parameters">(<a href="../TransactionDefinition.html" title="interface in io.micronaut.transaction">TransactionDefinition</a>&nbsp;definition)</span></div>
+<div class="deprecation-block"><span class="deprecated-label">Deprecated, for removal: This API element is subject to removal in a future version.</span></div>
 <div class="block">Determine the actual timeout to use for the given definition.
 Will fall back to this manager's default timeout if the
 transaction definition doesn't specify a non-default value.</div>
@@ -504,12 +583,13 @@ transaction definition doesn't specify a non-default value.</div>
 <h3>setEnforceReadOnly</h3>
 <div class="horizontal-scroll">
 <div class="member-signature"><span class="modifiers">public</span>&nbsp;<span class="return-type">void</span>&nbsp;<span class="element-name">setEnforceReadOnly</span><wbr><span class="parameters">(boolean&nbsp;enforceReadOnly)</span></div>
+<div class="deprecation-block"><span class="deprecated-label">Deprecated, for removal: This API element is subject to removal in a future version.</span></div>
 <div class="block">Specify whether to enforce the read-only nature of a transaction
 (as indicated by <a href="../TransactionDefinition.html#isReadOnly()"><code>TransactionDefinition.isReadOnly()</code></a>)
 through an explicit statement on the transactional connection:
 "SET TRANSACTION READ ONLY" as understood by Oracle, MySQL and Postgres.
 <p>This mode of read-only handling goes beyond the <a href="https://docs.oracle.com/en/java/javase/25/docs/api/java.sql/java/sql/Connection.html#setReadOnly(boolean)" title="class or interface in java.sql" class="external-link"><code>Connection.setReadOnly(boolean)</code></a>
-hint that Spring applies by default. In contrast to that standard JDBC hint,
+hint that Micronaut Data applies to read-only transactions by default. In contrast to that standard JDBC hint,
 "SET TRANSACTION READ ONLY" enforces an isolation-level-like connection mode
 where data manipulation statements are strictly disallowed. Also, on Oracle,
 this read-only mode provides read consistency for the entire transaction.
@@ -530,6 +610,7 @@ this strong enforcement needs to be applied explicitly, e.g. through this flag.<
 <h3>isEnforceReadOnly</h3>
 <div class="horizontal-scroll">
 <div class="member-signature"><span class="modifiers">public</span>&nbsp;<span class="return-type">boolean</span>&nbsp;<span class="element-name">isEnforceReadOnly</span>()</div>
+<div class="deprecation-block"><span class="deprecated-label">Deprecated, for removal: This API element is subject to removal in a future version.</span></div>
 <dl class="notes">
 <dt>Returns:</dt>
 <dd>Return whether to enforce the read-only nature of a transaction
