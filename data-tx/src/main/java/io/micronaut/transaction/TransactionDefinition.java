@@ -253,10 +253,8 @@ public interface TransactionDefinition {
      * to match the values of the same constants on {@link java.sql.Connection}.
      * <p>Exclusively designed for use with {@link Propagation#REQUIRED} or
      * {@link Propagation#REQUIRES_NEW} since it only applies to newly started
-     * transactions. Consider switching the "validateExistingTransactions" flag to
-     * "true" on your transaction manager if you'd like isolation level declarations
-     * to get rejected when participating in an existing transaction with a different
-     * isolation level.
+     * transactions. When participating in an existing
+     * transaction, the setting of the existing transaction applies and this one is ignored.
      * <p>The default is {@link Isolation#DEFAULT}. Note that a transaction manager
      * that does not support custom isolation levels will throw an exception when
      * given any other level than {@link Isolation#DEFAULT}.
