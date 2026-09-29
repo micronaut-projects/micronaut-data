@@ -51,11 +51,11 @@ import java.util.TreeMap;
  * Reads the schema metadata used by the schema validation using JDBC {@link DatabaseMetaData}.
  * <p>
  * The metadata is read for the whole schema with as few database calls as possible and kept in memory:
- * the tables and their columns are read with a single call. The primary keys are read with a single dialect query
- * for the schema (see {@link SqlTableMappingValidator#getPrimaryKeysQuery()}). The indexes, and the primary keys when
- * there is no such query or it fails, are read with a call per table: the drivers require the table name, they either
- * reject a null table name or return no rows for it. Entities can also be mapped to views, since the tables are
- * resolved from the columns.
+ * the tables and their columns are read with a single call. The primary keys and the indexes are read with a single
+ * dialect query for the schema (see {@link SqlTableMappingValidator#getPrimaryKeysQuery()} and
+ * {@link SqlTableMappingValidator#getIndexesQuery()}). Without such a query, or when it fails, they are read with a call
+ * per table: the drivers require the table name, they either reject a null table name or return no rows for it.
+ * Entities can also be mapped to views, since the tables are resolved from the columns.
  *
  * @author radovanradic
  * @since 5.3.0
@@ -89,21 +89,20 @@ final class JdbcSchemaMetadataReader {
      * Whether the MySQL database is the catalog, the MySQL Connector/J option {@code databaseTerm=SCHEMA} reports it as the schema.
      */
     private final boolean databaseAsCatalog;
-    private final @Nullable String primaryKeysQuery;
+    private final MetadataQueries queries;
 
     JdbcSchemaMetadataReader(Connection connection, Dialect dialect) throws SQLException {
-        this(connection, dialect, null);
+        this(connection, dialect, MetadataQueries.NONE);
     }
 
     /**
      * @param connection The connection
      * @param dialect The dialect
-     * @param primaryKeysQuery The query reading the primary keys of a schema, see {@link SqlTableMappingValidator#getPrimaryKeysQuery()},
-     * null to read them per table
+     * @param queries The dialect queries reading the metadata of a schema with a single query
      * @throws SQLException If the database metadata cannot be read
      */
-    JdbcSchemaMetadataReader(Connection connection, Dialect dialect, @Nullable String primaryKeysQuery) throws SQLException {
-        this.primaryKeysQuery = primaryKeysQuery;
+    JdbcSchemaMetadataReader(Connection connection, Dialect dialect, MetadataQueries queries) throws SQLException {
+        this.queries = queries;
         this.connection = connection;
         this.metaData = connection.getMetaData();
         this.identifierMatcher = SqlIdentifierMatcher.of(dialect, getIdentifierNamingStrategy(metaData), metaData.supportsMixedCaseIdentifiers());
@@ -306,7 +305,7 @@ final class JdbcSchemaMetadataReader {
         readPrimaryKeys(resolvedSchema, tables);
         markViews(catalog, schema, tables);
         if (readIndexes) {
-            readIndexes(tables);
+            readIndexes(resolvedSchema, tables);
         }
         return new SchemaTables(resolvedSchema, tables);
     }
@@ -355,64 +354,100 @@ final class JdbcSchemaMetadataReader {
      */
     private void readPrimaryKeys(@Nullable String schema, Map<String, SqlTableMetadata> tables) {
         Map<String, Map<Integer, String>> primaryKeys = new HashMap<>();
-        if (primaryKeysQuery != null && schema != null) {
-            try {
-                query(primaryKeysQuery, schema, resultSet -> {
-                    String tableName = resultSet.getString(1);
-                    String columnName = resultSet.getString(2);
-                    String tableKey = tableName == null ? null : identifierMatcher.tableKey(tableName);
-                    if (tableKey != null && columnName != null && tables.containsKey(tableKey)) {
-                        primaryKeys.computeIfAbsent(tableKey, k -> new TreeMap<>()).put(resultSet.getInt(3), columnName);
-                    }
-                });
-                setPrimaryKeys(tables, tables.keySet(), primaryKeys);
-                return;
-            } catch (SQLException | RuntimeException e) {
-                if (LOG.isDebugEnabled()) {
-                    LOG.debug("Unable to read the primary keys of schema [{}] with a single query, reading them per table: {}", schema, e.getMessage());
-                }
-                primaryKeys.clear();
+        Set<String> readTables;
+        if (readSchemaQuery("primary keys", queries.primaryKeys(), schema, tables, (tableKey, resultSet) -> {
+            String columnName = resultSet.getString(2);
+            if (columnName != null) {
+                primaryKeys.computeIfAbsent(tableKey, k -> new TreeMap<>()).put(resultSet.getInt(3), columnName);
             }
+        })) {
+            readTables = tables.keySet();
+        } else {
+            primaryKeys.clear();
+            readTables = readTablesMetadata("primary keys", tables,
+                (catalog, tableSchema, table) -> metaData.getPrimaryKeys(catalog, tableSchema, table),
+                (tableKey, resultSet) -> primaryKeys.computeIfAbsent(tableKey, k -> new TreeMap<>())
+                    .put(resultSet.getInt("KEY_SEQ"), resultSet.getString(SqlSchemaUtils.COLUMN_NAME_COLUMN)));
         }
-        Set<String> readTables = readTablesMetadata("primary keys", tables,
-            (catalog, tableSchema, table) -> metaData.getPrimaryKeys(catalog, tableSchema, table),
-            (tableKey, resultSet) -> primaryKeys.computeIfAbsent(tableKey, k -> new TreeMap<>())
-                .put(resultSet.getInt("KEY_SEQ"), resultSet.getString(SqlSchemaUtils.COLUMN_NAME_COLUMN)));
-        setPrimaryKeys(tables, readTables, primaryKeys);
-    }
-
-    /**
-     * Sets the primary key columns of the read tables, a table without a primary key has none.
-     */
-    private static void setPrimaryKeys(Map<String, SqlTableMetadata> tables, Set<String> readTables, Map<String, Map<Integer, String>> primaryKeys) {
+        // A table without a primary key has none
         for (String tableKey : readTables) {
             Objects.requireNonNull(tables.get(tableKey)).setPrimaryKeyColumns(new ArrayList<>(primaryKeys.getOrDefault(tableKey, Map.of()).values()));
         }
     }
 
-    private void readIndexes(Map<String, SqlTableMetadata> tables) {
+    private void readIndexes(@Nullable String schema, Map<String, SqlTableMetadata> tables) {
         Map<String, Map<String, IndexColumns>> indexes = new HashMap<>();
-        // approximate = true, some drivers (Oracle) would otherwise compute the table statistics
-        Set<String> readTables = readTablesMetadata("indexes", tables,
-            (catalog, schema, table) -> metaData.getIndexInfo(catalog, schema, table, false, true),
-            (tableKey, resultSet) -> {
-                String indexName = resultSet.getString("INDEX_NAME");
-                if (indexName == null || resultSet.getShort("TYPE") == DatabaseMetaData.tableIndexStatistic) {
-                    return;
-                }
-                boolean unique = !resultSet.getBoolean("NON_UNIQUE");
-                IndexColumns index = indexes.computeIfAbsent(tableKey, k -> new LinkedHashMap<>())
-                    .computeIfAbsent(indexName, name -> new IndexColumns(unique, new TreeMap<>()));
-                String columnName = resultSet.getString(SqlSchemaUtils.COLUMN_NAME_COLUMN);
-                if (columnName != null) {
-                    index.columns().put(resultSet.getInt("ORDINAL_POSITION"), columnName);
-                }
-            });
+        Set<String> readTables;
+        if (readSchemaQuery("indexes", queries.indexes(), schema, tables, (tableKey, resultSet) ->
+            addIndexColumn(indexes, tableKey, resultSet.getString(2), resultSet.getInt(3) != 0, resultSet.getString(4), resultSet.getInt(5)))) {
+            readTables = tables.keySet();
+        } else {
+            indexes.clear();
+            // approximate = true, some drivers (Oracle) would otherwise compute the table statistics
+            readTables = readTablesMetadata("indexes", tables,
+                (catalog, tableSchema, table) -> metaData.getIndexInfo(catalog, tableSchema, table, false, true),
+                (tableKey, resultSet) -> {
+                    if (resultSet.getShort("TYPE") != DatabaseMetaData.tableIndexStatistic) {
+                        addIndexColumn(indexes, tableKey, resultSet.getString("INDEX_NAME"), !resultSet.getBoolean("NON_UNIQUE"),
+                            resultSet.getString(SqlSchemaUtils.COLUMN_NAME_COLUMN), resultSet.getInt("ORDINAL_POSITION"));
+                    }
+                });
+        }
         for (String tableKey : readTables) {
             List<SqlIndexMetadata> indexMetadata = new ArrayList<>();
             indexes.getOrDefault(tableKey, Map.of()).forEach((name, index) ->
                 indexMetadata.add(new SqlIndexMetadata(name, index.unique(), new ArrayList<>(index.columns().values()))));
             Objects.requireNonNull(tables.get(tableKey)).setIndexes(indexMetadata);
+        }
+    }
+
+    /**
+     * Adds an index column, an index without a column name (an expression) is kept, since it can be matched by its name.
+     */
+    private static void addIndexColumn(Map<String, Map<String, IndexColumns>> indexes,
+                                       String tableKey,
+                                       @Nullable String indexName,
+                                       boolean unique,
+                                       @Nullable String columnName,
+                                       int position) {
+        if (indexName == null) {
+            return;
+        }
+        IndexColumns index = indexes.computeIfAbsent(tableKey, k -> new LinkedHashMap<>())
+            .computeIfAbsent(indexName, name -> new IndexColumns(unique, new TreeMap<>()));
+        if (columnName != null) {
+            index.columns().put(position, columnName);
+        }
+    }
+
+    /**
+     * Reads the metadata of the schema tables with a single dialect query, the query selects the table name first
+     * and has a single parameter, the schema.
+     *
+     * @return Whether the metadata was read, false without a query or when it fails, the metadata is then read per table
+     */
+    private boolean readSchemaQuery(String what,
+                                    @Nullable String query,
+                                    @Nullable String schema,
+                                    Map<String, SqlTableMetadata> tables,
+                                    TableRowReader rowReader) {
+        if (query == null || schema == null) {
+            return false;
+        }
+        try {
+            query(query, schema, resultSet -> {
+                String tableName = resultSet.getString(1);
+                String tableKey = tableName == null ? null : identifierMatcher.tableKey(tableName);
+                if (tableKey != null && tables.containsKey(tableKey)) {
+                    rowReader.read(tableKey, resultSet);
+                }
+            });
+            return true;
+        } catch (SQLException | RuntimeException e) {
+            if (LOG.isDebugEnabled()) {
+                LOG.debug("Unable to read the {} of schema [{}] with a single query, reading them per table: {}", what, schema, e.getMessage());
+            }
+            return false;
         }
     }
 
@@ -485,6 +520,22 @@ final class JdbcSchemaMetadataReader {
      * @param tables The table metadata by table key, see {@link SqlIdentifierMatcher#tableKey(String)}
      */
     record SchemaTables(@Nullable String schema, Map<String, SqlTableMetadata> tables) {
+    }
+
+    /**
+     * The dialect queries reading the metadata of all the tables of a schema with a single query, a null query reads the
+     * metadata per table.
+     *
+     * @param primaryKeys The primary keys query, see {@link SqlTableMappingValidator#getPrimaryKeysQuery()}
+     * @param indexes The indexes query, see {@link SqlTableMappingValidator#getIndexesQuery()}
+     */
+    record MetadataQueries(@Nullable String primaryKeys, @Nullable String indexes) {
+
+        static final MetadataQueries NONE = new MetadataQueries(null, null);
+
+        static MetadataQueries of(SqlTableMappingValidator validator) {
+            return new MetadataQueries(validator.getPrimaryKeysQuery(), validator.getIndexesQuery());
+        }
     }
 
     @FunctionalInterface

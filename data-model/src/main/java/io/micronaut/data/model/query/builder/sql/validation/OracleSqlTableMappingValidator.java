@@ -62,6 +62,16 @@ final class OracleSqlTableMappingValidator extends BaseSqlTableMappingValidator 
     }
 
     @Override
+    public String getIndexesQuery() {
+        // The driver requires the table name, it also computes the table statistics unless approximate
+        return """
+            SELECT ic.TABLE_NAME, ic.INDEX_NAME, CASE WHEN i.UNIQUENESS = 'UNIQUE' THEN 1 ELSE 0 END, ic.COLUMN_NAME, ic.COLUMN_POSITION
+            FROM ALL_INDEXES i
+            JOIN ALL_IND_COLUMNS ic ON ic.INDEX_OWNER = i.OWNER AND ic.INDEX_NAME = i.INDEX_NAME
+            WHERE i.TABLE_OWNER = ?""";
+    }
+
+    @Override
     protected boolean matchingDialectColumnType(SqlColumnMapping columnMapping,
                                                 SqlColumnMetadata columnMetadata,
                                                 SqlDialectOptions dialectOptions) {

@@ -185,6 +185,20 @@ public interface SqlTableMappingValidator {
     }
 
     /**
+     * Returns the query selecting the index columns of all the tables of a schema, so that they are read with a single query
+     * instead of a {@link java.sql.DatabaseMetaData#getIndexInfo(String, String, String, boolean, boolean)} call per table
+     * (the drivers require the table name). The query has a single parameter, the schema name (the database name for MySQL),
+     * and selects the table name, the index name, whether the index is unique (a non-zero number), the column name
+     * (null for an expression) and the column position in the index.
+     *
+     * @return The query or null to read the indexes per table
+     * @since 5.3.0
+     */
+    default @Nullable String getIndexesQuery() {
+        return null;
+    }
+
+    /**
      * Returns the SQL dialect supported by this validator.
      *
      * @return the supported SQL dialect, never null

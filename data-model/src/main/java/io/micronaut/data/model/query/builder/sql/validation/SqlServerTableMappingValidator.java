@@ -46,4 +46,17 @@ final class SqlServerTableMappingValidator extends BaseSqlTableMappingValidator 
     public String getPrimaryKeysQuery() {
         return INFORMATION_SCHEMA_PRIMARY_KEYS_QUERY;
     }
+
+    @Override
+    public String getIndexesQuery() {
+        // A heap has an unnamed index entry, the included columns are not the index key
+        return """
+            SELECT t.name, i.name, CASE WHEN i.is_unique = 1 THEN 1 ELSE 0 END, c.name, ic.key_ordinal
+            FROM sys.indexes i
+            JOIN sys.tables t ON t.object_id = i.object_id
+            JOIN sys.schemas s ON s.schema_id = t.schema_id
+            JOIN sys.index_columns ic ON ic.object_id = i.object_id AND ic.index_id = i.index_id
+            JOIN sys.columns c ON c.object_id = ic.object_id AND c.column_id = ic.column_id
+            WHERE s.name = ? AND i.name IS NOT NULL AND ic.is_included_column = 0""";
+    }
 }

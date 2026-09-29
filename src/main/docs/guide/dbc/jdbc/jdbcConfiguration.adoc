@@ -71,7 +71,7 @@ The following differences are only logged as warnings, since they only fail for 
 
 The schema, table, column and sequence names are matched the same way as the generated SQL refers to them: an escaped name (`@MappedEntity(escape = true)`, the default) must match exactly on the databases with case-sensitive quoted names (PostgreSQL), while the unescaped names, and all the names on Oracle and H2, are matched in the database identifier case. The MySQL table names are case-sensitive when the database is (`lower_case_table_names=0`).
 
-The schema metadata is read in bulk and validated in memory: a single call per schema reads the tables and columns, and a single catalog query per schema reads the primary keys (H2, PostgreSQL, MySQL, MariaDB, SQL Server and Oracle). The indexes are read with a call per table, and only when some are validated, since the JDBC drivers require the table name.
+The schema metadata is read in bulk and validated in memory: a single call per schema reads the tables and columns, and a single catalog query per schema reads the primary keys, and another one the indexes, only when some are validated (H2, PostgreSQL, MySQL, MariaDB, SQL Server and Oracle). For the other databases they are read with a call per table, since the JDBC drivers require the table name.
 
 Please note this option is currently regarded as experimental.
 

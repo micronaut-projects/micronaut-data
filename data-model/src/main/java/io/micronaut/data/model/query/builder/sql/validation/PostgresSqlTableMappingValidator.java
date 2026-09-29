@@ -69,6 +69,20 @@ final class PostgresSqlTableMappingValidator extends BaseSqlTableMappingValidato
     }
 
     @Override
+    public String getIndexesQuery() {
+        // An expression has no attribute (attnum 0), its column name is null
+        return """
+            SELECT ct.relname, ci.relname, CASE WHEN i.indisunique THEN 1 ELSE 0 END, a.attname, k.position
+            FROM pg_catalog.pg_index i
+            JOIN pg_catalog.pg_class ct ON ct.oid = i.indrelid
+            JOIN pg_catalog.pg_class ci ON ci.oid = i.indexrelid
+            JOIN pg_catalog.pg_namespace n ON n.oid = ct.relnamespace
+            CROSS JOIN LATERAL unnest(i.indkey::int2[]) WITH ORDINALITY AS k(attnum, position)
+            LEFT JOIN pg_catalog.pg_attribute a ON a.attrelid = ct.oid AND a.attnum = k.attnum AND k.attnum > 0
+            WHERE n.nspname = ?""";
+    }
+
+    @Override
     protected boolean matchingDialectColumnType(SqlColumnMapping columnMapping, SqlColumnMetadata columnMetadata) {
         if (columnMapping.getDbType() == SqlDbType.JSON || columnMapping.getDbType() == SqlDbType.JSON_OBJECT) {
             return "json".equalsIgnoreCase(columnMetadata.typeName()) || "jsonb".equalsIgnoreCase(columnMetadata.typeName());

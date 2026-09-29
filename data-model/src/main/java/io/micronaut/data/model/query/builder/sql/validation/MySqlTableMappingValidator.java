@@ -59,6 +59,14 @@ final class MySqlTableMappingValidator extends BaseSqlTableMappingValidator {
     }
 
     @Override
+    public String getIndexesQuery() {
+        // The column name is null for a functional key part
+        return """
+            SELECT TABLE_NAME, INDEX_NAME, CASE WHEN NON_UNIQUE = 0 THEN 1 ELSE 0 END, COLUMN_NAME, SEQ_IN_INDEX
+            FROM information_schema.STATISTICS WHERE TABLE_SCHEMA = ?""";
+    }
+
+    @Override
     protected boolean matchingDialectColumnType(SqlColumnMapping columnMapping, SqlColumnMetadata columnMetadata) {
         SqlDbType dbType = columnMapping.getDbType();
         if (dbType == SqlDbType.UUID) {

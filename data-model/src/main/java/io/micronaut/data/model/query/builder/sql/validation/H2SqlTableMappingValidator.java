@@ -44,4 +44,11 @@ final class H2SqlTableMappingValidator extends BaseSqlTableMappingValidator {
     public String getPrimaryKeysQuery() {
         return INFORMATION_SCHEMA_PRIMARY_KEYS_QUERY;
     }
+
+    @Override
+    public String getIndexesQuery() {
+        return """
+            SELECT TABLE_NAME, INDEX_NAME, CASE WHEN IS_UNIQUE THEN 1 ELSE 0 END, COLUMN_NAME, ORDINAL_POSITION
+            FROM INFORMATION_SCHEMA.INDEX_COLUMNS WHERE TABLE_SCHEMA = ?""";
+    }
 }
