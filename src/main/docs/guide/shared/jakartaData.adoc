@@ -1,45 +1,43 @@
-Micronaut Data implements Jakarta Data 1.0 specification.
+Micronaut Data provides implementation support for the https://jakarta.ee/specifications/data/[Jakarta Data specification], allowing developers to leverage Jakarta Data's standardized approach to data access within Micronaut applications. This integration combines Micronaut's efficient Ahead of Time (AoT) compilation capabilities with Jakarta Data's standardized repository pattern. The Jakarta Data specification provides an API to simplify data access. It enables the Java developer to focus on the data model, while delegating away the complexities of data persistence. To make this possible, Jakarta Data includes a variety of features such as pre-built interfaces for data access, offset and cursor based pagination strategies, and the ability to compose custom query methods that the framework implements.
 
-Micronaut Data provides implementation support for the https://jakarta.ee/specifications/data/1.0/jakarta-data-1.0[Jakarta Data 1.0 specification], allowing developers to leverage Jakarta Data's standardized approach to data access within Micronaut applications. This integration combines Micronaut's efficient Ahead of Time (AoT) compilation capabilities with Jakarta Data's standardized repository pattern. The Jakarta Data specification provides an API to simplify data access. It enables the Java developer to focus on the data model, while delegating away the complexities of data persistence. To make this possible, Jakarta Data includes a variety of features such as pre-built interfaces for data access, offset and cursor based pagination strategies, and the ability to compose custom query methods that the framework implements.
-
-## Configuration
+== Configuration
 To use Jakarta Data annotations in your Micronaut project, ensure you have the following dependency:
 
 dependency:jakarta.data:jakarta.data-api[]
 
-## Key features
+== Key features
 
 Micronaut Data supports a combination of Jakarta Data annotations and repositories with Micronaut annotations.
 It's still required to use `@JdbcRepository`, `@MongoRepository` etc to specify which data implementation should be used.
 
-### Core Repository Features
+=== Core Repository Features
 - Repository pattern with annotation `@Repository`
 - Standard CRUD operations out of the box
 - Type-safe query methods
 - Automatic query derivation from method names
 
-### Query Capabilities
+=== Query Capabilities
 - Method name-based query generation
 - Custom queries with annotation `@Query`
 - Dynamic finder methods with `@Find`
 - Result ordering with `@OrderBy`
-- Pagination support via `@Limit` and `@Offset`
+- Limiting results with `Limit`, and offset or cursor based pagination with `PageRequest`
 
-### Data Modification
+=== Data Modification
 - Entity insertion with `@Insert`
 - Updates with `@Update`
 - Persistence with `@Save`
 - Deletion with `@Delete`
 
-## Repository Mapping
+== Repository Mapping
 
 The implementation combines the benefits of Micronaut's efficient compilation and runtime characteristics with Jakarta Data's standardized approach to data access.
 
-For more detailed information about individual features and capabilities, please refer to the official Micronaut Data documentation and the Jakarta Data 1.0 specification.
+For more detailed information about individual features and capabilities, please refer to the official Micronaut Data documentation and the https://jakarta.ee/specifications/data/[Jakarta Data specification].
 
-## Jakarta Data Annotations
+== Jakarta Data Annotations
 
-### @Repository
+=== @Repository
 The core annotation that marks an interface as a Jakarta Data repository.
 
 [source.multi-language-sample,java]
@@ -68,14 +66,16 @@ interface UserRepository {
 
 NOTE: The default implementation is for JPA, add `@JdbcRepository`, `@MongoRepository` etc. for correct implementation
 
-### @OrderBy
-Specifies the ordering of query results.
+=== @OrderBy
+Specifies the ordering of query results. The annotation is repeatable; each occurrence adds one sort criterion, applied in the order declared.
 
 [source.multi-language-sample,java]
 ----
 @Repository
 public interface UserRepository {
-    @OrderBy("lastName ASC, firstName ASC")
+    @Find
+    @OrderBy("lastName")
+    @OrderBy("firstName")
     List<User> findAll();
 }
 ----
@@ -84,7 +84,9 @@ public interface UserRepository {
 ----
 @Repository
 interface UserRepository {
-    @OrderBy("lastName ASC, firstName ASC")
+    @Find
+    @OrderBy("lastName")
+    @OrderBy("firstName")
     fun findAll(): List<User>
 }
 ----
@@ -93,22 +95,25 @@ interface UserRepository {
 ----
 @Repository
 interface UserRepository {
-    @OrderBy("lastName ASC, firstName ASC")
+    @Find
+    @OrderBy("lastName")
+    @OrderBy("firstName")
     List<User> findAll()
 }
 ----
 
-## Query Annotations
 
-### @Find
-Defines custom finder queries.
+== Query Annotations
+
+=== @Find
+Defines a query from the method parameters: each parameter annotated with `@By` restricts the entity attribute it names. The method name is not parsed.
 
 [source.multi-language-sample,java]
 ----
 @Repository
 public interface UserRepository {
     @Find
-    List<User> findByEmailContaining(String email);
+    List<User> byEmail(@By("email") String email);
 }
 ----
 
@@ -117,7 +122,7 @@ public interface UserRepository {
 @Repository
 interface UserRepository {
     @Find
-    fun findByEmailContaining(email: String): List<User>
+    fun byEmail(@By("email") email: String): List<User>
 }
 ----
 
@@ -126,11 +131,12 @@ interface UserRepository {
 @Repository
 interface UserRepository {
     @Find
-    List<User> findByEmailContaining(String email)
+    List<User> byEmail(@By("email") String email)
 }
 ----
 
-### @Query
+
+=== @Query
 Specifies a custom query string.
 
 [source.multi-language-sample,java]
@@ -160,7 +166,7 @@ interface UserRepository {
 }
 ----
 
-### @Save
+=== @Save
 Conditionally performs insert or update operations on entities. Acts as insert for new entities and update for existing ones.
 
 [source.multi-language-sample,java]
@@ -190,7 +196,7 @@ interface UserRepository {
 }
 ----
 
-### @Update
+=== @Update
 Updates the state of existing entities in the database. Throws an exception if entity doesn't exist.
 
 [source.multi-language-sample,java]
@@ -220,7 +226,7 @@ interface UserRepository {
 }
 ----
 
-### @Insert
+=== @Insert
 Adds new entities to the database. Throws an exception if entity with same ID already exists.
 
 [source.multi-language-sample,java]
@@ -250,7 +256,7 @@ interface UserRepository {
 }
 ----
 
-### @Delete
+=== @Delete
 Removes entities from the database.
 
 [source.multi-language-sample,java]
@@ -280,9 +286,9 @@ interface UserRepository {
 }
 ----
 
-## Method Parameter Annotations
+== Method Parameters
 
-### @Param
+=== @Param
 Names a method parameter for use in queries.
 
 [source.multi-language-sample,java]
@@ -312,61 +318,47 @@ interface UserRepository {
 }
 ----
 
-### @Limit
-Specifies the maximum number of results to return.
+=== Limiting results
+Pass a `jakarta.data.Limit` parameter to restrict the number of results. `Limit.of(10)` returns at most 10 results, and `Limit.range(21, 30)` returns results 21 to 30 (positions start at 1), which also covers offset based access. For paging with totals use `PageRequest` as described in <<_pagination, Pagination>> below.
 
 [source.multi-language-sample,java]
 ----
 @Repository
 public interface UserRepository {
-    List<User> findByLastName(String lastName, @Limit int maxResults);
+    List<User> findByLastName(String lastName, Limit limit);
 }
+
+// usage
+userRepository.findByLastName("Smith", Limit.of(10));
+userRepository.findByLastName("Smith", Limit.range(21, 30));
 ----
 
 [source.multi-language-sample,kotlin]
 ----
 @Repository
 interface UserRepository {
-    fun findByLastName(lastName: String, @Limit maxResults: Int): List<User>
+    fun findByLastName(lastName: String, limit: Limit): List<User>
 }
+
+// usage
+userRepository.findByLastName("Smith", Limit.of(10))
+userRepository.findByLastName("Smith", Limit.range(21, 30))
 ----
 
 [source.multi-language-sample,groovy]
 ----
 @Repository
 interface UserRepository {
-    List<User> findByLastName(String lastName, @Limit int maxResults)
+    List<User> findByLastName(String lastName, Limit limit)
 }
+
+// usage
+userRepository.findByLastName("Smith", Limit.of(10))
+userRepository.findByLastName("Smith", Limit.range(21, 30))
 ----
 
-### @Offset
-Specifies the starting position in the result set.
 
-[source.multi-language-sample,java]
-----
-@Repository
-public interface UserRepository {
-    List<User> findAll(@Offset int startPosition, @Limit int maxResults);
-}
-----
-
-[source.multi-language-sample,kotlin]
-----
-@Repository
-interface UserRepository {
-    fun findAll(@Offset startPosition: Int, @Limit maxResults: Int): List<User>
-}
-----
-
-[source.multi-language-sample,groovy]
-----
-@Repository
-interface UserRepository {
-    List<User> findAll(@Offset int startPosition, @Limit int maxResults)
-}
-----
-
-## Repository Method Conventions
+== Repository Method Conventions
 Besides annotations, Jakarta Data also supports method name conventions for common queries:
 
 [source.multi-language-sample,java]
