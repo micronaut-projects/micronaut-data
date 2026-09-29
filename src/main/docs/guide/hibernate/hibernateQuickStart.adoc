@@ -49,7 +49,25 @@ Or via `curl`:
 $ curl https://launch.micronaut.io/demo.zip?lang=java&features=data-jpa,flyway,mysql,jdbc-hikari -o demo.zip && unzip demo.zip -d demo && cd demo
 ----
 
-NOTE: When working with JDBC drivers it's required to add a JDBC Connection Pool Module (Hikari, Tomcat JDBC or DBCP ) from the Micronaut SQL project.
+To add Micronaut Data JPA to an existing project, add the Micronaut Data JPA module:
+
+dependency:io.micronaut.data:micronaut-data-hibernate-jpa[]
+
+A JDBC connection pool module (Hikari, Tomcat JDBC, DBCP or UCP) from the Micronaut SQL project, which creates the `DataSource` Hibernate uses:
+
+dependency:io.micronaut.sql:micronaut-jdbc-hikari[scope="runtimeOnly"]
+
+The JDBC driver for your database, for example for H2:
+
+dependency:com.h2database:h2[scope="runtimeOnly"]
+
+And the Micronaut Data annotation processor:
+
+dependency:io.micronaut.data:micronaut-data-processor[scope="annotationProcessor"]
+
+NOTE: For Kotlin, add the `micronaut-data-processor` dependency in https://docs.micronaut.io/latest/guide/#kaptOrKsp[kapt or ksp scope], and for Groovy add `micronaut-data-processor` in compileOnly scope.
+
+IMPORTANT: Without a connection pool module no `DataSource` is created and the application fails at startup with `No bean of type [io.micronaut.data.operations.PrimaryRepositoryOperations] exists`. See <<buildConfig, Build Configuration>>.
 
 Use Micronaut SQL project documentation for more information regarding configuring https://micronaut-projects.github.io/micronaut-sql/latest/guide/index.html#hibernate[Hibernate], https://micronaut-projects.github.io/micronaut-sql/latest/guide/index.html#jdbc[JDBC and pooling].
 
@@ -78,8 +96,6 @@ jpa:
 ----
 
 Where `jpa.default.entity-scan.packages` references the root package where your `@Entity` classes are located.
-
-And ensure the implementation is configured correctly.
 
 You can then define an `@Entity`:
 

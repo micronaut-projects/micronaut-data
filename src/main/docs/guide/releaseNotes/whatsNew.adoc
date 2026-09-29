@@ -1,3 +1,33 @@
+=== Micronaut Data 5.2
+- <<upserts, Upsert>> repository methods for JDBC and R2DBC
+- Oracle: <<sqlOracleBoolean, native `BOOLEAN`>> support, <<sqlReservable, lock-free reservable columns>>, <<recoverableTransactions, transaction recovery>> and <<sessionlessTransactions, sessionless transactions>>
+- <<sqlGeospatial, Geography>> mapping for geographic coordinate reference systems
+- Criteria API navigation through associations, composite and identity-less association paths, and `Expression.in`
+- Documentation examples for Java, Kotlin, Groovy and Python
+- TCK modules are published to Maven Central
+
+=== Micronaut Data 5.1
+- SQLite dialect
+- Value based ETags for <<optimisticLocking, optimistic locking>>
+- Jakarta Persistence metamodel generation for Micronaut Data entities
+
+=== Micronaut Data 5.0
+- Micronaut Framework 5, Hibernate 7 and Jakarta Persistence 3.2
+- Repository `save` methods <<breaks, perform save-or-update>> based on the entity identity; new explicit `insert` methods
+- <<jakartaData, Jakarta Data>> 1.1 milestone support
+- <<sqlVectorType, Vector type>> support
+- <<sqlGeospatial, Geospatial>> CRUD and query predicates
+- Oracle: <<transactionPriority, transaction priority>>, `RETURNING INTO` for inserts, updates and deletes, JSON Duality Views defined with Jackson annotations and mapping of Java time types to `INTERVAL` types
+- R2DBC `INSERT`, `UPDATE` and `DELETE` with `RETURNING`
+- MongoDB `findOneAndUpdate`
+- `@Fetch` to set the fetch size for streaming repository methods
+- `KotlinCrudRepository`, a non-suspending Kotlin repository without `Optional`
+- JSpecify nullability annotations across the API
+- Synchronous transactions and connections are <<breaks, no longer propagated>> by default
+
+=== Micronaut Data 4.3 - 4.14
+See the https://github.com/{githubSlug}/releases[release notes on GitHub].
+
 === Micronaut Data 4.2
 - Procedure invocations in repositories for <<hibernateProcedures, Data JPA>> and <<dbcProcedures, Data JDBC/R2DBC>>
 - Added possibility to have associations (JOINs) in DTOs

@@ -50,7 +50,7 @@ The generated application will have a compile-scoped dependency on the `micronau
 
 dependency:io.micronaut.data:micronaut-data-jdbc[]
 
-You should also ensure you have the JDBC driver and connection pool dependencies configured:
+You should also ensure you have the JDBC driver and connection pool dependencies configured. The connection pool module creates the `DataSource` that Micronaut Data JDBC uses; without it the application fails at startup with `No bean of type [io.micronaut.data.operations.PrimaryRepositoryOperations] exists`:
 
 dependency:io.micronaut.sql:micronaut-jdbc-hikari[scope="runtime"]
 
@@ -58,7 +58,7 @@ The annotation processor needs to have the Micronaut Data processor dependency p
 
 dependency:io.micronaut.data:micronaut-data-processor[scope="annotationProcessor"]
 
-NOTE: For Kotlin, add the `micronaut-data-processor` dependency in https://docs.micronaut.io/4.4.3/guide/#kaptOrKsp[kapt or ksp scope], and for Groovy add `micronaut-data-processor` in compileOnly scope.
+NOTE: For Kotlin, add the `micronaut-data-processor` dependency in https://docs.micronaut.io/latest/guide/#kaptOrKsp[kapt or ksp scope], and for Groovy add `micronaut-data-processor` in compileOnly scope.
 
 Next up you need to configure at least one data source. The following snippet from the application configuration file is an example of configuring the default JDBC data source:
 
@@ -70,10 +70,6 @@ include::doc-examples/jdbc-example-java/src/main/resources/application.yml[]
 NOTE: The `schema-generate` setting is only useful for demos and testing trivial examples, for production usage it is recommended you pair Micronaut Data with a SQL migration tool such as https://micronaut-projects.github.io/micronaut-flyway/latest/guide/index.html[Flyway] or https://micronaut-projects.github.io/micronaut-liquibase/latest/guide/index.html[Liquibase].
 
 To retrieve objects from the database you need to define a class annotated with ann:data.annotation.MappedEntity[]. Note that this is a meta annotation and in fact if you prefer you can use JPA annotations (only a subset are supported, more on that later). If you wish to use JPA annotations include the following `compileOnly` scoped dependency:
-
-dependency:jakarta.persistence:jakarta.persistence-api[scope="compileOnly"]
-
-To use JPA annotations in the `javax.persistence` package use:
 
 dependency:jakarta.persistence:jakarta.persistence-api[scope="compileOnly"]
 

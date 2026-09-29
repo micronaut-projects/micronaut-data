@@ -44,11 +44,11 @@ $ curl https://launch.micronaut.io/demo.zip?lang=java&features=data-r2dbc,flyway
 
 The generated application will use MySQL since we passed the `mysql` feature adding dependency on the R2DBC driver for MySQL:
 
-dependency:dev.miku:r2dbc-mysql[scope="runtimeOnly"]
+dependency:io.asyncer:r2dbc-mysql[scope="runtimeOnly"]
 
 And for flyway the JDBC driver:
 
-dependency:mysql:mysql-connector-java[scope="runtimeOnly"]
+dependency:com.mysql:mysql-connector-j[scope="runtimeOnly"]
 
 TIP: To create configurations for other drivers you can select the appropriate feature: `oracle`, `postgres`, `sqlserver`, `h2` or `mariadb`.
 

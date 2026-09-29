@@ -1,9 +1,4 @@
-introduction:
-  title: Introduction
-  repository: Repository
-  whatsNew: What's New?
-  breaks: Breaking Changes
-  releaseHistory: Release History
+introduction: Introduction
 buildConfig:
   title: Build Configuration
 shared:
@@ -56,19 +51,6 @@ shared:
     discriminatormode: Discriminator Mode
     datasourcemode: DataSource Mode
     schemamode: Schema Mode
-hibernate:
-  title: Micronaut Data JPA Hibernate
-  hibernateJpaAnnotations: JPA Annotations
-  hibernateQuickStart:
-    title: Quick Start
-  hibernateLogging: Logging SQL with Micronaut Data JPA Hibernate
-  hibernateJoinQueries: Join queries
-  hibernateExplicitQueries: Explicit queries
-  hibernateNativeQueries: Native queries
-  hibernateStreaming: Streaming Large Result Sets
-  hibernateProcedures: Procedures
-
-hibernateReactive: Micronaut Data Hibernate Reactive
 dbc:
   title: Micronaut Data JDBC and R2DBC
   jdbc:
@@ -114,6 +96,19 @@ dbc:
   dbcJoinQueries: Join Queries
   dbcNativeQueries: Explicit Queries
   dbcProcedures: Procedures
+hibernate:
+  title: Micronaut Data JPA Hibernate
+  hibernateJpaAnnotations: JPA Annotations
+  hibernateQuickStart:
+    title: Quick Start
+  hibernateLogging: Logging SQL with Micronaut Data JPA Hibernate
+  hibernateJoinQueries: Join queries
+  hibernateExplicitQueries: Explicit queries
+  hibernateNativeQueries: Native queries
+  hibernateStreaming: Streaming Large Result Sets
+  hibernateProcedures: Procedures
+
+hibernateReactive: Micronaut Data Hibernate Reactive
 mongo:
   title: Micronaut Data MongoDB
   mongoQuickStart: Quick Start
@@ -160,3 +155,9 @@ graal:
 spring:
   title: Spring Data Support
 dataGuides: Guides
+releaseNotes:
+  title: Release Notes
+  whatsNew: What's New?
+  breaks: Breaking Changes
+  releaseHistory: Release History
+repository: Repository
