@@ -1358,9 +1358,9 @@ public final class SqlSchemaUtils {
     }
 
     /**
-     * Matches the names as the database stores them when created: an escaped name keeps its case (a quoted PostgreSQL
+     * Resolves the names as the database stores them when created: an escaped name keeps its case (a quoted PostgreSQL
      * table {@code "Foo"} is not {@code foo}), an unescaped name is folded to the default case of the database, lower
-     * for PostgreSQL and upper for Oracle and H2. The other databases compare the table names ignoring the case.
+     * for PostgreSQL and upper for Oracle and H2. The other databases keep the names as mapped.
      */
     private static SqlIdentifierMatcher createdNamesMatcher(Dialect dialect) {
         IdentifierNamingStrategy namingStrategy = switch (dialect) {
@@ -1373,10 +1373,12 @@ public final class SqlSchemaUtils {
 
     /**
      * The schema and the table name are kept apart, a quoted name can contain the separator (schema "a.b" and table "c",
-     * or schema "a" and table "b.c").
+     * or schema "a" and table "b.c"). The stored names are compared exactly: whether MySQL and SQL Server compare the
+     * table names ignoring the case depends on the server settings ({@code lower_case_table_names}, the collation), so
+     * a foreign key is only created to a table created with the same name.
      */
     private static List<String> createdTableKey(SqlIdentifierMatcher matcher, @Nullable String schema, String table, boolean escape) {
-        return List.of(schema == null ? "" : matcher.tableKey(matcher.resolve(schema, escape)), matcher.tableKey(matcher.resolve(table, escape)));
+        return List.of(schema == null ? "" : matcher.resolve(schema, escape), matcher.resolve(table, escape));
     }
 
     /**

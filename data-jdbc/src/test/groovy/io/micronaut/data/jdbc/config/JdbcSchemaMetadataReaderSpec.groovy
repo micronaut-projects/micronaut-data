@@ -163,14 +163,55 @@ class JdbcSchemaMetadataReaderSpec extends Specification {
         table.foreignKeys*.referencedTable() == ['USER', 'USER']
     }
 
+    void 'unnamed foreign keys to the same table that cannot be paired are left out'() {
+        given:"Two unnamed composite foreign keys to ACCOUNT, interleaved by the column position, one named and one unnamed to USER"
+        def metaData = [
+                storesUpperCaseIdentifiers : { -> true },
+                storesLowerCaseIdentifiers : { -> false },
+                supportsMixedCaseIdentifiers: { -> false },
+                getSearchStringEscape      : { -> '\\' },
+                getColumns                 : { String catalog, String schema, String table, String column ->
+                    rows(['ID', 'A1', 'A2', 'B1', 'B2', 'SENDER_ID', 'OWNER_ID'].collect { columnRow('MESSAGE', it) })
+                },
+                getPrimaryKeys             : { String catalog, String schema, String table ->
+                    rows([[TABLE_SCHEM: 'S', TABLE_NAME: 'MESSAGE', COLUMN_NAME: 'ID', KEY_SEQ: 1]])
+                },
+                getImportedKeys            : { String catalog, String schema, String table ->
+                    rows([
+                            foreignKeyRow('A1', 'ACCOUNT', 'X', 1),
+                            foreignKeyRow('B1', 'ACCOUNT', 'X', 1),
+                            foreignKeyRow('B2', 'ACCOUNT', 'Y', 2),
+                            foreignKeyRow('A2', 'ACCOUNT', 'Y', 2),
+                            foreignKeyRow('OWNER_ID', 'USER', 'ID', 1, 'FK_OWNER'),
+                            foreignKeyRow('SENDER_ID', 'USER', 'ID', 1)
+                    ])
+                }
+        ] as DatabaseMetaData
+        def stubConnection = [
+                getMetaData: { -> metaData },
+                getCatalog : { -> null },
+                getSchema  : { -> 'S' }
+        ] as Connection
+
+        when:
+        def table = new JdbcSchemaMetadataReader(stubConnection, Dialect.H2).readTables(null, ['MESSAGE'] as Set, false, true).tables()['MESSAGE']
+
+        then:"The foreign keys to ACCOUNT are not reported rather than paired as (A1, B2) and (B1, A2)"
+        table.foreignKeys.collect { [it.name(), it.columns(), it.referencedTable()] } as Set == [
+                ['FK_OWNER', ['OWNER_ID'], 'USER'],
+                [null, ['SENDER_ID'], 'USER']
+        ] as Set
+    }
+
     private static Map<String, Object> columnRow(String table, String name) {
         [TABLE_SCHEM: 'S', TABLE_NAME: table, COLUMN_NAME: name, DATA_TYPE: Types.BIGINT, TYPE_NAME: 'BIGINT', COLUMN_SIZE: 64,
          DECIMAL_DIGITS: 0, NULLABLE: DatabaseMetaData.columnNoNulls]
     }
 
-    private static Map<String, Object> foreignKeyRow(String column) {
-        [FKTABLE_SCHEM: 'S', FKTABLE_NAME: 'MESSAGE', FKCOLUMN_NAME: column, PKTABLE_SCHEM: 'S', PKTABLE_NAME: 'USER',
-         PKCOLUMN_NAME: 'ID', KEY_SEQ: 1, FK_NAME: null]
+    private static Map<String, Object> foreignKeyRow(String column, String referencedTable = 'USER', String referencedColumn = 'ID',
+                                                     int keySeq = 1, String name = null) {
+        [FKTABLE_SCHEM: 'S', FKTABLE_NAME: 'MESSAGE', FKCOLUMN_NAME: column, PKTABLE_SCHEM: 'S', PKTABLE_NAME: referencedTable,
+         PKCOLUMN_NAME: referencedColumn, KEY_SEQ: keySeq, FK_NAME: name]
     }
 
     private static ResultSet rows(List<Map<String, Object>> rows) {

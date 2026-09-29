@@ -37,6 +37,7 @@ import java.sql.PreparedStatement;
 import java.sql.ResultSet;
 import java.sql.SQLException;
 import java.util.ArrayList;
+import java.util.Collection;
 import java.util.HashMap;
 import java.util.HashSet;
 import java.util.LinkedHashMap;
@@ -47,6 +48,7 @@ import java.util.Map;
 import java.util.Objects;
 import java.util.Set;
 import java.util.TreeMap;
+import java.util.stream.Collectors;
 
 /**
  * Reads the schema metadata used by the schema validation using JDBC {@link DatabaseMetaData}.
@@ -444,8 +446,13 @@ final class JdbcSchemaMetadataReader {
                     resultSet.getString("FKCOLUMN_NAME"), resultSet.getString("PKCOLUMN_NAME"), resultSet.getInt("KEY_SEQ")));
         }
         for (String tableKey : readTables) {
+            Collection<ForeignKeyColumns> tableForeignKeys = foreignKeys.getOrDefault(tableKey, Map.of()).values();
+            Set<List<String>> ambiguousTables = ambiguousUnnamedForeignKeyTables(tableForeignKeys);
             List<SqlForeignKeyMetadata> foreignKeyMetadata = new ArrayList<>();
-            for (ForeignKeyColumns fk : foreignKeys.getOrDefault(tableKey, Map.of()).values()) {
+            for (ForeignKeyColumns fk : tableForeignKeys) {
+                if (StringUtils.isEmpty(fk.name()) && ambiguousTables.contains(referencedTableKey(fk))) {
+                    continue;
+                }
                 foreignKeyMetadata.add(new SqlForeignKeyMetadata(fk.name(), new ArrayList<>(fk.columns().values()),
                     fk.referencedSchema(), fk.referencedTable(), new ArrayList<>(fk.referencedColumns().values())));
             }
@@ -467,9 +474,8 @@ final class JdbcSchemaMetadataReader {
         } else {
             // Unnamed foreign keys to the same table are separated by the column position, the rows are ordered
             // by the referenced table and the position, so the columns of the foreign keys can be interleaved.
-            // The metadata has nothing identifying the foreign key of a row, so the columns of two unnamed composite foreign keys
-            // to the same table can be paired differently than declared. Only SQLite reports unnamed foreign keys (the other
-            // databases name every constraint) and the SQLite foreign keys are not validated, see SqlSchemaUtils.createdForeignKeys
+            // The metadata has nothing identifying the foreign key of a row, the foreign keys that cannot be told apart
+            // are left out, see ambiguousUnnamedForeignKeyTables
             int group = 0;
             ForeignKeyColumns existing = tableForeignKeys.get(unnamedForeignKeyKey(referencedSchema, referencedTable, group));
             while (existing != null && existing.columns().containsKey(keySeq)) {
@@ -482,6 +488,26 @@ final class JdbcSchemaMetadataReader {
             k -> new ForeignKeyColumns(name, referencedSchema, referencedTable, new TreeMap<>(), new TreeMap<>()));
         foreignKey.columns().put(keySeq, column);
         foreignKey.referencedColumns().put(keySeq, referencedColumn);
+    }
+
+    /**
+     * The referenced tables of the unnamed foreign keys whose columns cannot be paired: several unnamed foreign keys to
+     * the same table, one of them composite. The rows at the same column position are in no particular order, so
+     * the second column of a composite foreign key can be taken for the one of another foreign key. Only the unnamed
+     * single column foreign keys to the same table are told apart.
+     */
+    private static Set<List<String>> ambiguousUnnamedForeignKeyTables(Collection<ForeignKeyColumns> foreignKeys) {
+        Map<List<String>, List<ForeignKeyColumns>> unnamedByTable = foreignKeys.stream()
+            .filter(fk -> StringUtils.isEmpty(fk.name()))
+            .collect(Collectors.groupingBy(JdbcSchemaMetadataReader::referencedTableKey));
+        return unnamedByTable.entrySet().stream()
+            .filter(entry -> entry.getValue().size() > 1 && entry.getValue().stream().anyMatch(fk -> fk.columns().size() > 1))
+            .map(Map.Entry::getKey)
+            .collect(Collectors.toSet());
+    }
+
+    private static List<String> referencedTableKey(ForeignKeyColumns foreignKey) {
+        return List.of(foreignKey.referencedSchema() == null ? "" : foreignKey.referencedSchema(), foreignKey.referencedTable());
     }
 
     /**

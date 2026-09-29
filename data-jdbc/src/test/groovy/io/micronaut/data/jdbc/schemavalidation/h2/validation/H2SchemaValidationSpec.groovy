@@ -558,8 +558,10 @@ class H2SchemaValidationSpec extends Specification {
         created.test(referencing('foo', true))
         created.test(referencing('Foo', false))
 
-        and:"The MySQL table names are compared ignoring the case"
-        SqlSchemaUtils.createdForeignKeys(tables, Dialect.MYSQL).test(referencing('FOO', true))
+        and:"The MySQL table names are case-sensitive depending on the server, a foreign key is only created to the table created with the same name"
+        !SqlSchemaUtils.createdForeignKeys(tables, Dialect.MYSQL).test(referencing('FOO', true))
+        !SqlSchemaUtils.createdForeignKeys(tables, Dialect.MYSQL).test(referencing('FOO', false))
+        SqlSchemaUtils.createdForeignKeys(tables, Dialect.MYSQL).test(referencing('foo', false))
     }
 
     void 'foreign keys reference the table with its own escaping'() {
