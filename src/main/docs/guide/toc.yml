@@ -130,12 +130,7 @@ mongo:
     mongoAssociationFetching: Association Fetching
   mongoJoinQueries: Join Queries
   mongoAttributeConverter: Using Attribute Converter
-  mongoCriteriaSpecifications:
-    title: Repositories with Criteria API
-    mongoCriteriaExecuteQuery: Querying
-    mongoCriteriaExecuteUpdate: Updating
-    mongoCriteriaExecuteDelete: Deleting
-    mongoOtherRepositoryVariations: Other repository variations
+  mongoCriteriaSpecifications: Repositories with Criteria API
   mongoOptimisticLocking: Optimistic locking
 azureCosmos:
   title: Micronaut Data Azure Cosmos
@@ -143,11 +138,7 @@ azureCosmos:
   azureCosmosConfiguration: Configuration
   azureCosmosRepositories:
     title: Repositories
-  azureCosmosCriteriaSpecifications:
-    title: Repositories with Criteria API
-    azureCosmosCriteriaExecuteQuery: Querying
-    azureCosmosCriteriaExecuteUpdate: Updating
-    azureCosmosCriteriaExecuteDelete: Deleting
+  azureCosmosCriteriaSpecifications: Repositories with Criteria API
   azureCosmosSpecifics: Azure Cosmos Specifics
   azureCosmosAttributeConverter: Using Attribute Converter
   azureCosmosOptimisticLocking: Optimistic locking

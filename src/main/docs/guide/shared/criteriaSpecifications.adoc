@@ -1,8 +1,23 @@
 In some cases, you need to build a query programmatically and at the runtime; for that, Micronaut Data supports Jakarta Persistence Criteria API 3.0.
 
+The API described in this section is the same for every Micronaut Data module. With Micronaut Data JPA the criteria are executed by Hibernate, while Micronaut Data JDBC / R2DBC, MongoDB and Azure Cosmos implement a subset of the Criteria API themselves. For the additional dependency these modules require and the Criteria API features they do not support, see:
+
+- <<dbcCriteriaSpecifications, Criteria API with JDBC / R2DBC>>
+- <<mongoCriteriaSpecifications, Criteria API with MongoDB>>
+- <<azureCosmosCriteriaSpecifications, Criteria API with Azure Cosmos>>
+
 To implement queries that cannot be defined at the compile-time Micronaut Data introduces api:data.repository.jpa.JpaSpecificationExecutor[] repository interface that can be used to extend your repository interface:
 
+.JDBC / R2DBC
 snippet::example.PersonRepository[project-base="doc-examples/jdbc-example",source="main" tags="repository",indent="0"]
+
+.MongoDB
+snippet::example.PersonRepository[project-base="doc-examples/mongo-example",source="main" tags="repository",indent="0"]
+
+.Azure Cosmos
+snippet::example.PersonRepository[project-base="doc-examples/azure-cosmos-example",source="main" tags="repository",indent="0"]
+
+Only the repository annotation and the ID type differ between the modules; with Micronaut Data JPA the repository is annotated with ann:data.annotation.Repository[]. The remaining examples in this section use the JDBC example project; the MongoDB and Azure Cosmos example projects declare equivalent methods and specifications, referencing properties by name (for example `root.get("name")`) instead of through the <<typeSafeJava, static metamodel>>.
 
 [.lang-python]
 NOTE: In Python declare the specification methods on the repository itself: Micronaut Data matches them by their `PredicateSpecification` / `QuerySpecification` / `UpdateSpecification` / `DeleteSpecification` parameter types. A specification is a plain Python function or lambda, and since `and`, `or` and `not` are Python keywords, the corresponding `CriteriaBuilder` methods are called as `and_`, `or_` and `not_`.

@@ -39,12 +39,11 @@ To configure Hibernate's metamodel generator, add the following dependency to th
 
 dependency:hibernate-jpamodelgen[groupId="org.hibernate.orm", scope="annotationProcessor"]
 
-NOTE: Hibernate 6 is required for Jakarta (`jakarta.persistence`).
-Prior versions are based on `javax.persistence`.
+NOTE: Use the Hibernate 6 or later generator (group `org.hibernate.orm`), which generates metamodel classes for `jakarta.persistence`.
 
 [NOTE]
 ====
-For Kotlin, add the dependency in https://docs.micronaut.io/4.10.18/guide/#kaptOrKsp[kapt or ksp scope].
+For Kotlin, add the dependency in https://docs.micronaut.io/latest/guide/#kaptOrKsp[kapt or ksp scope].
 For Groovy, add it in `compileOnly` scope.
 ====
 

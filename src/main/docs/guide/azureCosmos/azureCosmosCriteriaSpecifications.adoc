@@ -1,15 +1,12 @@
-In some cases, you need to build a query programmatically and at the runtime; for that, Micronaut Data implements a subset of Jakarta Persistence Criteria API 3.0, which can be used for Micronaut Data Azure Cosmos features. To utilize this feature add the following dependency:
+Micronaut Data Azure Cosmos supports building queries programmatically at runtime using the Jakarta Persistence Criteria API. The repository interfaces, the specification types and how to use them for querying, updating and deleting are the same for all Micronaut Data modules and are described in the <<criteriaSpecifications, Repositories with Jakarta Criteria API>> section, including the async, reactive and coroutine <<otherRepositoryVariations, repository variations>>.
+
+Micronaut Data implements a subset of Jakarta Persistence Criteria API 3.0, which can be used for Micronaut Data Azure Cosmos features. To utilize this feature add the following dependency:
 
 dependency:jakarta.persistence:jakarta.persistence-api[]
 
-To implement queries that cannot be defined at the compile-time Micronaut Data introduces api:data.repository.jpa.JpaSpecificationExecutor[] repository interface that can be used to extend your repository interface:
+Then extend api:data.repository.jpa.JpaSpecificationExecutor[] (or one of its variations) in a ann:data.cosmos.annotation.CosmosRepository[] repository:
 
 snippet::example.PersonRepository[project-base="doc-examples/azure-cosmos-example",source="main" tags="repository",indent="0"]
-
-[.lang-python]
-NOTE: In Python declare the specification methods on the repository itself: Micronaut Data matches them by their `PredicateSpecification` / `QuerySpecification` / `UpdateSpecification` / `DeleteSpecification` parameter types. A specification is a plain Python function or lambda, and since `and`, `or` and `not` are Python keywords, the corresponding `CriteriaBuilder` methods are called as `and_`, `or_` and `not_`.
-
-Each method expects a "specification" which is a functional interface with a set of Criteria API objects intended to build a query programmatically.
 
 Micronaut Criteria API currently implements only a subset of the API. Most of it is internally used to create queries with predicates and projections.
 
@@ -21,5 +18,23 @@ Currently, not supported JPA Criteria API features:
 - Custom or tuple result type
 - Transformation expressions like concat, substring etc.
 - Cases and functions
+
+Specific criteria supported by Micronaut Azure Cosmos Data is `ArrayContains` or `CollectionContains` and for a class having an array or list of strings field named `tags` it can be used either via custom repository method like this:
+
+snippet::example.FamilyRepository[project-base="doc-examples/azure-cosmos-example",source="main" tags="method_array_contains",indent="0"]
+
+or predicate specification:
+
+snippet::example.FamilyRepository[project-base="doc-examples/azure-cosmos-example",source="main" tags="predicate_array_contains",indent="0"]
+
+Please note that Microsoft Data Azure Cosmos Db supports searching for list or array containing only against single element.
+For partial search using `ArrayContains` generic repository methods cannot be used but custom methods with raw query like this:
+
+snippet::example.FamilyRepository[project-base="doc-examples/azure-cosmos-example",source="main" tags="array_contains_partial",indent="0"]
+and then pass map entry with "gender" as key and gender as value, basically any object that will serialize to `{"gender": "<gender_value>"}` for this example.
+This will perform search against `children` array in the `Family` class using just `gender` field.
+It can be also achieved by using predicate specification:
+
+snippet::example.FamilyRepository[project-base="doc-examples/azure-cosmos-example",source="main" tags="predicate_array_contains_partial",indent="0"]
 
 More information about Jakarta Persistence Criteria API 3.0 you can find at the https://jakarta.ee/specifications/persistence/3.0/jakarta-persistence-spec-3.0.html#a6925[official API specification]
