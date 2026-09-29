@@ -438,7 +438,7 @@ final class JdbcSchemaMetadataReader {
         } else {
             foreignKeys.clear();
             readTables = readTablesMetadata("foreign keys", tables,
-                (catalog, tableSchema, table) -> metaData.getImportedKeys(catalog, tableSchema, table),
+                metaData::getImportedKeys,
                 (tableKey, resultSet) -> addForeignKeyColumn(foreignKeys.computeIfAbsent(tableKey, k -> new LinkedHashMap<>()),
                     resultSet.getString("FK_NAME"), resultSet.getString("PKTABLE_SCHEM"), resultSet.getString("PKTABLE_NAME"),
                     resultSet.getString("FKCOLUMN_NAME"), resultSet.getString("PKCOLUMN_NAME"), resultSet.getInt("KEY_SEQ")));
