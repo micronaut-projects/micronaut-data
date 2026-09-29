@@ -14,6 +14,7 @@ dependencies {
     implementation(mnSerde.micronaut.serde.jackson)
     implementation(mnSerde.micronaut.serde.support)
 
+    runtimeOnly mn.micronaut.http.server.netty
     runtimeOnly mnSql.micronaut.jdbc.tomcat
     runtimeOnly mnLogging.logback.classic
     runtimeOnly mnSql.h2

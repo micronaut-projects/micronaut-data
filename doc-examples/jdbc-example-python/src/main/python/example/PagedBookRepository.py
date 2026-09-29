@@ -4,6 +4,7 @@ from micronaut.data.model import Page, Pageable, Slice, Sort
 from micronaut.data.repository import CrudRepository
 
 from example.Book import Book
+from example.BookSummary import BookSummary
 
 
 @JdbcRepository(dialect="H2")
@@ -30,3 +31,5 @@ class PagedBookRepository(CrudRepository[Book, int]):
            nativeQuery=True)  # <1>
     def searchByTitle(self, title: str, pageable: Pageable) -> Page[Book]: ...
     # end::native[]
+
+    def list(self, pageable: Pageable) -> Page[BookSummary]: ...
