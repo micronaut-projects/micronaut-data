@@ -1,4 +1,4 @@
-Inspired by the similar annotation in Hibernate, you can apply a transformation when either reading or writing a column from or to the database using the ann:data.jdbc.annotation.ColumnTransformer[] annotation.
+Inspired by the similar annotation in Hibernate, you can apply a transformation when either reading or writing a column from or to the database using the ann:data.annotation.sql.ColumnTransformer[] annotation.
 
 This feature can be used to encrypt/decrypt values or invoke any arbitrary database function. To define a read transformation use the `read` member. For example:
 

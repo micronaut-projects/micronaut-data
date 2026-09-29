@@ -58,10 +58,10 @@ Hibernate reactive is non-blocking that repository interfaces and classes you de
 |Extends api:data.repository.GenericRepository[] and adds CRUD methods that return rs:Publisher[]
 
 |api:data.repository.reactive.ReactorCrudRepository[]
-|Extends api:data.repository.ReactiveStreamsCrudRepository[] and is using Reactor return types
+|Extends api:data.repository.reactive.ReactiveStreamsCrudRepository[] and is using Reactor return types
 
 |api:data.repository.reactive.RxJavaCrudRepository[]
-|Extends api:data.repository.GenericRepository[] and adds CRUD methods that return RxJava 2 types
+|Extends api:data.repository.GenericRepository[] and adds CRUD methods that return RxJava 3 types
 
 |api:data.repository.kotlin.CoroutineCrudRepository[]
 |Extends api:data.repository.GenericRepository[] and is using Kotlin coroutines for reactive CRUD operations

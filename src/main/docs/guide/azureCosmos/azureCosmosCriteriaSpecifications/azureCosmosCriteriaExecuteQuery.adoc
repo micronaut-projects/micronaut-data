@@ -1,10 +1,10 @@
-To find an entity or multiple entities you can use one of the following methods from api:data.jpa.repository.JpaSpecificationExecutor[] interface:
+To find an entity or multiple entities you can use one of the following methods from api:data.repository.jpa.JpaSpecificationExecutor[] interface:
 
 snippet::example.PersonRepository[project-base="doc-examples/azure-cosmos-example",source="main" tags="find",indent="0"]
 
 As you can see, there are two variations of `findOne`/`findAll` methods.
 
-First method is expecting api:data.repository.criteria.PredicateSpecification[] which is a simple specification interface that can be implemented to return a predicate:
+First method is expecting api:data.repository.jpa.criteria.PredicateSpecification[] which is a simple specification interface that can be implemented to return a predicate:
 
 [source,java]
 ----

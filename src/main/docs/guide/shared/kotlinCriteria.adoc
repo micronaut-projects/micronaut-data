@@ -36,7 +36,7 @@ fun nameOrAgeMatches(age: Int, name: String?) = where<Person> {
 }
 ----
 
-It's possible to use `where` predicate builder with following methods in api:data.repository.JpaSpecificationExecutor[]:
+It's possible to use `where` predicate builder with following methods in api:data.repository.jpa.JpaSpecificationExecutor[]:
 
 - `findOne(io.micronaut.data.repository.jpa.criteria.PredicateSpecification)`
 - `findAll(io.micronaut.data.repository.jpa.criteria.PredicateSpecification)`

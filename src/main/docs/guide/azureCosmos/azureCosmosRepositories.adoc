@@ -1,10 +1,10 @@
-As seen in the <<azureCosmosQuickStart, Quick Start>> Azure Cosmos Data repositories in Micronaut Data are defined as interfaces that are annotated with the ann:io.micronaut.data.cosmos.annotation.CosmosRepository[].
+As seen in the <<azureCosmosQuickStart, Quick Start>> Azure Cosmos Data repositories in Micronaut Data are defined as interfaces that are annotated with the ann:data.cosmos.annotation.CosmosRepository[].
 
 For example:
 
 snippet::example.BookRepository[project-base="doc-examples/azure-cosmos-example", source="main", tags="repository"]
 
-<1> ann:io.micronaut.data.cosmos.annotation.CosmosRepository[] marking the interface to access Azure Cosmos Db
+<1> ann:data.cosmos.annotation.CosmosRepository[] marking the interface to access Azure Cosmos Db
 <2> The `CrudRepository` interface take 2 generic arguments, the entity type (in this case `Book`) and the ID type (in this case `String`)
 
 The entity to treat as the root entity for the purposes of querying is established either from the method signature or from the generic type parameter specified to the api:data.repository.GenericRepository[] interface.

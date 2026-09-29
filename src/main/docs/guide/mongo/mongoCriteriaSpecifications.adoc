@@ -2,7 +2,7 @@ In some cases, you need to build a query programmatically and at the runtime; fo
 
 dependency:jakarta.persistence:jakarta.persistence-api[]
 
-To implement queries that cannot be defined at the compile-time Micronaut Data introduces api:data.repository.JpaSpecificationExecutor[] repository interface that can be used to extend your repository interface:
+To implement queries that cannot be defined at the compile-time Micronaut Data introduces api:data.repository.jpa.JpaSpecificationExecutor[] repository interface that can be used to extend your repository interface:
 
 snippet::example.PersonRepository[project-base="doc-examples/mongo-example",source="main" tags="repository",indent="0"]
 

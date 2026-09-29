@@ -8,20 +8,20 @@ More about Oracle JSON VIEW can be read here https://docs.oracle.com/en/database
 Essentially, json view will be treated like mapped entity and will return JSON structure from the database and be mapped to java entity. All CRUD operations can be
 performed against json view mapped entities.
 
-Also, entity can be mapped to a ann:io.micronaut.data.annotation.JsonView[] as follows:
+Also, entity can be mapped to a ann:data.annotation.JsonView[] as follows:
 
 snippet::example.AddressSubView[project-base="doc-examples/jdbc-example", source="main", tags="record-example"]
 
-The main difference between ann:io.micronaut.data.annotation.JsonView[] and ann:io.micronaut.data.annotation.JsonSubView[], and the reason for the existence of the ann:io.micronaut.data.annotation.JsonSubView[] annotation, is to specify for which classes the creation
+The main difference between ann:data.annotation.JsonView[] and ann:data.annotation.JsonSubView[], and the reason for the existence of the ann:data.annotation.JsonSubView[] annotation, is to specify for which classes the creation
 SQL script will be generated. SQL scripts are generated for JsonViews, but not for JsonSubViews.
 
 ==== Specifying joins
 
-You can define relationships between entities within JSON views by using ann:io.micronaut.data.annotation.Relation[]. Tables are
-joined automatically, on columns annotated with ann:io.micronaut.data.annotation.Id[] by default, but if user specified columns to join in
-by ann:io.micronaut.data.annotation.JoinColumn[], those columns will be used.
+You can define relationships between entities within JSON views by using ann:data.annotation.Relation[]. Tables are
+joined automatically, on columns annotated with ann:data.annotation.Id[] by default, but if user specified columns to join in
+by ann:data.annotation.sql.JoinColumn[], those columns will be used.
 
-NOTE: If ann:io.micronaut.data.annotation.JoinColumn[] is not specified, property name of Json View class needs to match the name of the corresponding entity class property name.
+NOTE: If ann:data.annotation.sql.JoinColumn[] is not specified, property name of Json View class needs to match the name of the corresponding entity class property name.
 
 For example, to associate a `StudentView` with its related `StudentScheduleSubView` entries in a one-to-many relationship,
 annotate your view class using `JoinColumn`, where `name` is the identifier for `StudentView`, and `referencedColumnName`
@@ -32,7 +32,7 @@ snippet::example.StudentView[project-base="doc-examples/jdbc-example", source="m
 ==== Using `@MappedProperty` annotation
 
 Json view field names do not need to match the underlying table field names, and if it's not matching, then users must annotate the field
-The fields of types annotated annotated with ann:io.micronaut.data.annotation.JsonView[] or ann:io.micronaut.data.annotation.JsonSubView[] do not need the match the corresponding entities field names as specified by the `entity` member (in the below case `Teacher`).
+The fields of types annotated annotated with ann:data.annotation.JsonView[] or ann:data.annotation.JsonSubView[] do not need the match the corresponding entities field names as specified by the `entity` member (in the below case `Teacher`).
 
 The `@MappedProperty` annotation can be used to control which underlying field the view matches in the entity.
 
@@ -63,12 +63,12 @@ CREATE OR REPLACE JSON RELATIONAL DUALITY VIEW STUDENT_VIEW AS
     WITH UPDATE INSERT DELETE -- <6>
 ----
 
-<1> Generated identity column, annotated with ann:io.micronaut.data.annotation.Generated[] and ann:io.micronaut.data.annotation.Id[]
+<1> Generated identity column, annotated with ann:data.annotation.GeneratedValue[] and ann:data.annotation.Id[]
 <2> Ordinary column
-<3> Relation column, annotated with ann:io.micronaut.data.annotation.Relation[]
-<4> Operations supported, specified by operations field in ann:io.micronaut.data.annotation.JsonSubView[]
-<5> Column matching, specified by ann:io.micronaut.data.annotation.JoinColumn[]
-<6> Operations supported, specified by operations field in ann:io.micronaut.data.annotation.JsonView[] (defaults to UPDATE INSERT DELETE)
+<3> Relation column, annotated with ann:data.annotation.Relation[]
+<4> Operations supported, specified by operations field in ann:data.annotation.JsonSubView[]
+<5> Column matching, specified by ann:data.annotation.sql.JoinColumn[]
+<6> Operations supported, specified by operations field in ann:data.annotation.JsonView[] (defaults to UPDATE INSERT DELETE)
 
 More documentation: https://docs.oracle.com/en/database/oracle/oracle-database/26/jsnvu/overview-json-relational-duality-views.html/[link]
 

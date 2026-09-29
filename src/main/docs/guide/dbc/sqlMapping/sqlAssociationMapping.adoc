@@ -44,4 +44,4 @@ Use 'mappedBy' to specify inverse property that this relation is mapped by.
 |===
 
 
-NOTE: You can use JPA's equivalent annotations ann:data.jdbc.annotation.JoinTable[] and ann:data.jdbc.annotation.JoinColumn[] to specify more complex mapping definition.
+NOTE: You can use JPA's equivalent annotations ann:data.annotation.sql.JoinTable[] and ann:data.annotation.sql.JoinColumn[] to specify more complex mapping definition.

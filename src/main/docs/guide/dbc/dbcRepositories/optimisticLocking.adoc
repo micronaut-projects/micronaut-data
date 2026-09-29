@@ -17,7 +17,7 @@ It's possible to use ann:data.annotation.Version[] in a partial update or a dele
 
 snippet::example.StudentRepository[project-base="doc-examples/hibernate-example", source="main", tags="studentRepository", indent="0"]
 
-For SQL dialects, you can also compute optimistic locking values with ann:io.micronaut.data.annotation.sql.GeneratedETag[], ann:io.micronaut.data.annotation.sql.ETagValue[], and ann:io.micronaut.data.annotation.sql.ETaggable[].
+For SQL dialects, you can also compute optimistic locking values with ann:data.annotation.sql.GeneratedETag[], ann:data.annotation.sql.ETagValue[], and ann:data.annotation.sql.ETaggable[].
 Annotate a `String` version property with `@GeneratedETag`, mark individual input fields with `@ETagValue`, or annotate the entity with `@ETaggable` to include all eligible persistent scalar fields by default.
 Use `@ETagValue(exclude = true)` to exclude a field from class-level `@ETaggable` input selection.
 Owning-side foreign-key columns are included only when `@ETaggable(includeForeignKeys = true)` is set or when the relation property is explicitly annotated with `@ETagValue`.
