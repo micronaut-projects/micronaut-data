@@ -1,8 +1,8 @@
-Since Micronaut Data 4.0 and Oracle23c database, an entity can be mapped to an JSON VIEW as follows:
+With Oracle Database 23ai or later, an entity can be mapped to a JSON Relational Duality View as follows:
 
 snippet::example.ContactView[project-base="doc-examples/jdbc-example", source="main", tags="record-example"]
 
-where "CONTACT_VIEW" is actual name of duality json view object in the database. It is currently supported only by the Oracle database, since version 23c.
+where "CONTACT_VIEW" is actual name of duality json view object in the database. It is currently supported only by the Oracle database, since version 23ai.
 More about Oracle JSON VIEW can be read here https://docs.oracle.com/en/database/oracle/oracle-database/23/jsnvu/overview-json-relational-duality-views.html.
 
 Essentially, json view will be treated like mapped entity and will return JSON structure from the database and be mapped to java entity. All CRUD operations can be

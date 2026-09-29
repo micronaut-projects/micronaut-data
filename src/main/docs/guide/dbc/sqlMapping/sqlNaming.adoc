@@ -5,7 +5,7 @@ If this is not satisfactory then you can customize this by setting the `namingSt
 .Micronaut Data Naming Strategy
 snippet::example.CountryRegion[project-base="doc-examples/jdbc-example", source="main", tags="namingStrategy"]
 
-Few important things to note. Since Micronaut Data pre-computes the table and column name mappings at compilation time the specified api:data.model.naming.NamingStrategy[] implementation must be on the annotation processor classpath (`annotationProcessor` scope for Java or `kapt` for Kotlin).
+Few important things to note. Since Micronaut Data pre-computes the table and column name mappings at compilation time the specified api:data.model.naming.NamingStrategy[] implementation must be on the annotation processor classpath (`annotationProcessor` scope for Java, `kapt` or `ksp` for Kotlin, and `compileOnly` for Groovy).
 
 If running project in native image, custom naming strategy needs to have `io.micronaut.core.annotation.TypeHint(CustomNamingStrategy.class)` annotation where custom naming strategy class is `CustomNamingStrategy`.
 

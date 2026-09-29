@@ -1,4 +1,4 @@
-Since 2.3, Micronaut Data supports defining entity event listeners for either JPA or JDBC using either annotations or by implementation the api:data.event.EntityEventListener[] interface.
+Micronaut Data supports defining entity event listeners for JPA, JDBC, R2DBC, MongoDB and Azure Cosmos using either annotations or by implementing the api:data.event.EntityEventListener[] interface.
 
 The following table lists the available event annotations:
 
@@ -28,7 +28,7 @@ The following table lists the available event annotations:
 
 |===
 
-TIP: You can also use the JPA annotations in the `javax.persistence` package if you prefer.
+TIP: You can also use the equivalent JPA annotations from the `jakarta.persistence` package, such as `jakarta.persistence.PrePersist`, if you prefer.
 
 Each event listener annotation can be applied to an instance method of an entity class (a JPA entity or a class annotated with ann:data.annotation.MappedEntity) in which case the method must return `void` and have zero arguments for example:
 

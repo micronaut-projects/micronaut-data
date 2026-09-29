@@ -91,7 +91,7 @@ dbc:
     sqlJsonView: JSON View
     sqlOracleBoolean: Oracle BOOLEAN Support
     sqlVectorType: SQL Vector Type Mapping
-    javaRecords: Support for Java 16 Records
+    javaRecords: Support for Java Records
     kotlinData: Support for Kotlin immutable data classes
   dbcDataTypes: Data Types
   dbcAttributeConverter: Using Attribute Converter

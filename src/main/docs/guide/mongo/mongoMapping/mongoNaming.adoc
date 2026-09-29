@@ -5,6 +5,6 @@ If this is not satisfactory then you can customize this by setting the `namingSt
 .Micronaut Data Naming Strategy
 snippet::example.CountryRegion[project-base="doc-examples/mongo-example", source="main", tags="namingStrategy"]
 
-Few important things to note. Since Micronaut Data pre-computes the collection and attribute name mappings at compilation time the specified api:data.model.naming.NamingStrategy[] implementation must be on the annotation processor classpath (`annotationProcessor` scope for Java or `kapt` for Kotlin).
+Few important things to note. Since Micronaut Data pre-computes the collection and attribute name mappings at compilation time the specified api:data.model.naming.NamingStrategy[] implementation must be on the annotation processor classpath (`annotationProcessor` scope for Java, `kapt` or `ksp` for Kotlin, and `compileOnly` for Groovy).
 
 In addition, if you don't want to repeat the above annotation definition on every entity it is handy to define a meta-annotation where the above annotation definition is applied to another annotation that you add to your class.
