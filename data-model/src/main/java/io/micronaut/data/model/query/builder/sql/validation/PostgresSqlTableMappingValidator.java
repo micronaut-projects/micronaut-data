@@ -70,7 +70,8 @@ final class PostgresSqlTableMappingValidator extends BaseSqlTableMappingValidato
 
     @Override
     public String getIndexesQuery() {
-        // An expression has no attribute (attnum 0), its column name is null
+        // An expression has no attribute (attnum 0), its column name is null. The key columns are followed
+        // by the INCLUDE columns, which are not the index key
         return """
             SELECT ct.relname, ci.relname, CASE WHEN i.indisunique THEN 1 ELSE 0 END, a.attname, k.position
             FROM pg_catalog.pg_index i
@@ -79,7 +80,7 @@ final class PostgresSqlTableMappingValidator extends BaseSqlTableMappingValidato
             JOIN pg_catalog.pg_namespace n ON n.oid = ct.relnamespace
             CROSS JOIN LATERAL unnest(i.indkey::int2[]) WITH ORDINALITY AS k(attnum, position)
             LEFT JOIN pg_catalog.pg_attribute a ON a.attrelid = ct.oid AND a.attnum = k.attnum AND k.attnum > 0
-            WHERE n.nspname = ?""";
+            WHERE n.nspname = ? AND k.position <= i.indnkeyatts""";
     }
 
     @Override

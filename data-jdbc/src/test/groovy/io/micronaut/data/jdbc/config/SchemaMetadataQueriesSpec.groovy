@@ -67,6 +67,11 @@ class SchemaMetadataQueriesSpec extends Specification {
         execute(connection, 'CREATE UNIQUE INDEX md_composite_bc ON md_composite (b, c)')
         execute(connection, 'CREATE TABLE md_none (id INT)')
         execute(connection, 'CREATE INDEX md_none_id ON md_none (id)')
+        boolean includeColumns = dialect in [Dialect.POSTGRES, Dialect.SQL_SERVER]
+        if (includeColumns) {
+            // The included column is stored in the index but it is not the index key
+            execute(connection, 'CREATE INDEX md_single_include ON md_single (id) INCLUDE (name)')
+        }
 
         when:
         // The per table metadata calls fail, the primary keys and indexes can only be read with the queries
@@ -92,12 +97,17 @@ class SchemaMetadataQueriesSpec extends Specification {
         and:"The reader reads the same primary keys and indexes as per table"
         queryTables.tables().size() == 3
         primaryKeys(queryTables.tables()) == primaryKeys(jdbcTables.tables())
-        indexes(queryTables.tables()) == indexes(jdbcTables.tables())
+        indexes(queryTables.tables(), 'md_single_include') == indexes(jdbcTables.tables(), 'md_single_include')
         table(queryTables.tables(), 'md_composite').primaryKeyColumns*.toLowerCase() == ['c', 'a', 'b']
         table(queryTables.tables(), 'md_none').primaryKeyColumns == []
         table(queryTables.tables(), 'md_composite').indexes.find { it.name().equalsIgnoreCase('md_composite_bc') }.with {
             it.unique() && it.columns()*.toLowerCase() == ['b', 'c']
         }
+
+        and:"The included columns are not index key columns"
+        !includeColumns || indexRows.findAll { it[1].equalsIgnoreCase('md_single_include') }.collect { it[3].toLowerCase() } == ['id']
+        !includeColumns || table(queryTables.tables(), 'md_single').indexes.find { it.name().equalsIgnoreCase('md_single_include') }
+            .columns()*.toLowerCase() == ['id']
 
         cleanup:
         TABLES.each { execute(connection, "DROP TABLE $it", true) }
@@ -144,9 +154,13 @@ class SchemaMetadataQueriesSpec extends Specification {
         return tables.collectEntries { key, table -> [key, table.primaryKeyColumns] }
     }
 
-    private static Map<String, Map<String, List<Object>>> indexes(Map<String, SqlTableMetadata> tables) {
+    /**
+     * The index with included columns is excluded, the drivers differ in reporting the included columns.
+     */
+    private static Map<String, Map<String, List<Object>>> indexes(Map<String, SqlTableMetadata> tables, String excludedIndex) {
         return tables.collectEntries { key, table ->
-            [key, table.indexes.collectEntries { index -> [index.name(), [index.unique(), index.columns()]] }]
+            [key, table.indexes.findAll { !it.name().equalsIgnoreCase(excludedIndex) }
+                .collectEntries { index -> [index.name(), [index.unique(), index.columns()]] }]
         }
     }
 
