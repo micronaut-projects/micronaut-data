@@ -19,7 +19,10 @@ import reactor.core.publisher.Flux;
 import reactor.core.publisher.Mono;
 
 /**
- * CRUD repository for Project Reactor.
+ * Project Reactor variation of {@link io.micronaut.data.repository.CrudRepository}, returning {@link Mono} for
+ * single results and {@link Flux} for multiple results. Errors are delivered as the error signal of the returned
+ * publisher, as described in {@link ReactiveStreamsCrudRepository}.
+ *
  * @param <E> The entity type
  * @param <ID> The ID type
  *

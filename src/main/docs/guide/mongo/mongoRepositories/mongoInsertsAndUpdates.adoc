@@ -1,6 +1,4 @@
-Unlike JPA/Hibernate, Micronaut Data MongoDB is stateless and has no notion of a persistence session that requires state management.
-
-Since there is no session, features like dirty checking are not supported. This has implications when defining repository methods for inserts and updates.
+Micronaut Data MongoDB is stateless: it does not keep track of the entities that it has loaded or saved. Modifying an entity object therefore does not change the database by itself, and nothing is written automatically at the end of a transaction. Every change must be written explicitly by calling a repository method, such as `save`, `update` or `delete`. This differs from JPA implementations such as Hibernate, which keep loaded entities in a persistence session and write detected changes ("dirty checking") when the session is flushed. It has implications when defining repository methods for inserts and updates.
 
 When saving an entity with a method like `save(MyEntity)`, Micronaut Data performs a conditional save.
 An entity without an identity value is inserted.

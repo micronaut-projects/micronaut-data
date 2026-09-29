@@ -23,13 +23,16 @@ import io.micronaut.transaction.exceptions.TransactionSystemException;
 import io.micronaut.transaction.exceptions.UnexpectedRollbackException;
 
 /**
- * NOTICE: This is a fork of Spring's {@code PlatformTransactionManager} modernizing it
- * to use enums, SLF4J and decoupling from Spring.
+ * A transaction manager for blocking code that lets the caller control the transaction boundaries explicitly:
+ * {@link #getTransaction(TransactionDefinition)} starts a new transaction or joins the current one according to the
+ * definition's propagation, and {@link #commit(TransactionStatus)} or {@link #rollback(TransactionStatus)} completes
+ * it. Every status obtained from {@code getTransaction} must be passed to exactly one of those two methods.
  *
- * This is the central interface in Spring's transaction infrastructure.
- * Applications can use this directly, but it is not primarily meant as API:
- * Typically, applications will work with either TransactionTemplate or
- * declarative transaction demarcation through AOP.
+ * <p>Most applications do not call these methods directly. They annotate methods with {@code @Transactional}, or pass
+ * a callback to {@link TransactionOperations#execute(TransactionDefinition, TransactionCallback)}, which begin, commit
+ * and roll back the transaction around the callback and are harder to misuse.
+ *
+ * <p>This type is derived from the Spring Framework's {@code PlatformTransactionManager} (Apache License 2.0).</p>
  *
  * <p>For implementors, it is recommended to derive from the provided
  * {@link io.micronaut.transaction.support.AbstractTransactionOperations}

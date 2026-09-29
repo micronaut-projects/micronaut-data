@@ -1,0 +1,112 @@
+When the Micronaut HTTP server is on the classpath, Micronaut Data registers a request argument binder (api:data.runtime.http.PageableRequestArgumentBinder[]) that creates a api:data.model.Pageable[] from the query parameters of the request. A controller method can therefore declare a `Pageable` parameter, without any annotation, and pass it to a repository method:
+
+snippet::example.BookController[project-base="doc-examples/jdbc-example", source="main", tags="controller", indent="0"]
+
+<1> Handles `GET /books`
+<2> The `Pageable` is bound from the `page`, `size` and `sort` query parameters of the request
+<3> The repository method `Page<BookSummary> list(Pageable pageable)` returns the requested page as a DTO projection. The returned api:data.model.Page[] is serialized as JSON
+
+The following query parameters are bound:
+
+[cols="1,4"]
+|===
+|Parameter |Description
+
+|`page`
+|The page number, starting from `0` (the first page). Defaults to `0`, a negative value is treated as `0`.
+
+|`size`
+|The number of elements per page. Defaults to `micronaut.data.pageable.default-page-size`, which itself defaults to `micronaut.data.pageable.max-page-size` (`100`). A size greater than the max page size is reduced to the max page size and a size lower than `1` is replaced by the default page size.
+
+|`sort`
+|A sort order, either a property name (`sort=title`) or a property name and a direction separated by a comma (`sort=pages,desc`). The direction is `asc` or `desc` (case-insensitive), if it's missing or not recognized the order is ascending. Repeat the parameter to sort by multiple properties, the orders are applied in the order of the parameters. Without the `sort` parameter the `Pageable` is unsorted.
+|===
+
+For example, the following request asks for the second page of three books, sorted by the number of pages in descending order and then by title:
+
+snippet::example.BookControllerTest[project-base="doc-examples/jdbc-example", tags="request", indent="0"]
+
+<1> `page=1&size=3&sort=pages,desc&sort=title` is bound to `Pageable.from(1, 3, Sort.of(Sort.Order.desc("pages"), Sort.Order.asc("title")))`
+<2> The JSON response can be read back as a `Page`
+
+The `Page` is serialized with its content, the requested `Pageable` and the total number of elements:
+
+[source,json]
+----
+{
+  "content": [
+    {"title": "The Border", "pages": 700},
+    {"title": "The Shining", "pages": 600},
+    {"title": "The Power of the Dog", "pages": 500}
+  ],
+  "pageable": {
+    "size": 3,
+    "number": 1,
+    "sort": {
+      "orderBy": [
+        {"nullOrdering": "NONE", "ignoreCase": false, "direction": "DESC", "property": "pages", "ascending": false},
+        {"nullOrdering": "NONE", "ignoreCase": false, "direction": "ASC", "property": "title", "ascending": true}
+      ]
+    },
+    "mode": "OFFSET"
+  },
+  "totalSize": 8
+}
+----
+
+A api:data.model.Slice[] can be returned in the same way, it doesn't include the `totalSize`.
+
+The sort properties are passed to the repository as they are requested. For derived and criteria queries, and explicit queries that are not native, they must be properties of the entity, otherwise the query fails. For native queries they are used as SQL identifiers (see <<dbcExplicitQueriesPagination, Explicit Queries and Pagination>>). Validate the sort properties that clients can request, for example by checking `pageable.getSort().getOrderBy()` against the properties you want to allow.
+
+NOTE: There is no binder for a standalone api:data.model.Sort[] parameter, use a `Pageable` parameter and its `getSort()` method instead.
+
+The names of the query parameters, the page sizes and the sort handling can be changed with the following configuration properties:
+
+[configuration]
+----
+micronaut:
+  data:
+    pageable:
+      max-page-size: 50
+      default-page-size: 20
+      page-parameter-name: p
+      size-parameter-name: limit
+      sort-parameter-name: orderBy
+      sort-delimiter: ':'
+      sort-ignore-case: true
+----
+
+[cols="2,1,4"]
+|===
+|Property |Default |Description
+
+|`micronaut.data.pageable.max-page-size`
+|`100`
+|The maximum page size. A greater requested size is reduced to this value.
+
+|`micronaut.data.pageable.default-page-size`
+|The max page size
+|The page size used when the request doesn't specify one.
+
+|`micronaut.data.pageable.page-parameter-name`
+|`page`
+|The name of the page number parameter.
+
+|`micronaut.data.pageable.size-parameter-name`
+|`size`
+|The name of the page size parameter.
+
+|`micronaut.data.pageable.sort-parameter-name`
+|`sort`
+|The name of the sort parameter.
+
+|`micronaut.data.pageable.sort-delimiter`
+|`,`
+|The delimiter between the property name and the direction in the sort parameter.
+
+|`micronaut.data.pageable.sort-ignore-case`
+|`false`
+|Whether the sort orders are case-insensitive (the property is compared with `LOWER(...)` for SQL databases).
+|===
+
+With the configuration above `GET /books?p=2&limit=10&orderBy=title:desc` requests the third page of ten books sorted by title in descending order, ignoring case.

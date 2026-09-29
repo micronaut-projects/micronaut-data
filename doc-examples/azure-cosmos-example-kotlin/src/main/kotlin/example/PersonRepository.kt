@@ -144,4 +144,4 @@ interface PersonRepository : CrudRepository<Person, String>, JpaSpecificationExe
     // end::specifications[]
     // tag::repository[]
 }
-
+// end::repository[]

@@ -58,10 +58,10 @@ Hibernate reactive is non-blocking that repository interfaces and classes you de
 |Extends api:data.repository.GenericRepository[] and adds CRUD methods that return rs:Publisher[]
 
 |api:data.repository.reactive.ReactorCrudRepository[]
-|Extends api:data.repository.ReactiveStreamsCrudRepository[] and is using Reactor return types
+|Extends api:data.repository.reactive.ReactiveStreamsCrudRepository[] and is using Reactor return types
 
 |api:data.repository.reactive.RxJavaCrudRepository[]
-|Extends api:data.repository.GenericRepository[] and adds CRUD methods that return RxJava 2 types
+|Extends api:data.repository.GenericRepository[] and adds CRUD methods that return RxJava 3 types
 
 |api:data.repository.kotlin.CoroutineCrudRepository[]
 |Extends api:data.repository.GenericRepository[] and is using Kotlin coroutines for reactive CRUD operations
@@ -81,25 +81,25 @@ snippet::example.BookRepository[project-base="doc-examples/hibernate-reactive-ex
 <2> The `ReactorCrudRepository` interface take 2 generic arguments, the entity type (in this case `Book`) and the ID type (in this case `Long`)
 
 
-=== Saving an Instance (Create)
+== Saving an Instance (Create)
 
 To save an instance use the `save` method of the `ReactorCrudRepository` interface:
 
 snippet::example.BookRepositorySpec[project-base="doc-examples/hibernate-reactive-example", tags="save", indent="0"]
 
-=== Retrieving an Instance (Read)
+== Retrieving an Instance (Read)
 
 To read a book back use `findById`:
 
 snippet::example.BookRepositorySpec[project-base="doc-examples/hibernate-reactive-example", tags="read", indent="0"]
 
-=== Updating an Instance (Update)
+== Updating an Instance (Update)
 
 To update an instance we use a custom method to do an update in a transaction:
 
 snippet::example.BookRepositorySpec[project-base="doc-examples/hibernate-reactive-example", tags="update", indent="0"]
 
-=== Deleting an Instance (Delete)
+== Deleting an Instance (Delete)
 
 To delete an instance use `deleteById`:
 

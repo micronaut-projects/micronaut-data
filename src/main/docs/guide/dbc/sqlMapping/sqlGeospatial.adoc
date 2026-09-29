@@ -11,7 +11,7 @@ Micronaut Data supports geospatial persistence through Micronaut repositories us
 The implementation is database-aware. Micronaut Data uses JSON and WKT converters in the Java model,
 and then applies dialect-specific SQL functions when reading from or writing to native spatial columns.
 
-=== JSON and WKT converters
+== JSON and WKT converters
 
 The model types in `io.micronaut.data.model.geo` are declared with `@TypeDef(type = DataType.STRING, converter = GeometryJsonConverter.class)`,
 so GeoJSON is the default mapping.
@@ -21,16 +21,16 @@ api:data.model.runtime.convert.GeometryWktConverter[] converts the same model ty
 
 Use the default GeoJSON mapping when you want Micronaut Data to serialize geospatial values as JSON:
 
-snippet::example.GeometryEntityJson[project="doc-examples/jdbc-geospatial", source="main", tags="get"]
+snippet::example.GeometryEntityJson[project-base="doc-examples/jdbc-geospatial", source="main", tags="get"]
 
 Use `@MappedProperty(converter = GeometryWktConverter.class)` when you want WKT conversion instead:
 
-snippet::example.GeometryEntityWkt[project="doc-examples/jdbc-geospatial", source="main", tags="get"]
+snippet::example.GeometryEntityWkt[project-base="doc-examples/jdbc-geospatial", source="main", tags="get"]
 
 NOTE: The converter controls the Java-side representation. The generated SQL still uses database-specific spatial functions
 and native spatial column definitions when the dialect supports them.
 
-=== SRID and coordinate reference system type
+== SRID and coordinate reference system type
 
 Use api:data.annotation.Srid[] to declare the spatial reference system identifier used for a persistent geospatial
 property. Micronaut Data uses the SRID value when it generates read and write conversion SQL, schema metadata, and
@@ -65,7 +65,7 @@ For PostgreSQL / PostGIS and SQL Server, `Srid.CrsType.GEOGRAPHIC` selects the n
 read and write conversions. Other dialects retain their native geometry column type. An explicit
 `@MappedProperty(definition = "...")` always takes precedence over the inferred column type.
 
-=== Query predicates
+== Query predicates
 
 Micronaut Data also translates repository finder methods and criteria predicates for geospatial comparisons into
 dialect-specific SQL.
@@ -84,12 +84,12 @@ database section below documents the exact spatial functions emitted for that di
 `Near` expects the second argument to be a numeric distance value. Micronaut Data passes that value through as a bind
 parameter and uses the most appropriate distance predicate available for the active dialect.
 
-=== Database vendor details
+== Database vendor details
 
 Each supported SQL dialect uses its own built-in spatial functions for read and write conversion,
 generates its own spatial column definitions, and emits its own index DDL.
 
-==== Oracle
+=== Oracle
 
 Oracle stores spatial values in `SDO_GEOMETRY` columns.
 
@@ -113,7 +113,7 @@ WARNING: Oracle `SDO_UTIL.FROM_GEOJSON` currently does not accept `NULL`. The bu
 Until the bug fix gets released, you can use GeoJSON conversion only for geospatial columns that are required.
 Otherwise you can use WKT conversion.
 
-===== Schema generation
+==== Schema generation
 
 The Oracle database requires rows in `USER_SDO_GEOM_METADATA` for spatial columns that are indexed. Micronaut Data generates
 those metadata statements automatically if you use Micronaut Data's internal schema-generation tooling, which is intended
@@ -138,7 +138,7 @@ are annotated with `@Index`:
 CREATE INDEX "IDX_GEOMETRY_ENTITY_JSON_LOCATION" ON "GEOMETRY_ENTITY_JSON" ("LOCATION") INDEXTYPE IS MDSYS.SPATIAL_INDEX
 ----
 
-===== Query predicates
+==== Query predicates
 
 Micronaut Data translates geospatial repository methods and criteria predicates to the following Oracle spatial functions:
 
@@ -159,7 +159,7 @@ Micronaut Data translates geospatial repository methods and criteria predicates 
 `convertedValue` is the Oracle spatial conversion call such as `SDO_UTIL.FROM_GEOJSON(?, NULL, srid)` or
 `SDO_UTIL.FROM_WKTGEOMETRY(TO_CHAR(?), srid)`.
 
-==== PostgreSQL
+=== PostgreSQL
 
 PostgreSQL geospatial support requires the PostGIS extension because the spatial types, functions, and indexes used by
 Micronaut Data come from PostGIS.
@@ -167,11 +167,11 @@ Micronaut Data come from PostGIS.
 PostGIS stores spatial values in `GEOMETRY` or `GEOGRAPHY` columns. Micronaut Data uses the `GEOMETRY` column type
 by default. To change the column type to `GEOGRAPHY`, set `@MappedProperty(definition = "geography")`:
 
-snippet::example.GeographyEntityJson[project="doc-examples/jdbc-geospatial", source="main", tags="get"]
+snippet::example.GeographyEntityJson[project-base="doc-examples/jdbc-geospatial", source="main", tags="get"]
 
 For WKT conversion, use:
 
-snippet::example.GeographyEntityWkt[project="doc-examples/jdbc-geospatial", source="main", tags="get"]
+snippet::example.GeographyEntityWkt[project-base="doc-examples/jdbc-geospatial", source="main", tags="get"]
 
 Micronaut Data uses the following functions to read and write spatial data:
 [cols="1,1,1,1"]
@@ -193,7 +193,7 @@ For `GEOGRAPHY` data type Micronaut Data still uses the same `ST_GeomFromGeoJSON
 and `ST_AsText` functions, but casts through `::geography` on writes and `::geometry` on reads because
 the PostGIS JSON and text conversion functions operate on geometry values.
 
-===== Schema generation
+==== Schema generation
 
 If using the internal schema-generation tooling, spatial indexes will be created for all columns whose properties are
 annotated with `@Index`:
@@ -203,7 +203,7 @@ annotated with `@Index`:
 CREATE INDEX "idx_geography_entity_json_location" ON "geography_entity_json" USING GIST ("location");
 ----
 
-===== Query predicates
+==== Query predicates
 
 Micronaut Data translates geospatial repository methods and criteria predicates to the following PostgreSQL / PostGIS spatial functions:
 
@@ -224,7 +224,7 @@ Micronaut Data translates geospatial repository methods and criteria predicates 
 `convertedValue` is the PostGIS conversion call such as `ST_SetSRID(ST_GeomFromGeoJSON(?), srid)` or
 `ST_GeomFromText(?, srid)`.
 
-==== MySQL
+=== MySQL
 
 MySQL stores spatial values in `GEOMETRY` columns.
 
@@ -244,7 +244,7 @@ Micronaut Data uses the following functions to read and write spatial data:
 | `ST_GeomFromText(?, srid)`
 |===
 
-===== Schema generation
+==== Schema generation
 
 If using the internal schema-generation tooling, spatial indexes will be created for all columns whose properties are
 annotated with `@Index`:
@@ -254,7 +254,7 @@ annotated with `@Index`:
 CREATE SPATIAL INDEX `idx_geometry_entity_json_location` ON `geometry_entity_json` (`location`);
 ----
 
-===== Query predicates
+==== Query predicates
 
 Micronaut Data translates geospatial repository methods and criteria predicates to the following MySQL spatial functions:
 
@@ -278,7 +278,7 @@ Micronaut Data translates geospatial repository methods and criteria predicates 
 `convertedValue` is the MySQL spatial conversion call such as `ST_GeomFromGeoJSON(?, 1, srid)` or
 `ST_GeomFromText(?, srid)`.
 
-==== MariaDB
+=== MariaDB
 
 MariaDB uses the same converter model as MySQL in Micronaut Data. The generated SQL and function handling
 follow the same MySQL-style `GEOMETRY` storage model, `ST_AsGeoJSON` and `ST_AsText` read conversion,
@@ -302,7 +302,7 @@ follow the same MySQL-style `GEOMETRY` storage model, `ST_AsGeoJSON` and `ST_AsT
 If you are targeting MariaDB, use the same mapping guidance as MySQL unless your database version introduces different
 spatial-function behavior.
 
-===== Query predicates
+==== Query predicates
 
 Micronaut Data translates geospatial repository methods and criteria predicates to the following MariaDB spatial functions:
 
@@ -326,7 +326,7 @@ Micronaut Data translates geospatial repository methods and criteria predicates 
 `convertedValue` is the MariaDB spatial conversion call such as `ST_GeomFromGeoJSON(?, 1, srid)` or
 `ST_GeomFromText(?, srid)`.
 
-==== H2
+=== H2
 
 H2 geospatial support requires the H2GIS extension because the spatial types, functions, and indexes used by Micronaut
 Data come from H2GIS.
@@ -349,7 +349,7 @@ Micronaut Data uses the following functions to read and write spatial data:
 | `ST_GeomFromText(?, srid)`
 |===
 
-===== Schema generation
+==== Schema generation
 
 If using the internal schema-generation tooling, spatial indexes will be created for all columns whose properties are
 annotated with `@Index`:
@@ -359,7 +359,7 @@ annotated with `@Index`:
 CREATE SPATIAL INDEX `idx_geometry_entity_json_location` ON `geometry_entity_json` (`location`);
 ----
 
-===== Query predicates
+==== Query predicates
 
 Micronaut Data translates geospatial repository methods and criteria predicates to the following H2 / H2GIS spatial functions:
 
@@ -383,12 +383,12 @@ Micronaut Data translates geospatial repository methods and criteria predicates 
 `convertedValue` is the H2GIS conversion call such as `ST_SetSRID(ST_GeomFromGeoJSON(?), srid)` or
 `ST_GeomFromText(?, srid)`.
 
-==== SQL Server
+=== SQL Server
 
 SQL Server stores spatial values in `GEOMETRY` or `GEOGRAPHY` columns. Micronaut Data uses the `GEOMETRY` column type
 by default. To change the column type to `GEOGRAPHY`, set `@MappedProperty(definition = "geography")`:
 
-snippet::example.GeographyEntityWkt[project="doc-examples/jdbc-geospatial", source="main", tags="get"]
+snippet::example.GeographyEntityWkt[project-base="doc-examples/jdbc-geospatial", source="main", tags="get"]
 
 WARNING: SQL Server doesn't have built-in functions for conversion between JSON and internal geospatial data types
 so Micronaut Data will use WKT conversion.
@@ -422,7 +422,7 @@ USING GEOMETRY_GRID WITH (BOUNDING_BOX = (-20037508.3427892, -20037508.3427892, 
 
 That clause is generated for `geometry` SQL Server mappings and is not used for the `geography` mapping.
 
-===== Query predicates
+==== Query predicates
 
 Micronaut Data translates geospatial repository methods and criteria predicates to the following SQL Server spatial functions:
 

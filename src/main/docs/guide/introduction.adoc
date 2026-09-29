@@ -9,27 +9,41 @@ Micronaut Data is inspired by https://gorm.grails.org[GORM] and https://spring.i
 
 Micronaut Data provides a general API for translating a compile time Query model into a query at compilation time and provides runtime support for the following backends:
 
-* <<hibernate, JPA (Hibernate)>> and <<hibernateReactive, Hibernate Reactive>>
-* <<dbc, SQL (JDBC, R2DBC)>>
-* <<mongo, MongoDB>>
-* <<azureCosmos, Azure Cosmos>>
+[cols="1,3"]
+|===
+|Module |Use it when
 
-Further implementations for other databases are planned in the future.
+|<<dbc, JDBC and R2DBC>>
+|You want to work with SQL directly. Queries are computed as native SQL for your database dialect at compilation time and results are mapped straight to your entities, without an ORM, lazy loading or a persistence context. R2DBC provides the same features for reactive, non-blocking applications.
 
-The following sections will take you through the basics of querying and using Micronaut Data, if you wish to understand more detail about how Micronaut Data works check out the <<howItWorks, How Micronaut Data Works>> section.
+|<<hibernate, JPA (Hibernate)>> and <<hibernateReactive, Hibernate Reactive>>
+|You need a full ORM: dirty checking, lazy loading, a persistence context, or you are migrating an existing JPA code base.
 
-At a fundamental level however what Micronaut Data does can be summed up in the following snippets. Given the following interface:
+|<<mongo, MongoDB>>
+|Your data lives in MongoDB.
 
-snippet::example.BookRepository[project-base="doc-examples/hibernate-example", source="main", tags="repository"]
+|<<azureCosmos, Azure Cosmos>>
+|Your data lives in Azure Cosmos DB.
+|===
 
-<1> The `@Repository` annotation designates `BookRepository` as a data repository. Since, it is an interface, the `@Repository` annotation provides implementations at compilation time.
+All modules share the same repository programming model, described in <<shared, Shared Concepts>>. If you wish to understand more detail about how Micronaut Data works check out the <<howItWorks, How Micronaut Data Works>> section.
+
+At a fundamental level what Micronaut Data does can be summed up in the following snippets. Given the following interface:
+
+snippet::example.BookRepository[project-base="doc-examples/jdbc-example", source="main", tags="repository"]
+
+<1> The ann:data.jdbc.annotation.JdbcRepository[] annotation designates `BookRepository` as a JDBC repository for the H2 dialect. Since it is an interface, Micronaut Data provides the implementation at compilation time.
 <2> By extending api:data.repository.CrudRepository[] you enable automatic generation of CRUD (Create, Read, Update, Delete) operations.
 
-Micronaut Data computes the query for the `find` method automatically at compilation time making it available at runtime via annotation metadata:
+Micronaut Data computes the SQL query for the `find` method automatically at compilation time making it available at runtime via annotation metadata:
 
-snippet::example.BookRepositorySpec[project-base="doc-examples/hibernate-example", tags="metadata", indent="0"]
+snippet::example.BookRepositorySpec[project-base="doc-examples/jdbc-example", tags="metadata", indent="0"]
 
 <1> The https://docs.micronaut.io/latest/api/io/micronaut/inject/BeanDefinition.html[BeanDefinition] is retrieved from the https://docs.micronaut.io/latest/api/io/micronaut/context/BeanContext.html[BeanContext]
 <2> The `find` method is retrieved
 <3> The value of the ann:data.annotation.Query[] annotation is retrieved
-<4> The JPA-QL query for the method is correct
+<4> The SQL query for the method was computed at compilation time - nothing is parsed or generated at runtime
+
+To get started, see <<buildConfig, Build Configuration>> and then the <<jdbcQuickStart, JDBC Quick Start>>.
+
+TIP: Upgrading from a previous version? See <<whatsNew, What's New>> and <<breaks, Breaking Changes>> in the <<releaseNotes, Release Notes>>.

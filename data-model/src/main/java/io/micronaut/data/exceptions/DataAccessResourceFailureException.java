@@ -16,11 +16,15 @@
 package io.micronaut.data.exceptions;
 
 /**
- * Exception thrown when the underlying resource fails to connect.
+ * Exception intended to signal that the underlying resource fails to connect.
  *
  * @author graemerocher
  * @since 1.0.0
+ * @deprecated Micronaut Data never throws this exception. A failure to obtain a JDBC connection is reported with
+ * {@code io.micronaut.data.connection.jdbc.exceptions.CannotGetJdbcConnectionException}, and R2DBC, MongoDB and
+ * Hibernate propagate the exceptions of their drivers. This class will be removed in a future release.
  */
+@Deprecated(forRemoval = true, since = "5.3")
 public class DataAccessResourceFailureException extends DataAccessException {
     /**
      * Default constructor.

@@ -12,7 +12,7 @@ There are simple extension methods that simplify working with the criteria API:
 
 - `From.joinOne(KProperty1, JoinType): Join` join `*-to-one` relationship
 
-=== Predicate builder
+== Predicate builder
 To implement a simple predicate query a function `where` can be used:
 
 [source,kotlin]
@@ -36,7 +36,7 @@ fun nameOrAgeMatches(age: Int, name: String?) = where<Person> {
 }
 ----
 
-It's possible to use `where` predicate builder with following methods in api:data.repository.JpaSpecificationExecutor[]:
+It's possible to use `where` predicate builder with following methods in api:data.repository.jpa.JpaSpecificationExecutor[]:
 
 - `findOne(io.micronaut.data.repository.jpa.criteria.PredicateSpecification)`
 - `findAll(io.micronaut.data.repository.jpa.criteria.PredicateSpecification)`
@@ -62,7 +62,7 @@ val recordsDeleted = personRepository.deleteAll(where {
 })
 ----
 
-=== Update builder
+== Update builder
 To implement an update query a function `update` can be used:
 
 [source,kotlin]

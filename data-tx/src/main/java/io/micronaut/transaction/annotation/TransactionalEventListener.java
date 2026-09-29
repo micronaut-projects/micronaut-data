@@ -27,9 +27,36 @@ import java.lang.annotation.RetentionPolicy;
 import java.lang.annotation.Target;
 
 /**
- * Largely based on the similar annotation in Spring. This is an {@link Adapter} that
- * turns any annotated method into a transaction aware event listener that implements the
- * {@link ApplicationEventListener} interface.
+ * Declares a method as an application event listener that runs at a specific phase of the transaction in which the
+ * event was published, instead of immediately. The method must take the event as its single parameter; Micronaut
+ * turns it into an {@link ApplicationEventListener} for that event type (this annotation is an {@link Adapter}).
+ *
+ * <p>When an event is published with {@link io.micronaut.context.event.ApplicationEventPublisher#publishEvent(Object)},
+ * an ordinary listener is invoked straight away, while the transaction is still open and its outcome unknown. A
+ * transactional event listener instead behaves as follows:</p>
+ * <ul>
+ *     <li>If a transaction is active in the publishing context, the call to the listener is deferred: it is
+ *     registered as a {@link io.micronaut.transaction.support.TransactionSynchronization} of that transaction and
+ *     {@code publishEvent} returns without invoking the method. The method is invoked later, at the
+ *     {@linkplain #value() phase} it declares, by default {@link TransactionPhase#AFTER_COMMIT}, so that it only
+ *     reacts to data that was actually committed.</li>
+ *     <li>If the publishing code joined an outer transaction (for example with propagation
+ *     {@code REQUIRED}), the listener is bound to that outer transaction and runs when the outer transaction
+ *     completes. With {@code REQUIRES_NEW} it runs when the new, inner transaction completes.</li>
+ *     <li>If no transaction is active, the event is discarded for this listener: the method is not invoked (a debug
+ *     message is logged by the {@code io.micronaut.transaction.annotation.TransactionalEventListener} logger).</li>
+ * </ul>
+ *
+ * <p>The listener runs synchronously on the thread that commits or rolls back the transaction, which is normally the
+ * thread that published the event. {@link TransactionPhase#BEFORE_COMMIT} listeners run while the transaction is
+ * still open: they can use it, and an exception they throw rolls it back and is propagated to the caller. The
+ * after-completion phases run once the transaction has been committed or rolled back, so their exceptions cannot
+ * change the outcome; they are propagated to the caller of the transactional method. To write to the database from an
+ * after-completion listener, start a new transaction, for example by annotating the listener with
+ * {@code @Transactional(Transactional.TxType.REQUIRES_NEW)}.</p>
+ *
+ * <p>The transaction is looked up using the synchronous transaction manager, selected with
+ * {@link #transactionManager()}. Transactions of reactive transaction managers are not supported.</p>
  *
  * @author graemerocher
  * @since 1.0.0

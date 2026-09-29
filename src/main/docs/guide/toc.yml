@@ -1,9 +1,4 @@
-introduction:
-  title: Introduction
-  repository: Repository
-  whatsNew: What's New?
-  breaks: Breaking Changes
-  releaseHistory: Release History
+introduction: Introduction
 buildConfig:
   title: Build Configuration
 shared:
@@ -17,6 +12,7 @@ shared:
     criteria: Query Criteria
     pagination: Pagination
     cursored-pagination: Cursored Pagination
+    paginationHttp: Pagination in HTTP Controllers
     ordering: Ordering
     projections: Query Projections
     dto: DTO Projections
@@ -32,6 +28,7 @@ shared:
     deletes: Deleting
     timestamps: Entity Timestamps
     entityEvents: Entity Events
+    exceptions: Exception Handling
   jakartaData:
       title: Jakarta Data
   criteriaSpecifications:
@@ -56,19 +53,6 @@ shared:
     discriminatormode: Discriminator Mode
     datasourcemode: DataSource Mode
     schemamode: Schema Mode
-hibernate:
-  title: Micronaut Data JPA Hibernate
-  hibernateJpaAnnotations: JPA Annotations
-  hibernateQuickStart:
-    title: Quick Start
-  hibernateLogging: Logging SQL with Micronaut Data JPA Hibernate
-  hibernateJoinQueries: Join queries
-  hibernateExplicitQueries: Explicit queries
-  hibernateNativeQueries: Native queries
-  hibernateStreaming: Streaming Large Result Sets
-  hibernateProcedures: Procedures
-
-hibernateReactive: Micronaut Data Hibernate Reactive
 dbc:
   title: Micronaut Data JDBC and R2DBC
   jdbc:
@@ -107,13 +91,27 @@ dbc:
     sqlJsonView: JSON View
     sqlOracleBoolean: Oracle BOOLEAN Support
     sqlVectorType: SQL Vector Type Mapping
-    javaRecords: Support for Java 16 Records
+    javaRecords: Support for Java Records
     kotlinData: Support for Kotlin immutable data classes
   dbcDataTypes: Data Types
   dbcAttributeConverter: Using Attribute Converter
   dbcJoinQueries: Join Queries
   dbcNativeQueries: Explicit Queries
+  dbcExplicitQueriesPagination: Explicit Queries and Pagination
   dbcProcedures: Procedures
+hibernate:
+  title: Micronaut Data JPA Hibernate
+  hibernateJpaAnnotations: JPA Annotations
+  hibernateQuickStart:
+    title: Quick Start
+  hibernateLogging: Logging SQL with Micronaut Data JPA Hibernate
+  hibernateJoinQueries: Join queries
+  hibernateExplicitQueries: Explicit queries
+  hibernateNativeQueries: Native queries
+  hibernateStreaming: Streaming Large Result Sets
+  hibernateProcedures: Procedures
+
+hibernateReactive: Micronaut Data Hibernate Reactive
 mongo:
   title: Micronaut Data MongoDB
   mongoQuickStart: Quick Start
@@ -132,12 +130,7 @@ mongo:
     mongoAssociationFetching: Association Fetching
   mongoJoinQueries: Join Queries
   mongoAttributeConverter: Using Attribute Converter
-  mongoCriteriaSpecifications:
-    title: Repositories with Criteria API
-    mongoCriteriaExecuteQuery: Querying
-    mongoCriteriaExecuteUpdate: Updating
-    mongoCriteriaExecuteDelete: Deleting
-    mongoOtherRepositoryVariations: Other repository variations
+  mongoCriteriaSpecifications: Repositories with Criteria API
   mongoOptimisticLocking: Optimistic locking
 azureCosmos:
   title: Micronaut Data Azure Cosmos
@@ -145,11 +138,7 @@ azureCosmos:
   azureCosmosConfiguration: Configuration
   azureCosmosRepositories:
     title: Repositories
-  azureCosmosCriteriaSpecifications:
-    title: Repositories with Criteria API
-    azureCosmosCriteriaExecuteQuery: Querying
-    azureCosmosCriteriaExecuteUpdate: Updating
-    azureCosmosCriteriaExecuteDelete: Deleting
+  azureCosmosCriteriaSpecifications: Repositories with Criteria API
   azureCosmosSpecifics: Azure Cosmos Specifics
   azureCosmosAttributeConverter: Using Attribute Converter
   azureCosmosOptimisticLocking: Optimistic locking
@@ -160,3 +149,9 @@ graal:
 spring:
   title: Spring Data Support
 dataGuides: Guides
+releaseNotes:
+  title: Release Notes
+  whatsNew: What's New?
+  breaks: Breaking Changes
+  releaseHistory: Release History
+repository: Repository

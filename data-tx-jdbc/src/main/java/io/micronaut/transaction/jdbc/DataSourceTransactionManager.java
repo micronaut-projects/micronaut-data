@@ -149,7 +149,7 @@ public final class DataSourceTransactionManager extends AbstractDefaultTransacti
      * <p>The exact treatment, including any SQL statement executed on the connection,
      * can be customized through {@link #prepareTransactionalConnection}.
      * <p>This mode of read-only handling goes beyond the {@link Connection#setReadOnly}
-     * hint that Spring applies by default. In contrast to that standard JDBC hint,
+     * hint that Micronaut Data applies to read-only transactions by default. In contrast to that standard JDBC hint,
      * "SET TRANSACTION READ ONLY" enforces an isolation-level-like connection mode
      * where data manipulation statements are strictly disallowed. Also, on Oracle,
      * this read-only mode provides read consistency for the entire transaction.
