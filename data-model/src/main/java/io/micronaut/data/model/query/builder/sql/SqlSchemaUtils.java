@@ -1333,14 +1333,18 @@ public final class SqlSchemaUtils {
         if (dialect == Dialect.SQLITE) {
             return foreignKey -> false;
         }
-        Set<String> tableKeys = tables.stream()
+        Set<List<String>> tableKeys = tables.stream()
             .map(table -> foreignKeyTableKey(table.schema(), table.name()))
             .collect(Collectors.toSet());
         return foreignKey -> tableKeys.contains(foreignKeyTableKey(foreignKey.referencedSchema(), foreignKey.referencedTable()));
     }
 
-    private static String foreignKeyTableKey(@Nullable String schema, String table) {
-        return (schema == null ? "" : schema.toLowerCase(Locale.ENGLISH)) + "." + table.toLowerCase(Locale.ENGLISH);
+    /**
+     * The schema and the table name are kept apart, a quoted name can contain the separator (schema "a.b" and table "c",
+     * or schema "a" and table "b.c").
+     */
+    private static List<String> foreignKeyTableKey(@Nullable String schema, String table) {
+        return List.of(schema == null ? "" : schema.toLowerCase(Locale.ENGLISH), table.toLowerCase(Locale.ENGLISH));
     }
 
     /**

@@ -481,8 +481,12 @@ final class JdbcSchemaMetadataReader {
         foreignKey.referencedColumns().put(keySeq, referencedColumn);
     }
 
+    /**
+     * The key of an unnamed foreign key, joined with the NUL character, which a name cannot contain: the schema and
+     * the table name are kept apart (a quoted name can contain a dot) and the key differs from the foreign key names.
+     */
     private static String unnamedForeignKeyKey(@Nullable String referencedSchema, String referencedTable, int group) {
-        return referencedSchema + "." + referencedTable + "#" + group;
+        return "\0" + (referencedSchema == null ? "" : referencedSchema) + "\0" + referencedTable + "\0" + group;
     }
 
     /**
