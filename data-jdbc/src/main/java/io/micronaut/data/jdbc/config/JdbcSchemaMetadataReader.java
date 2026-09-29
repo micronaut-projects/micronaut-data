@@ -395,7 +395,9 @@ final class JdbcSchemaMetadataReader {
                 (catalog, tableSchema, table) -> metaData.getIndexInfo(catalog, tableSchema, table, false, true),
                 (tableKey, resultSet) -> {
                     if (resultSet.getShort("TYPE") != DatabaseMetaData.tableIndexStatistic) {
-                        addIndexColumn(indexes, tableKey, resultSet.getString("INDEX_NAME"), !resultSet.getBoolean("NON_UNIQUE"),
+                        // A partial index (with a filter condition) is not unique for all the rows
+                        boolean unique = !resultSet.getBoolean("NON_UNIQUE") && StringUtils.isEmpty(filterCondition(resultSet));
+                        addIndexColumn(indexes, tableKey, resultSet.getString("INDEX_NAME"), unique,
                             resultSet.getString(SqlSchemaUtils.COLUMN_NAME_COLUMN), resultSet.getInt("ORDINAL_POSITION"));
                     }
                 });
@@ -405,6 +407,17 @@ final class JdbcSchemaMetadataReader {
             indexes.getOrDefault(tableKey, Map.of()).forEach((name, index) ->
                 indexMetadata.add(new SqlIndexMetadata(name, index.unique(), new ArrayList<>(index.columns().values()))));
             Objects.requireNonNull(tables.get(tableKey)).setIndexes(indexMetadata);
+        }
+    }
+
+    /**
+     * @return The filter condition of a partial index, null when the index has none or the driver doesn't report it
+     */
+    private static @Nullable String filterCondition(ResultSet resultSet) {
+        try {
+            return resultSet.getString("FILTER_CONDITION");
+        } catch (SQLException e) {
+            return null;
         }
     }
 

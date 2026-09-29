@@ -71,9 +71,9 @@ final class PostgresSqlTableMappingValidator extends BaseSqlTableMappingValidato
     @Override
     public String getIndexesQuery() {
         // An expression has no attribute (attnum 0), its column name is null. The key columns are followed
-        // by the INCLUDE columns, which are not the index key
+        // by the INCLUDE columns, which are not the index key. A partial index (with a predicate) is not unique for all the rows
         return """
-            SELECT ct.relname, ci.relname, CASE WHEN i.indisunique THEN 1 ELSE 0 END, a.attname, k.position
+            SELECT ct.relname, ci.relname, CASE WHEN i.indisunique AND i.indpred IS NULL THEN 1 ELSE 0 END, a.attname, k.position
             FROM pg_catalog.pg_index i
             JOIN pg_catalog.pg_class ct ON ct.oid = i.indrelid
             JOIN pg_catalog.pg_class ci ON ci.oid = i.indexrelid

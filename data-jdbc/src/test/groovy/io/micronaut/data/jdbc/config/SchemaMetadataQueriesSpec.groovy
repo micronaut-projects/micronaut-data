@@ -71,6 +71,8 @@ class SchemaMetadataQueriesSpec extends Specification {
         if (includeColumns) {
             // The included column is stored in the index but it is not the index key
             execute(connection, 'CREATE INDEX md_single_include ON md_single (id) INCLUDE (name)')
+            // A partial (filtered) unique index is only unique for the rows matching its predicate
+            execute(connection, 'CREATE UNIQUE INDEX md_single_partial ON md_single (name) WHERE name IS NOT NULL')
         }
 
         when:
@@ -97,7 +99,7 @@ class SchemaMetadataQueriesSpec extends Specification {
         and:"The reader reads the same primary keys and indexes as per table"
         queryTables.tables().size() == 3
         primaryKeys(queryTables.tables()) == primaryKeys(jdbcTables.tables())
-        indexes(queryTables.tables(), 'md_single_include') == indexes(jdbcTables.tables(), 'md_single_include')
+        indexes(queryTables.tables(), ['md_single_include', 'md_single_partial']) == indexes(jdbcTables.tables(), ['md_single_include', 'md_single_partial'])
         table(queryTables.tables(), 'md_composite').primaryKeyColumns*.toLowerCase() == ['c', 'a', 'b']
         table(queryTables.tables(), 'md_none').primaryKeyColumns == []
         table(queryTables.tables(), 'md_composite').indexes.find { it.name().equalsIgnoreCase('md_composite_bc') }.with {
@@ -108,6 +110,12 @@ class SchemaMetadataQueriesSpec extends Specification {
         !includeColumns || indexRows.findAll { it[1].equalsIgnoreCase('md_single_include') }.collect { it[3].toLowerCase() } == ['id']
         !includeColumns || table(queryTables.tables(), 'md_single').indexes.find { it.name().equalsIgnoreCase('md_single_include') }
             .columns()*.toLowerCase() == ['id']
+
+        and:"A partial unique index is not unique for all the rows"
+        !includeColumns || indexRows.findAll { it[1].equalsIgnoreCase('md_single_partial') }.every { it[2] == 0 }
+        !includeColumns || !table(queryTables.tables(), 'md_single').indexes.find { it.name().equalsIgnoreCase('md_single_partial') }.unique()
+        // The PostgreSQL driver reports the filter condition of the index, read per table
+        dialect != Dialect.POSTGRES || !table(jdbcTables.tables(), 'md_single').indexes.find { it.name().equalsIgnoreCase('md_single_partial') }.unique()
 
         cleanup:
         TABLES.each { execute(connection, "DROP TABLE $it", true) }
@@ -155,11 +163,11 @@ class SchemaMetadataQueriesSpec extends Specification {
     }
 
     /**
-     * The index with included columns is excluded, the drivers differ in reporting the included columns.
+     * The given indexes are excluded, the drivers differ in reporting the included columns and the partial indexes.
      */
-    private static Map<String, Map<String, List<Object>>> indexes(Map<String, SqlTableMetadata> tables, String excludedIndex) {
+    private static Map<String, Map<String, List<Object>>> indexes(Map<String, SqlTableMetadata> tables, List<String> excludedIndexes) {
         return tables.collectEntries { key, table ->
-            [key, table.indexes.findAll { !it.name().equalsIgnoreCase(excludedIndex) }
+            [key, table.indexes.findAll { index -> !excludedIndexes.any { it.equalsIgnoreCase(index.name()) } }
                 .collectEntries { index -> [index.name(), [index.unique(), index.columns()]] }]
         }
     }

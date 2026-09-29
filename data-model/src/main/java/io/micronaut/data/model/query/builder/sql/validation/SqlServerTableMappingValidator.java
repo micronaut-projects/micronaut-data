@@ -49,9 +49,10 @@ final class SqlServerTableMappingValidator extends BaseSqlTableMappingValidator 
 
     @Override
     public String getIndexesQuery() {
-        // A heap has an unnamed index entry, the included columns are not the index key
+        // A heap has an unnamed index entry, the included columns are not the index key.
+        // A filtered index is not unique for all the rows
         return """
-            SELECT t.name, i.name, CASE WHEN i.is_unique = 1 THEN 1 ELSE 0 END, c.name, ic.key_ordinal
+            SELECT t.name, i.name, CASE WHEN i.is_unique = 1 AND i.has_filter = 0 THEN 1 ELSE 0 END, c.name, ic.key_ordinal
             FROM sys.indexes i
             JOIN sys.tables t ON t.object_id = i.object_id
             JOIN sys.schemas s ON s.schema_id = t.schema_id
