@@ -28,6 +28,7 @@ shared:
     deletes: Deleting
     timestamps: Entity Timestamps
     entityEvents: Entity Events
+    exceptions: Exception Handling
   jakartaData:
       title: Jakarta Data
   criteriaSpecifications:

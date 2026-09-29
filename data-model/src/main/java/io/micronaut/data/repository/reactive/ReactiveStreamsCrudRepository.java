@@ -20,7 +20,14 @@ import io.micronaut.data.repository.GenericRepository;
 import org.reactivestreams.Publisher;
 
 /**
- * Interface for CRUD using Reactive Streams.
+ * Reactive Streams variation of {@link io.micronaut.data.repository.CrudRepository}: every method returns a
+ * {@link Publisher} and the operation is executed when the publisher is subscribed to.
+ * <p>
+ * The operations and the exceptions they produce are the same as those described in
+ * {@link io.micronaut.data.repository.CrudRepository}, but datastore failures such as
+ * {@link io.micronaut.data.exceptions.EntityExistsException} or
+ * {@link io.micronaut.data.exceptions.OptimisticLockException} are delivered as the error signal of the returned
+ * publisher. A lookup that finds nothing, such as {@link #findById(Object)}, completes without emitting an item.
  *
  * @param <E> The entity type
  * @param <ID> The ID type
@@ -110,7 +117,7 @@ public interface ReactiveStreamsCrudRepository<E, ID> extends GenericRepository<
      * Retrieves an entity by its id.
      *
      * @param id The ID of the entity to retrieve. Must not be {@literal null}.
-     * @return the entity with the given id or {@literal Optional#empty()} if none found
+     * @return a publisher emitting the entity with the given id, or completing empty if none is found
      */
     
     @SingleResult

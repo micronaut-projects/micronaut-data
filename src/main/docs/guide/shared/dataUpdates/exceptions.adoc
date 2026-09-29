@@ -1,0 +1,57 @@
+Repository methods do not declare checked exceptions. Errors are reported with unchecked exceptions, most of them subclasses of api:data.exceptions.DataAccessException[] in the `io.micronaut.data.exceptions` package.
+
+.Micronaut Data exceptions
+[cols="2,5"]
+|===
+|*Exception*
+|*Thrown when*
+
+|api:data.exceptions.DataAccessException[]
+|The base class of the exceptions below. Also thrown directly for datastore errors that have no more specific type. With JDBC, every `SQLException` is wrapped in a `DataAccessException` (or one of its subclasses), and the original `SQLException` is available with `getCause()`.
+
+|api:data.exceptions.EntityExistsException[]
+|An insert violated a primary key or unique constraint, for example `insert` was called for an entity whose ID already exists (JDBC and R2DBC).
+
+|api:data.exceptions.DataIntegrityViolationException[]
+|A write violated another integrity constraint, for example a `NOT NULL` column received `null`, or a foreign key refers to a row that does not exist (JDBC and R2DBC).
+
+|api:data.exceptions.OptimisticLockException[]
+|An update or delete of an entity with a ann:data.annotation.Version[] property matched no row, because the row was modified or deleted since the entity was read. See <<optimisticLocking, Optimistic locking>>.
+
+|api:data.exceptions.EmptyResultException[]
+|A query method whose return type is neither `Optional` nor nullable found no result.
+
+|api:data.exceptions.NonUniqueResultException[]
+|A query that must return a single result found more than one.
+
+|===
+
+==== Behaviour of the CRUD operations
+
+The following applies to the methods inherited from api:data.repository.CrudRepository[] and to the equivalent query methods:
+
+* *Inserting* (`insert`, `insertAll`, or `save` of a new entity): a duplicate ID or unique value fails with `EntityExistsException`, any other constraint violation with `DataIntegrityViolationException`.
+* *Updating and deleting* (`update`, `updateAll`, `delete`, `deleteAll`, and `save` of an existing entity): for an entity with a `@Version` property, the statement only matches the row with the same ID and version, and fails with `OptimisticLockException` when there is none. For an entity without a version property, updating or deleting an entity that does not exist is not an error: nothing is changed. The same applies to `deleteById` with an unknown ID. With MongoDB, `save` of an unversioned entity that resolves to an update fails with `OptimisticLockException` if no document matches.
+* *Finding*: `findById` returns an empty `Optional` if the entity does not exist. A query method that declares a non-nullable single result, for example `Book getByTitle(String title)`, throws `EmptyResultException` instead; declare the return type as `Optional<Book>` or annotate it with `@Nullable` to get an empty result instead. If a single-result query matches more than one row, SQL repositories return the first row by default. Set `datasources.<name>.unique-result-on-find-one` to `true` (JDBC) to fail with `NonUniqueResultException` instead.
+* *Null arguments*: arguments are not nullable unless annotated with `@Nullable`. A `null` ID is rejected with `IllegalArgumentException` and a `null` entity with `IllegalStateException`, before any statement is executed.
+* *Validation*: if Micronaut Validation is on the classpath and the type arguments of the repository carry constraints, for example `CrudRepository<@Valid Book, @NotNull Long>`, invalid arguments are rejected with `jakarta.validation.ConstraintViolationException` before any statement is executed. See <<validation, Validation>>.
+
+==== Differences between datastores
+
+* *JDBC*: all errors are `DataAccessException` or one of its subclasses, and they are thrown by the repository call that executed the statement.
+* *R2DBC*: duplicate keys and constraint violations are mapped to `EntityExistsException` and `DataIntegrityViolationException`; other `R2dbcException` errors are propagated unchanged.
+* *MongoDB*: the Micronaut Data exceptions for missing, non-unique and stale (versioned) results apply, but errors reported by the MongoDB driver, for example `com.mongodb.MongoWriteException` for a duplicate key, are propagated unchanged.
+* *Hibernate JPA and Hibernate Reactive*: the query related exceptions (`EmptyResultException`) are raised by Micronaut Data, but write errors are the exceptions of the JPA provider, for example `jakarta.persistence.OptimisticLockException`, `jakarta.persistence.EntityExistsException` or `org.hibernate.exception.ConstraintViolationException`, all subclasses of `jakarta.persistence.PersistenceException`. Because Hibernate writes changes when the persistence context is flushed, a constraint violation is often only reported when the transaction commits, and is then thrown by the method that ends the transaction rather than by the repository call.
+* Repositories that implement Jakarta Data interfaces convert these exceptions to the `jakarta.data.exceptions` types required by that specification. See <<jakartaData, Jakarta Data>>.
+
+==== Asynchronous and reactive repositories
+
+Asynchronous and reactive repositories report the same exceptions, but through their return type rather than by throwing:
+
+* A `CompletableFuture` / `CompletionStage` completes exceptionally. `CompletableFuture.get()` wraps the exception in an `ExecutionException` and `join()` in a `CompletionException`; call `getCause()` to obtain the Micronaut Data exception. Note that `findById` of api:data.repository.async.AsyncCrudRepository[] completes with `EmptyResultException` when the entity does not exist.
+* A `Publisher`, `Mono` or `Flux` signals the exception with `onError`. A lookup that finds nothing completes without emitting an item.
+* A Kotlin `suspend` function throws the exception from the suspending call.
+
+==== Exceptions and transactions
+
+If an exception escapes a method annotated with `@Transactional`, the transaction is rolled back by default, whether the exception is checked or unchecked. Use the `rollbackOn` and `dontRollbackOn` members of the annotation to change this. Catching a Micronaut Data exception inside the transaction does not undo a rollback-only mark: if a nested transactional call that joined the transaction failed, the transaction is marked as rollback-only and the commit at the end of the outer transaction fails with `io.micronaut.transaction.exceptions.UnexpectedRollbackException`. In addition, many databases do not allow further statements in a transaction after a failed statement. To recover from an expected error such as a duplicate key, execute the risky operation in its own transaction (`REQUIRES_NEW`) or nested transaction (`NESTED`).
