@@ -387,7 +387,9 @@ public class SchemaGenerator {
                                                                                   JdbcSchemaMetadataReader metadataReader) {
         // Get all tables for all entities and remove (de-duplicate) if there is SqlTableMapping created from the entity
         // that represents join and ad-hoc SqlTableMapping for the same entity based on relation mappings (to be removed/skipped)
-        Map<String, SqlTableMapping> sqlTableMappingByTableName = CollectionUtils.newLinkedHashMap(entities.length);
+        // The schema and the table name are kept apart, a quoted name can contain the separator (schema "a.b" and table "c",
+        // or schema "a" and table "b.c")
+        Map<List<String>, SqlTableMapping> sqlTableMappingByTableName = CollectionUtils.newLinkedHashMap(entities.length);
         for (PersistentEntity entity : entities) {
             if (entity.getAnnotationMetadata().hasAnnotation(JsonView.class)) {
                 continue;
@@ -395,8 +397,8 @@ public class SchemaGenerator {
             List<SqlTableMapping> sqlTableMappings = SqlSchemaUtils.getSqlTableMappings(definitionProviders, entity, dialect);
             for (SqlTableMapping mapping : sqlTableMappings) {
                 SqlTableMapping sqlTableMapping = resolvePlaceholders(mapping);
-                String key = schemaKey(metadataReader, sqlTableMapping.schema(), sqlTableMapping.escape())
-                    + "." + metadataReader.identifierMatcher().mappedTableKey(sqlTableMapping.name(), sqlTableMapping.escape());
+                List<String> key = List.of(schemaKey(metadataReader, sqlTableMapping.schema(), sqlTableMapping.escape()),
+                    metadataReader.identifierMatcher().mappedTableKey(sqlTableMapping.name(), sqlTableMapping.escape()));
                 SqlTableMapping existingSqlTableMapping = sqlTableMappingByTableName.get(key);
                 if (existingSqlTableMapping != null) {
                     if (existingSqlTableMapping.type() == SqlTableMapping.TableType.JOIN) {
