@@ -24,9 +24,12 @@ import io.micronaut.data.model.query.builder.sql.SqlSchemaCreateOptions
 import io.micronaut.data.model.query.builder.sql.SqlSchemaUtils
 import io.micronaut.data.model.runtime.RuntimePersistentEntity
 import jakarta.persistence.Column
+import jakarta.persistence.Embeddable
+import jakarta.persistence.EmbeddedId
 import jakarta.persistence.Entity
 import jakarta.persistence.Id
 import jakarta.persistence.JoinColumn
+import jakarta.persistence.JoinColumns
 import jakarta.persistence.ManyToOne
 import jakarta.persistence.OneToOne
 import jakarta.persistence.Table
@@ -44,6 +47,15 @@ class UniqueConstraintColumnsSpec extends Specification {
         mapping.uniqueConstraints()[0].name() ==~ /UK_JOIN_UNIQUE_ITEM_\w+/
         mapping.uniqueConstraints()[1].name() == 'uk_join_unique_item_owner_code'
         mapping.uniqueConstraints().every { it.unique() }
+    }
+
+    void 'a unique join column of a composite join is a single column constraint'() {
+        when:
+        def mapping = SqlSchemaUtils.getSqlTableMappings(new RuntimePersistentEntity(CompositeJoinItem), Dialect.POSTGRES).first()
+
+        then:"Both join columns are stored, only the one declared unique is a unique constraint"
+        mapping.columns()*.name.containsAll(['owner_a', 'owner_b'])
+        mapping.uniqueConstraints()*.columns() == [['owner_a'] as String[]]
     }
 
     void 'unique constraint column is resolved by the exact name when columns differ only by the case'() {
@@ -157,6 +169,32 @@ class JoinUniqueItem {
     UniqueOwner passport
     @ManyToOne
     UniqueOwner owner
+}
+
+@Embeddable
+class CompositeOwnerId {
+    Long a
+    Long b
+}
+
+@Entity
+@Table(name = "composite_owner")
+class CompositeOwner {
+    @EmbeddedId
+    CompositeOwnerId id
+}
+
+@Entity
+@Table(name = "composite_join_item")
+class CompositeJoinItem {
+    @Id
+    Long id
+    @ManyToOne
+    @JoinColumns([
+            @JoinColumn(name = "owner_a", referencedColumnName = "a", unique = true),
+            @JoinColumn(name = "owner_b", referencedColumnName = "b")
+    ])
+    CompositeOwner owner
 }
 
 @Entity

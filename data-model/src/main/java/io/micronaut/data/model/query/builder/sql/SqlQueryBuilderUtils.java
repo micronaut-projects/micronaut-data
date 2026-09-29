@@ -277,16 +277,19 @@ final class SqlQueryBuilderUtils {
     }
 
     /**
-     * Whether the association join column is declared unique with JPA {@code @JoinColumn(unique = true)}. The annotation
-     * is repeatable, a single one can be stored in its {@code @JoinColumns} container.
+     * Returns the names of the association join columns declared unique with JPA {@code @JoinColumn(unique = true)},
+     * including the join columns of a composite join ({@code @JoinColumns}). The annotation is repeatable, a single one
+     * can be stored in its {@code @JoinColumns} container.
      *
      * @param annotationMetadata The association annotation metadata
-     * @return true if the join column is unique
+     * @return The declared names of the unique join columns, an empty name for an unnamed join column
      */
-    static boolean isUniqueJoinColumn(AnnotationMetadata annotationMetadata) {
+    static List<String> getUniqueJoinColumnNames(AnnotationMetadata annotationMetadata) {
         return Stream.of("jakarta.persistence.JoinColumn", "javax.persistence.JoinColumn")
             .flatMap(annotation -> annotationMetadata.getAnnotationValuesByName(annotation).stream())
-            .anyMatch(joinColumn -> joinColumn.booleanValue("unique").orElse(false));
+            .filter(joinColumn -> joinColumn.booleanValue("unique").orElse(false))
+            .map(joinColumn -> joinColumn.stringValue("name").orElse(""))
+            .toList();
     }
 
     /**

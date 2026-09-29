@@ -825,21 +825,60 @@ public final class SqlSchemaUtils {
                     List<Association> newAssociations = new ArrayList<>(associations);
                     newAssociations.add(association);
                     addUniqueColumns(tableName, association.getAssociatedEntity(), namingStrategy, newAssociations, uniqueConstraints);
-                } else if (!association.isForeignKey() && SqlQueryBuilderUtils.isUniqueJoinColumn(association.getAnnotationMetadata())) {
-                    // The join column stored by the to-one association, resolved like the table column. A composite join column
-                    // is not unique by a single annotation, it can be declared with @Table(uniqueConstraints = ...)
-                    List<String> joinColumns = new ArrayList<>();
-                    PersistentEntityUtils.traversePersistentProperties(associations, association,
-                        (joinAssociations, joinProperty) -> joinColumns.add(namingStrategy.mappedName(joinAssociations, joinProperty)));
-                    if (joinColumns.size() == 1) {
-                        uniqueConstraints.add(new SqlIndexMapping(uniqueConstraintName(tableName, joinColumns), true, joinColumns.toArray(new String[0])));
-                    }
+                } else if (!association.isForeignKey()) {
+                    addUniqueJoinColumns(tableName, association, namingStrategy, associations, uniqueConstraints);
                 }
             } else if (SqlQueryBuilderUtils.isUniqueColumn(property.getAnnotationMetadata())) {
                 String columnName = namingStrategy.mappedName(associations, property);
                 uniqueConstraints.add(new SqlIndexMapping(uniqueConstraintName(tableName, List.of(columnName)), true, new String[]{columnName}));
             }
         }
+    }
+
+    /**
+     * Adds a single column unique constraint for every {@code @JoinColumn(unique = true)} of the to-one association, also for
+     * a join column of a composite join ({@code @JoinColumns}), since the annotation declares the uniqueness of its own column.
+     * The uniqueness of the combined join columns is declared with {@code @Table(uniqueConstraints = ...)}.
+     * The annotated join column is matched to the table column stored by the association by its name, an unnamed one
+     * only when the association has a single join column.
+     */
+    private static void addUniqueJoinColumns(String tableName,
+                                             Association association,
+                                             NamingStrategy namingStrategy,
+                                             List<Association> associations,
+                                             Set<SqlIndexMapping> uniqueConstraints) {
+        List<String> uniqueJoinColumns = SqlQueryBuilderUtils.getUniqueJoinColumnNames(association.getAnnotationMetadata());
+        if (uniqueJoinColumns.isEmpty()) {
+            return;
+        }
+        List<String> joinColumns = new ArrayList<>();
+        PersistentEntityUtils.traversePersistentProperties(associations, association,
+            (joinAssociations, joinProperty) -> joinColumns.add(namingStrategy.mappedName(joinAssociations, joinProperty)));
+        for (String declaredColumn : uniqueJoinColumns) {
+            String column = resolveJoinColumn(joinColumns, declaredColumn);
+            if (column != null) {
+                uniqueConstraints.add(new SqlIndexMapping(uniqueConstraintName(tableName, List.of(column)), true, new String[]{column}));
+            } else if (LOG.isDebugEnabled()) {
+                LOG.debug("Unique join column [{}] of association [{}] doesn't match a single join column {}, it is not created",
+                    declaredColumn, association.getName(), joinColumns);
+            }
+        }
+    }
+
+    /**
+     * @return The join column matching the declared join column name, exactly or else a single one ignoring the case,
+     * the only join column for an unnamed one, or null
+     */
+    private static @Nullable String resolveJoinColumn(List<String> joinColumns, String declaredColumn) {
+        String name = unquote(declaredColumn.trim());
+        if (name.isEmpty()) {
+            return joinColumns.size() == 1 ? joinColumns.getFirst() : null;
+        }
+        if (joinColumns.contains(name)) {
+            return name;
+        }
+        List<String> matchingColumns = joinColumns.stream().filter(column -> column.equalsIgnoreCase(name)).distinct().toList();
+        return matchingColumns.size() == 1 ? matchingColumns.getFirst() : null;
     }
 
     /**
