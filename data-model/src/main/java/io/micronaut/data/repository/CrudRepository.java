@@ -55,8 +55,8 @@ import java.util.Optional;
  *     the types above are propagated unchanged.</li>
  * </ul>
  * <p>
- * {@code null} arguments are rejected before any statement is executed: a {@code null} ID with
- * {@link IllegalArgumentException} and a {@code null} entity with {@link IllegalStateException}, or with
+ * {@code null} arguments are rejected with {@link IllegalArgumentException} before any statement is executed, whether
+ * the argument is an ID, an entity or the collection of entities, or with
  * {@code ConstraintViolationException} if the type argument carries a {@code @NotNull} constraint and Micronaut
  * Validation is present. JPA based implementations (Hibernate) propagate the exceptions of the JPA provider, for example
  * {@code jakarta.persistence.OptimisticLockException}, and may report constraint violations only when the persistence
@@ -82,6 +82,7 @@ public interface CrudRepository<E, ID> extends GenericRepository<E, ID> {
      * @param entity The entity to save. Must not be {@literal null}.
      * @return The saved entity will never be {@literal null}.
      * @param <S> The generic type
+     * @throws IllegalArgumentException if the entity is {@literal null}
      * @throws io.micronaut.data.exceptions.EntityExistsException if an insert violates a primary key or unique constraint
      * @throws io.micronaut.data.exceptions.OptimisticLockException if an update of a versioned entity matches no row
      * @throws io.micronaut.data.exceptions.DataAccessException if the datastore reports another error
@@ -96,6 +97,7 @@ public interface CrudRepository<E, ID> extends GenericRepository<E, ID> {
      * @param entity The entity to insert. Must not be {@literal null}.
      * @return The inserted entity will never be {@literal null}.
      * @param <S> The generic type
+     * @throws IllegalArgumentException if the entity is {@literal null}
      * @throws io.micronaut.data.exceptions.EntityExistsException if the insert violates a primary key or unique constraint
      * @throws io.micronaut.data.exceptions.DataIntegrityViolationException if the insert violates another integrity constraint
      * @throws io.micronaut.data.exceptions.DataAccessException if the datastore reports another error
@@ -115,6 +117,7 @@ public interface CrudRepository<E, ID> extends GenericRepository<E, ID> {
      * @param entity The entity to update. Must not be {@literal null}.
      * @return The updated entity will never be {@literal null}.
      * @param <S> The generic type
+     * @throws IllegalArgumentException if the entity is {@literal null}
      * @throws io.micronaut.data.exceptions.OptimisticLockException if the entity is versioned and no row with the same ID and version exists
      * @throws io.micronaut.data.exceptions.DataIntegrityViolationException if the update violates an integrity constraint
      * @throws io.micronaut.data.exceptions.DataAccessException if the datastore reports another error
@@ -129,6 +132,7 @@ public interface CrudRepository<E, ID> extends GenericRepository<E, ID> {
      * @param entities The entities to update. Must not be {@literal null}.
      * @return The updated entities will never be {@literal null}.
      * @param <S> The generic type
+     * @throws IllegalArgumentException if the entities are {@literal null}
      * @throws io.micronaut.data.exceptions.OptimisticLockException if the entities are versioned and fewer rows than entities were updated
      * @throws io.micronaut.data.exceptions.DataAccessException if the datastore reports another error
      * @see #update(Object)
@@ -143,6 +147,7 @@ public interface CrudRepository<E, ID> extends GenericRepository<E, ID> {
      * @param entities The entities to insert. Must not be {@literal null}.
      * @return The inserted entities will never be {@literal null}.
      * @param <S> The generic type
+     * @throws IllegalArgumentException if the entities are {@literal null}
      * @throws io.micronaut.data.exceptions.EntityExistsException if an insert violates a primary key or unique constraint
      * @throws io.micronaut.data.exceptions.DataIntegrityViolationException if an insert violates another integrity constraint
      * @throws io.micronaut.data.exceptions.DataAccessException if the datastore reports another error
@@ -159,6 +164,7 @@ public interface CrudRepository<E, ID> extends GenericRepository<E, ID> {
      * @param entities The entities to save. Must not be {@literal null}.
      * @param <S> The generic type
      * @return The saved entities objects. will never be {@literal null}.
+     * @throws IllegalArgumentException if the entities are {@literal null}
      * @throws io.micronaut.data.exceptions.DataAccessException for the same reasons as {@link #save(Object)}
      */
     <S extends E> List<S> saveAll(Iterable<S> entities);
@@ -177,6 +183,7 @@ public interface CrudRepository<E, ID> extends GenericRepository<E, ID> {
      *
      * @param id must not be {@literal null}.
      * @return {@literal true} if an entity with the given id exists, {@literal false} otherwise.
+     * @throws IllegalArgumentException if the ID is {@literal null}
      */
     boolean existsById(ID id);
 
@@ -210,6 +217,7 @@ public interface CrudRepository<E, ID> extends GenericRepository<E, ID> {
      * version property, SQL and MongoDB repositories treat deleting an entity that does not exist as a no-op.
      *
      * @param entity The entity to delete
+     * @throws IllegalArgumentException if the entity is {@literal null}
      * @throws io.micronaut.data.exceptions.OptimisticLockException if the entity is versioned and no row with the same ID and version exists
      */
     void delete(E entity);
@@ -218,6 +226,7 @@ public interface CrudRepository<E, ID> extends GenericRepository<E, ID> {
      * Deletes the given entities.
      *
      * @param entities The entities to delete
+     * @throws IllegalArgumentException if the entities are {@literal null}
      * @throws io.micronaut.data.exceptions.OptimisticLockException if the entities are versioned and fewer rows than entities were deleted
      * @see #delete(Object)
      */

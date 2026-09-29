@@ -14,12 +14,17 @@ import io.micronaut.data.jdbc.annotation.JdbcRepository
 import io.micronaut.data.jdbc.h2.H2TestPropertyProvider
 import io.micronaut.data.model.query.builder.sql.Dialect
 import io.micronaut.data.repository.CrudRepository
+import io.micronaut.data.repository.async.AsyncCrudRepository
+import io.micronaut.data.repository.reactive.ReactorCrudRepository
 import jakarta.annotation.Nullable
 import spock.lang.AutoCleanup
 import spock.lang.Shared
 import spock.lang.Specification
 
+import reactor.core.publisher.Mono
+
 import java.sql.SQLException
+import java.util.concurrent.CompletionException
 
 /**
  * Documents the exceptions thrown by {@link CrudRepository} methods on JDBC.
@@ -41,6 +46,12 @@ class H2RepositoryExceptionsSpec extends Specification implements H2TestProperty
 
     @Shared
     ExcVersionedRepository versionedRepository = ctx.getBean(ExcVersionedRepository)
+
+    @Shared
+    ExcItemAsyncRepository asyncRepository = ctx.getBean(ExcItemAsyncRepository)
+
+    @Shared
+    ExcItemReactiveRepository reactiveRepository = ctx.getBean(ExcItemReactiveRepository)
 
     void cleanup() {
         itemRepository.deleteAll()
@@ -111,23 +122,67 @@ class H2RepositoryExceptionsSpec extends Specification implements H2TestProperty
             itemRepository.count() == 0
     }
 
-    void "null argument to #method is rejected with #expected.simpleName before reaching the database"() {
+    void "null argument to #method is rejected with IllegalArgumentException before reaching the database"() {
+        given:
+            itemRepository.insert(new ExcItem(id: 7L, name: "keep"))
+
         when:
             call.call(itemRepository)
 
         then:
             def e = thrown(RuntimeException)
-            e.class == expected
+            e.class == IllegalArgumentException
+            e.message.contains(message)
+            itemRepository.count() == 1
 
         where:
-            method          | call                               | expected
-            "findById"      | { r -> r.findById(null) }          | IllegalArgumentException
-            "existsById"    | { r -> r.existsById(null) }        | IllegalArgumentException
-            "deleteById"    | { r -> r.deleteById(null) }        | IllegalArgumentException
-            "save"          | { r -> r.save(null) }              | IllegalStateException
-            "insert"        | { r -> r.insert(null) }            | IllegalStateException
-            "update"        | { r -> r.update(null) }            | IllegalStateException
-            "delete"        | { r -> r.delete(null) }            | IllegalStateException
+            method          | call                               | message
+            "findById"      | { r -> r.findById(null) }          | "[id]"
+            "existsById"    | { r -> r.existsById(null) }        | "[id]"
+            "deleteById"    | { r -> r.deleteById(null) }        | "[id]"
+            "save"          | { r -> r.save(null) }              | "Entity argument [entity] of repository method [save] cannot be null"
+            "insert"        | { r -> r.insert(null) }            | "Entity argument [entity] of repository method [insert] cannot be null"
+            "update"        | { r -> r.update(null) }            | "Entity argument [entity] of repository method [update] cannot be null"
+            "delete"        | { r -> r.delete(null) }            | "Entity argument [entity] of repository method [delete] cannot be null"
+            "saveAll"       | { r -> r.saveAll(null) }           | "Entities argument [entities] of repository method [saveAll] cannot be null"
+            "insertAll"     | { r -> r.insertAll(null) }         | "Entities argument [entities] of repository method [insertAll] cannot be null"
+            "updateAll"     | { r -> r.updateAll(null) }         | "Entities argument [entities] of repository method [updateAll] cannot be null"
+            "deleteAll"     | { r -> r.deleteAll((Iterable) null) } | "Entities argument [entities] of repository method [deleteAll] cannot be null"
+    }
+
+    void "null entity argument to async #method completes exceptionally with IllegalArgumentException"() {
+        when:
+            call.call(asyncRepository).toCompletableFuture().join()
+
+        then:
+            def e = thrown(CompletionException)
+            e.cause instanceof IllegalArgumentException
+            e.cause.message.contains("cannot be null")
+
+        where:
+            method      | call
+            "save"      | { r -> r.save(null) }
+            "update"    | { r -> r.update(null) }
+            "delete"    | { r -> r.delete(null) }
+            "saveAll"   | { r -> r.saveAll(null) }
+            "deleteAll" | { r -> r.deleteAll((Iterable) null) }
+    }
+
+    void "null entity argument to reactive #method signals IllegalArgumentException"() {
+        when:
+            Mono.from(call.call(reactiveRepository)).block()
+
+        then:
+            def e = thrown(IllegalArgumentException)
+            e.message.contains("cannot be null")
+
+        where:
+            method      | call
+            "save"      | { r -> r.save(null) }
+            "update"    | { r -> r.update(null) }
+            "delete"    | { r -> r.delete(null) }
+            "saveAll"   | { r -> r.saveAll(null) }
+            "deleteAll" | { r -> r.deleteAll((Iterable) null) }
     }
 }
 
@@ -159,4 +214,12 @@ interface ExcItemRepository extends CrudRepository<ExcItem, Long> {
 
 @JdbcRepository(dialect = Dialect.H2)
 interface ExcVersionedRepository extends CrudRepository<ExcVersioned, Long> {
+}
+
+@JdbcRepository(dialect = Dialect.H2)
+interface ExcItemAsyncRepository extends AsyncCrudRepository<ExcItem, Long> {
+}
+
+@JdbcRepository(dialect = Dialect.H2)
+interface ExcItemReactiveRepository extends ReactorCrudRepository<ExcItem, Long> {
 }

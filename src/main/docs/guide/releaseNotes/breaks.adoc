@@ -1,5 +1,13 @@
 This section documents breaking changes between Micronaut versions
 
+== 5.3
+
+=== `null` entity arguments are rejected with `IllegalArgumentException`
+
+Passing `null` as the entity or the entities to a repository method, for example `save(null)`, `update(null)`, `delete(null)` or `saveAll(null)`, now fails immediately with an `IllegalArgumentException`, consistent with a `null` ID. Previously, these methods failed with an `IllegalStateException` (for example `Cannot find parameter with role: entity`) from inside the interceptor. Asynchronous and reactive repositories report the exception through the returned `CompletionStage` or `Publisher`.
+
+Code that caught `IllegalStateException` for this case should catch `IllegalArgumentException` instead.
+
 == 5.2
 
 === Kotlin 2.4 generic repository bounds

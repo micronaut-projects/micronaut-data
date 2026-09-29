@@ -31,7 +31,8 @@ import java.util.concurrent.CompletableFuture;
  * {@link java.util.concurrent.CompletionException}; use {@code getCause()} to obtain, for example, the
  * {@link io.micronaut.data.exceptions.OptimisticLockException}. Unlike the blocking variant,
  * {@link #findById(Object)} completes with {@link io.micronaut.data.exceptions.EmptyResultException} when no entity
- * exists for the ID.
+ * exists for the ID. A {@code null} ID or entity argument is reported the same way, with an
+ * {@link IllegalArgumentException}.
  *
  * @param <E> The entity type
  * @param <ID> The ID type

@@ -27,7 +27,8 @@ import org.reactivestreams.Publisher;
  * {@link io.micronaut.data.repository.CrudRepository}, but datastore failures such as
  * {@link io.micronaut.data.exceptions.EntityExistsException} or
  * {@link io.micronaut.data.exceptions.OptimisticLockException} are delivered as the error signal of the returned
- * publisher. A lookup that finds nothing, such as {@link #findById(Object)}, completes without emitting an item.
+ * publisher, as is the {@link IllegalArgumentException} for a {@code null} ID or entity argument. A lookup that finds
+ * nothing, such as {@link #findById(Object)}, completes without emitting an item.
  *
  * @param <E> The entity type
  * @param <ID> The ID type
