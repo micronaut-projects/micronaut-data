@@ -56,11 +56,7 @@ Use ann:data.mongodb.annotation.MongoUpdateReturningQuery[] for single-document 
 For ann:data.mongodb.annotation.MongoUpdateReturningQuery[], the default `returnDocument` value is `ReturnDocument.BEFORE`.
 If you want the updated state returned, set `returnDocument = ReturnDocument.AFTER` explicitly.
 
-[source,java]
-----
-@MongoUpdateReturningQuery(filter = "{_id: {$eq: :id}}", update = "{$inc:{totalPages: 1}}", returnDocument = ReturnDocument.AFTER)
-Book incrementTotalPagesAfter(String id);
-----
+snippet::example.BookRepository[project-base="doc-examples/mongo-example", source="main", tags="updateReturning", indent="0"]
 
 NOTE: MongoDB can only return a single updated document for an update operation (using `findOneAndUpdate`).
 Update-returning methods must use a single-result return type and ann:data.mongodb.annotation.MongoUpdateReturningQuery[] (including supported single-item reactive/future types such as `Mono<T>` and `CompletionStage<T>`).

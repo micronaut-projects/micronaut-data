@@ -136,4 +136,12 @@ class BookRepositorySpec : AbstractMongoSpec() {
 
         assertEquals("The Shining", bookDTO.title)
     }
+
+    @Test
+    fun testUpdateReturning() {
+        val book = bookRepository.save(Book(null, "The Shining", 400))
+        val updated = bookRepository.incrementPagesAfter(book.id!!)
+
+        assertEquals(401, updated.pages)
+    }
 }

@@ -3,10 +3,24 @@ Inspired by the similar annotation in Hibernate, you can apply a transformation 
 This feature can be used to encrypt/decrypt values or invoke any arbitrary database function. To define a read transformation use the `read` member. For example:
 
 .Applying a read transformation
-[source,java]
+[source.multi-language-sample,java]
 ----
 @ColumnTransformer(read = "UPPER(@.name)")
 private String name;
+----
+
+.Applying a read transformation
+[source.multi-language-sample,kotlin]
+----
+@ColumnTransformer(read = "UPPER(@.name)")
+var name: String? = null
+----
+
+.Applying a read transformation
+[source.multi-language-sample,groovy]
+----
+@ColumnTransformer(read = "UPPER(@.name)")
+String name
 ----
 
 NOTE: `@` is a query alias placeholder and will be replaced with one if the query specifies it. Example: `"UPPER(@.name)` is going to become `UPPER(project_.name).`
@@ -14,10 +28,24 @@ NOTE: `@` is a query alias placeholder and will be replaced with one if the quer
 To apply a write transformation you should use the `write` member and include exactly one `?` placeholder:
 
 .Apply a write transformation
-[source,java]
+[source.multi-language-sample,java]
 ----
 @ColumnTransformer(write = "UPPER(?)")
 private String name;
+----
+
+.Apply a write transformation
+[source.multi-language-sample,kotlin]
+----
+@ColumnTransformer(write = "UPPER(?)")
+var name: String? = null
+----
+
+.Apply a write transformation
+[source.multi-language-sample,groovy]
+----
+@ColumnTransformer(write = "UPPER(?)")
+String name
 ----
 
 With this any place any `INSERT` or `UPDATE` statement generated will include the above `write` entry.

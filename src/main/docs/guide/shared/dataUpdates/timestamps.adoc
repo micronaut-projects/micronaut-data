@@ -6,13 +6,31 @@ You can also annotate a property that is a date type of entity with ann:data.ann
 
 If you sometimes want to provide values yourself and otherwise let Micronaut Data populate them, you can use the optional `skipIfPresent` flag:
 
-[source,java]
+[source.multi-language-sample,java]
 ----
 @DateCreated(skipIfPresent = true)
 Instant created;
 
 @DateUpdated(skipIfPresent = true)
 Instant updated;
+----
+
+[source.multi-language-sample,kotlin]
+----
+@DateCreated(skipIfPresent = true)
+var created: Instant? = null
+
+@DateUpdated(skipIfPresent = true)
+var updated: Instant? = null
+----
+
+[source.multi-language-sample,groovy]
+----
+@DateCreated(skipIfPresent = true)
+Instant created
+
+@DateUpdated(skipIfPresent = true)
+Instant updated
 ----
 
 Behavior:

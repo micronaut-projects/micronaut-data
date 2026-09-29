@@ -2,7 +2,7 @@ from typing import Annotated
 
 from micronaut.data.annotation import Id
 from micronaut.data.model import Page, Pageable, Slice
-from micronaut.data.mongodb.annotation import MongoAggregateQuery, MongoDeleteQuery, MongoFindQuery, MongoRepository, MongoUpdateQuery
+from micronaut.data.mongodb.annotation import MongoAggregateQuery, MongoDeleteQuery, MongoFindQuery, MongoRepository, MongoUpdateQuery, MongoUpdateReturningQuery
 from micronaut.data.repository import CrudRepository
 from org.bson.types import ObjectId
 
@@ -105,3 +105,8 @@ class BookRepository(CrudRepository[Book, ObjectId]):  # <2>
     @MongoDeleteQuery(filter="{title:{$regex: :t}}", collation="{locale:'en_US', numericOrdering:true}")
     def customDelete(self, t: str) -> None: ...
     # end::custom[]
+
+    # tag::updateReturning[]
+    @MongoUpdateReturningQuery(filter="{_id: {$eq: :id}}", update="{$inc:{pages: 1}}", returnDocument="AFTER")
+    def incrementPagesAfter(self, id: ObjectId) -> Book: ...
+    # end::updateReturning[]
