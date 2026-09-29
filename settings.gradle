@@ -101,6 +101,8 @@ include 'doc-examples:jdbc-example-groovy'
 include 'doc-examples:jdbc-example-kotlin'
 include 'doc-examples:jdbc-example-python'
 include 'doc-examples:jdbc-example-records-java'
+include 'doc-examples:jdbc-example-records-kotlin'
+include 'doc-examples:jdbc-example-records-groovy'
 include 'doc-examples:jdbc-example-records-python'
 
 include 'doc-examples:jdbc-sqlite'
@@ -113,7 +115,9 @@ include 'doc-examples:jdbc-multitenancy-datasource-example-java'
 include 'doc-examples:jdbc-multitenancy-schema-example-java'
 include 'doc-examples:jdbc-multitenancy-discriminator-example-java'
 
-include 'doc-examples:jdbc-sessionless-transaction-booking'
+include 'doc-examples:jdbc-sessionless-transaction-booking-java'
+include 'doc-examples:jdbc-sessionless-transaction-booking-kotlin'
+include 'doc-examples:jdbc-sessionless-transaction-booking-groovy'
 
 include 'doc-examples:jdbc-and-r2dbc-example-java'
 

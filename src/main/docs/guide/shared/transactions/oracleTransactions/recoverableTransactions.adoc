@@ -6,10 +6,32 @@ It is intended for the case where the database may have committed, but the clien
 `@OracleTransactional.Recoverable` is a companion to ann:transaction.annotation.Transactional[] and ann:transaction.annotation.OracleTransactional[].
 Use it on a method or type whose intercepted invocation owns the transaction commit boundary:
 
-[source,java]
+[source.multi-language-sample,java]
 ----
 import io.micronaut.transaction.annotation.OracleTransactional;
 import io.micronaut.transaction.annotation.Transactional;
+
+@Transactional
+@OracleTransactional.Recoverable
+void updateInventory() {
+    // repository or JDBC work
+}
+----
+[source.multi-language-sample,kotlin]
+----
+import io.micronaut.transaction.annotation.OracleTransactional
+import io.micronaut.transaction.annotation.Transactional
+
+@Transactional
+@OracleTransactional.Recoverable
+open fun updateInventory() {
+    // repository or JDBC work
+}
+----
+[source.multi-language-sample,groovy]
+----
+import io.micronaut.transaction.annotation.OracleTransactional
+import io.micronaut.transaction.annotation.Transactional
 
 @Transactional
 @OracleTransactional.Recoverable

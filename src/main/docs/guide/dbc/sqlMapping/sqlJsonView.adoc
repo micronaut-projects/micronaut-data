@@ -88,14 +88,14 @@ Optimistic concurrency control at the document level uses embedded ETAG values i
 
 Example of class used to map `_metadata` field:
 
-[source,java]
+[source.multi-language-sample,java]
 ----
 /**
  * The Json Duality View metadata.
  *
  * @param etag A unique identifier for a specific version of the document, as a string of hexadecimal characters.
  * @param asof The latest system change number (SCN) for the JSON document, as a JSON number.
-*              This records the last logical point in time at which the document was generated.
+ *             This records the last logical point in time at which the document was generated.
  */
 @Introspected
 public record Metadata(
@@ -104,13 +104,72 @@ public record Metadata(
 ) {
 }
 ----
+[source.multi-language-sample,kotlin]
+----
+/**
+ * The Json Duality View metadata.
+ *
+ * @property etag A unique identifier for a specific version of the document, as a string of hexadecimal characters.
+ * @property asof The latest system change number (SCN) for the JSON document, as a JSON number.
+ *                This records the last logical point in time at which the document was generated.
+ */
+@Introspected
+data class Metadata(
+    val etag: String,
+    val asof: String
+)
+----
+[source.multi-language-sample,groovy]
+----
+/**
+ * The Json Duality View metadata.
+ *
+ * @param etag A unique identifier for a specific version of the document, as a string of hexadecimal characters.
+ * @param asof The latest system change number (SCN) for the JSON document, as a JSON number.
+ *             This records the last logical point in time at which the document was generated.
+ */
+@Introspected
+record Metadata(
+    String etag,
+    String asof
+) {
+}
+----
+[source.multi-language-sample,python]
+----
+@Introspected
+@dataclass
+class Metadata:
+    """The Json Duality View metadata.
+
+    etag: A unique identifier for a specific version of the document, as a string of hexadecimal characters.
+    asof: The latest system change number (SCN) for the JSON document, as a JSON number.
+          This records the last logical point in time at which the document was generated.
+    """
+    etag: str
+    asof: str
+----
 
 Then this metadata class can be declared as property of class mapped to Json Duality View like this:
 
-[source,java]
+[source.multi-language-sample,java]
 ----
 @JsonProperty("_metadata")
 Metadata metadata;
+----
+[source.multi-language-sample,kotlin]
+----
+@field:JsonProperty("_metadata")
+val metadata: Metadata?
+----
+[source.multi-language-sample,groovy]
+----
+@JsonProperty("_metadata")
+Metadata metadata
+----
+[source.multi-language-sample,python]
+----
+metadata: Annotated[Metadata | None, JsonProperty("_metadata")] = None
 ----
 
 If Json Duality View mapped entity is updated with invalid or unexpected `etag` value of the `metadata` field
