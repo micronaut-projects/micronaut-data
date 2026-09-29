@@ -50,10 +50,10 @@ abstract class ProductRepository implements CrudRepository<Product, Long>, JpaSp
 
     // tag::procedure[]
     @Procedure(named = "calculateSum")
-    abstract long calculateSum(Long productId);
+    abstract long calculateSum(Long productId); // <1>
 
     @Procedure("calculateSumInternal")
-    abstract long calculateSumCustom(Long productId);
+    abstract long calculateSumCustom(Long productId); // <2>
     // end::procedure[]
 
     // tag::specifications[]

@@ -22,7 +22,9 @@ import io.reactivex.rxjava3.core.Maybe;
 import io.reactivex.rxjava3.core.Single;
 
 /**
- * Interface for CRUD using RxJava 3.
+ * RxJava 3 variation of {@link io.micronaut.data.repository.CrudRepository}. The operations and the exceptions they
+ * produce are the same as described there, but datastore failures are delivered through the {@code onError} signal
+ * of the returned reactive type, as described in {@link ReactiveStreamsCrudRepository}.
  *
  * @param <E> The entity type
  * @param <ID> The ID type
@@ -86,7 +88,7 @@ public interface RxJavaCrudRepository<E, ID> extends GenericRepository<E, ID> {
      * Retrieves an entity by its id.
      *
      * @param id The ID of the entity to retrieve. Must not be {@literal null}.
-     * @return the entity with the given id or {@literal Optional#empty()} if none found
+     * @return a {@link Maybe} emitting the entity with the given id, or completing empty if none is found
      */
     
     Maybe<E> findById(ID id);

@@ -1,9 +1,21 @@
 You can declare a field of a class as a JSON type using the ann:data.annotation.TypeDef[] annotation as follows:
 
-[source,java]
+[source.multi-language-sample,java]
 ----
 @TypeDef(type = DataType.JSON)
 private Map<String, String> data;
+----
+
+[source.multi-language-sample,kotlin]
+----
+@TypeDef(type = DataType.JSON)
+var data: Map<String, String>? = null
+----
+
+[source.multi-language-sample,groovy]
+----
+@TypeDef(type = DataType.JSON)
+Map<String, String> data
 ----
 
 The above will map to a column called `data`. Depending on the underling database the column type will be adjusted. For example for Postgres which features native JSON support the column type will be `JSONB`.

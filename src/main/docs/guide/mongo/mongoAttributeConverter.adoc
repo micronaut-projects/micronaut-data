@@ -16,7 +16,7 @@ The last step is to add custom attribute conversion so that Micronaut Data knows
 
 snippet::example.QuantityAttributeConverter[project-base="doc-examples/mongo-example", source="main"]
 
-<1> The attribute converter implements ann:io.micronaut.data.model.runtime.convert.AttributeConverter[] and must be a bean
+<1> The attribute converter implements ann:data.model.runtime.convert.AttributeConverter[] and must be a bean
 <2> A converter from `Quantity` to `Integer`
 <3> A converter from `Integer` to `Quantity`
 

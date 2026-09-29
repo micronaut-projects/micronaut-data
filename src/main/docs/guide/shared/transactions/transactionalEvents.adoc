@@ -1,13 +1,44 @@
-You can write event listeners that are transaction aware using the ann:transaction.annotation.TransactionalEventListener[] annotation.
+An application event listener is normally invoked as soon as the event is published. If the event is published inside a transaction, the listener then runs before the transaction has committed, so it may react to changes that are later rolled back, and it cannot see the outcome of the transaction.
+
+A listener annotated with ann:transaction.annotation.TransactionalEventListener[] is instead bound to the transaction in which the event is published: publishing the event only registers the listener with that transaction, and the listener method is invoked later, when the transaction reaches the phase that the listener declares. By default this is after a successful commit, which makes these listeners a good fit for side effects that must only happen once the data is committed, such as sending a notification.
 
 The following demonstrates an example:
 
 snippet::example.BookManager[project-base="doc-examples/hibernate-example", source="main", indent="0"]
 
 <1> The `BookManager` class receives an instance of `ApplicationEventPublisher`.
-<2> When the event is published if there is a running transaction then it will only trigger the listener once the transaction is committed.
-<3> The listener itself is annotated with ann:transaction.annotation.TransactionalEventListener[]
+<2> The event is published inside the transaction of the `saveBook` method. `publishEvent` returns without invoking the listener.
+<3> The listener annotated with ann:transaction.annotation.TransactionalEventListener[] is invoked once the transaction has been committed. If the transaction is rolled back, it is not invoked.
 
-TIP: You can set the value of the ann:transaction.annotation.TransactionalEventListener[] annotation to bind the listener to a particular transaction phase.
+The phase is set with the `value` member of the annotation:
+
+.Transaction phases
+[cols="1,3"]
+|===
+|*Phase*
+|*When the listener is invoked*
+
+|`AFTER_COMMIT` (default)
+|After the transaction has been committed successfully.
+
+|`AFTER_ROLLBACK`
+|After the transaction has been rolled back.
+
+|`AFTER_COMPLETION`
+|After the transaction has completed, whether it was committed or rolled back.
+
+|`BEFORE_COMMIT`
+|Just before the transaction is committed, while it is still open. The listener is not invoked if the transaction is rolled back instead.
+|===
+
+The following rules apply:
+
+* *No active transaction*: if the event is published when no transaction is active, a transactional event listener is not invoked at all; the event is ignored for this listener and a debug message is logged by the `io.micronaut.transaction.annotation.TransactionalEventListener` logger.
+* *Joined transactions*: if the publishing method joined an existing transaction (for example with the default `REQUIRED` propagation), the listener is bound to that existing transaction and runs when the outermost transaction completes. If the publishing method runs in a transaction of its own (`REQUIRES_NEW`), the listener runs when that transaction completes.
+* *Threading*: listeners are invoked synchronously, on the thread that commits or rolls back the transaction, which is normally the thread that published the event. The transactional method returns to its caller only after its after-commit listeners have run.
+* *Exceptions*: an exception thrown by a `BEFORE_COMMIT` listener rolls the transaction back and is propagated to the caller. The other phases run after the transaction has completed, so their exceptions cannot change the outcome anymore, but they are still propagated to the caller of the transactional method.
+* *Database access*: a `BEFORE_COMMIT` listener can still use the current transaction. The other phases run after it has completed, so a listener that writes to the database in one of them should start a new transaction, for example by annotating the listener method with `@Transactional(Transactional.TxType.REQUIRES_NEW)`.
+
+TIP: If several transaction managers are configured, use the `transactionManager` member of the annotation to select the one whose transaction the listener is bound to.
 
 NOTE: Using ann:transaction.annotation.TransactionalEventListener[] annotations for transaction events is not supported for reactive transactions.

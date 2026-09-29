@@ -50,7 +50,7 @@ The generated application will have a compile-scoped dependency on the `micronau
 
 dependency:io.micronaut.data:micronaut-data-jdbc[]
 
-You should also ensure you have the JDBC driver and connection pool dependencies configured:
+You should also ensure you have the JDBC driver and connection pool dependencies configured. The connection pool module creates the `DataSource` that Micronaut Data JDBC uses; without it the application fails at startup with `No bean of type [io.micronaut.data.operations.PrimaryRepositoryOperations] exists`:
 
 dependency:io.micronaut.sql:micronaut-jdbc-hikari[scope="runtime"]
 
@@ -58,7 +58,7 @@ The annotation processor needs to have the Micronaut Data processor dependency p
 
 dependency:io.micronaut.data:micronaut-data-processor[scope="annotationProcessor"]
 
-NOTE: For Kotlin, add the `micronaut-data-processor` dependency in https://docs.micronaut.io/4.4.3/guide/#kaptOrKsp[kapt or ksp scope], and for Groovy add `micronaut-data-processor` in compileOnly scope.
+NOTE: For Kotlin, add the `micronaut-data-processor` dependency in https://docs.micronaut.io/latest/guide/#kaptOrKsp[kapt or ksp scope], and for Groovy add `micronaut-data-processor` in compileOnly scope.
 
 Next up you need to configure at least one data source. The following snippet from the application configuration file is an example of configuring the default JDBC data source:
 
@@ -70,10 +70,6 @@ include::doc-examples/jdbc-example-java/src/main/resources/application.yml[]
 NOTE: The `schema-generate` setting is only useful for demos and testing trivial examples, for production usage it is recommended you pair Micronaut Data with a SQL migration tool such as https://micronaut-projects.github.io/micronaut-flyway/latest/guide/index.html[Flyway] or https://micronaut-projects.github.io/micronaut-liquibase/latest/guide/index.html[Liquibase].
 
 To retrieve objects from the database you need to define a class annotated with ann:data.annotation.MappedEntity[]. Note that this is a meta annotation and in fact if you prefer you can use JPA annotations (only a subset are supported, more on that later). If you wish to use JPA annotations include the following `compileOnly` scoped dependency:
-
-dependency:jakarta.persistence:jakarta.persistence-api[scope="compileOnly"]
-
-To use JPA annotations in the `javax.persistence` package use:
 
 dependency:jakarta.persistence:jakarta.persistence-api[scope="compileOnly"]
 
@@ -96,7 +92,7 @@ You can now perform CRUD (Create, Read, Update, Delete) operations on the entity
 
 snippet::example.BookRepositorySpec[project-base="doc-examples/jdbc-example", tags="inject", indent="0"]
 
-=== Saving an Instance (Create)
+== Saving an Instance (Create)
 
 To save an instance use the `save` method of the `CrudRepository` interface:
 
@@ -104,13 +100,13 @@ snippet::example.BookRepositorySpec[project-base="doc-examples/jdbc-example", ta
 
 NOTE: Unlike the JPA implementation there is no dirty checking. `save` inserts entities without an identity value and updates entities with a generated or always auto-populated identity value already present. Entities with non-generated assigned identities are inserted by default. Use `insert` to require an insert, and use an `update` method for explicit or partial updates.
 
-=== Retrieving an Instance (Read)
+== Retrieving an Instance (Read)
 
 To read a book back use `findById`:
 
 snippet::example.BookRepositorySpec[project-base="doc-examples/jdbc-example", tags="read", indent="0"]
 
-=== Updating an Instance (Update)
+== Updating an Instance (Update)
 
 With Micronaut Data JDBC, you must manually implement an `update` method since the JDBC implementation doesn't include any dirty checking or persistence session notion. So you have to define explicit update methods for updates in your repository. For example:
 
@@ -120,7 +116,7 @@ Which can then be called like so:
 
 snippet::example.BookRepositorySpec[project-base="doc-examples/jdbc-example", tags="update", indent="0"]
 
-=== Deleting an Instance (Delete)
+== Deleting an Instance (Delete)
 
 To delete an instance use `deleteById`:
 

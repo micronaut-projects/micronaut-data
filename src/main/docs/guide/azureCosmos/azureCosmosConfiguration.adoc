@@ -4,7 +4,7 @@ As mentioned in the <<azureCosmosQuickStart, Quick Start>> every class annotated
 
 Currently, it is only possible to configure a small subset of properties for the database and containers. For the database throughput properties can be configured whilst for containers the throughput properties and partition key path are configurable.
 
-NOTE: An additional way to configure the partition key value is adding the annotation ann:io.micronaut.data.cosmos.annotation.PartitionKey[]
+NOTE: An additional way to configure the partition key value is adding the annotation ann:data.cosmos.annotation.PartitionKey[]
 
 The below is an example application configuration showing container and db properties used when creating new containers if the containers don't already exist:
 

@@ -22,9 +22,17 @@ import jakarta.persistence.criteria.Predicate;
 import jakarta.persistence.criteria.Root;
 
 /**
- * Criteria query specification.
- *
- * Based on Spring Data's org.springframework.data.jpa.domain.Specification.
+ * A reusable, composable condition for selecting entities, expressed with the JPA criteria API.
+ * <p>
+ * {@link #toPredicate(Root, CriteriaQuery, CriteriaBuilder)} receives the query root, the query being built and the
+ * criteria builder, and returns the {@link Predicate} to use in the {@code WHERE} clause, or {@code null} for no
+ * restriction. Having access to the {@link CriteriaQuery} allows a specification to also influence the query, for
+ * example to make it {@code distinct}; use {@link PredicateSpecification} when only a predicate is needed.
+ * Specifications are passed to the methods of {@link io.micronaut.data.repository.jpa.JpaSpecificationExecutor} and
+ * can be combined with {@link #and(QuerySpecification)}, {@link #or(QuerySpecification)} and
+ * {@link #not(QuerySpecification)}.
+ * <p>
+ * Similar to Spring Data JPA's {@code Specification}.
  *
  * @param <T> The entity root type
  * @author Denis Stepanov

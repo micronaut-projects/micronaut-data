@@ -1,27 +1,27 @@
-Since Micronaut Data 4.0 and Oracle23c database, an entity can be mapped to an JSON VIEW as follows:
+With Oracle Database 23ai or later, an entity can be mapped to a JSON Relational Duality View as follows:
 
 snippet::example.ContactView[project-base="doc-examples/jdbc-example", source="main", tags="record-example"]
 
-where "CONTACT_VIEW" is actual name of duality json view object in the database. It is currently supported only by the Oracle database, since version 23c.
+where "CONTACT_VIEW" is actual name of duality json view object in the database. It is currently supported only by the Oracle database, since version 23ai.
 More about Oracle JSON VIEW can be read here https://docs.oracle.com/en/database/oracle/oracle-database/23/jsnvu/overview-json-relational-duality-views.html.
 
 Essentially, json view will be treated like mapped entity and will return JSON structure from the database and be mapped to java entity. All CRUD operations can be
 performed against json view mapped entities.
 
-Also, entity can be mapped to a ann:io.micronaut.data.annotation.JsonView[] as follows:
+Also, entity can be mapped to a ann:data.annotation.JsonView[] as follows:
 
 snippet::example.AddressSubView[project-base="doc-examples/jdbc-example", source="main", tags="record-example"]
 
-The main difference between ann:io.micronaut.data.annotation.JsonView[] and ann:io.micronaut.data.annotation.JsonSubView[], and the reason for the existence of the ann:io.micronaut.data.annotation.JsonSubView[] annotation, is to specify for which classes the creation
+The main difference between ann:data.annotation.JsonView[] and ann:data.annotation.JsonSubView[], and the reason for the existence of the ann:data.annotation.JsonSubView[] annotation, is to specify for which classes the creation
 SQL script will be generated. SQL scripts are generated for JsonViews, but not for JsonSubViews.
 
-==== Specifying joins
+== Specifying joins
 
-You can define relationships between entities within JSON views by using ann:io.micronaut.data.annotation.Relation[]. Tables are
-joined automatically, on columns annotated with ann:io.micronaut.data.annotation.Id[] by default, but if user specified columns to join in
-by ann:io.micronaut.data.annotation.JoinColumn[], those columns will be used.
+You can define relationships between entities within JSON views by using ann:data.annotation.Relation[]. Tables are
+joined automatically, on columns annotated with ann:data.annotation.Id[] by default, but if user specified columns to join in
+by ann:data.annotation.sql.JoinColumn[], those columns will be used.
 
-NOTE: If ann:io.micronaut.data.annotation.JoinColumn[] is not specified, property name of Json View class needs to match the name of the corresponding entity class property name.
+NOTE: If ann:data.annotation.sql.JoinColumn[] is not specified, property name of Json View class needs to match the name of the corresponding entity class property name.
 
 For example, to associate a `StudentView` with its related `StudentScheduleSubView` entries in a one-to-many relationship,
 annotate your view class using `JoinColumn`, where `name` is the identifier for `StudentView`, and `referencedColumnName`
@@ -29,10 +29,10 @@ is the identifier for `StudentScheduleSubView`, as follows:
 
 snippet::example.StudentView[project-base="doc-examples/jdbc-example", source="main", tags="class-example"]
 
-==== Using `@MappedProperty` annotation
+== Using `@MappedProperty` annotation
 
 Json view field names do not need to match the underlying table field names, and if it's not matching, then users must annotate the field
-The fields of types annotated annotated with ann:io.micronaut.data.annotation.JsonView[] or ann:io.micronaut.data.annotation.JsonSubView[] do not need the match the corresponding entities field names as specified by the `entity` member (in the below case `Teacher`).
+The fields of types annotated annotated with ann:data.annotation.JsonView[] or ann:data.annotation.JsonSubView[] do not need the match the corresponding entities field names as specified by the `entity` member (in the below case `Teacher`).
 
 The `@MappedProperty` annotation can be used to control which underlying field the view matches in the entity.
 
@@ -42,7 +42,7 @@ Json view field names do not need to match the underlying table field names, and
 
 snippet::example.TeacherSubView[project-base="doc-examples/jdbc-example", source="main", tags="class-example"]
 
-==== Schema generation
+== Schema generation
 
 Given the example entities above the following JSON Duality View definition is generated:
 
@@ -63,16 +63,16 @@ CREATE OR REPLACE JSON RELATIONAL DUALITY VIEW STUDENT_VIEW AS
     WITH UPDATE INSERT DELETE -- <6>
 ----
 
-<1> Generated identity column, annotated with ann:io.micronaut.data.annotation.Generated[] and ann:io.micronaut.data.annotation.Id[]
+<1> Generated identity column, annotated with ann:data.annotation.GeneratedValue[] and ann:data.annotation.Id[]
 <2> Ordinary column
-<3> Relation column, annotated with ann:io.micronaut.data.annotation.Relation[]
-<4> Operations supported, specified by operations field in ann:io.micronaut.data.annotation.JsonSubView[]
-<5> Column matching, specified by ann:io.micronaut.data.annotation.JoinColumn[]
-<6> Operations supported, specified by operations field in ann:io.micronaut.data.annotation.JsonView[] (defaults to UPDATE INSERT DELETE)
+<3> Relation column, annotated with ann:data.annotation.Relation[]
+<4> Operations supported, specified by operations field in ann:data.annotation.JsonSubView[]
+<5> Column matching, specified by ann:data.annotation.sql.JoinColumn[]
+<6> Operations supported, specified by operations field in ann:data.annotation.JsonView[] (defaults to UPDATE INSERT DELETE)
 
 More documentation: https://docs.oracle.com/en/database/oracle/oracle-database/26/jsnvu/overview-json-relational-duality-views.html/[link]
 
-==== Operations supported
+== Operations supported
 
 Users can specify sql operations supported for `JsonView` and `JsonSubView` using the `operations` field, if not specified, it defaults to `{ INSERT, UPDATE, DELETE }`.
 
@@ -80,7 +80,7 @@ snippet::example.StudentScheduleSubView[project-base="doc-examples/jdbc-example"
 
 More documentation: https://docs.oracle.com/en/database/oracle/oracle-database/26/jsnvu/overview-json-relational-duality-views.html/[link]
 
-==== Optimistic Locking
+== Optimistic Locking
 
 You can use optimistic/lock-free concurrency control with duality views, writing JSON documents or committing their updates only when other sessions haven't modified them concurrently.
 
@@ -88,14 +88,14 @@ Optimistic concurrency control at the document level uses embedded ETAG values i
 
 Example of class used to map `_metadata` field:
 
-[source,java]
+[source.multi-language-sample,java]
 ----
 /**
  * The Json Duality View metadata.
  *
  * @param etag A unique identifier for a specific version of the document, as a string of hexadecimal characters.
  * @param asof The latest system change number (SCN) for the JSON document, as a JSON number.
-*              This records the last logical point in time at which the document was generated.
+ *             This records the last logical point in time at which the document was generated.
  */
 @Introspected
 public record Metadata(
@@ -104,13 +104,72 @@ public record Metadata(
 ) {
 }
 ----
+[source.multi-language-sample,kotlin]
+----
+/**
+ * The Json Duality View metadata.
+ *
+ * @property etag A unique identifier for a specific version of the document, as a string of hexadecimal characters.
+ * @property asof The latest system change number (SCN) for the JSON document, as a JSON number.
+ *                This records the last logical point in time at which the document was generated.
+ */
+@Introspected
+data class Metadata(
+    val etag: String,
+    val asof: String
+)
+----
+[source.multi-language-sample,groovy]
+----
+/**
+ * The Json Duality View metadata.
+ *
+ * @param etag A unique identifier for a specific version of the document, as a string of hexadecimal characters.
+ * @param asof The latest system change number (SCN) for the JSON document, as a JSON number.
+ *             This records the last logical point in time at which the document was generated.
+ */
+@Introspected
+record Metadata(
+    String etag,
+    String asof
+) {
+}
+----
+[source.multi-language-sample,python]
+----
+@Introspected
+@dataclass
+class Metadata:
+    """The Json Duality View metadata.
+
+    etag: A unique identifier for a specific version of the document, as a string of hexadecimal characters.
+    asof: The latest system change number (SCN) for the JSON document, as a JSON number.
+          This records the last logical point in time at which the document was generated.
+    """
+    etag: str
+    asof: str
+----
 
 Then this metadata class can be declared as property of class mapped to Json Duality View like this:
 
-[source,java]
+[source.multi-language-sample,java]
 ----
 @JsonProperty("_metadata")
 Metadata metadata;
+----
+[source.multi-language-sample,kotlin]
+----
+@field:JsonProperty("_metadata")
+val metadata: Metadata?
+----
+[source.multi-language-sample,groovy]
+----
+@JsonProperty("_metadata")
+Metadata metadata
+----
+[source.multi-language-sample,python]
+----
+metadata: Annotated[Metadata | None, JsonProperty("_metadata")] = None
 ----
 
 If Json Duality View mapped entity is updated with invalid or unexpected `etag` value of the `metadata` field
@@ -118,6 +177,6 @@ then `OptimisticLockingException` will be thrown.
 
 NOTE: Using `@Version` is not supported in Json Duality View mapped classes.
 
-==== Limitations
+== Limitations
 
 * During schema creation, json view mapped entities are skipped, and it is expected for users to create them manually or via migration scripts.

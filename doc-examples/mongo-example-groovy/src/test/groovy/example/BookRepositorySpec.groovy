@@ -53,4 +53,18 @@ class BookRepositorySpec extends Specification {
         bookRepository.count() == 0
     }
 
+    void 'test update returning the updated document'() {
+        given:
+        Book book = bookRepository.save(new Book("The Shining", 400))
+
+        when:
+        Book updated = bookRepository.incrementPagesAfter(book.id)
+
+        then:
+        updated.pages == 401
+
+        cleanup:
+        bookRepository.deleteAll()
+    }
+
 }
