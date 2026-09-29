@@ -163,6 +163,10 @@ public interface SqlTableMappingValidator {
      * Returns the query selecting the full type definitions of the schema columns whose type arguments are not reported
      * by the standard metadata (like the vector dimension). The query has a single parameter, the schema name
      * (the database name for MySQL), and selects the table name, the column name and the type definition.
+     * <p>
+     * The definitions are used to validate the columns mapped with a definition, like {@code VECTOR(3, FLOAT32)}:
+     * a different vector dimension or storage is an error, a different element format a warning. The query is only
+     * executed when some mapped column of the schema has a definition.
      *
      * @return The query or null if not supported
      * @since 5.3.0

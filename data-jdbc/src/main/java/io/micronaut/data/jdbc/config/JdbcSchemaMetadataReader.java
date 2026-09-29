@@ -177,7 +177,14 @@ final class JdbcSchemaMetadataReader {
     /**
      * Reads the full column type definitions of the schema tables with a single query, see
      * {@link io.micronaut.data.model.query.builder.sql.validation.SqlTableMappingValidator#getColumnTypeDefinitionsQuery()}.
-     * Failures are ignored and the type definitions are not verified.
+     * <p>
+     * They are needed to validate the columns mapped with a definition, like {@code VECTOR(3, FLOAT32)}: the metadata
+     * ({@link DatabaseMetaData#getColumns(String, String, String, String)}) only reports the type name, not its arguments.
+     * Oracle reports {@code VECTOR}, the dimension, format and storage are only in {@code ALL_TAB_COLS.VECTOR_INFO},
+     * PostgreSQL reports {@code vector} without the dimension and MySQL the vector size in bytes. A column with a different
+     * vector dimension or storage cannot store the mapped vectors.
+     * <p>
+     * Failures are ignored and the type arguments are not verified.
      *
      * @param query The query selecting the table names, column names and type definitions
      * @param schemaTables The schema tables to populate
@@ -249,10 +256,10 @@ final class JdbcSchemaMetadataReader {
     }
 
     /**
-     * The dictionary reports the flags as the strings {@code true} and {@code false}.
+     * The dictionary reports the flags as the strings {@code true} and {@code false}, compared ignoring the case.
      */
     private static boolean isTrue(@Nullable String value) {
-        return "true".equalsIgnoreCase(value) || "yes".equalsIgnoreCase(value);
+        return value != null && StringUtils.isTrue(value.toLowerCase(Locale.ROOT));
     }
 
     private void query(String sql, @Nullable String parameter, RowReader rowReader) throws SQLException {
