@@ -12,6 +12,7 @@ shared:
     criteria: Query Criteria
     pagination: Pagination
     cursored-pagination: Cursored Pagination
+    paginationHttp: Pagination in HTTP Controllers
     ordering: Ordering
     projections: Query Projections
     dto: DTO Projections
@@ -95,6 +96,7 @@ dbc:
   dbcAttributeConverter: Using Attribute Converter
   dbcJoinQueries: Join Queries
   dbcNativeQueries: Explicit Queries
+  dbcExplicitQueriesPagination: Explicit Queries and Pagination
   dbcProcedures: Procedures
 hibernate:
   title: Micronaut Data JPA Hibernate
