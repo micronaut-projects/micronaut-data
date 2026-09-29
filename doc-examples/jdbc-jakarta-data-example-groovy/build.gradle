@@ -1,0 +1,26 @@
+plugins {
+    id "groovy"
+    id "io.micronaut.build.internal.data-example"
+}
+
+application {
+    mainClass = "example.Application"
+}
+
+micronaut {
+    version libs.versions.micronaut.platform.get()
+    runtime "netty"
+    testRuntime "spock"
+}
+
+dependencies {
+    compileOnly projects.micronautDataProcessor
+
+    implementation libs.managed.jakarta.data.api
+    implementation projects.micronautDataJdbc
+    implementation(mnSql.jakarta.persistence.api)
+
+    runtimeOnly mnSql.micronaut.jdbc.tomcat
+    runtimeOnly mnLogging.logback.classic
+    runtimeOnly mnSql.h2
+}

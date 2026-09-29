@@ -107,9 +107,13 @@ include 'doc-examples:jdbc-example-records-python'
 
 include 'doc-examples:jdbc-sqlite'
 
-include 'doc-examples:jdbc-geospatial'
+include 'doc-examples:jdbc-geospatial-java'
+include 'doc-examples:jdbc-geospatial-kotlin'
+include 'doc-examples:jdbc-geospatial-groovy'
 
 include 'doc-examples:jdbc-jakarta-data-example-java'
+include 'doc-examples:jdbc-jakarta-data-example-kotlin'
+include 'doc-examples:jdbc-jakarta-data-example-groovy'
 
 include 'doc-examples:jdbc-multitenancy-datasource-example-java'
 include 'doc-examples:jdbc-multitenancy-schema-example-java'

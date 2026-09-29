@@ -41,121 +41,336 @@ For more detailed information about individual features and capabilities, please
 
 ### @Repository
 The core annotation that marks an interface as a Jakarta Data repository.
-``` java
+
+[source.multi-language-sample,java]
+----
 @Repository
 public interface UserRepository {
     // repository methods
 }
-```
+----
+
+[source.multi-language-sample,kotlin]
+----
+@Repository
+interface UserRepository {
+    // repository methods
+}
+----
+
+[source.multi-language-sample,groovy]
+----
+@Repository
+interface UserRepository {
+    // repository methods
+}
+----
 
 NOTE: The default implementation is for JPA, add `@JdbcRepository`, `@MongoRepository` etc. for correct implementation
 
 ### @OrderBy
 Specifies the ordering of query results.
-``` java
+
+[source.multi-language-sample,java]
+----
 @Repository
 public interface UserRepository {
     @OrderBy("lastName ASC, firstName ASC")
     List<User> findAll();
 }
-```
+----
+
+[source.multi-language-sample,kotlin]
+----
+@Repository
+interface UserRepository {
+    @OrderBy("lastName ASC, firstName ASC")
+    fun findAll(): List<User>
+}
+----
+
+[source.multi-language-sample,groovy]
+----
+@Repository
+interface UserRepository {
+    @OrderBy("lastName ASC, firstName ASC")
+    List<User> findAll()
+}
+----
 
 ## Query Annotations
 
 ### @Find
 Defines custom finder queries.
-``` java
+
+[source.multi-language-sample,java]
+----
 @Repository
 public interface UserRepository {
     @Find
     List<User> findByEmailContaining(String email);
 }
-```
+----
+
+[source.multi-language-sample,kotlin]
+----
+@Repository
+interface UserRepository {
+    @Find
+    fun findByEmailContaining(email: String): List<User>
+}
+----
+
+[source.multi-language-sample,groovy]
+----
+@Repository
+interface UserRepository {
+    @Find
+    List<User> findByEmailContaining(String email)
+}
+----
 
 ### @Query
 Specifies a custom query string.
-``` java
+
+[source.multi-language-sample,java]
+----
 @Repository
 public interface UserRepository {
     @Query("SELECT u FROM User u WHERE u.status = :status")
     List<User> findByCustomQuery(String status);
 }
-```
+----
+
+[source.multi-language-sample,kotlin]
+----
+@Repository
+interface UserRepository {
+    @Query("SELECT u FROM User u WHERE u.status = :status")
+    fun findByCustomQuery(status: String): List<User>
+}
+----
+
+[source.multi-language-sample,groovy]
+----
+@Repository
+interface UserRepository {
+    @Query("SELECT u FROM User u WHERE u.status = :status")
+    List<User> findByCustomQuery(String status)
+}
+----
 
 ### @Save
 Conditionally performs insert or update operations on entities. Acts as insert for new entities and update for existing ones.
-``` java
+
+[source.multi-language-sample,java]
+----
 @Repository
 public interface UserRepository {
     @Save
     User save(User user);
 }
-```
+----
+
+[source.multi-language-sample,kotlin]
+----
+@Repository
+interface UserRepository {
+    @Save
+    fun save(user: User): User
+}
+----
+
+[source.multi-language-sample,groovy]
+----
+@Repository
+interface UserRepository {
+    @Save
+    User save(User user)
+}
+----
 
 ### @Update
 Updates the state of existing entities in the database. Throws an exception if entity doesn't exist.
-``` java
+
+[source.multi-language-sample,java]
+----
 @Repository
 public interface UserRepository {
     @Update
     User update(User user);
 }
+----
 
-```
+[source.multi-language-sample,kotlin]
+----
+@Repository
+interface UserRepository {
+    @Update
+    fun update(user: User): User
+}
+----
+
+[source.multi-language-sample,groovy]
+----
+@Repository
+interface UserRepository {
+    @Update
+    User update(User user)
+}
+----
 
 ### @Insert
 Adds new entities to the database. Throws an exception if entity with same ID already exists.
-``` java
+
+[source.multi-language-sample,java]
+----
 @Repository
 public interface UserRepository {
     @Insert
     User insert(User user);
 }
-```
+----
+
+[source.multi-language-sample,kotlin]
+----
+@Repository
+interface UserRepository {
+    @Insert
+    fun insert(user: User): User
+}
+----
+
+[source.multi-language-sample,groovy]
+----
+@Repository
+interface UserRepository {
+    @Insert
+    User insert(User user)
+}
+----
 
 ### @Delete
 Removes entities from the database.
-``` java
+
+[source.multi-language-sample,java]
+----
 @Repository
 public interface UserRepository {
     @Delete
     void delete(User user);
 }
-```
+----
+
+[source.multi-language-sample,kotlin]
+----
+@Repository
+interface UserRepository {
+    @Delete
+    fun delete(user: User)
+}
+----
+
+[source.multi-language-sample,groovy]
+----
+@Repository
+interface UserRepository {
+    @Delete
+    void delete(User user)
+}
+----
 
 ## Method Parameter Annotations
 
 ### @Param
 Names a method parameter for use in queries.
-``` java
+
+[source.multi-language-sample,java]
+----
 @Repository
 public interface UserRepository {
     @Query("SELECT u FROM User u WHERE u.department = :dept")
     List<User> findByDepartment(@Param("dept") String department);
 }
-```
+----
+
+[source.multi-language-sample,kotlin]
+----
+@Repository
+interface UserRepository {
+    @Query("SELECT u FROM User u WHERE u.department = :dept")
+    fun findByDepartment(@Param("dept") department: String): List<User>
+}
+----
+
+[source.multi-language-sample,groovy]
+----
+@Repository
+interface UserRepository {
+    @Query("SELECT u FROM User u WHERE u.department = :dept")
+    List<User> findByDepartment(@Param("dept") String department)
+}
+----
 
 ### @Limit
 Specifies the maximum number of results to return.
-``` java
+
+[source.multi-language-sample,java]
+----
 @Repository
 public interface UserRepository {
     List<User> findByLastName(String lastName, @Limit int maxResults);
 }
-```
+----
+
+[source.multi-language-sample,kotlin]
+----
+@Repository
+interface UserRepository {
+    fun findByLastName(lastName: String, @Limit maxResults: Int): List<User>
+}
+----
+
+[source.multi-language-sample,groovy]
+----
+@Repository
+interface UserRepository {
+    List<User> findByLastName(String lastName, @Limit int maxResults)
+}
+----
 
 ### @Offset
 Specifies the starting position in the result set.
-``` java
+
+[source.multi-language-sample,java]
+----
 @Repository
 public interface UserRepository {
     List<User> findAll(@Offset int startPosition, @Limit int maxResults);
 }
-```
+----
+
+[source.multi-language-sample,kotlin]
+----
+@Repository
+interface UserRepository {
+    fun findAll(@Offset startPosition: Int, @Limit maxResults: Int): List<User>
+}
+----
+
+[source.multi-language-sample,groovy]
+----
+@Repository
+interface UserRepository {
+    List<User> findAll(@Offset int startPosition, @Limit int maxResults)
+}
+----
 
 ## Repository Method Conventions
 Besides annotations, Jakarta Data also supports method name conventions for common queries:
-``` java
+
+[source.multi-language-sample,java]
+----
 @Repository
 public interface UserRepository {
     // Derived finder methods
@@ -172,7 +387,47 @@ public interface UserRepository {
     // Delete methods
     void deleteByLastName(String lastName);
 }
-```
+----
+
+[source.multi-language-sample,kotlin]
+----
+@Repository
+interface UserRepository {
+    // Derived finder methods
+    fun findByLastName(lastName: String): List<User>
+    fun findByEmail(email: String): Optional<User>
+    fun findByAgeGreaterThan(age: Int): List<User>
+
+    // Count methods
+    fun countByStatus(status: String): Long
+
+    // Existence checks
+    fun existsByEmail(email: String): Boolean
+
+    // Delete methods
+    fun deleteByLastName(lastName: String)
+}
+----
+
+[source.multi-language-sample,groovy]
+----
+@Repository
+interface UserRepository {
+    // Derived finder methods
+    List<User> findByLastName(String lastName)
+    Optional<User> findByEmail(String email)
+    List<User> findByAgeGreaterThan(int age)
+
+    // Count methods
+    long countByStatus(String status)
+
+    // Existence checks
+    boolean existsByEmail(String email)
+
+    // Delete methods
+    void deleteByLastName(String lastName)
+}
+----
 
 == Pagination
 

@@ -21,11 +21,11 @@ api:data.model.runtime.convert.GeometryWktConverter[] converts the same model ty
 
 Use the default GeoJSON mapping when you want Micronaut Data to serialize geospatial values as JSON:
 
-snippet::example.GeometryEntityJson[project="doc-examples/jdbc-geospatial", source="main", tags="get"]
+snippet::example.GeometryEntityJson[project-base="doc-examples/jdbc-geospatial", source="main", tags="get"]
 
 Use `@MappedProperty(converter = GeometryWktConverter.class)` when you want WKT conversion instead:
 
-snippet::example.GeometryEntityWkt[project="doc-examples/jdbc-geospatial", source="main", tags="get"]
+snippet::example.GeometryEntityWkt[project-base="doc-examples/jdbc-geospatial", source="main", tags="get"]
 
 NOTE: The converter controls the Java-side representation. The generated SQL still uses database-specific spatial functions
 and native spatial column definitions when the dialect supports them.
@@ -167,11 +167,11 @@ Micronaut Data come from PostGIS.
 PostGIS stores spatial values in `GEOMETRY` or `GEOGRAPHY` columns. Micronaut Data uses the `GEOMETRY` column type
 by default. To change the column type to `GEOGRAPHY`, set `@MappedProperty(definition = "geography")`:
 
-snippet::example.GeographyEntityJson[project="doc-examples/jdbc-geospatial", source="main", tags="get"]
+snippet::example.GeographyEntityJson[project-base="doc-examples/jdbc-geospatial", source="main", tags="get"]
 
 For WKT conversion, use:
 
-snippet::example.GeographyEntityWkt[project="doc-examples/jdbc-geospatial", source="main", tags="get"]
+snippet::example.GeographyEntityWkt[project-base="doc-examples/jdbc-geospatial", source="main", tags="get"]
 
 Micronaut Data uses the following functions to read and write spatial data:
 [cols="1,1,1,1"]
@@ -388,7 +388,7 @@ Micronaut Data translates geospatial repository methods and criteria predicates 
 SQL Server stores spatial values in `GEOMETRY` or `GEOGRAPHY` columns. Micronaut Data uses the `GEOMETRY` column type
 by default. To change the column type to `GEOGRAPHY`, set `@MappedProperty(definition = "geography")`:
 
-snippet::example.GeographyEntityWkt[project="doc-examples/jdbc-geospatial", source="main", tags="get"]
+snippet::example.GeographyEntityWkt[project-base="doc-examples/jdbc-geospatial", source="main", tags="get"]
 
 WARNING: SQL Server doesn't have built-in functions for conversion between JSON and internal geospatial data types
 so Micronaut Data will use WKT conversion.
