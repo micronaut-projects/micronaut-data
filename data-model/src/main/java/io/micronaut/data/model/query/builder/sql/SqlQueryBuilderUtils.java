@@ -277,6 +277,19 @@ final class SqlQueryBuilderUtils {
     }
 
     /**
+     * Whether the association join column is declared unique with JPA {@code @JoinColumn(unique = true)}. The annotation
+     * is repeatable, a single one can be stored in its {@code @JoinColumns} container.
+     *
+     * @param annotationMetadata The association annotation metadata
+     * @return true if the join column is unique
+     */
+    static boolean isUniqueJoinColumn(AnnotationMetadata annotationMetadata) {
+        return Stream.of("jakarta.persistence.JoinColumn", "javax.persistence.JoinColumn")
+            .flatMap(annotation -> annotationMetadata.getAnnotationValuesByName(annotation).stream())
+            .anyMatch(joinColumn -> joinColumn.booleanValue("unique").orElse(false));
+    }
+
+    /**
      * Finds int value for javax.persistence.Column given value, if not present falls back to jakarta.persistence.Column.
      *
      * @param annotationMetadata the annotation metadata

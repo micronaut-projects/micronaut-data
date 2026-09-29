@@ -24,6 +24,7 @@ import io.micronaut.data.model.query.builder.sql.validation.SchemaValidationResu
 import io.micronaut.data.model.query.builder.sql.validation.SqlTableMappingValidator
 import io.micronaut.data.model.runtime.RuntimeEntityRegistry
 import io.micronaut.data.model.schema.sql.metadata.SqlColumnMetadata
+import io.micronaut.data.model.schema.sql.metadata.SqlIndexMetadata
 import io.micronaut.data.model.schema.sql.metadata.SqlTableMetadata
 import jakarta.persistence.Column
 import jakarta.persistence.Embeddable
@@ -31,6 +32,9 @@ import jakarta.persistence.Embedded
 import jakarta.persistence.Entity
 import jakarta.persistence.GeneratedValue
 import jakarta.persistence.Id
+import jakarta.persistence.JoinColumn
+import jakarta.persistence.ManyToOne
+import jakarta.persistence.OneToOne
 import jakarta.persistence.Table
 import jakarta.persistence.UniqueConstraint
 import spock.lang.AutoCleanup
@@ -106,6 +110,53 @@ class H2UniqueConstraintSchemaSpec extends Specification {
 
         then:
         noExceptionThrown()
+    }
+
+    void 'unique join columns and table constraints on join columns are created and validated'() {
+        given:
+        def dataSource = DelegatingDataSource.unwrapDataSource(context.getBean(DataSource))
+
+        when:"The unique indexes of the join columns are read from the database"
+        def uniqueIndexes = uniqueIndexColumns(dataSource, 'h2_join_unique_item')
+
+        then:"The unique join column and the table constraint on the join column are unique indexes, the other join column is not"
+        uniqueIndexes.values().toSet() == [['passport_id'], ['owner_id', 'code'], ['id']].toSet()
+        uniqueIndexes.containsKey('uk_h2_join_unique_item_owner_code')
+
+        when:"The created schema is validated"
+        ApplicationContext.run(PROPERTIES + ['datasources.default.schema-generate': 'VALIDATE']).close()
+
+        then:
+        noExceptionThrown()
+
+        when:"The unique index of the join column is missing"
+        def validator = context.getBeansOfType(SqlTableMappingValidator).find { it.supportedDialect == Dialect.H2 }
+        def mapping = SqlSchemaUtils.getSqlTableMappings(context.getBean(RuntimeEntityRegistry).getEntity(H2JoinUniqueItem), Dialect.H2).first()
+        def metadata = new SqlTableMetadata(null, null, 'h2_join_unique_item')
+        metadata.setIndexes([new SqlIndexMetadata('uk_h2_join_unique_item_owner_code', true, ['OWNER_ID', 'CODE'])])
+        def result = new SchemaValidationResult()
+        validator.validateUniqueConstraints(mapping, metadata, result)
+
+        then:
+        !result.hasErrors()
+        result.warnings.size() == 1
+        result.warnings.first() ==~ /Unique constraint \[UK_\w+_[0-9A-F]{8}\] on columns \[passport_id\] not found in table \[h2_join_unique_item\]/
+    }
+
+    private static Map<String, List<String>> uniqueIndexColumns(DataSource dataSource, String table) {
+        Map<String, Map<Integer, String>> indexes = [:]
+        dataSource.connection.withCloseable { connection ->
+            // The table name can be stored as declared (escaped) or in upper case
+            [table, table.toUpperCase(Locale.ENGLISH)].each { tableName ->
+                connection.metaData.getIndexInfo(null, null, tableName, true, true).withCloseable { rs ->
+                    while (rs.next()) {
+                        indexes.computeIfAbsent(rs.getString('INDEX_NAME').toLowerCase(Locale.ENGLISH), k -> new TreeMap<>())
+                            .put(rs.getInt('ORDINAL_POSITION'), rs.getString('COLUMN_NAME').toLowerCase(Locale.ENGLISH))
+                    }
+                }
+            }
+        }
+        return indexes.collectEntries { name, columns -> [name, columns.values().toList()] }
     }
 
     void 'unique constraints are not created by default'() {
@@ -204,4 +255,32 @@ class H2UniqueAddress {
 
     @Column(name = "address_street", nullable = true)
     String street
+}
+
+@Entity
+@Table(name = "h2_unique_owner")
+class H2UniqueOwner {
+
+    @Id
+    @GeneratedValue
+    Long id
+}
+
+@Entity
+@Table(name = "h2_join_unique_item", uniqueConstraints = @UniqueConstraint(name = "uk_h2_join_unique_item_owner_code", columnNames = ["owner_id", "code"]))
+class H2JoinUniqueItem {
+
+    @Id
+    @GeneratedValue
+    Long id
+
+    @Column(nullable = false)
+    String code
+
+    @OneToOne
+    @JoinColumn(name = "passport_id", unique = true)
+    H2UniqueOwner passport
+
+    @ManyToOne
+    H2UniqueOwner owner
 }

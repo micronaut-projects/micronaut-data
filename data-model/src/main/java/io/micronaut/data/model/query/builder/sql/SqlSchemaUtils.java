@@ -799,7 +799,8 @@ public final class SqlSchemaUtils {
 
     /**
      * Returns the JPA unique constraints of the entity table as unique indexes: the {@code @Column(unique = true)} columns
-     * (including the columns of embedded values) and {@code @Table(uniqueConstraints = @UniqueConstraint(...))}.
+     * (including the columns of embedded values), the {@code @JoinColumn(unique = true)} join columns of the to-one associations
+     * and {@code @Table(uniqueConstraints = @UniqueConstraint(...))}.
      *
      * @param entity The entity
      * @param tableColumns The table columns
@@ -824,6 +825,15 @@ public final class SqlSchemaUtils {
                     List<Association> newAssociations = new ArrayList<>(associations);
                     newAssociations.add(association);
                     addUniqueColumns(tableName, association.getAssociatedEntity(), namingStrategy, newAssociations, uniqueConstraints);
+                } else if (!association.isForeignKey() && SqlQueryBuilderUtils.isUniqueJoinColumn(association.getAnnotationMetadata())) {
+                    // The join column stored by the to-one association, resolved like the table column. A composite join column
+                    // is not unique by a single annotation, it can be declared with @Table(uniqueConstraints = ...)
+                    List<String> joinColumns = new ArrayList<>();
+                    PersistentEntityUtils.traversePersistentProperties(associations, association,
+                        (joinAssociations, joinProperty) -> joinColumns.add(namingStrategy.mappedName(joinAssociations, joinProperty)));
+                    if (joinColumns.size() == 1) {
+                        uniqueConstraints.add(new SqlIndexMapping(uniqueConstraintName(tableName, joinColumns), true, joinColumns.toArray(new String[0])));
+                    }
                 }
             } else if (SqlQueryBuilderUtils.isUniqueColumn(property.getAnnotationMetadata())) {
                 String columnName = namingStrategy.mappedName(associations, property);

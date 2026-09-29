@@ -26,11 +26,25 @@ import io.micronaut.data.model.runtime.RuntimePersistentEntity
 import jakarta.persistence.Column
 import jakarta.persistence.Entity
 import jakarta.persistence.Id
+import jakarta.persistence.JoinColumn
+import jakarta.persistence.ManyToOne
+import jakarta.persistence.OneToOne
 import jakarta.persistence.Table
 import jakarta.persistence.UniqueConstraint
 import spock.lang.Specification
 
 class UniqueConstraintColumnsSpec extends Specification {
+
+    void 'unique join columns and table constraints on join columns are mapped'() {
+        when:
+        def mapping = SqlSchemaUtils.getSqlTableMappings(new RuntimePersistentEntity(JoinUniqueItem), Dialect.POSTGRES).first()
+
+        then:"The unique join column is a single column constraint, the join column without unique is not unique"
+        mapping.uniqueConstraints()*.columns() == [['passport_id'] as String[], ['owner_id', 'code'] as String[]]
+        mapping.uniqueConstraints()[0].name() ==~ /UK_JOIN_UNIQUE_ITEM_\w+/
+        mapping.uniqueConstraints()[1].name() == 'uk_join_unique_item_owner_code'
+        mapping.uniqueConstraints().every { it.unique() }
+    }
 
     void 'unique constraint column is resolved by the exact name when columns differ only by the case'() {
         when:
@@ -123,6 +137,26 @@ class UniqueConstraintColumnsSpec extends Specification {
         def e = thrown(MappingException)
         e.message.contains('@Reservable column [quantity] of table [reservable_unique_item] cannot be indexed')
     }
+}
+
+@Entity
+@Table(name = "unique_owner")
+class UniqueOwner {
+    @Id
+    Long id
+}
+
+@Entity
+@Table(name = "join_unique_item", uniqueConstraints = @UniqueConstraint(name = "uk_join_unique_item_owner_code", columnNames = ["owner_id", "code"]))
+class JoinUniqueItem {
+    @Id
+    Long id
+    String code
+    @OneToOne
+    @JoinColumn(name = "passport_id", unique = true)
+    UniqueOwner passport
+    @ManyToOne
+    UniqueOwner owner
 }
 
 @Entity
