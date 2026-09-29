@@ -144,8 +144,8 @@ public class TransactionManagerConfiguration {
      * neither is it for a sequence of JDBC insert/update/delete operations.
      * <p><b>Note:</b>This flag only applies to an explicit rollback attempt for a
      * subtransaction, typically caused by an exception thrown by a data access operation
-     * (where TransactionInterceptor will trigger a {@code PlatformTransactionManager.rollback()}
-     * call according to a rollback rule). If the flag is off, the caller can handle the exception
+     * (where the {@code @Transactional} interceptor triggers a rollback according to the
+     * transaction's rollback rule). If the flag is off, the caller can handle the exception
      * and decide on a rollback, independent of the rollback rules of the subtransaction.
      * This flag does, however, <i>not</i> apply to explicit {@code setRollbackOnly}
      * calls on a {@code TransactionStatus}, which will always cause an eventual
@@ -155,7 +155,7 @@ public class TransactionManagerConfiguration {
      * back to a savepoint taken at the beginning of the subtransaction.
      * propagation NESTED provides exactly those semantics; however, it will
      * only work when nested transaction support is available. This is the case
-     * with DataSourceTransactionManager, but not with JtaTransactionManager.
+     * with the JDBC and Hibernate transaction managers.
      *
      * @param globalRollbackOnParticipationFailure Whether to globally mark transaction as rollback only
      * @see #setNestedTransactionAllowed
@@ -238,7 +238,7 @@ public class TransactionManagerConfiguration {
      * through an explicit statement on the transactional connection:
      * "SET TRANSACTION READ ONLY" as understood by Oracle, MySQL and Postgres.
      * <p>This mode of read-only handling goes beyond the {@link Connection#setReadOnly}
-     * hint that Spring applies by default. In contrast to that standard JDBC hint,
+     * hint that Micronaut Data applies to read-only transactions by default. In contrast to that standard JDBC hint,
      * "SET TRANSACTION READ ONLY" enforces an isolation-level-like connection mode
      * where data manipulation statements are strictly disallowed. Also, on Oracle,
      * this read-only mode provides read consistency for the entire transaction.

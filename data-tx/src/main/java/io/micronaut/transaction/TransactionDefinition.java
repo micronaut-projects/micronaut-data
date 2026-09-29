@@ -28,11 +28,22 @@ import java.util.Map;
 import java.util.Optional;
 
 /**
- * NOTICE: This is a fork of Spring's {@code PlatformTransactionManager} modernizing it
- * to use enums, SLF4J and decoupling from Spring.
- *
- * Interface that defines Spring-compliant transaction properties.
- * Based on the propagation behavior definitions analogous to EJB CMT attributes.
+ * Describes how a unit of work should run with respect to transactions. A transaction manager reads a definition when
+ * a transactional method or callback starts and uses it to decide whether to start a new transaction, join the
+ * current one, suspend it, or run without a transaction. A definition consists of:
+ * <ul>
+ *     <li>the {@linkplain #getPropagationBehavior() propagation}, which says what to do when a transaction is or is
+ *     not already active (see {@link Propagation}; the default is {@link Propagation#REQUIRED});</li>
+ *     <li>the {@linkplain #getIsolationLevel() isolation level} requested from the datastore;</li>
+ *     <li>the {@linkplain #getTimeout() timeout} after which the transaction is rolled back;</li>
+ *     <li>the {@linkplain #isReadOnly() read-only} flag, a hint that the work does not modify data;</li>
+ *     <li>the {@linkplain #rollbackOn(Throwable) rollback rule} that decides whether an exception thrown by the work
+ *     causes a rollback, and a {@linkplain #getName() name} used in logs.</li>
+ * </ul>
+ * Definitions are usually derived from a {@code @Transactional} annotation, or created with
+ * {@link #of(Propagation)} and {@link io.micronaut.transaction.support.DefaultTransactionDefinition}. The
+ * propagation values mirror the transaction attributes of Jakarta EE ({@code REQUIRED}, {@code REQUIRES_NEW},
+ * {@code MANDATORY}, {@code SUPPORTS}, {@code NOT_SUPPORTED}, {@code NEVER}) plus {@code NESTED}.
  *
  * <p>Note that isolation level and timeout settings will not get applied unless
  * an actual new transaction gets started. As only {@link Propagation#REQUIRED},
@@ -46,6 +57,8 @@ import java.util.Optional;
  * whether backed by an actual resource transaction or operating non-transactionally
  * at the resource level. In the latter case, the flag will only apply to managed
  * resources within the application, such as a Hibernate {@code Session}.
+ *
+ * <p>This type is derived from the Spring Framework's {@code TransactionDefinition} (Apache License 2.0).</p>
  *
  * @author Juergen Hoeller
  * @author graemerocher
@@ -80,82 +93,52 @@ public interface TransactionDefinition {
     };
 
     /**
-     * Possible propagation values.
+     * Defines what happens when a transactional unit of work starts while a transaction is, or is not, already active
+     * in the current context. The names and semantics match the transaction attributes of Jakarta Transactions
+     * ({@code jakarta.transaction.Transactional.TxType}), plus {@link #NESTED}.
      */
     enum Propagation {
         /**
-         * Support a current transaction; create a new one if none exists.
-         * Analogous to the EJB transaction attribute of the same name.
-         * <p>This is typically the default setting of a transaction definition,
-         * and typically defines a transaction synchronization scope.
+         * Join the current transaction; start a new one if none is active. This is the default.
+         * <p>When the work joins an existing transaction, it shares that transaction's connection, and commit or
+         * rollback happens when the outermost transactional scope completes. A failure that causes a rollback in the
+         * joined scope marks the whole transaction rollback-only.
          */
         REQUIRED,
         /**
-         * Support a current transaction; execute non-transactionally if none exists.
-         * Analogous to the EJB transaction attribute of the same name.
-         * <p><b>NOTE:</b> For transaction managers with transaction synchronization,
-         * {@code PROPAGATION_SUPPORTS} is slightly different from no transaction
-         * at all, as it defines a transaction scope that synchronization might apply to.
-         * As a consequence, the same resources (a JDBC {@code Connection}, a
-         * Hibernate {@code Session}, etc.) will be shared for the entire specified
-         * scope. Note that the exact behavior depends on the actual synchronization
-         * configuration of the transaction manager!
-         * <p>In general, use {@code PROPAGATION_SUPPORTS} with care! In particular, do
-         * not rely on {@code PROPAGATION_REQUIRED} or {@code PROPAGATION_REQUIRES_NEW}
-         * <i>within</i> a {@code PROPAGATION_SUPPORTS} scope (which may lead to
-         * synchronization conflicts at runtime). If such nesting is unavoidable, make sure
-         * to configure your transaction manager appropriately (typically switching to
-         * "synchronization on actual transaction").
+         * Join the current transaction if one is active; otherwise run without a transaction.
+         * <p>Without a transaction, the statements are not grouped into a transaction, but the same connection (or
+         * session) is still used for the whole scope.
          */
         SUPPORTS,
         /**
-         * Support a current transaction; throw an exception if no current transaction
-         * exists. Analogous to the EJB transaction attribute of the same name.
-         * <p>Note that transaction synchronization within a {@code PROPAGATION_MANDATORY}
-         * scope will always be driven by the surrounding transaction.
+         * Join the current transaction; fail with
+         * {@link io.micronaut.transaction.exceptions.IllegalTransactionStateException} if none is active.
          */
         MANDATORY,
         /**
-         * Create a new transaction, suspending the current transaction if one exists.
-         * Analogous to the EJB transaction attribute of the same name.
-         * <p><b>NOTE:</b> Actual transaction suspension will not work out-of-the-box
-         * on all transaction managers. This in particular applies to
-         * {@code JtaTransactionManager},
-         * which requires the {@code jakarta.transaction.TransactionManager} to be
-         * made available it to it (which is server-specific in standard Java EE).
-         * <p>A {@code PROPAGATION_REQUIRES_NEW} scope always defines its own
-         * transaction synchronizations. Existing synchronizations will be suspended
-         * and resumed appropriately.
+         * Always start a new, independent transaction on a new connection, suspending the current transaction (if
+         * any) until the new one completes. The new transaction commits or rolls back independently of the suspended
+         * one, and has its own {@link io.micronaut.transaction.support.TransactionSynchronization synchronizations}.
          */
         REQUIRES_NEW,
         /**
-         * Do not support a current transaction; rather always execute non-transactionally.
-         * Analogous to the EJB transaction attribute of the same name.
-         * <p><b>NOTE:</b> Actual transaction suspension will not work out-of-the-box
-         * on all transaction managers. This in particular applies to
-         * {@code JtaTransactionManager},
-         * which requires the {@code jakarta.transaction.TransactionManager} to be
-         * made available it to it (which is server-specific in standard Java EE).
-         * <p>Note that transaction synchronization is <i>not</i> available within a
-         * {@code PROPAGATION_NOT_SUPPORTED} scope. Existing synchronizations
-         * will be suspended and resumed appropriately.
+         * Run without a transaction, suspending the current transaction (if any) until the work completes.
          */
         NOT_SUPPORTED,
         /**
-         * Do not support a current transaction; throw an exception if a current transaction
-         * exists. Analogous to the EJB transaction attribute of the same name.
-         * <p>Note that transaction synchronization is <i>not</i> available within a
-         * {@code PROPAGATION_NEVER} scope.
+         * Run without a transaction; fail with a
+         * {@link io.micronaut.transaction.exceptions.TransactionUsageException} if a transaction is active.
          */
         NEVER,
         /**
-         * Execute within a nested transaction if a current transaction exists,
-         * behave like {@link Propagation#REQUIRED} otherwise. There is no
-         * analogous feature in EJB.
-         * <p><b>NOTE:</b> Actual creation of a nested transaction will only work on
-         * specific transaction managers. Out of the box, this only applies to JDBC
-         * when working on a JDBC 3.0 driver. Some JTA providers might support
-         * nested transactions as well.
+         * If a transaction is active, run in a nested transaction backed by a savepoint of the current transaction;
+         * otherwise behave like {@link #REQUIRED}.
+         * <p>Rolling back the nested transaction only rolls back to the savepoint, so the outer transaction can
+         * continue; committing it releases the savepoint, and its changes become permanent only when the outer
+         * transaction commits. Nested transactions require a transaction manager that supports savepoints, such as
+         * the JDBC and Hibernate transaction managers, and fail with
+         * {@link io.micronaut.transaction.exceptions.NestedTransactionNotSupportedException} otherwise.
          */
         NESTED
     }
@@ -322,10 +305,9 @@ public interface TransactionDefinition {
 
     /**
      * Return the name of this transaction. Can be {@code null}.
-     * <p>This will be used as the transaction name to be shown in a
-     * transaction monitor, if applicable (for example, WebLogic's).
-     * <p>In case of Spring's declarative transactions, the exposed name will be
-     * the {@code fully-qualified class name + "." + method name} (by default).
+     * <p>The name identifies the transaction in logs and monitoring tools. For methods annotated with
+     * {@code @Transactional} the name is taken from the annotation's {@code name} member if present, and is otherwise
+     * {@code simple class name + "." + method name}.
      * @return the name of this transaction ({@code null} by default)
      */
     @Nullable

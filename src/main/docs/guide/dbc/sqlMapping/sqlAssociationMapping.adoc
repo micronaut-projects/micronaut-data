@@ -1,47 +1,58 @@
-To specify a relation between two entities you need to use ann:data.annotation.Relation[] annotation. The relation kind is specified using enum ann:data.annotation.Relation.Kind[] `value` attribute which is similar to JPA relations annotation names (`@OneToMany`, `@OneToOne` etc.)
+An association is a property of an entity whose value is another entity, or a collection of other entities, stored in its own table. To declare one, annotate the property with ann:data.annotation.Relation[] and set its `value` to one of the ann:data.annotation.Relation.Kind[] constants, which describe how many entities are on each side of the association:
 
 .Micronaut Data supported relations:
-[cols=2*]
+[cols="1,3"]
 |===
 |*Kind*
 |*Description*
 
+|`Kind.MANY_TO_ONE`
+|Many instances of this entity refer to one instance of the associated entity, for example many books have the same author. The table of this entity holds a foreign key column that stores the ID of the associated entity. By default the column is named after the property plus the `_id` suffix, for example `author_id` for a property named `author`.
+
 |`Kind.ONE_TO_MANY`
-|One-To-Many association
+|One instance of this entity is associated with a collection of instances of the other entity, for example an author and their books. The property type is a collection such as `List<Book>` or `Set<Book>`. See below for where the link is stored.
 
 |`Kind.ONE_TO_ONE`
-|One-To-One association
+|Each instance of this entity is associated with at most one instance of the other entity, for example a user and their profile. Without `mappedBy`, the table of this entity holds the foreign key column, as for `MANY_TO_ONE`.
 
 |`Kind.MANY_TO_MANY`
-|Many-To-Many association
-
-|`Kind.MANY_TO_ONE`
-|Many-To-One association
+|Instances on both sides can be associated with many instances on the other side, for example students and courses. The links are always stored in a join table.
 
 |`Kind.EMBEDDED`
-|Embedded association
+|Not an association to another table: the properties of an ann:data.annotation.Embeddable[] type are stored as columns of this entity's table.
 |===
 
-Use 'mappedBy' to specify inverse property that this relation is mapped by.
+==== Owning and inverse sides
+
+An association between two entities can be declared on one side only (unidirectional) or on both sides (bidirectional). In a bidirectional association, exactly one side owns the association, which means that it defines how the link is stored. The other side, the inverse side, sets `mappedBy` to the name of the property on the owning side, and does not add any column or table of its own.
+
+For example, a `Book` entity can declare `@Relation(Relation.Kind.MANY_TO_ONE) Author author`, which stores the author's ID in the `author_id` column of the `book` table. The `Author` entity can then declare `@Relation(value = Relation.Kind.ONE_TO_MANY, mappedBy = "author") List<Book> books`, which reads the books of an author through that same `author_id` column.
+
+A `ONE_TO_MANY` or `MANY_TO_MANY` association without `mappedBy` is stored in a join table: a separate table with one row per linked pair of entities, holding a foreign key to each of them. By default the join table is named after the owning and the associated entity, for example `author_book`, and its columns after each entity with the `_id` suffix, for example `author_id` and `book_id`. Use ann:data.annotation.sql.JoinTable[] to choose the table and column names, and ann:data.annotation.sql.JoinColumn[] to choose the name of a foreign key column. The JPA annotations `jakarta.persistence.JoinTable` and `jakarta.persistence.JoinColumn` are also accepted.
+
+Declaring an association only defines the mapping. Associated entities are not loaded unless the query asks for them, see <<sqlAssociationFetching, Association Fetching>>.
+
+==== Cascading
+
+By default, saving or updating an entity only writes the entity's own table: associated entities must already exist and are saved separately. Set the `cascade` member of ann:data.annotation.Relation[] to also write the associated entities in the same repository operation:
 
 .Micronaut Data supported association cascade types:
-[cols=2*]
+[cols="1,3"]
 |===
 |*Type*
 |*Description*
 
 |`Cascade.PERSIST`
-|Associated entity or entities are going to be persisted when owning entity is saved
+|When the entity is inserted, the associated entities are inserted too, and the rows of the join table, if any, are written. An associated entity is only inserted if it is new: its ID is not set yet, or its ID is assigned by the application rather than generated. In a join table association, an associated entity with an ID is considered existing, and only the join table row is written.
 
 |`Cascade.UPDATE`
-|Associated entity or entities are going to be updated when owning entity is updated
+|When the entity is updated, associated entities that have an ID are updated as well. In a collection, associated entities without an ID are inserted.
 
 |`Cascade.NONE`
-|(Default) No operation is cascaded
+|(Default) No operation is cascaded.
 
 |`Cascade.ALL`
-|All (`Cascade.PERSIST` and `Cascade.UPDATE`) operations are cascaded
+|Both `Cascade.PERSIST` and `Cascade.UPDATE`.
 |===
 
-
-NOTE: You can use JPA's equivalent annotations ann:data.annotation.sql.JoinTable[] and ann:data.annotation.sql.JoinColumn[] to specify more complex mapping definition.
+NOTE: Deletes are never cascaded. Delete associated entities, or rows of a join table, before deleting the entity that they refer to, or define `ON DELETE` rules in the database schema.

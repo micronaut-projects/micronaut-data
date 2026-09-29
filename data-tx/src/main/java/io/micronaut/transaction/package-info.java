@@ -14,8 +14,16 @@
  * limitations under the License.
  */
 /**
- * NOTICE: This is a fork of Spring's {@code PlatformTransactionManager} modernizing it
- * to use enums, SLF4J and decoupling from Spring.
+ * Micronaut transaction management API.
+ *
+ * <p>A transaction is started, joined, suspended, committed or rolled back by a transaction manager according to a
+ * {@link io.micronaut.transaction.TransactionDefinition}, which describes its propagation, isolation level, timeout
+ * and read-only flag. Code usually demarcates transactions declaratively with {@code @Transactional}, or
+ * programmatically with {@link io.micronaut.transaction.TransactionOperations#execute}. The state of a running
+ * transaction is exposed as a {@link io.micronaut.transaction.TransactionStatus}, which also accepts
+ * {@link io.micronaut.transaction.support.TransactionSynchronization} callbacks for its commit and completion.</p>
+ *
+ * <p>Parts of this API are derived from the Spring Framework's transaction abstraction (Apache License 2.0).</p>
  */
 @org.jspecify.annotations.NullMarked
 package io.micronaut.transaction;

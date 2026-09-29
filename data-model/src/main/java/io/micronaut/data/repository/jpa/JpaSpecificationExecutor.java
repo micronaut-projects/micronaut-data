@@ -31,8 +31,17 @@ import java.util.List;
 import java.util.Optional;
 
 /**
- * Interface to allow execution of query/delete/update methods using dynamic JPA criteria API.
- * Based on Spring Data's 'org.springframework.data.jpa.repository.JpaSpecificationExecutor'.
+ * Adds methods to a repository that find, count, check, delete and update entities selected by a specification built
+ * at runtime with the JPA criteria API ({@link jakarta.persistence.criteria.CriteriaBuilder}), rather than by a query
+ * derived from the method name at compile time. This is useful when the filter depends on runtime input, for example
+ * optional search fields.
+ * <p>
+ * A {@link QuerySpecification} or {@link PredicateSpecification} returns the {@link jakarta.persistence.criteria.Predicate}
+ * for the {@code WHERE} clause, and specifications can be combined with {@code and}, {@code or} and {@code not}. A
+ * {@code null} specification or predicate selects all entities. Despite the name, the criteria API is implemented by
+ * Micronaut Data itself, so this interface can be used with the JDBC, R2DBC and MongoDB repositories as well as with JPA.
+ * <p>
+ * Similar to Spring Data JPA's {@code JpaSpecificationExecutor}.
  *
  * @param <T> The entity type
  * @author Denis Stepanov
