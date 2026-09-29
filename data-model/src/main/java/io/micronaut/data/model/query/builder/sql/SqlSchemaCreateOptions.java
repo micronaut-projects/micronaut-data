@@ -37,6 +37,15 @@ public record SqlSchemaCreateOptions(boolean uniqueConstraints, boolean foreignK
     public static final SqlSchemaCreateOptions DEFAULT = new SqlSchemaCreateOptions(false, false);
 
     /**
+     * Creates the options without the foreign keys, the constructor of the options before the foreign keys were added.
+     *
+     * @param uniqueConstraints Whether to create the JPA unique constraints
+     */
+    public SqlSchemaCreateOptions(boolean uniqueConstraints) {
+        this(uniqueConstraints, false);
+    }
+
+    /**
      * @param uniqueConstraints Whether to create the JPA unique constraints
      * @return The options with the given unique constraints option
      */

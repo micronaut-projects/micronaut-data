@@ -106,7 +106,8 @@ public record SqlTableMapping(
                     foreignKey.columns().stream().map(nameMapper).toList(),
                     referencedSchema == null ? null : nameMapper.apply(referencedSchema),
                     nameMapper.apply(foreignKey.referencedTable()),
-                    foreignKey.referencedColumns().stream().map(nameMapper).toList());
+                    foreignKey.referencedColumns().stream().map(nameMapper).toList(),
+                    foreignKey.referencedEscape());
             }).toList());
     }
 

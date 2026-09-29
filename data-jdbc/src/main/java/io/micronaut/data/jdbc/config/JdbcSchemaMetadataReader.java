@@ -466,7 +466,10 @@ final class JdbcSchemaMetadataReader {
             key = name;
         } else {
             // Unnamed foreign keys to the same table are separated by the column position, the rows are ordered
-            // by the referenced table and the position, so the columns of the foreign keys can be interleaved
+            // by the referenced table and the position, so the columns of the foreign keys can be interleaved.
+            // The metadata has nothing identifying the foreign key of a row, so the columns of two unnamed composite foreign keys
+            // to the same table can be paired differently than declared. Only SQLite reports unnamed foreign keys (the other
+            // databases name every constraint) and the SQLite foreign keys are not validated, see SqlSchemaUtils.createdForeignKeys
             int group = 0;
             ForeignKeyColumns existing = tableForeignKeys.get(unnamedForeignKeyKey(referencedSchema, referencedTable, group));
             while (existing != null && existing.columns().containsKey(keySeq)) {

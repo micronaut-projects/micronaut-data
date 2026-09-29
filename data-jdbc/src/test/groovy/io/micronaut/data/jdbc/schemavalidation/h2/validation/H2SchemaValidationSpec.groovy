@@ -22,6 +22,8 @@ import io.micronaut.data.annotation.Id
 import io.micronaut.data.annotation.Index
 import io.micronaut.data.annotation.Indexes
 import io.micronaut.data.annotation.MappedEntity
+import io.micronaut.data.jdbc.schemavalidation.h2.foreignkeys.H2FkChild
+import io.micronaut.data.jdbc.schemavalidation.h2.foreignkeys.H2FkParent
 import io.micronaut.data.connection.jdbc.advice.DelegatingDataSource
 import io.micronaut.data.model.PersistentEntity
 import io.micronaut.data.model.query.builder.sql.Dialect
@@ -37,9 +39,11 @@ import io.micronaut.data.model.DataType
 import io.micronaut.data.model.runtime.RuntimeEntityRegistry
 import io.micronaut.data.model.schema.sql.SqlColumnMapping
 import io.micronaut.data.model.schema.sql.SqlDbType
+import io.micronaut.data.model.schema.sql.SqlForeignKeyMapping
 import io.micronaut.data.model.schema.sql.SqlIndexMapping
 import io.micronaut.data.model.schema.sql.SqlTableMapping
 import io.micronaut.data.model.schema.sql.metadata.SqlColumnMetadata
+import io.micronaut.data.model.schema.sql.metadata.SqlForeignKeyMetadata
 import io.micronaut.data.model.schema.sql.metadata.SqlIdentifierMatcher
 import io.micronaut.data.model.schema.sql.metadata.SqlIndexMetadata
 import io.micronaut.data.model.schema.sql.metadata.SqlTableMetadata
@@ -540,6 +544,84 @@ class H2SchemaValidationSpec extends Specification {
 
         and:"No foreign keys are created for SQLite"
         foreignKeys.every { !SqlSchemaUtils.createdForeignKeys(tables, Dialect.SQLITE).test(it) }
+    }
+
+    void 'the created foreign keys are selected by the table names as the database stores them'() {
+        given:"The quoted PostgreSQL table foo, distinct from the quoted table Foo"
+        def tables = [new SqlTableMapping(null, 'foo', true, SqlTableMapping.TableType.MAIN, [], [])]
+
+        when:
+        def created = SqlSchemaUtils.createdForeignKeys(tables, Dialect.POSTGRES)
+
+        then:"The quoted Foo is another table, the unquoted Foo is folded to foo"
+        !created.test(referencing('Foo', true))
+        created.test(referencing('foo', true))
+        created.test(referencing('Foo', false))
+
+        and:"The MySQL table names are compared ignoring the case"
+        SqlSchemaUtils.createdForeignKeys(tables, Dialect.MYSQL).test(referencing('FOO', true))
+    }
+
+    void 'foreign keys reference the table with its own escaping'() {
+        given:"The quoted fk_child referencing the unquoted FkParent, stored by PostgreSQL as fkparent"
+        def registry = context.getBean(RuntimeEntityRegistry)
+        PersistentEntity[] entities = [H2FkChild, H2FkParent].collect { registry.getEntity(it) } as PersistentEntity[]
+        def options = SqlSchemaCreateOptions.DEFAULT.withForeignKeys(true)
+
+        when:
+        def statements = foreignKeyStatements(new SqlQueryBuilder(Dialect.POSTGRES).buildCreateTableStatements([], entities, Dialect.POSTGRES, options) as List<String>)
+
+        then:
+        statements.size() == 1
+        statements[0] ==~ /ALTER TABLE "fk_child" ADD CONSTRAINT "\w+" FOREIGN KEY \("parent_id"\) REFERENCES FkParent \(id\);/
+
+        when:"The foreign key is validated"
+        def tables = entities.collectMany { SqlSchemaUtils.getSqlTableMappings(it, Dialect.POSTGRES) }
+        def childTable = tables.find { it.name() == 'fk_child' }
+        def validator = context.getBeansOfType(SqlTableMappingValidator).find { it.supportedDialect == Dialect.POSTGRES }
+        def matcher = SqlIdentifierMatcher.of(Dialect.POSTGRES, IdentifierNamingStrategy.LOWER, false)
+        def metadata = new SqlTableMetadata(null, null, 'fk_child', matcher)
+        metadata.setForeignKeys([new SqlForeignKeyMetadata('fk', ['parent_id'], 'public', 'fkparent', ['id'])])
+        def result = new SchemaValidationResult()
+        validator.validateForeignKeys(childTable, metadata, result)
+
+        then:
+        tables.collectMany { it.foreignKeys() }.every { SqlSchemaUtils.createdForeignKeys(tables, Dialect.POSTGRES).test(it) }
+        result.warnings.isEmpty()
+    }
+
+    void 'the options without the foreign keys are created by the unique constraints'() {
+        expect:
+        new SqlSchemaCreateOptions(true) == new SqlSchemaCreateOptions(true, false)
+    }
+
+    void 'foreign keys are validated with their referenced columns'() {
+        given:"The composite foreign key (x, y) referencing (a, b)"
+        def validator = context.getBeansOfType(SqlTableMappingValidator).find { it.supportedDialect == Dialect.H2 }
+        def mapping = new SqlTableMapping(null, 'fk_child', false, SqlTableMapping.TableType.MAIN, [], [], [], [], [], [],
+            [new SqlForeignKeyMapping('fk_child_parent', ['x', 'y'], null, 'fk_parent', ['a', 'b'], false)])
+
+        expect:"The same column pairs in any order are the foreign key"
+        validateForeignKey(validator, mapping, ['x', 'y'], ['a', 'b']).warnings.isEmpty()
+        validateForeignKey(validator, mapping, ['y', 'x'], ['b', 'a']).warnings.isEmpty()
+
+        and:"Different pairs or a different referenced column are not"
+        validateForeignKey(validator, mapping, ['x', 'y'], ['b', 'a']).warnings.size() == 1
+        validateForeignKey(validator, mapping, ['x', 'y'], ['a', 'c']).warnings == [
+                'Foreign key on columns [x, y] of table [fk_child] referencing table [fk_parent] [a, b] not found']
+    }
+
+    private static SqlForeignKeyMapping referencing(String table, boolean escape) {
+        return new SqlForeignKeyMapping('fk', ['ref_id'], null, table, ['id'], escape)
+    }
+
+    private static SchemaValidationResult validateForeignKey(SqlTableMappingValidator validator, SqlTableMapping mapping,
+                                                             List<String> columns, List<String> referencedColumns) {
+        def metadata = new SqlTableMetadata(null, null, 'fk_child')
+        metadata.setForeignKeys([new SqlForeignKeyMetadata('fk_child_parent', columns, null, 'fk_parent', referencedColumns)])
+        def result = new SchemaValidationResult()
+        validator.validateForeignKeys(mapping, metadata, result)
+        return result
     }
 
     private static SchemaValidationException findValidationException(Throwable e) {

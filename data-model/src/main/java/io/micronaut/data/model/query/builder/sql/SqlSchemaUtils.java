@@ -63,6 +63,7 @@ import io.micronaut.data.model.schema.sql.SqlIndexMapping;
 import io.micronaut.data.model.schema.sql.SqlJsonViewMapping;
 import io.micronaut.data.model.schema.sql.SqlSequenceMapping;
 import io.micronaut.data.model.schema.sql.SqlTableMapping;
+import io.micronaut.data.model.schema.sql.metadata.SqlIdentifierMatcher;
 import io.micronaut.data.model.schema.sql.metadata.VectorIndexMetadata;
 import org.jspecify.annotations.Nullable;
 import org.slf4j.Logger;
@@ -1330,21 +1331,52 @@ public final class SqlSchemaUtils {
      * @since 5.3.0
      */
     public static Predicate<SqlForeignKeyMapping> createdForeignKeys(Collection<SqlTableMapping> tables, Dialect dialect) {
+        return createdForeignKeys(tables, dialect, null);
+    }
+
+    /**
+     * Returns the predicate selecting the foreign keys created by the schema generation: the foreign keys referencing
+     * one of the given tables, and none for SQLite, which cannot add constraints to existing tables. The tables are
+     * compared as the database stores them when created, see {@link #createdNamesMatcher(Dialect)}.
+     *
+     * @param tables The tables of the schema generation
+     * @param dialect The dialect
+     * @param escape Whether all the names are escaped (a dialect setting overriding the mappings), null to use the escaping of the mappings
+     * @return The predicate
+     * @since 5.3.0
+     */
+    public static Predicate<SqlForeignKeyMapping> createdForeignKeys(Collection<SqlTableMapping> tables, Dialect dialect, @Nullable Boolean escape) {
         if (dialect == Dialect.SQLITE) {
             return foreignKey -> false;
         }
+        SqlIdentifierMatcher matcher = createdNamesMatcher(dialect);
         Set<List<String>> tableKeys = tables.stream()
-            .map(table -> foreignKeyTableKey(table.schema(), table.name()))
+            .map(table -> createdTableKey(matcher, table.schema(), table.name(), Objects.requireNonNullElse(escape, table.escape())))
             .collect(Collectors.toSet());
-        return foreignKey -> tableKeys.contains(foreignKeyTableKey(foreignKey.referencedSchema(), foreignKey.referencedTable()));
+        return foreignKey -> tableKeys.contains(createdTableKey(matcher, foreignKey.referencedSchema(), foreignKey.referencedTable(),
+            Objects.requireNonNullElse(escape, foreignKey.referencedEscape())));
+    }
+
+    /**
+     * Matches the names as the database stores them when created: an escaped name keeps its case (a quoted PostgreSQL
+     * table {@code "Foo"} is not {@code foo}), an unescaped name is folded to the default case of the database, lower
+     * for PostgreSQL and upper for Oracle and H2. The other databases compare the table names ignoring the case.
+     */
+    private static SqlIdentifierMatcher createdNamesMatcher(Dialect dialect) {
+        IdentifierNamingStrategy namingStrategy = switch (dialect) {
+            case POSTGRES -> IdentifierNamingStrategy.LOWER;
+            case ORACLE, H2 -> IdentifierNamingStrategy.UPPER;
+            default -> IdentifierNamingStrategy.MIXED;
+        };
+        return SqlIdentifierMatcher.of(dialect, namingStrategy, false);
     }
 
     /**
      * The schema and the table name are kept apart, a quoted name can contain the separator (schema "a.b" and table "c",
      * or schema "a" and table "b.c").
      */
-    private static List<String> foreignKeyTableKey(@Nullable String schema, String table) {
-        return List.of(schema == null ? "" : schema.toLowerCase(Locale.ENGLISH), table.toLowerCase(Locale.ENGLISH));
+    private static List<String> createdTableKey(SqlIdentifierMatcher matcher, @Nullable String schema, String table, boolean escape) {
+        return List.of(schema == null ? "" : matcher.tableKey(matcher.resolve(schema, escape)), matcher.tableKey(matcher.resolve(table, escape)));
     }
 
     /**
@@ -1431,7 +1463,8 @@ public final class SqlSchemaUtils {
             columns,
             SqlQueryBuilderUtils.getSchemaName(referencedEntity),
             referencedEntity.getPersistedName(),
-            referencedColumns
+            referencedColumns,
+            referencedEntity.getAnnotationMetadata().booleanValue(MappedEntity.class, "escape").orElse(true)
         );
         if (!foreignKeys.contains(foreignKey)) {
             foreignKeys.add(foreignKey);

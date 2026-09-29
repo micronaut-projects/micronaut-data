@@ -28,6 +28,8 @@ import java.util.List;
  * @param referencedSchema The schema of the referenced table, can be null
  * @param referencedTable The referenced table
  * @param referencedColumns The referenced (primary key) columns
+ * @param referencedEscape Whether the referenced entity escapes its names, the referenced table and columns are created
+ * and resolved with the escaping of their own entity, not of the owning table
  *
  * @author radovanradic
  * @since 5.3.0
@@ -37,7 +39,8 @@ public record SqlForeignKeyMapping(String name,
                                    List<String> columns,
                                    @Nullable String referencedSchema,
                                    String referencedTable,
-                                   List<String> referencedColumns) {
+                                   List<String> referencedColumns,
+                                   boolean referencedEscape) {
 
     public SqlForeignKeyMapping {
         columns = List.copyOf(columns);

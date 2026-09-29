@@ -31,6 +31,7 @@ import io.micronaut.data.model.schema.sql.metadata.SqlTableMetadata;
 import org.jspecify.annotations.Nullable;
 
 import java.util.Arrays;
+import java.util.HashSet;
 import java.util.List;
 import java.util.Set;
 import java.util.stream.Collectors;
@@ -106,23 +107,42 @@ public interface SqlTableMappingValidator {
         if (foreignKeys == null || tableMetadata.isView()) {
             return;
         }
-        // The foreign key is created with the escaping of its table, for the referenced table and columns too
+        // The foreign key columns are created with the escaping of their table, the referenced table and columns with the escaping
+        // of the referenced entity
         SqlIdentifierMatcher matcher = tableMetadata.getIdentifierMatcher();
         boolean escape = tableMapping.escape();
         for (SqlForeignKeyMapping foreignKey : tableMapping.foreignKeys()) {
+            boolean referencedEscape = foreignKey.referencedEscape();
             String declaredSchema = foreignKey.referencedSchema();
-            String referencedSchema = declaredSchema == null ? null : matcher.mappedTableKey(declaredSchema, escape);
-            String referencedTable = matcher.mappedTableKey(foreignKey.referencedTable(), escape);
-            Set<String> columns = foreignKey.columns().stream().map(column -> matcher.mappedColumnKey(column, escape)).collect(Collectors.toSet());
+            String referencedSchema = declaredSchema == null ? null : matcher.mappedTableKey(declaredSchema, referencedEscape);
+            String referencedTable = matcher.mappedTableKey(foreignKey.referencedTable(), referencedEscape);
+            // Each column is paired with the referenced column at the same position, the pairs are compared regardless of their order
+            Set<List<String>> columnPairs = new HashSet<>();
+            for (int i = 0; i < foreignKey.columns().size(); i++) {
+                columnPairs.add(List.of(matcher.mappedColumnKey(foreignKey.columns().get(i), escape),
+                    matcher.mappedColumnKey(foreignKey.referencedColumns().get(i), referencedEscape)));
+            }
             // The referenced schema is compared when declared and reported, the database default schema is not known
             boolean found = foreignKeys.stream().anyMatch(fk -> matcher.tableKey(fk.referencedTable()).equals(referencedTable)
                 && (referencedSchema == null || fk.referencedSchema() == null || matcher.tableKey(fk.referencedSchema()).equals(referencedSchema))
-                && fk.columns().stream().map(matcher::columnKey).collect(Collectors.toSet()).equals(columns));
+                && columnPairs(fk, matcher).equals(columnPairs));
             if (!found) {
                 result.addWarning(String.format("Foreign key on columns %s of table [%s] referencing table [%s] %s not found",
                     foreignKey.columns(), tableMapping.name(), foreignKey.referencedTable(), foreignKey.referencedColumns()));
             }
         }
+    }
+
+    /**
+     * @return The pairs of the foreign key columns and the referenced columns at the same position (in the key order)
+     */
+    private static Set<List<String>> columnPairs(SqlForeignKeyMetadata foreignKey, SqlIdentifierMatcher matcher) {
+        Set<List<String>> pairs = new HashSet<>();
+        int size = Math.min(foreignKey.columns().size(), foreignKey.referencedColumns().size());
+        for (int i = 0; i < size; i++) {
+            pairs.add(List.of(matcher.columnKey(foreignKey.columns().get(i)), matcher.columnKey(foreignKey.referencedColumns().get(i))));
+        }
+        return pairs;
     }
 
     /**

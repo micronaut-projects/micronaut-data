@@ -694,8 +694,8 @@ public class SqlQueryBuilder extends AbstractSqlLikeQueryBuilder {
             }
             return;
         }
-        java.util.function.Predicate<SqlForeignKeyMapping> createdForeignKeys = SqlSchemaUtils.createdForeignKeys(tables, dialect);
         Boolean shouldEscapeDialect = shouldEscapeDialect(dialect);
+        java.util.function.Predicate<SqlForeignKeyMapping> createdForeignKeys = SqlSchemaUtils.createdForeignKeys(tables, dialect, shouldEscapeDialect);
         for (SqlTableMapping table : tables) {
             boolean escape = Objects.requireNonNullElseGet(shouldEscapeDialect, table::escape);
             String tableName = getObjectName(table.schema(), table.name(), escape, true);
@@ -706,10 +706,12 @@ public class SqlQueryBuilder extends AbstractSqlLikeQueryBuilder {
                 String constraintName = escape ? quote(foreignKey.name()) : foreignKey.name();
                 StringBuilder statement = new StringBuilder("ALTER TABLE ").append(tableName);
                 if (create) {
+                    // The referenced table was created with the escaping of its own entity
+                    boolean referencedEscape = Objects.requireNonNullElse(shouldEscapeDialect, foreignKey.referencedEscape());
                     statement.append(" ADD CONSTRAINT ").append(constraintName)
                         .append(" FOREIGN KEY (").append(joinColumnNames(foreignKey.columns(), escape)).append(")")
-                        .append(" REFERENCES ").append(getObjectName(foreignKey.referencedSchema(), foreignKey.referencedTable(), escape, true))
-                        .append(" (").append(joinColumnNames(foreignKey.referencedColumns(), escape)).append(")");
+                        .append(" REFERENCES ").append(getObjectName(foreignKey.referencedSchema(), foreignKey.referencedTable(), referencedEscape, true))
+                        .append(" (").append(joinColumnNames(foreignKey.referencedColumns(), referencedEscape)).append(")");
                 } else if (dialect == Dialect.MYSQL) {
                     statement.append(" DROP FOREIGN KEY ").append(constraintName);
                 } else {
