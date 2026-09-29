@@ -67,6 +67,14 @@ final class MySqlTableMappingValidator extends BaseSqlTableMappingValidator {
     }
 
     @Override
+    public String getForeignKeysQuery() {
+        // Every primary key is named PRIMARY, the key column usage reports the referenced column directly
+        return """
+            SELECT TABLE_NAME, CONSTRAINT_NAME, COLUMN_NAME, REFERENCED_TABLE_SCHEMA, REFERENCED_TABLE_NAME, REFERENCED_COLUMN_NAME, ORDINAL_POSITION
+            FROM information_schema.KEY_COLUMN_USAGE WHERE TABLE_SCHEMA = ? AND REFERENCED_TABLE_NAME IS NOT NULL""";
+    }
+
+    @Override
     protected boolean matchingDialectColumnType(SqlColumnMapping columnMapping, SqlColumnMetadata columnMetadata) {
         SqlDbType dbType = columnMapping.getDbType();
         if (dbType == SqlDbType.UUID) {

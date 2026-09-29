@@ -238,6 +238,20 @@ public interface SqlTableMappingValidator {
     }
 
     /**
+     * Returns the query selecting the foreign key columns of all the tables of a schema, so that they are read with a single query
+     * instead of a {@link java.sql.DatabaseMetaData#getImportedKeys(String, String, String)} call per table (the drivers require
+     * the table name). The query has a single parameter, the schema name (the database name for MySQL), and selects the table name,
+     * the foreign key name, the column name, the referenced schema, the referenced table, the referenced column and the column
+     * position in the foreign key.
+     *
+     * @return The query or null to read the foreign keys per table
+     * @since 5.3.0
+     */
+    default @Nullable String getForeignKeysQuery() {
+        return null;
+    }
+
+    /**
      * Returns the SQL dialect supported by this validator.
      *
      * @return the supported SQL dialect, never null

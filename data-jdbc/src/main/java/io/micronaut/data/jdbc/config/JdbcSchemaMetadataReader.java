@@ -52,11 +52,12 @@ import java.util.TreeMap;
  * Reads the schema metadata used by the schema validation using JDBC {@link DatabaseMetaData}.
  * <p>
  * The metadata is read for the whole schema with as few database calls as possible and kept in memory:
- * the tables and their columns are read with a single call. The primary keys and the indexes are read with a single
- * dialect query for the schema (see {@link SqlTableMappingValidator#getPrimaryKeysQuery()} and
- * {@link SqlTableMappingValidator#getIndexesQuery()}). Without such a query, or when it fails, they are read with a call
- * per table, as are the foreign keys: the drivers require the table name, they either reject a null table name or return
- * no rows for it. Entities can also be mapped to views, since the tables are resolved from the columns.
+ * the tables and their columns are read with a single call. The primary keys, indexes and foreign keys are read with a single
+ * dialect query for the schema each (see {@link SqlTableMappingValidator#getPrimaryKeysQuery()},
+ * {@link SqlTableMappingValidator#getIndexesQuery()} and {@link SqlTableMappingValidator#getForeignKeysQuery()}).
+ * Without such a query, or when it fails, they are read with a call per table: the drivers require the table name, they
+ * either reject a null table name or return no rows for it. Entities can also be mapped to views, since the tables are
+ * resolved from the columns.
  *
  * @author radovanradic
  * @since 5.3.0
@@ -303,7 +304,7 @@ final class JdbcSchemaMetadataReader {
             readIndexes(resolvedSchema, tables);
         }
         if (readForeignKeys) {
-            readForeignKeys(tables);
+            readForeignKeys(resolvedSchema, tables);
         }
         return new SchemaTables(resolvedSchema, tables);
     }
@@ -427,35 +428,21 @@ final class JdbcSchemaMetadataReader {
         }
     }
 
-    private void readForeignKeys(Map<String, SqlTableMetadata> tables) {
+    private void readForeignKeys(@Nullable String schema, Map<String, SqlTableMetadata> tables) {
         Map<String, Map<String, ForeignKeyColumns>> foreignKeys = new HashMap<>();
-        Set<String> readTables = readTablesMetadata("foreign keys", tables,
-            (catalog, schema, table) -> metaData.getImportedKeys(catalog, schema, table),
-            (tableKey, resultSet) -> {
-                String referencedTable = resultSet.getString("PKTABLE_NAME");
-                String referencedSchema = resultSet.getString("PKTABLE_SCHEM");
-                String name = resultSet.getString("FK_NAME");
-                int keySeq = resultSet.getInt("KEY_SEQ");
-                Map<String, ForeignKeyColumns> tableForeignKeys = foreignKeys.computeIfAbsent(tableKey, k -> new LinkedHashMap<>());
-                String key;
-                if (StringUtils.isNotEmpty(name)) {
-                    key = name;
-                } else {
-                    // Unnamed foreign keys to the same table are separated by the column position, the rows are ordered
-                    // by the referenced table and the position, so the columns of the foreign keys can be interleaved
-                    int group = 0;
-                    ForeignKeyColumns existing = tableForeignKeys.get(unnamedForeignKeyKey(referencedSchema, referencedTable, group));
-                    while (existing != null && existing.columns().containsKey(keySeq)) {
-                        group++;
-                        existing = tableForeignKeys.get(unnamedForeignKeyKey(referencedSchema, referencedTable, group));
-                    }
-                    key = unnamedForeignKeyKey(referencedSchema, referencedTable, group);
-                }
-                ForeignKeyColumns foreignKey = tableForeignKeys.computeIfAbsent(key,
-                    k -> new ForeignKeyColumns(name, referencedSchema, referencedTable, new TreeMap<>(), new TreeMap<>()));
-                foreignKey.columns().put(keySeq, resultSet.getString("FKCOLUMN_NAME"));
-                foreignKey.referencedColumns().put(keySeq, resultSet.getString("PKCOLUMN_NAME"));
-            });
+        Set<String> readTables;
+        if (readSchemaQuery("foreign keys", queries.foreignKeys(), schema, tables, (tableKey, resultSet) ->
+            addForeignKeyColumn(foreignKeys.computeIfAbsent(tableKey, k -> new LinkedHashMap<>()), resultSet.getString(2),
+                resultSet.getString(4), resultSet.getString(5), resultSet.getString(3), resultSet.getString(6), resultSet.getInt(7)))) {
+            readTables = tables.keySet();
+        } else {
+            foreignKeys.clear();
+            readTables = readTablesMetadata("foreign keys", tables,
+                (catalog, tableSchema, table) -> metaData.getImportedKeys(catalog, tableSchema, table),
+                (tableKey, resultSet) -> addForeignKeyColumn(foreignKeys.computeIfAbsent(tableKey, k -> new LinkedHashMap<>()),
+                    resultSet.getString("FK_NAME"), resultSet.getString("PKTABLE_SCHEM"), resultSet.getString("PKTABLE_NAME"),
+                    resultSet.getString("FKCOLUMN_NAME"), resultSet.getString("PKCOLUMN_NAME"), resultSet.getInt("KEY_SEQ")));
+        }
         for (String tableKey : readTables) {
             List<SqlForeignKeyMetadata> foreignKeyMetadata = new ArrayList<>();
             for (ForeignKeyColumns fk : foreignKeys.getOrDefault(tableKey, Map.of()).values()) {
@@ -464,6 +451,34 @@ final class JdbcSchemaMetadataReader {
             }
             Objects.requireNonNull(tables.get(tableKey)).setForeignKeys(foreignKeyMetadata);
         }
+    }
+
+    @SuppressWarnings("java:S107")
+    private static void addForeignKeyColumn(Map<String, ForeignKeyColumns> tableForeignKeys,
+                                            @Nullable String name,
+                                            @Nullable String referencedSchema,
+                                            String referencedTable,
+                                            String column,
+                                            String referencedColumn,
+                                            int keySeq) {
+        String key;
+        if (StringUtils.isNotEmpty(name)) {
+            key = name;
+        } else {
+            // Unnamed foreign keys to the same table are separated by the column position, the rows are ordered
+            // by the referenced table and the position, so the columns of the foreign keys can be interleaved
+            int group = 0;
+            ForeignKeyColumns existing = tableForeignKeys.get(unnamedForeignKeyKey(referencedSchema, referencedTable, group));
+            while (existing != null && existing.columns().containsKey(keySeq)) {
+                group++;
+                existing = tableForeignKeys.get(unnamedForeignKeyKey(referencedSchema, referencedTable, group));
+            }
+            key = unnamedForeignKeyKey(referencedSchema, referencedTable, group);
+        }
+        ForeignKeyColumns foreignKey = tableForeignKeys.computeIfAbsent(key,
+            k -> new ForeignKeyColumns(name, referencedSchema, referencedTable, new TreeMap<>(), new TreeMap<>()));
+        foreignKey.columns().put(keySeq, column);
+        foreignKey.referencedColumns().put(keySeq, referencedColumn);
     }
 
     private static String unnamedForeignKeyKey(@Nullable String referencedSchema, String referencedTable, int group) {
@@ -608,13 +623,14 @@ final class JdbcSchemaMetadataReader {
      *
      * @param primaryKeys The primary keys query, see {@link SqlTableMappingValidator#getPrimaryKeysQuery()}
      * @param indexes The indexes query, see {@link SqlTableMappingValidator#getIndexesQuery()}
+     * @param foreignKeys The foreign keys query, see {@link SqlTableMappingValidator#getForeignKeysQuery()}
      */
-    record MetadataQueries(@Nullable String primaryKeys, @Nullable String indexes) {
+    record MetadataQueries(@Nullable String primaryKeys, @Nullable String indexes, @Nullable String foreignKeys) {
 
-        static final MetadataQueries NONE = new MetadataQueries(null, null);
+        static final MetadataQueries NONE = new MetadataQueries(null, null, null);
 
         static MetadataQueries of(SqlTableMappingValidator validator) {
-            return new MetadataQueries(validator.getPrimaryKeysQuery(), validator.getIndexesQuery());
+            return new MetadataQueries(validator.getPrimaryKeysQuery(), validator.getIndexesQuery(), validator.getForeignKeysQuery());
         }
     }
 

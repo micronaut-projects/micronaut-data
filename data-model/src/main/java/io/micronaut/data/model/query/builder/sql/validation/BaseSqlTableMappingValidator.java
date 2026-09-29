@@ -73,6 +73,20 @@ abstract class BaseSqlTableMappingValidator implements SqlTableMappingValidator 
         WHERE tc.CONSTRAINT_TYPE = 'PRIMARY KEY' AND tc.TABLE_SCHEMA = ?""";
 
     /**
+     * The foreign key columns of a schema from the standard information schema views, see {@link #getForeignKeysQuery()}.
+     * A referenced column is the column of the referenced unique constraint at the position of the foreign key column.
+     */
+    static final String INFORMATION_SCHEMA_FOREIGN_KEYS_QUERY = """
+        SELECT kcu.TABLE_NAME, kcu.CONSTRAINT_NAME, kcu.COLUMN_NAME, ukcu.TABLE_SCHEMA, ukcu.TABLE_NAME, ukcu.COLUMN_NAME, kcu.ORDINAL_POSITION
+        FROM INFORMATION_SCHEMA.REFERENTIAL_CONSTRAINTS rc
+        JOIN INFORMATION_SCHEMA.KEY_COLUMN_USAGE kcu
+          ON kcu.CONSTRAINT_SCHEMA = rc.CONSTRAINT_SCHEMA AND kcu.CONSTRAINT_NAME = rc.CONSTRAINT_NAME
+        JOIN INFORMATION_SCHEMA.KEY_COLUMN_USAGE ukcu
+          ON ukcu.CONSTRAINT_SCHEMA = rc.UNIQUE_CONSTRAINT_SCHEMA AND ukcu.CONSTRAINT_NAME = rc.UNIQUE_CONSTRAINT_NAME
+          AND ukcu.ORDINAL_POSITION = kcu.POSITION_IN_UNIQUE_CONSTRAINT
+        WHERE kcu.TABLE_SCHEMA = ?""";
+
+    /**
      * Types defined through a column definition (by a definition provider or a spatial type) that are verified strictly.
      * Other custom definitions are verified on the best effort basis and a difference is only reported as a warning.
      */

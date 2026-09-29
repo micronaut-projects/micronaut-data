@@ -72,6 +72,19 @@ final class OracleSqlTableMappingValidator extends BaseSqlTableMappingValidator 
     }
 
     @Override
+    public String getForeignKeysQuery() {
+        // A referenced column is the column of the referenced constraint at the position of the foreign key column
+        return """
+            SELECT c.TABLE_NAME, c.CONSTRAINT_NAME, cc.COLUMN_NAME, rc.OWNER, rc.TABLE_NAME, rcc.COLUMN_NAME, cc.POSITION
+            FROM ALL_CONSTRAINTS c
+            JOIN ALL_CONS_COLUMNS cc ON cc.OWNER = c.OWNER AND cc.CONSTRAINT_NAME = c.CONSTRAINT_NAME AND cc.TABLE_NAME = c.TABLE_NAME
+            JOIN ALL_CONSTRAINTS rc ON rc.OWNER = c.R_OWNER AND rc.CONSTRAINT_NAME = c.R_CONSTRAINT_NAME
+            JOIN ALL_CONS_COLUMNS rcc ON rcc.OWNER = rc.OWNER AND rcc.CONSTRAINT_NAME = rc.CONSTRAINT_NAME
+              AND rcc.TABLE_NAME = rc.TABLE_NAME AND rcc.POSITION = cc.POSITION
+            WHERE c.CONSTRAINT_TYPE = 'R' AND c.OWNER = ?""";
+    }
+
+    @Override
     protected boolean matchingDialectColumnType(SqlColumnMapping columnMapping,
                                                 SqlColumnMetadata columnMetadata,
                                                 SqlDialectOptions dialectOptions) {

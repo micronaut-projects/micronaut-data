@@ -50,18 +50,20 @@ class JdbcSchemaMetadataReaderSpec extends Specification {
         tables['READER_VIEW'].view
     }
 
-    void 'primary keys and indexes are read per table when the schema queries fail'() {
+    void 'primary keys, indexes and foreign keys are read per table when the schema queries fail'() {
         given:
-        def queries = new JdbcSchemaMetadataReader.MetadataQueries('SELECT * FROM MISSING_PRIMARY_KEYS WHERE S = ?', 'SELECT * FROM MISSING_INDEXES WHERE S = ?')
+        def queries = new JdbcSchemaMetadataReader.MetadataQueries('SELECT * FROM MISSING_PRIMARY_KEYS WHERE S = ?',
+            'SELECT * FROM MISSING_INDEXES WHERE S = ?', 'SELECT * FROM MISSING_FOREIGN_KEYS WHERE S = ?')
 
         when:
         def tables = new JdbcSchemaMetadataReader(connection, Dialect.H2, queries)
-            .readTables(null, ['READER_ITEM', 'READER_PLAIN'] as Set, true, false).tables()
+            .readTables(null, ['READER_ITEM', 'READER_PLAIN'] as Set, true, true).tables()
 
         then:
         tables['READER_ITEM'].primaryKeyColumns == ['ID']
         tables['READER_PLAIN'].primaryKeyColumns == []
         tables['READER_ITEM'].indexes*.name().contains('IDX_READER_ITEM_NAME')
+        tables['READER_ITEM'].foreignKeys == []
     }
 
     void 'indexes are read only when requested'() {

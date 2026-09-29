@@ -37,9 +37,10 @@ import java.sql.SQLException
  */
 class SchemaMetadataQueriesSpec extends Specification {
 
-    private static final List<String> TABLES = ['md_single', 'md_composite', 'md_none']
+    // The referencing table first, for the drop
+    private static final List<String> TABLES = ['md_child', 'md_single', 'md_composite', 'md_none']
 
-    void 'primary keys and indexes read with the #dialect queries match the JDBC metadata'() {
+    void 'primary keys, indexes and foreign keys read with the #dialect queries match the JDBC metadata'() {
         given:
         Map<String, Object> properties = [
                 'datasources.default.dialect'        : dialect.name(),
@@ -75,13 +76,17 @@ class SchemaMetadataQueriesSpec extends Specification {
             // A partial (filtered) unique index is only unique for the rows matching its predicate
             execute(connection, 'CREATE UNIQUE INDEX md_single_partial ON md_single (name) WHERE name IS NOT NULL')
         }
+        // The composite foreign key columns are not in the column order
+        execute(connection, '''CREATE TABLE md_child (id INT NOT NULL PRIMARY KEY, single_id INT, x INT, y INT, z INT,
+            CONSTRAINT md_child_single FOREIGN KEY (single_id) REFERENCES md_single (id),
+            CONSTRAINT md_child_composite FOREIGN KEY (z, x, y) REFERENCES md_composite (c, a, b))''')
 
         when:
-        // The per table metadata calls fail, the primary keys and indexes can only be read with the queries
+        // The per table metadata calls fail, the primary keys, indexes and foreign keys can only be read with the queries
         def queryReader = new JdbcSchemaMetadataReader(withoutPerTableMetadata(connection), dialect, JdbcSchemaMetadataReader.MetadataQueries.of(validator))
         def keys = TABLES.collect { queryReader.identifierMatcher().mappedTableKey(it, false) } as Set
-        def queryTables = queryReader.readTables(null, keys, true, false)
-        def jdbcTables = new JdbcSchemaMetadataReader(connection, dialect).readTables(null, keys, true, false)
+        def queryTables = queryReader.readTables(null, keys, true, true)
+        def jdbcTables = new JdbcSchemaMetadataReader(connection, dialect).readTables(null, keys, true, true)
         def primaryKeyRows = queryRows(connection, validator.primaryKeysQuery, queryTables.schema())
         def indexRows = queryRows(connection, validator.indexesQuery, queryTables.schema())
 
@@ -97,10 +102,18 @@ class SchemaMetadataQueriesSpec extends Specification {
         indexRows.findAll { it[1].equalsIgnoreCase('md_composite_bc') }.every { it[2] != 0 }
         indexRows.findAll { it[1].equalsIgnoreCase('md_single_name') }.every { it[2] == 0 }
 
-        and:"The reader reads the same primary keys and indexes as per table"
-        queryTables.tables().size() == 3
+        and:"The reader reads the same primary keys, indexes and foreign keys as per table"
+        queryTables.tables().size() == 4
         primaryKeys(queryTables.tables()) == primaryKeys(jdbcTables.tables())
         indexes(queryTables.tables(), ['md_single_include', 'md_single_partial']) == indexes(jdbcTables.tables(), ['md_single_include', 'md_single_partial'])
+        foreignKeys(queryTables.tables()) == foreignKeys(jdbcTables.tables())
+        table(queryTables.tables(), 'md_child').foreignKeys.collectEntries { [it.name().toLowerCase(), [it.columns()*.toLowerCase(),
+            it.referencedTable().toLowerCase(), it.referencedColumns()*.toLowerCase()]] } == [
+                md_child_single   : [['single_id'], 'md_single', ['id']],
+                md_child_composite: [['z', 'x', 'y'], 'md_composite', ['c', 'a', 'b']]
+        ]
+        table(queryTables.tables(), 'md_child').foreignKeys.every { it.referencedSchema().equalsIgnoreCase(queryTables.schema()) }
+        table(queryTables.tables(), 'md_single').foreignKeys == []
         table(queryTables.tables(), 'md_composite').primaryKeyColumns*.toLowerCase() == ['c', 'a', 'b']
         table(queryTables.tables(), 'md_none').primaryKeyColumns == []
         table(queryTables.tables(), 'md_composite').indexes.find { it.name().equalsIgnoreCase('md_composite_bc') }.with {
@@ -137,7 +150,7 @@ class SchemaMetadataQueriesSpec extends Specification {
         DatabaseMetaData metaData = connection.metaData
         ClassLoader classLoader = SchemaMetadataQueriesSpec.classLoader
         def metaDataProxy = (DatabaseMetaData) Proxy.newProxyInstance(classLoader, [DatabaseMetaData] as Class[], { proxy, Method method, Object[] args ->
-            if (method.name in ['getPrimaryKeys', 'getIndexInfo']) {
+            if (method.name in ['getPrimaryKeys', 'getIndexInfo', 'getImportedKeys']) {
                 throw new SQLException("Unexpected per table call " + method.name)
             }
             return delegate(method, metaData, args)
@@ -170,6 +183,15 @@ class SchemaMetadataQueriesSpec extends Specification {
         return tables.collectEntries { key, table ->
             [key, table.indexes.findAll { index -> !excludedIndexes.any { it.equalsIgnoreCase(index.name()) } }
                 .collectEntries { index -> [index.name(), [index.unique(), index.columns()]] }]
+        }
+    }
+
+    /**
+     * The referenced schema is not compared, MySQL Connector/J reports the database as the catalog and no schema.
+     */
+    private static Map<String, Set<List<Object>>> foreignKeys(Map<String, SqlTableMetadata> tables) {
+        return tables.collectEntries { key, table ->
+            [key, table.foreignKeys.collect { [it.name(), it.columns(), it.referencedTable(), it.referencedColumns()] } as Set]
         }
     }
 

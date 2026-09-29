@@ -84,6 +84,22 @@ final class PostgresSqlTableMappingValidator extends BaseSqlTableMappingValidato
     }
 
     @Override
+    public String getForeignKeysQuery() {
+        // The columns and the referenced columns are the arrays of the constraint, unnested together
+        return """
+            SELECT c.relname, con.conname, a.attname, rn.nspname, rc.relname, ra.attname, k.position
+            FROM pg_catalog.pg_constraint con
+            JOIN pg_catalog.pg_class c ON c.oid = con.conrelid
+            JOIN pg_catalog.pg_namespace n ON n.oid = c.relnamespace
+            JOIN pg_catalog.pg_class rc ON rc.oid = con.confrelid
+            JOIN pg_catalog.pg_namespace rn ON rn.oid = rc.relnamespace
+            CROSS JOIN LATERAL unnest(con.conkey, con.confkey) WITH ORDINALITY AS k(attnum, refattnum, position)
+            JOIN pg_catalog.pg_attribute a ON a.attrelid = con.conrelid AND a.attnum = k.attnum
+            JOIN pg_catalog.pg_attribute ra ON ra.attrelid = con.confrelid AND ra.attnum = k.refattnum
+            WHERE con.contype = 'f' AND n.nspname = ?""";
+    }
+
+    @Override
     protected boolean matchingDialectColumnType(SqlColumnMapping columnMapping, SqlColumnMetadata columnMetadata) {
         if (columnMapping.getDbType() == SqlDbType.JSON || columnMapping.getDbType() == SqlDbType.JSON_OBJECT) {
             return "json".equalsIgnoreCase(columnMetadata.typeName()) || "jsonb".equalsIgnoreCase(columnMetadata.typeName());

@@ -42,4 +42,9 @@ final class AnsiSqlTableMappingValidator extends BaseSqlTableMappingValidator {
     public String getPrimaryKeysQuery() {
         return INFORMATION_SCHEMA_PRIMARY_KEYS_QUERY;
     }
+
+    @Override
+    public String getForeignKeysQuery() {
+        return INFORMATION_SCHEMA_FOREIGN_KEYS_QUERY;
+    }
 }
