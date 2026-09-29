@@ -1,5 +1,7 @@
 Since 2.3.0, Micronaut Data JDBC / R2DBC has support for using Java 16 records to model entities.
 
+NOTE: This section applies to Java records. Kotlin users should see <<kotlinData, Support for Kotlin immutable data classes>> for the equivalent approach using Kotlin data classes.
+
 The following record class demonstrates this capability:
 
 snippet::example.Book[project-base="doc-examples/jdbc-example-records", source="main"]
