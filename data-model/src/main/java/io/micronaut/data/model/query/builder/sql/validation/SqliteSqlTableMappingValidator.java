@@ -54,6 +54,13 @@ final class SqliteSqlTableMappingValidator extends BaseSqlTableMappingValidator 
         return affinity(expectedType).equals(affinity(columnMetadata.typeName()));
     }
 
+    /**
+     * The SQLite type affinity of the declared type, determined by the SQLite rules applied in order
+     * (see <a href="https://www.sqlite.org/datatype3.html#determination_of_column_affinity">Determination Of Column Affinity</a>):
+     * a name containing {@code INT} is INTEGER, {@code CHAR}, {@code CLOB} or {@code TEXT} is TEXT, {@code BLOB} or no type is BLOB,
+     * {@code REAL}, {@code FLOA} or {@code DOUB} (FLOAT, DOUBLE, DOUBLE PRECISION) is REAL, anything else NUMERIC.
+     * The order matters, SQLite gives {@code FLOATING POINT} the INTEGER affinity.
+     */
     private static String affinity(@Nullable String typeName) {
         String type = typeName == null ? "" : typeName.toUpperCase(Locale.ENGLISH);
         if (type.contains("INT")) {

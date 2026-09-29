@@ -132,7 +132,6 @@ abstract class BaseSqlTableMappingValidator implements SqlTableMappingValidator 
     );
 
     private static final Pattern TYPE_ARGUMENTS = Pattern.compile("\\(\\s*(\\d+)\\s*(?:,\\s*(\\d+)\\s*)?\\)");
-    private static final Pattern PARENTHESES = Pattern.compile("\\([^()]*\\)");
     private static final Pattern WHITESPACE = Pattern.compile("\\s+");
 
     @Override
@@ -279,16 +278,11 @@ abstract class BaseSqlTableMappingValidator implements SqlTableMappingValidator 
         if (typeName == null) {
             return "";
         }
-        String type = typeName.toUpperCase(Locale.ENGLISH)
+        String type = removeParenthesized(typeName.toUpperCase(Locale.ENGLISH)
             .replace("\"", "")
             .replace("`", "")
             .replace("[", "")
-            .replace("]", "");
-        String previous;
-        do {
-            previous = type;
-            type = PARENTHESES.matcher(type).replaceAll(" ");
-        } while (!type.equals(previous));
+            .replace("]", ""));
         StringBuilder normalized = new StringBuilder();
         for (String token : WHITESPACE.splitAsStream(type.trim()).filter(t -> !t.isEmpty()).toList()) {
             if (!normalized.isEmpty() && TYPE_MODIFIER_KEYWORDS.contains(token)) {
@@ -305,6 +299,31 @@ abstract class BaseSqlTableMappingValidator implements SqlTableMappingValidator 
             name = name.substring(schemaSeparator + 1);
         }
         return TYPE_ALIASES.getOrDefault(name, name);
+    }
+
+    /**
+     * Replaces the parenthesized parts, including the nested ones (like {@code GEOMETRY(POINT(4326))}), with a space
+     * in a single pass. An unmatched closing parenthesis is dropped, an unclosed one removes the rest of the text.
+     */
+    private static String removeParenthesized(String type) {
+        StringBuilder result = new StringBuilder(type.length());
+        int depth = 0;
+        for (int i = 0; i < type.length(); i++) {
+            char c = type.charAt(i);
+            if (c == '(') {
+                if (depth == 0) {
+                    result.append(' ');
+                }
+                depth++;
+            } else if (c == ')') {
+                if (depth > 0) {
+                    depth--;
+                }
+            } else if (depth == 0) {
+                result.append(c);
+            }
+        }
+        return result.toString();
     }
 
     /**
