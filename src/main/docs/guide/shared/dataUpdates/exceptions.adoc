@@ -26,7 +26,7 @@ Repository methods do not declare checked exceptions. Errors are reported with u
 
 |===
 
-==== Behaviour of the CRUD operations
+== Behaviour of the CRUD operations
 
 The following applies to the methods inherited from api:data.repository.CrudRepository[] and to the equivalent query methods:
 
@@ -36,7 +36,7 @@ The following applies to the methods inherited from api:data.repository.CrudRepo
 * *Null arguments*: arguments are not nullable unless annotated with `@Nullable`. A `null` ID is rejected with `IllegalArgumentException` and a `null` entity with `IllegalStateException`, before any statement is executed.
 * *Validation*: if Micronaut Validation is on the classpath and the type arguments of the repository carry constraints, for example `CrudRepository<@Valid Book, @NotNull Long>`, invalid arguments are rejected with `jakarta.validation.ConstraintViolationException` before any statement is executed. See <<validation, Validation>>.
 
-==== Differences between datastores
+== Differences between datastores
 
 * *JDBC*: all errors are `DataAccessException` or one of its subclasses, and they are thrown by the repository call that executed the statement.
 * *R2DBC*: duplicate keys and constraint violations are mapped to `EntityExistsException` and `DataIntegrityViolationException`; other `R2dbcException` errors are propagated unchanged.
@@ -44,7 +44,7 @@ The following applies to the methods inherited from api:data.repository.CrudRepo
 * *Hibernate JPA and Hibernate Reactive*: the query related exceptions (`EmptyResultException`) are raised by Micronaut Data, but write errors are the exceptions of the JPA provider, for example `jakarta.persistence.OptimisticLockException`, `jakarta.persistence.EntityExistsException` or `org.hibernate.exception.ConstraintViolationException`, all subclasses of `jakarta.persistence.PersistenceException`. Because Hibernate writes changes when the persistence context is flushed, a constraint violation is often only reported when the transaction commits, and is then thrown by the method that ends the transaction rather than by the repository call.
 * Repositories that implement Jakarta Data interfaces convert these exceptions to the `jakarta.data.exceptions` types required by that specification. See <<jakartaData, Jakarta Data>>.
 
-==== Asynchronous and reactive repositories
+== Asynchronous and reactive repositories
 
 Asynchronous and reactive repositories report the same exceptions, but through their return type rather than by throwing:
 
@@ -52,6 +52,6 @@ Asynchronous and reactive repositories report the same exceptions, but through t
 * A `Publisher`, `Mono` or `Flux` signals the exception with `onError`. A lookup that finds nothing completes without emitting an item.
 * A Kotlin `suspend` function throws the exception from the suspending call.
 
-==== Exceptions and transactions
+== Exceptions and transactions
 
 If an exception escapes a method annotated with `@Transactional`, the transaction is rolled back by default, whether the exception is checked or unchecked. Use the `rollbackOn` and `dontRollbackOn` members of the annotation to change this. Catching a Micronaut Data exception inside the transaction does not undo a rollback-only mark: if a nested transactional call that joined the transaction failed, the transaction is marked as rollback-only and the commit at the end of the outer transaction fails with `io.micronaut.transaction.exceptions.UnexpectedRollbackException`. In addition, many databases do not allow further statements in a transaction after a failed statement. To recover from an expected error such as a duplicate key, execute the risky operation in its own transaction (`REQUIRES_NEW`) or nested transaction (`NESTED`).

@@ -112,19 +112,19 @@ You can now perform CRUD (Create, Read, Update, Delete) operations on the entity
 
 snippet::example.BookRepositorySpec[project-base="doc-examples/hibernate-example", tags="inject", indent="0"]
 
-=== Saving an Instance (Create)
+== Saving an Instance (Create)
 
 To save an instance use the `save` method of the `CrudRepository` interface:
 
 snippet::example.BookRepositorySpec[project-base="doc-examples/hibernate-example", tags="save", indent="0"]
 
-=== Retrieving an Instance (Read)
+== Retrieving an Instance (Read)
 
 To read a book back use `findById`:
 
 snippet::example.BookRepositorySpec[project-base="doc-examples/hibernate-example", tags="read", indent="0"]
 
-=== Updating an Instance (Update)
+== Updating an Instance (Update)
 
 To update an instance use `save` again:
 
@@ -136,7 +136,7 @@ snippet::example.BookRepository[project-base="doc-examples/hibernate-example", s
 
 In this example, in order for update to be propagated in the current session you can add `QueryHint` annotation to force session flush.
 
-=== Deleting an Instance (Delete)
+== Deleting an Instance (Delete)
 
 To delete an instance use `deleteById`:
 

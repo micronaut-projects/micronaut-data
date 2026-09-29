@@ -15,7 +15,7 @@ snippet::example.AddressSubView[project-base="doc-examples/jdbc-example", source
 The main difference between ann:data.annotation.JsonView[] and ann:data.annotation.JsonSubView[], and the reason for the existence of the ann:data.annotation.JsonSubView[] annotation, is to specify for which classes the creation
 SQL script will be generated. SQL scripts are generated for JsonViews, but not for JsonSubViews.
 
-==== Specifying joins
+== Specifying joins
 
 You can define relationships between entities within JSON views by using ann:data.annotation.Relation[]. Tables are
 joined automatically, on columns annotated with ann:data.annotation.Id[] by default, but if user specified columns to join in
@@ -29,7 +29,7 @@ is the identifier for `StudentScheduleSubView`, as follows:
 
 snippet::example.StudentView[project-base="doc-examples/jdbc-example", source="main", tags="class-example"]
 
-==== Using `@MappedProperty` annotation
+== Using `@MappedProperty` annotation
 
 Json view field names do not need to match the underlying table field names, and if it's not matching, then users must annotate the field
 The fields of types annotated annotated with ann:data.annotation.JsonView[] or ann:data.annotation.JsonSubView[] do not need the match the corresponding entities field names as specified by the `entity` member (in the below case `Teacher`).
@@ -42,7 +42,7 @@ Json view field names do not need to match the underlying table field names, and
 
 snippet::example.TeacherSubView[project-base="doc-examples/jdbc-example", source="main", tags="class-example"]
 
-==== Schema generation
+== Schema generation
 
 Given the example entities above the following JSON Duality View definition is generated:
 
@@ -72,7 +72,7 @@ CREATE OR REPLACE JSON RELATIONAL DUALITY VIEW STUDENT_VIEW AS
 
 More documentation: https://docs.oracle.com/en/database/oracle/oracle-database/26/jsnvu/overview-json-relational-duality-views.html/[link]
 
-==== Operations supported
+== Operations supported
 
 Users can specify sql operations supported for `JsonView` and `JsonSubView` using the `operations` field, if not specified, it defaults to `{ INSERT, UPDATE, DELETE }`.
 
@@ -80,7 +80,7 @@ snippet::example.StudentScheduleSubView[project-base="doc-examples/jdbc-example"
 
 More documentation: https://docs.oracle.com/en/database/oracle/oracle-database/26/jsnvu/overview-json-relational-duality-views.html/[link]
 
-==== Optimistic Locking
+== Optimistic Locking
 
 You can use optimistic/lock-free concurrency control with duality views, writing JSON documents or committing their updates only when other sessions haven't modified them concurrently.
 
@@ -177,6 +177,6 @@ then `OptimisticLockingException` will be thrown.
 
 NOTE: Using `@Version` is not supported in Json Duality View mapped classes.
 
-==== Limitations
+== Limitations
 
 * During schema creation, json view mapped entities are skipped, and it is expected for users to create them manually or via migration scripts.

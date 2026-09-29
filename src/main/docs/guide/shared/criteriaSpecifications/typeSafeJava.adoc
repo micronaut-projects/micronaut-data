@@ -15,7 +15,7 @@ q.select(customer.get(Customer_.name))
 .where(cb.equal(item.get(Item_.product).get(Product_.productType), "printer"));
 ----
 
-=== Configuring metamodel generation
+== Configuring metamodel generation
 
 Micronaut supports generating Jakarta Persistence static metamodel classes using one of the following annotation processors:
 
@@ -27,13 +27,13 @@ Micronaut supports generating Jakarta Persistence static metamodel classes using
 Enable *only one* metamodel generator at a time to avoid duplicate/conflicting generated sources.
 ====
 
-==== Option 1: Micronaut static metamodel generator (recommended)
+=== Option 1: Micronaut static metamodel generator (recommended)
 
 To configure the Micronaut metamodel generator, add the following dependency to the annotation processor classpath:
 
 dependency:micronaut-data-jpa-metamodel-processor[groupId="io.micronaut.data",scope="annotationProcessor"]
 
-==== Option 2: Hibernate static metamodel generator
+=== Option 2: Hibernate static metamodel generator
 
 To configure Hibernate's metamodel generator, add the following dependency to the annotation processor classpath:
 
@@ -47,7 +47,7 @@ For Kotlin, add the dependency in https://docs.micronaut.io/latest/guide/#kaptOr
 For Groovy, add it in `compileOnly` scope.
 ====
 
-=== Supported annotations
+== Supported annotations
 
 The Micronaut static metamodel generator supports:
 
@@ -56,7 +56,7 @@ The Micronaut static metamodel generator supports:
 
 NOTE: Jakarta Persistence (`jakarta.persistence`) must be present on the *compilation classpath* for static metamodel generation to run.
 If the Jakarta Persistence API is not available at compile time, metamodel generation is skipped.
-=== Using generated sources
+== Using generated sources
 
 The generated metamodel classes must be available on the compilation classpath for the module using them.
 Depending on the build tool and configuration, you may need to add the generated sources directory as an additional source set.
@@ -75,11 +75,11 @@ sourceSets {
 
 If everything is correctly set up you should be able to see the generated metamodel classes in IDE code completion and be able to use them:
 
-snippet::example.PersonRepository[project-base="doc-examples/jdbc-example",source="main" tags="typesafe",indent="0"]
+snippet::example.PersonRepository[project-base="doc-examples/jdbc-example", source="main", tags="typesafe", indent="0", languages="java"]
 
 NOTE: More information about the static metamodel can be found in the https://jakarta.ee/specifications/persistence/3.0/jakarta-persistence-spec-3.0.html#a6933[official specification].
 
-=== Disabling Micronaut static metamodel generation
+== Disabling Micronaut static metamodel generation
 
 If you are using another JPA static metamodel generator (for example Hibernate `hibernate-jpamodelgen`), you can disable Micronaut's static metamodel generation by setting the following build-time flag:
 
@@ -88,7 +88,7 @@ If you are using another JPA static metamodel generator (for example Hibernate `
 NOTE: This is a *compile-time* (annotation processor) option.
 It must be configured in your build tool (as a compiler argument), not in `application.properties`.
 
-==== Gradle (Java)
+=== Gradle (Java)
 
 [source,groovy]
 ----
@@ -99,7 +99,7 @@ tasks.withType(JavaCompile).configureEach {
 }
 ----
 
-==== Maven
+=== Maven
 
 [source,xml]
 ----

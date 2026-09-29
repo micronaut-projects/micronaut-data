@@ -21,7 +21,7 @@ snippet::example.ProductRepository[project-base="doc-examples/hibernate-example"
 
 Note that the ann:data.annotation.Join[] annotation is repeatable and hence can be specified multiple times for different associations. In addition, the `type` member of the annotation can be used to specify the join type, for example `LEFT`, `INNER` or `RIGHT`.
 
-=== JPA 2.1 Entity Graphs
+== JPA 2.1 Entity Graphs
 
 A JPA-specific alternative to specifying the joins to a query is to use JPA 2.1 entity graphs. With entity graphs you defer to the JPA implementation to pick the appropriate join type to use:
 
@@ -29,6 +29,6 @@ snippet::example.ProductRepository[project-base="doc-examples/hibernate-example"
 
 <1> The `attributePaths` member is used to specify the paths to include in the Entity graph.
 
-=== Tests
+== Tests
 
 Please note that in tests using join collections, to make sure joins are consistently fetched the test might need to be made non-transactional using `@MicronautTest(transactional = false)`.

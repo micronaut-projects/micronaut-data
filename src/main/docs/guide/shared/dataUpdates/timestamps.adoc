@@ -43,7 +43,7 @@ In other words, `skipIfPresent` on `@DateUpdated` is an insert-time override, no
 
 NOTE: If you update the entity with an external SQL statement or custom logic you will need to update the underlying `DateUpdated` column manually.
 
-=== JPA Hibernate and Entity Timestamps
+== JPA Hibernate and Entity Timestamps
 
 The ann:data.annotation.DateCreated[] and ann:data.annotation.DateUpdated[] annotations require a `ValidatorFactory` bean to be present in the application context when used with JPA Hibernate.
 This can be provided by ensuring one of

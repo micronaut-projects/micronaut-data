@@ -22,7 +22,7 @@ An association is a property of an entity whose value is another entity, or a co
 |Not an association to another table: the properties of an ann:data.annotation.Embeddable[] type are stored as columns of this entity's table.
 |===
 
-==== Owning and inverse sides
+== Owning and inverse sides
 
 An association between two entities can be declared on one side only (unidirectional) or on both sides (bidirectional). In a bidirectional association, exactly one side owns the association, which means that it defines how the link is stored. The other side, the inverse side, sets `mappedBy` to the name of the property on the owning side, and does not add any column or table of its own.
 
@@ -32,7 +32,7 @@ A `ONE_TO_MANY` or `MANY_TO_MANY` association without `mappedBy` is stored in a 
 
 Declaring an association only defines the mapping. Associated entities are not loaded unless the query asks for them, see <<sqlAssociationFetching, Association Fetching>>.
 
-==== Cascading
+== Cascading
 
 By default, saving or updating an entity only writes the entity's own table: associated entities must already exist and are saved separately. Set the `cascade` member of ann:data.annotation.Relation[] to also write the associated entities in the same repository operation:
 

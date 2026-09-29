@@ -7,7 +7,7 @@ If only the annotation processor is present, annotations such as `@Repository` d
 
 The quickest way to get a working build is to generate a project with https://micronaut.io/launch[Micronaut Launch] and select the `data-jdbc`, `data-r2dbc`, `data-jpa`, `data-mongodb` or `data-azure-cosmos` feature together with a database driver feature. To add Micronaut Data to an existing project, follow the steps below.
 
-=== Step 1: Choose a Module
+== Step 1: Choose a Module
 
 [cols="1,2,2"]
 |===
@@ -40,7 +40,7 @@ The quickest way to get a working build is to generate a project with https://mi
 
 Versions are managed by the Micronaut platform BOM, which is applied automatically by the Micronaut Gradle and Maven plugins, so no version numbers are needed.
 
-=== Step 2: Add the Annotation Processor
+== Step 2: Add the Annotation Processor
 
 For SQL databases (JDBC, R2DBC, JPA and Hibernate Reactive) add `micronaut-data-processor`:
 
@@ -52,7 +52,7 @@ dependency:io.micronaut.data:micronaut-data-document-processor[scope="annotation
 
 NOTE: For Kotlin, add the processor in https://docs.micronaut.io/latest/guide/#kaptOrKsp[kapt or ksp scope]. For Groovy, add it in `compileOnly` scope.
 
-=== Step 3: Add the Runtime Dependencies
+== Step 3: Add the Runtime Dependencies
 
 For example, a JDBC application using PostgreSQL needs:
 
@@ -70,7 +70,7 @@ dependency:io.micronaut.sql:micronaut-jdbc-hikari[scope="runtimeOnly"]
 
 dependency:org.postgresql:postgresql[scope="runtimeOnly"]
 
-==== Why a connection pool is required
+=== Why a connection pool is required
 
 Micronaut Data JDBC and Micronaut Data JPA do not open database connections themselves. They obtain connections from a `javax.sql.DataSource` bean, and that bean is created, from the `datasources.*` configuration, by one of the connection pool modules of https://micronaut-projects.github.io/micronaut-sql/latest/guide/#jdbc[Micronaut SQL]:
 
@@ -83,11 +83,11 @@ Without one of these modules no `DataSource` is created, no repository operation
 
 The R2DBC, Hibernate Reactive, MongoDB and Azure Cosmos modules connect through their own clients and do not need a JDBC pool. An R2DBC application that runs migrations with Flyway or Liquibase still needs a JDBC driver and pool for the migration tool.
 
-=== Step 4: Configure the Data Source
+== Step 4: Configure the Data Source
 
 Each module is configured in the application configuration file. See the quick start of your module: <<jdbcQuickStart, JDBC>>, <<r2dbcQuickStart, R2DBC>>, <<hibernateQuickStart, JPA>>, <<hibernateReactive, Hibernate Reactive>>, <<mongoQuickStart, MongoDB>> or <<azureCosmosQuickStart, Azure Cosmos>>.
 
-=== Using Micronaut Launch
+== Using Micronaut Launch
 
 You can use Micronaut Launch to create a pre-configured project:
 
@@ -118,7 +118,7 @@ You can use Micronaut Launch to create a pre-configured project:
 
 |===
 
-=== Micronaut Data and Lombok
+== Micronaut Data and Lombok
 
 If you intend to use Lombok with Micronaut Data then you must place the Lombok annotation processor *before* the Micronaut processors in your build configuration since Micronaut needs to see the mutations to the AST that Lombok applies.
 

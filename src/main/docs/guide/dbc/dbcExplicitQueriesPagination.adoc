@@ -37,7 +37,7 @@ The `countQuery` receives the same method parameters as the query (it can use an
 WARNING: Since the clauses are appended to the query, a query that already ends with an `ORDER BY` clause can't be combined with a sorted `Pageable` or a `Sort`, it would produce an invalid query with two `ORDER BY` clauses. A query with its own `ORDER BY` clause works with an unsorted `Pageable`, for example `Pageable.from(1, 10)`, in which case only the limit clause is appended. Don't write a `LIMIT` clause in a query that receives a paged `Pageable`.
 
 [[sortingExplicitQueries]]
-=== Sorting
+== Sorting
 
 How the sort properties of the `Pageable` or `Sort` are translated to the `ORDER BY` clause depends on the `nativeQuery` member of ann:data.annotation.Query[]:
 
@@ -58,7 +58,7 @@ TIP: When the sort comes from a user, for example from an HTTP request (see <<pa
 
 NOTE: With SQL Server, if the query has no `ORDER BY` clause and the `Pageable` is not sorted, Micronaut Data orders the results by the identity of the entity because SQL Server requires an `ORDER BY` clause for the `OFFSET ... FETCH` clause.
 
-=== Cursored Pagination
+== Cursored Pagination
 
 A method with an explicit query can also return a api:data.model.CursoredPage[] (see <<cursored-pagination, Cursored Pagination>>). Like for `Page`, the `countQuery` member is required. For a cursored query Micronaut Data has to modify the query itself, not only append clauses:
 
