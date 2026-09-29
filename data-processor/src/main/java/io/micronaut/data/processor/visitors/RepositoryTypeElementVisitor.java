@@ -290,8 +290,9 @@ public class RepositoryTypeElementVisitor implements TypeElementVisitor<Reposito
 
             Function<ClassElement, SourcePersistentEntity> entityResolver = new Function<>() {
 
-            final MappedEntityVisitor mappedEntityVisitor = new MappedEntityVisitor();
-            final MappedEntityVisitor embeddedMappedEntityVisitor = new MappedEntityVisitor();
+            // resolve entities for this repository without postponing it; see MappedEntityVisitor#resolveJsonCreatorConflictForRepository
+            final MappedEntityVisitor mappedEntityVisitor = new MappedEntityVisitor(false);
+            final MappedEntityVisitor embeddedMappedEntityVisitor = new MappedEntityVisitor(false);
 
                 @Override
                 public SourcePersistentEntity apply(ClassElement classElement) {
