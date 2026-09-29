@@ -53,7 +53,14 @@ import java.util.List;
 import java.util.Objects;
 
 /**
- * The Hibernate transaction manager.
+ * The transaction manager for Hibernate ORM. It is registered for each {@link DataSource} that has a Hibernate
+ * session factory and replaces the plain JDBC {@link DataSourceTransactionManager} for it.
+ * <p>
+ * Each transaction runs on a Hibernate {@link Session}: the manager begins, commits or rolls back the session's
+ * Hibernate transaction, applies the isolation level, timeout and read-only flag of the
+ * {@link io.micronaut.transaction.TransactionDefinition} (a read-only transaction also switches the session to manual
+ * flushing and read-only entities), and implements {@code NESTED} propagation with JDBC savepoints.
+ * <p>
  * Partially based on https://github.com/spring-projects/spring-framework/blob/main/spring-orm/src/main/java/org/springframework/orm/hibernate5/HibernateTransactionManager.java
  *
  * @author Denis Stepanov

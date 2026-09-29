@@ -19,7 +19,11 @@ import io.micronaut.core.annotation.Blocking
 import io.micronaut.data.repository.GenericRepository
 
 /**
- * Interface for CRUD repository using Kotlin.
+ * Blocking CRUD repository for Kotlin. It offers the same operations as
+ * [io.micronaut.data.repository.CrudRepository], but uses Kotlin nullability instead of [java.util.Optional]:
+ * methods such as [findById] return `null` when nothing is found.
+ *
+ * The exceptions thrown are the same as those described in [io.micronaut.data.repository.CrudRepository].
  *
  * @param <E> The entity type
  * @param <ID> The ID type

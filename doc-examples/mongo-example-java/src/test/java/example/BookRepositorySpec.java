@@ -133,4 +133,12 @@ class BookRepositorySpec {
 
 		assertEquals("The Shining", book.getTitle());
 	}
+
+	@Test
+	void testUpdateReturning() {
+		Book book = bookRepository.save(new Book("The Shining", 400));
+		Book updated = bookRepository.incrementPagesAfter(book.getId());
+
+		assertEquals(401, updated.getPages());
+	}
 }

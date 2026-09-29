@@ -1,0 +1,5 @@
+test-resources:
+  containers:
+    postgres:
+      image-name: postgis/postgis
+      image-tag: 17-3.5

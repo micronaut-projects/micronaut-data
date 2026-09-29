@@ -2,6 +2,7 @@
 // tag::repository[]
 package example
 
+import com.mongodb.client.model.ReturnDocument
 import io.micronaut.context.annotation.Executable
 import io.micronaut.data.annotation.Id
 import io.micronaut.data.model.Page
@@ -107,6 +108,11 @@ interface BookRepository : CrudRepository<Book, ObjectId> { // <2>
     @MongoDeleteQuery(filter = "{title:{\$regex: :t}}", collation = "{locale:'en_US', numericOrdering:true}")
     fun customDelete(t: String)
     // end::custom[]
+
+    // tag::updateReturning[]
+    @MongoUpdateReturningQuery(filter = "{_id: {\$eq: :id}}", update = "{\$inc:{pages: 1}}", returnDocument = ReturnDocument.AFTER)
+    fun incrementPagesAfter(id: ObjectId): Book
+    // end::updateReturning[]
 
 // tag::repository[]
 }

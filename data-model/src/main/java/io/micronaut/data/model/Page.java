@@ -32,11 +32,12 @@ import java.util.List;
 import java.util.function.Function;
 
 /**
- * Inspired by the Spring Data's {@code Page} and GORM's {@code PagedResultList}, this models a type that supports
- * pagination operations.
+ * One page of query results: the records selected by a particular {@link Pageable} (page number, page size and
+ * sort order), together with the total number of records matching the query, from which the total number of pages
+ * is calculated. Computing the total usually requires an additional count query; use {@link Slice} when it is not
+ * needed.
  *
- * <p>A Page is a result set associated with a particular {@link Pageable} that includes a calculation of the total
- * size of page of records.</p>
+ * <p>Similar to Spring Data's {@code Page} and GORM's {@code PagedResultList}.</p>
  *
  * @param <T> The generic type
  * @author graemerocher

@@ -41,13 +41,19 @@ The following table summarizes the repository interfaces that come with Micronau
 |Extends api:data.repository.reactive.ReactiveStreamsCrudRepository[] and adds methods for pagination
 
 |api:data.repository.reactive.ReactorCrudRepository[]
-|Extends api:data.repository.ReactiveStreamsCrudRepository[] and is using Reactor return types
+|Extends api:data.repository.reactive.ReactiveStreamsCrudRepository[] and is using Reactor return types
 
 |api:data.repository.reactive.ReactorPageableRepository[]
 |Extends api:data.repository.reactive.ReactorCrudRepository[] and adds methods for pagination
 
 |api:data.repository.reactive.RxJavaCrudRepository[]
-|Extends api:data.repository.GenericRepository[] and adds CRUD methods that return RxJava 2 types
+|Extends api:data.repository.GenericRepository[] and adds CRUD methods that return RxJava 3 types
+
+|api:data.repository.kotlin.KotlinCrudRepository[]
+|Extends api:data.repository.GenericRepository[] and adds blocking CRUD methods using Kotlin nullable types instead of `Optional`
+
+|api:data.repository.kotlin.KotlinPageableCrudRepository[]
+|Extends api:data.repository.kotlin.KotlinCrudRepository[] and adds methods for pagination
 
 |api:data.repository.kotlin.CoroutineCrudRepository[]
 |Extends api:data.repository.GenericRepository[] and is using Kotlin coroutines for reactive CRUD operations

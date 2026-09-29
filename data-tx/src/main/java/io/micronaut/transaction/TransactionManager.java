@@ -16,10 +16,11 @@
 package io.micronaut.transaction;
 
 /**
- * NOTICE: This is a fork of Spring's {@code TransactionManager} modernizing it
- * to use enums, SLF4J and decoupling from Spring.
- * Marker interface for transaction manager implementations,
- * either traditional or reactive.
+ * Marker interface implemented by every transaction manager, whether it manages transactions for blocking code
+ * ({@link SynchronousTransactionManager}) or for reactive code. It declares no methods; the operations are
+ * defined by {@link TransactionOperations} and the reactive, async and synchronous sub-interfaces.
+ *
+ * <p>This type is derived from the Spring Framework's {@code TransactionManager} (Apache License 2.0).</p>
  *
  * @author Juergen Hoeller
  * @author graemerocher

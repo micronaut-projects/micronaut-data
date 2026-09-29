@@ -5,11 +5,13 @@ from micronaut.data.model.runtime.convert import AttributeConverter
 from example.ItemPrice import ItemPrice
 
 
-@Singleton
+@Singleton  # <1>
 class ItemPriceAttributeConverter(AttributeConverter[ItemPrice, float]):
 
+    # <2>
     def convertToPersistedValue(self, book_price: ItemPrice | None, context: ConversionContext) -> float | None:
         return None if book_price is None else book_price.price
 
+    # <3>
     def convertToEntityValue(self, value: float | None, context: ConversionContext) -> ItemPrice | None:
         return None if value is None else ItemPrice(value)

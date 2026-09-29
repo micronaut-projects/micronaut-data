@@ -1,12 +1,12 @@
-To delete an entity or multiple entities you can use one of the following methods from api:data.repository.JpaSpecificationExecutor[] interface:
+To delete an entity or multiple entities you can use one of the following methods from api:data.repository.jpa.JpaSpecificationExecutor[] interface:
 
 snippet::example.PersonRepository[project-base="doc-examples/jdbc-example",source="main" tags="delete",indent="0"]
 
 As it is for querying, `deleteAll` methods also come in two variations.
 
-First method is expecting api:data.repository.criteria.PredicateSpecification[] which is the same interface described in <<criteriaExecuteQuery, Querying>> section
+First method is expecting api:data.repository.jpa.criteria.PredicateSpecification[] which is the same interface described in <<criteriaExecuteQuery, Querying>> section
 
-The second method comes with api:data.repository.DeleteSpecification[] and is intended only for delete criteria because it includes access to `jakarta.persistence.criteria.CriteriaDelete`.
+The second method comes with api:data.repository.jpa.criteria.DeleteSpecification[] and is intended only for delete criteria because it includes access to `jakarta.persistence.criteria.CriteriaDelete`.
 
 [source,java]
 ----

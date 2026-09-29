@@ -9,7 +9,4 @@ include::doc-examples/jdbc-multitenancy-datasource-example-java/src/main/resourc
 
 The following HTTP clients will access a different tenant datasource:
 
-[source,java]
-----
-include::doc-examples/jdbc-multitenancy-schema-example-java/src/test/java/example/BookJdbcSchemaMultiTenancySpec.java[tags="clients"]
-----
+snippet::example.BookJdbcDatasourceMultiTenancySpec[project-base="doc-examples/jdbc-multitenancy-datasource-example", tags="clients", indent="0"]

@@ -1,5 +1,7 @@
 package example
 
+import io.micronaut.context.BeanContext
+import io.micronaut.data.annotation.Query
 import io.micronaut.data.model.CursoredPage
 import io.micronaut.data.model.CursoredPageable
 import io.micronaut.data.model.Page
@@ -17,6 +19,23 @@ class BookRepositorySpec extends Specification {
     // tag::inject[]
     @Inject @Shared BookRepository bookRepository
     // end::inject[]
+
+    // tag::metadata[]
+    @Inject
+    BeanContext beanContext
+
+    void "test annotation metadata"() {
+        given:"The value of the Query annotation"
+        String query = beanContext.getBeanDefinition(BookRepository) // <1>
+                .getRequiredMethod("find", String) // <2>
+                .getAnnotationMetadata()
+                .stringValue(Query) // <3>
+                .orElse(null)
+
+        expect:"The SQL query to be correct" // <4>
+        query == "SELECT book_.`id`,book_.`title`,book_.`pages` FROM `book` book_ WHERE (book_.`title` = ?)"
+    }
+    // end::metadata[]
 
     void 'test CRUD operations'() {
 

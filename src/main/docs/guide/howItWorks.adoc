@@ -8,15 +8,15 @@ TIP: You can add additional method candidates by creating a library that depends
 
 The `MethodCandidate` interface features a `isMethodMatch` method which allows matching a https://docs.micronaut.io/latest/api/io/micronaut/inject/ast/MethodElement.html[MethodElement]. Once a `MethodElement` has been matched the `buildMatchInfo` method of the `MethodCandidate` is invoked which returns an instance of api:data.processor.visitors.finders.MethodMatchInfo[].
 
-The constructor for `MethodMatchInfo` allows specifying the runtime api:data.intercept.DataInterceptor[] to execute, which typically differs based on the return type and behaviour required and an optional api:data.model.query.Query[] instance which represents the query model of the query to be executed.
+The `MethodMatchInfo` specifies the runtime api:data.intercept.DataInterceptor[] to execute, which typically differs based on the return type and behaviour required, and the query to execute. To build the query, the method matcher translates the method name and parameters into a Jakarta Persistence Criteria query (api:data.model.jpa.criteria.PersistentEntityCriteriaQuery[]), which is the query model shared by all Micronaut Data implementations.
 
-The `RepositoryTypeElementVisitor` takes the `MethodMatchInfo` and converts the api:data.model.query.Query[] instance into the equivalent String-based query (such as JPA-QL) using the api:data.model.query.builder.QueryBuilder[] that is configured by the ann:data.annotation.Repository[] annotation.
+The criteria query is then converted into the equivalent String-based query (native SQL for JDBC and R2DBC, JPA-QL for Hibernate, or a query document for MongoDB and Azure Cosmos) using the api:data.model.query.builder.QueryBuilder[] that is configured by the repository annotation, for example ann:data.jdbc.annotation.JdbcRepository[] with its SQL dialect.
 
 A binding between runtime method parameters and named query parameters is also created.
 
 The visited `MethodElement` is then dynamically annotated with the following information:
 
-* The constructed string-based query (for example JPA-QL)
+* The constructed string-based query (for example SQL or JPA-QL)
 * The parameter binding (A map containing the named parameter in the query as key and the name of the method argument as a value)
 * The runtime api:data.intercept.DataInterceptor[] to execute.
 

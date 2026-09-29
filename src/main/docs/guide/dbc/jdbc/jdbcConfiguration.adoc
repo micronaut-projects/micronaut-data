@@ -101,8 +101,7 @@ As seen in the configuration above you should also configure the dialect. Althou
 |Oracle 12c or above
 
 |api:data.model.query.builder.sql.Dialect#SQLITE[]
-|SQLite
-| io.micronaut.sql:micronaut-sql-sqlite
+|SQLite (requires `io.micronaut.sql:micronaut-jdbc-sqlite`)
 |===
 
 IMPORTANT: To use SQLite, add the dependency `io.micronaut.sql:micronaut-sql-sqlite`, which adds the https://github.com/xerial/sqlite-jdbc[SQLite JDBC Driver] and configures a custom api:data.connection.ConnectionCapabilities[] implementation.

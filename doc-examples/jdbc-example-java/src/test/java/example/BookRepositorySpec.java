@@ -30,14 +30,14 @@ public abstract class BookRepositorySpec {
 
 	@Inject AbstractBookRepository abstractBookRepository;
 
-	// tag::metadata[]
-	@Inject
-	protected BeanContext beanContext;
-
     @AfterEach
     public void cleanup() {
         bookRepository.deleteAll();
     }
+
+	// tag::metadata[]
+	@Inject
+	protected BeanContext beanContext;
 
 	@Test
 	protected void testAnnotationMetadata() {

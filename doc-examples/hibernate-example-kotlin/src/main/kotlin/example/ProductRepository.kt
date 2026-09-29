@@ -49,10 +49,10 @@ interface ProductRepository : CrudRepository<Product, Long>, JpaSpecificationExe
 
     // tag::procedure[]
     @Procedure(named = "calculateSum")
-    fun calculateSum(productId: Long): Long
+    fun calculateSum(productId: Long): Long // <1>
 
     @Procedure("calculateSumInternal")
-    fun calculateSumCustom(productId: Long): Long
+    fun calculateSumCustom(productId: Long): Long // <2>
     // end::procedure[]
 
     // tag::specifications[]
