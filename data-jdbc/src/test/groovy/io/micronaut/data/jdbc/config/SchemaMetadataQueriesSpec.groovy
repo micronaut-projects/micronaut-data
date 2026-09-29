@@ -80,8 +80,8 @@ class SchemaMetadataQueriesSpec extends Specification {
         // The per table metadata calls fail, the primary keys and indexes can only be read with the queries
         def queryReader = new JdbcSchemaMetadataReader(withoutPerTableMetadata(connection), dialect, JdbcSchemaMetadataReader.MetadataQueries.of(validator))
         def keys = TABLES.collect { queryReader.identifierMatcher().mappedTableKey(it, false) } as Set
-        def queryTables = queryReader.readTables(null, keys, true)
-        def jdbcTables = new JdbcSchemaMetadataReader(connection, dialect).readTables(null, keys, true)
+        def queryTables = queryReader.readTables(null, keys, true, false)
+        def jdbcTables = new JdbcSchemaMetadataReader(connection, dialect).readTables(null, keys, true, false)
         def primaryKeyRows = queryRows(connection, validator.primaryKeysQuery, queryTables.schema())
         def indexRows = queryRows(connection, validator.indexesQuery, queryTables.schema())
 

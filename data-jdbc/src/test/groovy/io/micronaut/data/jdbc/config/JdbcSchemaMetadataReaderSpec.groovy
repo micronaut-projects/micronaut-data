@@ -56,7 +56,7 @@ class JdbcSchemaMetadataReaderSpec extends Specification {
 
         when:
         def tables = new JdbcSchemaMetadataReader(connection, Dialect.H2, queries)
-            .readTables(null, ['READER_ITEM', 'READER_PLAIN'] as Set, true).tables()
+            .readTables(null, ['READER_ITEM', 'READER_PLAIN'] as Set, true, false).tables()
 
         then:
         tables['READER_ITEM'].primaryKeyColumns == ['ID']
