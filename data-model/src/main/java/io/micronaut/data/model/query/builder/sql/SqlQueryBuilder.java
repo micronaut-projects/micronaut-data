@@ -1663,12 +1663,8 @@ public class SqlQueryBuilder extends AbstractSqlLikeQueryBuilder {
         if (associations.isEmpty()) {
             return new String[]{property.getName()};
         }
-        List<String> path = new ArrayList<>(associations.size() + 1);
-        for (Association association : associations) {
-            path.add(association.getName());
-        }
-        path.add(property.getName());
-        return path.toArray(new String[0]);
+        return Stream.concat(associations.stream().map(Association::getName), Stream.of(property.getName()))
+            .toArray(String[]::new);
     }
 
     final String getSequenceStatement(String unescapedSchemaName, String unescapedTableName, PersistentProperty property, boolean escape) {

@@ -29,6 +29,7 @@ import java.lang.reflect.Method
 import java.lang.reflect.Proxy
 import java.sql.Connection
 import java.sql.DatabaseMetaData
+import java.sql.ResultSet
 import java.sql.SQLException
 
 /**
@@ -188,11 +189,20 @@ class SchemaMetadataQueriesSpec extends Specification {
             statement.setString(1, schema)
             try (def resultSet = statement.executeQuery()) {
                 while (resultSet.next()) {
-                    def columnCount = resultSet.metaData.columnCount
-                    rows << (1..columnCount).collect { columnCount > 3 && it in [3, 5] || columnCount == 3 && it == 3 ? resultSet.getInt(it) : resultSet.getString(it) }
+                    rows << row(resultSet)
                 }
             }
         }
         return rows
+    }
+
+    /**
+     * @return The values of the current row, the numbers (positions, unique flags) as integers and the names as strings
+     */
+    private static List<Object> row(ResultSet resultSet) {
+        return (1..resultSet.metaData.columnCount).collect { column ->
+            def value = resultSet.getObject(column)
+            value instanceof Number ? ((Number) value).intValue() : value?.toString()
+        }
     }
 }

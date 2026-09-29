@@ -129,6 +129,10 @@ public final class SqlSchemaUtils {
     private static final int MAX_SHORT_CONSTRAINT_NAME_LENGTH = 30;
     private static final int SHORT_CONSTRAINT_NAME_HASH_LENGTH = 8;
     private static final List<String> JPA_TABLE_ANNOTATIONS = List.of("jakarta.persistence.Table", "javax.persistence.Table");
+    /**
+     * The entity argument name, and the entity member of {@link JsonView} and {@link JsonSubView}.
+     */
+    private static final String ENTITY = "entity";
     private static final String JSON_PROPERTY_ANNOTATION = "com.fasterxml.jackson.annotation.JsonProperty";
     private static final String SERDE_CONFIG_ANNOTATION = "io.micronaut.serde.config.annotation.SerdeConfig";
 
@@ -197,7 +201,7 @@ public final class SqlSchemaUtils {
     public static List<SqlTableMapping> getSqlTableMappings(List<DefinitionProvider> definitionProviders,
                                                             PersistentEntity entity,
                                                             Dialect dialect) {
-        ArgumentUtils.requireNonNull("entity", entity);
+        ArgumentUtils.requireNonNull(ENTITY, entity);
 
         final String tableName = entity.getPersistedName();
         String schema = SqlQueryBuilderUtils.getSchemaName(entity);
@@ -971,10 +975,9 @@ public final class SqlSchemaUtils {
                 if (declaredColumns.length == 0) {
                     continue;
                 }
-                List<String> columns = new ArrayList<>(declaredColumns.length);
-                for (String declaredColumn : declaredColumns) {
-                    columns.add(resolveUniqueConstraintColumn(entity, tableColumns, declaredColumn));
-                }
+                List<String> columns = Arrays.stream(declaredColumns)
+                    .map(declaredColumn -> resolveUniqueConstraintColumn(entity, tableColumns, declaredColumn))
+                    .toList();
                 String name = uniqueConstraint.stringValue("name")
                     .filter(StringUtils::isNotEmpty)
                     .orElseGet(() -> uniqueConstraintName(tableName, columns));
@@ -1112,7 +1115,7 @@ public final class SqlSchemaUtils {
      * @since 5.3.0
      */
     public static @Nullable SqlJsonViewMapping getSqlJsonViewMapping(PersistentEntity viewEntity) {
-        PersistentEntity entity = viewEntity.getAnnotationMetadata().classValue(JsonView.class, "entity").map(PersistentEntity::of).orElse(null);
+        PersistentEntity entity = viewEntity.getAnnotationMetadata().classValue(JsonView.class, ENTITY).map(PersistentEntity::of).orElse(null);
         if (entity == null) {
             return null;
         }
@@ -1133,9 +1136,8 @@ public final class SqlSchemaUtils {
 
     private static Set<JsonView.Operation> jsonViewOperations(PersistentEntity viewEntity) {
         AnnotationMetadata annotationMetadata = viewEntity.getAnnotationMetadata();
-        JsonView.Operation[] operations = annotationMetadata.hasAnnotation(JsonView.class)
-            ? annotationMetadata.enumValues(JsonView.class, "operations", JsonView.Operation.class)
-            : annotationMetadata.enumValues(JsonSubView.class, "operations", JsonView.Operation.class);
+        Class<? extends Annotation> viewAnnotation = annotationMetadata.hasAnnotation(JsonView.class) ? JsonView.class : JsonSubView.class;
+        JsonView.Operation[] operations = annotationMetadata.enumValues(viewAnnotation, "operations", JsonView.Operation.class);
         return operations.length == 0 ? EnumSet.allOf(JsonView.Operation.class) : EnumSet.copyOf(Arrays.asList(operations));
     }
 
@@ -1178,7 +1180,7 @@ public final class SqlSchemaUtils {
                 }
             } else {
                 PersistentEntity subView = association.getAssociatedEntity();
-                PersistentEntity subEntity = subView.getAnnotationMetadata().classValue(JsonSubView.class, "entity")
+                PersistentEntity subEntity = subView.getAnnotationMetadata().classValue(JsonSubView.class, ENTITY)
                     .map(PersistentEntity::of).orElse(null);
                 if (subEntity != null) {
                     children.add(jsonSubViewTable(association, subView, subEntity, entity));
@@ -1207,9 +1209,9 @@ public final class SqlSchemaUtils {
         if (association.getKind().isSingleEnded()) {
             return jsonViewTable(subView, subEntity, association.getAnnotationMetadata().hasAnnotation(JsonUnwrapped.class) ? null : key, false);
         }
-        PersistentProperty identity = subEntity.getIdentity();
-        if (SqlQueryBuilderUtils.isForeignKeyWithJoinTable(association) && identity != null
-            && identity.getAnnotationMetadata().hasAnnotation(EmbeddedId.class)
+        // A composite identity (more than one @Id) has no single identity property, getIdentity() fails for it
+        if (SqlQueryBuilderUtils.isForeignKeyWithJoinTable(association) && subEntity.hasIdentity()
+            && subEntity.getIdentity().getAnnotationMetadata().hasAnnotation(EmbeddedId.class)
             && entity.getPropertyByName(association.getName()) instanceof Association joinAssociation) {
             String joinTable = joinAssociation.getAnnotationMetadata().stringValue(SqlQueryBuilderUtils.ANN_JOIN_TABLE, "name")
                 .orElseGet(() -> entity.getNamingStrategy().mappedName(joinAssociation));

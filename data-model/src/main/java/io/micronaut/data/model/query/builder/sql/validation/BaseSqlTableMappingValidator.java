@@ -97,32 +97,39 @@ abstract class BaseSqlTableMappingValidator implements SqlTableMappingValidator 
         "IDENTITY", "CONSTRAINT", "COLLATE", "RESERVABLE", "UNSIGNED", "SIGNED", "ZEROFILL"
     );
 
+    // The normalized type names with more synonyms
+    private static final String INTEGER_TYPE = "INTEGER";
+    private static final String BIGINT_TYPE = "BIGINT";
+    private static final String VARCHAR_TYPE = "VARCHAR";
+    private static final String NVARCHAR_TYPE = "NVARCHAR";
+    private static final String NUMERIC_TYPE = "NUMERIC";
+
     /**
      * Synonyms of the type names used by the supported databases.
      */
     private static final Map<String, String> TYPE_ALIASES = Map.ofEntries(
-        Map.entry("INT", "INTEGER"),
-        Map.entry("INT4", "INTEGER"),
-        Map.entry("SERIAL", "INTEGER"),
-        Map.entry("SERIAL4", "INTEGER"),
-        Map.entry("INT8", "BIGINT"),
-        Map.entry("BIGSERIAL", "BIGINT"),
-        Map.entry("SERIAL8", "BIGINT"),
+        Map.entry("INT", INTEGER_TYPE),
+        Map.entry("INT4", INTEGER_TYPE),
+        Map.entry("SERIAL", INTEGER_TYPE),
+        Map.entry("SERIAL4", INTEGER_TYPE),
+        Map.entry("INT8", BIGINT_TYPE),
+        Map.entry("BIGSERIAL", BIGINT_TYPE),
+        Map.entry("SERIAL8", BIGINT_TYPE),
         Map.entry("INT2", "SMALLINT"),
         Map.entry("SMALLSERIAL", "SMALLINT"),
         Map.entry("FLOAT8", "DOUBLE"),
         Map.entry("DOUBLE PRECISION", "DOUBLE"),
         Map.entry("FLOAT4", "REAL"),
         Map.entry("BOOL", "BOOLEAN"),
-        Map.entry("VARCHAR2", "VARCHAR"),
-        Map.entry("CHARACTER VARYING", "VARCHAR"),
-        Map.entry("NVARCHAR2", "NVARCHAR"),
-        Map.entry("NATIONAL CHARACTER VARYING", "NVARCHAR"),
+        Map.entry("VARCHAR2", VARCHAR_TYPE),
+        Map.entry("CHARACTER VARYING", VARCHAR_TYPE),
+        Map.entry("NVARCHAR2", NVARCHAR_TYPE),
+        Map.entry("NATIONAL CHARACTER VARYING", NVARCHAR_TYPE),
         Map.entry("CHARACTER", "CHAR"),
         Map.entry("BPCHAR", "CHAR"),
-        Map.entry("DECIMAL", "NUMERIC"),
-        Map.entry("DEC", "NUMERIC"),
-        Map.entry("NUMBER", "NUMERIC"),
+        Map.entry("DECIMAL", NUMERIC_TYPE),
+        Map.entry("DEC", NUMERIC_TYPE),
+        Map.entry("NUMBER", NUMERIC_TYPE),
         Map.entry("TIMESTAMP WITH TIME ZONE", "TIMESTAMPTZ"),
         Map.entry("TIMESTAMP WITHOUT TIME ZONE", "TIMESTAMP"),
         Map.entry("TIME WITH TIME ZONE", "TIMETZ"),
@@ -497,34 +504,54 @@ abstract class BaseSqlTableMappingValidator implements SqlTableMappingValidator 
         }
         int expectedSize = Integer.parseInt(matcher.group(1));
         switch (expectedType) {
-            case "VARCHAR", "NVARCHAR", "CHAR" -> {
-                // The MySQL ENUM column size is the length of the longest value, which fits an enum mapping by definition
-                boolean enumValues = isEnumColumn(columnMetadata) && columnMapping.getDataType() != DataType.UUID;
-                if (isCharacterType(columnMetadata.type()) && columnMetadata.columnSize() < expectedSize && !enumValues) {
-                    String message = String.format("Column [%s] in table [%s] has length [%d] which is less than the mapped length [%d]",
-                        columnMetadata.name(), tableName, columnMetadata.columnSize(), expectedSize);
-                    if (columnMapping.getDataType() == DataType.UUID) {
-                        // A UUID stored as a string always has the full length, no value can be stored
-                        result.addError(message);
-                    } else {
-                        // Only the values longer than the column length cannot be stored
-                        result.addWarning(message);
-                    }
-                }
-            }
-            case "NUMERIC" -> {
-                if (columnMetadata.type() != Types.NUMERIC && columnMetadata.type() != Types.DECIMAL) {
-                    return;
-                }
+            case VARCHAR_TYPE, NVARCHAR_TYPE, "CHAR" -> validateLength(columnMapping, columnMetadata, expectedSize, tableName, result);
+            case NUMERIC_TYPE -> {
                 int expectedScale = matcher.group(2) == null ? 0 : Integer.parseInt(matcher.group(2));
-                if (columnMetadata.columnSize() < expectedSize || columnMetadata.decimalDigits() != expectedScale) {
-                    result.addWarning(String.format("Column [%s] in table [%s] has precision and scale [%d,%d] which is different from the mapped [%d,%d]",
-                        columnMetadata.name(), tableName, columnMetadata.columnSize(), columnMetadata.decimalDigits(), expectedSize, expectedScale));
-                }
+                validatePrecision(columnMetadata, expectedSize, expectedScale, tableName, result);
             }
             default -> {
                 // Other type arguments (fractional seconds, float binary precision) are not checked
             }
+        }
+    }
+
+    /**
+     * Reports a character column shorter than the mapped length: an error for a UUID stored as a string, which always has
+     * the full length, otherwise a warning, since only the longer values cannot be stored.
+     */
+    private static void validateLength(SqlColumnMapping columnMapping,
+                                       SqlColumnMetadata columnMetadata,
+                                       int expectedSize,
+                                       String tableName,
+                                       SchemaValidationResult result) {
+        // The MySQL ENUM column size is the length of the longest value, which fits an enum mapping by definition
+        boolean enumValues = isEnumColumn(columnMetadata) && columnMapping.getDataType() != DataType.UUID;
+        if (!isCharacterType(columnMetadata.type()) || columnMetadata.columnSize() >= expectedSize || enumValues) {
+            return;
+        }
+        String message = String.format("Column [%s] in table [%s] has length [%d] which is less than the mapped length [%d]",
+            columnMetadata.name(), tableName, columnMetadata.columnSize(), expectedSize);
+        if (columnMapping.getDataType() == DataType.UUID) {
+            result.addError(message);
+        } else {
+            result.addWarning(message);
+        }
+    }
+
+    /**
+     * Reports a numeric column with a smaller precision or a different scale than mapped.
+     */
+    private static void validatePrecision(SqlColumnMetadata columnMetadata,
+                                          int expectedSize,
+                                          int expectedScale,
+                                          String tableName,
+                                          SchemaValidationResult result) {
+        if (columnMetadata.type() != Types.NUMERIC && columnMetadata.type() != Types.DECIMAL) {
+            return;
+        }
+        if (columnMetadata.columnSize() < expectedSize || columnMetadata.decimalDigits() != expectedScale) {
+            result.addWarning(String.format("Column [%s] in table [%s] has precision and scale [%d,%d] which is different from the mapped [%d,%d]",
+                columnMetadata.name(), tableName, columnMetadata.columnSize(), columnMetadata.decimalDigits(), expectedSize, expectedScale));
         }
     }
 
@@ -573,34 +600,52 @@ abstract class BaseSqlTableMappingValidator implements SqlTableMappingValidator 
             return;
         }
         for (SqlIndexMapping indexMapping : tableMapping.indexes()) {
-            SqlIdentifierMatcher matcher = tableMetadata.getIdentifierMatcher();
-            List<String> columns = Arrays.stream(indexMapping.columns()).map(column -> matcher.mappedColumnKey(column, tableMapping.escape())).toList();
-            boolean special = indexMapping.spatial() || indexMapping.sqlIndexDefinitionProvider() != null;
-            String expectedName = SqlSchemaUtils.resolveIndexName(tableMapping.name(), indexMapping);
-            boolean found = indexes.stream().anyMatch(index -> {
-                List<String> indexColumns = index.columns().stream().map(matcher::columnKey).toList();
-                if (special) {
-                    // The index method (spatial, vector) is not reported by the metadata and an ordinary index on the same column
-                    // must not match, spatial and vector indexes are matched by the name, and by the columns when they are reported
-                    return matchingIndexName(expectedName, index.name(), matcher, tableMapping.escape(), dialectOptions.dialect())
-                        && (indexColumns.isEmpty() || indexColumns.containsAll(columns));
-                }
-                return indexColumns.equals(columns) && (!indexMapping.unique() || index.unique());
-            });
-            if (!found) {
-                String kind;
-                String indexName;
-                if (special) {
-                    kind = indexMapping.spatial() ? "Spatial index" : "Vector index";
-                    indexName = "[" + expectedName + "] ";
-                } else {
-                    kind = indexMapping.unique() ? "Unique index" : "Index";
-                    indexName = StringUtils.isNotEmpty(indexMapping.name()) ? "[" + indexMapping.name() + "] " : "";
-                }
-                result.addWarning(String.format("%s %son columns %s not found in table [%s]",
-                    kind, indexName, Arrays.toString(indexMapping.columns()), tableMapping.name()));
+            if (!hasIndex(tableMapping, indexMapping, indexes, tableMetadata.getIdentifierMatcher(), dialectOptions.dialect())) {
+                result.addWarning(missingIndexMessage(tableMapping, indexMapping));
             }
         }
+    }
+
+    /**
+     * @return Whether the table has the mapped index: an ordinary index with the same columns (unique when mapped unique),
+     * or a spatial or vector index with the name
+     */
+    private static boolean hasIndex(SqlTableMapping tableMapping,
+                                    SqlIndexMapping indexMapping,
+                                    List<SqlIndexMetadata> indexes,
+                                    SqlIdentifierMatcher matcher,
+                                    Dialect dialect) {
+        List<String> columns = Arrays.stream(indexMapping.columns()).map(column -> matcher.mappedColumnKey(column, tableMapping.escape())).toList();
+        if (isSpecialIndex(indexMapping)) {
+            // The index method (spatial, vector) is not reported by the metadata and an ordinary index on the same column
+            // must not match, spatial and vector indexes are matched by the name, and by the columns when they are reported
+            String expectedName = SqlSchemaUtils.resolveIndexName(tableMapping.name(), indexMapping);
+            return indexes.stream().anyMatch(index -> matchingIndexName(expectedName, index.name(), matcher, tableMapping.escape(), dialect)
+                && (index.columns().isEmpty() || indexColumnKeys(index, matcher).containsAll(columns)));
+        }
+        return indexes.stream().anyMatch(index -> indexColumnKeys(index, matcher).equals(columns) && (!indexMapping.unique() || index.unique()));
+    }
+
+    private static List<String> indexColumnKeys(SqlIndexMetadata index, SqlIdentifierMatcher matcher) {
+        return index.columns().stream().map(matcher::columnKey).toList();
+    }
+
+    private static boolean isSpecialIndex(SqlIndexMapping indexMapping) {
+        return indexMapping.spatial() || indexMapping.sqlIndexDefinitionProvider() != null;
+    }
+
+    private static String missingIndexMessage(SqlTableMapping tableMapping, SqlIndexMapping indexMapping) {
+        String kind;
+        String indexName;
+        if (isSpecialIndex(indexMapping)) {
+            kind = indexMapping.spatial() ? "Spatial index" : "Vector index";
+            indexName = "[" + SqlSchemaUtils.resolveIndexName(tableMapping.name(), indexMapping) + "] ";
+        } else {
+            kind = indexMapping.unique() ? "Unique index" : "Index";
+            indexName = StringUtils.isNotEmpty(indexMapping.name()) ? "[" + indexMapping.name() + "] " : "";
+        }
+        return String.format("%s %son columns %s not found in table [%s]",
+            kind, indexName, Arrays.toString(indexMapping.columns()), tableMapping.name());
     }
 
     /**

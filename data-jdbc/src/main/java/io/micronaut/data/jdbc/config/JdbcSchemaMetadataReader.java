@@ -250,7 +250,7 @@ final class JdbcSchemaMetadataReader {
                 view.links.add(new SqlJsonViewMetadata.Link(resultSet.getString(2), resultSet.getString(3), resultSet.getString(4)));
             }
         });
-        Map<String, SqlJsonViewMetadata> result = new LinkedHashMap<>(views.size());
+        Map<String, SqlJsonViewMetadata> result = LinkedHashMap.newLinkedHashMap(views.size());
         views.forEach((key, view) -> result.put(key, new SqlJsonViewMetadata(view.name, view.status, view.tables, view.fields, view.links)));
         return result;
     }
@@ -278,32 +278,17 @@ final class JdbcSchemaMetadataReader {
                                     Set<String> wantedTableNames,
                                     boolean readIndexes) throws SQLException {
         Map<String, SqlTableMetadata> tables = new LinkedHashMap<>();
-        String resolvedSchema = databaseAsCatalog ? catalog : schema;
+        String expectedSchema = databaseAsCatalog ? catalog : schema;
+        String resolvedSchema = expectedSchema;
         // The tables and their columns are read with a single call, the tables (and views) are the owners of the columns.
         // The schema is a pattern, its wildcard characters are escaped and the rows of the other schemas are skipped.
         try (ResultSet resultSet = metaData.getColumns(catalog, schema == null ? null : escapePattern(schema), null, MATCH_ALL)) {
             while (resultSet.next()) {
-                String tableName = resultSet.getString(SqlSchemaUtils.TABLE_NAME_COLUMN);
-                String tableKey = identifierMatcher.tableKey(tableName);
-                if (!wantedTableNames.contains(tableKey)) {
-                    // No need to read columns of the table which does not have mapped entity
-                    continue;
+                SqlTableMetadata table = columnTable(resultSet, expectedSchema, wantedTableNames, tables);
+                if (table != null) {
+                    addColumn(table, resultSet);
+                    resolvedSchema = databaseAsCatalog ? table.getCatalog() : table.getSchema();
                 }
-                String tableCatalog = resultSet.getString(SqlSchemaUtils.TABLE_CATALOG_COLUMN);
-                String tableSchema = resultSet.getString(SqlSchemaUtils.TABLE_SCHEMA_COLUMN);
-                if (!sameOrUnknown(databaseAsCatalog ? catalog : schema, databaseAsCatalog ? tableCatalog : tableSchema)) {
-                    continue;
-                }
-                SqlTableMetadata table = tables.get(tableKey);
-                if (table == null) {
-                    table = new SqlTableMetadata(tableCatalog, tableSchema, tableName, identifierMatcher);
-                    tables.put(tableKey, table);
-                    resolvedSchema = databaseAsCatalog ? tableCatalog : tableSchema;
-                } else if (!Objects.equals(table.getCatalog(), tableCatalog) || !Objects.equals(table.getSchema(), tableSchema)) {
-                    // A table with the same name in another schema (the schema pattern can match more schemas)
-                    continue;
-                }
-                addColumn(table, resultSet);
             }
         }
         if (tables.isEmpty()) {
@@ -315,6 +300,36 @@ final class JdbcSchemaMetadataReader {
             readIndexes(resolvedSchema, tables);
         }
         return new SchemaTables(resolvedSchema, tables);
+    }
+
+    /**
+     * Returns the table owning the column of the current row, created with its first column.
+     *
+     * @return The table, or null when the column belongs to a table without a mapped entity, or to a table of another schema
+     * (the schema pattern can match more schemas)
+     */
+    private @Nullable SqlTableMetadata columnTable(ResultSet resultSet,
+                                                   @Nullable String expectedSchema,
+                                                   Set<String> wantedTableNames,
+                                                   Map<String, SqlTableMetadata> tables) throws SQLException {
+        String tableName = resultSet.getString(SqlSchemaUtils.TABLE_NAME_COLUMN);
+        String tableKey = identifierMatcher.tableKey(tableName);
+        if (!wantedTableNames.contains(tableKey)) {
+            return null;
+        }
+        String tableCatalog = resultSet.getString(SqlSchemaUtils.TABLE_CATALOG_COLUMN);
+        String tableSchema = resultSet.getString(SqlSchemaUtils.TABLE_SCHEMA_COLUMN);
+        if (!sameOrUnknown(expectedSchema, databaseAsCatalog ? tableCatalog : tableSchema)) {
+            return null;
+        }
+        SqlTableMetadata table = tables.get(tableKey);
+        if (table == null) {
+            table = new SqlTableMetadata(tableCatalog, tableSchema, tableName, identifierMatcher);
+            tables.put(tableKey, table);
+            return table;
+        }
+        // A table with the same name in another schema
+        return Objects.equals(table.getCatalog(), tableCatalog) && Objects.equals(table.getSchema(), tableSchema) ? table : null;
     }
 
     /**
@@ -372,7 +387,7 @@ final class JdbcSchemaMetadataReader {
         } else {
             primaryKeys.clear();
             readTables = readTablesMetadata("primary keys", tables,
-                (catalog, tableSchema, table) -> metaData.getPrimaryKeys(catalog, tableSchema, table),
+                metaData::getPrimaryKeys,
                 (tableKey, resultSet) -> primaryKeys.computeIfAbsent(tableKey, k -> new TreeMap<>())
                     .put(resultSet.getInt("KEY_SEQ"), resultSet.getString(SqlSchemaUtils.COLUMN_NAME_COLUMN)));
         }

@@ -60,6 +60,7 @@ final class SqlQueryBuilderUtils {
     static final String ANN_JOIN_TABLE = "io.micronaut.data.annotation.sql.JoinTable";
     static final String ANN_JOIN_COLUMNS = "io.micronaut.data.annotation.sql.JoinColumns";
     static final String SEQ_SUFFIX = "_seq";
+    private static final String UNIQUE_MEMBER = "unique";
     private static final String PREFIX = "${";
     private static final String SUFFIX = "}";
 
@@ -272,8 +273,8 @@ final class SqlQueryBuilderUtils {
      * @return true if the column is unique
      */
     static boolean isUniqueColumn(AnnotationMetadata annotationMetadata) {
-        return annotationMetadata.booleanValue("jakarta.persistence.Column", "unique").orElse(false)
-            || annotationMetadata.booleanValue("javax.persistence.Column", "unique").orElse(false);
+        return annotationMetadata.booleanValue("jakarta.persistence.Column", UNIQUE_MEMBER).orElse(false)
+            || annotationMetadata.booleanValue("javax.persistence.Column", UNIQUE_MEMBER).orElse(false);
     }
 
     /**
@@ -287,7 +288,7 @@ final class SqlQueryBuilderUtils {
     static List<String> getUniqueJoinColumnNames(AnnotationMetadata annotationMetadata) {
         return Stream.of("jakarta.persistence.JoinColumn", "javax.persistence.JoinColumn")
             .flatMap(annotation -> annotationMetadata.getAnnotationValuesByName(annotation).stream())
-            .filter(joinColumn -> joinColumn.booleanValue("unique").orElse(false))
+            .filter(joinColumn -> joinColumn.booleanValue(UNIQUE_MEMBER).orElse(false))
             .map(joinColumn -> joinColumn.stringValue("name").orElse(""))
             .toList();
     }

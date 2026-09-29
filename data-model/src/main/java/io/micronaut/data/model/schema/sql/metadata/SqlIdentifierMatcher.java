@@ -101,7 +101,7 @@ public record SqlIdentifierMatcher(Dialect dialect,
         int index = 0;
         while (index < identifier.length()) {
             int codePoint = identifier.codePointAt(index);
-            int codePointBytes = codePoint < 0x80 ? 1 : codePoint < 0x800 ? 2 : codePoint < 0x10000 ? 3 : 4;
+            int codePointBytes = utf8Length(codePoint);
             if (bytes + codePointBytes > POSTGRES_MAX_IDENTIFIER_BYTES) {
                 break;
             }
@@ -109,6 +109,19 @@ public record SqlIdentifierMatcher(Dialect dialect,
             index += Character.charCount(codePoint);
         }
         return identifier.substring(0, index);
+    }
+
+    /**
+     * @return The number of bytes of the code point in UTF-8
+     */
+    private static int utf8Length(int codePoint) {
+        if (codePoint < 0x80) {
+            return 1;
+        }
+        if (codePoint < 0x800) {
+            return 2;
+        }
+        return codePoint < 0x10000 ? 3 : 4;
     }
 
     /**

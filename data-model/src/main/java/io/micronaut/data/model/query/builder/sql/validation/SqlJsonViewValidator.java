@@ -28,7 +28,6 @@ import java.util.HashSet;
 import java.util.LinkedHashMap;
 import java.util.List;
 import java.util.Map;
-import java.util.Objects;
 import java.util.Set;
 
 /**
@@ -48,6 +47,8 @@ public final class SqlJsonViewValidator {
     private static final String VALID_STATUS = "VALID";
     private static final String NESTED = "nested";
     private static final String SINGLETON = "singleton";
+    private static final String NOT_FOUND = " not found";
+    private static final String NOT_MAPPED = " is not mapped by the view entity";
 
     private SqlJsonViewValidator() {
     }
@@ -60,21 +61,42 @@ public final class SqlJsonViewValidator {
      * @param result The validation result collecting the problems found
      */
     public static void validate(SqlJsonViewMapping mapping, @Nullable SqlJsonViewMetadata metadata, SchemaValidationResult result) {
-        String viewName = mapping.schema() == null ? mapping.name() : mapping.schema() + "." + mapping.name();
+        String label = view(mapping.schema() == null ? mapping.name() : mapping.schema() + "." + mapping.name());
         if (metadata == null) {
-            result.addError("Expected JSON view [" + viewName + "] not found");
+            result.addError("Expected " + label + NOT_FOUND);
             return;
         }
         if (metadata.status() != null && !VALID_STATUS.equalsIgnoreCase(metadata.status())) {
-            result.addError("JSON view [" + viewName + "] has status [" + metadata.status() + "]");
+            result.addError(label + " has status [" + metadata.status() + "]");
         }
         SqlJsonViewMetadata.Table root = metadata.tables().stream().filter(table -> table.parentNumber() == null).findFirst().orElse(null);
         if (root == null || !mapping.rootTable().equalsIgnoreCase(root.name())) {
-            result.addError("JSON view [" + viewName + "] has root table [" + (root == null ? null : root.name())
+            result.addError(label + " has root table [" + (root == null ? null : root.name())
                 + "] but the view entity is mapped to table [" + mapping.rootTable() + "]");
             return;
         }
-        new ViewValidation(viewName, metadata, result).validateTable(mapping.root(), root, "");
+        new ViewValidation(label, metadata, result).validateTable(mapping.root(), root, "");
+    }
+
+    /**
+     * @return The view in the messages, like {@code JSON view [name]}
+     */
+    private static String view(String viewName) {
+        return "JSON view [" + viewName + "]";
+    }
+
+    /**
+     * @return The field in the messages, like {@code  field [key] of table [table]}
+     */
+    private static String field(String key, String table) {
+        return " field [" + key + "] of table [" + table + "]";
+    }
+
+    /**
+     * @return The sub view in the messages, like {@code  sub view [path] of table [table]}
+     */
+    private static String subView(String path, String table) {
+        return " sub view [" + path + "] of table [" + table + "]";
     }
 
     /**
@@ -82,14 +104,17 @@ public final class SqlJsonViewValidator {
      */
     private static final class ViewValidation {
 
-        private final String viewName;
+        /**
+         * The view in the messages, see {@link SqlJsonViewValidator#view(String)}.
+         */
+        private final String label;
         private final SchemaValidationResult result;
         private final Map<Integer, List<SqlJsonViewMetadata.Table>> childrenByParent = new HashMap<>();
         private final Map<Integer, Map<String, String>> columnsByTable = new HashMap<>();
         private final List<SqlJsonViewMetadata.Link> links;
 
-        private ViewValidation(String viewName, SqlJsonViewMetadata metadata, SchemaValidationResult result) {
-            this.viewName = viewName;
+        private ViewValidation(String label, SqlJsonViewMetadata metadata, SchemaValidationResult result) {
+            this.label = label;
             this.result = result;
             this.links = metadata.links();
             for (SqlJsonViewMetadata.Table table : metadata.tables()) {
@@ -109,7 +134,7 @@ public final class SqlJsonViewValidator {
             Set<JsonView.Operation> mappedOperations = EnumSet.noneOf(JsonView.Operation.class);
             mappedOperations.addAll(mappedTable.operations());
             if (!operations.equals(mappedOperations)) {
-                result.addWarning("JSON view [" + viewName + "]" + location + " allows operations " + operations
+                result.addWarning(label + location + " allows operations " + operations
                     + " but the view entity declares " + mappedOperations);
             }
             validateFields(mappedTable, table, path.isEmpty() ? "" : " in sub view [" + path + "]");
@@ -124,15 +149,14 @@ public final class SqlJsonViewValidator {
                 // The JSON keys are case-sensitive
                 String column = columns.get(field.key());
                 if (column == null) {
-                    result.addError("JSON view [" + viewName + "] field [" + field.key() + "] of table [" + field.table() + "] not found" + location);
+                    result.addError(label + field(field.key(), field.table()) + NOT_FOUND + location);
                 } else if (field.column() != null && !field.column().equalsIgnoreCase(column)) {
-                    result.addError("JSON view [" + viewName + "] field [" + field.key() + "] of table [" + field.table() + "]" + location
+                    result.addError(label + field(field.key(), field.table()) + location
                         + " is stored in column [" + column + "] but the view entity maps it to column [" + field.column() + "]");
                 }
             }
             columns.keySet().stream().filter(key -> !mappedKeys.contains(key)).forEach(key ->
-                result.addWarning("JSON view [" + viewName + "] field [" + key + "] of table [" + mappedTable.table() + "]" + location
-                    + " is not mapped by the view entity"));
+                result.addWarning(label + field(key, mappedTable.table()) + location + NOT_MAPPED));
         }
 
         private void validateSubViews(SqlJsonViewMapping.Table mappedTable, SqlJsonViewMetadata.Table table, String path) {
@@ -142,13 +166,13 @@ public final class SqlJsonViewValidator {
                 String childPath = childPath(path, mappedChild.key(), mappedChild.table());
                 SqlJsonViewMetadata.Table child = findChild(table, children, matched, mappedChild);
                 if (child == null) {
-                    result.addError("JSON view [" + viewName + "] sub view [" + childPath + "] of table [" + mappedChild.table() + "] not found");
+                    result.addError(label + subView(childPath, mappedChild.table()) + NOT_FOUND);
                     continue;
                 }
                 matched.add(child.number());
                 String expectedRelationship = mappedChild.nested() ? NESTED : SINGLETON;
                 if (child.relationship() != null && !expectedRelationship.equalsIgnoreCase(child.relationship())) {
-                    result.addError("JSON view [" + viewName + "] sub view [" + childPath + "] of table [" + mappedChild.table() + "] is "
+                    result.addError(label + subView(childPath, mappedChild.table()) + " is "
                         + describe(child.relationship()) + " but the view entity maps it as " + describe(expectedRelationship));
                 }
                 validateTable(mappedChild, child, childPath);
@@ -157,7 +181,7 @@ public final class SqlJsonViewValidator {
                 if (!matched.contains(child.number())) {
                     List<String> keys = keys(table.name(), child.name());
                     String childPath = childPath(path, keys.size() == 1 ? keys.getFirst() : null, child.name());
-                    result.addWarning("JSON view [" + viewName + "] sub view [" + childPath + "] of table [" + child.name() + "] is not mapped by the view entity");
+                    result.addWarning(label + subView(childPath, child.name()) + NOT_MAPPED);
                 }
             }
         }
@@ -189,14 +213,11 @@ public final class SqlJsonViewValidator {
          * @return The JSON keys of the child table in the parent table, a null key for an unnested child
          */
         private List<@Nullable String> keys(String parentTable, String childTable) {
-            List<@Nullable String> keys = new ArrayList<>();
-            for (SqlJsonViewMetadata.Link link : links) {
-                if (link.parentTable().equalsIgnoreCase(parentTable) && link.childTable().equalsIgnoreCase(childTable)
-                    && keys.stream().noneMatch(key -> Objects.equals(key, link.key()))) {
-                    keys.add(link.key());
-                }
-            }
-            return keys;
+            return links.stream()
+                .filter(link -> link.parentTable().equalsIgnoreCase(parentTable) && link.childTable().equalsIgnoreCase(childTable))
+                .<@Nullable String>map(SqlJsonViewMetadata.Link::key)
+                .distinct()
+                .toList();
         }
 
         private static String childPath(String path, @Nullable String key, String table) {

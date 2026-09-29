@@ -35,6 +35,7 @@ import org.slf4j.LoggerFactory
 import spock.lang.Specification
 
 import javax.sql.DataSource
+import java.sql.ResultSet
 
 /**
  * The schema validation of SQL Server: a non-default schema, the case-insensitive names, the SQL Server types,
@@ -146,19 +147,22 @@ class SqlServerSchemaValidationSpec extends Specification implements MSSQLTestPr
     }
 
     private static List<String> names(DataSource dataSource, String table, String query) {
-        List<String> names = []
-        dataSource.connection.withCloseable { connection ->
+        List<String> names = dataSource.connection.withCloseable { connection ->
             connection.prepareStatement(query).withCloseable { statement ->
                 statement.setString(1, table)
-                statement.executeQuery().withCloseable { resultSet ->
-                    while (resultSet.next()) {
-                        names << resultSet.getString(1)
-                    }
-                }
+                statement.executeQuery().withCloseable { resultSet -> firstColumn(resultSet) }
             }
         }
         assert !names.isEmpty()
         return names
+    }
+
+    private static List<String> firstColumn(ResultSet resultSet) {
+        List<String> values = []
+        while (resultSet.next()) {
+            values << resultSet.getString(1)
+        }
+        return values
     }
 
     private static void dropAll(DataSource dataSource) {
