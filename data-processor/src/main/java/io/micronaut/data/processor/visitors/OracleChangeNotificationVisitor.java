@@ -22,8 +22,10 @@ import io.micronaut.data.annotation.MappedEntity;
 import io.micronaut.data.annotation.MappedProperty;
 import io.micronaut.data.annotation.Transient;
 import io.micronaut.data.intercept.annotation.OracleChangeListenerQuery;
+import io.micronaut.data.model.DataType;
 import io.micronaut.data.model.PersistentEntity;
 import io.micronaut.data.model.PersistentProperty;
+import io.micronaut.data.model.query.builder.QueryParameterBinding;
 import io.micronaut.data.model.query.builder.QueryResult;
 import io.micronaut.data.model.query.builder.sql.Dialect;
 import io.micronaut.data.model.query.builder.sql.SqlQueryBuilder;
@@ -37,6 +39,7 @@ import io.micronaut.inject.visitor.TypeElementVisitor;
 import io.micronaut.inject.visitor.VisitorContext;
 
 import java.util.HashMap;
+import java.util.List;
 import java.util.Map;
 import java.util.Objects;
 import java.util.function.Function;
@@ -90,11 +93,21 @@ public final class OracleChangeNotificationVisitor implements TypeElementVisitor
             return;
         }
 
-        SourcePersistentEntityCriteriaQuery<Object> query = new SourcePersistentEntityCriteriaBuilderImpl(entityResolver).createQuery();
+        var criteriaBuilder = new SourcePersistentEntityCriteriaBuilderImpl(entityResolver);
+        SourcePersistentEntityCriteriaQuery<Object> query = criteriaBuilder.createQuery();
         query.select(query.from(persistentEntity));
+        query.where(criteriaBuilder.equal(
+            criteriaBuilder.function("ROWID", String.class), criteriaBuilder.parameter(String.class, "rowId")));
         QueryResult queryResult = Objects.requireNonNull(query.build(AnnotationMetadata.EMPTY_METADATA, new SqlQueryBuilder(Dialect.ORACLE)));
+        List<QueryParameterBinding> bindings = queryResult.getParameterBindings();
+        // The runtime loader supplies only the notification ROWID; no other query parameters are available.
+        if (bindings.size() != 1 || bindings.get(0).getDataType() != DataType.STRING) {
+            context.fail("@ChangeListener ROWID reload query requires exactly one ROWID parameter; "
+                + "parameterized entity @Where clauses are not supported", element);
+            return;
+        }
         element.annotate(OracleChangeListenerQuery.class, builder -> builder
-            .value(queryResult.getQuery() + " WHERE ROWID = ?")
+            .value(queryResult.getQuery())
             .member("entity", new AnnotationClassValue<>(resolvedEntityType.getName())));
     }
 

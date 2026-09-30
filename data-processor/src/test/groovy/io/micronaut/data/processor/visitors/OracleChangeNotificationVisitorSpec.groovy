@@ -36,8 +36,41 @@ class OracleChangeNotificationVisitorSpec extends AbstractTypeElementSpec {
         then:
         method.hasAnnotation(OracleChangeListenerQuery)
         reloadQuery.toUpperCase().contains('BOOK')
-        reloadQuery.endsWith(' WHERE ROWID = ?')
+        reloadQuery.endsWith(' WHERE (ROWID = ?)')
         method.classValue(OracleChangeListenerQuery, 'entity').orElseThrow().name == 'test.Book'
+    }
+
+    void "test ROWID predicate composes with entity-level Where"() {
+        when:
+        def beanDefinition = buildBeanDefinition('test.BookListener', listenerSource('''
+    @ChangeListener
+    @OracleChangeNotification
+    void changed(ChangeEvent<Book> event) {
+    }
+''', '@Where("enabled = 1")'))
+        def method = beanDefinition.getRequiredMethod('changed', ChangeEvent)
+        def reloadQuery = method.stringValue(OracleChangeListenerQuery).orElseThrow()
+
+        then:
+        reloadQuery.contains('enabled = 1')
+        reloadQuery.contains('ROWID = ?')
+        reloadQuery.contains(' AND ')
+        reloadQuery.findAll(/\bWHERE\b/).size() == 1
+        reloadQuery.count('?') == 1
+    }
+
+    void "test parameterized entity-level Where fails when reloading by ROWID"() {
+        when:
+        buildBeanDefinition('test.BookListener', listenerSource('''
+    @ChangeListener
+    @OracleChangeNotification
+    void changed(ChangeEvent<Book> event) {
+    }
+''', '@Where("enabled = :enabled")'))
+
+        then:
+        def exception = thrown(RuntimeException)
+        exception.message.contains('parameterized entity @Where clauses are not supported')
     }
 
     void "test valid Oracle query notification accepts mapped column select"() {
@@ -184,24 +217,27 @@ class OracleChangeNotificationVisitorSpec extends AbstractTypeElementSpec {
         exception.message.contains('@OracleChangeNotification requires @ChangeListener')
     }
 
-    private static String listenerSource(String method) {
+    private static String listenerSource(String method, String entityAnnotation = '') {
         """
 package test;
 
 import io.micronaut.data.annotation.Id;
 import io.micronaut.data.annotation.MappedEntity;
 import io.micronaut.data.annotation.MappedProperty;
+import io.micronaut.data.annotation.Where;
 import io.micronaut.data.jdbc.annotation.ChangeListener;
 import io.micronaut.data.jdbc.annotation.OracleChangeNotification;
 import io.micronaut.data.jdbc.notification.ChangeEvent;
 import jakarta.inject.Singleton;
 
 @MappedEntity
+$entityAnnotation
 class Book {
     @Id
     public Long id;
     @MappedProperty("book_title")
     public String title;
+    public boolean enabled;
 }
 
 @Singleton
