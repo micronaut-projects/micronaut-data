@@ -66,9 +66,10 @@ final class OracleChangeNotificationSubscription {
     private final LongSupplier nanoTimeSupplier;
 
     /**
-     * Tracks the physical registrations still owned by this subscription. This includes the
-     * current registration and any replacement being associated. The {@link #currentLease} field
-     * separately identifies which registration controls the next renewal.
+     * Tracks physical registrations still owned for cleanup, including replacements being
+     * associated. A registration is removed before an unregister attempt and is not restored if
+     * that attempt fails. The {@link #currentLease} can therefore remain current without appearing
+     * here, so lifecycle callbacks also resolve it directly.
      */
     private final List<DatabaseChangeRegistration> registrations = new ArrayList<>(2);
 
@@ -1040,12 +1041,17 @@ final class OracleChangeNotificationSubscription {
     }
 
     /**
-     * Finds a tracked registration by the identifier included in an Oracle notification event.
+     * Finds a registration for a lifecycle callback, including the current lease after it has
+     * been removed from cleanup ownership for an unregistration attempt. This does not add the
+     * registration back to cleanup ownership or cause another unregistration attempt.
      *
      * @param registrationId the Oracle registration identifier
-     * @return the tracked registration, or {@code null} when it is no longer owned
+     * @return the current or tracked registration, or {@code null} when neither matches
      */
     private synchronized @Nullable DatabaseChangeRegistration findRegistration(long registrationId) {
+        if (currentLease != null && currentLease.registration().getRegId() == registrationId) {
+            return currentLease.registration();
+        }
         for (DatabaseChangeRegistration registration : registrations) {
             if (registration.getRegId() == registrationId) {
                 return registration;

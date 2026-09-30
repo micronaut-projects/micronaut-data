@@ -652,6 +652,58 @@ class OracleChangeNotificationSubscriptionSpec extends Specification {
         0 * fixture.oracleConnection.unregisterDatabaseChangeNotification(original)
     }
 
+    void "timeout callback renews the current registration after cleanup ownership was removed"() {
+        given:
+        def original = Mock(DatabaseChangeRegistration)
+        def replacement = Mock(DatabaseChangeRegistration)
+        def scheduledTasks = []
+        def scheduledDelays = []
+        def scheduledFutures = []
+        def scheduler = Mock(TaskScheduler)
+        scheduler.schedule(_ as Duration, _ as Runnable) >> { Duration delay, Runnable task ->
+            scheduledDelays << delay.toNanos()
+            scheduledTasks << task
+            def future = Mock(ScheduledFuture)
+            scheduledFutures << future
+            future
+        }
+        def nanoTimeSupplier = new AtomicLong()
+        def clock = { nanoTimeSupplier.get() } as LongSupplier
+        def fixture = registrarFixture([original, replacement], clock, [])
+        def subscription = subscription(fixture.registrar, scheduler,
+            new OracleChangeNotificationTaskTracker(), clock,
+            new OracleChangeNotificationRenewalPolicy(
+                10, OracleChangeNotification.RenewalMode.AFTER_EXPIRATION, 0))
+
+        when:
+        subscription.start()
+        nanoTimeSupplier.set(TimeUnit.SECONDS.toNanos(10))
+        scheduledTasks.first().run()
+
+        then:
+        1 * fixture.oracleConnection.unregisterDatabaseChangeNotification(original) >> {
+            throw new DataAccessException('Unable to unregister')
+        }
+        fixture.registrationIndex.get() == 1
+        scheduledDelays == [TimeUnit.SECONDS.toNanos(10), TimeUnit.SECONDS.toNanos(60)]
+
+        when:
+        subscription.handleRegistrationDeregistered(
+            original.getRegId(), DatabaseChangeEvent.AdditionalEventType.TIMEOUT)
+
+        then:
+        fixture.registrationIndex.get() == 2
+        scheduledDelays == [TimeUnit.SECONDS.toNanos(10), TimeUnit.SECONDS.toNanos(60), TimeUnit.SECONDS.toNanos(10)]
+        1 * scheduledFutures[1].cancel(false)
+        0 * fixture.oracleConnection.unregisterDatabaseChangeNotification(original)
+
+        when:
+        scheduledTasks[1].run()
+
+        then:
+        fixture.registrationIndex.get() == 2
+    }
+
     void "rolls back registrations in reverse creation order"() {
         given:
         def first = Mock(DatabaseChangeRegistration)
