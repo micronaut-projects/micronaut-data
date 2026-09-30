@@ -28,6 +28,7 @@ import io.micronaut.scheduling.TaskScheduler
 import oracle.jdbc.OracleConnection
 import oracle.jdbc.OracleStatement
 import oracle.jdbc.dcn.DatabaseChangeEvent
+import oracle.jdbc.dcn.DatabaseChangeListener
 import oracle.jdbc.dcn.DatabaseChangeRegistration
 import oracle.jdbc.dcn.FailureListener
 import spock.lang.Specification
@@ -91,10 +92,37 @@ class OracleChangeNotificationSubscriptionSpec extends Specification {
         when:
         subscription.start()
         subscription.handleRegistrationDeregistered(
-            original, DatabaseChangeEvent.AdditionalEventType.TIMEOUT)
+            original.getRegId(), DatabaseChangeEvent.AdditionalEventType.TIMEOUT)
 
         then:
         fixture.registrationIndex.get() == 1
+    }
+
+    void "one-shot registration is renewed when it times out before receiving a data change"() {
+        given:
+        def original = Mock(DatabaseChangeRegistration)
+        def replacement = Mock(DatabaseChangeRegistration)
+        def scheduledTasks = []
+        def lifecycle = []
+        def clock = { 0L } as LongSupplier
+        def fixture = registrarFixture([original, replacement], clock, lifecycle)
+        def subscription = subscription(fixture.registrar, scheduler(scheduledTasks, []),
+            new OracleChangeNotificationTaskTracker(), clock,
+            new OracleChangeNotificationRenewalPolicy(
+                10, OracleChangeNotification.RenewalMode.OVERLAPPING, 2))
+        subscription.getDefinition().registrationProperties().setProperty(OracleConnection.NTF_QOS_PURGE_ON_NTFN, 'true')
+        def timeoutEvent = Mock(DatabaseChangeEvent)
+        timeoutEvent.getEventType() >> DatabaseChangeEvent.EventType.DEREG
+        timeoutEvent.getAdditionalEventType() >> DatabaseChangeEvent.AdditionalEventType.TIMEOUT
+        timeoutEvent.getRegId() >> 1L
+
+        when:
+        subscription.start()
+        fixture.registeredListeners.first().onDatabaseChangeNotification(timeoutEvent)
+
+        then:
+        lifecycle == ['register-1', 'associate-1', 'register-2', 'associate-2']
+        scheduledTasks.size() == 2
     }
 
     void "does not wait for or run a renewal queued before shutdown"() {
@@ -407,7 +435,7 @@ class OracleChangeNotificationSubscriptionSpec extends Specification {
         fixture.oracleConnection.unregisterDatabaseChangeNotification(original) >> {
             lifecycle << 'unregister-1'
             subscription.handleRegistrationDeregistered(
-                original, DatabaseChangeEvent.AdditionalEventType.NONE)
+                original.getRegId(), DatabaseChangeEvent.AdditionalEventType.NONE)
         }
 
         when:
@@ -471,7 +499,7 @@ class OracleChangeNotificationSubscriptionSpec extends Specification {
         when:
         subscription.start()
         subscription.handleRegistrationDeregistered(
-            original, DatabaseChangeEvent.AdditionalEventType.TIMEOUT)
+            original.getRegId(), DatabaseChangeEvent.AdditionalEventType.TIMEOUT)
         scheduledTasks.first().run()
 
         then:
@@ -558,6 +586,7 @@ class OracleChangeNotificationSubscriptionSpec extends Specification {
         beanContext.getBean(_ as BeanDefinition) >> new Object()
         def registrationIndex = new AtomicInteger()
         def failureListeners = []
+        def registeredListeners = []
         operations.execute(_ as ConnectionCallback) >> { ConnectionCallback<?> callback -> callback.call(connection) }
         connection.unwrap(OracleConnection) >> oracleConnection
         connection.createStatement() >> statement
@@ -567,12 +596,14 @@ class OracleChangeNotificationSubscriptionSpec extends Specification {
             associationAction.call(registrationIndex.get())
             resultSet
         }
-        oracleConnection.registerDatabaseChangeNotification(_ as Properties) >> {
+        oracleConnection.registerDatabaseChangeNotification(_ as Properties, _ as DatabaseChangeListener) >> { Properties ignoredProperties, DatabaseChangeListener listener ->
             int index = registrationIndex.incrementAndGet()
             lifecycle << "register-$index"
+            registeredListeners << listener
             registrations[index - 1]
         }
-        registrations.each { DatabaseChangeRegistration registration ->
+        registrations.eachWithIndex { DatabaseChangeRegistration registration, int index ->
+            registration.getRegId() >> (index + 1L)
             registration.addFailureListener(_ as FailureListener) >> { FailureListener listener ->
                 failureListeners << listener
             }
@@ -586,7 +617,8 @@ class OracleChangeNotificationSubscriptionSpec extends Specification {
             beanContext: beanContext,
             oracleConnection: oracleConnection,
             registrationIndex: registrationIndex,
-            failureListeners: failureListeners
+            failureListeners: failureListeners,
+            registeredListeners: registeredListeners
         ]
     }
 

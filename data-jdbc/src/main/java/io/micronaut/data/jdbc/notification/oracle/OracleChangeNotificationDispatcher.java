@@ -113,10 +113,32 @@ final class OracleChangeNotificationDispatcher implements DatabaseChangeListener
         return Boolean.parseBoolean(listenerDefinition.registrationProperties().getProperty(propertyName));
     }
 
+    /**
+     * Removes a one-shot registration only for a data-change notification. Registration and query
+     * deregistration, startup, and shutdown callbacks must retain their normal lifecycle handling.
+     */
     private void removePurgedRegistration(DatabaseChangeEvent event) {
-        if (purgeOnNotificationEnabled) {
+        if (!purgeOnNotificationEnabled) {
+            return;
+        }
+        DatabaseChangeEvent.EventType eventType = event.getEventType();
+        if (eventType == DatabaseChangeEvent.EventType.OBJCHANGE
+            || (eventType == DatabaseChangeEvent.EventType.QUERYCHANGE
+                && !containsQueryDeregistration(event.getQueryChangeDescription()))) {
+            // A timeout or lifecycle callback must reach its own handler, even for a one-shot registration.
             registrationPurgedHandler.accept(event.getRegId());
         }
+    }
+
+    private boolean containsQueryDeregistration(QueryChangeDescription @Nullable [] queries) {
+        if (queries != null) {
+            for (QueryChangeDescription query : queries) {
+                if (query.getQueryChangeEventType() == QueryChangeDescription.QueryChangeEventType.DEREG) {
+                    return true;
+                }
+            }
+        }
+        return false;
     }
 
     private void submitDispatch(DatabaseChangeEvent event) {

@@ -173,7 +173,7 @@ class OracleChangeNotificationDispatcherSpec extends Specification {
         reason << [DatabaseChangeEvent.AdditionalEventType.NONE, DatabaseChangeEvent.AdditionalEventType.GROUPING]
     }
 
-    void "registration purge is reported before the notification is dispatched"() {
+    void "registration purge is reported before an #eventType notification is dispatched"() {
         given:
         def beanDefinition = Mock(BeanDefinition)
         def bean = new Object()
@@ -186,6 +186,7 @@ class OracleChangeNotificationDispatcherSpec extends Specification {
         def sequence = []
         def purgeHandler = { long ignored -> sequence << "purged" } as LongConsumer
         def event = Mock(DatabaseChangeEvent)
+        event.getEventType() >> eventType
         event.getTableChangeDescription() >> null
         event.getQueryChangeDescription() >> ([] as QueryChangeDescription[])
         def listenerDefinition = definition(beanDefinition, method, properties)
@@ -202,6 +203,85 @@ class OracleChangeNotificationDispatcherSpec extends Specification {
             isInvalidation(arguments)
         })
         sequence == ["purged", "listener"]
+
+        where:
+        eventType << [DatabaseChangeEvent.EventType.OBJCHANGE, DatabaseChangeEvent.EventType.QUERYCHANGE]
+    }
+
+    void "one-shot registration timeout is handled as deregistration rather than purge"() {
+        given:
+        def properties = new Properties()
+        properties.setProperty(OracleConnection.NTF_QOS_PURGE_ON_NTFN, "true")
+        def method = Mock(ExecutableMethod)
+        method.getDescription(true) >> "void onChange(ChangeEvent<Book>)"
+        def purgeHandler = Mock(LongConsumer)
+        def deregistrationHandler = Mock(BiConsumer)
+        def event = Mock(DatabaseChangeEvent)
+        event.getEventType() >> DatabaseChangeEvent.EventType.DEREG
+        event.getAdditionalEventType() >> DatabaseChangeEvent.AdditionalEventType.TIMEOUT
+        event.getRegId() >> 45L
+        def dispatcher = dispatcher(definition(null, method, properties), Mock(BeanContext),
+            purgeHandler, deregistrationHandler, Mock(LongConsumer))
+
+        when:
+        dispatcher.onDatabaseChangeNotification(event)
+
+        then:
+        1 * deregistrationHandler.accept(45L, DatabaseChangeEvent.AdditionalEventType.TIMEOUT)
+        0 * purgeHandler.accept(_)
+        0 * event.getTableChangeDescription()
+    }
+
+    void "one-shot registration does not purge on #eventType"() {
+        given:
+        def properties = new Properties()
+        properties.setProperty(OracleConnection.NTF_QOS_PURGE_ON_NTFN, "true")
+        def method = Mock(ExecutableMethod)
+        method.getDescription(true) >> "void onChange(ChangeEvent<Book>)"
+        def purgeHandler = Mock(LongConsumer)
+        def event = Mock(DatabaseChangeEvent)
+        event.getEventType() >> eventType
+        def dispatcher = dispatcher(definition(null, method, properties), Mock(BeanContext),
+            purgeHandler, Mock(BiConsumer), Mock(LongConsumer))
+
+        when:
+        dispatcher.onDatabaseChangeNotification(event)
+
+        then:
+        0 * purgeHandler.accept(_)
+        0 * event.getTableChangeDescription()
+
+        where:
+        eventType << [DatabaseChangeEvent.EventType.STARTUP,
+                      DatabaseChangeEvent.EventType.SHUTDOWN,
+                      DatabaseChangeEvent.EventType.SHUTDOWN_ANY]
+    }
+
+    void "one-shot query deregistration does not suppress query cleanup"() {
+        given:
+        def properties = new Properties()
+        properties.setProperty(OracleConnection.NTF_QOS_PURGE_ON_NTFN, "true")
+        properties.setProperty(OracleConnection.DCN_QUERY_CHANGE_NOTIFICATION, "true")
+        def method = Mock(ExecutableMethod)
+        method.getDescription(true) >> "void onChange(ChangeEvent<Book>)"
+        def purgeHandler = Mock(LongConsumer)
+        def queryDeregistrationHandler = Mock(LongConsumer)
+        def query = Mock(QueryChangeDescription)
+        query.getQueryChangeEventType() >> QueryChangeDescription.QueryChangeEventType.DEREG
+        query.getQueryId() >> 18L
+        def event = Mock(DatabaseChangeEvent)
+        event.getEventType() >> DatabaseChangeEvent.EventType.QUERYCHANGE
+        event.getRegId() >> 46L
+        event.getQueryChangeDescription() >> ([query] as QueryChangeDescription[])
+        def dispatcher = dispatcher(definition(null, method, properties), Mock(BeanContext),
+            purgeHandler, Mock(BiConsumer), queryDeregistrationHandler)
+
+        when:
+        dispatcher.onDatabaseChangeNotification(event)
+
+        then:
+        1 * queryDeregistrationHandler.accept(46L)
+        0 * purgeHandler.accept(_)
     }
 
     void "query deregistration takes precedence over other query descriptions"() {

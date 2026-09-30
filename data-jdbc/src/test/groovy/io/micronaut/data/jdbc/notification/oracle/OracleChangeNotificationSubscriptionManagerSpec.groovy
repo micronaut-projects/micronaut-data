@@ -111,7 +111,7 @@ class OracleChangeNotificationSubscriptionManagerSpec extends Specification {
         shutdownWaitedForRenewal
         !renewalThread.alive
         renewalFailure.get() == null
-        2 * oracleConnection.registerDatabaseChangeNotification(_ as Properties) >>> [original, replacement]
+        2 * oracleConnection.registerDatabaseChangeNotification(_ as Properties, _ as DatabaseChangeListener) >>> [original, replacement]
         1 * oracleConnection.unregisterDatabaseChangeNotification(original)
         1 * oracleConnection.unregisterDatabaseChangeNotification(replacement)
     }
@@ -142,7 +142,7 @@ class OracleChangeNotificationSubscriptionManagerSpec extends Specification {
 
         operations.execute(_ as ConnectionCallback) >> { ConnectionCallback<?> callback -> callback.call(connection) }
         connection.unwrap(OracleConnection) >> oracleConnection
-        oracleConnection.registerDatabaseChangeNotification(_ as Properties) >> registration
+        oracleConnection.registerDatabaseChangeNotification(_ as Properties, _ as DatabaseChangeListener) >> registration
         connection.createStatement() >> statement
         statement.unwrap(OracleStatement) >> oracleStatement
         statement.executeQuery("SELECT * FROM BOOK") >> {
@@ -186,7 +186,7 @@ class OracleChangeNotificationSubscriptionManagerSpec extends Specification {
         manager.start()
 
         then:
-        1 * oracleConnection.registerDatabaseChangeNotification(_ as Properties) >> registration
+        1 * oracleConnection.registerDatabaseChangeNotification(_ as Properties, _ as DatabaseChangeListener) >> registration
         1 * connection.createStatement() >> statement
         1 * statement.executeQuery("SELECT * FROM BOOK") >> resultSet
     }
@@ -225,7 +225,7 @@ class OracleChangeNotificationSubscriptionManagerSpec extends Specification {
         then:
         1 * oracleConnection.unregisterDatabaseChangeNotification(firstRegistration)
         1 * oracleConnection.unregisterDatabaseChangeNotification(secondRegistration)
-        2 * oracleConnection.registerDatabaseChangeNotification(_ as Properties) >>> [firstRegistration, secondRegistration]
+        2 * oracleConnection.registerDatabaseChangeNotification(_ as Properties, _ as DatabaseChangeListener) >>> [firstRegistration, secondRegistration]
         2 * connection.createStatement() >>> [firstStatement, secondStatement]
         1 * firstStatement.executeQuery("SELECT * FROM FIRST_BOOK") >> resultSet
         1 * secondStatement.executeQuery("SELECT * FROM SECOND_BOOK") >> resultSet
@@ -248,7 +248,7 @@ class OracleChangeNotificationSubscriptionManagerSpec extends Specification {
 
         operations.execute(_ as ConnectionCallback) >> { ConnectionCallback<?> callback -> callback.call(connection) }
         connection.unwrap(OracleConnection) >> oracleConnection
-        oracleConnection.registerDatabaseChangeNotification(_ as Properties) >> registration
+        oracleConnection.registerDatabaseChangeNotification(_ as Properties, _ as DatabaseChangeListener) >> registration
         connection.createStatement() >> statement
         statement.unwrap(OracleStatement) >> oracleStatement
         statement.executeQuery("SELECT * FROM BOOK") >> resultSet
@@ -302,9 +302,10 @@ class OracleChangeNotificationSubscriptionManagerSpec extends Specification {
             }
         }
         connection.unwrap(OracleConnection) >> oracleConnection
-        oracleConnection.registerDatabaseChangeNotification(_ as Properties) >> registration
-        registration.addListener(_ as DatabaseChangeListener) >> { DatabaseChangeListener registeredListener ->
+        registration.getRegId() >> 7L
+        oracleConnection.registerDatabaseChangeNotification(_ as Properties, _ as DatabaseChangeListener) >> { Properties ignoredProperties, DatabaseChangeListener registeredListener ->
             listener = registeredListener
+            registration
         }
         connection.createStatement() >> statement
         statement.unwrap(OracleStatement) >> oracleStatement
@@ -314,6 +315,7 @@ class OracleChangeNotificationSubscriptionManagerSpec extends Specification {
         query.getQueryChangeEventType() >> QueryChangeDescription.QueryChangeEventType.DEREG
         def event = Mock(DatabaseChangeEvent)
         event.getEventType() >> DatabaseChangeEvent.EventType.QUERYCHANGE
+        event.getRegId() >> 7L
         event.getTableChangeDescription() >> null
         event.getQueryChangeDescription() >> ([query] as QueryChangeDescription[])
 
@@ -355,7 +357,7 @@ class OracleChangeNotificationSubscriptionManagerSpec extends Specification {
             }
         }
         connection.unwrap(OracleConnection) >> oracleConnection
-        oracleConnection.registerDatabaseChangeNotification(_ as Properties) >>> [firstRegistration, secondRegistration]
+        oracleConnection.registerDatabaseChangeNotification(_ as Properties, _ as DatabaseChangeListener) >>> [firstRegistration, secondRegistration]
         connection.createStatement() >>> [firstStatement, secondStatement]
         firstStatement.unwrap(OracleStatement) >> firstOracleStatement
         secondStatement.unwrap(OracleStatement) >> secondOracleStatement
