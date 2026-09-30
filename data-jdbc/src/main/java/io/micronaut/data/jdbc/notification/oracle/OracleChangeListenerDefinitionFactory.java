@@ -35,9 +35,9 @@ import java.util.Properties;
  * Builds the Oracle-specific runtime definition for a discovered change listener.
  *
  * <p>The factory resolves the entity's mapped Oracle table, reads the compile-time generated
- * {@code ROWID} reload query, copies the annotation's registration properties, adds the required
- * Oracle {@code ROWID} and timeout settings, derives the renewal policy, and builds the
- * registration query.</p>
+ * {@code ROWID} reload query, copies the annotation's registration properties, applies the
+ * client-initiated connection default, adds the required Oracle {@code ROWID} and timeout
+ * settings, derives the renewal policy, and builds the registration query.</p>
  *
  * <p>It also performs defensive runtime validation so invalid Oracle listener configuration
  * produces an error that identifies the listener method before registration is attempted.</p>
@@ -120,6 +120,7 @@ final class OracleChangeListenerDefinitionFactory {
             }
             properties.setProperty(name, value);
         }
+        properties.putIfAbsent(OracleConnection.DCN_CLIENT_INIT_CONNECTION, "true");
         properties.setProperty(OracleConnection.DCN_NOTIFY_ROWIDS, "true");
         return properties;
     }

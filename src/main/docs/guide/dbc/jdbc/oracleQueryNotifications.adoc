@@ -140,15 +140,13 @@ QRCN queries may depend on other tables, including tables in another schema when
 
 == Oracle Registration Properties
 
-Use `OracleChangeNotification.Property` to pass Oracle JDBC registration properties by name and value. Prefer the constants defined by `oracle.jdbc.OracleConnection`, for example:
+Use `OracleChangeNotification.Property` to pass Oracle JDBC registration properties by name and value. Micronaut Data sets `DCN_CLIENT_INIT_CONNECTION` to `true` by default, so the JDBC driver initiates its notification connection. Set it to `false` to use server-initiated notification connections. Client-initiated connections do not support notification grouping. For example, to opt out of the default and enable one-shot registrations:
 
 [source,java]
 ----
+import oracle.jdbc.OracleConnection;
+
 @OracleChangeNotification(properties = {
-    @OracleChangeNotification.Property(
-        name = OracleConnection.DCN_CLIENT_INIT_CONNECTION,
-        value = "true"
-    ),
     @OracleChangeNotification.Property(
         name = OracleConnection.NTF_QOS_PURGE_ON_NTFN,
         value = "true"
@@ -213,7 +211,7 @@ If creating or associating a replacement registration fails, Micronaut Data logs
 
 If Oracle deregisters a registration for a reason other than a renewable timeout, Micronaut Data closes that subscription and does not recreate it automatically. The same applies when Oracle deregisters a registered QRCN query. The application must correct the database or registration condition and restart the application if a new registration is required.
 
-Micronaut Data renews timed registrations that reach their timeout before a notification arrives, including those configured with `NTF_QOS_PURGE_ON_NTFN`. If Oracle purges a registration after delivering a notification, Micronaut Data closes that listener subscription and does not recreate it. The driver can report notification receiver failures to Micronaut Data, which attempts to replace the failed registration, but a silently lost channel with no failure callback cannot be detected by the framework. Setting `NTF_QOS_RELIABLE` does not itself cause Micronaut Data to recreate a lost channel or re-register a listener.
+Micronaut Data renews timed registrations that reach their timeout before a notification arrives, including those configured with `NTF_QOS_PURGE_ON_NTFN`. If Oracle purges a registration after delivering a notification, Micronaut Data closes that listener subscription and does not recreate it. With the default client-initiated connection, the JDBC driver retries a disrupted notification connection. When `NTF_QOS_RELIABLE` is also enabled, Oracle queues notifications for delivery after reconnect. If the driver's retries are exhausted, its registration failure callback tells Micronaut Data to replace the failed registration. A silently lost channel with no driver failure callback cannot be detected by the framework. `NTF_QOS_RELIABLE` alone does not cause Micronaut Data to recreate a lost channel or re-register a listener.
 
 == Delivery and Concurrency
 

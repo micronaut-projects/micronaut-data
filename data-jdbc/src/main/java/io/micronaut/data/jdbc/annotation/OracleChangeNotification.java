@@ -35,6 +35,10 @@ import java.lang.annotation.Target;
  * sets a finite Oracle Database lifetime. Renewal can be enabled explicitly to replace expiring
  * registrations; {@link RenewalMode#NONE} does not replace them.</p>
  *
+ * <p>Oracle JDBC client-initiated notification connections are enabled by default. Set the
+ * {@code DCN_CLIENT_INIT_CONNECTION} registration property to {@code false} to use
+ * server-initiated notification connections instead.</p>
+ *
  * @since 5.2.0
  */
 @Documented
@@ -89,7 +93,9 @@ public @interface OracleChangeNotification {
     String where() default "";
 
     /**
-     * @return Oracle JDBC Continuous Query Notification registration properties.
+     * @return Oracle JDBC Continuous Query Notification registration properties. The
+     * {@code DCN_CLIENT_INIT_CONNECTION} property defaults to {@code true} unless explicitly
+     * configured here.
      */
     Property[] properties() default {};
 

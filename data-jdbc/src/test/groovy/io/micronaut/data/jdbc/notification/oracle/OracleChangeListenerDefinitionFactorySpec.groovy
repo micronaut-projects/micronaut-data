@@ -55,6 +55,7 @@ class OracleChangeListenerDefinitionFactorySpec extends Specification {
         definition.registrationQuery() == 'SELECT * FROM "SALES"."ORDER.ITEMS"'
         definition.tableIdentifier().matches('"SALES"."ORDER.ITEMS"')
         !definition.tableIdentifier().matches('"OTHER"."ORDER.ITEMS"')
+        definition.registrationProperties().getProperty(OracleConnection.DCN_CLIENT_INIT_CONNECTION) == 'true'
         definition.registrationProperties().getProperty(OracleConnection.NTF_TIMEOUT) == '0'
         definition.renewalPolicy().timeoutSeconds() == 0
         definition.renewalPolicy().mode() == OracleChangeNotification.RenewalMode.NONE
@@ -69,6 +70,7 @@ class OracleChangeListenerDefinitionFactorySpec extends Specification {
                  renewal: OracleChangeNotification.RenewalMode.AFTER_EXPIRATION],
                 [
                         [name: OracleConnection.DCN_QUERY_CHANGE_NOTIFICATION, value: 'true'],
+                        [name: OracleConnection.DCN_CLIENT_INIT_CONNECTION, value: 'false'],
                         [name: OracleConnection.NTF_QOS_PURGE_ON_NTFN, value: 'true'],
                         [name: 'CUSTOM_PROPERTY', value: 'custom-value']
                 ]
@@ -80,6 +82,7 @@ class OracleChangeListenerDefinitionFactorySpec extends Specification {
         then:
         definition.registrationQuery() == 'SELECT id, title FROM "SALES"."ORDER.ITEMS" WHERE enabled = 1'
         definition.registrationProperties().getProperty(OracleConnection.DCN_QUERY_CHANGE_NOTIFICATION) == 'true'
+        definition.registrationProperties().getProperty(OracleConnection.DCN_CLIENT_INIT_CONNECTION) == 'false'
         definition.registrationProperties().getProperty(OracleConnection.NTF_QOS_PURGE_ON_NTFN) == 'true'
         definition.registrationProperties().getProperty('CUSTOM_PROPERTY') == 'custom-value'
         definition.registrationProperties().getProperty(OracleConnection.DCN_NOTIFY_ROWIDS) == 'true'
