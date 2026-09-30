@@ -54,8 +54,11 @@ import java.util.function.Consumer;
  *
  * <p>A registration-level deregistration removes the already-closed registration from manager
  * tracking. A query-level deregistration retires the enclosing registration as well because each
- * framework registration contains exactly one listener query. A database-wide shutdown starts
- * registration recovery; after a replacement is activated, the listener receives an invalidation.
+ * framework registration contains exactly one listener query. A database-wide shutdown normally
+ * starts registration recovery; after a replacement is activated, the listener receives an
+ * invalidation. When reliable notifications and a client-initiated connection are enabled, the
+ * dispatcher leaves notification-connection retries to the JDBC driver and relies on the
+ * registration failure callback to start framework recovery if the driver's retries are exhausted.
  * A shutdown affecting one RAC instance is logged only.</p>
  *
  * <p>Listener invocation failures are logged and do not prevent subsequent changes from being
@@ -76,6 +79,7 @@ final class OracleChangeNotificationDispatcher implements DatabaseChangeListener
     private final Consumer<DatabaseChangeRegistration> databaseShutdownHandler;
     private final boolean purgeOnNotificationEnabled;
     private final boolean queryChangeNotificationEnabled;
+    private final boolean driverReconnectRetryEnabled;
 
     OracleChangeNotificationDispatcher(String dataSourceName,
                                        OracleChangeListenerDefinition listenerDefinition,
@@ -97,16 +101,20 @@ final class OracleChangeNotificationDispatcher implements DatabaseChangeListener
         this.deregistrationHandler = deregistrationHandler;
         this.queryDeregistrationHandler = queryDeregistrationHandler;
         this.databaseShutdownHandler = databaseShutdownHandler;
-        this.purgeOnNotificationEnabled = Boolean.parseBoolean(listenerDefinition.registrationProperties()
-            .getProperty(OracleConnection.NTF_QOS_PURGE_ON_NTFN));
-        this.queryChangeNotificationEnabled = Boolean.parseBoolean(listenerDefinition.registrationProperties()
-            .getProperty(OracleConnection.DCN_QUERY_CHANGE_NOTIFICATION));
+        this.purgeOnNotificationEnabled = isRegistrationPropertyEnabled(OracleConnection.NTF_QOS_PURGE_ON_NTFN);
+        this.queryChangeNotificationEnabled = isRegistrationPropertyEnabled(OracleConnection.DCN_QUERY_CHANGE_NOTIFICATION);
+        this.driverReconnectRetryEnabled = isRegistrationPropertyEnabled(OracleConnection.NTF_QOS_RELIABLE)
+            && isRegistrationPropertyEnabled(OracleConnection.DCN_CLIENT_INIT_CONNECTION);
     }
 
     @Override
     public void onDatabaseChangeNotification(DatabaseChangeEvent event) {
         removePurgedRegistration();
         submitDispatch(event);
+    }
+
+    private boolean isRegistrationPropertyEnabled(String propertyName) {
+        return Boolean.parseBoolean(listenerDefinition.registrationProperties().getProperty(propertyName));
     }
 
     private void removePurgedRegistration() {
@@ -158,6 +166,12 @@ final class OracleChangeNotificationDispatcher implements DatabaseChangeListener
             return;
         }
         if (eventType == DatabaseChangeEvent.EventType.SHUTDOWN) {
+            if (driverReconnectRetryEnabled) {
+                LOG.warn("Received DCN event [{}] for registration [{}], datasource [{}], and listener method [{}]; " +
+                        "letting the JDBC driver retry the client-initiated connection, with the registration failure callback as recovery fallback",
+                    eventType, registration.getRegId(), dataSourceName, getMethodDesc());
+                return;
+            }
             LOG.warn("Received DCN event [{}] for registration [{}], datasource [{}], and listener method [{}]; " +
                     "marking listener state for reconciliation and starting registration recovery",
                 eventType, registration.getRegId(), dataSourceName, getMethodDesc());

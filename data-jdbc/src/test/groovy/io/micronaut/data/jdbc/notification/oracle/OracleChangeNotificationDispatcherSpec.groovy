@@ -55,18 +55,17 @@ class OracleChangeNotificationDispatcherSpec extends Specification {
         eventType << [DatabaseChangeEvent.EventType.SHUTDOWN_ANY]
     }
 
-    void "database shutdown starts registration recovery without immediate invalidation"() {
+    void "database shutdown delegates retries only for reliable client-initiated notifications"() {
         given:
-        def beanDefinition = Mock(BeanDefinition)
-        def bean = new Object()
-        def beanContext = Mock(BeanContext)
-        beanContext.getBean(beanDefinition) >> bean
         def registration = Mock(DatabaseChangeRegistration)
         def method = Mock(ExecutableMethod)
         method.getDescription(true) >> "void onChange(ChangeEvent<Book>)"
-        def definition = definition(beanDefinition, method, new Properties())
+        def properties = new Properties()
+        properties.setProperty(OracleConnection.NTF_QOS_RELIABLE, reliableNotifications.toString())
+        properties.setProperty(OracleConnection.DCN_CLIENT_INIT_CONNECTION, clientInitiatedConnection.toString())
+        def definition = definition(null, method, properties)
         def recoveryRequests = []
-        def dispatcher = dispatcher(definition, beanContext, registration,
+        def dispatcher = dispatcher(definition, Mock(BeanContext), registration,
             { DatabaseChangeRegistration ignored -> } as Consumer,
             { DatabaseChangeRegistration ignored, DatabaseChangeEvent.AdditionalEventType ignoredType -> } as BiConsumer,
             { DatabaseChangeRegistration ignored -> } as Consumer,
@@ -80,9 +79,16 @@ class OracleChangeNotificationDispatcherSpec extends Specification {
         dispatcher.onDatabaseChangeNotification(event)
 
         then:
-        recoveryRequests == [registration]
+        recoveryRequests == (driverReconnectRetryEnabled ? [] : [registration])
         0 * method.invoke(_, _)
         0 * event.getTableChangeDescription()
+
+        where:
+        reliableNotifications | clientInitiatedConnection | driverReconnectRetryEnabled
+        false                 | false                     | false
+        true                  | false                     | false
+        false                 | true                      | false
+        true                  | true                      | true
     }
 
     void "ignores database startup events"() {
