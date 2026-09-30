@@ -786,12 +786,13 @@ final class OracleChangeNotificationSubscription {
     /**
      * Creates and activates a replacement registration for this subscription.
      *
-     * <p>If activation is no longer possible, the newly created registration is unregistered and
-     * {@code null} is returned. If activation fails with a runtime exception, a cleanup failure is
-     * added as a suppressed exception before the activation failure is rethrown.</p>
+     * <p>If shutdown prevents activation, the newly created registration is unregistered and
+     * {@code null} is returned. If the registration became unavailable before activation, an
+     * exception triggers the caller's renewal or recovery retry path. A cleanup failure is added
+     * as a suppressed exception before an activation failure is rethrown.</p>
      *
      * @param previousLease the lease being replaced, or {@code null} if no previous lease remains
-     * @return the activated replacement lease, or {@code null} if it could not be activated
+     * @return the activated replacement lease, or {@code null} if shutdown prevented activation
      * @throws RuntimeException if registration creation or activation fails
      */
     private @Nullable OracleRegistrationLease createReplacementRegistration(@Nullable OracleRegistrationLease previousLease) {
@@ -804,7 +805,16 @@ final class OracleChangeNotificationSubscription {
                 LOG.trace("Discarding inactive replacement DCN registration [{}] for datasource [{}] and listener method [{}]",
                     replacementLease.registration().getRegId(), dataSourceName, methodDescription);
                 unregister(replacementLease.registration());
-                return null;
+                synchronized (this) {
+                    if (state == State.CLOSED || taskTracker.isShutdownStarted()) {
+                        return null;
+                    }
+                }
+                // A callback can deregister and untrack the replacement during query association.
+                // The renewal/recovery caller must retry instead of remaining in its in-progress state.
+                throw new IllegalStateException("Replacement DCN registration [" + replacementLease.registration().getRegId()
+                    + "] for datasource [" + dataSourceName + "] and listener method [" + methodDescription
+                    + "] became unavailable before activation");
             }
             return replacementLease;
         } catch (RuntimeException activationFailure) {
