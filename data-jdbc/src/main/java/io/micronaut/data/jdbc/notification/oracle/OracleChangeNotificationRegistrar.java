@@ -99,19 +99,19 @@ final class OracleChangeNotificationRegistrar {
             // The registration lifetime can start while this call is in progress. Measuring before
             // the call prevents local renewal from running later than its configured logical deadline.
             long startedNanos = nanoTimeSupplier.getAsLong();
-            DatabaseChangeRegistration registration = oracleConnection.registerDatabaseChangeNotification(definition.registrationProperties());
+            OracleChangeNotificationDispatcher dispatcher = new OracleChangeNotificationDispatcher(
+                dataSourceName, definition, beanContext, blockingExecutor, taskTracker,
+                subscription::handleRegistrationPurged,
+                subscription::handleRegistrationDeregistered,
+                subscription::handleQueryDeregistered,
+                subscription::handleDatabaseShutdown
+            );
+            DatabaseChangeRegistration registration = oracleConnection.registerDatabaseChangeNotification(
+                definition.registrationProperties(), dispatcher);
             LOG.trace("Created DCN registration [{}] for datasource [{}] and listener method [{}]",
                 registration.getRegId(), dataSourceName, definition.method().getDescription(true));
             long logicalExpirationNanos = startedNanos + TimeUnit.SECONDS.toNanos(definition.renewalPolicy().timeoutSeconds());
             try {
-                OracleChangeNotificationDispatcher dispatcher = new OracleChangeNotificationDispatcher(
-                    dataSourceName, definition, beanContext, blockingExecutor, taskTracker,
-                    subscription::handleRegistrationPurged,
-                    subscription::handleRegistrationDeregistered,
-                    subscription::handleQueryDeregistered,
-                    subscription::handleDatabaseShutdown
-                );
-                registration.addListener(dispatcher);
                 subscription.track(registration);
                 registration.addFailureListener(failure -> subscription.handleRegistrationFailure(registration, failure));
                 try (Statement statement = connection.createStatement()) {
