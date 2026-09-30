@@ -216,35 +216,40 @@ final class OracleChangeNotificationSubscription {
     }
 
     /**
-     * Starts recovery when Oracle Database reports a database-wide shutdown. A startup notification
+     * Starts recovery when database reports a database-wide shutdown. A startup notification
      * may not arrive on the driver-owned notification connection after the shutdown.
      *
-     * @param registration the registration that reported the shutdown
+     * @param registrationId the id of registration that reported the shutdown
      */
-    void handleDatabaseShutdown(DatabaseChangeRegistration registration) {
-        handleRegistrationFailure(registration,
-            new SQLException("Oracle Database reported a shutdown for this DCN registration"));
+    void handleDatabaseShutdown(long registrationId) {
+        DatabaseChangeRegistration registration = findRegistration(registrationId);
+        if (registration != null) {
+            handleRegistrationFailure(registration, new SQLException("Database reported a shutdown for this DCN registration"));
+        }
     }
 
     /**
-     * Handles a registration that Oracle Database purged after delivering a notification.
+     * Handles a registration that database purged after delivering a notification.
      *
      * <p>The registration is removed from local tracking and, when it is the current registration,
      * its renewal is canceled and this subscription is closed. No explicit unregister is issued
      * because Oracle Database has already purged the registration.</p>
      *
-     * @param registration the Oracle Database registration that was purged
+     * @param registrationId the id of registration that was purged
      */
-    void handleRegistrationPurged(DatabaseChangeRegistration registration) {
-        LOG.trace("Handling purged DCN [{}] for datasource [{}] and listener method [{}]",
-            registration.getRegId(), dataSourceName, methodDescription);
-        untrack(registration);
-        closeIfCurrent(registration);
+    void handleRegistrationPurged(long registrationId) {
+        DatabaseChangeRegistration registration = findRegistration(registrationId);
+        if (registration != null) {
+            LOG.trace("Handling purged DCN [{}] for datasource [{}] and listener method [{}]",
+                registration.getRegId(), dataSourceName, methodDescription);
+            untrack(registration);
+            closeIfCurrent(registration);
+        }
     }
 
     /**
      * Handles a registration deregistration event {@link DatabaseChangeEvent.EventType#DEREG}
-     * reported by Oracle Database.
+     * reported by database.
      *
      * <p>The deregistered registration is removed from local tracking. If it is the current
      * registration, a {@link DatabaseChangeEvent.AdditionalEventType#TIMEOUT} normally schedules a
@@ -253,20 +258,23 @@ final class OracleChangeNotificationSubscription {
      * renewal or close the subscription. Deregistration events for a registration that is no longer
      * current do not change the subscription state.</p>
      *
-     * @param registration the Oracle Database registration that was deregistered
+     * @param registrationId the id of registration that was deregistered
      * @param additionalEventType the additional reason reported for the deregistration
      */
-    void handleRegistrationDeregistered(DatabaseChangeRegistration registration,
+    void handleRegistrationDeregistered(long registrationId,
                                         DatabaseChangeEvent.AdditionalEventType additionalEventType) {
-        untrack(registration);
-        DeregistrationAction action = transitionOnDeregistration(registration, additionalEventType);
-        if (action == DeregistrationAction.RENEW) {
-            LOG.trace("Scheduling DCN renewal after timeout deregistration [{}] for datasource [{}] and listener method [{}]",
-                registration.getRegId(), dataSourceName, methodDescription);
-            submitRenewal(State.UNREGISTERED, null, RenewalTrigger.NORMAL);
-        } else if (action == DeregistrationAction.CLOSE) {
-            LOG.trace("Closing DCN subscription after deregistration [{}] for datasource [{}], listener method [{}], and reason [{}]",
-                registration.getRegId(), dataSourceName, methodDescription, additionalEventType);
+        DatabaseChangeRegistration registration = findRegistration(registrationId);
+        if (registration != null) {
+            untrack(registration);
+            DeregistrationAction action = transitionOnDeregistration(registration, additionalEventType);
+            if (action == DeregistrationAction.RENEW) {
+                LOG.trace("Scheduling DCN renewal after timeout deregistration [{}] for datasource [{}] and listener method [{}]",
+                    registration.getRegId(), dataSourceName, methodDescription);
+                submitRenewal(State.UNREGISTERED, null, RenewalTrigger.NORMAL);
+            } else if (action == DeregistrationAction.CLOSE) {
+                LOG.trace("Closing DCN subscription after deregistration [{}] for datasource [{}], listener method [{}], and reason [{}]",
+                    registration.getRegId(), dataSourceName, methodDescription, additionalEventType);
+            }
         }
     }
 
@@ -320,23 +328,26 @@ final class OracleChangeNotificationSubscription {
     }
 
     /**
-     * Handles Oracle Database deregistration of the query associated with a registration.
+     * Handles deregistration of the query associated with a registration.
      *
      * <p>If the registration is current, its renewal is canceled and the subscription is closed.
      * The method then attempts to unregister the registration if it is still locally owned. A
      * runtime cleanup failure is logged and does not propagate to the caller.</p>
      *
-     * @param registration the registration whose query was deregistered
+     * @param registrationId the id of registration whose query was deregistered
      */
-    void handleQueryDeregistered(DatabaseChangeRegistration registration) {
-        LOG.trace("Closing DCN subscription after query deregistration [{}] for datasource [{}] and listener method [{}]",
-            registration.getRegId(), dataSourceName, methodDescription);
-        closeIfCurrent(registration);
-        try {
-            unregisterIfOwned(registration);
-        } catch (RuntimeException e) {
-            LOG.warn("Unable to unregister deregistered DCN [{}] for datasource [{}] and listener method [{}]",
-                registration.getRegId(), dataSourceName, methodDescription, e);
+    void handleQueryDeregistered(long registrationId) {
+        DatabaseChangeRegistration registration = findRegistration(registrationId);
+        if (registration != null) {
+            LOG.trace("Closing DCN subscription after query deregistration [{}] for datasource [{}] and listener method [{}]",
+                registration.getRegId(), dataSourceName, methodDescription);
+            closeIfCurrent(registration);
+            try {
+                unregisterIfOwned(registration);
+            } catch (RuntimeException e) {
+                LOG.warn("Unable to unregister deregistered DCN [{}] for datasource [{}] and listener method [{}]",
+                    registration.getRegId(), dataSourceName, methodDescription, e);
+            }
         }
     }
 
@@ -1016,6 +1027,21 @@ final class OracleChangeNotificationSubscription {
             }
         }
         return false;
+    }
+
+    /**
+     * Finds a tracked registration by the identifier included in an Oracle notification event.
+     *
+     * @param registrationId the Oracle registration identifier
+     * @return the tracked registration, or {@code null} when it is no longer owned
+     */
+    private synchronized @Nullable DatabaseChangeRegistration findRegistration(long registrationId) {
+        for (DatabaseChangeRegistration registration : registrations) {
+            if (registration.getRegId() == registrationId) {
+                return registration;
+            }
+        }
+        return null;
     }
 
     /**

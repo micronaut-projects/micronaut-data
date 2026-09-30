@@ -105,7 +105,7 @@ final class OracleChangeNotificationRegistrar {
             long logicalExpirationNanos = startedNanos + TimeUnit.SECONDS.toNanos(definition.renewalPolicy().timeoutSeconds());
             try {
                 OracleChangeNotificationDispatcher dispatcher = new OracleChangeNotificationDispatcher(
-                    dataSourceName, definition, registration, beanContext, blockingExecutor, taskTracker,
+                    dataSourceName, definition, beanContext, blockingExecutor, taskTracker,
                     subscription::handleRegistrationPurged,
                     subscription::handleRegistrationDeregistered,
                     subscription::handleQueryDeregistered,
@@ -122,8 +122,9 @@ final class OracleChangeNotificationRegistrar {
                             registration.getRegId(), dataSourceName, definition.method().getDescription(true));
                     }
                 }
+                long registrationId = registration.getRegId();
                 return new OracleRegistrationLease(registration, logicalExpirationNanos,
-                    dispatcher::dispatchRecoveryInvalidation);
+                    () -> dispatcher.dispatchRecoveryInvalidation(registrationId));
             } catch (SQLException | RuntimeException e) {
                 subscription.untrack(registration);
                 try {

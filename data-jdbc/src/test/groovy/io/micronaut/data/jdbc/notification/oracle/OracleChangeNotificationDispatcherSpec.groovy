@@ -23,7 +23,6 @@ import io.micronaut.data.jdbc.notification.DeferredChangeEvent
 import io.micronaut.inject.BeanDefinition
 import io.micronaut.inject.ExecutableMethod
 import oracle.jdbc.dcn.DatabaseChangeEvent
-import oracle.jdbc.dcn.DatabaseChangeRegistration
 import oracle.jdbc.dcn.QueryChangeDescription
 import oracle.jdbc.dcn.RowChangeDescription
 import oracle.jdbc.dcn.TableChangeDescription
@@ -34,7 +33,7 @@ import spock.lang.Specification
 import java.util.concurrent.Executor
 import java.util.concurrent.RejectedExecutionException
 import java.util.function.BiConsumer
-import java.util.function.Consumer
+import java.util.function.LongConsumer
 
 class OracleChangeNotificationDispatcherSpec extends Specification {
 
@@ -57,7 +56,6 @@ class OracleChangeNotificationDispatcherSpec extends Specification {
 
     void "database shutdown delegates retries only for reliable client-initiated notifications"() {
         given:
-        def registration = Mock(DatabaseChangeRegistration)
         def method = Mock(ExecutableMethod)
         method.getDescription(true) >> "void onChange(ChangeEvent<Book>)"
         def properties = new Properties()
@@ -65,21 +63,22 @@ class OracleChangeNotificationDispatcherSpec extends Specification {
         properties.setProperty(OracleConnection.DCN_CLIENT_INIT_CONNECTION, clientInitiatedConnection.toString())
         def definition = definition(null, method, properties)
         def recoveryRequests = []
-        def dispatcher = dispatcher(definition, Mock(BeanContext), registration,
-            { DatabaseChangeRegistration ignored -> } as Consumer,
-            { DatabaseChangeRegistration ignored, DatabaseChangeEvent.AdditionalEventType ignoredType -> } as BiConsumer,
-            { DatabaseChangeRegistration ignored -> } as Consumer,
-            { DatabaseChangeRegistration failed -> recoveryRequests << failed } as Consumer,
+        def dispatcher = dispatcher(definition, Mock(BeanContext),
+            { long ignored -> } as LongConsumer,
+            { Long ignored, DatabaseChangeEvent.AdditionalEventType ignoredType -> } as BiConsumer,
+            { long ignored -> } as LongConsumer,
+            { long failed -> recoveryRequests << failed } as LongConsumer,
             { Runnable command -> command.run() } as Executor,
             new OracleChangeNotificationTaskTracker())
         def event = Mock(DatabaseChangeEvent)
         event.getEventType() >> DatabaseChangeEvent.EventType.SHUTDOWN
+        event.getRegId() >> 41L
 
         when:
         dispatcher.onDatabaseChangeNotification(event)
 
         then:
-        recoveryRequests == (driverReconnectRetryEnabled ? [] : [registration])
+        recoveryRequests == (driverReconnectRetryEnabled ? [] : [41L])
         0 * method.invoke(_, _)
         0 * event.getTableChangeDescription()
 
@@ -107,22 +106,21 @@ class OracleChangeNotificationDispatcherSpec extends Specification {
 
     void "removes a registration when Oracle reports registration deregistration"() {
         given:
-        def registration = Mock(DatabaseChangeRegistration)
-        registration.getRegId() >> 41L
-        def registrationPurgedHandler = Mock(Consumer)
+        def registrationPurgedHandler = Mock(LongConsumer)
         def deregistrationHandler = Mock(BiConsumer)
-        def queryDeregistrationHandler = Mock(Consumer)
+        def queryDeregistrationHandler = Mock(LongConsumer)
         def event = Mock(DatabaseChangeEvent)
         event.getEventType() >> DatabaseChangeEvent.EventType.DEREG
         event.getAdditionalEventType() >> DatabaseChangeEvent.AdditionalEventType.TIMEOUT
-        def dispatcher = dispatcher(definition(), Mock(BeanContext), registration,
+        event.getRegId() >> 41L
+        def dispatcher = dispatcher(definition(), Mock(BeanContext),
             registrationPurgedHandler, deregistrationHandler, queryDeregistrationHandler)
 
         when:
         dispatcher.onDatabaseChangeNotification(event)
 
         then:
-        1 * deregistrationHandler.accept(registration, DatabaseChangeEvent.AdditionalEventType.TIMEOUT)
+        1 * deregistrationHandler.accept(41L, DatabaseChangeEvent.AdditionalEventType.TIMEOUT)
         0 * registrationPurgedHandler.accept(_)
         0 * queryDeregistrationHandler.accept(_)
         0 * event.getTableChangeDescription()
@@ -130,26 +128,25 @@ class OracleChangeNotificationDispatcherSpec extends Specification {
 
     void "unregisters the enclosing registration when Oracle deregisters its listener query"() {
         given:
-        def registration = Mock(DatabaseChangeRegistration)
-        registration.getRegId() >> 42L
-        def registrationPurgedHandler = Mock(Consumer)
+        def registrationPurgedHandler = Mock(LongConsumer)
         def deregistrationHandler = Mock(BiConsumer)
-        def queryDeregistrationHandler = Mock(Consumer)
+        def queryDeregistrationHandler = Mock(LongConsumer)
         def query = Mock(QueryChangeDescription)
         query.getQueryId() >> 7L
         query.getQueryChangeEventType() >> QueryChangeDescription.QueryChangeEventType.DEREG
         def event = Mock(DatabaseChangeEvent)
         event.getEventType() >> DatabaseChangeEvent.EventType.QUERYCHANGE
+        event.getRegId() >> 42L
         event.getTableChangeDescription() >> null
         event.getQueryChangeDescription() >> ([query] as QueryChangeDescription[])
-        def dispatcher = dispatcher(definition(), Mock(BeanContext), registration,
+        def dispatcher = dispatcher(definition(), Mock(BeanContext),
             registrationPurgedHandler, deregistrationHandler, queryDeregistrationHandler)
 
         when:
         dispatcher.onDatabaseChangeNotification(event)
 
         then:
-        1 * queryDeregistrationHandler.accept(registration)
+        1 * queryDeregistrationHandler.accept(42L)
         0 * registrationPurgedHandler.accept(_)
         0 * deregistrationHandler.accept(_, _)
         0 * query.getTableChangeDescription()
@@ -157,19 +154,19 @@ class OracleChangeNotificationDispatcherSpec extends Specification {
 
     void "forwards each registration deregistration reason without dispatching changes"() {
         given:
-        def registration = Mock(DatabaseChangeRegistration)
         def deregistrationHandler = Mock(BiConsumer)
         def event = Mock(DatabaseChangeEvent)
         event.getEventType() >> DatabaseChangeEvent.EventType.DEREG
         event.getAdditionalEventType() >> reason
-        def dispatcher = dispatcher(definition(), Mock(BeanContext), registration,
-            Mock(Consumer), deregistrationHandler, Mock(Consumer))
+        event.getRegId() >> 43L
+        def dispatcher = dispatcher(definition(), Mock(BeanContext),
+            Mock(LongConsumer), deregistrationHandler, Mock(LongConsumer))
 
         when:
         dispatcher.onDatabaseChangeNotification(event)
 
         then:
-        1 * deregistrationHandler.accept(registration, reason)
+        1 * deregistrationHandler.accept(43L, reason)
         0 * event.getTableChangeDescription()
 
         where:
@@ -186,15 +183,14 @@ class OracleChangeNotificationDispatcherSpec extends Specification {
         method.getDescription(true) >> "void onChange(ChangeEvent<Book>)"
         def properties = new Properties()
         properties.setProperty(OracleConnection.NTF_QOS_PURGE_ON_NTFN, "true")
-        def registration = Mock(DatabaseChangeRegistration)
         def sequence = []
-        def purgeHandler = { DatabaseChangeRegistration ignored -> sequence << "purged" } as Consumer
+        def purgeHandler = { long ignored -> sequence << "purged" } as LongConsumer
         def event = Mock(DatabaseChangeEvent)
         event.getTableChangeDescription() >> null
         event.getQueryChangeDescription() >> ([] as QueryChangeDescription[])
         def listenerDefinition = definition(beanDefinition, method, properties)
-        def dispatcher = dispatcher(listenerDefinition, beanContext, registration, purgeHandler,
-            Mock(BiConsumer), Mock(Consumer), { Runnable command -> command.run() } as Executor,
+        def dispatcher = dispatcher(listenerDefinition, beanContext, purgeHandler,
+            Mock(BiConsumer), Mock(LongConsumer), { Runnable command -> command.run() } as Executor,
             new OracleChangeNotificationTaskTracker())
 
         when:
@@ -210,8 +206,7 @@ class OracleChangeNotificationDispatcherSpec extends Specification {
 
     void "query deregistration takes precedence over other query descriptions"() {
         given:
-        def registration = Mock(DatabaseChangeRegistration)
-        def queryDeregistrationHandler = Mock(Consumer)
+        def queryDeregistrationHandler = Mock(LongConsumer)
         def changedQuery = Mock(QueryChangeDescription)
         changedQuery.getQueryChangeEventType() >> QueryChangeDescription.QueryChangeEventType.QUERYCHANGE
         def deregisteredQuery = Mock(QueryChangeDescription)
@@ -221,14 +216,15 @@ class OracleChangeNotificationDispatcherSpec extends Specification {
         event.getEventType() >> DatabaseChangeEvent.EventType.QUERYCHANGE
         event.getTableChangeDescription() >> null
         event.getQueryChangeDescription() >> ([changedQuery, deregisteredQuery] as QueryChangeDescription[])
-        def dispatcher = dispatcher(definition(), Mock(BeanContext), registration, Mock(Consumer),
+        event.getRegId() >> 44L
+        def dispatcher = dispatcher(definition(), Mock(BeanContext), Mock(LongConsumer),
             Mock(BiConsumer), queryDeregistrationHandler)
 
         when:
         dispatcher.onDatabaseChangeNotification(event)
 
         then:
-        1 * queryDeregistrationHandler.accept(registration)
+        1 * queryDeregistrationHandler.accept(44L)
         0 * changedQuery.getTableChangeDescription()
     }
 
@@ -399,8 +395,8 @@ class OracleChangeNotificationDispatcherSpec extends Specification {
         given:
         def taskTracker = new OracleChangeNotificationTaskTracker()
         Executor executor = { Runnable ignored -> throw new RejectedExecutionException("executor closed") } as Executor
-        def dispatcher = dispatcher(definition(), Mock(BeanContext), Mock(DatabaseChangeRegistration), Mock(Consumer),
-            Mock(BiConsumer), Mock(Consumer), executor, taskTracker)
+        def dispatcher = dispatcher(definition(), Mock(BeanContext), Mock(LongConsumer),
+            Mock(BiConsumer), Mock(LongConsumer), executor, taskTracker)
 
         when:
         dispatcher.onDatabaseChangeNotification(Mock(DatabaseChangeEvent))
@@ -415,8 +411,8 @@ class OracleChangeNotificationDispatcherSpec extends Specification {
         def taskTracker = new OracleChangeNotificationTaskTracker()
         taskTracker.shutdownGracefully().toCompletableFuture().join()
         def event = Mock(DatabaseChangeEvent)
-        def dispatcher = dispatcher(definition(), Mock(BeanContext), Mock(DatabaseChangeRegistration), Mock(Consumer),
-            Mock(BiConsumer), Mock(Consumer), { Runnable command -> command.run() } as Executor, taskTracker)
+        def dispatcher = dispatcher(definition(), Mock(BeanContext), Mock(LongConsumer),
+            Mock(BiConsumer), Mock(LongConsumer), { Runnable command -> command.run() } as Executor, taskTracker)
 
         when:
         dispatcher.onDatabaseChangeNotification(event)
@@ -643,53 +639,49 @@ class OracleChangeNotificationDispatcherSpec extends Specification {
     private OracleChangeNotificationDispatcher dispatcher(OracleChangeListenerDefinition definition,
                                                             BeanContext beanContext) {
         Executor executor = { Runnable command -> command.run() } as Executor
-        Consumer<DatabaseChangeRegistration> registrationPurgedHandler = { DatabaseChangeRegistration ignored -> } as Consumer
-        BiConsumer<DatabaseChangeRegistration, DatabaseChangeEvent.AdditionalEventType> deregistrationHandler =
-            { DatabaseChangeRegistration ignored, DatabaseChangeEvent.AdditionalEventType ignoredType -> } as BiConsumer
-        Consumer<DatabaseChangeRegistration> queryDeregistrationHandler = { DatabaseChangeRegistration ignored -> } as Consumer
-        return dispatcher(definition, beanContext, Mock(DatabaseChangeRegistration),
+        LongConsumer registrationPurgedHandler = { long ignored -> } as LongConsumer
+        BiConsumer<Long, DatabaseChangeEvent.AdditionalEventType> deregistrationHandler =
+            { Long ignored, DatabaseChangeEvent.AdditionalEventType ignoredType -> } as BiConsumer
+        LongConsumer queryDeregistrationHandler = { long ignored -> } as LongConsumer
+        return dispatcher(definition, beanContext,
             registrationPurgedHandler, deregistrationHandler, queryDeregistrationHandler)
     }
 
     private OracleChangeNotificationDispatcher dispatcher(OracleChangeListenerDefinition definition,
                                                             BeanContext beanContext,
-                                                            DatabaseChangeRegistration registration,
-                                                            Consumer<DatabaseChangeRegistration> registrationPurgedHandler,
-                                                            BiConsumer<DatabaseChangeRegistration, DatabaseChangeEvent.AdditionalEventType> deregistrationHandler,
-                                                            Consumer<DatabaseChangeRegistration> queryDeregistrationHandler) {
+                                                            LongConsumer registrationPurgedHandler,
+                                                            BiConsumer<Long, DatabaseChangeEvent.AdditionalEventType> deregistrationHandler,
+                                                            LongConsumer queryDeregistrationHandler) {
         Executor executor = { Runnable command -> command.run() } as Executor
-        return dispatcher(definition, beanContext, registration, registrationPurgedHandler,
+        return dispatcher(definition, beanContext, registrationPurgedHandler,
             deregistrationHandler, queryDeregistrationHandler,
-            { DatabaseChangeRegistration ignored -> } as Consumer,
+            { long ignored -> } as LongConsumer,
             executor, new OracleChangeNotificationTaskTracker())
     }
 
     private OracleChangeNotificationDispatcher dispatcher(OracleChangeListenerDefinition definition,
                                                             BeanContext beanContext,
-                                                            DatabaseChangeRegistration registration,
-                                                            Consumer<DatabaseChangeRegistration> registrationPurgedHandler,
-                                                            BiConsumer<DatabaseChangeRegistration, DatabaseChangeEvent.AdditionalEventType> deregistrationHandler,
-                                                            Consumer<DatabaseChangeRegistration> queryDeregistrationHandler,
+                                                            LongConsumer registrationPurgedHandler,
+                                                            BiConsumer<Long, DatabaseChangeEvent.AdditionalEventType> deregistrationHandler,
+                                                            LongConsumer queryDeregistrationHandler,
                                                             Executor executor,
                                                             OracleChangeNotificationTaskTracker taskTracker) {
-        return dispatcher(definition, beanContext, registration, registrationPurgedHandler,
+        return dispatcher(definition, beanContext, registrationPurgedHandler,
             deregistrationHandler, queryDeregistrationHandler,
-            { DatabaseChangeRegistration ignored -> } as Consumer, executor, taskTracker)
+            { long ignored -> } as LongConsumer, executor, taskTracker)
     }
 
     private OracleChangeNotificationDispatcher dispatcher(OracleChangeListenerDefinition definition,
                                                             BeanContext beanContext,
-                                                            DatabaseChangeRegistration registration,
-                                                            Consumer<DatabaseChangeRegistration> registrationPurgedHandler,
-                                                            BiConsumer<DatabaseChangeRegistration, DatabaseChangeEvent.AdditionalEventType> deregistrationHandler,
-                                                            Consumer<DatabaseChangeRegistration> queryDeregistrationHandler,
-                                                            Consumer<DatabaseChangeRegistration> databaseShutdownHandler,
+                                                            LongConsumer registrationPurgedHandler,
+                                                            BiConsumer<Long, DatabaseChangeEvent.AdditionalEventType> deregistrationHandler,
+                                                            LongConsumer queryDeregistrationHandler,
+                                                            LongConsumer databaseShutdownHandler,
                                                             Executor executor,
                                                             OracleChangeNotificationTaskTracker taskTracker) {
         return new OracleChangeNotificationDispatcher(
             "inventory",
             definition,
-            registration,
             beanContext,
             executor,
             taskTracker,
