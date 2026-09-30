@@ -322,13 +322,9 @@ final class JdbcSchemaMetadataReader {
         if (!sameOrUnknown(expectedSchema, databaseAsCatalog ? tableCatalog : tableSchema)) {
             return null;
         }
-        SqlTableMetadata table = tables.get(tableKey);
-        if (table == null) {
-            table = new SqlTableMetadata(tableCatalog, tableSchema, tableName, identifierMatcher);
-            tables.put(tableKey, table);
-            return table;
-        }
-        // A table with the same name in another schema
+        SqlTableMetadata table = tables.computeIfAbsent(tableKey,
+            key -> new SqlTableMetadata(tableCatalog, tableSchema, tableName, identifierMatcher));
+        // Not a table with the same name in another schema
         return Objects.equals(table.getCatalog(), tableCatalog) && Objects.equals(table.getSchema(), tableSchema) ? table : null;
     }
 

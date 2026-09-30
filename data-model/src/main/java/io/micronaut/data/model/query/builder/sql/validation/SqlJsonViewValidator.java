@@ -86,20 +86,6 @@ public final class SqlJsonViewValidator {
     }
 
     /**
-     * @return The field in the messages, like {@code  field [key] of table [table]}
-     */
-    private static String field(String key, String table) {
-        return " field [" + key + "] of table [" + table + "]";
-    }
-
-    /**
-     * @return The sub view in the messages, like {@code  sub view [path] of table [table]}
-     */
-    private static String subView(String path, String table) {
-        return " sub view [" + path + "] of table [" + table + "]";
-    }
-
-    /**
      * The validation of a view, the view tables are indexed by their parent table.
      */
     private static final class ViewValidation {
@@ -126,6 +112,20 @@ public final class SqlJsonViewValidator {
             for (SqlJsonViewMetadata.Field field : metadata.fields()) {
                 columnsByTable.computeIfAbsent(field.tableNumber(), number -> new LinkedHashMap<>()).put(field.key(), field.column());
             }
+        }
+
+        /**
+         * @return The field in the messages, like {@code  field [key] of table [table]}
+         */
+        private static String field(String key, String table) {
+            return " field [" + key + "] of table [" + table + "]";
+        }
+
+        /**
+         * @return The sub view in the messages, like {@code  sub view [path] of table [table]}
+         */
+        private static String subView(String path, String table) {
+            return " sub view [" + path + "] of table [" + table + "]";
         }
 
         private void validateTable(SqlJsonViewMapping.Table mappedTable, SqlJsonViewMetadata.Table table, String path) {
