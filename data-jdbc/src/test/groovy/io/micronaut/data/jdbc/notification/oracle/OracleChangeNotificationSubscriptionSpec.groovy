@@ -214,6 +214,102 @@ class OracleChangeNotificationSubscriptionSpec extends Specification {
         listenerEvents.empty
     }
 
+    void "does not activate an initial registration deregistered during association"() {
+        given:
+        def original = Mock(DatabaseChangeRegistration)
+        def scheduledTasks = []
+        def clock = { 0L } as LongSupplier
+        OracleChangeNotificationSubscription targetSubscription
+        def fixture = registrarFixture([original], clock, [], { int ignored ->
+            targetSubscription.handleRegistrationDeregistered(
+                original.getRegId(), DatabaseChangeEvent.AdditionalEventType.TIMEOUT)
+        })
+        targetSubscription = subscription(fixture.registrar, scheduler(scheduledTasks, []),
+            new OracleChangeNotificationTaskTracker(), clock,
+            new OracleChangeNotificationRenewalPolicy(
+                10, OracleChangeNotification.RenewalMode.OVERLAPPING, 2))
+
+        when:
+        targetSubscription.start()
+
+        then:
+        noExceptionThrown()
+        scheduledTasks.empty
+        0 * fixture.oracleConnection.unregisterDatabaseChangeNotification(original)
+    }
+
+    void "cleans up the initial registration when shutdown prevents activation"() {
+        given:
+        def original = Mock(DatabaseChangeRegistration)
+        def scheduledTasks = []
+        def taskTracker = new OracleChangeNotificationTaskTracker()
+        def clock = { 0L } as LongSupplier
+        def fixture = registrarFixture([original], clock, [], { int ignored ->
+            taskTracker.shutdownGracefully()
+        })
+        def subscription = subscription(fixture.registrar, scheduler(scheduledTasks, []), taskTracker, clock,
+            new OracleChangeNotificationRenewalPolicy(
+                10, OracleChangeNotification.RenewalMode.OVERLAPPING, 2))
+
+        when:
+        subscription.start()
+
+        then:
+        noExceptionThrown()
+        scheduledTasks.empty
+        1 * fixture.oracleConnection.unregisterDatabaseChangeNotification(original)
+    }
+
+    void "hands an overlapping replacement failure during association to receiver recovery"() {
+        given:
+        def original = Mock(DatabaseChangeRegistration)
+        def failed = Mock(DatabaseChangeRegistration)
+        def recovered = Mock(DatabaseChangeRegistration)
+        def scheduledTasks = []
+        def scheduledDelays = []
+        List<Runnable> queuedTasks = []
+        def lifecycle = []
+        def listenerEvents = []
+        def clock = { 0L } as LongSupplier
+        def fixture
+        fixture = registrarFixture([original, failed, recovered], clock, lifecycle, { int index ->
+            if (index == 2) {
+                fixture.failureListeners[1].onFailure(new SQLException('Replacement receiver failed during association'))
+            }
+        })
+        def subscription = subscription(fixture.registrar, scheduler(scheduledTasks, scheduledDelays),
+            new OracleChangeNotificationTaskTracker(), clock,
+            new OracleChangeNotificationRenewalPolicy(
+                10, OracleChangeNotification.RenewalMode.OVERLAPPING, 2),
+            { Runnable command -> queuedTasks << command } as Executor,
+            { Object event -> listenerEvents << event.operation() })
+        fixture.oracleConnection.unregisterDatabaseChangeNotification(original) >> { lifecycle << 'unregister-1' }
+        fixture.oracleConnection.unregisterDatabaseChangeNotification(failed) >> { lifecycle << 'unregister-2' }
+
+        when:
+        subscription.start()
+        scheduledTasks.first().run()
+        queuedTasks.remove(0).run()
+
+        then:
+        fixture.registrationIndex.get() == 2
+        queuedTasks.size() == 1
+        scheduledDelays == [TimeUnit.SECONDS.toNanos(8)]
+        listenerEvents.empty
+        lifecycle == ['register-1', 'associate-1', 'register-2', 'associate-2', 'unregister-1']
+
+        when:
+        queuedTasks.remove(0).run()
+
+        then:
+        fixture.registrationIndex.get() == 3
+        queuedTasks.empty
+        scheduledDelays == [TimeUnit.SECONDS.toNanos(8), TimeUnit.SECONDS.toNanos(8)]
+        listenerEvents == [ChangeOperation.INVALIDATE]
+        lifecycle == ['register-1', 'associate-1', 'register-2', 'associate-2', 'unregister-1',
+                      'unregister-2', 'register-3', 'associate-3']
+    }
+
     void "retries renewal when a replacement is deregistered before activation"() {
         given:
         def original = Mock(DatabaseChangeRegistration)
@@ -778,6 +874,7 @@ class OracleChangeNotificationSubscriptionSpec extends Specification {
         def operations = Mock(JdbcOperations)
         def connection = Mock(Connection)
         def oracleConnection = Mock(OracleConnection)
+        oracleConnection.getProperties() >> new Properties()
         def statement = Mock(Statement)
         def oracleStatement = Mock(OracleStatement)
         def resultSet = Mock(ResultSet)

@@ -49,7 +49,7 @@ class OracleChangeNotificationSubscriptionManagerSpec extends Specification {
         given:
         def operations = Mock(JdbcOperations)
         def connection = Mock(Connection)
-        def oracleConnection = Mock(OracleConnection)
+        def oracleConnection = mockOracleConnection()
         def original = mockRegistration()
         def replacement = mockRegistration()
         def firstStatement = Mock(Statement)
@@ -120,7 +120,7 @@ class OracleChangeNotificationSubscriptionManagerSpec extends Specification {
         given:
         def operations = Mock(JdbcOperations)
         def connection = Mock(Connection)
-        def oracleConnection = Mock(OracleConnection)
+        def oracleConnection = mockOracleConnection()
         def registration = mockRegistration()
         def statement = Mock(Statement)
         def oracleStatement = Mock(OracleStatement)
@@ -166,7 +166,7 @@ class OracleChangeNotificationSubscriptionManagerSpec extends Specification {
         given:
         def operations = Mock(JdbcOperations)
         def connection = Mock(Connection)
-        def oracleConnection = Mock(OracleConnection)
+        def oracleConnection = mockOracleConnection()
         def registration = mockRegistration()
         def statement = Mock(Statement)
         def oracleStatement = Mock(OracleStatement)
@@ -195,7 +195,7 @@ class OracleChangeNotificationSubscriptionManagerSpec extends Specification {
         given:
         def operations = Mock(JdbcOperations)
         def connection = Mock(Connection)
-        def oracleConnection = Mock(OracleConnection)
+        def oracleConnection = mockOracleConnection()
         def firstRegistration = mockRegistration()
         def secondRegistration = mockRegistration()
         def firstStatement = Mock(Statement)
@@ -235,7 +235,7 @@ class OracleChangeNotificationSubscriptionManagerSpec extends Specification {
         given:
         def operations = Mock(JdbcOperations)
         def connection = Mock(Connection)
-        def oracleConnection = Mock(OracleConnection)
+        def oracleConnection = mockOracleConnection()
         def registration = mockRegistration()
         def statement = Mock(Statement)
         def oracleStatement = Mock(OracleStatement)
@@ -282,7 +282,7 @@ class OracleChangeNotificationSubscriptionManagerSpec extends Specification {
         given:
         def operations = Mock(JdbcOperations)
         def connection = Mock(Connection)
-        def oracleConnection = Mock(OracleConnection)
+        def oracleConnection = mockOracleConnection()
         def registration = mockRegistration()
         def statement = Mock(Statement)
         def oracleStatement = Mock(OracleStatement)
@@ -332,7 +332,7 @@ class OracleChangeNotificationSubscriptionManagerSpec extends Specification {
         given:
         def operations = Mock(JdbcOperations)
         def connection = Mock(Connection)
-        def oracleConnection = Mock(OracleConnection)
+        def oracleConnection = mockOracleConnection()
         def firstRegistration = mockRegistration()
         def secondRegistration = mockRegistration()
         def firstStatement = Mock(Statement)
@@ -393,6 +393,12 @@ class OracleChangeNotificationSubscriptionManagerSpec extends Specification {
         def scheduler = Mock(TaskScheduler)
         scheduler.schedule(_ as Duration, _ as Runnable) >> Mock(ScheduledFuture)
         return scheduler
+    }
+
+    private OracleConnection mockOracleConnection() {
+        def connection = Mock(OracleConnection)
+        connection.getProperties() >> new Properties()
+        return connection
     }
 
     private DatabaseChangeRegistration mockRegistration() {

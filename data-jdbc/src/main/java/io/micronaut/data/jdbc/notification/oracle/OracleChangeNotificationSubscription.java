@@ -131,17 +131,19 @@ final class OracleChangeNotificationSubscription {
     /**
      * Creates the initial registration for this listener and activates its lease.
      *
-     * <p>If the subscription has stopped while the registration was being created, the new
-     * registration is unregistered instead. Exceptions from registration creation or lease
-     * activation propagate to the manager so it can roll back registrations started earlier.</p>
+     * <p>If the subscription has stopped or the registration is no longer tracked when activation
+     * is attempted, the candidate is discarded and cleaned up if still owned. An adopted lease may
+     * already require receiver recovery. Exceptions from registration creation or lease activation
+     * propagate to the manager so it can roll back registrations started earlier.</p>
      *
      * @throws RuntimeException if registration creation or activation fails
      */
     void start() {
         OracleRegistrationLease registrationLease = registrar.createRegistration(this);
-        if (!activateLease(registrationLease)) {
-            LOG.trace("Discarding inactive DCN registration [{}] for datasource [{}] and listener method [{}]",
-                registrationLease.registration().getRegId(), dataSourceName, methodDescription);
+        ActivationResult activation = activateLease(registrationLease);
+        if (activation.outcome() == ActivationOutcome.STOPPED || activation.outcome() == ActivationOutcome.UNAVAILABLE) {
+            LOG.trace("Discarding inactive DCN registration [{}] with activation outcome [{}] for datasource [{}] and listener method [{}]",
+                registrationLease.registration().getRegId(), activation.outcome(), dataSourceName, methodDescription);
             unregister(registrationLease.registration());
         }
     }
@@ -416,15 +418,19 @@ final class OracleChangeNotificationSubscription {
      * pending, it is dispatched after the replacement becomes current.</p>
      *
      * @param registrationLease the lease to activate
-     * @return {@code true} if the lease became current; {@code false} if it is no longer eligible
+     * @return the activation outcome and candidate lease; the outcome distinguishes healthy
+     * activation, receiver recovery, stopping, and an unavailable registration
      */
-    private boolean activateLease(OracleRegistrationLease registrationLease) {
+    private ActivationResult activateLease(OracleRegistrationLease registrationLease) {
         SQLException pendingFailure;
         long invalidationGenerationToDispatch = -1;
         synchronized (this) {
             pendingFailure = pendingFailures.remove(registrationLease.registration());
-            if (state == State.CLOSED || taskTracker.isShutdownStarted() || !isTracked(registrationLease.registration())) {
-                return false;
+            if (state == State.CLOSED || taskTracker.isShutdownStarted()) {
+                return new ActivationResult(ActivationOutcome.STOPPED, registrationLease);
+            }
+            if (!isTracked(registrationLease.registration())) {
+                return new ActivationResult(ActivationOutcome.UNAVAILABLE, registrationLease);
             }
             // Preserve the previous lease and state if scheduling the replacement fails.
             ScheduledFuture<?> nextRenewal = pendingFailure == null && renewalPolicy.renewable()
@@ -442,10 +448,12 @@ final class OracleChangeNotificationSubscription {
         }
         if (pendingFailure != null) {
             recoverFailedLeaseDuringActivation(registrationLease, pendingFailure);
-        } else if (invalidationGenerationToDispatch >= 0) {
+            return new ActivationResult(ActivationOutcome.RECOVERY_REQUIRED, registrationLease);
+        }
+        if (invalidationGenerationToDispatch >= 0) {
             dispatchInvalidationIfCurrent(registrationLease, invalidationGenerationToDispatch);
         }
-        return true;
+        return new ActivationResult(ActivationOutcome.ACTIVATED, registrationLease);
     }
 
     /**
@@ -727,20 +735,22 @@ final class OracleChangeNotificationSubscription {
     }
 
     /**
-     * Activates a replacement before attempting to unregister the previous lease.
+     * Adopts a replacement before attempting to unregister the previous lease.
      *
      * <p>This ordering minimizes delivery gaps by activating the replacement before requesting
-     * cleanup of the previous registration. Cleanup is best-effort; a failure is logged without
-     * discarding the replacement.</p>
+     * cleanup of the previous registration. If the replacement receiver failed during association,
+     * receiver recovery owns the replacement instead. Cleanup is best-effort; a failure is logged
+     * without discarding the replacement.</p>
      *
      * @param previousLease the lease being replaced, or {@code null} if no previous lease remains
      */
     private void renewOverlapping(@Nullable OracleRegistrationLease previousLease) {
-        OracleRegistrationLease replacementLease = createReplacementRegistration(previousLease);
-        if (replacementLease != null && previousLease != null) {
-            LOG.trace("Cleaning up replaced DCN registration [{}] after activating replacement [{}] for datasource [{}] and listener method [{}]",
-                previousLease.registration().getRegId(), replacementLease.registration().getRegId(), dataSourceName,
-                methodDescription);
+        ActivationResult replacement = createReplacementRegistration(previousLease);
+        if (previousLease != null && (replacement.outcome() == ActivationOutcome.ACTIVATED
+            || replacement.outcome() == ActivationOutcome.RECOVERY_REQUIRED)) {
+            LOG.trace("Cleaning up replaced DCN registration [{}] after adopting replacement [{}] with activation outcome [{}] for datasource [{}] and listener method [{}]",
+                previousLease.registration().getRegId(), replacement.lease().registration().getRegId(), replacement.outcome(),
+                dataSourceName, methodDescription);
             unregister(previousLease.registration());
         }
     }
@@ -785,39 +795,40 @@ final class OracleChangeNotificationSubscription {
     }
 
     /**
-     * Creates and activates a replacement registration for this subscription.
+     * Creates a replacement registration and attempts to activate it for this subscription.
      *
-     * <p>If shutdown prevents activation, the newly created registration is unregistered and
-     * {@code null} is returned. If the registration became unavailable before activation, an
-     * exception triggers the caller's renewal or recovery retry path. A cleanup failure is added
+     * <p>If stopping prevents activation, the newly created registration is unregistered and
+     * {@link ActivationOutcome#STOPPED} is returned. An adopted lease is reported as either
+     * {@link ActivationOutcome#ACTIVATED} or {@link ActivationOutcome#RECOVERY_REQUIRED}.
+     * If the registration became unavailable before activation, an exception triggers the
+     * caller's renewal or recovery retry path. A cleanup failure is added
      * as a suppressed exception before an activation failure is rethrown.</p>
      *
      * @param previousLease the lease being replaced, or {@code null} if no previous lease remains
-     * @return the activated replacement lease, or {@code null} if shutdown prevented activation
+     * @return the replacement lease and its activation outcome
      * @throws RuntimeException if registration creation or activation fails
      */
-    private @Nullable OracleRegistrationLease createReplacementRegistration(@Nullable OracleRegistrationLease previousLease) {
+    private ActivationResult createReplacementRegistration(@Nullable OracleRegistrationLease previousLease) {
         LOG.trace("Creating replacement DCN registration for datasource [{}], listener method [{}], and previous registration [{}]",
             dataSourceName, methodDescription,
             previousLease == null ? null : previousLease.registration().getRegId());
         OracleRegistrationLease replacementLease = registrar.createRegistration(this);
         try {
-            if (!activateLease(replacementLease)) {
-                LOG.trace("Discarding inactive replacement DCN registration [{}] for datasource [{}] and listener method [{}]",
-                    replacementLease.registration().getRegId(), dataSourceName, methodDescription);
-                unregister(replacementLease.registration());
-                synchronized (this) {
-                    if (state == State.CLOSED || taskTracker.isShutdownStarted()) {
-                        return null;
-                    }
+            ActivationResult activation = activateLease(replacementLease);
+            return switch (activation.outcome()) {
+                case ACTIVATED, RECOVERY_REQUIRED -> activation;
+                case STOPPED -> {
+                    LOG.trace("Discarding inactive replacement DCN registration [{}] for datasource [{}] and listener method [{}]",
+                        replacementLease.registration().getRegId(), dataSourceName, methodDescription);
+                    unregister(replacementLease.registration());
+                    yield activation;
                 }
                 // A callback can deregister and untrack the replacement during query association.
                 // The renewal/recovery caller must retry instead of remaining in its in-progress state.
-                throw new IllegalStateException("Replacement DCN registration [" + replacementLease.registration().getRegId()
+                case UNAVAILABLE -> throw new IllegalStateException("Replacement DCN registration [" + replacementLease.registration().getRegId()
                     + "] for datasource [" + dataSourceName + "] and listener method [" + methodDescription
                     + "] became unavailable before activation");
-            }
-            return replacementLease;
+            };
         } catch (RuntimeException activationFailure) {
             try {
                 unregisterIfOwned(replacementLease.registration());
@@ -1080,6 +1091,26 @@ final class OracleChangeNotificationSubscription {
         if (untrack(registration)) {
             registrar.unregisterRegistration(registration);
         }
+    }
+
+    /**
+     * Records the activation decision for a candidate lease. Subsequent callbacks may change the
+     * subscription again before the caller handles this result.
+     *
+     * @param outcome the activation decision
+     * @param lease the candidate lease, including when its activation was rejected
+     */
+    private record ActivationResult(ActivationOutcome outcome, OracleRegistrationLease lease) {
+    }
+
+    /**
+     * Distinguishes healthy activation, a handoff to recovery, and rejection reasons.
+     */
+    private enum ActivationOutcome {
+        ACTIVATED,
+        RECOVERY_REQUIRED,
+        STOPPED,
+        UNAVAILABLE
     }
 
     private enum State {
