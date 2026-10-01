@@ -154,7 +154,7 @@ import oracle.jdbc.OracleConnection;
 })
 ----
 
-Properties are passed to the Oracle driver, except that Micronaut Data always enables `DCN_NOTIFY_ROWIDS` and controls `NTF_TIMEOUT` according to the renewal strategy.
+Properties are passed to the Oracle driver, except that Micronaut Data always enables `DCN_NOTIFY_ROWIDS` and controls `NTF_TIMEOUT` according to the renewal strategy. Do not set `NTF_TIMEOUT` in the annotation or datasource-level `oracle.jdbc.dcnOptions`; use `timeoutSeconds` instead.
 `NTF_QOS_PURGE_ON_NTFN` makes each Oracle registration one-shot: Oracle removes it after its first notification, and Micronaut Data closes the listener subscription when it receives the purge callback. With renewal enabled, a registration that reaches its timeout before any notification arrives is renewed.
 
 By default, `renewal = NONE` and `timeoutSeconds = 0`. Oracle Database does not expire the registration, and Micronaut Data does not renew it. To have Oracle Database expire a registration without replacing it, set a positive timeout:
