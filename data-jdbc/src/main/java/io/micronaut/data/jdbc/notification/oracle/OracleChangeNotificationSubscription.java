@@ -979,11 +979,9 @@ final class OracleChangeNotificationSubscription {
         // Keep the current registration active during the timeout grace period.
         // The fallback renewal expects the subscription to be ACTIVE.
         state = State.ACTIVE;
-        // Wait until Oracle Database's timeout, extended by the grace period, before retrying replacement.
-        // Calculate the remaining delay with the monotonic clock and clamp elapsed deadlines to zero.
-        long serverExpirationNanos = registrationLease.logicalExpirationNanos()
-            + TimeUnit.SECONDS.toNanos(OracleChangeNotificationRenewalPolicy.SERVER_TIMEOUT_GRACE_SECONDS);
-        long delayNanos = Math.max(0, serverExpirationNanos - nanoTimeSupplier.getAsLong());
+        // Wait for the conservative server deadline, measured after query association rather
+        // than from the earlier local-renewal start time, before attempting replacement.
+        long delayNanos = Math.max(0, registrationLease.serverExpirationNanos() - nanoTimeSupplier.getAsLong());
         try {
             renewalTask = taskScheduler.schedule(
                 Duration.ofNanos(delayNanos),

@@ -18,15 +18,17 @@ package io.micronaut.data.jdbc.notification.oracle;
 import oracle.jdbc.dcn.DatabaseChangeRegistration;
 
 /**
- * Associates one physical Oracle registration with its local expiration deadline and the
- * invalidation action to run if it activates as a recovery replacement.
+ * Associates one physical Oracle registration with its local renewal and conservative server
+ * expiration deadlines and the invalidation action to run if it activates as a recovery replacement.
  *
- * @param registration           the physical Oracle registration
- * @param logicalExpirationNanos the local expiration deadline measured by the registrar's monotonic clock
- * @param invalidationAction     the action that dispatches an INVALIDATE event to the listener after
- *                               this lease is activated to replace an unavailable registration
+ * @param registration the physical Oracle registration
+ * @param logicalExpirationNanos the local renewal deadline measured before registration begins
+ * @param serverExpirationNanos the conservative server-expiration deadline measured after query association
+ * @param invalidationAction the action that dispatches an INVALIDATE event to the listener after
+ *                           this lease is activated to replace an unavailable registration
  */
 record OracleRegistrationLease(DatabaseChangeRegistration registration,
                                long logicalExpirationNanos,
+                               long serverExpirationNanos,
                                Runnable invalidationAction) {
 }

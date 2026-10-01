@@ -19,12 +19,10 @@ import io.micronaut.core.annotation.AnnotationClassValue;
 import io.micronaut.core.annotation.AnnotationMetadata;
 import io.micronaut.core.annotation.AnnotationValue;
 import io.micronaut.data.annotation.MappedEntity;
-import io.micronaut.data.annotation.MappedProperty;
-import io.micronaut.data.annotation.Transient;
 import io.micronaut.data.intercept.annotation.OracleChangeListenerQuery;
 import io.micronaut.data.model.DataType;
 import io.micronaut.data.model.PersistentEntity;
-import io.micronaut.data.model.PersistentProperty;
+import io.micronaut.data.model.PersistentEntityUtils;
 import io.micronaut.data.model.query.builder.QueryParameterBinding;
 import io.micronaut.data.model.query.builder.QueryResult;
 import io.micronaut.data.model.query.builder.sql.Dialect;
@@ -33,22 +31,25 @@ import io.micronaut.data.processor.model.SourcePersistentEntity;
 import io.micronaut.data.processor.model.criteria.SourcePersistentEntityCriteriaQuery;
 import io.micronaut.data.processor.model.criteria.impl.SourcePersistentEntityCriteriaBuilderImpl;
 import io.micronaut.inject.ast.ClassElement;
-import io.micronaut.inject.ast.FieldElement;
 import io.micronaut.inject.ast.MethodElement;
 import io.micronaut.inject.visitor.TypeElementVisitor;
 import io.micronaut.inject.visitor.VisitorContext;
 
 import java.util.HashMap;
+import java.util.HashSet;
 import java.util.List;
+import java.util.Locale;
 import java.util.Map;
 import java.util.Objects;
+import java.util.Set;
 import java.util.function.Function;
 
 /**
  * Processes {@code @OracleChangeNotification} methods during compilation.
  *
  * <p>The visitor verifies that the method is also a {@code @ChangeListener}, validates
- * Oracle registration settings and query-change-notification select columns, and generates
+ * Oracle registration settings and query-change-notification select columns against the
+ * entity's physical mapping using Oracle Database identifier rules, and generates
  * an internal {@link OracleChangeListenerQuery} annotation containing the query used to
  * reload the mapped entity by its reported Oracle {@code ROWID}.</p>
  *
@@ -75,10 +76,10 @@ public final class OracleChangeNotificationVisitor implements TypeElementVisitor
 
     @Override
     public void visitMethod(MethodElement element, VisitorContext context) {
-        if (!element.hasAnnotation(ORACLE_CHANGE_NOTIFICATION)) {
+        if (!element.hasStereotype(ORACLE_CHANGE_NOTIFICATION)) {
             return;
         }
-        if (!element.hasAnnotation(ChangeListenerVisitor.CHANGE_LISTENER)) {
+        if (!element.hasStereotype(ChangeListenerVisitor.CHANGE_LISTENER)) {
             context.fail("@OracleChangeNotification requires @ChangeListener", element);
             return;
         }
@@ -89,7 +90,7 @@ public final class OracleChangeNotificationVisitor implements TypeElementVisitor
         ClassElement resolvedEntityType = context.getClassElement(entityType.getName()).orElse(entityType);
         Function<ClassElement, SourcePersistentEntity> entityResolver = new SourcePersistentEntityResolver(context, entityMap);
         SourcePersistentEntity persistentEntity = entityResolver.apply(resolvedEntityType);
-        if (!validateRegistration(element.getAnnotationMetadata(), context, element, persistentEntity, resolvedEntityType)) {
+        if (!validateRegistration(element.getAnnotationMetadata(), context, element, persistentEntity)) {
             return;
         }
 
@@ -114,8 +115,7 @@ public final class OracleChangeNotificationVisitor implements TypeElementVisitor
     private static boolean validateRegistration(AnnotationMetadata annotationMetadata,
                                                 VisitorContext context,
                                                 MethodElement element,
-                                                SourcePersistentEntity persistentEntity,
-                                                ClassElement entityType) {
+                                                SourcePersistentEntity persistentEntity) {
         String select = annotationMetadata.stringValue(ORACLE_CHANGE_NOTIFICATION, "select").orElse("*").trim();
         if (select.isEmpty()) {
             context.fail("@OracleChangeNotification must have a non-blank select value", element);
@@ -168,7 +168,7 @@ public final class OracleChangeNotificationVisitor implements TypeElementVisitor
                 + QUERY_CHANGE_NOTIFICATION + " is true", element);
             return false;
         }
-        if (queryChangeNotification && !validateSelect(select, persistentEntity, entityType, context, element)) {
+        if (queryChangeNotification && !validateSelect(select, persistentEntity, context, element)) {
             return false;
         }
         return true;
@@ -176,15 +176,15 @@ public final class OracleChangeNotificationVisitor implements TypeElementVisitor
 
     private static boolean validateSelect(String select,
                                           SourcePersistentEntity persistentEntity,
-                                          ClassElement entityType,
                                           VisitorContext context,
                                           MethodElement element) {
         if (select.equals("*")) {
             return true;
         }
+        Set<String> mappedColumns = mappedColumns(persistentEntity);
         for (String selection : select.split(",", -1)) {
             String column = selection.trim();
-            if (column.isEmpty() || !isMappedColumn(persistentEntity, entityType, unquote(column))) {
+            if (!matchesMappedColumn(column, mappedColumns)) {
                 context.fail("@OracleChangeNotification select must be '*' or a comma-separated list of mapped columns; "
                     + "unsupported selection [" + column + "]", element);
                 return false;
@@ -193,38 +193,25 @@ public final class OracleChangeNotificationVisitor implements TypeElementVisitor
         return true;
     }
 
-    private static boolean isMappedColumn(PersistentEntity persistentEntity, ClassElement entityType, String column) {
-        if (persistentEntity.getIdentityProperties().stream().anyMatch(property -> matchesColumn(property, column))
-            || (persistentEntity.hasVersion() && matchesColumn(persistentEntity.getVersion(), column))
-            || persistentEntity.getPersistentProperties().stream().anyMatch(property -> matchesColumn(property, column))) {
-            return true;
-        }
-        for (FieldElement field : entityType.getFields()) {
-            if (field.isStatic() || field.hasStereotype(Transient.class)) {
-                continue;
-            }
-            String mappedName = field.stringValue(MappedProperty.class)
-                .filter(value -> !value.isBlank())
-                .orElseGet(() -> persistentEntity.getNamingStrategy().mappedName(field.getName()));
-            if (unquote(mappedName).equalsIgnoreCase(column)) {
-                return true;
-            }
-        }
+    private static Set<String> mappedColumns(PersistentEntity persistentEntity) {
+        Set<String> columns = new HashSet<>();
+        PersistentEntityUtils.traversePersistentProperties(persistentEntity, (associations, property) ->
+            columns.add(persistentEntity.getNamingStrategy().mappedName(associations, property).toUpperCase(Locale.ENGLISH)));
         PersistentEntity parentEntity = persistentEntity.getParentEntity();
-        return parentEntity != null && entityType.getSuperType()
-            .map(parentType -> isMappedColumn(parentEntity, parentType, column))
-            .orElse(false);
-    }
-
-    private static boolean matchesColumn(PersistentProperty property, String column) {
-        return unquote(property.getPersistedName()).equalsIgnoreCase(column);
-    }
-
-    private static String unquote(String identifier) {
-        if (identifier.length() >= 2 && identifier.charAt(0) == '"' && identifier.charAt(identifier.length() - 1) == '"') {
-            return identifier.substring(1, identifier.length() - 1);
+        if (parentEntity != null) {
+            columns.addAll(mappedColumns(parentEntity));
         }
-        return identifier;
+        return columns;
+    }
+
+    private static boolean matchesMappedColumn(String column, Set<String> mappedColumns) {
+        if (column.length() > 2 && column.charAt(0) == '"' && column.charAt(column.length() - 1) == '"') {
+            // Quoted Oracle identifiers are case-sensitive; the Oracle query builder renders
+            // mapped column names in upper case inside its identifier quotes.
+            return mappedColumns.contains(column.substring(1, column.length() - 1));
+        }
+        return column.matches("[A-Za-z][A-Za-z0-9_$#]*")
+            && mappedColumns.contains(column.toUpperCase(Locale.ENGLISH));
     }
 
     private static boolean invalidChangeLag(AnnotationValue<?> property,

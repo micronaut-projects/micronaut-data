@@ -95,7 +95,9 @@ public @interface OracleChangeNotification {
     /**
      * @return Oracle JDBC Continuous Query Notification registration properties. The
      * {@code DCN_CLIENT_INIT_CONNECTION} property defaults to {@code true} unless explicitly
-     * configured here.
+     * configured here. Connection-level {@code oracle.jdbc.dcnOptions} may override these values;
+     * conflicting overrides of framework-controlled settings fail registration. Reattaching to
+     * an existing registration with {@code DCN_CLIENT_INIT_REGID} is not supported.
      */
     Property[] properties() default {};
 

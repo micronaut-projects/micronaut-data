@@ -33,6 +33,28 @@ class ChangeListenerVisitorSpec extends AbstractTypeElementSpec {
         beanDefinition.getRequiredMethod('changed', ChangeEvent.class) != null
     }
 
+    void "test composed ChangeListener receives compile-time signature validation"() {
+        given:
+        String source = listenerSource('''
+    @BookChanges
+    Book changed(ChangeEvent<Book> event) { return null; }
+''').replace('@Singleton\nclass BookListener', '''@ChangeListener
+@java.lang.annotation.Retention(java.lang.annotation.RetentionPolicy.RUNTIME)
+@java.lang.annotation.Target(java.lang.annotation.ElementType.METHOD)
+@interface BookChanges {
+}
+
+@Singleton
+class BookListener''')
+
+        when:
+        buildBeanDefinition('test.BookListener', source)
+
+        then:
+        def exception = thrown(RuntimeException)
+        exception.message.contains('method must return void')
+    }
+
     @Unroll
     void "test invalid listener signature fails compilation: #description"() {
         when:

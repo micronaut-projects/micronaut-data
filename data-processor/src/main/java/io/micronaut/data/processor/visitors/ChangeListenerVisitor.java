@@ -41,7 +41,7 @@ public final class ChangeListenerVisitor implements TypeElementVisitor<Object, O
 
     @Override
     public void visitMethod(MethodElement element, VisitorContext context) {
-        if (!element.hasAnnotation(CHANGE_LISTENER)) {
+        if (!element.hasStereotype(CHANGE_LISTENER)) {
             return;
         }
         if (element.isPrivate() || element.isStatic()) {

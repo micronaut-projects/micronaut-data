@@ -24,9 +24,12 @@ import oracle.jdbc.dcn.DatabaseChangeRegistration;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
+import java.io.IOException;
+import java.io.StringReader;
 import java.sql.ResultSet;
 import java.sql.SQLException;
 import java.sql.Statement;
+import java.util.Properties;
 import java.util.concurrent.Executor;
 import java.util.concurrent.TimeUnit;
 import java.util.function.LongSupplier;
@@ -88,14 +91,15 @@ final class OracleChangeNotificationRegistrar {
      * tracking and attempts to unregister it before propagating the failure.</p>
      *
      * @param subscription the subscription that owns the registration and receives its callbacks
-     * @return the registration lease, including its locally calculated expiration deadline and
-     *         post-recovery invalidation action
+     * @return the registration lease, including local renewal and conservative server-expiration
+     *         deadlines and the post-recovery invalidation action
      * @throws RuntimeException if registration setup or query association fails
      */
     OracleRegistrationLease createRegistration(OracleChangeNotificationSubscription subscription) {
         OracleChangeListenerDefinition definition = subscription.getDefinition();
         return operations.execute(connection -> {
             OracleConnection oracleConnection = connection.unwrap(OracleConnection.class);
+            validateConnectionOptions(definition, oracleConnection);
             // The registration lifetime can start while this call is in progress. Measuring before
             // the call prevents local renewal from running later than its configured logical deadline.
             long startedNanos = nanoTimeSupplier.getAsLong();
@@ -122,8 +126,12 @@ final class OracleChangeNotificationRegistrar {
                             registration.getRegId(), dataSourceName, definition.method().getDescription(true));
                     }
                 }
+                // Server-side lifetime may begin after the registration call starts. Measure after
+                // association so the fallback cannot precede the server's configured timeout.
+                long serverExpirationNanos = nanoTimeSupplier.getAsLong()
+                    + TimeUnit.SECONDS.toNanos(definition.renewalPolicy().serverTimeoutSeconds());
                 long registrationId = registration.getRegId();
-                return new OracleRegistrationLease(registration, logicalExpirationNanos,
+                return new OracleRegistrationLease(registration, logicalExpirationNanos, serverExpirationNanos,
                     () -> dispatcher.dispatchRecoveryInvalidation(registrationId));
             } catch (SQLException | RuntimeException e) {
                 subscription.untrack(registration);
@@ -135,6 +143,71 @@ final class OracleChangeNotificationRegistrar {
                 throw e;
             }
         });
+    }
+
+    /**
+     * Checks that datasource-level DCN options do not conflict with settings required by the listener.
+     *
+     * <p>The driver's connection-level options take precedence over the listener's registration
+     * options, so this method validates those overrides before creating a registration.</p>
+     *
+     * @param definition the listener definition containing requested registration settings
+     * @param connection the database connection with any datasource-level DCN options
+     */
+    void validateConnectionOptions(OracleChangeListenerDefinition definition, OracleConnection connection) {
+        String connectionOptions = connection.getProperties()
+            .getProperty(OracleConnection.CONNECTION_PROPERTY_DATABASE_CHANGE_NOTIFICATION_OPTIONS);
+        if (connectionOptions != null) {
+            Properties connectionProperties = new Properties();
+            try {
+                connectionProperties.load(new StringReader(connectionOptions.replace(',', '\n')));
+            } catch (IOException | IllegalArgumentException e) {
+                throw invalidRegistrationOptions(definition, "cannot read connection-level DCN options: " + e.getMessage());
+            }
+            validateConnectionOptions(definition, connectionProperties);
+        }
+    }
+
+    void validateConnectionOptions(OracleChangeListenerDefinition definition, Properties connectionOptions) {
+        if (connectionOptions.containsKey(OracleConnection.DCN_CLIENT_INIT_REGID)) {
+            throw invalidRegistrationOptions(definition, OracleConnection.DCN_CLIENT_INIT_REGID
+                + " is not supported because registration reattachment has no subscription ownership semantics");
+        }
+        Properties requestedOptions = definition.registrationProperties();
+        validateBooleanOption(definition, connectionOptions, OracleConnection.DCN_NOTIFY_ROWIDS, true);
+        validateBooleanOption(definition, connectionOptions, OracleConnection.DCN_QUERY_CHANGE_NOTIFICATION, false);
+        validateBooleanOption(definition, connectionOptions, OracleConnection.NTF_QOS_PURGE_ON_NTFN, false);
+        validateIntegerOption(definition, connectionOptions, OracleConnection.DCN_NOTIFY_CHANGELAG, 0);
+        validateIntegerOption(definition, connectionOptions, OracleConnection.NTF_TIMEOUT, 0);
+    }
+
+    private void validateBooleanOption(OracleChangeListenerDefinition definition, Properties effectiveOptions, String name, boolean defaultValue) {
+        Properties requestedOptions = definition.registrationProperties();
+        boolean requested = Boolean.parseBoolean(requestedOptions.getProperty(name, Boolean.toString(defaultValue)));
+        boolean effective = Boolean.parseBoolean(effectiveOptions.getProperty(name, Boolean.toString(defaultValue)));
+        if (requested != effective) {
+            throw invalidRegistrationOptions(definition, "effective " + name + " [" + effective
+                + "] conflicts with listener setting [" + requested + "]");
+        }
+    }
+
+    private void validateIntegerOption(OracleChangeListenerDefinition definition, Properties effectiveOptions, String name, int defaultValue) {
+        Properties requestedOptions = definition.registrationProperties();
+        String requested = requestedOptions.getProperty(name, Integer.toString(defaultValue));
+        String effective = effectiveOptions.getProperty(name, Integer.toString(defaultValue));
+        try {
+            if (Integer.parseInt(requested) != Integer.parseInt(effective)) {
+                throw invalidRegistrationOptions(definition, "effective " + name + " [" + effective
+                    + "] conflicts with listener setting [" + requested + "]");
+            }
+        } catch (NumberFormatException e) {
+            throw invalidRegistrationOptions(definition, "effective " + name + " [" + effective + "] is not an integer");
+        }
+    }
+
+    private IllegalStateException invalidRegistrationOptions(OracleChangeListenerDefinition definition, String message) {
+        return new IllegalStateException("DCN registration for datasource [" + dataSourceName + "] and listener method ["
+            + definition.method().getDescription(true) + "]: " + message);
     }
 
     /**

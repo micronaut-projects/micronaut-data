@@ -25,7 +25,7 @@ import java.util.Properties;
  *
  * <p>The definition contains the listener method, the mapped table identity used to match
  * notification table names, the SQL query associated with the notification registration, the
- * effective registration properties, the entity loader used to reload current state for
+ * requested registration properties, the entity loader used to reload current state for
  * non-deleted rows by {@code ROWID}, and the registration renewal policy.</p>
  *
  * @param beanDefinition         The bean definition that owns the listener method.
@@ -34,7 +34,7 @@ import java.util.Properties;
  * @param registrationQuery      The SQL query associated with the notification registration.
  * @param entityLoader           The loader that resolves current entity state for a non-deleted row from its
  *                               {@code ROWID}; deleted rows cannot be reloaded.
- * @param registrationProperties The effective registration properties, including framework-required
+ * @param registrationProperties The requested registration properties, including framework-required
  *                               {@code ROWID} notification and registration timeout settings.
  * @param renewalPolicy          The registration lifetime and replacement policy, if enabled.
  */
