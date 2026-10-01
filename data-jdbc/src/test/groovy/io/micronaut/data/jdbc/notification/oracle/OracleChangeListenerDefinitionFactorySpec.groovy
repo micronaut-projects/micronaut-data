@@ -98,7 +98,7 @@ class OracleChangeListenerDefinitionFactorySpec extends Specification {
         def operations = operations()
         def listenerMethod = listenerMethod(notification([
                 timeoutSeconds: 120,
-                renewal      : OracleChangeNotification.RenewalMode.AFTER_EXPIRATION
+                renewal       : OracleChangeNotification.RenewalMode.AFTER_EXPIRATION
         ]))
 
         when:
@@ -225,10 +225,37 @@ class OracleChangeListenerDefinitionFactorySpec extends Specification {
         exception.message.contains(expectedMessage)
 
         where:
-        propertyName                          | propertyValue | expectedMessage
-        ''                                    | 'value'       | 'has an Oracle property with a blank name'
-        OracleConnection.DCN_NOTIFY_CHANGELAG | '1'           | 'requires ' + OracleConnection.DCN_NOTIFY_CHANGELAG
-        OracleConnection.NTF_TIMEOUT          | '10'          | 'must configure Oracle registration timeout with timeoutSeconds'
+        propertyName                              | propertyValue                            | expectedMessage
+        ''                                        | 'value'                                  | 'has an Oracle property with a blank name'
+        OracleConnection.DCN_NOTIFY_CHANGELAG     | '1'                                      | 'requires ' + OracleConnection.DCN_NOTIFY_CHANGELAG
+        OracleConnection.DCN_NOTIFY_ROWIDS        | 'false'                                  | 'requires ' + OracleConnection.DCN_NOTIFY_ROWIDS + ' to be true'
+        OracleConnection.NTF_TIMEOUT              | '10'                                     | 'must configure Oracle registration timeout with timeoutSeconds'
+        OracleConnection.DCN_CLIENT_INIT_REGID    | '0'                                      | 'DCN_CLIENT_INIT_REGID: reusing an existing reliable DCN registration is not supported'
+        OracleConnection.NTF_GROUPING_CLASS       | OracleConnection.NTF_GROUPING_CLASS_TIME | OracleConnection.NTF_GROUPING_CLASS + ': notification grouping is not supported'
+        OracleConnection.NTF_GROUPING_VALUE       | '30'                                     | OracleConnection.NTF_GROUPING_VALUE + ': notification grouping is not supported'
+        OracleConnection.NTF_GROUPING_TYPE        | OracleConnection.NTF_GROUPING_TYPE_LAST  | OracleConnection.NTF_GROUPING_TYPE + ': notification grouping is not supported'
+        OracleConnection.NTF_GROUPING_REPEAT_TIME | '2'                                      | OracleConnection.NTF_GROUPING_REPEAT_TIME + ': notification grouping is not supported'
+        OracleConnection.NTF_GROUPING_START_TIME  | 'tomorrow'                               | OracleConnection.NTF_GROUPING_START_TIME + ': notification grouping is not supported'
+        OracleConnection.DCN_PULL_NOTIFICATIONS   | 'true'                                   | OracleConnection.DCN_PULL_NOTIFICATIONS + ' [true] is not supported'
+        OracleConnection.DCN_PULL_QUEUE_NAME      | 'CHANGES'                                | OracleConnection.DCN_PULL_QUEUE_NAME + ' is not supported'
+    }
+
+    void "accepts explicitly disabled grouping and pull options"() {
+        given:
+        def operations = operations()
+        def listenerMethod = listenerMethod(notification([:], [
+                [name: OracleConnection.NTF_GROUPING_CLASS, value: OracleConnection.NTF_GROUPING_CLASS_NONE],
+                [name: OracleConnection.DCN_PULL_NOTIFICATIONS, value: 'false'],
+                [name: OracleConnection.DCN_NOTIFY_ROWIDS, value: 'true']
+        ]))
+
+        when:
+        def definition = new OracleChangeListenerDefinitionFactory(operations).create(listenerMethod)
+
+        then:
+        definition.registrationProperties().getProperty(OracleConnection.NTF_GROUPING_CLASS) == OracleConnection.NTF_GROUPING_CLASS_NONE
+        definition.registrationProperties().getProperty(OracleConnection.DCN_PULL_NOTIFICATIONS) == 'false'
+        definition.registrationProperties().getProperty(OracleConnection.DCN_NOTIFY_ROWIDS) == 'true'
     }
 
     void "requires Oracle change notification configuration"() {

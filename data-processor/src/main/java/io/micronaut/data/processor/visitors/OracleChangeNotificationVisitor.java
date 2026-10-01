@@ -142,10 +142,7 @@ public final class OracleChangeNotificationVisitor implements TypeElementVisitor
         Object properties = annotationMetadata.getValue(ORACLE_CHANGE_NOTIFICATION, "properties").orElse(null);
         if (properties instanceof AnnotationValue<?>[] annotationValues) {
             for (AnnotationValue<?> property : annotationValues) {
-                if (invalidChangeLag(property, context, element)) {
-                    return false;
-                }
-                if (invalidTimeoutProperty(property, context, element)) {
+                if (invalidOracleProperty(property, context, element)) {
                     return false;
                 }
                 queryChangeNotification |= isEnabled(property, QUERY_CHANGE_NOTIFICATION);
@@ -153,10 +150,7 @@ public final class OracleChangeNotificationVisitor implements TypeElementVisitor
         } else if (properties instanceof Iterable<?> iterable) {
             for (Object property : iterable) {
                 if (property instanceof AnnotationValue<?> annotationValue) {
-                    if (invalidChangeLag(annotationValue, context, element)) {
-                        return false;
-                    }
-                    if (invalidTimeoutProperty(annotationValue, context, element)) {
+                    if (invalidOracleProperty(annotationValue, context, element)) {
                         return false;
                     }
                     queryChangeNotification |= isEnabled(annotationValue, QUERY_CHANGE_NOTIFICATION);
@@ -214,23 +208,36 @@ public final class OracleChangeNotificationVisitor implements TypeElementVisitor
             && mappedColumns.contains(column.toUpperCase(Locale.ENGLISH));
     }
 
-    private static boolean invalidChangeLag(AnnotationValue<?> property,
-                                            VisitorContext context,
-                                            MethodElement element) {
-        if (NOTIFY_CHANGE_LAG.equals(property.stringValue("name").orElse(""))
-            && !"0".equals(property.stringValue("value").orElse("").trim())) {
-            context.fail("@OracleChangeNotification requires " + NOTIFY_CHANGE_LAG
-                + " to be 0 so row-level operation and ROWID details are available", element);
-            return true;
+    private static boolean invalidOracleProperty(AnnotationValue<?> property,
+                                                 VisitorContext context,
+                                                 MethodElement element) {
+        String name = property.stringValue("name").orElse("");
+        String value = property.stringValue("value").orElse("");
+        String error = null;
+        if (name.isBlank()) {
+            error = "has an Oracle property with a blank name";
+        } else if (NOTIFY_CHANGE_LAG.equals(name) && !"0".equals(value.trim())) {
+            error = "requires " + name + " to be 0 so row-level operation and ROWID details are available";
+        } else if ("DCN_NOTIFY_ROWIDS".equals(name) && !"true".equalsIgnoreCase(value)) {
+            error = "requires " + name + " to be true so row-level operation and ROWID details are available";
+        } else if (NOTIFICATION_TIMEOUT.equals(name)) {
+            error = "must configure Oracle registration timeout with timeoutSeconds";
+        } else if ("DCN_CLIENT_INIT_REGID".equals(name)) {
+            error = name + ": reusing an existing reliable DCN registration is not supported";
+        } else if ("NTF_GROUPING_CLASS".equals(name) && !"NTF_GROUPING_CLASS_NONE".equals(value)) {
+            error = name + ": notification grouping is not supported";
+        } else if ("NTF_GROUPING_VALUE".equals(name)
+            || "NTF_GROUPING_TYPE".equals(name)
+            || "NTF_GROUPING_REPEAT_TIME".equals(name)
+            || "NTF_GROUPING_START_TIME".equals(name)) {
+            error = name + ": notification grouping is not supported";
+        } else if ("DCN_PULL_NOTIFICATIONS".equals(name) && !"false".equalsIgnoreCase(value)) {
+            error = name + " [" + value + "] is not supported because AQ pull delivery does not invoke the listener callback";
+        } else if ("DCN_PULL_QUEUE_NAME".equals(name)) {
+            error = name + " is not supported because AQ pull delivery does not invoke the listener callback";
         }
-        return false;
-    }
-
-    private static boolean invalidTimeoutProperty(AnnotationValue<?> property,
-                                                  VisitorContext context,
-                                                  MethodElement element) {
-        if (NOTIFICATION_TIMEOUT.equals(property.stringValue("name").orElse(""))) {
-            context.fail("@OracleChangeNotification must configure Oracle registration timeout with timeoutSeconds", element);
+        if (error != null) {
+            context.fail("@OracleChangeNotification " + error, element);
             return true;
         }
         return false;

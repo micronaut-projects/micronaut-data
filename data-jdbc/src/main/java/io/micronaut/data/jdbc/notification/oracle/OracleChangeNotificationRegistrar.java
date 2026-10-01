@@ -160,59 +160,9 @@ final class OracleChangeNotificationRegistrar {
             }
         }
         if (!connectionProperties.isEmpty()) {
-            validateConnectionProperties(connectionProperties, definition);
+            OracleChangeNotificationOptionsValidator.validateConnectionOptions(connectionProperties, definition, dataSourceName);
         }
         return connectionProperties;
-    }
-
-    /**
-     * Checks driver's connection-level properties do not conflict with settings required by the listener.
-     *
-     * <p>The driver's connection-level properties take precedence over the listener's registration
-     * properties in jdbc driver, so this method validates those overrides before creating a registration.</p>
-     *
-     * @param connectionProperties the connection properties
-     * @param definition           the listener definition containing requested registration settings
-     */
-    void validateConnectionProperties(Properties connectionProperties, OracleChangeListenerDefinition definition) {
-        if (connectionProperties.containsKey(OracleConnection.DCN_CLIENT_INIT_REGID)) {
-            throw invalidRegistrationProperty(definition, OracleConnection.DCN_CLIENT_INIT_REGID
-                + " is not supported because registration reattachment has no subscription ownership semantics");
-        }
-        validateBooleanProperty(definition, connectionProperties, OracleConnection.DCN_NOTIFY_ROWIDS, true);
-        validateBooleanProperty(definition, connectionProperties, OracleConnection.DCN_QUERY_CHANGE_NOTIFICATION, false);
-        validateBooleanProperty(definition, connectionProperties, OracleConnection.NTF_QOS_PURGE_ON_NTFN, false);
-        validateIntegerProperty(definition, connectionProperties, OracleConnection.DCN_NOTIFY_CHANGELAG, 0);
-        validateIntegerProperty(definition, connectionProperties, OracleConnection.NTF_TIMEOUT, 0);
-    }
-
-    private void validateBooleanProperty(OracleChangeListenerDefinition definition, Properties effectiveProperties, String name, boolean defaultValue) {
-        Properties requestedProperties = definition.registrationProperties();
-        boolean requested = Boolean.parseBoolean(requestedProperties.getProperty(name, Boolean.toString(defaultValue)));
-        boolean effective = Boolean.parseBoolean(effectiveProperties.getProperty(name, Boolean.toString(defaultValue)));
-        if (requested != effective) {
-            throw invalidRegistrationProperty(definition, "effective " + name + " [" + effective
-                + "] conflicts with listener setting [" + requested + "]");
-        }
-    }
-
-    private void validateIntegerProperty(OracleChangeListenerDefinition definition, Properties effectiveProperties, String name, int defaultValue) {
-        Properties requestedProperties = definition.registrationProperties();
-        String requested = requestedProperties.getProperty(name, Integer.toString(defaultValue));
-        String effective = effectiveProperties.getProperty(name, Integer.toString(defaultValue));
-        try {
-            if (Integer.parseInt(requested) != Integer.parseInt(effective)) {
-                throw invalidRegistrationProperty(definition, "effective " + name + " [" + effective
-                    + "] conflicts with listener setting [" + requested + "]");
-            }
-        } catch (NumberFormatException e) {
-            throw invalidRegistrationProperty(definition, "effective " + name + " [" + effective + "] is not an integer");
-        }
-    }
-
-    private IllegalStateException invalidRegistrationProperty(OracleChangeListenerDefinition definition, String message) {
-        return new IllegalStateException("DCN registration for datasource [" + dataSourceName + "] and listener method ["
-            + definition.method().getDescription(true) + "]: " + message);
     }
 
     /**

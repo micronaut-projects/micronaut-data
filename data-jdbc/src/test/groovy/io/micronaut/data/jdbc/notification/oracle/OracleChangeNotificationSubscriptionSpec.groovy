@@ -652,6 +652,46 @@ class OracleChangeNotificationSubscriptionSpec extends Specification {
         0 * fixture.oracleConnection.unregisterDatabaseChangeNotification(original)
     }
 
+    void "uses a conservative server deadline when registration takes time"() {
+        given:
+        def original = Mock(DatabaseChangeRegistration)
+        def replacement = Mock(DatabaseChangeRegistration)
+        def scheduledTasks = []
+        def scheduledDelays = []
+        def nanoTimeSupplier = new AtomicLong()
+        def clock = { nanoTimeSupplier.get() } as LongSupplier
+        def fixture = registrarFixture([original, replacement], clock, [], { int index ->
+            if (index == 1) {
+                nanoTimeSupplier.set(TimeUnit.SECONDS.toNanos(7))
+            }
+        })
+        def subscription = subscription(fixture.registrar, scheduler(scheduledTasks, scheduledDelays),
+            new OracleChangeNotificationTaskTracker(), clock,
+            new OracleChangeNotificationRenewalPolicy(
+                10, OracleChangeNotification.RenewalMode.AFTER_EXPIRATION, 0))
+
+        when:
+        subscription.start()
+        nanoTimeSupplier.set(TimeUnit.SECONDS.toNanos(10))
+        scheduledTasks.first().run()
+
+        then:
+        1 * fixture.oracleConnection.unregisterDatabaseChangeNotification(original) >> {
+            throw new DataAccessException('Unable to unregister')
+        }
+        fixture.registrationIndex.get() == 1
+        scheduledDelays == [TimeUnit.SECONDS.toNanos(3), TimeUnit.SECONDS.toNanos(67)]
+
+        when:
+        nanoTimeSupplier.set(TimeUnit.SECONDS.toNanos(77))
+        scheduledTasks[1].run()
+
+        then:
+        fixture.registrationIndex.get() == 2
+        scheduledDelays[2] == TimeUnit.SECONDS.toNanos(10)
+        0 * fixture.oracleConnection.unregisterDatabaseChangeNotification(original)
+    }
+
     void "timeout callback renews the current registration after cleanup ownership was removed"() {
         given:
         def original = Mock(DatabaseChangeRegistration)
@@ -744,6 +784,7 @@ class OracleChangeNotificationSubscriptionSpec extends Specification {
         def beanContext = Mock(BeanContext)
         beanContext.getBean(_ as BeanDefinition) >> new Object()
         def registrationIndex = new AtomicInteger()
+        def registrationOptions = registrations.collect { new Properties() }
         def failureListeners = []
         def registeredListeners = []
         operations.execute(_ as ConnectionCallback) >> { ConnectionCallback<?> callback -> callback.call(connection) }
@@ -755,14 +796,16 @@ class OracleChangeNotificationSubscriptionSpec extends Specification {
             associationAction.call(registrationIndex.get())
             resultSet
         }
-        oracleConnection.registerDatabaseChangeNotification(_ as Properties, _ as DatabaseChangeListener) >> { Properties ignoredProperties, DatabaseChangeListener listener ->
+        oracleConnection.registerDatabaseChangeNotification(_ as Properties, _ as DatabaseChangeListener) >> { Properties requestedProperties, DatabaseChangeListener listener ->
             int index = registrationIndex.incrementAndGet()
             lifecycle << "register-$index"
             registeredListeners << listener
+            registrationOptions[index - 1].putAll(requestedProperties)
             registrations[index - 1]
         }
         registrations.eachWithIndex { DatabaseChangeRegistration registration, int index ->
             registration.getRegId() >> (index + 1L)
+            registration.getRegistrationOptions() >> registrationOptions[index]
             registration.addFailureListener(_ as FailureListener) >> { FailureListener listener ->
                 failureListeners << listener
             }

@@ -19,6 +19,9 @@ import io.micronaut.context.BeanContext
 import io.micronaut.data.exceptions.DataAccessException
 import io.micronaut.data.jdbc.runtime.ConnectionCallback
 import io.micronaut.data.jdbc.runtime.JdbcOperations
+import io.micronaut.data.jdbc.annotation.OracleChangeNotification
+import io.micronaut.inject.ExecutableMethod
+import io.micronaut.scheduling.TaskScheduler
 import oracle.jdbc.NotificationRegistration
 import oracle.jdbc.OracleConnection
 import oracle.jdbc.dcn.DatabaseChangeRegistration
@@ -30,6 +33,122 @@ import java.util.concurrent.Executor
 import java.util.function.LongSupplier
 
 class OracleChangeNotificationRegistrarSpec extends Specification {
+
+    void "rejects connection-level overrides of framework-controlled registration settings"() {
+        given:
+        def method = Mock(ExecutableMethod)
+        method.getDescription(true) >> 'void changed(ChangeEvent<Book>)'
+        def requested = new Properties()
+        requested.setProperty(OracleConnection.DCN_NOTIFY_ROWIDS, 'true')
+        requested.setProperty(OracleConnection.NTF_TIMEOUT, '120')
+        def connectionProperties = new Properties()
+        connectionProperties.setProperty(option, overrideValue)
+        def definition = new OracleChangeListenerDefinition(null, method, null, null, null, requested,
+                new OracleChangeNotificationRenewalPolicy(120, OracleChangeNotification.RenewalMode.NONE, 60))
+
+        when:
+        OracleChangeNotificationOptionsValidator.validateConnectionOptions(connectionProperties, definition, 'default')
+
+        then:
+        def failure = thrown(IllegalStateException)
+        failure.message.contains(option)
+        failure.message.contains('datasource [default]')
+        failure.message.contains('listener method [void changed(ChangeEvent<Book>)]')
+
+        where:
+        option                                         | overrideValue
+        OracleConnection.NTF_TIMEOUT                   | '60'
+        OracleConnection.DCN_NOTIFY_ROWIDS             | 'false'
+        OracleConnection.DCN_NOTIFY_CHANGELAG          | '1'
+        OracleConnection.DCN_QUERY_CHANGE_NOTIFICATION | 'true'
+        OracleConnection.NTF_QOS_PURGE_ON_NTFN         | 'true'
+        OracleConnection.DCN_CLIENT_INIT_REGID         | '42'
+        OracleConnection.NTF_GROUPING_CLASS            | OracleConnection.NTF_GROUPING_CLASS_TIME
+        OracleConnection.NTF_GROUPING_VALUE            | '30'
+        OracleConnection.NTF_GROUPING_TYPE             | OracleConnection.NTF_GROUPING_TYPE_LAST
+        OracleConnection.NTF_GROUPING_REPEAT_TIME      | '2'
+        OracleConnection.NTF_GROUPING_START_TIME       | 'tomorrow'
+        OracleConnection.DCN_PULL_NOTIFICATIONS        | 'true'
+        OracleConnection.DCN_PULL_QUEUE_NAME           | 'CHANGES'
+    }
+
+    void "accepts non-conflicting effective driver options"() {
+        given:
+        def requested = new Properties()
+        requested.setProperty(OracleConnection.NTF_TIMEOUT, '120')
+        requested.setProperty(OracleConnection.DCN_NOTIFY_ROWIDS, 'true')
+        def connectionProperties = new Properties()
+        connectionProperties.setProperty(OracleConnection.NTF_QOS_RELIABLE, 'true')
+        connectionProperties.setProperty(OracleConnection.NTF_GROUPING_CLASS, OracleConnection.NTF_GROUPING_CLASS_NONE)
+        connectionProperties.setProperty(OracleConnection.DCN_PULL_NOTIFICATIONS, 'false')
+        connectionProperties.setProperty(OracleConnection.DCN_NOTIFY_ROWIDS, 'true')
+        connectionProperties.setProperty(OracleConnection.DCN_QUERY_CHANGE_NOTIFICATION, 'false')
+        connectionProperties.setProperty(OracleConnection.NTF_QOS_PURGE_ON_NTFN, 'false')
+        connectionProperties.setProperty(OracleConnection.DCN_NOTIFY_CHANGELAG, '0')
+        connectionProperties.setProperty(OracleConnection.NTF_TIMEOUT, '120')
+        def definition = new OracleChangeListenerDefinition(null, Mock(ExecutableMethod), null, null, null,
+                requested, new OracleChangeNotificationRenewalPolicy(120, OracleChangeNotification.RenewalMode.NONE, 60))
+
+        when:
+        OracleChangeNotificationOptionsValidator.validateConnectionOptions(connectionProperties, definition, 'default')
+
+        then:
+        noExceptionThrown()
+    }
+
+    void "rejects unsupported reattachment from connection-level DCN options before registration"() {
+        given:
+        def requested = new Properties()
+        requested.setProperty(OracleConnection.NTF_TIMEOUT, '0')
+        requested.setProperty(OracleConnection.DCN_NOTIFY_ROWIDS, 'true')
+        def connection = Mock(OracleConnection)
+        def connectionProperties = new Properties()
+        connectionProperties.setProperty(OracleConnection.CONNECTION_PROPERTY_DATABASE_CHANGE_NOTIFICATION_OPTIONS,
+                'DCN_CLIENT_INIT_CONNECTION=true,DCN_CLIENT_INIT_REGID=42')
+        connection.properties >> connectionProperties
+        def definition = new OracleChangeListenerDefinition(null, Mock(ExecutableMethod), null, null, null,
+                requested, new OracleChangeNotificationRenewalPolicy(0, OracleChangeNotification.RenewalMode.NONE, 60))
+
+        when:
+        registrar(Mock(JdbcOperations)).getConnectionProperties(connection, definition)
+
+        then:
+        def failure = thrown(IllegalStateException)
+        failure.message.contains(OracleConnection.DCN_CLIENT_INIT_REGID)
+        0 * connection.registerDatabaseChangeNotification(_, _)
+    }
+
+    void "rejects unsupported connection options before creating a registration"() {
+        given:
+        def operations = Mock(JdbcOperations)
+        def connection = Mock(Connection)
+        def oracleConnection = Mock(OracleConnection)
+        def method = Mock(ExecutableMethod)
+        method.getDescription(true) >> 'void changed(ChangeEvent<Book>)'
+        def requested = new Properties()
+        requested.setProperty(OracleConnection.NTF_TIMEOUT, '0')
+        requested.setProperty(OracleConnection.DCN_NOTIFY_ROWIDS, 'true')
+        def connectionProperties = new Properties()
+        connectionProperties.setProperty(OracleConnection.CONNECTION_PROPERTY_DATABASE_CHANGE_NOTIFICATION_OPTIONS,
+                'DCN_PULL_NOTIFICATIONS=true')
+        def definition = new OracleChangeListenerDefinition(null, method, null, 'SELECT * FROM BOOK', null,
+                requested, new OracleChangeNotificationRenewalPolicy(0, OracleChangeNotification.RenewalMode.NONE, 60))
+        def registrar = registrar(operations)
+        def subscription = new OracleChangeNotificationSubscription('default', definition, registrar,
+                Mock(Executor), Mock(TaskScheduler), new OracleChangeNotificationTaskTracker(), { 0L } as LongSupplier)
+        connection.unwrap(OracleConnection) >> oracleConnection
+        oracleConnection.properties >> connectionProperties
+        operations.execute(_ as ConnectionCallback) >> { ConnectionCallback<?> callback -> callback.call(connection) }
+
+        when:
+        registrar.createRegistration(subscription)
+
+        then:
+        def failure = thrown(IllegalStateException)
+        failure.message.contains(OracleConnection.DCN_PULL_NOTIFICATIONS)
+        0 * oracleConnection.registerDatabaseChangeNotification(_, _)
+        0 * connection.createStatement()
+    }
 
     void "does not acquire a connection for a registration already closed by the driver"() {
         given:
@@ -132,6 +251,6 @@ class OracleChangeNotificationRegistrarSpec extends Specification {
 
     private OracleChangeNotificationRegistrar registrar(JdbcOperations operations) {
         new OracleChangeNotificationRegistrar('default', operations, Mock(BeanContext), Mock(Executor),
-            new OracleChangeNotificationTaskTracker(), { 0L } as LongSupplier)
+                new OracleChangeNotificationTaskTracker(), { 0L } as LongSupplier)
     }
 }

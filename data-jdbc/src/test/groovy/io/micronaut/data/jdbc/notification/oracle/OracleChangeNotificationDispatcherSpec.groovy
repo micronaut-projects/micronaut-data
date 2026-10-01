@@ -37,6 +37,35 @@ import java.util.function.LongConsumer
 
 class OracleChangeNotificationDispatcherSpec extends Specification {
 
+    void "database shutdown uses effective JDBC options rather than annotation options"() {
+        given:
+        def properties = new Properties()
+        properties.setProperty(OracleConnection.DCN_CLIENT_INIT_CONNECTION, 'true')
+        def method = Mock(ExecutableMethod)
+        method.getDescription(true) >> 'void onChange(ChangeEvent<Book>)'
+        def recoveryRequests = []
+        def dispatcher = dispatcher(definition(null, method, properties), Mock(BeanContext),
+            { long ignored -> } as LongConsumer,
+            { Long ignored, DatabaseChangeEvent.AdditionalEventType ignoredType -> } as BiConsumer,
+            { long ignored -> } as LongConsumer,
+            { long registrationId -> recoveryRequests << registrationId } as LongConsumer,
+            { Runnable command -> command.run() } as Executor,
+            new OracleChangeNotificationTaskTracker())
+        def effective = new Properties()
+        effective.putAll(properties)
+        effective.setProperty(OracleConnection.NTF_QOS_RELIABLE, 'true')
+        def event = Mock(DatabaseChangeEvent)
+        event.eventType >> DatabaseChangeEvent.EventType.SHUTDOWN
+        event.regId >> 41L
+
+        when:
+        dispatcher.configureRegistrationOptions(effective)
+        dispatcher.onDatabaseChangeNotification(event)
+
+        then:
+        recoveryRequests.empty
+    }
+
     void "does not dispatch an instance shutdown as a row change"() {
         given:
         def event = Mock(DatabaseChangeEvent)

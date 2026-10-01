@@ -16,7 +16,9 @@
 package io.micronaut.data.processor.visitors
 
 import io.micronaut.annotation.processing.test.AbstractTypeElementSpec
+import io.micronaut.context.annotation.Executable
 import io.micronaut.data.intercept.annotation.OracleChangeListenerQuery
+import io.micronaut.data.jdbc.annotation.ChangeListener
 import io.micronaut.data.jdbc.notification.ChangeEvent
 import spock.lang.Unroll
 
@@ -122,6 +124,120 @@ class OracleChangeNotificationVisitorSpec extends AbstractTypeElementSpec {
         beanDefinition.getRequiredMethod('changed', ChangeEvent).hasAnnotation(OracleChangeListenerQuery)
     }
 
+    void "test quoted select column must match Oracle's rendered identifier exactly"() {
+        when:
+        buildBeanDefinition('test.BookListener', listenerSource('''
+    @ChangeListener
+    @OracleChangeNotification(
+        select = "\\\"book_title\\\"",
+        properties = @OracleChangeNotification.Property(name = "DCN_QUERY_CHANGE_NOTIFICATION", value = "true")
+    )
+    void changed(ChangeEvent<Book> event) {
+    }
+'''))
+
+        then:
+        def exception = thrown(RuntimeException)
+        exception.message.contains('unsupported selection ["book_title"]')
+    }
+
+    void "test select recognizes embedded and association columns but not their Java property names"() {
+        given:
+        String source = listenerSource('''
+    @ChangeListener
+    @OracleChangeNotification(
+        select = "detail_code, category_id",
+        properties = @OracleChangeNotification.Property(name = "DCN_QUERY_CHANGE_NOTIFICATION", value = "true")
+    )
+    void changed(ChangeEvent<Book> event) {
+    }
+''').replace('public boolean enabled;', '''public boolean enabled;
+    @Relation(Relation.Kind.EMBEDDED)
+    @MappedProperty("detail")
+    public BookDetails details;
+    @Relation(Relation.Kind.MANY_TO_ONE)
+    public Category category;
+    public BookDetails getDetails() { return details; }
+    public Category getCategory() { return category; }''').replace('@Singleton\nclass BookListener', '''@Embeddable
+class BookDetails {
+    public String code;
+    public String getCode() { return code; }
+}
+
+@MappedEntity
+class Category {
+    @Id public Long id;
+    public Long getId() { return id; }
+}
+
+@Singleton
+class BookListener''').replace('import io.micronaut.data.annotation.Id;', '''import io.micronaut.data.annotation.Id;
+import io.micronaut.data.annotation.Relation;
+import io.micronaut.data.annotation.Embeddable;''')
+
+        when:
+        def beanDefinition = buildBeanDefinition('test.BookListener', source)
+
+        then:
+        beanDefinition.getRequiredMethod('changed', ChangeEvent).hasAnnotation(OracleChangeListenerQuery)
+
+        when:
+        buildBeanDefinition('test.BookListener', source.replace('detail_code, category_id', 'details, category'))
+
+        then:
+        def exception = thrown(RuntimeException)
+        exception.message.contains('unsupported selection [details]')
+    }
+
+    void "test select rejects a transient field that is not a physical column"() {
+        given:
+        String source = listenerSource('''
+    @ChangeListener
+    @OracleChangeNotification(
+        select = "temporary",
+        properties = @OracleChangeNotification.Property(name = "DCN_QUERY_CHANGE_NOTIFICATION", value = "true")
+    )
+    void changed(ChangeEvent<Book> event) {
+    }
+''').replace('public boolean enabled;', '''public boolean enabled;
+    @Transient public String temporary;''').replace('import io.micronaut.data.annotation.Id;', '''import io.micronaut.data.annotation.Id;
+import io.micronaut.data.annotation.Transient;''')
+
+        when:
+        buildBeanDefinition('test.BookListener', source)
+
+        then:
+        def exception = thrown(RuntimeException)
+        exception.message.contains('unsupported selection [temporary]')
+    }
+
+    void "test composed ChangeListener is accepted with Oracle configuration"() {
+        given:
+        String source = listenerSource('''
+    @BookChanges
+    @OracleChangeNotification
+    void changed(ChangeEvent<Book> event) {
+    }
+''').replace('@Singleton\nclass BookListener', '''@ChangeListener(dataSource = "archive")
+@java.lang.annotation.Retention(java.lang.annotation.RetentionPolicy.RUNTIME)
+@java.lang.annotation.Target(java.lang.annotation.ElementType.METHOD)
+@interface BookChanges {
+}
+
+@Singleton
+class BookListener''')
+
+        when:
+        def beanDefinition = buildBeanDefinition('test.BookListener', source)
+        def method = beanDefinition.getRequiredMethod('changed', ChangeEvent)
+
+        then:
+        method.hasStereotype(ChangeListener)
+        method.hasAnnotation(OracleChangeListenerQuery)
+        method.stringValue(ChangeListener, 'dataSource').orElse('default') == 'archive'
+        method.annotationMetadata.getAnnotationTypesByStereotype(Executable).contains(ChangeListener)
+    }
+
     void "test after-expiration renewal ignores the overlap lead time"() {
         when:
         def beanDefinition = buildBeanDefinition('test.BookListener', listenerSource('''
@@ -170,6 +286,50 @@ class OracleChangeNotificationVisitorSpec extends AbstractTypeElementSpec {
     }
 
     @Unroll
+    void "test unsupported Oracle option #propertyName fails compilation"() {
+        when:
+        buildBeanDefinition('test.BookListener', listenerSource("""
+    @ChangeListener
+    @OracleChangeNotification(properties = @OracleChangeNotification.Property(name = "$propertyName", value = "$propertyValue"))
+    void changed(ChangeEvent<Book> event) {
+    }
+"""))
+
+        then:
+        def exception = thrown(RuntimeException)
+        exception.message.contains(expectedMessage)
+
+        where:
+        propertyName               | propertyValue             | expectedMessage
+        'DCN_NOTIFY_ROWIDS'        | 'false'                   | 'requires DCN_NOTIFY_ROWIDS to be true'
+        'DCN_CLIENT_INIT_REGID'    | '0'                       | 'DCN_CLIENT_INIT_REGID: reusing an existing reliable DCN registration is not supported'
+        'NTF_GROUPING_CLASS'       | 'NTF_GROUPING_CLASS_TIME' | 'NTF_GROUPING_CLASS: notification grouping is not supported'
+        'NTF_GROUPING_VALUE'       | '30'                      | 'NTF_GROUPING_VALUE: notification grouping is not supported'
+        'NTF_GROUPING_TYPE'        | 'NTF_GROUPING_TYPE_LAST'  | 'NTF_GROUPING_TYPE: notification grouping is not supported'
+        'NTF_GROUPING_REPEAT_TIME' | '2'                       | 'NTF_GROUPING_REPEAT_TIME: notification grouping is not supported'
+        'NTF_GROUPING_START_TIME'  | 'tomorrow'                | 'NTF_GROUPING_START_TIME: notification grouping is not supported'
+        'DCN_PULL_NOTIFICATIONS'   | 'true'                    | 'DCN_PULL_NOTIFICATIONS [true] is not supported'
+        'DCN_PULL_QUEUE_NAME'      | 'CHANGES'                 | 'DCN_PULL_QUEUE_NAME is not supported'
+    }
+
+    void "test explicitly disabled grouping and pull options compile"() {
+        when:
+        def beanDefinition = buildBeanDefinition('test.BookListener', listenerSource('''
+    @ChangeListener
+    @OracleChangeNotification(properties = {
+        @OracleChangeNotification.Property(name = "NTF_GROUPING_CLASS", value = "NTF_GROUPING_CLASS_NONE"),
+        @OracleChangeNotification.Property(name = "DCN_PULL_NOTIFICATIONS", value = "false"),
+        @OracleChangeNotification.Property(name = "DCN_NOTIFY_ROWIDS", value = "true")
+    })
+    void changed(ChangeEvent<Book> event) {
+    }
+'''))
+
+        then:
+        beanDefinition.getRequiredMethod('changed', ChangeEvent).hasAnnotation(OracleChangeListenerQuery)
+    }
+
+    @Unroll
     void "test invalid Oracle notification configuration fails compilation: #description"() {
         when:
         buildBeanDefinition('test.BookListener', listenerSource("""
@@ -190,11 +350,11 @@ class OracleChangeNotificationVisitorSpec extends AbstractTypeElementSpec {
         'where without QCN'  | '@OracleChangeNotification(where = "book_title = \'Query Change Notification\'")'                                                                              | 'may specify select or where only when DCN_QUERY_CHANGE_NOTIFICATION is true'
         'nonzero change lag' | '@OracleChangeNotification(properties = @OracleChangeNotification.Property(name = "DCN_NOTIFY_CHANGELAG", value = "1"))'                                       | 'requires DCN_NOTIFY_CHANGELAG to be 0'
         'negative timeout'   | '@OracleChangeNotification(timeoutSeconds = -1)'                                                                                                               | 'requires timeoutSeconds to be at least 0'
-        'zero timeout'       | '@OracleChangeNotification(renewal = OracleChangeNotification.RenewalMode.OVERLAPPING)'                                                                         | 'requires timeoutSeconds to be greater than 0'
-        'zero after timeout' | '@OracleChangeNotification(renewal = OracleChangeNotification.RenewalMode.AFTER_EXPIRATION)'                                                                    | 'requires timeoutSeconds to be greater than 0'
+        'zero timeout'       | '@OracleChangeNotification(renewal = OracleChangeNotification.RenewalMode.OVERLAPPING)'                                                                        | 'requires timeoutSeconds to be greater than 0'
+        'zero after timeout' | '@OracleChangeNotification(renewal = OracleChangeNotification.RenewalMode.AFTER_EXPIRATION)'                                                                   | 'requires timeoutSeconds to be greater than 0'
         'zero lead time'     | '@OracleChangeNotification(timeoutSeconds = 60, renewal = OracleChangeNotification.RenewalMode.OVERLAPPING, renewalLeadTimeSeconds = 0)'                       | 'requires renewalLeadTimeSeconds to be greater than 0 and less than timeoutSeconds'
         'negative lead time' | '@OracleChangeNotification(timeoutSeconds = 60, renewal = OracleChangeNotification.RenewalMode.OVERLAPPING, renewalLeadTimeSeconds = -1)'                      | 'requires renewalLeadTimeSeconds to be greater than 0 and less than timeoutSeconds'
-        'invalid lead time'  | '@OracleChangeNotification(timeoutSeconds = 60, renewal = OracleChangeNotification.RenewalMode.OVERLAPPING, renewalLeadTimeSeconds = 60)'                       | 'requires renewalLeadTimeSeconds to be greater than 0 and less than timeoutSeconds'
+        'invalid lead time'  | '@OracleChangeNotification(timeoutSeconds = 60, renewal = OracleChangeNotification.RenewalMode.OVERLAPPING, renewalLeadTimeSeconds = 60)'                      | 'requires renewalLeadTimeSeconds to be greater than 0 and less than timeoutSeconds'
         'raw timeout'        | '@OracleChangeNotification(properties = @OracleChangeNotification.Property(name = "NTF_TIMEOUT", value = "60"))'                                               | 'must configure Oracle registration timeout with timeoutSeconds'
         'aggregate select'   | '@OracleChangeNotification(select = "COUNT(*)", properties = @OracleChangeNotification.Property(name = "DCN_QUERY_CHANGE_NOTIFICATION", value = "true"))'      | 'unsupported selection [COUNT(*)]'
         'expression select'  | '@OracleChangeNotification(select = "UPPER(title)", properties = @OracleChangeNotification.Property(name = "DCN_QUERY_CHANGE_NOTIFICATION", value = "true"))'  | 'unsupported selection [UPPER(title)]'
@@ -238,6 +398,9 @@ class Book {
     @MappedProperty("book_title")
     public String title;
     public boolean enabled;
+    public Long getId() { return id; }
+    public String getTitle() { return title; }
+    public boolean isEnabled() { return enabled; }
 }
 
 @Singleton

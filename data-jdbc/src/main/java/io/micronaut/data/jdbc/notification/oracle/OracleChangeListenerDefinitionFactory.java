@@ -107,19 +107,10 @@ final class OracleChangeListenerDefinitionFactory {
             .getAnnotations("properties", OracleChangeNotification.Property.class);
         for (AnnotationValue<OracleChangeNotification.Property> property : propertyValues) {
             String name = property.stringValue("name").orElse("");
-            if (name.isBlank()) {
-                throw invalidChangeListener(method, "has an Oracle property with a blank name");
-            }
             String value = property.stringValue("value").orElse("");
-            if (OracleConnection.DCN_NOTIFY_CHANGELAG.equals(name) && !"0".equals(value.trim())) {
-                throw invalidChangeListener(method, "requires " + OracleConnection.DCN_NOTIFY_CHANGELAG
-                    + " to be 0 so row-level operation and ROWID details are available");
-            }
-            if (OracleConnection.NTF_TIMEOUT.equals(name)) {
-                throw invalidChangeListener(method, "must configure Oracle registration timeout with timeoutSeconds");
-            }
             properties.setProperty(name, value);
         }
+        OracleChangeNotificationOptionsValidator.validateListenerOptions(properties, method);
         properties.putIfAbsent(OracleConnection.DCN_CLIENT_INIT_CONNECTION, "true");
         properties.setProperty(OracleConnection.DCN_NOTIFY_ROWIDS, "true");
         return properties;
