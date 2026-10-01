@@ -42,9 +42,10 @@ import java.util.function.LongConsumer;
  * <p>The Oracle driver invokes this listener on its notification thread. To avoid blocking that
  * thread, the dispatcher submits row reload and listener invocation to the blocking executor.</p>
  *
- * <p>Accepted tasks are tracked so graceful shutdown can reject new work and wait for submitted
- * work to complete. Inserts and updates reload current entity state by ROWID. Deletes are
- * dispatched without entity state because the deleted row can no longer be reloaded.</p>
+ * <p>Running tasks are tracked so graceful shutdown can wait for them to complete. Queued tasks
+ * are discarded if shutdown starts before they run. Inserts and updates reload current entity
+ * state by ROWID. Deletes are dispatched without entity state because the deleted row can no
+ * longer be reloaded.</p>
  *
  * <p>When an event cannot be represented completely using entity ROWIDs, the dispatcher invokes
  * the listener once with {@link ChangeOperation#INVALIDATE}, no entity state, and no ROWID metadata.
@@ -157,31 +158,41 @@ final class OracleChangeNotificationDispatcher implements DatabaseChangeListener
         return false;
     }
 
+    /**
+     * Submits a callback without counting it as active until execution begins.
+     *
+     * @param event the notification to dispatch
+     */
     private void submitDispatch(DatabaseChangeEvent event) {
-        if (!taskTracker.acceptTask()) {
+        if (taskTracker.isShutdownStarted()) {
             LOG.trace("Ignored DCN callback for datasource [{}], registration [{}], and listener method [{}] because graceful shutdown has started",
                 dataSourceName, event.getRegId(), getMethodDesc());
             return;
         }
-        LOG.trace("Accepted DCN event of type [{}] for datasource [{}], registration [{}], and listener method [{}]",
-            event.getEventType(), dataSourceName, event.getRegId(), getMethodDesc());
         try {
             blockingExecutor.execute(() -> dispatchSafely(event));
         } catch (RuntimeException e) {
-            taskTracker.completeTask();
             LOG.warn("Unable to submit DCN event of type [{}] for datasource [{}], registration [{}], and listener method [{}]",
                 event.getEventType(), dataSourceName, event.getRegId(), getMethodDesc(), e);
         }
     }
 
     /**
-     * Dispatches one accepted task and always marks that task complete. Unexpected runtime
-     * exceptions are logged, while JVM errors propagate to the executor's error handling.
+     * Accepts a task when it starts running, then always marks it complete. A queued task that
+     * starts after shutdown is discarded. Unexpected runtime exceptions are logged, while JVM
+     * errors propagate to the executor's error handling.
      *
      * @param event the database change event
      */
     private void dispatchSafely(DatabaseChangeEvent event) {
+        if (!taskTracker.acceptTask()) {
+            LOG.trace("Discarded queued DCN event for datasource [{}], registration [{}], and listener method [{}] because graceful shutdown has started",
+                dataSourceName, event.getRegId(), getMethodDesc());
+            return;
+        }
         try {
+            LOG.trace("Accepted DCN event of type [{}] for datasource [{}], registration [{}], and listener method [{}]",
+                event.getEventType(), dataSourceName, event.getRegId(), getMethodDesc());
             dispatch(event);
         } catch (RuntimeException e) {
             LOG.error("Unexpected error dispatching DCN event [{}] for registration [{}], datasource [{}], and listener method [{}]",

@@ -25,8 +25,9 @@ import java.util.concurrent.CompletionStage;
  *
  * <p>The dispatcher and subscription renewal work share one tracker. A task is counted only after
  * {@link #acceptTask()} successfully reserves it. Once {@link #shutdownGracefully()} is called,
- * no new task is accepted. The returned completion stage completes after every task accepted before
- * shutdown has finished, allowing the provider to await all remaining work.</p>
+ * no new task is accepted. Dispatch and lifecycle work queued on the executor is not counted until
+ * it starts. The returned completion stage completes after every task running when shutdown begins
+ * has finished.</p>
  *
  * <p>Shutdown is one-way. The tracker methods are synchronized so task admission, completion, and
  * shutdown cannot race with an inconsistent active-task count.</p>

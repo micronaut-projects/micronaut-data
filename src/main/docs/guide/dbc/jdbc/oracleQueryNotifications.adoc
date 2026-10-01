@@ -243,7 +243,7 @@ If any listener registration fails, startup fails with a `DataAccessException` t
 
 If entity loading or listener execution fails and retry or recovery advice does not handle the failure, Micronaut Data logs it asynchronously with the listener method, operation, table, and `ROWID` when available. The failure is not returned to Oracle, does not roll back the original change, and does not trigger automatic redelivery. Subsequent notifications continue to be processed.
 
-During graceful shutdown, Micronaut Data stops accepting new callbacks, unregisters live Oracle registrations, and waits for already accepted blocking-executor tasks to finish. Normal non-graceful context destruction also attempts registration cleanup.
+During graceful shutdown, Micronaut Data stops accepting new callbacks, unregisters live Oracle registrations, and waits for callbacks already running on the blocking executor to finish. Callbacks still queued when shutdown starts are discarded when they reach the executor. Normal non-graceful context destruction also attempts registration cleanup.
 
 An abrupt process or host failure cannot run that cleanup. The next application instance does not remove existing registrations because it cannot safely distinguish an abandoned registration from one owned by another healthy instance using the same Oracle user and datasource. A positive timeout eventually removes an abandoned registration. For `AFTER_EXPIRATION`, that server timeout includes a short cleanup grace period after the locally managed `timeoutSeconds` deadline. With the default zero timeout, Oracle Database does not expire an abandoned registration; the operator must remove it manually.
 

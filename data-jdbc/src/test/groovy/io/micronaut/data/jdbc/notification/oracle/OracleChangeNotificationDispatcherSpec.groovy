@@ -530,6 +530,61 @@ class OracleChangeNotificationDispatcherSpec extends Specification {
         0 * event.getEventType()
     }
 
+    void "does not wait for queued callbacks during graceful shutdown"() {
+        given:
+        def taskTracker = new OracleChangeNotificationTaskTracker()
+        List<Runnable> queued = []
+        def shutdownRequests = []
+        Executor executor = { Runnable command -> queued << command } as Executor
+        def dispatcher = dispatcher(definition(), Mock(BeanContext), Mock(LongConsumer),
+            Mock(BiConsumer), Mock(LongConsumer),
+            { long registrationId -> shutdownRequests << registrationId } as LongConsumer,
+            executor, taskTracker)
+        def event = Mock(DatabaseChangeEvent)
+        event.eventType >> DatabaseChangeEvent.EventType.SHUTDOWN
+        event.regId >> 41L
+
+        when:
+        dispatcher.onDatabaseChangeNotification(event)
+        def completion = taskTracker.shutdownGracefully().toCompletableFuture()
+
+        then:
+        queued.size() == 1
+        completion.done
+
+        when:
+        queued.first().run()
+
+        then:
+        shutdownRequests.empty
+        taskTracker.reportActiveTasks().getAsLong() == 0L
+    }
+
+    void "waits for a callback that started before graceful shutdown"() {
+        given:
+        def taskTracker = new OracleChangeNotificationTaskTracker()
+        def completionDuringDispatch
+        boolean runningTaskWasCounted = false
+        def dispatcher = dispatcher(definition(), Mock(BeanContext), Mock(LongConsumer),
+            Mock(BiConsumer), Mock(LongConsumer),
+            { long ignored ->
+                completionDuringDispatch = taskTracker.shutdownGracefully().toCompletableFuture()
+                runningTaskWasCounted = !completionDuringDispatch.done && taskTracker.reportActiveTasks().getAsLong() == 1L
+            } as LongConsumer,
+            { Runnable command -> command.run() } as Executor, taskTracker)
+        def event = Mock(DatabaseChangeEvent)
+        event.eventType >> DatabaseChangeEvent.EventType.SHUTDOWN
+        event.regId >> 41L
+
+        when:
+        dispatcher.onDatabaseChangeNotification(event)
+
+        then:
+        runningTaskWasCounted
+        completionDuringDispatch != null
+        completionDuringDispatch.done
+    }
+
     void "dispatches a full-table notification as one invalidation without row details"() {
         given:
         def beanDefinition = Mock(BeanDefinition)
