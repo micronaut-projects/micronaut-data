@@ -86,9 +86,10 @@ final class OracleChangeNotificationRegistrar {
      *
      * <p>The Oracle listeners are attached before the generated registration query is associated.
      * The registration is tracked before the driver failure listener is attached so an early
-     * failure callback can be retained by the subscription until its lease is activated. If
-     * listener setup or query association fails, this method removes the registration from local
-     * tracking and attempts to unregister it before propagating the failure.</p>
+     * failure callback can be retained by the subscription until its lease is activated. The
+     * driver's effective registration options are validated and supplied to the dispatcher before
+     * the query is associated. If setup or association fails, this method removes the registration
+     * from local tracking and attempts to unregister it before propagating the failure.</p>
      *
      * @param subscription the subscription that owns the registration and receives its callbacks
      * @return the registration lease, including local renewal and conservative server-expiration
@@ -99,9 +100,7 @@ final class OracleChangeNotificationRegistrar {
         OracleChangeListenerDefinition definition = subscription.getDefinition();
         return operations.execute(connection -> {
             OracleConnection oracleConnection = connection.unwrap(OracleConnection.class);
-            Properties allProperties = new Properties();
-            allProperties.putAll(definition.registrationProperties());
-            allProperties.putAll(getConnectionProperties(oracleConnection, definition));
+            validateConnectionOptions(oracleConnection, definition);
             // The registration lifetime can start while this call is in progress. Measuring before
             // the call prevents local renewal from running later than its configured logical deadline.
             long startedNanos = nanoTimeSupplier.getAsLong();
@@ -110,8 +109,7 @@ final class OracleChangeNotificationRegistrar {
                 subscription::handleRegistrationPurged,
                 subscription::handleRegistrationDeregistered,
                 subscription::handleQueryDeregistered,
-                subscription::handleDatabaseShutdown,
-                allProperties
+                subscription::handleDatabaseShutdown
             );
             DatabaseChangeRegistration registration = oracleConnection.registerDatabaseChangeNotification(
                 definition.registrationProperties(), dispatcher);
@@ -120,6 +118,10 @@ final class OracleChangeNotificationRegistrar {
             long logicalExpirationNanos = startedNanos + TimeUnit.SECONDS.toNanos(definition.renewalPolicy().timeoutSeconds());
             try {
                 subscription.track(registration);
+                Properties effectiveOptions = new Properties();
+                effectiveOptions.putAll(registration.getRegistrationOptions());
+                OracleChangeNotificationOptionsValidator.validateEffectiveOptions(effectiveOptions, definition, dataSourceName);
+                dispatcher.configureRegistrationOptions(effectiveOptions);
                 registration.addFailureListener(failure -> subscription.handleRegistrationFailure(registration, failure));
                 try (Statement statement = connection.createStatement()) {
                     statement.unwrap(OracleStatement.class).setDatabaseChangeRegistration(registration);
@@ -148,7 +150,13 @@ final class OracleChangeNotificationRegistrar {
         });
     }
 
-    Properties getConnectionProperties(OracleConnection connection, OracleChangeListenerDefinition definition) {
+    /**
+     * Validates datasource-level DCN options before a registration is created.
+     *
+     * @param connection the datasource connection whose JDBC properties contain DCN options
+     * @param definition the listener definition used to check option compatibility
+     */
+    void validateConnectionOptions(OracleConnection connection, OracleChangeListenerDefinition definition) {
         Properties connectionProperties = new Properties();
         String connectionOptions = connection.getProperties()
             .getProperty(OracleConnection.CONNECTION_PROPERTY_DATABASE_CHANGE_NOTIFICATION_OPTIONS);
@@ -162,7 +170,6 @@ final class OracleChangeNotificationRegistrar {
         if (!connectionProperties.isEmpty()) {
             OracleChangeNotificationOptionsValidator.validateConnectionOptions(connectionProperties, definition, dataSourceName);
         }
-        return connectionProperties;
     }
 
     /**

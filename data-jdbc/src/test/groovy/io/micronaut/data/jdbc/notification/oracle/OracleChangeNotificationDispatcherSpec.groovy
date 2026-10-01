@@ -788,7 +788,7 @@ class OracleChangeNotificationDispatcherSpec extends Specification {
                                                             LongConsumer databaseShutdownHandler,
                                                             Executor executor,
                                                             OracleChangeNotificationTaskTracker taskTracker) {
-        return new OracleChangeNotificationDispatcher(
+        def dispatcher = new OracleChangeNotificationDispatcher(
             "inventory",
             definition,
             beanContext,
@@ -799,6 +799,8 @@ class OracleChangeNotificationDispatcherSpec extends Specification {
             queryDeregistrationHandler,
             databaseShutdownHandler
         )
+        dispatcher.configureRegistrationOptions(definition.registrationProperties())
+        return dispatcher
     }
 
     private static boolean isInvalidation(Object[] arguments) {

@@ -76,9 +76,7 @@ final class OracleChangeNotificationDispatcher implements DatabaseChangeListener
     private final BiConsumer<Long, DatabaseChangeEvent.AdditionalEventType> deregistrationHandler;
     private final LongConsumer queryDeregistrationHandler;
     private final LongConsumer databaseShutdownHandler;
-    private final boolean purgeOnNotificationEnabled;
-    private final boolean queryChangeNotificationEnabled;
-    private final boolean driverReconnectRetryEnabled;
+    private volatile @Nullable RegistrationOptions registrationOptions;
 
     OracleChangeNotificationDispatcher(String dataSourceName,
                                        OracleChangeListenerDefinition listenerDefinition,
@@ -88,8 +86,7 @@ final class OracleChangeNotificationDispatcher implements DatabaseChangeListener
                                        LongConsumer registrationPurgedHandler,
                                        BiConsumer<Long, DatabaseChangeEvent.AdditionalEventType> deregistrationHandler,
                                        LongConsumer queryDeregistrationHandler,
-                                       LongConsumer databaseShutdownHandler,
-                                       Properties allProperties) {
+                                       LongConsumer databaseShutdownHandler) {
         this.dataSourceName = dataSourceName;
         this.listenerDefinition = listenerDefinition;
         this.beanContext = beanContext;
@@ -99,20 +96,37 @@ final class OracleChangeNotificationDispatcher implements DatabaseChangeListener
         this.deregistrationHandler = deregistrationHandler;
         this.queryDeregistrationHandler = queryDeregistrationHandler;
         this.databaseShutdownHandler = databaseShutdownHandler;
-        this.purgeOnNotificationEnabled = isRegistrationPropertyEnabled(OracleConnection.NTF_QOS_PURGE_ON_NTFN, allProperties);
-        this.queryChangeNotificationEnabled = isRegistrationPropertyEnabled(OracleConnection.DCN_QUERY_CHANGE_NOTIFICATION, allProperties);
-        this.driverReconnectRetryEnabled = isRegistrationPropertyEnabled(OracleConnection.NTF_QOS_RELIABLE, allProperties)
-            && isRegistrationPropertyEnabled(OracleConnection.DCN_CLIENT_INIT_CONNECTION, allProperties);
+    }
+
+    /**
+     * Configures dispatch from the options reported by the created JDBC registration.
+     *
+     * <p>The registrar calls this before associating the listener query with the registration, so
+     * change callbacks use the options actually applied by the driver.</p>
+     *
+     * @param effectiveOptions the options reported by the JDBC registration
+     */
+    void configureRegistrationOptions(Properties effectiveOptions) {
+        boolean purgeOnNotificationEnabled = isEnabled(OracleConnection.NTF_QOS_PURGE_ON_NTFN, effectiveOptions);
+        boolean queryChangeNotificationEnabled = isEnabled(OracleConnection.DCN_QUERY_CHANGE_NOTIFICATION, effectiveOptions);
+        boolean driverReconnectRetryEnabled = isEnabled(OracleConnection.DCN_CLIENT_INIT_CONNECTION, effectiveOptions)
+            && isEnabled(OracleConnection.NTF_QOS_RELIABLE, effectiveOptions);
+        registrationOptions = new RegistrationOptions(purgeOnNotificationEnabled,
+            queryChangeNotificationEnabled,
+            driverReconnectRetryEnabled
+        );
     }
 
     @Override
     public void onDatabaseChangeNotification(DatabaseChangeEvent event) {
+        if (registrationOptions == null) {
+            // No query has been associated yet, so this cannot be a row-change callback.
+            LOG.trace("Ignoring DCN callback before registration options were configured for datasource [{}] and listener method [{}]",
+                dataSourceName, getMethodDesc());
+            return;
+        }
         removePurgedRegistration(event);
         submitDispatch(event);
-    }
-
-    private boolean isRegistrationPropertyEnabled(String propertyName, Properties allProperties) {
-        return Boolean.parseBoolean(allProperties.getProperty(propertyName));
     }
 
     /**
@@ -120,7 +134,7 @@ final class OracleChangeNotificationDispatcher implements DatabaseChangeListener
      * deregistration, startup, and shutdown callbacks must retain their normal lifecycle handling.
      */
     private void removePurgedRegistration(DatabaseChangeEvent event) {
-        if (!purgeOnNotificationEnabled) {
+        if (registrationOptions == null || !registrationOptions.purgeOnNotificationEnabled()) {
             return;
         }
         DatabaseChangeEvent.EventType eventType = event.getEventType();
@@ -187,7 +201,7 @@ final class OracleChangeNotificationDispatcher implements DatabaseChangeListener
             return;
         }
         if (eventType == DatabaseChangeEvent.EventType.SHUTDOWN) {
-            if (driverReconnectRetryEnabled) {
+            if (registrationOptions != null && registrationOptions.driverReconnectRetryEnabled()) {
                 LOG.warn("Received DCN event [{}] for registration [{}], datasource [{}], and listener method [{}]; " +
                         "letting the JDBC driver retry the client-initiated connection, with the registration failure callback as recovery fallback",
                     eventType, registrationId, dataSourceName, getMethodDesc());
@@ -210,7 +224,9 @@ final class OracleChangeNotificationDispatcher implements DatabaseChangeListener
         }
         TableChangeDescription[] tables = event.getTableChangeDescription();
         if (tables != null) {
-            dispatchTableChanges(tables, queryChangeNotificationEnabled, registrationId);
+            if (registrationOptions != null) {
+                dispatchTableChanges(tables, registrationOptions.queryChangeNotificationEnabled(), registrationId);
+            }
         } else {
             dispatchQueryChanges(event.getQueryChangeDescription(), registrationId);
         }
@@ -396,6 +412,15 @@ final class OracleChangeNotificationDispatcher implements DatabaseChangeListener
 
     private String getMethodDesc() {
         return listenerDefinition.method().getDescription(true);
+    }
+
+    private static boolean isEnabled(String propertyName, Properties properties) {
+        return Boolean.parseBoolean(properties.getProperty(propertyName));
+    }
+
+    private record RegistrationOptions(boolean purgeOnNotificationEnabled,
+                                       boolean queryChangeNotificationEnabled,
+                                       boolean driverReconnectRetryEnabled) {
     }
 
 }
