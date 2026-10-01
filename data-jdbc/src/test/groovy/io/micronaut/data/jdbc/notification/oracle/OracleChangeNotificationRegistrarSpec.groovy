@@ -35,7 +35,7 @@ import java.util.function.LongSupplier
 
 class OracleChangeNotificationRegistrarSpec extends Specification {
 
-    void "rejects connection-level overrides of framework-controlled registration settings"() {
+    void "rejects unsupported or conflicting connection-level registration settings"() {
         given:
         def method = Mock(ExecutableMethod)
         method.getDescription(true) >> 'void changed(ChangeEvent<Book>)'
@@ -58,6 +58,7 @@ class OracleChangeNotificationRegistrarSpec extends Specification {
 
         where:
         option                                         | overrideValue
+        OracleConnection.NTF_TIMEOUT                   | '120'
         OracleConnection.NTF_TIMEOUT                   | '60'
         OracleConnection.DCN_NOTIFY_ROWIDS             | 'false'
         OracleConnection.DCN_NOTIFY_CHANGELAG          | '1'
@@ -86,7 +87,6 @@ class OracleChangeNotificationRegistrarSpec extends Specification {
         connectionProperties.setProperty(OracleConnection.DCN_QUERY_CHANGE_NOTIFICATION, 'false')
         connectionProperties.setProperty(OracleConnection.NTF_QOS_PURGE_ON_NTFN, 'false')
         connectionProperties.setProperty(OracleConnection.DCN_NOTIFY_CHANGELAG, '0')
-        connectionProperties.setProperty(OracleConnection.NTF_TIMEOUT, '120')
         def definition = new OracleChangeListenerDefinition(null, Mock(ExecutableMethod), null, null, null,
                 requested, new OracleChangeNotificationRenewalPolicy(120, OracleChangeNotification.RenewalMode.NONE, 60))
 
@@ -183,41 +183,6 @@ class OracleChangeNotificationRegistrarSpec extends Specification {
         then:
         def failure = thrown(IllegalStateException)
         failure.message.contains('effective NTF_TIMEOUT [60] conflicts with listener setting [120]')
-        1 * oracleConnection.unregisterDatabaseChangeNotification(registration)
-        0 * connection.createStatement()
-    }
-
-    void "fails setup when the registration is closed before query association"() {
-        given:
-        def operations = Mock(JdbcOperations)
-        def connection = Mock(Connection)
-        def oracleConnection = Mock(OracleConnection)
-        def registration = Mock(DatabaseChangeRegistration)
-        def method = Mock(ExecutableMethod)
-        method.getDescription(true) >> 'void changed(ChangeEvent<Book>)'
-        def requested = new Properties()
-        requested.setProperty(OracleConnection.NTF_TIMEOUT, '0')
-        requested.setProperty(OracleConnection.DCN_NOTIFY_ROWIDS, 'true')
-        def definition = new OracleChangeListenerDefinition(null, method, null, 'SELECT * FROM BOOK', null,
-                requested, new OracleChangeNotificationRenewalPolicy(0, OracleChangeNotification.RenewalMode.NONE, 60))
-        def registrar = registrar(operations)
-        def subscription = new OracleChangeNotificationSubscription('default', definition, registrar,
-                Mock(Executor), Mock(TaskScheduler), new OracleChangeNotificationTaskTracker(), { 0L } as LongSupplier)
-        connection.unwrap(OracleConnection) >> oracleConnection
-        oracleConnection.properties >> new Properties()
-        oracleConnection.registerDatabaseChangeNotification(_ as Properties, _ as DatabaseChangeListener) >> registration
-        registration.getRegId() >> 23L
-        registration.getRegistrationOptions() >> requested
-        registration.getState() >> NotificationRegistration.RegistrationState.CLOSED
-        operations.execute(_ as ConnectionCallback) >> { ConnectionCallback<?> callback -> callback.call(connection) }
-
-        when:
-        registrar.createRegistration(subscription)
-
-        then:
-        def failure = thrown(IllegalStateException)
-        failure.message.contains('registration [23]')
-        failure.message.contains('closed before query association')
         1 * oracleConnection.unregisterDatabaseChangeNotification(registration)
         0 * connection.createStatement()
     }

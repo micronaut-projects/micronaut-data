@@ -53,9 +53,10 @@ final class OracleChangeNotificationOptionsValidator {
 
     /**
      * Validates the datasource's {@code oracle.jdbc.dcnOptions} before registration. Unsupported
-     * settings are rejected, and explicitly configured values for framework-controlled options
-     * must agree with the listener definition. An omitted option is not treated as an override;
-     * its effective value is checked later using the options returned by the JDBC registration.
+     * settings, including {@code NTF_TIMEOUT}, are rejected, and explicitly configured values for
+     * other framework-controlled options must agree with the listener definition. An omitted option
+     * is not treated as an override; its effective value is checked later using the options returned
+     * by the JDBC registration.
      *
      * @param connectionProperties the datasource-level DCN options
      * @param definition           the listener definition and its requested registration options
@@ -97,7 +98,7 @@ final class OracleChangeNotificationOptionsValidator {
                                         String dataSourceName,
                                         boolean validateOmittedOptions) {
         for (String name : options.stringPropertyNames()) {
-            String error = invalidOption(name, options.getProperty(name), false);
+            String error = invalidOption(name, options.getProperty(name), !validateOmittedOptions);
             if (error != null) {
                 throw invalidRegistrationProperty(definition, dataSourceName, error);
             }
@@ -114,10 +115,10 @@ final class OracleChangeNotificationOptionsValidator {
      *
      * @param name           the option name
      * @param value          the configured option value
-     * @param listenerOption whether the option came from the listener annotation
+     * @param userConfiguredOption whether the option came from the listener annotation or datasource
      * @return the validation error, or {@code null} when the option is allowed
      */
-    private static @Nullable String invalidOption(String name, String value, boolean listenerOption) {
+    private static @Nullable String invalidOption(String name, String value, boolean userConfiguredOption) {
         if (name.isBlank()) {
             return "has an Oracle property with a blank name";
         }
@@ -146,8 +147,8 @@ final class OracleChangeNotificationOptionsValidator {
         if (OracleConnection.DCN_PULL_QUEUE_NAME.equals(name)) {
             return name + " is not supported because AQ pull delivery does not invoke the listener callback";
         }
-        if (listenerOption && OracleConnection.NTF_TIMEOUT.equals(name)) {
-            return "must configure Oracle registration timeout with timeoutSeconds";
+        if (userConfiguredOption && OracleConnection.NTF_TIMEOUT.equals(name)) {
+            return name + ": must configure Oracle registration timeout with timeoutSeconds";
         }
         return null;
     }
