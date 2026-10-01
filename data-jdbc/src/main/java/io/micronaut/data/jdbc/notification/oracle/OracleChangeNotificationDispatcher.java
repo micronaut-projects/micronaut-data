@@ -31,6 +31,7 @@ import org.jspecify.annotations.Nullable;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
+import java.util.Properties;
 import java.util.concurrent.Executor;
 import java.util.function.BiConsumer;
 import java.util.function.LongConsumer;
@@ -87,7 +88,8 @@ final class OracleChangeNotificationDispatcher implements DatabaseChangeListener
                                        LongConsumer registrationPurgedHandler,
                                        BiConsumer<Long, DatabaseChangeEvent.AdditionalEventType> deregistrationHandler,
                                        LongConsumer queryDeregistrationHandler,
-                                       LongConsumer databaseShutdownHandler) {
+                                       LongConsumer databaseShutdownHandler,
+                                       Properties allProperties) {
         this.dataSourceName = dataSourceName;
         this.listenerDefinition = listenerDefinition;
         this.beanContext = beanContext;
@@ -97,10 +99,10 @@ final class OracleChangeNotificationDispatcher implements DatabaseChangeListener
         this.deregistrationHandler = deregistrationHandler;
         this.queryDeregistrationHandler = queryDeregistrationHandler;
         this.databaseShutdownHandler = databaseShutdownHandler;
-        this.purgeOnNotificationEnabled = isRegistrationPropertyEnabled(OracleConnection.NTF_QOS_PURGE_ON_NTFN);
-        this.queryChangeNotificationEnabled = isRegistrationPropertyEnabled(OracleConnection.DCN_QUERY_CHANGE_NOTIFICATION);
-        this.driverReconnectRetryEnabled = isRegistrationPropertyEnabled(OracleConnection.NTF_QOS_RELIABLE)
-            && isRegistrationPropertyEnabled(OracleConnection.DCN_CLIENT_INIT_CONNECTION);
+        this.purgeOnNotificationEnabled = isRegistrationPropertyEnabled(OracleConnection.NTF_QOS_PURGE_ON_NTFN, allProperties);
+        this.queryChangeNotificationEnabled = isRegistrationPropertyEnabled(OracleConnection.DCN_QUERY_CHANGE_NOTIFICATION, allProperties);
+        this.driverReconnectRetryEnabled = isRegistrationPropertyEnabled(OracleConnection.NTF_QOS_RELIABLE, allProperties)
+            && isRegistrationPropertyEnabled(OracleConnection.DCN_CLIENT_INIT_CONNECTION, allProperties);
     }
 
     @Override
@@ -109,8 +111,8 @@ final class OracleChangeNotificationDispatcher implements DatabaseChangeListener
         submitDispatch(event);
     }
 
-    private boolean isRegistrationPropertyEnabled(String propertyName) {
-        return Boolean.parseBoolean(listenerDefinition.registrationProperties().getProperty(propertyName));
+    private boolean isRegistrationPropertyEnabled(String propertyName, Properties allProperties) {
+        return Boolean.parseBoolean(allProperties.getProperty(propertyName));
     }
 
     /**
