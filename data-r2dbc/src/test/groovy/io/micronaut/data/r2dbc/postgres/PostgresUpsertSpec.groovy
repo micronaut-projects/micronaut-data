@@ -26,6 +26,16 @@ import io.micronaut.data.tck.repositories.upsert.AutoPopulatedUpsertRepository
 import io.micronaut.data.tck.repositories.upsert.CustomerProfileRepository
 import io.micronaut.data.tck.repositories.upsert.CustomerProfileUuidRepository
 import io.micronaut.data.tck.repositories.upsert.ProductReviewRepository
+import io.micronaut.data.r2dbc.postgres.upsert.PostgresClinicRepository
+import io.micronaut.data.r2dbc.postgres.upsert.PostgresClinicServiceOfferingRepository
+import io.micronaut.data.r2dbc.postgres.upsert.PostgresCompositeClinicRepository
+import io.micronaut.data.r2dbc.postgres.upsert.PostgresCompositeClinicOfferingRepository
+import io.micronaut.data.r2dbc.postgres.upsert.PostgresEmbeddedConflictEntityRepository
+import io.micronaut.data.tck.repositories.upsert.ClinicRepository
+import io.micronaut.data.tck.repositories.upsert.ClinicServiceOfferingRepository
+import io.micronaut.data.tck.repositories.upsert.CompositeClinicRepository
+import io.micronaut.data.tck.repositories.upsert.CompositeClinicOfferingRepository
+import io.micronaut.data.tck.repositories.upsert.EmbeddedConflictEntityRepository
 import io.micronaut.data.tck.repositories.upsert.WarehouseInventoryRepository
 import io.micronaut.data.tck.tests.AbstractUpsertSpec
 import io.micronaut.test.support.TestPropertyProviderFactory
@@ -35,6 +45,31 @@ class PostgresUpsertSpec extends AbstractUpsertSpec implements PostgresTestPrope
     @Override
     ProductReviewRepository getProductReviewRepository() {
         return context.getBean(PostgresProductReviewRepository)
+    }
+
+    @Override
+    ClinicRepository getClinicRepository() {
+        return context.getBean(PostgresClinicRepository)
+    }
+
+    @Override
+    ClinicServiceOfferingRepository getClinicServiceOfferingRepository() {
+        return context.getBean(PostgresClinicServiceOfferingRepository)
+    }
+
+    @Override
+    CompositeClinicRepository getCompositeClinicRepository() {
+        return context.getBean(PostgresCompositeClinicRepository)
+    }
+
+    @Override
+    CompositeClinicOfferingRepository getCompositeClinicOfferingRepository() {
+        return context.getBean(PostgresCompositeClinicOfferingRepository)
+    }
+
+    @Override
+    EmbeddedConflictEntityRepository getEmbeddedConflictEntityRepository() {
+        return context.getBean(PostgresEmbeddedConflictEntityRepository)
     }
 
     @Override
