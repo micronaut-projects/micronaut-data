@@ -157,7 +157,9 @@ public final class UpsertMethodMatcher extends AbstractMethodMatcher {
             }
             List<PersistentProperty> generatedProperties = new ArrayList<>();
             PersistentEntityUtils.traversePersistentProperties(propertyPath, (associations, property) -> {
-                if (property.isGenerated()) {
+                // A referenced generated identity is a bindable foreign key; the root generated value is not.
+                if (property.isGenerated() && (associations.isEmpty()
+                    || !associations.getLast().getAssociatedEntity().getIdentityProperties().contains(property))) {
                     generatedProperties.add(property);
                 }
             });

@@ -24,6 +24,10 @@ import io.micronaut.data.tck.repositories.upsert.CustomerProfileRepository
 import io.micronaut.data.tck.repositories.upsert.CustomerProfileUuidRepository
 import io.micronaut.data.tck.repositories.upsert.AutoPopulatedUpsertRepository
 import io.micronaut.data.tck.repositories.upsert.ProductReviewRepository
+import io.micronaut.data.jdbc.h2.upsert.H2ClinicRepository
+import io.micronaut.data.jdbc.h2.upsert.H2ClinicServiceOfferingRepository
+import io.micronaut.data.tck.repositories.upsert.ClinicRepository
+import io.micronaut.data.tck.repositories.upsert.ClinicServiceOfferingRepository
 import io.micronaut.data.tck.repositories.upsert.WarehouseInventoryRepository
 import io.micronaut.data.tck.tests.AbstractUpsertSpec
 
@@ -32,6 +36,16 @@ class H2UpsertSpec extends AbstractUpsertSpec implements H2TestPropertyProvider 
     @Override
     ProductReviewRepository getProductReviewRepository() {
         return context.getBean(H2ProductReviewRepository)
+    }
+
+    @Override
+    ClinicRepository getClinicRepository() {
+        return context.getBean(H2ClinicRepository)
+    }
+
+    @Override
+    ClinicServiceOfferingRepository getClinicServiceOfferingRepository() {
+        return context.getBean(H2ClinicServiceOfferingRepository)
     }
 
     @Override

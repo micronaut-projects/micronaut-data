@@ -24,6 +24,10 @@ import io.micronaut.data.tck.repositories.upsert.AutoPopulatedUpsertRepository
 import io.micronaut.data.tck.repositories.upsert.CustomerProfileRepository
 import io.micronaut.data.tck.repositories.upsert.CustomerProfileUuidRepository
 import io.micronaut.data.tck.repositories.upsert.ProductReviewRepository
+import io.micronaut.data.r2dbc.mysql.upsert.MySqlClinicRepository
+import io.micronaut.data.r2dbc.mysql.upsert.MySqlClinicServiceOfferingRepository
+import io.micronaut.data.tck.repositories.upsert.ClinicRepository
+import io.micronaut.data.tck.repositories.upsert.ClinicServiceOfferingRepository
 import io.micronaut.data.tck.repositories.upsert.WarehouseInventoryRepository
 import io.micronaut.data.tck.tests.AbstractUpsertSpec
 
@@ -32,6 +36,16 @@ class MySqlUpsertSpec extends AbstractUpsertSpec implements MySqlTestPropertyPro
     @Override
     ProductReviewRepository getProductReviewRepository() {
         return context.getBean(MySqlProductReviewRepository)
+    }
+
+    @Override
+    ClinicRepository getClinicRepository() {
+        return context.getBean(MySqlClinicRepository)
+    }
+
+    @Override
+    ClinicServiceOfferingRepository getClinicServiceOfferingRepository() {
+        return context.getBean(MySqlClinicServiceOfferingRepository)
     }
 
     @Override

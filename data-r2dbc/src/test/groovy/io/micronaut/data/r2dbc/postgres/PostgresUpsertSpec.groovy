@@ -26,6 +26,10 @@ import io.micronaut.data.tck.repositories.upsert.AutoPopulatedUpsertRepository
 import io.micronaut.data.tck.repositories.upsert.CustomerProfileRepository
 import io.micronaut.data.tck.repositories.upsert.CustomerProfileUuidRepository
 import io.micronaut.data.tck.repositories.upsert.ProductReviewRepository
+import io.micronaut.data.r2dbc.postgres.upsert.PostgresClinicRepository
+import io.micronaut.data.r2dbc.postgres.upsert.PostgresClinicServiceOfferingRepository
+import io.micronaut.data.tck.repositories.upsert.ClinicRepository
+import io.micronaut.data.tck.repositories.upsert.ClinicServiceOfferingRepository
 import io.micronaut.data.tck.repositories.upsert.WarehouseInventoryRepository
 import io.micronaut.data.tck.tests.AbstractUpsertSpec
 import io.micronaut.test.support.TestPropertyProviderFactory
@@ -35,6 +39,16 @@ class PostgresUpsertSpec extends AbstractUpsertSpec implements PostgresTestPrope
     @Override
     ProductReviewRepository getProductReviewRepository() {
         return context.getBean(PostgresProductReviewRepository)
+    }
+
+    @Override
+    ClinicRepository getClinicRepository() {
+        return context.getBean(PostgresClinicRepository)
+    }
+
+    @Override
+    ClinicServiceOfferingRepository getClinicServiceOfferingRepository() {
+        return context.getBean(PostgresClinicServiceOfferingRepository)
     }
 
     @Override

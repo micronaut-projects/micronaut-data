@@ -17,11 +17,15 @@ package io.micronaut.data.tck.tests
 
 import io.micronaut.context.ApplicationContext
 import io.micronaut.data.tck.jdbc.entities.upsert.AutoPopulatedUpsertEntity
+import io.micronaut.data.tck.jdbc.entities.upsert.Clinic
+import io.micronaut.data.tck.jdbc.entities.upsert.ClinicServiceOffering
 import io.micronaut.data.tck.jdbc.entities.upsert.CustomerProfile
 import io.micronaut.data.tck.jdbc.entities.upsert.CustomerProfileUuid
 import io.micronaut.data.tck.jdbc.entities.upsert.ProductReview
 import io.micronaut.data.tck.jdbc.entities.upsert.WarehouseInventory
 import io.micronaut.data.tck.repositories.upsert.AutoPopulatedUpsertRepository
+import io.micronaut.data.tck.repositories.upsert.ClinicRepository
+import io.micronaut.data.tck.repositories.upsert.ClinicServiceOfferingRepository
 import io.micronaut.data.tck.repositories.upsert.CustomerProfileRepository
 import io.micronaut.data.tck.repositories.upsert.CustomerProfileUuidRepository
 import io.micronaut.data.tck.repositories.upsert.ProductReviewRepository
@@ -48,6 +52,10 @@ abstract class AbstractUpsertSpec extends Specification {
 
     abstract AutoPopulatedUpsertRepository getAutoPopulatedUpsertRepository()
 
+    abstract ClinicRepository getClinicRepository()
+
+    abstract ClinicServiceOfferingRepository getClinicServiceOfferingRepository()
+
     abstract Map<String, String> getProperties()
 
     @AutoCleanup
@@ -62,6 +70,8 @@ abstract class AbstractUpsertSpec extends Specification {
         context.getBean(MockedDateTimeProvider).setValue(null)
         autoPopulatedUpsertRepository.deleteAll()
         autoPopulatedUpsertRepository.deleteByTenantId("another-tenant")
+        clinicServiceOfferingRepository.deleteAll()
+        clinicRepository.deleteAll()
         productReviewRepository.deleteAll()
         customerProfileRepository.deleteAll()
         customerProfileUuidRepository.deleteAll()
@@ -70,6 +80,32 @@ abstract class AbstractUpsertSpec extends Specification {
     }
 
     protected void cleanupAdditionalRepositories() {
+    }
+
+    void "upsert inserts and updates a clinic service offering by clinic and service code"() {
+        given:
+        Clinic clinic = clinicRepository.save(new Clinic("Central Clinic"))
+        Integer clinicId = clinic.id
+        ClinicServiceOffering offering = new ClinicServiceOffering("Vaccination", "VACCINATION", clinic)
+
+        when:
+        clinicServiceOfferingRepository.upsert(offering)
+        Clinic persistedClinic = clinicRepository.findById(clinicId).get()
+
+        then:
+        persistedClinic.serviceOfferings.size() == 1
+        persistedClinic.serviceOfferings[0].name == "Vaccination"
+        persistedClinic.serviceOfferings[0].serviceCode == "VACCINATION"
+
+        when:
+        clinicServiceOfferingRepository.upsert(new ClinicServiceOffering("Updated Vaccination", "VACCINATION", clinic))
+        Clinic updatedClinic = clinicRepository.findById(clinicId).get()
+
+        then:
+        updatedClinic.serviceOfferings.size() == 1
+        updatedClinic.serviceOfferings[0].id == persistedClinic.serviceOfferings[0].id
+        updatedClinic.serviceOfferings[0].name == "Updated Vaccination"
+        updatedClinic.serviceOfferings[0].serviceCode == "VACCINATION"
     }
 
     void "upsert prepares auto-populated properties, cascades updates, and invokes update lifecycle"() {
