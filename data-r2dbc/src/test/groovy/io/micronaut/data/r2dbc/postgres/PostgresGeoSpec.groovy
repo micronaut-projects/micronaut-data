@@ -1,7 +1,10 @@
 package io.micronaut.data.r2dbc.postgres
 
 import groovy.transform.Memoized
+import io.micronaut.data.model.geo.LineString
 import io.micronaut.data.model.geo.Point
+import io.micronaut.data.model.geo.Polygon
+import io.micronaut.data.tck.jdbc.entities.geo.DeliveryDriverJson
 import io.micronaut.data.tck.repositories.DeliveryDriverJsonRepository
 import io.micronaut.data.tck.repositories.DeliveryDriverWktRepository
 import io.micronaut.data.tck.repositories.GeometryEntityJsonRepository
@@ -278,5 +281,31 @@ class PostgresGeoSpec extends AbstractGeoSpec implements PostgresTestPropertyPro
         names.size() == 2
         names.contains("Nearby Driver")
         names.contains("Closest Driver")
+    }
+
+    void "test findByLocationGeoWithin with geographic CRS and JSON conversion"() {
+        given:
+        DeliveryDriverJson inside1 = new DeliveryDriverJson("Inside 1", DeliveryDriverJson.Status.AVAILABLE, new Point(-73.9857d, 40.7484d))
+        DeliveryDriverJson inside2 = new DeliveryDriverJson("Inside 2", DeliveryDriverJson.Status.AVAILABLE, new Point(-74.0000d, 40.8000d))
+        DeliveryDriverJson outside = new DeliveryDriverJson("Outside", DeliveryDriverJson.Status.AVAILABLE, new Point(-73.8000d, 40.8000d))
+        Polygon region = new Polygon([
+                new LineString([
+                        new Point(-74.1000d, 40.7000d),
+                        new Point(-73.9000d, 40.7000d),
+                        new Point(-73.9000d, 40.9000d),
+                        new Point(-74.1000d, 40.9000d),
+                        new Point(-74.1000d, 40.7000d)
+                ])
+        ])
+
+        when:
+        getDeliveryDriverJsonRepository().saveAll(List.of(inside1, inside2, outside))
+        List<DeliveryDriverJson> result = getDeliveryDriverJsonRepository().findByLocationGeoWithin(region)
+        List<String> names = result.collect { it.name() }
+
+        then:
+        names.size() == 2
+        names.contains("Inside 1")
+        names.contains("Inside 2")
     }
 }
