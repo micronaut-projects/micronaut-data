@@ -28,9 +28,12 @@ import io.micronaut.data.repository.jpa.criteria.UpdateSpecification
 import kotlinx.coroutines.flow.Flow
 
 /**
- * Interface to allow execution of query/delete/update methods using dynamic JPA criteria API.
+ * Adds methods to a repository that find, count, check, delete and update entities selected by a specification built
+ * at runtime with the JPA criteria API ([jakarta.persistence.criteria.CriteriaBuilder]), rather than by a query
+ * derived from the method name at compile time. See [io.micronaut.data.repository.jpa.JpaSpecificationExecutor]
+ * for how specifications are defined and combined.
  *
- * Based on Spring Data's 'org.springframework.data.jpa.repository.JpaSpecificationExecutor'.
+ * The methods are `suspend` functions or return a [Flow], so they do not block the calling thread.
  *
  * @param <T> The entity type
  * @author Denis Stepanov

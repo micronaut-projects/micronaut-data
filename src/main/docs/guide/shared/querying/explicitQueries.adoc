@@ -6,4 +6,8 @@ You specify named parameters using colon (`:`) followed by the name and these mu
 
 NOTE: Currently, Micronaut Data does not parse the JPA-QL AST and perform any further type checking hence greater care should be taken when using explicit queries. This may change in a future version of Micronaut Data.
 
-Note that if the method returns a api:data.model.Page[] for pagination then you must additionally specify a query that performs the equivalent count using the `countQuery` member of the ann:data.annotation.Query[] annotation.
+An explicit query method can declare a api:data.model.Pageable[] or a api:data.model.Sort[] parameter. The sorting is appended to the query as an `ORDER BY` clause and the page is applied as a limit and an offset, therefore the query should not contain its own `ORDER BY` clause when it is used with a sorted `Pageable` or a `Sort`.
+
+Note that if the method returns a api:data.model.Page[] for pagination then you must additionally specify a query that performs the equivalent count using the `countQuery` member of the ann:data.annotation.Query[] annotation, otherwise the compilation fails. The count query is not needed for methods returning a api:data.model.Slice[] or a `List`.
+
+For Micronaut Data JDBC and R2DBC, where the explicit queries are SQL queries, see <<dbcExplicitQueriesPagination, Explicit Queries and Pagination>> for how the pagination is applied and the rules for sorting.

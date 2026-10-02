@@ -6,10 +6,32 @@ It is intended for the case where the database may have committed, but the clien
 `@OracleTransactional.Recoverable` is a companion to ann:transaction.annotation.Transactional[] and ann:transaction.annotation.OracleTransactional[].
 Use it on a method or type whose intercepted invocation owns the transaction commit boundary:
 
-[source,java]
+[source.multi-language-sample,java]
 ----
 import io.micronaut.transaction.annotation.OracleTransactional;
 import io.micronaut.transaction.annotation.Transactional;
+
+@Transactional
+@OracleTransactional.Recoverable
+void updateInventory() {
+    // repository or JDBC work
+}
+----
+[source.multi-language-sample,kotlin]
+----
+import io.micronaut.transaction.annotation.OracleTransactional
+import io.micronaut.transaction.annotation.Transactional
+
+@Transactional
+@OracleTransactional.Recoverable
+open fun updateInventory() {
+    // repository or JDBC work
+}
+----
+[source.multi-language-sample,groovy]
+----
+import io.micronaut.transaction.annotation.OracleTransactional
+import io.micronaut.transaction.annotation.Transactional
 
 @Transactional
 @OracleTransactional.Recoverable
@@ -35,7 +57,7 @@ The recovery flow is:
 - `backoff`: delay between retries in milliseconds. Default: `100`
 - `unknownOutcomePolicy`: behavior when the outcome cannot be determined. Default: `FAIL`
 
-=== Usage Constraints
+== Usage Constraints
 
 `@OracleTransactional.Recoverable` must be used together with ann:transaction.annotation.Transactional[] or ann:transaction.annotation.OracleTransactional[].
 It does not create a transaction by itself.
@@ -54,7 +76,7 @@ In practice, this means:
 - do not expect recovery to run when the method is invoked inside an outer `@Transactional` method
 - do not expect recovery to run when the method is wrapped in programmatic transaction execution such as `transactionOperations.execute(...)`
 
-=== Configuration
+== Configuration
 
 Oracle transaction recovery activates only when Oracle JDBC is in use and the feature is enabled for the datasource:
 
@@ -66,7 +88,7 @@ datasources:
     enable-oracle-transaction-recovery: true
 ----
 
-=== Oracle Requirements
+== Oracle Requirements
 
 The database and service must be configured correctly for Oracle transaction recovery:
 
@@ -81,7 +103,7 @@ If that Oracle failover path is enabled, do not use `@OracleTransactional.Recove
 
 If the database, service, or client are out of sync for outcome resolution, Micronaut Data fails fast instead of treating the failure as an `UNKNOWN` outcome.
 
-=== Scope and Limitations
+== Scope and Limitations
 
 - Recovery applies only to synchronous JDBC transactions
 - Recovery applies only when the intercepted execution owns the transaction commit boundary
@@ -94,7 +116,7 @@ Oracle Transaction Guard can also report whether the user call completed after a
 Micronaut Data uses `USER_CALL_COMPLETED` internally to avoid replaying committed work.
 If Oracle reports `COMMITTED` with `USER_CALL_COMPLETED = FALSE`, Micronaut treats the transaction as committed, logs a warning, and returns the already produced result instead of replaying the call or exposing a separate structured recovery result.
 
-=== Operational Notes
+== Operational Notes
 
 - Replayed work must be safe to execute again when Oracle reports `NOT_COMMITTED`
 - Outcome resolution always uses a fresh connection

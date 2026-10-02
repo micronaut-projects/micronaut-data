@@ -19,12 +19,12 @@ class BookRepositorySpec:
     bookRepository: Annotated[BookRepository, Inject]
     # end::inject[]
 
-    # tag::metadata[]
-    beanContext: Annotated[BeanContext, Inject]
-
     @AfterEach
     def cleanup(self):
         self.bookRepository.deleteAll()
+
+    # tag::metadata[]
+    beanContext: Annotated[BeanContext, Inject]
 
     @Test
     def testAnnotationMetadata(self):

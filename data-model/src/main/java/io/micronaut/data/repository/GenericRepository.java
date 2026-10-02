@@ -19,6 +19,16 @@ import io.micronaut.core.annotation.Indexed;
 
 /**
  * Parent repository interface for all repositories.
+ * <p>
+ * {@code GenericRepository} declares no methods of its own. Micronaut Data implements the query methods declared on
+ * an interface that extends it (for example {@code findByTitle(String title)}) at compile time, using the type
+ * arguments to identify the root entity and its ID type. Extend {@link CrudRepository} or one of its variants to also
+ * inherit the standard create, read, update and delete operations.
+ * <p>
+ * Repository methods report datastore errors with subclasses of
+ * {@link io.micronaut.data.exceptions.DataAccessException}, as described in {@link CrudRepository}. In particular,
+ * a query method whose return type is neither {@link java.util.Optional} nor nullable throws
+ * {@link io.micronaut.data.exceptions.EmptyResultException} when no result is found.
  *
  * @author graemerocher
  * @since 1.0

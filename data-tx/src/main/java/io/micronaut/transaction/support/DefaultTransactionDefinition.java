@@ -109,10 +109,8 @@ public class DefaultTransactionDefinition implements TransactionDefinition {
      * in the TransactionDefinition interface. Default is PROPAGATION_REQUIRED.
      * <p>Exclusively designed for use with {@link Propagation#REQUIRED} or
      * {@link Propagation#REQUIRES_NEW} since it only applies to newly started
-     * transactions. Consider switching the "validateExistingTransactions" flag to
-     * "true" on your transaction manager if you'd like isolation level declarations
-     * to get rejected when participating in an existing transaction with a different
-     * isolation level.
+     * transactions. When participating in an existing
+     * transaction, the setting of the existing transaction applies and this one is ignored.
      * <p>Note that a transaction manager that does not support custom isolation levels
      * will throw an exception when given any other level than {@link Isolation#DEFAULT}.
      * @throws IllegalArgumentException if the supplied value is not one of the
@@ -139,10 +137,8 @@ public class DefaultTransactionDefinition implements TransactionDefinition {
      * in the TransactionDefinition interface. Default is ISOLATION_DEFAULT.
      * <p>Exclusively designed for use with {@link Propagation#REQUIRED} or
      * {@link Propagation#REQUIRES_NEW} since it only applies to newly started
-     * transactions. Consider switching the "validateExistingTransactions" flag to
-     * "true" on your transaction manager if you'd like isolation level declarations
-     * to get rejected when participating in an existing transaction with a different
-     * isolation level.
+     * transactions. When participating in an existing
+     * transaction, the setting of the existing transaction applies and this one is ignored.
      * <p>Note that a transaction manager that does not support custom isolation levels
      * will throw an exception when given any other level than {@link Isolation#DEFAULT}.
      * @throws IllegalArgumentException if the supplied value is not one of the
