@@ -19,6 +19,9 @@ import io.micronaut.context.ApplicationContext
 import io.micronaut.data.tck.jdbc.entities.upsert.AutoPopulatedUpsertEntity
 import io.micronaut.data.tck.jdbc.entities.upsert.Clinic
 import io.micronaut.data.tck.jdbc.entities.upsert.ClinicServiceOffering
+import io.micronaut.data.tck.jdbc.entities.upsert.CompositeClinic
+import io.micronaut.data.tck.jdbc.entities.upsert.CompositeClinicId
+import io.micronaut.data.tck.jdbc.entities.upsert.CompositeClinicOffering
 import io.micronaut.data.tck.jdbc.entities.upsert.CustomerProfile
 import io.micronaut.data.tck.jdbc.entities.upsert.CustomerProfileUuid
 import io.micronaut.data.tck.jdbc.entities.upsert.ProductReview
@@ -26,6 +29,8 @@ import io.micronaut.data.tck.jdbc.entities.upsert.WarehouseInventory
 import io.micronaut.data.tck.repositories.upsert.AutoPopulatedUpsertRepository
 import io.micronaut.data.tck.repositories.upsert.ClinicRepository
 import io.micronaut.data.tck.repositories.upsert.ClinicServiceOfferingRepository
+import io.micronaut.data.tck.repositories.upsert.CompositeClinicRepository
+import io.micronaut.data.tck.repositories.upsert.CompositeClinicOfferingRepository
 import io.micronaut.data.tck.repositories.upsert.CustomerProfileRepository
 import io.micronaut.data.tck.repositories.upsert.CustomerProfileUuidRepository
 import io.micronaut.data.tck.repositories.upsert.ProductReviewRepository
@@ -56,6 +61,10 @@ abstract class AbstractUpsertSpec extends Specification {
 
     abstract ClinicServiceOfferingRepository getClinicServiceOfferingRepository()
 
+    abstract CompositeClinicRepository getCompositeClinicRepository()
+
+    abstract CompositeClinicOfferingRepository getCompositeClinicOfferingRepository()
+
     abstract Map<String, String> getProperties()
 
     @AutoCleanup
@@ -72,6 +81,8 @@ abstract class AbstractUpsertSpec extends Specification {
         autoPopulatedUpsertRepository.deleteByTenantId("another-tenant")
         clinicServiceOfferingRepository.deleteAll()
         clinicRepository.deleteAll()
+        compositeClinicOfferingRepository.deleteAll()
+        compositeClinicRepository.deleteAll()
         productReviewRepository.deleteAll()
         customerProfileRepository.deleteAll()
         customerProfileUuidRepository.deleteAll()
@@ -106,6 +117,26 @@ abstract class AbstractUpsertSpec extends Specification {
         updatedClinic.serviceOfferings[0].id == persistedClinic.serviceOfferings[0].id
         updatedClinic.serviceOfferings[0].name == "Updated Vaccination"
         updatedClinic.serviceOfferings[0].serviceCode == "VACCINATION"
+    }
+
+    void "upsert matches every column of a composite clinic id"() {
+        given:
+        CompositeClinic firstClinic = compositeClinicRepository.save(new CompositeClinic(new CompositeClinicId("north", "main"), "North Main Clinic"))
+        CompositeClinic secondClinic = compositeClinicRepository.save(new CompositeClinic(new CompositeClinicId("north", "branch"), "North Branch Clinic"))
+        CompositeClinic thirdClinic = compositeClinicRepository.save(new CompositeClinic(new CompositeClinicId("south", "main"), "South Main Clinic"))
+
+        when:
+        compositeClinicOfferingRepository.upsert(new CompositeClinicOffering(firstClinic, "CHECKUP", "Initial"))
+        compositeClinicOfferingRepository.upsert(new CompositeClinicOffering(firstClinic, "CHECKUP", "Updated"))
+        compositeClinicOfferingRepository.upsert(new CompositeClinicOffering(secondClinic, "CHECKUP", "North Branch"))
+        compositeClinicOfferingRepository.upsert(new CompositeClinicOffering(thirdClinic, "CHECKUP", "South Main"))
+        List<CompositeClinicOffering> offerings = compositeClinicOfferingRepository.findByServiceCode("CHECKUP")
+
+        then:
+        offerings.size() == 3
+        offerings.find { it.clinic.id == firstClinic.id }.name == "Updated"
+        offerings.find { it.clinic.id == secondClinic.id }.name == "North Branch"
+        offerings.find { it.clinic.id == thirdClinic.id }.name == "South Main"
     }
 
     void "upsert prepares auto-populated properties, cascades updates, and invokes update lifecycle"() {

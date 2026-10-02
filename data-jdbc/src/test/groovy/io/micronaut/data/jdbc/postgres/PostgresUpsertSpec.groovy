@@ -28,8 +28,12 @@ import io.micronaut.data.tck.repositories.upsert.CustomerProfileUuidRepository
 import io.micronaut.data.tck.repositories.upsert.ProductReviewRepository
 import io.micronaut.data.jdbc.postgres.upsert.PostgresClinicRepository
 import io.micronaut.data.jdbc.postgres.upsert.PostgresClinicServiceOfferingRepository
+import io.micronaut.data.jdbc.postgres.upsert.PostgresCompositeClinicRepository
+import io.micronaut.data.jdbc.postgres.upsert.PostgresCompositeClinicOfferingRepository
 import io.micronaut.data.tck.repositories.upsert.ClinicRepository
 import io.micronaut.data.tck.repositories.upsert.ClinicServiceOfferingRepository
+import io.micronaut.data.tck.repositories.upsert.CompositeClinicRepository
+import io.micronaut.data.tck.repositories.upsert.CompositeClinicOfferingRepository
 import io.micronaut.data.tck.repositories.upsert.WarehouseInventoryRepository
 import io.micronaut.data.tck.tests.AbstractUpsertSpec
 
@@ -48,6 +52,16 @@ class PostgresUpsertSpec extends AbstractUpsertSpec implements PostgresTestPrope
     @Override
     ClinicServiceOfferingRepository getClinicServiceOfferingRepository() {
         return context.getBean(PostgresClinicServiceOfferingRepository)
+    }
+
+    @Override
+    CompositeClinicRepository getCompositeClinicRepository() {
+        return context.getBean(PostgresCompositeClinicRepository)
+    }
+
+    @Override
+    CompositeClinicOfferingRepository getCompositeClinicOfferingRepository() {
+        return context.getBean(PostgresCompositeClinicOfferingRepository)
     }
 
     @Override

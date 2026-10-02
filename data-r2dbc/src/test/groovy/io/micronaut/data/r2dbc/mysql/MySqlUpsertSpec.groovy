@@ -26,8 +26,12 @@ import io.micronaut.data.tck.repositories.upsert.CustomerProfileUuidRepository
 import io.micronaut.data.tck.repositories.upsert.ProductReviewRepository
 import io.micronaut.data.r2dbc.mysql.upsert.MySqlClinicRepository
 import io.micronaut.data.r2dbc.mysql.upsert.MySqlClinicServiceOfferingRepository
+import io.micronaut.data.r2dbc.mysql.upsert.MySqlCompositeClinicRepository
+import io.micronaut.data.r2dbc.mysql.upsert.MySqlCompositeClinicOfferingRepository
 import io.micronaut.data.tck.repositories.upsert.ClinicRepository
 import io.micronaut.data.tck.repositories.upsert.ClinicServiceOfferingRepository
+import io.micronaut.data.tck.repositories.upsert.CompositeClinicRepository
+import io.micronaut.data.tck.repositories.upsert.CompositeClinicOfferingRepository
 import io.micronaut.data.tck.repositories.upsert.WarehouseInventoryRepository
 import io.micronaut.data.tck.tests.AbstractUpsertSpec
 
@@ -46,6 +50,16 @@ class MySqlUpsertSpec extends AbstractUpsertSpec implements MySqlTestPropertyPro
     @Override
     ClinicServiceOfferingRepository getClinicServiceOfferingRepository() {
         return context.getBean(MySqlClinicServiceOfferingRepository)
+    }
+
+    @Override
+    CompositeClinicRepository getCompositeClinicRepository() {
+        return context.getBean(MySqlCompositeClinicRepository)
+    }
+
+    @Override
+    CompositeClinicOfferingRepository getCompositeClinicOfferingRepository() {
+        return context.getBean(MySqlCompositeClinicOfferingRepository)
     }
 
     @Override
