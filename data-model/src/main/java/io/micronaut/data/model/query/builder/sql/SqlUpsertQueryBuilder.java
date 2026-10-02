@@ -226,7 +226,8 @@ final class SqlUpsertQueryBuilder {
                         String sequence = sqlQueryBuilder.getSequenceStatement(
                             SqlQueryBuilderUtils.getSchemaName(entity),
                             sqlQueryBuilder.getUnescapedTableName(entity),
-                            property
+                            property,
+                            columnContext.escape()
                         );
                         addGeneratedUpsertColumn(data.columns(), columnContext, associations, property, true, sequence);
                     }

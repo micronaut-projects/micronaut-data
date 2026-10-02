@@ -76,6 +76,22 @@ abstract class AbstractGeoSpec extends Specification {
         getDeliveryDriverWktRepository()?.deleteAll()
     }
 
+    void "test the created geometry schema is valid"() {
+        given:"The JDBC data source properties (the schema validation is not supported for R2DBC)"
+        Map<String, Object> dataSourceProperties = new HashMap<>(properties as Map<String, Object>)
+        String schemaGenerateKey = dataSourceProperties.keySet().find { it.startsWith('datasources.') && it.endsWith('.schema-generate') }
+        assumeTrue(schemaGenerateKey != null)
+
+        when:"The spatial columns created by the schema generation are validated"
+        String prefix = schemaGenerateKey.substring(0, schemaGenerateKey.length() - '.schema-generate'.length())
+        dataSourceProperties[schemaGenerateKey] = 'VALIDATE'
+        dataSourceProperties[prefix + '.packages'] = 'io.micronaut.data.tck.jdbc.entities.geo'
+        ApplicationContext.run(dataSourceProperties).close()
+
+        then:
+        noExceptionThrown()
+    }
+
     void "test creates, reads, and updates embedded geometry with JSON conversion"() {
         assumeTrue(supportsGeometryJsonConversion())
 

@@ -31,19 +31,22 @@ import io.micronaut.data.annotation.JsonSubView;
 import io.micronaut.data.annotation.JsonView;
 import io.micronaut.data.annotation.MappedEntity;
 import io.micronaut.data.exceptions.DataAccessException;
-import io.micronaut.data.model.query.builder.sql.validation.SchemaValidationException;
 import io.micronaut.data.jdbc.operations.JdbcSchemaHandler;
 import io.micronaut.data.model.PersistentEntity;
 import io.micronaut.data.model.query.builder.sql.Dialect;
-import io.micronaut.data.model.query.builder.sql.IdentifierNamingStrategy;
 import io.micronaut.data.model.query.builder.sql.SqlDialectOptions;
 import io.micronaut.data.model.query.builder.sql.SqlQueryBuilder;
+import io.micronaut.data.model.query.builder.sql.SqlSchemaCreateOptions;
 import io.micronaut.data.model.query.builder.sql.SqlSchemaUtils;
+import io.micronaut.data.model.query.builder.sql.validation.SchemaValidationResult;
+import io.micronaut.data.model.query.builder.sql.validation.SqlJsonViewValidator;
 import io.micronaut.data.model.query.builder.sql.validation.SqlTableMappingValidator;
-import io.micronaut.data.model.runtime.convert.DefinitionProvider;
 import io.micronaut.data.model.runtime.RuntimeEntityRegistry;
+import io.micronaut.data.model.runtime.convert.DefinitionProvider;
+import io.micronaut.data.model.schema.sql.SqlColumnMapping;
+import io.micronaut.data.model.schema.sql.SqlJsonViewMapping;
 import io.micronaut.data.model.schema.sql.SqlTableMapping;
-import io.micronaut.data.model.schema.sql.metadata.SqlColumnMetadata;
+import io.micronaut.data.model.schema.sql.metadata.SqlJsonViewMetadata;
 import io.micronaut.data.model.schema.sql.metadata.SqlTableMetadata;
 import io.micronaut.data.runtime.config.DataSettings;
 import io.micronaut.data.runtime.config.SchemaGenerate;
@@ -51,22 +54,26 @@ import io.micronaut.inject.qualifiers.Qualifiers;
 import io.micronaut.data.connection.jdbc.advice.DelegatingDataSource;
 
 import jakarta.annotation.PostConstruct;
+import org.jspecify.annotations.Nullable;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 import javax.sql.DataSource;
 import java.lang.reflect.Modifier;
 import java.sql.Connection;
-import java.sql.DatabaseMetaData;
 import java.sql.PreparedStatement;
-import java.sql.ResultSet;
 import java.sql.SQLException;
+import java.util.ArrayList;
 import java.util.Collection;
 import java.util.Collections;
+import java.util.LinkedHashMap;
 import java.util.List;
+import java.util.Locale;
 import java.util.Map;
 import java.util.Set;
 import java.util.Comparator;
+import java.util.stream.Collectors;
+import java.util.stream.Stream;
 
 /**
  * Schema generator used for testing purposes.
@@ -74,8 +81,6 @@ import java.util.Comparator;
 @Context
 @Internal
 public class SchemaGenerator {
-
-    private static final String MATCH_ALL = "%";
 
     private static final Logger LOG = LoggerFactory.getLogger(SchemaGenerator.class);
 
@@ -159,7 +164,7 @@ public class SchemaGenerator {
                                 }
                                 schemaHandler.useSchema(connection, dialect, schemaName);
                                 if (schemaGenerate == SchemaGenerate.VALIDATE) {
-                                    validate(connection, configuration, entities, dialectSqlTableMappingValidatorMap, definitionProviders);
+                                    validate(connection, configuration, entities);
                                 } else {
                                     generate(connection, configuration, propertyPlaceholderResolver, entities);
                                 }
@@ -172,7 +177,7 @@ public class SchemaGenerator {
                                 schemaHandler.useSchema(connection, dialect, configuration.getSchemaGenerateName());
                             }
                             if (schemaGenerate == SchemaGenerate.VALIDATE) {
-                                validate(connection, configuration, entities, dialectSqlTableMappingValidatorMap, definitionProviders);
+                                validate(connection, configuration, entities);
                             } else {
                                 generate(connection, configuration, propertyPlaceholderResolver, entities);
                             }
@@ -194,6 +199,8 @@ public class SchemaGenerator {
                           PersistentEntity[] entities) throws SQLException {
         Dialect dialect = configuration.getDialect();
         SqlQueryBuilder builder = new SqlQueryBuilder(dialect, configuration.getDialectOptions().getVersion());
+        SqlSchemaCreateOptions createOptions = SqlSchemaCreateOptions.DEFAULT
+            .withUniqueConstraints(configuration.isSchemaGenerateUniqueConstraints());
         if (dialect.allowBatch() && configuration.isBatchGenerate()) {
             switch (configuration.getSchemaGenerate()) {
                 case CREATE_DROP:
@@ -211,7 +218,7 @@ public class SchemaGenerator {
                         }
                     }
                 case CREATE:
-                    String sql = resolveSql(propertyPlaceholderResolver, builder.buildBatchCreateTableStatement(definitionProviders, entities));
+                    String sql = resolveSql(propertyPlaceholderResolver, builder.buildBatchCreateTableStatement(definitionProviders, createOptions, entities));
                     if (DataSettings.QUERY_LOG.isDebugEnabled()) {
                         DataSettings.QUERY_LOG.debug("Creating Tables: \n{}", sql);
                     }
@@ -244,7 +251,7 @@ public class SchemaGenerator {
                         }
                     }
                 case CREATE:
-                    String[] sql = builder.buildCreateTableStatements(definitionProviders, entities, dialect);
+                    String[] sql = builder.buildCreateTableStatements(definitionProviders, entities, dialect, createOptions);
                     for (String stmt : sql) {
                         stmt = resolveSql(propertyPlaceholderResolver, stmt);
                         if (DataSettings.QUERY_LOG.isDebugEnabled()) {
@@ -268,126 +275,189 @@ public class SchemaGenerator {
     }
 
     @SuppressWarnings("java:S3776")
-    private static void validate(Connection connection,
-                                 DataJdbcConfiguration configuration,
-                                 PersistentEntity[] entities,
-                                 Map<Dialect, SqlTableMappingValidator> dialectSqlTableMappingValidatorMap,
-                                 List<DefinitionProvider> definitionProviders) throws SQLException {
+    private void validate(Connection connection,
+                          DataJdbcConfiguration configuration,
+                          PersistentEntity[] entities) throws SQLException {
         Dialect dialect = configuration.getDialect();
         SqlDialectOptions dialectOptions = SqlDialectOptions.of(dialect, configuration.getDialectOptions().getVersion());
         SqlTableMappingValidator sqlTableMappingValidator = dialectSqlTableMappingValidatorMap.get(dialect);
         if (sqlTableMappingValidator == null) {
             throw new IllegalStateException("There is no supported SqlTableMappingValidator for dialect " + dialect);
         }
+        SchemaValidationResult result = new SchemaValidationResult();
+        JdbcSchemaMetadataReader metadataReader = new JdbcSchemaMetadataReader(connection, dialect,
+            JdbcSchemaMetadataReader.MetadataQueries.of(sqlTableMappingValidator));
+        // Tables grouped by the schema as stored in the database (empty for the connection default schema)
+        Map<String, Map<String, SqlTableMapping>> sqlTableMappingsBySchema = getSqlTableMappingsBySchema(entities, dialect, metadataReader);
+
+        for (Map.Entry<String, Map<String, SqlTableMapping>> schemaEntry : sqlTableMappingsBySchema.entrySet()) {
+            Map<String, SqlTableMapping> sqlTableMappings = schemaEntry.getValue();
+            String schema = sqlTableMappings.values().iterator().next().schema();
+            // The indexes are only read when some are validated
+            boolean readIndexes = sqlTableMappings.values().stream().anyMatch(mapping -> !mapping.indexes().isEmpty()
+                || (configuration.isSchemaGenerateUniqueConstraints() && !mapping.uniqueConstraints().isEmpty()));
+            JdbcSchemaMetadataReader.SchemaTables schemaTables = metadataReader.readTables(
+                StringUtils.isNotEmpty(schemaEntry.getKey()) ? schemaEntry.getKey() : null, sqlTableMappings.keySet(), readIndexes);
+            String columnTypeDefinitionsQuery = sqlTableMappingValidator.getColumnTypeDefinitionsQuery();
+            if (columnTypeDefinitionsQuery != null && sqlTableMappings.values().stream().anyMatch(SchemaGenerator::hasDefinedColumns)) {
+                // Needed to verify the type arguments of columns with a definition, like the vector dimension
+                metadataReader.readColumnTypeDefinitions(columnTypeDefinitionsQuery, schemaTables);
+            }
+            Set<String> sequenceNames = null;
+            boolean sequencesRead = false;
+            for (Map.Entry<String, SqlTableMapping> sqlTableMappingEntry : sqlTableMappings.entrySet()) {
+                SqlTableMapping sqlTableMapping = sqlTableMappingEntry.getValue();
+                SqlTableMetadata dbSqlTableMetadata = schemaTables.tables().get(sqlTableMappingEntry.getKey());
+                if (dbSqlTableMetadata == null) {
+                    String tableName = StringUtils.isNotEmpty(schema) ? schema + "." + sqlTableMapping.name() : sqlTableMapping.name();
+                    result.addError("Expected table [" + tableName + "] not found");
+                    continue;
+                }
+                sqlTableMappingValidator.validateTable(sqlTableMapping, dbSqlTableMetadata, dialectOptions, result);
+                if (configuration.isSchemaGenerateUniqueConstraints()) {
+                    sqlTableMappingValidator.validateUniqueConstraints(sqlTableMapping, dbSqlTableMetadata, result);
+                }
+                if (sqlTableMapping.sequences().stream().anyMatch(sequence -> SqlSchemaUtils.requiresSequence(sequence, dialect))) {
+                    if (!sequencesRead) {
+                        sequenceNames = readSequenceNames(metadataReader, sqlTableMappingValidator, schemaTables.schema(), result);
+                        sequencesRead = true;
+                    }
+                    if (sequenceNames != null) {
+                        sqlTableMappingValidator.validateSequences(sqlTableMapping, sequenceNames, metadataReader.identifierMatcher(),
+                            dialectOptions, result);
+                    }
+                }
+            }
+        }
+        validateJsonViews(metadataReader, entities, dialect, result);
+        List<String> warnings = result.getWarnings();
+        if (!warnings.isEmpty() && LOG.isWarnEnabled()) {
+            String separator = System.lineSeparator() + " - ";
+            LOG.warn("Schema validation of datasource [{}] found {} warning(s):{}{}", configuration.getName(), warnings.size(),
+                separator, String.join(separator, warnings));
+        }
+        result.throwIfErrors();
+    }
+
+    /**
+     * Validates the Oracle JSON relational duality views of the {@link JsonView} entities.
+     * JSON views are only supported (created) for Oracle, they are skipped for the other dialects.
+     */
+    private static void validateJsonViews(JdbcSchemaMetadataReader metadataReader,
+                                          PersistentEntity[] entities,
+                                          Dialect dialect,
+                                          SchemaValidationResult result) {
+        if (dialect != Dialect.ORACLE) {
+            // JSON views are only created for Oracle
+            return;
+        }
+        List<SqlJsonViewMapping> jsonViewMappings = new ArrayList<>();
+        for (PersistentEntity entity : entities) {
+            if (entity.getAnnotationMetadata().hasAnnotation(JsonView.class)) {
+                SqlJsonViewMapping jsonViewMapping = SqlSchemaUtils.getSqlJsonViewMapping(entity);
+                if (jsonViewMapping != null) {
+                    jsonViewMappings.add(jsonViewMapping);
+                }
+            }
+        }
+        if (jsonViewMappings.isEmpty()) {
+            return;
+        }
+        // The JSON view is created with an unescaped schema name
+        Map<String, List<SqlJsonViewMapping>> jsonViewMappingsBySchema = jsonViewMappings.stream()
+            .collect(Collectors.groupingBy(mapping -> schemaKey(metadataReader, mapping.schema(), false), LinkedHashMap::new, Collectors.toList()));
+        for (Map.Entry<String, List<SqlJsonViewMapping>> schemaEntry : jsonViewMappingsBySchema.entrySet()) {
+            List<SqlJsonViewMapping> schemaJsonViewMappings = schemaEntry.getValue();
+            String schema = schemaJsonViewMappings.getFirst().schema();
+            Map<String, SqlJsonViewMetadata> jsonViews;
+            try {
+                jsonViews = metadataReader.readJsonDualityViews(StringUtils.isNotEmpty(schemaEntry.getKey()) ? schemaEntry.getKey() : null);
+            } catch (SQLException e) {
+                result.addWarning("Unable to read the JSON views of schema [" + schema + "], the JSON views are not validated: " + e.getMessage());
+                continue;
+            }
+            for (SqlJsonViewMapping jsonViewMapping : schemaJsonViewMappings) {
+                SqlJsonViewValidator.validate(jsonViewMapping, jsonViews.get(jsonViewMapping.name().toLowerCase(Locale.ENGLISH)), result);
+            }
+        }
+    }
+
+    private Map<String, Map<String, SqlTableMapping>> getSqlTableMappingsBySchema(PersistentEntity[] entities,
+                                                                                  Dialect dialect,
+                                                                                  JdbcSchemaMetadataReader metadataReader) {
         // Get all tables for all entities and remove (de-duplicate) if there is SqlTableMapping created from the entity
         // that represents join and ad-hoc SqlTableMapping for the same entity based on relation mappings (to be removed/skipped)
-        Map<String, SqlTableMapping> sqlTableMappingByTableName = CollectionUtils.newLinkedHashMap(entities.length);
+        // The schema and the table name are kept apart, a quoted name can contain the separator (schema "a.b" and table "c",
+        // or schema "a" and table "b.c")
+        Map<List<String>, SqlTableMapping> sqlTableMappingByTableName = CollectionUtils.newLinkedHashMap(entities.length);
         for (PersistentEntity entity : entities) {
             if (entity.getAnnotationMetadata().hasAnnotation(JsonView.class)) {
                 continue;
             }
             List<SqlTableMapping> sqlTableMappings = SqlSchemaUtils.getSqlTableMappings(definitionProviders, entity, dialect);
-            for (SqlTableMapping sqlTableMapping : sqlTableMappings) {
-                String tableName = sqlTableMapping.name();
-                String tableNameLowerCase = tableName.toLowerCase();
-                if (sqlTableMappingByTableName.containsKey(tableNameLowerCase)) {
-                    SqlTableMapping existingSqlTableMapping = sqlTableMappingByTableName.get(tableNameLowerCase);
+            for (SqlTableMapping mapping : sqlTableMappings) {
+                SqlTableMapping sqlTableMapping = resolvePlaceholders(mapping);
+                List<String> key = List.of(schemaKey(metadataReader, sqlTableMapping.schema(), sqlTableMapping.escape()),
+                    metadataReader.identifierMatcher().mappedTableKey(sqlTableMapping.name(), sqlTableMapping.escape()));
+                SqlTableMapping existingSqlTableMapping = sqlTableMappingByTableName.get(key);
+                if (existingSqlTableMapping != null) {
                     if (existingSqlTableMapping.type() == SqlTableMapping.TableType.JOIN) {
                         // Remove ad-hoc join table created from one of the entities relation mappings and not an actual entity
-                        sqlTableMappingByTableName.remove(tableNameLowerCase);
+                        sqlTableMappingByTableName.remove(key);
                     } else if (sqlTableMapping.type() == SqlTableMapping.TableType.JOIN) {
                         // Skip this table mapping ad-hoc join table created from one of the entities relation mappings and not an actual entity
                         continue;
                     }
                 }
-                sqlTableMappingByTableName.put(tableNameLowerCase, sqlTableMapping);
+                sqlTableMappingByTableName.put(key, sqlTableMapping);
             }
         }
+        return sqlTableMappingByTableName.values().stream()
+            .collect(Collectors.groupingBy(sqlTableMapping -> schemaKey(metadataReader, sqlTableMapping.schema(), sqlTableMapping.escape()), LinkedHashMap::new,
+                Collectors.toMap(sqlTableMapping -> metadataReader.identifierMatcher().mappedTableKey(sqlTableMapping.name(), sqlTableMapping.escape()), sqlTableMapping -> sqlTableMapping,
+                    (first, second) -> first, LinkedHashMap::new)));
+    }
 
-        Map<String, SqlTableMetadata> dbSqlTableMetadataMap = getDbSqlTableMetadataList(connection, sqlTableMappingByTableName.keySet());
-        for (Map.Entry<String, SqlTableMapping> sqlTableMappingEntry : sqlTableMappingByTableName.entrySet()) {
-            String tableNameLowerCase = sqlTableMappingEntry.getKey();
-            SqlTableMapping sqlTableMapping = sqlTableMappingEntry.getValue();
-            SqlTableMetadata dbSqlTableMetadata = dbSqlTableMetadataMap.get(tableNameLowerCase);
-            if (dbSqlTableMetadata == null) {
-                throw new SchemaValidationException("Schema validation failed. Expected table [" + sqlTableMapping.name() + "] not found");
-            }
-            sqlTableMappingValidator.validateTable(sqlTableMapping, dbSqlTableMetadata, dialectOptions);
+    /**
+     * Resolves the property placeholders of all the names (like {@code @MappedEntity("${prefix}entity")},
+     * {@code @MappedProperty("${column}")} or {@code @GeneratedValue(ref = "${sequence}")}), the same way as in the SQL
+     * executed by the schema generation and the queries.
+     */
+    private SqlTableMapping resolvePlaceholders(SqlTableMapping sqlTableMapping) {
+        return sqlTableMapping.withNames(name -> resolveSql(propertyPlaceholderResolver, name));
+    }
+
+    /**
+     * @return The lower case sequence names or null if the sequences cannot be read
+     */
+    private static @Nullable Set<String> readSequenceNames(JdbcSchemaMetadataReader metadataReader,
+                                                           SqlTableMappingValidator sqlTableMappingValidator,
+                                                           @Nullable String schema,
+                                                           SchemaValidationResult result) {
+        String query = sqlTableMappingValidator.getSequenceNamesQuery();
+        if (query == null) {
+            return null;
+        }
+        try {
+            return metadataReader.readSequenceNames(query, schema);
+        } catch (SQLException e) {
+            result.addWarning("Unable to read the sequences of schema [" + schema + "], the sequences are not validated: " + e.getMessage());
+            return null;
         }
     }
 
-    private static Map<String, SqlTableMetadata> getDbSqlTableMetadataList(Connection connection,
-                                                                           Set<String> wantedTableNames) throws SQLException {
-        Map<String, SqlTableMetadata> sqlTableMetadataList = CollectionUtils.newHashMap(50);
-        String catalog = connection.getCatalog();
-        String schema = connection.getSchema();
-        String[] tableTypes = { SqlSchemaUtils.TABLE_TYPE };
-        DatabaseMetaData metaData = connection.getMetaData();
-        IdentifierNamingStrategy namingStrategy = getIdentifierNamingStrategy(metaData);
-        catalog = namingStrategy.apply(catalog);
-        schema = namingStrategy.apply(schema);
-        // Some dialects won't support both catalog and schema
-        // Get tables
-        ResultSet tablesResultSet = metaData.getTables(catalog, schema, MATCH_ALL, tableTypes);
-        while (tablesResultSet.next()) {
-            String tableName = tablesResultSet.getString(SqlSchemaUtils.TABLE_NAME_COLUMN);
-            String tableNameLowerCase = tableName.toLowerCase();
-            if (!wantedTableNames.contains(tableNameLowerCase)) {
-                // Skip table that does not have entity mapped
-                continue;
-            }
-            String tableCatalog = tablesResultSet.getString(SqlSchemaUtils.TABLE_CATALOG_COLUMN);
-            String tableSchema = tablesResultSet.getString(SqlSchemaUtils.TABLE_SCHEMA_COLUMN);
-            SqlTableMetadata sqlTableMetadata = new SqlTableMetadata(tableCatalog, tableSchema, tableName);
-            sqlTableMetadataList.put(tableNameLowerCase, sqlTableMetadata);
-        }
-        // Get columns
-        populateSqlColumnMetadata(metaData, catalog, schema, sqlTableMetadataList);
-        return sqlTableMetadataList;
+    private static boolean hasDefinedColumns(SqlTableMapping sqlTableMapping) {
+        List<SqlColumnMapping> primaryKeyColumns = sqlTableMapping.primaryKeyColumns() == null ? List.of() : sqlTableMapping.primaryKeyColumns();
+        return Stream.concat(primaryKeyColumns.stream(), sqlTableMapping.columns().stream())
+            .anyMatch(column -> StringUtils.isNotEmpty(column.getDefinition()));
     }
 
-    private static void populateSqlColumnMetadata(DatabaseMetaData metaData, String catalog, String schema,
-                                           Map<String, SqlTableMetadata> sqlTableMetadataMap) throws SQLException {
-        ResultSet columnsResultSet = metaData.getColumns(catalog, schema, null, MATCH_ALL);
-        SqlTableMetadata sqlTableMetadata = null;
-        String currentTableName = StringUtils.EMPTY_STRING;
-        while (columnsResultSet.next()) {
-            String tableName = columnsResultSet.getString(SqlSchemaUtils.TABLE_NAME_COLUMN).toLowerCase();
-            if (!sqlTableMetadataMap.containsKey(tableName)) {
-                // No need to populate columns for the table which does not have mapped entity
-                continue;
-            }
-            if (!currentTableName.equals(tableName)) {
-                currentTableName = tableName;
-                sqlTableMetadata = sqlTableMetadataMap.get(currentTableName);
-            }
-            if (sqlTableMetadata != null) {
-                addExtractedColumnInformation(sqlTableMetadata, columnsResultSet);
-            }
-        }
-    }
-
-    private static void addExtractedColumnInformation(SqlTableMetadata sqlTableMetadata, ResultSet columnsResultSet) throws SQLException {
-        String columnName = columnsResultSet.getString(SqlSchemaUtils.COLUMN_NAME_COLUMN);
-        int columnType = columnsResultSet.getInt(SqlSchemaUtils.DATA_TYPE_COLUMN);
-        String typeName = columnsResultSet.getString(SqlSchemaUtils.TYPE_NAME_COLUMN);
-        int columnSize = columnsResultSet.getInt(SqlSchemaUtils.COLUMN_SIZE_COLUMN);
-        // the number of fractional digits. Null is returned for data types where DECIMAL_DIGITS is not applicable.
-        int decimalDigits = columnsResultSet.getInt(SqlSchemaUtils.DECIMAL_DIGITS_COLUMN);
-        int nullable = columnsResultSet.getInt(SqlSchemaUtils.NULLABLE_COLUMN);
-        sqlTableMetadata.addColumn(new SqlColumnMetadata(columnName, columnType, typeName,
-            columnSize, decimalDigits, nullable == 1));
-    }
-
-    private static IdentifierNamingStrategy getIdentifierNamingStrategy(DatabaseMetaData metaData) throws SQLException {
-        if (metaData.storesUpperCaseIdentifiers()) {
-            return IdentifierNamingStrategy.UPPER;
-        }
-        if (metaData.storesLowerCaseIdentifiers()) {
-            return IdentifierNamingStrategy.LOWER;
-        }
-        // default MIXED
-        return IdentifierNamingStrategy.MIXED;
+    /**
+     * The schema as stored in the database, resolved the same way as the generated SQL refers to it.
+     */
+    private static String schemaKey(JdbcSchemaMetadataReader metadataReader, @Nullable String schema, boolean escape) {
+        String resolvedSchema = metadataReader.resolveSchema(schema, escape);
+        return resolvedSchema == null ? "" : resolvedSchema;
     }
 
     /**

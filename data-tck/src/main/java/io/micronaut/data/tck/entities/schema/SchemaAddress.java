@@ -1,0 +1,48 @@
+/*
+ * Copyright 2017-2026 original authors
+ *
+ * Licensed under the Apache License, Version 2.0 (the "License");
+ * you may not use this file except in compliance with the License.
+ * You may obtain a copy of the License at
+ *
+ * https://www.apache.org/licenses/LICENSE-2.0
+ *
+ * Unless required by applicable law or agreed to in writing, software
+ * distributed under the License is distributed on an "AS IS" BASIS,
+ * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+ * See the License for the specific language governing permissions and
+ * limitations under the License.
+ */
+package io.micronaut.data.tck.entities.schema;
+
+import io.micronaut.data.annotation.Embeddable;
+import org.jspecify.annotations.Nullable;
+
+/**
+ * Embedded value of {@link SchemaBook}.
+ */
+@Embeddable
+public class SchemaAddress {
+
+    @Nullable
+    private String street;
+
+    @Nullable
+    private String city;
+
+    public @Nullable String getStreet() {
+        return street;
+    }
+
+    public void setStreet(@Nullable String street) {
+        this.street = street;
+    }
+
+    public @Nullable String getCity() {
+        return city;
+    }
+
+    public void setCity(@Nullable String city) {
+        this.city = city;
+    }
+}

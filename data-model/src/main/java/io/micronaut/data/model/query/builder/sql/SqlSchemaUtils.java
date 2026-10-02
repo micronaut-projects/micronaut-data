@@ -17,6 +17,7 @@ package io.micronaut.data.model.query.builder.sql;
 
 import com.fasterxml.jackson.annotation.JsonAnyGetter;
 import com.fasterxml.jackson.annotation.JsonAnySetter;
+import com.fasterxml.jackson.annotation.JsonUnwrapped;
 import io.micronaut.core.annotation.AnnotationMetadata;
 import io.micronaut.core.annotation.AnnotationValue;
 import io.micronaut.core.annotation.Experimental;
@@ -29,6 +30,9 @@ import io.micronaut.core.util.StringUtils;
 import io.micronaut.data.annotation.GeneratedValue;
 import io.micronaut.data.annotation.Index;
 import io.micronaut.data.annotation.Indexes;
+import io.micronaut.data.annotation.EmbeddedId;
+import io.micronaut.data.annotation.JsonSubView;
+import io.micronaut.data.annotation.JsonView;
 import io.micronaut.data.annotation.VectorIndex;
 import io.micronaut.data.annotation.MappedEntity;
 import io.micronaut.data.annotation.MappedProperty;
@@ -55,6 +59,7 @@ import io.micronaut.data.model.schema.sql.SqlColumnMapping.ReservableOptions;
 import io.micronaut.data.model.schema.sql.SqlColumnMapping.SqlCheckConstraint;
 import io.micronaut.data.model.schema.sql.SqlDbType;
 import io.micronaut.data.model.schema.sql.SqlIndexMapping;
+import io.micronaut.data.model.schema.sql.SqlJsonViewMapping;
 import io.micronaut.data.model.schema.sql.SqlSequenceMapping;
 import io.micronaut.data.model.schema.sql.SqlTableMapping;
 import io.micronaut.data.model.schema.sql.metadata.VectorIndexMetadata;
@@ -72,9 +77,12 @@ import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.Collection;
 import java.util.Collections;
+import java.util.EnumSet;
 import java.util.LinkedHashSet;
 import java.util.List;
+import java.util.Locale;
 import java.util.Map;
+import java.util.Objects;
 import java.util.Optional;
 import java.util.OptionalInt;
 import java.util.Set;
@@ -117,6 +125,16 @@ public final class SqlSchemaUtils {
 
     private static final int MAX_CONSTRAINT_NAME_LENGTH = 128;
     private static final int CONSTRAINT_NAME_HASH_LENGTH = 12;
+    // The lowest common identifier length limit (Oracle before 12.2)
+    private static final int MAX_SHORT_CONSTRAINT_NAME_LENGTH = 30;
+    private static final int SHORT_CONSTRAINT_NAME_HASH_LENGTH = 8;
+    private static final List<String> JPA_TABLE_ANNOTATIONS = List.of("jakarta.persistence.Table", "javax.persistence.Table");
+    /**
+     * The entity argument name, and the entity member of {@link JsonView} and {@link JsonSubView}.
+     */
+    private static final String ENTITY = "entity";
+    private static final String JSON_PROPERTY_ANNOTATION = "com.fasterxml.jackson.annotation.JsonProperty";
+    private static final String SERDE_CONFIG_ANNOTATION = "io.micronaut.serde.config.annotation.SerdeConfig";
 
     private static final String JAKARTA_SIZE = "jakarta.validation.constraints.Size";
     private static final String JAKARTA_POSITIVE = "jakarta.validation.constraints.Positive";
@@ -183,7 +201,7 @@ public final class SqlSchemaUtils {
     public static List<SqlTableMapping> getSqlTableMappings(List<DefinitionProvider> definitionProviders,
                                                             PersistentEntity entity,
                                                             Dialect dialect) {
-        ArgumentUtils.requireNonNull("entity", entity);
+        ArgumentUtils.requireNonNull(ENTITY, entity);
 
         final String tableName = entity.getPersistedName();
         String schema = SqlQueryBuilderUtils.getSchemaName(entity);
@@ -265,10 +283,13 @@ public final class SqlSchemaUtils {
         List<SqlSequenceMapping> sequences = getSqlSequenceMappings(identities, namingStrategy);
         List<String> auxiliaryStatements = getAuxiliaryStatements(entity, tableName, namingStrategy, dialect);
         List<SqlIndexMapping> indexes = getSqlIndexMappings(entity, dialect, sqlIndexDefinitionProviders);
+        List<SqlIndexMapping> uniqueConstraints = getSqlUniqueConstraintMappings(entity,
+            Stream.concat(primaryKeyColumns.stream(), columns.stream()).map(SqlColumnMapping::getName).toList());
+        // The unique constraints are only created when enabled, they are checked when the statements are built
         validateReservableColumns(entity, primaryKeyColumns, columns, indexes);
 
         SqlTableMapping table = new SqlTableMapping(schema, tableName, escape, SqlTableMapping.TableType.MAIN, primaryKeyColumns, columns, sequences,
-            indexes, auxiliaryStatements);
+            indexes, auxiliaryStatements, uniqueConstraints);
         tables.add(table);
         return tables;
     }
@@ -780,6 +801,191 @@ public final class SqlSchemaUtils {
         return new ArrayList<>(indexMappings);
     }
 
+    /**
+     * Returns the JPA unique constraints of the entity table as unique indexes: the {@code @Column(unique = true)} columns
+     * (including the columns of embedded values), the {@code @JoinColumn(unique = true)} join columns of the to-one associations
+     * and {@code @Table(uniqueConstraints = @UniqueConstraint(...))}.
+     *
+     * @param entity The entity
+     * @param tableColumns The table columns
+     * @return The unique constraints
+     */
+    private static List<SqlIndexMapping> getSqlUniqueConstraintMappings(PersistentEntity entity, List<String> tableColumns) {
+        String tableName = entity.getPersistedName();
+        Set<SqlIndexMapping> uniqueConstraints = new LinkedHashSet<>();
+        addUniqueColumns(tableName, entity, entity.getNamingStrategy(), Collections.emptyList(), uniqueConstraints);
+        addJpaUniqueConstraints(entity, tableName, tableColumns, uniqueConstraints);
+        return new ArrayList<>(uniqueConstraints);
+    }
+
+    private static void addUniqueColumns(String tableName,
+                                         PersistentEntity entity,
+                                         NamingStrategy namingStrategy,
+                                         List<Association> associations,
+                                         Set<SqlIndexMapping> uniqueConstraints) {
+        for (PersistentProperty property : entity.getPersistentProperties()) {
+            if (property instanceof Association association) {
+                if (association.getKind() == Relation.Kind.EMBEDDED) {
+                    List<Association> newAssociations = new ArrayList<>(associations);
+                    newAssociations.add(association);
+                    addUniqueColumns(tableName, association.getAssociatedEntity(), namingStrategy, newAssociations, uniqueConstraints);
+                } else if (!association.isForeignKey()) {
+                    addUniqueJoinColumns(tableName, association, namingStrategy, associations, uniqueConstraints);
+                }
+            } else if (SqlQueryBuilderUtils.isUniqueColumn(property.getAnnotationMetadata())) {
+                String columnName = namingStrategy.mappedName(associations, property);
+                uniqueConstraints.add(new SqlIndexMapping(uniqueConstraintName(tableName, List.of(columnName)), true, new String[]{columnName}));
+            }
+        }
+    }
+
+    /**
+     * Adds a single column unique constraint for every {@code @JoinColumn(unique = true)} of the to-one association, also for
+     * a join column of a composite join ({@code @JoinColumns}), since the annotation declares the uniqueness of its own column.
+     * The uniqueness of the combined join columns is declared with {@code @Table(uniqueConstraints = ...)}.
+     * The annotated join column is matched to the table column stored by the association by its name, an unnamed one
+     * only when the association has a single join column.
+     */
+    private static void addUniqueJoinColumns(String tableName,
+                                             Association association,
+                                             NamingStrategy namingStrategy,
+                                             List<Association> associations,
+                                             Set<SqlIndexMapping> uniqueConstraints) {
+        List<String> uniqueJoinColumns = SqlQueryBuilderUtils.getUniqueJoinColumnNames(association.getAnnotationMetadata());
+        if (uniqueJoinColumns.isEmpty()) {
+            return;
+        }
+        List<String> joinColumns = new ArrayList<>();
+        PersistentEntityUtils.traversePersistentProperties(associations, association,
+            (joinAssociations, joinProperty) -> joinColumns.add(namingStrategy.mappedName(joinAssociations, joinProperty)));
+        for (String declaredColumn : uniqueJoinColumns) {
+            String column = resolveJoinColumn(joinColumns, declaredColumn);
+            if (column != null) {
+                uniqueConstraints.add(new SqlIndexMapping(uniqueConstraintName(tableName, List.of(column)), true, new String[]{column}));
+            } else if (LOG.isDebugEnabled()) {
+                LOG.debug("Unique join column [{}] of association [{}] doesn't match a single join column {}, it is not created",
+                    declaredColumn, association.getName(), joinColumns);
+            }
+        }
+    }
+
+    /**
+     * @return The join column matching the declared join column name, exactly or else a single one ignoring the case,
+     * the only join column for an unnamed one, or null
+     */
+    private static @Nullable String resolveJoinColumn(List<String> joinColumns, String declaredColumn) {
+        String name = unquote(declaredColumn.trim());
+        if (name.isEmpty()) {
+            return joinColumns.size() == 1 ? joinColumns.getFirst() : null;
+        }
+        if (joinColumns.contains(name)) {
+            return name;
+        }
+        List<String> matchingColumns = joinColumns.stream().filter(column -> column.equalsIgnoreCase(name)).distinct().toList();
+        return matchingColumns.size() == 1 ? matchingColumns.getFirst() : null;
+    }
+
+    /**
+     * Resolves the name of the index: the declared name, or the name generated by the schema generation
+     * ({@code idx_} followed by the table and column names) for an unnamed index.
+     *
+     * @param tableName The (unescaped) table name
+     * @param indexMapping The index mapping
+     * @return The index name
+     * @since 5.3.0
+     */
+    public static String resolveIndexName(String tableName, SqlIndexMapping indexMapping) {
+        if (StringUtils.isNotEmpty(indexMapping.name())) {
+            return indexMapping.name();
+        }
+        String columns = Arrays.stream(prepareIndexNamePart(String.join(", ", indexMapping.columns())).split(","))
+            .map(column -> "_" + column)
+            .collect(Collectors.joining());
+        return "idx_" + prepareIndexNamePart(tableName) + columns;
+    }
+
+    private static String prepareIndexNamePart(String value) {
+        return value.chars()
+            .mapToObj(c -> String.valueOf((char) c))
+            .filter(x -> !x.equals(" "))
+            .filter(x -> !x.equals("\""))
+            .map(String::toLowerCase)
+            .collect(Collectors.joining());
+    }
+
+    /**
+     * Resolves the table column of a unique constraint column name, the name can be quoted. The column with the exact name
+     * is preferred, since a database with case-sensitive names can have columns differing only by the case, then a single
+     * column matching the name case-insensitively, then the column of the property with the name (like the Hibernate logical
+     * column names). The mappings are resolved regardless of whether the unique constraints are generated,
+     * so an unresolved name doesn't fail, it is kept as declared.
+     */
+    private static String resolveUniqueConstraintColumn(PersistentEntity entity, List<String> tableColumns, String declaredColumn) {
+        String name = unquote(declaredColumn.trim());
+        if (tableColumns.contains(name)) {
+            return name;
+        }
+        List<String> matchingColumns = tableColumns.stream().filter(column -> column.equalsIgnoreCase(name)).distinct().toList();
+        if (matchingColumns.size() == 1) {
+            return matchingColumns.getFirst();
+        }
+        if (matchingColumns.isEmpty()) {
+            PersistentPropertyPath propertyPath = entity.getPropertyPath(name);
+            if (propertyPath != null && !(propertyPath.getProperty() instanceof Association)) {
+                String column = entity.getNamingStrategy().mappedName(propertyPath.getAssociations(), propertyPath.getProperty());
+                if (tableColumns.contains(column)) {
+                    return column;
+                }
+            }
+        }
+        if (LOG.isDebugEnabled()) {
+            LOG.debug("Unique constraint column [{}] of entity [{}] doesn't match a single table column {}, using it as declared",
+                declaredColumn, entity.getName(), matchingColumns.isEmpty() ? tableColumns : matchingColumns);
+        }
+        return name;
+    }
+
+    private static String unquote(String name) {
+        if (name.length() > 1) {
+            char first = name.charAt(0);
+            char last = name.charAt(name.length() - 1);
+            if ((first == '"' && last == '"') || (first == '`' && last == '`') || (first == '[' && last == ']')) {
+                return name.substring(1, name.length() - 1);
+            }
+        }
+        return name;
+    }
+
+    /**
+     * Adds unique indexes for JPA {@code @Table(uniqueConstraints = @UniqueConstraint(...))}. The constraint declares
+     * physical column names, which can be any table column, including embedded and association columns.
+     * An unnamed constraint gets a bounded name, see {@link #uniqueConstraintName(String, List)}.
+     */
+    private static void addJpaUniqueConstraints(PersistentEntity entity,
+                                                String tableName,
+                                                List<String> tableColumns,
+                                                Set<SqlIndexMapping> indexMappings) {
+        for (String tableAnnotation : JPA_TABLE_ANNOTATIONS) {
+            AnnotationValue<Annotation> table = entity.getAnnotationMetadata().getAnnotation(tableAnnotation);
+            if (table == null) {
+                continue;
+            }
+            for (AnnotationValue<Annotation> uniqueConstraint : table.getAnnotations("uniqueConstraints")) {
+                String[] declaredColumns = uniqueConstraint.stringValues("columnNames");
+                if (declaredColumns.length == 0) {
+                    continue;
+                }
+                List<String> columns = Arrays.stream(declaredColumns)
+                    .map(declaredColumn -> resolveUniqueConstraintColumn(entity, tableColumns, declaredColumn))
+                    .toList();
+                String name = uniqueConstraint.stringValue("name")
+                    .filter(StringUtils::isNotEmpty)
+                    .orElseGet(() -> uniqueConstraintName(tableName, columns));
+                indexMappings.add(new SqlIndexMapping(name, true, columns.toArray(new String[0])));
+            }
+        }
+    }
+
     @SuppressWarnings("java:S3776")
     private static void addSqlIndexMappings(PersistentEntity entity,
                                             NamingStrategy namingStrategy,
@@ -897,6 +1103,231 @@ public final class SqlSchemaUtils {
             }
         }
         return primaryKeyColumns;
+    }
+
+    /**
+     * Returns the Oracle JSON relational duality view mapping of the {@link JsonView} entity: the view name and the tree
+     * of its tables, each with its JSON key, relationship, allowed operations and JSON fields. The tree, JSON keys and columns
+     * are resolved the same way as when the view is created, see {@link SqlQueryBuilder#buildCreateTableStatements(PersistentEntity)}.
+     *
+     * @param viewEntity The {@link JsonView} entity
+     * @return The view mapping or null if the entity is not a JSON view
+     * @since 5.3.0
+     */
+    public static @Nullable SqlJsonViewMapping getSqlJsonViewMapping(PersistentEntity viewEntity) {
+        PersistentEntity entity = viewEntity.getAnnotationMetadata().classValue(JsonView.class, ENTITY).map(PersistentEntity::of).orElse(null);
+        if (entity == null) {
+            return null;
+        }
+        return new SqlJsonViewMapping(
+            SqlQueryBuilderUtils.getSchemaName(viewEntity),
+            viewEntity.getPersistedName(),
+            jsonViewTable(viewEntity, entity, null, false)
+        );
+    }
+
+    private static SqlJsonViewMapping.Table jsonViewTable(PersistentEntity viewEntity, PersistentEntity entity, @Nullable String key, boolean nested) {
+        Set<SqlJsonViewMapping.Field> fields = new LinkedHashSet<>();
+        List<SqlJsonViewMapping.Table> children = new ArrayList<>();
+        collectJsonViewFields(viewEntity, entity, fields, children);
+        return new SqlJsonViewMapping.Table(entity.getPersistedName(), key, nested, jsonViewOperations(viewEntity),
+            new ArrayList<>(fields), children);
+    }
+
+    private static Set<JsonView.Operation> jsonViewOperations(PersistentEntity viewEntity) {
+        AnnotationMetadata annotationMetadata = viewEntity.getAnnotationMetadata();
+        Class<? extends Annotation> viewAnnotation = annotationMetadata.hasAnnotation(JsonView.class) ? JsonView.class : JsonSubView.class;
+        JsonView.Operation[] operations = annotationMetadata.enumValues(viewAnnotation, "operations", JsonView.Operation.class);
+        return operations.length == 0 ? EnumSet.allOf(JsonView.Operation.class) : EnumSet.copyOf(Arrays.asList(operations));
+    }
+
+    private static void collectJsonViewFields(PersistentEntity viewEntity,
+                                              PersistentEntity entity,
+                                              Set<SqlJsonViewMapping.Field> fields,
+                                              List<SqlJsonViewMapping.Table> children) {
+        String table = entity.getPersistedName();
+        for (PersistentProperty identity : viewEntity.getIdentityProperties()) {
+            AnnotationMetadata identityMetadata = identity.getAnnotationMetadata();
+            String key = jsonViewKey(identity);
+            if (identityMetadata.hasAnnotation(MappedProperty.class)) {
+                fields.add(new SqlJsonViewMapping.Field(table, key, identity.getPersistedName()));
+            } else if (identityMetadata.hasAnnotation(EmbeddedId.class) && identity instanceof Association embeddedId) {
+                // The embedded id fields are keyed by the property names, their columns are resolved by position
+                for (PersistentProperty idProperty : embeddedId.getAssociatedEntity().getPersistentProperties()) {
+                    fields.add(new SqlJsonViewMapping.Field(table, idProperty.getName(), null));
+                }
+            } else {
+                addJsonViewField(entity, table, key, fields);
+            }
+        }
+        for (PersistentProperty property : viewEntity.getPersistentProperties()) {
+            if (property.getDataType() != DataType.OBJECT || isFlexColumn(property)) {
+                collectJsonViewProperty(property, entity, fields, children);
+            }
+        }
+    }
+
+    private static void collectJsonViewProperty(PersistentProperty property,
+                                                PersistentEntity entity,
+                                                Set<SqlJsonViewMapping.Field> fields,
+                                                List<SqlJsonViewMapping.Table> children) {
+        String table = entity.getPersistedName();
+        if (property instanceof Association association) {
+            if (association.getKind() == Relation.Kind.EMBEDDED) {
+                // The embedded properties are stored in the same table
+                for (PersistentProperty embeddedProperty : association.getAssociatedEntity().getPersistentProperties()) {
+                    collectJsonViewProperty(embeddedProperty, entity, fields, children);
+                }
+            } else {
+                PersistentEntity subView = association.getAssociatedEntity();
+                PersistentEntity subEntity = subView.getAnnotationMetadata().classValue(JsonSubView.class, ENTITY)
+                    .map(PersistentEntity::of).orElse(null);
+                if (subEntity != null) {
+                    children.add(jsonSubViewTable(association, subView, subEntity, entity));
+                }
+            }
+        } else if (property.getDataType() != DataType.OBJECT) {
+            String key = jsonViewKey(property);
+            if (property.getAnnotationMetadata().hasAnnotation(MappedProperty.class)) {
+                fields.add(new SqlJsonViewMapping.Field(table, key, property.getPersistedName()));
+            } else {
+                addJsonViewField(entity, table, key, fields);
+            }
+        }
+    }
+
+    /**
+     * The sub view table, created the same way as the view: a to-one association is an object, unnested when annotated with
+     * {@code @JsonUnwrapped}, and a to-many association is an array, nested in an unnested join table when the join table
+     * entity has an embedded id.
+     */
+    private static SqlJsonViewMapping.Table jsonSubViewTable(Association association,
+                                                             PersistentEntity subView,
+                                                             PersistentEntity subEntity,
+                                                             PersistentEntity entity) {
+        String key = jsonViewKey(association);
+        if (association.getKind().isSingleEnded()) {
+            return jsonViewTable(subView, subEntity, association.getAnnotationMetadata().hasAnnotation(JsonUnwrapped.class) ? null : key, false);
+        }
+        // A composite identity (more than one @Id) has no single identity property, getIdentity() fails for it
+        if (SqlQueryBuilderUtils.isForeignKeyWithJoinTable(association) && subEntity.hasIdentity()
+            && subEntity.getIdentity().getAnnotationMetadata().hasAnnotation(EmbeddedId.class)
+            && entity.getPropertyByName(association.getName()) instanceof Association joinAssociation) {
+            String joinTable = joinAssociation.getAnnotationMetadata().stringValue(SqlQueryBuilderUtils.ANN_JOIN_TABLE, "name")
+                .orElseGet(() -> entity.getNamingStrategy().mappedName(joinAssociation));
+            return new SqlJsonViewMapping.Table(joinTable, null, false, EnumSet.allOf(JsonView.Operation.class), List.of(),
+                List.of(jsonViewTable(subView, subEntity, key, true)));
+        }
+        return jsonViewTable(subView, subEntity, key, true);
+    }
+
+    private static void addJsonViewField(PersistentEntity entity, String table, String key, Set<SqlJsonViewMapping.Field> fields) {
+        PersistentProperty entityProperty = entity.getPropertyByName(key);
+        if (entityProperty != null) {
+            fields.add(new SqlJsonViewMapping.Field(table, key, entityProperty.getPersistedName()));
+        }
+    }
+
+    private static String jsonViewKey(PersistentProperty property) {
+        AnnotationMetadata annotationMetadata = property.getAnnotationMetadata();
+        return annotationMetadata.stringValue(SERDE_CONFIG_ANNOTATION, "property")
+            .orElseGet(() -> annotationMetadata.stringValue(JSON_PROPERTY_ANNOTATION).orElse(property.getName()));
+    }
+
+    private static boolean isFlexColumn(PersistentProperty property) {
+        AnnotationMetadata annotationMetadata = property.getAnnotationMetadata();
+        return annotationMetadata.hasAnnotation(JsonAnyGetter.class) || annotationMetadata.hasAnnotation(JsonAnySetter.class);
+    }
+
+    /**
+     * Resolves the generation strategy of the sequence mapping for the given dialect, using the dialect default
+     * when no strategy is declared.
+     *
+     * @param sequence The sequence mapping
+     * @param dialect The dialect
+     * @return The effective generation type
+     * @since 5.3.0
+     */
+    public static GeneratedValue.Type resolveGeneratedValueType(SqlSequenceMapping sequence, Dialect dialect) {
+        return sequence.generatedValueType()
+            .orElseGet(() -> defaultAutoStrategy(sequence.dataType(), dialect));
+    }
+
+    /**
+     * Returns the default generation type used for {@link GeneratedValue.Type#AUTO}.
+     *
+     * @param dataType The data type of the generated property
+     * @param dialect The dialect
+     * @return The default generation type
+     * @since 5.3.0
+     */
+    public static GeneratedValue.Type defaultAutoStrategy(DataType dataType, Dialect dialect) {
+        if (dataType == DataType.UUID) {
+            return GeneratedValue.Type.UUID;
+        }
+        if (dialect == Dialect.ORACLE) {
+            return GeneratedValue.Type.SEQUENCE;
+        }
+        return AUTO;
+    }
+
+    /**
+     * Whether a database sequence is expected to exist for the given sequence mapping.
+     *
+     * @param sequence The sequence mapping
+     * @param dialect The dialect
+     * @return true if schema generation creates a sequence for the mapping
+     * @since 5.3.0
+     */
+    public static boolean requiresSequence(SqlSequenceMapping sequence, Dialect dialect) {
+        if (sequence.definition() != null) {
+            return StringUtils.isNotEmpty(sequence.definedName());
+        }
+        return resolveGeneratedValueType(sequence, dialect) == GeneratedValue.Type.SEQUENCE;
+    }
+
+    /**
+     * Resolves the (unqualified and unquoted) name of the sequence.
+     *
+     * @param table The table mapping owning the sequence
+     * @param sequence The sequence mapping
+     * @param dialect The dialect
+     * @return The sequence name
+     * @since 5.3.0
+     */
+    public static String resolveSequenceName(SqlTableMapping table, SqlSequenceMapping sequence, Dialect dialect) {
+        if (StringUtils.isNotEmpty(sequence.definedName())) {
+            return Objects.requireNonNull(sequence.definedName());
+        }
+        if (sequence.definition() != null && dialect == Dialect.SQL_SERVER) {
+            throw new MappingException(
+                "@GeneratedValue with a custom sequence definition requires 'ref' for SQL Server column: " + sequence.columnName()
+            );
+        }
+        return table.name() + SqlQueryBuilderUtils.SEQ_SUFFIX;
+    }
+
+    /**
+     * Builds a deterministic unique constraint (index) name that fits the identifier length limit of all supported databases:
+     * a readable part followed by a hash of the table and column names, which keeps the names of different column lists distinct.
+     *
+     * @param tableName The owning table
+     * @param columns The unique columns
+     * @return The constraint name
+     */
+    static String uniqueConstraintName(String tableName, List<String> columns) {
+        return shortConstraintName("UK_", tableName, columns);
+    }
+
+    private static String shortConstraintName(String prefix, String tableName, List<String> columns) {
+        String name = prefix + sanitize(tableName) + "_" + sanitize(String.join("_", columns));
+        // The readable part is ambiguous: the sanitization folds the case and the special characters (the quoted columns
+        // "Code" and "code"), and the underscores don't mark the table and column boundaries (the columns a_b and (a, b),
+        // or the tables item_a and item). The constraint names are unique per schema in some databases, the hash of
+        // the names separated by a character not allowed in identifiers keeps them distinct.
+        String hash = constraintNameHash(prefix + '\0' + tableName + '\0' + String.join("\0", columns))
+            .substring(0, SHORT_CONSTRAINT_NAME_HASH_LENGTH).toUpperCase(Locale.ENGLISH);
+        return name.substring(0, Math.min(name.length(), MAX_SHORT_CONSTRAINT_NAME_LENGTH - hash.length() - 1)) + "_" + hash;
     }
 
     private record ColumnOptions(@Nullable Integer length,
