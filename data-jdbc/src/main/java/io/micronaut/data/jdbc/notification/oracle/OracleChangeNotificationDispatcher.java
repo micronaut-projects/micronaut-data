@@ -74,6 +74,7 @@ final class OracleChangeNotificationDispatcher implements DatabaseChangeListener
 
     private final String dataSourceName;
     private final OracleChangeListenerDefinition listenerDefinition;
+    private final String methodDescription;
     private final BeanContext beanContext;
     private final Executor blockingExecutor;
     private final OracleChangeNotificationTaskTracker taskTracker;
@@ -96,6 +97,7 @@ final class OracleChangeNotificationDispatcher implements DatabaseChangeListener
                                        LongConsumer databaseShutdownHandler) {
         this.dataSourceName = dataSourceName;
         this.listenerDefinition = listenerDefinition;
+        this.methodDescription = listenerDefinition.method().getDescription(true);
         this.beanContext = beanContext;
         this.blockingExecutor = blockingExecutor;
         this.taskTracker = taskTracker;
@@ -144,7 +146,7 @@ final class OracleChangeNotificationDispatcher implements DatabaseChangeListener
         if (configuredOptions == null) {
             // No query has been associated yet, so this cannot be a row-change callback.
             LOG.trace("Ignoring DCN callback before registration options were configured for datasource [{}] and listener method [{}]",
-                dataSourceName, getMethodDesc());
+                dataSourceName, methodDescription);
             return;
         }
         boolean dataNotification = isDataNotification(event);
@@ -196,14 +198,14 @@ final class OracleChangeNotificationDispatcher implements DatabaseChangeListener
     private void submitDispatch(DatabaseChangeEvent event, boolean dataNotification, RegistrationOptions options) {
         if (taskTracker.isShutdownStarted()) {
             LOG.trace("Ignored DCN callback for datasource [{}], registration [{}], and listener method [{}] because graceful shutdown has started",
-                dataSourceName, event.getRegId(), getMethodDesc());
+                dataSourceName, event.getRegId(), methodDescription);
             return;
         }
         try {
             blockingExecutor.execute(() -> dispatchSafely(event, dataNotification, options));
         } catch (RuntimeException e) {
             LOG.warn("Unable to submit DCN event of type [{}] for datasource [{}], registration [{}], and listener method [{}]",
-                event.getEventType(), dataSourceName, event.getRegId(), getMethodDesc(), e);
+                event.getEventType(), dataSourceName, event.getRegId(), methodDescription, e);
         }
     }
 
@@ -222,16 +224,16 @@ final class OracleChangeNotificationDispatcher implements DatabaseChangeListener
         }
         if (!taskTracker.acceptTask()) {
             LOG.trace("Discarded queued DCN event for datasource [{}], registration [{}], and listener method [{}] because graceful shutdown has started",
-                dataSourceName, event.getRegId(), getMethodDesc());
+                dataSourceName, event.getRegId(), methodDescription);
             return;
         }
         try {
             LOG.trace("Accepted DCN event of type [{}] for datasource [{}], registration [{}], and listener method [{}]",
-                event.getEventType(), dataSourceName, event.getRegId(), getMethodDesc());
+                event.getEventType(), dataSourceName, event.getRegId(), methodDescription);
             dispatch(event, options);
         } catch (RuntimeException e) {
             LOG.error("Unexpected error dispatching DCN event [{}] for registration [{}], datasource [{}], and listener method [{}]",
-                event.getEventType(), event.getRegId(), dataSourceName, getMethodDesc(), e);
+                event.getEventType(), event.getRegId(), dataSourceName, methodDescription, e);
         } finally {
             taskTracker.completeTask();
         }
@@ -242,7 +244,7 @@ final class OracleChangeNotificationDispatcher implements DatabaseChangeListener
         DatabaseChangeEvent.EventType eventType = event.getEventType();
         if (eventType == DatabaseChangeEvent.EventType.DEREG) {
             LOG.warn("Received DCN event [{}] for registration [{}], datasource [{}], and listener method [{}]; deregistration reason [{}]",
-                eventType, registrationId, dataSourceName, getMethodDesc(), event.getAdditionalEventType());
+                eventType, registrationId, dataSourceName, methodDescription, event.getAdditionalEventType());
             deregistrationHandler.accept(registrationId, event.getAdditionalEventType());
             return;
         }
@@ -250,19 +252,19 @@ final class OracleChangeNotificationDispatcher implements DatabaseChangeListener
             if (options.driverReconnectRetryEnabled()) {
                 LOG.warn("Received DCN event [{}] for registration [{}], datasource [{}], and listener method [{}]; " +
                         "letting the JDBC driver retry the client-initiated connection, with the registration failure callback as recovery fallback",
-                    eventType, registrationId, dataSourceName, getMethodDesc());
+                    eventType, registrationId, dataSourceName, methodDescription);
                 return;
             }
             LOG.warn("Received DCN event [{}] for registration [{}], datasource [{}], and listener method [{}]; " +
                     "marking listener state for reconciliation and starting registration recovery",
-                eventType, registrationId, dataSourceName, getMethodDesc());
+                eventType, registrationId, dataSourceName, methodDescription);
             databaseShutdownHandler.accept(registrationId);
             return;
         }
         if (eventType == DatabaseChangeEvent.EventType.SHUTDOWN_ANY) {
             LOG.warn("Received DCN event [{}] for registration [{}], datasource [{}], and listener method [{}]; " +
                     "no recovery is started for an instance-level shutdown",
-                eventType, registrationId, dataSourceName, getMethodDesc());
+                eventType, registrationId, dataSourceName, methodDescription);
             return;
         }
         if (eventType == DatabaseChangeEvent.EventType.STARTUP) {
@@ -301,7 +303,7 @@ final class OracleChangeNotificationDispatcher implements DatabaseChangeListener
     private void handleQueryDeregistration(long queryId, long registrationId) {
         LOG.warn("DCN query [{}] for datasource [{}], listener method [{}], and registration [{}] "
                 + "was deregistered; the listener is unavailable",
-            queryId, dataSourceName, getMethodDesc(), registrationId);
+            queryId, dataSourceName, methodDescription, registrationId);
         queryDeregistrationHandler.accept(registrationId);
     }
 
@@ -405,7 +407,7 @@ final class OracleChangeNotificationDispatcher implements DatabaseChangeListener
 
     private void dispatchInvalidation(long registrationId) {
         LOG.trace("Dispatching INVALIDATE event for DCN for datasource [{}], registration [{}], and listener method [{}]",
-            dataSourceName, registrationId, getMethodDesc());
+            dataSourceName, registrationId, methodDescription);
         dispatchListener(new DefaultChangeEvent<>(ChangeOperation.INVALIDATE, null, null), null);
     }
 
@@ -415,7 +417,7 @@ final class OracleChangeNotificationDispatcher implements DatabaseChangeListener
      */
     void dispatchRecoveryInvalidation(long registrationId) {
         LOG.trace("Dispatching INVALIDATE after DCN registration recovery for datasource [{}], registration [{}], and listener method [{}]",
-            dataSourceName, registrationId, getMethodDesc());
+            dataSourceName, registrationId, methodDescription);
         dispatchListener(new DefaultChangeEvent<>(ChangeOperation.INVALIDATE, null, null), null);
     }
 
@@ -440,10 +442,10 @@ final class OracleChangeNotificationDispatcher implements DatabaseChangeListener
         } catch (Exception e) {
             if (rowId == null) {
                 LOG.error("Error handling DCN for listener method [{}], operation [{}], table [{}], ROWID unavailable",
-                    getMethodDesc(), event.operation(), listenerDefinition.tableIdentifier().sqlName(), e);
+                    methodDescription, event.operation(), listenerDefinition.tableIdentifier().sqlName(), e);
             } else {
                 LOG.error("Error handling DCN for listener method [{}], operation [{}], table [{}], ROWID [{}]",
-                    getMethodDesc(), event.operation(), listenerDefinition.tableIdentifier().sqlName(), rowId, e);
+                    methodDescription, event.operation(), listenerDefinition.tableIdentifier().sqlName(), rowId, e);
             }
         }
     }
@@ -451,10 +453,6 @@ final class OracleChangeNotificationDispatcher implements DatabaseChangeListener
     @SuppressWarnings({"unchecked", "rawtypes"})
     private void invokeListener(ChangeEvent<?> event) {
         ((ExecutableMethod) listenerDefinition.method()).invoke(beanContext.getBean(listenerDefinition.beanDefinition()), event);
-    }
-
-    private String getMethodDesc() {
-        return listenerDefinition.method().getDescription(true);
     }
 
     private static boolean isEnabled(String propertyName, Properties properties) {

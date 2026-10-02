@@ -442,25 +442,15 @@ final class OracleChangeNotificationSubscription {
             }
         }
         if (pendingFailure != null) {
-            recoverFailedLeaseDuringActivation(registrationLease, pendingFailure);
+            LOG.error("DCN registration [{}] became unavailable for datasource [{}] and listener method [{}] during activation; attempting recovery",
+                registrationLease.registration().getRegId(), dataSourceName, methodDescription, pendingFailure);
+            submitFailureRecovery(registrationLease);
             return new ActivationResult(ActivationOutcome.RECOVERY_REQUIRED, registrationLease);
         }
         if (invalidationGenerationToDispatch >= 0) {
             dispatchInvalidationIfCurrent(registrationLease, invalidationGenerationToDispatch);
         }
         return new ActivationResult(ActivationOutcome.ACTIVATED, registrationLease);
-    }
-
-    /**
-     * Starts recovery when a registration failure was reported before its lease could be activated.
-     *
-     * @param registrationLease the lease whose registration failed
-     * @param failure the failure reported during registration setup
-     */
-    private void recoverFailedLeaseDuringActivation(OracleRegistrationLease registrationLease, SQLException failure) {
-        LOG.error("DCN registration [{}] became unavailable for datasource [{}] and listener method [{}] during activation; attempting recovery",
-            registrationLease.registration().getRegId(), dataSourceName, methodDescription, failure);
-        submitFailureRecovery(registrationLease);
     }
 
     /**

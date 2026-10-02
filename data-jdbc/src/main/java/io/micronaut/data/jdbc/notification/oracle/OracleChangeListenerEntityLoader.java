@@ -46,7 +46,6 @@ final class OracleChangeListenerEntityLoader<E> {
     private static final QueryParameterBinding ROW_ID_BINDING = new RowIdQueryParameterBinding();
 
     private final JdbcRepositoryOperations operations;
-    private final SqlQueryBuilder queryBuilder = new SqlQueryBuilder(Dialect.ORACLE);
     private final DefaultSqlStoredQuery<E, E> sqlStoredQuery;
 
     @SuppressWarnings("unchecked")
@@ -56,6 +55,7 @@ final class OracleChangeListenerEntityLoader<E> {
         RuntimePersistentEntity<E> entity = operations.getEntity(resolvedEntityType);
         StoredQuery<E, E> storedQuery = new BasicStoredQuery<>(query, EMPTY_EXPANDABLE_QUERY_PARTS,
             List.of(ROW_ID_BINDING), resolvedEntityType, resolvedEntityType, StoredQuery.OperationType.QUERY);
+        SqlQueryBuilder queryBuilder = new SqlQueryBuilder(Dialect.ORACLE);
         this.sqlStoredQuery = new DefaultSqlStoredQuery<>(storedQuery, entity, queryBuilder,
             operations.getConversionService());
     }
