@@ -64,6 +64,10 @@ import java.util.function.LongConsumer;
  *
  * <p>Listener invocation failures are logged and do not prevent subsequent changes from being
  * dispatched.</p>
+ *
+ * <p>Local retirement stops new data callbacks without disabling lifecycle callbacks. Overlapping
+ * renewal preserves accepted queued data callbacks; after-expiration renewal discards them.
+ * A callback that has already started may finish in either mode.</p>
  */
 final class OracleChangeNotificationDispatcher implements DatabaseChangeListener {
     private static final Logger LOG = LoggerFactory.getLogger(OracleChangeNotificationDispatcher.class);
@@ -78,6 +82,8 @@ final class OracleChangeNotificationDispatcher implements DatabaseChangeListener
     private final LongConsumer queryDeregistrationHandler;
     private final LongConsumer databaseShutdownHandler;
     private volatile @Nullable RegistrationOptions registrationOptions;
+    private boolean acceptingDataNotifications = true;
+    private volatile boolean discardQueuedDataNotifications;
 
     OracleChangeNotificationDispatcher(String dataSourceName,
                                        OracleChangeListenerDefinition listenerDefinition,
@@ -97,6 +103,17 @@ final class OracleChangeNotificationDispatcher implements DatabaseChangeListener
         this.deregistrationHandler = deregistrationHandler;
         this.queryDeregistrationHandler = queryDeregistrationHandler;
         this.databaseShutdownHandler = databaseShutdownHandler;
+    }
+
+    /**
+     * Stops accepting data notifications without detaching lifecycle or failure handling.
+     *
+     * @param discardQueuedCallbacks whether accepted callbacks that have not started must also be discarded;
+     *                               running callbacks cannot be canceled
+     */
+    synchronized void retire(boolean discardQueuedCallbacks) {
+        acceptingDataNotifications = false;
+        discardQueuedDataNotifications |= discardQueuedCallbacks;
     }
 
     /**
@@ -120,31 +137,35 @@ final class OracleChangeNotificationDispatcher implements DatabaseChangeListener
 
     @Override
     public void onDatabaseChangeNotification(DatabaseChangeEvent event) {
+        if (taskTracker.isShutdownStarted()) {
+            return;
+        }
         if (registrationOptions == null) {
             // No query has been associated yet, so this cannot be a row-change callback.
             LOG.trace("Ignoring DCN callback before registration options were configured for datasource [{}] and listener method [{}]",
                 dataSourceName, getMethodDesc());
             return;
         }
-        removePurgedRegistration(event);
-        submitDispatch(event);
+        boolean dataNotification = isDataNotification(event);
+        synchronized (this) {
+            if (dataNotification && !acceptingDataNotifications) {
+                return;
+            }
+        }
+        if (dataNotification && registrationOptions.purgeOnNotificationEnabled()) {
+            registrationPurgedHandler.accept(event.getRegId());
+        }
+        submitDispatch(event, dataNotification);
     }
 
     /**
-     * Removes a one-shot registration only for a data-change notification. Registration and query
-     * deregistration, startup, and shutdown callbacks must retain their normal lifecycle handling.
+     * Distinguishes data notifications from lifecycle callbacks, including query deregistration.
      */
-    private void removePurgedRegistration(DatabaseChangeEvent event) {
-        if (registrationOptions == null || !registrationOptions.purgeOnNotificationEnabled()) {
-            return;
-        }
+    private boolean isDataNotification(DatabaseChangeEvent event) {
         DatabaseChangeEvent.EventType eventType = event.getEventType();
-        if (eventType == DatabaseChangeEvent.EventType.OBJCHANGE
+        return eventType == DatabaseChangeEvent.EventType.OBJCHANGE
             || (eventType == DatabaseChangeEvent.EventType.QUERYCHANGE
-                && !containsQueryDeregistration(event.getQueryChangeDescription()))) {
-            // A timeout or lifecycle callback must reach its own handler, even for a one-shot registration.
-            registrationPurgedHandler.accept(event.getRegId());
-        }
+                && !containsQueryDeregistration(event.getQueryChangeDescription()));
     }
 
     private boolean containsQueryDeregistration(QueryChangeDescription @Nullable [] queries) {
@@ -162,15 +183,16 @@ final class OracleChangeNotificationDispatcher implements DatabaseChangeListener
      * Submits a callback without counting it as active until execution begins.
      *
      * @param event the notification to dispatch
+     * @param dataNotification whether local retirement applies to this callback
      */
-    private void submitDispatch(DatabaseChangeEvent event) {
+    private void submitDispatch(DatabaseChangeEvent event, boolean dataNotification) {
         if (taskTracker.isShutdownStarted()) {
             LOG.trace("Ignored DCN callback for datasource [{}], registration [{}], and listener method [{}] because graceful shutdown has started",
                 dataSourceName, event.getRegId(), getMethodDesc());
             return;
         }
         try {
-            blockingExecutor.execute(() -> dispatchSafely(event));
+            blockingExecutor.execute(() -> dispatchSafely(event, dataNotification));
         } catch (RuntimeException e) {
             LOG.warn("Unable to submit DCN event of type [{}] for datasource [{}], registration [{}], and listener method [{}]",
                 event.getEventType(), dataSourceName, event.getRegId(), getMethodDesc(), e);
@@ -183,8 +205,12 @@ final class OracleChangeNotificationDispatcher implements DatabaseChangeListener
      * errors propagate to the executor's error handling.
      *
      * @param event the database change event
+     * @param dataNotification whether to check the queued-data retirement gate before starting
      */
-    private void dispatchSafely(DatabaseChangeEvent event) {
+    private void dispatchSafely(DatabaseChangeEvent event, boolean dataNotification) {
+        if (dataNotification && discardQueuedDataNotifications) {
+            return;
+        }
         if (!taskTracker.acceptTask()) {
             LOG.trace("Discarded queued DCN event for datasource [{}], registration [{}], and listener method [{}] because graceful shutdown has started",
                 dataSourceName, event.getRegId(), getMethodDesc());

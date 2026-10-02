@@ -37,6 +37,90 @@ import java.util.function.LongConsumer
 
 class OracleChangeNotificationDispatcherSpec extends Specification {
 
+    void "retirement discards queued callbacks only when requested (#discardQueued)"() {
+        given:
+        def beanDefinition = Mock(BeanDefinition)
+        def beanContext = Mock(BeanContext)
+        beanContext.getBean(beanDefinition) >> new Object()
+        def method = Mock(ExecutableMethod)
+        def invocations = []
+        method.invoke(_, _) >> { Object[] arguments -> invocations << eventArgument(arguments); null }
+        List<Runnable> queued = []
+        def dispatcher = dispatcher(definition(beanDefinition, method, new Properties()), beanContext,
+            Mock(LongConsumer), Mock(BiConsumer), Mock(LongConsumer), Mock(LongConsumer),
+            { Runnable task -> queued << task } as Executor, new OracleChangeNotificationTaskTracker())
+        def event = Mock(DatabaseChangeEvent)
+        event.eventType >> DatabaseChangeEvent.EventType.OBJCHANGE
+
+        when:
+        dispatcher.onDatabaseChangeNotification(event)
+        dispatcher.retire(discardQueued)
+        dispatcher.onDatabaseChangeNotification(event)
+        queued.first().run()
+
+        then:
+        queued.size() == 1
+        invocations.size() == (discardQueued ? 0 : 1)
+
+        where:
+        discardQueued << [false, true]
+    }
+
+    void "retirement keeps lifecycle callbacks enabled (#eventType)"() {
+        given:
+        def deregistrations = []
+        def shutdowns = []
+        def queries = []
+        def dispatcher = dispatcher(definition(), Mock(BeanContext), Mock(LongConsumer),
+            { Long id, DatabaseChangeEvent.AdditionalEventType ignored -> deregistrations << id } as BiConsumer,
+            { long id -> queries << id } as LongConsumer,
+            { long id -> shutdowns << id } as LongConsumer,
+            { Runnable task -> task.run() } as Executor, new OracleChangeNotificationTaskTracker())
+        def event = Mock(DatabaseChangeEvent)
+        event.eventType >> eventType
+        event.regId >> 41L
+        def query = Mock(QueryChangeDescription)
+        query.queryChangeEventType >> QueryChangeDescription.QueryChangeEventType.DEREG
+        event.queryChangeDescription >> ([query] as QueryChangeDescription[])
+
+        when:
+        dispatcher.retire(true)
+        dispatcher.onDatabaseChangeNotification(event)
+
+        then:
+        deregistrations == (eventType == DatabaseChangeEvent.EventType.DEREG ? [41L] : [])
+        shutdowns == (eventType == DatabaseChangeEvent.EventType.SHUTDOWN ? [41L] : [])
+        queries == (eventType == DatabaseChangeEvent.EventType.QUERYCHANGE ? [41L] : [])
+
+        where:
+        eventType << [DatabaseChangeEvent.EventType.DEREG, DatabaseChangeEvent.EventType.SHUTDOWN,
+                      DatabaseChangeEvent.EventType.QUERYCHANGE]
+    }
+
+    void "retiring during a running callback does not cancel that callback"() {
+        given:
+        def beanDefinition = Mock(BeanDefinition)
+        def beanContext = Mock(BeanContext)
+        beanContext.getBean(beanDefinition) >> new Object()
+        def method = Mock(ExecutableMethod)
+        def completed = false
+        OracleChangeNotificationDispatcher dispatcher
+        method.invoke(_, _) >> {
+            dispatcher.retire(true)
+            completed = true
+            null
+        }
+        dispatcher = this.dispatcher(definition(beanDefinition, method, new Properties()), beanContext)
+        def event = Mock(DatabaseChangeEvent)
+        event.eventType >> DatabaseChangeEvent.EventType.OBJCHANGE
+
+        when:
+        dispatcher.onDatabaseChangeNotification(event)
+
+        then:
+        completed
+    }
+
     void "database shutdown uses effective JDBC options rather than annotation options"() {
         given:
         def properties = new Properties()

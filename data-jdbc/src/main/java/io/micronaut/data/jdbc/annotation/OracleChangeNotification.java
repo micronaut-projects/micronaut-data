@@ -122,15 +122,17 @@ public @interface OracleChangeNotification {
      */
     enum RenewalMode {
         /**
-         * Activates the replacement before unregistering the previous registration. This avoids
-         * a planned renewal gap but can deliver the same change through both registrations.
+         * Activates the replacement before retiring new data delivery from the previous registration
+         * and attempting to unregister it. Previously accepted callbacks, including queued callbacks,
+         * may finish. This avoids a planned renewal gap but can deliver duplicate changes.
          */
         OVERLAPPING,
         /**
-         * Unregisters the previous registration at its local expiration deadline, then activates its
-         * replacement. This avoids planned renewal overlap, but database changes can be missed while
-         * the replacement is created. A longer Oracle Database timeout removes abandoned registrations
-         * if local deregistration cannot run.
+         * Retires data delivery from the previous registration at its local expiration deadline,
+         * discards queued data callbacks, and attempts to unregister it before creating its replacement.
+         * Cleanup failure does not delay replacement. Running callbacks may finish, and database
+         * changes can be missed while the replacement is created. A longer Oracle Database timeout
+         * removes abandoned registrations if local deregistration cannot run.
          */
         AFTER_EXPIRATION,
         /**

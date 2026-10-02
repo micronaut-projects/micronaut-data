@@ -711,7 +711,7 @@ class OracleChangeNotificationSubscriptionSpec extends Specification {
         0 * fixture.oracleConnection.unregisterDatabaseChangeNotification(original)
     }
 
-    void "delays after-expiration replacement until the server timeout when unregister fails"() {
+    void "replaces immediately after expiration when best-effort unregister fails"() {
         given:
         def original = Mock(DatabaseChangeRegistration)
         def replacement = Mock(DatabaseChangeRegistration)
@@ -735,20 +735,11 @@ class OracleChangeNotificationSubscriptionSpec extends Specification {
         1 * fixture.oracleConnection.unregisterDatabaseChangeNotification(original) >> {
             throw new DataAccessException("Unable to unregister")
         }
-        fixture.registrationIndex.get() == 1
-        scheduledDelays == [TimeUnit.SECONDS.toNanos(10), TimeUnit.SECONDS.toNanos(60)]
-
-        when:
-        nanoTimeSupplier.set(TimeUnit.SECONDS.toNanos(70))
-        scheduledTasks[1].run()
-
-        then:
         fixture.registrationIndex.get() == 2
-        scheduledDelays[2] == TimeUnit.SECONDS.toNanos(10)
-        0 * fixture.oracleConnection.unregisterDatabaseChangeNotification(original)
+        scheduledDelays == [TimeUnit.SECONDS.toNanos(10), TimeUnit.SECONDS.toNanos(10)]
     }
 
-    void "uses a conservative server deadline when registration takes time"() {
+    void "slow association does not extend the local expiration or postpone replacement on cleanup failure"() {
         given:
         def original = Mock(DatabaseChangeRegistration)
         def replacement = Mock(DatabaseChangeRegistration)
@@ -775,20 +766,11 @@ class OracleChangeNotificationSubscriptionSpec extends Specification {
         1 * fixture.oracleConnection.unregisterDatabaseChangeNotification(original) >> {
             throw new DataAccessException('Unable to unregister')
         }
-        fixture.registrationIndex.get() == 1
-        scheduledDelays == [TimeUnit.SECONDS.toNanos(3), TimeUnit.SECONDS.toNanos(67)]
-
-        when:
-        nanoTimeSupplier.set(TimeUnit.SECONDS.toNanos(77))
-        scheduledTasks[1].run()
-
-        then:
         fixture.registrationIndex.get() == 2
-        scheduledDelays[2] == TimeUnit.SECONDS.toNanos(10)
-        0 * fixture.oracleConnection.unregisterDatabaseChangeNotification(original)
+        scheduledDelays == [TimeUnit.SECONDS.toNanos(3), TimeUnit.SECONDS.toNanos(10)]
     }
 
-    void "timeout callback renews the current registration after cleanup ownership was removed"() {
+    void "late timeout for a retired registration does not renew or cancel its replacement"() {
         given:
         def original = Mock(DatabaseChangeRegistration)
         def replacement = Mock(DatabaseChangeRegistration)
@@ -820,8 +802,8 @@ class OracleChangeNotificationSubscriptionSpec extends Specification {
         1 * fixture.oracleConnection.unregisterDatabaseChangeNotification(original) >> {
             throw new DataAccessException('Unable to unregister')
         }
-        fixture.registrationIndex.get() == 1
-        scheduledDelays == [TimeUnit.SECONDS.toNanos(10), TimeUnit.SECONDS.toNanos(60)]
+        fixture.registrationIndex.get() == 2
+        scheduledDelays == [TimeUnit.SECONDS.toNanos(10), TimeUnit.SECONDS.toNanos(10)]
 
         when:
         subscription.handleRegistrationDeregistered(
@@ -829,15 +811,79 @@ class OracleChangeNotificationSubscriptionSpec extends Specification {
 
         then:
         fixture.registrationIndex.get() == 2
-        scheduledDelays == [TimeUnit.SECONDS.toNanos(10), TimeUnit.SECONDS.toNanos(60), TimeUnit.SECONDS.toNanos(10)]
-        1 * scheduledFutures[1].cancel(false)
+        scheduledDelays == [TimeUnit.SECONDS.toNanos(10), TimeUnit.SECONDS.toNanos(10)]
+        0 * scheduledFutures[1].cancel(false)
         0 * fixture.oracleConnection.unregisterDatabaseChangeNotification(original)
 
         when:
-        scheduledTasks[1].run()
+        scheduledTasks.first().run()
 
         then:
         fixture.registrationIndex.get() == 2
+    }
+
+    void "#mode retirement applies to queued and new callbacks even when cleanup fails (#cleanupFails)"() {
+        given:
+        def original = Mock(DatabaseChangeRegistration)
+        def replacement = Mock(DatabaseChangeRegistration)
+        def scheduledTasks = []
+        List<Runnable> queuedDispatch = []
+        def delivered = []
+        def clock = { 0L } as LongSupplier
+        def oldEvent = Mock(DatabaseChangeEvent)
+        oldEvent.eventType >> DatabaseChangeEvent.EventType.OBJCHANGE
+        oldEvent.regId >> 1L
+        def newEvent = Mock(DatabaseChangeEvent)
+        newEvent.eventType >> DatabaseChangeEvent.EventType.OBJCHANGE
+        newEvent.regId >> 2L
+        Map<String, Object> fixture
+        fixture = registrarFixture([original, replacement], clock, [], { int index ->
+            if (index == 2) {
+                // OVERLAPPING still accepts the old stream until replacement association completes.
+                fixture.registeredListeners[0].onDatabaseChangeNotification(oldEvent)
+            }
+        }, { Runnable task -> queuedDispatch << task } as Executor)
+        def subscription = subscription(fixture.registrar, scheduler(scheduledTasks, []),
+            new OracleChangeNotificationTaskTracker(), clock,
+            new OracleChangeNotificationRenewalPolicy(10, mode, 2),
+            { Runnable task -> task.run() } as Executor,
+            { ChangeEvent<?> event -> delivered << event.operation() })
+
+        when:
+        subscription.start()
+        fixture.registeredListeners[0].onDatabaseChangeNotification(oldEvent)
+        scheduledTasks.first().run()
+        fixture.registeredListeners[0].onDatabaseChangeNotification(oldEvent)
+        fixture.registeredListeners[1].onDatabaseChangeNotification(newEvent)
+        queuedDispatch.each { it.run() }
+
+        then:
+        1 * fixture.oracleConnection.unregisterDatabaseChangeNotification(original) >> {
+            if (cleanupFails) {
+                throw new DataAccessException('Cleanup failed')
+            }
+        }
+        fixture.registrationIndex.get() == 2
+        queuedDispatch.size() == (mode == OracleChangeNotification.RenewalMode.OVERLAPPING ? 3 : 2)
+        delivered == [ChangeOperation.INVALIDATE] * (mode == OracleChangeNotification.RenewalMode.OVERLAPPING ? 3 : 1)
+
+        when:
+        def lateTimeout = Mock(DatabaseChangeEvent)
+        lateTimeout.eventType >> DatabaseChangeEvent.EventType.DEREG
+        lateTimeout.additionalEventType >> DatabaseChangeEvent.AdditionalEventType.TIMEOUT
+        lateTimeout.regId >> 1L
+        fixture.registeredListeners[0].onDatabaseChangeNotification(lateTimeout)
+        queuedDispatch.last().run()
+
+        then:
+        fixture.registrationIndex.get() == 2
+
+        where:
+        mode                                                  | cleanupFails
+        OracleChangeNotification.RenewalMode.AFTER_EXPIRATION   | false
+        OracleChangeNotification.RenewalMode.AFTER_EXPIRATION   | true
+        OracleChangeNotification.RenewalMode.OVERLAPPING        | false
+        OracleChangeNotification.RenewalMode.OVERLAPPING        | true
     }
 
     void "rolls back registrations in reverse creation order"() {
@@ -870,7 +916,8 @@ class OracleChangeNotificationSubscriptionSpec extends Specification {
     private Map<String, Object> registrarFixture(List<DatabaseChangeRegistration> registrations,
                                                  LongSupplier nanoTimeSupplier,
                                                  List<String> lifecycle,
-                                                 Closure<?> associationAction = { int ignored -> }) {
+                                                 Closure<?> associationAction = { int ignored -> },
+                                                 Executor dispatchExecutor = { Runnable task -> task.run() } as Executor) {
         def operations = Mock(JdbcOperations)
         def connection = Mock(Connection)
         def oracleConnection = Mock(OracleConnection)
@@ -909,7 +956,7 @@ class OracleChangeNotificationSubscriptionSpec extends Specification {
         }
         def registrar = new OracleChangeNotificationRegistrar(
             "inventory", operations, beanContext,
-            { Runnable command -> command.run() } as Executor,
+            dispatchExecutor,
             new OracleChangeNotificationTaskTracker(), nanoTimeSupplier)
         return [
             registrar: registrar,

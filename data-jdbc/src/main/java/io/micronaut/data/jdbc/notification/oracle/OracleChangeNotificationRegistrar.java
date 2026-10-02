@@ -92,8 +92,8 @@ final class OracleChangeNotificationRegistrar {
      * from local tracking and attempts to unregister it before propagating the failure.</p>
      *
      * @param subscription the subscription that owns the registration and receives its callbacks
-     * @return the registration lease, including local renewal and conservative server-expiration
-     * deadlines and the post-recovery invalidation action
+     * @return the registration lease, including its local renewal deadline, data-delivery retirement,
+     * and post-recovery invalidation actions
      * @throws RuntimeException if registration setup or query association fails
      */
     OracleRegistrationLease createRegistration(OracleChangeNotificationSubscription subscription) {
@@ -131,14 +131,11 @@ final class OracleChangeNotificationRegistrar {
                             registration.getRegId(), dataSourceName, definition.method().getDescription(true));
                     }
                 }
-                // Server-side lifetime may begin after the registration call starts. Measure after
-                // association so the fallback cannot precede the server's configured timeout.
-                long serverExpirationNanos = nanoTimeSupplier.getAsLong()
-                    + TimeUnit.SECONDS.toNanos(definition.renewalPolicy().serverTimeoutSeconds());
                 long registrationId = registration.getRegId();
-                return new OracleRegistrationLease(registration, logicalExpirationNanos, serverExpirationNanos,
+                return new OracleRegistrationLease(registration, logicalExpirationNanos, dispatcher::retire,
                     () -> dispatcher.dispatchRecoveryInvalidation(registrationId));
             } catch (SQLException | RuntimeException e) {
+                dispatcher.retire(true);
                 subscription.untrack(registration);
                 try {
                     oracleConnection.unregisterDatabaseChangeNotification(registration);
