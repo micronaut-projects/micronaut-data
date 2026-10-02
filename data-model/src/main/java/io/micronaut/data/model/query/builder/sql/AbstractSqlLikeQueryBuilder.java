@@ -2644,8 +2644,15 @@ public abstract class AbstractSqlLikeQueryBuilder implements QueryBuilder {
                     appendExpression(rightExpression, leftExpression);
                     query.append(EQUAL_TO_TRUE_SUFFIX);
                 }
-                case POSTGRES, H2, MYSQL -> {
+                case H2, MYSQL -> {
                     query.append("ST_Within(");
+                    appendExpression(leftExpression);
+                    query.append(COMMA);
+                    appendExpression(rightExpression, leftExpression);
+                    query.append(CLOSE_BRACKET);
+                }
+                case POSTGRES -> {
+                    query.append("ST_CoveredBy(");
                     appendExpression(leftExpression);
                     query.append(COMMA);
                     appendExpression(rightExpression, leftExpression);

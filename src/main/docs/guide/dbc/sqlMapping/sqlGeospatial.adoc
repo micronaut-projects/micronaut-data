@@ -212,7 +212,7 @@ Micronaut Data translates geospatial repository methods and criteria predicates 
 | Predicate | PostgreSQL / PostGIS spatial function
 
 | `GeoWithin`
-| `ST_Within(column, convertedValue)`
+| `ST_CoveredBy(column, convertedValue)`
 
 | `GeoIntersects`
 | `ST_Intersects(column, convertedValue)`
