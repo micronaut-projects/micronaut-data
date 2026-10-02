@@ -56,7 +56,7 @@ groovy_yaml = "5.1.2"
 
 antlr = "4.13.2"
 
-jackson-override = "2.18.10"
+jackson-override = "2.22.3"
 micrometer-override = "1.15.12"
 commons-lang3 = "3.18.0"
 
