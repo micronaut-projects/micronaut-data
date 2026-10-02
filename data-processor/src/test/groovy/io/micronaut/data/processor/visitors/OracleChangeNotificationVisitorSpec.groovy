@@ -312,6 +312,48 @@ class BookListener''')
         'DCN_PULL_QUEUE_NAME'      | 'CHANGES'                 | 'DCN_PULL_QUEUE_NAME is not supported'
     }
 
+    @Unroll
+    void "test last query notification property enables query fragments (#initialValue)"() {
+        when:
+        def beanDefinition = buildBeanDefinition('test.BookListener', listenerSource("""
+    @ChangeListener
+    @OracleChangeNotification(select = "id", properties = {
+        @OracleChangeNotification.Property(name = "DCN_QUERY_CHANGE_NOTIFICATION", value = "$initialValue"),
+        @OracleChangeNotification.Property(name = "DCN_QUERY_CHANGE_NOTIFICATION", value = "true"),
+        @OracleChangeNotification.Property(name = "NTF_QOS_RELIABLE", value = "false")
+    })
+    void changed(ChangeEvent<Book> event) {
+    }
+"""))
+
+        then:
+        beanDefinition.getRequiredMethod('changed', ChangeEvent).hasAnnotation(OracleChangeListenerQuery)
+
+        where:
+        initialValue << ['false', 'true']
+    }
+
+    @Unroll
+    void "test last query notification property disables query fragments (#queryFragment)"() {
+        when:
+        buildBeanDefinition('test.BookListener', listenerSource("""
+    @ChangeListener
+    @OracleChangeNotification($queryFragment, properties = {
+        @OracleChangeNotification.Property(name = "DCN_QUERY_CHANGE_NOTIFICATION", value = "true"),
+        @OracleChangeNotification.Property(name = "DCN_QUERY_CHANGE_NOTIFICATION", value = "false")
+    })
+    void changed(ChangeEvent<Book> event) {
+    }
+"""))
+
+        then:
+        def exception = thrown(RuntimeException)
+        exception.message.contains('may specify select or where only when DCN_QUERY_CHANGE_NOTIFICATION is true')
+
+        where:
+        queryFragment << ['select = "id"', 'where = "id > 0"']
+    }
+
     void "test explicitly disabled grouping and pull options compile"() {
         when:
         def beanDefinition = buildBeanDefinition('test.BookListener', listenerSource('''

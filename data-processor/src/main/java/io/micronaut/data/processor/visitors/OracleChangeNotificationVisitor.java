@@ -139,22 +139,16 @@ public final class OracleChangeNotificationVisitor implements TypeElementVisitor
             return false;
         }
         boolean queryChangeNotification = false;
-        Object properties = annotationMetadata.getValue(ORACLE_CHANGE_NOTIFICATION, "properties").orElse(null);
-        if (properties instanceof AnnotationValue<?>[] annotationValues) {
-            for (AnnotationValue<?> property : annotationValues) {
-                if (invalidOracleProperty(property, context, element)) {
-                    return false;
-                }
-                queryChangeNotification |= isEnabled(property, QUERY_CHANGE_NOTIFICATION);
+        var properties = annotationMetadata.findAnnotation(ORACLE_CHANGE_NOTIFICATION)
+            .map(annotation -> annotation.getAnnotations("properties"))
+            .orElse(List.of());
+        for (AnnotationValue<?> property : properties) {
+            if (invalidOracleProperty(property, context, element)) {
+                return false;
             }
-        } else if (properties instanceof Iterable<?> iterable) {
-            for (Object property : iterable) {
-                if (property instanceof AnnotationValue<?> annotationValue) {
-                    if (invalidOracleProperty(annotationValue, context, element)) {
-                        return false;
-                    }
-                    queryChangeNotification |= isEnabled(annotationValue, QUERY_CHANGE_NOTIFICATION);
-                }
+            if (QUERY_CHANGE_NOTIFICATION.equals(property.stringValue("name").orElse(""))) {
+                // The runtime factory stores properties in order, so the last value wins.
+                queryChangeNotification = Boolean.parseBoolean(property.stringValue("value").orElse(""));
             }
         }
         if (!queryChangeNotification && (!select.equals("*") || !where.isEmpty())) {
@@ -243,8 +237,4 @@ public final class OracleChangeNotificationVisitor implements TypeElementVisitor
         return false;
     }
 
-    private static boolean isEnabled(AnnotationValue<?> property, String name) {
-        return name.equals(property.stringValue("name").orElse(""))
-            && Boolean.parseBoolean(property.stringValue("value").orElse("false"));
-    }
 }
