@@ -1459,6 +1459,62 @@ class Test {
     }
 
     @Unroll
+    void "test upsert rejects collection conflict property - #conflictsOn"() {
+        when:
+        buildRepository('test.MyInterface', """
+import io.micronaut.data.annotation.*;
+import io.micronaut.data.jdbc.annotation.JdbcRepository;
+import io.micronaut.data.model.query.builder.sql.Dialect;
+import io.micronaut.data.repository.GenericRepository;
+import java.util.List;
+
+@JdbcRepository(dialect = Dialect.H2)
+@io.micronaut.context.annotation.Executable
+interface MyInterface extends GenericRepository<Clinic, Long> {
+    @Upsert(conflictsOn = ${conflictsOn})
+    Clinic upsert(Clinic clinic);
+}
+
+@MappedEntity
+class Clinic {
+    @Id
+    @GeneratedValue
+    private Long id;
+    private String name;
+    @Relation(value = Relation.Kind.ONE_TO_MANY, mappedBy = "clinic")
+    private List<Offering> offerings;
+
+    public Long getId() { return id; }
+    public void setId(Long id) { this.id = id; }
+    public String getName() { return name; }
+    public void setName(String name) { this.name = name; }
+    public List<Offering> getOfferings() { return offerings; }
+    public void setOfferings(List<Offering> offerings) { this.offerings = offerings; }
+}
+
+@MappedEntity
+class Offering {
+    @Id
+    private Long id;
+    @Relation(Relation.Kind.MANY_TO_ONE)
+    private Clinic clinic;
+
+    public Long getId() { return id; }
+    public void setId(Long id) { this.id = id; }
+    public Clinic getClinic() { return clinic; }
+    public void setClinic(Clinic clinic) { this.clinic = clinic; }
+}
+""")
+
+        then:
+        def ex = thrown(RuntimeException)
+        ex.message.contains("Cannot implement explicit upsert query: conflict property does not map to a column: offerings")
+
+        where:
+        conflictsOn << ['"offerings"', '{"name", "offerings"}']
+    }
+
+    @Unroll
     void "test build upsert fails for unsupported explicit upsert - #description"() {
         when:
         buildRepository('test.MyInterface', """
