@@ -260,6 +260,43 @@ class OracleChangeNotificationSubscriptionSpec extends Specification {
         1 * fixture.oracleConnection.unregisterDatabaseChangeNotification(original)
     }
 
+    void "cleans up an initial activation failure and preserves its cause (#cleanupFails)"() {
+        given:
+        def original = Mock(DatabaseChangeRegistration)
+        def clock = { 0L } as LongSupplier
+        def fixture = registrarFixture([original], clock, [])
+        def activationFailure = new RejectedExecutionException('Cannot schedule initial renewal')
+        def cleanupFailure = new DataAccessException('Cannot unregister initial registration')
+        def taskScheduler = Mock(TaskScheduler)
+        taskScheduler.schedule(_ as Duration, _ as Runnable) >> { throw activationFailure }
+        def subscription = subscription(fixture.registrar, taskScheduler,
+            new OracleChangeNotificationTaskTracker(), clock,
+            new OracleChangeNotificationRenewalPolicy(
+                10, OracleChangeNotification.RenewalMode.OVERLAPPING, 2))
+
+        when:
+        subscription.start()
+
+        then:
+        def failure = thrown(RejectedExecutionException)
+        failure.is(activationFailure)
+        failure.suppressed.toList() == (cleanupFails ? [cleanupFailure] : [])
+        1 * fixture.oracleConnection.unregisterDatabaseChangeNotification(original) >> {
+            if (cleanupFails) {
+                throw cleanupFailure
+            }
+        }
+
+        when:
+        subscription.rollback(failure)
+
+        then:
+        0 * fixture.oracleConnection.unregisterDatabaseChangeNotification(original)
+
+        where:
+        cleanupFails << [false, true]
+    }
+
     void "hands an overlapping replacement failure during association to receiver recovery"() {
         given:
         def original = Mock(DatabaseChangeRegistration)

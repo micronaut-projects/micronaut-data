@@ -139,14 +139,7 @@ final class OracleChangeNotificationSubscription {
      * @throws RuntimeException if registration creation or activation fails
      */
     void start() {
-        OracleRegistrationLease registrationLease = registrar.createRegistration(this);
-        ActivationResult activation = activateLease(registrationLease);
-        if (activation.outcome() == ActivationOutcome.STOPPED || activation.outcome() == ActivationOutcome.UNAVAILABLE) {
-            registrationLease.retire(true);
-            LOG.trace("Discarding inactive DCN registration [{}] with activation outcome [{}] for datasource [{}] and listener method [{}]",
-                registrationLease.registration().getRegId(), activation.outcome(), dataSourceName, methodDescription);
-            unregister(registrationLease.registration());
-        }
+        createAndActivateRegistration();
     }
 
     /**
@@ -794,28 +787,42 @@ final class OracleChangeNotificationSubscription {
         LOG.trace("Creating replacement DCN registration for datasource [{}], listener method [{}], and previous registration [{}]",
             dataSourceName, methodDescription,
             previousLease == null ? null : previousLease.registration().getRegId());
-        OracleRegistrationLease replacementLease = registrar.createRegistration(this);
+        ActivationResult activation = createAndActivateRegistration();
+        // A callback can deregister and untrack the replacement during query association.
+        // The renewal/recovery caller must retry instead of remaining in its in-progress state.
+        if (activation.outcome() == ActivationOutcome.UNAVAILABLE) {
+            throw new IllegalStateException("Replacement DCN registration [" + activation.lease().registration().getRegId()
+                + "] for datasource [" + dataSourceName + "] and listener method [" + methodDescription
+                + "] became unavailable before activation");
+        }
+        return activation;
+    }
+
+    /**
+     * Creates and activates a candidate registration, sharing cleanup for startup and replacement.
+     *
+     * <p>Rejected candidates are retired and cleaned up on a best-effort basis. Activation failures
+     * also retire the candidate, but cleanup failures are suppressed on the original exception.
+     * Callers decide whether a rejected activation is non-fatal or requires a retry.</p>
+     *
+     * @return the candidate lease and its explicit activation outcome
+     * @throws RuntimeException if registration creation or activation fails
+     */
+    private ActivationResult createAndActivateRegistration() {
+        OracleRegistrationLease registrationLease = registrar.createRegistration(this);
         try {
-            ActivationResult activation = activateLease(replacementLease);
-            return switch (activation.outcome()) {
-                case ACTIVATED, RECOVERY_REQUIRED -> activation;
-                case STOPPED -> {
-                    replacementLease.retire(true);
-                    LOG.trace("Discarding inactive replacement DCN registration [{}] for datasource [{}] and listener method [{}]",
-                        replacementLease.registration().getRegId(), dataSourceName, methodDescription);
-                    unregister(replacementLease.registration());
-                    yield activation;
-                }
-                // A callback can deregister and untrack the replacement during query association.
-                // The renewal/recovery caller must retry instead of remaining in its in-progress state.
-                case UNAVAILABLE -> throw new IllegalStateException("Replacement DCN registration [" + replacementLease.registration().getRegId()
-                    + "] for datasource [" + dataSourceName + "] and listener method [" + methodDescription
-                    + "] became unavailable before activation");
-            };
+            ActivationResult activation = activateLease(registrationLease);
+            if (activation.outcome() == ActivationOutcome.STOPPED || activation.outcome() == ActivationOutcome.UNAVAILABLE) {
+                registrationLease.retire(true);
+                LOG.trace("Discarding inactive DCN registration [{}] with activation outcome [{}] for datasource [{}] and listener method [{}]",
+                    registrationLease.registration().getRegId(), activation.outcome(), dataSourceName, methodDescription);
+                unregister(registrationLease.registration());
+            }
+            return activation;
         } catch (RuntimeException activationFailure) {
-            replacementLease.retire(true);
+            registrationLease.retire(true);
             try {
-                unregisterIfOwned(replacementLease.registration());
+                unregisterIfOwned(registrationLease.registration());
             } catch (RuntimeException cleanupFailure) {
                 activationFailure.addSuppressed(cleanupFailure);
             }
