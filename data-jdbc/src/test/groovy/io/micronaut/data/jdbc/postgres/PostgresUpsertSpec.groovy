@@ -30,10 +30,12 @@ import io.micronaut.data.jdbc.postgres.upsert.PostgresClinicRepository
 import io.micronaut.data.jdbc.postgres.upsert.PostgresClinicServiceOfferingRepository
 import io.micronaut.data.jdbc.postgres.upsert.PostgresCompositeClinicRepository
 import io.micronaut.data.jdbc.postgres.upsert.PostgresCompositeClinicOfferingRepository
+import io.micronaut.data.jdbc.postgres.upsert.PostgresEmbeddedConflictEntityRepository
 import io.micronaut.data.tck.repositories.upsert.ClinicRepository
 import io.micronaut.data.tck.repositories.upsert.ClinicServiceOfferingRepository
 import io.micronaut.data.tck.repositories.upsert.CompositeClinicRepository
 import io.micronaut.data.tck.repositories.upsert.CompositeClinicOfferingRepository
+import io.micronaut.data.tck.repositories.upsert.EmbeddedConflictEntityRepository
 import io.micronaut.data.tck.repositories.upsert.WarehouseInventoryRepository
 import io.micronaut.data.tck.tests.AbstractUpsertSpec
 
@@ -62,6 +64,11 @@ class PostgresUpsertSpec extends AbstractUpsertSpec implements PostgresTestPrope
     @Override
     CompositeClinicOfferingRepository getCompositeClinicOfferingRepository() {
         return context.getBean(PostgresCompositeClinicOfferingRepository)
+    }
+
+    @Override
+    EmbeddedConflictEntityRepository getEmbeddedConflictEntityRepository() {
+        return context.getBean(PostgresEmbeddedConflictEntityRepository)
     }
 
     @Override

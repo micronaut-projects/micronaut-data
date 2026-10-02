@@ -28,10 +28,12 @@ import io.micronaut.data.jdbc.mysql.upsert.MySqlClinicRepository
 import io.micronaut.data.jdbc.mysql.upsert.MySqlClinicServiceOfferingRepository
 import io.micronaut.data.jdbc.mysql.upsert.MySqlCompositeClinicRepository
 import io.micronaut.data.jdbc.mysql.upsert.MySqlCompositeClinicOfferingRepository
+import io.micronaut.data.jdbc.mysql.upsert.MySqlEmbeddedConflictEntityRepository
 import io.micronaut.data.tck.repositories.upsert.ClinicRepository
 import io.micronaut.data.tck.repositories.upsert.ClinicServiceOfferingRepository
 import io.micronaut.data.tck.repositories.upsert.CompositeClinicRepository
 import io.micronaut.data.tck.repositories.upsert.CompositeClinicOfferingRepository
+import io.micronaut.data.tck.repositories.upsert.EmbeddedConflictEntityRepository
 import io.micronaut.data.tck.repositories.upsert.WarehouseInventoryRepository
 import io.micronaut.data.tck.tests.AbstractUpsertSpec
 
@@ -60,6 +62,11 @@ class MariaUpsertSpec extends AbstractUpsertSpec implements MariaTestPropertyPro
     @Override
     CompositeClinicOfferingRepository getCompositeClinicOfferingRepository() {
         return context.getBean(MySqlCompositeClinicOfferingRepository)
+    }
+
+    @Override
+    EmbeddedConflictEntityRepository getEmbeddedConflictEntityRepository() {
+        return context.getBean(MySqlEmbeddedConflictEntityRepository)
     }
 
     @Override

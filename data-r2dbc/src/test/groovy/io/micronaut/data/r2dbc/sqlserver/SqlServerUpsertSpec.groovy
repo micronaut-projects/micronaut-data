@@ -30,10 +30,12 @@ import io.micronaut.data.r2dbc.sqlserver.upsert.MSClinicRepository
 import io.micronaut.data.r2dbc.sqlserver.upsert.MSClinicServiceOfferingRepository
 import io.micronaut.data.r2dbc.sqlserver.upsert.MSCompositeClinicRepository
 import io.micronaut.data.r2dbc.sqlserver.upsert.MSCompositeClinicOfferingRepository
+import io.micronaut.data.r2dbc.sqlserver.upsert.MSEmbeddedConflictEntityRepository
 import io.micronaut.data.tck.repositories.upsert.ClinicRepository
 import io.micronaut.data.tck.repositories.upsert.ClinicServiceOfferingRepository
 import io.micronaut.data.tck.repositories.upsert.CompositeClinicRepository
 import io.micronaut.data.tck.repositories.upsert.CompositeClinicOfferingRepository
+import io.micronaut.data.tck.repositories.upsert.EmbeddedConflictEntityRepository
 import io.micronaut.data.tck.repositories.upsert.WarehouseInventoryRepository
 import io.micronaut.data.tck.tests.AbstractUpsertSpec
 
@@ -62,6 +64,11 @@ class SqlServerUpsertSpec extends AbstractUpsertSpec implements SqlServerTestPro
     @Override
     CompositeClinicOfferingRepository getCompositeClinicOfferingRepository() {
         return context.getBean(MSCompositeClinicOfferingRepository)
+    }
+
+    @Override
+    EmbeddedConflictEntityRepository getEmbeddedConflictEntityRepository() {
+        return context.getBean(MSEmbeddedConflictEntityRepository)
     }
 
     @Override

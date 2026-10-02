@@ -24,6 +24,8 @@ import io.micronaut.data.tck.jdbc.entities.upsert.CompositeClinicId
 import io.micronaut.data.tck.jdbc.entities.upsert.CompositeClinicOffering
 import io.micronaut.data.tck.jdbc.entities.upsert.CustomerProfile
 import io.micronaut.data.tck.jdbc.entities.upsert.CustomerProfileUuid
+import io.micronaut.data.tck.jdbc.entities.upsert.EmbeddedConflictEntity
+import io.micronaut.data.tck.jdbc.entities.upsert.EmbeddedConflictKey
 import io.micronaut.data.tck.jdbc.entities.upsert.ProductReview
 import io.micronaut.data.tck.jdbc.entities.upsert.WarehouseInventory
 import io.micronaut.data.tck.repositories.upsert.AutoPopulatedUpsertRepository
@@ -33,6 +35,7 @@ import io.micronaut.data.tck.repositories.upsert.CompositeClinicRepository
 import io.micronaut.data.tck.repositories.upsert.CompositeClinicOfferingRepository
 import io.micronaut.data.tck.repositories.upsert.CustomerProfileRepository
 import io.micronaut.data.tck.repositories.upsert.CustomerProfileUuidRepository
+import io.micronaut.data.tck.repositories.upsert.EmbeddedConflictEntityRepository
 import io.micronaut.data.tck.repositories.upsert.ProductReviewRepository
 import io.micronaut.data.tck.repositories.upsert.WarehouseInventoryRepository
 import spock.lang.AutoCleanup
@@ -65,6 +68,8 @@ abstract class AbstractUpsertSpec extends Specification {
 
     abstract CompositeClinicOfferingRepository getCompositeClinicOfferingRepository()
 
+    abstract EmbeddedConflictEntityRepository getEmbeddedConflictEntityRepository()
+
     abstract Map<String, String> getProperties()
 
     @AutoCleanup
@@ -83,6 +88,7 @@ abstract class AbstractUpsertSpec extends Specification {
         clinicRepository.deleteAll()
         compositeClinicOfferingRepository.deleteAll()
         compositeClinicRepository.deleteAll()
+        embeddedConflictEntityRepository.deleteAll()
         productReviewRepository.deleteAll()
         customerProfileRepository.deleteAll()
         customerProfileUuidRepository.deleteAll()
@@ -149,6 +155,26 @@ abstract class AbstractUpsertSpec extends Specification {
         offerings.find { it.clinic.id == firstClinic.id }.name == "Updated"
         offerings.find { it.clinic.id == secondClinic.id }.name == "North Branch"
         offerings.find { it.clinic.id == thirdClinic.id }.name == "South Main"
+    }
+
+    void "upsert matches every column of an ordinary embedded conflict property"() {
+        given:
+        EmbeddedConflictKey firstKey = new EmbeddedConflictKey("north", "main")
+        EmbeddedConflictKey secondKey = new EmbeddedConflictKey("north", "branch")
+        EmbeddedConflictKey thirdKey = new EmbeddedConflictKey("south", "main")
+
+        when:
+        embeddedConflictEntityRepository.upsert(new EmbeddedConflictEntity(firstKey, "Initial"))
+        embeddedConflictEntityRepository.upsert(new EmbeddedConflictEntity(firstKey, "Updated"))
+        embeddedConflictEntityRepository.upsert(new EmbeddedConflictEntity(secondKey, "North Branch"))
+        embeddedConflictEntityRepository.upsert(new EmbeddedConflictEntity(thirdKey, "South Main"))
+        List<EmbeddedConflictEntity> entities = embeddedConflictEntityRepository.findAll().toList()
+
+        then:
+        entities.size() == 3
+        entities.find { it.key == firstKey }.name == "Updated"
+        entities.find { it.key == secondKey }.name == "North Branch"
+        entities.find { it.key == thirdKey }.name == "South Main"
     }
 
     void "upsert prepares auto-populated properties, cascades updates, and invokes update lifecycle"() {
