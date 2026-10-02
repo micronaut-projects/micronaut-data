@@ -377,12 +377,7 @@ final class OracleChangeNotificationSubscription {
      */
     void unregisterAll() {
         for (DatabaseChangeRegistration registration : registrationsSnapshot()) {
-            try {
-                unregisterIfOwned(registration);
-            } catch (RuntimeException e) {
-                LOG.warn("Unable to unregister DCN [{}] for datasource [{}] and listener method [{}]",
-                    registration.getRegId(), dataSourceName, methodDescription, e);
-            }
+            unregister(registration);
         }
     }
 

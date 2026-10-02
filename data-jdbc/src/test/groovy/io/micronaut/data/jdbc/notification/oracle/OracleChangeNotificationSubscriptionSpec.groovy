@@ -923,6 +923,36 @@ class OracleChangeNotificationSubscriptionSpec extends Specification {
         OracleChangeNotification.RenewalMode.OVERLAPPING        | true
     }
 
+    void "continues best-effort cleanup after failure without retrying claimed registrations"() {
+        given:
+        def first = Mock(DatabaseChangeRegistration)
+        def second = Mock(DatabaseChangeRegistration)
+        def clock = { 0L } as LongSupplier
+        def fixture = registrarFixture([], clock, [])
+        def subscription = subscription(fixture.registrar, Mock(TaskScheduler),
+            new OracleChangeNotificationTaskTracker(), clock,
+            new OracleChangeNotificationRenewalPolicy(
+                0, OracleChangeNotification.RenewalMode.NONE, 60))
+        subscription.track(first)
+        subscription.track(second)
+
+        when:
+        subscription.unregisterAll()
+
+        then:
+        noExceptionThrown()
+        1 * fixture.oracleConnection.unregisterDatabaseChangeNotification(first) >> {
+            throw new DataAccessException('Cannot unregister first registration')
+        }
+        1 * fixture.oracleConnection.unregisterDatabaseChangeNotification(second)
+
+        when:
+        subscription.unregisterAll()
+
+        then:
+        0 * fixture.oracleConnection.unregisterDatabaseChangeNotification(_)
+    }
+
     void "rolls back registrations in reverse creation order"() {
         given:
         def first = Mock(DatabaseChangeRegistration)
