@@ -1,7 +1,3 @@
-=== Micronaut Data 5.3
-- A `null` entity argument to a repository method is <<breaks, rejected with `IllegalArgumentException`>>, like a `null` ID
-- The unused `DataAccessResourceFailureException` and `TransactionManagerConfiguration` are deprecated for removal
-
 === Micronaut Data 5.2
 - <<upserts, Upsert>> repository methods for JDBC and R2DBC
 - Oracle: <<sqlOracleBoolean, native `BOOLEAN`>> support, <<sqlReservable, lock-free reservable columns>>, <<recoverableTransactions, transaction recovery>> and <<sessionlessTransactions, sessionless transactions>>
