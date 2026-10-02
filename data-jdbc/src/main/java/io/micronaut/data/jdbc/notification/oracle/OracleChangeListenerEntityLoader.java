@@ -48,6 +48,13 @@ final class OracleChangeListenerEntityLoader<E> {
     private final JdbcRepositoryOperations operations;
     private final DefaultSqlStoredQuery<E, E> sqlStoredQuery;
 
+    /**
+     * Creates an immutable stored-query template for loading the entity by ROWID.
+     *
+     * @param operations the datasource operations used to load the entity
+     * @param entityType the persistent entity class
+     * @param query      the generated ROWID reload query
+     */
     @SuppressWarnings("unchecked")
     OracleChangeListenerEntityLoader(JdbcRepositoryOperations operations, Class<?> entityType, String query) {
         this.operations = operations;
@@ -60,6 +67,12 @@ final class OracleChangeListenerEntityLoader<E> {
             operations.getConversionService());
     }
 
+    /**
+     * Loads the current entity state for a notification's ROWID.
+     *
+     * @param rowId the affected Oracle ROWID
+     * @return the current mapped entity, or {@code null} if no row is found
+     */
     @Nullable E reload(String rowId) {
         return operations.findOne(new RowIdPreparedQuery(rowId));
     }

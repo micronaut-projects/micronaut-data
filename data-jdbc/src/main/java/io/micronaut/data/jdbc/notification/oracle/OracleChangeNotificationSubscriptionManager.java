@@ -45,9 +45,10 @@ import java.util.function.LongSupplier;
  * registrations completed during that start attempt are unregistered before the failure is
  * propagated.</p>
  *
- * <p>During shutdown, the manager cancels scheduled renewals, rejects new tasks, unregisters every
- * live Oracle registration once, and waits for already-running renewal and dispatch tasks to
- * finish.</p>
+ * <p>During shutdown, the manager cancels scheduled renewals, rejects new tasks, makes one
+ * best-effort unregister attempt for each registration it still owns, and waits for already-running
+ * dispatch and registration lifecycle tasks to finish. Work still queued on an executor is not
+ * included in that wait.</p>
  */
 final class OracleChangeNotificationSubscriptionManager {
     private static final Logger LOG = LoggerFactory.getLogger(OracleChangeNotificationSubscriptionManager.class);
@@ -82,6 +83,9 @@ final class OracleChangeNotificationSubscriptionManager {
             .toList();
     }
 
+    /**
+     * Starts each discovered subscription once, rolling back registrations if startup fails.
+     */
     void start() {
         if (taskTracker.isShutdownStarted() || !started.compareAndSet(false, true)) {
             return;
@@ -103,6 +107,11 @@ final class OracleChangeNotificationSubscriptionManager {
         }
     }
 
+    /**
+     * Stops renewals and dispatch admission, attempts cleanup, and returns when running tasks finish.
+     *
+     * @return completion stage for currently running dispatch and registration lifecycle tasks
+     */
     CompletionStage<?> stop() {
         LOG.trace("Stopping [{}] DCN subscriptions for datasource [{}]", subscriptions.size(), dataSourceName);
         subscriptions.forEach(OracleChangeNotificationSubscription::stopRenewal);
@@ -111,10 +120,20 @@ final class OracleChangeNotificationSubscriptionManager {
         return completion;
     }
 
+    /**
+     * Reports outstanding work when graceful shutdown is in progress.
+     *
+     * @return the active task count after shutdown begins, or empty before shutdown
+     */
     OptionalLong reportActiveTasks() {
         return taskTracker.reportActiveTasks();
     }
 
+    /**
+     * Rolls back subscriptions in reverse discovery order and attaches cleanup failures to the startup failure.
+     *
+     * @param registrationFailure the failure that caused startup rollback
+     */
     private void rollback(Throwable registrationFailure) {
         for (int i = subscriptions.size() - 1; i >= 0; i--) {
             subscriptions.get(i).rollback(registrationFailure);

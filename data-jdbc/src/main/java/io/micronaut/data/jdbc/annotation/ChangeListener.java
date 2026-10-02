@@ -29,10 +29,11 @@ import java.lang.annotation.Target;
 /**
  * Marks a method that receives database change events for a persistent entity.
  *
- * <p>The method must return {@code void} and accept exactly one
+ * <p>The method must be a non-private, non-static instance method, return {@code void}, and accept exactly one
  * {@link io.micronaut.data.jdbc.notification.ChangeEvent ChangeEvent}{@code <E>} argument, where
- * {@code E} is a {@code @MappedEntity}. The available operation, entity state, metadata, ordering,
- * and delivery guarantees depend on the notification provider selected for the datasource.</p>
+ * {@code E} is a {@code @MappedEntity}. These method requirements are validated during compilation.
+ * The available operation, entity state, metadata, ordering, and delivery guarantees depend on the
+ * notification provider selected for the datasource.</p>
  *
  * <p>When retry advice is also applied to the method, provider-deferred entity loading executes
  * within the same retry boundary as the listener invocation.</p>

@@ -39,6 +39,13 @@ public final class ChangeListenerVisitor implements TypeElementVisitor<Object, O
         return VisitorKind.ISOLATING;
     }
 
+    /**
+     * Validates the database-neutral method contract and its persistent entity event type.
+     * Invalid listener declarations fail compilation before datasource registration is attempted.
+     *
+     * @param element the annotated method
+     * @param context the compilation visitor context used to report validation errors
+     */
     @Override
     public void visitMethod(MethodElement element, VisitorContext context) {
         if (!element.hasStereotype(CHANGE_LISTENER)) {

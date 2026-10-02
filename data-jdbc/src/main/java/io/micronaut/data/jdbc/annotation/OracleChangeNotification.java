@@ -32,8 +32,10 @@ import java.lang.annotation.Target;
  * {@link io.micronaut.data.jdbc.notification.ChangeOperation#INVALIDATE}.</p>
  *
  * <p>By default, registrations do not expire or renew. A positive {@link #timeoutSeconds()}
- * sets a finite Oracle Database lifetime. Renewal can be enabled explicitly to replace expiring
- * registrations; {@link RenewalMode#NONE} does not replace them.</p>
+ * sets the logical expiration deadline. Renewal can be enabled explicitly to replace expiring
+ * registrations; {@link RenewalMode#NONE} does not replace them. In
+ * {@link RenewalMode#AFTER_EXPIRATION}, Oracle Database's configured timeout includes an additional
+ * cleanup grace period after the logical deadline.</p>
  *
  * <p>Oracle JDBC client-initiated notification connections are enabled by default. Set the
  * {@code DCN_CLIENT_INIT_CONNECTION} registration property to {@code false} to use
@@ -49,11 +51,11 @@ public @interface OracleChangeNotification {
     /**
      * Controls the lifetime of each registration.
      *
-     * @return The registration lifetime in seconds, or zero for no timeout. Must be greater than
-     * zero when renewal is enabled. With {@link RenewalMode#NONE}, a positive value makes Oracle
-     * Database expire the registration without replacement. For
-     * {@link RenewalMode#AFTER_EXPIRATION}, Micronaut Data configures a slightly longer Oracle
-     * Database timeout as a cleanup fallback if local deregistration cannot run.
+     * @return The logical expiration deadline in seconds, or zero for no timeout. Must be greater
+     * than zero when renewal is enabled. With {@link RenewalMode#NONE}, a positive value makes
+     * Oracle Database expire the registration without replacement. With
+     * {@link RenewalMode#AFTER_EXPIRATION}, Micronaut Data adds a cleanup grace period to the
+     * Oracle Database timeout; renewal still begins at this logical deadline.
      */
     int timeoutSeconds() default 0;
 
@@ -74,7 +76,8 @@ public @interface OracleChangeNotification {
 
     /**
      * The select list to register for Query Result Change Notification. The value must be {@code *}
-     * or a comma-separated list of mapped column names. It controls the result registered
+     * or a comma-separated list of mapped column identifiers. Quoted identifiers must match the
+     * Oracle-rendered column name exactly. It controls the result registered
      * with Oracle Database and is not used as a projection for the entity supplied to the listener.
      * It is valid only when {@link oracle.jdbc.OracleConnection#DCN_QUERY_CHANGE_NOTIFICATION} is
      * enabled in {@link #properties()}.
@@ -122,9 +125,9 @@ public @interface OracleChangeNotification {
      */
     enum RenewalMode {
         /**
-         * Activates the replacement before retiring new data delivery from the previous registration
+         * Activates the replacement before stopping new data callbacks from the previous registration
          * and attempting to unregister it. Previously accepted callbacks, including queued callbacks,
-         * may finish. This avoids a planned renewal gap but can deliver duplicate changes.
+         * may finish. This avoids a planned renewal gap but can deliver duplicate changes during the overlap.
          */
         OVERLAPPING,
         /**

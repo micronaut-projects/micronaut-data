@@ -55,6 +55,9 @@ public final class DeferredChangeEvent<E> implements ChangeEvent<E> {
         this.entityLoader = Objects.requireNonNull(entityLoader, "entityLoader");
     }
 
+    /**
+     * Loads and caches entity state once; a failed load remains eligible for a retry.
+     */
     synchronized void materialize() {
         if (materialized) {
             return;

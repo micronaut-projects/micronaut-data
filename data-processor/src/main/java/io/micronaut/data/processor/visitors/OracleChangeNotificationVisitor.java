@@ -74,6 +74,12 @@ public final class OracleChangeNotificationVisitor implements TypeElementVisitor
         return VisitorKind.ISOLATING;
     }
 
+    /**
+     * Validates Oracle notification settings and generates the entity reload query at compilation time.
+     *
+     * @param element the annotated listener method
+     * @param context the compilation visitor context used to report errors and add generated metadata
+     */
     @Override
     public void visitMethod(MethodElement element, VisitorContext context) {
         if (!element.hasStereotype(ORACLE_CHANGE_NOTIFICATION)) {
@@ -112,6 +118,15 @@ public final class OracleChangeNotificationVisitor implements TypeElementVisitor
             .member("entity", new AnnotationClassValue<>(resolvedEntityType.getName())));
     }
 
+    /**
+     * Validates registration timing, notification mode, Oracle properties, and select configuration.
+     *
+     * @param annotationMetadata the listener method's annotation metadata
+     * @param context            the compilation visitor context used to report errors
+     * @param element            the annotated listener method
+     * @param persistentEntity   the entity mapping used to validate selected columns
+     * @return {@code true} if the registration configuration is valid
+     */
     private static boolean validateRegistration(AnnotationMetadata annotationMetadata,
                                                 VisitorContext context,
                                                 MethodElement element,
@@ -162,6 +177,15 @@ public final class OracleChangeNotificationVisitor implements TypeElementVisitor
         return true;
     }
 
+    /**
+     * Ensures a QRCN select list contains only {@code *} or mapped physical column identifiers.
+     *
+     * @param select           the configured select fragment
+     * @param persistentEntity the entity mapping used to resolve physical column names
+     * @param context          the compilation visitor context used to report errors
+     * @param element          the annotated listener method
+     * @return {@code true} if the select list is supported
+     */
     private static boolean validateSelect(String select,
                                           SourcePersistentEntity persistentEntity,
                                           VisitorContext context,
@@ -181,6 +205,12 @@ public final class OracleChangeNotificationVisitor implements TypeElementVisitor
         return true;
     }
 
+    /**
+     * Collects mapped physical columns from the entity and its persistent parent mappings.
+     *
+     * @param persistentEntity the entity mapping to inspect
+     * @return canonical unquoted column names as rendered by the Oracle query builder
+     */
     private static Set<String> mappedColumns(PersistentEntity persistentEntity) {
         Set<String> columns = new HashSet<>();
         PersistentEntityUtils.traversePersistentProperties(persistentEntity, (associations, property) ->
@@ -192,6 +222,13 @@ public final class OracleChangeNotificationVisitor implements TypeElementVisitor
         return columns;
     }
 
+    /**
+     * Matches a select identifier using Oracle's exact quoted and case-insensitive unquoted rules.
+     *
+     * @param column        the configured identifier
+     * @param mappedColumns the canonical mapped column names
+     * @return {@code true} if the identifier refers to a mapped column
+     */
     private static boolean matchesMappedColumn(String column, Set<String> mappedColumns) {
         if (column.length() > 2 && column.charAt(0) == '"' && column.charAt(column.length() - 1) == '"') {
             // Quoted Oracle identifiers are case-sensitive; the Oracle query builder renders
@@ -202,6 +239,14 @@ public final class OracleChangeNotificationVisitor implements TypeElementVisitor
             && mappedColumns.contains(column.toUpperCase(Locale.ENGLISH));
     }
 
+    /**
+     * Reports unsupported or conflicting Oracle options used by the listener registration.
+     *
+     * @param property the configured Oracle property
+     * @param context  the compilation visitor context used to report errors
+     * @param element  the annotated listener method
+     * @return {@code true} when the property is invalid
+     */
     private static boolean invalidOracleProperty(AnnotationValue<?> property,
                                                  VisitorContext context,
                                                  MethodElement element) {

@@ -22,11 +22,11 @@ import java.util.function.Consumer;
 /**
  * Associates one physical registration with its local renewal deadline and delivery lifecycle actions.
  *
- * @param registration the physical Oracle registration
+ * @param registration           the physical Oracle registration
  * @param logicalExpirationNanos the local renewal deadline measured before registration begins
- * @param retirementAction stops new data callbacks and optionally discards queued callbacks
- * @param invalidationAction the action that dispatches an INVALIDATE event to the listener after
- *                           this lease is activated to replace an unavailable registration
+ * @param retirementAction       stops new data callbacks and optionally discards queued callbacks
+ * @param invalidationAction     dispatches an {@code INVALIDATE} event after this lease replaces an
+ *                               unavailable registration
  */
 record OracleRegistrationLease(DatabaseChangeRegistration registration,
                                long logicalExpirationNanos,

@@ -20,9 +20,9 @@ import io.micronaut.data.jdbc.annotation.OracleChangeNotification;
 /**
  * Immutable scheduling policy for one Oracle notification listener.
  *
- * @param timeoutSeconds  registration lifetime, or zero for no timeout
- * @param mode            replacement strategy
- * @param leadTimeSeconds time reserved for overlapping replacement
+ * @param timeoutSeconds  registration lifetime in seconds, or zero for no timeout
+ * @param mode            renewal strategy applied when a finite timeout is configured
+ * @param leadTimeSeconds time reserved for creating an overlapping replacement before expiration
  */
 record OracleChangeNotificationRenewalPolicy(int timeoutSeconds,
                                              OracleChangeNotification.RenewalMode mode,

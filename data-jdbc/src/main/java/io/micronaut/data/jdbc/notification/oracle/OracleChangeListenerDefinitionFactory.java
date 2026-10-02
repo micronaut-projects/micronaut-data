@@ -49,6 +49,12 @@ final class OracleChangeListenerDefinitionFactory {
         this.operations = operations;
     }
 
+    /**
+     * Creates the Oracle runtime definition for one discovered listener method.
+     *
+     * @param listenerMethod the validated listener method and entity type
+     * @return its table mapping, registration query, reload query, properties, and renewal policy
+     */
     OracleChangeListenerDefinition create(ChangeListenerMethod listenerMethod) {
         ExecutableMethod<?, ?> method = listenerMethod.method();
         AnnotationValue<OracleChangeNotification> notification = Objects.requireNonNull(
@@ -75,6 +81,14 @@ final class OracleChangeListenerDefinitionFactory {
         );
     }
 
+    /**
+     * Resolves renewal settings and adds the corresponding server timeout to registration options.
+     *
+     * @param notification the listener's Oracle notification annotation
+     * @param properties   the registration properties to update with the server timeout
+     * @param method       the listener method, used to identify invalid configuration
+     * @return the validated renewal policy
+     */
     private static OracleChangeNotificationRenewalPolicy renewalPolicy(AnnotationValue<OracleChangeNotification> notification,
                                                                        Properties properties,
                                                                        ExecutableMethod<?, ?> method) {
@@ -100,6 +114,13 @@ final class OracleChangeListenerDefinitionFactory {
         return renewalPolicy;
     }
 
+    /**
+     * Copies and validates annotation properties, then applies required framework defaults.
+     *
+     * @param notification the listener's Oracle notification annotation
+     * @param method       the listener method, used to identify invalid configuration
+     * @return the registration properties passed to the JDBC driver
+     */
     private static Properties registrationProperties(AnnotationValue<OracleChangeNotification> notification,
                                                      ExecutableMethod<?, ?> method) {
         Properties properties = new Properties();
@@ -116,6 +137,15 @@ final class OracleChangeListenerDefinitionFactory {
         return properties;
     }
 
+    /**
+     * Builds the table registration query from the mapped table and configured query fragments.
+     *
+     * @param notification    the listener's Oracle notification annotation
+     * @param method          the listener method, used to identify invalid configuration
+     * @param tableIdentifier the entity's mapped Oracle table
+     * @param properties      the effective annotation properties used to determine notification mode
+     * @return the SQL statement associated with the Oracle registration
+     */
     private static String registrationQuery(AnnotationValue<OracleChangeNotification> notification,
                                             ExecutableMethod<?, ?> method,
                                             OracleTableIdentifier tableIdentifier,

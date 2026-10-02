@@ -41,6 +41,12 @@ public final class ChangeListenerEntityLoadingInterceptor implements MethodInter
         return InterceptPhase.RETRY.getPosition() + 1;
     }
 
+    /**
+     * Materializes a deferred notification entity before proceeding to the listener and outer advice.
+     *
+     * @param context the listener invocation context
+     * @return the listener invocation result
+     */
     @Override
     public @Nullable Object intercept(MethodInvocationContext<Object, Object> context) {
         Object[] parameterValues = context.getParameterValues();

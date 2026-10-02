@@ -73,12 +73,18 @@ final class OracleChangeNotificationSubscription {
      */
     private final List<DatabaseChangeRegistration> registrations = new ArrayList<>(2);
 
+    /** Failures received before a tracked registration has been activated as the current lease. */
     private final IdentityHashMap<DatabaseChangeRegistration, SQLException> pendingFailures = new IdentityHashMap<>();
 
+    /** Current lifecycle state; transitions and related lease/timer updates are guarded by this instance. */
     private State state = State.UNREGISTERED;
+    /** The lease currently used for notification delivery, which may outlive cleanup ownership. */
     private @Nullable OracleRegistrationLease currentLease;
+    /** The scheduled renewal or fallback task for the current lease. */
     private @Nullable ScheduledFuture<?> renewalTask;
+    /** Whether recovery must be followed by one listener invalidation. */
     private boolean invalidationPending;
+    /** Distinguishes invalidation requests that arrive while a prior invalidation is being dispatched. */
     private long invalidationGeneration;
 
     /**
@@ -180,7 +186,7 @@ final class OracleChangeNotificationSubscription {
      * and activated. The Oracle registration timeout remains the fallback cleanup if explicit
      * removal is not possible.</p>
      *
-     * @param registration the registration whose notification connection failed
+     * @param registration the registration made unavailable by a driver failure or lifecycle event
      * @param failure      the driver failure or lifecycle event that made the registration unavailable
      */
     void handleRegistrationFailure(DatabaseChangeRegistration registration, SQLException failure) {
@@ -1007,23 +1013,35 @@ final class OracleChangeNotificationSubscription {
      * Distinguishes healthy activation, a handoff to recovery, and rejection reasons.
      */
     private enum ActivationOutcome {
+        /** The candidate became the active lease without a pending recovery requirement. */
         ACTIVATED,
+        /** The lease was adopted, but an early failure requires recovery to take over. */
         RECOVERY_REQUIRED,
+        /** Shutdown or terminal closure prevents activation. */
         STOPPED,
+        /** The candidate registration disappeared before it could be activated. */
         UNAVAILABLE
     }
 
     private enum State {
+        /** No registration has been activated yet. */
         UNREGISTERED,
+        /** A current registration is accepting data notifications. */
         ACTIVE,
+        /** A replacement is being created for ordinary renewal. */
         RENEWING,
+        /** A failed registration is being replaced. */
         RECOVERING,
+        /** The subscription has stopped and cannot accept further work. */
         CLOSED
     }
 
     private enum DeregistrationAction {
+        /** No follow-up action is required. */
         NONE,
+        /** Start a replacement registration. */
         RENEW,
+        /** Close the subscription because its registration is no longer usable. */
         CLOSE
     }
 }

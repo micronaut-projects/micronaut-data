@@ -75,11 +75,25 @@ final class OracleChangeNotificationProvider implements ChangeNotificationProvid
         this.taskScheduler = taskScheduler;
     }
 
+    /**
+     * Selects whether this provider can manage notifications on the supplied connection.
+     *
+     * @param connection a connection obtained from the datasource
+     * @return {@code true} if the connection can be unwrapped to an Oracle connection
+     * @throws SQLException if the connection cannot be inspected
+     */
     @Override
     public boolean supports(Connection connection) throws SQLException {
         return connection.isWrapperFor(OracleConnection.class);
     }
 
+    /**
+     * Builds and starts the subscriptions discovered for one datasource.
+     *
+     * @param dataSourceName  the datasource these listeners selected
+     * @param operations      repository operations bound to that datasource
+     * @param listenerMethods the listener methods discovered for that datasource
+     */
     @Override
     public void register(String dataSourceName, JdbcRepositoryOperations operations, List<ChangeListenerMethod> listenerMethods) {
         LOG.trace("Starting registration of [{}] change listener methods for datasource [{}]",
@@ -97,6 +111,11 @@ final class OracleChangeNotificationProvider implements ChangeNotificationProvid
         subscriptionManager.start();
     }
 
+    /**
+     * Stops all datasource managers and waits for their already-running tasks.
+     *
+     * @return a stage completed when all managers have finished graceful shutdown
+     */
     @Override
     public CompletionStage<?> shutdownGracefully() {
         LOG.trace("Stopping DCN subscription managers during graceful shutdown");
@@ -106,12 +125,20 @@ final class OracleChangeNotificationProvider implements ChangeNotificationProvid
             .toArray(CompletableFuture[]::new));
     }
 
+    /**
+     * Starts best-effort registration cleanup when the context is destroyed outside graceful shutdown.
+     */
     @PreDestroy
     void close() {
         LOG.trace("Stopping DCN subscription managers during context destruction");
         subscriptionManagers.values().forEach(OracleChangeNotificationSubscriptionManager::stop);
     }
 
+    /**
+     * Reports combined outstanding task counts while datasource managers are shutting down.
+     *
+     * @return the total active task count if shutdown has started, or empty otherwise
+     */
     @Override
     public OptionalLong reportActiveTasks() {
         long activeTasks = 0;
