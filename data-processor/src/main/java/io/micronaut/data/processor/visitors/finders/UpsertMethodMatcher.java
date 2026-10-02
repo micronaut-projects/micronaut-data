@@ -160,6 +160,7 @@ public final class UpsertMethodMatcher extends AbstractMethodMatcher {
             PersistentEntityUtils.traversePersistentProperties(propertyPath, (associations, property) -> {
                 hasBindableColumn[0] = true;
                 // A referenced generated identity is a bindable foreign key; the root generated value is not.
+                // Keep this aligned with SqlQueryBuilderUtils.isGeneratedProperty for runtime upsert binding.
                 if (property.isGenerated() && (associations.isEmpty()
                     || !associations.getLast().getAssociatedEntity().getIdentityProperties().contains(property))) {
                     generatedProperties.add(property);

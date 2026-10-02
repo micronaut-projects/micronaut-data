@@ -16,6 +16,7 @@
 package io.micronaut.data.tck.tests
 
 import io.micronaut.context.ApplicationContext
+import io.micronaut.data.exceptions.DataIntegrityViolationException
 import io.micronaut.data.tck.jdbc.entities.upsert.AutoPopulatedUpsertEntity
 import io.micronaut.data.tck.jdbc.entities.upsert.Clinic
 import io.micronaut.data.tck.jdbc.entities.upsert.ClinicServiceOffering
@@ -130,7 +131,7 @@ abstract class AbstractUpsertSpec extends Specification {
         clinicServiceOfferingRepository.upsert(new ClinicServiceOffering("Vaccination", "VACCINATION", clinic))
 
         then:
-        thrown(Exception)
+        thrown(DataIntegrityViolationException)
         clinicServiceOfferingRepository.count() == 0
 
         where:

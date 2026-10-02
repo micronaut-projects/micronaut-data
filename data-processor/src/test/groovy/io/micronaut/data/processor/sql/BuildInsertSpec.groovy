@@ -798,6 +798,64 @@ class Writer {
         getParameterPropertyPaths(updateMethod) == ["title", "author.code", "id"] as String[]
     }
 
+    void "upsert uses referenced property for many-to-one join column conflict"() {
+        given:
+        def repository = buildRepository('test.ArticleRepository', """
+import io.micronaut.data.annotation.*;
+import io.micronaut.data.jdbc.annotation.JdbcRepository;
+import io.micronaut.data.model.query.builder.sql.Dialect;
+import io.micronaut.data.repository.CrudRepository;
+import jakarta.persistence.JoinColumn;
+import jakarta.persistence.ManyToOne;
+
+@JdbcRepository(dialect = Dialect.H2)
+@io.micronaut.context.annotation.Executable
+interface ArticleRepository extends CrudRepository<Article, Long> {
+    @Upsert(conflictsOn = "author")
+    Article upsert(Article article);
+}
+
+@MappedEntity("article")
+class Article {
+    @Id
+    @GeneratedValue
+    private Long id;
+    private String title;
+    @ManyToOne
+    @JoinColumn(name = "writer_key", referencedColumnName = "writer_code")
+    private Writer author;
+
+    public Long getId() { return id; }
+    public void setId(Long id) { this.id = id; }
+    public String getTitle() { return title; }
+    public void setTitle(String title) { this.title = title; }
+    public Writer getAuthor() { return author; }
+    public void setAuthor(Writer author) { this.author = author; }
+}
+
+@MappedEntity("writer")
+class Writer {
+    @Id
+    @GeneratedValue
+    private Long id;
+    @MappedProperty("writer_code")
+    private Long code;
+
+    public Long getId() { return id; }
+    public void setId(Long id) { this.id = id; }
+    public Long getCode() { return code; }
+    public void setCode(Long code) { this.code = code; }
+}
+""")
+
+        when:
+        def upsertMethod = repository.findPossibleMethods("upsert").findFirst().get()
+
+        then:
+        getQuery(upsertMethod).contains('ON (target.`writer_key`=source.c1)')
+        getParameterPropertyPaths(upsertMethod) == ["title", "author.code"] as String[]
+    }
+
     void "test build custom SQL insert"() {
         given:
             BeanDefinition beanDefinition = buildBeanDefinition('test.MyInterface' + BeanDefinitionVisitor.PROXY_SUFFIX, """
