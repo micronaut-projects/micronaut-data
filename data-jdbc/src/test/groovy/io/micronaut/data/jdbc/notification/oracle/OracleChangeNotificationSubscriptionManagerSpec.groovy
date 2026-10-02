@@ -68,8 +68,8 @@ class OracleChangeNotificationSubscriptionManagerSpec extends Specification {
         def renewalTasks = []
         Executor executor = { Runnable command -> renewalTasks << command } as Executor
         def manager = new OracleChangeNotificationSubscriptionManager(
-            "inventory", operations, Mock(BeanContext), executor, scheduler)
-        manager.addSubscription(definition("SELECT * FROM BOOK", method))
+            "inventory", operations, Mock(BeanContext), executor, scheduler,
+            [definition("SELECT * FROM BOOK", method)])
         def replacementAssociationStarted = new CountDownLatch(1)
         def continueReplacementAssociation = new CountDownLatch(1)
         def renewalFailure = new AtomicReference<Throwable>()
@@ -136,9 +136,9 @@ class OracleChangeNotificationSubscriptionManagerSpec extends Specification {
         def nanoTimeSupplier = new AtomicLong()
         Executor executor = { Runnable command -> command.run() } as Executor
         def manager = new OracleChangeNotificationSubscriptionManager("inventory", operations, Mock(BeanContext), executor, scheduler,
+            [definition("SELECT * FROM BOOK", method,
+                new OracleChangeNotificationRenewalPolicy(10, OracleChangeNotification.RenewalMode.OVERLAPPING, 2))],
             { nanoTimeSupplier.get() } as LongSupplier)
-        manager.addSubscription(definition("SELECT * FROM BOOK", method,
-            new OracleChangeNotificationRenewalPolicy(10, OracleChangeNotification.RenewalMode.OVERLAPPING, 2)))
 
         operations.execute(_ as ConnectionCallback) >> { ConnectionCallback<?> callback -> callback.call(connection) }
         connection.unwrap(OracleConnection) >> oracleConnection
@@ -162,7 +162,7 @@ class OracleChangeNotificationSubscriptionManagerSpec extends Specification {
         9                  | 0
     }
 
-    void "starts subscriptions only once"() {
+    void "starts constructor-defined subscriptions only once despite changes to input definitions"() {
         given:
         def operations = Mock(JdbcOperations)
         def connection = Mock(Connection)
@@ -174,8 +174,11 @@ class OracleChangeNotificationSubscriptionManagerSpec extends Specification {
         def method = Mock(ExecutableMethod)
         method.getDescription(true) >> "void onChange(ChangeEvent<Book>)"
         Executor executor = { Runnable command -> command.run() } as Executor
-        def manager = new OracleChangeNotificationSubscriptionManager("inventory", operations, Mock(BeanContext), executor, scheduler())
-        manager.addSubscription(definition("SELECT * FROM BOOK", method))
+        def listenerDefinitions = [definition("SELECT * FROM BOOK", method)]
+        def manager = new OracleChangeNotificationSubscriptionManager("inventory", operations, Mock(BeanContext), executor,
+            scheduler(), listenerDefinitions)
+        listenerDefinitions.clear()
+        listenerDefinitions.add(definition("SELECT * FROM LATE_BOOK", method))
 
         operations.execute(_ as ConnectionCallback) >> { ConnectionCallback<?> callback -> callback.call(connection) }
         connection.unwrap(OracleConnection) >> oracleConnection
@@ -208,9 +211,8 @@ class OracleChangeNotificationSubscriptionManagerSpec extends Specification {
         firstMethod.getDescription(true) >> "void firstListener(ChangeEvent<Book>)"
         secondMethod.getDescription(true) >> "void secondListener(ChangeEvent<Book>)"
         Executor executor = { Runnable command -> command.run() } as Executor
-        def manager = new OracleChangeNotificationSubscriptionManager("inventory", operations, Mock(BeanContext), executor, scheduler())
-        manager.addSubscription(definition("SELECT * FROM FIRST_BOOK", firstMethod))
-        manager.addSubscription(definition("SELECT * FROM SECOND_BOOK", secondMethod))
+        def manager = new OracleChangeNotificationSubscriptionManager("inventory", operations, Mock(BeanContext), executor,
+            scheduler(), [definition("SELECT * FROM FIRST_BOOK", firstMethod), definition("SELECT * FROM SECOND_BOOK", secondMethod)])
 
         operations.execute(_ as ConnectionCallback) >> { ConnectionCallback<?> callback -> callback.call(connection) }
         connection.unwrap(OracleConnection) >> oracleConnection
@@ -243,8 +245,8 @@ class OracleChangeNotificationSubscriptionManagerSpec extends Specification {
         def method = Mock(ExecutableMethod)
         method.getDescription(true) >> "void onChange(ChangeEvent<Book>)"
         Executor executor = { Runnable command -> command.run() } as Executor
-        def manager = new OracleChangeNotificationSubscriptionManager("inventory", operations, Mock(BeanContext), executor, scheduler())
-        manager.addSubscription(definition("SELECT * FROM BOOK", method))
+        def manager = new OracleChangeNotificationSubscriptionManager("inventory", operations, Mock(BeanContext), executor,
+            scheduler(), [definition("SELECT * FROM BOOK", method)])
 
         operations.execute(_ as ConnectionCallback) >> { ConnectionCallback<?> callback -> callback.call(connection) }
         connection.unwrap(OracleConnection) >> oracleConnection
@@ -268,7 +270,7 @@ class OracleChangeNotificationSubscriptionManagerSpec extends Specification {
         given:
         def manager = new OracleChangeNotificationSubscriptionManager(
             "inventory", Mock(JdbcOperations), Mock(BeanContext),
-            { Runnable command -> command.run() } as Executor, scheduler())
+            { Runnable command -> command.run() } as Executor, scheduler(), [])
 
         when:
         manager.start()
@@ -290,8 +292,8 @@ class OracleChangeNotificationSubscriptionManagerSpec extends Specification {
         def method = Mock(ExecutableMethod)
         method.getDescription(true) >> "void onChange(ChangeEvent<Book>)"
         Executor executor = { Runnable command -> command.run() } as Executor
-        def manager = new OracleChangeNotificationSubscriptionManager("inventory", operations, Mock(BeanContext), executor, scheduler())
-        manager.addSubscription(definition("SELECT * FROM BOOK", method))
+        def manager = new OracleChangeNotificationSubscriptionManager("inventory", operations, Mock(BeanContext), executor,
+            scheduler(), [definition("SELECT * FROM BOOK", method)])
         DatabaseChangeListener listener
 
         operations.execute(_ as ConnectionCallback) >> { ConnectionCallback<?> callback ->
@@ -345,9 +347,8 @@ class OracleChangeNotificationSubscriptionManagerSpec extends Specification {
         firstMethod.getDescription(true) >> "void firstListener(ChangeEvent<Book>)"
         secondMethod.getDescription(true) >> "void failingListener(ChangeEvent<Book>)"
         Executor executor = { Runnable command -> command.run() } as Executor
-        def manager = new OracleChangeNotificationSubscriptionManager("inventory", operations, Mock(BeanContext), executor, scheduler())
-        manager.addSubscription(definition("SELECT * FROM BOOK", firstMethod))
-        manager.addSubscription(definition("INVALID SQL", secondMethod))
+        def manager = new OracleChangeNotificationSubscriptionManager("inventory", operations, Mock(BeanContext), executor,
+            scheduler(), [definition("SELECT * FROM BOOK", firstMethod), definition("INVALID SQL", secondMethod)])
 
         operations.execute(_ as ConnectionCallback) >> { ConnectionCallback<?> callback ->
             try {

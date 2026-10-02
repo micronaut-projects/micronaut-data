@@ -48,7 +48,8 @@ import java.util.concurrent.Executor;
  * <p>This singleton is available when the Oracle JDBC driver is present and is selected for
  * connections that unwrap to {@link OracleConnection}. It converts discovered listener methods
  * into Oracle listener definitions and maintains one {@link OracleChangeNotificationSubscriptionManager}
- * for each participating datasource.</p>
+ * for each participating datasource. Registration supplies the complete set of discovered listener
+ * methods once per datasource; later registration calls for that datasource are rejected.</p>
  *
  * <p>Each subscription manager owns the physical Oracle registrations and their renewal lifecycle.
  * This provider coordinates graceful shutdown across all datasource managers, including waiting
@@ -83,15 +84,16 @@ final class OracleChangeNotificationProvider implements ChangeNotificationProvid
     public void register(String dataSourceName, JdbcRepositoryOperations operations, List<ChangeListenerMethod> listenerMethods) {
         LOG.trace("Starting registration of [{}] change listener methods for datasource [{}]",
             listenerMethods.size(), dataSourceName);
-        OracleChangeNotificationSubscriptionManager subscriptionManager = subscriptionManagers.computeIfAbsent(
-            dataSourceName,
-            ignored -> new OracleChangeNotificationSubscriptionManager(dataSourceName, operations, beanContext, blockingExecutor, taskScheduler)
-        );
         OracleChangeListenerDefinitionFactory definitionFactory = new OracleChangeListenerDefinitionFactory(operations);
-        listenerMethods.forEach(listenerMethod -> {
-            OracleChangeListenerDefinition listenerDefinition = definitionFactory.create(listenerMethod);
-            subscriptionManager.addSubscription(listenerDefinition);
-        });
+        List<OracleChangeListenerDefinition> listenerDefinitions = listenerMethods.stream()
+            .map(definitionFactory::create)
+            .toList();
+        OracleChangeNotificationSubscriptionManager subscriptionManager = new OracleChangeNotificationSubscriptionManager(
+            dataSourceName, operations, beanContext, blockingExecutor, taskScheduler, listenerDefinitions);
+        if (subscriptionManagers.putIfAbsent(dataSourceName, subscriptionManager) != null) {
+            throw new IllegalStateException("DCN subscriptions for datasource [" + dataSourceName
+                + "] have already been discovered; additional registrations are not supported");
+        }
         subscriptionManager.start();
     }
 

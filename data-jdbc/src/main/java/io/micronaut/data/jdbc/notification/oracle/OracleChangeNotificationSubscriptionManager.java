@@ -25,7 +25,6 @@ import org.slf4j.LoggerFactory;
 import java.util.List;
 import java.util.OptionalLong;
 import java.util.concurrent.CompletionStage;
-import java.util.concurrent.CopyOnWriteArrayList;
 import java.util.concurrent.Executor;
 import java.util.concurrent.atomic.AtomicBoolean;
 import java.util.function.LongSupplier;
@@ -39,34 +38,32 @@ import java.util.function.LongSupplier;
  * <p>Each listener definition can have distinct registration SQL and Oracle properties. Therefore,
  * this manager coordinates multiple logical {@link OracleChangeNotificationSubscription}
  * instances rather than representing a single Oracle registration. Each subscription owns the
- * physical registrations and renewal state for one listener.</p>
+ * physical registrations and renewal state for one listener. All definitions are supplied during
+ * construction; the subscription collection is immutable and cannot accept later additions.</p>
  *
  * <p>The manager starts at most once. Registration startup is atomic: if one definition fails,
  * registrations completed during that start attempt are unregistered before the failure is
  * propagated.</p>
  *
  * <p>During shutdown, the manager cancels scheduled renewals, rejects new tasks, unregisters every
- * live Oracle registration once, and waits for already-submitted renewal and dispatch tasks to
+ * live Oracle registration once, and waits for already-running renewal and dispatch tasks to
  * finish.</p>
  */
 final class OracleChangeNotificationSubscriptionManager {
     private static final Logger LOG = LoggerFactory.getLogger(OracleChangeNotificationSubscriptionManager.class);
 
     private final String dataSourceName;
-    private final Executor blockingExecutor;
-    private final TaskScheduler taskScheduler;
-    private final LongSupplier nanoTimeSupplier;
-    private final List<OracleChangeNotificationSubscription> subscriptions = new CopyOnWriteArrayList<>();
+    private final List<OracleChangeNotificationSubscription> subscriptions;
     private final OracleChangeNotificationTaskTracker taskTracker = new OracleChangeNotificationTaskTracker();
-    private final OracleChangeNotificationRegistrar registrar;
     private final AtomicBoolean started = new AtomicBoolean();
 
     OracleChangeNotificationSubscriptionManager(String dataSourceName,
                                                 JdbcOperations operations,
                                                 BeanContext beanContext,
                                                 Executor blockingExecutor,
-                                                TaskScheduler taskScheduler) {
-        this(dataSourceName, operations, beanContext, blockingExecutor, taskScheduler, System::nanoTime);
+                                                TaskScheduler taskScheduler,
+                                                List<OracleChangeListenerDefinition> listenerDefinitions) {
+        this(dataSourceName, operations, beanContext, blockingExecutor, taskScheduler, listenerDefinitions, System::nanoTime);
     }
 
     OracleChangeNotificationSubscriptionManager(String dataSourceName,
@@ -74,30 +71,15 @@ final class OracleChangeNotificationSubscriptionManager {
                                                 BeanContext beanContext,
                                                 Executor blockingExecutor,
                                                 TaskScheduler taskScheduler,
+                                                List<OracleChangeListenerDefinition> listenerDefinitions,
                                                 LongSupplier nanoTimeSupplier) {
         this.dataSourceName = dataSourceName;
-        this.blockingExecutor = blockingExecutor;
-        this.taskScheduler = taskScheduler;
-        this.nanoTimeSupplier = nanoTimeSupplier;
-        this.registrar = new OracleChangeNotificationRegistrar(
+        OracleChangeNotificationRegistrar registrar = new OracleChangeNotificationRegistrar(
             dataSourceName, operations, beanContext, blockingExecutor, taskTracker, nanoTimeSupplier);
-    }
-
-    /**
-     * Creates and adds a subscription for the supplied listener definition.
-     *
-     * @param definition the listener definition to subscribe
-     */
-    void addSubscription(OracleChangeListenerDefinition definition) {
-        subscriptions.add(new OracleChangeNotificationSubscription(
-            dataSourceName,
-            definition,
-            registrar,
-            blockingExecutor,
-            taskScheduler,
-            taskTracker,
-            nanoTimeSupplier
-        ));
+        this.subscriptions = listenerDefinitions.stream()
+            .map(definition -> new OracleChangeNotificationSubscription(
+                dataSourceName, definition, registrar, blockingExecutor, taskScheduler, taskTracker, nanoTimeSupplier))
+            .toList();
     }
 
     void start() {

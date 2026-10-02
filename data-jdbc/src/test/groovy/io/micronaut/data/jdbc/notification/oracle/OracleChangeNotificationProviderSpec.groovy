@@ -17,6 +17,7 @@ package io.micronaut.data.jdbc.notification.oracle
 
 import io.micronaut.context.ApplicationContext
 import io.micronaut.context.BeanContext
+import io.micronaut.data.jdbc.operations.JdbcRepositoryOperations
 import io.micronaut.inject.qualifiers.Qualifiers
 import io.micronaut.scheduling.TaskExecutors
 import io.micronaut.scheduling.TaskScheduler
@@ -61,6 +62,38 @@ class OracleChangeNotificationProviderSpec extends Specification {
         then:
         def thrown = thrown(SQLException)
         thrown.is(failure)
+    }
+
+    void "rejects later registration calls for the same datasource"() {
+        given:
+        def provider = provider()
+        def operations = Mock(JdbcRepositoryOperations)
+        provider.register('inventory', operations, [])
+
+        when:
+        provider.register('inventory', operations, [])
+
+        then:
+        def exception = thrown(IllegalStateException)
+        exception.message.contains('datasource [inventory]')
+        exception.message.contains('additional registrations are not supported')
+        0 * operations._
+    }
+
+    void "accepts complete discovery separately for each datasource"() {
+        given:
+        def provider = provider()
+        def operations = Mock(JdbcRepositoryOperations)
+
+        when:
+        provider.register('inventory', operations, [])
+        provider.register('orders', operations, [])
+        provider.close()
+
+        then:
+        noExceptionThrown()
+        provider.reportActiveTasks().orElseThrow() == 0
+        0 * operations._
     }
 
     void "accepts the Micronaut task scheduler"() {
