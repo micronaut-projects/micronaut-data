@@ -1514,6 +1514,59 @@ class Offering {
         conflictsOn << ['"offerings"', '{"name", "offerings"}']
     }
 
+    void "test upsert expands embedded conflict property into its columns"() {
+        given:
+        BeanDefinition beanDefinition = buildRepository('test.MyInterface', """
+import io.micronaut.data.annotation.*;
+import io.micronaut.data.jdbc.annotation.JdbcRepository;
+import io.micronaut.data.model.query.builder.sql.Dialect;
+import io.micronaut.data.repository.GenericRepository;
+import jakarta.persistence.Embedded;
+
+@JdbcRepository(dialect = Dialect.H2)
+@io.micronaut.context.annotation.Executable
+interface MyInterface extends GenericRepository<Test, Long> {
+    @Upsert(conflictsOn = "key")
+    Test upsert(Test test);
+}
+
+@Embeddable
+class Key {
+    private String region;
+    private String code;
+
+    public String getRegion() { return region; }
+    public void setRegion(String region) { this.region = region; }
+    public String getCode() { return code; }
+    public void setCode(String code) { this.code = code; }
+}
+
+@MappedEntity
+class Test {
+    @Id
+    @GeneratedValue
+    private Long id;
+    @Embedded
+    private Key key;
+    private String name;
+
+    public Long getId() { return id; }
+    public void setId(Long id) { this.id = id; }
+    public Key getKey() { return key; }
+    public void setKey(Key key) { this.key = key; }
+    public String getName() { return name; }
+    public void setName(String name) { this.name = name; }
+}
+""")
+
+        when:
+        def upsertMethod = beanDefinition.findPossibleMethods("upsert").findFirst().get()
+
+        then:
+        getQuery(upsertMethod).contains('ON (target.`region`=source.c0 AND target.`code`=source.c1)')
+        getParameterPropertyPaths(upsertMethod) == ["key.region", "key.code", "name"] as String[]
+    }
+
     @Unroll
     void "test build upsert fails for unsupported explicit upsert - #description"() {
         when:

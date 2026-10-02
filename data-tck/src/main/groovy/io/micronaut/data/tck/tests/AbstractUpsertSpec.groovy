@@ -119,6 +119,18 @@ abstract class AbstractUpsertSpec extends Specification {
         updatedClinic.serviceOfferings[0].serviceCode == "VACCINATION"
     }
 
+    void "upsert requires a persisted clinic for a service offering"() {
+        when:
+        clinicServiceOfferingRepository.upsert(new ClinicServiceOffering("Vaccination", "VACCINATION", clinic))
+
+        then:
+        thrown(Exception)
+        clinicServiceOfferingRepository.count() == 0
+
+        where:
+        clinic << [null, new Clinic("Unsaved Clinic")]
+    }
+
     void "upsert matches every column of a composite clinic id"() {
         given:
         CompositeClinic firstClinic = compositeClinicRepository.save(new CompositeClinic(new CompositeClinicId("north", "main"), "North Main Clinic"))
