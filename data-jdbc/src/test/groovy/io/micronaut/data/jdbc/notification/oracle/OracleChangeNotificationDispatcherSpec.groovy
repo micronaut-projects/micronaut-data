@@ -150,6 +150,64 @@ class OracleChangeNotificationDispatcherSpec extends Specification {
         recoveryRequests.empty
     }
 
+    void "queued callbacks retain the configured options snapshot (#reliable)"() {
+        given:
+        def properties = new Properties()
+        properties.setProperty(OracleConnection.DCN_CLIENT_INIT_CONNECTION, 'true')
+        properties.setProperty(OracleConnection.NTF_QOS_RELIABLE, reliable.toString())
+        def queuedTasks = []
+        def recoveryRequests = []
+        def dispatcher = dispatcher(definition(null, Mock(ExecutableMethod), properties), Mock(BeanContext),
+            { long ignored -> } as LongConsumer,
+            { Long ignored, DatabaseChangeEvent.AdditionalEventType ignoredType -> } as BiConsumer,
+            { long ignored -> } as LongConsumer,
+            { long registrationId -> recoveryRequests << registrationId } as LongConsumer,
+            { Runnable command -> queuedTasks << command } as Executor,
+            new OracleChangeNotificationTaskTracker())
+        def event = Mock(DatabaseChangeEvent)
+        event.eventType >> DatabaseChangeEvent.EventType.SHUTDOWN
+        event.regId >> 41L
+
+        when:
+        dispatcher.onDatabaseChangeNotification(event)
+        properties.setProperty(OracleConnection.NTF_QOS_RELIABLE, (!reliable).toString())
+        dispatcher.configureRegistrationOptions(properties)
+        queuedTasks.first().run()
+
+        then:
+        recoveryRequests == (reliable ? [] : [41L])
+
+        when:
+        dispatcher.onDatabaseChangeNotification(event)
+        queuedTasks.last().run()
+
+        then:
+        recoveryRequests == [41L]
+
+        where:
+        reliable << [false, true]
+    }
+
+    void "ignores callbacks before options are configured without queueing them"() {
+        given:
+        def executor = Mock(Executor)
+        def event = Mock(DatabaseChangeEvent)
+        def dispatcher = new OracleChangeNotificationDispatcher(
+            'inventory', definition(null, Mock(ExecutableMethod), new Properties()), Mock(BeanContext),
+            executor, new OracleChangeNotificationTaskTracker(),
+            { long ignored -> } as LongConsumer,
+            { Long ignored, DatabaseChangeEvent.AdditionalEventType ignoredType -> } as BiConsumer,
+            { long ignored -> } as LongConsumer,
+            { long ignored -> } as LongConsumer)
+
+        when:
+        dispatcher.onDatabaseChangeNotification(event)
+
+        then:
+        0 * executor._
+        0 * event._
+    }
+
     void "does not dispatch an instance shutdown as a row change"() {
         given:
         def event = Mock(DatabaseChangeEvent)

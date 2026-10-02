@@ -140,7 +140,8 @@ final class OracleChangeNotificationDispatcher implements DatabaseChangeListener
         if (taskTracker.isShutdownStarted()) {
             return;
         }
-        if (registrationOptions == null) {
+        RegistrationOptions configuredOptions = registrationOptions;
+        if (configuredOptions == null) {
             // No query has been associated yet, so this cannot be a row-change callback.
             LOG.trace("Ignoring DCN callback before registration options were configured for datasource [{}] and listener method [{}]",
                 dataSourceName, getMethodDesc());
@@ -152,10 +153,10 @@ final class OracleChangeNotificationDispatcher implements DatabaseChangeListener
                 return;
             }
         }
-        if (dataNotification && registrationOptions.purgeOnNotificationEnabled()) {
+        if (dataNotification && configuredOptions.purgeOnNotificationEnabled()) {
             registrationPurgedHandler.accept(event.getRegId());
         }
-        submitDispatch(event, dataNotification);
+        submitDispatch(event, dataNotification, configuredOptions);
     }
 
     /**
@@ -165,18 +166,24 @@ final class OracleChangeNotificationDispatcher implements DatabaseChangeListener
         DatabaseChangeEvent.EventType eventType = event.getEventType();
         return eventType == DatabaseChangeEvent.EventType.OBJCHANGE
             || (eventType == DatabaseChangeEvent.EventType.QUERYCHANGE
-                && !containsQueryDeregistration(event.getQueryChangeDescription()));
+                && findDeregisteredQuery(event.getQueryChangeDescription()) == null);
     }
 
-    private boolean containsQueryDeregistration(QueryChangeDescription @Nullable [] queries) {
+    /**
+     * Finds the first query deregistration, which takes precedence over data changes in the event.
+     *
+     * @param queries the query descriptions, if supplied
+     * @return the first deregistered query, or {@code null} when none is present
+     */
+    private @Nullable QueryChangeDescription findDeregisteredQuery(QueryChangeDescription @Nullable [] queries) {
         if (queries != null) {
             for (QueryChangeDescription query : queries) {
                 if (query.getQueryChangeEventType() == QueryChangeDescription.QueryChangeEventType.DEREG) {
-                    return true;
+                    return query;
                 }
             }
         }
-        return false;
+        return null;
     }
 
     /**
@@ -184,15 +191,16 @@ final class OracleChangeNotificationDispatcher implements DatabaseChangeListener
      *
      * @param event the notification to dispatch
      * @param dataNotification whether local retirement applies to this callback
+     * @param options the configured options captured when the callback was received
      */
-    private void submitDispatch(DatabaseChangeEvent event, boolean dataNotification) {
+    private void submitDispatch(DatabaseChangeEvent event, boolean dataNotification, RegistrationOptions options) {
         if (taskTracker.isShutdownStarted()) {
             LOG.trace("Ignored DCN callback for datasource [{}], registration [{}], and listener method [{}] because graceful shutdown has started",
                 dataSourceName, event.getRegId(), getMethodDesc());
             return;
         }
         try {
-            blockingExecutor.execute(() -> dispatchSafely(event, dataNotification));
+            blockingExecutor.execute(() -> dispatchSafely(event, dataNotification, options));
         } catch (RuntimeException e) {
             LOG.warn("Unable to submit DCN event of type [{}] for datasource [{}], registration [{}], and listener method [{}]",
                 event.getEventType(), dataSourceName, event.getRegId(), getMethodDesc(), e);
@@ -206,8 +214,9 @@ final class OracleChangeNotificationDispatcher implements DatabaseChangeListener
      *
      * @param event the database change event
      * @param dataNotification whether to check the queued-data retirement gate before starting
+     * @param options the configured options captured when the callback was received
      */
-    private void dispatchSafely(DatabaseChangeEvent event, boolean dataNotification) {
+    private void dispatchSafely(DatabaseChangeEvent event, boolean dataNotification, RegistrationOptions options) {
         if (dataNotification && discardQueuedDataNotifications) {
             return;
         }
@@ -219,7 +228,7 @@ final class OracleChangeNotificationDispatcher implements DatabaseChangeListener
         try {
             LOG.trace("Accepted DCN event of type [{}] for datasource [{}], registration [{}], and listener method [{}]",
                 event.getEventType(), dataSourceName, event.getRegId(), getMethodDesc());
-            dispatch(event);
+            dispatch(event, options);
         } catch (RuntimeException e) {
             LOG.error("Unexpected error dispatching DCN event [{}] for registration [{}], datasource [{}], and listener method [{}]",
                 event.getEventType(), event.getRegId(), dataSourceName, getMethodDesc(), e);
@@ -228,7 +237,7 @@ final class OracleChangeNotificationDispatcher implements DatabaseChangeListener
         }
     }
 
-    private void dispatch(DatabaseChangeEvent event) {
+    private void dispatch(DatabaseChangeEvent event, RegistrationOptions options) {
         long registrationId = event.getRegId();
         DatabaseChangeEvent.EventType eventType = event.getEventType();
         if (eventType == DatabaseChangeEvent.EventType.DEREG) {
@@ -238,7 +247,7 @@ final class OracleChangeNotificationDispatcher implements DatabaseChangeListener
             return;
         }
         if (eventType == DatabaseChangeEvent.EventType.SHUTDOWN) {
-            if (registrationOptions != null && registrationOptions.driverReconnectRetryEnabled()) {
+            if (options.driverReconnectRetryEnabled()) {
                 LOG.warn("Received DCN event [{}] for registration [{}], datasource [{}], and listener method [{}]; " +
                         "letting the JDBC driver retry the client-initiated connection, with the registration failure callback as recovery fallback",
                     eventType, registrationId, dataSourceName, getMethodDesc());
@@ -261,9 +270,7 @@ final class OracleChangeNotificationDispatcher implements DatabaseChangeListener
         }
         TableChangeDescription[] tables = event.getTableChangeDescription();
         if (tables != null) {
-            if (registrationOptions != null) {
-                dispatchTableChanges(tables, registrationOptions.queryChangeNotificationEnabled(), registrationId);
-            }
+            dispatchTableChanges(tables, options.queryChangeNotificationEnabled(), registrationId);
         } else {
             dispatchQueryChanges(event.getQueryChangeDescription(), registrationId);
         }
@@ -274,11 +281,10 @@ final class OracleChangeNotificationDispatcher implements DatabaseChangeListener
             dispatchInvalidation(registrationId);
             return;
         }
-        for (QueryChangeDescription query : queries) {
-            if (query.getQueryChangeEventType() == QueryChangeDescription.QueryChangeEventType.DEREG) {
-                handleQueryDeregistration(query.getQueryId(), registrationId);
-                return;
-            }
+        QueryChangeDescription deregisteredQuery = findDeregisteredQuery(queries);
+        if (deregisteredQuery != null) {
+            handleQueryDeregistration(deregisteredQuery.getQueryId(), registrationId);
+            return;
         }
         if (requiresQueryInvalidation(queries)) {
             dispatchInvalidation(registrationId);
