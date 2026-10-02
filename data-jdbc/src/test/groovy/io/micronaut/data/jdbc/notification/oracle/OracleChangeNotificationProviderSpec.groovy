@@ -29,24 +29,17 @@ import java.util.concurrent.Executor
 
 class OracleChangeNotificationProviderSpec extends Specification {
 
-    void "supports Oracle JDBC connections"() {
+    void "supports only Oracle JDBC connections (#oracleConnection)"() {
         given:
         def provider = provider()
         def connection = Mock(Connection)
-        connection.isWrapperFor(oracle.jdbc.OracleConnection) >> true
+        connection.isWrapperFor(oracle.jdbc.OracleConnection) >> oracleConnection
 
         expect:
-        provider.supports(connection)
-    }
+        provider.supports(connection) == oracleConnection
 
-    void "does not support non-Oracle JDBC connections"() {
-        given:
-        def provider = provider()
-        def connection = Mock(Connection)
-        connection.isWrapperFor(oracle.jdbc.OracleConnection) >> false
-
-        expect:
-        !provider.supports(connection)
+        where:
+        oracleConnection << [true, false]
     }
 
     void "propagates connection capability check failures"() {
@@ -94,14 +87,6 @@ class OracleChangeNotificationProviderSpec extends Specification {
         noExceptionThrown()
         provider.reportActiveTasks().orElseThrow() == 0
         0 * operations._
-    }
-
-    void "accepts the Micronaut task scheduler"() {
-        when:
-        provider()
-
-        then:
-        noExceptionThrown()
     }
 
     void "is wired with the named Micronaut task scheduler"() {

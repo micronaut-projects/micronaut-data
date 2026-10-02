@@ -208,7 +208,7 @@ class OracleChangeNotificationDispatcherSpec extends Specification {
         0 * event._
     }
 
-    void "does not dispatch an instance shutdown as a row change"() {
+    void "does not dispatch #eventType as a row change"() {
         given:
         def event = Mock(DatabaseChangeEvent)
         event.getEventType() >> eventType
@@ -222,7 +222,7 @@ class OracleChangeNotificationDispatcherSpec extends Specification {
         0 * event.getQueryChangeDescription()
 
         where:
-        eventType << [DatabaseChangeEvent.EventType.SHUTDOWN_ANY]
+        eventType << [DatabaseChangeEvent.EventType.SHUTDOWN_ANY, DatabaseChangeEvent.EventType.STARTUP]
     }
 
     void "database shutdown delegates retries only for reliable client-initiated notifications"() {
@@ -259,20 +259,6 @@ class OracleChangeNotificationDispatcherSpec extends Specification {
         true                  | false                     | false
         false                 | true                      | false
         true                  | true                      | true
-    }
-
-    void "ignores database startup events"() {
-        given:
-        def event = Mock(DatabaseChangeEvent)
-        event.getEventType() >> DatabaseChangeEvent.EventType.STARTUP
-        def dispatcher = dispatcher()
-
-        when:
-        dispatcher.onDatabaseChangeNotification(event)
-
-        then:
-        0 * event.getTableChangeDescription()
-        0 * event.getQueryChangeDescription()
     }
 
     void "removes a registration when Oracle reports registration deregistration"() {
@@ -747,12 +733,7 @@ class OracleChangeNotificationDispatcherSpec extends Specification {
         dispatcher.onDatabaseChangeNotification(event)
 
         then:
-        1 * method.invoke(bean, { Object[] arguments ->
-            ChangeEvent<?> changeEvent = arguments[0] as ChangeEvent<?>
-            changeEvent.operation() == ChangeOperation.INVALIDATE &&
-                changeEvent.entity().isEmpty() &&
-                changeEvent.metadata(OracleChangeEventMetadata).isEmpty()
-        })
+        1 * method.invoke(bean, { Object[] arguments -> isInvalidation(arguments) })
         0 * table.getRowChangeDescription()
     }
 
@@ -888,12 +869,7 @@ class OracleChangeNotificationDispatcherSpec extends Specification {
         dispatcher.onDatabaseChangeNotification(event)
 
         then:
-        1 * method.invoke(bean, { Object[] arguments ->
-            ChangeEvent<?> changeEvent = arguments[0] as ChangeEvent<?>
-            changeEvent.operation() == ChangeOperation.INVALIDATE &&
-                changeEvent.entity().isEmpty() &&
-                changeEvent.metadata(OracleChangeEventMetadata).isEmpty()
-        })
+        1 * method.invoke(bean, { Object[] arguments -> isInvalidation(arguments) })
         0 * table.getRowChangeDescription()
     }
 

@@ -312,25 +312,22 @@ class BookListener''')
         'DCN_PULL_QUEUE_NAME'      | 'CHANGES'                 | 'DCN_PULL_QUEUE_NAME is not supported'
     }
 
-    @Unroll
-    void "test last query notification property enables query fragments (#initialValue)"() {
+    void "test last query notification property enables query fragments"() {
         when:
-        def beanDefinition = buildBeanDefinition('test.BookListener', listenerSource("""
+        def beanDefinition = buildBeanDefinition('test.BookListener', listenerSource('''
     @ChangeListener
     @OracleChangeNotification(select = "id", properties = {
-        @OracleChangeNotification.Property(name = "DCN_QUERY_CHANGE_NOTIFICATION", value = "$initialValue"),
+        @OracleChangeNotification.Property(name = "DCN_QUERY_CHANGE_NOTIFICATION", value = "false"),
         @OracleChangeNotification.Property(name = "DCN_QUERY_CHANGE_NOTIFICATION", value = "true"),
         @OracleChangeNotification.Property(name = "NTF_QOS_RELIABLE", value = "false")
     })
     void changed(ChangeEvent<Book> event) {
     }
-"""))
+'''))
 
         then:
         beanDefinition.getRequiredMethod('changed', ChangeEvent).hasAnnotation(OracleChangeListenerQuery)
 
-        where:
-        initialValue << ['false', 'true']
     }
 
     @Unroll

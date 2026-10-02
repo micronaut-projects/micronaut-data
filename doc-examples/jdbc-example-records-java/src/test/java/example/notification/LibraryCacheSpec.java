@@ -15,7 +15,6 @@ import java.util.concurrent.Callable;
 
 import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertFalse;
-import static org.junit.jupiter.api.Assertions.assertNotNull;
 
 @TestInstance(TestInstance.Lifecycle.PER_CLASS)
 class LibraryCacheSpec {
@@ -84,9 +83,7 @@ class LibraryCacheSpec {
 
             waitUntil(() -> libraryCache.find("Library 1 Updated").isPresent());
 
-            Library cachedLibrary1 = libraryCache.find("Library 1 Updated").get();
-
-            assertNotNull(cachedLibrary1);
+            Library cachedLibrary1 = libraryCache.find("Library 1 Updated").orElseThrow();
             assertEquals(library1.id(), cachedLibrary1.id());
 
             // capacity updated
@@ -96,7 +93,6 @@ class LibraryCacheSpec {
 
             Library cachedLibrary2 = libraryCache.find("Library 2").orElseThrow();
 
-            assertNotNull(cachedLibrary2);
             assertEquals(library2.id(), cachedLibrary2.id());
 
             // location updated
@@ -107,7 +103,6 @@ class LibraryCacheSpec {
 
             Library cachedLibrary3 = libraryCache.find("Library 3").orElseThrow();
 
-            assertNotNull(cachedLibrary3);
             assertEquals(library3.id(), cachedLibrary3.id());
 
             // new library added to the cache
@@ -115,9 +110,7 @@ class LibraryCacheSpec {
 
             waitUntil(() -> libraryCache.find("Library 5").isPresent());
 
-            Library cachedLibrary5 = libraryCache.find("Library 5").get();
-
-            assertNotNull(cachedLibrary5);
+            Library cachedLibrary5 = libraryCache.find("Library 5").orElseThrow();
             assertEquals(library5.id(), cachedLibrary5.id());
         }
     }
@@ -149,9 +142,7 @@ class LibraryCacheSpec {
 
             waitUntil(() -> libraryCache.find(library1.name()).isPresent());
 
-            Library cachedLibrary1 = libraryCache.find("Library 1").get();
-
-            assertNotNull(cachedLibrary1);
+            Library cachedLibrary1 = libraryCache.find("Library 1").orElseThrow();
             assertEquals(library1.id(), cachedLibrary1.id());
 
             // when capacity is updated below 10,000, the library should be removed from the cache

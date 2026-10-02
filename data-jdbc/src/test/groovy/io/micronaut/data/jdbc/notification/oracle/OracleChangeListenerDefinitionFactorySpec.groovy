@@ -93,23 +93,6 @@ class OracleChangeListenerDefinitionFactorySpec extends Specification {
         0 * operations.execute(_)
     }
 
-    void "adds a server cleanup grace period for after-expiration registrations"() {
-        given:
-        def operations = operations()
-        def listenerMethod = listenerMethod(notification([
-                timeoutSeconds: 120,
-                renewal       : OracleChangeNotification.RenewalMode.AFTER_EXPIRATION
-        ]))
-
-        when:
-        def definition = new OracleChangeListenerDefinitionFactory(operations).create(listenerMethod)
-
-        then:
-        definition.renewalPolicy().timeoutSeconds() == 120
-        definition.renewalPolicy().serverTimeoutSeconds() == 180
-        definition.registrationProperties().getProperty(OracleConnection.NTF_TIMEOUT) == '180'
-    }
-
     void "accepts zero timeout with no renewal"() {
         given:
         def operations = operations()

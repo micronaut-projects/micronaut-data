@@ -83,10 +83,6 @@ class OracleQueryNotificationSpec extends Specification implements OracleTestPro
         catalogCategoryRepository.deleteAll()
     }
 
-    def cleanupSpec() {
-        context?.close()
-    }
-
     private void grantChangeNotificationPrivilege() {
         // Test Resources creates the regular test user without this Oracle-specific privilege.
         // Bootstrap once as SYSTEM to grant it, then run the actual listener as the test user.
