@@ -33,7 +33,7 @@ spring-data = "4.1.1"
 
 # Lombok
 
-lombok = "1.18.46"
+lombok = "1.18.48"
 
 # Testing and benchmarking
 
@@ -50,7 +50,7 @@ spring-boot-gradle-plugin = "4.1.1"
 spring-dependency-management-gradle-plugin = "1.1.7"
 shadow-gradle-plugin = "9.6.1"
 errorprone-gradle-plugin = "5.1.1"
-nullaway = "0.14.1"
+nullaway = "0.14.2"
 error_prone_core = "2.50.0"
 groovy_yaml = "5.1.2"
 
