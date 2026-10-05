@@ -173,6 +173,63 @@ class OracleQueryNotificationSpec extends Specification implements OracleTestPro
         notification.metadata(OracleChangeEventMetadata).orElseThrow().rowId()
     }
 
+    void "change listener receives a committed change only after its transaction commits"() {
+        given:
+        objectChangeListener.discardNotifications(250, TimeUnit.MILLISECONDS)
+        def saved
+
+        when:
+        transactionManager.executeWrite { status ->
+            saved = objectChangeRepository.save(new ObjectChangeNotificationBook(title: "Committed book"))
+            assert objectChangeListener.poll(300, TimeUnit.MILLISECONDS) == null
+            null
+        }
+        def notification = objectChangeListener.poll(ChangeOperation.INSERT)
+        def entity = notification?.entity()?.orElse(null)
+
+        then:
+        notification
+        entity.id == saved.id
+        entity.title == "Committed book"
+    }
+
+    void "change listener does not receive a change from a rolled back transaction"() {
+        given:
+        objectChangeListener.discardNotifications(250, TimeUnit.MILLISECONDS)
+        def saved
+
+        when:
+        transactionManager.executeWrite { status ->
+            saved = objectChangeRepository.save(new ObjectChangeNotificationBook(title: "Rolled back book"))
+            status.setRollbackOnly()
+            null
+        }
+
+        then:
+        objectChangeRepository.findById(saved.id).isEmpty()
+        objectChangeListener.poll(1, TimeUnit.SECONDS) == null
+    }
+
+    void "object change listener invalidates when Oracle reports a full-table change"() {
+        given:
+        objectChangeRepository.save(new ObjectChangeNotificationBook(title: "Truncated book"))
+        assert objectChangeListener.poll(ChangeOperation.INSERT)
+
+        when:
+        context.getBean(DefaultJdbcRepositoryOperations).execute { connection ->
+            connection.createStatement().withCloseable { statement ->
+                statement.execute("TRUNCATE TABLE object_change_notification_book")
+            }
+            true
+        }
+        def notification = objectChangeListener.poll(ChangeOperation.INVALIDATE)
+
+        then:
+        notification
+        notification.entity().isEmpty()
+        notification.metadata(OracleChangeEventMetadata).isEmpty()
+    }
+
     void "query change listener receives an entity after an Oracle row is inserted"() {
         when:
         def saved = queryChangeRepository.save(new QueryChangeNotificationBook(title: "Query Change Notification"))
