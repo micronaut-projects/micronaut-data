@@ -15,7 +15,6 @@
  */
 package io.micronaut.data.jdbc.notification.oracle;
 
-import io.micronaut.inject.ExecutableMethod;
 import oracle.jdbc.OracleConnection;
 import org.jspecify.annotations.Nullable;
 
@@ -32,23 +31,6 @@ import java.util.Properties;
 final class OracleChangeNotificationOptionsValidator {
 
     private OracleChangeNotificationOptionsValidator() {
-    }
-
-    /**
-     * Validates explicitly declared annotation properties before framework-required defaults are
-     * added. This prevents listener configuration from requesting options that conflict with the
-     * callback model or are not supported by Micronaut Data.
-     *
-     * @param properties the explicitly requested listener properties
-     * @param method     the listener method used in diagnostics
-     */
-    static void validateListenerOptions(Properties properties, ExecutableMethod<?, ?> method) {
-        for (String name : properties.stringPropertyNames()) {
-            String error = invalidOption(name, properties.getProperty(name), true);
-            if (error != null) {
-                throw new IllegalStateException("@ChangeListener method [" + method.getDescription(true) + "] " + error);
-            }
-        }
     }
 
     /**
