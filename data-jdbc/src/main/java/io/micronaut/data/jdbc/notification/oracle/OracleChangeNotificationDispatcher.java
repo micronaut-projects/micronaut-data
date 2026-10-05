@@ -31,7 +31,9 @@ import org.jspecify.annotations.Nullable;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
+import java.util.HexFormat;
 import java.util.Properties;
+import java.util.StringJoiner;
 import java.util.concurrent.Executor;
 import java.util.function.BiConsumer;
 import java.util.function.LongConsumer;
@@ -288,8 +290,13 @@ final class OracleChangeNotificationDispatcher implements DatabaseChangeListener
             return;
         }
         try {
-            LOG.trace("Accepted DCN event of type [{}] for datasource [{}], registration [{}], and listener method [{}]",
-                event.getEventType(), dataSourceName, event.getRegId(), methodDescription);
+            if (LOG.isTraceEnabled()) {
+                LOG.trace("Accepted DCN event of type [{}] for datasource [{}], registration [{}], listener method [{}], " +
+                        "database [{}], transaction XID (raw hex) [{}], and table changes [{}]",
+                    event.getEventType(), dataSourceName, event.getRegId(), methodDescription,
+                    event.getDatabaseName(), describeTransactionId(event),
+                    describeTableChanges(event.getTableChangeDescription()));
+            }
             dispatch(event, options);
         } catch (RuntimeException e) {
             LOG.error("Unexpected error dispatching DCN event [{}] for registration [{}], datasource [{}], and listener method [{}]",
@@ -297,6 +304,43 @@ final class OracleChangeNotificationDispatcher implements DatabaseChangeListener
         } finally {
             taskTracker.completeTask();
         }
+    }
+
+    /**
+     * Formats the transaction identifier bytes as hex without assuming the database host's byte order.
+     *
+     * @param event the Oracle Database change event
+     * @return the raw transaction identifier in hexadecimal, or {@code <not provided>}
+     */
+    private String describeTransactionId(DatabaseChangeEvent event) {
+        byte[] transactionId = event.getTransactionId();
+        if (transactionId == null) {
+            return "<not provided>";
+        }
+        for (byte value : transactionId) {
+            if (value != 0) {
+                return HexFormat.of().formatHex(transactionId);
+            }
+        }
+        return "<not provided>";
+    }
+
+    /**
+     * Summarizes each table and table-level operation in an object-change event.
+     *
+     * @param tables the table descriptions supplied by Oracle Database, if any
+     * @return table names and their operations, or {@code []} when no table descriptions are available
+     */
+    private String describeTableChanges(TableChangeDescription @Nullable [] tables) {
+        if (tables == null || tables.length == 0) {
+            return "[]";
+        }
+        StringJoiner descriptions = new StringJoiner(", ", "[", "]");
+        for (TableChangeDescription table : tables) {
+            descriptions.add(table.getTableName() + "(objectNumber=" + table.getObjectNumber()
+                + ", operations=" + table.getTableOperations() + ")");
+        }
+        return descriptions.toString();
     }
 
     /**
