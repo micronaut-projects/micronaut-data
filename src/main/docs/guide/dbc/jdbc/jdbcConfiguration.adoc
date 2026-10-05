@@ -105,8 +105,11 @@ The effect of the read-only flag depends on the driver:
 |Oracle
 |A hint to the driver; writes are not rejected.
 
-|SQL Server / H2
+|SQL Server
 |Ignored by the driver; `isReadOnly()` always returns `false`.
+
+|H2
+|`setReadOnly` is ignored by the driver; `isReadOnly()` reflects only the database mode, for example `true` when the database is opened with `ACCESS_MODE_DATA=r`.
 |===
 
 Read-only connections are also used by some drivers and proxies (for example, the AWS Advanced JDBC Wrapper) and routing data sources to send queries to read replicas. Use explicit read-only transactions or `read-only-connection-per-operation` to keep that routing for non-transactional reads.
