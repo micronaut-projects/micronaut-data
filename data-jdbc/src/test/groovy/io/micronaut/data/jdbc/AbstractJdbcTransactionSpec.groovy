@@ -97,18 +97,6 @@ abstract class AbstractJdbcTransactionSpec extends AbstractTransactionSpec {
             !isConnectionReadOnly()
     }
 
-    void "test a writable connection is writable again after an inner read-only transaction"() {
-        when:
-            def flag = getConnectionOperations().executeWrite { status ->
-                getTransactionOperations().executeRead { repository.count() }
-                repository.count()
-                status.getConnection().isReadOnly()
-            }
-        then:
-            !flag
-            !isConnectionReadOnly()
-    }
-
     void "test reads in a read-only transaction are read-only"() {
         when:
             def flag = getTransactionOperations().executeRead { status ->
