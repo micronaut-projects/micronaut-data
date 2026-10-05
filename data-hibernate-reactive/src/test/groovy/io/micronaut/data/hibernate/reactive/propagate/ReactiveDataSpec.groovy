@@ -134,6 +134,20 @@ class ReactiveDataSpec extends Specification implements PostgresHibernateReactiv
         repository.findById(71L).block().name == "K"
     }
 
+    @Issue("https://github.com/micronaut-projects/micronaut-data/issues/2165")
+    void 'Verify a transaction rolls back after switching threads'() {
+        when:
+        transactionOperations.withTransactionMono { status ->
+            repository.save(new Foo(72, "L"))
+                .publishOn(Schedulers.parallel())
+                .flatMap { Mono.error(new IllegalStateException("boom")) }
+        }.block(Duration.ofSeconds(10))
+
+        then:
+        thrown(IllegalStateException)
+        repository.findById(72L).block() == null
+    }
+
     void 'Verify counting a paged query counts its root entity'() {
         setup:
         client.create(new FooController.CreateRequest(30, "E")).block()

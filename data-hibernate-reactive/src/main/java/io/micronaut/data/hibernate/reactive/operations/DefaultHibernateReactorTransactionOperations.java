@@ -34,8 +34,8 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import reactor.core.publisher.Flux;
 import reactor.core.publisher.Mono;
+import reactor.core.scheduler.Scheduler;
 
-import java.util.concurrent.Executor;
 import java.util.function.Function;
 
 /**
@@ -77,7 +77,7 @@ final class DefaultHibernateReactorTransactionOperations extends AbstractReactor
         if (error != null) {
             return error;
         }
-        return helper.withTransactionFlux(txStatus.getConnection(), sessionExecutor(txStatus), transaction -> {
+        return helper.withTransactionFlux(txStatus.getConnection(), sessionScheduler(txStatus), transaction -> {
             ReactiveTransactionStatus<Stage.Session> reactiveTransactionStatus = createTxStatus(txStatus, transaction);
             return executeCallbackFlux(reactiveTransactionStatus, handler);
         });
@@ -89,15 +89,15 @@ final class DefaultHibernateReactorTransactionOperations extends AbstractReactor
         if (error != null) {
             return error.next();
         }
-        return helper.withTransactionMono(txStatus.getConnection(), sessionExecutor(txStatus), transaction -> {
+        return helper.withTransactionMono(txStatus.getConnection(), sessionScheduler(txStatus), transaction -> {
             ReactiveTransactionStatus<Stage.Session> reactiveTransactionStatus = createTxStatus(txStatus, transaction);
             return executeCallbackMono(reactiveTransactionStatus, handler);
         });
     }
 
     @Nullable
-    private static Executor sessionExecutor(DefaultReactiveTransactionStatus<Stage.Session> txStatus) {
-        return txStatus.getConnectionStatus() instanceof DefaultReactiveConnectionStatus<Stage.Session> status ? status.getExecutor() : null;
+    private static Scheduler sessionScheduler(DefaultReactiveTransactionStatus<Stage.Session> txStatus) {
+        return txStatus.getConnectionStatus() instanceof DefaultReactiveConnectionStatus<Stage.Session> status ? status.getScheduler() : null;
     }
 
     private ReactiveTransactionStatus<Stage.Session> createTxStatus(DefaultReactiveTransactionStatus<Stage.Session> txStatus, Stage.Transaction transaction) {

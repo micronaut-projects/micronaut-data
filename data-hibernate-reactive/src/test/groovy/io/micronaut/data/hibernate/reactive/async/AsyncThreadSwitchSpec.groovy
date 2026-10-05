@@ -5,6 +5,7 @@ import io.micronaut.data.tck.entities.Person
 import io.micronaut.test.extensions.spock.annotation.MicronautTest
 import io.micronaut.transaction.annotation.Transactional
 import io.micronaut.scheduling.TaskExecutors
+import jakarta.annotation.PreDestroy
 import jakarta.inject.Inject
 import jakarta.inject.Named
 import jakarta.inject.Singleton
@@ -68,6 +69,11 @@ class AsyncThreadSwitchSpec extends Specification implements PostgresHibernateRe
 
         // A plain executor: completes the future on a thread that is neither a Vert.x thread nor propagates the context
         private final ExecutorService plainThreads = Executors.newSingleThreadExecutor()
+
+        @PreDestroy
+        void shutdown() {
+            plainThreads.shutdown()
+        }
 
         @Transactional
         CompletionStage<Person> saveAndCompleteOnPlainThread(String name) {

@@ -23,6 +23,7 @@ import io.micronaut.data.connection.ConnectionSynchronization;
 import org.reactivestreams.Publisher;
 import reactor.core.publisher.Flux;
 import reactor.core.publisher.Mono;
+import reactor.core.scheduler.Scheduler;
 import reactor.core.scheduler.Schedulers;
 
 import java.util.ArrayList;
@@ -51,6 +52,8 @@ public final class DefaultReactiveConnectionStatus<C> implements ReactiveConnect
     private final boolean isNew;
     @Nullable
     private final Executor executor;
+    @Nullable
+    private final Scheduler scheduler;
 
     @Nullable
     private List<ReactiveConnectionSynchronization> connectionSynchronizations;
@@ -78,6 +81,7 @@ public final class DefaultReactiveConnectionStatus<C> implements ReactiveConnect
         this.connectionOperations = connectionOperations;
         this.isNew = isNew;
         this.executor = executor;
+        this.scheduler = executor == null ? null : Schedulers.fromExecutor(executor);
     }
 
     /**
@@ -91,6 +95,16 @@ public final class DefaultReactiveConnectionStatus<C> implements ReactiveConnect
     }
 
     /**
+     * @return The scheduler of the connection's executor, or {@code null} if it can be used from any thread
+     * @since 5.3.0
+     */
+    @Internal
+    @Nullable
+    public Scheduler getScheduler() {
+        return scheduler;
+    }
+
+    /**
      * Run the work on the connection's executor, if it has one.
      *
      * @param work The work
@@ -101,7 +115,7 @@ public final class DefaultReactiveConnectionStatus<C> implements ReactiveConnect
     @Internal
     public <T> Mono<T> onConnectionExecutor(Supplier<? extends Mono<T>> work) {
         Mono<T> mono = Mono.defer(work);
-        return executor == null ? mono : mono.subscribeOn(Schedulers.fromExecutor(executor));
+        return scheduler == null ? mono : mono.subscribeOn(scheduler);
     }
 
     /**
@@ -115,7 +129,8 @@ public final class DefaultReactiveConnectionStatus<C> implements ReactiveConnect
     @Internal
     public <T> Flux<T> onConnectionExecutorFlux(Supplier<? extends Flux<T>> work) {
         Flux<T> flux = Flux.defer(work);
-        return executor == null ? flux : flux.subscribeOn(Schedulers.fromExecutor(executor));
+        // Only the subscription needs the connection's thread, not the subscriber's requests
+        return scheduler == null ? flux : flux.subscribeOn(scheduler, false);
     }
 
     public boolean isConnectionOf(ReactorConnectionOperations<C> connectionOperations) {

@@ -27,7 +27,6 @@ import reactor.core.scheduler.Schedulers;
 
 import java.util.List;
 import java.util.concurrent.CompletionStage;
-import java.util.concurrent.Executor;
 import java.util.function.Function;
 import java.util.function.Supplier;
 
@@ -113,16 +112,16 @@ final class ReactiveHibernateHelper {
      * on another thread, for example when it waits for a future completed elsewhere.
      *
      * @param session         The session
-     * @param sessionExecutor The executor of the session's thread, if known
+     * @param sessionScheduler The scheduler of the session's thread, if known
      * @param work            The work
      * @param <T>             The result type
      * @return The result
      */
-    <T> Flux<T> withTransactionFlux(Stage.Session session, @Nullable Executor sessionExecutor, Function<Stage.Transaction, Flux<T>> work) {
-        Scheduler scheduler = sessionScheduler(sessionExecutor);
+    <T> Flux<T> withTransactionFlux(Stage.Session session, @Nullable Scheduler sessionScheduler, Function<Stage.Transaction, Flux<T>> work) {
+        Scheduler scheduler = sessionScheduler == null ? contextScheduler : sessionScheduler;
         return Flux.deferContextual(contextView -> monoFromCompletionStage(() -> session.withTransaction(tx -> work.apply(tx).collectList().contextWrite(contextView).publishOn(scheduler).toFuture()))
             .flatMapIterable(it -> it))
-            .subscribeOn(scheduler);
+            .subscribeOn(scheduler, false);
     }
 
     /**
@@ -130,19 +129,15 @@ final class ReactiveHibernateHelper {
      * on another thread, for example when it waits for a future completed elsewhere.
      *
      * @param session         The session
-     * @param sessionExecutor The executor of the session's thread, if known
+     * @param sessionScheduler The scheduler of the session's thread, if known
      * @param work            The work
      * @param <T>             The result type
      * @return The result
      */
-    <T> Mono<T> withTransactionMono(Stage.Session session, @Nullable Executor sessionExecutor, Function<Stage.Transaction, Mono<T>> work) {
-        Scheduler scheduler = sessionScheduler(sessionExecutor);
+    <T> Mono<T> withTransactionMono(Stage.Session session, @Nullable Scheduler sessionScheduler, Function<Stage.Transaction, Mono<T>> work) {
+        Scheduler scheduler = sessionScheduler == null ? contextScheduler : sessionScheduler;
         return Mono.deferContextual(contextView -> monoFromCompletionStage(() -> session.withTransaction(tx -> work.apply(tx).contextWrite(contextView).publishOn(scheduler).toFuture())))
             .subscribeOn(scheduler);
-    }
-
-    private Scheduler sessionScheduler(@Nullable Executor sessionExecutor) {
-        return sessionExecutor == null ? contextScheduler : Schedulers.fromExecutor(sessionExecutor);
     }
 
     <T> Mono<T> monoFromCompletionStage(Supplier<CompletionStage<T>> supplier) {
