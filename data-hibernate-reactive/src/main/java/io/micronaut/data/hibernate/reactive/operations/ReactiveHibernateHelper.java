@@ -17,6 +17,7 @@ package io.micronaut.data.hibernate.reactive.operations;
 
 import io.micronaut.core.annotation.Internal;
 import io.micronaut.core.util.CollectionUtils;
+import org.jspecify.annotations.Nullable;
 import org.hibernate.reactive.common.spi.Implementor;
 import org.hibernate.reactive.stage.Stage;
 import reactor.core.publisher.Flux;
@@ -26,6 +27,7 @@ import reactor.core.scheduler.Schedulers;
 
 import java.util.List;
 import java.util.concurrent.CompletionStage;
+import java.util.concurrent.Executor;
 import java.util.function.Function;
 import java.util.function.Supplier;
 
@@ -106,13 +108,41 @@ final class ReactiveHibernateHelper {
         return monoFromCompletionStage(session::close);
     }
 
-    <T> Flux<T> withTransactionFlux(Stage.Session session, Function<Stage.Transaction, Flux<T>> work) {
-        return Flux.deferContextual(contextView -> monoFromCompletionStage(() -> session.withTransaction(tx -> work.apply(tx).collectList().contextWrite(contextView).publishOn(contextScheduler).toFuture()))
-            .flatMapIterable(it -> it));
+    /**
+     * Run the work in a transaction. The transaction begins and ends on the session's thread: the work can complete
+     * on another thread, for example when it waits for a future completed elsewhere.
+     *
+     * @param session         The session
+     * @param sessionExecutor The executor of the session's thread, if known
+     * @param work            The work
+     * @param <T>             The result type
+     * @return The result
+     */
+    <T> Flux<T> withTransactionFlux(Stage.Session session, @Nullable Executor sessionExecutor, Function<Stage.Transaction, Flux<T>> work) {
+        Scheduler scheduler = sessionScheduler(sessionExecutor);
+        return Flux.deferContextual(contextView -> monoFromCompletionStage(() -> session.withTransaction(tx -> work.apply(tx).collectList().contextWrite(contextView).publishOn(scheduler).toFuture()))
+            .flatMapIterable(it -> it))
+            .subscribeOn(scheduler);
     }
 
-    <T> Mono<T> withTransactionMono(Stage.Session session, Function<Stage.Transaction, Mono<T>> work) {
-        return Mono.deferContextual(contextView -> monoFromCompletionStage(() -> session.withTransaction(tx -> work.apply(tx).contextWrite(contextView).publishOn(contextScheduler).toFuture())));
+    /**
+     * Run the work in a transaction. The transaction begins and ends on the session's thread: the work can complete
+     * on another thread, for example when it waits for a future completed elsewhere.
+     *
+     * @param session         The session
+     * @param sessionExecutor The executor of the session's thread, if known
+     * @param work            The work
+     * @param <T>             The result type
+     * @return The result
+     */
+    <T> Mono<T> withTransactionMono(Stage.Session session, @Nullable Executor sessionExecutor, Function<Stage.Transaction, Mono<T>> work) {
+        Scheduler scheduler = sessionScheduler(sessionExecutor);
+        return Mono.deferContextual(contextView -> monoFromCompletionStage(() -> session.withTransaction(tx -> work.apply(tx).contextWrite(contextView).publishOn(scheduler).toFuture())))
+            .subscribeOn(scheduler);
+    }
+
+    private Scheduler sessionScheduler(@Nullable Executor sessionExecutor) {
+        return sessionExecutor == null ? contextScheduler : Schedulers.fromExecutor(sessionExecutor);
     }
 
     <T> Mono<T> monoFromCompletionStage(Supplier<CompletionStage<T>> supplier) {

@@ -26,6 +26,7 @@ import io.micronaut.transaction.exceptions.TransactionUsageException;
 import io.micronaut.transaction.reactive.ReactiveTransactionStatus;
 import io.micronaut.transaction.support.AbstractReactorTransactionOperations;
 import org.hibernate.SessionFactory;
+import io.micronaut.data.connection.reactive.DefaultReactiveConnectionStatus;
 import org.hibernate.reactive.stage.Stage;
 import org.jspecify.annotations.Nullable;
 import org.reactivestreams.Publisher;
@@ -34,6 +35,7 @@ import org.slf4j.LoggerFactory;
 import reactor.core.publisher.Flux;
 import reactor.core.publisher.Mono;
 
+import java.util.concurrent.Executor;
 import java.util.function.Function;
 
 /**
@@ -75,7 +77,7 @@ final class DefaultHibernateReactorTransactionOperations extends AbstractReactor
         if (error != null) {
             return error;
         }
-        return helper.withTransactionFlux(txStatus.getConnection(), transaction -> {
+        return helper.withTransactionFlux(txStatus.getConnection(), sessionExecutor(txStatus), transaction -> {
             ReactiveTransactionStatus<Stage.Session> reactiveTransactionStatus = createTxStatus(txStatus, transaction);
             return executeCallbackFlux(reactiveTransactionStatus, handler);
         });
@@ -87,10 +89,15 @@ final class DefaultHibernateReactorTransactionOperations extends AbstractReactor
         if (error != null) {
             return error.next();
         }
-        return helper.withTransactionMono(txStatus.getConnection(), transaction -> {
+        return helper.withTransactionMono(txStatus.getConnection(), sessionExecutor(txStatus), transaction -> {
             ReactiveTransactionStatus<Stage.Session> reactiveTransactionStatus = createTxStatus(txStatus, transaction);
             return executeCallbackMono(reactiveTransactionStatus, handler);
         });
+    }
+
+    @Nullable
+    private static Executor sessionExecutor(DefaultReactiveTransactionStatus<Stage.Session> txStatus) {
+        return txStatus.getConnectionStatus() instanceof DefaultReactiveConnectionStatus<Stage.Session> status ? status.getExecutor() : null;
     }
 
     private ReactiveTransactionStatus<Stage.Session> createTxStatus(DefaultReactiveTransactionStatus<Stage.Session> txStatus, Stage.Transaction transaction) {
