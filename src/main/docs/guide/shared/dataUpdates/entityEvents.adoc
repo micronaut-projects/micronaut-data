@@ -1,4 +1,4 @@
-Since 2.3, Micronaut Data supports defining entity event listeners for either JPA or JDBC using either annotations or by implementation the api:data.event.EntityEventListener[] interface.
+Micronaut Data supports defining entity event listeners for JPA, JDBC, R2DBC, MongoDB and Azure Cosmos using either annotations or by implementing the api:data.event.EntityEventListener[] interface.
 
 The following table lists the available event annotations:
 
@@ -28,7 +28,7 @@ The following table lists the available event annotations:
 
 |===
 
-TIP: You can also use the JPA annotations in the `javax.persistence` package if you prefer.
+TIP: You can also use the equivalent JPA annotations from the `jakarta.persistence` package, such as `jakarta.persistence.PrePersist`, if you prefer.
 
 Each event listener annotation can be applied to an instance method of an entity class (a JPA entity or a class annotated with ann:data.annotation.MappedEntity) in which case the method must return `void` and have zero arguments for example:
 
@@ -50,22 +50,22 @@ Finally, it is also possible to define a Micronaut bean that implements the api:
 |*Interface*
 |*Description*
 
-|api:data.event.listeners.PrePersistListener[]
+|api:data.event.listeners.PrePersistEventListener[]
 |Triggered prior to persisting an object
 
-|ann:data.event.listeners.PostPersistListener[]
+|ann:data.event.listeners.PostPersistEventListener[]
 |Triggered after persisting an object
 
-|ann:data.event.listeners.PreRemoveListener[]
+|ann:data.event.listeners.PreRemoveEventListener[]
 |Triggered prior to deleting an object (note: doesn't apply to batch deletes)
 
-|ann:data.event.listeners.PostRemoveListener[]
+|ann:data.event.listeners.PostRemoveEventListener[]
 |Triggered after to deleting an object (note: doesn't apply to batch deletes)
 
-|ann:data.event.listeners.PreUpdateListener[]
+|ann:data.event.listeners.PreUpdateEventListener[]
 |Triggered prior to updating an object (note: doesn't apply to batch updates)
 
-|ann:data.event.listeners.PostUpdateListener[]
+|ann:data.event.listeners.PostUpdateEventListener[]
 |Triggered after updating an object (note: doesn't apply to batch updates)
 
 |===
@@ -74,6 +74,6 @@ For example the following Micronaut factory bean defines listeners that are exec
 
 snippet::example.BookListeners[project-base="doc-examples/hibernate-example", source="main", indent="0"]
 
-<1> The factory returns a bean of type api:data.event.listeners.PrePersistListener[] that includes `Book` as the generic argument
+<1> The factory returns a bean of type api:data.event.listeners.PrePersistEventListener[] that includes `Book` as the generic argument
 <2> The `PrePersistListener` can return `false` if the operation should not proceed, if this case `true` is returned
-<3> An additional ann:data.event.listeners.PostPersistListener[] event listener is defined
+<3> An additional ann:data.event.listeners.PostPersistEventListener[] event listener is defined

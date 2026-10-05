@@ -24,7 +24,18 @@ import java.lang.annotation.RetentionPolicy;
 import java.lang.annotation.Target;
 
 /**
- * Allows configuring JPA 3.0 entity graphs on query methods. Largely based on the same annotation as in Spring Data.
+ * Configures the JPA entity graph used by a repository query method, which controls which associations are fetched
+ * together with the entity in the same query, overriding the fetch type declared on the mapping. Use it to load
+ * lazy associations eagerly for a particular query and avoid additional queries when they are accessed.
+ * <p>
+ * Either reference a named entity graph declared on the entity with {@code @NamedEntityGraph} using {@link #name()},
+ * or list the association paths to fetch with {@link #attributePaths()} (for example {@code "author"} or
+ * {@code "author.publisher"}), in which case an entity graph is built at runtime. The graph is passed to the
+ * persistence provider as the query hint named by {@link #hint()}: a <em>fetch graph</em> by default, which treats
+ * attributes not in the graph as lazy, or a <em>load graph</em> ({@code jakarta.persistence.loadgraph}), which keeps
+ * the mapped fetch type for them.
+ * <p>
+ * Similar to Spring Data JPA's {@code @EntityGraph}.
  *
  * @author graemerocher
  * @since 1.0.0

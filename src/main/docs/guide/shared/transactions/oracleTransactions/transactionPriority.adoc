@@ -1,9 +1,27 @@
 For Oracle JDBC and R2DBC transactions, Micronaut Data supports Oracle transaction priority with ann:transaction.annotation.OracleTransactional[].
 Set the `priority` attribute to request the desired Oracle transaction priority:
 
-[source,java]
+[source.multi-language-sample,java]
 ----
 import io.micronaut.transaction.annotation.OracleTransactional;
+
+@OracleTransactional(priority = OracleTransactional.Priority.MEDIUM)
+void updateInventory() {
+    // ...
+}
+----
+[source.multi-language-sample,kotlin]
+----
+import io.micronaut.transaction.annotation.OracleTransactional
+
+@OracleTransactional(priority = OracleTransactional.Priority.MEDIUM)
+open fun updateInventory() {
+    // ...
+}
+----
+[source.multi-language-sample,groovy]
+----
+import io.micronaut.transaction.annotation.OracleTransactional
 
 @OracleTransactional(priority = OracleTransactional.Priority.MEDIUM)
 void updateInventory() {
@@ -26,12 +44,32 @@ The transaction manager still performs the normal rollback and cleanup. The spec
 
 For example, an application can handle this contention separately from other transaction failures:
 
-[source,java]
+[source.multi-language-sample,java]
 ----
 import io.micronaut.transaction.exceptions.OracleTransactionPriorityException;
 
 try {
     checkoutService.checkout(accountId);
+} catch (OracleTransactionPriorityException e) {
+    // The transaction is already rolled back. Re-read the account before retrying.
+}
+----
+[source.multi-language-sample,kotlin]
+----
+import io.micronaut.transaction.exceptions.OracleTransactionPriorityException
+
+try {
+    checkoutService.checkout(accountId)
+} catch (e: OracleTransactionPriorityException) {
+    // The transaction is already rolled back. Re-read the account before retrying.
+}
+----
+[source.multi-language-sample,groovy]
+----
+import io.micronaut.transaction.exceptions.OracleTransactionPriorityException
+
+try {
+    checkoutService.checkout(accountId)
 } catch (OracleTransactionPriorityException e) {
     // The transaction is already rolled back. Re-read the account before retrying.
 }

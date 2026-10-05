@@ -3,11 +3,27 @@ As seen in the <<mongoQuickStart, Quick Start>> MongoDB repositories in Micronau
 In multiple servers scenario, the `serverName` annotation property can be used to specify the datasource configuration to use. By default, Micronaut Data will look for the default server.
 
 For example:
-[source,java]
+[source.multi-language-sample,java]
 ----
 @MongoRepository(serverName = "inventoryServer") // <1>
 public interface PhoneRepository extends CrudRepository<Phone, Integer> {
     Optional<Phone> findByAssetId(@NotNull Integer assetId);
+}
+----
+
+[source.multi-language-sample,kotlin]
+----
+@MongoRepository(serverName = "inventoryServer") // <1>
+interface PhoneRepository : CrudRepository<Phone, Int> {
+    fun findByAssetId(assetId: Int): Phone?
+}
+----
+
+[source.multi-language-sample,groovy]
+----
+@MongoRepository(serverName = "inventoryServer") // <1>
+interface PhoneRepository extends CrudRepository<Phone, Integer> {
+    Optional<Phone> findByAssetId(@NotNull Integer assetId)
 }
 ----
 <1> @MongoRepository marking the interface to access MongoDB and pointing to the server configuration 'inventoryServer'

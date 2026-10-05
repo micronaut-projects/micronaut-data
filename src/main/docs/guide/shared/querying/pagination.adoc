@@ -17,3 +17,7 @@ snippet::example.BookRepositorySpec[project-base="doc-examples/hibernate-example
 The `from` method accepts `index` and `size` arguments which are the page number to begin from and the number of records to return per page.
 
 A api:data.model.Slice[] is the same as a api:data.model.Page[] but results in one less query as it excludes the total number of pages calculation.
+
+A `Pageable` can also be passed to a method with an explicit query, see <<explicitQueries, Explicit Queries>> and, for Micronaut Data JDBC and R2DBC, <<dbcExplicitQueriesPagination, Explicit Queries and Pagination>>.
+
+TIP: In an HTTP application a `Pageable` can be bound directly from the query parameters of a request, see <<paginationHttp, Pagination in HTTP Controllers>>.

@@ -23,9 +23,17 @@ import static java.lang.annotation.ElementType.METHOD;
 import static java.lang.annotation.RetentionPolicy.RUNTIME;
 
 /**
- * Subset of the JPA join table annotation allowing support for bidirectional and unidirectional one-to-many join fetches only.
+ * Customizes the join table of a {@code ONE_TO_MANY} or {@code MANY_TO_MANY} association that is stored in a separate
+ * table. A join table (also called a link table) has one row per linked pair of entities, holding a foreign key to
+ * the owning entity and a foreign key to the associated entity.
  *
- * <p>Unlike the JPA version this is simplification and relies on a thid</p>
+ * <p>Without this annotation, the table name and the column names are derived from the entity and association names by
+ * the {@link io.micronaut.data.model.naming.NamingStrategy}. Use {@link #name()} and {@link #schema()} to name the
+ * table, {@link #joinColumns()} to name the columns that reference the owning entity and
+ * {@link #inverseJoinColumns()} to name the columns that reference the associated entity. Place the annotation on the
+ * owning side of the association, that is the side without {@code mappedBy}.</p>
+ *
+ * <p>The JPA annotation {@code jakarta.persistence.JoinTable} can be used instead and is interpreted the same way.</p>
  *
  * @author graemerocher
  * @since 1.0.0

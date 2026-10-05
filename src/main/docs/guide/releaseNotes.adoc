@@ -1,0 +1,1 @@
+This section lists the notable changes in each Micronaut Data release. Read <<breaks, Breaking Changes>> before upgrading to a new major or minor version. The complete list of changes for every release is on https://github.com/{githubSlug}/releases[GitHub].

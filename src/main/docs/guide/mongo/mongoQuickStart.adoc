@@ -72,9 +72,9 @@ Pre-generated applications should have everything properly setup. You can follow
 
 To get started with Micronaut Data MongoDB add the following dependency to your annotation processor path:
 
-dependency:io.micronaut.data:micronaut-data-document-processor[scope="annotationProcessor""]
+dependency:io.micronaut.data:micronaut-data-document-processor[scope="annotationProcessor"]
 
-NOTE: For Kotlin, add the `micronaut-data-document-processor` dependency in https://docs.micronaut.io/4.4.3/guide/#kaptOrKsp[kapt or ksp scope], and for Groovy add `micronaut-data-document-processor` in compileOnly scope.
+NOTE: For Kotlin, add the `micronaut-data-document-processor` dependency in https://docs.micronaut.io/latest/guide/#kaptOrKsp[kapt or ksp scope], and for Groovy add `micronaut-data-document-processor` in compileOnly scope.
 
 You should then configure a compile-scoped dependency on the `micronaut-data-mongodb` module:
 
@@ -116,26 +116,26 @@ Followed by an interface that extends from api:data.repository.CrudRepository[]
 
 snippet::example.BookRepository[project-base="doc-examples/mongo-example", source="main", tags="repository"]
 
-<1> The interface is annotated with ann:data.annotation.MongoRepository[]
+<1> The interface is annotated with ann:data.mongodb.annotation.MongoRepository[]
 <2> The `CrudRepository` interface take 2 generic arguments, the entity type (in this case `Book`) and the ID type (in this case `ObjectId`)
 
 You can now perform CRUD (Create, Read, Update, Delete) operations on the entity. The implementation of `example.BookRepository` is created at compilation time. To obtain a reference to it simply inject the bean:
 
 snippet::example.BookRepositorySpec[project-base="doc-examples/mongo-example", tags="inject", indent="0"]
 
-=== Saving an Instance (Create)
+== Saving an Instance (Create)
 
 To save an instance use the `save` method of the `CrudRepository` interface:
 
 snippet::example.BookRepositorySpec[project-base="doc-examples/mongo-example", tags="save", indent="0"]
 
-=== Retrieving an Instance (Read)
+== Retrieving an Instance (Read)
 
 To read a book back use `findById`:
 
 snippet::example.BookRepositorySpec[project-base="doc-examples/mongo-example", tags="read", indent="0"]
 
-=== Updating an Instance (Update)
+== Updating an Instance (Update)
 
 With Micronaut Data MongoDB, you must manually implement an `update` method since the MongoDB implementation doesn't include any dirty checking or persistence session notion. So you have to define explicit update methods for updates in your repository. For example:
 
@@ -145,7 +145,7 @@ Which can then be called like so:
 
 snippet::example.BookRepositorySpec[project-base="doc-examples/mongo-example", tags="update", indent="0"]
 
-=== Deleting an Instance (Delete)
+== Deleting an Instance (Delete)
 
 To delete an instance use `deleteById`:
 

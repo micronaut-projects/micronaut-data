@@ -9,7 +9,7 @@ Micronaut Data JDBC / R2DBC supports most common Java data types. The following 
 
 If you wish to define a custom data type then you can do so by defining a class that is annotated with ann:data.annotation.TypeDef[].
 
-==== Oracle database custom data types
+== Oracle database custom data types
 
 Since 5.0.0, the following Java time types are mapped to Oracle Database INTERVAL types:
 

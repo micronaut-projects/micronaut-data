@@ -19,7 +19,13 @@ import io.micronaut.data.repository.GenericRepository
 import kotlinx.coroutines.flow.Flow
 
 /**
- * Interface for CRUD repository using Kotlin coroutines.
+ * Kotlin coroutines variation of [io.micronaut.data.repository.CrudRepository]: the methods are `suspend`
+ * functions (or return a [kotlinx.coroutines.flow.Flow]) and do not block the calling thread.
+ *
+ * The operations and the exceptions they produce are the same as those described in
+ * [io.micronaut.data.repository.CrudRepository]; a failure such as
+ * [io.micronaut.data.exceptions.OptimisticLockException] is thrown from the suspending call.
+ * Methods that return a nullable type, such as [findById], return `null` when nothing is found.
  *
  * @param <E> The entity type
  * @param <ID> The ID type
