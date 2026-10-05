@@ -79,7 +79,7 @@ A repository method called outside of a transaction or a connection scope (ann:d
 
 Toggling the read-only flag is not free. Depending on the driver, `Connection.isReadOnly()` and `Connection.setReadOnly(boolean)` each result in a database round trip, and the flag must be restored before the connection is returned to the pool. With MySQL Connector/J's default settings, a simple query costs four round trips instead of one, which significantly reduces throughput when database latency dominates.
 
-The read-only flag is still applied when you ask for it explicitly, for example with `@Transactional(readOnly = true)`, `@ReadOnly`, `@Connectable(readOnly = true)` or `executeRead` on api:transaction.TransactionOperations[] / api:data.connection.ConnectionOperations[]. Running a group of reads in one transaction or connection scope is cheaper than letting each read obtain its own connection.
+The read-only flag is still applied when you ask for it explicitly, for example with `@Transactional(readOnly = true)`, `@ReadOnly`, `@Connectable(readOnly = true)` or `executeRead` on api:transaction.TransactionOperations[] / api:data.connection.ConnectionOperations[]. Running a group of reads in one transaction or connection scope is cheaper than letting each read obtain its own connection. Inside a read-only scope, each repository call still checks the connection's read-only state with `Connection.isReadOnly()`, which is one round trip per call with MySQL Connector/J's default settings; adding `useLocalSessionState=true` to the JDBC URL avoids it.
 
 To restore the previous behaviour, enable `read-only-connection-per-operation` for a datasource:
 
@@ -109,7 +109,9 @@ The effect of the read-only flag depends on the driver:
 |Ignored by the driver; `isReadOnly()` always returns `false`.
 |===
 
-Read-only connections are also used by some drivers and proxies (for example, the AWS Advanced JDBC Wrapper) to route queries to read replicas. Use explicit read-only transactions to get that routing.
+Read-only connections are also used by some drivers and proxies (for example, the AWS Advanced JDBC Wrapper) and routing data sources to send queries to read replicas. Use explicit read-only transactions or `read-only-connection-per-operation` to keep that routing for non-transactional reads.
+
+This applies to Micronaut Data JDBC. Micronaut Data R2DBC does not set a read-only flag on its connections.
 
 === Tracing calls from Java to Oracle Database sessions
 

@@ -11,7 +11,7 @@ class SqlServerTransactionsSpec extends AbstractJdbcTransactionSpec implements M
     }
 
     @Override
-    boolean supportsReadOnlyFlag() {
+    boolean reportsReadOnlyFlag() {
         // The SQL Server driver ignores setReadOnly, it's always false
         return false
     }
