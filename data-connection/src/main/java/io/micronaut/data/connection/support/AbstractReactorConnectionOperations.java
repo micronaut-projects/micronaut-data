@@ -71,7 +71,7 @@ public abstract class AbstractReactorConnectionOperations<C> implements ReactorC
      *
      * @param connection The connection
      * @param definition The connection definition
-     * @return The publisher closing the connection
+     * @return A supplier of the publisher closing the connection, invoked when the connection's work completes, fails or is cancelled
      * @since 5.3.0
      */
     @NonNull
