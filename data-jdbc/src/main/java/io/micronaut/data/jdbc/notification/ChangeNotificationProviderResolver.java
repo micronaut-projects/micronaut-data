@@ -38,6 +38,10 @@ final class ChangeNotificationProviderResolver {
         this.providers = providers;
     }
 
+    boolean hasProviders() {
+        return !providers.isEmpty();
+    }
+
     @Nullable
     ChangeNotificationProvider resolve(Connection connection) throws SQLException {
         for (ChangeNotificationProvider provider : providers) {
