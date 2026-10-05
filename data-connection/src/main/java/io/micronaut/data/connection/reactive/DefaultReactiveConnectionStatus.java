@@ -64,6 +64,7 @@ public final class DefaultReactiveConnectionStatus<C> implements ReactiveConnect
      * @param closer               How to close a new connection
      * @since 5.3.0
      */
+    @Internal
     public DefaultReactiveConnectionStatus(C connection,
                                            ConnectionDefinition definition,
                                            ReactorConnectionOperations<C> connectionOperations,
@@ -80,6 +81,7 @@ public final class DefaultReactiveConnectionStatus<C> implements ReactiveConnect
      * @return How to close a new connection, or {@code null} for a reused one
      * @since 5.3.0
      */
+    @Internal
     @Nullable
     public Supplier<Publisher<Void>> getCloser() {
         return closer;
