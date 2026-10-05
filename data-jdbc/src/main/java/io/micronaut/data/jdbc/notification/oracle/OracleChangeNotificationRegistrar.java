@@ -92,8 +92,8 @@ final class OracleChangeNotificationRegistrar {
      * from local tracking and attempts to unregister it before propagating the failure.</p>
      *
      * @param subscription the subscription that owns the registration and receives its callbacks
-     * @return the registration lease, including its local renewal deadline, data-delivery retirement,
-     * and post-recovery invalidation actions
+     * @return the registration lease, including its local renewal deadline when renewal is enabled,
+     * data-delivery retirement, and post-recovery invalidation actions
      * @throws RuntimeException if registration setup or query association fails
      */
     OracleRegistrationLease createRegistration(OracleChangeNotificationSubscription subscription) {
@@ -101,9 +101,12 @@ final class OracleChangeNotificationRegistrar {
         return operations.execute(connection -> {
             OracleConnection oracleConnection = connection.unwrap(OracleConnection.class);
             validateConnectionOptions(oracleConnection, definition);
-            // The registration lifetime can start while this call is in progress. Measuring before
-            // the call prevents local renewal from running later than its configured logical deadline.
-            long startedNanos = nanoTimeSupplier.getAsLong();
+            OracleChangeNotificationRenewalPolicy renewalPolicy = definition.renewalPolicy();
+            // Measure before registration starts so time spent creating it counts toward its renewal deadline.
+            // Non-renewing registrations have no local renewal deadline.
+            long logicalExpirationNanos = renewalPolicy.renewable()
+                ? nanoTimeSupplier.getAsLong() + TimeUnit.SECONDS.toNanos(renewalPolicy.timeoutSeconds())
+                : 0;
             OracleChangeNotificationDispatcher dispatcher = new OracleChangeNotificationDispatcher(
                 dataSourceName, definition, beanContext, blockingExecutor, taskTracker,
                 subscription::handleRegistrationPurged,
@@ -115,7 +118,6 @@ final class OracleChangeNotificationRegistrar {
                 definition.registrationProperties(), dispatcher);
             LOG.trace("Created DCN registration [{}] for datasource [{}] and listener method [{}]",
                 registration.getRegId(), dataSourceName, definition.method().getDescription(true));
-            long logicalExpirationNanos = startedNanos + TimeUnit.SECONDS.toNanos(definition.renewalPolicy().timeoutSeconds());
             try {
                 subscription.track(registration);
                 Properties effectiveOptions = new Properties();

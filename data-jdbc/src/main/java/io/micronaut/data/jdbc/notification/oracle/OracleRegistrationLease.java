@@ -23,7 +23,8 @@ import java.util.function.Consumer;
  * Associates one physical registration with its local renewal deadline and delivery lifecycle actions.
  *
  * @param registration           the physical Oracle registration
- * @param logicalExpirationNanos the local renewal deadline measured before registration begins
+ * @param logicalExpirationNanos the local renewal deadline measured before registration begins, or zero when
+ *                               renewal is disabled
  * @param retirementAction       stops new data callbacks and optionally discards queued callbacks
  * @param invalidationAction     dispatches an {@code INVALIDATE} event after this lease replaces an
  *                               unavailable registration

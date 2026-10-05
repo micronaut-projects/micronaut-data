@@ -49,13 +49,14 @@ import java.lang.annotation.Target;
 public @interface OracleChangeNotification {
 
     /**
-     * Controls the lifetime of each registration.
+     * Controls the Oracle Database registration timeout and, when renewal is enabled, the local renewal deadline.
      *
-     * @return The logical expiration deadline in seconds, or zero for no timeout. Must be greater
-     * than zero when renewal is enabled. With {@link RenewalMode#NONE}, a positive value makes
-     * Oracle Database expire the registration without replacement. With
-     * {@link RenewalMode#AFTER_EXPIRATION}, Micronaut Data adds a cleanup grace period to the
-     * Oracle Database timeout; renewal still begins at this logical deadline.
+     * @return The timeout in seconds. With {@link RenewalMode#NONE}, zero means no timeout and a positive
+     * value makes Oracle Database expire the registration without replacement. With
+     * {@link RenewalMode#OVERLAPPING}, the value must be positive; it is the logical expiration deadline,
+     * and Micronaut Data creates a replacement {@link #renewalLeadTimeSeconds()} before that deadline.
+     * With {@link RenewalMode#AFTER_EXPIRATION}, the value must also be positive; Micronaut Data begins
+     * renewal at this logical deadline and adds a cleanup grace period to the Oracle Database timeout.
      */
     int timeoutSeconds() default 0;
 

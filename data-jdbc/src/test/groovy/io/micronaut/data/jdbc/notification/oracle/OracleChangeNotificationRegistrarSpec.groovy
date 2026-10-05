@@ -24,12 +24,15 @@ import io.micronaut.inject.ExecutableMethod
 import io.micronaut.scheduling.TaskScheduler
 import oracle.jdbc.NotificationRegistration
 import oracle.jdbc.OracleConnection
+import oracle.jdbc.OracleStatement
 import oracle.jdbc.dcn.DatabaseChangeRegistration
 import oracle.jdbc.dcn.DatabaseChangeListener
 import spock.lang.Specification
 
 import java.sql.Connection
+import java.sql.ResultSet
 import java.sql.SQLException
+import java.sql.Statement
 import java.util.concurrent.Executor
 import java.util.function.LongSupplier
 
@@ -185,6 +188,46 @@ class OracleChangeNotificationRegistrarSpec extends Specification {
         failure.message.contains('effective NTF_TIMEOUT [60] conflicts with listener setting [120]')
         1 * oracleConnection.unregisterDatabaseChangeNotification(registration)
         0 * connection.createStatement()
+    }
+
+    void "does not set a local renewal deadline when renewal is disabled"() {
+        given:
+        def operations = Mock(JdbcOperations)
+        def connection = Mock(Connection)
+        def oracleConnection = Mock(OracleConnection)
+        def registration = Mock(DatabaseChangeRegistration)
+        def statement = Mock(Statement)
+        def oracleStatement = Mock(OracleStatement)
+        def resultSet = Mock(ResultSet)
+        def method = Mock(ExecutableMethod)
+        method.getDescription(true) >> 'void changed(ChangeEvent<Book>)'
+        def requested = new Properties()
+        requested.setProperty(OracleConnection.NTF_TIMEOUT, '120')
+        requested.setProperty(OracleConnection.DCN_NOTIFY_ROWIDS, 'true')
+        def definition = new OracleChangeListenerDefinition(null, method, null, 'SELECT * FROM BOOK', null,
+                requested, new OracleChangeNotificationRenewalPolicy(120, OracleChangeNotification.RenewalMode.NONE, 60))
+        def taskTracker = new OracleChangeNotificationTaskTracker()
+        def nanoTimeSupplier = Mock(LongSupplier)
+        def registrar = new OracleChangeNotificationRegistrar('default', operations, Mock(BeanContext), Mock(Executor),
+                taskTracker, nanoTimeSupplier)
+        def subscription = new OracleChangeNotificationSubscription('default', definition, registrar,
+                Mock(Executor), Mock(TaskScheduler), taskTracker, { 0L } as LongSupplier)
+        connection.unwrap(OracleConnection) >> oracleConnection
+        oracleConnection.properties >> new Properties()
+        registration.regId >> 22L
+        registration.registrationOptions >> requested
+        oracleConnection.registerDatabaseChangeNotification(requested, _ as DatabaseChangeListener) >> registration
+        connection.createStatement() >> statement
+        statement.unwrap(OracleStatement) >> oracleStatement
+        statement.executeQuery('SELECT * FROM BOOK') >> resultSet
+        operations.execute(_ as ConnectionCallback) >> { ConnectionCallback<?> callback -> callback.call(connection) }
+
+        when:
+        OracleRegistrationLease lease = registrar.createRegistration(subscription)
+
+        then:
+        lease.logicalExpirationNanos() == 0
+        0 * nanoTimeSupplier.getAsLong()
     }
 
     void "does not acquire a connection for a registration already closed by the driver"() {
