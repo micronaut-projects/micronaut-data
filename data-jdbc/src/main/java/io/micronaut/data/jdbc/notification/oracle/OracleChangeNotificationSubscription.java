@@ -73,10 +73,7 @@ final class OracleChangeNotificationSubscription {
      */
     private final List<DatabaseChangeRegistration> registrations = new ArrayList<>(2);
 
-    /** Registrations that have been tracked but have not yet been activated as the current lease. */
-    private final IdentityHashMap<DatabaseChangeRegistration, Boolean> registrationsPendingActivation = new IdentityHashMap<>();
-
-    /** Failures received before a tracked registration has been activated as the current lease. */
+    /** Non-current registration failures, consumed on activation or discarded when untracked. */
     private final IdentityHashMap<DatabaseChangeRegistration, SQLException> pendingFailures = new IdentityHashMap<>();
 
     /** Current lifecycle state; transitions and related lease/timer updates are guarded by this instance. */
@@ -158,7 +155,6 @@ final class OracleChangeNotificationSubscription {
      */
     synchronized void track(DatabaseChangeRegistration registration) {
         registrations.add(registration);
-        registrationsPendingActivation.put(registration, Boolean.TRUE);
     }
 
     /**
@@ -170,7 +166,6 @@ final class OracleChangeNotificationSubscription {
      */
     synchronized boolean untrack(DatabaseChangeRegistration registration) {
         pendingFailures.remove(registration);
-        registrationsPendingActivation.remove(registration);
         for (int i = 0; i < registrations.size(); i++) {
             if (registrations.get(i) == registration) {
                 registrations.remove(i);
@@ -201,7 +196,7 @@ final class OracleChangeNotificationSubscription {
                 return;
             }
             if (!isCurrent(registration)) {
-                if (registrationsPendingActivation.containsKey(registration)) {
+                if (isTracked(registration)) {
                     pendingFailures.put(registration, failure);
                 }
                 return;
@@ -431,7 +426,6 @@ final class OracleChangeNotificationSubscription {
         long invalidationGenerationToDispatch = -1;
         synchronized (this) {
             pendingFailure = pendingFailures.remove(registrationLease.registration());
-            registrationsPendingActivation.remove(registrationLease.registration());
             if (state == State.CLOSED || taskTracker.isShutdownStarted()) {
                 return new ActivationResult(ActivationOutcome.STOPPED, registrationLease);
             }
