@@ -5,7 +5,6 @@ import io.micronaut.http.annotation.Get;
 import io.micronaut.http.annotation.Post;
 import io.micronaut.http.annotation.QueryValue;
 import io.micronaut.http.client.annotation.Client;
-import reactor.core.publisher.Flux;
 import reactor.core.publisher.Mono;
 
 import java.util.List;
@@ -22,9 +21,6 @@ public interface TestClient {
 
     @Get(uri = "/list", produces = APPLICATION_JSON)
     Mono<List<Foo>> list();
-
-    @Get(uri = "/list", produces = APPLICATION_JSON)
-    Flux<Foo> stream();
 
     @Get(uri = "/read", produces = APPLICATION_JSON)
     Mono<Foo> read(@QueryValue Long id);

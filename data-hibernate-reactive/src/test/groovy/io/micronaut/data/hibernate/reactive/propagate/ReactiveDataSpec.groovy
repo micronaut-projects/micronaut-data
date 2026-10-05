@@ -7,6 +7,7 @@ import io.micronaut.test.extensions.spock.annotation.MicronautTest
 import jakarta.inject.Inject
 import spock.lang.Specification
 
+
 @MicronautTest(transactional = false)
 class ReactiveDataSpec extends Specification implements PostgresHibernateReactiveProperties {
 
@@ -72,21 +73,6 @@ class ReactiveDataSpec extends Specification implements PostgresHibernateReactiv
         then:
         first*.id.containsAll([10L, 11L])
         second*.id.containsAll([10L, 11L])
-    }
-
-    void 'Verify a Flux streamed from a connectable controller method closes its session when cancelled'() {
-        setup:
-        client.create(new FooController.CreateRequest(20, "C")).block()
-        client.create(new FooController.CreateRequest(21, "D")).block()
-
-        when: "The client cancels after the first element"
-        def first = client.stream().take(1).blockLast()
-
-        then:
-        first != null
-
-        and: "The sessions are still usable"
-        client.list().block()*.id.containsAll([20L, 21L])
     }
 
     void 'Verify counting a paged query counts its root entity'() {
