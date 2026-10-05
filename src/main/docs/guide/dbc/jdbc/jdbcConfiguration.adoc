@@ -73,6 +73,49 @@ IMPORTANT: To use SQLite, add the dependency `io.micronaut.sql:micronaut-sql-sql
 
 IMPORTANT: The dialect setting in configuration does *not* replace the need to ensure the correct dialect is set at the repository. If the dialect is H2 in configuration, the repository should have `@JdbcRepository(dialect = Dialect.H2)` / `@R2dbcRepository(dialect = Dialect.H2)`. Because repositories are computed at compile time, the configuration value is not known at that time.
 
+=== Read-only connections and performance
+
+A repository method called outside of a transaction or a connection scope (ann:data.connection.annotation.Connectable[]) obtains a connection from the pool for that single operation. Since 5.3.0, such a connection is used as configured by the pool: Micronaut Data no longer switches it to read-only for read operations.
+
+Toggling the read-only flag is not free. Depending on the driver, `Connection.isReadOnly()` and `Connection.setReadOnly(boolean)` each result in a database round trip, and the flag must be restored before the connection is returned to the pool. With MySQL Connector/J's default settings, a simple query costs four round trips instead of one, which significantly reduces throughput when database latency dominates.
+
+The read-only flag is still applied when you ask for it explicitly, for example with `@Transactional(readOnly = true)`, `@ReadOnly`, `@Connectable(readOnly = true)` or `executeRead` on api:transaction.TransactionOperations[] / api:data.connection.ConnectionOperations[]. Running a group of reads in one transaction or connection scope is cheaper than letting each read obtain its own connection. A read-only transaction applies the flag once when it begins. Inside a read-only connection scope (`@Connectable(readOnly = true)` or `executeRead` on api:data.connection.ConnectionOperations[]), each repository call checks the connection's read-only state with `Connection.isReadOnly()`, which is one round trip per call with MySQL Connector/J's default settings; adding `useLocalSessionState=true` to the JDBC URL avoids it.
+
+To restore the previous behaviour, enable `read-only-connection-per-operation` for a datasource:
+
+[configuration]
+----
+datasources:
+  default:
+    read-only-connection-per-operation: true
+----
+
+The effect of the read-only flag depends on the driver:
+
+[cols="1,3"]
+|===
+|Database |Behaviour
+
+|MySQL / MariaDB
+|Sets the session read-only, so writes fail. By default the MySQL driver queries the server for `isReadOnly()` and sends `SET SESSION TRANSACTION READ ONLY/WRITE` on every change. Adding `useLocalSessionState=true` to the JDBC URL lets the driver track the session state locally and skip the redundant round trips.
+
+|PostgreSQL
+|With the driver's default `readOnlyMode=transaction`, the flag only takes effect in transactions, where writes fail. `readOnlyMode=always` also applies it to auto-commit connections.
+
+|Oracle
+|A hint to the driver; writes are not rejected.
+
+|SQL Server
+|Ignored by the driver; `isReadOnly()` always returns `false`.
+
+|H2
+|`setReadOnly` is ignored by the driver; `isReadOnly()` reflects only the database mode, for example `true` when the database is opened with `ACCESS_MODE_DATA=r`.
+|===
+
+Read-only connections are also used by some drivers and proxies (for example, the AWS Advanced JDBC Wrapper) and routing data sources to send queries to read replicas. Use explicit read-only transactions or `read-only-connection-per-operation` to keep that routing for non-transactional reads.
+
+This applies to Micronaut Data JDBC. Micronaut Data R2DBC does not set a read-only flag on its connections.
+
 === Tracing calls from Java to Oracle Database sessions
 
 Specify the configuration property `datasources.<datasource-name>.enable-oracle-client-info=true` on a per datasource basis to link database sessions with Java thread activity. By default, this will set:

@@ -917,7 +917,8 @@ public final class DefaultJdbcRepositoryOperations extends AbstractSqlRepository
         if (!jdbcConfiguration.isAllowConnectionPerOperation() && connectionOperations.findConnectionStatus().isEmpty()) {
             throw connectionNotFoundAndNewNotAllowed();
         }
-        return connectionOperations.execute(ConnectionDefinition.READ_ONLY.withAnnotationMetadata(annotationMetadata), status -> {
+        ConnectionDefinition definition = jdbcConfiguration.isReadOnlyConnectionPerOperation() ? ConnectionDefinition.READ_ONLY : ConnectionDefinition.DEFAULT;
+        return connectionOperations.execute(definition.withAnnotationMetadata(annotationMetadata), status -> {
             Connection connection = status.getConnection();
             applySchema(connection);
             return fn.apply(connection);
