@@ -353,7 +353,7 @@ final class OracleChangeNotificationDispatcher implements DatabaseChangeListener
      */
     private void dispatchQueryChanges(QueryChangeDescription @Nullable [] queries, long registrationId) {
         if (queries == null || queries.length == 0) {
-            dispatchInvalidation(registrationId);
+            dispatchInvalidation(registrationId, "event for DCN");
             return;
         }
         QueryChangeDescription deregisteredQuery = findDeregisteredQuery(queries);
@@ -362,7 +362,7 @@ final class OracleChangeNotificationDispatcher implements DatabaseChangeListener
             return;
         }
         if (requiresQueryInvalidation(queries)) {
-            dispatchInvalidation(registrationId);
+            dispatchInvalidation(registrationId, "event for DCN");
             return;
         }
         for (QueryChangeDescription query : queries) {
@@ -416,7 +416,7 @@ final class OracleChangeNotificationDispatcher implements DatabaseChangeListener
                                       boolean invalidateOnUnmatchedTable,
                                       long registrationId) {
         if (requiresInvalidation(tables, invalidateOnUnmatchedTable)) {
-            dispatchInvalidation(registrationId);
+            dispatchInvalidation(registrationId, "event for DCN");
             return;
         }
         dispatchRows(tables);
@@ -492,25 +492,14 @@ final class OracleChangeNotificationDispatcher implements DatabaseChangeListener
     }
 
     /**
-     * Invokes the listener once to indicate that the event cannot be represented by row changes.
+     * Dispatches one invalidation and logs why it was sent.
      *
-     * @param registrationId the registration that received the event
+     * @param registrationId the registration that received or recovered from the event
+     * @param reason the invalidation reason included in the trace message
      */
-    private void dispatchInvalidation(long registrationId) {
-        LOG.trace("Dispatching INVALIDATE event for DCN for datasource [{}], registration [{}], and listener method [{}]",
-            dataSourceName, registrationId, methodDescription);
-        dispatchListener(new DefaultChangeEvent<>(ChangeOperation.INVALIDATE, null, null), null);
-    }
-
-    /**
-     * Dispatches an invalidation after this registration has successfully replaced an unavailable
-     * registration. The subscription invokes this from its accepted recovery task.
-     *
-     * @param registrationId the replacement registration identifier
-     */
-    void dispatchRecoveryInvalidation(long registrationId) {
-        LOG.trace("Dispatching INVALIDATE after DCN registration recovery for datasource [{}], registration [{}], and listener method [{}]",
-            dataSourceName, registrationId, methodDescription);
+    void dispatchInvalidation(long registrationId, String reason) {
+        LOG.trace("Dispatching INVALIDATE {} for datasource [{}], registration [{}], and listener method [{}]",
+            reason, dataSourceName, registrationId, methodDescription);
         dispatchListener(new DefaultChangeEvent<>(ChangeOperation.INVALIDATE, null, null), null);
     }
 

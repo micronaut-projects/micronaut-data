@@ -135,7 +135,7 @@ final class OracleChangeNotificationRegistrar {
                 }
                 long registrationId = registration.getRegId();
                 return new OracleRegistrationLease(registration, logicalExpirationNanos, dispatcher::retire,
-                    () -> dispatcher.dispatchRecoveryInvalidation(registrationId));
+                    () -> dispatcher.dispatchInvalidation(registrationId, "after DCN registration recovery"));
             } catch (SQLException | RuntimeException e) {
                 dispatcher.retire(true);
                 subscription.untrack(registration);
