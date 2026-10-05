@@ -217,7 +217,7 @@ class OracleChangeNotificationSubscriptionSpec extends Specification {
         listenerEvents.empty
     }
 
-    void "does not activate an initial registration deregistered during association"() {
+    void "fails startup when the initial registration is deregistered during association"() {
         given:
         def original = Mock(DatabaseChangeRegistration)
         def scheduledTasks = []
@@ -236,7 +236,9 @@ class OracleChangeNotificationSubscriptionSpec extends Specification {
         targetSubscription.start()
 
         then:
-        noExceptionThrown()
+        def failure = thrown(IllegalStateException)
+        failure.message.contains('Initial DCN registration')
+        failure.message.contains('became unavailable before activation')
         scheduledTasks.empty
         0 * fixture.oracleConnection.unregisterDatabaseChangeNotification(original)
     }

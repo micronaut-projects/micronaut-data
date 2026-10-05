@@ -138,14 +138,19 @@ final class OracleChangeNotificationSubscription {
      * Creates the initial registration for this listener and activates its lease.
      *
      * <p>If the subscription has stopped or the registration is no longer tracked when activation
-     * is attempted, the candidate is discarded and cleaned up if still owned. An adopted lease may
-     * already require receiver recovery. Exceptions from registration creation or lease activation
-     * propagate to the manager so it can roll back registrations started earlier.</p>
+     * is attempted, the candidate is discarded and cleaned up if still owned. An unavailable
+     * initial registration fails startup. An adopted lease may already require receiver recovery.
+     * Exceptions propagate to the manager so it can roll back registrations started earlier.</p>
      *
      * @throws RuntimeException if registration creation or activation fails
      */
     void start() {
-        createAndActivateRegistration();
+        ActivationResult activation = createAndActivateRegistration();
+        if (activation.outcome() == ActivationOutcome.UNAVAILABLE) {
+            throw new IllegalStateException("Initial DCN registration [" + activation.lease().registration().getRegId()
+                + "] for datasource [" + dataSourceName + "] and listener method [" + methodDescription
+                + "] became unavailable before activation");
+        }
     }
 
     /**
