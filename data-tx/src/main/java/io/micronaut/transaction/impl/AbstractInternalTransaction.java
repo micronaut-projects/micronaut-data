@@ -134,6 +134,8 @@ public abstract class AbstractInternalTransaction<C> implements InternalTransact
         }
     }
 
+    // Sonar java:S1181 -- every synchronization must run even if one of them throws an error
+    @SuppressWarnings("java:S1181")
     @Override
     public void cleanupAfterCompletion() {
         if (connectionSynchronizations == null) {
