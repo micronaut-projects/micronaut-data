@@ -44,6 +44,11 @@ public class DataJdbcConfiguration implements Named, Toggleable {
      */
     public static final String PREFIX = "datasources";
 
+    /**
+     * The default value for {@link #isReadOnlyConnectionPerOperation()}.
+     */
+    public static final boolean DEFAULT_READ_ONLY_CONNECTION_PER_OPERATION = false;
+
     private SchemaGenerate schemaGenerate = SchemaGenerate.NONE;
     private boolean batchGenerate = false;
     private Dialect dialect = Dialect.ANSI;
@@ -60,6 +65,10 @@ public class DataJdbcConfiguration implements Named, Toggleable {
      * If true, {@link javax.sql.DataSource#getConnection()} will be used in try-resource block for the operation.
      */
     private boolean allowConnectionPerOperation = true;
+    /**
+     * If true, a connection opened for a single read operation is switched to read-only.
+     */
+    private boolean readOnlyConnectionPerOperation = DEFAULT_READ_ONLY_CONNECTION_PER_OPERATION;
     private boolean enabled = true;
 
     /**
@@ -177,6 +186,29 @@ public class DataJdbcConfiguration implements Named, Toggleable {
      */
     public void setAllowConnectionPerOperation(boolean allowConnectionPerOperation) {
         this.allowConnectionPerOperation = allowConnectionPerOperation;
+    }
+
+    /**
+     * Whether a connection opened for a single read operation (outside of a transaction or a connection scope)
+     * is switched to read-only with {@link java.sql.Connection#setReadOnly(boolean)} and restored afterwards.
+     * Disabled by default: some drivers (for example, MySQL Connector/J) send extra database round trips
+     * for reading and toggling the read-only flag, which can dominate the cost of a simple query.
+     *
+     * @return true if the read-only flag should be applied
+     * @since 5.3.0
+     */
+    public boolean isReadOnlyConnectionPerOperation() {
+        return readOnlyConnectionPerOperation;
+    }
+
+    /**
+     * Sets whether a connection opened for a single read operation is switched to read-only. Default value ({@value #DEFAULT_READ_ONLY_CONNECTION_PER_OPERATION}).
+     *
+     * @param readOnlyConnectionPerOperation The property
+     * @since 5.3.0
+     */
+    public void setReadOnlyConnectionPerOperation(boolean readOnlyConnectionPerOperation) {
+        this.readOnlyConnectionPerOperation = readOnlyConnectionPerOperation;
     }
 
     /**
