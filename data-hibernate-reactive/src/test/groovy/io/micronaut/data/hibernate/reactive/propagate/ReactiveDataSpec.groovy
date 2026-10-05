@@ -55,4 +55,18 @@ class ReactiveDataSpec extends Specification implements PostgresHibernateReactiv
         res.name == name
     }
 
+    void 'Verify a Flux streamed from a connectable controller method closes its session'() {
+        setup:
+        client.create(new FooController.CreateRequest(10, "A")).block()
+        client.create(new FooController.CreateRequest(11, "B")).block()
+
+        when:
+        def first = client.list().block()
+        def second = client.list().block()
+
+        then:
+        first*.id.containsAll([10L, 11L])
+        second*.id.containsAll([10L, 11L])
+    }
+
 }

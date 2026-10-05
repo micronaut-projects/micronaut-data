@@ -188,7 +188,7 @@ final class DefaultHibernateReactiveRepositoryOperations extends AbstractHiberna
 
     @Override
     public <T> Mono<T> findOne(Class<T> type, Object id) {
-        return operation(session -> helper.find(session, type, id));
+        return readOperation(session -> helper.find(session, type, id));
     }
 
     @Override
@@ -216,7 +216,7 @@ final class DefaultHibernateReactiveRepositoryOperations extends AbstractHiberna
 
     @Override
     public <T, R> Mono<R> findOne(PreparedQuery<T, R> preparedQuery) {
-        return operation(session -> {
+        return readOperation(session -> {
             // Until this issue https://github.com/hibernate/hibernate-reactive/issues/1551 is fixed
             // we should not limit maxResults or else we could start having bugs
             // FirstResultCollector<R> collector = new FirstResultCollector<>(!preparedQuery.isNative());
@@ -238,7 +238,7 @@ final class DefaultHibernateReactiveRepositoryOperations extends AbstractHiberna
 
     @Override
     public <T> Flux<T> findAll(PagedQuery<T> pagedQuery) {
-        return operationFlux(session -> findPaged(session, pagedQuery));
+        return readOperationFlux(session -> findPaged(session, pagedQuery));
     }
 
     @Override
@@ -253,14 +253,14 @@ final class DefaultHibernateReactiveRepositoryOperations extends AbstractHiberna
                     -1L
                 ));
         }
-        return operation(session -> findPaged(session, pagedQuery).collectList()
+        return readOperation(session -> findPaged(session, pagedQuery).collectList()
                 .flatMap(resultList -> countOf(session, pagedQuery.getRootEntity(), pagedQuery.getQueryLimit())
                         .map(total -> Page.of(resultList, pagedQuery.getPageable(), total))));
     }
 
     @Override
     public <T> Mono<Long> count(PagedQuery<T> pagedQuery) {
-        return operation(session -> countOf(session, Long.class, Limit.UNLIMITED));
+        return readOperation(session -> countOf(session, Long.class, Limit.UNLIMITED));
     }
 
     private <T> Flux<T> findPaged(Stage.Session session, PagedQuery<T> pagedQuery) {
@@ -277,7 +277,7 @@ final class DefaultHibernateReactiveRepositoryOperations extends AbstractHiberna
 
     @Override
     public <T, R> Flux<R> findAll(PreparedQuery<T, R> preparedQuery) {
-        return operationFlux(session -> {
+        return readOperationFlux(session -> {
             AnnotationMetadata am = preparedQuery.getAnnotationMetadata();
             am.intValue(io.micronaut.data.annotation.Fetch.class).ifPresent(fetch -> {
                 if (LOG.isDebugEnabled()) {
@@ -422,6 +422,18 @@ final class DefaultHibernateReactiveRepositoryOperations extends AbstractHiberna
 
     private <T> Flux<T> flushIfNecessaryFlux(Flux<T> flux, Stage.Session session, AnnotationMetadata annotationMetadata) {
         return flushIfNecessary(flux.collectList(), session, annotationMetadata).flatMapMany(Flux::fromIterable);
+    }
+
+    /**
+     * A read runs in the current transaction if there is one, otherwise in a session without a transaction:
+     * beginning and committing a transaction would add two database round trips to every query.
+     */
+    private <T> Mono<T> readOperation(Function<Stage.Session, Mono<T>> work) {
+        return withSession(work);
+    }
+
+    private <T> Flux<T> readOperationFlux(Function<Stage.Session, Flux<T>> work) {
+        return withSessionFlux(work);
     }
 
     private <T> Mono<T> operation(Function<Stage.Session, Mono<T>> work) {

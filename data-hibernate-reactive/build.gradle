@@ -17,6 +17,8 @@ dependencies {
     }
 
     implementation mnReactor.micronaut.reactor
+    // Provided at runtime by Hibernate Reactive
+    compileOnly "io.vertx:vertx-core:${mnSql.versions.vertx.get()}"
 
     testAnnotationProcessor mn.micronaut.inject.java
     testAnnotationProcessor projects.micronautDataProcessor

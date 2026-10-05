@@ -17,6 +17,8 @@ package io.micronaut.data.hibernate.reactive.operations;
 
 import io.micronaut.core.annotation.Internal;
 import io.micronaut.core.util.CollectionUtils;
+import io.vertx.core.Context;
+import io.vertx.core.Vertx;
 import org.hibernate.reactive.common.spi.Implementor;
 import org.hibernate.reactive.stage.Stage;
 import reactor.core.publisher.Flux;
@@ -25,6 +27,8 @@ import reactor.core.scheduler.Scheduler;
 import reactor.core.scheduler.Schedulers;
 
 import java.util.List;
+import java.util.Map;
+import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.CompletionStage;
 import java.util.function.Function;
 import java.util.function.Supplier;
@@ -40,6 +44,7 @@ final class ReactiveHibernateHelper {
 
     private final Stage.SessionFactory sessionFactory;
     private final Scheduler contextScheduler;
+    private final Map<Stage.Session, Context> sessionContexts = new ConcurrentHashMap<>();
 
     ReactiveHibernateHelper(Stage.SessionFactory sessionFactory) {
         this.sessionFactory = sessionFactory;
@@ -99,11 +104,31 @@ final class ReactiveHibernateHelper {
     }
 
     Mono<Stage.Session> openSession() {
-        return monoFromCompletionStage(sessionFactory::openSession).subscribeOn(contextScheduler);
+        return monoFromCompletionStage(sessionFactory::openSession)
+            .subscribeOn(contextScheduler)
+            .doOnNext(session -> {
+                // Completed on the Vert.x thread the session is bound to
+                Context context = Vertx.currentContext();
+                if (context != null) {
+                    sessionContexts.put(session, context);
+                }
+            });
     }
 
     Mono<Void> closeSession(Stage.Session session) {
-        return monoFromCompletionStage(session::close);
+        Context context = sessionContexts.remove(session);
+        if (context == null || context == Vertx.currentContext()) {
+            return monoFromCompletionStage(session::close);
+        }
+        // Hibernate Reactive rejects using a session from another thread, which happens
+        // when a streamed result is completed or cancelled by its subscriber
+        return Mono.create(sink -> context.runOnContext(ignore -> session.close().whenComplete((result, throwable) -> {
+            if (throwable == null) {
+                sink.success();
+            } else {
+                sink.error(throwable);
+            }
+        })));
     }
 
     <T> Flux<T> withTransactionFlux(Stage.Session session, Function<Stage.Transaction, Flux<T>> work) {
