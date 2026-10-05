@@ -30,7 +30,18 @@ import java.util.Optional;
  *
  * @author Denis Stepanov
  * @since 4.0.0
+ * @deprecated This class is not used by any Micronaut Data transaction manager: it is neither a configuration
+ * bean nor passed to the transaction managers, so none of its settings have any effect. In particular,
+ * {@link #setNestedTransactionAllowed(boolean) nestedTransactionAllowed},
+ * {@link #setValidateExistingTransaction(boolean) validateExistingTransaction} and
+ * {@link #setGlobalRollbackOnParticipationFailure(boolean) globalRollbackOnParticipationFailure} are not implemented:
+ * whether {@code NESTED} propagation is supported depends only on the transaction manager (the JDBC and Hibernate
+ * transaction managers use savepoints), the isolation level and read-only setting of a joined transaction are not
+ * validated, and a participating transaction that is rolled back marks the existing transaction rollback-only.
+ * Read-only enforcement is configured on
+ * {@code DataSourceTransactionManager#setEnforceReadOnly(boolean)}. This class will be removed in a future release.
  */
+@Deprecated(forRemoval = true, since = "5.3")
 public class TransactionManagerConfiguration {
 
     @Nullable
@@ -84,14 +95,18 @@ public class TransactionManagerConfiguration {
      * concrete transaction manager subclass.
      *
      * @param nestedTransactionAllowed Whether a nested transaction is allowed
+     * @deprecated Has no effect: no transaction manager reads this setting. Whether {@code NESTED} propagation is supported depends only on the transaction manager.
      */
+    @Deprecated(forRemoval = true, since = "5.3")
     public final void setNestedTransactionAllowed(boolean nestedTransactionAllowed) {
         this.nestedTransactionAllowed = nestedTransactionAllowed;
     }
 
     /**
      * @return Return whether nested transactions are allowed.
+     * @deprecated Has no effect: no transaction manager reads this setting. Whether {@code NESTED} propagation is supported depends only on the transaction manager.
      */
+    @Deprecated(forRemoval = true, since = "5.3")
     public final boolean isNestedTransactionAllowed() {
         return this.nestedTransactionAllowed;
     }
@@ -111,7 +126,9 @@ public class TransactionManagerConfiguration {
      *
      * @param validateExistingTransaction Whether to validate an existing transaction
      * @since 2.5.1
+     * @deprecated Has no effect: no transaction manager reads this setting and the isolation level and read-only setting of a joined transaction are not validated.
      */
+    @Deprecated(forRemoval = true, since = "5.3")
     public final void setValidateExistingTransaction(boolean validateExistingTransaction) {
         this.validateExistingTransaction = validateExistingTransaction;
     }
@@ -122,7 +139,9 @@ public class TransactionManagerConfiguration {
      *
      * @return Whether to validate existing transactions
      * @since 2.5.1
+     * @deprecated Has no effect: no transaction manager reads this setting and the isolation level and read-only setting of a joined transaction are not validated.
      */
+    @Deprecated(forRemoval = true, since = "5.3")
     public final boolean isValidateExistingTransaction() {
         return this.validateExistingTransaction;
     }
@@ -144,8 +163,8 @@ public class TransactionManagerConfiguration {
      * neither is it for a sequence of JDBC insert/update/delete operations.
      * <p><b>Note:</b>This flag only applies to an explicit rollback attempt for a
      * subtransaction, typically caused by an exception thrown by a data access operation
-     * (where TransactionInterceptor will trigger a {@code PlatformTransactionManager.rollback()}
-     * call according to a rollback rule). If the flag is off, the caller can handle the exception
+     * (where the {@code @Transactional} interceptor triggers a rollback according to the
+     * transaction's rollback rule). If the flag is off, the caller can handle the exception
      * and decide on a rollback, independent of the rollback rules of the subtransaction.
      * This flag does, however, <i>not</i> apply to explicit {@code setRollbackOnly}
      * calls on a {@code TransactionStatus}, which will always cause an eventual
@@ -155,11 +174,13 @@ public class TransactionManagerConfiguration {
      * back to a savepoint taken at the beginning of the subtransaction.
      * propagation NESTED provides exactly those semantics; however, it will
      * only work when nested transaction support is available. This is the case
-     * with DataSourceTransactionManager, but not with JtaTransactionManager.
+     * with the JDBC and Hibernate transaction managers.
      *
      * @param globalRollbackOnParticipationFailure Whether to globally mark transaction as rollback only
      * @see #setNestedTransactionAllowed
+     * @deprecated Has no effect: no transaction manager reads this setting and a participating transaction that is rolled back marks the existing transaction rollback-only.
      */
+    @Deprecated(forRemoval = true, since = "5.3")
     public final void setGlobalRollbackOnParticipationFailure(boolean globalRollbackOnParticipationFailure) {
         this.globalRollbackOnParticipationFailure = globalRollbackOnParticipationFailure;
     }
@@ -167,7 +188,9 @@ public class TransactionManagerConfiguration {
     /**
      * @return Return whether to globally mark an existing transaction as rollback-only
      * after a participating transaction failed.
+     * @deprecated Has no effect: no transaction manager reads this setting and a participating transaction that is rolled back marks the existing transaction rollback-only.
      */
+    @Deprecated(forRemoval = true, since = "5.3")
     public final boolean isGlobalRollbackOnParticipationFailure() {
         return this.globalRollbackOnParticipationFailure;
     }
@@ -238,7 +261,7 @@ public class TransactionManagerConfiguration {
      * through an explicit statement on the transactional connection:
      * "SET TRANSACTION READ ONLY" as understood by Oracle, MySQL and Postgres.
      * <p>This mode of read-only handling goes beyond the {@link Connection#setReadOnly}
-     * hint that Spring applies by default. In contrast to that standard JDBC hint,
+     * hint that Micronaut Data applies to read-only transactions by default. In contrast to that standard JDBC hint,
      * "SET TRANSACTION READ ONLY" enforces an isolation-level-like connection mode
      * where data manipulation statements are strictly disallowed. Also, on Oracle,
      * this read-only mode provides read consistency for the entire transaction.

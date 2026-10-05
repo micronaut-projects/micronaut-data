@@ -24,7 +24,14 @@ import static java.lang.annotation.ElementType.METHOD;
 import static java.lang.annotation.RetentionPolicy.RUNTIME;
 
 /**
- * Subset of the JPA join column annotation.
+ * Customizes a foreign key column of an association: the column that stores the ID of the associated entity for a
+ * {@code MANY_TO_ONE} or {@code ONE_TO_ONE} association, or one of the columns of a {@link JoinTable}.
+ *
+ * <p>{@link #name()} is the name of the foreign key column and {@link #referencedColumnName()} the column of the
+ * referenced table it points to (the primary key by default). The annotation is repeatable, so a foreign key to an
+ * entity with a composite ID can declare one column per ID component.</p>
+ *
+ * <p>The JPA annotation {@code jakarta.persistence.JoinColumn} can be used instead and is interpreted the same way.</p>
  *
  * @author Denis Stepanov
  * @since 2.4.0

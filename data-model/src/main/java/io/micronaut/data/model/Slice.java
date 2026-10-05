@@ -28,10 +28,11 @@ import java.util.List;
 import java.util.function.Function;
 
 /**
- * Inspired by the Spring Data's {@code Slice} and GORM's {@code PagedResultList}, this models a type that supports
- * pagination operations.
+ * A portion of query results: the records selected by a particular {@link Pageable} (page number, page size and
+ * sort order). Unlike a {@link Page}, a slice does not know the total number of matching records, so retrieving it
+ * does not require a count query.
  *
- * <p>A slice is a result list associated with a particular {@link Pageable}</p>
+ * <p>Similar to Spring Data's {@code Slice} and GORM's {@code PagedResultList}.</p>
  *
  * @param <T> The generic type
  * @author graemerocher

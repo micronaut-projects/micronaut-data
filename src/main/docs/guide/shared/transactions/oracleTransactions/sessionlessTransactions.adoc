@@ -18,7 +18,7 @@ For `SUSPEND` and `REQUIRES_SUSPENDED`, the underlying JDBC connection must unwr
 
 The following service starts a sessionless transaction, suspends it, and later resumes it:
 
-snippet::example.BookingService[project="doc-examples/jdbc-sessionless-transaction-booking", source="main", indent="0"]
+snippet::example.BookingService[project-base="doc-examples/jdbc-sessionless-transaction-booking", source="main", indent="0"]
 
 For a method annotated with `@OracleTransactional(sessionless = SUSPEND)`, the standard JDBC transaction manager and
 Oracle sessionless transaction handler:
@@ -50,7 +50,7 @@ Inject api:transaction.jdbc.oracle.OracleSessionlessTransactionPropagationOperat
 scope. This is useful for tests, messaging, scheduled work, or any transport that needs to export and import the encoded
 transaction id itself.
 
-snippet::example.BookingServiceTest[project="doc-examples/jdbc-sessionless-transaction-booking", source="test", tags="propagation", indent="0"]
+snippet::example.BookingServiceTest[project-base="doc-examples/jdbc-sessionless-transaction-booking", source="test", tags="propagation", indent="0"]
 
 The first `withPropagation` call creates an empty propagation state. After the `SUSPEND` method returns,
 `currentTransactionId()` exposes the encoded transaction id from that state. The second `withPropagation(transactionId, ...)`

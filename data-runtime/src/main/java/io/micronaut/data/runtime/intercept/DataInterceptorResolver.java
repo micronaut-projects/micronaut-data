@@ -27,6 +27,7 @@ import io.micronaut.data.annotation.ConvertException;
 import io.micronaut.core.type.Argument;
 import io.micronaut.data.annotation.Repository;
 import io.micronaut.data.annotation.RepositoryConfiguration;
+import io.micronaut.data.annotation.TypeRole;
 import io.micronaut.data.exceptions.DataAccessException;
 import io.micronaut.data.exceptions.ExceptionConverter;
 import io.micronaut.data.intercept.DataInterceptor;
@@ -85,7 +86,7 @@ public final class DataInterceptorResolver {
         // Don't use "computeIfAbsent" to avoid "java.lang.IllegalStateException: Recursive update"
         DataInterceptor<? super Object, ? super Object> dataInterceptor = interceptors.get(theKey);
         if (dataInterceptor == null) {
-            dataInterceptor = findDataInterceptor(context, injectionPoint, tenantDataSourceName);
+            dataInterceptor = withEntityNullCheck(context, findDataInterceptor(context, injectionPoint, tenantDataSourceName));
             interceptors.put(theKey, dataInterceptor);
         }
         return dataInterceptor;
@@ -143,6 +144,56 @@ public final class DataInterceptorResolver {
             throw new IllegalStateException("Micronaut Data Interceptor [" + interceptorName + "] is not on the classpath but required by the method: " + context.getExecutableMethod());
         }
         throw new IllegalStateException("Micronaut Data method is missing compilation time query information. Ensure that the Micronaut Data annotation processors are declared in your build and try again with a clean re-build.");
+    }
+
+    /**
+     * Decorates the interceptor with a check that rejects a {@code null} entity or entities argument
+     * (a parameter in the {@link TypeRole#ENTITY} or {@link TypeRole#ENTITIES} role that is not declared nullable)
+     * with an {@link IllegalArgumentException}, before any interceptor logic runs.
+     *
+     * @param context     The context
+     * @param interceptor The interceptor
+     * @return The decorated interceptor, or the original one if the method has no such parameter
+     */
+    private DataInterceptor<Object, Object> withEntityNullCheck(MethodInvocationContext<Object, Object> context,
+                                                                DataInterceptor<Object, Object> interceptor) {
+        Argument<?>[] arguments = context.getArguments();
+        int entityIndex = findNonNullableParameterInRole(context, arguments, TypeRole.ENTITY);
+        int entitiesIndex = findNonNullableParameterInRole(context, arguments, TypeRole.ENTITIES);
+        if (entityIndex == -1 && entitiesIndex == -1) {
+            return interceptor;
+        }
+        String methodName = context.getMethodName();
+        String entityMessage = entityIndex == -1 ? null
+            : "Entity argument [" + arguments[entityIndex].getName() + "] of repository method [" + methodName + "] cannot be null";
+        String entitiesMessage = entitiesIndex == -1 ? null
+            : "Entities argument [" + arguments[entitiesIndex].getName() + "] of repository method [" + methodName + "] cannot be null";
+        return (methodKey, ctx) -> {
+            Object[] values = ctx.getParameterValues();
+            if (entityIndex != -1 && values[entityIndex] == null) {
+                throw new IllegalArgumentException(entityMessage);
+            }
+            if (entitiesIndex != -1 && values[entitiesIndex] == null) {
+                throw new IllegalArgumentException(entitiesMessage);
+            }
+            return interceptor.intercept(methodKey, ctx);
+        };
+    }
+
+    private static int findNonNullableParameterInRole(MethodInvocationContext<Object, Object> context,
+                                                      Argument<?>[] arguments,
+                                                      String role) {
+        String name = context.stringValue(DataMethod.NAME, role).orElse(null);
+        if (name == null) {
+            return -1;
+        }
+        for (int i = 0; i < arguments.length; i++) {
+            Argument<?> argument = arguments[i];
+            if (argument.getName().equals(name)) {
+                return argument.isNullable() ? -1 : i;
+            }
+        }
+        return -1;
     }
 
     @NonNull

@@ -1,10 +1,10 @@
-To find an entity or multiple entities you can use one of the following methods from api:data.jpa.repository.JpaSpecificationExecutor[] interface:
+To find an entity or multiple entities you can use one of the following methods from api:data.repository.jpa.JpaSpecificationExecutor[] interface:
 
 snippet::example.PersonRepository[project-base="doc-examples/jdbc-example",source="main" tags="find",indent="0"]
 
 As you can see, there are two variations of `findOne`/`findAll` methods.
 
-First method is expecting api:data.repository.criteria.PredicateSpecification[] which is a simple specification interface that can be implemented to return a predicate:
+First method is expecting api:data.repository.jpa.criteria.PredicateSpecification[] which is a simple specification interface that can be implemented to return a predicate:
 
 [source,java]
 ----
@@ -65,7 +65,7 @@ snippet::example.PersonRepositorySpec[project-base="doc-examples/jdbc-example",s
 NOTE: The examples use compile-known values, and in this case, it would be better to create custom repository methods which would come with compile-time generates queries and eliminate runtime overhead.
 It's recommended to use criteria only for dynamic queries where the query structure is not known at the build-time.
 
-Pagination with JOINS cannot be properly implemented with limiting the results for tabular SQL results, because of that Micronaut Data will execute two queries:
+With Micronaut Data JDBC / R2DBC, pagination with JOINs cannot be properly implemented by limiting the results for tabular SQL results, because of that Micronaut Data will execute two queries:
 
 - 1. Fetching a page of entity IDs
 - 2. Fetching a complete entity with JOINed associations

@@ -104,3 +104,10 @@ class BookRepositorySpec:
         book = self.bookRepository.findOne("The Shining")
 
         assert book.title == "The Shining"
+
+    @Test
+    def testUpdateReturning(self):
+        book = self.bookRepository.save(Book("The Shining", 400))
+        updated = self.bookRepository.incrementPagesAfter(book.id)
+
+        assert updated.pages == 401

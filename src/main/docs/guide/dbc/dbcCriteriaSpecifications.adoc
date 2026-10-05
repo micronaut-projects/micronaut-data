@@ -1,8 +1,14 @@
+Micronaut Data JDBC / R2DBC supports building queries programmatically at runtime using the Jakarta Persistence Criteria API. The repository interfaces, the specification types and how to use them for querying, updating and deleting are the same for all Micronaut Data modules and are described in the <<criteriaSpecifications, Repositories with Jakarta Criteria API>> section.
+
 Micronaut Criteria API for JDBC / R2DBC currently implements only a subset of the API.
 
 To use Jakarta Criteria API you need to add an optional dependency:
 
 dependency:jakarta.persistence:jakarta.persistence-api[]
+
+Then extend api:data.repository.jpa.JpaSpecificationExecutor[] (or one of its <<otherRepositoryVariations, variations>>) in a ann:data.jdbc.annotation.JdbcRepository[] or ann:data.r2dbc.annotation.R2dbcRepository[] repository:
+
+snippet::example.PersonRepository[project-base="doc-examples/jdbc-example",source="main" tags="repository",indent="0"]
 
 Currently, not supported JPA Criteria API features:
 

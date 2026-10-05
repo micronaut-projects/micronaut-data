@@ -21,7 +21,18 @@ import io.micronaut.data.repository.GenericRepository;
 import java.util.concurrent.CompletableFuture;
 
 /**
- * Asynchronous variation of {@link io.micronaut.data.repository.CrudRepository}.
+ * Asynchronous variation of {@link io.micronaut.data.repository.CrudRepository}: every method returns a
+ * {@link CompletableFuture} instead of blocking the calling thread.
+ * <p>
+ * The operations and the exceptions they produce are the same as those described in
+ * {@link io.micronaut.data.repository.CrudRepository}, but a datastore failure is reported by completing the returned
+ * future exceptionally rather than by throwing. {@link CompletableFuture#get()} wraps the failure in a
+ * {@link java.util.concurrent.ExecutionException} and {@link CompletableFuture#join()} in a
+ * {@link java.util.concurrent.CompletionException}; use {@code getCause()} to obtain, for example, the
+ * {@link io.micronaut.data.exceptions.OptimisticLockException}. Unlike the blocking variant,
+ * {@link #findById(Object)} completes with {@link io.micronaut.data.exceptions.EmptyResultException} when no entity
+ * exists for the ID. A {@code null} ID or entity argument is reported the same way, with an
+ * {@link IllegalArgumentException}.
  *
  * @param <E> The entity type
  * @param <ID> The ID type

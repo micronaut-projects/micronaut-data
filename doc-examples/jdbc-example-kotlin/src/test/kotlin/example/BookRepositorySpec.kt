@@ -27,14 +27,14 @@ class BookRepositorySpec {
     @Inject
     lateinit var abstractBookRepository: AbstractBookRepository
 
-    // tag::metadata[]
-    @Inject
-    lateinit var beanContext: BeanContext
-
     @BeforeEach
     fun cleanup() {
         bookRepository.deleteAll()
     }
+
+    // tag::metadata[]
+    @Inject
+    lateinit var beanContext: BeanContext
 
     @Test
     fun testAnnotationMetadata() {

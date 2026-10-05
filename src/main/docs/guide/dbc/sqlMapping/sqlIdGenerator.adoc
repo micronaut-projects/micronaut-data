@@ -8,11 +8,25 @@ Automatically assigned UUIDs are also supported by adding a property annotated w
 
 If you want to sometimes provide the ID yourself for UUID identifiers and otherwise let Micronaut Data generate it, use:
 
-[source,java]
+[source.multi-language-sample,java]
 ----
 @Id
 @AutoPopulated(skipIfPresent = true)
 UUID id;
+----
+
+[source.multi-language-sample,kotlin]
+----
+@Id
+@AutoPopulated(skipIfPresent = true)
+var id: UUID? = null
+----
+
+[source.multi-language-sample,groovy]
+----
+@Id
+@AutoPopulated(skipIfPresent = true)
+UUID id
 ----
 
 With `skipIfPresent = true`, if `id` already has a non-null value at `save()` time, it will not be overwritten by the UUID generator. If it is null, a UUID will be generated at PrePersist.

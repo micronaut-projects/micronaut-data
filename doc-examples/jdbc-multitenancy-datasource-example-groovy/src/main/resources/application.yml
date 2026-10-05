@@ -1,0 +1,25 @@
+micronaut:
+  data:
+    multi-tenancy:
+      mode: DATASOURCE
+  multitenancy:
+    tenantresolver:
+      httpheader:
+        enabled: true
+
+datasources:
+  foo:
+    url: jdbc:h2:mem:dbTenantFoo
+    driverClassName: org.h2.Driver
+    username: sa
+    password: ''
+    schema-generate: CREATE_DROP
+    dialect: H2
+  bar:
+    url: jdbc:h2:mem:dbTenantBar
+    driverClassName: org.h2.Driver
+    username: sa
+    password: ''
+    schema-generate: CREATE_DROP
+    dialect: H2
+

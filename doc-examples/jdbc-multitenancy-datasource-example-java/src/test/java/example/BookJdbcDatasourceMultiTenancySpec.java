@@ -89,6 +89,8 @@ class BookJdbcDatasourceMultiTenancySpec {
     }
 }
 
+// tag::clients[]
+
 @Header(name = "tenantId", value = "foo")
 @Client("/books")
 interface FooBookClient extends BookClient {
@@ -98,3 +100,5 @@ interface FooBookClient extends BookClient {
 @Client("/books")
 interface BarBookClient extends BookClient {
 }
+
+// end::clients[]

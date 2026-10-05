@@ -42,10 +42,29 @@ This example uses Maven's `-J` prefix to forward the `-D` property to the compil
 
 The target version can also be set on an individual repository:
 
-[source,java]
+[source.multi-language-sample,java]
 ----
 import io.micronaut.data.jdbc.annotation.JdbcRepository;
 import io.micronaut.data.model.query.builder.sql.Dialect;
+
+@JdbcRepository(dialect = Dialect.ORACLE, version = "23.1")
+interface ProductRepository {
+}
+----
+
+[source.multi-language-sample,kotlin]
+----
+import io.micronaut.data.jdbc.annotation.JdbcRepository
+import io.micronaut.data.model.query.builder.sql.Dialect
+
+@JdbcRepository(dialect = Dialect.ORACLE, version = "23.1")
+interface ProductRepository
+----
+
+[source.multi-language-sample,groovy]
+----
+import io.micronaut.data.jdbc.annotation.JdbcRepository
+import io.micronaut.data.model.query.builder.sql.Dialect
 
 @JdbcRepository(dialect = Dialect.ORACLE, version = "23.1")
 interface ProductRepository {
