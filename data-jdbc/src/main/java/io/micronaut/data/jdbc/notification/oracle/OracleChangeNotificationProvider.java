@@ -17,6 +17,8 @@ package io.micronaut.data.jdbc.notification.oracle;
 
 import io.micronaut.context.BeanContext;
 import io.micronaut.context.annotation.Requires;
+import io.micronaut.context.event.ApplicationEventListener;
+import io.micronaut.context.event.ShutdownEvent;
 import io.micronaut.core.annotation.Order;
 import io.micronaut.core.order.Ordered;
 import io.micronaut.data.jdbc.notification.ChangeListenerMethod;
@@ -29,6 +31,7 @@ import jakarta.annotation.PreDestroy;
 import jakarta.inject.Named;
 import jakarta.inject.Singleton;
 import oracle.jdbc.OracleConnection;
+import org.jspecify.annotations.Nullable;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -52,20 +55,23 @@ import java.util.concurrent.Executor;
  * methods once per datasource; later registration calls for that datasource are rejected.</p>
  *
  * <p>Each subscription manager owns the physical Oracle registrations and their renewal lifecycle.
- * This provider coordinates graceful shutdown across all datasource managers, including waiting
- * for already accepted notification tasks to complete. {@link PreDestroy} provides fallback
- * cleanup when graceful shutdown is not used.</p>
+ * A {@link ShutdownEvent} starts cleanup before datasources are destroyed. This provider also
+ * coordinates graceful shutdown across all datasource managers, including waiting for already
+ * running notification tasks to complete. {@link PreDestroy} provides fallback cleanup if the
+ * provider is destroyed without a context shutdown event.</p>
  */
 @Singleton
 @Requires(classes = OracleConnection.class)
 @Order(Ordered.HIGHEST_PRECEDENCE)
-final class OracleChangeNotificationProvider implements ChangeNotificationProvider, GracefulShutdownCapable {
+final class OracleChangeNotificationProvider implements ChangeNotificationProvider, GracefulShutdownCapable,
+    ApplicationEventListener<ShutdownEvent> {
     private static final Logger LOG = LoggerFactory.getLogger(OracleChangeNotificationProvider.class);
 
     private final BeanContext beanContext;
     private final Executor blockingExecutor;
     private final TaskScheduler taskScheduler;
     private final Map<String, OracleChangeNotificationSubscriptionManager> subscriptionManagers = new ConcurrentHashMap<>();
+    private @Nullable CompletableFuture<Void> shutdownStage;
 
     OracleChangeNotificationProvider(BeanContext beanContext,
                                      @Named(TaskExecutors.BLOCKING) Executor blockingExecutor,
@@ -95,9 +101,11 @@ final class OracleChangeNotificationProvider implements ChangeNotificationProvid
      * @param listenerMethods the listener methods discovered for that datasource
      */
     @Override
-    public void register(String dataSourceName, JdbcRepositoryOperations operations, List<ChangeListenerMethod> listenerMethods) {
-        LOG.trace("Starting registration of [{}] change listener methods for datasource [{}]",
-            listenerMethods.size(), dataSourceName);
+    public synchronized void register(String dataSourceName, JdbcRepositoryOperations operations, List<ChangeListenerMethod> listenerMethods) {
+        if (shutdownStage != null) {
+            throw new IllegalStateException("Cannot register DCN subscriptions for datasource [" + dataSourceName
+                + "] after provider shutdown has started");
+        }
         OracleChangeListenerDefinitionFactory definitionFactory = new OracleChangeListenerDefinitionFactory(operations);
         List<OracleChangeListenerDefinition> listenerDefinitions = listenerMethods.stream()
             .map(definitionFactory::create)
@@ -108,6 +116,8 @@ final class OracleChangeNotificationProvider implements ChangeNotificationProvid
             throw new IllegalStateException("DCN subscriptions for datasource [" + dataSourceName
                 + "] have already been discovered; additional registrations are not supported");
         }
+        LOG.trace("Starting registration of [{}] change listener methods for datasource [{}]",
+            listenerMethods.size(), dataSourceName);
         subscriptionManager.start();
     }
 
@@ -118,20 +128,42 @@ final class OracleChangeNotificationProvider implements ChangeNotificationProvid
      */
     @Override
     public CompletionStage<?> shutdownGracefully() {
-        LOG.trace("Stopping DCN subscription managers during graceful shutdown");
-        return CompletableFuture.allOf(subscriptionManagers.values().stream()
-            .map(OracleChangeNotificationSubscriptionManager::stop)
-            .map(CompletionStage::toCompletableFuture)
-            .toArray(CompletableFuture[]::new));
+        return stopManagers();
     }
 
     /**
-     * Starts best-effort registration cleanup when the context is destroyed outside graceful shutdown.
+     * Starts registration cleanup while datasource beans are still available.
+     *
+     * @param event the context shutdown event
+     */
+    @Override
+    public void onApplicationEvent(ShutdownEvent event) {
+        stopManagers();
+    }
+
+    /**
+     * Stops each datasource manager once and returns the same stage to every shutdown caller.
+     * Synchronization also prevents a new manager from being added after shutdown starts.
+     */
+    private synchronized CompletionStage<?> stopManagers() {
+        CompletableFuture<Void> completion = shutdownStage;
+        if (completion == null) {
+            LOG.trace("Stopping DCN subscription managers");
+            completion = CompletableFuture.allOf(subscriptionManagers.values().stream()
+                .map(OracleChangeNotificationSubscriptionManager::stop)
+                .map(CompletionStage::toCompletableFuture)
+                .toArray(CompletableFuture[]::new));
+            shutdownStage = completion;
+        }
+        return completion;
+    }
+
+    /**
+     * Starts best-effort registration cleanup if this bean is destroyed without a context shutdown event.
      */
     @PreDestroy
     void close() {
-        LOG.trace("Stopping DCN subscription managers during context destruction");
-        subscriptionManagers.values().forEach(OracleChangeNotificationSubscriptionManager::stop);
+        stopManagers();
     }
 
     /**

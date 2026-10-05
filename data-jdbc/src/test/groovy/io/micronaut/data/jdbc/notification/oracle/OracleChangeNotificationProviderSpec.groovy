@@ -17,6 +17,7 @@ package io.micronaut.data.jdbc.notification.oracle
 
 import io.micronaut.context.ApplicationContext
 import io.micronaut.context.BeanContext
+import io.micronaut.context.event.ShutdownEvent
 import io.micronaut.data.jdbc.operations.JdbcRepositoryOperations
 import io.micronaut.inject.qualifiers.Qualifiers
 import io.micronaut.scheduling.TaskExecutors
@@ -99,6 +100,54 @@ class OracleChangeNotificationProviderSpec extends Specification {
 
         cleanup:
         context?.close()
+    }
+
+    void "stops subscriptions on the context shutdown event"() {
+        given:
+        def context = ApplicationContext.run()
+        def provider = context.getBean(OracleChangeNotificationProvider)
+        def operations = Mock(JdbcRepositoryOperations)
+        provider.register('inventory', operations, [])
+        assert provider.reportActiveTasks().isEmpty()
+
+        when:
+        context.publishEvent(new ShutdownEvent(context))
+
+        then:
+        provider.reportActiveTasks().orElseThrow() == 0
+        0 * operations._
+
+        cleanup:
+        context?.close()
+    }
+
+    void "reuses the same completion stage for repeated shutdown calls"() {
+        given:
+        def provider = provider()
+        provider.register('inventory', Mock(JdbcRepositoryOperations), [])
+
+        when:
+        provider.onApplicationEvent(new ShutdownEvent(Mock(BeanContext)))
+        def first = provider.shutdownGracefully()
+        provider.close()
+        def second = provider.shutdownGracefully()
+
+        then:
+        first.is(second)
+        provider.reportActiveTasks().orElseThrow() == 0
+    }
+
+    void "rejects registration after shutdown begins"() {
+        given:
+        def provider = provider()
+        provider.shutdownGracefully()
+
+        when:
+        provider.register('inventory', Mock(JdbcRepositoryOperations), [])
+
+        then:
+        def exception = thrown(IllegalStateException)
+        exception.message.contains('after provider shutdown has started')
     }
 
     private OracleChangeNotificationProvider provider() {
