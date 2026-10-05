@@ -38,7 +38,10 @@ import java.sql.ResultSet
 import java.sql.SQLException
 import java.sql.Statement
 import java.time.Duration
+import java.util.concurrent.ConcurrentLinkedQueue
+import java.util.concurrent.CountDownLatch
 import java.util.concurrent.Executor
+import java.util.concurrent.Executors
 import java.util.concurrent.RejectedExecutionException
 import java.util.concurrent.ScheduledFuture
 import java.util.concurrent.TimeUnit
@@ -501,6 +504,68 @@ class OracleChangeNotificationSubscriptionSpec extends Specification {
         taskTracker.shutdownGracefully().toCompletableFuture().isDone()
     }
 
+    void "preserves a new invalidation request raised while recovery invalidation is running"() {
+        given:
+        def original = Mock(DatabaseChangeRegistration)
+        def replacement = Mock(DatabaseChangeRegistration)
+        def recovered = Mock(DatabaseChangeRegistration)
+        def scheduledTasks = []
+        def scheduledDelays = []
+        def clock = { 0L } as LongSupplier
+        def fixture = registrarFixture([original, replacement, recovered], clock, [])
+        def queuedRecovery = new ConcurrentLinkedQueue<Runnable>()
+        Executor executor = { Runnable command -> queuedRecovery.add(command) } as Executor
+        def invalidationStarted = new CountDownLatch(1)
+        def releaseInvalidation = new CountDownLatch(1)
+        def invalidations = new AtomicInteger()
+        def listenerEvents = []
+        def subscription = subscription(fixture.registrar, scheduler(scheduledTasks, scheduledDelays),
+            new OracleChangeNotificationTaskTracker(), clock,
+            new OracleChangeNotificationRenewalPolicy(
+                10, OracleChangeNotification.RenewalMode.OVERLAPPING, 2), executor,
+            { Object event ->
+                if (event.operation() == ChangeOperation.INVALIDATE) {
+                    listenerEvents << event.operation()
+                    if (invalidations.incrementAndGet() == 1) {
+                        invalidationStarted.countDown()
+                        if (!releaseInvalidation.await(5, TimeUnit.SECONDS)) {
+                            throw new AssertionError("Timed out waiting to release the recovery invalidation")
+                        }
+                    }
+                }
+            })
+        def recoveryWorker = Executors.newSingleThreadExecutor()
+
+        when:
+        subscription.start()
+        fixture.failureListeners[0].onFailure(new SQLException("Initial receiver failure"))
+        def firstRecovery = recoveryWorker.submit({ queuedRecovery.remove().run() } as Runnable)
+        boolean firstInvalidationStarted = invalidationStarted.await(5, TimeUnit.SECONDS)
+        fixture.failureListeners[1].onFailure(new SQLException("Receiver failed during invalidation"))
+        releaseInvalidation.countDown()
+        firstRecovery.get(5, TimeUnit.SECONDS)
+
+        then:
+        firstInvalidationStarted
+        fixture.registrationIndex.get() == 2
+        listenerEvents == [ChangeOperation.INVALIDATE]
+        queuedRecovery.size() == 1
+
+        when:
+        queuedRecovery.remove().run()
+
+        then:
+        fixture.registrationIndex.get() == 3
+        listenerEvents == [ChangeOperation.INVALIDATE, ChangeOperation.INVALIDATE]
+        queuedRecovery.empty
+
+        cleanup:
+        releaseInvalidation.countDown()
+        recoveryWorker.shutdownNow()
+        subscription.stopRenewal()
+        subscription.unregisterAll()
+    }
+
     void "recovers a registration that fails while its query is being associated"() {
         given:
         def original = Mock(DatabaseChangeRegistration)
@@ -746,6 +811,67 @@ class OracleChangeNotificationSubscriptionSpec extends Specification {
         fixture.registrationIndex.get() == 2
         1 * scheduledFuture.cancel(false)
         0 * fixture.oracleConnection.unregisterDatabaseChangeNotification(original)
+    }
+
+    void "creates only one replacement when the expiration timer races timeout deregistration"() {
+        given:
+        def original = Mock(DatabaseChangeRegistration)
+        def replacement = Mock(DatabaseChangeRegistration)
+        def scheduledTasks = []
+        def scheduledDelays = []
+        def queuedRenewals = new ConcurrentLinkedQueue<Runnable>()
+        def nanoTimeSupplier = new AtomicLong()
+        def clock = { nanoTimeSupplier.get() } as LongSupplier
+        def fixture = registrarFixture([original, replacement], clock, [])
+        Executor renewalExecutor = { Runnable command -> queuedRenewals.add(command) } as Executor
+        def subscription = subscription(fixture.registrar, scheduler(scheduledTasks, scheduledDelays),
+            new OracleChangeNotificationTaskTracker(), clock,
+            new OracleChangeNotificationRenewalPolicy(
+                10, OracleChangeNotification.RenewalMode.AFTER_EXPIRATION, 0), renewalExecutor)
+        def racers = Executors.newFixedThreadPool(2)
+        def ready = new CountDownLatch(2)
+        def startRace = new CountDownLatch(1)
+
+        when:
+        subscription.start()
+        nanoTimeSupplier.set(TimeUnit.SECONDS.toNanos(10))
+        def timer = racers.submit({
+            ready.countDown()
+            if (!startRace.await(5, TimeUnit.SECONDS)) {
+                throw new AssertionError("Timed out waiting to start the timer race")
+            }
+            scheduledTasks.first().run()
+        } as Runnable)
+        def timeoutCallback = racers.submit({
+            ready.countDown()
+            if (!startRace.await(5, TimeUnit.SECONDS)) {
+                throw new AssertionError("Timed out waiting to start the deregistration race")
+            }
+            subscription.handleRegistrationDeregistered(
+                original.getRegId(), DatabaseChangeEvent.AdditionalEventType.TIMEOUT)
+        } as Runnable)
+        boolean racersReady = ready.await(5, TimeUnit.SECONDS)
+        startRace.countDown()
+        timer.get(5, TimeUnit.SECONDS)
+        timeoutCallback.get(5, TimeUnit.SECONDS)
+        List<Runnable> submittedRenewals = []
+        Runnable submittedRenewal
+        while ((submittedRenewal = queuedRenewals.poll()) != null) {
+            submittedRenewals.add(submittedRenewal)
+        }
+        submittedRenewals.each { it.run() }
+
+        then:
+        racersReady
+        submittedRenewals.size() == 2
+        fixture.registrationIndex.get() == 2
+        scheduledDelays == [TimeUnit.SECONDS.toNanos(10), TimeUnit.SECONDS.toNanos(10)]
+
+        cleanup:
+        startRace.countDown()
+        racers.shutdownNow()
+        subscription.stopRenewal()
+        subscription.unregisterAll()
     }
 
     void "replaces immediately after expiration when best-effort unregister fails"() {

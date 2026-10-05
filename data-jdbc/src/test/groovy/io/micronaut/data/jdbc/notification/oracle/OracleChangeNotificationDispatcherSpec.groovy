@@ -30,8 +30,11 @@ import oracle.jdbc.OracleConnection
 import oracle.sql.ROWID
 import spock.lang.Specification
 
+import java.util.concurrent.CountDownLatch
 import java.util.concurrent.Executor
 import java.util.concurrent.RejectedExecutionException
+import java.util.concurrent.TimeUnit
+import java.util.concurrent.atomic.AtomicInteger
 import java.util.function.BiConsumer
 import java.util.function.LongConsumer
 
@@ -711,6 +714,56 @@ class OracleChangeNotificationDispatcherSpec extends Specification {
         runningTaskWasCounted
         completionDuringDispatch != null
         completionDuringDispatch.done
+    }
+
+    void "waits for all concurrently running callbacks during graceful shutdown"() {
+        given:
+        def taskTracker = new OracleChangeNotificationTaskTracker()
+        def callbacksStarted = new CountDownLatch(2)
+        def releaseCallbacks = new CountDownLatch(1)
+        List<Thread> callbackThreads = Collections.synchronizedList(new ArrayList<Thread>())
+        def shutdownRequests = new AtomicInteger()
+        LongConsumer shutdownHandler = { long ignored ->
+            shutdownRequests.incrementAndGet()
+            callbacksStarted.countDown()
+            if (!releaseCallbacks.await(5, TimeUnit.SECONDS)) {
+                throw new AssertionError("Timed out waiting to release the shutdown callback")
+            }
+        } as LongConsumer
+        Executor executor = { Runnable command ->
+            Thread callbackThread = new Thread(command)
+            callbackThreads.add(callbackThread)
+            callbackThread.start()
+        } as Executor
+        def dispatcher = dispatcher(definition(), Mock(BeanContext), Mock(LongConsumer),
+            Mock(BiConsumer), Mock(LongConsumer), shutdownHandler, executor, taskTracker)
+        def firstEvent = Mock(DatabaseChangeEvent)
+        firstEvent.eventType >> DatabaseChangeEvent.EventType.SHUTDOWN
+        firstEvent.regId >> 41L
+        def secondEvent = Mock(DatabaseChangeEvent)
+        secondEvent.eventType >> DatabaseChangeEvent.EventType.SHUTDOWN
+        secondEvent.regId >> 42L
+
+        when:
+        dispatcher.onDatabaseChangeNotification(firstEvent)
+        dispatcher.onDatabaseChangeNotification(secondEvent)
+        boolean bothCallbacksStarted = callbacksStarted.await(5, TimeUnit.SECONDS)
+        def shutdown = taskTracker.shutdownGracefully().toCompletableFuture()
+        long outstandingCallbacks = taskTracker.reportActiveTasks().orElseThrow()
+        releaseCallbacks.countDown()
+        callbackThreads.each { it.join(5000) }
+        shutdown.get(5, TimeUnit.SECONDS)
+
+        then:
+        bothCallbacksStarted
+        outstandingCallbacks == 2L
+        shutdownRequests.get() == 2
+        callbackThreads.every { !it.isAlive() }
+        taskTracker.reportActiveTasks().orElseThrow() == 0L
+
+        cleanup:
+        releaseCallbacks.countDown()
+        callbackThreads.each { if (it.isAlive()) it.join(5000) }
     }
 
     void "dispatches a full-table notification as one invalidation without row details"() {
