@@ -17,6 +17,7 @@ package io.micronaut.data.hibernate.reactive.operations;
 
 import io.micronaut.core.annotation.Internal;
 import io.micronaut.core.util.CollectionUtils;
+import org.jspecify.annotations.Nullable;
 import io.vertx.core.Context;
 import io.vertx.core.Vertx;
 import org.hibernate.reactive.common.spi.Implementor;
@@ -27,8 +28,6 @@ import reactor.core.scheduler.Scheduler;
 import reactor.core.scheduler.Schedulers;
 
 import java.util.List;
-import java.util.Map;
-import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.CompletionStage;
 import java.util.function.Function;
 import java.util.function.Supplier;
@@ -44,7 +43,6 @@ final class ReactiveHibernateHelper {
 
     private final Stage.SessionFactory sessionFactory;
     private final Scheduler contextScheduler;
-    private final Map<Stage.Session, Context> sessionContexts = new ConcurrentHashMap<>();
 
     ReactiveHibernateHelper(Stage.SessionFactory sessionFactory) {
         this.sessionFactory = sessionFactory;
@@ -104,24 +102,21 @@ final class ReactiveHibernateHelper {
     }
 
     Mono<Stage.Session> openSession() {
-        return monoFromCompletionStage(sessionFactory::openSession)
-            .subscribeOn(contextScheduler)
-            .doOnNext(session -> {
-                // Completed on the Vert.x thread the session is bound to
-                Context context = Vertx.currentContext();
-                if (context != null) {
-                    sessionContexts.put(session, context);
-                }
-            });
+        return monoFromCompletionStage(sessionFactory::openSession).subscribeOn(contextScheduler);
     }
 
-    Mono<Void> closeSession(Stage.Session session) {
-        Context context = sessionContexts.remove(session);
+    /**
+     * Close the session on the Vert.x context it was opened on. Hibernate Reactive rejects using a session
+     * from another thread, which happens when a streamed result is completed or cancelled by its subscriber.
+     *
+     * @param session The session
+     * @param context The Vert.x context the session was opened on, if known
+     * @return The publisher closing the session
+     */
+    Mono<Void> closeSession(Stage.Session session, @Nullable Context context) {
         if (context == null || context == Vertx.currentContext()) {
             return monoFromCompletionStage(session::close);
         }
-        // Hibernate Reactive rejects using a session from another thread, which happens
-        // when a streamed result is completed or cancelled by its subscriber
         return Mono.create(sink -> context.runOnContext(ignore -> session.close().whenComplete((result, throwable) -> {
             if (throwable == null) {
                 sink.success();

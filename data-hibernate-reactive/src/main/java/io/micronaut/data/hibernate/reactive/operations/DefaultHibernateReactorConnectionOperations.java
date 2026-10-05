@@ -23,9 +23,13 @@ import io.micronaut.data.connection.support.AbstractReactorConnectionOperations;
 import io.micronaut.data.hibernate.conf.RequiresReactiveHibernate;
 import org.hibernate.SessionFactory;
 import org.hibernate.reactive.stage.Stage;
+import io.vertx.core.Context;
+import io.vertx.core.Vertx;
 import org.reactivestreams.Publisher;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
+
+import java.util.function.Supplier;
 
 /**
  * The default Hibernate reactive connection operations.
@@ -61,6 +65,18 @@ final class DefaultHibernateReactorConnectionOperations extends AbstractReactorC
         if (LOG.isDebugEnabled()) {
             LOG.debug("Closing Connection for Hibernate Reactive configuration: {} and definition: {}", serverName, definition);
         }
-        return helper.closeSession(session);
+        return helper.closeSession(session, null);
+    }
+
+    @Override
+    protected Supplier<Publisher<Void>> connectionCloser(Stage.Session session, ConnectionDefinition definition) {
+        // Invoked on the Vert.x thread that opened the session
+        Context context = Vertx.currentContext();
+        return () -> {
+            if (LOG.isDebugEnabled()) {
+                LOG.debug("Closing Connection for Hibernate Reactive configuration: {} and definition: {}", serverName, definition);
+            }
+            return helper.closeSession(session, context);
+        };
     }
 }

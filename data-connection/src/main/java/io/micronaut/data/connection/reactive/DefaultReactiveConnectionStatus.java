@@ -46,15 +46,43 @@ public final class DefaultReactiveConnectionStatus<C> implements ReactiveConnect
     private final ConnectionDefinition definition;
     private final ReactorConnectionOperations<C> connectionOperations;
     private final boolean isNew;
+    @Nullable
+    private final Supplier<Publisher<Void>> closer;
 
     @Nullable
     private List<ReactiveConnectionSynchronization> connectionSynchronizations;
 
     public DefaultReactiveConnectionStatus(C connection, ConnectionDefinition definition, ReactorConnectionOperations<C> connectionOperations, boolean isNew) {
+        this(connection, definition, connectionOperations, isNew, null);
+    }
+
+    /**
+     * @param connection           The connection
+     * @param definition           The connection definition
+     * @param connectionOperations The connection operations
+     * @param isNew                Whether the connection was opened for this status
+     * @param closer               How to close a new connection
+     * @since 5.3.0
+     */
+    public DefaultReactiveConnectionStatus(C connection,
+                                           ConnectionDefinition definition,
+                                           ReactorConnectionOperations<C> connectionOperations,
+                                           boolean isNew,
+                                           @Nullable Supplier<Publisher<Void>> closer) {
         this.connection = connection;
         this.definition = definition;
         this.connectionOperations = connectionOperations;
         this.isNew = isNew;
+        this.closer = closer;
+    }
+
+    /**
+     * @return How to close a new connection, or {@code null} for a reused one
+     * @since 5.3.0
+     */
+    @Nullable
+    public Supplier<Publisher<Void>> getCloser() {
+        return closer;
     }
 
     public boolean isConnectionOf(ReactorConnectionOperations<C> connectionOperations) {

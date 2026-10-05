@@ -33,6 +33,7 @@ import reactor.util.context.ContextView;
 import java.util.Objects;
 import java.util.Optional;
 import java.util.function.Function;
+import java.util.function.Supplier;
 
 /**
  * The reactive MongoDB connection operations implementation.
@@ -62,6 +63,21 @@ public abstract class AbstractReactorConnectionOperations<C> implements ReactorC
      */
     @NonNull
     protected abstract Publisher<Void> closeConnection(@NonNull C connection, @NonNull ConnectionDefinition definition);
+
+    /**
+     * Returns how to close a connection that was just opened. It is invoked when the connection is emitted by
+     * {@link #openConnection(ConnectionDefinition)}, so an implementation can capture state of the opening thread
+     * that is needed to close the connection later, possibly from another thread.
+     *
+     * @param connection The connection
+     * @param definition The connection definition
+     * @return The publisher closing the connection
+     * @since 5.3.0
+     */
+    @NonNull
+    protected Supplier<Publisher<Void>> connectionCloser(@NonNull C connection, @NonNull ConnectionDefinition definition) {
+        return () -> closeConnection(connection, definition);
+    }
 
     @Override
     public boolean managesConnection(ConnectionStatus<C> connectionStatus) {
@@ -106,11 +122,11 @@ public abstract class AbstractReactorConnectionOperations<C> implements ReactorC
 
     private <T> Flux<T> openConnectionFlux(ConnectionDefinition definition, Function<ConnectionStatus<C>, Flux<T>> callback) {
         return Flux.usingWhen(
-            Mono.from(openConnection(definition)).map(connection -> new DefaultReactiveConnectionStatus<>(connection, definition, this, true)),
+            Mono.from(openConnection(definition)).map(connection -> newConnectionStatus(connection, definition)),
             connectionStatus -> applyCallbackFlux(callback, connectionStatus).contextWrite(ctx -> addClientSession(ctx, connectionStatus)),
-            connectionStatus -> connectionStatus.onComplete(() -> closeConnection(connectionStatus.getConnection(), definition)),
-            (connectionStatus, throwable) -> connectionStatus.onError(throwable, () -> closeConnection(connectionStatus.getConnection(), definition)),
-            connectionStatus -> connectionStatus.onCancel(() -> closeConnection(connectionStatus.getConnection(), definition))
+            connectionStatus -> connectionStatus.onComplete(connectionStatus.getCloser()),
+            (connectionStatus, throwable) -> connectionStatus.onError(throwable, connectionStatus.getCloser()),
+            connectionStatus -> connectionStatus.onCancel(connectionStatus.getCloser())
         );
     }
 
@@ -141,12 +157,16 @@ public abstract class AbstractReactorConnectionOperations<C> implements ReactorC
 
     private <T> Mono<T> openConnectionMono(ConnectionDefinition definition, Function<ConnectionStatus<C>, Mono<T>> callback) {
         return Mono.usingWhen(
-            Mono.from(openConnection(definition)).map(connection -> new DefaultReactiveConnectionStatus<>(connection, definition, this, true)),
+            Mono.from(openConnection(definition)).map(connection -> newConnectionStatus(connection, definition)),
             connectionStatus -> applyCallbackMono(callback, connectionStatus).contextWrite(ctx -> addClientSession(ctx, connectionStatus)),
-            connectionStatus -> connectionStatus.onComplete(() -> closeConnection(connectionStatus.getConnection(), definition)),
-            (connectionStatus, throwable) -> connectionStatus.onError(throwable, () -> closeConnection(connectionStatus.getConnection(), definition)),
-            connectionStatus -> connectionStatus.onCancel(() -> closeConnection(connectionStatus.getConnection(), definition))
+            connectionStatus -> connectionStatus.onComplete(connectionStatus.getCloser()),
+            (connectionStatus, throwable) -> connectionStatus.onError(throwable, connectionStatus.getCloser()),
+            connectionStatus -> connectionStatus.onCancel(connectionStatus.getCloser())
         );
+    }
+
+    private DefaultReactiveConnectionStatus<C> newConnectionStatus(C connection, ConnectionDefinition definition) {
+        return new DefaultReactiveConnectionStatus<>(connection, definition, this, true, connectionCloser(connection, definition));
     }
 
     private NoConnectionException noConnectionFound() {
