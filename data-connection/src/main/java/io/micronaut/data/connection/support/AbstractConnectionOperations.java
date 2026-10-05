@@ -107,10 +107,7 @@ public abstract class AbstractConnectionOperations<C> implements ConnectionOpera
             if (logger.isDebugEnabled()) {
                 logger.debug("Executing with a connection: [{}]", connection);
             }
-            if (connection.isNew()) {
-                // A reused connection was already set up by its owner
-                setupConnection(connection);
-            }
+            setupConnection(connection);
             for (ConnectionCustomizer<C> connectionCustomizer : connectionCustomizers) {
                 callback = connectionCustomizer.intercept(callback);
             }

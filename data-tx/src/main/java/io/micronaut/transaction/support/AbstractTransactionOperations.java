@@ -186,7 +186,17 @@ public abstract class AbstractTransactionOperations<T extends InternalTransactio
                 });
                 return transactionStatus;
             }
-            return createAndBeginTransaction(definition, connectionStatus);
+            // Begin on a status of its own, so the connection state changed by the transaction
+            // (read-only, isolation, auto-commit) is restored when it completes, not when the outer scope does
+            ConnectionStatus<C> reusedConnectionStatus = synchronousConnectionManager.getConnection(ConnectionDefinition.of(ConnectionDefinition.Propagation.MANDATORY));
+            T transactionStatus = createAndBeginTransaction(definition, reusedConnectionStatus);
+            transactionStatus.registerInvocationSynchronization(new TransactionSynchronization() {
+                @Override
+                public void afterCompletion(Status status) {
+                    synchronousConnectionManager.complete(reusedConnectionStatus);
+                }
+            });
+            return transactionStatus;
         }
         if (debugEnabled) {
             logger.debug("Found existing transaction [{}]", existingTransaction);

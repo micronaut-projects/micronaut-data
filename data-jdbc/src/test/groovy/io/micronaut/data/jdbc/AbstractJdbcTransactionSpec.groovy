@@ -92,9 +92,20 @@ abstract class AbstractJdbcTransactionSpec extends AbstractTransactionSpec {
             }
         then:
             flags == [supportsReadOnlyFlag(), supportsReadOnlyFlag()]
-            // The outer callback and both reads reuse the connection set up once by the outer scope
             readOnlyDuringOperation == [supportsReadOnlyFlag()] * 3
         and:
+            !isConnectionReadOnly()
+    }
+
+    void "test a writable connection is writable again after an inner read-only transaction"() {
+        when:
+            def flag = getConnectionOperations().executeWrite { status ->
+                getTransactionOperations().executeRead { repository.count() }
+                repository.count()
+                status.getConnection().isReadOnly()
+            }
+        then:
+            !flag
             !isConnectionReadOnly()
     }
 

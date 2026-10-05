@@ -79,7 +79,7 @@ A repository method called outside of a transaction or a connection scope (ann:d
 
 Toggling the read-only flag is not free. Depending on the driver, `Connection.isReadOnly()` and `Connection.setReadOnly(boolean)` each result in a database round trip, and the flag must be restored before the connection is returned to the pool. With MySQL Connector/J's default settings, a simple query costs four round trips instead of one, which significantly reduces throughput when database latency dominates.
 
-The read-only flag is still applied when you ask for it explicitly, for example with `@Transactional(readOnly = true)`, `@ReadOnly`, `@Connectable(readOnly = true)` or `executeRead` on api:transaction.TransactionOperations[] / api:data.connection.ConnectionOperations[]. It is applied once when the connection is opened, and repository calls that reuse the connection don't apply it again. Running a group of reads in one read-only transaction or connection scope is therefore cheaper than letting each read open its own connection.
+The read-only flag is still applied when you ask for it explicitly, for example with `@Transactional(readOnly = true)`, `@ReadOnly`, `@Connectable(readOnly = true)` or `executeRead` on api:transaction.TransactionOperations[] / api:data.connection.ConnectionOperations[]. Running a group of reads in one transaction or connection scope is cheaper than letting each read obtain its own connection.
 
 To restore the previous behaviour, enable `read-only-connection-per-operation` for a datasource:
 
