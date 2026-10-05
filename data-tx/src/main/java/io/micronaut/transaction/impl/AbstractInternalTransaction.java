@@ -141,12 +141,12 @@ public abstract class AbstractInternalTransaction<C> implements InternalTransact
         }
         List<ConnectionSynchronization> toExecute = connectionSynchronizations;
         connectionSynchronizations = null;
-        RuntimeException failure = null;
+        Throwable failure = null;
         // Restore in the reverse order of the changes
         for (int i = toExecute.size() - 1; i >= 0; i--) {
             try {
                 toExecute.get(i).executionComplete();
-            } catch (RuntimeException e) {
+            } catch (RuntimeException | Error e) {
                 if (failure == null) {
                     failure = e;
                 } else {
@@ -154,8 +154,11 @@ public abstract class AbstractInternalTransaction<C> implements InternalTransact
                 }
             }
         }
-        if (failure != null) {
-            throw failure;
+        if (failure instanceof RuntimeException runtimeException) {
+            throw runtimeException;
+        }
+        if (failure instanceof Error error) {
+            throw error;
         }
     }
 
