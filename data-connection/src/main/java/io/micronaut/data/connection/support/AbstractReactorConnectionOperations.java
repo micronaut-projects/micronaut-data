@@ -124,9 +124,9 @@ public abstract class AbstractReactorConnectionOperations<C> implements ReactorC
         return Flux.usingWhen(
             Mono.from(openConnection(definition)).map(connection -> newConnectionStatus(connection, definition)),
             connectionStatus -> applyCallbackFlux(callback, connectionStatus).contextWrite(ctx -> addClientSession(ctx, connectionStatus)),
-            connectionStatus -> connectionStatus.onComplete(connectionStatus.getCloser()),
-            (connectionStatus, throwable) -> connectionStatus.onError(throwable, connectionStatus.getCloser()),
-            connectionStatus -> connectionStatus.onCancel(connectionStatus.getCloser())
+            connectionStatus -> connectionStatus.onComplete(closer(connectionStatus)),
+            (connectionStatus, throwable) -> connectionStatus.onError(throwable, closer(connectionStatus)),
+            connectionStatus -> connectionStatus.onCancel(closer(connectionStatus))
         );
     }
 
@@ -159,14 +159,19 @@ public abstract class AbstractReactorConnectionOperations<C> implements ReactorC
         return Mono.usingWhen(
             Mono.from(openConnection(definition)).map(connection -> newConnectionStatus(connection, definition)),
             connectionStatus -> applyCallbackMono(callback, connectionStatus).contextWrite(ctx -> addClientSession(ctx, connectionStatus)),
-            connectionStatus -> connectionStatus.onComplete(connectionStatus.getCloser()),
-            (connectionStatus, throwable) -> connectionStatus.onError(throwable, connectionStatus.getCloser()),
-            connectionStatus -> connectionStatus.onCancel(connectionStatus.getCloser())
+            connectionStatus -> connectionStatus.onComplete(closer(connectionStatus)),
+            (connectionStatus, throwable) -> connectionStatus.onError(throwable, closer(connectionStatus)),
+            connectionStatus -> connectionStatus.onCancel(closer(connectionStatus))
         );
     }
 
     private DefaultReactiveConnectionStatus<C> newConnectionStatus(C connection, ConnectionDefinition definition) {
         return new DefaultReactiveConnectionStatus<>(connection, definition, this, true, connectionCloser(connection, definition));
+    }
+
+    private static <C> Supplier<Publisher<Void>> closer(DefaultReactiveConnectionStatus<C> connectionStatus) {
+        // Always set for a status created by newConnectionStatus
+        return Objects.requireNonNull(connectionStatus.getCloser());
     }
 
     private NoConnectionException noConnectionFound() {
