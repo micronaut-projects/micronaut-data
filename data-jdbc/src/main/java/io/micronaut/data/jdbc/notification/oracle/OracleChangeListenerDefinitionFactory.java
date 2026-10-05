@@ -28,7 +28,6 @@ import io.micronaut.inject.ExecutableMethod;
 import oracle.jdbc.OracleConnection;
 
 import java.util.List;
-import java.util.Objects;
 import java.util.Properties;
 
 /**
@@ -57,10 +56,10 @@ final class OracleChangeListenerDefinitionFactory {
      */
     OracleChangeListenerDefinition create(ChangeListenerMethod listenerMethod) {
         ExecutableMethod<?, ?> method = listenerMethod.method();
-        AnnotationValue<OracleChangeNotification> notification = Objects.requireNonNull(
-            method.getAnnotation(OracleChangeNotification.class),
-            () -> "@ChangeListener method [" + method.getDescription(true) + "] requires @OracleChangeNotification for an Oracle datasource"
-        );
+        AnnotationValue<OracleChangeNotification> notification = method.getAnnotation(OracleChangeNotification.class);
+        if (notification == null) {
+            throw invalidChangeListener(method, "requires @OracleChangeNotification for an Oracle datasource");
+        }
         Argument<?> entityArgument = listenerMethod.entityArgument();
         RuntimePersistentEntity<?> persistentEntity = operations.getEntity(entityArgument.getType());
         OracleTableIdentifier tableIdentifier = OracleTableIdentifier.parse(

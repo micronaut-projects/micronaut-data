@@ -250,7 +250,7 @@ class OracleChangeListenerDefinitionFactorySpec extends Specification {
         new OracleChangeListenerDefinitionFactory(operations).create(listenerMethod)
 
         then:
-        def exception = thrown(NullPointerException)
+        def exception = thrown(IllegalStateException)
         exception.message.contains('requires @OracleChangeNotification for an Oracle datasource')
     }
 
