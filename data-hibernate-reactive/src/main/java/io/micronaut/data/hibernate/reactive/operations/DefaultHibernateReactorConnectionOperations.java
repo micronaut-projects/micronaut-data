@@ -65,18 +65,19 @@ final class DefaultHibernateReactorConnectionOperations extends AbstractReactorC
         if (LOG.isDebugEnabled()) {
             LOG.debug("Closing Connection for Hibernate Reactive configuration: {} and definition: {}", serverName, definition);
         }
-        return helper.closeSession(session, null);
+        return helper.closeSession(session, null, null);
     }
 
     @Override
     protected Supplier<Publisher<Void>> connectionCloser(Stage.Session session, ConnectionDefinition definition) {
-        // Invoked on the Vert.x thread that opened the session
+        // Invoked on the Vert.x thread that opened the session; Hibernate Reactive checks the thread, the context is used to get back to it
+        Thread thread = Thread.currentThread();
         Context context = Vertx.currentContext();
         return () -> {
             if (LOG.isDebugEnabled()) {
                 LOG.debug("Closing Connection for Hibernate Reactive configuration: {} and definition: {}", serverName, definition);
             }
-            return helper.closeSession(session, context);
+            return helper.closeSession(session, thread, context);
         };
     }
 }

@@ -260,7 +260,7 @@ final class DefaultHibernateReactiveRepositoryOperations extends AbstractHiberna
 
     @Override
     public <T> Mono<Long> count(PagedQuery<T> pagedQuery) {
-        return readOperation(session -> countOf(session, Long.class, Limit.UNLIMITED));
+        return readOperation(session -> countOf(session, pagedQuery.getRootEntity(), Limit.UNLIMITED));
     }
 
     private <T> Flux<T> findPaged(Stage.Session session, PagedQuery<T> pagedQuery) {
