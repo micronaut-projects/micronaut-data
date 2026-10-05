@@ -2,6 +2,15 @@ This section documents breaking changes between Micronaut versions
 
 == 5.3
 
+=== JDBC reads outside of a transaction no longer use read-only connections
+
+A JDBC repository read method called outside of a transaction or a connection scope no longer switches its connection to read-only. Switching the flag and restoring it costs extra database round trips with some drivers, see <<jdbcConfiguration, JDBC Configuration>>. As a result:
+
+* On MySQL and MariaDB, a statement in a read method that writes (for example a native query with side effects) is no longer rejected.
+* Read/write splitting based on `Connection#isReadOnly`, such as the AWS Advanced JDBC Wrapper or a routing `DataSource`, sends these reads to the writer.
+
+To restore the previous behaviour, set `datasources.<name>.read-only-connection-per-operation` to `true`, or run the reads in a read-only transaction.
+
 === `null` entity arguments are rejected with `IllegalArgumentException`
 
 Passing `null` as the entity or the entities to a repository method, for example `save(null)`, `update(null)`, `delete(null)` or `saveAll(null)`, now fails immediately with an `IllegalArgumentException`, consistent with a `null` ID. Previously, these methods failed with an `IllegalStateException` (for example `Cannot find parameter with role: entity`) from inside the interceptor. Asynchronous and reactive repositories report the exception through the returned `CompletionStage` or `Publisher`.
