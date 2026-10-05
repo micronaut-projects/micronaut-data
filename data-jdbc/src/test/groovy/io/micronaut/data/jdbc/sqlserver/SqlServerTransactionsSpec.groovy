@@ -10,4 +10,9 @@ class SqlServerTransactionsSpec extends AbstractJdbcTransactionSpec implements M
         return MSBookRepository.class
     }
 
+    @Override
+    boolean appliesReadOnlyFlagToConnection() {
+        // The SQL Server driver ignores Connection.setReadOnly
+        return false
+    }
 }

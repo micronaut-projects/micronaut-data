@@ -199,7 +199,7 @@ public final class DataSourceTransactionManager extends AbstractDefaultTransacti
 
         if (!onComplete.isEmpty()) {
             Collections.reverse(onComplete);
-            status.getConnectionStatus().registerSynchronization(new ConnectionSynchronization() {
+            status.registerConnectionSynchronization(new ConnectionSynchronization() {
                 @Override
                 public void executionComplete() {
                     for (Runnable runnable : onComplete) {
@@ -242,6 +242,19 @@ public final class DataSourceTransactionManager extends AbstractDefaultTransacti
         } catch (SQLException ex) {
             throw new TransactionSystemException("Could not commit JDBC transaction", ex);
         }
+    }
+
+    @Override
+    protected void doRollbackAfterBeginFailure(DefaultTransactionStatus<Connection> status) {
+        try {
+            if (status.getConnection().getAutoCommit()) {
+                // The transaction wasn't started
+                return;
+            }
+        } catch (SQLException ex) {
+            throw new TransactionSystemException("Could not read JDBC auto-commit state", ex);
+        }
+        doRollback(status);
     }
 
     private static boolean isRecoveryCommitAttempt(DefaultTransactionStatus<Connection> status) {

@@ -22,6 +22,7 @@ import io.micronaut.context.annotation.Requires;
 import org.jspecify.annotations.NonNull;
 import io.micronaut.core.annotation.TypeHint;
 import io.micronaut.data.connection.ConnectionOperations;
+import io.micronaut.data.connection.ConnectionSynchronization;
 import io.micronaut.data.connection.SynchronousConnectionManager;
 import io.micronaut.data.connection.support.JdbcConnectionUtils;
 import io.micronaut.transaction.TransactionDefinition;
@@ -92,10 +93,22 @@ public final class HibernateTransactionManager extends AbstractDefaultTransactio
 
         boolean isReadOnly = definition.isReadOnly().orElse(false);
         if (isReadOnly && isNewSession) {
+            FlushMode previousFlushMode = session.getHibernateFlushMode();
+            boolean previousDefaultReadOnly = session.isDefaultReadOnly();
             // Just set to MANUAL in case of a new Session for this transaction.
             session.setFlushMode(FlushMode.MANUAL.toJpaFlushMode());
             // As of 5.1, we're also setting Hibernate's read-only entity mode by default.
             session.setDefaultReadOnly(true);
+            // The session might be owned by an outer connection scope
+            txStatus.registerConnectionSynchronization(new ConnectionSynchronization() {
+                @Override
+                public void executionComplete() {
+                    if (session.isOpen()) {
+                        session.setHibernateFlushMode(previousFlushMode);
+                        session.setDefaultReadOnly(previousDefaultReadOnly);
+                    }
+                }
+            });
         }
         List<Runnable> onComplete = new ArrayList<>(5);
 
@@ -215,6 +228,13 @@ public final class HibernateTransactionManager extends AbstractDefaultTransactio
                 // Necessary for pre-bound Sessions, to avoid inconsistent state.
                 tx.getConnection().clear();
             }
+        }
+    }
+
+    @Override
+    protected void doRollbackAfterBeginFailure(DefaultTransactionStatus<Session> tx) {
+        if (tx.getTransaction() != null) {
+            doRollback(tx);
         }
     }
 

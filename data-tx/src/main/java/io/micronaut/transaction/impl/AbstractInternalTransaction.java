@@ -17,6 +17,7 @@ package io.micronaut.transaction.impl;
 
 import io.micronaut.core.annotation.Internal;
 import io.micronaut.core.order.OrderUtil;
+import io.micronaut.data.connection.ConnectionSynchronization;
 import io.micronaut.transaction.exceptions.TransactionUsageException;
 import io.micronaut.transaction.support.TransactionResourceCommit;
 import io.micronaut.transaction.support.TransactionSynchronization;
@@ -43,6 +44,9 @@ public abstract class AbstractInternalTransaction<C> implements InternalTransact
     private boolean completed = false;
     @Nullable
     private TransactionResourceCommit transactionResourceCommit;
+    private boolean connectionSynchronizationsBound = false;
+    @Nullable
+    private List<ConnectionSynchronization> connectionSynchronizations;
 
     /**
      * Set global rollback only.
@@ -132,6 +136,49 @@ public abstract class AbstractInternalTransaction<C> implements InternalTransact
 
     @Override
     public void cleanupAfterCompletion() {
+        if (connectionSynchronizations == null) {
+            return;
+        }
+        List<ConnectionSynchronization> toExecute = connectionSynchronizations;
+        connectionSynchronizations = null;
+        RuntimeException failure = null;
+        // Restore in the reverse order of the changes
+        for (int i = toExecute.size() - 1; i >= 0; i--) {
+            try {
+                toExecute.get(i).executionComplete();
+            } catch (RuntimeException e) {
+                if (failure == null) {
+                    failure = e;
+                } else {
+                    failure.addSuppressed(e);
+                }
+            }
+        }
+        if (failure != null) {
+            throw failure;
+        }
+    }
+
+    @Override
+    public void registerConnectionSynchronization(@NonNull ConnectionSynchronization synchronization) {
+        if (!connectionSynchronizationsBound) {
+            getConnectionStatus().registerSynchronization(synchronization);
+            return;
+        }
+        if (connectionSynchronizations == null) {
+            connectionSynchronizations = new ArrayList<>(3);
+        }
+        connectionSynchronizations.add(synchronization);
+    }
+
+    @Override
+    public void bindConnectionSynchronizationsToTransaction() {
+        connectionSynchronizationsBound = true;
+    }
+
+    @Override
+    public boolean hasBoundConnectionSynchronizations() {
+        return connectionSynchronizations != null && !connectionSynchronizations.isEmpty();
     }
 
     @Override

@@ -186,7 +186,7 @@ public abstract class AbstractTransactionOperations<T extends InternalTransactio
                 });
                 return transactionStatus;
             }
-            return createAndBeginTransaction(definition, connectionStatus);
+            return createAndBeginTransactionOnExistingConnection(definition, connectionStatus);
         }
         if (debugEnabled) {
             logger.debug("Found existing transaction [{}]", existingTransaction);
@@ -385,6 +385,17 @@ public abstract class AbstractTransactionOperations<T extends InternalTransactio
         return false;
     }
 
+    /**
+     * Rollback a transaction that failed to begin after it already modified the connection state.
+     * The default implementation calls {@link #doRollback(InternalTransaction)}.
+     *
+     * @param tx The transaction
+     * @since 5.3.1
+     */
+    protected void doRollbackAfterBeginFailure(T tx) {
+        doRollback(tx);
+    }
+
     private void begin(T transaction) {
         if (transaction.isNewTransaction()) {
             doBegin(transaction);
@@ -457,9 +468,11 @@ public abstract class AbstractTransactionOperations<T extends InternalTransactio
                 tx.triggerAfterCompletion(TransactionSynchronization.Status.COMMITTED);
             }
 
-        } finally {
-            tx.cleanupAfterCompletion();
+        } catch (RuntimeException | Error e) {
+            cleanupAfterCompletion(tx, e);
+            throw e;
         }
+        cleanupAfterCompletion(tx, null);
     }
 
     private void rollbackInternal(T tx) {
@@ -479,8 +492,23 @@ public abstract class AbstractTransactionOperations<T extends InternalTransactio
             }
 
             tx.triggerAfterCompletion(TransactionSynchronization.Status.ROLLED_BACK);
-        } finally {
+        } catch (RuntimeException | Error e) {
+            cleanupAfterCompletion(tx, e);
+            throw e;
+        }
+        cleanupAfterCompletion(tx, null);
+    }
+
+    private void cleanupAfterCompletion(T tx, @Nullable Throwable failure) {
+        try {
             tx.cleanupAfterCompletion();
+        } catch (RuntimeException | Error e) {
+            if (failure == null) {
+                throw e;
+            }
+            if (failure != e) {
+                failure.addSuppressed(e);
+            }
         }
     }
 
@@ -529,6 +557,29 @@ public abstract class AbstractTransactionOperations<T extends InternalTransactio
     private T createAndBeginTransaction(@NonNull TransactionDefinition definition, @NonNull ConnectionStatus<C> connectionStatus) {
         T transaction = createTransaction(definition, connectionStatus);
         begin(transaction);
+        return transaction;
+    }
+
+    private T createAndBeginTransactionOnExistingConnection(@NonNull TransactionDefinition definition,
+                                                           @NonNull ConnectionStatus<C> connectionStatus) {
+        T transaction = createTransaction(definition, connectionStatus);
+        // The connection is owned by an outer scope: the connection state changed by the transaction
+        // needs to be restored when the transaction completes, not when the outer scope completes
+        transaction.bindConnectionSynchronizationsToTransaction();
+        try {
+            begin(transaction);
+        } catch (RuntimeException | Error e) {
+            if (transaction.isNewTransaction() && transaction.hasBoundConnectionSynchronizations()) {
+                // Partially started transaction, rollback before restoring the auto-commit
+                try {
+                    doRollbackAfterBeginFailure(transaction);
+                } catch (RuntimeException | Error rollbackException) {
+                    e.addSuppressed(rollbackException);
+                }
+            }
+            cleanupAfterCompletion(transaction, e);
+            throw e;
+        }
         return transaction;
     }
 

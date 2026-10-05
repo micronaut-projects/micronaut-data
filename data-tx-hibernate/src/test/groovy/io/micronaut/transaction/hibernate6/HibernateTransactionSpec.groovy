@@ -26,6 +26,8 @@ import io.micronaut.transaction.TransactionOperations
 import io.micronaut.transaction.hibernate.HibernateTransactionManager
 import io.micronaut.transaction.hibernate6.micronaut.HibernateBookRepository
 import io.micronaut.transaction.hibernate6.micronaut.ReadOnlyTest
+import io.micronaut.data.tck.entities.Book
+import org.hibernate.FlushMode
 import org.hibernate.Session
 import org.hibernate.resource.transaction.spi.TransactionStatus
 
@@ -92,6 +94,31 @@ class HibernateTransactionSpec extends AbstractTransactionSpec implements TestRe
     boolean supportsModificationInNonTransaction() {
         // Hibernate always requires TX to modify data
         return false
+    }
+
+    def "read-only transaction scoped to an existing session"() {
+        given:
+            def connectionOperations = getConnectionOperations()
+            def transactionOperations = getTransactionOperations()
+            def bookRepository = context.getBean(HibernateBookRepository)
+        when:
+            def state = connectionOperations.executeWrite { status ->
+                Session session = status.connection
+                def inTx = transactionOperations.executeRead { txStatus ->
+                    bookRepository.count()
+                    [txStatus.connection.hibernateFlushMode, txStatus.connection.defaultReadOnly]
+                }
+                def afterTx = [session.hibernateFlushMode, session.defaultReadOnly]
+                transactionOperations.executeWrite { txStatus ->
+                    bookRepository.save(new Book(title: "Written after read-only", totalPages: 10))
+                }
+                [inTx, afterTx]
+            }
+        then:
+            // MANUAL is applied as the JPA COMMIT flush mode
+            state[0] == [FlushMode.COMMIT, true]
+            state[1] == [FlushMode.AUTO, false]
+            bookService.countBooksTransactional() == 1
     }
 
     def "test book is not updated if TX has readOnly=true"() {
