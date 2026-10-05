@@ -21,7 +21,7 @@ package io.micronaut.data.jdbc.notification;
  * <p>Applications obtain a provider-specific implementation through
  * {@link ChangeEvent#metadata(Class)}.</p>
  *
- * @since 5.2.0
+ * @since 5.3.0
  */
 public interface ChangeEventMetadata {
 }

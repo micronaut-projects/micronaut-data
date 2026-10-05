@@ -41,7 +41,7 @@ import java.lang.annotation.Target;
  * {@code DCN_CLIENT_INIT_CONNECTION} registration property to {@code false} to use
  * server-initiated notification connections instead.</p>
  *
- * @since 5.2.0
+ * @since 5.3.0
  */
 @Documented
 @Retention(RetentionPolicy.RUNTIME)

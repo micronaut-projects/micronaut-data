@@ -21,7 +21,7 @@ import io.micronaut.data.jdbc.notification.ChangeEventMetadata;
  * Oracle-specific metadata for a row-level Continuous Query Notification event.
  *
  * @param rowId The Oracle {@code ROWID} reported for the changed row.
- * @since 5.2.0
+ * @since 5.3.0
  */
 public record OracleChangeEventMetadata(String rowId) implements ChangeEventMetadata {
 }

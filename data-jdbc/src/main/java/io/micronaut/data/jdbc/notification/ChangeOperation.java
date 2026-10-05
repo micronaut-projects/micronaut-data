@@ -18,7 +18,7 @@ package io.micronaut.data.jdbc.notification;
 /**
  * The operation reported by a database change notification provider.
  *
- * @since 5.2.0
+ * @since 5.3.0
  */
 public enum ChangeOperation {
     /** A row was inserted. */

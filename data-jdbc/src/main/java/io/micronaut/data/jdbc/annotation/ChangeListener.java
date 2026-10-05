@@ -38,7 +38,7 @@ import java.lang.annotation.Target;
  * <p>When retry advice is also applied to the method, provider-deferred entity loading executes
  * within the same retry boundary as the listener invocation.</p>
  *
- * @since 5.2.0
+ * @since 5.3.0
  */
 @Documented
 @Executable(processOnStartup = true)

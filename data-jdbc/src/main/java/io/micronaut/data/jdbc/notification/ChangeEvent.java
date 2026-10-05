@@ -25,7 +25,7 @@ import java.util.Optional;
  * a deleted row cannot be reloaded, and an invalidation event has no row-level entity state.</p>
  *
  * @param <E> The persistent entity type.
- * @since 5.2.0
+ * @since 5.3.0
  */
 public interface ChangeEvent<E> {
 
