@@ -17,8 +17,6 @@ package io.micronaut.data.hibernate.reactive.operations;
 
 import io.micronaut.core.annotation.Internal;
 import io.micronaut.core.util.CollectionUtils;
-import org.jspecify.annotations.Nullable;
-import io.vertx.core.Context;
 import org.hibernate.reactive.common.spi.Implementor;
 import org.hibernate.reactive.stage.Stage;
 import reactor.core.publisher.Flux;
@@ -104,32 +102,8 @@ final class ReactiveHibernateHelper {
         return monoFromCompletionStage(sessionFactory::openSession).subscribeOn(contextScheduler);
     }
 
-    /**
-     * Close the session on the thread it was opened on. Hibernate Reactive rejects using a session
-     * from another thread, which happens when a streamed result is completed or cancelled by its subscriber.
-     *
-     * @param session The session
-     * @param thread  The thread the session was opened on, if known
-     * @param context The Vert.x context of that thread, if known
-     * @return The publisher closing the session
-     */
-    Mono<Void> closeSession(Stage.Session session, @Nullable Thread thread, @Nullable Context context) {
-        if (context == null || thread == Thread.currentThread()) {
-            return monoFromCompletionStage(session::close);
-        }
-        return Mono.create(sink -> context.runOnContext(ignore -> {
-            try {
-                session.close().whenComplete((result, throwable) -> {
-                    if (throwable == null) {
-                        sink.success();
-                    } else {
-                        sink.error(throwable);
-                    }
-                });
-            } catch (Throwable e) {
-                sink.error(e);
-            }
-        }));
+    Mono<Void> closeSession(Stage.Session session) {
+        return monoFromCompletionStage(session::close);
     }
 
     <T> Flux<T> withTransactionFlux(Stage.Session session, Function<Stage.Transaction, Flux<T>> work) {

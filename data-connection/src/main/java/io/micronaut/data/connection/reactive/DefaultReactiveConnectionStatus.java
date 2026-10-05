@@ -21,12 +21,15 @@ import io.micronaut.core.order.OrderUtil;
 import io.micronaut.data.connection.ConnectionDefinition;
 import io.micronaut.data.connection.ConnectionSynchronization;
 import org.reactivestreams.Publisher;
+import reactor.core.publisher.Flux;
 import reactor.core.publisher.Mono;
+import reactor.core.scheduler.Schedulers;
 
 import java.util.ArrayList;
 import java.util.List;
 import java.util.ListIterator;
 import java.util.Optional;
+import java.util.concurrent.Executor;
 import java.util.function.Function;
 import java.util.function.Supplier;
 
@@ -47,7 +50,7 @@ public final class DefaultReactiveConnectionStatus<C> implements ReactiveConnect
     private final ReactorConnectionOperations<C> connectionOperations;
     private final boolean isNew;
     @Nullable
-    private final Supplier<Publisher<Void>> closer;
+    private final Executor executor;
 
     @Nullable
     private List<ReactiveConnectionSynchronization> connectionSynchronizations;
@@ -61,7 +64,7 @@ public final class DefaultReactiveConnectionStatus<C> implements ReactiveConnect
      * @param definition           The connection definition
      * @param connectionOperations The connection operations
      * @param isNew                Whether the connection was opened for this status
-     * @param closer               How to close a new connection
+     * @param executor             The executor the connection must be used on, if it is bound to a thread
      * @since 5.3.0
      */
     @Internal
@@ -69,22 +72,50 @@ public final class DefaultReactiveConnectionStatus<C> implements ReactiveConnect
                                            ConnectionDefinition definition,
                                            ReactorConnectionOperations<C> connectionOperations,
                                            boolean isNew,
-                                           @Nullable Supplier<Publisher<Void>> closer) {
+                                           @Nullable Executor executor) {
         this.connection = connection;
         this.definition = definition;
         this.connectionOperations = connectionOperations;
         this.isNew = isNew;
-        this.closer = closer;
+        this.executor = executor;
     }
 
     /**
-     * @return How to close a new connection, or {@code null} for a reused one
+     * @return The executor the connection must be used on, or {@code null} if it can be used from any thread
      * @since 5.3.0
      */
     @Internal
     @Nullable
-    public Supplier<Publisher<Void>> getCloser() {
-        return closer;
+    public Executor getExecutor() {
+        return executor;
+    }
+
+    /**
+     * Run the work on the connection's executor, if it has one.
+     *
+     * @param work The work
+     * @param <T>  The result type
+     * @return The result
+     * @since 5.3.0
+     */
+    @Internal
+    public <T> Mono<T> onConnectionExecutor(Supplier<? extends Mono<T>> work) {
+        Mono<T> mono = Mono.defer(work);
+        return executor == null ? mono : mono.subscribeOn(Schedulers.fromExecutor(executor));
+    }
+
+    /**
+     * Run the work on the connection's executor, if it has one.
+     *
+     * @param work The work
+     * @param <T>  The result type
+     * @return The result
+     * @since 5.3.0
+     */
+    @Internal
+    public <T> Flux<T> onConnectionExecutorFlux(Supplier<? extends Flux<T>> work) {
+        Flux<T> flux = Flux.defer(work);
+        return executor == null ? flux : flux.subscribeOn(Schedulers.fromExecutor(executor));
     }
 
     public boolean isConnectionOf(ReactorConnectionOperations<C> connectionOperations) {

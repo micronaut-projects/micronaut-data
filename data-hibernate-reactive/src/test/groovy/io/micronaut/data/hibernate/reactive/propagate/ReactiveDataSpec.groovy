@@ -9,7 +9,11 @@ import org.hibernate.reactive.stage.Stage
 import reactor.core.publisher.Flux
 import reactor.core.publisher.Mono
 import reactor.core.scheduler.Schedulers
+import io.micronaut.transaction.reactive.ReactorReactiveTransactionOperations
+import spock.lang.Issue
 import spock.lang.Specification
+
+import java.time.Duration
 
 
 @MicronautTest(transactional = false)
@@ -20,6 +24,12 @@ class ReactiveDataSpec extends Specification implements PostgresHibernateReactiv
 
     @Inject
     HibernateReactorRepositoryOperations operations
+
+    @Inject
+    FooRepository repository
+
+    @Inject
+    ReactorReactiveTransactionOperations<?> transactionOperations
 
     void 'Verify ReactorCrudRepository.save(...) will update entity if already exist'() {
         setup:
@@ -95,6 +105,33 @@ class ReactiveDataSpec extends Specification implements PostgresHibernateReactiv
         then:
         !all.isEmpty()
         !captured.isOpen()
+    }
+
+    @Issue("https://github.com/micronaut-projects/micronaut-data/issues/2165")
+    void 'Verify a transaction continues after switching threads'() {
+        when: "The pipeline continues on another thread, like after a reactive HTTP client call"
+        def found = transactionOperations.withTransactionMono { status ->
+            repository.save(new Foo(70, "I"))
+                .publishOn(Schedulers.parallel())
+                .flatMap { repository.findById(70L) }
+        }.block(Duration.ofSeconds(10))
+
+        then:
+        found.name == "I"
+        repository.findById(70L).block().name == "I"
+    }
+
+    @Issue("https://github.com/micronaut-projects/micronaut-data/issues/2165")
+    void 'Verify a transaction commits an update made after switching threads'() {
+        when:
+        transactionOperations.withTransactionMono { status ->
+            repository.save(new Foo(71, "J"))
+                .delayElement(Duration.ofMillis(50))
+                .flatMap { repository.update(new Foo(71, "K")) }
+        }.block(Duration.ofSeconds(10))
+
+        then:
+        repository.findById(71L).block().name == "K"
     }
 
     void 'Verify counting a paged query counts its root entity'() {

@@ -27,9 +27,10 @@ import io.vertx.core.Context;
 import io.vertx.core.Vertx;
 import org.reactivestreams.Publisher;
 import org.slf4j.Logger;
+import org.jspecify.annotations.Nullable;
 import org.slf4j.LoggerFactory;
 
-import java.util.function.Supplier;
+import java.util.concurrent.Executor;
 
 /**
  * The default Hibernate reactive connection operations.
@@ -65,19 +66,14 @@ final class DefaultHibernateReactorConnectionOperations extends AbstractReactorC
         if (LOG.isDebugEnabled()) {
             LOG.debug("Closing Connection for Hibernate Reactive configuration: {} and definition: {}", serverName, definition);
         }
-        return helper.closeSession(session, null, null);
+        return helper.closeSession(session);
     }
 
     @Override
-    protected Supplier<Publisher<Void>> connectionCloser(Stage.Session session, ConnectionDefinition definition) {
-        // Invoked on the Vert.x thread that opened the session; Hibernate Reactive checks the thread, the context is used to get back to it
-        Thread thread = Thread.currentThread();
+    @Nullable
+    protected Executor connectionExecutor(Stage.Session session, ConnectionDefinition definition) {
+        // Invoked on the Vert.x thread that opened the session
         Context context = Vertx.currentContext();
-        return () -> {
-            if (LOG.isDebugEnabled()) {
-                LOG.debug("Closing Connection for Hibernate Reactive configuration: {} and definition: {}", serverName, definition);
-            }
-            return helper.closeSession(session, thread, context);
-        };
+        return context == null ? null : new SessionThreadExecutor(Thread.currentThread(), context);
     }
 }

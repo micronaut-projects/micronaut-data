@@ -24,6 +24,8 @@ import io.micronaut.core.convert.ConversionService;
 import io.micronaut.core.type.Argument;
 import io.micronaut.data.annotation.QueryHint;
 import io.micronaut.data.connection.reactive.ReactorConnectionOperations;
+import io.micronaut.data.connection.reactive.DefaultReactiveConnectionStatus;
+import io.micronaut.data.connection.ConnectionStatus;
 import io.micronaut.data.hibernate.conf.RequiresReactiveHibernate;
 import io.micronaut.data.hibernate.operations.AbstractHibernateOperations;
 import io.micronaut.data.model.Limit;
@@ -437,21 +439,38 @@ final class DefaultHibernateReactiveRepositoryOperations extends AbstractHiberna
     }
 
     private <T> Mono<T> operation(Function<Stage.Session, Mono<T>> work) {
-        return transactionOperations.withTransactionMono(tx -> work.apply(tx.getConnection()));
+        return transactionOperations.withTransactionMono(tx -> onSessionThread(tx.getConnectionStatus(), work));
     }
 
     private <T> Flux<T> operationFlux(Function<Stage.Session, Flux<T>> work) {
-        return transactionOperations.withTransactionFlux(tx -> work.apply(tx.getConnection()));
+        return transactionOperations.withTransactionFlux(tx -> onSessionThreadFlux(tx.getConnectionStatus(), work));
     }
 
     @Override
     public <T> Mono<T> withSession(Function<Stage.Session, Mono<T>> work) {
-        return connectionOperations.withConnectionMono(status -> work.apply(status.getConnection()));
+        return connectionOperations.withConnectionMono(status -> onSessionThread(status, work));
     }
 
     @Override
     public <T> Flux<T> withSessionFlux(Function<Stage.Session, Flux<T>> work) {
-        return connectionOperations.withConnectionFlux(status -> work.apply(status.getConnection()));
+        return connectionOperations.withConnectionFlux(status -> onSessionThreadFlux(status, work));
+    }
+
+    /**
+     * Runs the work on the thread the session was opened on, which Hibernate Reactive requires.
+     */
+    private static <T> Mono<T> onSessionThread(ConnectionStatus<Stage.Session> status, Function<Stage.Session, Mono<T>> work) {
+        if (status instanceof DefaultReactiveConnectionStatus<Stage.Session> reactiveStatus) {
+            return reactiveStatus.onConnectionExecutor(() -> work.apply(status.getConnection()));
+        }
+        return work.apply(status.getConnection());
+    }
+
+    private static <T> Flux<T> onSessionThreadFlux(ConnectionStatus<Stage.Session> status, Function<Stage.Session, Flux<T>> work) {
+        if (status instanceof DefaultReactiveConnectionStatus<Stage.Session> reactiveStatus) {
+            return reactiveStatus.onConnectionExecutorFlux(() -> work.apply(status.getConnection()));
+        }
+        return work.apply(status.getConnection());
     }
 
     @Override
