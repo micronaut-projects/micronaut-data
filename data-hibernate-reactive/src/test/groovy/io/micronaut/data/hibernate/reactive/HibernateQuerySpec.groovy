@@ -439,7 +439,9 @@ class HibernateQuerySpec extends Specification implements PostgresHibernateReact
             books1.size() == 1
     }
 
-    @PendingFeature(reason = "PostgreSQL fails with 42P18 'could not determine data type of parameter' inside a transaction")
+    // The Vert.x PostgreSQL client prepares without parameter types; on 42P18 it retries with types inferred
+    // from the values, but only in auto-commit mode, because the failed statement aborts a transaction
+    @PendingFeature(reason = "PostgreSQL fails with 42P18 'could not determine data type of parameter' inside a transaction: Vert.x only retries with inferred parameter types in auto-commit mode")
     @Issue('https://github.com/micronaut-projects/micronaut-data/issues/1131')
     void "test IN queries with multiple parameters in a transaction"() {
         when:
