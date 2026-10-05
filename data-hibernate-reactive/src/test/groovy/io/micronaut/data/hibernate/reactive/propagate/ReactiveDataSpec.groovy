@@ -5,6 +5,10 @@ import io.micronaut.data.hibernate.reactive.operations.HibernateReactorRepositor
 import io.micronaut.data.model.runtime.PagedQuery
 import io.micronaut.test.extensions.spock.annotation.MicronautTest
 import jakarta.inject.Inject
+import org.hibernate.reactive.stage.Stage
+import reactor.core.publisher.Flux
+import reactor.core.publisher.Mono
+import reactor.core.scheduler.Schedulers
 import spock.lang.Specification
 
 
@@ -73,6 +77,24 @@ class ReactiveDataSpec extends Specification implements PostgresHibernateReactiv
         then:
         first*.id.containsAll([10L, 11L])
         second*.id.containsAll([10L, 11L])
+    }
+
+    void 'Verify a session is closed when its Flux completes on another thread'() {
+        setup:
+        client.create(new FooController.CreateRequest(50, "H")).block()
+        Stage.Session captured = null
+
+        when:
+        def all = operations.withSessionFlux { Stage.Session session ->
+            captured = session
+            Mono.fromCompletionStage(session.createSelectionQuery("from Foo", Foo).getResultList())
+                .flatMapMany { Flux.fromIterable(it) }
+                .publishOn(Schedulers.parallel())
+        }.collectList().block()
+
+        then:
+        !all.isEmpty()
+        !captured.isOpen()
     }
 
     void 'Verify counting a paged query counts its root entity'() {
