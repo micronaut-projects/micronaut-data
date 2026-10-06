@@ -156,7 +156,7 @@ final class DefaultMongoStoredQuery<E, R> extends DefaultBindableParametersStore
                 findData = null;
             } else if (StringUtils.isEmpty(query)) {
                 aggregateData = null;
-                findData = new FindData(BsonDocument.parse(query));
+                findData = new FindData(EMPTY);
             } else if (query.startsWith("[")) {
                 aggregateData = new AggregateData(parseAggregation(query, storedQuery.isCount()));
                 findData = null;
@@ -164,7 +164,7 @@ final class DefaultMongoStoredQuery<E, R> extends DefaultBindableParametersStore
                 aggregateData = null;
                 findData = new FindData(BsonDocument.parse(query));
             }
-            isCount = operationType == OperationType.COUNT || storedQuery.isCount() || query.contains("$count");
+            isCount = operationType == OperationType.COUNT || storedQuery.isCount() || (query != null && query.contains("$count"));
         } else {
             aggregateData = null;
             findData = null;
