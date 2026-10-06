@@ -216,6 +216,41 @@ class ExistingConnectionTransactionTest {
     }
 
     @Test
+    void failedRollbackAfterFailedBeginOnANewConnectionReleasesWithoutRestoring() {
+        IllegalStateException beginFailure = new IllegalStateException("begin failure");
+        TransactionSystemException rollbackFailure = new TransactionSystemException("rollback failure");
+        txManager.beginFailure = beginFailure;
+        txManager.rollbackFailure = rollbackFailure;
+
+        IllegalStateException exception = assertThrows(IllegalStateException.class, () -> txManager.executeWrite(tx -> null));
+
+        // Restoring the auto-commit would commit the partially started transaction
+        assertSame(beginFailure, exception);
+        assertArrayEquals(new Throwable[]{rollbackFailure}, exception.getSuppressed());
+        assertEquals(List.of("doBegin", "doRollback"), txManager.calls);
+        assertEquals(List.of("complete"), connectionManager.completed);
+    }
+
+    @Test
+    void connectionIsReleasedWhenAnAfterCompletionSynchronizationFails() {
+        IllegalStateException failure = new IllegalStateException("after completion failure");
+
+        IllegalStateException exception = assertThrows(IllegalStateException.class, () -> txManager.executeWrite(tx -> {
+            tx.registerSynchronization(new TransactionSynchronization() {
+                @Override
+                public void afterCompletion(Status status) {
+                    throw failure;
+                }
+            });
+            return null;
+        }));
+
+        assertSame(failure, exception);
+        assertEquals(List.of("doBegin", "doCommit", "restore"), txManager.calls);
+        assertEquals(List.of("complete"), connectionManager.completed);
+    }
+
+    @Test
     void failedBeginOfARequiresNewTransactionResumesTheSuspendedTransaction() {
         IllegalStateException beginFailure = new IllegalStateException("begin failure");
 

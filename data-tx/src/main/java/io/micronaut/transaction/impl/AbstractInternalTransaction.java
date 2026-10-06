@@ -46,6 +46,8 @@ public abstract class AbstractInternalTransaction<C> implements InternalTransact
     private TransactionResourceCommit transactionResourceCommit;
     private boolean connectionSynchronizationsBound = false;
     @Nullable
+    private Runnable connectionRelease;
+    @Nullable
     private List<ConnectionSynchronization> connectionSynchronizations;
 
     /**
@@ -134,26 +136,30 @@ public abstract class AbstractInternalTransaction<C> implements InternalTransact
         }
     }
 
-    // Sonar java:S1181 -- every synchronization must run even if one of them throws an error
+    // Sonar java:S1181 -- every synchronization and the release must run even if one of them throws an error
     @SuppressWarnings("java:S1181")
     @Override
     public void cleanupAfterCompletion() {
-        if (connectionSynchronizations == null) {
-            return;
-        }
         List<ConnectionSynchronization> toExecute = connectionSynchronizations;
         connectionSynchronizations = null;
+        Runnable release = connectionRelease;
+        connectionRelease = null;
         Throwable failure = null;
-        // Restore in the reverse order of the changes
-        for (int i = toExecute.size() - 1; i >= 0; i--) {
-            try {
-                toExecute.get(i).executionComplete();
-            } catch (RuntimeException | Error e) {
-                if (failure == null) {
-                    failure = e;
-                } else {
-                    failure.addSuppressed(e);
+        if (toExecute != null) {
+            // Restore in the reverse order of the changes
+            for (int i = toExecute.size() - 1; i >= 0; i--) {
+                try {
+                    toExecute.get(i).executionComplete();
+                } catch (RuntimeException | Error e) {
+                    failure = addFailure(failure, e);
                 }
+            }
+        }
+        if (release != null) {
+            try {
+                release.run();
+            } catch (RuntimeException | Error e) {
+                failure = addFailure(failure, e);
             }
         }
         if (failure instanceof RuntimeException runtimeException) {
@@ -162,6 +168,14 @@ public abstract class AbstractInternalTransaction<C> implements InternalTransact
         if (failure instanceof Error error) {
             throw error;
         }
+    }
+
+    private static Throwable addFailure(@Nullable Throwable failure, Throwable e) {
+        if (failure == null) {
+            return e;
+        }
+        failure.addSuppressed(e);
+        return failure;
     }
 
     @Override
@@ -181,13 +195,24 @@ public abstract class AbstractInternalTransaction<C> implements InternalTransact
         connectionSynchronizationsBound = true;
     }
 
+    @Override
+    public void bindConnectionSynchronizationsToTransaction(@NonNull Runnable release) {
+        connectionSynchronizationsBound = true;
+        connectionRelease = release;
+    }
+
+    @Override
+    public void discardConnectionSynchronizations() {
+        connectionSynchronizations = null;
+    }
+
     /**
      * @return true if the transaction was started on a connection owned by an outer scope,
      * see {@link #bindConnectionSynchronizationsToTransaction()}
      * @since 5.3.0
      */
-    public boolean isConnectionSynchronizationsBound() {
-        return connectionSynchronizationsBound;
+    public boolean isConnectionOwnedByOuterScope() {
+        return connectionSynchronizationsBound && connectionRelease == null;
     }
 
     @Override

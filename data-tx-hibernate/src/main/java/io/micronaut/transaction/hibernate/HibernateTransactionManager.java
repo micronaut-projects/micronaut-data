@@ -221,7 +221,7 @@ public final class HibernateTransactionManager extends AbstractDefaultTransactio
     }
 
     private static boolean isNewSession(DefaultTransactionStatus<Session> tx) {
-        return tx.getConnectionStatus().isNew() && !tx.isConnectionSynchronizationsBound();
+        return tx.getConnectionStatus().isNew() && !tx.isConnectionOwnedByOuterScope();
     }
 
     @Override

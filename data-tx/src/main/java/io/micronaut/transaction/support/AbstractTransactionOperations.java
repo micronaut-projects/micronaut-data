@@ -177,15 +177,8 @@ public abstract class AbstractTransactionOperations<T extends InternalTransactio
             ConnectionStatus<C> connectionStatus = connectionOperations.findConnectionStatus().orElse(null);
             if (connectionStatus == null) {
                 ConnectionStatus<C> newConnectionStatus = synchronousConnectionManager.getConnection(txConnectionDefinition(definition));
-                T transactionStatus = createAndBeginTransaction(definition, newConnectionStatus,
+                return createAndBeginTransaction(definition, newConnectionStatus,
                     () -> synchronousConnectionManager.complete(newConnectionStatus));
-                transactionStatus.registerInvocationSynchronization(new TransactionSynchronization() {
-                    @Override
-                    public void afterCompletion(Status status) {
-                        synchronousConnectionManager.complete(newConnectionStatus);
-                    }
-                });
-                return transactionStatus;
             }
             return createAndBeginTransactionOnExistingConnection(definition, connectionStatus);
         }
@@ -196,21 +189,13 @@ public abstract class AbstractTransactionOperations<T extends InternalTransactio
         if (definition.getPropagationBehavior() == TransactionDefinition.Propagation.REQUIRES_NEW || definition.getPropagationBehavior() == TransactionDefinition.Propagation.NOT_SUPPORTED) {
             doSuspend(existingTransaction);
             ConnectionStatus<C> newConnection = synchronousConnectionManager.getConnection(ConnectionDefinition.REQUIRES_NEW);
-            T newTransaction = createAndBeginTransaction(definition, newConnection, () -> {
+            return createAndBeginTransaction(definition, newConnection, () -> {
                 try {
-                    synchronousConnectionManager.complete(newConnection);
+                    doResume(existingTransaction);
                 } finally {
-                    doResume(existingTransaction);
-                }
-            });
-            newTransaction.registerInvocationSynchronization(new TransactionSynchronization() {
-                @Override
-                public void afterCompletion(Status status) {
-                    doResume(existingTransaction);
                     synchronousConnectionManager.complete(newConnection);
                 }
             });
-            return newTransaction;
         }
         T existingTransactionStatus = createExistingTransactionStatus(definition, existingTransaction);
         begin(existingTransactionStatus);
@@ -585,49 +570,57 @@ public abstract class AbstractTransactionOperations<T extends InternalTransactio
         return transaction;
     }
 
+    /**
+     * Creates and begins a transaction owning a new connection. The connection state is restored
+     * and the connection released when the transaction completes, or when the begin fails.
+     *
+     * @param definition       The transaction definition
+     * @param connectionStatus The new connection status
+     * @param release          The release of the connection
+     * @return The transaction
+     */
     // Sonar java:S1181 -- the connection needs to be released after any begin failure, errors included
     @SuppressWarnings("java:S1181")
     private T createAndBeginTransaction(@NonNull TransactionDefinition definition,
                                         @NonNull ConnectionStatus<C> connectionStatus,
-                                        @NonNull Runnable releaseOnBeginFailure) {
+                                        @NonNull Runnable release) {
         T transaction;
         try {
             transaction = createTransaction(definition, connectionStatus);
         } catch (RuntimeException | Error e) {
-            runAfterBeginFailure(releaseOnBeginFailure, e);
+            runAfterBeginFailure(release, e);
             throw e;
         }
-        try {
-            begin(transaction);
-        } catch (RuntimeException | Error e) {
-            rollbackAfterBeginFailure(transaction, e);
-            // Releasing the connection restores its state
-            runAfterBeginFailure(releaseOnBeginFailure, e);
-            throw e;
-        }
+        transaction.bindConnectionSynchronizationsToTransaction(release);
+        beginOrCleanup(transaction);
         return transaction;
     }
 
-    // Sonar java:S1181 -- the connection state must be restored after any begin failure, errors included
-    @SuppressWarnings("java:S1181")
     private T createAndBeginTransactionOnExistingConnection(@NonNull TransactionDefinition definition,
                                                            @NonNull ConnectionStatus<C> connectionStatus) {
         T transaction = createTransaction(definition, connectionStatus);
         // The connection is owned by an outer scope: the connection state changed by the transaction
         // needs to be restored when the transaction completes, not when the outer scope completes
         transaction.bindConnectionSynchronizationsToTransaction();
+        beginOrCleanup(transaction);
+        return transaction;
+    }
+
+    // Sonar java:S1181 -- the connection state must be restored after any begin failure, errors included
+    @SuppressWarnings("java:S1181")
+    private void beginOrCleanup(T transaction) {
         try {
             begin(transaction);
         } catch (RuntimeException | Error e) {
-            if (rollbackAfterBeginFailure(transaction, e)) {
-                cleanupAfterCompletion(transaction, e);
-            } else {
+            if (!rollbackAfterBeginFailure(transaction, e)) {
                 // Restoring the auto-commit would commit the partially started transaction
                 logger.warn("Not restoring the connection state of a transaction that failed to begin and to roll back");
+                transaction.discardConnectionSynchronizations();
             }
+            // Restores the connection state and releases a connection owned by the transaction
+            cleanupAfterCompletion(transaction, e);
             throw e;
         }
-        return transaction;
     }
 
     /**

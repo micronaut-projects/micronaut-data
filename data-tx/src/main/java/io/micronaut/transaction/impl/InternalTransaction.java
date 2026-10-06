@@ -119,6 +119,33 @@ public interface InternalTransaction<T> extends TransactionStatus<T> {
     }
 
     /**
+     * Binds the synchronizations registered by {@link #registerConnectionSynchronization(ConnectionSynchronization)}
+     * and the release of the connection to this transaction. Used when the transaction owns the connection.
+     * The connection is released at {@link #cleanupAfterCompletion()}, after the connection state is restored.
+     *
+     * @param release The release of the connection
+     * @since 5.3.0
+     */
+    default void bindConnectionSynchronizationsToTransaction(@NonNull Runnable release) {
+        registerInvocationSynchronization(new TransactionSynchronization() {
+            @Override
+            public void afterCompletion(Status status) {
+                release.run();
+            }
+        });
+    }
+
+    /**
+     * Discards the connection synchronizations bound to this transaction without executing them.
+     * Used when restoring the connection state is unsafe, for example, restoring the auto-commit
+     * of a partially started transaction that couldn't be rolled back would commit it.
+     *
+     * @since 5.3.0
+     */
+    default void discardConnectionSynchronizations() {
+    }
+
+    /**
      * The variation of {@link #registerSynchronization(TransactionSynchronization)} that is always executed on the current TX invocation.
      * The ordinary {@link #registerSynchronization(TransactionSynchronization)} will always bound the synchronization to the TX in progress.
      * @param synchronization The synchronization
