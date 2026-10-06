@@ -894,8 +894,13 @@ public final class MongoQueryBuilder implements QueryBuilder {
         } else if (obj instanceof Number) {
             sb.append(obj);
         } else {
-            sb.append('\'').append(obj.toString().replace("'", "\\'")).append('\'');
+            appendString(sb, obj.toString());
         }
+    }
+
+    private static void appendString(StringBuilder sb, String value) {
+        // The string is single-quoted, a backslash starts an escape sequence in the JSON parsed by MongoDB
+        sb.append('\'').append(value.replace("\\", "\\\\").replace("'", "\\'")).append('\'');
     }
 
     private boolean shouldEscapeKey(String s) {
