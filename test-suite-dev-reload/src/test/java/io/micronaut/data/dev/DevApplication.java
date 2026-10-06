@@ -74,8 +74,6 @@ final class DevApplication {
             import java.util.ArrayList;
             import java.util.List;
 
-import static org.junit.jupiter.api.Assertions.assertEquals;
-
             @jakarta.inject.Singleton
             public class Library {
                 private final BookRepository books;
@@ -187,8 +185,6 @@ import static org.junit.jupiter.api.Assertions.assertEquals;
 
             import java.util.List;
 
-import static org.junit.jupiter.api.Assertions.assertEquals;
-
             @JdbcRepository(dialect = Dialect.H2)
             public interface BookRepository extends CrudRepository<Book, Long> {
                 List<Book> findByPagesGreaterThan(int pages);
@@ -199,8 +195,6 @@ import static org.junit.jupiter.api.Assertions.assertEquals;
 
             import java.util.ArrayList;
             import java.util.List;
-
-import static org.junit.jupiter.api.Assertions.assertEquals;
 
             @jakarta.inject.Singleton
             public class Library {

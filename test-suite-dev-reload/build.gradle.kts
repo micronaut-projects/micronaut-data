@@ -17,7 +17,7 @@ dependencies {
     testImplementation(mnTest.junit.jupiter.params)
     testRuntimeOnly(mnTest.junit.jupiter.engine)
     testRuntimeOnly(mnTest.junit.platform.launcher)
-    testRuntimeOnly(mnLogging.logback.classic)
+    testImplementation(mnLogging.logback.classic)
 }
 
 tasks.test {
