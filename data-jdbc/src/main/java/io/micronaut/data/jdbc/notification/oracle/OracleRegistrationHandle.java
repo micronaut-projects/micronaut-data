@@ -20,19 +20,16 @@ import oracle.jdbc.dcn.DatabaseChangeRegistration;
 import java.util.function.Consumer;
 
 /**
- * Associates one physical registration with its local renewal deadline and delivery lifecycle actions.
+ * Associates one physical registration with its delivery lifecycle actions.
  *
  * @param registration           the physical Oracle registration
- * @param logicalExpirationNanos the local renewal deadline measured before registration begins, or zero when
- *                               renewal is disabled
  * @param retirementAction       stops new data callbacks and optionally discards queued callbacks
- * @param invalidationAction     dispatches an {@code INVALIDATE} event after this lease replaces an
+ * @param invalidationAction     dispatches an {@code INVALIDATE} event after this registration replaces an
  *                               unavailable registration
  */
-record OracleRegistrationLease(DatabaseChangeRegistration registration,
-                               long logicalExpirationNanos,
-                               Consumer<Boolean> retirementAction,
-                               Runnable invalidationAction) {
+record OracleRegistrationHandle(DatabaseChangeRegistration registration,
+                                Consumer<Boolean> retirementAction,
+                                Runnable invalidationAction) {
     /**
      * Retires data delivery locally while retaining database lifecycle callbacks.
      *

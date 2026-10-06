@@ -17,7 +17,6 @@ package io.micronaut.data.jdbc.notification.oracle
 
 import io.micronaut.context.BeanContext
 import io.micronaut.data.exceptions.DataAccessException
-import io.micronaut.data.jdbc.annotation.OracleChangeNotification
 import io.micronaut.data.jdbc.runtime.ConnectionCallback
 import io.micronaut.data.jdbc.runtime.JdbcOperations
 import io.micronaut.inject.ExecutableMethod
@@ -34,133 +33,9 @@ import java.sql.Connection
 import java.sql.ResultSet
 import java.sql.SQLException
 import java.sql.Statement
-import java.time.Duration
-import java.util.concurrent.CountDownLatch
 import java.util.concurrent.Executor
-import java.util.concurrent.ScheduledFuture
-import java.util.concurrent.TimeUnit
-import java.util.concurrent.atomic.AtomicLong
-import java.util.concurrent.atomic.AtomicReference
-import java.util.function.LongSupplier
 
 class OracleChangeNotificationSubscriptionManagerSpec extends Specification {
-
-    void "unregisters a replacement only once when shutdown races its activation"() {
-        given:
-        def operations = Mock(JdbcOperations)
-        def connection = Mock(Connection)
-        def oracleConnection = mockOracleConnection()
-        def original = mockRegistration()
-        def replacement = mockRegistration()
-        def firstStatement = Mock(Statement)
-        def secondStatement = Mock(Statement)
-        def firstOracleStatement = Mock(OracleStatement)
-        def secondOracleStatement = Mock(OracleStatement)
-        def resultSet = Mock(ResultSet)
-        def method = Mock(ExecutableMethod)
-        method.getDescription(true) >> "void onChange(ChangeEvent<Book>)"
-        def scheduledTasks = []
-        def scheduler = Mock(TaskScheduler)
-        scheduler.schedule(_ as Duration, _ as Runnable) >> { Duration ignoredDelay, Runnable task ->
-            scheduledTasks << task
-            Mock(ScheduledFuture)
-        }
-        def renewalTasks = []
-        Executor executor = { Runnable command -> renewalTasks << command } as Executor
-        def manager = new OracleChangeNotificationSubscriptionManager(
-            "inventory", operations, Mock(BeanContext), executor, scheduler,
-            [definition("SELECT * FROM BOOK", method)])
-        def replacementAssociationStarted = new CountDownLatch(1)
-        def continueReplacementAssociation = new CountDownLatch(1)
-        def renewalFailure = new AtomicReference<Throwable>()
-
-        operations.execute(_ as ConnectionCallback) >> { ConnectionCallback<?> callback -> callback.call(connection) }
-        connection.unwrap(OracleConnection) >> oracleConnection
-        connection.createStatement() >>> [firstStatement, secondStatement]
-        firstStatement.unwrap(OracleStatement) >> firstOracleStatement
-        secondStatement.unwrap(OracleStatement) >> secondOracleStatement
-        firstStatement.executeQuery("SELECT * FROM BOOK") >> resultSet
-        secondStatement.executeQuery("SELECT * FROM BOOK") >> {
-            replacementAssociationStarted.countDown()
-            if (!continueReplacementAssociation.await(5, TimeUnit.SECONDS)) {
-                throw new AssertionError("Timed out waiting for shutdown")
-            }
-            resultSet
-        }
-
-        when:
-        manager.start()
-        scheduledTasks.first().run()
-        def renewalThread = new Thread({
-            try {
-                renewalTasks.first().run()
-            } catch (Throwable e) {
-                renewalFailure.set(e)
-            }
-        })
-        renewalThread.start()
-        def replacementWasTracked = replacementAssociationStarted.await(5, TimeUnit.SECONDS)
-        def shutdown = manager.stop()
-        def shutdownWaitedForRenewal = !shutdown.toCompletableFuture().isDone()
-        continueReplacementAssociation.countDown()
-        renewalThread.join(5000)
-        shutdown.toCompletableFuture().join()
-
-        then:
-        replacementWasTracked
-        shutdownWaitedForRenewal
-        !renewalThread.alive
-        renewalFailure.get() == null
-        2 * oracleConnection.registerDatabaseChangeNotification(_ as Properties, _ as DatabaseChangeListener) >>> [original, replacement]
-        1 * oracleConnection.unregisterDatabaseChangeNotification(original)
-        1 * oracleConnection.unregisterDatabaseChangeNotification(replacement)
-    }
-
-    void "schedules overlapping renewal from registration creation after a #associationSeconds second association"() {
-        given:
-        def operations = Mock(JdbcOperations)
-        def connection = Mock(Connection)
-        def oracleConnection = mockOracleConnection()
-        def registration = mockRegistration()
-        def statement = Mock(Statement)
-        def oracleStatement = Mock(OracleStatement)
-        def resultSet = Mock(ResultSet)
-        def method = Mock(ExecutableMethod)
-        method.getDescription(true) >> "void onChange(ChangeEvent<Book>)"
-        def scheduledDelays = []
-        def scheduler = Mock(TaskScheduler)
-        scheduler.schedule(_ as Duration, _ as Runnable) >> { Duration delay, Runnable ignoredTask ->
-            scheduledDelays << delay.toNanos()
-            Mock(ScheduledFuture)
-        }
-        def nanoTimeSupplier = new AtomicLong()
-        Executor executor = { Runnable command -> command.run() } as Executor
-        def manager = new OracleChangeNotificationSubscriptionManager("inventory", operations, Mock(BeanContext), executor, scheduler,
-            [definition("SELECT * FROM BOOK", method,
-                new OracleChangeNotificationRenewalPolicy(10, OracleChangeNotification.RenewalMode.OVERLAPPING, 2))],
-            { nanoTimeSupplier.get() } as LongSupplier)
-
-        operations.execute(_ as ConnectionCallback) >> { ConnectionCallback<?> callback -> callback.call(connection) }
-        connection.unwrap(OracleConnection) >> oracleConnection
-        oracleConnection.registerDatabaseChangeNotification(_ as Properties, _ as DatabaseChangeListener) >> registration
-        connection.createStatement() >> statement
-        statement.unwrap(OracleStatement) >> oracleStatement
-        statement.executeQuery("SELECT * FROM BOOK") >> {
-            nanoTimeSupplier.addAndGet(TimeUnit.SECONDS.toNanos(associationSeconds))
-            resultSet
-        }
-
-        when:
-        manager.start()
-
-        then:
-        scheduledDelays == [TimeUnit.SECONDS.toNanos(expectedDelaySeconds)]
-
-        where:
-        associationSeconds | expectedDelaySeconds
-        3                  | 5
-        9                  | 0
-    }
 
     void "starts constructor-defined subscriptions only once despite changes to input definitions"() {
         given:
@@ -379,20 +254,12 @@ class OracleChangeNotificationSubscriptionManagerSpec extends Specification {
     }
 
     private static OracleChangeListenerDefinition definition(String query, ExecutableMethod<?, ?> method) {
-        return definition(query, method,
-            new OracleChangeNotificationRenewalPolicy(3600, OracleChangeNotification.RenewalMode.OVERLAPPING, 60))
-    }
-
-    private static OracleChangeListenerDefinition definition(String query,
-                                                               ExecutableMethod<?, ?> method,
-                                                               OracleChangeNotificationRenewalPolicy renewalPolicy) {
         return new OracleChangeListenerDefinition(null, method, OracleTableIdentifier.parse("BOOK"), query, null,
-            new Properties(), renewalPolicy)
+            new Properties())
     }
 
     private TaskScheduler scheduler() {
         def scheduler = Mock(TaskScheduler)
-        scheduler.schedule(_ as Duration, _ as Runnable) >> Mock(ScheduledFuture)
         return scheduler
     }
 

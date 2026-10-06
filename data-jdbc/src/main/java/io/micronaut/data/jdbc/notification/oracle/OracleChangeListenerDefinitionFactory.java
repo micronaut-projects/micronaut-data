@@ -35,8 +35,8 @@ import java.util.Properties;
  *
  * <p>The factory resolves the entity's mapped Oracle table, reads the compile-time generated
  * {@code ROWID} reload query, copies the annotation's registration properties, applies the
- * client-initiated connection default, adds the required Oracle {@code ROWID} and timeout
- * settings, derives the renewal policy, and builds the registration query.</p>
+ * client-initiated connection default, adds the required Oracle {@code ROWID} and
+ * application-lifetime settings, and builds the registration query.</p>
  *
  * <p>The annotation processor validates listener configuration at compile time. Runtime checks
  * here identify missing Oracle metadata before registration is attempted.</p>
@@ -52,7 +52,7 @@ final class OracleChangeListenerDefinitionFactory {
      * Creates the Oracle runtime definition for one discovered listener method.
      *
      * @param listenerMethod the validated listener method and entity type
-     * @return its table mapping, registration query, reload query, properties, and renewal policy
+     * @return its table mapping, registration query, reload query, and properties
      */
     OracleChangeListenerDefinition create(ChangeListenerMethod listenerMethod) {
         ExecutableMethod<?, ?> method = listenerMethod.method();
@@ -68,36 +68,14 @@ final class OracleChangeListenerDefinitionFactory {
         String reloadQuery = method.stringValue(OracleChangeListenerQuery.class)
             .orElseThrow(() -> invalidChangeListener(method, "is missing its generated Oracle ROWID reload query"));
         Properties properties = registrationProperties(notification);
-        OracleChangeNotificationRenewalPolicy renewalPolicy = renewalPolicy(notification, properties);
         return new OracleChangeListenerDefinition(
             listenerMethod.beanDefinition(),
             method,
             tableIdentifier,
             registrationQuery(notification, tableIdentifier),
             new OracleChangeListenerEntityLoader<>(operations, entityArgument.getType(), reloadQuery),
-            properties,
-            renewalPolicy
+            properties
         );
-    }
-
-    /**
-     * Resolves renewal settings and adds the corresponding server timeout to registration options.
-     *
-     * @param notification the listener's Oracle notification annotation
-     * @param properties   the registration properties to update with the server timeout
-     * @return the renewal policy
-     */
-    private static OracleChangeNotificationRenewalPolicy renewalPolicy(AnnotationValue<OracleChangeNotification> notification,
-                                                                       Properties properties) {
-        int timeoutSeconds = notification.intValue("timeoutSeconds").orElse(0);
-        int leadTimeSeconds = notification.intValue("renewalLeadTimeSeconds").orElse(60);
-        OracleChangeNotification.RenewalMode mode = notification
-            .enumValue("renewal", OracleChangeNotification.RenewalMode.class)
-            .orElse(OracleChangeNotification.RenewalMode.NONE);
-        OracleChangeNotificationRenewalPolicy renewalPolicy =
-            new OracleChangeNotificationRenewalPolicy(timeoutSeconds, mode, leadTimeSeconds);
-        properties.setProperty(OracleConnection.NTF_TIMEOUT, Integer.toString(renewalPolicy.serverTimeoutSeconds()));
-        return renewalPolicy;
     }
 
     /**
@@ -117,6 +95,7 @@ final class OracleChangeListenerDefinitionFactory {
         }
         properties.putIfAbsent(OracleConnection.DCN_CLIENT_INIT_CONNECTION, "true");
         properties.setProperty(OracleConnection.DCN_NOTIFY_ROWIDS, "true");
+        properties.setProperty(OracleConnection.NTF_TIMEOUT, "0");
         return properties;
     }
 

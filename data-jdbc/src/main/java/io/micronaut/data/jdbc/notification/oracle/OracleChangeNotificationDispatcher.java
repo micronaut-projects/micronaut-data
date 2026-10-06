@@ -67,9 +67,9 @@ import java.util.function.LongConsumer;
  * <p>Listener invocation failures are logged and do not prevent subsequent changes from being
  * dispatched.</p>
  *
- * <p>Local retirement stops new data callbacks without disabling lifecycle callbacks. Overlapping
- * renewal preserves accepted queued data callbacks; after-expiration renewal discards them.
- * A callback that has already started may finish in either mode.</p>
+ * <p>Local retirement stops new data callbacks without disabling lifecycle callbacks. Failure
+ * recovery discards queued callbacks from an unavailable registration. A callback that has already
+ * started may finish.</p>
  */
 final class OracleChangeNotificationDispatcher implements DatabaseChangeListener {
     private static final Logger LOG = LoggerFactory.getLogger(OracleChangeNotificationDispatcher.class);

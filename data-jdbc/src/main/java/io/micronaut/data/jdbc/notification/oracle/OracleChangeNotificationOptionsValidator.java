@@ -130,7 +130,7 @@ final class OracleChangeNotificationOptionsValidator {
             return name + " is not supported because AQ pull delivery does not invoke the listener callback";
         }
         if (userConfiguredOption && OracleConnection.NTF_TIMEOUT.equals(name)) {
-            return name + ": must configure Oracle registration timeout with timeoutSeconds";
+            return name + ": registration timeouts are not supported for application-lifetime listeners";
         }
         return null;
     }

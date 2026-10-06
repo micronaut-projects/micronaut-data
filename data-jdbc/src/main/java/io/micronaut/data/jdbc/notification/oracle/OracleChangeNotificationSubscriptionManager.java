@@ -27,7 +27,6 @@ import java.util.OptionalLong;
 import java.util.concurrent.CompletionStage;
 import java.util.concurrent.Executor;
 import java.util.concurrent.atomic.AtomicBoolean;
-import java.util.function.LongSupplier;
 
 /**
  * Manages all Oracle Continuous Query Notification registrations for one datasource.
@@ -38,14 +37,14 @@ import java.util.function.LongSupplier;
  * <p>Each listener definition can have distinct registration SQL and Oracle properties. Therefore,
  * this manager coordinates multiple logical {@link OracleChangeNotificationSubscription}
  * instances rather than representing a single Oracle registration. Each subscription owns the
- * physical registrations and renewal state for one listener. All definitions are supplied during
+ * physical registrations and failure recovery for one listener. All definitions are supplied during
  * construction; the subscription collection is immutable and cannot accept later additions.</p>
  *
  * <p>The manager starts at most once. Registration startup is atomic: if one definition fails,
  * registrations completed during that start attempt are unregistered before the failure is
  * propagated.</p>
  *
- * <p>During shutdown, the manager cancels scheduled renewals, rejects new tasks, makes one
+ * <p>During shutdown, the manager cancels scheduled recovery retries, rejects new tasks, makes one
  * best-effort unregister attempt for each registration it still owns, and waits for already-running
  * dispatch and registration lifecycle tasks to finish. Work still queued on an executor is not
  * included in that wait.</p>
@@ -64,22 +63,12 @@ final class OracleChangeNotificationSubscriptionManager {
                                                 Executor blockingExecutor,
                                                 TaskScheduler taskScheduler,
                                                 List<OracleChangeListenerDefinition> listenerDefinitions) {
-        this(dataSourceName, operations, beanContext, blockingExecutor, taskScheduler, listenerDefinitions, System::nanoTime);
-    }
-
-    OracleChangeNotificationSubscriptionManager(String dataSourceName,
-                                                JdbcOperations operations,
-                                                BeanContext beanContext,
-                                                Executor blockingExecutor,
-                                                TaskScheduler taskScheduler,
-                                                List<OracleChangeListenerDefinition> listenerDefinitions,
-                                                LongSupplier nanoTimeSupplier) {
         this.dataSourceName = dataSourceName;
         OracleChangeNotificationRegistrar registrar = new OracleChangeNotificationRegistrar(
-            dataSourceName, operations, beanContext, blockingExecutor, taskTracker, nanoTimeSupplier);
+            dataSourceName, operations, beanContext, blockingExecutor, taskTracker);
         this.subscriptions = listenerDefinitions.stream()
             .map(definition -> new OracleChangeNotificationSubscription(
-                dataSourceName, definition, registrar, blockingExecutor, taskScheduler, taskTracker, nanoTimeSupplier))
+                dataSourceName, definition, registrar, blockingExecutor, taskScheduler, taskTracker))
             .toList();
     }
 
@@ -108,13 +97,13 @@ final class OracleChangeNotificationSubscriptionManager {
     }
 
     /**
-     * Stops renewals and dispatch admission, attempts cleanup, and returns when running tasks finish.
+     * Stops recovery work and dispatch admission, attempts cleanup, and returns when running tasks finish.
      *
      * @return completion stage for currently running dispatch and registration lifecycle tasks
      */
     CompletionStage<?> stop() {
         LOG.trace("Stopping [{}] DCN subscriptions for datasource [{}]", subscriptions.size(), dataSourceName);
-        subscriptions.forEach(OracleChangeNotificationSubscription::stopRenewal);
+        subscriptions.forEach(OracleChangeNotificationSubscription::stop);
         CompletionStage<Void> completion = taskTracker.shutdownGracefully();
         subscriptions.forEach(OracleChangeNotificationSubscription::unregisterAll);
         return completion;

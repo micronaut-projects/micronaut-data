@@ -54,7 +54,7 @@ import java.util.concurrent.Executor;
  * for each participating datasource. Registration supplies the complete set of discovered listener
  * methods once per datasource; later registration calls for that datasource are rejected.</p>
  *
- * <p>Each subscription manager owns the physical Oracle registrations and their renewal lifecycle.
+ * <p>Each subscription manager owns the physical Oracle registrations and their lifecycle.
  * A {@link ShutdownEvent} starts cleanup before datasources are destroyed. This provider also
  * coordinates graceful shutdown across all datasource managers, including waiting for already
  * running notification tasks to complete. {@link PreDestroy} provides fallback cleanup if the

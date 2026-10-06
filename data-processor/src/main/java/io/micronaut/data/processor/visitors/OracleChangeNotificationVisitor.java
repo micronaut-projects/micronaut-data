@@ -119,7 +119,7 @@ public final class OracleChangeNotificationVisitor implements TypeElementVisitor
     }
 
     /**
-     * Validates registration timing, notification mode, Oracle properties, and select configuration.
+     * Validates notification mode, Oracle properties, and select configuration.
      *
      * @param annotationMetadata the listener method's annotation metadata
      * @param context            the compilation visitor context used to report errors
@@ -137,22 +137,6 @@ public final class OracleChangeNotificationVisitor implements TypeElementVisitor
             return false;
         }
         String where = annotationMetadata.stringValue(ORACLE_CHANGE_NOTIFICATION, "where").orElse("").trim();
-        int timeoutSeconds = annotationMetadata.intValue(ORACLE_CHANGE_NOTIFICATION, "timeoutSeconds").orElse(0);
-        int leadTimeSeconds = annotationMetadata.intValue(ORACLE_CHANGE_NOTIFICATION, "renewalLeadTimeSeconds").orElse(60);
-        String renewal = annotationMetadata.stringValue(ORACLE_CHANGE_NOTIFICATION, "renewal").orElse("NONE");
-        if (timeoutSeconds < 0) {
-            context.fail("@OracleChangeNotification requires timeoutSeconds to be at least 0", element);
-            return false;
-        }
-        if (!"NONE".equals(renewal) && timeoutSeconds == 0) {
-            context.fail("@OracleChangeNotification requires timeoutSeconds to be greater than 0", element);
-            return false;
-        }
-        if ("OVERLAPPING".equals(renewal) && (leadTimeSeconds <= 0 || leadTimeSeconds >= timeoutSeconds)) {
-            context.fail("@OracleChangeNotification requires renewalLeadTimeSeconds to be greater than 0 "
-                + "and less than timeoutSeconds", element);
-            return false;
-        }
         boolean queryChangeNotification = false;
         var properties = annotationMetadata.findAnnotation(ORACLE_CHANGE_NOTIFICATION)
             .map(annotation -> annotation.getAnnotations("properties"))
@@ -260,7 +244,7 @@ public final class OracleChangeNotificationVisitor implements TypeElementVisitor
         } else if ("DCN_NOTIFY_ROWIDS".equals(name) && !"true".equalsIgnoreCase(value)) {
             error = "requires " + name + " to be true so row-level operation and ROWID details are available";
         } else if (NOTIFICATION_TIMEOUT.equals(name)) {
-            error = "must configure Oracle registration timeout with timeoutSeconds";
+            error = NOTIFICATION_TIMEOUT + ": registration timeouts are not supported for application-lifetime listeners";
         } else if ("DCN_CLIENT_INIT_REGID".equals(name)) {
             error = name + ": reusing an existing reliable DCN registration is not supported";
         } else if ("NTF_GROUPING_CLASS".equals(name) && !"NTF_GROUPING_CLASS_NONE".equals(value)) {

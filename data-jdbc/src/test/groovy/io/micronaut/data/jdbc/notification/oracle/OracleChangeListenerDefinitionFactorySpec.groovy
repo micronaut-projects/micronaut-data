@@ -57,17 +57,13 @@ class OracleChangeListenerDefinitionFactorySpec extends Specification {
         !definition.tableIdentifier().matches('"OTHER"."ORDER.ITEMS"')
         definition.registrationProperties().getProperty(OracleConnection.DCN_CLIENT_INIT_CONNECTION) == 'true'
         definition.registrationProperties().getProperty(OracleConnection.NTF_TIMEOUT) == '0'
-        definition.renewalPolicy().timeoutSeconds() == 0
-        definition.renewalPolicy().mode() == OracleChangeNotification.RenewalMode.NONE
-        definition.renewalPolicy().leadTimeSeconds() == 60
     }
 
     void "builds a query result registration query and preserves its Oracle properties"() {
         given:
         def operations = operations()
         def listenerMethod = listenerMethod(notification(
-                [select : 'id, title', where: 'enabled = 1', timeoutSeconds: 120,
-                 renewal: OracleChangeNotification.RenewalMode.AFTER_EXPIRATION],
+                [select : 'id, title', where: 'enabled = 1'],
                 [
                         [name: OracleConnection.DCN_QUERY_CHANGE_NOTIFICATION, value: 'true'],
                         [name: OracleConnection.DCN_CLIENT_INIT_CONNECTION, value: 'false'],
@@ -86,43 +82,8 @@ class OracleChangeListenerDefinitionFactorySpec extends Specification {
         definition.registrationProperties().getProperty(OracleConnection.NTF_QOS_PURGE_ON_NTFN) == 'true'
         definition.registrationProperties().getProperty('CUSTOM_PROPERTY') == 'custom-value'
         definition.registrationProperties().getProperty(OracleConnection.DCN_NOTIFY_ROWIDS) == 'true'
-        definition.registrationProperties().getProperty(OracleConnection.NTF_TIMEOUT) == '180'
-        definition.renewalPolicy().timeoutSeconds() == 120
-        definition.renewalPolicy().mode() == OracleChangeNotification.RenewalMode.AFTER_EXPIRATION
-        definition.renewalPolicy().serverTimeoutSeconds() == 180
-        0 * operations.execute(_)
-    }
-
-    void "accepts zero timeout with no renewal"() {
-        given:
-        def operations = operations()
-        def listenerMethod = listenerMethod(notification([
-                timeoutSeconds        : 0,
-                renewal               : OracleChangeNotification.RenewalMode.NONE,
-                renewalLeadTimeSeconds: 0
-        ]))
-
-        when:
-        def definition = new OracleChangeListenerDefinitionFactory(operations).create(listenerMethod)
-
-        then:
         definition.registrationProperties().getProperty(OracleConnection.NTF_TIMEOUT) == '0'
-        definition.renewalPolicy().mode() == OracleChangeNotification.RenewalMode.NONE
-        !definition.renewalPolicy().renewable()
-    }
-
-    void "sets an Oracle timeout without renewal"() {
-        given:
-        def operations = operations()
-        def listenerMethod = listenerMethod(notification([timeoutSeconds: 10]))
-
-        when:
-        def definition = new OracleChangeListenerDefinitionFactory(operations).create(listenerMethod)
-
-        then:
-        definition.registrationProperties().getProperty(OracleConnection.NTF_TIMEOUT) == '10'
-        definition.renewalPolicy().mode() == OracleChangeNotification.RenewalMode.NONE
-        !definition.renewalPolicy().renewable()
+        0 * operations.execute(_)
     }
 
     void "accepts explicitly disabled grouping and pull options"() {

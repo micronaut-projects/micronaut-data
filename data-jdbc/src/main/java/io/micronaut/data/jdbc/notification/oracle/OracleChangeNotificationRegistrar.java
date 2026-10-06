@@ -31,18 +31,16 @@ import java.sql.SQLException;
 import java.sql.Statement;
 import java.util.Properties;
 import java.util.concurrent.Executor;
-import java.util.concurrent.TimeUnit;
-import java.util.function.LongSupplier;
 
 /**
  * Bridges logical change-listener subscriptions to physical Oracle JDBC registrations.
  *
  * <p>For each subscription, this component creates a {@link DatabaseChangeRegistration},
  * attaches the Oracle notification dispatcher, associates the generated registration query,
- * and returns an {@link OracleRegistrationLease} describing the registration lifetime.</p>
+ * and returns an {@link OracleRegistrationHandle} for its delivery lifecycle.</p>
  *
- * <p>It also unregisters physical Oracle registrations during cleanup. Registration renewal,
- * subscription state, and listener event dispatching are handled by other components.</p>
+ * <p>It also unregisters physical Oracle registrations during cleanup. Subscription state and
+ * listener event dispatching are handled by other components.</p>
  *
  * <p>The subscription manager creates one registrar for each participating datasource.</p>
  */
@@ -55,7 +53,6 @@ final class OracleChangeNotificationRegistrar {
     private final BeanContext beanContext;
     private final Executor blockingExecutor;
     private final OracleChangeNotificationTaskTracker taskTracker;
-    private final LongSupplier nanoTimeSupplier;
 
     /**
      * Creates a registrar for one datasource and the subscriptions managed for it.
@@ -65,20 +62,17 @@ final class OracleChangeNotificationRegistrar {
      * @param beanContext      the context used by the notification dispatcher to resolve listener beans
      * @param blockingExecutor the executor used for asynchronous notification processing
      * @param taskTracker      the tracker used to coordinate asynchronous work with shutdown
-     * @param nanoTimeSupplier a monotonic clock used to calculate registration lease deadlines
      */
     OracleChangeNotificationRegistrar(String dataSourceName,
                                       JdbcOperations operations,
                                       BeanContext beanContext,
                                       Executor blockingExecutor,
-                                      OracleChangeNotificationTaskTracker taskTracker,
-                                      LongSupplier nanoTimeSupplier) {
+                                      OracleChangeNotificationTaskTracker taskTracker) {
         this.dataSourceName = dataSourceName;
         this.operations = operations;
         this.beanContext = beanContext;
         this.blockingExecutor = blockingExecutor;
         this.taskTracker = taskTracker;
-        this.nanoTimeSupplier = nanoTimeSupplier;
     }
 
     /**
@@ -86,27 +80,21 @@ final class OracleChangeNotificationRegistrar {
      *
      * <p>The Oracle listeners are attached before the generated registration query is associated.
      * The registration is tracked before the driver failure listener is attached so an early
-     * failure callback can be retained by the subscription until its lease is activated. The
+     * failure callback can be retained by the subscription until its handle is activated. The
      * driver's effective registration options are validated and supplied to the dispatcher before
      * the query is associated. If setup or association fails, this method removes the registration
      * from local tracking and attempts to unregister it before propagating the failure.</p>
      *
      * @param subscription the subscription that owns the registration and receives its callbacks
-     * @return the registration lease, including its local renewal deadline when renewal is enabled,
-     * data-delivery retirement, and post-recovery invalidation actions
+     * @return the registration handle with data-delivery retirement and post-recovery
+     * invalidation actions
      * @throws RuntimeException if registration setup or query association fails
      */
-    OracleRegistrationLease createRegistration(OracleChangeNotificationSubscription subscription) {
+    OracleRegistrationHandle createRegistration(OracleChangeNotificationSubscription subscription) {
         OracleChangeListenerDefinition definition = subscription.getDefinition();
         return operations.execute(connection -> {
             OracleConnection oracleConnection = connection.unwrap(OracleConnection.class);
             validateConnectionOptions(oracleConnection, definition);
-            OracleChangeNotificationRenewalPolicy renewalPolicy = definition.renewalPolicy();
-            // Measure before registration starts so time spent creating it counts toward its renewal deadline.
-            // Non-renewing registrations have no local renewal deadline.
-            long logicalExpirationNanos = renewalPolicy.renewable()
-                ? nanoTimeSupplier.getAsLong() + TimeUnit.SECONDS.toNanos(renewalPolicy.timeoutSeconds())
-                : 0;
             OracleChangeNotificationDispatcher dispatcher = new OracleChangeNotificationDispatcher(
                 dataSourceName, definition, beanContext, blockingExecutor, taskTracker,
                 subscription::handleRegistrationPurged,
@@ -134,7 +122,7 @@ final class OracleChangeNotificationRegistrar {
                     }
                 }
                 long registrationId = registration.getRegId();
-                return new OracleRegistrationLease(registration, logicalExpirationNanos, dispatcher::retire,
+                return new OracleRegistrationHandle(registration, dispatcher::retire,
                     () -> dispatcher.dispatchInvalidation(registrationId, "after DCN registration recovery"));
             } catch (SQLException | RuntimeException e) {
                 dispatcher.retire(true);

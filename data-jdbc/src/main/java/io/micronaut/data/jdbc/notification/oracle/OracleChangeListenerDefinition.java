@@ -26,7 +26,7 @@ import java.util.Properties;
  * <p>The definition contains the listener method, the mapped table identity used to match
  * notification table names, the SQL query associated with the notification registration, the
  * requested registration properties, the entity loader used to reload current state for
- * non-deleted rows by {@code ROWID}, and the registration renewal policy.</p>
+ * non-deleted rows by {@code ROWID}.</p>
  *
  * @param beanDefinition         The bean definition that owns the listener method.
  * @param method                 The executable listener method.
@@ -35,14 +35,12 @@ import java.util.Properties;
  * @param entityLoader           The loader that resolves current entity state for a non-deleted row from its
  *                               {@code ROWID}; deleted rows cannot be reloaded.
  * @param registrationProperties The requested registration properties, including framework-required
- *                               {@code ROWID} notification and registration timeout settings.
- * @param renewalPolicy          The registration lifetime and replacement policy, if enabled.
+ *                               {@code ROWID} notification and application-lifetime settings.
  */
 record OracleChangeListenerDefinition(BeanDefinition<?> beanDefinition,
                                       ExecutableMethod<?, ?> method,
                                       OracleTableIdentifier tableIdentifier,
                                       String registrationQuery,
                                       OracleChangeListenerEntityLoader<?> entityLoader,
-                                      Properties registrationProperties,
-                                      OracleChangeNotificationRenewalPolicy renewalPolicy) {
+                                      Properties registrationProperties) {
 }

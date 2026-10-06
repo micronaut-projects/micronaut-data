@@ -23,7 +23,7 @@ import java.util.concurrent.CompletionStage;
  * Tracks running notification dispatch and registration lifecycle tasks for one datasource manager
  * so it can await outstanding work during graceful shutdown.
  *
- * <p>The dispatcher and subscription renewal or recovery work share one tracker. A task is counted only after
+ * <p>The dispatcher and subscription recovery work share one tracker. A task is counted only after
  * {@link #acceptTask()} successfully reserves it. Once {@link #shutdownGracefully()} is called,
  * no new task is accepted. Dispatch and lifecycle work queued on the executor is not counted until
  * it starts. The returned completion stage completes after every task running when shutdown begins
