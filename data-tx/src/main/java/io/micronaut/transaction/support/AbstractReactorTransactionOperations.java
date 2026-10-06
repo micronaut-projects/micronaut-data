@@ -20,6 +20,7 @@ import io.micronaut.core.annotation.Internal;
 import org.jspecify.annotations.NonNull;
 import org.jspecify.annotations.Nullable;
 import io.micronaut.core.async.propagation.ReactorPropagation;
+import io.micronaut.data.connection.ConnectionDefinition;
 import io.micronaut.data.connection.ConnectionStatus;
 import io.micronaut.data.connection.reactive.ReactiveConnectionStatus;
 import io.micronaut.data.connection.reactive.ReactiveConnectionSynchronization;
@@ -146,8 +147,12 @@ public abstract class AbstractReactorTransactionOperations<C> implements Reactor
     protected <T> Flux<T> withTransactionFlux(@Nullable ReactiveTransactionStatus<C> transactionStatus, TransactionDefinition definition, TransactionalCallback<C, T> handler) {
         TransactionDefinition.Propagation propagationBehavior = definition.getPropagationBehavior();
         if (transactionStatus != null) {
-            if (propagationBehavior == TransactionDefinition.Propagation.NOT_SUPPORTED || propagationBehavior == TransactionDefinition.Propagation.NEVER) {
+            if (propagationBehavior == TransactionDefinition.Propagation.NEVER) {
                 return Flux.error(propagationNotSupported(propagationBehavior));
+            }
+            if (propagationBehavior == TransactionDefinition.Propagation.NOT_SUPPORTED) {
+                // The existing transaction is suspended: execute without a transaction on a new connection
+                return openNewConnectionWithoutTx(newConnectionDefinition(definition), definition, handler);
             }
             if (propagationBehavior == TransactionDefinition.Propagation.REQUIRES_NEW) {
                 return openNewConnectionAndTx(definition, handler);
@@ -160,7 +165,18 @@ public abstract class AbstractReactorTransactionOperations<C> implements Reactor
         if (propagationBehavior == TransactionDefinition.Propagation.MANDATORY) {
             return Flux.error(expectedTransaction());
         }
+        if (isWithoutTransaction(propagationBehavior)) {
+            return openNewConnectionWithoutTx(definition.getConnectionDefinition(), definition, handler);
+        }
         return openNewConnectionAndTx(definition, handler);
+    }
+
+    private <T> Flux<T> openNewConnectionWithoutTx(ConnectionDefinition connectionDefinition,
+                                                   TransactionDefinition definition,
+                                                   TransactionalCallback<C, T> handler) {
+        return connectionOperations.withConnectionFlux(connectionDefinition, connectionStatus ->
+            executeCallbackFlux(noTransaction(connectionStatus, definition), handler)
+        );
     }
 
     private <T> Flux<T> openNewConnectionAndTx(TransactionDefinition definition, TransactionalCallback<C, T> handler) {
@@ -181,8 +197,12 @@ public abstract class AbstractReactorTransactionOperations<C> implements Reactor
             ReactiveTransactionStatus<C> transactionStatus = getTransactionStatus(contextView);
             TransactionDefinition.Propagation propagationBehavior = definition.getPropagationBehavior();
             if (transactionStatus != null) {
-                if (propagationBehavior == TransactionDefinition.Propagation.NOT_SUPPORTED || propagationBehavior == TransactionDefinition.Propagation.NEVER) {
+                if (propagationBehavior == TransactionDefinition.Propagation.NEVER) {
                     return Mono.error(propagationNotSupported(propagationBehavior));
+                }
+                if (propagationBehavior == TransactionDefinition.Propagation.NOT_SUPPORTED) {
+                    // The existing transaction is suspended: execute without a transaction on a new connection
+                    return openNewConnectionWithoutTxMono(newConnectionDefinition(definition), definition, handler);
                 }
                 if (propagationBehavior == TransactionDefinition.Propagation.REQUIRES_NEW) {
                     return openNewConnectionAndTxMono(definition, handler);
@@ -195,8 +215,39 @@ public abstract class AbstractReactorTransactionOperations<C> implements Reactor
             if (propagationBehavior == TransactionDefinition.Propagation.MANDATORY) {
                 return Mono.error(expectedTransaction());
             }
+            if (isWithoutTransaction(propagationBehavior)) {
+                return openNewConnectionWithoutTxMono(definition.getConnectionDefinition(), definition, handler);
+            }
             return openNewConnectionAndTxMono(definition, handler);
         });
+    }
+
+    private <T> Mono<T> openNewConnectionWithoutTxMono(ConnectionDefinition connectionDefinition,
+                                                       TransactionDefinition definition,
+                                                       Function<ReactiveTransactionStatus<C>, Mono<T>> handler) {
+        return connectionOperations.withConnectionMono(connectionDefinition, connectionStatus ->
+            executeCallbackMono(noTransaction(connectionStatus, definition), handler)
+        );
+    }
+
+    /**
+     * Like the synchronous transaction manager, these propagations execute without a transaction when there is none.
+     *
+     * @param propagationBehavior The propagation
+     * @return true if the callback is executed without a transaction
+     */
+    private static boolean isWithoutTransaction(TransactionDefinition.Propagation propagationBehavior) {
+        return propagationBehavior == TransactionDefinition.Propagation.SUPPORTS
+            || propagationBehavior == TransactionDefinition.Propagation.NOT_SUPPORTED
+            || propagationBehavior == TransactionDefinition.Propagation.NEVER;
+    }
+
+    private static ConnectionDefinition newConnectionDefinition(TransactionDefinition definition) {
+        return definition.getConnectionDefinition().withPropagation(ConnectionDefinition.Propagation.REQUIRES_NEW);
+    }
+
+    private DefaultReactiveTransactionStatus<C> noTransaction(ConnectionStatus<C> connectionStatus, TransactionDefinition definition) {
+        return new DefaultReactiveTransactionStatus<>(connectionStatus, false, definition, this);
     }
 
     private <T> Mono<T> openNewConnectionAndTxMono(TransactionDefinition definition, Function<ReactiveTransactionStatus<C>, Mono<T>> handler) {
