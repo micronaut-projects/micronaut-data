@@ -215,8 +215,11 @@ public final class DataSourceTransactionManager extends AbstractDefaultTransacti
             .ifPresent(isolation -> JdbcConnectionUtils.applyTransactionIsolation(logger, connection, isolation.getCode(), onComplete));
         JdbcConnectionUtils.applyAutoCommit(logger, connection, false, onComplete);
 
-        //        prepareTransactionalConnection(connection, definition);
-
+        try {
+            prepareTransactionalConnection(connection, definition);
+        } catch (SQLException e) {
+            throw new CannotCreateTransactionException("Could not prepare JDBC Connection for the transaction", e);
+        }
         for (TransactionExecutionListener<Connection> transactionExecutionListener : transactionExecutionListeners) {
             transactionExecutionListener.afterBegin(status.getConnectionStatus(), definition);
         }
