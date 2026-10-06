@@ -231,13 +231,6 @@ public final class HibernateTransactionManager extends AbstractDefaultTransactio
     }
 
     @Override
-    protected void doRollbackAfterBeginFailure(DefaultTransactionStatus<Session> tx) {
-        if (tx.getTransaction() != null) {
-            doRollback(tx);
-        }
-    }
-
-    @Override
     protected void doNestedBegin(DefaultTransactionStatus<Session> status) {
         try {
             Session session = status.getConnection();
