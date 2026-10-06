@@ -18,6 +18,7 @@ package io.micronaut.data.connection.reactive;
 import io.micronaut.core.annotation.Internal;
 import org.jspecify.annotations.Nullable;
 import io.micronaut.core.order.OrderUtil;
+import io.micronaut.core.order.Ordered;
 import io.micronaut.data.connection.ConnectionDefinition;
 import io.micronaut.data.connection.ConnectionSynchronization;
 import org.reactivestreams.Publisher;
@@ -154,31 +155,7 @@ public final class DefaultReactiveConnectionStatus<C> implements ReactiveConnect
 
     @Override
     public void registerSynchronization(ConnectionSynchronization synchronization) {
-        registerReactiveSynchronization(new ReactiveConnectionSynchronization() {
-            @Override
-            public Publisher<Void> onComplete() {
-                return Mono.defer(() -> {
-                    synchronization.executionComplete();
-                    return Mono.empty();
-                });
-            }
-
-            @Override
-            public Publisher<Void> onClose() {
-                return Mono.defer(() -> {
-                    synchronization.beforeClosed();
-                    return Mono.empty();
-                });
-            }
-
-            @Override
-            public Publisher<Void> afterClose() {
-                return Mono.defer(() -> {
-                    synchronization.afterClosed();
-                    return Mono.empty();
-                });
-            }
-        });
+        registerReactiveSynchronization(new SynchronousConnectionSynchronization(synchronization));
     }
 
     @Override
@@ -186,8 +163,8 @@ public final class DefaultReactiveConnectionStatus<C> implements ReactiveConnect
         if (connectionSynchronizations == null) {
             connectionSynchronizations = new ArrayList<>(5);
         }
-        OrderUtil.sort(connectionSynchronizations);
         connectionSynchronizations.add(synchronization);
+        OrderUtil.sort(connectionSynchronizations);
     }
 
     private Publisher<Void> forEachSynchronizations(Function<ReactiveConnectionSynchronization, Publisher<Void>> consumer) {
@@ -297,5 +274,43 @@ public final class DefaultReactiveConnectionStatus<C> implements ReactiveConnect
             return forEachSynchronizations(ReactiveConnectionSynchronization::afterClose);
         }
         return Mono.empty();
+    }
+
+    /**
+     * Adapts a {@link ConnectionSynchronization}, keeping its order.
+     *
+     * @param synchronization The synchronization
+     */
+    private record SynchronousConnectionSynchronization(
+        ConnectionSynchronization synchronization) implements ReactiveConnectionSynchronization, Ordered {
+
+        @Override
+        public Publisher<Void> onComplete() {
+            return Mono.defer(() -> {
+                synchronization.executionComplete();
+                return Mono.empty();
+            });
+        }
+
+        @Override
+        public Publisher<Void> onClose() {
+            return Mono.defer(() -> {
+                synchronization.beforeClosed();
+                return Mono.empty();
+            });
+        }
+
+        @Override
+        public Publisher<Void> afterClose() {
+            return Mono.defer(() -> {
+                synchronization.afterClosed();
+                return Mono.empty();
+            });
+        }
+
+        @Override
+        public int getOrder() {
+            return synchronization.getOrder();
+        }
     }
 }
