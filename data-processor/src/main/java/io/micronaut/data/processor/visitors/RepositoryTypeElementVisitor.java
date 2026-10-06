@@ -526,14 +526,16 @@ public class RepositoryTypeElementVisitor implements TypeElementVisitor<Reposito
                 }
             } catch (MatchFailedException e) {
                 throw new ProcessingException(e.getElement() == null ? method : e.getElement(), matchContext.getUnableToImplementMessage() + e.getMessage());
+            } catch (ProcessingException e) {
+                // Already reported against the right element
+                throw e;
             } catch (Exception e) {
-                e.printStackTrace(System.err);
                 if (e instanceof ElementPostponedToNextRoundException || e.getClass().getSimpleName().equals("PostponeToNextRoundException")) {
                     // rethrow postponed and don't fail compilation
                     // this is not ideal since PostponeToNextRoundException is part of inject-java
                     throw e;
                 }
-                throw new ProcessingException(method, "Exception occurred while processing: " + e.getMessage(), e);
+                throw new ProcessingException(method, "Exception occurred while processing: " + (e.getMessage() == null ? e.toString() : e.getMessage()), e);
             }
         }
     }
@@ -1103,11 +1105,16 @@ public class RepositoryTypeElementVisitor implements TypeElementVisitor<Reposito
         if (element.hasStereotype(Query.class)) {
             return null;
         }
+        // Fallback to the entity of one of the repository's lifecycle methods
         ClassElement owningType = element.getOwningType();
         for (MethodElement method : owningType.getMethods()) {
-            return resolvePersistentEntityFromLifecycleMethods(method, getParametersNotInRole(method.getParameters()), entityResolver);
+            SourcePersistentEntity lifecycleEntity = resolvePersistentEntityFromLifecycleMethods(method, getParametersNotInRole(method.getParameters()), entityResolver);
+            if (lifecycleEntity != null) {
+                return lifecycleEntity;
+            }
         }
-        throw new MatchFailedException("Could not resolved root entity. Either implement the Repository interface or define the entity as part of the signature", element);
+        // Some matchers (e.g. Jakarta Data @Query with a FROM clause) don't require the root entity to be resolved here
+        return null;
     }
 
     @Nullable
