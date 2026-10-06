@@ -367,10 +367,10 @@ public final class MongoQueryBuilder implements QueryBuilder {
                 rootPath.add(path);
                 currentEntityPath.add(path);
                 String thisPath = currentEntityPath.toString();
-                if (currentLookup.subLookups.containsKey(thisPath)) {
-                    // TODO: inspect this check. Why do we check 'thisPath' but get 'path'
-                    currentLookup = currentLookup.subLookups.get(path);
-                    Objects.requireNonNull(currentLookup);
+                LookupsStage subLookup = currentLookup.subLookups.get(thisPath);
+                if (subLookup != null) {
+                    // The path from the current entity can span several segments, for example through an embedded property
+                    currentLookup = subLookup;
                     currentEntityPath = new StringJoiner(".");
                     continue;
                 }
