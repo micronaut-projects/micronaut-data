@@ -2,6 +2,7 @@ package io.micronaut.transaction.jdbc
 
 import io.micronaut.data.connection.ConnectionDefinition
 import io.micronaut.data.connection.ConnectionOperations
+import io.micronaut.data.connection.SynchronousConnectionManager
 import io.micronaut.data.connection.support.DefaultConnectionStatus
 import io.micronaut.transaction.TransactionDefinition
 import io.micronaut.transaction.exceptions.CannotCreateTransactionException
@@ -81,6 +82,24 @@ class EnforceReadOnlySpec extends Specification {
         0 * connection.commit()
         def e = thrown(CannotCreateTransactionException)
         e.cause instanceof SQLException
+    }
+
+    void "a new connection is completed when the transaction fails to begin"() {
+        given:
+        def connectionManager = Mock(SynchronousConnectionManager)
+        def connectionStatus = new DefaultConnectionStatus<>(connection, ConnectionDefinition.DEFAULT, true, connectionOperations)
+        def manager = new DataSourceTransactionManager(Mock(DataSource), connectionOperations, connectionManager)
+        manager.setEnforceReadOnly(true)
+        connectionOperations.findConnectionStatus() >> Optional.empty()
+
+        when:
+        manager.getTransaction(readOnly(true))
+
+        then:
+        1 * connectionManager.getConnection(_) >> connectionStatus
+        1 * connection.createStatement() >> { throw new SQLException("not supported") }
+        1 * connectionManager.complete(connectionStatus)
+        thrown(CannotCreateTransactionException)
     }
 
     private static TransactionDefinition readOnly(boolean readOnly) {
