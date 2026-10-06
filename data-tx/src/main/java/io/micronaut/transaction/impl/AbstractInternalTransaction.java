@@ -23,8 +23,8 @@ import io.micronaut.transaction.support.TransactionSynchronization;
 import org.jspecify.annotations.NonNull;
 import org.jspecify.annotations.Nullable;
 
-import java.util.ArrayList;
 import java.util.List;
+import java.util.concurrent.CopyOnWriteArrayList;
 
 /**
  * The abstract internal transaction.
@@ -142,7 +142,7 @@ public abstract class AbstractInternalTransaction<C> implements InternalTransact
     @Override
     public void registerInvocationSynchronization(@NonNull TransactionSynchronization synchronization) {
         if (synchronizations == null) {
-            synchronizations = new ArrayList<>(5);
+            synchronizations = new CopyOnWriteArrayList<>();
         }
         synchronizations.add(synchronization);
         OrderUtil.sort(synchronizations);
