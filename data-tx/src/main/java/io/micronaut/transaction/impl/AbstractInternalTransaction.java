@@ -142,6 +142,7 @@ public abstract class AbstractInternalTransaction<C> implements InternalTransact
     @Override
     public void registerInvocationSynchronization(@NonNull TransactionSynchronization synchronization) {
         if (synchronizations == null) {
+            // Copy-on-write: synchronizations may register other synchronizations while being triggered
             synchronizations = new CopyOnWriteArrayList<>();
         }
         synchronizations.add(synchronization);

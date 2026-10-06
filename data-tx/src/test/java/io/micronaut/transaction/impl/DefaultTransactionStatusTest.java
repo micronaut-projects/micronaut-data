@@ -193,6 +193,11 @@ class DefaultTransactionStatusTest {
                 events.add("beforeCommit");
                 transactionStatus.registerSynchronization(new TransactionSynchronization() {
                     @Override
+                    public void beforeCommit(boolean readOnly) {
+                        events.add("registered.beforeCommit");
+                    }
+
+                    @Override
                     public void afterCommit() {
                         events.add("registered.afterCommit");
                     }
