@@ -64,8 +64,8 @@ final class OracleChangeNotificationRegistrar {
     /**
      * Creates and associates a database registration for a subscription.
      *
-     * @param subscription the subscription that owns the registration and receives its callbacks
-     * @param dispatcher   the subscription's dispatcher, reused across registration recovery
+     * @param subscription the subscription notified if the driver's notification connection fails
+     * @param dispatcher   the listener for database change events, reused across registration recovery
      * @return the associated database registration
      * @throws RuntimeException if registration setup or query association fails
      */

@@ -55,10 +55,9 @@ import java.util.concurrent.Executor;
  * methods once per datasource; later registration calls for that datasource are rejected.</p>
  *
  * <p>Each subscription manager owns the physical Oracle registrations and their lifecycle.
- * A {@link ShutdownEvent} starts cleanup before datasources are destroyed. This provider also
- * coordinates graceful shutdown across all datasource managers, including waiting for already
- * running notification tasks to complete. {@link PreDestroy} provides fallback cleanup if the
- * provider is destroyed without a context shutdown event.</p>
+ * A {@link ShutdownEvent} initiates cleanup for all datasource managers, and graceful shutdown
+ * waits for notification callbacks that are already running. {@link PreDestroy} provides a
+ * best-effort cleanup fallback if the provider is destroyed without a context shutdown event.</p>
  */
 @Singleton
 @Requires(classes = OracleConnection.class)
@@ -122,7 +121,7 @@ final class OracleChangeNotificationProvider implements ChangeNotificationProvid
     }
 
     /**
-     * Stops all datasource managers and waits for their already-running tasks.
+     * Stops all datasource managers and waits for notification callbacks that are already running.
      *
      * @return a stage completed when all managers have finished graceful shutdown
      */
@@ -132,7 +131,7 @@ final class OracleChangeNotificationProvider implements ChangeNotificationProvid
     }
 
     /**
-     * Starts registration cleanup while datasource beans are still available.
+     * Initiates registration cleanup when the application context begins shutting down.
      *
      * @param event the context shutdown event
      */

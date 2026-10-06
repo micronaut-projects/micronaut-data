@@ -100,7 +100,9 @@ class OracleChangeNotificationSubscriptionManagerSpec extends Specification {
         manager.start()
 
         then:
-        1 * oracleConnection.unregisterDatabaseChangeNotification(firstRegistration)
+        1 * oracleConnection.unregisterDatabaseChangeNotification(firstRegistration) >> {
+            throw new DataAccessException("Unable to deregister first listener")
+        }
         1 * oracleConnection.unregisterDatabaseChangeNotification(secondRegistration)
         2 * oracleConnection.registerDatabaseChangeNotification(_ as Properties, _ as DatabaseChangeListener) >>> [firstRegistration, secondRegistration]
         2 * connection.createStatement() >>> [firstStatement, secondStatement]

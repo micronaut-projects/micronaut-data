@@ -22,8 +22,8 @@ import java.util.Objects;
 import java.util.Optional;
 
 /**
- * Default immutable change event used by database notification providers when entity state is
- * already available, or is intentionally unavailable.
+ * Default change-event implementation used by providers when entity state is already available or
+ * intentionally unavailable.
  *
  * @param <E> The persistent entity type.
  */

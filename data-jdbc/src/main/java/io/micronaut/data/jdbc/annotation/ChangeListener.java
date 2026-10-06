@@ -35,6 +35,9 @@ import java.lang.annotation.Target;
  * The available operation, entity state, metadata, ordering, and delivery guarantees depend on the
  * notification provider selected for the datasource.</p>
  *
+ * <p>This annotation can also be used as a meta-annotation to define a composed listener
+ * annotation.</p>
+ *
  * <p>When retry advice is also applied to the method, provider-deferred entity loading executes
  * within the same retry boundary as the listener invocation.</p>
  *
@@ -48,13 +51,19 @@ import java.lang.annotation.Target;
 public @interface ChangeListener {
 
     /**
-     * @return The datasource that supplies database change notifications.
+     * Gets the datasource selected for database change notifications.
+     *
+     * @return The datasource name that supplies database change notifications; defaults to
+     * {@code default}.
      */
     @AliasFor(member = "dataSource")
     String value() default "default";
 
     /**
-     * @return The datasource that supplies database change notifications.
+     * Gets the datasource selected for database change notifications.
+     *
+     * @return The datasource name that supplies database change notifications; defaults to
+     * {@code default}.
      */
     @AliasFor(member = "value")
     String dataSource() default "default";

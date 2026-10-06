@@ -31,18 +31,17 @@ import java.util.concurrent.RejectedExecutionException;
 import java.util.concurrent.ScheduledFuture;
 
 /**
- * Owns the registration for one listener method throughout its application lifetime.
+ * Manages one listener method's Oracle Database change-notification registration.
  *
- * <p>One dispatcher is shared by the initial registration and any recovery replacements.
- * The subscription uses it directly to dispatch post-recovery invalidation.</p>
+ * <p>The subscription creates the initial registration, handles registration lifecycle events,
+ * and unregisters the registration during shutdown. A dispatcher is reused if the driver reports
+ * a notification-connection failure or Oracle Database reports a shutdown and a replacement
+ * registration is created.</p>
  *
- * <p>A reported notification receiver failure starts asynchronous recovery. Recovery replaces
- * the unavailable registration and dispatches an invalidation after the replacement becomes
- * active. The registration owned for cleanup is tracked separately from the current registration:
- * an attempted unregister removes cleanup ownership even if the driver later reports failure.</p>
- *
- * <p>State changes and registration ownership are synchronized on this subscription. JDBC calls,
- * executor submissions, and listener invalidation run outside that lock.</p>
+ * <p>A reported notification-connection failure triggers recovery on the blocking executor. If a
+ * replacement is registered successfully, the listener receives an invalidation event so it can
+ * refresh any state that may have become stale while notifications were unavailable. Recovery
+ * attempts may be retried after a delay.</p>
  */
 @SuppressWarnings("ReferenceEquality")
 final class OracleChangeNotificationSubscription {
@@ -88,12 +87,20 @@ final class OracleChangeNotificationSubscription {
         return methodDescription;
     }
 
-    /** Creates the initial registration; an unavailable candidate fails startup. */
+    /**
+     * Creates the initial registration for this listener method and marks the subscription active.
+     *
+     * @throws RuntimeException if registration or query association fails
+     */
     synchronized void start() {
         registration = registrar.createRegistration(this, dispatcher);
         state = State.ACTIVE;
     }
 
+    /**
+     * Marks the subscription closed, attempts to unregister its registration, and cancels a pending
+     * retry.
+     */
     synchronized void stop() {
         state = State.CLOSED;
         unregisterRegistration();
@@ -109,10 +116,21 @@ final class OracleChangeNotificationSubscription {
         return Objects.equals(getRegId(), regId);
     }
 
+    /**
+     * Starts recovery when Oracle Database reports a shutdown for the current registration.
+     *
+     * @param registrationId the registration identifier reported in the shutdown event
+     */
     synchronized void handleDatabaseShutdown(long registrationId) {
         handleRegistrationFailure(registrationId, new SQLException("Database reported a shutdown for this DCN registration"));
     }
 
+    /**
+     * Handles a driver-reported failure of the current notification connection.
+     *
+     * @param registrationId the failed registration identifier
+     * @param failure the failure reported by the JDBC driver
+     */
     synchronized void handleRegistrationFailure(long registrationId, SQLException failure) {
         if (state == State.CLOSED || !isCurrent(registrationId)) {
             return;
@@ -132,6 +150,14 @@ final class OracleChangeNotificationSubscription {
         }
     }
 
+    /**
+     * Attempts to create a replacement registration and dispatches an invalidation on success.
+     *
+     * @param retryCount the number of retry attempts already made
+     * @param retryMax the maximum number of retry attempts
+     * @param retryDelay the delay between attempts, in seconds
+     * @param failedRegId the identifier of the registration that failed
+     */
     synchronized void recoverRegistration(int retryCount, int retryMax, long retryDelay, long failedRegId) {
         if (state == State.CLOSED) {
             return;
@@ -182,6 +208,11 @@ final class OracleChangeNotificationSubscription {
         }
     }
 
+    /**
+     * Clears the current registration after Oracle Database purges it on notification.
+     *
+     * @param registrationId the purged registration identifier
+     */
     synchronized void handleRegistrationPurged(long registrationId) {
         if (state == State.CLOSED || !isCurrent(registrationId)) {
             return;
@@ -191,6 +222,12 @@ final class OracleChangeNotificationSubscription {
         registration = null;
     }
 
+    /**
+     * Marks the subscription unavailable when Oracle Database deregisters its registration.
+     *
+     * @param registrationId the deregistered registration identifier
+     * @param additionalEventType the reason reported for deregistration
+     */
     synchronized void handleRegistrationDeregistered(long registrationId,
                                         DatabaseChangeEvent.AdditionalEventType additionalEventType) {
         if (state == State.CLOSED || !isCurrent(registrationId)) {
@@ -202,6 +239,11 @@ final class OracleChangeNotificationSubscription {
         registration = null;
     }
 
+    /**
+     * Unregisters the subscription when its associated query is deregistered.
+     *
+     * @param registrationId the registration whose associated query was deregistered
+     */
     synchronized void handleQueryDeregistered(long registrationId) {
         if (state == State.CLOSED || !isCurrent(registrationId)) {
             return;

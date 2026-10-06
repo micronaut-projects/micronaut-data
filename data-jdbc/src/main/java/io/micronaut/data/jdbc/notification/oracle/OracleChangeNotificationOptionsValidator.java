@@ -26,7 +26,7 @@ import java.util.Properties;
  *
  * <p>Annotation options are checked before defaults are added. Datasource options are checked only
  * when explicitly configured, while options reported by the JDBC registration are checked as the
- * effective values, including Oracle defaults for omitted framework-controlled settings.</p>
+ * effective values, including the framework's fallback values for omitted controlled settings.</p>
  */
 final class OracleChangeNotificationOptionsValidator {
 
@@ -54,7 +54,7 @@ final class OracleChangeNotificationOptionsValidator {
      * Validates the effective registration options returned by the JDBC driver after it has
      * applied datasource-level options. Unsupported settings are rejected, and controlled
      * settings must agree with the listener definition. If a controlled option is absent from the
-     * returned properties, its Oracle default is treated as the effective value.
+     * returned properties, the fallback value used by the framework is treated as effective.
      *
      * @param registrationOptions the options reported by the created registration
      * @param definition          the listener definition and its requested registration options
@@ -142,7 +142,7 @@ final class OracleChangeNotificationOptionsValidator {
      * @param options                the option set being validated
      * @param dataSourceName         the datasource name used in diagnostics
      * @param name                   the boolean option name
-     * @param defaultValue           the Oracle default used when the option is absent
+     * @param defaultValue           the fallback value used when the option is absent
      * @param validateOmittedOptions whether an absent option should be checked as its default
      */
     private static void validateBooleanProperty(OracleChangeListenerDefinition definition,
@@ -170,7 +170,7 @@ final class OracleChangeNotificationOptionsValidator {
      * @param options                the option set being validated
      * @param dataSourceName         the datasource name used in diagnostics
      * @param name                   the integer option name
-     * @param defaultValue           the Oracle default used when the option is absent
+     * @param defaultValue           the fallback value used when the option is absent
      * @param validateOmittedOptions whether an absent option should be checked as its default
      */
     private static void validateIntegerProperty(OracleChangeListenerDefinition definition,

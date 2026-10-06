@@ -33,6 +33,7 @@ record OracleTableIdentifier(@Nullable String schema, String table, String sqlNa
      *
      * @param value The rendered identifier
      * @return The parsed identifier
+     * @throws IllegalArgumentException if the value is not a valid qualified identifier
      */
     static OracleTableIdentifier parse(String value) {
         String sqlName = value.trim();

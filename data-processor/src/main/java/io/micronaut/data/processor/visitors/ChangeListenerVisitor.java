@@ -23,7 +23,11 @@ import io.micronaut.inject.visitor.TypeElementVisitor;
 import io.micronaut.inject.visitor.VisitorContext;
 
 /**
- * Validates the database-neutral method contract for change listeners.
+ * Validates direct and composed database-neutral change-listener declarations at compile time.
+ *
+ * <p>This includes the method shape and the concrete persistent entity type declared by
+ * {@code ChangeEvent<E>}. Provider-specific annotation settings are validated by the visitor for
+ * that provider.</p>
  */
 public final class ChangeListenerVisitor implements TypeElementVisitor<Object, Object> {
     static final String CHANGE_LISTENER = "io.micronaut.data.jdbc.annotation.ChangeListener";

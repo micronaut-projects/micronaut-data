@@ -34,12 +34,12 @@ import java.util.Properties;
  * Builds the Oracle-specific runtime definition for a discovered change listener.
  *
  * <p>The factory resolves the entity's mapped Oracle table, reads the compile-time generated
- * {@code ROWID} reload query, copies the annotation's registration properties, applies the
- * client-initiated connection default, adds the required Oracle {@code ROWID} and
- * application-lifetime settings, and builds the registration query.</p>
+ * {@code ROWID} reload query, copies the annotation's registration properties, defaults to a
+ * client-initiated connection, requests row identifiers, and sets the registration timeout to
+ * zero so it does not expire. It also builds the query associated with the registration.</p>
  *
- * <p>The annotation processor validates listener configuration at compile time. Runtime checks
- * here identify missing Oracle metadata before registration is attempted.</p>
+ * <p>The annotation processor validates annotation-level listener settings at compile time.
+ * Runtime checks here identify missing generated metadata before registration is attempted.</p>
  */
 final class OracleChangeListenerDefinitionFactory {
     private final JdbcRepositoryOperations operations;

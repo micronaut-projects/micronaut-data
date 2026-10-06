@@ -31,10 +31,10 @@ final class ChangeListenerMethodUtils {
     }
 
     /**
-     * Resolves the persistent entity type from a valid {@code ChangeEvent<E>} method argument.
+     * Resolves the entity type declared by a {@code ChangeEvent<E>} method argument.
      *
      * @param element The listener method.
-     * @return The entity type, or {@code null} when the method does not declare a concrete event type.
+     * @return The declared entity type, or {@code null} when the method does not declare one concrete event type.
      */
     static @Nullable ClassElement resolveEntityType(MethodElement element) {
         ParameterElement[] parameters = element.getParameters();
@@ -48,7 +48,7 @@ final class ChangeListenerMethodUtils {
      * Resolves the entity type from a {@code ChangeEvent<E>} type.
      *
      * @param eventType The event argument type.
-     * @return The entity type, or {@code null} when it is raw, wildcarded, or unresolved.
+     * @return The declared entity type, or {@code null} when it is raw, wildcarded, or unresolved.
      */
     static @Nullable ClassElement resolveEntityType(ClassElement eventType) {
         if (!ChangeListenerVisitor.CHANGE_EVENT.equals(eventType.getName()) || eventType.isRawType()) {

@@ -40,14 +40,12 @@ import java.util.concurrent.atomic.AtomicBoolean;
  * physical registrations and failure recovery for one listener. All definitions are supplied during
  * construction; the subscription collection is immutable and cannot accept later additions.</p>
  *
- * <p>The manager starts at most once. Registration startup is atomic: if one definition fails,
- * registrations completed during that start attempt are unregistered before the failure is
- * propagated.</p>
+ * <p>The manager starts at most once. If registering a listener fails, the manager attempts to
+ * stop its subscriptions in reverse order before propagating the failure.</p>
  *
- * <p>During shutdown, the manager cancels scheduled recovery retries, rejects new tasks, makes one
- * best-effort unregister attempt for each registration it still owns, and waits for already-running
- * dispatch and registration lifecycle tasks to finish. Work still queued on an executor is not
- * included in that wait.</p>
+ * <p>During shutdown, the manager cancels scheduled recovery retries, closes each subscription,
+ * attempts to unregister its registration, and waits for notification callbacks already running.
+ * Callbacks still queued on the executor are not included in that wait.</p>
  */
 final class OracleChangeNotificationSubscriptionManager {
     private static final Logger LOG = LoggerFactory.getLogger(OracleChangeNotificationSubscriptionManager.class);
@@ -72,7 +70,8 @@ final class OracleChangeNotificationSubscriptionManager {
     }
 
     /**
-     * Starts each discovered subscription once, rolling back registrations if startup fails.
+     * Starts each discovered subscription once. If one fails, cleanup is attempted and the failure
+     * is propagated.
      */
     void start() {
         if (taskTracker.isShutdownStarted() || !started.compareAndSet(false, true)) {
@@ -98,9 +97,10 @@ final class OracleChangeNotificationSubscriptionManager {
     }
 
     /**
-     * Stops recovery work and dispatch admission, attempts cleanup, and returns when running tasks finish.
+     * Closes subscriptions, attempts registration cleanup, and returns a stage that completes when
+     * already-running notification callbacks finish.
      *
-     * @return completion stage for currently running dispatch and registration lifecycle tasks
+     * @return completion stage for currently running notification callbacks
      */
     CompletionStage<?> stop() {
         LOG.trace("Stopping [{}] DCN subscriptions for datasource [{}]", subscriptions.size(), dataSourceName);

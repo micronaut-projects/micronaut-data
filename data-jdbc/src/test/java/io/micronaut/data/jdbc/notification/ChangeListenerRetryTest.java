@@ -20,12 +20,16 @@ import io.micronaut.context.annotation.Requires;
 import io.micronaut.data.annotation.Id;
 import io.micronaut.data.annotation.MappedEntity;
 import io.micronaut.data.jdbc.annotation.ChangeListener;
+import io.micronaut.data.jdbc.operations.JdbcRepositoryOperations;
 import io.micronaut.retry.annotation.Retryable;
 import jakarta.inject.Singleton;
 import org.junit.jupiter.api.Test;
 
-import java.util.concurrent.atomic.AtomicInteger;
+import java.sql.Connection;
+import java.sql.SQLException;
+import java.util.List;
 import java.util.Map;
+import java.util.concurrent.atomic.AtomicInteger;
 
 import static org.junit.jupiter.api.Assertions.assertEquals;
 
@@ -34,7 +38,7 @@ class ChangeListenerRetryTest {
 
     @Test
     void retriesEntityLoadingBeforeInvokingListener() {
-        try (ApplicationContext context = ApplicationContext.run(Map.of("spec.name", SPEC_NAME))) {
+        try (ApplicationContext context = ApplicationContext.run(properties())) {
             RetryListener listener = context.getBean(RetryListener.class);
             AtomicInteger loadAttempts = new AtomicInteger();
             Book book = new Book(1L, "The Stand");
@@ -55,7 +59,7 @@ class ChangeListenerRetryTest {
 
     @Test
     void reusesLoadedEntityWhenListenerInvocationIsRetried() {
-        try (ApplicationContext context = ApplicationContext.run(Map.of("spec.name", SPEC_NAME))) {
+        try (ApplicationContext context = ApplicationContext.run(properties())) {
             RetryListener listener = context.getBean(RetryListener.class);
             listener.remainingListenerFailures.set(2);
             AtomicInteger loadAttempts = new AtomicInteger();
@@ -70,6 +74,30 @@ class ChangeListenerRetryTest {
             assertEquals(1, loadAttempts.get());
             assertEquals(3, listener.invocations.get());
             assertEquals(book, listener.receivedBook);
+        }
+    }
+
+    private static Map<String, Object> properties() {
+        return Map.of(
+            "spec.name", SPEC_NAME,
+            "datasources.default.url", "jdbc:h2:mem:changeListenerRetry;DB_CLOSE_DELAY=-1",
+            "datasources.default.driver-class-name", "org.h2.Driver",
+            "datasources.default.username", "sa",
+            "datasources.default.password", ""
+        );
+    }
+
+    @Singleton
+    @Requires(property = "spec.name", value = SPEC_NAME)
+    static class NoOpNotificationProvider implements ChangeNotificationProvider {
+        @Override
+        public boolean supports(Connection connection) throws SQLException {
+            return true;
+        }
+
+        @Override
+        public void register(String dataSourceName, JdbcRepositoryOperations operations, List<ChangeListenerMethod> listenerMethods) {
+            // Registration is irrelevant to testing the listener retry interceptor.
         }
     }
 

@@ -28,9 +28,8 @@ public enum ChangeOperation {
     /** A row was deleted. */
     DELETE,
     /**
-     * The registered data may have changed, or the listener may need to reconcile after notification
-     * recovery, but no affected row can be identified. No entity state or row-specific metadata is
-     * available. Applications determine how to respond to this event.
+     * The provider cannot identify one affected row, or the listener should refresh or reconcile its
+     * view of the registered data. Applications determine how to respond to this event.
      */
     INVALIDATE
 }

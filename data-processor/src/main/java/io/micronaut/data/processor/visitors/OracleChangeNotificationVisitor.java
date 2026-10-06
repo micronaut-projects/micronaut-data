@@ -193,7 +193,7 @@ public final class OracleChangeNotificationVisitor implements TypeElementVisitor
      * Collects mapped physical columns from the entity and its persistent parent mappings.
      *
      * @param persistentEntity the entity mapping to inspect
-     * @return canonical unquoted column names as rendered by the Oracle query builder
+     * @return mapped column names normalized for comparison with Oracle identifiers
      */
     private static Set<String> mappedColumns(PersistentEntity persistentEntity) {
         Set<String> columns = new HashSet<>();
@@ -207,10 +207,11 @@ public final class OracleChangeNotificationVisitor implements TypeElementVisitor
     }
 
     /**
-     * Matches a select identifier using Oracle's exact quoted and case-insensitive unquoted rules.
+     * Matches a select identifier using exact quoted-name matching and case-insensitive matching
+     * for unquoted Oracle identifiers.
      *
      * @param column        the configured identifier
-     * @param mappedColumns the canonical mapped column names
+     * @param mappedColumns the normalized mapped column names
      * @return {@code true} if the identifier refers to a mapped column
      */
     private static boolean matchesMappedColumn(String column, Set<String> mappedColumns) {
