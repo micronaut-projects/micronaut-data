@@ -127,6 +127,28 @@ class OracleChangeNotificationSubscriptionSpec extends Specification {
         1 * fixture.oracleConnection.unregisterDatabaseChangeNotification(original)
     }
 
+    void "replaces a registration after Oracle Database reports shutdown"() {
+        given:
+        def original = Mock(DatabaseChangeRegistration)
+        def replacement = Mock(DatabaseChangeRegistration)
+        def fixture = registrarFixture([original, replacement])
+        def delivered = []
+        def subscription = subscription(fixture.registrar, Mock(TaskScheduler), new OracleChangeNotificationTaskTracker(),
+            { Runnable command -> command.run() } as Executor,
+            { ChangeEvent<?> event -> delivered << event.operation() })
+
+        when:
+        subscription.start()
+        subscription.handleDatabaseShutdown(original.getRegId())
+        subscription.stop()
+
+        then:
+        fixture.registrationIndex.get() == 2
+        delivered == [ChangeOperation.INVALIDATE]
+        1 * fixture.oracleConnection.unregisterDatabaseChangeNotification(original)
+        1 * fixture.oracleConnection.unregisterDatabaseChangeNotification(replacement)
+    }
+
     void "retries receiver recovery after executor rejection"() {
         given:
         def original = Mock(DatabaseChangeRegistration)

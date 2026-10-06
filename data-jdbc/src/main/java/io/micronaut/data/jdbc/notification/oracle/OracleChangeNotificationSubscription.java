@@ -23,7 +23,6 @@ import org.jspecify.annotations.Nullable;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
-import java.sql.SQLException;
 import java.time.Duration;
 import java.util.Objects;
 import java.util.concurrent.Executor;
@@ -121,22 +120,28 @@ final class OracleChangeNotificationSubscription {
      *
      * @param registrationId the registration identifier reported in the shutdown event
      */
-    synchronized void handleDatabaseShutdown(long registrationId) {
-        handleRegistrationFailure(registrationId, new SQLException("Database reported a shutdown for this DCN registration"));
+    void handleDatabaseShutdown(long registrationId) {
+        handleRegistrationUnavailable(registrationId, null);
     }
 
     /**
-     * Handles a driver-reported failure of the current notification connection.
+     * Starts recovery when the current registration can no longer deliver notifications.
      *
-     * @param registrationId the failed registration identifier
-     * @param failure the failure reported by the JDBC driver
+     * @param registrationId the unavailable registration identifier
+     * @param failure        the failure reported by the JDBC driver, or {@code null} when Oracle Database
+     *                       reports a shutdown
      */
-    synchronized void handleRegistrationFailure(long registrationId, SQLException failure) {
+    synchronized void handleRegistrationUnavailable(long registrationId, @Nullable Throwable failure) {
         if (state == State.CLOSED || !isCurrent(registrationId)) {
             return;
         }
-        LOG.error("DCN registration [{}] became unavailable for datasource [{}] and listener method [{}]; attempting recovery",
-            registrationId, dataSourceName, methodDescription, failure);
+        if (failure == null) {
+            LOG.warn("DCN registration [{}] became unavailable for datasource [{}] and listener method [{}] after Oracle Database shutdown; attempting recovery",
+                registrationId, dataSourceName, methodDescription);
+        } else {
+            LOG.error("DCN registration [{}] became unavailable for datasource [{}] and listener method [{}]; attempting recovery",
+                registrationId, dataSourceName, methodDescription, failure);
+        }
         state = State.RECOVERING;
         unregisterRegistration(true);
         submitRecoveryTask(0, 3, 10, registrationId);
@@ -153,9 +158,9 @@ final class OracleChangeNotificationSubscription {
     /**
      * Attempts to create a replacement registration and dispatches an invalidation on success.
      *
-     * @param retryCount the number of retry attempts already made
-     * @param retryMax the maximum number of retry attempts
-     * @param retryDelay the delay between attempts, in seconds
+     * @param retryCount  the number of retry attempts already made
+     * @param retryMax    the maximum number of retry attempts
+     * @param retryDelay  the delay between attempts, in seconds
      * @param failedRegId the identifier of the registration that failed
      */
     synchronized void recoverRegistration(int retryCount, int retryMax, long retryDelay, long failedRegId) {
@@ -225,11 +230,11 @@ final class OracleChangeNotificationSubscription {
     /**
      * Marks the subscription unavailable when Oracle Database deregisters its registration.
      *
-     * @param registrationId the deregistered registration identifier
+     * @param registrationId      the deregistered registration identifier
      * @param additionalEventType the reason reported for deregistration
      */
     synchronized void handleRegistrationDeregistered(long registrationId,
-                                        DatabaseChangeEvent.AdditionalEventType additionalEventType) {
+                                                     DatabaseChangeEvent.AdditionalEventType additionalEventType) {
         if (state == State.CLOSED || !isCurrent(registrationId)) {
             return;
         }

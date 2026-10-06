@@ -84,7 +84,7 @@ final class OracleChangeNotificationRegistrar {
                 effectiveOptions.putAll(registration.getRegistrationOptions());
                 OracleChangeNotificationOptionsValidator.validateEffectiveOptions(effectiveOptions, definition, dataSourceName);
                 dispatcher.configureRegistrationOptions(effectiveOptions);
-                registration.addFailureListener(failure -> subscription.handleRegistrationFailure(registration.getRegId(), failure));
+                registration.addFailureListener(failure -> subscription.handleRegistrationUnavailable(registration.getRegId(), failure));
                 try (Statement statement = connection.createStatement()) {
                     statement.unwrap(OracleStatement.class).setDatabaseChangeRegistration(registration);
                     try (ResultSet ignored = statement.executeQuery(definition.registrationQuery())) {
