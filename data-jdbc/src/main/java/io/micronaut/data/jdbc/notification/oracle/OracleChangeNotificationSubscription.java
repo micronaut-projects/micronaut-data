@@ -25,10 +25,10 @@ import org.slf4j.LoggerFactory;
 
 import java.sql.SQLException;
 import java.time.Duration;
+import java.util.Objects;
 import java.util.concurrent.Executor;
 import java.util.concurrent.RejectedExecutionException;
 import java.util.concurrent.ScheduledFuture;
-import java.util.function.Consumer;
 
 /**
  * Owns the registration for one listener method throughout its application lifetime.
@@ -47,7 +47,6 @@ import java.util.function.Consumer;
 @SuppressWarnings("ReferenceEquality")
 final class OracleChangeNotificationSubscription {
     private static final Logger LOG = LoggerFactory.getLogger(OracleChangeNotificationSubscription.class);
-    private static final long RECOVERY_RETRY_DELAY_SECONDS = 5;
 
     private final String dataSourceName;
     private final OracleChangeListenerDefinition definition;
@@ -56,22 +55,11 @@ final class OracleChangeNotificationSubscription {
     private final OracleChangeNotificationDispatcher dispatcher;
     private final Executor blockingExecutor;
     private final TaskScheduler taskScheduler;
-    private final OracleChangeNotificationTaskTracker taskTracker;
 
-    /** The current registration or a candidate being associated; removal claims it for one cleanup attempt. */
-    private @Nullable DatabaseChangeRegistration ownedRegistration;
-    /** A receiver failure received before the owned candidate becomes current. */
-    private @Nullable SQLException pendingCandidateFailure;
-
-    private State state = State.UNREGISTERED;
-    /** May remain current after cleanup ownership was removed for an unregister attempt. */
-    private @Nullable DatabaseChangeRegistration currentRegistration;
+    private @Nullable DatabaseChangeRegistration registration;
     private @Nullable ScheduledFuture<?> recoveryRetryTask;
-    /** Prevents two workers from replacing the same failed registration concurrently. */
-    private @Nullable DatabaseChangeRegistration recoveryInProgressFor;
-    private boolean invalidationPending;
-    /** Preserves a new invalidation request raised while an earlier one is being dispatched. */
-    private long invalidationGeneration;
+
+    private volatile State state = State.UNREGISTERED;
 
     OracleChangeNotificationSubscription(String dataSourceName,
                                          OracleChangeListenerDefinition definition,
@@ -86,7 +74,6 @@ final class OracleChangeNotificationSubscription {
         this.registrar = registrar;
         this.blockingExecutor = blockingExecutor;
         this.taskScheduler = taskScheduler;
-        this.taskTracker = taskTracker;
         this.dispatcher = new OracleChangeNotificationDispatcher(
             dataSourceName, definition, beanContext, blockingExecutor, taskTracker,
             this::handleRegistrationPurged, this::handleRegistrationDeregistered,
@@ -102,392 +89,155 @@ final class OracleChangeNotificationSubscription {
     }
 
     /** Creates the initial registration; an unavailable candidate fails startup. */
-    void start() {
-        ActivationResult activation = createAndActivateRegistration();
-        if (activation.outcome() == ActivationOutcome.UNAVAILABLE) {
-            throw new IllegalStateException("Initial DCN registration [" + activation.registration().getRegId()
-                + "] for datasource [" + dataSourceName + "] and listener method [" + methodDescription
-                + "] became unavailable before activation");
-        }
+    synchronized void start() {
+        registration = registrar.createRegistration(this, dispatcher);
+        state = State.ACTIVE;
     }
 
-    /** Records a physical registration before its failure listener and query are associated. */
-    synchronized void track(DatabaseChangeRegistration registration) {
-        if (ownedRegistration != null) {
-            throw new IllegalStateException("A DCN registration is already owned for datasource [" + dataSourceName
-                + "] and listener method [" + methodDescription + "]");
-        }
-        ownedRegistration = registration;
-    }
-
-    /** Removes cleanup ownership without making another Oracle Database call. */
-    synchronized boolean untrack(DatabaseChangeRegistration registration) {
-        if (ownedRegistration == registration) {
-            ownedRegistration = null;
-            pendingCandidateFailure = null;
-            return true;
-        }
-        return false;
-    }
-
-    /**
-     * Records a receiver failure and starts recovery when the failed registration is current.
-     * A candidate failure is retained until activation so it cannot be missed during association.
-     */
-    void handleRegistrationFailure(DatabaseChangeRegistration registration, SQLException failure) {
-        DatabaseChangeRegistration failedRegistration;
-        synchronized (this) {
-            if (state == State.CLOSED) {
-                return;
-            }
-            if (!isCurrent(registration)) {
-                if (isTracked(registration)) {
-                    pendingCandidateFailure = failure;
-                }
-                return;
-            }
-            markInvalidationPending();
-            if (state != State.ACTIVE || currentRegistration == null) {
-                return;
-            }
-            failedRegistration = currentRegistration;
-            state = State.RECOVERING;
-            cancelRecoveryRetry();
-        }
-        LOG.error("DCN registration [{}] became unavailable for datasource [{}] and listener method [{}]; attempting recovery",
-            registration.getRegId(), dataSourceName, methodDescription, failure);
-        submitFailureRecovery(failedRegistration);
-    }
-
-    /** Treats a database shutdown as a receiver failure for a known registration. */
-    void handleDatabaseShutdown(long registrationId) {
-        DatabaseChangeRegistration registration = findRegistration(registrationId);
-        if (registration != null) {
-            handleRegistrationFailure(registration, new SQLException("Database reported a shutdown for this DCN registration"));
-        }
-    }
-
-    /** Closes a one-shot subscription after Oracle Database purges its registration. */
-    void handleRegistrationPurged(long registrationId) {
-        DatabaseChangeRegistration registration = findRegistration(registrationId);
-        if (registration != null) {
-            LOG.trace("Handling purged DCN [{}] for datasource [{}] and listener method [{}]",
-                registration.getRegId(), dataSourceName, methodDescription);
-            untrack(registration);
-            closeIfCurrent(registration);
-        }
-    }
-
-    /**
-     * Closes a deregistered current subscription. Recovery already in progress owns its failed
-     * registration and continues replacing it. A deregistered candidate cannot be activated.
-     */
-    void handleRegistrationDeregistered(long registrationId,
-                                        DatabaseChangeEvent.AdditionalEventType additionalEventType) {
-        DatabaseChangeRegistration registration = findRegistration(registrationId);
-        if (registration != null) {
-            untrack(registration);
-            if (closeIfCurrentAndNotRecovering(registration)) {
-                LOG.warn("DCN registration [{}] for datasource [{}] and listener method [{}] was deregistered; reason [{}]",
-                    registration.getRegId(), dataSourceName, methodDescription, additionalEventType);
-            }
-        }
-    }
-
-    /** Closes a subscription whose registered query was deregistered and cleans up its registration. */
-    void handleQueryDeregistered(long registrationId) {
-        DatabaseChangeRegistration registration = findRegistration(registrationId);
-        if (registration != null) {
-            LOG.trace("Closing DCN subscription after query deregistration [{}] for datasource [{}] and listener method [{}]",
-                registration.getRegId(), dataSourceName, methodDescription);
-            closeIfCurrent(registration);
-            unregister(registration);
-        }
-    }
-
-    /** Stops future recovery before shutdown cleanup begins. */
     synchronized void stop() {
         state = State.CLOSED;
-        cancelRecoveryRetry();
+        unregisterRegistration();
+        cancelRecoveryRetryTask();
     }
 
-    /** Makes one best-effort unregister attempt for the still-owned registration. */
-    void unregisterAll() {
-        DatabaseChangeRegistration registration = registrationForCleanup();
-        if (registration != null) {
-            unregister(registration);
-        }
+    @Nullable
+    private Long getRegId() {
+        return registration == null ? null : registration.getRegId();
     }
 
-    /** Rolls back the startup registration without hiding the original failure. */
-    void rollback(Throwable registrationFailure) {
-        stop();
-        DatabaseChangeRegistration registration = registrationForCleanup();
-        if (registration != null) {
-            try {
-                unregisterIfOwned(registration);
-            } catch (RuntimeException | Error cleanupFailure) {
-                registrationFailure.addSuppressed(cleanupFailure);
-            }
-        }
+    private boolean isCurrent(long regId) {
+        return Objects.equals(getRegId(), regId);
     }
 
-    /** Adopts a candidate and handles an early failure or a pending post-recovery invalidation. */
-    private ActivationResult activateRegistration(DatabaseChangeRegistration registration) {
-        SQLException pendingFailure;
-        long generationToDispatch = -1;
-        synchronized (this) {
-            pendingFailure = ownedRegistration == registration ? pendingCandidateFailure : null;
-            if (ownedRegistration == registration) {
-                pendingCandidateFailure = null;
-            }
-            if (state == State.CLOSED || taskTracker.isShutdownStarted()) {
-                return new ActivationResult(ActivationOutcome.STOPPED, registration);
-            }
-            if (!isTracked(registration)) {
-                return new ActivationResult(ActivationOutcome.UNAVAILABLE, registration);
-            }
-            if (pendingFailure != null) {
-                markInvalidationPending();
-            }
-            currentRegistration = registration;
-            cancelRecoveryRetry();
-            state = pendingFailure == null ? State.ACTIVE : State.RECOVERING;
-            if (pendingFailure == null && invalidationPending) {
-                generationToDispatch = invalidationGeneration;
-            }
-            if (pendingFailure == null) {
-                LOG.trace("Activated DCN registration [{}] for datasource [{}] and listener method [{}]",
-                    registration.getRegId(), dataSourceName, methodDescription);
-            }
-        }
-        if (pendingFailure != null) {
-            LOG.error("DCN registration [{}] became unavailable for datasource [{}] and listener method [{}] during activation; attempting recovery",
-                registration.getRegId(), dataSourceName, methodDescription, pendingFailure);
-            submitFailureRecovery(registration);
-            return new ActivationResult(ActivationOutcome.RECOVERY_REQUIRED, registration);
-        }
-        if (generationToDispatch >= 0) {
-            dispatchInvalidationIfCurrent(registration, generationToDispatch);
-        }
-        return new ActivationResult(ActivationOutcome.ACTIVATED, registration);
+    synchronized void handleDatabaseShutdown(long registrationId) {
+        handleRegistrationFailure(registrationId, new SQLException("Database reported a shutdown for this DCN registration"));
     }
 
-    /** Dispatches one pending invalidation while preserving a newer request raised concurrently. */
-    private void dispatchInvalidationIfCurrent(DatabaseChangeRegistration registration, long generation) {
-        synchronized (this) {
-            if (state != State.ACTIVE || currentRegistration != registration
-                || !invalidationPending || invalidationGeneration != generation) {
-                return;
-            }
+    synchronized void handleRegistrationFailure(long registrationId, SQLException failure) {
+        if (state == State.CLOSED || !isCurrent(registrationId)) {
+            return;
         }
-        dispatcher.dispatchInvalidation(registration.getRegId(), "after DCN registration recovery");
-        synchronized (this) {
-            if (invalidationPending && invalidationGeneration == generation) {
-                invalidationPending = false;
-            }
-        }
+        LOG.error("DCN registration [{}] became unavailable for datasource [{}] and listener method [{}]; attempting recovery",
+            registrationId, dataSourceName, methodDescription, failure);
+        state = State.RECOVERING;
+        unregisterRegistration(true);
+        submitRecoveryTask(0, 3, 10, registrationId);
     }
 
-    private void markInvalidationPending() {
-        invalidationPending = true;
-        invalidationGeneration++;
-    }
-
-    /** Submits receiver recovery without blocking the Oracle JDBC notification thread. */
-    private void submitFailureRecovery(DatabaseChangeRegistration failedRegistration) {
-        submitTrackedTask(() -> executeFailureRecovery(failedRegistration),
-            rejection -> scheduleFailureRecoveryRetry(failedRegistration, rejection));
-    }
-
-    /** Replaces a failed registration and retries if the candidate cannot be activated. */
-    private void executeFailureRecovery(DatabaseChangeRegistration failedRegistration) {
-        synchronized (this) {
-            if (state != State.RECOVERING || currentRegistration != failedRegistration || recoveryInProgressFor == failedRegistration) {
-                return;
-            }
-            recoveryInProgressFor = failedRegistration;
-            recoveryRetryTask = null;
-        }
-        RuntimeException recoveryFailure = null;
+    private void submitRecoveryTask(int retryCount, int retryMax, long retryDelay, long failedRegId) {
         try {
-            LOG.trace("Recovering failed DCN registration [{}] for datasource [{}] and listener method [{}]",
-                failedRegistration.getRegId(), dataSourceName, methodDescription);
-            unregisterFailedRegistration(failedRegistration);
-            synchronized (this) {
-                if (state != State.RECOVERING || currentRegistration != failedRegistration) {
-                    return;
-                }
-            }
-            ActivationResult replacement = createAndActivateRegistration();
-            if (replacement.outcome() == ActivationOutcome.UNAVAILABLE) {
-                throw new IllegalStateException("Replacement DCN registration [" + replacement.registration().getRegId()
-                    + "] for datasource [" + dataSourceName + "] and listener method [" + methodDescription
-                    + "] became unavailable before activation");
-            }
-        } catch (RuntimeException e) {
-            recoveryFailure = e;
-        } finally {
-            synchronized (this) {
-                if (recoveryInProgressFor == failedRegistration) {
-                    recoveryInProgressFor = null;
-                }
-            }
-        }
-        if (recoveryFailure != null) {
-            LOG.error("Unable to recover failed DCN registration [{}] for datasource [{}] and listener method [{}]",
-                failedRegistration.getRegId(), dataSourceName, methodDescription, recoveryFailure);
-            scheduleFailureRecoveryRetry(failedRegistration, recoveryFailure);
+            blockingExecutor.execute(() -> recoverRegistration(retryCount, retryMax, retryDelay, failedRegId));
+        } catch (RejectedExecutionException e) {
+            rescheduleRecoveryTask(retryCount, retryMax, retryDelay, failedRegId, e);
         }
     }
 
-    /** Attempts best-effort cleanup of a failed receiver, even when the driver marks it closed. */
-    private void unregisterFailedRegistration(DatabaseChangeRegistration registration) {
-        if (untrack(registration)) {
-            try {
-                registrar.unregisterRegistrationAfterFailure(registration);
-            } catch (RuntimeException cleanupFailure) {
-                LOG.warn("Unable to unregister failed DCN registration [{}] for datasource [{}] and listener method [{}]; "
-                        + "the registration may remain in Oracle Database",
-                    registration.getRegId(), dataSourceName, methodDescription, cleanupFailure);
+    synchronized void recoverRegistration(int retryCount, int retryMax, long retryDelay, long failedRegId) {
+        if (state == State.CLOSED) {
+            return;
+        }
+        LOG.trace("Creating a new DCN registration for datasource [{}] and listener method [{}]",
+            dataSourceName, methodDescription);
+        try {
+            registration = registrar.createRegistration(this, dispatcher);
+            state = State.ACTIVE;
+            dispatcher.dispatchInvalidation(registration.getRegId(), "after DCN registration recovery");
+        } catch (Exception e) {
+            rescheduleRecoveryTask(retryCount, retryMax, retryDelay, failedRegId, e);
+        }
+    }
+
+    private void rescheduleRecoveryTask(int retryCount, int retryMax, long retryDelay, long failedRegId, Exception e) {
+        if (retryCount < retryMax) {
+            LOG.warn("DCN receiver recovery attempt failed for registration [{}], datasource [{}], and listener method [{}]; will retry",
+                failedRegId, dataSourceName, methodDescription, e);
+            scheduleRecoveryRetry(retryCount + 1, retryMax, retryDelay, failedRegId);
+        } else {
+            LOG.error("DCN receiver recovery exhausted [{}] retries for registration [{}], datasource [{}], "
+                    + "and listener method [{}]; the listener remains unavailable",
+                retryMax, failedRegId, dataSourceName, methodDescription, e);
+            synchronized (this) {
+                if (state == State.RECOVERING) {
+                    state = State.UNREGISTERED;
+                }
             }
         }
     }
 
-    /** Schedules a retry only while the same failed registration is current. */
-    private synchronized void scheduleFailureRecoveryRetry(DatabaseChangeRegistration failedRegistration,
-                                                           RuntimeException recoveryFailure) {
-        if (state != State.RECOVERING || currentRegistration != failedRegistration || taskTracker.isShutdownStarted()
-            || recoveryInProgressFor == failedRegistration || recoveryRetryTask != null) {
+    private synchronized void scheduleRecoveryRetry(int retryCount, int retryMax, long retryDelay, long failedRegId) {
+        if (state == State.CLOSED) {
             return;
         }
         try {
             recoveryRetryTask = taskScheduler.schedule(
-                Duration.ofSeconds(RECOVERY_RETRY_DELAY_SECONDS),
-                () -> submitFailureRecovery(failedRegistration));
+                Duration.ofSeconds(retryDelay),
+                () -> submitRecoveryTask(retryCount, retryMax, retryDelay, failedRegId));
             LOG.warn("Scheduled DCN receiver recovery retry in [{}] seconds for datasource [{}], listener method [{}], and registration [{}]",
-                RECOVERY_RETRY_DELAY_SECONDS, dataSourceName, methodDescription,
-                failedRegistration.getRegId(), recoveryFailure);
+                retryDelay, dataSourceName, methodDescription, failedRegId);
         } catch (RuntimeException schedulingFailure) {
-            recoveryFailure.addSuppressed(schedulingFailure);
-            state = State.CLOSED;
-            LOG.error("Unable to schedule DCN receiver recovery for registration [{}], datasource [{}], and listener method [{}]",
-                failedRegistration.getRegId(), dataSourceName, methodDescription, recoveryFailure);
+            state = State.UNREGISTERED;
+            LOG.error("Unable to schedule DCN receiver recovery for registration [{}], datasource [{}], "
+                    + "and listener method [{}]; automatic recovery has stopped and the listener remains unavailable",
+                failedRegId, dataSourceName, methodDescription, schedulingFailure);
         }
     }
 
-    /** Counts only lifecycle work that starts before shutdown. */
-    private void submitTrackedTask(Runnable task, Consumer<RejectedExecutionException> rejectionHandler) {
-        try {
-            blockingExecutor.execute(() -> {
-                if (!taskTracker.acceptTask()) {
-                    LOG.trace("Skipping DCN lifecycle task for datasource [{}] and listener method [{}] because shutdown has started",
-                        dataSourceName, methodDescription);
-                    return;
-                }
-                try {
-                    task.run();
-                } finally {
-                    taskTracker.completeTask();
-                }
-            });
-        } catch (RejectedExecutionException e) {
-            rejectionHandler.accept(e);
+    synchronized void handleRegistrationPurged(long registrationId) {
+        if (state == State.CLOSED || !isCurrent(registrationId)) {
+            return;
         }
+        LOG.trace("Handling purged DCN [{}] for datasource [{}] and listener method [{}]", getRegId(), dataSourceName, methodDescription);
+        state = State.UNREGISTERED;
+        registration = null;
     }
 
-    /** Creates a candidate and releases it if activation is rejected. */
-    private ActivationResult createAndActivateRegistration() {
-        DatabaseChangeRegistration registration = registrar.createRegistration(this, dispatcher);
-        try {
-            ActivationResult activation = activateRegistration(registration);
-            if (activation.outcome() == ActivationOutcome.STOPPED || activation.outcome() == ActivationOutcome.UNAVAILABLE) {
-                LOG.trace("Discarding inactive DCN registration [{}] with activation outcome [{}] for datasource [{}] and listener method [{}]",
-                    registration.getRegId(), activation.outcome(), dataSourceName, methodDescription);
-                unregister(registration);
-            }
-            return activation;
-        } catch (RuntimeException activationFailure) {
+    synchronized void handleRegistrationDeregistered(long registrationId,
+                                        DatabaseChangeEvent.AdditionalEventType additionalEventType) {
+        if (state == State.CLOSED || !isCurrent(registrationId)) {
+            return;
+        }
+        LOG.warn("DCN registration [{}] for datasource [{}] and listener method [{}] was deregistered; reason [{}]",
+            registrationId, dataSourceName, methodDescription, additionalEventType);
+        state = State.UNREGISTERED;
+        registration = null;
+    }
+
+    synchronized void handleQueryDeregistered(long registrationId) {
+        if (state == State.CLOSED || !isCurrent(registrationId)) {
+            return;
+        }
+        LOG.trace("Closing DCN subscription after query deregistration [{}] for datasource [{}] and listener method [{}]",
+            registrationId, dataSourceName, methodDescription);
+
+        state = State.UNREGISTERED;
+        unregisterRegistration();
+    }
+
+    private void unregisterRegistration() {
+        unregisterRegistration(false);
+    }
+
+    private void unregisterRegistration(boolean afterFailure) {
+        if (registration != null) {
             try {
-                unregisterIfOwned(registration);
-            } catch (RuntimeException cleanupFailure) {
-                activationFailure.addSuppressed(cleanupFailure);
+                if (afterFailure) {
+                    registrar.unregisterRegistrationAfterFailure(registration);
+                } else {
+                    registrar.unregisterRegistration(registration);
+                }
+            } catch (RuntimeException e) {
+                LOG.warn("Unable to unregister DCN registration [{}] for datasource [{}] and listener method [{}]",
+                    registration.getRegId(), dataSourceName, methodDescription, e);
             }
-            throw activationFailure;
+            registration = null;
         }
     }
 
-    /** Attempts one unregister and logs cleanup failure without stopping other cleanup work. */
-    private void unregister(DatabaseChangeRegistration registration) {
-        try {
-            unregisterIfOwned(registration);
-        } catch (RuntimeException e) {
-            LOG.warn("Unable to unregister DCN registration [{}] for datasource [{}] and listener method [{}]",
-                registration.getRegId(), dataSourceName, methodDescription, e);
-        }
-    }
-
-    private void cancelRecoveryRetry() {
+    private void cancelRecoveryRetryTask() {
         if (recoveryRetryTask != null) {
             recoveryRetryTask.cancel(false);
             recoveryRetryTask = null;
         }
-    }
-
-    private synchronized void closeIfCurrent(DatabaseChangeRegistration registration) {
-        if (currentRegistration == registration) {
-            currentRegistration = null;
-            cancelRecoveryRetry();
-            state = State.CLOSED;
-        }
-    }
-
-    private synchronized boolean closeIfCurrentAndNotRecovering(DatabaseChangeRegistration registration) {
-        if (!isCurrent(registration) || state == State.RECOVERING) {
-            return false;
-        }
-        closeIfCurrent(registration);
-        return true;
-    }
-
-    private boolean isCurrent(DatabaseChangeRegistration registration) {
-        return currentRegistration == registration;
-    }
-
-    private synchronized boolean isTracked(DatabaseChangeRegistration registration) {
-        return ownedRegistration == registration;
-    }
-
-    /** Also resolves the current registration after an unregister attempt removed cleanup ownership. */
-    private synchronized @Nullable DatabaseChangeRegistration findRegistration(long registrationId) {
-        if (currentRegistration != null && currentRegistration.getRegId() == registrationId) {
-            return currentRegistration;
-        }
-        if (ownedRegistration != null && ownedRegistration.getRegId() == registrationId) {
-            return ownedRegistration;
-        }
-        return null;
-    }
-
-    private synchronized @Nullable DatabaseChangeRegistration registrationForCleanup() {
-        return ownedRegistration;
-    }
-
-    /** Claims a registration before calling Oracle Database, with no automatic cleanup retry. */
-    private void unregisterIfOwned(DatabaseChangeRegistration registration) {
-        if (untrack(registration)) {
-            registrar.unregisterRegistration(registration);
-        }
-    }
-
-    private record ActivationResult(ActivationOutcome outcome, DatabaseChangeRegistration registration) {
-    }
-
-    private enum ActivationOutcome {
-        ACTIVATED,
-        RECOVERY_REQUIRED,
-        STOPPED,
-        UNAVAILABLE
     }
 
     private enum State {

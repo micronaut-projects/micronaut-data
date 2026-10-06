@@ -90,7 +90,9 @@ final class OracleChangeNotificationSubscriptionManager {
             }
             LOG.trace("Started [{}] DCN subscriptions for datasource [{}]", subscriptions.size(), dataSourceName);
         } catch (RuntimeException | Error registrationFailure) {
-            rollback(registrationFailure);
+            for (int i = subscriptions.size() - 1; i >= 0; i--) {
+                subscriptions.get(i).stop();
+            }
             throw registrationFailure;
         }
     }
@@ -103,9 +105,7 @@ final class OracleChangeNotificationSubscriptionManager {
     CompletionStage<?> stop() {
         LOG.trace("Stopping [{}] DCN subscriptions for datasource [{}]", subscriptions.size(), dataSourceName);
         subscriptions.forEach(OracleChangeNotificationSubscription::stop);
-        CompletionStage<Void> completion = taskTracker.shutdownGracefully();
-        subscriptions.forEach(OracleChangeNotificationSubscription::unregisterAll);
-        return completion;
+        return taskTracker.shutdownGracefully();
     }
 
     /**
@@ -116,16 +116,4 @@ final class OracleChangeNotificationSubscriptionManager {
     OptionalLong reportActiveTasks() {
         return taskTracker.reportActiveTasks();
     }
-
-    /**
-     * Rolls back subscriptions in reverse discovery order and attaches cleanup failures to the startup failure.
-     *
-     * @param registrationFailure the failure that caused startup rollback
-     */
-    private void rollback(Throwable registrationFailure) {
-        for (int i = subscriptions.size() - 1; i >= 0; i--) {
-            subscriptions.get(i).rollback(registrationFailure);
-        }
-    }
-
 }

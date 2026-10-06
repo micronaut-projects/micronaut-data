@@ -80,12 +80,11 @@ final class OracleChangeNotificationRegistrar {
             LOG.trace("Created DCN registration [{}] for datasource [{}] and listener method [{}]",
                 registration.getRegId(), dataSourceName, definition.method().getDescription(true));
             try {
-                subscription.track(registration);
                 Properties effectiveOptions = new Properties();
                 effectiveOptions.putAll(registration.getRegistrationOptions());
                 OracleChangeNotificationOptionsValidator.validateEffectiveOptions(effectiveOptions, definition, dataSourceName);
                 dispatcher.configureRegistrationOptions(effectiveOptions);
-                registration.addFailureListener(failure -> subscription.handleRegistrationFailure(registration, failure));
+                registration.addFailureListener(failure -> subscription.handleRegistrationFailure(registration.getRegId(), failure));
                 try (Statement statement = connection.createStatement()) {
                     statement.unwrap(OracleStatement.class).setDatabaseChangeRegistration(registration);
                     try (ResultSet ignored = statement.executeQuery(definition.registrationQuery())) {
@@ -96,7 +95,6 @@ final class OracleChangeNotificationRegistrar {
                 }
                 return registration;
             } catch (SQLException | RuntimeException e) {
-                subscription.untrack(registration);
                 try {
                     oracleConnection.unregisterDatabaseChangeNotification(registration);
                 } catch (SQLException | RuntimeException cleanupException) {
