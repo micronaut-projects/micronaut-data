@@ -25,6 +25,7 @@ import io.r2dbc.spi.ConnectionFactory
 import io.r2dbc.spi.Result
 import io.r2dbc.spi.Row
 import io.r2dbc.spi.RowMetadata
+import org.reactivestreams.Publisher
 import reactor.core.publisher.Flux
 import reactor.core.publisher.Mono
 import spock.lang.AutoCleanup
@@ -62,6 +63,16 @@ abstract class PlainR2dbcSpec extends Specification {
 
     protected String correctOutput(String output) {
         return output
+    }
+
+    /**
+     * Some drivers (e.g. Oracle R2DBC) keep auto-commit disabled after the transaction ends,
+     * restore it before returning the connection to the pool.
+     */
+    private static Publisher<Void> closeConnection(Connection connection) {
+        return Mono.from(connection.setAutoCommit(true))
+                .onErrorResume { Mono.empty() }
+                .then(Mono.from(connection.close()))
     }
 
     def "use withTransaction and withConnection"() {
@@ -140,7 +151,7 @@ abstract class PlainR2dbcSpec extends Specification {
                         (b, throwable) -> connection.rollbackTransaction(),
                         (b) -> connection.commitTransaction())
 
-            }, { it -> it.close() })
+            }, { it -> closeConnection(it) })
                     .collectList()
                     .block()
         then:
@@ -179,7 +190,7 @@ abstract class PlainR2dbcSpec extends Specification {
                         (b, throwable) -> connection.rollbackTransaction(),
                         (b) -> connection.commitTransaction())
 
-            }, { it -> it.close() })
+            }, { it -> closeConnection(it) })
                     .collectList()
                     .block()
         then:
@@ -201,7 +212,7 @@ abstract class PlainR2dbcSpec extends Specification {
                         (b, throwable) -> connection.rollbackTransaction(),
                         (b) -> connection.commitTransaction())
 
-            }, { it -> it.close() })
+            }, { it -> closeConnection(it) })
             ).block()
         then:
             result == 1
@@ -268,7 +279,7 @@ abstract class PlainR2dbcSpec extends Specification {
                         (b, throwable) -> connection.rollbackTransaction(),
                         (b) -> connection.commitTransaction())
 
-            }, { it -> it.close() })
+            }, { it -> closeConnection(it) })
                     .collectList()
                     .block()
         then:
