@@ -128,6 +128,7 @@ public abstract class AbstractReactiveEntityOperations<Ctx extends OperationCont
                 return ReactorPropagation.findPropagatedContext(contextView).orElse(PropagatedContext.empty()).propagate(() -> {
                     final DefaultEntityEventContext<T> event = new DefaultEntityEventContext<>(persistentEntity, d.entity);
                     fn.accept((EntityEventContext<Object>) event);
+                    d.entity = event.getEntity();
                     return Mono.just(d);
                 });
             });
