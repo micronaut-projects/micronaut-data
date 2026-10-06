@@ -101,23 +101,40 @@ class HibernateTransactionSpec extends AbstractTransactionSpec implements TestRe
             def connectionOperations = getConnectionOperations()
             def transactionOperations = getTransactionOperations()
             def bookRepository = context.getBean(HibernateBookRepository)
+            Long bookId = transactionOperations.executeWrite {
+                bookRepository.save(new Book(title: "Original", totalPages: 10)).id
+            }
         when:
             def state = connectionOperations.executeWrite { status ->
                 Session session = status.connection
+                Book book = null
                 def inTx = transactionOperations.executeRead { txStatus ->
-                    bookRepository.count()
-                    [txStatus.connection.hibernateFlushMode, txStatus.connection.defaultReadOnly]
+                    book = bookRepository.findById(bookId).get()
+                    [txStatus.connection.hibernateFlushMode, txStatus.connection.isReadOnly(book)]
                 }
-                def afterTx = [session.hibernateFlushMode, session.defaultReadOnly]
+                def afterTx = [session.hibernateFlushMode, session.isReadOnly(book)]
                 transactionOperations.executeWrite { txStatus ->
-                    bookRepository.save(new Book(title: "Written after read-only", totalPages: 10))
+                    // The entity loaded in the read-only transaction is still managed by the outer session
+                    book.title = "Updated after read-only"
                 }
                 [inTx, afterTx]
             }
         then:
-            state[0] == [FlushMode.MANUAL, true]
+            // The session is owned by the outer scope: the read-only mode isn't applied to its entities
+            state[0] == [FlushMode.AUTO, false]
             state[1] == [FlushMode.AUTO, false]
-            bookService.countBooksTransactional() == 1
+            transactionOperations.executeRead { bookRepository.findById(bookId).get().title } == "Updated after read-only"
+    }
+
+    def "read-only transaction on a new session"() {
+        given:
+            def transactionOperations = getTransactionOperations()
+        when:
+            def state = transactionOperations.executeRead { txStatus ->
+                [txStatus.connection.hibernateFlushMode, txStatus.connection.defaultReadOnly]
+            }
+        then:
+            state == [FlushMode.MANUAL, true]
     }
 
     def "test book is not updated if TX has readOnly=true"() {

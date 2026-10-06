@@ -181,6 +181,15 @@ public abstract class AbstractInternalTransaction<C> implements InternalTransact
         connectionSynchronizationsBound = true;
     }
 
+    /**
+     * @return true if the transaction was started on a connection owned by an outer scope,
+     * see {@link #bindConnectionSynchronizationsToTransaction()}
+     * @since 5.3.0
+     */
+    public boolean isConnectionSynchronizationsBound() {
+        return connectionSynchronizationsBound;
+    }
+
     @Override
     public void registerSynchronization(@NonNull TransactionSynchronization synchronization) {
         registerInvocationSynchronization(synchronization);

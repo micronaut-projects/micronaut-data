@@ -88,27 +88,17 @@ public final class HibernateTransactionManager extends AbstractDefaultTransactio
     protected void doBegin(DefaultTransactionStatus<Session> txStatus) {
         Session session = txStatus.getConnection();
         TransactionDefinition definition = txStatus.getTransactionDefinition();
-        boolean isNewSession = txStatus.getConnectionStatus().isNew();
+        // A session owned by an outer scope is treated as pre-bound: the read-only flush mode and
+        // entity mode would leak to the entities the outer scope keeps using after this transaction
+        boolean isNewSession = isNewSession(txStatus);
 
         boolean isReadOnly = definition.isReadOnly().orElse(false);
         if (isReadOnly && isNewSession) {
-            FlushMode previousFlushMode = session.getHibernateFlushMode();
-            boolean previousDefaultReadOnly = session.isDefaultReadOnly();
             // Just set to MANUAL in case of a new Session for this transaction.
             // JPA has no MANUAL flush mode, FlushMode.MANUAL.toJpaFlushMode() would flush on commit
             session.setHibernateFlushMode(FlushMode.MANUAL);
             // As of 5.1, we're also setting Hibernate's read-only entity mode by default.
             session.setDefaultReadOnly(true);
-            // The session might be owned by an outer connection scope
-            txStatus.registerConnectionSynchronization(new ConnectionSynchronization() {
-                @Override
-                public void executionComplete() {
-                    if (session.isOpen()) {
-                        session.setHibernateFlushMode(previousFlushMode);
-                        session.setDefaultReadOnly(previousDefaultReadOnly);
-                    }
-                }
-            });
         }
         List<Runnable> onComplete = new ArrayList<>(5);
         // Registered before the connection is modified, so the changes applied before
@@ -222,12 +212,16 @@ public final class HibernateTransactionManager extends AbstractDefaultTransactio
         } catch (TransactionException ex) {
             throw new TransactionSystemException("Could not roll back Hibernate transaction", ex);
         } finally {
-            if (!tx.getConnectionStatus().isNew()) {
+            if (!isNewSession(tx)) {
                 // Clear all pending inserts/updates/deletes in the Session.
                 // Necessary for pre-bound Sessions, to avoid inconsistent state.
                 tx.getConnection().clear();
             }
         }
+    }
+
+    private static boolean isNewSession(DefaultTransactionStatus<Session> tx) {
+        return tx.getConnectionStatus().isNew() && !tx.isConnectionSynchronizationsBound();
     }
 
     @Override
