@@ -202,6 +202,7 @@ include 'doc-examples:jooq-r2dbc-postgres'
 include 'test-annotation-processor-java'
 
 include 'test-suite-data-jdbc-sqlite'
+include 'test-suite-dev-reload'
 
 // benchmarks
 include 'benchmarks:benchmark-micronaut-data-jpa'
