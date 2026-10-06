@@ -15,5 +15,4 @@ class SqlServerTransactionsSpec extends AbstractJdbcTransactionSpec implements M
         // The SQL Server driver ignores setReadOnly, it's always false
         return false
     }
-
 }

@@ -26,6 +26,8 @@ import io.micronaut.transaction.TransactionOperations
 import io.micronaut.transaction.hibernate.HibernateTransactionManager
 import io.micronaut.transaction.hibernate6.micronaut.HibernateBookRepository
 import io.micronaut.transaction.hibernate6.micronaut.ReadOnlyTest
+import io.micronaut.data.tck.entities.Book
+import org.hibernate.FlushMode
 import org.hibernate.Session
 import org.hibernate.resource.transaction.spi.TransactionStatus
 
@@ -92,6 +94,47 @@ class HibernateTransactionSpec extends AbstractTransactionSpec implements TestRe
     boolean supportsModificationInNonTransaction() {
         // Hibernate always requires TX to modify data
         return false
+    }
+
+    def "read-only transaction scoped to an existing session"() {
+        given:
+            def connectionOperations = getConnectionOperations()
+            def transactionOperations = getTransactionOperations()
+            def bookRepository = context.getBean(HibernateBookRepository)
+            Long bookId = transactionOperations.executeWrite {
+                bookRepository.save(new Book(title: "Original", totalPages: 10)).id
+            }
+        when:
+            def state = connectionOperations.executeWrite { status ->
+                Session session = status.connection
+                Book book = null
+                def inTx = transactionOperations.executeRead { txStatus ->
+                    book = bookRepository.findById(bookId).get()
+                    [txStatus.connection.hibernateFlushMode, txStatus.connection.isReadOnly(book)]
+                }
+                def afterTx = [session.hibernateFlushMode, session.isReadOnly(book)]
+                transactionOperations.executeWrite { txStatus ->
+                    // The entity loaded in the read-only transaction is still managed by the outer session
+                    book.title = "Updated after read-only"
+                }
+                [inTx, afterTx]
+            }
+        then:
+            // The session is owned by the outer scope: the read-only mode isn't applied to its entities
+            state[0] == [FlushMode.AUTO, false]
+            state[1] == [FlushMode.AUTO, false]
+            transactionOperations.executeRead { bookRepository.findById(bookId).get().title } == "Updated after read-only"
+    }
+
+    def "read-only transaction on a new session"() {
+        given:
+            def transactionOperations = getTransactionOperations()
+        when:
+            def state = transactionOperations.executeRead { txStatus ->
+                [txStatus.connection.hibernateFlushMode, txStatus.connection.defaultReadOnly]
+            }
+        then:
+            state == [FlushMode.MANUAL, true]
     }
 
     def "test book is not updated if TX has readOnly=true"() {

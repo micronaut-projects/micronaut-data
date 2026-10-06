@@ -22,6 +22,7 @@ import io.micronaut.context.annotation.Requires;
 import org.jspecify.annotations.NonNull;
 import io.micronaut.core.annotation.TypeHint;
 import io.micronaut.data.connection.ConnectionOperations;
+import io.micronaut.data.connection.ConnectionSynchronization;
 import io.micronaut.data.connection.SynchronousConnectionManager;
 import io.micronaut.data.connection.support.JdbcConnectionUtils;
 import io.micronaut.transaction.TransactionDefinition;
@@ -48,7 +49,6 @@ import java.sql.SQLException;
 import java.sql.SQLFeatureNotSupportedException;
 import java.sql.Savepoint;
 import java.util.ArrayList;
-import java.util.Collections;
 import java.util.List;
 import java.util.Objects;
 
@@ -88,16 +88,35 @@ public final class HibernateTransactionManager extends AbstractDefaultTransactio
     protected void doBegin(DefaultTransactionStatus<Session> txStatus) {
         Session session = txStatus.getConnection();
         TransactionDefinition definition = txStatus.getTransactionDefinition();
-        boolean isNewSession = txStatus.getConnectionStatus().isNew();
+        // A session owned by an outer scope is treated as pre-bound: the read-only flush mode and
+        // entity mode would leak to the entities the outer scope keeps using after this transaction
+        boolean isNewSession = isNewSession(txStatus);
 
         boolean isReadOnly = definition.isReadOnly().orElse(false);
         if (isReadOnly && isNewSession) {
             // Just set to MANUAL in case of a new Session for this transaction.
-            session.setFlushMode(FlushMode.MANUAL.toJpaFlushMode());
+            // JPA has no MANUAL flush mode, FlushMode.MANUAL.toJpaFlushMode() would flush on commit
+            session.setHibernateFlushMode(FlushMode.MANUAL);
             // As of 5.1, we're also setting Hibernate's read-only entity mode by default.
             session.setDefaultReadOnly(true);
         }
         List<Runnable> onComplete = new ArrayList<>(5);
+        // Registered before the connection is modified, so the changes applied before
+        // a failing step are restored too; only the successfully applied changes are recorded
+        txStatus.registerConnectionSynchronization(new ConnectionSynchronization() {
+            @Override
+            public void executionComplete() {
+                if (!onComplete.isEmpty() && isPhysicallyConnected(session)) {
+                    // We're running with connection release mode "on_close": We're able to reset
+                    // the isolation level and/or read-only flag of the JDBC Connection here.
+                    // Else, we need to rely on the connection pool to perform proper cleanup.
+                    // Restore in the reverse order of the changes
+                    for (int i = onComplete.size() - 1; i >= 0; i--) {
+                        onComplete.get(i).run();
+                    }
+                }
+            }
+        });
 
         boolean holdabilityNeeded = allowResultAccessAfterCompletion && !isNewSession;
         boolean isolationLevelNeeded = definition.getIsolationLevel().isPresent();
@@ -154,23 +173,6 @@ public final class HibernateTransactionManager extends AbstractDefaultTransactio
             hibTx.setTimeout(((int) timeout.toMillis() / 1000));
         });
 
-        if (!onComplete.isEmpty()) {
-            Collections.reverse(onComplete);
-            txStatus.registerInvocationSynchronization(new TransactionSynchronization() {
-                @Override
-                public void afterCompletion(Status status) {
-                    if (isPhysicallyConnected(session)) {
-                        // We're running with connection release mode "on_close": We're able to reset
-                        // the isolation level and/or read-only flag of the JDBC Connection here.
-                        // Else, we need to rely on the connection pool to perform proper cleanup.
-                        for (Runnable runnable : onComplete) {
-                            runnable.run();
-                        }
-                    }
-                }
-            });
-        }
-
         Transaction transaction = session.beginTransaction();
         txStatus.setTransaction(transaction);
     }
@@ -210,12 +212,16 @@ public final class HibernateTransactionManager extends AbstractDefaultTransactio
         } catch (TransactionException ex) {
             throw new TransactionSystemException("Could not roll back Hibernate transaction", ex);
         } finally {
-            if (!tx.getConnectionStatus().isNew()) {
+            if (!isNewSession(tx)) {
                 // Clear all pending inserts/updates/deletes in the Session.
                 // Necessary for pre-bound Sessions, to avoid inconsistent state.
                 tx.getConnection().clear();
             }
         }
+    }
+
+    private static boolean isNewSession(DefaultTransactionStatus<Session> tx) {
+        return tx.getConnectionStatus().isNew() && !tx.isConnectionOwnedByOuterScope();
     }
 
     @Override

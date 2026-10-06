@@ -189,6 +189,26 @@ public final class DataSourceTransactionManager extends AbstractDefaultTransacti
             transactionExecutionListener.beforeBegin(status.getConnectionStatus(), definition);
         }
 
+        // Registered before the connection is modified, so the changes applied before
+        // a failing step are restored too; only the successfully applied changes are recorded
+        status.registerConnectionSynchronization(new ConnectionSynchronization() {
+            @Override
+            public void executionComplete() {
+                // Restore in the reverse order of the changes
+                for (int i = onComplete.size() - 1; i >= 0; i--) {
+                    try {
+                        onComplete.get(i).run();
+                    } catch (ConnectionException e) {
+                        if (isRecoveryCommitAttempt(status)) {
+                            logger.debug("Skipping JDBC Connection [{}] state restore after a recoverable commit attempt", connection, e);
+                            continue;
+                        }
+                        throw e;
+                    }
+                }
+            }
+        });
+
         definition.isReadOnly()
             .ifPresent(readOnly -> JdbcConnectionUtils.applyReadOnly(logger, connection, readOnly, onComplete));
         definition.getIsolationLevel()
@@ -197,25 +217,6 @@ public final class DataSourceTransactionManager extends AbstractDefaultTransacti
 
         //        prepareTransactionalConnection(connection, definition);
 
-        if (!onComplete.isEmpty()) {
-            Collections.reverse(onComplete);
-            status.getConnectionStatus().registerSynchronization(new ConnectionSynchronization() {
-                @Override
-                public void executionComplete() {
-                    for (Runnable runnable : onComplete) {
-                        try {
-                            runnable.run();
-                        } catch (ConnectionException e) {
-                            if (isRecoveryCommitAttempt(status)) {
-                                logger.debug("Skipping JDBC Connection [{}] state restore after a recoverable commit attempt", connection, e);
-                                continue;
-                            }
-                            throw e;
-                        }
-                    }
-                }
-            });
-        }
         for (TransactionExecutionListener<Connection> transactionExecutionListener : transactionExecutionListeners) {
             transactionExecutionListener.afterBegin(status.getConnectionStatus(), definition);
         }
@@ -242,6 +243,19 @@ public final class DataSourceTransactionManager extends AbstractDefaultTransacti
         } catch (SQLException ex) {
             throw new TransactionSystemException("Could not commit JDBC transaction", ex);
         }
+    }
+
+    @Override
+    protected void doRollbackAfterBeginFailure(DefaultTransactionStatus<Connection> status) {
+        try {
+            if (status.getConnection().getAutoCommit()) {
+                // The transaction wasn't started
+                return;
+            }
+        } catch (SQLException ex) {
+            throw new TransactionSystemException("Could not read JDBC auto-commit state", ex);
+        }
+        doRollback(status);
     }
 
     private static boolean isRecoveryCommitAttempt(DefaultTransactionStatus<Connection> status) {

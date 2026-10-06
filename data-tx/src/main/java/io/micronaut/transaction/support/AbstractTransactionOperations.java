@@ -177,16 +177,10 @@ public abstract class AbstractTransactionOperations<T extends InternalTransactio
             ConnectionStatus<C> connectionStatus = connectionOperations.findConnectionStatus().orElse(null);
             if (connectionStatus == null) {
                 ConnectionStatus<C> newConnectionStatus = synchronousConnectionManager.getConnection(txConnectionDefinition(definition));
-                T transactionStatus = createAndBeginTransaction(definition, newConnectionStatus);
-                transactionStatus.registerInvocationSynchronization(new TransactionSynchronization() {
-                    @Override
-                    public void afterCompletion(Status status) {
-                        synchronousConnectionManager.complete(newConnectionStatus);
-                    }
-                });
-                return transactionStatus;
+                return createAndBeginTransaction(definition, newConnectionStatus,
+                    () -> synchronousConnectionManager.complete(newConnectionStatus));
             }
-            return createAndBeginTransaction(definition, connectionStatus);
+            return createAndBeginTransactionOnExistingConnection(definition, connectionStatus);
         }
         if (debugEnabled) {
             logger.debug("Found existing transaction [{}]", existingTransaction);
@@ -195,15 +189,13 @@ public abstract class AbstractTransactionOperations<T extends InternalTransactio
         if (definition.getPropagationBehavior() == TransactionDefinition.Propagation.REQUIRES_NEW || definition.getPropagationBehavior() == TransactionDefinition.Propagation.NOT_SUPPORTED) {
             doSuspend(existingTransaction);
             ConnectionStatus<C> newConnection = synchronousConnectionManager.getConnection(ConnectionDefinition.REQUIRES_NEW);
-            T newTransaction = createAndBeginTransaction(definition, newConnection);
-            newTransaction.registerInvocationSynchronization(new TransactionSynchronization() {
-                @Override
-                public void afterCompletion(Status status) {
+            return createAndBeginTransaction(definition, newConnection, () -> {
+                try {
                     doResume(existingTransaction);
+                } finally {
                     synchronousConnectionManager.complete(newConnection);
                 }
             });
-            return newTransaction;
         }
         T existingTransactionStatus = createExistingTransactionStatus(definition, existingTransaction);
         begin(existingTransactionStatus);
@@ -327,7 +319,7 @@ public abstract class AbstractTransactionOperations<T extends InternalTransactio
                 throw priorityException;
             }
             if (definition.rollbackOn(e)) {
-                rollbackInternal(transaction);
+                rollbackInternal(transaction, e);
             } else {
                 commitInternal(transaction);
             }
@@ -385,6 +377,18 @@ public abstract class AbstractTransactionOperations<T extends InternalTransactio
         return false;
     }
 
+    /**
+     * Rollback a transaction whose {@link #doBegin(InternalTransaction)} failed after it was partially started,
+     * before the connection state is restored. Implementations need to check whether the transaction was started.
+     * The default implementation does nothing.
+     *
+     * @param tx The transaction
+     * @since 5.3.0
+     */
+    protected void doRollbackAfterBeginFailure(T tx) {
+        // The default begin is not partially started
+    }
+
     private void begin(T transaction) {
         if (transaction.isNewTransaction()) {
             doBegin(transaction);
@@ -396,7 +400,9 @@ public abstract class AbstractTransactionOperations<T extends InternalTransactio
     // Sonar java:S3776 -- the branching mirrors the commit state machine (rollback-only checks,
     // synchronization ordering, and the distinct recovery paths per exception type); the sequence
     // is only correct read as a whole.
-    @SuppressWarnings("java:S3776")
+    // Sonar java:S1181, java:S1141 -- errors must also trigger the final cleanup that restores the
+    // connection state, and the cleanup wraps the existing nested commit/rollback handling.
+    @SuppressWarnings({"java:S3776", "java:S1181", "java:S1141"})
     private void commitInternal(T tx) {
         if (tx.isCompleted()) {
             throw new IllegalTransactionStateException("Transaction is already completed - do not call commit or rollback more than once per transaction");
@@ -457,12 +463,21 @@ public abstract class AbstractTransactionOperations<T extends InternalTransactio
                 tx.triggerAfterCompletion(TransactionSynchronization.Status.COMMITTED);
             }
 
-        } finally {
-            tx.cleanupAfterCompletion();
+        } catch (RuntimeException | Error e) {
+            cleanupAfterCompletion(tx, e);
+            throw e;
         }
+        cleanupAfterCompletion(tx, null);
     }
 
     private void rollbackInternal(T tx) {
+        rollbackInternal(tx, null);
+    }
+
+    // Sonar java:S1181, java:S1141 -- errors must also trigger the final cleanup that restores the
+    // connection state, and the cleanup wraps the existing nested rollback handling.
+    @SuppressWarnings({"java:S1181", "java:S1141"})
+    private void rollbackInternal(T tx, @Nullable Throwable cause) {
         try {
             try {
                 tx.triggerBeforeCompletion();
@@ -479,8 +494,31 @@ public abstract class AbstractTransactionOperations<T extends InternalTransactio
             }
 
             tx.triggerAfterCompletion(TransactionSynchronization.Status.ROLLED_BACK);
-        } finally {
+        } catch (RuntimeException | Error e) {
+            cleanupAfterCompletion(tx, e);
+            throw e;
+        }
+        cleanupAfterCompletion(tx, cause);
+    }
+
+    /**
+     * Executes the final cleanup. A cleanup failure never replaces the outcome of the transaction:
+     * it's added as suppressed to the failure, or logged if the transaction completed.
+     *
+     * @param tx      The transaction
+     * @param failure The primary failure
+     */
+    // Sonar java:S1181 -- a cleanup error must not hide or change the transaction outcome
+    @SuppressWarnings("java:S1181")
+    private void cleanupAfterCompletion(T tx, @Nullable Throwable failure) {
+        try {
             tx.cleanupAfterCompletion();
+        } catch (RuntimeException | Error e) {
+            if (failure == null) {
+                logger.warn("Failed to restore the connection state after the transaction completed", e);
+            } else if (!failure.equals(e)) {
+                failure.addSuppressed(e);
+            }
         }
     }
 
@@ -530,6 +568,91 @@ public abstract class AbstractTransactionOperations<T extends InternalTransactio
         T transaction = createTransaction(definition, connectionStatus);
         begin(transaction);
         return transaction;
+    }
+
+    /**
+     * Creates and begins a transaction owning a new connection. The connection state is restored
+     * and the connection released when the transaction completes, or when the begin fails.
+     *
+     * @param definition       The transaction definition
+     * @param connectionStatus The new connection status
+     * @param release          The release of the connection
+     * @return The transaction
+     */
+    // Sonar java:S1181 -- the connection needs to be released after any begin failure, errors included
+    @SuppressWarnings("java:S1181")
+    private T createAndBeginTransaction(@NonNull TransactionDefinition definition,
+                                        @NonNull ConnectionStatus<C> connectionStatus,
+                                        @NonNull Runnable release) {
+        T transaction;
+        try {
+            transaction = createTransaction(definition, connectionStatus);
+        } catch (RuntimeException | Error e) {
+            runAfterBeginFailure(release, e);
+            throw e;
+        }
+        transaction.bindConnectionSynchronizationsToTransaction(release);
+        beginOrCleanup(transaction);
+        return transaction;
+    }
+
+    private T createAndBeginTransactionOnExistingConnection(@NonNull TransactionDefinition definition,
+                                                           @NonNull ConnectionStatus<C> connectionStatus) {
+        T transaction = createTransaction(definition, connectionStatus);
+        // The connection is owned by an outer scope: the connection state changed by the transaction
+        // needs to be restored when the transaction completes, not when the outer scope completes
+        transaction.bindConnectionSynchronizationsToTransaction();
+        beginOrCleanup(transaction);
+        return transaction;
+    }
+
+    // Sonar java:S1181 -- the connection state must be restored after any begin failure, errors included
+    @SuppressWarnings("java:S1181")
+    private void beginOrCleanup(T transaction) {
+        try {
+            begin(transaction);
+        } catch (RuntimeException | Error e) {
+            if (!rollbackAfterBeginFailure(transaction, e)) {
+                // Restoring the auto-commit would commit the partially started transaction
+                logger.warn("Not restoring the connection state of a transaction that failed to begin and to roll back");
+                transaction.discardConnectionSynchronizations();
+            }
+            // Restores the connection state and releases a connection owned by the transaction
+            cleanupAfterCompletion(transaction, e);
+            throw e;
+        }
+    }
+
+    /**
+     * Rollback a partially started transaction after a begin failure.
+     *
+     * @param transaction The transaction
+     * @param failure     The begin failure
+     * @return true if the connection state can be restored
+     */
+    // Sonar java:S1181 -- the begin failure is the primary failure
+    @SuppressWarnings("java:S1181")
+    private boolean rollbackAfterBeginFailure(T transaction, Throwable failure) {
+        if (!transaction.isNewTransaction()) {
+            return true;
+        }
+        try {
+            doRollbackAfterBeginFailure(transaction);
+            return true;
+        } catch (RuntimeException | Error rollbackException) {
+            failure.addSuppressed(rollbackException);
+            return false;
+        }
+    }
+
+    // Sonar java:S1181 -- the begin failure is the primary failure
+    @SuppressWarnings("java:S1181")
+    private static void runAfterBeginFailure(Runnable runnable, Throwable failure) {
+        try {
+            runnable.run();
+        } catch (RuntimeException | Error e) {
+            failure.addSuppressed(e);
+        }
     }
 
     private T createTransaction(@NonNull TransactionDefinition definition, @NonNull ConnectionStatus<C> connectionStatus) {
