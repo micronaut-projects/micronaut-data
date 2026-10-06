@@ -115,8 +115,7 @@ class HibernateTransactionSpec extends AbstractTransactionSpec implements TestRe
                 [inTx, afterTx]
             }
         then:
-            // MANUAL is applied as the JPA COMMIT flush mode
-            state[0] == [FlushMode.COMMIT, true]
+            state[0] == [FlushMode.MANUAL, true]
             state[1] == [FlushMode.AUTO, false]
             bookService.countBooksTransactional() == 1
     }

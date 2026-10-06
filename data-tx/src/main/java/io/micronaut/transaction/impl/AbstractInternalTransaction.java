@@ -182,11 +182,6 @@ public abstract class AbstractInternalTransaction<C> implements InternalTransact
     }
 
     @Override
-    public boolean hasBoundConnectionSynchronizations() {
-        return connectionSynchronizations != null && !connectionSynchronizations.isEmpty();
-    }
-
-    @Override
     public void registerSynchronization(@NonNull TransactionSynchronization synchronization) {
         registerInvocationSynchronization(synchronization);
     }

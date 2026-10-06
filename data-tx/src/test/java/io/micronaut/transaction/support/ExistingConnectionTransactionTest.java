@@ -21,6 +21,7 @@ import io.micronaut.data.connection.ConnectionOperations;
 import io.micronaut.data.connection.ConnectionStatus;
 import io.micronaut.data.connection.ConnectionSynchronization;
 import io.micronaut.data.connection.SynchronousConnectionManager;
+import io.micronaut.transaction.TransactionDefinition;
 import io.micronaut.transaction.exceptions.TransactionSystemException;
 import io.micronaut.transaction.impl.DefaultTransactionStatus;
 import io.micronaut.transaction.impl.InternalTransaction;
@@ -37,7 +38,6 @@ import java.util.function.Function;
 
 import static org.junit.jupiter.api.Assertions.assertArrayEquals;
 import static org.junit.jupiter.api.Assertions.assertEquals;
-import static org.junit.jupiter.api.Assertions.assertFalse;
 import static org.junit.jupiter.api.Assertions.assertSame;
 import static org.junit.jupiter.api.Assertions.assertThrows;
 
@@ -88,33 +88,35 @@ class ExistingConnectionTransactionTest {
     }
 
     @Test
-    void allSynchronizationsRunWhenOneFails() {
+    void restoreFailuresDoNotFailACommittedTransaction() {
         IllegalStateException first = new IllegalStateException("first");
         AssertionError second = new AssertionError("second");
         txManager.restoreFailures.add(first);
         txManager.restoreFailures.add(second);
         txManager.restoreCount = 3;
 
-        AssertionError exception = assertThrows(AssertionError.class, () ->
-            connectionManager.execute(ConnectionDefinition.DEFAULT, status -> txManager.executeWrite(tx -> null))
-        );
+        Object result = connectionManager.execute(ConnectionDefinition.DEFAULT, status -> txManager.executeWrite(tx -> "committed"));
 
-        // Restored in the reverse order of the registration
-        assertSame(second, exception);
-        assertArrayEquals(new Throwable[]{first}, exception.getSuppressed());
+        // Every restore runs, the failures are logged and the committed result is returned
+        assertEquals("committed", result);
         assertEquals(List.of("doBegin", "doCommit", "restore", "restore", "restore"), txManager.calls);
     }
 
     @Test
-    void errorFromSynchronizationIsRethrown() {
-        AssertionError error = new AssertionError("restore error");
-        txManager.restoreFailures.add(error);
+    void restoreFailureIsSuppressedOnTheRolledBackFailure() {
+        RuntimeException failure = new RuntimeException("work failure");
+        IllegalStateException restoreFailure = new IllegalStateException("restore failure");
+        txManager.restoreFailures.add(restoreFailure);
 
-        AssertionError exception = assertThrows(AssertionError.class, () ->
-            connectionManager.execute(ConnectionDefinition.DEFAULT, status -> txManager.executeWrite(tx -> null))
+        RuntimeException exception = assertThrows(RuntimeException.class, () ->
+            connectionManager.execute(ConnectionDefinition.DEFAULT, status -> txManager.executeWrite(tx -> {
+                throw failure;
+            }))
         );
 
-        assertSame(error, exception);
+        assertSame(failure, exception);
+        assertArrayEquals(new Throwable[]{restoreFailure}, exception.getSuppressed());
+        assertEquals(List.of("doBegin", "doRollback", "restore"), txManager.calls);
     }
 
     @Test
@@ -153,10 +155,8 @@ class ExistingConnectionTransactionTest {
     @Test
     void failedBeginRollsBackAndRestoresTheConnectionState() {
         IllegalStateException beginFailure = new IllegalStateException("begin failure");
-        TransactionSystemException rollbackFailure = new TransactionSystemException("rollback failure");
         IllegalStateException restoreFailure = new IllegalStateException("restore failure");
         txManager.beginFailure = beginFailure;
-        txManager.rollbackFailure = rollbackFailure;
         txManager.restoreFailures.add(restoreFailure);
 
         IllegalStateException exception = assertThrows(IllegalStateException.class, () ->
@@ -164,8 +164,25 @@ class ExistingConnectionTransactionTest {
         );
 
         assertSame(beginFailure, exception);
-        assertArrayEquals(new Throwable[]{rollbackFailure, restoreFailure}, exception.getSuppressed());
+        assertArrayEquals(new Throwable[]{restoreFailure}, exception.getSuppressed());
         assertEquals(List.of("doBegin", "doRollback", "restore"), txManager.calls);
+    }
+
+    @Test
+    void failedRollbackAfterFailedBeginDoesNotRestoreTheConnectionState() {
+        IllegalStateException beginFailure = new IllegalStateException("begin failure");
+        TransactionSystemException rollbackFailure = new TransactionSystemException("rollback failure");
+        txManager.beginFailure = beginFailure;
+        txManager.rollbackFailure = rollbackFailure;
+
+        IllegalStateException exception = assertThrows(IllegalStateException.class, () ->
+            connectionManager.execute(ConnectionDefinition.DEFAULT, status -> txManager.executeWrite(tx -> null))
+        );
+
+        // Restoring the auto-commit would commit the partially started transaction
+        assertSame(beginFailure, exception);
+        assertArrayEquals(new Throwable[]{rollbackFailure}, exception.getSuppressed());
+        assertEquals(List.of("doBegin", "doRollback"), txManager.calls);
     }
 
     @Test
@@ -181,6 +198,42 @@ class ExistingConnectionTransactionTest {
         assertSame(beginFailure, exception);
         assertEquals(0, exception.getSuppressed().length);
         assertEquals(List.of("doBegin"), txManager.calls);
+    }
+
+    @Test
+    void failedBeginOnANewConnectionReleasesTheConnection() {
+        IllegalStateException beginFailure = new IllegalStateException("begin failure");
+        IllegalStateException completeFailure = new IllegalStateException("complete failure");
+        txManager.beginFailure = beginFailure;
+        connectionManager.completeFailure = completeFailure;
+
+        IllegalStateException exception = assertThrows(IllegalStateException.class, () -> txManager.executeWrite(tx -> null));
+
+        assertSame(beginFailure, exception);
+        assertArrayEquals(new Throwable[]{completeFailure}, exception.getSuppressed());
+        assertEquals(List.of("doBegin", "doRollback", "restore"), txManager.calls);
+        assertEquals(List.of("complete"), connectionManager.completed);
+    }
+
+    @Test
+    void failedBeginOfARequiresNewTransactionResumesTheSuspendedTransaction() {
+        IllegalStateException beginFailure = new IllegalStateException("begin failure");
+
+        txManager.executeWrite(outer -> {
+            txManager.beginFailure = beginFailure;
+            IllegalStateException exception = assertThrows(IllegalStateException.class, () ->
+                txManager.execute(TransactionDefinition.of(TransactionDefinition.Propagation.REQUIRES_NEW), inner -> null)
+            );
+            txManager.beginFailure = null;
+            assertSame(beginFailure, exception);
+            return null;
+        });
+
+        assertEquals(
+            List.of("doBegin", "suspend", "doBegin", "doRollback", "restore", "resume", "doCommit", "restore"),
+            txManager.calls
+        );
+        assertEquals(List.of("complete", "complete"), connectionManager.completed);
     }
 
     @Test
@@ -202,7 +255,6 @@ class ExistingConnectionTransactionTest {
         transaction.registerConnectionSynchronization(new ConnectionSynchronization() {
         });
 
-        assertFalse(transaction.hasBoundConnectionSynchronizations());
         assertEquals(1, connectionStatus.synchronizations.size());
     }
 
@@ -257,6 +309,24 @@ class ExistingConnectionTransactionTest {
         }
 
         @Override
+        protected void doRollbackAfterBeginFailure(DefaultTransactionStatus<String> tx) {
+            // Partially started when the connection was modified
+            if (restoreCount > 0) {
+                doRollback(tx);
+            }
+        }
+
+        @Override
+        protected void doSuspend(DefaultTransactionStatus<String> transaction) {
+            calls.add("suspend");
+        }
+
+        @Override
+        protected void doResume(DefaultTransactionStatus<String> transaction) {
+            calls.add("resume");
+        }
+
+        @Override
         protected void doRollback(DefaultTransactionStatus<String> tx) {
             calls.add("doRollback");
             if (rollbackFailure != null) {
@@ -270,6 +340,7 @@ class ExistingConnectionTransactionTest {
         private final Deque<ConnectionStatus<String>> stack = new ArrayDeque<>();
         final List<ConnectionSynchronization> outerSynchronizations = new ArrayList<>();
         final List<String> completed = new ArrayList<>();
+        RuntimeException completeFailure;
 
         @Override
         public Optional<ConnectionStatus<String>> findConnectionStatus() {
@@ -303,6 +374,9 @@ class ExistingConnectionTransactionTest {
         public void complete(@NonNull ConnectionStatus<String> status) {
             completed.add("complete");
             ((StubConnectionStatus) status).complete();
+            if (completeFailure != null) {
+                throw completeFailure;
+            }
         }
     }
 

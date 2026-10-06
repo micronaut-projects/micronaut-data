@@ -118,13 +118,6 @@ public interface InternalTransaction<T> extends TransactionStatus<T> {
     default void bindConnectionSynchronizationsToTransaction() {
     }
 
-    /**
-     * @return true if there are connection synchronizations bound to this transaction
-     * @since 5.3.0
-     */
-    default boolean hasBoundConnectionSynchronizations() {
-        return false;
-    }
 
     /**
      * The variation of {@link #registerSynchronization(TransactionSynchronization)} that is always executed on the current TX invocation.

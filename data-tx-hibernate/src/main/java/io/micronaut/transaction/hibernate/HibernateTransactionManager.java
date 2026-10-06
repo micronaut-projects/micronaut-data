@@ -49,7 +49,6 @@ import java.sql.SQLException;
 import java.sql.SQLFeatureNotSupportedException;
 import java.sql.Savepoint;
 import java.util.ArrayList;
-import java.util.Collections;
 import java.util.List;
 import java.util.Objects;
 
@@ -96,7 +95,8 @@ public final class HibernateTransactionManager extends AbstractDefaultTransactio
             FlushMode previousFlushMode = session.getHibernateFlushMode();
             boolean previousDefaultReadOnly = session.isDefaultReadOnly();
             // Just set to MANUAL in case of a new Session for this transaction.
-            session.setFlushMode(FlushMode.MANUAL.toJpaFlushMode());
+            // JPA has no MANUAL flush mode, FlushMode.MANUAL.toJpaFlushMode() would flush on commit
+            session.setHibernateFlushMode(FlushMode.MANUAL);
             // As of 5.1, we're also setting Hibernate's read-only entity mode by default.
             session.setDefaultReadOnly(true);
             // The session might be owned by an outer connection scope
@@ -111,6 +111,22 @@ public final class HibernateTransactionManager extends AbstractDefaultTransactio
             });
         }
         List<Runnable> onComplete = new ArrayList<>(5);
+        // Registered before the connection is modified, so the changes applied before
+        // a failing step are restored too; only the successfully applied changes are recorded
+        txStatus.registerConnectionSynchronization(new ConnectionSynchronization() {
+            @Override
+            public void executionComplete() {
+                if (!onComplete.isEmpty() && isPhysicallyConnected(session)) {
+                    // We're running with connection release mode "on_close": We're able to reset
+                    // the isolation level and/or read-only flag of the JDBC Connection here.
+                    // Else, we need to rely on the connection pool to perform proper cleanup.
+                    // Restore in the reverse order of the changes
+                    for (int i = onComplete.size() - 1; i >= 0; i--) {
+                        onComplete.get(i).run();
+                    }
+                }
+            }
+        });
 
         boolean holdabilityNeeded = allowResultAccessAfterCompletion && !isNewSession;
         boolean isolationLevelNeeded = definition.getIsolationLevel().isPresent();
@@ -166,23 +182,6 @@ public final class HibernateTransactionManager extends AbstractDefaultTransactio
             Transaction hibTx = session.getTransaction();
             hibTx.setTimeout(((int) timeout.toMillis() / 1000));
         });
-
-        if (!onComplete.isEmpty()) {
-            Collections.reverse(onComplete);
-            txStatus.registerInvocationSynchronization(new TransactionSynchronization() {
-                @Override
-                public void afterCompletion(Status status) {
-                    if (isPhysicallyConnected(session)) {
-                        // We're running with connection release mode "on_close": We're able to reset
-                        // the isolation level and/or read-only flag of the JDBC Connection here.
-                        // Else, we need to rely on the connection pool to perform proper cleanup.
-                        for (Runnable runnable : onComplete) {
-                            runnable.run();
-                        }
-                    }
-                }
-            });
-        }
 
         Transaction transaction = session.beginTransaction();
         txStatus.setTransaction(transaction);
