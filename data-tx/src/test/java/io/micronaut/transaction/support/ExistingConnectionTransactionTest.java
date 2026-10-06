@@ -219,10 +219,11 @@ class ExistingConnectionTransactionTest {
     void failedBeginOfARequiresNewTransactionResumesTheSuspendedTransaction() {
         IllegalStateException beginFailure = new IllegalStateException("begin failure");
 
+        TransactionDefinition requiresNew = TransactionDefinition.of(TransactionDefinition.Propagation.REQUIRES_NEW);
         txManager.executeWrite(outer -> {
             txManager.beginFailure = beginFailure;
             IllegalStateException exception = assertThrows(IllegalStateException.class, () ->
-                txManager.execute(TransactionDefinition.of(TransactionDefinition.Propagation.REQUIRES_NEW), inner -> null)
+                txManager.execute(requiresNew, inner -> null)
             );
             txManager.beginFailure = null;
             assertSame(beginFailure, exception);

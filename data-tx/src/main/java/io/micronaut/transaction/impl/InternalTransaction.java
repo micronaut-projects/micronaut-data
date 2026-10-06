@@ -118,7 +118,6 @@ public interface InternalTransaction<T> extends TransactionStatus<T> {
     default void bindConnectionSynchronizationsToTransaction() {
     }
 
-
     /**
      * The variation of {@link #registerSynchronization(TransactionSynchronization)} that is always executed on the current TX invocation.
      * The ordinary {@link #registerSynchronization(TransactionSynchronization)} will always bound the synchronization to the TX in progress.

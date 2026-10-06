@@ -608,6 +608,8 @@ public abstract class AbstractTransactionOperations<T extends InternalTransactio
         return transaction;
     }
 
+    // Sonar java:S1181 -- the connection state must be restored after any begin failure, errors included
+    @SuppressWarnings("java:S1181")
     private T createAndBeginTransactionOnExistingConnection(@NonNull TransactionDefinition definition,
                                                            @NonNull ConnectionStatus<C> connectionStatus) {
         T transaction = createTransaction(definition, connectionStatus);
