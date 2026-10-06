@@ -826,61 +826,86 @@ public abstract class AbstractSqlLikeQueryBuilder implements QueryBuilder {
         Iterator<Order> i = orders.iterator();
         while (i.hasNext()) {
             Order order = i.next();
-            Expression<?> expr = order.getExpression();
-            boolean lowerExpression = false;
-            if (expr instanceof UnaryExpression<?> ue && ue.getType() == UnaryExpressionType.LOWER) {
-                lowerExpression = true;
-                expr = ue.getExpression();
+            Nulls nullPrecedence = getNullPrecedence(order);
+            boolean emulateNullOrdering = nullPrecedence != Nulls.NONE && !supportsNullOrdering();
+            if (emulateNullOrdering) {
+                // Sorting the null rank first puts the nulls where the caller asked for them. Whether the
+                // value is null does not depend on its case, so the rank tests the value as it is
+                int nullRank = nullPrecedence == Nulls.FIRST ? 0 : 1;
+                buff.append("CASE WHEN ");
+                appendOrderExpression(annotationMetadata, order, false, jsonEntityColumn, queryState);
+                buff.append(" IS NULL THEN ").append(nullRank).append(" ELSE ").append(1 - nullRank).append(" END,");
             }
-            if (expr instanceof io.micronaut.data.model.jpa.criteria.PersistentPropertyPath<?> persistentPropertyPath) {
-                QueryPropertyPath propertyPath = queryState.findProperty(persistentPropertyPath.getPropertyPath());
-                String currentAlias = propertyPath.getTableAlias();
-                boolean ignoreCase = (order instanceof DefaultOrder<?> defaultOrder && defaultOrder.isIgnoreCase())
-                    || lowerExpression;
-                if (ignoreCase) {
-                    buff.append("LOWER(");
-                }
-                if (currentAlias != null) {
-                    buff.append(currentAlias).append(DOT);
-                }
-                if (jsonEntityColumn != null) {
-                    buff.append(jsonEntityColumn).append(DOT);
-                }
-                if (computePropertyPaths() && jsonEntityColumn == null) {
-                    buff.append(propertyPath.getColumnName());
-                } else {
-                    buff.append(propertyPath.getPath());
-                    if (jsonEntityColumn != null) {
-                        appendJsonProjection(buff, propertyPath.getProperty().getDataType());
-                    }
-                }
-                if (ignoreCase) {
-                    buff.append(")");
-                }
-            } else {
-                new ExpressionAppender(queryState, annotationMetadata).appendExpression(order.getExpression());
-            }
+            appendOrderExpression(annotationMetadata, order, true, jsonEntityColumn, queryState);
             buff.append(SPACE);
             if (order.isAscending()) {
                 buff.append("ASC");
             } else {
                 buff.append("DESC");
             }
-            appendNullPrecedence(order, buff);
+            if (!emulateNullOrdering) {
+                appendNullPrecedence(nullPrecedence, buff);
+            }
             if (i.hasNext()) {
                 buff.append(",");
             }
         }
     }
 
-    private static void appendNullPrecedence(Order order, StringBuilder query) {
-        if (order instanceof DefaultOrder<?> defaultOrder) {
-            Nulls nullPrecedence = defaultOrder.getNullPrecedence();
-            if (nullPrecedence == Nulls.FIRST) {
-                query.append(" NULLS FIRST");
-            } else if (nullPrecedence == Nulls.LAST) {
-                query.append(" NULLS LAST");
+    private void appendOrderExpression(AnnotationMetadata annotationMetadata,
+                                       Order order,
+                                       boolean applyIgnoreCase,
+                                       @Nullable String jsonEntityColumn,
+                                       QueryState queryState) {
+        StringBuilder buff = queryState.getQuery();
+        Expression<?> expr = order.getExpression();
+        boolean lowerExpression = false;
+        if (expr instanceof UnaryExpression<?> ue && ue.getType() == UnaryExpressionType.LOWER) {
+            lowerExpression = true;
+            expr = ue.getExpression();
+        }
+        if (expr instanceof io.micronaut.data.model.jpa.criteria.PersistentPropertyPath<?> persistentPropertyPath) {
+            QueryPropertyPath propertyPath = queryState.findProperty(persistentPropertyPath.getPropertyPath());
+            String currentAlias = propertyPath.getTableAlias();
+            boolean ignoreCase = applyIgnoreCase
+                && ((order instanceof DefaultOrder<?> defaultOrder && defaultOrder.isIgnoreCase()) || lowerExpression);
+            if (ignoreCase) {
+                buff.append("LOWER(");
             }
+            if (currentAlias != null) {
+                buff.append(currentAlias).append(DOT);
+            }
+            if (jsonEntityColumn != null) {
+                buff.append(jsonEntityColumn).append(DOT);
+            }
+            if (computePropertyPaths() && jsonEntityColumn == null) {
+                buff.append(propertyPath.getColumnName());
+            } else {
+                buff.append(propertyPath.getPath());
+                if (jsonEntityColumn != null) {
+                    appendJsonProjection(buff, propertyPath.getProperty().getDataType());
+                }
+            }
+            if (ignoreCase) {
+                buff.append(")");
+            }
+        } else {
+            new ExpressionAppender(queryState, annotationMetadata).appendExpression(order.getExpression());
+        }
+    }
+
+    private static Nulls getNullPrecedence(Order order) {
+        if (order instanceof DefaultOrder<?> defaultOrder && defaultOrder.getNullPrecedence() != null) {
+            return defaultOrder.getNullPrecedence();
+        }
+        return Nulls.NONE;
+    }
+
+    private static void appendNullPrecedence(Nulls nullPrecedence, StringBuilder query) {
+        if (nullPrecedence == Nulls.FIRST) {
+            query.append(" NULLS FIRST");
+        } else if (nullPrecedence == Nulls.LAST) {
+            query.append(" NULLS LAST");
         }
     }
 
