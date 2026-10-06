@@ -36,6 +36,7 @@ import org.reactivestreams.Publisher;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import reactor.core.publisher.Flux;
+import reactor.core.publisher.Mono;
 
 import java.time.Duration;
 import java.util.ArrayList;
@@ -112,7 +113,8 @@ final class DefaultR2dbcReactorTransactionOperations extends AbstractReactorTran
         if (LOG.isDebugEnabled()) {
             LOG.debug("Committing transaction for R2DBC connection: {} and configuration {}.", connectionStatus.getConnection(), dataSourceName);
         }
-        return connectionStatus.getConnection().commitTransaction();
+        Connection connection = connectionStatus.getConnection();
+        return Flux.concat(connection.commitTransaction(), restoreAutoCommit(connection));
     }
 
     @Override
@@ -120,7 +122,19 @@ final class DefaultR2dbcReactorTransactionOperations extends AbstractReactorTran
         if (LOG.isDebugEnabled()) {
             LOG.debug("Rolling back transaction for R2DBC connection: {} and configuration {}.", connectionStatus.getConnection(), dataSourceName);
         }
-        return connectionStatus.getConnection().rollbackTransaction();
+        Connection connection = connectionStatus.getConnection();
+        return Flux.concat(connection.rollbackTransaction(), restoreAutoCommit(connection));
+    }
+
+    /**
+     * Some drivers (e.g. Oracle R2DBC) leave auto-commit disabled after the transaction ends.
+     * A pooled connection would then hold row locks of later non-transactional statements forever.
+     *
+     * @param connection The connection
+     * @return The publisher
+     */
+    private static Publisher<Void> restoreAutoCommit(Connection connection) {
+        return Mono.defer(() -> connection.isAutoCommit() ? Mono.empty() : Mono.from(connection.setAutoCommit(true)));
     }
 
     @Override

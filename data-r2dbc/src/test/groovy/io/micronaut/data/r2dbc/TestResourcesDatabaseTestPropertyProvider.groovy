@@ -76,22 +76,17 @@ trait TestResourcesDatabaseTestPropertyProvider implements TestPropertyProvider 
             // but that's the only thing which works
             options += ['test-resources.containers.mssql.accept-license': true]
         }
-// TODO
-//        if (usePool()) {
-//            String poolProtocol
-//            switch (dialect) {
-//                case Dialect.SQL_SERVER:
-//                    poolProtocol = "sqlserver"
-//                    break
-//                default:
-//                    poolProtocol = dialect.name().toLowerCase()
-//            }
-//            map += [
-//                    "r2dbc.datasources.default.options.protocol": poolProtocol,
-//                    "r2dbc.datasources.default.options.driver"  : 'pool',
-//            ]
-//        }
-//        map += options
+        if (usePool()) {
+            options += [
+                    (prefix + '.options.driver')                    : 'pool',
+                    (prefix + '.options.protocol')                  : dialect == Dialect.SQL_SERVER ? 'sqlserver' : dbType,
+                    // micronaut-r2dbc doesn't dispose the pool when the context is closed,
+                    // keep the pools of the finished specs from exhausting the database connections
+                    (prefix + '.options.initialSize')               : '1',
+                    (prefix + '.options.maxIdleTime')               : 'PT5S',
+                    (prefix + '.options.backgroundEvictionInterval'): 'PT5S',
+            ]
+        }
         return options
     }
 
