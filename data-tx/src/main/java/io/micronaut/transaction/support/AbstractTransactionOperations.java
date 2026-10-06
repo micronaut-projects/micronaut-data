@@ -390,7 +390,7 @@ public abstract class AbstractTransactionOperations<T extends InternalTransactio
      * The default implementation calls {@link #doRollback(InternalTransaction)}.
      *
      * @param tx The transaction
-     * @since 5.3.1
+     * @since 5.3.0
      */
     protected void doRollbackAfterBeginFailure(T tx) {
         doRollback(tx);

@@ -103,7 +103,7 @@ public interface InternalTransaction<T> extends TransactionStatus<T> {
      * reuses a connection owned by an outer scope, it is executed at {@link #cleanupAfterCompletion()}.
      *
      * @param synchronization The synchronization
-     * @since 5.3.1
+     * @since 5.3.0
      */
     default void registerConnectionSynchronization(@NonNull ConnectionSynchronization synchronization) {
         getConnectionStatus().registerSynchronization(synchronization);
@@ -113,14 +113,14 @@ public interface InternalTransaction<T> extends TransactionStatus<T> {
      * Binds the synchronizations registered by {@link #registerConnectionSynchronization(ConnectionSynchronization)}
      * to this transaction. Used when the transaction is started on a connection owned by an outer scope.
      *
-     * @since 5.3.1
+     * @since 5.3.0
      */
     default void bindConnectionSynchronizationsToTransaction() {
     }
 
     /**
      * @return true if there are connection synchronizations bound to this transaction
-     * @since 5.3.1
+     * @since 5.3.0
      */
     default boolean hasBoundConnectionSynchronizations() {
         return false;
