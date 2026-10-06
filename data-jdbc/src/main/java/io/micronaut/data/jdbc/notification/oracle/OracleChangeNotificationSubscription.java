@@ -28,6 +28,7 @@ import java.util.Objects;
 import java.util.concurrent.Executor;
 import java.util.concurrent.RejectedExecutionException;
 import java.util.concurrent.ScheduledFuture;
+import java.util.function.Consumer;
 
 /**
  * Manages one listener method's Oracle Database change-notification registration.
@@ -143,15 +144,15 @@ final class OracleChangeNotificationSubscription {
                 registrationId, dataSourceName, methodDescription, failure);
         }
         state = State.RECOVERING;
-        unregisterRegistration(true);
+        unregisterFailedRegistration();
         submitRecoveryTask(0, 3, 10, registrationId);
     }
 
-    private void submitRecoveryTask(int retryCount, int retryMax, long retryDelay, long failedRegId) {
+    private void submitRecoveryTask(int retryCount, int maxRetries, long retryDelay, long failedRegId) {
         try {
-            blockingExecutor.execute(() -> recoverRegistration(retryCount, retryMax, retryDelay, failedRegId));
+            blockingExecutor.execute(() -> attemptRegistrationRecovery(retryCount, maxRetries, retryDelay, failedRegId));
         } catch (RejectedExecutionException e) {
-            rescheduleRecoveryTask(retryCount, retryMax, retryDelay, failedRegId, e);
+            rescheduleRecoveryTask(retryCount, maxRetries, retryDelay, failedRegId, e);
         }
     }
 
@@ -159,11 +160,11 @@ final class OracleChangeNotificationSubscription {
      * Attempts to create a replacement registration and dispatches an invalidation on success.
      *
      * @param retryCount  the number of retry attempts already made
-     * @param retryMax    the maximum number of retry attempts
+     * @param maxRetries  the maximum number of retry attempts
      * @param retryDelay  the delay between attempts, in seconds
      * @param failedRegId the identifier of the registration that failed
      */
-    synchronized void recoverRegistration(int retryCount, int retryMax, long retryDelay, long failedRegId) {
+    private synchronized void attemptRegistrationRecovery(int retryCount, int maxRetries, long retryDelay, long failedRegId) {
         if (state == State.CLOSED) {
             return;
         }
@@ -174,19 +175,19 @@ final class OracleChangeNotificationSubscription {
             state = State.ACTIVE;
             dispatcher.dispatchInvalidation(registration.getRegId(), "after DCN registration recovery");
         } catch (Exception e) {
-            rescheduleRecoveryTask(retryCount, retryMax, retryDelay, failedRegId, e);
+            rescheduleRecoveryTask(retryCount, maxRetries, retryDelay, failedRegId, e);
         }
     }
 
-    private void rescheduleRecoveryTask(int retryCount, int retryMax, long retryDelay, long failedRegId, Exception e) {
-        if (retryCount < retryMax) {
+    private void rescheduleRecoveryTask(int retryCount, int maxRetries, long retryDelay, long failedRegId, Exception e) {
+        if (retryCount < maxRetries) {
             LOG.warn("DCN receiver recovery attempt failed for registration [{}], datasource [{}], and listener method [{}]; will retry",
                 failedRegId, dataSourceName, methodDescription, e);
-            scheduleRecoveryRetry(retryCount + 1, retryMax, retryDelay, failedRegId);
+            scheduleRecoveryRetry(retryCount + 1, maxRetries, retryDelay, failedRegId);
         } else {
             LOG.error("DCN receiver recovery exhausted [{}] retries for registration [{}], datasource [{}], "
                     + "and listener method [{}]; the listener remains unavailable",
-                retryMax, failedRegId, dataSourceName, methodDescription, e);
+                maxRetries, failedRegId, dataSourceName, methodDescription, e);
             synchronized (this) {
                 if (state == State.RECOVERING) {
                     state = State.UNREGISTERED;
@@ -195,14 +196,14 @@ final class OracleChangeNotificationSubscription {
         }
     }
 
-    private synchronized void scheduleRecoveryRetry(int retryCount, int retryMax, long retryDelay, long failedRegId) {
+    private synchronized void scheduleRecoveryRetry(int retryCount, int maxRetries, long retryDelay, long failedRegId) {
         if (state == State.CLOSED) {
             return;
         }
         try {
             recoveryRetryTask = taskScheduler.schedule(
                 Duration.ofSeconds(retryDelay),
-                () -> submitRecoveryTask(retryCount, retryMax, retryDelay, failedRegId));
+                () -> submitRecoveryTask(retryCount, maxRetries, retryDelay, failedRegId));
             LOG.warn("Scheduled DCN receiver recovery retry in [{}] seconds for datasource [{}], listener method [{}], and registration [{}]",
                 retryDelay, dataSourceName, methodDescription, failedRegId);
         } catch (RuntimeException schedulingFailure) {
@@ -261,23 +262,29 @@ final class OracleChangeNotificationSubscription {
     }
 
     private void unregisterRegistration() {
-        unregisterRegistration(false);
+        unregisterCurrentRegistration(registrar::unregisterRegistration);
     }
 
-    private void unregisterRegistration(boolean afterFailure) {
-        if (registration != null) {
-            try {
-                if (afterFailure) {
-                    registrar.unregisterRegistrationAfterFailure(registration);
-                } else {
-                    registrar.unregisterRegistration(registration);
-                }
-            } catch (RuntimeException e) {
-                LOG.warn("Unable to unregister DCN registration [{}] for datasource [{}] and listener method [{}]",
-                    registration.getRegId(), dataSourceName, methodDescription, e);
-            }
-            registration = null;
+    private void unregisterFailedRegistration() {
+        unregisterCurrentRegistration(registrar::unregisterRegistrationAfterFailure);
+    }
+
+    /**
+     * Attempts to unregister the current registration and clears its local reference afterward.
+     *
+     * @param unregistration the operation to use for cleanup
+     */
+    private void unregisterCurrentRegistration(Consumer<DatabaseChangeRegistration> unregistration) {
+        if (registration == null) {
+            return;
         }
+        try {
+            unregistration.accept(registration);
+        } catch (RuntimeException e) {
+            LOG.warn("Unable to unregister DCN registration [{}] for datasource [{}] and listener method [{}]",
+                getRegId(), dataSourceName, methodDescription, e);
+        }
+        registration = null;
     }
 
     private void cancelRecoveryRetryTask() {
