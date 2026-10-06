@@ -24,6 +24,7 @@ import io.micronaut.data.model.jpa.criteria.PersistentEntityCriteriaDelete;
 import io.micronaut.data.model.jpa.criteria.PersistentEntityRoot;
 import io.micronaut.data.model.jpa.criteria.PersistentEntitySubquery;
 import io.micronaut.data.model.jpa.criteria.impl.predicate.ConjunctionPredicate;
+import io.micronaut.data.model.jpa.criteria.impl.predicate.DisjunctionPredicate;
 import io.micronaut.data.model.jpa.criteria.impl.selection.CompoundSelection;
 import io.micronaut.data.model.query.builder.QueryBuilder;
 import io.micronaut.data.model.query.builder.QueryResult;
@@ -35,7 +36,6 @@ import jakarta.persistence.metamodel.EntityType;
 import org.jspecify.annotations.Nullable;
 
 import java.util.Arrays;
-import java.util.Collections;
 import java.util.List;
 import java.util.Map;
 import java.util.Objects;
@@ -86,18 +86,16 @@ public abstract class AbstractPersistentEntityCriteriaDelete<T> implements Persi
 
     @Override
     public PersistentEntityCriteriaDelete<T> where(Expression<Boolean> restriction) {
-        if (restriction instanceof ConjunctionPredicate conjunctionPredicate) {
-            predicate = conjunctionPredicate;
-        } else {
-            predicate = new ConjunctionPredicate(Collections.singleton((IExpression<Boolean>) restriction));
-        }
+        predicate = CriteriaUtils.normalizeRestriction(restriction);
         return this;
     }
 
     @Override
     public PersistentEntityCriteriaDelete<T> where(Predicate... restrictions) {
         Objects.requireNonNull(restrictions);
-        if (restrictions.length > 0) {
+        if (restrictions.length == 1 && (restrictions[0] instanceof ConjunctionPredicate || restrictions[0] instanceof DisjunctionPredicate)) {
+            predicate = CriteriaUtils.normalizeRestriction(restrictions[0]);
+        } else if (restrictions.length > 0) {
             predicate = restrictions.length == 1 ? restrictions[0] : new ConjunctionPredicate(Arrays.stream(restrictions).sequential().map(x -> (IExpression<Boolean>) x).toList());
         } else {
             predicate = null;
