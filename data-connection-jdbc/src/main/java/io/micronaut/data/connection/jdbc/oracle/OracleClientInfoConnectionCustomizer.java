@@ -47,7 +47,6 @@ import java.util.LinkedHashMap;
 import java.util.List;
 import java.util.Map;
 import java.util.Properties;
-import java.util.concurrent.ConcurrentHashMap;
 import java.util.function.Function;
 
 /**
@@ -77,7 +76,16 @@ final class OracleClientInfoConnectionCustomizer implements ConnectionCustomizer
 
     private static final Logger LOG = LoggerFactory.getLogger(OracleClientInfoConnectionCustomizer.class);
 
-    private static final Map<Class<?>, String> MODULE_CLASS_MAP = new ConcurrentHashMap<>(100);
+    /**
+     * The module name of each repository class, held by the class itself, so that a class of an application that is
+     * reloaded in development mode, or undeployed, is not kept reachable by this one.
+     */
+    private static final ClassValue<String> MODULE_NAMES = new ClassValue<>() {
+        @Override
+        protected String computeValue(Class<?> type) {
+            return preprocessClassName(type);
+        }
+    };
 
     // The driver is supposed to expose this via DataBaseMetadata.getClientInfoProperties() but the Oracle driver
     // doesn't do so as of release 23.7.0.25.1, so we hard-code it here. This bug is being fixed so a future
@@ -203,10 +211,7 @@ final class OracleClientInfoConnectionCustomizer implements ConnectionCustomizer
         }
         if (annotationMetadata instanceof MethodInvocationContext<?, ?> methodInvocationContext) {
             clientInfoAttributes.putIfAbsent(ORACLE_MODULE,
-                MODULE_CLASS_MAP.computeIfAbsent(
-                    methodInvocationContext.getTarget().getClass(),
-                    OracleClientInfoConnectionCustomizer::preprocessClassName
-                )
+                MODULE_NAMES.get(methodInvocationContext.getTarget().getClass())
             );
             clientInfoAttributes.putIfAbsent(ORACLE_ACTION, methodInvocationContext.getName());
         }
