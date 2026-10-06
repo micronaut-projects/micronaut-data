@@ -89,8 +89,6 @@ final class OracleChangeNotificationSubscription {
 
     /**
      * Creates the initial registration for this listener method and marks the subscription active.
-     *
-     * @throws RuntimeException if registration or query association fails
      */
     synchronized void start() {
         registration = registrar.createRegistration(this, dispatcher);
@@ -105,15 +103,6 @@ final class OracleChangeNotificationSubscription {
         state = State.CLOSED;
         unregisterRegistration();
         cancelRecoveryRetryTask();
-    }
-
-    @Nullable
-    private Long getRegId() {
-        return registration == null ? null : registration.getRegId();
-    }
-
-    private boolean isCurrent(long regId) {
-        return Objects.equals(getRegId(), regId);
     }
 
     /**
@@ -148,6 +137,53 @@ final class OracleChangeNotificationSubscription {
         submitRecoveryTask(0, 3, 10, registrationId);
     }
 
+    /**
+     * Clears the current registration after Oracle Database purges it on notification.
+     *
+     * @param registrationId the purged registration identifier
+     */
+    synchronized void handleRegistrationPurged(long registrationId) {
+        if (state == State.CLOSED || !isCurrent(registrationId)) {
+            return;
+        }
+        LOG.trace("Handling purged DCN [{}] for datasource [{}] and listener method [{}]", getRegId(), dataSourceName, methodDescription);
+        state = State.UNREGISTERED;
+        registration = null;
+    }
+
+    /**
+     * Marks the subscription unavailable when Oracle Database deregisters its registration.
+     *
+     * @param registrationId      the deregistered registration identifier
+     * @param additionalEventType the reason reported for deregistration
+     */
+    synchronized void handleRegistrationDeregistered(long registrationId,
+                                                     DatabaseChangeEvent.AdditionalEventType additionalEventType) {
+        if (state == State.CLOSED || !isCurrent(registrationId)) {
+            return;
+        }
+        LOG.warn("DCN registration [{}] for datasource [{}] and listener method [{}] was deregistered; reason [{}]",
+            registrationId, dataSourceName, methodDescription, additionalEventType);
+        state = State.UNREGISTERED;
+        registration = null;
+    }
+
+    /**
+     * Unregisters the subscription when its associated query is deregistered.
+     *
+     * @param registrationId the registration whose associated query was deregistered
+     */
+    synchronized void handleQueryDeregistered(long registrationId) {
+        if (state == State.CLOSED || !isCurrent(registrationId)) {
+            return;
+        }
+        LOG.trace("Closing DCN subscription after query deregistration [{}] for datasource [{}] and listener method [{}]",
+            registrationId, dataSourceName, methodDescription);
+
+        state = State.UNREGISTERED;
+        unregisterRegistration();
+    }
+
     private void submitRecoveryTask(int retryCount, int maxRetries, long retryDelay, long failedRegId) {
         try {
             blockingExecutor.execute(() -> attemptRegistrationRecovery(retryCount, maxRetries, retryDelay, failedRegId));
@@ -156,14 +192,6 @@ final class OracleChangeNotificationSubscription {
         }
     }
 
-    /**
-     * Attempts to create a replacement registration and dispatches an invalidation on success.
-     *
-     * @param retryCount  the number of retry attempts already made
-     * @param maxRetries  the maximum number of retry attempts
-     * @param retryDelay  the delay between attempts, in seconds
-     * @param failedRegId the identifier of the registration that failed
-     */
     private synchronized void attemptRegistrationRecovery(int retryCount, int maxRetries, long retryDelay, long failedRegId) {
         if (state == State.CLOSED) {
             return;
@@ -214,53 +242,6 @@ final class OracleChangeNotificationSubscription {
         }
     }
 
-    /**
-     * Clears the current registration after Oracle Database purges it on notification.
-     *
-     * @param registrationId the purged registration identifier
-     */
-    synchronized void handleRegistrationPurged(long registrationId) {
-        if (state == State.CLOSED || !isCurrent(registrationId)) {
-            return;
-        }
-        LOG.trace("Handling purged DCN [{}] for datasource [{}] and listener method [{}]", getRegId(), dataSourceName, methodDescription);
-        state = State.UNREGISTERED;
-        registration = null;
-    }
-
-    /**
-     * Marks the subscription unavailable when Oracle Database deregisters its registration.
-     *
-     * @param registrationId      the deregistered registration identifier
-     * @param additionalEventType the reason reported for deregistration
-     */
-    synchronized void handleRegistrationDeregistered(long registrationId,
-                                                     DatabaseChangeEvent.AdditionalEventType additionalEventType) {
-        if (state == State.CLOSED || !isCurrent(registrationId)) {
-            return;
-        }
-        LOG.warn("DCN registration [{}] for datasource [{}] and listener method [{}] was deregistered; reason [{}]",
-            registrationId, dataSourceName, methodDescription, additionalEventType);
-        state = State.UNREGISTERED;
-        registration = null;
-    }
-
-    /**
-     * Unregisters the subscription when its associated query is deregistered.
-     *
-     * @param registrationId the registration whose associated query was deregistered
-     */
-    synchronized void handleQueryDeregistered(long registrationId) {
-        if (state == State.CLOSED || !isCurrent(registrationId)) {
-            return;
-        }
-        LOG.trace("Closing DCN subscription after query deregistration [{}] for datasource [{}] and listener method [{}]",
-            registrationId, dataSourceName, methodDescription);
-
-        state = State.UNREGISTERED;
-        unregisterRegistration();
-    }
-
     private void unregisterRegistration() {
         unregisterCurrentRegistration(registrar::unregisterRegistration);
     }
@@ -292,6 +273,15 @@ final class OracleChangeNotificationSubscription {
             recoveryRetryTask.cancel(false);
             recoveryRetryTask = null;
         }
+    }
+
+    @Nullable
+    private Long getRegId() {
+        return registration == null ? null : registration.getRegId();
+    }
+
+    private boolean isCurrent(long regId) {
+        return Objects.equals(getRegId(), regId);
     }
 
     private enum State {
