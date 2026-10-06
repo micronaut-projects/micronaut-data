@@ -47,6 +47,11 @@ import java.util.function.Supplier;
 public abstract class AbstractReactorConnectionOperations<C> implements ReactorConnectionOperations<C> {
 
     /**
+     * A reused connection is closed by the scope that opened it.
+     */
+    private static final Supplier<Publisher<Void>> NO_CLOSE = Mono::empty;
+
+    /**
      * Open a new connection.
      *
      * @param definition The connection definition
@@ -118,7 +123,14 @@ public abstract class AbstractReactorConnectionOperations<C> implements ReactorC
     }
 
     private <T> Flux<T> existingConnectionFlux(ConnectionDefinition definition, Function<ConnectionStatus<C>, Flux<T>> callback, ConnectionStatus<C> existing) {
-        return applyCallbackFlux(callback, new DefaultReactiveConnectionStatus<>(existing.getConnection(), definition, this, false, executorOf(existing)));
+        // Complete the status of the reused connection, so its synchronizations run when the callback ends
+        return Flux.usingWhen(
+            Mono.fromSupplier(() -> existingConnectionStatus(definition, existing)),
+            connectionStatus -> applyCallbackFlux(callback, connectionStatus),
+            connectionStatus -> connectionStatus.onComplete(NO_CLOSE),
+            (connectionStatus, throwable) -> connectionStatus.onError(throwable, NO_CLOSE),
+            connectionStatus -> connectionStatus.onCancel(NO_CLOSE)
+        );
     }
 
     private <T> Flux<T> openConnectionFlux(ConnectionDefinition definition, Function<ConnectionStatus<C>, Flux<T>> callback) {
@@ -153,7 +165,18 @@ public abstract class AbstractReactorConnectionOperations<C> implements ReactorC
     }
 
     private <T> Mono<T> existingConnectionMono(ConnectionDefinition definition, Function<ConnectionStatus<C>, Mono<T>> callback, ConnectionStatus<C> existing) {
-        return applyCallbackMono(callback, new DefaultReactiveConnectionStatus<>(existing.getConnection(), definition, this, false, executorOf(existing)));
+        // Complete the status of the reused connection, so its synchronizations run when the callback ends
+        return Mono.usingWhen(
+            Mono.fromSupplier(() -> existingConnectionStatus(definition, existing)),
+            connectionStatus -> applyCallbackMono(callback, connectionStatus),
+            connectionStatus -> connectionStatus.onComplete(NO_CLOSE),
+            (connectionStatus, throwable) -> connectionStatus.onError(throwable, NO_CLOSE),
+            connectionStatus -> connectionStatus.onCancel(NO_CLOSE)
+        );
+    }
+
+    private DefaultReactiveConnectionStatus<C> existingConnectionStatus(ConnectionDefinition definition, ConnectionStatus<C> existing) {
+        return new DefaultReactiveConnectionStatus<>(existing.getConnection(), definition, this, false, executorOf(existing));
     }
 
     private <T> Mono<T> openConnectionMono(ConnectionDefinition definition, Function<ConnectionStatus<C>, Mono<T>> callback) {
