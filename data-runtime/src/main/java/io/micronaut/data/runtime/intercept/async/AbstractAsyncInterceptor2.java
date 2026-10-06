@@ -19,6 +19,7 @@ import io.micronaut.aop.MethodInvocationContext;
 import io.micronaut.core.annotation.Internal;
 import org.jspecify.annotations.NonNull;
 import io.micronaut.core.type.Argument;
+import io.micronaut.core.type.ReturnType;
 import io.micronaut.data.exceptions.DataAccessException;
 import io.micronaut.data.operations.RepositoryOperations;
 import io.micronaut.data.operations.async.AsyncCapableRepository;
@@ -61,10 +62,13 @@ abstract sealed class AbstractAsyncInterceptor2<T, R> extends AbstractQueryInter
     }
 
     protected final Argument<?> findReturnType(MethodInvocationContext<?, ?> context, Argument<?> defaultArg) {
+        ReturnType<?> returnType = context.getReturnType();
         if (context.isSuspend()) {
-            return context.getReturnType().asArgument();
+            if (!returnType.getType().getName().equals("kotlinx.coroutines.flow.Flow")) {
+                return returnType.asArgument();
+            }
         }
-        return context.getReturnType().asArgument().getFirstTypeVariable().orElse(defaultArg);
+        return returnType.asArgument().getFirstTypeVariable().orElse(defaultArg);
     }
 
 }

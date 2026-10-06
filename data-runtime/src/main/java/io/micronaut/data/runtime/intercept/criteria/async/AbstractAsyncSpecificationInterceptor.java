@@ -21,6 +21,7 @@ import io.micronaut.core.util.ArgumentUtils;
 import org.jspecify.annotations.NonNull;
 import org.jspecify.annotations.Nullable;
 import io.micronaut.core.type.Argument;
+import io.micronaut.core.type.ReturnType;
 import io.micronaut.data.exceptions.DataAccessException;
 import io.micronaut.data.intercept.RepositoryMethodKey;
 import io.micronaut.data.model.Limit;
@@ -122,10 +123,13 @@ public abstract class AbstractAsyncSpecificationInterceptor<T, R> extends Abstra
     }
 
     protected final Argument<?> findReturnType(MethodInvocationContext<?, ?> context, Argument<?> defaultArg) {
+        ReturnType<?> returnType = context.getReturnType();
         if (context.isSuspend()) {
-            return context.getReturnType().asArgument();
+            if (!returnType.getType().getName().equals("kotlinx.coroutines.flow.Flow")) {
+                return returnType.asArgument();
+            }
         }
-        return context.getReturnType().asArgument().getFirstTypeVariable().orElse(defaultArg);
+        return returnType.asArgument().getFirstTypeVariable().orElse(defaultArg);
     }
 
     /**
@@ -139,7 +143,7 @@ public abstract class AbstractAsyncSpecificationInterceptor<T, R> extends Abstra
     protected Number convertNumberToReturnType(MethodInvocationContext<?, ?> context, Number number) {
         Argument<?> firstTypeVar = findReturnType(context, Argument.LONG);
         Class<?> type = firstTypeVar.getType();
-        if (type == Object.class || type == Void.class) {
+        if (type == Object.class || type == Void.class || type == void.class) {
             return null;
         }
         if (number == null) {
