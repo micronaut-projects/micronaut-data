@@ -296,6 +296,32 @@ public class TxSpec {
     }
 
     @Test
+    public void testReactiveTxRollbackOnlyIsRolledBackWhenExceptionDoesNotTriggerRollback() {
+        try (ApplicationContext applicationContext = ApplicationContext.run()) {
+            ReactiveTxManager txManager = applicationContext.getBean(ReactiveTxManager.class);
+            OpLogger opLogger = applicationContext.getBean(OpLogger.class);
+            DefaultTransactionDefinition definition = new DefaultTransactionDefinition();
+            definition.setDontRollbackOn(List.of(IllegalStateException.class));
+
+            Assertions.assertThrows(
+                IllegalStateException.class,
+                () -> txManager.withTransactionMono(
+                    definition,
+                    status -> {
+                        status.setRollbackOnly();
+                        return Mono.error(new IllegalStateException("no rollback"));
+                    }
+                ).block()
+            );
+
+            Assertions.assertEquals(
+                List.of("OPEN CONNECTION_1", "BEGIN TX CONNECTION_1", "ROLLBACK TX CONNECTION_1", "CLOSE CONNECTION_1"),
+                opLogger.getLogs()
+            );
+        }
+    }
+
+    @Test
     public void testReactiveTxDoesNotTreatApplicationMessageAsOraclePriorityRollback() {
         try (ApplicationContext applicationContext = ApplicationContext.run()) {
             ReactiveTxManager txManager = applicationContext.getBean(ReactiveTxManager.class);

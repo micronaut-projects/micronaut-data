@@ -77,6 +77,7 @@ import io.micronaut.data.operations.DeleteReturningRepositoryOperations;
 import io.micronaut.data.operations.reactive.BlockingExecutorReactorRepositoryOperations;
 import io.micronaut.data.r2dbc.annotation.R2dbcRepository;
 import io.micronaut.data.r2dbc.config.DataR2dbcConfiguration;
+import io.micronaut.data.r2dbc.connection.R2dbcConnectionState;
 import io.micronaut.data.r2dbc.convert.R2dbcConversionContext;
 import io.micronaut.data.r2dbc.exceptions.R2dbcExceptionUtils;
 import io.micronaut.data.r2dbc.mapper.ColumnIndexR2dbcResultReader;
@@ -176,6 +177,9 @@ final class DefaultR2dbcRepositoryOperations extends AbstractSqlRepositoryOperat
     private final ReactiveCascadeOperations<R2dbcOperationContext> cascadeOperations;
     private final R2dbcReactorTransactionOperations transactionOperations;
     private final ReactorConnectionOperations<Connection> connectionOperations;
+    @Nullable
+    private final SchemaTenantResolver schemaTenantResolver;
+    private final R2dbcSchemaHandler schemaHandler;
     private final DataR2dbcConfiguration configuration;
     private final Map<Dialect, VectorBindSupport> vectorBindSupportByDialect = new EnumMap<>(Dialect.class);
     private final Map<Dialect, List<R2dbcExceptionMapper>> r2dbcExceptionMappers = new EnumMap<>(Dialect.class);
@@ -241,6 +245,8 @@ final class DefaultR2dbcRepositoryOperations extends AbstractSqlRepositoryOperat
             conversionContextFactory);
         this.connectionFactory = connectionFactory;
         this.executorServiceResolver = new ExecutorServiceResolver(executorService);
+        this.schemaTenantResolver = schemaTenantResolver;
+        this.schemaHandler = schemaHandler;
         this.configuration = configuration;
         this.transactionOperations = transactionOperations;
         this.connectionOperations = connectionOperations;
@@ -415,11 +421,43 @@ final class DefaultR2dbcRepositoryOperations extends AbstractSqlRepositoryOperat
         if (LOG.isDebugEnabled()) {
             LOG.debug("Creating a new Connection for DataSource: " + dataSourceName);
         }
-        // The connection operations restore the connection state (auto-commit etc.) before the connection is closed
-        return connectionOperations.withConnectionFlux(
-            ConnectionDefinition.REQUIRES_NEW,
-            status -> Flux.from(handler.apply(status.getConnection()))
-        );
+        return Flux.usingWhen(
+            Mono.<Connection>from(connectionFactory.create()).map(connection -> new StatefulConnection(connection, R2dbcConnectionState.capture(connection))),
+            statefulConnection -> tenantAwareHandler(handler).apply(statefulConnection.connection()),
+            statefulConnection -> {
+                if (LOG.isDebugEnabled()) {
+                    LOG.debug("Closing Connection for DataSource: " + dataSourceName);
+                }
+                return statefulConnection.state().restore(statefulConnection.connection(), LOG)
+                    .then(Mono.from(statefulConnection.connection().close()));
+            });
+    }
+
+    /**
+     * The connection with its state when it was opened.
+     *
+     * @param connection The connection
+     * @param state      The state to restore before the connection is closed
+     */
+    private record StatefulConnection(Connection connection, R2dbcConnectionState state) {
+    }
+
+    private <K> Function<Connection, Publisher<? extends K>> tenantAwareHandler(Function<Connection, Publisher<? extends K>> handler) {
+        Function<Connection, Publisher<? extends K>> theHandler;
+        if (schemaTenantResolver == null) {
+            theHandler = handler;
+        } else {
+            theHandler = connection -> {
+                String schemaName = schemaTenantResolver.resolveTenantSchemaName();
+                if (schemaName != null) {
+                    return Mono.fromDirect(schemaHandler.useSchema(connection, configuration.getDialect(), schemaName))
+                        .thenReturn(connection)
+                        .flatMapMany(handler::apply);
+                }
+                return handler.apply(connection);
+            };
+        }
+        return theHandler;
     }
 
     @NonNull
