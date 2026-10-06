@@ -59,7 +59,6 @@ dbc:
     title: JDBC
     jdbcQuickStart: Quick Start
     jdbcConfiguration: Configuration
-    oracleQueryNotifications: Oracle Query Notifications
   r2dbc:
     title: R2DBC
     r2dbcQuickStart: Quick Start
@@ -100,6 +99,9 @@ dbc:
   dbcNativeQueries: Explicit Queries
   dbcExplicitQueriesPagination: Explicit Queries and Pagination
   dbcProcedures: Procedures
+  notifications:
+    title: Notifications
+    oracleQueryNotifications: Oracle Query Notifications
 hibernate:
   title: Micronaut Data JPA Hibernate
   hibernateJpaAnnotations: JPA Annotations

@@ -34,14 +34,13 @@ import java.util.function.Consumer;
  * Manages one listener method's Oracle Database change-notification registration.
  *
  * <p>The subscription creates the initial registration, handles registration lifecycle events,
- * and unregisters the registration during shutdown. A dispatcher is reused if the driver reports
- * a notification-connection failure or Oracle Database reports a shutdown and a replacement
- * registration is created.</p>
+ * and unregisters the registration during shutdown. When a driver-reported receiver failure or a
+ * shutdown callback requires recovery, it creates a replacement registration using the same
+ * dispatcher.</p>
  *
- * <p>A reported notification-connection failure triggers recovery on the blocking executor. If a
- * replacement is registered successfully, the listener receives an invalidation event so it can
- * refresh any state that may have become stale while notifications were unavailable. Recovery
- * attempts may be retried after a delay.</p>
+ * <p>Recovery runs on the blocking executor and may be retried after a delay. Once the replacement
+ * is registered, the listener receives an invalidation event so it can refresh state that may have
+ * become stale while notifications were unavailable.</p>
  */
 @SuppressWarnings("ReferenceEquality")
 final class OracleChangeNotificationSubscription {
@@ -242,10 +241,16 @@ final class OracleChangeNotificationSubscription {
         }
     }
 
+    /**
+     * Unregisters the current registration during ordinary subscription cleanup.
+     */
     private void unregisterRegistration() {
         unregisterCurrentRegistration(registrar::unregisterRegistration);
     }
 
+    /**
+     * Attempts cleanup for an unavailable registration, even if the driver considers it closed.
+     */
     private void unregisterFailedRegistration() {
         unregisterCurrentRegistration(registrar::unregisterRegistrationAfterFailure);
     }

@@ -1,0 +1,1 @@
+Micronaut Data notification integrations let an application react to committed database changes. The available capabilities depend on the database and JDBC driver.

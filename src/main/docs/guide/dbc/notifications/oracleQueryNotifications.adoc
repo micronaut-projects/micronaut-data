@@ -1,4 +1,4 @@
-Oracle Continuous Query Notification (CQN), also known as Database Change Notification (DCN), lets an application react when committed database changes affect an entity table or a registered query result.
+Micronaut Data JDBC supports Oracle Continuous Query Notification (CQN), also known as Database Change Notification (DCN), so applications can react when committed database changes affect an entity table or registered query result.
 
 Micronaut Data exposes a database-neutral listener contract through ann:data.jdbc.annotation.ChangeListener[] and Oracle Database registration options through ann:data.jdbc.annotation.OracleChangeNotification[].
 When Oracle Database reports a change, the listener receives an api:data.jdbc.notification.ChangeEvent[] containing the reported operation, optional current entity state, and optional provider-specific metadata.
@@ -62,7 +62,9 @@ void onBookChanged(ChangeEvent<Book> event) {
 }
 ----
 
-Micronaut Data creates one logical subscription and one Oracle Database registration for each listener method. A registration normally remains active for the application's lifetime. Registrations are application-lifecycle scoped; there is no public API for dynamically registering a callback for only the duration of a method invocation.
+Micronaut Data creates an Oracle Database registration for each listener method during application startup.
+The registration normally remains active for the application’s lifetime, and Micronaut Data attempts to unregister
+it during graceful shutdown.
 
 == Handling Change Events
 
@@ -201,7 +203,9 @@ Micronaut Data does not periodically replace registrations. It keeps each regist
 
 If Oracle Database deregisters a registration or a registered QRCN query, Micronaut Data closes that subscription. The application must correct the database or registration condition and restart the application if a new registration is required.
 
-With both a client-initiated connection and `NTF_QOS_RELIABLE` enabled, Micronaut Data leaves notification-connection retries to the JDBC driver. Oracle Database can queue reliable notifications for delivery after reconnect. If the driver reports a terminal registration failure, Micronaut Data attempts to replace that registration and delivers an `INVALIDATE` event after recovery succeeds. If replacement fails, it schedules another attempt while the scheduler remains available. Changes can be missed while a non-reliable registration is unavailable. A silently lost channel with no driver failure callback cannot be detected by the framework.
+With both a client-initiated connection and `NTF_QOS_RELIABLE` enabled, Micronaut Data leaves notification-connection retries to the JDBC driver. Oracle Database can queue reliable notifications for delivery after reconnect. If the driver reports a terminal registration failure, Micronaut Data starts framework recovery, replacing the registration and delivering an `INVALIDATE` event if recovery succeeds. For other registration configurations, a database shutdown callback starts that recovery path directly.
+
+Framework recovery makes an initial replacement attempt and, if it fails, schedules up to three retries ten seconds apart. If those retries are exhausted or a retry cannot be scheduled, the subscription remains unavailable until the application is restarted. Changes can be missed while a non-reliable registration is unavailable. A silently lost channel with no driver failure callback cannot be detected by the framework.
 
 == Delivery and Concurrency
 
@@ -233,7 +237,7 @@ If any listener registration fails, startup fails with a `DataAccessException` t
 
 If entity loading or listener execution fails and retry or recovery advice does not handle the failure, Micronaut Data logs it asynchronously with the listener method, operation, table, and `ROWID` when available. The failure is not returned to Oracle Database, does not roll back the original change, and does not trigger automatic redelivery. Subsequent notifications continue to be processed.
 
-During graceful shutdown, Micronaut Data stops accepting new callbacks, attempts to unregister registrations it still owns, and waits for callback and registration lifecycle tasks already running on the blocking executor to finish. Callbacks still queued when shutdown starts are discarded when they reach the executor. Context destruction also attempts registration cleanup if graceful shutdown was not used.
+During graceful shutdown, Micronaut Data closes each subscription and attempts to unregister registrations it still owns. It then stops accepting callback work and waits for notification callbacks that are already running. Callback tasks still queued on the blocking executor are discarded when they start and do not delay shutdown. Context destruction also attempts registration cleanup if graceful shutdown was not used.
 
 An abrupt process or host failure cannot run that cleanup. For ordinary registrations, Oracle Database can remove a disconnected registration lazily after its client cleanup interval, when a notification is generated and no connected client is found. This is not an immediate or time-bounded cleanup guarantee. Reliable registrations are excluded from that automatic cleanup and may need manual removal. The next application instance does not remove existing registrations because it cannot safely distinguish an abandoned registration from one owned by another healthy instance using the same Oracle Database user and datasource.
 
