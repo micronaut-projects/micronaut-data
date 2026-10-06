@@ -104,7 +104,7 @@ public abstract class AbstractAsyncSpecificationInterceptor<T, R> extends Abstra
     @NonNull
     protected final CompletionStage<Iterable<Object>> findAllAsync(RepositoryMethodKey methodKey, MethodInvocationContext<T, R> context) {
         CriteriaQuery<Object> criteriaQuery = buildQuery(methodKey, context);
-        Pageable pageable = applyPaginationAndSort(getPageable(context), criteriaQuery, true);
+        Pageable pageable = applyPaginationAndSort(getPageable(context), criteriaQuery, false);
         if (asyncCriteriaOperations != null) {
             if (pageable != null && !pageable.isUnpaged()) {
                 return asyncCriteriaOperations.findAll(criteriaQuery, (int) pageable.getOffset(), pageable.getSize()).thenApply(m -> m);
