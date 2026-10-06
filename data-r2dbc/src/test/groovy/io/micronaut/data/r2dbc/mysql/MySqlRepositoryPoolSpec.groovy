@@ -21,4 +21,11 @@ class MySqlRepositoryPoolSpec extends MySqlRepositorySpec {
     boolean usePool() {
         return true
     }
+
+    @Override
+    boolean supportsJvmDefaultTimeZoneChange() {
+        // The driver resolves the connection time zone when the connection is opened,
+        // a pooled connection keeps the zone from before the JVM default time zone was changed
+        return false
+    }
 }
