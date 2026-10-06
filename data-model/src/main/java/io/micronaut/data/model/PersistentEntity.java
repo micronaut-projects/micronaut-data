@@ -329,13 +329,14 @@ public interface PersistentEntity extends PersistentElement {
             for (String token : tokens) {
                 prop = startingEntity.getPropertyByName(token);
                 if (prop == null) {
-                    if (hasIdentity()) {
+                    if (startingEntity.hasIdentity()) {
                         PersistentProperty identity = startingEntity.getIdentity();
                         if (identity.getName().equals(token)) {
                             prop = identity;
-                        } else {
-                            return Optional.empty();
                         }
+                    }
+                    if (prop == null) {
+                        return Optional.empty();
                     }
                 }
                 if (prop instanceof Association association) {
