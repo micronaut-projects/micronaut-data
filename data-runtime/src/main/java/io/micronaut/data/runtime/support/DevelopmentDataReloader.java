@@ -70,8 +70,8 @@ import java.util.Optional;
  *     with the converter providers and the transaction and connection interceptors, which cache by classes and
  *     methods of the retired generation.</li>
  *     <li>A class change applied in place that redefines an entity, an embeddable, a repository or an entity event
- *     listener recreates the entity registry, the repository operations, the interceptor resolver and the entity
- *     event registry.</li>
+ *     listener recreates the entity registry, the repository operations, the interceptor resolver, the entity
+ *     event registry and the entity event listeners, which cache by entity.</li>
  *     <li>A repository definition added or removed, such as one registered at runtime, recreates the repository
  *     operations and the interceptor resolver: the operations know the repositories they serve from when they
  *     were created.</li>
@@ -103,7 +103,9 @@ final class DevelopmentDataReloader {
         RuntimeEntityRegistry.class,
         RepositoryOperations.class,
         DataInterceptorResolver.class,
-        EntityEventRegistry.class
+        EntityEventRegistry.class,
+        // the listeners themselves cache by entity, such as the auto-populating and the Jakarta Data ones
+        EntityEventListener.class
     );
 
     /**

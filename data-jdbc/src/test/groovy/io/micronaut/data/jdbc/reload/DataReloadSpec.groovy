@@ -9,6 +9,7 @@ import io.micronaut.data.jdbc.config.SchemaGenerator
 import io.micronaut.data.jdbc.operations.JdbcRepositoryOperations
 import io.micronaut.data.model.runtime.RuntimeEntityRegistry
 import io.micronaut.data.runtime.event.EntityEventRegistry
+import io.micronaut.data.runtime.event.listeners.AutoTimestampEntityEventListener
 import io.micronaut.data.runtime.intercept.DataInterceptorResolver
 import io.micronaut.transaction.interceptor.TransactionalInterceptor
 import spock.lang.Specification
@@ -204,7 +205,8 @@ class DataReloadSpec extends Specification {
             entityRegistry     : context.getBean(RuntimeEntityRegistry),
             operations         : context.getBean(JdbcRepositoryOperations),
             interceptorResolver: context.getBean(DataInterceptorResolver),
-            eventRegistry      : context.getBean(EntityEventRegistry)
+            eventRegistry      : context.getBean(EntityEventRegistry),
+            timestampListener  : context.getBean(AutoTimestampEntityEventListener)
         ]
     }
 

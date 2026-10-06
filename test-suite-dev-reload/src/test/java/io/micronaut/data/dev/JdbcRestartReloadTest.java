@@ -105,6 +105,24 @@ class JdbcRestartReloadTest {
         }
     }
 
+    @Test
+    void createModeReplacesTheTablesThatReferenceAChangedEntity() {
+        try (ReloadHarness harness = ReloadHarness.inDirectory(project)) {
+            database(harness, "CREATE", true);
+            AuthorApplication.first(harness);
+            harness.start();
+            AuthorApplication.useFirstGeneration(harness);
+
+            // the author gains a column, and the table of the books refers to the table of the authors
+            AuthorApplication.second(harness);
+            harness.reload();
+            assertEquals(2, harness.generation());
+
+            AuthorApplication.useSecondGeneration(harness);
+            ReloadTck.assertRetiredGenerationsCollected(harness);
+        }
+    }
+
     private static void database(ReloadHarness harness, String schemaGenerate, boolean persistentDatabase) {
         harness.property("datasources.default.url", "jdbc:h2:mem:" + UUID.randomUUID() + ";LOCK_TIMEOUT=10000" + (persistentDatabase ? ";DB_CLOSE_DELAY=-1" : ""));
         harness.property("datasources.default.username", "sa");
