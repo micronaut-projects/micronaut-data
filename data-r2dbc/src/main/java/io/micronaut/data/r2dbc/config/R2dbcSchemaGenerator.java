@@ -115,7 +115,7 @@ public class R2dbcSchemaGenerator {
                             for (String schemaName : configuration.getSchemaGenerateNames()) {
                                 result = result.then(Mono.from(schemaHandler.createSchema(connection, dialect, schemaName)))
                                     .then(Mono.from(schemaHandler.useSchema(connection, dialect, schemaName)))
-                                    .then(generate(connection, schemaGenerate, entities, builder));
+                                    .then(generate(connection, configuration, entities, builder));
                             }
                             return result.then(Mono.from(connection.close()));
                         }
@@ -124,7 +124,7 @@ public class R2dbcSchemaGenerator {
                             result = Mono.from(schemaHandler.createSchema(connection, dialect, configuration.getSchemaGenerateName()))
                                 .then(Mono.from(schemaHandler.useSchema(connection, dialect, configuration.getSchemaGenerateName())));
                         }
-                        return result.then(generate(connection, schemaGenerate, entities, builder))
+                        return result.then(generate(connection, configuration, entities, builder))
                             .then(Mono.from(connection.close()));
                     }).block();
                 }
@@ -133,9 +133,13 @@ public class R2dbcSchemaGenerator {
     }
 
     private Mono<Void> generate(Connection connection,
-                                SchemaGenerate schemaGenerate,
+                                DataR2dbcConfiguration configuration,
                                 PersistentEntity[] entities,
                                 SqlQueryBuilder builder) {
+        SchemaGenerate schemaGenerate = configuration.getSchemaGenerate();
+        if (configuration.getDialect().allowBatch() && configuration.isBatchGenerate()) {
+            return generateBatch(connection, schemaGenerate, entities, builder);
+        }
         List<String> createStatements = Arrays.asList(
             builder.buildCreateTableStatements(definitionProviders, entities, builder.getDialect())
         );
@@ -144,7 +148,6 @@ public class R2dbcSchemaGenerator {
                     if (DataSettings.QUERY_LOG.isDebugEnabled()) {
                         DataSettings.QUERY_LOG.debug("Creating Table: \n{}", sql);
                     }
-                    LOG.warn("Create table :{}", sql);
                     return execute(connection, sql)
                             .onErrorResume((throwable -> {
                                 if (LOG.isWarnEnabled()) {
@@ -170,6 +173,37 @@ public class R2dbcSchemaGenerator {
             }
             default -> createTablesFlow
                     .then();
+        };
+    }
+
+    private Mono<Void> generateBatch(Connection connection,
+                                     SchemaGenerate schemaGenerate,
+                                     PersistentEntity[] entities,
+                                     SqlQueryBuilder builder) {
+        Mono<Void> createTables = Mono.defer(() -> {
+            String sql = builder.buildBatchCreateTableStatement(definitionProviders, entities);
+            if (DataSettings.QUERY_LOG.isDebugEnabled()) {
+                DataSettings.QUERY_LOG.debug("Creating Tables: \n{}", sql);
+            }
+            return execute(connection, sql);
+        });
+        return switch (schemaGenerate) {
+            case CREATE_DROP -> Mono.defer(() -> {
+                    String sql = builder.buildBatchDropTableStatement(entities);
+                    if (DataSettings.QUERY_LOG.isDebugEnabled()) {
+                        DataSettings.QUERY_LOG.debug("Dropping Tables: \n{}", sql);
+                    }
+                    return execute(connection, sql);
+                })
+                .onErrorResume(throwable -> {
+                    if (DataSettings.QUERY_LOG.isTraceEnabled()) {
+                        DataSettings.QUERY_LOG.trace("Drop Unsuccessful: {}", throwable.getMessage());
+                    }
+                    return Mono.empty();
+                })
+                .then(createTables);
+            case CREATE -> createTables;
+            default -> Mono.empty();
         };
     }
 
