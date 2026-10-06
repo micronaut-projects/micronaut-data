@@ -15,6 +15,8 @@
  */
 package io.micronaut.data.jdbc.h2
 
+import io.micronaut.data.model.CursoredPage
+import io.micronaut.data.model.CursoredPageable
 import io.micronaut.data.model.Pageable
 import io.micronaut.data.model.Sort
 import io.micronaut.data.tck.entities.Person
@@ -56,5 +58,39 @@ class H2SpecificationFindAllPagedSpec extends Specification implements H2TestPro
 
         then:
             people*.age == (21..30).toList()
+    }
+
+    void "test async find page by specification with a cursored pageable"() {
+        when:
+            def page = asyncRepository.findAllCursored(nameLike("Person%"), CursoredPageable.from(10, Sort.of(Sort.Order.asc("age")))).get()
+
+        then:
+            page instanceof CursoredPage
+            page.content*.age == (1..10).toList()
+            page.totalSize == 30
+
+        when:
+            page = asyncRepository.findAllCursored(nameLike("Person%"), page.nextPageable()).get()
+
+        then:
+            page instanceof CursoredPage
+            page.content*.age == (11..20).toList()
+    }
+
+    void "test reactive find page by specification with a cursored pageable"() {
+        when:
+            def page = reactiveRepository.findAllCursored(nameLike("Person%"), CursoredPageable.from(10, Sort.of(Sort.Order.asc("age")))).block()
+
+        then:
+            page instanceof CursoredPage
+            page.content*.age == (1..10).toList()
+            page.totalSize == 30
+
+        when:
+            page = reactiveRepository.findAllCursored(nameLike("Person%"), page.nextPageable()).block()
+
+        then:
+            page instanceof CursoredPage
+            page.content*.age == (11..20).toList()
     }
 }

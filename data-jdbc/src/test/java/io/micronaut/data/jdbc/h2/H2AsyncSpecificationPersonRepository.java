@@ -16,6 +16,8 @@
 package io.micronaut.data.jdbc.h2;
 
 import io.micronaut.data.jdbc.annotation.JdbcRepository;
+import io.micronaut.data.model.CursoredPage;
+import io.micronaut.data.model.CursoredPageable;
 import io.micronaut.data.model.Pageable;
 import io.micronaut.data.model.query.builder.sql.Dialect;
 import io.micronaut.data.repository.async.AsyncCrudRepository;
@@ -30,4 +32,6 @@ import java.util.concurrent.CompletableFuture;
 public interface H2AsyncSpecificationPersonRepository extends AsyncCrudRepository<Person, Long>, AsyncJpaSpecificationExecutor<Person> {
 
     CompletableFuture<List<Person>> findAllPaged(PredicateSpecification<Person> spec, Pageable pageable);
+
+    CompletableFuture<CursoredPage<Person>> findAllCursored(PredicateSpecification<Person> spec, CursoredPageable pageable);
 }

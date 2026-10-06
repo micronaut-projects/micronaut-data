@@ -16,6 +16,8 @@
 package io.micronaut.data.jdbc.h2;
 
 import io.micronaut.data.jdbc.annotation.JdbcRepository;
+import io.micronaut.data.model.CursoredPage;
+import io.micronaut.data.model.CursoredPageable;
 import io.micronaut.data.model.Pageable;
 import io.micronaut.data.model.query.builder.sql.Dialect;
 import io.micronaut.data.repository.jpa.reactive.ReactorJpaSpecificationExecutor;
@@ -23,9 +25,12 @@ import io.micronaut.data.repository.jpa.criteria.PredicateSpecification;
 import io.micronaut.data.repository.reactive.ReactorCrudRepository;
 import io.micronaut.data.tck.entities.Person;
 import reactor.core.publisher.Flux;
+import reactor.core.publisher.Mono;
 
 @JdbcRepository(dialect = Dialect.H2)
 public interface H2ReactiveSpecificationPersonRepository extends ReactorCrudRepository<Person, Long>, ReactorJpaSpecificationExecutor<Person> {
 
     Flux<Person> findAllPaged(PredicateSpecification<Person> spec, Pageable pageable);
+
+    Mono<CursoredPage<Person>> findAllCursored(PredicateSpecification<Person> spec, CursoredPageable pageable);
 }

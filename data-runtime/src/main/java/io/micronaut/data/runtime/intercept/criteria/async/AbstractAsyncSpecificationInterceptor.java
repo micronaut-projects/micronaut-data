@@ -23,6 +23,7 @@ import org.jspecify.annotations.Nullable;
 import io.micronaut.core.type.Argument;
 import io.micronaut.data.exceptions.DataAccessException;
 import io.micronaut.data.intercept.RepositoryMethodKey;
+import io.micronaut.data.model.Limit;
 import io.micronaut.data.model.Pageable;
 import io.micronaut.data.model.query.builder.QueryBuilder;
 import io.micronaut.data.operations.RepositoryOperations;
@@ -106,8 +107,9 @@ public abstract class AbstractAsyncSpecificationInterceptor<T, R> extends Abstra
         CriteriaQuery<Object> criteriaQuery = buildQuery(methodKey, context);
         Pageable pageable = applyPaginationAndSort(getPageable(context), criteriaQuery, false);
         if (asyncCriteriaOperations != null) {
-            if (pageable != null && !pageable.isUnpaged()) {
-                return asyncCriteriaOperations.findAll(criteriaQuery, (int) pageable.getOffset(), pageable.getSize()).thenApply(m -> m);
+            Limit limit = resolveLimit(context, pageable);
+            if (limit.isLimited()) {
+                return asyncCriteriaOperations.findAll(criteriaQuery, (int) limit.offset(), limit.maxResults()).thenApply(m -> m);
             }
             return asyncCriteriaOperations.findAll(criteriaQuery).thenApply(m -> m);
         }
