@@ -63,6 +63,7 @@ import io.micronaut.data.model.jpa.criteria.impl.ExpressionVisitor;
 import io.micronaut.data.model.jpa.criteria.impl.IParameterExpression;
 import io.micronaut.data.model.jpa.criteria.impl.SelectionVisitor;
 import io.micronaut.data.model.jpa.criteria.impl.expression.BinaryExpression;
+import io.micronaut.data.model.jpa.criteria.impl.expression.BinaryExpressionType;
 import io.micronaut.data.model.jpa.criteria.impl.expression.CastExpression;
 import io.micronaut.data.model.jpa.criteria.impl.expression.ClassExpressionType;
 import io.micronaut.data.model.jpa.criteria.impl.expression.CurrentTemporalExpression;
@@ -3363,31 +3364,34 @@ public abstract class AbstractSqlLikeQueryBuilder implements QueryBuilder {
             Expression<?> left = binaryExpression.getLeft();
             Expression<?> right = binaryExpression.getRight();
             switch (binaryExpression.getType()) {
-                case SUM -> {
-                    appendExpression(left);
-                    query.append(" + ");
-                    appendExpression(right);
-                }
-                case DIFF -> {
-                    appendExpression(left);
-                    query.append(" - ");
-                    appendExpression(right);
-                }
-                case QUOT -> {
-                    appendExpression(left);
-                    query.append(" / ");
-                    appendExpression(right);
-                }
-                case PROD -> {
-                    appendExpression(left);
-                    query.append(" * ");
-                    appendExpression(right);
-                }
+                case SUM -> appendArithmeticOperation(left, " + ", right);
+                case DIFF -> appendArithmeticOperation(left, " - ", right);
+                case QUOT -> appendArithmeticOperation(left, " / ", right);
+                case PROD -> appendArithmeticOperation(left, " * ", right);
                 case CONCAT -> appendFunction("CONCAT", List.of(left, right));
                 default ->
                     throw new IllegalStateException(UNSUPPORTED_EXPRESSION + binaryExpression.getType());
             }
             appendColumnAliasIfNecessary();
+        }
+
+        private void appendArithmeticOperation(Expression<?> left, String operator, Expression<?> right) {
+            appendArithmeticOperand(left);
+            query.append(operator);
+            appendArithmeticOperand(right);
+        }
+
+        private void appendArithmeticOperand(Expression<?> operand) {
+            // A nested arithmetic operation keeps its own precedence, like in the predicates
+            boolean requiresBrackets = operand instanceof BinaryExpression<?> binaryOperand
+                && binaryOperand.getType() != BinaryExpressionType.CONCAT;
+            if (requiresBrackets) {
+                query.append(OPEN_BRACKET);
+            }
+            appendExpression(operand);
+            if (requiresBrackets) {
+                query.append(CLOSE_BRACKET);
+            }
         }
 
         @Override
