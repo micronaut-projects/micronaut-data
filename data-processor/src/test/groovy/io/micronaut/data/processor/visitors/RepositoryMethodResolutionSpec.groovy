@@ -16,6 +16,8 @@
 package io.micronaut.data.processor.visitors
 
 import io.micronaut.data.intercept.CountInterceptor
+import io.micronaut.data.intercept.FindSliceInterceptor
+import io.micronaut.data.model.Pageable
 
 import static io.micronaut.data.processor.visitors.TestUtils.getDataInterceptor
 import static io.micronaut.data.processor.visitors.TestUtils.getQuery
@@ -66,5 +68,33 @@ interface BookRepository {
         getDataInterceptor(countByTitle) == CountInterceptor.name
         getQuery(countByTitle) == 'SELECT COUNT(*) FROM `book` book_ WHERE (book_.`title` = ?)'
         getQuery(repository.getRequiredMethod("existsByTitle", String)).contains('FROM `book` book_ WHERE (book_.`title` = ?)')
+    }
+
+    void "test a type registered in the slice role uses the slice interceptor"() {
+        given:
+        def repository = buildRepository('test.PersonRepository', """
+import io.micronaut.data.tck.entities.Person;
+
+@Repository
+@RepositoryConfiguration(
+    typeRoles = @TypeRole(role = TypeRole.SLICE, type = MySlice.class)
+)
+interface PersonRepository extends GenericRepository<Person, Long> {
+
+    MySlice<Person> findByName(String name, Pageable pageable);
+
+    org.springframework.data.domain.Slice<Person> findByAge(int age, org.springframework.data.domain.Pageable pageable);
+
+    Slice<Person> findByNameLike(String name, Pageable pageable);
+}
+
+interface MySlice<T> {
+}
+""")
+
+        expect:
+        getDataInterceptor(repository.getRequiredMethod("findByName", String, Pageable)) == FindSliceInterceptor.name
+        getDataInterceptor(repository.getRequiredMethod("findByAge", int, org.springframework.data.domain.Pageable)) == FindSliceInterceptor.name
+        getDataInterceptor(repository.getRequiredMethod("findByNameLike", String, Pageable)) == FindSliceInterceptor.name
     }
 }
