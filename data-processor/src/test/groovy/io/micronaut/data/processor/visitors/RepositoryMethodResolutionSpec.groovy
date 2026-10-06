@@ -17,9 +17,12 @@ package io.micronaut.data.processor.visitors
 
 import io.micronaut.data.intercept.CountInterceptor
 import io.micronaut.data.intercept.FindSliceInterceptor
+import io.micronaut.data.intercept.annotation.DataMethod
+import io.micronaut.data.model.DataType
 import io.micronaut.data.model.Pageable
 
 import static io.micronaut.data.processor.visitors.TestUtils.getDataInterceptor
+import static io.micronaut.data.processor.visitors.TestUtils.getDataTypes
 import static io.micronaut.data.processor.visitors.TestUtils.getQuery
 
 class RepositoryMethodResolutionSpec extends AbstractDataSpec {
@@ -96,5 +99,41 @@ interface MySlice<T> {
         getDataInterceptor(repository.getRequiredMethod("findByName", String, Pageable)) == FindSliceInterceptor.name
         getDataInterceptor(repository.getRequiredMethod("findByAge", int, org.springframework.data.domain.Pageable)) == FindSliceInterceptor.name
         getDataInterceptor(repository.getRequiredMethod("findByNameLike", String, Pageable)) == FindSliceInterceptor.name
+    }
+
+    void "test the resolved data type of a type doesn't leak between compilations"() {
+        when:
+        def withoutTypeDef = buildMoneyRepository("")
+        def withTypeDef = buildMoneyRepository("@TypeDef(type = DataType.JSON, classes = Money.class)")
+        def withoutTypeDefAgain = buildMoneyRepository("")
+
+        then:
+        moneyParameterDataType(withoutTypeDef) == DataType.OBJECT
+        moneyParameterDataType(withTypeDef) == DataType.JSON
+        moneyParameterDataType(withoutTypeDefAgain) == DataType.OBJECT
+    }
+
+    private buildMoneyRepository(String typeDef) {
+        return buildRepository('test.MoneyRepository', """
+import io.micronaut.data.jdbc.annotation.JdbcRepository;
+import io.micronaut.data.model.query.builder.sql.Dialect;
+import io.micronaut.data.tck.entities.Person;
+
+@JdbcRepository(dialect = Dialect.H2)
+$typeDef
+interface MoneyRepository extends GenericRepository<Person, Long> {
+
+    @Query("SELECT * FROM person WHERE name = :money")
+    List<Person> findWithMoney(Money money);
+}
+
+class Money {
+}
+""")
+    }
+
+    private static DataType moneyParameterDataType(def repository) {
+        def method = repository.findPossibleMethods("findWithMoney").findFirst().get()
+        return getDataTypes(method.getAnnotationMetadata().getAnnotation(DataMethod))[0]
     }
 }
