@@ -61,6 +61,8 @@ abstract sealed class AbstractAsyncInterceptor2<T, R> extends AbstractQueryInter
         return findReturnType(context, Argument.OBJECT_ARGUMENT);
     }
 
+    // Sonar java:S1872 -- Kotlin coroutines are an optional dependency, so the Flow class cannot be referenced
+    @SuppressWarnings("java:S1872")
     protected final Argument<?> findReturnType(MethodInvocationContext<?, ?> context, Argument<?> defaultArg) {
         ReturnType<?> returnType = context.getReturnType();
         if (context.isSuspend()) {

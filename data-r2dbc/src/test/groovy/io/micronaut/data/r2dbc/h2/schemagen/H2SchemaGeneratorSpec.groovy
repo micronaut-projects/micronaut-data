@@ -97,17 +97,18 @@ class StatementRecorder implements BeanCreatedEventListener<ConnectionFactory> {
 
     @Override
     ConnectionFactory onCreated(BeanCreatedEvent<ConnectionFactory> event) {
-        ConnectionFactory connectionFactory = event.bean
-        return proxy(ConnectionFactory, connectionFactory) { Method method, Object[] args, Object result ->
+        return proxy(ConnectionFactory, event.bean) { Method method, Object[] args, Object result ->
             if (method.name == "create") {
-                return Mono.from(result).map { Connection connection ->
-                    proxy(Connection, connection) { Method connectionMethod, Object[] connectionArgs, Object connectionResult ->
-                        if (connectionMethod.name == "createStatement") {
-                            statements.add(connectionArgs[0] as String)
-                        }
-                        return connectionResult
-                    }
-                }
+                return Mono.from(result).map { Connection connection -> recordStatements(connection) }
+            }
+            return result
+        }
+    }
+
+    private Connection recordStatements(Connection connection) {
+        return proxy(Connection, connection) { Method method, Object[] args, Object result ->
+            if (method.name == "createStatement") {
+                statements.add(args[0] as String)
             }
             return result
         }

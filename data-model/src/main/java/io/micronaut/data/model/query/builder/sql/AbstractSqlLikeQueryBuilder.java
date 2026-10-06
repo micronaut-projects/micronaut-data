@@ -857,7 +857,6 @@ public abstract class AbstractSqlLikeQueryBuilder implements QueryBuilder {
                                        boolean applyIgnoreCase,
                                        @Nullable String jsonEntityColumn,
                                        QueryState queryState) {
-        StringBuilder buff = queryState.getQuery();
         Expression<?> expr = order.getExpression();
         boolean lowerExpression = false;
         if (expr instanceof UnaryExpression<?> ue && ue.getType() == UnaryExpressionType.LOWER) {
@@ -865,32 +864,40 @@ public abstract class AbstractSqlLikeQueryBuilder implements QueryBuilder {
             expr = ue.getExpression();
         }
         if (expr instanceof io.micronaut.data.model.jpa.criteria.PersistentPropertyPath<?> persistentPropertyPath) {
-            QueryPropertyPath propertyPath = queryState.findProperty(persistentPropertyPath.getPropertyPath());
-            String currentAlias = propertyPath.getTableAlias();
             boolean ignoreCase = applyIgnoreCase
                 && ((order instanceof DefaultOrder<?> defaultOrder && defaultOrder.isIgnoreCase()) || lowerExpression);
-            if (ignoreCase) {
-                buff.append("LOWER(");
-            }
-            if (currentAlias != null) {
-                buff.append(currentAlias).append(DOT);
-            }
-            if (jsonEntityColumn != null) {
-                buff.append(jsonEntityColumn).append(DOT);
-            }
-            if (computePropertyPaths() && jsonEntityColumn == null) {
-                buff.append(propertyPath.getColumnName());
-            } else {
-                buff.append(propertyPath.getPath());
-                if (jsonEntityColumn != null) {
-                    appendJsonProjection(buff, propertyPath.getProperty().getDataType());
-                }
-            }
-            if (ignoreCase) {
-                buff.append(")");
-            }
+            appendOrderPropertyPath(persistentPropertyPath, ignoreCase, jsonEntityColumn, queryState);
         } else {
             new ExpressionAppender(queryState, annotationMetadata).appendExpression(order.getExpression());
+        }
+    }
+
+    private void appendOrderPropertyPath(io.micronaut.data.model.jpa.criteria.PersistentPropertyPath<?> persistentPropertyPath,
+                                         boolean ignoreCase,
+                                         @Nullable String jsonEntityColumn,
+                                         QueryState queryState) {
+        StringBuilder buff = queryState.getQuery();
+        QueryPropertyPath propertyPath = queryState.findProperty(persistentPropertyPath.getPropertyPath());
+        String currentAlias = propertyPath.getTableAlias();
+        if (ignoreCase) {
+            buff.append("LOWER(");
+        }
+        if (currentAlias != null) {
+            buff.append(currentAlias).append(DOT);
+        }
+        if (jsonEntityColumn != null) {
+            buff.append(jsonEntityColumn).append(DOT);
+        }
+        if (computePropertyPaths() && jsonEntityColumn == null) {
+            buff.append(propertyPath.getColumnName());
+        } else {
+            buff.append(propertyPath.getPath());
+            if (jsonEntityColumn != null) {
+                appendJsonProjection(buff, propertyPath.getProperty().getDataType());
+            }
+        }
+        if (ignoreCase) {
+            buff.append(")");
         }
     }
 
