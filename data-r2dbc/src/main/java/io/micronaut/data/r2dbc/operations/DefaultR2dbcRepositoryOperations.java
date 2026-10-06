@@ -433,15 +433,6 @@ final class DefaultR2dbcRepositoryOperations extends AbstractSqlRepositoryOperat
             });
     }
 
-    /**
-     * The connection with its state when it was opened.
-     *
-     * @param connection The connection
-     * @param state      The state to restore before the connection is closed
-     */
-    private record StatefulConnection(Connection connection, R2dbcConnectionState state) {
-    }
-
     private <K> Function<Connection, Publisher<? extends K>> tenantAwareHandler(Function<Connection, Publisher<? extends K>> handler) {
         Function<Connection, Publisher<? extends K>> theHandler;
         if (schemaTenantResolver == null) {
@@ -1789,5 +1780,14 @@ final class DefaultR2dbcRepositoryOperations extends AbstractSqlRepositoryOperat
         public DatabaseType getDatabaseType() {
             return databaseType;
         }
+    }
+
+    /**
+     * The connection with its state when it was opened.
+     *
+     * @param connection The connection
+     * @param state      The state to restore before the connection is closed
+     */
+    private record StatefulConnection(Connection connection, R2dbcConnectionState state) {
     }
 }
