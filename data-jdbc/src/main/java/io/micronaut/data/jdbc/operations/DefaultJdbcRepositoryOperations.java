@@ -1642,7 +1642,8 @@ public final class DefaultJdbcRepositoryOperations extends AbstractSqlRepository
                     entity = DefaultJdbcRepositoryOperations.this.triggerPostLoad(entity, persistentEntity, ctx.annotationMetadata);
                     return;
                 } catch (SQLException e) {
-                    throw new DataAccessException("Error executing Oracle SQL RETURNING: " + e.getMessage(), e);
+                    throw sqlExceptionToDataAccessException(e, ctx.dialect,
+                        sqlException -> new DataAccessException("Error executing Oracle SQL RETURNING: " + sqlException.getMessage(), sqlException));
                 }
             }
             // Default path (e.g. Postgres) uses PreparedStatement and maps a result set
@@ -1655,7 +1656,8 @@ public final class DefaultJdbcRepositoryOperations extends AbstractSqlRepository
                 rowsUpdated = result.size();
                 entity = result.iterator().next();
             } catch (SQLException e) {
-                throw new DataAccessException("Error executing SQL Query: " + e.getMessage(), e);
+                throw sqlExceptionToDataAccessException(e, ctx.dialect,
+                    sqlException -> new DataAccessException("Error executing SQL Query: " + sqlException.getMessage(), sqlException));
             }
         }
 
