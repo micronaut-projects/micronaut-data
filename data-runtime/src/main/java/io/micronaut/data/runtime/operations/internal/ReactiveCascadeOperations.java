@@ -146,6 +146,7 @@ public final class ReactiveCascadeOperations<Ctx extends OperationContext> exten
                         Flux<Object> childrenFlux = Flux.empty();
                         for (Object child : cascadeManyOp.children) {
                             if (ctx.persisted.contains(child)) {
+                                childrenFlux = childrenFlux.concatWith(Mono.just(child));
                                 continue;
                             }
                             Mono<Object> modifiedEntity;
@@ -159,7 +160,7 @@ public final class ReactiveCascadeOperations<Ctx extends OperationContext> exten
                         return childrenFlux.collectList();
                     });
                 } else if (cascadeType == Relation.Cascade.PERSIST) {
-                    if (helper.isSupportsBatchInsert(ctx, persistentEntity)) {
+                    if (helper.isSupportsBatchInsert(ctx, childPersistentEntity)) {
                         monoEntity = updateChildren(ctx, monoEntity, cascadeOp, cascadeManyOp, childPersistentEntity, e -> {
                             if (LOG.isDebugEnabled()) {
                                 LOG.debug("Cascading many PERSIST for '{}' association: '{}'", persistentEntity.getName(), cascadeOp.ctx.associations);
@@ -213,7 +214,7 @@ public final class ReactiveCascadeOperations<Ctx extends OperationContext> exten
             T entityAfterCascade = afterCascadedMany(e, cascadeOp.ctx.associations, cascadeManyOp.children, newChildren);
             RuntimeAssociation<Object> association = (RuntimeAssociation) cascadeOp.ctx.getAssociation();
             if (association != null && SqlQueryBuilder.isForeignKeyWithJoinTable(association)) {
-                if (helper.isSupportsBatchInsert(ctx, cascadeOp.ctx.parentPersistentEntity)) {
+                if (helper.isSupportsBatchInsert(ctx, childPersistentEntity)) {
                     Predicate<Object> veto = ctx.persisted::contains;
                     Mono<Void> op = helper.persistManyAssociationBatch(ctx, association, cascadeOp.ctx.parent, cascadeOp.ctx.parentPersistentEntity, newChildren, childPersistentEntity, veto);
                     return op.thenReturn(entityAfterCascade);
