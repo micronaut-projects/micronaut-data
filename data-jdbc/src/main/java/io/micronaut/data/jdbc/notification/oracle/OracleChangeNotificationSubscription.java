@@ -15,6 +15,7 @@
  */
 package io.micronaut.data.jdbc.notification.oracle;
 
+import io.micronaut.context.BeanContext;
 import io.micronaut.scheduling.TaskScheduler;
 import oracle.jdbc.dcn.DatabaseChangeEvent;
 import oracle.jdbc.dcn.DatabaseChangeRegistration;
@@ -31,6 +32,9 @@ import java.util.function.Consumer;
 
 /**
  * Owns the registration for one listener method throughout its application lifetime.
+ *
+ * <p>One dispatcher is shared by the initial registration and any recovery replacements.
+ * The subscription uses it directly to dispatch post-recovery invalidation.</p>
  *
  * <p>A reported notification receiver failure starts asynchronous recovery. Recovery replaces
  * the unavailable registration and dispatches an invalidation after the replacement becomes
@@ -49,6 +53,7 @@ final class OracleChangeNotificationSubscription {
     private final OracleChangeListenerDefinition definition;
     private final String methodDescription;
     private final OracleChangeNotificationRegistrar registrar;
+    private final OracleChangeNotificationDispatcher dispatcher;
     private final Executor blockingExecutor;
     private final TaskScheduler taskScheduler;
     private final OracleChangeNotificationTaskTracker taskTracker;
@@ -60,10 +65,10 @@ final class OracleChangeNotificationSubscription {
 
     private State state = State.UNREGISTERED;
     /** May remain current after cleanup ownership was removed for an unregister attempt. */
-    private @Nullable OracleRegistrationHandle currentHandle;
+    private @Nullable DatabaseChangeRegistration currentRegistration;
     private @Nullable ScheduledFuture<?> recoveryRetryTask;
     /** Prevents two workers from replacing the same failed registration concurrently. */
-    private @Nullable OracleRegistrationHandle recoveryInProgressFor;
+    private @Nullable DatabaseChangeRegistration recoveryInProgressFor;
     private boolean invalidationPending;
     /** Preserves a new invalidation request raised while an earlier one is being dispatched. */
     private long invalidationGeneration;
@@ -71,6 +76,7 @@ final class OracleChangeNotificationSubscription {
     OracleChangeNotificationSubscription(String dataSourceName,
                                          OracleChangeListenerDefinition definition,
                                          OracleChangeNotificationRegistrar registrar,
+                                         BeanContext beanContext,
                                          Executor blockingExecutor,
                                          TaskScheduler taskScheduler,
                                          OracleChangeNotificationTaskTracker taskTracker) {
@@ -81,6 +87,10 @@ final class OracleChangeNotificationSubscription {
         this.blockingExecutor = blockingExecutor;
         this.taskScheduler = taskScheduler;
         this.taskTracker = taskTracker;
+        this.dispatcher = new OracleChangeNotificationDispatcher(
+            dataSourceName, definition, beanContext, blockingExecutor, taskTracker,
+            this::handleRegistrationPurged, this::handleRegistrationDeregistered,
+            this::handleQueryDeregistered, this::handleDatabaseShutdown);
     }
 
     OracleChangeListenerDefinition getDefinition() {
@@ -95,7 +105,7 @@ final class OracleChangeNotificationSubscription {
     void start() {
         ActivationResult activation = createAndActivateRegistration();
         if (activation.outcome() == ActivationOutcome.UNAVAILABLE) {
-            throw new IllegalStateException("Initial DCN registration [" + activation.handle().registration().getRegId()
+            throw new IllegalStateException("Initial DCN registration [" + activation.registration().getRegId()
                 + "] for datasource [" + dataSourceName + "] and listener method [" + methodDescription
                 + "] became unavailable before activation");
         }
@@ -125,7 +135,7 @@ final class OracleChangeNotificationSubscription {
      * A candidate failure is retained until activation so it cannot be missed during association.
      */
     void handleRegistrationFailure(DatabaseChangeRegistration registration, SQLException failure) {
-        OracleRegistrationHandle failedHandle;
+        DatabaseChangeRegistration failedRegistration;
         synchronized (this) {
             if (state == State.CLOSED) {
                 return;
@@ -137,16 +147,16 @@ final class OracleChangeNotificationSubscription {
                 return;
             }
             markInvalidationPending();
-            if (state != State.ACTIVE || currentHandle == null) {
+            if (state != State.ACTIVE || currentRegistration == null) {
                 return;
             }
-            failedHandle = currentHandle;
+            failedRegistration = currentRegistration;
             state = State.RECOVERING;
             cancelRecoveryRetry();
         }
         LOG.error("DCN registration [{}] became unavailable for datasource [{}] and listener method [{}]; attempting recovery",
             registration.getRegId(), dataSourceName, methodDescription, failure);
-        submitFailureRecovery(failedHandle);
+        submitFailureRecovery(failedRegistration);
     }
 
     /** Treats a database shutdown as a receiver failure for a known registration. */
@@ -223,24 +233,24 @@ final class OracleChangeNotificationSubscription {
     }
 
     /** Adopts a candidate and handles an early failure or a pending post-recovery invalidation. */
-    private ActivationResult activateHandle(OracleRegistrationHandle handle) {
+    private ActivationResult activateRegistration(DatabaseChangeRegistration registration) {
         SQLException pendingFailure;
         long generationToDispatch = -1;
         synchronized (this) {
-            pendingFailure = ownedRegistration == handle.registration() ? pendingCandidateFailure : null;
-            if (ownedRegistration == handle.registration()) {
+            pendingFailure = ownedRegistration == registration ? pendingCandidateFailure : null;
+            if (ownedRegistration == registration) {
                 pendingCandidateFailure = null;
             }
             if (state == State.CLOSED || taskTracker.isShutdownStarted()) {
-                return new ActivationResult(ActivationOutcome.STOPPED, handle);
+                return new ActivationResult(ActivationOutcome.STOPPED, registration);
             }
-            if (!isTracked(handle.registration())) {
-                return new ActivationResult(ActivationOutcome.UNAVAILABLE, handle);
+            if (!isTracked(registration)) {
+                return new ActivationResult(ActivationOutcome.UNAVAILABLE, registration);
             }
             if (pendingFailure != null) {
                 markInvalidationPending();
             }
-            currentHandle = handle;
+            currentRegistration = registration;
             cancelRecoveryRetry();
             state = pendingFailure == null ? State.ACTIVE : State.RECOVERING;
             if (pendingFailure == null && invalidationPending) {
@@ -248,30 +258,30 @@ final class OracleChangeNotificationSubscription {
             }
             if (pendingFailure == null) {
                 LOG.trace("Activated DCN registration [{}] for datasource [{}] and listener method [{}]",
-                    handle.registration().getRegId(), dataSourceName, methodDescription);
+                    registration.getRegId(), dataSourceName, methodDescription);
             }
         }
         if (pendingFailure != null) {
             LOG.error("DCN registration [{}] became unavailable for datasource [{}] and listener method [{}] during activation; attempting recovery",
-                handle.registration().getRegId(), dataSourceName, methodDescription, pendingFailure);
-            submitFailureRecovery(handle);
-            return new ActivationResult(ActivationOutcome.RECOVERY_REQUIRED, handle);
+                registration.getRegId(), dataSourceName, methodDescription, pendingFailure);
+            submitFailureRecovery(registration);
+            return new ActivationResult(ActivationOutcome.RECOVERY_REQUIRED, registration);
         }
         if (generationToDispatch >= 0) {
-            dispatchInvalidationIfCurrent(handle, generationToDispatch);
+            dispatchInvalidationIfCurrent(registration, generationToDispatch);
         }
-        return new ActivationResult(ActivationOutcome.ACTIVATED, handle);
+        return new ActivationResult(ActivationOutcome.ACTIVATED, registration);
     }
 
     /** Dispatches one pending invalidation while preserving a newer request raised concurrently. */
-    private void dispatchInvalidationIfCurrent(OracleRegistrationHandle handle, long generation) {
+    private void dispatchInvalidationIfCurrent(DatabaseChangeRegistration registration, long generation) {
         synchronized (this) {
-            if (state != State.ACTIVE || currentHandle != handle
+            if (state != State.ACTIVE || currentRegistration != registration
                 || !invalidationPending || invalidationGeneration != generation) {
                 return;
             }
         }
-        handle.invalidationAction().run();
+        dispatcher.dispatchInvalidation(registration.getRegId(), "after DCN registration recovery");
         synchronized (this) {
             if (invalidationPending && invalidationGeneration == generation) {
                 invalidationPending = false;
@@ -285,34 +295,33 @@ final class OracleChangeNotificationSubscription {
     }
 
     /** Submits receiver recovery without blocking the Oracle JDBC notification thread. */
-    private void submitFailureRecovery(OracleRegistrationHandle failedHandle) {
-        submitTrackedTask(() -> executeFailureRecovery(failedHandle),
-            rejection -> scheduleFailureRecoveryRetry(failedHandle, rejection));
+    private void submitFailureRecovery(DatabaseChangeRegistration failedRegistration) {
+        submitTrackedTask(() -> executeFailureRecovery(failedRegistration),
+            rejection -> scheduleFailureRecoveryRetry(failedRegistration, rejection));
     }
 
     /** Replaces a failed registration and retries if the candidate cannot be activated. */
-    private void executeFailureRecovery(OracleRegistrationHandle failedHandle) {
+    private void executeFailureRecovery(DatabaseChangeRegistration failedRegistration) {
         synchronized (this) {
-            if (state != State.RECOVERING || currentHandle != failedHandle || recoveryInProgressFor == failedHandle) {
+            if (state != State.RECOVERING || currentRegistration != failedRegistration || recoveryInProgressFor == failedRegistration) {
                 return;
             }
-            recoveryInProgressFor = failedHandle;
+            recoveryInProgressFor = failedRegistration;
             recoveryRetryTask = null;
         }
         RuntimeException recoveryFailure = null;
         try {
-            DatabaseChangeRegistration registration = failedHandle.registration();
             LOG.trace("Recovering failed DCN registration [{}] for datasource [{}] and listener method [{}]",
-                registration.getRegId(), dataSourceName, methodDescription);
-            unregisterFailedRegistration(registration);
+                failedRegistration.getRegId(), dataSourceName, methodDescription);
+            unregisterFailedRegistration(failedRegistration);
             synchronized (this) {
-                if (state != State.RECOVERING || currentHandle != failedHandle) {
+                if (state != State.RECOVERING || currentRegistration != failedRegistration) {
                     return;
                 }
             }
             ActivationResult replacement = createAndActivateRegistration();
             if (replacement.outcome() == ActivationOutcome.UNAVAILABLE) {
-                throw new IllegalStateException("Replacement DCN registration [" + replacement.handle().registration().getRegId()
+                throw new IllegalStateException("Replacement DCN registration [" + replacement.registration().getRegId()
                     + "] for datasource [" + dataSourceName + "] and listener method [" + methodDescription
                     + "] became unavailable before activation");
             }
@@ -320,15 +329,15 @@ final class OracleChangeNotificationSubscription {
             recoveryFailure = e;
         } finally {
             synchronized (this) {
-                if (recoveryInProgressFor == failedHandle) {
+                if (recoveryInProgressFor == failedRegistration) {
                     recoveryInProgressFor = null;
                 }
             }
         }
         if (recoveryFailure != null) {
             LOG.error("Unable to recover failed DCN registration [{}] for datasource [{}] and listener method [{}]",
-                failedHandle.registration().getRegId(), dataSourceName, methodDescription, recoveryFailure);
-            scheduleFailureRecoveryRetry(failedHandle, recoveryFailure);
+                failedRegistration.getRegId(), dataSourceName, methodDescription, recoveryFailure);
+            scheduleFailureRecoveryRetry(failedRegistration, recoveryFailure);
         }
     }
 
@@ -346,24 +355,24 @@ final class OracleChangeNotificationSubscription {
     }
 
     /** Schedules a retry only while the same failed registration is current. */
-    private synchronized void scheduleFailureRecoveryRetry(OracleRegistrationHandle failedHandle,
+    private synchronized void scheduleFailureRecoveryRetry(DatabaseChangeRegistration failedRegistration,
                                                            RuntimeException recoveryFailure) {
-        if (state != State.RECOVERING || currentHandle != failedHandle || taskTracker.isShutdownStarted()
-            || recoveryInProgressFor == failedHandle || recoveryRetryTask != null) {
+        if (state != State.RECOVERING || currentRegistration != failedRegistration || taskTracker.isShutdownStarted()
+            || recoveryInProgressFor == failedRegistration || recoveryRetryTask != null) {
             return;
         }
         try {
             recoveryRetryTask = taskScheduler.schedule(
                 Duration.ofSeconds(RECOVERY_RETRY_DELAY_SECONDS),
-                () -> submitFailureRecovery(failedHandle));
+                () -> submitFailureRecovery(failedRegistration));
             LOG.warn("Scheduled DCN receiver recovery retry in [{}] seconds for datasource [{}], listener method [{}], and registration [{}]",
                 RECOVERY_RETRY_DELAY_SECONDS, dataSourceName, methodDescription,
-                failedHandle.registration().getRegId(), recoveryFailure);
+                failedRegistration.getRegId(), recoveryFailure);
         } catch (RuntimeException schedulingFailure) {
             recoveryFailure.addSuppressed(schedulingFailure);
             state = State.CLOSED;
             LOG.error("Unable to schedule DCN receiver recovery for registration [{}], datasource [{}], and listener method [{}]",
-                failedHandle.registration().getRegId(), dataSourceName, methodDescription, recoveryFailure);
+                failedRegistration.getRegId(), dataSourceName, methodDescription, recoveryFailure);
         }
     }
 
@@ -389,18 +398,18 @@ final class OracleChangeNotificationSubscription {
 
     /** Creates a candidate and releases it if activation is rejected. */
     private ActivationResult createAndActivateRegistration() {
-        OracleRegistrationHandle handle = registrar.createRegistration(this);
+        DatabaseChangeRegistration registration = registrar.createRegistration(this, dispatcher);
         try {
-            ActivationResult activation = activateHandle(handle);
+            ActivationResult activation = activateRegistration(registration);
             if (activation.outcome() == ActivationOutcome.STOPPED || activation.outcome() == ActivationOutcome.UNAVAILABLE) {
                 LOG.trace("Discarding inactive DCN registration [{}] with activation outcome [{}] for datasource [{}] and listener method [{}]",
-                    handle.registration().getRegId(), activation.outcome(), dataSourceName, methodDescription);
-                unregister(handle.registration());
+                    registration.getRegId(), activation.outcome(), dataSourceName, methodDescription);
+                unregister(registration);
             }
             return activation;
         } catch (RuntimeException activationFailure) {
             try {
-                unregisterIfOwned(handle.registration());
+                unregisterIfOwned(registration);
             } catch (RuntimeException cleanupFailure) {
                 activationFailure.addSuppressed(cleanupFailure);
             }
@@ -426,9 +435,8 @@ final class OracleChangeNotificationSubscription {
     }
 
     private synchronized void closeIfCurrent(DatabaseChangeRegistration registration) {
-        OracleRegistrationHandle handle = currentHandle;
-        if (handle != null && handle.registration() == registration) {
-            currentHandle = null;
+        if (currentRegistration == registration) {
+            currentRegistration = null;
             cancelRecoveryRetry();
             state = State.CLOSED;
         }
@@ -443,7 +451,7 @@ final class OracleChangeNotificationSubscription {
     }
 
     private boolean isCurrent(DatabaseChangeRegistration registration) {
-        return currentHandle != null && currentHandle.registration() == registration;
+        return currentRegistration == registration;
     }
 
     private synchronized boolean isTracked(DatabaseChangeRegistration registration) {
@@ -452,8 +460,8 @@ final class OracleChangeNotificationSubscription {
 
     /** Also resolves the current registration after an unregister attempt removed cleanup ownership. */
     private synchronized @Nullable DatabaseChangeRegistration findRegistration(long registrationId) {
-        if (currentHandle != null && currentHandle.registration().getRegId() == registrationId) {
-            return currentHandle.registration();
+        if (currentRegistration != null && currentRegistration.getRegId() == registrationId) {
+            return currentRegistration;
         }
         if (ownedRegistration != null && ownedRegistration.getRegId() == registrationId) {
             return ownedRegistration;
@@ -472,7 +480,7 @@ final class OracleChangeNotificationSubscription {
         }
     }
 
-    private record ActivationResult(ActivationOutcome outcome, OracleRegistrationHandle handle) {
+    private record ActivationResult(ActivationOutcome outcome, DatabaseChangeRegistration registration) {
     }
 
     private enum ActivationOutcome {

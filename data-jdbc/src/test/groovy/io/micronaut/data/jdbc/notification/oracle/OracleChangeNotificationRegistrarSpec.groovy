@@ -130,13 +130,13 @@ class OracleChangeNotificationRegistrarSpec extends Specification {
         def definition = new OracleChangeListenerDefinition(null, method, null, 'SELECT * FROM BOOK', null, requested)
         def registrar = registrar(operations)
         def subscription = new OracleChangeNotificationSubscription('default', definition, registrar,
-                Mock(Executor), Mock(TaskScheduler), new OracleChangeNotificationTaskTracker())
+                Mock(BeanContext), Mock(Executor), Mock(TaskScheduler), new OracleChangeNotificationTaskTracker())
         connection.unwrap(OracleConnection) >> oracleConnection
         oracleConnection.properties >> connectionProperties
         operations.execute(_ as ConnectionCallback) >> { ConnectionCallback<?> callback -> callback.call(connection) }
 
         when:
-        registrar.createRegistration(subscription)
+        subscription.start()
 
         then:
         def failure = thrown(IllegalStateException)
@@ -162,7 +162,7 @@ class OracleChangeNotificationRegistrarSpec extends Specification {
         def definition = new OracleChangeListenerDefinition(null, method, null, 'SELECT * FROM BOOK', null, requested)
         def registrar = registrar(operations)
         def subscription = new OracleChangeNotificationSubscription('default', definition, registrar,
-                Mock(Executor), Mock(TaskScheduler), new OracleChangeNotificationTaskTracker())
+                Mock(BeanContext), Mock(Executor), Mock(TaskScheduler), new OracleChangeNotificationTaskTracker())
         connection.unwrap(OracleConnection) >> oracleConnection
         oracleConnection.properties >> new Properties()
         registration.getRegId() >> 22L
@@ -171,7 +171,7 @@ class OracleChangeNotificationRegistrarSpec extends Specification {
         oracleConnection.registerDatabaseChangeNotification(_ as Properties, _ as DatabaseChangeListener) >> registration
 
         when:
-        registrar.createRegistration(subscription)
+        subscription.start()
 
         then:
         def failure = thrown(IllegalStateException)
@@ -280,7 +280,6 @@ class OracleChangeNotificationRegistrarSpec extends Specification {
     }
 
     private OracleChangeNotificationRegistrar registrar(JdbcOperations operations) {
-        new OracleChangeNotificationRegistrar('default', operations, Mock(BeanContext), Mock(Executor),
-                new OracleChangeNotificationTaskTracker())
+        new OracleChangeNotificationRegistrar('default', operations)
     }
 }

@@ -41,6 +41,10 @@ import java.util.function.LongConsumer;
 /**
  * Dispatches Oracle database change events for one listener definition.
  *
+ * <p>The subscription owns this dispatcher and reuses it when recovering its registration.
+ * Each submitted callback retains its registration options snapshot even if recovery configures
+ * different options for a replacement registration.</p>
+ *
  * <p>The Oracle driver invokes this listener on its notification thread. To avoid blocking that
  * thread, the dispatcher submits row reload and listener invocation to the blocking executor.</p>
  *

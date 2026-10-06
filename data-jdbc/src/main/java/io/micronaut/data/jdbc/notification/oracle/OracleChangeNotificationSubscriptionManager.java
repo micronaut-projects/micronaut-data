@@ -64,11 +64,10 @@ final class OracleChangeNotificationSubscriptionManager {
                                                 TaskScheduler taskScheduler,
                                                 List<OracleChangeListenerDefinition> listenerDefinitions) {
         this.dataSourceName = dataSourceName;
-        OracleChangeNotificationRegistrar registrar = new OracleChangeNotificationRegistrar(
-            dataSourceName, operations, beanContext, blockingExecutor, taskTracker);
+        OracleChangeNotificationRegistrar registrar = new OracleChangeNotificationRegistrar(dataSourceName, operations);
         this.subscriptions = listenerDefinitions.stream()
             .map(definition -> new OracleChangeNotificationSubscription(
-                dataSourceName, definition, registrar, blockingExecutor, taskScheduler, taskTracker))
+                dataSourceName, definition, registrar, beanContext, blockingExecutor, taskScheduler, taskTracker))
             .toList();
     }
 

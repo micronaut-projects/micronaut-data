@@ -160,6 +160,7 @@ class OracleChangeNotificationSubscriptionSpec extends Specification {
 
         then:
         fixture.registrationIndex.get() == 2
+        fixture.registeredListeners[0].is(fixture.registeredListeners[1])
         delivered == [ChangeOperation.INVALIDATE]
         1 * fixture.oracleConnection.unregisterDatabaseChangeNotification(original)
     }
@@ -457,8 +458,6 @@ class OracleChangeNotificationSubscriptionSpec extends Specification {
         def statement = Mock(Statement)
         def oracleStatement = Mock(OracleStatement)
         def resultSet = Mock(ResultSet)
-        def beanContext = Mock(BeanContext)
-        beanContext.getBean(_ as BeanDefinition) >> new Object()
         def registrationIndex = new AtomicInteger()
         List<Properties> registrationOptions = registrations.collect { new Properties() }
         List<FailureListener> failureListeners = []
@@ -484,9 +483,7 @@ class OracleChangeNotificationSubscriptionSpec extends Specification {
                 failureListeners.add(listener)
             }
         }
-        def registrar = new OracleChangeNotificationRegistrar(
-            'inventory', operations, beanContext, { Runnable command -> command.run() } as Executor,
-            new OracleChangeNotificationTaskTracker())
+        def registrar = new OracleChangeNotificationRegistrar('inventory', operations)
         new RegistrarFixture(registrar, oracleConnection, registrationIndex, failureListeners, registeredListeners)
     }
 
@@ -507,7 +504,9 @@ class OracleChangeNotificationSubscriptionSpec extends Specification {
         def definition = new OracleChangeListenerDefinition(
             Mock(BeanDefinition), method, OracleTableIdentifier.parse('BOOK'),
             'SELECT * FROM BOOK', null, new Properties())
-        new OracleChangeNotificationSubscription('inventory', definition, registrar, executor, scheduler, tracker)
+        def beanContext = Mock(BeanContext)
+        beanContext.getBean(_ as BeanDefinition) >> new Object()
+        new OracleChangeNotificationSubscription('inventory', definition, registrar, beanContext, executor, scheduler, tracker)
     }
 
     private static Object findChangeEvent(Object value) {

@@ -15,7 +15,6 @@
  */
 package io.micronaut.data.jdbc.notification.oracle;
 
-import io.micronaut.context.BeanContext;
 import io.micronaut.data.jdbc.runtime.JdbcOperations;
 import oracle.jdbc.NotificationRegistration;
 import oracle.jdbc.OracleConnection;
@@ -30,14 +29,13 @@ import java.sql.ResultSet;
 import java.sql.SQLException;
 import java.sql.Statement;
 import java.util.Properties;
-import java.util.concurrent.Executor;
 
 /**
  * Bridges logical change-listener subscriptions to physical Oracle JDBC registrations.
  *
  * <p>For each subscription, this component creates a {@link DatabaseChangeRegistration},
  * attaches the Oracle notification dispatcher, associates the generated registration query,
- * and returns an {@link OracleRegistrationHandle} for its delivery lifecycle.</p>
+ * and returns the associated registration.</p>
  *
  * <p>It also unregisters physical Oracle registrations during cleanup. Subscription state and
  * listener event dispatching are handled by other components.</p>
@@ -50,57 +48,33 @@ final class OracleChangeNotificationRegistrar {
 
     private final String dataSourceName;
     private final JdbcOperations operations;
-    private final BeanContext beanContext;
-    private final Executor blockingExecutor;
-    private final OracleChangeNotificationTaskTracker taskTracker;
 
     /**
      * Creates a registrar for one datasource and the subscriptions managed for it.
      *
-     * @param dataSourceName   the name used to identify the datasource in diagnostics
-     * @param operations       the JDBC operations used to acquire datasource connections
-     * @param beanContext      the context used by the notification dispatcher to resolve listener beans
-     * @param blockingExecutor the executor used for asynchronous notification processing
-     * @param taskTracker      the tracker used to coordinate asynchronous work with shutdown
+     * @param dataSourceName the name used to identify the datasource in diagnostics
+     * @param operations     the JDBC operations used to acquire datasource connections
      */
     OracleChangeNotificationRegistrar(String dataSourceName,
-                                      JdbcOperations operations,
-                                      BeanContext beanContext,
-                                      Executor blockingExecutor,
-                                      OracleChangeNotificationTaskTracker taskTracker) {
+                                      JdbcOperations operations) {
         this.dataSourceName = dataSourceName;
         this.operations = operations;
-        this.beanContext = beanContext;
-        this.blockingExecutor = blockingExecutor;
-        this.taskTracker = taskTracker;
     }
 
     /**
      * Creates and associates a database registration for a subscription.
      *
-     * <p>The Oracle listeners are attached before the generated registration query is associated.
-     * The registration is tracked before the driver failure listener is attached so an early
-     * failure callback can be retained by the subscription until its handle is activated. The
-     * driver's effective registration options are validated and supplied to the dispatcher before
-     * the query is associated. If setup or association fails, this method removes the registration
-     * from local tracking and attempts to unregister it before propagating the failure.</p>
-     *
      * @param subscription the subscription that owns the registration and receives its callbacks
-     * @return the registration handle with its post-recovery invalidation action
+     * @param dispatcher   the subscription's dispatcher, reused across registration recovery
+     * @return the associated database registration
      * @throws RuntimeException if registration setup or query association fails
      */
-    OracleRegistrationHandle createRegistration(OracleChangeNotificationSubscription subscription) {
+    DatabaseChangeRegistration createRegistration(OracleChangeNotificationSubscription subscription,
+                                                  OracleChangeNotificationDispatcher dispatcher) {
         OracleChangeListenerDefinition definition = subscription.getDefinition();
         return operations.execute(connection -> {
             OracleConnection oracleConnection = connection.unwrap(OracleConnection.class);
             validateConnectionOptions(oracleConnection, definition);
-            OracleChangeNotificationDispatcher dispatcher = new OracleChangeNotificationDispatcher(
-                dataSourceName, definition, beanContext, blockingExecutor, taskTracker,
-                subscription::handleRegistrationPurged,
-                subscription::handleRegistrationDeregistered,
-                subscription::handleQueryDeregistered,
-                subscription::handleDatabaseShutdown
-            );
             DatabaseChangeRegistration registration = oracleConnection.registerDatabaseChangeNotification(
                 definition.registrationProperties(), dispatcher);
             LOG.trace("Created DCN registration [{}] for datasource [{}] and listener method [{}]",
@@ -120,9 +94,7 @@ final class OracleChangeNotificationRegistrar {
                             registration.getRegId(), dataSourceName, definition.method().getDescription(true));
                     }
                 }
-                long registrationId = registration.getRegId();
-                return new OracleRegistrationHandle(registration,
-                    () -> dispatcher.dispatchInvalidation(registrationId, "after DCN registration recovery"));
+                return registration;
             } catch (SQLException | RuntimeException e) {
                 subscription.untrack(registration);
                 try {
