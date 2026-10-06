@@ -115,6 +115,20 @@ class OracleXEConnectionStatePoolSpec extends Specification implements OracleXET
             count() == 1
     }
 
+    void "the transaction left open by the user is rolled back when the connection is closed"() {
+        when:
+            Mono.from(r2dbcOperations.withConnection { connection ->
+                Mono.from(connection.beginTransaction())
+                        .then(Mono.from(insert(connection, 1)))
+                        .then(Mono.error(new IllegalStateException("not committed")))
+            }).block()
+
+        then:
+            thrown(IllegalStateException)
+            autoCommit()
+            count() == 0
+    }
+
     void "isolation level is restored after the transaction"() {
         given:
             def definition = new DefaultTransactionDefinition()

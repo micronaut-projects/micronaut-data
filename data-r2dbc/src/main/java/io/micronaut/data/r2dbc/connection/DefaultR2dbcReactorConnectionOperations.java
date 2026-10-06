@@ -112,6 +112,10 @@ public final class DefaultR2dbcReactorConnectionOperations extends AbstractReact
         return Mono.defer(() -> {
             Mono<Void> result = Mono.empty();
             if (connection.isAutoCommit() != initialState.autoCommit()) {
+                if (initialState.autoCommit()) {
+                    // Enabling auto-commit commits an active transaction, discard the work that wasn't committed
+                    result = result.then(Mono.from(connection.rollbackTransaction()));
+                }
                 result = result.then(Mono.from(connection.setAutoCommit(initialState.autoCommit())));
             }
             IsolationLevel isolationLevel = initialState.isolationLevel();
