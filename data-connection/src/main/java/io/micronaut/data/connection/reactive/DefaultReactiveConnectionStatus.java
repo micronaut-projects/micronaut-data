@@ -21,12 +21,16 @@ import io.micronaut.core.order.OrderUtil;
 import io.micronaut.data.connection.ConnectionDefinition;
 import io.micronaut.data.connection.ConnectionSynchronization;
 import org.reactivestreams.Publisher;
+import reactor.core.publisher.Flux;
 import reactor.core.publisher.Mono;
+import reactor.core.scheduler.Scheduler;
+import reactor.core.scheduler.Schedulers;
 
 import java.util.ArrayList;
 import java.util.List;
 import java.util.ListIterator;
 import java.util.Optional;
+import java.util.concurrent.Executor;
 import java.util.function.Function;
 import java.util.function.Supplier;
 
@@ -46,15 +50,87 @@ public final class DefaultReactiveConnectionStatus<C> implements ReactiveConnect
     private final ConnectionDefinition definition;
     private final ReactorConnectionOperations<C> connectionOperations;
     private final boolean isNew;
+    @Nullable
+    private final Executor executor;
+    @Nullable
+    private final Scheduler scheduler;
 
     @Nullable
     private List<ReactiveConnectionSynchronization> connectionSynchronizations;
 
     public DefaultReactiveConnectionStatus(C connection, ConnectionDefinition definition, ReactorConnectionOperations<C> connectionOperations, boolean isNew) {
+        this(connection, definition, connectionOperations, isNew, null);
+    }
+
+    /**
+     * @param connection           The connection
+     * @param definition           The connection definition
+     * @param connectionOperations The connection operations
+     * @param isNew                Whether the connection was opened for this status
+     * @param executor             The executor the connection must be used on, if it is bound to a thread
+     * @since 5.3.0
+     */
+    @Internal
+    public DefaultReactiveConnectionStatus(C connection,
+                                           ConnectionDefinition definition,
+                                           ReactorConnectionOperations<C> connectionOperations,
+                                           boolean isNew,
+                                           @Nullable Executor executor) {
         this.connection = connection;
         this.definition = definition;
         this.connectionOperations = connectionOperations;
         this.isNew = isNew;
+        this.executor = executor;
+        this.scheduler = executor == null ? null : Schedulers.fromExecutor(executor);
+    }
+
+    /**
+     * @return The executor the connection must be used on, or {@code null} if it can be used from any thread
+     * @since 5.3.0
+     */
+    @Internal
+    @Nullable
+    public Executor getExecutor() {
+        return executor;
+    }
+
+    /**
+     * @return The scheduler of the connection's executor, or {@code null} if it can be used from any thread
+     * @since 5.3.0
+     */
+    @Internal
+    @Nullable
+    public Scheduler getScheduler() {
+        return scheduler;
+    }
+
+    /**
+     * Run the work on the connection's executor, if it has one.
+     *
+     * @param work The work
+     * @param <T>  The result type
+     * @return The result
+     * @since 5.3.0
+     */
+    @Internal
+    public <T> Mono<T> onConnectionExecutor(Supplier<? extends Mono<T>> work) {
+        Mono<T> mono = Mono.defer(work);
+        return scheduler == null ? mono : mono.subscribeOn(scheduler);
+    }
+
+    /**
+     * Run the work on the connection's executor, if it has one.
+     *
+     * @param work The work
+     * @param <T>  The result type
+     * @return The result
+     * @since 5.3.0
+     */
+    @Internal
+    public <T> Flux<T> onConnectionExecutorFlux(Supplier<? extends Flux<T>> work) {
+        Flux<T> flux = Flux.defer(work);
+        // Only the subscription needs the connection's thread, not the subscriber's requests
+        return scheduler == null ? flux : flux.subscribeOn(scheduler, false);
     }
 
     public boolean isConnectionOf(ReactorConnectionOperations<C> connectionOperations) {

@@ -7,6 +7,8 @@ import io.micronaut.http.annotation.QueryValue;
 import io.micronaut.http.client.annotation.Client;
 import reactor.core.publisher.Mono;
 
+import java.util.List;
+
 import static io.micronaut.http.MediaType.APPLICATION_JSON;
 
 @Client("/")
@@ -16,6 +18,9 @@ public interface TestClient {
 
     @Post(uri = "/create-transactional", produces = APPLICATION_JSON)
     Mono<Foo> createTransactional(@Body FooController.CreateRequest request);
+
+    @Get(uri = "/list", produces = APPLICATION_JSON)
+    Mono<List<Foo>> list();
 
     @Get(uri = "/read", produces = APPLICATION_JSON)
     Mono<Foo> read(@QueryValue Long id);
