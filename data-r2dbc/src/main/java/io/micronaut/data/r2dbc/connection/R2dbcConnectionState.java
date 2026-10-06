@@ -66,16 +66,19 @@ public record R2dbcConnectionState(boolean autoCommit, @Nullable IsolationLevel 
 
     private Mono<Void> restore(Connection connection) {
         return Mono.defer(() -> {
+            // Each step is deferred: it runs after the previous one completed
             Mono<Void> result = Mono.empty();
             if (connection.isAutoCommit() != autoCommit) {
                 if (autoCommit) {
                     // Enabling auto-commit commits an active transaction, discard the work that wasn't committed
-                    result = result.then(Mono.from(connection.rollbackTransaction()));
+                    result = result.then(Mono.defer(() -> Mono.from(connection.rollbackTransaction())));
                 }
-                result = result.then(Mono.from(connection.setAutoCommit(autoCommit)));
+                result = result.then(Mono.defer(() -> Mono.from(connection.setAutoCommit(autoCommit))));
             }
-            if (isolationLevel != null && !isolationLevel.equals(connection.getTransactionIsolationLevel())) {
-                result = result.then(Mono.from(connection.setTransactionIsolationLevel(isolationLevel)));
+            if (isolationLevel != null) {
+                result = result.then(Mono.defer(() -> isolationLevel.equals(connection.getTransactionIsolationLevel())
+                    ? Mono.empty()
+                    : Mono.from(connection.setTransactionIsolationLevel(isolationLevel))));
             }
             return result;
         });

@@ -2,16 +2,20 @@ package io.micronaut.data.r2dbc.transaction
 
 import io.micronaut.data.connection.reactive.ReactiveConnectionStatus
 import io.micronaut.data.connection.reactive.ReactiveConnectionSynchronization
+import io.micronaut.transaction.TransactionDefinition
 import io.micronaut.transaction.annotation.OracleTransactional
 import io.micronaut.transaction.support.DefaultTransactionDefinition
 import io.r2dbc.spi.Connection
 import io.r2dbc.spi.ConnectionMetadata
+import io.r2dbc.spi.IsolationLevel
 import io.r2dbc.spi.R2dbcException
 import io.r2dbc.spi.Result
 import io.r2dbc.spi.Statement
 import reactor.core.publisher.Flux
 import reactor.core.publisher.Mono
 import spock.lang.Specification
+
+import java.time.Duration
 
 class DefaultR2dbcReactorTransactionOperationsSpec extends Specification {
 
@@ -128,6 +132,31 @@ class DefaultR2dbcReactorTransactionOperationsSpec extends Specification {
         then:
         !result
         0 * connection.getMetadata()
+    }
+
+    void "applies the statement timeout and the isolation level before the transaction begins"() {
+        given:
+        def transactionOperations = new DefaultR2dbcReactorTransactionOperations("default", null)
+        def connectionStatus = Mock(ReactiveConnectionStatus<Connection>)
+        def connection = Mock(Connection)
+        def definition = new DefaultTransactionDefinition()
+        definition.timeout = Duration.ofSeconds(5)
+        definition.isolationLevel = TransactionDefinition.Isolation.SERIALIZABLE
+
+        when:
+        Mono.from(transactionOperations.beginTransaction(connectionStatus, definition)).block()
+
+        then:
+        1 * connectionStatus.getConnection() >> connection
+
+        then:
+        1 * connection.setStatementTimeout(Duration.ofSeconds(5)) >> Mono.empty()
+
+        then:
+        1 * connection.setTransactionIsolationLevel(IsolationLevel.SERIALIZABLE) >> Mono.empty()
+
+        then:
+        1 * connection.beginTransaction() >> Mono.empty()
     }
 
     private static List oracleListeners() {

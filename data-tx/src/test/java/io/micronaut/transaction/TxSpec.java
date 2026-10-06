@@ -410,6 +410,34 @@ public class TxSpec {
         }
     }
 
+    @Test
+    public void testReactiveTxCommitFailureWhenExceptionDoesNotTriggerRollback() {
+        try (ApplicationContext applicationContext = ApplicationContext.run()) {
+            OpLogger opLogger = applicationContext.getBean(OpLogger.class);
+            IllegalStateException commitFailure = new IllegalStateException("commit failed");
+            ReactiveTxManager txManager = new CommitFailingReactiveTxManager(
+                applicationContext.getBean(ReactiveConnManager.class),
+                opLogger,
+                commitFailure
+            );
+            DefaultTransactionDefinition definition = new DefaultTransactionDefinition();
+            definition.setDontRollbackOn(List.of(IllegalArgumentException.class));
+            IllegalArgumentException applicationException = new IllegalArgumentException("no rollback");
+
+            IllegalArgumentException exception = Assertions.assertThrows(
+                IllegalArgumentException.class,
+                () -> txManager.withTransactionMono(definition, status -> Mono.error(applicationException)).block()
+            );
+
+            Assertions.assertSame(applicationException, exception);
+            Assertions.assertTrue(List.of(exception.getSuppressed()).contains(commitFailure));
+            Assertions.assertEquals(
+                List.of("OPEN CONNECTION_1", "BEGIN TX CONNECTION_1", "COMMIT TX CONNECTION_1", "CLOSE CONNECTION_1"),
+                opLogger.getLogs()
+            );
+        }
+    }
+
     private static class OracleReactiveTxManager extends ReactiveTxManager {
 
         private OracleReactiveTxManager(ReactorConnectionOperations<String> connectionOperations,
