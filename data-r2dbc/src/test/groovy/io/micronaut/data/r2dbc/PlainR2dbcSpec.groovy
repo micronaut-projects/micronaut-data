@@ -70,7 +70,9 @@ abstract class PlainR2dbcSpec extends Specification {
      * restore it before returning the connection to the pool.
      */
     private static Publisher<Void> closeConnection(Connection connection) {
-        return Flux.concat(connection.setAutoCommit(true), connection.close())
+        return Mono.from(connection.setAutoCommit(true))
+                .onErrorResume { Mono.empty() }
+                .then(Mono.from(connection.close()))
     }
 
     def "use withTransaction and withConnection"() {

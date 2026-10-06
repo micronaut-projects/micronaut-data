@@ -313,7 +313,8 @@ public class TxSpec {
 
             Assertions.assertFalse(exception instanceof OracleTransactionPriorityException);
             Assertions.assertEquals(
-                List.of("OPEN CONNECTION_1", "BEGIN TX CONNECTION_1", "CLOSE CONNECTION_1"),
+                // The exception doesn't trigger the rollback: the work is committed, the same as the synchronous transaction manager
+                List.of("OPEN CONNECTION_1", "BEGIN TX CONNECTION_1", "COMMIT TX CONNECTION_1", "CLOSE CONNECTION_1"),
                 opLogger.getLogs()
             );
         }
@@ -340,7 +341,8 @@ public class TxSpec {
 
             Assertions.assertSame(applicationException, exception);
             Assertions.assertEquals(
-                List.of("OPEN CONNECTION_1", "BEGIN TX CONNECTION_1", "CLOSE CONNECTION_1"),
+                // The exception doesn't trigger the rollback: the work is committed, the same as the synchronous transaction manager
+                List.of("OPEN CONNECTION_1", "BEGIN TX CONNECTION_1", "COMMIT TX CONNECTION_1", "CLOSE CONNECTION_1"),
                 opLogger.getLogs()
             );
         }

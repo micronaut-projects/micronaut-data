@@ -400,7 +400,8 @@ public abstract class AbstractReactorTransactionOperations<C> implements Reactor
             if (throwable instanceof OracleTransactionPriorityException || definition.rollbackOn(throwable)) {
                 abort = Flux.from(rollbackTransaction(status.getConnectionStatus(), definition));
             } else {
-                abort = Flux.error(throwable);
+                // Same as the synchronous transaction manager: the exception doesn't trigger a rollback, commit the work
+                abort = Flux.from(commitTransaction(status.getConnectionStatus(), definition));
             }
         } catch (Exception e) {
             // Sometimes an exception can be thrown creating the publishers for rollback or commit.

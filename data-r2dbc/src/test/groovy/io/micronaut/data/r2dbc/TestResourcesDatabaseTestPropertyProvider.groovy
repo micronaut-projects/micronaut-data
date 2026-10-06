@@ -42,6 +42,17 @@ trait TestResourcesDatabaseTestPropertyProvider implements TestPropertyProvider 
         }
     }
 
+    String poolProtocol() {
+        switch (dialect()) {
+            case Dialect.H2:
+                return "h2:mem"
+            case Dialect.SQL_SERVER:
+                return "sqlserver"
+            default:
+                return dbType()
+        }
+    }
+
     @Override
     Map<String, String> getProperties() {
         def props = getDataSourceProperties("default")
@@ -79,7 +90,7 @@ trait TestResourcesDatabaseTestPropertyProvider implements TestPropertyProvider 
         if (usePool()) {
             options += [
                     (prefix + '.options.driver')                    : 'pool',
-                    (prefix + '.options.protocol')                  : dialect == Dialect.SQL_SERVER ? 'sqlserver' : dbType,
+                    (prefix + '.options.protocol')                  : poolProtocol(),
                     // micronaut-r2dbc doesn't dispose the pool when the context is closed,
                     // keep the pools of the finished specs from exhausting the database connections
                     (prefix + '.options.initialSize')               : '1',

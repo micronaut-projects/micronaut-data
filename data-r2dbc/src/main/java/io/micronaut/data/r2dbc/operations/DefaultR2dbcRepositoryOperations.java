@@ -176,9 +176,6 @@ final class DefaultR2dbcRepositoryOperations extends AbstractSqlRepositoryOperat
     private final ReactiveCascadeOperations<R2dbcOperationContext> cascadeOperations;
     private final R2dbcReactorTransactionOperations transactionOperations;
     private final ReactorConnectionOperations<Connection> connectionOperations;
-    @Nullable
-    private final SchemaTenantResolver schemaTenantResolver;
-    private final R2dbcSchemaHandler schemaHandler;
     private final DataR2dbcConfiguration configuration;
     private final Map<Dialect, VectorBindSupport> vectorBindSupportByDialect = new EnumMap<>(Dialect.class);
     private final Map<Dialect, List<R2dbcExceptionMapper>> r2dbcExceptionMappers = new EnumMap<>(Dialect.class);
@@ -244,8 +241,6 @@ final class DefaultR2dbcRepositoryOperations extends AbstractSqlRepositoryOperat
             conversionContextFactory);
         this.connectionFactory = connectionFactory;
         this.executorServiceResolver = new ExecutorServiceResolver(executorService);
-        this.schemaTenantResolver = schemaTenantResolver;
-        this.schemaHandler = schemaHandler;
         this.configuration = configuration;
         this.transactionOperations = transactionOperations;
         this.connectionOperations = connectionOperations;
@@ -420,30 +415,11 @@ final class DefaultR2dbcRepositoryOperations extends AbstractSqlRepositoryOperat
         if (LOG.isDebugEnabled()) {
             LOG.debug("Creating a new Connection for DataSource: " + dataSourceName);
         }
-        return Flux.usingWhen(connectionFactory.create(), tenantAwareHandler(handler), (connection -> {
-            if (LOG.isDebugEnabled()) {
-                LOG.debug("Closing Connection for DataSource: " + dataSourceName);
-            }
-            return connection.close();
-        }));
-    }
-
-    private <K> Function<Connection, Publisher<? extends K>> tenantAwareHandler(Function<Connection, Publisher<? extends K>> handler) {
-        Function<Connection, Publisher<? extends K>> theHandler;
-        if (schemaTenantResolver == null) {
-            theHandler = handler;
-        } else {
-            theHandler = connection -> {
-                String schemaName = schemaTenantResolver.resolveTenantSchemaName();
-                if (schemaName != null) {
-                    return Mono.fromDirect(schemaHandler.useSchema(connection, configuration.getDialect(), schemaName))
-                        .thenReturn(connection)
-                        .flatMapMany(handler::apply);
-                }
-                return handler.apply(connection);
-            };
-        }
-        return theHandler;
+        // The connection operations restore the connection state (auto-commit etc.) before the connection is closed
+        return connectionOperations.withConnectionFlux(
+            ConnectionDefinition.REQUIRES_NEW,
+            status -> Flux.from(handler.apply(status.getConnection()))
+        );
     }
 
     @NonNull

@@ -36,7 +36,6 @@ import org.reactivestreams.Publisher;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import reactor.core.publisher.Flux;
-import reactor.core.publisher.Mono;
 
 import java.time.Duration;
 import java.util.ArrayList;
@@ -87,7 +86,7 @@ final class DefaultR2dbcReactorTransactionOperations extends AbstractReactorTran
             if (LOG.isDebugEnabled()) {
                 LOG.debug("Setting statement timeout ({}) for transaction: {} for dataSource: {}", timeout, definition.getName(), dataSourceName);
             }
-            result = result.thenMany(connection.setStatementTimeout(timeout));
+            result = result.thenMany(Flux.defer(() -> connection.setStatementTimeout(timeout)));
         }
         if (definition.getIsolationLevel().isPresent()) {
             IsolationLevel isolationLevel = getIsolationLevel(definition);
@@ -95,15 +94,16 @@ final class DefaultR2dbcReactorTransactionOperations extends AbstractReactorTran
                 LOG.debug("Setting Isolation Level ({}) for transaction: {} for dataSource: {}", isolationLevel, definition.getName(), dataSourceName);
             }
             if (isolationLevel != null) {
-                result = result.thenMany(connection.setTransactionIsolationLevel(isolationLevel));
+                result = result.thenMany(Flux.defer(() -> connection.setTransactionIsolationLevel(isolationLevel)));
             }
         }
         for (ReactiveTransactionExecutionListener<Connection> transactionExecutionListener : transactionExecutionListeners) {
-            result = result.thenMany(transactionExecutionListener.beforeBegin(connectionStatus, definition));
+            result = result.thenMany(Flux.defer(() -> transactionExecutionListener.beforeBegin(connectionStatus, definition)));
         }
-        result = result.thenMany(connection.beginTransaction());
+        // Deferred: some drivers (e.g. Oracle R2DBC) read the isolation level when beginTransaction is called
+        result = result.thenMany(Flux.defer(connection::beginTransaction));
         for (ReactiveTransactionExecutionListener<Connection> transactionExecutionListener : transactionExecutionListeners) {
-            result = result.thenMany(transactionExecutionListener.afterBegin(connectionStatus, definition));
+            result = result.thenMany(Flux.defer(() -> transactionExecutionListener.afterBegin(connectionStatus, definition)));
         }
         return result;
     }
@@ -113,8 +113,7 @@ final class DefaultR2dbcReactorTransactionOperations extends AbstractReactorTran
         if (LOG.isDebugEnabled()) {
             LOG.debug("Committing transaction for R2DBC connection: {} and configuration {}.", connectionStatus.getConnection(), dataSourceName);
         }
-        Connection connection = connectionStatus.getConnection();
-        return Flux.concat(connection.commitTransaction(), restoreAutoCommit(connection));
+        return connectionStatus.getConnection().commitTransaction();
     }
 
     @Override
@@ -122,19 +121,7 @@ final class DefaultR2dbcReactorTransactionOperations extends AbstractReactorTran
         if (LOG.isDebugEnabled()) {
             LOG.debug("Rolling back transaction for R2DBC connection: {} and configuration {}.", connectionStatus.getConnection(), dataSourceName);
         }
-        Connection connection = connectionStatus.getConnection();
-        return Flux.concat(connection.rollbackTransaction(), restoreAutoCommit(connection));
-    }
-
-    /**
-     * Some drivers (e.g. Oracle R2DBC) leave auto-commit disabled after the transaction ends.
-     * A pooled connection would then hold row locks of later non-transactional statements forever.
-     *
-     * @param connection The connection
-     * @return The publisher
-     */
-    private static Publisher<Void> restoreAutoCommit(Connection connection) {
-        return Mono.defer(() -> connection.isAutoCommit() ? Mono.empty() : Mono.from(connection.setAutoCommit(true)));
+        return connectionStatus.getConnection().rollbackTransaction();
     }
 
     @Override
