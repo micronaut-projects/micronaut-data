@@ -56,7 +56,7 @@ import java.util.function.LongConsumer;
  * changes reported by that same event.</p>
  *
  * <p>A registration-level deregistration removes the already-closed registration from subscription
- * tracking. A query-level deregistration retires the enclosing registration as well because each
+ * tracking. A query-level deregistration unregisters the enclosing registration as well because each
  * framework registration contains exactly one listener query. A database-wide shutdown normally
  * starts registration recovery; after a replacement is activated, the listener receives an
  * invalidation. When reliable notifications and a client-initiated connection are enabled, the
@@ -66,10 +66,6 @@ import java.util.function.LongConsumer;
  *
  * <p>Listener invocation failures are logged and do not prevent subsequent changes from being
  * dispatched.</p>
- *
- * <p>Local retirement stops new data callbacks without disabling lifecycle callbacks. Failure
- * recovery discards queued callbacks from an unavailable registration. A callback that has already
- * started may finish.</p>
  */
 final class OracleChangeNotificationDispatcher implements DatabaseChangeListener {
     private static final Logger LOG = LoggerFactory.getLogger(OracleChangeNotificationDispatcher.class);
@@ -88,14 +84,6 @@ final class OracleChangeNotificationDispatcher implements DatabaseChangeListener
      * Options reported by the driver and captured for callbacks after query association.
      */
     private volatile @Nullable RegistrationOptions registrationOptions;
-    /**
-     * Whether newly received data notifications are still accepted from this registration.
-     */
-    private boolean acceptingDataNotifications = true;
-    /**
-     * Whether accepted data callbacks that have not started should be dropped during retirement.
-     */
-    private volatile boolean discardQueuedDataNotifications;
 
     OracleChangeNotificationDispatcher(String dataSourceName,
                                        OracleChangeListenerDefinition listenerDefinition,
@@ -116,17 +104,6 @@ final class OracleChangeNotificationDispatcher implements DatabaseChangeListener
         this.deregistrationHandler = deregistrationHandler;
         this.queryDeregistrationHandler = queryDeregistrationHandler;
         this.databaseShutdownHandler = databaseShutdownHandler;
-    }
-
-    /**
-     * Stops accepting data notifications without detaching lifecycle or failure handling.
-     *
-     * @param discardQueuedCallbacks whether accepted callbacks that have not started must also be discarded;
-     *                               running callbacks cannot be canceled
-     */
-    synchronized void retire(boolean discardQueuedCallbacks) {
-        acceptingDataNotifications = false;
-        discardQueuedDataNotifications |= discardQueuedCallbacks;
     }
 
     /**
@@ -167,15 +144,10 @@ final class OracleChangeNotificationDispatcher implements DatabaseChangeListener
             return;
         }
         boolean dataNotification = isDataNotification(event);
-        synchronized (this) {
-            if (dataNotification && !acceptingDataNotifications) {
-                return;
-            }
-        }
         if (dataNotification && configuredOptions.purgeOnNotificationEnabled()) {
             registrationPurgedHandler.accept(event.getRegId());
         }
-        submitDispatch(event, dataNotification, configuredOptions);
+        submitDispatch(event, configuredOptions);
     }
 
     /**
@@ -253,18 +225,17 @@ final class OracleChangeNotificationDispatcher implements DatabaseChangeListener
     /**
      * Submits a callback without counting it as active until execution begins.
      *
-     * @param event            the notification to dispatch
-     * @param dataNotification whether local retirement applies to this callback
-     * @param options          the configured options captured when the callback was received
+     * @param event   the notification to dispatch
+     * @param options the configured options captured when the callback was received
      */
-    private void submitDispatch(DatabaseChangeEvent event, boolean dataNotification, RegistrationOptions options) {
+    private void submitDispatch(DatabaseChangeEvent event, RegistrationOptions options) {
         if (taskTracker.isShutdownStarted()) {
             LOG.trace("Ignored DCN callback for datasource [{}], registration [{}], and listener method [{}] because graceful shutdown has started",
                 dataSourceName, event.getRegId(), methodDescription);
             return;
         }
         try {
-            blockingExecutor.execute(() -> dispatchSafely(event, dataNotification, options));
+            blockingExecutor.execute(() -> dispatchSafely(event, options));
         } catch (RuntimeException e) {
             LOG.warn("Unable to submit DCN event of type [{}] for datasource [{}], registration [{}], and listener method [{}]",
                 event.getEventType(), dataSourceName, event.getRegId(), methodDescription, e);
@@ -276,14 +247,10 @@ final class OracleChangeNotificationDispatcher implements DatabaseChangeListener
      * starts after shutdown is discarded. Unexpected runtime exceptions are logged, while JVM
      * errors propagate to the executor's error handling.
      *
-     * @param event            the database change event
-     * @param dataNotification whether to check the queued-data retirement gate before starting
-     * @param options          the configured options captured when the callback was received
+     * @param event   the database change event
+     * @param options the configured options captured when the callback was received
      */
-    private void dispatchSafely(DatabaseChangeEvent event, boolean dataNotification, RegistrationOptions options) {
-        if (dataNotification && discardQueuedDataNotifications) {
-            return;
-        }
+    private void dispatchSafely(DatabaseChangeEvent event, RegistrationOptions options) {
         if (!taskTracker.acceptTask()) {
             LOG.trace("Discarded queued DCN event for datasource [{}], registration [{}], and listener method [{}] because graceful shutdown has started",
                 dataSourceName, event.getRegId(), methodDescription);
@@ -374,7 +341,7 @@ final class OracleChangeNotificationDispatcher implements DatabaseChangeListener
     }
 
     /**
-     * Reports query deregistration and retires the registration that owns the query.
+     * Reports query deregistration and unregisters the registration that owns the query.
      *
      * @param queryId        the deregistered Oracle query identifier
      * @param registrationId the registration that owned the query

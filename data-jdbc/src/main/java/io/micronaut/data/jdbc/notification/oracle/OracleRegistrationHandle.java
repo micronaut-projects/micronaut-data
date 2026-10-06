@@ -17,25 +17,13 @@ package io.micronaut.data.jdbc.notification.oracle;
 
 import oracle.jdbc.dcn.DatabaseChangeRegistration;
 
-import java.util.function.Consumer;
-
 /**
- * Associates one physical registration with its delivery lifecycle actions.
+ * Associates one physical registration with its post-recovery invalidation action.
  *
  * @param registration           the physical Oracle registration
- * @param retirementAction       stops new data callbacks and optionally discards queued callbacks
  * @param invalidationAction     dispatches an {@code INVALIDATE} event after this registration replaces an
  *                               unavailable registration
  */
 record OracleRegistrationHandle(DatabaseChangeRegistration registration,
-                                Consumer<Boolean> retirementAction,
                                 Runnable invalidationAction) {
-    /**
-     * Retires data delivery locally while retaining database lifecycle callbacks.
-     *
-     * @param discardQueuedCallbacks whether queued data callbacks must be discarded as well
-     */
-    void retire(boolean discardQueuedCallbacks) {
-        retirementAction.accept(discardQueuedCallbacks);
-    }
 }

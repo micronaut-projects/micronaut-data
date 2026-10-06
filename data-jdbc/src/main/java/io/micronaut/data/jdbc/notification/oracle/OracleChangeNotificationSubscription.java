@@ -24,9 +24,6 @@ import org.slf4j.LoggerFactory;
 
 import java.sql.SQLException;
 import java.time.Duration;
-import java.util.ArrayList;
-import java.util.IdentityHashMap;
-import java.util.List;
 import java.util.concurrent.Executor;
 import java.util.concurrent.RejectedExecutionException;
 import java.util.concurrent.ScheduledFuture;
@@ -37,7 +34,7 @@ import java.util.function.Consumer;
  *
  * <p>A reported notification receiver failure starts asynchronous recovery. Recovery replaces
  * the unavailable registration and dispatches an invalidation after the replacement becomes
- * active. Registrations owned for cleanup are tracked separately from the current registration:
+ * active. The registration owned for cleanup is tracked separately from the current registration:
  * an attempted unregister removes cleanup ownership even if the driver later reports failure.</p>
  *
  * <p>State changes and registration ownership are synchronized on this subscription. JDBC calls,
@@ -56,15 +53,17 @@ final class OracleChangeNotificationSubscription {
     private final TaskScheduler taskScheduler;
     private final OracleChangeNotificationTaskTracker taskTracker;
 
-    /** Includes candidates being associated; removal claims a registration for one cleanup attempt. */
-    private final List<DatabaseChangeRegistration> registrations = new ArrayList<>(2);
-    /** Failures received before a candidate becomes current. */
-    private final IdentityHashMap<DatabaseChangeRegistration, SQLException> pendingFailures = new IdentityHashMap<>();
+    /** The current registration or a candidate being associated; removal claims it for one cleanup attempt. */
+    private @Nullable DatabaseChangeRegistration ownedRegistration;
+    /** A receiver failure received before the owned candidate becomes current. */
+    private @Nullable SQLException pendingCandidateFailure;
 
     private State state = State.UNREGISTERED;
     /** May remain current after cleanup ownership was removed for an unregister attempt. */
     private @Nullable OracleRegistrationHandle currentHandle;
     private @Nullable ScheduledFuture<?> recoveryRetryTask;
+    /** Prevents two workers from replacing the same failed registration concurrently. */
+    private @Nullable OracleRegistrationHandle recoveryInProgressFor;
     private boolean invalidationPending;
     /** Preserves a new invalidation request raised while an earlier one is being dispatched. */
     private long invalidationGeneration;
@@ -104,17 +103,19 @@ final class OracleChangeNotificationSubscription {
 
     /** Records a physical registration before its failure listener and query are associated. */
     synchronized void track(DatabaseChangeRegistration registration) {
-        registrations.add(registration);
+        if (ownedRegistration != null) {
+            throw new IllegalStateException("A DCN registration is already owned for datasource [" + dataSourceName
+                + "] and listener method [" + methodDescription + "]");
+        }
+        ownedRegistration = registration;
     }
 
     /** Removes cleanup ownership without making another Oracle Database call. */
     synchronized boolean untrack(DatabaseChangeRegistration registration) {
-        pendingFailures.remove(registration);
-        for (int i = 0; i < registrations.size(); i++) {
-            if (registrations.get(i) == registration) {
-                registrations.remove(i);
-                return true;
-            }
+        if (ownedRegistration == registration) {
+            ownedRegistration = null;
+            pendingCandidateFailure = null;
+            return true;
         }
         return false;
     }
@@ -131,7 +132,7 @@ final class OracleChangeNotificationSubscription {
             }
             if (!isCurrent(registration)) {
                 if (isTracked(registration)) {
-                    pendingFailures.put(registration, failure);
+                    pendingCandidateFailure = failure;
                 }
                 return;
             }
@@ -194,29 +195,27 @@ final class OracleChangeNotificationSubscription {
         }
     }
 
-    /** Stops future recovery and data delivery before shutdown cleanup begins. */
+    /** Stops future recovery before shutdown cleanup begins. */
     synchronized void stop() {
-        if (currentHandle != null) {
-            currentHandle.retire(true);
-        }
         state = State.CLOSED;
         cancelRecoveryRetry();
     }
 
-    /** Makes one best-effort unregister attempt for each still-owned registration. */
+    /** Makes one best-effort unregister attempt for the still-owned registration. */
     void unregisterAll() {
-        for (DatabaseChangeRegistration registration : registrationsSnapshot()) {
+        DatabaseChangeRegistration registration = registrationForCleanup();
+        if (registration != null) {
             unregister(registration);
         }
     }
 
-    /** Rolls back startup registrations in reverse creation order without hiding the original failure. */
+    /** Rolls back the startup registration without hiding the original failure. */
     void rollback(Throwable registrationFailure) {
         stop();
-        DatabaseChangeRegistration[] registrationsToRollback = registrationsSnapshot();
-        for (int i = registrationsToRollback.length - 1; i >= 0; i--) {
+        DatabaseChangeRegistration registration = registrationForCleanup();
+        if (registration != null) {
             try {
-                unregisterIfOwned(registrationsToRollback[i]);
+                unregisterIfOwned(registration);
             } catch (RuntimeException | Error cleanupFailure) {
                 registrationFailure.addSuppressed(cleanupFailure);
             }
@@ -228,7 +227,10 @@ final class OracleChangeNotificationSubscription {
         SQLException pendingFailure;
         long generationToDispatch = -1;
         synchronized (this) {
-            pendingFailure = pendingFailures.remove(handle.registration());
+            pendingFailure = ownedRegistration == handle.registration() ? pendingCandidateFailure : null;
+            if (ownedRegistration == handle.registration()) {
+                pendingCandidateFailure = null;
+            }
             if (state == State.CLOSED || taskTracker.isShutdownStarted()) {
                 return new ActivationResult(ActivationOutcome.STOPPED, handle);
             }
@@ -290,17 +292,18 @@ final class OracleChangeNotificationSubscription {
 
     /** Replaces a failed registration and retries if the candidate cannot be activated. */
     private void executeFailureRecovery(OracleRegistrationHandle failedHandle) {
+        synchronized (this) {
+            if (state != State.RECOVERING || currentHandle != failedHandle || recoveryInProgressFor == failedHandle) {
+                return;
+            }
+            recoveryInProgressFor = failedHandle;
+            recoveryRetryTask = null;
+        }
+        RuntimeException recoveryFailure = null;
         try {
             DatabaseChangeRegistration registration = failedHandle.registration();
-            synchronized (this) {
-                if (state != State.RECOVERING || currentHandle != failedHandle) {
-                    return;
-                }
-                recoveryRetryTask = null;
-            }
             LOG.trace("Recovering failed DCN registration [{}] for datasource [{}] and listener method [{}]",
                 registration.getRegId(), dataSourceName, methodDescription);
-            failedHandle.retire(true);
             unregisterFailedRegistration(registration);
             synchronized (this) {
                 if (state != State.RECOVERING || currentHandle != failedHandle) {
@@ -313,7 +316,16 @@ final class OracleChangeNotificationSubscription {
                     + "] for datasource [" + dataSourceName + "] and listener method [" + methodDescription
                     + "] became unavailable before activation");
             }
-        } catch (RuntimeException recoveryFailure) {
+        } catch (RuntimeException e) {
+            recoveryFailure = e;
+        } finally {
+            synchronized (this) {
+                if (recoveryInProgressFor == failedHandle) {
+                    recoveryInProgressFor = null;
+                }
+            }
+        }
+        if (recoveryFailure != null) {
             LOG.error("Unable to recover failed DCN registration [{}] for datasource [{}] and listener method [{}]",
                 failedHandle.registration().getRegId(), dataSourceName, methodDescription, recoveryFailure);
             scheduleFailureRecoveryRetry(failedHandle, recoveryFailure);
@@ -336,7 +348,8 @@ final class OracleChangeNotificationSubscription {
     /** Schedules a retry only while the same failed registration is current. */
     private synchronized void scheduleFailureRecoveryRetry(OracleRegistrationHandle failedHandle,
                                                            RuntimeException recoveryFailure) {
-        if (state != State.RECOVERING || currentHandle != failedHandle || taskTracker.isShutdownStarted()) {
+        if (state != State.RECOVERING || currentHandle != failedHandle || taskTracker.isShutdownStarted()
+            || recoveryInProgressFor == failedHandle || recoveryRetryTask != null) {
             return;
         }
         try {
@@ -380,14 +393,12 @@ final class OracleChangeNotificationSubscription {
         try {
             ActivationResult activation = activateHandle(handle);
             if (activation.outcome() == ActivationOutcome.STOPPED || activation.outcome() == ActivationOutcome.UNAVAILABLE) {
-                handle.retire(true);
                 LOG.trace("Discarding inactive DCN registration [{}] with activation outcome [{}] for datasource [{}] and listener method [{}]",
                     handle.registration().getRegId(), activation.outcome(), dataSourceName, methodDescription);
                 unregister(handle.registration());
             }
             return activation;
         } catch (RuntimeException activationFailure) {
-            handle.retire(true);
             try {
                 unregisterIfOwned(handle.registration());
             } catch (RuntimeException cleanupFailure) {
@@ -417,7 +428,6 @@ final class OracleChangeNotificationSubscription {
     private synchronized void closeIfCurrent(DatabaseChangeRegistration registration) {
         OracleRegistrationHandle handle = currentHandle;
         if (handle != null && handle.registration() == registration) {
-            handle.retire(true);
             currentHandle = null;
             cancelRecoveryRetry();
             state = State.CLOSED;
@@ -437,12 +447,7 @@ final class OracleChangeNotificationSubscription {
     }
 
     private synchronized boolean isTracked(DatabaseChangeRegistration registration) {
-        for (DatabaseChangeRegistration tracked : registrations) {
-            if (tracked == registration) {
-                return true;
-            }
-        }
-        return false;
+        return ownedRegistration == registration;
     }
 
     /** Also resolves the current registration after an unregister attempt removed cleanup ownership. */
@@ -450,16 +455,14 @@ final class OracleChangeNotificationSubscription {
         if (currentHandle != null && currentHandle.registration().getRegId() == registrationId) {
             return currentHandle.registration();
         }
-        for (DatabaseChangeRegistration registration : registrations) {
-            if (registration.getRegId() == registrationId) {
-                return registration;
-            }
+        if (ownedRegistration != null && ownedRegistration.getRegId() == registrationId) {
+            return ownedRegistration;
         }
         return null;
     }
 
-    private synchronized DatabaseChangeRegistration[] registrationsSnapshot() {
-        return registrations.toArray(DatabaseChangeRegistration[]::new);
+    private synchronized @Nullable DatabaseChangeRegistration registrationForCleanup() {
+        return ownedRegistration;
     }
 
     /** Claims a registration before calling Oracle Database, with no automatic cleanup retry. */

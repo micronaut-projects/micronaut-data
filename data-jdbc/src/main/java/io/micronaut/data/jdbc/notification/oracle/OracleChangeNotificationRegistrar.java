@@ -86,8 +86,7 @@ final class OracleChangeNotificationRegistrar {
      * from local tracking and attempts to unregister it before propagating the failure.</p>
      *
      * @param subscription the subscription that owns the registration and receives its callbacks
-     * @return the registration handle with data-delivery retirement and post-recovery
-     * invalidation actions
+     * @return the registration handle with its post-recovery invalidation action
      * @throws RuntimeException if registration setup or query association fails
      */
     OracleRegistrationHandle createRegistration(OracleChangeNotificationSubscription subscription) {
@@ -122,10 +121,9 @@ final class OracleChangeNotificationRegistrar {
                     }
                 }
                 long registrationId = registration.getRegId();
-                return new OracleRegistrationHandle(registration, dispatcher::retire,
+                return new OracleRegistrationHandle(registration,
                     () -> dispatcher.dispatchInvalidation(registrationId, "after DCN registration recovery"));
             } catch (SQLException | RuntimeException e) {
-                dispatcher.retire(true);
                 subscription.untrack(registration);
                 try {
                     oracleConnection.unregisterDatabaseChangeNotification(registration);
