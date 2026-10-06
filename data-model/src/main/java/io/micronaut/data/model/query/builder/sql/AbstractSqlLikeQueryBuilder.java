@@ -3055,7 +3055,7 @@ public abstract class AbstractSqlLikeQueryBuilder implements QueryBuilder {
             query.append(CAST_FUNCTION).append(OPEN_BRACKET);
             appendExpression(expression);
             query.append(AS_CLAUSE);
-            query.append(getCastDbType(type, getDialect()));
+            query.append(getCastDbType(type, getDialectOptions()));
             query.append(CLOSE_BRACKET);
         }
 
@@ -3792,10 +3792,6 @@ public abstract class AbstractSqlLikeQueryBuilder implements QueryBuilder {
                 }
             }
             query.append(CLOSE_BRACKET);
-        }
-
-        static String getCastDbType(@Nullable ExpressionType<?> type, Dialect dialect) {
-            return getCastDbType(type, SqlDialectOptions.defaults(dialect));
         }
 
         static String getCastDbType(@Nullable ExpressionType<?> type,
