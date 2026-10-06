@@ -77,10 +77,11 @@ final class DefaultHibernateReactorTransactionOperations extends AbstractReactor
         if (error != null) {
             return error;
         }
+        // Hibernate Reactive signals the result once it has completed the transaction
         return helper.withTransactionFlux(txStatus.getConnection(), sessionScheduler(txStatus), transaction -> {
             ReactiveTransactionStatus<Stage.Session> reactiveTransactionStatus = createTxStatus(txStatus, transaction);
             return executeCallbackFlux(reactiveTransactionStatus, handler);
-        });
+        }).doOnEach(ignore -> markCompleted(txStatus));
     }
 
     @Override
@@ -89,10 +90,11 @@ final class DefaultHibernateReactorTransactionOperations extends AbstractReactor
         if (error != null) {
             return error.next();
         }
+        // Hibernate Reactive signals the result once it has completed the transaction
         return helper.withTransactionMono(txStatus.getConnection(), sessionScheduler(txStatus), transaction -> {
             ReactiveTransactionStatus<Stage.Session> reactiveTransactionStatus = createTxStatus(txStatus, transaction);
             return executeCallbackMono(reactiveTransactionStatus, handler);
-        });
+        }).doOnEach(ignore -> markCompleted(txStatus));
     }
 
     @Nullable

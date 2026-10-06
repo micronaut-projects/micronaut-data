@@ -524,6 +524,18 @@ public abstract class AbstractReactorTransactionOperations<C> implements Reactor
         }).then();
     }
 
+    /**
+     * Marks the transaction as completed, for an implementation that overrides
+     * {@link #executeTransactionFlux(DefaultReactiveTransactionStatus, TransactionalCallback)} and
+     * {@link #executeTransactionMono(DefaultReactiveTransactionStatus, Function)} to complete the transaction itself.
+     *
+     * @param status The transaction status
+     * @since 5.3.0
+     */
+    protected final void markCompleted(@NonNull DefaultReactiveTransactionStatus<C> status) {
+        status.completed = true;
+    }
+
     @NonNull
     private Context addTxStatus(@NonNull Context context, @NonNull ReactiveTransactionStatus<C> status) {
         context = ReactorPropagation.addContextElement(context, status.getConnectionStatus());
