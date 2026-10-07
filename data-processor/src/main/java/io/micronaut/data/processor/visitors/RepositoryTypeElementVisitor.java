@@ -1105,16 +1105,21 @@ public class RepositoryTypeElementVisitor implements TypeElementVisitor<Reposito
         if (element.hasStereotype(Query.class)) {
             return null;
         }
-        // Fallback to the entity of one of the repository's lifecycle methods
+        // Fallback to the entity of the repository's lifecycle methods, only when they all agree on it:
+        // otherwise the result would depend on the declaration order of the methods
         ClassElement owningType = element.getOwningType();
+        SourcePersistentEntity lifecycleEntity = null;
         for (MethodElement method : owningType.getMethods()) {
-            SourcePersistentEntity lifecycleEntity = resolvePersistentEntityFromLifecycleMethods(method, getParametersNotInRole(method.getParameters()), entityResolver);
-            if (lifecycleEntity != null) {
-                return lifecycleEntity;
+            SourcePersistentEntity methodEntity = resolvePersistentEntityFromLifecycleMethods(method, getParametersNotInRole(method.getParameters()), entityResolver);
+            if (methodEntity != null) {
+                if (lifecycleEntity != null && !lifecycleEntity.getName().equals(methodEntity.getName())) {
+                    return null;
+                }
+                lifecycleEntity = methodEntity;
             }
         }
         // Some matchers (e.g. Jakarta Data @Query with a FROM clause) don't require the root entity to be resolved here
-        return null;
+        return lifecycleEntity;
     }
 
     @Nullable

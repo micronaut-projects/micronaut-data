@@ -73,6 +73,33 @@ interface BookRepository {
         getQuery(repository.getRequiredMethod("existsByTitle", String)).contains('FROM `book` book_ WHERE (book_.`title` = ?)')
     }
 
+    void "test the root entity is not resolved from lifecycle methods of different entities"() {
+        when:
+        buildRepository('test.LibraryRepository', """
+import io.micronaut.data.jdbc.annotation.JdbcRepository;
+import io.micronaut.data.model.query.builder.sql.Dialect;
+import io.micronaut.data.tck.entities.Author;
+import io.micronaut.data.tck.entities.Book;
+
+@JdbcRepository(dialect = Dialect.H2)
+interface LibraryRepository {
+
+    long countById(Long id);
+
+    @Insert
+    void add(Book book);
+
+    @Insert
+    void add(Author author);
+}
+""")
+
+        then:
+        def e = thrown(RuntimeException)
+        e.message.contains('long countById(Long id);')
+        e.message.contains('Persistent entity is required')
+    }
+
     void "test a type registered in the slice role uses the slice interceptor"() {
         given:
         def repository = buildRepository('test.PersonRepository', """
