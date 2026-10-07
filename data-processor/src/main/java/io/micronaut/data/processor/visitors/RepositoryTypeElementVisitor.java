@@ -1110,9 +1110,21 @@ public class RepositoryTypeElementVisitor implements TypeElementVisitor<Reposito
         if (element.hasStereotype(Query.class)) {
             return null;
         }
-        // Fallback to the entity of the repository's lifecycle methods, only when they all agree on it:
-        // otherwise the result would depend on the declaration order of the methods
-        ClassElement owningType = element.getOwningType();
+        // Some matchers (e.g. Jakarta Data @Query with a FROM clause) don't require the root entity to be resolved here
+        return resolvePersistentEntityFromRepositoryLifecycleMethods(element.getOwningType(), entityResolver);
+    }
+
+    /**
+     * Fallback to the entity of the repository's lifecycle methods, only when they all agree on it:
+     * otherwise the result would depend on the declaration order of the methods.
+     *
+     * @param owningType     The repository type
+     * @param entityResolver The entity resolver
+     * @return The entity of the lifecycle methods or null
+     */
+    @Nullable
+    private SourcePersistentEntity resolvePersistentEntityFromRepositoryLifecycleMethods(ClassElement owningType,
+                                                                                         Function<ClassElement, SourcePersistentEntity> entityResolver) {
         SourcePersistentEntity lifecycleEntity = null;
         for (MethodElement method : owningType.getMethods()) {
             SourcePersistentEntity methodEntity = resolvePersistentEntityFromLifecycleMethods(method, getParametersNotInRole(method.getParameters()), entityResolver);
@@ -1123,7 +1135,6 @@ public class RepositoryTypeElementVisitor implements TypeElementVisitor<Reposito
                 lifecycleEntity = methodEntity;
             }
         }
-        // Some matchers (e.g. Jakarta Data @Query with a FROM clause) don't require the root entity to be resolved here
         return lifecycleEntity;
     }
 
