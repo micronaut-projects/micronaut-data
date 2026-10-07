@@ -19,8 +19,8 @@ import io.micronaut.aop.MethodInvocationContext;
 import org.jspecify.annotations.NonNull;
 import io.micronaut.data.exceptions.DataAccessException;
 import io.micronaut.data.intercept.RepositoryMethodKey;
+import io.micronaut.data.model.Limit;
 import io.micronaut.data.model.Pageable;
-import io.micronaut.data.model.Pageable.Mode;
 import io.micronaut.data.model.query.builder.QueryBuilder;
 import io.micronaut.data.operations.RepositoryOperations;
 import io.micronaut.data.operations.reactive.ReactiveCapableRepository;
@@ -97,16 +97,9 @@ public abstract class AbstractReactiveSpecificationInterceptor<T, R> extends Abs
         CriteriaQuery<Object> criteriaQuery = buildQuery(methodKey, context);
         Pageable pageable = applyPaginationAndSort(getPageable(context), criteriaQuery, false);
         if (reactiveCriteriaOperations != null) {
-            if (pageable != null && !pageable.isUnpaged()) {
-                if (pageable.getMode() != Mode.OFFSET) {
-                    throw new UnsupportedOperationException("Pageable mode " + pageable.getMode() + " is not supported by hibernate operations");
-                }
-                return reactiveCriteriaOperations.findAll(criteriaQuery, (int) pageable.getOffset(), pageable.getSize());
-            }
-            int offset = getOffset(context);
-            int limit = getLimit(context);
-            if (offset > 0 || limit > 0) {
-                return reactiveCriteriaOperations.findAll(criteriaQuery, offset, limit);
+            Limit limit = resolveLimit(context, pageable);
+            if (limit.isLimited()) {
+                return reactiveCriteriaOperations.findAll(criteriaQuery, (int) limit.offset(), limit.maxResults());
             }
             return reactiveCriteriaOperations.findAll(criteriaQuery);
         }

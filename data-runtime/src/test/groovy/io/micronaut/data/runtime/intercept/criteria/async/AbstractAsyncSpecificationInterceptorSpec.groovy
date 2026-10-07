@@ -17,6 +17,8 @@ package io.micronaut.data.runtime.intercept.criteria.async
 
 import io.micronaut.aop.MethodInvocationContext
 import io.micronaut.core.convert.ConversionService
+import io.micronaut.core.type.Argument
+import io.micronaut.core.type.ReturnType
 import io.micronaut.data.exceptions.DataAccessException
 import io.micronaut.data.intercept.RepositoryMethodKey
 import io.micronaut.data.operations.CriteriaRepositoryOperations
@@ -24,6 +26,7 @@ import io.micronaut.data.operations.RepositoryOperations
 import io.micronaut.data.operations.async.AsyncCapableRepository
 import io.micronaut.data.operations.async.AsyncRepositoryOperations
 import jakarta.persistence.criteria.CriteriaBuilder
+import kotlinx.coroutines.flow.Flow
 import spock.lang.Specification
 
 class AbstractAsyncSpecificationInterceptorSpec extends Specification {
@@ -54,6 +57,51 @@ class AbstractAsyncSpecificationInterceptorSpec extends Specification {
             def e = thrown(DataAccessException)
             e.message.contains("does not support asynchronous operations")
             0 * operations.getConversionService()
+    }
+
+    void "returns no number for a suspend function returning Unit"() {
+        given:
+            def interceptor = new TestAsyncSpecificationInterceptor(asyncCapableOperations())
+            def context = suspendContext(void.class, Argument.VOID)
+
+        expect:
+            interceptor.convertNumberToReturnType(context, 1L) == null
+    }
+
+    void "resolves the element type of a suspend function returning a Flow"() {
+        given:
+            def interceptor = new TestAsyncSpecificationInterceptor(asyncCapableOperations())
+            def context = suspendContext(Flow, Argument.of(Flow, String))
+
+        expect:
+            interceptor.findReturnType(context, Argument.OBJECT_ARGUMENT).type == String
+    }
+
+    void "resolves the return type of a suspend function"() {
+        given:
+            def interceptor = new TestAsyncSpecificationInterceptor(asyncCapableOperations())
+            def context = suspendContext(List, Argument.listOf(String))
+
+        expect:
+            interceptor.findReturnType(context, Argument.OBJECT_ARGUMENT).type == List
+    }
+
+    private AsyncCapableCriteriaRepositoryOperations asyncCapableOperations() {
+        def operations = Mock(AsyncCapableCriteriaRepositoryOperations)
+        operations.getConversionService() >> ConversionService.SHARED
+        operations.async() >> Mock(AsyncRepositoryOperations)
+        operations.getCriteriaBuilder() >> Mock(CriteriaBuilder)
+        return operations
+    }
+
+    private MethodInvocationContext<Object, Object> suspendContext(Class<?> type, Argument<?> argument) {
+        def returnType = Mock(ReturnType)
+        returnType.getType() >> type
+        returnType.asArgument() >> argument
+        def context = Mock(MethodInvocationContext)
+        context.isSuspend() >> true
+        context.getReturnType() >> returnType
+        return context
     }
 
     private interface AsyncCapableCriteriaRepositoryOperations extends AsyncCapableRepository, CriteriaRepositoryOperations {

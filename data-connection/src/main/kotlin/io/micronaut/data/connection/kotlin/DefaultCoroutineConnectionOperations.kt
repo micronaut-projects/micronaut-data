@@ -44,9 +44,11 @@ import kotlin.coroutines.CoroutineContext
 class DefaultCoroutineConnectionOperations<C>(private val reactiveConnectionOperations: ReactorConnectionOperations<C>) :
     CoroutineConnectionOperations<C> {
 
+    @Suppress("UNCHECKED_CAST")
     override suspend fun <R> execute(definition: ConnectionDefinition, handler: suspend (ConnectionStatus<C>) -> R): R {
-        return reactiveConnectionOperations.withConnectionMono(definition) {
-             mono<R> {
+        // The reactive connection manager cannot carry a `null` result, so it's represented by a sentinel value
+        val result = reactiveConnectionOperations.withConnectionMono(definition) {
+             mono<Any> {
                  val reactorContext = coroutineContext[ReactorContext.Key]
                  if (reactorContext != null) {
                      val micronautPropagatedContext = ReactorPropagation.findPropagatedContext(reactorContext.context).orElse(null)
@@ -57,12 +59,13 @@ class DefaultCoroutineConnectionOperations<C>(private val reactiveConnectionOper
                          )
                          return@mono withContext(newCoroutineContext) {
                              handler(it)
-                         }
+                         } ?: NULL_RESULT
                      }
                  }
-                 handler(it)
+                 handler(it) ?: NULL_RESULT
             }
         }.awaitSingle()
+        return (if (result === NULL_RESULT) null else result) as R
     }
 
     override fun findConnectionStatus(coroutineContext: CoroutineContext): ConnectionStatus<C>? {
@@ -73,5 +76,12 @@ class DefaultCoroutineConnectionOperations<C>(private val reactiveConnectionOper
                 .orElse(null)
         }
         return null
+    }
+
+    private companion object {
+        /**
+         * Sentinel representing a `null` value returned by the handler.
+         */
+        private val NULL_RESULT = Any()
     }
 }

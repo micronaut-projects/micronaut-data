@@ -218,7 +218,7 @@ final class SqlUpsertQueryBuilder {
                                           UpsertColumnContext columnContext) {
         for (PersistentProperty identity : entity.getIdentityProperties()) {
             PersistentEntityUtils.traversePersistentProperties(Collections.emptyList(), identity, (associations, property) -> {
-                if (SqlQueryBuilderUtils.isGeneratedProperty(property, associations)) {
+                if (SqlQueryBuilderUtils.isGeneratedProperty(property, associations) && !isWrittenGeneratedIdentity(property)) {
                     if (identityConflict) {
                         throw new IllegalStateException("Upsert requires a non-generated identity property: " + property.getName());
                     }
@@ -294,6 +294,11 @@ final class SqlUpsertQueryBuilder {
         return (int) columns.stream()
             .filter(UpsertColumn::sourceColumn)
             .count();
+    }
+
+    private boolean isWrittenGeneratedIdentity(PersistentProperty property) {
+        // MySQL cannot generate a UUID, so like an insert, the upsert writes the value the application provides
+        return dialect == Dialect.MYSQL && property.getDataType() == DataType.UUID && !isSequenceGeneratedProperty(property);
     }
 
     private boolean isSequenceGeneratedProperty(PersistentProperty property) {

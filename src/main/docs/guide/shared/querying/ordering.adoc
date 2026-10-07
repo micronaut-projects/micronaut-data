@@ -3,3 +3,7 @@ You can control ordering of results by appending an `OrderBy*` expression to the
 snippet::example.BookRepository[project-base="doc-examples/hibernate-example", source="main", tags="ordering", indent="0"]
 
 The `OrderBy*` expression refer to the property name to order by and can optionally be appended with either `Asc` or `Desc` to control ascending or descending order. Multiple conditions can be used by joining them with `And` like `findByTypeOrderByNameAndDate`.
+
+An order of a api:data.model.Sort[] can also define where `null` values are placed relative to non-null values with `Sort.Order.NullOrdering.FIRST` or `Sort.Order.NullOrdering.LAST`, as can the `nullOrdering` member of the Jakarta Data `@OrderBy` annotation and the null precedence of a criteria order. SQL dialects with `NULLS FIRST` / `NULLS LAST` syntax append it to the `ORDER BY` item. The `MYSQL` dialect, which is also used for MariaDB, and the `SQL_SERVER` dialect have no such syntax, so the null ordering is emulated by sorting on a `CASE WHEN ... IS NULL THEN ... END` expression first, for example `ORDER BY CASE WHEN book_.title IS NULL THEN 1 ELSE 0 END, book_.title ASC` for `NULLS LAST`.
+
+NOTE: SQL Server requires every `ORDER BY` item of a `SELECT DISTINCT` query to appear in the select list, so it rejects the emulated null ordering of a distinct query (error 145). Don't combine a null ordering with a distinct query on SQL Server.

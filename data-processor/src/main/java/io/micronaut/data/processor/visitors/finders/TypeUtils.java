@@ -46,7 +46,6 @@ import java.time.YearMonth;
 import java.time.chrono.ChronoLocalDate;
 import java.time.temporal.Temporal;
 import java.util.Date;
-import java.util.HashMap;
 import java.util.Locale;
 import java.util.Map;
 import java.util.Objects;
@@ -65,8 +64,6 @@ import java.util.stream.Stream;
  */
 @Internal
 public class TypeUtils {
-
-    private static final Map<String, DataType> RESOLVED_DATA_TYPES = new HashMap<>(50);
 
     @Nullable
     public static ClassElement getKotlinCoroutineProducedType(MethodElement methodElement) {
@@ -556,115 +553,114 @@ public class TypeUtils {
     public static DataType resolveDataType(ClassElement type, Map<String, DataType> dataTypes) {
         final String typeName = type.isArray() ? type.getName() + "[]" : type.getName();
 
-        return RESOLVED_DATA_TYPES.computeIfAbsent(typeName, s -> {
-            if (type.isPrimitive() || typeName.startsWith("java.lang")) {
-                Class primitiveType = ClassUtils.getPrimitiveType(type.getName()).orElse(null);
-                if (primitiveType != null && primitiveType != void.class) {
-                    String wrapperName = ReflectionUtils.getWrapperType(primitiveType).getSimpleName().toUpperCase(Locale.ENGLISH);
-                    if (type.isArray())   {
-                        wrapperName += "_ARRAY";
-                    }
-                    return DataType.valueOf(wrapperName);
+        // Not cached: the result depends on the configured data types and on the compiled sources (@TypeDef, @MappedEntity)
+        if (type.isPrimitive() || typeName.startsWith("java.lang")) {
+            Class primitiveType = ClassUtils.getPrimitiveType(type.getName()).orElse(null);
+            if (primitiveType != null && primitiveType != void.class) {
+                String wrapperName = ReflectionUtils.getWrapperType(primitiveType).getSimpleName().toUpperCase(Locale.ENGLISH);
+                if (type.isArray())   {
+                    wrapperName += "_ARRAY";
                 }
+                return DataType.valueOf(wrapperName);
             }
+        }
 
-            Optional<DataType> explicitType = type.getValue(TypeDef.class, "type", DataType.class);
-            if (explicitType.isPresent()) {
-                return explicitType.get();
-            }
+        Optional<DataType> explicitType = type.getValue(TypeDef.class, "type", DataType.class);
+        if (explicitType.isPresent()) {
+            return explicitType.get();
+        }
 
-            if (type.isEnum()) {
-                return DataType.STRING;
-            }
+        if (type.isEnum()) {
+            return DataType.STRING;
+        }
 
-            if (type.hasStereotype(MappedEntity.class)) {
-                return DataType.ENTITY;
-            }
+        if (type.hasStereotype(MappedEntity.class)) {
+            return DataType.ENTITY;
+        }
 
-            if (type.isArray()) {
-                if (type.isAssignable(String.class)) {
-                    return DataType.STRING_ARRAY;
-                }
-                if (type.isAssignable(UUID.class)) {
-                    return DataType.UUID_ARRAY;
-                }
-                if (type.isAssignable(Short.class)) {
-                    return DataType.SHORT_ARRAY;
-                }
-                if (type.isAssignable(Integer.class)) {
-                    return DataType.INTEGER_ARRAY;
-                }
-                if (type.isAssignable(Long.class)) {
-                    return DataType.LONG_ARRAY;
-                }
-                if (type.isAssignable(Float.class)) {
-                    return DataType.FLOAT_ARRAY;
-                }
-                if (type.isAssignable(Double.class)) {
-                    return DataType.DOUBLE_ARRAY;
-                }
-                if (type.isAssignable(Character.class)) {
-                    return DataType.CHARACTER_ARRAY;
-                }
-                if (type.isAssignable(Boolean.class)) {
-                    return DataType.BOOLEAN_ARRAY;
-                }
+        if (type.isArray()) {
+            if (type.isAssignable(String.class)) {
+                return DataType.STRING_ARRAY;
             }
+            if (type.isAssignable(UUID.class)) {
+                return DataType.UUID_ARRAY;
+            }
+            if (type.isAssignable(Short.class)) {
+                return DataType.SHORT_ARRAY;
+            }
+            if (type.isAssignable(Integer.class)) {
+                return DataType.INTEGER_ARRAY;
+            }
+            if (type.isAssignable(Long.class)) {
+                return DataType.LONG_ARRAY;
+            }
+            if (type.isAssignable(Float.class)) {
+                return DataType.FLOAT_ARRAY;
+            }
+            if (type.isAssignable(Double.class)) {
+                return DataType.DOUBLE_ARRAY;
+            }
+            if (type.isAssignable(Character.class)) {
+                return DataType.CHARACTER_ARRAY;
+            }
+            if (type.isAssignable(Boolean.class)) {
+                return DataType.BOOLEAN_ARRAY;
+            }
+        }
 
-            try {
-                if (ClassUtils.isJavaBasicType(type.getName())) {
-                    Class pt = ClassUtils.getPrimitiveType(type.getName()).orElse(null);
-                    if (pt != null) {
-                        String wrapperName = ReflectionUtils.getWrapperType(pt).getSimpleName();
-                        return DataType.valueOf(wrapperName.toUpperCase(Locale.ENGLISH));
-                    } else {
-                        return DataType.valueOf(type.getSimpleName().toUpperCase(Locale.ENGLISH));
-                    }
-                }
-            } catch (IllegalArgumentException e) {
-                // ignore
-            }
-
-            if (type.isAssignable(CharSequence.class)) {
-                return DataType.STRING;
-            } else if (type.isAssignable(BigDecimal.class) || type.isAssignable(BigInteger.class)) {
-                return DataType.BIGDECIMAL;
-            } else if (type.isAssignable(Temporal.class)) {
-                if (type.isAssignable(ChronoLocalDate.class) || type.isAssignable(Year.class) || type.isAssignable(YearMonth.class)) {
-                    return DataType.DATE;
-                } else {
-                    return DataType.TIMESTAMP;
-                }
-            } else if (type.isAssignable(Date.class)) {
-                if (type.isAssignable(Time.class)) {
-                    return DataType.TIME;
-                }
-                if (type.isAssignable(Timestamp.class)) {
-                    return DataType.TIMESTAMP;
-                } else {
-                    return DataType.DATE;
-                }
-            } else if (type.isAssignable(UUID.class)) {
-                return DataType.UUID;
-            }
-            if (Stream.of(Charset.class, TimeZone.class, Locale.class, URL.class, URI.class).anyMatch(type::isAssignable)) {
-                return DataType.STRING;
-            }
-
-            String configured = dataTypes.keySet()
-                    .stream()
-                    .filter(type::isAssignable)
-                    .findFirst().orElse(null);
-            if (configured != null) {
-                return dataTypes.get(configured);
-            }
+        try {
             if (ClassUtils.isJavaBasicType(type.getName())) {
-                return DataType.STRING;
-            } else {
-                return DataType.OBJECT;
+                Class pt = ClassUtils.getPrimitiveType(type.getName()).orElse(null);
+                if (pt != null) {
+                    String wrapperName = ReflectionUtils.getWrapperType(pt).getSimpleName();
+                    return DataType.valueOf(wrapperName.toUpperCase(Locale.ENGLISH));
+                } else {
+                    return DataType.valueOf(type.getSimpleName().toUpperCase(Locale.ENGLISH));
+                }
             }
-        });
+        } catch (IllegalArgumentException e) {
+            // ignore
+        }
 
+        if (type.isAssignable(CharSequence.class)) {
+            return DataType.STRING;
+        } else if (type.isAssignable(BigDecimal.class) || type.isAssignable(BigInteger.class)) {
+            return DataType.BIGDECIMAL;
+        } else if (type.isAssignable(Temporal.class)) {
+            if (type.isAssignable(ChronoLocalDate.class) || type.isAssignable(Year.class) || type.isAssignable(YearMonth.class)) {
+                return DataType.DATE;
+            } else {
+                return DataType.TIMESTAMP;
+            }
+        } else if (type.isAssignable(Date.class)) {
+            if (type.isAssignable(Time.class)) {
+                return DataType.TIME;
+            }
+            if (type.isAssignable(Timestamp.class)) {
+                return DataType.TIMESTAMP;
+            } else {
+                return DataType.DATE;
+            }
+        } else if (type.isAssignable(UUID.class)) {
+            return DataType.UUID;
+        }
+        if (Stream.of(Charset.class, TimeZone.class, Locale.class, URL.class, URI.class).anyMatch(type::isAssignable)) {
+            return DataType.STRING;
+        }
+
+        DataType configured = dataTypes.entrySet()
+                .stream()
+                .filter(entry -> type.isAssignable(entry.getKey()))
+                .map(Map.Entry::getValue)
+                .findFirst().orElse(null);
+        if (configured != null) {
+            return configured;
+        }
+        if (ClassUtils.isJavaBasicType(type.getName())) {
+            return DataType.STRING;
+        } else {
+            return DataType.OBJECT;
+        }
     }
 
     /**

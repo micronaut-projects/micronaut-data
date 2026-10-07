@@ -113,6 +113,9 @@ public class DataJdbcConfiguration implements Named, Toggleable {
     }
 
     /**
+     * Whether to drop and create the tables with a single statement containing all the DDL statements.
+     * It requires a driver that executes several statements in one string and is ignored for Oracle.
+     *
      * @param batchGenerate Whether to generate tables in batch.
      */
     public void setBatchGenerate(boolean batchGenerate) {

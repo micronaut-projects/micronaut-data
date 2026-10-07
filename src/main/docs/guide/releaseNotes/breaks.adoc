@@ -30,6 +30,23 @@ Passing `null` as the entity or the entities to a repository method, for example
 
 Code that caught `IllegalStateException` for this case should catch `IllegalArgumentException` instead.
 
+=== Criteria delete and update with an empty conjunction or disjunction
+
+As the restriction of a criteria delete or update, an empty conjunction (`criteriaBuilder.and()`) now means no restriction and an empty disjunction (`criteriaBuilder.or()`) matches nothing, like in a criteria query:
+
+* In JDBC and R2DBC repositories, `deleteAll` and `updateAll` with an empty conjunction delete or update every row. Previously, they rendered an invalid `WHERE` clause and the statement failed, as with an empty disjunction.
+* In MongoDB repositories, an empty disjunction used to render no filter, so `deleteAll` and `updateAll` deleted or updated every document. It now matches no documents. An empty conjunction still matches every document, as before.
+
+Code that builds the restriction from a list of predicates that can be empty should check the list before calling `deleteAll` or `updateAll`.
+
+=== Jakarta Data queries filter by the tenant id
+
+Jakarta Data `@Query` methods (JDQL) on entities with a `@TenantId` property now apply the tenant discriminator filter, like derived finders: selects return, and updates and deletes modify, only the rows of the current tenant. Previously, they ignored the tenant and affected the rows of every tenant. Annotate a method with `@WithoutTenantId` to keep the previous behaviour.
+
+=== Repositories whose lifecycle methods use different entities
+
+When a repository doesn't declare its root entity, for example because it doesn't extend `GenericRepository<E, ID>`, the methods that need one, such as `countById`, use the entity of the lifecycle methods (`@Insert`, `@Update`, `@Upsert`, `@Delete`). If those methods use different entities, such a method now fails to compile. Previously, it silently used the entity of the first lifecycle method, so the result depended on the declaration order. Declare the root entity, for example by extending `GenericRepository<E, ID>`.
+
 == 5.2
 
 === Kotlin 2.4 generic repository bounds

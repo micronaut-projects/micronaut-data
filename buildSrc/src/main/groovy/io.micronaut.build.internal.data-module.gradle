@@ -21,15 +21,15 @@ micronautBuild {
     }
 }
 
-def testModulesOptional = rootProject.tasks.findByName("testModules")
-def testModules
-if (testModulesOptional) {
-    testModules = testModulesOptional
-} else {
-    testModules = rootProject.tasks.register("testModules").get()
+// Aggregates the tests of the library modules only: doc examples, benchmarks and test suites are excluded
+def testModules = rootProject.tasks.names.contains("testModules") ? rootProject.tasks.named("testModules") : rootProject.tasks.register("testModules") {
+    group = "verification"
+    description = "Runs the tests of the Micronaut Data library modules"
 }
-
-testModules.mustRunAfter(tasks.named("test"))
+def moduleTest = tasks.named("test")
+testModules.configure {
+    dependsOn(moduleTest)
+}
 
 test {
     useJUnitPlatform()

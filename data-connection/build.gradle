@@ -17,5 +17,6 @@ dependencies {
 
     testImplementation(mnTest.micronaut.test.junit5)
     testImplementation(mnTest.junit.jupiter.params)
+    testImplementation(mn.kotlinx.coroutines.reactor)
     compileOnly(mn.kotlinx.coroutines.reactor)
 }

@@ -502,6 +502,7 @@ public class RepositoryTypeElementVisitor implements TypeElementVisitor<Reposito
                     findInterceptors,
                     entityBySimplyNameResolver
                 );
+                methodMatchContext.setConflictingRootEntities(getConflictingRootEntities(entity, method, entityResolver));
 
                 for (MethodMatcher finder : methodsMatchers) {
                     MethodMatcher.MethodMatch matcher = finder.match(methodMatchContext);
@@ -526,16 +527,26 @@ public class RepositoryTypeElementVisitor implements TypeElementVisitor<Reposito
                 }
             } catch (MatchFailedException e) {
                 throw new ProcessingException(e.getElement() == null ? method : e.getElement(), matchContext.getUnableToImplementMessage() + e.getMessage());
+            } catch (ProcessingException e) {
+                // Already reported against the right element
+                throw e;
             } catch (Exception e) {
-                e.printStackTrace(System.err);
                 if (e instanceof ElementPostponedToNextRoundException || e.getClass().getSimpleName().equals("PostponeToNextRoundException")) {
                     // rethrow postponed and don't fail compilation
                     // this is not ideal since PostponeToNextRoundException is part of inject-java
                     throw e;
                 }
-                throw new ProcessingException(method, "Exception occurred while processing: " + e.getMessage(), e);
+                printUnexpectedFailure(e);
+                throw new ProcessingException(method, "Exception occurred while processing: " + (e.getMessage() == null ? e.toString() : e.getMessage()), e);
             }
         }
+    }
+
+    // Sonar java:S106 -- the compiler only reports the message of the ProcessingException, without its cause:
+    // print the stack trace of an unexpected failure of the processor to keep the frames needed to find the bug
+    @SuppressWarnings("java:S106")
+    private static void printUnexpectedFailure(Exception e) {
+        e.printStackTrace(System.err);
     }
 
     private Map<Element, String> getParametersInRole(ParameterElement[] parameters) {
@@ -724,7 +735,12 @@ public class RepositoryTypeElementVisitor implements TypeElementVisitor<Reposito
                 );
             }
 
-            String returnTypeRole = findTypeRole(method.getReturnType().getType());
+            ClassElement resultType = method.getReturnType();
+            if (TypeUtils.isReactiveOrFuture(resultType)) {
+                // The role of a reactive or async method is defined by the emitted type
+                resultType = resultType.getFirstTypeArgument().orElse(resultType);
+            }
+            String returnTypeRole = findTypeRole(resultType.getType());
             if (returnTypeRole == null) {
                 returnTypeRole =  findAnnotationRole(method.getReturnType());
             }
@@ -1103,11 +1119,56 @@ public class RepositoryTypeElementVisitor implements TypeElementVisitor<Reposito
         if (element.hasStereotype(Query.class)) {
             return null;
         }
-        ClassElement owningType = element.getOwningType();
-        for (MethodElement method : owningType.getMethods()) {
-            return resolvePersistentEntityFromLifecycleMethods(method, getParametersNotInRole(method.getParameters()), entityResolver);
+        // Some matchers (e.g. Jakarta Data @Query with a FROM clause) don't require the root entity to be resolved here
+        return resolvePersistentEntityFromRepositoryLifecycleMethods(element.getOwningType(), entityResolver);
+    }
+
+    /**
+     * Fallback to the entity of the repository's lifecycle methods, only when they all agree on it:
+     * otherwise the result would depend on the declaration order of the methods.
+     *
+     * @param owningType     The repository type
+     * @param entityResolver The entity resolver
+     * @return The entity of the lifecycle methods or null
+     */
+    @Nullable
+    private SourcePersistentEntity resolvePersistentEntityFromRepositoryLifecycleMethods(ClassElement owningType,
+                                                                                         Function<ClassElement, SourcePersistentEntity> entityResolver) {
+        Map<String, SourcePersistentEntity> lifecycleEntities = resolveRepositoryLifecycleEntities(owningType, entityResolver);
+        return lifecycleEntities.size() == 1 ? lifecycleEntities.values().iterator().next() : null;
+    }
+
+    /**
+     * The entities of the repository's lifecycle methods when they prevented resolving the root entity of the method.
+     *
+     * @param entity         The resolved root entity
+     * @param method         The method
+     * @param entityResolver The entity resolver
+     * @return The simple names of the conflicting entities or an empty list
+     */
+    private List<String> getConflictingRootEntities(@Nullable SourcePersistentEntity entity,
+                                                    MethodElement method,
+                                                    Function<ClassElement, SourcePersistentEntity> entityResolver) {
+        if (entity != null) {
+            return List.of();
         }
-        throw new MatchFailedException("Could not resolved root entity. Either implement the Repository interface or define the entity as part of the signature", element);
+        Collection<SourcePersistentEntity> lifecycleEntities = resolveRepositoryLifecycleEntities(method.getOwningType(), entityResolver).values();
+        if (lifecycleEntities.size() < 2) {
+            return List.of();
+        }
+        return lifecycleEntities.stream().map(SourcePersistentEntity::getSimpleName).toList();
+    }
+
+    private Map<String, SourcePersistentEntity> resolveRepositoryLifecycleEntities(ClassElement owningType,
+                                                                                    Function<ClassElement, SourcePersistentEntity> entityResolver) {
+        Map<String, SourcePersistentEntity> lifecycleEntities = new LinkedHashMap<>();
+        for (MethodElement method : owningType.getMethods()) {
+            SourcePersistentEntity methodEntity = resolvePersistentEntityFromLifecycleMethods(method, getParametersNotInRole(method.getParameters()), entityResolver);
+            if (methodEntity != null) {
+                lifecycleEntities.putIfAbsent(methodEntity.getName(), methodEntity);
+            }
+        }
+        return lifecycleEntities;
     }
 
     @Nullable

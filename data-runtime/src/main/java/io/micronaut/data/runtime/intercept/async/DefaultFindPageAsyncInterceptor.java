@@ -49,6 +49,13 @@ public class DefaultFindPageAsyncInterceptor extends AbstractConvertCompletionSt
     protected CompletionStage<?> interceptCompletionStage(RepositoryMethodKey methodKey, MethodInvocationContext<Object, CompletionStage<Page<Object>>> context) {
         if (context.hasAnnotation(Query.class)) {
             PreparedQuery<?, ?> preparedQuery = prepareQuery(methodKey, context);
+            if (!preparedQuery.getPageable().requestTotal()) {
+                return asyncDatastoreOperations.findAll(preparedQuery)
+                    .thenApply(objects -> {
+                        List<Object> resultList = CollectionUtils.iterableToList((Iterable<Object>) objects);
+                        return Page.of(resultList, getPageable(context), null);
+                    });
+            }
             PreparedQuery<?, Number> countQuery = prepareCountQuery(methodKey, context);
             return asyncDatastoreOperations.findOne(countQuery)
                 .thenCompose(total -> asyncDatastoreOperations.findAll(preparedQuery)

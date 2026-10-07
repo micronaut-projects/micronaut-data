@@ -31,7 +31,6 @@ import java.util.Arrays;
 import java.util.Collections;
 import java.util.List;
 import java.util.Map;
-import java.util.Objects;
 import java.util.function.Function;
 
 /**
@@ -48,6 +47,7 @@ public class MethodMatchContext extends MatchContext {
     private final Map<Element, String> parametersInRole;
     private final Function<ClassElement, SourcePersistentEntity> entityResolver;
     private final Function<String, @Nullable SourcePersistentEntity> entityBySimplyNameResolver;
+    private List<String> conflictingRootEntities = List.of();
 
     /**
      * Creates the context.
@@ -137,7 +137,28 @@ public class MethodMatchContext extends MatchContext {
      * @return The root entity
      */
     public SourcePersistentEntity getRootEntity() {
-        return Objects.requireNonNull(entity, "Persistent entity is required");
+        if (entity == null) {
+            throw new MatchFailedException(getMissingRootEntityMessage(), methodElement);
+        }
+        return entity;
+    }
+
+    private String getMissingRootEntityMessage() {
+        String suggestion = "Declare the root entity, for example by extending GenericRepository<E, ID>.";
+        if (conflictingRootEntities.size() > 1) {
+            return "The lifecycle methods of the repository use different entities: " + String.join(", ", conflictingRootEntities) + ". " + suggestion;
+        }
+        return "The repository has no root entity. " + suggestion;
+    }
+
+    /**
+     * Sets the entities of the repository lifecycle methods that prevented resolving the root entity.
+     *
+     * @param conflictingRootEntities The names of the conflicting entities
+     * @since 5.3
+     */
+    void setConflictingRootEntities(List<String> conflictingRootEntities) {
+        this.conflictingRootEntities = conflictingRootEntities;
     }
 
     /**

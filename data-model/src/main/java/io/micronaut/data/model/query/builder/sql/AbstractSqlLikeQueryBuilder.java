@@ -63,6 +63,7 @@ import io.micronaut.data.model.jpa.criteria.impl.ExpressionVisitor;
 import io.micronaut.data.model.jpa.criteria.impl.IParameterExpression;
 import io.micronaut.data.model.jpa.criteria.impl.SelectionVisitor;
 import io.micronaut.data.model.jpa.criteria.impl.expression.BinaryExpression;
+import io.micronaut.data.model.jpa.criteria.impl.expression.BinaryExpressionType;
 import io.micronaut.data.model.jpa.criteria.impl.expression.CastExpression;
 import io.micronaut.data.model.jpa.criteria.impl.expression.ClassExpressionType;
 import io.micronaut.data.model.jpa.criteria.impl.expression.CurrentTemporalExpression;
@@ -825,61 +826,93 @@ public abstract class AbstractSqlLikeQueryBuilder implements QueryBuilder {
         Iterator<Order> i = orders.iterator();
         while (i.hasNext()) {
             Order order = i.next();
-            Expression<?> expr = order.getExpression();
-            boolean lowerExpression = false;
-            if (expr instanceof UnaryExpression<?> ue && ue.getType() == UnaryExpressionType.LOWER) {
-                lowerExpression = true;
-                expr = ue.getExpression();
+            Nulls nullPrecedence = getNullPrecedence(order);
+            boolean emulateNullOrdering = nullPrecedence != Nulls.NONE && !supportsNullOrdering();
+            if (emulateNullOrdering) {
+                // Sorting the null rank first puts the nulls where the caller asked for them. Whether the
+                // value is null does not depend on its case, so the rank tests the value as it is
+                int nullRank = nullPrecedence == Nulls.FIRST ? 0 : 1;
+                buff.append("CASE WHEN ");
+                appendOrderExpression(annotationMetadata, order, false, jsonEntityColumn, queryState);
+                buff.append(" IS NULL THEN ").append(nullRank).append(" ELSE ").append(1 - nullRank).append(" END,");
             }
-            if (expr instanceof io.micronaut.data.model.jpa.criteria.PersistentPropertyPath<?> persistentPropertyPath) {
-                QueryPropertyPath propertyPath = queryState.findProperty(persistentPropertyPath.getPropertyPath());
-                String currentAlias = propertyPath.getTableAlias();
-                boolean ignoreCase = (order instanceof DefaultOrder<?> defaultOrder && defaultOrder.isIgnoreCase())
-                    || lowerExpression;
-                if (ignoreCase) {
-                    buff.append("LOWER(");
-                }
-                if (currentAlias != null) {
-                    buff.append(currentAlias).append(DOT);
-                }
-                if (jsonEntityColumn != null) {
-                    buff.append(jsonEntityColumn).append(DOT);
-                }
-                if (computePropertyPaths() && jsonEntityColumn == null) {
-                    buff.append(propertyPath.getColumnName());
-                } else {
-                    buff.append(propertyPath.getPath());
-                    if (jsonEntityColumn != null) {
-                        appendJsonProjection(buff, propertyPath.getProperty().getDataType());
-                    }
-                }
-                if (ignoreCase) {
-                    buff.append(")");
-                }
-            } else {
-                new ExpressionAppender(queryState, annotationMetadata).appendExpression(order.getExpression());
-            }
+            appendOrderExpression(annotationMetadata, order, true, jsonEntityColumn, queryState);
             buff.append(SPACE);
             if (order.isAscending()) {
                 buff.append("ASC");
             } else {
                 buff.append("DESC");
             }
-            appendNullPrecedence(order, buff);
+            if (!emulateNullOrdering) {
+                appendNullPrecedence(nullPrecedence, buff);
+            }
             if (i.hasNext()) {
                 buff.append(",");
             }
         }
     }
 
-    private static void appendNullPrecedence(Order order, StringBuilder query) {
-        if (order instanceof DefaultOrder<?> defaultOrder) {
-            Nulls nullPrecedence = defaultOrder.getNullPrecedence();
-            if (nullPrecedence == Nulls.FIRST) {
-                query.append(" NULLS FIRST");
-            } else if (nullPrecedence == Nulls.LAST) {
-                query.append(" NULLS LAST");
+    private void appendOrderExpression(AnnotationMetadata annotationMetadata,
+                                       Order order,
+                                       boolean applyIgnoreCase,
+                                       @Nullable String jsonEntityColumn,
+                                       QueryState queryState) {
+        Expression<?> expr = order.getExpression();
+        boolean lowerExpression = false;
+        if (expr instanceof UnaryExpression<?> ue && ue.getType() == UnaryExpressionType.LOWER) {
+            lowerExpression = true;
+            expr = ue.getExpression();
+        }
+        if (expr instanceof io.micronaut.data.model.jpa.criteria.PersistentPropertyPath<?> persistentPropertyPath) {
+            boolean ignoreCase = applyIgnoreCase
+                && ((order instanceof DefaultOrder<?> defaultOrder && defaultOrder.isIgnoreCase()) || lowerExpression);
+            appendOrderPropertyPath(persistentPropertyPath, ignoreCase, jsonEntityColumn, queryState);
+        } else {
+            new ExpressionAppender(queryState, annotationMetadata).appendExpression(order.getExpression());
+        }
+    }
+
+    private void appendOrderPropertyPath(io.micronaut.data.model.jpa.criteria.PersistentPropertyPath<?> persistentPropertyPath,
+                                         boolean ignoreCase,
+                                         @Nullable String jsonEntityColumn,
+                                         QueryState queryState) {
+        StringBuilder buff = queryState.getQuery();
+        QueryPropertyPath propertyPath = queryState.findProperty(persistentPropertyPath.getPropertyPath());
+        String currentAlias = propertyPath.getTableAlias();
+        if (ignoreCase) {
+            buff.append("LOWER(");
+        }
+        if (currentAlias != null) {
+            buff.append(currentAlias).append(DOT);
+        }
+        if (jsonEntityColumn != null) {
+            buff.append(jsonEntityColumn).append(DOT);
+        }
+        if (computePropertyPaths() && jsonEntityColumn == null) {
+            buff.append(propertyPath.getColumnName());
+        } else {
+            buff.append(propertyPath.getPath());
+            if (jsonEntityColumn != null) {
+                appendJsonProjection(buff, propertyPath.getProperty().getDataType());
             }
+        }
+        if (ignoreCase) {
+            buff.append(")");
+        }
+    }
+
+    private static Nulls getNullPrecedence(Order order) {
+        if (order instanceof DefaultOrder<?> defaultOrder && defaultOrder.getNullPrecedence() != null) {
+            return defaultOrder.getNullPrecedence();
+        }
+        return Nulls.NONE;
+    }
+
+    private static void appendNullPrecedence(Nulls nullPrecedence, StringBuilder query) {
+        if (nullPrecedence == Nulls.FIRST) {
+            query.append(" NULLS FIRST");
+        } else if (nullPrecedence == Nulls.LAST) {
+            query.append(" NULLS LAST");
         }
     }
 
@@ -3055,7 +3088,7 @@ public abstract class AbstractSqlLikeQueryBuilder implements QueryBuilder {
             query.append(CAST_FUNCTION).append(OPEN_BRACKET);
             appendExpression(expression);
             query.append(AS_CLAUSE);
-            query.append(getCastDbType(type, getDialect()));
+            query.append(getCastDbType(type, getDialectOptions()));
             query.append(CLOSE_BRACKET);
         }
 
@@ -3363,31 +3396,34 @@ public abstract class AbstractSqlLikeQueryBuilder implements QueryBuilder {
             Expression<?> left = binaryExpression.getLeft();
             Expression<?> right = binaryExpression.getRight();
             switch (binaryExpression.getType()) {
-                case SUM -> {
-                    appendExpression(left);
-                    query.append(" + ");
-                    appendExpression(right);
-                }
-                case DIFF -> {
-                    appendExpression(left);
-                    query.append(" - ");
-                    appendExpression(right);
-                }
-                case QUOT -> {
-                    appendExpression(left);
-                    query.append(" / ");
-                    appendExpression(right);
-                }
-                case PROD -> {
-                    appendExpression(left);
-                    query.append(" * ");
-                    appendExpression(right);
-                }
+                case SUM -> appendArithmeticOperation(left, " + ", right);
+                case DIFF -> appendArithmeticOperation(left, " - ", right);
+                case QUOT -> appendArithmeticOperation(left, " / ", right);
+                case PROD -> appendArithmeticOperation(left, " * ", right);
                 case CONCAT -> appendFunction("CONCAT", List.of(left, right));
                 default ->
                     throw new IllegalStateException(UNSUPPORTED_EXPRESSION + binaryExpression.getType());
             }
             appendColumnAliasIfNecessary();
+        }
+
+        private void appendArithmeticOperation(Expression<?> left, String operator, Expression<?> right) {
+            appendArithmeticOperand(left);
+            query.append(operator);
+            appendArithmeticOperand(right);
+        }
+
+        private void appendArithmeticOperand(Expression<?> operand) {
+            // A nested arithmetic operation keeps its own precedence, like in the predicates
+            boolean requiresBrackets = operand instanceof BinaryExpression<?> binaryOperand
+                && binaryOperand.getType() != BinaryExpressionType.CONCAT;
+            if (requiresBrackets) {
+                query.append(OPEN_BRACKET);
+            }
+            appendExpression(operand);
+            if (requiresBrackets) {
+                query.append(CLOSE_BRACKET);
+            }
         }
 
         @Override
@@ -3792,10 +3828,6 @@ public abstract class AbstractSqlLikeQueryBuilder implements QueryBuilder {
                 }
             }
             query.append(CLOSE_BRACKET);
-        }
-
-        static String getCastDbType(@Nullable ExpressionType<?> type, Dialect dialect) {
-            return getCastDbType(type, SqlDialectOptions.defaults(dialect));
         }
 
         static String getCastDbType(@Nullable ExpressionType<?> type,
