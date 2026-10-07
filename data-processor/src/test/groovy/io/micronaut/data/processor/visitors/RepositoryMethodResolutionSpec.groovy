@@ -97,7 +97,28 @@ interface LibraryRepository {
         then:
         def e = thrown(RuntimeException)
         e.message.contains('long countById(Long id);')
-        e.message.contains('Persistent entity is required')
+        e.message.contains('Unable to implement Repository method: test.LibraryRepository.countById(Long id). The lifecycle methods of the repository use different entities: Book, Author. Declare the root entity, for example by extending GenericRepository<E, ID>.')
+        !e.message.contains('Exception occurred while processing')
+    }
+
+    void "test a method requiring the root entity of a repository without an entity is reported against the method"() {
+        when:
+        buildRepository('test.LibraryRepository', """
+import io.micronaut.data.jdbc.annotation.JdbcRepository;
+import io.micronaut.data.model.query.builder.sql.Dialect;
+
+@JdbcRepository(dialect = Dialect.H2)
+interface LibraryRepository {
+
+    long countById(Long id);
+}
+""")
+
+        then:
+        def e = thrown(RuntimeException)
+        e.message.contains('long countById(Long id);')
+        e.message.contains('Unable to implement Repository method: test.LibraryRepository.countById(Long id). The repository has no root entity. Declare the root entity, for example by extending GenericRepository<E, ID>.')
+        !e.message.contains('Exception occurred while processing')
     }
 
     void "test a type registered in the slice role uses the slice interceptor"() {

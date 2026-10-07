@@ -502,6 +502,7 @@ public class RepositoryTypeElementVisitor implements TypeElementVisitor<Reposito
                     findInterceptors,
                     entityBySimplyNameResolver
                 );
+                methodMatchContext.setConflictingRootEntities(getConflictingRootEntities(entity, method, entityResolver));
 
                 for (MethodMatcher finder : methodsMatchers) {
                     MethodMatcher.MethodMatch matcher = finder.match(methodMatchContext);
@@ -1126,17 +1127,41 @@ public class RepositoryTypeElementVisitor implements TypeElementVisitor<Reposito
     @Nullable
     private SourcePersistentEntity resolvePersistentEntityFromRepositoryLifecycleMethods(ClassElement owningType,
                                                                                          Function<ClassElement, SourcePersistentEntity> entityResolver) {
-        SourcePersistentEntity lifecycleEntity = null;
+        Map<String, SourcePersistentEntity> lifecycleEntities = resolveRepositoryLifecycleEntities(owningType, entityResolver);
+        return lifecycleEntities.size() == 1 ? lifecycleEntities.values().iterator().next() : null;
+    }
+
+    /**
+     * The entities of the repository's lifecycle methods when they prevented resolving the root entity of the method.
+     *
+     * @param entity         The resolved root entity
+     * @param method         The method
+     * @param entityResolver The entity resolver
+     * @return The simple names of the conflicting entities or an empty list
+     */
+    private List<String> getConflictingRootEntities(@Nullable SourcePersistentEntity entity,
+                                                    MethodElement method,
+                                                    Function<ClassElement, SourcePersistentEntity> entityResolver) {
+        if (entity != null) {
+            return List.of();
+        }
+        Collection<SourcePersistentEntity> lifecycleEntities = resolveRepositoryLifecycleEntities(method.getOwningType(), entityResolver).values();
+        if (lifecycleEntities.size() < 2) {
+            return List.of();
+        }
+        return lifecycleEntities.stream().map(SourcePersistentEntity::getSimpleName).toList();
+    }
+
+    private Map<String, SourcePersistentEntity> resolveRepositoryLifecycleEntities(ClassElement owningType,
+                                                                                    Function<ClassElement, SourcePersistentEntity> entityResolver) {
+        Map<String, SourcePersistentEntity> lifecycleEntities = new LinkedHashMap<>();
         for (MethodElement method : owningType.getMethods()) {
             SourcePersistentEntity methodEntity = resolvePersistentEntityFromLifecycleMethods(method, getParametersNotInRole(method.getParameters()), entityResolver);
             if (methodEntity != null) {
-                if (lifecycleEntity != null && !lifecycleEntity.getName().equals(methodEntity.getName())) {
-                    return null;
-                }
-                lifecycleEntity = methodEntity;
+                lifecycleEntities.putIfAbsent(methodEntity.getName(), methodEntity);
             }
         }
-        return lifecycleEntity;
+        return lifecycleEntities;
     }
 
     @Nullable
