@@ -245,10 +245,18 @@ It then stops accepting callback work and waits for notification callbacks that 
 still queued on the blocking executor are discarded when they start and do not delay shutdown. Context destruction
 also attempts registration cleanup if graceful shutdown was not used.
 
-An abrupt process or host failure cannot run that cleanup. For ordinary registrations, Oracle Database can remove
-a disconnected registration lazily after its client cleanup interval, when a notification is generated and no connected
-client is found. This is not an immediate or time-bounded cleanup guarantee. Reliable registrations are excluded from
-that automatic cleanup and may need manual removal. The next application instance does not remove existing registrations
+An abrupt process or host failure cannot run that cleanup. Oracle Database automatically cleans up ordinary
+(non-reliable) registrations after their owning client has permanently disconnected. Registrations become eligible
+for cleanup when the application terminates unexpectedly or the database instance or pluggable database (PDB)
+is shut down.
+
+Cleanup is not immediate. Oracle Database retains disconnected registrations for a period that allows the application
+to reuse them and supports transparent registration failover during database patching. After that period, cleanup
+remains lazy: Oracle Database removes a registration when it generates a notification for it and finds no connected
+client. A registration whose client remains disconnected will eventually be removed, but there is no fixed cleanup
+deadline. This automatic cleanup does not apply to registrations created with `NTF_QOS_RELIABLE` enabled.
+
+Micronaut Data does not reuse or remove registrations left by a previous application instance during startup,
 because it cannot safely distinguish an abandoned registration from one owned by another healthy instance using
 the same Oracle Database user and datasource.
 
@@ -261,14 +269,3 @@ SELECT DISTINCT regid, callback, table_name
 FROM user_change_notification_regs
 ORDER BY regid, table_name;
 ----
-
-Verify that the chosen registration ID belongs to a stopped instance before removing it: another healthy instance may use the same database user and table. To remove one confirmed abandoned registration, run the following as its owning user (or as `SYS`), replacing `1202` with the verified `REGID`:
-
-[source,sql]
-----
-BEGIN
-    DBMS_CQ_NOTIFICATION.DEREGISTER(1202);
-END;
-----
-
-Oracle documents link:https://docs.oracle.com/en/database/oracle/oracle-database/26/arpls/DBMS_CQ_NOTIFICATION.html[`DBMS_CQ_NOTIFICATION.DEREGISTER`] as accepting a registration ID; only the registration creator or `SYS` can deregister it. Do not bulk-delete all registrations for a user or table, since those may include active instances.
