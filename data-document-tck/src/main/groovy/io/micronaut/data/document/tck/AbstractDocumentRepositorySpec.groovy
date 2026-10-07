@@ -46,6 +46,7 @@ import io.micronaut.transaction.SynchronousTransactionManager
 import io.micronaut.transaction.TransactionCallback
 import io.micronaut.transaction.TransactionStatus
 import jakarta.persistence.criteria.CriteriaBuilder
+import jakarta.persistence.criteria.CriteriaDelete
 import jakarta.persistence.criteria.CriteriaUpdate
 import jakarta.persistence.criteria.Predicate
 import jakarta.persistence.criteria.Root
@@ -993,6 +994,25 @@ abstract class AbstractDocumentRepositorySpec extends Specification {
             updated == 1
             personRepository.count(nameEquals("Xyz")) == 1
             personRepository.count(nameEquals("Jeff")) == 0
+        when: "the restriction is an empty disjunction"
+            updated = personRepository.updateAll(new UpdateSpecification<Person>() {
+                @Override
+                Predicate toPredicate(Root<Person> root, CriteriaUpdate<?> query, CriteriaBuilder criteriaBuilder) {
+                    query.set("name", "Abc")
+                    return criteriaBuilder.or()
+                }
+            })
+            deleted = personRepository.deleteAll(new DeleteSpecification<Person>() {
+                @Override
+                Predicate toPredicate(Root<Person> root, CriteriaDelete<?> query, CriteriaBuilder criteriaBuilder) {
+                    return criteriaBuilder.or()
+                }
+            })
+        then: "nothing is matched"
+            updated == 0
+            deleted == 0
+            personRepository.count(nameEquals("Abc")) == 0
+            personRepository.count() == 2
         when:
             deleted = personRepository.deleteAll(DeleteSpecification.where(nameEquals("Xyz")))
         then:

@@ -30,6 +30,12 @@ Passing `null` as the entity or the entities to a repository method, for example
 
 Code that caught `IllegalStateException` for this case should catch `IllegalArgumentException` instead.
 
+=== Criteria delete and update with an empty conjunction affect all rows
+
+An empty conjunction (`criteriaBuilder.and()`) as the restriction of a criteria delete or update in JDBC, R2DBC and MongoDB repositories now means no restriction, like in a criteria query: `deleteAll` and `updateAll` delete or update every row. Previously, JDBC and R2DBC repositories rendered an invalid `WHERE` clause and the statement failed. An empty disjunction (`criteriaBuilder.or()`) matches no rows.
+
+Code that builds the restriction from a list of predicates that can be empty should check the list before calling `deleteAll` or `updateAll`.
+
 === Reactive transaction propagation matches the synchronous transaction managers
 
 The reactive transaction managers (R2DBC, MongoDB and Hibernate Reactive) now apply the `SUPPORTS`, `NOT_SUPPORTED` and `NEVER` propagations like the synchronous ones:
