@@ -1,19 +1,18 @@
 package example.notification
 
-import io.micronaut.context.annotation.Context
 import io.micronaut.context.annotation.Requires
-import io.micronaut.context.event.ApplicationEventListener
-import io.micronaut.context.event.StartupEvent
 import io.micronaut.data.jdbc.annotation.ChangeListener
 import io.micronaut.data.jdbc.annotation.OracleChangeNotification
 import io.micronaut.data.jdbc.notification.ChangeEvent
 import io.micronaut.data.jdbc.notification.ChangeOperation
+import jakarta.annotation.PostConstruct
+import jakarta.inject.Singleton
 
 import java.util.concurrent.ConcurrentHashMap
 
-@Context
+@Singleton
 @Requires(property = "query-notification.query.enabled")
-class LargeLibraryCache implements ApplicationEventListener<StartupEvent> {
+class LargeLibraryCache {
 
     private final LibraryRepository repository
     private final Map<Long, Library> libraries = new ConcurrentHashMap<>()
@@ -22,8 +21,8 @@ class LargeLibraryCache implements ApplicationEventListener<StartupEvent> {
         this.repository = repository
     }
 
-    @Override
-    void onApplicationEvent(StartupEvent event) {
+    @PostConstruct
+    void initialize() {
         refreshCache()
     }
 
@@ -43,7 +42,7 @@ class LargeLibraryCache implements ApplicationEventListener<StartupEvent> {
             value = "true"
         )
     )
-    synchronized void onLibraryChanged(ChangeEvent<Library> event) {
+    void onLibraryChanged(ChangeEvent<Library> event) {
         switch (event.operation()) {
             case ChangeOperation.INSERT:
             case ChangeOperation.UPDATE:
