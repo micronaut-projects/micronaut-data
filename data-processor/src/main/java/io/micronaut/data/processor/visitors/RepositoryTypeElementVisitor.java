@@ -536,10 +536,17 @@ public class RepositoryTypeElementVisitor implements TypeElementVisitor<Reposito
                     // this is not ideal since PostponeToNextRoundException is part of inject-java
                     throw e;
                 }
-                e.printStackTrace(System.err); // unexpected failure of the processor
+                printUnexpectedFailure(e);
                 throw new ProcessingException(method, "Exception occurred while processing: " + (e.getMessage() == null ? e.toString() : e.getMessage()), e);
             }
         }
+    }
+
+    // Sonar java:S106 -- the compiler only reports the message of the ProcessingException, without its cause:
+    // print the stack trace of an unexpected failure of the processor to keep the frames needed to find the bug
+    @SuppressWarnings("java:S106")
+    private static void printUnexpectedFailure(Exception e) {
+        e.printStackTrace(System.err);
     }
 
     private Map<Element, String> getParametersInRole(ParameterElement[] parameters) {

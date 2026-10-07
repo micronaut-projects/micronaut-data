@@ -198,6 +198,18 @@ class PageDelegate<T> implements Page<T> {
         }
 
         @Override
+        public boolean equals(@Nullable Object obj) {
+            // Sort compares the orders returned by the iterator
+            return super.equals(obj);
+        }
+
+        @Override
+        public int hashCode() {
+            // Sort hashes its own orders, which are empty here: hash the delegated orders like equals compares them
+            return toList().hashCode();
+        }
+
+        @Override
         public Sort and(Sort sort) {
             for (Order order : sort) {
                 delegate.order(
