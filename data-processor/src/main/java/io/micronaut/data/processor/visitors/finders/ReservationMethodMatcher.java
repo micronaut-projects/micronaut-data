@@ -15,6 +15,7 @@
  */
 package io.micronaut.data.processor.visitors.finders;
 
+import io.micronaut.context.annotation.Parameter;
 import io.micronaut.core.annotation.Internal;
 import io.micronaut.core.naming.NameUtils;
 import io.micronaut.data.annotation.Id;
@@ -221,12 +222,24 @@ public final class ReservationMethodMatcher implements MethodMatcher {
         }
     }
 
+    /**
+     * Resolves the delta parameter of a reservation operation like the values of other update methods: by the
+     * parameter name, or by its {@link Parameter} value, which must be the name of the reservable property.
+     */
     private static ParameterElement resolveDeltaParameter(ParameterElement[] parameters, String propertyName) {
-        ParameterElement parameter = Arrays.stream(parameters)
+        List<ParameterElement> matches = Arrays.stream(parameters)
             .filter(p -> !p.hasAnnotation(Id.class))
-            .filter(p -> p.getName().equals(propertyName))
-            .findFirst()
-            .orElseThrow(() -> new MatchFailedException("Reservation property [" + propertyName + "] requires a matching delta parameter"));
+            .filter(p -> p.stringValue(Parameter.class).orElse(p.getName()).equals(propertyName))
+            .toList();
+        if (matches.isEmpty()) {
+            throw new MatchFailedException("Reservation property [" + propertyName + "] requires a matching delta parameter named ["
+                + propertyName + "] or annotated with @Parameter(\"" + propertyName + "\")");
+        }
+        if (matches.size() > 1) {
+            throw new MatchFailedException("Reservation property [" + propertyName + "] matches more than one delta parameter: "
+                + matches.stream().map(ParameterElement::getName).toList());
+        }
+        ParameterElement parameter = matches.getFirst();
         if (!TypeUtils.resolveDataType(parameter.getType(), Collections.emptyMap()).isNumeric()) {
             throw new MatchFailedException("Reservation delta parameter [" + propertyName + "] must be numeric");
         }
