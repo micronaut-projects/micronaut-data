@@ -21,7 +21,7 @@ class LibraryCache {
     private static final Logger LOG = LoggerFactory.getLogger(LibraryCache)
 
     private final LibraryRepository repository
-    private final Map<Long, Library> libraries = new ConcurrentHashMap<>()
+    private volatile Map<Long, Library> libraries = new ConcurrentHashMap<>()
 
     LibraryCache(LibraryRepository repository) {
         this.repository = repository
@@ -42,7 +42,7 @@ class LibraryCache {
     // tag::events[]
     @ChangeListener
     @OracleChangeNotification
-    void onLibraryChanged(ChangeEvent<Library> event) {
+    synchronized void onLibraryChanged(ChangeEvent<Library> event) {
         // end::listener[]
         event.metadata(OracleChangeEventMetadata).ifPresent { metadata ->
             LOG.debug("Changed library ROWID: {}", metadata.rowId())
@@ -64,8 +64,9 @@ class LibraryCache {
 
     private synchronized void refreshCache() {
         def currentLibraries = repository.findAll()
-        libraries.clear()
-        currentLibraries.forEach { library -> libraries.put(library.id(), library) }
+        Map<Long, Library> refreshed = new ConcurrentHashMap<>()
+        currentLibraries.forEach { library -> refreshed.put(library.id(), library) }
+        libraries = refreshed
     }
     // tag::listener[]
 }

@@ -16,7 +16,7 @@ import java.util.concurrent.ConcurrentHashMap;
 class LargeLibraryCache {
 
     private final LibraryRepository repository;
-    private final Map<Long, Library> libraries = new ConcurrentHashMap<>();
+    private volatile Map<Long, Library> libraries = new ConcurrentHashMap<>();
 
     LargeLibraryCache(LibraryRepository repository) {
         this.repository = repository;
@@ -44,7 +44,7 @@ class LargeLibraryCache {
             value = "true"
         )
     )
-    void onLibraryChanged(ChangeEvent<Library> event) {
+    synchronized void onLibraryChanged(ChangeEvent<Library> event) {
         switch (event.operation()) {
             case INSERT, UPDATE -> event.entity().ifPresent(library -> {
                 if (library.capacity() >= 10000) {
@@ -60,7 +60,8 @@ class LargeLibraryCache {
 
     private synchronized void refreshCache() {
         var currentLibraries = repository.findByCapacityGreaterThanEquals(10000);
-        libraries.clear();
-        currentLibraries.forEach(library -> libraries.put(library.id(), library));
+        Map<Long, Library> refreshed = new ConcurrentHashMap<>();
+        currentLibraries.forEach(library -> refreshed.put(library.id(), library));
+        libraries = refreshed;
     }
 }

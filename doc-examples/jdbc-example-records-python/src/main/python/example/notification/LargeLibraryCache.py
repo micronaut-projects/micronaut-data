@@ -6,6 +6,7 @@ from jakarta.annotation import PostConstruct
 from jakarta.inject import Inject, Singleton
 from java.util import Optional
 from java.util.concurrent import ConcurrentHashMap
+from java.util.concurrent.atomic import AtomicReference
 from micronaut.context.annotation import Requires
 from micronaut.data.jdbc.annotation import ChangeListener, OracleChangeNotification
 
@@ -21,7 +22,7 @@ class LargeLibraryCache:
 
     def __init__(self, repository: LibraryRepository):
         self.repository = repository
-        self.libraries = ConcurrentHashMap()
+        self.libraries = AtomicReference(ConcurrentHashMap())
         self.lock = RLock()
 
     @PostConstruct
@@ -29,7 +30,7 @@ class LargeLibraryCache:
         self.refreshCache()
 
     def find(self, name: str) -> Optional[Library]:
-        for library in self.libraries.values():
+        for library in self.libraries.get().values():
             if library.name == name:
                 return Optional.of(library)
         return Optional.empty()
@@ -47,20 +48,22 @@ class LargeLibraryCache:
         ]
     )
     def onLibraryChanged(self, event: ChangeEvent[Library]) -> None:
-        if event.operation() in (ChangeOperation.INSERT, ChangeOperation.UPDATE):
-            library = event.entity().orElse(None)
-            if library is not None:
-                if library.capacity >= 10000:
-                    self.libraries.put(library.id, library)
-                else:
-                    self.libraries.remove(library.id)
-        elif event.operation() in (ChangeOperation.DELETE, ChangeOperation.INVALIDATE):
-            self.refreshCache()
+        with self.lock:
+            if event.operation() in (ChangeOperation.INSERT, ChangeOperation.UPDATE):
+                library = event.entity().orElse(None)
+                if library is not None:
+                    if library.capacity >= 10000:
+                        self.libraries.get().put(library.id, library)
+                    else:
+                        self.libraries.get().remove(library.id)
+            elif event.operation() in (ChangeOperation.DELETE, ChangeOperation.INVALIDATE):
+                self.refreshCache()
     # end::query[]
 
     def refreshCache(self) -> None:
         with self.lock:
             currentLibraries = self.repository.findByCapacityGreaterThanEquals(10000)
-            self.libraries.clear()
+            refreshed = ConcurrentHashMap()
             for library in currentLibraries:
-                self.libraries.put(library.id, library)
+                refreshed.put(library.id, library)
+            self.libraries.set(refreshed)

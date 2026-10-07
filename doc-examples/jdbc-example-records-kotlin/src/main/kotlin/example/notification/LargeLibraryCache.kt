@@ -14,7 +14,8 @@ import java.util.concurrent.ConcurrentHashMap
 @Requires(property = "query-notification.query.enabled")
 open class LargeLibraryCache(private val repository: LibraryRepository) {
 
-    private val libraries = ConcurrentHashMap<Long, Library>()
+    @Volatile
+    private var libraries = ConcurrentHashMap<Long, Library>()
 
     @PostConstruct
     fun initialize() {
@@ -26,6 +27,7 @@ open class LargeLibraryCache(private val repository: LibraryRepository) {
         ?.let { Optional.of(it) } ?: Optional.empty()
 
     // tag::query[]
+    @Synchronized
     @ChangeListener
     @OracleChangeNotification(
         select = "name",
@@ -54,7 +56,8 @@ open class LargeLibraryCache(private val repository: LibraryRepository) {
     @Synchronized
     private fun refreshCache() {
         val currentLibraries = repository.findByCapacityGreaterThanEquals(10000)
-        libraries.clear()
-        currentLibraries.forEach { library -> libraries[library.id!!] = library }
+        val refreshed = ConcurrentHashMap<Long, Library>()
+        currentLibraries.forEach { library -> refreshed[library.id!!] = library }
+        libraries = refreshed
     }
 }

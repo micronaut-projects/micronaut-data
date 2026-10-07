@@ -19,7 +19,8 @@ open class LibraryCache(private val repository: LibraryRepository) {
     // end::listener[]
     private val log = LoggerFactory.getLogger(LibraryCache::class.java)
 
-    private val libraries = ConcurrentHashMap<Long, Library>()
+    @Volatile
+    private var libraries = ConcurrentHashMap<Long, Library>()
 
     @PostConstruct
     fun initialize() {
@@ -32,6 +33,7 @@ open class LibraryCache(private val repository: LibraryRepository) {
 
     // tag::listener[]
     // tag::events[]
+    @Synchronized
     @ChangeListener
     @OracleChangeNotification
     open fun onLibraryChanged(event: ChangeEvent<Library>) {
@@ -52,8 +54,9 @@ open class LibraryCache(private val repository: LibraryRepository) {
     @Synchronized
     private fun refreshCache() {
         val currentLibraries = repository.findAll()
-        libraries.clear()
-        currentLibraries.forEach { library -> libraries[library.id!!] = library }
+        val refreshed = ConcurrentHashMap<Long, Library>()
+        currentLibraries.forEach { library -> refreshed[library.id!!] = library }
+        libraries = refreshed
     }
     // tag::listener[]
 }
