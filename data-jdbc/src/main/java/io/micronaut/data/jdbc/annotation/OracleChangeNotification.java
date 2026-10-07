@@ -32,8 +32,9 @@ import java.lang.annotation.Target;
  * available, or report a dependent table for Query Result Change Notification. Either condition is
  * delivered as {@link io.micronaut.data.jdbc.notification.ChangeOperation#INVALIDATE}.</p>
  *
- * <p>Registrations have no configured expiry and are intended to remain active for the
- * application lifetime. When Oracle Database reports a deregistration, that listener becomes
+ * <p>Registrations do not expire by default. A positive {@code NTF_TIMEOUT} property makes Oracle
+ * Database expire the registration after the specified number of seconds; Micronaut Data does not
+ * renew it. When Oracle Database reports a deregistration, that listener becomes
  * unavailable. If the JDBC driver reports a notification-connection failure or Oracle Database
  * reports a shutdown, Micronaut Data attempts to create a replacement registration and dispatches
  * an invalidation event after recovery succeeds. Registrations are also unregistered during
@@ -56,8 +57,7 @@ public @interface OracleChangeNotification {
      * Oracle-rendered column name exactly. The selection controls the result registered with Oracle
      * Database; it does not define a projection for the entity supplied to the listener. A
      * non-default selection is valid only when
-     * {@link oracle.jdbc.OracleConnection#DCN_QUERY_CHANGE_NOTIFICATION} is enabled in
-     * {@link #properties()}.
+     * {@link oracle.jdbc.OracleConnection#DCN_QUERY_CHANGE_NOTIFICATION} is enabled in {@link #properties()}.
      *
      * @return The mapped column list, or {@code *} to select all columns.
      */
@@ -76,9 +76,11 @@ public @interface OracleChangeNotification {
      * Oracle JDBC Continuous Query Notification registration properties for this listener.
      *
      * <p>The {@code DCN_CLIENT_INIT_CONNECTION} property defaults to {@code true} unless explicitly
-     * configured here. Connection-level {@code oracle.jdbc.dcnOptions} may override these values;
-     * conflicting overrides of framework-controlled settings fail registration. Reattaching to
-     * an existing registration with {@code DCN_CLIENT_INIT_REGID} is not supported.</p>
+     * configured here. The {@code NTF_TIMEOUT} property defaults to {@code 0}, which leaves the
+     * registration without a configured expiry. Connection-level {@code oracle.jdbc.dcnOptions}
+     * may override these values; conflicting overrides of framework-controlled settings fail
+     * registration. Reattaching to an existing registration with {@code DCN_CLIENT_INIT_REGID} is
+     * not supported.</p>
      *
      * @return The configured registration properties.
      */

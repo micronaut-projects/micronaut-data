@@ -159,7 +159,7 @@ import oracle.jdbc.OracleConnection;
 
 `NTF_QOS_PURGE_ON_NTFN` makes each Oracle Database registration one-shot: Oracle Database removes it after its first data notification, and Micronaut Data closes the listener subscription when it receives that notification.
 
-Micronaut Data validates requested properties before passing them to Oracle JDBC. It always enables `DCN_NOTIFY_ROWIDS` and sets `NTF_TIMEOUT` to `0` so registrations do not expire while the application is running.
+Micronaut Data validates requested properties before passing them to Oracle JDBC. It always enables `DCN_NOTIFY_ROWIDS` and defaults `NTF_TIMEOUT` to `0`, so registrations do not expire unless a timeout is configured.
 The table covers the Oracle JDBC properties relevant to CQN registration, ordered by status. *Supported* means Micronaut Data accounts for the option in its listener lifecycle. *Restricted* means only the stated value is accepted. *Driver-managed* means Micronaut Data passes the option to JDBC without implementing additional behavior for it. *Unsupported* means registration fails validation if the property is configured.
 
 [cols="2,1,4",options="header"]
@@ -170,6 +170,7 @@ The table covers the Oracle JDBC properties relevant to CQN registration, ordere
 |`DCN_QUERY_CHANGE_NOTIFICATION` |Supported |Set `true` for QRCN or leave `false` for Object Change Notification. `select` and `where` require QRCN.
 |`NTF_QOS_RELIABLE` |Supported |Requests persistent notification queuing in Oracle Database. Micronaut Data lets the driver handle client-initiated reconnect attempts; a terminal driver failure starts framework recovery. Oracle Database's lazy cleanup of disconnected ordinary registrations does not apply to reliable registrations.
 |`NTF_QOS_PURGE_ON_NTFN` |Supported |Makes a registration one-shot. Micronaut Data closes its subscription after Oracle Database purges the registration following a data notification.
+|`NTF_TIMEOUT` |Supported |Sets the registration lifetime in seconds. The default is `0` (no configured expiry). A positive value causes Oracle Database to expire the registration; Micronaut Data does not renew it, so the listener becomes unavailable when it expires. May be set in the annotation or datasource-level `oracle.jdbc.dcnOptions`.
 
 |`DCN_NOTIFY_ROWIDS` |Restricted |Must be `true`; row identifiers are needed to reload affected entities.
 |`DCN_NOTIFY_CHANGELAG` |Restricted |Must be `0`; a non-zero lag removes the row-level details needed by the listener API.
@@ -187,7 +188,6 @@ The table covers the Oracle JDBC properties relevant to CQN registration, ordere
 |`DCN_IGNORE_DELETEOP` |Driver-managed |Asks Oracle Database to omit delete notifications.
 
 |`DCN_CLIENT_INIT_REGID` |Unsupported |Reattaches to an existing reliable registration; Micronaut Data does not manage ownership of reattached registrations.
-|`NTF_TIMEOUT` |Unsupported |A finite timeout could expire a listener while its application is still running. Micronaut Data sets this property to `0`; do not set it in the annotation or datasource-level `oracle.jdbc.dcnOptions`.
 |`NTF_GROUPING_VALUE` |Unsupported |Sets the time interval for grouped notifications.
 |`NTF_GROUPING_TYPE` |Unsupported |Chooses summary or last-event grouping output.
 |`NTF_GROUPING_START_TIME` |Unsupported |Sets when notification grouping starts.
@@ -199,7 +199,7 @@ These restrictions apply to annotation properties and to datasource-level `oracl
 
 == Registration Lifetime and Recovery
 
-Micronaut Data does not periodically replace registrations. It keeps each registration active until shutdown, Oracle Database deregisters it, or the JDBC driver reports that its notification connection has failed. A one-shot registration configured with `NTF_QOS_PURGE_ON_NTFN` closes after its first data notification.
+Micronaut Data does not periodically replace registrations. With the default `NTF_TIMEOUT=0`, each registration remains active until shutdown, Oracle Database deregisters it, or the JDBC driver reports that its notification connection has failed. A positive `NTF_TIMEOUT` expires the registration after the configured number of seconds, even if the application is still running. A one-shot registration configured with `NTF_QOS_PURGE_ON_NTFN` closes after its first data notification.
 
 If Oracle Database deregisters a registration or a registered QRCN query, Micronaut Data closes that subscription. The application must correct the database or registration condition and restart the application if a new registration is required.
 

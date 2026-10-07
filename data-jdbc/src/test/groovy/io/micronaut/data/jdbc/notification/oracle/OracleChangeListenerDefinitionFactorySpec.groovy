@@ -68,6 +68,7 @@ class OracleChangeListenerDefinitionFactorySpec extends Specification {
                         [name: OracleConnection.DCN_QUERY_CHANGE_NOTIFICATION, value: 'true'],
                         [name: OracleConnection.DCN_CLIENT_INIT_CONNECTION, value: 'false'],
                         [name: OracleConnection.NTF_QOS_PURGE_ON_NTFN, value: 'true'],
+                        [name: OracleConnection.NTF_TIMEOUT, value: '60'],
                         [name: 'CUSTOM_PROPERTY', value: 'custom-value']
                 ]
         ))
@@ -82,7 +83,7 @@ class OracleChangeListenerDefinitionFactorySpec extends Specification {
         definition.registrationProperties().getProperty(OracleConnection.NTF_QOS_PURGE_ON_NTFN) == 'true'
         definition.registrationProperties().getProperty('CUSTOM_PROPERTY') == 'custom-value'
         definition.registrationProperties().getProperty(OracleConnection.DCN_NOTIFY_ROWIDS) == 'true'
-        definition.registrationProperties().getProperty(OracleConnection.NTF_TIMEOUT) == '0'
+        definition.registrationProperties().getProperty(OracleConnection.NTF_TIMEOUT) == '60'
         0 * operations.execute(_)
     }
 

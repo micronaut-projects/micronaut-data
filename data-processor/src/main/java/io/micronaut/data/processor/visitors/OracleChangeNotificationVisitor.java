@@ -245,7 +245,13 @@ public final class OracleChangeNotificationVisitor implements TypeElementVisitor
         } else if ("DCN_NOTIFY_ROWIDS".equals(name) && !"true".equalsIgnoreCase(value)) {
             error = "requires " + name + " to be true so row-level operation and ROWID details are available";
         } else if (NOTIFICATION_TIMEOUT.equals(name)) {
-            error = NOTIFICATION_TIMEOUT + ": registration timeouts are not supported for application-lifetime listeners";
+            try {
+                if (Integer.parseInt(value) < 0) {
+                    error = NOTIFICATION_TIMEOUT + " must be a non-negative integer number of seconds";
+                }
+            } catch (NumberFormatException e) {
+                error = NOTIFICATION_TIMEOUT + " must be a non-negative integer number of seconds";
+            }
         } else if ("DCN_CLIENT_INIT_REGID".equals(name)) {
             error = name + ": reusing an existing reliable DCN registration is not supported";
         } else if ("NTF_GROUPING_CLASS".equals(name) && !"NTF_GROUPING_CLASS_NONE".equals(value)) {

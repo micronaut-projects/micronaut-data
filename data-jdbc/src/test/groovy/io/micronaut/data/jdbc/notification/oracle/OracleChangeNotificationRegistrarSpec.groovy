@@ -55,8 +55,8 @@ class OracleChangeNotificationRegistrarSpec extends Specification {
 
         where:
         option                                         | overrideValue
-        OracleConnection.NTF_TIMEOUT                   | '120'
-        OracleConnection.NTF_TIMEOUT                   | '60'
+        OracleConnection.NTF_TIMEOUT                   | '-1'
+        OracleConnection.NTF_TIMEOUT                   | 'invalid'
         OracleConnection.DCN_NOTIFY_ROWIDS             | 'false'
         OracleConnection.DCN_NOTIFY_CHANGELAG          | '1'
         OracleConnection.DCN_QUERY_CHANGE_NOTIFICATION | 'true'
@@ -69,6 +69,26 @@ class OracleChangeNotificationRegistrarSpec extends Specification {
         OracleConnection.NTF_GROUPING_START_TIME       | 'tomorrow'
         OracleConnection.DCN_PULL_NOTIFICATIONS        | 'true'
         OracleConnection.DCN_PULL_QUEUE_NAME           | 'CHANGES'
+    }
+
+    void "accepts a datasource timeout and the resulting effective registration timeout"() {
+        given:
+        def requested = new Properties()
+        requested.setProperty(OracleConnection.NTF_TIMEOUT, '0')
+        requested.setProperty(OracleConnection.DCN_NOTIFY_ROWIDS, 'true')
+        def definition = new OracleChangeListenerDefinition(null, Mock(ExecutableMethod), null, null, null, requested)
+        def connectionProperties = new Properties()
+        connectionProperties.setProperty(OracleConnection.NTF_TIMEOUT, '120')
+        def effectiveOptions = new Properties()
+        effectiveOptions.setProperty(OracleConnection.NTF_TIMEOUT, '120')
+        effectiveOptions.setProperty(OracleConnection.DCN_NOTIFY_ROWIDS, 'true')
+
+        when:
+        OracleChangeNotificationOptionsValidator.validateConnectionOptions(connectionProperties, definition, 'default')
+        OracleChangeNotificationOptionsValidator.validateEffectiveOptions(effectiveOptions, definition, 'default')
+
+        then:
+        noExceptionThrown()
     }
 
     void "accepts non-conflicting effective driver options"() {
@@ -157,8 +177,8 @@ class OracleChangeNotificationRegistrarSpec extends Specification {
         requested.setProperty(OracleConnection.NTF_TIMEOUT, '0')
         requested.setProperty(OracleConnection.DCN_NOTIFY_ROWIDS, 'true')
         def effectiveOptions = new Properties()
-        effectiveOptions.setProperty(OracleConnection.NTF_TIMEOUT, '60')
         effectiveOptions.setProperty(OracleConnection.DCN_NOTIFY_ROWIDS, 'true')
+        effectiveOptions.setProperty(OracleConnection.DCN_QUERY_CHANGE_NOTIFICATION, 'true')
         def definition = new OracleChangeListenerDefinition(null, method, null, 'SELECT * FROM BOOK', null, requested)
         def registrar = registrar(operations)
         def subscription = new OracleChangeNotificationSubscription('default', definition, registrar,
@@ -175,7 +195,7 @@ class OracleChangeNotificationRegistrarSpec extends Specification {
 
         then:
         def failure = thrown(IllegalStateException)
-        failure.message.contains('effective NTF_TIMEOUT [60] conflicts with listener setting [0]')
+        failure.message.contains('effective DCN_QUERY_CHANGE_NOTIFICATION [true] conflicts with listener setting [false]')
         1 * oracleConnection.unregisterDatabaseChangeNotification(registration)
         0 * connection.createStatement()
     }

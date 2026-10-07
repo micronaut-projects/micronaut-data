@@ -321,6 +321,19 @@ class BookListener''')
         beanDefinition.getRequiredMethod('changed', ChangeEvent).hasAnnotation(OracleChangeListenerQuery)
     }
 
+    void "test finite registration timeout compiles"() {
+        when:
+        def beanDefinition = buildBeanDefinition('test.BookListener', listenerSource('''
+    @ChangeListener
+    @OracleChangeNotification(properties = @OracleChangeNotification.Property(name = "NTF_TIMEOUT", value = "60"))
+    void changed(ChangeEvent<Book> event) {
+    }
+'''))
+
+        then:
+        beanDefinition.getRequiredMethod('changed', ChangeEvent).hasAnnotation(OracleChangeListenerQuery)
+    }
+
     @Unroll
     void "test invalid Oracle notification configuration fails compilation: #description"() {
         when:
@@ -341,7 +354,8 @@ class BookListener''')
         'select without QCN' | '@OracleChangeNotification(select = "id")'                                                                                                                     | 'may specify select or where only when DCN_QUERY_CHANGE_NOTIFICATION is true'
         'where without QCN'  | '@OracleChangeNotification(where = "book_title = \'Query Change Notification\'")'                                                                              | 'may specify select or where only when DCN_QUERY_CHANGE_NOTIFICATION is true'
         'nonzero change lag' | '@OracleChangeNotification(properties = @OracleChangeNotification.Property(name = "DCN_NOTIFY_CHANGELAG", value = "1"))'                                       | 'requires DCN_NOTIFY_CHANGELAG to be 0'
-        'raw timeout'        | '@OracleChangeNotification(properties = @OracleChangeNotification.Property(name = "NTF_TIMEOUT", value = "60"))'                                               | 'registration timeouts are not supported for application-lifetime listeners'
+        'negative timeout'   | '@OracleChangeNotification(properties = @OracleChangeNotification.Property(name = "NTF_TIMEOUT", value = "-1"))'                                               | 'NTF_TIMEOUT must be a non-negative integer number of seconds'
+        'invalid timeout'    | '@OracleChangeNotification(properties = @OracleChangeNotification.Property(name = "NTF_TIMEOUT", value = "invalid"))'                                          | 'NTF_TIMEOUT must be a non-negative integer number of seconds'
         'aggregate select'   | '@OracleChangeNotification(select = "COUNT(*)", properties = @OracleChangeNotification.Property(name = "DCN_QUERY_CHANGE_NOTIFICATION", value = "true"))'      | 'unsupported selection [COUNT(*)]'
         'expression select'  | '@OracleChangeNotification(select = "UPPER(title)", properties = @OracleChangeNotification.Property(name = "DCN_QUERY_CHANGE_NOTIFICATION", value = "true"))'  | 'unsupported selection [UPPER(title)]'
         'aliased select'     | '@OracleChangeNotification(select = "title AS name", properties = @OracleChangeNotification.Property(name = "DCN_QUERY_CHANGE_NOTIFICATION", value = "true"))' | 'unsupported selection [title AS name]'

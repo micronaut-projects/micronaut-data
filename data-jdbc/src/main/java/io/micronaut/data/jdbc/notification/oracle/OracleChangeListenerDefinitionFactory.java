@@ -35,8 +35,8 @@ import java.util.Properties;
  *
  * <p>The factory resolves the entity's mapped Oracle table, reads the compile-time generated
  * {@code ROWID} reload query, copies the annotation's registration properties, defaults to a
- * client-initiated connection, requests row identifiers, and sets the registration timeout to
- * zero so it does not expire. It also builds the query associated with the registration.</p>
+ * client-initiated connection, requests row identifiers, and defaults the registration timeout to
+ * zero when no timeout is configured. It also builds the query associated with the registration.</p>
  *
  * <p>The annotation processor validates annotation-level listener settings at compile time.
  * Runtime checks here identify missing generated metadata before registration is attempted.</p>
@@ -95,7 +95,7 @@ final class OracleChangeListenerDefinitionFactory {
         }
         properties.putIfAbsent(OracleConnection.DCN_CLIENT_INIT_CONNECTION, "true");
         properties.setProperty(OracleConnection.DCN_NOTIFY_ROWIDS, "true");
-        properties.setProperty(OracleConnection.NTF_TIMEOUT, "0");
+        properties.putIfAbsent(OracleConnection.NTF_TIMEOUT, "0");
         return properties;
     }
 
