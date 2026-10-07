@@ -19,6 +19,8 @@ import io.micronaut.context.ApplicationContext
 import io.micronaut.data.annotation.Id
 import io.micronaut.data.annotation.Index
 import io.micronaut.data.annotation.MappedEntity
+import io.micronaut.data.annotation.Query
+import io.micronaut.data.connection.jdbc.advice.DelegatingDataSource
 import io.micronaut.data.exceptions.DataIntegrityViolationException
 import io.micronaut.data.exceptions.EntityExistsException
 import io.micronaut.data.jdbc.annotation.JdbcRepository
@@ -29,10 +31,11 @@ import spock.lang.AutoCleanup
 import spock.lang.Shared
 import spock.lang.Specification
 
+import javax.sql.DataSource
 import java.sql.SQLException
 
 /**
- * Constraint violations of entity operations executed with a RETURNING clause
+ * Constraint violations of entity and query operations executed with a RETURNING clause
  * must be classified the same way as those of plain entity operations.
  */
 class PostgresReturningExceptionsSpec extends Specification implements PostgresTestPropertyProvider {
@@ -49,8 +52,28 @@ class PostgresReturningExceptionsSpec extends Specification implements PostgresT
     @Shared
     ReturningItemRepository repository = ctx.getBean(ReturningItemRepository)
 
+    @Shared
+    DataSource dataSource = DelegatingDataSource.unwrapDataSource(ctx.getBean(DataSource))
+
+    void setupSpec() {
+        executeSql('CREATE TABLE IF NOT EXISTS returning_item_ref (item_id BIGINT NOT NULL REFERENCES returning_item (id))')
+    }
+
+    void cleanupSpec() {
+        executeSql('DROP TABLE IF EXISTS returning_item_ref')
+    }
+
     void cleanup() {
+        executeSql('DELETE FROM returning_item_ref')
         repository.deleteAll()
+    }
+
+    private void executeSql(String sql) {
+        dataSource.connection.withCloseable { connection ->
+            connection.createStatement().withCloseable { statement ->
+                statement.execute(sql)
+            }
+        }
     }
 
     void "plain insert of an existing id throws EntityExistsException"() {
@@ -100,6 +123,45 @@ class PostgresReturningExceptionsSpec extends Specification implements PostgresT
             !(e instanceof EntityExistsException)
             e.cause instanceof SQLException
     }
+
+    void "custom insert returning query of an existing id throws EntityExistsException"() {
+        given:
+            repository.customInsertReturning(1L, "A", "A")
+
+        when:
+            repository.customInsertReturning(1L, "B", "B")
+
+        then:
+            def e = thrown(EntityExistsException)
+            e.cause instanceof SQLException
+    }
+
+    void "update returning a property violating a unique index throws EntityExistsException"() {
+        given:
+            repository.insert(new ReturningItem(id: 1L, code: "A", name: "A"))
+            repository.insert(new ReturningItem(id: 2L, code: "B", name: "B"))
+
+        when:
+            repository.updateReturningCode(2L, "A")
+
+        then:
+            def e = thrown(EntityExistsException)
+            e.cause instanceof SQLException
+    }
+
+    void "delete returning a referenced row throws DataIntegrityViolationException"() {
+        given:
+            repository.insert(new ReturningItem(id: 1L, code: "A", name: "A"))
+            executeSql('INSERT INTO returning_item_ref (item_id) VALUES (1)')
+
+        when:
+            repository.deleteReturning(1L)
+
+        then:
+            def e = thrown(DataIntegrityViolationException)
+            !(e instanceof EntityExistsException)
+            e.cause instanceof SQLException
+    }
 }
 
 @MappedEntity("returning_item")
@@ -117,4 +179,11 @@ interface ReturningItemRepository extends CrudRepository<ReturningItem, Long> {
     ReturningItem insertReturning(ReturningItem entity)
 
     ReturningItem updateReturning(ReturningItem entity)
+
+    @Query("INSERT INTO returning_item (id, code, name) VALUES (:id, :code, :name) RETURNING *")
+    ReturningItem customInsertReturning(Long id, String code, String name)
+
+    String updateReturningCode(@Id Long id, String code)
+
+    List<ReturningItem> deleteReturning(Long id)
 }

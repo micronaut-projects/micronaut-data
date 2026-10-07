@@ -466,12 +466,16 @@ public final class DefaultJdbcRepositoryOperations extends AbstractSqlRepository
                 ).map(cs, preparedQuery.getResultType()));
                 return result;
             } catch (SQLException e) {
-                throw new DataAccessException("Error executing Oracle SQL RETURNING: " + e.getMessage(), e);
+                throw sqlExceptionToDataAccessException(e, preparedQuery.getDialect(),
+                    sqlException -> new DataAccessException("Error executing Oracle SQL RETURNING: " + sqlException.getMessage(), sqlException));
             }
         }
         try (PreparedStatement ps = prepareStatement(connection::prepareStatement, preparedQuery, !applyPageable, false)) {
             preparedQuery.bindParameters(new JdbcParameterBinder(connection, ps, preparedQuery));
             return findAll(preparedQuery, ps);
+        } catch (SQLException e) {
+            throw sqlExceptionToDataAccessException(e, preparedQuery.getDialect(),
+                sqlException -> new DataAccessException("Error executing SQL Query: " + preparedQuery.getQuery() + " " + sqlException.getMessage(), sqlException));
         } catch (Throwable e) {
             throw new DataAccessException("Error executing SQL Query: " + preparedQuery.getQuery() + " " + e.getMessage(), e);
         }
