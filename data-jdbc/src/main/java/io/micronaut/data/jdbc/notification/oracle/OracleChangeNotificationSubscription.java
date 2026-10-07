@@ -55,6 +55,8 @@ final class OracleChangeNotificationSubscription {
     private final TaskScheduler taskScheduler;
     private final int maxRetries;
     private final Duration retryDelay;
+    private final int retryDelayMultiplier;
+    private final Duration maxRetryDelay;
 
     private @Nullable DatabaseChangeRegistration registration;
     private @Nullable ScheduledFuture<?> recoveryRetryTask;
@@ -81,6 +83,8 @@ final class OracleChangeNotificationSubscription {
         this.taskScheduler = taskScheduler;
         this.maxRetries = recoveryConfiguration.getMaxRetries();
         this.retryDelay = recoveryConfiguration.getRetryDelay();
+        this.retryDelayMultiplier = recoveryConfiguration.getRetryDelayMultiplier();
+        this.maxRetryDelay = recoveryConfiguration.getMaxRetryDelay();
         this.dispatcher = new OracleChangeNotificationDispatcher(
             dataSourceName, definition, beanContext, blockingExecutor, taskTracker,
             this::handleRegistrationPurged, this::handleRegistrationDeregistered,
@@ -226,16 +230,36 @@ final class OracleChangeNotificationSubscription {
             return;
         }
         try {
-            recoveryRetryTask = taskScheduler.schedule(
-                retryDelay,
-                () -> submitRecoveryTask(retryCount, failedRegId));
+            Duration delay = recoveryRetryDelay(retryCount);
+            recoveryRetryTask = taskScheduler.schedule(delay, () -> submitRecoveryTask(retryCount, failedRegId));
             LOG.warn("Scheduled DCN receiver recovery retry after [{}] for datasource [{}], listener method [{}], and registration [{}]",
-                retryDelay, dataSourceName, methodDescription, failedRegId);
+                delay, dataSourceName, methodDescription, failedRegId);
         } catch (RuntimeException schedulingFailure) {
             LOG.error("Unable to schedule DCN receiver recovery for registration [{}], datasource [{}], "
                     + "and listener method [{}]; automatic recovery has stopped and the listener remains unavailable",
                 failedRegId, dataSourceName, methodDescription, schedulingFailure);
         }
+    }
+
+    /**
+     * Computes the capped exponential delay for a recovery retry without overflowing the duration.
+     *
+     * @param retryCount the retry number, starting at one
+     * @return the delay before this retry
+     */
+    private Duration recoveryRetryDelay(int retryCount) {
+        Duration delay = retryDelay.compareTo(maxRetryDelay) < 0 ? retryDelay : maxRetryDelay;
+        for (int retry = 1; retry < retryCount && retryDelayMultiplier > 1 && delay.compareTo(maxRetryDelay) < 0; retry++) {
+            try {
+                delay = delay.multipliedBy(retryDelayMultiplier);
+            } catch (ArithmeticException e) {
+                return maxRetryDelay;
+            }
+            if (delay.compareTo(maxRetryDelay) >= 0) {
+                return maxRetryDelay;
+            }
+        }
+        return delay;
     }
 
     /**

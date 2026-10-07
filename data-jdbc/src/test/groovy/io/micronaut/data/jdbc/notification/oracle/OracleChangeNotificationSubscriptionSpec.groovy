@@ -225,7 +225,9 @@ class OracleChangeNotificationSubscriptionSpec extends Specification {
             }
         })
         List<Runnable> scheduledTasks = []
-        def configuration = new OracleRegistrationRecoveryConfiguration(maxRetries: maxRetries, retryDelay: Duration.ofMillis(250))
+        List<Duration> scheduledDelays = []
+        def configuration = new OracleRegistrationRecoveryConfiguration(maxRetries: maxRetries, retryDelay: initialDelay,
+            retryDelayMultiplier: multiplier, maxRetryDelay: maximumDelay)
         def scheduler = Mock(TaskScheduler)
         def subscription = subscription(fixture.registrar, scheduler, new OracleChangeNotificationTaskTracker(),
             { Runnable command -> command.run() } as Executor, { ChangeEvent<?> ignored -> }, configuration)
@@ -240,7 +242,9 @@ class OracleChangeNotificationSubscriptionSpec extends Specification {
         then:
         fixture.registrationIndex.get() == maxRetries + 2
         scheduledTasks.size() == maxRetries
-        maxRetries * scheduler.schedule(Duration.ofMillis(250), _ as Runnable) >> { Duration ignored, Runnable task ->
+        scheduledDelays == expectedDelays
+        maxRetries * scheduler.schedule(_ as Duration, _ as Runnable) >> { Duration delay, Runnable task ->
+            scheduledDelays.add(delay)
             scheduledTasks.add(task)
             Mock(ScheduledFuture)
         }
@@ -253,7 +257,14 @@ class OracleChangeNotificationSubscriptionSpec extends Specification {
         noExceptionThrown()
 
         where:
-        maxRetries << [0, 1, 3]
+        maxRetries | initialDelay                 | multiplier | maximumDelay                       | expectedDelays
+        0          | Duration.ofMillis(250)       | 2          | Duration.ofSeconds(60)              | []
+        1          | Duration.ofMillis(250)       | 2          | Duration.ofSeconds(60)              | [Duration.ofMillis(250)]
+        3          | Duration.ofMillis(250)       | 1          | Duration.ofSeconds(60)              | [250, 250, 250].collect { Duration.ofMillis(it) }
+        5          | Duration.ofMillis(250)       | 2          | Duration.ofSeconds(1)               | [250, 500, 1000, 1000, 1000].collect { Duration.ofMillis(it) }
+        10         | Duration.ofSeconds(1)        | 2          | Duration.ofSeconds(60)              | [1, 2, 4, 8, 16, 32, 60, 60, 60, 60].collect { Duration.ofSeconds(it) }
+        2          | Duration.ofSeconds(10)       | 2          | Duration.ofSeconds(1)               | [Duration.ofSeconds(1), Duration.ofSeconds(1)]
+        2          | Duration.ofSeconds(Long.MAX_VALUE.intdiv(2)) | 3 | Duration.ofSeconds(Long.MAX_VALUE) | [initialDelay, maximumDelay]
     }
 
     void "stops retrying when scheduling a recovery retry fails"() {

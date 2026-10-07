@@ -38,11 +38,13 @@ public final class OracleRegistrationRecoveryConfiguration {
      */
     public static final String PREFIX = "micronaut.data.jdbc.notifications.oracle.registration-recovery";
 
-    private int maxRetries = 3;
-    private Duration retryDelay = Duration.ofSeconds(10);
+    private int maxRetries = 10;
+    private Duration retryDelay = Duration.ofSeconds(1);
+    private int retryDelayMultiplier = 2;
+    private Duration maxRetryDelay = Duration.ofSeconds(60);
 
     /**
-     * Returns the number of retries after the initial recovery attempt. Defaults to three.
+     * Returns the number of retries after the initial recovery attempt. Defaults to ten.
      *
      * @return the maximum number of retries
      */
@@ -64,7 +66,7 @@ public final class OracleRegistrationRecoveryConfiguration {
     }
 
     /**
-     * Returns the delay between recovery attempts. Defaults to ten seconds.
+     * Returns the initial retry delay. Defaults to one second.
      *
      * @return the retry delay
      */
@@ -73,7 +75,8 @@ public final class OracleRegistrationRecoveryConfiguration {
     }
 
     /**
-     * Sets the delay before each retry of a failed recovery attempt.
+     * Sets the delay before the first retry of a failed recovery attempt. Subsequent delays are
+     * multiplied by {@link #getRetryDelayMultiplier()} and capped at {@link #getMaxRetryDelay()}.
      *
      * @param retryDelay the positive retry delay
      * @throws IllegalArgumentException if the delay is zero or negative
@@ -84,5 +87,50 @@ public final class OracleRegistrationRecoveryConfiguration {
             throw new IllegalArgumentException("retry-delay must be greater than zero");
         }
         this.retryDelay = retryDelay;
+    }
+
+    /**
+     * Returns the multiplier applied to the delay after each retry. Defaults to two.
+     *
+     * @return the retry delay multiplier
+     */
+    public int getRetryDelayMultiplier() {
+        return retryDelayMultiplier;
+    }
+
+    /**
+     * Sets the multiplier applied to the delay after each retry. One uses a fixed delay.
+     *
+     * @param retryDelayMultiplier the integer multiplier, at least one
+     * @throws IllegalArgumentException if the multiplier is less than one
+     */
+    public void setRetryDelayMultiplier(int retryDelayMultiplier) {
+        if (retryDelayMultiplier < 1) {
+            throw new IllegalArgumentException("retry-delay-multiplier must be greater than or equal to one");
+        }
+        this.retryDelayMultiplier = retryDelayMultiplier;
+    }
+
+    /**
+     * Returns the maximum delay before a recovery retry. Defaults to sixty seconds.
+     *
+     * @return the maximum retry delay
+     */
+    public Duration getMaxRetryDelay() {
+        return maxRetryDelay;
+    }
+
+    /**
+     * Sets the upper bound for every retry delay, including the first retry.
+     *
+     * @param maxRetryDelay the positive maximum retry delay
+     * @throws IllegalArgumentException if the delay is zero or negative
+     */
+    public void setMaxRetryDelay(Duration maxRetryDelay) {
+        Objects.requireNonNull(maxRetryDelay, "maxRetryDelay");
+        if (maxRetryDelay.isZero() || maxRetryDelay.isNegative()) {
+            throw new IllegalArgumentException("max-retry-delay must be greater than zero");
+        }
+        this.maxRetryDelay = maxRetryDelay;
     }
 }
