@@ -30,11 +30,18 @@ Passing `null` as the entity or the entities to a repository method, for example
 
 Code that caught `IllegalStateException` for this case should catch `IllegalArgumentException` instead.
 
-=== Criteria delete and update with an empty conjunction affect all rows
+=== Criteria delete and update with an empty conjunction or disjunction
 
-An empty conjunction (`criteriaBuilder.and()`) as the restriction of a criteria delete or update in JDBC, R2DBC and MongoDB repositories now means no restriction, like in a criteria query: `deleteAll` and `updateAll` delete or update every row. Previously, JDBC and R2DBC repositories rendered an invalid `WHERE` clause and the statement failed. An empty disjunction (`criteriaBuilder.or()`) matches no rows.
+As the restriction of a criteria delete or update, an empty conjunction (`criteriaBuilder.and()`) now means no restriction and an empty disjunction (`criteriaBuilder.or()`) matches nothing, like in a criteria query:
+
+* In JDBC and R2DBC repositories, `deleteAll` and `updateAll` with an empty conjunction delete or update every row. Previously, they rendered an invalid `WHERE` clause and the statement failed, as with an empty disjunction.
+* In MongoDB repositories, an empty disjunction used to render no filter, so `deleteAll` and `updateAll` deleted or updated every document. It now matches no documents. An empty conjunction still matches every document, as before.
 
 Code that builds the restriction from a list of predicates that can be empty should check the list before calling `deleteAll` or `updateAll`.
+
+=== Repositories whose lifecycle methods use different entities
+
+When a repository doesn't declare its root entity, for example because it doesn't extend `GenericRepository<E, ID>`, the methods that need one, such as `countById`, use the entity of the lifecycle methods (`@Insert`, `@Update`, `@Upsert`, `@Delete`). If those methods use different entities, such a method now fails to compile. Previously, it silently used the entity of the first lifecycle method, so the result depended on the declaration order. Declare the root entity, for example by extending `GenericRepository<E, ID>`.
 
 == 5.2
 
