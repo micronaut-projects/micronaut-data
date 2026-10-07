@@ -32,7 +32,9 @@ import reactor.util.context.ContextView;
 
 import java.util.Objects;
 import java.util.Optional;
+import java.util.concurrent.Executor;
 import java.util.function.Function;
+import java.util.function.Supplier;
 
 /**
  * The reactive MongoDB connection operations implementation.
@@ -63,6 +65,21 @@ public abstract class AbstractReactorConnectionOperations<C> implements ReactorC
     @NonNull
     protected abstract Publisher<Void> closeConnection(@NonNull C connection, @NonNull ConnectionDefinition definition);
 
+    /**
+     * Returns the executor a connection that was just opened must be used on, for a connection bound to a thread.
+     * It is invoked when the connection is emitted by {@link #openConnection(ConnectionDefinition)}, so an implementation
+     * can capture the opening thread. Operations on the connection, including closing it, run on the executor.
+     *
+     * @param connection The connection
+     * @param definition The connection definition
+     * @return The executor, or {@code null} if the connection can be used from any thread
+     * @since 5.3.0
+     */
+    @Nullable
+    protected Executor connectionExecutor(@NonNull C connection, @NonNull ConnectionDefinition definition) {
+        return null;
+    }
+
     @Override
     public boolean managesConnection(ConnectionStatus<C> connectionStatus) {
         if (connectionStatus instanceof DefaultReactiveConnectionStatus<C> reactiveConnectionStatus) {
@@ -85,11 +102,11 @@ public abstract class AbstractReactorConnectionOperations<C> implements ReactorC
                                           @NonNull Function<ConnectionStatus<C>, Flux<T>> callback) {
         Objects.requireNonNull(callback, "Callback cannot be null");
         return Flux.deferContextual(contextView -> {
-            C connection = findConnection(contextView);
-            if (connection != null) {
+            ConnectionStatus<C> existing = findConnectionStatus(contextView).orElse(null);
+            if (existing != null) {
                 return switch (definition.getPropagationBehavior()) {
                     case REQUIRED, MANDATORY ->
-                        existingConnectionFlux(definition, callback, connection);
+                        existingConnectionFlux(definition, callback, existing);
                     case REQUIRES_NEW -> openConnectionFlux(definition, callback);
                 };
             }
@@ -100,17 +117,17 @@ public abstract class AbstractReactorConnectionOperations<C> implements ReactorC
         });
     }
 
-    private <T> Flux<T> existingConnectionFlux(ConnectionDefinition definition, Function<ConnectionStatus<C>, Flux<T>> callback, C clientSession) {
-        return applyCallbackFlux(callback, new DefaultReactiveConnectionStatus<>(clientSession, definition, this, false));
+    private <T> Flux<T> existingConnectionFlux(ConnectionDefinition definition, Function<ConnectionStatus<C>, Flux<T>> callback, ConnectionStatus<C> existing) {
+        return applyCallbackFlux(callback, new DefaultReactiveConnectionStatus<>(existing.getConnection(), definition, this, false, executorOf(existing)));
     }
 
     private <T> Flux<T> openConnectionFlux(ConnectionDefinition definition, Function<ConnectionStatus<C>, Flux<T>> callback) {
         return Flux.usingWhen(
-            Mono.from(openConnection(definition)).map(connection -> new DefaultReactiveConnectionStatus<>(connection, definition, this, true)),
+            Mono.from(openConnection(definition)).map(connection -> newConnectionStatus(connection, definition)),
             connectionStatus -> applyCallbackFlux(callback, connectionStatus).contextWrite(ctx -> addClientSession(ctx, connectionStatus)),
-            connectionStatus -> connectionStatus.onComplete(() -> closeConnection(connectionStatus.getConnection(), definition)),
-            (connectionStatus, throwable) -> connectionStatus.onError(throwable, () -> closeConnection(connectionStatus.getConnection(), definition)),
-            connectionStatus -> connectionStatus.onCancel(() -> closeConnection(connectionStatus.getConnection(), definition))
+            connectionStatus -> connectionStatus.onComplete(closer(connectionStatus)),
+            (connectionStatus, throwable) -> connectionStatus.onError(throwable, closer(connectionStatus)),
+            connectionStatus -> connectionStatus.onCancel(closer(connectionStatus))
         );
     }
 
@@ -120,11 +137,11 @@ public abstract class AbstractReactorConnectionOperations<C> implements ReactorC
                                           @NonNull Function<ConnectionStatus<C>, Mono<T>> callback) {
         Objects.requireNonNull(callback, "Callback cannot be null");
         return Mono.deferContextual(contextView -> {
-            C connection = findConnection(contextView);
-            if (connection != null) {
+            ConnectionStatus<C> existing = findConnectionStatus(contextView).orElse(null);
+            if (existing != null) {
                 return switch (definition.getPropagationBehavior()) {
                     case REQUIRED, MANDATORY ->
-                        existingConnectionMono(definition, callback, connection);
+                        existingConnectionMono(definition, callback, existing);
                     case REQUIRES_NEW -> openConnectionMono(definition, callback);
                 };
             }
@@ -135,18 +152,31 @@ public abstract class AbstractReactorConnectionOperations<C> implements ReactorC
         });
     }
 
-    private <T> Mono<T> existingConnectionMono(ConnectionDefinition definition, Function<ConnectionStatus<C>, Mono<T>> callback, C clientSession) {
-        return applyCallbackMono(callback, new DefaultReactiveConnectionStatus<>(clientSession, definition, this, false));
+    private <T> Mono<T> existingConnectionMono(ConnectionDefinition definition, Function<ConnectionStatus<C>, Mono<T>> callback, ConnectionStatus<C> existing) {
+        return applyCallbackMono(callback, new DefaultReactiveConnectionStatus<>(existing.getConnection(), definition, this, false, executorOf(existing)));
     }
 
     private <T> Mono<T> openConnectionMono(ConnectionDefinition definition, Function<ConnectionStatus<C>, Mono<T>> callback) {
         return Mono.usingWhen(
-            Mono.from(openConnection(definition)).map(connection -> new DefaultReactiveConnectionStatus<>(connection, definition, this, true)),
+            Mono.from(openConnection(definition)).map(connection -> newConnectionStatus(connection, definition)),
             connectionStatus -> applyCallbackMono(callback, connectionStatus).contextWrite(ctx -> addClientSession(ctx, connectionStatus)),
-            connectionStatus -> connectionStatus.onComplete(() -> closeConnection(connectionStatus.getConnection(), definition)),
-            (connectionStatus, throwable) -> connectionStatus.onError(throwable, () -> closeConnection(connectionStatus.getConnection(), definition)),
-            connectionStatus -> connectionStatus.onCancel(() -> closeConnection(connectionStatus.getConnection(), definition))
+            connectionStatus -> connectionStatus.onComplete(closer(connectionStatus)),
+            (connectionStatus, throwable) -> connectionStatus.onError(throwable, closer(connectionStatus)),
+            connectionStatus -> connectionStatus.onCancel(closer(connectionStatus))
         );
+    }
+
+    private DefaultReactiveConnectionStatus<C> newConnectionStatus(C connection, ConnectionDefinition definition) {
+        return new DefaultReactiveConnectionStatus<>(connection, definition, this, true, connectionExecutor(connection, definition));
+    }
+
+    private Supplier<Publisher<Void>> closer(DefaultReactiveConnectionStatus<C> connectionStatus) {
+        return () -> connectionStatus.onConnectionExecutor(() -> Mono.from(closeConnection(connectionStatus.getConnection(), connectionStatus.getDefinition())));
+    }
+
+    @Nullable
+    private static <C> Executor executorOf(ConnectionStatus<C> connectionStatus) {
+        return connectionStatus instanceof DefaultReactiveConnectionStatus<C> status ? status.getExecutor() : null;
     }
 
     private NoConnectionException noConnectionFound() {
@@ -159,13 +189,6 @@ public abstract class AbstractReactorConnectionOperations<C> implements ReactorC
             context,
             status
         );
-    }
-
-    @Nullable
-    private C findConnection(@NonNull ContextView contextView) {
-        return findConnectionStatus(contextView)
-            .map(ConnectionStatus::getConnection)
-            .orElse(null);
     }
 
     private <T> Flux<T> applyCallbackFlux(Function<ConnectionStatus<C>, Flux<T>> callback, DefaultReactiveConnectionStatus<C> connectionStatus) {

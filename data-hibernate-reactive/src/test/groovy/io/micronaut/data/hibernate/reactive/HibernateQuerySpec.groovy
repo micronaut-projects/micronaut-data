@@ -28,6 +28,7 @@ import io.micronaut.data.tck.entities.EntityIdClass
 import io.micronaut.data.tck.entities.EntityWithIdClass
 import io.micronaut.data.tck.entities.Student
 import io.micronaut.test.extensions.spock.annotation.MicronautTest
+import io.micronaut.transaction.reactive.ReactorReactiveTransactionOperations
 import jakarta.inject.Inject
 import jakarta.persistence.criteria.Join
 import jakarta.persistence.criteria.JoinType
@@ -45,6 +46,10 @@ class HibernateQuerySpec extends Specification implements PostgresHibernateReact
     @Shared
     @Inject
     BookRepository bookRepository
+
+    @Shared
+    @Inject
+    ReactorReactiveTransactionOperations<?> transactionOperations
 
     @Shared
     @Inject
@@ -426,11 +431,23 @@ class HibernateQuerySpec extends Specification implements PostgresHibernateReact
             books8a.size() == 0
     }
 
-    @PendingFeature(reason = "setParameterList method is missing")
     @Issue('https://github.com/micronaut-projects/micronaut-data/issues/1131')
     void "test IN queries with multiple parameters"() {
         when:
             def books1 = bookRepository.listNativeBooksNullableListSearchWithExtraParameter(["The Stand", "FFF"], true).collectList().block()
+        then:
+            books1.size() == 1
+    }
+
+    // The Vert.x PostgreSQL client prepares without parameter types; on 42P18 it retries with types inferred
+    // from the values, but only in auto-commit mode, because the failed statement aborts a transaction
+    @PendingFeature(reason = "PostgreSQL fails with 42P18 'could not determine data type of parameter' inside a transaction: Vert.x only retries with inferred parameter types in auto-commit mode")
+    @Issue('https://github.com/micronaut-projects/micronaut-data/issues/1131')
+    void "test IN queries with multiple parameters in a transaction"() {
+        when:
+            def books1 = transactionOperations.withTransactionFlux { status ->
+                bookRepository.listNativeBooksNullableListSearchWithExtraParameter(["The Stand", "FFF"], true)
+            }.collectList().block()
         then:
             books1.size() == 1
     }

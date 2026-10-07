@@ -17,6 +17,8 @@ dependencies {
     }
 
     implementation mnReactor.micronaut.reactor
+    // Provided at runtime by Hibernate Reactive, compiled against the same version (see consistent resolution below)
+    compileOnly "io.vertx:vertx-core"
 
     testAnnotationProcessor mn.micronaut.inject.java
     testAnnotationProcessor projects.micronautDataProcessor
@@ -51,3 +53,5 @@ micronaut {
         version = libs.versions.micronaut.testresources.get()
     }
 }
+
+configurations.compileClasspath.shouldResolveConsistentlyWith(configurations.runtimeClasspath)

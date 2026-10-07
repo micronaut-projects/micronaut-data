@@ -345,6 +345,17 @@ public abstract class AbstractReactorTransactionOperations<C> implements Reactor
 
     @NonNull
     private Publisher<Void> doCommit(@NonNull DefaultReactiveTransactionStatus<C> status) {
+        return commitOrRollbackOnly(status).as(flux -> doFinish(flux, status));
+    }
+
+    /**
+     * Commits the transaction, or rolls it back if it's marked as rollback-only.
+     *
+     * @param status The transaction status
+     * @return The publisher
+     */
+    @NonNull
+    private Flux<Void> commitOrRollbackOnly(@NonNull DefaultReactiveTransactionStatus<C> status) {
         Flux<Void> op;
         try {
             if (status.isRollbackOnly()) {
@@ -364,7 +375,7 @@ public abstract class AbstractReactorTransactionOperations<C> implements Reactor
                 exception -> status.isRollbackOnly()
                     ? Mono.error(exception)
                     : rollbackAfterPriorityCommitFailure(status, exception));
-        return op.as(flux -> doFinish(flux, status));
+        return op;
     }
 
     private Publisher<Void> rollbackAfterPriorityCommitFailure(@NonNull DefaultReactiveTransactionStatus<C> status,
@@ -391,17 +402,27 @@ public abstract class AbstractReactorTransactionOperations<C> implements Reactor
 
     @NonNull
     private Publisher<Void> doRollback(@NonNull DefaultReactiveTransactionStatus<C> status, @NonNull Throwable throwable) {
+        TransactionDefinition definition = status.getTransactionDefinition();
+        if (!(throwable instanceof OracleTransactionPriorityException) && !definition.rollbackOn(throwable)) {
+            // Same as the synchronous transaction manager: the exception doesn't trigger a rollback, commit the work
+            return commitOrRollbackOnly(status)
+                .onErrorResume(commitError -> {
+                    if (commitError != throwable) {
+                        if (LOG.isWarnEnabled()) {
+                            LOG.warn("Error occurred during transaction commit: " + commitError.getMessage(), commitError);
+                        }
+                        throwable.addSuppressed(commitError);
+                    }
+                    return Mono.error(throwable);
+                })
+                .as(flux -> doFinish(flux, status));
+        }
         if (LOG.isWarnEnabled()) {
             LOG.warn("Rolling back transaction on error: " + throwable.getMessage(), throwable);
         }
         Flux<Void> abort;
         try {
-            TransactionDefinition definition = status.getTransactionDefinition();
-            if (throwable instanceof OracleTransactionPriorityException || definition.rollbackOn(throwable)) {
-                abort = Flux.from(rollbackTransaction(status.getConnectionStatus(), definition));
-            } else {
-                abort = Flux.error(throwable);
-            }
+            abort = Flux.from(rollbackTransaction(status.getConnectionStatus(), definition));
         } catch (Exception e) {
             // Sometimes an exception can be thrown creating the publishers for rollback or commit.
             // An example of this, is if the connection has been closed prematurely by the DBMS.

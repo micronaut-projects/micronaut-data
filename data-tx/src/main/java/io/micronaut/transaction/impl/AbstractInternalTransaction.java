@@ -17,6 +17,7 @@ package io.micronaut.transaction.impl;
 
 import io.micronaut.core.annotation.Internal;
 import io.micronaut.core.order.OrderUtil;
+import io.micronaut.data.connection.ConnectionSynchronization;
 import io.micronaut.transaction.exceptions.TransactionUsageException;
 import io.micronaut.transaction.support.TransactionResourceCommit;
 import io.micronaut.transaction.support.TransactionSynchronization;
@@ -43,6 +44,11 @@ public abstract class AbstractInternalTransaction<C> implements InternalTransact
     private boolean completed = false;
     @Nullable
     private TransactionResourceCommit transactionResourceCommit;
+    private boolean connectionSynchronizationsBound = false;
+    @Nullable
+    private Runnable connectionRelease;
+    @Nullable
+    private List<ConnectionSynchronization> connectionSynchronizations;
 
     /**
      * Set global rollback only.
@@ -130,8 +136,83 @@ public abstract class AbstractInternalTransaction<C> implements InternalTransact
         }
     }
 
+    // Sonar java:S1181 -- every synchronization and the release must run even if one of them throws an error
+    @SuppressWarnings("java:S1181")
     @Override
     public void cleanupAfterCompletion() {
+        List<ConnectionSynchronization> toExecute = connectionSynchronizations;
+        connectionSynchronizations = null;
+        Runnable release = connectionRelease;
+        connectionRelease = null;
+        Throwable failure = null;
+        if (toExecute != null) {
+            // Restore in the reverse order of the changes
+            for (int i = toExecute.size() - 1; i >= 0; i--) {
+                try {
+                    toExecute.get(i).executionComplete();
+                } catch (RuntimeException | Error e) {
+                    failure = addFailure(failure, e);
+                }
+            }
+        }
+        if (release != null) {
+            try {
+                release.run();
+            } catch (RuntimeException | Error e) {
+                failure = addFailure(failure, e);
+            }
+        }
+        if (failure instanceof RuntimeException runtimeException) {
+            throw runtimeException;
+        }
+        if (failure instanceof Error error) {
+            throw error;
+        }
+    }
+
+    private static Throwable addFailure(@Nullable Throwable failure, Throwable e) {
+        if (failure == null) {
+            return e;
+        }
+        failure.addSuppressed(e);
+        return failure;
+    }
+
+    @Override
+    public void registerConnectionSynchronization(@NonNull ConnectionSynchronization synchronization) {
+        if (!connectionSynchronizationsBound) {
+            getConnectionStatus().registerSynchronization(synchronization);
+            return;
+        }
+        if (connectionSynchronizations == null) {
+            connectionSynchronizations = new ArrayList<>(3);
+        }
+        connectionSynchronizations.add(synchronization);
+    }
+
+    @Override
+    public void bindConnectionSynchronizationsToTransaction() {
+        connectionSynchronizationsBound = true;
+    }
+
+    @Override
+    public void bindConnectionSynchronizationsToTransaction(@NonNull Runnable release) {
+        connectionSynchronizationsBound = true;
+        connectionRelease = release;
+    }
+
+    @Override
+    public void discardConnectionSynchronizations() {
+        connectionSynchronizations = null;
+    }
+
+    /**
+     * @return true if the transaction was started on a connection owned by an outer scope,
+     * see {@link #bindConnectionSynchronizationsToTransaction()}
+     * @since 5.3.0
+     */
+    public boolean isConnectionOwnedByOuterScope() {
+        return connectionSynchronizationsBound && connectionRelease == null;
     }
 
     @Override

@@ -11,6 +11,19 @@ A JDBC repository read method called outside of a transaction or a connection sc
 
 To restore the previous behaviour, set `datasources.<name>.read-only-connection-per-operation` to `true`, or run the reads in a read-only transaction.
 
+=== Transactions inside an existing connection scope restore the connection when they complete
+
+A transaction started inside an existing connection scope, for example within a `@Connectable` method or `ConnectionOperations#executeWrite`, now restores the JDBC read-only flag, isolation level and auto-commit when the transaction completes. Previously the connection kept the transaction's settings, for example read-only with auto-commit disabled, until the connection scope completed.
+
+=== Hibernate read-only transactions inside an existing session scope
+
+A Hibernate session opened by an outer scope, for example a `@Connectable` method, is now treated like a pre-bound session for transactions started inside it, consistent with Spring:
+
+* A read-only transaction no longer switches the session to the `MANUAL` flush mode and the default read-only entity mode. Previously, entities loaded during the read-only transaction stayed read-only in the outer scope and later changes to them were silently lost. Pending changes made earlier in the outer scope are now flushed when the read-only transaction commits: databases that enforce the JDBC read-only flag, such as MySQL and PostgreSQL, reject them, and others, such as Oracle and H2, commit them.
+* A rollback of a transaction clears the session. Entities loaded by the outer scope before the transaction become detached, so later lazy loading or change tracking on them fails.
+
+A read-only transaction that opens its own session now uses the Hibernate `MANUAL` flush mode, so the session is not flushed on commit. Previously the JPA mapping of `MANUAL` applied the `COMMIT` flush mode.
+
 === `null` entity arguments are rejected with `IllegalArgumentException`
 
 Passing `null` as the entity or the entities to a repository method, for example `save(null)`, `update(null)`, `delete(null)` or `saveAll(null)`, now fails immediately with an `IllegalArgumentException`, consistent with a `null` ID. Previously, these methods failed with an `IllegalStateException` (for example `Cannot find parameter with role: entity`) from inside the interceptor. Asynchronous and reactive repositories report the exception through the returned `CompletionStage` or `Publisher`.

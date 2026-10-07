@@ -43,11 +43,13 @@ class BrokenConnectionPropagationSpec extends spock.lang.Specification {
 
         then: "rollback fails (simulated driver or synchronization failure)"
         def ex = thrown(Throwable)
-        // The completion synchronization may now surface directly here because later
-        // rollback/reset failures are no longer expected to replace the original error.
-        assert ex instanceof io.micronaut.data.connection.exceptions.ConnectionException ||
-            ex instanceof IllegalStateException ||
-            ex.message == "Simulated sync failure at executionComplete"
+        // The rollback failure is the primary error: the connection state restore and the
+        // connection release run in the final cleanup and their failures are suppressed on it
+        assert ex instanceof io.micronaut.transaction.exceptions.TransactionSystemException
+        assert ex.message == "Could not roll back JDBC transaction"
+        def suppressed = ex.suppressed.toList()
+        assert suppressed.any { it instanceof io.micronaut.data.connection.exceptions.ConnectionException }
+        assert (suppressed + suppressed*.suppressed.flatten()).any { it.message == "Simulated sync failure at executionComplete" }
         and: "all connection synchronizations executed even when one throws"
         assert tracker.executionComplete.get() >= 1
         assert tracker.beforeClosed.get() >= 1

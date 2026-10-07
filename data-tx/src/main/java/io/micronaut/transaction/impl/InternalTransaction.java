@@ -16,6 +16,7 @@
 package io.micronaut.transaction.impl;
 
 import io.micronaut.core.annotation.Internal;
+import io.micronaut.data.connection.ConnectionSynchronization;
 import io.micronaut.transaction.TransactionStatus;
 import io.micronaut.transaction.exceptions.TransactionSuspensionNotSupportedException;
 import io.micronaut.transaction.support.TransactionResourceCommit;
@@ -89,7 +90,60 @@ public interface InternalTransaction<T> extends TransactionStatus<T> {
 
     void triggerAfterCompletion(TransactionSynchronization.Status status);
 
+    /**
+     * Final cleanup after the transaction completed, always invoked even if an earlier
+     * completion step failed. Runs the connection synchronizations bound to this transaction,
+     * see {@link #bindConnectionSynchronizationsToTransaction()}.
+     */
     void cleanupAfterCompletion();
+
+    /**
+     * Registers a synchronization restoring the connection state changed by this transaction.
+     * By default, the synchronization is registered on the connection status; if the transaction
+     * reuses a connection owned by an outer scope, it is executed at {@link #cleanupAfterCompletion()}.
+     *
+     * @param synchronization The synchronization
+     * @since 5.3.0
+     */
+    default void registerConnectionSynchronization(@NonNull ConnectionSynchronization synchronization) {
+        getConnectionStatus().registerSynchronization(synchronization);
+    }
+
+    /**
+     * Binds the synchronizations registered by {@link #registerConnectionSynchronization(ConnectionSynchronization)}
+     * to this transaction. Used when the transaction is started on a connection owned by an outer scope.
+     *
+     * @since 5.3.0
+     */
+    default void bindConnectionSynchronizationsToTransaction() {
+    }
+
+    /**
+     * Binds the synchronizations registered by {@link #registerConnectionSynchronization(ConnectionSynchronization)}
+     * and the release of the connection to this transaction. Used when the transaction owns the connection.
+     * The connection is released at {@link #cleanupAfterCompletion()}, after the connection state is restored.
+     *
+     * @param release The release of the connection
+     * @since 5.3.0
+     */
+    default void bindConnectionSynchronizationsToTransaction(@NonNull Runnable release) {
+        registerInvocationSynchronization(new TransactionSynchronization() {
+            @Override
+            public void afterCompletion(Status status) {
+                release.run();
+            }
+        });
+    }
+
+    /**
+     * Discards the connection synchronizations bound to this transaction without executing them.
+     * Used when restoring the connection state is unsafe, for example, restoring the auto-commit
+     * of a partially started transaction that couldn't be rolled back would commit it.
+     *
+     * @since 5.3.0
+     */
+    default void discardConnectionSynchronizations() {
+    }
 
     /**
      * The variation of {@link #registerSynchronization(TransactionSynchronization)} that is always executed on the current TX invocation.
