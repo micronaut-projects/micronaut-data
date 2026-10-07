@@ -14,18 +14,18 @@ import java.util.concurrent.ConcurrentHashMap;
 
 @Context
 @Requires(property = "query-notification.query.enabled")
-class CustomLibraryCache implements ApplicationEventListener<StartupEvent> {
+class LargeLibraryCache implements ApplicationEventListener<StartupEvent> {
 
     private final LibraryRepository repository;
     private final Map<Long, Library> libraries = new ConcurrentHashMap<>();
 
-    CustomLibraryCache(LibraryRepository repository) {
+    LargeLibraryCache(LibraryRepository repository) {
         this.repository = repository;
     }
 
     @Override
     public void onApplicationEvent(StartupEvent event) {
-        repository.findByCapacityGreaterThanEquals(10000).forEach(library -> libraries.put(library.id(), library));
+        refreshCache();
     }
 
     public Optional<Library> find(String name) {
@@ -35,6 +35,7 @@ class CustomLibraryCache implements ApplicationEventListener<StartupEvent> {
             .findFirst();
     }
 
+    // tag::query[]
     @ChangeListener
     @OracleChangeNotification(
         select = "name",
@@ -44,13 +45,23 @@ class CustomLibraryCache implements ApplicationEventListener<StartupEvent> {
             value = "true"
         )
     )
-    void onLibraryChanged(ChangeEvent<Library> event) {
-        event.entity().ifPresent(library -> {
-            if (library.capacity() >= 10000) {
-                libraries.put(library.id(), library);
-            } else {
-                libraries.remove(library.id());
-            }
-        });
+    synchronized void onLibraryChanged(ChangeEvent<Library> event) {
+        switch (event.operation()) {
+            case INSERT, UPDATE -> event.entity().ifPresent(library -> {
+                if (library.capacity() >= 10000) {
+                    libraries.put(library.id(), library);
+                } else {
+                    libraries.remove(library.id());
+                }
+            });
+            case DELETE, INVALIDATE -> refreshCache();
+        }
+    }
+    // end::query[]
+
+    private synchronized void refreshCache() {
+        var currentLibraries = repository.findByCapacityGreaterThanEquals(10000);
+        libraries.clear();
+        currentLibraries.forEach(library -> libraries.put(library.id(), library));
     }
 }

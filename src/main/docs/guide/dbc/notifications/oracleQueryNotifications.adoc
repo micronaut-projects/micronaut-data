@@ -21,25 +21,11 @@ The listener itself must be a Micronaut bean and must be proxyable; in particula
 
 == Declaring a Listener
 
-The following listener uses Object Change Notification to observe the complete mapped `BOOK` table:
+The following cache uses Object Change Notification to observe the complete mapped `LIBRARY` table.
+It loads the initial contents at startup and keeps them current through its listener method.
+Enable this example with `query-notification.object.enabled=true`:
 
-[source,java]
-----
-import io.micronaut.data.jdbc.annotation.ChangeListener;
-import io.micronaut.data.jdbc.annotation.OracleChangeNotification;
-import io.micronaut.data.jdbc.notification.ChangeEvent;
-import jakarta.inject.Singleton;
-
-@Singleton
-class BookChangeListener {
-
-    @ChangeListener
-    @OracleChangeNotification
-    void onBookChanged(ChangeEvent<Book> event) {
-        // React to the committed database change.
-    }
-}
-----
+snippet::example.notification.LibraryCache[project-base="doc-examples/jdbc-example-records", source="main", tags="listener", languages="java,groovy,kotlin,python"]
 
 Every Oracle Database listener must declare both annotations, even when ann:data.jdbc.annotation.OracleChangeNotification[] uses only its defaults.
 The Oracle annotation identifies the provider-specific registration and supplies the information needed to generate the Oracle Database `ROWID` reload query at compilation time.
@@ -51,16 +37,11 @@ Micronaut Data validates the listener contract at compilation time. A method ann
 * declare exactly one `ChangeEvent<E>` parameter; and
 * use a concrete persistent entity type for `E`.
 
-The listener uses the `default` datasource unless another datasource is selected:
+The listener uses the `default` datasource unless another datasource is selected through `dataSource`:
 
-[source,java]
-----
-@ChangeListener(dataSource = "inventory")
-@OracleChangeNotification
-void onBookChanged(ChangeEvent<Book> event) {
-    // Registered against the "inventory" datasource.
-}
-----
+snippet::example.notification.LibraryCache[project-base="doc-examples/jdbc-example-records", source="main", tags="datasource", indent="0", languages="java,groovy,kotlin,python"]
+
+Replace `default` with the name of another configured datasource to register against it.
 
 Micronaut Data creates an Oracle Database registration for each listener method during application startup.
 The registration normally remains active for the application’s lifetime, and Micronaut Data attempts to unregister
@@ -76,25 +57,12 @@ api:data.jdbc.notification.ChangeEvent[] provides:
 
 Oracle Database row events include api:data.jdbc.notification.oracle.OracleChangeEventMetadata[], which exposes the affected row's `ROWID`:
 
-[source,java]
-----
-void onBookChanged(ChangeEvent<Book> event) {
-    switch (event.operation()) {
-        case INSERT, UPDATE -> {
-            event.entity().ifPresent(this::refreshBook);
-            event.metadata(OracleChangeEventMetadata.class)
-                .ifPresent(metadata -> auditRow(metadata.rowId()));
-        }
-        case DELETE -> {
-            String rowId = event.metadata(OracleChangeEventMetadata.class)
-                .orElseThrow()
-                .rowId();
-            removeBook(rowId);
-        }
-        case INVALIDATE -> refreshAllBooks();
-    }
-}
-----
+snippet::example.notification.LibraryCache[project-base="doc-examples/jdbc-example-records", source="main", tags="events", indent="0", languages="java,groovy,kotlin,python"]
+
+This cache updates individual entities for `INSERT` and `UPDATE`. For `DELETE`, the event has no entity ID,
+so the example reloads the cache instead of trying to interpret the Oracle Database `ROWID` as an entity ID.
+It also reloads the complete cache for `INVALIDATE`. The callback and cache refresh use the same lock so
+concurrent notifications cannot interleave a full refresh with an individual cache update.
 
 For `INSERT` and `UPDATE`, Oracle Database supplies a `ROWID` rather than entity values. Micronaut Data reloads the row and maps the complete entity before the application reads `entity()`.
 The reloaded value is the current database state at reload time, not a historical snapshot of the commit that produced the notification. Another transaction can therefore change or delete the row before it is reloaded.
@@ -115,23 +83,13 @@ Micronaut Data automatically requests row identifiers with `DCN_NOTIFY_ROWIDS`. 
 
 Query Result Change Notification (QRCN) registers a query result instead of the complete mapped table. Enable it with the Oracle JDBC `DCN_QUERY_CHANGE_NOTIFICATION` registration property, then use `select` and `where` to describe the result:
 
-[source,java]
-----
-import oracle.jdbc.OracleConnection;
+The `LargeLibraryCache` example tracks only libraries with a capacity of at least 10,000.
+Enable it with `query-notification.query.enabled=true`:
 
-@ChangeListener
-@OracleChangeNotification(
-    select = "id, title",
-    where = "status = 'AVAILABLE'",
-    properties = @OracleChangeNotification.Property(
-        name = OracleConnection.DCN_QUERY_CHANGE_NOTIFICATION,
-        value = "true"
-    )
-)
-void onAvailableBookChanged(ChangeEvent<Book> event) {
-    // React when the registered result may have changed.
-}
-----
+snippet::example.notification.LargeLibraryCache[project-base="doc-examples/jdbc-example-records", source="main", tags="query", indent="0", languages="java,groovy,kotlin,python"]
+
+When a reloaded library no longer satisfies the filter, the callback removes it from the cache.
+Deletes and invalidations reload the filtered result.
 
 The `select` value controls the result registered with Oracle Database; it is not an entity projection. For an `INSERT` or `UPDATE`, Micronaut Data still reloads and maps the complete entity by `ROWID`.
 
@@ -143,19 +101,11 @@ QRCN queries may depend on other tables, including tables in another schema when
 
 == Oracle Registration Properties
 
-Use `OracleChangeNotification.Property` to pass Oracle JDBC registration properties by name and value. Micronaut Data sets `DCN_CLIENT_INIT_CONNECTION` to `true` by default, so the JDBC driver initiates its notification connection. Set it to `false` to use server-initiated notification connections. For example, to enable a one-shot registration:
-
-[source,java]
-----
-import oracle.jdbc.OracleConnection;
-
-@OracleChangeNotification(properties = {
-    @OracleChangeNotification.Property(
-        name = OracleConnection.NTF_QOS_PURGE_ON_NTFN,
-        value = "true"
-    )
-})
-----
+Use `OracleChangeNotification.Property` to pass Oracle JDBC registration properties by name and value,
+as shown by `DCN_QUERY_CHANGE_NOTIFICATION` in the preceding example. Micronaut Data sets
+`DCN_CLIENT_INIT_CONNECTION` to `true` by default, so the JDBC driver initiates its notification connection.
+Set it to `false` to use server-initiated notification connections. To enable a one-shot registration,
+add a property named `NTF_QOS_PURGE_ON_NTFN` with the value `true`.
 
 `NTF_QOS_PURGE_ON_NTFN` makes each Oracle Database registration one-shot: Oracle Database removes it after its first data notification, and Micronaut Data closes the listener subscription when it receives that notification.
 

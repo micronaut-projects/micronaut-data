@@ -80,6 +80,17 @@ class LibraryCacheSpec extends Specification {
             Library library5 = repository.save(new Library(null, 'Library 5', 'library5@example.com', 8000, new Point(21.16560, 44.77220)))
             waitUntil { libraryCache.find('Library 5').isPresent() }
             assert libraryCache.find('Library 5').orElseThrow().id() == library5.id()
+
+            repository.deleteById(library5.id())
+            waitUntil { !libraryCache.find('Library 5').isPresent() }
+
+            truncateLibraries(context)
+            waitUntil {
+                !libraryCache.find('Library 1 Updated').isPresent() &&
+                    !libraryCache.find('Library 2').isPresent() &&
+                    !libraryCache.find('Library 3').isPresent() &&
+                    !libraryCache.find('Library 4').isPresent()
+            }
         }
 
         then:
@@ -93,7 +104,7 @@ class LibraryCacheSpec extends Specification {
             'datasources.default.schema-generate': 'NONE'
         ]) { ApplicationContext context ->
             LibraryRepository repository = context.getBean(LibraryRepository)
-            CustomLibraryCache libraryCache = context.getBean(CustomLibraryCache)
+            LargeLibraryCache libraryCache = context.getBean(LargeLibraryCache)
 
             assert !libraryCache.find('Library 1').isPresent()
             assert !libraryCache.find('Library 2').isPresent()
@@ -109,10 +120,29 @@ class LibraryCacheSpec extends Specification {
 
             repository.save(new Library(library3.id(), library3.name(), library3.email(), 9000, library3.location()))
             waitUntil { !libraryCache.find(library3.name()).isPresent() }
+
+            repository.deleteById(library4.id())
+            waitUntil { !libraryCache.find(library4.name()).isPresent() }
+
+            truncateLibraries(context)
+            waitUntil { !libraryCache.find(library1.name()).isPresent() }
         }
 
         then:
         noExceptionThrown()
+    }
+
+    private static void truncateLibraries(ApplicationContext context) {
+        ConnectionCallback<Boolean> callback = { connection ->
+            Statement statement = connection.createStatement()
+            try {
+                statement.execute('TRUNCATE TABLE LIBRARY')
+            } finally {
+                statement.close()
+            }
+            true
+        } as ConnectionCallback<Boolean>
+        context.getBean(DefaultJdbcRepositoryOperations).execute(callback)
     }
 
     private static <T> T withContext(Map<String, Object> properties, Closure<T> action) {

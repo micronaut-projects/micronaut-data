@@ -7,26 +7,51 @@ import io.micronaut.context.event.StartupEvent
 import io.micronaut.data.jdbc.annotation.ChangeListener
 import io.micronaut.data.jdbc.annotation.OracleChangeNotification
 import io.micronaut.data.jdbc.notification.ChangeEvent
+import io.micronaut.data.jdbc.notification.ChangeOperation
+import io.micronaut.data.jdbc.notification.oracle.OracleChangeEventMetadata
+import org.slf4j.LoggerFactory
 import java.util.Optional
 import java.util.concurrent.ConcurrentHashMap
 
+// tag::listener[]
 @Context
 @Requires(property = "query-notification.object.enabled")
 open class LibraryCache(private val repository: LibraryRepository) : ApplicationEventListener<StartupEvent> {
+    private val log = LoggerFactory.getLogger(LibraryCache::class.java)
 
     private val libraries = ConcurrentHashMap<Long, Library>()
 
     override fun onApplicationEvent(event: StartupEvent) {
-        repository.findAll().forEach { library -> libraries[library.id!!] = library }
+        refreshCache()
     }
 
     fun find(name: String): Optional<Library> = libraries.values
         .firstOrNull { library -> library.name == name }
         ?.let { Optional.of(it) } ?: Optional.empty()
 
-    @ChangeListener
+    // tag::events[]
+    // tag::datasource[]
+    @ChangeListener(dataSource = "default")
+    // end::datasource[]
     @OracleChangeNotification
+    @Synchronized
     open fun onLibraryChanged(event: ChangeEvent<Library>) {
-        event.entity().ifPresent { library -> libraries[library.id!!] = library }
+        event.metadata(OracleChangeEventMetadata::class.java).ifPresent { metadata ->
+            log.debug("Changed library ROWID: {}", metadata.rowId())
+        }
+        when (event.operation()) {
+            ChangeOperation.INSERT, ChangeOperation.UPDATE ->
+                event.entity().ifPresent { library -> libraries[library.id!!] = library }
+            ChangeOperation.DELETE, ChangeOperation.INVALIDATE -> refreshCache()
+        }
+    }
+    // end::events[]
+
+    @Synchronized
+    private fun refreshCache() {
+        val currentLibraries = repository.findAll()
+        libraries.clear()
+        currentLibraries.forEach { library -> libraries[library.id!!] = library }
     }
 }
+// end::listener[]

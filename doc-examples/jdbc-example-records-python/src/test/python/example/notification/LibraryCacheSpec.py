@@ -10,7 +10,7 @@ from typing import Callable
 
 from example.notification.Library import Library
 from example.notification.LibraryCache import LibraryCache
-from example.notification.CustomLibraryCache import CustomLibraryCache
+from example.notification.LargeLibraryCache import LargeLibraryCache
 from example.notification.LibraryRepository import LibraryRepository
 
 
@@ -57,6 +57,13 @@ class LibraryCacheSpec:
                 library5 = repository.save(Library(None, "Library 5", "library5@example.com", 8000, Point(21.16560, 44.77220)))
                 self.waitUntil(lambda: libraryCache.find("Library 5").isPresent())
                 assert libraryCache.find("Library 5").orElse(None).id == library5.id, "inserted library was not cached"
+
+                repository.deleteById(library5.id)
+                self.waitUntil(lambda: not libraryCache.find("Library 5").isPresent())
+
+                self.truncateLibraries(context)
+                self.waitUntil(lambda: all(not libraryCache.find(name).isPresent() for name in
+                                          ("Library 1 Updated", "Library 2", "Library 3", "Library 4")))
             finally:
                 context.close()
         finally:
@@ -73,7 +80,7 @@ class LibraryCacheSpec:
             })
             try:
                 repository = context.getBean(LibraryRepository)
-                libraryCache = context.getBean(CustomLibraryCache)
+                libraryCache = context.getBean(LargeLibraryCache)
 
                 assert not libraryCache.find("Library 1").isPresent()
                 assert not libraryCache.find("Library 2").isPresent()
@@ -89,10 +96,28 @@ class LibraryCacheSpec:
 
                 repository.save(Library(library3.id, library3.name, library3.email, 9000, library3.location))
                 self.waitUntil(lambda: not libraryCache.find(library3.name).isPresent())
+
+                repository.deleteById(library4.id)
+                self.waitUntil(lambda: not libraryCache.find(library4.name).isPresent())
+
+                self.truncateLibraries(context)
+                self.waitUntil(lambda: not libraryCache.find(library1.name).isPresent())
             finally:
                 context.close()
         finally:
             self.removeData()
+
+    def truncateLibraries(self, context: ApplicationContext):
+        operations = context.getBean(DefaultJdbcRepositoryOperations)
+        operations.execute(lambda connection: self.truncateTable(connection))
+
+    def truncateTable(self, connection: Connection) -> bool:
+        statement = connection.createStatement()
+        try:
+            statement.execute("TRUNCATE TABLE LIBRARY")
+        finally:
+            statement.close()
+        return True
 
     def grantChangeNotificationPrivilege(self):
         context = self.startContext({

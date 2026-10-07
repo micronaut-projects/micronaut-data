@@ -48,6 +48,17 @@ class LibraryCacheSpec {
                 val library5 = repository.save(Library(null, "Library 5", "library5@example.com", 8000, Point(21.16560, 44.77220)))
                 waitUntil { libraryCache.find("Library 5").isPresent }
                 assertEquals(library5.id, libraryCache.find("Library 5").orElseThrow().id)
+
+                repository.deleteById(library5.id!!)
+                waitUntil { !libraryCache.find("Library 5").isPresent }
+
+                truncateLibraries(context)
+                waitUntil {
+                    !libraryCache.find("Library 1 Updated").isPresent &&
+                        !libraryCache.find("Library 2").isPresent &&
+                        !libraryCache.find("Library 3").isPresent &&
+                        !libraryCache.find("Library 4").isPresent
+                }
             }
         } finally {
             removeData()
@@ -64,7 +75,7 @@ class LibraryCacheSpec {
                 "datasources.default.schema-generate" to "NONE"
             )) { context ->
                 val repository = context.getBean(LibraryRepository::class.java)
-                val libraryCache = context.getBean(CustomLibraryCache::class.java)
+                val libraryCache = context.getBean(LargeLibraryCache::class.java)
 
                 assertFalse(libraryCache.find("Library 1").isPresent)
                 assertFalse(libraryCache.find("Library 2").isPresent)
@@ -80,9 +91,24 @@ class LibraryCacheSpec {
 
                 repository.save(Library(library3.id, library3.name, library3.email, 9000, library3.location))
                 waitUntil { !libraryCache.find(library3.name).isPresent }
+
+                repository.deleteById(library4.id!!)
+                waitUntil { !libraryCache.find(library4.name).isPresent }
+
+                truncateLibraries(context)
+                waitUntil { !libraryCache.find(library1.name).isPresent }
             }
         } finally {
             removeData()
+        }
+    }
+
+    private fun truncateLibraries(context: ApplicationContext) {
+        context.getBean(DefaultJdbcRepositoryOperations::class.java).execute { connection ->
+            connection.createStatement().use { statement: Statement ->
+                statement.execute("TRUNCATE TABLE LIBRARY")
+            }
+            true
         }
     }
 

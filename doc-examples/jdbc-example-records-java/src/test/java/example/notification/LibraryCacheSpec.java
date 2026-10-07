@@ -112,6 +112,15 @@ class LibraryCacheSpec {
 
             Library cachedLibrary5 = libraryCache.find("Library 5").orElseThrow();
             assertEquals(library5.id(), cachedLibrary5.id());
+
+            repository.deleteById(library5.id());
+            waitUntil(() -> libraryCache.find("Library 5").isEmpty());
+
+            truncateLibraries(context);
+            waitUntil(() -> libraryCache.find("Library 1 Updated").isEmpty()
+                && libraryCache.find("Library 2").isEmpty()
+                && libraryCache.find("Library 3").isEmpty()
+                && libraryCache.find("Library 4").isEmpty());
         }
     }
 
@@ -122,7 +131,7 @@ class LibraryCacheSpec {
             "datasources.default.schema-generate", "NONE"
         ))) {
             LibraryRepository repository = context.getBean(LibraryRepository.class);
-            CustomLibraryCache libraryCache = context.getBean(CustomLibraryCache.class);
+            LargeLibraryCache libraryCache = context.getBean(LargeLibraryCache.class);
 
             assertFalse(libraryCache.find("Library 1").isPresent());
             assertFalse(libraryCache.find("Library 2").isPresent());
@@ -149,7 +158,22 @@ class LibraryCacheSpec {
             repository.save(new Library(library3.id(), library3.name(), library3.email(), 9_000, library3.location()));
 
             waitUntil(() -> libraryCache.find(library3.name()).isEmpty());
+
+            repository.deleteById(library4.id());
+            waitUntil(() -> libraryCache.find(library4.name()).isEmpty());
+
+            truncateLibraries(context);
+            waitUntil(() -> libraryCache.find(library1.name()).isEmpty());
         }
+    }
+
+    private void truncateLibraries(ApplicationContext context) {
+        context.getBean(DefaultJdbcRepositoryOperations.class).execute(connection -> {
+            try (Statement statement = connection.createStatement()) {
+                statement.execute("TRUNCATE TABLE LIBRARY");
+            }
+            return true;
+        });
     }
 
     private void waitUntil(Callable<Boolean> conditionEvaluator) {
