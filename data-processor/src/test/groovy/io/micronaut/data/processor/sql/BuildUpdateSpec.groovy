@@ -217,6 +217,87 @@ class Account {
         getQuery(repository.findPossibleMethods("reserveIncrementAmountAndDecrementBalance").findFirst().get()) == 'UPDATE "ACCOUNT" SET "AMOUNT"=("AMOUNT" + ?),"BALANCE"=("BALANCE" - ?) WHERE ("ID" = ?)'
     }
 
+    void "test reserve method matches delta parameters named with @Parameter"() {
+        given:
+        def repository = buildRepository('test.AccountRepository', """
+import io.micronaut.context.annotation.Parameter;
+import io.micronaut.data.annotation.Id;
+import io.micronaut.data.annotation.MappedEntity;
+import io.micronaut.data.annotation.Reservable;
+import io.micronaut.data.jdbc.annotation.JdbcRepository;
+import io.micronaut.data.model.query.builder.sql.Dialect;
+import io.micronaut.data.repository.GenericRepository;
+
+@JdbcRepository(dialect = Dialect.ORACLE)
+@io.micronaut.context.annotation.Executable
+interface AccountRepository extends GenericRepository<Account, Long> {
+    long reserveIncrementAmountAndDecrementBalance(@Id Long id, @Parameter("balance") Long debit, @Parameter("amount") Long credit);
+}
+
+@MappedEntity
+class Account {
+    @Id
+    private Long id;
+    @Reservable
+    private Long amount;
+    @Reservable
+    private Long balance;
+
+    public Long getId() { return id; }
+    public void setId(Long id) { this.id = id; }
+    public Long getAmount() { return amount; }
+    public void setAmount(Long amount) { this.amount = amount; }
+    public Long getBalance() { return balance; }
+    public void setBalance(Long balance) { this.balance = balance; }
+}
+""")
+        def method = repository.findPossibleMethods("reserveIncrementAmountAndDecrementBalance").findFirst().get()
+
+        expect:
+        getQuery(method) == 'UPDATE "ACCOUNT" SET "AMOUNT"=("AMOUNT" + ?),"BALANCE"=("BALANCE" - ?) WHERE ("ID" = ?)'
+        getParameterBindingIndexes(method) == ['2', '1', '0'] as String[]
+    }
+
+    void "test reserve method matches delta parameters named after the operation"() {
+        given:
+        def repository = buildRepository('test.AccountRepository', """
+import io.micronaut.data.annotation.Id;
+import io.micronaut.data.annotation.MappedEntity;
+import io.micronaut.data.annotation.Reservable;
+import io.micronaut.data.jdbc.annotation.JdbcRepository;
+import io.micronaut.data.model.query.builder.sql.Dialect;
+import io.micronaut.data.repository.GenericRepository;
+
+@JdbcRepository(dialect = Dialect.ORACLE)
+@io.micronaut.context.annotation.Executable
+interface AccountRepository extends GenericRepository<Account, Long> {
+    long reserveIncrementAmountAndDecrementBalance(@Id Long id, Long balanceDecrement, Long amountIncrement);
+}
+
+@MappedEntity
+class Account {
+    @Id
+    private Long id;
+    @Reservable
+    private Long amount;
+    @Reservable
+    private Long balance;
+
+    public Long getId() { return id; }
+    public void setId(Long id) { this.id = id; }
+    public Long getAmount() { return amount; }
+    public void setAmount(Long amount) { this.amount = amount; }
+    public Long getBalance() { return balance; }
+    public void setBalance(Long balance) { this.balance = balance; }
+}
+""")
+        def method = repository.findPossibleMethods("reserveIncrementAmountAndDecrementBalance").findFirst().get()
+
+        expect:
+        getQuery(method) == 'UPDATE "ACCOUNT" SET "AMOUNT"=("AMOUNT" + ?),"BALANCE"=("BALANCE" - ?) WHERE ("ID" = ?)'
+        getParameterBindingIndexes(method) == ['2', '1', '0'] as String[]
+    }
+
     void "test reserve methods omit automatic audit assignments"() {
         given:
         def repository = buildRepository('test.AccountRepository', """

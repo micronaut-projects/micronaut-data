@@ -31,6 +31,12 @@ class OracleJDBCReservableSpec extends Specification implements OracleTestProper
     @Shared
     ReservableAccountRepository repository = context.getBean(ReservableAccountRepository)
 
+    @Shared
+    ReservableAccountAliasRepository aliasRepository = context.getBean(ReservableAccountAliasRepository)
+
+    @Shared
+    ReservableWalletRepository walletRepository = context.getBean(ReservableWalletRepository)
+
     @Override
     List<String> packages() {
         return [getClass().package.name]
@@ -38,6 +44,7 @@ class OracleJDBCReservableSpec extends Specification implements OracleTestProper
 
     void cleanup() {
         repository.deleteAll()
+        walletRepository.deleteAll()
     }
 
     void "test Oracle reservable column with generated reservation delta updates"() {
@@ -63,5 +70,69 @@ class OracleJDBCReservableSpec extends Specification implements OracleTestProper
 
         then:
         thrown(DataIntegrityViolationException)
+    }
+
+    void "test reservation delta parameters named after the operation or with @Parameter"() {
+        given:
+        def account = repository.save(new ReservableAccount(name: "alias", balance: 100L))
+
+        when:
+        def updatedRows = aliasRepository.reserveDecrementBalance(account.id, 40L)
+        def updated = repository.findById(account.id).orElseThrow()
+
+        then:
+        updatedRows == 1
+        updated.balance == 60L
+
+        when:
+        aliasRepository.reserveIncrementBalance(account.id, 10L)
+        updated = repository.findById(account.id).orElseThrow()
+
+        then:
+        updated.balance == 70L
+
+        when:
+        aliasRepository.reserveDecrementBalance(account.id, 100L)
+
+        then:
+        thrown(DataIntegrityViolationException)
+    }
+
+    void "test reservation updating multiple reservable columns"() {
+        given:
+        def wallet = walletRepository.save(new ReservableWallet(name: "wallet", amount: 10L, balance: 100L))
+
+        when:
+        def updatedRows = walletRepository.reserveIncrementAmountAndDecrementBalance(wallet.id, 40L, 40L)
+        def updated = walletRepository.findById(wallet.id).orElseThrow()
+
+        then:
+        updatedRows == 1
+        updated.amount == 50L
+        updated.balance == 60L
+
+        when:
+        walletRepository.reserveDecrementAmountAndIncrementBalance(wallet.id, 20L, 20L)
+        updated = walletRepository.findById(wallet.id).orElseThrow()
+
+        then:
+        updated.amount == 30L
+        updated.balance == 80L
+
+        when: "the balance check constraint fails"
+        walletRepository.reserveIncrementAmountAndDecrementBalance(wallet.id, 100L, 100L)
+
+        then: "neither column changes"
+        thrown(DataIntegrityViolationException)
+        walletRepository.findById(wallet.id).orElseThrow().amount == 30L
+        walletRepository.findById(wallet.id).orElseThrow().balance == 80L
+
+        when: "the amount check constraint fails"
+        walletRepository.reserveDecrementAmountAndIncrementBalance(wallet.id, 50L, 50L)
+
+        then: "neither column changes"
+        thrown(DataIntegrityViolationException)
+        walletRepository.findById(wallet.id).orElseThrow().amount == 30L
+        walletRepository.findById(wallet.id).orElseThrow().balance == 80L
     }
 }

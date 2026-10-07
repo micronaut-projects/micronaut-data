@@ -56,7 +56,14 @@ This restriction is specific to reservable-only update shapes.
 If an entity has at least one non-reservable updatable property, generated `save(...)` and `update(...)` methods remain supported and Micronaut Data simply omits reservable properties from the generated `SET` clause.
 
 Each reservation method identifies the row with exactly one `@Id` parameter whose type matches the entity identity. For a composite primary key, use the entity's `@EmbeddedId` value object as that parameter; Micronaut Data expands it into all primary-key columns.
-Each operation target must be a numeric ann:data.annotation.Reservable[] scalar property. The delta parameters must have the same names as their reservable properties, and no additional non-ID parameters are allowed. Embedded scalar properties use the flattened property path in the method name and parameter name, for example `reserveDecrementLimitsAvailableBalance(@Id Long id, Long limitsAvailableBalance)`.
+Each operation target must be a numeric ann:data.annotation.Reservable[] scalar property, and each operation requires exactly one numeric delta parameter; no additional non-ID parameters are allowed.
+A delta parameter matches its operation when it is named after the reservable property, or after the property followed by the operation, for example `balance` or `balanceIncrement` for `IncrementBalance` and `balance` or `balanceDecrement` for `DecrementBalance`. The operation suffix makes it explicit that the parameter is a delta and not a new value. Alternatively, annotate a parameter with any name with `@Parameter`, for example `@Parameter("balance") Long amount`.
+Embedded scalar properties use the flattened property path in the method name and parameter name, for example `reserveDecrementLimitsAvailableBalance(@Id Long id, Long limitsAvailableBalance)`.
+
+[source,java]
+----
+long reserveIncrementAmountAndDecrementBalance(@Id Long id, Long amountIncrement, Long balanceDecrement);
+----
 Reservation methods cannot target relationship paths. A scalar reservable property inside an embedded component is supported, but `reserveIncrementAccountBalance(...)` is rejected when `account` is a relationship.
 Generated reservation updates cannot mix reservable and non-reservable assignments and do not support Oracle DML `RETURNING`.
 Criteria API updates of reservable properties are not supported. Use derived reservation methods instead; arbitrary criteria expressions are not validated against Oracle lock-free reservation restrictions.

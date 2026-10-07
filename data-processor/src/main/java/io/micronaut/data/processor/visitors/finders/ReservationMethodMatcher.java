@@ -15,6 +15,7 @@
  */
 package io.micronaut.data.processor.visitors.finders;
 
+import io.micronaut.context.annotation.Parameter;
 import io.micronaut.core.annotation.Internal;
 import io.micronaut.core.naming.NameUtils;
 import io.micronaut.data.annotation.Id;
@@ -186,8 +187,9 @@ public final class ReservationMethodMatcher implements MethodMatcher {
         String propertyName = Objects.requireNonNull(NameUtils.decapitalize(matcher.group(2)), "Reservation property name must not be null");
         PersistentPropertyPath propertyPath = resolveReservationProperty(entity, propertyName);
         validateUniqueTarget(propertyName, propertyPath, targetPaths);
-        ParameterElement parameter = resolveDeltaParameter(parameters, propertyName);
-        return new Delta(propertyPath, parameter, matcher.group(1).equals("Increment"));
+        String operation = matcher.group(1);
+        ParameterElement parameter = resolveDeltaParameter(parameters, propertyName, operation);
+        return new Delta(propertyPath, parameter, operation.equals("Increment"));
     }
 
     private static PersistentPropertyPath resolveReservationProperty(SourcePersistentEntity entity, String propertyName) {
@@ -221,12 +223,22 @@ public final class ReservationMethodMatcher implements MethodMatcher {
         }
     }
 
-    private static ParameterElement resolveDeltaParameter(ParameterElement[] parameters, String propertyName) {
+    /**
+     * Resolves the delta parameter of a reservation operation. The parameter matches when its name, or its
+     * {@link Parameter} value, is the property name or the property name followed by the operation,
+     * for example {@code balance} or {@code balanceIncrement} for {@code IncrementBalance}.
+     */
+    private static ParameterElement resolveDeltaParameter(ParameterElement[] parameters, String propertyName, String operation) {
+        String operationName = propertyName + operation;
         ParameterElement parameter = Arrays.stream(parameters)
             .filter(p -> !p.hasAnnotation(Id.class))
-            .filter(p -> p.getName().equals(propertyName))
+            .filter(p -> {
+                String name = p.stringValue(Parameter.class).orElse(p.getName());
+                return name.equals(propertyName) || name.equals(operationName);
+            })
             .findFirst()
-            .orElseThrow(() -> new MatchFailedException("Reservation property [" + propertyName + "] requires a matching delta parameter"));
+            .orElseThrow(() -> new MatchFailedException("Reservation property [" + propertyName + "] requires a matching delta parameter named ["
+                + propertyName + "] or [" + operationName + "], or annotated with @Parameter(\"" + propertyName + "\")"));
         if (!TypeUtils.resolveDataType(parameter.getType(), Collections.emptyMap()).isNumeric()) {
             throw new MatchFailedException("Reservation delta parameter [" + propertyName + "] must be numeric");
         }

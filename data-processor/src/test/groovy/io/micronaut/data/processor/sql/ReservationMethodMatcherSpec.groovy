@@ -77,6 +77,27 @@ class ReservationMethodMatcherSpec extends AbstractDataSpec {
         then:
         e = thrown(RuntimeException)
         e.message.contains('require one delta parameter for each reservation property')
+
+        when:
+        buildReservationRepository('MismatchedReservationDeltaAliasRepository', 'long reserveIncrementBalance(@Id Long id, @io.micronaut.context.annotation.Parameter("amount") Long balance);')
+
+        then:
+        e = thrown(RuntimeException)
+        e.message.contains('Reservation property [balance] requires a matching delta parameter named [balance] or [balanceIncrement], or annotated with @Parameter("balance")')
+
+        when:
+        buildReservationRepository('MismatchedReservationDeltaOperationRepository', 'long reserveIncrementBalance(@Id Long id, Long balanceDecrement);')
+
+        then:
+        e = thrown(RuntimeException)
+        e.message.contains('Reservation property [balance] requires a matching delta parameter named [balance] or [balanceIncrement]')
+
+        when:
+        buildReservationRepository('AmbiguousReservationDeltaRepository', 'long reserveIncrementBalance(@Id Long id, Long balance, Long balanceIncrement);')
+
+        then:
+        e = thrown(RuntimeException)
+        e.message.contains('require one delta parameter for each reservation property')
     }
 
     private void buildReservationRepository(String repositoryName, String method) {
