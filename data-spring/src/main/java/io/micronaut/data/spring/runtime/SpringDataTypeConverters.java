@@ -20,6 +20,7 @@ import io.micronaut.core.annotation.Internal;
 import io.micronaut.core.convert.TypeConverter;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
+import org.springframework.data.domain.Slice;
 import org.springframework.data.domain.Sort;
 
 import jakarta.inject.Singleton;
@@ -41,6 +42,15 @@ public class SpringDataTypeConverters {
     @Singleton
     TypeConverter<io.micronaut.data.model.Page, Page> pageConverter() {
         return (object, targetType, context) -> Optional.of(new PageDelegate(object));
+    }
+
+    /**
+     * @return The slice converter
+     * @since 5.3.0
+     */
+    @Singleton
+    TypeConverter<io.micronaut.data.model.Slice, Slice> sliceConverter() {
+        return (object, targetType, context) -> Optional.of(new SliceDelegate(object));
     }
 
     /**

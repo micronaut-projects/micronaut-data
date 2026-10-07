@@ -143,7 +143,7 @@ class PageDelegate<T> implements Page<T> {
     /**
      * A pageable delegate impl.
      */
-    private class PageableDelegate extends PageRequest {
+    static class PageableDelegate extends PageRequest {
 
         PageableDelegate(io.micronaut.data.model.Pageable pageable) {
             super(pageable.getNumber(), pageable.getSize(), new SortDelegate(pageable.getSort()));
@@ -154,7 +154,7 @@ class PageDelegate<T> implements Page<T> {
     /**
      * A sort delegate impl.
      */
-    private static class SortDelegate extends Sort {
+    static class SortDelegate extends Sort {
 
         private final io.micronaut.data.model.Sort delegate;
 
