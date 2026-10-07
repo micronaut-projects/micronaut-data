@@ -535,6 +535,7 @@ public class RepositoryTypeElementVisitor implements TypeElementVisitor<Reposito
                     // this is not ideal since PostponeToNextRoundException is part of inject-java
                     throw e;
                 }
+                e.printStackTrace(System.err); // unexpected failure of the processor
                 throw new ProcessingException(method, "Exception occurred while processing: " + (e.getMessage() == null ? e.toString() : e.getMessage()), e);
             }
         }
