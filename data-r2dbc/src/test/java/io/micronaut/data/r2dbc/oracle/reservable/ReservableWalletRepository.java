@@ -15,6 +15,7 @@
  */
 package io.micronaut.data.r2dbc.oracle.reservable;
 
+import io.micronaut.context.annotation.Parameter;
 import io.micronaut.data.annotation.Id;
 import io.micronaut.data.model.query.builder.sql.Dialect;
 import io.micronaut.data.r2dbc.annotation.R2dbcRepository;
@@ -26,4 +27,6 @@ public interface ReservableWalletRepository extends CrudRepository<ReservableWal
     int reserveIncrementAmountAndDecrementBalance(@Id Long id, Long amountIncrement, Long balanceDecrement);
 
     int reserveDecrementAmountAndIncrementBalance(@Id Long id, Long amountDecrement, Long balanceIncrement);
+
+    int reserveDecrementBalanceAndIncrementAmount(@Id Long id, @Parameter("amount") Long credit, Long balanceDecrement);
 }

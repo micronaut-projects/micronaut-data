@@ -46,7 +46,6 @@ import java.util.HashSet;
 import java.util.IdentityHashMap;
 import java.util.List;
 import java.util.Objects;
-import java.util.Optional;
 import java.util.Set;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
@@ -163,17 +162,26 @@ public final class ReservationMethodMatcher implements MethodMatcher {
                                     SourcePersistentEntity entity,
                                     ParameterElement[] parameters) {
         Matcher matcher = DELTA_PATTERN.matcher(definition);
-        List<Delta> deltas = new ArrayList<>();
+        List<DeltaOperation> operations = new ArrayList<>();
         Set<String> targetPaths = new HashSet<>();
-        Set<ParameterElement> matchedParameters = Collections.newSetFromMap(new IdentityHashMap<>());
         int end = 0;
         while (matcher.find()) {
             validateMatchPosition(matcher, end);
-            deltas.add(parseDelta(matcher, entity, parameters, targetPaths, matchedParameters));
+            operations.add(parseOperation(matcher, entity, parameters, targetPaths));
             end = nextMatchStart(definition, matcher.end());
         }
         validateDefinitionEnd(definition, end);
-        validateDeltaParameterCount(parameters, deltas);
+        validateDeltaParameterCount(parameters, operations);
+        List<ParameterElement> assignment = resolveDeltaParameters(operations);
+        List<Delta> deltas = new ArrayList<>(operations.size());
+        for (int i = 0; i < operations.size(); i++) {
+            DeltaOperation operation = operations.get(i);
+            ParameterElement parameter = assignment.get(i);
+            if (!TypeUtils.resolveDataType(parameter.getType(), Collections.emptyMap()).isNumeric()) {
+                throw new MatchFailedException("Reservation delta parameter [" + operation.propertyName() + "] must be numeric");
+            }
+            deltas.add(new Delta(operation.propertyPath(), parameter, operation.increment()));
+        }
         return deltas;
     }
 
@@ -183,17 +191,16 @@ public final class ReservationMethodMatcher implements MethodMatcher {
         }
     }
 
-    private static Delta parseDelta(Matcher matcher,
-                                    SourcePersistentEntity entity,
-                                    ParameterElement[] parameters,
-                                    Set<String> targetPaths,
-                                    Set<ParameterElement> matchedParameters) {
+    private static DeltaOperation parseOperation(Matcher matcher,
+                                                 SourcePersistentEntity entity,
+                                                 ParameterElement[] parameters,
+                                                 Set<String> targetPaths) {
         String propertyName = Objects.requireNonNull(NameUtils.decapitalize(matcher.group(2)), "Reservation property name must not be null");
         PersistentPropertyPath propertyPath = resolveReservationProperty(entity, propertyName);
         validateUniqueTarget(propertyName, propertyPath, targetPaths);
         String operation = matcher.group(1);
-        ParameterElement parameter = resolveDeltaParameter(parameters, propertyName, operation, matchedParameters);
-        return new Delta(propertyPath, parameter, operation.equals("Increment"));
+        List<ParameterElement> candidates = findDeltaParameterCandidates(parameters, propertyName, operation);
+        return new DeltaOperation(propertyName, propertyPath, operation.equals("Increment"), candidates);
     }
 
     private static PersistentPropertyPath resolveReservationProperty(SourcePersistentEntity entity, String propertyName) {
@@ -228,36 +235,70 @@ public final class ReservationMethodMatcher implements MethodMatcher {
     }
 
     /**
-     * Resolves the delta parameter of a reservation operation. The parameter matches when its name, or its
-     * {@link Parameter} value, is the property name or the property name followed by the operation,
+     * Finds the parameters that can be the delta of a reservation operation. A parameter matches when its name,
+     * or its {@link Parameter} value, is the property name or the property name followed by the operation,
      * for example {@code balance} or {@code balanceIncrement} for {@code IncrementBalance}.
-     * A parameter named after the property takes precedence, and a parameter already matched by another
-     * operation is not matched again, so each delta resolves to a distinct parameter.
      */
-    private static ParameterElement resolveDeltaParameter(ParameterElement[] parameters,
-                                                          String propertyName,
-                                                          String operation,
-                                                          Set<ParameterElement> matchedParameters) {
+    private static List<ParameterElement> findDeltaParameterCandidates(ParameterElement[] parameters,
+                                                                       String propertyName,
+                                                                       String operation) {
         String operationName = propertyName + operation;
-        ParameterElement parameter = findDeltaParameter(parameters, propertyName, matchedParameters)
-            .or(() -> findDeltaParameter(parameters, operationName, matchedParameters))
-            .orElseThrow(() -> new MatchFailedException("Reservation property [" + propertyName + "] requires a matching delta parameter named ["
-                + propertyName + "] or [" + operationName + "], or annotated with @Parameter(\"" + propertyName + "\")"));
-        if (!TypeUtils.resolveDataType(parameter.getType(), Collections.emptyMap()).isNumeric()) {
-            throw new MatchFailedException("Reservation delta parameter [" + propertyName + "] must be numeric");
+        List<ParameterElement> candidates = Arrays.stream(parameters)
+            .filter(p -> !p.hasAnnotation(Id.class))
+            .filter(p -> {
+                String name = p.stringValue(Parameter.class).orElse(p.getName());
+                return name.equals(propertyName) || name.equals(operationName);
+            })
+            .toList();
+        if (candidates.isEmpty()) {
+            throw new MatchFailedException("Reservation property [" + propertyName + "] requires a matching delta parameter named ["
+                + propertyName + "] or [" + operationName + "], or annotated with @Parameter(\"" + propertyName + "\")");
         }
-        matchedParameters.add(parameter);
-        return parameter;
+        return candidates;
     }
 
-    private static Optional<ParameterElement> findDeltaParameter(ParameterElement[] parameters,
-                                                                 String name,
-                                                                 Set<ParameterElement> matchedParameters) {
-        return Arrays.stream(parameters)
-            .filter(p -> !p.hasAnnotation(Id.class))
-            .filter(p -> !matchedParameters.contains(p))
-            .filter(p -> p.stringValue(Parameter.class).orElse(p.getName()).equals(name))
-            .findFirst();
+    /**
+     * Assigns a distinct delta parameter to every operation. The assignment is resolved for all operations
+     * together, so it does not depend on the order of the operations in the method name, and it must be unique.
+     */
+    private static List<ParameterElement> resolveDeltaParameters(List<DeltaOperation> operations) {
+        List<List<ParameterElement>> assignments = new ArrayList<>();
+        collectAssignments(operations, 0, new ArrayList<>(), Collections.newSetFromMap(new IdentityHashMap<>()), assignments);
+        if (assignments.isEmpty()) {
+            throw new MatchFailedException("Reservation delta parameters cannot be matched to distinct parameters for properties "
+                + propertyNames(operations) + ". Use @Parameter to name each delta parameter after its property");
+        }
+        if (assignments.size() > 1) {
+            throw new MatchFailedException("Reservation delta parameters are ambiguous for properties "
+                + propertyNames(operations) + ". Use @Parameter to name each delta parameter after its property");
+        }
+        return assignments.getFirst();
+    }
+
+    private static void collectAssignments(List<DeltaOperation> operations,
+                                           int index,
+                                           List<ParameterElement> current,
+                                           Set<ParameterElement> used,
+                                           List<List<ParameterElement>> assignments) {
+        if (assignments.size() > 1) {
+            return;
+        }
+        if (index == operations.size()) {
+            assignments.add(List.copyOf(current));
+            return;
+        }
+        for (ParameterElement candidate : operations.get(index).candidates()) {
+            if (used.add(candidate)) {
+                current.add(candidate);
+                collectAssignments(operations, index + 1, current, used, assignments);
+                current.removeLast();
+                used.remove(candidate);
+            }
+        }
+    }
+
+    private static List<String> propertyNames(List<DeltaOperation> operations) {
+        return operations.stream().map(DeltaOperation::propertyName).toList();
     }
 
     private static int nextMatchStart(String definition, int end) {
@@ -270,9 +311,9 @@ public final class ReservationMethodMatcher implements MethodMatcher {
         }
     }
 
-    private static void validateDeltaParameterCount(ParameterElement[] parameters, List<Delta> deltas) {
+    private static void validateDeltaParameterCount(ParameterElement[] parameters, List<DeltaOperation> operations) {
         long deltaParameterCount = Arrays.stream(parameters).filter(p -> !p.hasAnnotation(Id.class)).count();
-        if (deltaParameterCount != deltas.size()) {
+        if (deltaParameterCount != operations.size()) {
             throw new MatchFailedException("Reservation methods require one delta parameter for each reservation property");
         }
     }
@@ -283,5 +324,11 @@ public final class ReservationMethodMatcher implements MethodMatcher {
     }
 
     private record Delta(PersistentPropertyPath propertyPath, ParameterElement parameter, boolean increment) {
+    }
+
+    private record DeltaOperation(String propertyName,
+                                  PersistentPropertyPath propertyPath,
+                                  boolean increment,
+                                  List<ParameterElement> candidates) {
     }
 }

@@ -90,6 +90,22 @@ class OracleR2dbcReservableSpec extends Specification implements OracleXETestPro
         updated.amount == 30L
         updated.balance == 80L
 
+        when: "the delta parameters are declared in a different order than the operations"
+        walletRepository.reserveDecrementBalanceAndIncrementAmount(wallet.id, 5L, 30L)
+        updated = walletRepository.findById(wallet.id).orElseThrow()
+
+        then: "each delta is applied to its own column"
+        updated.amount == 35L
+        updated.balance == 50L
+
+        when:
+        walletRepository.reserveDecrementAmountAndIncrementBalance(wallet.id, 5L, 30L)
+        updated = walletRepository.findById(wallet.id).orElseThrow()
+
+        then:
+        updated.amount == 30L
+        updated.balance == 80L
+
         when: "the balance check constraint fails"
         walletRepository.reserveIncrementAmountAndDecrementBalance(wallet.id, 100L, 100L)
 
