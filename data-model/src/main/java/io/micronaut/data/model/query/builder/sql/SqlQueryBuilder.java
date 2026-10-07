@@ -372,6 +372,8 @@ public class SqlQueryBuilder extends AbstractSqlLikeQueryBuilder {
     @Experimental
     public String buildBatchDropTableStatement(PersistentEntity... entities) {
         return Arrays.stream(entities).flatMap(entity -> Stream.of(buildDropTableStatements(entity)))
+            // The statements are executed together: each one needs to be terminated
+            .map(sql -> sql.endsWith(";") ? sql : sql + ";")
             .collect(Collectors.joining("\n"));
     }
 

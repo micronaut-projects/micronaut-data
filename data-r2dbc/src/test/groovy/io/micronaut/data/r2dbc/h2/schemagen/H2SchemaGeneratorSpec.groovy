@@ -84,6 +84,36 @@ class H2SchemaGeneratorSpec extends Specification {
             true          | SchemaGenerate.CREATE
             true          | SchemaGenerate.CREATE_DROP
     }
+
+    void "batch CREATE_DROP drops and recreates existing tables"() {
+        given: "a database whose tables already exist"
+            def config = [
+                    'spec.name'                                : 'H2SchemaGeneratorSpec',
+                    'r2dbc.datasources.default.url'            : "r2dbc:h2:mem:///schemagenexisting;DB_CLOSE_DELAY=-1",
+                    'r2dbc.datasources.default.username'       : '',
+                    'r2dbc.datasources.default.password'       : '',
+                    'r2dbc.datasources.default.dialect'        : 'h2',
+                    'r2dbc.datasources.default.batch-generate' : true,
+                    'r2dbc.datasources.default.packages'       : getClass().package.name
+            ]
+            def firstContext = ApplicationContext.run(config + ['r2dbc.datasources.default.schema-generate': SchemaGenerate.CREATE.name()])
+            firstContext.getBean(SchemaGenAuthorRepository).save(new SchemaGenAuthor(name: "Stephen King")).block()
+            firstContext.close()
+
+        when: "the schema is generated again with a batch drop"
+            def context = ApplicationContext.run(config + ['r2dbc.datasources.default.schema-generate': SchemaGenerate.CREATE_DROP.name()])
+            def dropStatements = context.getBean(StatementRecorder).statements.findAll { it.contains("DROP TABLE") }
+
+        then: "every table is dropped by the batch and created again"
+            dropStatements.size() == 1
+            dropStatements[0].contains("schema_gen_author")
+            dropStatements[0].contains("schema_gen_book")
+            dropStatements[0].readLines().every { it.startsWith("DROP TABLE") && it.endsWith(";") }
+            context.getBean(SchemaGenAuthorRepository).count().block() == 0
+
+        cleanup:
+            context?.close()
+    }
 }
 
 /**
