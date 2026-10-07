@@ -39,10 +39,10 @@ class CustomLibraryCache implements ApplicationEventListener<StartupEvent> {
     @OracleChangeNotification(
         select = "name",
         where = "capacity >= 10000",
-        properties = {
-            @OracleChangeNotification.Property(name = "DCN_CLIENT_INIT_CONNECTION", value = "true"),
-            @OracleChangeNotification.Property(name = "DCN_QUERY_CHANGE_NOTIFICATION", value = "true")
-        }
+        properties = @OracleChangeNotification.Property(
+            name = "DCN_QUERY_CHANGE_NOTIFICATION",
+            value = "true"
+        )
     )
     void onLibraryChanged(ChangeEvent<Library> event) {
         event.entity().ifPresent(library -> {

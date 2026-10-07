@@ -1,0 +1,5 @@
+test-resources:
+  containers:
+    oracle:
+      image-name: gvenzl/oracle-free
+      image-tag: latest

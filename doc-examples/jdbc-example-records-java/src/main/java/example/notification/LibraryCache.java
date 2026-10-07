@@ -36,9 +36,7 @@ class LibraryCache implements ApplicationEventListener<StartupEvent> {
     }
 
     @ChangeListener
-    @OracleChangeNotification(properties = @OracleChangeNotification.Property(
-        name = "DCN_CLIENT_INIT_CONNECTION", value = "true"
-    ))
+    @OracleChangeNotification
     void onLibraryChanged(ChangeEvent<Library> event) {
         event.entity().ifPresent(library -> libraries.put(library.id(), library));
     }
