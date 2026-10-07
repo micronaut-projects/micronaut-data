@@ -5,7 +5,9 @@ import io.micronaut.data.connection.ConnectionOperations
 import io.micronaut.data.connection.SynchronousConnectionManager
 import io.micronaut.data.connection.support.DefaultConnectionStatus
 import io.micronaut.transaction.TransactionDefinition
+import io.micronaut.transaction.annotation.OracleTransactional
 import io.micronaut.transaction.exceptions.CannotCreateTransactionException
+import io.micronaut.transaction.sessionless.SessionlessTransactionHandler
 import io.micronaut.transaction.support.DefaultTransactionDefinition
 import spock.lang.Specification
 
@@ -102,7 +104,26 @@ class EnforceReadOnlySpec extends Specification {
         thrown(CannotCreateTransactionException)
     }
 
-    private static TransactionDefinition readOnly(boolean readOnly) {
+    void "read-only sessionless transaction is not enforced with a statement"() {
+        given:
+        def sessionlessTransactionHandler = Mock(SessionlessTransactionHandler)
+        def manager = new DataSourceTransactionManager(Mock(DataSource), connectionOperations, null, List.of(), sessionlessTransactionHandler)
+        manager.setEnforceReadOnly(true)
+        def definition = readOnly(true)
+        definition.putProperty(OracleTransactional.ORACLE_SESSIONLESS_MODE, OracleTransactional.Sessionless.SUSPEND)
+
+        when:
+        manager.execute(definition) { status -> null }
+
+        then:
+        _ * sessionlessTransactionHandler.supports(_) >> true
+        1 * connection.setReadOnly(true)
+        0 * connection.createStatement()
+        1 * sessionlessTransactionHandler.begin(_, definition) >> null
+        1 * connection.commit()
+    }
+
+    private static DefaultTransactionDefinition readOnly(boolean readOnly) {
         def definition = new DefaultTransactionDefinition()
         definition.setReadOnly(readOnly)
         definition
