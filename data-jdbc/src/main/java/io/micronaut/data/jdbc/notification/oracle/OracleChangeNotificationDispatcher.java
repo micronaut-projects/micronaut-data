@@ -130,8 +130,7 @@ final class OracleChangeNotificationDispatcher implements DatabaseChangeListener
     }
 
     /**
-     * Receives a driver callback, classifies lifecycle versus data notifications, and submits
-     * accepted processing without blocking the driver's notification thread.
+     * Receives a driver callback and submits processing to the blocking executor.
      *
      * @param event the callback event supplied by the Oracle JDBC driver
      */
@@ -146,10 +145,6 @@ final class OracleChangeNotificationDispatcher implements DatabaseChangeListener
             LOG.trace("Ignoring DCN callback before registration options were configured for datasource [{}] and listener method [{}]",
                 dataSourceName, methodDescription);
             return;
-        }
-        boolean dataNotification = isDataNotification(event);
-        if (dataNotification && configuredOptions.purgeOnNotificationEnabled()) {
-            registrationPurgedHandler.accept(event.getRegId());
         }
         submitDispatch(event, configuredOptions);
     }
@@ -261,6 +256,9 @@ final class OracleChangeNotificationDispatcher implements DatabaseChangeListener
             return;
         }
         try {
+            if (options.purgeOnNotificationEnabled() && isDataNotification(event)) {
+                registrationPurgedHandler.accept(event.getRegId());
+            }
             if (LOG.isTraceEnabled()) {
                 LOG.trace("Accepted DCN event of type [{}] for datasource [{}], registration [{}], listener method [{}], " +
                         "database [{}], transaction XID (raw hex) [{}], and table changes [{}]",

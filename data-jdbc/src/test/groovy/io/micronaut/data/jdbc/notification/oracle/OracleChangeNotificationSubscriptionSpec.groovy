@@ -36,10 +36,13 @@ import java.sql.ResultSet
 import java.sql.SQLException
 import java.sql.Statement
 import java.time.Duration
+import java.util.concurrent.CountDownLatch
 import java.util.concurrent.Executor
 import java.util.concurrent.RejectedExecutionException
 import java.util.concurrent.ScheduledFuture
+import java.util.concurrent.TimeUnit
 import java.util.concurrent.atomic.AtomicInteger
+import java.util.concurrent.atomic.AtomicReference
 
 class OracleChangeNotificationSubscriptionSpec extends Specification {
 
@@ -215,6 +218,31 @@ class OracleChangeNotificationSubscriptionSpec extends Specification {
         1 * scheduledFuture.cancel(false)
     }
 
+    void "does not recover a deregistered registration after initial executor rejection"() {
+        given:
+        def original = Mock(DatabaseChangeRegistration)
+        def fixture = registrarFixture([original])
+        List<Runnable> scheduled = []
+        def attempts = new AtomicInteger()
+        Executor executor = { Runnable task ->
+            if (attempts.incrementAndGet() == 1) {
+                throw new RejectedExecutionException('Executor rejected recovery')
+            }
+            task.run()
+        } as Executor
+        def subscription = subscription(fixture.registrar, scheduler(scheduled), new OracleChangeNotificationTaskTracker(), executor)
+        subscription.start()
+
+        when:
+        fixture.failureListeners[0].onFailure(new SQLException('Receiver failed'))
+        subscription.handleRegistrationDeregistered(original.getRegId(), DatabaseChangeEvent.AdditionalEventType.TIMEOUT)
+        scheduled[0].run()
+
+        then:
+        fixture.registrationIndex.get() == 1
+        0 * fixture.oracleConnection.unregisterDatabaseChangeNotification(_)
+    }
+
     void "does not schedule further retries after the configured retry limit of #maxRetries"() {
         given:
         def original = Mock(DatabaseChangeRegistration)
@@ -309,6 +337,107 @@ class OracleChangeNotificationSubscriptionSpec extends Specification {
 
         then:
         fixture.registrationIndex.get() == 2
+    }
+
+    void "queues failed registration cleanup before creating its replacement"() {
+        given:
+        def original = Mock(DatabaseChangeRegistration)
+        def replacement = Mock(DatabaseChangeRegistration)
+        def fixture = registrarFixture([original, replacement])
+        List<Runnable> queued = []
+        def subscription = subscription(fixture.registrar, Mock(TaskScheduler), new OracleChangeNotificationTaskTracker(),
+            { Runnable task -> queued.add(task) } as Executor)
+        subscription.start()
+
+        when:
+        fixture.failureListeners[0].onFailure(new SQLException('Receiver failed'))
+
+        then:
+        queued.size() == 1
+        fixture.registrationIndex.get() == 1
+        0 * fixture.oracleConnection.unregisterDatabaseChangeNotification(_)
+
+        when:
+        queued.remove(0).run()
+
+        then:
+        1 * fixture.oracleConnection.unregisterDatabaseChangeNotification(original) >> {
+            assert !Thread.holdsLock(subscription)
+            assert fixture.registrationIndex.get() == 1
+        }
+        fixture.registrationIndex.get() == 2
+    }
+
+    void "driver #callback callback returns while #cleanup cleanup waits for it"() {
+        given:
+        def original = Mock(DatabaseChangeRegistration)
+        def replacement = Mock(DatabaseChangeRegistration)
+        def fixture = registrarFixture([original, replacement])
+        List<Runnable> queued = Collections.synchronizedList(new ArrayList<Runnable>())
+        def subscription = subscription(fixture.registrar, Mock(TaskScheduler), new OracleChangeNotificationTaskTracker(),
+            { Runnable task -> queued.add(task) } as Executor)
+        subscription.start()
+        def dispatcher = (OracleChangeNotificationDispatcher) fixture.registeredListeners[0]
+        def options = new Properties()
+        options.setProperty(OracleConnection.NTF_QOS_PURGE_ON_NTFN, 'true')
+        dispatcher.configureRegistrationOptions(options)
+        def event = Mock(DatabaseChangeEvent)
+        event.eventType >> DatabaseChangeEvent.EventType.OBJCHANGE
+        event.regId >> original.getRegId()
+        def callbackReturned = new CountDownLatch(1)
+        def callbackFailure = new AtomicReference<Throwable>()
+        Thread callbackThread
+
+        when:
+        if (cleanup == 'shutdown') {
+            subscription.stop()
+        } else if (cleanup == 'query deregistration') {
+            subscription.handleQueryDeregistered(original.getRegId())
+        } else {
+            fixture.failureListeners[0].onFailure(new SQLException('Receiver failed'))
+            queued.remove(0).run()
+        }
+
+        then:
+        1 * fixture.oracleConnection.unregisterDatabaseChangeNotification(original) >> {
+            assert !Thread.holdsLock(subscription)
+            callbackThread = Thread.startDaemon {
+                try {
+                    if (callback == 'failure') {
+                        fixture.failureListeners[0].onFailure(new SQLException('Concurrent receiver failure'))
+                    } else {
+                        dispatcher.onDatabaseChangeNotification(event)
+                    }
+                } catch (Throwable failure) {
+                    callbackFailure.set(failure)
+                } finally {
+                    callbackReturned.countDown()
+                }
+            }
+            // Model JDBC cleanup waiting for the receiver to leave its callback and release its lock.
+            assert callbackReturned.await(5, TimeUnit.SECONDS)
+        }
+        callbackFailure.get() == null
+
+        when:
+        while (!queued.empty) {
+            queued.remove(0).run()
+        }
+
+        then:
+        fixture.registrationIndex.get() == (cleanup == 'recovery' ? 2 : 1)
+
+        cleanup:
+        callbackThread?.join(5000)
+
+        where:
+        cleanup                | callback
+        'shutdown'             | 'failure'
+        'shutdown'             | 'purge'
+        'query deregistration' | 'failure'
+        'query deregistration' | 'purge'
+        'recovery'             | 'failure'
+        'recovery'             | 'purge'
     }
 
     private RegistrarFixture registrarFixture(List<DatabaseChangeRegistration> registrations,

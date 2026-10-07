@@ -58,14 +58,22 @@ final class OracleChangeNotificationSubscription {
     private final int retryDelayMultiplier;
     private final Duration maxRetryDelay;
 
+    /**
+     * Serializes registration setup and cleanup. Driver callbacks submit work without acquiring
+     * this lock, since JDBC cleanup can wait for the driver's notification thread to return.
+     */
+    private final Object lifecycleLock = new Object();
+
     private @Nullable DatabaseChangeRegistration registration;
+    /** The failed registration whose replacement is being retried after cleanup. */
+    private @Nullable Long recoveryRegistrationId;
     private @Nullable ScheduledFuture<?> recoveryRetryTask;
 
     /**
      * Prevents callbacks or recovery work that was already submitted from creating a registration
      * after the subscription has stopped.
      */
-    private boolean closed;
+    private volatile boolean closed;
 
     OracleChangeNotificationSubscription(String dataSourceName,
                                          OracleChangeListenerDefinition definition,
@@ -102,18 +110,24 @@ final class OracleChangeNotificationSubscription {
     /**
      * Creates the initial registration for this listener method.
      */
-    synchronized void start() {
-        registration = registrar.createRegistration(this, dispatcher);
+    void start() {
+        synchronized (lifecycleLock) {
+            if (!closed) {
+                registration = registrar.createRegistration(this, dispatcher);
+            }
+        }
     }
 
     /**
      * Marks the subscription closed, attempts to unregister its registration, and cancels a pending
      * retry.
      */
-    synchronized void stop() {
+    void stop() {
         closed = true;
-        unregisterRegistration();
         cancelRecoveryRetryTask();
+        synchronized (lifecycleLock) {
+            unregisterRegistration();
+        }
     }
 
     /**
@@ -126,25 +140,35 @@ final class OracleChangeNotificationSubscription {
     }
 
     /**
-     * Starts recovery when the current registration can no longer deliver notifications.
+     * Submits recovery without blocking the driver's failure-callback thread on JDBC cleanup.
      *
      * @param registrationId the unavailable registration identifier
      * @param failure        the failure reported by the JDBC driver, or {@code null} when Oracle Database
      *                       reports a shutdown
      */
-    synchronized void handleRegistrationUnavailable(long registrationId, @Nullable Throwable failure) {
-        if (closed || !isCurrent(registrationId)) {
+    void handleRegistrationUnavailable(long registrationId, @Nullable Throwable failure) {
+        if (closed) {
             return;
         }
-        if (failure == null) {
-            LOG.warn("DCN registration [{}] became unavailable for datasource [{}] and listener method [{}] after Oracle Database shutdown; attempting recovery",
-                registrationId, dataSourceName, methodDescription);
-        } else {
-            LOG.error("DCN registration [{}] became unavailable for datasource [{}] and listener method [{}]; attempting recovery",
-                registrationId, dataSourceName, methodDescription, failure);
+        try {
+            blockingExecutor.execute(() -> {
+                synchronized (lifecycleLock) {
+                    if (closed || !isCurrent(registrationId)) {
+                        return;
+                    }
+                    if (failure == null) {
+                        LOG.warn("DCN registration [{}] became unavailable for datasource [{}] and listener method [{}] after Oracle Database shutdown; attempting recovery",
+                            registrationId, dataSourceName, methodDescription);
+                    } else {
+                        LOG.error("DCN registration [{}] became unavailable for datasource [{}] and listener method [{}]; attempting recovery",
+                            registrationId, dataSourceName, methodDescription, failure);
+                    }
+                    attemptRegistrationRecovery(0, registrationId);
+                }
+            });
+        } catch (RejectedExecutionException e) {
+            rescheduleRecoveryTask(0, registrationId, e);
         }
-        unregisterFailedRegistration();
-        submitRecoveryTask(0, registrationId);
     }
 
     /**
@@ -152,12 +176,14 @@ final class OracleChangeNotificationSubscription {
      *
      * @param registrationId the purged registration identifier
      */
-    synchronized void handleRegistrationPurged(long registrationId) {
-        if (closed || !isCurrent(registrationId)) {
-            return;
+    void handleRegistrationPurged(long registrationId) {
+        synchronized (lifecycleLock) {
+            if (closed || !isCurrent(registrationId)) {
+                return;
+            }
+            LOG.trace("Handling purged DCN [{}] for datasource [{}] and listener method [{}]", getRegId(), dataSourceName, methodDescription);
+            registration = null;
         }
-        LOG.trace("Handling purged DCN [{}] for datasource [{}] and listener method [{}]", getRegId(), dataSourceName, methodDescription);
-        registration = null;
     }
 
     /**
@@ -166,14 +192,16 @@ final class OracleChangeNotificationSubscription {
      * @param registrationId      the deregistered registration identifier
      * @param additionalEventType the reason reported for deregistration
      */
-    synchronized void handleRegistrationDeregistered(long registrationId,
-                                                     DatabaseChangeEvent.AdditionalEventType additionalEventType) {
-        if (closed || !isCurrent(registrationId)) {
-            return;
+    void handleRegistrationDeregistered(long registrationId,
+                                       DatabaseChangeEvent.AdditionalEventType additionalEventType) {
+        synchronized (lifecycleLock) {
+            if (closed || !isCurrent(registrationId)) {
+                return;
+            }
+            LOG.warn("DCN registration [{}] for datasource [{}] and listener method [{}] was deregistered; reason [{}]",
+                registrationId, dataSourceName, methodDescription, additionalEventType);
+            registration = null;
         }
-        LOG.warn("DCN registration [{}] for datasource [{}] and listener method [{}] was deregistered; reason [{}]",
-            registrationId, dataSourceName, methodDescription, additionalEventType);
-        registration = null;
     }
 
     /**
@@ -181,14 +209,16 @@ final class OracleChangeNotificationSubscription {
      *
      * @param registrationId the registration whose associated query was deregistered
      */
-    synchronized void handleQueryDeregistered(long registrationId) {
-        if (closed || !isCurrent(registrationId)) {
-            return;
-        }
-        LOG.trace("Closing DCN subscription after query deregistration [{}] for datasource [{}] and listener method [{}]",
-            registrationId, dataSourceName, methodDescription);
+    void handleQueryDeregistered(long registrationId) {
+        synchronized (lifecycleLock) {
+            if (closed || !isCurrent(registrationId)) {
+                return;
+            }
+            LOG.trace("Closing DCN subscription after query deregistration [{}] for datasource [{}] and listener method [{}]",
+                registrationId, dataSourceName, methodDescription);
 
-        unregisterRegistration();
+            unregisterRegistration();
+        }
     }
 
     private void submitRecoveryTask(int retryCount, long failedRegId) {
@@ -199,17 +229,30 @@ final class OracleChangeNotificationSubscription {
         }
     }
 
-    private synchronized void attemptRegistrationRecovery(int retryCount, long failedRegId) {
-        if (closed) {
-            return;
-        }
-        LOG.trace("Creating a new DCN registration for datasource [{}] and listener method [{}]",
-            dataSourceName, methodDescription);
-        try {
-            registration = registrar.createRegistration(this, dispatcher);
-            dispatcher.dispatchInvalidation(registration.getRegId(), "after DCN registration recovery");
-        } catch (Exception e) {
-            rescheduleRecoveryTask(retryCount, failedRegId, e);
+    private void attemptRegistrationRecovery(int retryCount, long failedRegId) {
+        synchronized (lifecycleLock) {
+            if (closed || (registration != null && !isCurrent(failedRegId))) {
+                return;
+            }
+            if (registration == null && !Objects.equals(recoveryRegistrationId, failedRegId)) {
+                return;
+            }
+            recoveryRegistrationId = failedRegId;
+            unregisterFailedRegistration();
+            if (closed) {
+                return;
+            }
+            LOG.trace("Creating a new DCN registration for datasource [{}] and listener method [{}]",
+                dataSourceName, methodDescription);
+            try {
+                registration = registrar.createRegistration(this, dispatcher);
+                recoveryRegistrationId = null;
+                if (!closed) {
+                    dispatcher.dispatchInvalidation(registration.getRegId(), "after DCN registration recovery");
+                }
+            } catch (Exception e) {
+                rescheduleRecoveryTask(retryCount, failedRegId, e);
+            }
         }
     }
 
@@ -294,7 +337,7 @@ final class OracleChangeNotificationSubscription {
         registration = null;
     }
 
-    private void cancelRecoveryRetryTask() {
+    private synchronized void cancelRecoveryRetryTask() {
         if (recoveryRetryTask != null) {
             recoveryRetryTask.cancel(false);
             recoveryRetryTask = null;
