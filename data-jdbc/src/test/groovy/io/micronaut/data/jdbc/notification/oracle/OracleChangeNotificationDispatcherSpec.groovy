@@ -36,6 +36,7 @@ import java.util.concurrent.CountDownLatch
 import java.util.concurrent.Executor
 import java.util.concurrent.RejectedExecutionException
 import java.util.concurrent.TimeUnit
+import java.util.concurrent.atomic.AtomicBoolean
 import java.util.concurrent.atomic.AtomicInteger
 import java.util.function.BiConsumer
 import java.util.function.LongConsumer
@@ -595,7 +596,223 @@ class OracleChangeNotificationDispatcherSpec extends Specification {
         then:
         noExceptionThrown()
         taskTracker.reportActiveTasks().isEmpty()
-        0 * scheduler._
+        1 * scheduler.schedule(Duration.ofSeconds(1), _ as Runnable)
+        taskTracker.shutdownGracefully().toCompletableFuture().isDone()
+    }
+
+    void "coalesces rejected #eventType notifications until invalidation begins"() {
+        given:
+        List<Runnable> scheduled = []
+        List<Runnable> queued = []
+        List<ChangeEvent<?>> delivered = []
+        def reject = new AtomicBoolean(true)
+        def scheduler = Mock(TaskScheduler)
+        scheduler.schedule(Duration.ofSeconds(1), _ as Runnable) >> { Duration ignored, Runnable task ->
+            scheduled.add(task)
+            null
+        }
+        Executor executor = { Runnable task ->
+            if (reject.get()) {
+                throw new RejectedExecutionException('Executor busy')
+            }
+            queued.add(task)
+        } as Executor
+        def method = Mock(ExecutableMethod)
+        method.invoke(_, _) >> { Object[] arguments -> delivered.add(eventArgument(arguments)); null }
+        def tracker = new OracleChangeNotificationTaskTracker()
+        def dispatcher = dispatcher(definition(null, method, new Properties()), Mock(BeanContext), Mock(LongConsumer),
+            Mock(BiConsumer), Mock(LongConsumer), Mock(LongConsumer), executor, tracker, scheduler)
+        def event = Mock(DatabaseChangeEvent)
+        event.eventType >> eventType
+        event.regId >> 41L
+
+        when:
+        20.times { dispatcher.onDatabaseChangeNotification(event) }
+
+        then:
+        scheduled.size() == 1
+        queued.empty
+        delivered.empty
+
+        when:
+        scheduled.remove(0).run()
+
+        then:
+        scheduled.size() == 1
+        queued.empty
+        delivered.empty
+
+        when:
+        reject.set(false)
+        scheduled.remove(0).run()
+        reject.set(true)
+        20.times { dispatcher.onDatabaseChangeNotification(event) }
+
+        then:
+        scheduled.empty
+        queued.size() == 1
+        delivered.empty
+
+        when:
+        queued.remove(0).run()
+
+        then:
+        delivered.size() == 1
+        delivered[0].operation() == ChangeOperation.INVALIDATE
+        delivered[0].entity().isEmpty()
+        delivered[0].metadata(OracleChangeEventMetadata).isEmpty()
+        tracker.shutdownGracefully().toCompletableFuture().isDone()
+        0 * event.getTableChangeDescription()
+
+        where:
+        eventType << [DatabaseChangeEvent.EventType.OBJCHANGE, DatabaseChangeEvent.EventType.QUERYCHANGE]
+    }
+
+    void "requests another invalidation for a loss during refresh and tracks the callback"() {
+        given:
+        List<Runnable> scheduled = []
+        List<Runnable> queued = []
+        def reject = new AtomicBoolean(true)
+        def scheduler = Mock(TaskScheduler)
+        scheduler.schedule(_ as Duration, _ as Runnable) >> { Duration ignored, Runnable task ->
+            scheduled.add(task)
+            null
+        }
+        Executor executor = { Runnable task ->
+            if (reject.get()) {
+                throw new RejectedExecutionException('Executor busy')
+            }
+            queued.add(task)
+        } as Executor
+        def tracker = new OracleChangeNotificationTaskTracker()
+        def method = Mock(ExecutableMethod)
+        def dispatcher = dispatcher(definition(null, method, new Properties()), Mock(BeanContext), Mock(LongConsumer),
+            Mock(BiConsumer), Mock(LongConsumer), Mock(LongConsumer), executor, tracker, scheduler)
+        def event = Mock(DatabaseChangeEvent)
+        event.eventType >> DatabaseChangeEvent.EventType.OBJCHANGE
+        def invocations = 0
+        def completion
+        method.invoke(_, _) >> { Object[] arguments ->
+            assert eventArgument(arguments).operation() == ChangeOperation.INVALIDATE
+            if (++invocations == 1) {
+                reject.set(true)
+                dispatcher.onDatabaseChangeNotification(event)
+            } else {
+                completion = tracker.shutdownGracefully().toCompletableFuture()
+                assert !completion.isDone()
+                assert tracker.reportActiveTasks().getAsLong() == 1
+            }
+            null
+        }
+
+        when:
+        dispatcher.onDatabaseChangeNotification(event)
+        reject.set(false)
+        scheduled.remove(0).run()
+        queued.remove(0).run()
+
+        then:
+        invocations == 1
+        scheduled.size() == 1
+
+        when:
+        reject.set(false)
+        scheduled.remove(0).run()
+        queued.remove(0).run()
+
+        then:
+        invocations == 2
+        scheduled.empty
+        completion.isDone()
+        tracker.reportActiveTasks().getAsLong() == 0
+    }
+
+    void "discards #phase loss invalidation when shutdown begins"() {
+        given:
+        List<Runnable> scheduled = []
+        List<Runnable> queued = []
+        def reject = new AtomicBoolean(true)
+        def scheduler = Mock(TaskScheduler)
+        scheduler.schedule(_ as Duration, _ as Runnable) >> { Duration ignored, Runnable task ->
+            scheduled.add(task)
+            null
+        }
+        Executor executor = { Runnable task ->
+            if (reject.get()) {
+                throw new RejectedExecutionException('Executor busy')
+            }
+            queued.add(task)
+        } as Executor
+        def tracker = new OracleChangeNotificationTaskTracker()
+        def method = Mock(ExecutableMethod)
+        def dispatcher = dispatcher(definition(null, method, new Properties()), Mock(BeanContext), Mock(LongConsumer),
+            Mock(BiConsumer), Mock(LongConsumer), Mock(LongConsumer), executor, tracker, scheduler)
+        def event = Mock(DatabaseChangeEvent)
+        event.eventType >> DatabaseChangeEvent.EventType.OBJCHANGE
+
+        when:
+        dispatcher.onDatabaseChangeNotification(event)
+        if (phase == 'queued') {
+            reject.set(false)
+            scheduled.remove(0).run()
+        }
+        def completion = tracker.shutdownGracefully().toCompletableFuture()
+        (phase == 'queued' ? queued : scheduled).remove(0).run()
+
+        then:
+        completion.isDone()
+        scheduled.empty
+        queued.empty
+        0 * method.invoke(_, _)
+
+        where:
+        phase << ['scheduled', 'queued']
+    }
+
+    void "can request invalidation again after the retry scheduler fails"() {
+        given:
+        List<Runnable> scheduled = []
+        def scheduler = Mock(TaskScheduler)
+        def schedulingAttempts = new AtomicInteger()
+        scheduler.schedule(_ as Duration, _ as Runnable) >> { Duration ignored, Runnable task ->
+            if (schedulingAttempts.incrementAndGet() == 1) {
+                throw new RejectedExecutionException('Scheduler busy')
+            }
+            scheduled.add(task)
+            null
+        }
+        def reject = new AtomicBoolean(true)
+        Executor executor = { Runnable task ->
+            if (reject.get()) {
+                throw new RejectedExecutionException('Executor busy')
+            }
+            task.run()
+        } as Executor
+        def method = Mock(ExecutableMethod)
+        def tracker = new OracleChangeNotificationTaskTracker()
+        def dispatcher = dispatcher(definition(null, method, new Properties()), Mock(BeanContext), Mock(LongConsumer),
+            Mock(BiConsumer), Mock(LongConsumer), Mock(LongConsumer), executor, tracker, scheduler)
+        def event = Mock(DatabaseChangeEvent)
+        event.eventType >> DatabaseChangeEvent.EventType.OBJCHANGE
+
+        when:
+        dispatcher.onDatabaseChangeNotification(event)
+        dispatcher.onDatabaseChangeNotification(event)
+
+        then:
+        schedulingAttempts.get() == 2
+        scheduled.size() == 1
+
+        when:
+        reject.set(false)
+        scheduled.remove(0).run()
+
+        then:
+        1 * method.invoke(_, _) >> { Object[] arguments ->
+            assert eventArgument(arguments).operation() == ChangeOperation.INVALIDATE
+            null
+        }
+        tracker.shutdownGracefully().toCompletableFuture().isDone()
     }
 
     void "resubmits rejected #eventType lifecycle handling on the blocking executor"() {

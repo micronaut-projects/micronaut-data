@@ -222,6 +222,13 @@ notification connection unless the JDBC driver reports the failure.
 Oracle JDBC invokes its callback on a driver notification thread. Micronaut Data moves entity loading and listener
 invocation to the configured blocking executor so application work does not block that driver thread.
 
+For ongoing registrations, if the application cannot accept a data notification because its configured executor is
+saturated, Micronaut Data requests an `INVALIDATE` event so the listener can refresh its state. Repeated missed
+notifications are combined into one pending invalidation. Submission is retried until accepted or shutdown begins.
+Changes missed after the listener starts processing that invalidation can cause an additional invalidation.
+This reconciliation does not replay the missed row notifications. If another delivery attempt cannot be scheduled,
+Micronaut Data logs an error and cannot guarantee delivery of the invalidation.
+
 Changes to individual rows within one Oracle Database notification are delivered sequentially. Separate notifications
 may invoke the same listener concurrently, with no ordering guarantee between them. Listener beans must therefore be
 thread-safe and must not depend on callback order.

@@ -38,6 +38,7 @@ import java.util.Properties;
 import java.util.StringJoiner;
 import java.util.concurrent.Executor;
 import java.util.concurrent.RejectedExecutionException;
+import java.util.concurrent.atomic.AtomicBoolean;
 import java.util.function.BiConsumer;
 import java.util.function.BooleanSupplier;
 import java.util.function.LongConsumer;
@@ -54,7 +55,8 @@ import java.util.function.LongConsumer;
  *
  * <p>If the executor rejects a lifecycle callback, the scheduler retries submission until it is
  * accepted or shutdown begins. This also applies to one-shot data notifications because they
- * clear the purged registration. Other rejected data callbacks are logged and discarded.</p>
+ * clear the purged registration. Other rejected data callbacks request a deferred invalidation.
+ * Repeated losses are combined while that invalidation is waiting to run.</p>
  *
  * <p>Running tasks are tracked so graceful shutdown can wait for them to complete. Queued tasks
  * are discarded if shutdown starts before they run. Inserts and updates reload current entity
@@ -81,7 +83,7 @@ import java.util.function.LongConsumer;
  */
 final class OracleChangeNotificationDispatcher implements DatabaseChangeListener {
     private static final Logger LOG = LoggerFactory.getLogger(OracleChangeNotificationDispatcher.class);
-    private static final Duration LIFECYCLE_RETRY_DELAY = Duration.ofSeconds(1);
+    private static final Duration DISPATCH_RETRY_DELAY = Duration.ofSeconds(1);
 
     private final String dataSourceName;
     private final OracleChangeListenerDefinition listenerDefinition;
@@ -94,6 +96,8 @@ final class OracleChangeNotificationDispatcher implements DatabaseChangeListener
     private final BiConsumer<Long, DatabaseChangeEvent.AdditionalEventType> deregistrationHandler;
     private final LongConsumer queryDeregistrationHandler;
     private final LongConsumer databaseShutdownHandler;
+    /** Held until a loss-triggered invalidation starts, including time spent queued on the executor. */
+    private final AtomicBoolean invalidationPending = new AtomicBoolean();
     /**
      * Options reported by the driver and captured for callbacks after query association.
      */
@@ -250,8 +254,12 @@ final class OracleChangeNotificationDispatcher implements DatabaseChangeListener
         } catch (RuntimeException e) {
             LOG.warn("Unable to submit DCN event of type [{}] for datasource [{}], registration [{}], and listener method [{}]",
                 event.getEventType(), dataSourceName, event.getRegId(), methodDescription, e);
-            if (e instanceof RejectedExecutionException && requiresLifecycleHandling(event, options)) {
-                retryLifecycleDispatch(event, options);
+            if (e instanceof RejectedExecutionException) {
+                if (requiresLifecycleHandling(event, options)) {
+                    retryLifecycleDispatch(event, options);
+                } else if (isDataNotification(event) && invalidationPending.compareAndSet(false, true)) {
+                    retryInvalidation(event.getRegId());
+                }
             }
         }
     }
@@ -275,17 +283,60 @@ final class OracleChangeNotificationDispatcher implements DatabaseChangeListener
      * @param event the rejected lifecycle callback
      * @param options the options captured when the callback was received
      */
-    @SuppressWarnings("FutureReturnValueIgnored") // Resubmission checks shutdown and logs submission failures itself.
     private void retryLifecycleDispatch(DatabaseChangeEvent event, RegistrationOptions options) {
+        scheduleRetry(event.getRegId(), "lifecycle event " + event.getEventType(), () -> submitDispatch(event, options));
+    }
+
+    /**
+     * Keeps one invalidation pending across executor rejections without retaining lost row events.
+     */
+    private void retryInvalidation(long registrationId) {
+        if (!scheduleRetry(registrationId, "invalidation after rejected data notifications", () -> submitPendingInvalidation(registrationId))) {
+            invalidationPending.set(false);
+        }
+    }
+
+    private void submitPendingInvalidation(long registrationId) {
         if (taskTracker.isShutdownStarted()) {
+            invalidationPending.set(false);
             return;
         }
         try {
-            taskScheduler.schedule(LIFECYCLE_RETRY_DELAY, () -> submitDispatch(event, options));
+            blockingExecutor.execute(() -> {
+                // A loss during the listener's refresh needs another invalidation: its snapshot
+                // may already have been read. Losses while queued are covered by this refresh.
+                invalidationPending.set(false);
+                dispatchSafely(registrationId, () -> dispatchInvalidation(registrationId, "after rejected data notifications"));
+            });
+        } catch (RuntimeException e) {
+            LOG.warn("Unable to submit DCN invalidation for datasource [{}], registration [{}], and listener method [{}]",
+                dataSourceName, registrationId, methodDescription, e);
+            if (e instanceof RejectedExecutionException) {
+                retryInvalidation(registrationId);
+            } else {
+                invalidationPending.set(false);
+            }
+        }
+    }
+
+    /**
+     * Reschedules submission only; JDBC and listener work always runs through the blocking executor.
+     *
+     * @return whether a retry was scheduled
+     */
+    @SuppressWarnings("FutureReturnValueIgnored") // Retries check shutdown before submitting work.
+    private boolean scheduleRetry(long registrationId, String description, Runnable retry) {
+        if (taskTracker.isShutdownStarted()) {
+            return false;
+        }
+        try {
+            taskScheduler.schedule(DISPATCH_RETRY_DELAY, retry);
+            return true;
         } catch (RuntimeException schedulingFailure) {
-            LOG.error("Unable to schedule DCN lifecycle event [{}] for datasource [{}], registration [{}], and listener method [{}]; "
-                    + "lifecycle handling could not be completed",
-                event.getEventType(), dataSourceName, event.getRegId(), methodDescription, schedulingFailure);
+            LOG.error("Unable to schedule DCN {} for datasource [{}], registration [{}], and listener method [{}]; "
+                    + "notification handling could not be completed",
+                description, dataSourceName, registrationId, methodDescription, schedulingFailure);
+            return false;
         }
     }
 
