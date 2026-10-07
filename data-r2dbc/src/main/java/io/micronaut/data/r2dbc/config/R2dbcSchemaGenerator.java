@@ -46,6 +46,7 @@ import java.util.Arrays;
 import java.util.Collection;
 import java.util.Comparator;
 import java.util.List;
+import java.util.stream.Collectors;
 
 /**
  * Schema generation for R2DBC.
@@ -137,9 +138,6 @@ public class R2dbcSchemaGenerator {
                                 PersistentEntity[] entities,
                                 SqlQueryBuilder builder) {
         SchemaGenerate schemaGenerate = configuration.getSchemaGenerate();
-        if (configuration.getDialect().allowBatch() && configuration.isBatchGenerate()) {
-            return generateBatch(connection, schemaGenerate, entities, builder);
-        }
         List<String> createStatements = Arrays.asList(
             builder.buildCreateTableStatements(definitionProviders, entities, builder.getDialect())
         );
@@ -156,6 +154,10 @@ public class R2dbcSchemaGenerator {
                                 return Mono.empty();
                             }));
                 });
+        // Oracle R2DBC doesn't execute several statements in one string
+        if (configuration.getDialect().allowBatch() && configuration.getDialect() != Dialect.ORACLE && configuration.isBatchGenerate()) {
+            return generateBatch(connection, schemaGenerate, entities, builder, createStatements, createTablesFlow.then());
+        }
         return switch (schemaGenerate) {
             case CREATE_DROP -> {
                 List<String> dropStatements = Arrays.stream(entities).flatMap(entity -> Arrays.stream(builder.buildDropTableStatements(entity)))
@@ -179,13 +181,26 @@ public class R2dbcSchemaGenerator {
     private Mono<Void> generateBatch(Connection connection,
                                      SchemaGenerate schemaGenerate,
                                      PersistentEntity[] entities,
-                                     SqlQueryBuilder builder) {
+                                     SqlQueryBuilder builder,
+                                     List<String> createStatements,
+                                     Mono<Void> createTablesOneByOne) {
         Mono<Void> createTables = Mono.defer(() -> {
-            String sql = builder.buildBatchCreateTableStatement(definitionProviders, entities);
+            // The same statements as without batch generation, which don't repeat a schema or a join table
+            // shared by several entities. They are executed together: each one needs to be terminated
+            String sql = createStatements.stream()
+                .map(statement -> statement.endsWith(";") ? statement : statement + ";")
+                .collect(Collectors.joining(System.lineSeparator()));
             if (DataSettings.QUERY_LOG.isDebugEnabled()) {
                 DataSettings.QUERY_LOG.debug("Creating Tables: \n{}", sql);
             }
             return execute(connection, sql);
+        }).onErrorResume(throwable -> {
+            // For example a schema or a table that already exists: like without batch generation,
+            // create the tables one by one, ignoring the statements that fail
+            if (DataSettings.QUERY_LOG.isDebugEnabled()) {
+                DataSettings.QUERY_LOG.debug("Batch create unsuccessful, creating the tables one by one: {}", throwable.getMessage());
+            }
+            return createTablesOneByOne;
         });
         return switch (schemaGenerate) {
             case CREATE_DROP -> Mono.defer(() -> {
