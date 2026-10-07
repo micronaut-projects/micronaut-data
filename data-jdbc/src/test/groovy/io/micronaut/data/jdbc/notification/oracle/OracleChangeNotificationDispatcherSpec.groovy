@@ -22,6 +22,7 @@ import io.micronaut.data.jdbc.notification.DefaultChangeEvent
 import io.micronaut.data.jdbc.notification.DeferredChangeEvent
 import io.micronaut.inject.BeanDefinition
 import io.micronaut.inject.ExecutableMethod
+import io.micronaut.scheduling.TaskScheduler
 import oracle.jdbc.dcn.DatabaseChangeEvent
 import oracle.jdbc.dcn.QueryChangeDescription
 import oracle.jdbc.dcn.RowChangeDescription
@@ -30,6 +31,7 @@ import oracle.jdbc.OracleConnection
 import oracle.sql.ROWID
 import spock.lang.Specification
 
+import java.time.Duration
 import java.util.concurrent.CountDownLatch
 import java.util.concurrent.Executor
 import java.util.concurrent.RejectedExecutionException
@@ -143,7 +145,7 @@ class OracleChangeNotificationDispatcherSpec extends Specification {
         def event = Mock(DatabaseChangeEvent)
         def dispatcher = new OracleChangeNotificationDispatcher(
             'inventory', definition(null, Mock(ExecutableMethod), new Properties()), Mock(BeanContext),
-            executor, new OracleChangeNotificationTaskTracker(),
+            executor, Mock(TaskScheduler), new OracleChangeNotificationTaskTracker(),
             { long ignored -> } as LongConsumer,
             { Long ignored, DatabaseChangeEvent.AdditionalEventType ignoredType -> } as BiConsumer,
             { long ignored -> } as LongConsumer,
@@ -580,16 +582,136 @@ class OracleChangeNotificationDispatcherSpec extends Specification {
     void "handles executor rejection without leaking an accepted task"() {
         given:
         def taskTracker = new OracleChangeNotificationTaskTracker()
+        def scheduler = Mock(TaskScheduler)
         Executor executor = { Runnable ignored -> throw new RejectedExecutionException("executor closed") } as Executor
         def dispatcher = dispatcher(definition(), Mock(BeanContext), Mock(LongConsumer),
-            Mock(BiConsumer), Mock(LongConsumer), executor, taskTracker)
+            Mock(BiConsumer), Mock(LongConsumer), Mock(LongConsumer), executor, taskTracker, scheduler)
+        def event = Mock(DatabaseChangeEvent)
+        event.eventType >> DatabaseChangeEvent.EventType.OBJCHANGE
 
         when:
-        dispatcher.onDatabaseChangeNotification(Mock(DatabaseChangeEvent))
+        dispatcher.onDatabaseChangeNotification(event)
 
         then:
         noExceptionThrown()
         taskTracker.reportActiveTasks().isEmpty()
+        0 * scheduler._
+    }
+
+    void "resubmits rejected #eventType lifecycle handling on the blocking executor"() {
+        given:
+        List<Runnable> scheduled = []
+        List<Runnable> queued = []
+        List<String> handled = []
+        def attempts = new AtomicInteger()
+        def scheduler = Mock(TaskScheduler)
+        scheduler.schedule(Duration.ofSeconds(1), _ as Runnable) >> { Duration ignored, Runnable task ->
+            scheduled.add(task)
+            null
+        }
+        Executor executor = { Runnable task ->
+            if (attempts.incrementAndGet() <= 2) {
+                throw new RejectedExecutionException('Executor busy')
+            }
+            queued.add(task)
+        } as Executor
+        def properties = new Properties()
+        properties.setProperty(OracleConnection.NTF_QOS_PURGE_ON_NTFN, Boolean.toString(purge))
+        def tracker = new OracleChangeNotificationTaskTracker()
+        def dispatcher = dispatcher(definition(null, Mock(ExecutableMethod), properties), Mock(BeanContext),
+            { long ignored -> handled.add('purge') } as LongConsumer,
+            { Long ignored, DatabaseChangeEvent.AdditionalEventType reason -> handled.add('deregistration') } as BiConsumer,
+            { long ignored -> handled.add('query deregistration') } as LongConsumer,
+            { long ignored -> handled.add('shutdown') } as LongConsumer,
+            executor, tracker, scheduler)
+        def query = Mock(QueryChangeDescription)
+        query.queryChangeEventType >> QueryChangeDescription.QueryChangeEventType.DEREG
+        def event = Mock(DatabaseChangeEvent)
+        event.eventType >> eventType
+        event.regId >> 41L
+        event.queryChangeDescription >> (eventType == DatabaseChangeEvent.EventType.QUERYCHANGE ? [query] as QueryChangeDescription[] : null)
+
+        when:
+        dispatcher.onDatabaseChangeNotification(event)
+        scheduled.remove(0).run()
+
+        then:
+        handled.empty
+        queued.empty
+        scheduled.size() == 1
+
+        when:
+        scheduled.remove(0).run()
+
+        then:
+        handled.empty
+        queued.size() == 1
+        scheduled.empty
+
+        when:
+        queued.remove(0).run()
+
+        then:
+        handled == [expectedHandler]
+        attempts.get() == 3
+        tracker.shutdownGracefully().toCompletableFuture().isDone()
+
+        where:
+        eventType                              | purge | expectedHandler
+        DatabaseChangeEvent.EventType.DEREG       | false | 'deregistration'
+        DatabaseChangeEvent.EventType.SHUTDOWN    | false | 'shutdown'
+        DatabaseChangeEvent.EventType.QUERYCHANGE | false | 'query deregistration'
+        DatabaseChangeEvent.EventType.OBJCHANGE   | true  | 'purge'
+    }
+
+    void "stops lifecycle resubmission when shutdown starts"() {
+        given:
+        List<Runnable> scheduled = []
+        def scheduler = Mock(TaskScheduler)
+        scheduler.schedule(_ as Duration, _ as Runnable) >> { Duration ignored, Runnable task ->
+            scheduled.add(task)
+            null
+        }
+        def executor = Mock(Executor)
+        def tracker = new OracleChangeNotificationTaskTracker()
+        def handler = Mock(BiConsumer)
+        def dispatcher = dispatcher(definition(), Mock(BeanContext), Mock(LongConsumer), handler,
+            Mock(LongConsumer), Mock(LongConsumer), executor, tracker, scheduler)
+        def event = Mock(DatabaseChangeEvent)
+        event.eventType >> DatabaseChangeEvent.EventType.DEREG
+
+        when:
+        dispatcher.onDatabaseChangeNotification(event)
+        def completion = tracker.shutdownGracefully().toCompletableFuture()
+        scheduled.remove(0).run()
+
+        then:
+        1 * executor.execute(_) >> { throw new RejectedExecutionException('Executor busy') }
+        0 * handler._
+        completion.isDone()
+        scheduled.empty
+    }
+
+    void "contains lifecycle retry scheduler failure on the driver callback thread"() {
+        given:
+        def executor = Mock(Executor)
+        def scheduler = Mock(TaskScheduler)
+        def tracker = new OracleChangeNotificationTaskTracker()
+        def handler = Mock(BiConsumer)
+        def dispatcher = dispatcher(definition(), Mock(BeanContext), Mock(LongConsumer), handler,
+            Mock(LongConsumer), Mock(LongConsumer), executor, tracker, scheduler)
+        def event = Mock(DatabaseChangeEvent)
+        event.eventType >> DatabaseChangeEvent.EventType.DEREG
+
+        when:
+        dispatcher.onDatabaseChangeNotification(event)
+
+        then:
+        noExceptionThrown()
+        1 * executor.execute(_) >> { throw new RejectedExecutionException('Executor busy') }
+        1 * scheduler.schedule(_ as Duration, _ as Runnable) >> { throw new RejectedExecutionException('Scheduler stopped') }
+        0 * handler._
+        tracker.shutdownGracefully().toCompletableFuture().isDone()
     }
 
     void "ignores callbacks after graceful shutdown starts"() {
@@ -958,12 +1080,14 @@ class OracleChangeNotificationDispatcherSpec extends Specification {
                                                             LongConsumer queryDeregistrationHandler,
                                                             LongConsumer databaseShutdownHandler,
                                                             Executor executor,
-                                                            OracleChangeNotificationTaskTracker taskTracker) {
+                                                            OracleChangeNotificationTaskTracker taskTracker,
+                                                            TaskScheduler scheduler = null) {
         def dispatcher = new OracleChangeNotificationDispatcher(
             "inventory",
             definition,
             beanContext,
             executor,
+            scheduler ?: Mock(TaskScheduler),
             taskTracker,
             registrationPurgedHandler,
             deregistrationHandler,

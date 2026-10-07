@@ -94,7 +94,7 @@ final class OracleChangeNotificationSubscription {
         this.retryDelayMultiplier = recoveryConfiguration.getRetryDelayMultiplier();
         this.maxRetryDelay = recoveryConfiguration.getMaxRetryDelay();
         this.dispatcher = new OracleChangeNotificationDispatcher(
-            dataSourceName, definition, beanContext, blockingExecutor, taskTracker,
+            dataSourceName, definition, beanContext, blockingExecutor, taskScheduler, taskTracker,
             this::handleRegistrationPurged, this::handleRegistrationDeregistered,
             this::handleQueryDeregistered, this::handleDatabaseShutdown);
     }

@@ -21,6 +21,7 @@ import io.micronaut.data.jdbc.notification.ChangeOperation;
 import io.micronaut.data.jdbc.notification.DefaultChangeEvent;
 import io.micronaut.data.jdbc.notification.DeferredChangeEvent;
 import io.micronaut.inject.ExecutableMethod;
+import io.micronaut.scheduling.TaskScheduler;
 import oracle.jdbc.OracleConnection;
 import oracle.jdbc.dcn.DatabaseChangeEvent;
 import oracle.jdbc.dcn.DatabaseChangeListener;
@@ -31,10 +32,12 @@ import org.jspecify.annotations.Nullable;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
+import java.time.Duration;
 import java.util.HexFormat;
 import java.util.Properties;
 import java.util.StringJoiner;
 import java.util.concurrent.Executor;
+import java.util.concurrent.RejectedExecutionException;
 import java.util.function.BiConsumer;
 import java.util.function.LongConsumer;
 
@@ -47,6 +50,10 @@ import java.util.function.LongConsumer;
  *
  * <p>The Oracle driver invokes this listener on its notification thread. To avoid blocking that
  * thread, the dispatcher submits row reload and listener invocation to the blocking executor.</p>
+ *
+ * <p>If the executor rejects a lifecycle callback, the scheduler retries submission until it is
+ * accepted or shutdown begins. This also applies to one-shot data notifications because they
+ * clear the purged registration. Other rejected data callbacks are logged and discarded.</p>
  *
  * <p>Running tasks are tracked so graceful shutdown can wait for them to complete. Queued tasks
  * are discarded if shutdown starts before they run. Inserts and updates reload current entity
@@ -73,12 +80,14 @@ import java.util.function.LongConsumer;
  */
 final class OracleChangeNotificationDispatcher implements DatabaseChangeListener {
     private static final Logger LOG = LoggerFactory.getLogger(OracleChangeNotificationDispatcher.class);
+    private static final Duration LIFECYCLE_RETRY_DELAY = Duration.ofSeconds(1);
 
     private final String dataSourceName;
     private final OracleChangeListenerDefinition listenerDefinition;
     private final String methodDescription;
     private final BeanContext beanContext;
     private final Executor blockingExecutor;
+    private final TaskScheduler taskScheduler;
     private final OracleChangeNotificationTaskTracker taskTracker;
     private final LongConsumer registrationPurgedHandler;
     private final BiConsumer<Long, DatabaseChangeEvent.AdditionalEventType> deregistrationHandler;
@@ -93,6 +102,7 @@ final class OracleChangeNotificationDispatcher implements DatabaseChangeListener
                                        OracleChangeListenerDefinition listenerDefinition,
                                        BeanContext beanContext,
                                        Executor blockingExecutor,
+                                       TaskScheduler taskScheduler,
                                        OracleChangeNotificationTaskTracker taskTracker,
                                        LongConsumer registrationPurgedHandler,
                                        BiConsumer<Long, DatabaseChangeEvent.AdditionalEventType> deregistrationHandler,
@@ -103,6 +113,7 @@ final class OracleChangeNotificationDispatcher implements DatabaseChangeListener
         this.methodDescription = listenerDefinition.method().getDescription(true);
         this.beanContext = beanContext;
         this.blockingExecutor = blockingExecutor;
+        this.taskScheduler = taskScheduler;
         this.taskTracker = taskTracker;
         this.registrationPurgedHandler = registrationPurgedHandler;
         this.deregistrationHandler = deregistrationHandler;
@@ -238,6 +249,42 @@ final class OracleChangeNotificationDispatcher implements DatabaseChangeListener
         } catch (RuntimeException e) {
             LOG.warn("Unable to submit DCN event of type [{}] for datasource [{}], registration [{}], and listener method [{}]",
                 event.getEventType(), dataSourceName, event.getRegId(), methodDescription, e);
+            if (e instanceof RejectedExecutionException && requiresLifecycleHandling(event, options)) {
+                retryLifecycleDispatch(event, options);
+            }
+        }
+    }
+
+    /**
+     * Identifies callbacks that update registration lifecycle state, including a one-shot data
+     * notification that clears a purged registration.
+     */
+    private boolean requiresLifecycleHandling(DatabaseChangeEvent event, RegistrationOptions options) {
+        return event.getEventType() == DatabaseChangeEvent.EventType.DEREG
+            || (event.getEventType() == DatabaseChangeEvent.EventType.SHUTDOWN && !options.driverReconnectRetryEnabled())
+            || (event.getEventType() == DatabaseChangeEvent.EventType.QUERYCHANGE
+                && findDeregisteredQuery(event.getQueryChangeDescription()) != null)
+            || (options.purgeOnNotificationEnabled() && isDataNotification(event));
+    }
+
+    /**
+     * Retains a rejected lifecycle callback for resubmission. Retries continue until the blocking
+     * executor accepts it or shutdown starts. The scheduler never performs JDBC or listener work.
+     *
+     * @param event the rejected lifecycle callback
+     * @param options the options captured when the callback was received
+     */
+    @SuppressWarnings("FutureReturnValueIgnored") // Resubmission checks shutdown and logs submission failures itself.
+    private void retryLifecycleDispatch(DatabaseChangeEvent event, RegistrationOptions options) {
+        if (taskTracker.isShutdownStarted()) {
+            return;
+        }
+        try {
+            taskScheduler.schedule(LIFECYCLE_RETRY_DELAY, () -> submitDispatch(event, options));
+        } catch (RuntimeException schedulingFailure) {
+            LOG.error("Unable to schedule DCN lifecycle event [{}] for datasource [{}], registration [{}], and listener method [{}]; "
+                    + "lifecycle handling could not be completed",
+                event.getEventType(), dataSourceName, event.getRegId(), methodDescription, schedulingFailure);
         }
     }
 
