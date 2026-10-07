@@ -57,7 +57,11 @@ final class OracleChangeNotificationSubscription {
     private @Nullable DatabaseChangeRegistration registration;
     private @Nullable ScheduledFuture<?> recoveryRetryTask;
 
-    private volatile State state = State.UNREGISTERED;
+    /**
+     * Prevents callbacks or recovery work that was already submitted from creating a registration
+     * after the subscription has stopped.
+     */
+    private boolean closed;
 
     OracleChangeNotificationSubscription(String dataSourceName,
                                          OracleChangeListenerDefinition definition,
@@ -87,11 +91,10 @@ final class OracleChangeNotificationSubscription {
     }
 
     /**
-     * Creates the initial registration for this listener method and marks the subscription active.
+     * Creates the initial registration for this listener method.
      */
     synchronized void start() {
         registration = registrar.createRegistration(this, dispatcher);
-        state = State.ACTIVE;
     }
 
     /**
@@ -99,7 +102,7 @@ final class OracleChangeNotificationSubscription {
      * retry.
      */
     synchronized void stop() {
-        state = State.CLOSED;
+        closed = true;
         unregisterRegistration();
         cancelRecoveryRetryTask();
     }
@@ -121,7 +124,7 @@ final class OracleChangeNotificationSubscription {
      *                       reports a shutdown
      */
     synchronized void handleRegistrationUnavailable(long registrationId, @Nullable Throwable failure) {
-        if (state == State.CLOSED || !isCurrent(registrationId)) {
+        if (closed || !isCurrent(registrationId)) {
             return;
         }
         if (failure == null) {
@@ -131,7 +134,6 @@ final class OracleChangeNotificationSubscription {
             LOG.error("DCN registration [{}] became unavailable for datasource [{}] and listener method [{}]; attempting recovery",
                 registrationId, dataSourceName, methodDescription, failure);
         }
-        state = State.RECOVERING;
         unregisterFailedRegistration();
         submitRecoveryTask(0, 3, 10, registrationId);
     }
@@ -142,11 +144,10 @@ final class OracleChangeNotificationSubscription {
      * @param registrationId the purged registration identifier
      */
     synchronized void handleRegistrationPurged(long registrationId) {
-        if (state == State.CLOSED || !isCurrent(registrationId)) {
+        if (closed || !isCurrent(registrationId)) {
             return;
         }
         LOG.trace("Handling purged DCN [{}] for datasource [{}] and listener method [{}]", getRegId(), dataSourceName, methodDescription);
-        state = State.UNREGISTERED;
         registration = null;
     }
 
@@ -158,12 +159,11 @@ final class OracleChangeNotificationSubscription {
      */
     synchronized void handleRegistrationDeregistered(long registrationId,
                                                      DatabaseChangeEvent.AdditionalEventType additionalEventType) {
-        if (state == State.CLOSED || !isCurrent(registrationId)) {
+        if (closed || !isCurrent(registrationId)) {
             return;
         }
         LOG.warn("DCN registration [{}] for datasource [{}] and listener method [{}] was deregistered; reason [{}]",
             registrationId, dataSourceName, methodDescription, additionalEventType);
-        state = State.UNREGISTERED;
         registration = null;
     }
 
@@ -173,13 +173,12 @@ final class OracleChangeNotificationSubscription {
      * @param registrationId the registration whose associated query was deregistered
      */
     synchronized void handleQueryDeregistered(long registrationId) {
-        if (state == State.CLOSED || !isCurrent(registrationId)) {
+        if (closed || !isCurrent(registrationId)) {
             return;
         }
         LOG.trace("Closing DCN subscription after query deregistration [{}] for datasource [{}] and listener method [{}]",
             registrationId, dataSourceName, methodDescription);
 
-        state = State.UNREGISTERED;
         unregisterRegistration();
     }
 
@@ -192,14 +191,13 @@ final class OracleChangeNotificationSubscription {
     }
 
     private synchronized void attemptRegistrationRecovery(int retryCount, int maxRetries, long retryDelay, long failedRegId) {
-        if (state == State.CLOSED) {
+        if (closed) {
             return;
         }
         LOG.trace("Creating a new DCN registration for datasource [{}] and listener method [{}]",
             dataSourceName, methodDescription);
         try {
             registration = registrar.createRegistration(this, dispatcher);
-            state = State.ACTIVE;
             dispatcher.dispatchInvalidation(registration.getRegId(), "after DCN registration recovery");
         } catch (Exception e) {
             rescheduleRecoveryTask(retryCount, maxRetries, retryDelay, failedRegId, e);
@@ -215,16 +213,11 @@ final class OracleChangeNotificationSubscription {
             LOG.error("DCN receiver recovery exhausted [{}] retries for registration [{}], datasource [{}], "
                     + "and listener method [{}]; the listener remains unavailable",
                 maxRetries, failedRegId, dataSourceName, methodDescription, e);
-            synchronized (this) {
-                if (state == State.RECOVERING) {
-                    state = State.UNREGISTERED;
-                }
-            }
         }
     }
 
     private synchronized void scheduleRecoveryRetry(int retryCount, int maxRetries, long retryDelay, long failedRegId) {
-        if (state == State.CLOSED) {
+        if (closed) {
             return;
         }
         try {
@@ -234,7 +227,6 @@ final class OracleChangeNotificationSubscription {
             LOG.warn("Scheduled DCN receiver recovery retry in [{}] seconds for datasource [{}], listener method [{}], and registration [{}]",
                 retryDelay, dataSourceName, methodDescription, failedRegId);
         } catch (RuntimeException schedulingFailure) {
-            state = State.UNREGISTERED;
             LOG.error("Unable to schedule DCN receiver recovery for registration [{}], datasource [{}], "
                     + "and listener method [{}]; automatic recovery has stopped and the listener remains unavailable",
                 failedRegId, dataSourceName, methodDescription, schedulingFailure);
@@ -289,10 +281,4 @@ final class OracleChangeNotificationSubscription {
         return Objects.equals(getRegId(), regId);
     }
 
-    private enum State {
-        UNREGISTERED,
-        ACTIVE,
-        RECOVERING,
-        CLOSED
-    }
 }
