@@ -53,8 +53,17 @@ class OracleChangeNotificationRegistrarSpec extends Specification {
         failure.message.contains('datasource [default]')
         failure.message.contains('listener method [void changed(ChangeEvent<Book>)]')
 
+        when:
+        OracleChangeNotificationOptionsValidator.validateEffectiveOptions(connectionProperties, definition, 'default')
+
+        then:
+        def effectiveFailure = thrown(IllegalStateException)
+        effectiveFailure.message == failure.message
+
         where:
         option                                         | overrideValue
+        ' '                                            | 'value'
+        OracleConnection.NTF_TIMEOUT                   | '2147483648'
         OracleConnection.NTF_TIMEOUT                   | '-1'
         OracleConnection.NTF_TIMEOUT                   | 'invalid'
         OracleConnection.DCN_NOTIFY_ROWIDS             | 'false'

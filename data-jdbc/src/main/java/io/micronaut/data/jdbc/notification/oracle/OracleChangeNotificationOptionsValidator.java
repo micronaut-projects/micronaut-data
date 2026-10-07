@@ -15,8 +15,8 @@
  */
 package io.micronaut.data.jdbc.notification.oracle;
 
+import io.micronaut.data.model.OracleChangeNotificationOptions;
 import oracle.jdbc.OracleConnection;
-import org.jspecify.annotations.Nullable;
 
 import java.util.Properties;
 
@@ -79,7 +79,7 @@ final class OracleChangeNotificationOptionsValidator {
                                         String dataSourceName,
                                         boolean validateOmittedOptions) {
         for (String name : options.stringPropertyNames()) {
-            String error = invalidOption(name, options.getProperty(name));
+            String error = OracleChangeNotificationOptions.invalidOption(name, options.getProperty(name));
             if (error != null) {
                 throw invalidRegistrationProperty(definition, dataSourceName, error);
             }
@@ -88,54 +88,6 @@ final class OracleChangeNotificationOptionsValidator {
         validateBooleanProperty(definition, options, dataSourceName, OracleConnection.DCN_QUERY_CHANGE_NOTIFICATION, false, validateOmittedOptions);
         validateBooleanProperty(definition, options, dataSourceName, OracleConnection.NTF_QOS_PURGE_ON_NTFN, false, validateOmittedOptions);
         validateIntegerProperty(definition, options, dataSourceName, OracleConnection.DCN_NOTIFY_CHANGELAG, 0, validateOmittedOptions);
-    }
-
-    /**
-     * Returns an error when an individual option is not supported for its configuration source.
-     *
-     * @param name  the option name
-     * @param value the configured option value
-     * @return the validation error, or {@code null} when the option is allowed
-     */
-    private static @Nullable String invalidOption(String name, String value) {
-        if (name.isBlank()) {
-            return "has an Oracle property with a blank name";
-        }
-        if (OracleConnection.DCN_CLIENT_INIT_REGID.equals(name)) {
-            return name + ": reusing an existing reliable DCN registration is not supported";
-        }
-        if (OracleConnection.DCN_NOTIFY_ROWIDS.equals(name) && !"true".equalsIgnoreCase(value)) {
-            return "requires " + name + " to be true so row-level operation and ROWID details are available";
-        }
-        if (OracleConnection.DCN_NOTIFY_CHANGELAG.equals(name) && !"0".equals(value.trim())) {
-            return "requires " + name + " to be 0 so row-level operation and ROWID details are available";
-        }
-        if (OracleConnection.NTF_GROUPING_CLASS.equals(name)) {
-            if (!OracleConnection.NTF_GROUPING_CLASS_NONE.equals(value)) {
-                return name + ": notification grouping is not supported";
-            }
-        } else if (OracleConnection.NTF_GROUPING_VALUE.equals(name)
-            || OracleConnection.NTF_GROUPING_TYPE.equals(name)
-            || OracleConnection.NTF_GROUPING_REPEAT_TIME.equals(name)
-            || OracleConnection.NTF_GROUPING_START_TIME.equals(name)) {
-            return name + ": notification grouping is not supported";
-        }
-        if (OracleConnection.DCN_PULL_NOTIFICATIONS.equals(name) && !"false".equalsIgnoreCase(value)) {
-            return name + " [" + value + "] is not supported because AQ pull delivery does not invoke the listener callback";
-        }
-        if (OracleConnection.DCN_PULL_QUEUE_NAME.equals(name)) {
-            return name + " is not supported because AQ pull delivery does not invoke the listener callback";
-        }
-        if (OracleConnection.NTF_TIMEOUT.equals(name)) {
-            try {
-                if (Integer.parseInt(value) < 0) {
-                    return name + " must be a non-negative integer number of seconds";
-                }
-            } catch (NumberFormatException e) {
-                return name + " must be a non-negative integer number of seconds";
-            }
-        }
-        return null;
     }
 
     /**

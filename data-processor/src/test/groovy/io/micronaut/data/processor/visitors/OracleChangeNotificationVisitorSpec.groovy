@@ -254,6 +254,8 @@ class BookListener''')
 
         where:
         propertyName               | propertyValue             | expectedMessage
+        ' '                       | 'value'                   | 'has an Oracle property with a blank name'
+        'NTF_TIMEOUT'             | '2147483648'              | 'NTF_TIMEOUT must be a non-negative integer number of seconds'
         'DCN_NOTIFY_ROWIDS'        | 'false'                   | 'requires DCN_NOTIFY_ROWIDS to be true'
         'DCN_CLIENT_INIT_REGID'    | '0'                       | 'DCN_CLIENT_INIT_REGID: reusing an existing reliable DCN registration is not supported'
         'NTF_GROUPING_CLASS'       | 'NTF_GROUPING_CLASS_TIME' | 'NTF_GROUPING_CLASS: notification grouping is not supported'

@@ -21,6 +21,7 @@ import io.micronaut.core.annotation.AnnotationValue;
 import io.micronaut.data.annotation.MappedEntity;
 import io.micronaut.data.intercept.annotation.OracleChangeListenerQuery;
 import io.micronaut.data.model.DataType;
+import io.micronaut.data.model.OracleChangeNotificationOptions;
 import io.micronaut.data.model.PersistentEntity;
 import io.micronaut.data.model.PersistentEntityUtils;
 import io.micronaut.data.model.query.builder.QueryParameterBinding;
@@ -59,8 +60,6 @@ import java.util.function.Function;
 public final class OracleChangeNotificationVisitor implements TypeElementVisitor<Object, Object> {
     private static final String ORACLE_CHANGE_NOTIFICATION = "io.micronaut.data.jdbc.annotation.OracleChangeNotification";
     private static final String QUERY_CHANGE_NOTIFICATION = "DCN_QUERY_CHANGE_NOTIFICATION";
-    private static final String NOTIFY_CHANGE_LAG = "DCN_NOTIFY_CHANGELAG";
-    private static final String NOTIFICATION_TIMEOUT = "NTF_TIMEOUT";
 
     private final Map<String, SourcePersistentEntity> entityMap = new HashMap<>();
 
@@ -237,35 +236,7 @@ public final class OracleChangeNotificationVisitor implements TypeElementVisitor
                                                  MethodElement element) {
         String name = property.stringValue("name").orElse("");
         String value = property.stringValue("value").orElse("");
-        String error = null;
-        if (name.isBlank()) {
-            error = "has an Oracle property with a blank name";
-        } else if (NOTIFY_CHANGE_LAG.equals(name) && !"0".equals(value.trim())) {
-            error = "requires " + name + " to be 0 so row-level operation and ROWID details are available";
-        } else if ("DCN_NOTIFY_ROWIDS".equals(name) && !"true".equalsIgnoreCase(value)) {
-            error = "requires " + name + " to be true so row-level operation and ROWID details are available";
-        } else if (NOTIFICATION_TIMEOUT.equals(name)) {
-            try {
-                if (Integer.parseInt(value) < 0) {
-                    error = NOTIFICATION_TIMEOUT + " must be a non-negative integer number of seconds";
-                }
-            } catch (NumberFormatException e) {
-                error = NOTIFICATION_TIMEOUT + " must be a non-negative integer number of seconds";
-            }
-        } else if ("DCN_CLIENT_INIT_REGID".equals(name)) {
-            error = name + ": reusing an existing reliable DCN registration is not supported";
-        } else if ("NTF_GROUPING_CLASS".equals(name) && !"NTF_GROUPING_CLASS_NONE".equals(value)) {
-            error = name + ": notification grouping is not supported";
-        } else if ("NTF_GROUPING_VALUE".equals(name)
-            || "NTF_GROUPING_TYPE".equals(name)
-            || "NTF_GROUPING_REPEAT_TIME".equals(name)
-            || "NTF_GROUPING_START_TIME".equals(name)) {
-            error = name + ": notification grouping is not supported";
-        } else if ("DCN_PULL_NOTIFICATIONS".equals(name) && !"false".equalsIgnoreCase(value)) {
-            error = name + " [" + value + "] is not supported because AQ pull delivery does not invoke the listener callback";
-        } else if ("DCN_PULL_QUEUE_NAME".equals(name)) {
-            error = name + " is not supported because AQ pull delivery does not invoke the listener callback";
-        }
+        String error = OracleChangeNotificationOptions.invalidOption(name, value);
         if (error != null) {
             context.fail("@OracleChangeNotification " + error, element);
             return true;
