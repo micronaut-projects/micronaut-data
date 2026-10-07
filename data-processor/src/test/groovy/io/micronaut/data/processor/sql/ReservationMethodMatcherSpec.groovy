@@ -83,7 +83,7 @@ class ReservationMethodMatcherSpec extends AbstractDataSpec {
 
         then:
         e = thrown(RuntimeException)
-        e.message.contains('Reservation property [balance] requires a matching delta parameter named [balance] or [balanceIncrement], or annotated with @Parameter("balance")')
+        e.message.contains('Reservation property [balance] requires a matching delta parameter named [balance] or [balanceIncrement], or annotated with @Parameter("balance") or @Parameter("balanceIncrement")')
 
         when:
         buildReservationRepository('MismatchedReservationDeltaOperationRepository', 'long reserveIncrementBalance(@Id Long id, Long balanceDecrement);')

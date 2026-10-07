@@ -252,7 +252,8 @@ public final class ReservationMethodMatcher implements MethodMatcher {
             .toList();
         if (candidates.isEmpty()) {
             throw new MatchFailedException("Reservation property [" + propertyName + "] requires a matching delta parameter named ["
-                + propertyName + "] or [" + operationName + "], or annotated with @Parameter(\"" + propertyName + "\")");
+                + propertyName + "] or [" + operationName + "], or annotated with @Parameter(\"" + propertyName + "\") or @Parameter(\""
+                + operationName + "\")");
         }
         return candidates;
     }
