@@ -21,9 +21,7 @@ The listener itself must be a Micronaut bean and must be proxyable; in particula
 
 == Declaring a Listener
 
-The following cache uses Object Change Notification to observe the complete mapped `LIBRARY` table.
-It loads the initial contents at startup and keeps them current through its listener method.
-Enable this example with `query-notification.object.enabled=true`:
+The following listener uses Object Change Notification to observe the complete mapped `LIBRARY` table.
 
 snippet::example.notification.LibraryCache[project-base="doc-examples/jdbc-example-records", source="main", tags="listener", languages="java,groovy,kotlin,python"]
 
@@ -37,11 +35,8 @@ Micronaut Data validates the listener contract at compilation time. A method ann
 * declare exactly one `ChangeEvent<E>` parameter; and
 * use a concrete persistent entity type for `E`.
 
-The listener uses the `default` datasource unless another datasource is selected through `dataSource`:
-
-snippet::example.notification.LibraryCache[project-base="doc-examples/jdbc-example-records", source="main", tags="datasource", indent="0", languages="java,groovy,kotlin,python"]
-
-Replace `default` with the name of another configured datasource to register against it.
+The listener uses the `default` datasource unless another datasource is specified through the `dataSource` attribute
+of the ann:data.jdbc.annotation.ChangeListener[] annotation.
 
 Micronaut Data creates an Oracle Database registration for each listener method during application startup.
 The registration normally remains active for the application’s lifetime, and Micronaut Data attempts to unregister
@@ -61,8 +56,8 @@ snippet::example.notification.LibraryCache[project-base="doc-examples/jdbc-examp
 
 This cache updates individual entities for `INSERT` and `UPDATE`. For `DELETE`, the event has no entity ID,
 so the example reloads the cache instead of trying to interpret the Oracle Database `ROWID` as an entity ID.
-It also reloads the complete cache for `INVALIDATE`. The callback and cache refresh use the same lock so
-concurrent notifications cannot interleave a full refresh with an individual cache update.
+It also reloads the complete cache for `INVALIDATE`. Cache refreshes are serialized, but individual
+cache updates may run concurrently with a refresh.
 
 For `INSERT` and `UPDATE`, Oracle Database supplies a `ROWID` rather than entity values. Micronaut Data reloads the row and maps the complete entity before the application reads `entity()`.
 The reloaded value is the current database state at reload time, not a historical snapshot of the commit that produced the notification. Another transaction can therefore change or delete the row before it is reloaded.

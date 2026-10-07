@@ -14,7 +14,6 @@ import org.slf4j.LoggerFactory
 
 import java.util.concurrent.ConcurrentHashMap
 
-// tag::listener[]
 @Context
 @Requires(property = "query-notification.object.enabled")
 class LibraryCache implements ApplicationEventListener<StartupEvent> {
@@ -38,12 +37,12 @@ class LibraryCache implements ApplicationEventListener<StartupEvent> {
             .findFirst()
     }
 
+    // tag::listener[]
     // tag::events[]
-    // tag::datasource[]
-    @ChangeListener(dataSource = "default")
-    // end::datasource[]
+    @ChangeListener
     @OracleChangeNotification
-    synchronized void onLibraryChanged(ChangeEvent<Library> event) {
+    void onLibraryChanged(ChangeEvent<Library> event) {
+        // end::listener[]
         event.metadata(OracleChangeEventMetadata).ifPresent { metadata ->
             LOG.debug("Changed library ROWID: {}", metadata.rowId())
         }
@@ -57,7 +56,9 @@ class LibraryCache implements ApplicationEventListener<StartupEvent> {
                 refreshCache()
                 break
         }
+        // tag::listener[]
     }
+    // end::listener[]
     // end::events[]
 
     private synchronized void refreshCache() {
@@ -66,4 +67,3 @@ class LibraryCache implements ApplicationEventListener<StartupEvent> {
         currentLibraries.forEach { library -> libraries.put(library.id(), library) }
     }
 }
-// end::listener[]

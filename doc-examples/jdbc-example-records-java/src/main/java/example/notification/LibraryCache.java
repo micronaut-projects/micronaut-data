@@ -15,7 +15,6 @@ import java.util.Map;
 import java.util.Optional;
 import java.util.concurrent.ConcurrentHashMap;
 
-// tag::listener[]
 @Context
 @Requires(property = "query-notification.object.enabled")
 class LibraryCache implements ApplicationEventListener<StartupEvent> {
@@ -40,19 +39,21 @@ class LibraryCache implements ApplicationEventListener<StartupEvent> {
             .findFirst();
     }
 
+    // tag::listener[]
     // tag::events[]
-    // tag::datasource[]
-    @ChangeListener(dataSource = "default")
-    // end::datasource[]
+    @ChangeListener
     @OracleChangeNotification
-    synchronized void onLibraryChanged(ChangeEvent<Library> event) {
+    void onLibraryChanged(ChangeEvent<Library> event) {
+        // end::listener[]
         event.metadata(OracleChangeEventMetadata.class)
             .ifPresent(metadata -> LOG.debug("Changed library ROWID: {}", metadata.rowId()));
         switch (event.operation()) {
             case INSERT, UPDATE -> event.entity().ifPresent(library -> libraries.put(library.id(), library));
             case DELETE, INVALIDATE -> refreshCache();
         }
+        // tag::listener[]
     }
+    // end::listener[]
     // end::events[]
 
     private synchronized void refreshCache() {
@@ -61,4 +62,3 @@ class LibraryCache implements ApplicationEventListener<StartupEvent> {
         currentLibraries.forEach(library -> libraries.put(library.id(), library));
     }
 }
-// end::listener[]
