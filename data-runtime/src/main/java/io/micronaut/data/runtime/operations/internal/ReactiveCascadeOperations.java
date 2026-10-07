@@ -215,7 +215,9 @@ public final class ReactiveCascadeOperations<Ctx extends OperationContext> exten
     private static List<Object> mergeBatchPersisted(List<Object> sourceChildren, List<Boolean> vetoed, List<Object> inserted) {
         List<Object> children = new ArrayList<>(sourceChildren.size());
         if (inserted.size() != Collections.frequency(vetoed, Boolean.FALSE)) {
-            // An insert was vetoed by an event listener, the children cannot be matched with the source
+            // An insert was vetoed by an event listener, the children cannot be matched with the source.
+            // Unlike the sync cascade, the child vetoed by the listener is left out, because the reactive
+            // batch persist doesn't expose which entities were vetoed, and the source order isn't kept
             children.addAll(inserted);
             for (int i = 0; i < sourceChildren.size(); i++) {
                 if (Boolean.TRUE.equals(vetoed.get(i))) {
