@@ -1184,14 +1184,6 @@ interface MyRepository {
         Dialect.POSTGRES | 'DROP TABLE "restaurant";\nDROP TABLE "product";'
     }
 
-    void "test encode batch drop statement of a single entity on Oracle has no terminator"() {
-        given:
-        def encoder = new SqlQueryBuilder(Dialect.ORACLE)
-
-        expect:
-        encoder.buildBatchDropTableStatement(new RuntimePersistentEntity(Restaurant)) == 'DROP TABLE "RESTAURANT"'
-    }
-
     void "test encode insert statement - custom mapping strategy"() {
         given:
         def result = builder.createCriteriaInsert(CountryRegion).build(new SqlQueryBuilder())

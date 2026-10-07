@@ -194,7 +194,8 @@ public class SchemaGenerator {
                           PersistentEntity[] entities) throws SQLException {
         Dialect dialect = configuration.getDialect();
         SqlQueryBuilder builder = new SqlQueryBuilder(dialect, configuration.getDialectOptions().getVersion());
-        if (dialect.allowBatch() && configuration.isBatchGenerate()) {
+        // Oracle JDBC doesn't execute several statements in one string
+        if (dialect.allowBatch() && dialect != Dialect.ORACLE && configuration.isBatchGenerate()) {
             switch (configuration.getSchemaGenerate()) {
                 case CREATE_DROP:
                     try {
