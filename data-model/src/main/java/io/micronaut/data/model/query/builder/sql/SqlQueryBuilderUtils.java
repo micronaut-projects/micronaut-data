@@ -60,6 +60,7 @@ final class SqlQueryBuilderUtils {
     static final String ANN_JOIN_TABLE = "io.micronaut.data.annotation.sql.JoinTable";
     static final String ANN_JOIN_COLUMNS = "io.micronaut.data.annotation.sql.JoinColumns";
     static final String SEQ_SUFFIX = "_seq";
+    private static final String UNIQUE_MEMBER = "unique";
     private static final String PREFIX = "${";
     private static final String SUFFIX = "}";
 
@@ -263,6 +264,33 @@ final class SqlQueryBuilderUtils {
     static String getSchemaName(PersistentEntity entity) {
         return entity.getAnnotationMetadata().stringValue(MappedEntity.class, SqlMembers.SCHEMA).orElseGet(() ->
             entity.getAnnotationMetadata().stringValue(MappedEntity.class, SqlMembers.SCHEMA).orElse(null));
+    }
+
+    /**
+     * Whether the property is declared unique with JPA {@code @Column(unique = true)}.
+     *
+     * @param annotationMetadata The property annotation metadata
+     * @return true if the column is unique
+     */
+    static boolean isUniqueColumn(AnnotationMetadata annotationMetadata) {
+        return annotationMetadata.booleanValue("jakarta.persistence.Column", UNIQUE_MEMBER).orElse(false)
+            || annotationMetadata.booleanValue("javax.persistence.Column", UNIQUE_MEMBER).orElse(false);
+    }
+
+    /**
+     * Returns the names of the association join columns declared unique with JPA {@code @JoinColumn(unique = true)},
+     * including the join columns of a composite join ({@code @JoinColumns}). The annotation is repeatable, a single one
+     * can be stored in its {@code @JoinColumns} container.
+     *
+     * @param annotationMetadata The association annotation metadata
+     * @return The declared names of the unique join columns, an empty name for an unnamed join column
+     */
+    static List<String> getUniqueJoinColumnNames(AnnotationMetadata annotationMetadata) {
+        return Stream.of("jakarta.persistence.JoinColumn", "javax.persistence.JoinColumn")
+            .flatMap(annotation -> annotationMetadata.getAnnotationValuesByName(annotation).stream())
+            .filter(joinColumn -> joinColumn.booleanValue(UNIQUE_MEMBER).orElse(false))
+            .map(joinColumn -> joinColumn.stringValue("name").orElse(""))
+            .toList();
     }
 
     /**

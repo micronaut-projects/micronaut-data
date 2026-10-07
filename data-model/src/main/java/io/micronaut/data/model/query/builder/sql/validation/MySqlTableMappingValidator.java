@@ -17,6 +17,7 @@ package io.micronaut.data.model.query.builder.sql.validation;
 
 import io.micronaut.core.annotation.Internal;
 import io.micronaut.data.model.query.builder.sql.Dialect;
+import io.micronaut.data.model.query.builder.sql.SqlDialectOptions;
 import io.micronaut.data.model.schema.sql.SqlColumnMapping;
 import io.micronaut.data.model.schema.sql.SqlDbType;
 import io.micronaut.data.model.schema.sql.metadata.SqlColumnMetadata;
@@ -25,13 +26,10 @@ import jakarta.inject.Singleton;
 import java.sql.Types;
 
 /**
- * A validator for SQL table mappings specific to MySQL databases.
+ * A validator for MySQL (and MariaDB) table mappings.
  * <p>
  * This class extends {@link BaseSqlTableMappingValidator} and provides MySQL-specific logic
- * for validating column types and mappings against the actual database schema.
- * <p>
- * It is designed to be used with Micronaut Data and is annotated with {@link Singleton} to
- * indicate that it should be treated as a singleton bean within the application context.
+ * for validating table mappings against the actual database metadata.
  *
  * @since 4.13.0
  */
@@ -44,18 +42,57 @@ final class MySqlTableMappingValidator extends BaseSqlTableMappingValidator {
     }
 
     @Override
+    public String getSequenceNamesQuery() {
+        // Only MariaDB supports sequences
+        return "SELECT TABLE_NAME FROM information_schema.TABLES WHERE TABLE_TYPE = 'SEQUENCE' AND TABLE_SCHEMA = ?";
+    }
+
+    @Override
+    public String getColumnTypeDefinitionsQuery() {
+        return "SELECT TABLE_NAME, COLUMN_NAME, COLUMN_TYPE FROM information_schema.COLUMNS WHERE TABLE_SCHEMA = ? AND DATA_TYPE = 'vector'";
+    }
+
+    @Override
+    public String getPrimaryKeysQuery() {
+        // Every MySQL primary key is named PRIMARY, the join also matches the table
+        return INFORMATION_SCHEMA_PRIMARY_KEYS_QUERY;
+    }
+
+    @Override
+    public String getIndexesQuery() {
+        // The column name is null for a functional key part
+        return """
+            SELECT TABLE_NAME, INDEX_NAME, CASE WHEN NON_UNIQUE = 0 THEN 1 ELSE 0 END, COLUMN_NAME, SEQ_IN_INDEX
+            FROM information_schema.STATISTICS WHERE TABLE_SCHEMA = ?""";
+    }
+
+    @Override
     protected boolean matchingDialectColumnType(SqlColumnMapping columnMapping, SqlColumnMetadata columnMetadata) {
-        if (columnMapping.getDbType() == SqlDbType.UUID) {
-            return uuidMatchesVarchar(columnMetadata) ||
-                // For MariaDB
-                (columnMetadata.type() == Types.OTHER && columnMetadata.typeName().equalsIgnoreCase("uuid"));
+        SqlDbType dbType = columnMapping.getDbType();
+        if (dbType == SqlDbType.UUID) {
+            // MariaDB native UUID type
+            return columnMetadata.type() == Types.OTHER && columnMetadata.typeName().equalsIgnoreCase("uuid");
         }
-        if (columnMapping.getDbType() == SqlDbType.BOOLEAN) {
-            return columnMetadata.type() == Types.BIT;
+        if (dbType == SqlDbType.BOOLEAN) {
+            // BOOLEAN is TINYINT(1), reported as TINYINT when tinyInt1isBit is disabled
+            return columnMetadata.type() == Types.TINYINT;
         }
-        if (columnMapping.getDbType() == SqlDbType.JSON) {
+        if (dbType == SqlDbType.JSON || dbType == SqlDbType.JSON_OBJECT) {
+            // MariaDB JSON is an alias for LONGTEXT
             return columnMetadata.type() == Types.LONGVARCHAR;
         }
         return false;
+    }
+
+    @Override
+    protected boolean matchingDialectDefinedColumnType(String expectedType, SqlColumnMetadata columnMetadata, SqlDialectOptions dialectOptions) {
+        if (!"GEOMETRY".equals(expectedType)) {
+            return false;
+        }
+        // The spatial columns can be reported with the subtype name
+        return switch (normalizeTypeName(columnMetadata.typeName())) {
+            case "POINT", "LINESTRING", "POLYGON", "MULTIPOINT", "MULTILINESTRING", "MULTIPOLYGON", "GEOMETRYCOLLECTION", "GEOMCOLLECTION" -> true;
+            default -> false;
+        };
     }
 }

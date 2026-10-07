@@ -363,6 +363,25 @@ public class SqlQueryBuilder extends AbstractSqlLikeQueryBuilder {
     }
 
     /**
+     * Builds a batch create tables statement with the given options. Designed for testing and not production usage. For production a
+     * SQL migration tool such as Flyway or Liquibase is recommended.
+     *
+     * @param columnDefinitionProviders the list of SqlColumnDefinitionProvider
+     * @param options the options of the created schema objects
+     * @param entities the entities
+     * @return The table
+     * @since 5.3.0
+     */
+    @Experimental
+    public String buildBatchCreateTableStatement(List<DefinitionProvider> columnDefinitionProviders,
+                                                 SqlSchemaCreateOptions options,
+                                                 PersistentEntity... entities) {
+        return Arrays.stream(entities)
+            .flatMap(entity -> Stream.of(buildCreateTableStatements(entity, columnDefinitionProviders, options)))
+            .collect(Collectors.joining(System.lineSeparator()));
+    }
+
+    /**
      * Builds a batch drop tables statement. Designed for testing and not production usage. For production a
      * SQL migration tool such as Flyway or Liquibase is recommended.
      *
@@ -486,6 +505,20 @@ public class SqlQueryBuilder extends AbstractSqlLikeQueryBuilder {
      */
     @Experimental
     public String[] buildCreateTableStatements(PersistentEntity entity, List<DefinitionProvider> definitionProviders) {
+        return buildCreateTableStatements(entity, definitionProviders, SqlSchemaCreateOptions.DEFAULT);
+    }
+
+    /**
+     * Builds a set of {@code CREATE TABLE} statements for the given entity with the given options.
+     *
+     * @param entity The entity
+     * @param definitionProviders The definition providers
+     * @param options The options of the created schema objects
+     * @return The {@code CREATE TABLE} statements
+     * @since 5.3.0
+     */
+    @Experimental
+    public String[] buildCreateTableStatements(PersistentEntity entity, List<DefinitionProvider> definitionProviders, SqlSchemaCreateOptions options) {
         List<String> createStatements = new ArrayList<>();
         if (entity.getAnnotationMetadata().hasAnnotation(JsonView.class)) {
             if (dialect != Dialect.ORACLE) {
@@ -506,6 +539,7 @@ public class SqlQueryBuilder extends AbstractSqlLikeQueryBuilder {
 
         for (SqlTableMapping table : tables) {
            addTableCreateStatements(createStatements, table, schema, escape);
+           addOptionalStatements(createStatements, table, escape, options);
         }
 
         return createStatements.toArray(new String[0]);
@@ -540,6 +574,25 @@ public class SqlQueryBuilder extends AbstractSqlLikeQueryBuilder {
     public final String[] buildCreateTableStatements(List<DefinitionProvider> definitionProviders,
                                                      PersistentEntity[] entities,
                                                      Dialect dialect) {
+        return buildCreateTableStatements(definitionProviders, entities, dialect, SqlSchemaCreateOptions.DEFAULT);
+    }
+
+    /**
+     * Builds the create table statements for a collection of entities with the given options. Designed for testing and not production usage.
+     * For production a SQL migration tool such as Flyway or Liquibase is recommended.
+     *
+     * @param definitionProviders The definition providers
+     * @param entities The collection of entities
+     * @param dialect The dialect
+     * @param options The options of the created schema objects
+     * @return The tables for the given entities
+     * @since 5.3.0
+     */
+    @Experimental
+    public final String[] buildCreateTableStatements(List<DefinitionProvider> definitionProviders,
+                                                     PersistentEntity[] entities,
+                                                     Dialect dialect,
+                                                     SqlSchemaCreateOptions options) {
         Map<String, SqlTableMapping> sqlTableMappingByTableName = CollectionUtils.newLinkedHashMap(entities.length);
         // Entity can generate indexes, sequences, join tables so need some longer map
         List<String> createStatements = new ArrayList<>(entities.length * 5);
@@ -569,10 +622,33 @@ public class SqlQueryBuilder extends AbstractSqlLikeQueryBuilder {
             Boolean shouldEscapeDialect = shouldEscapeDialect(dialect);
             boolean escape = Objects.requireNonNullElseGet(shouldEscapeDialect, table::escape);
             addTableCreateStatements(createStatements, table, table.schema(), escape);
+            addOptionalStatements(createStatements, table, escape, options);
         }
 
         createStatements.addAll(jsonViewCreateStatements);
         return createStatements.toArray(new String[0]);
+    }
+
+    /**
+     * Adds the statements of the optional schema objects of the table enabled by the options: the JPA unique constraints
+     * ({@code @Column(unique = true)} and {@code @Table(uniqueConstraints = ...)}) as unique indexes, after the table indexes.
+     */
+    private void addOptionalStatements(List<String> createStatements, SqlTableMapping table, boolean escape, SqlSchemaCreateOptions options) {
+        if (!options.uniqueConstraints() || table.uniqueConstraints().isEmpty()) {
+            return;
+        }
+        String tableName = getObjectName(table.schema(), table.name(), escape, true);
+        Set<String> reservableColumns = table.columns().stream().filter(SqlColumnMapping::isReservable)
+            .map(SqlColumnMapping::getName).collect(Collectors.toSet());
+        for (SqlIndexMapping uniqueConstraint : table.uniqueConstraints()) {
+            for (String column : uniqueConstraint.columns()) {
+                if (reservableColumns.contains(column)) {
+                    throw new MappingException("@Reservable column [" + column + "] of table [" + table.name() + "] cannot be indexed");
+                }
+            }
+            String indexName = createIndexName(table, uniqueConstraint, escape);
+            addToCollectionIfNotContains(createStatements, createIndexStatement(table, uniqueConstraint, indexName, tableName, escape));
+        }
     }
 
     private Optional<PersistentEntity> getJsonViewEntity(@NonNull PersistentEntity entity) {
@@ -1032,7 +1108,7 @@ public class SqlQueryBuilder extends AbstractSqlLikeQueryBuilder {
             if (sequence.definition() != null) {
                 addToCollectionIfNotContains(createStatements, sequence.definition());
             } else {
-                GeneratedValue.Type idGeneratorType = sequence.generatedValueType().orElseGet(() -> defaultSelectAutoStrategy(sequence.dataType(), dialect));
+                GeneratedValue.Type idGeneratorType = SqlSchemaUtils.resolveGeneratedValueType(sequence, dialect);
                 boolean isSequence = idGeneratorType == SEQUENCE;
                 if (isSequence) {
                     addToCollectionIfNotContains(createStatements, createSequenceStmt(table, sequence, escape));
@@ -1059,10 +1135,7 @@ public class SqlQueryBuilder extends AbstractSqlLikeQueryBuilder {
 
     private String createIndexName(SqlTableMapping tableMapping, SqlIndexMapping indexMapping, boolean escape) {
         // Create index name without escaped table name and then escape if needed
-        String columnNames = String.join(", ", indexMapping.columns());
-        String indexName = StringUtils.isNotEmpty(indexMapping.name()) ? indexMapping.name() :
-            String.format("idx_%s%s", prepareNames(tableMapping.name()),
-                makeTransformedColumnList(columnNames));
+        String indexName = SqlSchemaUtils.resolveIndexName(tableMapping.name(), indexMapping);
         if (escape) {
             indexName = quote(indexName);
         }
@@ -1133,7 +1206,13 @@ public class SqlQueryBuilder extends AbstractSqlLikeQueryBuilder {
     }
 
     private String createSequenceStmt(SqlTableMapping table, SqlSequenceMapping sequence, boolean escape) {
-        String sequenceName = getObjectName(table.schema(), resolveSequenceName(table, sequence), escape, true);
+        String sequenceName;
+        if (dialect == Dialect.POSTGRES) {
+            // Created with the same name as the inserts refer to it in nextval('...')
+            sequenceName = postgresSequenceName(table.schema(), resolveSequenceName(table, sequence), escape);
+        } else {
+            sequenceName = getObjectName(table.schema(), resolveSequenceName(table, sequence), escape, true);
+        }
         final boolean isSqlServer = dialect == Dialect.SQL_SERVER;
         String createSequenceStmt = "CREATE SEQUENCE " + sequenceName;
         if (isSqlServer) {
@@ -1149,21 +1228,6 @@ public class SqlQueryBuilder extends AbstractSqlLikeQueryBuilder {
             }
         }
         return createSequenceStmt;
-    }
-
-    private String makeTransformedColumnList(String columnList) {
-        return Arrays.stream(prepareNames(columnList).split(","))
-            .map(col -> "_" + col)
-            .collect(Collectors.joining());
-    }
-
-    private String prepareNames(String columnList) {
-        return columnList.chars()
-            .mapToObj(c -> String.valueOf((char) c))
-            .filter(x -> !x.equals(" "))
-            .filter(x -> !x.equals("\""))
-            .map(String::toLowerCase)
-            .collect(Collectors.joining());
     }
 
     @Override
@@ -1274,15 +1338,7 @@ public class SqlQueryBuilder extends AbstractSqlLikeQueryBuilder {
     }
 
     private String resolveSequenceName(SqlTableMapping table, SqlSequenceMapping sequence) {
-        if (StringUtils.isNotEmpty(sequence.definedName())) {
-            return Objects.requireNonNull(sequence.definedName());
-        }
-        if (sequence.definition() != null && dialect == Dialect.SQL_SERVER) {
-            throw new MappingException(
-                "@GeneratedValue with a custom sequence definition requires 'ref' for SQL Server column: " + sequence.columnName()
-            );
-        }
-        return table.name() + SqlQueryBuilderUtils.SEQ_SUFFIX;
+        return SqlSchemaUtils.resolveSequenceName(table, sequence, dialect);
     }
 
     private List<String> resolveJoinTableAssociatedColumns(AnnotationMetadata annotationMetadata, boolean associationOwner, PersistentEntity entity, NamingStrategy namingStrategy) {
@@ -1498,7 +1554,7 @@ public class SqlQueryBuilder extends AbstractSqlLikeQueryBuilder {
                     }
 
                     if (isSequence) {
-                        values.add(getSequenceStatement(unescapedSchema, unescapedTableName, property));
+                        values.add(getSequenceStatement(unescapedSchema, unescapedTableName, property, escape));
                     } else {
                         addWriteExpression(values, property);
 
@@ -1607,22 +1663,30 @@ public class SqlQueryBuilder extends AbstractSqlLikeQueryBuilder {
         if (associations.isEmpty()) {
             return new String[]{property.getName()};
         }
-        List<String> path = new ArrayList<>(associations.size() + 1);
-        for (Association association : associations) {
-            path.add(association.getName());
-        }
-        path.add(property.getName());
-        return path.toArray(new String[0]);
+        return Stream.concat(associations.stream().map(Association::getName), Stream.of(property.getName()))
+            .toArray(String[]::new);
     }
 
-    final String getSequenceStatement(String unescapedSchemaName, String unescapedTableName, PersistentProperty property) {
+    final String getSequenceStatement(String unescapedSchemaName, String unescapedTableName, PersistentProperty property, boolean escape) {
         final String sequenceName = resolveSequenceName(property, unescapedTableName);
         return switch (dialect) {
             case ORACLE -> (StringUtils.isEmpty(unescapedSchemaName) ? "" : quote(unescapedSchemaName, true) + DOT) + quote(sequenceName, true) + ".nextval";
-            case POSTGRES -> "nextval('" + (StringUtils.isEmpty(unescapedSchemaName) ? "" : unescapedSchemaName + DOT) + sequenceName + "')";
+            case POSTGRES -> "nextval('" + postgresSequenceName(unescapedSchemaName, sequenceName, escape) + "')";
             case SQL_SERVER -> "NEXT VALUE FOR " + (StringUtils.isEmpty(unescapedSchemaName) ? "" : quote(unescapedSchemaName, true) + DOT) + quote(sequenceName, true);
             default -> throw new IllegalStateException("Cannot generate a sequence for dialect: " + dialect);
         };
+    }
+
+    /**
+     * The PostgreSQL sequence name used both to create the sequence and in the {@code nextval('...')} of the inserts.
+     * The schema is quoted like the schema of the table, the sequence name is unquoted and folded to lower case,
+     * as the inserts always referred to it.
+     */
+    private String postgresSequenceName(@Nullable String schema, String sequenceName, boolean escape) {
+        if (StringUtils.isEmpty(schema)) {
+            return sequenceName;
+        }
+        return (escape ? quote(schema, true) : schema) + DOT + sequenceName;
     }
 
     private String resolveSequenceName(PersistentProperty identity, String unescapedTableName) {
@@ -2247,13 +2311,7 @@ public class SqlQueryBuilder extends AbstractSqlLikeQueryBuilder {
     }
 
     private GeneratedValue.Type defaultSelectAutoStrategy(DataType dataType, Dialect dialect) {
-        if (dataType == DataType.UUID) {
-            return UUID;
-        }
-        if (dialect == Dialect.ORACLE) {
-            return SEQUENCE;
-        }
-        return AUTO;
+        return SqlSchemaUtils.defaultAutoStrategy(dataType, dialect);
     }
 
     /**

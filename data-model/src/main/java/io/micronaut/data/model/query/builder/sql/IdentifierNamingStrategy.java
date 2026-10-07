@@ -18,6 +18,8 @@ package io.micronaut.data.model.query.builder.sql;
 import io.micronaut.core.annotation.Internal;
 import io.micronaut.core.util.StringUtils;
 
+import java.util.Locale;
+
 /**
  * An enumeration representing different strategies for naming identifiers.
  *
@@ -53,8 +55,9 @@ public enum IdentifierNamingStrategy {
             return source;
         }
         return switch (this) {
-            case UPPER -> source.toUpperCase();
-            case LOWER -> source.toLowerCase();
+            // Identifiers are case-folded independently of the default locale (the Turkish dotted and dotless i)
+            case UPPER -> source.toUpperCase(Locale.ROOT);
+            case LOWER -> source.toLowerCase(Locale.ROOT);
             case MIXED -> source;
         };
     }

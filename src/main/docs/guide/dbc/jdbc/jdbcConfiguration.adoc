@@ -32,11 +32,46 @@ include::doc-examples/jdbc-example-java/src/main/resources/application.yml[]
 
 The `schema-generate` option is currently only recommended for simple applications, testing and demos and is not considered production-ready. The dialect set in configuration is the dialect that will be used to generate the schema.
 
+==== Unique Constraints
+
+By default, JPA unique constraints are not generated. Set `schema-generate-unique-constraints=true` to create a unique index for every column annotated with `@Column(unique = true)`, for every to-one association join column annotated with `@JoinColumn(unique = true)` (also a single join column of a composite `@JoinColumns`), and for the columns of `@Table(uniqueConstraints = @UniqueConstraint(...))`, which can be any table column, including embedded and association columns (the combined columns of a composite join are made unique this way). The constraint column names are the table column names, a property name (like `firstName` for the column `first_name`) is accepted too. An unnamed constraint gets a generated name that fits the identifier length limit of all the supported databases. The unique indexes of a table are created after the table, and with the option enabled the schema validation reports missing unique constraints.
+
+.Generating unique constraints
+[source,yaml]
+----
+datasources:
+  default:
+    schema-generate: create-drop
+    schema-generate-unique-constraints: true
+----
+
+NOTE: Unique indexes declared with `@Index(unique = true)` are always generated.
+
 ==== Schema Validation
 
 In order to validate mapped entities against current schema state set `schema-generate=validate` in the configuration.
-If mapped entity does not have corresponding table in the schema or some field does not have column in the database table or
-types are not matching then the application will report an error and stop.
+All the problems found are reported together. The following differences are errors, and the application will report them and stop:
+
+* A mapped entity or join table does not have a corresponding table in the schema
+* A mapped property does not have a column in the table
+* The column type is not compatible with the mapped type. Compatible types are accepted, for example a wider integral type, `TEXT` or `CLOB` for strings, or any type name synonym (`int4` for `INTEGER`). Columns with an explicit definition (`@MappedProperty(definition = "...")`) are compared by the type name of the definition. Vector and spatial types are always verified, including the vector dimension (Oracle, PostgreSQL and MySQL) and the Oracle vector storage (dense or sparse).
+* A `UUID` stored as a string in a column shorter than 36 characters
+* A sequence used to generate the identity values does not exist
+* An Oracle JSON relational duality view (`@JsonView`) does not exist, is not valid, has a different root table, a sub view (`@JsonSubView`) is missing under its JSON key or is an object instead of an array (or the opposite), or a JSON field of the view entity is missing or stored in a different column
+
+The following differences are only logged as warnings, since they only fail for some values or don't affect the mapping:
+
+* A column is shorter or has smaller precision than the mapped type
+* A column nullability is different from the mapped property nullability
+* The table primary key is different from the mapped identity
+* A declared index (`@Index`, `@VectorIndex`) does not exist. Spatial and vector indexes are matched by their name, the declared or the generated one, since the index method is not reported by the database metadata
+* A unique constraint does not exist, validated only when `schema-generate-unique-constraints` is enabled
+* A vector column has a different element format (for example `FLOAT64` instead of `FLOAT32`)
+* A JSON view or one of its sub views allows different operations than declared, or the view has fields or sub views not mapped by the view entity
+
+The schema, table, column and sequence names are matched the same way as the generated SQL refers to them: an escaped name (`@MappedEntity(escape = true)`, the default) must match exactly on the databases with case-sensitive quoted names (PostgreSQL), while the unescaped names, and all the names on Oracle and H2, are matched in the database identifier case. The MySQL table names are case-sensitive when the database is (`lower_case_table_names=0`).
+
+The schema metadata is read in bulk and validated in memory: a single call per schema reads the tables and columns, and a single catalog query per schema reads the primary keys, and another one the indexes, only when some are validated (H2, PostgreSQL, MySQL, MariaDB, SQL Server and Oracle). For the other databases they are read with a call per table, since the JDBC drivers require the table name.
 
 Please note this option is currently regarded as experimental.
 
@@ -69,7 +104,7 @@ As seen in the configuration above you should also configure the dialect. Althou
 |SQLite (requires `io.micronaut.sql:micronaut-jdbc-sqlite`)
 |===
 
-IMPORTANT: To use SQLite, add the dependency `io.micronaut.sql:micronaut-sql-sqlite`, which adds the https://github.com/xerial/sqlite-jdbc[SQLite JDBC Driver] and configures a custom api:data.connection.ConnectionCapabilities[] implementation.
+IMPORTANT: To use SQLite, add the dependency `io.micronaut.sql:micronaut-jdbc-sqlite`, which adds the https://github.com/xerial/sqlite-jdbc[SQLite JDBC Driver] and configures a custom api:data.connection.ConnectionCapabilities[] implementation.
 
 IMPORTANT: The dialect setting in configuration does *not* replace the need to ensure the correct dialect is set at the repository. If the dialect is H2 in configuration, the repository should have `@JdbcRepository(dialect = Dialect.H2)` / `@R2dbcRepository(dialect = Dialect.H2)`. Because repositories are computed at compile time, the configuration value is not known at that time.
 
