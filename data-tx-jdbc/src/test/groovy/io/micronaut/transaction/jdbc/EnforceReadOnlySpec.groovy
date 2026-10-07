@@ -4,7 +4,6 @@ import io.micronaut.data.connection.ConnectionDefinition
 import io.micronaut.data.connection.ConnectionOperations
 import io.micronaut.data.connection.SynchronousConnectionManager
 import io.micronaut.data.connection.support.DefaultConnectionStatus
-import io.micronaut.transaction.TransactionDefinition
 import io.micronaut.transaction.annotation.OracleTransactional
 import io.micronaut.transaction.exceptions.CannotCreateTransactionException
 import io.micronaut.transaction.sessionless.SessionlessTransactionHandler

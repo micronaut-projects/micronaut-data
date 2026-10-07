@@ -126,10 +126,8 @@ public abstract class AbstractAsyncSpecificationInterceptor<T, R> extends Abstra
     @SuppressWarnings("java:S1872")
     protected final Argument<?> findReturnType(MethodInvocationContext<?, ?> context, Argument<?> defaultArg) {
         ReturnType<?> returnType = context.getReturnType();
-        if (context.isSuspend()) {
-            if (!returnType.getType().getName().equals("kotlinx.coroutines.flow.Flow")) {
-                return returnType.asArgument();
-            }
+        if (context.isSuspend() && !returnType.getType().getName().equals("kotlinx.coroutines.flow.Flow")) {
+            return returnType.asArgument();
         }
         return returnType.asArgument().getFirstTypeVariable().orElse(defaultArg);
     }

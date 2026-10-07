@@ -86,7 +86,8 @@ public class TransactionUtilSpec {
         definition.setTimeout(TransactionDefinition.TIMEOUT_DEFAULT);
         Assertions.assertTrue(definition.getTimeout().isEmpty());
 
-        Assertions.assertThrows(IllegalArgumentException.class, () -> definition.setTimeout(Duration.ofSeconds(-1)));
+        Duration negativeTimeout = Duration.ofSeconds(-1);
+        Assertions.assertThrows(IllegalArgumentException.class, () -> definition.setTimeout(negativeTimeout));
     }
 
     @Test
