@@ -726,7 +726,12 @@ public class RepositoryTypeElementVisitor implements TypeElementVisitor<Reposito
                 );
             }
 
-            String returnTypeRole = findTypeRole(method.getReturnType().getType());
+            ClassElement resultType = method.getReturnType();
+            if (TypeUtils.isReactiveOrFuture(resultType)) {
+                // The role of a reactive or async method is defined by the emitted type
+                resultType = resultType.getFirstTypeArgument().orElse(resultType);
+            }
+            String returnTypeRole = findTypeRole(resultType.getType());
             if (returnTypeRole == null) {
                 returnTypeRole =  findAnnotationRole(method.getReturnType());
             }

@@ -74,6 +74,52 @@ class H2AsyncReactivePageSpec extends Specification implements H2TestPropertyPro
             !page.hasTotalSize()
     }
 
+    void "test reactive cursored page with an offset pageable"() {
+        when:
+            def result = reactiveRepository.findByNameLike("Person%", Pageable.from(0, 10, Sort.of(Sort.Order.asc("age")))).block()
+
+        then:
+            result instanceof CursoredPage
+
+        when:
+            CursoredPage<Person> page = (CursoredPage<Person>) result
+
+        then:
+            page.content*.age == (1..10).toList()
+            page.totalSize == 30
+            page.cursors.size() == 10
+
+        when:
+            page = reactiveRepository.findByNameLike("Person%", page.nextPageable()).block()
+
+        then:
+            page.content*.age == (11..20).toList()
+            page.totalSize == 30
+    }
+
+    void "test async cursored page with an offset pageable"() {
+        when:
+            def result = asyncRepository.findByNameLike("Person%", Pageable.from(0, 10, Sort.of(Sort.Order.asc("age")))).get()
+
+        then:
+            result instanceof CursoredPage
+
+        when:
+            CursoredPage<Person> page = (CursoredPage<Person>) result
+
+        then:
+            page.content*.age == (1..10).toList()
+            page.totalSize == 30
+            page.cursors.size() == 10
+
+        when:
+            page = asyncRepository.findByNameLike("Person%", page.nextPageable()).get()
+
+        then:
+            page.content*.age == (11..20).toList()
+            page.totalSize == 30
+    }
+
     void "test reactive page honours request total"() {
         when:
             Page<Person> page = reactiveRepository.findByAgeGreaterThan(10, Pageable.from(1, 5, Sort.of(Sort.Order.asc("age")))).block()
@@ -117,6 +163,8 @@ interface H2JdbcReactivePagePersonRepository extends ReactorCrudRepository<Perso
 
 @JdbcRepository(dialect = Dialect.H2)
 interface H2JdbcAsyncPagePersonRepository extends AsyncCrudRepository<Person, Long> {
+
+    CompletableFuture<CursoredPage<Person>> findByNameLike(String name, Pageable pageable)
 
     CompletableFuture<Page<Person>> findByAgeGreaterThan(int age, Pageable pageable)
 }
