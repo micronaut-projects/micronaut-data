@@ -16,7 +16,6 @@
 package io.micronaut.data.spring.runtime;
 
 import io.micronaut.core.annotation.Internal;
-import io.micronaut.core.util.CollectionUtils;
 import org.springframework.data.domain.Pageable;
 import org.springframework.data.domain.Slice;
 import org.springframework.data.domain.Sort;
@@ -52,7 +51,7 @@ final class SliceDelegate<T> implements Slice<T> {
 
     @Override
     public int getSize() {
-        return delegate.getSize();
+        return delegate.getPageable().isUnpaged() ? getNumberOfElements() : delegate.getSize();
     }
 
     @Override
@@ -87,12 +86,12 @@ final class SliceDelegate<T> implements Slice<T> {
 
     @Override
     public Sort getSort() {
-        List<io.micronaut.data.model.Sort.Order> orderBy = delegate.getSort().getOrderBy();
-        if (CollectionUtils.isEmpty(orderBy)) {
-            return Sort.unsorted();
-        } else {
-            return new PageDelegate.SortDelegate(delegate.getSort());
-        }
+        return PageDelegate.toSort(delegate.getSort());
+    }
+
+    @Override
+    public Pageable getPageable() {
+        return delegate.getPageable().isUnpaged() ? Pageable.unpaged(getSort()) : Slice.super.getPageable();
     }
 
     @Override
@@ -117,11 +116,11 @@ final class SliceDelegate<T> implements Slice<T> {
 
     @Override
     public Pageable nextPageable() {
-        return new PageDelegate.PageableDelegate(delegate.nextPageable());
+        return PageDelegate.toPageable(delegate.nextPageable());
     }
 
     @Override
     public Pageable previousPageable() {
-        return new PageDelegate.PageableDelegate(delegate.previousPageable());
+        return PageDelegate.toPageable(delegate.previousPageable());
     }
 }

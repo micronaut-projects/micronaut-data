@@ -58,7 +58,11 @@ public class SpringDataTypeConverters {
      */
     @Singleton
     TypeConverter<Pageable, io.micronaut.data.model.Pageable> pageableConverter() {
-        return (object, targetType, context) -> Optional.of(new PageableDelegate(object));
+        return (object, targetType, context) -> Optional.of(
+                object.isUnpaged()
+                        ? io.micronaut.data.model.Pageable.from(new SortDelegate(object.getSort()))
+                        : new PageableDelegate(object)
+        );
     }
 
     /**

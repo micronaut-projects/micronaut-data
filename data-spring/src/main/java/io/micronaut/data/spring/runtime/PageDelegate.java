@@ -56,11 +56,15 @@ class PageDelegate<T> implements Page<T> {
 
     @Override
     public int getSize() {
-        return delegate.getSize();
+        return delegate.getPageable().isUnpaged() ? getNumberOfElements() : delegate.getSize();
     }
 
     @Override
     public int getTotalPages() {
+        if (delegate.getPageable().isUnpaged()) {
+            int size = getSize();
+            return size == 0 ? 1 : (int) Math.ceil((double) getTotalElements() / size);
+        }
         return delegate.getTotalPages();
     }
 
@@ -102,12 +106,12 @@ class PageDelegate<T> implements Page<T> {
 
     @Override
     public Sort getSort() {
-        List<io.micronaut.data.model.Sort.Order> orderBy = delegate.getSort().getOrderBy();
-        if (CollectionUtils.isEmpty(orderBy)) {
-            return Sort.unsorted();
-        } else {
-            return new SortDelegate(delegate.getSort());
-        }
+        return toSort(delegate.getSort());
+    }
+
+    @Override
+    public Pageable getPageable() {
+        return delegate.getPageable().isUnpaged() ? Pageable.unpaged(getSort()) : Page.super.getPageable();
     }
 
     @Override
@@ -132,12 +136,37 @@ class PageDelegate<T> implements Page<T> {
 
     @Override
     public Pageable nextPageable() {
-        return new PageableDelegate(delegate.nextPageable());
+        return toPageable(delegate.nextPageable());
     }
 
     @Override
     public Pageable previousPageable() {
-        return new PageableDelegate(delegate.previousPageable());
+        return toPageable(delegate.previousPageable());
+    }
+
+    /**
+     * Converts a Micronaut sort to a Spring sort.
+     *
+     * @param sort The Micronaut sort
+     * @return The Spring sort
+     */
+    static Sort toSort(io.micronaut.data.model.Sort sort) {
+        List<io.micronaut.data.model.Sort.Order> orderBy = sort.getOrderBy();
+        if (CollectionUtils.isEmpty(orderBy)) {
+            return Sort.unsorted();
+        } else {
+            return new SortDelegate(sort);
+        }
+    }
+
+    /**
+     * Converts a Micronaut pageable to a Spring pageable, an unpaged pageable to {@link Pageable#unpaged()}.
+     *
+     * @param pageable The Micronaut pageable
+     * @return The Spring pageable
+     */
+    static Pageable toPageable(io.micronaut.data.model.Pageable pageable) {
+        return pageable.isUnpaged() ? Pageable.unpaged() : new PageableDelegate(pageable);
     }
 
     /**
@@ -161,6 +190,11 @@ class PageDelegate<T> implements Page<T> {
         SortDelegate(io.micronaut.data.model.Sort delegate) {
             super(Collections.emptyList()); // not used in reality
             this.delegate = delegate;
+        }
+
+        @Override
+        public boolean isEmpty() {
+            return delegate.getOrderBy().isEmpty();
         }
 
         @Override
