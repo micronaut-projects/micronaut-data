@@ -264,9 +264,15 @@ logs it asynchronously with the listener method, operation, table, and `ROWID` w
 to Oracle Database, does not roll back the original change, and does not trigger automatic redelivery.
 Subsequent notifications continue to be processed.
 
-During graceful shutdown, Micronaut Data stops registration recovery, attempts to unregister its registrations,
-and waits for listener callbacks already running to complete. Callbacks waiting to run are discarded and do not delay
-shutdown. Registration cleanup is also attempted when the application context is closed without graceful shutdown.
+During graceful shutdown, Micronaut Data stops accepting new notifications and stops automatic registration recovery.
+It attempts to unregister its registrations and waits for cleanup, registration recovery already in progress, and
+listener callbacks already running to complete, within the application's graceful-shutdown timeout.
+
+Callbacks waiting to run, including invalidation after registration recovery, are discarded when shutdown begins.
+A replacement registration created during shutdown is cleaned up without activating it or notifying the listener.
+Already-running callbacks are allowed to finish; the shutdown timeout does not forcibly terminate listener code or JDBC
+operations. Registration cleanup is best effort: database unavailability or shutdown timeout can prevent it from
+completing. Cleanup is also attempted when the application context is closed without graceful shutdown.
 
 An abrupt process or host failure cannot run that cleanup. Oracle Database automatically cleans up ordinary
 (non-reliable) registrations after their owning client has permanently disconnected. Registrations become eligible

@@ -20,13 +20,14 @@ import java.util.concurrent.CompletableFuture;
 import java.util.concurrent.CompletionStage;
 
 /**
- * Tracks running notification callback tasks for one datasource manager so graceful shutdown can
- * await callbacks that have already started.
+ * Tracks notification callbacks and registration tasks for one datasource manager so graceful
+ * shutdown can await work that has already started and submitted registration cleanup.
  *
- * <p>The dispatcher counts a callback only when execution begins and
- * {@link #acceptTask()} successfully reserves it. Once {@link #shutdownGracefully()} is called,
- * callbacks that have not started are rejected, while accepted callbacks may finish. The returned
- * completion stage completes when all accepted callbacks have finished.</p>
+ * <p>Callbacks and recovery are counted only when execution begins and
+ * {@link #acceptTask()} successfully reserves them. Once {@link #shutdownGracefully()} is called,
+ * callbacks and recovery that have not started are rejected, while accepted work may finish. The returned
+ * completion stage completes when all accepted work has finished. Shutdown cleanup is reserved
+ * before admission closes, so it is counted even while queued.</p>
  *
  * <p>Shutdown is one-way. The tracker methods are synchronized so task admission, completion, and
  * shutdown cannot race with an inconsistent active-task count.</p>

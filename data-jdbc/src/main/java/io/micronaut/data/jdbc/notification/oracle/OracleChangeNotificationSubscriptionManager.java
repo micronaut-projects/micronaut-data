@@ -19,6 +19,7 @@ import io.micronaut.context.BeanContext;
 import io.micronaut.data.exceptions.DataAccessException;
 import io.micronaut.data.jdbc.runtime.JdbcOperations;
 import io.micronaut.scheduling.TaskScheduler;
+import org.jspecify.annotations.Nullable;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -44,8 +45,9 @@ import java.util.concurrent.atomic.AtomicBoolean;
  * stop its subscriptions in reverse order before propagating the failure.</p>
  *
  * <p>During shutdown, the manager stops accepting callbacks, cancels scheduled recovery retries,
- * closes each subscription, attempts to unregister its registration, and waits for notification
- * callbacks already running. Callbacks still queued on the executor are not included in that wait.</p>
+ * closes each subscription, and submits registration cleanup to the blocking executor. Shutdown
+ * waits for cleanup, registration work, and notification callbacks already running. Callbacks still
+ * queued on the executor are not included in that wait.</p>
  */
 final class OracleChangeNotificationSubscriptionManager {
     private static final Logger LOG = LoggerFactory.getLogger(OracleChangeNotificationSubscriptionManager.class);
@@ -54,6 +56,8 @@ final class OracleChangeNotificationSubscriptionManager {
     private final List<OracleChangeNotificationSubscription> subscriptions;
     private final OracleChangeNotificationTaskTracker taskTracker = new OracleChangeNotificationTaskTracker();
     private final AtomicBoolean started = new AtomicBoolean();
+    private final Executor blockingExecutor;
+    private @Nullable CompletionStage<Void> shutdownStage;
 
     OracleChangeNotificationSubscriptionManager(String dataSourceName,
                                                 JdbcOperations operations,
@@ -63,6 +67,7 @@ final class OracleChangeNotificationSubscriptionManager {
                                                 List<OracleChangeListenerDefinition> listenerDefinitions,
                                                 OracleRegistrationRecoveryConfiguration recoveryConfiguration) {
         this.dataSourceName = dataSourceName;
+        this.blockingExecutor = blockingExecutor;
         OracleChangeNotificationRegistrar registrar = new OracleChangeNotificationRegistrar(dataSourceName, operations);
         this.subscriptions = listenerDefinitions.stream()
             .map(definition -> new OracleChangeNotificationSubscription(
@@ -99,16 +104,37 @@ final class OracleChangeNotificationSubscriptionManager {
     }
 
     /**
-     * Stops accepting callbacks, closes subscriptions, and attempts registration cleanup. The
-     * returned stage completes when already-running notification callbacks finish.
+     * Stops admission and closes every subscription before submitting JDBC cleanup. One cleanup
+     * task per datasource bounds concurrency, and participates in the same completion stage as
+     * running callbacks and recovery. The caller can apply a single graceful-shutdown deadline
+     * without blocking here on a connection timeout for every subscription.
      *
-     * @return completion stage for currently running notification callbacks
+     * @return completion stage for cleanup and work already running
      */
-    CompletionStage<?> stop() {
+    synchronized CompletionStage<?> stop() {
+        if (shutdownStage != null) {
+            return shutdownStage;
+        }
         LOG.trace("Stopping [{}] DCN subscriptions for datasource [{}]", subscriptions.size(), dataSourceName);
-        CompletionStage<Void> completion = taskTracker.shutdownGracefully();
-        subscriptions.forEach(OracleChangeNotificationSubscription::stop);
-        return completion;
+        // Reserve cleanup before shutting admission so even queued cleanup keeps the stage pending.
+        boolean cleanupAccepted = !subscriptions.isEmpty() && taskTracker.acceptTask();
+        shutdownStage = taskTracker.shutdownGracefully();
+        subscriptions.forEach(OracleChangeNotificationSubscription::close);
+        if (cleanupAccepted) {
+            try {
+                blockingExecutor.execute(() -> {
+                    try {
+                        subscriptions.forEach(OracleChangeNotificationSubscription::stop);
+                    } finally {
+                        taskTracker.completeTask();
+                    }
+                });
+            } catch (RuntimeException e) {
+                LOG.warn("Unable to submit DCN registration cleanup for datasource [{}]", dataSourceName, e);
+                taskTracker.completeTask();
+            }
+        }
+        return shutdownStage;
     }
 
     /**

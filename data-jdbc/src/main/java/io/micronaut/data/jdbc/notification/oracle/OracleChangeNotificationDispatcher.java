@@ -39,6 +39,7 @@ import java.util.StringJoiner;
 import java.util.concurrent.Executor;
 import java.util.concurrent.RejectedExecutionException;
 import java.util.function.BiConsumer;
+import java.util.function.BooleanSupplier;
 import java.util.function.LongConsumer;
 
 /**
@@ -297,12 +298,7 @@ final class OracleChangeNotificationDispatcher implements DatabaseChangeListener
      * @param options the configured options captured when the callback was received
      */
     private void dispatchSafely(DatabaseChangeEvent event, RegistrationOptions options) {
-        if (!taskTracker.acceptTask()) {
-            LOG.trace("Discarded queued DCN event for datasource [{}], registration [{}], and listener method [{}] because graceful shutdown has started",
-                dataSourceName, event.getRegId(), methodDescription);
-            return;
-        }
-        try {
+        dispatchSafely(event.getRegId(), () -> {
             if (options.purgeOnNotificationEnabled() && isDataNotification(event)) {
                 registrationPurgedHandler.accept(event.getRegId());
             }
@@ -314,9 +310,20 @@ final class OracleChangeNotificationDispatcher implements DatabaseChangeListener
                     describeTableChanges(event.getTableChangeDescription()));
             }
             dispatch(event, options);
+        });
+    }
+
+    private void dispatchSafely(long registrationId, Runnable dispatch) {
+        if (!taskTracker.acceptTask()) {
+            LOG.trace("Discarded queued DCN callback for datasource [{}], registration [{}], and listener method [{}] because graceful shutdown has started",
+                dataSourceName, registrationId, methodDescription);
+            return;
+        }
+        try {
+            dispatch.run();
         } catch (RuntimeException e) {
-            LOG.error("Unexpected error dispatching DCN event [{}] for registration [{}], datasource [{}], and listener method [{}]",
-                event.getEventType(), event.getRegId(), dataSourceName, methodDescription, e);
+            LOG.error("Unexpected error dispatching DCN callback for registration [{}], datasource [{}], and listener method [{}]",
+                registrationId, dataSourceName, methodDescription, e);
         } finally {
             taskTracker.completeTask();
         }
@@ -504,6 +511,29 @@ final class OracleChangeNotificationDispatcher implements DatabaseChangeListener
                     }
                 }
             }
+        }
+    }
+
+    /**
+     * Submits recovery invalidation through the same admission and accounting as driver callbacks.
+     * The registration is checked again when execution starts, without holding its lock during user code.
+     *
+     * @param registrationId the recovered registration
+     * @param isCurrent whether this registration is still active
+     */
+    void submitInvalidation(long registrationId, BooleanSupplier isCurrent) {
+        if (taskTracker.isShutdownStarted()) {
+            return;
+        }
+        try {
+            blockingExecutor.execute(() -> dispatchSafely(registrationId, () -> {
+                if (isCurrent.getAsBoolean()) {
+                    dispatchInvalidation(registrationId, "after DCN registration recovery");
+                }
+            }));
+        } catch (RuntimeException e) {
+            LOG.warn("Unable to submit recovery invalidation for datasource [{}], registration [{}], and listener method [{}]",
+                dataSourceName, registrationId, methodDescription, e);
         }
     }
 

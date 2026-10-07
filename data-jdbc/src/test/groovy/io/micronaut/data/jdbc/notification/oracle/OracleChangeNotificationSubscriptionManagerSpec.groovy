@@ -26,6 +26,7 @@ import oracle.jdbc.OracleStatement
 import oracle.jdbc.dcn.DatabaseChangeEvent
 import oracle.jdbc.dcn.DatabaseChangeListener
 import oracle.jdbc.dcn.DatabaseChangeRegistration
+import oracle.jdbc.dcn.FailureListener
 import oracle.jdbc.dcn.QueryChangeDescription
 import spock.lang.Specification
 
@@ -34,6 +35,7 @@ import java.sql.ResultSet
 import java.sql.SQLException
 import java.sql.Statement
 import java.util.concurrent.Executor
+import java.util.concurrent.RejectedExecutionException
 
 class OracleChangeNotificationSubscriptionManagerSpec extends Specification {
 
@@ -85,7 +87,11 @@ class OracleChangeNotificationSubscriptionManagerSpec extends Specification {
         def secondMethod = Mock(ExecutableMethod)
         firstMethod.getDescription(true) >> "void firstListener(ChangeEvent<Book>)"
         secondMethod.getDescription(true) >> "void secondListener(ChangeEvent<Book>)"
-        Executor executor = { Runnable command -> command.run() } as Executor
+        List<Runnable> queued = []
+        List<FailureListener> failures = []
+        firstRegistration.addFailureListener(_ as FailureListener) >> { FailureListener listener -> failures.add(listener) }
+        secondRegistration.addFailureListener(_ as FailureListener) >> { FailureListener listener -> failures.add(listener) }
+        Executor executor = { Runnable command -> queued.add(command) } as Executor
         def manager = new OracleChangeNotificationSubscriptionManager("inventory", operations, Mock(BeanContext), executor,
             scheduler(), [definition("SELECT * FROM FIRST_BOOK", firstMethod), definition("SELECT * FROM SECOND_BOOK", secondMethod)], new OracleRegistrationRecoveryConfiguration())
 
@@ -96,18 +102,33 @@ class OracleChangeNotificationSubscriptionManagerSpec extends Specification {
 
         when:
         manager.start()
-        manager.stop().toCompletableFuture().join()
+        def completion = manager.stop().toCompletableFuture()
+        failures.each { it.onFailure(new SQLException('Failure during shutdown')) }
         manager.start()
 
         then:
-        1 * oracleConnection.unregisterDatabaseChangeNotification(firstRegistration) >> {
-            throw new DataAccessException("Unable to deregister first listener")
-        }
-        1 * oracleConnection.unregisterDatabaseChangeNotification(secondRegistration)
+        !completion.isDone()
+        queued.size() == 1
+        manager.reportActiveTasks().getAsLong() == 1
+
         2 * oracleConnection.registerDatabaseChangeNotification(_ as Properties, _ as DatabaseChangeListener) >>> [firstRegistration, secondRegistration]
         2 * connection.createStatement() >>> [firstStatement, secondStatement]
         1 * firstStatement.executeQuery("SELECT * FROM FIRST_BOOK") >> resultSet
         1 * secondStatement.executeQuery("SELECT * FROM SECOND_BOOK") >> resultSet
+
+        when:
+        queued.remove(0).run()
+
+        then:
+        completion.isDone()
+        manager.reportActiveTasks().getAsLong() == 0
+
+        and:
+        1 * oracleConnection.unregisterDatabaseChangeNotification(firstRegistration) >> {
+            throw new DataAccessException("Unable to deregister first listener")
+        }
+        1 * oracleConnection.unregisterDatabaseChangeNotification(secondRegistration)
+
     }
 
     void "does not retry a failed deregistration during later cleanup"() {
@@ -175,13 +196,40 @@ class OracleChangeNotificationSubscriptionManagerSpec extends Specification {
         def completion = manager.stop().toCompletableFuture()
 
         then:
-        1 * oracleConnection.unregisterDatabaseChangeNotification(registration) >> {
-            assert manager.reportActiveTasks().isPresent()
-            assert queued.size() == 1
-            queued.remove(0).run()
-        }
+        !completion.isDone()
+        manager.stop().is(completion)
+        queued.size() == 2
+        manager.reportActiveTasks().getAsLong() == 1
+
+        when:
+        queued.remove(0).run()
+
+        then:
+        !completion.isDone()
         0 * method.invoke(_, _)
+
+        when:
+        queued.remove(0).run()
+
+        then:
+        1 * oracleConnection.unregisterDatabaseChangeNotification(registration)
         completion.isDone()
+        manager.reportActiveTasks().getAsLong() == 0
+    }
+
+    void "completes shutdown accounting when the executor rejects cleanup"() {
+        given:
+        Executor executor = { Runnable task -> throw new RejectedExecutionException('Executor stopped') } as Executor
+        def manager = new OracleChangeNotificationSubscriptionManager(
+            "inventory", Mock(JdbcOperations), Mock(BeanContext), executor, scheduler(),
+            [definition("SELECT * FROM BOOK", Mock(ExecutableMethod))], new OracleRegistrationRecoveryConfiguration())
+
+        when:
+        def completion = manager.stop().toCompletableFuture()
+
+        then:
+        completion.isDone()
+        manager.stop().is(completion)
         manager.reportActiveTasks().getAsLong() == 0
     }
 
