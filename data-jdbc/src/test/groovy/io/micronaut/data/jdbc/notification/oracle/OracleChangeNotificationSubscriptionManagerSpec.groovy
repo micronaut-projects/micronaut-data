@@ -143,6 +143,48 @@ class OracleChangeNotificationSubscriptionManagerSpec extends Specification {
         }
     }
 
+    void "discards queued callbacks before shutdown registration cleanup completes"() {
+        given:
+        def operations = Mock(JdbcOperations)
+        def connection = Mock(Connection)
+        def oracleConnection = mockOracleConnection()
+        def registration = mockRegistration()
+        def statement = Mock(Statement)
+        def oracleStatement = Mock(OracleStatement)
+        def method = Mock(ExecutableMethod)
+        List<Runnable> queued = []
+        Executor executor = { Runnable task -> queued.add(task) } as Executor
+        def manager = new OracleChangeNotificationSubscriptionManager("inventory", operations, Mock(BeanContext), executor,
+            scheduler(), [definition("SELECT * FROM BOOK", method)], new OracleRegistrationRecoveryConfiguration())
+        DatabaseChangeListener listener
+        operations.execute(_ as ConnectionCallback) >> { ConnectionCallback<?> callback -> callback.call(connection) }
+        connection.unwrap(OracleConnection) >> oracleConnection
+        oracleConnection.registerDatabaseChangeNotification(_ as Properties, _ as DatabaseChangeListener) >> { Properties ignored, DatabaseChangeListener callback ->
+            listener = callback
+            registration
+        }
+        connection.createStatement() >> statement
+        statement.unwrap(OracleStatement) >> oracleStatement
+        statement.executeQuery(_) >> Mock(ResultSet)
+        def event = Mock(DatabaseChangeEvent)
+        event.eventType >> DatabaseChangeEvent.EventType.OBJCHANGE
+
+        when:
+        manager.start()
+        listener.onDatabaseChangeNotification(event)
+        def completion = manager.stop().toCompletableFuture()
+
+        then:
+        1 * oracleConnection.unregisterDatabaseChangeNotification(registration) >> {
+            assert manager.reportActiveTasks().isPresent()
+            assert queued.size() == 1
+            queued.remove(0).run()
+        }
+        0 * method.invoke(_, _)
+        completion.isDone()
+        manager.reportActiveTasks().getAsLong() == 0
+    }
+
     void "starts and stops cleanly without subscriptions"() {
         given:
         def manager = new OracleChangeNotificationSubscriptionManager(
@@ -223,7 +265,9 @@ class OracleChangeNotificationSubscriptionManagerSpec extends Specification {
         def secondMethod = Mock(ExecutableMethod)
         firstMethod.getDescription(true) >> "void firstListener(ChangeEvent<Book>)"
         secondMethod.getDescription(true) >> "void failingListener(ChangeEvent<Book>)"
-        Executor executor = { Runnable command -> command.run() } as Executor
+        List<Runnable> queued = []
+        List<DatabaseChangeListener> listeners = []
+        Executor executor = { Runnable command -> queued.add(command) } as Executor
         def manager = new OracleChangeNotificationSubscriptionManager("inventory", operations, Mock(BeanContext), executor,
             scheduler(), [definition("SELECT * FROM BOOK", firstMethod), definition("INVALID SQL", secondMethod)], new OracleRegistrationRecoveryConfiguration())
 
@@ -235,12 +279,20 @@ class OracleChangeNotificationSubscriptionManagerSpec extends Specification {
             }
         }
         connection.unwrap(OracleConnection) >> oracleConnection
-        oracleConnection.registerDatabaseChangeNotification(_ as Properties, _ as DatabaseChangeListener) >>> [firstRegistration, secondRegistration]
+        oracleConnection.registerDatabaseChangeNotification(_ as Properties, _ as DatabaseChangeListener) >> { Properties ignored, DatabaseChangeListener listener ->
+            listeners.add(listener)
+            listeners.size() == 1 ? firstRegistration : secondRegistration
+        }
         connection.createStatement() >>> [firstStatement, secondStatement]
         firstStatement.unwrap(OracleStatement) >> firstOracleStatement
         secondStatement.unwrap(OracleStatement) >> secondOracleStatement
         firstStatement.executeQuery("SELECT * FROM BOOK") >> resultSet
-        secondStatement.executeQuery("INVALID SQL") >> { throw new SQLException("Invalid registration query") }
+        def event = Mock(DatabaseChangeEvent)
+        event.eventType >> DatabaseChangeEvent.EventType.OBJCHANGE
+        secondStatement.executeQuery("INVALID SQL") >> {
+            listeners[0].onDatabaseChangeNotification(event)
+            throw new SQLException("Invalid registration query")
+        }
 
         when:
         manager.start()
@@ -252,7 +304,13 @@ class OracleChangeNotificationSubscriptionManagerSpec extends Specification {
         exception.cause.cause instanceof SQLException
         exception.cause.cause.message == "Invalid registration query"
         1 * oracleConnection.unregisterDatabaseChangeNotification(secondRegistration)
-        1 * oracleConnection.unregisterDatabaseChangeNotification(firstRegistration)
+        1 * oracleConnection.unregisterDatabaseChangeNotification(firstRegistration) >> {
+            assert manager.reportActiveTasks().isPresent()
+            assert queued.size() == 1
+            queued.remove(0).run()
+        }
+        0 * firstMethod.invoke(_, _)
+        manager.reportActiveTasks().getAsLong() == 0
     }
 
     private static OracleChangeListenerDefinition definition(String query, ExecutableMethod<?, ?> method) {

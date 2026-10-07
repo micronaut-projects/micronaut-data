@@ -43,9 +43,9 @@ import java.util.concurrent.atomic.AtomicBoolean;
  * <p>The manager starts at most once. If registering a listener fails, the manager attempts to
  * stop its subscriptions in reverse order before propagating the failure.</p>
  *
- * <p>During shutdown, the manager cancels scheduled recovery retries, closes each subscription,
- * attempts to unregister its registration, and waits for notification callbacks already running.
- * Callbacks still queued on the executor are not included in that wait.</p>
+ * <p>During shutdown, the manager stops accepting callbacks, cancels scheduled recovery retries,
+ * closes each subscription, attempts to unregister its registration, and waits for notification
+ * callbacks already running. Callbacks still queued on the executor are not included in that wait.</p>
  */
 final class OracleChangeNotificationSubscriptionManager {
     private static final Logger LOG = LoggerFactory.getLogger(OracleChangeNotificationSubscriptionManager.class);
@@ -90,6 +90,7 @@ final class OracleChangeNotificationSubscriptionManager {
             }
             LOG.trace("Started [{}] DCN subscriptions for datasource [{}]", subscriptions.size(), dataSourceName);
         } catch (RuntimeException | Error registrationFailure) {
+            taskTracker.shutdownGracefully();
             for (int i = subscriptions.size() - 1; i >= 0; i--) {
                 subscriptions.get(i).stop();
             }
@@ -98,15 +99,16 @@ final class OracleChangeNotificationSubscriptionManager {
     }
 
     /**
-     * Closes subscriptions, attempts registration cleanup, and returns a stage that completes when
-     * already-running notification callbacks finish.
+     * Stops accepting callbacks, closes subscriptions, and attempts registration cleanup. The
+     * returned stage completes when already-running notification callbacks finish.
      *
      * @return completion stage for currently running notification callbacks
      */
     CompletionStage<?> stop() {
         LOG.trace("Stopping [{}] DCN subscriptions for datasource [{}]", subscriptions.size(), dataSourceName);
+        CompletionStage<Void> completion = taskTracker.shutdownGracefully();
         subscriptions.forEach(OracleChangeNotificationSubscription::stop);
-        return taskTracker.shutdownGracefully();
+        return completion;
     }
 
     /**
