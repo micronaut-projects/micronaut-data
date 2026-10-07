@@ -1171,6 +1171,27 @@ interface MyRepository {
         result == 'CREATE TABLE `restaurant` (`id` BIGINT PRIMARY KEY AUTO_INCREMENT,`name` VARCHAR(255) NOT NULL,`street` VARCHAR(255) NOT NULL,`zip_code` VARCHAR(255) NOT NULL,`hqaddress_street` VARCHAR(255),`hqaddress_zip_code` VARCHAR(255));'
     }
 
+    void "test encode batch drop statement terminates every statement on #dialect"() {
+        given:
+        def encoder = new SqlQueryBuilder(dialect)
+
+        expect:
+        encoder.buildBatchDropTableStatement(new RuntimePersistentEntity(Restaurant), new RuntimePersistentEntity(Product)) == expected
+
+        where:
+        dialect          | expected
+        Dialect.H2       | 'DROP TABLE `restaurant`;\nDROP TABLE `product`;'
+        Dialect.POSTGRES | 'DROP TABLE "restaurant";\nDROP TABLE "product";'
+    }
+
+    void "test encode batch drop statement of a single entity on Oracle has no terminator"() {
+        given:
+        def encoder = new SqlQueryBuilder(Dialect.ORACLE)
+
+        expect:
+        encoder.buildBatchDropTableStatement(new RuntimePersistentEntity(Restaurant)) == 'DROP TABLE "RESTAURANT"'
+    }
+
     void "test encode insert statement - custom mapping strategy"() {
         given:
         def result = builder.createCriteriaInsert(CountryRegion).build(new SqlQueryBuilder())

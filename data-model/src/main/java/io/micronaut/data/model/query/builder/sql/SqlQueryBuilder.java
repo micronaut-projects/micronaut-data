@@ -371,10 +371,13 @@ public class SqlQueryBuilder extends AbstractSqlLikeQueryBuilder {
      */
     @Experimental
     public String buildBatchDropTableStatement(PersistentEntity... entities) {
-        return Arrays.stream(entities).flatMap(entity -> Stream.of(buildDropTableStatements(entity)))
-            // The statements are executed together: each one needs to be terminated
-            .map(sql -> sql.endsWith(";") ? sql : sql + ";")
-            .collect(Collectors.joining("\n"));
+        Stream<String> statements = Arrays.stream(entities).flatMap(entity -> Stream.of(buildDropTableStatements(entity)));
+        if (dialect != Dialect.ORACLE) {
+            // The statements are executed together: each one needs to be terminated.
+            // Oracle JDBC rejects a statement that ends with a semicolon.
+            statements = statements.map(sql -> sql.endsWith(";") ? sql : sql + ";");
+        }
+        return statements.collect(Collectors.joining("\n"));
     }
 
     /**
