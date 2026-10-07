@@ -4,20 +4,22 @@ from threading import RLock
 from micronaut.data.jdbc.notification import ChangeEvent, ChangeOperation
 from micronaut.data.jdbc.notification.oracle import OracleChangeEventMetadata
 from org.slf4j import LoggerFactory
-from jakarta.inject import Inject
+from jakarta.annotation import PostConstruct
+from jakarta.inject import Inject, Singleton
 from java.util import Optional
 from java.util.concurrent import ConcurrentHashMap
-from micronaut.context.annotation import Context, Requires
-from micronaut.context.event import ApplicationEventListener, StartupEvent
+from micronaut.context.annotation import Requires
 from micronaut.data.jdbc.annotation import ChangeListener, OracleChangeNotification
 
 from example.notification.Library import Library
 from example.notification.LibraryRepository import LibraryRepository
 
 
-@Context
 @Requires(property="query-notification.object.enabled")
-class LibraryCache(ApplicationEventListener[StartupEvent]):
+# tag::listener[]
+@Singleton
+class LibraryCache:
+    # end::listener[]
 
     repository: Annotated[LibraryRepository, Inject]
 
@@ -27,7 +29,8 @@ class LibraryCache(ApplicationEventListener[StartupEvent]):
         self.lock = RLock()
         self.log = LoggerFactory.getLogger("example.notification.LibraryCache")
 
-    def onApplicationEvent(self, event: StartupEvent) -> None:
+    @PostConstruct
+    def initialize(self) -> None:
         self.refreshCache()
 
     def find(self, name: str) -> Optional[Library]:

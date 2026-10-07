@@ -1,26 +1,28 @@
 package example.notification
 
-import io.micronaut.context.annotation.Context
 import io.micronaut.context.annotation.Requires
-import io.micronaut.context.event.ApplicationEventListener
-import io.micronaut.context.event.StartupEvent
 import io.micronaut.data.jdbc.annotation.ChangeListener
 import io.micronaut.data.jdbc.annotation.OracleChangeNotification
 import io.micronaut.data.jdbc.notification.ChangeEvent
 import io.micronaut.data.jdbc.notification.ChangeOperation
 import io.micronaut.data.jdbc.notification.oracle.OracleChangeEventMetadata
+import jakarta.annotation.PostConstruct
+import jakarta.inject.Singleton
 import org.slf4j.LoggerFactory
 import java.util.Optional
 import java.util.concurrent.ConcurrentHashMap
 
-@Context
 @Requires(property = "query-notification.object.enabled")
-open class LibraryCache(private val repository: LibraryRepository) : ApplicationEventListener<StartupEvent> {
+// tag::listener[]
+@Singleton
+open class LibraryCache(private val repository: LibraryRepository) {
+    // end::listener[]
     private val log = LoggerFactory.getLogger(LibraryCache::class.java)
 
     private val libraries = ConcurrentHashMap<Long, Library>()
 
-    override fun onApplicationEvent(event: StartupEvent) {
+    @PostConstruct
+    fun initialize() {
         refreshCache()
     }
 
@@ -53,4 +55,6 @@ open class LibraryCache(private val repository: LibraryRepository) : Application
         libraries.clear()
         currentLibraries.forEach { library -> libraries[library.id!!] = library }
     }
+    // tag::listener[]
 }
+// end::listener[]
