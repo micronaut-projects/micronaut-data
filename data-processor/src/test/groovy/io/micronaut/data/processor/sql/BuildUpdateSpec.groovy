@@ -298,6 +298,51 @@ class Account {
         getParameterBindingIndexes(method) == ['2', '1', '0'] as String[]
     }
 
+    void "test reserve method matches each delta parameter once when names overlap"() {
+        given:
+        def repository = buildRepository('test.AccountRepository', """
+import io.micronaut.data.annotation.Id;
+import io.micronaut.data.annotation.MappedEntity;
+import io.micronaut.data.annotation.Reservable;
+import io.micronaut.data.jdbc.annotation.JdbcRepository;
+import io.micronaut.data.model.query.builder.sql.Dialect;
+import io.micronaut.data.repository.GenericRepository;
+
+@JdbcRepository(dialect = Dialect.ORACLE)
+@io.micronaut.context.annotation.Executable
+interface AccountRepository extends GenericRepository<Account, Long> {
+    long reserveIncrementBalanceAndDecrementBalanceIncrement(@Id Long id, Long balanceIncrement, Long balanceIncrementDecrement);
+
+    long reserveDecrementBalanceAndIncrementBalanceIncrement(@Id Long id, Long balance, Long balanceIncrement);
+}
+
+@MappedEntity
+class Account {
+    @Id
+    private Long id;
+    @Reservable
+    private Long balance;
+    @Reservable
+    private Long balanceIncrement;
+
+    public Long getId() { return id; }
+    public void setId(Long id) { this.id = id; }
+    public Long getBalance() { return balance; }
+    public void setBalance(Long balance) { this.balance = balance; }
+    public Long getBalanceIncrement() { return balanceIncrement; }
+    public void setBalanceIncrement(Long balanceIncrement) { this.balanceIncrement = balanceIncrement; }
+}
+""")
+        def operationNamed = repository.findPossibleMethods("reserveIncrementBalanceAndDecrementBalanceIncrement").findFirst().get()
+        def propertyNamed = repository.findPossibleMethods("reserveDecrementBalanceAndIncrementBalanceIncrement").findFirst().get()
+
+        expect:
+        getQuery(operationNamed) == 'UPDATE "ACCOUNT" SET "BALANCE"=("BALANCE" + ?),"BALANCE_INCREMENT"=("BALANCE_INCREMENT" - ?) WHERE ("ID" = ?)'
+        getParameterBindingIndexes(operationNamed) == ['1', '2', '0'] as String[]
+        getQuery(propertyNamed) == 'UPDATE "ACCOUNT" SET "BALANCE"=("BALANCE" - ?),"BALANCE_INCREMENT"=("BALANCE_INCREMENT" + ?) WHERE ("ID" = ?)'
+        getParameterBindingIndexes(propertyNamed) == ['1', '2', '0'] as String[]
+    }
+
     void "test reserve methods omit automatic audit assignments"() {
         given:
         def repository = buildRepository('test.AccountRepository', """
