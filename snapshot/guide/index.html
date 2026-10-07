@@ -2609,6 +2609,21 @@ List&lt;Book&gt; listOrderByTitleDesc()</code></pre>
 <div class="paragraph">
 <p>The <code>OrderBy*</code> expression refer to the property name to order by and can optionally be appended with either <code>Asc</code> or <code>Desc</code> to control ascending or descending order. Multiple conditions can be used by joining them with <code>And</code> like <code>findByTypeOrderByNameAndDate</code>.</p>
 </div>
+<div class="paragraph">
+<p>An order of a <a href="../api/io/micronaut/data/model/Sort.html">Sort</a> can also define where <code>null</code> values are placed relative to non-null values with <code>Sort.Order.NullOrdering.FIRST</code> or <code>Sort.Order.NullOrdering.LAST</code>, as can the <code>nullOrdering</code> member of the Jakarta Data <code>@OrderBy</code> annotation and the null precedence of a criteria order. SQL dialects with <code>NULLS FIRST</code> / <code>NULLS LAST</code> syntax append it to the <code>ORDER BY</code> item. The <code>MYSQL</code> dialect, which is also used for MariaDB, and the <code>SQL_SERVER</code> dialect have no such syntax, so the null ordering is emulated by sorting on a <code>CASE WHEN &#8230;&#8203; IS NULL THEN &#8230;&#8203; END</code> expression first, for example <code>ORDER BY CASE WHEN book_.title IS NULL THEN 1 ELSE 0 END, book_.title ASC</code> for <code>NULLS LAST</code>.</p>
+</div>
+<div class="admonitionblock note">
+<table>
+<tr>
+<td class="icon">
+<i class="fa icon-note" title="Note"></i>
+</td>
+<td class="content">
+SQL Server requires every <code>ORDER BY</code> item of a <code>SELECT DISTINCT</code> query to appear in the select list, so it rejects the emulated null ordering of a distinct query (error 145). Don&#8217;t combine a null ordering with a distinct query on SQL Server.
+</td>
+</tr>
+</table>
+</div>
 
 <h2 id="projections"><a class="anchor" href="#projections"></a>3.3.6 Query Projections</h2>
 
@@ -26034,7 +26049,7 @@ private String documentVersion</code></pre>
 <p>Micronaut Data defines a <a href="../api/io/micronaut/data/processor/visitors/RepositoryTypeElementVisitor.html">RepositoryTypeElementVisitor</a> that at compilation time visits all interfaces in the source tree that are annotated with the <a href="../api/io/micronaut/data/annotation/Repository.html">@Repository</a> annotation.</p>
 </div>
 <div class="paragraph">
-<p>The <code>RepositoryTypeElementVisitor</code> uses service loader to load all available <a href="../api/io/micronaut/data/processor/visitors/finders/MethodCandidate.html">MethodCandidate</a> implementations and iterate over them.</p>
+<p>The <code>RepositoryTypeElementVisitor</code> uses service loader to load all available <a href="../api/io/micronaut/data/processor/visitors/finders/MethodMatcher.html">MethodMatcher</a> implementations, sorts them by their order and iterates over them.</p>
 </div>
 <div class="admonitionblock tip">
 <table>
@@ -26043,13 +26058,13 @@ private String documentVersion</code></pre>
 <i class="fa icon-tip" title="Tip"></i>
 </td>
 <td class="content">
-You can add additional method candidates by creating a library that depends on <code>micronaut-data-processor</code> and defining the <code>META-INF/services</code> definition for the method candidate. The new library should be added to your annotation processor path.
+You can add additional method matchers by creating a library that depends on <code>micronaut-data-processor</code> and defining the <code>META-INF/services</code> definition for the method matcher. The new library should be added to your annotation processor path.
 </td>
 </tr>
 </table>
 </div>
 <div class="paragraph">
-<p>The <code>MethodCandidate</code> interface features a <code>isMethodMatch</code> method which allows matching a <a href="https://docs.micronaut.io/latest/api/io/micronaut/inject/ast/MethodElement.html">MethodElement</a>. Once a <code>MethodElement</code> has been matched the <code>buildMatchInfo</code> method of the <code>MethodCandidate</code> is invoked which returns an instance of <a href="../api/io/micronaut/data/processor/visitors/finders/MethodMatchInfo.html">MethodMatchInfo</a>.</p>
+<p>The <code>MethodMatcher</code> interface features a <code>match</code> method which allows matching a <a href="https://docs.micronaut.io/latest/api/io/micronaut/inject/ast/MethodElement.html">MethodElement</a>. When a matcher returns a <code>MethodMatch</code>, its <code>buildMatchInfo</code> method is invoked, which returns an instance of <a href="../api/io/micronaut/data/processor/visitors/finders/MethodMatchInfo.html">MethodMatchInfo</a>. The first matcher that produces a <code>MethodMatchInfo</code> is used to implement the method.</p>
 </div>
 <div class="paragraph">
 <p>The <code>MethodMatchInfo</code> specifies the runtime <a href="../api/io/micronaut/data/intercept/DataInterceptor.html">DataInterceptor</a> to execute, which typically differs based on the return type and behaviour required, and the query to execute. To build the query, the method matcher translates the method name and parameters into a Jakarta Persistence Criteria query (<a href="../api/io/micronaut/data/model/jpa/criteria/PersistentEntityCriteriaQuery.html">PersistentEntityCriteriaQuery</a>), which is the query model shared by all Micronaut Data implementations.</p>
@@ -26728,6 +26743,37 @@ runtime = [
 </div>
 <div class="paragraph">
 <p>Code that caught <code>IllegalStateException</code> for this case should catch <code>IllegalArgumentException</code> instead.</p>
+</div>
+</div>
+<div class="sect2">
+<h3 id="_criteria_delete_and_update_with_an_empty_conjunction_or_disjunction">Criteria delete and update with an empty conjunction or disjunction</h3>
+<div class="paragraph">
+<p>As the restriction of a criteria delete or update, an empty conjunction (<code>criteriaBuilder.and()</code>) now means no restriction and an empty disjunction (<code>criteriaBuilder.or()</code>) matches nothing, like in a criteria query:</p>
+</div>
+<div class="ulist">
+<ul>
+<li>
+<p>In JDBC and R2DBC repositories, <code>deleteAll</code> and <code>updateAll</code> with an empty conjunction delete or update every row. Previously, they rendered an invalid <code>WHERE</code> clause and the statement failed, as with an empty disjunction.</p>
+</li>
+<li>
+<p>In MongoDB repositories, an empty disjunction used to render no filter, so <code>deleteAll</code> and <code>updateAll</code> deleted or updated every document. It now matches no documents. An empty conjunction still matches every document, as before.</p>
+</li>
+</ul>
+</div>
+<div class="paragraph">
+<p>Code that builds the restriction from a list of predicates that can be empty should check the list before calling <code>deleteAll</code> or <code>updateAll</code>.</p>
+</div>
+</div>
+<div class="sect2">
+<h3 id="_jakarta_data_queries_filter_by_the_tenant_id">Jakarta Data queries filter by the tenant id</h3>
+<div class="paragraph">
+<p>Jakarta Data <code>@Query</code> methods (JDQL) on entities with a <code>@TenantId</code> property now apply the tenant discriminator filter, like derived finders: selects return, and updates and deletes modify, only the rows of the current tenant. Previously, they ignored the tenant and affected the rows of every tenant. Annotate a method with <code>@WithoutTenantId</code> to keep the previous behaviour.</p>
+</div>
+</div>
+<div class="sect2">
+<h3 id="_repositories_whose_lifecycle_methods_use_different_entities">Repositories whose lifecycle methods use different entities</h3>
+<div class="paragraph">
+<p>When a repository doesn&#8217;t declare its root entity, for example because it doesn&#8217;t extend <code>GenericRepository&lt;E, ID&gt;</code>, the methods that need one, such as <code>countById</code>, use the entity of the lifecycle methods (<code>@Insert</code>, <code>@Update</code>, <code>@Upsert</code>, <code>@Delete</code>). If those methods use different entities, such a method now fails to compile. Previously, it silently used the entity of the first lifecycle method, so the result depended on the declaration order. Declare the root entity, for example by extending <code>GenericRepository&lt;E, ID&gt;</code>.</p>
 </div>
 </div>
 </div>

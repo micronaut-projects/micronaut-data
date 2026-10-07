@@ -243,7 +243,8 @@
 <tr>
 <td class="tableblock halign-left valign-top"><p class="tableblock"><code>datasources.*.batch-generate</code></p></td>
 <td class="tableblock halign-left valign-top"><p class="tableblock">boolean</p></td>
-<td class="tableblock halign-left valign-top"><p class="tableblock">Whether to generate tables in batch.</p></td>
+<td class="tableblock halign-left valign-top"><p class="tableblock">Whether to drop and create the tables with a single statement containing all the DDL statements.
+ It requires a driver that executes several statements in one string and is ignored for Oracle.</p></td>
 <td class="tableblock halign-left valign-top"></td>
 </tr>
 <tr>
@@ -411,7 +412,10 @@
 <tr>
 <td class="tableblock halign-left valign-top"><p class="tableblock"><code>r2dbc.datasources.*.batch-generate</code></p></td>
 <td class="tableblock halign-left valign-top"><p class="tableblock">boolean</p></td>
-<td class="tableblock halign-left valign-top"><p class="tableblock">Whether to generate tables in batch.</p></td>
+<td class="tableblock halign-left valign-top"><p class="tableblock">Whether to create the tables with a single statement containing all the DDL statements. It requires a
+ driver that executes several statements in one string, such as H2 or PostgreSQL, and is ignored for Oracle.
+ When the batch fails, for example because a table already exists, the tables are created one by one.
+ With {@link SchemaGenerate#CREATE_DROP}, the tables are still dropped one by one.</p></td>
 <td class="tableblock halign-left valign-top"></td>
 </tr>
 <tr>

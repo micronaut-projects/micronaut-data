@@ -22401,6 +22401,12 @@ managed by this <a href="io/micronaut/transaction/reactive/ReactiveTransactionOp
 <dd>
 <div class="block">Converts an object to JSON using json mapper.</div>
 </dd>
+<dt><a href="io/micronaut/transaction/support/AbstractReactorTransactionOperations.html#markCompleted(io.micronaut.transaction.support.AbstractReactorTransactionOperations.DefaultReactiveTransactionStatus)" class="member-name-link">markCompleted(AbstractReactorTransactionOperations.DefaultReactiveTransactionStatus)</a> - Method in class io.micronaut.transaction.support.<a href="io/micronaut/transaction/support/AbstractReactorTransactionOperations.html" title="class in io.micronaut.transaction.support">AbstractReactorTransactionOperations</a></dt>
+<dd>
+<div class="block">Marks the transaction as completed, for an implementation that overrides
+<a href="io/micronaut/transaction/support/AbstractReactorTransactionOperations.html#executeTransactionFlux(io.micronaut.transaction.support.AbstractReactorTransactionOperations.DefaultReactiveTransactionStatus,io.micronaut.transaction.reactive.ReactiveTransactionOperations.TransactionalCallback)"><code>AbstractReactorTransactionOperations.executeTransactionFlux(DefaultReactiveTransactionStatus, TransactionalCallback)</code></a> and
+<a href="io/micronaut/transaction/support/AbstractReactorTransactionOperations.html#executeTransactionMono(io.micronaut.transaction.support.AbstractReactorTransactionOperations.DefaultReactiveTransactionStatus,java.util.function.Function)"><code>AbstractReactorTransactionOperations.executeTransactionMono(DefaultReactiveTransactionStatus, Function)</code></a> to complete the transaction itself.</div>
+</dd>
 <dt><a href="io/micronaut/data/model/jpa/criteria/impl/AbstractPersistentEntityCriteriaUpdate.html#markGeneratedEntityUpdate()" class="member-name-link">markGeneratedEntityUpdate()</a> - Method in class io.micronaut.data.model.jpa.criteria.impl.<a href="io/micronaut/data/model/jpa/criteria/impl/AbstractPersistentEntityCriteriaUpdate.html" title="class in io.micronaut.data.model.jpa.criteria.impl">AbstractPersistentEntityCriteriaUpdate</a></dt>
 <dd>
 <div class="block">Mark this internal criteria representation as generated from a repository entity update
@@ -24078,6 +24084,12 @@ but nested transactions are not supported by the underlying backend.</div>
 </dd>
 <dt><a href="io/micronaut/data/model/query/builder/sql/SqlQueryBuilder.html#normalizeAlias(java.lang.String)" class="member-name-link">normalizeAlias(String)</a> - Method in class io.micronaut.data.model.query.builder.sql.<a href="io/micronaut/data/model/query/builder/sql/SqlQueryBuilder.html" title="class in io.micronaut.data.model.query.builder.sql">SqlQueryBuilder</a></dt>
 <dd>&nbsp;</dd>
+<dt><a href="io/micronaut/data/model/jpa/criteria/impl/CriteriaUtils.html#normalizeRestriction(jakarta.persistence.criteria.Expression)" class="member-name-link">normalizeRestriction(Expression)</a> - Static method in class io.micronaut.data.model.jpa.criteria.impl.<a href="io/micronaut/data/model/jpa/criteria/impl/CriteriaUtils.html" title="class in io.micronaut.data.model.jpa.criteria.impl">CriteriaUtils</a></dt>
+<dd>
+<div class="block">Normalizes the restriction of a criteria delete or update the same way as the one of a criteria query:
+an empty conjunction restricts nothing, an empty disjunction matches nothing and a junction of a single
+restriction is replaced by that restriction.</div>
+</dd>
 <dt><a href="io/micronaut/transaction/annotation/OracleTransactional.html#noRollbackFor()" class="member-name-link">noRollbackFor()</a> - Element in annotation interface io.micronaut.transaction.annotation.<a href="io/micronaut/transaction/annotation/OracleTransactional.html" title="annotation interface in io.micronaut.transaction.annotation">OracleTransactional</a></dt>
 <dd>
 <div class="block">Defines the exceptions that will not result in a rollback.</div>
@@ -28361,6 +28373,11 @@ it when the transactional boundary completes.</div>
 </dd>
 <dt><a href="io/micronaut/data/model/query/builder/sql/SqlQueryBuilder.html#resolveJoinType(io.micronaut.data.annotation.Join.Type)" class="member-name-link">resolveJoinType(Join.Type)</a> - Method in class io.micronaut.data.model.query.builder.sql.<a href="io/micronaut/data/model/query/builder/sql/SqlQueryBuilder.html" title="class in io.micronaut.data.model.query.builder.sql">SqlQueryBuilder</a></dt>
 <dd>&nbsp;</dd>
+<dt><a href="io/micronaut/data/runtime/intercept/criteria/AbstractSpecificationInterceptor.html#resolveLimit(io.micronaut.aop.MethodInvocationContext,io.micronaut.data.model.Pageable)" class="member-name-link">resolveLimit(MethodInvocationContext, Pageable)</a> - Method in class io.micronaut.data.runtime.intercept.criteria.<a href="io/micronaut/data/runtime/intercept/criteria/AbstractSpecificationInterceptor.html" title="class in io.micronaut.data.runtime.intercept.criteria">AbstractSpecificationInterceptor</a></dt>
+<dd>
+<div class="block">Resolves the limit of a find-all query executed by criteria repository operations, that don't support
+a pageable: the pageable, the <a href="io/micronaut/data/model/Limit.html" title="interface in io.micronaut.data.model"><code>Limit</code></a> parameter, the method's offset and limit and <a href="io/micronaut/data/annotation/First.html" title="annotation interface in io.micronaut.data.annotation"><code>First</code></a>.</div>
+</dd>
 <dt><a href="io/micronaut/data/processor/visitors/Utils.html#resolvePersistentEntity(io.micronaut.inject.ast.ClassElement,java.util.function.Function)" class="member-name-link">resolvePersistentEntity(ClassElement, Function)</a> - Static method in class io.micronaut.data.processor.visitors.<a href="io/micronaut/data/processor/visitors/Utils.html" title="class in io.micronaut.data.processor.visitors">Utils</a></dt>
 <dd>&nbsp;</dd>
 <dt><a href="io/micronaut/data/runtime/query/PreparedQueryResolver.html#resolveQuery(io.micronaut.aop.MethodInvocationContext,io.micronaut.data.model.runtime.StoredQuery,io.micronaut.data.model.Pageable)" class="member-name-link">resolveQuery(MethodInvocationContext, StoredQuery, Pageable)</a> - Method in interface io.micronaut.data.runtime.query.<a href="io/micronaut/data/runtime/query/PreparedQueryResolver.html" title="interface in io.micronaut.data.runtime.query">PreparedQueryResolver</a></dt>
@@ -29730,9 +29747,13 @@ are prevented.</div>
 <div class="block">Sets the auto scaled indicator for throughput.</div>
 </dd>
 <dt><a href="io/micronaut/data/jdbc/config/DataJdbcConfiguration.html#setBatchGenerate(boolean)" class="member-name-link">setBatchGenerate(boolean)</a> - Method in class io.micronaut.data.jdbc.config.<a href="io/micronaut/data/jdbc/config/DataJdbcConfiguration.html" title="class in io.micronaut.data.jdbc.config">DataJdbcConfiguration</a></dt>
-<dd>&nbsp;</dd>
+<dd>
+<div class="block">Whether to drop and create the tables with a single statement containing all the DDL statements.</div>
+</dd>
 <dt><a href="io/micronaut/data/r2dbc/config/DataR2dbcConfiguration.html#setBatchGenerate(boolean)" class="member-name-link">setBatchGenerate(boolean)</a> - Method in class io.micronaut.data.r2dbc.config.<a href="io/micronaut/data/r2dbc/config/DataR2dbcConfiguration.html" title="class in io.micronaut.data.r2dbc.config">DataR2dbcConfiguration</a></dt>
-<dd>&nbsp;</dd>
+<dd>
+<div class="block">Whether to create the tables with a single statement containing all the DDL statements.</div>
+</dd>
 <dt><a href="io/micronaut/data/r2dbc/mapper/R2dbcQueryStatement.html#setBigDecimal(io.r2dbc.spi.Statement,java.lang.Integer,java.math.BigDecimal)" class="member-name-link">setBigDecimal(Statement, Integer, BigDecimal)</a> - Method in class io.micronaut.data.r2dbc.mapper.<a href="io/micronaut/data/r2dbc/mapper/R2dbcQueryStatement.html" title="class in io.micronaut.data.r2dbc.mapper">R2dbcQueryStatement</a></dt>
 <dd>&nbsp;</dd>
 <dt><a href="io/micronaut/data/document/tck/entities/BasicTypes.html#setBigDecimal(java.math.BigDecimal)" class="member-name-link">setBigDecimal(BigDecimal)</a> - Method in class io.micronaut.data.document.tck.entities.<a href="io/micronaut/data/document/tck/entities/BasicTypes.html" title="class in io.micronaut.data.document.tck.entities">BasicTypes</a></dt>

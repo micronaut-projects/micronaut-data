@@ -75,6 +75,7 @@ loadScripts(document, 'script');</script>
 <li><a href="#getPageable(io.micronaut.aop.MethodInvocationContext)" tabindex="0">getPageable(MethodInvocationContext)</a></li>
 <li><a href="#findAll(io.micronaut.data.intercept.RepositoryMethodKey,io.micronaut.aop.MethodInvocationContext,io.micronaut.data.model.Pageable,jakarta.persistence.criteria.CriteriaQuery)" tabindex="0">findAll(RepositoryMethodKey, MethodInvocationContext, Pageable, CriteriaQuery)</a></li>
 <li><a href="#findPageIds(io.micronaut.data.intercept.RepositoryMethodKey,io.micronaut.aop.MethodInvocationContext,io.micronaut.data.model.Pageable,jakarta.persistence.criteria.CriteriaQuery)" tabindex="0">findPageIds(RepositoryMethodKey, MethodInvocationContext, Pageable, CriteriaQuery)</a></li>
+<li><a href="#resolveLimit(io.micronaut.aop.MethodInvocationContext,io.micronaut.data.model.Pageable)" tabindex="0">resolveLimit(MethodInvocationContext, Pageable)</a></li>
 <li><a href="#getMethodJoinPaths(io.micronaut.data.intercept.RepositoryMethodKey,io.micronaut.aop.MethodInvocationContext)" tabindex="0">getMethodJoinPaths(RepositoryMethodKey, MethodInvocationContext)</a></li>
 <li><a href="#getQueryBuilder(io.micronaut.data.intercept.RepositoryMethodKey,io.micronaut.aop.MethodInvocationContext)" tabindex="0">getQueryBuilder(RepositoryMethodKey, MethodInvocationContext)</a></li>
 <li><a href="#buildExistsQuery(io.micronaut.data.intercept.RepositoryMethodKey,io.micronaut.aop.MethodInvocationContext)" tabindex="0">buildExistsQuery(RepositoryMethodKey, MethodInvocationContext)</a></li>
@@ -314,6 +315,13 @@ or <a href="../../../repository/jpa/criteria/QuerySpecification.html" title="int
 <div class="col-first odd-row-color method-summary-table method-summary-table-tab1 method-summary-table-tab4"><code>protected static boolean</code></div>
 <div class="col-second odd-row-color method-summary-table method-summary-table-tab1 method-summary-table-tab4"><code><a href="#hasJoinsOrFetches(jakarta.persistence.criteria.Root)" class="member-name-link">hasJoinsOrFetches</a><wbr>(jakarta.persistence.criteria.Root&lt;?&gt;&nbsp;root)</code></div>
 <div class="col-last odd-row-color method-summary-table method-summary-table-tab1 method-summary-table-tab4">&nbsp;</div>
+<div class="col-first even-row-color method-summary-table method-summary-table-tab2 method-summary-table-tab4"><code>protected final <a href="../../../model/Limit.html" title="interface in io.micronaut.data.model">Limit</a></code></div>
+<div class="col-second even-row-color method-summary-table method-summary-table-tab2 method-summary-table-tab4"><code><a href="#resolveLimit(io.micronaut.aop.MethodInvocationContext,io.micronaut.data.model.Pageable)" class="member-name-link">resolveLimit</a><wbr>(io.micronaut.aop.MethodInvocationContext&lt;?,<wbr>?&gt;&nbsp;context,
+ @Nullable <a href="../../../model/Pageable.html" title="interface in io.micronaut.data.model">Pageable</a>&nbsp;pageable)</code></div>
+<div class="col-last even-row-color method-summary-table method-summary-table-tab2 method-summary-table-tab4">
+<div class="block">Resolves the limit of a find-all query executed by criteria repository operations, that don't support
+a pageable: the pageable, the <a href="../../../model/Limit.html" title="interface in io.micronaut.data.model"><code>Limit</code></a> parameter, the method's offset and limit and <a href="../../../annotation/First.html" title="annotation interface in io.micronaut.data.annotation"><code>First</code></a>.</div>
+</div>
 </div>
 </div>
 </div>
@@ -450,6 +458,24 @@ without changing normal user criteria queries.</div>
 <dd><code>criteriaQuery</code> - The ID criteria query</dd>
 <dt>Returns:</dt>
 <dd>The page IDs</dd>
+</dl>
+</div>
+</section>
+</li>
+<li>
+<section class="detail" id="resolveLimit(io.micronaut.aop.MethodInvocationContext,io.micronaut.data.model.Pageable)">
+<h3>resolveLimit</h3>
+<div class="horizontal-scroll">
+<div class="member-signature"><span class="modifiers">protected final</span>&nbsp;<span class="return-type"><a href="../../../model/Limit.html" title="interface in io.micronaut.data.model">Limit</a></span>&nbsp;<span class="element-name">resolveLimit</span><wbr><span class="parameters">(io.micronaut.aop.MethodInvocationContext&lt;?,<wbr>?&gt;&nbsp;context,
+ @Nullable <a href="../../../model/Pageable.html" title="interface in io.micronaut.data.model">Pageable</a>&nbsp;pageable)</span></div>
+<div class="block">Resolves the limit of a find-all query executed by criteria repository operations, that don't support
+a pageable: the pageable, the <a href="../../../model/Limit.html" title="interface in io.micronaut.data.model"><code>Limit</code></a> parameter, the method's offset and limit and <a href="../../../annotation/First.html" title="annotation interface in io.micronaut.data.annotation"><code>First</code></a>.</div>
+<dl class="notes">
+<dt>Parameters:</dt>
+<dd><code>context</code> - The invocation context</dd>
+<dd><code>pageable</code> - The pageable with the sort removed</dd>
+<dt>Returns:</dt>
+<dd>The limit</dd>
 </dl>
 </div>
 </section>

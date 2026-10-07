@@ -364,7 +364,8 @@ implements <a href="DelegateStoredQuery.html" title="interface in io.micronaut.d
  @NonNull <a href="https://docs.oracle.com/en/java/javase/25/docs/api/java.base/java/lang/Class.html" title="class or interface in java.lang" class="external-link">Class</a>&lt;?&gt;&nbsp;type,
  @NonNull io.micronaut.aop.MethodInvocationContext&lt;?,<wbr>?&gt;&nbsp;methodContext,
  @NonNull io.micronaut.core.convert.ConversionService&nbsp;conversionService)</span></div>
-<div class="block">Check the return role from the method context.</div>
+<div class="block">Check the return role from the method context.
+For reactive, async and suspended methods the type emitted by the wrapper is checked.</div>
 <dl class="notes">
 <dt>Parameters:</dt>
 <dd><code>role</code> - The role</dd>

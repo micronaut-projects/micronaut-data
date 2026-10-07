@@ -394,7 +394,10 @@ where data manipulation statements are strictly disallowed. Also, on Oracle,
 this read-only mode provides read consistency for the entire transaction.
 <p>Note that older Oracle JDBC drivers (9i, 10g) used to enforce this read-only
 mode even for <code>Connection.setReadOnly(true</code>. However, with recent drivers,
-this strong enforcement needs to be applied explicitly, e.g. through this flag.</div>
+this strong enforcement needs to be applied explicitly, e.g. through this flag.
+<p>The statement isn't executed for Oracle sessionless transactions: on Oracle,
+"SET TRANSACTION READ ONLY" starts a local transaction, which would prevent
+the sessionless transaction from being started or resumed.</div>
 <dl class="notes">
 <dt>Parameters:</dt>
 <dd><code>enforceReadOnly</code> - True if read-only should be enforced</dd>
@@ -589,7 +592,8 @@ method after validating their connection.</div>
 <div class="block">Prepare the transactional <code>Connection</code> right after transaction begin.
 <p>The default implementation executes a "SET TRANSACTION READ ONLY" statement
 if the <a href="#setEnforceReadOnly(boolean)"><code>"enforceReadOnly"</code></a> flag is set to <code>true</code>
-and the transaction definition indicates a read-only transaction.
+and the transaction definition indicates a read-only transaction
+that isn't an Oracle sessionless transaction.
 <p>The "SET TRANSACTION READ ONLY" is understood by Oracle, MySQL and Postgres
 and may work with other databases as well. If you'd like to adapt this treatment,
 override this method accordingly.</div>

@@ -200,7 +200,9 @@ implements io.micronaut.core.naming.Named</span></div>
 <div class="col-last even-row-color method-summary-table method-summary-table-tab2 method-summary-table-tab4">&nbsp;</div>
 <div class="col-first odd-row-color method-summary-table method-summary-table-tab2 method-summary-table-tab4"><code>void</code></div>
 <div class="col-second odd-row-color method-summary-table method-summary-table-tab2 method-summary-table-tab4"><code><a href="#setBatchGenerate(boolean)" class="member-name-link">setBatchGenerate</a><wbr>(boolean&nbsp;batchGenerate)</code></div>
-<div class="col-last odd-row-color method-summary-table method-summary-table-tab2 method-summary-table-tab4">&nbsp;</div>
+<div class="col-last odd-row-color method-summary-table method-summary-table-tab2 method-summary-table-tab4">
+<div class="block">Whether to create the tables with a single statement containing all the DDL statements.</div>
+</div>
 <div class="col-first even-row-color method-summary-table method-summary-table-tab2 method-summary-table-tab4"><code>void</code></div>
 <div class="col-second even-row-color method-summary-table method-summary-table-tab2 method-summary-table-tab4"><code><a href="#setDefaultFetchSize(java.lang.Integer)" class="member-name-link">setDefaultFetchSize</a><wbr>(@NonNull <a href="https://docs.oracle.com/en/java/javase/25/docs/api/java.base/java/lang/Integer.html" title="class or interface in java.lang" class="external-link">Integer</a>&nbsp;defaultFetchSize)</code></div>
 <div class="col-last even-row-color method-summary-table method-summary-table-tab2 method-summary-table-tab4">
@@ -341,6 +343,10 @@ implements io.micronaut.core.naming.Named</span></div>
 <h3>setBatchGenerate</h3>
 <div class="horizontal-scroll">
 <div class="member-signature"><span class="modifiers">public</span>&nbsp;<span class="return-type">void</span>&nbsp;<span class="element-name">setBatchGenerate</span><wbr><span class="parameters">(boolean&nbsp;batchGenerate)</span></div>
+<div class="block">Whether to create the tables with a single statement containing all the DDL statements. It requires a
+driver that executes several statements in one string, such as H2 or PostgreSQL, and is ignored for Oracle.
+When the batch fails, for example because a table already exists, the tables are created one by one.
+With <a href="../../runtime/config/SchemaGenerate.html#CREATE_DROP"><code>SchemaGenerate.CREATE_DROP</code></a>, the tables are still dropped one by one.</div>
 <dl class="notes">
 <dt>Parameters:</dt>
 <dd><code>batchGenerate</code> - Whether to generate tables in batch.</dd>
