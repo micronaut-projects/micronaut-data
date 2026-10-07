@@ -83,49 +83,19 @@ class ReservationMethodMatcherSpec extends AbstractDataSpec {
 
         then:
         e = thrown(RuntimeException)
-        e.message.contains('Reservation property [balance] requires a matching delta parameter named [balance] or [balanceIncrement], or annotated with @Parameter("balance") or @Parameter("balanceIncrement")')
+        e.message.contains('Reservation property [balance] requires a matching delta parameter named [balance] or annotated with @Parameter("balance")')
 
         when:
-        buildReservationRepository('MismatchedReservationDeltaOperationRepository', 'long reserveIncrementBalance(@Id Long id, Long balanceDecrement);')
+        buildReservationRepository('UnaliasedOperationNamedDeltaRepository', 'long reserveIncrementBalance(@Id Long id, Long balanceIncrement);')
 
         then:
         e = thrown(RuntimeException)
-        e.message.contains('Reservation property [balance] requires a matching delta parameter named [balance] or [balanceIncrement]')
-
-        when:
-        buildReservationRepository('AmbiguousReservationDeltaRepository', 'long reserveIncrementBalance(@Id Long id, Long balance, Long balanceIncrement);')
-
-        then:
-        e = thrown(RuntimeException)
-        e.message.contains('require one delta parameter for each reservation property')
+        e.message.contains('Reservation property [balance] requires a matching delta parameter named [balance] or annotated with @Parameter("balance")')
     }
 
-    void "test reservation method requires a unique assignment of overlapping delta parameter names"() {
+    void "test reservation method validates aliased delta parameters"() {
         when:
-        buildOverlappingReservationRepository('UnassignableReservationDeltaRepository', 'long reserveIncrementBalanceAndDecrementBalanceIncrement(@Id Long id, Long balanceIncrement, Long other);')
-
-        then:
-        def e = thrown(RuntimeException)
-        e.message.contains('Reservation delta parameters cannot be matched to distinct parameters for properties [balance, balanceIncrement]')
-
-        when:
-        buildOverlappingReservationRepository('AmbiguousReservationDeltaAssignmentRepository', 'long reserveIncrementBalanceAndDecrementBalanceIncrement(@Id Long id, @io.micronaut.context.annotation.Parameter("balanceIncrement") Long first, Long balanceIncrement);')
-
-        then:
-        e = thrown(RuntimeException)
-        e.message.contains('Reservation delta parameters are ambiguous for properties [balance, balanceIncrement]')
-
-        when:
-        buildOverlappingReservationRepository('MissingOverlappingReservationDeltaRepository', 'long reserveIncrementBalanceAndDecrementBalanceIncrement(@Id Long id, Long balance, Long balanceIncrementIncrement);')
-
-        then:
-        e = thrown(RuntimeException)
-        e.message.contains('Reservation property [balanceIncrement] requires a matching delta parameter named [balanceIncrement] or [balanceIncrementDecrement]')
-    }
-
-    void "test reservation method validates operation named and aliased delta parameters"() {
-        when:
-        buildReservationRepository('NonNumericOperationNamedDeltaRepository', 'long reserveIncrementBalance(@Id Long id, String balanceIncrement);')
+        buildReservationRepository('NonNumericAliasedDeltaRepository', 'long reserveIncrementBalance(@Id Long id, @io.micronaut.context.annotation.Parameter("balance") String balanceIncrement);')
 
         then:
         def e = thrown(RuntimeException)
@@ -136,7 +106,14 @@ class ReservationMethodMatcherSpec extends AbstractDataSpec {
 
         then:
         e = thrown(RuntimeException)
-        e.message.contains('require one delta parameter for each reservation property')
+        e.message.contains('Reservation property [balance] matches more than one delta parameter: [amount, balance]')
+
+        when:
+        buildOverlappingReservationRepository('DuplicateClaimedReservationDeltaRepository', 'long reserveIncrementBalanceAndDecrementBalanceIncrement(@Id Long id, @io.micronaut.context.annotation.Parameter("balance") Long amount, Long balance);')
+
+        then:
+        e = thrown(RuntimeException)
+        e.message.contains('Reservation property [balance] matches more than one delta parameter: [amount, balance]')
     }
 
     private void buildOverlappingReservationRepository(String repositoryName, String method) {

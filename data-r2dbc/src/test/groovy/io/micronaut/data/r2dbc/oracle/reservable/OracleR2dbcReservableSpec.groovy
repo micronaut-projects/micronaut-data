@@ -90,7 +90,7 @@ class OracleR2dbcReservableSpec extends Specification implements OracleXETestPro
         updated.amount == 30L
         updated.balance == 80L
 
-        when: "the delta parameters are declared in a different order than the operations"
+        when: "aliased delta parameters are declared in a different order than the operations"
         walletRepository.reserveDecrementBalanceAndIncrementAmount(wallet.id, 5L, 30L)
         updated = walletRepository.findById(wallet.id).orElseThrow()
 

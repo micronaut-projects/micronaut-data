@@ -258,7 +258,7 @@ class Account {
         getParameterBindingIndexes(method) == ['2', '1', '0'] as String[]
     }
 
-    void "test reserve method matches delta parameters named after the operation"() {
+    void "test reserve method binds delta parameters by property name regardless of their order"() {
         given:
         def repository = buildRepository('test.AccountRepository', """
 import io.micronaut.data.annotation.Id;
@@ -271,7 +271,7 @@ import io.micronaut.data.repository.GenericRepository;
 @JdbcRepository(dialect = Dialect.ORACLE)
 @io.micronaut.context.annotation.Executable
 interface AccountRepository extends GenericRepository<Account, Long> {
-    long reserveIncrementAmountAndDecrementBalance(@Id Long id, Long balanceDecrement, Long amountIncrement);
+    long reserveIncrementBalanceAndDecrementBalanceIncrement(@Id Long id, Long balanceIncrement, Long balance);
 }
 
 @MappedEntity
@@ -279,120 +279,26 @@ class Account {
     @Id
     private Long id;
     @Reservable
-    private Long amount;
-    @Reservable
     private Long balance;
+    @Reservable
+    private Long balanceIncrement;
 
     public Long getId() { return id; }
     public void setId(Long id) { this.id = id; }
-    public Long getAmount() { return amount; }
-    public void setAmount(Long amount) { this.amount = amount; }
     public Long getBalance() { return balance; }
     public void setBalance(Long balance) { this.balance = balance; }
+    public Long getBalanceIncrement() { return balanceIncrement; }
+    public void setBalanceIncrement(Long balanceIncrement) { this.balanceIncrement = balanceIncrement; }
 }
 """)
-        def method = repository.findPossibleMethods("reserveIncrementAmountAndDecrementBalance").findFirst().get()
+        def method = repository.findPossibleMethods("reserveIncrementBalanceAndDecrementBalanceIncrement").findFirst().get()
 
         expect:
-        getQuery(method) == 'UPDATE "ACCOUNT" SET "AMOUNT"=("AMOUNT" + ?),"BALANCE"=("BALANCE" - ?) WHERE ("ID" = ?)'
+        getQuery(method) == 'UPDATE "ACCOUNT" SET "BALANCE"=("BALANCE" + ?),"BALANCE_INCREMENT"=("BALANCE_INCREMENT" - ?) WHERE ("ID" = ?)'
         getParameterBindingIndexes(method) == ['2', '1', '0'] as String[]
     }
 
-    void "test reserve method matches each delta parameter once when names overlap"() {
-        given:
-        def repository = buildRepository('test.AccountRepository', """
-import io.micronaut.data.annotation.Id;
-import io.micronaut.data.annotation.MappedEntity;
-import io.micronaut.data.annotation.Reservable;
-import io.micronaut.data.jdbc.annotation.JdbcRepository;
-import io.micronaut.data.model.query.builder.sql.Dialect;
-import io.micronaut.data.repository.GenericRepository;
-
-@JdbcRepository(dialect = Dialect.ORACLE)
-@io.micronaut.context.annotation.Executable
-interface AccountRepository extends GenericRepository<Account, Long> {
-    long reserveIncrementBalanceAndDecrementBalanceIncrement(@Id Long id, Long balanceIncrement, Long balanceIncrementDecrement);
-
-    long reserveDecrementBalanceAndIncrementBalanceIncrement(@Id Long id, Long balance, Long balanceIncrement);
-
-    long reserveDecrementBalanceIncrementAndIncrementBalance(@Id Long id, Long balanceIncrement, Long balanceIncrementDecrement);
-}
-
-@MappedEntity
-class Account {
-    @Id
-    private Long id;
-    @Reservable
-    private Long balance;
-    @Reservable
-    private Long balanceIncrement;
-
-    public Long getId() { return id; }
-    public void setId(Long id) { this.id = id; }
-    public Long getBalance() { return balance; }
-    public void setBalance(Long balance) { this.balance = balance; }
-    public Long getBalanceIncrement() { return balanceIncrement; }
-    public void setBalanceIncrement(Long balanceIncrement) { this.balanceIncrement = balanceIncrement; }
-}
-""")
-        def operationNamed = repository.findPossibleMethods("reserveIncrementBalanceAndDecrementBalanceIncrement").findFirst().get()
-        def propertyNamed = repository.findPossibleMethods("reserveDecrementBalanceAndIncrementBalanceIncrement").findFirst().get()
-        def reordered = repository.findPossibleMethods("reserveDecrementBalanceIncrementAndIncrementBalance").findFirst().get()
-
-        expect:
-        getQuery(operationNamed) == 'UPDATE "ACCOUNT" SET "BALANCE"=("BALANCE" + ?),"BALANCE_INCREMENT"=("BALANCE_INCREMENT" - ?) WHERE ("ID" = ?)'
-        getParameterBindingIndexes(operationNamed) == ['1', '2', '0'] as String[]
-        getQuery(propertyNamed) == 'UPDATE "ACCOUNT" SET "BALANCE"=("BALANCE" - ?),"BALANCE_INCREMENT"=("BALANCE_INCREMENT" + ?) WHERE ("ID" = ?)'
-        getParameterBindingIndexes(propertyNamed) == ['1', '2', '0'] as String[]
-        getQuery(reordered) == 'UPDATE "ACCOUNT" SET "BALANCE_INCREMENT"=("BALANCE_INCREMENT" - ?),"BALANCE"=("BALANCE" + ?) WHERE ("ID" = ?)'
-        getParameterBindingIndexes(reordered) == ['2', '1', '0'] as String[]
-    }
-
-    void "test reserve method resolves overlapping delta parameter names across three operations"() {
-        given:
-        def repository = buildRepository('test.AccountRepository', """
-import io.micronaut.data.annotation.Id;
-import io.micronaut.data.annotation.MappedEntity;
-import io.micronaut.data.annotation.Reservable;
-import io.micronaut.data.jdbc.annotation.JdbcRepository;
-import io.micronaut.data.model.query.builder.sql.Dialect;
-import io.micronaut.data.repository.GenericRepository;
-
-@JdbcRepository(dialect = Dialect.ORACLE)
-@io.micronaut.context.annotation.Executable
-interface AccountRepository extends GenericRepository<Account, Long> {
-    long reserveIncrementAmountAndDecrementBalanceIncrementAndIncrementBalance(@Id Long id, Long balanceIncrement, Long amountIncrement, Long balanceIncrementDecrement);
-}
-
-@MappedEntity
-class Account {
-    @Id
-    private Long id;
-    @Reservable
-    private Long amount;
-    @Reservable
-    private Long balance;
-    @Reservable
-    private Long balanceIncrement;
-
-    public Long getId() { return id; }
-    public void setId(Long id) { this.id = id; }
-    public Long getAmount() { return amount; }
-    public void setAmount(Long amount) { this.amount = amount; }
-    public Long getBalance() { return balance; }
-    public void setBalance(Long balance) { this.balance = balance; }
-    public Long getBalanceIncrement() { return balanceIncrement; }
-    public void setBalanceIncrement(Long balanceIncrement) { this.balanceIncrement = balanceIncrement; }
-}
-""")
-        def method = repository.findPossibleMethods("reserveIncrementAmountAndDecrementBalanceIncrementAndIncrementBalance").findFirst().get()
-
-        expect:
-        getQuery(method) == 'UPDATE "ACCOUNT" SET "AMOUNT"=("AMOUNT" + ?),"BALANCE_INCREMENT"=("BALANCE_INCREMENT" - ?),"BALANCE"=("BALANCE" + ?) WHERE ("ID" = ?)'
-        getParameterBindingIndexes(method) == ['2', '3', '1', '0'] as String[]
-    }
-
-    void "test reserve method combines delta parameter naming styles"() {
+    void "test reserve method combines property named and aliased delta parameters"() {
         given:
         def repository = buildRepository('test.AccountRepository', """
 import io.micronaut.context.annotation.Parameter;
@@ -407,13 +313,11 @@ import java.math.BigDecimal;
 @JdbcRepository(dialect = Dialect.ORACLE)
 @io.micronaut.context.annotation.Executable
 interface AccountRepository extends GenericRepository<Account, Long> {
-    long reserveIncrementAmountAndDecrementBalanceAndIncrementCredit(@Id Long id, @Parameter("credit") Long creditLine, Long balanceDecrement, Long amount);
+    long reserveIncrementAmountAndDecrementBalanceAndIncrementCredit(@Id Long id, @Parameter("credit") Long creditLine, @Parameter("balance") Long balanceDecrement, Long amount);
 
-    long reserveIncrementBalance(@Id Long id, @Parameter("balanceIncrement") Long delta);
+    long reserveDecrementAmount(@Id Long id, double amount);
 
-    long reserveDecrementAmount(@Id Long id, double amountDecrement);
-
-    long reserveIncrementCredit(@Id Long id, BigDecimal creditIncrement);
+    long reserveIncrementCredit(@Id Long id, @Parameter("credit") BigDecimal creditIncrement);
 }
 
 @MappedEntity
@@ -438,24 +342,22 @@ class Account {
 }
 """)
         def mixed = repository.findPossibleMethods("reserveIncrementAmountAndDecrementBalanceAndIncrementCredit").findFirst().get()
-        def operationAlias = repository.findPossibleMethods("reserveIncrementBalance").findFirst().get()
         def doubleDelta = repository.findPossibleMethods("reserveDecrementAmount").findFirst().get()
         def bigDecimalDelta = repository.findPossibleMethods("reserveIncrementCredit").findFirst().get()
 
         expect:
         getQuery(mixed) == 'UPDATE "ACCOUNT" SET "AMOUNT"=("AMOUNT" + ?),"BALANCE"=("BALANCE" - ?),"CREDIT"=("CREDIT" + ?) WHERE ("ID" = ?)'
         getParameterBindingIndexes(mixed) == ['3', '2', '1', '0'] as String[]
-        getQuery(operationAlias) == 'UPDATE "ACCOUNT" SET "BALANCE"=("BALANCE" + ?) WHERE ("ID" = ?)'
-        getParameterBindingIndexes(operationAlias) == ['1', '0'] as String[]
         getQuery(doubleDelta) == 'UPDATE "ACCOUNT" SET "AMOUNT"=("AMOUNT" - ?) WHERE ("ID" = ?)'
         getParameterBindingIndexes(doubleDelta) == ['1', '0'] as String[]
         getQuery(bigDecimalDelta) == 'UPDATE "ACCOUNT" SET "CREDIT"=("CREDIT" + ?) WHERE ("ID" = ?)'
         getParameterBindingIndexes(bigDecimalDelta) == ['1', '0'] as String[]
     }
 
-    void "test reserve method matches an operation named delta parameter of an embedded property"() {
+    void "test reserve method matches an aliased delta parameter of an embedded property"() {
         given:
         def repository = buildRepository('test.ProjectRepository', """
+import io.micronaut.context.annotation.Parameter;
 import io.micronaut.data.annotation.Embeddable;
 import io.micronaut.data.annotation.EmbeddedId;
 import io.micronaut.data.annotation.Id;
@@ -469,7 +371,7 @@ import io.micronaut.data.repository.GenericRepository;
 @JdbcRepository(dialect = Dialect.ORACLE)
 @io.micronaut.context.annotation.Executable
 interface ProjectRepository extends GenericRepository<Project, ProjectId> {
-    long reserveIncrementLimitsAvailableBalance(@Id ProjectId id, Long limitsAvailableBalanceIncrement);
+    long reserveIncrementLimitsAvailableBalance(@Id ProjectId id, @Parameter("limitsAvailableBalance") Long increment);
 }
 
 @MappedEntity

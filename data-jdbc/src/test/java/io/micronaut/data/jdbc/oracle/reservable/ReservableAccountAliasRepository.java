@@ -24,7 +24,7 @@ import io.micronaut.data.repository.GenericRepository;
 @JdbcRepository(dialect = Dialect.ORACLE)
 public interface ReservableAccountAliasRepository extends GenericRepository<ReservableAccount, Long> {
 
-    int reserveDecrementBalance(@Id Long id, Long balanceDecrement);
+    int reserveDecrementBalance(@Id Long id, @Parameter("balance") Long balanceDecrement);
 
     int reserveIncrementBalance(@Id Long id, @Parameter("balance") Long amount);
 }

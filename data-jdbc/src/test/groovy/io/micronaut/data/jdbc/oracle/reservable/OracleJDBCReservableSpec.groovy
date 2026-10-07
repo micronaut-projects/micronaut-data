@@ -72,7 +72,7 @@ class OracleJDBCReservableSpec extends Specification implements OracleTestProper
         thrown(DataIntegrityViolationException)
     }
 
-    void "test reservation delta parameters named after the operation or with @Parameter"() {
+    void "test reservation delta parameters named with @Parameter"() {
         given:
         def account = repository.save(new ReservableAccount(name: "alias", balance: 100L))
 
@@ -119,7 +119,7 @@ class OracleJDBCReservableSpec extends Specification implements OracleTestProper
         updated.amount == 30L
         updated.balance == 80L
 
-        when: "the delta parameters are declared in a different order than the operations"
+        when: "aliased delta parameters are declared in a different order than the operations"
         walletRepository.reserveDecrementBalanceAndIncrementAmount(wallet.id, 5L, 30L)
         updated = walletRepository.findById(wallet.id).orElseThrow()
 

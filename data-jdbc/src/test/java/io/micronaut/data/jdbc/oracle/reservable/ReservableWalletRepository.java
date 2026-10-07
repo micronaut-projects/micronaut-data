@@ -24,9 +24,9 @@ import io.micronaut.data.repository.CrudRepository;
 @JdbcRepository(dialect = Dialect.ORACLE)
 public interface ReservableWalletRepository extends CrudRepository<ReservableWallet, Long> {
 
-    int reserveIncrementAmountAndDecrementBalance(@Id Long id, Long amountIncrement, Long balanceDecrement);
+    int reserveIncrementAmountAndDecrementBalance(@Id Long id, Long amount, Long balance);
 
-    int reserveDecrementAmountAndIncrementBalance(@Id Long id, Long amountDecrement, Long balanceIncrement);
+    int reserveDecrementAmountAndIncrementBalance(@Id Long id, Long amount, Long balance);
 
-    int reserveDecrementBalanceAndIncrementAmount(@Id Long id, @Parameter("amount") Long credit, Long balanceDecrement);
+    int reserveDecrementBalanceAndIncrementAmount(@Id Long id, @Parameter("amount") Long credit, @Parameter("balance") Long debit);
 }
