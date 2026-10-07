@@ -125,6 +125,45 @@ abstract class AbstractR2dbcCascadeSpec extends Specification {
             found.children*.id.toSorted() == parent.children*.id.toSorted()
     }
 
+    void "test cascading persist keeps the order of the children already cascaded"() {
+        given:
+            def parent = new CascadeGeneratedParent(name: "parent")
+            def favourite = new CascadeAssignedChild(id: ID_SEQUENCE.incrementAndGet(), name: "B", parent: parent)
+            parent.favourite = favourite
+            parent.children = [
+                    new CascadeAssignedChild(id: ID_SEQUENCE.incrementAndGet(), name: "A", parent: parent),
+                    favourite,
+                    new CascadeAssignedChild(id: ID_SEQUENCE.incrementAndGet(), name: "C", parent: parent)
+            ]
+
+        when: "a child of the collection is also cascaded by a to-one association"
+            parent = generatedParentRepository.save(parent).block()
+
+        then:
+            parent.children*.name == ["A", "B", "C"]
+            parent.children[1].is(favourite)
+    }
+
+    void "test cascading persist keeps the order of the children already persisted"() {
+        given:
+            def otherParent = new CascadeAssignedParent(id: ID_SEQUENCE.incrementAndGet(), name: "other")
+            otherParent.children = [new CascadeGeneratedChild(name: "B", parent: otherParent)]
+            def existing = assignedParentRepository.save(otherParent).block().children[0]
+            def parent = new CascadeAssignedParent(id: ID_SEQUENCE.incrementAndGet(), name: "parent")
+            parent.children = [
+                    new CascadeGeneratedChild(name: "A", parent: parent),
+                    existing,
+                    new CascadeGeneratedChild(name: "C", parent: parent)
+            ]
+
+        when:
+            parent = assignedParentRepository.save(parent).block()
+
+        then:
+            parent.children*.name == ["A", "B", "C"]
+            parent.children[1].is(existing)
+    }
+
     private static List<String> persistEvents(boolean batch, String... names) {
         if (batch) {
             return names.collect { "pre " + it } + names.collect { "post " + it }
@@ -188,6 +227,9 @@ class CascadeGeneratedParent {
     @GeneratedValue
     Long id
     String name
+    @Relation(value = Relation.Kind.ONE_TO_ONE, cascade = Relation.Cascade.ALL)
+    @Nullable
+    CascadeAssignedChild favourite
     @Relation(value = Relation.Kind.ONE_TO_MANY, mappedBy = "parent", cascade = Relation.Cascade.ALL)
     List<CascadeAssignedChild> children
 }
@@ -198,6 +240,7 @@ class CascadeAssignedChild {
     Long id
     String name
     @Relation(value = Relation.Kind.MANY_TO_ONE)
+    @Nullable
     CascadeGeneratedParent parent
 
     @PrePersist
