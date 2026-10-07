@@ -85,7 +85,8 @@ class SqlCriteriaNullOrderingSpec extends Specification {
         result.parameterBindings.size() == 2
 
         where:
-        dialect       | orderBy
-        Dialect.MYSQL | 'CASE WHEN CONCAT(restaurant_.`name`,?) IS NULL THEN 0 ELSE 1 END,CONCAT(restaurant_.`name`,?) ASC'
+        dialect            | orderBy
+        Dialect.MYSQL      | 'CASE WHEN CONCAT(restaurant_.`name`,?) IS NULL THEN 0 ELSE 1 END,CONCAT(restaurant_.`name`,?) ASC'
+        Dialect.SQL_SERVER | 'CASE WHEN CONCAT(restaurant_.[name],?) IS NULL THEN 0 ELSE 1 END,CONCAT(restaurant_.[name],?) ASC'
     }
 }
