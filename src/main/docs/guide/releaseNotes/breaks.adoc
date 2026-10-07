@@ -36,13 +36,6 @@ An empty conjunction (`criteriaBuilder.and()`) as the restriction of a criteria 
 
 Code that builds the restriction from a list of predicates that can be empty should check the list before calling `deleteAll` or `updateAll`.
 
-=== Reactive transaction propagation matches the synchronous transaction managers
-
-The reactive transaction managers (R2DBC, MongoDB and Hibernate Reactive) now apply the `SUPPORTS`, `NOT_SUPPORTED` and `NEVER` propagations like the synchronous ones:
-
-* Without an existing transaction, they execute with a connection but without a transaction. Previously, they started a new transaction.
-* With an existing transaction, `NOT_SUPPORTED` executes without a transaction on a new connection. Previously, it failed with a `TransactionUsageException`.
-
 == 5.2
 
 === Kotlin 2.4 generic repository bounds

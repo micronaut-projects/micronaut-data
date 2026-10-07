@@ -16,7 +16,6 @@
 package io.micronaut.data.hibernate.reactive
 
 import io.micronaut.test.extensions.spock.annotation.MicronautTest
-import io.micronaut.transaction.TransactionDefinition
 import io.micronaut.transaction.reactive.ReactiveTransactionStatus
 import io.micronaut.transaction.reactive.ReactorReactiveTransactionOperations
 import jakarta.inject.Inject
@@ -74,15 +73,5 @@ class ReactiveTransactionStatusSpec extends Specification implements PostgresHib
         then:
         thrown(IllegalStateException)
         transactionStatus.isCompleted()
-    }
-
-    void "SUPPORTS without an existing transaction executes without a transaction"() {
-        when:
-        def result = transactionOperations.withTransactionMono(TransactionDefinition.of(TransactionDefinition.Propagation.SUPPORTS)) { status ->
-            Mono.just([newTransaction: status.isNewTransaction(), sessionTransaction: status.connection.currentTransaction() != null])
-        }.block()
-
-        then:
-        result == [newTransaction: false, sessionTransaction: false]
     }
 }
