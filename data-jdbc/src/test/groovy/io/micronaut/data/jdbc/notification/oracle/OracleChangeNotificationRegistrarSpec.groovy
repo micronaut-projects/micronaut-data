@@ -150,7 +150,8 @@ class OracleChangeNotificationRegistrarSpec extends Specification {
         def definition = new OracleChangeListenerDefinition(null, method, null, 'SELECT * FROM BOOK', null, requested)
         def registrar = registrar(operations)
         def subscription = new OracleChangeNotificationSubscription('default', definition, registrar,
-                Mock(BeanContext), Mock(Executor), Mock(TaskScheduler), new OracleChangeNotificationTaskTracker())
+                Mock(BeanContext), Mock(Executor), Mock(TaskScheduler), new OracleChangeNotificationTaskTracker(),
+                new OracleRegistrationRecoveryConfiguration())
         connection.unwrap(OracleConnection) >> oracleConnection
         oracleConnection.properties >> connectionProperties
         operations.execute(_ as ConnectionCallback) >> { ConnectionCallback<?> callback -> callback.call(connection) }
@@ -182,7 +183,8 @@ class OracleChangeNotificationRegistrarSpec extends Specification {
         def definition = new OracleChangeListenerDefinition(null, method, null, 'SELECT * FROM BOOK', null, requested)
         def registrar = registrar(operations)
         def subscription = new OracleChangeNotificationSubscription('default', definition, registrar,
-                Mock(BeanContext), Mock(Executor), Mock(TaskScheduler), new OracleChangeNotificationTaskTracker())
+                Mock(BeanContext), Mock(Executor), Mock(TaskScheduler), new OracleChangeNotificationTaskTracker(),
+                new OracleRegistrationRecoveryConfiguration())
         connection.unwrap(OracleConnection) >> oracleConnection
         oracleConnection.properties >> new Properties()
         registration.getRegId() >> 22L

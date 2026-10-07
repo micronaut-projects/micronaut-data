@@ -279,6 +279,9 @@ remains lazy: Oracle Database removes a registration when it generates a notific
 client. A registration whose client remains disconnected will eventually be removed, but there is no fixed cleanup
 deadline. This automatic cleanup does not apply to registrations created with `NTF_QOS_RELIABLE` enabled.
 
+Reliable registrations without a configured timeout may remain in Oracle Database if application cleanup cannot
+complete. An administrator must explicitly unregister abandoned reliable registrations.
+
 Micronaut Data does not reuse or remove registrations left by a previous application instance during startup,
 because it cannot safely distinguish an abandoned registration from one owned by another healthy instance using
 the same Oracle Database user and datasource.
