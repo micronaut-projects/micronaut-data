@@ -159,23 +159,28 @@ public class R2dbcSchemaGenerator {
             return generateBatch(connection, schemaGenerate, entities, builder, createStatements, createTablesFlow.then());
         }
         return switch (schemaGenerate) {
-            case CREATE_DROP -> {
-                List<String> dropStatements = Arrays.stream(entities).flatMap(entity -> Arrays.stream(builder.buildDropTableStatements(entity)))
-                        .toList();
-                yield Flux.fromIterable(dropStatements)
-                        .concatMap(sql -> {
-                            if (DataSettings.QUERY_LOG.isDebugEnabled()) {
-                                DataSettings.QUERY_LOG.debug("Dropping Table: \n{}", sql);
-                            }
-                            return execute(connection, sql)
-                                    .onErrorResume((throwable -> Mono.empty()));
-                        })
-                        .thenMany(createTablesFlow)
-                        .then();
-            }
+            case CREATE_DROP -> dropTablesOneByOne(connection, entities, builder)
+                    .thenMany(createTablesFlow)
+                    .then();
             default -> createTablesFlow
                     .then();
         };
+    }
+
+    private Mono<Void> dropTablesOneByOne(Connection connection,
+                                          PersistentEntity[] entities,
+                                          SqlQueryBuilder builder) {
+        List<String> dropStatements = Arrays.stream(entities).flatMap(entity -> Arrays.stream(builder.buildDropTableStatements(entity)))
+                .toList();
+        return Flux.fromIterable(dropStatements)
+                .concatMap(sql -> {
+                    if (DataSettings.QUERY_LOG.isDebugEnabled()) {
+                        DataSettings.QUERY_LOG.debug("Dropping Table: \n{}", sql);
+                    }
+                    return execute(connection, sql)
+                            .onErrorResume(throwable -> Mono.empty());
+                })
+                .then();
     }
 
     private Mono<Void> generateBatch(Connection connection,
@@ -203,19 +208,9 @@ public class R2dbcSchemaGenerator {
             return createTablesOneByOne;
         });
         return switch (schemaGenerate) {
-            case CREATE_DROP -> Mono.defer(() -> {
-                    String sql = builder.buildBatchDropTableStatement(entities);
-                    if (DataSettings.QUERY_LOG.isDebugEnabled()) {
-                        DataSettings.QUERY_LOG.debug("Dropping Tables: \n{}", sql);
-                    }
-                    return execute(connection, sql);
-                })
-                .onErrorResume(throwable -> {
-                    if (DataSettings.QUERY_LOG.isTraceEnabled()) {
-                        DataSettings.QUERY_LOG.trace("Drop Unsuccessful: {}", throwable.getMessage());
-                    }
-                    return Mono.empty();
-                })
+            // The tables are dropped one by one, ignoring the failures: in a batch, a table that doesn't exist yet
+            // would prevent the next tables from being dropped, and the creation would keep their old data
+            case CREATE_DROP -> dropTablesOneByOne(connection, entities, builder)
                 .then(createTables);
             case CREATE -> createTables;
             default -> Mono.empty();

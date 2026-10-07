@@ -29,6 +29,7 @@ import io.micronaut.data.runtime.config.SchemaGenerate
 import io.r2dbc.spi.Connection
 import io.r2dbc.spi.ConnectionFactory
 import jakarta.inject.Singleton
+import reactor.core.publisher.Flux
 import reactor.core.publisher.Mono
 import spock.lang.Specification
 
@@ -104,12 +105,45 @@ class H2SchemaGeneratorSpec extends Specification {
             def context = ApplicationContext.run(config + ['r2dbc.datasources.default.schema-generate': SchemaGenerate.CREATE_DROP.name()])
             def dropStatements = context.getBean(StatementRecorder).statements.findAll { it.contains("DROP TABLE") }
 
-        then: "every table is dropped by the batch and created again"
-            dropStatements.size() == 1
-            dropStatements[0].contains("schema_gen_author")
-            dropStatements[0].contains("schema_gen_book")
-            dropStatements[0].readLines().every { it.startsWith("DROP TABLE") && it.endsWith(";") }
+        then: "every table is dropped and created again"
+            dropStatements.size() == 2
+            dropStatements.any { it.contains("schema_gen_author") }
+            dropStatements.any { it.contains("schema_gen_book") }
             context.getBean(SchemaGenAuthorRepository).count().block() == 0
+
+        cleanup:
+            context?.close()
+    }
+
+    void "batch CREATE_DROP drops the existing tables when another table doesn't exist"() {
+        given: "a database with the data of both entities"
+            def config = [
+                    'spec.name'                                : 'H2SchemaGeneratorSpec',
+                    'r2dbc.datasources.default.url'            : "r2dbc:h2:mem:///schemagenmissing;DB_CLOSE_DELAY=-1",
+                    'r2dbc.datasources.default.username'       : '',
+                    'r2dbc.datasources.default.password'       : '',
+                    'r2dbc.datasources.default.dialect'        : 'h2',
+                    'r2dbc.datasources.default.batch-generate' : true,
+                    'r2dbc.datasources.default.packages'       : getClass().package.name
+            ]
+            def firstContext = ApplicationContext.run(config + ['r2dbc.datasources.default.schema-generate': SchemaGenerate.CREATE.name()])
+            firstContext.getBean(SchemaGenAuthorRepository).save(new SchemaGenAuthor(name: "Stephen King")).block()
+            firstContext.getBean(SchemaGenBookRepository).save(new SchemaGenBook(title: "The Stand")).block()
+
+        and: "the table that is dropped first doesn't exist, as for an entity added since the last run"
+            def createStatement = firstContext.getBean(StatementRecorder).statements.find { it.contains("CREATE TABLE") }
+            def firstTable = (createStatement =~ /CREATE TABLE (\S*schema_gen_(?:author|book)\S*)/)[0][1]
+            Mono.usingWhen(Mono.from(firstContext.getBean(ConnectionFactory).create()),
+                    { Connection connection -> Flux.from(connection.createStatement("DROP TABLE " + firstTable).execute()).flatMap { it.getRowsUpdated() }.then() },
+                    { Connection connection -> connection.close() }).block()
+            firstContext.close()
+
+        when: "the schema is generated again"
+            def context = ApplicationContext.run(config + ['r2dbc.datasources.default.schema-generate': SchemaGenerate.CREATE_DROP.name()])
+
+        then: "the existing table is dropped too, so no previous data is kept"
+            context.getBean(SchemaGenAuthorRepository).count().block() == 0
+            context.getBean(SchemaGenBookRepository).count().block() == 0
 
         cleanup:
             context?.close()

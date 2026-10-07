@@ -113,9 +113,10 @@ public class DataR2dbcConfiguration implements Named {
     }
 
     /**
-     * Whether to generate the tables with a single statement containing all the DDL statements. It requires a
+     * Whether to create the tables with a single statement containing all the DDL statements. It requires a
      * driver that executes several statements in one string, such as H2 or PostgreSQL, and is ignored for Oracle.
      * When the batch fails, for example because a table already exists, the tables are created one by one.
+     * With {@link SchemaGenerate#CREATE_DROP}, the tables are still dropped one by one.
      *
      * @param batchGenerate Whether to generate tables in batch.
      */
