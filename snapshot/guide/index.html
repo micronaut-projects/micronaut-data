@@ -15848,7 +15848,16 @@ If an entity has at least one non-reservable updatable property, generated <code
 </div>
 <div class="paragraph">
 <p>Each reservation method identifies the row with exactly one <code>@Id</code> parameter whose type matches the entity identity. For a composite primary key, use the entity&#8217;s <code>@EmbeddedId</code> value object as that parameter; Micronaut Data expands it into all primary-key columns.
-Each operation target must be a numeric <a href="../api/io/micronaut/data/annotation/Reservable.html">@Reservable</a> scalar property. The delta parameters must have the same names as their reservable properties, and no additional non-ID parameters are allowed. Embedded scalar properties use the flattened property path in the method name and parameter name, for example <code>reserveDecrementLimitsAvailableBalance(@Id Long id, Long limitsAvailableBalance)</code>.
+Each operation target must be a numeric <a href="../api/io/micronaut/data/annotation/Reservable.html">@Reservable</a> scalar property, and each operation requires exactly one numeric delta parameter; no additional non-ID parameters are allowed.
+Like the values of other update methods, a delta parameter is matched to its operation by name, not by position: the parameter must be named after the reservable property, or annotated with <code>@Parameter</code> with the property name. Use <code>@Parameter</code> to give a delta parameter a different name, for example to make it explicit that it is a delta and not a new value:</p>
+</div>
+<div class="listingblock">
+<div class="content">
+<pre class="highlightjs highlight"><code class="language-java hljs" data-lang="java">long reserveIncrementAmountAndDecrementBalance(@Id Long id, @Parameter("amount") Long amountIncrement, @Parameter("balance") Long balanceDecrement);</code></pre>
+</div>
+</div>
+<div class="paragraph">
+<p>Embedded scalar properties use the flattened property path in the method name and parameter name, for example <code>reserveDecrementLimitsAvailableBalance(@Id Long id, Long limitsAvailableBalance)</code>.
 Reservation methods cannot target relationship paths. A scalar reservable property inside an embedded component is supported, but <code>reserveIncrementAccountBalance(&#8230;&#8203;)</code> is rejected when <code>account</code> is a relationship.
 Generated reservation updates cannot mix reservable and non-reservable assignments and do not support Oracle DML <code>RETURNING</code>.
 Criteria API updates of reservable properties are not supported. Use derived reservation methods instead; arbitrary criteria expressions are not validated against Oracle lock-free reservation restrictions.</p>
