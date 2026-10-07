@@ -94,6 +94,69 @@ interface AccountRepository {
         getQuery(repository.getRequiredMethod("removeByName", String)) == 'DELETE  FROM `account`  WHERE (`name` = ? AND `tenancy` = ?)'
     }
 
+    void "test Jakarta Data @Query tenant id with disjunctions, aliases and @WithoutTenantId updates"() {
+        given:
+        def repository = buildRepository('test.AccountRepository', """
+import io.micronaut.data.annotation.WithoutTenantId;
+import io.micronaut.data.jdbc.annotation.JdbcRepository;
+import io.micronaut.data.model.query.builder.sql.Dialect;
+import io.micronaut.data.tck.entities.Account;
+import jakarta.data.repository.Query;
+import jakarta.data.repository.Repository;
+
+@JdbcRepository(dialect = Dialect.MYSQL)
+@Repository
+interface AccountRepository {
+
+    @Query("WHERE name = :a OR name = :b")
+    List<Account> byEitherName(String a, String b);
+
+    @Query("FROM Account a WHERE a.name = :name")
+    List<Account> byNameAliased(String name);
+
+    @Query("UPDATE Account SET name = :newName WHERE name = :a OR name = :b")
+    long renameEither(String a, String b, String newName);
+
+    @Query("DELETE FROM Account WHERE name = :a OR name = :b")
+    long removeEither(String a, String b);
+
+    @WithoutTenantId
+    @Query("UPDATE Account SET name = :newName WHERE name = :name")
+    long renameAllTenants(String name, String newName);
+
+    @WithoutTenantId
+    @Query("DELETE FROM Account WHERE name = :name")
+    long removeByNameAllTenants(String name);
+}
+""")
+
+        when:
+        def byEitherName = repository.getRequiredMethod("byEitherName", String, String)
+        def byNameAliased = repository.getRequiredMethod("byNameAliased", String)
+        def renameEither = repository.getRequiredMethod("renameEither", String, String, String)
+        def removeEither = repository.getRequiredMethod("removeEither", String, String)
+        def renameAllTenants = repository.getRequiredMethod("renameAllTenants", String, String)
+        def removeByNameAllTenants = repository.getRequiredMethod("removeByNameAllTenants", String)
+
+        then: "a disjunction is bracketed before the tenant id is added"
+        getQuery(byEitherName) == 'SELECT account_.`id`,account_.`name`,account_.`tenancy` FROM `account` account_ WHERE ((account_.`name` = ? OR account_.`name` = ?) AND account_.`tenancy` = ?)'
+        getParameterPropertyPaths(byEitherName) == ["name", "name", "tenancy"] as String[]
+        getQuery(renameEither) == 'UPDATE `account` SET `name`=? WHERE ((`name` = ? OR `name` = ?) AND `tenancy` = ?)'
+        getParameterPropertyPaths(renameEither) == ["name", "name", "name", "tenancy"] as String[]
+        getQuery(removeEither) == 'DELETE  FROM `account`  WHERE ((`name` = ? OR `name` = ?) AND `tenancy` = ?)'
+        getParameterPropertyPaths(removeEither) == ["name", "name", "tenancy"] as String[]
+
+        and: "an aliased query applies the tenant id to the alias of the queried entity"
+        getQuery(byNameAliased) == 'SELECT account_.`id`,account_.`name`,account_.`tenancy` FROM `account` account_ WHERE (account_.`name` = ? AND account_.`tenancy` = ?)'
+        getParameterPropertyPaths(byNameAliased) == ["name", "tenancy"] as String[]
+
+        and: "@WithoutTenantId updates and deletes are not filtered by the tenant id"
+        getQuery(renameAllTenants) == 'UPDATE `account` SET `name`=? WHERE (`name` = ?)'
+        getParameterPropertyPaths(renameAllTenants) == ["name", "name"] as String[]
+        getQuery(removeByNameAllTenants) == 'DELETE  FROM `account`  WHERE (`name` = ?)'
+        getParameterPropertyPaths(removeByNameAllTenants) == ["name"] as String[]
+    }
+
     void "test Jakarta Data @Query with Sort and Limit registers the same parameter roles as a derived finder"() {
         given:
         def repository = buildRepository('test.BookRepository', """
