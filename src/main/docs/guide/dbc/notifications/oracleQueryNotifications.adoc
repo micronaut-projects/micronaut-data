@@ -187,7 +187,26 @@ If the JDBC driver reports that it cannot restore notification delivery, Microna
 registration. After successful recovery, the listener receives an `INVALIDATE` event so it can refresh potentially
 outdated data. For other registration configurations, recovery starts when a database shutdown notification is received.
 
-If the initial replacement attempt fails, Micronaut Data retries up to three times, ten seconds apart.
+If the initial replacement attempt fails, Micronaut Data retries up to three times, ten seconds apart by default.
+Configure registration recovery globally for all Oracle notification listeners and datasources:
+
+[configuration]
+----
+micronaut:
+  data:
+    jdbc:
+      notifications:
+        oracle:
+          registration-recovery:
+            max-retries: 3
+            retry-delay: 10s
+----
+
+`max-retries` must be non-negative and counts retries after the initial recovery attempt. Set it to `0` to make only
+the initial attempt. `retry-delay` must be positive and accepts duration values such as `500ms`, `10s`, or `1m`.
+These settings control creating a replacement registration, not listener-method retries through `@Retryable`
+or the JDBC driver's notification-connection retries.
+
 If recovery cannot complete, notifications remain unavailable until the application is restarted.
 Changes can be missed while a non-reliable registration is unavailable. Micronaut Data cannot detect a silently lost
 notification connection unless the JDBC driver reports the failure.

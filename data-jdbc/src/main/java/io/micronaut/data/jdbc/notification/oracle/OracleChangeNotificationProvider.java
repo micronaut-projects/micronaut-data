@@ -69,15 +69,18 @@ final class OracleChangeNotificationProvider implements ChangeNotificationProvid
     private final BeanContext beanContext;
     private final Executor blockingExecutor;
     private final TaskScheduler taskScheduler;
+    private final OracleRegistrationRecoveryConfiguration recoveryConfiguration;
     private final Map<String, OracleChangeNotificationSubscriptionManager> subscriptionManagers = new ConcurrentHashMap<>();
     private @Nullable CompletableFuture<Void> shutdownStage;
 
     OracleChangeNotificationProvider(BeanContext beanContext,
                                      @Named(TaskExecutors.BLOCKING) Executor blockingExecutor,
-                                     @Named(TaskExecutors.SCHEDULED) TaskScheduler taskScheduler) {
+                                     @Named(TaskExecutors.SCHEDULED) TaskScheduler taskScheduler,
+                                     OracleRegistrationRecoveryConfiguration recoveryConfiguration) {
         this.beanContext = beanContext;
         this.blockingExecutor = blockingExecutor;
         this.taskScheduler = taskScheduler;
+        this.recoveryConfiguration = recoveryConfiguration;
     }
 
     /**
@@ -110,7 +113,7 @@ final class OracleChangeNotificationProvider implements ChangeNotificationProvid
             .map(definitionFactory::create)
             .toList();
         OracleChangeNotificationSubscriptionManager subscriptionManager = new OracleChangeNotificationSubscriptionManager(
-            dataSourceName, operations, beanContext, blockingExecutor, taskScheduler, listenerDefinitions);
+            dataSourceName, operations, beanContext, blockingExecutor, taskScheduler, listenerDefinitions, recoveryConfiguration);
         if (subscriptionManagers.putIfAbsent(dataSourceName, subscriptionManager) != null) {
             throw new IllegalStateException("DCN subscriptions for datasource [" + dataSourceName
                 + "] have already been discovered; additional registrations are not supported");

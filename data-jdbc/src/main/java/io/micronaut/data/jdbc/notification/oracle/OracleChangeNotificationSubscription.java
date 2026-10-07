@@ -53,6 +53,8 @@ final class OracleChangeNotificationSubscription {
     private final OracleChangeNotificationDispatcher dispatcher;
     private final Executor blockingExecutor;
     private final TaskScheduler taskScheduler;
+    private final int maxRetries;
+    private final Duration retryDelay;
 
     private @Nullable DatabaseChangeRegistration registration;
     private @Nullable ScheduledFuture<?> recoveryRetryTask;
@@ -69,13 +71,16 @@ final class OracleChangeNotificationSubscription {
                                          BeanContext beanContext,
                                          Executor blockingExecutor,
                                          TaskScheduler taskScheduler,
-                                         OracleChangeNotificationTaskTracker taskTracker) {
+                                         OracleChangeNotificationTaskTracker taskTracker,
+                                         OracleRegistrationRecoveryConfiguration recoveryConfiguration) {
         this.dataSourceName = dataSourceName;
         this.definition = definition;
         this.methodDescription = definition.method().getDescription(true);
         this.registrar = registrar;
         this.blockingExecutor = blockingExecutor;
         this.taskScheduler = taskScheduler;
+        this.maxRetries = recoveryConfiguration.getMaxRetries();
+        this.retryDelay = recoveryConfiguration.getRetryDelay();
         this.dispatcher = new OracleChangeNotificationDispatcher(
             dataSourceName, definition, beanContext, blockingExecutor, taskTracker,
             this::handleRegistrationPurged, this::handleRegistrationDeregistered,
@@ -135,7 +140,7 @@ final class OracleChangeNotificationSubscription {
                 registrationId, dataSourceName, methodDescription, failure);
         }
         unregisterFailedRegistration();
-        submitRecoveryTask(0, 3, 10, registrationId);
+        submitRecoveryTask(0, registrationId);
     }
 
     /**
@@ -182,15 +187,15 @@ final class OracleChangeNotificationSubscription {
         unregisterRegistration();
     }
 
-    private void submitRecoveryTask(int retryCount, int maxRetries, long retryDelay, long failedRegId) {
+    private void submitRecoveryTask(int retryCount, long failedRegId) {
         try {
-            blockingExecutor.execute(() -> attemptRegistrationRecovery(retryCount, maxRetries, retryDelay, failedRegId));
+            blockingExecutor.execute(() -> attemptRegistrationRecovery(retryCount, failedRegId));
         } catch (RejectedExecutionException e) {
-            rescheduleRecoveryTask(retryCount, maxRetries, retryDelay, failedRegId, e);
+            rescheduleRecoveryTask(retryCount, failedRegId, e);
         }
     }
 
-    private synchronized void attemptRegistrationRecovery(int retryCount, int maxRetries, long retryDelay, long failedRegId) {
+    private synchronized void attemptRegistrationRecovery(int retryCount, long failedRegId) {
         if (closed) {
             return;
         }
@@ -200,15 +205,15 @@ final class OracleChangeNotificationSubscription {
             registration = registrar.createRegistration(this, dispatcher);
             dispatcher.dispatchInvalidation(registration.getRegId(), "after DCN registration recovery");
         } catch (Exception e) {
-            rescheduleRecoveryTask(retryCount, maxRetries, retryDelay, failedRegId, e);
+            rescheduleRecoveryTask(retryCount, failedRegId, e);
         }
     }
 
-    private void rescheduleRecoveryTask(int retryCount, int maxRetries, long retryDelay, long failedRegId, Exception e) {
+    private void rescheduleRecoveryTask(int retryCount, long failedRegId, Exception e) {
         if (retryCount < maxRetries) {
             LOG.warn("DCN receiver recovery attempt failed for registration [{}], datasource [{}], and listener method [{}]; will retry",
                 failedRegId, dataSourceName, methodDescription, e);
-            scheduleRecoveryRetry(retryCount + 1, maxRetries, retryDelay, failedRegId);
+            scheduleRecoveryRetry(retryCount + 1, failedRegId);
         } else {
             LOG.error("DCN receiver recovery exhausted [{}] retries for registration [{}], datasource [{}], "
                     + "and listener method [{}]; the listener remains unavailable",
@@ -216,15 +221,15 @@ final class OracleChangeNotificationSubscription {
         }
     }
 
-    private synchronized void scheduleRecoveryRetry(int retryCount, int maxRetries, long retryDelay, long failedRegId) {
+    private synchronized void scheduleRecoveryRetry(int retryCount, long failedRegId) {
         if (closed) {
             return;
         }
         try {
             recoveryRetryTask = taskScheduler.schedule(
-                Duration.ofSeconds(retryDelay),
-                () -> submitRecoveryTask(retryCount, maxRetries, retryDelay, failedRegId));
-            LOG.warn("Scheduled DCN receiver recovery retry in [{}] seconds for datasource [{}], listener method [{}], and registration [{}]",
+                retryDelay,
+                () -> submitRecoveryTask(retryCount, failedRegId));
+            LOG.warn("Scheduled DCN receiver recovery retry after [{}] for datasource [{}], listener method [{}], and registration [{}]",
                 retryDelay, dataSourceName, methodDescription, failedRegId);
         } catch (RuntimeException schedulingFailure) {
             LOG.error("Unable to schedule DCN receiver recovery for registration [{}], datasource [{}], "

@@ -215,34 +215,45 @@ class OracleChangeNotificationSubscriptionSpec extends Specification {
         1 * scheduledFuture.cancel(false)
     }
 
-    void "does not schedule further retries after the configured retry limit"() {
+    void "does not schedule further retries after the configured retry limit of #maxRetries"() {
         given:
         def original = Mock(DatabaseChangeRegistration)
-        def failedReplacements = (1..4).collect { Mock(DatabaseChangeRegistration) }
+        def failedReplacements = (0..maxRetries).collect { Mock(DatabaseChangeRegistration) }
         def fixture = registrarFixture([original, *failedReplacements], { int index ->
             if (index > 1) {
                 throw new SQLException('Unable to associate replacement query')
             }
         })
         List<Runnable> scheduledTasks = []
-        def subscription = subscription(fixture.registrar, scheduler(scheduledTasks))
+        def configuration = new OracleRegistrationRecoveryConfiguration(maxRetries: maxRetries, retryDelay: Duration.ofMillis(250))
+        def scheduler = Mock(TaskScheduler)
+        def subscription = subscription(fixture.registrar, scheduler, new OracleChangeNotificationTaskTracker(),
+            { Runnable command -> command.run() } as Executor, { ChangeEvent<?> ignored -> }, configuration)
 
         when:
         subscription.start()
         fixture.failureListeners[0].onFailure(new SQLException('Receiver failed'))
-        scheduledTasks[0].run()
-        scheduledTasks[1].run()
-        scheduledTasks[2].run()
+        for (int i = 0; i < maxRetries; i++) {
+            scheduledTasks[i].run()
+        }
 
         then:
-        fixture.registrationIndex.get() == 5
-        scheduledTasks.size() == 3
+        fixture.registrationIndex.get() == maxRetries + 2
+        scheduledTasks.size() == maxRetries
+        maxRetries * scheduler.schedule(Duration.ofMillis(250), _ as Runnable) >> { Duration ignored, Runnable task ->
+            scheduledTasks.add(task)
+            Mock(ScheduledFuture)
+        }
+        0 * scheduler.schedule(_, _)
 
         when:
         subscription.stop()
 
         then:
         noExceptionThrown()
+
+        where:
+        maxRetries << [0, 1, 3]
     }
 
     void "stops retrying when scheduling a recovery retry fails"() {
@@ -331,7 +342,8 @@ class OracleChangeNotificationSubscriptionSpec extends Specification {
                                                               TaskScheduler scheduler,
                                                               OracleChangeNotificationTaskTracker tracker = new OracleChangeNotificationTaskTracker(),
                                                               Executor executor = { Runnable command -> command.run() } as Executor,
-                                                              Closure<?> listenerInvocation = { ChangeEvent<?> ignored -> }) {
+                                                              Closure<?> listenerInvocation = { ChangeEvent<?> ignored -> },
+                                                              OracleRegistrationRecoveryConfiguration recoveryConfiguration = new OracleRegistrationRecoveryConfiguration()) {
         def method = Mock(ExecutableMethod)
         method.getDescription(true) >> 'void onChange(ChangeEvent<Book>)'
         method.invoke(_, _) >> { Object[] arguments ->
@@ -346,7 +358,7 @@ class OracleChangeNotificationSubscriptionSpec extends Specification {
             'SELECT * FROM BOOK', null, new Properties())
         def beanContext = Mock(BeanContext)
         beanContext.getBean(_ as BeanDefinition) >> new Object()
-        new OracleChangeNotificationSubscription('inventory', definition, registrar, beanContext, executor, scheduler, tracker)
+        new OracleChangeNotificationSubscription('inventory', definition, registrar, beanContext, executor, scheduler, tracker, recoveryConfiguration)
     }
 
     private static Object findChangeEvent(Object value) {

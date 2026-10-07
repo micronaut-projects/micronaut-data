@@ -60,12 +60,13 @@ final class OracleChangeNotificationSubscriptionManager {
                                                 BeanContext beanContext,
                                                 Executor blockingExecutor,
                                                 TaskScheduler taskScheduler,
-                                                List<OracleChangeListenerDefinition> listenerDefinitions) {
+                                                List<OracleChangeListenerDefinition> listenerDefinitions,
+                                                OracleRegistrationRecoveryConfiguration recoveryConfiguration) {
         this.dataSourceName = dataSourceName;
         OracleChangeNotificationRegistrar registrar = new OracleChangeNotificationRegistrar(dataSourceName, operations);
         this.subscriptions = listenerDefinitions.stream()
             .map(definition -> new OracleChangeNotificationSubscription(
-                dataSourceName, definition, registrar, beanContext, blockingExecutor, taskScheduler, taskTracker))
+                dataSourceName, definition, registrar, beanContext, blockingExecutor, taskScheduler, taskTracker, recoveryConfiguration))
             .toList();
     }
 

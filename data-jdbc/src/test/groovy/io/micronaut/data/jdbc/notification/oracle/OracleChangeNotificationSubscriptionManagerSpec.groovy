@@ -51,7 +51,7 @@ class OracleChangeNotificationSubscriptionManagerSpec extends Specification {
         Executor executor = { Runnable command -> command.run() } as Executor
         def listenerDefinitions = [definition("SELECT * FROM BOOK", method)]
         def manager = new OracleChangeNotificationSubscriptionManager("inventory", operations, Mock(BeanContext), executor,
-            scheduler(), listenerDefinitions)
+            scheduler(), listenerDefinitions, new OracleRegistrationRecoveryConfiguration())
         listenerDefinitions.clear()
         listenerDefinitions.add(definition("SELECT * FROM LATE_BOOK", method))
 
@@ -87,7 +87,7 @@ class OracleChangeNotificationSubscriptionManagerSpec extends Specification {
         secondMethod.getDescription(true) >> "void secondListener(ChangeEvent<Book>)"
         Executor executor = { Runnable command -> command.run() } as Executor
         def manager = new OracleChangeNotificationSubscriptionManager("inventory", operations, Mock(BeanContext), executor,
-            scheduler(), [definition("SELECT * FROM FIRST_BOOK", firstMethod), definition("SELECT * FROM SECOND_BOOK", secondMethod)])
+            scheduler(), [definition("SELECT * FROM FIRST_BOOK", firstMethod), definition("SELECT * FROM SECOND_BOOK", secondMethod)], new OracleRegistrationRecoveryConfiguration())
 
         operations.execute(_ as ConnectionCallback) >> { ConnectionCallback<?> callback -> callback.call(connection) }
         connection.unwrap(OracleConnection) >> oracleConnection
@@ -123,7 +123,7 @@ class OracleChangeNotificationSubscriptionManagerSpec extends Specification {
         method.getDescription(true) >> "void onChange(ChangeEvent<Book>)"
         Executor executor = { Runnable command -> command.run() } as Executor
         def manager = new OracleChangeNotificationSubscriptionManager("inventory", operations, Mock(BeanContext), executor,
-            scheduler(), [definition("SELECT * FROM BOOK", method)])
+            scheduler(), [definition("SELECT * FROM BOOK", method)], new OracleRegistrationRecoveryConfiguration())
 
         operations.execute(_ as ConnectionCallback) >> { ConnectionCallback<?> callback -> callback.call(connection) }
         connection.unwrap(OracleConnection) >> oracleConnection
@@ -147,7 +147,7 @@ class OracleChangeNotificationSubscriptionManagerSpec extends Specification {
         given:
         def manager = new OracleChangeNotificationSubscriptionManager(
             "inventory", Mock(JdbcOperations), Mock(BeanContext),
-            { Runnable command -> command.run() } as Executor, scheduler(), [])
+            { Runnable command -> command.run() } as Executor, scheduler(), [], new OracleRegistrationRecoveryConfiguration())
 
         when:
         manager.start()
@@ -170,7 +170,7 @@ class OracleChangeNotificationSubscriptionManagerSpec extends Specification {
         method.getDescription(true) >> "void onChange(ChangeEvent<Book>)"
         Executor executor = { Runnable command -> command.run() } as Executor
         def manager = new OracleChangeNotificationSubscriptionManager("inventory", operations, Mock(BeanContext), executor,
-            scheduler(), [definition("SELECT * FROM BOOK", method)])
+            scheduler(), [definition("SELECT * FROM BOOK", method)], new OracleRegistrationRecoveryConfiguration())
         DatabaseChangeListener listener
 
         operations.execute(_ as ConnectionCallback) >> { ConnectionCallback<?> callback ->
@@ -225,7 +225,7 @@ class OracleChangeNotificationSubscriptionManagerSpec extends Specification {
         secondMethod.getDescription(true) >> "void failingListener(ChangeEvent<Book>)"
         Executor executor = { Runnable command -> command.run() } as Executor
         def manager = new OracleChangeNotificationSubscriptionManager("inventory", operations, Mock(BeanContext), executor,
-            scheduler(), [definition("SELECT * FROM BOOK", firstMethod), definition("INVALID SQL", secondMethod)])
+            scheduler(), [definition("SELECT * FROM BOOK", firstMethod), definition("INVALID SQL", secondMethod)], new OracleRegistrationRecoveryConfiguration())
 
         operations.execute(_ as ConnectionCallback) >> { ConnectionCallback<?> callback ->
             try {

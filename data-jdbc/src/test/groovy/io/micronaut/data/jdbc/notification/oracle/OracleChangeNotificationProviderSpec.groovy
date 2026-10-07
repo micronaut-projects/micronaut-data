@@ -151,6 +151,6 @@ class OracleChangeNotificationProviderSpec extends Specification {
     }
 
     private OracleChangeNotificationProvider provider() {
-        new OracleChangeNotificationProvider(Mock(BeanContext), Mock(Executor), Mock(TaskScheduler))
+        new OracleChangeNotificationProvider(Mock(BeanContext), Mock(Executor), Mock(TaskScheduler), new OracleRegistrationRecoveryConfiguration())
     }
 }
