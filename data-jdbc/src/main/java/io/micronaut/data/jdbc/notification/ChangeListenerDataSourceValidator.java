@@ -16,6 +16,7 @@
 package io.micronaut.data.jdbc.notification;
 
 import io.micronaut.context.BeanContext;
+import io.micronaut.context.BeanProvider;
 import io.micronaut.context.annotation.Context;
 import io.micronaut.context.event.ApplicationEventListener;
 import io.micronaut.context.event.StartupEvent;
@@ -36,7 +37,8 @@ import java.util.concurrent.CopyOnWriteArrayList;
  *
  * <p>This processor is independent of datasource-specific listener processors and notification
  * providers, so it can detect methods that none of those processors would otherwise claim. It
- * validates at startup before datasource-specific processors begin registration.</p>
+ * validates at startup before datasource-specific processors begin registration. Notification
+ * providers are resolved only when at least one listener has been discovered.</p>
  */
 @Context
 @Order(Ordered.HIGHEST_PRECEDENCE)
@@ -44,10 +46,10 @@ final class ChangeListenerDataSourceValidator implements ExecutableMethodProcess
     ApplicationEventListener<StartupEvent> {
 
     private final BeanContext beanContext;
-    private final ChangeNotificationProviderResolver providerResolver;
+    private final BeanProvider<ChangeNotificationProviderResolver> providerResolver;
     private final List<ListenerDataSource> listeners = new CopyOnWriteArrayList<>();
 
-    ChangeListenerDataSourceValidator(BeanContext beanContext, ChangeNotificationProviderResolver providerResolver) {
+    ChangeListenerDataSourceValidator(BeanContext beanContext, BeanProvider<ChangeNotificationProviderResolver> providerResolver) {
         this.beanContext = beanContext;
         this.providerResolver = providerResolver;
     }
@@ -81,7 +83,7 @@ final class ChangeListenerDataSourceValidator implements ExecutableMethodProcess
                     + "] selects datasource [" + listener.dataSourceName() + "] but no matching DataSource bean is configured");
             }
         }
-        if (!providerResolver.hasProviders()) {
+        if (!providerResolver.get().hasProviders()) {
             ListenerDataSource listener = listeners.get(0);
             throw new IllegalStateException("@ChangeListener method [" + listener.method().getDescription(true)
                 + "] cannot be registered because no change notification provider is available");

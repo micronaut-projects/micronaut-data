@@ -15,6 +15,7 @@
  */
 package io.micronaut.data.jdbc.notification
 
+import io.micronaut.context.BeanProvider
 import io.micronaut.context.event.StartupEvent
 import io.micronaut.core.type.Argument
 import io.micronaut.data.jdbc.annotation.ChangeListener
@@ -28,6 +29,20 @@ import java.sql.Connection
 
 class ChangeListenerMethodProcessorSpec extends Specification {
 
+    void "does not resolve providers or acquire a connection without listeners"() {
+        given:
+        def operations = Mock(JdbcRepositoryOperations)
+        def resolver = Mock(BeanProvider)
+        def processor = new ChangeListenerMethodProcessor('default', operations, resolver)
+
+        when:
+        processor.onApplicationEvent(Mock(StartupEvent))
+
+        then:
+        0 * resolver._
+        0 * operations._
+    }
+
     void "registers listeners after provider resolution releases its connection"() {
         given:
         def operations = Mock(JdbcRepositoryOperations)
@@ -35,8 +50,9 @@ class ChangeListenerMethodProcessorSpec extends Specification {
         def connection = Mock(Connection)
         def beanDefinition = Mock(BeanDefinition)
         def method = Mock(ExecutableMethod)
-        def processor = new ChangeListenerMethodProcessor('default', operations,
-            new ChangeNotificationProviderResolver([provider]))
+        def resolver = Mock(BeanProvider)
+        resolver.get() >> new ChangeNotificationProviderResolver([provider])
+        def processor = new ChangeListenerMethodProcessor('default', operations, resolver)
         boolean resolvingProvider = false
 
         method.stringValue(ChangeListener, 'dataSource') >> Optional.empty()

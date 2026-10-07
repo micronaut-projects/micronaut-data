@@ -15,6 +15,7 @@
  */
 package io.micronaut.data.jdbc.notification;
 
+import io.micronaut.context.BeanProvider;
 import io.micronaut.context.annotation.Context;
 import io.micronaut.context.annotation.EachBean;
 import io.micronaut.context.annotation.Parameter;
@@ -44,7 +45,8 @@ import java.util.concurrent.CopyOnWriteArrayList;
  *
  * <p>Registration is deferred to {@link StartupEvent}, after schema generation. The processor
  * then uses a connection from its datasource to select a notification provider. Registration
- * begins after that connection has been released.</p>
+ * begins after that connection has been released. Notification providers are not instantiated
+ * when no listeners select this datasource.</p>
  */
 @Context
 @EachBean(DataSource.class)
@@ -54,12 +56,12 @@ final class ChangeListenerMethodProcessor implements ExecutableMethodProcessor<C
 
     private final String dataSourceName;
     private final JdbcRepositoryOperations operations;
-    private final ChangeNotificationProviderResolver providerResolver;
+    private final BeanProvider<ChangeNotificationProviderResolver> providerResolver;
     private final List<ChangeListenerMethod> listenerMethods = new CopyOnWriteArrayList<>();
 
     ChangeListenerMethodProcessor(@Parameter String dataSourceName,
                                   @Parameter JdbcRepositoryOperations operations,
-                                  ChangeNotificationProviderResolver providerResolver) {
+                                  BeanProvider<ChangeNotificationProviderResolver> providerResolver) {
         this.dataSourceName = dataSourceName;
         this.operations = operations;
         this.providerResolver = providerResolver;
@@ -105,8 +107,9 @@ final class ChangeListenerMethodProcessor implements ExecutableMethodProcessor<C
         if (listenerMethods.isEmpty()) {
             return;
         }
+        ChangeNotificationProviderResolver resolver = providerResolver.get();
         ChangeNotificationProvider provider = operations.execute(connection -> {
-            ChangeNotificationProvider resolved = providerResolver.resolve(connection);
+            ChangeNotificationProvider resolved = resolver.resolve(connection);
             if (resolved == null) {
                 throw new IllegalStateException("@ChangeListener datasource [" + dataSourceName + "] has no change notification provider");
             }
