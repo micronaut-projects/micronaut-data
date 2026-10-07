@@ -39,6 +39,10 @@ As the restriction of a criteria delete or update, an empty conjunction (`criter
 
 Code that builds the restriction from a list of predicates that can be empty should check the list before calling `deleteAll` or `updateAll`.
 
+=== Jakarta Data queries filter by the tenant id
+
+Jakarta Data `@Query` methods (JDQL) on entities with a `@TenantId` property now apply the tenant discriminator filter, like derived finders: selects return, and updates and deletes modify, only the rows of the current tenant. Previously, they ignored the tenant and affected the rows of every tenant. Annotate a method with `@WithoutTenantId` to keep the previous behaviour.
+
 === Repositories whose lifecycle methods use different entities
 
 When a repository doesn't declare its root entity, for example because it doesn't extend `GenericRepository<E, ID>`, the methods that need one, such as `countById`, use the entity of the lifecycle methods (`@Insert`, `@Update`, `@Upsert`, `@Delete`). If those methods use different entities, such a method now fails to compile. Previously, it silently used the entity of the first lifecycle method, so the result depended on the declaration order. Declare the root entity, for example by extending `GenericRepository<E, ID>`.
