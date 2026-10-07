@@ -424,10 +424,8 @@ public final class DefaultJdbcRepositoryOperations extends AbstractSqlRepository
     }
 
     private <T, R> List<R> findAll(Connection connection, SqlPreparedQuery<T, R> preparedQuery, boolean applyPageable) {
-        if (preparedQuery.getDialect() == Dialect.ORACLE && (
-            preparedQuery.getOperationType() == StoredQuery.OperationType.INSERT_RETURNING ||
-            preparedQuery.getOperationType() == StoredQuery.OperationType.UPDATE_RETURNING ||
-            preparedQuery.getOperationType() == StoredQuery.OperationType.DELETE_RETURNING)) {
+        boolean returning = isReturningOperation(preparedQuery);
+        if (preparedQuery.getDialect() == Dialect.ORACLE && returning) {
             preparedQuery.prepare(null);
             try (CallableStatement cs = connection.prepareCall(preparedQuery.getQuery())) {
                 JdbcParameterBinder parameterBinder = new JdbcParameterBinder(connection, cs, preparedQuery);
@@ -474,8 +472,12 @@ public final class DefaultJdbcRepositoryOperations extends AbstractSqlRepository
             preparedQuery.bindParameters(new JdbcParameterBinder(connection, ps, preparedQuery));
             return findAll(preparedQuery, ps);
         } catch (SQLException e) {
-            throw sqlExceptionToDataAccessException(e, preparedQuery.getDialect(),
-                sqlException -> new DataAccessException("Error executing SQL Query: " + preparedQuery.getQuery() + " " + sqlException.getMessage(), sqlException));
+            if (returning) {
+                // A RETURNING query is a modification: classify its constraint violations like the entity operations
+                throw sqlExceptionToDataAccessException(e, preparedQuery.getDialect(),
+                    sqlException -> new DataAccessException("Error executing SQL Query: " + preparedQuery.getQuery() + " " + sqlException.getMessage(), sqlException));
+            }
+            throw new DataAccessException("Error executing SQL Query: " + preparedQuery.getQuery() + " " + e.getMessage(), e);
         } catch (Throwable e) {
             throw new DataAccessException("Error executing SQL Query: " + preparedQuery.getQuery() + " " + e.getMessage(), e);
         }
@@ -1185,6 +1187,13 @@ public final class DefaultJdbcRepositoryOperations extends AbstractSqlRepository
             return Objects.requireNonNull(columnNameResultSetReader.readDynamic(generatedKeysResultSet, identity.getPersistedName(), identity.getDataType()));
         }
         return Objects.requireNonNull(columnIndexResultSetReader.readDynamic(generatedKeysResultSet, 1, identity.getDataType()));
+    }
+
+    private static boolean isReturningOperation(SqlStoredQuery<?, ?> storedQuery) {
+        StoredQuery.OperationType operationType = storedQuery.getOperationType();
+        return operationType == StoredQuery.OperationType.INSERT_RETURNING
+            || operationType == StoredQuery.OperationType.UPDATE_RETURNING
+            || operationType == StoredQuery.OperationType.DELETE_RETURNING;
     }
 
     private boolean isUpsertOperation(SqlStoredQuery<?, ?> storedQuery) {

@@ -21,6 +21,7 @@ import io.micronaut.data.annotation.Index
 import io.micronaut.data.annotation.MappedEntity
 import io.micronaut.data.annotation.Query
 import io.micronaut.data.connection.jdbc.advice.DelegatingDataSource
+import io.micronaut.data.exceptions.DataAccessException
 import io.micronaut.data.exceptions.DataIntegrityViolationException
 import io.micronaut.data.exceptions.EntityExistsException
 import io.micronaut.data.jdbc.annotation.JdbcRepository
@@ -162,6 +163,20 @@ class PostgresReturningExceptionsSpec extends Specification implements PostgresT
             !(e instanceof EntityExistsException)
             e.cause instanceof SQLException
     }
+
+    void "a constraint violation of a select query is not classified"() {
+        given:
+            repository.insert(new ReturningItem(id: 1L, code: "A", name: "A"))
+
+        when: "a SELECT query fails with a duplicate key"
+            repository.findAllInsertedWithCte(1L, "B", "B")
+
+        then: "it is wrapped as before, only the RETURNING queries are classified"
+            def e = thrown(DataAccessException)
+            e.class == DataAccessException
+            e.message.startsWith("Error executing SQL Query: ")
+            e.cause instanceof SQLException
+    }
 }
 
 @MappedEntity("returning_item")
@@ -186,4 +201,7 @@ interface ReturningItemRepository extends CrudRepository<ReturningItem, Long> {
     String updateReturningCode(@Id Long id, String code)
 
     List<ReturningItem> deleteReturning(Long id)
+
+    @Query("WITH inserted AS (INSERT INTO returning_item (id, code, name) VALUES (:id, :code, :name) RETURNING *) SELECT * FROM inserted")
+    List<ReturningItem> findAllInsertedWithCte(Long id, String code, String name)
 }
