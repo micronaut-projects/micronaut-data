@@ -52,7 +52,9 @@ class OracleRegistrationRecoveryConfigurationSpec extends Specification {
 
     void "rejects invalid recovery setting #property=#value"() {
         given:
+        // Avoid resolving shutdown listeners that depend on the invalid configuration during cleanup.
         def context = ApplicationContext.builder().enableDefaultPropertySources(false)
+            .eventsEnabled(false)
             .properties([(OracleRegistrationRecoveryConfiguration.PREFIX + '.' + property): value]).build()
 
         when:
