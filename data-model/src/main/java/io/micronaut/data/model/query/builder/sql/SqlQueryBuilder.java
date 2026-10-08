@@ -1117,9 +1117,9 @@ public class SqlQueryBuilder extends AbstractSqlLikeQueryBuilder {
                     String definition = optSqlColumnMapping.get().getDefinition();
                     if (definition != null && definition.toLowerCase().contains("geometry")) {
                         Integer srid = indexMapping.srid();
-                        if (Objects.equals(SqlSchemaUtils.SRID_WGS_84, srid) || Objects.equals(SqlSchemaUtils.SRID_ETRS_89, srid)) {
+                        if (Objects.equals(Srid.WGS_84, srid) || Objects.equals(Srid.ETRS_89, srid)) {
                             indexBuilder.append(" USING GEOMETRY_GRID WITH (BOUNDING_BOX = (-180, -90, 180,  90))");
-                        } else if (Objects.equals(SqlSchemaUtils.SRID_WEB_MERCATOR, srid)) {
+                        } else if (Objects.equals(Srid.WEB_MERCATOR, srid)) {
                             indexBuilder.append(" USING GEOMETRY_GRID WITH (BOUNDING_BOX = (-20037508.3427892, -20037508.3427892, 20037508.3427892,  20037508.3427892))");
                         }
                     }
@@ -1815,10 +1815,10 @@ public class SqlQueryBuilder extends AbstractSqlLikeQueryBuilder {
         int defaultSrid;
         if (SqlQueryBuilderUtils.isGeography(annotationMetadata)) {
             geoDataType = "geography";
-            defaultSrid = 4326;
+            defaultSrid = Srid.WGS_84;
         } else {
             geoDataType = "geometry";
-            defaultSrid = 3857;
+            defaultSrid = Srid.WEB_MERCATOR;
         }
 
         sb.append(geoDataType).append("::STGeomFromText(");
