@@ -132,10 +132,150 @@ class ItemRepository(GenericRepository[Item, int], ABC):
         "update_first_name_by_code"          | ", code: str, first_name: str" | "int"
         "update2_by_code"                    | ", code: str, first_name: str" | "int"
         "updateé_by_code"                    | ", code: str, first_name: str" | "int"
+        "updateOne_by_code"                  | ", code: str, first_name: str" | "int"
+        "updateFirstName_by_code"            | ", code: str, first_name: str" | "int"
+        "updateOne_by_codeByFirst_name"      | ", code: str, first_name: str" | "int"
         "find_first_by_code"                 | ", code: str"                 | "Item | None"
         "find_by_code_and_first_name"        | ", code: str, first_name: str" | "list[Item]"
         "find_by_code_greater_than"          | ", code: str"                 | "list[Item]"
         "find_by_code_order_by_first_name"   | ", code: str"                 | "list[Item]"
+    }
+
+    void "Python literal property is not a parser keyword for #methodName"() {
+        when:
+        def definition = buildBeanDefinition("python", "ItemRepository\$Intercepted", """
+from abc import ABC, abstractmethod
+from dataclasses import dataclass
+from typing import Annotated
+from micronaut.data.annotation import Id, MappedEntity
+from micronaut.data.jdbc.annotation import JdbcRepository
+from micronaut.data.repository import GenericRepository
+
+@MappedEntity("item")
+@dataclass
+class Item:
+    id: Annotated[int, Id]
+    ids: int
+    returning: str
+    like: str
+    first_name: str
+    code: str
+    codeLike: str
+    codeReturning: str
+    codeAndFirst_name: str
+    codeNot: str
+
+@JdbcRepository(dialect="H2")
+class ItemRepository(GenericRepository[Item, int], ABC):
+    @abstractmethod
+    def ${methodName}(self${parameters}) -> ${returnType}: ...
+""")
+        def method = definition.executableMethods.find { it.methodName == methodName }
+
+        then:
+        method != null
+        getQuery(method).endsWith(queryEnding)
+
+        where:
+        methodName                  | parameters                         | returnType   | queryEnding
+        "update_by_ids"             | ", ids: int, first_name: str"       | "int"        | 'UPDATE `item` SET `first_name`=? WHERE (`ids` = ?)'
+        "update_by_returning"       | ", returning: str, first_name: str" | "int"        | 'UPDATE `item` SET `first_name`=? WHERE (`returning` = ?)'
+        "find_by_like"              | ", like: str"                      | "list[Item]" | 'WHERE (item_.`like` = ?)'
+        "find_by_codeLike"          | ", value: str"                     | "list[Item]" | 'WHERE (item_.`code_like` = ?)'
+        "update_by_codeReturning"   | ", value: str, first_name: str"     | "int"        | 'UPDATE `item` SET `first_name`=? WHERE (`code_returning` = ?)'
+        "find_by_codeAndFirst_name" | ", value: str"                     | "list[Item]" | 'WHERE (item_.`code_and_first_name` = ?)'
+        "find_by_codeNot_in_list"   | ", values: list[str]"              | "list[Item]" | 'WHERE (item_.`code_not` IN (?))'
+    }
+
+    void "Python literal returning predicate cannot opt into a returning update"() {
+        when:
+        buildBeanDefinition("python", "ItemRepository\$Intercepted", """
+from abc import ABC, abstractmethod
+from dataclasses import dataclass
+from typing import Annotated
+from micronaut.data.annotation import Id, MappedEntity
+from micronaut.data.jdbc.annotation import JdbcRepository
+from micronaut.data.repository import GenericRepository
+
+@MappedEntity("item")
+@dataclass
+class Item:
+    id: Annotated[int, Id]
+    returning: str
+    first_name: str
+
+@JdbcRepository(dialect="POSTGRES")
+class ItemRepository(GenericRepository[Item, int], ABC):
+    @abstractmethod
+    def update_by_returning(self, returning: str, first_name: str) -> list[Item]: ...
+""")
+
+        then:
+        def exception = thrown(RuntimeException)
+        exception.message.contains("Update methods only support void or number based return types")
+    }
+
+    void "Python literal property does not trigger vector operator inference"() {
+        when:
+        def definition = buildBeanDefinition("python", "ItemRepository\$Intercepted", """
+from abc import ABC, abstractmethod
+from dataclasses import dataclass
+from typing import Annotated
+from micronaut.data.annotation import Id, MappedEntity
+from micronaut.data.jdbc.annotation import JdbcRepository
+from micronaut.data.model.vector import FloatVector
+from micronaut.data.repository import GenericRepository
+
+@MappedEntity("item")
+@dataclass
+class Item:
+    id: Annotated[int, Id]
+    embedding: FloatVector
+    embeddingNear: str
+
+@JdbcRepository(dialect="H2")
+class ItemRepository(GenericRepository[Item, int], ABC):
+    @abstractmethod
+    def find_by_embeddingNear(self, value: str) -> list[Item]: ...
+""")
+        def method = definition.executableMethods.find { it.methodName == "find_by_embeddingNear" }
+
+        then:
+        method != null
+        getQuery(method) == 'SELECT item_.`id`,item_.`embedding`,item_.`embedding_near` FROM `item` item_ WHERE (item_.`embedding_near` = ?)'
+    }
+
+    void "Python camel projection preserves native underscored property for #methodName"() {
+        when:
+        def definition = buildBeanDefinition("python", "ItemRepository\$Intercepted", """
+from abc import ABC, abstractmethod
+from dataclasses import dataclass
+from typing import Annotated
+from micronaut.data.annotation import Id, MappedEntity
+from micronaut.data.jdbc.annotation import JdbcRepository
+from micronaut.data.repository import GenericRepository
+
+@MappedEntity("item")
+@dataclass
+class Item:
+    id: Annotated[int, Id]
+    created_by_name: str
+
+@JdbcRepository(dialect="H2")
+class ItemRepository(GenericRepository[Item, int], ABC):
+    @abstractmethod
+    def ${methodName}(self${parameters}) -> ${returnType}: ...
+""")
+        def method = definition.executableMethods.find { it.methodName == methodName }
+
+        then:
+        method != null
+        getQuery(method) == query
+
+        where:
+        methodName                 | parameters   | returnType  | query
+        "findCreated_by_name"     | ""           | "list[str]" | 'SELECT item_.`created_by_name` FROM `item` item_'
+        "findCreated_by_nameById" | ", id: int"   | "str"       | 'SELECT item_.`created_by_name` FROM `item` item_ WHERE (item_.`id` = ?)'
     }
 
     void "Python direct property takes precedence for #methodName"() {
@@ -277,6 +417,7 @@ class Item:
     code: str
     first_name: str
     name_in_list: str
+    created_by_name: str
     owner: Annotated[Owner, Relation(Relation.Kind.MANY_TO_ONE)]
 
 @JdbcRepository(dialect="H2")
@@ -305,6 +446,10 @@ class ItemRepository(GenericRepository[Item, int], ABC):
         "find_all"                         | ""                           | "list[Item]"  | 'FROM `item` item_'
         "findByFirst_name"                 | ", first_name: str"           | "list[Item]"  | 'WHERE (item_.`first_name` = ?)'
         "find_by_first_name"               | ", first_name: str"           | "list[Item]"  | 'WHERE (item_.`first_name` = ?)'
+        "findByCreated_by_name"            | ", created_by_name: str"      | "list[Item]"  | 'WHERE (item_.`created_by_name` = ?)'
+        "updateByCreated_by_name"          | ", created_by_name: str, code: str" | "int"    | 'UPDATE `item` SET `code`=? WHERE (`created_by_name` = ?)'
+        "find_by_created_by_name"          | ", created_by_name: str"      | "list[Item]"  | 'WHERE (item_.`created_by_name` = ?)'
+        "update_by_created_by_name"        | ", created_by_name: str, code: str" | "int"    | 'UPDATE `item` SET `code`=? WHERE (`created_by_name` = ?)'
         "findByName_in_list"               | ", name_in_list: str"         | "list[Item]"  | 'WHERE (item_.`name_in_list` = ?)'
         "find_by_name_in_list"             | ", name_in_list: str"         | "list[Item]"  | 'WHERE (item_.`name_in_list` = ?)'
         "findByowner_first_name"           | ", first_name: str"           | "list[Item]"  | 'WHERE (item_owner_.`first_name` = ?)'
