@@ -21,6 +21,130 @@ import static io.micronaut.data.processor.visitors.TestUtils.getQuery
 
 class PythonDerivedQuerySpec extends AbstractPythonTypeElementSpec {
 
+    void "Python rejects unsupported snake case derived method #methodName"() {
+        when:
+        buildBeanDefinition("python", "ItemRepository\$Intercepted", """
+from abc import ABC, abstractmethod
+from dataclasses import dataclass
+from typing import Annotated
+from micronaut.data.annotation import Id, MappedEntity
+from micronaut.data.jdbc.annotation import JdbcRepository
+from micronaut.data.repository import GenericRepository
+
+@MappedEntity("item")
+@dataclass
+class Item:
+    id: Annotated[int, Id]
+    code: str
+    first_name: str
+
+@JdbcRepository(dialect="H2")
+class ItemRepository(GenericRepository[Item, int], ABC):
+    @abstractmethod
+    def ${methodName}(self${parameters}) -> ${returnType}: ...
+""")
+        then:
+        def exception = thrown(RuntimeException)
+        exception.message.contains("Unsupported Python snake_case derived query")
+        exception.message.contains(methodName)
+        exception.message.contains("camelCase")
+
+        where:
+        methodName                           | parameters                    | returnType
+        "update_one_by_code"                 | ", code: str, first_name: str" | "int"
+        "update_first_name_by_code"          | ", code: str, first_name: str" | "int"
+        "update2_by_code"                    | ", code: str, first_name: str" | "int"
+        "updateé_by_code"                    | ", code: str, first_name: str" | "int"
+        "find_first_by_code"                 | ", code: str"                 | "Item | None"
+        "find_by_code_and_first_name"        | ", code: str, first_name: str" | "list[Item]"
+        "find_by_code_greater_than"          | ", code: str"                 | "list[Item]"
+        "find_by_code_order_by_first_name"   | ", code: str"                 | "list[Item]"
+    }
+
+    void "Python direct property takes precedence for #methodName"() {
+        when:
+        def definition = buildBeanDefinition("python", "ItemRepository\$Intercepted", """
+from abc import ABC, abstractmethod
+from dataclasses import dataclass
+from typing import Annotated
+from micronaut.data.annotation import Id, MappedEntity, Relation
+from micronaut.data.jdbc.annotation import JdbcRepository
+from micronaut.data.repository import GenericRepository
+
+@MappedEntity("owner")
+@dataclass
+class Owner:
+    id: Annotated[int, Id]
+    name: str
+
+@MappedEntity("item")
+@dataclass
+class Item:
+    id: Annotated[int, Id]
+    owner_name: str
+    code_and_first_name: str
+    code_greater_than: str
+    code_order_by_first_name: str
+    owner: Annotated[Owner, Relation(Relation.Kind.MANY_TO_ONE)]
+
+@JdbcRepository(dialect="H2")
+class ItemRepository(GenericRepository[Item, int], ABC):
+    @abstractmethod
+    def ${methodName}(self, value: str) -> list[Item]: ...
+""")
+        def method = definition.executableMethods.find { it.methodName == methodName }
+
+        then:
+        method != null
+        getQuery(method).endsWith(queryEnding)
+
+        where:
+        methodName                         | queryEnding
+        "find_by_owner_name"               | 'WHERE (item_.`owner_name` = ?)'
+        "findByOwner_Name"                 | 'WHERE (item_owner_.`name` = ?)'
+        "find_by_code_and_first_name"      | 'WHERE (item_.`code_and_first_name` = ?)'
+        "find_by_code_greater_than"        | 'WHERE (item_.`code_greater_than` = ?)'
+        "find_by_code_order_by_first_name" | 'WHERE (item_.`code_order_by_first_name` = ?)'
+    }
+
+    void "Python explicit query and update annotations retain arbitrary method names"() {
+        when:
+        def definition = buildBeanDefinition("python", "ItemRepository\$Intercepted", """
+from abc import ABC, abstractmethod
+from dataclasses import dataclass
+from typing import Annotated
+from micronaut.data.annotation import Id, MappedEntity, Query, Update
+from micronaut.data.jdbc.annotation import JdbcRepository
+from micronaut.data.repository import GenericRepository
+
+@MappedEntity("item")
+@dataclass
+class Item:
+    id: Annotated[int, Id]
+    code: str
+    first_name: str
+
+@JdbcRepository(dialect="H2")
+class ItemRepository(GenericRepository[Item, int], ABC):
+    @Query("UPDATE item SET first_name = :value WHERE code = :code")
+    @abstractmethod
+    def update_first_name_by_code(self, code: str, value: str) -> int: ...
+
+    @Update
+    @abstractmethod
+    def update_one_by_code(self, item: Item) -> Item: ...
+
+    @Update
+    @abstractmethod
+    def custom_update(self, item: Item) -> Item: ...
+""")
+
+        then:
+        getQuery(definition.executableMethods.find { it.methodName == "update_first_name_by_code" }) == 'UPDATE item SET first_name = :value WHERE code = :code'
+        getQuery(definition.executableMethods.find { it.methodName == "update_one_by_code" }) == 'UPDATE `item` SET `code`=?,`first_name`=? WHERE (`id` = ?)'
+        getQuery(definition.executableMethods.find { it.methodName == "custom_update" }) == 'UPDATE `item` SET `code`=?,`first_name`=? WHERE (`id` = ?)'
+    }
+
     void "Python repository derives an IN query for #methodName"() {
         when:
         def definition = buildBeanDefinition("python", "FruitRepository\$Intercepted", """
@@ -92,6 +216,7 @@ class ItemRepository(GenericRepository[Item, int], ABC):
         where:
         methodName                         | parameters                    | returnType    | queryEnding
         "findByCode"                       | ", code: str"                | "list[Item]"  | 'WHERE (item_.`code` = ?)'
+        "findByCodeAndFirst_name"          | ", code: str, first_name: str" | "list[Item]"  | 'WHERE (item_.`code` = ? AND item_.`first_name` = ?)'
         "find_by_code"                     | ", code: str"                | "list[Item]"  | 'WHERE (item_.`code` = ?)'
         "updateByCode"                     | ", code: str, first_name: str" | "int"         | 'UPDATE `item` SET `first_name`=? WHERE (`code` = ?)'
         "update_by_code"                   | ", code: str, first_name: str" | "int"         | 'UPDATE `item` SET `first_name`=? WHERE (`code` = ?)'

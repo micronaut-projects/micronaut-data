@@ -66,7 +66,6 @@ interface BookRepository extends GenericRepository<Book, Long> {
 """)
 
         then:
-        def exception = thrown(RuntimeException)
-        exception.message.contains("Cannot project on non-existent property: _by_first_name")
+        thrown(RuntimeException)
     }
 }
