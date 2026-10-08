@@ -26,6 +26,7 @@ import io.micronaut.data.model.geo.Point
 import io.micronaut.data.model.geo.Polygon
 import io.micronaut.data.tck.jdbc.entities.geo.DeliveryDriverJson
 import io.micronaut.data.tck.jdbc.entities.geo.DeliveryDriverWkt
+import io.micronaut.data.tck.jdbc.entities.geo.District
 import io.micronaut.data.tck.jdbc.entities.geo.GeometryEntityJson
 import io.micronaut.data.tck.jdbc.entities.geo.GeometryEntityWkt
 import io.micronaut.data.tck.jdbc.entities.geo.HotelJson
@@ -34,6 +35,7 @@ import io.micronaut.data.tck.jdbc.entities.geo.Location
 import io.micronaut.data.tck.jdbc.entities.geo.School
 import io.micronaut.data.tck.repositories.DeliveryDriverJsonRepository
 import io.micronaut.data.tck.repositories.DeliveryDriverWktRepository
+import io.micronaut.data.tck.repositories.DistrictRepository
 import io.micronaut.data.tck.repositories.GeometryEntityJsonRepository
 import io.micronaut.data.tck.repositories.GeometryEntityWktRepository
 import io.micronaut.data.tck.repositories.HotelJsonRepository
@@ -62,6 +64,8 @@ abstract class AbstractGeoSpec extends Specification {
 
     abstract DeliveryDriverWktRepository getDeliveryDriverWktRepository()
 
+    abstract DistrictRepository getDistrictRepository()
+
     @AutoCleanup
     @Shared
     ApplicationContext context = ApplicationContext.run(properties)
@@ -74,6 +78,7 @@ abstract class AbstractGeoSpec extends Specification {
         getHotelWktRepository()?.deleteAll()
         getDeliveryDriverJsonRepository()?.deleteAll()
         getDeliveryDriverWktRepository()?.deleteAll()
+        getDistrictRepository()?.deleteAll()
     }
 
     void "test creates, reads, and updates embedded geometry with JSON conversion"() {
@@ -123,14 +128,7 @@ abstract class AbstractGeoSpec extends Specification {
         assumeTrue(supportsGeometryJsonConversion())
 
         given:
-        GeometryEntityJson entity = new GeometryEntityJson()
-        entity.setPoint(createPoint(1))
-        entity.setMultiPoint(createMultiPoint(1))
-        entity.setLineString(createLineString(1))
-        entity.setMultiLineString(createMultiLineString(1))
-        entity.setPolygon(createPolygon(1))
-        entity.setMultiPolygon(createMultiPolygon(1))
-        entity.setGeometryCollection(createGeometryCollection(3))
+        GeometryEntityJson entity = createGeometryEntityJson(1, 3)
 
         when:
         GeometryEntityJson savedEntity = getGeometryEntityJsonRepository().insert(entity)
@@ -181,14 +179,7 @@ abstract class AbstractGeoSpec extends Specification {
         assumeTrue(supportsDeletingGeometryTypes())
 
         given:
-        GeometryEntityJson entity = new GeometryEntityJson()
-        entity.setPoint(createPoint(5))
-        entity.setMultiPoint(createMultiPoint(5))
-        entity.setLineString(createLineString(5))
-        entity.setMultiLineString(createMultiLineString(5))
-        entity.setPolygon(createPolygon(5))
-        entity.setMultiPolygon(createMultiPolygon(5))
-        entity.setGeometryCollection(createGeometryCollection(8))
+        GeometryEntityJson entity = createGeometryEntityJson(5, 8)
 
         when:
         GeometryEntityJson savedEntity = getGeometryEntityJsonRepository().insert(entity)
@@ -507,6 +498,147 @@ abstract class AbstractGeoSpec extends Specification {
         names.size() == 2
         names.contains("Nearby Driver")
         names.contains("Closest Driver")
+    }
+
+    void "test district mappings, fetch joins, and geospatial predicates"() {
+        assumeTrue(supportsGeometryJsonConversion())
+
+        given:
+        Polygon downtownArea = square(0.0d, 10.0d)
+        Polygon searchArea = square(-1.0d, 11.0d)
+        Polygon hotelSearchArea = square(2.5d, 3.5d)
+        Polygon outskirtsArea = square(20.0d, 30.0d)
+        Polygon emptyArea = square(40.0d, 50.0d)
+        LineString downtownRoute = new LineString([
+                new Point(4.5d, 5.0d),
+                new Point(5.5d, 5.0d)
+        ])
+
+        GeometryEntityJson geometryEntityJson = getGeometryEntityJsonRepository().save(createGeometryEntityJson(5))
+        GeometryEntityWkt geometryEntityWkt = getGeometryEntityWktRepository().save(createGeometryEntityWkt(5))
+        District downtown = getDistrictRepository().save(new District(null, "Downtown", downtownArea, geometryEntityJson, geometryEntityWkt))
+        District outskirts = getDistrictRepository().save(new District(null, "Outskirts", outskirtsArea, geometryEntityJson, geometryEntityWkt))
+        District emptyDistrict = getDistrictRepository().save(new District(null, "Empty", emptyArea, geometryEntityJson, geometryEntityWkt))
+
+        addSchool(downtown, "Downtown Primary", new Point(1.0d, 1.0d))
+        addSchool(downtown, "Downtown Secondary", new Point(2.0d, 2.0d))
+        addHotelJson(downtown, "Downtown JSON Hotel", new Point(3.0d, 3.0d))
+        addHotelJson(downtown, "Downtown JSON Inn", new Point(4.0d, 4.0d))
+        addHotelWkt(downtown, "Downtown WKT Hotel", new Point(5.0d, 5.0d))
+        addHotelWkt(downtown, "Downtown WKT Inn", new Point(6.0d, 6.0d))
+
+        addHotelJson(outskirts, "Outskirts JSON Hotel", new Point(22.0d, 22.0d))
+
+        when:
+        District fetchedDowntown = getDistrictRepository().findByName("Downtown")
+        District fetchedOutskirts = getDistrictRepository().findByName("Outskirts")
+        District fetchedEmptyDistrict = getDistrictRepository().findByName("Empty")
+        List<District> districtsWithin = getDistrictRepository().findByAreaGeoWithin(searchArea)
+        List<District> districtsIntersecting = getDistrictRepository().findByAreaGeoIntersects(downtownRoute)
+        List<District> districtsWithJsonHotelsWithin = getDistrictRepository().findByHotelsJsonLocationGeoWithin(hotelSearchArea)
+        List<District> districtsWithOutskirtsJsonHotel = getDistrictRepository().findByHotelsJsonLocationGeoWithin(outskirtsArea)
+        List<District> districtsWithWktHotelsIntersecting = getDistrictRepository().findByHotelsWktLocationGeoIntersects(downtownRoute)
+
+        then:
+        getSchoolRepository().findByDistrictId(downtown.id)*.name.sort() == ["Downtown Primary", "Downtown Secondary"]
+        getHotelJsonRepository().findByDistrictId(downtown.id)*.name.sort() == ["Downtown JSON Hotel", "Downtown JSON Inn"]
+        getHotelWktRepository().findByDistrictId(downtown.id)*.name.sort() == ["Downtown WKT Hotel", "Downtown WKT Inn"]
+
+        fetchedDowntown != null
+        fetchedDowntown.id == downtown.id
+        fetchedDowntown.schools*.name.sort() == ["Downtown Primary", "Downtown Secondary"]
+        fetchedDowntown.hotelsJson*.name.sort() == ["Downtown JSON Hotel", "Downtown JSON Inn"]
+        fetchedDowntown.hotelsWkt*.name.sort() == ["Downtown WKT Hotel", "Downtown WKT Inn"]
+        fetchedDowntown.geometryEntityJson.id == geometryEntityJson.id
+        fetchedDowntown.geometryEntityWkt.id == geometryEntityWkt.id
+
+        and: "left fetch returns populated and partially populated districts"
+        fetchedOutskirts != null
+        fetchedOutskirts.id == outskirts.id
+        !fetchedOutskirts.schools
+        fetchedOutskirts.hotelsJson*.name == ["Outskirts JSON Hotel"]
+        !fetchedOutskirts.hotelsWkt
+        fetchedOutskirts.geometryEntityJson.id == geometryEntityJson.id
+        fetchedOutskirts.geometryEntityWkt.id == geometryEntityWkt.id
+
+        and: "left fetch keeps a district with no collection rows"
+        fetchedEmptyDistrict != null
+        fetchedEmptyDistrict.id == emptyDistrict.id
+        !fetchedEmptyDistrict.schools
+        !fetchedEmptyDistrict.hotelsJson
+        !fetchedEmptyDistrict.hotelsWkt
+
+        and: "GeoWithin and GeoIntersects filter district geometry"
+        districtsWithin*.id == [downtown.id]
+        districtsIntersecting*.id == [downtown.id]
+
+        and: "GeoWithin and GeoIntersects also filter through joined hotel geometries"
+        districtsWithJsonHotelsWithin*.id == [downtown.id]
+        districtsWithOutskirtsJsonHotel*.id == [outskirts.id]
+        districtsWithWktHotelsIntersecting*.id == [downtown.id]
+
+    }
+
+    private void addSchool(District district, String name, Point point) {
+        Location location = new Location()
+        location.setPoint(point)
+        School school = new School()
+        school.setName(name)
+        school.setLocation(location)
+        school.setDistrict(district)
+        getSchoolRepository().save(school)
+    }
+
+    private void addHotelJson(District district, String name, Point point) {
+        HotelJson hotel = new HotelJson(name, point)
+        hotel.setDistrict(district)
+        getHotelJsonRepository().save(hotel)
+    }
+
+    private void addHotelWkt(District district, String name, Point point) {
+        HotelWkt hotel = new HotelWkt(name, point)
+        hotel.setDistrict(district)
+        getHotelWktRepository().save(hotel)
+    }
+
+    private Polygon square(double min, double max) {
+        return new Polygon([
+                new LineString([
+                        new Point(min, min),
+                        new Point(min, max),
+                        new Point(max, max),
+                        new Point(max, min),
+                        new Point(min, min)
+                ])
+        ])
+    }
+
+    private GeometryEntityJson createGeometryEntityJson(int n) {
+        return createGeometryEntityJson(n, n)
+    }
+
+    private GeometryEntityJson createGeometryEntityJson(int n, int geometryCollectionN) {
+        GeometryEntityJson entity = new GeometryEntityJson()
+        entity.setPoint(createPoint(n))
+        entity.setMultiPoint(createMultiPoint(n))
+        entity.setLineString(createLineString(n))
+        entity.setMultiLineString(createMultiLineString(n))
+        entity.setPolygon(createPolygon(n))
+        entity.setMultiPolygon(createMultiPolygon(n))
+        entity.setGeometryCollection(createGeometryCollection(geometryCollectionN))
+        return entity
+    }
+
+    private GeometryEntityWkt createGeometryEntityWkt(int n) {
+        GeometryEntityWkt entity = new GeometryEntityWkt()
+        entity.setPoint(createPoint(n))
+        entity.setMultiPoint(createMultiPoint(n))
+        entity.setLineString(createLineString(n))
+        entity.setMultiLineString(createMultiLineString(n))
+        entity.setPolygon(createPolygon(n))
+        entity.setMultiPolygon(createMultiPolygon(n))
+        entity.setGeometryCollection(createGeometryCollection(n))
+        return entity
     }
 
     protected boolean supportsGeometryJsonConversion() {
