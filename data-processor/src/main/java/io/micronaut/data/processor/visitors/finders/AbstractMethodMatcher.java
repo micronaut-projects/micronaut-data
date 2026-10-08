@@ -16,7 +16,6 @@
 package io.micronaut.data.processor.visitors.finders;
 
 import io.micronaut.core.annotation.Internal;
-import io.micronaut.core.naming.NameUtils;
 import io.micronaut.data.annotation.TypeRole;
 import io.micronaut.data.model.PersistentEntityUtils;
 import io.micronaut.data.processor.visitors.MatchFailedException;
@@ -60,36 +59,42 @@ public abstract class AbstractMethodMatcher implements MethodMatcher {
     @Nullable
     public MethodMatch match(MethodMatchContext matchContext) {
         String methodName = matchContext.getMethodElement().getName();
-        if (matchContext.getVisitorContext().getLanguage() == VisitorContext.Language.PYTHON) {
+        boolean python = matchContext.getVisitorContext().getLanguage() == VisitorContext.Language.PYTHON;
+        if (python) {
             Matcher prefix = PYTHON_QUERY_PREFIX.matcher(methodName);
             if (prefix.find()) {
                 // Only validate names belonging to this matcher; explicit operation annotations may use arbitrary names.
                 if (parser.tryMatch(prefix.group(1)).isEmpty()) {
                     return null;
                 }
-                methodName = pythonQueryName(methodName, matchContext);
+                return match(matchContext, pythonQueryMatches(methodName, matchContext));
             }
         }
-        List<MethodNameParser.Match> matches = parser.tryMatch(methodName);
+        List<MethodNameParser.Match> matches = parser.tryMatch(methodName, unmatched -> {
+            if (python && unmatched.contains("_by_")) {
+                throw unsupportedPythonQuery(methodName);
+            }
+        });
         if (matches.isEmpty()) {
             return null;
         }
         return match(matchContext, matches);
     }
 
-    private static String pythonQueryName(String methodName, MethodMatchContext matchContext) {
+    private List<MethodNameParser.Match> pythonQueryMatches(String methodName, MethodMatchContext matchContext) {
         Matcher matcher = PYTHON_QUERY_NAME.matcher(methodName);
         if (!matcher.matches()) {
             if (!methodName.contains("_by_")) {
-                return methodName;
+                return parser.tryMatch(methodName);
             }
             throw unsupportedPythonQuery(methodName);
         }
         String prefix = matcher.group(1) + (matcher.group(2) == null ? "" : ALL[0]);
         String predicate = matcher.group(3);
         if (predicate == null) {
-            return prefix;
+            return parser.tryMatch(prefix);
         }
+        String restriction = "Equals";
         // A literal property or association path takes precedence over the InList operator.
         if (!isPropertyPath(matchContext, predicate)) {
             if (!predicate.endsWith("_in_list")) {
@@ -99,9 +104,18 @@ public abstract class AbstractMethodMatcher implements MethodMatcher {
             if (!isPropertyPath(matchContext, property)) {
                 throw unsupportedPythonQuery(methodName);
             }
-            predicate = property + "InList";
+            predicate = property;
+            restriction = "InList";
         }
-        return prefix + BY + NameUtils.capitalize(predicate);
+        // Parse the structure without exposing a native property name to camelCase keyword parsing.
+        List<MethodNameParser.Match> matches = parser.tryMatch(prefix + BY + "property");
+        if (matches.stream().noneMatch(m -> m.id() == QueryMatchId.PREDICATE)) {
+            throw unsupportedPythonQuery(methodName);
+        }
+        String property = predicate;
+        matches.replaceAll(m -> m.id() == QueryMatchId.PREDICATE ? new MethodNameParser.Match(QueryMatchId.PREDICATE, property) : m);
+        matches.add(new MethodNameParser.Match(QueryMatchId.LITERAL_PROPERTY_RESTRICTION, restriction));
+        return matches;
     }
 
     private static MatchFailedException unsupportedPythonQuery(String methodName) {
