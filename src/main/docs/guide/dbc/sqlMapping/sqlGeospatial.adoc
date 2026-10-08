@@ -239,10 +239,15 @@ Micronaut Data uses the following functions to read and write spatial data:
 | `ST_GeomFromGeoJSON(?, 1, srid)`
 
 | WKT
-| `ST_AsText(column)`
+| `ST_AsText(column /*!80001 , 'axis-order=long-lat' */)`
 | `ST_GeomFromText(?)`
-| `ST_GeomFromText(?, srid)`
+| `ST_GeomFromText(?, srid /*!80001 , 'axis-order=long-lat' */)`
 |===
+
+WKT coordinates use `(x, y)` order, which is `(longitude, latitude)` for geographic SRIDs.
+MySQL 8.0.1 and later use the SRID's axis order by default, so Micronaut Data explicitly sets
+`axis-order=long-lat` for WKT writes with an SRID, predicate arguments, and reads. The option is wrapped
+in a MySQL executable comment so MariaDB and older MySQL versions retain their existing x/y behavior.
 
 ==== Schema generation
 
@@ -276,7 +281,7 @@ Micronaut Data translates geospatial repository methods and criteria predicates 
 |===
 
 `convertedValue` is the MySQL spatial conversion call such as `ST_GeomFromGeoJSON(?, 1, srid)` or
-`ST_GeomFromText(?, srid)`.
+`ST_GeomFromText(?, srid /*!80001 , 'axis-order=long-lat' */)`.
 
 === MariaDB
 
@@ -294,9 +299,9 @@ follow the same MySQL-style `GEOMETRY` storage model, `ST_AsGeoJSON` and `ST_AsT
 | `ST_GeomFromGeoJSON(?, 1, srid)`
 
 | WKT
-| `ST_AsText(column)`
+| `ST_AsText(column /*!80001 , 'axis-order=long-lat' */)`
 | `ST_GeomFromText(?)`
-| `ST_GeomFromText(?, srid)`
+| `ST_GeomFromText(?, srid /*!80001 , 'axis-order=long-lat' */)`
 |===
 
 If you are targeting MariaDB, use the same mapping guidance as MySQL unless your database version introduces different
@@ -324,7 +329,7 @@ Micronaut Data translates geospatial repository methods and criteria predicates 
 |===
 
 `convertedValue` is the MariaDB spatial conversion call such as `ST_GeomFromGeoJSON(?, 1, srid)` or
-`ST_GeomFromText(?, srid)`.
+`ST_GeomFromText(?, srid /*!80001 , 'axis-order=long-lat' */)`.
 
 === H2
 

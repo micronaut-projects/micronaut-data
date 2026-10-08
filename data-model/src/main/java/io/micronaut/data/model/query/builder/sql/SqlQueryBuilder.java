@@ -1791,7 +1791,7 @@ public class SqlQueryBuilder extends AbstractSqlLikeQueryBuilder {
         if (optSrid.isPresent()) {
             sb.append(", ");
             if (isWkt) {
-                sb.append(optSrid.getAsInt());
+                sb.append(optSrid.getAsInt()).append(SqlQueryBuilderUtils.MYSQL_WKT_AXIS_ORDER);
             } else {
                 sb.append("1, ").append(optSrid.getAsInt());
             }
