@@ -17,6 +17,7 @@ package io.micronaut.data.processor.visitors.finders;
 
 import io.micronaut.core.annotation.Internal;
 import io.micronaut.core.naming.NameUtils;
+import io.micronaut.data.annotation.TypeRole;
 import io.micronaut.data.model.PersistentEntityUtils;
 import io.micronaut.data.processor.visitors.MatchFailedException;
 import io.micronaut.data.processor.visitors.MethodMatchContext;
@@ -79,6 +80,9 @@ public abstract class AbstractMethodMatcher implements MethodMatcher {
     private static String pythonQueryName(String methodName, MethodMatchContext matchContext) {
         Matcher matcher = PYTHON_QUERY_NAME.matcher(methodName);
         if (!matcher.matches()) {
+            if (!methodName.contains("_by_")) {
+                return methodName;
+            }
             throw unsupportedPythonQuery(methodName);
         }
         String prefix = matcher.group(1) + (matcher.group(2) == null ? "" : ALL[0]);
@@ -109,6 +113,9 @@ public abstract class AbstractMethodMatcher implements MethodMatcher {
     private static boolean isPropertyPath(MethodMatchContext matchContext, String predicate) {
         if (!matchContext.hasRootEntity()) {
             return false;
+        }
+        if (TypeRole.ID.equals(predicate) && (matchContext.getRootEntity().hasIdentity() || matchContext.getRootEntity().hasCompositeIdentity())) {
+            return true;
         }
         try {
             return PersistentEntityUtils.getPersistentPropertyPath(matchContext.getRootEntity(), predicate).isPresent();

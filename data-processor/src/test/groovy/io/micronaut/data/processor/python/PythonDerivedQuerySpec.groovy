@@ -21,6 +21,83 @@ import static io.micronaut.data.processor.visitors.TestUtils.getQuery
 
 class PythonDerivedQuerySpec extends AbstractPythonTypeElementSpec {
 
+    void "Python entity operation retains descriptive name #methodName"() {
+        when:
+        def definition = buildBeanDefinition("python", "ItemRepository\$Intercepted", """
+from abc import ABC, abstractmethod
+from dataclasses import dataclass
+from typing import Annotated
+from micronaut.data.annotation import Id, MappedEntity
+from micronaut.data.jdbc.annotation import JdbcRepository
+from micronaut.data.repository import GenericRepository
+
+@MappedEntity("item")
+@dataclass
+class Item:
+    id: Annotated[int, Id]
+    code: str
+    first_name: str
+
+@JdbcRepository(dialect="H2")
+class ItemRepository(GenericRepository[Item, int], ABC):
+    @abstractmethod
+    def ${methodName}(self, item: Item) -> Item: ...
+""")
+        def method = definition.executableMethods.find { it.methodName == methodName }
+
+        then:
+        method != null
+        getQuery(method) == query
+
+        where:
+        methodName     | query
+        "saveBook"     | 'INSERT INTO `item` (`code`,`first_name`,`id`) VALUES (?,?,?)'
+        "save_book"    | 'INSERT INTO `item` (`code`,`first_name`,`id`) VALUES (?,?,?)'
+        "insert_item"  | 'INSERT INTO `item` (`code`,`first_name`,`id`) VALUES (?,?,?)'
+        "persist_item" | 'INSERT INTO `item` (`code`,`first_name`,`id`) VALUES (?,?,?)'
+        "save_one"     | 'INSERT INTO `item` (`code`,`first_name`,`id`) VALUES (?,?,?)'
+        "updateItem"   | 'UPDATE `item` SET `code`=?,`first_name`=? WHERE (`id` = ?)'
+        "update_item"  | 'UPDATE `item` SET `code`=?,`first_name`=? WHERE (`id` = ?)'
+        "update_one"   | 'UPDATE `item` SET `code`=?,`first_name`=? WHERE (`id` = ?)'
+    }
+
+    void "Python identity alias uses a differently named primary key for #methodName"() {
+        when:
+        def definition = buildBeanDefinition("python", "ItemRepository\$Intercepted", """
+from abc import ABC, abstractmethod
+from dataclasses import dataclass
+from typing import Annotated
+from micronaut.data.annotation import Id, MappedEntity
+from micronaut.data.jdbc.annotation import JdbcRepository
+from micronaut.data.repository import GenericRepository
+
+@MappedEntity("item")
+@dataclass
+class Item:
+    isbn: Annotated[str, Id]
+    title: str
+
+@JdbcRepository(dialect="H2")
+class ItemRepository(GenericRepository[Item, str], ABC):
+    @abstractmethod
+    def ${methodName}(self, id: str) -> ${returnType}: ...
+""")
+        def method = definition.executableMethods.find { it.methodName == methodName }
+
+        then:
+        method != null
+        getQuery(method).endsWith(queryEnding)
+
+        where:
+        methodName     | returnType    | queryEnding
+        "findById"     | "Item | None" | 'WHERE (item_.`isbn` = ?)'
+        "find_by_id"   | "Item | None" | 'WHERE (item_.`isbn` = ?)'
+        "deleteById"   | "int"         | 'DELETE  FROM `item`  WHERE (`isbn` = ?)'
+        "delete_by_id" | "int"         | 'DELETE  FROM `item`  WHERE (`isbn` = ?)'
+        "existsById"   | "bool"        | 'WHERE (item_.`isbn` = ?)'
+        "exists_by_id" | "bool"        | 'WHERE (item_.`isbn` = ?)'
+    }
+
     void "Python rejects unsupported snake case derived method #methodName"() {
         when:
         buildBeanDefinition("python", "ItemRepository\$Intercepted", """
