@@ -359,6 +359,55 @@ interface MyRepository {
         Dialect.SQL_SERVER || 'school_.[point].STAsText() AS [point]'
     }
 
+    @Unroll
+    void "test #dialect aliased spatial projection for #entityClass with compound selection #compound"() {
+        given:
+        def criteriaQuery = builder.createQuery(Object)
+        def root = criteriaQuery.from(entityClass)
+        def selection = root.get("point").alias("projected_location")
+        if (compound) {
+            criteriaQuery.multiselect(selection, root.get("id").alias("projected_id"))
+        } else {
+            criteriaQuery.select(selection)
+        }
+
+        when:
+        def encoded = criteriaQuery.build(new SqlQueryBuilder(dialect))
+
+        then:
+        encoded.query.startsWith("SELECT ${expectedProjection} AS projected_location" + (compound ? "," : " FROM"))
+        !encoded.query.contains(" AS projected_location AS ")
+        encoded.query.count(" AS ") == (compound ? 2 : 1)
+
+        where:
+        [dialect, entityClass, expectedProjection, compound] << [
+            [Dialect.ORACLE, GeomEntityJson, 'SDO_UTIL.TO_GEOJSON(geom_entity_json_."LOCATION")'],
+            [Dialect.ORACLE, GeomEntityWkt, 'SDO_UTIL.TO_WKTGEOMETRY(geom_entity_wkt_."LOCATION")'],
+            [Dialect.ORACLE, GeogEntityJson, 'SDO_UTIL.TO_GEOJSON(geog_entity_json_."LOCATION")'],
+            [Dialect.ORACLE, GeogEntityWkt, 'SDO_UTIL.TO_WKTGEOMETRY(geog_entity_wkt_."LOCATION")'],
+            [Dialect.MYSQL, GeomEntityJson, 'ST_AsGeoJSON(geom_entity_json_.`location`)'],
+            [Dialect.MYSQL, GeomEntityWkt, 'ST_AsText(geom_entity_wkt_.`location`)'],
+            [Dialect.MYSQL, GeogEntityJson, 'ST_AsGeoJSON(geog_entity_json_.`location`)'],
+            [Dialect.MYSQL, GeogEntityWkt, 'ST_AsText(geog_entity_wkt_.`location`)'],
+            [Dialect.H2, GeomEntityJson, 'ST_AsGeoJSON(geom_entity_json_.`location`)'],
+            [Dialect.H2, GeomEntityWkt, 'ST_AsText(geom_entity_wkt_.`location`)'],
+            [Dialect.H2, GeogEntityJson, 'ST_AsGeoJSON(geog_entity_json_.`location`)'],
+            [Dialect.H2, GeogEntityWkt, 'ST_AsText(geog_entity_wkt_.`location`)'],
+            [Dialect.POSTGRES, GeomEntityJson, 'ST_AsGeoJSON(geom_entity_json_."location")'],
+            [Dialect.POSTGRES, GeomEntityWkt, 'ST_AsText(geom_entity_wkt_."location")'],
+            [Dialect.POSTGRES, GeogEntityJson, 'ST_AsGeoJSON(geog_entity_json_."location"::geometry)'],
+            [Dialect.POSTGRES, GeogEntityWkt, 'ST_AsText(geog_entity_wkt_."location"::geometry)'],
+            [Dialect.SQL_SERVER, GeomEntityJson, 'geom_entity_json_.[location].STAsText()'],
+            [Dialect.SQL_SERVER, GeomEntityWkt, 'geom_entity_wkt_.[location].STAsText()'],
+            [Dialect.SQL_SERVER, GeogEntityJson, 'geog_entity_json_.[location].STAsText()'],
+            [Dialect.SQL_SERVER, GeogEntityWkt, 'geog_entity_wkt_.[location].STAsText()'],
+            [Dialect.ANSI, GeomEntityJson, 'geom_entity_json_."location"'],
+            [Dialect.ANSI, GeomEntityWkt, 'geom_entity_wkt_."location"'],
+            [Dialect.ANSI, GeogEntityJson, 'geog_entity_json_."location"'],
+            [Dialect.ANSI, GeogEntityWkt, 'geog_entity_wkt_."location"']
+        ].collectMany { row -> [false, true].collect { compound -> row + [compound] } }
+    }
+
     void "test aliased embedded projection with multiple columns throws"() {
         given:
         def criteriaQuery = builder.createQuery(Address)

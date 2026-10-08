@@ -3734,39 +3734,41 @@ public abstract class AbstractSqlLikeQueryBuilder implements QueryBuilder {
             AnnotationMetadata annotationMetadata = property.getAnnotationMetadata();
             String converter = annotationMetadata.stringValue(MappedProperty.class, "converter").orElse(null);
             boolean isWkt = GeometryWktConverter.class.getName().equals(converter);
-            return switch (getDialect()) {
-                case ORACLE -> getOracleGeometryFunction(column, columnAlias, isWkt);
-                case SQL_SERVER ->  getSqlServerGeometryFunction(column, columnAlias);
-                case POSTGRES -> getPostgresGeometryFunction(column, columnAlias, isWkt, annotationMetadata);
-                case MYSQL, H2 -> getOtherGeometryFunction(column, columnAlias, isWkt);
-                default -> column + AS_CLAUSE + columnAlias;
+            String expression = switch (getDialect()) {
+                case ORACLE -> getOracleGeometryFunction(column, isWkt);
+                case SQL_SERVER ->  getSqlServerGeometryFunction(column);
+                case POSTGRES -> getPostgresGeometryFunction(column, isWkt, annotationMetadata);
+                case MYSQL, H2 -> getOtherGeometryFunction(column, isWkt);
+                default -> column;
             };
+            // Explicit selection aliases are appended by the projection visitor.
+            return StringUtils.isNotEmpty(this.columnAlias) ? expression : expression + AS_CLAUSE + columnAlias;
         }
 
-        private String getOracleGeometryFunction(String column, String columnAlias, boolean isWkt) {
+        private String getOracleGeometryFunction(String column, boolean isWkt) {
             String function = isWkt ? "SDO_UTIL.TO_WKTGEOMETRY(" : "SDO_UTIL.TO_GEOJSON(";
-            return function + column + ")" + AS_CLAUSE + columnAlias;
+            return function + column + ")";
         }
 
-        private String getSqlServerGeometryFunction(String column, String columnAlias) {
+        private String getSqlServerGeometryFunction(String column) {
             // since sqlserver doesn't have built-in functions for conversion between
             // json and internal geospatial data type, use always Well-Known Text (WKT) functions
-            return column + ".STAsText()" + AS_CLAUSE + columnAlias;
+            return column + ".STAsText()";
         }
 
-        private String getPostgresGeometryFunction(String column, String columnAlias, boolean isWkt, AnnotationMetadata annotationMetadata) {
+        private String getPostgresGeometryFunction(String column, boolean isWkt, AnnotationMetadata annotationMetadata) {
             String function = isWkt ? "ST_AsText(" : "ST_AsGeoJSON(";
             function = function + column;
             if (SqlQueryBuilderUtils.isGeography(annotationMetadata)) {
                 // convert value from geography to geometry since ST_AsText and ST_AsGeoJSON requires geometry
                 function = function + "::geometry";
             }
-            return function + ")" + AS_CLAUSE + columnAlias;
+            return function + ")";
         }
 
-        private String getOtherGeometryFunction(String column, String columnAlias, boolean isWkt) {
+        private String getOtherGeometryFunction(String column, boolean isWkt) {
             String function = isWkt ? "ST_AsText(" : "ST_AsGeoJSON(";
-            return function + column + ")" + AS_CLAUSE + columnAlias;
+            return function + column + ")";
         }
 
         private void appendFunction(String functionName, Expression<?> expression) {
