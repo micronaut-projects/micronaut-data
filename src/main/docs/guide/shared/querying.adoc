@@ -7,6 +7,11 @@ image::finderpattern.svg[]
 
 As shown in Figure 1, the most common query stem is `find`, but you can also use `search`, `query`, `get`, `read` or `retrieve`.
 
+Python repositories also support the limited snake_case pattern `<prefix>[_all][_by_<property>[_in_list]]`, for example `find_all`, `find_by_code`, `update_by_code`, and `find_by_name_in_list`.
+The predicate must resolve to an existing property or association path; other snake_case operators fail compilation. Use camelCase names such as `findByCodeAndFirst_name` for the remaining derived-query grammar.
+Literal properties take precedence over operators and association paths: `find_by_name_in_list` queries a property named `name_in_list` when one exists, and `find_by_owner_name` queries a local `owner_name` rather than `owner.name`.
+Use `findByOwner_Name` to select `owner.name` in the latter case. Association traversal follows the existing first-underscore resolver and supports single-word association names such as `owner`; a multi-word association named `home_owner` cannot be traversed by either spelling.
+
 The projection and ordering parts of the query pattern are optional (more on those later). The following snippet demonstrates 3 simple queries that use a different stem but perform the same query:
 
 snippet::example.BookRepository[project-base="doc-examples/hibernate-example", source="main", tags="simple", indent="0"]
