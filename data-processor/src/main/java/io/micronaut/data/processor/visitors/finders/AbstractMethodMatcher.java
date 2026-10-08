@@ -1,5 +1,5 @@
 /*
- * Copyright 2017-2023 original authors
+ * Copyright 2017-2026 original authors
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -16,10 +16,15 @@
 package io.micronaut.data.processor.visitors.finders;
 
 import io.micronaut.core.annotation.Internal;
+import io.micronaut.core.naming.NameUtils;
+import io.micronaut.data.model.PersistentEntityUtils;
 import io.micronaut.data.processor.visitors.MethodMatchContext;
+import io.micronaut.inject.visitor.VisitorContext;
 import org.jspecify.annotations.Nullable;
 
 import java.util.List;
+import java.util.regex.Matcher;
+import java.util.regex.Pattern;
 
 /**
  * The method matcher that is using {@link MethodNameParser}.
@@ -40,6 +45,8 @@ public abstract class AbstractMethodMatcher implements MethodMatcher {
     protected static final String FOR_UPDATE = "ForUpdate";
     protected static final String RETURNING = "Returning";
 
+    private static final Pattern PYTHON_QUERY_NAME = Pattern.compile("^([a-z]+)(_all)?(?:_by_(.+))?$");
+
     private final MethodNameParser parser;
 
     public AbstractMethodMatcher(MethodNameParser parser) {
@@ -50,11 +57,45 @@ public abstract class AbstractMethodMatcher implements MethodMatcher {
     @Nullable
     public MethodMatch match(MethodMatchContext matchContext) {
         String methodName = matchContext.getMethodElement().getName();
+        if (matchContext.getVisitorContext().getLanguage() == VisitorContext.Language.PYTHON) {
+            methodName = pythonQueryName(methodName, matchContext);
+        }
         List<MethodNameParser.Match> matches = parser.tryMatch(methodName);
         if (matches.isEmpty()) {
             return null;
         }
         return match(matchContext, matches);
+    }
+
+    private static String pythonQueryName(String methodName, MethodMatchContext matchContext) {
+        Matcher matcher = PYTHON_QUERY_NAME.matcher(methodName);
+        if (!matcher.matches()) {
+            return methodName;
+        }
+        String prefix = matcher.group(1) + (matcher.group(2) == null ? "" : ALL[0]);
+        String predicate = matcher.group(3);
+        if (predicate == null) {
+            return prefix;
+        }
+        // Keep native property names such as first_name and name_in_list intact.
+        // ponytail: By/All/InList grammar only; extend with property-name regression tests.
+        if (predicate.endsWith("_in_list")
+            && !isPropertyPath(matchContext, predicate)) {
+            predicate = predicate.substring(0, predicate.length() - "_in_list".length()) + "InList";
+        }
+        return prefix + BY + NameUtils.capitalize(predicate);
+    }
+
+    private static boolean isPropertyPath(MethodMatchContext matchContext, String predicate) {
+        if (!matchContext.hasRootEntity()) {
+            return false;
+        }
+        try {
+            return PersistentEntityUtils.getPersistentPropertyPath(matchContext.getRootEntity(), predicate).isPresent();
+        } catch (IllegalArgumentException ignored) {
+            // An unresolved association path may still end in the InList operator.
+            return false;
+        }
     }
 
     /**
