@@ -38,6 +38,29 @@ final class GeometryWktConverterSpec extends Specification {
         geometryCollection()           || 'GEOMETRYCOLLECTION(POINT (9 9), LINESTRING (1 2.5, 3 4, 5.75 6), GEOMETRYCOLLECTION(POINT (7.5 8.25), MULTIPOINT (1 2.5, 3 4)))'
     }
 
+    void "preserves coordinate #coordinate when formatting WKT"() {
+        given:
+        def geometry = new Point(coordinate, 2.5d)
+
+        when:
+        def persisted = converter.convertToPersistedValue(geometry, ConversionContext.DEFAULT)
+
+        then:
+        persisted == "POINT (${expectedCoordinate} 2.5)"
+        converter.convertToEntityValue(persisted, ConversionContext.DEFAULT) == geometry
+
+        where:
+        coordinate                              || expectedCoordinate
+        Math.nextDown(Math.scalb(1d, 63))       || '9223372036854774784'
+        Math.scalb(1d, 63)                      || '9.223372036854776E18'
+        (double) Long.MIN_VALUE                 || '-9223372036854775808'
+        Math.nextDown((double) Long.MIN_VALUE)  || '-9.223372036854778E18'
+        1e20d                                   || '1.0E20'
+        -1e20d                                  || '-1.0E20'
+        Double.MAX_VALUE                        || '1.7976931348623157E308'
+        -Double.MAX_VALUE                       || '-1.7976931348623157E308'
+    }
+
     void 'convert null geometry to persisted value returns null'() {
         expect:
         converter.convertToPersistedValue(null, ConversionContext.DEFAULT) == null
@@ -82,6 +105,23 @@ final class GeometryWktConverterSpec extends Specification {
             'POINT 1 2',
             'CIRCLE (1 2)',
             'POINT (1 2))',
+            'POINT (NaN 1)',
+            'POINT (1 NaN)',
+            'POINT (Infinity 1)',
+            'POINT (1 Infinity)',
+            'POINT (-Infinity 1)',
+            'POINT (1 -Infinity)',
+            'LINESTRING (,0 0, 1 1)',
+            'LINESTRING (0 0,, 1 1)',
+            'LINESTRING (0 0, , 1 1)',
+            'LINESTRING (0 0, 1 1,)',
+            'MULTIPOINT (0 0,, 1 1)',
+            'MULTILINESTRING ((0 0, 1 1),, (2 2, 3 3))',
+            'POLYGON ((0 0, 4 0, 4 4, 0 0),)',
+            'MULTIPOLYGON (((0 0, 4 0,, 4 4, 0 0)))',
+            'GEOMETRYCOLLECTION(,POINT (1 2))',
+            'GEOMETRYCOLLECTION(POINT (1 2),, LINESTRING (0 0, 1 1))',
+            'GEOMETRYCOLLECTION(POINT (1 2),)',
             'GEOMETRYCOLLECTION(POINT (1 2), LINESTRING (0 0, 1 1)))'
         ]
     }

@@ -99,8 +99,8 @@ public final class GeometryWktConverter implements AttributeConverter<Geometry, 
 
     private String formatNumber(double value) {
         // Keep whole-number doubles as "1" instead of "1.0" so the generated WKT stays compact and stable.
-        // Math.rint is used as the integral-value check rather than modulo arithmetic on doubles.
-        if (value == Math.rint(value)) {
+        // The upper bound is exclusive: Long.MAX_VALUE rounds to 2^63 when converted to double.
+        if (value == Math.rint(value) && value >= Long.MIN_VALUE && value < 0x1p63) {
             return Long.toString((long) value);
         }
         return Double.toString(value);
@@ -212,9 +212,10 @@ public final class GeometryWktConverter implements AttributeConverter<Geometry, 
                 }
             } else if (c == ',' && depth == 0) {
                 String part = s.substring(start, i).trim();
-                if (!part.isEmpty()) {
-                    out.add(part);
+                if (part.isEmpty()) {
+                    throw new IllegalArgumentException("Empty WKT component at index " + start);
                 }
+                out.add(part);
                 start = i + 1;
             }
         }
@@ -222,9 +223,10 @@ public final class GeometryWktConverter implements AttributeConverter<Geometry, 
             throw new IllegalArgumentException("Unbalanced parentheses");
         }
         String last = s.substring(start).trim();
-        if (!last.isEmpty()) {
-            out.add(last);
+        if (last.isEmpty()) {
+            throw new IllegalArgumentException("Empty WKT component at index " + start);
         }
+        out.add(last);
         return out;
     }
 }
