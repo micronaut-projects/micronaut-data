@@ -86,6 +86,7 @@ import io.micronaut.data.operations.reactive.ReactiveCapableRepository;
 import io.micronaut.data.operations.reactive.ReactiveRepositoryOperations;
 import io.micronaut.data.runtime.convert.DatabaseConversionContextFactory;
 import io.micronaut.data.runtime.convert.DataConversionService;
+import io.micronaut.data.runtime.convert.SqlAttributeConverterResolver;
 import io.micronaut.data.runtime.convert.RuntimePersistentPropertyConversionContext;
 import io.micronaut.data.runtime.date.DateTimeProvider;
 import io.micronaut.data.runtime.mapper.DTOMapper;
@@ -1368,7 +1369,8 @@ public final class DefaultJdbcRepositoryOperations extends AbstractSqlRepository
             if (property != null) {
                 AttributeConverter<Object, Object> converter = property.getConverter();
                 if (converter != null) {
-                    return converter.convertToPersistedValue(value, createTypeConversionContext(property, property.getArgument()));
+                    return SqlAttributeConverterResolver.resolve(converter, DatabaseType.from(sqlStoredQuery.getDialect()))
+                        .convertToPersistedValue(value, createTypeConversionContext(property, property.getArgument()));
                 }
             }
             return value;
@@ -1380,7 +1382,8 @@ public final class DefaultJdbcRepositoryOperations extends AbstractSqlRepository
             if (converterClass == null) {
                 return value;
             }
-            AttributeConverter<Object, Object> converter = attributeConverterRegistry.getConverter(converterClass);
+            AttributeConverter<Object, Object> converter = SqlAttributeConverterResolver.resolve(
+                attributeConverterRegistry.getConverter(converterClass), DatabaseType.from(sqlStoredQuery.getDialect()));
             ConversionContext conversionContext = createTypeConversionContext(null, argument);
             return converter.convertToPersistedValue(value, conversionContext);
         }

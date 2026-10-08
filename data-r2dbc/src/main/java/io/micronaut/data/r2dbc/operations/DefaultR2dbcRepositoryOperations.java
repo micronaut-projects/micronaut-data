@@ -90,6 +90,7 @@ import io.micronaut.data.r2dbc.mapper.RowTupleMapper;
 import io.micronaut.data.r2dbc.transaction.R2dbcReactorTransactionOperations;
 import io.micronaut.data.runtime.convert.DatabaseConversionContextFactory;
 import io.micronaut.data.runtime.convert.DataConversionService;
+import io.micronaut.data.runtime.convert.SqlAttributeConverterResolver;
 import io.micronaut.data.runtime.convert.RuntimePersistentPropertyConversionContext;
 import io.micronaut.data.runtime.date.DateTimeProvider;
 import io.micronaut.data.runtime.mapper.ResultReader;
@@ -1276,7 +1277,8 @@ final class DefaultR2dbcRepositoryOperations extends AbstractSqlRepositoryOperat
             }
             AttributeConverter<Object, Object> converter = property.getConverter();
             if (converter != null) {
-                return converter.convertToPersistedValue(value, createTypeConversionContext(property, property.getArgument()));
+                return SqlAttributeConverterResolver.resolve(converter, DatabaseType.from(sqlStoredQuery.getDialect()))
+                    .convertToPersistedValue(value, createTypeConversionContext(property, property.getArgument()));
             }
             return value;
         }
@@ -1287,7 +1289,8 @@ final class DefaultR2dbcRepositoryOperations extends AbstractSqlRepositoryOperat
             if (converterClass == null) {
                 return value;
             }
-            AttributeConverter<Object, Object> converter = attributeConverterRegistry.getConverter(converterClass);
+            AttributeConverter<Object, Object> converter = SqlAttributeConverterResolver.resolve(
+                attributeConverterRegistry.getConverter(converterClass), DatabaseType.from(sqlStoredQuery.getDialect()));
             ConversionContext conversionContext = createTypeConversionContext(null, argument);
             return converter.convertToPersistedValue(value, conversionContext);
         }

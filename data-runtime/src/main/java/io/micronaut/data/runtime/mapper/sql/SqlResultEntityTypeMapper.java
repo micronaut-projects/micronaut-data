@@ -48,6 +48,7 @@ import io.micronaut.data.model.runtime.convert.AttributeConverter;
 import io.micronaut.data.model.runtime.convert.ResultReaderAttributeConverter;
 import io.micronaut.data.runtime.convert.DatabaseConversionContextFactory;
 import io.micronaut.data.runtime.convert.DataConversionService;
+import io.micronaut.data.runtime.convert.SqlAttributeConverterResolver;
 import io.micronaut.data.runtime.mapper.ResultReader;
 
 import java.sql.Array;
@@ -835,9 +836,14 @@ public final class SqlResultEntityTypeMapper<RS, R> implements SqlTypeMapper<RS,
         DataType dataType = prop.getDataType();
         Object result;
         AttributeConverter<Object, Object> converter = prop.getConverter();
+        var conversionContext = converter != null && conversionContextFactory != null
+            ? conversionContextFactory.forArgument(prop.getArgument()) : null;
+        if (converter != null && conversionContext != null) {
+            converter = SqlAttributeConverterResolver.resolve(converter, conversionContext.getDatabaseType());
+        }
 
-        if (converter instanceof ResultReaderAttributeConverter<Object, Object> sqlAttributeConverter && conversionContextFactory != null) {
-            result = sqlAttributeConverter.readFromResultSet(conversionContextFactory.forArgument(prop.getArgument()), resultReader, rs, columnName);
+        if (converter instanceof ResultReaderAttributeConverter<Object, Object> sqlAttributeConverter && conversionContext != null) {
+            result = sqlAttributeConverter.readFromResultSet(conversionContext, resultReader, rs, columnName);
         } else if (dataType == DataType.JSON && jsonColumnReader != null) {
             JsonDataType jsonDataType = prop.getJsonDataType();
             result = jsonColumnReader.readJsonColumn(resultReader, rs, columnName, jsonDataType, prop.getArgument());
@@ -845,8 +851,8 @@ public final class SqlResultEntityTypeMapper<RS, R> implements SqlTypeMapper<RS,
             result = readDynamic(rs, column, dataType);
         }
 
-        if (converter != null && conversionContextFactory != null) {
-            return converter.convertToEntityValue(result, conversionContextFactory.forArgument(prop.getArgument()));
+        if (converter != null && conversionContext != null) {
+            return converter.convertToEntityValue(result, conversionContext);
         }
         return result;
     }
