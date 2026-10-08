@@ -15,6 +15,8 @@
  */
 package io.micronaut.data.jdbc.annotation;
 
+import io.micronaut.core.annotation.Experimental;
+
 import java.lang.annotation.Documented;
 import java.lang.annotation.ElementType;
 import java.lang.annotation.Retention;
@@ -47,6 +49,7 @@ import java.lang.annotation.Target;
  * @since 5.3.0
  */
 @Documented
+@Experimental
 @Retention(RetentionPolicy.RUNTIME)
 @Target(ElementType.METHOD)
 public @interface OracleChangeNotification {
@@ -89,6 +92,7 @@ public @interface OracleChangeNotification {
     /**
      * An Oracle JDBC Continuous Query Notification registration property.
      */
+    @Experimental
     @interface Property {
 
         /**

@@ -19,6 +19,7 @@ import io.micronaut.aop.InterceptorBinding;
 import io.micronaut.aop.InterceptorKind;
 import io.micronaut.context.annotation.AliasFor;
 import io.micronaut.context.annotation.Executable;
+import io.micronaut.core.annotation.Experimental;
 
 import java.lang.annotation.Documented;
 import java.lang.annotation.ElementType;
@@ -44,6 +45,7 @@ import java.lang.annotation.Target;
  * @since 5.3.0
  */
 @Documented
+@Experimental
 @Executable(processOnStartup = true)
 @InterceptorBinding(kind = InterceptorKind.AROUND)
 @Retention(RetentionPolicy.RUNTIME)

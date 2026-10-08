@@ -17,6 +17,7 @@ package io.micronaut.data.jdbc.notification.oracle;
 
 import io.micronaut.context.annotation.ConfigurationProperties;
 import io.micronaut.context.annotation.Requires;
+import io.micronaut.core.annotation.Experimental;
 import oracle.jdbc.OracleConnection;
 
 import java.time.Duration;
@@ -30,6 +31,7 @@ import java.util.Objects;
  *
  * @since 5.3.0
  */
+@Experimental
 @Requires(classes = OracleConnection.class)
 @ConfigurationProperties(OracleRegistrationRecoveryConfiguration.PREFIX)
 public final class OracleRegistrationRecoveryConfiguration {

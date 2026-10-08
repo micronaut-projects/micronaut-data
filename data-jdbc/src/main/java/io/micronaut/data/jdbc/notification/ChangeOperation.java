@@ -15,11 +15,14 @@
  */
 package io.micronaut.data.jdbc.notification;
 
+import io.micronaut.core.annotation.Experimental;
+
 /**
  * The operation reported by a database change notification provider.
  *
  * @since 5.3.0
  */
+@Experimental
 public enum ChangeOperation {
     /** A row was inserted. */
     INSERT,

@@ -15,6 +15,7 @@
  */
 package io.micronaut.data.jdbc.notification.oracle;
 
+import io.micronaut.core.annotation.Experimental;
 import io.micronaut.data.jdbc.notification.ChangeEventMetadata;
 
 /**
@@ -23,5 +24,6 @@ import io.micronaut.data.jdbc.notification.ChangeEventMetadata;
  * @param rowId The Oracle {@code ROWID} reported for the changed row.
  * @since 5.3.0
  */
+@Experimental
 public record OracleChangeEventMetadata(String rowId) implements ChangeEventMetadata {
 }

@@ -15,6 +15,8 @@
  */
 package io.micronaut.data.jdbc.notification;
 
+import io.micronaut.core.annotation.Experimental;
+
 /**
  * Marker interface for database-provider-specific change event metadata.
  *
@@ -23,5 +25,6 @@ package io.micronaut.data.jdbc.notification;
  *
  * @since 5.3.0
  */
+@Experimental
 public interface ChangeEventMetadata {
 }

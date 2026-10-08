@@ -15,6 +15,8 @@
  */
 package io.micronaut.data.jdbc.notification;
 
+import io.micronaut.core.annotation.Experimental;
+
 import java.util.Optional;
 
 /**
@@ -27,6 +29,7 @@ import java.util.Optional;
  * @param <E> The persistent entity type.
  * @since 5.3.0
  */
+@Experimental
 public interface ChangeEvent<E> {
 
     /**

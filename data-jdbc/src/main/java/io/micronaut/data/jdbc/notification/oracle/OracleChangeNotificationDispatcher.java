@@ -350,15 +350,15 @@ final class OracleChangeNotificationDispatcher implements DatabaseChangeListener
      */
     private void dispatchSafely(DatabaseChangeEvent event, RegistrationOptions options) {
         dispatchSafely(event.getRegId(), () -> {
-            if (options.purgeOnNotificationEnabled() && isDataNotification(event)) {
-                registrationPurgedHandler.accept(event.getRegId());
-            }
             if (LOG.isTraceEnabled()) {
                 LOG.trace("Accepted DCN event of type [{}] for datasource [{}], registration [{}], listener method [{}], " +
                         "database [{}], transaction XID (raw hex) [{}], and table changes [{}]",
                     event.getEventType(), dataSourceName, event.getRegId(), methodDescription,
                     event.getDatabaseName(), describeTransactionId(event),
                     describeTableChanges(event.getTableChangeDescription()));
+            }
+            if (options.purgeOnNotificationEnabled() && isDataNotification(event)) {
+                registrationPurgedHandler.accept(event.getRegId());
             }
             dispatch(event, options);
         });
