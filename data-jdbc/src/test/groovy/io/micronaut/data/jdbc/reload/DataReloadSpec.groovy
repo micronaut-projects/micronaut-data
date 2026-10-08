@@ -184,7 +184,7 @@ class DataReloadSpec extends Specification {
     private static ApplicationContext devContext(boolean track) {
         return ApplicationContext.builder()
             .properties(properties() + ['micronaut.dev.enabled': true])
-            .trackBeanDependencies(track)
+            .beanDependencyTrackingEnabled(track)
             .start()
     }
 
@@ -215,7 +215,7 @@ class DataReloadSpec extends Specification {
     }
 
     private static ClassChangeEvent classChange(Set<ClassLoader> retired, List<ClassChange> changes, ReloadStrategy strategy) {
-        return new ClassChangeEvent(DataReloadSpec, 1, retired, DataReloadSpec.classLoader, changes, strategy)
+        return new ClassChangeEvent(DataReloadSpec, retired, DataReloadSpec.classLoader, changes, strategy)
     }
 
     static class LateRepository {
