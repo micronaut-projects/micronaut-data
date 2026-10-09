@@ -18,7 +18,7 @@ data class GeometryEntityWkt(
     @field:GeneratedValue
     val id: Long? = null,
     //tag::get[]
-    @field:Srid(3857)
+    @field:Srid(Srid.WEB_MERCATOR)
     @field:Index(columns = ["location"])
     @MappedProperty(value = "location", converter = GeometryWktConverter::class)
     val point: Point,

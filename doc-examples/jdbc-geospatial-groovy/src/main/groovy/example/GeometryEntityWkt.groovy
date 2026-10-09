@@ -21,7 +21,7 @@ class GeometryEntityWkt {
     Long id
     //tag::get[]
 
-    @Srid(3857)
+    @Srid(Srid.WEB_MERCATOR)
     @Index(columns = "location")
     @MappedProperty(value = "location", converter = GeometryWktConverter)
     Point point

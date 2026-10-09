@@ -36,6 +36,14 @@ Use api:data.annotation.Srid[] to declare the spatial reference system identifie
 property. Micronaut Data uses the SRID value when it generates read and write conversion SQL, schema metadata, and
 predicate argument conversion.
 
+Use the constants declared on `Srid` for common spatial reference systems:
+
+* `Srid.WGS_84` (4326) - World Geodetic System 1984
+* `Srid.WEB_MERCATOR` (3857) - Web Mercator
+* `Srid.ETRS_89` (4258) - European Terrestrial Reference System 1989
+
+For example, use `@Srid(value = Srid.WGS_84, type = Srid.CrsType.GEOGRAPHIC)` for WGS 84 coordinates.
+
 Micronaut Data uses `Srid.CrsType` to choose the distance function for dialects that have different functions
 for planar and spherical distance checks:
 
@@ -120,9 +128,9 @@ those metadata statements automatically if you use Micronaut Data's internal sch
 for tests rather than production schema management. In that case, the generated metadata depends on the SRID.
 The internal schema-generation tooling currently supports the following SRIDs:
 
-* 4326 - WGS 84 - World Geodetic System 1984
-* 3857 - Web Mercator
-* 4258 - ETRS89 - Geodetic coordinate system for Europe
+* `Srid.WGS_84` (4326) - WGS 84 - World Geodetic System 1984
+* `Srid.WEB_MERCATOR` (3857) - Web Mercator
+* `Srid.ETRS_89` (4258) - ETRS89 - Geodetic coordinate system for Europe
 
 If using the internal schema-generation tooling and another SRID, a new row will not be inserted into the `USER_SDO_GEOM_METADATA` table.
 
@@ -439,7 +447,7 @@ CREATE SPATIAL INDEX [idx_geography_entity_wkt_location] ON [geography_entity_wk
 ----
 
 When the indexed column definition contains `geometry`, the internal schema-generation tooling also appends the geometry
-grid bounding box clause using default coordinates for SRID = 3857 - Web Mercator:
+grid bounding box clause using default coordinates for `Srid.WEB_MERCATOR` (3857):
 
 [source,sql]
 ----
