@@ -27,7 +27,6 @@ import io.r2dbc.spi.R2dbcTransientResourceException;
 import io.r2dbc.spi.Row;
 import org.jspecify.annotations.NonNull;
 import org.jspecify.annotations.Nullable;
-import reactor.core.publisher.Mono;
 
 import java.math.BigDecimal;
 import java.sql.Time;
@@ -214,8 +213,7 @@ abstract class AbstractR2dbcResultReader<I> implements ResultReader<Row, I> {
             return string;
         }
         if (o instanceof Clob clob) {
-            CharSequence charSequence = Mono.from(clob.stream()).block();
-            return charSequence == null ? null : charSequence.toString();
+            return R2dbcLobReader.readClob(clob).block();
         }
         // Try to get it as a string otherwise Postgres can return an internal class
         try {

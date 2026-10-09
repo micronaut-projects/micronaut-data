@@ -516,6 +516,16 @@ final class DefaultR2dbcRepositoryOperations extends AbstractSqlRepositoryOperat
             .flatMap(result -> Flux.from(result.map((row, rowMetadata) -> mapper.apply(row))));
     }
 
+    /**
+     * Like {@link #executeAndMapEachRow(Statement, Function)}, but reads the rows of each {@link Result} only after
+     * the rows of the previous one, so the rows keep the order of the bindings of a batched statement even when the
+     * rows of an earlier result arrive later.
+     */
+    private static <T> Flux<T> executeAndMapEachRowInResultOrder(Statement statement, Function<Row, T> mapper) {
+        return Flux.from(statement.execute())
+            .concatMap(result -> Flux.from(result.map((row, rowMetadata) -> mapper.apply(row))));
+    }
+
     private static <T> Flux<T> executeAndMapEachReadable(Statement statement, Function<Readable, T> mapper) {
         return Flux.from(statement.execute())
             .flatMap(result -> Flux.from(result.map(mapper)));
@@ -1625,9 +1635,13 @@ final class DefaultR2dbcRepositoryOperations extends AbstractSqlRepositoryOperat
                         } else {
                             idMapper = row -> columnIndexResultSetReader.readDynamic(row, 0, persistentEntity.getIdentity().getDataType());
                         }
-                        Mono<List<Object>> ids = executeAndMapEachRow(statement, idMapper).collectList();
+                        Mono<List<Object>> ids = executeAndMapEachRowInResultOrder(statement, idMapper).collectList();
 
                         return ids.flatMap(idList -> {
+                            // The ids are matched to the entities by position, which a surplus id makes unreliable
+                            if (idList.size() > notVetoedEntities.size()) {
+                                throw new DataAccessException("Expected " + notVetoedEntities.size() + " generated IDs, one for each inserted entity, but the database returned " + idList.size());
+                            }
                             Iterator<Object> iterator = idList.iterator();
                             ListIterator<Data> resultIterator = notVetoedEntities.listIterator();
                             RuntimePersistentProperty<T> identity = persistentEntity.getIdentity();

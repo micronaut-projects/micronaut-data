@@ -19,6 +19,7 @@ import io.micronaut.core.convert.ConversionService
 import io.micronaut.data.exceptions.DataAccessException
 import io.micronaut.data.model.DataType
 import io.micronaut.data.runtime.convert.DataConversionService
+import io.r2dbc.spi.Blob
 import io.r2dbc.spi.Clob
 import io.r2dbc.spi.ColumnMetadata
 import io.r2dbc.spi.Row
@@ -31,6 +32,7 @@ import spock.lang.Specification
 import spock.lang.Unroll
 
 import java.nio.ByteBuffer
+import java.nio.CharBuffer
 import java.sql.Time
 import java.time.Instant
 import java.time.LocalDate
@@ -178,7 +180,7 @@ class ColumnNameR2dbcResultReaderSpec extends Specification {
         def row = new StubRow([
                 text  : "plain",
                 clob  : new StubClob("from clob"),
-                empty : new StubClob(null),
+                empty : new StubClob(),
                 number: 42,
                 internal: new Typed(new StringBuilder("pg"), [(String): "rendered"]),
                 none  : null,
@@ -208,6 +210,101 @@ class ColumnNameR2dbcResultReaderSpec extends Specification {
 
         where:
         mode << MODES
+    }
+
+    @Unroll
+    void "reads every chunk of a clob streamed in several chunks, by #mode"() {
+        given:
+        def row = new StubRow([
+                clob      : new StubClob("first ", new StringBuilder("second "), CharBuffer.wrap("third")),
+                emptyChunk: new StubClob(""),
+        ])
+
+        expect:
+        read(mode, row, "clob") { r, c -> r.readString(row, c) } == "first second third"
+        read(mode, row, "clob") { r, c -> r.readDynamic(row, c, DataType.STRING) } == "first second third"
+        read(mode, row, "emptyChunk") { r, c -> r.readString(row, c) } == ""
+
+        where:
+        mode << MODES
+    }
+
+    @Unroll
+    void "reads the remaining bytes of a sliced, direct or read-only buffer, by #mode"() {
+        given:
+        def row = new StubRow([
+                sliced  : positioned(ByteBuffer.wrap([9, 1, 2, 3, 9] as byte[]), 1, 4),
+                direct  : directBuffer(BYTES),
+                readOnly: ByteBuffer.wrap(BYTES).asReadOnlyBuffer(),
+        ])
+
+        expect:
+        Arrays.equals((byte[]) read(mode, row, "sliced") { r, c -> r.readBytes(row, c) }, BYTES)
+        Arrays.equals((byte[]) read(mode, row, "direct") { r, c -> r.readBytes(row, c) }, BYTES)
+        Arrays.equals((byte[]) read(mode, row, "readOnly") { r, c -> r.readBytes(row, c) }, BYTES)
+
+        and: "the position of the buffer is left as it was"
+        row.columns.sliced.position() == 1
+
+        where:
+        mode << MODES
+    }
+
+    @Unroll
+    void "reads every chunk of a blob streamed in several chunks of any kind of buffer, by #mode"() {
+        given:
+        def row = new StubRow([
+                blob : new StubBlob(
+                        ByteBuffer.wrap([1, 2] as byte[]),
+                        positioned(ByteBuffer.wrap([9, 3, 4, 9] as byte[]), 1, 3),
+                        directBuffer([5, 6] as byte[]),
+                        ByteBuffer.wrap([7] as byte[]).asReadOnlyBuffer()),
+                empty: new StubBlob(),
+        ])
+
+        expect:
+        Arrays.equals((byte[]) read(mode, row, "blob") { r, c -> r.readBytes(row, c) }, [1, 2, 3, 4, 5, 6, 7] as byte[])
+        Arrays.equals((byte[]) read(mode, row, "blob") { r, c -> r.readDynamic(row, c, DataType.BYTE_ARRAY) }, [1, 2, 3, 4, 5, 6, 7] as byte[])
+        Arrays.equals((byte[]) read(mode, row, "empty") { r, c -> r.readBytes(row, c) }, new byte[0])
+
+        where:
+        mode << MODES
+    }
+
+    void "a lob is released by consuming its stream or by cancelling the subscription to it, never discarded"() {
+        given:
+        def clob = new StubClob("a", "b")
+        def blob = new StubBlob(ByteBuffer.wrap([1] as byte[]))
+        def pendingClob = new StubClob(Flux.never())
+        def pendingBlob = new StubBlob(Flux.never())
+
+        when:
+        R2dbcLobReader.readClob(clob).block()
+        R2dbcLobReader.readBlob(blob).block()
+        R2dbcLobReader.readClob(pendingClob).subscribe().dispose()
+        R2dbcLobReader.readBlob(pendingBlob).subscribe().dispose()
+
+        then: "the stream read to the end is not cancelled"
+        !clob.cancelled
+        !blob.cancelled
+
+        and: "cancelling the read cancels the subscription to the stream"
+        pendingClob.cancelled
+        pendingBlob.cancelled
+
+        and: "discard is only for a stream that is not subscribed"
+        !clob.discardCalled
+        !blob.discardCalled
+        !pendingClob.discardCalled
+        !pendingBlob.discardCalled
+    }
+
+    private static ByteBuffer positioned(ByteBuffer buffer, int position, int limit) {
+        return buffer.limit(limit).position(position)
+    }
+
+    private static ByteBuffer directBuffer(byte[] bytes) {
+        return ByteBuffer.allocateDirect(bytes.length).put(bytes).flip()
     }
 
     @Unroll
@@ -370,20 +467,58 @@ class ColumnNameR2dbcResultReaderSpec extends Specification {
         }
     }
 
+    /**
+     * A CLOB streaming its text in the given chunks.
+     */
     static class StubClob implements Clob {
-        final String text
+        final Publisher<CharSequence> chunks
+        boolean cancelled
+        boolean discardCalled
 
-        StubClob(String text) {
-            this.text = text
+        StubClob(CharSequence... chunks) {
+            this(Flux.fromArray(chunks))
+        }
+
+        StubClob(Publisher<CharSequence> chunks) {
+            this.chunks = chunks
         }
 
         @Override
         Publisher<CharSequence> stream() {
-            return text == null ? Flux.empty() : Flux.just(text)
+            return Flux.from(chunks).doOnCancel { cancelled = true }
         }
 
         @Override
         Publisher<Void> discard() {
+            discardCalled = true
+            return Mono.empty()
+        }
+    }
+
+    /**
+     * A BLOB streaming its content in the given chunks.
+     */
+    static class StubBlob implements Blob {
+        final Publisher<ByteBuffer> chunks
+        boolean cancelled
+        boolean discardCalled
+
+        StubBlob(ByteBuffer... chunks) {
+            this(Flux.fromArray(chunks))
+        }
+
+        StubBlob(Publisher<ByteBuffer> chunks) {
+            this.chunks = chunks
+        }
+
+        @Override
+        Publisher<ByteBuffer> stream() {
+            return Flux.from(chunks).doOnCancel { cancelled = true }
+        }
+
+        @Override
+        Publisher<Void> discard() {
+            discardCalled = true
             return Mono.empty()
         }
     }
