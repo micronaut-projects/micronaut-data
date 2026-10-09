@@ -38,17 +38,17 @@ public class GeographyEntityWkt {
     @GeneratedValue
     private Long id;
 
-    @Srid(4258)
+    @Srid(Srid.ETRS_89)
     @Index(columns = "location")
     @MappedProperty(value = "location", converter = GeometryWktConverter.class, definition = "geography not null")
     private Point point;
 
-    @Srid(4258)
+    @Srid(Srid.ETRS_89)
     @Index(columns = "multi_point")
     @MappedProperty(converter = GeometryWktConverter.class, definition = "geography not null")
     private MultiPoint multiPoint;
 
-    @Srid(4326)
+    @Srid(Srid.WGS_84)
     @MappedProperty(converter = GeometryWktConverter.class, definition = "geography not null")
     private LineString lineString;
 

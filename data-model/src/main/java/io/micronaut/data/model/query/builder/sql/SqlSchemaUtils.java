@@ -110,9 +110,6 @@ public final class SqlSchemaUtils {
 
     static final String LIST_ANNOTATION_SUFFIX = "$List";
 
-    static final int SRID_WGS_84 = 4326;
-    static final int SRID_ETRS_89 = 4258;
-    static final int SRID_WEB_MERCATOR = 3857;
 
     private static final Logger LOG = LoggerFactory.getLogger(SqlSchemaUtils.class);
 
@@ -758,12 +755,12 @@ public final class SqlSchemaUtils {
                     if (sridOpt.isPresent()) {
                         srid = sridOpt.getAsInt();
                     } else if (annotationMetadata.hasAnnotation(Index.class)) {
-                        srid = SRID_WGS_84;
+                        srid = Srid.WGS_84;
                     }
                     String columnName = namingStrategy.mappedName(associations, persistentProperty);
-                    if (srid == SRID_WGS_84 || srid == SRID_ETRS_89) {
+                    if (srid == Srid.WGS_84 || srid == Srid.ETRS_89) {
                         statements.add(ORACLE_GEOM_METADATA_STATEMENT.formatted(tableName, columnName, "-180", "180", "0.005", "-90", "90", "0.005", srid));
-                    } else if (srid == SRID_WEB_MERCATOR) {
+                    } else if (srid == Srid.WEB_MERCATOR) {
                         statements.add(ORACLE_GEOM_METADATA_STATEMENT.formatted(tableName, columnName, "-20037508.3427892", "20037508.3427892", "0.001", "-20037508.3427892", "20037508.3427892", "0.001", srid));
                     }
                 }

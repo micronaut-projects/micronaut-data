@@ -31,7 +31,7 @@ public class HotelJson {
 
     private String name;
 
-    @Srid(3857)
+    @Srid(Srid.WEB_MERCATOR)
     @Index(columns = "location")
     private Point location;
 

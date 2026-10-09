@@ -35,7 +35,7 @@ public class GeometryEntityJson {
     private Long id;
     //tag::get[]
 
-    @Srid(3857)
+    @Srid(Srid.WEB_MERCATOR)
     @Index(columns = "location")
     @MappedProperty("location")
     private Point point;
