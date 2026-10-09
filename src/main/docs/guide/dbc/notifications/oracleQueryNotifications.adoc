@@ -1,0 +1,310 @@
+Micronaut Data JDBC supports Oracle Continuous Query Notification (CQN), also known as Database Change Notification (DCN),
+so applications can react when committed database changes affect an entity table or registered query result.
+
+Micronaut Data exposes a database-neutral listener contract through ann:data.jdbc.annotation.ChangeListener[] and
+Oracle Database registration options through ann:data.jdbc.annotation.OracleChangeNotification[].
+When Oracle Database reports a change, the listener receives an api:data.jdbc.notification.ChangeEvent[] containing
+the reported operation, optional current entity state, and optional provider-specific metadata.
+
+== Prerequisites
+
+Query notifications require Micronaut Data JDBC and the Oracle JDBC driver:
+
+dependency:com.oracle.database.jdbc:ojdbc11[scope="runtimeOnly"]
+
+The datasource user must have Oracle Database's `CHANGE NOTIFICATION` privilege. A database administrator can grant it with:
+
+[source,sql]
+----
+GRANT CHANGE NOTIFICATION TO application_user;
+----
+
+The entity used by a listener must be a Micronaut Data persistent entity.
+The listener itself must be a Micronaut bean and must be proxyable; in particular,
+do not declare the listener class or listener method `final`.
+
+== Declaring a Listener
+
+The following listener uses Object Change Notification to observe the complete mapped `LIBRARY` table.
+
+snippet::example.notification.LibraryCache[project-base="doc-examples/jdbc-example-records", source="main", tags="listener", languages="java,groovy,kotlin,python"]
+
+Every Oracle Database listener must declare both annotations, even when ann:data.jdbc.annotation.OracleChangeNotification[] uses only its defaults.
+ann:data.jdbc.annotation.OracleChangeNotification[] selects Oracle-specific notification settings and enables
+Micronaut Data to reload changed entities using their `ROWID`.
+
+Micronaut Data validates the listener contract at compilation time. A method annotated with ann:data.jdbc.annotation.ChangeListener[] must:
+
+* be a non-private, non-static instance method;
+* return `void`;
+* declare exactly one `ChangeEvent<E>` parameter; and
+* use a concrete persistent entity type for `E`.
+
+The listener uses the `default` datasource unless another datasource is specified through the `dataSource` attribute
+of the ann:data.jdbc.annotation.ChangeListener[] annotation.
+
+Micronaut Data creates an Oracle Database registration for each listener method during application startup.
+The registration normally remains active for the application’s lifetime, and Micronaut Data attempts to unregister
+it during graceful shutdown.
+
+== Handling Change Events
+
+api:data.jdbc.notification.ChangeEvent[] provides:
+
+* `operation()` -- the api:data.jdbc.notification.ChangeOperation[] reported for the event;
+* `entity()` -- the current entity state, when it is available; and
+* `metadata(Class)` -- provider-specific metadata, when it is available.
+
+Oracle Database row events include api:data.jdbc.notification.oracle.OracleChangeEventMetadata[], which exposes the affected row's `ROWID`:
+
+snippet::example.notification.LibraryCache[project-base="doc-examples/jdbc-example-records", source="main", tags="events", indent="0", languages="java,groovy,kotlin,python"]
+
+This cache updates individual entities for `INSERT` and `UPDATE`. For `DELETE`, the event has no entity ID,
+so the example reloads the cache instead of trying to interpret the Oracle Database `ROWID` as an entity ID.
+It also reloads the complete cache for `INVALIDATE`.
+
+For `INSERT` and `UPDATE`, Oracle Database supplies a `ROWID` rather than entity values.
+Micronaut Data reloads the row and maps the complete entity before the application reads `entity()`.
+The reloaded value is the current database state at reload time, not a historical snapshot of the commit that produced
+the notification. Another transaction can therefore change or delete the row before it is reloaded.
+
+For `DELETE`, the entity is empty because the row can no longer be loaded, but Oracle Database `ROWID` metadata is retained.
+
+Oracle Database can report that the registered data changed without usable row details. This includes an `ALL_ROWS` or
+full-table notification, an `ALTER` or `DROP` operation, a missing `ROWID`, and, for a query notification, a change to
+a dependent table that cannot be represented as the listener entity.
+When a notification requires invalidation, the listener receives one `INVALIDATE` event with no entity or row-specific
+metadata instead of individual row events from that notification. The application
+decides whether to refresh a cache, rerun a query, or take another appropriate action.
+Micronaut Data also delivers `INVALIDATE` after it replaces a registration whose notification connection failed,
+so the listener can reconcile changes that may have been missed during recovery.
+
+== Object Change Notification
+
+The default ann:data.jdbc.annotation.OracleChangeNotification[] configuration registers the entity's mapped table.
+Each affected row for which Oracle Database supplies a `ROWID` is delivered as an `INSERT`, `UPDATE`, or `DELETE` event.
+
+Micronaut Data automatically requests row identifiers with `DCN_NOTIFY_ROWIDS`. Do not configure `DCN_NOTIFY_CHANGELAG`
+to a non-zero value: grouping changes with a lag prevents Oracle Database from supplying the row-level operation and
+`ROWID` details required by this API. A non-zero DCN_NOTIFY_CHANGELAG value is rejected at compilation time when supplied
+through the annotation, or during registration when supplied through datasource properties.
+
+== Query Result Change Notification
+
+Query Result Change Notification (QRCN) registers a query result instead of the complete mapped table.
+Enable it with the Oracle JDBC `DCN_QUERY_CHANGE_NOTIFICATION` registration property, then use `select` and `where`
+to describe the result:
+
+This example tracks only libraries with a capacity of at least 10,000.
+
+snippet::example.notification.LargeLibraryCache[project-base="doc-examples/jdbc-example-records", source="main", tags="query", indent="0", languages="java,groovy,kotlin,python"]
+
+The `select` value controls the result registered with Oracle Database; it is not an entity projection.
+For an `INSERT` or `UPDATE`, Micronaut Data still reloads and maps the complete entity by `ROWID`.
+
+The `select` value must be `*` or a comma-separated list of mapped database column identifiers.
+Aggregate functions, expressions, aliases, literals, empty selections, and unmapped columns are rejected at compilation time.
+If a property uses `@MappedProperty`, specify its mapped database column name rather than its Java property name.
+Unquoted identifiers follow Oracle Database's case-insensitive identifier rules; quoted identifiers must match the rendered mapped column name exactly.
+
+The `where` value is appended as Oracle SQL. Micronaut Data verifies at compilation time that `select` or `where` is
+used only when QRCN is enabled; Oracle Database determines whether the completed query is eligible for registration when the application starts.
+
+QRCN queries may depend on other tables, including tables in another schema when the datasource user has the required privileges.
+If a notification reports a change only to a dependent table, Micronaut Data cannot reload it as the listener’s entity type.
+The listener therefore receives an `INVALIDATE` event instead of a row-level event.
+
+== Oracle Registration Properties
+
+Use `OracleChangeNotification.Property` to pass Oracle JDBC registration properties by name and value,
+as shown by `DCN_QUERY_CHANGE_NOTIFICATION` in the preceding example. Micronaut Data sets
+`DCN_CLIENT_INIT_CONNECTION` to `true` by default, so the JDBC driver initiates its notification connection.
+Set it to `false` to use server-initiated notification connections. To enable a one-shot registration,
+add a property named `NTF_QOS_PURGE_ON_NTFN` with the value `true`.
+
+`NTF_QOS_PURGE_ON_NTFN` makes each registration one-shot: Oracle Database removes it after its first data notification,
+and Micronaut Data stops receiving further notifications for that listener.
+
+Micronaut Data validates requested properties before passing them to Oracle JDBC. It always enables `DCN_NOTIFY_ROWIDS`
+and defaults `NTF_TIMEOUT` to `0`, so registrations do not expire unless a timeout is configured.
+The table covers the Oracle JDBC properties relevant to CQN registration, ordered by status.
+*Supported* means the option can be used with this feature, subject to the constraints described below.
+*Restricted* means only the stated value is accepted.
+*Driver-managed* means Micronaut Data passes the option to JDBC without implementing additional behavior for it.
+*Unsupported* means registration fails validation if the property is configured.
+
+[cols="2,1,4",options="header"]
+|===
+|Property |Status |Purpose and constraint
+
+|`DCN_CLIENT_INIT_CONNECTION` |Supported |Selects the notification connection direction. Micronaut Data defaults to `true` (client-initiated); set `false` for server-initiated delivery.
+|`DCN_QUERY_CHANGE_NOTIFICATION` |Supported |Set `true` for QRCN or leave `false` for Object Change Notification. `select` and `where` require QRCN.
+|`NTF_QOS_RELIABLE` |Supported |Requests persistent notification queuing in Oracle Database. Micronaut Data lets the driver handle client-initiated reconnect attempts; a terminal driver failure starts framework recovery. Oracle Database's lazy cleanup of disconnected ordinary registrations does not apply to reliable registrations.
+|`NTF_QOS_PURGE_ON_NTFN` |Supported |Makes a registration one-shot. Oracle Database removes it after its first data notification, and the listener receives no further notifications.
+|`NTF_TIMEOUT` |Supported |Sets the registration lifetime in seconds. The default is `0` (no configured expiry). A positive value causes Oracle Database to expire the registration; Micronaut Data does not renew it, so the listener becomes unavailable when it expires.
+
+|`DCN_NOTIFY_ROWIDS` |Restricted |Must be `true`; row identifiers are needed to reload affected entities.
+|`DCN_NOTIFY_CHANGELAG` |Restricted |Must be `0`; a non-zero lag removes the row-level details needed by the listener API.
+|`NTF_GROUPING_CLASS` |Restricted |Only `NTF_GROUPING_CLASS_NONE` is accepted. Time-based notification grouping is unsupported.
+|`DCN_PULL_NOTIFICATIONS` |Restricted |Only `false` is accepted. AQ pull delivery does not invoke the listener callback.
+
+|`DCN_USE_HOST_CONNECTION_ADDR_INFO` |Driver-managed |For a client-initiated connection, selects the address used when connecting to Oracle Database. `false` asks the driver to use the address returned by the server.
+|`NTF_LOCAL_HOST` |Driver-managed |Advertises the local host address for server-initiated callbacks. It must identify the machine running the JDBC driver, not a different receiver.
+|`NTF_LOCAL_TCP_PORT` |Driver-managed |Selects the local listening port for server-initiated callbacks.
+|`NTF_USE_SSL` |Driver-managed |Requests SSL for the driver's notification listener connection; Micronaut Data does not configure its certificates or trust settings.
+|`NTF_CONNECTION_RETRY_COUNT` |Driver-managed |Sets the driver's maximum connection retry count for a disrupted client-initiated notification connection.
+|`DCN_BEST_EFFORT` |Driver-managed |Allows eligible complex QRCN queries at the cost of possible extra notifications; it has no effect in object notification mode.
+|`DCN_IGNORE_INSERTOP` |Driver-managed |Asks Oracle Database to omit insert notifications.
+|`DCN_IGNORE_UPDATEOP` |Driver-managed |Asks Oracle Database to omit update notifications.
+|`DCN_IGNORE_DELETEOP` |Driver-managed |Asks Oracle Database to omit delete notifications.
+
+|`DCN_CLIENT_INIT_REGID` |Unsupported |Reuses an existing reliable registration. Reusing existing registrations is not supported by Micronaut Data.
+|`NTF_GROUPING_VALUE` |Unsupported |Sets the time interval for grouped notifications.
+|`NTF_GROUPING_TYPE` |Unsupported |Chooses summary or last-event grouping output.
+|`NTF_GROUPING_START_TIME` |Unsupported |Sets when notification grouping starts.
+|`NTF_GROUPING_REPEAT_TIME` |Unsupported |Sets how often notification grouping repeats.
+|`DCN_PULL_QUEUE_NAME` |Unsupported |Names the AQ queue used by pull delivery, which this listener API does not implement.
+|===
+
+These restrictions apply to annotation properties and to datasource-level `oracle.jdbc.dcnOptions`.
+Micronaut Data also checks the effective options reported by the created JDBC registration.
+Oracle JDBC options intended for AQ or JMS registrations are outside the CQN property list above.
+
+== Registration Lifetime and Recovery
+
+Micronaut Data does not periodically replace registrations. With the default `NTF_TIMEOUT=0`, each registration remains
+active until shutdown, Oracle Database deregisters it, or the JDBC driver reports that its notification connection
+has failed. A positive `NTF_TIMEOUT` expires the registration after the configured number of seconds, even if
+the application is still running. A one-shot registration configured with `NTF_QOS_PURGE_ON_NTFN` closes after
+its first data notification.
+
+If Oracle Database deregisters a registration or a registered QRCN query, the affected listener stops receiving notifications.
+The application must correct the database or registration condition and restart the application if a new registration is required.
+
+With both a client-initiated connection and `NTF_QOS_RELIABLE` enabled, Micronaut Data leaves notification-connection
+retries to the JDBC driver. Oracle Database can queue reliable notifications for delivery after reconnect.
+If the JDBC driver reports that it cannot restore notification delivery, Micronaut Data attempts to create a replacement
+registration. After successful recovery, the listener receives an `INVALIDATE` event so it can refresh potentially
+outdated data. For other registration configurations, recovery starts when a database shutdown notification is received.
+
+If the initial replacement attempt fails, Micronaut Data retries up to ten times by default. The first retry waits
+one second; each subsequent delay doubles, up to a maximum of sixty seconds.
+Configure registration recovery globally for all Oracle notification listeners and datasources:
+
+[configuration]
+----
+micronaut:
+  data:
+    jdbc:
+      notifications:
+        oracle:
+          registration-recovery:
+            max-retries: 10
+            retry-delay: 1s
+            retry-delay-multiplier: 2
+            max-retry-delay: 60s
+----
+
+`max-retries` must be non-negative and counts retries after the initial recovery attempt. Set it to `0` to make only
+the initial attempt. `retry-delay` sets the first retry delay. `retry-delay-multiplier` must be an integer of at least
+`1`; set it to `1` for a fixed delay. `max-retry-delay` caps every retry delay, including the first.
+Both delays must be positive and accept duration values such as `500ms`, `10s`, or `1m`.
+The default ten retry delays are `1s`, `2s`, `4s`, `8s`, `16s`, `32s`, `60s`, `60s`, `60s`, and `60s`.
+These settings control creating a replacement registration, not listener-method retries through `@Retryable`
+or the JDBC driver's notification-connection retries.
+
+If recovery cannot complete, notifications remain unavailable until the application is restarted.
+Changes can be missed while a non-reliable registration is unavailable. Micronaut Data cannot detect a silently lost
+notification connection unless the JDBC driver reports the failure.
+
+== Delivery and Concurrency
+
+Oracle JDBC invokes its callback on a driver notification thread. Micronaut Data moves entity loading and listener
+invocation to the configured blocking executor so application work does not block that driver thread.
+
+For ongoing registrations, if the application cannot accept a data notification because its configured executor is
+saturated, Micronaut Data requests an `INVALIDATE` event so the listener can refresh its state. Repeated missed
+notifications are combined into one pending invalidation. Submission is retried until accepted or shutdown begins.
+Changes missed after the listener starts processing that invalidation can cause an additional invalidation.
+This reconciliation does not replay the missed row notifications. If another delivery attempt cannot be scheduled,
+Micronaut Data logs an error and cannot guarantee delivery of the invalidation.
+
+Changes to individual rows within one Oracle Database notification are delivered sequentially. Separate notifications
+may invoke the same listener concurrently, with no ordering guarantee between them. Listener beans must therefore be
+thread-safe and must not depend on callback order.
+
+A single transaction, such as a bulk update, can produce one Oracle Database notification containing several row descriptions.
+The application receives one listener invocation for each affected row unless the notification requires an `INVALIDATE` event.
+
+Notifications describe committed database changes and are not part of the transaction that caused them.
+The API does not provide durable consumption, automatic redelivery, or event identifiers suitable for generic deduplication.
+Listener code should tolerate repeated observations and should reconcile state when an invalidation or an application-specific
+consistency check requires it.
+
+== Transactions, Retry, and Recovery
+
+An ann:transaction.annotation.Transactional[] listener executes in a new transaction. It cannot participate in
+or roll back the original database transaction because that transaction has already committed before Oracle Database
+emits the notification.
+
+ann:retry.annotation.Retryable[] and ann:retry.annotation.Recoverable[] can be applied to the listener method.
+ann:retry.annotation.Retryable[] applies to both loading the changed entity and executing the listener method:
+
+* if loading an inserted or updated row fails, loading can be retried;
+* if loading succeeds but listener code fails, later attempts reuse the entity already loaded for that event; and
+* if the method is transactional, each retry attempt runs in a new transaction and a failed attempt is rolled back before the next attempt.
+
+Because a callback can run more than once, listener work should be idempotent. A recovery method can handle a failure
+after all retry attempts are exhausted, but recovery does not replay the Oracle Database notification or restore the transaction that caused it.
+
+== Startup, Shutdown, and Failures
+
+Micronaut Data creates notification registrations during application startup, after generated schema creation has completed.
+
+If any listener registration fails, startup fails with a `DataAccessException` that identifies the datasource and listener method.
+Micronaut Data attempts to unregister registrations already created for that datasource during the same startup attempt;
+cleanup failures are attached to the startup exception. If the datasource has no supported notification provider,
+startup instead fails with an `IllegalStateException`.
+
+If entity loading or listener execution fails and retry or recovery advice does not handle the failure, Micronaut Data
+logs it asynchronously with the listener method, operation, table, and `ROWID` when available. The failure is not returned
+to Oracle Database, does not roll back the original change, and does not trigger automatic redelivery.
+Subsequent notifications continue to be processed.
+
+During graceful shutdown, Micronaut Data stops accepting new notifications and stops automatic registration recovery.
+It attempts to unregister its registrations and waits for cleanup, registration recovery already in progress, and
+listener callbacks already running to complete, within the application's graceful-shutdown timeout.
+
+Callbacks waiting to run, including invalidation after registration recovery, are discarded when shutdown begins.
+A replacement registration created during shutdown is cleaned up without activating it or notifying the listener.
+Already-running callbacks are allowed to finish; the shutdown timeout does not forcibly terminate listener code or JDBC
+operations. Registration cleanup is best effort: database unavailability or shutdown timeout can prevent it from
+completing. Cleanup is also attempted when the application context is closed without graceful shutdown.
+
+An abrupt process or host failure cannot run that cleanup. Oracle Database automatically cleans up ordinary
+(non-reliable) registrations after their owning client has permanently disconnected. Registrations become eligible
+for cleanup when the application terminates unexpectedly or the database instance or pluggable database (PDB)
+is shut down.
+
+Cleanup is not immediate. Oracle Database retains disconnected registrations for a period that allows the application
+to reuse them and supports transparent registration failover during database patching. After that period, cleanup
+remains lazy: Oracle Database removes a registration when it generates a notification for it and finds no connected
+client. A registration whose client remains disconnected will eventually be removed, but there is no fixed cleanup
+deadline. This automatic cleanup does not apply to registrations created with `NTF_QOS_RELIABLE` enabled.
+
+Reliable registrations without a configured timeout may remain in Oracle Database if application cleanup cannot
+complete. An administrator must explicitly unregister abandoned reliable registrations.
+
+Micronaut Data does not reuse or remove registrations left by a previous application instance during startup,
+because it cannot safely distinguish an abandoned registration from one owned by another healthy instance using
+the same Oracle Database user and datasource.
+
+To inspect registrations, connect to the same pluggable database as the application using the registration-owning user,
+then query link:https://docs.oracle.com/en/database/oracle/oracle-database/26/refrn/USER_CHANGE_NOTIFICATION_REGS.html[`USER_CHANGE_NOTIFICATION_REGS`]:
+
+[source,sql]
+----
+SELECT DISTINCT regid, callback, table_name
+FROM user_change_notification_regs
+ORDER BY regid, table_name;
+----

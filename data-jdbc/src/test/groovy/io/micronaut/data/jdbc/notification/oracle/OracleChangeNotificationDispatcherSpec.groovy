@@ -1,0 +1,1347 @@
+/*
+ * Copyright 2017-2026 original authors
+ *
+ * Licensed under the Apache License, Version 2.0 (the "License");
+ * you may not use this file except in compliance with the License.
+ * You may obtain a copy of the License at
+ *
+ * https://www.apache.org/licenses/LICENSE-2.0
+ *
+ * Unless required by applicable law or agreed to in writing, software
+ * distributed under the License is distributed on an "AS IS" BASIS,
+ * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+ * See the License for the specific language governing permissions and
+ * limitations under the License.
+ */
+package io.micronaut.data.jdbc.notification.oracle
+
+import io.micronaut.context.BeanContext
+import io.micronaut.data.jdbc.notification.ChangeEvent
+import io.micronaut.data.jdbc.notification.ChangeOperation
+import io.micronaut.data.jdbc.notification.DefaultChangeEvent
+import io.micronaut.data.jdbc.notification.DeferredChangeEvent
+import io.micronaut.inject.BeanDefinition
+import io.micronaut.inject.ExecutableMethod
+import io.micronaut.scheduling.TaskScheduler
+import oracle.jdbc.dcn.DatabaseChangeEvent
+import oracle.jdbc.dcn.QueryChangeDescription
+import oracle.jdbc.dcn.RowChangeDescription
+import oracle.jdbc.dcn.TableChangeDescription
+import oracle.jdbc.OracleConnection
+import oracle.sql.ROWID
+import spock.lang.Specification
+
+import java.time.Duration
+import java.util.concurrent.CountDownLatch
+import java.util.concurrent.Executor
+import java.util.concurrent.RejectedExecutionException
+import java.util.concurrent.TimeUnit
+import java.util.concurrent.atomic.AtomicBoolean
+import java.util.concurrent.atomic.AtomicInteger
+import java.util.function.BiConsumer
+import java.util.function.LongConsumer
+
+class OracleChangeNotificationDispatcherSpec extends Specification {
+
+    void "routes lifecycle callbacks to their handlers (#eventType)"() {
+        given:
+        def deregistrations = []
+        def shutdowns = []
+        def queries = []
+        def dispatcher = dispatcher(definition(), Mock(BeanContext), Mock(LongConsumer),
+            { Long id, DatabaseChangeEvent.AdditionalEventType ignored -> deregistrations << id } as BiConsumer,
+            { long id -> queries << id } as LongConsumer,
+            { long id -> shutdowns << id } as LongConsumer,
+            { Runnable task -> task.run() } as Executor, new OracleChangeNotificationTaskTracker())
+        def event = Mock(DatabaseChangeEvent)
+        event.eventType >> eventType
+        event.regId >> 41L
+        def query = Mock(QueryChangeDescription)
+        query.queryChangeEventType >> QueryChangeDescription.QueryChangeEventType.DEREG
+        event.queryChangeDescription >> ([query] as QueryChangeDescription[])
+
+        when:
+        dispatcher.onDatabaseChangeNotification(event)
+
+        then:
+        deregistrations == (eventType == DatabaseChangeEvent.EventType.DEREG ? [41L] : [])
+        shutdowns == (eventType == DatabaseChangeEvent.EventType.SHUTDOWN ? [41L] : [])
+        queries == (eventType == DatabaseChangeEvent.EventType.QUERYCHANGE ? [41L] : [])
+
+        where:
+        eventType << [DatabaseChangeEvent.EventType.DEREG, DatabaseChangeEvent.EventType.SHUTDOWN,
+                      DatabaseChangeEvent.EventType.QUERYCHANGE]
+    }
+
+    void "database shutdown uses effective JDBC options rather than annotation options"() {
+        given:
+        def properties = new Properties()
+        properties.setProperty(OracleConnection.DCN_CLIENT_INIT_CONNECTION, 'true')
+        def method = Mock(ExecutableMethod)
+        method.getDescription(true) >> 'void onChange(ChangeEvent<Book>)'
+        def recoveryRequests = []
+        def dispatcher = dispatcher(definition(null, method, properties), Mock(BeanContext),
+            { long ignored -> } as LongConsumer,
+            { Long ignored, DatabaseChangeEvent.AdditionalEventType ignoredType -> } as BiConsumer,
+            { long ignored -> } as LongConsumer,
+            { long registrationId -> recoveryRequests << registrationId } as LongConsumer,
+            { Runnable command -> command.run() } as Executor,
+            new OracleChangeNotificationTaskTracker())
+        def effective = new Properties()
+        effective.putAll(properties)
+        effective.setProperty(OracleConnection.NTF_QOS_RELIABLE, 'true')
+        def event = Mock(DatabaseChangeEvent)
+        event.eventType >> DatabaseChangeEvent.EventType.SHUTDOWN
+        event.regId >> 41L
+
+        when:
+        dispatcher.configureRegistrationOptions(effective)
+        dispatcher.onDatabaseChangeNotification(event)
+
+        then:
+        recoveryRequests.empty
+    }
+
+    void "queued callbacks retain the configured options snapshot (#reliable)"() {
+        given:
+        def properties = new Properties()
+        properties.setProperty(OracleConnection.DCN_CLIENT_INIT_CONNECTION, 'true')
+        properties.setProperty(OracleConnection.NTF_QOS_RELIABLE, reliable.toString())
+        def queuedTasks = []
+        def recoveryRequests = []
+        def dispatcher = dispatcher(definition(null, Mock(ExecutableMethod), properties), Mock(BeanContext),
+            { long ignored -> } as LongConsumer,
+            { Long ignored, DatabaseChangeEvent.AdditionalEventType ignoredType -> } as BiConsumer,
+            { long ignored -> } as LongConsumer,
+            { long registrationId -> recoveryRequests << registrationId } as LongConsumer,
+            { Runnable command -> queuedTasks << command } as Executor,
+            new OracleChangeNotificationTaskTracker())
+        def event = Mock(DatabaseChangeEvent)
+        event.eventType >> DatabaseChangeEvent.EventType.SHUTDOWN
+        event.regId >> 41L
+
+        when:
+        dispatcher.onDatabaseChangeNotification(event)
+        properties.setProperty(OracleConnection.NTF_QOS_RELIABLE, (!reliable).toString())
+        dispatcher.configureRegistrationOptions(properties)
+        queuedTasks.first().run()
+
+        then:
+        recoveryRequests == (reliable ? [] : [41L])
+
+        when:
+        dispatcher.onDatabaseChangeNotification(event)
+        queuedTasks.last().run()
+
+        then:
+        recoveryRequests == [41L]
+
+        where:
+        reliable << [false, true]
+    }
+
+    void "ignores callbacks before options are configured without queueing them"() {
+        given:
+        def executor = Mock(Executor)
+        def event = Mock(DatabaseChangeEvent)
+        def dispatcher = new OracleChangeNotificationDispatcher(
+            'inventory', definition(null, Mock(ExecutableMethod), new Properties()), Mock(BeanContext),
+            executor, Mock(TaskScheduler), new OracleChangeNotificationTaskTracker(),
+            { long ignored -> } as LongConsumer,
+            { Long ignored, DatabaseChangeEvent.AdditionalEventType ignoredType -> } as BiConsumer,
+            { long ignored -> } as LongConsumer,
+            { long ignored -> } as LongConsumer)
+
+        when:
+        dispatcher.onDatabaseChangeNotification(event)
+
+        then:
+        0 * executor._
+        0 * event._
+    }
+
+    void "does not dispatch #eventType as a row change"() {
+        given:
+        def event = Mock(DatabaseChangeEvent)
+        event.getEventType() >> eventType
+        def dispatcher = dispatcher()
+
+        when:
+        dispatcher.onDatabaseChangeNotification(event)
+
+        then:
+        0 * event.getTableChangeDescription()
+        0 * event.getQueryChangeDescription()
+
+        where:
+        eventType << [DatabaseChangeEvent.EventType.SHUTDOWN_ANY, DatabaseChangeEvent.EventType.STARTUP]
+    }
+
+    void "database shutdown delegates retries only for reliable client-initiated notifications"() {
+        given:
+        def method = Mock(ExecutableMethod)
+        method.getDescription(true) >> "void onChange(ChangeEvent<Book>)"
+        def properties = new Properties()
+        properties.setProperty(OracleConnection.NTF_QOS_RELIABLE, reliableNotifications.toString())
+        properties.setProperty(OracleConnection.DCN_CLIENT_INIT_CONNECTION, clientInitiatedConnection.toString())
+        def definition = definition(null, method, properties)
+        def recoveryRequests = []
+        def dispatcher = dispatcher(definition, Mock(BeanContext),
+            { long ignored -> } as LongConsumer,
+            { Long ignored, DatabaseChangeEvent.AdditionalEventType ignoredType -> } as BiConsumer,
+            { long ignored -> } as LongConsumer,
+            { long failed -> recoveryRequests << failed } as LongConsumer,
+            { Runnable command -> command.run() } as Executor,
+            new OracleChangeNotificationTaskTracker())
+        def event = Mock(DatabaseChangeEvent)
+        event.getEventType() >> DatabaseChangeEvent.EventType.SHUTDOWN
+        event.getRegId() >> 41L
+
+        when:
+        dispatcher.onDatabaseChangeNotification(event)
+
+        then:
+        recoveryRequests == (driverReconnectRetryEnabled ? [] : [41L])
+        0 * method.invoke(_, _)
+        0 * event.getTableChangeDescription()
+
+        where:
+        reliableNotifications | clientInitiatedConnection | driverReconnectRetryEnabled
+        false                 | false                     | false
+        true                  | false                     | false
+        false                 | true                      | false
+        true                  | true                      | true
+    }
+
+    void "removes a registration when Oracle reports registration deregistration"() {
+        given:
+        def registrationPurgedHandler = Mock(LongConsumer)
+        def deregistrationHandler = Mock(BiConsumer)
+        def queryDeregistrationHandler = Mock(LongConsumer)
+        def event = Mock(DatabaseChangeEvent)
+        event.getEventType() >> DatabaseChangeEvent.EventType.DEREG
+        event.getAdditionalEventType() >> DatabaseChangeEvent.AdditionalEventType.TIMEOUT
+        event.getRegId() >> 41L
+        def dispatcher = dispatcher(definition(), Mock(BeanContext),
+            registrationPurgedHandler, deregistrationHandler, queryDeregistrationHandler)
+
+        when:
+        dispatcher.onDatabaseChangeNotification(event)
+
+        then:
+        1 * deregistrationHandler.accept(41L, DatabaseChangeEvent.AdditionalEventType.TIMEOUT)
+        0 * registrationPurgedHandler.accept(_)
+        0 * queryDeregistrationHandler.accept(_)
+        0 * event.getTableChangeDescription()
+    }
+
+    void "unregisters the enclosing registration when Oracle deregisters its listener query"() {
+        given:
+        def registrationPurgedHandler = Mock(LongConsumer)
+        def deregistrationHandler = Mock(BiConsumer)
+        def queryDeregistrationHandler = Mock(LongConsumer)
+        def query = Mock(QueryChangeDescription)
+        query.getQueryId() >> 7L
+        query.getQueryChangeEventType() >> QueryChangeDescription.QueryChangeEventType.DEREG
+        def event = Mock(DatabaseChangeEvent)
+        event.getEventType() >> DatabaseChangeEvent.EventType.QUERYCHANGE
+        event.getRegId() >> 42L
+        event.getTableChangeDescription() >> null
+        event.getQueryChangeDescription() >> ([query] as QueryChangeDescription[])
+        def dispatcher = dispatcher(definition(), Mock(BeanContext),
+            registrationPurgedHandler, deregistrationHandler, queryDeregistrationHandler)
+
+        when:
+        dispatcher.onDatabaseChangeNotification(event)
+
+        then:
+        1 * queryDeregistrationHandler.accept(42L)
+        0 * registrationPurgedHandler.accept(_)
+        0 * deregistrationHandler.accept(_, _)
+        0 * query.getTableChangeDescription()
+    }
+
+    void "forwards each registration deregistration reason without dispatching changes"() {
+        given:
+        def deregistrationHandler = Mock(BiConsumer)
+        def event = Mock(DatabaseChangeEvent)
+        event.getEventType() >> DatabaseChangeEvent.EventType.DEREG
+        event.getAdditionalEventType() >> reason
+        event.getRegId() >> 43L
+        def dispatcher = dispatcher(definition(), Mock(BeanContext),
+            Mock(LongConsumer), deregistrationHandler, Mock(LongConsumer))
+
+        when:
+        dispatcher.onDatabaseChangeNotification(event)
+
+        then:
+        1 * deregistrationHandler.accept(43L, reason)
+        0 * event.getTableChangeDescription()
+
+        where:
+        reason << [DatabaseChangeEvent.AdditionalEventType.NONE, DatabaseChangeEvent.AdditionalEventType.GROUPING]
+    }
+
+    void "registration purge is reported before an #eventType notification is dispatched"() {
+        given:
+        def beanDefinition = Mock(BeanDefinition)
+        def bean = new Object()
+        def beanContext = Mock(BeanContext)
+        beanContext.getBean(beanDefinition) >> bean
+        def method = Mock(ExecutableMethod)
+        method.getDescription(true) >> "void onChange(ChangeEvent<Book>)"
+        def properties = new Properties()
+        properties.setProperty(OracleConnection.NTF_QOS_PURGE_ON_NTFN, "true")
+        def sequence = []
+        def purgeHandler = { long ignored -> sequence << "purged" } as LongConsumer
+        def event = Mock(DatabaseChangeEvent)
+        event.getEventType() >> eventType
+        event.getTableChangeDescription() >> null
+        event.getQueryChangeDescription() >> ([] as QueryChangeDescription[])
+        def listenerDefinition = definition(beanDefinition, method, properties)
+        def dispatcher = dispatcher(listenerDefinition, beanContext, purgeHandler,
+            Mock(BiConsumer), Mock(LongConsumer), { Runnable command -> command.run() } as Executor,
+            new OracleChangeNotificationTaskTracker())
+
+        when:
+        dispatcher.onDatabaseChangeNotification(event)
+
+        then:
+        1 * method.invoke(bean, { Object[] arguments ->
+            sequence << "listener"
+            isInvalidation(arguments)
+        })
+        sequence == ["purged", "listener"]
+
+        where:
+        eventType << [DatabaseChangeEvent.EventType.OBJCHANGE, DatabaseChangeEvent.EventType.QUERYCHANGE]
+    }
+
+    void "one-shot registration timeout is handled as deregistration rather than purge"() {
+        given:
+        def properties = new Properties()
+        properties.setProperty(OracleConnection.NTF_QOS_PURGE_ON_NTFN, "true")
+        def method = Mock(ExecutableMethod)
+        method.getDescription(true) >> "void onChange(ChangeEvent<Book>)"
+        def purgeHandler = Mock(LongConsumer)
+        def deregistrationHandler = Mock(BiConsumer)
+        def event = Mock(DatabaseChangeEvent)
+        event.getEventType() >> DatabaseChangeEvent.EventType.DEREG
+        event.getAdditionalEventType() >> DatabaseChangeEvent.AdditionalEventType.TIMEOUT
+        event.getRegId() >> 45L
+        def dispatcher = dispatcher(definition(null, method, properties), Mock(BeanContext),
+            purgeHandler, deregistrationHandler, Mock(LongConsumer))
+
+        when:
+        dispatcher.onDatabaseChangeNotification(event)
+
+        then:
+        1 * deregistrationHandler.accept(45L, DatabaseChangeEvent.AdditionalEventType.TIMEOUT)
+        0 * purgeHandler.accept(_)
+        0 * event.getTableChangeDescription()
+    }
+
+    void "one-shot registration does not purge on #eventType"() {
+        given:
+        def properties = new Properties()
+        properties.setProperty(OracleConnection.NTF_QOS_PURGE_ON_NTFN, "true")
+        def method = Mock(ExecutableMethod)
+        method.getDescription(true) >> "void onChange(ChangeEvent<Book>)"
+        def purgeHandler = Mock(LongConsumer)
+        def event = Mock(DatabaseChangeEvent)
+        event.getEventType() >> eventType
+        def dispatcher = dispatcher(definition(null, method, properties), Mock(BeanContext),
+            purgeHandler, Mock(BiConsumer), Mock(LongConsumer))
+
+        when:
+        dispatcher.onDatabaseChangeNotification(event)
+
+        then:
+        0 * purgeHandler.accept(_)
+        0 * event.getTableChangeDescription()
+
+        where:
+        eventType << [DatabaseChangeEvent.EventType.STARTUP,
+                      DatabaseChangeEvent.EventType.SHUTDOWN,
+                      DatabaseChangeEvent.EventType.SHUTDOWN_ANY]
+    }
+
+    void "one-shot query deregistration does not suppress query cleanup"() {
+        given:
+        def properties = new Properties()
+        properties.setProperty(OracleConnection.NTF_QOS_PURGE_ON_NTFN, "true")
+        properties.setProperty(OracleConnection.DCN_QUERY_CHANGE_NOTIFICATION, "true")
+        def method = Mock(ExecutableMethod)
+        method.getDescription(true) >> "void onChange(ChangeEvent<Book>)"
+        def purgeHandler = Mock(LongConsumer)
+        def queryDeregistrationHandler = Mock(LongConsumer)
+        def query = Mock(QueryChangeDescription)
+        query.getQueryChangeEventType() >> QueryChangeDescription.QueryChangeEventType.DEREG
+        query.getQueryId() >> 18L
+        def event = Mock(DatabaseChangeEvent)
+        event.getEventType() >> DatabaseChangeEvent.EventType.QUERYCHANGE
+        event.getRegId() >> 46L
+        event.getQueryChangeDescription() >> ([query] as QueryChangeDescription[])
+        def dispatcher = dispatcher(definition(null, method, properties), Mock(BeanContext),
+            purgeHandler, Mock(BiConsumer), queryDeregistrationHandler)
+
+        when:
+        dispatcher.onDatabaseChangeNotification(event)
+
+        then:
+        1 * queryDeregistrationHandler.accept(46L)
+        0 * purgeHandler.accept(_)
+    }
+
+    void "query deregistration takes precedence over other query descriptions"() {
+        given:
+        def queryDeregistrationHandler = Mock(LongConsumer)
+        def changedQuery = Mock(QueryChangeDescription)
+        changedQuery.getQueryChangeEventType() >> QueryChangeDescription.QueryChangeEventType.QUERYCHANGE
+        def deregisteredQuery = Mock(QueryChangeDescription)
+        deregisteredQuery.getQueryId() >> 17L
+        deregisteredQuery.getQueryChangeEventType() >> QueryChangeDescription.QueryChangeEventType.DEREG
+        def event = Mock(DatabaseChangeEvent)
+        event.getEventType() >> DatabaseChangeEvent.EventType.QUERYCHANGE
+        event.getTableChangeDescription() >> null
+        event.getQueryChangeDescription() >> ([changedQuery, deregisteredQuery] as QueryChangeDescription[])
+        event.getRegId() >> 44L
+        def dispatcher = dispatcher(definition(), Mock(BeanContext), Mock(LongConsumer),
+            Mock(BiConsumer), queryDeregistrationHandler)
+
+        when:
+        dispatcher.onDatabaseChangeNotification(event)
+
+        then:
+        1 * queryDeregistrationHandler.accept(44L)
+        0 * changedQuery.getTableChangeDescription()
+    }
+
+    void "dispatches one invalidation when a query notification has no query descriptions"() {
+        given:
+        def beanDefinition = Mock(BeanDefinition)
+        def bean = new Object()
+        def beanContext = Mock(BeanContext)
+        beanContext.getBean(beanDefinition) >> bean
+        def method = Mock(ExecutableMethod)
+        method.getDescription(true) >> "void onChange(ChangeEvent<Book>)"
+        def event = Mock(DatabaseChangeEvent)
+        event.getTableChangeDescription() >> null
+        event.getQueryChangeDescription() >> queries
+        def dispatcher = dispatcher(definition(beanDefinition, method, new Properties()), beanContext)
+
+        when:
+        dispatcher.onDatabaseChangeNotification(event)
+
+        then:
+        1 * method.invoke(bean, { Object[] arguments -> isInvalidation(arguments) })
+
+        where:
+        queries << [null, [] as QueryChangeDescription[]]
+    }
+
+    void "ignores an unmatched table for object change notification"() {
+        given:
+        def table = Mock(TableChangeDescription)
+        table.getTableName() >> "OTHER_TABLE"
+        table.getTableOperations() >> EnumSet.of(TableChangeDescription.TableOperation.UPDATE)
+        def event = Mock(DatabaseChangeEvent)
+        event.getTableChangeDescription() >> ([table] as TableChangeDescription[])
+        def dispatcher = dispatcher()
+
+        when:
+        dispatcher.onDatabaseChangeNotification(event)
+
+        then:
+        0 * table.getRowChangeDescription()
+    }
+
+    void "dispatches row operations with their ROWID metadata"() {
+        given:
+        def beanDefinition = Mock(BeanDefinition)
+        def bean = new Object()
+        def beanContext = Mock(BeanContext)
+        beanContext.getBean(beanDefinition) >> bean
+        def method = Mock(ExecutableMethod)
+        method.getDescription(true) >> "void onChange(ChangeEvent<Book>)"
+        def rowId = Mock(ROWID)
+        rowId.stringValue() >> "AAEH7kAAEAAABv3AAA"
+        def row = Mock(RowChangeDescription)
+        row.getRowid() >> rowId
+        row.getRowOperations() >> EnumSet.of(RowChangeDescription.RowOperation.INSERT,
+            RowChangeDescription.RowOperation.UPDATE, RowChangeDescription.RowOperation.DELETE)
+        def table = Mock(TableChangeDescription)
+        table.getTableName() >> "BOOK"
+        table.getTableOperations() >> EnumSet.of(TableChangeDescription.TableOperation.UPDATE)
+        table.getRowChangeDescription() >> ([row] as RowChangeDescription[])
+        def event = Mock(DatabaseChangeEvent)
+        event.getTableChangeDescription() >> ([table] as TableChangeDescription[])
+        def operations = []
+        def metadataRowIds = []
+        method.invoke(bean, _) >> { Object[] arguments ->
+            ChangeEvent<?> changeEvent = eventArgument(arguments)
+            operations << changeEvent.operation()
+            metadataRowIds << changeEvent.metadata(OracleChangeEventMetadata).get().rowId()
+            null
+        }
+        def dispatcher = dispatcher(definition(beanDefinition, method, new Properties()), beanContext)
+
+        when:
+        dispatcher.onDatabaseChangeNotification(event)
+
+        then:
+        operations == [ChangeOperation.INSERT, ChangeOperation.UPDATE, ChangeOperation.DELETE]
+        metadataRowIds == ["AAEH7kAAEAAABv3AAA"] * 3
+    }
+
+    void "uses an empty entity for deletes and defers loading for inserts and updates"() {
+        given:
+        def beanDefinition = Mock(BeanDefinition)
+        def bean = new Object()
+        def beanContext = Mock(BeanContext)
+        beanContext.getBean(beanDefinition) >> bean
+        def method = Mock(ExecutableMethod)
+        method.getDescription(true) >> "void onChange(ChangeEvent<Book>)"
+        def rowId = Mock(ROWID)
+        rowId.stringValue() >> "AAEH7kAAEAAABv3AAA"
+        def row = Mock(RowChangeDescription)
+        row.getRowid() >> rowId
+        row.getRowOperations() >> EnumSet.of(rowOperation)
+        def table = Mock(TableChangeDescription)
+        table.getTableName() >> "BOOK"
+        table.getTableOperations() >> EnumSet.of(TableChangeDescription.TableOperation.UPDATE)
+        table.getRowChangeDescription() >> ([row] as RowChangeDescription[])
+        def event = Mock(DatabaseChangeEvent)
+        event.getTableChangeDescription() >> ([table] as TableChangeDescription[])
+        def events = []
+        method.invoke(bean, _) >> { Object[] arguments ->
+            ChangeEvent<?> changeEvent = eventArgument(arguments)
+            events << changeEvent
+            assert changeEvent.metadata(OracleChangeEventMetadata).get().rowId() == "AAEH7kAAEAAABv3AAA"
+            assert changeOperation == ChangeOperation.DELETE
+                ? changeEvent instanceof DefaultChangeEvent && changeEvent.entity().isEmpty()
+                : changeEvent instanceof DeferredChangeEvent
+            null
+        }
+        def dispatcher = dispatcher(definition(beanDefinition, method, new Properties()), beanContext)
+
+        when:
+        dispatcher.onDatabaseChangeNotification(event)
+
+        then:
+        events.size() == 1
+
+        where:
+        rowOperation << [RowChangeDescription.RowOperation.INSERT, RowChangeDescription.RowOperation.UPDATE,
+                         RowChangeDescription.RowOperation.DELETE]
+        changeOperation << [ChangeOperation.INSERT, ChangeOperation.UPDATE, ChangeOperation.DELETE]
+    }
+
+    void "continues dispatching rows after a listener invocation failure"() {
+        given:
+        def beanDefinition = Mock(BeanDefinition)
+        def bean = new Object()
+        def beanContext = Mock(BeanContext)
+        beanContext.getBean(beanDefinition) >> bean
+        def method = Mock(ExecutableMethod)
+        method.getDescription(true) >> "void onChange(ChangeEvent<Book>)"
+        def firstRowId = Mock(ROWID)
+        firstRowId.stringValue() >> "AAEH7kAAEAAABv3AAA"
+        def secondRowId = Mock(ROWID)
+        secondRowId.stringValue() >> "AAEH7kAAEAAABv3AAB"
+        def firstRow = Mock(RowChangeDescription)
+        firstRow.getRowid() >> firstRowId
+        firstRow.getRowOperations() >> EnumSet.of(RowChangeDescription.RowOperation.DELETE)
+        def secondRow = Mock(RowChangeDescription)
+        secondRow.getRowid() >> secondRowId
+        secondRow.getRowOperations() >> EnumSet.of(RowChangeDescription.RowOperation.DELETE)
+        def table = Mock(TableChangeDescription)
+        table.getTableName() >> "BOOK"
+        table.getTableOperations() >> EnumSet.of(TableChangeDescription.TableOperation.DELETE)
+        table.getRowChangeDescription() >> ([firstRow, secondRow] as RowChangeDescription[])
+        def event = Mock(DatabaseChangeEvent)
+        event.getTableChangeDescription() >> ([table] as TableChangeDescription[])
+        def invokedRowIds = []
+        method.invoke(bean, _) >> { Object[] arguments ->
+            String rowId = eventArgument(arguments).metadata(OracleChangeEventMetadata).get().rowId()
+            invokedRowIds << rowId
+            if (invokedRowIds.size() == 1) {
+                throw new IllegalStateException("listener failure")
+            }
+            null
+        }
+        def dispatcher = dispatcher(definition(beanDefinition, method, new Properties()), beanContext)
+
+        when:
+        dispatcher.onDatabaseChangeNotification(event)
+
+        then:
+        noExceptionThrown()
+        invokedRowIds == ["AAEH7kAAEAAABv3AAA", "AAEH7kAAEAAABv3AAB"]
+    }
+
+    void "handles executor rejection without leaking an accepted task"() {
+        given:
+        def taskTracker = new OracleChangeNotificationTaskTracker()
+        def scheduler = Mock(TaskScheduler)
+        Executor executor = { Runnable ignored -> throw new RejectedExecutionException("executor closed") } as Executor
+        def dispatcher = dispatcher(definition(), Mock(BeanContext), Mock(LongConsumer),
+            Mock(BiConsumer), Mock(LongConsumer), Mock(LongConsumer), executor, taskTracker, scheduler)
+        def event = Mock(DatabaseChangeEvent)
+        event.eventType >> DatabaseChangeEvent.EventType.OBJCHANGE
+
+        when:
+        dispatcher.onDatabaseChangeNotification(event)
+
+        then:
+        noExceptionThrown()
+        taskTracker.reportActiveTasks().isEmpty()
+        1 * scheduler.schedule(Duration.ofSeconds(1), _ as Runnable)
+        taskTracker.shutdownGracefully().toCompletableFuture().isDone()
+    }
+
+    void "coalesces rejected #eventType notifications until invalidation begins"() {
+        given:
+        List<Runnable> scheduled = []
+        List<Runnable> queued = []
+        List<ChangeEvent<?>> delivered = []
+        def reject = new AtomicBoolean(true)
+        def scheduler = Mock(TaskScheduler)
+        scheduler.schedule(Duration.ofSeconds(1), _ as Runnable) >> { Duration ignored, Runnable task ->
+            scheduled.add(task)
+            null
+        }
+        Executor executor = { Runnable task ->
+            if (reject.get()) {
+                throw new RejectedExecutionException('Executor busy')
+            }
+            queued.add(task)
+        } as Executor
+        def method = Mock(ExecutableMethod)
+        method.invoke(_, _) >> { Object[] arguments -> delivered.add(eventArgument(arguments)); null }
+        def tracker = new OracleChangeNotificationTaskTracker()
+        def dispatcher = dispatcher(definition(null, method, new Properties()), Mock(BeanContext), Mock(LongConsumer),
+            Mock(BiConsumer), Mock(LongConsumer), Mock(LongConsumer), executor, tracker, scheduler)
+        def event = Mock(DatabaseChangeEvent)
+        event.eventType >> eventType
+        event.regId >> 41L
+
+        when:
+        20.times { dispatcher.onDatabaseChangeNotification(event) }
+
+        then:
+        scheduled.size() == 1
+        queued.empty
+        delivered.empty
+
+        when:
+        scheduled.remove(0).run()
+
+        then:
+        scheduled.size() == 1
+        queued.empty
+        delivered.empty
+
+        when:
+        reject.set(false)
+        scheduled.remove(0).run()
+        reject.set(true)
+        20.times { dispatcher.onDatabaseChangeNotification(event) }
+
+        then:
+        scheduled.empty
+        queued.size() == 1
+        delivered.empty
+
+        when:
+        queued.remove(0).run()
+
+        then:
+        delivered.size() == 1
+        delivered[0].operation() == ChangeOperation.INVALIDATE
+        delivered[0].entity().isEmpty()
+        delivered[0].metadata(OracleChangeEventMetadata).isEmpty()
+        tracker.shutdownGracefully().toCompletableFuture().isDone()
+        0 * event.getTableChangeDescription()
+
+        where:
+        eventType << [DatabaseChangeEvent.EventType.OBJCHANGE, DatabaseChangeEvent.EventType.QUERYCHANGE]
+    }
+
+    void "requests another invalidation for a loss during refresh and tracks the callback"() {
+        given:
+        List<Runnable> scheduled = []
+        List<Runnable> queued = []
+        def reject = new AtomicBoolean(true)
+        def scheduler = Mock(TaskScheduler)
+        scheduler.schedule(_ as Duration, _ as Runnable) >> { Duration ignored, Runnable task ->
+            scheduled.add(task)
+            null
+        }
+        Executor executor = { Runnable task ->
+            if (reject.get()) {
+                throw new RejectedExecutionException('Executor busy')
+            }
+            queued.add(task)
+        } as Executor
+        def tracker = new OracleChangeNotificationTaskTracker()
+        def method = Mock(ExecutableMethod)
+        def dispatcher = dispatcher(definition(null, method, new Properties()), Mock(BeanContext), Mock(LongConsumer),
+            Mock(BiConsumer), Mock(LongConsumer), Mock(LongConsumer), executor, tracker, scheduler)
+        def event = Mock(DatabaseChangeEvent)
+        event.eventType >> DatabaseChangeEvent.EventType.OBJCHANGE
+        def invocations = 0
+        def completion
+        method.invoke(_, _) >> { Object[] arguments ->
+            assert eventArgument(arguments).operation() == ChangeOperation.INVALIDATE
+            if (++invocations == 1) {
+                reject.set(true)
+                dispatcher.onDatabaseChangeNotification(event)
+            } else {
+                completion = tracker.shutdownGracefully().toCompletableFuture()
+                assert !completion.isDone()
+                assert tracker.reportActiveTasks().getAsLong() == 1
+            }
+            null
+        }
+
+        when:
+        dispatcher.onDatabaseChangeNotification(event)
+        reject.set(false)
+        scheduled.remove(0).run()
+        queued.remove(0).run()
+
+        then:
+        invocations == 1
+        scheduled.size() == 1
+
+        when:
+        reject.set(false)
+        scheduled.remove(0).run()
+        queued.remove(0).run()
+
+        then:
+        invocations == 2
+        scheduled.empty
+        completion.isDone()
+        tracker.reportActiveTasks().getAsLong() == 0
+    }
+
+    void "discards #phase loss invalidation when shutdown begins"() {
+        given:
+        List<Runnable> scheduled = []
+        List<Runnable> queued = []
+        def reject = new AtomicBoolean(true)
+        def scheduler = Mock(TaskScheduler)
+        scheduler.schedule(_ as Duration, _ as Runnable) >> { Duration ignored, Runnable task ->
+            scheduled.add(task)
+            null
+        }
+        Executor executor = { Runnable task ->
+            if (reject.get()) {
+                throw new RejectedExecutionException('Executor busy')
+            }
+            queued.add(task)
+        } as Executor
+        def tracker = new OracleChangeNotificationTaskTracker()
+        def method = Mock(ExecutableMethod)
+        def dispatcher = dispatcher(definition(null, method, new Properties()), Mock(BeanContext), Mock(LongConsumer),
+            Mock(BiConsumer), Mock(LongConsumer), Mock(LongConsumer), executor, tracker, scheduler)
+        def event = Mock(DatabaseChangeEvent)
+        event.eventType >> DatabaseChangeEvent.EventType.OBJCHANGE
+
+        when:
+        dispatcher.onDatabaseChangeNotification(event)
+        if (phase == 'queued') {
+            reject.set(false)
+            scheduled.remove(0).run()
+        }
+        def completion = tracker.shutdownGracefully().toCompletableFuture()
+        (phase == 'queued' ? queued : scheduled).remove(0).run()
+
+        then:
+        completion.isDone()
+        scheduled.empty
+        queued.empty
+        0 * method.invoke(_, _)
+
+        where:
+        phase << ['scheduled', 'queued']
+    }
+
+    void "can request invalidation again after the retry scheduler fails"() {
+        given:
+        List<Runnable> scheduled = []
+        def scheduler = Mock(TaskScheduler)
+        def schedulingAttempts = new AtomicInteger()
+        scheduler.schedule(_ as Duration, _ as Runnable) >> { Duration ignored, Runnable task ->
+            if (schedulingAttempts.incrementAndGet() == 1) {
+                throw new RejectedExecutionException('Scheduler busy')
+            }
+            scheduled.add(task)
+            null
+        }
+        def reject = new AtomicBoolean(true)
+        Executor executor = { Runnable task ->
+            if (reject.get()) {
+                throw new RejectedExecutionException('Executor busy')
+            }
+            task.run()
+        } as Executor
+        def method = Mock(ExecutableMethod)
+        def tracker = new OracleChangeNotificationTaskTracker()
+        def dispatcher = dispatcher(definition(null, method, new Properties()), Mock(BeanContext), Mock(LongConsumer),
+            Mock(BiConsumer), Mock(LongConsumer), Mock(LongConsumer), executor, tracker, scheduler)
+        def event = Mock(DatabaseChangeEvent)
+        event.eventType >> DatabaseChangeEvent.EventType.OBJCHANGE
+
+        when:
+        dispatcher.onDatabaseChangeNotification(event)
+        dispatcher.onDatabaseChangeNotification(event)
+
+        then:
+        schedulingAttempts.get() == 2
+        scheduled.size() == 1
+
+        when:
+        reject.set(false)
+        scheduled.remove(0).run()
+
+        then:
+        1 * method.invoke(_, _) >> { Object[] arguments ->
+            assert eventArgument(arguments).operation() == ChangeOperation.INVALIDATE
+            null
+        }
+        tracker.shutdownGracefully().toCompletableFuture().isDone()
+    }
+
+    void "resubmits rejected #eventType lifecycle handling on the blocking executor"() {
+        given:
+        List<Runnable> scheduled = []
+        List<Runnable> queued = []
+        List<String> handled = []
+        def attempts = new AtomicInteger()
+        def scheduler = Mock(TaskScheduler)
+        scheduler.schedule(Duration.ofSeconds(1), _ as Runnable) >> { Duration ignored, Runnable task ->
+            scheduled.add(task)
+            null
+        }
+        Executor executor = { Runnable task ->
+            if (attempts.incrementAndGet() <= 2) {
+                throw new RejectedExecutionException('Executor busy')
+            }
+            queued.add(task)
+        } as Executor
+        def properties = new Properties()
+        properties.setProperty(OracleConnection.NTF_QOS_PURGE_ON_NTFN, Boolean.toString(purge))
+        def tracker = new OracleChangeNotificationTaskTracker()
+        def dispatcher = dispatcher(definition(null, Mock(ExecutableMethod), properties), Mock(BeanContext),
+            { long ignored -> handled.add('purge') } as LongConsumer,
+            { Long ignored, DatabaseChangeEvent.AdditionalEventType reason -> handled.add('deregistration') } as BiConsumer,
+            { long ignored -> handled.add('query deregistration') } as LongConsumer,
+            { long ignored -> handled.add('shutdown') } as LongConsumer,
+            executor, tracker, scheduler)
+        def query = Mock(QueryChangeDescription)
+        query.queryChangeEventType >> QueryChangeDescription.QueryChangeEventType.DEREG
+        def event = Mock(DatabaseChangeEvent)
+        event.eventType >> eventType
+        event.regId >> 41L
+        event.queryChangeDescription >> (eventType == DatabaseChangeEvent.EventType.QUERYCHANGE ? [query] as QueryChangeDescription[] : null)
+
+        when:
+        dispatcher.onDatabaseChangeNotification(event)
+        scheduled.remove(0).run()
+
+        then:
+        handled.empty
+        queued.empty
+        scheduled.size() == 1
+
+        when:
+        scheduled.remove(0).run()
+
+        then:
+        handled.empty
+        queued.size() == 1
+        scheduled.empty
+
+        when:
+        queued.remove(0).run()
+
+        then:
+        handled == [expectedHandler]
+        attempts.get() == 3
+        tracker.shutdownGracefully().toCompletableFuture().isDone()
+
+        where:
+        eventType                              | purge | expectedHandler
+        DatabaseChangeEvent.EventType.DEREG       | false | 'deregistration'
+        DatabaseChangeEvent.EventType.SHUTDOWN    | false | 'shutdown'
+        DatabaseChangeEvent.EventType.QUERYCHANGE | false | 'query deregistration'
+        DatabaseChangeEvent.EventType.OBJCHANGE   | true  | 'purge'
+    }
+
+    void "stops lifecycle resubmission when shutdown starts"() {
+        given:
+        List<Runnable> scheduled = []
+        def scheduler = Mock(TaskScheduler)
+        scheduler.schedule(_ as Duration, _ as Runnable) >> { Duration ignored, Runnable task ->
+            scheduled.add(task)
+            null
+        }
+        def executor = Mock(Executor)
+        def tracker = new OracleChangeNotificationTaskTracker()
+        def handler = Mock(BiConsumer)
+        def dispatcher = dispatcher(definition(), Mock(BeanContext), Mock(LongConsumer), handler,
+            Mock(LongConsumer), Mock(LongConsumer), executor, tracker, scheduler)
+        def event = Mock(DatabaseChangeEvent)
+        event.eventType >> DatabaseChangeEvent.EventType.DEREG
+
+        when:
+        dispatcher.onDatabaseChangeNotification(event)
+        def completion = tracker.shutdownGracefully().toCompletableFuture()
+        scheduled.remove(0).run()
+
+        then:
+        1 * executor.execute(_) >> { throw new RejectedExecutionException('Executor busy') }
+        0 * handler._
+        completion.isDone()
+        scheduled.empty
+    }
+
+    void "contains lifecycle retry scheduler failure on the driver callback thread"() {
+        given:
+        def executor = Mock(Executor)
+        def scheduler = Mock(TaskScheduler)
+        def tracker = new OracleChangeNotificationTaskTracker()
+        def handler = Mock(BiConsumer)
+        def dispatcher = dispatcher(definition(), Mock(BeanContext), Mock(LongConsumer), handler,
+            Mock(LongConsumer), Mock(LongConsumer), executor, tracker, scheduler)
+        def event = Mock(DatabaseChangeEvent)
+        event.eventType >> DatabaseChangeEvent.EventType.DEREG
+
+        when:
+        dispatcher.onDatabaseChangeNotification(event)
+
+        then:
+        noExceptionThrown()
+        1 * executor.execute(_) >> { throw new RejectedExecutionException('Executor busy') }
+        1 * scheduler.schedule(_ as Duration, _ as Runnable) >> { throw new RejectedExecutionException('Scheduler stopped') }
+        0 * handler._
+        tracker.shutdownGracefully().toCompletableFuture().isDone()
+    }
+
+    void "ignores callbacks after graceful shutdown starts"() {
+        given:
+        def taskTracker = new OracleChangeNotificationTaskTracker()
+        taskTracker.shutdownGracefully().toCompletableFuture().join()
+        def event = Mock(DatabaseChangeEvent)
+        def dispatcher = dispatcher(definition(), Mock(BeanContext), Mock(LongConsumer),
+            Mock(BiConsumer), Mock(LongConsumer), { Runnable command -> command.run() } as Executor, taskTracker)
+
+        when:
+        dispatcher.onDatabaseChangeNotification(event)
+
+        then:
+        0 * event.getEventType()
+    }
+
+    void "does not wait for queued callbacks during graceful shutdown"() {
+        given:
+        def taskTracker = new OracleChangeNotificationTaskTracker()
+        List<Runnable> queued = []
+        def shutdownRequests = []
+        Executor executor = { Runnable command -> queued << command } as Executor
+        def dispatcher = dispatcher(definition(), Mock(BeanContext), Mock(LongConsumer),
+            Mock(BiConsumer), Mock(LongConsumer),
+            { long registrationId -> shutdownRequests << registrationId } as LongConsumer,
+            executor, taskTracker)
+        def event = Mock(DatabaseChangeEvent)
+        event.eventType >> DatabaseChangeEvent.EventType.SHUTDOWN
+        event.regId >> 41L
+
+        when:
+        dispatcher.onDatabaseChangeNotification(event)
+        def completion = taskTracker.shutdownGracefully().toCompletableFuture()
+
+        then:
+        queued.size() == 1
+        completion.done
+
+        when:
+        queued.first().run()
+
+        then:
+        shutdownRequests.empty
+        taskTracker.reportActiveTasks().getAsLong() == 0L
+    }
+
+    void "waits for a callback that started before graceful shutdown"() {
+        given:
+        def taskTracker = new OracleChangeNotificationTaskTracker()
+        def completionDuringDispatch
+        boolean runningTaskWasCounted = false
+        def dispatcher = dispatcher(definition(), Mock(BeanContext), Mock(LongConsumer),
+            Mock(BiConsumer), Mock(LongConsumer),
+            { long ignored ->
+                completionDuringDispatch = taskTracker.shutdownGracefully().toCompletableFuture()
+                runningTaskWasCounted = !completionDuringDispatch.done && taskTracker.reportActiveTasks().getAsLong() == 1L
+            } as LongConsumer,
+            { Runnable command -> command.run() } as Executor, taskTracker)
+        def event = Mock(DatabaseChangeEvent)
+        event.eventType >> DatabaseChangeEvent.EventType.SHUTDOWN
+        event.regId >> 41L
+
+        when:
+        dispatcher.onDatabaseChangeNotification(event)
+
+        then:
+        runningTaskWasCounted
+        completionDuringDispatch != null
+        completionDuringDispatch.done
+    }
+
+    void "waits for all concurrently running callbacks during graceful shutdown"() {
+        given:
+        def taskTracker = new OracleChangeNotificationTaskTracker()
+        def callbacksStarted = new CountDownLatch(2)
+        def releaseCallbacks = new CountDownLatch(1)
+        List<Thread> callbackThreads = Collections.synchronizedList(new ArrayList<Thread>())
+        def shutdownRequests = new AtomicInteger()
+        LongConsumer shutdownHandler = { long ignored ->
+            shutdownRequests.incrementAndGet()
+            callbacksStarted.countDown()
+            if (!releaseCallbacks.await(5, TimeUnit.SECONDS)) {
+                throw new AssertionError("Timed out waiting to release the shutdown callback")
+            }
+        } as LongConsumer
+        Executor executor = { Runnable command ->
+            Thread callbackThread = new Thread(command)
+            callbackThreads.add(callbackThread)
+            callbackThread.start()
+        } as Executor
+        def dispatcher = dispatcher(definition(), Mock(BeanContext), Mock(LongConsumer),
+            Mock(BiConsumer), Mock(LongConsumer), shutdownHandler, executor, taskTracker)
+        def firstEvent = Mock(DatabaseChangeEvent)
+        firstEvent.eventType >> DatabaseChangeEvent.EventType.SHUTDOWN
+        firstEvent.regId >> 41L
+        def secondEvent = Mock(DatabaseChangeEvent)
+        secondEvent.eventType >> DatabaseChangeEvent.EventType.SHUTDOWN
+        secondEvent.regId >> 42L
+
+        when:
+        dispatcher.onDatabaseChangeNotification(firstEvent)
+        dispatcher.onDatabaseChangeNotification(secondEvent)
+        boolean bothCallbacksStarted = callbacksStarted.await(5, TimeUnit.SECONDS)
+        def shutdown = taskTracker.shutdownGracefully().toCompletableFuture()
+        long outstandingCallbacks = taskTracker.reportActiveTasks().orElseThrow()
+        releaseCallbacks.countDown()
+        callbackThreads.each { it.join(5000) }
+        shutdown.get(5, TimeUnit.SECONDS)
+
+        then:
+        bothCallbacksStarted
+        outstandingCallbacks == 2L
+        shutdownRequests.get() == 2
+        callbackThreads.every { !it.isAlive() }
+        taskTracker.reportActiveTasks().orElseThrow() == 0L
+
+        cleanup:
+        releaseCallbacks.countDown()
+        callbackThreads.each { if (it.isAlive()) it.join(5000) }
+    }
+
+    void "dispatches a full-table notification as one invalidation without row details"() {
+        given:
+        def beanDefinition = Mock(BeanDefinition)
+        def bean = new Object()
+        def beanContext = Mock(BeanContext)
+        beanContext.getBean(beanDefinition) >> bean
+        def method = Mock(ExecutableMethod)
+        method.getDescription(true) >> "void onChange(ChangeEvent<Book>)"
+        def definition = definition(beanDefinition, method, new Properties())
+        def table = Mock(TableChangeDescription)
+        table.getTableName() >> "BOOK"
+        table.getTableOperations() >> EnumSet.of(TableChangeDescription.TableOperation.ALL_ROWS)
+        def event = Mock(DatabaseChangeEvent)
+        event.getTableChangeDescription() >> ([table] as TableChangeDescription[])
+        def dispatcher = dispatcher(definition, beanContext)
+
+        when:
+        dispatcher.onDatabaseChangeNotification(event)
+
+        then:
+        1 * method.invoke(bean, { Object[] arguments -> isInvalidation(arguments) })
+        0 * table.getRowChangeDescription()
+    }
+
+    void "dispatches a #operation notification as one invalidation without row details"() {
+        given:
+        def beanDefinition = Mock(BeanDefinition)
+        def bean = new Object()
+        def beanContext = Mock(BeanContext)
+        beanContext.getBean(beanDefinition) >> bean
+        def method = Mock(ExecutableMethod)
+        method.getDescription(true) >> "void onChange(ChangeEvent<Book>)"
+        def table = Mock(TableChangeDescription)
+        table.getTableName() >> "BOOK"
+        table.getTableOperations() >> EnumSet.of(operation)
+        def event = Mock(DatabaseChangeEvent)
+        event.getTableChangeDescription() >> ([table] as TableChangeDescription[])
+        def dispatcher = dispatcher(definition(beanDefinition, method, new Properties()), beanContext)
+
+        when:
+        dispatcher.onDatabaseChangeNotification(event)
+
+        then:
+        1 * method.invoke(bean, { Object[] arguments -> isInvalidation(arguments) })
+        0 * table.getRowChangeDescription()
+
+        where:
+        operation << [TableChangeDescription.TableOperation.ALTER, TableChangeDescription.TableOperation.DROP]
+    }
+
+    void "dispatches one invalidation when a matching table has no row descriptions"() {
+        given:
+        def beanDefinition = Mock(BeanDefinition)
+        def bean = new Object()
+        def beanContext = Mock(BeanContext)
+        beanContext.getBean(beanDefinition) >> bean
+        def method = Mock(ExecutableMethod)
+        method.getDescription(true) >> "void onChange(ChangeEvent<Book>)"
+        def table = Mock(TableChangeDescription)
+        table.getTableName() >> "BOOK"
+        table.getTableOperations() >> EnumSet.of(TableChangeDescription.TableOperation.UPDATE)
+        table.getRowChangeDescription() >> rows
+        def event = Mock(DatabaseChangeEvent)
+        event.getTableChangeDescription() >> ([table] as TableChangeDescription[])
+        def dispatcher = dispatcher(definition(beanDefinition, method, new Properties()), beanContext)
+
+        when:
+        dispatcher.onDatabaseChangeNotification(event)
+
+        then:
+        1 * method.invoke(bean, { Object[] arguments -> isInvalidation(arguments) })
+
+        where:
+        rows << [null, [] as RowChangeDescription[]]
+    }
+
+    void "suppresses valid row changes when another row has no ROWID"() {
+        given:
+        def beanDefinition = Mock(BeanDefinition)
+        def bean = new Object()
+        def beanContext = Mock(BeanContext)
+        beanContext.getBean(beanDefinition) >> bean
+        def method = Mock(ExecutableMethod)
+        method.getDescription(true) >> "void onChange(ChangeEvent<Book>)"
+        def rowId = Mock(ROWID)
+        def validRow = Mock(RowChangeDescription)
+        validRow.getRowid() >> rowId
+        validRow.getRowOperations() >> EnumSet.of(RowChangeDescription.RowOperation.INSERT)
+        def rowWithoutId = Mock(RowChangeDescription)
+        rowWithoutId.getRowid() >> null
+        def table = Mock(TableChangeDescription)
+        table.getTableName() >> "BOOK"
+        table.getTableOperations() >> EnumSet.of(TableChangeDescription.TableOperation.INSERT)
+        table.getRowChangeDescription() >> ([validRow, rowWithoutId] as RowChangeDescription[])
+        def event = Mock(DatabaseChangeEvent)
+        event.getTableChangeDescription() >> ([table] as TableChangeDescription[])
+        def dispatcher = dispatcher(definition(beanDefinition, method, new Properties()), beanContext)
+
+        when:
+        dispatcher.onDatabaseChangeNotification(event)
+
+        then:
+        1 * method.invoke(bean, { Object[] arguments -> isInvalidation(arguments) })
+        0 * rowId.stringValue()
+    }
+
+    void "dispatches one invalidation when a row has no operation"() {
+        given:
+        def beanDefinition = Mock(BeanDefinition)
+        def bean = new Object()
+        def beanContext = Mock(BeanContext)
+        beanContext.getBean(beanDefinition) >> bean
+        def method = Mock(ExecutableMethod)
+        method.getDescription(true) >> "void onChange(ChangeEvent<Book>)"
+        def row = Mock(RowChangeDescription)
+        row.getRowid() >> Mock(ROWID)
+        row.getRowOperations() >> EnumSet.noneOf(RowChangeDescription.RowOperation)
+        def table = Mock(TableChangeDescription)
+        table.getTableName() >> "BOOK"
+        table.getTableOperations() >> EnumSet.of(TableChangeDescription.TableOperation.UPDATE)
+        table.getRowChangeDescription() >> ([row] as RowChangeDescription[])
+        def event = Mock(DatabaseChangeEvent)
+        event.getTableChangeDescription() >> ([table] as TableChangeDescription[])
+        def dispatcher = dispatcher(definition(beanDefinition, method, new Properties()), beanContext)
+
+        when:
+        dispatcher.onDatabaseChangeNotification(event)
+
+        then:
+        1 * method.invoke(bean, { Object[] arguments -> isInvalidation(arguments) })
+    }
+
+    void "dispatches one invalidation for a dependent query table"() {
+        given:
+        def beanDefinition = Mock(BeanDefinition)
+        def bean = new Object()
+        def beanContext = Mock(BeanContext)
+        beanContext.getBean(beanDefinition) >> bean
+        def method = Mock(ExecutableMethod)
+        method.getDescription(true) >> "void onChange(ChangeEvent<Book>)"
+        def properties = new Properties()
+        properties.setProperty(OracleConnection.DCN_QUERY_CHANGE_NOTIFICATION, "true")
+        def definition = definition(beanDefinition, method, properties)
+        def table = Mock(TableChangeDescription)
+        table.getTableName() >> "BOOK_CATEGORY"
+        def query = Mock(QueryChangeDescription)
+        query.getTableChangeDescription() >> ([table] as TableChangeDescription[])
+        def event = Mock(DatabaseChangeEvent)
+        event.getTableChangeDescription() >> null
+        event.getQueryChangeDescription() >> ([query] as QueryChangeDescription[])
+        def dispatcher = dispatcher(definition, beanContext)
+
+        when:
+        dispatcher.onDatabaseChangeNotification(event)
+
+        then:
+        1 * method.invoke(bean, { Object[] arguments -> isInvalidation(arguments) })
+        0 * table.getRowChangeDescription()
+    }
+
+    void "handles unexpected asynchronous dispatch exceptions"() {
+        given:
+        def event = Mock(DatabaseChangeEvent)
+        event.getTableChangeDescription() >> { throw new IllegalStateException("Unexpected dispatch failure") }
+        def dispatcher = dispatcher()
+
+        when:
+        dispatcher.onDatabaseChangeNotification(event)
+
+        then:
+        noExceptionThrown()
+    }
+
+    void "allows JVM errors from asynchronous dispatch to propagate"() {
+        given:
+        def event = Mock(DatabaseChangeEvent)
+        event.getTableChangeDescription() >> { throw new AssertionError("Fatal dispatch failure") }
+        def dispatcher = dispatcher()
+
+        when:
+        dispatcher.onDatabaseChangeNotification(event)
+
+        then:
+        def error = thrown(AssertionError)
+        error.message == "Fatal dispatch failure"
+    }
+
+    private OracleChangeNotificationDispatcher dispatcher() {
+        return dispatcher(definition(), Mock(BeanContext))
+    }
+
+    private OracleChangeListenerDefinition definition() {
+        def method = Mock(ExecutableMethod)
+        method.getDescription(true) >> "void onChange(ChangeEvent<Book>)"
+        return definition(null, method, new Properties())
+    }
+
+    private static OracleChangeListenerDefinition definition(BeanDefinition beanDefinition,
+                                                               ExecutableMethod method,
+                                                               Properties properties) {
+        return new OracleChangeListenerDefinition(beanDefinition, method, OracleTableIdentifier.parse("BOOK"),
+            "SELECT * FROM BOOK", null, properties)
+    }
+
+    private OracleChangeNotificationDispatcher dispatcher(OracleChangeListenerDefinition definition,
+                                                            BeanContext beanContext) {
+        Executor executor = { Runnable command -> command.run() } as Executor
+        LongConsumer registrationPurgedHandler = { long ignored -> } as LongConsumer
+        BiConsumer<Long, DatabaseChangeEvent.AdditionalEventType> deregistrationHandler =
+            { Long ignored, DatabaseChangeEvent.AdditionalEventType ignoredType -> } as BiConsumer
+        LongConsumer queryDeregistrationHandler = { long ignored -> } as LongConsumer
+        return dispatcher(definition, beanContext,
+            registrationPurgedHandler, deregistrationHandler, queryDeregistrationHandler)
+    }
+
+    private OracleChangeNotificationDispatcher dispatcher(OracleChangeListenerDefinition definition,
+                                                            BeanContext beanContext,
+                                                            LongConsumer registrationPurgedHandler,
+                                                            BiConsumer<Long, DatabaseChangeEvent.AdditionalEventType> deregistrationHandler,
+                                                            LongConsumer queryDeregistrationHandler) {
+        Executor executor = { Runnable command -> command.run() } as Executor
+        return dispatcher(definition, beanContext, registrationPurgedHandler,
+            deregistrationHandler, queryDeregistrationHandler,
+            { long ignored -> } as LongConsumer,
+            executor, new OracleChangeNotificationTaskTracker())
+    }
+
+    private OracleChangeNotificationDispatcher dispatcher(OracleChangeListenerDefinition definition,
+                                                            BeanContext beanContext,
+                                                            LongConsumer registrationPurgedHandler,
+                                                            BiConsumer<Long, DatabaseChangeEvent.AdditionalEventType> deregistrationHandler,
+                                                            LongConsumer queryDeregistrationHandler,
+                                                            Executor executor,
+                                                            OracleChangeNotificationTaskTracker taskTracker) {
+        return dispatcher(definition, beanContext, registrationPurgedHandler,
+            deregistrationHandler, queryDeregistrationHandler,
+            { long ignored -> } as LongConsumer, executor, taskTracker)
+    }
+
+    private OracleChangeNotificationDispatcher dispatcher(OracleChangeListenerDefinition definition,
+                                                            BeanContext beanContext,
+                                                            LongConsumer registrationPurgedHandler,
+                                                            BiConsumer<Long, DatabaseChangeEvent.AdditionalEventType> deregistrationHandler,
+                                                            LongConsumer queryDeregistrationHandler,
+                                                            LongConsumer databaseShutdownHandler,
+                                                            Executor executor,
+                                                            OracleChangeNotificationTaskTracker taskTracker,
+                                                            TaskScheduler scheduler = null) {
+        def dispatcher = new OracleChangeNotificationDispatcher(
+            "inventory",
+            definition,
+            beanContext,
+            executor,
+            scheduler ?: Mock(TaskScheduler),
+            taskTracker,
+            registrationPurgedHandler,
+            deregistrationHandler,
+            queryDeregistrationHandler,
+            databaseShutdownHandler
+        )
+        dispatcher.configureRegistrationOptions(definition.registrationProperties())
+        return dispatcher
+    }
+
+    private static boolean isInvalidation(Object[] arguments) {
+        ChangeEvent<?> changeEvent = arguments[0] as ChangeEvent<?>
+        return changeEvent.operation() == ChangeOperation.INVALIDATE &&
+            changeEvent.entity().isEmpty() &&
+            changeEvent.metadata(OracleChangeEventMetadata).isEmpty()
+    }
+
+    private static ChangeEvent<?> eventArgument(Object value) {
+        if (value instanceof ChangeEvent) {
+            return value as ChangeEvent<?>
+        }
+        if (value instanceof Object[]) {
+            for (int i = ((Object[]) value).length - 1; i >= 0; i--) {
+                ChangeEvent<?> event = eventArgument(((Object[]) value)[i])
+                if (event != null) {
+                    return event
+                }
+            }
+        } else if (value instanceof Collection) {
+            List values = new ArrayList((Collection) value)
+            for (int i = values.size() - 1; i >= 0; i--) {
+                ChangeEvent<?> event = eventArgument(values[i])
+                if (event != null) {
+                    return event
+                }
+            }
+        }
+        return null
+    }
+}

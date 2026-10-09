@@ -1,0 +1,69 @@
+from typing import Annotated
+from threading import RLock
+
+from micronaut.data.jdbc.notification import ChangeEvent, ChangeOperation
+from jakarta.annotation import PostConstruct
+from jakarta.inject import Inject, Singleton
+from java.util import Optional
+from java.util.concurrent import ConcurrentHashMap
+from java.util.concurrent.atomic import AtomicReference
+from micronaut.context.annotation import Requires
+from micronaut.data.jdbc.annotation import ChangeListener, OracleChangeNotification
+
+from example.notification.Library import Library
+from example.notification.LibraryRepository import LibraryRepository
+
+
+@Singleton
+@Requires(property="query-notification.query.enabled")
+class LargeLibraryCache:
+
+    repository: Annotated[LibraryRepository, Inject]
+
+    def __init__(self, repository: LibraryRepository):
+        self.repository = repository
+        self.libraries = AtomicReference(ConcurrentHashMap())
+        self.lock = RLock()
+
+    @PostConstruct
+    def initialize(self) -> None:
+        self.refreshCache()
+
+    def find(self, name: str) -> Optional[Library]:
+        for library in self.libraries.get().values():
+            if library.name == name:
+                return Optional.of(library)
+        return Optional.empty()
+
+    # tag::query[]
+    @ChangeListener
+    @OracleChangeNotification(
+        select="name",
+        where="capacity >= 10000",
+        properties=[
+            OracleChangeNotification.Property(
+                name="DCN_QUERY_CHANGE_NOTIFICATION",
+                value="true"
+            ),
+        ]
+    )
+    def onLibraryChanged(self, event: ChangeEvent[Library]) -> None:
+        with self.lock:
+            if event.operation() in (ChangeOperation.INSERT, ChangeOperation.UPDATE):
+                library = event.entity().orElse(None)
+                if library is not None:
+                    if library.capacity >= 10000:
+                        self.libraries.get().put(library.id, library)
+                    else:
+                        self.libraries.get().remove(library.id)
+            elif event.operation() in (ChangeOperation.DELETE, ChangeOperation.INVALIDATE):
+                self.refreshCache()
+    # end::query[]
+
+    def refreshCache(self) -> None:
+        with self.lock:
+            currentLibraries = self.repository.findByCapacityGreaterThanEquals(10000)
+            refreshed = ConcurrentHashMap()
+            for library in currentLibraries:
+                refreshed.put(library.id, library)
+            self.libraries.set(refreshed)

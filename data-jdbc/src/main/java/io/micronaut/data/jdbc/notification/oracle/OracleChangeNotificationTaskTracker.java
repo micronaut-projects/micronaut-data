@@ -1,0 +1,109 @@
+/*
+ * Copyright 2017-2026 original authors
+ *
+ * Licensed under the Apache License, Version 2.0 (the "License");
+ * you may not use this file except in compliance with the License.
+ * You may obtain a copy of the License at
+ *
+ * https://www.apache.org/licenses/LICENSE-2.0
+ *
+ * Unless required by applicable law or agreed to in writing, software
+ * distributed under the License is distributed on an "AS IS" BASIS,
+ * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+ * See the License for the specific language governing permissions and
+ * limitations under the License.
+ */
+package io.micronaut.data.jdbc.notification.oracle;
+
+import java.util.OptionalLong;
+import java.util.concurrent.CompletableFuture;
+import java.util.concurrent.CompletionStage;
+
+/**
+ * Tracks notification callbacks and registration tasks for one datasource manager so graceful
+ * shutdown can await work that has already started and submitted registration cleanup.
+ *
+ * <p>Callbacks and recovery are counted only when execution begins and
+ * {@link #acceptTask()} successfully reserves them. Once {@link #shutdownGracefully()} is called,
+ * callbacks and recovery that have not started are rejected, while accepted work may finish. The returned
+ * completion stage completes when all accepted work has finished. Shutdown cleanup is reserved
+ * before admission closes, so it is counted even while queued.</p>
+ *
+ * <p>Shutdown is one-way. The tracker methods are synchronized so task admission, completion, and
+ * shutdown cannot race with an inconsistent active-task count.</p>
+ */
+final class OracleChangeNotificationTaskTracker {
+    private final CompletableFuture<Void> completion = new CompletableFuture<>();
+    private boolean shutdownStarted;
+    private long activeTasks;
+
+    /**
+     * Attempts to reserve one asynchronous task.
+     *
+     * <p>A successful reservation must be paired with exactly one call to
+     * {@link #completeTask()}.</p>
+     *
+     * @return {@code true} when the task was accepted; {@code false} after shutdown started
+     */
+    synchronized boolean acceptTask() {
+        if (shutdownStarted) {
+            return false;
+        }
+        activeTasks++;
+        return true;
+    }
+
+    /**
+     * Marks one previously accepted task as complete.
+     *
+     * <p>Completion may finish the stage returned by {@link #shutdownGracefully()} when no
+     * accepted tasks remain.</p>
+     *
+     * @throws IllegalStateException if no accepted asynchronous task is active
+     */
+    synchronized void completeTask() {
+        if (activeTasks == 0) {
+            throw new IllegalStateException("No accepted asynchronous task is active");
+        }
+        activeTasks--;
+        completeIfIdle();
+    }
+
+    /**
+     * Begins one-way graceful shutdown and returns a stage completed when accepted work is idle.
+     *
+     * <p>If no tasks are active, the returned stage is already complete. Calling this method more
+     * than once returns the same completion stage.</p>
+     *
+     * @return a stage completed after all tasks accepted before shutdown finish
+     */
+    synchronized CompletionStage<Void> shutdownGracefully() {
+        shutdownStarted = true;
+        completeIfIdle();
+        return completion;
+    }
+
+    /**
+     * Reports the number of accepted tasks that have not completed after shutdown has begun.
+     *
+     * @return the outstanding-task count after shutdown starts, or empty while the tracker is running
+     */
+    synchronized OptionalLong reportActiveTasks() {
+        return shutdownStarted ? OptionalLong.of(activeTasks) : OptionalLong.empty();
+    }
+
+    /**
+     * Checks whether graceful shutdown has begun.
+     *
+     * @return {@code true} after {@link #shutdownGracefully()} has been called
+     */
+    synchronized boolean isShutdownStarted() {
+        return shutdownStarted;
+    }
+
+    private void completeIfIdle() {
+        if (shutdownStarted && activeTasks == 0) {
+            completion.complete(null);
+        }
+    }
+}

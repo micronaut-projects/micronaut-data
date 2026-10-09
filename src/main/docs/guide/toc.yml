@@ -99,6 +99,9 @@ dbc:
   dbcNativeQueries: Explicit Queries
   dbcExplicitQueriesPagination: Explicit Queries and Pagination
   dbcProcedures: Procedures
+  notifications:
+    title: Notifications
+    oracleQueryNotifications: Oracle Query Notifications
 hibernate:
   title: Micronaut Data JPA Hibernate
   hibernateJpaAnnotations: JPA Annotations
