@@ -19,7 +19,7 @@ class GeomEntityJson {
     @GeneratedValue
     private Long id;
 
-    @Srid(3857)
+    @Srid(Srid.WEB_MERCATOR)
     @Index(columns = "location")
     @MappedProperty("location")
     private Point point;
@@ -27,7 +27,7 @@ class GeomEntityJson {
     @Index(columns = "multi_point")
     private MultiPoint multiPoint;
 
-    @Srid(3857)
+    @Srid(Srid.WEB_MERCATOR)
     private LineString lineString;
 
     @Nullable
