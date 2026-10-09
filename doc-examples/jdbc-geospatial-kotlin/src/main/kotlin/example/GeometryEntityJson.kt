@@ -17,7 +17,7 @@ data class GeometryEntityJson(
     @field:GeneratedValue
     val id: Long? = null,
     //tag::get[]
-    @field:Srid(3857)
+    @field:Srid(Srid.WEB_MERCATOR)
     @field:Index(columns = ["location"])
     @MappedProperty("location")
     val point: Point,

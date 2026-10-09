@@ -33,7 +33,7 @@ public class HotelWkt {
 
     private String name;
 
-    @Srid(3857)
+    @Srid(Srid.WEB_MERCATOR)
     @Index(columns = "location")
     @MappedProperty(converter = GeometryWktConverter.class)
     private Point location;

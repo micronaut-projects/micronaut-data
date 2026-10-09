@@ -32,6 +32,27 @@ import java.lang.annotation.Target;
 public @interface Srid {
 
     /**
+     * WGS 84 geographic coordinate reference system (EPSG:4326).
+     *
+     * @since 5.2.3
+     */
+    int WGS_84 = 4326;
+
+    /**
+     * Web Mercator projected coordinate reference system (EPSG:3857).
+     *
+     * @since 5.2.3
+     */
+    int WEB_MERCATOR = 3857;
+
+    /**
+     * ETRS89 geographic coordinate reference system (EPSG:4258).
+     *
+     * @since 5.2.3
+     */
+    int ETRS_89 = 4258;
+
+    /**
      * @return The spatial reference system identifier.
      */
     int value();
