@@ -1032,11 +1032,11 @@ interface MyRepository {
         query.build(new SqlQueryBuilder(dialect)).query == expectedQuery
 
         where:
-        dialect            | entityClass          || expectedQuery
-        Dialect.POSTGRES   | GeomEntityWGS84      || 'UPDATE "geom_entity_wgs84" SET "location"=ST_SetSRID(ST_GeomFromGeoJSON(?), 4326)::geography WHERE ("id" = ?)'
-        Dialect.POSTGRES   | GeomEntityWGS84Wkt   || 'UPDATE "geom_entity_wgs84_wkt" SET "location"=ST_GeomFromText(?, 4326)::geography WHERE ("id" = ?)'
-        Dialect.SQL_SERVER | GeomEntityWGS84      || 'UPDATE [geom_entity_wgs84] SET [location]=geography::STGeomFromText(?, 4326) WHERE ([id] = ?)'
-        Dialect.SQL_SERVER | GeomEntityWGS84Wkt   || 'UPDATE [geom_entity_wgs84_wkt] SET [location]=geography::STGeomFromText(?, 4326) WHERE ([id] = ?)'
+        dialect            | entityClass        || expectedQuery
+        Dialect.POSTGRES   | GeomEntityWGS84    || 'UPDATE "geom_entity_wgs84" SET "location"=ST_SetSRID(ST_GeomFromGeoJSON(?), %d)::geography WHERE ("id" = ?)'.formatted(Srid.WGS_84)
+        Dialect.POSTGRES   | GeomEntityWGS84Wkt || 'UPDATE "geom_entity_wgs84_wkt" SET "location"=ST_GeomFromText(?, %d)::geography WHERE ("id" = ?)'.formatted(Srid.WGS_84)
+        Dialect.SQL_SERVER | GeomEntityWGS84    || 'UPDATE [geom_entity_wgs84] SET [location]=geography::STGeomFromText(?, %d) WHERE ([id] = ?)'.formatted(Srid.WGS_84)
+        Dialect.SQL_SERVER | GeomEntityWGS84Wkt || 'UPDATE [geom_entity_wgs84_wkt] SET [location]=geography::STGeomFromText(?, %d) WHERE ([id] = ?)'.formatted(Srid.WGS_84)
     }
 
     @Unroll
