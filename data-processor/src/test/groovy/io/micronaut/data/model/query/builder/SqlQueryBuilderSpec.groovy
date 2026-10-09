@@ -1387,13 +1387,13 @@ interface MyRepository {
         statements[1] == 'CREATE SEQUENCE "GEOM_ENTITY_JSON_SEQ" MINVALUE 1 START WITH 1 CACHE 100 NOCYCLE'
         statements[2].contains("INSERT INTO USER_SDO_GEOM_METADATA")
         statements[2].contains("'location'")
-        statements[2].contains("3857")
+        statements[2].contains(Integer.toString(Srid.WEB_MERCATOR))
         statements[3].contains("INSERT INTO USER_SDO_GEOM_METADATA")
         statements[3].contains("'multi_point'")
-        statements[3].contains("4326")
+        statements[3].contains(Integer.toString(Srid.WGS_84))
         statements[4].contains("INSERT INTO USER_SDO_GEOM_METADATA")
         statements[4].contains("'line_string'")
-        statements[4].contains("3857")
+        statements[4].contains(Integer.toString(Srid.WEB_MERCATOR))
         statements[5] == 'CREATE INDEX "IDX_GEOM_ENTITY_JSON_LOCATION" ON "GEOM_ENTITY_JSON" ("LOCATION") INDEXTYPE IS MDSYS.SPATIAL_INDEX'
         statements[6] == 'CREATE INDEX "IDX_GEOM_ENTITY_JSON_MULTI_POINT" ON "GEOM_ENTITY_JSON" ("MULTI_POINT") INDEXTYPE IS MDSYS.SPATIAL_INDEX'
     }
