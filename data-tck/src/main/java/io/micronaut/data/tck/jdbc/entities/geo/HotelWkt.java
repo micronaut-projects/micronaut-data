@@ -15,11 +15,13 @@
  */
 package io.micronaut.data.tck.jdbc.entities.geo;
 
+import io.micronaut.core.annotation.Nullable;
 import io.micronaut.data.annotation.GeneratedValue;
 import io.micronaut.data.annotation.Id;
 import io.micronaut.data.annotation.Index;
 import io.micronaut.data.annotation.MappedEntity;
 import io.micronaut.data.annotation.MappedProperty;
+import io.micronaut.data.annotation.Relation;
 import io.micronaut.data.annotation.Srid;
 import io.micronaut.data.model.geo.Point;
 import io.micronaut.data.model.runtime.convert.GeometryWktConverter;
@@ -37,6 +39,10 @@ public class HotelWkt {
     @Index(columns = "location")
     @MappedProperty(converter = GeometryWktConverter.class)
     private Point location;
+
+    @Nullable
+    @Relation(Relation.Kind.MANY_TO_ONE)
+    private District district;
 
     public HotelWkt() {
     }
@@ -68,5 +74,13 @@ public class HotelWkt {
 
     public void setLocation(Point location) {
         this.location = location;
+    }
+
+    public District getDistrict() {
+        return district;
+    }
+
+    public void setDistrict(District district) {
+        this.district = district;
     }
 }

@@ -15,9 +15,11 @@
  */
 package io.micronaut.data.tck.jdbc.entities.geo;
 
+import io.micronaut.core.annotation.Nullable;
 import io.micronaut.data.annotation.GeneratedValue;
 import io.micronaut.data.annotation.Id;
 import io.micronaut.data.annotation.MappedEntity;
+import io.micronaut.data.annotation.Relation;
 import jakarta.persistence.Embedded;
 
 @MappedEntity
@@ -31,6 +33,10 @@ public class School {
 
     @Embedded
     private Location location;
+
+    @Nullable
+    @Relation(Relation.Kind.MANY_TO_ONE)
+    private District district;
 
     public Long getId() {
         return id;
@@ -54,5 +60,13 @@ public class School {
 
     public void setLocation(Location location) {
         this.location = location;
+    }
+
+    public District getDistrict() {
+        return district;
+    }
+
+    public void setDistrict(District district) {
+        this.district = district;
     }
 }
