@@ -2,6 +2,24 @@ This section documents breaking changes between Micronaut versions
 
 == 5.2
 
+=== MySQL WKT geographic axis order (5.2.3)
+
+MySQL 8.0.1 and later now use explicit longitude/latitude axis order for WKT-mapped columns with a geographic
+SRID, such as 4326. Existing values written since Micronaut Data 5.0.0 using the previous behavior have their
+axes swapped, even though reads previously appeared correct. After upgrading, these rows are read back
+with longitude and latitude flipped and can be excluded from `Near` query results.
+
+Affected data requires a one-time repair when upgrading. For a table containing only affected rows:
+
+[source,sql]
+----
+UPDATE delivery_driver_wkt SET location = ST_SwapXY(location);
+----
+
+Adapt the table and column names and update only values written with the old behavior; do not update new
+or already migrated values. Micronaut Data cannot distinguish old rows from corrected rows automatically.
+See <<sqlGeospatial,Geospatial Support>> for the MySQL migration details.
+
 === Kotlin 2.4 generic repository bounds
 
 When using Kotlin 2.4, generic base repositories extending `CoroutineCrudRepository`,

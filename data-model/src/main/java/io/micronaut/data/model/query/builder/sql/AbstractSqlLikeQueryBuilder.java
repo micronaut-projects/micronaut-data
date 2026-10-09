@@ -3766,7 +3766,8 @@ public abstract class AbstractSqlLikeQueryBuilder implements QueryBuilder {
 
         private String getOtherGeometryFunction(String column, String columnAlias, boolean isWkt) {
             String function = isWkt ? "ST_AsText(" : "ST_AsGeoJSON(";
-            return function + column + ")" + AS_CLAUSE + columnAlias;
+            String options = isWkt && getDialect() == Dialect.MYSQL ? SqlQueryBuilderUtils.MYSQL_WKT_AXIS_ORDER : "";
+            return function + column + options + ")" + AS_CLAUSE + columnAlias;
         }
 
         private void appendFunction(String functionName, Expression<?> expression) {
