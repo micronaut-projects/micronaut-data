@@ -61,31 +61,39 @@ final class PythonMethodNameParser {
         if (parser.tryMatch(prefix).stream().noneMatch(m -> m.id() == QueryMatchId.PREFIX && m.part().equals(prefix))) {
             throw unsupported(methodName);
         }
-        String remaining = methodName.substring(separator + 1);
-        if (remaining.isEmpty()) {
-            throw unsupported(methodName);
-        }
+        boolean forceProperty = methodName.startsWith("__", separator);
+        String remaining = consume(methodName, separator, methodName);
         PersistentEntity entity = context.hasRootEntity() ? context.getRootEntity() : null;
         StringBuilder normalized = new StringBuilder(prefix);
         List<MethodNameParser.Match> properties = new ArrayList<>();
         Set<QueryMatchId> required = new HashSet<>();
-        boolean header = true;
+        QueryMatchId clause = QueryMatchId.PROJECTION;
         boolean expectProperty = true;
+        boolean orderDirection = false;
+        boolean allowDescription = ENTITY_OPERATIONS.contains(prefix);
         while (!remaining.isEmpty()) {
+            boolean header = clause == QueryMatchId.PROJECTION;
             Map.Entry<String, String> keyword = keyword(remaining);
             PropertyToken property = expectProperty && entity != null ? property(entity, remaining) : null;
+            // A header property must not swallow a structural clause and drop a filter.
             boolean headerKeyword = header && keyword != null
-                && (CLAUSES.contains(keyword.getValue()) || HEADER_MODIFIERS.contains(keyword.getValue()));
+                && !forceProperty && (CLAUSES.contains(keyword.getValue())
+                || (HEADER_MODIFIERS.contains(keyword.getValue()) && property != null && spansClause(property.text())));
+            if (forceProperty && property == null) {
+                throw unsupported(methodName);
+            }
             if (entity != null && property != null && !headerKeyword) {
                 String alias = alias(entity, properties);
                 normalized.append(alias);
                 properties.add(new MethodNameParser.Match(new Property(property.path()), alias));
                 remaining = consume(remaining, property.text().length(), methodName);
                 expectProperty = false;
+                orderDirection = false;
+                forceProperty = false;
                 continue;
             }
             Matcher limit = LIMIT.matcher(remaining);
-            if (header && limit.find()) {
+            if (header && expectProperty && limit.find()) {
                 normalized.append(NameUtils.capitalize(limit.group(1))).append(limit.group(2));
                 required.add(QueryMatchId.LIMIT);
                 remaining = consume(remaining, limit.end(), methodName);
@@ -101,7 +109,7 @@ final class PythonMethodNameParser {
                     continue;
                 }
                 // Entity operation suffixes are descriptive, not filters, in the existing grammar.
-                if (header && ENTITY_OPERATIONS.contains(prefix)) {
+                if (header && allowDescription) {
                     int end = remaining.indexOf('_');
                     if (end < 0) {
                         end = remaining.length();
@@ -113,18 +121,39 @@ final class PythonMethodNameParser {
                 throw unsupported(methodName);
             }
             String token = keyword.getValue();
+            if ((!header || !allowDescription) && misplaced(token, clause, expectProperty)) {
+                throw unsupported(methodName);
+            }
+            if (token.equals("ForUpdate") && remaining.length() != keyword.getKey().length()) {
+                throw unsupported(methodName);
+            }
             normalized.append(token);
             switch (token) {
-                case "By" -> required.add(QueryMatchId.PREDICATE);
-                case "OrderBy", "SortBy" -> required.add(QueryMatchId.ORDER);
-                case "Returning" -> required.add(QueryMatchId.RETURNING);
-                case "ForUpdate" -> required.add(QueryMatchId.FOR_UPDATE);
+                case "By" -> {
+                    required.add(QueryMatchId.PREDICATE);
+                    clause = QueryMatchId.PREDICATE;
+                }
+                case "OrderBy", "SortBy" -> {
+                    required.add(QueryMatchId.ORDER);
+                    clause = QueryMatchId.ORDER;
+                }
+                case "Returning" -> {
+                    required.add(QueryMatchId.RETURNING);
+                    clause = QueryMatchId.RETURNING;
+                }
+                case "ForUpdate" -> {
+                    required.add(QueryMatchId.FOR_UPDATE);
+                    clause = QueryMatchId.FOR_UPDATE;
+                }
+                case "Asc", "Desc" -> {
+                    if (orderDirection) {
+                        throw unsupported(methodName);
+                    }
+                    orderDirection = true;
+                }
                 case "Distinct" -> required.add(QueryMatchId.DISTINCT);
                 case "First" -> required.add(QueryMatchId.FIRST);
                 default -> { }
-            }
-            if (CLAUSES.contains(token)) {
-                header = false;
             }
             expectProperty = CLAUSES.contains(token) || HEADER_MODIFIERS.contains(token)
                 || AGGREGATES.contains(token) || token.equals("And") || token.equals("Or") || token.equals("First");
@@ -134,7 +163,6 @@ final class PythonMethodNameParser {
                 throw unsupported(methodName);
             }
         }
-        boolean allowDescription = ENTITY_OPERATIONS.contains(prefix);
         List<MethodNameParser.Match> matches = parser.tryMatch(normalized.toString(), unmatched -> {
             if (!unmatched.isEmpty() && !allowDescription) {
                 throw unsupported(methodName);
@@ -147,6 +175,28 @@ final class PythonMethodNameParser {
         }
         matches.addAll(properties);
         return matches;
+    }
+
+    private static boolean misplaced(String token, QueryMatchId clause, boolean expectProperty) {
+        boolean header = clause == QueryMatchId.PROJECTION;
+        return switch (token) {
+            case "All", "One", "Top", "First", "Distinct", "Max", "Min", "Sum", "Avg" -> !header || !expectProperty;
+            case "Asc", "Desc" -> clause != QueryMatchId.ORDER || expectProperty;
+            case "And" -> expectProperty;
+            case "Or" -> clause != QueryMatchId.PREDICATE || expectProperty;
+            case "By" -> !header;
+            case "OrderBy", "SortBy", "Returning" -> !header && (clause != QueryMatchId.PREDICATE || expectProperty);
+            case "ForUpdate" -> !header && ((clause != QueryMatchId.PREDICATE && clause != QueryMatchId.ORDER) || expectProperty);
+            case "Not", "IgnoreCase" -> clause != QueryMatchId.PREDICATE || expectProperty;
+            default -> Restrictions.PROPERTY_RESTRICTIONS_MAP.containsKey(token)
+                ? clause != QueryMatchId.PREDICATE || expectProperty
+                : Restrictions.RESTRICTIONS_MAP.containsKey(token) && clause != QueryMatchId.PREDICATE;
+        };
+    }
+
+    private static boolean spansClause(String property) {
+        return KEYWORDS.stream().anyMatch(keyword -> CLAUSES.contains(keyword.getValue())
+            && (property.contains("_" + keyword.getKey() + "_") || property.endsWith("_" + keyword.getKey())));
     }
 
     static MatchFailedException unsupported(String methodName) {
