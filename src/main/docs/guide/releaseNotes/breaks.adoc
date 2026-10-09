@@ -2,7 +2,7 @@ This section documents breaking changes between Micronaut versions
 
 == 5.2
 
-=== MySQL WKT geographic axis order
+=== MySQL WKT geographic axis order (5.2.3)
 
 MySQL 8.0.1 and later now use explicit longitude/latitude axis order for WKT-mapped columns with a geographic
 SRID, such as 4326. Existing values written since Micronaut Data 5.0.0 using the previous behavior have their
