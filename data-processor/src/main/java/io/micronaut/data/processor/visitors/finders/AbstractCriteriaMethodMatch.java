@@ -659,26 +659,28 @@ public abstract class AbstractCriteriaMethodMatch implements MethodMatcher.Metho
         propertyName = NameUtils.decapitalize(propertyName);
         PersistentEntity entity = root.getPersistentEntity();
         String nativePropertyName = resolveNativePropertyName(propertyName);
-        PersistentProperty prop = entity.getPropertyByName(nativePropertyName);
         PersistentPropertyPath pp;
         if (!nativePropertyName.equals(propertyName)) {
             pp = entity.getPropertyPath(nativePropertyName);
             if (pp == null) {
                 return null;
             }
-        } else if (prop == null) {
-            Optional<String> propertyPath = PersistentEntityUtils.getPersistentPropertyPath(entity, propertyName);
-            if (propertyPath.isPresent()) {
-                String path = propertyPath.get();
-                pp = entity.getPropertyPath(path);
-                if (pp == null) {
+        } else {
+            PersistentProperty prop = entity.getPropertyByName(nativePropertyName);
+            if (prop == null) {
+                Optional<String> propertyPath = PersistentEntityUtils.getPersistentPropertyPath(entity, propertyName);
+                if (propertyPath.isPresent()) {
+                    String path = propertyPath.get();
+                    pp = entity.getPropertyPath(path);
+                    if (pp == null) {
+                        return null;
+                    }
+                } else {
                     return null;
                 }
             } else {
-                return null;
+                pp = PersistentPropertyPath.of(Collections.emptyList(), prop, propertyName);
             }
-        } else {
-            pp = PersistentPropertyPath.of(Collections.emptyList(), prop, propertyName);
         }
 
         PersistentEntityFrom<?, ?> path = root;
