@@ -15,12 +15,13 @@
  */
 package io.micronaut.data.tck.jdbc.entities.geo;
 
+import io.micronaut.core.annotation.Nullable;
+import io.micronaut.data.annotation.GeneratedValue;
 import io.micronaut.data.annotation.Id;
 import io.micronaut.data.annotation.MappedEntity;
 import io.micronaut.data.annotation.MappedProperty;
 import io.micronaut.data.annotation.Relation;
 import io.micronaut.data.model.geo.Polygon;
-import jakarta.persistence.GeneratedValue;
 
 import java.util.List;
 
@@ -35,6 +36,7 @@ public class District {
 
     private String name;
 
+    @Nullable
     private Polygon area;
 
     @Relation(value = ONE_TO_MANY, mappedBy = "district")
@@ -46,6 +48,7 @@ public class District {
     @Relation(value = ONE_TO_MANY, mappedBy = "district")
     private List<HotelJson> hotelsJson;
 
+    @Nullable
     @Relation(Relation.Kind.MANY_TO_ONE)
     @MappedProperty(value = "geometryEntityJson")
     private GeometryEntityJson geometryEntityJson;
@@ -54,7 +57,7 @@ public class District {
     @MappedProperty(value = "geometryEntityWkt")
     private GeometryEntityWkt geometryEntityWkt;
 
-    public District(Long id, String name, Polygon area, GeometryEntityJson geometryEntityJson, GeometryEntityWkt geometryEntityWkt) {
+    public District(Long id, String name, @Nullable Polygon area, @Nullable GeometryEntityJson geometryEntityJson, GeometryEntityWkt geometryEntityWkt) {
         this.id = id;
         this.name = name;
         this.area = area;

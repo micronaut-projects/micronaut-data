@@ -548,9 +548,29 @@ abstract class AbstractGeoSpec extends Specification {
         fetchedDowntown.id == downtown.id
         fetchedDowntown.schools*.name.sort() == ["Downtown Primary", "Downtown Secondary"]
         fetchedDowntown.hotelsJson*.name.sort() == ["Downtown JSON Hotel", "Downtown JSON Inn"]
+        fetchedDowntown.hotelsJson*.location.toSet() == [new Point(3.0d, 3.0d), new Point(4.0d, 4.0d)] as Set
         fetchedDowntown.hotelsWkt*.name.sort() == ["Downtown WKT Hotel", "Downtown WKT Inn"]
+        fetchedDowntown.hotelsWkt*.location.toSet() == [new Point(5.0d, 5.0d), new Point(6.0d, 6.0d)] as Set
         fetchedDowntown.geometryEntityJson.id == geometryEntityJson.id
+        with(fetchedDowntown.geometryEntityJson) {
+            assertPoint(it.point, 5)
+            assertMultiPoint(it.multiPoint, 5)
+            assertLineString(it.lineString, 5)
+            assertMultiLineString(it.multiLineString, 5)
+            assertPolygon(it.polygon, 5)
+            assertMultiPolygon(it.multiPolygon, 5)
+            assertGeometryCollection(it.geometryCollection, 5)
+        }
         fetchedDowntown.geometryEntityWkt.id == geometryEntityWkt.id
+        with(fetchedDowntown.geometryEntityWkt) {
+            assertPoint(it.point, 5)
+            assertMultiPoint(it.multiPoint, 5)
+            assertLineString(it.lineString, 5)
+            assertMultiLineString(it.multiLineString, 5)
+            assertPolygon(it.polygon, 5)
+            assertMultiPolygon(it.multiPolygon, 5)
+            assertGeometryCollection(it.geometryCollection, 5)
+        }
 
         and: "left fetch returns populated and partially populated districts"
         fetchedOutskirts != null
@@ -577,6 +597,34 @@ abstract class AbstractGeoSpec extends Specification {
         districtsWithOutskirtsJsonHotel*.id == [outskirts.id]
         districtsWithWktHotelsIntersecting*.id == [downtown.id]
 
+    }
+
+    void "test WKT district fetch joins without JSON conversion"() {
+        given:
+        GeometryEntityWkt geometryEntityWkt = getGeometryEntityWktRepository().save(createGeometryEntityWkt(5))
+        District district = getDistrictRepository().save(new District(null, "WKT District", null, null, geometryEntityWkt))
+        addHotelWkt(district, "First WKT Hotel", new Point(3.0d, 3.0d))
+        addHotelWkt(district, "Second WKT Hotel", new Point(4.0d, 4.0d))
+
+        when:
+        District fetchedDistrict = getDistrictRepository().findByName("WKT District")
+
+        then:
+        fetchedDistrict != null
+        fetchedDistrict.id == district.id
+        fetchedDistrict.geometryEntityWkt.id == geometryEntityWkt.id
+        with(fetchedDistrict.geometryEntityWkt) {
+            assertPoint(it.point, 5)
+            assertMultiPoint(it.multiPoint, 5)
+            assertLineString(it.lineString, 5)
+            assertMultiLineString(it.multiLineString, 5)
+            assertPolygon(it.polygon, 5)
+            assertMultiPolygon(it.multiPolygon, 5)
+            assertGeometryCollection(it.geometryCollection, 5)
+        }
+        fetchedDistrict.hotelsWkt*.name.toSet() == ["First WKT Hotel", "Second WKT Hotel"] as Set
+        fetchedDistrict.hotelsWkt.find { it.name == "First WKT Hotel" }.location == new Point(3.0d, 3.0d)
+        fetchedDistrict.hotelsWkt.find { it.name == "Second WKT Hotel" }.location == new Point(4.0d, 4.0d)
     }
 
     private void addSchool(District district, String name, Point point) {
