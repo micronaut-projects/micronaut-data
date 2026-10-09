@@ -99,7 +99,7 @@ class H2StreamResourcesSpec extends Specification implements H2TestPropertyProvi
         when:
             def names = connectionOperations.executeRead { repository.queryAll().map { it.name }.toList() }
         then:
-            names.sort(false) == ["a", "b"]
+            names.toSorted() == ["a", "b"]
             StatementTracker.openStatements.get() == 0
     }
 
