@@ -65,18 +65,21 @@ class MongoQueryStateIsolationSpec extends Specification implements MongoTestPro
         rankedRepository.deleteAll()
     }
 
+    // The dynamic sort keys are merged into the pipeline's own $sort stage after its keys, so they only
+    // order rows that the pipeline's sort leaves tied (here: the two rows named "a")
+
     void "a dynamic sort does not change the cached aggregation pipeline"() {
-        when: "the first call adds age descending after the pipeline's own name sort"
+        when: "effective sort {name: 1, age: -1}"
             def first = rankedRepository.sortedByName(Sort.of(Sort.Order.desc("age")))
         then:
             first*.rank == [2, 1, 3]
 
-        when: "the second call sorts by rank only; age must not be left over from the first call"
+        when: "effective sort {name: 1, rank: 1}; age from the first call must not be left over"
             def second = rankedRepository.sortedByName(Sort.of(Sort.Order.asc("rank")))
         then:
             second*.rank == [1, 2, 3]
 
-        when: "a dynamic sort on a key the pipeline already sorts by overrides it for that call only"
+        when: "effective sorts {name: 1, rank: -1}, then {name: 1, rank: 1}, then {name: 1, rank: -1} again"
             def unsorted = rankedRepository.sortedByNameAndRankDescending(Sort.unsorted())
             def sorted = rankedRepository.sortedByNameAndRankDescending(Sort.of(Sort.Order.asc("rank")))
             def unsortedAgain = rankedRepository.sortedByNameAndRankDescending(Sort.unsorted())
@@ -87,7 +90,7 @@ class MongoQueryStateIsolationSpec extends Specification implements MongoTestPro
     }
 
     void "a dynamic sort with null ordering does not leave its rank field in the cached pipeline"() {
-        when:
+        when: "effective sorts {name: 1, <null rank of age>: 1, age: 1}, then {name: 1, rank: -1}"
             rankedRepository.sortedByName(Sort.of(new Sort.Order("age", Sort.Order.Direction.ASC, false, Sort.Order.NullOrdering.FIRST)))
             def next = rankedRepository.sortedByName(Sort.of(Sort.Order.desc("rank")))
         then:
