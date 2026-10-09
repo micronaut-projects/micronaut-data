@@ -35,6 +35,7 @@ import io.micronaut.data.processor.visitors.MethodMatchContext;
 import io.micronaut.data.processor.visitors.finders.criteria.UpdateCriteriaMethodMatch;
 import io.micronaut.inject.ast.MethodElement;
 import io.micronaut.inject.ast.ParameterElement;
+import io.micronaut.inject.visitor.VisitorContext;
 import jakarta.persistence.criteria.Expression;
 import jakarta.persistence.criteria.Path;
 import org.jspecify.annotations.Nullable;
@@ -73,7 +74,10 @@ public final class ReservationMethodMatcher implements MethodMatcher {
         SourcePersistentEntity entity = resolveRootEntity(matchContext);
         ParameterElement[] parameters = method.getParameters();
         validateIdParameter(entity, parameters);
-        List<Delta> deltas = parseDeltas(deltaDefinition, entity, parameters);
+        List<Delta> deltas = matchContext.getVisitorContext().getLanguage() == VisitorContext.Language.PYTHON
+            && method.getName().startsWith("reserve_")
+            ? parsePythonDeltas(deltaDefinition.substring(1), entity, parameters)
+            : parseDeltas(deltaDefinition, entity, parameters);
         return deltas.isEmpty() ? null : reservationUpdateMatch(deltas);
     }
 
@@ -170,6 +174,55 @@ public final class ReservationMethodMatcher implements MethodMatcher {
             end = nextMatchStart(definition, matcher.end());
         }
         validateDefinitionEnd(definition, end);
+        validateDeltaParameterCount(parameters, deltas);
+        return deltas;
+    }
+
+    private static List<Delta> parsePythonDeltas(String definition,
+                                               SourcePersistentEntity entity,
+                                               ParameterElement[] parameters) {
+        String methodName = "reserve_" + definition;
+        List<Delta> deltas = new ArrayList<>();
+        Set<String> targetPaths = new HashSet<>();
+        while (!definition.isEmpty()) {
+            boolean increment = definition.startsWith("increment_");
+            if (!increment && !definition.startsWith("decrement_")) {
+                throw PythonMethodNameParser.unsupported(methodName);
+            }
+            String remaining = definition.substring("increment_".length());
+            String propertyName = null;
+            String propertyPath = null;
+            int end;
+            for (end = remaining.length(); end > 0; end--) {
+                String separator = remaining.startsWith("__", end) ? "__and_" : "_and_";
+                if (end != remaining.length() && !remaining.startsWith(separator + "increment_", end)
+                    && !remaining.startsWith(separator + "decrement_", end)) {
+                    continue;
+                }
+                String candidate = remaining.substring(0, end);
+                String path = PythonMethodNameParser.path(entity, candidate);
+                if (path != null) {
+                    propertyName = candidate;
+                    propertyPath = path;
+                    break;
+                }
+            }
+            if (propertyName == null || propertyPath == null) {
+                throw PythonMethodNameParser.unsupported(methodName);
+            }
+            PersistentPropertyPath persistentPropertyPath = entity.getPropertyPath(propertyPath);
+            if (persistentPropertyPath == null) {
+                throw PythonMethodNameParser.unsupported(methodName);
+            }
+            validateReservationProperty(propertyName, persistentPropertyPath);
+            validateUniqueTarget(propertyName, persistentPropertyPath, targetPaths);
+            ParameterElement parameter = resolveDeltaParameter(parameters, propertyName);
+            deltas.add(new Delta(persistentPropertyPath, parameter, increment));
+            definition = end == remaining.length() ? "" : remaining.substring(end + (remaining.startsWith("__", end) ? 6 : 5));
+        }
+        if (deltas.isEmpty()) {
+            throw PythonMethodNameParser.unsupported(methodName);
+        }
         validateDeltaParameterCount(parameters, deltas);
         return deltas;
     }

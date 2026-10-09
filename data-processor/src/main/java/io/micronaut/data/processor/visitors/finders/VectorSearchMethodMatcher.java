@@ -52,7 +52,7 @@ public final class VectorSearchMethodMatcher extends AbstractMethodMatcher {
 
     @Override
     @Nullable
-    public MethodMatch match(MethodMatchContext matchContext, List<MethodNameParser.Match> matches) {
+    public MethodMatch match(MethodMatchContext matchContext) {
         ClassElement returnType = matchContext.getReturnType();
         if (TypeUtils.isReactiveOrFuture(returnType)) {
             returnType = returnType.getFirstTypeArgument().orElse(returnType);
@@ -60,6 +60,12 @@ public final class VectorSearchMethodMatcher extends AbstractMethodMatcher {
         if (!returnType.getName().equals(SearchResults.class.getName())) {
             return null;
         }
+        return super.match(matchContext);
+    }
+
+    @Override
+    @Nullable
+    public MethodMatch match(MethodMatchContext matchContext, List<MethodNameParser.Match> matches) {
         return new QueryCriteriaMethodMatch(matches) {
             @Override
             protected PersistentEntityCriteriaQuery<Object> createQuery(MethodMatchContext matchContext,
