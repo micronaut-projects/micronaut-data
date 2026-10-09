@@ -22,6 +22,7 @@ import io.micronaut.data.annotation.Join
 import io.micronaut.data.annotation.MappedEntity
 import io.micronaut.data.annotation.MappedProperty
 import io.micronaut.data.annotation.Relation
+import io.micronaut.data.annotation.sql.ColumnTransformer
 import io.micronaut.data.exceptions.MappingException
 import io.micronaut.data.model.PersistentEntity
 import io.micronaut.data.model.Sort
@@ -451,6 +452,41 @@ interface MyRepository {
         entityClass    | association | function
         GeomEntityJson | "geom"      | "ST_AsGeoJSON"
         GeomEntityWkt  | "wkt"       | "ST_AsText"
+    }
+
+    @Unroll
+    void "test property projection alias for #property with explicit alias #explicitAlias and compound selection #compound"() {
+        given:
+        def criteriaQuery = builder.createQuery(Object)
+        def root = criteriaQuery.from(ProjectionAliasEntity)
+        def selection = root.get(property)
+        if (explicitAlias) {
+            selection = selection.alias("projected_alias")
+        }
+        if (compound) {
+            criteriaQuery.multiselect(selection, root.get("id"))
+        } else {
+            criteriaQuery.select(selection)
+        }
+
+        when:
+        def sql = criteriaQuery.build(new SqlQueryBuilder(Dialect.POSTGRES)).query
+
+        then:
+        sql == "SELECT ${expression} AS ${explicitAlias ? 'projected_alias' : defaultAlias}" +
+            (compound ? ',projection_alias_entity_."id"' : '') +
+            ' FROM "projection_alias_entity" projection_alias_entity_'
+
+        where:
+        [property, expression, defaultAlias, explicitAlias, compound] << [
+            ["transformed", "UPPER(projection_alias_entity_.transformed)", "transformed"],
+            ["mapped", 'projection_alias_entity_."mapped"', "mapped_alias"],
+            ["combined", "UPPER(projection_alias_entity_.combined)", "combined_alias"]
+        ].collectMany { row ->
+            [false, true].collectMany { explicitAlias ->
+                [false, true].collect { compound -> row + [explicitAlias, compound] }
+            }
+        }
     }
 
     void "test aliased embedded projection with multiple columns throws"() {
@@ -1593,6 +1629,22 @@ interface MyRepository {
         return entity
     }
 
+}
+
+@MappedEntity
+class ProjectionAliasEntity {
+    @Id
+    Long id
+
+    @ColumnTransformer(read = "UPPER(@.transformed)")
+    String transformed
+
+    @MappedProperty(alias = "mapped_alias")
+    String mapped
+
+    @ColumnTransformer(read = "UPPER(@.combined)")
+    @MappedProperty(alias = "combined_alias")
+    String combined
 }
 
 @MappedEntity
