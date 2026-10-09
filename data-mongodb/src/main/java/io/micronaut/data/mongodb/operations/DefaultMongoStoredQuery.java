@@ -688,9 +688,8 @@ final class DefaultMongoStoredQuery<E, R> extends DefaultBindableParametersStore
             MongoAggregationOptions options = getOptions(invocationContext);
             Collation collation = getCollation(invocationContext, null);
             if (collation != null) {
-                if (options == null) {
-                    options = new MongoAggregationOptions();
-                }
+                // The options can be the cached ones or the caller's, so set the collation on a copy
+                options = options == null ? new MongoAggregationOptions() : new MongoAggregationOptions(options);
                 options.collation(collation);
             }
             return new MongoAggregation(Objects.requireNonNull(pipeline), options);
@@ -756,6 +755,9 @@ final class DefaultMongoStoredQuery<E, R> extends DefaultBindableParametersStore
             newOptions.hint(options.getHint());
             newOptions.hintString(options.getHintString());
             newOptions.arrayFilters(options.getArrayFilters());
+            newOptions.comment(options.getComment());
+            newOptions.let(options.getLet());
+            newOptions.sort(options.getSort());
             return newOptions;
         }
 
@@ -811,6 +813,8 @@ final class DefaultMongoStoredQuery<E, R> extends DefaultBindableParametersStore
         @NonNull
         private UpdateOptions getOptions(@Nullable InvocationContext<?, ?> invocationContext) {
             UpdateOptions options = this.options;
+            // The cached options and the caller's options must not be modified
+            boolean shared = true;
             if (optionsParameterIndex != -1) {
                 UpdateOptions paramOptions = getParameterAtIndex(invocationContext, optionsParameterIndex);
                 if (paramOptions != null) {
@@ -819,15 +823,17 @@ final class DefaultMongoStoredQuery<E, R> extends DefaultBindableParametersStore
                     } else {
                         options = copy(options);
                         copyNonNullFrom(options, paramOptions);
+                        shared = false;
                     }
                 }
             }
             if (options == null) {
                 options = new UpdateOptions();
+                shared = false;
             }
             Collation collation = getCollation(invocationContext, null);
             if (collation != null) {
-                if (options == this.options) {
+                if (shared) {
                     options = copy(options);
                 }
                 options.collation(collation);
@@ -1107,7 +1113,8 @@ final class DefaultMongoStoredQuery<E, R> extends DefaultBindableParametersStore
                 MongoFindOptions paramOptions = getParameterAtIndex(invocationContext, optionsParameterIndex);
                 if (paramOptions != null) {
                     if (options == null) {
-                        return paramOptions;
+                        // A copy, because the filter, collation, sort and projection are set on the result
+                        return new MongoFindOptions(paramOptions);
                     }
                     MongoFindOptions options = new MongoFindOptions(this.options);
                     options.copyNotNullFrom(paramOptions);
@@ -1178,6 +1185,8 @@ final class DefaultMongoStoredQuery<E, R> extends DefaultBindableParametersStore
         @NonNull
         private DeleteOptions getOptions(@Nullable InvocationContext<?, ?> invocationContext) {
             DeleteOptions options = this.options;
+            // The cached options and the caller's options must not be modified
+            boolean shared = true;
             if (optionsParameterIndex != -1) {
                 DeleteOptions paramOptions = getParameterAtIndex(invocationContext, optionsParameterIndex);
                 if (paramOptions != null) {
@@ -1186,15 +1195,17 @@ final class DefaultMongoStoredQuery<E, R> extends DefaultBindableParametersStore
                     } else {
                         options = copy(options);
                         copyNonNullFrom(options, paramOptions);
+                        shared = false;
                     }
                 }
             }
             if (options == null) {
                 options = new DeleteOptions();
+                shared = false;
             }
             Collation collation = getCollation(invocationContext, null);
             if (collation != null) {
-                if (this.options == options) {
+                if (shared) {
                     options = copy(options);
                 }
                 options.collation(collation);
@@ -1207,6 +1218,8 @@ final class DefaultMongoStoredQuery<E, R> extends DefaultBindableParametersStore
             newOptions.collation(options.getCollation());
             newOptions.hint(options.getHint());
             newOptions.hintString(options.getHintString());
+            newOptions.comment(options.getComment());
+            newOptions.let(options.getLet());
             return newOptions;
         }
 
