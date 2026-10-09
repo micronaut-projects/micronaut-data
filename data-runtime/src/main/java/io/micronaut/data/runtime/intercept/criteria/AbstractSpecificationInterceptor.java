@@ -340,39 +340,76 @@ public abstract class AbstractSpecificationInterceptor<T, R> extends AbstractQue
         }
 
         Root<?> root = criteriaQuery.getRoots().iterator().next();
+        // Disjunct i: the keys before i equal the cursor and key i comes after it. The keys are compared the same way
+        // they are sorted: case-insensitive keys in lower case, and keys with an explicit null ordering with the nulls
+        // at the requested end
         List<Predicate> orPredicates = new ArrayList<>(orders.size());
         for (int i = 0; i < orders.size(); ++i) {
-            List<Predicate> andPredicates = new ArrayList<>(orders.size());
-            for (int j = 0; j <= i; ++j) {
-                String propertyName = orders.get(j).getProperty();
-                Predicate predicate;
-                Object value = cursor.get(i);
-                if (orders.get(i).isAscending()) {
-                    if (i == j) {
-                        predicate = criteriaBuilder.greaterThan(root.<Comparable>get(propertyName), (Comparable) value);
-                    } else {
-                        predicate = criteriaBuilder.equal(root.get(propertyName), value);
-                    }
+            Sort.Order order = orders.get(i);
+            Object value = cursor.get(i);
+            boolean explicitNulls = order.getNullOrdering() != Sort.Order.NullOrdering.NONE;
+            if (explicitNulls && value == null && order.getNullOrdering() == Sort.Order.NullOrdering.LAST) {
+                // Nothing comes after a null that is ordered last, so the remaining rows differ in a later key
+                continue;
+            }
+            List<Predicate> andPredicates = new ArrayList<>(i + 1);
+            for (int j = 0; j < i; ++j) {
+                Sort.Order previous = orders.get(j);
+                Object previousValue = cursor.get(j);
+                Path<Object> path = cursorPath(root, previous.getProperty());
+                if (previous.getNullOrdering() != Sort.Order.NullOrdering.NONE && previousValue == null) {
+                    andPredicates.add(criteriaBuilder.isNull(path));
+                } else if (previous.isIgnoreCase()) {
+                    andPredicates.add(criteriaBuilder.equal(criteriaBuilder.lower((Expression<String>) (Expression<?>) path),
+                        criteriaBuilder.lower(criteriaBuilder.literal(String.valueOf(previousValue)))));
                 } else {
-                    if (i == j) {
-                        predicate = criteriaBuilder.lessThan(root.<Comparable>get(propertyName), (Comparable) value);
-                    } else {
-                        predicate = criteriaBuilder.equal(root.get(propertyName), value);
-                    }
+                    andPredicates.add(criteriaBuilder.equal(path, previousValue));
                 }
-                andPredicates.add(predicate);
+            }
+            Path<Comparable> path = (Path) cursorPath(root, order.getProperty());
+            if (explicitNulls && value == null) {
+                // A null that is ordered first: every non-null value comes after it
+                andPredicates.add(criteriaBuilder.isNotNull(path));
+            } else {
+                Predicate comparison;
+                if (order.isIgnoreCase()) {
+                    Expression<String> lower = criteriaBuilder.lower((Expression<String>) (Expression<?>) path);
+                    Expression<String> lowerValue = criteriaBuilder.lower(criteriaBuilder.literal(String.valueOf(value)));
+                    comparison = order.isAscending() ? criteriaBuilder.greaterThan(lower, lowerValue) : criteriaBuilder.lessThan(lower, lowerValue);
+                } else {
+                    comparison = order.isAscending() ? criteriaBuilder.greaterThan(path, (Comparable) value) : criteriaBuilder.lessThan(path, (Comparable) value);
+                }
+                if (order.getNullOrdering() == Sort.Order.NullOrdering.LAST) {
+                    comparison = criteriaBuilder.or(comparison, criteriaBuilder.isNull(path));
+                }
+                andPredicates.add(comparison);
             }
             orPredicates.add(
                 criteriaBuilder.and(andPredicates.toArray(new Predicate[0]))
             );
         }
-        Predicate predicate = criteriaBuilder.or(orPredicates.toArray(new Predicate[0]));
+        Predicate predicate = orPredicates.isEmpty()
+            ? criteriaBuilder.disjunction()
+            : criteriaBuilder.or(orPredicates.toArray(new Predicate[0]));
         Predicate restriction = criteriaQuery.getRestriction();
         if (restriction == null) {
             criteriaQuery.where(predicate);
         } else {
             criteriaQuery.where(criteriaBuilder.and(restriction, predicate));
         }
+    }
+
+    private static Path<Object> cursorPath(Root<?> root, String propertyPath) {
+        // A sort property can be a path through embedded properties, such as "address.city"
+        int start = 0;
+        int dot = propertyPath.indexOf('.');
+        Path<Object> path = root.get(dot == -1 ? propertyPath : propertyPath.substring(0, dot));
+        while (dot != -1) {
+            start = dot + 1;
+            dot = propertyPath.indexOf('.', start);
+            path = path.get(dot == -1 ? propertyPath.substring(start) : propertyPath.substring(start, dot));
+        }
+        return path;
     }
 
     protected final CriteriaQuery<Tuple> buildIdsQuery(RepositoryMethodKey methodKey,
