@@ -40,6 +40,64 @@ final class GeometryJsonConverterSpec extends Specification {
         geometryCollection()           || '{"type":"GeometryCollection","geometries":[{"type":"Point","coordinates":[9.0,9.0]},{"type":"LineString","coordinates":[[1.0,2.5],[3.0,4.0],[5.75,6.0]]},{"type":"GeometryCollection","geometries":[{"type":"Point","coordinates":[7.5,8.25]},{"type":"MultiPoint","coordinates":[[1.0,2.5],[3.0,4.0]]}]}]}'
     }
 
+    void "uses the spatial representation for #databaseType without affecting other contexts"() {
+        given:
+        def conversionContext = Stub(DatabaseTypeConversionContext) {
+            getDatabaseType() >> databaseType
+        }
+        def json = '{"type":"Point","coordinates":[1.0,2.5]}'
+
+        expect:
+        converter.convertToPersistedValue(point(), conversionContext) == expectedValue
+        converter.convertToEntityValue(expectedValue, conversionContext) == point()
+        converter.convertToPersistedValue(null, conversionContext) == null
+        converter.convertToEntityValue(null, conversionContext) == null
+        converter.convertToEntityValue('', conversionContext) == null
+
+        and: "the same converter still uses GeoJSON without database information"
+        converter.convertToPersistedValue(point(), ConversionContext.DEFAULT) == json
+        converter.convertToEntityValue(json, ConversionContext.DEFAULT) == point()
+
+        where:
+        databaseType << DatabaseType.values()
+        expectedValue = databaseType == DatabaseType.SQL_SERVER ? 'POINT (1 2.5)' : '{"type":"Point","coordinates":[1.0,2.5]}'
+    }
+
+    void "converts #geometry.class.simpleName through WKT for SQL Server without using the JSON mapper"() {
+        given:
+        def mapper = Mock(JsonMapper)
+        def converter = new GeometryJsonConverter(mapper, null)
+        def conversionContext = Stub(DatabaseTypeConversionContext) {
+            getDatabaseType() >> DatabaseType.SQL_SERVER
+        }
+
+        when:
+        def persisted = converter.convertToPersistedValue(geometry, conversionContext)
+        def restored = converter.convertToEntityValue(persisted, conversionContext)
+
+        then:
+        persisted == new GeometryWktConverter().convertToPersistedValue(geometry, conversionContext)
+        restored == geometry
+        0 * mapper._
+
+        where:
+        geometry << [point(), multiPoint(), lineString(), multiLineString(), polygon(), multiPolygon(), geometryCollection()]
+    }
+
+    void "rejects invalid WKT for SQL Server"() {
+        given:
+        def conversionContext = Stub(DatabaseTypeConversionContext) {
+            getDatabaseType() >> DatabaseType.SQL_SERVER
+        }
+
+        when:
+        converter.convertToEntityValue('POINT (invalid)', conversionContext)
+
+        then:
+        def ex = thrown(SerializationException)
+        ex.message == 'Failed to deserialize WKT [POINT (invalid)]'
+    }
+
     void 'convert null geometry to persisted value returns null'() {
         expect:
         converter.convertToPersistedValue(null, ConversionContext.DEFAULT) == null

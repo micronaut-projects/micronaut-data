@@ -391,9 +391,11 @@ by default. To change the column type to `GEOGRAPHY`, set `@MappedProperty(defin
 snippet::example.GeographyEntityWkt[project-base="doc-examples/jdbc-geospatial", source="main", tags="get"]
 
 SQL Server uses WKT conversion for both the default `GeometryJsonConverter` mapping and explicit
-`GeometryWktConverter` mappings. The SQL runtime selects `GeometryWktConverter` for SQL Server operations
-to match the generated spatial SQL. This also applies to geospatial predicate arguments;
-no explicit converter annotation is required.
+`GeometryWktConverter` mappings. SQL Server does not provide built-in GeoJSON conversion for its spatial types.
+When the conversion context identifies SQL Server, `GeometryJsonConverter` delegates both reading and writing
+to `GeometryWktConverter` to match the generated spatial SQL. This also applies to geospatial predicate arguments;
+no explicit converter annotation is required. Other database types and conversion contexts without database
+information continue to use GeoJSON with `GeometryJsonConverter`.
 
 Micronaut Data uses the following functions to read and write spatial data:
 [cols="1,1,2"]
