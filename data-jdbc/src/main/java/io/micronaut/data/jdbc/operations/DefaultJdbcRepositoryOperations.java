@@ -1800,6 +1800,11 @@ public final class DefaultJdbcRepositoryOperations extends AbstractSqlRepository
                             ids.add(getGeneratedIdentity(generatedKeys, identity, dialect));
                         }
                     }
+                    // The ids are matched to the entities by position, which a surplus id makes unreliable
+                    long notVetoed = entities.stream().filter(d -> !d.vetoed).count();
+                    if (ids.size() > notVetoed) {
+                        throw new DataAccessException("Expected " + notVetoed + " generated IDs, one for each inserted entity, but the database returned " + ids.size());
+                    }
                     Iterator<Object> iterator = ids.iterator();
                     for (Data d : entities) {
                         if (d.vetoed) {
