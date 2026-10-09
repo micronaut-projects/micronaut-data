@@ -19,8 +19,6 @@ import io.micronaut.data.exceptions.DataAccessException
 import io.micronaut.data.model.DataType
 import spock.lang.Specification
 
-import java.util.concurrent.atomic.AtomicLong
-
 class QueryStatementBigDecimalSpec extends Specification {
 
     void "a #value.class.simpleName bound as BIGDECIMAL keeps every digit"() {
@@ -35,7 +33,6 @@ class QueryStatementBigDecimalSpec extends Specification {
             value                                   | expected
             Long.MAX_VALUE                          | new BigDecimal("9223372036854775807")
             9007199254740993L                       | new BigDecimal("9007199254740993")
-            new AtomicLong(9007199254740993L)       | new BigDecimal("9007199254740993")
             new BigInteger("123456789012345678901") | new BigDecimal("123456789012345678901")
             42                                      | new BigDecimal("42")
             1.5d                                    | new BigDecimal("1.5")

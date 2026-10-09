@@ -28,8 +28,6 @@ import java.time.Instant;
 import java.time.ZonedDateTime;
 import java.util.Date;
 import java.util.UUID;
-import java.util.concurrent.atomic.AtomicInteger;
-import java.util.concurrent.atomic.AtomicLong;
 
 /**
  * An abstract interface over prepared statements.
@@ -153,8 +151,7 @@ public interface QueryStatement<PS, IDX> {
                 if (value instanceof BigInteger bigInteger) {
                     return setBigDecimal(statement, index, new BigDecimal(bigInteger));
                 }
-                if (value instanceof Long || value instanceof Integer || value instanceof Short || value instanceof Byte
-                    || value instanceof AtomicLong || value instanceof AtomicInteger) {
+                if (value instanceof Long || value instanceof Integer || value instanceof Short || value instanceof Byte) {
                     // Exact: a double can't represent every long
                     return setBigDecimal(statement, index, BigDecimal.valueOf(((Number) value).longValue()));
                 }
