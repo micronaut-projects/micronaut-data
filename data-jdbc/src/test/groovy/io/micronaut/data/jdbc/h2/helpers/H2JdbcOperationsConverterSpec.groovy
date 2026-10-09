@@ -20,9 +20,11 @@ import io.micronaut.core.convert.ConversionContext
 import io.micronaut.data.annotation.GeneratedValue
 import io.micronaut.data.annotation.Id
 import io.micronaut.data.annotation.MappedEntity
+import io.micronaut.data.annotation.Query
 import io.micronaut.data.annotation.TypeDef
 import io.micronaut.data.jdbc.annotation.JdbcRepository
 import io.micronaut.data.jdbc.h2.H2TestPropertyProvider
+import io.micronaut.data.jdbc.mapper.SqlResultConsumer
 import io.micronaut.data.jdbc.runtime.JdbcOperations
 import io.micronaut.data.model.DataType
 import io.micronaut.data.model.query.builder.sql.Dialect
@@ -37,7 +39,8 @@ import spock.lang.Specification
 import java.sql.Connection
 
 /**
- * The public {@link JdbcOperations} read helpers apply the properties' attribute converters, like repositories do.
+ * The public {@link JdbcOperations} read helpers and a result consumer's context apply the properties' attribute
+ * converters, like repositories do.
  */
 class H2JdbcOperationsConverterSpec extends Specification implements H2TestPropertyProvider {
 
@@ -97,10 +100,24 @@ class H2JdbcOperationsConverterSpec extends Specification implements H2TestPrope
         then:
             items*.label*.value == ["a"]
     }
+
+    void "a result consumer's readEntity applies the attribute converter"() {
+        given:
+            List<LabelledItem> read = []
+        when:
+            repository.queryWithConsumer({ LabelledItem item, context ->
+                read << context.readEntity("other_", LabelledItem)
+            } as SqlResultConsumer<LabelledItem>)
+        then:
+            read*.label*.value == ["a"]
+    }
 }
 
 @JdbcRepository(dialect = Dialect.H2)
 interface LabelledItemRepository extends CrudRepository<LabelledItem, Long> {
+
+    @Query("SELECT l.*, l.id AS other_id, l.label AS other_label FROM labelled_item l")
+    LabelledItem queryWithConsumer(SqlResultConsumer<LabelledItem> consumer)
 }
 
 @MappedEntity
