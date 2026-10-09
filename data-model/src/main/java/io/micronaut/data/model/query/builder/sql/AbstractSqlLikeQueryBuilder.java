@@ -3729,6 +3729,15 @@ public abstract class AbstractSqlLikeQueryBuilder implements QueryBuilder {
             sb.append(COMMA);
         }
 
+        /**
+         * Wraps a geometry column in the dialect-specific function that reads it as GeoJSON or WKT,
+         * depending on the property converter.
+         *
+         * @param column      The column, qualified with the table alias
+         * @param columnAlias The result column alias
+         * @param property    The geometry property
+         * @return The select expression including the alias
+         */
         @SuppressWarnings("NullAway")
         protected String getGeometryFunction(String column, String columnAlias, PersistentProperty property) {
             AnnotationMetadata annotationMetadata = property.getAnnotationMetadata();
