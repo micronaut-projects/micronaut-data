@@ -52,8 +52,56 @@ class PythonQueryGrammarReviewSpec extends AbstractPythonTypeElementSpec {
             "find_by_code_order_by_age_and_and_code",
             "find_by_code_order_by_age_desc_asc",
             "find_by_code_order_by_age_asc_desc",
-            "find_by_code_order_by_age_desc_desc"
+            "find_by_code_order_by_age_desc_desc",
+            "find_by_code_like_like",
+            "find_by_age_greater_than_less_than",
+            "find_by_code_is_null_like",
+            "find_by_code_like_not",
+            "find_by_code_not_not",
+            "find_by_code_ignore_case_ignore_case",
+            "find_by_code_ids",
+            "find_by_code_ignore_case_not",
+            "find_by_code_contains_ignore_case_ignore_case",
+            "find_by_ids_like",
+            "find_by_code_not_not_equals_ignore_case"
         ]
+    }
+
+    void "Python valid predicate #snake retains SQL and bindings of #camel"() {
+        given:
+        def definition = repository("""
+    @abstractmethod
+    def findBy${camel}(self${parameters}) -> list[Item]: ...
+    @abstractmethod
+    def find_by_${snake}(self${parameters}) -> list[Item]: ...
+""")
+        def camelMethod = definition.executableMethods.find { it.methodName == "findBy${camel}" }
+        def snakeMethod = definition.executableMethods.find { it.methodName == "find_by_${snake}" }
+
+        expect:
+        camelMethod != null
+        snakeMethod != null
+        getQuery(snakeMethod) == getQuery(camelMethod)
+        getQuery(snakeMethod) == "SELECT item_.`pk`,item_.`id`,item_.`code`,item_.`age`,item_.`all_day`,item_.`one_time_code`,item_.`distinct_code` FROM `item` item_ WHERE (${predicate})"
+        getParameterPropertyPaths(snakeMethod) == getParameterPropertyPaths(camelMethod)
+        getParameterPropertyPaths(snakeMethod) == paths as String[]
+        getParameterBindingIndexes(snakeMethod) == getParameterBindingIndexes(camelMethod)
+        getParameterBindingIndexes(snakeMethod) == indexes as String[]
+
+        where:
+        camel                                                 | snake                                                        | parameters                      | predicate                                                                                                                        | paths            | indexes
+        "CodeNotLike"                                         | "code_not_like"                                              | ", value: str"                  | 'item_.`code` NOT LIKE ?'                                                                                                          | ["code"]        | ["0"]
+        "CodeNot"                                             | "code_not"                                                   | ", value: str"                  | 'item_.`code` != ?'                                                                                                                | ["code"]        | ["0"]
+        "CodeContainsIgnoreCase"                              | "code_contains_ignore_case"                                  | ", value: str"                  | "LOWER(item_.`code`) LIKE CONCAT('%',LOWER(?),'%')"                                                                                | ["code"]        | ["0"]
+        "CodeIgnoreCaseContains"                              | "code_ignore_case_contains"                                  | ", value: str"                  | "LOWER(item_.`code`) LIKE CONCAT('%',LOWER(?),'%')"                                                                                | ["code"]        | ["0"]
+        "CodeNotContainsIgnoreCase"                           | "code_not_contains_ignore_case"                              | ", value: str"                  | "NOT(LOWER(item_.`code`) LIKE CONCAT('%',LOWER(?),'%'))"                                                                           | ["code"]        | ["0"]
+        "CodeNotIgnoreCaseContains"                           | "code_not_ignore_case_contains"                              | ", value: str"                  | "NOT(LOWER(item_.`code`) LIKE CONCAT('%',LOWER(?),'%'))"                                                                           | ["code"]        | ["0"]
+        "CodeNotIgnoreCase"                                   | "code_not_ignore_case"                                       | ", value: str"                  | 'NOT(LOWER(item_.`code`) = LOWER(?))'                                                                                              | ["code"]        | ["0"]
+        "CodeNotEqualsIgnoreCase"                             | "code_not_equals_ignore_case"                                | ", value: str"                  | 'NOT(LOWER(item_.`code`) = LOWER(?))'                                                                                              | ["code"]        | ["0"]
+        "CodeNotNotEquals"                                    | "code_not_not_equals"                                        | ", value: str"                  | 'item_.`code` = ?'                                                                                                                 | ["code"]        | ["0"]
+        "Ids"                                                | "ids"                                                        | ", ids: list[int]"              | 'item_.`pk` IN (?)'                                                                                                                | ["pk"]          | ["0"]
+        "CodeNotLikeAndCodeNotLike"                           | "code_not_like_and_code_not_like"                            | ", first: str, second: str"     | 'item_.`code` NOT LIKE ? AND item_.`code` NOT LIKE ?'                                                                               | ["code", "code"] | ["0", "1"]
+        "CodeNotIgnoreCaseContainsOrCodeNotContainsIgnoreCase" | "code_not_ignore_case_contains_or_code_not_contains_ignore_case" | ", first: str, second: str" | "NOT(LOWER(item_.`code`) LIKE CONCAT('%',LOWER(?),'%')) OR NOT(LOWER(item_.`code`) LIKE CONCAT('%',LOWER(?),'%'))"                      | ["code", "code"] | ["0", "1"]
     }
 
     void "Python projects native keyword-prefixed property using #methodName"() {
@@ -114,6 +162,7 @@ class PythonQueryGrammarReviewSpec extends AbstractPythonTypeElementSpec {
         "and_code"      | "str"         | "    and_code: str"
         "or_code"       | "str"         | "    or_code: str"
         "top_code"      | "str"         | "    top_code: str"
+        "code_like_like" | "str"        | "    code_like_like: str"
     }
 
     void "Python valid header #snake retains the query and limits of #camel"() {

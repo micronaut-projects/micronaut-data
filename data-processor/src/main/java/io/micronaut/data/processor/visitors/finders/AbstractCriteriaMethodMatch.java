@@ -477,36 +477,21 @@ public abstract class AbstractCriteriaMethodMatch implements MethodMatcher.Metho
         Expression<Object> prop = getProperty(root, propertyName);
 
         Restrictions.PropertyRestriction<Object> effectiveRestriction = restriction;
-        if (BETWEEN.equals(restriction.getName())) {
-            PersistentEntity persistentEntity = root.getPersistentEntity();
-            String nativePropertyName = resolveNativePropertyName(propertyName);
-            PersistentProperty property;
-            if (!nativePropertyName.equals(propertyName)) {
-                PersistentPropertyPath propertyPath = persistentEntity.getPropertyPath(nativePropertyName);
-                property = propertyPath == null ? null : propertyPath.getProperty();
-            } else {
-                String resolvedPropertyName = persistentEntity.getPath(propertyName).orElse(propertyName);
-                property = persistentEntity.getPropertyByName(resolvedPropertyName);
-                if (property == null) {
-                    property = persistentEntity.getPropertyByNameIgnoreCase(propertyName);
-                }
+        if (BETWEEN.equals(restriction.getName())
+            && prop instanceof io.micronaut.data.model.jpa.criteria.PersistentPropertyPath<?> path
+            && path.getProperty().isAssignable(Vector.class)) {
+            Restrictions.PropertyRestriction<Object> vectorRangeRestriction = Restrictions.findPropertyRestriction(WITHIN);
+            if (vectorRangeRestriction == null) {
+                throw new MatchFailedException("Cannot find vector range restriction for: Within");
             }
-            if (property != null && property.isAssignable(Vector.class)) {
-                Restrictions.PropertyRestriction<Object> vectorRangeRestriction = Restrictions.findPropertyRestriction(WITHIN);
-                if (vectorRangeRestriction == null) {
-                    throw new MatchFailedException("Cannot find vector range restriction for: Within");
-                }
-                effectiveRestriction = vectorRangeRestriction;
-            }
+            effectiveRestriction = vectorRangeRestriction;
         }
-
-        Expression<?> parameterBindingExpression = prop;
 
         List<ParameterExpression<Object>> parameterExpressions = provideParams(parameters,
             effectiveRestriction.getRequiredParameters(),
             effectiveRestriction.getName(),
             cb,
-            parameterBindingExpression
+            prop
         );
         Predicate predicate = effectiveRestriction.find(root,
             cb,

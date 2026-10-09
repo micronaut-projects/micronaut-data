@@ -46,6 +46,7 @@ import java.util.regex.Pattern;
 final class PythonMethodNameParser {
 
     private static final List<Map.Entry<String, String>> KEYWORDS = keywords();
+    private static final Set<String> PROPERTY_SUFFIXES = propertySuffixes();
     private static final Pattern LIMIT = Pattern.compile("^(top|first)_?(\\d+)(?=_|$)");
     private static final Set<String> ENTITY_OPERATIONS = Set.of("save", "persist", "store", "insert", "update", "modify");
     private static final Set<String> CLAUSES = Set.of("By", "OrderBy", "SortBy", "Returning", "ForUpdate");
@@ -71,6 +72,7 @@ final class PythonMethodNameParser {
         boolean expectProperty = true;
         boolean orderDirection = false;
         boolean allowDescription = ENTITY_OPERATIONS.contains(prefix);
+        String propertySuffix = null;
         while (!remaining.isEmpty()) {
             boolean header = clause == QueryMatchId.PROJECTION;
             Map.Entry<String, String> keyword = keyword(remaining);
@@ -90,6 +92,7 @@ final class PythonMethodNameParser {
                 expectProperty = false;
                 orderDirection = false;
                 forceProperty = false;
+                propertySuffix = clause == QueryMatchId.PREDICATE ? "" : null;
                 continue;
             }
             Matcher limit = LIMIT.matcher(remaining);
@@ -127,6 +130,19 @@ final class PythonMethodNameParser {
             if (token.equals("ForUpdate") && remaining.length() != keyword.getKey().length()) {
                 throw unsupported(methodName);
             }
+            if (clause == QueryMatchId.PREDICATE) {
+                if (token.equals("Not") || token.equals("IgnoreCase") || Restrictions.PROPERTY_RESTRICTIONS_MAP.containsKey(token)) {
+                    if (propertySuffix == null) {
+                        throw unsupported(methodName);
+                    }
+                    propertySuffix += token;
+                } else {
+                    if (propertySuffix != null && !PROPERTY_SUFFIXES.contains(propertySuffix)) {
+                        throw unsupported(methodName);
+                    }
+                    propertySuffix = null;
+                }
+            }
             normalized.append(token);
             switch (token) {
                 case "By" -> {
@@ -163,6 +179,9 @@ final class PythonMethodNameParser {
                 throw unsupported(methodName);
             }
         }
+        if (propertySuffix != null && !PROPERTY_SUFFIXES.contains(propertySuffix)) {
+            throw unsupported(methodName);
+        }
         List<MethodNameParser.Match> matches = parser.tryMatch(normalized.toString(), unmatched -> {
             if (!unmatched.isEmpty() && !allowDescription) {
                 throw unsupported(methodName);
@@ -190,8 +209,22 @@ final class PythonMethodNameParser {
             case "Not", "IgnoreCase" -> clause != QueryMatchId.PREDICATE || expectProperty;
             default -> Restrictions.PROPERTY_RESTRICTIONS_MAP.containsKey(token)
                 ? clause != QueryMatchId.PREDICATE || expectProperty
-                : Restrictions.RESTRICTIONS_MAP.containsKey(token) && clause != QueryMatchId.PREDICATE;
+                : Restrictions.RESTRICTIONS_MAP.containsKey(token) && (clause != QueryMatchId.PREDICATE || !expectProperty);
         };
+    }
+
+    private static Set<String> propertySuffixes() {
+        Set<String> suffixes = new HashSet<>(Set.of("", "Not", "IgnoreCase", "NotIgnoreCase"));
+        for (String restriction : Restrictions.PROPERTY_RESTRICTIONS_MAP.keySet()) {
+            suffixes.add(restriction);
+            suffixes.add("Not" + restriction);
+            if (restriction.endsWith("IgnoreCase")) {
+                String base = restriction.substring(0, restriction.length() - "IgnoreCase".length());
+                suffixes.add("IgnoreCase" + base);
+                suffixes.add("NotIgnoreCase" + base);
+            }
+        }
+        return Set.copyOf(suffixes);
     }
 
     private static boolean spansClause(String property) {

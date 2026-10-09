@@ -17,6 +17,8 @@ package io.micronaut.data.processor.python
 
 import io.micronaut.data.processor.visitors.AbstractDataSpec
 
+import static io.micronaut.data.processor.visitors.TestUtils.getParameterBindingIndexes
+import static io.micronaut.data.processor.visitors.TestUtils.getParameterPropertyPaths
 import static io.micronaut.data.processor.visitors.TestUtils.getQuery
 
 class JavaDerivedQueryCompatibilitySpec extends AbstractDataSpec {
@@ -48,6 +50,38 @@ interface BookRepository extends GenericRepository<Book, Long> {
         getQuery(repository.getRequiredMethod("findByName_in_list", String)).endsWith('WHERE (book_.`name_in_list` = ?)')
         getQuery(repository.getRequiredMethod("findByauthor_first_name", String)).endsWith('WHERE (book_author_.`first_name` = ?)')
         getQuery(repository.getRequiredMethod("findByauthor_name_in_list", String)).endsWith('WHERE (book_author_.`name_in_list` = ?)')
+    }
+
+    void "Java nested vector Between uses the same distance range as Within"() {
+        when:
+        def repository = buildRepository("test.DocRepository", """
+import io.micronaut.data.jdbc.annotation.JdbcRepository;
+import io.micronaut.data.model.query.builder.sql.Dialect;
+import io.micronaut.data.model.vector.FloatVector;
+import io.micronaut.data.model.vector.Vector;
+
+@Embeddable
+record Details(FloatVector embedding) {}
+
+@MappedEntity
+record Doc(@Id Long id, @Relation(Relation.Kind.EMBEDDED) Details details) {}
+
+@JdbcRepository(dialect = Dialect.POSTGRES)
+interface DocRepository extends GenericRepository<Doc, Long> {
+    List<Doc> findByDetailsEmbeddingWithin(Vector query, double lower, double upper);
+    List<Doc> findByDetailsEmbeddingBetween(Vector query, double lower, double upper);
+}
+""")
+        def between = repository.executableMethods.find { it.methodName == "findByDetailsEmbeddingBetween" }
+        def within = repository.executableMethods.find { it.methodName == "findByDetailsEmbeddingWithin" }
+
+        then:
+        between != null
+        within != null
+        getQuery(between) == getQuery(within)
+        getParameterPropertyPaths(between) == getParameterPropertyPaths(within)
+        getParameterBindingIndexes(between) == ["0", "1", "0", "2", "0"] as String[]
+        getParameterBindingIndexes(between) == getParameterBindingIndexes(within)
     }
 
     void "Python snake case grammar is not enabled for Java"() {
