@@ -15028,12 +15028,51 @@ annotated with <code>@Index</code>:</p>
 </tr>
 <tr>
 <td class="tableblock halign-left valign-top"><p class="tableblock">WKT</p></td>
-<td class="tableblock halign-left valign-top"><p class="tableblock"><code>ST_AsText(column)</code></p></td>
+<td class="tableblock halign-left valign-top"><p class="tableblock"><code>ST_AsText(column /*!80001 , 'axis-order=long-lat' */)</code></p></td>
 <td class="tableblock halign-left valign-top"><p class="tableblock"><code>ST_GeomFromText(?)</code></p></td>
-<td class="tableblock halign-left valign-top"><p class="tableblock"><code>ST_GeomFromText(?, srid)</code></p></td>
+<td class="tableblock halign-left valign-top"><p class="tableblock"><code>ST_GeomFromText(?, srid /*!80001 , 'axis-order=long-lat' */)</code></p></td>
 </tr>
 </tbody>
 </table>
+<div class="paragraph">
+<p>WKT coordinates use <code>(x, y)</code> order, which is <code>(longitude, latitude)</code> for geographic SRIDs.
+MySQL 8.0.1 and later use the SRID&#8217;s axis order by default, so Micronaut Data explicitly sets
+<code>axis-order=long-lat</code> for WKT writes with an SRID, predicate arguments, and reads. The option is wrapped
+in a MySQL executable comment so MariaDB and older MySQL versions retain their existing x/y behavior.</p>
+</div>
+<div class="admonitionblock warning">
+<table>
+<tr>
+<td class="icon">
+<i class="fa icon-warning" title="Warning"></i>
+</td>
+<td class="content">
+<div class="paragraph">
+<p>Existing WKT-mapped data on MySQL 8.0.1 and later with a geographic SRID such as 4326 requires a one-time migration.
+Since geospatial support was introduced in Micronaut Data 5.0.0, versions before this axis-order fix stored
+longitude and latitude swapped: <code>ST_GeomFromText(?, 4326)</code> used the SRID&#8217;s axis order, and <code>ST_AsText(column)</code>
+swapped them back on reads, making round-trips appear correct. Longitudes outside ±90 were rejected.
+With the explicit <code>axis-order=long-lat</code> option, those existing rows are read back with longitude and latitude
+flipped and can be excluded from <code>Near</code> query results.</p>
+</div>
+<div class="paragraph">
+<p>When upgrading, repair affected values once with <code>ST_SwapXY</code>. For example, if all rows in
+<code>delivery_driver_wkt</code> were written with the old behavior:</p>
+</div>
+<div class="listingblock">
+<div class="content">
+<pre class="highlightjs highlight"><code class="language-sql hljs" data-lang="sql">UPDATE delivery_driver_wkt SET location = ST_SwapXY(location);</code></pre>
+</div>
+</div>
+<div class="paragraph">
+<p>Adapt the table and column names to your schema. If old and corrected rows coexist, restrict the update
+to rows written with the old behavior. Micronaut Data cannot distinguish them automatically.
+Do not apply this update to newly written or already migrated values: running it again swaps the axes back.</p>
+</div>
+</td>
+</tr>
+</table>
+</div>
 <div class="sect3">
 <h4 id="_schema_generation_3">Schema generation</h4>
 <div class="paragraph">
@@ -15083,7 +15122,7 @@ annotated with <code>@Index</code>:</p>
 </table>
 <div class="paragraph">
 <p><code>convertedValue</code> is the MySQL spatial conversion call such as <code>ST_GeomFromGeoJSON(?, 1, srid)</code> or
-<code>ST_GeomFromText(?, srid)</code>.</p>
+<code>ST_GeomFromText(?, srid /*!80001 , 'axis-order=long-lat' */)</code>.</p>
 </div>
 </div>
 </div>
@@ -15118,9 +15157,9 @@ follow the same MySQL-style <code>GEOMETRY</code> storage model, <code>ST_AsGeoJ
 </tr>
 <tr>
 <td class="tableblock halign-left valign-top"><p class="tableblock">WKT</p></td>
-<td class="tableblock halign-left valign-top"><p class="tableblock"><code>ST_AsText(column)</code></p></td>
+<td class="tableblock halign-left valign-top"><p class="tableblock"><code>ST_AsText(column /*!80001 , 'axis-order=long-lat' */)</code></p></td>
 <td class="tableblock halign-left valign-top"><p class="tableblock"><code>ST_GeomFromText(?)</code></p></td>
-<td class="tableblock halign-left valign-top"><p class="tableblock"><code>ST_GeomFromText(?, srid)</code></p></td>
+<td class="tableblock halign-left valign-top"><p class="tableblock"><code>ST_GeomFromText(?, srid /*!80001 , 'axis-order=long-lat' */)</code></p></td>
 </tr>
 </tbody>
 </table>
@@ -15165,7 +15204,7 @@ spatial-function behavior.</p>
 </table>
 <div class="paragraph">
 <p><code>convertedValue</code> is the MariaDB spatial conversion call such as <code>ST_GeomFromGeoJSON(?, 1, srid)</code> or
-<code>ST_GeomFromText(?, srid)</code>.</p>
+<code>ST_GeomFromText(?, srid /*!80001 , 'axis-order=long-lat' */)</code>.</p>
 </div>
 </div>
 </div>
@@ -26412,6 +26451,28 @@ runtime = [
 <div class="sect1">
 <h2 id="_5_2">5.2</h2>
 <div class="sectionbody">
+<div class="sect2">
+<h3 id="_mysql_wkt_geographic_axis_order_5_2_3">MySQL WKT geographic axis order (5.2.3)</h3>
+<div class="paragraph">
+<p>MySQL 8.0.1 and later now use explicit longitude/latitude axis order for WKT-mapped columns with a geographic
+SRID, such as 4326. Existing values written since Micronaut Data 5.0.0 using the previous behavior have their
+axes swapped, even though reads previously appeared correct. After upgrading, these rows are read back
+with longitude and latitude flipped and can be excluded from <code>Near</code> query results.</p>
+</div>
+<div class="paragraph">
+<p>Affected data requires a one-time repair when upgrading. For a table containing only affected rows:</p>
+</div>
+<div class="listingblock">
+<div class="content">
+<pre class="highlightjs highlight"><code class="language-sql hljs" data-lang="sql">UPDATE delivery_driver_wkt SET location = ST_SwapXY(location);</code></pre>
+</div>
+</div>
+<div class="paragraph">
+<p>Adapt the table and column names and update only values written with the old behavior; do not update new
+or already migrated values. Micronaut Data cannot distinguish old rows from corrected rows automatically.
+See <a href="#sqlGeospatial">Geospatial Support</a> for the MySQL migration details.</p>
+</div>
+</div>
 <div class="sect2">
 <h3 id="_kotlin_2_4_generic_repository_bounds">Kotlin 2.4 generic repository bounds</h3>
 <div class="paragraph">
