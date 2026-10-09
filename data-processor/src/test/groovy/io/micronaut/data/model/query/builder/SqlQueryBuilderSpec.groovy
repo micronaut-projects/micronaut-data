@@ -408,6 +408,51 @@ interface MyRepository {
         ].collectMany { row -> [false, true].collect { compound -> row + [compound] } }
     }
 
+    @Unroll
+    void "test aliased spatial root selection retains column aliases for #entityClass.simpleName"() {
+        given:
+        def criteriaQuery = builder.createQuery(entityClass)
+        def root = criteriaQuery.from(entityClass)
+        criteriaQuery.select(root.alias("geom"))
+
+        when:
+        def sql = criteriaQuery.build(new SqlQueryBuilder(Dialect.POSTGRES)).query
+
+        then:
+        ["location", "multi_point", "line_string", "multi_line_string"].every { column ->
+            sql.contains("${function}(${tableAlias}.\"${column}\") AS \"${column}\"")
+        }
+        sql.count(" AS ") == 4
+
+        where:
+        entityClass    | tableAlias          | function
+        GeomEntityJson | "geom_entity_json_" | "ST_AsGeoJSON"
+        GeomEntityWkt  | "geom_entity_wkt_"  | "ST_AsText"
+    }
+
+    @Unroll
+    void "test aliased spatial association selection retains column aliases for #association"() {
+        given:
+        def criteriaQuery = builder.createQuery(entityClass)
+        def root = criteriaQuery.from(GeomOwner)
+        root.join(association)
+        criteriaQuery.select(root.get(association).alias("geom"))
+
+        when:
+        def sql = criteriaQuery.build(new SqlQueryBuilder(Dialect.POSTGRES)).query
+
+        then:
+        ["location", "multi_point", "line_string", "multi_line_string"].every { column ->
+            sql.contains("${function}(geom_owner_${association}_.\"${column}\") AS \"${column}\"")
+        }
+        sql.count(" AS ") == 4
+
+        where:
+        entityClass    | association | function
+        GeomEntityJson | "geom"      | "ST_AsGeoJSON"
+        GeomEntityWkt  | "wkt"       | "ST_AsText"
+    }
+
     void "test aliased embedded projection with multiple columns throws"() {
         given:
         def criteriaQuery = builder.createQuery(Address)
@@ -1548,6 +1593,18 @@ interface MyRepository {
         return entity
     }
 
+}
+
+@MappedEntity
+class GeomOwner {
+    @Id
+    Long id
+
+    @Relation(Relation.Kind.MANY_TO_ONE)
+    GeomEntityJson geom
+
+    @Relation(Relation.Kind.MANY_TO_ONE)
+    GeomEntityWkt wkt
 }
 
 @MappedEntity(alias = "this_is_an_intentionally_very_long_postgres_table_alias_for_sorting_")
