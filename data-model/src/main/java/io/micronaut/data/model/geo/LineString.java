@@ -20,6 +20,8 @@ import io.micronaut.data.annotation.TypeDef;
 import io.micronaut.data.model.DataType;
 import io.micronaut.data.model.runtime.convert.GeometryJsonConverter;
 
+import java.util.ArrayList;
+import java.util.Collections;
 import java.util.List;
 import java.util.Objects;
 
@@ -29,6 +31,8 @@ import java.util.Objects;
  * <p>This type follows the GeoJSON LineString model and can be converted to nested coordinate
  * lists for serialization.
  *
+ * <p>The component list is copied during construction and exposed as an unmodifiable list.
+ *
  * @param points the ordered points that define the line string
  * @since 5.0
  */
@@ -36,6 +40,9 @@ import java.util.Objects;
 public record LineString(List<Point> points) implements Geometry {
 
     public LineString {
+        if (points != null) {
+            points = Collections.unmodifiableList(new ArrayList<>(points));
+        }
         if (CollectionUtils.isEmpty(points) || points.size() < 2) {
             throw new IllegalArgumentException("LineString requires at least two Points");
         }
