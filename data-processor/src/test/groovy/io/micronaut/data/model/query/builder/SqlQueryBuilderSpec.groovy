@@ -489,6 +489,30 @@ interface MyRepository {
         }
     }
 
+    @Unroll
+    void "test Oracle returning projection uses one explicit alias for #entityClass.simpleName #property"() {
+        given:
+        def update = builder.createCriteriaUpdate(entityClass)
+        def root = update.from(entityClass)
+        update.set(root.get(property), builder.parameter(Object))
+        update.returning(root.get(property).alias("projected"))
+
+        when:
+        def sql = update.build(new SqlQueryBuilder(Dialect.ORACLE)).query
+
+        then:
+        sql.contains(" RETURNING ${expression} AS projected INTO ?;")
+        sql.count(" AS ") == 1
+
+        where:
+        entityClass           | property      | expression
+        GeomEntityJson        | "point"       | 'SDO_UTIL.TO_GEOJSON("LOCATION")'
+        GeomEntityWkt         | "point"       | 'SDO_UTIL.TO_WKTGEOMETRY("LOCATION")'
+        ProjectionAliasEntity | "transformed" | 'UPPER(transformed)'
+        ProjectionAliasEntity | "mapped"      | '"MAPPED"'
+        ProjectionAliasEntity | "combined"    | 'UPPER(combined)'
+    }
+
     void "test aliased embedded projection with multiple columns throws"() {
         given:
         def criteriaQuery = builder.createQuery(Address)

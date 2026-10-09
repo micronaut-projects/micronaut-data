@@ -2629,7 +2629,7 @@ public class SqlQueryBuilder extends AbstractSqlLikeQueryBuilder {
             int[] propertiesCount = new int[1];
 
             PersistentEntityUtils.traversePersistentProperties(propertyPath.getAssociations(), propertyPath.getProperty(), traverseEmbedded(), (associations, property) -> {
-                appendProperty(query, associations, property, namingStrategy, tableAlias, escape);
+                appendProperty(query, associations, property, namingStrategy, tableAlias, escape, null, StringUtils.isNotEmpty(columnAlias));
                 unescapedColumns.add(getMappedName(namingStrategy, associations, property));
                 resultColumnTypes.add(property.getDataType());
                 needsTrimming[0] = true;

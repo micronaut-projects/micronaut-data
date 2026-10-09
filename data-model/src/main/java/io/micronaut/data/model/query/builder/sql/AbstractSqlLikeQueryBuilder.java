@@ -3701,16 +3701,17 @@ public abstract class AbstractSqlLikeQueryBuilder implements QueryBuilder {
          * @param targetName     The result column name, escaped like the column. If not set, the property column alias is used
          * @param explicitAlias  Whether the caller will append an explicit projection alias
          */
-        private void appendProperty(StringBuilder sb,
-                                    List<Association> associations,
-                                    PersistentProperty property,
-                                    NamingStrategy namingStrategy,
-                                    @Nullable
-                                    String tableAlias,
-                                    boolean escape,
-                                    @Nullable
-                                    String targetName,
-                                    boolean explicitAlias) {
+        @Internal
+        protected final void appendProperty(StringBuilder sb,
+                                            List<Association> associations,
+                                            PersistentProperty property,
+                                            NamingStrategy namingStrategy,
+                                            @Nullable
+                                            String tableAlias,
+                                            boolean escape,
+                                            @Nullable
+                                            String targetName,
+                                            boolean explicitAlias) {
             String transformed = getDataTransformerReadValue(tableAlias, property).orElse(null);
             String resultName = targetName != null ? escapeColumnIfNeeded(targetName, escape) : getColumnAlias(property);
             boolean useAlias = StringUtils.isNotEmpty(resultName);
