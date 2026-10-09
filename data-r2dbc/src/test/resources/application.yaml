@@ -9,8 +9,6 @@ test-resources:
       startup-timeout: 300s
     oracle:
       startup-timeout: 300s
-      copy-to-container:
-        - classpath:/oracle-test-processes.sql: /container-entrypoint-initdb.d/001-test-processes.sql
     postgres:
       startup-timeout: 300s
 
