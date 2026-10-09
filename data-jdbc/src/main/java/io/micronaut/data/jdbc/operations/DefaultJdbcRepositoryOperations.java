@@ -568,6 +568,8 @@ public final class DefaultJdbcRepositoryOperations extends AbstractSqlRepository
             // No stream is returned, so the caller can't close the statement
             throw closeAfterFailure(new DataAccessException("SQL Error preparing Query: " + e.getMessage(), e),
                 connection, preparing, null, finished, closeConnection);
+        } catch (Error e) {
+            throw closeAfterFailure(e, connection, preparing, null, finished, closeConnection);
         }
         PreparedStatement ps = preparing;
 
@@ -619,6 +621,9 @@ public final class DefaultJdbcRepositoryOperations extends AbstractSqlRepository
         } catch (Exception e) {
             throw closeAfterFailure(new DataAccessException("SQL Error executing Query: " + e.getMessage(), e),
                 connection, ps, openedRs, finished, closeConnection);
+        } catch (Error e) {
+            // No stream is returned, so the caller can't close the resources
+            throw closeAfterFailure(e, connection, ps, openedRs, finished, closeConnection);
         }
     }
 
@@ -629,8 +634,8 @@ public final class DefaultJdbcRepositoryOperations extends AbstractSqlRepository
         }
     }
 
-    private DataAccessException closeAfterFailure(DataAccessException failure, Connection connection, @Nullable PreparedStatement ps,
-                                                  @Nullable ResultSet rs, AtomicBoolean finished, boolean closeConnection) {
+    private <X extends Throwable> X closeAfterFailure(X failure, Connection connection, @Nullable PreparedStatement ps,
+                                                      @Nullable ResultSet rs, AtomicBoolean finished, boolean closeConnection) {
         SQLException closeFailure = closeResources(connection, ps, rs, finished, closeConnection);
         if (closeFailure != null) {
             failure.addSuppressed(closeFailure);

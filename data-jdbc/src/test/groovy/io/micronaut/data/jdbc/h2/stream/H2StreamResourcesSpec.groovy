@@ -22,7 +22,9 @@ import io.micronaut.context.event.BeanCreatedEventListener
 import io.micronaut.core.convert.ConversionContext
 import io.micronaut.data.annotation.GeneratedValue
 import io.micronaut.data.annotation.Id
+import io.micronaut.data.annotation.Join
 import io.micronaut.data.annotation.MappedEntity
+import io.micronaut.data.annotation.Relation
 import io.micronaut.data.annotation.TypeDef
 import io.micronaut.data.connection.ConnectionOperations
 import io.micronaut.data.exceptions.DataAccessException
@@ -60,6 +62,12 @@ class H2StreamResourcesSpec extends Specification implements H2TestPropertyProvi
 
     @Shared
     StreamItemRepository repository = ctx.getBean(StreamItemRepository)
+
+    @Shared
+    StreamParentRepository parentRepository = ctx.getBean(StreamParentRepository)
+
+    @Shared
+    StreamChildRepository childRepository = ctx.getBean(StreamChildRepository)
 
     @Shared
     ConnectionOperations<Connection> connectionOperations = ctx.getBean(ConnectionOperations)
@@ -113,6 +121,29 @@ class H2StreamResourcesSpec extends Specification implements H2TestPropertyProvi
             e.message.contains("Error closing JDBC result stream")
             StatementTracker.openStatements.get() == 0
     }
+
+    void "a stream whose parameter binding throws an Error closes its statement"() {
+        when:
+            connectionOperations.executeRead { repository.findByCode(new ItemCode(ItemCodeConverter.ERROR_ON_BIND)).toList() }
+        then:
+            thrown(AssertionError)
+            StatementTracker.openStatements.get() == 0
+    }
+
+    void "a fetch-joined stream closes its statement when mapping throws an Error"() {
+        given:
+            def parent = parentRepository.save(new StreamParent(name: "p", code: new ItemCode(ItemCodeConverter.ERROR_ON_READ)))
+            childRepository.save(new StreamChild(name: "c", parent: parent))
+            StatementTracker.reset()
+        when:
+            connectionOperations.executeRead { parentRepository.queryByName("p").toList() }
+        then:
+            thrown(AssertionError)
+            StatementTracker.openStatements.get() == 0
+        cleanup:
+            childRepository.deleteAll()
+            parentRepository.deleteAll()
+    }
 }
 
 @JdbcRepository(dialect = Dialect.H2)
@@ -121,6 +152,44 @@ interface StreamItemRepository extends CrudRepository<StreamItem, Long> {
     Stream<StreamItem> queryAll()
 
     Stream<StreamItem> findByCode(ItemCode code)
+}
+
+@JdbcRepository(dialect = Dialect.H2)
+interface StreamParentRepository extends CrudRepository<StreamParent, Long> {
+
+    @Join(value = "children", type = Join.Type.LEFT_FETCH)
+    Stream<StreamParent> queryByName(String name)
+}
+
+@JdbcRepository(dialect = Dialect.H2)
+interface StreamChildRepository extends CrudRepository<StreamChild, Long> {
+}
+
+@MappedEntity
+class StreamParent {
+    @Id
+    @GeneratedValue
+    Long id
+
+    String name
+
+    @TypeDef(type = DataType.STRING, converter = ItemCodeConverter)
+    ItemCode code
+
+    @Relation(value = Relation.Kind.ONE_TO_MANY, mappedBy = "parent")
+    List<StreamChild> children
+}
+
+@MappedEntity
+class StreamChild {
+    @Id
+    @GeneratedValue
+    Long id
+
+    String name
+
+    @Relation(Relation.Kind.MANY_TO_ONE)
+    StreamParent parent
 }
 
 @MappedEntity
@@ -147,17 +216,25 @@ class ItemCode {
 class ItemCodeConverter implements AttributeConverter<ItemCode, String> {
 
     static final String FAILING = "fail-to-bind"
+    static final String ERROR_ON_BIND = "error-on-bind"
+    static final String ERROR_ON_READ = "error-on-read"
 
     @Override
     String convertToPersistedValue(ItemCode entityValue, ConversionContext context) {
         if (entityValue?.value == FAILING) {
             throw new IllegalStateException("Cannot bind " + FAILING)
         }
+        if (entityValue?.value == ERROR_ON_BIND) {
+            throw new AssertionError("Cannot bind " + ERROR_ON_BIND)
+        }
         return entityValue?.value
     }
 
     @Override
     ItemCode convertToEntityValue(String persistedValue, ConversionContext context) {
+        if (persistedValue == ERROR_ON_READ) {
+            throw new AssertionError("Cannot read " + ERROR_ON_READ)
+        }
         return persistedValue == null ? null : new ItemCode(persistedValue)
     }
 }
