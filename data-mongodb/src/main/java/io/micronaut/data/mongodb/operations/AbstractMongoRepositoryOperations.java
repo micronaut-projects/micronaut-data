@@ -55,6 +55,7 @@ import io.micronaut.data.runtime.operations.internal.AbstractRepositoryOperation
 import io.micronaut.data.runtime.query.MethodContextAwareStoredQueryDecorator;
 import io.micronaut.data.runtime.query.PreparedQueryDecorator;
 import io.micronaut.data.runtime.query.internal.QueryResultStoredQuery;
+import io.micronaut.serde.config.annotation.SerdeConfig;
 import org.bson.BsonDocument;
 import org.bson.BsonDocumentWrapper;
 import org.bson.BsonNull;
@@ -399,11 +400,14 @@ abstract sealed class AbstractMongoRepositoryOperations<Dtb> extends AbstractRep
         filter.put(MongoUtils.ID, bsonDocument.get(MongoUtils.ID));
         if (persistentEntity.hasVersion()) {
             RuntimePersistentProperty<T> version = persistentEntity.getVersion();
-            // We don't support naming strategy for Mongo entity properties
-            String versionPropertyName = version.getName();
-            BsonValue value = bsonDocument.get(versionPropertyName);
+            // We don't support naming strategy for Mongo entity properties, but the property can be renamed
+            // for serialization (@MappedProperty), as the query builder does for generated queries
+            String versionFieldName = version.getAnnotationMetadata()
+                .stringValue(SerdeConfig.class, SerdeConfig.PROPERTY)
+                .orElseGet(version::getName);
+            BsonValue value = bsonDocument.get(versionFieldName);
             if (value != null) {
-                filter.put(versionPropertyName, value);
+                filter.put(versionFieldName, value);
             }
         }
         return filter;
