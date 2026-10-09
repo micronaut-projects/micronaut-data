@@ -271,7 +271,7 @@ class ColumnNameR2dbcResultReaderSpec extends Specification {
         mode << MODES
     }
 
-    void "reading a lob to the end does not discard it, cancelling the read does"() {
+    void "a lob is released by consuming its stream or by cancelling the subscription to it, never discarded"() {
         given:
         def clob = new StubClob("a", "b")
         def blob = new StubBlob(ByteBuffer.wrap([1] as byte[]))
@@ -284,11 +284,19 @@ class ColumnNameR2dbcResultReaderSpec extends Specification {
         R2dbcLobReader.readClob(pendingClob).subscribe().dispose()
         R2dbcLobReader.readBlob(pendingBlob).subscribe().dispose()
 
-        then:
-        !clob.discarded
-        !blob.discarded
-        pendingClob.discarded
-        pendingBlob.discarded
+        then: "the stream read to the end is not cancelled"
+        !clob.cancelled
+        !blob.cancelled
+
+        and: "cancelling the read cancels the subscription to the stream"
+        pendingClob.cancelled
+        pendingBlob.cancelled
+
+        and: "discard is only for a stream that is not subscribed"
+        !clob.discardCalled
+        !blob.discardCalled
+        !pendingClob.discardCalled
+        !pendingBlob.discardCalled
     }
 
     private static ByteBuffer positioned(ByteBuffer buffer, int position, int limit) {
@@ -464,7 +472,8 @@ class ColumnNameR2dbcResultReaderSpec extends Specification {
      */
     static class StubClob implements Clob {
         final Publisher<CharSequence> chunks
-        boolean discarded
+        boolean cancelled
+        boolean discardCalled
 
         StubClob(CharSequence... chunks) {
             this(Flux.fromArray(chunks))
@@ -476,12 +485,13 @@ class ColumnNameR2dbcResultReaderSpec extends Specification {
 
         @Override
         Publisher<CharSequence> stream() {
-            return chunks
+            return Flux.from(chunks).doOnCancel { cancelled = true }
         }
 
         @Override
         Publisher<Void> discard() {
-            return Mono.fromRunnable { discarded = true }
+            discardCalled = true
+            return Mono.empty()
         }
     }
 
@@ -490,7 +500,8 @@ class ColumnNameR2dbcResultReaderSpec extends Specification {
      */
     static class StubBlob implements Blob {
         final Publisher<ByteBuffer> chunks
-        boolean discarded
+        boolean cancelled
+        boolean discardCalled
 
         StubBlob(ByteBuffer... chunks) {
             this(Flux.fromArray(chunks))
@@ -502,12 +513,13 @@ class ColumnNameR2dbcResultReaderSpec extends Specification {
 
         @Override
         Publisher<ByteBuffer> stream() {
-            return chunks
+            return Flux.from(chunks).doOnCancel { cancelled = true }
         }
 
         @Override
         Publisher<Void> discard() {
-            return Mono.fromRunnable { discarded = true }
+            discardCalled = true
+            return Mono.empty()
         }
     }
 

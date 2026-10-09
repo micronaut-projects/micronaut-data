@@ -17,21 +17,17 @@ package io.micronaut.data.r2dbc.mapper;
 
 import io.r2dbc.spi.Blob;
 import io.r2dbc.spi.Clob;
-import org.reactivestreams.Publisher;
 import reactor.core.publisher.Flux;
 import reactor.core.publisher.Mono;
 
 import java.nio.ByteBuffer;
-import java.util.List;
-import java.util.function.Function;
-import java.util.function.Supplier;
 
 /**
  * Reads the whole content of an R2DBC {@link Clob} or {@link Blob}.
  *
- * <p>A large value is streamed in more than one chunk, so every chunk is read. Consuming the stream to the end
- * releases the LOB; if the read is cancelled before that, the LOB is discarded, as the R2DBC specification asks for
- * a stream that is not consumed.</p>
+ * <p>A large value is streamed in more than one chunk, so every chunk is read. As the R2DBC specification defines,
+ * consuming the stream to the end releases the LOB, and so does cancelling the read before that, which cancels the
+ * subscription to the stream.</p>
  */
 final class R2dbcLobReader {
 
@@ -44,7 +40,9 @@ final class R2dbcLobReader {
      */
     static Mono<String> readClob(Clob clob) {
         // Copy each chunk when it is emitted, the driver may reuse it afterwards
-        return readChunks(clob.stream(), clob::discard, CharSequence::toString)
+        return Flux.from(clob.stream())
+            .map(CharSequence::toString)
+            .collectList()
             .flatMap(chunks -> {
                 if (chunks.isEmpty()) {
                     return Mono.empty();
@@ -62,7 +60,9 @@ final class R2dbcLobReader {
      */
     static Mono<byte[]> readBlob(Blob blob) {
         // Copy each chunk when it is emitted, the driver may reuse it afterwards
-        return readChunks(blob.stream(), blob::discard, R2dbcLobReader::toBytes)
+        return Flux.from(blob.stream())
+            .map(R2dbcLobReader::toBytes)
+            .collectList()
             .map(chunks -> {
                 if (chunks.size() == 1) {
                     return chunks.getFirst();
@@ -95,12 +95,4 @@ final class R2dbcLobReader {
         return bytes;
     }
 
-    private static <C, T> Mono<List<T>> readChunks(Publisher<C> stream,
-                                                   Supplier<Publisher<Void>> discard,
-                                                   Function<C, T> copy) {
-        return Flux.from(stream)
-            .map(copy)
-            .doOnCancel(() -> Mono.from(discard.get()).onErrorResume(_ -> Mono.empty()).subscribe())
-            .collectList();
-    }
 }
