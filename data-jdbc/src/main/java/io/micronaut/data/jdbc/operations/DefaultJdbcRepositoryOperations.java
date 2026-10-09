@@ -1853,7 +1853,7 @@ public final class DefaultJdbcRepositoryOperations extends AbstractSqlRepository
                 rowsUpdated = 0;
                 for (int count : counts) {
                     if (count == Statement.EXECUTE_FAILED) {
-                        throw new DataAccessException("Error executing batch SQL UPDATE: the driver reported a failed statement");
+                        throw new DataAccessException("Error executing batch SQL: the driver reported a failed statement");
                     }
                     if (count == Statement.SUCCESS_NO_INFO) {
                         // The statement succeeded, but the driver doesn't say how many rows it affected

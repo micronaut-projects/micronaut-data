@@ -150,7 +150,7 @@ public final class SqlResultEntityTypeMapper<RS, R> implements SqlTypeMapper<RS,
     /**
      * Constructor with a prefix that applies the properties' attribute converters.
      *
-     * @param prefix                   The prefix to startup from.
+     * @param prefix                   The prefix to start from.
      * @param entity                   The entity
      * @param resultReader             The result reader
      * @param jsonColumnReader         The json column reader
