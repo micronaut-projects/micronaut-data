@@ -59,7 +59,8 @@ public final class JdbcTupleMapper implements SqlTypeMapper<ResultSet, Tuple> {
             Map<String, Integer> aliasToPosition = CollectionUtils.newHashMap(values.length);
             for (int i = 0; i < values.length; i++) {
                 values[i] = rs.getObject(i + 1);
-                String alias = metaData.getColumnName(i + 1);
+                // The label is the column alias, or the column name if the column has none
+                String alias = metaData.getColumnLabel(i + 1);
                 aliasToPosition.put(alias, i);
             }
             return new JdbcTuple(conversionService, values, aliasToPosition);
