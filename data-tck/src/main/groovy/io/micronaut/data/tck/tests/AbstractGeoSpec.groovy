@@ -77,8 +77,6 @@ abstract class AbstractGeoSpec extends Specification {
     }
 
     void "test creates, reads, and updates embedded geometry with JSON conversion"() {
-        assumeTrue(supportsGeometryJsonConversion())
-
         given:
         Location location1 = new Location()
         location1.setPoint(new Point(2.0, 2.5))
@@ -120,8 +118,6 @@ abstract class AbstractGeoSpec extends Specification {
     }
 
     void "test creates, reads, and updates geometry with JSON conversion"() {
-        assumeTrue(supportsGeometryJsonConversion())
-
         given:
         GeometryEntityJson entity = new GeometryEntityJson()
         entity.setPoint(createPoint(1))
@@ -177,7 +173,6 @@ abstract class AbstractGeoSpec extends Specification {
     }
 
     void "test updates geometry to null with JSON conversion"() {
-        assumeTrue(supportsGeometryJsonConversion())
         assumeTrue(supportsDeletingGeometryTypes())
 
         given:
@@ -306,8 +301,6 @@ abstract class AbstractGeoSpec extends Specification {
     }
 
     void "test findByLocationGeoWithin with JSON conversion"() {
-        assumeTrue(supportsGeometryJsonConversion())
-
         given:
         HotelJson inside1 = new HotelJson("Grand Plaza Hotel", new Point(10.0, 10.0))
         HotelJson inside2 = new HotelJson("Sunset Resort", new Point(12.0, 12.0))
@@ -337,8 +330,6 @@ abstract class AbstractGeoSpec extends Specification {
     }
 
     void "test findByLocationGeoIntersects with JSON conversion"() {
-        assumeTrue(supportsGeometryJsonConversion())
-
         given:
         HotelJson onRoute1 = new HotelJson("Grand Plaza Hotel", new Point(10.0, 10.0))
         HotelJson onRoute2 = new HotelJson("Sunset Resort", new Point(12.0, 12.0))
@@ -416,8 +407,6 @@ abstract class AbstractGeoSpec extends Specification {
     }
 
     void "test findByLocationNear with projected CRS and JSON conversion"() {
-        assumeTrue(supportsGeometryJsonConversion())
-
         given:
         HotelJson nearby1 = new HotelJson("Grand Plaza Hotel", new Point(11.0, 11.0))
         HotelJson nearby2 = new HotelJson("Sunset Resort", new Point(12.0, 10.0))
@@ -460,8 +449,6 @@ abstract class AbstractGeoSpec extends Specification {
     }
 
     void "test findByLocationNear with geographic CRS and JSON conversion"() {
-        assumeTrue(supportsGeometryJsonConversion())
-
         given:
         DeliveryDriverJson nearby = new DeliveryDriverJson("Nearby Driver", DeliveryDriverJson.Status.AVAILABLE, new Point(-73.9757d, 40.7554d))
         DeliveryDriverJson closest = new DeliveryDriverJson("Closest Driver", DeliveryDriverJson.Status.AVAILABLE, new Point(-73.9827d, 40.7504d))
@@ -507,10 +494,6 @@ abstract class AbstractGeoSpec extends Specification {
         names.size() == 2
         names.contains("Nearby Driver")
         names.contains("Closest Driver")
-    }
-
-    protected boolean supportsGeometryJsonConversion() {
-        return true
     }
 
     protected boolean supportsDeletingGeometryTypes() {
