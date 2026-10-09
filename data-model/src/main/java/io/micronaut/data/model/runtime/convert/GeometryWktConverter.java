@@ -100,7 +100,8 @@ public final class GeometryWktConverter implements AttributeConverter<Geometry, 
     private String formatNumber(double value) {
         // Keep whole-number doubles as "1" instead of "1.0" so the generated WKT stays compact and stable.
         // The upper bound is exclusive: Long.MAX_VALUE rounds to 2^63 when converted to double.
-        if (value == Math.rint(value) && value >= Long.MIN_VALUE && value < 0x1p63) {
+        if (value == Math.rint(value) && value >= Long.MIN_VALUE && value < 0x1p63
+                && Double.compare(value, -0.0d) != 0) {
             return Long.toString((long) value);
         }
         return Double.toString(value);
