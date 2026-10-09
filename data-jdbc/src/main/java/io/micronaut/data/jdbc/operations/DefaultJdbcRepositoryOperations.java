@@ -603,17 +603,24 @@ public final class DefaultJdbcRepositoryOperations extends AbstractSqlRepository
                     if (finished.get()) {
                         return false;
                     }
-                    boolean hasNext = resultMapper.hasNext(rs);
-                    if (hasNext) {
-                        R o = resultMapper.map(rs, resultType);
+                    R o;
+                    try {
+                        if (!resultMapper.hasNext(rs)) {
+                            closeResultSet(connection, ps, rs, finished, closeConnection);
+                            return false;
+                        }
+                        o = resultMapper.map(rs, resultType);
                         if (sqlMappingConsumer != null) {
                             sqlMappingConsumer.accept(o, newMappingContext(rs));
                         }
-                        action.accept(o);
-                    } else {
-                        closeResultSet(connection, ps, rs, finished, closeConnection);
+                    } catch (RuntimeException e) {
+                        // The caller might not close the stream after a failure
+                        throw closeAfterFailure(e, connection, ps, rs, finished, closeConnection);
+                    } catch (Error e) {
+                        throw closeAfterFailure(e, connection, ps, rs, finished, closeConnection);
                     }
-                    return hasNext;
+                    action.accept(o);
+                    return true;
                 }
             };
             return StreamSupport.stream(spliterator, false)

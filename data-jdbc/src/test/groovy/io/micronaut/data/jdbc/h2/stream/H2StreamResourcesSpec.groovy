@@ -144,6 +144,17 @@ class H2StreamResourcesSpec extends Specification implements H2TestPropertyProvi
             childRepository.deleteAll()
             parentRepository.deleteAll()
     }
+
+    void "a stream closes its statement when mapping a row throws, even if the stream isn't closed"() {
+        given:
+            repository.save(new StreamItem(name: "c", code: new ItemCode(ItemCodeConverter.ERROR_ON_READ)))
+            StatementTracker.reset()
+        when:
+            connectionOperations.executeRead { repository.queryAll().iterator().forEachRemaining {} }
+        then:
+            thrown(AssertionError)
+            StatementTracker.openStatements.get() == 0
+    }
 }
 
 @JdbcRepository(dialect = Dialect.H2)
