@@ -780,6 +780,15 @@ final class DefaultMongoStoredQuery<E, R> extends DefaultBindableParametersStore
             if (from.getArrayFilters() != null) {
                 to.arrayFilters(from.getArrayFilters());
             }
+            if (from.getComment() != null) {
+                to.comment(from.getComment());
+            }
+            if (from.getLet() != null) {
+                to.let(from.getLet());
+            }
+            if (from.getSort() != null) {
+                to.sort(from.getSort());
+            }
         }
 
         private MongoUpdate getUpdateMany(InvocationContext<?, ?> invocationContext) {
@@ -1232,6 +1241,12 @@ final class DefaultMongoStoredQuery<E, R> extends DefaultBindableParametersStore
             }
             if (from.getHintString() != null) {
                 to.hintString(from.getHintString());
+            }
+            if (from.getComment() != null) {
+                to.comment(from.getComment());
+            }
+            if (from.getLet() != null) {
+                to.let(from.getLet());
             }
         }
 

@@ -26,7 +26,9 @@ import io.micronaut.data.annotation.MappedEntity
 import io.micronaut.data.model.Sort
 import io.micronaut.data.mongodb.annotation.MongoAggregateQuery
 import io.micronaut.data.mongodb.annotation.MongoCollation
+import io.micronaut.data.mongodb.annotation.MongoDeleteOptions
 import io.micronaut.data.mongodb.annotation.MongoRepository
+import io.micronaut.data.mongodb.annotation.MongoUpdateOptions
 import io.micronaut.data.mongodb.operations.options.MongoAggregationOptions
 import io.micronaut.data.mongodb.operations.options.MongoFindOptions
 import io.micronaut.data.mongodb.repository.MongoQueryExecutor
@@ -52,6 +54,9 @@ class MongoQueryStateIsolationSpec extends Specification implements MongoTestPro
 
     @Shared
     CollatedRankedRepository collatedRankedRepository = applicationContext.getBean(CollatedRankedRepository)
+
+    @Shared
+    OptionsRankedRepository optionsRankedRepository = applicationContext.getBean(OptionsRankedRepository)
 
     def setup() {
         rankedRepository.saveAll([
@@ -128,6 +133,26 @@ class MongoQueryStateIsolationSpec extends Specification implements MongoTestPro
             options.collation == null
     }
 
+    void "caller supplied update options are combined with the repository's options"() {
+        given: "a filter that only matches through the caller's let variable"
+            def filter = BsonDocument.parse('{ $expr: { $eq: ["$name", "$$target"] } }')
+            def options = new UpdateOptions().let(new BsonDocument("target", new BsonString("b")))
+        when:
+            def updated = optionsRankedRepository.updateAll(filter, Updates.set("rank", 30), options)
+        then:
+            updated == 1
+    }
+
+    void "caller supplied delete options are combined with the repository's options"() {
+        given: "a filter that only matches through the caller's let variable"
+            def filter = BsonDocument.parse('{ $expr: { $eq: ["$name", "$$target"] } }')
+            def options = new DeleteOptions().let(new BsonDocument("target", new BsonString("b")))
+        when:
+            def deleted = optionsRankedRepository.deleteAll(filter, options)
+        then:
+            deleted == 1
+    }
+
     void "caller supplied delete options are not modified"() {
         given:
             def options = new DeleteOptions()
@@ -152,6 +177,12 @@ interface RankedRepository extends CrudRepository<Ranked, String> {
 @MongoCollation("{ locale: 'en_US', numericOrdering: true}")
 @MongoRepository
 interface CollatedRankedRepository extends CrudRepository<Ranked, String>, MongoQueryExecutor<Ranked> {
+}
+
+@MongoUpdateOptions(bypassDocumentValidation = true)
+@MongoDeleteOptions
+@MongoRepository
+interface OptionsRankedRepository extends CrudRepository<Ranked, String>, MongoQueryExecutor<Ranked> {
 }
 
 @MappedEntity
