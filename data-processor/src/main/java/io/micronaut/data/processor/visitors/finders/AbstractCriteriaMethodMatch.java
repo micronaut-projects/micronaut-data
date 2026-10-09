@@ -122,6 +122,16 @@ public abstract class AbstractCriteriaMethodMatch implements MethodMatcher.Metho
         this.matches = matches;
     }
 
+    protected final String resolveNativePropertyName(String propertyName) {
+        for (MethodNameParser.Match match : matches) {
+            if (match.id() instanceof PythonMethodNameParser.Property property
+                && match.part().equalsIgnoreCase(propertyName)) {
+                return property.path();
+            }
+        }
+        return propertyName;
+    }
+
     /**
      * @return The entity parameter
      */
@@ -337,16 +347,6 @@ public abstract class AbstractCriteriaMethodMatch implements MethodMatcher.Metho
                                                     Iterator<ParameterElement> parametersIt,
                                                     PersistentEntityRoot<T> root,
                                                     PersistentEntityCriteriaBuilder cb) {
-        Optional<MethodNameParser.Match> literalRestriction = matches.stream()
-            .filter(m -> m.id() == QueryMatchId.LITERAL_PROPERTY_RESTRICTION)
-            .findFirst();
-        if (querySequence != null && literalRestriction.isPresent()) {
-            Restrictions.PropertyRestriction<Object> restriction = Restrictions.findPropertyRestriction(literalRestriction.get().part());
-            Objects.requireNonNull(restriction);
-            Expression<Object> property = getProperty(root, querySequence);
-            return restriction.find(root, cb, property,
-                provideParams(parametersIt, restriction.getRequiredParameters(), restriction.getName(), cb, property));
-        }
         Predicate predicate = null;
 
         // if it contains operator and split
@@ -479,10 +479,17 @@ public abstract class AbstractCriteriaMethodMatch implements MethodMatcher.Metho
         Restrictions.PropertyRestriction<Object> effectiveRestriction = restriction;
         if (BETWEEN.equals(restriction.getName())) {
             PersistentEntity persistentEntity = root.getPersistentEntity();
-            String resolvedPropertyName = persistentEntity.getPath(propertyName).orElse(propertyName);
-            PersistentProperty property = persistentEntity.getPropertyByName(resolvedPropertyName);
-            if (property == null) {
-                property = persistentEntity.getPropertyByNameIgnoreCase(propertyName);
+            String nativePropertyName = resolveNativePropertyName(propertyName);
+            PersistentProperty property;
+            if (!nativePropertyName.equals(propertyName)) {
+                PersistentPropertyPath propertyPath = persistentEntity.getPropertyPath(nativePropertyName);
+                property = propertyPath == null ? null : propertyPath.getProperty();
+            } else {
+                String resolvedPropertyName = persistentEntity.getPath(propertyName).orElse(propertyName);
+                property = persistentEntity.getPropertyByName(resolvedPropertyName);
+                if (property == null) {
+                    property = persistentEntity.getPropertyByNameIgnoreCase(propertyName);
+                }
             }
             if (property != null && property.isAssignable(Vector.class)) {
                 Restrictions.PropertyRestriction<Object> vectorRangeRestriction = Restrictions.findPropertyRestriction(WITHIN);
@@ -635,22 +642,31 @@ public abstract class AbstractCriteriaMethodMatch implements MethodMatcher.Metho
     }
 
     protected final <T> Expression<Object> getProperty(PersistentEntityRoot<T> root, String propertyName) {
-        if (TypeRole.ID.equals(NameUtils.decapitalize(propertyName)) && (root.getPersistentEntity().hasIdentity() || root.getPersistentEntity().hasCompositeIdentity())) {
+        String nativePropertyName = resolveNativePropertyName(propertyName);
+        boolean nativeProperty = !nativePropertyName.equals(propertyName)
+            && root.getPersistentEntity().getPropertyByName(nativePropertyName) != null;
+        if (!nativeProperty && TypeRole.ID.equals(NameUtils.decapitalize(nativePropertyName)) && (root.getPersistentEntity().hasIdentity() || root.getPersistentEntity().hasCompositeIdentity())) {
             return root.id();
         }
         io.micronaut.data.model.jpa.criteria.PersistentPropertyPath<Object> property = findProperty(root, propertyName);
         if (property != null) {
             return property;
         }
-        throw new MatchFailedException("Cannot query entity [" + root.getPersistentEntity().getSimpleName() + "] on non-existent property: " + propertyName + " " + root.getPersistentEntity().getPersistentProperties().stream().map(PersistentProperty::getName).toList());
+        throw new MatchFailedException("Cannot query entity [" + root.getPersistentEntity().getSimpleName() + "] on non-existent property: " + nativePropertyName + " " + root.getPersistentEntity().getPersistentProperties().stream().map(PersistentProperty::getName).toList());
     }
 
     protected final <T> io.micronaut.data.model.jpa.criteria. @Nullable PersistentPropertyPath<Object> findProperty(PersistentEntityRoot<T> root, String propertyName) {
         propertyName = NameUtils.decapitalize(propertyName);
         PersistentEntity entity = root.getPersistentEntity();
-        PersistentProperty prop = entity.getPropertyByName(propertyName);
+        String nativePropertyName = resolveNativePropertyName(propertyName);
+        PersistentProperty prop = entity.getPropertyByName(nativePropertyName);
         PersistentPropertyPath pp;
-        if (prop == null) {
+        if (!nativePropertyName.equals(propertyName)) {
+            pp = entity.getPropertyPath(nativePropertyName);
+            if (pp == null) {
+                return null;
+            }
+        } else if (prop == null) {
             Optional<String> propertyPath = PersistentEntityUtils.getPersistentPropertyPath(entity, propertyName);
             if (propertyPath.isPresent()) {
                 String path = propertyPath.get();
