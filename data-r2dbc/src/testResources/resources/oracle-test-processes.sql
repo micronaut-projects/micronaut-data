@@ -1,0 +1,11 @@
+-- -- Leave room for rapid connection creation between listener load updates.
+WHENEVER SQLERROR EXIT SQL.SQLCODE
+ALTER
+SYSTEM SET processes = 1000 SCOPE = SPFILE;
+SHUTDOWN
+IMMEDIATE;
+STARTUP;
+ALTER
+PLUGGABLE DATABASE ALL OPEN;
+ALTER
+SYSTEM REGISTER;

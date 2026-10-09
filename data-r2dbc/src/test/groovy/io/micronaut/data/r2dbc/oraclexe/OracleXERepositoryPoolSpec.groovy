@@ -15,7 +15,15 @@
  */
 package io.micronaut.data.r2dbc.oraclexe
 
+import io.r2dbc.pool.ConnectionPool
+import io.r2dbc.spi.ConnectionFactory
+
 class OracleXERepositoryPoolSpec extends OracleXERepositorySpec {
+
+    def "connection factory uses a pool"() {
+        expect:
+        context.getBean(ConnectionFactory) instanceof ConnectionPool
+    }
 
     @Override
     boolean usePool() {
