@@ -500,6 +500,29 @@ abstract class AbstractGeoSpec extends Specification {
         names.contains("Closest Driver")
     }
 
+    void "test geographic WKT preserves longitude latitude on writes reads and near predicates"() {
+        given:
+        def repository = getDeliveryDriverWktRepository()
+        def location = new Point(-122.4194d, 37.7749d)
+        def updatedLocation = new Point(-122.4180d, 37.7750d)
+        def status = DeliveryDriverWkt.Status.AVAILABLE
+
+        when:
+        def saved = repository.save(new DeliveryDriverWkt("San Francisco Driver", status, location))
+
+        then:
+        repository.findById(saved.id()).orElseThrow().location() == location
+        repository.findByStatusAndLocationNear(status, location, 100d)*.id() == [saved.id()]
+        repository.findByStatusAndLocationNear(status, new Point(-118.2437d, 34.0522d), 100d).isEmpty()
+
+        when:
+        repository.update(new DeliveryDriverWkt(saved.id(), saved.name(), status, updatedLocation))
+
+        then:
+        repository.findById(saved.id()).orElseThrow().location() == updatedLocation
+        repository.findByStatusAndLocationNear(status, updatedLocation, 100d)*.id() == [saved.id()]
+    }
+
     void "test district mappings, fetch joins, and geospatial predicates"() {
         assumeTrue(supportsGeometryJsonConversion())
 
