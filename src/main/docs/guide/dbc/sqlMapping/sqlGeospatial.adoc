@@ -249,6 +249,28 @@ MySQL 8.0.1 and later use the SRID's axis order by default, so Micronaut Data ex
 `axis-order=long-lat` for WKT writes with an SRID, predicate arguments, and reads. The option is wrapped
 in a MySQL executable comment so MariaDB and older MySQL versions retain their existing x/y behavior.
 
+[WARNING]
+====
+Existing WKT-mapped data on MySQL 8.0.1 and later with a geographic SRID such as 4326 requires a one-time migration.
+Since geospatial support was introduced in Micronaut Data 5.0.0, versions before this axis-order fix stored
+longitude and latitude swapped: `ST_GeomFromText(?, 4326)` used the SRID's axis order, and `ST_AsText(column)`
+swapped them back on reads, making round-trips appear correct. Longitudes outside ±90 were rejected.
+With the explicit `axis-order=long-lat` option, those existing rows are read back with longitude and latitude
+flipped and can be excluded from `Near` query results.
+
+When upgrading, repair affected values once with `ST_SwapXY`. For example, if all rows in
+`delivery_driver_wkt` were written with the old behavior:
+
+[source,sql]
+----
+UPDATE delivery_driver_wkt SET location = ST_SwapXY(location);
+----
+
+Adapt the table and column names to your schema. If old and corrected rows coexist, restrict the update
+to rows written with the old behavior. Micronaut Data cannot distinguish them automatically.
+Do not apply this update to newly written or already migrated values: running it again swaps the axes back.
+====
+
 ==== Schema generation
 
 If using the internal schema-generation tooling, spatial indexes will be created for all columns whose properties are
