@@ -55,10 +55,11 @@ import java.util.List;
 public final class GeometryJsonConverter implements AttributeConverter<Geometry, String> {
 
     private final JsonMapper jsonMapper;
-    private final GeometryWktConverter wktConverter = new GeometryWktConverter();
+    private final GeometryWktConverter wktConverter;
 
-    GeometryJsonConverter(JsonMapper jsonMapper, @Nullable OracleJsonMapper oracleJsonMapper) {
+    GeometryJsonConverter(JsonMapper jsonMapper, @Nullable OracleJsonMapper oracleJsonMapper, GeometryWktConverter wktConverter) {
         this.jsonMapper = oracleJsonMapper == null ? jsonMapper : oracleJsonMapper.getJsonMapper();
+        this.wktConverter = wktConverter;
     }
 
     @Override

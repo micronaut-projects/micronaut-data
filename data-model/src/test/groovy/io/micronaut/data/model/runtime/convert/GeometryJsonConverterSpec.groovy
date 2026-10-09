@@ -17,7 +17,7 @@ import spock.lang.Unroll
 final class GeometryJsonConverterSpec extends Specification {
 
     private final JsonMapper jsonMapper = JsonMapper.createDefault()
-    private final GeometryJsonConverter converter = new GeometryJsonConverter(jsonMapper, null)
+    private final GeometryJsonConverter converter = new GeometryJsonConverter(jsonMapper, null, new GeometryWktConverter())
 
     @Unroll
     void "convert #geometry.class.simpleName to GeoJSON and back"() {
@@ -66,7 +66,7 @@ final class GeometryJsonConverterSpec extends Specification {
     void "converts #geometry.class.simpleName through WKT for SQL Server without using the JSON mapper"() {
         given:
         def mapper = Mock(JsonMapper)
-        def converter = new GeometryJsonConverter(mapper, null)
+        def converter = new GeometryJsonConverter(mapper, null, new GeometryWktConverter())
         def conversionContext = Stub(DatabaseTypeConversionContext) {
             getDatabaseType() >> DatabaseType.SQL_SERVER
         }
@@ -133,7 +133,7 @@ final class GeometryJsonConverterSpec extends Specification {
     void 'wraps mapper serialization io exceptions'() {
         given:
         def mapper = Mock(JsonMapper)
-        def converter = new GeometryJsonConverter(mapper, null)
+        def converter = new GeometryJsonConverter(mapper, null, new GeometryWktConverter())
 
         when:
         converter.convertToPersistedValue(point(), ConversionContext.DEFAULT)
