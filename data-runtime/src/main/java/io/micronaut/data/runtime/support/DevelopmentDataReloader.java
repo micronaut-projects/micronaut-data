@@ -133,10 +133,10 @@ final class DevelopmentDataReloader {
     DevelopmentDataReloader(BeanContext beanContext) {
         this.beanContext = beanContext;
         if (beanContext instanceof WatchableBeanContext watchable) {
-            watchable.watchClassChanges(this::onClassChange);
-            watchable.watchDefinitions(Object.class, Qualifiers.byStereotype(Repository.class), this::onRepositoryDefinitions);
-            watchable.watchDefinitions(EntityEventListener.class, null, this::onEntityEventListenerDefinitions);
-            watchable.watchMethods(EntityEventMapping.class, this::onEntityEventMethods);
+            watchable.classChanges().watch(this::onClassChange);
+            watchable.definitions().stereotype(Repository.class).watch(this::onRepositoryDefinitions);
+            watchable.definitions(EntityEventListener.class).watch(this::onEntityEventListenerDefinitions);
+            watchable.methods(EntityEventMapping.class).watch(this::onEntityEventMethods);
         }
     }
 
