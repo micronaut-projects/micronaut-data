@@ -1,7 +1,9 @@
 package io.micronaut.data.r2dbc.sqlserver
 
 import groovy.transform.Memoized
+import io.micronaut.data.model.geo.LineString
 import io.micronaut.data.model.geo.Point
+import io.micronaut.data.model.geo.Polygon
 import io.micronaut.data.tck.repositories.DeliveryDriverJsonRepository
 import io.micronaut.data.tck.repositories.DeliveryDriverWktRepository
 import io.micronaut.data.tck.repositories.GeometryEntityJsonRepository
@@ -70,13 +72,6 @@ class SqlServerGeoSpec extends AbstractGeoSpec implements SqlServerTestPropertyP
     @Override
     List<String> packages() {
         return Arrays.asList("io.micronaut.data.tck.jdbc.entities.geo", "io.micronaut.data.r2dbc.sqlserver")
-    }
-
-    @Override
-    protected boolean supportsGeometryJsonConversion() {
-        // SqlServer doesn't have built-in functions for conversion
-        // between json and internal geometry/geography data types
-        return false
     }
 
     void "test creates, reads, updates, and clears geography with WKT conversion"() {
@@ -175,5 +170,51 @@ class SqlServerGeoSpec extends AbstractGeoSpec implements SqlServerTestPropertyP
         names.size() == 2
         names.contains("Nearby Driver")
         names.contains("Closest Driver")
+    }
+
+    void "test findByLocationGeoWithin with an explicit geography column and WKT conversion"() {
+        given:
+        DeliveryDriverWktGeography inside1 = new DeliveryDriverWktGeography("Inside 1", DeliveryDriverWktGeography.Status.AVAILABLE, new Point(-73.9857d, 40.7484d))
+        DeliveryDriverWktGeography inside2 = new DeliveryDriverWktGeography("Inside 2", DeliveryDriverWktGeography.Status.AVAILABLE, new Point(-74.0000d, 40.8000d))
+        DeliveryDriverWktGeography outside = new DeliveryDriverWktGeography("Outside", DeliveryDriverWktGeography.Status.AVAILABLE, new Point(-73.8000d, 40.8000d))
+        Polygon region = new Polygon([
+                new LineString([
+                        new Point(-74.1000d, 40.7000d),
+                        new Point(-73.9000d, 40.7000d),
+                        new Point(-73.9000d, 40.9000d),
+                        new Point(-74.1000d, 40.9000d),
+                        new Point(-74.1000d, 40.7000d)
+                ])
+        ])
+
+        when:
+        getDeliveryDriverWktGeographyRepository().saveAll(List.of(inside1, inside2, outside))
+        List<DeliveryDriverWktGeography> result = getDeliveryDriverWktGeographyRepository().findByLocationGeoWithin(region)
+
+        then:
+        result.collect { it.name() }.toSet() == ["Inside 1", "Inside 2"].toSet()
+    }
+
+    void "test findByLocationGeoIntersects with an explicit geography column and WKT conversion"() {
+        given:
+        DeliveryDriverWktGeography routeStart = new DeliveryDriverWktGeography("Route Start", DeliveryDriverWktGeography.Status.AVAILABLE, new Point(-73.9857d, 40.7484d))
+        DeliveryDriverWktGeography routeTurn = new DeliveryDriverWktGeography("Route Turn", DeliveryDriverWktGeography.Status.AVAILABLE, new Point(-74.0000d, 40.8000d))
+        DeliveryDriverWktGeography offRoute = new DeliveryDriverWktGeography("Off Route", DeliveryDriverWktGeography.Status.AVAILABLE, new Point(-73.8000d, 40.8000d))
+        LineString route = new LineString([
+                routeStart.location(),
+                routeTurn.location(),
+                new Point(-74.0500d, 40.8500d)
+        ])
+
+        when:
+        getDeliveryDriverWktGeographyRepository().saveAll(List.of(routeStart, routeTurn, offRoute))
+        List<DeliveryDriverWktGeography> result = getDeliveryDriverWktGeographyRepository().findByLocationGeoIntersects(route)
+
+        then:
+        result.collect { it.name() }.toSet() == ["Route Start", "Route Turn"].toSet()
+    }
+
+    void cleanup() {
+        getDeliveryDriverWktGeographyRepository().deleteAll()
     }
 }
