@@ -267,14 +267,14 @@ class StatementTrackingDataSourceListener implements BeanCreatedEventListener<Da
     @Override
     DataSource onCreated(BeanCreatedEvent<DataSource> event) {
         DataSource dataSource = event.bean
-        return proxy(DataSource, dataSource) { Method method, Object[] args ->
+        return proxy(DataSource) { Method method, Object[] args ->
             Object result = invoke(dataSource, method, args)
             method.name == "getConnection" ? trackConnection((Connection) result) : result
         }
     }
 
     private static Connection trackConnection(Connection connection) {
-        return proxy(Connection, connection) { Method method, Object[] args ->
+        return proxy(Connection) { Method method, Object[] args ->
             Object result = invoke(connection, method, args)
             if (method.name == "prepareStatement" && result instanceof PreparedStatement) {
                 StatementTracker.openStatements.incrementAndGet()
@@ -286,7 +286,7 @@ class StatementTrackingDataSourceListener implements BeanCreatedEventListener<Da
 
     private static PreparedStatement trackStatement(PreparedStatement statement) {
         boolean[] closed = [false]
-        return proxy(PreparedStatement, statement) { Method method, Object[] args ->
+        return proxy(PreparedStatement) { Method method, Object[] args ->
             Object result = invoke(statement, method, args)
             if (method.name == "close" && !closed[0]) {
                 closed[0] = true
@@ -300,7 +300,7 @@ class StatementTrackingDataSourceListener implements BeanCreatedEventListener<Da
     }
 
     private static ResultSet failingCloseResultSet(ResultSet resultSet) {
-        return proxy(ResultSet, resultSet) { Method method, Object[] args ->
+        return proxy(ResultSet) { Method method, Object[] args ->
             Object result = invoke(resultSet, method, args)
             if (method.name == "close" && StatementTracker.failResultSetClose) {
                 throw new SQLException("Result set close failure")
@@ -309,7 +309,7 @@ class StatementTrackingDataSourceListener implements BeanCreatedEventListener<Da
         }
     }
 
-    private static <T> T proxy(Class<T> type, T target, Closure<Object> handler) {
+    private static <T> T proxy(Class<T> type, Closure<Object> handler) {
         return (T) Proxy.newProxyInstance(StatementTrackingDataSourceListener.classLoader, [type] as Class[],
             { Object p, Method method, Object[] args -> handler.call(method, args) } as InvocationHandler)
     }

@@ -162,21 +162,21 @@ class BatchCountDataSourceListener implements BeanCreatedEventListener<DataSourc
     @Override
     DataSource onCreated(BeanCreatedEvent<DataSource> event) {
         DataSource dataSource = event.bean
-        return proxy(DataSource, dataSource) { Method method, Object[] args ->
+        return proxy(DataSource) { Method method, Object[] args ->
             Object result = invoke(dataSource, method, args)
             method.name == "getConnection" ? overrideConnection((Connection) result) : result
         }
     }
 
     private static Connection overrideConnection(Connection connection) {
-        return proxy(Connection, connection) { Method method, Object[] args ->
+        return proxy(Connection) { Method method, Object[] args ->
             Object result = invoke(connection, method, args)
             method.name == "prepareStatement" && result instanceof PreparedStatement ? overrideStatement((PreparedStatement) result) : result
         }
     }
 
     private static PreparedStatement overrideStatement(PreparedStatement statement) {
-        return proxy(PreparedStatement, statement) { Method method, Object[] args ->
+        return proxy(PreparedStatement) { Method method, Object[] args ->
             Object result = invoke(statement, method, args)
             Integer reportedCount = BatchCountOverride.reportedCount
             if (method.name == "executeBatch" && reportedCount != null) {
@@ -188,7 +188,7 @@ class BatchCountDataSourceListener implements BeanCreatedEventListener<DataSourc
         }
     }
 
-    private static <T> T proxy(Class<T> type, T target, Closure<Object> handler) {
+    private static <T> T proxy(Class<T> type, Closure<Object> handler) {
         return (T) Proxy.newProxyInstance(BatchCountDataSourceListener.classLoader, [type] as Class[],
             { Object p, Method method, Object[] args -> handler.call(method, args) } as InvocationHandler)
     }
