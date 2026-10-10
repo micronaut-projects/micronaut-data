@@ -41,16 +41,20 @@ import org.slf4j.LoggerFactory;
  * entries, would stay reachable for the life of the process.</p>
  *
  * <ul>
- *     <li>As the context stops, on a restart, it forgets the Cosmos entities of the entity classes the context sees,
- *     so that the next context creates its own.</li>
+ *     <li>As the context stops, on a restart, it forgets the Cosmos entities of the entity classes its own classloader
+ *     defined, the generation's, so that the next context creates its own.</li>
  *     <li>A class change applied in place that retires a classloader forgets the Cosmos entities of the persistent
  *     entities whose class that loader defined.</li>
  *     <li>A class change applied in place, after which the data beans recreated the entity registry, and with it, as
  *     a bean that received the registry, the database initializer, forgets the Cosmos entities of the entity classes
- *     the context sees and initializes the database again, as the application did as it started: the persistent
+ *     its classloader defined and initializes the database again, as the application did as it started: the persistent
  *     entities of the new registry get Cosmos entities of their own, and the containers of entities added in place are
  *     created.</li>
  * </ul>
+ *
+ * <p>An entity class of a library, which the classloader of the context did not define, may be used by another
+ * context at the same time: its Cosmos entity is kept, as it is outside development mode. Such a class does not
+ * change with the application's generations.</p>
  *
  * <p>It holds the context only, never an entity nor a data bean.</p>
  *
@@ -77,12 +81,12 @@ final class DevelopmentCosmosReloader {
     }
 
     /**
-     * Forgets the Cosmos entities of the entity classes this context sees, as it stops.
+     * Forgets the Cosmos entities of the entity classes the classloader of this context defined, as it stops.
      */
     @PreDestroy
     void close() {
         ClassLoader loader = beanContext.getClassLoader();
-        CosmosEntity.forget(entity -> isVisible(entity, loader));
+        CosmosEntity.forget(entity -> isDefinedBy(entity, loader));
     }
 
     private void onClassChange(ClassChangeEvent change) {
@@ -107,21 +111,16 @@ final class DevelopmentCosmosReloader {
         LOG.debug("Initializing the Cosmos database again: the entity registry was recreated");
         // first: the initializer only creates the entries that are missing, by entity name
         ClassLoader loader = beanContext.getClassLoader();
-        CosmosEntity.forget(entity -> isVisible(entity, loader));
+        CosmosEntity.forget(entity -> isDefinedBy(entity, loader));
         beanContext.getBean(CosmosDatabaseInitializer.class);
     }
 
     /**
-     * Whether the class of a persistent entity is the one a loader sees by its name.
+     * Whether the class of a persistent entity was defined by a loader, the loader of a generation.
      */
-    @SuppressWarnings("ReferenceEquality") // a class is the same class by identity
-    private static boolean isVisible(RuntimePersistentEntity<?> entity, ClassLoader loader) {
-        Class<?> type = entity.getIntrospection().getBeanType();
-        try {
-            return Class.forName(type.getName(), false, loader) == type;
-        } catch (ClassNotFoundException | LinkageError e) {
-            return false;
-        }
+    @SuppressWarnings("ReferenceEquality") // a generation is its loader
+    private static boolean isDefinedBy(RuntimePersistentEntity<?> entity, ClassLoader loader) {
+        return entity.getIntrospection().getBeanType().getClassLoader() == loader;
     }
 
     /**

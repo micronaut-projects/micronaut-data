@@ -96,22 +96,31 @@ class CosmosEntityReloadSpec extends Specification {
         harness.close()
     }
 
-    void "stopping the context in development mode forgets the Cosmos entities of its classes"() {
+    void "stopping the context in development mode forgets the Cosmos entities of the classes of its generation only"() {
         given:
         ReloadHarness harness = ReloadHarness.inDirectory(project)
         harness.source(NOTE, note('topic'))
         harness.start()
         ApplicationContext context = harness.context()
         CosmosReloadSupport.initialize(context, NOTE)
+        RuntimePersistentEntity<?> note = CosmosReloadSupport.entity(context, NOTE)
         RuntimePersistentEntity<?> plain = context.getBean(RuntimeEntityRegistry).getEntity(Plain)
         CosmosEntity.create(plain, null)
 
         when:
         harness.close()
-        CosmosEntity.get(plain)
 
-        then: 'a class the context sees, of the parent tier too'
+        then: 'the class of a library, which another context may use at the same time, keeps its Cosmos entity'
+        CosmosEntity.get(plain).containerName == 'plain'
+
+        when:
+        CosmosEntity.get(note)
+
+        then: 'the generation is forgotten'
         thrown(NullPointerException)
+
+        cleanup:
+        CosmosEntity.forget(entity -> entity == plain)
     }
 
     void "outside development mode the Cosmos entities are kept"() {
@@ -129,6 +138,9 @@ class CosmosEntityReloadSpec extends Specification {
 
         then:
         CosmosEntity.get(entity).containerName == 'plain'
+
+        cleanup:
+        CosmosEntity.forget(e -> e == entity)
     }
 
     private static String note(String property) {
