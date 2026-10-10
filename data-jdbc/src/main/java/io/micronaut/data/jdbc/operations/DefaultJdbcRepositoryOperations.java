@@ -545,6 +545,8 @@ public final class DefaultJdbcRepositoryOperations extends AbstractSqlRepository
         return findAll(preparedQuery).stream();
     }
 
+    // Errors are caught only to close the JDBC resources, and are always rethrown
+    @SuppressWarnings({"java:S1181"})
     private <T, R> Stream<R> findStream(@NonNull PreparedQuery<T, R> pq, Connection connection, boolean closeConnection) {
         SqlPreparedQuery<T, R> preparedQuery = getSqlPreparedQuery(pq);
         RuntimePersistentEntity<T> persistentEntity = preparedQuery.getPersistentEntity();
