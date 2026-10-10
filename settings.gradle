@@ -20,6 +20,9 @@ def micronautSnapshotRepositories = { RepositoryHandler repositories ->
     repositories.mavenLocal {
         content {
             includeVersionByRegex("io\\.micronaut(\\..*)?", ".*", ".*-SNAPSHOT")
+            // the development test suites run against Micronaut MongoDB 6.3.0, which carries its development
+            // support and is not released yet
+            includeVersionByRegex("io\\.micronaut\\.mongodb", ".*", "6\\.3\\.0")
         }
     }
     repositories.maven {
@@ -204,6 +207,7 @@ include 'test-annotation-processor-java'
 include 'test-suite-data-jdbc-sqlite'
 include 'test-suite-dev-reload'
 include 'test-suite-dev-reload-r2dbc'
+include 'test-suite-dev-reload-mongodb'
 
 // benchmarks
 include 'benchmarks:benchmark-micronaut-data-jpa'
