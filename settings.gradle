@@ -19,7 +19,10 @@ enableFeaturePreview("TYPESAFE_PROJECT_ACCESSORS")
 def micronautSnapshotRepositories = { RepositoryHandler repositories ->
     repositories.mavenLocal {
         content {
-            includeVersionByRegex("io\\.micronaut", ".*", ".*-SNAPSHOT")
+            includeVersionByRegex("io\\.micronaut(\\..*)?", ".*", ".*-SNAPSHOT")
+            // the MongoDB development test suite, included with -PdevReloadSuites, runs against Micronaut MongoDB
+            // 6.3.0, which carries its development support and is not released yet
+            includeVersionByRegex("io\\.micronaut\\.mongodb", ".*", "6\\.3\\.0")
         }
     }
     repositories.maven {
@@ -203,6 +206,14 @@ include 'test-annotation-processor-java'
 
 include 'test-suite-data-jdbc-sqlite'
 include 'test-suite-dev-reload'
+// The development mode test suites of R2DBC and MongoDB run against versions of Micronaut R2DBC (7.3.0-SNAPSHOT,
+// micronaut-projects/micronaut-r2dbc#1066) and Micronaut MongoDB (6.3.0, micronaut-projects/micronaut-mongodb#1011)
+// that are not released yet, published to Maven local: pass -PdevReloadSuites to include them. Include them always once
+// the platform moves to those releases.
+if (providers.gradleProperty('devReloadSuites').present) {
+    include 'test-suite-dev-reload-r2dbc'
+    include 'test-suite-dev-reload-mongodb'
+}
 
 // benchmarks
 include 'benchmarks:benchmark-micronaut-data-jpa'

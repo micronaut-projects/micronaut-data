@@ -55,6 +55,9 @@ dependencies {
     testImplementation(platform(mnTestResources.boms.testcontainers))
     testImplementation libs.testcontainers.azure
     testImplementation mn.micronaut.inject.java.test
+    // the reload harness of the development mode test compiles its application with the processors on the test classpath
+    testImplementation mn.micronaut.dev.tck
+    testImplementation mn.micronaut.inject.java
     testImplementation mn.jackson.databind
     testCompileOnly mn.micronaut.inject.groovy
 }
