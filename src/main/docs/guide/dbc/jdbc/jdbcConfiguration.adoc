@@ -40,6 +40,23 @@ types are not matching then the application will report an error and stop.
 
 Please note this option is currently regarded as experimental.
 
+[[devModeSchema]]
+==== Development Mode Reloading
+
+When the application runs in development mode, which restarts or reloads it as its classes change, the generated schema follows an entity change only if the schema is generated again from scratch. Set `schema-generate` to `CREATE_DROP` for the `dev` environment, which development mode activates, in `src/main/resources/application-dev.properties`:
+
+.application-dev.properties
+[source,properties]
+----
+datasources.default.schema-generate=CREATE_DROP
+----
+
+With `CREATE_DROP` each restart or reload drops the tables and creates them again from the current entities, so a new field gets its column, but the rows are reset each time: seed the data you need at startup if you want it back.
+
+`CREATE` only creates the tables that do not exist. A database that outlives the application, such as a database server, a file database, or an in-memory database kept open with `DB_CLOSE_DELAY=-1`, keeps the previous table of a changed entity, without its new columns. Development mode never drops such a table: it logs a warning that names the table and recommends `CREATE_DROP`. Micronaut Data JDBC has no mode that alters existing tables; to evolve the schema while keeping its data, use a migration tool such as Flyway or Liquibase.
+
+Development mode does not change the configured schema generation, and `schema-generate` remains not production-ready: keep it in `application-dev.properties` rather than `application.properties`.
+
 === Setting the Dialect
 
 As seen in the configuration above you should also configure the dialect. Although queries are precomputed in the repository some cases (like pagination) still require the dialect to specify. The following table summarizes the supported dialects:

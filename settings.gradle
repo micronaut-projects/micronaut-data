@@ -11,10 +11,37 @@ plugins {
 
 enableFeaturePreview("TYPESAFE_PROJECT_ACCESSORS")
 
+// Micronaut core 5.3.0-SNAPSHOT, which carries the development-mode API, comes from Maven local, where a
+// core checkout publishes it with publishToMavenLocal (pass -Dmaven.repo.local to use a private repository),
+// or from the Central snapshots repository. Only io.micronaut snapshots are resolved from them. Projects
+// declare their own repositories, which replace the settings ones, so they are added to each project too.
+// Remove once the build moves to a core release.
+def micronautSnapshotRepositories = { RepositoryHandler repositories ->
+    repositories.mavenLocal {
+        content {
+            includeVersionByRegex("io\\.micronaut", ".*", ".*-SNAPSHOT")
+        }
+    }
+    repositories.maven {
+        url = "https://central.sonatype.com/repository/maven-snapshots/"
+        mavenContent {
+            snapshotsOnly()
+        }
+        content {
+            includeGroupByRegex("io\\.micronaut(\\..*)?")
+        }
+    }
+}
 dependencyResolutionManagement {
+    micronautSnapshotRepositories(repositories)
     repositories {
         mavenCentral()
     }
+}
+gradle.beforeProject {
+    micronautSnapshotRepositories(it.repositories)
+    // a project repository disables the settings ones, so a project without its own still needs Central
+    it.repositories.mavenCentral()
 }
 
 rootProject.name = 'data-parent'
@@ -175,6 +202,7 @@ include 'doc-examples:jooq-r2dbc-postgres'
 include 'test-annotation-processor-java'
 
 include 'test-suite-data-jdbc-sqlite'
+include 'test-suite-dev-reload'
 
 // benchmarks
 include 'benchmarks:benchmark-micronaut-data-jpa'
