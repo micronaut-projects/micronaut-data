@@ -91,13 +91,15 @@ final class OracleClientInfoConnectionCustomizer implements ConnectionCustomizer
                                          @NonNull @Parameter AbstractConnectionOperations<Connection> connectionOperations,
                                          @Nullable ApplicationConfiguration applicationConfiguration) {
         this.applicationName = applicationConfiguration != null ? applicationConfiguration.getName().orElse(null) : null;
-        try {
-            Connection connection = DelegatingDataSource.unwrapDataSource(dataSource).getConnection();
-            if (isOracleConnection(connection)) {
-                connectionOperations.addConnectionCustomizer(this);
-            }
+        boolean oracleConnection = false;
+        // The connection is only borrowed to detect the database, so give it back to the pool
+        try (Connection connection = DelegatingDataSource.unwrapDataSource(dataSource).getConnection()) {
+            oracleConnection = isOracleConnection(connection);
         } catch (SQLException e) {
             LOG.error("Failed to get connection for oracle connection listener", e);
+        }
+        if (oracleConnection) {
+            connectionOperations.addConnectionCustomizer(this);
         }
     }
 

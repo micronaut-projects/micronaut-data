@@ -21,6 +21,7 @@ import io.micronaut.data.model.DataType;
 import org.jspecify.annotations.Nullable;
 
 import java.math.BigDecimal;
+import java.math.BigInteger;
 import java.sql.Array;
 import java.sql.Time;
 import java.time.Instant;
@@ -146,6 +147,13 @@ public interface QueryStatement<PS, IDX> {
                 }
                 if (value instanceof BigDecimal decimal) {
                     return setBigDecimal(statement, index, decimal);
+                }
+                if (value instanceof BigInteger bigInteger) {
+                    return setBigDecimal(statement, index, new BigDecimal(bigInteger));
+                }
+                if (value instanceof Long || value instanceof Integer || value instanceof Short || value instanceof Byte) {
+                    // Exact: a double can't represent every long
+                    return setBigDecimal(statement, index, BigDecimal.valueOf(((Number) value).longValue()));
                 }
                 if (value instanceof Number number) {
                     return setBigDecimal(statement, index, BigDecimal.valueOf(number.doubleValue()));
