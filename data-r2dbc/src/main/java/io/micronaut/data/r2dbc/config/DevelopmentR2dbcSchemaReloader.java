@@ -13,7 +13,7 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package io.micronaut.data.jdbc.config;
+package io.micronaut.data.r2dbc.config;
 
 import io.micronaut.context.BeanContext;
 import io.micronaut.context.WatchableBeanContext;
@@ -34,28 +34,23 @@ import org.slf4j.LoggerFactory;
 import java.util.ArrayList;
 import java.util.List;
 
-
 /**
- * Keeps the schema that {@link SchemaGenerator} generates in step with the entities in development mode, as far as
- * the configured schema generation allows. It exists only in development mode, so nothing of it is on the path of a
- * query, nor of the schema generation of an application in production.
+ * Keeps the schema that {@link R2dbcSchemaGenerator} generates in step with the entities in development mode, as far
+ * as the configured schema generation allows, as the JDBC module does. It exists only in development mode, so nothing
+ * of it is on the path of a query, nor of the schema generation of an application in production.
  *
  * <ul>
  *     <li>A change applied in place that retires a classloader generates the schema again, as the application did as
- *     it started, by recreating the schema generator.</li>
+ *     it started, by recreating the schema generator, after the entity registry was recreated.</li>
  *     <li>A change that restarts the application, or that is applied in place and retires a classloader, warns about
- *     each entity whose table definition changed, for each data source that generates its schema in
- *     {@link SchemaGenerate#CREATE} mode. {@code CREATE} only creates the tables that do not exist, so the table of
- *     the previous version of an entity, without the columns it gained, is kept in a database that outlives the
- *     application: a retained connection pool, an in-memory database kept open, or a database server. Nothing is
- *     dropped: the warning recommends {@link SchemaGenerate#CREATE_DROP} for the development environment, whose
- *     schema follows the entities on each restart, at the cost of the rows.</li>
+ *     each entity whose table definition changed, for each R2DBC data source that generates its schema in
+ *     {@link SchemaGenerate#CREATE} mode. Development mode retains the R2DBC connection factory across restarts, so
+ *     an in-memory database the pool keeps open outlives the application as a database server does, and keeps the
+ *     previous table of a changed entity. Nothing is dropped: the warning recommends
+ *     {@link SchemaGenerate#CREATE_DROP} for the development environment.</li>
  * </ul>
  *
- * <p>A change that redefines classes in place, without retiring a classloader, is ignored: it changes method bodies
- * only, and the entities keep their properties.</p>
- *
- * <p>It holds the context only, never a data source nor an entity.</p>
+ * <p>It holds the context only, never a connection factory nor an entity.</p>
  *
  * @author graemerocher
  * @since 5.3.0
@@ -63,31 +58,30 @@ import java.util.List;
 @Internal
 @Context
 @DevelopmentActive
-final class DevelopmentSchemaReloader {
+final class DevelopmentR2dbcSchemaReloader {
 
-    private static final Logger LOG = LoggerFactory.getLogger(DevelopmentSchemaReloader.class);
+    private static final Logger LOG = LoggerFactory.getLogger(DevelopmentR2dbcSchemaReloader.class);
 
     private final BeanContext beanContext;
 
     /**
      * @param beanContext The context, watched when it can be
      */
-    DevelopmentSchemaReloader(BeanContext beanContext) {
+    DevelopmentR2dbcSchemaReloader(BeanContext beanContext) {
         this.beanContext = beanContext;
         if (beanContext instanceof WatchableBeanContext watchable) {
             watchable.classChanges().watch(new SchemaWatcher());
         }
     }
 
-
     private void onClassChange(ClassChangeEvent change) {
         boolean restart = change.strategy() == ReloadStrategy.RESTART;
         if (!restart && change.retiredLoaders().isEmpty()) {
             return;
         }
-        List<DataJdbcConfiguration> configurations = new ArrayList<>();
-        for (DataJdbcConfiguration configuration : beanContext.getBeansOfType(DataJdbcConfiguration.class)) {
-            if (configuration.isEnabled() && configuration.getSchemaGenerate() == SchemaGenerate.CREATE) {
+        List<DataR2dbcConfiguration> configurations = new ArrayList<>();
+        for (DataR2dbcConfiguration configuration : beanContext.getBeansOfType(DataR2dbcConfiguration.class)) {
+            if (configuration.getSchemaGenerate() == SchemaGenerate.CREATE) {
                 configurations.add(configuration);
             }
         }
@@ -95,29 +89,21 @@ final class DevelopmentSchemaReloader {
             warnChangedTables(configurations, beanContext.getClassLoader(), change.newLoader());
         }
         if (!restart) {
-            DevelopmentSchemaChanges.regenerate(beanContext, SchemaGenerator.class);
+            DevelopmentSchemaChanges.regenerate(beanContext, R2dbcSchemaGenerator.class);
         }
     }
 
-    /**
-     * Warns about the entities whose table definition differs between the two generations, whose tables a schema
-     * generation in create mode keeps as they were.
-     *
-     * @param configurations The configurations that generate their schema in create mode
-     * @param oldLoader The loader of the running generation
-     * @param newLoader The loader of the new generation
-     */
-    private void warnChangedTables(List<DataJdbcConfiguration> configurations, ClassLoader oldLoader, ClassLoader newLoader) {
+    private void warnChangedTables(List<DataR2dbcConfiguration> configurations, ClassLoader oldLoader, ClassLoader newLoader) {
         List<DefinitionProvider> definitionProviders = new ArrayList<>(beanContext.getBeansOfType(DefinitionProvider.class));
-        for (DataJdbcConfiguration configuration : configurations) {
+        for (DataR2dbcConfiguration configuration : configurations) {
             SqlQueryBuilder builder = new SqlQueryBuilder(configuration.getDialect(), configuration.getDialectOptions().getVersion());
             for (DevelopmentSchemaChanges.ChangedTable changed : DevelopmentSchemaChanges.changedTables(oldLoader, newLoader, configuration.getPackages(), builder, definitionProviders)) {
                 LOG.warn("""
-                    The table [{}] of entity {} changed, but data source [{}] generates its schema in CREATE mode, \
-                    which only creates missing tables: a database that outlives the application keeps the previous table. \
-                    To have the schema follow entity changes in development, set datasources.{}.schema-generate=CREATE_DROP \
-                    in application-dev.properties (this drops and recreates the tables, and their rows, on each restart), \
-                    or drop the table yourself.""",
+                    The table [{}] of entity {} changed, but R2DBC data source [{}] generates its schema in CREATE mode, \
+                    which only creates missing tables: a database that outlives the application, such as one the retained \
+                    connection pool keeps open, keeps the previous table. To have the schema follow entity changes in \
+                    development, set r2dbc.datasources.{}.schema-generate=CREATE_DROP in application-dev.properties \
+                    (this drops and recreates the tables, and their rows, on each restart), or drop the table yourself.""",
                     changed.table(), changed.entity(), configuration.getName(), configuration.getName());
             }
         }

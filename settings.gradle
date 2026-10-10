@@ -19,7 +19,7 @@ enableFeaturePreview("TYPESAFE_PROJECT_ACCESSORS")
 def micronautSnapshotRepositories = { RepositoryHandler repositories ->
     repositories.mavenLocal {
         content {
-            includeVersionByRegex("io\\.micronaut", ".*", ".*-SNAPSHOT")
+            includeVersionByRegex("io\\.micronaut(\\..*)?", ".*", ".*-SNAPSHOT")
         }
     }
     repositories.maven {
@@ -203,6 +203,7 @@ include 'test-annotation-processor-java'
 
 include 'test-suite-data-jdbc-sqlite'
 include 'test-suite-dev-reload'
+include 'test-suite-dev-reload-r2dbc'
 
 // benchmarks
 include 'benchmarks:benchmark-micronaut-data-jpa'
