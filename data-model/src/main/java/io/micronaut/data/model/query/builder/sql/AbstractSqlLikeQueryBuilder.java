@@ -3465,7 +3465,7 @@ public abstract class AbstractSqlLikeQueryBuilder implements QueryBuilder {
             NamingStrategy namingStrategy = getNamingStrategy(entity);
             int[] propertiesCount = new int[1];
             PersistentEntityUtils.traversePersistentProperties(propertyPath, traverseEmbedded(), (associations, p) -> {
-                appendProperty(query, associations, p, namingStrategy, queryState.rootAlias, escape);
+                appendProperty(query, associations, p, namingStrategy, queryState.rootAlias, escape, null, StringUtils.isNotEmpty(columnAlias));
                 propertiesCount[0]++;
             });
             query.setLength(query.length() - 1);
@@ -3529,7 +3529,7 @@ public abstract class AbstractSqlLikeQueryBuilder implements QueryBuilder {
                     ? associations.subList(projectedPathSize, associations.size())
                     : Collections.emptyList();
                 String targetName = getEmbeddedProjectionTargetName(targetNamingStrategy, relativeAssociations, p);
-                appendProperty(query, associations, p, sourceNamingStrategy, queryState.rootAlias, escape, targetName);
+                appendProperty(query, associations, p, sourceNamingStrategy, queryState.rootAlias, escape, targetName, false);
                 needsTrimming[0] = true;
             });
             if (needsTrimming[0]) {
@@ -3577,7 +3577,7 @@ public abstract class AbstractSqlLikeQueryBuilder implements QueryBuilder {
             int[] propertiesCount = new int[1];
 
             PersistentEntityUtils.traversePersistentProperties(propertyPath.getAssociations(), propertyPath.getProperty(), traverseEmbedded(), (associations, property) -> {
-                appendProperty(query, associations, property, namingStrategy, tableAlias, escape);
+                appendProperty(query, associations, property, namingStrategy, tableAlias, escape, null, StringUtils.isNotEmpty(columnAlias));
                 needsTrimming[0] = true;
                 propertiesCount[0]++;
             });
@@ -3686,7 +3686,7 @@ public abstract class AbstractSqlLikeQueryBuilder implements QueryBuilder {
                                             @Nullable
                                             String tableAlias,
                                             boolean escape) {
-            appendProperty(sb, associations, property, namingStrategy, tableAlias, escape, null);
+            appendProperty(sb, associations, property, namingStrategy, tableAlias, escape, null, false);
         }
 
         /**
@@ -3699,75 +3699,85 @@ public abstract class AbstractSqlLikeQueryBuilder implements QueryBuilder {
          * @param tableAlias     The table alias
          * @param escape         Whether to escape the column
          * @param targetName     The result column name, escaped like the column. If not set, the property column alias is used
+         * @param explicitAlias  Whether the caller will append an explicit projection alias
          */
-        private void appendProperty(StringBuilder sb,
-                                    List<Association> associations,
-                                    PersistentProperty property,
-                                    NamingStrategy namingStrategy,
-                                    @Nullable
-                                    String tableAlias,
-                                    boolean escape,
-                                    @Nullable
-                                    String targetName) {
+        @Internal
+        protected final void appendProperty(StringBuilder sb,
+                                            List<Association> associations,
+                                            PersistentProperty property,
+                                            NamingStrategy namingStrategy,
+                                            @Nullable
+                                            String tableAlias,
+                                            boolean escape,
+                                            @Nullable
+                                            String targetName,
+                                            boolean explicitAlias) {
             String transformed = getDataTransformerReadValue(tableAlias, property).orElse(null);
             String resultName = targetName != null ? escapeColumnIfNeeded(targetName, escape) : getColumnAlias(property);
             boolean useAlias = StringUtils.isNotEmpty(resultName);
+            String alias = null;
             if (transformed != null) {
-                sb.append(transformed).append(AS_CLAUSE).append(useAlias ? resultName : property.getPersistedName());
+                sb.append(transformed);
+                alias = useAlias ? resultName : property.getPersistedName();
             } else {
                 String column = getMappedName(namingStrategy, associations, property);
                 String escapedColumn = escapeColumnIfNeeded(column, escape);
                 String columnWithTableAlias = tableAlias == null ? escapedColumn : tableAlias + DOT + escapedColumn;
                 if (isJsonOrWktGeometry(property)) {
-                    sb.append(getGeometryFunction(columnWithTableAlias, StringUtils.isNotEmpty(resultName) ? resultName : escapedColumn, property));
-                } else if (useAlias && !column.equals(targetName)) {
-                    sb.append(columnWithTableAlias).append(AS_CLAUSE).append(resultName);
+                    sb.append(getGeometryFunction(columnWithTableAlias, property));
+                    alias = useAlias ? resultName : escapedColumn;
                 } else {
                     sb.append(columnWithTableAlias);
+                    if (useAlias && !column.equals(targetName)) {
+                        alias = resultName;
+                    }
                 }
+            }
+            if (!explicitAlias && StringUtils.isNotEmpty(alias)) {
+                sb.append(AS_CLAUSE).append(alias);
             }
             sb.append(COMMA);
         }
 
         @SuppressWarnings("NullAway")
-        private String getGeometryFunction(String column, String columnAlias, PersistentProperty property) {
+        private String getGeometryFunction(String column, PersistentProperty property) {
             AnnotationMetadata annotationMetadata = property.getAnnotationMetadata();
             String converter = annotationMetadata.stringValue(MappedProperty.class, "converter").orElse(null);
             boolean isWkt = GeometryWktConverter.class.getName().equals(converter);
             return switch (getDialect()) {
-                case ORACLE -> getOracleGeometryFunction(column, columnAlias, isWkt);
-                case SQL_SERVER ->  getSqlServerGeometryFunction(column, columnAlias);
-                case POSTGRES -> getPostgresGeometryFunction(column, columnAlias, isWkt, annotationMetadata);
-                case MYSQL, H2 -> getOtherGeometryFunction(column, columnAlias, isWkt);
-                default -> column + AS_CLAUSE + columnAlias;
+                case ORACLE -> getOracleGeometryFunction(column, isWkt);
+                case SQL_SERVER ->  getSqlServerGeometryFunction(column);
+                case POSTGRES -> getPostgresGeometryFunction(column, isWkt, annotationMetadata);
+                case MYSQL, H2 -> getOtherGeometryFunction(column, isWkt);
+                default -> column;
             };
         }
 
-        private String getOracleGeometryFunction(String column, String columnAlias, boolean isWkt) {
+        private String getOracleGeometryFunction(String column, boolean isWkt) {
             String function = isWkt ? "SDO_UTIL.TO_WKTGEOMETRY(" : "SDO_UTIL.TO_GEOJSON(";
-            return function + column + ")" + AS_CLAUSE + columnAlias;
+            return function + column + ")";
         }
 
-        private String getSqlServerGeometryFunction(String column, String columnAlias) {
+        private String getSqlServerGeometryFunction(String column) {
             // since sqlserver doesn't have built-in functions for conversion between
             // json and internal geospatial data type, use always Well-Known Text (WKT) functions
-            return column + ".STAsText()" + AS_CLAUSE + columnAlias;
+            return column + ".STAsText()";
         }
 
-        private String getPostgresGeometryFunction(String column, String columnAlias, boolean isWkt, AnnotationMetadata annotationMetadata) {
+        private String getPostgresGeometryFunction(String column, boolean isWkt, AnnotationMetadata annotationMetadata) {
             String function = isWkt ? "ST_AsText(" : "ST_AsGeoJSON(";
             function = function + column;
             if (SqlQueryBuilderUtils.isGeography(annotationMetadata)) {
                 // convert value from geography to geometry since ST_AsText and ST_AsGeoJSON requires geometry
                 function = function + "::geometry";
             }
-            return function + ")" + AS_CLAUSE + columnAlias;
+            return function + ")";
         }
 
-        private String getOtherGeometryFunction(String column, String columnAlias, boolean isWkt) {
+        private String getOtherGeometryFunction(String column, boolean isWkt) {
             String function = isWkt ? "ST_AsText(" : "ST_AsGeoJSON(";
             String options = isWkt && getDialect() == Dialect.MYSQL ? SqlQueryBuilderUtils.MYSQL_WKT_AXIS_ORDER : "";
-            return function + column + options + ")" + AS_CLAUSE + columnAlias;
+            return function + column + options + ")";
         }
 
         private void appendFunction(String functionName, Expression<?> expression) {

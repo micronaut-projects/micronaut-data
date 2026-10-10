@@ -23,6 +23,7 @@ import io.micronaut.data.annotation.MappedEntity
 import io.micronaut.data.annotation.MappedProperty
 import io.micronaut.data.annotation.Srid
 import io.micronaut.data.annotation.Relation
+import io.micronaut.data.annotation.sql.ColumnTransformer
 import io.micronaut.data.exceptions.MappingException
 import io.micronaut.data.model.PersistentEntity
 import io.micronaut.data.model.Sort
@@ -358,6 +359,159 @@ interface MyRepository {
         Dialect.H2         || 'ST_AsGeoJSON(school_.`point`) AS `point`'
         Dialect.POSTGRES   || 'ST_AsGeoJSON(school_."point") AS "point"'
         Dialect.SQL_SERVER || 'school_.[point].STAsText() AS [point]'
+    }
+
+    @Unroll
+    void "test #dialect aliased spatial projection for #entityClass with compound selection #compound"() {
+        given:
+        def criteriaQuery = builder.createQuery(Object)
+        def root = criteriaQuery.from(entityClass)
+        def selection = root.get("point").alias("projected_location")
+        if (compound) {
+            criteriaQuery.multiselect(selection, root.get("id").alias("projected_id"))
+        } else {
+            criteriaQuery.select(selection)
+        }
+
+        when:
+        def encoded = criteriaQuery.build(new SqlQueryBuilder(dialect))
+
+        then:
+        encoded.query.startsWith("SELECT ${expectedProjection} AS projected_location" + (compound ? "," : " FROM"))
+        !encoded.query.contains(" AS projected_location AS ")
+        encoded.query.count(" AS ") == (compound ? 2 : 1)
+
+        where:
+        [dialect, entityClass, expectedProjection, compound] << [
+            [Dialect.ORACLE, GeomEntityJson, 'SDO_UTIL.TO_GEOJSON(geom_entity_json_."LOCATION")'],
+            [Dialect.ORACLE, GeomEntityWkt, 'SDO_UTIL.TO_WKTGEOMETRY(geom_entity_wkt_."LOCATION")'],
+            [Dialect.ORACLE, GeogEntityJson, 'SDO_UTIL.TO_GEOJSON(geog_entity_json_."LOCATION")'],
+            [Dialect.ORACLE, GeogEntityWkt, 'SDO_UTIL.TO_WKTGEOMETRY(geog_entity_wkt_."LOCATION")'],
+            [Dialect.MYSQL, GeomEntityJson, 'ST_AsGeoJSON(geom_entity_json_.`location`)'],
+            [Dialect.MYSQL, GeomEntityWkt, "ST_AsText(geom_entity_wkt_.`location` /*!80001 , 'axis-order=long-lat' */)"],
+            [Dialect.MYSQL, GeogEntityJson, 'ST_AsGeoJSON(geog_entity_json_.`location`)'],
+            [Dialect.MYSQL, GeogEntityWkt, "ST_AsText(geog_entity_wkt_.`location` /*!80001 , 'axis-order=long-lat' */)"],
+            [Dialect.H2, GeomEntityJson, 'ST_AsGeoJSON(geom_entity_json_.`location`)'],
+            [Dialect.H2, GeomEntityWkt, 'ST_AsText(geom_entity_wkt_.`location`)'],
+            [Dialect.H2, GeogEntityJson, 'ST_AsGeoJSON(geog_entity_json_.`location`)'],
+            [Dialect.H2, GeogEntityWkt, 'ST_AsText(geog_entity_wkt_.`location`)'],
+            [Dialect.POSTGRES, GeomEntityJson, 'ST_AsGeoJSON(geom_entity_json_."location")'],
+            [Dialect.POSTGRES, GeomEntityWkt, 'ST_AsText(geom_entity_wkt_."location")'],
+            [Dialect.POSTGRES, GeogEntityJson, 'ST_AsGeoJSON(geog_entity_json_."location"::geometry)'],
+            [Dialect.POSTGRES, GeogEntityWkt, 'ST_AsText(geog_entity_wkt_."location"::geometry)'],
+            [Dialect.SQL_SERVER, GeomEntityJson, 'geom_entity_json_.[location].STAsText()'],
+            [Dialect.SQL_SERVER, GeomEntityWkt, 'geom_entity_wkt_.[location].STAsText()'],
+            [Dialect.SQL_SERVER, GeogEntityJson, 'geog_entity_json_.[location].STAsText()'],
+            [Dialect.SQL_SERVER, GeogEntityWkt, 'geog_entity_wkt_.[location].STAsText()'],
+            [Dialect.ANSI, GeomEntityJson, 'geom_entity_json_."location"'],
+            [Dialect.ANSI, GeomEntityWkt, 'geom_entity_wkt_."location"'],
+            [Dialect.ANSI, GeogEntityJson, 'geog_entity_json_."location"'],
+            [Dialect.ANSI, GeogEntityWkt, 'geog_entity_wkt_."location"']
+        ].collectMany { row -> [false, true].collect { compound -> row + [compound] } }
+    }
+
+    @Unroll
+    void "test aliased spatial root selection retains column aliases for #entityClass.simpleName"() {
+        given:
+        def criteriaQuery = builder.createQuery(entityClass)
+        def root = criteriaQuery.from(entityClass)
+        criteriaQuery.select(root.alias("geom"))
+
+        when:
+        def sql = criteriaQuery.build(new SqlQueryBuilder(Dialect.POSTGRES)).query
+
+        then:
+        ["location", "multi_point", "line_string", "multi_line_string"].every { column ->
+            sql.contains("${function}(${tableAlias}.\"${column}\") AS \"${column}\"")
+        }
+        sql.count(" AS ") == 4
+
+        where:
+        entityClass    | tableAlias          | function
+        GeomEntityJson | "geom_entity_json_" | "ST_AsGeoJSON"
+        GeomEntityWkt  | "geom_entity_wkt_"  | "ST_AsText"
+    }
+
+    @Unroll
+    void "test aliased spatial association selection retains column aliases for #association"() {
+        given:
+        def criteriaQuery = builder.createQuery(entityClass)
+        def root = criteriaQuery.from(GeomOwner)
+        root.join(association)
+        criteriaQuery.select(root.get(association).alias("geom"))
+
+        when:
+        def sql = criteriaQuery.build(new SqlQueryBuilder(Dialect.POSTGRES)).query
+
+        then:
+        ["location", "multi_point", "line_string", "multi_line_string"].every { column ->
+            sql.contains("${function}(geom_owner_${association}_.\"${column}\") AS \"${column}\"")
+        }
+        sql.count(" AS ") == 4
+
+        where:
+        entityClass    | association | function
+        GeomEntityJson | "geom"      | "ST_AsGeoJSON"
+        GeomEntityWkt  | "wkt"       | "ST_AsText"
+    }
+
+    @Unroll
+    void "test property projection alias for #property with explicit alias #explicitAlias and compound selection #compound"() {
+        given:
+        def criteriaQuery = builder.createQuery(Object)
+        def root = criteriaQuery.from(ProjectionAliasEntity)
+        def selection = root.get(property)
+        if (explicitAlias) {
+            selection = selection.alias("projected_alias")
+        }
+        if (compound) {
+            criteriaQuery.multiselect(selection, root.get("id"))
+        } else {
+            criteriaQuery.select(selection)
+        }
+
+        when:
+        def sql = criteriaQuery.build(new SqlQueryBuilder(Dialect.POSTGRES)).query
+
+        then:
+        sql == "SELECT ${expression} AS ${explicitAlias ? 'projected_alias' : defaultAlias}" +
+            (compound ? ',projection_alias_entity_."id"' : '') +
+            ' FROM "projection_alias_entity" projection_alias_entity_'
+
+        where:
+        [property, expression, defaultAlias, explicitAlias, compound] << [
+            ["transformed", "UPPER(projection_alias_entity_.transformed)", "transformed"],
+            ["mapped", 'projection_alias_entity_."mapped"', "mapped_alias"],
+            ["combined", "UPPER(projection_alias_entity_.combined)", "combined_alias"]
+        ].collectMany { row ->
+            [false, true].collectMany { explicitAlias ->
+                [false, true].collect { compound -> row + [explicitAlias, compound] }
+            }
+        }
+    }
+
+    @Unroll
+    void "test Oracle returning projection uses one explicit alias for #entityClass.simpleName #property"() {
+        given:
+        def update = builder.createCriteriaUpdate(entityClass)
+        def root = update.from(entityClass)
+        update.set(root.get(property), builder.parameter(Object))
+        update.returning(root.get(property).alias("projected"))
+
+        when:
+        def sql = update.build(new SqlQueryBuilder(Dialect.ORACLE)).query
+
+        then:
+        sql.contains(" RETURNING ${expression} AS projected INTO ?;")
+        sql.count(" AS ") == 1
+
+        where:
+        entityClass           | property      | expression
+        GeomEntityJson        | "point"       | 'SDO_UTIL.TO_GEOJSON("LOCATION")'
+        GeomEntityWkt         | "point"       | 'SDO_UTIL.TO_WKTGEOMETRY("LOCATION")'
+        ProjectionAliasEntity | "transformed" | 'UPPER(transformed)'
+        ProjectionAliasEntity | "mapped"      | '"MAPPED"'
+        ProjectionAliasEntity | "combined"    | 'UPPER(combined)'
     }
 
     void "test aliased embedded projection with multiple columns throws"() {
@@ -1500,6 +1654,34 @@ interface MyRepository {
         return entity
     }
 
+}
+
+@MappedEntity
+class ProjectionAliasEntity {
+    @Id
+    Long id
+
+    @ColumnTransformer(read = "UPPER(@.transformed)")
+    String transformed
+
+    @MappedProperty(alias = "mapped_alias")
+    String mapped
+
+    @ColumnTransformer(read = "UPPER(@.combined)")
+    @MappedProperty(alias = "combined_alias")
+    String combined
+}
+
+@MappedEntity
+class GeomOwner {
+    @Id
+    Long id
+
+    @Relation(Relation.Kind.MANY_TO_ONE)
+    GeomEntityJson geom
+
+    @Relation(Relation.Kind.MANY_TO_ONE)
+    GeomEntityWkt wkt
 }
 
 @MappedEntity(alias = "this_is_an_intentionally_very_long_postgres_table_alias_for_sorting_")
