@@ -64,6 +64,8 @@ The `schema-generate` option is currently only recommended for simple applicatio
 
 Please note that currently schema validation is not supported for Micronaut Data R2DBC.
 
+In development mode, the <<devModeSchema, `CREATE_DROP` recommendation for JDBC>> applies to R2DBC when the application restarts. A reload applied in place, without a restart, does not yet generate the R2DBC schema again.
+
 === Setting the Dialect
 
 As seen in the configuration above you should also configure the dialect. Although queries are precomputed in the repository some cases (like pagination) still require the dialect to specify. The following table summarizes the supported dialects:
