@@ -23,8 +23,10 @@ import io.micronaut.data.connection.ConnectionStatus;
 import io.micronaut.transaction.SynchronousTransactionManager;
 import io.micronaut.transaction.TransactionDefinition;
 import io.micronaut.transaction.TransactionStatus;
+import io.micronaut.transaction.exceptions.OracleTransactionPriorityException;
 
 import java.util.concurrent.CompletableFuture;
+import java.util.concurrent.CompletionException;
 import java.util.concurrent.CompletionStage;
 import java.util.function.Function;
 
@@ -79,11 +81,20 @@ public final class AsyncUsingSyncTransactionOperations<C> implements AsyncTransa
                         return null;
                     }
                     newResult.complete(o);
-                } else {
+                } else if (rollbackOn(definition, throwable)) {
                     try {
                         synchronousTransactionManager.rollback(status);
                     } catch (Throwable e) {
                         // Ignore rethrow
+                    }
+                    newResult.completeExceptionally(throwable);
+                } else {
+                    // Same as the synchronous transaction manager: the exception doesn't trigger a rollback, commit the work
+                    try {
+                        synchronousTransactionManager.commit(status);
+                    } catch (Throwable e) {
+                        newResult.completeExceptionally(e);
+                        return null;
                     }
                     newResult.completeExceptionally(throwable);
                 }
@@ -91,6 +102,12 @@ public final class AsyncUsingSyncTransactionOperations<C> implements AsyncTransa
             });
         });
         return newResult;
+    }
+
+    private static boolean rollbackOn(TransactionDefinition definition, Throwable throwable) {
+        // A dependent stage reports the failure wrapped in a CompletionException
+        Throwable failure = throwable instanceof CompletionException && throwable.getCause() != null ? throwable.getCause() : throwable;
+        return failure instanceof OracleTransactionPriorityException || definition.rollbackOn(failure);
     }
 
     private record DefaultAsyncTransactionStatus<T>(

@@ -98,8 +98,38 @@ class AsyncTransactionOperationsTest {
             Throwable e = failureOf(fixture.operations.withTransaction(noRollback, status -> CompletableFuture.failedFuture(failure)));
 
             assertSame(failure, e);
-            // The adapter of the synchronous manager ignores the rollback rules
-            assertEquals(fixture.backend == Backend.SYNC ? ROLLED_BACK : NEW_TX, fixture.log());
+            assertEquals(NEW_TX, fixture.log());
+        });
+    }
+
+    @TestFactory
+    List<DynamicTest> failureThatIsNotInTheRollbackOnRules() {
+        return forEachBackend(fixture -> {
+            DefaultTransactionDefinition rollbackOnOther = new DefaultTransactionDefinition();
+            rollbackOnOther.setRollbackOn(List.of(IllegalArgumentException.class));
+            IllegalStateException failure = new IllegalStateException("work");
+
+            Throwable e = failureOf(fixture.operations.withTransaction(rollbackOnOther, status -> CompletableFuture.failedFuture(failure)));
+
+            assertSame(failure, e);
+            assertEquals(NEW_TX, fixture.log());
+        });
+    }
+
+    @TestFactory
+    List<DynamicTest> failureThatDoesNotRollBackInARollbackOnlyTransaction() {
+        return forEachBackend(fixture -> {
+            DefaultTransactionDefinition noRollback = new DefaultTransactionDefinition();
+            noRollback.setDontRollbackOn(List.of(IllegalStateException.class));
+            IllegalStateException failure = new IllegalStateException("work");
+
+            Throwable e = failureOf(fixture.operations.withTransaction(noRollback, status -> {
+                status.setRollbackOnly();
+                return CompletableFuture.failedFuture(failure);
+            }));
+
+            assertSame(failure, e);
+            assertEquals(ROLLED_BACK, fixture.log());
         });
     }
 
@@ -118,7 +148,7 @@ class AsyncTransactionOperationsTest {
             ));
 
             assertSame(failure, e);
-            assertEquals(fixture.backend == Backend.SYNC ? ROLLED_BACK : NEW_TX, fixture.log());
+            assertEquals(NEW_TX, fixture.log());
         });
     }
 
