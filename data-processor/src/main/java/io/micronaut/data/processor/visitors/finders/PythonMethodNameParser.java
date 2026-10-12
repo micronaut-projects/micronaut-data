@@ -68,6 +68,7 @@ final class PythonMethodNameParser {
     private final List<MethodNameParser.Match> properties = new ArrayList<>();
     private final Set<QueryMatchId> required = new HashSet<>();
     private final boolean allowDescription;
+    private final boolean supportsPredicate;
     private String remaining;
     private boolean forceProperty;
     private QueryMatchId clause = QueryMatchId.PROJECTION;
@@ -89,6 +90,8 @@ final class PythonMethodNameParser {
         entity = context.hasRootEntity() ? context.getRootEntity() : null;
         normalized = new StringBuilder(prefix);
         allowDescription = ENTITY_OPERATIONS.contains(prefix);
+        supportsPredicate = allowDescription && parser.tryMatch(prefix + "ByDescription").stream()
+            .anyMatch(match -> match.id() == QueryMatchId.PREDICATE);
     }
 
     static List<MethodNameParser.Match> parse(MethodNameParser parser, String methodName, MethodMatchContext context) {
@@ -116,7 +119,7 @@ final class PythonMethodNameParser {
 
     private void parseNext() {
         Map.Entry<String, String> keyword = keyword(remaining);
-        if (parseProperty(keyword) || parseTypeDescription(keyword) || parseLimit()) {
+        if (parseProperty(keyword) || parseTypeDescription(keyword) || parseEntityDescription(keyword) || parseLimit()) {
             return;
         }
         if (keyword == null) {
@@ -196,6 +199,23 @@ final class PythonMethodNameParser {
         }
         normalized.append("Description");
         remaining = consume(remaining, end, methodName);
+    }
+
+    private boolean parseEntityDescription(Map.@Nullable Entry<String, String> keyword) {
+        if (!allowDescription || clause != QueryMatchId.PROJECTION || entityHeaderKeyword(keyword)) {
+            return false;
+        }
+        parseDescription();
+        return true;
+    }
+
+    private boolean entityHeaderKeyword(Map.@Nullable Entry<String, String> keyword) {
+        if (keyword == null) {
+            return false;
+        }
+        String token = keyword.getValue();
+        return token.equals("All") || token.equals("One") || token.equals(RETURNING)
+            || (token.equals("By") && supportsPredicate);
     }
 
     private void parseKeyword(Map.Entry<String, String> keyword) {

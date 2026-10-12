@@ -22,7 +22,7 @@ import static io.micronaut.data.processor.visitors.TestUtils.getParameterBinding
 import static io.micronaut.data.processor.visitors.TestUtils.getParameterPropertyPaths
 import static io.micronaut.data.processor.visitors.TestUtils.getQuery
 
-class PythonQueryGrammarReviewSpec extends AbstractPythonTypeElementSpec {
+class PythonQueryKeywordPlacementSpec extends AbstractPythonTypeElementSpec {
 
     void "Python misplaced keyword in #methodName reports the original method name"() {
         when:
