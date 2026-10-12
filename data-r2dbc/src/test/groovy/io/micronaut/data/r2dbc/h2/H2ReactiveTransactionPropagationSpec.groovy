@@ -7,6 +7,7 @@ import io.micronaut.transaction.TransactionDefinition
 import io.micronaut.transaction.TransactionDefinition.Propagation
 import io.micronaut.transaction.exceptions.NoTransactionException
 import io.micronaut.transaction.exceptions.TransactionUsageException
+import io.micronaut.transaction.exceptions.UnexpectedRollbackException
 import io.micronaut.transaction.reactive.ReactiveTransactionStatus
 import io.micronaut.transaction.support.DefaultTransactionDefinition
 import io.r2dbc.spi.Connection
@@ -125,11 +126,33 @@ class H2ReactiveTransactionPropagationSpec extends Specification implements H2Te
             [propagation, shape] << [[Propagation.NOT_SUPPORTED, Propagation.NEVER], SHAPES].combinations()
     }
 
-    void "a recovered failure of a joined #propagation scope is committed (#shape)"() {
+    void "a recovered failure of a joined #propagation scope rolls back the transaction (#shape)"() {
+        when:
+            await(scope(shape, TransactionDefinition.DEFAULT) {
+                save("outer").then(
+                    scope(shape, TransactionDefinition.of(propagation)) {
+                        save("inner").then(Mono.error(new IllegalStateException("inner")))
+                    }.onErrorResume(IllegalStateException) { Mono.just("recovered") }
+                )
+            })
+
+        then: "the rows of both scopes are rolled back and the outer scope fails"
+            thrown(UnexpectedRollbackException)
+            count() == 0
+
+        where:
+            [propagation, shape] << [[Propagation.REQUIRED, Propagation.SUPPORTS, Propagation.MANDATORY], SHAPES].combinations()
+    }
+
+    void "a recovered failure of a joined scope that doesn't roll back is committed (#shape)"() {
+        given:
+            def noRollback = new DefaultTransactionDefinition()
+            noRollback.setDontRollbackOn([IllegalStateException])
+
         when:
             def result = await(scope(shape, TransactionDefinition.DEFAULT) {
                 save("outer").then(
-                    scope(shape, TransactionDefinition.of(propagation)) {
+                    scope(shape, noRollback) {
                         save("inner").then(Mono.error(new IllegalStateException("inner")))
                     }.onErrorResume(IllegalStateException) { Mono.just("recovered") }
                 )
@@ -140,7 +163,25 @@ class H2ReactiveTransactionPropagationSpec extends Specification implements H2Te
             count() == 2
 
         where:
-            [propagation, shape] << [[Propagation.REQUIRED, Propagation.NESTED], SHAPES].combinations()
+            shape << SHAPES
+    }
+
+    void "a recovered failure of a NESTED scope is committed (#shape)"() {
+        when:
+            def result = await(scope(shape, TransactionDefinition.DEFAULT) {
+                save("outer").then(
+                    scope(shape, TransactionDefinition.of(Propagation.NESTED)) {
+                        save("inner").then(Mono.error(new IllegalStateException("inner")))
+                    }.onErrorResume(IllegalStateException) { Mono.just("recovered") }
+                )
+            })
+
+        then: "NESTED joins the transaction without a savepoint: the rows of both scopes are committed"
+            result == "recovered"
+            count() == 2
+
+        where:
+            shape << SHAPES
     }
 
     void "a recovered failure of a REQUIRES_NEW scope doesn't affect the outer transaction (#shape)"() {

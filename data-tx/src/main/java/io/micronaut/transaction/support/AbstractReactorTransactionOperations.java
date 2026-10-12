@@ -29,6 +29,7 @@ import io.micronaut.transaction.exceptions.NoTransactionException;
 import io.micronaut.transaction.exceptions.OracleTransactionPriorityException;
 import io.micronaut.transaction.exceptions.TransactionSystemException;
 import io.micronaut.transaction.exceptions.TransactionUsageException;
+import io.micronaut.transaction.exceptions.UnexpectedRollbackException;
 import io.micronaut.transaction.reactive.ReactiveTransactionOperations;
 import io.micronaut.transaction.reactive.ReactiveTransactionStatus;
 import io.micronaut.transaction.reactive.ReactorReactiveTransactionOperations;
@@ -155,7 +156,7 @@ public abstract class AbstractReactorTransactionOperations<C> implements Reactor
             return executeCallbackFlux(
                 existingTransaction(transactionStatus, definition),
                 handler
-            );
+            ).doOnError(throwable -> joinedScopeFailed(transactionStatus, definition, throwable));
         }
         if (propagationBehavior == TransactionDefinition.Propagation.MANDATORY) {
             return Flux.error(expectedTransaction());
@@ -190,7 +191,7 @@ public abstract class AbstractReactorTransactionOperations<C> implements Reactor
                 return executeCallbackMono(
                     existingTransaction(transactionStatus, definition),
                     handler
-                );
+                ).doOnError(throwable -> joinedScopeFailed(transactionStatus, definition, throwable));
             }
             if (propagationBehavior == TransactionDefinition.Propagation.MANDATORY) {
                 return Mono.error(expectedTransaction());
@@ -310,25 +311,72 @@ public abstract class AbstractReactorTransactionOperations<C> implements Reactor
         }
     }
 
+    /**
+     * Same as the synchronous transaction manager: a failure that triggers a rollback in a scope that joined
+     * a transaction marks the transaction as rollback-only, even if the failure is recovered by the caller.
+     *
+     * @param existing   The transaction that was joined
+     * @param definition The definition of the scope that joined it
+     * @param throwable  The failure of the scope
+     */
+    private void joinedScopeFailed(ReactiveTransactionStatus<C> existing, TransactionDefinition definition, Throwable throwable) {
+        if (definition.getPropagationBehavior() == TransactionDefinition.Propagation.NESTED) {
+            // The failure of a nested scope doesn't affect the transaction it runs in
+            return;
+        }
+        if (throwable instanceof OracleTransactionPriorityException || definition.rollbackOn(throwable)) {
+            markFailedByJoinedScope(existing);
+        }
+    }
+
+    /**
+     * Marks a transaction as rollback-only because a scope that joined it failed. Unlike a transaction marked with
+     * {@link ReactiveTransactionStatus#setRollbackOnly()}, it can't complete normally: when its work completes,
+     * it is rolled back and fails with {@link UnexpectedRollbackException}.
+     *
+     * @param existing The transaction status found in the context, which can be the status of a scope that joined the transaction
+     * @since 5.3.0
+     */
+    protected void markFailedByJoinedScope(@NonNull ReactiveTransactionStatus<C> existing) {
+        if (existing instanceof JoinedReactiveTransactionStatus<C> joined) {
+            markFailedByJoinedScope(joined.existing);
+        } else if (existing instanceof DefaultReactiveTransactionStatus<C> status) {
+            status.failedByJoinedScope = true;
+        } else {
+            existing.setRollbackOnly();
+        }
+    }
+
+    /**
+     * Records that a scope that joined the transaction failed, for an implementation that
+     * overrides {@link #markFailedByJoinedScope(ReactiveTransactionStatus)}.
+     *
+     * @param status The status of the transaction
+     * @since 5.3.0
+     */
+    protected final void setFailedByJoinedScope(@NonNull DefaultReactiveTransactionStatus<C> status) {
+        status.failedByJoinedScope = true;
+    }
+
+    /**
+     * @param status The status of the transaction
+     * @return Whether a scope that joined the transaction failed
+     * @since 5.3.0
+     */
+    protected final boolean isFailedByJoinedScope(@NonNull DefaultReactiveTransactionStatus<C> status) {
+        return status.failedByJoinedScope;
+    }
+
+    /**
+     * @return The failure of a transaction that was rolled back because a scope that joined it failed
+     * @since 5.3.0
+     */
+    protected static UnexpectedRollbackException unexpectedRollback() {
+        return new UnexpectedRollbackException("Transaction rolled back because it has been marked as rollback-only");
+    }
+
     private ReactiveTransactionStatus<C> existingTransaction(ReactiveTransactionStatus<C> existing, TransactionDefinition transactionDefinition) {
-        return new DefaultReactiveTransactionStatus<>(existing.getConnectionStatus(), false, transactionDefinition, this) {
-
-            @Override
-            public void setRollbackOnly() {
-                existing.setRollbackOnly();
-            }
-
-            @Override
-            public boolean isRollbackOnly() {
-                return existing.isRollbackOnly();
-            }
-
-            @Override
-            public boolean isCompleted() {
-                return existing.isCompleted();
-            }
-
-        };
+        return new JoinedReactiveTransactionStatus<>(existing, transactionDefinition, this);
     }
 
     /**
@@ -360,6 +408,13 @@ public abstract class AbstractReactorTransactionOperations<C> implements Reactor
         try {
             if (status.isRollbackOnly()) {
                 op = Flux.from(rollbackTransaction(status.getConnectionStatus(), status.getTransactionDefinition()));
+                if (status.failedByJoinedScope) {
+                    // Same as the synchronous transaction manager: the scopes that completed normally expect a commit
+                    op = op.thenMany(Flux.defer(() -> {
+                        status.completed = true;
+                        return Flux.error(unexpectedRollback());
+                    }));
+                }
             } else {
                 op = Flux.from(commitTransaction(status.getConnectionStatus(), status.getTransactionDefinition()));
             }
@@ -513,6 +568,7 @@ public abstract class AbstractReactorTransactionOperations<C> implements Reactor
         private final TransactionDefinition transactionDefinition;
         private final ReactiveTransactionOperations<C> reactiveTransactionOperations;
         private boolean rollbackOnly;
+        private boolean failedByJoinedScope;
         private boolean completed;
 
         public DefaultReactiveTransactionStatus(ConnectionStatus<C> connectionStatus,
@@ -552,12 +608,44 @@ public abstract class AbstractReactorTransactionOperations<C> implements Reactor
 
         @Override
         public boolean isRollbackOnly() {
-            return rollbackOnly;
+            return rollbackOnly || failedByJoinedScope;
         }
 
         @Override
         public boolean isCompleted() {
             return completed;
+        }
+    }
+
+    /**
+     * The status of a scope that joined an existing transaction.
+     *
+     * @param <C> The connection type
+     */
+    private static final class JoinedReactiveTransactionStatus<C> extends DefaultReactiveTransactionStatus<C> {
+
+        private final ReactiveTransactionStatus<C> existing;
+
+        private JoinedReactiveTransactionStatus(ReactiveTransactionStatus<C> existing,
+                                                TransactionDefinition transactionDefinition,
+                                                ReactiveTransactionOperations<C> reactiveTransactionOperations) {
+            super(existing.getConnectionStatus(), false, transactionDefinition, reactiveTransactionOperations);
+            this.existing = existing;
+        }
+
+        @Override
+        public void setRollbackOnly() {
+            existing.setRollbackOnly();
+        }
+
+        @Override
+        public boolean isRollbackOnly() {
+            return existing.isRollbackOnly();
+        }
+
+        @Override
+        public boolean isCompleted() {
+            return existing.isCompleted();
         }
     }
 }

@@ -163,14 +163,9 @@ class AsyncTransactionOperationsTest {
                     .exceptionally(e -> "recovered")
             );
 
-            if (fixture.backend == Backend.SYNC) {
-                // The synchronous manager marks the transaction as rollback-only and fails the commit
-                assertInstanceOf(UnexpectedRollbackException.class, failureOf(work.get()));
-                assertEquals(ROLLED_BACK, fixture.log());
-            } else {
-                assertEquals("recovered", get(work.get()));
-                assertEquals(NEW_TX, fixture.log());
-            }
+            // The failure marks the transaction as rollback-only and fails the commit
+            assertInstanceOf(UnexpectedRollbackException.class, failureOf(work.get()));
+            assertEquals(ROLLED_BACK, fixture.log());
         });
     }
 
@@ -201,11 +196,9 @@ class AsyncTransactionOperationsTest {
     private static final class Fixture {
 
         private final OpLogger opLogger = new OpLogger();
-        private final Backend backend;
         private final AsyncTransactionOperations<String> operations;
 
         private Fixture(Backend backend) {
-            this.backend = backend;
             if (backend == Backend.SYNC) {
                 operations = new AsyncUsingSyncTransactionOperations<>(new SyncTxManager(new SyncConnManager(opLogger), opLogger));
             } else {

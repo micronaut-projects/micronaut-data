@@ -18,6 +18,7 @@ package io.micronaut.transaction;
 import io.micronaut.transaction.TransactionDefinition.Propagation;
 import io.micronaut.transaction.exceptions.NoTransactionException;
 import io.micronaut.transaction.exceptions.TransactionUsageException;
+import io.micronaut.transaction.exceptions.UnexpectedRollbackException;
 import io.micronaut.transaction.reactive.ReactiveTransactionStatus;
 import io.micronaut.transaction.support.DefaultTransactionDefinition;
 import org.junit.jupiter.api.DynamicTest;
@@ -34,6 +35,7 @@ import java.util.function.Function;
 
 import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertFalse;
+import static org.junit.jupiter.api.Assertions.assertInstanceOf;
 import static org.junit.jupiter.api.Assertions.assertSame;
 import static org.junit.jupiter.api.Assertions.assertThrows;
 import static org.junit.jupiter.api.Assertions.assertTrue;
@@ -102,19 +104,54 @@ class ReactiveTransactionPropagationTest {
     }
 
     @TestFactory
-    List<DynamicTest> recoveredFailureOfAJoinedScopeIsCommitted() {
-        // The synchronous manager marks the transaction as rollback-only and fails the commit
+    List<DynamicTest> recoveredFailureOfAJoinedScopeFailsTheCommit() {
         return forEachShape("joined failure", fixture -> {
-            String result = fixture.<String>scope(TransactionDefinition.DEFAULT, outer ->
+            Mono<String> work = fixture.scope(TransactionDefinition.DEFAULT, outer ->
                 fixture.<String>scope(TransactionDefinition.DEFAULT, inner -> Mono.error(new IllegalStateException("inner")))
                     .onErrorResume(IllegalStateException.class, e -> {
-                        assertFalse(outer.isRollbackOnly());
+                        assertTrue(outer.isRollbackOnly());
                         return Mono.just("recovered");
                     })
-            ).block();
+            );
 
-            assertEquals("recovered", result);
-            assertEquals(NEW_TX, fixture.log());
+            assertThrows(UnexpectedRollbackException.class, work::block);
+            assertEquals(ROLLED_BACK, fixture.log());
+        });
+    }
+
+    @TestFactory
+    List<DynamicTest> recoveredFailureOfAScopeJoinedThroughAnotherScopeFailsTheCommit() {
+        return forEachShape("joined failure", fixture -> {
+            Mono<String> work = fixture.scope(TransactionDefinition.DEFAULT, outer ->
+                fixture.<String>scope(TransactionDefinition.DEFAULT, middle ->
+                    fixture.<String>scope(TransactionDefinition.DEFAULT, inner -> Mono.error(new IllegalStateException("inner")))
+                        .onErrorResume(IllegalStateException.class, e -> Mono.just("recovered"))
+                )
+            );
+
+            assertThrows(UnexpectedRollbackException.class, work::block);
+            assertEquals(ROLLED_BACK, fixture.log());
+        });
+    }
+
+    @TestFactory
+    List<DynamicTest> failureThatDoesNotRollBackAfterAJoinedScopeFailedIsRolledBack() {
+        return forEachShape("joined failure", fixture -> {
+            DefaultTransactionDefinition noRollback = new DefaultTransactionDefinition();
+            noRollback.setDontRollbackOn(List.of(IllegalArgumentException.class));
+            IllegalArgumentException failure = new IllegalArgumentException("no rollback");
+            Mono<String> work = fixture.scope(noRollback, outer ->
+                fixture.<String>scope(TransactionDefinition.DEFAULT, inner -> Mono.error(new IllegalStateException("inner")))
+                    .onErrorResume(IllegalStateException.class, e -> Mono.error(failure))
+            );
+
+            Throwable e = work.materialize().block().getThrowable();
+
+            // The failure of the work stays the primary failure
+            assertSame(failure, e);
+            assertEquals(1, e.getSuppressed().length);
+            assertInstanceOf(UnexpectedRollbackException.class, e.getSuppressed()[0]);
+            assertEquals(ROLLED_BACK, fixture.log());
         });
     }
 
@@ -204,7 +241,7 @@ class ReactiveTransactionPropagationTest {
 
     @TestFactory
     List<DynamicTest> rollbackOnlySetByAJoinedScopeRollsBackWithoutAnError() {
-        // The synchronous manager fails the commit
+        // Only the failure of a joined scope fails the commit. The synchronous manager also fails it in this case
         return forEachShape("rollback-only", fixture -> {
             String result = fixture.<String>scope(TransactionDefinition.DEFAULT, outer ->
                 fixture.<String>scope(TransactionDefinition.DEFAULT, inner -> {
