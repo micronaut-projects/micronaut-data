@@ -15,10 +15,18 @@
  */
 package io.micronaut.data.azure
 
+import com.azure.cosmos.CosmosClient
+import com.azure.cosmos.CosmosException
+import com.azure.cosmos.models.CosmosContainerProperties
+import com.azure.cosmos.models.UniqueKey
+import com.azure.cosmos.models.UniqueKeyPolicy
 import io.micronaut.context.ApplicationContext
 import io.micronaut.data.azure.entities.bulk.BulkDoc
+import io.micronaut.data.azure.entities.bulk.UniqueNameDoc
 import io.micronaut.data.azure.repositories.BulkDocRepository
+import io.micronaut.data.azure.repositories.UniqueNameDocRepository
 import io.micronaut.data.cosmos.common.CosmosAccessException
+import io.micronaut.data.cosmos.config.CosmosDatabaseConfiguration
 import io.micronaut.data.exceptions.OptimisticLockException
 import io.micronaut.data.repository.jpa.criteria.DeleteSpecification
 import io.micronaut.data.repository.jpa.criteria.UpdateSpecification
@@ -36,12 +44,18 @@ import spock.lang.Specification
  */
 class CosmosBulkOperationsSpec extends Specification implements AzureCosmosTestProperties {
 
+    // The maximum size of a document is 2 MB
+    private static final int TOO_LARGE = 3 * 1024 * 1024
+
     @AutoCleanup
     @Shared
     ApplicationContext context = ApplicationContext.run(properties)
 
     @Shared
     BulkDocRepository repository = context.getBean(BulkDocRepository)
+
+    @Shared
+    UniqueNameDocRepository uniqueNameRepository = context.getBean(UniqueNameDocRepository)
 
     @Override
     Map<String, String> getDbInitProperties() {
@@ -51,8 +65,19 @@ class CosmosBulkOperationsSpec extends Specification implements AzureCosmosTestP
         ]
     }
 
+    def setupSpec() {
+        // The container created from the entity has no unique key, so it is replaced by one that has it
+        def containerProperties = new CosmosContainerProperties("uniquenamedoc", "/region")
+        containerProperties.setUniqueKeyPolicy(new UniqueKeyPolicy().setUniqueKeys([new UniqueKey(["/name"])]))
+        def databaseName = context.getBean(CosmosDatabaseConfiguration).databaseName
+        def database = context.getBean(CosmosClient).getDatabase(databaseName)
+        database.getContainer("uniquenamedoc").delete()
+        database.createContainer(containerProperties)
+    }
+
     def cleanup() {
         repository.deleteAll()
+        uniqueNameRepository.deleteAll()
     }
 
     void "a bulk update with a stale version fails"() {
@@ -89,6 +114,92 @@ class CosmosBulkOperationsSpec extends Specification implements AzureCosmosTestP
         then:
             thrown(CosmosAccessException)
             repository.findById("1").get().name == "a"
+    }
+
+    void "a bulk insert of a document that is rejected fails"() {
+        when: "a document is larger than the maximum document size"
+            repository.insertAll([new BulkDoc("1", "eu", "a"), new BulkDoc("2", "eu", "x" * TOO_LARGE)])
+        then:
+            def e = thrown(CosmosAccessException)
+            e.cause instanceof CosmosException
+            e.cause.statusCode == 413
+            !repository.findById("2").isPresent()
+    }
+
+    void "a bulk update by query of a document that is rejected fails"() {
+        given:
+            repository.insert(new BulkDoc("1", "eu", "a"))
+        when: "the updated document is larger than the maximum document size"
+            repository.updateAll(new UpdateSpecification<BulkDoc>() {
+                @Override
+                Predicate toPredicate(Root<BulkDoc> root, CriteriaUpdate<?> query, CriteriaBuilder criteriaBuilder) {
+                    query.set("name", "x" * TOO_LARGE)
+                    return criteriaBuilder.equal(root.get("name"), "a")
+                }
+            })
+        then:
+            def e = thrown(CosmosAccessException)
+            e.cause instanceof CosmosException
+            e.cause.statusCode == 413
+            repository.findById("1").get().name == "a"
+    }
+
+    void "a bulk update by query of a document that violates a unique key fails"() {
+        given:
+            uniqueNameRepository.saveAll([new UniqueNameDoc("1", "eu", "a"), new UniqueNameDoc("2", "eu", "b")])
+        when:
+            uniqueNameRepository.updateAll(new UpdateSpecification<UniqueNameDoc>() {
+                @Override
+                Predicate toPredicate(Root<UniqueNameDoc> root, CriteriaUpdate<?> query, CriteriaBuilder criteriaBuilder) {
+                    query.set("name", "a")
+                    return criteriaBuilder.equal(root.get("name"), "b")
+                }
+            })
+        then:
+            def e = thrown(CosmosAccessException)
+            e.message.contains("status code 409")
+            uniqueNameRepository.findById("2").get().name == "b"
+    }
+
+    void "a bulk update and delete of a document that no longer exists fail as the update and delete of one document do"() {
+        given:
+            def saved = repository.insert(new BulkDoc("1", "eu", "a"))
+            def missing = new BulkDoc("2", "eu", "b")
+        when:
+            repository.update(missing)
+        then:
+            thrown(CosmosAccessException)
+        when:
+            repository.delete(missing)
+        then:
+            thrown(CosmosAccessException)
+        when:
+            repository.updateAll([saved, missing])
+        then:
+            def e = thrown(CosmosAccessException)
+            e.message.contains("status code 404")
+        when:
+            repository.deleteAll([saved, missing])
+        then:
+            e = thrown(CosmosAccessException)
+            e.message.contains("status code 404")
+            !repository.findById("1").isPresent()
+    }
+
+    void "a bulk update by query of a document that is not found is not counted"() {
+        given:
+            repository.insert(new BulkDoc("1", "eu", "a"))
+        when: "the document is looked up in another partition, as its partition key is changed"
+            def updated = repository.updateAll(new UpdateSpecification<BulkDoc>() {
+                @Override
+                Predicate toPredicate(Root<BulkDoc> root, CriteriaUpdate<?> query, CriteriaBuilder criteriaBuilder) {
+                    query.set("region", "us")
+                    return criteriaBuilder.equal(root.get("name"), "a")
+                }
+            })
+        then:
+            updated == 0
+            repository.findById("1").get().region == "eu"
     }
 
     void "documents read by a list query have their version, so a concurrent change is detected"() {

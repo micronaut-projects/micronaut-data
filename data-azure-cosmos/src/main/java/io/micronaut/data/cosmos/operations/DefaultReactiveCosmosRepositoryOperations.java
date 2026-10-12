@@ -110,6 +110,7 @@ import java.util.Date;
 import java.util.HashMap;
 import java.util.Iterator;
 import java.util.List;
+import java.util.Locale;
 import java.util.Map;
 import java.util.Optional;
 import java.util.UUID;
@@ -873,10 +874,12 @@ public final class DefaultReactiveCosmosRepositoryOperations extends AbstractRep
         });
         return container.executeBulkOperations(updateItems)
             .reduceWith(BulkResult::new, (result, bulkOperationResponse) -> {
-                acceptBulkItemResponse(result, bulkOperationResponse, bulkOperationType);
+                // The items were read by the query: they are replaced or deleted without a version check,
+                // and an item that was deleted in the meantime is only not counted as affected
+                acceptBulkItemResponse(result, bulkOperationResponse, bulkOperationType, false, true);
                 return result;
             })
-            .<Number>map(result -> result.affected);
+            .flatMap(result -> getBulkRowsAffected(result, bulkOperationType));
     }
 
     /**
@@ -885,12 +888,16 @@ public final class DefaultReactiveCosmosRepositoryOperations extends AbstractRep
      * @param result the result of the bulk operation so far
      * @param bulkOperationResponse the response of the item
      * @param bulkOperationType the bulk operation type
+     * @param versioned whether the items are replaced or deleted only if their version matches
+     * @param ignoreNotFound whether an item that does not exist is only not counted as affected
      * @return the item response if the item was created, replaced or deleted, otherwise null
      */
     @Nullable
     private CosmosBulkItemResponse acceptBulkItemResponse(BulkResult result,
                                                           CosmosBulkOperationResponse<?> bulkOperationResponse,
-                                                          BulkOperationType bulkOperationType) {
+                                                          BulkOperationType bulkOperationType,
+                                                          boolean versioned,
+                                                          boolean ignoreNotFound) {
         Exception exception = bulkOperationResponse.getException();
         if (exception != null) {
             // The item failed without a response
@@ -911,12 +918,34 @@ public final class DefaultReactiveCosmosRepositoryOperations extends AbstractRep
             result.affected++;
             return response;
         }
-        if (statusCode == HttpResponseStatus.PRECONDITION_FAILED.code()) {
+        if (versioned && statusCode == HttpResponseStatus.PRECONDITION_FAILED.code()) {
             result.preconditionFailed++;
-        } else if (statusCode == HttpResponseStatus.CONFLICT.code()) {
-            result.conflicts++;
+        } else if (!ignoreNotFound || statusCode != HttpResponseStatus.NOT_FOUND.code()) {
+            if (result.rejected++ == 0) {
+                result.rejectedStatusCode = statusCode;
+            }
         }
         return null;
+    }
+
+    /**
+     * Gets the number of items affected by a bulk operation, or an error if any of its items failed.
+     * The bulk operation is not transactional, the other items are not rolled back.
+     *
+     * @param result the result of the bulk operation
+     * @param bulkOperationType the bulk operation type
+     * @return the number of affected items or an error
+     */
+    private static Mono<Number> getBulkRowsAffected(BulkResult result, BulkOperationType bulkOperationType) {
+        if (result.preconditionFailed > 0) {
+            return Mono.error(new OptimisticLockException("Operation failed due to optimistic locking conflict."));
+        }
+        if (result.rejected > 0) {
+            // The response of a rejected item has no exception to use as the cause
+            return Mono.error(new CosmosAccessException("Failed to execute bulk " + bulkOperationType.name().toLowerCase(Locale.ROOT) + ": "
+                + result.rejected + " item(s) rejected, the first with status code " + result.rejectedStatusCode, null));
+        }
+        return Mono.<Number>just(result.affected);
     }
 
     private <T> CosmosReactiveEntityOperation<T> createCosmosInsertOneOperation(CosmosReactiveOperationContext<T> ctx, T entity) {
@@ -1127,7 +1156,8 @@ public final class DefaultReactiveCosmosRepositoryOperations extends AbstractRep
     private static final class BulkResult {
         private int affected;
         private int preconditionFailed;
-        private int conflicts;
+        private int rejected;
+        private int rejectedStatusCode;
         private boolean diagnosticsProcessed;
     }
 
@@ -1321,7 +1351,7 @@ public final class DefaultReactiveCosmosRepositoryOperations extends AbstractRep
         private Mono<Number> executeAndGetRowsUpdated(List<ItemBulkOperation<?, ?>> bulkOperations, Map<BulkItemKey, T> entitiesByKey) {
             return ctx.getContainer().executeBulkOperations(Flux.fromIterable(bulkOperations))
                 .reduceWith(BulkResult::new, (result, bulkOperationResponse) -> {
-                    CosmosBulkItemResponse response = acceptBulkItemResponse(result, bulkOperationResponse, operationType);
+                    CosmosBulkItemResponse response = acceptBulkItemResponse(result, bulkOperationResponse, operationType, versionField != null, false);
                     if (response != null && setETagVersion) {
                         CosmosItemOperation itemOperation = bulkOperationResponse.getOperation();
                         T entity = entitiesByKey.get(new BulkItemKey(itemOperation.getId(), itemOperation.getPartitionKeyValue()));
@@ -1331,18 +1361,7 @@ public final class DefaultReactiveCosmosRepositoryOperations extends AbstractRep
                     }
                     return result;
                 })
-                .flatMap(result -> {
-                    if (result.preconditionFailed > 0 && versionField != null) {
-                        // The other items of the bulk operation are not rolled back
-                        return Mono.error(new OptimisticLockException("Operation failed due to optimistic locking conflict."));
-                    }
-                    if (result.conflicts > 0) {
-                        // An item with the same id or unique key already exists, the item response has no exception to use as the cause
-                        return Mono.error(new CosmosAccessException("Failed to execute bulk operation: " + result.conflicts
-                            + " item(s) rejected with status 409 (Conflict)", null));
-                    }
-                    return Mono.<Number>just(result.affected);
-                });
+                .flatMap(result -> getBulkRowsAffected(result, operationType));
         }
 
         private ItemBulkOperation<?, ?> createItemBulkOperation(ObjectNode item, String partitionKeyField, CosmosItemOperationType cosmosItemOperationType, boolean insert) {
