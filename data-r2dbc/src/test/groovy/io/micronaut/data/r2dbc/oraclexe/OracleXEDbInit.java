@@ -30,7 +30,10 @@ public class OracleXEDbInit implements BeanCreatedEventListener<DefaultBasicR2db
 
         ConnectionFactoryOptions options = configuration.getBuilder().build();
 
-        if (!"oracle".equals(options.getValue(Option.valueOf("driver")))) {
+        Object driver = options.getValue(Option.valueOf("driver"));
+        boolean oracle = "oracle".equals(driver)
+            || "pool".equals(driver) && "oracle".equals(options.getValue(Option.valueOf("protocol")));
+        if (!oracle) {
             return configuration;
         }
 

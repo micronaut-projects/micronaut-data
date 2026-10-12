@@ -17,7 +17,6 @@ import io.micronaut.data.tck.tests.AbstractGeoSpec
 import io.micronaut.test.extensions.junit5.annotation.TestResourcesScope
 import io.micronaut.test.support.TestPropertyProviderFactory
 
-import java.time.Duration
 
 @TestResourcesScope("r2dbc-oracle-geo")
 class OracleXEGeoSpec extends AbstractGeoSpec implements OracleXETestPropertyProvider {
@@ -81,18 +80,10 @@ class OracleXEGeoSpec extends AbstractGeoSpec implements OracleXETestPropertyPro
 
     @Override
     Map<String, String> getDataSourceProperties(String dataSourceName) {
-        def prefix = 'r2dbc.datasources.' + dataSourceName
-        return [
-                (prefix + '.db-type')                        : dbType(),
-                (prefix + '.schema-generate')                : schemaGenerate().name(),
-                (prefix + '.dialect')                        : dialect().name(),
-                (prefix + '.packages')                       : packages(),
-                (prefix + '.connectTimeout')                 : Duration.ofMinutes(1).toString(),
-                (prefix + '.statementTimeout')               : Duration.ofMinutes(1).toString(),
-                (prefix + '.lockTimeout')                    : Duration.ofMinutes(1).toString(),
+        return OracleXETestPropertyProvider.super.getDataSourceProperties(dataSourceName) + [
                 "test-resources.containers.oracle.image-name": "gvenzl/oracle-free",
                 "test-resources.containers.oracle.image-tag" : "latest"
-        ] as Map<String, String>
+        ]
     }
 
     @Override
