@@ -17,8 +17,10 @@ package io.micronaut.data.jdbc
 
 import io.micronaut.core.annotation.AnnotationMetadata
 import io.micronaut.context.ApplicationContext
+import io.micronaut.data.annotation.Embeddable
 import io.micronaut.data.connection.ConnectionOperations
 import io.micronaut.data.connection.ConnectionStatus
+import io.micronaut.data.exceptions.DataAccessException
 import io.micronaut.data.jdbc.config.DataJdbcConfiguration
 import io.micronaut.data.jdbc.operations.DefaultJdbcRepositoryOperations
 import io.micronaut.data.jdbc.operations.JdbcSchemaHandler
@@ -40,6 +42,7 @@ import javax.sql.DataSource
 import java.sql.Connection
 import java.sql.DatabaseMetaData
 import java.sql.PreparedStatement
+import java.sql.ResultSet
 import java.sql.SQLException
 import java.util.concurrent.ExecutorService
 import java.util.concurrent.Executors
@@ -78,6 +81,35 @@ class DefaultJdbcRepositoryOperationsSpec extends Specification {
 
         then:
             fallbackExecutor.isShutdown()
+    }
+
+    void "readEntity materializes a required constructor value"() {
+        given:
+        DefaultJdbcRepositoryOperations operations = newOperations(null)
+        ResultSet resultSet = Mock {
+            findColumn("code") >> 1
+            getString(1) >> "A1"
+        }
+
+        expect:
+        operations.readEntity("", resultSet, RequiredCode).code == "A1"
+    }
+
+    void "readEntity rejects a missing embedded value rather than returning null"() {
+        given:
+        DefaultJdbcRepositoryOperations operations = newOperations(null)
+        ResultSet resultSet = Mock {
+            findColumn("code") >> 1
+            wasNull() >> true
+        }
+
+        when:
+        operations.readEntity("", resultSet, RequiredCode)
+
+        then:
+        def exception = thrown(DataAccessException)
+        exception.message.contains("Unable to map result to entity of type")
+        exception.message.contains("Missing result data")
     }
 
     void "batch capability metadata failures are not cached"() {
@@ -367,6 +399,16 @@ class DefaultJdbcRepositoryOperationsSpec extends Specification {
         RuntimeEntityRegistry runtimeEntityRegistry = Mock()
         runtimeEntityRegistry.getEntityEventListener() >> Mock(EntityEventRegistry)
         runtimeEntityRegistry.getApplicationContext() >> context
+        runtimeEntityRegistry.getEntity(RequiredCode) >> new RuntimePersistentEntity<>(RequiredCode)
         return runtimeEntityRegistry
+    }
+
+    @Embeddable
+    static class RequiredCode {
+        final String code
+
+        RequiredCode(String code) {
+            this.code = code
+        }
     }
 }
