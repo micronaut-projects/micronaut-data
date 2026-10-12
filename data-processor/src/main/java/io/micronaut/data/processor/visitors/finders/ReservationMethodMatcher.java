@@ -60,6 +60,8 @@ import java.util.regex.Pattern;
 public final class ReservationMethodMatcher implements MethodMatcher {
 
     private static final Pattern DELTA_PATTERN = Pattern.compile("(Increment|Decrement)([A-Z][A-Za-z0-9]*?)(?=And(?:Increment|Decrement)|$)");
+    private static final String PYTHON_INCREMENT = "increment_";
+    private static final String PYTHON_DECREMENT = "decrement_";
 
     @Override
     @Nullable
@@ -185,32 +187,14 @@ public final class ReservationMethodMatcher implements MethodMatcher {
         List<Delta> deltas = new ArrayList<>();
         Set<String> targetPaths = new HashSet<>();
         while (!definition.isEmpty()) {
-            boolean increment = definition.startsWith("increment_");
-            if (!increment && !definition.startsWith("decrement_")) {
+            boolean increment = definition.startsWith(PYTHON_INCREMENT);
+            if (!increment && !definition.startsWith(PYTHON_DECREMENT)) {
                 throw PythonMethodNameParser.unsupported(methodName);
             }
-            String remaining = definition.substring("increment_".length());
-            String propertyName = null;
-            String propertyPath = null;
-            int end;
-            for (end = remaining.length(); end > 0; end--) {
-                String separator = remaining.startsWith("__", end) ? "__and_" : "_and_";
-                if (end != remaining.length() && !remaining.startsWith(separator + "increment_", end)
-                    && !remaining.startsWith(separator + "decrement_", end)) {
-                    continue;
-                }
-                String candidate = remaining.substring(0, end);
-                String path = PythonMethodNameParser.path(entity, candidate);
-                if (path != null) {
-                    propertyName = candidate;
-                    propertyPath = path;
-                    break;
-                }
-            }
-            if (propertyName == null || propertyPath == null) {
-                throw PythonMethodNameParser.unsupported(methodName);
-            }
-            PersistentPropertyPath persistentPropertyPath = entity.getPropertyPath(propertyPath);
+            String remaining = definition.substring(PYTHON_INCREMENT.length());
+            PythonDeltaProperty property = resolvePythonDeltaProperty(remaining, entity, methodName);
+            String propertyName = property.name();
+            PersistentPropertyPath persistentPropertyPath = entity.getPropertyPath(property.path());
             if (persistentPropertyPath == null) {
                 throw PythonMethodNameParser.unsupported(methodName);
             }
@@ -218,13 +202,39 @@ public final class ReservationMethodMatcher implements MethodMatcher {
             validateUniqueTarget(propertyName, persistentPropertyPath, targetPaths);
             ParameterElement parameter = resolveDeltaParameter(parameters, propertyName);
             deltas.add(new Delta(persistentPropertyPath, parameter, increment));
-            definition = end == remaining.length() ? "" : remaining.substring(end + (remaining.startsWith("__", end) ? 6 : 5));
+            definition = nextPythonDelta(remaining, propertyName.length());
         }
         if (deltas.isEmpty()) {
             throw PythonMethodNameParser.unsupported(methodName);
         }
         validateDeltaParameterCount(parameters, deltas);
         return deltas;
+    }
+
+    private static PythonDeltaProperty resolvePythonDeltaProperty(String remaining,
+                                                                  SourcePersistentEntity entity,
+                                                                  String methodName) {
+        for (int end = remaining.length(); end > 0; end--) {
+            String separator = remaining.startsWith("__", end) ? "__and_" : "_and_";
+            if (end != remaining.length() && !remaining.startsWith(separator + PYTHON_INCREMENT, end)
+                && !remaining.startsWith(separator + PYTHON_DECREMENT, end)) {
+                continue;
+            }
+            String candidate = remaining.substring(0, end);
+            String path = PythonMethodNameParser.path(entity, candidate);
+            if (path != null) {
+                return new PythonDeltaProperty(candidate, path);
+            }
+        }
+        throw PythonMethodNameParser.unsupported(methodName);
+    }
+
+    private static String nextPythonDelta(String remaining, int end) {
+        if (end == remaining.length()) {
+            return "";
+        }
+        int separatorLength = remaining.startsWith("__", end) ? 6 : 5;
+        return remaining.substring(end + separatorLength);
     }
 
     private static void validateMatchPosition(Matcher matcher, int end) {
@@ -322,5 +332,8 @@ public final class ReservationMethodMatcher implements MethodMatcher {
     }
 
     private record Delta(PersistentPropertyPath propertyPath, ParameterElement parameter, boolean increment) {
+    }
+
+    private record PythonDeltaProperty(String name, String path) {
     }
 }
