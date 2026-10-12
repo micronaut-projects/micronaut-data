@@ -62,6 +62,11 @@ public final class DefaultDataSourceConnectionOperations extends AbstractConnect
 
     @Override
     protected void setupConnection(ConnectionStatus<Connection> connectionStatus) {
+        if (!connectionStatus.isNew()) {
+            // A reused connection carries the definition of the scope that opened it, which has already applied it.
+            // Applying it again would undo the changes made since, for example by a transaction that is in progress.
+            return;
+        }
         connectionStatus.getDefinition().isReadOnly().ifPresent(readOnly -> {
             List<Runnable> onCompleteCallbacks = new ArrayList<>(1);
             JdbcConnectionUtils.applyReadOnly(LOG, connectionStatus.getConnection(), readOnly, onCompleteCallbacks);

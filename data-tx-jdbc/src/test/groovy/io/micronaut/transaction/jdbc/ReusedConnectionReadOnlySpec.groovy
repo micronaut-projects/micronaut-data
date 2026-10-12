@@ -39,7 +39,7 @@ class ReusedConnectionReadOnlySpec extends Specification {
     DefaultDataSourceConnectionOperations connectionOperations = new DefaultDataSourceConnectionOperations(dataSource)
     DataSourceTransactionManager transactionManager = new DataSourceTransactionManager(dataSource, connectionOperations, connectionOperations)
 
-    void "a nested scope applies the read-only state of the outer connection scope inside the transaction"() {
+    void "a nested scope doesn't apply the read-only state of the outer connection scope inside the transaction"() {
         given: "the definition of a method annotated with @Transactional"
             def readWrite = new DefaultTransactionDefinition()
             readWrite.setReadOnly(false)
@@ -59,9 +59,7 @@ class ReusedConnectionReadOnlySpec extends Specification {
                 'setReadOnly(true)',    // The outer connection scope
                 'setReadOnly(false)',   // The transaction begins
                 'setAutoCommit(false)',
-                'setReadOnly(true)',    // The nested scope applies the definition of the outer scope again
-                'write readOnly=true',
-                'setReadOnly(false)',   // The nested scope restores what it changed
+                'write readOnly=false', // The nested scope reuses the connection as the transaction left it
                 'commit',
                 'setAutoCommit(true)',
                 'setReadOnly(true)',    // The transaction restores the connection state
