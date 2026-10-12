@@ -86,7 +86,7 @@ final class DefaultR2dbcReactorTransactionOperations extends AbstractReactorTran
             if (LOG.isDebugEnabled()) {
                 LOG.debug("Setting statement timeout ({}) for transaction: {} for dataSource: {}", timeout, definition.getName(), dataSourceName);
             }
-            result = result.thenMany(connection.setStatementTimeout(timeout));
+            result = result.thenMany(Flux.defer(() -> connection.setStatementTimeout(timeout)));
         }
         if (definition.getIsolationLevel().isPresent()) {
             IsolationLevel isolationLevel = getIsolationLevel(definition);
@@ -94,15 +94,16 @@ final class DefaultR2dbcReactorTransactionOperations extends AbstractReactorTran
                 LOG.debug("Setting Isolation Level ({}) for transaction: {} for dataSource: {}", isolationLevel, definition.getName(), dataSourceName);
             }
             if (isolationLevel != null) {
-                result = result.thenMany(connection.setTransactionIsolationLevel(isolationLevel));
+                result = result.thenMany(Flux.defer(() -> connection.setTransactionIsolationLevel(isolationLevel)));
             }
         }
         for (ReactiveTransactionExecutionListener<Connection> transactionExecutionListener : transactionExecutionListeners) {
-            result = result.thenMany(transactionExecutionListener.beforeBegin(connectionStatus, definition));
+            result = result.thenMany(Flux.defer(() -> transactionExecutionListener.beforeBegin(connectionStatus, definition)));
         }
-        result = result.thenMany(connection.beginTransaction());
+        // Deferred: some drivers (e.g. Oracle R2DBC) read the isolation level when beginTransaction is called
+        result = result.thenMany(Flux.defer(connection::beginTransaction));
         for (ReactiveTransactionExecutionListener<Connection> transactionExecutionListener : transactionExecutionListeners) {
-            result = result.thenMany(transactionExecutionListener.afterBegin(connectionStatus, definition));
+            result = result.thenMany(Flux.defer(() -> transactionExecutionListener.afterBegin(connectionStatus, definition)));
         }
         return result;
     }
