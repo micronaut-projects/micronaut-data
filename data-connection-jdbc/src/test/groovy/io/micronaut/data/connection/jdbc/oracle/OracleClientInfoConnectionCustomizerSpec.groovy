@@ -15,13 +15,17 @@
  */
 package io.micronaut.data.connection.jdbc.oracle
 
+import io.micronaut.data.connection.ConnectionDefinition
 import io.micronaut.data.connection.support.AbstractConnectionOperations
+import io.micronaut.data.connection.support.DefaultConnectionStatus
 import spock.lang.Specification
 
 import javax.sql.DataSource
 import java.sql.Connection
 import java.sql.DatabaseMetaData
+import java.sql.SQLClientInfoException
 import java.sql.SQLException
+import java.util.function.Function
 
 class OracleClientInfoConnectionCustomizerSpec extends Specification {
 
@@ -67,5 +71,54 @@ class OracleClientInfoConnectionCustomizerSpec extends Specification {
         then:
             1 * connection.close()
             0 * connectionOperations.addConnectionCustomizer(_)
+    }
+
+    void "a failure to restore the client info replaces the failure of the operation"() {
+        given:
+            def restoreFailure = new SQLClientInfoException()
+            def operationFailure = new IllegalStateException("operation")
+            def status = statusOfConnectionFailingToRestore(restoreFailure)
+
+        when:
+            newCustomizer().intercept({ throw operationFailure } as Function).apply(status)
+
+        then:
+            def e = thrown(RuntimeException)
+            e.cause.is(restoreFailure)
+            e.suppressed.length == 0
+    }
+
+    void "a failure to restore the client info fails a successful operation"() {
+        given:
+            def restoreFailure = new SQLClientInfoException()
+            def status = statusOfConnectionFailingToRestore(restoreFailure)
+
+        when:
+            newCustomizer().intercept({ "result" } as Function).apply(status)
+
+        then:
+            def e = thrown(RuntimeException)
+            e.cause.is(restoreFailure)
+    }
+
+    private OracleClientInfoConnectionCustomizer newCustomizer() {
+        def metaData = Mock(DatabaseMetaData) {
+            getDatabaseProductName() >> "Oracle"
+        }
+        def connection = Mock(Connection) {
+            getMetaData() >> metaData
+        }
+        def dataSource = Mock(DataSource) {
+            getConnection() >> connection
+        }
+        return new OracleClientInfoConnectionCustomizer(dataSource, Mock(AbstractConnectionOperations), null)
+    }
+
+    private DefaultConnectionStatus<Connection> statusOfConnectionFailingToRestore(SQLClientInfoException restoreFailure) {
+        def connection = Mock(Connection) {
+            getClientInfo() >> new Properties()
+            setClientInfo(_ as Properties) >> { throw restoreFailure }
+        }
+        return new DefaultConnectionStatus<>(connection, ConnectionDefinition.DEFAULT, true, null)
     }
 }
