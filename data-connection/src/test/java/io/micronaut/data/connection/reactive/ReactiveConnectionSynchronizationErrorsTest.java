@@ -15,8 +15,10 @@
  */
 package io.micronaut.data.connection.reactive;
 
+import io.micronaut.data.connection.ConnectionDefinition;
 import io.micronaut.data.connection.ConnectionStatus;
 import io.micronaut.data.connection.ConnectionSynchronization;
+import io.micronaut.data.connection.support.AbstractReactorConnectionOperations;
 import io.micronaut.data.connection.support.RecordingReactorConnectionOperations;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.params.ParameterizedTest;
@@ -69,15 +71,10 @@ class ReactiveConnectionSynchronizationErrorsTest {
             return Mono.just("value");
         });
 
-        if (failure == Failure.THROWN) {
-            // Only a callback that throws instead of returning a publisher is reported
-            Throwable e = failureOf(work);
-            assertEquals("Async resource cleanup failed after onComplete", e.getMessage());
-            assertSame(callbackFailure, e.getCause());
-        } else {
-            assertEquals("value", work.block());
-        }
-        // Every callback runs and the connection is closed
+        // The failure is signalled once every callback has run and the connection is closed
+        Throwable e = failureOf(work);
+        assertEquals("Async resource cleanup failed after onComplete", e.getMessage());
+        assertSame(callbackFailure, e.getCause());
         assertEquals(expectedEvents("onComplete", phase, failure), events);
     }
 
@@ -93,16 +90,10 @@ class ReactiveConnectionSynchronizationErrorsTest {
 
         Throwable e = failureOf(work);
 
-        if (failure == Failure.THROWN) {
-            // The callback failure replaces the failure of the work, which is only suppressed
-            assertEquals("Async resource cleanup failed after onError", e.getMessage());
-            assertSame(callbackFailure, e.getCause());
-            assertArrayEquals(new Throwable[]{workFailure}, e.getSuppressed());
-            assertArrayEquals(new Throwable[]{workFailure}, callbackFailure.getSuppressed());
-        } else {
-            assertSame(workFailure, e);
-            assertEquals(0, e.getSuppressed().length);
-        }
+        // The failure of the work stays the primary failure
+        assertSame(workFailure, e);
+        assertArrayEquals(new Throwable[]{callbackFailure}, e.getSuppressed());
+        assertEquals(0, callbackFailure.getSuppressed().length);
         assertEquals(expectedEvents("onError", "onError", failure), events);
     }
 
@@ -118,24 +109,66 @@ class ReactiveConnectionSynchronizationErrorsTest {
 
         subscription.dispose();
 
+        // There is no subscriber left: the failure is logged
         awaitEvent("first afterClose");
         assertEquals(expectedEvents("onCancel", "onCancel", failure), events);
     }
 
     @Test
-    void synchronousSynchronizationIsNotCompletedWhenTheWorkFails() {
+    void everyFailureIsReportedWhenTheWorkCompletes() {
+        IllegalStateException closeFailure = new IllegalStateException("close");
+        IllegalStateException afterCloseFailure = new IllegalStateException("afterClose");
+        Mono<String> work = failingToClose(closeFailure).withConnectionMono(status -> {
+            register(status, new Recording("first"));
+            registerFailing(status, "onComplete", Failure.SIGNALLED);
+            register(status, new ReactiveConnectionSynchronization() {
+                @Override
+                public Publisher<Void> afterClose() {
+                    return Mono.error(afterCloseFailure);
+                }
+            });
+            return Mono.just("value");
+        });
+
+        Throwable e = failureOf(work).getCause();
+
+        assertEquals("Error executing connection synchronizations", e.getMessage());
+        assertSame(callbackFailure, e.getCause());
+        assertArrayEquals(new Throwable[]{closeFailure, afterCloseFailure}, e.getSuppressed());
+        assertEquals(List.of(
+            "OPEN " + C1,
+            "failing onComplete", "first onComplete",
+            "first onClose",
+            "first afterClose"), events);
+    }
+
+    @Test
+    void everyFailureIsSuppressedWhenTheWorkFails() {
+        IllegalStateException closeFailure = new IllegalStateException("close");
+        Mono<String> work = failingToClose(closeFailure).withConnectionMono(status -> {
+            registerFailing(status, "onError", Failure.SIGNALLED);
+            return Mono.error(workFailure);
+        });
+
+        Throwable e = failureOf(work);
+
+        assertSame(workFailure, e);
+        assertArrayEquals(new Throwable[]{callbackFailure, closeFailure}, e.getSuppressed());
+    }
+
+    @Test
+    void synchronousSynchronizationIsCompletedWhenTheWorkFails() {
         Mono<String> work = operations.withConnectionMono(status -> {
             status.registerSynchronization(new RecordingSynchronization());
             return Mono.error(workFailure);
         });
 
         assertSame(workFailure, failureOf(work));
-        // A synchronous connection always invokes executionComplete
-        assertEquals(List.of("OPEN " + C1, "beforeClosed", "CLOSE " + C1, "afterClosed"), events);
+        assertEquals(List.of("OPEN " + C1, "executionComplete", "beforeClosed", "CLOSE " + C1, "afterClosed"), events);
     }
 
     @Test
-    void synchronousSynchronizationIsNotCompletedWhenTheWorkIsCancelled() {
+    void synchronousSynchronizationIsCompletedWhenTheWorkIsCancelled() {
         Disposable subscription = operations.withConnectionFlux(status -> {
             status.registerSynchronization(new RecordingSynchronization());
             return Flux.<String>never();
@@ -143,7 +176,7 @@ class ReactiveConnectionSynchronizationErrorsTest {
 
         subscription.dispose();
 
-        assertEquals(List.of("OPEN " + C1, "beforeClosed", "CLOSE " + C1, "afterClosed"), events);
+        assertEquals(List.of("OPEN " + C1, "executionComplete", "beforeClosed", "CLOSE " + C1, "afterClosed"), events);
     }
 
     @Test
@@ -170,12 +203,8 @@ class ReactiveConnectionSynchronizationErrorsTest {
                 expected.add("CLOSE " + C1);
             }
             boolean failing = phase.equals(failingPhase);
-            if (failing && failure == Failure.THROWN) {
-                // The callbacks are invoked while the chain is built, before the first one is subscribed
-                expected.add("failing " + phase);
-            }
             expected.add("last " + phase);
-            if (failing && failure != Failure.THROWN && failure != Failure.SYNCHRONOUS_ADAPTER) {
+            if (failing && failure != Failure.SYNCHRONOUS_ADAPTER) {
                 expected.add("failing " + phase);
             }
             expected.add("first " + phase);
@@ -185,6 +214,23 @@ class ReactiveConnectionSynchronizationErrorsTest {
             }
         }
         return expected;
+    }
+
+    private AbstractReactorConnectionOperations<String> failingToClose(Throwable closeFailure) {
+        return new AbstractReactorConnectionOperations<>() {
+            @Override
+            protected Publisher<String> openConnection(ConnectionDefinition definition) {
+                return Mono.fromSupplier(() -> {
+                    events.add("OPEN " + C1);
+                    return C1;
+                });
+            }
+
+            @Override
+            protected Publisher<Void> closeConnection(String connection, ConnectionDefinition definition) {
+                return Mono.error(closeFailure);
+            }
+        };
     }
 
     /**
