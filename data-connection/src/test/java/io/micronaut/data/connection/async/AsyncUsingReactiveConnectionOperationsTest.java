@@ -26,8 +26,10 @@ import java.util.Optional;
 import java.util.concurrent.CompletableFuture;
 
 import static org.junit.jupiter.api.Assertions.assertEquals;
+import static org.junit.jupiter.api.Assertions.assertFalse;
 import static org.junit.jupiter.api.Assertions.assertSame;
 import static org.junit.jupiter.api.Assertions.assertThrows;
+import static org.junit.jupiter.api.Assertions.assertTrue;
 
 class AsyncUsingReactiveConnectionOperationsTest {
 
@@ -49,8 +51,19 @@ class AsyncUsingReactiveConnectionOperationsTest {
     }
 
     @Test
-    void optionalLookupThrowsWithoutAConnection() {
-        assertThrows(NoConnectionException.class, operations::findConnectionStatus);
+    void optionalLookupIsEmptyWithoutAConnection() {
+        assertTrue(operations.findConnectionStatus().isEmpty());
+    }
+
+    @Test
+    void optionalLookupIsEmptyInsideAConnectionOfAnotherManager() throws Exception {
+        var other = new AsyncUsingReactiveConnectionOperations<>(new RecordingReactorConnectionOperations(new ArrayList<>()));
+
+        boolean found = other.withConnection(status ->
+            CompletableFuture.completedFuture(operations.findConnectionStatus().isPresent())
+        ).toCompletableFuture().get();
+
+        assertFalse(found);
     }
 
     @Test
