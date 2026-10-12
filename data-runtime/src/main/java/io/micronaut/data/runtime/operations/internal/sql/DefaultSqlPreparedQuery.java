@@ -479,54 +479,77 @@ public class DefaultSqlPreparedQuery<E, R> extends DefaultBindableParametersPrep
         }
 
         List<QueryParameterBinding> cursorBindings = new ArrayList<>(orders.size());
-        cursorQueryBindings = new ArrayList<>(orders.size() * (orders.size() + 1) / 2);
         for (int i = 0; i < orders.size(); ++i) {
             cursorBindings.add(new CursoredQueryParameterBinder(
                 "cursor_" + i, cursorPersistentPropertyPaths.get(i).getProperty().getDataType(), cursor.get(i)
             ));
         }
+        List<QueryParameterBinding> queryBindings = new ArrayList<>(orders.size() * (orders.size() + 1) / 2);
+        cursorQueryBindings = queryBindings;
+        CursorParameters parameters = new CursorParameters(getQueryBuilder().positionalParameterFormat(), paramIndex, queryBindings);
 
-        String positionalParameter = getQueryBuilder().positionalParameterFormat();
-        // Disjunct i: the keys before i equal the cursor and key i comes after it
         List<String> disjuncts = new ArrayList<>(orders.size());
         for (int i = 0; i < orders.size(); ++i) {
-            Order order = orders.get(i);
-            Object value = cursor.get(i);
-            boolean explicitNulls = order.getNullOrdering() != Order.NullOrdering.NONE;
-            if (explicitNulls && value == null && order.getNullOrdering() == Order.NullOrdering.LAST) {
-                // Nothing comes after a null that is ordered last, so the remaining rows differ in a later key
-                continue;
+            String disjunct = cursorDisjunct(i, orders, cursorPropertyNames, cursor, cursorBindings, parameters);
+            if (disjunct != null) {
+                disjuncts.add(disjunct);
             }
-            StringBuilder disjunct = new StringBuilder("(");
-            for (int j = 0; j < i; ++j) {
-                Order previous = orders.get(j);
-                String column = cursorPropertyNames.get(j);
-                if (previous.getNullOrdering() != Order.NullOrdering.NONE && cursor.get(j) == null) {
-                    disjunct.append(column).append(" IS NULL");
-                } else {
-                    disjunct.append(cursorColumn(previous, column)).append(" = ")
-                        .append(cursorParameter(previous, positionalParameter, paramIndex++));
-                    cursorQueryBindings.add(cursorBindings.get(j));
-                }
-                disjunct.append(" AND ");
-            }
-            String column = cursorPropertyNames.get(i);
-            if (explicitNulls && value == null) {
-                // A null that is ordered first: every non-null value comes after it
-                disjunct.append(column).append(" IS NOT NULL");
-            } else {
-                String comparison = cursorColumn(order, column) + (order.isAscending() ? " > " : " < ")
-                    + cursorParameter(order, positionalParameter, paramIndex++);
-                cursorQueryBindings.add(cursorBindings.get(i));
-                if (order.getNullOrdering() == Order.NullOrdering.LAST) {
-                    disjunct.append("(").append(comparison).append(" OR ").append(column).append(" IS NULL)");
-                } else {
-                    disjunct.append(comparison);
-                }
-            }
-            disjuncts.add(disjunct.append(")").toString());
         }
         return disjuncts.isEmpty() ? "1 = 0" : String.join(" OR ", disjuncts);
+    }
+
+    /**
+     * Builds disjunct {@code i} of the cursor condition: the keys before {@code i} equal the cursor and key {@code i}
+     * comes after it.
+     *
+     * @param i The index of the key that comes after the cursor
+     * @param orders The order keys
+     * @param columns The column of each key
+     * @param cursor The cursor
+     * @param cursorBindings The binding of each cursor value
+     * @param parameters The cursor parameters
+     * @return The disjunct, or null if no row can come after the cursor in key {@code i}
+     */
+    @Nullable
+    private static String cursorDisjunct(int i, List<Order> orders, List<String> columns, Cursor cursor,
+                                         List<QueryParameterBinding> cursorBindings, CursorParameters parameters) {
+        Order order = orders.get(i);
+        boolean nullValue = isExplicitlyOrderedNull(order, cursor.get(i));
+        if (nullValue && order.getNullOrdering() == Order.NullOrdering.LAST) {
+            // Nothing comes after a null that is ordered last, so the remaining rows differ in a later key
+            return null;
+        }
+        StringBuilder disjunct = new StringBuilder("(");
+        for (int j = 0; j < i; ++j) {
+            disjunct.append(cursorKeyEquals(orders.get(j), columns.get(j), cursor.get(j), cursorBindings.get(j), parameters))
+                .append(" AND ");
+        }
+        String column = columns.get(i);
+        if (nullValue) {
+            // A null that is ordered first: every non-null value comes after it
+            disjunct.append(column).append(" IS NOT NULL");
+        } else {
+            String comparison = cursorColumn(order, column) + (order.isAscending() ? " > " : " < ")
+                + parameters.bind(order, cursorBindings.get(i));
+            if (order.getNullOrdering() == Order.NullOrdering.LAST) {
+                disjunct.append("(").append(comparison).append(" OR ").append(column).append(" IS NULL)");
+            } else {
+                disjunct.append(comparison);
+            }
+        }
+        return disjunct.append(")").toString();
+    }
+
+    private static String cursorKeyEquals(Order order, String column, @Nullable Object value,
+                                          QueryParameterBinding binding, CursorParameters parameters) {
+        if (isExplicitlyOrderedNull(order, value)) {
+            return column + " IS NULL";
+        }
+        return cursorColumn(order, column) + " = " + parameters.bind(order, binding);
+    }
+
+    private static boolean isExplicitlyOrderedNull(Order order, @Nullable Object value) {
+        return value == null && order.getNullOrdering() != Order.NullOrdering.NONE;
     }
 
     /**
@@ -558,11 +581,6 @@ public class DefaultSqlPreparedQuery<E, R> extends DefaultBindableParametersPrep
 
     private static String cursorColumn(Order order, String column) {
         return order.isIgnoreCase() ? "LOWER(" + column + ")" : column;
-    }
-
-    private static String cursorParameter(Order order, String positionalParameter, int paramIndex) {
-        String parameter = String.format(positionalParameter, paramIndex);
-        return order.isIgnoreCase() ? "LOWER(" + parameter + ")" : parameter;
     }
 
     private List<PersistentPropertyPath> getCursorProperties(CursoredPageable cursoredPageable, RuntimePersistentEntity<Object> persistentEntity) {
@@ -729,6 +747,23 @@ public class DefaultSqlPreparedQuery<E, R> extends DefaultBindableParametersPrep
         @Override
         public Object getValue() {
             return value;
+        }
+    }
+
+    /**
+     * The parameters of the cursor condition. They are numbered in the order they are added to the condition, and the
+     * binding of each one is recorded in that order.
+     *
+     * @param format The positional parameter format
+     * @param firstIndex The index of the first cursor parameter
+     * @param bindings The bindings of the parameters added so far
+     */
+    private record CursorParameters(String format, int firstIndex, List<QueryParameterBinding> bindings) {
+
+        String bind(Order order, QueryParameterBinding binding) {
+            String parameter = String.format(format, firstIndex + bindings.size());
+            bindings.add(binding);
+            return order.isIgnoreCase() ? "LOWER(" + parameter + ")" : parameter;
         }
     }
 }
