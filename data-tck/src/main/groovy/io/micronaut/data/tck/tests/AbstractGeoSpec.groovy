@@ -511,8 +511,6 @@ abstract class AbstractGeoSpec extends Specification {
     }
 
     void "test district mappings, fetch joins, and geospatial predicates"() {
-        assumeTrue(supportsGeometryJsonConversion())
-
         given:
         Polygon downtownArea = square(0.0d, 10.0d)
         Polygon searchArea = square(-1.0d, 11.0d)
