@@ -20,6 +20,7 @@ update_by_code_returning_first_name(code: str, first_name: str)
 
 Operators, logical `and`/`or`, projections, aggregate projections, `distinct`, `first`/`top` limits, `order_by`/`sort_by`, `for_update`, and `returning` use the same query builders and parameter validation as their camelCase equivalents. Both `top3` and `top_3` spellings are accepted, as are `first2` and `first_2`.
 Supported descriptive type headers retain their meaning, including `find_first_item_by_code` returning `FirstItem`, and `save_first_item` or `update_first_item_by_code` returning an entity, count or `None` where the corresponding operation permits it.
+Save/persist/store/insert and update/modify also accept descriptive headers such as `save_first_draft` and `update_distinct_copy`, without interpreting descriptive words as limits or projections. A `by` suffix is descriptive for save-family operations, while update/modify still use `by` as a real predicate clause; descriptions do not introduce extra actions.
 Mongo executor signatures also accept the Python aliases `find_all`, `find_one`, `delete_all`, and `update_all`, with the same options, filter and update parameter roles as their camelCase equivalents.
 Database-specific restrictions remain unchanged: for example, vector operators and returning queries still require a supported dialect, `upsert` supports only the existing `upsert`/`upsert_all` variants, and Oracle reservation operations use `reserve_increment_available_balance_and_decrement_reserved_balance`.
 

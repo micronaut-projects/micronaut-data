@@ -17,6 +17,7 @@ package io.micronaut.data.processor.python
 
 import io.micronaut.core.annotation.AnnotationMetadataProvider
 import io.micronaut.data.annotation.Query
+import io.micronaut.data.annotation.TypeRole
 import io.micronaut.data.intercept.annotation.DataMethod
 import io.micronaut.data.intercept.annotation.DataMethodQuery
 import io.micronaut.python.annotation.processing.test.AbstractPythonTypeElementSpec
@@ -28,6 +29,119 @@ import static io.micronaut.data.processor.visitors.TestUtils.getParameterPropert
 import static io.micronaut.data.processor.visitors.TestUtils.getQuery
 
 class PythonDescriptiveHeaderParitySpec extends AbstractPythonTypeElementSpec {
+
+    void "Native descriptive entity mutation #camel retains its operation and entity role"() {
+        given:
+        def definition = mutationRepository("""
+    @abstractmethod
+    def ${camel}(self, item: Item) -> Item: ...
+""")
+        def method = definition.executableMethods.find { it.methodName == camel }
+
+        expect:
+        assertDescriptiveEntityMutation(method, camel)
+
+        where:
+        camel << ["saveFirstDraft", "saveDistinctCopy", "updateFirstDraft", "updateDistinctCopy",
+                  "saveTop3Draft", "saveFirst2Draft", "saveMax", "saveByHand",
+                  "persistFirstDraft", "storeDistinctCopy", "insertMax", "modifyFirstDraft",
+                  "saveForUpdateDraft", "updateForUpdateDraft", "saveAllAndFlush"]
+    }
+
+    void "Python descriptive entity mutation #snake retains #camel operation and metadata"() {
+        given:
+        def definition = mutationRepository("""
+    @abstractmethod
+    def ${camel}(self, item: Item) -> Item: ...
+    @abstractmethod
+    def ${snake}(self, item: Item) -> Item: ...
+""")
+        def camelMethod = definition.executableMethods.find { it.methodName == camel }
+        def snakeMethod = definition.executableMethods.find { it.methodName == snake }
+
+        expect:
+        assertDescriptiveEntityMutation(snakeMethod, camel)
+        assertParity(camelMethod, snakeMethod)
+        snakeMethod.getAnnotation(DataMethod).stringValue(TypeRole.ENTITY) ==
+            camelMethod.getAnnotation(DataMethod).stringValue(TypeRole.ENTITY)
+
+        where:
+        camel                | snake
+        "saveFirstDraft"     | "save_first_draft"
+        "saveDistinctCopy"   | "save_distinct_copy"
+        "updateFirstDraft"   | "update_first_draft"
+        "updateDistinctCopy" | "update_distinct_copy"
+        "saveTop3Draft"      | "save_top3_draft"
+        "saveFirst2Draft"    | "save_first2_draft"
+        "saveFirst2Draft"    | "save_first_2_draft"
+        "saveMax"            | "save_max"
+        "saveByHand"         | "save_by_hand"
+        "persistFirstDraft"  | "persist_first_draft"
+        "storeDistinctCopy"  | "store_distinct_copy"
+        "insertMax"          | "insert_max"
+        "modifyFirstDraft"   | "modify_first_draft"
+        "saveForUpdateDraft" | "save_for_update_draft"
+        "updateForUpdateDraft" | "update_for_update_draft"
+        "saveAllAndFlush"    | "save_all_and_flush"
+    }
+
+    void "Native descriptive update #camel retains its real by clause"() {
+        given:
+        def definition = mutationRepository("""
+    @abstractmethod
+    def ${camel}(self, value: str, age: int) -> ${returnType}: ...
+""")
+        def method = definition.executableMethods.find { it.methodName == camel }
+
+        expect:
+        assertFilteredDescriptiveUpdate(method)
+
+        where:
+        camel                      | returnType
+        "updateFirstDraftByCode"   | "int"
+        "modifyDistinctCopyByCode" | "None"
+        "updateOrderByCode"        | "int"
+        "modifySortByCode"         | "None"
+    }
+
+    void "Python descriptive update #snake retains its real filter and bindings"() {
+        given:
+        def definition = mutationRepository("""
+    @abstractmethod
+    def ${camel}(self, value: str, age: int) -> ${returnType}: ...
+    @abstractmethod
+    def ${snake}(self, value: str, age: int) -> ${returnType}: ...
+""")
+        def camelMethod = definition.executableMethods.find { it.methodName == camel }
+        def snakeMethod = definition.executableMethods.find { it.methodName == snake }
+
+        expect:
+        assertFilteredDescriptiveUpdate(snakeMethod)
+        assertParity(camelMethod, snakeMethod)
+
+        where:
+        camel                      | snake                              | returnType
+        "updateFirstDraftByCode"   | "update_first_draft_by_code"       | "int"
+        "modifyDistinctCopyByCode" | "modify_distinct_copy_by_code"     | "None"
+        "updateOrderByCode"        | "update_order_by_code"            | "int"
+        "modifySortByCode"         | "modify_sort_by_code"             | "None"
+    }
+
+    void "Python descriptive update rejects a missing filter property in #methodName"() {
+        when:
+        mutationRepository("""
+    @abstractmethod
+    def ${methodName}(self, value: str, age: int) -> int: ...
+""")
+
+        then:
+        def exception = thrown(RuntimeException)
+        exception.message.contains("Unsupported Python snake_case derived query '${methodName}'")
+        !exception.message.contains("PythonProperty")
+
+        where:
+        methodName << ["update_first_draft_by_missing", "modify_distinct_copy_by_missing"]
+    }
 
     void "Native save entity header #entityName returning #returnType is descriptive"() {
         given:
@@ -251,6 +365,34 @@ class PythonDescriptiveHeaderParitySpec extends AbstractPythonTypeElementSpec {
         !exception.message.contains("PythonProperty")
     }
 
+    private static void assertDescriptiveEntityMutation(AnnotationMetadataProvider method, String camel) {
+        boolean update = camel.startsWith("update") || camel.startsWith("modify")
+        assert method != null
+        assert getQuery(method) == (update
+            ? 'UPDATE `item` SET `code`=?,`age`=? WHERE (`id` = ?)'
+            : 'INSERT INTO `item` (`code`,`age`,`id`) VALUES (?,?,?)')
+        assert getParameterPropertyPaths(method) == ["code", "age", "id"] as String[]
+        assert method.getAnnotation(DataMethod).stringValue(TypeRole.ENTITY).orElse(null) == "item"
+        assert getDataInterceptor(method) == (update
+            ? "io.micronaut.data.intercept.UpdateEntityInterceptor"
+            : camel.startsWith("save")
+                ? "io.micronaut.data.intercept.SaveEntityInterceptor"
+                : "io.micronaut.data.intercept.InsertEntityInterceptor")
+        assert getOperationType(method) == (update ? DataMethod.OperationType.UPDATE : DataMethod.OperationType.INSERT)
+        assert method.getAnnotation(DataMethod).intValue(DataMethodQuery.META_MEMBER_LIMIT).orElse(-1) == -1
+    }
+
+    private static void assertFilteredDescriptiveUpdate(AnnotationMetadataProvider method) {
+        assert method != null
+        assert getQuery(method) == 'UPDATE `item` SET `age`=? WHERE (`code` = ?)'
+        assert getParameterPropertyPaths(method) == ["age", "code"] as String[]
+        assert getParameterBindingIndexes(method) == ["1", "0"] as String[]
+        assert method.getAnnotation(DataMethod).stringValue(TypeRole.ENTITY).isEmpty()
+        assert getDataInterceptor(method) == "io.micronaut.data.intercept.UpdateInterceptor"
+        assert getOperationType(method) == DataMethod.OperationType.UPDATE
+        assert method.getAnnotation(DataMethod).intValue(DataMethodQuery.META_MEMBER_LIMIT).orElse(-1) == -1
+    }
+
     private static void assertSave(AnnotationMetadataProvider method) {
         assert method != null
         assert getQuery(method) == 'INSERT INTO `item` (`code`,`first_name`,`id`) VALUES (?,?,?)'
@@ -291,6 +433,28 @@ class PythonDescriptiveHeaderParitySpec extends AbstractPythonTypeElementSpec {
         assert snake.getAnnotation(DataMethod).stringValue(DataMethod.META_MEMBER_RESULT_TYPE) ==
             camel.getAnnotation(DataMethod).stringValue(DataMethod.META_MEMBER_RESULT_TYPE)
         assert snake.getAnnotation(DataMethod).intValue(DataMethodQuery.META_MEMBER_LIMIT).orElse(-1) == -1
+    }
+
+    private def mutationRepository(String declarations) {
+        buildBeanDefinition("python", "ItemRepository\$Intercepted", """
+from abc import ABC, abstractmethod
+from dataclasses import dataclass
+from typing import Annotated
+from micronaut.data.annotation import Id, MappedEntity
+from micronaut.data.jdbc.annotation import JdbcRepository
+from micronaut.data.repository import GenericRepository
+
+@MappedEntity("item")
+@dataclass
+class Item:
+    id: Annotated[int, Id]
+    code: str
+    age: int
+
+@JdbcRepository(dialect="H2")
+class ItemRepository(GenericRepository[Item, int], ABC):
+${declarations}
+""")
     }
 
     private def repository(String entityName, String declarations, String extraFields = "") {
