@@ -3744,7 +3744,6 @@ public abstract class AbstractSqlLikeQueryBuilder implements QueryBuilder {
          * depending on the property converter.
          *
          * @param column      The column, qualified with the table alias
-         * @param columnAlias The result column alias
          * @param property    The geometry property
          * @return The select expression including the alias
          */
