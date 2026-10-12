@@ -114,6 +114,7 @@ import java.util.Locale;
 import java.util.Map;
 import java.util.Optional;
 import java.util.UUID;
+import java.util.function.Function;
 import java.util.function.UnaryOperator;
 import java.util.stream.Collectors;
 
@@ -299,16 +300,11 @@ public final class DefaultReactiveCosmosRepositoryOperations extends AbstractRep
             } else {
                 argument = Argument.of(preparedQuery.getResultType());
             }
-            // The root entity is read like a single result, so that it gets its version (_etag)
-            RuntimePersistentEntity<T> rootEntity = preparedQuery.getResultType().equals(preparedQuery.getRootEntity())
-                ? runtimeEntityRegistry.getEntity(preparedQuery.getRootEntity())
-                : null;
+            Function<ObjectNode, R> entityReader = getEntityReader(preparedQuery, argument);
             return result.byPage().flatMap(response -> {
                 CosmosUtils.processDiagnostics(cosmosDiagnosticsProcessor, CosmosDiagnosticsProcessor.QUERY_ITEMS, response.getCosmosDiagnostics(),
                     response.getActivityId(), response.getRequestCharge());
-                return Flux.fromIterable(response.getResults().stream()
-                    .map(item -> rootEntity == null ? cosmosSerde.deserialize(item, argument) : cosmosSerde.deserialize(rootEntity, item, argument))
-                    .toList());
+                return Flux.fromIterable(response.getResults().stream().map(entityReader).toList());
             }).onErrorMap(e ->  CosmosUtils.cosmosAccessException(cosmosDiagnosticsProcessor, CosmosDiagnosticsProcessor.QUERY_ITEMS,
                 FAILED_TO_QUERY_ITEMS, e));
         }
@@ -329,6 +325,24 @@ public final class DefaultReactiveCosmosRepositoryOperations extends AbstractRep
             }).toList());
         }).onErrorMap(e ->  CosmosUtils.cosmosAccessException(cosmosDiagnosticsProcessor, CosmosDiagnosticsProcessor.QUERY_ITEMS,
             FAILED_TO_QUERY_ITEMS, e));
+    }
+
+    /**
+     * Gets the function that reads the entities returned by a list query.
+     * The root entity is read like a single result, so that it gets its version (_etag).
+     *
+     * @param preparedQuery the prepared query
+     * @param argument the argument of the result type
+     * @param <T> the root entity type
+     * @param <R> the result type
+     * @return the function that reads an entity from an item
+     */
+    private <T, R> Function<ObjectNode, R> getEntityReader(SqlPreparedQuery<T, R> preparedQuery, Argument<R> argument) {
+        if (preparedQuery.getResultType().equals(preparedQuery.getRootEntity())) {
+            RuntimePersistentEntity<T> rootEntity = runtimeEntityRegistry.getEntity(preparedQuery.getRootEntity());
+            return item -> cosmosSerde.deserialize(rootEntity, item, argument);
+        }
+        return item -> cosmosSerde.deserialize(item, argument);
     }
 
     @Override
@@ -921,9 +935,7 @@ public final class DefaultReactiveCosmosRepositoryOperations extends AbstractRep
         if (versioned && statusCode == HttpResponseStatus.PRECONDITION_FAILED.code()) {
             result.preconditionFailed++;
         } else if (!ignoreNotFound || statusCode != HttpResponseStatus.NOT_FOUND.code()) {
-            if (result.rejected++ == 0) {
-                result.rejectedStatusCode = statusCode;
-            }
+            result.addRejected(statusCode);
         }
         return null;
     }
@@ -1159,6 +1171,14 @@ public final class DefaultReactiveCosmosRepositoryOperations extends AbstractRep
         private int rejected;
         private int rejectedStatusCode;
         private boolean diagnosticsProcessed;
+
+        private void addRejected(int statusCode) {
+            if (rejected == 0) {
+                // The status code of the first rejected item is reported
+                rejectedStatusCode = statusCode;
+            }
+            rejected++;
+        }
     }
 
     /**
@@ -1325,7 +1345,7 @@ public final class DefaultReactiveCosmosRepositoryOperations extends AbstractRep
             Mono<Tuple2<List<Data>, Long>> entitiesWithRowsUpdated = entities
                 .flatMap(e -> {
                     // An id is unique only within its partition
-                    Map<BulkItemKey, T> entitiesByKey = new HashMap<>(e.size());
+                    Map<BulkItemKey, T> entitiesByKey = HashMap.newHashMap(e.size());
                     List<ItemBulkOperation<?, ?>> notVetoedEntities = e.stream().filter(this::notVetoed).map(x -> {
                         if (generateId) {
                             generateId(persistentEntity, x.entity);
