@@ -116,7 +116,7 @@ final class PythonMethodNameParser {
 
     private void parseNext() {
         Map.Entry<String, String> keyword = keyword(remaining);
-        if (parseProperty(keyword) || parseLimit()) {
+        if (parseProperty(keyword) || parseTypeDescription(keyword) || parseLimit()) {
             return;
         }
         if (keyword == null) {
@@ -131,7 +131,7 @@ final class PythonMethodNameParser {
         if (forceProperty && property == null) {
             throw unsupported(methodName);
         }
-        if (entity == null || property == null || headerKeyword(keyword, property)) {
+        if (entity == null || property == null || headerKeyword(keyword, property.text())) {
             return false;
         }
         String alias = alias(entity, properties);
@@ -145,13 +145,13 @@ final class PythonMethodNameParser {
         return true;
     }
 
-    private boolean headerKeyword(Map.@Nullable Entry<String, String> keyword, PropertyToken property) {
+    private boolean headerKeyword(Map.@Nullable Entry<String, String> keyword, String text) {
         if (clause != QueryMatchId.PROJECTION || keyword == null || forceProperty) {
             return false;
         }
-        // A header property must not swallow a structural clause and drop a filter.
+        // A header must not swallow a structural clause and drop a filter.
         String token = keyword.getValue();
-        return CLAUSES.contains(token) || (HEADER_MODIFIERS.contains(token) && spansClause(property.text()));
+        return CLAUSES.contains(token) || (HEADER_MODIFIERS.contains(token) && spansClause(text));
     }
 
     private boolean parseLimit() {
@@ -165,19 +165,28 @@ final class PythonMethodNameParser {
         return true;
     }
 
-    private void parseDescription() {
+    private boolean parseTypeDescription(Map.@Nullable Entry<String, String> keyword) {
         if (clause != QueryMatchId.PROJECTION) {
-            throw unsupported(methodName);
+            return false;
         }
-        String returnType = context.getReturnType().getSimpleName();
-        String pythonReturnType = NameUtils.underscoreSeparate(returnType).toLowerCase(Locale.ROOT);
-        if (remaining.equals(pythonReturnType) || remaining.startsWith(pythonReturnType + "_")) {
-            normalized.append(returnType);
-            remaining = consume(remaining, pythonReturnType.length(), methodName);
-            expectProperty = false;
-            return;
+        return parseTypeDescription(context.getReturnType().getSimpleName(), keyword)
+            || (allowDescription && entity != null && parseTypeDescription(entity.getSimpleName(), keyword));
+    }
+
+    private boolean parseTypeDescription(String typeName, Map.@Nullable Entry<String, String> keyword) {
+        String pythonType = NameUtils.underscoreSeparate(typeName).toLowerCase(Locale.ROOT);
+        if ((!remaining.equals(pythonType) && !remaining.startsWith(pythonType + "_"))
+            || spansClause(pythonType) || headerKeyword(keyword, pythonType)) {
+            return false;
         }
-        if (!allowDescription) {
+        normalized.append(typeName);
+        remaining = consume(remaining, pythonType.length(), methodName);
+        expectProperty = false;
+        return true;
+    }
+
+    private void parseDescription() {
+        if (clause != QueryMatchId.PROJECTION || !allowDescription) {
             throw unsupported(methodName);
         }
         // Entity operation suffixes are descriptive, not filters, in the existing grammar.

@@ -25,6 +25,7 @@ import io.micronaut.data.processor.visitors.finders.MethodMatchInfo;
 import io.micronaut.data.processor.visitors.finders.MethodMatcher;
 import io.micronaut.inject.ast.ClassElement;
 import io.micronaut.inject.ast.ParameterElement;
+import io.micronaut.inject.visitor.VisitorContext;
 import org.jspecify.annotations.Nullable;
 
 import java.util.Optional;
@@ -36,6 +37,8 @@ import java.util.Optional;
  * @since 3.3.0
  */
 public class MongoExecutorQueryMethodMatcher implements MethodMatcher {
+
+    private static final String FIND_ONE = "findOne";
 
     @Override
     public final int getOrder() {
@@ -54,8 +57,8 @@ public class MongoExecutorQueryMethodMatcher implements MethodMatcher {
         if (reactiveExecutor.isPresent() && reactiveExecutor.get().isAssignable(matchContext.getRepositoryClass())) {
             return null;
         }
-        String methodName = matchContext.getMethodElement().getName();
-        if ("findAll".equals(methodName) || "findOne".equals(methodName)) {
+        String methodName = executorMethodName(matchContext);
+        if ("findAll".equals(methodName) || FIND_ONE.equals(methodName)) {
             ParameterElement[] parameters = matchContext.getParameters();
             switch (parameters.length) {
                 case 1:
@@ -113,7 +116,7 @@ public class MongoExecutorQueryMethodMatcher implements MethodMatcher {
 
                         };
                     }
-                    if ("findOne".equals(methodName)) {
+                    if (FIND_ONE.equals(methodName)) {
                         break;
                     }
                     ParameterElement p1 = parameters[0];
@@ -246,6 +249,20 @@ public class MongoExecutorQueryMethodMatcher implements MethodMatcher {
             }
         }
         return null;
+    }
+
+    private static String executorMethodName(MethodMatchContext matchContext) {
+        String name = matchContext.getMethodElement().getName();
+        if (matchContext.getVisitorContext().getLanguage() != VisitorContext.Language.PYTHON) {
+            return name;
+        }
+        return switch (name) {
+            case "find_all" -> "findAll";
+            case "find_one" -> FIND_ONE;
+            case "delete_all" -> "deleteAll";
+            case "update_all" -> "updateAll";
+            default -> name;
+        };
     }
 
     private boolean isPipeline(ParameterElement parameter) {
