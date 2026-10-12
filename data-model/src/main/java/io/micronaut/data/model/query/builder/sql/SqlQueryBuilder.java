@@ -2473,18 +2473,14 @@ public class SqlQueryBuilder extends AbstractSqlLikeQueryBuilder {
                     String qualifiedColumn = joinAlias + DOT + (queryState.shouldEscape() ? quote(columnName) : columnName);
                     if (transformed != null) {
                         query.append(transformed);
+                    } else if (isJsonOrWktGeometry(prop)) {
+                        query.append(getGeometryFunction(qualifiedColumn, prop));
                     } else {
-                        if (isJsonOrWktGeometry(prop)) {
-                            query.append(getGeometryFunction(qualifiedColumn, prop));
-                        } else {
-                            query.append(qualifiedColumn);
-                        }
+                        query.append(qualifiedColumn);
                     }
-                    if (!StringUtils.isEmpty(columnAlias)) {
-                        query.append(AS_CLAUSE)
-                                .append(columnAlias);
-                    }
-                    query.append(COMMA);
+                    query.append(AS_CLAUSE)
+                            .append(columnAlias)
+                            .append(COMMA);
                 });
                 query.setLength(query.length() - 1);
             }
