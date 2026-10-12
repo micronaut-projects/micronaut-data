@@ -913,6 +913,8 @@ public final class DefaultReactiveCosmosRepositoryOperations extends AbstractRep
         }
         if (statusCode == HttpResponseStatus.PRECONDITION_FAILED.code()) {
             result.preconditionFailed++;
+        } else if (statusCode == HttpResponseStatus.CONFLICT.code()) {
+            result.conflicts++;
         }
         return null;
     }
@@ -948,7 +950,7 @@ public final class DefaultReactiveCosmosRepositoryOperations extends AbstractRep
     }
 
     private Throwable handleCosmosOperationException(String message, Throwable e, String operationName, RuntimePersistentEntity<?> persistentEntity) {
-        if (e instanceof OptimisticLockException) {
+        if (e instanceof OptimisticLockException || e instanceof CosmosAccessException) {
             return e;
         }
         if (e instanceof CosmosException cosmosException) {
@@ -1125,6 +1127,7 @@ public final class DefaultReactiveCosmosRepositoryOperations extends AbstractRep
     private static final class BulkResult {
         private int affected;
         private int preconditionFailed;
+        private int conflicts;
         private boolean diagnosticsProcessed;
     }
 
@@ -1332,6 +1335,11 @@ public final class DefaultReactiveCosmosRepositoryOperations extends AbstractRep
                     if (result.preconditionFailed > 0 && versionField != null) {
                         // The other items of the bulk operation are not rolled back
                         return Mono.error(new OptimisticLockException("Operation failed due to optimistic locking conflict."));
+                    }
+                    if (result.conflicts > 0) {
+                        // An item with the same id or unique key already exists, the item response has no exception to use as the cause
+                        return Mono.error(new CosmosAccessException("Failed to execute bulk operation: " + result.conflicts
+                            + " item(s) rejected with status 409 (Conflict)", null));
                     }
                     return Mono.<Number>just(result.affected);
                 });

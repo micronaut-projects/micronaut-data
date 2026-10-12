@@ -18,6 +18,7 @@ package io.micronaut.data.azure
 import io.micronaut.context.ApplicationContext
 import io.micronaut.data.azure.entities.bulk.BulkDoc
 import io.micronaut.data.azure.repositories.BulkDocRepository
+import io.micronaut.data.cosmos.common.CosmosAccessException
 import io.micronaut.data.exceptions.OptimisticLockException
 import io.micronaut.data.repository.jpa.criteria.DeleteSpecification
 import io.micronaut.data.repository.jpa.criteria.UpdateSpecification
@@ -78,6 +79,16 @@ class CosmosBulkOperationsSpec extends Specification implements AzureCosmosTestP
         then:
             thrown(OptimisticLockException)
             repository.findByRegion("eu")*.id.contains("2")
+    }
+
+    void "a bulk insert of a document that already exists fails"() {
+        given:
+            repository.insert(new BulkDoc("1", "eu", "a"))
+        when:
+            repository.insertAll([new BulkDoc("1", "eu", "duplicate"), new BulkDoc("2", "eu", "b")])
+        then:
+            thrown(CosmosAccessException)
+            repository.findById("1").get().name == "a"
     }
 
     void "documents read by a list query have their version, so a concurrent change is detected"() {
