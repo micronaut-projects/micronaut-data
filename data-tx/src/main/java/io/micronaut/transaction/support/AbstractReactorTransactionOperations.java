@@ -43,6 +43,7 @@ import reactor.util.context.ContextView;
 
 import java.util.Objects;
 import java.util.Optional;
+import java.util.concurrent.atomic.AtomicBoolean;
 import java.util.function.Function;
 
 /**
@@ -58,6 +59,7 @@ public abstract class AbstractReactorTransactionOperations<C> implements Reactor
     private static final Logger LOG = LoggerFactory.getLogger(AbstractReactorTransactionOperations.class);
 
     private final ReactorConnectionOperations<C> connectionOperations;
+    private final AtomicBoolean nestedPropagationWarned = new AtomicBoolean();
 
     protected AbstractReactorTransactionOperations(@Parameter ReactorConnectionOperations<C> connectionOperations) {
         this.connectionOperations = connectionOperations;
@@ -153,6 +155,7 @@ public abstract class AbstractReactorTransactionOperations<C> implements Reactor
             if (propagationBehavior == TransactionDefinition.Propagation.REQUIRES_NEW) {
                 return openNewConnectionAndTx(definition, handler);
             }
+            warnIfNestedPropagation(propagationBehavior);
             return executeCallbackFlux(
                 existingTransaction(transactionStatus, definition),
                 handler
@@ -162,6 +165,17 @@ public abstract class AbstractReactorTransactionOperations<C> implements Reactor
             return Flux.error(expectedTransaction());
         }
         return openNewConnectionAndTx(definition, handler);
+    }
+
+    /**
+     * A nested scope joins the existing transaction: reactive transactions don't create a savepoint for it.
+     */
+    private void warnIfNestedPropagation(TransactionDefinition.Propagation propagationBehavior) {
+        if (propagationBehavior == TransactionDefinition.Propagation.NESTED && nestedPropagationWarned.compareAndSet(false, true)) {
+            LOG.warn("Reactive transactions don't support nested transactions: the work of a transaction with the NESTED propagation "
+                + "joins the existing transaction without a savepoint, so its changes aren't rolled back when only the nested work fails. "
+                + "This warning is logged once.");
+        }
     }
 
     private <T> Flux<T> openNewConnectionAndTx(TransactionDefinition definition, TransactionalCallback<C, T> handler) {
@@ -188,6 +202,7 @@ public abstract class AbstractReactorTransactionOperations<C> implements Reactor
                 if (propagationBehavior == TransactionDefinition.Propagation.REQUIRES_NEW) {
                     return openNewConnectionAndTxMono(definition, handler);
                 }
+                warnIfNestedPropagation(propagationBehavior);
                 return executeCallbackMono(
                     existingTransaction(transactionStatus, definition),
                     handler
