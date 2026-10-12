@@ -45,143 +45,61 @@ import java.util.regex.Pattern;
 @Internal
 final class PythonMethodNameParser {
 
+    private static final String ORDER_BY = "OrderBy";
+    private static final String SORT_BY = "SortBy";
+    private static final String RETURNING = "Returning";
+    private static final String FOR_UPDATE = "ForUpdate";
+    private static final String DISTINCT = "Distinct";
+    private static final String FIRST = "First";
+    private static final String IGNORE_CASE = "IgnoreCase";
     private static final List<Map.Entry<String, String>> KEYWORDS = keywords();
     private static final Set<String> PROPERTY_SUFFIXES = propertySuffixes();
     private static final Pattern LIMIT = Pattern.compile("^(top|first)_?(\\d+)(?=_|$)");
     private static final Set<String> ENTITY_OPERATIONS = Set.of("save", "persist", "store", "insert", "update", "modify");
-    private static final Set<String> CLAUSES = Set.of("By", "OrderBy", "SortBy", "Returning", "ForUpdate");
-    private static final Set<String> HEADER_MODIFIERS = Set.of("All", "One", "Distinct");
+    private static final Set<String> CLAUSES = Set.of("By", ORDER_BY, SORT_BY, RETURNING, FOR_UPDATE);
+    private static final Set<String> HEADER_MODIFIERS = Set.of("All", "One", DISTINCT);
     private static final Set<String> AGGREGATES = Set.of("Max", "Min", "Sum", "Avg");
 
-    private PythonMethodNameParser() {
-    }
+    private final MethodNameParser parser;
+    private final String methodName;
+    private final MethodMatchContext context;
+    private final @Nullable PersistentEntity entity;
+    private final StringBuilder normalized;
+    private final List<MethodNameParser.Match> properties = new ArrayList<>();
+    private final Set<QueryMatchId> required = new HashSet<>();
+    private final boolean allowDescription;
+    private String remaining;
+    private boolean forceProperty;
+    private QueryMatchId clause = QueryMatchId.PROJECTION;
+    private boolean expectProperty = true;
+    private boolean orderDirection;
+    private @Nullable StringBuilder propertySuffix;
 
-    static List<MethodNameParser.Match> parse(MethodNameParser parser, String methodName, MethodMatchContext context) {
+    private PythonMethodNameParser(MethodNameParser parser, String methodName, MethodMatchContext context) {
+        this.parser = parser;
+        this.methodName = methodName;
+        this.context = context;
         int separator = methodName.indexOf('_');
         String prefix = methodName.substring(0, separator);
         if (parser.tryMatch(prefix).stream().noneMatch(m -> m.id() == QueryMatchId.PREFIX && m.part().equals(prefix))) {
             throw unsupported(methodName);
         }
-        boolean forceProperty = methodName.startsWith("__", separator);
-        String remaining = consume(methodName, separator, methodName);
-        PersistentEntity entity = context.hasRootEntity() ? context.getRootEntity() : null;
-        StringBuilder normalized = new StringBuilder(prefix);
-        List<MethodNameParser.Match> properties = new ArrayList<>();
-        Set<QueryMatchId> required = new HashSet<>();
-        QueryMatchId clause = QueryMatchId.PROJECTION;
-        boolean expectProperty = true;
-        boolean orderDirection = false;
-        boolean allowDescription = ENTITY_OPERATIONS.contains(prefix);
-        String propertySuffix = null;
+        forceProperty = methodName.startsWith("__", separator);
+        remaining = consume(methodName, separator, methodName);
+        entity = context.hasRootEntity() ? context.getRootEntity() : null;
+        normalized = new StringBuilder(prefix);
+        allowDescription = ENTITY_OPERATIONS.contains(prefix);
+    }
+
+    static List<MethodNameParser.Match> parse(MethodNameParser parser, String methodName, MethodMatchContext context) {
+        return new PythonMethodNameParser(parser, methodName, context).parse();
+    }
+
+    private List<MethodNameParser.Match> parse() {
         while (!remaining.isEmpty()) {
-            boolean header = clause == QueryMatchId.PROJECTION;
-            Map.Entry<String, String> keyword = keyword(remaining);
-            PropertyToken property = expectProperty && entity != null ? property(entity, remaining) : null;
-            // A header property must not swallow a structural clause and drop a filter.
-            boolean headerKeyword = header && keyword != null
-                && !forceProperty && (CLAUSES.contains(keyword.getValue())
-                || (HEADER_MODIFIERS.contains(keyword.getValue()) && property != null && spansClause(property.text())));
-            if (forceProperty && property == null) {
-                throw unsupported(methodName);
-            }
-            if (entity != null && property != null && !headerKeyword) {
-                String alias = alias(entity, properties);
-                normalized.append(alias);
-                properties.add(new MethodNameParser.Match(new Property(property.path()), alias));
-                remaining = consume(remaining, property.text().length(), methodName);
-                expectProperty = false;
-                orderDirection = false;
-                forceProperty = false;
-                propertySuffix = clause == QueryMatchId.PREDICATE ? "" : null;
-                continue;
-            }
-            Matcher limit = LIMIT.matcher(remaining);
-            if (header && expectProperty && limit.find()) {
-                normalized.append(NameUtils.capitalize(limit.group(1))).append(limit.group(2));
-                required.add(QueryMatchId.LIMIT);
-                remaining = consume(remaining, limit.end(), methodName);
-                continue;
-            }
-            if (keyword == null) {
-                String returnType = context.getReturnType().getSimpleName();
-                String pythonReturnType = NameUtils.underscoreSeparate(returnType).toLowerCase(Locale.ROOT);
-                if (header && (remaining.equals(pythonReturnType) || remaining.startsWith(pythonReturnType + "_"))) {
-                    normalized.append(returnType);
-                    remaining = consume(remaining, pythonReturnType.length(), methodName);
-                    expectProperty = false;
-                    continue;
-                }
-                // Entity operation suffixes are descriptive, not filters, in the existing grammar.
-                if (header && allowDescription) {
-                    int end = remaining.indexOf('_');
-                    if (end < 0) {
-                        end = remaining.length();
-                    }
-                    normalized.append("Description");
-                    remaining = consume(remaining, end, methodName);
-                    continue;
-                }
-                throw unsupported(methodName);
-            }
-            String token = keyword.getValue();
-            if ((!header || !allowDescription) && misplaced(token, clause, expectProperty)) {
-                throw unsupported(methodName);
-            }
-            if (token.equals("ForUpdate") && remaining.length() != keyword.getKey().length()) {
-                throw unsupported(methodName);
-            }
-            if (clause == QueryMatchId.PREDICATE) {
-                if (token.equals("Not") || token.equals("IgnoreCase") || Restrictions.PROPERTY_RESTRICTIONS_MAP.containsKey(token)) {
-                    if (propertySuffix == null) {
-                        throw unsupported(methodName);
-                    }
-                    propertySuffix += token;
-                } else {
-                    if (propertySuffix != null && !PROPERTY_SUFFIXES.contains(propertySuffix)) {
-                        throw unsupported(methodName);
-                    }
-                    propertySuffix = null;
-                }
-            }
-            normalized.append(token);
-            switch (token) {
-                case "By" -> {
-                    required.add(QueryMatchId.PREDICATE);
-                    clause = QueryMatchId.PREDICATE;
-                }
-                case "OrderBy", "SortBy" -> {
-                    required.add(QueryMatchId.ORDER);
-                    clause = QueryMatchId.ORDER;
-                }
-                case "Returning" -> {
-                    required.add(QueryMatchId.RETURNING);
-                    clause = QueryMatchId.RETURNING;
-                }
-                case "ForUpdate" -> {
-                    required.add(QueryMatchId.FOR_UPDATE);
-                    clause = QueryMatchId.FOR_UPDATE;
-                }
-                case "Asc", "Desc" -> {
-                    if (orderDirection) {
-                        throw unsupported(methodName);
-                    }
-                    orderDirection = true;
-                }
-                case "Distinct" -> required.add(QueryMatchId.DISTINCT);
-                case "First" -> required.add(QueryMatchId.FIRST);
-                default -> { }
-            }
-            expectProperty = CLAUSES.contains(token) || HEADER_MODIFIERS.contains(token)
-                || AGGREGATES.contains(token) || token.equals("And") || token.equals("Or") || token.equals("First");
-            remaining = consume(remaining, keyword.getKey().length(), methodName);
-            if (remaining.isEmpty() && (token.equals("And") || token.equals("Or") || token.equals("By")
-                || token.equals("OrderBy") || token.equals("SortBy") || AGGREGATES.contains(token))) {
-                throw unsupported(methodName);
-            }
+            parseNext();
         }
-        if (propertySuffix != null && !PROPERTY_SUFFIXES.contains(propertySuffix)) {
-            throw unsupported(methodName);
-        }
+        validatePropertySuffix();
         List<MethodNameParser.Match> matches = parser.tryMatch(normalized.toString(), unmatched -> {
             if (!unmatched.isEmpty() && !allowDescription) {
                 throw unsupported(methodName);
@@ -196,17 +114,166 @@ final class PythonMethodNameParser {
         return matches;
     }
 
+    private void parseNext() {
+        Map.Entry<String, String> keyword = keyword(remaining);
+        if (parseProperty(keyword) || parseLimit()) {
+            return;
+        }
+        if (keyword == null) {
+            parseDescription();
+        } else {
+            parseKeyword(keyword);
+        }
+    }
+
+    private boolean parseProperty(Map.@Nullable Entry<String, String> keyword) {
+        PropertyToken property = expectProperty && entity != null ? property(entity, remaining) : null;
+        if (forceProperty && property == null) {
+            throw unsupported(methodName);
+        }
+        if (entity == null || property == null || headerKeyword(keyword, property)) {
+            return false;
+        }
+        String alias = alias(entity, properties);
+        normalized.append(alias);
+        properties.add(new MethodNameParser.Match(new Property(property.path()), alias));
+        remaining = consume(remaining, property.text().length(), methodName);
+        expectProperty = false;
+        orderDirection = false;
+        forceProperty = false;
+        propertySuffix = clause == QueryMatchId.PREDICATE ? new StringBuilder() : null;
+        return true;
+    }
+
+    private boolean headerKeyword(Map.@Nullable Entry<String, String> keyword, PropertyToken property) {
+        if (clause != QueryMatchId.PROJECTION || keyword == null || forceProperty) {
+            return false;
+        }
+        // A header property must not swallow a structural clause and drop a filter.
+        String token = keyword.getValue();
+        return CLAUSES.contains(token) || (HEADER_MODIFIERS.contains(token) && spansClause(property.text()));
+    }
+
+    private boolean parseLimit() {
+        Matcher limit = LIMIT.matcher(remaining);
+        if (clause != QueryMatchId.PROJECTION || !expectProperty || !limit.find()) {
+            return false;
+        }
+        normalized.append(NameUtils.capitalize(limit.group(1))).append(limit.group(2));
+        required.add(QueryMatchId.LIMIT);
+        remaining = consume(remaining, limit.end(), methodName);
+        return true;
+    }
+
+    private void parseDescription() {
+        if (clause != QueryMatchId.PROJECTION) {
+            throw unsupported(methodName);
+        }
+        String returnType = context.getReturnType().getSimpleName();
+        String pythonReturnType = NameUtils.underscoreSeparate(returnType).toLowerCase(Locale.ROOT);
+        if (remaining.equals(pythonReturnType) || remaining.startsWith(pythonReturnType + "_")) {
+            normalized.append(returnType);
+            remaining = consume(remaining, pythonReturnType.length(), methodName);
+            expectProperty = false;
+            return;
+        }
+        if (!allowDescription) {
+            throw unsupported(methodName);
+        }
+        // Entity operation suffixes are descriptive, not filters, in the existing grammar.
+        int end = remaining.indexOf('_');
+        if (end < 0) {
+            end = remaining.length();
+        }
+        normalized.append("Description");
+        remaining = consume(remaining, end, methodName);
+    }
+
+    private void parseKeyword(Map.Entry<String, String> keyword) {
+        String token = keyword.getValue();
+        validateKeyword(token, keyword.getKey().length());
+        parsePropertySuffix(token);
+        normalized.append(token);
+        updateClause(token);
+        expectProperty = CLAUSES.contains(token) || HEADER_MODIFIERS.contains(token)
+            || AGGREGATES.contains(token) || token.equals("And") || token.equals("Or") || token.equals(FIRST);
+        remaining = consume(remaining, keyword.getKey().length(), methodName);
+        if (remaining.isEmpty() && incomplete(token)) {
+            throw unsupported(methodName);
+        }
+    }
+
+    private void validateKeyword(String token, int length) {
+        if ((clause != QueryMatchId.PROJECTION || !allowDescription) && misplaced(token, clause, expectProperty)) {
+            throw unsupported(methodName);
+        }
+        if (token.equals(FOR_UPDATE) && remaining.length() != length) {
+            throw unsupported(methodName);
+        }
+    }
+
+    private void parsePropertySuffix(String token) {
+        if (clause != QueryMatchId.PREDICATE) {
+            return;
+        }
+        if (token.equals("Not") || token.equals(IGNORE_CASE) || Restrictions.PROPERTY_RESTRICTIONS_MAP.containsKey(token)) {
+            if (propertySuffix == null) {
+                throw unsupported(methodName);
+            }
+            propertySuffix.append(token);
+        } else {
+            validatePropertySuffix();
+            propertySuffix = null;
+        }
+    }
+
+    private void validatePropertySuffix() {
+        if (propertySuffix != null && !PROPERTY_SUFFIXES.contains(propertySuffix.toString())) {
+            throw unsupported(methodName);
+        }
+    }
+
+    private void updateClause(String token) {
+        switch (token) {
+            case "By" -> requireClause(QueryMatchId.PREDICATE);
+            case ORDER_BY, SORT_BY -> requireClause(QueryMatchId.ORDER);
+            case RETURNING -> requireClause(QueryMatchId.RETURNING);
+            case FOR_UPDATE -> requireClause(QueryMatchId.FOR_UPDATE);
+            case "Asc", "Desc" -> {
+                if (orderDirection) {
+                    throw unsupported(methodName);
+                }
+                orderDirection = true;
+            }
+            case DISTINCT -> required.add(QueryMatchId.DISTINCT);
+            case FIRST -> required.add(QueryMatchId.FIRST);
+            default -> {
+                // Other tokens do not change the clause or required matches.
+            }
+        }
+    }
+
+    private void requireClause(QueryMatchId id) {
+        required.add(id);
+        clause = id;
+    }
+
+    private static boolean incomplete(String token) {
+        return token.equals("And") || token.equals("Or") || token.equals("By")
+            || token.equals(ORDER_BY) || token.equals(SORT_BY) || AGGREGATES.contains(token);
+    }
+
     private static boolean misplaced(String token, QueryMatchId clause, boolean expectProperty) {
         boolean header = clause == QueryMatchId.PROJECTION;
         return switch (token) {
-            case "All", "One", "Top", "First", "Distinct", "Max", "Min", "Sum", "Avg" -> !header || !expectProperty;
+            case "All", "One", "Top", FIRST, DISTINCT, "Max", "Min", "Sum", "Avg" -> !header || !expectProperty;
             case "Asc", "Desc" -> clause != QueryMatchId.ORDER || expectProperty;
             case "And" -> expectProperty;
             case "Or" -> clause != QueryMatchId.PREDICATE || expectProperty;
             case "By" -> !header;
-            case "OrderBy", "SortBy", "Returning" -> !header && (clause != QueryMatchId.PREDICATE || expectProperty);
-            case "ForUpdate" -> !header && ((clause != QueryMatchId.PREDICATE && clause != QueryMatchId.ORDER) || expectProperty);
-            case "Not", "IgnoreCase" -> clause != QueryMatchId.PREDICATE || expectProperty;
+            case ORDER_BY, SORT_BY, RETURNING -> !header && (clause != QueryMatchId.PREDICATE || expectProperty);
+            case FOR_UPDATE -> !header && ((clause != QueryMatchId.PREDICATE && clause != QueryMatchId.ORDER) || expectProperty);
+            case "Not", IGNORE_CASE -> clause != QueryMatchId.PREDICATE || expectProperty;
             default -> Restrictions.PROPERTY_RESTRICTIONS_MAP.containsKey(token)
                 ? clause != QueryMatchId.PREDICATE || expectProperty
                 : Restrictions.RESTRICTIONS_MAP.containsKey(token) && (clause != QueryMatchId.PREDICATE || !expectProperty);
@@ -214,13 +281,13 @@ final class PythonMethodNameParser {
     }
 
     private static Set<String> propertySuffixes() {
-        Set<String> suffixes = new HashSet<>(Set.of("", "Not", "IgnoreCase", "NotIgnoreCase"));
+        Set<String> suffixes = new HashSet<>(Set.of("", "Not", IGNORE_CASE, "NotIgnoreCase"));
         for (String restriction : Restrictions.PROPERTY_RESTRICTIONS_MAP.keySet()) {
             suffixes.add(restriction);
             suffixes.add("Not" + restriction);
-            if (restriction.endsWith("IgnoreCase")) {
-                String base = restriction.substring(0, restriction.length() - "IgnoreCase".length());
-                suffixes.add("IgnoreCase" + base);
+            if (restriction.endsWith(IGNORE_CASE)) {
+                String base = restriction.substring(0, restriction.length() - IGNORE_CASE.length());
+                suffixes.add(IGNORE_CASE + base);
                 suffixes.add("NotIgnoreCase" + base);
             }
         }
@@ -252,13 +319,10 @@ final class PythonMethodNameParser {
     @Nullable
     private static PropertyToken property(PersistentEntity entity, String input) {
         for (int end = input.length(); end > 0; end--) {
-            if (end != input.length() && input.charAt(end) != '_') {
+            if (!propertyBoundary(input, end)) {
                 continue;
             }
             String candidate = input.substring(0, end);
-            if (candidate.endsWith("_") && end != input.length() && !input.startsWith("__", end)) {
-                continue;
-            }
             String path = path(entity, candidate);
             if (path != null) {
                 return new PropertyToken(candidate, path);
@@ -267,16 +331,16 @@ final class PythonMethodNameParser {
         return null;
     }
 
+    private static boolean propertyBoundary(String input, int end) {
+        return end == input.length()
+            || (input.charAt(end) == '_' && (input.charAt(end - 1) != '_' || input.startsWith("__", end)));
+    }
+
     @Nullable
     static String path(PersistentEntity entity, String input) {
         int explicit = input.indexOf("__");
         if (explicit >= 0) {
-            PersistentProperty property = entity.getPropertyByName(input.substring(0, explicit));
-            if (property instanceof Association association) {
-                String nested = path(association.getAssociatedEntity(), input.substring(explicit + 2));
-                return nested == null ? null : property.getName() + "." + nested;
-            }
-            return null;
+            return associationPath(entity, input.substring(0, explicit), input.substring(explicit + 2));
         }
         if (entity.getPropertyByName(input) != null) {
             return input;
@@ -285,12 +349,9 @@ final class PythonMethodNameParser {
             return entity.hasIdentity() ? entity.getIdentity().getName() : input;
         }
         for (int end = input.lastIndexOf('_'); end > 0; end = input.lastIndexOf('_', end - 1)) {
-            PersistentProperty property = entity.getPropertyByName(input.substring(0, end));
-            if (property instanceof Association association) {
-                String nested = path(association.getAssociatedEntity(), input.substring(end + 1));
-                if (nested != null) {
-                    return property.getName() + "." + nested;
-                }
+            String nested = associationPath(entity, input.substring(0, end), input.substring(end + 1));
+            if (nested != null) {
+                return nested;
             }
         }
         try {
@@ -298,6 +359,16 @@ final class PythonMethodNameParser {
         } catch (IllegalArgumentException _) {
             return null;
         }
+    }
+
+    @Nullable
+    private static String associationPath(PersistentEntity entity, String propertyName, String nestedName) {
+        PersistentProperty property = entity.getPropertyByName(propertyName);
+        if (property instanceof Association association) {
+            String nested = path(association.getAssociatedEntity(), nestedName);
+            return nested == null ? null : property.getName() + "." + nested;
+        }
+        return null;
     }
 
     private static String alias(PersistentEntity entity, List<MethodNameParser.Match> properties) {
@@ -326,8 +397,8 @@ final class PythonMethodNameParser {
         Map<String, String> keywords = new LinkedHashMap<>();
         List<String> names = new ArrayList<>(Restrictions.PROPERTY_RESTRICTIONS_MAP.keySet());
         names.addAll(Restrictions.RESTRICTIONS_MAP.keySet());
-        names.addAll(List.of("All", "One", "Top", "First", "Distinct", "By", "OrderBy", "SortBy", "Returning", "ForUpdate",
-            "And", "Or", "Not", "IgnoreCase", "Asc", "Desc", "Max", "Min", "Sum", "Avg"));
+        names.addAll(List.of("All", "One", "Top", FIRST, DISTINCT, "By", ORDER_BY, SORT_BY, RETURNING, FOR_UPDATE,
+            "And", "Or", "Not", IGNORE_CASE, "Asc", "Desc", "Max", "Min", "Sum", "Avg"));
         for (String name : names) {
             keywords.put(NameUtils.underscoreSeparate(name).toLowerCase(Locale.ROOT), name);
         }

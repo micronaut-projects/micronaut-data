@@ -124,9 +124,9 @@ public abstract class AbstractCriteriaMethodMatch implements MethodMatcher.Metho
 
     protected final String resolveNativePropertyName(String propertyName) {
         for (MethodNameParser.Match match : matches) {
-            if (match.id() instanceof PythonMethodNameParser.Property property
+            if (match.id() instanceof PythonMethodNameParser.Property(var path)
                 && match.part().equalsIgnoreCase(propertyName)) {
-                return property.path();
+                return path;
             }
         }
         return propertyName;
@@ -641,31 +641,10 @@ public abstract class AbstractCriteriaMethodMatch implements MethodMatcher.Metho
     }
 
     protected final <T> io.micronaut.data.model.jpa.criteria. @Nullable PersistentPropertyPath<Object> findProperty(PersistentEntityRoot<T> root, String propertyName) {
-        propertyName = NameUtils.decapitalize(propertyName);
-        PersistentEntity entity = root.getPersistentEntity();
-        String nativePropertyName = resolveNativePropertyName(propertyName);
-        PersistentPropertyPath pp;
-        if (!nativePropertyName.equals(propertyName)) {
-            pp = entity.getPropertyPath(nativePropertyName);
-            if (pp == null) {
-                return null;
-            }
-        } else {
-            PersistentProperty prop = entity.getPropertyByName(nativePropertyName);
-            if (prop == null) {
-                Optional<String> propertyPath = PersistentEntityUtils.getPersistentPropertyPath(entity, propertyName);
-                if (propertyPath.isPresent()) {
-                    String path = propertyPath.get();
-                    pp = entity.getPropertyPath(path);
-                    if (pp == null) {
-                        return null;
-                    }
-                } else {
-                    return null;
-                }
-            } else {
-                pp = PersistentPropertyPath.of(Collections.emptyList(), prop, propertyName);
-            }
+        propertyName = Objects.requireNonNull(NameUtils.decapitalize(propertyName), "Property name must not be null");
+        PersistentPropertyPath pp = resolvePropertyPath(root.getPersistentEntity(), propertyName);
+        if (pp == null) {
+            return null;
         }
 
         PersistentEntityFrom<?, ?> path = root;
@@ -679,6 +658,20 @@ public abstract class AbstractCriteriaMethodMatch implements MethodMatcher.Metho
             exp = path.get(pp.getProperty().getName());
         }
         return CriteriaUtils.requireProperty(exp);
+    }
+
+    private @Nullable PersistentPropertyPath resolvePropertyPath(PersistentEntity entity, String propertyName) {
+        String nativePropertyName = resolveNativePropertyName(propertyName);
+        if (!nativePropertyName.equals(propertyName)) {
+            return entity.getPropertyPath(nativePropertyName);
+        }
+        PersistentProperty prop = entity.getPropertyByName(nativePropertyName);
+        if (prop != null) {
+            return PersistentPropertyPath.of(Collections.emptyList(), prop, propertyName);
+        }
+        return PersistentEntityUtils.getPersistentPropertyPath(entity, propertyName)
+            .map(entity::getPropertyPath)
+            .orElse(null);
     }
 
     protected final void applyJoinSpecs(PersistentEntityRoot<?> root, List<AnnotationValue<Join>> joinSpecs) {
