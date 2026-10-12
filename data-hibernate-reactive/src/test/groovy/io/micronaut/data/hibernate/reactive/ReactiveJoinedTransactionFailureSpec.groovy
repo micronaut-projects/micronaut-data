@@ -75,6 +75,34 @@ class ReactiveJoinedTransactionFailureSpec extends Specification implements Post
         bookRepository.count().block() == 0
     }
 
+    void "a recovered failure of a joined scope fails a Flux whose first result only is consumed"() {
+        when: "the subscriber cancels after the first result"
+        transactionOperations.withTransactionFlux { outer ->
+            saveBook("Outer").thenMany(
+                transactionOperations.withTransactionFlux { inner -> Flux.error(new IllegalStateException("inner")) }
+                    .onErrorResume(IllegalStateException) { Flux.just("recovered", "more") }
+            )
+        }.next().block()
+
+        then: "the transaction is already rolled back when the results are emitted"
+        thrown(UnexpectedRollbackException)
+        bookRepository.count().block() == 0
+    }
+
+    void "a recovered failure of a joined scope fails a Flux without results"() {
+        when:
+        transactionOperations.withTransactionFlux { outer ->
+            saveBook("Outer").thenMany(
+                transactionOperations.withTransactionFlux { inner -> Flux.error(new IllegalStateException("inner")) }
+                    .onErrorResume(IllegalStateException) { Flux.empty() }
+            )
+        }.collectList().block()
+
+        then:
+        thrown(UnexpectedRollbackException)
+        bookRepository.count().block() == 0
+    }
+
     void "a recovered failure of a NESTED scope is committed"() {
         when:
         def result = transactionOperations.withTransactionMono { outer ->

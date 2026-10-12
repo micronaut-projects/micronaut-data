@@ -81,7 +81,10 @@ final class DefaultHibernateReactorTransactionOperations extends AbstractReactor
         return helper.withTransactionFlux(txStatus.getConnection(), sessionScheduler(txStatus), transaction -> {
             ReactiveTransactionStatus<Stage.Session> reactiveTransactionStatus = createTxStatus(txStatus, transaction);
             return executeCallbackFlux(reactiveTransactionStatus, handler);
-        }).doOnEach(ignore -> markCompleted(txStatus)).concatWith(failIfJoinedScopeFailed(txStatus));
+        }).doOnEach(ignore -> markCompleted(txStatus))
+            // The results are emitted once the transaction has completed: fail before the first one,
+            // because a subscriber can cancel after it
+            .switchOnFirst((first, results) -> first.isOnError() || !isFailedByJoinedScope(txStatus) ? results : Flux.error(unexpectedRollback()));
     }
 
     @Override
