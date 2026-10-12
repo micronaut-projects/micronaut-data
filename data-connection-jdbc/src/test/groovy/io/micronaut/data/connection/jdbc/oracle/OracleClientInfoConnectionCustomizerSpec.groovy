@@ -73,7 +73,7 @@ class OracleClientInfoConnectionCustomizerSpec extends Specification {
             0 * connectionOperations.addConnectionCustomizer(_)
     }
 
-    void "a failure to restore the client info replaces the failure of the operation"() {
+    void "a failure to restore the client info doesn't replace the failure of the operation"() {
         given:
             def restoreFailure = new SQLClientInfoException()
             def operationFailure = new IllegalStateException("operation")
@@ -83,9 +83,10 @@ class OracleClientInfoConnectionCustomizerSpec extends Specification {
             newCustomizer().intercept({ throw operationFailure } as Function).apply(status)
 
         then:
-            def e = thrown(RuntimeException)
-            e.cause.is(restoreFailure)
-            e.suppressed.length == 0
+            def e = thrown(IllegalStateException)
+            e.is(operationFailure)
+            e.suppressed.length == 1
+            e.suppressed[0].cause.is(restoreFailure)
     }
 
     void "a failure to restore the client info fails a successful operation"() {

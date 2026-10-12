@@ -18,7 +18,6 @@ package io.micronaut.transaction;
 import io.micronaut.transaction.support.TransactionSynchronization;
 import org.junit.jupiter.api.Test;
 
-import java.util.ConcurrentModificationException;
 import java.util.List;
 
 import static org.junit.jupiter.api.Assertions.assertEquals;
@@ -160,8 +159,8 @@ class TransactionSynchronizationCallbackTest {
     }
 
     @Test
-    void synchronizationRegisteredInBeforeCommitFailsTheCommit() {
-        assertThrows(ConcurrentModificationException.class, () -> txManager.executeWrite(status -> {
+    void synchronizationRegisteredInBeforeCommitIsInvokedForTheFollowingCallbacks() {
+        txManager.executeWrite(status -> {
             status.registerSynchronization(new RecordingSynchronization("A") {
                 @Override
                 public void beforeCommit(boolean readOnly) {
@@ -170,20 +169,21 @@ class TransactionSynchronizationCallbackTest {
                 }
             });
             return null;
-        }));
+        });
 
         assertEquals(List.of(
             "OPEN " + C1, "BEGIN TX " + C1,
             "A beforeCommit",
             "A beforeCompletion", "B beforeCompletion",
-            "ROLLBACK TX " + C1,
-            "A afterCompletion ROLLED_BACK", "B afterCompletion ROLLED_BACK",
+            "COMMIT TX " + C1,
+            "A afterCommit", "B afterCommit",
+            "A afterCompletion COMMITTED", "B afterCompletion COMMITTED",
             "CLOSE " + C1), opLogger.getLogs());
     }
 
     @Test
-    void synchronizationRegisteredInAfterCompletionFailsAfterTheCommit() {
-        assertThrows(ConcurrentModificationException.class, () -> txManager.executeWrite(status -> {
+    void synchronizationRegisteredInAfterCompletionIsNotInvoked() {
+        txManager.executeWrite(status -> {
             status.registerSynchronization(new RecordingSynchronization("A") {
                 @Override
                 public void afterCompletion(Status completionStatus) {
@@ -192,7 +192,7 @@ class TransactionSynchronizationCallbackTest {
                 }
             });
             return null;
-        }));
+        });
 
         assertEquals(List.of(
             "OPEN " + C1, "BEGIN TX " + C1,
