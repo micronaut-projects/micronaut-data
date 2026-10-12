@@ -69,6 +69,38 @@ class PageableRequestArgumentBinderSpec extends Specification {
     }
 
     @Unroll
+    void 'test sort values without a property name are ignored #sort'() {
+        given:
+        PageableRequestArgumentBinder binder = new PageableRequestArgumentBinder(new DataConfiguration.PageableConfiguration())
+        def get = HttpRequest.GET('/')
+        get.parameters.add("sort", sort)
+
+        Pageable p = binder.bind(ConversionContext.of(Pageable), get).get()
+
+        expect:
+        p.orderBy == orderBy
+
+        where:
+        sort                | orderBy
+        [',']               | []
+        ['']                | []
+        [',desc']           | []
+        [' ,desc']          | []
+        [',', 'age,desc']   | [Sort.Order.desc("age")]
+    }
+
+    void 'test only malformed sort values bind like no sort'() {
+        given:
+        PageableRequestArgumentBinder binder = new PageableRequestArgumentBinder(new DataConfiguration.PageableConfiguration())
+        def withMalformedSort = HttpRequest.GET('/')
+        withMalformedSort.parameters.add("sort", [','])
+        def withoutSort = HttpRequest.GET('/')
+
+        expect:
+        binder.bind(ConversionContext.of(Pageable), withMalformedSort).get() == binder.bind(ConversionContext.of(Pageable), withoutSort).get()
+    }
+
+    @Unroll
     void 'test bind size #size and page #page with custom configuration'() {
         given:
         def configuration = new DataConfiguration.PageableConfiguration()

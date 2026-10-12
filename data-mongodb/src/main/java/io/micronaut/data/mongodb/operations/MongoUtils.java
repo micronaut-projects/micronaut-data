@@ -127,6 +127,8 @@ public final class MongoUtils {
                 return bsonValue.asBoolean().getValue();
             case DATE_TIME:
                 return Instant.ofEpochMilli(bsonValue.asDateTime().getValue());
+            case OBJECT_ID:
+                return bsonValue.asObjectId().getValue();
             case NULL:
                 return null;
             case DOCUMENT:
