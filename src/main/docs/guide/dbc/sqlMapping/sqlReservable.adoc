@@ -1,7 +1,8 @@
 Micronaut Data JDBC and R2DBC can map Oracle lock-free reservation columns with ann:data.annotation.Reservable[].
 
 Oracle reservable columns are intended for high-concurrency numeric updates where the database tracks reservations without taking row locks for each reservation operation.
-Reservable columns require Oracle Database 23.26.1 or later. Oracle documentation may refer to this capability using the `26` code name.
+Reservable columns are available starting with Oracle Database 23c (widely released as Oracle Database 23ai). While this core database capability is available in any 23ai environment,
+specific advanced framework integrations or toolsets may recommend the updated Oracle 26ai (internally versioned as 23.26.1) runtime baseline.
 Micronaut Data validates only that the configured dialect is Oracle; it does not configure or detect the database version.
 Use ann:data.annotation.Reservable[] only when the target Oracle Database supports reservable columns. Otherwise, Oracle rejects the generated DDL or DML.
 
