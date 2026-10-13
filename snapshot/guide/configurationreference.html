@@ -46,7 +46,7 @@
         <div class="docs-content">
             <div class="project">
                 <h1>Configuration Reference</h1>
-                <p><strong>Version:</strong>5.2.3-SNAPSHOT</p>
+                <p><strong>Version:</strong>5.3.0-SNAPSHOT</p>
                 <p></p>
             </div>
 <div class="sect2">
@@ -243,7 +243,8 @@
 <tr>
 <td class="tableblock halign-left valign-top"><p class="tableblock"><code>datasources.*.batch-generate</code></p></td>
 <td class="tableblock halign-left valign-top"><p class="tableblock">boolean</p></td>
-<td class="tableblock halign-left valign-top"><p class="tableblock">Whether to generate tables in batch.</p></td>
+<td class="tableblock halign-left valign-top"><p class="tableblock">Whether to drop and create the tables with a single statement containing all the DDL statements.
+ It requires a driver that executes several statements in one string and is ignored for Oracle.</p></td>
 <td class="tableblock halign-left valign-top"></td>
 </tr>
 <tr>
@@ -262,6 +263,12 @@
 <td class="tableblock halign-left valign-top"><p class="tableblock"><code>datasources.*.allow-connection-per-operation</code></p></td>
 <td class="tableblock halign-left valign-top"><p class="tableblock">boolean</p></td>
 <td class="tableblock halign-left valign-top"><p class="tableblock">If true, {@link javax.sql.DataSource#getConnection()} will be used in try-resource block for the operation.</p></td>
+<td class="tableblock halign-left valign-top"></td>
+</tr>
+<tr>
+<td class="tableblock halign-left valign-top"><p class="tableblock"><code>datasources.*.read-only-connection-per-operation</code></p></td>
+<td class="tableblock halign-left valign-top"><p class="tableblock">boolean</p></td>
+<td class="tableblock halign-left valign-top"><p class="tableblock">Sets whether a connection opened for a single read operation is switched to read-only. Default value (false).</p></td>
 <td class="tableblock halign-left valign-top"></td>
 </tr>
 <tr>
@@ -405,7 +412,10 @@
 <tr>
 <td class="tableblock halign-left valign-top"><p class="tableblock"><code>r2dbc.datasources.*.batch-generate</code></p></td>
 <td class="tableblock halign-left valign-top"><p class="tableblock">boolean</p></td>
-<td class="tableblock halign-left valign-top"><p class="tableblock">Whether to generate tables in batch.</p></td>
+<td class="tableblock halign-left valign-top"><p class="tableblock">Whether to create the tables with a single statement containing all the DDL statements. It requires a
+ driver that executes several statements in one string, such as H2 or PostgreSQL, and is ignored for Oracle.
+ When the batch fails, for example because a table already exists, the tables are created one by one.
+ With {@link SchemaGenerate#CREATE_DROP}, the tables are still dropped one by one.</p></td>
 <td class="tableblock halign-left valign-top"></td>
 </tr>
 <tr>
