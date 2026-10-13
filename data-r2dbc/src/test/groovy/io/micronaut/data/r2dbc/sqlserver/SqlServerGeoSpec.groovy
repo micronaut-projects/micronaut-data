@@ -6,6 +6,7 @@ import io.micronaut.data.model.geo.Point
 import io.micronaut.data.model.geo.Polygon
 import io.micronaut.data.tck.repositories.DeliveryDriverJsonRepository
 import io.micronaut.data.tck.repositories.DeliveryDriverWktRepository
+import io.micronaut.data.tck.repositories.DistrictRepository
 import io.micronaut.data.tck.repositories.GeometryEntityJsonRepository
 import io.micronaut.data.tck.repositories.GeometryEntityWktRepository
 import io.micronaut.data.tck.repositories.HotelJsonRepository
@@ -57,6 +58,12 @@ class SqlServerGeoSpec extends AbstractGeoSpec implements SqlServerTestPropertyP
     @Override
     DeliveryDriverWktRepository getDeliveryDriverWktRepository() {
         return context.getBean(MSDeliveryDriverWktRepository)
+    }
+
+    @Memoized
+    @Override
+    DistrictRepository getDistrictRepository() {
+        return context.getBean(MSDistrictRepository)
     }
 
     @Memoized

@@ -110,7 +110,6 @@ public final class SqlSchemaUtils {
 
     static final String LIST_ANNOTATION_SUFFIX = "$List";
 
-
     private static final Logger LOG = LoggerFactory.getLogger(SqlSchemaUtils.class);
 
     private static final int MAX_CONSTRAINT_NAME_LENGTH = 128;

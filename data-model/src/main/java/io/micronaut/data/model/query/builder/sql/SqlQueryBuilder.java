@@ -2466,21 +2466,21 @@ public class SqlQueryBuilder extends AbstractSqlLikeQueryBuilder {
                     } else {
                         columnName = asPath(propertyAssociations, prop);
                     }
+
+                    if (StringUtils.isEmpty(columnAlias)) {
+                        columnAlias = joinPathAlias + columnName;
+                    }
+                    String qualifiedColumn = joinAlias + DOT + (queryState.shouldEscape() ? quote(columnName) : columnName);
                     if (transformed != null) {
-                        query.append(transformed).append(AS_CLAUSE);
+                        query.append(transformed);
+                    } else if (isJsonOrWktGeometry(prop)) {
+                        query.append(getGeometryFunction(qualifiedColumn, prop));
                     } else {
-                        query
-                            .append(joinAlias)
-                            .append(DOT)
-                            .append(queryState.shouldEscape() ? quote(columnName) : columnName)
-                            .append(AS_CLAUSE);
+                        query.append(qualifiedColumn);
                     }
-                    if (StringUtils.isNotEmpty(columnAlias)) {
-                        query.append(columnAlias);
-                    } else {
-                        query.append(joinPathAlias).append(columnName);
-                    }
-                    query.append(COMMA);
+                    query.append(AS_CLAUSE)
+                            .append(columnAlias)
+                            .append(COMMA);
                 });
                 query.setLength(query.length() - 1);
             }

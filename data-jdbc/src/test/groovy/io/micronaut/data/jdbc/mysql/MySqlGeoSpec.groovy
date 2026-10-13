@@ -6,6 +6,7 @@ import io.micronaut.data.model.geo.Point
 import io.micronaut.data.tck.jdbc.entities.geo.DeliveryDriverWkt
 import io.micronaut.data.tck.repositories.DeliveryDriverJsonRepository
 import io.micronaut.data.tck.repositories.DeliveryDriverWktRepository
+import io.micronaut.data.tck.repositories.DistrictRepository
 import io.micronaut.data.tck.repositories.GeometryEntityJsonRepository
 import io.micronaut.data.tck.repositories.GeometryEntityWktRepository
 import io.micronaut.data.tck.repositories.HotelJsonRepository
@@ -55,6 +56,12 @@ class MySqlGeoSpec extends AbstractGeoSpec implements MySQLTestPropertyProvider 
     @Override
     DeliveryDriverWktRepository getDeliveryDriverWktRepository() {
         return context.getBean(MySqlDeliveryDriverWktRepository)
+    }
+
+    @Memoized
+    @Override
+    DistrictRepository getDistrictRepository() {
+        return context.getBean(MySqlDistrictRepository)
     }
 
     @Override
