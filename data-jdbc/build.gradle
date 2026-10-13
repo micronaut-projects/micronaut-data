@@ -53,6 +53,7 @@ dependencies {
 
     testCompileOnly mn.micronaut.inject.groovy
     testImplementation mnSql.ojdbc11
+    testImplementation mnSql.postgresql
 
 
     testImplementation mnMultitenancy.micronaut.multitenancy
@@ -62,7 +63,6 @@ dependencies {
     testRuntimeOnly mnSql.h2
     testRuntimeOnly mnSql.mariadb.java.client
     testRuntimeOnly mnSql.mysql.connector.j
-    testRuntimeOnly mnSql.postgresql
     testRuntimeOnly mnSql.mssql.jdbc
     testRuntimeOnly mn.snakeyaml
     testRuntimeOnly libs.h2gis

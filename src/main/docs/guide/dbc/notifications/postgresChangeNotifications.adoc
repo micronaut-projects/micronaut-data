@@ -1,0 +1,95 @@
+NOTE: PostgreSQL notification support currently provides an experimental annotation, event metadata, and a database trigger protocol.
+The JDBC subscription provider, entity loading, and connection recovery are not yet implemented.
+Declaring ann:data.jdbc.annotation.PostgresChangeNotification[] does not currently start a PostgreSQL subscription.
+
+The PostgreSQL contract uses ann:data.jdbc.annotation.ChangeListener[] together with
+ann:data.jdbc.annotation.PostgresChangeNotification[]. Its required `channel` member names the exact channel used by
+the table triggers. Supply the case-sensitive channel name without SQL identifier quotes, using at most 63 UTF-8 bytes.
+Blank names and names containing NUL characters are rejected during compilation.
+
+== Installing the Trigger Function
+
+The `micronaut-data-jdbc` artifact includes this SQL resource:
+
+[source,text]
+----
+io/micronaut/data/jdbc/notification/postgres/create-notification-function.sql
+----
+
+Copy the function into an application database migration and install it in an explicitly selected schema.
+It creates `micronaut_data_notify_change()` in the migration's current schema and executes with the caller's privileges.
+At execution time its search path is restricted to `pg_catalog`. Qualify the function name when creating triggers.
+The framework does not install or remove the function or triggers on application startup or shutdown.
+
+For example, after installing the function in `public`, register changes to an existing `public.book` table:
+
+[source,sql]
+----
+CREATE TRIGGER book_changes
+AFTER INSERT OR UPDATE OR DELETE ON public.book
+FOR EACH ROW EXECUTE FUNCTION public.micronaut_data_notify_change('book_changes', 'id');
+
+CREATE TRIGGER book_truncate
+AFTER TRUNCATE ON public.book
+FOR EACH STATEMENT EXECUTE FUNCTION public.micronaut_data_notify_change('book_changes', 'id');
+----
+
+The first argument is the channel. Subsequent arguments are the exact mapped primary-key column names.
+Supply every component for composite keys, for example `'book_changes', 'tenant_id', 'book_id'`.
+These names refer to database columns, including their case, rather than Java properties.
+The migration must supply the actual primary key: the function validates column values, but does not inspect primary-key constraints.
+
+Keys must be non-null values represented by PostgreSQL JSON strings, numbers, or booleans.
+Missing columns, duplicate column arguments, null keys, and structured JSON keys cause the modifying statement to fail explicitly.
+The function supports `AFTER ROW` insert/update/delete triggers and `AFTER STATEMENT` truncate triggers.
+Database DDL changes such as dropping a table are outside this trigger protocol.
+
+== Version 1 Payload
+
+The PostgreSQL notification envelope supplies the channel separately. Its payload is a JSON object:
+
+[source,json]
+----
+{
+  "version": 1,
+  "schema": "public",
+  "table": "book",
+  "operation": "UPDATE",
+  "oldKeys": { "id": "9007199254740993" },
+  "newKeys": { "id": "9007199254740994" }
+}
+----
+
+All key values are JSON strings, including numeric and boolean identifiers, so numeric precision is preserved.
+Schema, table, and key names retain their database spelling. Payloads contain keys only, with no complete row state.
+
+[cols="1,2,2",options="header"]
+|===
+|Operation |`oldKeys` |`newKeys`
+|`INSERT` |Empty object |Inserted primary key
+|`UPDATE` |Previous primary key |Current primary key
+|`DELETE` |Deleted primary key |Empty object
+|`INVALIDATE` |Empty object |Empty object
+|===
+
+Updates retain both keys even when their values are identical. Truncation sends `INVALIDATE`.
+If the serialized payload reaches 8,000 bytes in the database encoding, the function emits `INVALIDATE` with the
+schema and table identity and empty key objects, keeping the notification below PostgreSQL's default payload limit.
+Consumers must validate the protocol version and table/key mapping before loading an entity.
+
+api:data.jdbc.notification.postgres.PostgresChangeEventMetadata[] exposes the channel, schema, table,
+and immutable `oldKeys` and `newKeys` maps. A deleted row can be identified from its old keys without reloading it.
+Future entity loading will return current state at reload time; it cannot reconstruct a row's historical state from this payload.
+
+== Delivery Semantics
+
+Notifications are delivered only after the modifying transaction commits; rolled-back changes produce no notifications.
+PostgreSQL may coalesce identical channel/payload pairs within a transaction. For example, multiple updates to the same
+row with unchanged keys may produce one update notification. This protocol signals changes for reconciliation and cache
+maintenance; it does not provide an audit record of every write or replay after a listener disconnects.
+
+Notifications are visible to all users in the database. Include only appropriate identifiers in payloads;
+channels do not provide access control. Trigger execution and PostgreSQL notification-queue failures can fail the write transaction.
+
+See the PostgreSQL link:https://www.postgresql.org/docs/current/sql-notify.html[`NOTIFY` documentation]
+for transaction, payload, and delivery behavior.
