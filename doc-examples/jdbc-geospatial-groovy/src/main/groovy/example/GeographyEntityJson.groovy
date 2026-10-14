@@ -20,7 +20,7 @@ class GeographyEntityJson {
     Long id
     //tag::get[]
 
-    @Srid(4258)
+    @Srid(Srid.ETRS_89)
     @Index(columns = "location")
     @MappedProperty(value = "location", definition = "geography not null")
     Point point

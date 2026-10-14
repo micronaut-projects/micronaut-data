@@ -37,6 +37,19 @@ import java.util.List;
 public record Point(double x, double y) implements Geometry {
 
     /**
+     * Creates a point with finite coordinates.
+     *
+     * @param x the x-coordinate (typically longitude)
+     * @param y the y-coordinate (typically latitude)
+     * @throws IllegalArgumentException if either coordinate is NaN or infinite
+     */
+    public Point {
+        if (!Double.isFinite(x) || !Double.isFinite(y)) {
+            throw new IllegalArgumentException("Point coordinates must be finite");
+        }
+    }
+
+    /**
      * Returns the coordinates of this point as a list of two {@code Double} values.
      *
      * @return a list containing the x and y coordinates, in that order
@@ -50,7 +63,8 @@ public record Point(double x, double y) implements Geometry {
      *
      * @param coords a list containing exactly two {@code Double} elements representing x and y
      * @return a new {@link Point} created from the given coordinates
-     * @throws IllegalArgumentException if {@code coords} is {@code null}, empty, or does not contain exactly two elements
+     * @throws IllegalArgumentException if {@code coords} is {@code null}, does not contain exactly two elements,
+     * contains null values, or contains non-finite values
      */
     public static Point fromCoords(List<Double> coords) {
         if (CollectionUtils.isEmpty(coords)) {

@@ -72,6 +72,7 @@ import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.Collection;
 import java.util.Collections;
+import java.util.LinkedHashMap;
 import java.util.LinkedHashSet;
 import java.util.List;
 import java.util.Map;
@@ -108,10 +109,6 @@ public final class SqlSchemaUtils {
     public static final String NULLABLE_COLUMN = "NULLABLE";
 
     static final String LIST_ANNOTATION_SUFFIX = "$List";
-
-    static final int SRID_WGS_84 = 4326;
-    static final int SRID_ETRS_89 = 4258;
-    static final int SRID_WEB_MERCATOR = 3857;
 
     private static final Logger LOG = LoggerFactory.getLogger(SqlSchemaUtils.class);
 
@@ -757,12 +754,12 @@ public final class SqlSchemaUtils {
                     if (sridOpt.isPresent()) {
                         srid = sridOpt.getAsInt();
                     } else if (annotationMetadata.hasAnnotation(Index.class)) {
-                        srid = SRID_WGS_84;
+                        srid = Srid.WGS_84;
                     }
                     String columnName = namingStrategy.mappedName(associations, persistentProperty);
-                    if (srid == SRID_WGS_84 || srid == SRID_ETRS_89) {
+                    if (srid == Srid.WGS_84 || srid == Srid.ETRS_89) {
                         statements.add(ORACLE_GEOM_METADATA_STATEMENT.formatted(tableName, columnName, "-180", "180", "0.005", "-90", "90", "0.005", srid));
-                    } else if (srid == SRID_WEB_MERCATOR) {
+                    } else if (srid == Srid.WEB_MERCATOR) {
                         statements.add(ORACLE_GEOM_METADATA_STATEMENT.formatted(tableName, columnName, "-20037508.3427892", "20037508.3427892", "0.001", "-20037508.3427892", "20037508.3427892", "0.001", srid));
                     }
                 }
@@ -787,9 +784,16 @@ public final class SqlSchemaUtils {
                                             Set<SqlIndexMapping> indexMappings,
                                             Dialect dialect,
                                             List<SqlIndexDefinitionProvider> sqlIndexDefinitionProviders) {
-        Map<String, PersistentProperty> propertyMap = entity.getPersistentProperties().stream()
-            .filter(pp -> !(pp instanceof Association a && a.isForeignKey()))
-            .collect(Collectors.toMap(namingStrategy::mappedName, Function.identity()));
+        Map<String, PersistentPropertyPath> propertyMap = new LinkedHashMap<>();
+        for (PersistentProperty property : entity.getPersistentProperties()) {
+            if (property instanceof Association association && association.isForeignKey()) {
+                continue;
+            }
+            PersistentEntityUtils.traversePersistentProperties(Collections.emptyList(), property, (propertyAssociations, leaf) -> {
+                String columnName = namingStrategy.mappedName(propertyAssociations, leaf);
+                propertyMap.put(columnName, PersistentPropertyPath.of(propertyAssociations, leaf, ""));
+            });
+        }
 
         final Optional<List<AnnotationValue<Index>>> indexes = entity
             .findAnnotation(Indexes.class)
@@ -849,7 +853,7 @@ public final class SqlSchemaUtils {
     }
 
     private static SqlIndexMapping toSqlIndexMapping(AnnotationValue<Index> index,
-                                                     Map<String, PersistentProperty> propertyMap,
+                                                     Map<String, PersistentPropertyPath> propertyMap,
                                                      NamingStrategy namingStrategy,
                                                      List<Association> associations) {
         String name = index.stringValue("name").orElse("");
@@ -860,10 +864,11 @@ public final class SqlSchemaUtils {
         String[] mappedColumns = new String[declaredColumns.length];
         for (int i = 0; i < declaredColumns.length; i++) {
             String declaredColumn = declaredColumns[i];
-            PersistentProperty persistentProperty = propertyMap.get(declaredColumn);
-            if (persistentProperty == null) {
+            PersistentPropertyPath propertyPath = propertyMap.get(declaredColumn);
+            if (propertyPath == null) {
                 throw new MappingException("Persistent property not found for column: " + declaredColumn);
             }
+            PersistentProperty persistentProperty = propertyPath.getProperty();
             if (persistentProperty.isAssignable(Geometry.class)) {
                 OptionalInt optSrid = persistentProperty.getAnnotationMetadata().intValue(Srid.class);
                 if (optSrid.isPresent()) {
@@ -871,7 +876,9 @@ public final class SqlSchemaUtils {
                 }
                 spatial = true;
             }
-            mappedColumns[i] = namingStrategy.mappedName(associations, persistentProperty);
+            List<Association> propertyAssociations = new ArrayList<>(associations);
+            propertyAssociations.addAll(propertyPath.getAssociations());
+            mappedColumns[i] = namingStrategy.mappedName(propertyAssociations, persistentProperty);
         }
         if (spatial && mappedColumns.length > 1) {
             throw new MappingException("A geospatial column cannot be included in a composite index. Index columns: " + Arrays.toString(mappedColumns));

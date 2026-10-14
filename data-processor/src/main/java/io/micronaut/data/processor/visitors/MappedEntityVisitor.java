@@ -44,6 +44,7 @@ import io.micronaut.inject.ast.MethodElement;
 import io.micronaut.inject.ast.ParameterElement;
 import io.micronaut.inject.ast.PropertyElement;
 import io.micronaut.inject.processing.ProcessingException;
+import io.micronaut.inject.visitor.ElementPostponedToNextRoundException;
 import io.micronaut.inject.visitor.TypeElementVisitor;
 import io.micronaut.inject.visitor.VisitorContext;
 import org.jspecify.annotations.Nullable;
@@ -85,12 +86,32 @@ public class MappedEntityVisitor implements TypeElementVisitor<MappedEntity, Obj
     private static final String LEGACY = "LEGACY";
 
     private final Map<String, SourcePersistentEntity> entityMap = new HashMap<>(50);
+    /**
+     * Whether this visitor visits entities and embeddables as their own elements, rather than resolving
+     * them for a repository; see {@link #resolveJsonCreatorConflictForRepository(ClassElement, SourcePersistentEntity)}.
+     */
+    private final boolean visitsOwnElements;
     private final Function<ClassElement, SourcePersistentEntity> entityResolver = new Function<>() {
         @Override
         public SourcePersistentEntity apply(ClassElement classElement) {
             return entityMap.computeIfAbsent(classElement.getName(), s -> new SourcePersistentEntity(classElement, this));
         }
     };
+
+    /**
+     * Visitor for entities and embeddables visited as their own elements.
+     */
+    public MappedEntityVisitor() {
+        this(true);
+    }
+
+    /**
+     * @param visitsOwnElements whether this visitor visits entities and embeddables as their own elements,
+     *                          rather than resolving them for a repository
+     */
+    MappedEntityVisitor(boolean visitsOwnElements) {
+        this.visitsOwnElements = visitsOwnElements;
+    }
 
     @Override
     public int getOrder() {
@@ -106,7 +127,11 @@ public class MappedEntityVisitor implements TypeElementVisitor<MappedEntity, Obj
     @Override
     public void visitClass(ClassElement element, VisitorContext context) {
         SourcePersistentEntity entity = entityResolver.apply(element);
-        resolveJsonCreatorConflict(element, entity);
+        if (visitsOwnElements) {
+            resolveJsonCreatorConflict(element, entity);
+        } else {
+            resolveJsonCreatorConflictForRepository(element, entity);
+        }
         Map<String, DataType> dataTypes = getConfiguredDataTypes(element);
         Map<String, String> dataConverters = getConfiguredDataConverters(element);
         boolean legacyEmbeddedNaming = isLegacyEmbeddedNaming(element, context);
@@ -200,6 +225,32 @@ public class MappedEntityVisitor implements TypeElementVisitor<MappedEntity, Obj
             + String.join(" and ", reasons)
             + ". Either add a no-argument constructor and setters for all persistent properties, "
             + "or remove @JsonCreator and use a custom Serde deserializer (@Serdeable.Deserializable(using = ...)).");
+    }
+
+    /**
+     * Resolves the {@code @JsonCreator} conflict of an entity or embeddable that a repository resolves.
+     * A type compiled into a dependency is never visited as its own element in this compilation, so it is
+     * checked here. Looking up the creator of a record inspects its static methods, and a static method
+     * whose signature names a type generated later in this compilation postpones the lookup to the next
+     * round. Such a type is part of this compilation and its own visit checks it, so the check is skipped
+     * here instead of postponing the repository, whose bean definition is written in the current round.
+     *
+     * @param element The entity or embeddable
+     * @param entity  The source persistent entity
+     */
+    private void resolveJsonCreatorConflictForRepository(ClassElement element, SourcePersistentEntity entity) {
+        try {
+            resolveJsonCreatorConflict(element, entity);
+        } catch (RuntimeException e) {
+            if (!isPostponement(e)) {
+                throw e;
+            }
+        }
+    }
+
+    private static boolean isPostponement(RuntimeException e) {
+        // the Java processor's PostponeToNextRoundException is not on this module's classpath
+        return e instanceof ElementPostponedToNextRoundException || e.getClass().getSimpleName().equals("PostponeToNextRoundException");
     }
 
     private static boolean isJsonCreator(MethodElement element) {

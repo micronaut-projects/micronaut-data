@@ -36,6 +36,14 @@ Use api:data.annotation.Srid[] to declare the spatial reference system identifie
 property. Micronaut Data uses the SRID value when it generates read and write conversion SQL, schema metadata, and
 predicate argument conversion.
 
+Use the constants declared on `Srid` for common spatial reference systems:
+
+* `Srid.WGS_84` (4326) - World Geodetic System 1984
+* `Srid.WEB_MERCATOR` (3857) - Web Mercator
+* `Srid.ETRS_89` (4258) - European Terrestrial Reference System 1989
+
+For example, use `@Srid(value = Srid.WGS_84, type = Srid.CrsType.GEOGRAPHIC)` for WGS 84 coordinates.
+
 Micronaut Data uses `Srid.CrsType` to choose the distance function for dialects that have different functions
 for planar and spherical distance checks:
 
@@ -120,9 +128,9 @@ those metadata statements automatically if you use Micronaut Data's internal sch
 for tests rather than production schema management. In that case, the generated metadata depends on the SRID.
 The internal schema-generation tooling currently supports the following SRIDs:
 
-* 4326 - WGS 84 - World Geodetic System 1984
-* 3857 - Web Mercator
-* 4258 - ETRS89 - Geodetic coordinate system for Europe
+* `Srid.WGS_84` (4326) - WGS 84 - World Geodetic System 1984
+* `Srid.WEB_MERCATOR` (3857) - Web Mercator
+* `Srid.ETRS_89` (4258) - ETRS89 - Geodetic coordinate system for Europe
 
 If using the internal schema-generation tooling and another SRID, a new row will not be inserted into the `USER_SDO_GEOM_METADATA` table.
 
@@ -212,7 +220,7 @@ Micronaut Data translates geospatial repository methods and criteria predicates 
 | Predicate | PostgreSQL / PostGIS spatial function
 
 | `GeoWithin`
-| `ST_Within(column, convertedValue)`
+| `ST_CoveredBy(column, convertedValue)`
 
 | `GeoIntersects`
 | `ST_Intersects(column, convertedValue)`
@@ -239,10 +247,37 @@ Micronaut Data uses the following functions to read and write spatial data:
 | `ST_GeomFromGeoJSON(?, 1, srid)`
 
 | WKT
-| `ST_AsText(column)`
+| `ST_AsText(column /*!80001 , 'axis-order=long-lat' */)`
 | `ST_GeomFromText(?)`
-| `ST_GeomFromText(?, srid)`
+| `ST_GeomFromText(?, srid /*!80001 , 'axis-order=long-lat' */)`
 |===
+
+WKT coordinates use `(x, y)` order, which is `(longitude, latitude)` for geographic SRIDs.
+MySQL 8.0.1 and later use the SRID's axis order by default, so Micronaut Data explicitly sets
+`axis-order=long-lat` for WKT writes with an SRID, predicate arguments, and reads. The option is wrapped
+in a MySQL executable comment so MariaDB and older MySQL versions retain their existing x/y behavior.
+
+[WARNING]
+====
+Existing WKT-mapped data on MySQL 8.0.1 and later with a geographic SRID such as 4326 requires a one-time migration.
+Since geospatial support was introduced in Micronaut Data 5.0.0, versions before this axis-order fix stored
+longitude and latitude swapped: `ST_GeomFromText(?, 4326)` used the SRID's axis order, and `ST_AsText(column)`
+swapped them back on reads, making round-trips appear correct. Longitudes outside ±90 were rejected.
+With the explicit `axis-order=long-lat` option, those existing rows are read back with longitude and latitude
+flipped and can be excluded from `Near` query results.
+
+When upgrading, repair affected values once with `ST_SwapXY`. For example, if all rows in
+`delivery_driver_wkt` were written with the old behavior:
+
+[source,sql]
+----
+UPDATE delivery_driver_wkt SET location = ST_SwapXY(location);
+----
+
+Adapt the table and column names to your schema. If old and corrected rows coexist, restrict the update
+to rows written with the old behavior. Micronaut Data cannot distinguish them automatically.
+Do not apply this update to newly written or already migrated values: running it again swaps the axes back.
+====
 
 ==== Schema generation
 
@@ -276,7 +311,7 @@ Micronaut Data translates geospatial repository methods and criteria predicates 
 |===
 
 `convertedValue` is the MySQL spatial conversion call such as `ST_GeomFromGeoJSON(?, 1, srid)` or
-`ST_GeomFromText(?, srid)`.
+`ST_GeomFromText(?, srid /*!80001 , 'axis-order=long-lat' */)`.
 
 === MariaDB
 
@@ -294,9 +329,9 @@ follow the same MySQL-style `GEOMETRY` storage model, `ST_AsGeoJSON` and `ST_AsT
 | `ST_GeomFromGeoJSON(?, 1, srid)`
 
 | WKT
-| `ST_AsText(column)`
+| `ST_AsText(column /*!80001 , 'axis-order=long-lat' */)`
 | `ST_GeomFromText(?)`
-| `ST_GeomFromText(?, srid)`
+| `ST_GeomFromText(?, srid /*!80001 , 'axis-order=long-lat' */)`
 |===
 
 If you are targeting MariaDB, use the same mapping guidance as MySQL unless your database version introduces different
@@ -324,7 +359,7 @@ Micronaut Data translates geospatial repository methods and criteria predicates 
 |===
 
 `convertedValue` is the MariaDB spatial conversion call such as `ST_GeomFromGeoJSON(?, 1, srid)` or
-`ST_GeomFromText(?, srid)`.
+`ST_GeomFromText(?, srid /*!80001 , 'axis-order=long-lat' */)`.
 
 === H2
 
@@ -390,8 +425,12 @@ by default. To change the column type to `GEOGRAPHY`, set `@MappedProperty(defin
 
 snippet::example.GeographyEntityWkt[project-base="doc-examples/jdbc-geospatial", source="main", tags="get"]
 
-WARNING: SQL Server doesn't have built-in functions for conversion between JSON and internal geospatial data types
-so Micronaut Data will use WKT conversion.
+SQL Server uses WKT conversion for both the default `GeometryJsonConverter` mapping and explicit
+`GeometryWktConverter` mappings. SQL Server does not provide built-in GeoJSON conversion for its spatial types.
+When the conversion context identifies SQL Server, `GeometryJsonConverter` delegates both reading and writing
+to `GeometryWktConverter` to match the generated spatial SQL. This also applies to geospatial predicate arguments;
+no explicit converter annotation is required. Other database types and conversion contexts without database
+information continue to use GeoJSON with `GeometryJsonConverter`.
 
 Micronaut Data uses the following functions to read and write spatial data:
 [cols="1,1,2"]
@@ -412,7 +451,7 @@ CREATE SPATIAL INDEX [idx_geography_entity_wkt_location] ON [geography_entity_wk
 ----
 
 When the indexed column definition contains `geometry`, the internal schema-generation tooling also appends the geometry
-grid bounding box clause using default coordinates for SRID = 3857 - Web Mercator:
+grid bounding box clause using default coordinates for `Srid.WEB_MERCATOR` (3857):
 
 [source,sql]
 ----
