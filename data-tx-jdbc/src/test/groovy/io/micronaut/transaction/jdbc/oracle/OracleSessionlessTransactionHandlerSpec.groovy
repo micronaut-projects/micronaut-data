@@ -2,17 +2,21 @@ package io.micronaut.transaction.jdbc.oracle
 
 import io.micronaut.core.propagation.PropagatedContext
 import io.micronaut.data.connection.ConnectionDefinition
+import io.micronaut.data.connection.ConnectionOperations
+import io.micronaut.data.connection.SynchronousConnectionManager
 import io.micronaut.data.connection.support.DefaultConnectionStatus
 import io.micronaut.transaction.TransactionDefinition
 import io.micronaut.transaction.annotation.OracleTransactional
 import io.micronaut.transaction.exceptions.CannotCreateTransactionException
 import io.micronaut.transaction.exceptions.TransactionSystemException
 import io.micronaut.transaction.impl.DefaultTransactionStatus
+import io.micronaut.transaction.jdbc.DataSourceTransactionManager
 import io.micronaut.transaction.support.DefaultTransactionDefinition
 import io.micronaut.transaction.support.TransactionSynchronization
 import oracle.jdbc.OracleConnection
 import spock.lang.Specification
 
+import javax.sql.DataSource
 import java.sql.Connection
 import java.sql.SQLException
 import java.sql.SQLFeatureNotSupportedException
@@ -312,7 +316,7 @@ class OracleSessionlessTransactionHandlerSpec extends Specification {
         thrown(CannotCreateTransactionException)
     }
 
-    def "failed resume does not consume the propagated transaction id"() {
+    def "failed resume clears the propagated transaction id"() {
         given:
         def handler = new OracleSessionlessTransactionHandler("test")
         def connection = Mock(Connection)
@@ -331,7 +335,63 @@ class OracleSessionlessTransactionHandlerSpec extends Specification {
         1 * connection.unwrap(OracleConnection) >> oracle
         1 * oracle.resumeTransaction(_) >> { throw new SQLException("resume failed") }
         thrown(TransactionSystemException)
-        Arrays.equals(gtrid, state.gtrid.orElseThrow())
+        state.gtrid.isEmpty()
+    }
+
+    def "failed resume confirmation clears the id even when rollback fails"() {
+        given:
+        boolean autoCommit = true
+        def connection = Mock(Connection) {
+            getAutoCommit() >> { autoCommit }
+            setAutoCommit(_) >> { boolean value -> autoCommit = value }
+        }
+        def oracle = Mock(OracleConnection)
+        def connectionStatus = new DefaultConnectionStatus<>(connection, ConnectionDefinition.named("test"), true, null)
+        def connections = Mock(ConnectionOperations) {
+            findConnectionStatus() >> Optional.empty()
+        }
+        def manager = Mock(SynchronousConnectionManager) {
+            getConnection(_) >> connectionStatus
+        }
+        def handler = new OracleSessionlessTransactionHandler("test")
+        def txManager = new DataSourceTransactionManager(
+            Mock(DataSource), connections, manager, [], handler)
+        def state = new OracleSessionlessTransactionState()
+        state.setGtrid([4, 5, 6] as byte[])
+
+        when:
+        PropagatedContext.empty().plus(state).propagate({
+            txManager.execute(definition(OracleTransactional.Sessionless.RESUME_AND_SUSPEND), { status ->
+                throw new AssertionError("application work should not run")
+            })
+        })
+
+        then:
+        1 * connection.unwrap(OracleConnection) >> oracle
+        1 * oracle.resumeTransaction(_)
+        1 * oracle.pingDatabase() >> {
+            if (throwsException) {
+                throw new SQLException("confirmation failed after resume")
+            }
+            OracleConnection.DATABASE_CLOSED
+        }
+        1 * connection.rollback() >> {
+            if (rollbackFails) {
+                throw new SQLException("rollback failed")
+            }
+        }
+        def e = thrown(TransactionSystemException)
+        e.message == "Could not resume Oracle sessionless transaction"
+        e.cause.message == (throwsException ? "confirmation failed after resume" : "Could not confirm Oracle sessionless transaction resume")
+        e.suppressed.length == (rollbackFails ? 1 : 0)
+        state.gtrid.isEmpty()
+
+        where:
+        throwsException | rollbackFails
+        true            | false
+        false           | false
+        true            | true
+        false           | true
     }
 
     private static DefaultTransactionStatus<Connection> txStatus(Connection connection,

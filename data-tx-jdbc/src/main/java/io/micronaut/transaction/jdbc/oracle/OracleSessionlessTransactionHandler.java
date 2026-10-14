@@ -112,7 +112,7 @@ final class OracleSessionlessTransactionHandler implements SessionlessTransactio
         byte[] gtrid = state.getGtrid()
             .orElseThrow(() -> new CannotCreateTransactionException("No Oracle sessionless transaction id found to resume"));
         OracleConnection oracle = unwrapRequiredOracleForBegin(status);
-        resume(oracle, gtrid, suspendAfterCompletion);
+        resume(oracle, gtrid, suspendAfterCompletion, state);
         status.registerSynchronization(new TransactionSynchronization() {
             @Override
             public void afterCompletion(Status completionStatus) {
@@ -199,7 +199,8 @@ final class OracleSessionlessTransactionHandler implements SessionlessTransactio
         }
     }
 
-    private static void resume(OracleConnection oracle, byte[] gtrid, boolean immediate) {
+    private static void resume(OracleConnection oracle, byte[] gtrid, boolean immediate,
+                               OracleSessionlessTransactionState state) {
         try {
             oracle.resumeTransaction(gtrid);
             // The driver queues the resume request until the next database round trip.
@@ -208,6 +209,8 @@ final class OracleSessionlessTransactionHandler implements SessionlessTransactio
                 throw new SQLException("Could not confirm Oracle sessionless transaction resume");
             }
         } catch (Exception e) {
+            // Begin-failure cleanup does not invoke transaction completion callbacks.
+            state.clearGtrid();
             throw new TransactionSystemException("Could not resume Oracle sessionless transaction", e);
         }
     }
