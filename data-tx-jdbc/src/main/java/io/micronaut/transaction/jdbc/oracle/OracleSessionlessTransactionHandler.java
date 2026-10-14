@@ -68,22 +68,25 @@ final class OracleSessionlessTransactionHandler implements SessionlessTransactio
         OracleSessionlessTransactionState state = OracleSessionlessTransactionState.current()
             .orElseThrow(() -> new CannotCreateTransactionException("Oracle sessionless transaction propagation is not active"));
         return switch (mode) {
-            case SUSPEND -> beginSuspendable(status, definition, state);
-            case REQUIRES_SUSPENDED -> {
-                beginResumed(status, state, false);
-                yield null;
+            case SUSPEND -> {
+                OracleConnection oracle = beginSuspendable(status, definition, state);
+                yield () -> suspend(oracle);
             }
             case RESUME_AND_SUSPEND -> {
                 OracleConnection oracle = beginResumed(status, state, true);
                 yield () -> suspend(oracle);
             }
+            case REQUIRES_SUSPENDED -> {
+                beginResumed(status, state, false);
+                yield null;
+            }
             case NONE -> null;
         };
     }
 
-    private TransactionResourceCommit beginSuspendable(TransactionStatus<?> status,
-                                                       TransactionDefinition definition,
-                                                       OracleSessionlessTransactionState state) {
+    private OracleConnection beginSuspendable(TransactionStatus<?> status,
+                                              TransactionDefinition definition,
+                                              OracleSessionlessTransactionState state) {
         if (state.getGtrid().isPresent()) {
             throw new CannotCreateTransactionException("Oracle sessionless transaction context already contains a transaction id");
         }
@@ -100,7 +103,7 @@ final class OracleSessionlessTransactionHandler implements SessionlessTransactio
                 }
             }
         });
-        return () -> suspend(oracle);
+        return oracle;
     }
 
     private OracleConnection beginResumed(TransactionStatus<?> status,
