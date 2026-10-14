@@ -11,9 +11,12 @@ active transaction. If a parent transaction is already active, Micronaut rejects
 instead of allowing it to participate in the existing transaction.
 The sessionless modes require the default `REQUIRED` propagation and cannot be combined with other propagation values.
 
-Sessionless transaction modes cannot be combined with `@OracleTransactional.Recoverable`. Automatic retries cannot safely
-assume that the previous attempt left the transaction available to resume. A retry could repeat earlier changes or attempt
-to resume a transaction that has already ended. Micronaut rejects this annotation combination before executing the transactional method.
+Sessionless transaction modes cannot be combined with `@OracleTransactional.Recoverable`. Recovery resolves the outcome
+of the method's JDBC commit with Transaction Guard and, when a retry is allowed, replays the whole method.
+`SUSPEND` and `RESUME_AND_SUSPEND` suspend instead of committing, so there is no commit outcome to resolve.
+A stage also covers only part of the transaction: replaying it cannot restore work from earlier stages, and if the previous
+suspension reached the database, a replay could apply the stage's changes twice. Micronaut rejects this annotation
+combination before executing the transactional method.
 
 Oracle sessionless transaction support is available only when Oracle JDBC classes are present.
 For all sessionless modes, the underlying JDBC connection must unwrap to an `oracle.jdbc.OracleConnection`.
@@ -52,7 +55,9 @@ After a `SUSPEND` or `RESUME_AND_SUSPEND` method completes successfully, Microna
 completion callbacks with `Status.COMMITTED`, even though Oracle Database has only suspended the transaction.
 The database changes remain uncommitted until a later `REQUIRES_SUSPENDED` method commits them.
 For both modes, `afterCommit` and `afterCompletion` run after suspension, so database work in these callbacks does not
-participate in the suspended transaction.
+participate in the suspended transaction. This also applies to ann:transaction.annotation.TransactionalEventListener[]:
+`AFTER_COMMIT` and `AFTER_COMPLETION` listeners for events published in that stage run at the end of the stage, before
+the work is committed, and a later stage can still roll that work back.
 
 Use each transaction id sequentially. Suspending releases the connection while uncommitted work and its locks remain in
 Oracle Database. The suspended-transaction timeout is established by the initial `SUSPEND` stage; intermediate stages do not
