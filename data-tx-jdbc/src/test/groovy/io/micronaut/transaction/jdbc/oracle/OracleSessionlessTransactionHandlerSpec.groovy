@@ -15,6 +15,7 @@ import spock.lang.Specification
 
 import java.sql.Connection
 import java.sql.SQLException
+import java.sql.SQLFeatureNotSupportedException
 import java.time.Duration
 import java.util.function.Supplier
 
@@ -37,6 +38,7 @@ class OracleSessionlessTransactionHandlerSpec extends Specification {
         then:
         1 * connection.unwrap(OracleConnection) >> oracle
         1 * oracle.startTransaction(5) >> gtrid
+        1 * oracle.pingDatabase() >> OracleConnection.DATABASE_OK
         Arrays.equals(gtrid, state.gtrid.orElseThrow())
 
         when:
@@ -63,7 +65,8 @@ class OracleSessionlessTransactionHandlerSpec extends Specification {
         then:
         1 * connection.unwrap(OracleConnection) >> oracle
         1 * oracle.startTransaction() >> ([1, 2, 3] as byte[])
-        1 * oracle.suspendTransactionImmediately() >> { throw new SQLException("immediate failed") }
+        2 * oracle.pingDatabase() >> OracleConnection.DATABASE_OK
+        1 * oracle.suspendTransactionImmediately() >> { throw new SQLFeatureNotSupportedException("immediate failed") }
         1 * oracle.suspendTransaction()
     }
 
@@ -104,6 +107,7 @@ class OracleSessionlessTransactionHandlerSpec extends Specification {
         then:
         1 * connection.unwrap(OracleConnection) >> oracle
         1 * oracle.startTransaction() >> ([1, 2, 3] as byte[])
+        1 * oracle.pingDatabase() >> OracleConnection.DATABASE_OK
         state.gtrid.isEmpty()
     }
 
@@ -153,6 +157,38 @@ class OracleSessionlessTransactionHandlerSpec extends Specification {
         thrown(CannotCreateTransactionException)
     }
 
+    def "start confirmation failure does not publish a transaction id"() {
+        given:
+        def handler = new OracleSessionlessTransactionHandler("test")
+        def connection = Mock(Connection)
+        def oracle = Mock(OracleConnection)
+        def status = txStatus(connection, definition(OracleTransactional.Sessionless.SUSPEND))
+        def state = new OracleSessionlessTransactionState()
+        def failure = new SQLException("deferred start failed")
+
+        when:
+        PropagatedContext.empty().plus(state).propagate({ handler.begin(status, status.transactionDefinition) })
+
+        then:
+        1 * connection.unwrap(OracleConnection) >> oracle
+        1 * oracle.startTransaction() >> ([1, 2, 3] as byte[])
+        1 * oracle.pingDatabase() >> {
+            if (throwsException) {
+                throw failure
+            }
+            OracleConnection.DATABASE_CLOSED
+        }
+        0 * oracle.getTransactionId()
+        def e = thrown(CannotCreateTransactionException)
+        e.message == "Could not start Oracle sessionless transaction"
+        e.cause instanceof SQLException
+        e.cause.message == (throwsException ? failure.message : "Could not confirm Oracle sessionless transaction start")
+        state.gtrid.isEmpty()
+
+        where:
+        throwsException << [false, true]
+    }
+
     def "suspension failure is reported as transaction system failure"() {
         given:
         def handler = new OracleSessionlessTransactionHandler("test")
@@ -170,9 +206,132 @@ class OracleSessionlessTransactionHandlerSpec extends Specification {
         then:
         1 * connection.unwrap(OracleConnection) >> oracle
         1 * oracle.startTransaction() >> ([1, 2, 3] as byte[])
-        1 * oracle.suspendTransactionImmediately() >> { throw new SQLException("immediate failed") }
+        1 * oracle.pingDatabase() >> OracleConnection.DATABASE_OK
+        1 * oracle.suspendTransactionImmediately() >> { throw new SQLFeatureNotSupportedException("immediate failed") }
         1 * oracle.suspendTransaction() >> { throw new SQLException("fallback failed") }
         thrown(TransactionSystemException)
+    }
+
+    def "deferred resume errors at suspension are propagated without retry"() {
+        given:
+        def handler = new OracleSessionlessTransactionHandler("test")
+        def connection = Mock(Connection)
+        def oracle = Mock(OracleConnection)
+        def status = txStatus(connection, definition(OracleTransactional.Sessionless.RESUME_AND_SUSPEND))
+        def state = new OracleSessionlessTransactionState()
+        state.setGtrid([4, 5, 6] as byte[])
+
+        when:
+        def completion = PropagatedContext.empty().plus(state).propagate(
+            { handler.begin(status, status.transactionDefinition) } as Supplier
+        )
+        completion.commit()
+
+        then:
+        1 * connection.unwrap(OracleConnection) >> oracle
+        1 * oracle.resumeTransaction(_)
+        1 * oracle.suspendTransactionImmediately() >> { throw new SQLException("transaction expired") }
+        0 * oracle.suspendTransaction()
+        1 * oracle.pingDatabase() >> OracleConnection.DATABASE_OK
+        def e = thrown(TransactionSystemException)
+        e.cause.message == "transaction expired"
+    }
+
+    def "failed suspension round trip is not reported as a successful stage"() {
+        given:
+        def handler = new OracleSessionlessTransactionHandler("test")
+        def connection = Mock(Connection)
+        def oracle = Mock(OracleConnection)
+        def status = txStatus(connection, definition(OracleTransactional.Sessionless.RESUME_AND_SUSPEND))
+        def state = new OracleSessionlessTransactionState()
+        state.setGtrid([4, 5, 6] as byte[])
+
+        when:
+        def completion = PropagatedContext.empty().plus(state).propagate(
+            { handler.begin(status, status.transactionDefinition) } as Supplier
+        )
+        completion.commit()
+
+        then:
+        1 * connection.unwrap(OracleConnection) >> oracle
+        1 * oracle.resumeTransaction(_)
+        1 * oracle.suspendTransactionImmediately() >> { throw new SQLFeatureNotSupportedException("immediate failed") }
+        1 * oracle.suspendTransaction()
+        2 * oracle.pingDatabase() >>> [OracleConnection.DATABASE_OK, OracleConnection.DATABASE_CLOSED]
+        def e = thrown(TransactionSystemException)
+        e.cause.message == "Could not confirm Oracle sessionless transaction suspension"
+        e.cause.suppressed[0].message == "immediate failed"
+    }
+
+    def "resumed stage retains its id only after successful suspension"() {
+        given:
+        def handler = new OracleSessionlessTransactionHandler("test")
+        def connection = Mock(Connection)
+        def oracle = Mock(OracleConnection)
+        def status = txStatus(connection, definition(OracleTransactional.Sessionless.RESUME_AND_SUSPEND))
+        def state = new OracleSessionlessTransactionState()
+        def gtrid = [4, 5, 6] as byte[]
+        state.setGtrid(gtrid)
+
+        when:
+        def completion = PropagatedContext.empty().plus(state).propagate(
+            { handler.begin(status, status.transactionDefinition) } as Supplier
+        )
+        if (outcome == TransactionSynchronization.Status.COMMITTED) {
+            completion.commit()
+        }
+        status.triggerAfterCompletion(outcome)
+
+        then:
+        1 * connection.unwrap(OracleConnection) >> oracle
+        1 * oracle.resumeTransaction({ Arrays.equals(it, gtrid) })
+        (outcome == TransactionSynchronization.Status.COMMITTED ? 1 : 0) * oracle.suspendTransactionImmediately()
+        0 * oracle.startTransaction()
+        0 * connection.commit()
+        state.gtrid.isPresent() == retained
+        !retained || Arrays.equals(gtrid, state.gtrid.orElseThrow())
+
+        where:
+        outcome                                         | retained
+        TransactionSynchronization.Status.COMMITTED    | true
+        TransactionSynchronization.Status.ROLLED_BACK  | false
+        TransactionSynchronization.Status.UNKNOWN      | false
+    }
+
+    def "intermediate stage requires an existing transaction id"() {
+        given:
+        def handler = new OracleSessionlessTransactionHandler("test")
+        def status = txStatus(Mock(Connection), definition(OracleTransactional.Sessionless.RESUME_AND_SUSPEND))
+
+        when:
+        PropagatedContext.empty().plus(new OracleSessionlessTransactionState()).propagate(
+            { handler.begin(status, status.transactionDefinition) } as Supplier
+        )
+
+        then:
+        thrown(CannotCreateTransactionException)
+    }
+
+    def "failed resume does not consume the propagated transaction id"() {
+        given:
+        def handler = new OracleSessionlessTransactionHandler("test")
+        def connection = Mock(Connection)
+        def oracle = Mock(OracleConnection)
+        def status = txStatus(connection, definition(OracleTransactional.Sessionless.RESUME_AND_SUSPEND))
+        def state = new OracleSessionlessTransactionState()
+        def gtrid = [4, 5, 6] as byte[]
+        state.setGtrid(gtrid)
+
+        when:
+        PropagatedContext.empty().plus(state).propagate(
+            { handler.begin(status, status.transactionDefinition) } as Supplier
+        )
+
+        then:
+        1 * connection.unwrap(OracleConnection) >> oracle
+        1 * oracle.resumeTransaction(_) >> { throw new SQLException("resume failed") }
+        thrown(TransactionSystemException)
+        Arrays.equals(gtrid, state.gtrid.orElseThrow())
     }
 
     private static DefaultTransactionStatus<Connection> txStatus(Connection connection,

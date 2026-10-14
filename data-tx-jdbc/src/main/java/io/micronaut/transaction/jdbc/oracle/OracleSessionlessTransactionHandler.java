@@ -35,6 +35,7 @@ import org.jspecify.annotations.Nullable;
 import javax.sql.DataSource;
 import java.sql.Connection;
 import java.sql.SQLException;
+import java.sql.SQLFeatureNotSupportedException;
 
 /**
  * Applies Oracle sessionless semantics to the JDBC transaction prepared by the standard transaction manager.
@@ -69,8 +70,12 @@ final class OracleSessionlessTransactionHandler implements SessionlessTransactio
         return switch (mode) {
             case SUSPEND -> beginSuspendable(status, definition, state);
             case REQUIRES_SUSPENDED -> {
-                beginResumed(status, state);
+                beginResumed(status, state, false);
                 yield null;
+            }
+            case RESUME_AND_SUSPEND -> {
+                OracleConnection oracle = beginResumed(status, state, true);
+                yield () -> suspend(oracle);
             }
             case NONE -> null;
         };
@@ -98,16 +103,22 @@ final class OracleSessionlessTransactionHandler implements SessionlessTransactio
         return () -> suspend(oracle);
     }
 
-    private void beginResumed(TransactionStatus<?> status, OracleSessionlessTransactionState state) {
+    private OracleConnection beginResumed(TransactionStatus<?> status,
+                                          OracleSessionlessTransactionState state,
+                                          boolean suspendAfterCompletion) {
         byte[] gtrid = state.getGtrid()
             .orElseThrow(() -> new CannotCreateTransactionException("No Oracle sessionless transaction id found to resume"));
-        resume(unwrapRequiredOracleForBegin(status), gtrid);
+        OracleConnection oracle = unwrapRequiredOracleForBegin(status);
+        resume(oracle, gtrid, suspendAfterCompletion);
         status.registerSynchronization(new TransactionSynchronization() {
             @Override
             public void afterCompletion(Status completionStatus) {
-                state.clearGtrid();
+                if (!suspendAfterCompletion || completionStatus != Status.COMMITTED) {
+                    state.clearGtrid();
+                }
             }
         });
+        return oracle;
     }
 
     @Nullable
@@ -148,6 +159,10 @@ final class OracleSessionlessTransactionHandler implements SessionlessTransactio
     private static byte[] startTransaction(OracleConnection oracle, @Nullable Integer timeout) {
         try {
             byte[] gtrid = timeout == null ? oracle.startTransaction() : oracle.startTransaction(timeout);
+            // Flush the queued start so an empty stage can suspend the transaction.
+            if (oracle.pingDatabase() != OracleConnection.DATABASE_OK) {
+                throw new SQLException("Could not confirm Oracle sessionless transaction start");
+            }
             if (gtrid == null) {
                 gtrid = oracle.getTransactionId();
             }
@@ -163,19 +178,32 @@ final class OracleSessionlessTransactionHandler implements SessionlessTransactio
     private static void suspend(OracleConnection oracle) {
         try {
             oracle.suspendTransactionImmediately();
-        } catch (Exception immediateFailure) {
+        } catch (SQLFeatureNotSupportedException | UnsupportedOperationException immediateFailure) {
+            // A deferred resume error can surface during immediate suspension. Only fall back when
+            // the immediate API is unsupported; retrying other failures could hide a failed resume.
             try {
                 oracle.suspendTransaction();
+                // Flush the deferred suspension before returning the connection to its pool.
+                if (oracle.pingDatabase() != OracleConnection.DATABASE_OK) {
+                    throw new SQLException("Could not confirm Oracle sessionless transaction suspension");
+                }
             } catch (Exception fallbackFailure) {
                 fallbackFailure.addSuppressed(immediateFailure);
                 throw new TransactionSystemException("Could not suspend Oracle sessionless transaction", fallbackFailure);
             }
+        } catch (Exception e) {
+            throw new TransactionSystemException("Could not suspend Oracle sessionless transaction", e);
         }
     }
 
-    private static void resume(OracleConnection oracle, byte[] gtrid) {
+    private static void resume(OracleConnection oracle, byte[] gtrid, boolean immediate) {
         try {
             oracle.resumeTransaction(gtrid);
+            // The driver queues the resume request until the next database round trip.
+            // Ping now so Oracle Database processes it even if the stage executes no SQL before suspending again.
+            if (immediate && oracle.pingDatabase() != OracleConnection.DATABASE_OK) {
+                throw new SQLException("Could not confirm Oracle sessionless transaction resume");
+            }
         } catch (Exception e) {
             throw new TransactionSystemException("Could not resume Oracle sessionless transaction", e);
         }
