@@ -37,15 +37,8 @@ import io.micronaut.data.model.runtime.convert.AttributeConverter;
 import org.jspecify.annotations.Nullable;
 
 import java.lang.reflect.Array;
-import java.time.Instant;
-import java.time.LocalDate;
-import java.time.LocalDateTime;
-import java.time.OffsetDateTime;
-import java.time.ZoneOffset;
-import java.time.ZonedDateTime;
 import java.util.ArrayList;
 import java.util.Collection;
-import java.util.Date;
 import java.util.HashMap;
 import java.util.HashSet;
 import java.util.LinkedHashMap;
@@ -370,30 +363,10 @@ public final class GraphEntityMapper {
         if (value == null) {
             return null;
         }
-        Class<?> type = argument.getType();
-        if (type.isInstance(value) && argument.getTypeParameters().length == 0) {
+        if (argument.getType().isInstance(value) && argument.getTypeParameters().length == 0) {
             return value;
         }
-        if (type == Instant.class) {
-            if (value instanceof OffsetDateTime odt) {
-                return odt.toInstant();
-            }
-            if (value instanceof ZonedDateTime zdt) {
-                return zdt.toInstant();
-            }
-            if (value instanceof LocalDateTime ldt) {
-                return ldt.toInstant(ZoneOffset.UTC);
-            }
-        }
-        if (type == Date.class) {
-            Object instant = convert(value, Argument.of(Instant.class));
-            if (instant instanceof Instant i) {
-                return Date.from(i);
-            }
-        }
-        if (type == LocalDate.class && value instanceof ZonedDateTime zdt) {
-            return zdt.toLocalDate();
-        }
+        // The data conversion service converts between the temporal types the databases return and those of entities
         Optional<?> converted = conversionService.convert(value, argument);
         if (converted.isPresent()) {
             return converted.get();
@@ -401,6 +374,11 @@ public final class GraphEntityMapper {
         throw new DataAccessException("Cannot convert value [" + value + "] of type " + value.getClass().getName() + " to " + argument.getTypeName());
     }
 
+    /**
+     * Instantiates an entity through its constructor, then sets the properties that were read. The introspection
+     * builder is not used, as it assigns null to every settable property not read, which discards the values a class
+     * initializes its properties with, such as empty collections of relationships that were not fetched.
+     */
     private <T> T instantiate(RuntimePersistentEntity<T> entity, Map<String, Object> values) {
         BeanIntrospection<T> introspection = entity.getIntrospection();
         Argument<Object>[] constructorArguments = (Argument<Object>[]) introspection.getConstructorArguments();
