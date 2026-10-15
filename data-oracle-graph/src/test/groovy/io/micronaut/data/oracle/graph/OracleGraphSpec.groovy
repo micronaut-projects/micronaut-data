@@ -3,6 +3,7 @@ package io.micronaut.data.oracle.graph
 import io.micronaut.data.connection.jdbc.advice.DelegatingDataSource
 import io.micronaut.data.model.Pageable
 import io.micronaut.data.model.Sort
+import io.micronaut.data.oracle.graph.bank.Account
 import io.micronaut.data.oracle.graph.bank.BankGraph
 import io.micronaut.test.extensions.spock.annotation.MicronautTest
 import jakarta.inject.Inject
@@ -55,6 +56,26 @@ class OracleGraphSpec extends Specification {
             }
         }
         created = true
+    }
+
+    void "write nodes to their vertex table with SQL"() {
+        when:
+        bankGraph.save(new Account(5L, "Erin", []))
+
+        then:
+        bankGraph.findById(5L).get().name() == "Erin"
+
+        when:
+        bankGraph.update(new Account(5L, "Erin Smith", []))
+
+        then:
+        bankGraph.findById(5L).get().name() == "Erin Smith"
+
+        when:
+        bankGraph.deleteById(5L)
+
+        then:
+        bankGraph.findById(5L).empty
     }
 
     void "find nodes by their properties"() {

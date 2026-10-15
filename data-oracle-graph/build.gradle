@@ -21,6 +21,7 @@ dependencies {
     api projects.micronautDataGraphRuntime
     api projects.micronautDataConnectionJdbc
     api projects.micronautDataTxJdbc
+    api projects.micronautDataJdbc
     implementation mnSql.micronaut.jdbc
 
     compileOnly(mnSql.jakarta.persistence.api)
