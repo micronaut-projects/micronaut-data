@@ -23,6 +23,7 @@ import io.micronaut.core.convert.ConversionContext;
 import io.micronaut.core.convert.ConversionService;
 import io.micronaut.core.type.Argument;
 import io.micronaut.data.exceptions.DataAccessException;
+import io.micronaut.data.graph.annotation.DynamicAttributes;
 import io.micronaut.data.graph.annotation.Node;
 import io.micronaut.data.graph.model.GraphEntities;
 import io.micronaut.data.graph.model.GraphPath;
@@ -64,11 +65,15 @@ import java.util.function.Function;
  */
 @Internal
 public final class GraphEntityMapper {
-
     private final RuntimeEntityRegistry entityRegistry;
+
     private final ConversionService conversionService;
+
     private final Function<Object, Object> encoder;
+
     private final Map<String, Optional<Class<?>>> entitiesByLabel = new ConcurrentHashMap<>();
+
+    private final Map<String, Schemaless> schemaless = new ConcurrentHashMap<>();
 
     /**
      * @param entityRegistry    The entity registry
@@ -120,7 +125,72 @@ public final class GraphEntityMapper {
                 values.put(property.getName(), readValue(property, properties.get(property.getPersistedName())));
             }
         }
+        Schemaless schemaless = schemaless(entity);
+        if (schemaless.attributes() != null) {
+            Map<String, Object> attributes = new LinkedHashMap<>();
+            node.properties().forEach((name, value) -> {
+                if (!schemaless.declared().contains(name)) {
+                    attributes.put(name, value);
+                }
+            });
+            values.put(schemaless.attributes().getName(), attributes);
+        }
+        if (schemaless.labels() != null) {
+            List<String> labels = new ArrayList<>(node.labels());
+            labels.removeAll(GraphEntities.labels(entity));
+            values.put(schemaless.labels().getName(), convert(labels, schemaless.labels().asArgument()));
+        }
         return instantiate(entity, values);
+    }
+
+    /**
+     * The labels of an instance beyond those its entity declares, held by its
+     * {@link io.micronaut.data.graph.annotation.Labels} property.
+     *
+     * @param entity   The entity
+     * @param instance The instance
+     * @param <T>      The entity type
+     * @return The labels, empty if none
+     */
+    public <T> List<String> dynamicLabels(RuntimePersistentEntity<T> entity, T instance) {
+        BeanProperty<Object, Object> labelsProperty = schemaless(entity).labels();
+        if (labelsProperty == null) {
+            return List.of();
+        }
+        Object labels = labelsProperty.get(instance);
+        if (!(labels instanceof Iterable<?> iterable)) {
+            return List.of();
+        }
+        List<String> result = new ArrayList<>();
+        List<String> declared = GraphEntities.labels(entity);
+        for (Object label : iterable) {
+            if (label != null && !declared.contains(label.toString())) {
+                result.add(label.toString());
+            }
+        }
+        return result;
+    }
+
+    private Schemaless schemaless(RuntimePersistentEntity<?> entity) {
+        return schemaless.computeIfAbsent(entity.getName(), name -> {
+            BeanProperty<Object, Object> attributes = null;
+            BeanProperty<Object, Object> labels = null;
+            for (BeanProperty<?, Object> property : entity.getIntrospection().getBeanProperties()) {
+                if (property.hasAnnotation(DynamicAttributes.class)) {
+                    attributes = (BeanProperty<Object, Object>) property;
+                } else if (property.hasAnnotation(io.micronaut.data.graph.annotation.Labels.class)) {
+                    labels = (BeanProperty<Object, Object>) property;
+                }
+            }
+            Set<String> declared = new HashSet<>();
+            if (entity.getIdentity() != null) {
+                declared.add(entity.getIdentity().getPersistedName());
+            }
+            for (RuntimePersistentProperty<?> property : entity.getPersistentProperties()) {
+                declared.add(property.getPersistedName());
+            }
+            return new Schemaless(attributes, labels, declared);
+        });
     }
 
     /**
@@ -274,6 +344,15 @@ public final class GraphEntityMapper {
                 continue;
             }
             values.put(property.getPersistedName(), writeValue(property, property.getProperty().get(instance)));
+        }
+        BeanProperty<Object, Object> attributesProperty = schemaless(entity).attributes();
+        if (attributesProperty != null && attributesProperty.get(instance) instanceof Map<?, ?> attributes) {
+            attributes.forEach((name, value) -> {
+                String key = String.valueOf(name);
+                if (!values.containsKey(key)) {
+                    values.put(key, encode(value));
+                }
+            });
         }
         return values;
     }
@@ -466,5 +545,17 @@ public final class GraphEntityMapper {
             }
         }
         return Optional.empty();
+    }
+
+    /**
+     * The schemaless properties of an entity.
+     *
+     * @param attributes The property holding schemaless properties, or null
+     * @param labels     The property holding dynamic labels, or null
+     * @param declared   The stored names of the declared properties
+     */
+    private record Schemaless(@Nullable BeanProperty<Object, Object> attributes,
+                              @Nullable BeanProperty<Object, Object> labels,
+                              Set<String> declared) {
     }
 }
