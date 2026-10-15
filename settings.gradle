@@ -158,6 +158,11 @@ include 'doc-examples:mongo-reactive-example-kotlin'
 include 'doc-examples:mongo-example-records-java'
 include 'doc-examples:mongo-jackson-example-java'
 
+include 'doc-examples:neo4j-example-java'
+include 'doc-examples:neo4j-example-groovy'
+include 'doc-examples:neo4j-example-kotlin'
+include 'doc-examples:neo4j-example-python'
+
 include 'doc-examples:mongo-multitenancy-database-example-java'
 include 'doc-examples:mongo-multitenancy-datasource-example-java'
 include 'doc-examples:mongo-multitenancy-discriminator-example-java'

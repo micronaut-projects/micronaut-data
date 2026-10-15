@@ -1,0 +1,41 @@
+A finder can follow relationships by naming the relationship property, then a property of the related node:
+
+snippet::example.MovieRepository[project-base="doc-examples/neo4j-example", source="main", tags="traversal", languages="java,kotlin,groovy,python"]
+
+<1> Movies directed by a person with the given name.
+<2> Movies with a role played by a person with the given name. `roles` is a relationship with properties, so `person` refers to its ann:data.graph.annotation.TargetNode[].
+
+Each relationship in a criterion adds a pattern to the query:
+
+[source,cypher]
+----
+MATCH (n:Movie), (n)<-[ar0:ACTED_IN]-(a0:Person) WHERE a0.name = $p0 WITH DISTINCT n RETURN n
+----
+
+Properties of a relationship with properties are queried the same way, for example `findByRolesRolesArrayContains(String role)` matches movies by the roles stored on `ACTED_IN`.
+
+snippet::example.MovieRepositorySpec[project-base="doc-examples/neo4j-example", tags="traverse", indent="0", languages="java,kotlin,groovy,python"]
+
+== Fetching relationships
+
+Relationships are loaded when a finder is annotated with ann:data.annotation.Join[]:
+
+snippet::example.MovieRepository[project-base="doc-examples/neo4j-example", source="main", tags="join", languages="java,kotlin,groovy,python"]
+
+<1> The roles, with the people who played them, and the directors are loaded with the movie.
+
+Each join adds an `OPTIONAL MATCH` whose results are collected, so the query returns one row per movie:
+
+[source,cypher]
+----
+MATCH (n:Movie) WHERE n.title = $p0
+OPTIONAL MATCH (n)<-[r0:ACTED_IN]-(j0:Person)
+WITH n, collect(CASE WHEN r0 IS NULL THEN NULL ELSE {rel: r0, node: j0} END) AS j_roles
+OPTIONAL MATCH (n)<-[:DIRECTED]-(j1:Person)
+WITH n, j_roles, collect(j1) AS j_directors
+RETURN n, j_roles, j_directors
+----
+
+snippet::example.MovieRepositorySpec[project-base="doc-examples/neo4j-example", tags="fetch", indent="0", languages="java,kotlin,groovy,python"]
+
+Joins load the relationships of the root node. Joins deeper than one relationship are rejected at build time.
