@@ -347,6 +347,17 @@ public class CypherQueryBuilder implements GraphQueryBuilder {
      * @return The query
      */
     @Override
+    public String buildAddLabelsQuery(PersistentEntity entity, List<String> labels) {
+        StringBuilder query = new StringBuilder("MATCH (").append(ROOT).append(labelExpression(entity)).append(") WHERE ")
+            .append(identityExpression(entity.getIdentity(), ROOT)).append(" = $").append(ID_PARAMETER)
+            .append(" SET ").append(ROOT);
+        for (String label : labels) {
+            query.append(':').append(GraphEntities.escapeName(label));
+        }
+        return query.append(" RETURN count(*) AS result").toString();
+    }
+
+    @Override
     public String buildDeleteByIdQuery(PersistentEntity entity) {
         return MATCH_OPEN + ROOT + labelExpression(entity) + CLOSE_WHERE
             + identityExpression(entity.getIdentity(), ROOT) + " = $" + ID_PARAMETER + " DETACH DELETE " + ROOT + " RETURN count(*) AS result";
