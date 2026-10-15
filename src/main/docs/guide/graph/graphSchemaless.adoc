@@ -1,0 +1,44 @@
+Nodes in a graph rarely share a fixed schema. A ann:data.graph.annotation.DynamicAttributes[] property holds every property of a node that its entity does not declare:
+
+snippet::example.Pet[project-base="doc-examples/neo4j-example", source="main", tags="pet", languages="java,kotlin,groovy,python"]
+
+<1> api:data.graph.model.DynamicAttributeHolder[] adds map-like access to the schemaless properties.
+<2> The map receives the properties the class does not declare when a node is read, and its entries are written when the entity is saved.
+<3> The holder reads and writes through this map.
+
+Each language accesses the properties in its own style:
+
+snippet::example.PetRepositorySpec[project-base="doc-examples/neo4j-example", tags="schemaless", indent="0", languages="java,kotlin,groovy,python"]
+
+<1> Set a property that the class does not declare. Java calls `set`, Kotlin uses index syntax, Groovy property or subscript syntax, and Python the dictionary.
+<2> Read it back.
+<3> Query it with an explicit query.
+
+[cols="1,2"]
+|===
+|Language |Syntax
+
+|Java
+|`pet.set("goesInPatch", true)` and `pet.get("goesInPatch")`
+
+|Kotlin
+|`pet["goesInPatch"] = true` and `pet["goesInPatch"]`
+
+|Groovy
+|`pet.goesInPatch = true`, `pet['goesInPatch']`
+
+|Python
+|`pet.attributes["goesInPatch"] = True`
+|===
+
+Values must be types the database stores: strings, numbers, booleans, temporal values and lists of those. Setting a value to `null` removes the property when the entity is saved. As schemaless properties are not known at build time, finders cannot refer to them. Use an explicit query instead.
+
+== Dynamic labels
+
+A collection of strings annotated with ann:data.graph.annotation.Labels[] holds the labels of a node beyond those its entity declares. Saving adds them to the node and reading collects them. Dynamic labels are supported by Neo4j.
+
+[source,java]
+----
+@Labels
+private Set<String> labels = new LinkedHashSet<>();
+----
