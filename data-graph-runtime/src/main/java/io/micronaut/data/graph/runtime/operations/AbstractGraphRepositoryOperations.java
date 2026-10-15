@@ -30,6 +30,7 @@ import io.micronaut.data.graph.model.GraphRelationship;
 import io.micronaut.data.graph.model.query.PathLimitParameter;
 import io.micronaut.data.graph.model.query.PathQueryDefinition;
 import io.micronaut.data.graph.model.query.builder.CypherQueryBuilder;
+import io.micronaut.data.graph.model.query.builder.GraphQueryBuilder;
 import io.micronaut.data.graph.runtime.GraphEdge;
 import io.micronaut.data.graph.runtime.GraphEntityMapper;
 import io.micronaut.data.graph.runtime.GraphNode;
@@ -118,7 +119,7 @@ public abstract class AbstractGraphRepositoryOperations extends AbstractReposito
     AsyncCapableRepository,
     ReactiveCapableRepository,
     AutoCloseable {
-    protected final CypherQueryBuilder queryBuilder;
+    protected final GraphQueryBuilder queryBuilder;
 
     protected final GraphEntityMapper mapper;
 
@@ -138,7 +139,7 @@ public abstract class AbstractGraphRepositoryOperations extends AbstractReposito
      * @param attributeConverterRegistry The attribute converter registry
      * @param executorService            The executor for asynchronous and reactive operations
      */
-    protected AbstractGraphRepositoryOperations(CypherQueryBuilder queryBuilder,
+    protected AbstractGraphRepositoryOperations(GraphQueryBuilder queryBuilder,
                                                 DateTimeProvider<Object> dateTimeProvider,
                                                 RuntimeEntityRegistry runtimeEntityRegistry,
                                                 DataConversionService conversionService,
@@ -435,7 +436,15 @@ public abstract class AbstractGraphRepositoryOperations extends AbstractReposito
         return new GraphQuery(query.toString(), parameters);
     }
 
-    private void appendSortAndLimit(StringBuilder query, RuntimePersistentEntity<?> entity, Sort sort, Limit limit) {
+    /**
+     * Appends the ordering and limits requested by method arguments to a query.
+     *
+     * @param query  The query
+     * @param entity The root entity
+     * @param sort   The sort
+     * @param limit  The limit
+     */
+    protected void appendSortAndLimit(StringBuilder query, RuntimePersistentEntity<?> entity, Sort sort, Limit limit) {
         boolean rootQuery = query.indexOf("MATCH (" + CypherQueryBuilder.ROOT) == 0;
         if (sort != null && sort.isSorted() && rootQuery && query.indexOf(" ORDER BY ") < 0) {
             query.append(" ORDER BY ");
