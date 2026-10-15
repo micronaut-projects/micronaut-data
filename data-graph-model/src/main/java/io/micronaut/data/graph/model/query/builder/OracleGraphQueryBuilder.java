@@ -18,8 +18,7 @@ package io.micronaut.data.graph.model.query.builder;
 import io.micronaut.core.annotation.AnnotationMetadata;
 import io.micronaut.core.annotation.Introspected;
 import io.micronaut.data.graph.annotation.Direction;
-import io.micronaut.data.graph.annotation.DynamicAttributes;
-import io.micronaut.data.graph.annotation.Labels;
+import io.micronaut.data.graph.annotation.DynamicRelationships;
 import io.micronaut.data.graph.annotation.PropertyGraph;
 import io.micronaut.data.graph.annotation.TargetNode;
 import io.micronaut.data.graph.model.GraphEntities;
@@ -483,8 +482,10 @@ public class OracleGraphQueryBuilder implements GraphQueryBuilder {
             }
             column("'" + GraphEntities.primaryLabel(nodeEntity).replace("'", "''") + "'", variable + SEPARATOR + LABEL_COLUMN);
             for (PersistentProperty property : nodeEntity.getPersistentProperties()) {
-                if (property instanceof Association || property.getAnnotationMetadata().hasAnnotation(DynamicAttributes.class)
-                    || property.getAnnotationMetadata().hasAnnotation(Labels.class)) {
+                if (property.getAnnotationMetadata().hasAnnotation(DynamicRelationships.class)) {
+                    throw new UnsupportedOperationException("Dynamic relationships are not supported for Oracle property graphs: " + nodeEntity.getName());
+                }
+                if (property instanceof Association || GraphEntities.isSchemalessHolder(property)) {
                     continue;
                 }
                 column(property(variable, property), variable + SEPARATOR + GraphEntities.propertyName(property));

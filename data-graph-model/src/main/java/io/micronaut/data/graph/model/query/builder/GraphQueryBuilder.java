@@ -111,6 +111,19 @@ public interface GraphQueryBuilder extends QueryBuilder {
                           @Nullable PersistentProperty relationshipIdentity);
 
     /**
+     * Builds the query that links two nodes with an outgoing relationship of a type the owner does not declare.
+     * The identifiers of the owner and the target are bound to {@code $from} and {@code $to}.
+     *
+     * @param owner  The entity of the owning node
+     * @param target The entity of the target node
+     * @param type   The relationship type
+     * @return The query
+     */
+    default String buildDynamicLinkQuery(PersistentEntity owner, PersistentEntity target, String type) {
+        throw new UnsupportedOperationException("Dynamic relationships are not supported by this database");
+    }
+
+    /**
      * Builds the query that adds labels to a node, identified by the parameter {@code id}.
      *
      * @param entity The entity

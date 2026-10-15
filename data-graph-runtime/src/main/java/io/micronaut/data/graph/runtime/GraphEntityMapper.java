@@ -30,6 +30,7 @@ import io.micronaut.data.graph.model.GraphPath;
 import io.micronaut.data.graph.model.GraphRelationship;
 import io.micronaut.data.graph.model.query.builder.CypherQueryBuilder;
 import io.micronaut.data.model.Association;
+import io.micronaut.data.model.PersistentProperty;
 import io.micronaut.data.model.runtime.RuntimeAssociation;
 import io.micronaut.data.model.runtime.RuntimeEntityRegistry;
 import io.micronaut.data.model.runtime.RuntimePersistentEntity;
@@ -143,7 +144,35 @@ public final class GraphEntityMapper {
             labels.removeAll(GraphEntities.labels(entity));
             values.put(schemaless.labels().getName(), convert(labels, schemaless.labels().asArgument()));
         }
+        BeanProperty<Object, Object> relationshipsProperty = dynamicRelationshipsProperty(entity);
+        if (relationshipsProperty != null && row != null && row.has(CypherQueryBuilder.DYNAMIC_RELATIONSHIPS_COLUMN)) {
+            Map<String, List<Object>> relationships = new LinkedHashMap<>();
+            if (row.get(CypherQueryBuilder.DYNAMIC_RELATIONSHIPS_COLUMN) instanceof Collection<?> collection) {
+                for (Object item : collection) {
+                    if (item instanceof Map<?, ?> map && map.get(CypherQueryBuilder.NODE_KEY) instanceof GraphNode target) {
+                        String type = String.valueOf(map.get(CypherQueryBuilder.DYNAMIC_TYPE_KEY));
+                        relationships.computeIfAbsent(type, k -> new ArrayList<>()).add(readNodeAs(target, Object.class));
+                    }
+                }
+            }
+            values.put(relationshipsProperty.getName(), relationships);
+        }
         return instantiate(entity, values);
+    }
+
+    /**
+     * The property holding relationships of undeclared types, annotated with
+     * {@link io.micronaut.data.graph.annotation.DynamicRelationships}.
+     *
+     * @param entity The entity
+     * @return The property, or null if the entity has none
+     */
+    public @Nullable BeanProperty<Object, Object> dynamicRelationshipsProperty(RuntimePersistentEntity<?> entity) {
+        PersistentProperty property = GraphEntities.findDynamicRelationships(entity);
+        if (property == null) {
+            return null;
+        }
+        return (BeanProperty<Object, Object>) entity.getIntrospection().getRequiredProperty(property.getName(), Object.class);
     }
 
     /**
@@ -175,8 +204,7 @@ public final class GraphEntityMapper {
     }
 
     private static boolean isSchemalessHolder(RuntimePersistentProperty<?> property) {
-        return property.getAnnotationMetadata().hasAnnotation(DynamicAttributes.class)
-            || property.getAnnotationMetadata().hasAnnotation(io.micronaut.data.graph.annotation.Labels.class);
+        return GraphEntities.isSchemalessHolder(property);
     }
 
     /**

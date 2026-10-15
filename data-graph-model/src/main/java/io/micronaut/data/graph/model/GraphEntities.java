@@ -116,6 +116,56 @@ public final class GraphEntities {
     }
 
     /**
+     * Finds the property holding the relationships of undeclared types, annotated with
+     * {@link io.micronaut.data.graph.annotation.DynamicRelationships}.
+     *
+     * @param entity The entity
+     * @return The property, or null if the entity has none
+     */
+    public static @Nullable PersistentProperty findDynamicRelationships(PersistentEntity entity) {
+        for (PersistentProperty property : entity.getPersistentProperties()) {
+            if (property.getAnnotationMetadata().hasAnnotation(io.micronaut.data.graph.annotation.DynamicRelationships.class)) {
+                return property;
+            }
+        }
+        return null;
+    }
+
+    /**
+     * Whether a property holds schemaless data rather than a stored value: dynamic attributes, labels or relationships.
+     *
+     * @param property The property
+     * @return True if it does
+     */
+    public static boolean isSchemalessHolder(PersistentProperty property) {
+        AnnotationMetadata metadata = property.getAnnotationMetadata();
+        return metadata.hasAnnotation(io.micronaut.data.graph.annotation.DynamicAttributes.class)
+            || metadata.hasAnnotation(io.micronaut.data.graph.annotation.Labels.class)
+            || metadata.hasAnnotation(io.micronaut.data.graph.annotation.DynamicRelationships.class);
+    }
+
+    /**
+     * The types of the relationships an entity declares that leave its nodes: outgoing and undirected relationships.
+     *
+     * @param entity The entity
+     * @return The relationship types
+     */
+    public static List<String> outgoingRelationshipTypes(PersistentEntity entity) {
+        java.util.ArrayList<String> types = new java.util.ArrayList<>();
+        for (PersistentProperty property : entity.getPersistentProperties()) {
+            if (property instanceof Association association && isRelationship(association)
+                && direction(association) != Direction.INCOMING) {
+                String type = relationshipType(association);
+                if (!types.contains(type)) {
+                    types.add(type);
+                }
+            }
+        }
+        return types;
+    }
+
+
+    /**
      * Finds the target node association of a relationship entity.
      *
      * @param relationshipEntity The relationship entity
