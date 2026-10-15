@@ -22,6 +22,7 @@ dependencies {
     api projects.micronautDataConnectionJdbc
     api projects.micronautDataTxJdbc
     implementation mnSql.micronaut.jdbc
+    implementation mnSerde.micronaut.serde.jackson
 
     compileOnly(mnSql.jakarta.persistence.api)
 
