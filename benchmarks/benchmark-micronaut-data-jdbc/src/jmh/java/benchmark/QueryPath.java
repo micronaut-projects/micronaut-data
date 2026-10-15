@@ -23,6 +23,8 @@ import example.BookRepository;
 import example.Novel;
 import example.NovelRepository;
 import example.TargetVersionBookRepository;
+import example.TimestampedBook;
+import example.TimestampedBookRepository;
 import io.micronaut.context.ApplicationContext;
 import io.micronaut.data.model.Page;
 import io.micronaut.data.model.Pageable;
@@ -65,6 +67,7 @@ public class QueryPath {
     BookRepository bookRepository;
     AuthorRepository authorRepository;
     TargetVersionBookRepository targetVersionBookRepository;
+    TimestampedBookRepository timestampedBookRepository;
     List<Long> bookIds;
 
     @Setup
@@ -73,6 +76,7 @@ public class QueryPath {
         bookRepository = applicationContext.getBean(BookRepository.class);
         authorRepository = applicationContext.getBean(AuthorRepository.class);
         targetVersionBookRepository = applicationContext.getBean(TargetVersionBookRepository.class);
+        timestampedBookRepository = applicationContext.getBean(TimestampedBookRepository.class);
         NovelRepository novelRepository = applicationContext.getBean(NovelRepository.class);
 
         List<Book> books = new ArrayList<>(BOOKS);
@@ -109,6 +113,7 @@ public class QueryPath {
         private static final AtomicInteger THREADS = new AtomicInteger();
 
         List<Book> batch;
+        List<TimestampedBook> timestampedBatch;
         Pageable pageable;
 
         @Setup
@@ -119,6 +124,11 @@ public class QueryPath {
                 books.add(new Book(prefix + i, BOOKS + i));
             }
             batch = List.copyOf(queryPath.bookRepository.saveAll(books));
+            List<TimestampedBook> timestampedBooks = new ArrayList<>(BATCH);
+            for (int i = 0; i < BATCH; i++) {
+                timestampedBooks.add(new TimestampedBook(prefix + i, i));
+            }
+            timestampedBatch = List.copyOf(queryPath.timestampedBookRepository.saveAll(timestampedBooks));
             pageable = Pageable.from(1, 10, Sort.of(Sort.Order.desc("pages"), Sort.Order.asc("title")));
         }
 
@@ -182,6 +192,14 @@ public class QueryPath {
     @Benchmark
     public List<Book> updateAllWithTargetVersion(ThreadState state) {
         return targetVersionBookRepository.updateAll(state.batch);
+    }
+
+    /**
+     * A batch update of {@value #BATCH} books whose update timestamp is set by the auto-populate listener.
+     */
+    @Benchmark
+    public List<TimestampedBook> updateAllTimestamped(ThreadState state) {
+        return timestampedBookRepository.updateAll(state.timestampedBatch);
     }
 
     /**
