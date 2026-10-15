@@ -32,8 +32,8 @@ class Neo4jSchemalessSpec extends Specification implements TestPropertyProvider 
         def pet = new Pet("Dino")
         pet.species = "Dinosaur"
         pet.set("goesInPatch", true)
-        pet['legs'] = 4
-        pet.favouriteFood = "Bronto burgers"
+        pet.set('legs', 4)
+        pet.set('favouriteFood', "Bronto burgers")
 
         when:
         petRepository.save(pet)
@@ -42,8 +42,8 @@ class Neo4jSchemalessSpec extends Specification implements TestPropertyProvider 
         then:
         found.species == "Dinosaur"
         found.get("goesInPatch") == true
-        found['legs'] == 4L
-        found.favouriteFood == "Bronto burgers"
+        found.get('legs') == 4L
+        found.get('favouriteFood') == "Bronto burgers"
         found.attributes.keySet() == ["goesInPatch", "legs", "favouriteFood"] as Set
         !found.attributes.containsKey("species")
     }
@@ -51,9 +51,9 @@ class Neo4jSchemalessSpec extends Specification implements TestPropertyProvider 
     void "query schemaless properties with explicit queries"() {
         given:
         def dino = new Pet("Dino")
-        dino['goesInPatch'] = true
+        dino.set('goesInPatch', true)
         def hoppy = new Pet("Hoppy")
-        hoppy['goesInPatch'] = false
+        hoppy.set('goesInPatch', false)
         petRepository.saveAll([dino, hoppy])
 
         expect:
@@ -63,12 +63,12 @@ class Neo4jSchemalessSpec extends Specification implements TestPropertyProvider 
     void "remove a schemaless property by setting it to null"() {
         given:
         def pet = new Pet("Dino")
-        pet['nickname'] = "Little Dino"
+        pet.set('nickname', "Little Dino")
         petRepository.save(pet)
 
         when:
         def found = petRepository.findById("Dino").get()
-        found['nickname'] = null
+        found.set('nickname', null)
         petRepository.update(found)
 
         then:

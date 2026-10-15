@@ -120,7 +120,7 @@ class Neo4jReactiveSpec extends Specification implements TestPropertyProvider {
         given:
         def dino = new Pet("Dino")
         dino.labels = ["Dinosaur"] as Set
-        dino['legs'] = 4
+        dino.set('legs', 4)
         dino.related = [PLAYS_WITH: [new Pet("Hoppy")], TAGGED: [new Tag("prehistoric")]]
 
         when:
@@ -129,7 +129,7 @@ class Neo4jReactiveSpec extends Specification implements TestPropertyProvider {
 
         then:
         found.labels == ["Dinosaur"] as Set
-        found['legs'] == 4L
+        found.get('legs') == 4L
         found.related.PLAYS_WITH*.name == ["Hoppy"]
         found.related.TAGGED[0] instanceof Tag
     }
