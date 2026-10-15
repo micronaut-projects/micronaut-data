@@ -81,6 +81,11 @@ public class DataJdbcConfiguration implements Named, Toggleable {
     private Integer defaultFetchSize = Fetch.DEFAULT_FETCH_SIZE;
 
     /**
+     * Whether flat entities are read with typed result set getters by column ordinal.
+     */
+    private boolean flatEntityMapping = false;
+
+    /**
      * The configuration.
      * @param name The configuration name
      */
@@ -293,6 +298,30 @@ public class DataJdbcConfiguration implements Named, Toggleable {
      */
     public void setDefaultFetchSize(@NonNull Integer defaultFetchSize) {
         this.defaultFetchSize = defaultFetchSize;
+    }
+
+    /**
+     * Whether an entity whose columns map one to one onto properties of types the driver returns directly (no
+     * associations, embedded values, JSON columns, attribute converters or composite identity) is read with the
+     * typed {@link java.sql.ResultSet} getters by column ordinal and set through the bean introspection, without
+     * the per-column conversion of the general mapper. Any other entity, and every DTO projection or joined query,
+     * is mapped as before. Disabled by default.
+     *
+     * @return Whether the flat entity mapping is enabled
+     * @since 5.3.0
+     */
+    public boolean isFlatEntityMapping() {
+        return flatEntityMapping;
+    }
+
+    /**
+     * Enables the flat entity mapping, see {@link #isFlatEntityMapping()}.
+     *
+     * @param flatEntityMapping Whether to read flat entities with typed getters by ordinal
+     * @since 5.3.0
+     */
+    public void setFlatEntityMapping(boolean flatEntityMapping) {
+        this.flatEntityMapping = flatEntityMapping;
     }
 
     /**
