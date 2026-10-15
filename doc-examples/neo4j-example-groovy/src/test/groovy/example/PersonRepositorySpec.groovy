@@ -1,0 +1,57 @@
+package example
+
+import io.micronaut.test.extensions.spock.annotation.MicronautTest
+import jakarta.inject.Inject
+
+@MicronautTest(transactional = false)
+class PersonRepositorySpec extends AbstractNeo4jSpec {
+
+    @Inject
+    PersonRepository personRepository
+
+    Person fred
+    Person joe
+
+    void setup() {
+        fred = new Person(name: "Fred", born: 1970)
+        def barney = new Person(name: "Barney", born: 1971)
+        def wilma = new Person(name: "Wilma", born: 1972)
+        joe = new Person(name: "Joe", born: 1973)
+        fred.follows = [barney, wilma]
+        barney.follows = [joe]
+        wilma.follows = [joe]
+        personRepository.save(fred)
+    }
+
+    void cleanup() {
+        personRepository.deleteAll()
+    }
+
+    void "find paths"() {
+        when:
+        // tag::shortestPath[]
+        def path = personRepository.findShortestPath(fred, joe).get()
+        path.segments().each { segment -> // <1>
+            println "${segment.start().name} -> ${segment.end().name}"
+        }
+        // end::shortestPath[]
+
+        then:
+        path.length() == 2
+        path.start().name == "Fred"
+        path.end().name == "Joe"
+        !personRepository.findShortestPathByFollows(fred.id, joe.id, 1).present
+        personRepository.findAllPathsByFollows(fred, joe).size() == 2
+        personRepository.existsPathByFollows(fred, joe)
+        !personRepository.existsPathByFollows(joe, fred)
+    }
+
+    void "find relationships"() {
+        given:
+        def barney = personRepository.findByName("Barney").get()
+
+        expect:
+        personRepository.findRelationships(fred, barney)*.type() == ["FOLLOWS"]
+        personRepository.countRelationshipsByFollows() == 4
+    }
+}
