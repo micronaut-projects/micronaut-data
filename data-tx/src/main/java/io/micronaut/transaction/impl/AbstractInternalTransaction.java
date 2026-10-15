@@ -85,33 +85,29 @@ public abstract class AbstractInternalTransaction<C> implements InternalTransact
 
     @Override
     public void triggerBeforeCommit() {
-        for (TransactionSynchronization synchronization : synchronizationsToTrigger()) {
-            propagate(() -> synchronization.beforeCommit(getTransactionDefinition().isReadOnly().orElse(false)));
+        if (synchronizations != null) {
+            for (TransactionSynchronization synchronization : synchronizations) {
+                propagate(() -> synchronization.beforeCommit(getTransactionDefinition().isReadOnly().orElse(false)));
+            }
         }
     }
 
     @Override
     public void triggerAfterCommit() {
-        for (TransactionSynchronization synchronization : synchronizationsToTrigger()) {
-            propagate(synchronization::afterCommit);
+        if (synchronizations != null) {
+            for (TransactionSynchronization synchronization : synchronizations) {
+                propagate(synchronization::afterCommit);
+            }
         }
     }
 
     @Override
     public void triggerBeforeCompletion() {
-        for (TransactionSynchronization synchronization : synchronizationsToTrigger()) {
-            propagate(synchronization::beforeCompletion);
+        if (synchronizations != null) {
+            for (TransactionSynchronization synchronization : synchronizations) {
+                propagate(synchronization::beforeCompletion);
+            }
         }
-    }
-
-    /**
-     * The synchronizations registered so far. A callback can register another synchronization:
-     * it isn't invoked for the callback that is in progress, only for the following ones.
-     *
-     * @return The synchronizations to trigger
-     */
-    private List<TransactionSynchronization> synchronizationsToTrigger() {
-        return synchronizations == null ? List.of() : List.copyOf(synchronizations);
     }
 
     @Override
@@ -134,8 +130,10 @@ public abstract class AbstractInternalTransaction<C> implements InternalTransact
     @Override
     public void triggerAfterCompletion(TransactionSynchronization.Status status) {
         completed = true;
-        for (TransactionSynchronization synchronization : synchronizationsToTrigger()) {
-            propagate(() -> synchronization.afterCompletion(status));
+        if (synchronizations != null) {
+            for (TransactionSynchronization synchronization : synchronizations) {
+                propagate(() -> synchronization.afterCompletion(status));
+            }
         }
     }
 
