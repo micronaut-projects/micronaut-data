@@ -146,8 +146,9 @@ public final class FlatEntityMappingPlan<R> {
         List<Byte> kinds = new ArrayList<>(candidates.size());
         List<Boolean> conversions = new ArrayList<>(candidates.size());
         List<Integer> argumentIndexes = new ArrayList<>(candidates.size());
+        // Every constructor argument is a persistent property, the identity or the version, so each is among the
+        // candidates and is either mapped or makes the entity fall back
         boolean[] requiredArguments = new boolean[constructorArguments.length];
-        boolean[] suppliedArguments = new boolean[constructorArguments.length];
         for (RuntimePersistentProperty<R> property : candidates) {
             if (property instanceof RuntimeAssociation || property.getConverter() != null) {
                 return null;
@@ -163,7 +164,6 @@ public final class FlatEntityMappingPlan<R> {
                     continue;
                 }
             } else {
-                suppliedArguments[argumentIndex] = true;
                 requiredArguments[argumentIndex] = !property.isOptional();
             }
             byte kind = kind(property.getDataType());
@@ -175,12 +175,6 @@ public final class FlatEntityMappingPlan<R> {
             kinds.add(kind);
             conversions.add(!property.getType().isAssignableFrom(getterType(kind)));
             argumentIndexes.add(argumentIndex);
-        }
-        for (boolean supplied : suppliedArguments) {
-            if (!supplied) {
-                // A constructor argument that is not a persistent property, such as an association
-                return null;
-            }
         }
         byte[] kindArray = new byte[kinds.size()];
         boolean[] conversionArray = new boolean[kinds.size()];
