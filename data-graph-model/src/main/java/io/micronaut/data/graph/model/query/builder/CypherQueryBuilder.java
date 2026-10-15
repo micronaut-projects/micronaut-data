@@ -50,7 +50,6 @@ import io.micronaut.data.model.jpa.criteria.impl.selection.AliasedSelection;
 import io.micronaut.data.model.jpa.criteria.impl.selection.CompoundSelection;
 import io.micronaut.data.model.query.BindingParameter;
 import io.micronaut.data.model.query.JoinPath;
-import io.micronaut.data.model.query.builder.QueryBuilder;
 import io.micronaut.data.model.query.builder.QueryParameterBinding;
 import io.micronaut.data.model.query.builder.QueryResult;
 import io.micronaut.data.model.query.impl.AdvancedPredicateVisitor;
@@ -80,7 +79,7 @@ import java.util.Map;
  * @since 5.3.0
  */
 @Introspected
-public class CypherQueryBuilder implements QueryBuilder {
+public class CypherQueryBuilder implements GraphQueryBuilder {
 
     /**
      * The variable of the root node.
@@ -262,6 +261,7 @@ public class CypherQueryBuilder implements QueryBuilder {
      * @param entity The entity
      * @return The query
      */
+    @Override
     public String buildFindByIdQuery(PersistentEntity entity) {
         return "MATCH (" + ROOT + labelExpression(entity) + ") WHERE "
             + identityExpression(entity.getIdentity(), ROOT) + " = $" + ID_PARAMETER + " RETURN " + ROOT;
@@ -273,6 +273,7 @@ public class CypherQueryBuilder implements QueryBuilder {
      * @param entity The entity
      * @return The query
      */
+    @Override
     public String buildFindAllQuery(PersistentEntity entity) {
         return "MATCH (" + ROOT + labelExpression(entity) + ") RETURN " + ROOT;
     }
@@ -283,6 +284,7 @@ public class CypherQueryBuilder implements QueryBuilder {
      * @param entity The entity
      * @return The query
      */
+    @Override
     public String buildCountAllQuery(PersistentEntity entity) {
         return "MATCH (" + ROOT + labelExpression(entity) + ") RETURN count(" + ROOT + ") AS result";
     }
@@ -302,6 +304,7 @@ public class CypherQueryBuilder implements QueryBuilder {
      * @param idPresent     Whether the identifier is set
      * @return The query
      */
+    @Override
     public String buildWriteNodeQuery(PersistentEntity entity, List<String> propertyNames, boolean idPresent) {
         PersistentProperty identity = entity.getIdentity();
         String labels = labelExpression(entity);
@@ -326,26 +329,9 @@ public class CypherQueryBuilder implements QueryBuilder {
         return query.append(" AS ").append(ID_PARAMETER).toString();
     }
 
-    /**
-     * Builds the query that deletes all nodes of an entity with their relationships, returning their count.
-     *
-     * @param entity The entity
-     * @return The query
-     */
+    @Override
     public String buildDeleteAllQuery(PersistentEntity entity) {
         return "MATCH (" + ROOT + labelExpression(entity) + ") DETACH DELETE " + ROOT + " RETURN count(*) AS result";
-    }
-
-    /**
-     * Completes a query written in Cypher into the statement the driver runs. Applied when repositories are compiled
-     * to explicit queries, and at runtime to queries passed to the repository operations.
-     *
-     * @param query The query
-     * @return The statement
-     * @throws IllegalArgumentException if the database cannot run the query
-     */
-    public String finishQuery(String query) {
-        return query;
     }
 
     /**
@@ -354,6 +340,7 @@ public class CypherQueryBuilder implements QueryBuilder {
      * @param entity The entity
      * @return The query
      */
+    @Override
     public String buildDeleteByIdQuery(PersistentEntity entity) {
         return "MATCH (" + ROOT + labelExpression(entity) + ") WHERE "
             + identityExpression(entity.getIdentity(), ROOT) + " = $" + ID_PARAMETER + " DETACH DELETE " + ROOT + " RETURN count(*) AS result";
@@ -371,6 +358,7 @@ public class CypherQueryBuilder implements QueryBuilder {
      * @param relationshipIdentity The identity of the relationship entity, or null if none
      * @return The query
      */
+    @Override
     public String buildLinkQuery(Association association,
                                  PersistentEntity owner,
                                  PersistentEntity target,
@@ -422,6 +410,7 @@ public class CypherQueryBuilder implements QueryBuilder {
      * @param definition The definition
      * @return The query
      */
+    @Override
     public QueryResult buildPathQuery(PathQueryDefinition definition) {
         PersistentEntity entity = definition.entity();
         if (!entity.hasIdentity() && (definition.start() != null || definition.end() != null)) {
