@@ -15,7 +15,6 @@
  */
 package io.micronaut.data.graph.annotation;
 
-import io.micronaut.data.annotation.Transient;
 
 import java.lang.annotation.Documented;
 import java.lang.annotation.ElementType;
@@ -35,6 +34,5 @@ import java.lang.annotation.Target;
 @Retention(RetentionPolicy.RUNTIME)
 @Target({ElementType.FIELD, ElementType.METHOD, ElementType.PARAMETER})
 @Documented
-@Transient
 public @interface Labels {
 }
