@@ -181,7 +181,11 @@ class OracleTransactionPrioritySpec extends Specification {
             events << 'transaction completed'
         })
 
-        then:
+        then: "this records the current behaviour"
+        // The reset is registered on the connection, not on the transaction: when the transaction runs on a connection
+        // opened by an outer scope, the priority is only reset when that scope completes, so the work that runs in the
+        // outer scope after the transaction still has the priority of the transaction. Ideally, the priority would be
+        // reset when the transaction completes, as the other connection state changed by the transaction is.
         events == [
             'ALTER SESSION SET "txn_priority"="LOW"',
             'work',
