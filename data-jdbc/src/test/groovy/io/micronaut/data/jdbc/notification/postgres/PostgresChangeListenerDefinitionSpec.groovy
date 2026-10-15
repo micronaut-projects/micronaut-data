@@ -40,7 +40,8 @@ class PostgresChangeListenerDefinitionSpec extends Specification {
         operations.getEntity(type) >> entity
         operations.conversionService >> ConversionService.SHARED
         def method = Mock(ExecutableMethod)
-        method.stringValue(PostgresChangeNotification, 'channel') >> Optional.of('changes')
+        method.getAnnotation(PostgresChangeNotification) >> AnnotationValue.builder(PostgresChangeNotification)
+            .member('channel', 'changes').build()
         method.getAnnotation(PostgresChangeListenerQuery) >> AnnotationValue.builder(PostgresChangeListenerQuery)
                 .value('SELECT id FROM book WHERE id = ?')
                 .member('columns', ['id'] as String[])
@@ -78,7 +79,8 @@ class PostgresChangeListenerDefinitionSpec extends Specification {
         operations.getEntity(DefinitionBook) >> new RuntimePersistentEntity<>(DefinitionBook)
         def method = Mock(ExecutableMethod)
         method.getDescription(true) >> 'void changed(ChangeEvent<DefinitionBook>)'
-        method.stringValue(PostgresChangeNotification, 'channel') >> Optional.of('changes')
+        method.getAnnotation(PostgresChangeNotification) >> AnnotationValue.builder(PostgresChangeNotification)
+            .member('channel', 'changes').build()
         method.getAnnotation(PostgresChangeListenerQuery) >> metadata
         def listener = new ChangeListenerMethod(Mock(BeanDefinition), method, Argument.of(DefinitionBook))
 
@@ -108,7 +110,7 @@ class PostgresChangeListenerDefinitionSpec extends Specification {
         def operations = Mock(JdbcRepositoryOperations)
         def method = Mock(ExecutableMethod)
         method.getDescription(true) >> 'void changed(ChangeEvent<DefinitionBook>)'
-        method.stringValue(PostgresChangeNotification, 'channel') >> Optional.empty()
+        method.getAnnotation(PostgresChangeNotification) >> null
         def listener = new ChangeListenerMethod(Mock(BeanDefinition), method, Argument.of(DefinitionBook))
 
         when:

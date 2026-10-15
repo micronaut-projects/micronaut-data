@@ -52,14 +52,18 @@ final class PostgresChangeListenerDefinitionFactory {
     /**
      * Creates the table mapping and entity loader for one discovered listener method.
      *
-     * @param listener the validated listener method and entity type
+     * @param listenerMethod the validated listener method and entity type
      * @return the listener definition
      */
-    PostgresChangeListenerDefinition create(ChangeListenerMethod listener) {
-        ExecutableMethod<?, ?> method = listener.method();
-        String channel = method.stringValue(PostgresChangeNotification.class, "channel")
-            .orElseThrow(() -> invalidChangeListener(method, "requires @PostgresChangeNotification for a PostgreSQL datasource"));
-        RuntimePersistentEntity<?> entity = operations.getEntity(listener.entityArgument().getType());
+    PostgresChangeListenerDefinition create(ChangeListenerMethod listenerMethod) {
+        ExecutableMethod<?, ?> method = listenerMethod.method();
+        AnnotationValue<PostgresChangeNotification> notification = method.getAnnotation(PostgresChangeNotification.class);
+        if (notification == null) {
+            throw invalidChangeListener(method, "requires @PostgresChangeNotification for a PostgreSQL datasource");
+        }
+        String channel = notification.stringValue("channel")
+            .orElseThrow(() -> invalidChangeListener(method, "requires a PostgreSQL notification channel"));
+        RuntimePersistentEntity<?> entity = operations.getEntity(listenerMethod.entityArgument().getType());
         PostgresChangeListenerEntityLoader<?> loader = createEntityLoader(method, entity);
         String schema = entity.getAnnotationMetadata().stringValue(MappedEntity.class, "schema")
             .filter(value -> !value.isEmpty()).orElse(null);
