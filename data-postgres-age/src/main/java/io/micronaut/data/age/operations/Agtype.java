@@ -22,18 +22,15 @@ import io.micronaut.data.graph.runtime.GraphPathValue;
 import org.jspecify.annotations.Nullable;
 
 import java.math.BigDecimal;
-import java.time.temporal.Temporal;
-import java.time.temporal.TemporalAmount;
 import java.util.ArrayList;
-import java.util.Base64;
-import java.util.Iterator;
 import java.util.LinkedHashMap;
 import java.util.List;
 import java.util.Map;
 
 /**
- * Reads and writes the text form of Apache AGE {@code agtype} values: JSON extended with type annotations such as
- * {@code ::vertex}, {@code ::edge}, {@code ::path} and {@code ::numeric}.
+ * Reads the text form of Apache AGE {@code agtype} values: JSON extended with type annotations such as
+ * {@code ::vertex}, {@code ::edge}, {@code ::path} and {@code ::numeric}, which a JSON parser cannot read.
+ * Parameters are plain JSON, written by Micronaut Serialization.
  *
  * @author graemerocher
  * @since 5.3.0
@@ -65,86 +62,6 @@ final class Agtype {
             throw parser.error("Unexpected trailing input");
         }
         return value;
-    }
-
-    /**
-     * Writes a map of parameters as an agtype map, in JSON.
-     *
-     * @param parameters The parameters
-     * @return The JSON text
-     */
-    static String write(Map<String, Object> parameters) {
-        StringBuilder sb = new StringBuilder();
-        writeValue(sb, parameters);
-        return sb.toString();
-    }
-
-    private static void writeValue(StringBuilder sb, @Nullable Object value) {
-        if (value == null) {
-            sb.append("null");
-        } else if (value instanceof String s) {
-            writeString(sb, s);
-        } else if (value instanceof Boolean || value instanceof Long || value instanceof Integer
-            || value instanceof Short || value instanceof Byte || value instanceof BigDecimal) {
-            sb.append(value);
-        } else if (value instanceof Double d) {
-            sb.append(d.isNaN() || d.isInfinite() ? "null" : d.toString());
-        } else if (value instanceof Float f) {
-            sb.append(f.isNaN() || f.isInfinite() ? "null" : f.toString());
-        } else if (value instanceof Map<?, ?> map) {
-            sb.append('{');
-            Iterator<? extends Map.Entry<?, ?>> iterator = map.entrySet().iterator();
-            while (iterator.hasNext()) {
-                Map.Entry<?, ?> entry = iterator.next();
-                writeString(sb, String.valueOf(entry.getKey()));
-                sb.append(": ");
-                writeValue(sb, entry.getValue());
-                if (iterator.hasNext()) {
-                    sb.append(", ");
-                }
-            }
-            sb.append('}');
-        } else if (value instanceof Iterable<?> iterable) {
-            sb.append('[');
-            Iterator<?> iterator = iterable.iterator();
-            while (iterator.hasNext()) {
-                writeValue(sb, iterator.next());
-                if (iterator.hasNext()) {
-                    sb.append(", ");
-                }
-            }
-            sb.append(']');
-        } else if (value instanceof byte[] bytes) {
-            writeString(sb, Base64.getEncoder().encodeToString(bytes));
-        } else if (value instanceof Temporal || value instanceof TemporalAmount) {
-            writeString(sb, value.toString());
-        } else {
-            writeString(sb, value.toString());
-        }
-    }
-
-    private static void writeString(StringBuilder sb, String value) {
-        sb.append('"');
-        for (int i = 0; i < value.length(); i++) {
-            char c = value.charAt(i);
-            switch (c) {
-                case '"' -> sb.append("\\\"");
-                case '\\' -> sb.append("\\\\");
-                case '\n' -> sb.append("\\n");
-                case '\r' -> sb.append("\\r");
-                case '\t' -> sb.append("\\t");
-                case '\b' -> sb.append("\\b");
-                case '\f' -> sb.append("\\f");
-                default -> {
-                    if (c < 0x20) {
-                        sb.append(String.format("\\u%04x", (int) c));
-                    } else {
-                        sb.append(c);
-                    }
-                }
-            }
-        }
-        sb.append('"');
     }
 
     private @Nullable Object value() {
