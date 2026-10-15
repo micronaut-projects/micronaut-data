@@ -1,0 +1,18 @@
+When a finder cannot express a query, write it with ann:data.annotation.Query[] in the query language of the database. Parameters are written `$name` and bound to the method parameters of the same name, and checked at build time.
+
+snippet::example.MovieRepository[project-base="doc-examples/neo4j-example", source="main", tags="query", languages="java,kotlin,groovy,python"]
+
+The operation follows from the query and the return type:
+
+* A query with a `RETURN` clause whose method returns entities, DTOs, paths or values reads.
+* A query that writes with `CREATE`, `MERGE`, `SET` or `REMOVE` updates, and a query with `DELETE` deletes. These return the number of entities or properties written.
+
+A query returning nodes maps them to the entity type of the method. Paths map to api:data.graph.model.GraphPath[], and relationships to api:data.graph.model.GraphRelationship[] when the query also returns the start and end nodes as the columns `f` and `t`.
+
+Queries can also be run without a repository method through the repository operations, for example api:data.neo4j.operations.Neo4jRepositoryOperations[]:
+
+[source,java]
+----
+List<GraphRecord> rows = operations.executeQuery("MATCH (p:Person) RETURN p.name AS name", Map.of());
+List<Person> people = operations.executeQuery("MATCH (p:Person) RETURN p", Map.of(), Person.class);
+----
