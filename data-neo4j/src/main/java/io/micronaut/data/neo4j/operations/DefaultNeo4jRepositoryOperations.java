@@ -15,6 +15,7 @@
  */
 package io.micronaut.data.neo4j.operations;
 
+import io.micronaut.context.BeanProvider;
 import io.micronaut.context.annotation.Requires;
 import io.micronaut.core.annotation.AnnotationMetadata;
 import io.micronaut.core.annotation.Internal;
@@ -64,8 +65,10 @@ final class DefaultNeo4jRepositoryOperations extends AbstractGraphRepositoryOper
     private static final Logger LOG = LoggerFactory.getLogger(DefaultNeo4jRepositoryOperations.class);
 
     private final Neo4jConnectionOperations connectionOperations;
+    private final BeanProvider<Neo4jReactorRepositoryOperations> reactiveOperations;
 
     DefaultNeo4jRepositoryOperations(Neo4jConnectionOperations connectionOperations,
+                                     BeanProvider<Neo4jReactorRepositoryOperations> reactiveOperations,
                                      DateTimeProvider<Object> dateTimeProvider,
                                      RuntimeEntityRegistry runtimeEntityRegistry,
                                      DataConversionService conversionService,
@@ -73,6 +76,12 @@ final class DefaultNeo4jRepositoryOperations extends AbstractGraphRepositoryOper
                                      @Named("io") @Nullable ExecutorService executorService) {
         super(new CypherQueryBuilder(), dateTimeProvider, runtimeEntityRegistry, conversionService, attributeConverterRegistry, executorService);
         this.connectionOperations = connectionOperations;
+        this.reactiveOperations = reactiveOperations;
+    }
+
+    @Override
+    public Neo4jReactorRepositoryOperations reactive() {
+        return reactiveOperations.get();
     }
 
     @Override
