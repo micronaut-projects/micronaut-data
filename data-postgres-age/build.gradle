@@ -1,3 +1,5 @@
+import io.micronaut.testresources.buildtools.KnownModules
+
 plugins {
     id "io.micronaut.build.internal.data-module"
     id 'io.micronaut.test-resources'
@@ -8,6 +10,7 @@ micronaut {
     testResources {
         clientTimeout = 300
         version = libs.versions.micronaut.testresources.get()
+        additionalModules.add(KnownModules.JDBC_POSTGRESQL)
     }
 }
 
@@ -32,6 +35,7 @@ dependencies {
 
     testRuntimeOnly mnSql.micronaut.jdbc.hikari
     testRuntimeOnly mnSql.postgresql
+    testResourcesService mnSql.postgresql
     testRuntimeOnly mnLogging.logback.classic
 
     testCompileOnly mn.micronaut.inject.groovy
