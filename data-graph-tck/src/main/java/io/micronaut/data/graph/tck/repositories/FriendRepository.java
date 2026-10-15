@@ -11,6 +11,7 @@ import java.util.Optional;
 
 public interface FriendRepository extends CrudRepository<Friend, String> {
 
+    @PathLimit(10)
     Optional<GraphPath<Friend>> findShortestPath(Friend from, Friend to);
 
     Optional<GraphPath<Friend>> findShortestPathByFriends(String from, String to, @PathLimit int maxDepth);
@@ -18,6 +19,7 @@ public interface FriendRepository extends CrudRepository<Friend, String> {
     @PathLimit(4)
     List<GraphPath<Friend>> findAllPathsByFriends(String from, String to);
 
+    @PathLimit(10)
     boolean existsPath(String from, String to);
 
     List<GraphRelationship<Friend, Friend>> findRelationships(String from, String to);
