@@ -1,4 +1,4 @@
-package io.micronaut.data.graph.processor.matchers
+package io.micronaut.data.processor.graph.matchers
 
 import spock.lang.Specification
 import spock.lang.Unroll
