@@ -23,6 +23,7 @@ import io.micronaut.data.annotation.ParameterExpression;
 import io.micronaut.data.annotation.Query;
 import io.micronaut.data.annotation.TypeRole;
 import io.micronaut.data.graph.annotation.GraphRepository;
+import io.micronaut.data.graph.model.query.builder.CypherQueryBuilder;
 import io.micronaut.data.intercept.annotation.DataMethod;
 import io.micronaut.data.model.query.BindingParameter.BindingContext;
 import io.micronaut.data.model.query.builder.QueryParameterBinding;
@@ -182,7 +183,15 @@ public final class GraphRawQueryMethodMatcher implements MethodMatcher {
                 BindingContext.create().index(index++).name(name)
             ));
         }
-        return QueryResult.of(query, List.of(query), bindings);
+        String finalQuery = query;
+        if (matchContext.getQueryBuilder() instanceof CypherQueryBuilder cypherQueryBuilder) {
+            try {
+                finalQuery = cypherQueryBuilder.finishQuery(query);
+            } catch (IllegalArgumentException e) {
+                throw new MatchFailedException(String.valueOf(e.getMessage()));
+            }
+        }
+        return QueryResult.of(finalQuery, List.of(finalQuery), bindings);
     }
 
     /**
