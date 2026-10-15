@@ -159,6 +159,11 @@ public class AgeCypherQueryBuilder extends CypherQueryBuilder {
     }
 
     @Override
+    public String buildAddLabelsQuery(PersistentEntity entity, List<String> labels) {
+        throw new UnsupportedOperationException("Apache AGE nodes have a single label: dynamic labels are not supported");
+    }
+
+    @Override
     protected boolean supportsUnboundedPaths() {
         return false;
     }
