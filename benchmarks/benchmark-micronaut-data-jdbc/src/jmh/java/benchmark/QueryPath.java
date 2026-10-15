@@ -22,6 +22,7 @@ import example.BookDto;
 import example.BookRepository;
 import example.Novel;
 import example.NovelRepository;
+import example.TargetVersionBookRepository;
 import io.micronaut.context.ApplicationContext;
 import io.micronaut.data.model.Page;
 import io.micronaut.data.model.Pageable;
@@ -63,6 +64,7 @@ public class QueryPath {
     ApplicationContext applicationContext;
     BookRepository bookRepository;
     AuthorRepository authorRepository;
+    TargetVersionBookRepository targetVersionBookRepository;
     List<Long> bookIds;
 
     @Setup
@@ -70,6 +72,7 @@ public class QueryPath {
         applicationContext = ApplicationContext.run();
         bookRepository = applicationContext.getBean(BookRepository.class);
         authorRepository = applicationContext.getBean(AuthorRepository.class);
+        targetVersionBookRepository = applicationContext.getBean(TargetVersionBookRepository.class);
         NovelRepository novelRepository = applicationContext.getBean(NovelRepository.class);
 
         List<Book> books = new ArrayList<>(BOOKS);
@@ -171,6 +174,14 @@ public class QueryPath {
     @Benchmark
     public List<Book> updateAll(ThreadState state) {
         return bookRepository.updateAll(state.batch);
+    }
+
+    /**
+     * A batch update of {@value #BATCH} books through a repository that declares the database version it targets.
+     */
+    @Benchmark
+    public List<Book> updateAllWithTargetVersion(ThreadState state) {
+        return targetVersionBookRepository.updateAll(state.batch);
     }
 
     /**
