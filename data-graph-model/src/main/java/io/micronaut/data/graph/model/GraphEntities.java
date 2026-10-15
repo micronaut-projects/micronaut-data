@@ -164,7 +164,6 @@ public final class GraphEntities {
         return types;
     }
 
-
     /**
      * Finds the target node association of a relationship entity.
      *
