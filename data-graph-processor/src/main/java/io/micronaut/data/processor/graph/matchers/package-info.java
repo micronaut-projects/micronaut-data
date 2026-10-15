@@ -19,4 +19,4 @@
  * @author graemerocher
  * @since 5.3.0
  */
-package io.micronaut.data.graph.processor.matchers;
+package io.micronaut.data.processor.graph.matchers;
