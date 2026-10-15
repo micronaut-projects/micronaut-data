@@ -30,12 +30,12 @@ import io.micronaut.data.model.runtime.StoredQuery;
 import io.micronaut.data.runtime.operations.internal.query.DefaultBindableParametersStoredQuery;
 import org.jspecify.annotations.Nullable;
 
-import java.util.AbstractMap;
 import java.util.Arrays;
+import java.util.Collections;
+import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 import java.util.Objects;
-import java.util.stream.Collectors;
 
 /**
  * Implementation of {@link SqlStoredQuery}.
@@ -118,18 +118,24 @@ public class DefaultSqlStoredQuery<E, R> extends DefaultBindableParametersStored
     @Override
     @Nullable
     public Map<QueryParameterBinding, Object> collectAutoPopulatedPreviousValues(E entity) {
-        StoredQuery<E, R> storedQuery = getStoredQueryDelegate();
-        if (storedQuery.getQueryBindings().isEmpty()) {
+        List<QueryParameterBinding> queryBindings = getStoredQueryDelegate().getQueryBindings();
+        if (queryBindings.isEmpty()) {
             return null;
         }
-        return storedQuery.getQueryBindings().stream()
-            .filter(b -> b.isAutoPopulated() && b.isRequiresPreviousPopulatedValue())
-            .map(b -> {
-                var value = getRequiredPropertyPath(b, getPersistentEntity()).getPropertyValue(entity);
-                return new AbstractMap.SimpleEntry<>(b, value);
-            })
-            .filter(e -> e.getValue() != null)
-            .collect(Collectors.toMap(AbstractMap.SimpleEntry::getKey, AbstractMap.SimpleEntry::getValue));
+        Map<QueryParameterBinding, Object> previousValues = null;
+        for (int i = 0; i < queryBindings.size(); i++) {
+            QueryParameterBinding binding = queryBindings.get(i);
+            if (binding.isAutoPopulated() && binding.isRequiresPreviousPopulatedValue()) {
+                Object value = getRequiredPropertyPath(i).getPropertyValue(entity);
+                if (value != null) {
+                    if (previousValues == null) {
+                        previousValues = new HashMap<>();
+                    }
+                    previousValues.put(binding, value);
+                }
+            }
+        }
+        return previousValues == null ? Collections.emptyMap() : previousValues;
     }
 
 }
