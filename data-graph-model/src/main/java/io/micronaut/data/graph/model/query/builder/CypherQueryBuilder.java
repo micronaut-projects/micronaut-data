@@ -126,8 +126,26 @@ public class CypherQueryBuilder implements QueryBuilder {
      * The column holding the end node of a returned relationship.
      */
     public static final String RELATIONSHIP_TO = "t";
+    /**
+     * The parameter holding an identifier in runtime write queries.
+     */
+    public static final String ID_PARAMETER = "id";
+    /**
+     * The prefix of the parameters holding property values in runtime write queries.
+     */
+    public static final String VALUE_PARAMETER_PREFIX = "v";
+    /**
+     * The parameter holding the identifier of the owner in a link query.
+     */
+    public static final String LINK_FROM_PARAMETER = "from";
+    /**
+     * The parameter holding the identifier of the target in a link query.
+     */
+    public static final String LINK_TO_PARAMETER = "to";
     private static final String RETURN = " RETURN ";
     private static final String AND = " AND ";
+    private static final String LINK_FROM = "a";
+    private static final String LINK_TO = "b";
 
     @Override
     public @Nullable QueryResult buildInsert(AnnotationMetadata repositoryMetadata, InsertQueryDefinition definition) {
@@ -238,6 +256,144 @@ public class CypherQueryBuilder implements QueryBuilder {
         }
         query.append(" DETACH DELETE ").append(ROOT).append(" RETURN count(*)");
         return QueryResult.of(query.toString(), List.of(query.toString()), state.parameterBindings, state.additionalRequiredParameters);
+    }
+
+    /**
+     * Builds the query that finds a node by its identifier, bound to the parameter {@code $id}.
+     *
+     * @param entity The entity
+     * @return The query
+     */
+    public String buildFindByIdQuery(PersistentEntity entity) {
+        return "MATCH (" + ROOT + GraphEntities.labelExpression(entity) + ") WHERE "
+            + identityExpression(entity.getIdentity(), ROOT) + " = $" + ID_PARAMETER + " RETURN " + ROOT;
+    }
+
+    /**
+     * Builds the query that finds all nodes of an entity.
+     *
+     * @param entity The entity
+     * @return The query
+     */
+    public String buildFindAllQuery(PersistentEntity entity) {
+        return "MATCH (" + ROOT + GraphEntities.labelExpression(entity) + ") RETURN " + ROOT;
+    }
+
+    /**
+     * Builds the query that counts all nodes of an entity.
+     *
+     * @param entity The entity
+     * @return The query
+     */
+    public String buildCountAllQuery(PersistentEntity entity) {
+        return "MATCH (" + ROOT + GraphEntities.labelExpression(entity) + ") RETURN count(" + ROOT + ") AS result";
+    }
+
+    /**
+     * Builds the query that writes a node. The property values are bound to {@code $v0}, {@code $v1} and so on,
+     * in the order of the given names, and the identifier to {@code $id}. The query returns the identifier as {@code id}.
+     *
+     * <ul>
+     *     <li>A database-assigned identifier that is not set yet creates the node.</li>
+     *     <li>A database-assigned identifier that is set updates the existing node.</li>
+     *     <li>An assigned identifier merges the node on it.</li>
+     * </ul>
+     *
+     * @param entity        The entity
+     * @param propertyNames The stored names of the properties to write
+     * @param idPresent     Whether the identifier is set
+     * @return The query
+     */
+    public String buildWriteNodeQuery(PersistentEntity entity, List<String> propertyNames, boolean idPresent) {
+        PersistentProperty identity = entity.getIdentity();
+        String labels = GraphEntities.labelExpression(entity);
+        StringBuilder query = new StringBuilder();
+        boolean nativeId = identity != null && GraphEntities.isNativeId(identity);
+        if (identity == null || (nativeId && !idPresent)) {
+            query.append("CREATE (").append(ROOT).append(labels).append(')');
+        } else if (nativeId) {
+            query.append("MATCH (").append(ROOT).append(labels).append(") WHERE ")
+                .append(identityExpression(identity, ROOT)).append(" = $").append(ID_PARAMETER);
+        } else {
+            query.append("MERGE (").append(ROOT).append(labels).append(" {")
+                .append(GraphEntities.escapeName(GraphEntities.propertyName(identity))).append(": $").append(ID_PARAMETER).append("})");
+        }
+        appendSetProperties(query, ROOT, propertyNames);
+        query.append(" RETURN ");
+        if (identity == null) {
+            query.append("null");
+        } else {
+            query.append(identityExpression(identity, ROOT));
+        }
+        return query.append(" AS ").append(ID_PARAMETER).toString();
+    }
+
+    /**
+     * Builds the query that deletes a node by its identifier, bound to {@code $id}, with its relationships.
+     *
+     * @param entity The entity
+     * @return The query
+     */
+    public String buildDeleteByIdQuery(PersistentEntity entity) {
+        return "MATCH (" + ROOT + GraphEntities.labelExpression(entity) + ") WHERE "
+            + identityExpression(entity.getIdentity(), ROOT) + " = $" + ID_PARAMETER + " DETACH DELETE " + ROOT + " RETURN count(*) AS result";
+    }
+
+    /**
+     * Builds the query that links two nodes with the relationship of an association. The identifiers of the owner and
+     * the target are bound to {@code $from} and {@code $to}. For a relationship entity the properties are bound to
+     * {@code $v0}, {@code $v1} and so on, and the query returns the identifier of the relationship as {@code id}.
+     *
+     * @param association   The association
+     * @param owner         The entity that declares the association
+     * @param target        The node entity at the far end
+     * @param propertyNames The stored names of the relationship properties to write
+     * @param relationshipIdentity The identity of the relationship entity, or null if none
+     * @return The query
+     */
+    public String buildLinkQuery(Association association,
+                                 PersistentEntity owner,
+                                 PersistentEntity target,
+                                 List<String> propertyNames,
+                                 @Nullable PersistentProperty relationshipIdentity) {
+        StringBuilder query = new StringBuilder("MATCH (")
+            .append(LINK_FROM).append(GraphEntities.labelExpression(owner)).append("), (")
+            .append(LINK_TO).append(GraphEntities.labelExpression(target)).append(") WHERE ")
+            .append(identityExpression(owner.getIdentity(), LINK_FROM)).append(" = $").append(LINK_FROM_PARAMETER)
+            .append(" AND ")
+            .append(identityExpression(target.getIdentity(), LINK_TO)).append(" = $").append(LINK_TO_PARAMETER)
+            .append(" MERGE ");
+        String rel = "[" + PATH_RELATIONSHIP + ":" + GraphEntities.escapeName(GraphEntities.relationshipType(association)) + "]";
+        query.append(directed("(" + LINK_FROM + ")", rel, "(" + LINK_TO + ")", GraphEntities.direction(association)));
+        appendSetProperties(query, PATH_RELATIONSHIP, propertyNames);
+        query.append(" RETURN ");
+        if (relationshipIdentity != null) {
+            query.append(identityExpression(relationshipIdentity, PATH_RELATIONSHIP));
+        } else {
+            query.append("null");
+        }
+        return query.append(" AS ").append(ID_PARAMETER).toString();
+    }
+
+    /**
+     * Appends a {@code SET} clause that writes the given properties from the parameters {@code $v0}, {@code $v1} and so on.
+     *
+     * @param query         The query
+     * @param variable      The variable of the graph element
+     * @param propertyNames The stored property names
+     */
+    protected void appendSetProperties(StringBuilder query, String variable, List<String> propertyNames) {
+        if (propertyNames.isEmpty()) {
+            return;
+        }
+        query.append(" SET ");
+        for (int i = 0; i < propertyNames.size(); i++) {
+            if (i > 0) {
+                query.append(", ");
+            }
+            query.append(variable).append('.').append(GraphEntities.escapeName(propertyNames.get(i)))
+                .append(" = $").append(VALUE_PARAMETER_PREFIX).append(i);
+        }
     }
 
     /**
