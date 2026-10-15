@@ -13,7 +13,7 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package io.micronaut.data.age.operations;
+package io.micronaut.data.graph.model.query.builder;
 
 import io.micronaut.core.annotation.Internal;
 
@@ -24,50 +24,127 @@ import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 
 /**
- * Wraps Cypher queries in the SQL that Apache AGE runs them with.
+ * The SQL statements that run Cypher on Apache AGE, built when repositories are compiled: a call to {@code cypher()}
+ * whose result columns are named after the columns the Cypher query returns. The graph name is the token
+ * {@link #GRAPH_TOKEN}, replaced with the configured graph when the statement runs.
  *
  * @author graemerocher
  * @since 5.3.0
  */
 @Internal
-final class AgeQueries {
+public final class AgeStatements {
 
+    /**
+     * Stands for the graph name in a statement until it runs.
+     */
+    public static final String GRAPH_TOKEN = "$__graph";
+
+    /**
+     * Separates the Cypher query from the end of a statement.
+     */
+    public static final String CYPHER_END = " $$";
+
+    private static final String CYPHER_START = "', $$ ";
+    private static final String PARAMETER_ARGUMENT = "$$, ?)";
     private static final Pattern ALIAS = Pattern.compile("(?is)^(.*\\S)\\s+AS\\s+(`[^`]+`|[A-Za-z_][A-Za-z0-9_]*)$");
+    private static final Pattern PARAMETER = Pattern.compile("\\$([A-Za-z_][A-Za-z0-9_]*)");
+    private static final Pattern GRAPH_NAME = Pattern.compile("[A-Za-z_][A-Za-z0-9_]*");
     private static final String DOLLAR_QUOTE = "$$";
+    private static final String RESULT_COLUMN = "result";
 
-    private AgeQueries() {
+    private AgeStatements() {
     }
 
     /**
-     * Wraps a Cypher query in a call to {@code cypher()}.
+     * Wraps a Cypher query in a call to {@code cypher()}. The statement takes the parameter map as its single SQL
+     * parameter when the query refers to parameters.
      *
-     * @param graph         The graph name
-     * @param cypher        The Cypher query
-     * @param hasParameters Whether the query takes a parameter map, bound to the single SQL parameter
-     * @param columns       The number of columns the query returns
-     * @return The SQL
+     * @param cypher The Cypher query
+     * @return The SQL statement
+     * @throws IllegalArgumentException if Apache AGE cannot run the query
      */
-    static String wrap(String graph, String cypher, boolean hasParameters, int columns) {
+    public static String wrap(String cypher) {
         if (cypher.contains(DOLLAR_QUOTE)) {
             throw new IllegalArgumentException("A Cypher query for Apache AGE cannot contain $$");
         }
-        if (!graph.matches("[A-Za-z_][A-Za-z0-9_]*")) {
-            throw new IllegalArgumentException("Invalid Apache AGE graph name: " + graph);
-        }
+        List<String> columns = returnColumns(cypher);
         StringBuilder sql = new StringBuilder("SELECT * FROM ag_catalog.cypher('")
-            .append(graph).append("', $$ ").append(cypher).append(" $$");
-        if (hasParameters) {
+            .append(GRAPH_TOKEN).append(CYPHER_START).append(cypher).append(CYPHER_END);
+        if (hasParameters(cypher)) {
             sql.append(", ?");
         }
         sql.append(") AS (");
-        int count = Math.max(columns, 1);
-        for (int i = 0; i < count; i++) {
+        if (columns.isEmpty()) {
+            columns = List.of(RESULT_COLUMN);
+        }
+        for (int i = 0; i < columns.size(); i++) {
             if (i > 0) {
                 sql.append(", ");
             }
-            sql.append('c').append(i).append(" ag_catalog.agtype");
+            sql.append('"').append(columns.get(i).replace("\"", "\"\"")).append("\" ag_catalog.agtype");
         }
         return sql.append(')').toString();
+    }
+
+    /**
+     * @param statement A statement built by {@link #wrap(String)}
+     * @return Whether the statement takes the parameter map
+     */
+    public static boolean takesParameters(String statement) {
+        return statement.contains(PARAMETER_ARGUMENT);
+    }
+
+    /**
+     * @param statement A statement built by {@link #wrap(String)}
+     * @return The offset of the Cypher query in the statement, or -1 if it is not a statement
+     */
+    public static int cypherStart(String statement) {
+        int index = statement.indexOf(CYPHER_START);
+        return index < 0 ? -1 : index + CYPHER_START.length();
+    }
+
+    /**
+     * @param statement A statement built by {@link #wrap(String)}
+     * @return The offset just after the Cypher query in the statement
+     */
+    public static int cypherEnd(String statement) {
+        return statement.lastIndexOf(CYPHER_END);
+    }
+
+    /**
+     * Replaces the graph token of a statement.
+     *
+     * @param statement A statement built by {@link #wrap(String)}
+     * @param graph     The graph name
+     * @return The statement to run
+     */
+    public static String forGraph(String statement, String graph) {
+        return statement.replace(GRAPH_TOKEN, graph);
+    }
+
+    /**
+     * Checks a graph name can be written into a statement.
+     *
+     * @param graph The graph name
+     * @return The graph name
+     * @throws IllegalArgumentException if the name is not a valid identifier
+     */
+    public static String validateGraphName(String graph) {
+        if (!GRAPH_NAME.matcher(graph).matches()) {
+            throw new IllegalArgumentException("Invalid Apache AGE graph name: " + graph);
+        }
+        return graph;
+    }
+
+    private static boolean hasParameters(String cypher) {
+        Matcher matcher = PARAMETER.matcher(mask(cypher));
+        while (matcher.find()) {
+            // Tokens such as the path limit are replaced before the statement runs
+            if (!matcher.group(1).startsWith("__")) {
+                return true;
+            }
+        }
+        return false;
     }
 
     /**
@@ -77,7 +154,7 @@ final class AgeQueries {
      * @param cypher The query
      * @return The column names, empty if the query returns nothing
      */
-    static List<String> returnColumns(String cypher) {
+    private static List<String> returnColumns(String cypher) {
         String masked = mask(cypher);
         String upper = masked.toUpperCase(Locale.ENGLISH);
         int returnIndex = lastTopLevelKeyword(upper, "RETURN");
