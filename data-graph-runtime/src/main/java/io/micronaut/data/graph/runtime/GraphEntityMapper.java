@@ -107,6 +107,9 @@ public final class GraphEntityMapper {
             values.put(identity.getName(), readValue(identity, id));
         }
         for (RuntimePersistentProperty<T> property : entity.getPersistentProperties()) {
+            if (isSchemalessHolder(property)) {
+                continue;
+            }
             if (property instanceof RuntimeAssociation<T> association) {
                 if (row != null && row.has(CypherQueryBuilder.JOIN_COLUMN_PREFIX + association.getName())) {
                     values.put(association.getName(), readFetched(association, row.get(CypherQueryBuilder.JOIN_COLUMN_PREFIX + association.getName())));
@@ -164,6 +167,35 @@ public final class GraphEntityMapper {
         return result;
     }
 
+    private static boolean isSchemalessHolder(RuntimePersistentProperty<?> property) {
+        return property.getAnnotationMetadata().hasAnnotation(DynamicAttributes.class)
+            || property.getAnnotationMetadata().hasAnnotation(io.micronaut.data.graph.annotation.Labels.class);
+    }
+
+    /**
+     * The value of a constructor argument the node has no value for: the default of a primitive, an empty collection
+     * for relationships that were not fetched, otherwise null.
+     */
+    private static @Nullable Object emptyValue(Argument<?> argument) {
+        Class<?> type = argument.getType();
+        if (argument.isPrimitive()) {
+            return Array.get(Array.newInstance(type, 1), 0);
+        }
+        if (type == Object.class) {
+            return null;
+        }
+        if (type.isAssignableFrom(ArrayList.class)) {
+            return new ArrayList<>();
+        }
+        if (type.isAssignableFrom(java.util.LinkedHashSet.class)) {
+            return new java.util.LinkedHashSet<>();
+        }
+        if (type.isAssignableFrom(LinkedHashMap.class)) {
+            return new LinkedHashMap<>();
+        }
+        return null;
+    }
+
     private Schemaless schemaless(RuntimePersistentEntity<?> entity) {
         return schemaless.computeIfAbsent(entity.getName(), name -> {
             BeanProperty<Object, Object> attributes = null;
@@ -180,7 +212,9 @@ public final class GraphEntityMapper {
                 declared.add(entity.getIdentity().getPersistedName());
             }
             for (RuntimePersistentProperty<?> property : entity.getPersistentProperties()) {
-                declared.add(property.getPersistedName());
+                if (!isSchemalessHolder(property)) {
+                    declared.add(property.getPersistedName());
+                }
             }
             return new Schemaless(attributes, labels, declared);
         });
@@ -203,6 +237,9 @@ public final class GraphEntityMapper {
             values.put(identity.getName(), readValue(identity, id));
         }
         for (RuntimePersistentProperty<T> property : entity.getPersistentProperties()) {
+            if (isSchemalessHolder(property)) {
+                continue;
+            }
             if (property instanceof RuntimeAssociation<T> association) {
                 if (target != null && association.getAnnotationMetadata().hasStereotype(io.micronaut.data.graph.annotation.TargetNode.class)) {
                     values.put(association.getName(), readNode(association.getAssociatedEntity(), target, null));
@@ -330,6 +367,9 @@ public final class GraphEntityMapper {
             values.put(identity.getPersistedName(), writeValue(identity, identity.getProperty().get(instance)));
         }
         for (RuntimePersistentProperty<T> property : entity.getPersistentProperties()) {
+            if (isSchemalessHolder(property)) {
+                continue;
+            }
             if (property instanceof Association association) {
                 if (association.isEmbedded()) {
                     throw new DataAccessException("Embedded properties are not supported by graph repositories: " + entity.getSimpleName() + "." + property.getName());
@@ -472,7 +512,7 @@ public final class GraphEntityMapper {
                 Object value = values.get(argument.getName());
                 consumed.add(argument.getName());
                 if (value == null) {
-                    value = argument.isPrimitive() ? Array.get(Array.newInstance(argument.getType(), 1), 0) : null;
+                    value = emptyValue(argument);
                 } else if (!argument.getType().isInstance(value)) {
                     value = convert(value, argument);
                 }
