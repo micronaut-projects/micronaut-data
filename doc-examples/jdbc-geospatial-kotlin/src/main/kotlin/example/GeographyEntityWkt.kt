@@ -18,7 +18,7 @@ data class GeographyEntityWkt(
     @field:GeneratedValue
     val id: Long? = null,
     //tag::get[]
-    @field:Srid(4258)
+    @field:Srid(Srid.ETRS_89)
     @field:Index(columns = ["location"])
     @MappedProperty(value = "location", converter = GeometryWktConverter::class, definition = "geography not null")
     val point: Point,
