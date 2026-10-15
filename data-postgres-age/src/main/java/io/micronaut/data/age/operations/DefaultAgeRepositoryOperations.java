@@ -24,7 +24,9 @@ import io.micronaut.data.connection.ConnectionDefinition;
 import io.micronaut.data.connection.ConnectionOperations;
 import io.micronaut.data.exceptions.DataAccessException;
 import io.micronaut.data.graph.model.query.builder.AgeCypherQueryBuilder;
+import io.micronaut.core.type.Argument;
 import io.micronaut.data.graph.model.query.builder.AgeStatements;
+import io.micronaut.json.JsonMapper;
 import io.micronaut.data.model.Limit;
 import io.micronaut.data.model.Sort;
 import io.micronaut.data.model.runtime.RuntimePersistentEntity;
@@ -44,6 +46,7 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 import javax.sql.DataSource;
+import java.io.IOException;
 import java.sql.Connection;
 import java.sql.PreparedStatement;
 import java.sql.ResultSet;
@@ -78,15 +81,18 @@ import java.util.function.Function;
 final class DefaultAgeRepositoryOperations extends AbstractGraphRepositoryOperations implements AgeRepositoryOperations {
 
     private static final Logger LOG = LoggerFactory.getLogger(DefaultAgeRepositoryOperations.class);
+    private static final Argument<Map<String, Object>> PARAMETERS = Argument.mapOf(String.class, Object.class);
 
     private final ConnectionOperations<Connection> connectionOperations;
     private final String graph;
     private final boolean createExtension;
     private final boolean createGraph;
+    private final JsonMapper jsonMapper;
     private final Set<Connection> preparedConnections = Collections.synchronizedSet(Collections.newSetFromMap(new WeakHashMap<>()));
     private volatile boolean graphReady;
 
     DefaultAgeRepositoryOperations(@Parameter ConnectionOperations<Connection> connectionOperations,
+                                   JsonMapper jsonMapper,
                                    @Value("${micronaut.data.age.graph:graph}") String graph,
                                    @Value("${micronaut.data.age.create-extension:false}") boolean createExtension,
                                    @Value("${micronaut.data.age.create-graph:true}") boolean createGraph,
@@ -101,6 +107,7 @@ final class DefaultAgeRepositoryOperations extends AbstractGraphRepositoryOperat
         this.graph = AgeStatements.validateGraphName(graph);
         this.createExtension = createExtension;
         this.createGraph = createGraph;
+        this.jsonMapper = jsonMapper;
     }
 
     @Override
@@ -150,7 +157,7 @@ final class DefaultAgeRepositoryOperations extends AbstractGraphRepositoryOperat
             }
             try (PreparedStatement preparedStatement = connection.prepareStatement(sql)) {
                 if (AgeStatements.takesParameters(statement)) {
-                    preparedStatement.setObject(1, Agtype.write(parameters), Types.OTHER);
+                    preparedStatement.setObject(1, writeParameters(jsonMapper, parameters), Types.OTHER);
                 }
                 List<GraphRecord> records = new ArrayList<>();
                 try (ResultSet resultSet = preparedStatement.executeQuery()) {
@@ -172,6 +179,22 @@ final class DefaultAgeRepositoryOperations extends AbstractGraphRepositoryOperat
             }
         } catch (SQLException e) {
             throw new DataAccessException("Error executing Cypher query on Apache AGE [" + sql + "]: " + e.getMessage(), e);
+        }
+    }
+
+    /**
+     * Writes the parameter map of a statement as JSON, which AGE reads as an agtype map. The values are already
+     * encoded: strings, numbers, booleans, lists and maps.
+     *
+     * @param jsonMapper The JSON mapper of Micronaut Serialization
+     * @param parameters The parameters
+     * @return The JSON text
+     */
+    static String writeParameters(JsonMapper jsonMapper, Map<String, Object> parameters) {
+        try {
+            return jsonMapper.writeValueAsString(PARAMETERS, parameters);
+        } catch (IOException e) {
+            throw new DataAccessException("Cannot write the parameters of an Apache AGE query as JSON: " + e.getMessage(), e);
         }
     }
 
