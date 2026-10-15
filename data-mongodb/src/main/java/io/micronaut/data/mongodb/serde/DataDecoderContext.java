@@ -62,6 +62,11 @@ final class DataDecoderContext implements Deserializer.DecoderContext {
     private final AttributeConverterRegistry attributeConverterRegistry;
     private final Deserializer.DecoderContext parent;
     private final CodecRegistry codecRegistry;
+    // The decoders are stateless and created on first use, not while the registry is still building codecs
+    @Nullable
+    private volatile CodecBsonDecoder<BsonDocument> documentDecoder;
+    @Nullable
+    private volatile CodecBsonDecoder<BsonValue> valueDecoder;
 
     /**
      * Default constructor.
@@ -111,8 +116,7 @@ final class DataDecoderContext implements Deserializer.DecoderContext {
                             if (decoder.decodeNull()) {
                                 return null;
                             }
-                            CodecBsonDecoder<BsonDocument> codecBsonDecoder = new CodecBsonDecoder<>(new BsonDocumentCodec(codecRegistry));
-                            BsonDocument document = codecBsonDecoder.deserialize(decoder, decoderContext, type);
+                            BsonDocument document = documentDecoder().deserialize(decoder, decoderContext, type);
                             if (document == null || document.size() <= 1) {
                                 return null;
                             }
@@ -209,11 +213,28 @@ final class DataDecoderContext implements Deserializer.DecoderContext {
         return parent.findCustomDeserializer(deserializerClass);
     }
 
+    private CodecBsonDecoder<BsonDocument> documentDecoder() {
+        CodecBsonDecoder<BsonDocument> decoder = documentDecoder;
+        if (decoder == null) {
+            decoder = new CodecBsonDecoder<>(new BsonDocumentCodec(codecRegistry));
+            documentDecoder = decoder;
+        }
+        return decoder;
+    }
+
+    private CodecBsonDecoder<BsonValue> valueDecoder() {
+        CodecBsonDecoder<BsonValue> decoder = valueDecoder;
+        if (decoder == null) {
+            decoder = new CodecBsonDecoder<>(codecRegistry.get(BsonValue.class));
+            valueDecoder = decoder;
+        }
+        return decoder;
+    }
+
     @Nullable
     private String decodeGeneratedStringId(Decoder decoder, Deserializer.DecoderContext decoderContext) throws IOException {
         if (decoder instanceof BsonReaderDecoder) {
-            CodecBsonDecoder<BsonValue> codecBsonDecoder = new CodecBsonDecoder<>(codecRegistry.get(BsonValue.class));
-            BsonValue value = codecBsonDecoder.deserialize(decoder, decoderContext, BSON_VALUE);
+            BsonValue value = valueDecoder().deserialize(decoder, decoderContext, BSON_VALUE);
             if (value == null || value.isNull()) {
                 return null;
             }

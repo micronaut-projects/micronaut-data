@@ -62,6 +62,9 @@ class MappedCodec<T> implements Codec<T> {
     private final Deserializer.DecoderContext decoderContext;
     private final Serializer.EncoderContext encoderContext;
     private final List<String> manyAssociationProperties;
+    // Created on first encode, not while the registry is still building codecs
+    @Nullable
+    private volatile BsonDocumentCodec documentCodec;
 
     /**
      * Default constructor.
@@ -114,7 +117,12 @@ class MappedCodec<T> implements Codec<T> {
                 BsonDocument document = new BsonDocument();
                 serializer.serialize(new BsonWriterEncoder(new BsonDocumentWriter(document), LimitingStream.DEFAULT_LIMITS), this.encoderContext, argument, value);
                 removeNullManyAssociations(document);
-                new BsonDocumentCodec(codecRegistry).encode(writer, document, encoderContext);
+                BsonDocumentCodec codec = documentCodec;
+                if (codec == null) {
+                    codec = new BsonDocumentCodec(codecRegistry);
+                    documentCodec = codec;
+                }
+                codec.encode(writer, document, encoderContext);
             }
         } catch (IOException e) {
             throw new DataAccessException("Cannot serialize: " + value, e);
