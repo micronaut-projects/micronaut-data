@@ -864,6 +864,7 @@ public abstract class AbstractGraphRepositoryOperations extends AbstractReposito
                 persister.run(queryBuilder.buildAddLabelsQuery(persistentEntity, labels), Map.of(CypherQueryBuilder.ID_PARAMETER, nodeId));
             }
             writeRelationships();
+            writeDynamicRelationships();
         }
 
         private void writeRelationships() {
@@ -889,6 +890,42 @@ public abstract class AbstractGraphRepositoryOperations extends AbstractReposito
                     Object newValue = many ? conversionService.convertRequired(written, beanProperty.asArgument()) : written.get(0);
                     entity = withProperty(beanProperty, entity, newValue);
                 }
+            }
+        }
+
+        private void writeDynamicRelationships() {
+            BeanProperty<Object, Object> property = mapper.dynamicRelationshipsProperty(persistentEntity);
+            if (property == null || !(property.get(entity) instanceof Map<?, ?> relationships) || relationships.isEmpty()) {
+                return;
+            }
+            Object fromId = mapper.writeIdentity(persistentEntity, entity);
+            Map<String, List<Object>> written = new LinkedHashMap<>();
+            boolean changed = false;
+            for (Map.Entry<?, ?> entry : relationships.entrySet()) {
+                String type = String.valueOf(entry.getKey());
+                Object value = entry.getValue();
+                Iterable<?> targets = value instanceof Iterable<?> iterable ? iterable : value == null ? List.of() : List.of(value);
+                List<Object> savedTargets = new ArrayList<>();
+                for (Object target : targets) {
+                    if (target == null) {
+                        continue;
+                    }
+                    RuntimePersistentEntity<Object> targetEntity = (RuntimePersistentEntity<Object>) AbstractGraphRepositoryOperations.this.getEntity(target.getClass());
+                    Object savedTarget = persister.save(targetEntity, target, isNew(targetEntity, target));
+                    changed |= savedTarget != target;
+                    savedTargets.add(savedTarget);
+                    Object toId = mapper.writeIdentity(targetEntity, savedTarget);
+                    if (fromId == null || toId == null) {
+                        throw new DataAccessException("Cannot link a [" + type + "] relationship without the identifiers of both nodes");
+                    }
+                    String key = "dynamicLink:" + persistentEntity.getName() + ":" + targetEntity.getName() + ":" + type;
+                    String query = queryCache.computeIfAbsent(key, k -> queryBuilder.buildDynamicLinkQuery(persistentEntity, targetEntity, type));
+                    persister.run(query, Map.of(CypherQueryBuilder.LINK_FROM_PARAMETER, fromId, CypherQueryBuilder.LINK_TO_PARAMETER, toId));
+                }
+                written.put(type, savedTargets);
+            }
+            if (changed) {
+                entity = withProperty((BeanProperty<T, Object>) (BeanProperty<?, ?>) property, entity, written);
             }
         }
 
