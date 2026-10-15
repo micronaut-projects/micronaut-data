@@ -153,50 +153,44 @@ public final class FlatEntityResultSetMapper<R> implements SqlTypeMapper<ResultS
         if (rs != resolvedResultSet) {
             resolveOrdinals(rs);
         }
-        int[] ordinals = this.ordinals;
-        byte[] kinds = this.kinds;
         R entity;
         try {
-            if (constructorArgumentCount == 0) {
-                entity = introspection.instantiate();
-                for (int i = 0; i < kinds.length; i++) {
-                    Object value = read(rs, ordinals[i], kinds[i], i);
-                    if (value != null) {
-                        properties[i].set(entity, value);
-                    }
-                }
-            } else {
-                Object[] arguments = new Object[constructorArgumentCount];
-                int[] argumentIndexes = this.constructorArgumentIndexes;
-                for (int i = 0; i < kinds.length; i++) {
-                    int argumentIndex = argumentIndexes[i];
-                    if (argumentIndex < 0) {
-                        continue;
-                    }
-                    Object value = read(rs, ordinals[i], kinds[i], i);
-                    if (value == null && requiredConstructorArguments[argumentIndex]) {
-                        throw new DataAccessException("Null value read for non-null constructor argument [" + persistentProperties[i].getName() + "] of type: " + plan.getEntity().getName());
-                    }
-                    arguments[argumentIndex] = value;
-                }
-                entity = introspection.instantiate(arguments);
-                for (int i = 0; i < kinds.length; i++) {
-                    if (argumentIndexes[i] >= 0) {
-                        continue;
-                    }
-                    Object value = read(rs, ordinals[i], kinds[i], i);
-                    if (value != null) {
-                        properties[i].set(entity, value);
-                    }
-                }
-            }
+            entity = constructorArgumentCount == 0 ? introspection.instantiate() : instantiate(rs);
         } catch (InstantiationException e) {
             throw new DataAccessException("Error instantiating entity [" + plan.getEntity().getName() + "]: " + e.getMessage(), e);
+        }
+        for (int i = 0; i < kinds.length; i++) {
+            if (constructorArgumentIndexes[i] >= 0) {
+                continue;
+            }
+            Object value = read(rs, ordinals[i], kinds[i], i);
+            if (value != null) {
+                properties[i].set(entity, value);
+            }
         }
         if (loadListener != null) {
             entity = (R) loadListener.apply((RuntimePersistentEntity<Object>) plan.getEntity(), entity);
         }
         return entity;
+    }
+
+    /**
+     * Instantiates the entity with the columns of its constructor arguments.
+     */
+    private R instantiate(ResultSet rs) {
+        Object[] arguments = new Object[constructorArgumentCount];
+        for (int i = 0; i < kinds.length; i++) {
+            int argumentIndex = constructorArgumentIndexes[i];
+            if (argumentIndex < 0) {
+                continue;
+            }
+            Object value = read(rs, ordinals[i], kinds[i], i);
+            if (value == null && requiredConstructorArguments[argumentIndex]) {
+                throw new DataAccessException("Null value read for non-null constructor argument [" + persistentProperties[i].getName() + "] of type: " + plan.getEntity().getName());
+            }
+            arguments[argumentIndex] = value;
+        }
+        return introspection.instantiate(arguments);
     }
 
     /**
@@ -324,15 +318,15 @@ public final class FlatEntityResultSetMapper<R> implements SqlTypeMapper<ResultS
 
     private void resolveOrdinals(ResultSet rs) {
         String[] columnNames = plan.getColumnNames();
-        int[] ordinals = new int[columnNames.length];
+        int[] resolved = new int[columnNames.length];
         for (int i = 0; i < columnNames.length; i++) {
             try {
-                ordinals[i] = rs.findColumn(columnNames[i]);
+                resolved[i] = rs.findColumn(columnNames[i]);
             } catch (SQLException e) {
                 throw new DataAccessException("Error reading object for name [" + columnNames[i] + "] from result set: " + e.getMessage(), e);
             }
         }
-        this.ordinals = ordinals;
+        this.ordinals = resolved;
         this.resolvedResultSet = rs;
     }
 
