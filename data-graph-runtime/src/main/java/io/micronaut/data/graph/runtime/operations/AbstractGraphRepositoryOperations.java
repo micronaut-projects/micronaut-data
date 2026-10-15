@@ -39,6 +39,8 @@ import io.micronaut.data.graph.runtime.GraphPathValue;
 import io.micronaut.data.graph.runtime.GraphRecord;
 import io.micronaut.data.graph.runtime.GraphResult;
 import io.micronaut.data.graph.runtime.GraphSession;
+import io.micronaut.data.graph.runtime.GraphValueEncoderRegistrar;
+import io.micronaut.data.graph.runtime.GraphValueEncoders;
 import io.micronaut.data.model.Limit;
 import io.micronaut.data.model.Page;
 import io.micronaut.data.model.Pageable;
@@ -81,26 +83,15 @@ import io.micronaut.data.runtime.query.PreparedQueryDecorator;
 import io.micronaut.data.annotation.Relation;
 import org.jspecify.annotations.Nullable;
 
-import java.math.BigDecimal;
-import java.math.BigInteger;
-import java.net.URI;
-import java.net.URL;
-import java.time.Instant;
-import java.time.ZoneOffset;
-import java.time.temporal.Temporal;
-import java.time.temporal.TemporalAmount;
 import java.util.ArrayList;
 import java.util.Collection;
-import java.util.Currency;
-import java.util.Date;
 import java.util.IdentityHashMap;
 import java.util.Iterator;
 import java.util.LinkedHashMap;
 import java.util.List;
-import java.util.Locale;
 import java.util.Map;
+import java.util.Objects;
 import java.util.Optional;
-import java.util.UUID;
 import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.ExecutorService;
 import java.util.function.Function;
@@ -130,6 +121,8 @@ public abstract class AbstractGraphRepositoryOperations extends AbstractReposito
 
     private final Map<String, String> queryCache = new ConcurrentHashMap<>();
 
+    private final GraphValueEncoders encoders = GraphValueEncoders.defaults();
+
     private final SyncCascadeOperations<OperationContext> noCascade;
 
     /**
@@ -139,15 +132,21 @@ public abstract class AbstractGraphRepositoryOperations extends AbstractReposito
      * @param conversionService          The conversion service
      * @param attributeConverterRegistry The attribute converter registry
      * @param executorService            The executor for asynchronous and reactive operations
+     * @param encoderRegistrars          The registrars of the encoders of the application
      */
     protected AbstractGraphRepositoryOperations(GraphQueryBuilder queryBuilder,
                                                 DateTimeProvider<Object> dateTimeProvider,
                                                 RuntimeEntityRegistry runtimeEntityRegistry,
                                                 DataConversionService conversionService,
                                                 AttributeConverterRegistry attributeConverterRegistry,
-                                                @Nullable ExecutorService executorService) {
+                                                @Nullable ExecutorService executorService,
+                                                List<GraphValueEncoderRegistrar> encoderRegistrars) {
         super(dateTimeProvider, runtimeEntityRegistry, conversionService, attributeConverterRegistry);
         this.queryBuilder = queryBuilder;
+        registerEncoders(encoders);
+        for (GraphValueEncoderRegistrar registrar : encoderRegistrars) {
+            registrar.register(encoders);
+        }
         this.mapper = new GraphEntityMapper(runtimeEntityRegistry, conversionService, this::encodeValue);
         this.executorServiceResolver = new ExecutorServiceResolver(executorService);
         this.noCascade = new SyncCascadeOperations<>(conversionService, new RelationshipsWrittenByNode());
@@ -174,58 +173,22 @@ public abstract class AbstractGraphRepositoryOperations extends AbstractReposito
     protected abstract <R> R write(AnnotationMetadata annotationMetadata, Function<GraphSession, R> work);
 
     /**
+     * Registers the encoders of the database, which replace or add to the defaults. Called once, while the operations
+     * are constructed, before the encoders of the application are registered.
+     *
+     * @param encoders The encoders
+     */
+    protected void registerEncoders(GraphValueEncoders encoders) {
+    }
+
+    /**
      * Encodes a Java value into a value the database accepts as a parameter or property.
      *
      * @param value The value, never null
      * @return The encoded value
      */
-    protected Object encodeValue(Object value) {
-        if (value instanceof String || value instanceof Boolean || value instanceof Long || value instanceof Integer
-            || value instanceof Double || value instanceof Float || value instanceof Short || value instanceof Byte
-            || value instanceof byte[]) {
-            return value;
-        }
-        if (value instanceof Enum<?> e) {
-            return e.name();
-        }
-        if (value instanceof Character || value instanceof UUID || value instanceof URI || value instanceof URL
-            || value instanceof BigDecimal || value instanceof BigInteger || value instanceof Locale || value instanceof Currency) {
-            return value.toString();
-        }
-        if (value instanceof Instant instant) {
-            return instant.atOffset(ZoneOffset.UTC);
-        }
-        if (value instanceof java.sql.Date date) {
-            return date.toLocalDate();
-        }
-        if (value instanceof Date date) {
-            return date.toInstant().atOffset(ZoneOffset.UTC);
-        }
-        if (value instanceof Temporal || value instanceof TemporalAmount) {
-            return value;
-        }
-        if (value instanceof Iterable<?> iterable) {
-            List<Object> list = new ArrayList<>();
-            for (Object item : iterable) {
-                list.add(item == null ? null : encodeValue(item));
-            }
-            return list;
-        }
-        if (value.getClass().isArray()) {
-            int length = java.lang.reflect.Array.getLength(value);
-            List<Object> list = new ArrayList<>(length);
-            for (int i = 0; i < length; i++) {
-                Object item = java.lang.reflect.Array.get(value, i);
-                list.add(item == null ? null : encodeValue(item));
-            }
-            return list;
-        }
-        if (value instanceof Map<?, ?> map) {
-            Map<String, Object> encoded = new LinkedHashMap<>();
-            map.forEach((k, v) -> encoded.put(String.valueOf(k), v == null ? null : encodeValue(v)));
-            return encoded;
-        }
-        return value.toString();
+    protected final Object encodeValue(Object value) {
+        return Objects.requireNonNull(encoders.encode(value));
     }
 
     @Override

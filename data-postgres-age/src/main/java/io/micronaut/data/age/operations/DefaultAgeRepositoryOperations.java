@@ -31,6 +31,8 @@ import io.micronaut.data.model.runtime.RuntimePersistentEntity;
 import io.micronaut.data.graph.runtime.GraphRecord;
 import io.micronaut.data.graph.runtime.GraphResult;
 import io.micronaut.data.graph.runtime.GraphSession;
+import io.micronaut.data.graph.runtime.GraphValueEncoderRegistrar;
+import io.micronaut.data.graph.runtime.GraphValueEncoders;
 import io.micronaut.data.graph.runtime.operations.AbstractGraphRepositoryOperations;
 import io.micronaut.data.model.runtime.AttributeConverterRegistry;
 import io.micronaut.data.model.runtime.RuntimeEntityRegistry;
@@ -49,11 +51,14 @@ import java.sql.ResultSetMetaData;
 import java.sql.SQLException;
 import java.sql.Statement;
 import java.sql.Types;
+import java.time.Instant;
+import java.time.ZoneOffset;
 import java.time.temporal.Temporal;
 import java.time.temporal.TemporalAmount;
 import java.util.ArrayList;
 import java.util.Base64;
 import java.util.Collections;
+import java.util.Date;
 import java.util.List;
 import java.util.Map;
 import java.util.Set;
@@ -89,8 +94,9 @@ final class DefaultAgeRepositoryOperations extends AbstractGraphRepositoryOperat
                                    RuntimeEntityRegistry runtimeEntityRegistry,
                                    DataConversionService conversionService,
                                    AttributeConverterRegistry attributeConverterRegistry,
-                                   @Named("io") @Nullable ExecutorService executorService) {
-        super(new AgeCypherQueryBuilder(), dateTimeProvider, runtimeEntityRegistry, conversionService, attributeConverterRegistry, executorService);
+                                   @Named("io") @Nullable ExecutorService executorService,
+                                   List<GraphValueEncoderRegistrar> encoderRegistrars) {
+        super(new AgeCypherQueryBuilder(), dateTimeProvider, runtimeEntityRegistry, conversionService, attributeConverterRegistry, executorService, encoderRegistrars);
         this.connectionOperations = connectionOperations;
         this.graph = AgeStatements.validateGraphName(graph);
         this.createExtension = createExtension;
@@ -98,19 +104,14 @@ final class DefaultAgeRepositoryOperations extends AbstractGraphRepositoryOperat
     }
 
     @Override
-    protected Object encodeValue(Object value) {
-        // agtype has no temporal or binary types
-        if (value instanceof Temporal || value instanceof TemporalAmount) {
-            return value.toString();
-        }
-        if (value instanceof byte[] bytes) {
-            return Base64.getEncoder().encodeToString(bytes);
-        }
-        Object encoded = super.encodeValue(value);
-        if (encoded instanceof Temporal || encoded instanceof TemporalAmount) {
-            return encoded.toString();
-        }
-        return encoded;
+    protected void registerEncoders(GraphValueEncoders encoders) {
+        // agtype has no temporal or binary types: temporal values are ISO-8601 strings and bytes Base64 strings
+        encoders.register(Temporal.class, (value, e) -> value.toString())
+            .register(TemporalAmount.class, (value, e) -> value.toString())
+            .register(Instant.class, (value, e) -> value.toString())
+            .register(java.sql.Date.class, (value, e) -> value.toLocalDate().toString())
+            .register(Date.class, (value, e) -> value.toInstant().atOffset(ZoneOffset.UTC).toString())
+            .register(byte[].class, (value, e) -> Base64.getEncoder().encodeToString(value));
     }
 
     @Override
