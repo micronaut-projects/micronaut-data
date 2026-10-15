@@ -27,8 +27,8 @@ import java.util.Map;
  *     <li>Java: {@code person.set("nickname", "Neo")} and {@code person.get("nickname")}.</li>
  *     <li>Kotlin: {@code person["nickname"] = "Neo"} and {@code person["nickname"]}, through the {@code get} and
  *     {@code set} methods.</li>
- *     <li>Groovy: {@code person['nickname'] = 'Neo'} and {@code person.nickname}, through {@code getAt},
- *     {@code putAt} and {@code propertyMissing}.</li>
+ *     <li>Groovy: {@code person['nickname'] = 'Neo'} and {@code person.nickname}, through
+ *     {@link GroovyDynamicAttributeHolder}, which the graph processor adds to Groovy classes at build time.</li>
  * </ul>
  *
  * @author graemerocher
@@ -67,45 +67,5 @@ public interface DynamicAttributeHolder {
      */
     default void set(String name, @Nullable Object value) {
         dynamicAttributes().put(name, value);
-    }
-
-    /**
-     * Groovy subscript read: {@code entity['name']}.
-     *
-     * @param name The property name
-     * @return The value, or null if not set
-     */
-    default @Nullable Object getAt(String name) {
-        return get(name);
-    }
-
-    /**
-     * Groovy subscript write: {@code entity['name'] = value}.
-     *
-     * @param name  The property name
-     * @param value The value
-     */
-    default void putAt(String name, @Nullable Object value) {
-        set(name, value);
-    }
-
-    /**
-     * Groovy property read for a property the class does not declare: {@code entity.name}.
-     *
-     * @param name The property name
-     * @return The value, or null if not set
-     */
-    default @Nullable Object propertyMissing(String name) {
-        return get(name);
-    }
-
-    /**
-     * Groovy property write for a property the class does not declare: {@code entity.name = value}.
-     *
-     * @param name  The property name
-     * @param value The value
-     */
-    default void propertyMissing(String name, @Nullable Object value) {
-        set(name, value);
     }
 }
