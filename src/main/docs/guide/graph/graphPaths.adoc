@@ -1,0 +1,44 @@
+Path finders search the graph between two nodes. Their names start with the kind of search, optionally followed by `By` and the relationship properties to traverse, joined with `Or`. Their first two parameters are the start and end nodes, as entities or identifiers.
+
+snippet::example.PersonRepository[project-base="doc-examples/neo4j-example", source="main", tags="paths", languages="java,kotlin,groovy,python"]
+
+<1> One shortest path following any relationship.
+<2> One shortest path following `FOLLOWS` relationships, at most `maxDepth` long.
+<3> Every path following `FOLLOWS` relationships, at most 4 long, shortest first.
+<4> Whether any path exists.
+
+[cols="1,2"]
+|===
+|Method name |Result
+
+|`findShortestPath`, `findPath`
+|One shortest path
+
+|`findAllShortestPaths`
+|Every shortest path
+
+|`findAllPaths`, `findPaths`
+|Every path up to the maximum depth, which is required
+
+|`existsPath`
+|Whether a path exists
+
+|`countPaths`
+|The number of paths up to the maximum depth
+|===
+
+ann:data.graph.annotation.PathLimit[] sets the maximum depth, either on the method or on an `int` parameter. The direction follows the relationship properties named after `By`. Without them, paths follow any relationship in either direction.
+
+A path is returned as a api:data.graph.model.GraphPath[] holding its nodes, mapped to entities, and its relationships:
+
+snippet::example.PersonRepositorySpec[project-base="doc-examples/neo4j-example", tags="shortestPath", indent="0", languages="java,kotlin,groovy"]
+
+<1> Each api:data.graph.model.PathSegment[] holds a relationship and the nodes at its ends, in path order.
+
+== Querying relationships
+
+Relationship finders return the relationships between two nodes, or between any nodes of the entity, as api:data.graph.model.GraphRelationship[] values with the type, properties and both nodes:
+
+snippet::example.PersonRepository[project-base="doc-examples/neo4j-example", source="main", tags="relationships", languages="java,kotlin,groovy,python"]
+
+`findRelationship`, `findRelationships`, `hasRelationship` and `countRelationships` accept the same `By` suffix as path finders, and `findRelationships` accepts a `Pageable`.
