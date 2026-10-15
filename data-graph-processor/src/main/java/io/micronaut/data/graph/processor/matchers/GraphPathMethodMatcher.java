@@ -165,7 +165,11 @@ public final class GraphPathMethodMatcher implements MethodMatcher {
             case EXISTS -> DataMethod.OperationType.EXISTS;
             default -> DataMethod.OperationType.QUERY;
         };
-        FindersUtils.InterceptorMatch entry = FindersUtils.resolveInterceptorTypeByOperationType(false, false, operationType, matchContext);
+        FindersUtils.InterceptorMatch entry = switch (result) {
+            case COUNT -> FindersUtils.pickCountInterceptor(matchContext, matchContext.getReturnType());
+            case EXISTS -> FindersUtils.pickExistsInterceptor(matchContext, matchContext.getReturnType());
+            default -> FindersUtils.resolveInterceptorTypeByOperationType(false, false, operationType, matchContext);
+        };
         ClassElement resultType = entry.returnType();
         if (result == PathQueryDefinition.Result.ELEMENTS) {
             Class<?> expected = kind == PathQueryDefinition.Kind.RELATIONSHIPS ? GraphRelationship.class : GraphPath.class;
