@@ -75,6 +75,8 @@ import static io.micronaut.data.runtime.query.internal.DefaultPreparedQuery.getP
 @Internal
 public class DefaultSqlPreparedQuery<E, R> extends DefaultBindableParametersPreparedQuery<E, R> implements SqlPreparedQuery<E, R>, DelegatePreparedQuery<E, R> {
 
+    private static final Argument<ScoringFunction> SCORING_FUNCTION_ARGUMENT = Argument.of(ScoringFunction.class);
+
     @Nullable
     protected List<QueryParameterBinding> cursorQueryBindings;
     @Nullable
@@ -138,7 +140,7 @@ public class DefaultSqlPreparedQuery<E, R> extends DefaultBindableParametersPrep
         if (!(invocationContext instanceof MethodInvocationContext<?, ?> methodInvocationContext)) {
             return;
         }
-        List<ScoringFunction> scoringFunctions = getParametersOfType(Argument.of(ScoringFunction.class),
+        List<ScoringFunction> scoringFunctions = getParametersOfType(SCORING_FUNCTION_ARGUMENT,
             methodInvocationContext,
             getConversionService());
         if (scoringFunctions.isEmpty()) {

@@ -39,6 +39,8 @@ import io.micronaut.data.model.runtime.PreparedQuery;
 import io.micronaut.data.model.runtime.StoredQuery;
 
 import java.lang.annotation.Annotation;
+import java.util.ArrayList;
+import java.util.Collections;
 import java.util.List;
 import java.util.Map;
 import java.util.Optional;
@@ -238,26 +240,30 @@ public final class DefaultPreparedQuery<E, RT> extends DefaultStoredDataOperatio
                                                   @NonNull ConversionService conversionService) {
         Argument<?>[] arguments = methodContext.getArguments();
         Object[] values = methodContext.getParameterValues();
-        if (arguments.length == 0 || values.length == 0) {
-            return List.of();
+        List<T> parameters = null;
+        for (int i = 0; i < Math.min(arguments.length, values.length); i++) {
+            Object value = values[i];
+            if (value == null) {
+                continue;
+            }
+            T parameter;
+            if (type.isInstance(value)) {
+                //noinspection unchecked
+                parameter = (T) value;
+            } else if (type.getType().isAssignableFrom(arguments[i].getType())) {
+                parameter = conversionService.convert(value, type).orElse(null);
+                if (parameter == null) {
+                    continue;
+                }
+            } else {
+                continue;
+            }
+            if (parameters == null) {
+                parameters = new ArrayList<>(2);
+            }
+            parameters.add(parameter);
         }
-        return java.util.stream.IntStream.range(0, Math.min(arguments.length, values.length))
-            .mapToObj(i -> {
-                Object value = values[i];
-                if (value == null) {
-                    return Stream.<T>empty();
-                }
-                if (type.isInstance(value)) {
-                    //noinspection unchecked
-                    return Stream.of((T) value);
-                }
-                if (type.getType().isAssignableFrom(arguments[i].getType())) {
-                    return conversionService.convert(value, type).stream();
-                }
-                return Stream.<T>empty();
-            })
-            .flatMap(s -> s)
-            .toList();
+        return parameters == null ? List.of() : Collections.unmodifiableList(parameters);
     }
 
     @Override
