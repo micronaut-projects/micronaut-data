@@ -27,67 +27,42 @@ import io.micronaut.data.model.runtime.RuntimePersistentProperty;
 import io.micronaut.data.runtime.mapper.sql.SqlTypeMapper;
 import org.jspecify.annotations.Nullable;
 
-import java.math.BigDecimal;
-import java.math.BigInteger;
 import java.sql.ResultSet;
 import java.sql.SQLException;
-import java.sql.Timestamp;
-import java.time.Instant;
-import java.time.LocalDate;
-import java.time.LocalDateTime;
-import java.time.LocalTime;
-import java.time.OffsetDateTime;
-import java.time.ZoneId;
-import java.time.ZonedDateTime;
-import java.util.Map;
 import java.util.UUID;
 import java.util.function.BiFunction;
 import java.util.function.Supplier;
 
 import static io.micronaut.data.jdbc.mapper.FlatEntityMappingPlan.BIG_DECIMAL;
-import static io.micronaut.data.jdbc.mapper.FlatEntityMappingPlan.BIG_INTEGER;
 import static io.micronaut.data.jdbc.mapper.FlatEntityMappingPlan.BOOLEAN;
-import static io.micronaut.data.jdbc.mapper.FlatEntityMappingPlan.BOXED_BOOLEAN;
-import static io.micronaut.data.jdbc.mapper.FlatEntityMappingPlan.BOXED_BYTE;
-import static io.micronaut.data.jdbc.mapper.FlatEntityMappingPlan.BOXED_DOUBLE;
-import static io.micronaut.data.jdbc.mapper.FlatEntityMappingPlan.BOXED_FLOAT;
-import static io.micronaut.data.jdbc.mapper.FlatEntityMappingPlan.BOXED_INT;
-import static io.micronaut.data.jdbc.mapper.FlatEntityMappingPlan.BOXED_LONG;
-import static io.micronaut.data.jdbc.mapper.FlatEntityMappingPlan.BOXED_SHORT;
 import static io.micronaut.data.jdbc.mapper.FlatEntityMappingPlan.BYTE;
 import static io.micronaut.data.jdbc.mapper.FlatEntityMappingPlan.BYTES;
+import static io.micronaut.data.jdbc.mapper.FlatEntityMappingPlan.CHARACTER;
+import static io.micronaut.data.jdbc.mapper.FlatEntityMappingPlan.DATE;
 import static io.micronaut.data.jdbc.mapper.FlatEntityMappingPlan.DOUBLE;
-import static io.micronaut.data.jdbc.mapper.FlatEntityMappingPlan.ENUM_NAME;
-import static io.micronaut.data.jdbc.mapper.FlatEntityMappingPlan.ENUM_ORDINAL;
 import static io.micronaut.data.jdbc.mapper.FlatEntityMappingPlan.FLOAT;
-import static io.micronaut.data.jdbc.mapper.FlatEntityMappingPlan.INSTANT;
-import static io.micronaut.data.jdbc.mapper.FlatEntityMappingPlan.INT;
-import static io.micronaut.data.jdbc.mapper.FlatEntityMappingPlan.LOCAL_DATE;
-import static io.micronaut.data.jdbc.mapper.FlatEntityMappingPlan.LOCAL_DATE_TIME;
-import static io.micronaut.data.jdbc.mapper.FlatEntityMappingPlan.LOCAL_TIME;
-import static io.micronaut.data.jdbc.mapper.FlatEntityMappingPlan.LOCAL_TIME_OF_TIMESTAMP;
+import static io.micronaut.data.jdbc.mapper.FlatEntityMappingPlan.INTEGER;
 import static io.micronaut.data.jdbc.mapper.FlatEntityMappingPlan.LONG;
-import static io.micronaut.data.jdbc.mapper.FlatEntityMappingPlan.OFFSET_DATE_TIME;
 import static io.micronaut.data.jdbc.mapper.FlatEntityMappingPlan.SHORT;
-import static io.micronaut.data.jdbc.mapper.FlatEntityMappingPlan.SQL_DATE;
-import static io.micronaut.data.jdbc.mapper.FlatEntityMappingPlan.SQL_TIME;
 import static io.micronaut.data.jdbc.mapper.FlatEntityMappingPlan.STRING;
+import static io.micronaut.data.jdbc.mapper.FlatEntityMappingPlan.TIME;
 import static io.micronaut.data.jdbc.mapper.FlatEntityMappingPlan.TIMESTAMP;
 import static io.micronaut.data.jdbc.mapper.FlatEntityMappingPlan.UUID_VALUE;
-import static io.micronaut.data.jdbc.mapper.FlatEntityMappingPlan.ZONED_DATE_TIME;
 
 /**
- * Maps the rows of a {@link ResultSet} onto a flat entity by reading every column with the typed getter matching
- * the property type and setting the property through the compile time bean introspection, with no intermediate
- * boxing, {@link ResultSet#wasNull()} call or conversion.
+ * Maps the rows of a {@link ResultSet} onto a flat entity by reading every column with the typed getter of its
+ * data type by ordinal and setting the property through the compile time bean introspection.
+ *
+ * <p>The values are the ones {@link io.micronaut.data.runtime.mapper.sql.SqlResultEntityTypeMapper} produces: a
+ * column is read with the getter {@code readDynamic} uses for its data type, a SQL NULL is {@code null} whatever
+ * the property type (so a primitive property keeps its initial value, and a non-null constructor argument fails),
+ * and a value that is not of the property type goes through the conversion service, including any converter
+ * registered for it. What is saved is the per-column dispatch, boxing and mapping context of the general mapper,
+ * and the conversion of every property whose type is what its getter returns.</p>
  *
  * <p>The column ordinals are resolved once from the first row, so an instance belongs to one query execution and
- * is not thread safe, like {@link io.micronaut.data.runtime.mapper.sql.SqlResultEntityTypeMapper}. The plan that
- * decides what to read is shared between executions, see {@link FlatEntityMappingPlan}.</p>
- *
- * <p>{@link ResultSet#wasNull()} is only consulted after a getter that returns a primitive for a property that can
- * hold {@code null}; a primitive property is left at its default for a SQL NULL, which is what the general mapper
- * does as well since it never sets a {@code null} value.</p>
+ * is not thread safe, like the general mapper. The plan that decides what to read is shared between executions,
+ * see {@link FlatEntityMappingPlan}.</p>
  *
  * @param <R> The entity type
  * @since 5.3.0
@@ -100,12 +75,11 @@ public final class FlatEntityResultSetMapper<R> implements SqlTypeMapper<ResultS
     private final BeanProperty<R, Object>[] properties;
     private final RuntimePersistentProperty<R>[] persistentProperties;
     private final byte[] kinds;
+    private final boolean[] conversions;
     private final int[] constructorArgumentIndexes;
     private final boolean[] requiredConstructorArguments;
     private final int constructorArgumentCount;
     private final ConversionService conversionService;
-    private final Map<String, Enum<?>>[] enumsByName;
-    private final Enum<?>[][] enumsByOrdinal;
     @Nullable
     private final BiFunction<RuntimePersistentEntity<Object>, Object, Object> loadListener;
     private final Supplier<SqlTypeMapper<ResultSet, R>> generalMapper;
@@ -117,15 +91,10 @@ public final class FlatEntityResultSetMapper<R> implements SqlTypeMapper<ResultS
     private int[] ordinals = new int[0];
     @Nullable
     private ResultSet resolvedResultSet;
-    /**
-     * Whether the driver rejected {@link ResultSet#getObject(int, Class)} for a {@code java.time} type, in which case
-     * the value is read as the legacy SQL type and converted from there.
-     */
-    private boolean legacyTimeReads;
 
     /**
      * @param plan              The plan
-     * @param conversionService The conversion service, used only for the values a driver cannot hand back typed
+     * @param conversionService The conversion service, for the values a getter doesn't return in the property type
      * @param loadListener      The listener invoked with every mapped entity, for the post load events
      * @param generalMapper     Supplies the general mapper for the operations this mapper does not perform
      */
@@ -138,12 +107,11 @@ public final class FlatEntityResultSetMapper<R> implements SqlTypeMapper<ResultS
         this.properties = plan.getProperties();
         this.persistentProperties = plan.getPersistentProperties();
         this.kinds = plan.getKinds();
+        this.conversions = plan.getConversions();
         this.constructorArgumentIndexes = plan.getConstructorArgumentIndexes();
         this.requiredConstructorArguments = plan.getRequiredConstructorArguments();
         this.constructorArgumentCount = plan.getConstructorArgumentCount();
         this.conversionService = conversionService;
-        this.enumsByName = plan.getEnumsByName();
-        this.enumsByOrdinal = plan.getEnumsByOrdinal();
         this.loadListener = loadListener;
         this.generalMapper = generalMapper;
     }
@@ -231,167 +199,104 @@ public final class FlatEntityResultSetMapper<R> implements SqlTypeMapper<ResultS
         return entity;
     }
 
+    /**
+     * Reads a column with the typed getter of its kind. A SQL NULL is {@code null}: the getters returning a
+     * primitive are followed by {@link ResultSet#wasNull()} when they return zero, which is when the column can be
+     * NULL. The value is converted when the plan found the getter's type is not the property type.
+     */
     @Nullable
     private Object read(ResultSet rs, int ordinal, byte kind, int property) {
+        Object value;
         try {
-            return switch (kind) {
+            value = switch (kind) {
                 case STRING -> rs.getString(ordinal);
-                case LONG -> rs.getLong(ordinal);
-                case BOXED_LONG -> boxedLong(rs, ordinal);
-                case INT -> rs.getInt(ordinal);
-                case BOXED_INT -> boxedInt(rs, ordinal);
-                case SHORT -> rs.getShort(ordinal);
-                case BOXED_SHORT -> boxedShort(rs, ordinal);
-                case BYTE -> rs.getByte(ordinal);
-                case BOXED_BYTE -> boxedByte(rs, ordinal);
-                case DOUBLE -> rs.getDouble(ordinal);
-                case BOXED_DOUBLE -> boxedDouble(rs, ordinal);
-                case FLOAT -> rs.getFloat(ordinal);
-                case BOXED_FLOAT -> boxedFloat(rs, ordinal);
-                case BOOLEAN -> rs.getBoolean(ordinal);
-                case BOXED_BOOLEAN -> boxedBoolean(rs, ordinal);
+                case LONG -> readLong(rs, ordinal);
+                case INTEGER -> readInt(rs, ordinal);
+                case SHORT -> readShort(rs, ordinal);
+                case BYTE -> readByte(rs, ordinal);
+                case DOUBLE -> readDouble(rs, ordinal);
+                case FLOAT -> readFloat(rs, ordinal);
+                case BOOLEAN -> readBoolean(rs, ordinal);
                 case BIG_DECIMAL -> rs.getBigDecimal(ordinal);
-                case BIG_INTEGER -> bigInteger(rs, ordinal);
                 case BYTES -> rs.getBytes(ordinal);
-                case LOCAL_DATE_TIME -> localDateTime(rs, ordinal);
-                case LOCAL_DATE -> localDate(rs, ordinal);
-                case LOCAL_TIME -> localTime(rs, ordinal);
-                case LOCAL_TIME_OF_TIMESTAMP -> localTimeOfTimestamp(rs, ordinal);
-                case INSTANT -> instant(rs, ordinal);
-                case OFFSET_DATE_TIME -> offsetDateTime(rs, ordinal);
-                case ZONED_DATE_TIME -> zonedDateTime(rs, ordinal);
                 case TIMESTAMP -> rs.getTimestamp(ordinal);
-                case SQL_DATE -> rs.getDate(ordinal);
-                case SQL_TIME -> rs.getTime(ordinal);
-                case UUID_VALUE -> uuid(rs, ordinal, property);
-                case ENUM_NAME -> enumByName(rs, ordinal, property);
-                case ENUM_ORDINAL -> enumByOrdinal(rs, ordinal, property);
+                case DATE -> rs.getDate(ordinal);
+                case TIME -> rs.getTime(ordinal);
+                case CHARACTER -> readChar(rs, ordinal);
+                case UUID_VALUE -> readUuid(rs, ordinal, property);
                 default -> throw new IllegalStateException("Unknown read kind " + kind);
             };
         } catch (SQLException e) {
             throw new DataAccessException("Error reading object for name [" + plan.getColumnNames()[property] + "] from result set: " + e.getMessage(), e);
         }
+        if (value != null && conversions[property]) {
+            return convert(value, property);
+        }
+        return value;
     }
 
     @Nullable
-    private static Long boxedLong(ResultSet rs, int ordinal) throws SQLException {
+    private static Long readLong(ResultSet rs, int ordinal) throws SQLException {
         long v = rs.getLong(ordinal);
         return v == 0 && rs.wasNull() ? null : v;
     }
 
     @Nullable
-    private static Integer boxedInt(ResultSet rs, int ordinal) throws SQLException {
+    private static Integer readInt(ResultSet rs, int ordinal) throws SQLException {
         int v = rs.getInt(ordinal);
         return v == 0 && rs.wasNull() ? null : v;
     }
 
     @Nullable
-    private static Short boxedShort(ResultSet rs, int ordinal) throws SQLException {
+    private static Short readShort(ResultSet rs, int ordinal) throws SQLException {
         short v = rs.getShort(ordinal);
         return v == 0 && rs.wasNull() ? null : v;
     }
 
     @Nullable
-    private static Byte boxedByte(ResultSet rs, int ordinal) throws SQLException {
+    private static Byte readByte(ResultSet rs, int ordinal) throws SQLException {
         byte v = rs.getByte(ordinal);
         return v == 0 && rs.wasNull() ? null : v;
     }
 
     @Nullable
-    private static Double boxedDouble(ResultSet rs, int ordinal) throws SQLException {
+    private static Double readDouble(ResultSet rs, int ordinal) throws SQLException {
         double v = rs.getDouble(ordinal);
         return v == 0 && rs.wasNull() ? null : v;
     }
 
     @Nullable
-    private static Float boxedFloat(ResultSet rs, int ordinal) throws SQLException {
+    private static Float readFloat(ResultSet rs, int ordinal) throws SQLException {
         float v = rs.getFloat(ordinal);
         return v == 0 && rs.wasNull() ? null : v;
     }
 
     @Nullable
-    private static Boolean boxedBoolean(ResultSet rs, int ordinal) throws SQLException {
+    private static Boolean readBoolean(ResultSet rs, int ordinal) throws SQLException {
         boolean v = rs.getBoolean(ordinal);
         return (!v && rs.wasNull()) ? null : v;
     }
 
+    /**
+     * The first character of the column, or the zero character of an empty string, the way
+     * {@link ColumnIndexResultSetReader#readChar} reads it.
+     */
     @Nullable
-    private static BigInteger bigInteger(ResultSet rs, int ordinal) throws SQLException {
-        BigDecimal v = rs.getBigDecimal(ordinal);
-        return v == null ? null : v.toBigInteger();
-    }
-
-    @Nullable
-    private LocalDateTime localDateTime(ResultSet rs, int ordinal) throws SQLException {
-        if (!legacyTimeReads) {
-            try {
-                return rs.getObject(ordinal, LocalDateTime.class);
-            } catch (SQLException | ClassCastException e) {
-                legacyTimeReads = true;
-            }
+    private static Character readChar(ResultSet rs, int ordinal) throws SQLException {
+        String v = rs.getString(ordinal);
+        if (v == null) {
+            return null;
         }
-        Timestamp v = rs.getTimestamp(ordinal);
-        return v == null ? null : v.toLocalDateTime();
-    }
-
-    @Nullable
-    private LocalDate localDate(ResultSet rs, int ordinal) throws SQLException {
-        if (!legacyTimeReads) {
-            try {
-                return rs.getObject(ordinal, LocalDate.class);
-            } catch (SQLException | ClassCastException e) {
-                legacyTimeReads = true;
-            }
-        }
-        java.sql.Date v = rs.getDate(ordinal);
-        return v == null ? null : v.toLocalDate();
-    }
-
-    @Nullable
-    private LocalTime localTime(ResultSet rs, int ordinal) throws SQLException {
-        if (!legacyTimeReads) {
-            try {
-                return rs.getObject(ordinal, LocalTime.class);
-            } catch (SQLException | ClassCastException e) {
-                legacyTimeReads = true;
-            }
-        }
-        java.sql.Time v = rs.getTime(ordinal);
-        return v == null ? null : v.toLocalTime();
+        return v.isEmpty() ? (char) 0 : v.charAt(0);
     }
 
     /**
-     * The same conversion the conversion service applies to a {@link Timestamp} read for a {@link LocalTime}.
+     * A UUID the way {@link ColumnIndexResultSetReader#getRequiredValue} reads one: through
+     * {@link ResultSet#getObject(int, Class)}, or {@link ResultSet#getObject(int)} and a conversion when the driver
+     * cannot return the type.
      */
     @Nullable
-    private static LocalTime localTimeOfTimestamp(ResultSet rs, int ordinal) throws SQLException {
-        Timestamp v = rs.getTimestamp(ordinal);
-        return v == null ? null : v.toInstant().atZone(ZoneId.systemDefault()).toLocalTime();
-    }
-
-    @Nullable
-    private static Instant instant(ResultSet rs, int ordinal) throws SQLException {
-        Timestamp v = rs.getTimestamp(ordinal);
-        return v == null ? null : v.toInstant();
-    }
-
-    /**
-     * The same conversion the conversion service applies to a {@link Timestamp}.
-     */
-    @Nullable
-    private static OffsetDateTime offsetDateTime(ResultSet rs, int ordinal) throws SQLException {
-        Timestamp v = rs.getTimestamp(ordinal);
-        return v == null ? null : v.toInstant().atZone(ZoneId.systemDefault()).toOffsetDateTime();
-    }
-
-    @Nullable
-    private static ZonedDateTime zonedDateTime(ResultSet rs, int ordinal) throws SQLException {
-        Timestamp v = rs.getTimestamp(ordinal);
-        return v == null ? null : v.toInstant().atZone(ZoneId.systemDefault());
-    }
-
-    @Nullable
-    private Object uuid(ResultSet rs, int ordinal, int property) throws SQLException {
+    private Object readUuid(ResultSet rs, int ordinal, int property) throws SQLException {
         Object v;
         try {
             v = rs.getObject(ordinal, UUID.class);
@@ -405,36 +310,8 @@ public final class FlatEntityResultSetMapper<R> implements SqlTypeMapper<ResultS
     }
 
     /**
-     * An enum stored by name: an exact name is looked up directly, which is the first thing the conversion service
-     * tries; anything else goes through the conversion service, so a custom converter or the case-insensitive
-     * matching of the default one apply as they do in the general mapper.
-     */
-    @Nullable
-    private Object enumByName(ResultSet rs, int ordinal, int property) throws SQLException {
-        String v = rs.getString(ordinal);
-        if (v == null) {
-            return null;
-        }
-        Enum<?> constant = enumsByName[property].get(v);
-        return constant != null ? constant : convert(v, property);
-    }
-
-    /**
-     * An enum stored by ordinal, resolved the way the conversion service resolves a number to an enum.
-     */
-    @Nullable
-    private Object enumByOrdinal(ResultSet rs, int ordinal, int property) throws SQLException {
-        int v = rs.getInt(ordinal);
-        if (v == 0 && rs.wasNull()) {
-            return null;
-        }
-        Enum<?>[] constants = enumsByOrdinal[property];
-        return v >= 0 && v < constants.length ? constants[v] : convert(v, property);
-    }
-
-    /**
-     * Converts a value the typed read could not hand back in the property type, the way the general mapper
-     * converts every value whose type doesn't match.
+     * Converts a value the getter did not return in the property type, the way the general mapper converts every
+     * value whose type doesn't match, through the conversion service and whatever converters are registered with it.
      */
     private Object convert(Object v, int property) {
         Argument<Object> argument = persistentProperties[property].getArgument();

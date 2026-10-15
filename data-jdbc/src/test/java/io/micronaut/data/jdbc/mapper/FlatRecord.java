@@ -29,10 +29,12 @@ import java.time.LocalDate;
  * @param name     The name
  * @param quantity The quantity
  * @param since    The date
+ * @param count    A primitive component, which a NULL column cannot supply
  */
 @MappedEntity("flat_record")
 public record FlatRecord(@Id @GeneratedValue Long id,
                          String name,
                          @Nullable Integer quantity,
-                         @Nullable LocalDate since) {
+                         @Nullable LocalDate since,
+                         int count) {
 }

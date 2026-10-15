@@ -46,6 +46,10 @@ public class FlatTypes {
     @Version
     private Long version;
     private int primitiveInteger;
+    /**
+     * A primitive with an initial value, which a NULL column must leave alone.
+     */
+    private int withDefault = 7;
     private long primitiveLong;
     private boolean primitiveBoolean;
     private short primitiveShort;
@@ -372,5 +376,13 @@ public class FlatTypes {
 
     public void setSuitOrdinal(@Nullable Suit suitOrdinal) {
         this.suitOrdinal = suitOrdinal;
+    }
+
+    public int getWithDefault() {
+        return withDefault;
+    }
+
+    public void setWithDefault(int withDefault) {
+        this.withDefault = withDefault;
     }
 }

@@ -58,8 +58,8 @@ class FlatEntityResultSetMapperSpec extends Specification {
         FlatEntityMappingPlan.of(entity(Person)) != null
         // An association
         FlatEntityMappingPlan.of(entity(Book)) == null
-        // Types read through the conversion service (char, URL, URI, CharSequence)
-        FlatEntityMappingPlan.of(entity(BasicTypes)) == null
+        // Types the getters do not return (char, URL, URI, CharSequence) are converted, as the general mapper does
+        FlatEntityMappingPlan.of(entity(BasicTypes)) != null
         // A composite identity
         FlatEntityMappingPlan.of(entity(EntityWithIdClass)) == null
     }
@@ -70,7 +70,7 @@ class FlatEntityResultSetMapperSpec extends Specification {
 
         then:
         plan.columnNames.toList().containsAll(["id", "version", "primitive_integer", "wrapper_long", "renamed_column", "uuid"])
-        plan.columnNames.length == 31
+        plan.columnNames.length == 32
     }
 
     void "maps the same entity as the general mapper"() {
@@ -78,13 +78,14 @@ class FlatEntityResultSetMapperSpec extends Specification {
         def entity = entity(FlatTypes)
         def plan = FlatEntityMappingPlan.of(entity)
         createTable("flat_types", plan.columnNames.collect { "$it ${columnType(it)}" })
-        execute("INSERT INTO flat_types (id, version, primitive_integer, primitive_long, primitive_boolean, primitive_short, primitive_double, primitive_float, primitive_byte, string, wrapper_integer, wrapper_long, wrapper_boolean, wrapper_short, wrapper_double, wrapper_float, wrapper_byte, big_decimal, big_integer, byte_array, date, local_date_time, zoned_date_time, offset_date_time, local_date, local_time, instant, uuid, renamed_column, suit, suit_ordinal) VALUES " +
-            "(1, 3, 11, 12, TRUE, 13, 1.5, 2.5, 14, 'one', 21, 22, FALSE, 23, 3.5, 4.5, 24, 123.45, 678, X'010203', DATE '2024-01-02', TIMESTAMP '2024-02-03 04:05:06', TIMESTAMP '2024-03-04 05:06:07', TIMESTAMP '2024-03-14 05:06:07', DATE '2024-04-05', TIMESTAMP '1970-01-01 06:07:08', TIMESTAMP '2024-05-06 07:08:09', 'c2b9f4a0-3c9e-4c6e-9a7c-6b1f1a2b3c4d', 'aliased', 'HEARTS', 1)")
-        execute("INSERT INTO flat_types (id, version, primitive_integer, primitive_long, primitive_boolean, primitive_short, primitive_double, primitive_float, primitive_byte, string, wrapper_integer, wrapper_long, wrapper_boolean, wrapper_short, wrapper_double, wrapper_float, wrapper_byte, big_decimal, big_integer, byte_array, date, local_date_time, zoned_date_time, offset_date_time, local_date, local_time, instant, uuid, renamed_column, suit, suit_ordinal) VALUES " +
-            "(2, NULL, 0, 0, FALSE, 0, 0, 0, 0, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL)")
-        // Zero values in nullable columns, which the typed getters cannot tell from NULL without wasNull
-        execute("INSERT INTO flat_types (id, version, primitive_integer, primitive_long, primitive_boolean, primitive_short, primitive_double, primitive_float, primitive_byte, string, wrapper_integer, wrapper_long, wrapper_boolean, wrapper_short, wrapper_double, wrapper_float, wrapper_byte, big_decimal, big_integer, byte_array, date, local_date_time, zoned_date_time, offset_date_time, local_date, local_time, instant, uuid, renamed_column, suit, suit_ordinal) VALUES " +
-            "(3, 0, 0, 0, FALSE, 0, 0, 0, 0, '', 0, 0, FALSE, 0, 0, 0, 0, 0, 0, X'', NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, '', 'spades', 0)")
+        execute("INSERT INTO flat_types (id, version, primitive_integer, primitive_long, primitive_boolean, primitive_short, primitive_double, primitive_float, primitive_byte, string, wrapper_integer, wrapper_long, wrapper_boolean, wrapper_short, wrapper_double, wrapper_float, wrapper_byte, big_decimal, big_integer, byte_array, date, local_date_time, zoned_date_time, offset_date_time, local_date, local_time, instant, uuid, renamed_column, suit, suit_ordinal, with_default) VALUES " +
+            "(1, 3, 11, 12, TRUE, 13, 1.5, 2.5, 14, 'one', 21, 22, FALSE, 23, 3.5, 4.5, 24, 123.45, 678, X'010203', DATE '2024-01-02', TIMESTAMP '2024-02-03 04:05:06', TIMESTAMP '2024-03-04 05:06:07', TIMESTAMP '2024-03-14 05:06:07', DATE '2024-04-05', TIMESTAMP '1970-01-01 06:07:08', TIMESTAMP '2024-05-06 07:08:09', 'c2b9f4a0-3c9e-4c6e-9a7c-6b1f1a2b3c4d', 'aliased', 'HEARTS', 1, 9)")
+        execute("INSERT INTO flat_types (id, version, primitive_integer, primitive_long, primitive_boolean, primitive_short, primitive_double, primitive_float, primitive_byte, string, wrapper_integer, wrapper_long, wrapper_boolean, wrapper_short, wrapper_double, wrapper_float, wrapper_byte, big_decimal, big_integer, byte_array, date, local_date_time, zoned_date_time, offset_date_time, local_date, local_time, instant, uuid, renamed_column, suit, suit_ordinal, with_default) VALUES " +
+            "(2, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL)")
+        // Zero values in nullable columns, which the typed getters cannot tell from NULL without wasNull, and a
+        // local date time inside the CET daylight saving gap, which getObject and getTimestamp disagree on
+        execute("INSERT INTO flat_types (id, version, primitive_integer, primitive_long, primitive_boolean, primitive_short, primitive_double, primitive_float, primitive_byte, string, wrapper_integer, wrapper_long, wrapper_boolean, wrapper_short, wrapper_double, wrapper_float, wrapper_byte, big_decimal, big_integer, byte_array, date, local_date_time, zoned_date_time, offset_date_time, local_date, local_time, instant, uuid, renamed_column, suit, suit_ordinal, with_default) VALUES " +
+            "(3, 0, 0, 0, FALSE, 0, 0, 0, 0, '', 0, 0, FALSE, 0, 0, 0, 0, 0, 0, X'', NULL, TIMESTAMP '2026-03-29 02:30:00', NULL, NULL, NULL, NULL, NULL, NULL, '', 'spades', 0, 0)")
 
         when:
         List<FlatTypes> flat = mapFlat(plan, "SELECT * FROM flat_types ORDER BY id")
@@ -127,8 +128,9 @@ class FlatEntityResultSetMapperSpec extends Specification {
         flat[0].renamed == "aliased"
         flat[0].suit == FlatTypes.Suit.HEARTS
         flat[0].suitOrdinal == FlatTypes.Suit.SPADES
+        flat[0].withDefault == 9
 
-        and: "NULL leaves a wrapper null and a primitive at its default"
+        and: "NULL leaves a wrapper null and a primitive at its initial value"
         flat[1].version == null
         flat[1].wrapperInteger == null
         flat[1].wrapperLong == null
@@ -145,6 +147,9 @@ class FlatEntityResultSetMapperSpec extends Specification {
         flat[1].suit == null
         flat[1].suitOrdinal == null
         flat[1].primitiveInteger == 0
+        flat[1].primitiveLong == 0L
+        flat[1].primitiveDouble == 0d
+        flat[1].withDefault == 7
         !flat[1].primitiveBoolean
 
         and: "zero is not NULL"
@@ -163,6 +168,8 @@ class FlatEntityResultSetMapperSpec extends Specification {
         and: "a name only the conversion service resolves, and ordinal zero, are not NULL"
         flat[2].suit == FlatTypes.Suit.SPADES
         flat[2].suitOrdinal == FlatTypes.Suit.HEARTS
+        flat[2].withDefault == 0
+        flat[2].localDateTime == java.sql.Timestamp.valueOf("2026-03-29 02:30:00").toInstant().atZone(ZoneId.systemDefault()).toLocalDateTime()
 
         cleanup:
         execute("DROP TABLE flat_types")
@@ -172,8 +179,8 @@ class FlatEntityResultSetMapperSpec extends Specification {
         given:
         def entity = entity(FlatRecord)
         def plan = FlatEntityMappingPlan.of(entity)
-        createTable("flat_record", ["id BIGINT", "name VARCHAR(255)", "quantity INT", "since DATE"])
-        execute("INSERT INTO flat_record VALUES (1, 'first', 5, DATE '2024-06-07'), (2, 'second', NULL, NULL)")
+        createTable("flat_record", ["id BIGINT", "name VARCHAR(255)", "quantity INT", "since DATE", "count INT"])
+        execute("INSERT INTO flat_record VALUES (1, 'first', 5, DATE '2024-06-07', 3), (2, 'second', NULL, NULL, 0)")
 
         when:
         List<FlatRecord> flat = mapFlat(plan, "SELECT * FROM flat_record ORDER BY id")
@@ -181,15 +188,23 @@ class FlatEntityResultSetMapperSpec extends Specification {
 
         then:
         flat == general
-        flat == [new FlatRecord(1L, "first", 5, LocalDate.of(2024, 6, 7)), new FlatRecord(2L, "second", null, null)]
+        flat == [new FlatRecord(1L, "first", 5, LocalDate.of(2024, 6, 7), 3), new FlatRecord(2L, "second", null, null, 0)]
 
         when: "a non-null constructor argument is NULL"
-        execute("INSERT INTO flat_record VALUES (3, NULL, NULL, NULL)")
+        execute("INSERT INTO flat_record VALUES (3, NULL, NULL, NULL, 1)")
         mapFlat(plan, "SELECT * FROM flat_record WHERE id = 3")
 
         then:
         def e = thrown(DataAccessException)
         e.message.contains("Null value read for non-null constructor argument [name]")
+
+        when: "a primitive constructor argument is NULL"
+        execute("INSERT INTO flat_record VALUES (4, 'fourth', NULL, NULL, NULL)")
+        mapFlat(plan, "SELECT * FROM flat_record WHERE id = 4")
+
+        then:
+        e = thrown(DataAccessException)
+        e.message.contains("Null value read for non-null constructor argument [count]")
 
         cleanup:
         execute("DROP TABLE flat_record")
@@ -215,10 +230,10 @@ class FlatEntityResultSetMapperSpec extends Specification {
     void "the load listener sees every entity"() {
         given:
         def plan = FlatEntityMappingPlan.of(entity(FlatRecord))
-        createTable("flat_record", ["id BIGINT", "name VARCHAR(255)", "quantity INT", "since DATE"])
-        execute("INSERT INTO flat_record VALUES (1, 'first', 5, NULL), (2, 'second', NULL, NULL)")
+        createTable("flat_record", ["id BIGINT", "name VARCHAR(255)", "quantity INT", "since DATE", "count INT"])
+        execute("INSERT INTO flat_record VALUES (1, 'first', 5, NULL, 1), (2, 'second', NULL, NULL, 2)")
         def seen = []
-        def mapper = new FlatEntityResultSetMapper<FlatRecord>(plan, conversionService, { e, o -> seen.add(o); new FlatRecord(o.id(), o.name().toUpperCase(), o.quantity(), o.since()) }, { throw new IllegalStateException() })
+        def mapper = new FlatEntityResultSetMapper<FlatRecord>(plan, conversionService, { e, o -> seen.add(o); new FlatRecord(o.id(), o.name().toUpperCase(), o.quantity(), o.since(), o.count()) }, { throw new IllegalStateException() })
 
         when:
         def result = mapAll(mapper, "SELECT * FROM flat_record ORDER BY id")
@@ -299,7 +314,7 @@ class FlatEntityResultSetMapperSpec extends Specification {
     private static String columnType(String column) {
         switch (column) {
             case "id": case "version": case "primitive_long": case "wrapper_long": return "BIGINT"
-            case "primitive_integer": case "wrapper_integer": case "suit_ordinal": return "INT"
+            case "primitive_integer": case "wrapper_integer": case "suit_ordinal": case "with_default": return "INT"
             case "primitive_boolean": case "wrapper_boolean": return "BOOLEAN"
             case "primitive_short": case "wrapper_short": return "SMALLINT"
             case "primitive_double": case "wrapper_double": return "DOUBLE PRECISION"
