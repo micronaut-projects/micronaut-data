@@ -39,6 +39,7 @@ import java.time.LocalTime;
 import java.time.OffsetDateTime;
 import java.time.ZoneId;
 import java.time.ZonedDateTime;
+import java.util.Map;
 import java.util.UUID;
 import java.util.function.BiFunction;
 import java.util.function.Supplier;
@@ -56,6 +57,8 @@ import static io.micronaut.data.jdbc.mapper.FlatEntityMappingPlan.BOXED_SHORT;
 import static io.micronaut.data.jdbc.mapper.FlatEntityMappingPlan.BYTE;
 import static io.micronaut.data.jdbc.mapper.FlatEntityMappingPlan.BYTES;
 import static io.micronaut.data.jdbc.mapper.FlatEntityMappingPlan.DOUBLE;
+import static io.micronaut.data.jdbc.mapper.FlatEntityMappingPlan.ENUM_NAME;
+import static io.micronaut.data.jdbc.mapper.FlatEntityMappingPlan.ENUM_ORDINAL;
 import static io.micronaut.data.jdbc.mapper.FlatEntityMappingPlan.FLOAT;
 import static io.micronaut.data.jdbc.mapper.FlatEntityMappingPlan.INSTANT;
 import static io.micronaut.data.jdbc.mapper.FlatEntityMappingPlan.INT;
@@ -101,6 +104,8 @@ public final class FlatEntityResultSetMapper<R> implements SqlTypeMapper<ResultS
     private final boolean[] requiredConstructorArguments;
     private final int constructorArgumentCount;
     private final ConversionService conversionService;
+    private final Map<String, Enum<?>>[] enumsByName;
+    private final Enum<?>[][] enumsByOrdinal;
     @Nullable
     private final BiFunction<RuntimePersistentEntity<Object>, Object, Object> loadListener;
     private final Supplier<SqlTypeMapper<ResultSet, R>> generalMapper;
@@ -137,6 +142,8 @@ public final class FlatEntityResultSetMapper<R> implements SqlTypeMapper<ResultS
         this.requiredConstructorArguments = plan.getRequiredConstructorArguments();
         this.constructorArgumentCount = plan.getConstructorArgumentCount();
         this.conversionService = conversionService;
+        this.enumsByName = plan.getEnumsByName();
+        this.enumsByOrdinal = plan.getEnumsByOrdinal();
         this.loadListener = loadListener;
         this.generalMapper = generalMapper;
     }
@@ -257,6 +264,8 @@ public final class FlatEntityResultSetMapper<R> implements SqlTypeMapper<ResultS
                 case SQL_DATE -> rs.getDate(ordinal);
                 case SQL_TIME -> rs.getTime(ordinal);
                 case UUID_VALUE -> uuid(rs, ordinal, property);
+                case ENUM_NAME -> enumByName(rs, ordinal, property);
+                case ENUM_ORDINAL -> enumByOrdinal(rs, ordinal, property);
                 default -> throw new IllegalStateException("Unknown read kind " + kind);
             };
         } catch (SQLException e) {
@@ -392,6 +401,42 @@ public final class FlatEntityResultSetMapper<R> implements SqlTypeMapper<ResultS
         if (v == null || v instanceof UUID) {
             return v;
         }
+        return convert(v, property);
+    }
+
+    /**
+     * An enum stored by name: an exact name is looked up directly, which is the first thing the conversion service
+     * tries; anything else goes through the conversion service, so a custom converter or the case-insensitive
+     * matching of the default one apply as they do in the general mapper.
+     */
+    @Nullable
+    private Object enumByName(ResultSet rs, int ordinal, int property) throws SQLException {
+        String v = rs.getString(ordinal);
+        if (v == null) {
+            return null;
+        }
+        Enum<?> constant = enumsByName[property].get(v);
+        return constant != null ? constant : convert(v, property);
+    }
+
+    /**
+     * An enum stored by ordinal, resolved the way the conversion service resolves a number to an enum.
+     */
+    @Nullable
+    private Object enumByOrdinal(ResultSet rs, int ordinal, int property) throws SQLException {
+        int v = rs.getInt(ordinal);
+        if (v == 0 && rs.wasNull()) {
+            return null;
+        }
+        Enum<?>[] constants = enumsByOrdinal[property];
+        return v >= 0 && v < constants.length ? constants[v] : convert(v, property);
+    }
+
+    /**
+     * Converts a value the typed read could not hand back in the property type, the way the general mapper
+     * converts every value whose type doesn't match.
+     */
+    private Object convert(Object v, int property) {
         Argument<Object> argument = persistentProperties[property].getArgument();
         Object converted = conversionService.convert(v, argument).orElse(null);
         if (converted == null) {

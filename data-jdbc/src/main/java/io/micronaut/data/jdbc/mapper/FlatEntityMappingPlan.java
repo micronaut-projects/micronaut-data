@@ -38,7 +38,9 @@ import java.time.ZonedDateTime;
 import java.util.ArrayList;
 import java.util.Collections;
 import java.util.Date;
+import java.util.HashMap;
 import java.util.List;
+import java.util.Map;
 import java.util.UUID;
 
 /**
@@ -85,6 +87,8 @@ public final class FlatEntityMappingPlan<R> {
     static final byte SQL_TIME = 27;
     static final byte UUID_VALUE = 28;
     static final byte LOCAL_TIME_OF_TIMESTAMP = 29;
+    static final byte ENUM_NAME = 30;
+    static final byte ENUM_ORDINAL = 31;
 
     private final RuntimePersistentEntity<R> entity;
     private final BeanIntrospection<R> introspection;
@@ -99,6 +103,12 @@ public final class FlatEntityMappingPlan<R> {
     private final int[] constructorArgumentIndexes;
     private final boolean[] requiredConstructorArguments;
     private final int constructorArgumentCount;
+    /**
+     * For an {@link #ENUM_NAME} property, its constants by name; for an {@link #ENUM_ORDINAL} property, its
+     * constants in ordinal order. The same lookups the conversion service performs for an exact name or ordinal.
+     */
+    private final Map<String, Enum<?>>[] enumsByName;
+    private final Enum<?>[][] enumsByOrdinal;
 
     private FlatEntityMappingPlan(RuntimePersistentEntity<R> entity,
                                   List<RuntimePersistentProperty<R>> mapped,
@@ -119,6 +129,19 @@ public final class FlatEntityMappingPlan<R> {
         this.constructorArgumentIndexes = constructorArgumentIndexes;
         this.requiredConstructorArguments = requiredConstructorArguments;
         this.constructorArgumentCount = constructorArgumentCount;
+        this.enumsByName = new Map[kinds.length];
+        this.enumsByOrdinal = new Enum[kinds.length][];
+        for (int i = 0; i < kinds.length; i++) {
+            if (kinds[i] == ENUM_NAME || kinds[i] == ENUM_ORDINAL) {
+                Enum<?>[] constants = (Enum<?>[]) persistentProperties[i].getType().getEnumConstants();
+                enumsByOrdinal[i] = constants;
+                Map<String, Enum<?>> byName = new HashMap<>(constants.length * 2);
+                for (Enum<?> constant : constants) {
+                    byName.put(constant.name(), constant);
+                }
+                enumsByName[i] = byName;
+            }
+        }
     }
 
     /**
@@ -157,7 +180,7 @@ public final class FlatEntityMappingPlan<R> {
         boolean[] suppliedArguments = new boolean[constructorArguments.length];
         for (RuntimePersistentProperty<R> property : candidates) {
             if (property instanceof RuntimeAssociation || property.getConverter() != null
-                || property.getDataType() == DataType.JSON || property.isEnum()) {
+                || property.getDataType() == DataType.JSON) {
                 return null;
             }
             int argumentIndex = indexOf(constructorArguments, property);
@@ -292,6 +315,10 @@ public final class FlatEntityMappingPlan<R> {
         if (type == java.sql.Time.class) {
             return dataType == DataType.TIME ? SQL_TIME : 0;
         }
+        if (type.isEnum()) {
+            // Stored by name, or by ordinal when the data type says so, the two cases the conversion service covers
+            return dataType == DataType.STRING ? ENUM_NAME : dataType == DataType.INTEGER ? ENUM_ORDINAL : 0;
+        }
         if (type == UUID.class) {
             return dataType == DataType.UUID ? UUID_VALUE : 0;
         }
@@ -334,6 +361,14 @@ public final class FlatEntityMappingPlan<R> {
 
     boolean[] getRequiredConstructorArguments() {
         return requiredConstructorArguments;
+    }
+
+    Map<String, Enum<?>>[] getEnumsByName() {
+        return enumsByName;
+    }
+
+    Enum<?>[][] getEnumsByOrdinal() {
+        return enumsByOrdinal;
     }
 
     int getConstructorArgumentCount() {

@@ -24,7 +24,6 @@ import io.micronaut.data.runtime.mapper.sql.SqlResultEntityTypeMapper
 import io.micronaut.data.tck.entities.BasicTypes
 import io.micronaut.data.tck.entities.Book
 import io.micronaut.data.tck.entities.EntityWithIdClass
-import io.micronaut.data.tck.entities.Food
 import io.micronaut.data.tck.entities.Person
 import spock.lang.AutoCleanup
 import spock.lang.Shared
@@ -63,8 +62,6 @@ class FlatEntityResultSetMapperSpec extends Specification {
         FlatEntityMappingPlan.of(entity(BasicTypes)) == null
         // A composite identity
         FlatEntityMappingPlan.of(entity(EntityWithIdClass)) == null
-        // An enum
-        FlatEntityMappingPlan.of(entity(Food)) == null
     }
 
     void "the plan resolves the column of every property"() {
@@ -73,7 +70,7 @@ class FlatEntityResultSetMapperSpec extends Specification {
 
         then:
         plan.columnNames.toList().containsAll(["id", "version", "primitive_integer", "wrapper_long", "renamed_column", "uuid"])
-        plan.columnNames.length == 29
+        plan.columnNames.length == 31
     }
 
     void "maps the same entity as the general mapper"() {
@@ -81,13 +78,13 @@ class FlatEntityResultSetMapperSpec extends Specification {
         def entity = entity(FlatTypes)
         def plan = FlatEntityMappingPlan.of(entity)
         createTable("flat_types", plan.columnNames.collect { "$it ${columnType(it)}" })
-        execute("INSERT INTO flat_types (id, version, primitive_integer, primitive_long, primitive_boolean, primitive_short, primitive_double, primitive_float, primitive_byte, string, wrapper_integer, wrapper_long, wrapper_boolean, wrapper_short, wrapper_double, wrapper_float, wrapper_byte, big_decimal, big_integer, byte_array, date, local_date_time, zoned_date_time, offset_date_time, local_date, local_time, instant, uuid, renamed_column) VALUES " +
-            "(1, 3, 11, 12, TRUE, 13, 1.5, 2.5, 14, 'one', 21, 22, FALSE, 23, 3.5, 4.5, 24, 123.45, 678, X'010203', DATE '2024-01-02', TIMESTAMP '2024-02-03 04:05:06', TIMESTAMP '2024-03-04 05:06:07', TIMESTAMP '2024-03-14 05:06:07', DATE '2024-04-05', TIMESTAMP '1970-01-01 06:07:08', TIMESTAMP '2024-05-06 07:08:09', 'c2b9f4a0-3c9e-4c6e-9a7c-6b1f1a2b3c4d', 'aliased')")
-        execute("INSERT INTO flat_types (id, version, primitive_integer, primitive_long, primitive_boolean, primitive_short, primitive_double, primitive_float, primitive_byte, string, wrapper_integer, wrapper_long, wrapper_boolean, wrapper_short, wrapper_double, wrapper_float, wrapper_byte, big_decimal, big_integer, byte_array, date, local_date_time, zoned_date_time, offset_date_time, local_date, local_time, instant, uuid, renamed_column) VALUES " +
-            "(2, NULL, 0, 0, FALSE, 0, 0, 0, 0, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL)")
+        execute("INSERT INTO flat_types (id, version, primitive_integer, primitive_long, primitive_boolean, primitive_short, primitive_double, primitive_float, primitive_byte, string, wrapper_integer, wrapper_long, wrapper_boolean, wrapper_short, wrapper_double, wrapper_float, wrapper_byte, big_decimal, big_integer, byte_array, date, local_date_time, zoned_date_time, offset_date_time, local_date, local_time, instant, uuid, renamed_column, suit, suit_ordinal) VALUES " +
+            "(1, 3, 11, 12, TRUE, 13, 1.5, 2.5, 14, 'one', 21, 22, FALSE, 23, 3.5, 4.5, 24, 123.45, 678, X'010203', DATE '2024-01-02', TIMESTAMP '2024-02-03 04:05:06', TIMESTAMP '2024-03-04 05:06:07', TIMESTAMP '2024-03-14 05:06:07', DATE '2024-04-05', TIMESTAMP '1970-01-01 06:07:08', TIMESTAMP '2024-05-06 07:08:09', 'c2b9f4a0-3c9e-4c6e-9a7c-6b1f1a2b3c4d', 'aliased', 'HEARTS', 1)")
+        execute("INSERT INTO flat_types (id, version, primitive_integer, primitive_long, primitive_boolean, primitive_short, primitive_double, primitive_float, primitive_byte, string, wrapper_integer, wrapper_long, wrapper_boolean, wrapper_short, wrapper_double, wrapper_float, wrapper_byte, big_decimal, big_integer, byte_array, date, local_date_time, zoned_date_time, offset_date_time, local_date, local_time, instant, uuid, renamed_column, suit, suit_ordinal) VALUES " +
+            "(2, NULL, 0, 0, FALSE, 0, 0, 0, 0, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL)")
         // Zero values in nullable columns, which the typed getters cannot tell from NULL without wasNull
-        execute("INSERT INTO flat_types (id, version, primitive_integer, primitive_long, primitive_boolean, primitive_short, primitive_double, primitive_float, primitive_byte, string, wrapper_integer, wrapper_long, wrapper_boolean, wrapper_short, wrapper_double, wrapper_float, wrapper_byte, big_decimal, big_integer, byte_array, date, local_date_time, zoned_date_time, offset_date_time, local_date, local_time, instant, uuid, renamed_column) VALUES " +
-            "(3, 0, 0, 0, FALSE, 0, 0, 0, 0, '', 0, 0, FALSE, 0, 0, 0, 0, 0, 0, X'', NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, '')")
+        execute("INSERT INTO flat_types (id, version, primitive_integer, primitive_long, primitive_boolean, primitive_short, primitive_double, primitive_float, primitive_byte, string, wrapper_integer, wrapper_long, wrapper_boolean, wrapper_short, wrapper_double, wrapper_float, wrapper_byte, big_decimal, big_integer, byte_array, date, local_date_time, zoned_date_time, offset_date_time, local_date, local_time, instant, uuid, renamed_column, suit, suit_ordinal) VALUES " +
+            "(3, 0, 0, 0, FALSE, 0, 0, 0, 0, '', 0, 0, FALSE, 0, 0, 0, 0, 0, 0, X'', NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, '', 'spades', 0)")
 
         when:
         List<FlatTypes> flat = mapFlat(plan, "SELECT * FROM flat_types ORDER BY id")
@@ -128,6 +125,8 @@ class FlatEntityResultSetMapperSpec extends Specification {
         flat[0].instant == java.sql.Timestamp.valueOf("2024-05-06 07:08:09").toInstant()
         flat[0].uuid == UUID.fromString("c2b9f4a0-3c9e-4c6e-9a7c-6b1f1a2b3c4d")
         flat[0].renamed == "aliased"
+        flat[0].suit == FlatTypes.Suit.HEARTS
+        flat[0].suitOrdinal == FlatTypes.Suit.SPADES
 
         and: "NULL leaves a wrapper null and a primitive at its default"
         flat[1].version == null
@@ -143,6 +142,8 @@ class FlatEntityResultSetMapperSpec extends Specification {
         flat[1].localDateTime == null
         flat[1].uuid == null
         flat[1].string == null
+        flat[1].suit == null
+        flat[1].suitOrdinal == null
         flat[1].primitiveInteger == 0
         !flat[1].primitiveBoolean
 
@@ -158,6 +159,10 @@ class FlatEntityResultSetMapperSpec extends Specification {
         flat[2].bigDecimal == 0G
         flat[2].byteArray == new byte[0]
         flat[2].string == ""
+
+        and: "a name only the conversion service resolves, and ordinal zero, are not NULL"
+        flat[2].suit == FlatTypes.Suit.SPADES
+        flat[2].suitOrdinal == FlatTypes.Suit.HEARTS
 
         cleanup:
         execute("DROP TABLE flat_types")
@@ -294,7 +299,7 @@ class FlatEntityResultSetMapperSpec extends Specification {
     private static String columnType(String column) {
         switch (column) {
             case "id": case "version": case "primitive_long": case "wrapper_long": return "BIGINT"
-            case "primitive_integer": case "wrapper_integer": return "INT"
+            case "primitive_integer": case "wrapper_integer": case "suit_ordinal": return "INT"
             case "primitive_boolean": case "wrapper_boolean": return "BOOLEAN"
             case "primitive_short": case "wrapper_short": return "SMALLINT"
             case "primitive_double": case "wrapper_double": return "DOUBLE PRECISION"

@@ -20,6 +20,7 @@ import io.micronaut.data.annotation.Id;
 import io.micronaut.data.annotation.MappedEntity;
 import io.micronaut.data.annotation.MappedProperty;
 import io.micronaut.data.annotation.Version;
+import io.micronaut.data.model.DataType;
 import org.jspecify.annotations.Nullable;
 
 import java.math.BigDecimal;
@@ -91,6 +92,18 @@ public class FlatTypes {
     @Nullable
     @MappedProperty("renamed_column")
     private String renamed;
+    @Nullable
+    private Suit suit;
+    @Nullable
+    @MappedProperty(type = DataType.INTEGER)
+    private Suit suitOrdinal;
+
+    /**
+     * An enum stored by name in {@link #suit} and by ordinal in {@link #suitOrdinal}.
+     */
+    public enum Suit {
+        HEARTS, SPADES, CLUBS
+    }
 
     public Long getId() {
         return id;
@@ -341,5 +354,23 @@ public class FlatTypes {
 
     public void setRenamed(@Nullable String renamed) {
         this.renamed = renamed;
+    }
+
+    @Nullable
+    public Suit getSuit() {
+        return suit;
+    }
+
+    public void setSuit(@Nullable Suit suit) {
+        this.suit = suit;
+    }
+
+    @Nullable
+    public Suit getSuitOrdinal() {
+        return suitOrdinal;
+    }
+
+    public void setSuitOrdinal(@Nullable Suit suitOrdinal) {
+        this.suitOrdinal = suitOrdinal;
     }
 }
