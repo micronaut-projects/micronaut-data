@@ -1,8 +1,10 @@
 package io.micronaut.data.graph.processor
 
+import io.micronaut.data.annotation.Query
 import io.micronaut.inject.BeanDefinition
 import io.micronaut.inject.ExecutableMethod
 import spock.lang.Shared
+import io.micronaut.data.graph.model.query.builder.AgeStatements
 import spock.lang.Unroll
 
 class BuildAgeQuerySpec extends AbstractGraphDataSpec {
@@ -70,7 +72,7 @@ interface AccountRepository extends CrudRepository<Account, Long> {
     @Unroll
     void "test AGE query for #method"() {
         expect:
-        getQuery(findMethod(friends, method)) == query
+        getQuery(findMethod(friends, method)) == AgeStatements.wrap(query)
 
         where:
         method                      | query
@@ -82,8 +84,39 @@ interface AccountRepository extends CrudRepository<Account, Long> {
 
     void "test database assigned identifiers are graph ids"() {
         expect:
-        getQuery(findMethod(accounts, 'findById')) == 'MATCH (n:Account) WHERE id(n) = $p0 RETURN n'
-        getQuery(findMethod(accounts, 'findByOwner')) == 'MATCH (n:Account) WHERE n.owner = $p0 RETURN n'
+        getQuery(findMethod(accounts, 'findById')) == 'SELECT * FROM ag_catalog.cypher(\'$__graph\', $$ MATCH (n:Account) WHERE id(n) = $p0 RETURN n $$, ?) AS ("n" ag_catalog.agtype)'
+        getQuery(findMethod(accounts, 'findByOwner')) == AgeStatements.wrap('MATCH (n:Account) WHERE n.owner = $p0 RETURN n')
+    }
+
+    void "test explicit queries are wrapped and checked at build time"() {
+        when:
+        def repository = buildRepository('test.ExplicitRepository', """
+$ENTITIES
+
+@TestAgeRepository
+interface ExplicitRepository extends CrudRepository<Friend, String> {
+    @Query("MATCH (f:Friend) WHERE f.name = \$name RETURN f.name AS name, count(f) AS total")
+    List<Map<String, Object>> counts(String name);
+}
+""")
+
+        then:
+        findMethod(repository, 'counts').stringValue(Query, 'rawQuery').get() == 'SELECT * FROM ag_catalog.cypher(\'$__graph\', $$ MATCH (f:Friend) WHERE f.name = $name RETURN f.name AS name, count(f) AS total $$, ?) AS ("name" ag_catalog.agtype, "total" ag_catalog.agtype)'
+
+        when:
+        buildRepository('test.StarRepository', """
+$ENTITIES
+
+@TestAgeRepository
+interface StarRepository extends CrudRepository<Friend, String> {
+    @Query("MATCH (f:Friend) RETURN *")
+    List<Friend> everything();
+}
+""")
+
+        then:
+        def e = thrown(RuntimeException)
+        e.message.contains('RETURN * is not supported with Apache AGE')
     }
 
     void "test path queries need a maximum depth"() {

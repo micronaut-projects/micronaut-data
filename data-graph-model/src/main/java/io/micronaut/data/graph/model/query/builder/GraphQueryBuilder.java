@@ -87,6 +87,26 @@ public interface GraphQueryBuilder extends QueryBuilder {
     String buildWriteNodeQuery(PersistentEntity entity, List<String> propertyNames, boolean idPresent);
 
     /**
+     * Builds the query that deletes all nodes of an entity with their relationships, returning their count.
+     *
+     * @param entity The entity
+     * @return The query
+     */
+    String buildDeleteAllQuery(PersistentEntity entity);
+
+    /**
+     * Completes a query written in the database's query language into the statement the driver runs. Applied when
+     * repositories are compiled to explicit queries, and at runtime to queries passed to the repository operations.
+     *
+     * @param query The query
+     * @return The statement
+     * @throws IllegalArgumentException if the database cannot run the query
+     */
+    default String finishQuery(String query) {
+        return query;
+    }
+
+    /**
      * Builds the query that deletes a node by its identifier, with its relationships.
      *
      * @param entity The entity

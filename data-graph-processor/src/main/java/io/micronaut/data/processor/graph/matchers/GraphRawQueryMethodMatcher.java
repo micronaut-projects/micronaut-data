@@ -201,6 +201,13 @@ public final class GraphRawQueryMethodMatcher implements MethodMatcher {
         if (positional) {
             finalQuery = rewritten.append(query.substring(lastEnd)).toString();
         }
+        if (matchContext.getQueryBuilder() instanceof GraphQueryBuilder graphQueryBuilder) {
+            try {
+                finalQuery = graphQueryBuilder.finishQuery(finalQuery);
+            } catch (IllegalArgumentException e) {
+                throw new MatchFailedException(String.valueOf(e.getMessage()));
+            }
+        }
         return QueryResult.of(finalQuery, List.of(finalQuery), bindings);
     }
 

@@ -385,7 +385,8 @@ public abstract class AbstractGraphRepositoryOperations extends AbstractReposito
     @Override
     public List<GraphRecord> executeQuery(String query, Map<String, Object> parameters) {
         Map<String, Object> encoded = encodeParameters(parameters);
-        return write(AnnotationMetadata.EMPTY_METADATA, session -> session.run(query, encoded).records());
+        String statement = finishedQuery(query);
+        return write(AnnotationMetadata.EMPTY_METADATA, session -> session.run(statement, encoded).records());
     }
 
     @Override
@@ -689,9 +690,16 @@ public abstract class AbstractGraphRepositoryOperations extends AbstractReposito
      * @param entity The root entity
      * @return The query that deletes all nodes of the entity, returning their count
      */
-    static String deleteAllQuery(RuntimePersistentEntity<?> entity) {
-        return "MATCH (" + CypherQueryBuilder.ROOT + GraphEntities.labelExpression(entity) + ") DETACH DELETE "
-            + CypherQueryBuilder.ROOT + " RETURN count(*) AS result";
+    final String deleteAllQuery(RuntimePersistentEntity<?> entity) {
+        return queryCache.computeIfAbsent("deleteAll:" + entity.getName(), k -> queryBuilder.buildDeleteAllQuery(entity));
+    }
+
+    /**
+     * @param query A query in the database's query language, passed to the operations at runtime
+     * @return The statement that runs it
+     */
+    final String finishedQuery(String query) {
+        return queryCache.computeIfAbsent("query:" + query, k -> queryBuilder.finishQuery(query));
     }
 
     /**

@@ -184,6 +184,11 @@ public class OracleGraphQueryBuilder implements GraphQueryBuilder {
     }
 
     @Override
+    public String buildDeleteAllQuery(PersistentEntity entity) {
+        throw new UnsupportedOperationException(READ_ONLY);
+    }
+
+    @Override
     public String buildLinkQuery(Association association, PersistentEntity owner, PersistentEntity target,
                                  List<String> propertyNames, @Nullable PersistentProperty relationshipIdentity) {
         throw new UnsupportedOperationException(READ_ONLY);

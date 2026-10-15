@@ -15,14 +15,25 @@
  */
 package io.micronaut.data.graph.model.query.builder;
 
+import io.micronaut.core.annotation.AnnotationMetadata;
 import io.micronaut.core.annotation.Introspected;
 import io.micronaut.data.graph.annotation.Direction;
 import io.micronaut.data.graph.model.GraphEntities;
 import io.micronaut.data.graph.model.query.PathQueryDefinition;
+import io.micronaut.data.model.Association;
+import io.micronaut.data.model.DataType;
 import io.micronaut.data.model.PersistentEntity;
 import io.micronaut.data.model.PersistentProperty;
+import io.micronaut.data.model.Sort;
+import io.micronaut.data.model.query.JoinPath;
+import io.micronaut.data.model.query.builder.QueryParameterBinding;
+import io.micronaut.data.model.query.builder.QueryResult;
+import io.micronaut.data.model.query.builder.QueryOutParameterBinding;
+import org.jspecify.annotations.Nullable;
 
+import java.util.Collection;
 import java.util.List;
+import java.util.Map;
 
 /**
  * Builds the openCypher subset of Apache AGE.
@@ -39,6 +50,73 @@ import java.util.List;
  */
 @Introspected
 public class AgeCypherQueryBuilder extends CypherQueryBuilder {
+
+    // Every query is wrapped in the SQL statement that runs it, so nothing is parsed at runtime
+
+    @Override
+    public String finishQuery(String query) {
+        return AgeStatements.wrap(query);
+    }
+
+    @Override
+    public QueryResult buildSelect(AnnotationMetadata annotationMetadata, SelectQueryDefinition definition) {
+        return wrap(super.buildSelect(annotationMetadata, definition));
+    }
+
+    @Override
+    public QueryResult buildUpdate(AnnotationMetadata annotationMetadata, UpdateQueryDefinition definition) {
+        return wrap(super.buildUpdate(annotationMetadata, definition));
+    }
+
+    @Override
+    public QueryResult buildDelete(AnnotationMetadata annotationMetadata, DeleteQueryDefinition definition) {
+        return wrap(super.buildDelete(annotationMetadata, definition));
+    }
+
+    @Override
+    public QueryResult buildPathQuery(PathQueryDefinition definition) {
+        return wrap(super.buildPathQuery(definition));
+    }
+
+    @Override
+    public String buildFindByIdQuery(PersistentEntity entity) {
+        return AgeStatements.wrap(super.buildFindByIdQuery(entity));
+    }
+
+    @Override
+    public String buildFindAllQuery(PersistentEntity entity) {
+        return AgeStatements.wrap(super.buildFindAllQuery(entity));
+    }
+
+    @Override
+    public String buildCountAllQuery(PersistentEntity entity) {
+        return AgeStatements.wrap(super.buildCountAllQuery(entity));
+    }
+
+    @Override
+    public String buildWriteNodeQuery(PersistentEntity entity, List<String> propertyNames, boolean idPresent) {
+        return AgeStatements.wrap(super.buildWriteNodeQuery(entity, propertyNames, idPresent));
+    }
+
+    @Override
+    public String buildDeleteByIdQuery(PersistentEntity entity) {
+        return AgeStatements.wrap(super.buildDeleteByIdQuery(entity));
+    }
+
+    @Override
+    public String buildDeleteAllQuery(PersistentEntity entity) {
+        return AgeStatements.wrap(super.buildDeleteAllQuery(entity));
+    }
+
+    @Override
+    public String buildLinkQuery(Association association, PersistentEntity owner, PersistentEntity target,
+                                 List<String> propertyNames, @Nullable PersistentProperty relationshipIdentity) {
+        return AgeStatements.wrap(super.buildLinkQuery(association, owner, target, propertyNames, relationshipIdentity));
+    }
+
+    private static QueryResult wrap(QueryResult result) {
+        return new WrappedQueryResult(AgeStatements.wrap(result.getQuery()), result);
+    }
 
     @Override
     protected String identityExpression(PersistentProperty identity, String variable) {
@@ -100,5 +178,74 @@ public class AgeCypherQueryBuilder extends CypherQueryBuilder {
             return;
         }
         super.appendPathReturn(query, definition);
+    }
+
+    /**
+     * A query result whose query is the statement that runs it.
+     *
+     * @param query    The statement
+     * @param delegate The result of the Cypher query
+     */
+    private record WrappedQueryResult(String query, QueryResult delegate) implements QueryResult {
+
+        @Override
+        public String getQuery() {
+            return query;
+        }
+
+        @Override
+        public List<String> getQueryParts() {
+            return List.of(query);
+        }
+
+        @Override
+        public @Nullable String getUpdate() {
+            return delegate.getUpdate();
+        }
+
+        @Override
+        public Map<String, String> getParameters() {
+            return delegate.getParameters();
+        }
+
+        @Override
+        public Map<String, DataType> getParameterTypes() {
+            return delegate.getParameterTypes();
+        }
+
+        @Override
+        public List<QueryParameterBinding> getParameterBindings() {
+            return delegate.getParameterBindings();
+        }
+
+        @Override
+        public List<QueryOutParameterBinding> getOutParameterBindings() {
+            return delegate.getOutParameterBindings();
+        }
+
+        @Override
+        public Map<String, String> getAdditionalRequiredParameters() {
+            return delegate.getAdditionalRequiredParameters();
+        }
+
+        @Override
+        public int getMax() {
+            return delegate.getMax();
+        }
+
+        @Override
+        public long getOffset() {
+            return delegate.getOffset();
+        }
+
+        @Override
+        public Sort getSort() {
+            return delegate.getSort();
+        }
+
+        @Override
+        public Collection<JoinPath> getJoinPaths() {
+            return delegate.getJoinPaths();
+        }
     }
 }

@@ -374,6 +374,11 @@ public class CypherQueryBuilder implements GraphQueryBuilder {
         return query.append(" RETURN count(*) AS result").toString();
     }
 
+    @Override
+    public String buildDeleteAllQuery(PersistentEntity entity) {
+        return "MATCH (" + ROOT + labelExpression(entity) + ") DETACH DELETE " + ROOT + " RETURN count(*) AS result";
+    }
+
     /**
      * Builds the query that deletes a node by its identifier, bound to {@code $id}, with its relationships.
      *

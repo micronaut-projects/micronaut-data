@@ -215,7 +215,8 @@ public abstract class AbstractReactiveGraphRepositoryOperations implements React
 
     @Override
     public Flux<GraphRecord> executeQuery(String query, Map<String, Object> parameters) {
-        return withSessionFlux(AnnotationMetadata.EMPTY_METADATA, session -> session.stream(query, operations.encodeParameters(parameters)));
+        String statement = operations.finishedQuery(query);
+        return withSessionFlux(AnnotationMetadata.EMPTY_METADATA, session -> session.stream(statement, operations.encodeParameters(parameters)));
     }
 
     @Override
@@ -268,7 +269,7 @@ public abstract class AbstractReactiveGraphRepositoryOperations implements React
         RuntimePersistentEntity<T> entity = operations.getEntity(operation.getRootEntity());
         return withSessionMono(operation.getAnnotationMetadata(), session -> {
             if (operation.all()) {
-                return session.run(AbstractGraphRepositoryOperations.deleteAllQuery(entity), Map.of())
+                return session.run(operations.deleteAllQuery(entity), Map.of())
                     .map(AbstractGraphRepositoryOperations::updateCount);
             }
             Persister persister = new Persister(session, operation.getAnnotationMetadata(), operation.getRepositoryType());

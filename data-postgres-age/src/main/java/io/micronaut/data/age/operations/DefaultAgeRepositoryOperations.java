@@ -24,6 +24,10 @@ import io.micronaut.data.connection.ConnectionDefinition;
 import io.micronaut.data.connection.ConnectionOperations;
 import io.micronaut.data.exceptions.DataAccessException;
 import io.micronaut.data.graph.model.query.builder.AgeCypherQueryBuilder;
+import io.micronaut.data.graph.model.query.builder.AgeStatements;
+import io.micronaut.data.model.Limit;
+import io.micronaut.data.model.Sort;
+import io.micronaut.data.model.runtime.RuntimePersistentEntity;
 import io.micronaut.data.graph.runtime.GraphRecord;
 import io.micronaut.data.graph.runtime.GraphResult;
 import io.micronaut.data.graph.runtime.GraphSession;
@@ -41,6 +45,7 @@ import javax.sql.DataSource;
 import java.sql.Connection;
 import java.sql.PreparedStatement;
 import java.sql.ResultSet;
+import java.sql.ResultSetMetaData;
 import java.sql.SQLException;
 import java.sql.Statement;
 import java.sql.Types;
@@ -87,7 +92,7 @@ final class DefaultAgeRepositoryOperations extends AbstractGraphRepositoryOperat
                                    @Named("io") @Nullable ExecutorService executorService) {
         super(new AgeCypherQueryBuilder(), dateTimeProvider, runtimeEntityRegistry, conversionService, attributeConverterRegistry, executorService);
         this.connectionOperations = connectionOperations;
-        this.graph = graph;
+        this.graph = AgeStatements.validateGraphName(graph);
         this.createExtension = createExtension;
         this.createGraph = createGraph;
     }
@@ -131,34 +136,57 @@ final class DefaultAgeRepositoryOperations extends AbstractGraphRepositoryOperat
         return (query, parameters) -> run(connection, query, parameters);
     }
 
-    private GraphResult run(Connection connection, String cypher, Map<String, Object> parameters) {
+    /**
+     * Runs a statement built by {@link AgeCypherQueryBuilder} when the repository was compiled, whose result columns
+     * carry the names of the columns of its Cypher query.
+     */
+    private GraphResult run(Connection connection, String statement, Map<String, Object> parameters) {
+        String sql = AgeStatements.forGraph(statement, graph);
         try {
             prepare(connection);
-            List<String> columns = AgeQueries.returnColumns(cypher);
-            String sql = AgeQueries.wrap(graph, cypher, !parameters.isEmpty(), columns.size());
             if (LOG.isDebugEnabled()) {
                 LOG.debug("Executing Cypher on Apache AGE: {} with parameters {}", sql, parameters);
             }
-            try (PreparedStatement statement = connection.prepareStatement(sql)) {
-                if (!parameters.isEmpty()) {
-                    statement.setObject(1, Agtype.write(parameters), Types.OTHER);
+            try (PreparedStatement preparedStatement = connection.prepareStatement(sql)) {
+                if (AgeStatements.takesParameters(statement)) {
+                    preparedStatement.setObject(1, Agtype.write(parameters), Types.OTHER);
                 }
                 List<GraphRecord> records = new ArrayList<>();
-                try (ResultSet resultSet = statement.executeQuery()) {
-                    int count = resultSet.getMetaData().getColumnCount();
+                try (ResultSet resultSet = preparedStatement.executeQuery()) {
+                    ResultSetMetaData metaData = resultSet.getMetaData();
+                    int count = metaData.getColumnCount();
+                    List<String> columns = new ArrayList<>(count);
+                    for (int i = 1; i <= count; i++) {
+                        columns.add(metaData.getColumnLabel(i));
+                    }
                     while (resultSet.next()) {
                         List<Object> values = new ArrayList<>(count);
                         for (int i = 1; i <= count; i++) {
                             values.add(Agtype.parse(resultSet.getString(i)));
                         }
-                        records.add(new GraphRecord(columns.isEmpty() ? List.of("result") : columns, values));
+                        records.add(new GraphRecord(columns, values));
                     }
                 }
                 return new GraphResult(records, -1);
             }
         } catch (SQLException e) {
-            throw new DataAccessException("Error executing Cypher query on Apache AGE [" + cypher + "]: " + e.getMessage(), e);
+            throw new DataAccessException("Error executing Cypher query on Apache AGE [" + sql + "]: " + e.getMessage(), e);
         }
+    }
+
+    @Override
+    protected void appendSortAndLimit(StringBuilder query, RuntimePersistentEntity<?> entity, Sort sort, Limit limit) {
+        // Sorting and limits requested at runtime belong to the Cypher query inside the statement
+        String statement = query.toString();
+        int start = AgeStatements.cypherStart(statement);
+        int end = AgeStatements.cypherEnd(statement);
+        if (start < 0 || end < start) {
+            super.appendSortAndLimit(query, entity, sort, limit);
+            return;
+        }
+        StringBuilder cypher = new StringBuilder(statement.substring(start, end));
+        super.appendSortAndLimit(cypher, entity, sort, limit);
+        query.replace(start, end, cypher.toString());
     }
 
     private void prepare(Connection connection) throws SQLException {
