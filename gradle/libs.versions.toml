@@ -14,6 +14,7 @@ micronaut-serde = "3.2.4"
 micronaut-spring = "6.1.0"
 micronaut-test = "5.1.1"
 micronaut-mongo = "6.2.0"
+micronaut-neo4j = "8.1.0"
 micronaut-kotlin = "5.1.0"
 micronaut-multitenancy = "6.1.0"
 micronaut-validation = "5.2.1"
@@ -39,6 +40,7 @@ lombok = "1.18.48"
 
 benchmark-spring-data = "2026.0.1"
 jmh = "1.37"
+neo4j-harness = "2026.09.0"
 h2gis = "2.2.5"
 
 # Gradle plugins
@@ -61,6 +63,7 @@ micrometer-override = "1.17.1"
 commons-lang3 = "3.21.0"
 
 [libraries]
+neo4j-harness = { module = "org.neo4j.test:neo4j-harness", version.ref = "neo4j-harness" }
 micronaut-core = { module = 'io.micronaut:micronaut-core-bom', version.ref = 'micronaut' }
 
 micronaut-testresources-client = { module = 'io.micronaut.testresources:micronaut-test-resources-client', version.ref = "micronaut-testresources" }
@@ -76,6 +79,7 @@ micronaut-testresources = { module = 'io.micronaut.testresources:micronaut-test-
 micronaut-validation = { module = 'io.micronaut.validation:micronaut-validation-bom', version.ref = "micronaut-validation" }
 micronaut-logging = { module = "io.micronaut.logging:micronaut-logging-bom", version.ref = "micronaut-logging" }
 micronaut-mongo = { module = "io.micronaut.mongodb:micronaut-mongo-bom", version.ref = "micronaut-mongo" }
+micronaut-neo4j = { module = "io.micronaut.neo4j:micronaut-neo4j-bom", version.ref = "micronaut-neo4j" }
 micronaut-spring = { module = "io.micronaut.spring:micronaut-spring-bom", version.ref = "micronaut-spring" }
 micronaut-sql = { module = "io.micronaut.sql:micronaut-sql-bom", version.ref = "micronaut-sql" }
 micronaut-r2dbc = { module = "io.micronaut.r2dbc:micronaut-r2dbc-bom", version.ref = "micronaut-r2dbc" }
