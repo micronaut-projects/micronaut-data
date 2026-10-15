@@ -1119,9 +1119,9 @@ public class SqlQueryBuilder extends AbstractSqlLikeQueryBuilder {
                     String definition = optSqlColumnMapping.get().getDefinition();
                     if (definition != null && definition.toLowerCase().contains("geometry")) {
                         Integer srid = indexMapping.srid();
-                        if (Objects.equals(SqlSchemaUtils.SRID_WGS_84, srid) || Objects.equals(SqlSchemaUtils.SRID_ETRS_89, srid)) {
+                        if (Objects.equals(Srid.WGS_84, srid) || Objects.equals(Srid.ETRS_89, srid)) {
                             indexBuilder.append(" USING GEOMETRY_GRID WITH (BOUNDING_BOX = (-180, -90, 180,  90))");
-                        } else if (Objects.equals(SqlSchemaUtils.SRID_WEB_MERCATOR, srid)) {
+                        } else if (Objects.equals(Srid.WEB_MERCATOR, srid)) {
                             indexBuilder.append(" USING GEOMETRY_GRID WITH (BOUNDING_BOX = (-20037508.3427892, -20037508.3427892, 20037508.3427892,  20037508.3427892))");
                         }
                     }
@@ -1793,7 +1793,7 @@ public class SqlQueryBuilder extends AbstractSqlLikeQueryBuilder {
         if (optSrid.isPresent()) {
             sb.append(", ");
             if (isWkt) {
-                sb.append(optSrid.getAsInt());
+                sb.append(optSrid.getAsInt()).append(SqlQueryBuilderUtils.MYSQL_WKT_AXIS_ORDER);
             } else {
                 sb.append("1, ").append(optSrid.getAsInt());
             }
@@ -1817,10 +1817,10 @@ public class SqlQueryBuilder extends AbstractSqlLikeQueryBuilder {
         int defaultSrid;
         if (SqlQueryBuilderUtils.isGeography(annotationMetadata)) {
             geoDataType = "geography";
-            defaultSrid = 4326;
+            defaultSrid = Srid.WGS_84;
         } else {
             geoDataType = "geometry";
-            defaultSrid = 3857;
+            defaultSrid = Srid.WEB_MERCATOR;
         }
 
         sb.append(geoDataType).append("::STGeomFromText(");
@@ -2468,21 +2468,21 @@ public class SqlQueryBuilder extends AbstractSqlLikeQueryBuilder {
                     } else {
                         columnName = asPath(propertyAssociations, prop);
                     }
+
+                    if (StringUtils.isEmpty(columnAlias)) {
+                        columnAlias = joinPathAlias + columnName;
+                    }
+                    String qualifiedColumn = joinAlias + DOT + (queryState.shouldEscape() ? quote(columnName) : columnName);
                     if (transformed != null) {
-                        query.append(transformed).append(AS_CLAUSE);
+                        query.append(transformed);
+                    } else if (isJsonOrWktGeometry(prop)) {
+                        query.append(getGeometryFunction(qualifiedColumn, prop));
                     } else {
-                        query
-                            .append(joinAlias)
-                            .append(DOT)
-                            .append(queryState.shouldEscape() ? quote(columnName) : columnName)
-                            .append(AS_CLAUSE);
+                        query.append(qualifiedColumn);
                     }
-                    if (StringUtils.isNotEmpty(columnAlias)) {
-                        query.append(columnAlias);
-                    } else {
-                        query.append(joinPathAlias).append(columnName);
-                    }
-                    query.append(COMMA);
+                    query.append(AS_CLAUSE)
+                            .append(columnAlias)
+                            .append(COMMA);
                 });
                 query.setLength(query.length() - 1);
             }
@@ -2631,7 +2631,7 @@ public class SqlQueryBuilder extends AbstractSqlLikeQueryBuilder {
             int[] propertiesCount = new int[1];
 
             PersistentEntityUtils.traversePersistentProperties(propertyPath.getAssociations(), propertyPath.getProperty(), traverseEmbedded(), (associations, property) -> {
-                appendProperty(query, associations, property, namingStrategy, tableAlias, escape);
+                appendProperty(query, associations, property, namingStrategy, tableAlias, escape, null, StringUtils.isNotEmpty(columnAlias));
                 unescapedColumns.add(getMappedName(namingStrategy, associations, property));
                 resultColumnTypes.add(property.getDataType());
                 needsTrimming[0] = true;

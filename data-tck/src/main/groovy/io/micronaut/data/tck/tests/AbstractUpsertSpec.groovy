@@ -16,14 +16,27 @@
 package io.micronaut.data.tck.tests
 
 import io.micronaut.context.ApplicationContext
+import io.micronaut.data.exceptions.DataIntegrityViolationException
 import io.micronaut.data.tck.jdbc.entities.upsert.AutoPopulatedUpsertEntity
+import io.micronaut.data.tck.jdbc.entities.upsert.Clinic
+import io.micronaut.data.tck.jdbc.entities.upsert.ClinicServiceOffering
+import io.micronaut.data.tck.jdbc.entities.upsert.CompositeClinic
+import io.micronaut.data.tck.jdbc.entities.upsert.CompositeClinicId
+import io.micronaut.data.tck.jdbc.entities.upsert.CompositeClinicOffering
 import io.micronaut.data.tck.jdbc.entities.upsert.CustomerProfile
 import io.micronaut.data.tck.jdbc.entities.upsert.CustomerProfileUuid
+import io.micronaut.data.tck.jdbc.entities.upsert.EmbeddedConflictEntity
+import io.micronaut.data.tck.jdbc.entities.upsert.EmbeddedConflictKey
 import io.micronaut.data.tck.jdbc.entities.upsert.ProductReview
 import io.micronaut.data.tck.jdbc.entities.upsert.WarehouseInventory
 import io.micronaut.data.tck.repositories.upsert.AutoPopulatedUpsertRepository
+import io.micronaut.data.tck.repositories.upsert.ClinicRepository
+import io.micronaut.data.tck.repositories.upsert.ClinicServiceOfferingRepository
+import io.micronaut.data.tck.repositories.upsert.CompositeClinicRepository
+import io.micronaut.data.tck.repositories.upsert.CompositeClinicOfferingRepository
 import io.micronaut.data.tck.repositories.upsert.CustomerProfileRepository
 import io.micronaut.data.tck.repositories.upsert.CustomerProfileUuidRepository
+import io.micronaut.data.tck.repositories.upsert.EmbeddedConflictEntityRepository
 import io.micronaut.data.tck.repositories.upsert.ProductReviewRepository
 import io.micronaut.data.tck.repositories.upsert.WarehouseInventoryRepository
 import spock.lang.AutoCleanup
@@ -48,6 +61,16 @@ abstract class AbstractUpsertSpec extends Specification {
 
     abstract AutoPopulatedUpsertRepository getAutoPopulatedUpsertRepository()
 
+    abstract ClinicRepository getClinicRepository()
+
+    abstract ClinicServiceOfferingRepository getClinicServiceOfferingRepository()
+
+    abstract CompositeClinicRepository getCompositeClinicRepository()
+
+    abstract CompositeClinicOfferingRepository getCompositeClinicOfferingRepository()
+
+    abstract EmbeddedConflictEntityRepository getEmbeddedConflictEntityRepository()
+
     abstract Map<String, String> getProperties()
 
     @AutoCleanup
@@ -62,6 +85,11 @@ abstract class AbstractUpsertSpec extends Specification {
         context.getBean(MockedDateTimeProvider).setValue(null)
         autoPopulatedUpsertRepository.deleteAll()
         autoPopulatedUpsertRepository.deleteByTenantId("another-tenant")
+        clinicServiceOfferingRepository.deleteAll()
+        clinicRepository.deleteAll()
+        compositeClinicOfferingRepository.deleteAll()
+        compositeClinicRepository.deleteAll()
+        embeddedConflictEntityRepository.deleteAll()
         productReviewRepository.deleteAll()
         customerProfileRepository.deleteAll()
         customerProfileUuidRepository.deleteAll()
@@ -70,6 +98,84 @@ abstract class AbstractUpsertSpec extends Specification {
     }
 
     protected void cleanupAdditionalRepositories() {
+    }
+
+    void "upsert inserts and updates a clinic service offering by clinic and service code"() {
+        given:
+        Clinic clinic = clinicRepository.save(new Clinic("Central Clinic"))
+        Integer clinicId = clinic.id
+        ClinicServiceOffering offering = new ClinicServiceOffering("Vaccination", "VACCINATION", clinic)
+
+        when:
+        clinicServiceOfferingRepository.upsert(offering)
+        Clinic persistedClinic = clinicRepository.findById(clinicId).get()
+
+        then:
+        persistedClinic.serviceOfferings.size() == 1
+        persistedClinic.serviceOfferings[0].name == "Vaccination"
+        persistedClinic.serviceOfferings[0].serviceCode == "VACCINATION"
+
+        when:
+        clinicServiceOfferingRepository.upsert(new ClinicServiceOffering("Updated Vaccination", "VACCINATION", clinic))
+        Clinic updatedClinic = clinicRepository.findById(clinicId).get()
+
+        then:
+        updatedClinic.serviceOfferings.size() == 1
+        updatedClinic.serviceOfferings[0].id == persistedClinic.serviceOfferings[0].id
+        updatedClinic.serviceOfferings[0].name == "Updated Vaccination"
+        updatedClinic.serviceOfferings[0].serviceCode == "VACCINATION"
+    }
+
+    void "upsert requires a persisted clinic for a service offering"() {
+        when:
+        clinicServiceOfferingRepository.upsert(new ClinicServiceOffering("Vaccination", "VACCINATION", clinic))
+
+        then:
+        thrown(DataIntegrityViolationException)
+        clinicServiceOfferingRepository.count() == 0
+
+        where:
+        clinic << [null, new Clinic("Unsaved Clinic")]
+    }
+
+    void "upsert matches every column of a composite clinic id"() {
+        given:
+        CompositeClinic firstClinic = compositeClinicRepository.save(new CompositeClinic(new CompositeClinicId("north", "main"), "North Main Clinic"))
+        CompositeClinic secondClinic = compositeClinicRepository.save(new CompositeClinic(new CompositeClinicId("north", "branch"), "North Branch Clinic"))
+        CompositeClinic thirdClinic = compositeClinicRepository.save(new CompositeClinic(new CompositeClinicId("south", "main"), "South Main Clinic"))
+
+        when:
+        compositeClinicOfferingRepository.upsert(new CompositeClinicOffering(firstClinic, "CHECKUP", "Initial"))
+        compositeClinicOfferingRepository.upsert(new CompositeClinicOffering(firstClinic, "CHECKUP", "Updated"))
+        compositeClinicOfferingRepository.upsert(new CompositeClinicOffering(secondClinic, "CHECKUP", "North Branch"))
+        compositeClinicOfferingRepository.upsert(new CompositeClinicOffering(thirdClinic, "CHECKUP", "South Main"))
+        List<CompositeClinicOffering> offerings = compositeClinicOfferingRepository.findByServiceCode("CHECKUP")
+
+        then:
+        offerings.size() == 3
+        offerings.find { it.clinic.id == firstClinic.id }.name == "Updated"
+        offerings.find { it.clinic.id == secondClinic.id }.name == "North Branch"
+        offerings.find { it.clinic.id == thirdClinic.id }.name == "South Main"
+    }
+
+    void "upsert matches every column of an ordinary embedded conflict property"() {
+        given:
+        EmbeddedConflictKey firstKey = new EmbeddedConflictKey("north", "main")
+        EmbeddedConflictKey secondKey = new EmbeddedConflictKey("north", "branch")
+        EmbeddedConflictKey thirdKey = new EmbeddedConflictKey("south", "main")
+
+        when:
+        embeddedConflictEntityRepository.upsert(new EmbeddedConflictEntity(firstKey, "Initial"))
+        embeddedConflictEntityRepository.upsert(new EmbeddedConflictEntity(firstKey, "Updated"))
+        embeddedConflictEntityRepository.upsert(new EmbeddedConflictEntity(secondKey, "North Branch"))
+        embeddedConflictEntityRepository.upsert(new EmbeddedConflictEntity(thirdKey, "South Main"))
+        List<EmbeddedConflictEntity> entities = embeddedConflictEntityRepository.findAll().toList()
+
+        then:
+        entities.size() == 3
+        entities.find { it.key == firstKey }.name == "Updated"
+        entities.find { it.key == secondKey }.name == "North Branch"
+        entities.find { it.key == thirdKey }.name == "South Main"
     }
 
     void "upsert prepares auto-populated properties, cascades updates, and invokes update lifecycle"() {
