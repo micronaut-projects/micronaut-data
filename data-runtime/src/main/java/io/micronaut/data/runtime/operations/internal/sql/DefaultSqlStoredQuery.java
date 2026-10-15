@@ -15,6 +15,7 @@
  */
 package io.micronaut.data.runtime.operations.internal.sql;
 
+import io.micronaut.core.annotation.AnnotationMetadata;
 import io.micronaut.core.annotation.AnnotationValue;
 import io.micronaut.core.annotation.Internal;
 import io.micronaut.core.convert.ConversionService;
@@ -52,6 +53,12 @@ public class DefaultSqlStoredQuery<E, R> extends DefaultBindableParametersStored
     private final SqlQueryBuilder queryBuilder;
     @Nullable
     private final QueryResultInfo queryResultInfo;
+    /**
+     * The DTO entity built for this query, with the inputs it was built from. The stored query is shared between
+     * threads, the volatile field publishes the immutable holder.
+     */
+    @Nullable
+    private volatile DtoEntity dtoEntity;
 
     /**
      * @param storedQuery             The stored query
@@ -136,6 +143,66 @@ public class DefaultSqlStoredQuery<E, R> extends DefaultBindableParametersStored
             }
         }
         return previousValues == null ? Collections.emptyMap() : previousValues;
+    }
+
+    /**
+     * Returns the DTO entity stored by {@link #setDtoPersistentEntity} for the same instances of its inputs.
+     *
+     * @param annotationMetadata     The annotation metadata of the query
+     * @param persistentEntity       The root entity of the query
+     * @param resultPersistentEntity The entity of the result type
+     * @param <T>                    The result type
+     * @return The DTO entity, {@code null} when it has to be built
+     */
+    @Nullable
+    @SuppressWarnings("unchecked")
+    public <T> RuntimePersistentEntity<T> getDtoPersistentEntity(AnnotationMetadata annotationMetadata,
+                                                                 RuntimePersistentEntity<?> persistentEntity,
+                                                                 RuntimePersistentEntity<T> resultPersistentEntity) {
+        DtoEntity cached = dtoEntity;
+        if (cached != null && cached.isFor(annotationMetadata, persistentEntity, resultPersistentEntity)) {
+            return (RuntimePersistentEntity<T>) cached.dtoPersistentEntity();
+        }
+        return null;
+    }
+
+    /**
+     * Stores the DTO entity built for this query from the given inputs.
+     *
+     * @param annotationMetadata     The annotation metadata of the query
+     * @param persistentEntity       The root entity of the query
+     * @param resultPersistentEntity The entity of the result type
+     * @param dtoPersistentEntity    The DTO entity
+     */
+    public void setDtoPersistentEntity(AnnotationMetadata annotationMetadata,
+                                       RuntimePersistentEntity<?> persistentEntity,
+                                       RuntimePersistentEntity<?> resultPersistentEntity,
+                                       RuntimePersistentEntity<?> dtoPersistentEntity) {
+        dtoEntity = new DtoEntity(annotationMetadata, persistentEntity, resultPersistentEntity, dtoPersistentEntity);
+    }
+
+    /**
+     * A DTO entity with the inputs it was built from.
+     *
+     * @param annotationMetadata     The annotation metadata of the query
+     * @param persistentEntity       The root entity of the query
+     * @param resultPersistentEntity The entity of the result type
+     * @param dtoPersistentEntity    The DTO entity
+     */
+    private record DtoEntity(AnnotationMetadata annotationMetadata,
+                             RuntimePersistentEntity<?> persistentEntity,
+                             RuntimePersistentEntity<?> resultPersistentEntity,
+                             RuntimePersistentEntity<?> dtoPersistentEntity) {
+
+        // The inputs are compared by identity, other instances get a DTO entity built for them
+        @SuppressWarnings("ReferenceEquality")
+        boolean isFor(AnnotationMetadata annotationMetadata,
+                      RuntimePersistentEntity<?> persistentEntity,
+                      RuntimePersistentEntity<?> resultPersistentEntity) {
+            return this.annotationMetadata == annotationMetadata
+                && this.persistentEntity == persistentEntity
+                && this.resultPersistentEntity == resultPersistentEntity;
+        }
     }
 
 }
