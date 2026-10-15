@@ -330,6 +330,28 @@ public class CypherQueryBuilder implements QueryBuilder {
     }
 
     /**
+     * Builds the query that deletes all nodes of an entity with their relationships, returning their count.
+     *
+     * @param entity The entity
+     * @return The query
+     */
+    public String buildDeleteAllQuery(PersistentEntity entity) {
+        return "MATCH (" + ROOT + labelExpression(entity) + ") DETACH DELETE " + ROOT + " RETURN count(*) AS result";
+    }
+
+    /**
+     * Completes a query written in Cypher into the statement the driver runs. Applied when repositories are compiled
+     * to explicit queries, and at runtime to queries passed to the repository operations.
+     *
+     * @param query The query
+     * @return The statement
+     * @throws IllegalArgumentException if the database cannot run the query
+     */
+    public String finishQuery(String query) {
+        return query;
+    }
+
+    /**
      * Builds the query that deletes a node by its identifier, bound to {@code $id}, with its relationships.
      *
      * @param entity The entity
