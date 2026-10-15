@@ -1,6 +1,6 @@
-NOTE: PostgreSQL notification support currently provides an experimental annotation, event metadata, and a database trigger protocol.
-The JDBC subscription provider, entity loading, and connection recovery are not yet implemented.
-Declaring ann:data.jdbc.annotation.PostgresChangeNotification[] does not currently start a PostgreSQL subscription.
+PostgreSQL notifications provide experimental table-change subscriptions with primary-key metadata and entity loading.
+Notifications use one dedicated connection per participating datasource for PostgreSQL `LISTEN`.
+The PostgreSQL JDBC driver and a Micronaut `JsonMapper` implementation must be available in the application.
 
 The PostgreSQL contract uses ann:data.jdbc.annotation.ChangeListener[] together with
 ann:data.jdbc.annotation.PostgresChangeNotification[]. Its required `channel` member names the exact channel used by
@@ -44,6 +44,87 @@ Missing columns, duplicate column arguments, null keys, and structured JSON keys
 The function supports `AFTER ROW` insert/update/delete triggers and `AFTER STATEMENT` truncate triggers.
 Database DDL changes such as dropping a table are outside this trigger protocol.
 
+== Declaring a Listener
+
+[source,java]
+----
+@Singleton
+class BookListener {
+    @ChangeListener
+    @PostgresChangeNotification(channel = "book_changes")
+    void changed(ChangeEvent<Book> event) {
+        // INSERT/UPDATE: event.entity() contains the current row, if it still exists.
+        // DELETE: identify the removed row using PostgresChangeEventMetadata.oldKeys().
+        // INVALIDATE: reload the application's cached state.
+    }
+}
+----
+
+Use `@ChangeListener(dataSource = "inventory")` to select a named datasource.
+Use application migrations to create the entity's mapped table and notification triggers.
+The mapped schema and table name are read from Micronaut Data's entity metadata.
+Startup and reconnection do not query the database catalogs to resolve or validate the mapped table.
+Application migrations are responsible for the primary-key constraints and notification triggers.
+The provider does not inspect those constraints or triggers at startup or reconnection.
+Missing triggers do not fail startup; changes without a publishing trigger produce no notifications.
+Missing tables do not fail startup but cause entity loading to fail if a matching insert or update notification is received.
+Incoming payloads and their key-column names are validated before entity loading.
+
+Notifications are matched by channel and mapped table name. If the entity mapping specifies a schema,
+that schema must also match. Without an explicit schema, notifications from tables with the same name
+in different schemas can reach the same listener when they publish to its channel.
+Entity loading follows the datasource's schema search path, which may resolve to a different table
+from the notification's source. This can load an unrelated row with the same primary key or find no row.
+Specify a schema, such as `@MappedEntity(value = "book", schema = "public")`, or use separate channels
+for tables in different schemas to avoid this ambiguity.
+Quoted mapped identifiers retain their case; unquoted identifiers are matched in lower case.
+
+This implementation supports ordinary tables on PostgreSQL 11 or later, with scalar or composite primary keys,
+including embedded keys. Key values must be convertible from PostgreSQL's JSON text representation to the mapped
+Java key type using Micronaut's conversion service. Association keys and keys with custom converters are unsupported.
+Entity filters requiring extra query parameters are rejected at compilation.
+This is a table subscription; it does not evaluate arbitrary SQL query-result changes.
+
+== Connections and Dispatch
+
+Reserve capacity for one long-lived connection per subscribing datasource, plus connections for entity loading
+and application queries. Use a direct PostgreSQL connection or a proxy with session pooling; transaction pooling
+cannot preserve `LISTEN` state. Configure datasource connection-acquisition and network timeouts for your deployment.
+
+Callbacks run serially for each listener on Micronaut's blocking executor. Separate listeners can run concurrently.
+Invocation uses the listener bean's interceptors, including `@Retryable`. Insert and update entity loading occurs
+inside that invocation, so loading failures can also be retried. Once retries are exhausted, the failure is logged
+and subsequent notifications continue.
+
+The provider sends `INVALIDATE` after startup and each successful reconnection, allowing listeners to reconcile
+changes missed while disconnected. It reconnects with exponential backoff. An invalid payload invalidates listeners
+on its channel. A mismatched key mapping invalidates the affected listener. Well-formed events for other tables
+are ignored.
+
+Each listener has a bounded queue. Overflow replaces pending changes with `INVALIDATE`.
+Startup, recovery, malformed-payload, and overflow invalidations have no PostgreSQL event metadata.
+Shutdown stops reception, removes subscriptions, releases the connection, and drains accepted callbacks.
+Context shutdown events and bean destruction initiate cleanup asynchronously. Graceful shutdown returns a stage
+that completes when cleanup and accepted callbacks finish; Micronaut's graceful shutdown configuration controls
+how long the application waits. The PostgreSQL `shutdown-timeout` setting bounds callback cleanup after failed startup.
+
+[configuration]
+----
+micronaut:
+  data:
+    jdbc:
+      notifications:
+        postgres:
+          queue-capacity: 1024
+          poll-timeout: 1s
+          retry-delay: 1s
+          max-retry-delay: 60s
+          shutdown-timeout: 30s
+----
+
+These settings apply to all subscribing datasources. The queue capacity must be positive.
+Durations must be at least one millisecond and no greater than 2,147,483,647 milliseconds.
+
 == Version 1 Payload
 
 The PostgreSQL notification envelope supplies the channel separately. Its payload is a JSON object:
@@ -79,7 +160,7 @@ Consumers must validate the protocol version and table/key mapping before loadin
 
 api:data.jdbc.notification.postgres.PostgresChangeEventMetadata[] exposes the channel, schema, table,
 and immutable `oldKeys` and `newKeys` maps. A deleted row can be identified from its old keys without reloading it.
-Future entity loading will return current state at reload time; it cannot reconstruct a row's historical state from this payload.
+Entity loading returns current state at reload time; it cannot reconstruct a row's historical state from this payload.
 
 == Delivery Semantics
 

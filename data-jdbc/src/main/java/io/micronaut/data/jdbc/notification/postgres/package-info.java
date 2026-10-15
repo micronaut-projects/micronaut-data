@@ -14,7 +14,7 @@
  * limitations under the License.
  */
 /**
- * PostgreSQL database change notification contracts.
+ * PostgreSQL database change notification contracts and JDBC subscriptions.
  */
 @NullMarked
 package io.micronaut.data.jdbc.notification.postgres;
