@@ -41,6 +41,10 @@ import org.openjdk.jmh.runner.options.OptionsBuilder;
 
 import java.util.ArrayList;
 import java.util.List;
+import java.sql.Connection;
+import java.sql.DriverManager;
+import java.sql.PreparedStatement;
+import java.sql.SQLException;
 import java.util.concurrent.atomic.AtomicInteger;
 
 /**
@@ -59,7 +63,7 @@ public class QueryPath {
     static final int AUTHORS = 10;
     static final int NOVELS_PER_AUTHOR = 5;
     static final int BATCH = 100;
-    // Books written by the saveAll benchmark have this number of pages, so they can be removed between iterations
+    // Books written by the saveAll benchmark have this number of pages, so they can be removed after every call
     static final int NEW_BOOK_PAGES = -1;
 
     ApplicationContext applicationContext;
@@ -128,10 +132,35 @@ public class QueryPath {
             timestampedBatch = List.copyOf(queryPath.timestampedBookRepository.saveAll(timestampedBooks));
             pageable = Pageable.from(1, 10, Sort.of(Sort.Order.desc("pages"), Sort.Order.asc("title")));
         }
+    }
 
-        @TearDown(Level.Iteration)
-        public void removeNewBooks(QueryPath queryPath) {
-            queryPath.bookRepository.deleteByPages(NEW_BOOK_PAGES);
+    /**
+     * The state of the saveAll benchmark: removes the books inserted by a call after that call, so that every call
+     * inserts into a table of the same size. The removal runs outside the measured time on a plain JDBC connection to
+     * the same database, so that it is the same work on both sides of a comparison.
+     */
+    @State(Scope.Thread)
+    public static class NewBooks {
+
+        Connection connection;
+        PreparedStatement delete;
+
+        @Setup
+        public void prepare(QueryPath queryPath) throws SQLException {
+            String url = queryPath.applicationContext.getRequiredProperty("datasources.default.url", String.class);
+            connection = DriverManager.getConnection(url, "sa", "");
+            delete = connection.prepareStatement("DELETE FROM book WHERE pages = " + NEW_BOOK_PAGES);
+        }
+
+        @TearDown(Level.Invocation)
+        public void removeNewBooks() throws SQLException {
+            delete.executeUpdate();
+        }
+
+        @TearDown
+        public void close() throws SQLException {
+            delete.close();
+            connection.close();
         }
     }
 
@@ -192,10 +221,10 @@ public class QueryPath {
     }
 
     /**
-     * A batch insert of {@value #BATCH} new books, removed again after each iteration.
+     * A batch insert of {@value #BATCH} new books into a table of fixed size, the books are removed after every call.
      */
     @Benchmark
-    public List<Book> saveAll(ThreadState state) {
+    public List<Book> saveAll(NewBooks newBooks) {
         List<Book> books = new ArrayList<>(BATCH);
         for (int i = 0; i < BATCH; i++) {
             books.add(new Book("New", NEW_BOOK_PAGES));

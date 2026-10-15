@@ -32,6 +32,4 @@ public interface BookRepository extends CrudRepository<Book, Long> {
     Page<Book> findByPagesGreaterThan(int pages, Pageable pageable);
 
     List<BookDto> findByPagesBetween(int min, int max);
-
-    void deleteByPages(int pages);
 }
