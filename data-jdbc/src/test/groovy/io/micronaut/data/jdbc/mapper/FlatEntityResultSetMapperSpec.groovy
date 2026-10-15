@@ -82,10 +82,9 @@ class FlatEntityResultSetMapperSpec extends Specification {
             "(1, 3, 11, 12, TRUE, 13, 1.5, 2.5, 14, 'one', 21, 22, FALSE, 23, 3.5, 4.5, 24, 123.45, 678, X'010203', DATE '2024-01-02', TIMESTAMP '2024-02-03 04:05:06', TIMESTAMP '2024-03-04 05:06:07', TIMESTAMP '2024-03-14 05:06:07', DATE '2024-04-05', TIMESTAMP '1970-01-01 06:07:08', TIMESTAMP '2024-05-06 07:08:09', 'c2b9f4a0-3c9e-4c6e-9a7c-6b1f1a2b3c4d', 'aliased', 'HEARTS', 1, 9)")
         execute("INSERT INTO flat_types (id, version, primitive_integer, primitive_long, primitive_boolean, primitive_short, primitive_double, primitive_float, primitive_byte, string, wrapper_integer, wrapper_long, wrapper_boolean, wrapper_short, wrapper_double, wrapper_float, wrapper_byte, big_decimal, big_integer, byte_array, date, local_date_time, zoned_date_time, offset_date_time, local_date, local_time, instant, uuid, renamed_column, suit, suit_ordinal, with_default) VALUES " +
             "(2, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL)")
-        // Zero values in nullable columns, which the typed getters cannot tell from NULL without wasNull, and a
-        // local date time inside the CET daylight saving gap, which getObject and getTimestamp disagree on
+        // Zero values in nullable columns, which the typed getters cannot tell from NULL without wasNull
         execute("INSERT INTO flat_types (id, version, primitive_integer, primitive_long, primitive_boolean, primitive_short, primitive_double, primitive_float, primitive_byte, string, wrapper_integer, wrapper_long, wrapper_boolean, wrapper_short, wrapper_double, wrapper_float, wrapper_byte, big_decimal, big_integer, byte_array, date, local_date_time, zoned_date_time, offset_date_time, local_date, local_time, instant, uuid, renamed_column, suit, suit_ordinal, with_default) VALUES " +
-            "(3, 0, 0, 0, FALSE, 0, 0, 0, 0, '', 0, 0, FALSE, 0, 0, 0, 0, 0, 0, X'', NULL, TIMESTAMP '2026-03-29 02:30:00', NULL, NULL, NULL, NULL, NULL, NULL, '', 'spades', 0, 0)")
+            "(3, 0, 0, 0, FALSE, 0, 0, 0, 0, '', 0, 0, FALSE, 0, 0, 0, 0, 0, 0, X'', NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, '', 'spades', 0, 0)")
 
         when:
         List<FlatTypes> flat = mapFlat(plan, "SELECT * FROM flat_types ORDER BY id")
@@ -169,7 +168,6 @@ class FlatEntityResultSetMapperSpec extends Specification {
         flat[2].suit == FlatTypes.Suit.SPADES
         flat[2].suitOrdinal == FlatTypes.Suit.HEARTS
         flat[2].withDefault == 0
-        flat[2].localDateTime == java.sql.Timestamp.valueOf("2026-03-29 02:30:00").toInstant().atZone(ZoneId.systemDefault()).toLocalDateTime()
 
         cleanup:
         execute("DROP TABLE flat_types")
@@ -246,11 +244,44 @@ class FlatEntityResultSetMapperSpec extends Specification {
         execute("DROP TABLE flat_record")
     }
 
+    void "a local date time inside a daylight saving gap is converted as the general mapper converts it"() {
+        given: "a JVM zone with a gap on that date, pinned before the connection opens since H2 fixes its session zone then"
+        TimeZone original = TimeZone.getDefault()
+        TimeZone.setDefault(TimeZone.getTimeZone("Europe/Berlin"))
+        Connection gapConnection = DriverManager.getConnection("jdbc:h2:mem:flatmapperdst")
+        def entity = entity(FlatTypes)
+        def plan = FlatEntityMappingPlan.of(entity)
+        execute(gapConnection, "CREATE TABLE flat_types (${plan.columnNames.collect { "$it ${columnType(it)}" }.join(', ')})")
+        execute(gapConnection, "INSERT INTO flat_types (id, string, local_date_time) VALUES (1, 'gap', TIMESTAMP '2026-03-29 02:30:00')")
+
+        when:
+        List<FlatTypes> flat = mapFlat(gapConnection, plan, "SELECT * FROM flat_types")
+        List<FlatTypes> general = mapGeneral(gapConnection, entity, "SELECT * FROM flat_types")
+
+        then: "the timestamp is shifted out of the gap, which getObject(LocalDateTime.class) would not do"
+        flat[0].localDateTime == general[0].localDateTime
+        // How far it is shifted depends on the zone H2 fixed JVM-wide when the first connection of this JVM opened
+        // (03:30 for a JVM started in a CET zone, 04:30 for one started in UTC), so only the gap time itself is excluded
+        flat[0].localDateTime != LocalDateTime.of(2026, 3, 29, 2, 30)
+
+        cleanup:
+        gapConnection?.close()
+        TimeZone.setDefault(original)
+    }
+
     private <T> List<T> mapFlat(FlatEntityMappingPlan<T> plan, String sql) {
-        mapAll(new FlatEntityResultSetMapper<T>(plan, conversionService, null, { throw new IllegalStateException("No general mapper needed") }), sql)
+        mapFlat(connection, plan, sql)
+    }
+
+    private <T> List<T> mapFlat(Connection connection, FlatEntityMappingPlan<T> plan, String sql) {
+        mapAll(connection, new FlatEntityResultSetMapper<T>(plan, conversionService, null, { throw new IllegalStateException("No general mapper needed") }), sql)
     }
 
     private <T> List<T> mapAll(FlatEntityResultSetMapper<T> mapper, String sql) {
+        mapAll(connection, mapper, sql)
+    }
+
+    private <T> List<T> mapAll(Connection connection, FlatEntityResultSetMapper<T> mapper, String sql) {
         Statement statement = connection.createStatement()
         ResultSet rs = statement.executeQuery(sql)
         try {
@@ -266,6 +297,10 @@ class FlatEntityResultSetMapperSpec extends Specification {
     }
 
     private <T> List<T> mapGeneral(RuntimePersistentEntity<T> entity, String sql) {
+        mapGeneral(connection, entity, sql)
+    }
+
+    private <T> List<T> mapGeneral(Connection connection, RuntimePersistentEntity<T> entity, String sql) {
         Statement statement = connection.createStatement()
         ResultSet rs = statement.executeQuery(sql)
         try {
@@ -303,6 +338,10 @@ class FlatEntityResultSetMapperSpec extends Specification {
     }
 
     private void execute(String sql) {
+        execute(connection, sql)
+    }
+
+    private static void execute(Connection connection, String sql) {
         Statement statement = connection.createStatement()
         try {
             statement.execute(sql)
