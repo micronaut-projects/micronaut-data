@@ -265,7 +265,7 @@ public class CypherQueryBuilder implements QueryBuilder {
      * @return The query
      */
     public String buildFindByIdQuery(PersistentEntity entity) {
-        return "MATCH (" + ROOT + GraphEntities.labelExpression(entity) + ") WHERE "
+        return "MATCH (" + ROOT + labelExpression(entity) + ") WHERE "
             + identityExpression(entity.getIdentity(), ROOT) + " = $" + ID_PARAMETER + " RETURN " + ROOT;
     }
 
@@ -276,7 +276,7 @@ public class CypherQueryBuilder implements QueryBuilder {
      * @return The query
      */
     public String buildFindAllQuery(PersistentEntity entity) {
-        return "MATCH (" + ROOT + GraphEntities.labelExpression(entity) + ") RETURN " + ROOT;
+        return "MATCH (" + ROOT + labelExpression(entity) + ") RETURN " + ROOT;
     }
 
     /**
@@ -286,7 +286,7 @@ public class CypherQueryBuilder implements QueryBuilder {
      * @return The query
      */
     public String buildCountAllQuery(PersistentEntity entity) {
-        return "MATCH (" + ROOT + GraphEntities.labelExpression(entity) + ") RETURN count(" + ROOT + ") AS result";
+        return "MATCH (" + ROOT + labelExpression(entity) + ") RETURN count(" + ROOT + ") AS result";
     }
 
     /**
@@ -306,7 +306,7 @@ public class CypherQueryBuilder implements QueryBuilder {
      */
     public String buildWriteNodeQuery(PersistentEntity entity, List<String> propertyNames, boolean idPresent) {
         PersistentProperty identity = entity.getIdentity();
-        String labels = GraphEntities.labelExpression(entity);
+        String labels = labelExpression(entity);
         StringBuilder query = new StringBuilder();
         boolean nativeId = identity != null && GraphEntities.isNativeId(identity);
         if (identity == null || (nativeId && !idPresent)) {
@@ -335,7 +335,7 @@ public class CypherQueryBuilder implements QueryBuilder {
      * @return The query
      */
     public String buildDeleteByIdQuery(PersistentEntity entity) {
-        return "MATCH (" + ROOT + GraphEntities.labelExpression(entity) + ") WHERE "
+        return "MATCH (" + ROOT + labelExpression(entity) + ") WHERE "
             + identityExpression(entity.getIdentity(), ROOT) + " = $" + ID_PARAMETER + " DETACH DELETE " + ROOT + " RETURN count(*) AS result";
     }
 
@@ -357,8 +357,8 @@ public class CypherQueryBuilder implements QueryBuilder {
                                  List<String> propertyNames,
                                  @Nullable PersistentProperty relationshipIdentity) {
         StringBuilder query = new StringBuilder("MATCH (")
-            .append(LINK_FROM).append(GraphEntities.labelExpression(owner)).append("), (")
-            .append(LINK_TO).append(GraphEntities.labelExpression(target)).append(") WHERE ")
+            .append(LINK_FROM).append(labelExpression(owner)).append("), (")
+            .append(LINK_TO).append(labelExpression(target)).append(") WHERE ")
             .append(identityExpression(owner.getIdentity(), LINK_FROM)).append(" = $").append(LINK_FROM_PARAMETER)
             .append(" AND ")
             .append(identityExpression(target.getIdentity(), LINK_TO)).append(" = $").append(LINK_TO_PARAMETER)
@@ -408,7 +408,7 @@ public class CypherQueryBuilder implements QueryBuilder {
             throw new IllegalArgumentException("Entity [" + entity.getName() + "] has no identity to match path endpoints by");
         }
         QueryState state = new QueryState(entity, List.of());
-        String label = GraphEntities.labelExpression(entity);
+        String label = labelExpression(entity);
         List<String> conditions = new ArrayList<>();
         if (definition.start() != null) {
             conditions.add(endpointCondition(state, entity, PATH_START, definition.start()));
@@ -449,6 +449,25 @@ public class CypherQueryBuilder implements QueryBuilder {
         query.append('(').append(PATH_START).append(label).append("), (").append(PATH_END).append(label).append(')');
         appendWhere(query, conditions);
         appendPathMatch(query, definition.kind(), "[" + types + pathDepth(definition) + "]", definition.direction());
+        appendPathReturn(query, definition);
+    }
+
+    /**
+     * Whether the database can search paths of any length.
+     *
+     * @return True if path queries may omit a maximum depth
+     */
+    protected boolean supportsUnboundedPaths() {
+        return true;
+    }
+
+    /**
+     * Appends the {@code RETURN} clause of a path query.
+     *
+     * @param query      The query
+     * @param definition The definition
+     */
+    protected void appendPathReturn(StringBuilder query, PathQueryDefinition definition) {
         switch (definition.result()) {
             case COUNT -> query.append(" RETURN count(").append(PATH).append(") AS result");
             case EXISTS -> query.append(" RETURN true AS result LIMIT 1");
@@ -461,14 +480,27 @@ public class CypherQueryBuilder implements QueryBuilder {
         }
     }
 
-    private static String pathDepth(PathQueryDefinition definition) {
+    private String pathDepth(PathQueryDefinition definition) {
         if (definition.maxDepthBound()) {
             return "*1.." + PathQueryDefinition.PATH_LIMIT_TOKEN;
         }
         if (definition.maxDepth() > 0) {
             return "*1.." + definition.maxDepth();
         }
-        return "*";
+        if (supportsUnboundedPaths()) {
+            return "*";
+        }
+        throw new IllegalArgumentException("This database needs a maximum depth for path queries: add an int parameter annotated with @PathLimit, or annotate the method with @PathLimit(n)");
+    }
+
+    /**
+     * Renders the label expression of a node pattern, for example {@code :Person:Actor}.
+     *
+     * @param entity The entity
+     * @return The label expression
+     */
+    protected String labelExpression(PersistentEntity entity) {
+        return GraphEntities.labelExpression(entity);
     }
 
     /**
@@ -588,7 +620,7 @@ public class CypherQueryBuilder implements QueryBuilder {
     }
 
     private void appendMatch(StringBuilder query, QueryState state, @Nullable String where) {
-        query.append("MATCH (").append(ROOT).append(GraphEntities.labelExpression(state.entity)).append(')');
+        query.append("MATCH (").append(ROOT).append(labelExpression(state.entity)).append(')');
         for (Pattern pattern : state.patterns.values()) {
             query.append(", ").append(pattern.text);
         }
@@ -619,7 +651,7 @@ public class CypherQueryBuilder implements QueryBuilder {
             int index = columns.size();
             String nodeVariable = "j" + index;
             PersistentEntity target = GraphEntities.targetNodeEntity(association);
-            String nodePattern = "(" + nodeVariable + GraphEntities.labelExpression(target) + ")";
+            String nodePattern = "(" + nodeVariable + labelExpression(target) + ")";
             query.append(" OPTIONAL MATCH ");
             String collect;
             if (relationshipEntity) {
@@ -790,7 +822,7 @@ public class CypherQueryBuilder implements QueryBuilder {
                     int index = patterns.size();
                     String nodeVariable = "a" + index;
                     PersistentEntity target = GraphEntities.targetNodeEntity(association);
-                    String nodePattern = "(" + nodeVariable + GraphEntities.labelExpression(target) + ")";
+                    String nodePattern = "(" + nodeVariable + labelExpression(target) + ")";
                     if (GraphEntities.isRelationshipEntity(association.getAssociatedEntity())) {
                         String relVariable = "ar" + index;
                         return new Pattern(GraphEntities.relationshipPattern(association, from, relVariable, nodePattern), nodeVariable, relVariable);
