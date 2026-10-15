@@ -199,7 +199,7 @@ abstract class AbstractJdbcTransactionSpec extends AbstractTransactionSpec {
             state[2] == false
     }
 
-    void "write in a transaction on a read-only connection isn't switched back to read-only"() {
+    void "a write in a transaction started inside a read-only connection scope is not made read-only"() {
         given:
             def connectionOperations = context.getBean(DefaultDataSourceConnectionOperations)
             def transactionManager = context.getBean(DataSourceTransactionManager)
@@ -209,6 +209,8 @@ abstract class AbstractJdbcTransactionSpec extends AbstractTransactionSpec {
             readWrite.setReadOnly(false)
             recordReadOnly = true
         when: "the repository reuses the connection of the transaction, opened by a read-only connection scope"
+            // A read-only connection without a transaction, as a method annotated with @Connectable(readOnly = true).
+            // The transaction started inside it switches the connection to read-write until the transaction ends.
             connectionOperations.executeRead { status ->
                 transactionManager.execute(readWrite) { txStatus ->
                     bookRepository.save(new Book(title: "Written", totalPages: 10))
