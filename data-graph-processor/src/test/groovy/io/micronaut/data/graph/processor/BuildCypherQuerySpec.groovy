@@ -195,6 +195,39 @@ $MOVIES
         introspection.getRequiredProperty('mentor', Object).annotationMetadata.enumValue(Relation, Relation.Kind).get() == Relation.Kind.MANY_TO_ONE
     }
 
+    void "test dynamic relationships are collected apart from declared ones"() {
+        when:
+        def repository = buildRepository('test.PetRepository', '''
+@Node
+class Pet {
+    @Id
+    private String name;
+    @Relationship("FOLLOWS")
+    private Pet leader;
+    @DynamicRelationships
+    private Map<String, List<Object>> related = new HashMap<>();
+    public String getName() { return name; }
+    public void setName(String name) { this.name = name; }
+    public Pet getLeader() { return leader; }
+    public void setLeader(Pet leader) { this.leader = leader; }
+    public Map<String, List<Object>> getRelated() { return related; }
+    public void setRelated(Map<String, List<Object>> related) { this.related = related; }
+}
+
+@TestGraphRepository
+interface PetRepository extends CrudRepository<Pet, String> {
+    List<Pet> findByNameStartsWith(String prefix);
+}
+''')
+        def query = getQuery(findMethod(repository, 'findByNameStartsWith', 1))
+
+        then:
+        query.startsWith('MATCH (n:Pet) WHERE n.name STARTS WITH $p0 OPTIONAL MATCH (n)-[dr]->(dn) WHERE NOT type(dr) IN ')
+        query.contains("'FOLLOWS'")
+        query.contains('collect(CASE WHEN dr IS NULL THEN NULL ELSE {type: type(dr), node: dn} END) AS d_relationships')
+        query.endsWith('d_relationships')
+    }
+
     void "test LIKE is rejected"() {
         when:
         buildRepository('test.LikeRepository', """

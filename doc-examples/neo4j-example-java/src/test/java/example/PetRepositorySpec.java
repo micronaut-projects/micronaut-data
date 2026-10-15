@@ -39,4 +39,18 @@ class PetRepositorySpec extends AbstractNeo4jTest {
         assertEquals(4L, found.get("legs"));
         assertEquals(List.of("Dino"), inPatch.stream().map(Pet::getName).toList());
     }
+
+    @Test
+    void testDynamicRelationships() {
+        // tag::dynamicRelationships[]
+        Pet dino = new Pet("Dino");
+        dino.getRelated().put("PLAYS_WITH", List.of(new Pet("Hoppy"))); // <1>
+        petRepository.save(dino); // <2>
+
+        Pet found = petRepository.findById("Dino").orElseThrow();
+        List<Object> playsWith = found.getRelated().get("PLAYS_WITH"); // <3>
+        // end::dynamicRelationships[]
+
+        assertEquals(List.of("Hoppy"), playsWith.stream().map(pet -> ((Pet) pet).getName()).toList());
+    }
 }
