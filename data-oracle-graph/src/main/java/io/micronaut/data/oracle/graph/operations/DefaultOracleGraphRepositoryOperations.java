@@ -15,6 +15,7 @@
  */
 package io.micronaut.data.oracle.graph.operations;
 
+import io.micronaut.aop.MethodInvocationContext;
 import io.micronaut.context.annotation.EachBean;
 import io.micronaut.context.annotation.Parameter;
 import io.micronaut.core.annotation.AnnotationMetadata;
@@ -27,6 +28,7 @@ import io.micronaut.data.graph.runtime.GraphResult;
 import io.micronaut.data.graph.runtime.GraphSession;
 import io.micronaut.data.graph.runtime.GraphValueEncoderRegistrar;
 import io.micronaut.data.graph.runtime.operations.AbstractGraphRepositoryOperations;
+import io.micronaut.data.jdbc.operations.JdbcRepositoryOperations;
 import io.micronaut.data.model.Limit;
 import io.micronaut.data.model.Page;
 import io.micronaut.data.model.Sort;
@@ -35,8 +37,11 @@ import io.micronaut.data.model.runtime.DeleteBatchOperation;
 import io.micronaut.data.model.runtime.DeleteOperation;
 import io.micronaut.data.model.runtime.InsertBatchOperation;
 import io.micronaut.data.model.runtime.InsertOperation;
+import io.micronaut.data.model.query.builder.sql.Dialect;
+import io.micronaut.data.model.query.builder.sql.SqlQueryBuilder;
 import io.micronaut.data.model.runtime.PagedQuery;
 import io.micronaut.data.model.runtime.PreparedQuery;
+import io.micronaut.data.model.runtime.StoredQuery;
 import io.micronaut.data.model.runtime.RuntimeEntityRegistry;
 import io.micronaut.data.model.runtime.RuntimePersistentEntity;
 import io.micronaut.data.model.runtime.RuntimePersistentProperty;
@@ -44,6 +49,10 @@ import io.micronaut.data.model.runtime.UpdateBatchOperation;
 import io.micronaut.data.model.runtime.UpdateOperation;
 import io.micronaut.data.runtime.convert.DataConversionService;
 import io.micronaut.data.runtime.date.DateTimeProvider;
+import io.micronaut.data.runtime.operations.internal.sql.DefaultSqlPreparedQuery;
+import io.micronaut.data.runtime.operations.internal.sql.DefaultSqlStoredQuery;
+import io.micronaut.data.runtime.operations.internal.sql.SqlStoredQuery;
+import io.micronaut.data.runtime.query.internal.DelegateStoredQuery;
 import jakarta.inject.Named;
 import org.jspecify.annotations.Nullable;
 import org.slf4j.Logger;
@@ -76,12 +85,14 @@ import java.util.stream.Stream;
 final class DefaultOracleGraphRepositoryOperations extends AbstractGraphRepositoryOperations implements OracleGraphRepositoryOperations {
 
     private static final Logger LOG = LoggerFactory.getLogger(DefaultOracleGraphRepositoryOperations.class);
-    private static final String READ_ONLY = "Oracle property graphs are read only views over tables: write to the tables with a JDBC repository";
     private static final String DECLARE_METHOD = "Declare a query method on the Oracle graph repository instead";
 
     private final ConnectionOperations<Connection> connectionOperations;
+    private final JdbcRepositoryOperations jdbcOperations;
+    private final SqlQueryBuilder sqlQueryBuilder = new SqlQueryBuilder(Dialect.ORACLE);
 
     DefaultOracleGraphRepositoryOperations(@Parameter ConnectionOperations<Connection> connectionOperations,
+                                           @Parameter JdbcRepositoryOperations jdbcOperations,
                                            DateTimeProvider<Object> dateTimeProvider,
                                            RuntimeEntityRegistry runtimeEntityRegistry,
                                            DataConversionService conversionService,
@@ -91,6 +102,31 @@ final class DefaultOracleGraphRepositoryOperations extends AbstractGraphReposito
         super(new OracleGraphQueryBuilder(AnnotationMetadata.EMPTY_METADATA), dateTimeProvider, runtimeEntityRegistry,
             conversionService, attributeConverterRegistry, executorService, encoderRegistrars);
         this.connectionOperations = connectionOperations;
+        this.jdbcOperations = jdbcOperations;
+    }
+
+    @Override
+    public <E, R> StoredQuery<E, R> decorate(MethodInvocationContext<?, ?> context, StoredQuery<E, R> storedQuery) {
+        if (isSqlWrite(storedQuery)) {
+            // Writes are SQL over the vertex tables, compiled like those of a JDBC repository
+            return new DefaultSqlStoredQuery<>(storedQuery, getEntity(storedQuery.getRootEntity()), sqlQueryBuilder, getConversionService());
+        }
+        return super.decorate(context, storedQuery);
+    }
+
+    @Override
+    public <E, R> PreparedQuery<E, R> decorate(PreparedQuery<E, R> preparedQuery) {
+        if (preparedQuery instanceof DelegateStoredQuery<?, ?> delegate && delegate.getStoredQueryDelegate() instanceof SqlStoredQuery<?, ?> sqlStoredQuery) {
+            return new DefaultSqlPreparedQuery<>(preparedQuery, (SqlStoredQuery<E, R>) sqlStoredQuery);
+        }
+        return super.decorate(preparedQuery);
+    }
+
+    private static boolean isSqlWrite(StoredQuery<?, ?> storedQuery) {
+        return switch (storedQuery.getOperationType()) {
+            case INSERT, UPDATE, DELETE, INSERT_RETURNING, UPDATE_RETURNING, DELETE_RETURNING -> true;
+            default -> false;
+        };
     }
 
     @Override
@@ -225,33 +261,45 @@ final class DefaultOracleGraphRepositoryOperations extends AbstractGraphReposito
         throw new UnsupportedOperationException(DECLARE_METHOD);
     }
 
+    // Writes run as SQL on the vertex tables through Micronaut Data JDBC, in the same connection and transaction
+
     @Override
     public <T> T persist(InsertOperation<T> operation) {
-        throw new DataAccessException(READ_ONLY);
+        return jdbcOperations.persist(operation);
     }
 
     @Override
     public <T> Iterable<T> persistAll(InsertBatchOperation<T> operation) {
-        throw new DataAccessException(READ_ONLY);
+        return jdbcOperations.persistAll(operation);
     }
 
     @Override
     public <T> T update(UpdateOperation<T> operation) {
-        throw new DataAccessException(READ_ONLY);
+        return jdbcOperations.update(operation);
     }
 
     @Override
     public <T> Iterable<T> updateAll(UpdateBatchOperation<T> operation) {
-        throw new DataAccessException(READ_ONLY);
+        return jdbcOperations.updateAll(operation);
     }
 
     @Override
     public <T> int delete(DeleteOperation<T> operation) {
-        throw new DataAccessException(READ_ONLY);
+        return jdbcOperations.delete(operation);
     }
 
     @Override
     public <T> Optional<Number> deleteAll(DeleteBatchOperation<T> operation) {
-        throw new DataAccessException(READ_ONLY);
+        return jdbcOperations.deleteAll(operation);
+    }
+
+    @Override
+    public Optional<Number> executeUpdate(PreparedQuery<?, Number> preparedQuery) {
+        return jdbcOperations.executeUpdate(preparedQuery);
+    }
+
+    @Override
+    public Optional<Number> executeDelete(PreparedQuery<?, Number> preparedQuery) {
+        return jdbcOperations.executeDelete(preparedQuery);
     }
 }

@@ -20,4 +20,32 @@ The query language is one of:
 `PGQL`:: The default. Queries are compiled to https://pgql-lang.org[PGQL] and need a data source that uses the PGQL JDBC driver from `com.oracle.database.graph:opg-pgql-jdbc`. Path finders return paths with `ANY SHORTEST`, `ALL SHORTEST` and `ALL` searches.
 `SQL_PGQ`:: Queries are compiled to SQL/PGQ `GRAPH_TABLE` queries, which run on any Oracle Database 23ai data source. Path finders check for paths and count them, and `StartsWith`, `EndsWith` and `Contains` are supported through `LIKE`.
 
-Property graphs over tables are read only views: write the tables with a JDBC repository, for example a ann:data.jdbc.annotation.JdbcRepository[] over the same entities. Path finders need a fixed maximum depth set with ann:data.graph.annotation.PathLimit[] on the method, and relationship finders a single relationship type.
+Path finders need a fixed maximum depth set with ann:data.graph.annotation.PathLimit[] on the method, and relationship finders a single relationship type.
+
+== Writing nodes
+
+A property graph over tables is a view, so its repositories write nodes to their vertex tables with SQL, as Micronaut Data JDBC does. The value of ann:data.graph.annotation.Node[] names the vertex table, and `labels` the label the graph gives it:
+
+[source,java]
+----
+@Node(value = "accounts", labels = "Account")
+public record Account(@Id Long id, String name, @Relationship("TRANSFERS") List<Transfer> transfers) {
+}
+----
+
+Save, update and delete methods, including those of api:data.repository.CrudRepository[], are compiled to SQL for Oracle at build time and run by the JDBC repository operations of the same data source:
+
+[source,java]
+----
+@OracleGraphRepository(graph = "bank_graph", language = PropertyGraph.QueryLanguage.SQL_PGQ)
+public interface BankGraph extends CrudRepository<Account, Long> {
+}
+----
+
+[source,java]
+----
+bankGraph.save(new Account(5L, "Erin", List.of()));                  // INSERT INTO "ACCOUNTS" ("NAME","ID") VALUES (?,?)
+List<Account> erin = bankGraph.findByNameStartsWithOrderByName("Er"); // SELECT * FROM GRAPH_TABLE (bank_graph MATCH (n IS Account) ...)
+----
+
+Writes join the current connection and transaction of the data source, as graph queries do. Writes need the `micronaut-data-jdbc` module, which `micronaut-data-oracle-graph` depends on. Saving a node writes only its row: relationships are rows of their edge tables, which a ann:data.jdbc.annotation.JdbcRepository[] over an entity of the edge table writes.
