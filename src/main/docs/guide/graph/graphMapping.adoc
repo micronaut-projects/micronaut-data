@@ -50,3 +50,26 @@ snippet::example.Role[project-base="doc-examples/neo4j-example", source="main", 
 Saving an entity writes its node, then saves the nodes it relates to and creates the relationships between them. A related node that has an identifier is updated rather than created again. Saving does not remove relationships missing from a collection: use an explicit query to delete relationships.
 
 Relationships are not loaded unless a finder asks for them with ann:data.annotation.Join[], see <<graphTraversal, Querying Relationships>>. Collections of relationships that were not fetched are empty.
+
+== Encoding values
+
+Property and parameter values are encoded into values the database accepts by the encoder registered for their type in api:data.graph.runtime.GraphValueEncoders[], or for their nearest supertype. Strings, booleans, numbers and temporal values are written as they are, enums by name, collections and maps element by element, and other values as their string form. Each database replaces encoders for types it stores differently: Apache AGE writes temporal values as ISO-8601 strings, for example.
+
+A bean of type api:data.graph.runtime.GraphValueEncoderRegistrar[] adds encoders for application types, or replaces those of the database:
+
+[source,java]
+----
+@Singleton
+public class MoneyEncoderRegistrar implements GraphValueEncoderRegistrar {
+
+    @Override
+    public void register(GraphValueEncoders encoders) {
+        encoders.register(Money.class, (money, e) -> Map.of(
+            "amount", e.encode(money.amount()),
+            "currency", money.currency()
+        ));
+    }
+}
+----
+
+Values read from the database are converted to the types of properties by the conversion service of Micronaut Data. An attribute converter, set with the `converter` member of ann:data.annotation.MappedProperty[], converts a property both ways.
