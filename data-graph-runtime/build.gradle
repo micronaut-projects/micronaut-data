@@ -9,6 +9,7 @@ dependencies {
     api projects.micronautDataRuntime
     api projects.micronautDataGraphModel
     api projects.micronautDataConnection
+    api mn.reactor
 
     compileOnly(mnSql.jakarta.persistence.api)
 }

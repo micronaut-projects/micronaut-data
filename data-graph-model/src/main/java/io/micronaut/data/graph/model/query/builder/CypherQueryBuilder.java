@@ -356,15 +356,13 @@ public class CypherQueryBuilder implements GraphQueryBuilder {
         return query.append(" AS ").append(ID_PARAMETER).toString();
     }
 
-    @Override
-    public String buildDeleteAllQuery(PersistentEntity entity) {
-        return MATCH_OPEN + ROOT + labelExpression(entity) + ") DETACH DELETE " + ROOT + RETURN_COUNT_RESULT;
-    }
-
     /**
-     * Builds the query that deletes a node by its identifier, bound to {@code $id}, with its relationships.
+     * Builds the query that links two nodes with a relationship of a type the owner does not declare. {@code MERGE}
+     * keeps saving the owner again from duplicating the relationship.
      *
-     * @param entity The entity
+     * @param owner  The entity of the owning node
+     * @param target The entity of the target node
+     * @param type   The relationship type
      * @return The query
      */
     @Override
@@ -387,6 +385,17 @@ public class CypherQueryBuilder implements GraphQueryBuilder {
         return query.append(RETURN_COUNT_RESULT).toString();
     }
 
+    @Override
+    public String buildDeleteAllQuery(PersistentEntity entity) {
+        return MATCH_OPEN + ROOT + labelExpression(entity) + ") DETACH DELETE " + ROOT + RETURN_COUNT_RESULT;
+    }
+
+    /**
+     * Builds the query that deletes a node by its identifier, bound to {@code $id}, with its relationships.
+     *
+     * @param entity The entity
+     * @return The query
+     */
     @Override
     public String buildDeleteByIdQuery(PersistentEntity entity) {
         return MATCH_OPEN + ROOT + labelExpression(entity) + CLOSE_WHERE
