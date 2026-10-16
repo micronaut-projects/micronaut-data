@@ -19,28 +19,21 @@ Saving an entity writes its node, its labels and its relationships in sequence, 
 
 A method annotated with `@Transactional` that returns a `Mono` or `Flux` runs in a transaction of the reactive session, which commits when the publisher completes and rolls back when it fails or is cancelled. Reactive repository methods called from it join the transaction through the Reactor context:
 
-[source,java]
-----
-@Transactional
-public Mono<Long> saveAndCount(Movie movie) {
-    return movieRepository.save(movie).then(movieRepository.count());
-}
-----
+snippet::example.ReactiveMovieService[project-base="doc-examples/neo4j-example", source="main", tags="transactional", languages="java,kotlin,groovy,python"]
+
+<1> The method runs in a transaction of the reactive session.
+<2> Both operations join the transaction.
 
 The transaction can also be managed programmatically with api:data.neo4j.transaction.Neo4jReactorTransactionOperations[]:
 
-[source,java]
-----
-Flux<Movie> saved = transactionOperations.withTransaction(TransactionDefinition.DEFAULT, status ->
-    movieRepository.saveAll(movies)
-);
-----
+snippet::example.ReactiveMovieRepositorySpec[project-base="doc-examples/neo4j-example", tags="transactionOperations", indent="0", languages="java,kotlin,groovy,python"]
+
+<1> The publisher returned by the callback runs in the transaction, which commits when it completes.
 
 Explicit queries can be streamed with api:data.neo4j.operations.Neo4jReactorRepositoryOperations[], which is also returned by `reactive()` of api:data.neo4j.operations.Neo4jRepositoryOperations[]:
 
-[source,java]
-----
-Flux<Movie> movies = reactiveOperations.executeQuery("MATCH (m:Movie) RETURN m", Map.of(), Movie.class);
-----
+snippet::example.ReactiveMovieRepositorySpec[project-base="doc-examples/neo4j-example", tags="reactiveQuery", indent="0", languages="java,kotlin,groovy,python"]
+
+<1> The nodes are mapped to the entity as the database returns them.
 
 Apache AGE and Oracle property graphs run reactive repository methods on a thread of the I/O executor, in the blocking operations of their JDBC driver.
