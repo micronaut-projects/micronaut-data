@@ -117,18 +117,29 @@ final class OracleClientInfoConnectionCustomizer implements ConnectionCustomizer
         return NameUtils.getShortenedName(clazz.getName().replace(INTERCEPTED_SUFFIX, ""));
     }
 
+    // Sonar java:S1181 -- the client info must be restored after any failure of the operation, errors included
+    @SuppressWarnings("java:S1181")
     @Override
     public <R> Function<ConnectionStatus<Connection>, R> intercept(Function<ConnectionStatus<Connection>, R> operation) {
         return connectionStatus -> {
             ConnectionDefinition connectionDefinition = connectionStatus.getDefinition();
             Properties oldInfo = readCurrentClientInfo(connectionStatus);
             Map<String, String> newInfo = newConnectionClientInfo(connectionDefinition);
+            R result;
             try {
                 applyClientInfo(connectionStatus, newInfo);
-                return operation.apply(connectionStatus);
-            } finally {
-                setOldInfo(connectionStatus, oldInfo);
+                result = operation.apply(connectionStatus);
+            } catch (RuntimeException | Error e) {
+                // The failure of the operation is the primary failure
+                try {
+                    setOldInfo(connectionStatus, oldInfo);
+                } catch (RuntimeException restoreFailure) {
+                    e.addSuppressed(restoreFailure);
+                }
+                throw e;
             }
+            setOldInfo(connectionStatus, oldInfo);
+            return result;
         };
     }
 
