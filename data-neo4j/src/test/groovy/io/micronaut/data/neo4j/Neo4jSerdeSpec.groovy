@@ -8,6 +8,8 @@ import io.micronaut.data.graph.tck.entities.Movie
 import io.micronaut.data.graph.tck.entities.Person
 import io.micronaut.core.type.Argument
 import io.micronaut.data.graph.tck.entities.Role
+import io.micronaut.data.neo4j.features.Event
+import io.micronaut.data.neo4j.features.EventRepository
 import io.micronaut.data.neo4j.features.Tag
 import io.micronaut.data.neo4j.features.Topic
 import io.micronaut.data.neo4j.features.TopicRepository
@@ -20,6 +22,16 @@ import io.micronaut.test.extensions.spock.annotation.MicronautTest
 import io.micronaut.test.support.TestPropertyProvider
 import jakarta.inject.Inject
 import spock.lang.Specification
+
+import java.time.Duration
+import java.time.Instant
+import java.time.LocalDate
+import java.time.LocalDateTime
+import java.time.OffsetDateTime
+import java.time.ZoneId
+import java.time.ZoneOffset
+import java.time.ZonedDateTime
+import java.time.temporal.ChronoUnit
 
 /**
  * Reads nodes with Micronaut Serialization and with GraphEntityMapper, and checks both give the same entities.
@@ -42,6 +54,9 @@ class Neo4jSerdeSpec extends Specification implements TestPropertyProvider {
     @Inject
     TopicRepository topicRepository
 
+    @Inject
+    EventRepository eventRepository
+
     GraphSerde serde
 
     @Override
@@ -60,6 +75,39 @@ class Neo4jSerdeSpec extends Specification implements TestPropertyProvider {
         matrix.directors = [lana]
         matrix.votes = 42L
         movieRepository.save(matrix)
+    }
+
+    void "the switch makes the operations read entities with serde"() {
+        expect:
+        context.containsBean(GraphSerde) == Boolean.getBoolean(GraphSerde.ENABLED)
+    }
+
+    void "temporal values, identifiers, enums, decimals and attribute converters"() {
+        given:
+        def instant = Instant.parse("2026-10-16T09:30:15.123456789Z")
+        def event = new Event("launch", LocalDate.of(2026, 10, 16), LocalDateTime.of(2026, 10, 16, 9, 30, 15),
+            instant, ZonedDateTime.of(2026, 10, 16, 11, 30, 15, 0, ZoneId.of("Europe/Madrid")),
+            OffsetDateTime.of(2026, 10, 16, 9, 30, 15, 0, ZoneOffset.ofHours(2)), Date.from(instant.truncatedTo(ChronoUnit.MILLIS)),
+            Duration.ofMinutes(90), UUID.fromString("6f9619ff-8b86-d011-b42d-00cf4fc964ff"), Event.Priority.HIGH,
+            new BigDecimal("19.99"), new Event.Points(7))
+
+        when:
+        eventRepository.save(event)
+        def found = eventRepository.findById("launch").get()
+
+        then:
+        found.day() == event.day()
+        found.start() == event.start()
+        found.created() == event.created()
+        found.zoned().toInstant() == event.zoned().toInstant()
+        found.offset().toInstant() == event.offset().toInstant()
+        found.legacy() == event.legacy()
+        found.length() == event.length()
+        found.ref() == event.ref()
+        found.priority() == Event.Priority.HIGH
+        found.price() == new BigDecimal("19.99")
+        found.points() == new Event.Points(7)
+        operations.executeQuery('MATCH (e:Event) RETURN e.points AS points', [:])[0].get("points") == 70L
     }
 
     void "read plain nodes"() {
