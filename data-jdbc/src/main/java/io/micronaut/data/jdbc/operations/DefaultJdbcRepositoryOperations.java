@@ -48,6 +48,8 @@ import io.micronaut.data.jdbc.mapper.ColumnIndexCallableResultReader;
 import io.micronaut.data.jdbc.mapper.ColumnIndexResultSetReader;
 import io.micronaut.data.jdbc.mapper.ColumnNameExistenceAwareResultSetReader;
 import io.micronaut.data.jdbc.mapper.ColumnNameResultSetReader;
+import io.micronaut.data.jdbc.mapper.FlatEntityMappingPlan;
+import io.micronaut.data.jdbc.mapper.FlatEntityResultSetMapper;
 import io.micronaut.data.jdbc.mapper.JdbcQueryStatement;
 import io.micronaut.data.jdbc.mapper.JdbcTupleMapper;
 import io.micronaut.data.jdbc.mapper.SqlResultConsumer;
@@ -147,6 +149,7 @@ import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.ExecutorService;
 import java.util.concurrent.atomic.AtomicBoolean;
 import java.util.concurrent.atomic.AtomicReference;
+import java.util.function.BiFunction;
 import java.util.function.Consumer;
 import java.util.function.Function;
 import java.util.function.Predicate;
@@ -179,6 +182,11 @@ public final class DefaultJdbcRepositoryOperations extends AbstractSqlRepository
     private final ExecutorServiceResolver executorServiceResolver;
     private final SyncCascadeOperations<JdbcOperationContext> cascadeOperations;
     private final DataJdbcConfiguration jdbcConfiguration;
+    /**
+     * The flat mapping plan of every entity read so far, empty for an entity without one, so that an entity is
+     * examined once.
+     */
+    private final Map<RuntimePersistentEntity<?>, Optional<FlatEntityMappingPlan<?>>> flatEntityMappingPlans = new ConcurrentHashMap<>();
     @Nullable
     private final SchemaTenantResolver schemaTenantResolver;
     private final JdbcSchemaHandler schemaHandler;
@@ -280,6 +288,35 @@ public final class DefaultJdbcRepositoryOperations extends AbstractSqlRepository
     @Override
     protected ResultReader<ResultSet, String> createColumnNameResultSetReaderWithColumnExistenceAware() {
         return new ColumnNameExistenceAwareResultSetReader(columnNameResultSetReader);
+    }
+
+    /**
+     * {@inheritDoc}
+     *
+     * <p>A query returning, without joins, an entity the annotation processor generated a row mapper for or marked
+     * as flat (see {@link io.micronaut.data.annotation.FlatEntity}) is mapped by a {@link FlatEntityResultSetMapper}.
+     * Everything else is mapped by the general mapper.</p>
+     */
+    @Override
+    protected <E, R> SqlTypeMapper<ResultSet, R> createMapper(SqlStoredQuery<E, R> preparedQuery, Class<ResultSet> rsType) {
+        if (preparedQuery.getResultDataType() == DataType.ENTITY
+            && !preparedQuery.getResultType().equals(SearchResults.class)
+            && preparedQuery.getJoinPaths().isEmpty()
+            && !preparedQuery.isOptionalEmbeddedProjection()
+            && !isDtoProjection(preparedQuery)
+            && !isJsonResult(preparedQuery, preparedQuery.getQueryResultInfo())) {
+            RuntimePersistentEntity<R> entity = getEntity(preparedQuery.getResultType());
+            FlatEntityMappingPlan<R> plan = (FlatEntityMappingPlan<R>) flatEntityMappingPlans
+                .computeIfAbsent(entity, e -> FlatEntityMappingPlan.supports(e) ? Optional.of(FlatEntityMappingPlan.of(e)) : Optional.empty())
+                .orElse(null);
+            if (plan != null) {
+                BiFunction<RuntimePersistentEntity<Object>, Object, Object> loadListener = entity.hasPostLoadEventListeners()
+                    ? (loadedEntity, o) -> triggerPostLoad(o, loadedEntity, preparedQuery.getAnnotationMetadata())
+                    : null;
+                return new FlatEntityResultSetMapper<>(plan, conversionService, loadListener, () -> super.createMapper(preparedQuery, rsType));
+            }
+        }
+        return super.createMapper(preparedQuery, rsType);
     }
 
     @Override
