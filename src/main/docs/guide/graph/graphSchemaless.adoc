@@ -37,8 +37,11 @@ Values must be types the database stores: strings, numbers, booleans, temporal v
 
 A collection of strings annotated with ann:data.graph.annotation.Labels[] holds the labels of a node beyond those its entity declares. Saving adds them to the node and reading collects them. Dynamic labels are supported by Neo4j.
 
-[source,java]
-----
-@Labels
-private Set<String> labels = new LinkedHashSet<>();
-----
+snippet::example.Person[project-base="doc-examples/neo4j-example", source="main", tags="labels", languages="java,kotlin,groovy,python"]
+
+<1> The labels of the node beyond `Person`.
+
+snippet::example.PersonRepositorySpec[project-base="doc-examples/neo4j-example", tags="labels", indent="0", languages="java,kotlin,groovy,python"]
+
+<1> Add a label. Saving the person adds it to the node.
+<2> Reading the person collects its labels beyond `Person`.

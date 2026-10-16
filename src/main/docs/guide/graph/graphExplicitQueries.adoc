@@ -11,8 +11,7 @@ A query returning nodes maps them to the entity type of the method. Paths map to
 
 Queries can also be run without a repository method through the repository operations, for example api:data.neo4j.operations.Neo4jRepositoryOperations[]:
 
-[source,java]
-----
-List<GraphRecord> rows = operations.executeQuery("MATCH (p:Person) RETURN p.name AS name", Map.of());
-List<Person> people = operations.executeQuery("MATCH (p:Person) RETURN p", Map.of(), Person.class);
-----
+snippet::example.OperationsSpec[project-base="doc-examples/neo4j-example", tags="executeQuery", indent="0", languages="java,kotlin,groovy,python"]
+
+<1> Without a type, each row is a api:data.graph.runtime.GraphRecord[] holding the columns of the query.
+<2> With a type, the nodes the query returns are mapped to the entity.

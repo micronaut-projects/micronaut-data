@@ -60,4 +60,16 @@ class PersonRepositorySpec : AbstractNeo4jTest() {
         assertEquals(listOf("FOLLOWS"), personRepository.findRelationships(fred, barney).map { it.type() })
         assertEquals(4, personRepository.countRelationshipsByFollows())
     }
+
+    @Test
+    fun testLabels() {
+        // tag::labels[]
+        val keanu = Person(name = "Keanu Reeves", born = 1964, labels = setOf("Actor")) // <1>
+        personRepository.save(keanu)
+
+        val labels = personRepository.findByName("Keanu Reeves")!!.labels // <2>
+        // end::labels[]
+
+        assertEquals(setOf("Actor"), labels)
+    }
 }
