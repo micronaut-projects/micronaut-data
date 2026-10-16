@@ -1,0 +1,3 @@
+micronaut:
+  application:
+    name: neo4j-example

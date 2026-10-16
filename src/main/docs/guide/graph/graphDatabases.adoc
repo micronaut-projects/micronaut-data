@@ -1,0 +1,18 @@
+Entities and repository methods are portable between the databases. Each database module provides a repository stereotype that selects the query language, and supports a subset of the features that matches the database.
+
+[cols="2,1,1,1"]
+|===
+|Feature |Neo4j |Oracle |Apache AGE
+
+|Finders, projections and paging |Yes |Yes |Yes
+|Criteria on relationships |Yes |Yes |Yes
+|Fetch joins with `@Join` |Yes |No |Yes
+|Saving, updating and deleting |Yes |No, write the tables |Yes
+|Shortest paths |Yes |PGQL |With a maximum depth
+|Path existence and counts |Yes |With a maximum depth |With a maximum depth
+|Multiple and dynamic labels |Yes |No |No
+|Schemaless properties |Yes |No |Yes
+|Transactions |Yes |Yes |Yes
+|===
+
+Unsupported methods fail at build time with a message naming the limitation.
