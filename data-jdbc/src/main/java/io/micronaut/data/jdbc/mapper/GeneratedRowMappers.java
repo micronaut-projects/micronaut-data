@@ -23,7 +23,6 @@ import org.jspecify.annotations.Nullable;
 import java.util.HashMap;
 import java.util.Map;
 import java.util.Optional;
-import java.util.concurrent.ConcurrentHashMap;
 
 /**
  * Finds the {@link GeneratedRowMapper} of an entity. The generated mappers are registered as Micronaut services
@@ -32,16 +31,22 @@ import java.util.concurrent.ConcurrentHashMap;
  *
  * <p>The service entries are read once, on the first lookup, into a map by entity name: the mapper of an entity
  * is named after it, so nothing is loaded until the entity is looked up, and then only that entity's mapper. The
- * cache is static, per class loader of this class rather than per application context: a mapper is stateless and
- * belongs to its entity class, and a mapper whose entity class is not the one looked up (another class loader)
- * is treated as absent.</p>
+ * per-class cache is a {@link ClassValue}, so it holds no entity class reachable (an application redeployed under
+ * a parent class loader holding data-jdbc is collected); it is static rather than per application context: a
+ * mapper is stateless and belongs to its entity class, and a mapper whose entity class is not the one looked up
+ * (another class loader) is treated as absent.</p>
  *
  * @since 5.3.0
  */
 @Internal
 public final class GeneratedRowMappers {
 
-    private static final Map<Class<?>, Optional<GeneratedRowMapper<?>>> MAPPERS = new ConcurrentHashMap<>();
+    private static final ClassValue<Optional<GeneratedRowMapper<?>>> MAPPERS = new ClassValue<>() {
+        @Override
+        protected Optional<GeneratedRowMapper<?>> computeValue(Class<?> type) {
+            return load(type);
+        }
+    };
     @Nullable
     private static volatile Map<String, ServiceDefinition<GeneratedRowMapper>> definitions;
 
@@ -56,7 +61,7 @@ public final class GeneratedRowMappers {
     @Nullable
     @SuppressWarnings("unchecked")
     public static <T> GeneratedRowMapper<T> find(Class<T> entityType) {
-        return (GeneratedRowMapper<T>) MAPPERS.computeIfAbsent(entityType, GeneratedRowMappers::load).orElse(null);
+        return (GeneratedRowMapper<T>) MAPPERS.get(entityType).orElse(null);
     }
 
     @SuppressWarnings("rawtypes")

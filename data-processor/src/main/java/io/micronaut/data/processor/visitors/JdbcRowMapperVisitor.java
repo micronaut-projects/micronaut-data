@@ -29,6 +29,7 @@ import io.micronaut.data.model.PersistentEntityUtils;
 import io.micronaut.data.model.PersistentProperty;
 import io.micronaut.data.processor.model.SourceAssociation;
 import io.micronaut.data.processor.model.SourcePersistentEntity;
+import io.micronaut.annotation.processing.visitor.JavaNativeElement;
 import io.micronaut.data.processor.model.SourcePersistentProperty;
 import io.micronaut.inject.ast.ClassElement;
 import io.micronaut.inject.ast.ElementQuery;
@@ -50,7 +51,10 @@ import io.micronaut.sourcegen.model.TypeDef;
 import io.micronaut.sourcegen.model.VariableDef;
 import org.jspecify.annotations.Nullable;
 
+import javax.lang.model.element.AnnotationMirror;
+import javax.lang.model.element.ElementKind;
 import javax.lang.model.element.Modifier;
+import javax.lang.model.element.TypeElement;
 import java.math.BigDecimal;
 import java.math.BigInteger;
 import java.sql.ResultSet;
@@ -93,8 +97,9 @@ import java.util.function.Function;
  *
  * <p>Generation is on for Java entities whenever data-jdbc is on the compile classpath; the processor option
  * {@value #OPTION_ENABLED} set to {@code false} turns it off, and {@value #OPTION_REPORT} set to {@code true}
- * reports every entity no mapper is generated for. A failure to generate a mapper is a warning, never a
- * compilation error.</p>
+ * reports every entity no mapper is generated for. A failure while generating a mapper is a warning and the
+ * entity keeps the runtime mappers; the option is the escape hatch should a generated source itself not
+ * compile.</p>
  *
  * <p>No mapper is generated for an entity the runtime cannot read exactly that
  * way: a composite identity, an attribute converter, a JSON column, a property type without a typed read (which
@@ -189,6 +194,9 @@ public final class JdbcRowMapperVisitor implements TypeElementVisitor<MappedEnti
                 // A lookup that names a type generated later in this compilation: the entity keeps the runtime
                 // mappers rather than postponing the element, which would leave the repositories of this round
                 // half processed
+                if (report) {
+                    context.info("No JDBC row mapper generated for " + element.getName() + ": a type it refers to is generated later in this compilation. Rows are mapped at runtime.", element);
+                }
                 return;
             }
             // The mapper is an optimization: a failure to generate it must not fail the build
@@ -356,9 +364,10 @@ public final class JdbcRowMapperVisitor implements TypeElementVisitor<MappedEnti
     }
 
     /**
-     * The creator the bean introspection instantiates the type with: a static {@code @Creator} factory (with or
-     * without parameters) or a {@code @Creator} constructor, else the canonical constructor of a record, else the
-     * primary constructor; {@code null} for a no-argument constructor, which is {@code new}.
+     * The creator the bean introspection instantiates the type with: for a record its declared {@code @Creator}
+     * (a static factory, with or without parameters, or a constructor) else its canonical constructor; for any
+     * other type the primary constructor, which is a static {@code @Creator} factory when there is one;
+     * {@code null} for a no-argument constructor, which is {@code new}.
      */
     @Nullable
     private static MethodElement constructorOf(SourcePersistentEntity entity) {
@@ -368,17 +377,21 @@ public final class JdbcRowMapperVisitor implements TypeElementVisitor<MappedEnti
             MethodElement creator = type.getDefaultConstructor().orElse(null);
             return creator != null && creator.isStatic() ? creator : null;
         }
-        // The introspection's creator: a static @Creator factory, whatever its arity, or a @Creator constructor
-        // before anything else
-        MethodElement primary = type.getPrimaryConstructor().orElse(null);
-        if (primary != null && primary.isStatic()) {
-            return primary;
-        }
-        if (primary != null && primary.hasStereotype(Creator.class)) {
-            return primary.getParameters().length > 0 ? primary : null;
-        }
         if (type.isRecord()) {
-            // The canonical constructor: the one with a parameter per component, whatever other constructors
+            // A declared @Creator first. Enumerating the record's methods (which getPrimaryConstructor and any
+            // method query do) postpones the element when one of them names a type generated later in this
+            // compilation, so the methods are only enumerated when the javac element shows a static @Creator
+            MethodElement creator = declaresStaticCreator(type)
+                ? type.getEnclosedElement(ElementQuery.ALL_METHODS.onlyDeclared().onlyStatic().annotated(am -> am.hasStereotype(Creator.class))).orElse(null)
+                : null;
+            if (creator != null) {
+                return creator;
+            }
+            creator = type.getEnclosedElement(ElementQuery.CONSTRUCTORS.annotated(am -> am.hasStereotype(Creator.class))).orElse(null);
+            if (creator != null) {
+                return creator.getParameters().length > 0 ? creator : null;
+            }
+            // Else the canonical constructor: the one with a parameter per component, whatever other constructors
             // exist (an extra no-argument constructor can be the primary one)
             Set<String> components = new HashSet<>();
             for (PersistentProperty property : entity.getPersistentProperties()) {
@@ -400,7 +413,36 @@ public final class JdbcRowMapperVisitor implements TypeElementVisitor<MappedEnti
                 }
             }
         }
+        // The introspection's creator: a static @Creator factory, whatever its arity, or a @Creator constructor
+        // before anything else
+        MethodElement primary = type.getPrimaryConstructor().orElse(null);
+        if (primary != null && primary.isStatic()) {
+            return primary;
+        }
         return primary != null && primary.getParameters().length > 0 ? primary : null;
+    }
+
+    /**
+     * Whether the type declares a static method annotated {@code @Creator}, read from the javac element without
+     * creating a method element for any method, which would resolve its signature.
+     */
+    private static boolean declaresStaticCreator(ClassElement type) {
+        if (!(type.getNativeType() instanceof JavaNativeElement.Class nativeClass)) {
+            // Not javac: enumerate the methods
+            return true;
+        }
+        for (javax.lang.model.element.Element member : nativeClass.element().getEnclosedElements()) {
+            if (member.getKind() != ElementKind.METHOD || !member.getModifiers().contains(Modifier.STATIC)) {
+                continue;
+            }
+            for (AnnotationMirror mirror : member.getAnnotationMirrors()) {
+                if (mirror.getAnnotationType().asElement() instanceof TypeElement annotation
+                    && annotation.getQualifiedName().contentEquals(Creator.class.getName())) {
+                    return true;
+                }
+            }
+        }
+        return false;
     }
 
     private static SourcePersistentProperty property(Member member) {
