@@ -124,6 +124,8 @@ public abstract class AbstractGraphRepositoryOperations extends AbstractReposito
 
     private final GraphValueEncoders encoders = GraphValueEncoders.defaults();
 
+    private final @Nullable GraphSerde graphSerde;
+
     private final SyncCascadeOperations<OperationContext> noCascade;
 
     /**
@@ -151,6 +153,7 @@ public abstract class AbstractGraphRepositoryOperations extends AbstractReposito
         for (GraphValueEncoderRegistrar registrar : encoderRegistrars) {
             registrar.register(encoders);
         }
+        this.graphSerde = graphSerde;
         this.mapper = new GraphEntityMapper(runtimeEntityRegistry, conversionService, this::encodeValue, graphSerde);
         this.executorServiceResolver = new ExecutorServiceResolver(executorService);
         this.noCascade = new SyncCascadeOperations<>(conversionService, new RelationshipsWrittenByNode());
@@ -584,6 +587,10 @@ public abstract class AbstractGraphRepositoryOperations extends AbstractReposito
     }
 
     private <R> R readDto(Map<String, Object> values, Class<R> type) {
+        GraphSerde serde = graphSerde;
+        if (serde != null) {
+            return serde.read(type, values);
+        }
         BeanIntrospection<R> introspection = BeanIntrospection.getIntrospection(type);
         Argument<Object>[] constructorArguments = (Argument<Object>[]) introspection.getConstructorArguments();
         R instance;
