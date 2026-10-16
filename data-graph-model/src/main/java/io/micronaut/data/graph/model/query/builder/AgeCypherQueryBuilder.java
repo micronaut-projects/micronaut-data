@@ -111,7 +111,27 @@ public class AgeCypherQueryBuilder extends CypherQueryBuilder {
     @Override
     public String buildLinkQuery(Association association, PersistentEntity owner, PersistentEntity target,
                                  List<String> propertyNames, @Nullable PersistentProperty relationshipIdentity) {
-        return AgeStatements.wrap(super.buildLinkQuery(association, owner, target, propertyNames, relationshipIdentity));
+        if (propertyNames.isEmpty()) {
+            return AgeStatements.wrap(super.buildLinkQuery(association, owner, target, propertyNames, relationshipIdentity));
+        }
+        // AGE does not store a SET on a relationship that the MERGE before it created, so the relationship is either
+        // created with its properties or matched and updated
+        String nodes = "MATCH (a" + labelExpression(owner) + "), (b" + labelExpression(target) + ") WHERE "
+            + identityExpression(owner.getIdentity(), "a") + " = $" + LINK_FROM_PARAMETER + " AND "
+            + identityExpression(target.getIdentity(), "b") + " = $" + LINK_TO_PARAMETER;
+        String type = ":" + GraphEntities.escapeName(GraphEntities.relationshipType(association));
+        Direction direction = GraphEntities.direction(association);
+        String id = " RETURN " + (relationshipIdentity != null ? identityExpression(relationshipIdentity, PATH_RELATIONSHIP) : "null")
+            + " AS " + ID_PARAMETER;
+        StringBuilder query = new StringBuilder(nodes)
+            .append(" OPTIONAL MATCH ").append(directed("(a)", "[existing" + type + "]", "(b)", direction))
+            .append(" WITH a, b, existing WHERE existing IS NULL CREATE ")
+            .append(directed("(a)", "[" + PATH_RELATIONSHIP + type + "]", "(b)", direction));
+        appendSetProperties(query, PATH_RELATIONSHIP, propertyNames);
+        query.append(id).append(" UNION ").append(nodes).append(" MATCH ")
+            .append(directed("(a)", "[" + PATH_RELATIONSHIP + type + "]", "(b)", direction));
+        appendSetProperties(query, PATH_RELATIONSHIP, propertyNames);
+        return AgeStatements.wrap(query.append(id).toString());
     }
 
     private static QueryResult wrap(QueryResult result) {
