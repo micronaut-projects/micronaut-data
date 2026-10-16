@@ -117,13 +117,24 @@ micronaut:
         postgres:
           queue-capacity: 1024
           poll-timeout: 1s
+          max-retries: -1
           retry-delay: 1s
+          retry-delay-multiplier: 2
           max-retry-delay: 60s
           shutdown-timeout: 30s
 ----
 
 These settings apply to all subscribing datasources. The queue capacity must be positive.
 Durations must be at least one millisecond and no greater than 2,147,483,647 milliseconds.
+
+`max-retries` defaults to `-1`, which retries recovery until shutdown. Non-negative values count retries
+after the initial recovery attempt; `0` allows only that initial attempt. The first recovery attempt waits
+for `retry-delay`. Subsequent delays are multiplied by `retry-delay-multiplier`.
+All delays, including the initial delay, are capped at `max-retry-delay`.
+The multiplier must be an integer of at least `1`; `1` uses a fixed delay.
+A successful reconnection resets the retry count and delay. These settings do not retry failed application startup
+or listener callbacks. If a finite retry limit is exhausted, the provider logs an error and stops receiving
+notifications for that datasource until the application restarts.
 
 == Version 1 Payload
 

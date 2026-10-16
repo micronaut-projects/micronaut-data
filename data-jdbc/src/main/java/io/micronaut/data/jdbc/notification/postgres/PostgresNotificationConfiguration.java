@@ -29,6 +29,8 @@ import java.util.Objects;
 public final class PostgresNotificationConfiguration {
     private int queueCapacity = 1024;
     private Duration pollTimeout = Duration.ofSeconds(1);
+    private int maxRetries = -1;
+    private int retryDelayMultiplier = 2;
     private Duration retryDelay = Duration.ofSeconds(1);
     private Duration maxRetryDelay = Duration.ofSeconds(60);
     private Duration shutdownTimeout = Duration.ofSeconds(30);
@@ -62,6 +64,52 @@ public final class PostgresNotificationConfiguration {
      */
     public void setPollTimeout(Duration pollTimeout) {
         this.pollTimeout = positive(pollTimeout, "PollTimeout");
+    }
+
+    /**
+     * Returns the number of retries after the initial recovery attempt. Defaults to unlimited.
+     *
+     * @return the maximum number of retries, or {@code -1} for unlimited retries
+     */
+    public int getMaxRetries() {
+        return maxRetries;
+    }
+
+    /**
+     * Sets the number of retries after the initial recovery attempt. Zero allows only that initial attempt.
+     * A successful reconnection resets the retry count for the next connection failure.
+     *
+     * @param maxRetries the non-negative maximum number of retries, or {@code -1} for unlimited retries
+     * @throws IllegalArgumentException if the value is less than {@code -1}
+     */
+    public void setMaxRetries(int maxRetries) {
+        if (maxRetries < -1) {
+            throw new IllegalArgumentException("max-retries must be greater than or equal to -1");
+        }
+        this.maxRetries = maxRetries;
+    }
+
+    /**
+     * Returns the multiplier applied to the delay after each recovery attempt. Defaults to two.
+     *
+     * @return the retry delay multiplier
+     */
+    public int getRetryDelayMultiplier() {
+        return retryDelayMultiplier;
+    }
+
+    /**
+     * Sets the multiplier applied to the delay after each recovery attempt. One uses a fixed delay.
+     * Delays are capped at {@link #getMaxRetryDelay()}.
+     *
+     * @param retryDelayMultiplier the integer multiplier, at least one
+     * @throws IllegalArgumentException if the multiplier is less than one
+     */
+    public void setRetryDelayMultiplier(int retryDelayMultiplier) {
+        if (retryDelayMultiplier < 1) {
+            throw new IllegalArgumentException("retry-delay-multiplier must be greater than or equal to one");
+        }
+        this.retryDelayMultiplier = retryDelayMultiplier;
     }
 
     /**

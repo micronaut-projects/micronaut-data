@@ -69,6 +69,7 @@ final class PostgresNotificationSubscription {
     private final DataSource dataSource;
     private final JsonMapper mapper;
     private final PostgresNotificationConfiguration configuration;
+    private final long initialDelay;
     private final Map<PostgresChangeListenerDefinition, PostgresChangeNotificationDispatcher> dispatchers = new LinkedHashMap<>();
     private final ExecutorService receiver;
     private final CompletableFuture<Void> received = new CompletableFuture<>();
@@ -87,6 +88,7 @@ final class PostgresNotificationSubscription {
         this.name = name;
         this.mapper = mapper;
         this.configuration = configuration;
+        initialDelay = Math.min(configuration.getRetryDelay().toMillis(), configuration.getMaxRetryDelay().toMillis());
         dataSource = DelegatingDataSource.unwrapDataSource(operations.getDataSource());
         PostgresChangeListenerDefinitionFactory definitionFactory = new PostgresChangeListenerDefinitionFactory(operations);
         for (ChangeListenerMethod method : methods) {
@@ -164,50 +166,13 @@ final class PostgresNotificationSubscription {
 
     /**
      * Receives and routes notifications until stopped, reconnecting after failures with exponential backoff.
+     * Stops reception if the configured recovery retry limit is exhausted.
      * Queues invalidation events after reconnection and before reception resumes.
      * Releases the connection and completes the reception stage when the loop exits.
      */
     private void receive() {
-        long delay = Math.min(configuration.getRetryDelay().toMillis(), configuration.getMaxRetryDelay().toMillis());
         try {
-            while (running) {
-                try {
-                    Connection active = connection;
-                    if (active == null) {
-                        active = connect();
-                        connection = active;
-                        delay = Math.min(configuration.getRetryDelay().toMillis(), configuration.getMaxRetryDelay().toMillis());
-                        // LISTEN has committed before listeners can refresh state missed while disconnected.
-                        if (running) {
-                            dispatchers.values().forEach(PostgresChangeNotificationDispatcher::invalidate);
-                        }
-                    }
-                    if (!running) {
-                        break;
-                    }
-                    PGNotification[] notifications = active.unwrap(PGConnection.class)
-                        .getNotifications((int) configuration.getPollTimeout().toMillis());
-                    if (notifications != null) {
-                        for (PGNotification notification : notifications) {
-                            if (!running) {
-                                break;
-                            }
-                            dispatch(notification);
-                        }
-                    }
-                } catch (Exception e) {
-                    closeConnection();
-                    if (running) {
-                        LOG.warn("PostgreSQL notification connection for [{}] failed; reconnecting in {} ms", name, delay, e);
-                        synchronized (recoveryMonitor) {
-                            if (running) {
-                                recoveryMonitor.wait(delay);
-                            }
-                        }
-                        delay = Math.min(delay * 2, configuration.getMaxRetryDelay().toMillis());
-                    }
-                }
-            }
+            receiveLoop();
         } catch (InterruptedException e) {
             Thread.currentThread().interrupt();
         } finally {
@@ -215,6 +180,91 @@ final class PostgresNotificationSubscription {
             closeConnection();
             receiver.shutdown();
             received.complete(null);
+        }
+    }
+
+    /**
+     * Polls the active connection and retries connection failures until stopped or retries are exhausted.
+     * A successful reconnection resets the retry count and delay before invalidating listeners.
+     *
+     * @throws InterruptedException if interrupted while waiting to reconnect
+     */
+    private void receiveLoop() throws InterruptedException {
+        long delay = initialDelay;
+        int retryCount = 0;
+        while (running) {
+            boolean reconnecting = connection == null;
+            try {
+                Connection active = connection;
+                if (active == null) {
+                    active = connect();
+                    connection = active;
+                    reconnecting = false;
+                    retryCount = 0;
+                    delay = initialDelay;
+                    // LISTEN has committed before listeners can refresh state missed while disconnected.
+                    if (running) {
+                        dispatchers.values().forEach(PostgresChangeNotificationDispatcher::invalidate);
+                    }
+                }
+                receiveNotifications(active);
+            } catch (Exception e) {
+                closeConnection();
+                if (!running) {
+                    break;
+                }
+                if (reconnecting && configuration.getMaxRetries() >= 0) {
+                    if (retryCount >= configuration.getMaxRetries()) {
+                        LOG.error("PostgreSQL notification recovery exhausted [{}] retries for datasource [{}]; notifications remain unavailable",
+                            configuration.getMaxRetries(), name, e);
+                        break;
+                    }
+                    retryCount++;
+                }
+                LOG.warn("PostgreSQL notification connection for [{}] failed; reconnecting in {} ms", name, delay, e);
+                awaitReconnect(delay);
+                delay = Math.min(delay * configuration.getRetryDelayMultiplier(), configuration.getMaxRetryDelay().toMillis());
+            }
+        }
+    }
+
+    /**
+     * Polls and dispatches one batch of notifications, stopping dispatch when shutdown is requested.
+     *
+     * @param active the listening connection
+     * @throws SQLException if polling fails
+     */
+    private void receiveNotifications(Connection active) throws SQLException {
+        if (!running) {
+            return;
+        }
+        PGNotification[] notifications = active.unwrap(PGConnection.class)
+            .getNotifications((int) configuration.getPollTimeout().toMillis());
+        if (notifications == null) {
+            return;
+        }
+        for (PGNotification notification : notifications) {
+            if (!running) {
+                return;
+            }
+            dispatch(notification);
+        }
+    }
+
+    /**
+     * Waits before reconnecting. Shutdown wakes this wait through the recovery monitor.
+     *
+     * @param delay the delay in milliseconds
+     * @throws InterruptedException if the receive thread is interrupted
+     */
+    private void awaitReconnect(long delay) throws InterruptedException {
+        long remaining = TimeUnit.MILLISECONDS.toNanos(delay);
+        long deadline = System.nanoTime() + remaining;
+        synchronized (recoveryMonitor) {
+            while (running && remaining > 0) {
+                TimeUnit.NANOSECONDS.timedWait(recoveryMonitor, remaining);
+                remaining = deadline - System.nanoTime();
+            }
         }
     }
 
