@@ -5,7 +5,7 @@ import io.micronaut.data.graph.annotation.Node
 import io.micronaut.data.graph.annotation.Relationship
 
 // tag::account[]
-@Node("Account") // <1>
+@Node(value = "accounts", labels = ["Account"]) // <1>
 data class Account(
     @field:Id // <2>
     val id: Long,
