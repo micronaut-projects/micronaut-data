@@ -29,7 +29,6 @@ import io.micronaut.data.model.PersistentEntityUtils;
 import io.micronaut.data.model.PersistentProperty;
 import io.micronaut.data.processor.model.SourceAssociation;
 import io.micronaut.data.processor.model.SourcePersistentEntity;
-import io.micronaut.annotation.processing.visitor.JavaNativeElement;
 import io.micronaut.data.processor.model.SourcePersistentProperty;
 import io.micronaut.inject.ast.ClassElement;
 import io.micronaut.inject.ast.ElementQuery;
@@ -51,7 +50,6 @@ import io.micronaut.sourcegen.model.TypeDef;
 import io.micronaut.sourcegen.model.VariableDef;
 import org.jspecify.annotations.Nullable;
 
-import javax.lang.model.element.ElementKind;
 import javax.lang.model.element.Modifier;
 import java.math.BigDecimal;
 import java.math.BigInteger;
@@ -203,7 +201,8 @@ public final class JdbcRowMapperVisitor implements TypeElementVisitor<MappedEnti
     }
 
     private static boolean isPostponement(RuntimeException e) {
-        // The Java processor's PostponeToNextRoundException is not on this module's classpath
+        // The Java processor's PostponeToNextRoundException belongs to inject-java, which is only present when
+        // compiling Java, so it is recognized by name
         return e instanceof ElementPostponedToNextRoundException || e.getClass().getSimpleName().equals("PostponeToNextRoundException");
     }
 
@@ -376,13 +375,10 @@ public final class JdbcRowMapperVisitor implements TypeElementVisitor<MappedEnti
             return creator != null && creator.isStatic() ? creator : null;
         }
         if (type.isRecord()) {
-            // A declared @Creator first. Enumerating the record's methods (which getPrimaryConstructor and any
-            // method query do) postpones the element when one of them names a type generated later in this
-            // compilation, so the methods are only enumerated when the javac element shows an annotated static
-            // method, which may be a creator by stereotype (@Creator, Jackson's @JsonCreator, ...)
-            MethodElement creator = hasAnnotatedStaticMethod(type)
-                ? type.getEnclosedElement(ElementQuery.ALL_METHODS.onlyDeclared().onlyStatic().annotated(am -> am.hasStereotype(Creator.class))).orElse(null)
-                : null;
+            // A declared creator first, by stereotype as the introspection finds it (@Creator, Jackson's
+            // @JsonCreator, ...). Enumerating the methods postpones the element when one of them names a type
+            // generated later in this compilation; the entity then keeps the runtime mappers (see visitClass)
+            MethodElement creator = type.getEnclosedElement(ElementQuery.ALL_METHODS.onlyDeclared().onlyStatic().annotated(am -> am.hasStereotype(Creator.class))).orElse(null);
             if (creator != null) {
                 return creator;
             }
@@ -419,27 +415,6 @@ public final class JdbcRowMapperVisitor implements TypeElementVisitor<MappedEnti
             return primary;
         }
         return primary != null && primary.getParameters().length > 0 ? primary : null;
-    }
-
-    /**
-     * Whether the type declares a static method carrying any annotation, which may make it a creator by
-     * stereotype, read from the javac element without creating a method element for any method, which would
-     * resolve its signature. Conservative: an annotated static method that is no creator only costs the method
-     * query that the introspection performs anyway.
-     */
-    private static boolean hasAnnotatedStaticMethod(ClassElement type) {
-        if (!(type.getNativeType() instanceof JavaNativeElement.Class nativeClass)) {
-            // Not javac: enumerate the methods
-            return true;
-        }
-        for (javax.lang.model.element.Element member : nativeClass.element().getEnclosedElements()) {
-            if (member.getKind() == ElementKind.METHOD
-                && member.getModifiers().contains(Modifier.STATIC)
-                && !member.getAnnotationMirrors().isEmpty()) {
-                return true;
-            }
-        }
-        return false;
     }
 
     private static SourcePersistentProperty property(Member member) {

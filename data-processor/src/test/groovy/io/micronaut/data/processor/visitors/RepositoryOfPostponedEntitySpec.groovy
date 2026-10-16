@@ -42,9 +42,6 @@ interface WidgetRepository extends CrudRepository<Widget, Long> {
         then:
         repository.executableMethods.findAll { it.abstract }*.methodName.containsAll(['findById', 'findByName', 'save'])
         repository.executableMethods.findAll { it.abstract && !it.classValue(DataMethod, DataMethod.META_MEMBER_INTERCEPTOR).present }*.methodName == []
-
-        and: "the record got its generated JDBC row mapper, its static method not being inspected for the creator"
-        repository.beanType.classLoader.loadClass('test.Widget$JdbcRowMapper') != null
     }
 
     @Override
