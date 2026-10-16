@@ -77,7 +77,7 @@ final class DefaultNeo4jRepositoryOperations extends AbstractGraphRepositoryOper
                                      AttributeConverterRegistry attributeConverterRegistry,
                                      @Named("io") @Nullable ExecutorService executorService,
                                      List<GraphValueEncoderRegistrar> encoderRegistrars,
-                                     @Nullable GraphSerde graphSerde) {
+                                     GraphSerde graphSerde) {
         super(new CypherQueryBuilder(), dateTimeProvider, runtimeEntityRegistry, conversionService, attributeConverterRegistry, executorService, encoderRegistrars, graphSerde);
         this.connectionOperations = connectionOperations;
         this.reactiveOperations = reactiveOperations;

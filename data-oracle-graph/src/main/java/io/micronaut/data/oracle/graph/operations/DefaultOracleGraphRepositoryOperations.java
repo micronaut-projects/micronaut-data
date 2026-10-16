@@ -100,7 +100,7 @@ final class DefaultOracleGraphRepositoryOperations extends AbstractGraphReposito
                                            AttributeConverterRegistry attributeConverterRegistry,
                                            @Named("io") @Nullable ExecutorService executorService,
                                            List<GraphValueEncoderRegistrar> encoderRegistrars,
-                                           @Nullable GraphSerde graphSerde) {
+                                           GraphSerde graphSerde) {
         super(new OracleGraphQueryBuilder(AnnotationMetadata.EMPTY_METADATA), dateTimeProvider, runtimeEntityRegistry,
             conversionService, attributeConverterRegistry, executorService, encoderRegistrars, graphSerde);
         this.connectionOperations = connectionOperations;
