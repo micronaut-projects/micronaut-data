@@ -49,6 +49,18 @@ public final class GeneratedRowMapperSupport {
     }
 
     /**
+     * The ordinal of a column, read through a call because the Java source generator of Sourcegen 2.1 renders no
+     * array element expression.
+     *
+     * @param columns The ordinals
+     * @param index   The index
+     * @return The ordinal
+     */
+    public static int column(int[] columns, int index) {
+        return columns[index];
+    }
+
+    /**
      * @param rs The result set
      * @param c  The column
      * @return The value, or {@code null} for SQL NULL

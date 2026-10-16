@@ -31,14 +31,14 @@ import io.micronaut.data.processor.model.SourcePersistentProperty;
 import io.micronaut.inject.ast.ClassElement;
 import io.micronaut.inject.ast.ElementQuery;
 import io.micronaut.inject.ast.Element;
-import io.micronaut.inject.ast.FieldElement;
 import io.micronaut.inject.ast.MethodElement;
 import io.micronaut.inject.ast.ParameterElement;
 import io.micronaut.inject.ast.PropertyElement;
-import io.micronaut.inject.processing.ProcessingException;
+import io.micronaut.inject.visitor.ElementPostponedToNextRoundException;
 import io.micronaut.inject.visitor.TypeElementVisitor;
 import io.micronaut.inject.visitor.VisitorContext;
-import io.micronaut.sourcegen.bytecode.ByteCodeWriter;
+import io.micronaut.sourcegen.generator.SourceGenerator;
+import io.micronaut.sourcegen.generator.SourceGenerators;
 import io.micronaut.sourcegen.model.ClassDef;
 import io.micronaut.sourcegen.model.ClassTypeDef;
 import io.micronaut.sourcegen.model.ExpressionDef;
@@ -49,8 +49,6 @@ import io.micronaut.sourcegen.model.VariableDef;
 import org.jspecify.annotations.Nullable;
 
 import javax.lang.model.element.Modifier;
-import java.io.IOException;
-import java.io.OutputStream;
 import java.math.BigDecimal;
 import java.math.BigInteger;
 import java.sql.ResultSet;
@@ -77,9 +75,9 @@ import java.util.function.Function;
 /**
  * Generates {@code <Entity>$JdbcRowMapper} for every {@link MappedEntity}: an implementation of
  * {@code io.micronaut.data.jdbc.mapper.GeneratedRowMapper} that reads one row of a {@link ResultSet} into the
- * entity with the typed getters by column index, written as bytecode so that Java, Kotlin and Groovy entities are
- * served alike and no source is generated. The mapper is registered as a Micronaut service of that interface, which
- * is how {@code GeneratedRowMappers} finds it at runtime and how a native image knows to include it.
+ * entity with the typed getters by column index, written by the Sourcegen generator registered for the language
+ * being compiled. The mapper is registered as a Micronaut service of that interface, which is how
+ * {@code GeneratedRowMappers} finds it at runtime and how a native image knows to include it.
  *
  * <p>The columns are the ones a query returning the entity without joins selects, as
  * {@link PersistentEntityUtils#traversePersistentProperties} lists them: the identity, the version, the persistent
@@ -113,7 +111,6 @@ public final class JdbcRowMapperVisitor implements TypeElementVisitor<MappedEnti
     private static final ClassTypeDef DATA_ACCESS_EXCEPTION = ClassTypeDef.of(DataAccessException.class);
     private static final ClassTypeDef BIG_DECIMAL = ClassTypeDef.of(BigDecimal.class);
     private static final ClassTypeDef BIG_INTEGER = ClassTypeDef.of(BigInteger.class);
-    private static final ByteCodeWriter WRITER = new ByteCodeWriter(false, true);
 
     private final Map<String, SourcePersistentEntity> entities = new HashMap<>();
     private final Function<ClassElement, SourcePersistentEntity> entityResolver = new Function<>() {
@@ -142,19 +139,48 @@ public final class JdbcRowMapperVisitor implements TypeElementVisitor<MappedEnti
             // Only a project with data-jdbc on its classpath can use the mapper
             return;
         }
+        SourceGenerator sourceGenerator = sourceGenerator(context);
+        if (sourceGenerator == null) {
+            return;
+        }
         SourcePersistentEntity entity = entityResolver.apply(element);
-        Model model = Model.of(entity, context);
+        Model model;
+        try {
+            model = Model.of(entity, context);
+        } catch (RuntimeException e) {
+            if (isPostponement(e)) {
+                // A constructor lookup that names a type generated later in this compilation: the entity keeps the
+                // runtime mappers rather than postponing the element, which would leave the repositories of this
+                // round half processed
+                return;
+            }
+            throw e;
+        }
         if (model == null) {
             return;
         }
         String name = element.getName() + SUFFIX;
-        ClassDef classDef = generate(name, element, model);
-        try (OutputStream os = context.visitClass(name, element)) {
-            os.write(WRITER.write(classDef, null));
-        } catch (IOException e) {
-            throw new ProcessingException(element, "Failed to write the generated row mapper " + name + ": " + e.getMessage(), e);
-        }
+        sourceGenerator.write(generate(name, element, model), context, element);
         context.visitServiceDescriptor(MAPPER_INTERFACE, name, element);
+    }
+
+    private static boolean isPostponement(RuntimeException e) {
+        // The Java processor's PostponeToNextRoundException is not on this module's classpath
+        return e instanceof ElementPostponedToNextRoundException || e.getClass().getSimpleName().equals("PostponeToNextRoundException");
+    }
+
+    /**
+     * @return The Sourcegen generator of the language being compiled, or {@code null} when there is none or
+     * Sourcegen is not on the classpath the visitor is loaded from (the Groovy compiler loads visitors from the
+     * compile classpath, where a processor's own dependencies need not be)
+     */
+    @Nullable
+    private static SourceGenerator sourceGenerator(VisitorContext context) {
+        try {
+            return SourceGenerators.findByLanguage(context.getLanguage()).orElse(null);
+        } catch (NoClassDefFoundError e) {
+            return null;
+        }
     }
 
     private static ClassDef generate(String name, ClassElement element, Model model) {
@@ -179,7 +205,6 @@ public final class JdbcRowMapperVisitor implements TypeElementVisitor<MappedEnti
                 .overrides()
                 .returns(TypeDef.STRING.array())
                 .build((aThis, params) -> TypeDef.STRING.array().instantiate(columns).returning()))
-            // Returns Object, the erasure of the interface method: the bytecode writer emits no bridge method
             .addMethod(MethodDef.builder("map")
                 .addModifiers(Modifier.PUBLIC)
                 .overrides()
@@ -302,12 +327,21 @@ public final class JdbcRowMapperVisitor implements TypeElementVisitor<MappedEnti
      * else the primary constructor; {@code null} for a no-argument one.
      */
     @Nullable
-    private static MethodElement constructorOf(ClassElement type) {
+    private static MethodElement constructorOf(SourcePersistentEntity entity) {
+        ClassElement type = entity.getClassElement();
         if (type.isRecord()) {
-            // The canonical constructor: the one with a parameter per component, whatever other constructors exist
+            // The canonical constructor: the one with a parameter per component, whatever other constructors
+            // exist. The components are the persistent properties, which avoids inspecting the record's methods
+            // (a static method naming a type generated later in the compilation postpones the element)
             Set<String> components = new HashSet<>();
-            for (PropertyElement property : type.getBeanProperties()) {
+            for (PersistentProperty property : entity.getPersistentProperties()) {
                 components.add(property.getName());
+            }
+            if (entity.hasIdentity()) {
+                components.add(entity.getIdentity().getName());
+            }
+            if (entity.hasVersion()) {
+                components.add(entity.getVersion().getName());
             }
             for (MethodElement candidate : type.getEnclosedElements(ElementQuery.CONSTRUCTORS.filter(c -> !c.isPrivate()))) {
                 Set<String> names = new HashSet<>();
@@ -339,12 +373,6 @@ public final class JdbcRowMapperVisitor implements TypeElementVisitor<MappedEnti
     private static MethodElement writeMethod(SourcePersistentProperty property) {
         PropertyElement element = property.getPropertyElement();
         return element.getWriteMethod().filter(m -> !m.isPrivate()).orElse(null);
-    }
-
-    @Nullable
-    private static FieldElement writableField(SourcePersistentProperty property) {
-        PropertyElement element = property.getPropertyElement();
-        return element.getField().filter(f -> !f.isPrivate() && !f.isFinal()).orElse(null);
     }
 
     private static String path(List<Association> associations, PersistentProperty property) {
@@ -532,14 +560,14 @@ public final class JdbcRowMapperVisitor implements TypeElementVisitor<MappedEnti
 
         /**
          * Picks the constructor of every object the way the bean introspection does and checks that every
-         * argument is a column or an object of the model; a member that is neither an argument nor settable is
+         * argument is a column or an object of the model; a member that is neither an argument nor has a setter is
          * dropped, unless it is the identity or the version.
          */
         private void resolveConstructors(Node node) {
             ClassElement type = node.type();
             MethodElement constructor = type.hasAnnotation(InstantiateWithDefaultConstructor.class)
                 ? null
-                : constructorOf(type);
+                : constructorOf(node.entity);
             node.constructor = constructor;
             Set<String> arguments = new HashSet<>();
             if (constructor != null) {
@@ -560,7 +588,7 @@ public final class JdbcRowMapperVisitor implements TypeElementVisitor<MappedEnti
                     continue;
                 }
                 SourcePersistentProperty property = property(entry.getValue());
-                if (writeMethod(property) == null && writableField(property) == null) {
+                if (writeMethod(property) == null) {
                     if (isIdentityOrVersion(node.entity, property)) {
                         throw new Unsupported("the property " + property.getName() + " of " + type.getName() + " cannot be set", property.getPropertyElement());
                     }
@@ -607,8 +635,12 @@ public final class JdbcRowMapperVisitor implements TypeElementVisitor<MappedEnti
         }
 
         private void read(Leaf leaf) {
-            ExpressionDef column = columns.arrayElement(leaf.index());
-            StatementDef.DefineAndAssign value = leaf.read().read(rs, column).newLocal("v" + leaf.index());
+            // int cN = GeneratedRowMapperSupport.column(columns, N): the Java source generator of Sourcegen 2.1,
+            // which the core BOM pins, renders no array element expression
+            StatementDef.DefineAndAssign column = SUPPORT_TYPE.invokeStatic("column", TypeDef.Primitive.INT, columns, ExpressionDef.constant(leaf.index()))
+                .newLocal("c" + leaf.index());
+            statements.add(column);
+            StatementDef.DefineAndAssign value = leaf.read().read(rs, column.variable()).newLocal("v" + leaf.index());
             statements.add(value);
             VariableDef local = value.variable();
             values.put(leaf, local);
@@ -742,10 +774,7 @@ public final class JdbcRowMapperVisitor implements TypeElementVisitor<MappedEnti
                 }
                 SourcePersistentProperty property = property(entry.getValue());
                 ExpressionDef value = Objects.requireNonNull(built.get(entry.getKey()));
-                MethodElement setter = writeMethod(property);
-                StatementDef set = setter != null
-                    ? local.invoke(setter, value)
-                    : local.field(Objects.requireNonNull(writableField(property))).assign(value);
+                StatementDef set = local.invoke(Objects.requireNonNull(writeMethod(property)), value);
                 if (entry.getValue() instanceof Leaf) {
                     setters.add(condition(present, entry.getKey()).doIf(set));
                 } else {

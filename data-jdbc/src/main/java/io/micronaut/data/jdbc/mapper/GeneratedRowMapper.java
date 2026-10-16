@@ -61,8 +61,9 @@ public interface GeneratedRowMapper<T> {
      *
      * @param rs      The result set, positioned on a row
      * @param columns The 1-based ordinal of every column of {@link #columnNames()}, in that order
-     * @return The entity
+     * @return The entity, declared as {@link Object} so that a generated implementation needs no bridge method
+     * whatever generator wrote it
      * @throws SQLException If a column cannot be read
      */
-    T map(ResultSet rs, int[] columns) throws SQLException;
+    Object map(ResultSet rs, int[] columns) throws SQLException;
 }
