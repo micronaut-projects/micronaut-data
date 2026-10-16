@@ -2,32 +2,18 @@ The `micronaut-data-oracle-graph` module queries property graphs that Oracle Dat
 
 [source,sql]
 ----
-CREATE PROPERTY GRAPH bank_graph
-  VERTEX TABLES (accounts KEY (id) LABEL Account PROPERTIES (id, name))
-  EDGE TABLES (transfers KEY (id)
-    SOURCE KEY (src) REFERENCES accounts (id)
-    DESTINATION KEY (dst) REFERENCES accounts (id)
-    LABEL TRANSFERS PROPERTIES (id, amount))
+include::doc-examples/oracle-graph-example-java/src/test/sql/bank-graph.sql[tag=graph]
 ----
 
 dependency:io.micronaut.data:micronaut-data-oracle-graph[]
 
-Repositories are annotated with ann:data.oracle.graph.annotation.OracleGraphRepository[], which names the graph and the query language:
+Repositories are annotated with ann:data.oracle.graph.annotation.OracleGraphRepository[], which names the graph and the query language, as shown in the <<graphOracleQuickStart, quick start>>. Explicit queries are written in the query language of the repository:
 
-[source,java]
-----
-@OracleGraphRepository(graph = "bank_graph", language = PropertyGraph.QueryLanguage.SQL_PGQ)
-public interface BankGraph extends GenericRepository<Account, Long> {
+snippet::example.BankGraph[project-base="doc-examples/oracle-graph-example", source="main", tags="query", languages="java,kotlin,groovy,python"]
 
-    List<Account> findByTransfersAmountGreaterThan(BigDecimal amount);
+The columns of the query are mapped to the properties of the result type by name:
 
-    @PathLimit(3)
-    boolean existsPathByTransfers(Long from, Long to);
-
-    @Query("SELECT * FROM GRAPH_TABLE (bank_graph MATCH (a IS Account) -[t IS TRANSFERS]-> (b IS Account) WHERE t.amount > $amount COLUMNS (a.name AS \"source\", b.name AS \"target\", t.amount AS \"amount\"))")
-    List<TransferView> largeTransfers(BigDecimal amount);
-}
-----
+snippet::example.TransferView[project-base="doc-examples/oracle-graph-example", source="main", tags="view", languages="java,kotlin,groovy,python"]
 
 The query language is one of:
 
