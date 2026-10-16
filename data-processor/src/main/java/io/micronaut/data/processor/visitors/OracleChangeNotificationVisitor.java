@@ -15,7 +15,6 @@
  */
 package io.micronaut.data.processor.visitors;
 
-import io.micronaut.core.annotation.AnnotationClassValue;
 import io.micronaut.core.annotation.AnnotationMetadata;
 import io.micronaut.core.annotation.AnnotationValue;
 import io.micronaut.data.annotation.MappedEntity;
@@ -112,9 +111,7 @@ public final class OracleChangeNotificationVisitor implements TypeElementVisitor
                 + "parameterized entity @Where clauses are not supported", element);
             return;
         }
-        element.annotate(OracleChangeListenerQuery.class, builder -> builder
-            .value(queryResult.getQuery())
-            .member("entity", new AnnotationClassValue<>(resolvedEntityType.getName())));
+        element.annotate(OracleChangeListenerQuery.class, builder -> builder.value(queryResult.getQuery()));
     }
 
     /**

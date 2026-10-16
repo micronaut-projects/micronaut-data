@@ -34,9 +34,4 @@ public @interface OracleChangeListenerQuery {
      * @return The generated SQL query.
      */
     String value();
-
-    /**
-     * @return The entity type reloaded by the query.
-     */
-    Class<?> entity();
 }
