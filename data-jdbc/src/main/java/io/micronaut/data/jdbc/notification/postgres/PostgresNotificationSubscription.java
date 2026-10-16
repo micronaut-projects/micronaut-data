@@ -29,6 +29,7 @@ import org.postgresql.PGConnection;
 import org.postgresql.PGNotification;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
+
 import javax.sql.DataSource;
 import java.io.IOException;
 import java.sql.Connection;
@@ -121,7 +122,7 @@ final class PostgresNotificationSubscription {
             received.complete(null);
             try {
                 CompletableFuture.allOf(dispatchers.values().stream().map(PostgresChangeNotificationDispatcher::stop)
-                    .toArray(CompletableFuture[]::new))
+                        .toArray(CompletableFuture[]::new))
                     .orTimeout(configuration.getShutdownTimeout().toMillis(), TimeUnit.MILLISECONDS).join();
             } catch (CompletionException cleanupFailure) {
                 e.addSuppressed(cleanupFailure);
@@ -140,13 +141,14 @@ final class PostgresNotificationSubscription {
         Connection candidate = dataSource.getConnection();
         try {
             candidate.setAutoCommit(true);
+            PGConnection postgresConnection = candidate.unwrap(PGConnection.class);
             Set<String> channels = new HashSet<>();
             for (PostgresChangeListenerDefinition listener : dispatchers.keySet()) {
                 channels.add(listener.channel());
             }
             for (String channel : channels) {
                 try (Statement statement = candidate.createStatement()) {
-                    statement.execute("LISTEN " + quote(channel));
+                    statement.execute("LISTEN " + postgresConnection.escapeIdentifier(channel));
                 }
             }
             return candidate;
@@ -252,7 +254,8 @@ final class PostgresNotificationSubscription {
             ChangeEvent<?> event = switch (payload.operation()) {
                 case INSERT, UPDATE -> new DeferredChangeEvent<>(payload.operation(), metadata,
                     () -> listener.loader().reload(metadata.newKeys()));
-                case DELETE, INVALIDATE -> new DefaultChangeEvent<>(payload.operation(), null, metadata);
+                case DELETE, INVALIDATE ->
+                    new DefaultChangeEvent<>(payload.operation(), null, metadata);
             };
             dispatcher.offer(event);
         }
@@ -282,7 +285,9 @@ final class PostgresNotificationSubscription {
         return (received.isDone() ? 0 : 1) + dispatchers.values().stream().mapToLong(PostgresChangeNotificationDispatcher::pendingTasks).sum();
     }
 
-    /** Clears the active connection reference and attempts to release the listening connection. */
+    /**
+     * Clears the active connection reference and attempts to release the listening connection.
+     */
     private void closeConnection() {
         Connection old = connection;
         connection = null;
@@ -297,24 +302,67 @@ final class PostgresNotificationSubscription {
 
     /**
      * Removes all channel subscriptions before closing the connection, including when it is returned to a pool.
-     * Closing is attempted even if UNLISTEN fails.
+     * If cleanup fails, attempts to abort the physical connection before closing the pooled handle.
+     * Abort runs synchronously so the connection cannot be returned to the pool before it is discarded.
+     * Closing is attempted even if cleanup or abort fails.
      *
      * @param old the connection to release
      * @throws SQLException if removing subscriptions or closing the connection fails
      */
     private static void clearAndClose(Connection old) throws SQLException {
         try (old) {
-            if (!old.isClosed()) {
-                try (Statement statement = old.createStatement()) {
-                    statement.setQueryTimeout(5);
-                    statement.execute("UNLISTEN *");
-                }
+            clearSubscriptions(old);
+        }
+    }
+
+    /**
+     * Removes subscriptions or aborts the connection before propagating a cleanup failure.
+     *
+     * @param connection the listening connection
+     * @throws SQLException if subscription cleanup fails
+     */
+    private static void clearSubscriptions(Connection connection) throws SQLException {
+        try {
+            unlisten(connection);
+        } catch (Exception e) {
+            abortConnection(connection, e);
+            throw e;
+        }
+    }
+
+    /**
+     * Executes UNLISTEN for an open connection with a query timeout.
+     *
+     * @param connection the listening connection
+     * @throws SQLException if inspecting the connection or executing UNLISTEN fails
+     */
+    private static void unlisten(Connection connection) throws SQLException {
+        if (!connection.isClosed()) {
+            try (Statement statement = connection.createStatement()) {
+                statement.setQueryTimeout(5);
+                statement.execute("UNLISTEN *");
             }
         }
     }
 
-    private static String quote(String name) {
-        return "\"" + name.replace("\"", "\"\"") + "\"";
+    /**
+     * Attempts synchronous connection abort, attaching any failure to the original cleanup exception.
+     *
+     * <p>If UNLISTEN fails, the physical connection may still have channel subscriptions.
+     * Closing a pooled connection normally returns it to the pool without removing those subscriptions,
+     * and a query cancellation does not necessarily cause the pool to discard it.
+     * Aborting terminates the physical connection so a later borrower cannot inherit its subscriptions.
+     * The direct executor completes the abort attempt before the pooled handle is closed.</p>
+     *
+     * @param connection     the connection to abort
+     * @param cleanupFailure the original cleanup exception
+     */
+    private static void abortConnection(Connection connection, Exception cleanupFailure) {
+        try {
+            connection.abort(Runnable::run);
+        } catch (SQLException | RuntimeException abortFailure) {
+            cleanupFailure.addSuppressed(abortFailure);
+        }
     }
 
     @SuppressWarnings({"rawtypes", "unchecked"})
