@@ -191,11 +191,6 @@ public class MappedEntityVisitor implements TypeElementVisitor<MappedEntity, Obj
             // Read as a map of its values
             return false;
         }
-        Set<String> constructorArguments = element.hasAnnotation(InstantiateWithDefaultConstructor.class)
-            ? Set.of()
-            : element.getPrimaryConstructor()
-                .map(constructor -> Arrays.stream(constructor.getParameters()).map(ParameterElement::getName).collect(Collectors.toSet()))
-                .orElse(Set.of());
         List<SourcePersistentProperty> candidates = new ArrayList<>();
         if (entity.hasIdentity()) {
             candidates.add(entity.getIdentity());
@@ -204,6 +199,27 @@ public class MappedEntityVisitor implements TypeElementVisitor<MappedEntity, Obj
             candidates.add(entity.getVersion());
         }
         candidates.addAll(entity.getPersistentProperties());
+        Set<String> constructorArguments;
+        if (element.hasAnnotation(InstantiateWithDefaultConstructor.class)) {
+            constructorArguments = Set.of();
+        } else if (element.isRecord()) {
+            // The canonical constructor takes every component, without inspecting the record's methods: a static
+            // method whose signature names a type generated later in this compilation would postpone the element
+            constructorArguments = candidates.stream().map(SourcePersistentProperty::getName).collect(Collectors.toSet());
+        } else {
+            try {
+                constructorArguments = element.getPrimaryConstructor()
+                    .map(constructor -> Arrays.stream(constructor.getParameters()).map(ParameterElement::getName).collect(Collectors.toSet()))
+                    .orElse(Set.of());
+            } catch (RuntimeException e) {
+                if (isPostponement(e)) {
+                    // Decided without the constructor: the entity keeps the general mapper rather than postponing
+                    // the element, which would leave the repositories of this round half processed
+                    return false;
+                }
+                throw e;
+            }
+        }
         for (SourcePersistentProperty property : candidates) {
             // The converter is read from the element, where computeMappingDefaults records the one it resolved
             // from @TypeDef or the configured data converters; the source property cached the member before that
