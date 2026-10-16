@@ -38,6 +38,7 @@ import io.micronaut.data.model.query.builder.sql.Dialect;
 import io.micronaut.data.model.query.builder.sql.IdentifierNamingStrategy;
 import io.micronaut.data.model.query.builder.sql.SqlDialectOptions;
 import io.micronaut.data.model.query.builder.sql.SqlQueryBuilder;
+import jakarta.inject.Inject;
 import io.micronaut.data.model.query.builder.sql.SqlSchemaUtils;
 import io.micronaut.data.model.query.builder.sql.validation.SqlTableMappingValidator;
 import io.micronaut.data.model.runtime.convert.DefinitionProvider;
@@ -61,8 +62,11 @@ import java.sql.DatabaseMetaData;
 import java.sql.PreparedStatement;
 import java.sql.ResultSet;
 import java.sql.SQLException;
+import java.util.ArrayList;
+import java.util.Arrays;
 import java.util.Collection;
 import java.util.Collections;
+import java.util.LinkedHashMap;
 import java.util.List;
 import java.util.Map;
 import java.util.Set;
@@ -84,6 +88,7 @@ public class SchemaGenerator {
     private final Map<Dialect, SqlTableMappingValidator> dialectSqlTableMappingValidatorMap;
     private final PropertyPlaceholderResolver propertyPlaceholderResolver;
     private final List<DefinitionProvider> definitionProviders;
+    private final List<JdbcSchemaContributor> schemaContributors;
 
     /**
      * Constructors a schema generator for the given configurations.
@@ -99,6 +104,28 @@ public class SchemaGenerator {
                            List<SqlTableMappingValidator> sqlTableMappingValidators,
                            Environment environment,
                            List<DefinitionProvider> definitionProviders) {
+        this(configurations, schemaHandler, sqlTableMappingValidators, environment, definitionProviders, List.of());
+    }
+
+    /**
+     * Constructors a schema generator for the given configurations.
+     *
+     * @param configurations              The configurations
+     * @param schemaHandler               The schema handler
+     * @param sqlTableMappingValidators   The list of {@link SqlTableMappingValidator} instances
+     * @param environment                 The environment
+     * @param definitionProviders         Providers of vendor-specific SQL definitions (columns and indexes) used during schema generation
+     * @param schemaContributors          Contributors that generate the schema of some entities, such as the tables and property graphs of graph entities
+     * @since 5.3.0
+     */
+    @Inject
+    public SchemaGenerator(List<DataJdbcConfiguration> configurations,
+                           JdbcSchemaHandler schemaHandler,
+                           List<SqlTableMappingValidator> sqlTableMappingValidators,
+                           Environment environment,
+                           List<DefinitionProvider> definitionProviders,
+                           List<JdbcSchemaContributor> schemaContributors) {
+        this.schemaContributors = schemaContributors == null ? Collections.emptyList() : schemaContributors;
         this.configurations = configurations == null ? Collections.emptyList() : configurations;
         this.schemaHandler = schemaHandler;
         this.propertyPlaceholderResolver = environment.getPlaceholderResolver();
@@ -148,7 +175,13 @@ public class SchemaGenerator {
                 .sorted(Comparator.comparing(i -> i.hasAnnotation(JsonView.class)))
                 .map(beanIntrospection -> runtimeEntityRegistry.getEntity(beanIntrospection.getBeanType()))
                 .toArray(PersistentEntity[]::new);
-            if (ArrayUtils.isNotEmpty(entities)) {
+            Map<JdbcSchemaContributor, List<PersistentEntity>> contributions = selectContributions(configuration, entities);
+            if (!contributions.isEmpty()) {
+                List<PersistentEntity> remaining = new ArrayList<>(Arrays.asList(entities));
+                contributions.values().forEach(remaining::removeAll);
+                entities = remaining.toArray(PersistentEntity[]::new);
+            }
+            if (ArrayUtils.isNotEmpty(entities) || !contributions.isEmpty()) {
                 DataSource dataSource = DelegatingDataSource.unwrapDataSource(beanLocator.getBean(DataSource.class, Qualifiers.byName(name)));
                 try {
                     try (Connection connection = dataSource.getConnection()) {
@@ -161,7 +194,7 @@ public class SchemaGenerator {
                                 if (schemaGenerate == SchemaGenerate.VALIDATE) {
                                     validate(connection, configuration, entities, dialectSqlTableMappingValidatorMap, definitionProviders);
                                 } else {
-                                    generate(connection, configuration, propertyPlaceholderResolver, entities);
+                                    generate(connection, configuration, propertyPlaceholderResolver, entities, contributions);
                                 }
                             }
                         } else {
@@ -174,7 +207,7 @@ public class SchemaGenerator {
                             if (schemaGenerate == SchemaGenerate.VALIDATE) {
                                 validate(connection, configuration, entities, dialectSqlTableMappingValidatorMap, definitionProviders);
                             } else {
-                                generate(connection, configuration, propertyPlaceholderResolver, entities);
+                                generate(connection, configuration, propertyPlaceholderResolver, entities, contributions);
                             }
                         }
                     } catch (SQLException e) {
@@ -187,11 +220,74 @@ public class SchemaGenerator {
         }
     }
 
-    @SuppressWarnings("java:S3776")
+    private Map<JdbcSchemaContributor, List<PersistentEntity>> selectContributions(DataJdbcConfiguration configuration,
+                                                                                PersistentEntity[] entities) {
+        if (schemaContributors.isEmpty()) {
+            return Map.of();
+        }
+        Map<JdbcSchemaContributor, List<PersistentEntity>> contributions = new LinkedHashMap<>();
+        List<PersistentEntity> remaining = new ArrayList<>(Arrays.asList(entities));
+        for (JdbcSchemaContributor contributor : schemaContributors) {
+            List<PersistentEntity> selected = contributor.selectEntities(configuration, List.copyOf(remaining));
+            if (!selected.isEmpty()) {
+                contributions.put(contributor, selected);
+                remaining.removeAll(selected);
+            }
+        }
+        return contributions;
+    }
+
     private void generate(Connection connection,
                           DataJdbcConfiguration configuration,
                           PropertyPlaceholderResolver propertyPlaceholderResolver,
-                          PersistentEntity[] entities) throws SQLException {
+                          PersistentEntity[] entities,
+                          Map<JdbcSchemaContributor, List<PersistentEntity>> contributions) throws SQLException {
+        SchemaGenerate schemaGenerate = configuration.getSchemaGenerate();
+        if (schemaGenerate == SchemaGenerate.CREATE_DROP) {
+            // Contributed objects, such as property graphs, can depend on the tables, so they are dropped first
+            for (Map.Entry<JdbcSchemaContributor, List<PersistentEntity>> contribution : contributions.entrySet()) {
+                for (String statement : contribution.getKey().buildDropStatements(configuration, contribution.getValue())) {
+                    String sql = resolveSql(propertyPlaceholderResolver, statement);
+                    if (DataSettings.QUERY_LOG.isDebugEnabled()) {
+                        DataSettings.QUERY_LOG.debug("Executing DROP statement: \n{}", sql);
+                    }
+                    try (PreparedStatement ps = connection.prepareStatement(sql)) {
+                        ps.executeUpdate();
+                    } catch (SQLException e) {
+                        if (DataSettings.QUERY_LOG.isTraceEnabled()) {
+                            DataSettings.QUERY_LOG.trace("Drop Unsuccessful: " + e.getMessage());
+                        }
+                    }
+                }
+            }
+        }
+        if (entities.length > 0) {
+            generateTables(connection, configuration, propertyPlaceholderResolver, entities);
+        }
+        if (schemaGenerate == SchemaGenerate.CREATE_DROP || schemaGenerate == SchemaGenerate.CREATE) {
+            for (Map.Entry<JdbcSchemaContributor, List<PersistentEntity>> contribution : contributions.entrySet()) {
+                for (String statement : contribution.getKey().buildCreateStatements(configuration, contribution.getValue())) {
+                    String sql = resolveSql(propertyPlaceholderResolver, statement);
+                    if (DataSettings.QUERY_LOG.isDebugEnabled()) {
+                        DataSettings.QUERY_LOG.debug("Executing CREATE statement: \n{}", sql);
+                    }
+                    try (PreparedStatement ps = connection.prepareStatement(sql)) {
+                        ps.executeUpdate();
+                    } catch (SQLException e) {
+                        if (DataSettings.QUERY_LOG.isWarnEnabled()) {
+                            DataSettings.QUERY_LOG.warn("CREATE Statement Unsuccessful: " + e.getMessage());
+                        }
+                    }
+                }
+            }
+        }
+    }
+
+    @SuppressWarnings("java:S3776")
+    private void generateTables(Connection connection,
+                                DataJdbcConfiguration configuration,
+                                PropertyPlaceholderResolver propertyPlaceholderResolver,
+                                PersistentEntity[] entities) throws SQLException {
         Dialect dialect = configuration.getDialect();
         SqlQueryBuilder builder = new SqlQueryBuilder(dialect, configuration.getDialectOptions().getVersion());
         // Oracle JDBC doesn't execute several statements in one string
