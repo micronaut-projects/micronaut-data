@@ -96,13 +96,13 @@ Invocation uses the listener bean's interceptors, including `@Retryable`. Insert
 inside that invocation, so loading failures can also be retried. Once retries are exhausted, the failure is logged
 and subsequent notifications continue.
 
-The provider sends `INVALIDATE` after startup and each successful reconnection, allowing listeners to reconcile
+The provider sends `INVALIDATE` after each successful reconnection, allowing listeners to reconcile
 changes missed while disconnected. It reconnects with exponential backoff. An invalid payload invalidates listeners
 on its channel. A mismatched key mapping invalidates the affected listener. Well-formed events for other tables
 are ignored.
 
 Each listener has a bounded queue. Overflow replaces pending changes with `INVALIDATE`.
-Startup, recovery, malformed-payload, and overflow invalidations have no PostgreSQL event metadata.
+Recovery, malformed-payload, and overflow invalidations have no PostgreSQL event metadata.
 Shutdown stops reception, removes subscriptions, releases the connection, and drains accepted callbacks.
 Context shutdown events and bean destruction initiate cleanup asynchronously. Graceful shutdown returns a stage
 that completes when cleanup and accepted callbacks finish; Micronaut's graceful shutdown configuration controls

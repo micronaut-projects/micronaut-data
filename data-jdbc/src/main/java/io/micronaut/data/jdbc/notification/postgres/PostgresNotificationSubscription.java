@@ -51,8 +51,8 @@ import java.util.concurrent.Executors;
  *
  * <p>A dedicated connection subscribes to each distinct listener channel. Startup opens the
  * connection synchronously, then a single receive thread handles notifications, reconnection,
- * and connection cleanup. Each successful connection queues an invalidation event for every
- * listener so it can account for changes made before listening began.</p>
+ * and connection cleanup. Each successful reconnection queues an invalidation event for every
+ * listener so it can account for changes missed while disconnected.</p>
  *
  * <p>Notifications are routed by channel, schema, and table. The subscription owns one dispatcher
  * per listener to serialize its callbacks on the supplied executor. Entity loading uses repository
@@ -76,8 +76,12 @@ final class PostgresNotificationSubscription {
     private volatile boolean running = true;
     private volatile @Nullable Connection connection;
 
-    PostgresNotificationSubscription(String name, JdbcRepositoryOperations operations, List<ChangeListenerMethod> methods,
-                                     BeanContext context, JsonMapper mapper, Executor executor,
+    PostgresNotificationSubscription(String name,
+                                     JdbcRepositoryOperations operations,
+                                     List<ChangeListenerMethod> methods,
+                                     BeanContext context,
+                                     JsonMapper mapper,
+                                     Executor executor,
                                      PostgresNotificationConfiguration configuration) {
         this.name = name;
         this.mapper = mapper;
@@ -98,11 +102,6 @@ final class PostgresNotificationSubscription {
             thread.setDaemon(true);
             return thread;
         });
-    }
-
-    @SuppressWarnings({"rawtypes", "unchecked"})
-    private static void invoke(BeanContext context, ChangeListenerMethod method, ChangeEvent<?> event) {
-        ((ExecutableMethod) method.method()).invoke(context.getBean(method.beanDefinition()), event);
     }
 
     /**
@@ -133,7 +132,6 @@ final class PostgresNotificationSubscription {
 
     /**
      * Opens an autocommit connection and subscribes to each distinct listener channel.
-     * Queues invalidation events after all LISTEN statements have committed.
      *
      * @return the connection retained for notification reception
      * @throws SQLException if a connection cannot be obtained or configured
@@ -151,10 +149,6 @@ final class PostgresNotificationSubscription {
                     statement.execute("LISTEN " + quote(channel));
                 }
             }
-            // LISTEN has committed before reconciliation can query the initial state.
-            if (running) {
-                dispatchers.values().forEach(PostgresChangeNotificationDispatcher::invalidate);
-            }
             return candidate;
         } catch (Exception e) {
             try {
@@ -168,6 +162,7 @@ final class PostgresNotificationSubscription {
 
     /**
      * Receives and routes notifications until stopped, reconnecting after failures with exponential backoff.
+     * Queues invalidation events after reconnection and before reception resumes.
      * Releases the connection and completes the reception stage when the loop exits.
      */
     private void receive() {
@@ -180,6 +175,10 @@ final class PostgresNotificationSubscription {
                         active = connect();
                         connection = active;
                         delay = Math.min(configuration.getRetryDelay().toMillis(), configuration.getMaxRetryDelay().toMillis());
+                        // LISTEN has committed before listeners can refresh state missed while disconnected.
+                        if (running) {
+                            dispatchers.values().forEach(PostgresChangeNotificationDispatcher::invalidate);
+                        }
                     }
                     if (!running) {
                         break;
@@ -316,6 +315,11 @@ final class PostgresNotificationSubscription {
 
     private static String quote(String name) {
         return "\"" + name.replace("\"", "\"\"") + "\"";
+    }
+
+    @SuppressWarnings({"rawtypes", "unchecked"})
+    private static void invoke(BeanContext context, ChangeListenerMethod method, ChangeEvent<?> event) {
+        ((ExecutableMethod) method.method()).invoke(context.getBean(method.beanDefinition()), event);
     }
 
 }

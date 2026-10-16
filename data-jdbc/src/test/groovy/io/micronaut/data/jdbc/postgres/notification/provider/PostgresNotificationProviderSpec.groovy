@@ -85,7 +85,26 @@ class PostgresNotificationProviderSpec extends Specification implements Postgres
             'micronaut.data.jdbc.notifications.postgres.retry-delay': '100ms'
         ] + additionalSettings)
         listener = application.getBean(BookChangeListener)
-        assert next().operation() == ChangeOperation.INVALIDATE
+    }
+
+    void "startup emits no invalidation or events for existing rows"() {
+        given:
+        execute("INSERT INTO \"ProviderBook\" VALUES ('$TENANT', 1, 'existing')")
+
+        when:
+        start()
+
+        then:
+        listener.events.poll(300, TimeUnit.MILLISECONDS) == null
+        listener.attempts.get() == 0
+
+        when:
+        execute('UPDATE "ProviderBook" SET title = \'changed after startup\'')
+        def event = next()
+
+        then:
+        event.operation() == ChangeOperation.UPDATE
+        event.entity().orElseThrow().title == 'changed after startup'
     }
 
     void "external committed row changes load entities and retain delete and changed keys"() {
@@ -299,7 +318,7 @@ class PostgresNotificationProviderSpec extends Specification implements Postgres
             'datasources.default.url': url + (url.contains('?') ? '&' : '?') + 'currentSchema=notification_provider_test'
         ])
         def unqualified = application.getBean(UnqualifiedBookChangeListener)
-        assert unqualified.events.poll(10, TimeUnit.SECONDS).operation() == ChangeOperation.INVALIDATE
+        assert unqualified.events.poll(300, TimeUnit.MILLISECONDS) == null
         execute("INSERT INTO \"ProviderBook\" VALUES ('$TENANT', 8, 'local')")
         assert next().entity().orElseThrow().title == 'local'
         assert unqualified.events.poll(10, TimeUnit.SECONDS).entity().orElseThrow().title == 'local'
