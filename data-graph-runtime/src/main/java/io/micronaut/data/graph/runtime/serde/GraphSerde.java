@@ -15,9 +15,7 @@
  */
 package io.micronaut.data.graph.runtime.serde;
 
-import io.micronaut.context.annotation.Requires;
 import io.micronaut.core.annotation.Internal;
-import io.micronaut.core.util.StringUtils;
 import io.micronaut.core.convert.ConversionService;
 import io.micronaut.core.type.Argument;
 import io.micronaut.data.exceptions.DataAccessException;
@@ -55,14 +53,8 @@ import java.util.concurrent.ConcurrentHashMap;
  * @since 5.3.0
  */
 @Singleton
-@Requires(property = GraphSerde.ENABLED, value = StringUtils.TRUE)
 @Internal
 public final class GraphSerde {
-
-    /**
-     * Turns reading entities with Micronaut Serialization on.
-     */
-    public static final String ENABLED = "micronaut.data.graph.serde.enabled";
 
     private final SerdeRegistry serdeRegistry;
     private final ConversionService conversionService;
