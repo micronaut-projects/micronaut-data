@@ -288,25 +288,7 @@ public class RepositoryTypeElementVisitor implements TypeElementVisitor<Reposito
                 }
             }
 
-            Function<ClassElement, SourcePersistentEntity> entityResolver = new Function<>() {
-
-            // resolve entities for this repository without postponing it; see MappedEntityVisitor#resolveJsonCreatorConflictForRepository
-            final MappedEntityVisitor mappedEntityVisitor = new MappedEntityVisitor(false);
-            final MappedEntityVisitor embeddedMappedEntityVisitor = new MappedEntityVisitor(false);
-
-                @Override
-                public SourcePersistentEntity apply(ClassElement classElement) {
-                    String classNameKey = getClassNameKey(classElement);
-                    return entityMap.computeIfAbsent(classNameKey, s -> {
-                        if (classElement.hasAnnotation("io.micronaut.data.annotation.Embeddable")) {
-                            embeddedMappedEntityVisitor.visitClass(classElement, context);
-                        } else {
-                            mappedEntityVisitor.visitClass(classElement, context);
-                        }
-                        return new SourcePersistentEntity(classElement, this);
-                    });
-                }
-            };
+            Function<ClassElement, SourcePersistentEntity> entityResolver = new SourcePersistentEntityResolver(context, entityMap);
             Function<String, SourcePersistentEntity> entityBySimplyNameResolver = new Function<>() {
                 @Override
                 @Nullable
