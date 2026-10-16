@@ -35,6 +35,7 @@ snippet::example.BankGraphSpec[project-base="doc-examples/oracle-graph-example",
 
 Writes join the current connection and transaction of the data source, as graph queries do. Writes need the `micronaut-data-jdbc` module, which `micronaut-data-oracle-graph` depends on. Saving a node writes only its row: relationships are rows of their edge tables, which a ann:data.jdbc.annotation.JdbcRepository[] over an entity of the edge table writes.
 
+[[graphOracleSchema]]
 == Generating the schema
 
 When schema generation is enabled for the data source, the JDBC schema generator creates the tables of the graph entities and the property graphs over them, as it does for the tables of Micronaut Data JDBC entities:
@@ -52,7 +53,7 @@ The tables follow the mapping of the entities:
 * A relationship to a ann:data.graph.annotation.RelationshipProperties[] entity is stored in the table of that entity, which gets a column referencing the node that owns the relationship, named after the owner, such as `ACCOUNTID`. The ann:data.graph.annotation.TargetNode[] property is the column referencing the other end.
 * A relationship to a node is stored in an edge table named after the owner's table and the relationship type, such as `MEMBERS_FOLLOWS`, with a column referencing the owner and a column named after the property referencing the target.
 
-Each graph named by an ann:data.oracle.graph.annotation.OracleGraphRepository[] of the data source is then created with `CREATE PROPERTY GRAPH`, over the vertex tables of the entities its repositories reach through their relationships and the edge tables between them. Incoming relationships are stored as edges from their target to their owner. For the `Account` and `Transfer` entities of the <<graphOracleQuickStart, quick start>>, the generator runs:
+Each graph named by an ann:data.oracle.graph.annotation.OracleGraphRepository[] of the data source, or an ann:data.oracle.graph.r2dbc.annotation.OracleGraphR2dbcRepository[] of the connection factory with <<graphOracleR2dbcSchema, R2DBC>>, is then created with `CREATE PROPERTY GRAPH`, over the vertex tables of the entities its repositories reach through their relationships and the edge tables between them. Incoming relationships are stored as edges from their target to their owner. For the `Account` and `Transfer` entities of the <<graphOracleQuickStart, quick start>>, the generator runs:
 
 [source,sql]
 ----
@@ -100,3 +101,18 @@ snippet::example.BankGraphSpec[project-base="doc-examples/oracle-graph-r2dbc-exa
 <3> Block only to read the result in the test.
 
 Graph queries and node writes run in the same reactive connection, and join the transaction of a reactive `@Transactional` method. Blocking methods are not supported. Micronaut Data JDBC and R2DBC cannot be used together with Oracle in one application, so an application uses one of the two modules.
+
+[[graphOracleR2dbcSchema]]
+=== Generating the schema with R2DBC
+
+The R2DBC schema generator creates the tables of the graph entities and the property graphs named by the ann:data.oracle.graph.r2dbc.annotation.OracleGraphR2dbcRepository[] repositories of the connection factory, with the same statements as the <<graphOracleSchema, JDBC schema generator>>:
+
+[configuration]
+----
+r2dbc:
+  datasources:
+    default:
+      schema-generate: CREATE_DROP
+----
+
+Rows of edge tables are written with SQL or a ann:data.r2dbc.annotation.R2dbcRepository[] over an entity of the edge table. R2DBC schema generation does not support `VALIDATE`.
