@@ -112,20 +112,18 @@ public final class GraphValueDecoder extends LimitingStream implements Decoder {
 
     private Number takeNumber(String expected) throws IOException {
         Object value = takeNonNull(expected);
-        if (value instanceof Number number) {
-            return number;
-        }
-        if (value instanceof Boolean b) {
-            return b ? 1 : 0;
-        }
-        if (value instanceof CharSequence text) {
-            try {
-                return new BigDecimal(text.toString().trim());
-            } catch (NumberFormatException e) {
-                throw createDeserializationException("Expected " + expected + " but found [" + text + "]", value);
+        return switch (value) {
+            case Number number -> number;
+            case Boolean b -> b ? 1 : 0;
+            case CharSequence text -> {
+                try {
+                    yield new BigDecimal(text.toString().trim());
+                } catch (NumberFormatException e) {
+                    throw createDeserializationException("Expected " + expected + " but found [" + text + "]", value);
+                }
             }
-        }
-        throw createDeserializationException("Expected " + expected + " but found " + value.getClass().getName(), value);
+            default -> throw createDeserializationException("Expected " + expected + " but found " + value.getClass().getName(), value);
+        };
     }
 
     @Override
@@ -210,17 +208,17 @@ public final class GraphValueDecoder extends LimitingStream implements Decoder {
     @Override
     public char decodeChar() throws IOException {
         Object value = takeNonNull("a character");
-        if (value instanceof Character c) {
-            return c;
-        }
-        if (value instanceof Number number) {
-            return (char) number.intValue();
-        }
-        String text = value.toString();
-        if (text.length() != 1) {
-            throw createDeserializationException("Expected a single character but found [" + text + "]", value);
-        }
-        return text.charAt(0);
+        return switch (value) {
+            case Character c -> c;
+            case Number number -> (char) number.intValue();
+            default -> {
+                String text = value.toString();
+                if (text.length() != 1) {
+                    throw createDeserializationException("Expected a single character but found [" + text + "]", value);
+                }
+                yield text.charAt(0);
+            }
+        };
     }
 
     @Override
@@ -250,48 +248,39 @@ public final class GraphValueDecoder extends LimitingStream implements Decoder {
 
     @Override
     public BigInteger decodeBigInteger() throws IOException {
-        Number number = takeNumber("an integer");
-        if (number instanceof BigInteger bigInteger) {
-            return bigInteger;
-        }
-        if (number instanceof BigDecimal bigDecimal) {
-            return bigDecimal.toBigInteger();
-        }
-        return BigInteger.valueOf(number.longValue());
+        return switch (takeNumber("an integer")) {
+            case BigInteger bigInteger -> bigInteger;
+            case BigDecimal bigDecimal -> bigDecimal.toBigInteger();
+            case Number number -> BigInteger.valueOf(number.longValue());
+        };
     }
 
     @Override
     public BigDecimal decodeBigDecimal() throws IOException {
-        Number number = takeNumber("a decimal");
-        if (number instanceof BigDecimal bigDecimal) {
-            return bigDecimal;
-        }
-        if (number instanceof BigInteger bigInteger) {
-            return new BigDecimal(bigInteger);
-        }
-        if (number instanceof Double || number instanceof Float) {
-            return BigDecimal.valueOf(number.doubleValue());
-        }
-        return BigDecimal.valueOf(number.longValue());
+        return switch (takeNumber("a decimal")) {
+            case BigDecimal bigDecimal -> bigDecimal;
+            case BigInteger bigInteger -> new BigDecimal(bigInteger);
+            case Double d -> BigDecimal.valueOf(d);
+            case Float f -> BigDecimal.valueOf(f.doubleValue());
+            case Number number -> BigDecimal.valueOf(number.longValue());
+        };
     }
 
     @Override
     public byte[] decodeBinary() throws IOException {
         Object value = takeNonNull("binary data");
-        if (value instanceof byte[] bytes) {
-            return bytes;
-        }
-        if (value instanceof CharSequence text) {
-            return Base64.getDecoder().decode(text.toString());
-        }
-        if (value instanceof List<?> list) {
-            byte[] bytes = new byte[list.size()];
-            for (int i = 0; i < bytes.length; i++) {
-                bytes[i] = list.get(i) instanceof Number number ? number.byteValue() : 0;
+        return switch (value) {
+            case byte[] bytes -> bytes;
+            case CharSequence text -> Base64.getDecoder().decode(text.toString());
+            case List<?> list -> {
+                byte[] bytes = new byte[list.size()];
+                for (int i = 0; i < bytes.length; i++) {
+                    bytes[i] = list.get(i) instanceof Number number ? number.byteValue() : 0;
+                }
+                yield bytes;
             }
-            return bytes;
-        }
-        throw createDeserializationException("Expected binary data but found " + value.getClass().getName(), value);
+            default -> throw createDeserializationException("Expected binary data but found " + value.getClass().getName(), value);
+        };
     }
 
     @Override
@@ -309,19 +298,21 @@ public final class GraphValueDecoder extends LimitingStream implements Decoder {
     }
 
     private static @Nullable Object arbitrary(@Nullable Object value) {
-        if (value instanceof Map<?, ?> map) {
-            Map<String, Object> copy = new LinkedHashMap<>(map.size());
-            map.forEach((k, v) -> copy.put(String.valueOf(k), arbitrary(v)));
-            return copy;
-        }
-        if (value instanceof List<?> list) {
-            List<Object> copy = new ArrayList<>(list.size());
-            for (Object item : list) {
-                copy.add(arbitrary(item));
+        return switch (value) {
+            case Map<?, ?> map -> {
+                Map<String, Object> copy = new LinkedHashMap<>(map.size());
+                map.forEach((k, v) -> copy.put(String.valueOf(k), arbitrary(v)));
+                yield copy;
             }
-            return copy;
-        }
-        return value;
+            case List<?> list -> {
+                List<Object> copy = new ArrayList<>(list.size());
+                for (Object item : list) {
+                    copy.add(arbitrary(item));
+                }
+                yield copy;
+            }
+            case null, default -> value;
+        };
     }
 
     @Override
@@ -330,46 +321,30 @@ public final class GraphValueDecoder extends LimitingStream implements Decoder {
     }
 
     private static JsonNode node(@Nullable Object value) {
-        if (value == null) {
-            return JsonNode.nullNode();
-        }
-        if (value instanceof Map<?, ?> map) {
-            Map<String, JsonNode> nodes = new LinkedHashMap<>(map.size());
-            map.forEach((k, v) -> nodes.put(String.valueOf(k), node(v)));
-            return JsonNode.createObjectNode(nodes);
-        }
-        if (value instanceof List<?> list) {
-            List<JsonNode> nodes = new ArrayList<>(list.size());
-            for (Object item : list) {
-                nodes.add(node(item));
+        return switch (value) {
+            case null -> JsonNode.nullNode();
+            case Map<?, ?> map -> {
+                Map<String, JsonNode> nodes = new LinkedHashMap<>(map.size());
+                map.forEach((k, v) -> nodes.put(String.valueOf(k), node(v)));
+                yield JsonNode.createObjectNode(nodes);
             }
-            return JsonNode.createArrayNode(nodes);
-        }
-        if (value instanceof Boolean b) {
-            return JsonNode.createBooleanNode(b);
-        }
-        if (value instanceof Integer i) {
-            return JsonNode.createNumberNode(i);
-        }
-        if (value instanceof Long l) {
-            return JsonNode.createNumberNode(l);
-        }
-        if (value instanceof Double d) {
-            return JsonNode.createNumberNode(d);
-        }
-        if (value instanceof Float f) {
-            return JsonNode.createNumberNode(f);
-        }
-        if (value instanceof BigDecimal d) {
-            return JsonNode.createNumberNode(d);
-        }
-        if (value instanceof BigInteger i) {
-            return JsonNode.createNumberNode(i);
-        }
-        if (value instanceof Number n) {
-            return JsonNode.createNumberNode(n.longValue());
-        }
-        return JsonNode.createStringNode(value.toString());
+            case List<?> list -> {
+                List<JsonNode> nodes = new ArrayList<>(list.size());
+                for (Object item : list) {
+                    nodes.add(node(item));
+                }
+                yield JsonNode.createArrayNode(nodes);
+            }
+            case Boolean b -> JsonNode.createBooleanNode(b);
+            case Integer i -> JsonNode.createNumberNode(i);
+            case Long l -> JsonNode.createNumberNode(l);
+            case Double d -> JsonNode.createNumberNode(d);
+            case Float f -> JsonNode.createNumberNode(f);
+            case BigDecimal d -> JsonNode.createNumberNode(d);
+            case BigInteger i -> JsonNode.createNumberNode(i);
+            case Number n -> JsonNode.createNumberNode(n.longValue());
+            default -> JsonNode.createStringNode(value.toString());
+        };
     }
 
     @Override
