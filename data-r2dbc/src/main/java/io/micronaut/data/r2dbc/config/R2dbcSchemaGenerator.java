@@ -40,12 +40,16 @@ import reactor.core.publisher.Flux;
 import reactor.core.publisher.Mono;
 
 import jakarta.annotation.PostConstruct;
+import jakarta.inject.Inject;
 
 import java.lang.reflect.Modifier;
+import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.Collection;
 import java.util.Comparator;
+import java.util.LinkedHashMap;
 import java.util.List;
+import java.util.Map;
 import java.util.stream.Collectors;
 
 /**
@@ -61,6 +65,7 @@ public class R2dbcSchemaGenerator {
     private final List<DataR2dbcConfiguration> configurations;
     private final R2dbcSchemaHandler schemaHandler;
     private final List<DefinitionProvider> definitionProviders;
+    private final List<R2dbcSchemaContributor> schemaContributors;
 
     /**
      * Default constructor.
@@ -72,6 +77,24 @@ public class R2dbcSchemaGenerator {
     public R2dbcSchemaGenerator(List<DataR2dbcConfiguration> configurations,
                                 R2dbcSchemaHandler schemaHandler,
                                 List<DefinitionProvider> definitionProviders) {
+        this(configurations, schemaHandler, definitionProviders, List.of());
+    }
+
+    /**
+     * Constructor with schema contributors.
+     *
+     * @param configurations      The configurations.
+     * @param schemaHandler       The schema handler
+     * @param definitionProviders Providers of vendor-specific SQL definitions
+     * @param schemaContributors  Contributors that generate the schema of some entities, such as the tables and property graphs of graph entities
+     * @since 5.3.0
+     */
+    @Inject
+    public R2dbcSchemaGenerator(List<DataR2dbcConfiguration> configurations,
+                                R2dbcSchemaHandler schemaHandler,
+                                List<DefinitionProvider> definitionProviders,
+                                List<R2dbcSchemaContributor> schemaContributors) {
+        this.schemaContributors = schemaContributors == null ? java.util.Collections.emptyList() : schemaContributors;
         this.configurations = configurations;
         this.schemaHandler = schemaHandler;
         this.definitionProviders = definitionProviders == null ? java.util.Collections.emptyList() : definitionProviders;
@@ -107,7 +130,14 @@ public class R2dbcSchemaGenerator {
                         .filter(i -> !i.hasAnnotation(JsonSubView.class))
                         .sorted(Comparator.comparing(i -> i.hasAnnotation(JsonView.class)))
                         .map(e -> runtimeEntityRegistry.getEntity(e.getBeanType())).toArray(PersistentEntity[]::new);
-                if (ArrayUtils.isNotEmpty(entities)) {
+                Map<R2dbcSchemaContributor, List<PersistentEntity>> contributions = selectContributions(configuration, entities);
+                if (!contributions.isEmpty()) {
+                    List<PersistentEntity> remaining = new ArrayList<>(Arrays.asList(entities));
+                    contributions.values().forEach(remaining::removeAll);
+                    entities = remaining.toArray(PersistentEntity[]::new);
+                }
+                PersistentEntity[] tableEntities = entities;
+                if (ArrayUtils.isNotEmpty(entities) || !contributions.isEmpty()) {
                     SqlQueryBuilder builder = new SqlQueryBuilder(configuration.getDialect(), configuration.getDialectOptions().getVersion());
                     Mono.from(configuration.getConnectionFactory().create()).flatMap(connection -> {
                         Dialect dialect = configuration.getDialect();
@@ -116,7 +146,7 @@ public class R2dbcSchemaGenerator {
                             for (String schemaName : configuration.getSchemaGenerateNames()) {
                                 result = result.then(Mono.from(schemaHandler.createSchema(connection, dialect, schemaName)))
                                     .then(Mono.from(schemaHandler.useSchema(connection, dialect, schemaName)))
-                                    .then(generate(connection, configuration, entities, builder));
+                                    .then(generate(connection, configuration, tableEntities, builder, contributions));
                             }
                             return result.then(Mono.from(connection.close()));
                         }
@@ -125,7 +155,7 @@ public class R2dbcSchemaGenerator {
                             result = Mono.from(schemaHandler.createSchema(connection, dialect, configuration.getSchemaGenerateName()))
                                 .then(Mono.from(schemaHandler.useSchema(connection, dialect, configuration.getSchemaGenerateName())));
                         }
-                        return result.then(generate(connection, configuration, entities, builder))
+                        return result.then(generate(connection, configuration, tableEntities, builder, contributions))
                             .then(Mono.from(connection.close()));
                     }).block();
                 }
@@ -133,10 +163,73 @@ public class R2dbcSchemaGenerator {
         }
     }
 
+    private Map<R2dbcSchemaContributor, List<PersistentEntity>> selectContributions(DataR2dbcConfiguration configuration,
+                                                                                  PersistentEntity[] entities) {
+        if (schemaContributors.isEmpty()) {
+            return Map.of();
+        }
+        Map<R2dbcSchemaContributor, List<PersistentEntity>> contributions = new LinkedHashMap<>();
+        List<PersistentEntity> remaining = new ArrayList<>(Arrays.asList(entities));
+        for (R2dbcSchemaContributor contributor : schemaContributors) {
+            List<PersistentEntity> selected = contributor.selectEntities(configuration, List.copyOf(remaining));
+            if (!selected.isEmpty()) {
+                contributions.put(contributor, selected);
+                remaining.removeAll(selected);
+            }
+        }
+        return contributions;
+    }
+
     private Mono<Void> generate(Connection connection,
                                 DataR2dbcConfiguration configuration,
                                 PersistentEntity[] entities,
-                                SqlQueryBuilder builder) {
+                                SqlQueryBuilder builder,
+                                Map<R2dbcSchemaContributor, List<PersistentEntity>> contributions) {
+        if (contributions.isEmpty()) {
+            return generateTables(connection, configuration, entities, builder);
+        }
+        SchemaGenerate schemaGenerate = configuration.getSchemaGenerate();
+        // Contributed objects, such as property graphs, can depend on the tables, so they are dropped first
+        Flux<Void> dropContributions = Flux.fromIterable(contributions.entrySet())
+            .concatMap(contribution -> Flux.fromIterable(contribution.getKey().buildDropStatements(configuration, contribution.getValue())))
+            .concatMap(sql -> {
+                if (DataSettings.QUERY_LOG.isDebugEnabled()) {
+                    DataSettings.QUERY_LOG.debug("Executing DROP statement: \n{}", sql);
+                }
+                return execute(connection, sql)
+                    .onErrorResume(throwable -> {
+                        if (DataSettings.QUERY_LOG.isTraceEnabled()) {
+                            DataSettings.QUERY_LOG.trace("Drop Unsuccessful: {}", throwable.getMessage());
+                        }
+                        return Mono.empty();
+                    });
+            });
+        Flux<Void> createContributions = Flux.fromIterable(contributions.entrySet())
+            .concatMap(contribution -> Flux.fromIterable(contribution.getKey().buildCreateStatements(configuration, contribution.getValue())))
+            .concatMap(sql -> {
+                if (DataSettings.QUERY_LOG.isDebugEnabled()) {
+                    DataSettings.QUERY_LOG.debug("Executing CREATE statement: \n{}", sql);
+                }
+                return execute(connection, sql)
+                    .onErrorResume(throwable -> {
+                        if (LOG.isWarnEnabled()) {
+                            LOG.warn("CREATE Statement Unsuccessful: {}, {}", throwable.getMessage(), sql);
+                        }
+                        return Mono.empty();
+                    });
+            });
+        Mono<Void> tables = entities.length > 0 ? generateTables(connection, configuration, entities, builder) : Mono.empty();
+        return switch (schemaGenerate) {
+            case CREATE_DROP -> dropContributions.then(tables).thenMany(createContributions).then();
+            case CREATE -> tables.thenMany(createContributions).then();
+            default -> tables;
+        };
+    }
+
+    private Mono<Void> generateTables(Connection connection,
+                                      DataR2dbcConfiguration configuration,
+                                      PersistentEntity[] entities,
+                                      SqlQueryBuilder builder) {
         SchemaGenerate schemaGenerate = configuration.getSchemaGenerate();
         List<String> createStatements = Arrays.asList(
             builder.buildCreateTableStatements(definitionProviders, entities, builder.getDialect())
