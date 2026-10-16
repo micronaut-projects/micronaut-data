@@ -80,7 +80,15 @@ public @interface OracleTransactional {
          * Resume an Oracle sessionless transaction from the current propagation context and complete
          * it when the transactional boundary completes.
          */
-        REQUIRES_SUSPENDED
+        REQUIRES_SUSPENDED,
+        /**
+         * Resume an Oracle sessionless transaction from the current propagation context and suspend
+         * it again when the transactional boundary completes successfully. The same transaction id
+         * remains available for subsequent stages. A rollback ends the entire transaction.
+         *
+         * @since 5.3.0
+         */
+        RESUME_AND_SUSPEND
     }
 
     /**
