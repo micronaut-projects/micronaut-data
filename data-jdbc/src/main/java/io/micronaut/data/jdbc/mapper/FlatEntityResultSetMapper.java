@@ -60,6 +60,9 @@ import static io.micronaut.data.jdbc.mapper.FlatEntityMappingPlan.UUID_VALUE;
  * registered for it. What is saved is the per-column dispatch, boxing and mapping context of the general mapper,
  * and the conversion of every property whose type is what its getter returns.</p>
  *
+ * <p>When the plan holds a {@link GeneratedRowMapper}, the row is read by that generated class instead, with the
+ * ordinals resolved here the same way; the values are the same.</p>
+ *
  * <p>The column ordinals are resolved once from the first row, so an instance belongs to one query execution and
  * is not thread safe, like the general mapper. The plan that decides what to read is shared between executions,
  * see {@link FlatEntityMappingPlan}.</p>
@@ -71,6 +74,8 @@ import static io.micronaut.data.jdbc.mapper.FlatEntityMappingPlan.UUID_VALUE;
 public final class FlatEntityResultSetMapper<R> implements SqlTypeMapper<ResultSet, R> {
 
     private final FlatEntityMappingPlan<R> plan;
+    @Nullable
+    private final GeneratedRowMapper<R> generatedMapper;
     private final BeanIntrospection<R> introspection;
     private final BeanProperty<R, Object>[] properties;
     private final RuntimePersistentProperty<R>[] persistentProperties;
@@ -103,6 +108,7 @@ public final class FlatEntityResultSetMapper<R> implements SqlTypeMapper<ResultS
                                      @Nullable BiFunction<RuntimePersistentEntity<Object>, Object, Object> loadListener,
                                      Supplier<SqlTypeMapper<ResultSet, R>> generalMapper) {
         this.plan = plan;
+        this.generatedMapper = plan.getGeneratedMapper();
         this.introspection = plan.getIntrospection();
         this.properties = plan.getProperties();
         this.persistentProperties = plan.getPersistentProperties();
@@ -154,18 +160,26 @@ public final class FlatEntityResultSetMapper<R> implements SqlTypeMapper<ResultS
             resolveOrdinals(rs);
         }
         R entity;
-        try {
-            entity = constructorArgumentCount == 0 ? introspection.instantiate() : instantiate(rs);
-        } catch (InstantiationException e) {
-            throw new DataAccessException("Error instantiating entity [" + plan.getEntity().getName() + "]: " + e.getMessage(), e);
-        }
-        for (int i = 0; i < kinds.length; i++) {
-            if (constructorArgumentIndexes[i] >= 0) {
-                continue;
+        if (generatedMapper != null) {
+            try {
+                entity = generatedMapper.map(rs, ordinals);
+            } catch (SQLException e) {
+                throw new DataAccessException("Error reading entity [" + plan.getEntity().getName() + "] from result set: " + e.getMessage(), e);
             }
-            Object value = read(rs, ordinals[i], kinds[i], i);
-            if (value != null) {
-                properties[i].set(entity, value);
+        } else {
+            try {
+                entity = constructorArgumentCount == 0 ? introspection.instantiate() : instantiate(rs);
+            } catch (InstantiationException e) {
+                throw new DataAccessException("Error instantiating entity [" + plan.getEntity().getName() + "]: " + e.getMessage(), e);
+            }
+            for (int i = 0; i < kinds.length; i++) {
+                if (constructorArgumentIndexes[i] >= 0) {
+                    continue;
+                }
+                Object value = read(rs, ordinals[i], kinds[i], i);
+                if (value != null) {
+                    properties[i].set(entity, value);
+                }
             }
         }
         if (loadListener != null) {

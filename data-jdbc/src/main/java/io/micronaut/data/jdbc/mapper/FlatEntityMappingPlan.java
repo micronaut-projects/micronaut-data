@@ -50,6 +50,12 @@ import java.util.UUID;
  * converters, no composite identity, and only data types with a typed getter. {@link #of} returns {@code null}
  * for any other entity, which is then mapped by the general mapper as before.</p>
  *
+ * <p>When the annotation processor generated a {@link GeneratedRowMapper} for the entity, the plan holds it
+ * instead and {@link FlatEntityResultSetMapper} delegates the row read to it; the plan then only resolves the
+ * ordinals of the generated mapper's columns. A generated mapper covers what the flat mapper covers and also
+ * embedded values and single ended associations by their foreign key, and its values are those the flat mapper
+ * reads.</p>
+ *
  * @param <R> The entity type
  * @since 5.3.0
  */
@@ -78,6 +84,8 @@ public final class FlatEntityMappingPlan<R> {
     private static final byte SKIPPED = 0;
 
     private final RuntimePersistentEntity<R> entity;
+    @Nullable
+    private final GeneratedRowMapper<R> generatedMapper;
     private final BeanIntrospection<R> introspection;
     private final RuntimePersistentProperty<R>[] persistentProperties;
     private final BeanProperty<R, Object>[] properties;
@@ -96,8 +104,23 @@ public final class FlatEntityMappingPlan<R> {
     private final boolean[] requiredConstructorArguments;
     private final int constructorArgumentCount;
 
+    private FlatEntityMappingPlan(RuntimePersistentEntity<R> entity, GeneratedRowMapper<R> generatedMapper) {
+        this.entity = entity;
+        this.generatedMapper = generatedMapper;
+        this.introspection = entity.getIntrospection();
+        this.persistentProperties = new RuntimePersistentProperty[0];
+        this.properties = new BeanProperty[0];
+        this.columnNames = generatedMapper.columnNames();
+        this.kinds = new byte[0];
+        this.conversions = new boolean[0];
+        this.constructorArgumentIndexes = new int[0];
+        this.requiredConstructorArguments = new boolean[0];
+        this.constructorArgumentCount = 0;
+    }
+
     private FlatEntityMappingPlan(RuntimePersistentEntity<R> entity, List<Column<R>> columns, boolean[] requiredConstructorArguments) {
         this.entity = entity;
+        this.generatedMapper = null;
         this.introspection = entity.getIntrospection();
         int size = columns.size();
         this.persistentProperties = new RuntimePersistentProperty[size];
@@ -128,6 +151,25 @@ public final class FlatEntityMappingPlan<R> {
      */
     @Nullable
     public static <R> FlatEntityMappingPlan<R> of(RuntimePersistentEntity<R> entity) {
+        return of(entity, true);
+    }
+
+    /**
+     * Resolves the plan of the given entity.
+     *
+     * @param entity    The entity
+     * @param generated Whether to use the mapper the annotation processor generated for the entity when there is one
+     * @param <R>       The entity type
+     * @return The plan, or {@code null} when the entity is not flat and has to be mapped by the general mapper
+     */
+    @Nullable
+    public static <R> FlatEntityMappingPlan<R> of(RuntimePersistentEntity<R> entity, boolean generated) {
+        if (generated) {
+            GeneratedRowMapper<R> generatedMapper = GeneratedRowMappers.find(entity.getIntrospection().getBeanType());
+            if (generatedMapper != null) {
+                return new FlatEntityMappingPlan<>(entity, generatedMapper);
+            }
+        }
         if (!entity.hasIdentity() && !entity.getIdentityProperties().isEmpty()) {
             // A composite identity is read as a map of its values
             return null;
@@ -275,6 +317,15 @@ public final class FlatEntityMappingPlan<R> {
      */
     public RuntimePersistentEntity<R> getEntity() {
         return entity;
+    }
+
+    /**
+     * @return The mapper the annotation processor generated for the entity, which reads the rows in place of the
+     * plan's columns, or {@code null} when the plan's columns are read one by one
+     */
+    @Nullable
+    public GeneratedRowMapper<R> getGeneratedMapper() {
+        return generatedMapper;
     }
 
     BeanIntrospection<R> getIntrospection() {

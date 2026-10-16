@@ -56,17 +56,24 @@ class FlatEntityResultSetMapperSpec extends Specification {
         FlatEntityMappingPlan.of(entity(FlatTypes)) != null
         FlatEntityMappingPlan.of(entity(FlatRecord)) != null
         FlatEntityMappingPlan.of(entity(Person)) != null
-        // An association
-        FlatEntityMappingPlan.of(entity(Book)) == null
+        // An association: read by the generated mapper, not flat without it
+        FlatEntityMappingPlan.of(entity(Book)).generatedMapper != null
+        FlatEntityMappingPlan.of(entity(Book), false) == null
         // Types the getters do not return (char, URL, URI, CharSequence) are converted, as the general mapper does
         FlatEntityMappingPlan.of(entity(BasicTypes)) != null
         // A composite identity
         FlatEntityMappingPlan.of(entity(EntityWithIdClass)) == null
+
+        and: "the plan of an entity with a generated mapper holds it, and reads the columns itself without"
+        FlatEntityMappingPlan.of(entity(FlatRecord)).generatedMapper != null
+        FlatEntityMappingPlan.of(entity(FlatRecord), false).generatedMapper == null
+        // An enum stored by ordinal has no generated mapper
+        FlatEntityMappingPlan.of(entity(FlatTypes)).generatedMapper == null
     }
 
     void "the plan resolves the column of every property"() {
         when:
-        def plan = FlatEntityMappingPlan.of(entity(FlatTypes))
+        def plan = FlatEntityMappingPlan.of(entity(FlatTypes), false)
 
         then:
         plan.columnNames.toList().containsAll(["id", "version", "primitive_integer", "wrapper_long", "renamed_column", "uuid"])
@@ -76,7 +83,7 @@ class FlatEntityResultSetMapperSpec extends Specification {
     void "maps the same entity as the general mapper"() {
         given:
         def entity = entity(FlatTypes)
-        def plan = FlatEntityMappingPlan.of(entity)
+        def plan = FlatEntityMappingPlan.of(entity, false)
         createTable("flat_types", plan.columnNames.collect { "$it ${columnType(it)}" })
         execute("INSERT INTO flat_types (id, version, primitive_integer, primitive_long, primitive_boolean, primitive_short, primitive_double, primitive_float, primitive_byte, string, wrapper_integer, wrapper_long, wrapper_boolean, wrapper_short, wrapper_double, wrapper_float, wrapper_byte, big_decimal, big_integer, byte_array, date, local_date_time, zoned_date_time, offset_date_time, local_date, local_time, instant, uuid, renamed_column, suit, suit_ordinal, with_default) VALUES " +
             "(1, 3, 11, 12, TRUE, 13, 1.5, 2.5, 14, 'one', 21, 22, FALSE, 23, 3.5, 4.5, 24, 123.45, 678, X'010203', DATE '2024-01-02', TIMESTAMP '2024-02-03 04:05:06', TIMESTAMP '2024-03-04 05:06:07', TIMESTAMP '2024-03-14 05:06:07', DATE '2024-04-05', TIMESTAMP '1970-01-01 06:07:08', TIMESTAMP '2024-05-06 07:08:09', 'c2b9f4a0-3c9e-4c6e-9a7c-6b1f1a2b3c4d', 'aliased', 'HEARTS', 1, 9)")
@@ -176,7 +183,7 @@ class FlatEntityResultSetMapperSpec extends Specification {
     void "instantiates a record through its constructor"() {
         given:
         def entity = entity(FlatRecord)
-        def plan = FlatEntityMappingPlan.of(entity)
+        def plan = FlatEntityMappingPlan.of(entity, false)
         createTable("flat_record", ["id BIGINT", "name VARCHAR(255)", "quantity INT", "since DATE", "count INT"])
         execute("INSERT INTO flat_record VALUES (1, 'first', 5, DATE '2024-06-07', 3), (2, 'second', NULL, NULL, 0)")
 
@@ -210,7 +217,7 @@ class FlatEntityResultSetMapperSpec extends Specification {
 
     void "a missing column is reported by name"() {
         given:
-        def plan = FlatEntityMappingPlan.of(entity(FlatRecord))
+        def plan = FlatEntityMappingPlan.of(entity(FlatRecord), false)
         createTable("flat_record", ["id BIGINT", "name VARCHAR(255)"])
         execute("INSERT INTO flat_record VALUES (1, 'first')")
 
@@ -227,7 +234,7 @@ class FlatEntityResultSetMapperSpec extends Specification {
 
     void "the load listener sees every entity"() {
         given:
-        def plan = FlatEntityMappingPlan.of(entity(FlatRecord))
+        def plan = FlatEntityMappingPlan.of(entity(FlatRecord), false)
         createTable("flat_record", ["id BIGINT", "name VARCHAR(255)", "quantity INT", "since DATE", "count INT"])
         execute("INSERT INTO flat_record VALUES (1, 'first', 5, NULL, 1), (2, 'second', NULL, NULL, 2)")
         def seen = []
@@ -250,7 +257,7 @@ class FlatEntityResultSetMapperSpec extends Specification {
         TimeZone.setDefault(TimeZone.getTimeZone("Europe/Berlin"))
         Connection gapConnection = DriverManager.getConnection("jdbc:h2:mem:flatmapperdst")
         def entity = entity(FlatTypes)
-        def plan = FlatEntityMappingPlan.of(entity)
+        def plan = FlatEntityMappingPlan.of(entity, false)
         execute(gapConnection, "CREATE TABLE flat_types (${plan.columnNames.collect { "$it ${columnType(it)}" }.join(', ')})")
         execute(gapConnection, "INSERT INTO flat_types (id, string, local_date_time) VALUES (1, 'gap', TIMESTAMP '2026-03-29 02:30:00')")
 

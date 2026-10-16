@@ -28,8 +28,8 @@ import spock.lang.Shared
 import spock.lang.Specification
 
 /**
- * The flat entity mapping switched on for a data source: a flat entity is read with the typed getters, an entity
- * with associations with the general mapper, and both read the same rows.
+ * The flat entity mapping switched on for a data source: an entity is read with the typed getters, through the
+ * mapper the annotation processor generated for it when there is one, and reads the same rows as the general mapper.
  */
 @MicronautTest
 @H2DBProperties
@@ -80,7 +80,7 @@ class H2FlatEntityMappingSpec extends Specification {
         plans()[operations.getEntity(Person)].present
     }
 
-    void "entities with associations keep the general mapper"() {
+    void "entities with associations are read by the generated mapper"() {
         given:
         def author = authorRepository.save(new Author(name: "Stephen King"))
         bookRepository.save(new Book(title: "It", totalPages: 1138, author: author))
@@ -93,8 +93,9 @@ class H2FlatEntityMappingSpec extends Specification {
         books[0].title == "It"
         books[0].author.id == author.id
 
-        and: "no plan exists for the entity with an association"
-        !plans()[operations.getEntity(Book)].present
+        and: "the plan of the entity with associations holds the mapper the annotation processor generated"
+        plans()[operations.getEntity(Book)].get().generatedMapper != null
+        plans()[operations.getEntity(Person)].get().generatedMapper != null
 
         cleanup:
         bookRepository.deleteAll()

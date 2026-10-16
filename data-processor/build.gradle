@@ -23,6 +23,8 @@ dependencies {
 
     implementation mn.micronaut.sourcegen.generator
     implementation mn.micronaut.sourcegen.generator.java
+    // The generated JDBC row mappers are written as bytecode, for every language the entities are compiled from
+    implementation libs.micronaut.sourcegen.bytecode.writer
 
     testAnnotationProcessor mn.micronaut.inject.java
 	testAnnotationProcessor projects.micronautDataProcessor
