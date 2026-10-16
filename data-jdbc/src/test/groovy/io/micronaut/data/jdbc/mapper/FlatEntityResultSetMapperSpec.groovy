@@ -21,6 +21,7 @@ import io.micronaut.data.exceptions.DataAccessException
 import io.micronaut.data.model.runtime.RuntimePersistentEntity
 import io.micronaut.data.runtime.convert.DataConversionService
 import io.micronaut.data.runtime.mapper.sql.SqlResultEntityTypeMapper
+import io.micronaut.data.tck.entities.Address
 import io.micronaut.data.tck.entities.BasicTypes
 import io.micronaut.data.tck.entities.Book
 import io.micronaut.data.tck.entities.EntityWithIdClass
@@ -221,6 +222,26 @@ class FlatEntityResultSetMapperSpec extends Specification {
 
         cleanup:
         execute("DROP TABLE flat_record")
+    }
+
+    void "an embeddable whose required constructor argument is NULL is null, as the general mapper reads it"() {
+        given: "an embedded projection of a row without the value"
+        def entity = entity(Address)
+        def plan = FlatEntityMappingPlan.of(entity)
+        createTable("address", ["street VARCHAR(255)", "zip_code VARCHAR(255)"])
+        execute("INSERT INTO address VALUES ('Main St.', '1111'), (NULL, NULL)")
+
+        when:
+        List<Address> flat = mapFlat(plan, "SELECT * FROM address ORDER BY street NULLS LAST")
+        List<Address> general = mapGeneral(entity, "SELECT * FROM address WHERE street IS NOT NULL")
+
+        then: "the row with the value reads as with the general mapper, the row without is null, not an error"
+        flat[0].street == general[0].street
+        flat[0].zipCode == general[0].zipCode
+        flat[1] == null
+
+        cleanup:
+        execute("DROP TABLE address")
     }
 
     void "a missing column is reported by name"() {

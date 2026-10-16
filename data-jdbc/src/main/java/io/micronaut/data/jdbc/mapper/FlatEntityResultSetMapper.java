@@ -84,6 +84,7 @@ public final class FlatEntityResultSetMapper<R> implements SqlTypeMapper<ResultS
     private final int[] constructorArgumentIndexes;
     private final boolean[] requiredConstructorArguments;
     private final int constructorArgumentCount;
+    private final boolean embeddable;
     private final ConversionService conversionService;
     @Nullable
     private final BiFunction<RuntimePersistentEntity<Object>, Object, Object> loadListener;
@@ -117,6 +118,7 @@ public final class FlatEntityResultSetMapper<R> implements SqlTypeMapper<ResultS
         this.constructorArgumentIndexes = plan.getConstructorArgumentIndexes();
         this.requiredConstructorArguments = plan.getRequiredConstructorArguments();
         this.constructorArgumentCount = plan.getConstructorArgumentCount();
+        this.embeddable = plan.isEmbeddable();
         this.conversionService = conversionService;
         this.loadListener = loadListener;
         this.generalMapper = generalMapper;
@@ -143,6 +145,7 @@ public final class FlatEntityResultSetMapper<R> implements SqlTypeMapper<ResultS
         }
     }
 
+    @Nullable
     @Override
     public R map(ResultSet rs, Class<R> type) throws DataAccessException {
         return readEntity(rs);
@@ -152,8 +155,9 @@ public final class FlatEntityResultSetMapper<R> implements SqlTypeMapper<ResultS
      * Reads the entity of the current row.
      *
      * @param rs The result set
-     * @return The entity
+     * @return The entity, or {@code null} for an embeddable whose required constructor argument is NULL
      */
+    @Nullable
     @SuppressWarnings("ReferenceEquality")
     public R readEntity(ResultSet rs) {
         if (rs != resolvedResultSet) {
@@ -172,6 +176,9 @@ public final class FlatEntityResultSetMapper<R> implements SqlTypeMapper<ResultS
             } catch (InstantiationException e) {
                 throw new DataAccessException("Error instantiating entity [" + plan.getEntity().getName() + "]: " + e.getMessage(), e);
             }
+            if (entity == null) {
+                return null;
+            }
             for (int i = 0; i < kinds.length; i++) {
                 if (constructorArgumentIndexes[i] >= 0) {
                     continue;
@@ -189,8 +196,11 @@ public final class FlatEntityResultSetMapper<R> implements SqlTypeMapper<ResultS
     }
 
     /**
-     * Instantiates the entity with the columns of its constructor arguments.
+     * Instantiates the entity with the columns of its constructor arguments. A required argument that is NULL is
+     * an error, except for an embeddable, which the general mapper reads as {@code null} then (an embedded
+     * projection of a row without the value).
      */
+    @Nullable
     private R instantiate(ResultSet rs) {
         Object[] arguments = new Object[constructorArgumentCount];
         for (int i = 0; i < kinds.length; i++) {
@@ -200,6 +210,9 @@ public final class FlatEntityResultSetMapper<R> implements SqlTypeMapper<ResultS
             }
             Object value = read(rs, ordinals[i], kinds[i], i);
             if (value == null && requiredConstructorArguments[argumentIndex]) {
+                if (embeddable) {
+                    return null;
+                }
                 throw new DataAccessException("Null value read for non-null constructor argument [" + persistentProperties[i].getName() + "] of type: " + plan.getEntity().getName());
             }
             arguments[argumentIndex] = value;
