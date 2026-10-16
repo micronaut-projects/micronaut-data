@@ -1,0 +1,1043 @@
+/*
+ * Copyright 2017-2026 original authors
+ *
+ * Licensed under the Apache License, Version 2.0 (the "License");
+ * you may not use this file except in compliance with the License.
+ * You may obtain a copy of the License at
+ *
+ * https://www.apache.org/licenses/LICENSE-2.0
+ *
+ * Unless required by applicable law or agreed to in writing, software
+ * distributed under the License is distributed on an "AS IS" BASIS,
+ * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+ * See the License for the specific language governing permissions and
+ * limitations under the License.
+ */
+package io.micronaut.data.graph.model.query.builder;
+
+import io.micronaut.core.annotation.AnnotationMetadata;
+import io.micronaut.core.annotation.Introspected;
+import io.micronaut.data.graph.model.GraphEntities;
+import io.micronaut.data.model.Association;
+import io.micronaut.data.model.PersistentEntity;
+import io.micronaut.data.model.PersistentProperty;
+import io.micronaut.data.model.jpa.criteria.IExpression;
+import io.micronaut.data.model.jpa.criteria.IPredicate;
+import io.micronaut.data.model.jpa.criteria.ISelection;
+import io.micronaut.data.model.jpa.criteria.PersistentEntityRoot;
+import io.micronaut.data.model.jpa.criteria.PersistentEntitySubquery;
+import io.micronaut.data.model.jpa.criteria.impl.DefaultOrder;
+import io.micronaut.data.model.jpa.criteria.impl.ExpressionVisitor;
+import io.micronaut.data.model.jpa.criteria.impl.IParameterExpression;
+import io.micronaut.data.model.jpa.criteria.impl.SelectionVisitor;
+import io.micronaut.data.model.jpa.criteria.impl.expression.BinaryExpression;
+import io.micronaut.data.model.jpa.criteria.impl.expression.CastExpression;
+import io.micronaut.data.model.jpa.criteria.impl.expression.CurrentTemporalExpression;
+import io.micronaut.data.model.jpa.criteria.impl.expression.FunctionExpression;
+import io.micronaut.data.model.jpa.criteria.impl.expression.IdExpression;
+import io.micronaut.data.model.jpa.criteria.impl.expression.LiteralExpression;
+import io.micronaut.data.model.jpa.criteria.impl.expression.SubqueryExpression;
+import io.micronaut.data.model.jpa.criteria.impl.expression.UnaryExpression;
+import io.micronaut.data.model.jpa.criteria.impl.predicate.ConjunctionPredicate;
+import io.micronaut.data.model.jpa.criteria.impl.predicate.DisjunctionPredicate;
+import io.micronaut.data.model.jpa.criteria.impl.predicate.ExistsSubqueryPredicate;
+import io.micronaut.data.model.jpa.criteria.impl.predicate.InPredicate;
+import io.micronaut.data.model.jpa.criteria.impl.predicate.LikePredicate;
+import io.micronaut.data.model.jpa.criteria.impl.predicate.NegatedPredicate;
+import io.micronaut.data.model.jpa.criteria.impl.selection.AliasedSelection;
+import io.micronaut.data.model.jpa.criteria.impl.selection.CompoundSelection;
+import io.micronaut.data.model.query.BindingParameter;
+import io.micronaut.data.model.query.JoinPath;
+import io.micronaut.data.model.query.builder.QueryBuilder;
+import io.micronaut.data.model.query.builder.QueryParameterBinding;
+import io.micronaut.data.model.query.builder.QueryResult;
+import io.micronaut.data.model.query.impl.AdvancedPredicateVisitor;
+import jakarta.persistence.criteria.Expression;
+import jakarta.persistence.criteria.Nulls;
+import jakarta.persistence.criteria.Order;
+import jakarta.persistence.criteria.Predicate;
+import jakarta.persistence.criteria.Selection;
+import org.jspecify.annotations.Nullable;
+
+import java.util.ArrayList;
+import java.util.Collection;
+import java.util.Iterator;
+import java.util.LinkedHashMap;
+import java.util.List;
+import java.util.Map;
+
+/**
+ * Builds Cypher queries for graph repositories at compile time.
+ *
+ * <p>The root node is bound to the variable {@code n}. Criteria on associations add relationship
+ * patterns to the {@code MATCH} clause, and fetch joins add an {@code OPTIONAL MATCH} per association
+ * whose results are collected into a column named {@code j_<association>}.
+ * Parameters are rendered as {@code $p<index>}.</p>
+ *
+ * @author graemerocher
+ * @since 5.3.0
+ */
+@Introspected
+public class CypherQueryBuilder implements QueryBuilder {
+
+    /**
+     * The variable of the root node.
+     */
+    public static final String ROOT = "n";
+    /**
+     * The prefix of a column that holds the collected values of a fetch join.
+     */
+    public static final String JOIN_COLUMN_PREFIX = "j_";
+    /**
+     * The key of the relationship in a collected relationship entity map.
+     */
+    public static final String REL_KEY = "rel";
+    /**
+     * The key of the target node in a collected relationship entity map.
+     */
+    public static final String NODE_KEY = "node";
+    /**
+     * The parameter name prefix.
+     */
+    public static final String PARAMETER_PREFIX = "p";
+
+    @Override
+    public @Nullable QueryResult buildInsert(AnnotationMetadata repositoryMetadata, InsertQueryDefinition definition) {
+        // Inserts are created at runtime from the entity and its relationships
+        return null;
+    }
+
+    @Override
+    public QueryResult buildSelect(AnnotationMetadata annotationMetadata, SelectQueryDefinition definition) {
+        QueryState state = new QueryState(definition.persistentEntity(), definition.getJoinPaths());
+        String where = renderWhere(definition.predicate(), state);
+
+        SelectionRenderer selectionRenderer = new SelectionRenderer(state);
+        Selection<?> selection = definition.selection();
+        if (selection instanceof ISelection<?> iSelection) {
+            iSelection.visitSelection(selectionRenderer);
+        } else if (selection != null) {
+            throw new IllegalStateException("Unsupported selection type: " + selection.getClass().getName());
+        } else {
+            selectionRenderer.entity = true;
+        }
+        String orderBy = renderOrderBy(definition.order(), state);
+
+        StringBuilder query = new StringBuilder();
+        appendMatch(query, state, where);
+        if (selectionRenderer.entity) {
+            if (state.hasPatterns()) {
+                query.append(" WITH DISTINCT ").append(ROOT);
+            }
+            List<String> joinColumns = appendFetchJoins(query, state);
+            query.append(" RETURN ");
+            if (definition.isDistinct()) {
+                query.append("DISTINCT ");
+            }
+            query.append(ROOT);
+            for (String joinColumn : joinColumns) {
+                query.append(", ").append(joinColumn);
+            }
+        } else {
+            if (state.hasPatterns() && selectionRenderer.rootOnly) {
+                query.append(" WITH DISTINCT ").append(ROOT);
+            }
+            query.append(" RETURN ");
+            if (definition.isDistinct()) {
+                query.append("DISTINCT ");
+            }
+            query.append(selectionRenderer.out);
+        }
+        if (!orderBy.isEmpty()) {
+            query.append(" ORDER BY ").append(orderBy);
+        }
+        if (definition.offset() > 0 || definition.limit() > 0) {
+            query.append(buildLimitAndOffset(definition.limit(), Math.max(definition.offset(), 0)));
+        } else if (selectionRenderer.literal) {
+            // An existence check needs a single row
+            query.append(" LIMIT 1");
+        }
+        return QueryResult.of(query.toString(), List.of(query.toString()), state.parameterBindings, state.additionalRequiredParameters);
+    }
+
+    @Override
+    public QueryResult buildUpdate(AnnotationMetadata annotationMetadata, UpdateQueryDefinition definition) {
+        QueryState state = new QueryState(definition.persistentEntity(), definition.getJoinPaths());
+        String where = renderWhere(definition.predicate(), state);
+        StringBuilder sets = new StringBuilder();
+        Iterator<Map.Entry<String, Object>> iterator = definition.propertiesToUpdate().entrySet().iterator();
+        while (iterator.hasNext()) {
+            Map.Entry<String, Object> entry = iterator.next();
+            PersistentProperty property = state.entity.getPropertyByName(entry.getKey());
+            if (property == null) {
+                property = state.entity.getIdentity();
+            }
+            if (property == null || !property.getName().equals(entry.getKey())) {
+                throw new IllegalArgumentException("Cannot update non-existent property: " + entry.getKey());
+            }
+            io.micronaut.data.model.PersistentPropertyPath propertyPath = io.micronaut.data.model.PersistentPropertyPath.of(List.of(), property);
+            sets.append(ROOT).append('.').append(GraphEntities.escapeName(GraphEntities.propertyName(property))).append(" = ");
+            Object value = entry.getValue();
+            ExpressionRenderer renderer = new ExpressionRenderer(state, sets);
+            if (value instanceof BindingParameter bindingParameter) {
+                renderer.appendParameter(bindingParameter, propertyPath, propertyPath);
+            } else if (value instanceof Expression<?> expression) {
+                renderer.appendExpression(expression, propertyPath);
+            } else {
+                sets.append(asLiteral(value));
+            }
+            if (iterator.hasNext()) {
+                sets.append(", ");
+            }
+        }
+        StringBuilder query = new StringBuilder();
+        appendMatch(query, state, where);
+        if (state.hasPatterns()) {
+            query.append(" WITH DISTINCT ").append(ROOT);
+        }
+        query.append(" SET ").append(sets).append(" RETURN count(*)");
+        return QueryResult.of(query.toString(), List.of(query.toString()), state.parameterBindings, state.additionalRequiredParameters);
+    }
+
+    @Override
+    public QueryResult buildDelete(AnnotationMetadata annotationMetadata, DeleteQueryDefinition definition) {
+        QueryState state = new QueryState(definition.persistentEntity(), definition.getJoinPaths());
+        String where = renderWhere(definition.predicate(), state);
+        StringBuilder query = new StringBuilder();
+        appendMatch(query, state, where);
+        if (state.hasPatterns()) {
+            query.append(" WITH DISTINCT ").append(ROOT);
+        }
+        query.append(" DETACH DELETE ").append(ROOT).append(" RETURN count(*)");
+        return QueryResult.of(query.toString(), List.of(query.toString()), state.parameterBindings, state.additionalRequiredParameters);
+    }
+
+    @Override
+    public String buildLimitAndOffset(long limit, long offset) {
+        StringBuilder sb = new StringBuilder();
+        if (offset > 0) {
+            sb.append(" SKIP ").append(offset);
+        }
+        if (limit > 0) {
+            sb.append(" LIMIT ").append(limit);
+        }
+        return sb.toString();
+    }
+
+    /**
+     * Renders the expression that reads the identifier of a graph element.
+     *
+     * @param identity The identity property
+     * @param variable The variable of the graph element
+     * @return The expression
+     */
+    protected String identityExpression(PersistentProperty identity, String variable) {
+        if (GraphEntities.isNativeId(identity)) {
+            String typeName = identity.getTypeName();
+            if (typeName.equals(String.class.getName())) {
+                return "elementId(" + variable + ")";
+            }
+            return "id(" + variable + ")";
+        }
+        return variable + "." + GraphEntities.escapeName(GraphEntities.propertyName(identity));
+    }
+
+    /**
+     * Renders a parameter placeholder.
+     *
+     * @param index The parameter index
+     * @return The placeholder
+     */
+    protected String parameterPlaceholder(int index) {
+        return "$" + PARAMETER_PREFIX + index;
+    }
+
+    /**
+     * Renders the expression that collects the fetched values of a relationship entity association.
+     *
+     * @param relVariable  The variable of the relationship
+     * @param nodeVariable The variable of the target node
+     * @return The expression
+     */
+    protected String relationshipEntityCollectExpression(String relVariable, String nodeVariable) {
+        return "collect(CASE WHEN " + relVariable + " IS NULL THEN NULL ELSE {" + REL_KEY + ": " + relVariable + ", " + NODE_KEY + ": " + nodeVariable + "} END)";
+    }
+
+    private void appendMatch(StringBuilder query, QueryState state, @Nullable String where) {
+        query.append("MATCH (").append(ROOT).append(GraphEntities.labelExpression(state.entity)).append(')');
+        for (Pattern pattern : state.patterns.values()) {
+            query.append(", ").append(pattern.text);
+        }
+        if (where != null && !where.isEmpty()) {
+            query.append(" WHERE ").append(where);
+        }
+    }
+
+    private List<String> appendFetchJoins(StringBuilder query, QueryState state) {
+        List<String> columns = new ArrayList<>();
+        for (JoinPath joinPath : state.joinPaths) {
+            if (!joinPath.getJoinType().isFetch()) {
+                continue;
+            }
+            Association[] associationPath = joinPath.getAssociationPath();
+            Association association = associationPath[0];
+            boolean relationshipEntity = GraphEntities.isRelationshipEntity(association.getAssociatedEntity());
+            if (associationPath.length > 2 || (associationPath.length == 2 && !(relationshipEntity && isTargetNode(associationPath[1])))) {
+                throw new IllegalArgumentException("Graph repositories can only join direct relationships, found join path: " + joinPath.getPath());
+            }
+            if (!GraphEntities.isRelationship(association)) {
+                throw new IllegalArgumentException("Association [" + association.getName() + "] is not a @Relationship and cannot be joined");
+            }
+            String column = JOIN_COLUMN_PREFIX + association.getName();
+            if (columns.contains(column)) {
+                continue;
+            }
+            int index = columns.size();
+            String nodeVariable = "j" + index;
+            PersistentEntity target = GraphEntities.targetNodeEntity(association);
+            String nodePattern = "(" + nodeVariable + GraphEntities.labelExpression(target) + ")";
+            query.append(" OPTIONAL MATCH ");
+            String collect;
+            if (relationshipEntity) {
+                String relVariable = "r" + index;
+                query.append(GraphEntities.relationshipPattern(association, ROOT, relVariable, nodePattern));
+                collect = relationshipEntityCollectExpression(relVariable, nodeVariable);
+            } else {
+                query.append(GraphEntities.relationshipPattern(association, ROOT, null, nodePattern));
+                collect = "collect(" + nodeVariable + ")";
+            }
+            query.append(" WITH ").append(ROOT);
+            for (String previous : columns) {
+                query.append(", ").append(previous);
+            }
+            query.append(", ").append(collect).append(" AS ").append(column);
+            columns.add(column);
+        }
+        return columns;
+    }
+
+    private static boolean isTargetNode(Association association) {
+        return association.getAnnotationMetadata().hasStereotype("io.micronaut.data.graph.annotation.TargetNode");
+    }
+
+    private @Nullable String renderWhere(@Nullable Predicate predicate, QueryState state) {
+        if (predicate == null) {
+            return null;
+        }
+        StringBuilder sb = new StringBuilder();
+        if (predicate instanceof IPredicate iPredicate) {
+            iPredicate.visitPredicate(new PredicateRenderer(state, sb));
+        } else {
+            throw new IllegalStateException("Unsupported predicate type: " + predicate.getClass().getName());
+        }
+        return sb.toString();
+    }
+
+    private String renderOrderBy(List<Order> orders, QueryState state) {
+        if (orders == null || orders.isEmpty()) {
+            return "";
+        }
+        StringBuilder sb = new StringBuilder();
+        Iterator<Order> iterator = orders.iterator();
+        while (iterator.hasNext()) {
+            Order order = iterator.next();
+            StringBuilder expression = new StringBuilder();
+            ExpressionRenderer renderer = new ExpressionRenderer(state, expression);
+            boolean ignoreCase = order instanceof DefaultOrder<?> defaultOrder && defaultOrder.isIgnoreCase();
+            Nulls nulls = order instanceof DefaultOrder<?> defaultOrder ? defaultOrder.getNullPrecedence() : Nulls.NONE;
+            if (ignoreCase) {
+                expression.append("toLower(");
+                renderer.appendExpression(order.getExpression(), null);
+                expression.append(')');
+            } else {
+                renderer.appendExpression(order.getExpression(), null);
+            }
+            if (nulls == Nulls.FIRST) {
+                sb.append("CASE WHEN ").append(expression).append(" IS NULL THEN 0 ELSE 1 END, ");
+            } else if (nulls == Nulls.LAST) {
+                sb.append("CASE WHEN ").append(expression).append(" IS NULL THEN 1 ELSE 0 END, ");
+            }
+            sb.append(expression).append(order.isAscending() ? " ASC" : " DESC");
+            if (iterator.hasNext()) {
+                sb.append(", ");
+            }
+        }
+        return sb.toString();
+    }
+
+    /**
+     * Renders a literal value.
+     *
+     * @param value The value
+     * @return The Cypher literal
+     */
+    protected String asLiteral(@Nullable Object value) {
+        if (value == null) {
+            return "null";
+        }
+        if (value instanceof Number || value instanceof Boolean) {
+            return value.toString();
+        }
+        if (value instanceof Enum<?> e) {
+            return quote(e.name());
+        }
+        if (value instanceof Collection<?> collection) {
+            StringBuilder sb = new StringBuilder("[");
+            Iterator<?> iterator = collection.iterator();
+            while (iterator.hasNext()) {
+                sb.append(asLiteral(iterator.next()));
+                if (iterator.hasNext()) {
+                    sb.append(", ");
+                }
+            }
+            return sb.append(']').toString();
+        }
+        return quote(value.toString());
+    }
+
+    private static String quote(String value) {
+        return "'" + value.replace("\\", "\\\\").replace("'", "\\'") + "'";
+    }
+
+    /**
+     * A relationship pattern added to the {@code MATCH} clause by a criterion on an association.
+     *
+     * @param text         The pattern
+     * @param nodeVariable The variable of the target node
+     * @param relVariable  The variable of the relationship, or null if it has none
+     */
+    private record Pattern(String text, String nodeVariable, @Nullable String relVariable) {
+    }
+
+    /**
+     * The state of a query being built.
+     */
+    private final class QueryState {
+        private final PersistentEntity entity;
+        private final Collection<JoinPath> joinPaths;
+        private final Map<String, Pattern> patterns = new LinkedHashMap<>();
+        private final List<QueryParameterBinding> parameterBindings = new ArrayList<>();
+        private final Map<String, String> additionalRequiredParameters = new LinkedHashMap<>();
+        private int position;
+
+        private QueryState(PersistentEntity entity, Collection<JoinPath> joinPaths) {
+            this.entity = entity;
+            this.joinPaths = joinPaths == null ? List.of() : joinPaths;
+        }
+
+        private boolean hasPatterns() {
+            return !patterns.isEmpty();
+        }
+
+        private int pushParameter(BindingParameter bindingParameter, BindingParameter.BindingContext bindingContext) {
+            int index = position++;
+            parameterBindings.add(bindingParameter.bind(bindingContext.index(index).name(PARAMETER_PREFIX + index)));
+            return index;
+        }
+
+        /**
+         * Resolves the expression of a property path, adding relationship patterns for associations.
+         *
+         * @param propertyPath The property path
+         * @return The expression
+         */
+        private String resolve(io.micronaut.data.model.PersistentPropertyPath propertyPath) {
+            String variable = ROOT;
+            Pattern relationshipEntityPattern = null;
+            StringBuilder path = new StringBuilder();
+            for (Association association : propertyPath.getAssociations()) {
+                if (!path.isEmpty()) {
+                    path.append('.');
+                }
+                path.append(association.getName());
+                if (relationshipEntityPattern != null && isTargetNode(association)) {
+                    variable = relationshipEntityPattern.nodeVariable();
+                    relationshipEntityPattern = null;
+                    continue;
+                }
+                if (association.isEmbedded()) {
+                    throw new IllegalArgumentException("Embedded properties are not supported by graph repositories: " + propertyPath.getPath());
+                }
+                if (!GraphEntities.isRelationship(association)) {
+                    throw new IllegalArgumentException("Association [" + association.getName() + "] is not a @Relationship and cannot be queried");
+                }
+                String from = variable;
+                Pattern pattern = patterns.computeIfAbsent(path.toString(), key -> {
+                    int index = patterns.size();
+                    String nodeVariable = "a" + index;
+                    PersistentEntity target = GraphEntities.targetNodeEntity(association);
+                    String nodePattern = "(" + nodeVariable + GraphEntities.labelExpression(target) + ")";
+                    if (GraphEntities.isRelationshipEntity(association.getAssociatedEntity())) {
+                        String relVariable = "ar" + index;
+                        return new Pattern(GraphEntities.relationshipPattern(association, from, relVariable, nodePattern), nodeVariable, relVariable);
+                    }
+                    return new Pattern(GraphEntities.relationshipPattern(association, from, null, nodePattern), nodeVariable, null);
+                });
+                if (pattern.relVariable() != null) {
+                    variable = pattern.relVariable();
+                    relationshipEntityPattern = pattern;
+                } else {
+                    variable = pattern.nodeVariable();
+                }
+            }
+            PersistentProperty property = propertyPath.getProperty();
+            PersistentEntity owner = property.getOwner();
+            if (owner.hasIdentity() && owner.getIdentity().getName().equals(property.getName())) {
+                return identityExpression(property, variable);
+            }
+            if (property instanceof Association association && !association.isEmbedded()) {
+                // A criterion on an association itself compares its identifier
+                PersistentEntity target = GraphEntities.targetNodeEntity(association);
+                io.micronaut.data.model.PersistentPropertyPath idPath = io.micronaut.data.model.PersistentPropertyPath.of(
+                    concat(propertyPath.getAssociations(), association), target.getIdentity());
+                return resolve(idPath);
+            }
+            return variable + "." + GraphEntities.escapeName(GraphEntities.propertyName(property));
+        }
+
+        private static List<Association> concat(List<Association> associations, Association association) {
+            List<Association> list = new ArrayList<>(associations);
+            list.add(association);
+            return list;
+        }
+    }
+
+    /**
+     * Renders expressions.
+     */
+    private class ExpressionRenderer implements ExpressionVisitor {
+        final QueryState state;
+        final StringBuilder out;
+        int depth;
+        private io.micronaut.data.model.@Nullable PersistentPropertyPath boundProperty;
+
+        private ExpressionRenderer(QueryState state, StringBuilder out) {
+            this.state = state;
+            this.out = out;
+        }
+
+        void appendExpression(Expression<?> expression, io.micronaut.data.model.@Nullable PersistentPropertyPath boundProperty) {
+            io.micronaut.data.model.PersistentPropertyPath previous = this.boundProperty;
+            this.boundProperty = boundProperty;
+            depth++;
+            try {
+                if (expression instanceof BindingParameter bindingParameter) {
+                    appendParameter(bindingParameter, boundProperty, boundProperty);
+                } else if (expression instanceof IExpression<?> iExpression) {
+                    iExpression.visitExpression(this);
+                } else {
+                    throw new IllegalStateException("Unsupported expression: " + expression);
+                }
+            } finally {
+                depth--;
+                this.boundProperty = previous;
+            }
+        }
+
+        void appendParameter(BindingParameter bindingParameter,
+                             io.micronaut.data.model.@Nullable PersistentPropertyPath in,
+                             io.micronaut.data.model.@Nullable PersistentPropertyPath out) {
+            int index = state.pushParameter(bindingParameter, BindingParameter.BindingContext.create()
+                .incomingMethodParameterProperty(in)
+                .outgoingQueryParameterProperty(out));
+            this.out.append(parameterPlaceholder(index));
+        }
+
+        @Override
+        public void visit(io.micronaut.data.model.jpa.criteria.PersistentPropertyPath<?> persistentPropertyPath) {
+            out.append(state.resolve(persistentPropertyPath.getPropertyPath()));
+        }
+
+        @Override
+        public void visit(PersistentEntityRoot<?> entityRoot) {
+            out.append(ROOT);
+        }
+
+        @Override
+        public void visit(PersistentEntitySubquery<?> subquery) {
+            throw new UnsupportedOperationException("Subqueries are not supported by graph repositories");
+        }
+
+        @Override
+        public void visit(LiteralExpression<?> literalExpression) {
+            out.append(asLiteral(literalExpression.getValue()));
+        }
+
+        @Override
+        public void visit(UnaryExpression<?> unaryExpression) {
+            Expression<?> expression = unaryExpression.getExpression();
+            switch (unaryExpression.getType()) {
+                case AVG -> appendFunction("avg", expression);
+                case SUM -> appendFunction("sum", expression);
+                case MAX -> appendFunction("max", expression);
+                case MIN -> appendFunction("min", expression);
+                case UPPER -> appendFunction("toUpper", expression);
+                case LOWER -> appendFunction("toLower", expression);
+                case LENGTH -> appendFunction("size", expression);
+                case COUNT -> {
+                    out.append("count(");
+                    if (expression instanceof PersistentEntityRoot<?> && state.hasPatterns()) {
+                        out.append("DISTINCT ");
+                    }
+                    appendExpression(expression, null);
+                    out.append(')');
+                }
+                case COUNT_DISTINCT -> {
+                    out.append("count(DISTINCT ");
+                    appendExpression(expression, null);
+                    out.append(')');
+                }
+                default -> throw new UnsupportedOperationException("Unsupported expression type: " + unaryExpression.getType());
+            }
+        }
+
+        private void appendFunction(String name, Expression<?> expression) {
+            out.append(name).append('(');
+            appendExpression(expression, boundProperty);
+            out.append(')');
+        }
+
+        @Override
+        public void visit(BinaryExpression<?> binaryExpression) {
+            io.micronaut.data.model.PersistentPropertyPath bound = boundProperty;
+            if (bound == null) {
+                bound = findPropertyPath(binaryExpression.getLeft());
+                if (bound == null) {
+                    bound = findPropertyPath(binaryExpression.getRight());
+                }
+            }
+            out.append('(');
+            appendExpression(binaryExpression.getLeft(), bound);
+            out.append(switch (binaryExpression.getType()) {
+                case SUM, CONCAT -> " + ";
+                case PROD -> " * ";
+                case QUOT -> " / ";
+                default -> throw new UnsupportedOperationException("Unsupported binary expression: " + binaryExpression.getType());
+            });
+            appendExpression(binaryExpression.getRight(), bound);
+            out.append(')');
+        }
+
+        @Override
+        public void visit(IdExpression<?, ?> idExpression) {
+            PersistentEntity entity = state.entity;
+            if (!entity.hasIdentity()) {
+                throw new IllegalStateException("Entity [" + entity.getName() + "] has no identity");
+            }
+            out.append(identityExpression(entity.getIdentity(), ROOT));
+        }
+
+        @Override
+        public void visit(FunctionExpression<?> functionExpression) {
+            out.append(functionExpression.getName()).append('(');
+            Iterator<Expression<?>> iterator = functionExpression.getExpressions().iterator();
+            while (iterator.hasNext()) {
+                appendExpression(iterator.next(), boundProperty);
+                if (iterator.hasNext()) {
+                    out.append(", ");
+                }
+            }
+            out.append(')');
+        }
+
+        @Override
+        public void visit(IParameterExpression<?> parameterExpression) {
+            appendParameter(parameterExpression, boundProperty, boundProperty);
+        }
+
+        @Override
+        public void visit(SubqueryExpression<?> subqueryExpression) {
+            throw new UnsupportedOperationException("Subqueries are not supported by graph repositories");
+        }
+
+        @Override
+        public void visit(CastExpression<?> castExpression) {
+            Class<?> type = castExpression.getJavaType();
+            String function;
+            if (type == String.class) {
+                function = "toString";
+            } else if (type == Integer.class || type == Long.class || type == Short.class || type == int.class || type == long.class) {
+                function = "toInteger";
+            } else if (type == Double.class || type == Float.class || type == double.class || type == float.class) {
+                function = "toFloat";
+            } else if (type == Boolean.class || type == boolean.class) {
+                function = "toBoolean";
+            } else {
+                throw new UnsupportedOperationException("Unsupported cast to: " + type.getName());
+            }
+            appendFunction(function, castExpression.getExpression());
+        }
+
+        @Override
+        public void visit(CurrentTemporalExpression<?> currentTemporalExpression) {
+            out.append(switch (currentTemporalExpression.getType()) {
+                case DATE -> "date()";
+                case TIME -> "localtime()";
+                case TIMESTAMP -> "datetime()";
+            });
+        }
+
+        io.micronaut.data.model.@Nullable PersistentPropertyPath findPropertyPath(@Nullable Expression<?> expression) {
+            if (expression instanceof io.micronaut.data.model.jpa.criteria.PersistentPropertyPath<?> path) {
+                return path.getPropertyPath();
+            }
+            if (expression instanceof UnaryExpression<?> unaryExpression) {
+                return findPropertyPath(unaryExpression.getExpression());
+            }
+            if (expression instanceof BinaryExpression<?> binaryExpression) {
+                io.micronaut.data.model.PersistentPropertyPath left = findPropertyPath(binaryExpression.getLeft());
+                return left != null ? left : findPropertyPath(binaryExpression.getRight());
+            }
+            return null;
+        }
+    }
+
+    /**
+     * Renders predicates.
+     */
+    private final class PredicateRenderer extends ExpressionRenderer implements AdvancedPredicateVisitor<io.micronaut.data.model.PersistentPropertyPath> {
+
+        private PredicateRenderer(QueryState state, StringBuilder out) {
+            super(state, out);
+        }
+
+        @Override
+        public io.micronaut.data.model.PersistentPropertyPath getRequiredProperty(io.micronaut.data.model.jpa.criteria.PersistentPropertyPath<?> persistentPropertyPath) {
+            return persistentPropertyPath.getPropertyPath();
+        }
+
+        private void visitBoolean(IExpression<Boolean> expression) {
+            if (expression instanceof IPredicate predicate) {
+                predicate.visitPredicate(this);
+            } else if (expression instanceof io.micronaut.data.model.jpa.criteria.PersistentPropertyPath<?>) {
+                visitIsTrue(expression);
+            } else {
+                throw new IllegalStateException("Unknown boolean expression: " + expression);
+            }
+        }
+
+        private void visitJunction(Collection<? extends IExpression<Boolean>> predicates, String operator, String empty) {
+            if (predicates.isEmpty()) {
+                out.append(empty);
+                return;
+            }
+            if (predicates.size() == 1) {
+                visitBoolean(predicates.iterator().next());
+                return;
+            }
+            out.append('(');
+            Iterator<? extends IExpression<Boolean>> iterator = predicates.iterator();
+            while (iterator.hasNext()) {
+                visitBoolean(iterator.next());
+                if (iterator.hasNext()) {
+                    out.append(operator);
+                }
+            }
+            out.append(')');
+        }
+
+        @Override
+        public void visit(ConjunctionPredicate conjunction) {
+            visitJunction(conjunction.getPredicates(), " AND ", "true");
+        }
+
+        @Override
+        public void visit(DisjunctionPredicate disjunction) {
+            visitJunction(disjunction.getPredicates(), " OR ", "false");
+        }
+
+        @Override
+        public void visit(NegatedPredicate negate) {
+            out.append("NOT (");
+            visitBoolean(negate.getNegated());
+            out.append(')');
+        }
+
+        @Override
+        public void visit(InPredicate<?> inPredicate) {
+            visitIn(inPredicate.getExpression(), inPredicate.getValues(), false);
+        }
+
+        @Override
+        public void visitIn(Expression<?> expression, Collection<?> values, boolean negated) {
+            io.micronaut.data.model.PersistentPropertyPath bound = findPropertyPath(expression);
+            if (negated) {
+                out.append("NOT (");
+            }
+            appendExpression(expression, bound);
+            out.append(" IN ");
+            if (values.size() == 1 && values.iterator().next() instanceof BindingParameter bindingParameter) {
+                appendParameter(bindingParameter, bound, bound);
+            } else {
+                out.append('[');
+                Iterator<?> iterator = values.iterator();
+                while (iterator.hasNext()) {
+                    Object value = iterator.next();
+                    if (value instanceof Expression<?> e) {
+                        appendExpression(e, bound);
+                    } else {
+                        out.append(asLiteral(value));
+                    }
+                    if (iterator.hasNext()) {
+                        out.append(", ");
+                    }
+                }
+                out.append(']');
+            }
+            if (negated) {
+                out.append(')');
+            }
+        }
+
+        private void appendComparison(Expression<?> left, String operator, Expression<?> right, boolean ignoreCase) {
+            io.micronaut.data.model.PersistentPropertyPath bound = findPropertyPath(left);
+            if (bound == null) {
+                bound = findPropertyPath(right);
+            }
+            if (ignoreCase) {
+                out.append("toLower(");
+                appendExpression(left, bound);
+                out.append(')').append(operator).append("toLower(");
+                appendExpression(right, bound);
+                out.append(')');
+            } else {
+                appendExpression(left, bound);
+                out.append(operator);
+                appendExpression(right, bound);
+            }
+        }
+
+        @Override
+        public void visitIdEquals(Expression<?> expression) {
+            PersistentEntity entity = state.entity;
+            if (!entity.hasIdentity()) {
+                throw new IllegalStateException("Entity [" + entity.getName() + "] has no identity");
+            }
+            io.micronaut.data.model.PersistentPropertyPath idPath = io.micronaut.data.model.PersistentPropertyPath.of(List.of(), entity.getIdentity());
+            out.append(identityExpression(entity.getIdentity(), ROOT)).append(" = ");
+            appendExpression(expression, idPath);
+        }
+
+        @Override
+        public void visitEquals(Expression<?> leftExpression, Expression<?> rightExpression, boolean ignoreCase) {
+            appendComparison(leftExpression, " = ", rightExpression, ignoreCase);
+        }
+
+        @Override
+        public void visitNotEquals(Expression<?> leftExpression, Expression<?> rightExpression, boolean ignoreCase) {
+            appendComparison(leftExpression, " <> ", rightExpression, ignoreCase);
+        }
+
+        @Override
+        public void visitGreaterThan(Expression<?> leftExpression, Expression<?> rightExpression) {
+            appendComparison(leftExpression, " > ", rightExpression, false);
+        }
+
+        @Override
+        public void visitGreaterThanOrEquals(Expression<?> leftExpression, Expression<?> rightExpression) {
+            appendComparison(leftExpression, " >= ", rightExpression, false);
+        }
+
+        @Override
+        public void visitLessThan(Expression<?> leftExpression, Expression<?> rightExpression) {
+            appendComparison(leftExpression, " < ", rightExpression, false);
+        }
+
+        @Override
+        public void visitLessThanOrEquals(Expression<?> leftExpression, Expression<?> rightExpression) {
+            appendComparison(leftExpression, " <= ", rightExpression, false);
+        }
+
+        @Override
+        public void visitStartsWith(Expression<?> leftExpression, Expression<?> expression, boolean ignoreCase) {
+            appendComparison(leftExpression, " STARTS WITH ", expression, ignoreCase);
+        }
+
+        @Override
+        public void visitEndsWith(Expression<?> leftExpression, Expression<?> expression, boolean ignoreCase) {
+            appendComparison(leftExpression, " ENDS WITH ", expression, ignoreCase);
+        }
+
+        @Override
+        public void visitContains(Expression<?> leftExpression, Expression<?> expression, boolean ignoreCase) {
+            appendComparison(leftExpression, " CONTAINS ", expression, ignoreCase);
+        }
+
+        @Override
+        public void visitRegexp(Expression<?> leftExpression, Expression<?> expression) {
+            appendComparison(leftExpression, " =~ ", expression, false);
+        }
+
+        @Override
+        public void visitArrayContains(Expression<?> leftExpression, Expression<?> expression) {
+            io.micronaut.data.model.PersistentPropertyPath bound = findPropertyPath(leftExpression);
+            appendExpression(expression, bound);
+            out.append(" IN ");
+            appendExpression(leftExpression, bound);
+        }
+
+        @Override
+        public void visitInBetween(Expression<?> value, Expression<?> from, Expression<?> to, boolean negated) {
+            if (negated) {
+                out.append("NOT ");
+            }
+            out.append('(');
+            appendComparison(value, " >= ", from, false);
+            out.append(" AND ");
+            appendComparison(value, " <= ", to, false);
+            out.append(')');
+        }
+
+        @Override
+        public void visitIsNull(Expression<?> expression) {
+            appendExpression(expression, null);
+            out.append(" IS NULL");
+        }
+
+        @Override
+        public void visitIsNotNull(Expression<?> expression) {
+            appendExpression(expression, null);
+            out.append(" IS NOT NULL");
+        }
+
+        @Override
+        public void visitIsTrue(Expression<?> expression) {
+            appendExpression(expression, null);
+            out.append(" = true");
+        }
+
+        @Override
+        public void visitIsFalse(Expression<?> expression) {
+            appendExpression(expression, null);
+            out.append(" = false");
+        }
+
+        @Override
+        public void visitIsEmpty(Expression<?> expression) {
+            StringBuilder e = new StringBuilder();
+            new ExpressionRenderer(state, e).appendExpression(expression, null);
+            out.append('(').append(e).append(" IS NULL OR size(").append(e).append(") = 0)");
+        }
+
+        @Override
+        public void visitIsNotEmpty(Expression<?> expression) {
+            StringBuilder e = new StringBuilder();
+            new ExpressionRenderer(state, e).appendExpression(expression, null);
+            out.append('(').append(e).append(" IS NOT NULL AND size(").append(e).append(") > 0)");
+        }
+
+        @Override
+        public void visit(LikePredicate likePredicate) {
+            throw new UnsupportedOperationException("LIKE is not supported by graph repositories. Use StartsWith, EndsWith, Contains or Regex instead.");
+        }
+
+        @Override
+        public void visit(ExistsSubqueryPredicate existsSubqueryPredicate) {
+            throw new UnsupportedOperationException("Subqueries are not supported by graph repositories");
+        }
+    }
+
+    /**
+     * Renders the {@code RETURN} items of a projection.
+     */
+    private final class SelectionRenderer extends ExpressionRenderer implements SelectionVisitor {
+        private boolean entity;
+        private boolean literal;
+        private boolean rootOnly = true;
+        private @Nullable String alias;
+
+        private SelectionRenderer(QueryState state) {
+            super(state, new StringBuilder());
+        }
+
+        @Override
+        public void visit(AliasedSelection<?> aliasedSelection) {
+            String previous = alias;
+            alias = aliasedSelection.getAlias();
+            aliasedSelection.getSelection().visitSelection(this);
+            alias = previous;
+        }
+
+        @Override
+        public void visit(CompoundSelection<?> compoundSelection) {
+            Iterator<Selection<?>> iterator = compoundSelection.getCompoundSelectionItems().iterator();
+            while (iterator.hasNext()) {
+                Selection<?> selection = iterator.next();
+                if (selection instanceof ISelection<?> iSelection) {
+                    iSelection.visitSelection(this);
+                } else {
+                    throw new IllegalStateException("Unknown selection: " + selection);
+                }
+                if (iterator.hasNext()) {
+                    out.append(", ");
+                }
+            }
+        }
+
+        @Override
+        public void visit(PersistentEntityRoot<?> entityRoot) {
+            if (depth == 0) {
+                entity = true;
+            } else {
+                super.visit(entityRoot);
+            }
+        }
+
+        @Override
+        public void visit(io.micronaut.data.model.jpa.criteria.PersistentPropertyPath<?> persistentPropertyPath) {
+            io.micronaut.data.model.PersistentPropertyPath propertyPath = persistentPropertyPath.getPropertyPath();
+            if (!propertyPath.getAssociations().isEmpty()) {
+                rootOnly = false;
+            }
+            super.visit(persistentPropertyPath);
+            if (depth == 0) {
+                out.append(" AS ").append(GraphEntities.escapeName(alias != null ? alias : propertyPath.getProperty().getName()));
+            }
+        }
+
+        @Override
+        public void visit(UnaryExpression<?> unaryExpression) {
+            super.visit(unaryExpression);
+            if (depth == 0) {
+                appendAlias("result");
+            }
+        }
+
+        @Override
+        public void visit(IdExpression<?, ?> idExpression) {
+            super.visit(idExpression);
+            if (depth == 0) {
+                appendAlias(state.entity.getIdentity().getName());
+            }
+        }
+
+        @Override
+        public void visit(LiteralExpression<?> literalExpression) {
+            super.visit(literalExpression);
+            if (depth == 0) {
+                literal = true;
+                appendAlias("result");
+            }
+        }
+
+        @Override
+        public void visit(BinaryExpression<?> binaryExpression) {
+            super.visit(binaryExpression);
+            if (depth == 0) {
+                appendAlias("result");
+            }
+        }
+
+        @Override
+        public void visit(FunctionExpression<?> functionExpression) {
+            super.visit(functionExpression);
+            if (depth == 0) {
+                appendAlias("result");
+            }
+        }
+
+        private void appendAlias(String defaultAlias) {
+            out.append(" AS ").append(GraphEntities.escapeName(alias != null ? alias : defaultAlias));
+        }
+    }
+}
