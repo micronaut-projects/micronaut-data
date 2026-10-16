@@ -21,6 +21,8 @@ import io.micronaut.data.jdbc.mapper.generated.Country
 import io.micronaut.data.jdbc.mapper.generated.GeneratedTypes
 import io.micronaut.data.jdbc.mapper.generated.GeoPoint
 import io.micronaut.data.jdbc.mapper.generated.Place
+import io.micronaut.data.jdbc.mapper.generated.Probe
+import io.micronaut.data.jdbc.mapper.generated.Tag
 import io.micronaut.data.jdbc.mapper.generated.Unsupported
 import io.micronaut.data.jdbc.mapper.generated.Visit
 import io.micronaut.data.model.runtime.RuntimePersistentEntity
@@ -174,6 +176,22 @@ class GeneratedRowMapperSpec extends Specification {
         generated[2].suit == GeneratedTypes.Suit.SPADES
         generated[2].withDefault == 0
 
+        when: "an enum name only the conversion service resolves"
+        execute("INSERT INTO generated_types (id, suit) VALUES (4, 'spades')")
+        List<GeneratedTypes> lower = mapGenerated(plan, "SELECT * FROM generated_types WHERE id = 4")
+
+        then:
+        lower[0].suit == GeneratedTypes.Suit.SPADES
+        lower[0].suit == mapGeneral(entity, "SELECT * FROM generated_types WHERE id = 4")[0].suit
+
+        when: "a value no converter accepts fails the way the general mapper fails"
+        execute("INSERT INTO generated_types (id, suit) VALUES (5, '')")
+        mapGenerated(plan, "SELECT * FROM generated_types WHERE id = 5")
+
+        then:
+        def e = thrown(DataAccessException)
+        e.message.contains("Cannot convert type [class java.lang.String] with value []")
+
         cleanup:
         execute("DROP TABLE generated_types")
     }
@@ -259,6 +277,33 @@ class GeneratedRowMapperSpec extends Specification {
         execute("DROP TABLE generated_visit")
     }
 
+    void "an entity with a static creator is built through it, as the introspection builds it"() {
+        given:
+        createTable("generated_probe", ["id BIGINT", "name VARCHAR(255)", "active BOOLEAN"])
+        execute("INSERT INTO generated_probe VALUES (1, 'probe', FALSE)")
+        createTable("generated_tag", ["id BIGINT", "name VARCHAR(255)"])
+        execute("INSERT INTO generated_tag VALUES (1, 'lower')")
+
+        when:
+        List<Probe> probes = mapGenerated(FlatEntityMappingPlan.of(entity(Probe)), "SELECT * FROM generated_probe")
+        List<Tag> tags = mapGenerated(FlatEntityMappingPlan.of(entity(Tag)), "SELECT * FROM generated_tag")
+
+        then: "the creator's parameters come from the columns, the rest from the setters"
+        probes[0].id == 1L
+        probes[0].name == "probe"
+        !probes[0].active
+        def general = mapGeneral(entity(Probe), "SELECT * FROM generated_probe")
+        probes*.id == general*.id && probes*.name == general*.name && probes*.active == general*.active
+
+        and: "the record's creator normalizes the component, which the canonical constructor would not"
+        tags == [new Tag(1L, "LOWER")]
+        tags == mapGeneral(entity(Tag), "SELECT * FROM generated_tag")
+
+        cleanup:
+        execute("DROP TABLE generated_probe")
+        execute("DROP TABLE generated_tag")
+    }
+
     void "the generated mapper is used directly with resolved ordinals"() {
         given:
         def mapper = GeneratedRowMappers.find(Country)
@@ -269,7 +314,7 @@ class GeneratedRowMapperSpec extends Specification {
 
         when:
         rs.next()
-        Country country = mapper.map(rs, [2] as int[])
+        Country country = mapper.map(rs, [2] as int[], conversionService)
 
         then:
         country.id() == 42L

@@ -15,6 +15,8 @@
  */
 package io.micronaut.data.processor.visitors;
 
+import io.micronaut.core.annotation.Creator;
+import io.micronaut.core.convert.ConversionService;
 import io.micronaut.core.annotation.Internal;
 import io.micronaut.data.annotation.InstantiateWithDefaultConstructor;
 import io.micronaut.data.annotation.MappedEntity;
@@ -69,7 +71,6 @@ import java.util.Map;
 import java.util.Objects;
 import java.util.Set;
 import java.util.UUID;
-import java.util.function.BiFunction;
 import java.util.function.Function;
 
 /**
@@ -83,13 +84,19 @@ import java.util.function.Function;
  * {@link PersistentEntityUtils#traversePersistentProperties} lists them: the identity, the version, the persistent
  * properties, the leaves of embedded values and the identity of single ended associations, named by the entity's
  * naming strategy. Each column is read into a typed local, then the objects are built innermost first: through the
- * constructor the bean introspection uses when it has parameters, through setters otherwise. The values and the
+ * creator the bean introspection uses when it has parameters, through setters otherwise. The values and the
  * null handling are those of the flat entity mapper of {@code data-jdbc}, which is the mapper that delegates to
- * the generated class: a SQL NULL read for a primitive leaves the property at its initial value, a non-null
- * constructor argument fails, an association target whose identity is null is null, and a nullable embedded value
- * without a single column value is null.</p>
+ * the generated class: a value the getter does not return in the property type (an enum, a java.time type) goes
+ * through the conversion service, a SQL NULL read for a primitive leaves the property at its initial value, a
+ * non-null constructor argument fails, an association target whose identity is null is null, and a nullable
+ * embedded value without a single column value is null.</p>
  *
- * <p>No mapper is generated, with a warning naming the reason, for an entity the runtime cannot read exactly that
+ * <p>Generation is on for Java entities whenever data-jdbc is on the compile classpath; the processor option
+ * {@value #OPTION_ENABLED} set to {@code false} turns it off, and {@value #OPTION_REPORT} set to {@code true}
+ * reports every entity no mapper is generated for. A failure to generate a mapper is a warning, never a
+ * compilation error.</p>
+ *
+ * <p>No mapper is generated for an entity the runtime cannot read exactly that
  * way: a composite identity, an attribute converter, a JSON column, a property type without a typed read (which
  * includes arrays and custom types the conversion service converts), a join column override, an identity or
  * version that cannot be set, or a constructor argument that is not a persistent property. Such entities keep the
@@ -101,6 +108,14 @@ import java.util.function.Function;
 public final class JdbcRowMapperVisitor implements TypeElementVisitor<MappedEntity, Object> {
 
     static final String SUFFIX = "$JdbcRowMapper";
+    /**
+     * The processor option that turns the generation off ({@code false}).
+     */
+    static final String OPTION_ENABLED = "micronaut.data.jdbc.generatedRowMappers";
+    /**
+     * The processor option that reports every entity no mapper is generated for, with the reason ({@code true}).
+     */
+    static final String OPTION_REPORT = "micronaut.data.jdbc.generatedRowMappers.report";
     static final String MAPPER_INTERFACE = "io.micronaut.data.jdbc.mapper.GeneratedRowMapper";
     static final String SUPPORT = "io.micronaut.data.jdbc.mapper.GeneratedRowMapperSupport";
 
@@ -109,8 +124,11 @@ public final class JdbcRowMapperVisitor implements TypeElementVisitor<MappedEnti
     private static final ClassTypeDef RESULT_SET = ClassTypeDef.of(ResultSet.class);
     private static final ClassTypeDef SQL_EXCEPTION = ClassTypeDef.of(SQLException.class);
     private static final ClassTypeDef DATA_ACCESS_EXCEPTION = ClassTypeDef.of(DataAccessException.class);
+    private static final ClassTypeDef CONVERSION_SERVICE = ClassTypeDef.of(ConversionService.class);
     private static final ClassTypeDef BIG_DECIMAL = ClassTypeDef.of(BigDecimal.class);
-    private static final ClassTypeDef BIG_INTEGER = ClassTypeDef.of(BigInteger.class);
+    private static final ClassTypeDef TIMESTAMP = ClassTypeDef.of(Timestamp.class);
+    private static final ClassTypeDef DATE = ClassTypeDef.of(java.sql.Date.class);
+    private static final ClassTypeDef TIME = ClassTypeDef.of(java.sql.Time.class);
 
     private final Map<String, SourcePersistentEntity> entities = new HashMap<>();
     private final Function<ClassElement, SourcePersistentEntity> entityResolver = new Function<>() {
@@ -131,8 +149,21 @@ public final class JdbcRowMapperVisitor implements TypeElementVisitor<MappedEnti
     }
 
     @Override
+    public Set<String> getSupportedOptions() {
+        return Set.of(OPTION_ENABLED, OPTION_REPORT);
+    }
+
+    @Override
     public void visitClass(ClassElement element, VisitorContext context) {
         if (element.isAbstract() || element.isInterface() || element.isEnum() || !element.hasAnnotation(MappedEntity.class)) {
+            return;
+        }
+        if (context.getLanguage() != VisitorContext.Language.JAVA) {
+            // Only the Java generator's rendering of the model is tested; Kotlin needs a KSP test before it is enabled
+            return;
+        }
+        Map<String, String> options = context.getOptions();
+        if ("false".equalsIgnoreCase(options.get(OPTION_ENABLED))) {
             return;
         }
         if (context.getClassElement(MAPPER_INTERFACE).isEmpty()) {
@@ -143,25 +174,26 @@ public final class JdbcRowMapperVisitor implements TypeElementVisitor<MappedEnti
         if (sourceGenerator == null) {
             return;
         }
-        SourcePersistentEntity entity = entityResolver.apply(element);
-        Model model;
+        boolean report = "true".equalsIgnoreCase(options.get(OPTION_REPORT));
         try {
-            model = Model.of(entity, context);
-        } catch (RuntimeException e) {
-            if (isPostponement(e)) {
-                // A constructor lookup that names a type generated later in this compilation: the entity keeps the
-                // runtime mappers rather than postponing the element, which would leave the repositories of this
-                // round half processed
+            SourcePersistentEntity entity = entityResolver.apply(element);
+            Model model = Model.of(entity, context, report);
+            if (model == null) {
                 return;
             }
-            throw e;
+            String name = element.getName() + SUFFIX;
+            sourceGenerator.write(generate(name, element, model), context, element);
+            context.visitServiceDescriptor(MAPPER_INTERFACE, name, element);
+        } catch (RuntimeException e) {
+            if (isPostponement(e)) {
+                // A lookup that names a type generated later in this compilation: the entity keeps the runtime
+                // mappers rather than postponing the element, which would leave the repositories of this round
+                // half processed
+                return;
+            }
+            // The mapper is an optimization: a failure to generate it must not fail the build
+            context.warn("No JDBC row mapper generated for " + element.getName() + ": " + e + ". Rows are mapped at runtime.", element);
         }
-        if (model == null) {
-            return;
-        }
-        String name = element.getName() + SUFFIX;
-        sourceGenerator.write(generate(name, element, model), context, element);
-        context.visitServiceDescriptor(MAPPER_INTERFACE, name, element);
     }
 
     private static boolean isPostponement(RuntimeException e) {
@@ -211,28 +243,28 @@ public final class JdbcRowMapperVisitor implements TypeElementVisitor<MappedEnti
                 .returns(TypeDef.OBJECT)
                 .addParameter("rs", RESULT_SET)
                 .addParameter("columns", TypeDef.Primitive.INT.array())
+                .addParameter("conversionService", CONVERSION_SERVICE)
                 .addThrows(SQL_EXCEPTION)
-                .build((aThis, params) -> new Body(params.get(0), params.get(1)).build(model.root)))
+                .build((aThis, params) -> new Body(params.get(0), params.get(1), params.get(2)).build(model.root)))
             .build();
     }
 
     private static Read getter(String name, TypeDef type) {
-        return new Read(type, (rs, c) -> rs.invoke(name, type, c));
+        return new Read(type, (rs, c, cs) -> rs.invoke(name, type, c));
     }
 
     private static Read support(String name, Class<?> type) {
         ClassTypeDef typeDef = ClassTypeDef.of(type);
-        return new Read(typeDef, (rs, c) -> SUPPORT_TYPE.invokeStatic(name, typeDef, rs, c));
+        return new Read(typeDef, (rs, c, cs) -> SUPPORT_TYPE.invokeStatic(name, typeDef, rs, c));
     }
 
     /**
-     * {@code T t = source; t == null ? null : convert(t)}.
+     * {@code GeneratedRowMapperSupport.convert(rs.getX(c), Type.class, conversionService)}: a value the getter does
+     * not return in the property type, converted as the general mapper converts it, through the conversion
+     * service; a single read of the column.
      */
-    private static Read derived(Read source, TypeDef type, Function<ExpressionDef, ExpressionDef> convert) {
-        return new Read(type, (rs, c) -> {
-            ExpressionDef read = source.read(rs, c);
-            return read.isNull().doIfElse(ExpressionDef.nullValue().cast(type), convert.apply(read)).cast(type);
-        });
+    private static Read converted(String getter, TypeDef getterType, ClassTypeDef type) {
+        return new Read(type, (rs, c, cs) -> SUPPORT_TYPE.invokeStatic("convert", type, rs.invoke(getter, getterType, c), ExpressionDef.constant(type), cs));
     }
 
     /**
@@ -246,8 +278,7 @@ public final class JdbcRowMapperVisitor implements TypeElementVisitor<MappedEnti
             if (dataType != DataType.STRING) {
                 return null;
             }
-            ClassTypeDef enumType = ClassTypeDef.of(type);
-            return derived(getter("getString", TypeDef.STRING), enumType, s -> enumType.invokeStatic("valueOf", enumType, s));
+            return converted("getString", TypeDef.STRING, ClassTypeDef.of(type));
         }
         String name = type.isArray() ? type.getName() + "[]" : type.getName();
         return switch (dataType) {
@@ -294,45 +325,52 @@ public final class JdbcRowMapperVisitor implements TypeElementVisitor<MappedEnti
             };
             case BIGDECIMAL -> switch (name) {
                 case "java.math.BigDecimal" -> getter("getBigDecimal", BIG_DECIMAL);
-                case "java.math.BigInteger" -> derived(getter("getBigDecimal", BIG_DECIMAL), BIG_INTEGER, d -> d.invoke("toBigInteger", BIG_INTEGER));
+                case "java.math.BigInteger" -> converted("getBigDecimal", BIG_DECIMAL, ClassTypeDef.of(BigInteger.class));
                 default -> null;
             };
             case BYTE_ARRAY -> "byte[]".equals(name) ? getter("getBytes", TypeDef.of(byte[].class)) : null;
             case TIMESTAMP -> switch (name) {
-                case "java.sql.Timestamp" -> getter("getTimestamp", ClassTypeDef.of(Timestamp.class));
-                case "java.time.LocalDateTime" -> support("readLocalDateTime", LocalDateTime.class);
-                case "java.time.Instant" -> support("readInstant", Instant.class);
-                case "java.time.OffsetDateTime" -> support("readOffsetDateTime", OffsetDateTime.class);
-                case "java.time.ZonedDateTime" -> support("readZonedDateTime", ZonedDateTime.class);
-                case "java.time.LocalTime" -> support("readLocalTimeOfTimestamp", LocalTime.class);
+                case "java.sql.Timestamp" -> getter("getTimestamp", TIMESTAMP);
+                case "java.time.LocalDateTime" -> converted("getTimestamp", TIMESTAMP, ClassTypeDef.of(LocalDateTime.class));
+                case "java.time.Instant" -> converted("getTimestamp", TIMESTAMP, ClassTypeDef.of(Instant.class));
+                case "java.time.OffsetDateTime" -> converted("getTimestamp", TIMESTAMP, ClassTypeDef.of(OffsetDateTime.class));
+                case "java.time.ZonedDateTime" -> converted("getTimestamp", TIMESTAMP, ClassTypeDef.of(ZonedDateTime.class));
+                case "java.time.LocalTime" -> converted("getTimestamp", TIMESTAMP, ClassTypeDef.of(LocalTime.class));
                 default -> null;
             };
             case DATE -> switch (name) {
-                case "java.util.Date", "java.sql.Date" -> getter("getDate", ClassTypeDef.of(java.sql.Date.class));
-                case "java.time.LocalDate" -> support("readLocalDate", LocalDate.class);
+                case "java.util.Date", "java.sql.Date" -> getter("getDate", DATE);
+                case "java.time.LocalDate" -> converted("getDate", DATE, ClassTypeDef.of(LocalDate.class));
                 default -> null;
             };
             case TIME -> switch (name) {
-                case "java.sql.Time" -> getter("getTime", ClassTypeDef.of(java.sql.Time.class));
-                case "java.time.LocalTime" -> support("readLocalTime", LocalTime.class);
+                case "java.sql.Time" -> getter("getTime", TIME);
+                case "java.time.LocalTime" -> converted("getTime", TIME, ClassTypeDef.of(LocalTime.class));
                 default -> null;
             };
-            case UUID -> "java.util.UUID".equals(name) ? support("readUuid", UUID.class) : null;
+            case UUID -> "java.util.UUID".equals(name)
+                ? new Read(ClassTypeDef.of(UUID.class), (rs, c, cs) -> SUPPORT_TYPE.invokeStatic("readUuid", ClassTypeDef.of(UUID.class), rs, c, cs))
+                : null;
             default -> null;
         };
     }
 
     /**
-     * The constructor the bean introspection instantiates the type with: the canonical constructor of a record,
-     * else the primary constructor; {@code null} for a no-argument one.
+     * The creator the bean introspection instantiates the type with: a static {@code @Creator} factory or a
+     * {@code @Creator} constructor, else the canonical constructor of a record, else the primary constructor;
+     * {@code null} for a no-argument one.
      */
     @Nullable
     private static MethodElement constructorOf(SourcePersistentEntity entity) {
         ClassElement type = entity.getClassElement();
+        // The introspection's creator: a static @Creator factory or a @Creator constructor before anything else
+        MethodElement primary = type.getPrimaryConstructor().orElse(null);
+        if (primary != null && (primary.isStatic() || primary.hasStereotype(Creator.class))) {
+            return primary.getParameters().length > 0 ? primary : null;
+        }
         if (type.isRecord()) {
             // The canonical constructor: the one with a parameter per component, whatever other constructors
-            // exist. The components are the persistent properties, which avoids inspecting the record's methods
-            // (a static method naming a type generated later in the compilation postpones the element)
+            // exist (an extra no-argument constructor can be the primary one)
             Set<String> components = new HashSet<>();
             for (PersistentProperty property : entity.getPersistentProperties()) {
                 components.add(property.getName());
@@ -353,7 +391,7 @@ public final class JdbcRowMapperVisitor implements TypeElementVisitor<MappedEnti
                 }
             }
         }
-        return type.getPrimaryConstructor().filter(c -> c.getParameters().length > 0).orElse(null);
+        return primary != null && primary.getParameters().length > 0 ? primary : null;
     }
 
     private static SourcePersistentProperty property(Member member) {
@@ -387,12 +425,17 @@ public final class JdbcRowMapperVisitor implements TypeElementVisitor<MappedEnti
      * The typed read of one column.
      *
      * @param type       The type of the value
-     * @param expression Builds the read from the result set and the column
+     * @param expression Builds the read from the result set, the column and the conversion service
      */
-    private record Read(TypeDef type, BiFunction<VariableDef, ExpressionDef, ExpressionDef> expression) {
+    private record Read(TypeDef type, Expression expression) {
 
-        ExpressionDef read(VariableDef rs, ExpressionDef column) {
-            return expression.apply(rs, column);
+        ExpressionDef read(VariableDef rs, ExpressionDef column, VariableDef conversionService) {
+            return expression.apply(rs, column, conversionService);
+        }
+
+        @FunctionalInterface
+        interface Expression {
+            ExpressionDef apply(VariableDef rs, ExpressionDef column, VariableDef conversionService);
         }
     }
 
@@ -497,7 +540,7 @@ public final class JdbcRowMapperVisitor implements TypeElementVisitor<MappedEnti
          * @return The model, or {@code null} after warning when no mapper can be generated for the entity
          */
         @Nullable
-        static Model of(SourcePersistentEntity entity, VisitorContext context) {
+        static Model of(SourcePersistentEntity entity, VisitorContext context, boolean report) {
             try {
                 Model model = new Model(new Node(entity, null));
                 model.collect(entity);
@@ -505,7 +548,9 @@ public final class JdbcRowMapperVisitor implements TypeElementVisitor<MappedEnti
                 model.index(model.root);
                 return model;
             } catch (Unsupported e) {
-                context.info("No JDBC row mapper generated for " + entity.getName() + ": " + e.getMessage() + ". Rows are mapped at runtime.", e.element);
+                if (report) {
+                    context.info("No JDBC row mapper generated for " + entity.getName() + ": " + e.getMessage() + ". Rows are mapped at runtime.", e.element);
+                }
                 return null;
             }
         }
@@ -611,6 +656,7 @@ public final class JdbcRowMapperVisitor implements TypeElementVisitor<MappedEnti
     private static final class Body {
         private final VariableDef rs;
         private final VariableDef columns;
+        private final VariableDef conversionService;
         private final List<StatementDef> statements = new ArrayList<>();
         /**
          * The local holding the value of each column, in the property type (the wrapper for a primitive char).
@@ -623,9 +669,10 @@ public final class JdbcRowMapperVisitor implements TypeElementVisitor<MappedEnti
         private final Map<Leaf, ExpressionDef.ConditionExpressionDef> presents = new HashMap<>();
         private int locals;
 
-        Body(VariableDef rs, VariableDef columns) {
+        Body(VariableDef rs, VariableDef columns, VariableDef conversionService) {
             this.rs = rs;
             this.columns = columns;
+            this.conversionService = conversionService;
         }
 
         StatementDef build(Node root) {
@@ -640,7 +687,7 @@ public final class JdbcRowMapperVisitor implements TypeElementVisitor<MappedEnti
             StatementDef.DefineAndAssign column = SUPPORT_TYPE.invokeStatic("column", TypeDef.Primitive.INT, columns, ExpressionDef.constant(leaf.index()))
                 .newLocal("c" + leaf.index());
             statements.add(column);
-            StatementDef.DefineAndAssign value = leaf.read().read(rs, column.variable()).newLocal("v" + leaf.index());
+            StatementDef.DefineAndAssign value = leaf.read().read(rs, column.variable(), conversionService).newLocal("v" + leaf.index());
             statements.add(value);
             VariableDef local = value.variable();
             values.put(leaf, local);
@@ -701,7 +748,15 @@ public final class JdbcRowMapperVisitor implements TypeElementVisitor<MappedEnti
                     consumed.add(parameter.getName());
                 }
             }
-            ExpressionDef instance = constructor == null ? type.instantiate() : type.instantiate(constructor, arguments);
+            ExpressionDef instance;
+            if (constructor == null) {
+                instance = type.instantiate();
+            } else if (constructor.isStatic()) {
+                // A static @Creator factory
+                instance = type.invokeStatic(constructor, arguments);
+            } else {
+                instance = type.instantiate(constructor, arguments);
+            }
             StatementDef.DefineAndAssign object;
             if (node.isRoot()) {
                 // A required argument that is NULL fails as in the general mapper

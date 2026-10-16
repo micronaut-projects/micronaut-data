@@ -92,15 +92,15 @@ class H2FlatEntityMappingSpec extends Specification {
         books[0].author.id == author.id
 
         and: "the plan of the entity with associations holds the mapper the annotation processor generated"
-        plans()[operations.getEntity(Book)].generatedMapper != null
-        plans()[operations.getEntity(Person)].generatedMapper != null
+        plans()[operations.getEntity(Book)].get().generatedMapper != null
+        plans()[operations.getEntity(Person)].get().generatedMapper != null
 
         cleanup:
         bookRepository.deleteAll()
         authorRepository.deleteAll()
     }
 
-    private Map<RuntimePersistentEntity<?>, ?> plans() {
+    private Map<RuntimePersistentEntity<?>, Optional<?>> plans() {
         operations.flatEntityMappingPlans
     }
 }

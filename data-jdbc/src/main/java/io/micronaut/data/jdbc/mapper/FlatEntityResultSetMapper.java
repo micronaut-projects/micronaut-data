@@ -162,7 +162,7 @@ public final class FlatEntityResultSetMapper<R> implements SqlTypeMapper<ResultS
         R entity;
         if (generatedMapper != null) {
             try {
-                entity = (R) generatedMapper.map(rs, ordinals);
+                entity = (R) generatedMapper.map(rs, ordinals, conversionService);
             } catch (SQLException e) {
                 throw new DataAccessException("Error reading entity [" + plan.getEntity().getName() + "] from result set: " + e.getMessage(), e);
             }

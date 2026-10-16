@@ -16,29 +16,20 @@
 package io.micronaut.data.jdbc.mapper;
 
 import io.micronaut.core.annotation.Internal;
+import io.micronaut.core.convert.ConversionService;
 import io.micronaut.data.exceptions.DataAccessException;
 import org.jspecify.annotations.Nullable;
 
-import java.sql.Date;
 import java.sql.ResultSet;
 import java.sql.SQLException;
-import java.sql.Time;
-import java.sql.Timestamp;
-import java.time.Instant;
-import java.time.LocalDate;
-import java.time.LocalDateTime;
-import java.time.LocalTime;
-import java.time.OffsetDateTime;
-import java.time.ZoneId;
-import java.time.ZonedDateTime;
 import java.util.UUID;
 
 /**
  * The reads a {@link GeneratedRowMapper} delegates to when a column is not read with a single typed getter: a
- * boxed number that is {@code null} for SQL NULL, a character, a UUID and the java.time types, each read and
- * converted the way {@link FlatEntityResultSetMapper} and the general mapper read and convert them (a typed getter
- * followed by {@link ResultSet#wasNull()}, and the conversions of
- * {@link io.micronaut.data.runtime.convert.DataConversionService} applied in place).
+ * boxed number that is {@code null} for SQL NULL, a character, a UUID, and the conversion of a value a getter
+ * does not return in the property type (enums, the java.time types, BigInteger), each exactly as
+ * {@link FlatEntityResultSetMapper} and the general mapper do it: a typed getter followed by
+ * {@link ResultSet#wasNull()}, and the conversion service with whatever converters are registered with it.
  *
  * @since 5.3.0
  */
@@ -164,16 +155,17 @@ public final class GeneratedRowMapperSupport {
 
     /**
      * A UUID the way {@link ColumnIndexResultSetReader#getRequiredValue} reads one: through
-     * {@link ResultSet#getObject(int, Class)}, or {@link ResultSet#getObject(int)} and a conversion from the
-     * string or bytes a driver that cannot return the type returns.
+     * {@link ResultSet#getObject(int, Class)}, or {@link ResultSet#getObject(int)} and a conversion when the driver
+     * cannot return the type.
      *
-     * @param rs The result set
-     * @param c  The column
+     * @param rs                The result set
+     * @param c                 The column
+     * @param conversionService The conversion service
      * @return The value, or {@code null} for SQL NULL
      * @throws SQLException If the column cannot be read
      */
     @Nullable
-    public static UUID readUuid(ResultSet rs, int c) throws SQLException {
+    public static UUID readUuid(ResultSet rs, int c, ConversionService conversionService) throws SQLException {
         Object v;
         try {
             v = rs.getObject(c, UUID.class);
@@ -183,102 +175,30 @@ public final class GeneratedRowMapperSupport {
         if (v == null || v instanceof UUID) {
             return (UUID) v;
         }
-        if (v instanceof String s) {
-            return UUID.fromString(s);
-        }
-        if (v instanceof byte[] bytes) {
-            return UUID.nameUUIDFromBytes(bytes);
-        }
-        throw new DataAccessException("Cannot convert type [" + v.getClass() + "] with value [" + v + "] to target type: " + UUID.class.getName());
+        return convert(v, UUID.class, conversionService);
     }
 
     /**
-     * @param rs The result set
-     * @param c  The column
-     * @return The timestamp in the system zone, or {@code null} for SQL NULL
-     * @throws SQLException If the column cannot be read
-     */
-    @Nullable
-    public static LocalDateTime readLocalDateTime(ResultSet rs, int c) throws SQLException {
-        Timestamp v = rs.getTimestamp(c);
-        return v == null ? null : zoned(v).toLocalDateTime();
-    }
-
-    /**
-     * @param rs The result set
-     * @param c  The column
-     * @return The timestamp as an instant, or {@code null} for SQL NULL
-     * @throws SQLException If the column cannot be read
-     */
-    @Nullable
-    public static Instant readInstant(ResultSet rs, int c) throws SQLException {
-        Timestamp v = rs.getTimestamp(c);
-        return v == null ? null : v.toInstant();
-    }
-
-    /**
-     * @param rs The result set
-     * @param c  The column
-     * @return The timestamp in the system zone, or {@code null} for SQL NULL
-     * @throws SQLException If the column cannot be read
-     */
-    @Nullable
-    public static OffsetDateTime readOffsetDateTime(ResultSet rs, int c) throws SQLException {
-        Timestamp v = rs.getTimestamp(c);
-        return v == null ? null : zoned(v).toOffsetDateTime();
-    }
-
-    /**
-     * @param rs The result set
-     * @param c  The column
-     * @return The timestamp in the system zone, or {@code null} for SQL NULL
-     * @throws SQLException If the column cannot be read
-     */
-    @Nullable
-    public static ZonedDateTime readZonedDateTime(ResultSet rs, int c) throws SQLException {
-        Timestamp v = rs.getTimestamp(c);
-        return v == null ? null : zoned(v);
-    }
-
-    /**
-     * The time of a timestamp column, which is how a {@link LocalTime} property is stored.
+     * Converts a value a getter did not return in the property type, the way the general mapper converts every
+     * value whose type doesn't match: through the conversion service and whatever converters are registered with
+     * it, so that enums, the java.time types and user converters behave exactly as they do there.
      *
-     * @param rs The result set
-     * @param c  The column
-     * @return The time of the timestamp in the system zone, or {@code null} for SQL NULL
-     * @throws SQLException If the column cannot be read
+     * @param value             The value read, or {@code null} for SQL NULL
+     * @param type              The property type
+     * @param conversionService The conversion service
+     * @param <T>               The property type
+     * @return The converted value, or {@code null} for {@code null}
+     * @throws DataAccessException If the value cannot be converted
      */
     @Nullable
-    public static LocalTime readLocalTimeOfTimestamp(ResultSet rs, int c) throws SQLException {
-        Timestamp v = rs.getTimestamp(c);
-        return v == null ? null : zoned(v).toLocalTime();
-    }
-
-    /**
-     * @param rs The result set
-     * @param c  The column
-     * @return The time, or {@code null} for SQL NULL
-     * @throws SQLException If the column cannot be read
-     */
-    @Nullable
-    public static LocalTime readLocalTime(ResultSet rs, int c) throws SQLException {
-        Time v = rs.getTime(c);
-        return v == null ? null : v.toLocalTime();
-    }
-
-    /**
-     * @param rs The result set
-     * @param c  The column
-     * @return The date in the system zone, or {@code null} for SQL NULL
-     * @throws SQLException If the column cannot be read
-     */
-    @Nullable
-    public static LocalDate readLocalDate(ResultSet rs, int c) throws SQLException {
-        Date v = rs.getDate(c);
-        return v == null ? null : Instant.ofEpochMilli(v.getTime()).atZone(ZoneId.systemDefault()).toLocalDate();
-    }
-
-    private static ZonedDateTime zoned(Timestamp timestamp) {
-        return timestamp.toInstant().atZone(ZoneId.systemDefault());
+    public static <T> T convert(@Nullable Object value, Class<T> type, ConversionService conversionService) {
+        if (value == null) {
+            return null;
+        }
+        T converted = conversionService.convert(value, type).orElse(null);
+        if (converted == null) {
+            throw new DataAccessException("Cannot convert type [" + value.getClass() + "] with value [" + value + "] to target type: " + type.getName() + ". Consider defining a TypeConverter bean to handle this case.");
+        }
+        return converted;
     }
 }
