@@ -182,14 +182,14 @@ public final class GraphPathMethodMatcher implements MethodMatcher {
         }
 
         MethodMatchInfo methodMatchInfo = new MethodMatchInfo(operationType, resultType, entry.interceptor());
-        methodMatchInfo.queryResult(queryBuilder.buildPathQuery(definition));
+        methodMatchInfo.queryResult(buildPathQuery(queryBuilder, definition));
         if (result == PathQueryDefinition.Result.ELEMENTS && TypeUtils.isContainerType(matchContext.getReturnType())) {
             ClassElement returnType = matchContext.getReturnType();
             if (returnType.isAssignable("io.micronaut.data.model.Page")) {
                 PathQueryDefinition countDefinition = new PathQueryDefinition(
                     entity, kind, PathQueryDefinition.Result.COUNT, relationships, direction, maxDepth, limitParameterIndex >= 0, start, end
                 );
-                methodMatchInfo.countQueryResult(queryBuilder.buildPathQuery(countDefinition));
+                methodMatchInfo.countQueryResult(buildPathQuery(queryBuilder, countDefinition));
             }
         }
         if (limitParameterIndex >= 0) {
@@ -197,6 +197,14 @@ public final class GraphPathMethodMatcher implements MethodMatcher {
             matchContext.getMethodElement().annotate(PathLimitParameter.class, builder -> builder.value(index));
         }
         return methodMatchInfo;
+    }
+
+    private static io.micronaut.data.model.query.builder.QueryResult buildPathQuery(CypherQueryBuilder queryBuilder, PathQueryDefinition definition) {
+        try {
+            return queryBuilder.buildPathQuery(definition);
+        } catch (IllegalArgumentException e) {
+            throw new MatchFailedException(String.valueOf(e.getMessage()));
+        }
     }
 
     private static CypherQueryBuilder queryBuilder(MethodMatchContext matchContext) {
