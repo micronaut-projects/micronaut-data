@@ -25,6 +25,8 @@ import io.micronaut.data.model.DataType;
 import io.micronaut.data.model.naming.NamingStrategy;
 import io.micronaut.data.model.runtime.RuntimePersistentEntity;
 import io.micronaut.data.model.runtime.RuntimePersistentProperty;
+import org.jspecify.annotations.Nullable;
+
 import java.math.BigDecimal;
 import java.sql.Timestamp;
 import java.util.ArrayList;
@@ -49,6 +51,12 @@ import java.util.UUID;
  * <p>Which entities are flat is decided by the annotation processor, which marks them with {@link FlatEntity}:
  * no associations or embedded values, no JSON columns, no attribute converters, no composite identity, and only
  * data types with a typed getter. Any other entity is mapped by the general mapper as before.</p>
+ *
+ * <p>When the annotation processor generated a {@link GeneratedRowMapper} for the entity, the plan holds it
+ * instead and {@link FlatEntityResultSetMapper} delegates the row read to it; the plan then only resolves the
+ * ordinals of the generated mapper's columns. A generated mapper covers what the flat mapper covers and also
+ * embedded values and single ended associations by their foreign key, and its values are those the flat mapper
+ * reads.</p>
  *
  * @param <R> The entity type
  * @since 5.3.0
@@ -78,6 +86,8 @@ public final class FlatEntityMappingPlan<R> {
     private static final byte SKIPPED = 0;
 
     private final RuntimePersistentEntity<R> entity;
+    @Nullable
+    private final GeneratedRowMapper<R> generatedMapper;
     private final BeanIntrospection<R> introspection;
     private final RuntimePersistentProperty<R>[] persistentProperties;
     private final BeanProperty<R, Object>[] properties;
@@ -101,8 +111,24 @@ public final class FlatEntityMappingPlan<R> {
      */
     private final boolean embeddable;
 
+    private FlatEntityMappingPlan(RuntimePersistentEntity<R> entity, GeneratedRowMapper<R> generatedMapper) {
+        this.entity = entity;
+        this.generatedMapper = generatedMapper;
+        this.introspection = entity.getIntrospection();
+        this.persistentProperties = new RuntimePersistentProperty[0];
+        this.properties = new BeanProperty[0];
+        this.columnNames = generatedMapper.columnNames();
+        this.kinds = new byte[0];
+        this.conversions = new boolean[0];
+        this.constructorArgumentIndexes = new int[0];
+        this.requiredConstructorArguments = new boolean[0];
+        this.constructorArgumentCount = 0;
+        this.embeddable = false;
+    }
+
     private FlatEntityMappingPlan(RuntimePersistentEntity<R> entity, List<Column<R>> columns, boolean[] requiredConstructorArguments) {
         this.entity = entity;
+        this.generatedMapper = null;
         this.introspection = entity.getIntrospection();
         int size = columns.size();
         this.persistentProperties = new RuntimePersistentProperty[size];
@@ -136,6 +162,26 @@ public final class FlatEntityMappingPlan<R> {
      * @throws IllegalArgumentException if the entity is not marked as flat
      */
     public static <R> FlatEntityMappingPlan<R> of(RuntimePersistentEntity<R> entity) {
+        return of(entity, true);
+    }
+
+    /**
+     * Resolves the plan of an entity: the one holding the mapper the annotation processor generated for it when
+     * there is one and {@code generated} allows it, else the columns of an entity marked with {@link FlatEntity}.
+     *
+     * @param entity    The entity
+     * @param generated Whether to use the mapper the annotation processor generated for the entity when there is one
+     * @param <R>       The entity type
+     * @return The plan
+     * @throws IllegalArgumentException if the entity has no generated mapper to use and is not marked as flat
+     */
+    public static <R> FlatEntityMappingPlan<R> of(RuntimePersistentEntity<R> entity, boolean generated) {
+        if (generated) {
+            GeneratedRowMapper<R> generatedMapper = GeneratedRowMappers.find(entity.getIntrospection().getBeanType());
+            if (generatedMapper != null) {
+                return new FlatEntityMappingPlan<>(entity, generatedMapper);
+            }
+        }
         if (!isFlat(entity)) {
             throw new IllegalArgumentException("Entity [" + entity.getName() + "] is not a flat entity");
         }
@@ -163,6 +209,15 @@ public final class FlatEntityMappingPlan<R> {
      */
     public static boolean isFlat(RuntimePersistentEntity<?> entity) {
         return entity.getAnnotationMetadata().hasAnnotation(FlatEntity.class);
+    }
+
+    /**
+     * @param entity The entity
+     * @return Whether a plan exists for the entity: the annotation processor generated a row mapper for it or
+     * marked it as flat
+     */
+    public static boolean supports(RuntimePersistentEntity<?> entity) {
+        return isFlat(entity) || GeneratedRowMappers.find(entity.getIntrospection().getBeanType()) != null;
     }
 
     /**
@@ -274,6 +329,15 @@ public final class FlatEntityMappingPlan<R> {
      */
     public RuntimePersistentEntity<R> getEntity() {
         return entity;
+    }
+
+    /**
+     * @return The mapper the annotation processor generated for the entity, which reads the rows in place of the
+     * plan's columns, or {@code null} when the plan's columns are read one by one
+     */
+    @Nullable
+    public GeneratedRowMapper<R> getGeneratedMapper() {
+        return generatedMapper;
     }
 
     BeanIntrospection<R> getIntrospection() {

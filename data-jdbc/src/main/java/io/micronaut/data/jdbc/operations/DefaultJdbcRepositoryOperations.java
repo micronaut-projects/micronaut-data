@@ -183,9 +183,10 @@ public final class DefaultJdbcRepositoryOperations extends AbstractSqlRepository
     private final SyncCascadeOperations<JdbcOperationContext> cascadeOperations;
     private final DataJdbcConfiguration jdbcConfiguration;
     /**
-     * The flat mapping plan of every flat entity read so far.
+     * The flat mapping plan of every entity read so far, empty for an entity without one, so that an entity is
+     * examined once.
      */
-    private final Map<RuntimePersistentEntity<?>, FlatEntityMappingPlan<?>> flatEntityMappingPlans = new ConcurrentHashMap<>();
+    private final Map<RuntimePersistentEntity<?>, Optional<FlatEntityMappingPlan<?>>> flatEntityMappingPlans = new ConcurrentHashMap<>();
     @Nullable
     private final SchemaTenantResolver schemaTenantResolver;
     private final JdbcSchemaHandler schemaHandler;
@@ -292,8 +293,9 @@ public final class DefaultJdbcRepositoryOperations extends AbstractSqlRepository
     /**
      * {@inheritDoc}
      *
-     * <p>A query returning a flat entity (see {@link io.micronaut.data.annotation.FlatEntity}) without joins is
-     * mapped by a {@link FlatEntityResultSetMapper}. Everything else is mapped by the general mapper.</p>
+     * <p>A query returning, without joins, an entity the annotation processor generated a row mapper for or marked
+     * as flat (see {@link io.micronaut.data.annotation.FlatEntity}) is mapped by a {@link FlatEntityResultSetMapper}.
+     * Everything else is mapped by the general mapper.</p>
      */
     @Override
     protected <E, R> SqlTypeMapper<ResultSet, R> createMapper(SqlStoredQuery<E, R> preparedQuery, Class<ResultSet> rsType) {
@@ -304,8 +306,10 @@ public final class DefaultJdbcRepositoryOperations extends AbstractSqlRepository
             && !isDtoProjection(preparedQuery)
             && !isJsonResult(preparedQuery, preparedQuery.getQueryResultInfo())) {
             RuntimePersistentEntity<R> entity = getEntity(preparedQuery.getResultType());
-            if (FlatEntityMappingPlan.isFlat(entity)) {
-                FlatEntityMappingPlan<R> plan = (FlatEntityMappingPlan<R>) flatEntityMappingPlans.computeIfAbsent(entity, FlatEntityMappingPlan::of);
+            FlatEntityMappingPlan<R> plan = (FlatEntityMappingPlan<R>) flatEntityMappingPlans
+                .computeIfAbsent(entity, e -> FlatEntityMappingPlan.supports(e) ? Optional.of(FlatEntityMappingPlan.of(e)) : Optional.empty())
+                .orElse(null);
+            if (plan != null) {
                 BiFunction<RuntimePersistentEntity<Object>, Object, Object> loadListener = entity.hasPostLoadEventListeners()
                     ? (loadedEntity, o) -> triggerPostLoad(o, loadedEntity, preparedQuery.getAnnotationMetadata())
                     : null;
