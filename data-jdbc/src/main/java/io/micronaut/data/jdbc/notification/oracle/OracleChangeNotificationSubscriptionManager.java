@@ -111,7 +111,7 @@ final class OracleChangeNotificationSubscriptionManager {
      *
      * @return completion stage for cleanup and work already running
      */
-    synchronized CompletionStage<?> stop() {
+    synchronized CompletionStage<Void> stop() {
         if (shutdownStage != null) {
             return shutdownStage;
         }

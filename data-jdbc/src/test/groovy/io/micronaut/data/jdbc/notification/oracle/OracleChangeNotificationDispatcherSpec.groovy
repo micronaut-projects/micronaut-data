@@ -1048,7 +1048,11 @@ class OracleChangeNotificationDispatcherSpec extends Specification {
 
         cleanup:
         releaseCallbacks.countDown()
-        callbackThreads.each { if (it.isAlive()) it.join(5000) }
+        callbackThreads.each {
+            if (it.isAlive()) {
+                it.join(5000)
+            }
+        }
     }
 
     void "dispatches a full-table notification as one invalidation without row details"() {

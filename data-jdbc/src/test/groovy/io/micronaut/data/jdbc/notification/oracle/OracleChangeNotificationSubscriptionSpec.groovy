@@ -403,11 +403,7 @@ class OracleChangeNotificationSubscriptionSpec extends Specification {
             assert !Thread.holdsLock(subscription)
             callbackThread = Thread.startDaemon {
                 try {
-                    if (callback == 'failure') {
-                        fixture.failureListeners[0].onFailure(new SQLException('Concurrent receiver failure'))
-                    } else {
-                        dispatcher.onDatabaseChangeNotification(event)
-                    }
+                    invokeDriverCallback(callback, fixture.failureListeners[0], dispatcher, event)
                 } catch (Throwable failure) {
                     callbackFailure.set(failure)
                 } finally {
@@ -602,6 +598,15 @@ class OracleChangeNotificationSubscriptionSpec extends Specification {
 
         where:
         reason << ['shutdown', 'deregistration']
+    }
+
+    private static void invokeDriverCallback(String callback, FailureListener failureListener,
+                                             OracleChangeNotificationDispatcher dispatcher, DatabaseChangeEvent event) {
+        if (callback == 'failure') {
+            failureListener.onFailure(new SQLException('Concurrent receiver failure'))
+        } else {
+            dispatcher.onDatabaseChangeNotification(event)
+        }
     }
 
     private RegistrarFixture registrarFixture(List<DatabaseChangeRegistration> registrations,

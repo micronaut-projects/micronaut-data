@@ -66,9 +66,13 @@ final class OracleChangeNotificationSubscription {
     private final Object lifecycleLock = new Object();
 
     private @Nullable DatabaseChangeRegistration registration;
-    /** The failed registration whose replacement is being retried after cleanup. */
+    /**
+     * The failed registration whose replacement is being retried after cleanup.
+     */
     private @Nullable Long recoveryRegistrationId;
-    /** Identifies the recovery attempt that currently owns JDBC setup and cleanup. */
+    /**
+     * Identifies the recovery attempt that currently owns JDBC setup and cleanup.
+     */
     private @Nullable Object recoveryAttempt;
     private @Nullable ScheduledFuture<?> recoveryRetryTask;
 
@@ -225,7 +229,7 @@ final class OracleChangeNotificationSubscription {
      * @param additionalEventType the reason reported for deregistration
      */
     void handleRegistrationDeregistered(long registrationId,
-                                       DatabaseChangeEvent.AdditionalEventType additionalEventType) {
+                                        DatabaseChangeEvent.AdditionalEventType additionalEventType) {
         synchronized (lifecycleLock) {
             if (closed || !isCurrent(registrationId)) {
                 return;
@@ -274,13 +278,13 @@ final class OracleChangeNotificationSubscription {
             return;
         }
         try {
-            recoverRegistration(retryCount, failedRegId);
+            beginRegistrationRecovery(retryCount, failedRegId);
         } finally {
             taskTracker.completeTask();
         }
     }
 
-    private void recoverRegistration(int retryCount, long failedRegId) {
+    private void beginRegistrationRecovery(int retryCount, long failedRegId) {
         Object attempt = new Object();
         DatabaseChangeRegistration failed;
         synchronized (lifecycleLock) {
@@ -295,6 +299,20 @@ final class OracleChangeNotificationSubscription {
             failed = registration;
             registration = null;
         }
+        replaceFailedRegistration(retryCount, failedRegId, attempt, failed);
+    }
+
+    /**
+     * Replaces a detached registration for a recovery attempt already claimed under the lifecycle lock.
+     * Cleans up an unpublished replacement and releases the attempt before notifying or scheduling a retry.
+     *
+     * @param retryCount  the number of retries already attempted
+     * @param failedRegId the registration being recovered
+     * @param attempt     the claimed recovery attempt
+     * @param failed      the detached registration, or {@code null} if already detached
+     */
+    private void replaceFailedRegistration(int retryCount, long failedRegId, Object attempt,
+                                           @Nullable DatabaseChangeRegistration failed) {
         Exception recoveryFailure = null;
         DatabaseChangeRegistration replacement = null;
         boolean published = false;
@@ -327,7 +345,7 @@ final class OracleChangeNotificationSubscription {
                 }
             }
         }
-        if (published && replacement != null) {
+        if (published) {
             long replacementId = replacement.getRegId();
             dispatcher.submitInvalidation(replacementId, () -> {
                 synchronized (lifecycleLock) {

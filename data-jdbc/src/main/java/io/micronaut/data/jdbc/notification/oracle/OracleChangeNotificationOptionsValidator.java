@@ -29,6 +29,7 @@ import java.util.Properties;
  * effective values, including the framework's fallback values for omitted controlled settings.</p>
  */
 final class OracleChangeNotificationOptionsValidator {
+    private static final String EFFECTIVE_OPTION_PREFIX = "effective ";
 
     private OracleChangeNotificationOptionsValidator() {
     }
@@ -113,7 +114,7 @@ final class OracleChangeNotificationOptionsValidator {
         boolean requested = Boolean.parseBoolean(definition.registrationProperties().getProperty(name, Boolean.toString(defaultValue)));
         boolean effective = Boolean.parseBoolean(actual == null ? Boolean.toString(defaultValue) : actual);
         if (requested != effective) {
-            throw invalidRegistrationProperty(definition, dataSourceName, "effective " + name + " [" + effective
+            throw invalidRegistrationProperty(definition, dataSourceName, EFFECTIVE_OPTION_PREFIX + name + " [" + effective
                 + "] conflicts with listener setting [" + requested + "]");
         }
     }
@@ -142,11 +143,11 @@ final class OracleChangeNotificationOptionsValidator {
         String effective = actual == null ? Integer.toString(defaultValue) : actual;
         try {
             if (Integer.parseInt(requested) != Integer.parseInt(effective)) {
-                throw invalidRegistrationProperty(definition, dataSourceName, "effective " + name + " [" + effective
+                throw invalidRegistrationProperty(definition, dataSourceName, EFFECTIVE_OPTION_PREFIX + name + " [" + effective
                     + "] conflicts with listener setting [" + requested + "]");
             }
         } catch (NumberFormatException e) {
-            throw invalidRegistrationProperty(definition, dataSourceName, "effective " + name + " [" + effective + "] is not an integer");
+            throw invalidRegistrationProperty(definition, dataSourceName, EFFECTIVE_OPTION_PREFIX + name + " [" + effective + "] is not an integer");
         }
     }
 

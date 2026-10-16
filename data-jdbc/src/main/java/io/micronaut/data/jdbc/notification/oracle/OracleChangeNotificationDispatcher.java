@@ -531,15 +531,28 @@ final class OracleChangeNotificationDispatcher implements DatabaseChangeListener
                 || tableOperations.contains(TableChangeDescription.TableOperation.DROP)) {
                 return true;
             }
-            RowChangeDescription[] rows = table.getRowChangeDescription();
-            if (rows == null || rows.length == 0) {
+            if (requiresRowInvalidation(table)) {
                 return true;
             }
-            for (RowChangeDescription row : rows) {
-                var rowOperations = row.getRowOperations();
-                if (row.getRowid() == null || rowOperations == null || rowOperations.isEmpty()) {
-                    return true;
-                }
+        }
+        return false;
+    }
+
+    /**
+     * Checks whether missing or unusable row details require invalidation of the complete event.
+     *
+     * @param table the table change supplied by Oracle Database
+     * @return whether the table's changes cannot be represented as row-level events
+     */
+    private static boolean requiresRowInvalidation(TableChangeDescription table) {
+        RowChangeDescription[] rows = table.getRowChangeDescription();
+        if (rows == null || rows.length == 0) {
+            return true;
+        }
+        for (RowChangeDescription row : rows) {
+            var rowOperations = row.getRowOperations();
+            if (row.getRowid() == null || rowOperations == null || rowOperations.isEmpty()) {
+                return true;
             }
         }
         return false;
