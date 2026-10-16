@@ -100,6 +100,8 @@ loadScripts(document, 'script');</script>
 <li><a href="#selectAllColumnsAndJoined()" tabindex="0">selectAllColumnsAndJoined()</a></li>
 <li><a href="#selectAllColumnsFromJoinPaths(java.util.Collection,java.util.Map)" tabindex="0">selectAllColumnsFromJoinPaths(Collection, Map)</a></li>
 <li><a href="#appendProperty(java.lang.StringBuilder,java.util.List,io.micronaut.data.model.PersistentProperty,io.micronaut.data.model.naming.NamingStrategy,java.lang.String,boolean)" tabindex="0">appendProperty(StringBuilder, List, PersistentProperty, NamingStrategy, String, boolean)</a></li>
+<li><a href="#appendProperty(java.lang.StringBuilder,java.util.List,io.micronaut.data.model.PersistentProperty,io.micronaut.data.model.naming.NamingStrategy,java.lang.String,boolean,java.lang.String,boolean)" tabindex="0">appendProperty(StringBuilder, List, PersistentProperty, NamingStrategy, String, boolean, String, boolean)</a></li>
+<li><a href="#getGeometryFunction(java.lang.String,io.micronaut.data.model.PersistentProperty)" tabindex="0">getGeometryFunction(String, PersistentProperty)</a></li>
 </ol>
 </li>
 </ol>
@@ -228,20 +230,39 @@ implements <a href="../../../jpa/criteria/impl/SelectionVisitor.html" title="int
  @Nullable <a href="https://docs.oracle.com/en/java/javase/25/docs/api/java.base/java/lang/String.html" title="class or interface in java.lang" class="external-link">String</a>&nbsp;tableAlias,
  boolean&nbsp;escape)</code></div>
 <div class="col-last even-row-color method-summary-table method-summary-table-tab2 method-summary-table-tab4">&nbsp;</div>
-<div class="col-first odd-row-color method-summary-table method-summary-table-tab2 method-summary-table-tab4"><code>protected void</code></div>
-<div class="col-second odd-row-color method-summary-table method-summary-table-tab2 method-summary-table-tab4"><code><a href="#appendPropertyProjection(io.micronaut.data.model.query.builder.sql.AbstractSqlLikeQueryBuilder.QueryPropertyPath)" class="member-name-link">appendPropertyProjection</a><wbr>(<a href="AbstractSqlLikeQueryBuilder.QueryPropertyPath.html" title="class in io.micronaut.data.model.query.builder.sql">AbstractSqlLikeQueryBuilder.QueryPropertyPath</a>&nbsp;propertyPath)</code></div>
+<div class="col-first odd-row-color method-summary-table method-summary-table-tab2 method-summary-table-tab4"><code>protected final void</code></div>
+<div class="col-second odd-row-color method-summary-table method-summary-table-tab2 method-summary-table-tab4"><code><a href="#appendProperty(java.lang.StringBuilder,java.util.List,io.micronaut.data.model.PersistentProperty,io.micronaut.data.model.naming.NamingStrategy,java.lang.String,boolean,java.lang.String,boolean)" class="member-name-link">appendProperty</a><wbr>(<a href="https://docs.oracle.com/en/java/javase/25/docs/api/java.base/java/lang/StringBuilder.html" title="class or interface in java.lang" class="external-link">StringBuilder</a>&nbsp;sb,
+ <a href="https://docs.oracle.com/en/java/javase/25/docs/api/java.base/java/util/List.html" title="class or interface in java.util" class="external-link">List</a>&lt;<a href="../../../Association.html" title="interface in io.micronaut.data.model">Association</a>&gt;&nbsp;associations,
+ <a href="../../../PersistentProperty.html" title="interface in io.micronaut.data.model">PersistentProperty</a>&nbsp;property,
+ <a href="../../../naming/NamingStrategy.html" title="interface in io.micronaut.data.model.naming">NamingStrategy</a>&nbsp;namingStrategy,
+ @Nullable <a href="https://docs.oracle.com/en/java/javase/25/docs/api/java.base/java/lang/String.html" title="class or interface in java.lang" class="external-link">String</a>&nbsp;tableAlias,
+ boolean&nbsp;escape,
+ @Nullable <a href="https://docs.oracle.com/en/java/javase/25/docs/api/java.base/java/lang/String.html" title="class or interface in java.lang" class="external-link">String</a>&nbsp;targetName,
+ boolean&nbsp;explicitAlias)</code></div>
 <div class="col-last odd-row-color method-summary-table method-summary-table-tab2 method-summary-table-tab4">
-<div class="block">Append the property projection.</div>
+<div class="block">Appends the property column followed by a comma.</div>
 </div>
 <div class="col-first even-row-color method-summary-table method-summary-table-tab2 method-summary-table-tab4"><code>protected void</code></div>
-<div class="col-second even-row-color method-summary-table method-summary-table-tab2 method-summary-table-tab4"><code><a href="#appendRowCount(java.lang.String)" class="member-name-link">appendRowCount</a><wbr>(<a href="https://docs.oracle.com/en/java/javase/25/docs/api/java.base/java/lang/String.html" title="class or interface in java.lang" class="external-link">String</a>&nbsp;logicalName)</code></div>
+<div class="col-second even-row-color method-summary-table method-summary-table-tab2 method-summary-table-tab4"><code><a href="#appendPropertyProjection(io.micronaut.data.model.query.builder.sql.AbstractSqlLikeQueryBuilder.QueryPropertyPath)" class="member-name-link">appendPropertyProjection</a><wbr>(<a href="AbstractSqlLikeQueryBuilder.QueryPropertyPath.html" title="class in io.micronaut.data.model.query.builder.sql">AbstractSqlLikeQueryBuilder.QueryPropertyPath</a>&nbsp;propertyPath)</code></div>
 <div class="col-last even-row-color method-summary-table method-summary-table-tab2 method-summary-table-tab4">
-<div class="block">Appends a row count projection to the query string.</div>
+<div class="block">Append the property projection.</div>
 </div>
 <div class="col-first odd-row-color method-summary-table method-summary-table-tab2 method-summary-table-tab4"><code>protected void</code></div>
-<div class="col-second odd-row-color method-summary-table method-summary-table-tab2 method-summary-table-tab4"><code><a href="#appendRowCountDistinct(java.lang.String)" class="member-name-link">appendRowCountDistinct</a><wbr>(<a href="https://docs.oracle.com/en/java/javase/25/docs/api/java.base/java/lang/String.html" title="class or interface in java.lang" class="external-link">String</a>&nbsp;logicalName)</code></div>
+<div class="col-second odd-row-color method-summary-table method-summary-table-tab2 method-summary-table-tab4"><code><a href="#appendRowCount(java.lang.String)" class="member-name-link">appendRowCount</a><wbr>(<a href="https://docs.oracle.com/en/java/javase/25/docs/api/java.base/java/lang/String.html" title="class or interface in java.lang" class="external-link">String</a>&nbsp;logicalName)</code></div>
 <div class="col-last odd-row-color method-summary-table method-summary-table-tab2 method-summary-table-tab4">
+<div class="block">Appends a row count projection to the query string.</div>
+</div>
+<div class="col-first even-row-color method-summary-table method-summary-table-tab2 method-summary-table-tab4"><code>protected void</code></div>
+<div class="col-second even-row-color method-summary-table method-summary-table-tab2 method-summary-table-tab4"><code><a href="#appendRowCountDistinct(java.lang.String)" class="member-name-link">appendRowCountDistinct</a><wbr>(<a href="https://docs.oracle.com/en/java/javase/25/docs/api/java.base/java/lang/String.html" title="class or interface in java.lang" class="external-link">String</a>&nbsp;logicalName)</code></div>
+<div class="col-last even-row-color method-summary-table method-summary-table-tab2 method-summary-table-tab4">
 <div class="block">Appends a row count distinct projection to the query string.</div>
+</div>
+<div class="col-first odd-row-color method-summary-table method-summary-table-tab2 method-summary-table-tab4"><code>protected <a href="https://docs.oracle.com/en/java/javase/25/docs/api/java.base/java/lang/String.html" title="class or interface in java.lang" class="external-link">String</a></code></div>
+<div class="col-second odd-row-color method-summary-table method-summary-table-tab2 method-summary-table-tab4"><code><a href="#getGeometryFunction(java.lang.String,io.micronaut.data.model.PersistentProperty)" class="member-name-link">getGeometryFunction</a><wbr>(<a href="https://docs.oracle.com/en/java/javase/25/docs/api/java.base/java/lang/String.html" title="class or interface in java.lang" class="external-link">String</a>&nbsp;column,
+ <a href="../../../PersistentProperty.html" title="interface in io.micronaut.data.model">PersistentProperty</a>&nbsp;property)</code></div>
+<div class="col-last odd-row-color method-summary-table method-summary-table-tab2 method-summary-table-tab4">
+<div class="block">Wraps a geometry column in the dialect-specific function that reads it as GeoJSON or WKT,
+depending on the property converter.</div>
 </div>
 <div class="col-first even-row-color method-summary-table method-summary-table-tab2 method-summary-table-tab4"><code>protected void</code></div>
 <div class="col-second even-row-color method-summary-table method-summary-table-tab2 method-summary-table-tab4"><code><a href="#selectAllColumns(io.micronaut.core.annotation.AnnotationMetadata,io.micronaut.data.model.PersistentEntity,java.lang.String)" class="member-name-link">selectAllColumns</a><wbr>(io.micronaut.core.annotation.AnnotationMetadata&nbsp;annotationMetadata,
@@ -786,6 +807,52 @@ implements <a href="../../../jpa/criteria/impl/SelectionVisitor.html" title="int
  <a href="../../../naming/NamingStrategy.html" title="interface in io.micronaut.data.model.naming">NamingStrategy</a>&nbsp;namingStrategy,
  @Nullable <a href="https://docs.oracle.com/en/java/javase/25/docs/api/java.base/java/lang/String.html" title="class or interface in java.lang" class="external-link">String</a>&nbsp;tableAlias,
  boolean&nbsp;escape)</span></div>
+</div>
+</section>
+</li>
+<li>
+<section class="detail" id="appendProperty(java.lang.StringBuilder,java.util.List,io.micronaut.data.model.PersistentProperty,io.micronaut.data.model.naming.NamingStrategy,java.lang.String,boolean,java.lang.String,boolean)">
+<h3>appendProperty</h3>
+<div class="horizontal-scroll">
+<div class="member-signature"><span class="annotations">@Internal
+</span><span class="modifiers">protected final</span>&nbsp;<span class="return-type">void</span>&nbsp;<span class="element-name">appendProperty</span><wbr><span class="parameters">(<a href="https://docs.oracle.com/en/java/javase/25/docs/api/java.base/java/lang/StringBuilder.html" title="class or interface in java.lang" class="external-link">StringBuilder</a>&nbsp;sb,
+ <a href="https://docs.oracle.com/en/java/javase/25/docs/api/java.base/java/util/List.html" title="class or interface in java.util" class="external-link">List</a>&lt;<a href="../../../Association.html" title="interface in io.micronaut.data.model">Association</a>&gt;&nbsp;associations,
+ <a href="../../../PersistentProperty.html" title="interface in io.micronaut.data.model">PersistentProperty</a>&nbsp;property,
+ <a href="../../../naming/NamingStrategy.html" title="interface in io.micronaut.data.model.naming">NamingStrategy</a>&nbsp;namingStrategy,
+ @Nullable <a href="https://docs.oracle.com/en/java/javase/25/docs/api/java.base/java/lang/String.html" title="class or interface in java.lang" class="external-link">String</a>&nbsp;tableAlias,
+ boolean&nbsp;escape,
+ @Nullable <a href="https://docs.oracle.com/en/java/javase/25/docs/api/java.base/java/lang/String.html" title="class or interface in java.lang" class="external-link">String</a>&nbsp;targetName,
+ boolean&nbsp;explicitAlias)</span></div>
+<div class="block">Appends the property column followed by a comma.</div>
+<dl class="notes">
+<dt>Parameters:</dt>
+<dd><code>sb</code> - The query builder</dd>
+<dd><code>associations</code> - The associations</dd>
+<dd><code>property</code> - The property</dd>
+<dd><code>namingStrategy</code> - The naming strategy used to resolve the column name</dd>
+<dd><code>tableAlias</code> - The table alias</dd>
+<dd><code>escape</code> - Whether to escape the column</dd>
+<dd><code>targetName</code> - The result column name, escaped like the column. If not set, the property column alias is used</dd>
+<dd><code>explicitAlias</code> - Whether the caller will append an explicit projection alias</dd>
+</dl>
+</div>
+</section>
+</li>
+<li>
+<section class="detail" id="getGeometryFunction(java.lang.String,io.micronaut.data.model.PersistentProperty)">
+<h3>getGeometryFunction</h3>
+<div class="horizontal-scroll">
+<div class="member-signature"><span class="modifiers">protected</span>&nbsp;<span class="return-type"><a href="https://docs.oracle.com/en/java/javase/25/docs/api/java.base/java/lang/String.html" title="class or interface in java.lang" class="external-link">String</a></span>&nbsp;<span class="element-name">getGeometryFunction</span><wbr><span class="parameters">(<a href="https://docs.oracle.com/en/java/javase/25/docs/api/java.base/java/lang/String.html" title="class or interface in java.lang" class="external-link">String</a>&nbsp;column,
+ <a href="../../../PersistentProperty.html" title="interface in io.micronaut.data.model">PersistentProperty</a>&nbsp;property)</span></div>
+<div class="block">Wraps a geometry column in the dialect-specific function that reads it as GeoJSON or WKT,
+depending on the property converter.</div>
+<dl class="notes">
+<dt>Parameters:</dt>
+<dd><code>column</code> - The column, qualified with the table alias</dd>
+<dd><code>property</code> - The geometry property</dd>
+<dt>Returns:</dt>
+<dd>The select expression including the alias</dd>
+</dl>
 </div>
 </section>
 </li>

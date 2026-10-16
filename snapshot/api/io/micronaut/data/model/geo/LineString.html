@@ -102,7 +102,9 @@ implements <a href="Geometry.html" title="interface in io.micronaut.data.model.g
 <div class="block">Represents a line geometry defined by an ordered list of at least two <a href="Point.html" title="class in io.micronaut.data.model.geo"><code>Point</code></a> values.
 
 <p>This type follows the GeoJSON LineString model and can be converted to nested coordinate
-lists for serialization.</div>
+lists for serialization.
+
+<p>The component list is copied during construction and exposed as an unmodifiable list.</div>
 <dl class="notes">
 <dt>Since:</dt>
 <dd>5.0</dd>

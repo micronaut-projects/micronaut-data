@@ -70,6 +70,8 @@ loadScripts(document, 'script');</script>
 <li><a href="#setName(java.lang.String)" tabindex="0">setName(String)</a></li>
 <li><a href="#getLocation()" tabindex="0">getLocation()</a></li>
 <li><a href="#setLocation(io.micronaut.data.model.geo.Point)" tabindex="0">setLocation(Point)</a></li>
+<li><a href="#getDistrict()" tabindex="0">getDistrict()</a></li>
+<li><a href="#setDistrict(io.micronaut.data.tck.jdbc.entities.geo.District)" tabindex="0">setDistrict(District)</a></li>
 </ol>
 </li>
 </ol>
@@ -119,14 +121,20 @@ loadScripts(document, 'script');</script>
 <div class="table-header col-first">Modifier and Type</div>
 <div class="table-header col-second">Method</div>
 <div class="table-header col-last">Description</div>
-<div class="col-first even-row-color method-summary-table method-summary-table-tab2 method-summary-table-tab4"><code><a href="https://docs.oracle.com/en/java/javase/25/docs/api/java.base/java/lang/Long.html" title="class or interface in java.lang" class="external-link">Long</a></code></div>
-<div class="col-second even-row-color method-summary-table method-summary-table-tab2 method-summary-table-tab4"><code><a href="#getId()" class="member-name-link">getId</a>()</code></div>
+<div class="col-first even-row-color method-summary-table method-summary-table-tab2 method-summary-table-tab4"><code><a href="District.html" title="class in io.micronaut.data.tck.jdbc.entities.geo">District</a></code></div>
+<div class="col-second even-row-color method-summary-table method-summary-table-tab2 method-summary-table-tab4"><code><a href="#getDistrict()" class="member-name-link">getDistrict</a>()</code></div>
 <div class="col-last even-row-color method-summary-table method-summary-table-tab2 method-summary-table-tab4">&nbsp;</div>
-<div class="col-first odd-row-color method-summary-table method-summary-table-tab2 method-summary-table-tab4"><code><a href="../../../../model/geo/Point.html" title="class in io.micronaut.data.model.geo">Point</a></code></div>
-<div class="col-second odd-row-color method-summary-table method-summary-table-tab2 method-summary-table-tab4"><code><a href="#getLocation()" class="member-name-link">getLocation</a>()</code></div>
+<div class="col-first odd-row-color method-summary-table method-summary-table-tab2 method-summary-table-tab4"><code><a href="https://docs.oracle.com/en/java/javase/25/docs/api/java.base/java/lang/Long.html" title="class or interface in java.lang" class="external-link">Long</a></code></div>
+<div class="col-second odd-row-color method-summary-table method-summary-table-tab2 method-summary-table-tab4"><code><a href="#getId()" class="member-name-link">getId</a>()</code></div>
 <div class="col-last odd-row-color method-summary-table method-summary-table-tab2 method-summary-table-tab4">&nbsp;</div>
-<div class="col-first even-row-color method-summary-table method-summary-table-tab2 method-summary-table-tab4"><code><a href="https://docs.oracle.com/en/java/javase/25/docs/api/java.base/java/lang/String.html" title="class or interface in java.lang" class="external-link">String</a></code></div>
-<div class="col-second even-row-color method-summary-table method-summary-table-tab2 method-summary-table-tab4"><code><a href="#getName()" class="member-name-link">getName</a>()</code></div>
+<div class="col-first even-row-color method-summary-table method-summary-table-tab2 method-summary-table-tab4"><code><a href="../../../../model/geo/Point.html" title="class in io.micronaut.data.model.geo">Point</a></code></div>
+<div class="col-second even-row-color method-summary-table method-summary-table-tab2 method-summary-table-tab4"><code><a href="#getLocation()" class="member-name-link">getLocation</a>()</code></div>
+<div class="col-last even-row-color method-summary-table method-summary-table-tab2 method-summary-table-tab4">&nbsp;</div>
+<div class="col-first odd-row-color method-summary-table method-summary-table-tab2 method-summary-table-tab4"><code><a href="https://docs.oracle.com/en/java/javase/25/docs/api/java.base/java/lang/String.html" title="class or interface in java.lang" class="external-link">String</a></code></div>
+<div class="col-second odd-row-color method-summary-table method-summary-table-tab2 method-summary-table-tab4"><code><a href="#getName()" class="member-name-link">getName</a>()</code></div>
+<div class="col-last odd-row-color method-summary-table method-summary-table-tab2 method-summary-table-tab4">&nbsp;</div>
+<div class="col-first even-row-color method-summary-table method-summary-table-tab2 method-summary-table-tab4"><code>void</code></div>
+<div class="col-second even-row-color method-summary-table method-summary-table-tab2 method-summary-table-tab4"><code><a href="#setDistrict(io.micronaut.data.tck.jdbc.entities.geo.District)" class="member-name-link">setDistrict</a><wbr>(<a href="District.html" title="class in io.micronaut.data.tck.jdbc.entities.geo">District</a>&nbsp;district)</code></div>
 <div class="col-last even-row-color method-summary-table method-summary-table-tab2 method-summary-table-tab4">&nbsp;</div>
 <div class="col-first odd-row-color method-summary-table method-summary-table-tab2 method-summary-table-tab4"><code>void</code></div>
 <div class="col-second odd-row-color method-summary-table method-summary-table-tab2 method-summary-table-tab4"><code><a href="#setId(java.lang.Long)" class="member-name-link">setId</a><wbr>(<a href="https://docs.oracle.com/en/java/javase/25/docs/api/java.base/java/lang/Long.html" title="class or interface in java.lang" class="external-link">Long</a>&nbsp;id)</code></div>
@@ -224,6 +232,22 @@ loadScripts(document, 'script');</script>
 <h3>setLocation</h3>
 <div class="horizontal-scroll">
 <div class="member-signature"><span class="modifiers">public</span>&nbsp;<span class="return-type">void</span>&nbsp;<span class="element-name">setLocation</span><wbr><span class="parameters">(<a href="../../../../model/geo/Point.html" title="class in io.micronaut.data.model.geo">Point</a>&nbsp;location)</span></div>
+</div>
+</section>
+</li>
+<li>
+<section class="detail" id="getDistrict()">
+<h3>getDistrict</h3>
+<div class="horizontal-scroll">
+<div class="member-signature"><span class="modifiers">public</span>&nbsp;<span class="return-type"><a href="District.html" title="class in io.micronaut.data.tck.jdbc.entities.geo">District</a></span>&nbsp;<span class="element-name">getDistrict</span>()</div>
+</div>
+</section>
+</li>
+<li>
+<section class="detail" id="setDistrict(io.micronaut.data.tck.jdbc.entities.geo.District)">
+<h3>setDistrict</h3>
+<div class="horizontal-scroll">
+<div class="member-signature"><span class="modifiers">public</span>&nbsp;<span class="return-type">void</span>&nbsp;<span class="element-name">setDistrict</span><wbr><span class="parameters">(<a href="District.html" title="class in io.micronaut.data.tck.jdbc.entities.geo">District</a>&nbsp;district)</span></div>
 </div>
 </section>
 </li>

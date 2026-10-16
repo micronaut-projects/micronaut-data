@@ -125,7 +125,7 @@ as (longitude, latitude) or (x, y) depending on context.</div>
 <div class="col-constructor-name even-row-color"><code><a href="#%3Cinit%3E(double,double)" class="member-name-link">Point</a><wbr>(double&nbsp;x,
  double&nbsp;y)</code></div>
 <div class="col-last even-row-color">
-<div class="block">Creates an instance of a <code>Point</code> record class.</div>
+<div class="block">Creates a point with finite coordinates.</div>
 </div>
 </div>
 </section>
@@ -199,11 +199,13 @@ as (longitude, latitude) or (x, y) depending on context.</div>
 <div class="horizontal-scroll">
 <div class="member-signature"><span class="modifiers">public</span>&nbsp;<span class="element-name">Point</span><wbr><span class="parameters">(double&nbsp;x,
  double&nbsp;y)</span></div>
-<div class="block">Creates an instance of a <code>Point</code> record class.</div>
+<div class="block">Creates a point with finite coordinates.</div>
 <dl class="notes">
 <dt>Parameters:</dt>
-<dd><code>x</code> - the value for the <a href="#param-x"><code>x</code></a> record component</dd>
-<dd><code>y</code> - the value for the <a href="#param-y"><code>y</code></a> record component</dd>
+<dd><code>x</code> - the x-coordinate (typically longitude)</dd>
+<dd><code>y</code> - the y-coordinate (typically latitude)</dd>
+<dt>Throws:</dt>
+<dd><code><a href="https://docs.oracle.com/en/java/javase/25/docs/api/java.base/java/lang/IllegalArgumentException.html" title="class or interface in java.lang" class="external-link">IllegalArgumentException</a></code> - if either coordinate is NaN or infinite</dd>
 </dl>
 </div>
 </section>
@@ -241,7 +243,8 @@ as (longitude, latitude) or (x, y) depending on context.</div>
 <dt>Returns:</dt>
 <dd>a new <a href="Point.html" title="class in io.micronaut.data.model.geo"><code>Point</code></a> created from the given coordinates</dd>
 <dt>Throws:</dt>
-<dd><code><a href="https://docs.oracle.com/en/java/javase/25/docs/api/java.base/java/lang/IllegalArgumentException.html" title="class or interface in java.lang" class="external-link">IllegalArgumentException</a></code> - if <code>coords</code> is <code>null</code>, empty, or does not contain exactly two elements</dd>
+<dd><code><a href="https://docs.oracle.com/en/java/javase/25/docs/api/java.base/java/lang/IllegalArgumentException.html" title="class or interface in java.lang" class="external-link">IllegalArgumentException</a></code> - if <code>coords</code> is <code>null</code>, does not contain exactly two elements,
+contains null values, or contains non-finite values</dd>
 </dl>
 </div>
 </section>
