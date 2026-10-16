@@ -34,7 +34,9 @@ import java.lang.annotation.Target;
  * {@code CREATE PROPERTY GRAPH}. Queries are compiled at build time to PGQL, which needs a data source that uses
  * the PGQL JDBC driver, or to SQL/PGQ {@code GRAPH_TABLE} queries, which run on any Oracle 23ai data source.
  *
- * <p>Property graphs over tables are read only. Write the tables with a JDBC repository.</p>
+ * <p>Saving, updating and deleting nodes writes their vertex tables with SQL through Micronaut Data JDBC. For reactive
+ * repositories on the Oracle R2DBC driver, use {@code @OracleGraphR2dbcRepository} from
+ * {@code micronaut-data-oracle-graph-r2dbc}.</p>
  *
  * @author graemerocher
  * @since 5.3.0
