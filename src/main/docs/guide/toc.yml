@@ -144,7 +144,11 @@ azureCosmos:
   azureCosmosOptimisticLocking: Optimistic locking
 graph:
   title: Micronaut Data Graph
-  graphQuickStart: Quick Start
+  graphQuickStart:
+    title: Quick Start
+    graphNeo4jQuickStart: Neo4j
+    graphOracleQuickStart: Oracle Property Graphs
+    graphAgeQuickStart: Apache AGE
   graphMapping: Mapping Nodes and Relationships
   graphRepositories: Repositories and Finders
   graphTraversal: Querying Relationships
@@ -154,8 +158,8 @@ graph:
   graphDatabases:
     title: Databases
     graphNeo4j: Neo4j
-    graphAge: Apache AGE
     graphOracle: Oracle Property Graphs
+    graphAge: Apache AGE
   graphGorm: Coming from GORM or Spring Data Neo4j
 howItWorks:
   title: How Micronaut Data Works

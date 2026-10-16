@@ -3,11 +3,14 @@ package example;
 // tag::person[]
 import io.micronaut.data.annotation.AutoPopulated;
 import io.micronaut.data.annotation.Id;
+import io.micronaut.data.graph.annotation.Labels;
 import io.micronaut.data.graph.annotation.Node;
 import io.micronaut.data.graph.annotation.Relationship;
 
 import java.util.ArrayList;
+import java.util.LinkedHashSet;
 import java.util.List;
+import java.util.Set;
 import java.util.UUID;
 
 @Node
@@ -29,6 +32,19 @@ public class Person {
         this.born = born;
     }
     // end::person[]
+
+    // tag::labels[]
+    @Labels // <1>
+    private Set<String> labels = new LinkedHashSet<>();
+    // end::labels[]
+
+    public Set<String> getLabels() {
+        return labels;
+    }
+
+    public void setLabels(Set<String> labels) {
+        this.labels = labels;
+    }
 
     public UUID getId() {
         return id;
