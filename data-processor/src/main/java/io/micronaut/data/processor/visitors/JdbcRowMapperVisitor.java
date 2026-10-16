@@ -356,16 +356,25 @@ public final class JdbcRowMapperVisitor implements TypeElementVisitor<MappedEnti
     }
 
     /**
-     * The creator the bean introspection instantiates the type with: a static {@code @Creator} factory or a
-     * {@code @Creator} constructor, else the canonical constructor of a record, else the primary constructor;
-     * {@code null} for a no-argument one.
+     * The creator the bean introspection instantiates the type with: a static {@code @Creator} factory (with or
+     * without parameters) or a {@code @Creator} constructor, else the canonical constructor of a record, else the
+     * primary constructor; {@code null} for a no-argument constructor, which is {@code new}.
      */
     @Nullable
     private static MethodElement constructorOf(SourcePersistentEntity entity) {
         ClassElement type = entity.getClassElement();
-        // The introspection's creator: a static @Creator factory or a @Creator constructor before anything else
+        if (type.hasAnnotation(InstantiateWithDefaultConstructor.class)) {
+            // The default creator, which is a static factory before a no-argument constructor
+            MethodElement creator = type.getDefaultConstructor().orElse(null);
+            return creator != null && creator.isStatic() ? creator : null;
+        }
+        // The introspection's creator: a static @Creator factory, whatever its arity, or a @Creator constructor
+        // before anything else
         MethodElement primary = type.getPrimaryConstructor().orElse(null);
-        if (primary != null && (primary.isStatic() || primary.hasStereotype(Creator.class))) {
+        if (primary != null && primary.isStatic()) {
+            return primary;
+        }
+        if (primary != null && primary.hasStereotype(Creator.class)) {
             return primary.getParameters().length > 0 ? primary : null;
         }
         if (type.isRecord()) {
@@ -610,9 +619,7 @@ public final class JdbcRowMapperVisitor implements TypeElementVisitor<MappedEnti
          */
         private void resolveConstructors(Node node) {
             ClassElement type = node.type();
-            MethodElement constructor = type.hasAnnotation(InstantiateWithDefaultConstructor.class)
-                ? null
-                : constructorOf(node.entity);
+            MethodElement constructor = constructorOf(node.entity);
             node.constructor = constructor;
             Set<String> arguments = new HashSet<>();
             if (constructor != null) {
@@ -752,7 +759,7 @@ public final class JdbcRowMapperVisitor implements TypeElementVisitor<MappedEnti
             if (constructor == null) {
                 instance = type.instantiate();
             } else if (constructor.isStatic()) {
-                // A static @Creator factory
+                // A static @Creator factory, called with its arguments or none
                 instance = type.invokeStatic(constructor, arguments);
             } else {
                 instance = type.instantiate(constructor, arguments);

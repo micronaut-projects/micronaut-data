@@ -20,6 +20,7 @@ import io.micronaut.data.exceptions.DataAccessException
 import io.micronaut.data.jdbc.mapper.generated.Country
 import io.micronaut.data.jdbc.mapper.generated.GeneratedTypes
 import io.micronaut.data.jdbc.mapper.generated.GeoPoint
+import io.micronaut.data.jdbc.mapper.generated.NoArgCreatorProbe
 import io.micronaut.data.jdbc.mapper.generated.Place
 import io.micronaut.data.jdbc.mapper.generated.Probe
 import io.micronaut.data.jdbc.mapper.generated.Tag
@@ -283,6 +284,8 @@ class GeneratedRowMapperSpec extends Specification {
         execute("INSERT INTO generated_probe VALUES (1, 'probe', FALSE)")
         createTable("generated_tag", ["id BIGINT", "name VARCHAR(255)"])
         execute("INSERT INTO generated_tag VALUES (1, 'lower')")
+        createTable("generated_no_arg_creator_probe", ["id BIGINT", "name VARCHAR(255)", "created BOOLEAN"])
+        execute("INSERT INTO generated_no_arg_creator_probe VALUES (1, 'probe', FALSE)")
 
         when:
         List<Probe> probes = mapGenerated(FlatEntityMappingPlan.of(entity(Probe)), "SELECT * FROM generated_probe")
@@ -299,9 +302,19 @@ class GeneratedRowMapperSpec extends Specification {
         tags == [new Tag(1L, "LOWER")]
         tags == mapGeneral(entity(Tag), "SELECT * FROM generated_tag")
 
+        when: "a parameterless static creator is the only way to instantiate the entity"
+        List<NoArgCreatorProbe> created = mapGenerated(FlatEntityMappingPlan.of(entity(NoArgCreatorProbe)), "SELECT * FROM generated_no_arg_creator_probe")
+
+        then: "it is called, then the setters"
+        created[0].id == 1L
+        created[0].name == "probe"
+        created[0].created
+        created[0].created == mapGeneral(entity(NoArgCreatorProbe), "SELECT * FROM generated_no_arg_creator_probe")[0].created
+
         cleanup:
         execute("DROP TABLE generated_probe")
         execute("DROP TABLE generated_tag")
+        execute("DROP TABLE generated_no_arg_creator_probe")
     }
 
     void "the generated mapper is used directly with resolved ordinals"() {
