@@ -2,16 +2,16 @@ Entities and repository methods are portable between the databases. Each databas
 
 [cols="2,1,1,1"]
 |===
-|Feature |Neo4j |Apache AGE |Oracle
+|Feature |Neo4j |Oracle |Apache AGE
 
 |Finders, projections and paging |Yes |Yes |Yes
 |Criteria on relationships |Yes |Yes |Yes
-|Fetch joins with `@Join` |Yes |Yes |No
-|Saving, updating and deleting |Yes |Yes |No, write the tables
-|Shortest paths |Yes |With a maximum depth |PGQL
+|Fetch joins with `@Join` |Yes |No |Yes
+|Saving, updating and deleting |Yes |No, write the tables |Yes
+|Shortest paths |Yes |PGQL |With a maximum depth
 |Path existence and counts |Yes |With a maximum depth |With a maximum depth
 |Multiple and dynamic labels |Yes |No |No
-|Schemaless properties |Yes |Yes |No
+|Schemaless properties |Yes |No |Yes
 |Transactions |Yes |Yes |Yes
 |===
 

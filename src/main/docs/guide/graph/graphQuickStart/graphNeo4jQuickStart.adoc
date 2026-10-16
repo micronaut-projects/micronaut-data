@@ -1,0 +1,33 @@
+To use Micronaut Data with Neo4j, add the Neo4j module to your build, along with the <<graphQuickStart, graph annotation processor>>:
+
+dependency:io.micronaut.data:micronaut-data-neo4j[]
+
+The Neo4j driver is provided by https://micronaut-projects.github.io/micronaut-neo4j/latest/guide/[Micronaut Neo4j], so configure the connection with `neo4j.uri`. With https://micronaut-projects.github.io/micronaut-test-resources/latest/guide/[Micronaut Test Resources] a Neo4j container is started for tests and development automatically.
+
+[configuration]
+----
+neo4j:
+  uri: bolt://localhost:7687
+----
+
+Then annotate a class with ann:data.graph.annotation.Node[] to map it to a node:
+
+snippet::example.Movie[project-base="doc-examples/neo4j-example", source="main", tags="movie", languages="java,kotlin,groovy,python"]
+
+<1> The class is mapped to nodes labelled `Movie`.
+<2> The title is the identifier, assigned by the application.
+<3> The property is stored as `tagline`.
+<4> The roles are relationships of type `ACTED_IN` pointing at the movie.
+
+And define a repository annotated with ann:data.neo4j.annotation.Neo4jRepository[]:
+
+snippet::example.MovieRepository[project-base="doc-examples/neo4j-example", source="main", tags="repository", languages="java,kotlin,groovy,python"]
+
+<1> The repository is a Neo4j repository, its queries are compiled to Cypher.
+<2> `CrudRepository` provides the usual create, read, update and delete operations.
+
+Saving a node saves the nodes it is related to and links them:
+
+snippet::example.MovieRepositorySpec[project-base="doc-examples/neo4j-example", tags="save", indent="0", languages="java,kotlin,groovy,python"]
+
+<1> The movie, its actors and its director are written, along with the `ACTED_IN` and `DIRECTED` relationships.
