@@ -34,7 +34,6 @@ public enum QueryMatchId implements MethodNameParser.MatchId {
     DISTINCT,
     PROJECTION,
     PREDICATE,
-    LITERAL_PROPERTY_RESTRICTION,
     RETURNING,
     ORDER,
     FOR_UPDATE

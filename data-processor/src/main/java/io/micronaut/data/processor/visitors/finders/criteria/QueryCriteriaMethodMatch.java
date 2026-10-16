@@ -478,6 +478,8 @@ public class QueryCriteriaMethodMatch extends AbstractCriteriaMethodMatch {
     }
 
     private <T> Expression<?> findOrderProperty(PersistentEntityRoot<T> root, String propertyName) {
+        String originalPropertyName = propertyName;
+        propertyName = resolveNativePropertyName(propertyName);
         if (By.ID.equals(propertyName)) {
             return root.id();
         }
@@ -485,7 +487,7 @@ public class QueryCriteriaMethodMatch extends AbstractCriteriaMethodMatch {
             return root.get(propertyName);
         }
         // Look at association paths
-        io.micronaut.data.model.jpa.criteria.PersistentPropertyPath<?> property = findProperty(root, propertyName);
+        io.micronaut.data.model.jpa.criteria.PersistentPropertyPath<?> property = findProperty(root, originalPropertyName);
         if (property != null) {
             return property;
         }
@@ -754,9 +756,6 @@ public class QueryCriteriaMethodMatch extends AbstractCriteriaMethodMatch {
 
     @SuppressWarnings("StringSplitter")
     private @Nullable VectorPredicate resolveVectorPredicate(List<MethodNameParser.Match> predicateMatches) {
-        if (matches.stream().anyMatch(m -> m.id() == QueryMatchId.LITERAL_PROPERTY_RESTRICTION)) {
-            return null;
-        }
         String predicate = predicateMatches.getFirst().part();
         int parameterIndex = 0;
         for (String part : LOGICAL_OPERATOR_PATTERN.split(predicate)) {
