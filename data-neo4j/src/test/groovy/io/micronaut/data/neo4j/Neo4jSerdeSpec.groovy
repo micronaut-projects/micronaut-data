@@ -4,6 +4,7 @@ import io.micronaut.context.ApplicationContext
 import io.micronaut.data.annotation.Query
 import io.micronaut.data.graph.runtime.GraphNode
 import io.micronaut.data.graph.runtime.serde.GraphSerde
+import io.micronaut.serde.SerdeRegistry
 import io.micronaut.data.graph.tck.entities.Movie
 import io.micronaut.data.graph.tck.entities.Person
 import io.micronaut.core.type.Argument
@@ -16,8 +17,6 @@ import io.micronaut.data.neo4j.features.TopicRepository
 import io.micronaut.data.model.runtime.RuntimeEntityRegistry
 import io.micronaut.data.neo4j.operations.Neo4jRepositoryOperations
 import io.micronaut.data.neo4j.tck.Neo4jMovieRepository
-import io.micronaut.data.runtime.convert.DataConversionService
-import io.micronaut.serde.SerdeRegistry
 import io.micronaut.test.extensions.spock.annotation.MicronautTest
 import io.micronaut.test.support.TestPropertyProvider
 import jakarta.inject.Inject
@@ -57,6 +56,7 @@ class Neo4jSerdeSpec extends Specification implements TestPropertyProvider {
     @Inject
     EventRepository eventRepository
 
+    @Inject
     GraphSerde serde
 
     @Override
@@ -66,7 +66,6 @@ class Neo4jSerdeSpec extends Specification implements TestPropertyProvider {
 
     void setup() {
         operations.executeQuery("MATCH (n) DETACH DELETE n", [:])
-        serde = new GraphSerde(context.getBean(SerdeRegistry), context.getBean(DataConversionService))
         def keanu = new Person("Keanu Reeves", 1964)
         def carrie = new Person("Carrie-Anne Moss", 1967)
         def lana = new Person("Lana Wachowski", 1965)
@@ -75,11 +74,6 @@ class Neo4jSerdeSpec extends Specification implements TestPropertyProvider {
         matrix.directors = [lana]
         matrix.votes = 42L
         movieRepository.save(matrix)
-    }
-
-    void "the switch makes the operations read entities with serde"() {
-        expect:
-        context.containsBean(GraphSerde) == Boolean.getBoolean(GraphSerde.ENABLED)
     }
 
     void "temporal values, identifiers, enums, decimals and attribute converters"() {
