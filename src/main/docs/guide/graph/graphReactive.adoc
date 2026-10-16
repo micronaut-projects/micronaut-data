@@ -36,4 +36,4 @@ snippet::example.ReactiveMovieRepositorySpec[project-base="doc-examples/neo4j-ex
 
 <1> The nodes are mapped to the entity as the database returns them.
 
-Apache AGE and Oracle property graphs run reactive repository methods on a thread of the I/O executor, in the blocking operations of their JDBC driver.
+Apache AGE and Oracle property graphs on JDBC run reactive repository methods on a thread of the I/O executor, in the blocking operations of their JDBC driver. Oracle property graphs can also run on the non-blocking Oracle R2DBC driver, see <<graphOracle, Reactive repositories with R2DBC>>.

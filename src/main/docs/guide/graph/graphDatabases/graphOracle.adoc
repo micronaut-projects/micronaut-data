@@ -69,3 +69,34 @@ CREATE PROPERTY GRAPH bank_graph
 `CREATE_DROP` drops the property graphs before the tables. Graph repositories save nodes only, so rows of edge tables are written with SQL or a ann:data.jdbc.annotation.JdbcRepository[] over an entity of the edge table, which also supplies the identifier of a relationship entity. `VALIDATE` does not check the tables of graph entities.
 
 NOTE: Schema generation is meant for development and testing. In production, create the tables and property graphs with a migration tool such as https://micronaut-projects.github.io/micronaut-flyway/latest/guide/index.html[Flyway] or https://micronaut-projects.github.io/micronaut-liquibase/latest/guide/index.html[Liquibase].
+
+== Reactive repositories with R2DBC
+
+To run graph repositories on the non-blocking https://github.com/oracle/oracle-r2dbc[Oracle R2DBC driver], use the `micronaut-data-oracle-graph-r2dbc` module in place of `micronaut-data-oracle-graph`, with the driver:
+
+dependency:io.micronaut.data:micronaut-data-oracle-graph-r2dbc[]
+
+dependency:com.oracle.database.r2dbc:oracle-r2dbc[scope="runtimeOnly"]
+
+The repositories run on an R2DBC connection factory of https://micronaut-projects.github.io/micronaut-r2dbc/latest/guide/[Micronaut R2DBC]:
+
+[configuration]
+----
+include::doc-examples/oracle-graph-r2dbc-example-java/src/main/resources/application.yml[tag=config]
+----
+
+Annotate them with ann:data.oracle.graph.r2dbc.annotation.OracleGraphR2dbcRepository[], and declare methods that return Reactor or Reactive Streams types:
+
+snippet::example.BankGraph[project-base="doc-examples/oracle-graph-r2dbc-example", source="main", tags="repository", languages="java,kotlin,groovy,python"]
+
+<1> The repository queries the `bank_graph` property graph over R2DBC. Queries are compiled to SQL/PGQ, as PGQL needs the PGQL JDBC driver.
+<2> `ReactorCrudRepository` provides reactive create, read, update and delete operations.
+<3> Finders return a `Flux` of results, streamed as the driver reads the rows.
+
+snippet::example.BankGraphSpec[project-base="doc-examples/oracle-graph-r2dbc-example", tags="reactive", indent="0", languages="java,kotlin,groovy,python"]
+
+<1> Saving a node inserts its row through Micronaut Data R2DBC.
+<2> Then stream the accounts that sent a transfer of more than 1000.
+<3> Block only to read the result in the test.
+
+Graph queries and node writes run in the same reactive connection, and join the transaction of a reactive `@Transactional` method. Blocking methods are not supported. Micronaut Data JDBC and R2DBC cannot be used together with Oracle in one application, so an application uses one of the two modules.
