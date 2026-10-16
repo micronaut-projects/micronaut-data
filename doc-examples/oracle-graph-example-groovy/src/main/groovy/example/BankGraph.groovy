@@ -4,17 +4,17 @@ import io.micronaut.data.annotation.Query
 import io.micronaut.data.graph.annotation.PathLimit
 import io.micronaut.data.graph.annotation.PropertyGraph
 import io.micronaut.data.oracle.graph.annotation.OracleGraphRepository
-import io.micronaut.data.repository.GenericRepository
+import io.micronaut.data.repository.CrudRepository
 
 // tag::repository[]
 @OracleGraphRepository(graph = "bank_graph", language = PropertyGraph.QueryLanguage.SQL_PGQ) // <1>
-interface BankGraph extends GenericRepository<Account, Long> {
+interface BankGraph extends CrudRepository<Account, Long> { // <2>
 
-    Optional<Account> findById(Long id)
+    List<Account> findByNameStartsWithOrderByName(String prefix)
 
-    List<Account> findByTransfersAmountGreaterThan(BigDecimal amount) // <2>
+    List<Account> findByTransfersAmountGreaterThan(BigDecimal amount) // <3>
 
-    @PathLimit(3) // <3>
+    @PathLimit(3) // <4>
     boolean existsPathByTransfers(Long from, Long to)
     // end::repository[]
 
