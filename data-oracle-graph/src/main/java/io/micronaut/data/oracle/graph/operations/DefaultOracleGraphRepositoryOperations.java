@@ -27,6 +27,7 @@ import io.micronaut.data.graph.model.query.builder.OracleGraphQueryBuilder;
 import io.micronaut.data.graph.runtime.GraphResult;
 import io.micronaut.data.graph.runtime.GraphSession;
 import io.micronaut.data.graph.runtime.GraphValueEncoderRegistrar;
+import io.micronaut.data.graph.runtime.serde.GraphSerde;
 import io.micronaut.data.graph.runtime.operations.AbstractGraphRepositoryOperations;
 import io.micronaut.data.jdbc.operations.JdbcRepositoryOperations;
 import io.micronaut.data.model.Limit;
@@ -98,9 +99,10 @@ final class DefaultOracleGraphRepositoryOperations extends AbstractGraphReposito
                                            DataConversionService conversionService,
                                            AttributeConverterRegistry attributeConverterRegistry,
                                            @Named("io") @Nullable ExecutorService executorService,
-                                           List<GraphValueEncoderRegistrar> encoderRegistrars) {
+                                           List<GraphValueEncoderRegistrar> encoderRegistrars,
+                                           @Nullable GraphSerde graphSerde) {
         super(new OracleGraphQueryBuilder(AnnotationMetadata.EMPTY_METADATA), dateTimeProvider, runtimeEntityRegistry,
-            conversionService, attributeConverterRegistry, executorService, encoderRegistrars);
+            conversionService, attributeConverterRegistry, executorService, encoderRegistrars, graphSerde);
         this.connectionOperations = connectionOperations;
         this.jdbcOperations = jdbcOperations;
     }
