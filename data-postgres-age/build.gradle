@@ -49,6 +49,4 @@ micronautBuild {
 }
 
 tasks.withType(Test).configureEach {
-    // Run the specs with entities read by Micronaut Serialization: -PgraphSerde=true
-    systemProperty "micronaut.data.graph.serde.enabled", providers.gradleProperty("graphSerde").getOrElse("false")
 }

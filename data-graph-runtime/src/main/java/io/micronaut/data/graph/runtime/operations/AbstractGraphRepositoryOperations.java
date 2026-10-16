@@ -17,7 +17,6 @@ package io.micronaut.data.graph.runtime.operations;
 
 import io.micronaut.aop.MethodInvocationContext;
 import io.micronaut.core.annotation.AnnotationMetadata;
-import io.micronaut.core.beans.BeanIntrospection;
 import io.micronaut.core.beans.BeanIntrospector;
 import io.micronaut.core.beans.BeanProperty;
 import io.micronaut.core.convert.ConversionContext;
@@ -124,7 +123,7 @@ public abstract class AbstractGraphRepositoryOperations extends AbstractReposito
 
     private final GraphValueEncoders encoders = GraphValueEncoders.defaults();
 
-    private final @Nullable GraphSerde graphSerde;
+    private final GraphSerde graphSerde;
 
     private final SyncCascadeOperations<OperationContext> noCascade;
 
@@ -136,8 +135,7 @@ public abstract class AbstractGraphRepositoryOperations extends AbstractReposito
      * @param attributeConverterRegistry The attribute converter registry
      * @param executorService            The executor for asynchronous and reactive operations
      * @param encoderRegistrars          The registrars of the encoders of the application
-     * @param graphSerde                 Reads entities with Micronaut Serialization, or null to read them with
-     *                                   {@link GraphEntityMapper}
+     * @param graphSerde                 Reads entities and DTOs with Micronaut Serialization
      */
     protected AbstractGraphRepositoryOperations(GraphQueryBuilder queryBuilder,
                                                 DateTimeProvider<Object> dateTimeProvider,
@@ -146,7 +144,7 @@ public abstract class AbstractGraphRepositoryOperations extends AbstractReposito
                                                 AttributeConverterRegistry attributeConverterRegistry,
                                                 @Nullable ExecutorService executorService,
                                                 List<GraphValueEncoderRegistrar> encoderRegistrars,
-                                                @Nullable GraphSerde graphSerde) {
+                                                GraphSerde graphSerde) {
         super(dateTimeProvider, runtimeEntityRegistry, conversionService, attributeConverterRegistry);
         this.queryBuilder = queryBuilder;
         registerEncoders(encoders);
@@ -571,28 +569,7 @@ public abstract class AbstractGraphRepositoryOperations extends AbstractReposito
     }
 
     private <R> R readDto(Map<String, Object> values, Class<R> type) {
-        GraphSerde serde = graphSerde;
-        if (serde != null) {
-            return serde.read(type, values);
-        }
-        BeanIntrospection<R> introspection = BeanIntrospection.getIntrospection(type);
-        Argument<Object>[] constructorArguments = (Argument<Object>[]) introspection.getConstructorArguments();
-        R instance;
-        if (constructorArguments.length == 0) {
-            instance = introspection.instantiate();
-        } else {
-            Object[] arguments = new Object[constructorArguments.length];
-            for (int i = 0; i < constructorArguments.length; i++) {
-                arguments[i] = mapper.convert(values.get(constructorArguments[i].getName()), constructorArguments[i]);
-            }
-            instance = introspection.instantiate(false, arguments);
-        }
-        for (BeanProperty<R, Object> property : introspection.getBeanProperties()) {
-            if (!property.isReadOnly() && values.containsKey(property.getName())) {
-                property.set(instance, mapper.convert(values.get(property.getName()), property.asArgument()));
-            }
-        }
-        return instance;
+        return graphSerde.read(type, values);
     }
 
     // Writes
