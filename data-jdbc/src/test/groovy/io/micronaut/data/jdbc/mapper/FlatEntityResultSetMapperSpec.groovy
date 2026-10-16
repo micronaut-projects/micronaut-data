@@ -51,17 +51,23 @@ class FlatEntityResultSetMapperSpec extends Specification {
     @AutoCleanup
     Connection connection = DriverManager.getConnection("jdbc:h2:mem:flatmapper;DB_CLOSE_DELAY=-1")
 
-    void "a plan exists for a flat entity and for nothing else"() {
+    void "the annotation processor marks the flat entities and the plan follows the marker"() {
         expect:
-        FlatEntityMappingPlan.of(entity(FlatTypes)) != null
-        FlatEntityMappingPlan.of(entity(FlatRecord)) != null
-        FlatEntityMappingPlan.of(entity(Person)) != null
-        // An association
-        FlatEntityMappingPlan.of(entity(Book)) == null
+        FlatEntityMappingPlan.isFlat(entity(FlatTypes))
+        FlatEntityMappingPlan.isFlat(entity(FlatRecord))
+        FlatEntityMappingPlan.isFlat(entity(Person))
         // Types the getters do not return (char, URL, URI, CharSequence) are converted, as the general mapper does
-        FlatEntityMappingPlan.of(entity(BasicTypes)) != null
+        FlatEntityMappingPlan.isFlat(entity(BasicTypes))
+        // An association
+        !FlatEntityMappingPlan.isFlat(entity(Book))
         // A composite identity
-        FlatEntityMappingPlan.of(entity(EntityWithIdClass)) == null
+        !FlatEntityMappingPlan.isFlat(entity(EntityWithIdClass))
+
+        when:
+        FlatEntityMappingPlan.of(entity(Book))
+
+        then:
+        thrown(IllegalArgumentException)
     }
 
     void "the plan resolves the column of every property"() {

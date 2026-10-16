@@ -45,7 +45,6 @@ import java.sql.SQLException;
 import java.sql.Statement;
 import java.util.ArrayList;
 import java.util.List;
-import java.util.Objects;
 import java.util.Set;
 import java.util.StringJoiner;
 
@@ -98,7 +97,7 @@ public class ResultSetMapping {
         applicationContext = ApplicationContext.run();
         conversionService = applicationContext.getBean(DataConversionService.class);
         entity = new RuntimePersistentEntity<>(WideBook.class);
-        flatPlan = Objects.requireNonNull(FlatEntityMappingPlan.of(entity), "WideBook is a flat entity");
+        flatPlan = FlatEntityMappingPlan.of(entity);
 
         ColumnNameResultSetReader nameReader = new ColumnNameResultSetReader(conversionService);
         resultReader = columnIndexes ? nameReader : new NoColumnIndexReader(nameReader);

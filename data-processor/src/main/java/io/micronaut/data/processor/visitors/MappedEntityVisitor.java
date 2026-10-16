@@ -20,6 +20,7 @@ import io.micronaut.core.annotation.AnnotationMetadata;
 import io.micronaut.core.annotation.AnnotationValue;
 import io.micronaut.core.util.StringUtils;
 import io.micronaut.data.annotation.EmbeddedNaming;
+import io.micronaut.data.annotation.FlatEntity;
 import io.micronaut.data.annotation.Index;
 import io.micronaut.data.annotation.Indexes;
 import io.micronaut.data.annotation.InstantiateWithDefaultConstructor;
@@ -56,6 +57,7 @@ import java.util.List;
 import java.util.Map;
 import java.util.Objects;
 import java.util.Optional;
+import java.util.Set;
 import java.util.function.Function;
 import java.util.stream.Collectors;
 
@@ -170,6 +172,72 @@ public class MappedEntityVisitor implements TypeElementVisitor<MappedEntity, Obj
         if (entity.hasAnnotation(JSON_VIEW_ANNOTATION) || entity.hasAnnotation(JSON_SUB_VIEW_ANNOTATION)) {
             validateJsonView(entity, context);
         }
+        if (isFlat(element, entity)) {
+            element.annotate(FlatEntity.class);
+        }
+    }
+
+    /**
+     * Whether every column of the entity maps onto a property the driver returns with a typed getter, so that the
+     * SQL runtimes can read it by ordinal without resolving the mapping per column; see {@link FlatEntity}. Decided
+     * after the mapping defaults are computed, since those fix the data type of every property.
+     *
+     * @param element The entity
+     * @param entity  The source persistent entity
+     * @return Whether the entity is flat
+     */
+    private static boolean isFlat(ClassElement element, SourcePersistentEntity entity) {
+        if (entity.hasCompositeIdentity()) {
+            // Read as a map of its values
+            return false;
+        }
+        Set<String> constructorArguments = element.hasAnnotation(InstantiateWithDefaultConstructor.class)
+            ? Set.of()
+            : element.getPrimaryConstructor()
+                .map(constructor -> Arrays.stream(constructor.getParameters()).map(ParameterElement::getName).collect(Collectors.toSet()))
+                .orElse(Set.of());
+        List<SourcePersistentProperty> candidates = new ArrayList<>();
+        if (entity.hasIdentity()) {
+            candidates.add(entity.getIdentity());
+        }
+        if (entity.hasVersion()) {
+            candidates.add(entity.getVersion());
+        }
+        candidates.addAll(entity.getPersistentProperties());
+        for (SourcePersistentProperty property : candidates) {
+            // The converter is read from the element, where computeMappingDefaults records the one it resolved
+            // from @TypeDef or the configured data converters; the source property cached the member before that
+            String converter = property.getPropertyElement().stringValue(MappedProperty.class, "converter").orElse(null);
+            if (property instanceof Association || (converter != null && !converter.equals(Object.class.getName()))) {
+                return false;
+            }
+            if (!constructorArguments.contains(property.getName()) && property.getPropertyElement().isReadOnly()) {
+                if ((entity.hasIdentity() && property == entity.getIdentity()) || (entity.hasVersion() && property == entity.getVersion())) {
+                    // The general mapper sets these through a copy of the entity
+                    return false;
+                }
+                // Neither mapper sets such a property
+                continue;
+            }
+            DataType dataType = property.getAnnotationMetadata().enumValue(MappedProperty.class, "type", DataType.class)
+                .orElseGet(property::getDataType);
+            if (!hasTypedGetter(dataType)) {
+                return false;
+            }
+        }
+        return true;
+    }
+
+    /**
+     * @return Whether the data type is read with a typed {@code java.sql.ResultSet} getter rather than
+     * {@code getObject}, the set the flat entity mapper of the JDBC runtime reads
+     */
+    private static boolean hasTypedGetter(DataType dataType) {
+        return switch (dataType) {
+            case STRING, LONG, INTEGER, SHORT, BYTE, DOUBLE, FLOAT, BOOLEAN, BIGDECIMAL, BYTE_ARRAY,
+                 TIMESTAMP, DATE, TIME, UUID, CHARACTER -> true;
+            default -> false;
+        };
     }
 
     /**

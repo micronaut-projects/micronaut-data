@@ -15,7 +15,6 @@
  */
 package io.micronaut.data.jdbc.h2
 
-import io.micronaut.context.annotation.Property
 import io.micronaut.data.jdbc.operations.DefaultJdbcRepositoryOperations
 import io.micronaut.data.model.Pageable
 import io.micronaut.data.model.runtime.RuntimePersistentEntity
@@ -28,12 +27,11 @@ import spock.lang.Shared
 import spock.lang.Specification
 
 /**
- * The flat entity mapping switched on for a data source: a flat entity is read with the typed getters, an entity
+ * A flat entity, as marked by the annotation processor, is read with the typed getters, an entity
  * with associations with the general mapper, and both read the same rows.
  */
 @MicronautTest
 @H2DBProperties
-@Property(name = "datasources.default.flat-entity-mapping", value = "true")
 class H2FlatEntityMappingSpec extends Specification {
 
     @Inject
@@ -77,7 +75,7 @@ class H2FlatEntityMappingSpec extends Specification {
         streamed*.name == ["Barney", "Fred"]
 
         and: "the operations resolved a plan for the flat entity"
-        plans()[operations.getEntity(Person)].present
+        plans().containsKey(operations.getEntity(Person))
     }
 
     void "entities with associations keep the general mapper"() {
@@ -94,14 +92,14 @@ class H2FlatEntityMappingSpec extends Specification {
         books[0].author.id == author.id
 
         and: "no plan exists for the entity with an association"
-        !plans()[operations.getEntity(Book)].present
+        !plans().containsKey(operations.getEntity(Book))
 
         cleanup:
         bookRepository.deleteAll()
         authorRepository.deleteAll()
     }
 
-    private Map<RuntimePersistentEntity<?>, Optional<?>> plans() {
+    private Map<RuntimePersistentEntity<?>, ?> plans() {
         operations.flatEntityMappingPlans
     }
 }
