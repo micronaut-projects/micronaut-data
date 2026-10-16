@@ -47,6 +47,3 @@ micronautBuild {
         enabledAfter("5.3.0")
     }
 }
-
-tasks.withType(Test).configureEach {
-}
