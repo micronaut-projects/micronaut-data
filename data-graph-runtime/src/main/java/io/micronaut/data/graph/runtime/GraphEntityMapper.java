@@ -462,7 +462,7 @@ public final class GraphEntityMapper {
      * @param id       The identifier
      * @return The identifier to convert
      */
-    private static @Nullable Object nativeId(RuntimePersistentProperty<?> identity, @Nullable Object id) {
+    public static @Nullable Object nativeId(RuntimePersistentProperty<?> identity, @Nullable Object id) {
         if (id instanceof String s && !CharSequence.class.isAssignableFrom(identity.getType())) {
             int separator = s.lastIndexOf(':');
             if (separator >= 0) {
