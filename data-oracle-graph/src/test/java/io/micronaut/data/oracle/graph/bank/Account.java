@@ -6,6 +6,6 @@ import io.micronaut.data.graph.annotation.Relationship;
 
 import java.util.List;
 
-@Node("Account")
+@Node(value = "accounts", labels = "Account")
 public record Account(@Id Long id, String name, @Relationship("TRANSFERS") List<Transfer> transfers) {
 }
