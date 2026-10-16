@@ -37,8 +37,6 @@ dependencies {
 tasks.withType(Test).configureEach {
     // The embedded Neo4j server opens many files and uses off heap memory
     maxHeapSize = "2g"
-    // Run the specs with entities read by Micronaut Serialization: -PgraphSerde=true
-    systemProperty "micronaut.data.graph.serde.enabled", providers.gradleProperty("graphSerde").getOrElse("false")
     jvmArgs "--add-opens=java.base/java.nio=ALL-UNNAMED", "--add-opens=java.base/java.lang=ALL-UNNAMED", "--enable-native-access=ALL-UNNAMED"
 }
 

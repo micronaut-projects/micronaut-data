@@ -26,9 +26,10 @@ import java.util.List;
 import java.util.Map;
 
 /**
- * Reads nodes into entities with GraphEntityMapper and with Micronaut Serialization. The nodes are built in memory,
- * so the benchmark measures mapping alone. A record and a bean with a no-argument constructor use source-generated
- * deserializers; a class mixing constructor arguments with setters uses the runtime deserializer.
+ * Reads nodes into entities with Micronaut Serialization and writes entities to node properties with their bean
+ * introspections. The nodes are built in memory, so the benchmark measures mapping alone. A record and a bean with a
+ * no-argument constructor use source-generated deserializers; a class mixing constructor arguments with setters uses
+ * the runtime deserializer.
  */
 @State(Scope.Benchmark)
 public class GraphMapping {
@@ -41,23 +42,25 @@ public class GraphMapping {
 
     private ApplicationContext applicationContext;
     private GraphEntityMapper mapper;
-    private GraphSerde serde;
-    private RuntimePersistentEntity<?> entity;
+
+    private RuntimePersistentEntity<Object> entity;
     private List<GraphNode> values;
+    private List<Object> entities;
 
     @Setup
+    @SuppressWarnings("unchecked")
     public void prepare() {
         applicationContext = ApplicationContext.run();
         RuntimeEntityRegistry registry = applicationContext.getBean(RuntimeEntityRegistry.class);
         DataConversionService conversionService = applicationContext.getBean(DataConversionService.class);
-        mapper = new GraphEntityMapper(registry, conversionService, value -> value);
-        serde = new GraphSerde(applicationContext.getBean(SerdeRegistry.class), conversionService);
+        GraphSerde serde = new GraphSerde(applicationContext.getBean(SerdeRegistry.class), conversionService);
+        mapper = new GraphEntityMapper(registry, conversionService, value -> value, serde);
         Class<?> type = switch (shape) {
             case "record" -> RecordMovie.class;
             case "bean" -> BeanMovie.class;
             default -> MixedMovie.class;
         };
-        entity = registry.getEntity(type);
+        entity = (RuntimePersistentEntity<Object>) registry.getEntity(type);
         values = new ArrayList<>(nodes);
         for (int i = 0; i < nodes; i++) {
             Map<String, Object> properties = new LinkedHashMap<>();
@@ -73,6 +76,10 @@ public class GraphMapping {
             properties.put("premiere", LocalDate.of(2000, 1, 1).plusDays(i));
             values.add(new GraphNode("4:db:" + i, List.of("Movie"), properties));
         }
+        entities = new ArrayList<>(nodes);
+        for (GraphNode node : values) {
+            entities.add(mapper.readNode(entity, node, null));
+        }
     }
 
     @TearDown
@@ -81,16 +88,16 @@ public class GraphMapping {
     }
 
     @Benchmark
-    public void mapper(Blackhole blackhole) {
+    public void read(Blackhole blackhole) {
         for (GraphNode node : values) {
             blackhole.consume(mapper.readNode(entity, node, null));
         }
     }
 
     @Benchmark
-    public void serde(Blackhole blackhole) {
-        for (GraphNode node : values) {
-            blackhole.consume(serde.readNode(entity, node, null));
+    public void write(Blackhole blackhole) {
+        for (Object instance : entities) {
+            blackhole.consume(mapper.writeProperties(entity, instance));
         }
     }
 }
