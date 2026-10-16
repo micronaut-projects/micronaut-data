@@ -26,6 +26,7 @@ import io.micronaut.data.graph.runtime.GraphRecord;
 import io.micronaut.data.graph.runtime.GraphResult;
 import io.micronaut.data.graph.runtime.GraphSession;
 import io.micronaut.data.graph.runtime.GraphValueEncoderRegistrar;
+import io.micronaut.data.graph.runtime.serde.GraphSerde;
 import io.micronaut.data.graph.runtime.operations.AbstractGraphRepositoryOperations;
 import io.micronaut.data.model.runtime.AttributeConverterRegistry;
 import io.micronaut.data.model.runtime.RuntimeEntityRegistry;
@@ -75,8 +76,9 @@ final class DefaultNeo4jRepositoryOperations extends AbstractGraphRepositoryOper
                                      DataConversionService conversionService,
                                      AttributeConverterRegistry attributeConverterRegistry,
                                      @Named("io") @Nullable ExecutorService executorService,
-                                     List<GraphValueEncoderRegistrar> encoderRegistrars) {
-        super(new CypherQueryBuilder(), dateTimeProvider, runtimeEntityRegistry, conversionService, attributeConverterRegistry, executorService, encoderRegistrars);
+                                     List<GraphValueEncoderRegistrar> encoderRegistrars,
+                                     @Nullable GraphSerde graphSerde) {
+        super(new CypherQueryBuilder(), dateTimeProvider, runtimeEntityRegistry, conversionService, attributeConverterRegistry, executorService, encoderRegistrars, graphSerde);
         this.connectionOperations = connectionOperations;
         this.reactiveOperations = reactiveOperations;
     }

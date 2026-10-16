@@ -23,10 +23,13 @@ import io.micronaut.data.graph.runtime.GraphRecord;
 import org.jspecify.annotations.Nullable;
 import org.neo4j.driver.Record;
 import org.neo4j.driver.Value;
+import org.neo4j.driver.types.IsoDuration;
 import org.neo4j.driver.types.Node;
 import org.neo4j.driver.types.Path;
 import org.neo4j.driver.types.Relationship;
 
+import java.time.Duration;
+import java.time.Period;
 import java.util.ArrayList;
 import java.util.LinkedHashMap;
 import java.util.List;
@@ -89,17 +92,34 @@ final class Neo4jValues {
             map.forEach((k, v) -> decoded.put(String.valueOf(k), decodeObject(v)));
             return decoded;
         }
+        if (value instanceof IsoDuration duration) {
+            return duration(duration);
+        }
         return value;
+    }
+
+    /**
+     * Adapts a Neo4j duration to the Java type it can be represented by exactly: a {@link Duration} when it has no
+     * months, a {@link Period} when it has no time, or the duration itself otherwise.
+     */
+    private static Object duration(IsoDuration duration) {
+        if (duration.months() == 0) {
+            return Duration.ofDays(duration.days()).plusSeconds(duration.seconds()).plusNanos(duration.nanoseconds());
+        }
+        if (duration.seconds() == 0 && duration.nanoseconds() == 0) {
+            return Period.of(0, Math.toIntExact(duration.months()), Math.toIntExact(duration.days()));
+        }
+        return duration;
     }
 
     private static GraphNode node(Node node) {
         List<String> labels = new ArrayList<>();
         node.labels().forEach(labels::add);
-        return new GraphNode(node.elementId(), labels, node.asMap());
+        return new GraphNode(node.elementId(), labels, node.asMap(Neo4jValues::decode));
     }
 
     private static GraphEdge relationship(Relationship relationship) {
         return new GraphEdge(relationship.elementId(), relationship.type(), relationship.startNodeElementId(),
-            relationship.endNodeElementId(), relationship.asMap());
+            relationship.endNodeElementId(), relationship.asMap(Neo4jValues::decode));
     }
 }

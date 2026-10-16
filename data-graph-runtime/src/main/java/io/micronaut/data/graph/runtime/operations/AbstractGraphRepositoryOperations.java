@@ -41,6 +41,7 @@ import io.micronaut.data.graph.runtime.GraphResult;
 import io.micronaut.data.graph.runtime.GraphSession;
 import io.micronaut.data.graph.runtime.GraphValueEncoderRegistrar;
 import io.micronaut.data.graph.runtime.GraphValueEncoders;
+import io.micronaut.data.graph.runtime.serde.GraphSerde;
 import io.micronaut.data.model.Limit;
 import io.micronaut.data.model.Page;
 import io.micronaut.data.model.Pageable;
@@ -133,6 +134,8 @@ public abstract class AbstractGraphRepositoryOperations extends AbstractReposito
      * @param attributeConverterRegistry The attribute converter registry
      * @param executorService            The executor for asynchronous and reactive operations
      * @param encoderRegistrars          The registrars of the encoders of the application
+     * @param graphSerde                 Reads entities with Micronaut Serialization, or null to read them with
+     *                                   {@link GraphEntityMapper}
      */
     protected AbstractGraphRepositoryOperations(GraphQueryBuilder queryBuilder,
                                                 DateTimeProvider<Object> dateTimeProvider,
@@ -140,14 +143,15 @@ public abstract class AbstractGraphRepositoryOperations extends AbstractReposito
                                                 DataConversionService conversionService,
                                                 AttributeConverterRegistry attributeConverterRegistry,
                                                 @Nullable ExecutorService executorService,
-                                                List<GraphValueEncoderRegistrar> encoderRegistrars) {
+                                                List<GraphValueEncoderRegistrar> encoderRegistrars,
+                                                @Nullable GraphSerde graphSerde) {
         super(dateTimeProvider, runtimeEntityRegistry, conversionService, attributeConverterRegistry);
         this.queryBuilder = queryBuilder;
         registerEncoders(encoders);
         for (GraphValueEncoderRegistrar registrar : encoderRegistrars) {
             registrar.register(encoders);
         }
-        this.mapper = new GraphEntityMapper(runtimeEntityRegistry, conversionService, this::encodeValue);
+        this.mapper = new GraphEntityMapper(runtimeEntityRegistry, conversionService, this::encodeValue, graphSerde);
         this.executorServiceResolver = new ExecutorServiceResolver(executorService);
         this.noCascade = new SyncCascadeOperations<>(conversionService, new RelationshipsWrittenByNode());
     }

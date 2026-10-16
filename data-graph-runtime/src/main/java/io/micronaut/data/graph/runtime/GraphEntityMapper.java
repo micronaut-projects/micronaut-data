@@ -22,10 +22,12 @@ import io.micronaut.core.beans.BeanProperty;
 import io.micronaut.core.convert.ConversionContext;
 import io.micronaut.core.convert.ConversionService;
 import io.micronaut.core.type.Argument;
+import io.micronaut.data.annotation.MappedProperty;
 import io.micronaut.data.exceptions.DataAccessException;
 import io.micronaut.data.graph.annotation.DynamicAttributes;
 import io.micronaut.data.graph.annotation.Node;
 import io.micronaut.data.graph.model.GraphEntities;
+import io.micronaut.data.graph.runtime.serde.GraphSerde;
 import io.micronaut.data.graph.model.GraphPath;
 import io.micronaut.data.graph.model.GraphRelationship;
 import io.micronaut.data.graph.model.query.builder.CypherQueryBuilder;
@@ -65,6 +67,8 @@ public final class GraphEntityMapper {
 
     private final Function<Object, Object> encoder;
 
+    private final @Nullable GraphSerde serde;
+
     private final Map<String, Optional<Class<?>>> entitiesByLabel = new ConcurrentHashMap<>();
 
     private final Map<String, Schemaless> schemaless = new ConcurrentHashMap<>();
@@ -77,9 +81,23 @@ public final class GraphEntityMapper {
     public GraphEntityMapper(RuntimeEntityRegistry entityRegistry,
                              ConversionService conversionService,
                              Function<Object, Object> encoder) {
+        this(entityRegistry, conversionService, encoder, null);
+    }
+
+    /**
+     * @param entityRegistry    The entity registry
+     * @param conversionService The conversion service
+     * @param encoder           Encodes a Java value into a value the database accepts
+     * @param serde             Reads entities with Micronaut Serialization, or null to read them here
+     */
+    public GraphEntityMapper(RuntimeEntityRegistry entityRegistry,
+                             ConversionService conversionService,
+                             Function<Object, Object> encoder,
+                             @Nullable GraphSerde serde) {
         this.entityRegistry = entityRegistry;
         this.conversionService = conversionService;
         this.encoder = encoder;
+        this.serde = serde;
     }
 
     /**
@@ -101,6 +119,10 @@ public final class GraphEntityMapper {
      * @return The entity instance
      */
     public <T> T readNode(RuntimePersistentEntity<T> entity, GraphNode node, @Nullable GraphRecord row) {
+        GraphSerde graphSerde = serde;
+        if (graphSerde != null && !schemaless(entity).present() && dynamicRelationshipsProperty(entity) == null) {
+            return graphSerde.readNode(entity, node, row);
+        }
         Map<String, Object> values = new HashMap<>();
         RuntimePersistentProperty<T> identity = entity.getIdentity();
         if (identity != null) {
@@ -268,6 +290,10 @@ public final class GraphEntityMapper {
      * @return The entity instance
      */
     public <T> T readRelationshipEntity(RuntimePersistentEntity<T> entity, GraphEdge edge, @Nullable GraphNode target) {
+        GraphSerde graphSerde = serde;
+        if (graphSerde != null) {
+            return graphSerde.readEdge(entity, edge, target);
+        }
         Map<String, Object> values = new HashMap<>();
         RuntimePersistentProperty<T> identity = entity.getIdentity();
         if (identity != null) {
@@ -507,7 +533,12 @@ public final class GraphEntityMapper {
     public @Nullable Object readValue(RuntimePersistentProperty<?> property, @Nullable Object value) {
         AttributeConverter<Object, Object> converter = property.getConverter();
         if (converter != null) {
-            return converter.convertToEntityValue(value, ConversionContext.of(property.getArgument()));
+            // The driver's value, such as a Long, becomes the type the converter persists, such as an Integer
+            Object persisted = property.getAnnotationMetadata()
+                .classValue(MappedProperty.class, "converterPersistedType")
+                .map(type -> value == null ? null : convert(value, Argument.of(type)))
+                .orElse(value);
+            return converter.convertToEntityValue(persisted, ConversionContext.of(property.getArgument()));
         }
         return convert(value, property.getArgument());
     }
@@ -619,5 +650,9 @@ public final class GraphEntityMapper {
     private record Schemaless(@Nullable BeanProperty<Object, Object> attributes,
                               @Nullable BeanProperty<Object, Object> labels,
                               Set<String> declared) {
+
+        boolean present() {
+            return attributes != null || labels != null;
+        }
     }
 }
