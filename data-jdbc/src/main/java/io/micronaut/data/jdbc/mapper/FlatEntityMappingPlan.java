@@ -123,6 +123,7 @@ public final class FlatEntityMappingPlan<R> {
         this.constructorArgumentIndexes = new int[0];
         this.requiredConstructorArguments = new boolean[0];
         this.constructorArgumentCount = 0;
+        this.embeddable = false;
     }
 
     private FlatEntityMappingPlan(RuntimePersistentEntity<R> entity, List<Column<R>> columns, boolean[] requiredConstructorArguments) {
