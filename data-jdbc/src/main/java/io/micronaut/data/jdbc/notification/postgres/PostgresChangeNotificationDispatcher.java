@@ -25,7 +25,22 @@ import java.util.concurrent.CompletableFuture;
 import java.util.concurrent.Executor;
 import java.util.function.Consumer;
 
-/** Serializes callbacks for one listener without blocking the notification connection. */
+/**
+ * Queues events and serializes callbacks for one listener on the supplied executor.
+ *
+ * <p>The queue lets the notification receive thread continue receiving and routing events while
+ * callbacks load entities, retry failed operations, or perform other application work. Each listener
+ * has its own dispatcher, so callbacks for different listeners can run concurrently, subject to
+ * executor capacity. Callbacks for the same listener run one at a time in queue order.</p>
+ *
+ * <p>The queue has a fixed capacity to bound pending work when notifications arrive faster than
+ * the listener can process them. On overflow, pending events and the incoming event are replaced
+ * by an {@link ChangeOperation#INVALIDATE} event so the listener can reload its state.
+ * A callback already running is allowed to finish.</p>
+ *
+ * <p>Stopping rejects new events and lets an active drain finish the running callback and remaining
+ * queued events. The returned completion future allows graceful shutdown to wait for that work.</p>
+ */
 final class PostgresChangeNotificationDispatcher {
     private static final Logger LOG = LoggerFactory.getLogger(PostgresChangeNotificationDispatcher.class);
 

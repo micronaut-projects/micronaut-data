@@ -31,8 +31,8 @@ import java.util.Objects;
  * retain both, including when a primary key changes. Table invalidations have neither.</p>
  *
  * @param channel The notification channel.
- * @param schema The exact database schema name.
- * @param table The exact database table name.
+ * @param schema  The exact database schema name.
+ * @param table   The exact database table name.
  * @param oldKeys The old primary-key values, or an empty map when unavailable.
  * @param newKeys The new primary-key values, or an empty map when unavailable.
  * @since 5.3.0
@@ -48,11 +48,10 @@ public record PostgresChangeEventMetadata(String channel,
      * Creates metadata with defensive copies of the primary-key maps.
      *
      * @param channel The notification channel.
-     * @param schema The database schema name.
-     * @param table The database table name.
+     * @param schema  The database schema name.
+     * @param table   The database table name.
      * @param oldKeys The old primary-key values.
      * @param newKeys The new primary-key values.
-     * @since 5.3.0
      */
     public PostgresChangeEventMetadata {
         Objects.requireNonNull(channel, "channel");
