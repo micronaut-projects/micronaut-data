@@ -120,8 +120,8 @@ public final class GraphEntityMapper {
      */
     public <T> T readNode(RuntimePersistentEntity<T> entity, GraphNode node, @Nullable GraphRecord row) {
         GraphSerde graphSerde = serde;
-        if (graphSerde != null && !schemaless(entity).present() && dynamicRelationshipsProperty(entity) == null) {
-            return graphSerde.readNode(entity, node, row);
+        if (graphSerde != null) {
+            return readNodeWithSerde(graphSerde, entity, node, row);
         }
         Map<String, Object> values = new HashMap<>();
         RuntimePersistentProperty<T> identity = entity.getIdentity();
@@ -146,33 +146,69 @@ public final class GraphEntityMapper {
         }
         Schemaless schemaless = schemaless(entity);
         if (schemaless.attributes() != null) {
-            Map<String, Object> attributes = new LinkedHashMap<>();
-            node.properties().forEach((name, value) -> {
-                if (!schemaless.declared().contains(name)) {
-                    attributes.put(name, value);
-                }
-            });
-            values.put(schemaless.attributes().getName(), attributes);
+            values.put(schemaless.attributes().getName(), undeclaredProperties(schemaless, node));
         }
         if (schemaless.labels() != null) {
-            List<String> labels = new ArrayList<>(node.labels());
-            labels.removeAll(GraphEntities.labels(entity));
-            values.put(schemaless.labels().getName(), convert(labels, schemaless.labels().asArgument()));
+            values.put(schemaless.labels().getName(), convert(extraLabels(entity, node), schemaless.labels().asArgument()));
         }
         BeanProperty<Object, Object> relationshipsProperty = dynamicRelationshipsProperty(entity);
         if (relationshipsProperty != null && row != null && row.has(CypherQueryBuilder.DYNAMIC_RELATIONSHIPS_COLUMN)) {
-            Map<String, List<Object>> relationships = new LinkedHashMap<>();
-            if (row.get(CypherQueryBuilder.DYNAMIC_RELATIONSHIPS_COLUMN) instanceof Collection<?> collection) {
-                for (Object item : collection) {
-                    if (item instanceof Map<?, ?> map && map.get(CypherQueryBuilder.NODE_KEY) instanceof GraphNode target) {
-                        String type = String.valueOf(map.get(CypherQueryBuilder.DYNAMIC_TYPE_KEY));
-                        relationships.computeIfAbsent(type, k -> new ArrayList<>()).add(readNodeAs(target, Object.class));
-                    }
-                }
-            }
-            values.put(relationshipsProperty.getName(), relationships);
+            values.put(relationshipsProperty.getName(), dynamicRelationships(row));
         }
         return instantiate(entity, values);
+    }
+
+    /**
+     * Reads a node with Micronaut Serialization. Schemaless data, which lives outside the declared properties of the
+     * node, is read here and added to what the deserializer sees under the names of its holder properties.
+     */
+    private <T> T readNodeWithSerde(GraphSerde graphSerde, RuntimePersistentEntity<T> entity, GraphNode node, @Nullable GraphRecord row) {
+        Schemaless schemaless = schemaless(entity);
+        BeanProperty<Object, Object> relationshipsProperty = dynamicRelationshipsProperty(entity);
+        if (!schemaless.present() && relationshipsProperty == null) {
+            return graphSerde.readNode(entity, node, row);
+        }
+        Map<String, @Nullable Object> extras = new LinkedHashMap<>();
+        if (schemaless.attributes() != null) {
+            extras.put(schemaless.attributes().getName(), undeclaredProperties(schemaless, node));
+        }
+        if (schemaless.labels() != null) {
+            extras.put(schemaless.labels().getName(), extraLabels(entity, node));
+        }
+        if (relationshipsProperty != null && row != null && row.has(CypherQueryBuilder.DYNAMIC_RELATIONSHIPS_COLUMN)) {
+            // The targets are read here, by their labels, and reach the deserializer as entities
+            extras.put(relationshipsProperty.getName(), dynamicRelationships(row));
+        }
+        return graphSerde.readNode(entity, node, row, extras, schemaless.attributes() != null ? schemaless.declared() : null);
+    }
+
+    private static Map<String, Object> undeclaredProperties(Schemaless schemaless, GraphNode node) {
+        Map<String, Object> attributes = new LinkedHashMap<>();
+        node.properties().forEach((name, value) -> {
+            if (!schemaless.declared().contains(name)) {
+                attributes.put(name, value);
+            }
+        });
+        return attributes;
+    }
+
+    private static List<String> extraLabels(RuntimePersistentEntity<?> entity, GraphNode node) {
+        List<String> labels = new ArrayList<>(node.labels());
+        labels.removeAll(GraphEntities.labels(entity));
+        return labels;
+    }
+
+    private Map<String, List<Object>> dynamicRelationships(GraphRecord row) {
+        Map<String, List<Object>> relationships = new LinkedHashMap<>();
+        if (row.get(CypherQueryBuilder.DYNAMIC_RELATIONSHIPS_COLUMN) instanceof Collection<?> collection) {
+            for (Object item : collection) {
+                if (item instanceof Map<?, ?> map && map.get(CypherQueryBuilder.NODE_KEY) instanceof GraphNode target) {
+                    String type = String.valueOf(map.get(CypherQueryBuilder.DYNAMIC_TYPE_KEY));
+                    relationships.computeIfAbsent(type, k -> new ArrayList<>()).add(readNodeAs(target, Object.class));
+                }
+            }
+        }
+        return relationships;
     }
 
     /**
