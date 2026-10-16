@@ -18,6 +18,8 @@ package io.micronaut.data.jdbc.mapper;
 import io.micronaut.core.annotation.Internal;
 import io.micronaut.core.beans.BeanIntrospection;
 import io.micronaut.core.beans.BeanProperty;
+import io.micronaut.data.annotation.Embeddable;
+import io.micronaut.data.annotation.EmbeddedId;
 import io.micronaut.data.annotation.FlatEntity;
 import io.micronaut.data.model.DataType;
 import io.micronaut.data.model.naming.NamingStrategy;
@@ -93,6 +95,11 @@ public final class FlatEntityMappingPlan<R> {
     private final int[] constructorArgumentIndexes;
     private final boolean[] requiredConstructorArguments;
     private final int constructorArgumentCount;
+    /**
+     * Whether the entity is an embeddable, which is null rather than an error when a required constructor
+     * argument is NULL, as it is for the general mapper.
+     */
+    private final boolean embeddable;
 
     private FlatEntityMappingPlan(RuntimePersistentEntity<R> entity, List<Column<R>> columns, boolean[] requiredConstructorArguments) {
         this.entity = entity;
@@ -115,6 +122,8 @@ public final class FlatEntityMappingPlan<R> {
         }
         this.requiredConstructorArguments = requiredConstructorArguments;
         this.constructorArgumentCount = requiredConstructorArguments.length;
+        this.embeddable = entity.getAnnotationMetadata().hasAnnotation(Embeddable.class)
+            || entity.getAnnotationMetadata().hasAnnotation(EmbeddedId.class);
     }
 
     /**
@@ -304,6 +313,10 @@ public final class FlatEntityMappingPlan<R> {
 
     int getConstructorArgumentCount() {
         return constructorArgumentCount;
+    }
+
+    boolean isEmbeddable() {
+        return embeddable;
     }
 
     /**
