@@ -54,4 +54,18 @@ class PersonRepositorySpec extends AbstractNeo4jSpec {
         personRepository.findRelationships(fred, barney)*.type() == ["FOLLOWS"]
         personRepository.countRelationshipsByFollows() == 4
     }
+
+    void "dynamic labels"() {
+        when:
+        // tag::labels[]
+        def keanu = new Person(name: "Keanu Reeves", born: 1964)
+        keanu.labels << "Actor" // <1>
+        personRepository.save(keanu)
+
+        def labels = personRepository.findByName("Keanu Reeves").get().labels // <2>
+        // end::labels[]
+
+        then:
+        labels == ["Actor"] as Set
+    }
 }

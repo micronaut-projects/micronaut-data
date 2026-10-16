@@ -10,6 +10,7 @@ import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.TestInstance;
 
 import java.util.List;
+import java.util.Set;
 
 import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertFalse;
@@ -72,5 +73,18 @@ class PersonRepositorySpec extends AbstractNeo4jTest {
 
         assertEquals("FOLLOWS", personRepository.findRelationships(fred, barney).get(0).type());
         assertEquals(4, personRepository.countRelationshipsByFollows());
+    }
+
+    @Test
+    void testLabels() {
+        // tag::labels[]
+        Person keanu = new Person("Keanu Reeves", 1964);
+        keanu.getLabels().add("Actor"); // <1>
+        personRepository.save(keanu);
+
+        Set<String> labels = personRepository.findByName("Keanu Reeves").orElseThrow().getLabels(); // <2>
+        // end::labels[]
+
+        assertEquals(Set.of("Actor"), labels);
     }
 }

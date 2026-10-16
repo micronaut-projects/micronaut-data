@@ -57,19 +57,15 @@ Property and parameter values are encoded into values the database accepts by th
 
 A bean of type api:data.graph.runtime.GraphValueEncoderRegistrar[] adds encoders for application types, or replaces those of the database:
 
-[source,java]
-----
-@Singleton
-public class MoneyEncoderRegistrar implements GraphValueEncoderRegistrar {
+snippet::example.MoneyEncoderRegistrar[project-base="doc-examples/neo4j-example", source="main", tags="registrar", languages="java,kotlin,groovy,python"]
 
-    @Override
-    public void register(GraphValueEncoders encoders) {
-        encoders.register(Money.class, (money, e) -> Map.of(
-            "amount", e.encode(money.amount()),
-            "currency", money.currency()
-        ));
-    }
-}
-----
+<1> `Money` values are written as maps.
+<2> The encoders passed to the encoder encode the values it contains.
+
+Values of the type are then encoded wherever they are written, in properties and in query parameters:
+
+snippet::example.OperationsSpec[project-base="doc-examples/neo4j-example", tags="encode", indent="0", languages="java,kotlin,groovy,python"]
+
+<1> The parameter is encoded as a map, so the query can read its entries.
 
 Values read from the database are converted to the types of properties by the conversion service of Micronaut Data. An attribute converter, set with the `converter` member of ann:data.annotation.MappedProperty[], converts a property both ways.
