@@ -24,7 +24,19 @@ class BankGraphSpec {
         assertEquals(listOf("Bob"), bigSenders.map { it.name })
         assertTrue(connected)
         assertFalse(bankGraph.existsPathByTransfers(3L, 1L))
-        assertEquals("Alice", bankGraph.findById(1L)?.name)
+        assertEquals("Alice", bankGraph.findById(1L).get().name)
         assertEquals(listOf("Alice", "Bob"), bankGraph.largeTransfers(BigDecimal(100)).map { it.source })
+    }
+
+    @Test
+    fun testSave() {
+        // tag::save[]
+        bankGraph.save(Account(5L, "Erin")) // <1>
+        val erin = bankGraph.findByNameStartsWithOrderByName("Er") // <2>
+        // end::save[]
+
+        assertEquals(listOf("Erin"), erin.map { it.name })
+        bankGraph.deleteById(5L)
+        assertTrue(bankGraph.findById(5L).isEmpty)
     }
 }

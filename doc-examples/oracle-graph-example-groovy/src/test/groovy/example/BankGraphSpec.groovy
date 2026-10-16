@@ -24,4 +24,21 @@ class BankGraphSpec extends Specification {
         bankGraph.findById(1L).get().name == "Alice"
         bankGraph.largeTransfers(100)*.source == ["Alice", "Bob"]
     }
+
+    void "save accounts"() {
+        when:
+        // tag::save[]
+        bankGraph.save(new Account(id: 5L, name: "Erin")) // <1>
+        def erin = bankGraph.findByNameStartsWithOrderByName("Er") // <2>
+        // end::save[]
+
+        then:
+        erin*.name == ["Erin"]
+
+        when:
+        bankGraph.deleteById(5L)
+
+        then:
+        !bankGraph.findById(5L).present
+    }
 }

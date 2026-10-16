@@ -24,28 +24,13 @@ Path finders need a fixed maximum depth set with ann:data.graph.annotation.PathL
 
 == Writing nodes
 
-A property graph over tables is a view, so its repositories write nodes to their vertex tables with SQL, as Micronaut Data JDBC does. The value of ann:data.graph.annotation.Node[] names the vertex table, and `labels` the label the graph gives it:
-
-[source,java]
-----
-@Node(value = "accounts", labels = "Account")
-public record Account(@Id Long id, String name, @Relationship("TRANSFERS") List<Transfer> transfers) {
-}
-----
+A property graph over tables is a view, so its repositories write nodes to their vertex tables with SQL, as Micronaut Data JDBC does. The value of ann:data.graph.annotation.Node[] names the vertex table, and `labels` the label the graph gives it, as in the `Account` entity of the <<graphOracleQuickStart, quick start>>.
 
 Save, update and delete methods, including those of api:data.repository.CrudRepository[], are compiled to SQL for Oracle at build time and run by the JDBC repository operations of the same data source:
 
-[source,java]
-----
-@OracleGraphRepository(graph = "bank_graph", language = PropertyGraph.QueryLanguage.SQL_PGQ)
-public interface BankGraph extends CrudRepository<Account, Long> {
-}
-----
+snippet::example.BankGraphSpec[project-base="doc-examples/oracle-graph-example", tags="save", indent="0", languages="java,kotlin,groovy,python"]
 
-[source,java]
-----
-bankGraph.save(new Account(5L, "Erin", List.of()));                  // INSERT INTO "ACCOUNTS" ("NAME","ID") VALUES (?,?)
-List<Account> erin = bankGraph.findByNameStartsWithOrderByName("Er"); // SELECT * FROM GRAPH_TABLE (bank_graph MATCH (n IS Account) ...)
-----
+<1> Runs `INSERT INTO "ACCOUNTS" ("NAME","ID") VALUES (?,?)`.
+<2> Runs a SQL/PGQ query over the property graph, `SELECT * FROM GRAPH_TABLE (bank_graph MATCH (n IS Account) ...)`.
 
 Writes join the current connection and transaction of the data source, as graph queries do. Writes need the `micronaut-data-jdbc` module, which `micronaut-data-oracle-graph` depends on. Saving a node writes only its row: relationships are rows of their edge tables, which a ann:data.jdbc.annotation.JdbcRepository[] over an entity of the edge table writes.
