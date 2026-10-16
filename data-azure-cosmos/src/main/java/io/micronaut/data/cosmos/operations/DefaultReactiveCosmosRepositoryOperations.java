@@ -22,6 +22,7 @@ import com.azure.cosmos.CosmosException;
 import com.azure.cosmos.implementation.RequestOptions;
 import com.azure.cosmos.implementation.batch.ItemBulkOperation;
 import com.azure.cosmos.models.CosmosBulkItemResponse;
+import com.azure.cosmos.models.CosmosBulkOperationResponse;
 import com.azure.cosmos.models.CosmosItemOperation;
 import com.azure.cosmos.models.CosmosItemOperationType;
 import com.azure.cosmos.models.CosmosItemRequestOptions;
@@ -93,6 +94,7 @@ import io.netty.handler.codec.http.HttpResponseStatus;
 import jakarta.inject.Singleton;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
+import reactor.core.Exceptions;
 import reactor.core.publisher.Flux;
 import reactor.core.publisher.Mono;
 import reactor.util.function.Tuple2;
@@ -108,9 +110,11 @@ import java.util.Date;
 import java.util.HashMap;
 import java.util.Iterator;
 import java.util.List;
+import java.util.Locale;
 import java.util.Map;
 import java.util.Optional;
 import java.util.UUID;
+import java.util.function.Function;
 import java.util.function.UnaryOperator;
 import java.util.stream.Collectors;
 
@@ -296,10 +300,11 @@ public final class DefaultReactiveCosmosRepositoryOperations extends AbstractRep
             } else {
                 argument = Argument.of(preparedQuery.getResultType());
             }
+            Function<ObjectNode, R> entityReader = getEntityReader(preparedQuery, argument);
             return result.byPage().flatMap(response -> {
                 CosmosUtils.processDiagnostics(cosmosDiagnosticsProcessor, CosmosDiagnosticsProcessor.QUERY_ITEMS, response.getCosmosDiagnostics(),
                     response.getActivityId(), response.getRequestCharge());
-                return Flux.fromIterable(response.getResults().stream().map(item -> cosmosSerde.deserialize(item, argument)).toList());
+                return Flux.fromIterable(response.getResults().stream().map(entityReader).toList());
             }).onErrorMap(e ->  CosmosUtils.cosmosAccessException(cosmosDiagnosticsProcessor, CosmosDiagnosticsProcessor.QUERY_ITEMS,
                 FAILED_TO_QUERY_ITEMS, e));
         }
@@ -320,6 +325,24 @@ public final class DefaultReactiveCosmosRepositoryOperations extends AbstractRep
             }).toList());
         }).onErrorMap(e ->  CosmosUtils.cosmosAccessException(cosmosDiagnosticsProcessor, CosmosDiagnosticsProcessor.QUERY_ITEMS,
             FAILED_TO_QUERY_ITEMS, e));
+    }
+
+    /**
+     * Gets the function that reads the entities returned by a list query.
+     * The root entity is read like a single result, so that it gets its version (_etag).
+     *
+     * @param preparedQuery the prepared query
+     * @param argument the argument of the result type
+     * @param <T> the root entity type
+     * @param <R> the result type
+     * @return the function that reads an entity from an item
+     */
+    private <T, R> Function<ObjectNode, R> getEntityReader(SqlPreparedQuery<T, R> preparedQuery, Argument<R> argument) {
+        if (preparedQuery.getResultType().equals(preparedQuery.getRootEntity())) {
+            RuntimePersistentEntity<T> rootEntity = runtimeEntityRegistry.getEntity(preparedQuery.getRootEntity());
+            return item -> cosmosSerde.deserialize(rootEntity, item, argument);
+        }
+        return item -> cosmosSerde.deserialize(item, argument);
     }
 
     @Override
@@ -863,19 +886,78 @@ public final class DefaultReactiveCosmosRepositoryOperations extends AbstractRep
             List<CosmosItemOperation> bulkOperations = createBulkOperations(response.getResults(), bulkOperationType, persistentEntity, optPartitionKey, handleItem);
             return Flux.fromIterable(bulkOperations);
         });
-        return container.executeBulkOperations(updateItems).reduce(-1, (affectedCount, bulkOperationResponse) -> {
-            CosmosBulkItemResponse response = bulkOperationResponse.getResponse();
-            if (affectedCount.intValue() == -1) {
-                // The response diagnostic is the same for each iteration, so we don't want to log it for each item
-                affectedCount = 0;
-                CosmosUtils.processDiagnostics(cosmosDiagnosticsProcessor, CosmosDiagnosticsProcessor.EXECUTE_BULK, response.getCosmosDiagnostics(), response.getActivityId(),
-                    response.getRequestCharge());
-            }
-            if (response.getStatusCode() == bulkOperationType.expectedOperationStatusCode) {
-                affectedCount = (int) affectedCount + 1;
-            }
-            return affectedCount;
-        });
+        return container.executeBulkOperations(updateItems)
+            .reduceWith(BulkResult::new, (result, bulkOperationResponse) -> {
+                // The items were read by the query: they are replaced or deleted without a version check,
+                // and an item that was deleted in the meantime is only not counted as affected
+                acceptBulkItemResponse(result, bulkOperationResponse, bulkOperationType, false, true);
+                return result;
+            })
+            .flatMap(result -> getBulkRowsAffected(result, bulkOperationType));
+    }
+
+    /**
+     * Adds the response of one item of a bulk operation to the result.
+     *
+     * @param result the result of the bulk operation so far
+     * @param bulkOperationResponse the response of the item
+     * @param bulkOperationType the bulk operation type
+     * @param versioned whether the items are replaced or deleted only if their version matches
+     * @param ignoreNotFound whether an item that does not exist is only not counted as affected
+     * @return the item response if the item was created, replaced or deleted, otherwise null
+     */
+    @Nullable
+    private CosmosBulkItemResponse acceptBulkItemResponse(BulkResult result,
+                                                          CosmosBulkOperationResponse<?> bulkOperationResponse,
+                                                          BulkOperationType bulkOperationType,
+                                                          boolean versioned,
+                                                          boolean ignoreNotFound) {
+        Exception exception = bulkOperationResponse.getException();
+        if (exception != null) {
+            // The item failed without a response
+            throw Exceptions.propagate(exception);
+        }
+        CosmosBulkItemResponse response = bulkOperationResponse.getResponse();
+        if (response == null) {
+            return null;
+        }
+        if (!result.diagnosticsProcessed) {
+            // The response diagnostic is the same for each item, so we don't want to log it for each item
+            result.diagnosticsProcessed = true;
+            CosmosUtils.processDiagnostics(cosmosDiagnosticsProcessor, CosmosDiagnosticsProcessor.EXECUTE_BULK, response.getCosmosDiagnostics(), response.getActivityId(),
+                response.getRequestCharge());
+        }
+        int statusCode = response.getStatusCode();
+        if (statusCode == bulkOperationType.expectedOperationStatusCode) {
+            result.affected++;
+            return response;
+        }
+        if (versioned && statusCode == HttpResponseStatus.PRECONDITION_FAILED.code()) {
+            result.preconditionFailed++;
+        } else if (!ignoreNotFound || statusCode != HttpResponseStatus.NOT_FOUND.code()) {
+            result.addRejected(statusCode);
+        }
+        return null;
+    }
+
+    /**
+     * Gets the number of items affected by a bulk operation, or an error if any of its items failed.
+     * The bulk operation is not transactional, the other items are not rolled back.
+     *
+     * @param result the result of the bulk operation
+     * @param bulkOperationType the bulk operation type
+     * @return the number of affected items or an error
+     */
+    private static Mono<Number> getBulkRowsAffected(BulkResult result, BulkOperationType bulkOperationType) {
+        if (result.preconditionFailed > 0) {
+            return Mono.error(new OptimisticLockException("Operation failed due to optimistic locking conflict."));
+        }
+        if (result.rejected > 0) {
+            // The response of a rejected item has no exception to use as the cause
+            return Mono.error(new CosmosAccessException("Failed to execute bulk " + bulkOperationType.name().toLowerCase(Locale.ROOT) + ": "
+                + result.rejected + " item(s) rejected, the first with status code " + result.rejectedStatusCode, null));
+        }
+        return Mono.<Number>just(result.affected);
     }
 
     private <T> CosmosReactiveEntityOperation<T> createCosmosInsertOneOperation(CosmosReactiveOperationContext<T> ctx, T entity) {
@@ -909,6 +991,9 @@ public final class DefaultReactiveCosmosRepositoryOperations extends AbstractRep
     }
 
     private Throwable handleCosmosOperationException(String message, Throwable e, String operationName, RuntimePersistentEntity<?> persistentEntity) {
+        if (e instanceof OptimisticLockException || e instanceof CosmosAccessException) {
+            return e;
+        }
         if (e instanceof CosmosException cosmosException) {
             if (cosmosException.getStatusCode() == HttpResponseStatus.PRECONDITION_FAILED.code()) {
                 CosmosEntity cosmosEntity = CosmosEntity.get(persistentEntity);
@@ -1078,6 +1163,34 @@ public final class DefaultReactiveCosmosRepositoryOperations extends AbstractRep
     }
 
     /**
+     * The result of a bulk operation, collected from the responses of its items.
+     */
+    private static final class BulkResult {
+        private int affected;
+        private int preconditionFailed;
+        private int rejected;
+        private int rejectedStatusCode;
+        private boolean diagnosticsProcessed;
+
+        private void addRejected(int statusCode) {
+            if (rejected == 0) {
+                // The status code of the first rejected item is reported
+                rejectedStatusCode = statusCode;
+            }
+            rejected++;
+        }
+    }
+
+    /**
+     * Identifies an item of a bulk operation. An id is unique only within a partition.
+     *
+     * @param id the item id
+     * @param partitionKey the partition key of the item
+     */
+    private record BulkItemKey(String id, PartitionKey partitionKey) {
+    }
+
+    /**
      * The Cosmos Db reactive operation context.
      *
      * @param <T> the entity type
@@ -1231,20 +1344,21 @@ public final class DefaultReactiveCosmosRepositoryOperations extends AbstractRep
             // Update/replace using partition key calculated from each item
             Mono<Tuple2<List<Data>, Long>> entitiesWithRowsUpdated = entities
                 .flatMap(e -> {
-                    Map<String, T> entitiesById = new HashMap<>(e.size());
+                    // An id is unique only within its partition
+                    Map<BulkItemKey, T> entitiesByKey = HashMap.newHashMap(e.size());
                     List<ItemBulkOperation<?, ?>> notVetoedEntities = e.stream().filter(this::notVetoed).map(x -> {
                         if (generateId) {
                             generateId(persistentEntity, x.entity);
                         }
                         ObjectNode item = cosmosSerde.serialize(persistentEntity, x.entity, arg);
                         ItemBulkOperation<?, ?> itemBulkOperation = createItemBulkOperation(item, partitionKeyField, operationType.cosmosItemOperationType, insert);
-                        entitiesById.put(itemBulkOperation.getId(), x.entity);
+                        entitiesByKey.put(new BulkItemKey(itemBulkOperation.getId(), itemBulkOperation.getPartitionKeyValue()), x.entity);
                         return itemBulkOperation;
                     }).collect(Collectors.toList());
                     if (notVetoedEntities.isEmpty()) {
                         return Mono.just(Tuples.of(e, 0L));
                     }
-                    return executeAndGetRowsUpdated(notVetoedEntities, entitiesById)
+                    return executeAndGetRowsUpdated(notVetoedEntities, entitiesByKey)
                         .map(Number::longValue)
                         .map(rowsUpdated ->  Tuples.of(e, rowsUpdated));
                 })
@@ -1254,27 +1368,20 @@ public final class DefaultReactiveCosmosRepositoryOperations extends AbstractRep
             rowsUpdated = entitiesWithRowsUpdated.map(Tuple2::getT2);
         }
 
-        private Mono<Number> executeAndGetRowsUpdated(List<ItemBulkOperation<?, ?>> bulkOperations, Map<String, T> entitiesById) {
-            return ctx.getContainer().executeBulkOperations(Flux.fromIterable(bulkOperations)).reduce(-1, (count, bulkOperationResponse) -> {
-                CosmosBulkItemResponse response = bulkOperationResponse.getResponse();
-                if (count.intValue() == -1) {
-                    count = 0;
-                    // The response diagnostic is the same for each iteration, so we don't want to log it for each item
-                    CosmosUtils.processDiagnostics(cosmosDiagnosticsProcessor, CosmosDiagnosticsProcessor.EXECUTE_BULK, response.getCosmosDiagnostics(), response.getActivityId(),
-                        response.getRequestCharge());
-                }
-                if (response.getStatusCode() == operationType.expectedOperationStatusCode) {
-                    count = (int) count + 1;
-                    if (setETagVersion) {
-                        String id = bulkOperationResponse.getOperation().getId();
-                        T entity = entitiesById.get(id);
+        private Mono<Number> executeAndGetRowsUpdated(List<ItemBulkOperation<?, ?>> bulkOperations, Map<BulkItemKey, T> entitiesByKey) {
+            return ctx.getContainer().executeBulkOperations(Flux.fromIterable(bulkOperations))
+                .reduceWith(BulkResult::new, (result, bulkOperationResponse) -> {
+                    CosmosBulkItemResponse response = acceptBulkItemResponse(result, bulkOperationResponse, operationType, versionField != null, false);
+                    if (response != null && setETagVersion) {
+                        CosmosItemOperation itemOperation = bulkOperationResponse.getOperation();
+                        T entity = entitiesByKey.get(new BulkItemKey(itemOperation.getId(), itemOperation.getPartitionKeyValue()));
                         if (entity != null) {
                             setETagVersion(persistentEntity, entity, versionField, response.getETag());
                         }
                     }
-                }
-                return count;
-            });
+                    return result;
+                })
+                .flatMap(result -> getBulkRowsAffected(result, operationType));
         }
 
         private ItemBulkOperation<?, ?> createItemBulkOperation(ObjectNode item, String partitionKeyField, CosmosItemOperationType cosmosItemOperationType, boolean insert) {
