@@ -51,10 +51,8 @@ import io.micronaut.sourcegen.model.TypeDef;
 import io.micronaut.sourcegen.model.VariableDef;
 import org.jspecify.annotations.Nullable;
 
-import javax.lang.model.element.AnnotationMirror;
 import javax.lang.model.element.ElementKind;
 import javax.lang.model.element.Modifier;
-import javax.lang.model.element.TypeElement;
 import java.math.BigDecimal;
 import java.math.BigInteger;
 import java.sql.ResultSet;
@@ -380,8 +378,9 @@ public final class JdbcRowMapperVisitor implements TypeElementVisitor<MappedEnti
         if (type.isRecord()) {
             // A declared @Creator first. Enumerating the record's methods (which getPrimaryConstructor and any
             // method query do) postpones the element when one of them names a type generated later in this
-            // compilation, so the methods are only enumerated when the javac element shows a static @Creator
-            MethodElement creator = declaresStaticCreator(type)
+            // compilation, so the methods are only enumerated when the javac element shows an annotated static
+            // method, which may be a creator by stereotype (@Creator, Jackson's @JsonCreator, ...)
+            MethodElement creator = hasAnnotatedStaticMethod(type)
                 ? type.getEnclosedElement(ElementQuery.ALL_METHODS.onlyDeclared().onlyStatic().annotated(am -> am.hasStereotype(Creator.class))).orElse(null)
                 : null;
             if (creator != null) {
@@ -423,23 +422,21 @@ public final class JdbcRowMapperVisitor implements TypeElementVisitor<MappedEnti
     }
 
     /**
-     * Whether the type declares a static method annotated {@code @Creator}, read from the javac element without
-     * creating a method element for any method, which would resolve its signature.
+     * Whether the type declares a static method carrying any annotation, which may make it a creator by
+     * stereotype, read from the javac element without creating a method element for any method, which would
+     * resolve its signature. Conservative: an annotated static method that is no creator only costs the method
+     * query that the introspection performs anyway.
      */
-    private static boolean declaresStaticCreator(ClassElement type) {
+    private static boolean hasAnnotatedStaticMethod(ClassElement type) {
         if (!(type.getNativeType() instanceof JavaNativeElement.Class nativeClass)) {
             // Not javac: enumerate the methods
             return true;
         }
         for (javax.lang.model.element.Element member : nativeClass.element().getEnclosedElements()) {
-            if (member.getKind() != ElementKind.METHOD || !member.getModifiers().contains(Modifier.STATIC)) {
-                continue;
-            }
-            for (AnnotationMirror mirror : member.getAnnotationMirrors()) {
-                if (mirror.getAnnotationType().asElement() instanceof TypeElement annotation
-                    && annotation.getQualifiedName().contentEquals(Creator.class.getName())) {
-                    return true;
-                }
+            if (member.getKind() == ElementKind.METHOD
+                && member.getModifiers().contains(Modifier.STATIC)
+                && !member.getAnnotationMirrors().isEmpty()) {
+                return true;
             }
         }
         return false;

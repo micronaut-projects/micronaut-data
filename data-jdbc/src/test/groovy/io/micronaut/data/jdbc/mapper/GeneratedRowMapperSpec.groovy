@@ -20,6 +20,7 @@ import io.micronaut.data.exceptions.DataAccessException
 import io.micronaut.data.jdbc.mapper.generated.Country
 import io.micronaut.data.jdbc.mapper.generated.GeneratedTypes
 import io.micronaut.data.jdbc.mapper.generated.GeoPoint
+import io.micronaut.data.jdbc.mapper.generated.JsonCreatorTag
 import io.micronaut.data.jdbc.mapper.generated.NoArgCreatorProbe
 import io.micronaut.data.jdbc.mapper.generated.Place
 import io.micronaut.data.jdbc.mapper.generated.Probe
@@ -284,6 +285,8 @@ class GeneratedRowMapperSpec extends Specification {
         execute("INSERT INTO generated_probe VALUES (1, 'probe', FALSE)")
         createTable("generated_tag", ["id BIGINT", "name VARCHAR(255)"])
         execute("INSERT INTO generated_tag VALUES (1, 'lower')")
+        createTable("generated_json_creator_tag", ["id BIGINT", "name VARCHAR(255)"])
+        execute("INSERT INTO generated_json_creator_tag VALUES (1, 'lower')")
         createTable("generated_no_arg_creator_probe", ["id BIGINT", "name VARCHAR(255)", "created BOOLEAN"])
         execute("INSERT INTO generated_no_arg_creator_probe VALUES (1, 'probe', FALSE)")
 
@@ -302,6 +305,13 @@ class GeneratedRowMapperSpec extends Specification {
         tags == [new Tag(1L, "LOWER")]
         tags == mapGeneral(entity(Tag), "SELECT * FROM generated_tag")
 
+        when: "the creator is one by stereotype only"
+        List<JsonCreatorTag> jsonTags = mapGenerated(FlatEntityMappingPlan.of(entity(JsonCreatorTag)), "SELECT * FROM generated_json_creator_tag")
+
+        then:
+        jsonTags == [new JsonCreatorTag(1L, "LOWER")]
+        jsonTags == mapGeneral(entity(JsonCreatorTag), "SELECT * FROM generated_json_creator_tag")
+
         when: "a parameterless static creator is the only way to instantiate the entity"
         List<NoArgCreatorProbe> created = mapGenerated(FlatEntityMappingPlan.of(entity(NoArgCreatorProbe)), "SELECT * FROM generated_no_arg_creator_probe")
 
@@ -315,6 +325,7 @@ class GeneratedRowMapperSpec extends Specification {
         execute("DROP TABLE generated_probe")
         execute("DROP TABLE generated_tag")
         execute("DROP TABLE generated_no_arg_creator_probe")
+        execute("DROP TABLE generated_json_creator_tag")
     }
 
     void "the generated mapper is used directly with resolved ordinals"() {
