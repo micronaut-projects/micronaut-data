@@ -19,12 +19,15 @@ import io.micronaut.core.annotation.Internal;
 import io.micronaut.core.type.Argument;
 import io.micronaut.serde.SerdeRegistry;
 import io.micronaut.serde.Serializer;
+import io.micronaut.serde.config.SerializationConfiguration;
 import io.micronaut.serde.config.naming.PropertyNamingStrategy;
 import io.micronaut.serde.exceptions.SerdeException;
 import io.micronaut.serde.reference.AbstractPropertyReferenceManager;
 import io.micronaut.serde.reference.PropertyReference;
 import io.micronaut.serde.reference.SerializationReference;
 import org.jspecify.annotations.Nullable;
+
+import java.util.Optional;
 
 /**
  * Default implementation of {@link Serializer.EncoderContext}.
@@ -33,9 +36,24 @@ import org.jspecify.annotations.Nullable;
 @Internal
 class DefaultEncoderContext extends AbstractPropertyReferenceManager implements Serializer.EncoderContext {
     private final SerdeRegistry registry;
+    private final @Nullable SerializationConfiguration serializationConfiguration;
 
     DefaultEncoderContext(SerdeRegistry registry) {
+        this(registry, null);
+    }
+
+    /**
+     * @param registry                   The registry
+     * @param serializationConfiguration The serialization configuration, read by generated serializers
+     */
+    DefaultEncoderContext(SerdeRegistry registry, @Nullable SerializationConfiguration serializationConfiguration) {
         this.registry = registry;
+        this.serializationConfiguration = serializationConfiguration;
+    }
+
+    @Override
+    public Optional<SerializationConfiguration> getSerializationConfiguration() {
+        return Optional.ofNullable(serializationConfiguration);
     }
 
     @Override
