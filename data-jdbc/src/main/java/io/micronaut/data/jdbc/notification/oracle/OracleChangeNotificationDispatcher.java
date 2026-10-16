@@ -84,6 +84,7 @@ import java.util.function.LongConsumer;
 final class OracleChangeNotificationDispatcher implements DatabaseChangeListener {
     private static final Logger LOG = LoggerFactory.getLogger(OracleChangeNotificationDispatcher.class);
     private static final Duration DISPATCH_RETRY_DELAY = Duration.ofSeconds(1);
+    private static final String DCN_EVENT_INVALIDATION_REASON = "event for DCN";
 
     private final String dataSourceName;
     private final OracleChangeListenerDefinition listenerDefinition;
@@ -96,11 +97,17 @@ final class OracleChangeNotificationDispatcher implements DatabaseChangeListener
     private final BiConsumer<Long, DatabaseChangeEvent.AdditionalEventType> deregistrationHandler;
     private final LongConsumer queryDeregistrationHandler;
     private final LongConsumer databaseShutdownHandler;
+
     /** Held until a loss-triggered invalidation starts, including time spent queued on the executor. */
     private final AtomicBoolean invalidationPending = new AtomicBoolean();
+
     /**
      * Options reported by the driver and captured for callbacks after query association.
+     * Sonar rule S3077 is suppressed because the referenced record is immutable and contains only
+     * booleans. Volatile safely publishes each complete snapshot to callback threads, which read
+     * it once without modifying its state; there is no mutable object state requiring synchronization.
      */
+    @SuppressWarnings("java:S3077")
     private volatile @Nullable RegistrationOptions registrationOptions;
 
     OracleChangeNotificationDispatcher(String dataSourceName,
@@ -427,7 +434,7 @@ final class OracleChangeNotificationDispatcher implements DatabaseChangeListener
      */
     private void dispatchQueryChanges(QueryChangeDescription @Nullable [] queries, long registrationId) {
         if (queries == null || queries.length == 0) {
-            dispatchInvalidation(registrationId, "event for DCN");
+            dispatchInvalidation(registrationId, DCN_EVENT_INVALIDATION_REASON);
             return;
         }
         QueryChangeDescription deregisteredQuery = findDeregisteredQuery(queries);
@@ -436,7 +443,7 @@ final class OracleChangeNotificationDispatcher implements DatabaseChangeListener
             return;
         }
         if (requiresQueryInvalidation(queries)) {
-            dispatchInvalidation(registrationId, "event for DCN");
+            dispatchInvalidation(registrationId, DCN_EVENT_INVALIDATION_REASON);
             return;
         }
         for (QueryChangeDescription query : queries) {
@@ -490,7 +497,7 @@ final class OracleChangeNotificationDispatcher implements DatabaseChangeListener
                                       boolean invalidateOnUnmatchedTable,
                                       long registrationId) {
         if (requiresInvalidation(tables, invalidateOnUnmatchedTable)) {
-            dispatchInvalidation(registrationId, "event for DCN");
+            dispatchInvalidation(registrationId, DCN_EVENT_INVALIDATION_REASON);
             return;
         }
         dispatchRows(tables);
@@ -524,15 +531,28 @@ final class OracleChangeNotificationDispatcher implements DatabaseChangeListener
                 || tableOperations.contains(TableChangeDescription.TableOperation.DROP)) {
                 return true;
             }
-            RowChangeDescription[] rows = table.getRowChangeDescription();
-            if (rows == null || rows.length == 0) {
+            if (requiresRowInvalidation(table)) {
                 return true;
             }
-            for (RowChangeDescription row : rows) {
-                var rowOperations = row.getRowOperations();
-                if (row.getRowid() == null || rowOperations == null || rowOperations.isEmpty()) {
-                    return true;
-                }
+        }
+        return false;
+    }
+
+    /**
+     * Checks whether missing or unusable row details require invalidation of the complete event.
+     *
+     * @param table the table change supplied by Oracle Database
+     * @return whether the table's changes cannot be represented as row-level events
+     */
+    private static boolean requiresRowInvalidation(TableChangeDescription table) {
+        RowChangeDescription[] rows = table.getRowChangeDescription();
+        if (rows == null || rows.length == 0) {
+            return true;
+        }
+        for (RowChangeDescription row : rows) {
+            var rowOperations = row.getRowOperations();
+            if (row.getRowid() == null || rowOperations == null || rowOperations.isEmpty()) {
+                return true;
             }
         }
         return false;

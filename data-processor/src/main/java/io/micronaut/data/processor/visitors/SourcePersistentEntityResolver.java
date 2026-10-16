@@ -32,8 +32,10 @@ final class SourcePersistentEntityResolver implements Function<ClassElement, Sou
 
     private final VisitorContext context;
     private final Map<String, SourcePersistentEntity> entityMap;
-    private final MappedEntityVisitor mappedEntityVisitor = new MappedEntityVisitor();
-    private final MappedEntityVisitor embeddedMappedEntityVisitor = new MappedEntityVisitor();
+    // Resolve referenced entities without postponing the repository or listener that uses them.
+    // See MappedEntityVisitor#resolveJsonCreatorConflictForRepository.
+    private final MappedEntityVisitor mappedEntityVisitor = new MappedEntityVisitor(false);
+    private final MappedEntityVisitor embeddedMappedEntityVisitor = new MappedEntityVisitor(false);
 
     SourcePersistentEntityResolver(VisitorContext context, Map<String, SourcePersistentEntity> entityMap) {
         this.context = context;

@@ -176,6 +176,9 @@ class LibraryCacheSpec {
         });
     }
 
+    // S2925 is suppressed because sleep bounds the polling frequency while waiting for an
+    // asynchronous notification; success depends on the condition, with an overall timeout.
+    @SuppressWarnings("java:S2925")
     private void waitUntil(Callable<Boolean> conditionEvaluator) {
         Exception lastException = null;
 
@@ -187,7 +190,8 @@ class LibraryCacheSpec {
             try {
                 Thread.sleep(sleepTimeMillis);
             } catch (InterruptedException e) {
-                // continue
+                Thread.currentThread().interrupt();
+                throw new IllegalStateException("Interrupted while waiting for the condition", e);
             }
             try {
                 if (conditionEvaluator.call()) {

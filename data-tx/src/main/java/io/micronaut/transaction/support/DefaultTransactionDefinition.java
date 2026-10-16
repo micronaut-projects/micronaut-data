@@ -176,6 +176,11 @@ public class DefaultTransactionDefinition implements TransactionDefinition {
      * @param timeout The timeout to use
      */
     public final void setTimeout(@NonNull Duration timeout) {
+        if (TIMEOUT_DEFAULT.equals(timeout)) {
+            // No timeout is specified: the default timeout of the transaction manager applies
+            this.timeout = null;
+            return;
+        }
         //noinspection ConstantConditions
         if (timeout == null || timeout.isNegative()) {
             throw new IllegalArgumentException("Timeout must be a positive integer or TIMEOUT_DEFAULT");

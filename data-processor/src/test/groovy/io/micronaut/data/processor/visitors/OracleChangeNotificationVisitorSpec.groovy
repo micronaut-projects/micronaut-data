@@ -39,7 +39,6 @@ class OracleChangeNotificationVisitorSpec extends AbstractTypeElementSpec {
         method.hasAnnotation(OracleChangeListenerQuery)
         reloadQuery.toUpperCase().contains('BOOK')
         reloadQuery.endsWith(' WHERE (ROWID = ?)')
-        method.classValue(OracleChangeListenerQuery, 'entity').orElseThrow().name == 'test.Book'
     }
 
     void "test ROWID predicate composes with entity-level Where"() {

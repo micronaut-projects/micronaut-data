@@ -16,7 +16,9 @@
 package io.micronaut.data.runtime.operations.internal;
 
 import io.micronaut.core.annotation.Internal;
+import io.micronaut.core.async.propagation.ReactorPropagation;
 import io.micronaut.core.convert.ConversionService;
+import io.micronaut.core.propagation.PropagatedContext;
 import io.micronaut.data.annotation.Relation;
 import io.micronaut.data.event.EntityEventContext;
 import io.micronaut.data.event.EntityEventListener;
@@ -119,33 +121,37 @@ public abstract class AbstractReactiveEntitiesOperations<Ctx extends OperationCo
 
     @Override
     protected boolean triggerPre(Function<EntityEventContext<Object>, Boolean> fn) {
-        entities = entities.map(list -> {
-            for (Data d : list) {
-                if (d.vetoed) {
-                    continue;
+        entities = entities.flatMap(list -> Mono.deferContextual(contextView -> {
+            return ReactorPropagation.findPropagatedContext(contextView).orElse(PropagatedContext.empty()).propagate(() -> {
+                for (Data d : list) {
+                    if (d.vetoed) {
+                        continue;
+                    }
+                    final DefaultEntityEventContext<T> event = new DefaultEntityEventContext<>(persistentEntity, d.entity);
+                    d.vetoed = !fn.apply((EntityEventContext<Object>) event);
+                    d.entity = event.getEntity();
                 }
-                final DefaultEntityEventContext<T> event = new DefaultEntityEventContext<>(persistentEntity, d.entity);
-                d.vetoed = !fn.apply((EntityEventContext<Object>) event);
-                d.entity = event.getEntity();
-            }
-            return list;
-        });
+                return Mono.just(list);
+            });
+        }));
         return false;
     }
 
     @Override
     protected void triggerPost(Consumer<EntityEventContext<Object>> fn) {
-        entities = entities.map(list -> {
-            for (Data d : list) {
-                if (d.vetoed) {
-                    continue;
+        entities = entities.flatMap(list -> Mono.deferContextual(contextView -> {
+            return ReactorPropagation.findPropagatedContext(contextView).orElse(PropagatedContext.empty()).propagate(() -> {
+                for (Data d : list) {
+                    if (d.vetoed) {
+                        continue;
+                    }
+                    final DefaultEntityEventContext<T> event = new DefaultEntityEventContext<>(persistentEntity, d.entity);
+                    fn.accept((EntityEventContext<Object>) event);
+                    d.entity = event.getEntity();
                 }
-                final DefaultEntityEventContext<T> event = new DefaultEntityEventContext<>(persistentEntity, d.entity);
-                fn.accept((EntityEventContext<Object>) event);
-                d.entity = event.getEntity();
-            }
-            return list;
-        });
+                return Mono.just(list);
+            });
+        }));
     }
 
     /**

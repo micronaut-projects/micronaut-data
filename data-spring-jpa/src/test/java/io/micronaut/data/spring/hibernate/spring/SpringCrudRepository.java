@@ -22,6 +22,7 @@ import io.micronaut.data.annotation.Repository;
 import io.micronaut.data.tck.entities.Person;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
+import org.springframework.data.domain.Slice;
 import org.springframework.data.jpa.domain.PredicateSpecification;
 import org.springframework.data.jpa.domain.Specification;
 import org.springframework.data.jpa.repository.JpaSpecificationExecutor;
@@ -41,6 +42,8 @@ public interface SpringCrudRepository extends CrudRepository<Person, Long>, JpaS
     void updatePerson(@Id Long id, String name);
 
     List<Person> list(Pageable pageable);
+
+    Slice<Person> findByAgeGreaterThan(int age, Pageable pageable);
 
     int count(String name);
 

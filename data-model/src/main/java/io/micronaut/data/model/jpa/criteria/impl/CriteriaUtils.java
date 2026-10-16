@@ -27,11 +27,14 @@ import io.micronaut.data.model.jpa.criteria.impl.predicate.ConjunctionPredicate;
 import io.micronaut.data.model.jpa.criteria.impl.predicate.DisjunctionPredicate;
 import io.micronaut.data.model.jpa.criteria.impl.predicate.BinaryPredicate;
 import io.micronaut.data.model.jpa.criteria.impl.predicate.InPredicate;
+import io.micronaut.data.model.jpa.criteria.impl.predicate.PredicateBinaryOp;
 import jakarta.persistence.criteria.Expression;
 import jakarta.persistence.criteria.ParameterExpression;
+import jakarta.persistence.criteria.Predicate;
 import jakarta.persistence.criteria.Subquery;
 import org.jspecify.annotations.Nullable;
 
+import java.util.Collection;
 import java.util.Collections;
 import java.util.LinkedHashSet;
 import java.util.List;
@@ -137,6 +140,40 @@ public final class CriteriaUtils {
             return (IExpression<T>) exp;
         }
         throw new IllegalStateException("Expression is expected to be a property path or a root! Got: " + exp);
+    }
+
+    /**
+     * Normalizes the restriction of a criteria delete or update the same way as the one of a criteria query:
+     * an empty conjunction restricts nothing, an empty disjunction matches nothing and a junction of a single
+     * restriction is replaced by that restriction.
+     *
+     * @param restriction The restriction
+     * @return The normalized restriction or null if there is none
+     * @since 5.3
+     */
+    @Nullable
+    public static Predicate normalizeRestriction(Expression<Boolean> restriction) {
+        if (restriction instanceof ConjunctionPredicate conjunctionPredicate) {
+            Collection<? extends IExpression<Boolean>> predicates = conjunctionPredicate.getPredicates();
+            if (predicates.isEmpty()) {
+                return null;
+            }
+            if (predicates.size() == 1) {
+                return normalizeRestriction(predicates.iterator().next());
+            }
+            return conjunctionPredicate;
+        }
+        if (restriction instanceof DisjunctionPredicate disjunctionPredicate) {
+            Collection<? extends IExpression<Boolean>> predicates = disjunctionPredicate.getPredicates();
+            if (predicates.isEmpty()) {
+                // Empty disjunction should result into unmatchable query
+                return new BinaryPredicate(new LiteralExpression<>(1), new LiteralExpression<>(2), PredicateBinaryOp.EQUALS);
+            }
+            if (predicates.size() == 1) {
+                return normalizeRestriction(predicates.iterator().next());
+            }
+        }
+        return new ConjunctionPredicate(Collections.singleton((IExpression<Boolean>) restriction));
     }
 
     public static IllegalStateException notSupportedOperation() {

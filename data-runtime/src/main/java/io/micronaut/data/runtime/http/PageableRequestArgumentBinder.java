@@ -25,10 +25,12 @@ import io.micronaut.http.HttpParameters;
 import io.micronaut.http.HttpRequest;
 import io.micronaut.http.bind.binders.RequestArgumentBinder;
 import io.micronaut.http.bind.binders.TypedRequestArgumentBinder;
+import org.jspecify.annotations.Nullable;
 
 import jakarta.inject.Singleton;
 import java.util.List;
 import java.util.Locale;
+import java.util.Objects;
 import java.util.Optional;
 import java.util.function.Function;
 
@@ -45,7 +47,7 @@ public class PageableRequestArgumentBinder implements TypedRequestArgumentBinder
     public static final Argument<Pageable> TYPE = Argument.of(Pageable.class);
 
     private final DataConfiguration.PageableConfiguration configuration;
-    private final Function<String, Sort.Order> sortMapper;
+    private final Function<String, Sort.@Nullable Order> sortMapper;
 
     /**
      * Default constructor.
@@ -55,6 +57,10 @@ public class PageableRequestArgumentBinder implements TypedRequestArgumentBinder
         this.configuration = configuration;
         sortMapper = s -> {
             String[] tokens = configuration.getSortDelimiterPattern().split(s);
+            if (tokens.length == 0 || tokens[0].isBlank()) {
+                // No property to sort by, for example "sort=" or "sort=,desc"
+                return null;
+            }
             if (tokens.length == 1) {
                 return new Sort.Order(tokens[0], Sort.Order.Direction.ASC, configuration.isSortIgnoreCase());
             } else {
@@ -91,8 +97,11 @@ public class PageableRequestArgumentBinder implements TypedRequestArgumentBinder
 
             List<Sort.Order> orders = sortParams.stream()
                     .map(sortMapper)
+                    .filter(Objects::nonNull)
                     .toList();
-            sort = Sort.of(orders);
+            if (!orders.isEmpty()) {
+                sort = Sort.of(orders);
+            }
         }
 
         if (size < 1) {

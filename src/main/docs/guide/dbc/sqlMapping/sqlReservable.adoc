@@ -1,7 +1,8 @@
 Micronaut Data JDBC and R2DBC can map Oracle lock-free reservation columns with ann:data.annotation.Reservable[].
 
 Oracle reservable columns are intended for high-concurrency numeric updates where the database tracks reservations without taking row locks for each reservation operation.
-Reservable columns require Oracle Database 23.26.1 or later. Oracle documentation may refer to this capability using the `26` code name.
+Reservable columns are available starting with Oracle Database 23c (widely released as Oracle Database 23ai). While this core database capability is available in any 23ai environment,
+specific advanced framework integrations or toolsets may recommend the updated Oracle 26ai (internally versioned as 23.26.1) runtime baseline.
 Micronaut Data validates only that the configured dialect is Oracle; it does not configure or detect the database version.
 Use ann:data.annotation.Reservable[] only when the target Oracle Database supports reservable columns. Otherwise, Oracle rejects the generated DDL or DML.
 
@@ -56,7 +57,15 @@ This restriction is specific to reservable-only update shapes.
 If an entity has at least one non-reservable updatable property, generated `save(...)` and `update(...)` methods remain supported and Micronaut Data simply omits reservable properties from the generated `SET` clause.
 
 Each reservation method identifies the row with exactly one `@Id` parameter whose type matches the entity identity. For a composite primary key, use the entity's `@EmbeddedId` value object as that parameter; Micronaut Data expands it into all primary-key columns.
-Each operation target must be a numeric ann:data.annotation.Reservable[] scalar property. The delta parameters must have the same names as their reservable properties, and no additional non-ID parameters are allowed. Embedded scalar properties use the flattened property path in the method name and parameter name, for example `reserveDecrementLimitsAvailableBalance(@Id Long id, Long limitsAvailableBalance)`.
+Each operation target must be a numeric ann:data.annotation.Reservable[] scalar property, and each operation requires exactly one numeric delta parameter; no additional non-ID parameters are allowed.
+Like the values of other update methods, a delta parameter is matched to its operation by name, not by position: the parameter must be named after the reservable property, or annotated with `@Parameter` with the property name. Use `@Parameter` to give a delta parameter a different name, for example to make it explicit that it is a delta and not a new value:
+
+[source,java]
+----
+long reserveIncrementAmountAndDecrementBalance(@Id Long id, @Parameter("amount") Long amountIncrement, @Parameter("balance") Long balanceDecrement);
+----
+
+Embedded scalar properties use the flattened property path in the method name and parameter name, for example `reserveDecrementLimitsAvailableBalance(@Id Long id, Long limitsAvailableBalance)`.
 Reservation methods cannot target relationship paths. A scalar reservable property inside an embedded component is supported, but `reserveIncrementAccountBalance(...)` is rejected when `account` is a relationship.
 Generated reservation updates cannot mix reservable and non-reservable assignments and do not support Oracle DML `RETURNING`.
 Criteria API updates of reservable properties are not supported. Use derived reservation methods instead; arbitrary criteria expressions are not validated against Oracle lock-free reservation restrictions.

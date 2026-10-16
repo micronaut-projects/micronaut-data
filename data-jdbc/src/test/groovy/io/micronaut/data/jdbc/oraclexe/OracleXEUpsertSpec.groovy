@@ -26,6 +26,16 @@ import io.micronaut.data.tck.repositories.upsert.AutoPopulatedUpsertRepository
 import io.micronaut.data.tck.repositories.upsert.CustomerProfileRepository
 import io.micronaut.data.tck.repositories.upsert.CustomerProfileUuidRepository
 import io.micronaut.data.tck.repositories.upsert.ProductReviewRepository
+import io.micronaut.data.jdbc.oraclexe.upsert.OracleXEClinicRepository
+import io.micronaut.data.jdbc.oraclexe.upsert.OracleXEClinicServiceOfferingRepository
+import io.micronaut.data.jdbc.oraclexe.upsert.OracleXECompositeClinicRepository
+import io.micronaut.data.jdbc.oraclexe.upsert.OracleXECompositeClinicOfferingRepository
+import io.micronaut.data.jdbc.oraclexe.upsert.OracleXEEmbeddedConflictEntityRepository
+import io.micronaut.data.tck.repositories.upsert.ClinicRepository
+import io.micronaut.data.tck.repositories.upsert.ClinicServiceOfferingRepository
+import io.micronaut.data.tck.repositories.upsert.CompositeClinicRepository
+import io.micronaut.data.tck.repositories.upsert.CompositeClinicOfferingRepository
+import io.micronaut.data.tck.repositories.upsert.EmbeddedConflictEntityRepository
 import io.micronaut.data.tck.repositories.upsert.WarehouseInventoryRepository
 import io.micronaut.data.tck.tests.AbstractUpsertSpec
 
@@ -34,6 +44,31 @@ class OracleXEUpsertSpec extends AbstractUpsertSpec implements OracleTestPropert
     @Override
     ProductReviewRepository getProductReviewRepository() {
         return context.getBean(OracleXEProductReviewRepository)
+    }
+
+    @Override
+    ClinicRepository getClinicRepository() {
+        return context.getBean(OracleXEClinicRepository)
+    }
+
+    @Override
+    ClinicServiceOfferingRepository getClinicServiceOfferingRepository() {
+        return context.getBean(OracleXEClinicServiceOfferingRepository)
+    }
+
+    @Override
+    CompositeClinicRepository getCompositeClinicRepository() {
+        return context.getBean(OracleXECompositeClinicRepository)
+    }
+
+    @Override
+    CompositeClinicOfferingRepository getCompositeClinicOfferingRepository() {
+        return context.getBean(OracleXECompositeClinicOfferingRepository)
+    }
+
+    @Override
+    EmbeddedConflictEntityRepository getEmbeddedConflictEntityRepository() {
+        return context.getBean(OracleXEEmbeddedConflictEntityRepository)
     }
 
     @Override

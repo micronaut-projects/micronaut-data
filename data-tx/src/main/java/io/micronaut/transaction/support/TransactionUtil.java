@@ -68,7 +68,12 @@ public final class TransactionUtil {
         DefaultTransactionDefinition definition = new DefaultTransactionDefinition();
         definition.setName(name);
         definition.setReadOnly(annotation.isTrue("readOnly"));
-        annotation.intValue("timeout").ifPresent(timeout -> definition.setTimeout(Duration.ofSeconds(timeout)));
+        annotation.intValue("timeout").ifPresent(timeout -> {
+            // The default value of the annotation member (-1) means the default timeout of the transaction manager
+            if (timeout != -1) {
+                definition.setTimeout(Duration.ofSeconds(timeout));
+            }
+        });
         final Class[] rollbackFor = annotation.classValues("rollbackFor");
         //noinspection unchecked
         definition.setRollbackOn(Arrays.asList(rollbackFor));

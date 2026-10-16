@@ -58,7 +58,7 @@ record OracleTableIdentifier(@Nullable String schema, String table, String sqlNa
         final OracleTableIdentifier changed;
         try {
             changed = parse(changedTableName);
-        } catch (IllegalArgumentException e) {
+        } catch (IllegalArgumentException _) {
             return false;
         }
         return table.equals(changed.table) && (schema == null || schema.equals(changed.schema));

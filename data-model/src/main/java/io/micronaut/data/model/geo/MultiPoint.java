@@ -20,6 +20,8 @@ import io.micronaut.data.annotation.TypeDef;
 import io.micronaut.data.model.DataType;
 import io.micronaut.data.model.runtime.convert.GeometryJsonConverter;
 
+import java.util.ArrayList;
+import java.util.Collections;
 import java.util.List;
 import java.util.Objects;
 
@@ -29,6 +31,8 @@ import java.util.Objects;
  * <p>This type follows the GeoJSON MultiPoint model and provides helpers for converting
  * between point instances and their coordinate representation.
  *
+ * <p>The component list is copied during construction and exposed as an unmodifiable list.
+ *
  * @param points the points contained in this geometry
  * @since 5.0
  */
@@ -36,6 +40,9 @@ import java.util.Objects;
 public record MultiPoint(List<Point> points) implements Geometry {
 
     public MultiPoint {
+        if (points != null) {
+            points = Collections.unmodifiableList(new ArrayList<>(points));
+        }
         if (CollectionUtils.isEmpty(points)) {
             throw new IllegalArgumentException("MultiPoint requires at least one Point");
         }

@@ -17,6 +17,8 @@ package io.micronaut.data.jdbc.h2.assignedid
 
 import io.micronaut.context.ApplicationContext
 import io.micronaut.data.annotation.Id
+import io.micronaut.data.annotation.Index
+import io.micronaut.data.annotation.Indexes
 import io.micronaut.data.annotation.MappedEntity
 import io.micronaut.data.annotation.Version
 import io.micronaut.data.exceptions.DataAccessException
@@ -24,9 +26,13 @@ import io.micronaut.data.jdbc.annotation.JdbcRepository
 import io.micronaut.data.jdbc.h2.H2TestPropertyProvider
 import io.micronaut.data.model.query.builder.sql.Dialect
 import io.micronaut.data.repository.CrudRepository
+import io.micronaut.data.repository.async.AsyncCrudRepository
+import io.micronaut.data.repository.reactive.ReactorCrudRepository
 import spock.lang.AutoCleanup
 import spock.lang.Shared
 import spock.lang.Specification
+
+import java.util.concurrent.CompletionException
 
 class SaveAssignedIdFallbackToUpdateSpec extends Specification implements H2TestPropertyProvider {
 
@@ -34,6 +40,9 @@ class SaveAssignedIdFallbackToUpdateSpec extends Specification implements H2Test
 
     @Shared SaveAssignedIdFallbackBookRepository repository = ctx.getBean(SaveAssignedIdFallbackBookRepository)
     @Shared SaveAssignedIdFallbackVersionedBookRepository versionedRepository = ctx.getBean(SaveAssignedIdFallbackVersionedBookRepository)
+    @Shared SaveAssignedIdFallbackUniqueBookRepository uniqueRepository = ctx.getBean(SaveAssignedIdFallbackUniqueBookRepository)
+    @Shared SaveAssignedIdFallbackUniqueBookAsyncRepository uniqueAsyncRepository = ctx.getBean(SaveAssignedIdFallbackUniqueBookAsyncRepository)
+    @Shared SaveAssignedIdFallbackUniqueBookReactiveRepository uniqueReactiveRepository = ctx.getBean(SaveAssignedIdFallbackUniqueBookReactiveRepository)
 
     @Override
     List<String> packages() {
@@ -87,6 +96,79 @@ class SaveAssignedIdFallbackToUpdateSpec extends Specification implements H2Test
         thrown(DataAccessException)
         versionedRepository.findById(1L).get().title == 'Versioned first'
     }
+
+    void "save reports the insert failure when another unique constraint is violated"() {
+        given:
+        uniqueRepository.save(new SaveAssignedIdFallbackUniqueBook(id: 1, isbn: 'X', title: 'First'))
+
+        when: "the id is new, so there is nothing to update"
+        uniqueRepository.save(new SaveAssignedIdFallbackUniqueBook(id: 2, isbn: 'X', title: 'Second'))
+
+        then:
+        thrown(DataAccessException)
+        !uniqueRepository.findById(2L).present
+        uniqueRepository.findById(1L).get().title == 'First'
+
+        when:
+        uniqueAsyncRepository.save(new SaveAssignedIdFallbackUniqueBook(id: 3, isbn: 'X', title: 'Third')).toCompletableFuture().join()
+
+        then:
+        def e = thrown(CompletionException)
+        e.cause instanceof DataAccessException
+        !uniqueRepository.findById(3L).present
+
+        when:
+        uniqueReactiveRepository.save(new SaveAssignedIdFallbackUniqueBook(id: 4, isbn: 'X', title: 'Fourth')).block()
+
+        then:
+        thrown(DataAccessException)
+        !uniqueRepository.findById(4L).present
+
+        cleanup:
+        uniqueRepository.deleteAll()
+    }
+
+    void "save still falls back to update when the unique ISBN belongs to the same row"() {
+        given:
+        uniqueRepository.save(new SaveAssignedIdFallbackUniqueBook(id: 1, isbn: 'X', title: 'First'))
+
+        when:
+        uniqueRepository.save(new SaveAssignedIdFallbackUniqueBook(id: 1, isbn: 'X', title: 'Second'))
+        uniqueAsyncRepository.save(new SaveAssignedIdFallbackUniqueBook(id: 1, isbn: 'X', title: 'Third')).toCompletableFuture().join()
+
+        then:
+        uniqueRepository.findById(1L).get().title == 'Third'
+
+        when:
+        uniqueReactiveRepository.save(new SaveAssignedIdFallbackUniqueBook(id: 1, isbn: 'X', title: 'Fourth')).block()
+
+        then:
+        uniqueRepository.findById(1L).get().title == 'Fourth'
+
+        cleanup:
+        uniqueRepository.deleteAll()
+    }
+}
+
+@MappedEntity("save_assigned_id_fallback_unique_book")
+@Indexes(@Index(columns = ["isbn"], unique = true))
+class SaveAssignedIdFallbackUniqueBook {
+    @Id
+    Long id
+    String isbn
+    String title
+}
+
+@JdbcRepository(dialect = Dialect.H2)
+interface SaveAssignedIdFallbackUniqueBookRepository extends CrudRepository<SaveAssignedIdFallbackUniqueBook, Long> {
+}
+
+@JdbcRepository(dialect = Dialect.H2)
+interface SaveAssignedIdFallbackUniqueBookAsyncRepository extends AsyncCrudRepository<SaveAssignedIdFallbackUniqueBook, Long> {
+}
+
+@JdbcRepository(dialect = Dialect.H2)
+interface SaveAssignedIdFallbackUniqueBookReactiveRepository extends ReactorCrudRepository<SaveAssignedIdFallbackUniqueBook, Long> {
 }
 
 @MappedEntity("save_assigned_id_fallback_book")

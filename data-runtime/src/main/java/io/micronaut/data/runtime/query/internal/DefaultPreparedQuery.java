@@ -25,6 +25,7 @@ import io.micronaut.core.convert.ConversionService;
 import io.micronaut.core.convert.value.ConvertibleValues;
 import io.micronaut.core.type.Argument;
 import io.micronaut.core.type.MutableArgumentValue;
+import io.micronaut.core.type.ReturnType;
 import io.micronaut.data.annotation.TypeRole;
 import io.micronaut.data.intercept.annotation.DataMethod;
 import io.micronaut.data.intercept.annotation.DataMethodQuery;
@@ -41,6 +42,7 @@ import java.lang.annotation.Annotation;
 import java.util.List;
 import java.util.Map;
 import java.util.Optional;
+import java.util.concurrent.Future;
 import java.util.stream.Stream;
 
 /**
@@ -98,6 +100,7 @@ public final class DefaultPreparedQuery<E, RT> extends DefaultStoredDataOperatio
 
     /**
      * Check the return role from the method context.
+     * For reactive, async and suspended methods the type emitted by the wrapper is checked.
      *
      * @param role              The role
      * @param type              The type
@@ -111,8 +114,19 @@ public final class DefaultPreparedQuery<E, RT> extends DefaultStoredDataOperatio
                                               @NonNull ConversionService conversionService) {
         return methodContext.stringValue(DataMethod.NAME, DataMethodQuery.META_MEMBER_RETURN_TYPE_ROLE)
             .filter(typeRole -> typeRole.equals(role))
-            .map(ignore -> conversionService.canConvert(methodContext.getReturnType().getType(), type))
+            .map(ignore -> conversionService.canConvert(getResultType(methodContext.getReturnType()), type))
             .orElse(false);
+    }
+
+    private static Class<?> getResultType(ReturnType<?> returnType) {
+        if (returnType.isSuspended()) {
+            return returnType.asArgument().getType();
+        }
+        Class<?> type = returnType.getType();
+        if (returnType.isReactive() || returnType.isAsync() || Future.class.isAssignableFrom(type)) {
+            return returnType.getFirstTypeVariable().<Class<?>>map(Argument::getType).orElse(type);
+        }
+        return type;
     }
 
     /**

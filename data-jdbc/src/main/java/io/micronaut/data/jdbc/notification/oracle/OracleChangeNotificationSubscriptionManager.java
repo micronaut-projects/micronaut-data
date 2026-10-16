@@ -84,22 +84,34 @@ final class OracleChangeNotificationSubscriptionManager {
             return;
         }
         LOG.trace("Starting [{}] DCN subscriptions for datasource [{}]", subscriptions.size(), dataSourceName);
+        boolean startupCompleted = false;
         try {
             for (OracleChangeNotificationSubscription subscription : subscriptions) {
-                try {
-                    subscription.start();
-                } catch (RuntimeException e) {
-                    throw new DataAccessException("Unable to start DCN subscription for datasource ["
-                        + dataSourceName + "] and listener method [" + subscription.getMethodDescription() + "]", e);
-                }
+                startSubscription(subscription);
             }
             LOG.trace("Started [{}] DCN subscriptions for datasource [{}]", subscriptions.size(), dataSourceName);
-        } catch (RuntimeException | Error registrationFailure) {
-            taskTracker.shutdownGracefully();
-            for (int i = subscriptions.size() - 1; i >= 0; i--) {
-                subscriptions.get(i).stop();
+            startupCompleted = true;
+        } finally {
+            if (!startupCompleted) {
+                taskTracker.shutdownGracefully();
+                for (int i = subscriptions.size() - 1; i >= 0; i--) {
+                    subscriptions.get(i).stop();
+                }
             }
-            throw registrationFailure;
+        }
+    }
+
+    /**
+     * Starts a subscription and adds datasource and listener context to startup failures.
+     *
+     * @param subscription the subscription to start
+     */
+    private void startSubscription(OracleChangeNotificationSubscription subscription) {
+        try {
+            subscription.start();
+        } catch (RuntimeException e) {
+            throw new DataAccessException("Unable to start DCN subscription for datasource ["
+                + dataSourceName + "] and listener method [" + subscription.getMethodDescription() + "]", e);
         }
     }
 
@@ -111,7 +123,7 @@ final class OracleChangeNotificationSubscriptionManager {
      *
      * @return completion stage for cleanup and work already running
      */
-    synchronized CompletionStage<?> stop() {
+    synchronized CompletionStage<Void> stop() {
         if (shutdownStage != null) {
             return shutdownStage;
         }

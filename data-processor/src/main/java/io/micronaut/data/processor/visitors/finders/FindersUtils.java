@@ -779,7 +779,8 @@ public interface FindersUtils {
         if (matches && !methodMatchContext.hasParameterInRole(TypeRole.PAGEABLE)) {
             methodMatchContext.fail("Method must accept an argument that is a Pageable");
         }
-        return isContainer(typeArgument, Slice.class);
+        // Types registered in the slice role (e.g. Spring Data's Slice or custom type roles) aren't Micronaut's Slice
+        return matches || isContainer(typeArgument, Slice.class);
     }
 
     static boolean isContainer(@Nullable ClassElement typeArgument, Class<?> containerType) {

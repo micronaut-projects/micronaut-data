@@ -111,8 +111,15 @@ The `where` value is appended as Oracle SQL. Micronaut Data verifies at compilat
 used only when QRCN is enabled; Oracle Database determines whether the completed query is eligible for registration when the application starts.
 
 QRCN queries may depend on other tables, including tables in another schema when the datasource user has the required privileges.
-If a notification reports a change only to a dependent table, Micronaut Data cannot reload it as the listener’s entity type.
+If a notification reports a change only to a table identified as a dependent table, Micronaut Data cannot reload it as the listener’s entity type.
 The listener therefore receives an `INVALIDATE` event instead of a row-level event.
+
+WARNING: When the entity does not declare an explicit schema, notification tables are matched by table name alone.
+Micronaut Data does not resolve the entity table's schema from the database. A notification for a same-named table
+in another schema can therefore be processed as a change to the entity table. For example, a QRCN query rooted in
+`APP.BOOK` that depends on `OTHER.BOOK` can deliver `DELETE` instead of `INVALIDATE` for a deletion from `OTHER.BOOK`.
+Declare the entity's schema explicitly, for example with `@MappedEntity(value = "BOOK", schema = "APP")`,
+so notification matching compares both schema and table name.
 
 == Oracle Registration Properties
 

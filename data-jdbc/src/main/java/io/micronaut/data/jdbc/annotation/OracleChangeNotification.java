@@ -29,10 +29,15 @@ import java.lang.annotation.Target;
  * <p>For an Oracle datasource, every change-listener method must use this annotation, including
  * listeners that rely on its defaults. The annotation enables compile-time generation of a
  * {@code ROWID} reload query. Registrations always request row identifiers so inserts and updates
- * can be reloaded.
- * Oracle Database may report a full-table invalidation when row-level details are not
- * available, or report a dependent table for Query Result Change Notification. Either condition is
- * delivered as {@link io.micronaut.data.jdbc.notification.ChangeOperation#INVALIDATE}.</p>
+ * can be reloaded. Oracle Database may report a full-table invalidation when row-level details are not
+ * available, or report a table identified as a dependent table for Query Result Change Notification.
+ * Either condition is delivered as {@link io.micronaut.data.jdbc.notification.ChangeOperation#INVALIDATE}.</p>
+ *
+ * <p>Notification tables are matched against the entity's mapped table name and, when explicitly
+ * configured, its schema. Without an explicit schema, a notification for a same-named table in
+ * another schema can be processed as an entity row change instead of an invalidation. Micronaut Data
+ * does not resolve the entity table's schema from the database. Set
+ * {@link io.micronaut.data.annotation.MappedEntity#schema()} to distinguish same-named tables across schemas.</p>
  *
  * <p>Registrations do not expire by default. A positive {@code NTF_TIMEOUT} property makes Oracle
  * Database expire the registration after the specified number of seconds; Micronaut Data does not

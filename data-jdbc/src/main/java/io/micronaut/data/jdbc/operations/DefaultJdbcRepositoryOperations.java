@@ -39,6 +39,7 @@ import io.micronaut.data.exceptions.DataAccessException;
 import io.micronaut.data.exceptions.DataIntegrityViolationException;
 import io.micronaut.data.exceptions.EntityExistsException;
 import io.micronaut.data.exceptions.NonUniqueResultException;
+import io.micronaut.data.exceptions.OptimisticLockException;
 import io.micronaut.data.intercept.annotation.DataMethod;
 import io.micronaut.data.jdbc.config.DataJdbcConfiguration;
 import io.micronaut.data.jdbc.convert.JdbcConversionContext;
@@ -131,7 +132,6 @@ import java.sql.SQLException;
 import java.sql.Statement;
 import java.sql.Types;
 import java.util.ArrayList;
-import java.util.Arrays;
 import java.util.Collection;
 import java.util.EnumMap;
 import java.util.Iterator;
@@ -424,10 +424,8 @@ public final class DefaultJdbcRepositoryOperations extends AbstractSqlRepository
     }
 
     private <T, R> List<R> findAll(Connection connection, SqlPreparedQuery<T, R> preparedQuery, boolean applyPageable) {
-        if (preparedQuery.getDialect() == Dialect.ORACLE && (
-            preparedQuery.getOperationType() == StoredQuery.OperationType.INSERT_RETURNING ||
-            preparedQuery.getOperationType() == StoredQuery.OperationType.UPDATE_RETURNING ||
-            preparedQuery.getOperationType() == StoredQuery.OperationType.DELETE_RETURNING)) {
+        boolean returning = isReturningOperation(preparedQuery);
+        if (preparedQuery.getDialect() == Dialect.ORACLE && returning) {
             preparedQuery.prepare(null);
             try (CallableStatement cs = connection.prepareCall(preparedQuery.getQuery())) {
                 JdbcParameterBinder parameterBinder = new JdbcParameterBinder(connection, cs, preparedQuery);
@@ -466,12 +464,20 @@ public final class DefaultJdbcRepositoryOperations extends AbstractSqlRepository
                 ).map(cs, preparedQuery.getResultType()));
                 return result;
             } catch (SQLException e) {
-                throw new DataAccessException("Error executing Oracle SQL RETURNING: " + e.getMessage(), e);
+                throw sqlExceptionToDataAccessException(e, preparedQuery.getDialect(),
+                    sqlException -> new DataAccessException("Error executing Oracle SQL RETURNING: " + sqlException.getMessage(), sqlException));
             }
         }
         try (PreparedStatement ps = prepareStatement(connection::prepareStatement, preparedQuery, !applyPageable, false)) {
             preparedQuery.bindParameters(new JdbcParameterBinder(connection, ps, preparedQuery));
             return findAll(preparedQuery, ps);
+        } catch (SQLException e) {
+            if (returning) {
+                // A RETURNING query is a modification: classify its constraint violations like the entity operations
+                throw sqlExceptionToDataAccessException(e, preparedQuery.getDialect(),
+                    sqlException -> new DataAccessException("Error executing SQL Query: " + preparedQuery.getQuery() + " " + sqlException.getMessage(), sqlException));
+            }
+            throw new DataAccessException("Error executing SQL Query: " + preparedQuery.getQuery() + " " + e.getMessage(), e);
         } catch (Throwable e) {
             throw new DataAccessException("Error executing SQL Query: " + preparedQuery.getQuery() + " " + e.getMessage(), e);
         }
@@ -539,28 +545,35 @@ public final class DefaultJdbcRepositoryOperations extends AbstractSqlRepository
         return findAll(preparedQuery).stream();
     }
 
+    // Errors are caught only to close the JDBC resources, and are always rethrown
+    @SuppressWarnings({"java:S1181"})
     private <T, R> Stream<R> findStream(@NonNull PreparedQuery<T, R> pq, Connection connection, boolean closeConnection) {
         SqlPreparedQuery<T, R> preparedQuery = getSqlPreparedQuery(pq);
         RuntimePersistentEntity<T> persistentEntity = preparedQuery.getPersistentEntity();
         Class<R> resultType = preparedQuery.getResultType();
         AtomicBoolean finished = new AtomicBoolean();
 
-        PreparedStatement ps;
+        PreparedStatement preparing = null;
         try {
-            ps = prepareStatement(connection::prepareStatement, preparedQuery, false, false);
+            preparing = prepareStatement(connection::prepareStatement, preparedQuery, false, false);
             // Apply fetch size hint if present
             int fetchSize = preparedQuery.getAnnotationMetadata().intValue(Fetch.class).orElse(this.defaultFetchSize);
             if (fetchSize > 0) {
                 try {
-                    ps.setFetchSize(fetchSize);
+                    preparing.setFetchSize(fetchSize);
                 } catch (SQLException ignored) {
                     // driver may not support fetchSize; ignore
                 }
             }
-            preparedQuery.bindParameters(new JdbcParameterBinder(connection, ps, preparedQuery));
+            preparedQuery.bindParameters(new JdbcParameterBinder(connection, preparing, preparedQuery));
         } catch (Exception e) {
-            throw new DataAccessException("SQL Error preparing Query: " + e.getMessage(), e);
+            // No stream is returned, so the caller can't close the statement
+            throw closeAfterFailure(new DataAccessException("SQL Error preparing Query: " + e.getMessage(), e),
+                connection, preparing, null, finished, closeConnection);
+        } catch (Error e) {
+            throw closeAfterFailure(e, connection, preparing, null, finished, closeConnection);
         }
+        PreparedStatement ps = preparing;
 
         ResultSet openedRs = null;
         ResultSet rs;
@@ -574,16 +587,14 @@ public final class DefaultJdbcRepositoryOperations extends AbstractSqlRepository
                 boolean onlySingleEndedJoins = isOnlySingleEndedJoins(persistentEntity, joinFetchPaths);
                 // Cannot stream ResultSet for "many" joined query
                 if (!onlySingleEndedJoins) {
-                    try {
-                        SqlResultEntityTypeMapper.PushingMapper<ResultSet, List<R>> manyMapper = entityTypeMapper.readManyMapper();
-                        while (rs.next()) {
-                            manyMapper.processRow(rs);
-                        }
-                        List<R> result = manyMapper.getResult();
-                        return result == null ? Stream.of() : result.stream();
-                    } finally {
-                        closeResultSet(connection, ps, rs, finished, closeConnection);
+                    SqlResultEntityTypeMapper.PushingMapper<ResultSet, List<R>> manyMapper = entityTypeMapper.readManyMapper();
+                    while (rs.next()) {
+                        manyMapper.processRow(rs);
                     }
+                    List<R> result = manyMapper.getResult();
+                    // A mapping failure is handled below, so that a failure to close doesn't replace it
+                    closeResultSet(connection, ps, rs, finished, closeConnection);
+                    return result == null ? Stream.of() : result.stream();
                 }
             }
 
@@ -594,43 +605,96 @@ public final class DefaultJdbcRepositoryOperations extends AbstractSqlRepository
                     if (finished.get()) {
                         return false;
                     }
-                    boolean hasNext = resultMapper.hasNext(rs);
-                    if (hasNext) {
-                        R o = resultMapper.map(rs, resultType);
+                    R o;
+                    try {
+                        if (!resultMapper.hasNext(rs)) {
+                            closeResultSet(connection, ps, rs, finished, closeConnection);
+                            return false;
+                        }
+                        o = resultMapper.map(rs, resultType);
                         if (sqlMappingConsumer != null) {
                             sqlMappingConsumer.accept(o, newMappingContext(rs));
                         }
-                        action.accept(o);
-                    } else {
-                        closeResultSet(connection, ps, rs, finished, closeConnection);
+                    } catch (RuntimeException e) {
+                        // The caller might not close the stream after a failure
+                        throw closeAfterFailure(e, connection, ps, rs, finished, closeConnection);
+                    } catch (Error e) {
+                        throw closeAfterFailure(e, connection, ps, rs, finished, closeConnection);
                     }
-                    return hasNext;
+                    action.accept(o);
+                    return true;
                 }
             };
             return StreamSupport.stream(spliterator, false)
                 .onClose(() -> closeResultSet(connection, ps, rs, finished, closeConnection));
         } catch (Exception e) {
-            closeResultSet(connection, ps, openedRs, finished, closeConnection);
-            throw new DataAccessException("SQL Error executing Query: " + e.getMessage(), e);
+            throw closeAfterFailure(new DataAccessException("SQL Error executing Query: " + e.getMessage(), e),
+                connection, ps, openedRs, finished, closeConnection);
+        } catch (Error e) {
+            // No stream is returned, so the caller can't close the resources
+            throw closeAfterFailure(e, connection, ps, openedRs, finished, closeConnection);
         }
     }
 
     private void closeResultSet(Connection connection, @Nullable PreparedStatement ps, @Nullable ResultSet rs, AtomicBoolean finished, boolean closeConnection) {
-        if (finished.compareAndSet(false, true)) {
+        SQLException closeFailure = closeResources(connection, ps, rs, finished, closeConnection);
+        if (closeFailure != null) {
+            throw new DataAccessException("Error closing JDBC result stream: " + closeFailure.getMessage(), closeFailure);
+        }
+    }
+
+    private <X extends Throwable> X closeAfterFailure(X failure, Connection connection, @Nullable PreparedStatement ps,
+                                                      @Nullable ResultSet rs, AtomicBoolean finished, boolean closeConnection) {
+        SQLException closeFailure = closeResources(connection, ps, rs, finished, closeConnection);
+        if (closeFailure != null) {
+            failure.addSuppressed(closeFailure);
+        }
+        return failure;
+    }
+
+    /**
+     * Closes the result set, the statement and, if owned, the connection. Each one is closed even if closing
+     * an earlier one fails.
+     *
+     * @return The first failure, with any later ones suppressed, or null
+     */
+    @Nullable
+    private SQLException closeResources(Connection connection, @Nullable PreparedStatement ps, @Nullable ResultSet rs,
+                                        AtomicBoolean finished, boolean closeConnection) {
+        if (!finished.compareAndSet(false, true)) {
+            return null;
+        }
+        SQLException failure = null;
+        if (rs != null) {
             try {
-                if (rs != null) {
-                    rs.close();
-                }
-                if (ps != null) {
-                    ps.close();
-                }
-                if (closeConnection) {
-                    connection.close();
-                }
+                rs.close();
             } catch (SQLException e) {
-                throw new DataAccessException("Error closing JDBC result stream: " + e.getMessage(), e);
+                failure = e;
             }
         }
+        if (ps != null) {
+            try {
+                ps.close();
+            } catch (SQLException e) {
+                failure = addFailure(failure, e);
+            }
+        }
+        if (closeConnection) {
+            try {
+                connection.close();
+            } catch (SQLException e) {
+                failure = addFailure(failure, e);
+            }
+        }
+        return failure;
+    }
+
+    private static SQLException addFailure(@Nullable SQLException failure, SQLException e) {
+        if (failure == null) {
+            return e;
+        }
+        failure.addSuppressed(e);
+        return failure;
     }
 
     @NonNull
@@ -1041,7 +1105,8 @@ public final class DefaultJdbcRepositoryOperations extends AbstractSqlRepository
             getEntity(type),
             columnNameResultSetReader,
             jsonMapper != null ? () -> jsonMapper : null,
-            conversionService).map(resultSet, type);
+            conversionService,
+            getConversionContextFactory()).map(resultSet, type);
     }
 
     @NonNull
@@ -1060,7 +1125,7 @@ public final class DefaultJdbcRepositoryOperations extends AbstractSqlRepository
         ArgumentUtils.requireNonNull("resultSet", resultSet);
         ArgumentUtils.requireNonNull("rootEntity", rootEntity);
         TypeMapper<ResultSet, T> mapper = new SqlResultEntityTypeMapper<>(prefix, getEntity(rootEntity), columnNameResultSetReader,
-            jsonMapper != null ? () -> jsonMapper : null, conversionService);
+            jsonMapper != null ? () -> jsonMapper : null, conversionService, getConversionContextFactory());
         Iterable<T> iterable = () -> new Iterator<>() {
             boolean fetched = false;
             boolean end = false;
@@ -1141,7 +1206,8 @@ public final class DefaultJdbcRepositoryOperations extends AbstractSqlRepository
                         entity,
                         columnNameResultSetReader,
                         jsonMapper != null ? () -> jsonMapper : null,
-                        conversionService);
+                        conversionService,
+                        getConversionContextFactory());
                 return mapper.map(rs, type);
             }
 
@@ -1181,6 +1247,13 @@ public final class DefaultJdbcRepositoryOperations extends AbstractSqlRepository
             return Objects.requireNonNull(columnNameResultSetReader.readDynamic(generatedKeysResultSet, identity.getPersistedName(), identity.getDataType()));
         }
         return Objects.requireNonNull(columnIndexResultSetReader.readDynamic(generatedKeysResultSet, 1, identity.getDataType()));
+    }
+
+    private static boolean isReturningOperation(SqlStoredQuery<?, ?> storedQuery) {
+        StoredQuery.OperationType operationType = storedQuery.getOperationType();
+        return operationType == StoredQuery.OperationType.INSERT_RETURNING
+            || operationType == StoredQuery.OperationType.UPDATE_RETURNING
+            || operationType == StoredQuery.OperationType.DELETE_RETURNING;
     }
 
     private boolean isUpsertOperation(SqlStoredQuery<?, ?> storedQuery) {
@@ -1642,7 +1715,8 @@ public final class DefaultJdbcRepositoryOperations extends AbstractSqlRepository
                     entity = DefaultJdbcRepositoryOperations.this.triggerPostLoad(entity, persistentEntity, ctx.annotationMetadata);
                     return;
                 } catch (SQLException e) {
-                    throw new DataAccessException("Error executing Oracle SQL RETURNING: " + e.getMessage(), e);
+                    throw sqlExceptionToDataAccessException(e, ctx.dialect,
+                        sqlException -> new DataAccessException("Error executing Oracle SQL RETURNING: " + sqlException.getMessage(), sqlException));
                 }
             }
             // Default path (e.g. Postgres) uses PreparedStatement and maps a result set
@@ -1655,7 +1729,8 @@ public final class DefaultJdbcRepositoryOperations extends AbstractSqlRepository
                 rowsUpdated = result.size();
                 entity = result.iterator().next();
             } catch (SQLException e) {
-                throw new DataAccessException("Error executing SQL Query: " + e.getMessage(), e);
+                throw sqlExceptionToDataAccessException(e, ctx.dialect,
+                    sqlException -> new DataAccessException("Error executing SQL Query: " + sqlException.getMessage(), sqlException));
             }
         }
 
@@ -1775,7 +1850,24 @@ public final class DefaultJdbcRepositoryOperations extends AbstractSqlRepository
             }
             try (PreparedStatement ps = prepare(ctx.connection)) {
                 setParameters(ps, storedQuery);
-                rowsUpdated = Arrays.stream(ps.executeBatch()).sum();
+                int[] counts = ps.executeBatch();
+                boolean unknownCount = false;
+                rowsUpdated = 0;
+                for (int count : counts) {
+                    if (count == Statement.EXECUTE_FAILED) {
+                        throw new DataAccessException("Error executing batch SQL: the driver reported a failed statement");
+                    }
+                    if (count == Statement.SUCCESS_NO_INFO) {
+                        // The statement succeeded, but the driver doesn't say how many rows it affected
+                        unknownCount = true;
+                        rowsUpdated++;
+                    } else {
+                        rowsUpdated += count;
+                    }
+                }
+                if (unknownCount && storedQuery.isOptimisticLock()) {
+                    throw new OptimisticLockException("Cannot verify the affected row count of the batch: the JDBC driver didn't report the number of updated rows (Statement.SUCCESS_NO_INFO)");
+                }
                 if (shouldReadGeneratedId(storedQuery, readGeneratedKeys)) {
                     RuntimePersistentProperty<T> identity = persistentEntity.getIdentity();
                     List<Object> ids = new ArrayList<>();
@@ -1784,6 +1876,11 @@ public final class DefaultJdbcRepositoryOperations extends AbstractSqlRepository
                         while (generatedKeys.next()) {
                             ids.add(getGeneratedIdentity(generatedKeys, identity, dialect));
                         }
+                    }
+                    // The ids are matched to the entities by position, which a surplus id makes unreliable
+                    long notVetoed = entities.stream().filter(d -> !d.vetoed).count();
+                    if (ids.size() > notVetoed) {
+                        throw new DataAccessException("Expected " + notVetoed + " generated IDs, one for each inserted entity, but the database returned " + ids.size());
                     }
                     Iterator<Object> iterator = ids.iterator();
                     for (Data d : entities) {

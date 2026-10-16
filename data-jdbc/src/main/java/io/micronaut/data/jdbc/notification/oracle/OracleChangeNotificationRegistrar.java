@@ -87,7 +87,7 @@ final class OracleChangeNotificationRegistrar {
                 registration.addFailureListener(failure -> subscription.handleRegistrationUnavailable(registration.getRegId(), failure));
                 try (Statement statement = connection.createStatement()) {
                     statement.unwrap(OracleStatement.class).setDatabaseChangeRegistration(registration);
-                    try (ResultSet ignored = statement.executeQuery(definition.registrationQuery())) {
+                    try (ResultSet _ = statement.executeQuery(definition.registrationQuery())) {
                         // Executing the statement associates its query and tables with the registration.
                         LOG.trace("Associated DCN registration [{}] for datasource [{}] with listener method [{}]",
                             registration.getRegId(), dataSourceName, definition.method().getDescription(true));
