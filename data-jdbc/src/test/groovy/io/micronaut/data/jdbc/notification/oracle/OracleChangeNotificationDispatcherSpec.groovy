@@ -846,7 +846,7 @@ class OracleChangeNotificationDispatcherSpec extends Specification {
         def event = Mock(DatabaseChangeEvent)
         event.eventType >> eventType
         event.regId >> 41L
-        event.queryChangeDescription >> (eventType == DatabaseChangeEvent.EventType.QUERYCHANGE ? [query] as QueryChangeDescription[] : null)
+        event.queryChangeDescription >> (eventType == DatabaseChangeEvent.EventType.QUERYCHANGE ? ([query] as QueryChangeDescription[]) : null)
 
         when:
         dispatcher.onDatabaseChangeNotification(event)
@@ -1261,7 +1261,6 @@ class OracleChangeNotificationDispatcherSpec extends Specification {
 
     private OracleChangeNotificationDispatcher dispatcher(OracleChangeListenerDefinition definition,
                                                             BeanContext beanContext) {
-        Executor executor = { Runnable command -> command.run() } as Executor
         LongConsumer registrationPurgedHandler = { long ignored -> } as LongConsumer
         BiConsumer<Long, DatabaseChangeEvent.AdditionalEventType> deregistrationHandler =
             { Long ignored, DatabaseChangeEvent.AdditionalEventType ignoredType -> } as BiConsumer

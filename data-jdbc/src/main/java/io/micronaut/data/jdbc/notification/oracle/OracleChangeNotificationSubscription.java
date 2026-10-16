@@ -396,7 +396,7 @@ final class OracleChangeNotificationSubscription {
         for (int retry = 1; retry < retryCount && retryDelayMultiplier > 1 && delay.compareTo(maxRetryDelay) < 0; retry++) {
             try {
                 delay = delay.multipliedBy(retryDelayMultiplier);
-            } catch (ArithmeticException e) {
+            } catch (ArithmeticException _) {
                 return maxRetryDelay;
             }
             if (delay.compareTo(maxRetryDelay) >= 0) {

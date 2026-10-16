@@ -146,7 +146,7 @@ final class OracleChangeNotificationOptionsValidator {
                 throw invalidRegistrationProperty(definition, dataSourceName, EFFECTIVE_OPTION_PREFIX + name + " [" + effective
                     + "] conflicts with listener setting [" + requested + "]");
             }
-        } catch (NumberFormatException e) {
+        } catch (NumberFormatException _) {
             throw invalidRegistrationProperty(definition, dataSourceName, EFFECTIVE_OPTION_PREFIX + name + " [" + effective + "] is not an integer");
         }
     }

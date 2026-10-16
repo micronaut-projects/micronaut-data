@@ -72,7 +72,7 @@ public final class OracleChangeNotificationOptions {
                 if (Integer.parseInt(value) < 0) {
                     return name + " must be a non-negative integer number of seconds";
                 }
-            } catch (NumberFormatException e) {
+            } catch (NumberFormatException _) {
                 return name + " must be a non-negative integer number of seconds";
             }
         }
