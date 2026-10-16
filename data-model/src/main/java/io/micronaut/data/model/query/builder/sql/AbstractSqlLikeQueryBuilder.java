@@ -202,6 +202,12 @@ public abstract class AbstractSqlLikeQueryBuilder implements QueryBuilder {
         return Dialect.ANSI;
     }
 
+    private boolean isNoArgKeywordFunction(FunctionExpression<?> functionExpression) {
+        return functionExpression.getExpressions().isEmpty()
+            && (NO_ARG_KEYWORD_FUNCTIONS.contains(functionExpression.getName())
+                || (getDialect() == Dialect.ORACLE && "ROWID".equals(functionExpression.getName())));
+    }
+
     /**
      * @param requiredVersion the required target dialect version
      * @return whether the target dialect version meets the requirement
@@ -3207,7 +3213,7 @@ public abstract class AbstractSqlLikeQueryBuilder implements QueryBuilder {
 
         @Override
         public void visit(FunctionExpression<?> functionExpression) {
-            if (functionExpression.getExpressions().isEmpty() && NO_ARG_KEYWORD_FUNCTIONS.contains(functionExpression.getName())) {
+            if (isNoArgKeywordFunction(functionExpression)) {
                 query.append(functionExpression.getName());
             } else {
                 appendFunction(functionExpression.getName(), functionExpression.getExpressions());
@@ -3457,7 +3463,7 @@ public abstract class AbstractSqlLikeQueryBuilder implements QueryBuilder {
 
         @Override
         public void visit(FunctionExpression<?> functionExpression) {
-            if (functionExpression.getExpressions().isEmpty() && NO_ARG_KEYWORD_FUNCTIONS.contains(functionExpression.getName())) {
+            if (isNoArgKeywordFunction(functionExpression)) {
                 query.append(functionExpression.getName());
             } else {
                 appendFunction(functionExpression.getName(), functionExpression.getExpressions());
