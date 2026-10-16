@@ -103,7 +103,7 @@ final class DefaultAgeRepositoryOperations extends AbstractGraphRepositoryOperat
                                    AttributeConverterRegistry attributeConverterRegistry,
                                    @Named("io") @Nullable ExecutorService executorService,
                                    List<GraphValueEncoderRegistrar> encoderRegistrars,
-                                   @Nullable GraphSerde graphSerde) {
+                                   GraphSerde graphSerde) {
         super(new AgeCypherQueryBuilder(), dateTimeProvider, runtimeEntityRegistry, conversionService, attributeConverterRegistry, executorService, encoderRegistrars, graphSerde);
         this.connectionOperations = connectionOperations;
         this.graph = AgeStatements.validateGraphName(graph);
