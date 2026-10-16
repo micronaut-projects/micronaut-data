@@ -44,15 +44,8 @@ See the [Snapshot Documentation](https://micronaut-projects.github.io/micronaut-
 
 ## Snapshots and Releases
 
-Snaphots are automatically published to [JFrog OSS](https://oss.jfrog.org/artifactory/oss-snapshot-local/) using [GitHub Actions](https://github.com/micronaut-projects/micronaut-data/actions).
+Snapshots are automatically published to the Sonatype snapshots repository using [GitHub Actions](https://github.com/micronaut-projects/micronaut-data/actions).
 
 See the documentation in the [Micronaut Docs](https://docs.micronaut.io/latest/guide/index.html#usingsnapshots) for how to configure your build to use snapshots.
 
-Releases are published to Maven Central via [GitHub Actions](https://github.com/micronaut-projects/micronaut-data/actions).
-
-A release is performed with the following steps:
-
-* [Edit the version](https://github.com/micronaut-projects/micronaut-data/edit/master/gradle.properties) specified by `projectVersion` in `gradle.properties` to a semantic, unreleased version. Example `1.0.0`
-* [Create a new release](https://github.com/micronaut-projects/micronaut-data/releases/new). The Git Tag should start with `v`. For example `v1.0.0`.
-* [Monitor the Workflow](https://github.com/micronaut-projects/micronaut-data/actions?query=workflow%3ARelease) to check it passed successfully.
-* Celebrate!
+Releases are published to Maven Central via [GitHub Actions](https://github.com/micronaut-projects/micronaut-data/actions). A release is performed by publishing a GitHub release, see [MAINTAINING.md](MAINTAINING.md#releases) for details.

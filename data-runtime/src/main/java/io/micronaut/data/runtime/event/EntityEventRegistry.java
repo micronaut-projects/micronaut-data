@@ -285,6 +285,22 @@ public class EntityEventRegistry implements EntityEventListener<Object>, UpsertE
                             throw new PersistenceEventException("An error occurred invoking post-update event listener method [" + reference.getDescription(true) + "]: " + e.getMessage(), e);
                         }
                     });
+                } else if (annotation == PostLoad.class) {
+                    eventListeners.add(new EntityEventListener<>() {
+                        @Override
+                        public boolean supports(RuntimePersistentEntity<Object> persistentEntity, Class<? extends Annotation> eventType) {
+                            return eventType == PostLoad.class;
+                        }
+
+                        @Override
+                        public void postLoad(@NonNull EntityEventContext<Object> context) {
+                            try {
+                                reference.invoke(bean, context.getEntity());
+                            } catch (Exception e) {
+                                throw new PersistenceEventException("An error occurred invoking post-load event listener method [" + reference.getDescription(true) + "]: " + e.getMessage(), e);
+                            }
+                        }
+                    });
                 }
             }
         }));

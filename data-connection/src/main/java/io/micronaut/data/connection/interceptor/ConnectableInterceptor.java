@@ -123,9 +123,13 @@ public final class ConnectableInterceptor implements MethodInterceptor<Object, O
                     if (connectionInvocation.reactorConnectionOperations != null) {
                         ReactorConnectionOperations<?> reactorConnectionOperations = connectionInvocation.reactorConnectionOperations;
                         if (context.getExecutableMethod().getReturnType().isSingleResult()) {
-                            return reactorConnectionOperations.withConnectionMono(definition, status -> Mono.from(interceptedMethod.interceptResultAsPublisher()));
+                            return interceptedMethod.handleResult(
+                                reactorConnectionOperations.withConnectionMono(definition, status -> Mono.from(interceptedMethod.interceptResultAsPublisher()))
+                            );
                         }
-                        return reactorConnectionOperations.withConnectionFlux(definition, status -> Flux.from(interceptedMethod.interceptResultAsPublisher()));
+                        return interceptedMethod.handleResult(
+                            reactorConnectionOperations.withConnectionFlux(definition, status -> Flux.from(interceptedMethod.interceptResultAsPublisher()))
+                        );
                     }
                     return interceptedMethod.handleResult(
                         operations.withConnection(definition, status -> interceptedMethod.interceptResultAsPublisher())

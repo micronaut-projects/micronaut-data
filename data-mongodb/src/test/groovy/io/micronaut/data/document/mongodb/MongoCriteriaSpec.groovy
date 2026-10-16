@@ -248,9 +248,13 @@ class MongoCriteriaSpec extends Specification {
                     { root, query, cb ->
                         cb.ge(root.get("amount"), 1000)
                     } as DeleteSpecification,
+                    { root, query, cb ->
+                        cb.or()
+                    } as DeleteSpecification,
             ]
             expectedQuery << [
                     '''{amount:{$gte:{$mn_qp:0}}}''',
+                    '''{$expr:{$eq:[1,2]}}''',
             ]
     }
 
@@ -285,16 +289,22 @@ class MongoCriteriaSpec extends Specification {
                         query.set(root.get("amount"), cb.parameter(Integer))
                         cb.le(root.get("amount"), 1000)
                     } as UpdateSpecification,
+                    { root, query, cb ->
+                        query.set("name", "test")
+                        cb.or()
+                    } as UpdateSpecification,
             ]
             expectedPredicateQuery << [
                     '''{amount:{$gte:{$mn_qp:0}}}''',
                     '''{amount:{$lt:{$mn_qp:0}}}''',
                     '''{amount:{$lte:{$mn_qp:0}}}''',
+                    '''{$expr:{$eq:[1,2]}}''',
             ]
             expectedUpdateQuery << [
                     '''{$set:{name:{$mn_qp:1},amount:{$mn_qp:2}}}''',
                     '''{$set:{name:{$mn_qp:1},amount:{$mn_qp:2}}}''',
                     '''{$set:{name:{$mn_qp:1},amount:{$mn_qp:2}}}''',
+                    '''{$set:{name:{$mn_qp:0}}}''',
             ]
     }
 

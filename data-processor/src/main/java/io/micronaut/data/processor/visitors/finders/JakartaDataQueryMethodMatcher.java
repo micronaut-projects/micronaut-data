@@ -26,6 +26,7 @@ import io.micronaut.data.model.jpa.criteria.PersistentEntityCommonAbstractCriter
 import io.micronaut.data.model.jpa.criteria.PersistentEntityCriteriaDelete;
 import io.micronaut.data.model.jpa.criteria.PersistentEntityCriteriaQuery;
 import io.micronaut.data.model.jpa.criteria.PersistentEntityCriteriaUpdate;
+import io.micronaut.data.model.jpa.criteria.PersistentEntityRoot;
 import io.micronaut.data.model.jpa.criteria.impl.AbstractPersistentEntityCriteriaDelete;
 import io.micronaut.data.model.jpa.criteria.impl.AbstractPersistentEntityCriteriaUpdate;
 import io.micronaut.data.model.jpa.criteria.impl.AbstractPersistentEntityQuery;
@@ -43,6 +44,7 @@ import io.micronaut.inject.ast.ClassElement;
 import io.micronaut.inject.ast.Element;
 import io.micronaut.inject.processing.ProcessingException;
 import jakarta.persistence.criteria.Path;
+import jakarta.persistence.criteria.Predicate;
 import jakarta.persistence.criteria.Root;
 import jakarta.persistence.criteria.Selection;
 import org.jspecify.annotations.Nullable;
@@ -118,6 +120,8 @@ public final class JakartaDataQueryMethodMatcher implements MethodMatcher {
                 boolean isDto = false;
                 ClassElement interceptorType = interceptorMatch.interceptor();
 
+                applyTenantIdPredicate(this, matchContext, criteriaQuery);
+
                 AbstractPersistentEntityCriteriaUpdate<?> query = (AbstractPersistentEntityCriteriaUpdate<?>) criteriaQuery;
 
                 boolean optimisticLock = query.hasVersionRestriction();
@@ -156,6 +160,8 @@ public final class JakartaDataQueryMethodMatcher implements MethodMatcher {
                 ClassElement resultType = interceptorMatch.returnType();
                 ClassElement interceptorType = interceptorMatch.interceptor();
 
+                applyTenantIdPredicate(this, matchContext, criteriaQuery);
+
                 boolean optimisticLock = ((AbstractPersistentEntityCriteriaDelete<?>) criteriaQuery).hasVersionRestriction();
 
                 final AnnotationMetadataHierarchy annotationMetadataHierarchy = new AnnotationMetadataHierarchy(
@@ -191,6 +197,8 @@ public final class JakartaDataQueryMethodMatcher implements MethodMatcher {
             protected MethodMatchInfo build(MethodMatchContext matchContext) {
                 FindersUtils.InterceptorMatch interceptorMatch = resolveReturnTypeAndInterceptor(matchContext);
                 ClassElement interceptorType = interceptorMatch.interceptor();
+
+                applyTenantIdPredicate(this, matchContext, criteriaQuery);
 
                 final AnnotationMetadataHierarchy annotationMetadataHierarchy = new AnnotationMetadataHierarchy(
                     matchContext.getRepositoryClass().getAnnotationMetadata(),
@@ -257,6 +265,7 @@ public final class JakartaDataQueryMethodMatcher implements MethodMatcher {
                         findClassElementFn,
                         new MethodMatchSourcePersistentEntityCriteriaBuilderImpl(matchContext)
                     );
+                    applyTenantIdPredicate(this, matchContext, countCriteriaQuery);
 
                     QueryResult countQueryResult = countCriteriaQuery.build(annotationMetadataHierarchy, queryBuilder);
                     return new MethodMatchInfo(
@@ -276,6 +285,39 @@ public final class JakartaDataQueryMethodMatcher implements MethodMatcher {
                     .queryResult(queryResult);
             }
         };
+    }
+
+    /**
+     * Applies the tenant id restriction to a JDQL query the same way as the criteria method matches do.
+     *
+     * @param methodMatch The method match
+     * @param matchContext The match context
+     * @param criteria The criteria
+     */
+    private static void applyTenantIdPredicate(AbstractCriteriaMethodMatch methodMatch,
+                                               MethodMatchContext matchContext,
+                                               PersistentEntityCommonAbstractCriteria criteria) {
+        MethodMatchSourcePersistentEntityCriteriaBuilderImpl cb = new MethodMatchSourcePersistentEntityCriteriaBuilderImpl(matchContext);
+        if (criteria instanceof PersistentEntityCriteriaQuery<?> query) {
+            PersistentEntityRoot<?> root = (PersistentEntityRoot<?>) query.getRoots().iterator().next();
+            Predicate existingPredicate = query.getRestriction();
+            Predicate predicate = methodMatch.interceptPredicate(matchContext, List.of(), root, cb, existingPredicate);
+            if (predicate != null && predicate != existingPredicate) {
+                query.where(predicate);
+            }
+        } else if (criteria instanceof PersistentEntityCriteriaUpdate<?> update) {
+            Predicate existingPredicate = update.getRestriction();
+            Predicate predicate = methodMatch.interceptPredicate(matchContext, List.of(), update.getRoot(), cb, existingPredicate);
+            if (predicate != null && predicate != existingPredicate) {
+                update.where(predicate);
+            }
+        } else if (criteria instanceof PersistentEntityCriteriaDelete<?> delete) {
+            Predicate existingPredicate = delete.getRestriction();
+            Predicate predicate = methodMatch.interceptPredicate(matchContext, List.of(), delete.getRoot(), cb, existingPredicate);
+            if (predicate != null && predicate != existingPredicate) {
+                delete.where(predicate);
+            }
+        }
     }
 
     /**

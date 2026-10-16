@@ -18,6 +18,7 @@ package io.micronaut.data.runtime.mapper;
 import io.micronaut.core.beans.BeanIntrospection;
 import io.micronaut.core.beans.BeanProperty;
 import io.micronaut.core.beans.exceptions.IntrospectionException;
+import io.micronaut.core.convert.ArgumentConversionContext;
 import io.micronaut.core.convert.ConversionContext;
 import io.micronaut.core.convert.ConversionError;
 import io.micronaut.core.convert.exceptions.ConversionErrorException;
@@ -120,8 +121,9 @@ public interface BeanIntrospectionMapper<D, R> extends TypeMapper<D, R> {
     }
 
     default Object convert(Object value, Argument<?> argument) {
-        ConversionContext acc = ConversionContext.of(argument);
-        Optional<?> result = getConversionService().convert(value, argument);
+        ArgumentConversionContext<?> acc = ConversionContext.of(argument);
+        // Convert with the context, so that it records the cause of a failed conversion
+        Optional<?> result = getConversionService().convert(value, acc);
         if (result.isEmpty()) {
             Optional<ConversionError> lastError = acc.getLastError();
             if (lastError.isPresent()) {
