@@ -1,1 +1,2 @@
 io.micronaut.data.processor.graph.visitors.GroovyDynamicAttributesVisitor
+io.micronaut.data.processor.graph.visitors.GraphDtoVisitor

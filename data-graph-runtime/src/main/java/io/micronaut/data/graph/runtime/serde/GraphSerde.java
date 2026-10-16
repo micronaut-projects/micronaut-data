@@ -43,6 +43,7 @@ import java.util.Collection;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
+import java.util.Set;
 import java.util.concurrent.ConcurrentHashMap;
 
 /**
@@ -87,6 +88,34 @@ public final class GraphSerde {
      */
     public <T> T readNode(RuntimePersistentEntity<T> entity, GraphNode node, @Nullable GraphRecord row) {
         return read(entity.getIntrospection().getBeanType(), nodeView(entity, node, row));
+    }
+
+    /**
+     * Reads an entity from a node, with values read elsewhere, such as schemaless data.
+     *
+     * @param entity   The entity
+     * @param node     The node
+     * @param row      The row holding relationships fetched with the node, or null
+     * @param extras   Values to add to the object view, by property name
+     * @param declared The persisted names of the node properties the entity declares, to leave out the others, or null
+     * @param <T>      The entity type
+     * @return The entity
+     */
+    public <T> T readNode(RuntimePersistentEntity<T> entity,
+                          GraphNode node,
+                          @Nullable GraphRecord row,
+                          Map<String, @Nullable Object> extras,
+                          @Nullable Set<String> declared) {
+        Map<String, @Nullable Object> view = nodeView(entity, node, row);
+        if (declared != null) {
+            for (String name : node.properties().keySet()) {
+                if (!declared.contains(name)) {
+                    view.remove(name);
+                }
+            }
+        }
+        view.putAll(extras);
+        return read(entity.getIntrospection().getBeanType(), view);
     }
 
     /**
