@@ -18,9 +18,9 @@ package io.micronaut.data.jdbc.mapper;
 import io.micronaut.core.annotation.Internal;
 import io.micronaut.core.beans.BeanIntrospection;
 import io.micronaut.core.beans.BeanProperty;
+import io.micronaut.data.annotation.FlatEntity;
 import io.micronaut.data.model.DataType;
 import io.micronaut.data.model.naming.NamingStrategy;
-import io.micronaut.data.model.runtime.RuntimeAssociation;
 import io.micronaut.data.model.runtime.RuntimePersistentEntity;
 import io.micronaut.data.model.runtime.RuntimePersistentProperty;
 import org.jspecify.annotations.Nullable;
@@ -46,9 +46,9 @@ import java.util.UUID;
  * dispatch, boxing and mapping context of that mapper, and the conversion for every property whose type is what the
  * getter returns.</p>
  *
- * <p>A plan exists only for a flat entity: no associations or embedded values, no JSON columns, no attribute
- * converters, no composite identity, and only data types with a typed getter. {@link #of} returns {@code null}
- * for any other entity, which is then mapped by the general mapper as before.</p>
+ * <p>Which entities are flat is decided by the annotation processor, which marks them with {@link FlatEntity}:
+ * no associations or embedded values, no JSON columns, no attribute converters, no composite identity, and only
+ * data types with a typed getter. Any other entity is mapped by the general mapper as before.</p>
  *
  * <p>When the annotation processor generated a {@link GeneratedRowMapper} for the entity, the plan holds it
  * instead and {@link FlatEntityResultSetMapper} delegates the row read to it; the plan then only resolves the
@@ -143,26 +143,28 @@ public final class FlatEntityMappingPlan<R> {
     }
 
     /**
-     * Resolves the plan of the given entity.
+     * Resolves the plan of an entity the annotation processor marked with {@link FlatEntity}, which guarantees
+     * every property has a typed getter; the processor decides what is flat, this only lays the columns out.
      *
      * @param entity The entity
      * @param <R>    The entity type
-     * @return The plan, or {@code null} when the entity is not flat and has to be mapped by the general mapper
+     * @return The plan
+     * @throws IllegalArgumentException if the entity is not marked as flat
      */
-    @Nullable
     public static <R> FlatEntityMappingPlan<R> of(RuntimePersistentEntity<R> entity) {
         return of(entity, true);
     }
 
     /**
-     * Resolves the plan of the given entity.
+     * Resolves the plan of an entity: the one holding the mapper the annotation processor generated for it when
+     * there is one and {@code generated} allows it, else the columns of an entity marked with {@link FlatEntity}.
      *
      * @param entity    The entity
      * @param generated Whether to use the mapper the annotation processor generated for the entity when there is one
      * @param <R>       The entity type
-     * @return The plan, or {@code null} when the entity is not flat and has to be mapped by the general mapper
+     * @return The plan
+     * @throws IllegalArgumentException if the entity has no generated mapper to use and is not marked as flat
      */
-    @Nullable
     public static <R> FlatEntityMappingPlan<R> of(RuntimePersistentEntity<R> entity, boolean generated) {
         if (generated) {
             GeneratedRowMapper<R> generatedMapper = GeneratedRowMappers.find(entity.getIntrospection().getBeanType());
@@ -170,20 +172,16 @@ public final class FlatEntityMappingPlan<R> {
                 return new FlatEntityMappingPlan<>(entity, generatedMapper);
             }
         }
-        if (!entity.hasIdentity() && !entity.getIdentityProperties().isEmpty()) {
-            // A composite identity is read as a map of its values
-            return null;
+        if (!isFlat(entity)) {
+            throw new IllegalArgumentException("Entity [" + entity.getName() + "] is not a flat entity");
         }
         // Every constructor argument is a persistent property, the identity or the version, so each is among the
-        // candidates and is either mapped or makes the entity fall back
+        // candidates
         RuntimePersistentProperty<R>[] constructorArguments = entity.getConstructorArguments();
         boolean[] requiredArguments = new boolean[constructorArguments.length];
         List<Column<R>> columns = new ArrayList<>();
         for (RuntimePersistentProperty<R> property : candidates(entity)) {
             Column<R> column = column(entity, property, constructorArguments);
-            if (column == null) {
-                return null;
-            }
             if (column.kind == SKIPPED) {
                 continue;
             }
@@ -193,6 +191,23 @@ public final class FlatEntityMappingPlan<R> {
             columns.add(column);
         }
         return new FlatEntityMappingPlan<>(entity, columns, requiredArguments);
+    }
+
+    /**
+     * @param entity The entity
+     * @return Whether the annotation processor marked the entity as flat, see {@link FlatEntity}
+     */
+    public static boolean isFlat(RuntimePersistentEntity<?> entity) {
+        return entity.getAnnotationMetadata().hasAnnotation(FlatEntity.class);
+    }
+
+    /**
+     * @param entity The entity
+     * @return Whether a plan exists for the entity: the annotation processor generated a row mapper for it or
+     * marked it as flat
+     */
+    public static boolean supports(RuntimePersistentEntity<?> entity) {
+        return isFlat(entity) || GeneratedRowMappers.find(entity.getIntrospection().getBeanType()) != null;
     }
 
     /**
@@ -211,35 +226,22 @@ public final class FlatEntityMappingPlan<R> {
     }
 
     /**
-     * @return How the property is read, a {@link #SKIPPED} column for a property the general mapper doesn't set
-     * either, or {@code null} when the property keeps the entity from being flat
+     * @return How the property is read, or a {@link #SKIPPED} column for a property that cannot be set and is not
+     * a constructor argument, which the general mapper doesn't set either
      */
-    @Nullable
     private static <R> Column<R> column(RuntimePersistentEntity<R> entity,
                                         RuntimePersistentProperty<R> property,
                                         RuntimePersistentProperty<R>[] constructorArguments) {
-        if (property instanceof RuntimeAssociation || property.getConverter() != null) {
-            return null;
-        }
         int argumentIndex = indexOf(constructorArguments, property);
-        if (argumentIndex < 0 && (property.isReadOnly() || property.isConstructorArgument())) {
-            if (isIdentityOrVersion(entity, property)) {
-                // The general mapper sets these through a copy of the entity; not worth replicating here
-                return null;
-            }
+        if (argumentIndex < 0 && property.isReadOnly()) {
             return new Column<>(property, "", SKIPPED, false, -1);
         }
         byte kind = kind(property.getDataType());
         if (kind == SKIPPED) {
-            return null;
+            throw new IllegalStateException("Property [" + property.getName() + "] of flat entity [" + entity.getName() + "] has no typed getter for " + property.getDataType());
         }
         boolean conversion = !property.getType().isAssignableFrom(getterType(kind));
         return new Column<>(property, columnName(entity.getNamingStrategy(), property), kind, conversion, argumentIndex);
-    }
-
-    private static <R> boolean isIdentityOrVersion(RuntimePersistentEntity<R> entity, RuntimePersistentProperty<R> property) {
-        return (entity.hasIdentity() && property == entity.getIdentity())
-            || (entity.hasVersion() && property == entity.getVersion());
     }
 
     private static <R> int indexOf(RuntimePersistentProperty<R>[] constructorArguments, RuntimePersistentProperty<R> property) {

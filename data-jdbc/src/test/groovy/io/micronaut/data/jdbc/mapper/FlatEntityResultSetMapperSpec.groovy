@@ -51,24 +51,32 @@ class FlatEntityResultSetMapperSpec extends Specification {
     @AutoCleanup
     Connection connection = DriverManager.getConnection("jdbc:h2:mem:flatmapper;DB_CLOSE_DELAY=-1")
 
-    void "a plan exists for a flat entity and for nothing else"() {
+    void "the annotation processor marks the flat entities and the plan follows the marker"() {
         expect:
-        FlatEntityMappingPlan.of(entity(FlatTypes)) != null
-        FlatEntityMappingPlan.of(entity(FlatRecord)) != null
-        FlatEntityMappingPlan.of(entity(Person)) != null
-        // An association: read by the generated mapper, not flat without it
-        FlatEntityMappingPlan.of(entity(Book)).generatedMapper != null
-        FlatEntityMappingPlan.of(entity(Book), false) == null
+        FlatEntityMappingPlan.isFlat(entity(FlatTypes))
+        FlatEntityMappingPlan.isFlat(entity(FlatRecord))
+        FlatEntityMappingPlan.isFlat(entity(Person))
         // Types the getters do not return (char, URL, URI, CharSequence) are converted, as the general mapper does
-        FlatEntityMappingPlan.of(entity(BasicTypes)) != null
+        FlatEntityMappingPlan.isFlat(entity(BasicTypes))
+        // An association
+        !FlatEntityMappingPlan.isFlat(entity(Book))
         // A composite identity
-        FlatEntityMappingPlan.of(entity(EntityWithIdClass)) == null
+        !FlatEntityMappingPlan.isFlat(entity(EntityWithIdClass))
 
-        and: "the plan of an entity with a generated mapper holds it, and reads the columns itself without"
+        and: "an entity with a generated mapper is supported whether or not it is flat, and its plan holds the mapper"
+        FlatEntityMappingPlan.supports(entity(Book))
+        FlatEntityMappingPlan.of(entity(Book)).generatedMapper != null
         FlatEntityMappingPlan.of(entity(FlatRecord)).generatedMapper != null
         FlatEntityMappingPlan.of(entity(FlatRecord), false).generatedMapper == null
         // An enum stored by ordinal has no generated mapper
         FlatEntityMappingPlan.of(entity(FlatTypes)).generatedMapper == null
+        !FlatEntityMappingPlan.supports(entity(EntityWithIdClass))
+
+        when: "an entity with associations has no plan without its generated mapper"
+        FlatEntityMappingPlan.of(entity(Book), false)
+
+        then:
+        thrown(IllegalArgumentException)
     }
 
     void "the plan resolves the column of every property"() {
