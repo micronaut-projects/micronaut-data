@@ -15,7 +15,9 @@
  */
 package io.micronaut.data.graph.runtime.serde;
 
+import io.micronaut.context.annotation.Requires;
 import io.micronaut.core.annotation.Internal;
+import io.micronaut.core.util.StringUtils;
 import io.micronaut.core.convert.ConversionService;
 import io.micronaut.core.type.Argument;
 import io.micronaut.data.exceptions.DataAccessException;
@@ -30,7 +32,9 @@ import io.micronaut.data.model.runtime.RuntimeAssociation;
 import io.micronaut.data.model.runtime.RuntimePersistentEntity;
 import io.micronaut.data.model.runtime.RuntimePersistentProperty;
 import io.micronaut.serde.Deserializer;
+import io.micronaut.data.runtime.convert.DataConversionService;
 import io.micronaut.serde.SerdeRegistry;
+import jakarta.inject.Singleton;
 import org.jspecify.annotations.Nullable;
 
 import java.io.IOException;
@@ -49,8 +53,15 @@ import java.util.concurrent.ConcurrentHashMap;
  * @author graemerocher
  * @since 5.3.0
  */
+@Singleton
+@Requires(property = GraphSerde.ENABLED, value = StringUtils.TRUE)
 @Internal
 public final class GraphSerde {
+
+    /**
+     * Turns reading entities with Micronaut Serialization on.
+     */
+    public static final String ENABLED = "micronaut.data.graph.serde.enabled";
 
     private final SerdeRegistry serdeRegistry;
     private final ConversionService conversionService;
@@ -60,7 +71,7 @@ public final class GraphSerde {
      * @param serdeRegistry     The serde registry
      * @param conversionService The conversion service for native values
      */
-    public GraphSerde(SerdeRegistry serdeRegistry, ConversionService conversionService) {
+    public GraphSerde(SerdeRegistry serdeRegistry, DataConversionService conversionService) {
         this.serdeRegistry = serdeRegistry;
         this.conversionService = conversionService;
     }
@@ -76,6 +87,19 @@ public final class GraphSerde {
      */
     public <T> T readNode(RuntimePersistentEntity<T> entity, GraphNode node, @Nullable GraphRecord row) {
         return read(entity.getIntrospection().getBeanType(), nodeView(entity, node, row));
+    }
+
+    /**
+     * Reads a relationship entity from an edge and its target node.
+     *
+     * @param entity The relationship entity
+     * @param edge   The edge
+     * @param target The target node, or null
+     * @param <T>    The entity type
+     * @return The relationship entity
+     */
+    public <T> T readEdge(RuntimePersistentEntity<T> entity, GraphEdge edge, @Nullable GraphNode target) {
+        return read(entity.getIntrospection().getBeanType(), edgeView(entity, edge, target));
     }
 
     /**
