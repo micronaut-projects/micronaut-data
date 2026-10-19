@@ -31,6 +31,7 @@ import io.micronaut.data.jdbc.notification.postgres.PostgresChangeEventMetadata
 import io.micronaut.data.jdbc.postgres.PostgresTestPropertyProvider
 import io.micronaut.data.runtime.config.SchemaGenerate
 import spock.lang.Specification
+import spock.lang.Unroll
 import jakarta.inject.Singleton
 import javax.sql.DataSource
 import java.sql.Connection
@@ -78,9 +79,9 @@ class PostgresNotificationProviderSpec extends Specification implements Postgres
 
     private void start(Map additionalSettings = [:]) {
         application = ApplicationContext.run(settings + [
-            'spec.name': 'PostgresNotificationProviderSpec',
-            'micronaut.data.jdbc.notifications.postgres.poll-timeout': '100ms',
-            'micronaut.data.jdbc.notifications.postgres.retry-delay': '100ms'
+                'spec.name'                                              : 'PostgresNotificationProviderSpec',
+                'micronaut.data.jdbc.notifications.postgres.poll-timeout': '100ms',
+                'micronaut.data.jdbc.notifications.postgres.retry-delay' : '100ms'
         ] + additionalSettings)
         listener = application.getBean(BookChangeListener)
     }
@@ -138,6 +139,37 @@ class PostgresNotificationProviderSpec extends Specification implements Postgres
         deleted.metadata(PostgresChangeEventMetadata).orElseThrow().oldKeys().BookId == '9007199254740994'
     }
 
+    void "bulk changes load every affected entity without requiring callback order"() {
+        given:
+        start()
+
+        when:
+        execute("""INSERT INTO "ProviderBook" VALUES
+            ('$TENANT', 1, 'first'), ('$TENANT', 2, 'second'), ('$TENANT', 3, 'third')""")
+        def inserted = (1..3).collect { next() }
+
+        then:
+        inserted.every { it.operation() == ChangeOperation.INSERT }
+        inserted.collect { it.entity().orElseThrow().id }.toSet() == [1L, 2L, 3L].toSet()
+
+        when:
+        execute("UPDATE \"ProviderBook\" SET title = 'bulk update'")
+        def updated = (1..3).collect { next() }
+
+        then:
+        updated.every { it.operation() == ChangeOperation.UPDATE }
+        updated.every { it.entity().orElseThrow().title == 'bulk update' }
+        updated.collect { it.entity().orElseThrow().id }.toSet() == [1L, 2L, 3L].toSet()
+
+        when:
+        execute('DELETE FROM "ProviderBook"')
+        def deleted = (1..3).collect { next() }
+
+        then:
+        deleted.every { it.operation() == ChangeOperation.DELETE && it.entity().isEmpty() }
+        deleted.collect { it.metadata(PostgresChangeEventMetadata).orElseThrow().oldKeys().BookId }.toSet() == ['1', '2', '3'].toSet()
+    }
+
     void "listener retry stays inside AOP and truncate invalidates"() {
         given:
         start()
@@ -174,12 +206,17 @@ class PostgresNotificationProviderSpec extends Specification implements Postgres
         next().entity().orElseThrow().title == 'recovered'
     }
 
-    void "malformed payload invalidates without terminating reception"() {
+    @Unroll
+    void "unusable payload invalidates without terminating reception: #description"() {
         given:
         start()
 
         when:
-        execute("NOTIFY provider_changes, 'invalid JSON'")
+        try (def statement = writer.prepareStatement('SELECT pg_notify(?, ?)')) {
+            statement.setString(1, 'provider_changes')
+            statement.setString(2, payload)
+            statement.execute()
+        }
 
         then:
         next().operation() == ChangeOperation.INVALIDATE
@@ -189,6 +226,12 @@ class PostgresNotificationProviderSpec extends Specification implements Postgres
 
         then:
         next().entity().orElseThrow().title == 'healthy'
+
+        where:
+        description           | payload
+        'invalid JSON'        | 'invalid JSON'
+        'unsupported version' | '{"version":2}'
+        'wrong key names'     | '{"version":1,"schema":"notification_provider_test","table":"ProviderBook","operation":"INSERT","oldKeys":{},"newKeys":{"unexpected":"1"}}'
     }
 
     void "rollback sends no event and entity loading tolerates a row deleted before reload"() {
@@ -217,7 +260,7 @@ class PostgresNotificationProviderSpec extends Specification implements Postgres
         events.find { it.operation() == ChangeOperation.INSERT }.entity().isEmpty()
     }
 
-    void "shutdown lifecycle starts cleanup asynchronously and waits for accepted callbacks"() {
+    void "shutdown lifecycle starts cleanup asynchronously and waits for running callbacks"() {
         given:
         start()
         listener.entered = new CountDownLatch(1)
@@ -225,7 +268,7 @@ class PostgresNotificationProviderSpec extends Specification implements Postgres
         execute('TRUNCATE "ProviderBook"')
         assert listener.entered.await(10, TimeUnit.SECONDS)
         def provider = application.getBeansOfType(ChangeNotificationProvider)
-            .find { it.class.simpleName == 'PostgresChangeNotificationProvider' }
+                .find { it.class.simpleName == 'PostgresChangeNotificationProvider' }
 
         when:
         CompletableFuture.runAsync {
@@ -309,8 +352,8 @@ class PostgresNotificationProviderSpec extends Specification implements Postgres
             EXECUTE FUNCTION notification_provider_test.micronaut_data_notify_change('provider_changes', 'tenant', 'BookId')""")
         String url = writer.metaData.URL
         start([
-            'spec.unqualified-listener': 'true',
-            'datasources.default.url': url + (url.contains('?') ? '&' : '?') + 'currentSchema=notification_provider_test'
+                'spec.unqualified-listener': 'true',
+                'datasources.default.url'  : url + (url.contains('?') ? '&' : '?') + 'currentSchema=notification_provider_test'
         ])
         def unqualified = application.getBean(UnqualifiedBookChangeListener)
         assert unqualified.events.poll(300, TimeUnit.MILLISECONDS) == null
@@ -344,8 +387,11 @@ class PostgresNotificationProviderSpec extends Specification implements Postgres
 
 @MappedEntity('ProviderBook')
 class UnqualifiedNotificationBook {
-    @Id UUID tenant
-    @Id @MappedProperty('BookId') Long id
+    @Id
+    UUID tenant
+    @Id
+    @MappedProperty('BookId')
+    Long id
     String title
 }
 

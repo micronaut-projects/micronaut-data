@@ -41,7 +41,7 @@ class PostgresChangeListenerDefinitionSpec extends Specification {
         operations.conversionService >> ConversionService.SHARED
         def method = Mock(ExecutableMethod)
         method.getAnnotation(PostgresChangeNotification) >> AnnotationValue.builder(PostgresChangeNotification)
-            .member('channel', 'changes').build()
+                .member('channel', 'changes').build()
         method.getAnnotation(PostgresChangeListenerQuery) >> AnnotationValue.builder(PostgresChangeListenerQuery)
                 .value('SELECT id FROM book WHERE id = ?')
                 .member('columns', ['id'] as String[])
@@ -58,18 +58,24 @@ class PostgresChangeListenerDefinitionSpec extends Specification {
         0 * operations.execute(_)
 
         where:
-        type            | schema  | table             | changedSchema | changedTable      | matches
-        QualifiedBook   | 'Sales' | 'Book.Items'      | 'Sales'       | 'Book.Items'      | true
-        QualifiedBook   | 'Sales' | 'Book.Items'      | 'other'       | 'Book.Items'      | false
-        QualifiedBook   | 'Sales' | 'Book.Items'      | 'sales'       | 'Book.Items'      | false
-        QualifiedBook   | 'Sales' | 'Book.Items'      | 'Sales'       | 'book.items'      | false
-        UnqualifiedBook | null    | 'Book'            | 'public'      | 'Book'            | true
-        UnqualifiedBook | null    | 'Book'            | 'other'       | 'Book'            | true
-        UnqualifiedBook | null    | 'Book'            | 'public'      | 'book'            | false
-        UnescapedBook   | 'sales' | 'book'            | 'sales'       | 'book'            | true
-        UnescapedBook   | 'sales' | 'book'            | 'Sales'       | 'book'            | false
-        UnescapedBook   | 'sales' | 'book'            | 'sales'       | 'Book'            | false
-        DefinitionBook  | null    | 'definition_book' | 'public'      | 'definition_book' | true
+        type                | schema   | table             | changedSchema | changedTable      | matches
+        QualifiedBook       | 'Sales'  | 'Book.Items'      | 'Sales'       | 'Book.Items'      | true
+        QualifiedBook       | 'Sales'  | 'Book.Items'      | 'other'       | 'Book.Items'      | false
+        QualifiedBook       | 'Sales'  | 'Book.Items'      | 'sales'       | 'Book.Items'      | false
+        QualifiedBook       | 'Sales'  | 'Book.Items'      | 'Sales'       | 'book.items'      | false
+        UnqualifiedBook     | null     | 'Book'            | 'public'      | 'Book'            | true
+        UnqualifiedBook     | null     | 'Book'            | 'other'       | 'Book'            | true
+        UnqualifiedBook     | null     | 'Book'            | 'public'      | 'book'            | false
+        UnescapedBook       | 'sales'  | 'book'            | 'sales'       | 'book'            | true
+        UnescapedBook       | 'sales'  | 'book'            | 'Sales'       | 'book'            | false
+        UnescapedBook       | 'sales'  | 'book'            | 'sales'       | 'Book'            | false
+        DefinitionBook      | null     | 'definition_book' | 'public'      | 'definition_book' | true
+        QuotedUnicodeBook   | 'ÄSales' | 'ÄBook'           | 'ÄSales'      | 'ÄBook'           | true
+        QuotedUnicodeBook   | 'ÄSales' | 'ÄBook'           | 'Äsales'      | 'Äbook'           | false
+        UnquotedUnicodeBook | 'Äsales' | 'Äbook'           | 'Äsales'      | 'Äbook'           | true
+        UnquotedUnicodeBook | 'Äsales' | 'Äbook'           | 'äsales'      | 'äbook'           | false
+        QuotedLongBook      | 'S' * 62 | 'A' * 62          | 'S' * 62      | 'A' * 62          | true
+        UnquotedLongBook    | 's' * 62 | 'a' * 62          | 's' * 62      | 'a' * 62          | true
     }
 
     @Unroll
@@ -80,7 +86,7 @@ class PostgresChangeListenerDefinitionSpec extends Specification {
         def method = Mock(ExecutableMethod)
         method.getDescription(true) >> 'void changed(ChangeEvent<DefinitionBook>)'
         method.getAnnotation(PostgresChangeNotification) >> AnnotationValue.builder(PostgresChangeNotification)
-            .member('channel', 'changes').build()
+                .member('channel', 'changes').build()
         method.getAnnotation(PostgresChangeListenerQuery) >> metadata
         def listener = new ChangeListenerMethod(Mock(BeanDefinition), method, Argument.of(DefinitionBook))
 
@@ -94,15 +100,15 @@ class PostgresChangeListenerDefinitionSpec extends Specification {
         0 * operations.execute(_)
 
         where:
-        description       | metadata                                                                  | message
-        'missing metadata'| null                                                                      | 'missing its generated PostgreSQL primary-key reload query'
-        'missing SQL'     | queryMetadata(null, ['id'], ['id'])                                         | 'missing or blank generated PostgreSQL reload query'
-        'blank SQL'       | queryMetadata(' ', ['id'], ['id'])                                          | 'missing or blank generated PostgreSQL reload query'
-        'empty keys'      | queryMetadata('SELECT id FROM book', [], [])                                | 'non-empty column and property-path arrays of equal length'
-        'unequal arrays'  | queryMetadata('SELECT id FROM book', ['id'], [])                            | 'non-empty column and property-path arrays of equal length'
-        'empty column'    | queryMetadata('SELECT id FROM book', [''], ['id'])                          | 'empty or duplicate generated PostgreSQL key column []'
-        'duplicate column'| queryMetadata('SELECT id FROM book', ['id', 'id'], ['id', 'id'])             | 'empty or duplicate generated PostgreSQL key column [id]'
-        'unknown path'    | queryMetadata('SELECT id FROM book', ['id'], ['missing'])                   | 'unknown generated PostgreSQL key property path [missing]'
+        description        | metadata                                                         | message
+        'missing metadata' | null                                                             | 'missing its generated PostgreSQL primary-key reload query'
+        'missing SQL'      | queryMetadata(null, ['id'], ['id'])                              | 'missing or blank generated PostgreSQL reload query'
+        'blank SQL'        | queryMetadata(' ', ['id'], ['id'])                               | 'missing or blank generated PostgreSQL reload query'
+        'empty keys'       | queryMetadata('SELECT id FROM book', [], [])                     | 'non-empty column and property-path arrays of equal length'
+        'unequal arrays'   | queryMetadata('SELECT id FROM book', ['id'], [])                 | 'non-empty column and property-path arrays of equal length'
+        'empty column'     | queryMetadata('SELECT id FROM book', [''], ['id'])               | 'empty or duplicate generated PostgreSQL key column []'
+        'duplicate column' | queryMetadata('SELECT id FROM book', ['id', 'id'], ['id', 'id']) | 'empty or duplicate generated PostgreSQL key column [id]'
+        'unknown path'     | queryMetadata('SELECT id FROM book', ['id'], ['missing'])        | 'unknown generated PostgreSQL key property path [missing]'
     }
 
     void "a PostgreSQL datasource requires its notification annotation"() {
@@ -125,7 +131,7 @@ class PostgresChangeListenerDefinitionSpec extends Specification {
 
     private static AnnotationValue<PostgresChangeListenerQuery> queryMetadata(String query, List<String> columns, List<String> paths) {
         def builder = AnnotationValue.builder(PostgresChangeListenerQuery)
-            .member('columns', columns as String[]).member('paths', paths as String[])
+                .member('columns', columns as String[]).member('paths', paths as String[])
         if (query != null) {
             builder.value(query)
         }
@@ -146,6 +152,30 @@ class PostgresChangeListenerDefinitionSpec extends Specification {
 
     @MappedEntity(value = 'Book', schema = 'Sales', escape = false)
     private static class UnescapedBook {
+        @Id
+        Long id
+    }
+
+    @MappedEntity(value = 'ÄBook', schema = 'ÄSales', escape = true)
+    private static class QuotedUnicodeBook {
+        @Id
+        Long id
+    }
+
+    @MappedEntity(value = 'ÄBook', schema = 'ÄSales', escape = false)
+    private static class UnquotedUnicodeBook {
+        @Id
+        Long id
+    }
+
+    @MappedEntity(value = 'AAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAé', schema = 'SSSSSSSSSSSSSSSSSSSSSSSSSSSSSSSSSSSSSSSSSSSSSSSSSSSSSSSSSSSSSSé', escape = true)
+    private static class QuotedLongBook {
+        @Id
+        Long id
+    }
+
+    @MappedEntity(value = 'AAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAé', schema = 'SSSSSSSSSSSSSSSSSSSSSSSSSSSSSSSSSSSSSSSSSSSSSSSSSSSSSSSSSSSSSSé', escape = false)
+    private static class UnquotedLongBook {
         @Id
         Long id
     }

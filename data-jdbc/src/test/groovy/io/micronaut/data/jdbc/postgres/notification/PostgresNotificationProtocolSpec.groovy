@@ -98,6 +98,64 @@ class PostgresNotificationProtocolSpec extends Specification implements Postgres
         event() == payload('DELETE', [Tenant: OTHER_TENANT, Id: '9007199254740994'], [:])
     }
 
+    @Unroll
+    void "non-key JSON that cannot be represented as jsonb does not prevent row changes: #description"() {
+        given:
+        execute('ALTER TABLE "Book" ADD COLUMN metadata json')
+        try (def statement = writer.prepareStatement('INSERT INTO "Book" VALUES (?, ?, ?, ?::json)')) {
+            statement.setObject(1, UUID.fromString(TENANT))
+            statement.setBigDecimal(2, BigDecimal.ONE)
+            statement.setString(3, 'before')
+            statement.setString(4, json)
+            statement.executeUpdate()
+        }
+
+        expect:
+        event() == payload('INSERT', [:], [Tenant: TENANT, Id: '1'])
+
+        when:
+        execute('UPDATE "Book" SET body = \'after\'')
+
+        then:
+        event() == payload('UPDATE', [Tenant: TENANT, Id: '1'], [Tenant: TENANT, Id: '1'])
+
+        when:
+        execute('DELETE FROM "Book"')
+
+        then:
+        event() == payload('DELETE', [Tenant: TENANT, Id: '1'], [:])
+
+        where:
+        description             | json
+        'escaped NUL'           | '{"value":"\\u0000"}'
+        'out-of-range number'   | '{"value":1e1000000}'
+    }
+
+    void "key column identifiers containing quotes are extracted safely"() {
+        given:
+        execute('CREATE TABLE quoted_key ("Book""Id" bigint PRIMARY KEY)')
+        execute("""CREATE TRIGGER changes AFTER INSERT OR UPDATE OR DELETE ON quoted_key FOR EACH ROW
+            EXECUTE FUNCTION micronaut_data_notify_change('$channel', 'Book"Id')""")
+
+        when:
+        execute('INSERT INTO quoted_key VALUES (1)')
+
+        then:
+        event() == payload('INSERT', [:], ['Book"Id': '1']) + [table: 'quoted_key']
+
+        when:
+        execute('UPDATE quoted_key SET "Book""Id" = 2')
+
+        then:
+        event() == payload('UPDATE', ['Book"Id': '1'], ['Book"Id': '2']) + [table: 'quoted_key']
+
+        when:
+        execute('DELETE FROM quoted_key')
+
+        then:
+        event() == payload('DELETE', ['Book"Id': '2'], [:]) + [table: 'quoted_key']
+    }
+
     void "notifications are delivered after commit and discarded on rollback"() {
         given:
         writer.autoCommit = false

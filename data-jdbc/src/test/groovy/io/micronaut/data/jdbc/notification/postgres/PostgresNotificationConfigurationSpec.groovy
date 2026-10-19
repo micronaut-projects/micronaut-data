@@ -20,14 +20,35 @@ import spock.lang.Unroll
 import java.time.Duration
 
 class PostgresNotificationConfigurationSpec extends Specification {
-    void "defaults bound notification work and connection waits"() {
+    void "defaults use finite polling and unlimited recovery with exponential backoff"() {
         when:
         def config = new PostgresNotificationConfiguration()
 
         then:
         config.pollTimeout == Duration.ofSeconds(1)
+        config.maxRetries == -1
+        config.retryDelayMultiplier == 2
         config.retryDelay == Duration.ofSeconds(1)
         config.maxRetryDelay == Duration.ofSeconds(60)
+    }
+
+    void "recovery limit and multiplier accept supported boundary values"() {
+        given:
+        def config = new PostgresNotificationConfiguration()
+
+        when:
+        config.maxRetries = retries
+        config.retryDelayMultiplier = multiplier
+
+        then:
+        config.maxRetries == retries
+        config.retryDelayMultiplier == multiplier
+
+        where:
+        retries           | multiplier
+        -1                | 1
+        0                 | 2
+        Integer.MAX_VALUE | Integer.MAX_VALUE
     }
 
     @Unroll
@@ -40,11 +61,14 @@ class PostgresNotificationConfigurationSpec extends Specification {
         thrown(IllegalArgumentException)
 
         where:
-        property          | value
-        'pollTimeout'     | Duration.ZERO
-        'pollTimeout'     | Duration.ofNanos(1)
-        'pollTimeout'     | Duration.ofMillis(Integer.MAX_VALUE + 1L)
-        'retryDelay'      | Duration.ofMillis(-1)
-        'maxRetryDelay'   | Duration.ZERO
+        property               | value
+        'pollTimeout'          | Duration.ZERO
+        'pollTimeout'          | Duration.ofNanos(1)
+        'pollTimeout'          | Duration.ofMillis(Integer.MAX_VALUE + 1L)
+        'retryDelay'           | Duration.ofMillis(-1)
+        'maxRetryDelay'        | Duration.ZERO
+        'maxRetries'           | -2
+        'retryDelayMultiplier' | 0
+        'retryDelayMultiplier' | -1
     }
 }

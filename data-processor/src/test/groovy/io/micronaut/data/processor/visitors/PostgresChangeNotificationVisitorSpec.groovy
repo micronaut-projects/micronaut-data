@@ -162,11 +162,11 @@ class BookIdConverter implements io.micronaut.data.model.runtime.convert.Attribu
     }
 
     @Unroll
-    void "mapped key column names respect identifier escaping: #escape"() {
+    void "mapped key column names respect PostgreSQL identifiers: #name, escape=#escape"() {
         given:
         def input = source('books')
                 .replace('@MappedEntity\nclass Book', "@MappedEntity(escape = $escape)\nclass Book")
-                .replace('@Id private', '@Id @io.micronaut.data.annotation.MappedProperty("BookId") private')
+                .replace('@Id private', '@Id @io.micronaut.data.annotation.MappedProperty("' + name + '") private')
 
         when:
         def query = buildBeanDefinition('test.BookListener', input).getRequiredMethod('changed', ChangeEvent)
@@ -175,13 +175,16 @@ class BookIdConverter implements io.micronaut.data.model.runtime.convert.Attribu
         then:
         query.stringValues('columns') as List == [column]
         query.stringValues('paths') as List == ['id']
-        query.stringValue().orElseThrow().contains('"BookId"') == escape
-        query.stringValue().orElseThrow().toLowerCase(Locale.ROOT).contains(escape ? 'book_."bookid" = ?' : 'book_.bookid = ?')
+        query.stringValue().orElseThrow().contains(escape ? 'book_."' + name + '" = ?' : 'book_.' + name + ' = ?')
 
         where:
-        escape | column
-        true   | 'BookId'
-        false  | 'bookid'
+        escape | name             | column
+        true   | 'BookId'         | 'BookId'
+        false  | 'BookId'         | 'bookid'
+        true   | 'ÄBookId'        | 'ÄBookId'
+        false  | 'ÄBookId'        | 'Äbookid'
+        true   | 'A' * 62 + 'é'   | 'A' * 62
+        false  | 'A' * 62 + 'é'   | 'a' * 62
     }
 
     void "parameterized entity filters fail compilation"() {
