@@ -33,7 +33,7 @@ class PostgresNotificationDispatcherSpec extends Specification {
         given:
         def tasks = []
         def events = []
-        def dispatcher = new PostgresChangeNotificationDispatcher({ tasks.add(it) } as Executor, Stub(TaskScheduler), { events.add(it.operation()) }, 'test')
+        def dispatcher = new PostgresChangeNotificationDispatcher({ tasks.add(it) } as Executor, Stub(TaskScheduler), { events.add(it.operation()) }, 'default', 'test')
 
         when:
         dispatcher.submitDispatch(new DefaultChangeEvent(ChangeOperation.INSERT, null, null))
@@ -56,7 +56,7 @@ class PostgresNotificationDispatcherSpec extends Specification {
         given:
         def tasks = []
         def events = []
-        def dispatcher = new PostgresChangeNotificationDispatcher({ tasks.add(it) } as Executor, Stub(TaskScheduler), { events.add(it) }, 'test')
+        def dispatcher = new PostgresChangeNotificationDispatcher({ tasks.add(it) } as Executor, Stub(TaskScheduler), { events.add(it) }, 'default', 'test')
         dispatcher.invalidate()
         dispatcher.invalidate()
 
@@ -81,7 +81,7 @@ class PostgresNotificationDispatcherSpec extends Specification {
         def dispatcher = new PostgresChangeNotificationDispatcher(executor, Stub(TaskScheduler), {
             entered.countDown()
             assert release.await(10, TimeUnit.SECONDS)
-        }, 'test')
+        }, 'default', 'test')
 
         when:
         dispatcher.invalidate()
@@ -115,7 +115,7 @@ class PostgresNotificationDispatcherSpec extends Specification {
         int called = 0
         def dispatcher = new PostgresChangeNotificationDispatcher({ tasks.add(it) } as Executor, Stub(TaskScheduler), {
             if (++called == 1) { throw new IllegalStateException('callback failure') }
-        }, 'test')
+        }, 'default', 'test')
         dispatcher.invalidate()
         dispatcher.invalidate()
 
@@ -143,7 +143,7 @@ class PostgresNotificationDispatcherSpec extends Specification {
         def dispatcher = new PostgresChangeNotificationDispatcher({
             if (reject) { throw new RejectedExecutionException() }
             tasks.add(it)
-        } as Executor, scheduler, { events.add(it.operation()) }, 'test')
+        } as Executor, scheduler, { events.add(it.operation()) }, 'default', 'test')
 
         when:
         dispatcher.submitDispatch(new DefaultChangeEvent(ChangeOperation.INSERT, null, null))
@@ -193,7 +193,7 @@ class PostgresNotificationDispatcherSpec extends Specification {
         def tasks = []
         def dispatcher = new PostgresChangeNotificationDispatcher({ tasks.add(it) } as Executor, Stub(TaskScheduler), {
             throw new AssertionError('fatal')
-        }, 'test')
+        }, 'default', 'test')
         dispatcher.invalidate()
 
         when:

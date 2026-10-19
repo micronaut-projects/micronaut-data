@@ -113,6 +113,7 @@ final class PostgresChangeNotificationProvider implements ChangeNotificationProv
         }
         var subscription = new PostgresNotificationSubscription(name, operations, listeners, beanContext,
             jsonMapperProvider.get(), executor, taskScheduler, configuration, connectionFactory);
+        LOG.trace("Starting registration of [{}] change listener methods for datasource [{}]", listeners.size(), name);
         subscription.start();
         subscriptions.put(name, subscription);
     }

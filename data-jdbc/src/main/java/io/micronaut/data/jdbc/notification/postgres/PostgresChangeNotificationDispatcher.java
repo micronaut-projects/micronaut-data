@@ -55,15 +55,17 @@ final class PostgresChangeNotificationDispatcher {
     private final CompletableFuture<Void> completion = new CompletableFuture<>();
     private final Executor executor;
     private final Consumer<ChangeEvent<?>> listener;
+    private final String dataSourceName;
     private final String description;
 
     private boolean closing;
     private long activeTasks;
 
-    PostgresChangeNotificationDispatcher(Executor executor, TaskScheduler taskScheduler, Consumer<ChangeEvent<?>> listener, String description) {
+    PostgresChangeNotificationDispatcher(Executor executor, TaskScheduler taskScheduler, Consumer<ChangeEvent<?>> listener, String dataSourceName, String description) {
         this.executor = executor;
         this.taskScheduler = taskScheduler;
         this.listener = listener;
+        this.dataSourceName = dataSourceName;
         this.description = description;
     }
 
@@ -78,7 +80,8 @@ final class PostgresChangeNotificationDispatcher {
         try {
             executor.execute(() -> dispatchSafely(event));
         } catch (RuntimeException e) {
-            LOG.warn("Unable to submit PostgreSQL change listener [{}]", description, e);
+            LOG.warn("Unable to submit PostgreSQL notification operation [{}] for datasource [{}] and listener method [{}]",
+                event.operation(), dataSourceName, description, e);
             if (e instanceof RejectedExecutionException && invalidationPending.compareAndSet(false, true)) {
                 retryInvalidation();
             }
@@ -95,7 +98,8 @@ final class PostgresChangeNotificationDispatcher {
             taskScheduler.schedule(DISPATCH_RETRY_DELAY, this::submitPendingInvalidation);
         } catch (RuntimeException e) {
             invalidationPending.set(false);
-            LOG.error("Unable to schedule PostgreSQL listener invalidation for [{}]", description, e);
+            LOG.error("Unable to schedule PostgreSQL listener invalidation for datasource [{}] and listener method [{}]",
+                dataSourceName, description, e);
         }
     }
 
@@ -111,7 +115,8 @@ final class PostgresChangeNotificationDispatcher {
                 dispatchSafely(new DefaultChangeEvent<>(ChangeOperation.INVALIDATE, null, null));
             });
         } catch (RuntimeException e) {
-            LOG.warn("Unable to submit PostgreSQL listener invalidation for [{}]", description, e);
+            LOG.warn("Unable to submit PostgreSQL listener invalidation for datasource [{}] and listener method [{}]",
+                dataSourceName, description, e);
             if (e instanceof RejectedExecutionException) {
                 retryInvalidation();
             } else {
@@ -129,9 +134,22 @@ final class PostgresChangeNotificationDispatcher {
             return;
         }
         try {
+            if (LOG.isTraceEnabled()) {
+                PostgresChangeEventMetadata metadata = event.metadata(PostgresChangeEventMetadata.class).orElse(null);
+                if (metadata == null) {
+                    LOG.trace("Accepted PostgreSQL notification operation [{}] for datasource [{}] and listener method [{}] without table metadata",
+                        event.operation(), dataSourceName, description);
+                } else {
+                    LOG.trace("Accepted PostgreSQL notification operation [{}] for datasource [{}], listener method [{}], "
+                            + "channel [{}], schema [{}], table [{}], old keys [{}], and new keys [{}]",
+                        event.operation(), dataSourceName, description, metadata.channel(), metadata.schema(), metadata.table(),
+                        metadata.oldKeys(), metadata.newKeys());
+                }
+            }
             listener.accept(event);
         } catch (Exception e) {
-            LOG.error("PostgreSQL change listener [{}] failed", description, e);
+            LOG.error("PostgreSQL notification operation [{}] failed for datasource [{}] and listener method [{}]",
+                event.operation(), dataSourceName, description, e);
         } finally {
             completeTask();
         }

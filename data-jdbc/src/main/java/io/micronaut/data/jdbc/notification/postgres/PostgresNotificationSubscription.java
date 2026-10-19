@@ -99,6 +99,7 @@ final class PostgresNotificationSubscription {
                 executor,
                 taskScheduler,
                 event -> invoke(context, method, event),
+                name,
                 method.method().getDescription(true));
             dispatchers.put(definition, dispatcher);
         }
@@ -119,6 +120,8 @@ final class PostgresNotificationSubscription {
         try {
             connection = connect();
             receiver.execute(this::receive);
+            LOG.trace("Started PostgreSQL notification subscription with [{}] listener methods for datasource [{}]",
+                dispatchers.size(), name);
         } catch (Exception e) {
             running = false;
             closeConnection();
@@ -147,6 +150,7 @@ final class PostgresNotificationSubscription {
             for (String channel : channels) {
                 try (Statement statement = candidate.createStatement()) {
                     statement.execute("LISTEN " + postgresConnection.escapeIdentifier(channel));
+                    LOG.trace("Subscribed to PostgreSQL notification channel [{}] for datasource [{}]", channel, name);
                 }
             }
             return candidate;
@@ -175,7 +179,7 @@ final class PostgresNotificationSubscription {
             Thread.currentThread().interrupt();
         } catch (RuntimeException | Error e) {
             failure = e;
-            LOG.error("PostgreSQL notification receiver for [{}] terminated unexpectedly", name, e);
+            LOG.error("PostgreSQL notification receiver for datasource [{}] terminated unexpectedly", name, e);
             throw e;
         } finally {
             finishReception(failure);
@@ -209,6 +213,7 @@ final class PostgresNotificationSubscription {
                 } else {
                     received.completeExceptionally(failure);
                 }
+                LOG.trace("PostgreSQL notification receiver stopped for datasource [{}]", name);
             }
         }
     }
@@ -234,6 +239,8 @@ final class PostgresNotificationSubscription {
                     delay = initialDelay;
                     // LISTEN has committed before listeners can refresh state missed while disconnected.
                     if (running) {
+                        LOG.debug("Reconnected PostgreSQL notifications for datasource [{}]; submitting invalidation for [{}] listener methods",
+                            name, dispatchers.size());
                         dispatchers.values().forEach(PostgresChangeNotificationDispatcher::invalidate);
                     }
                 }
@@ -251,7 +258,7 @@ final class PostgresNotificationSubscription {
                     }
                     retryCount++;
                 }
-                LOG.warn("PostgreSQL notification connection for [{}] failed; reconnecting in {} ms", name, delay, e);
+                LOG.warn("PostgreSQL notification connection for datasource [{}] failed; reconnecting in {} ms", name, delay, e);
                 awaitReconnect(delay);
                 delay = Math.min(delay * configuration.getRetryDelayMultiplier(), configuration.getMaxRetryDelay().toMillis());
             }
@@ -316,7 +323,8 @@ final class PostgresNotificationSubscription {
         try {
             payload = PostgresNotificationPayload.decode(mapper, notification.getName(), notification.getParameter());
         } catch (IOException | IllegalArgumentException e) {
-            LOG.warn("Invalid PostgreSQL notification on channel [{}]; requesting reconciliation", notification.getName(), e);
+            LOG.warn("Invalid PostgreSQL notification on channel [{}] for datasource [{}]; submitting invalidation",
+                notification.getName(), name, e);
             targets.forEach(entry -> entry.getValue().invalidate());
             return;
         }
@@ -329,6 +337,10 @@ final class PostgresNotificationSubscription {
             }
             if ((!metadata.oldKeys().isEmpty() && !listener.loader().columns().equals(metadata.oldKeys().keySet()))
                 || (!metadata.newKeys().isEmpty() && !listener.loader().columns().equals(metadata.newKeys().keySet()))) {
+                LOG.warn("PostgreSQL notification key columns do not match for datasource [{}], channel [{}], and table [{}].[{}]; "
+                        + "expected [{}], received old [{}] and new [{}]; submitting invalidation",
+                    name, listener.channel(), metadata.schema(), metadata.table(), listener.loader().columns(),
+                    metadata.oldKeys().keySet(), metadata.newKeys().keySet());
                 dispatcher.invalidate();
                 continue;
             }
@@ -350,6 +362,9 @@ final class PostgresNotificationSubscription {
      * @return a future completed when reception, connection cleanup, and listener dispatch have finished
      */
     CompletableFuture<Void> stop() {
+        if (running) {
+            LOG.trace("Stopping PostgreSQL notification subscription for datasource [{}]", name);
+        }
         running = false;
         synchronized (recoveryMonitor) {
             recoveryMonitor.notifyAll();
@@ -377,8 +392,13 @@ final class PostgresNotificationSubscription {
         if (old != null) {
             try {
                 clearAndClose(old);
+                LOG.trace("Closed PostgreSQL notification connection for datasource [{}]", name);
             } catch (SQLException | RuntimeException e) {
-                LOG.debug("Closing PostgreSQL notification connection for [{}]", name, e);
+                if (running) {
+                    LOG.debug("Unable to close PostgreSQL notification connection for datasource [{}] during recovery", name, e);
+                } else {
+                    LOG.warn("Unable to close PostgreSQL notification connection for datasource [{}] while stopping reception", name, e);
+                }
             }
         }
     }
