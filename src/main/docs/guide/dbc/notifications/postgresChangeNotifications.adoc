@@ -166,7 +166,16 @@ The subscription owns each notification connection and closes it after failure o
 Reconnection opens a new connection from the cached source.
 
 Use a direct PostgreSQL connection or a proxy with session pooling; transaction pooling cannot preserve `LISTEN`
-state. Configure PostgreSQL driver connection and network timeouts for your deployment.
+state. Dedicated notification connections use finite PostgreSQL driver timeouts: `connectTimeout` defaults
+to 10 seconds, while `loginTimeout` and `socketTimeout` default to 30 seconds. These defaults replace absent
+or zero (unlimited) values after JDBC URL properties have been applied. Positive configured values are
+preserved; invalid values fail subscription startup. Set these driver properties in the datasource settings
+or JDBC URL to suit your deployment. The defaults apply only to notification connections.
+
+`connectTimeout` bounds each socket connection attempt, `loginTimeout` bounds the caller's wait for
+connection establishment, and `socketTimeout` bounds socket reads during operations such as `LISTEN`.
+These settings do not provide immediate shutdown cancellation or an overall shutdown deadline.
+Timed notification polling continues to use `poll-timeout`.
 
 Each notification is submitted directly to Micronaut's blocking executor. Callbacks for the same listener
 can run concurrently, and callback execution and completion order are not guaranteed. Listener implementations

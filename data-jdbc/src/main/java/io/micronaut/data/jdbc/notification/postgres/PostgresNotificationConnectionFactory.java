@@ -42,10 +42,26 @@ import java.util.concurrent.ConcurrentMap;
  * the lifetime of this factory. Its JDBC URL, credentials, and driver properties are resolved
  * at that time. Each connection request opens a new physical connection outside the application
  * connection pool, including requests made during reconnection.</p>
+ *
+ * <p>Missing or zero connect, login, and socket-read timeouts are replaced with finite defaults
+ * of 10, 30, and 30 seconds respectively. The connect timeout limits each TCP connection attempt;
+ * the login timeout limits the caller's wait for a usable connection, including authentication;
+ * and the socket-read timeout limits reads during operations such as {@code LISTEN} and {@code UNLISTEN}.
+ * pgJDBC defaults login and socket-read timeouts to unlimited. Finite values allow stalled setup
+ * operations to fail so reception can retry or finish shutdown. The connect timeout also replaces
+ * an explicitly unlimited value, while retaining pgJDBC's default of 10 seconds.</p>
+ *
+ * <p>Positive configured timeouts are preserved. These defaults apply only to notification connections.
+ * They do not cancel JDBC operations immediately when shutdown is requested or provide an overall
+ * shutdown deadline. Timed notification polling uses the subscription's poll timeout.</p>
  */
 @Singleton
 @Requires(classes = PGSimpleDataSource.class)
 final class PostgresNotificationConnectionFactory {
+    private static final int DEFAULT_CONNECT_TIMEOUT_SECONDS = 10;
+    private static final int DEFAULT_LOGIN_TIMEOUT_SECONDS = 30;
+    private static final int DEFAULT_SOCKET_TIMEOUT_SECONDS = 30;
+
     private final BeanContext beanContext;
     private final Environment environment;
     private final ConcurrentMap<String, PGSimpleDataSource> dataSources = new ConcurrentHashMap<>();
@@ -81,11 +97,41 @@ final class PostgresNotificationConnectionFactory {
         if (parsed == null) {
             throw new ConfigurationException("Invalid PostgreSQL notification JDBC URL for datasource [" + dataSourceName + "]");
         }
+        ensureFiniteTimeout(parsed, PGProperty.CONNECT_TIMEOUT, DEFAULT_CONNECT_TIMEOUT_SECONDS, dataSourceName);
+        ensureFiniteTimeout(parsed, PGProperty.LOGIN_TIMEOUT, DEFAULT_LOGIN_TIMEOUT_SECONDS, dataSourceName);
+        ensureFiniteTimeout(parsed, PGProperty.SOCKET_TIMEOUT, DEFAULT_SOCKET_TIMEOUT_SECONDS, dataSourceName);
         PGSimpleDataSource source = new PGSimpleDataSource();
         for (PGProperty property : PGProperty.values()) {
             source.setProperty(property, parsed.getProperty(property.getName()));
         }
         return source;
+    }
+
+    /**
+     * Replaces missing or unlimited timeouts after URL precedence has been applied.
+     * Positive driver values are retained; invalid values fail before opening a connection.
+     */
+    private static void ensureFiniteTimeout(Properties properties, PGProperty property, int defaultSeconds, String dataSourceName) {
+        String value = properties.getProperty(property.getName());
+        if (value == null) {
+            property.set(properties, defaultSeconds);
+            return;
+        }
+        try {
+            // pgJDBC accepts fractional login seconds but requires integer connect and socket seconds.
+            double seconds = property == PGProperty.LOGIN_TIMEOUT ? Float.parseFloat(value) : Integer.parseInt(value);
+            double millis = seconds * 1000;
+            double maxMillis = property == PGProperty.LOGIN_TIMEOUT ? Long.MAX_VALUE : Integer.MAX_VALUE;
+            if (!Double.isFinite(seconds) || seconds < 0 || (seconds > 0 && millis < 1) || millis >= maxMillis) {
+                throw new NumberFormatException();
+            }
+            if (seconds == 0) {
+                property.set(properties, defaultSeconds);
+            }
+        } catch (NumberFormatException e) {
+            throw new ConfigurationException("Invalid PostgreSQL notification " + property.getName()
+                + " for datasource [" + dataSourceName + "]: expected a finite non-negative timeout in seconds representable in milliseconds", e);
+        }
     }
 
     /**
