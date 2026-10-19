@@ -142,25 +142,35 @@ final class PostgresNotificationSubscription {
         Connection candidate = connectionFactory.openConnection(name);
         try {
             candidate.setAutoCommit(true);
-            PGConnection postgresConnection = candidate.unwrap(PGConnection.class);
-            Set<String> channels = new HashSet<>();
-            for (PostgresChangeListenerDefinition listener : dispatchers.keySet()) {
-                channels.add(listener.channel());
-            }
-            for (String channel : channels) {
-                try (Statement statement = candidate.createStatement()) {
-                    statement.execute("LISTEN " + postgresConnection.escapeIdentifier(channel));
-                    LOG.trace("Subscribed to PostgreSQL notification channel [{}] for datasource [{}]", channel, name);
-                }
-            }
+            listen(candidate);
             return candidate;
         } catch (Exception e) {
             try {
                 clearAndClose(candidate);
-            } catch (SQLException closeFailure) {
+            } catch (SQLException | RuntimeException closeFailure) {
                 e.addSuppressed(closeFailure);
             }
             throw e;
+        }
+    }
+
+    /**
+     * Subscribes the connection to each distinct listener channel.
+     *
+     * @param connection the listening connection
+     * @throws SQLException if a channel subscription fails
+     */
+    private void listen(Connection connection) throws SQLException {
+        PGConnection postgresConnection = connection.unwrap(PGConnection.class);
+        Set<String> channels = new HashSet<>();
+        for (PostgresChangeListenerDefinition listener : dispatchers.keySet()) {
+            channels.add(listener.channel());
+        }
+        for (String channel : channels) {
+            try (Statement statement = connection.createStatement()) {
+                statement.execute("LISTEN " + postgresConnection.escapeIdentifier(channel));
+                LOG.trace("Subscribed to PostgreSQL notification channel [{}] for datasource [{}]", channel, name);
+            }
         }
     }
 
@@ -329,29 +339,41 @@ final class PostgresNotificationSubscription {
             return;
         }
         for (Map.Entry<PostgresChangeListenerDefinition, PostgresChangeNotificationDispatcher> target : targets) {
-            PostgresChangeListenerDefinition listener = target.getKey();
-            PostgresChangeNotificationDispatcher dispatcher = target.getValue();
-            PostgresChangeEventMetadata metadata = payload.metadata();
-            if (!listener.matches(metadata.schema(), metadata.table())) {
-                continue;
-            }
-            if ((!metadata.oldKeys().isEmpty() && !listener.loader().columns().equals(metadata.oldKeys().keySet()))
-                || (!metadata.newKeys().isEmpty() && !listener.loader().columns().equals(metadata.newKeys().keySet()))) {
-                LOG.warn("PostgreSQL notification key columns do not match for datasource [{}], channel [{}], and table [{}].[{}]; "
-                        + "expected [{}], received old [{}] and new [{}]; submitting invalidation",
-                    name, listener.channel(), metadata.schema(), metadata.table(), listener.loader().columns(),
-                    metadata.oldKeys().keySet(), metadata.newKeys().keySet());
-                dispatcher.invalidate();
-                continue;
-            }
-            ChangeEvent<?> event = switch (payload.operation()) {
-                case INSERT, UPDATE -> new DeferredChangeEvent<>(payload.operation(), metadata,
-                    () -> listener.loader().reload(metadata.newKeys()));
-                case DELETE, INVALIDATE ->
-                    new DefaultChangeEvent<>(payload.operation(), null, metadata);
-            };
-            dispatcher.submitDispatch(event);
+            dispatch(target.getKey(), target.getValue(), payload);
         }
+    }
+
+    /**
+     * Validates the table identity and key columns before submitting an event to one listener.
+     * Entity loading for inserts and updates is deferred to callback execution.
+     *
+     * @param listener the listener definition
+     * @param dispatcher the listener dispatcher
+     * @param payload the decoded notification
+     */
+    private void dispatch(PostgresChangeListenerDefinition listener,
+                          PostgresChangeNotificationDispatcher dispatcher,
+                          PostgresNotificationPayload payload) {
+        PostgresChangeEventMetadata metadata = payload.metadata();
+        if (!listener.matches(metadata.schema(), metadata.table())) {
+            return;
+        }
+        if ((!metadata.oldKeys().isEmpty() && !listener.loader().columns().equals(metadata.oldKeys().keySet()))
+            || (!metadata.newKeys().isEmpty() && !listener.loader().columns().equals(metadata.newKeys().keySet()))) {
+            LOG.warn("PostgreSQL notification key columns do not match for datasource [{}], channel [{}], and table [{}].[{}]; "
+                    + "expected [{}], received old [{}] and new [{}]; submitting invalidation",
+                name, listener.channel(), metadata.schema(), metadata.table(), listener.loader().columns(),
+                metadata.oldKeys().keySet(), metadata.newKeys().keySet());
+            dispatcher.invalidate();
+            return;
+        }
+        ChangeEvent<?> event = switch (payload.operation()) {
+            case INSERT, UPDATE -> new DeferredChangeEvent<>(payload.operation(), metadata,
+                () -> listener.loader().reload(metadata.newKeys()));
+            case DELETE, INVALIDATE ->
+                new DefaultChangeEvent<>(payload.operation(), null, metadata);
+        };
+        dispatcher.submitDispatch(event);
     }
 
     /**

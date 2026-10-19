@@ -40,6 +40,39 @@ import java.util.concurrent.atomic.AtomicReference
 
 class PostgresNotificationSubscriptionSpec extends Specification {
     @Unroll
+    void "startup preserves the setup failure after #scenario"() {
+        given:
+        def setupFailure = new SQLException('setup failed')
+        def connection = Mock(Connection)
+        def source = Stub(PGSimpleDataSource) {
+            getConnection() >> connection
+        }
+        def subscription = newSubscription(source)
+
+        when:
+        subscription.start()
+
+        then:
+        def failure = thrown(IllegalStateException)
+        failure.cause.is(setupFailure)
+        setupFailure.suppressed.toList() == [cleanupFailure]
+        1 * connection.setAutoCommit(true) >> { throw setupFailure }
+        1 * connection.isClosed() >> true
+        1 * connection.close() >> { throw cleanupFailure }
+        subscription.stop().get(10, TimeUnit.SECONDS) == null
+        subscription.pendingTasks() == 0
+        subscription.@receiver.awaitTermination(10, TimeUnit.SECONDS)
+
+        cleanup:
+        subscription?.stop()?.get(10, TimeUnit.SECONDS)
+
+        where:
+        scenario                  | cleanupFailure
+        'SQL cleanup failure'     | new SQLException('close failed')
+        'runtime cleanup failure' | new IllegalStateException('close failed')
+    }
+
+    @Unroll
     void "failed reception discards the connection without UNLISTEN: #scenario"() {
         given:
         def entered = new CountDownLatch(1)
