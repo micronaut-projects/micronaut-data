@@ -26,6 +26,7 @@ import io.micronaut.data.jdbc.operations.JdbcRepositoryOperations;
 import io.micronaut.json.JsonMapper;
 import io.micronaut.runtime.graceful.GracefulShutdownCapable;
 import io.micronaut.scheduling.TaskExecutors;
+import io.micronaut.scheduling.TaskScheduler;
 import jakarta.annotation.PreDestroy;
 import jakarta.inject.Named;
 import jakarta.inject.Singleton;
@@ -66,16 +67,19 @@ final class PostgresChangeNotificationProvider implements ChangeNotificationProv
     private final BeanContext beanContext;
     private final BeanProvider<JsonMapper> jsonMapperProvider;
     private final Executor executor;
+    private final TaskScheduler taskScheduler;
     private final PostgresNotificationConfiguration configuration;
     private final Map<String, PostgresNotificationSubscription> subscriptions = new HashMap<>();
     private @Nullable CompletableFuture<Void> shutdown;
 
     PostgresChangeNotificationProvider(BeanContext beanContext, BeanProvider<JsonMapper> jsonMapperProvider,
                                        @Named(TaskExecutors.BLOCKING) Executor executor,
+                                       @Named(TaskExecutors.SCHEDULED) TaskScheduler taskScheduler,
                                        PostgresNotificationConfiguration configuration) {
         this.beanContext = beanContext;
         this.jsonMapperProvider = jsonMapperProvider;
         this.executor = executor;
+        this.taskScheduler = taskScheduler;
         this.configuration = configuration;
     }
 
@@ -104,7 +108,7 @@ final class PostgresChangeNotificationProvider implements ChangeNotificationProv
             throw new IllegalStateException("PostgreSQL notifications already registered or shutting down for " + name);
         }
         var subscription = new PostgresNotificationSubscription(name, operations, listeners, beanContext,
-            jsonMapperProvider.get(), executor, configuration);
+            jsonMapperProvider.get(), executor, taskScheduler, configuration);
         subscription.start();
         subscriptions.put(name, subscription);
     }

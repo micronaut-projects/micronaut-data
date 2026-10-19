@@ -18,125 +18,150 @@ package io.micronaut.data.jdbc.notification.postgres;
 import io.micronaut.data.jdbc.notification.ChangeEvent;
 import io.micronaut.data.jdbc.notification.ChangeOperation;
 import io.micronaut.data.jdbc.notification.DefaultChangeEvent;
+import io.micronaut.scheduling.TaskScheduler;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
-import java.util.ArrayDeque;
+
+import java.time.Duration;
 import java.util.concurrent.CompletableFuture;
+import java.util.concurrent.RejectedExecutionException;
+import java.util.concurrent.atomic.AtomicBoolean;
 import java.util.concurrent.Executor;
 import java.util.function.Consumer;
 
 /**
- * Queues events and serializes callbacks for one listener on the supplied executor.
+ * Submits entity loading and listener invocation directly to the supplied blocking executor.
  *
- * <p>The queue lets the notification receive thread continue receiving and routing events while
- * callbacks load entities, retry failed operations, or perform other application work. Each listener
- * has its own dispatcher, so callbacks for different listeners can run concurrently, subject to
- * executor capacity. Callbacks for the same listener run one at a time in queue order.</p>
+ * <p>Each notification is submitted separately. Callbacks for the same listener may run concurrently,
+ * and execution and completion order depend on the executor. The dispatcher does not maintain an
+ * event queue or serialize listener invocations.</p>
  *
- * <p>The queue has a fixed capacity to bound pending work when notifications arrive faster than
- * the listener can process them. On overflow, pending events and the incoming event are replaced
- * by an {@link ChangeOperation#INVALIDATE} event so the listener can reload its state.
- * A callback already running is allowed to finish.</p>
+ * <p>Callbacks count as active only when execution begins. Stopping rejects callbacks that have not
+ * started and returns a future that completes when callbacks already running finish. Runtime callback
+ * failures are logged; JVM errors propagate to the executor after task accounting is released.</p>
  *
- * <p>Stopping rejects new events and lets an active drain finish the running callback and remaining
- * queued events. The returned completion future allows graceful shutdown to wait for that work.</p>
+ * <p>If the executor rejects a submission, one pending invalidation represents lost notifications.
+ * The scheduler retries its submission until accepted or shutdown starts. Entity loading and listener
+ * invocation always run through the blocking executor, including invalidation callbacks.</p>
  */
 final class PostgresChangeNotificationDispatcher {
     private static final Logger LOG = LoggerFactory.getLogger(PostgresChangeNotificationDispatcher.class);
 
-    private final ArrayDeque<ChangeEvent<?>> queue = new ArrayDeque<>();
+    private static final Duration DISPATCH_RETRY_DELAY = Duration.ofSeconds(1);
+
+    private final AtomicBoolean invalidationPending = new AtomicBoolean();
+    private final TaskScheduler taskScheduler;
     private final CompletableFuture<Void> completion = new CompletableFuture<>();
     private final Executor executor;
-    private final int capacity;
     private final Consumer<ChangeEvent<?>> listener;
     private final String description;
 
-    private boolean draining;
     private boolean closing;
+    private long activeTasks;
 
-    PostgresChangeNotificationDispatcher(Executor executor, int capacity, Consumer<ChangeEvent<?>> listener, String description) {
+    PostgresChangeNotificationDispatcher(Executor executor, TaskScheduler taskScheduler, Consumer<ChangeEvent<?>> listener, String description) {
         this.executor = executor;
-        this.capacity = capacity;
+        this.taskScheduler = taskScheduler;
         this.listener = listener;
         this.description = description;
     }
 
     void invalidate() {
-        offer(new DefaultChangeEvent<>(ChangeOperation.INVALIDATE, null, null));
+        submitDispatch(new DefaultChangeEvent<>(ChangeOperation.INVALIDATE, null, null));
     }
 
-    void offer(ChangeEvent<?> event) {
-        synchronized (this) {
-            if (closing) {
-                return;
-            }
-            if (queue.size() >= capacity) {
-                queue.clear();
-                queue.add(new DefaultChangeEvent<>(ChangeOperation.INVALIDATE, null, null));
-                LOG.warn("PostgreSQL listener queue overflow for [{}]; requesting reconciliation", description);
-            } else {
-                queue.add(event);
-            }
-            if (draining) {
-                return;
-            }
-            draining = true;
+    void submitDispatch(ChangeEvent<?> event) {
+        if (isClosing()) {
+            return;
         }
         try {
-            executor.execute(this::drain);
+            executor.execute(() -> dispatchSafely(event));
         } catch (RuntimeException e) {
-            synchronized (this) {
-                draining = false;
-                queue.clear();
-                if (closing) {
-                    completion.complete(null);
-                } else {
-                    queue.add(new DefaultChangeEvent<>(ChangeOperation.INVALIDATE, null, null));
-                }
+            LOG.warn("Unable to submit PostgreSQL change listener [{}]", description, e);
+            if (e instanceof RejectedExecutionException && invalidationPending.compareAndSet(false, true)) {
+                retryInvalidation();
             }
-            throw e;
         }
     }
 
-    private void drain() {
-        while (true) {
-            ChangeEvent<?> event;
-            synchronized (this) {
-                event = queue.poll();
-                if (event == null) {
-                    draining = false;
-                    if (closing) {
-                        completion.complete(null);
-                    }
-                    return;
-                }
-            }
-            try {
-                listener.accept(event);
-            } catch (Exception e) {
-                LOG.error("PostgreSQL change listener [{}] failed", description, e);
-            } catch (Error e) {
-                synchronized (this) {
-                    draining = false;
-                    closing = true;
-                    queue.clear();
-                    completion.completeExceptionally(e);
-                }
-                throw e;
+    @SuppressWarnings("FutureReturnValueIgnored") // Retries check shutdown before submitting work.
+    private void retryInvalidation() {
+        if (isClosing()) {
+            invalidationPending.set(false);
+            return;
+        }
+        try {
+            taskScheduler.schedule(DISPATCH_RETRY_DELAY, this::submitPendingInvalidation);
+        } catch (RuntimeException e) {
+            invalidationPending.set(false);
+            LOG.error("Unable to schedule PostgreSQL listener invalidation for [{}]", description, e);
+        }
+    }
+
+    private void submitPendingInvalidation() {
+        if (isClosing()) {
+            invalidationPending.set(false);
+            return;
+        }
+        try {
+            executor.execute(() -> {
+                // Losses while queued are covered by this refresh. Losses during refresh need another one.
+                invalidationPending.set(false);
+                dispatchSafely(new DefaultChangeEvent<>(ChangeOperation.INVALIDATE, null, null));
+            });
+        } catch (RuntimeException e) {
+            LOG.warn("Unable to submit PostgreSQL listener invalidation for [{}]", description, e);
+            if (e instanceof RejectedExecutionException) {
+                retryInvalidation();
+            } else {
+                invalidationPending.set(false);
             }
         }
+    }
+
+    private synchronized boolean isClosing() {
+        return closing;
+    }
+
+    private void dispatchSafely(ChangeEvent<?> event) {
+        if (!acceptTask()) {
+            return;
+        }
+        try {
+            listener.accept(event);
+        } catch (Exception e) {
+            LOG.error("PostgreSQL change listener [{}] failed", description, e);
+        } finally {
+            completeTask();
+        }
+    }
+
+    private synchronized boolean acceptTask() {
+        if (closing) {
+            return false;
+        }
+        activeTasks++;
+        return true;
+    }
+
+    private synchronized void completeTask() {
+        activeTasks--;
+        completeIfIdle();
     }
 
     synchronized CompletableFuture<Void> stop() {
         closing = true;
-        if (!draining) {
-            queue.clear();
-            completion.complete(null);
-        }
+        completeIfIdle();
         return completion;
     }
 
     synchronized long pendingTasks() {
-        return (long) queue.size() + (draining ? 1 : 0);
+        return activeTasks;
+    }
+
+    private void completeIfIdle() {
+        if (closing && activeTasks == 0) {
+            completion.complete(null);
+        }
     }
 }

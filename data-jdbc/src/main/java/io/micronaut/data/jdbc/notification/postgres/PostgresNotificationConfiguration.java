@@ -21,36 +21,17 @@ import java.time.Duration;
 import java.util.Objects;
 
 /**
- * Settings for PostgreSQL notification connections and listener queues across datasources.
+ * Settings for PostgreSQL notification connections across datasources.
  * @since 5.3.0
  */
 @Experimental
 @ConfigurationProperties("micronaut.data.jdbc.notifications.postgres")
 public final class PostgresNotificationConfiguration {
-    private int queueCapacity = 1024;
     private Duration pollTimeout = Duration.ofSeconds(1);
     private int maxRetries = -1;
     private int retryDelayMultiplier = 2;
     private Duration retryDelay = Duration.ofSeconds(1);
     private Duration maxRetryDelay = Duration.ofSeconds(60);
-    private Duration shutdownTimeout = Duration.ofSeconds(30);
-
-    /**
-     * @return Maximum pending events per listener, default 1024.
-     */
-    public int getQueueCapacity() {
-        return queueCapacity;
-    }
-
-    /**
-     * @param queueCapacity Positive pending-event limit.
-     */
-    public void setQueueCapacity(int queueCapacity) {
-        if (queueCapacity < 1) {
-            throw new IllegalArgumentException("queue-capacity must be positive");
-        }
-        this.queueCapacity = queueCapacity;
-    }
 
     /**
      * @return Maximum notification receive wait, default one second.
@@ -138,20 +119,6 @@ public final class PostgresNotificationConfiguration {
      */
     public void setMaxRetryDelay(Duration maxRetryDelay) {
         this.maxRetryDelay = positive(maxRetryDelay, "MaxRetryDelay");
-    }
-
-    /**
-     * @return Maximum callback cleanup wait after failed startup, default thirty seconds.
-     */
-    public Duration getShutdownTimeout() {
-        return shutdownTimeout;
-    }
-
-    /**
-     * @param shutdownTimeout A positive duration in whole milliseconds for cleanup after failed startup.
-     */
-    public void setShutdownTimeout(Duration shutdownTimeout) {
-        this.shutdownTimeout = positive(shutdownTimeout, "ShutdownTimeout");
     }
 
     private static Duration positive(Duration value, String name) {

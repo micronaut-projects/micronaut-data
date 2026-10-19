@@ -28,14 +28,12 @@ import io.micronaut.data.jdbc.notification.ChangeNotificationProvider
 import io.micronaut.data.jdbc.notification.ChangeEvent
 import io.micronaut.data.jdbc.notification.ChangeOperation
 import io.micronaut.data.jdbc.notification.postgres.PostgresChangeEventMetadata
-import io.micronaut.data.jdbc.notification.postgres.PostgresNotificationConfiguration
 import io.micronaut.data.jdbc.postgres.PostgresTestPropertyProvider
 import io.micronaut.data.runtime.config.SchemaGenerate
 import spock.lang.Specification
 import jakarta.inject.Singleton
 import javax.sql.DataSource
 import java.sql.Connection
-import java.time.Duration
 import java.util.concurrent.CompletableFuture
 import java.util.concurrent.TimeoutException
 import java.util.concurrent.TimeUnit
@@ -212,13 +210,11 @@ class PostgresNotificationProviderSpec extends Specification implements Postgres
         execute('DELETE FROM "ProviderBook"')
         writer.commit()
         writer.autoCommit = true
-        def inserted = next()
-        def deleted = next()
+        def events = [next(), next()]
 
         then:
-        inserted.operation() == ChangeOperation.INSERT
-        inserted.entity().isEmpty()
-        deleted.operation() == ChangeOperation.DELETE
+        events*.operation().toSet() == [ChangeOperation.INSERT, ChangeOperation.DELETE].toSet()
+        events.find { it.operation() == ChangeOperation.INSERT }.entity().isEmpty()
     }
 
     void "shutdown lifecycle starts cleanup asynchronously and waits for accepted callbacks"() {
@@ -230,7 +226,6 @@ class PostgresNotificationProviderSpec extends Specification implements Postgres
         assert listener.entered.await(10, TimeUnit.SECONDS)
         def provider = application.getBeansOfType(ChangeNotificationProvider)
             .find { it.class.simpleName == 'PostgresChangeNotificationProvider' }
-        application.getBean(PostgresNotificationConfiguration).shutdownTimeout = Duration.ofMillis(1)
 
         when:
         CompletableFuture.runAsync {

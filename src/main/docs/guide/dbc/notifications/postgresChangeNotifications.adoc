@@ -150,7 +150,9 @@ Reserve capacity for one long-lived connection per subscribing datasource, plus 
 and application queries. Use a direct PostgreSQL connection or a proxy with session pooling; transaction pooling
 cannot preserve `LISTEN` state. Configure datasource connection-acquisition and network timeouts for your deployment.
 
-Callbacks run serially for each listener on Micronaut's blocking executor. Separate listeners can run concurrently.
+Each notification is submitted directly to Micronaut's blocking executor. Callbacks for the same listener
+can run concurrently, and callback execution and completion order are not guaranteed. Listener implementations
+must coordinate shared state and tolerate callbacks completing in a different order from notification reception.
 Invocation uses the listener bean's interceptors, including `@Retryable`. Insert and update entity loading occurs
 inside that invocation, so loading failures can also be retried. Once retries are exhausted, the failure is logged
 and subsequent notifications continue.
@@ -160,12 +162,16 @@ changes missed while disconnected. It reconnects with exponential backoff. An in
 on its channel. A mismatched key mapping invalidates the affected listener. Well-formed events for other tables
 are ignored.
 
-Each listener has a bounded queue. Overflow replaces pending changes with `INVALIDATE`.
-Recovery, malformed-payload, and overflow invalidations have no PostgreSQL event metadata.
-Shutdown stops reception, removes subscriptions, releases the connection, and drains accepted callbacks.
+Pending work and executor capacity are controlled by the blocking executor configuration. If the executor rejects
+a submission, the dispatcher retains one pending `INVALIDATE` and retries its submission until accepted or shutdown
+starts. Lost notifications while an invalidation is pending are covered by that refresh; losses after it starts
+request another invalidation. The scheduler only retries submission; callbacks run on the blocking executor.
+Recovery, rejected-submission, and malformed-payload invalidations have no PostgreSQL event metadata.
+Shutdown stops reception, removes subscriptions, releases the connection, and waits for running callbacks.
+Callbacks submitted to the executor that have not started when shutdown begins are discarded.
 Context shutdown events and bean destruction initiate cleanup asynchronously. Graceful shutdown returns a stage
-that completes when cleanup and accepted callbacks finish; Micronaut's graceful shutdown configuration controls
-how long the application waits. The PostgreSQL `shutdown-timeout` setting bounds callback cleanup after failed startup.
+that completes when cleanup and running callbacks finish; Micronaut's graceful shutdown configuration controls
+how long the application waits.
 
 [configuration]
 ----
@@ -174,16 +180,14 @@ micronaut:
     jdbc:
       notifications:
         postgres:
-          queue-capacity: 1024
           poll-timeout: 1s
           max-retries: -1
           retry-delay: 1s
           retry-delay-multiplier: 2
           max-retry-delay: 60s
-          shutdown-timeout: 30s
 ----
 
-These settings apply to all subscribing datasources. The queue capacity must be positive.
+These settings apply to all subscribing datasources.
 Durations must be at least one millisecond and no greater than 2,147,483,647 milliseconds.
 
 `max-retries` defaults to `-1`, which retries recovery until shutdown. Non-negative values count retries

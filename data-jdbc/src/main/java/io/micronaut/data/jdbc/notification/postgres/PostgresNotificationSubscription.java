@@ -24,6 +24,7 @@ import io.micronaut.data.jdbc.notification.DeferredChangeEvent;
 import io.micronaut.data.jdbc.operations.JdbcRepositoryOperations;
 import io.micronaut.inject.ExecutableMethod;
 import io.micronaut.json.JsonMapper;
+import io.micronaut.scheduling.TaskScheduler;
 import org.jspecify.annotations.Nullable;
 import org.postgresql.PGConnection;
 import org.postgresql.PGNotification;
@@ -42,7 +43,6 @@ import java.util.Map;
 import java.util.Set;
 import java.util.concurrent.CompletableFuture;
 import java.util.concurrent.Executor;
-import java.util.concurrent.CompletionException;
 import java.util.concurrent.TimeUnit;
 import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Executors;
@@ -52,15 +52,15 @@ import java.util.concurrent.Executors;
  *
  * <p>A dedicated connection subscribes to each distinct listener channel. Startup opens the
  * connection synchronously, then a single receive thread handles notifications, reconnection,
- * and connection cleanup. Each successful reconnection queues an invalidation event for every
+ * and connection cleanup. Each successful reconnection submits an invalidation event for every
  * listener so it can account for changes missed while disconnected.</p>
  *
  * <p>Notifications are routed by channel, schema, and table. The subscription owns one dispatcher
- * per listener to serialize its callbacks on the supplied executor. Entity loading uses repository
+ * per listener to submit callbacks to the supplied executor. Entity loading uses repository
  * connections independently of the listening connection.</p>
  *
- * <p>Stopping the subscription signals the receive loop to exit. Cleanup releases the listening
- * connection before waiting for accepted callbacks to finish.</p>
+ * <p>Stopping the subscription closes callback admission and signals the receive loop to exit.
+ * Shutdown completes after the listening connection is released and running callbacks finish.</p>
  */
 final class PostgresNotificationSubscription {
     private static final Logger LOG = LoggerFactory.getLogger(PostgresNotificationSubscription.class);
@@ -84,6 +84,7 @@ final class PostgresNotificationSubscription {
                                      BeanContext context,
                                      JsonMapper mapper,
                                      Executor executor,
+                                     TaskScheduler taskScheduler,
                                      PostgresNotificationConfiguration configuration) {
         this.name = name;
         this.mapper = mapper;
@@ -95,7 +96,7 @@ final class PostgresNotificationSubscription {
             PostgresChangeListenerDefinition definition = definitionFactory.create(method);
             PostgresChangeNotificationDispatcher dispatcher = new PostgresChangeNotificationDispatcher(
                 executor,
-                configuration.getQueueCapacity(),
+                taskScheduler,
                 event -> invoke(context, method, event),
                 method.method().getDescription(true));
             dispatchers.put(definition, dispatcher);
@@ -109,7 +110,7 @@ final class PostgresNotificationSubscription {
 
     /**
      * Opens the initial listening connection and starts notification reception.
-     * If startup fails, releases the connection and waits for callback cleanup up to the configured timeout.
+     * If startup fails, releases the connection and stops the listener dispatchers.
      *
      * @throws IllegalStateException if the subscription cannot be started
      */
@@ -122,13 +123,7 @@ final class PostgresNotificationSubscription {
             closeConnection();
             receiver.shutdown();
             received.complete(null);
-            try {
-                CompletableFuture.allOf(dispatchers.values().stream().map(PostgresChangeNotificationDispatcher::stop)
-                        .toArray(CompletableFuture[]::new))
-                    .orTimeout(configuration.getShutdownTimeout().toMillis(), TimeUnit.MILLISECONDS).join();
-            } catch (CompletionException cleanupFailure) {
-                e.addSuppressed(cleanupFailure);
-            }
+            dispatchers.values().forEach(PostgresChangeNotificationDispatcher::stop);
             throw new IllegalStateException("Cannot start PostgreSQL notifications for datasource [" + name + "]", e);
         }
     }
@@ -167,7 +162,7 @@ final class PostgresNotificationSubscription {
     /**
      * Receives and routes notifications until stopped, reconnecting after failures with exponential backoff.
      * Stops reception if the configured recovery retry limit is exhausted.
-     * Queues invalidation events after reconnection and before reception resumes.
+     * Submits invalidation events after reconnection and before reception resumes.
      * Releases the connection and completes the reception stage when the loop exits.
      */
     private void receive() {
@@ -269,7 +264,7 @@ final class PostgresNotificationSubscription {
     }
 
     /**
-     * Decodes a notification and queues events for listeners matching its channel and table identity.
+     * Decodes a notification and submits events for listeners matching its channel and table identity.
      * Malformed payloads invalidate listeners on the channel; key mismatches invalidate the affected listener.
      * Insert and update events defer entity loading to callback execution.
      *
@@ -307,13 +302,13 @@ final class PostgresNotificationSubscription {
                 case DELETE, INVALIDATE ->
                     new DefaultChangeEvent<>(payload.operation(), null, metadata);
             };
-            dispatcher.offer(event);
+            dispatcher.submitDispatch(event);
         }
     }
 
     /**
      * Requests reception to stop and wakes any pending reconnect delay without blocking the caller.
-     * Listener dispatchers stop after reception and connection cleanup finish, then drain accepted callbacks.
+     * Listener dispatchers immediately close task admission; callbacks already running may finish.
      *
      * @return a future completed when reception, connection cleanup, and listener dispatch have finished
      */
@@ -322,12 +317,13 @@ final class PostgresNotificationSubscription {
         synchronized (recoveryMonitor) {
             recoveryMonitor.notifyAll();
         }
-        return received.thenCompose(ignored -> CompletableFuture.allOf(dispatchers.values().stream()
-            .map(PostgresChangeNotificationDispatcher::stop).toArray(CompletableFuture[]::new)));
+        CompletableFuture<Void> callbacks = CompletableFuture.allOf(dispatchers.values().stream()
+            .map(PostgresChangeNotificationDispatcher::stop).toArray(CompletableFuture[]::new));
+        return CompletableFuture.allOf(received, callbacks);
     }
 
     /**
-     * Counts unfinished reception as one task and adds queued and running listener work.
+     * Counts unfinished reception as one task and adds running listener callbacks.
      *
      * @return the number of outstanding tasks
      */

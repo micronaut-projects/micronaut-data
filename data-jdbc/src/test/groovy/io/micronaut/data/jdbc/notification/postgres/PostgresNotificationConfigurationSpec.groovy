@@ -25,11 +25,9 @@ class PostgresNotificationConfigurationSpec extends Specification {
         def config = new PostgresNotificationConfiguration()
 
         then:
-        config.queueCapacity == 1024
         config.pollTimeout == Duration.ofSeconds(1)
         config.retryDelay == Duration.ofSeconds(1)
         config.maxRetryDelay == Duration.ofSeconds(60)
-        config.shutdownTimeout == Duration.ofSeconds(30)
     }
 
     @Unroll
@@ -43,13 +41,10 @@ class PostgresNotificationConfigurationSpec extends Specification {
 
         where:
         property          | value
-        'queueCapacity'   | 0
-        'queueCapacity'   | -1
         'pollTimeout'     | Duration.ZERO
         'pollTimeout'     | Duration.ofNanos(1)
         'pollTimeout'     | Duration.ofMillis(Integer.MAX_VALUE + 1L)
         'retryDelay'      | Duration.ofMillis(-1)
         'maxRetryDelay'   | Duration.ZERO
-        'shutdownTimeout' | Duration.ZERO
     }
 }
