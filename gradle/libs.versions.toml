@@ -19,6 +19,7 @@ micronaut-multitenancy = "6.1.0"
 micronaut-validation = "5.2.1"
 micronaut-logging = "2.1.0"
 micronaut-flyway = "8.1.1"
+micronaut-liquibase = "7.2.0"
 micronaut-coherence = "7.1.0"
 micronaut-sourcegen = "2.2.3"
 
@@ -80,6 +81,7 @@ micronaut-spring = { module = "io.micronaut.spring:micronaut-spring-bom", versio
 micronaut-sql = { module = "io.micronaut.sql:micronaut-sql-bom", version.ref = "micronaut-sql" }
 micronaut-r2dbc = { module = "io.micronaut.r2dbc:micronaut-r2dbc-bom", version.ref = "micronaut-r2dbc" }
 micronaut-flyway = { module = "io.micronaut.flyway:micronaut-flyway-bom", version.ref = "micronaut-flyway" }
+micronaut-liquibase = { module = "io.micronaut.liquibase:micronaut-liquibase-bom", version.ref = "micronaut-liquibase" }
 micronaut-serde = { module = "io.micronaut.serde:micronaut-serde-bom", version.ref = "micronaut-serde" }
 micronaut-coherence = { module = "io.micronaut.coherence:micronaut-coherence-bom", version.ref = "micronaut-coherence" }
 micronaut-sourcegen = { module = "io.micronaut.sourcegen:micronaut-sourcegen-bom", version.ref = "micronaut-sourcegen" }
