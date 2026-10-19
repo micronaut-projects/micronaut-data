@@ -164,17 +164,51 @@ final class PostgresNotificationSubscription {
      * Stops reception if the configured recovery retry limit is exhausted.
      * Submits invalidation events after reconnection and before reception resumes.
      * Releases the connection and completes the reception stage when the loop exits.
+     * Unexpected receiver failures complete that stage exceptionally and propagate to the executor.
      */
     private void receive() {
+        Throwable failure = null;
         try {
             receiveLoop();
         } catch (InterruptedException e) {
             Thread.currentThread().interrupt();
+        } catch (RuntimeException | Error e) {
+            failure = e;
+            LOG.error("PostgreSQL notification receiver for [{}] terminated unexpectedly", name, e);
+            throw e;
         } finally {
-            running = false;
+            finishReception(failure);
+        }
+    }
+
+    /**
+     * Releases the connection and completes reception after stopping the executor, even if cleanup fails.
+     * An original receiver failure remains the primary failure if cleanup also fails.
+     *
+     * @param failure the unexpected receiver failure, or {@code null} for normal termination
+     */
+    private void finishReception(@Nullable Throwable failure) {
+        running = false;
+        try {
             closeConnection();
-            receiver.shutdown();
-            received.complete(null);
+        } catch (RuntimeException | Error cleanupFailure) {
+            if (failure == null) {
+                failure = cleanupFailure;
+                throw cleanupFailure;
+            }
+            if (failure != cleanupFailure) {
+                failure.addSuppressed(cleanupFailure);
+            }
+        } finally {
+            try {
+                receiver.shutdown();
+            } finally {
+                if (failure == null) {
+                    received.complete(null);
+                } else {
+                    received.completeExceptionally(failure);
+                }
+            }
         }
     }
 
@@ -340,7 +374,7 @@ final class PostgresNotificationSubscription {
         if (old != null) {
             try {
                 clearAndClose(old);
-            } catch (SQLException e) {
+            } catch (SQLException | RuntimeException e) {
                 LOG.debug("Closing PostgreSQL notification connection for [{}]", name, e);
             }
         }
