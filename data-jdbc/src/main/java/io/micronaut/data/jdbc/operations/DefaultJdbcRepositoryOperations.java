@@ -313,7 +313,8 @@ public final class DefaultJdbcRepositoryOperations extends AbstractSqlRepository
                 BiFunction<RuntimePersistentEntity<Object>, Object, Object> loadListener = entity.hasPostLoadEventListeners()
                     ? (loadedEntity, o) -> triggerPostLoad(o, loadedEntity, preparedQuery.getAnnotationMetadata())
                     : null;
-                return new FlatEntityResultSetMapper<>(plan, conversionService, loadListener, () -> super.createMapper(preparedQuery, rsType), getConversionContextFactory());
+                return new FlatEntityResultSetMapper<>(plan, conversionService, loadListener, () -> super.createMapper(preparedQuery, rsType),
+                    getConversionContextFactory(), sqlJsonColumnMapperProvider.getJsonColumnReader(preparedQuery, rsType), columnNameResultSetReader);
             }
         }
         return super.createMapper(preparedQuery, rsType);

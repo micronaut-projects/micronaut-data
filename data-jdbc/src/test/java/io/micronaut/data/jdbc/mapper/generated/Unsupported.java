@@ -18,13 +18,8 @@ package io.micronaut.data.jdbc.mapper.generated;
 import io.micronaut.data.annotation.GeneratedValue;
 import io.micronaut.data.annotation.Id;
 import io.micronaut.data.annotation.MappedEntity;
-import io.micronaut.data.annotation.TypeDef;
-import io.micronaut.data.model.DataType;
-
-import java.util.Map;
-
 /**
- * An entity with a JSON column, which has no generated mapper.
+ * An entity with an array property, which has no typed read and so no generated mapper.
  */
 @MappedEntity("generated_unsupported")
 public class Unsupported {
@@ -32,8 +27,7 @@ public class Unsupported {
     @Id
     @GeneratedValue
     private Long id;
-    @TypeDef(type = DataType.JSON)
-    private Map<String, Object> data;
+    private String[] data;
 
     public Long getId() {
         return id;
@@ -43,11 +37,11 @@ public class Unsupported {
         this.id = id;
     }
 
-    public Map<String, Object> getData() {
+    public String[] getData() {
         return data;
     }
 
-    public void setData(Map<String, Object> data) {
+    public void setData(String[] data) {
         this.data = data;
     }
 }

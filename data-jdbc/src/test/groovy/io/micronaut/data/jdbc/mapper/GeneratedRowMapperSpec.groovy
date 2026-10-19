@@ -22,18 +22,22 @@ import io.micronaut.data.jdbc.mapper.generated.GeneratedTypes
 import io.micronaut.data.jdbc.mapper.generated.GeoPoint
 import io.micronaut.data.jdbc.mapper.generated.JsonCreatorTag
 import io.micronaut.data.jdbc.mapper.generated.NoArgCreatorProbe
+import io.micronaut.data.jdbc.mapper.generated.Note
 import io.micronaut.data.jdbc.mapper.generated.Money
 import io.micronaut.data.jdbc.mapper.generated.Place
 import io.micronaut.data.jdbc.mapper.generated.Priced
 import io.micronaut.data.jdbc.mapper.generated.Probe
 import io.micronaut.data.jdbc.mapper.generated.Tag
+import io.micronaut.data.jdbc.mapper.generated.Tagged
 import io.micronaut.data.jdbc.mapper.generated.Unsupported
 import io.micronaut.data.jdbc.mapper.generated.Visit
 import io.micronaut.data.model.runtime.RuntimePersistentEntity
 import io.micronaut.data.model.runtime.RuntimeEntityRegistry
 import io.micronaut.data.runtime.convert.DataConversionService
 import io.micronaut.data.runtime.convert.DatabaseConversionContextFactory
+import io.micronaut.data.runtime.mapper.sql.SqlJsonColumnReader
 import io.micronaut.data.runtime.mapper.sql.SqlResultEntityTypeMapper
+import io.micronaut.json.JsonMapper
 import io.micronaut.data.tck.entities.Book
 import io.micronaut.data.tck.entities.Order
 import spock.lang.AutoCleanup
@@ -77,6 +81,9 @@ class GeneratedRowMapperSpec extends Specification {
     RuntimeEntityRegistry entityRegistry = context.getBean(RuntimeEntityRegistry)
 
     @Shared
+    SqlJsonColumnReader<ResultSet> jsonColumnReader = { -> context.getBean(JsonMapper) } as SqlJsonColumnReader<ResultSet>
+
+    @Shared
     @AutoCleanup
     Connection connection = DriverManager.getConnection("jdbc:h2:mem:generatedmapper;DB_CLOSE_DELAY=-1")
 
@@ -89,7 +96,7 @@ class GeneratedRowMapperSpec extends Specification {
         GeneratedRowMappers.find(Country) != null
         GeneratedRowMappers.find(Book) != null
 
-        and: "not for an entity with a JSON column, nor for one whose identity has no setter"
+        and: "not for an entity with an array property, nor for one whose identity has no setter"
         GeneratedRowMappers.find(Unsupported) == null
         GeneratedRowMappers.find(Order) == null
 
@@ -371,6 +378,33 @@ class GeneratedRowMapperSpec extends Specification {
         execute("DROP TABLE generated_priced")
     }
 
+    void "a JSON column is read through the query's JSON column reader"() {
+        given:
+        def entity = entity(Tagged)
+        def plan = FlatEntityMappingPlan.of(entity)
+        createTable("generated_tagged", ["id BIGINT", "attributes VARCHAR(1000)", "note VARCHAR(1000)"])
+        execute("INSERT INTO generated_tagged VALUES (1, '{\"colour\":\"red\",\"size\":\"L\"}', '{\"title\":\"first\",\"stars\":4}')")
+        execute("INSERT INTO generated_tagged VALUES (2, NULL, 'null')")
+
+        expect:
+        plan.generatedMapper != null
+
+        when:
+        List<Tagged> generated = mapGenerated(plan, "SELECT * FROM generated_tagged ORDER BY id")
+        List<Tagged> general = mapGeneral(entity, "SELECT * FROM generated_tagged ORDER BY id")
+
+        then:
+        generated[0].attributes == [colour: "red", size: "L"]
+        generated[0].note == new Note("first", 4)
+        generated[1].attributes == null
+        generated[1].note == null
+        generated*.attributes == general*.attributes
+        generated*.note == general*.note
+
+        cleanup:
+        execute("DROP TABLE generated_tagged")
+    }
+
     void "the generated mapper is used directly with resolved ordinals"() {
         given:
         def mapper = GeneratedRowMappers.find(Country)
@@ -381,7 +415,7 @@ class GeneratedRowMapperSpec extends Specification {
 
         when:
         rs.next()
-        Country country = mapper.map(rs, [2] as int[], FlatEntityMappingPlan.of(entity(Country)).createContext(conversionService, conversionContextFactory))
+        Country country = mapper.map(rs, [2] as int[], FlatEntityMappingPlan.of(entity(Country)).createContext(conversionService, conversionContextFactory, null, null))
 
         then:
         country.id() == 42L
@@ -413,7 +447,7 @@ class GeneratedRowMapperSpec extends Specification {
         Statement statement = connection.createStatement()
         ResultSet rs = statement.executeQuery(sql)
         try {
-            def mapper = new FlatEntityResultSetMapper<T>(plan, conversionService, null, { throw new IllegalStateException("No general mapper needed") }, conversionContextFactory)
+            def mapper = new FlatEntityResultSetMapper<T>(plan, conversionService, null, { throw new IllegalStateException("No general mapper needed") }, conversionContextFactory, jsonColumnReader, new ColumnNameResultSetReader(conversionService))
             List<T> result = []
             while (rs.next()) {
                 result.add(mapper.readEntity(rs))
@@ -429,7 +463,7 @@ class GeneratedRowMapperSpec extends Specification {
         Statement statement = connection.createStatement()
         ResultSet rs = statement.executeQuery(sql)
         try {
-            def mapper = new SqlResultEntityTypeMapper<ResultSet, T>(entity, new ColumnNameResultSetReader(conversionService), Set.of(), null, null, conversionService, conversionContextFactory)
+            def mapper = new SqlResultEntityTypeMapper<ResultSet, T>(entity, new ColumnNameResultSetReader(conversionService), Set.of(), jsonColumnReader, null, conversionService, conversionContextFactory)
             List<T> result = []
             while (rs.next()) {
                 result.add(mapper.readEntity(rs))

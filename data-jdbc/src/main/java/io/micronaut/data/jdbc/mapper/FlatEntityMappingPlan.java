@@ -23,15 +23,20 @@ import io.micronaut.core.convert.ConversionService;
 import io.micronaut.data.annotation.Embeddable;
 import io.micronaut.data.annotation.EmbeddedId;
 import io.micronaut.data.annotation.FlatEntity;
+import io.micronaut.core.type.Argument;
 import io.micronaut.data.model.DataType;
+import io.micronaut.data.model.JsonDataType;
 import io.micronaut.data.model.naming.NamingStrategy;
 import io.micronaut.data.model.runtime.RuntimePersistentEntity;
 import io.micronaut.data.model.runtime.RuntimePersistentProperty;
 import io.micronaut.data.model.runtime.convert.AttributeConverter;
 import io.micronaut.data.runtime.convert.DatabaseConversionContextFactory;
+import io.micronaut.data.runtime.mapper.ResultReader;
+import io.micronaut.data.runtime.mapper.sql.SqlJsonColumnReader;
 import org.jspecify.annotations.Nullable;
 
 import java.math.BigDecimal;
+import java.sql.ResultSet;
 import java.sql.Timestamp;
 import java.util.ArrayList;
 import java.util.Collections;
@@ -92,6 +97,11 @@ public final class FlatEntityMappingPlan<R> {
     private final RuntimePersistentEntity<R> entity;
     @Nullable
     private final GeneratedRowMapper<R> generatedMapper;
+    /**
+     * The per-column facts of the generated mapper's columns, resolved on the first context created.
+     */
+    @Nullable
+    private volatile Columns generatedColumns;
     private final BeanIntrospection<R> introspection;
     private final RuntimePersistentProperty<R>[] persistentProperties;
     private final BeanProperty<R, Object>[] properties;
@@ -345,37 +355,52 @@ public final class FlatEntityMappingPlan<R> {
     }
 
     /**
-     * Resolves what the generated mapper needs beyond the result set: the attribute converter of every column that
-     * has one, with the conversion context of its property, as the general mapper applies them.
+     * Creates what the generated mapper needs beyond the result set: the attribute converter of every column that
+     * has one, with the conversion context of its property, and the JSON type and argument of every JSON column,
+     * resolved once for the plan, as well as the JSON column reader of the query.
      *
      * @param conversionService        The conversion service
      * @param conversionContextFactory The factory of the conversion contexts, or {@code null} for plain ones
+     * @param jsonColumnReader         The JSON column reader of the query, or {@code null} to read a JSON column as a string
+     * @param resultReader             The result reader the JSON column reader reads with, or {@code null} without one
      * @return The context
      * @throws IllegalStateException if the plan holds no generated mapper
      */
-    @SuppressWarnings("unchecked")
     public GeneratedRowMapperContext createContext(ConversionService conversionService,
-                                                   @Nullable DatabaseConversionContextFactory conversionContextFactory) {
+                                                   @Nullable DatabaseConversionContextFactory conversionContextFactory,
+                                                   @Nullable SqlJsonColumnReader<ResultSet> jsonColumnReader,
+                                                   @Nullable ResultReader<ResultSet, String> resultReader) {
         if (generatedMapper == null) {
             throw new IllegalStateException("The plan of [" + entity.getName() + "] has no generated mapper");
         }
-        String[] paths = generatedMapper.propertyPaths();
-        AttributeConverter<Object, Object>[] converters = new AttributeConverter[paths.length];
-        ConversionContext[] contexts = new ConversionContext[paths.length];
+        Columns columns = generatedColumns;
+        if (columns == null) {
+            columns = resolveColumns(generatedMapper, conversionContextFactory);
+            generatedColumns = columns;
+        }
+        return new GeneratedRowMapperContext(conversionService, columns, jsonColumnReader, resultReader);
+    }
+
+    @SuppressWarnings("unchecked")
+    private Columns resolveColumns(GeneratedRowMapper<R> mapper, @Nullable DatabaseConversionContextFactory conversionContextFactory) {
+        String[] paths = mapper.propertyPaths();
+        Columns columns = new Columns(mapper.columnNames(), paths.length);
         for (int i = 0; i < paths.length; i++) {
             RuntimePersistentProperty<?> property = (RuntimePersistentProperty<?>) entity.getPropertyByPath(paths[i]).orElse(null);
             if (property == null) {
                 continue;
             }
+            columns.arguments[i] = property.getArgument();
+            columns.jsonDataTypes[i] = property.getJsonDataType();
             AttributeConverter<Object, Object> converter = property.getConverter();
             if (converter != null) {
-                converters[i] = converter;
-                contexts[i] = conversionContextFactory != null
+                columns.converters[i] = converter;
+                columns.conversionContexts[i] = conversionContextFactory != null
                     ? conversionContextFactory.forArgument(property.getArgument())
                     : ConversionContext.of(property.getArgument());
             }
         }
-        return new GeneratedRowMapperContext(conversionService, converters, contexts);
+        return columns;
     }
 
     BeanIntrospection<R> getIntrospection() {
@@ -436,5 +461,25 @@ public final class FlatEntityMappingPlan<R> {
                              byte kind,
                              boolean conversion,
                              int argumentIndex) {
+    }
+
+    /**
+     * The per-column facts a generated mapper's context reads, indexed like the mapper's columns.
+     */
+    @SuppressWarnings("unchecked")
+    static final class Columns {
+        final String[] names;
+        final AttributeConverter<Object, Object>[] converters;
+        final ConversionContext[] conversionContexts;
+        final JsonDataType[] jsonDataTypes;
+        final Argument<?>[] arguments;
+
+        Columns(String[] names, int size) {
+            this.names = names;
+            this.converters = new AttributeConverter[size];
+            this.conversionContexts = new ConversionContext[size];
+            this.jsonDataTypes = new JsonDataType[size];
+            this.arguments = new Argument[size];
+        }
     }
 }

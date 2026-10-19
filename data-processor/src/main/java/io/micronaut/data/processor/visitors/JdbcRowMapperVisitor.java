@@ -89,7 +89,8 @@ import java.util.function.Function;
  * null handling are those of the flat entity mapper of {@code data-jdbc}, which is the mapper that delegates to
  * the generated class: a value the getter does not return in the property type (an enum, a java.time type) goes
  * through the conversion service, a property with an attribute converter is read in its persisted type and
- * converted by the converter with the property's conversion context, a SQL NULL read for a primitive leaves the property at its initial value, a
+ * converted by the converter with the property's conversion context, a JSON column is read by the query's JSON
+ * column reader, a SQL NULL read for a primitive leaves the property at its initial value, a
  * non-null constructor argument fails, an association target whose identity is null is null, and a nullable
  * embedded value without a single column value is null.</p>
  *
@@ -100,10 +101,11 @@ import java.util.function.Function;
  * compile.</p>
  *
  * <p>No mapper is generated for an entity the runtime cannot read exactly that
- * way: a composite identity, a JSON column, a property type without a typed read (which includes arrays and
- * custom types the conversion service converts), an attribute converter that reads the result set itself or
- * persists such a type, a join column override, an identity or version that cannot be set, or a constructor
- * argument that is not a persistent property. Such entities keep the flat or the general mapper at runtime.</p>
+ * way: a composite identity, a property type without a typed read (which includes arrays and custom types the
+ * conversion service converts), an attribute converter that reads the result set itself or persists such a type,
+ * a JSON column with an attribute converter, a join column override, an identity or version that cannot be set,
+ * or a constructor argument that is not a persistent property. Such entities keep the flat or the general mapper
+ * at runtime.</p>
  *
  * @since 5.3.0
  */
@@ -304,6 +306,15 @@ public final class JdbcRowMapperVisitor implements TypeElementVisitor<MappedEnti
         TypeDef type = TypeDef.of(propertyType);
         ClassTypeDef boxed = type instanceof TypeDef.Primitive primitive ? primitive.wrapperType() : (ClassTypeDef) type;
         return new Read(boxed, (rs, c, ctx, i) -> ctx.invoke("convertToEntityValue", TypeDef.OBJECT, ExpressionDef.constant(i), persisted.read(rs, c, ctx, i)).cast(boxed));
+    }
+
+    /**
+     * {@code (Type) context.readJson(i, rs, c)}: a JSON column, read through the query's JSON column reader with
+     * the property's JSON type and argument, as the general mapper reads it.
+     */
+    private static Read json(ClassElement propertyType) {
+        ClassTypeDef type = ClassTypeDef.of(propertyType);
+        return new Read(type, (rs, c, ctx, i) -> ctx.invoke("readJson", TypeDef.OBJECT, ExpressionDef.constant(i), rs, c).cast(type));
     }
 
     /**
@@ -653,7 +664,8 @@ public final class JdbcRowMapperVisitor implements TypeElementVisitor<MappedEnti
 
         /**
          * How a property is read: by the typed getter of its data type, through the conversion service when the
-         * getter does not return the property type, and through its attribute converter when it has one. The
+         * getter does not return the property type, through its attribute converter when it has one, and through
+         * the query's JSON column reader for a JSON column. The
          * converter and the data type are read from the element, where {@link MappedEntityVisitor} recorded the ones
          * it resolved (from {@code @TypeDef} or the configured data converters); the source property cached the
          * members before that.
@@ -661,10 +673,13 @@ public final class JdbcRowMapperVisitor implements TypeElementVisitor<MappedEnti
         private static Read readOf(SourcePersistentProperty source, String path, VisitorContext context) {
             PropertyElement element = source.getPropertyElement();
             DataType dataType = element.enumValue(MappedProperty.class, "type", DataType.class).orElseGet(source::getDataType);
-            if (dataType == DataType.JSON) {
-                throw new UnsupportedEntityException("the property " + path + " is a JSON column", element);
-            }
             String converter = element.stringValue(MappedProperty.class, "converter").filter(c -> !Object.class.getName().equals(c)).orElse(null);
+            if (dataType == DataType.JSON) {
+                if (converter != null) {
+                    throw new UnsupportedEntityException("the JSON property " + path + " has an attribute converter", element);
+                }
+                return json(source.getType());
+            }
             if (converter == null) {
                 Read read = readFor(source.getType(), dataType);
                 if (read == null) {

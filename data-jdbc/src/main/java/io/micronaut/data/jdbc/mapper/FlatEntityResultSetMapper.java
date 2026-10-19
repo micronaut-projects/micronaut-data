@@ -25,6 +25,8 @@ import io.micronaut.data.exceptions.DataAccessException;
 import io.micronaut.data.model.runtime.RuntimePersistentEntity;
 import io.micronaut.data.model.runtime.RuntimePersistentProperty;
 import io.micronaut.data.runtime.convert.DatabaseConversionContextFactory;
+import io.micronaut.data.runtime.mapper.ResultReader;
+import io.micronaut.data.runtime.mapper.sql.SqlJsonColumnReader;
 import io.micronaut.data.runtime.mapper.sql.SqlTypeMapper;
 import org.jspecify.annotations.Nullable;
 
@@ -128,9 +130,30 @@ public final class FlatEntityResultSetMapper<R> implements SqlTypeMapper<ResultS
                                      @Nullable BiFunction<RuntimePersistentEntity<Object>, Object, Object> loadListener,
                                      Supplier<SqlTypeMapper<ResultSet, R>> generalMapper,
                                      @Nullable DatabaseConversionContextFactory conversionContextFactory) {
+        this(plan, conversionService, loadListener, generalMapper, conversionContextFactory, null, null);
+    }
+
+    /**
+     * @param plan                     The plan
+     * @param conversionService        The conversion service, for the values a getter doesn't return in the property type
+     * @param loadListener             The listener invoked with every mapped entity, for the post load events
+     * @param generalMapper            Supplies the general mapper for the operations this mapper does not perform
+     * @param conversionContextFactory The factory of the conversion contexts the attribute converters of a generated
+     *                                 mapper's columns receive, or {@code null} for plain ones
+     * @param jsonColumnReader         The JSON column reader of the query for the JSON columns of a generated mapper, or
+     *                                 {@code null} to read them as strings
+     * @param resultReader             The result reader the JSON column reader reads with
+     */
+    public FlatEntityResultSetMapper(FlatEntityMappingPlan<R> plan,
+                                     ConversionService conversionService,
+                                     @Nullable BiFunction<RuntimePersistentEntity<Object>, Object, Object> loadListener,
+                                     Supplier<SqlTypeMapper<ResultSet, R>> generalMapper,
+                                     @Nullable DatabaseConversionContextFactory conversionContextFactory,
+                                     @Nullable SqlJsonColumnReader<ResultSet> jsonColumnReader,
+                                     @Nullable ResultReader<ResultSet, String> resultReader) {
         this.plan = plan;
         this.generatedMapper = plan.getGeneratedMapper();
-        this.generatedContext = generatedMapper == null ? null : plan.createContext(conversionService, conversionContextFactory);
+        this.generatedContext = generatedMapper == null ? null : plan.createContext(conversionService, conversionContextFactory, jsonColumnReader, resultReader);
         this.introspection = plan.getIntrospection();
         this.properties = plan.getProperties();
         this.persistentProperties = plan.getPersistentProperties();
