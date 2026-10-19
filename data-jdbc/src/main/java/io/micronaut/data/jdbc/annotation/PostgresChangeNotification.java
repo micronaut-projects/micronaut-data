@@ -28,25 +28,26 @@ import java.lang.annotation.Target;
  *
  * <p>Use database migrations to install the notification function and triggers for the entity's
  * table. Configure the triggers with the channel declared by this annotation and the entity's
- * mapped primary-key column names.</p>
+ * primary-key column names as stored in PostgreSQL's catalogs.</p>
  *
  * <p>Notifications are matched by channel and mapped table name. If the entity mapping specifies
  * a schema, that schema must also match. Without an explicit schema, tables with the same name
  * in different schemas can trigger the same listener when they publish to its channel. Entity
- * loading follows the datasource's schema search path and can therefore load from a different
- * schema than the notification's source. Specify a schema or use separate channels to avoid
+ * loading without an explicit schema follows the datasource's schema search path and can therefore
+ * load from a different schema than the notification's source. Specify a schema or use separate channels to avoid
  * this ambiguity.</p>
  *
  * <p>Notifications describe table changes and include the operation and the old or new primary keys,
  * as appropriate for that operation. Inserted and updated entities are loaded by primary key before
  * the listener is invoked. The loaded entity reflects the database state at the time of loading,
- * which may include changes made after the notification was sent.</p>
+ * which may include changes made after the notification was sent. If the row no longer exists,
+ * the event contains no entity.</p>
  *
  * <p>PostgreSQL notifications use one dedicated, non-pooled connection per participating datasource, shared by
  * all listener methods using that datasource. Callbacks run on the blocking executor and may
  * execute concurrently for the same listener, without guaranteed execution or completion order.
- * An {@code INVALIDATE} event is delivered after each successful reconnection so
- * listeners can reload the affected data to account for changes made while disconnected.</p>
+ * After each successful reconnection, an {@code INVALIDATE} event is submitted so listeners can
+ * reload data that may have changed while disconnected.</p>
  *
  * @since 5.3.0
  */

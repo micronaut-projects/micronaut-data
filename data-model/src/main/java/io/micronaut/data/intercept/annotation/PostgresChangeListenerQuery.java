@@ -24,6 +24,9 @@ import java.lang.annotation.Target;
 
 /**
  * Internal, compile-time generated PostgreSQL primary-key reload query and ordered key mapping for a change listener.
+ *
+ * <p>Column names and Java property paths use the same order as the generated query's parameters.
+ * Column names are normalized to the identifiers reported by PostgreSQL notification triggers.</p>
  */
 @Internal
 @Retention(RetentionPolicy.RUNTIME)

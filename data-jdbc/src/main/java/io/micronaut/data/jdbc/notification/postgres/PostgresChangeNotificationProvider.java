@@ -54,7 +54,8 @@ import java.util.concurrent.Executor;
  *
  * <p>Each subscription owns a dedicated, non-pooled LISTEN connection, notification reception, reconnection,
  * and listener dispatch. A {@link ShutdownEvent} initiates cleanup for all datasource subscriptions,
- * and graceful shutdown waits for connection cleanup, reception, and accepted notification callbacks.
+ * and graceful shutdown waits for reception to stop, the connection to be released, and callbacks
+ * already running to finish.
  * {@link PreDestroy} provides a best-effort cleanup fallback if the provider is destroyed without a
  * context shutdown event.</p>
  */
@@ -117,7 +118,8 @@ final class PostgresChangeNotificationProvider implements ChangeNotificationProv
     }
 
     /**
-     * Stops all datasource subscriptions and waits for connection cleanup, reception, and accepted notification callbacks.
+     * Initiates shutdown of all datasource subscriptions and returns a stage that tracks connection cleanup,
+     * receiver termination, and completion of callbacks already running.
      *
      * @return a stage completed when all subscriptions have finished graceful shutdown
      */

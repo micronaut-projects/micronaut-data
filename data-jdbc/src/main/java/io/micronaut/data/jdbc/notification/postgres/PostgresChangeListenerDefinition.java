@@ -20,8 +20,8 @@ import org.jspecify.annotations.Nullable;
 /**
  * Runtime definition for one {@code @ChangeListener} method.
  *
- * <p>The table identity comes from the entity mapping. A schema is required to match only when
- * the mapping specifies one.</p>
+ * <p>The table identity comes from the entity mapping. When the mapping specifies a schema,
+ * both schema and table must match. Otherwise, only the table name is compared.</p>
  *
  * @param channel the notification channel
  * @param schema the optional mapped schema name, normalized for PostgreSQL identifier matching

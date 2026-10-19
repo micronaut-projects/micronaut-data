@@ -36,13 +36,14 @@ import java.util.function.Consumer;
  * and execution and completion order depend on the executor. The dispatcher does not maintain an
  * event queue or serialize listener invocations.</p>
  *
- * <p>Callbacks count as active only when execution begins. Stopping rejects callbacks that have not
- * started and returns a future that completes when callbacks already running finish. Runtime callback
- * failures are logged; JVM errors propagate to the executor after task accounting is released.</p>
+ * <p>Callbacks count as active only when execution begins. After stopping, callbacks that have not
+ * started are skipped. The returned shutdown future completes when callbacks already running finish.
+ * Callback exceptions are logged; JVM errors propagate to the executor after task accounting is released.</p>
  *
  * <p>If the executor rejects a submission, one pending invalidation represents lost notifications.
- * The scheduler retries its submission until accepted or shutdown starts. Entity loading and listener
- * invocation always run through the blocking executor, including invalidation callbacks.</p>
+ * The scheduler retries submission until accepted, shutdown starts, or scheduling itself fails.
+ * Entity loading and listener invocation run through the blocking executor; invalidation callbacks
+ * use the same executor.</p>
  */
 final class PostgresChangeNotificationDispatcher {
     private static final Logger LOG = LoggerFactory.getLogger(PostgresChangeNotificationDispatcher.class);

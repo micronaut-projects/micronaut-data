@@ -51,14 +51,16 @@ import java.util.concurrent.Executors;
  * <p>A dedicated, non-pooled connection subscribes to each distinct listener channel. Startup opens the
  * connection synchronously, then a single receive thread handles notifications, reconnection,
  * and connection cleanup. Each successful reconnection submits an invalidation event for every
- * listener so it can account for changes missed while disconnected.</p>
+ * listener so it can account for changes missed while disconnected. Initial startup does not
+ * submit invalidation events.</p>
  *
  * <p>Notifications are routed by channel, schema, and table. The subscription owns one dispatcher
  * per listener to submit callbacks to the supplied executor. Entity loading uses repository
  * connections independently of the listening connection.</p>
  *
  * <p>Stopping the subscription closes callback admission and signals the receive loop to exit.
- * Shutdown completes after the listening connection is released and running callbacks finish.</p>
+ * Shutdown completes after the receiver exits, the listening connection is released, and running
+ * callbacks finish. Stopping wakes the retry delay but does not cancel connection setup in progress.</p>
  */
 final class PostgresNotificationSubscription {
     private static final Logger LOG = LoggerFactory.getLogger(PostgresNotificationSubscription.class);
@@ -159,7 +161,7 @@ final class PostgresNotificationSubscription {
     }
 
     /**
-     * Receives and routes notifications until stopped, reconnecting after failures with exponential backoff.
+     * Receives and routes notifications until stopped, reconnecting after failures with the configured backoff.
      * Stops reception if the configured recovery retry limit is exhausted.
      * Submits invalidation events after reconnection and before reception resumes.
      * Releases the connection and completes the reception stage when the loop exits.
@@ -298,7 +300,8 @@ final class PostgresNotificationSubscription {
 
     /**
      * Decodes a notification and submits events for listeners matching its channel and table identity.
-     * Malformed payloads invalidate listeners on the channel; key mismatches invalidate the affected listener.
+     * Malformed payloads submit invalidation events for listeners on the channel; key mismatches submit
+     * an invalidation event for the affected listener.
      * Insert and update events defer entity loading to callback execution.
      *
      * @param notification the notification received from the listening connection
@@ -341,7 +344,8 @@ final class PostgresNotificationSubscription {
 
     /**
      * Requests reception to stop and wakes any pending reconnect delay without blocking the caller.
-     * Listener dispatchers immediately close task admission; callbacks already running may finish.
+     * Dispatchers stop admitting callbacks; callbacks already running may finish. Connection setup
+     * in progress must return or fail before the receiver can finish shutdown.
      *
      * @return a future completed when reception, connection cleanup, and listener dispatch have finished
      */
@@ -409,7 +413,7 @@ final class PostgresNotificationSubscription {
     }
 
     /**
-     * Executes UNLISTEN for an open connection with a query timeout.
+     * Executes {@code UNLISTEN *} on an open connection with a five-second query timeout.
      *
      * @param connection the listening connection
      * @throws SQLException if inspecting the connection or executing UNLISTEN fails
@@ -426,9 +430,9 @@ final class PostgresNotificationSubscription {
     /**
      * Attempts synchronous connection abort, attaching any failure to the original cleanup exception.
      *
-     * <p>If UNLISTEN fails, the physical connection may still have channel subscriptions.
-     * Aborting explicitly terminates the physical connection when normal subscription cleanup fails.
-     * The direct executor completes the abort attempt before the final close attempt.</p>
+     * <p>If {@code UNLISTEN} fails, normal cleanup may not have removed the channel subscriptions.
+     * Aborting attempts to terminate the physical connection before the final close attempt.
+     * The direct executor runs the driver's abort task on the cleanup thread.</p>
      *
      * @param connection     the connection to abort
      * @param cleanupFailure the original cleanup exception

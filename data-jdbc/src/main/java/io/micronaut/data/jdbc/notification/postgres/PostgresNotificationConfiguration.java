@@ -21,7 +21,12 @@ import java.time.Duration;
 import java.util.Objects;
 
 /**
- * Settings for PostgreSQL notification connections across datasources.
+ * Shared polling and reconnection settings for PostgreSQL notification subscriptions.
+ *
+ * <p>Recovery settings apply after a listening connection fails; initial startup failures are
+ * propagated to the application. Driver connection and socket timeouts are configured separately
+ * through the datasource's PostgreSQL driver properties.</p>
+ *
  * @since 5.3.0
  */
 @Experimental
@@ -34,14 +39,20 @@ public final class PostgresNotificationConfiguration {
     private Duration maxRetryDelay = Duration.ofSeconds(60);
 
     /**
-     * @return Maximum notification receive wait, default one second.
+     * Returns the timeout passed to each notification poll. Defaults to one second.
+     * This setting does not limit connection establishment or SQL statement execution.
+     *
+     * @return the notification poll timeout
      */
     public Duration getPollTimeout() {
         return pollTimeout;
     }
 
     /**
-     * @param pollTimeout A positive duration in whole milliseconds.
+     * Sets the notification poll timeout. Durations are used at millisecond precision.
+     *
+     * @param pollTimeout a duration whose millisecond value is between one and {@link Integer#MAX_VALUE}
+     * @throws IllegalArgumentException if the millisecond value is outside the supported range
      */
     public void setPollTimeout(Duration pollTimeout) {
         this.pollTimeout = positive(pollTimeout, "PollTimeout");
@@ -71,7 +82,7 @@ public final class PostgresNotificationConfiguration {
     }
 
     /**
-     * Returns the multiplier applied to the delay after each recovery attempt. Defaults to two.
+     * Returns the multiplier applied to the delay after each failed recovery attempt. Defaults to two.
      *
      * @return the retry delay multiplier
      */
@@ -80,7 +91,7 @@ public final class PostgresNotificationConfiguration {
     }
 
     /**
-     * Sets the multiplier applied to the delay after each recovery attempt. One uses a fixed delay.
+     * Sets the multiplier applied to the delay after each failed recovery attempt. One uses a fixed delay.
      * Delays are capped at {@link #getMaxRetryDelay()}.
      *
      * @param retryDelayMultiplier the integer multiplier, at least one
@@ -94,28 +105,39 @@ public final class PostgresNotificationConfiguration {
     }
 
     /**
-     * @return Initial reconnect delay, default one second.
+     * Returns the delay before the first recovery attempt. Defaults to one second.
+     * The effective delay is capped by {@link #getMaxRetryDelay()}.
+     *
+     * @return the initial recovery delay
      */
     public Duration getRetryDelay() {
         return retryDelay;
     }
 
     /**
-     * @param retryDelay A positive duration in whole milliseconds.
+     * Sets the initial recovery delay. Durations are used at millisecond precision.
+     *
+     * @param retryDelay a duration whose millisecond value is between one and {@link Integer#MAX_VALUE}
+     * @throws IllegalArgumentException if the millisecond value is outside the supported range
      */
     public void setRetryDelay(Duration retryDelay) {
         this.retryDelay = positive(retryDelay, "RetryDelay");
     }
 
     /**
-     * @return Maximum reconnect delay, default sixty seconds.
+     * Returns the upper bound for recovery delays, including the initial delay. Defaults to sixty seconds.
+     *
+     * @return the maximum recovery delay
      */
     public Duration getMaxRetryDelay() {
         return maxRetryDelay;
     }
 
     /**
-     * @param maxRetryDelay A positive duration in whole milliseconds.
+     * Sets the maximum recovery delay. Durations are used at millisecond precision.
+     *
+     * @param maxRetryDelay a duration whose millisecond value is between one and {@link Integer#MAX_VALUE}
+     * @throws IllegalArgumentException if the millisecond value is outside the supported range
      */
     public void setMaxRetryDelay(Duration maxRetryDelay) {
         this.maxRetryDelay = positive(maxRetryDelay, "MaxRetryDelay");

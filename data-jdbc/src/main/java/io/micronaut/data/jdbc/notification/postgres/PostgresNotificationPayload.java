@@ -24,7 +24,7 @@ import java.util.LinkedHashMap;
 import java.util.Map;
 
 /**
- * Validates version 1 payloads before their identifiers or values reach a loader.
+ * Represents a decoded trigger notification with a validated operation, table identity, and key maps.
  *
  * @param operation The validated table operation.
  * @param metadata The validated table identity and keys.

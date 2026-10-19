@@ -117,7 +117,7 @@ public final class PostgresChangeNotificationVisitor implements TypeElementVisit
     }
 
     /**
-     * Rejects primary-key mappings that require association traversal or value conversion.
+     * Rejects primary-key mappings that require association traversal or a custom attribute converter.
      *
      * @param keys the flattened primary-key property paths
      * @param element the annotated listener method

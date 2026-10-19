@@ -37,7 +37,7 @@ import java.util.Set;
  *
  * <p>The factory reads the generated reload query and ordered key mappings, resolves their
  * Java and JDBC types, and creates the entity loader. Table identity is read from entity
- * metadata and normalized using PostgreSQL identifier rules.</p>
+ * metadata and normalized for a UTF-8 database with PostgreSQL's default identifier length limit.</p>
  *
  * <p>The annotation processor validates listener settings during compilation. Runtime checks
  * here identify missing or invalid generated metadata before subscription setup.</p>
