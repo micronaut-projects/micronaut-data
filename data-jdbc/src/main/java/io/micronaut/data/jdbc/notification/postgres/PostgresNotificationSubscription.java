@@ -34,16 +34,15 @@ import java.io.IOException;
 import java.sql.Connection;
 import java.sql.SQLException;
 import java.sql.Statement;
-import java.util.HashSet;
 import java.util.LinkedHashMap;
 import java.util.List;
 import java.util.Map;
-import java.util.Set;
 import java.util.concurrent.CompletableFuture;
 import java.util.concurrent.Executor;
 import java.util.concurrent.TimeUnit;
 import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Executors;
+import java.util.stream.Collectors;
 
 /**
  * Manages PostgreSQL notifications for all listener methods assigned to one datasource.
@@ -71,6 +70,7 @@ final class PostgresNotificationSubscription {
     private final PostgresNotificationConfiguration configuration;
     private final long initialDelay;
     private final Map<PostgresChangeListenerDefinition, PostgresChangeNotificationDispatcher> dispatchers = new LinkedHashMap<>();
+    private final Map<String, List<Map.Entry<PostgresChangeListenerDefinition, PostgresChangeNotificationDispatcher>>> listenersByChannel;
     private final ExecutorService receiver;
     private final CompletableFuture<Void> received = new CompletableFuture<>();
     private final Object recoveryMonitor = new Object();
@@ -103,6 +103,8 @@ final class PostgresNotificationSubscription {
                 method.method().getDescription(true));
             dispatchers.put(definition, dispatcher);
         }
+        listenersByChannel = dispatchers.entrySet().stream().collect(Collectors.groupingBy(
+            entry -> entry.getKey().channel(), LinkedHashMap::new, Collectors.toList()));
         receiver = Executors.newSingleThreadExecutor(task -> {
             Thread thread = new Thread(task, "postgres-notifications-" + name);
             thread.setDaemon(true);
@@ -162,11 +164,7 @@ final class PostgresNotificationSubscription {
      */
     private void listen(Connection connection) throws SQLException {
         PGConnection postgresConnection = connection.unwrap(PGConnection.class);
-        Set<String> channels = new HashSet<>();
-        for (PostgresChangeListenerDefinition listener : dispatchers.keySet()) {
-            channels.add(listener.channel());
-        }
-        for (String channel : channels) {
+        for (String channel : listenersByChannel.keySet()) {
             try (Statement statement = connection.createStatement()) {
                 statement.execute("LISTEN " + postgresConnection.escapeIdentifier(channel));
                 LOG.trace("Subscribed to PostgreSQL notification channel [{}] for datasource [{}]", channel, name);
@@ -324,8 +322,8 @@ final class PostgresNotificationSubscription {
      * @param notification the notification received from the listening connection
      */
     private void dispatch(PGNotification notification) {
-        List<Map.Entry<PostgresChangeListenerDefinition, PostgresChangeNotificationDispatcher>> targets = dispatchers.entrySet().stream()
-            .filter(entry -> entry.getKey().channel().equals(notification.getName())).toList();
+        List<Map.Entry<PostgresChangeListenerDefinition, PostgresChangeNotificationDispatcher>> targets =
+            listenersByChannel.getOrDefault(notification.getName(), List.of());
         if (targets.isEmpty()) {
             return;
         }
