@@ -124,7 +124,7 @@ final class PostgresNotificationSubscription {
                 dispatchers.size(), name);
         } catch (Exception e) {
             running = false;
-            closeConnection();
+            closeConnection(false);
             receiver.shutdown();
             received.complete(null);
             dispatchers.values().forEach(PostgresChangeNotificationDispatcher::stop);
@@ -195,7 +195,7 @@ final class PostgresNotificationSubscription {
     private void finishReception(@Nullable Throwable failure) {
         running = false;
         try {
-            closeConnection();
+            closeConnection(false);
         } catch (RuntimeException | Error cleanupFailure) {
             if (failure == null) {
                 failure = cleanupFailure;
@@ -246,7 +246,7 @@ final class PostgresNotificationSubscription {
                 }
                 receiveNotifications(active);
             } catch (Exception e) {
-                closeConnection();
+                closeConnection(true);
                 if (!running) {
                     break;
                 }
@@ -385,13 +385,21 @@ final class PostgresNotificationSubscription {
 
     /**
      * Clears the active connection reference and attempts to release the listening connection.
+     * Failed receive connections are aborted without issuing further SQL. Normal shutdown removes
+     * subscriptions before closing the connection.
+     *
+     * @param failed whether reception failed and the connection must be discarded
      */
-    private void closeConnection() {
+    private void closeConnection(boolean failed) {
         Connection old = connection;
         connection = null;
         if (old != null) {
             try {
-                clearAndClose(old);
+                if (failed) {
+                    abortAndClose(old);
+                } else {
+                    clearAndClose(old);
+                }
                 LOG.trace("Closed PostgreSQL notification connection for datasource [{}]", name);
             } catch (SQLException | RuntimeException e) {
                 if (running) {
@@ -400,6 +408,19 @@ final class PostgresNotificationSubscription {
                     LOG.warn("Unable to close PostgreSQL notification connection for datasource [{}] while stopping reception", name, e);
                 }
             }
+        }
+    }
+
+    /**
+     * Discards a failed receive connection without attempting UNLISTEN on an unreliable connection.
+     * Terminating the physical connection removes its subscriptions. Closing is attempted even if abort fails.
+     *
+     * @param old the failed connection
+     * @throws SQLException if aborting or closing the connection fails
+     */
+    private static void abortAndClose(Connection old) throws SQLException {
+        try (old) {
+            old.abort(Runnable::run);
         }
     }
 

@@ -40,6 +40,59 @@ import java.util.concurrent.atomic.AtomicReference
 
 class PostgresNotificationSubscriptionSpec extends Specification {
     @Unroll
+    void "failed reception discards the connection without UNLISTEN: #scenario"() {
+        given:
+        def entered = new CountDownLatch(1)
+        def release = new CountDownLatch(1)
+        def postgres = Stub(PGConnection) {
+            getNotifications(_ as int) >> {
+                entered.countDown()
+                assert release.await(10, TimeUnit.SECONDS)
+                throw new SQLException('Connection lost')
+            }
+        }
+        def connection = Mock(Connection) {
+            unwrap(PGConnection) >> postgres
+        }
+        def source = Mock(PGSimpleDataSource)
+        def subscription = newSubscription(source)
+
+        when:
+        subscription.start()
+        assert entered.await(10, TimeUnit.SECONDS)
+        def stopped = subscription.stop()
+        release.countDown()
+        stopped.get(10, TimeUnit.SECONDS)
+
+        then:
+        1 * source.getConnection() >> connection
+        1 * connection.abort(_ as Executor) >> {
+            if (abortFailure != null) {
+                throw abortFailure
+            }
+        }
+        1 * connection.close() >> {
+            if (closeFailure != null) {
+                throw closeFailure
+            }
+        }
+        0 * connection.createStatement()
+        subscription.pendingTasks() == 0
+        subscription.@receiver.awaitTermination(10, TimeUnit.SECONDS)
+
+        cleanup:
+        release.countDown()
+        subscription?.stop()?.get(10, TimeUnit.SECONDS)
+
+        where:
+        scenario                | abortFailure                         | closeFailure
+        'normal discard'        | null                                 | null
+        'SQL abort failure'     | new SQLException('abort failed')     | null
+        'runtime abort failure' | new IllegalStateException('abort')   | null
+        'close failure'         | null                                 | new SQLException('close failed')
+    }
+
+    @Unroll
     void "recovery makes an initial attempt and at most #maxRetries retries"() {
         given:
         def polls = new CountDownLatch(1)
