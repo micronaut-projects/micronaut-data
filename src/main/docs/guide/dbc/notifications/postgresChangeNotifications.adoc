@@ -2,7 +2,7 @@ PostgreSQL notifications provide experimental table-change subscriptions with pr
 Notifications use one dedicated, non-pooled connection per participating datasource for PostgreSQL `LISTEN`.
 The PostgreSQL JDBC driver and a Micronaut `JsonMapper` implementation must be available in the application.
 
-The PostgreSQL contract uses ann:data.jdbc.annotation.ChangeListener[] together with
+Declare a listener with ann:data.jdbc.annotation.ChangeListener[] together with
 ann:data.jdbc.annotation.PostgresChangeNotification[]. Its required `channel` member names the exact channel used by
 the table triggers. Supply the case-sensitive channel name without SQL identifier quotes, using at most 63 UTF-8 bytes.
 Blank names and names containing NUL characters are rejected during compilation.
@@ -20,7 +20,8 @@ Load this classpath resource from an application database migration and execute 
 selecting the installation schema explicitly. The runnable example below uses Liquibase `sqlFile` to load it directly
 from the dependency JAR. Flyway users can load the resource in a Java migration or copy the SQL into a versioned migration.
 It creates `micronaut_data_notify_change()` in the migration's current schema and executes with the caller's privileges.
-At execution time its search path is restricted to `pg_catalog`. Qualify the function name when creating triggers.
+The function uses only `pg_catalog` to resolve database objects while it runs. Include the installation schema
+in the function name when creating triggers, as shown below.
 The framework does not install or remove the function or triggers on application startup or shutdown.
 
 For example, after installing the function in `public`, register changes to an existing `public.book` table:
@@ -44,7 +45,7 @@ The migration must supply the actual primary key: the function validates column 
 Keys must be non-null values represented by PostgreSQL JSON strings, numbers, or booleans.
 Missing columns, duplicate column arguments, null keys, and structured JSON keys cause the modifying statement to fail explicitly.
 The function supports `AFTER ROW` insert/update/delete triggers and `AFTER STATEMENT` truncate triggers.
-Database DDL changes such as dropping a table are outside this trigger protocol.
+Changes to the database structure, such as dropping a table, do not produce notifications.
 
 == Declaring a Listener
 
@@ -63,14 +64,16 @@ class BookListener {
 ----
 
 Use `@ChangeListener(dataSource = "inventory")` to select a named datasource.
-Use application migrations to create the entity's mapped table and notification triggers.
-The mapped schema and table name are read from Micronaut Data's entity metadata.
-Startup and reconnection do not query the database catalogs to resolve or validate the mapped table.
-Application migrations are responsible for the primary-key constraints and notification triggers.
-The provider does not inspect those constraints or triggers at startup or reconnection.
-Missing triggers do not fail startup; changes without a publishing trigger produce no notifications.
-Missing tables do not fail startup but cause entity loading to fail if a matching insert or update notification is received.
-Incoming payloads and their key-column names are validated before entity loading.
+Use application migrations to create the mapped table, its primary-key constraints, and notification triggers
+before the application starts. Micronaut Data uses the entity mapping to match notifications and load entities;
+it does not check that the table, constraints, or triggers exist during startup or reconnection.
+A missing trigger means changes produce no notifications. A missing table causes entity loading to fail when
+a matching insert or update notification arrives. Invalid notification payloads or unexpected key-column names
+cause an `INVALIDATE` event so your listener can refresh its state.
+
+Load any initial application state explicitly: starting a listener does not send an `INVALIDATE` event
+or notifications for existing rows. After a lost connection is restored, listeners receive `INVALIDATE`
+to refresh changes they may have missed.
 
 Notifications are matched by channel and mapped table name. If the entity mapping specifies a schema,
 that schema must also match. Without an explicit schema, notifications from tables with the same name
@@ -81,14 +84,15 @@ Specify a schema, such as `@MappedEntity(value = "book", schema = "public")`, or
 for tables in different schemas to avoid this ambiguity.
 Identifier matching assumes a UTF-8 database and PostgreSQL's default 63-byte identifier limit.
 Quoted mapped identifiers retain their case; unquoted identifiers fold only ASCII `A`–`Z` to lower case.
-Both are truncated to 63 UTF-8 bytes without splitting a character, matching PostgreSQL's catalog names.
-Supply these actual catalog column names as the trigger's primary-key arguments.
+PostgreSQL truncates identifiers longer than 63 UTF-8 bytes without splitting a character; notification matching
+accounts for this truncation. If a primary-key column name exceeds that limit, use its stored database name
+as the trigger argument.
 
 This implementation supports ordinary tables on PostgreSQL 11 or later, with scalar or composite primary keys,
-including embedded keys. Key values must be convertible from PostgreSQL's JSON text representation to the mapped
+including embedded keys. Key values must be convertible from the text sent by PostgreSQL to the mapped
 Java key type using Micronaut's conversion service. Association keys and keys with custom converters are unsupported.
 Entity filters requiring extra query parameters are rejected at compilation.
-This is a table subscription; it does not evaluate arbitrary SQL query-result changes.
+Listeners receive changes to the mapped table. They cannot subscribe to the result of an arbitrary SQL query.
 
 == Runnable Migration and Listener Example
 
@@ -147,23 +151,23 @@ delete, and truncate notifications:
 ./gradlew :micronaut-doc-examples:micronaut-jdbc-postgres-notifications-java:test
 ----
 
-== Connections and Dispatch
+== Connections and Listener Execution
 
-The listener opens one long-lived, non-pooled physical connection per subscribing datasource using
-PostgreSQL's `PGSimpleDataSource`. This connection does not consume a slot in the application connection pool.
+Micronaut Data opens one dedicated connection per datasource that has notification listeners. All listeners
+for that datasource share the connection, including listeners on different channels. This connection remains open
+while the application listens for changes and does not consume a slot in the application connection pool.
 Entity loading and application queries continue to use the configured datasource pool. Allow capacity on the
 PostgreSQL server for the additional notification connections.
 
-The notification connection factory reuses the named datasource's JDBC URL, username, and password. It also reads
+The notification connection uses the selected datasource's JDBC URL, username, and password. It also reads
 PostgreSQL driver properties from `datasources.<name>.data-source-properties`, `db-properties`, and the
 semicolon-separated `connection-properties` setting. Properties embedded in the JDBC URL take precedence.
-It lazily creates and caches one `PGSimpleDataSource` per datasource name, capturing these settings on first use.
-Each connection attempt opens a new physical connection from the cached source.
+Connection settings are read when notifications first start for a datasource and are reused for reconnection.
 Pool settings and connection initialization SQL do not apply to notification connections. Put any required session
 settings in PostgreSQL driver properties, such as `currentSchema` or `options`.
 
-The subscription owns each notification connection and closes it after failure or shutdown.
-Reconnection opens a new connection from the cached source.
+The notification connection is closed after failure or application shutdown. Recovery opens a new connection
+and subscribes to the same channels again.
 
 Use a direct PostgreSQL connection or a proxy with session pooling; transaction pooling cannot preserve `LISTEN`
 state. Dedicated notification connections use finite PostgreSQL driver timeouts: `connectTimeout` defaults
@@ -172,33 +176,36 @@ or zero (unlimited) values after JDBC URL properties have been applied. Positive
 preserved; invalid values fail subscription startup. Set these driver properties in the datasource settings
 or JDBC URL to suit your deployment. The defaults apply only to notification connections.
 
-`connectTimeout` bounds each socket connection attempt, `loginTimeout` bounds the caller's wait for
-connection establishment, and `socketTimeout` bounds socket reads during operations such as `LISTEN`.
-These settings do not provide immediate shutdown cancellation or an overall shutdown deadline.
-Timed notification polling continues to use `poll-timeout`.
+`connectTimeout` limits each attempt to connect to a database server, `loginTimeout` limits how long the
+application waits for a connection to be established, and `socketTimeout` limits waits for data during operations
+such as subscribing to channels with `LISTEN`. Shutdown may need to wait for connection setup already in progress
+to finish or time out. Configure Micronaut's graceful shutdown timeout to control how long the application waits.
+The separate `poll-timeout` setting controls waits for notifications on an established connection.
 
-Each notification is submitted directly to Micronaut's blocking executor. Callbacks for the same listener
-can run concurrently, and callback execution and completion order are not guaranteed. Listener implementations
-must coordinate shared state and tolerate callbacks completing in a different order from notification reception.
-Invocation uses the listener bean's interceptors, including `@Retryable`. Insert and update entity loading occurs
-inside that invocation, so loading failures can also be retried. Once retries are exhausted, the failure is logged
-and subsequent notifications continue.
+Listener methods run on Micronaut's blocking executor. Multiple calls to the same listener can run concurrently,
+and their execution and completion order are not guaranteed. Protect shared state, such as an application cache,
+against concurrent access and updates arriving in a different order.
+Listener methods support interceptors such as `@Retryable`. For insert and update events, Micronaut Data
+loads the current row before calling your method and makes it available through `event.entity()`.
+This loading participates in `@Retryable`, so entity-loading failures can also be retried.
+Once retries are exhausted, the failure is logged and subsequent notifications continue.
 
-The provider sends `INVALIDATE` after each successful reconnection, allowing listeners to reconcile
-changes missed while disconnected. It reconnects with exponential backoff. An invalid payload invalidates listeners
-on its channel. A mismatched key mapping invalidates the affected listener. Well-formed events for other tables
-are ignored.
+Listeners receive `INVALIDATE` after each successful reconnection so they can refresh changes missed
+while disconnected. Connection recovery uses increasing delays between attempts, as configured below.
+An invalid payload causes `INVALIDATE` for all listeners on its channel. Unexpected key-column names
+cause `INVALIDATE` for the affected listener. Valid notifications for other tables are ignored.
 
-Pending work and executor capacity are controlled by the blocking executor configuration. If the executor rejects
-a submission, the dispatcher retains one pending `INVALIDATE` and retries its submission until accepted or shutdown
-starts. Lost notifications while an invalidation is pending are covered by that refresh; losses after it starts
-request another invalidation. The scheduler only retries submission; callbacks run on the blocking executor.
-Recovery, rejected-submission, and malformed-payload invalidations have no PostgreSQL event metadata.
-Shutdown stops reception, removes subscriptions, releases the connection, and waits for running callbacks.
-Callbacks submitted to the executor that have not started when shutdown begins are discarded.
-Context shutdown events and bean destruction initiate cleanup asynchronously. Graceful shutdown returns a stage
-that completes when cleanup and running callbacks finish; Micronaut's graceful shutdown configuration controls
-how long the application waits.
+Micronaut's blocking executor configuration controls how many listener calls can run or wait for execution.
+If the executor cannot accept a call, your listener may miss individual change events. Micronaut Data then retries
+submitting an `INVALIDATE` event so the listener can refresh its state. Multiple missed events can be covered by
+one refresh. Implement `INVALIDATE` handling even if your listener normally processes individual rows.
+Invalidations caused by reconnection, executor rejection, or malformed payloads have no PostgreSQL event metadata;
+check whether metadata is present before accessing it.
+
+When the application stops, Micronaut Data stops accepting listener calls, removes channel subscriptions,
+and closes the listening connection. Listener calls already running may finish; calls still waiting for execution
+are discarded. With Micronaut graceful shutdown enabled, the application waits for connection cleanup and running
+listener calls, up to the configured graceful shutdown timeout.
 
 [configuration]
 ----
@@ -232,9 +239,9 @@ A successful reconnection resets the retry count and delay. These settings do no
 or listener callbacks. If a finite retry limit is exhausted, the provider logs an error and stops receiving
 notifications for that datasource until the application restarts.
 
-== Version 1 Payload
+== Notification Payload
 
-The PostgreSQL notification envelope supplies the channel separately. Its payload is a JSON object:
+The trigger function sends the channel name separately from the notification payload. The payload is a JSON object:
 
 [source,json]
 ----
@@ -263,7 +270,8 @@ Schema, table, and key names retain their database spelling. Payloads contain ke
 Updates retain both keys even when their values are identical. Truncation sends `INVALIDATE`.
 If the serialized payload reaches 8,000 bytes in the database encoding, the function emits `INVALIDATE` with the
 schema and table identity and empty key objects, keeping the notification below PostgreSQL's default payload limit.
-Consumers must validate the protocol version and table/key mapping before loading an entity.
+Micronaut Data validates the payload version and table/key mapping before loading an entity.
+If you consume these notifications directly outside Micronaut Data, validate those fields before loading rows.
 
 api:data.jdbc.notification.postgres.PostgresChangeEventMetadata[] exposes the channel, schema, table,
 and immutable `oldKeys` and `newKeys` maps. A deleted row can be identified from its old keys without reloading it.
@@ -273,8 +281,8 @@ Entity loading returns current state at reload time; it cannot reconstruct a row
 
 Notifications are delivered only after the modifying transaction commits; rolled-back changes produce no notifications.
 PostgreSQL may coalesce identical channel/payload pairs within a transaction. For example, multiple updates to the same
-row with unchanged keys may produce one update notification. This protocol signals changes for reconciliation and cache
-maintenance; it does not provide an audit record of every write or replay after a listener disconnects.
+row with unchanged keys may produce one update notification. Use notifications to refresh application state or maintain caches. They do not provide an audit record of every
+write, and missed notifications cannot be replayed after a listener disconnects.
 
 Notifications are visible to all users in the database. Include only appropriate identifiers in payloads;
 channels do not provide access control. Trigger execution and PostgreSQL notification-queue failures can fail the write transaction.
