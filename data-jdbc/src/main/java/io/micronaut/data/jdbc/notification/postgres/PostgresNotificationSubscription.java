@@ -16,7 +16,6 @@
 package io.micronaut.data.jdbc.notification.postgres;
 
 import io.micronaut.context.BeanContext;
-import io.micronaut.data.connection.jdbc.advice.DelegatingDataSource;
 import io.micronaut.data.jdbc.notification.ChangeEvent;
 import io.micronaut.data.jdbc.notification.ChangeListenerMethod;
 import io.micronaut.data.jdbc.notification.DefaultChangeEvent;
@@ -31,7 +30,6 @@ import org.postgresql.PGNotification;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
-import javax.sql.DataSource;
 import java.io.IOException;
 import java.sql.Connection;
 import java.sql.SQLException;
@@ -50,7 +48,7 @@ import java.util.concurrent.Executors;
 /**
  * Manages PostgreSQL notifications for all listener methods assigned to one datasource.
  *
- * <p>A dedicated connection subscribes to each distinct listener channel. Startup opens the
+ * <p>A dedicated, non-pooled connection subscribes to each distinct listener channel. Startup opens the
  * connection synchronously, then a single receive thread handles notifications, reconnection,
  * and connection cleanup. Each successful reconnection submits an invalidation event for every
  * listener so it can account for changes missed while disconnected.</p>
@@ -66,7 +64,7 @@ final class PostgresNotificationSubscription {
     private static final Logger LOG = LoggerFactory.getLogger(PostgresNotificationSubscription.class);
 
     private final String name;
-    private final DataSource dataSource;
+    private final PostgresNotificationConnectionFactory connectionFactory;
     private final JsonMapper mapper;
     private final PostgresNotificationConfiguration configuration;
     private final long initialDelay;
@@ -85,12 +83,13 @@ final class PostgresNotificationSubscription {
                                      JsonMapper mapper,
                                      Executor executor,
                                      TaskScheduler taskScheduler,
-                                     PostgresNotificationConfiguration configuration) {
+                                     PostgresNotificationConfiguration configuration,
+                                     PostgresNotificationConnectionFactory connectionFactory) {
         this.name = name;
         this.mapper = mapper;
         this.configuration = configuration;
         initialDelay = Math.min(configuration.getRetryDelay().toMillis(), configuration.getMaxRetryDelay().toMillis());
-        dataSource = DelegatingDataSource.unwrapDataSource(operations.getDataSource());
+        this.connectionFactory = connectionFactory;
         PostgresChangeListenerDefinitionFactory definitionFactory = new PostgresChangeListenerDefinitionFactory(operations);
         for (ChangeListenerMethod method : methods) {
             PostgresChangeListenerDefinition definition = definitionFactory.create(method);
@@ -135,7 +134,7 @@ final class PostgresNotificationSubscription {
      * @throws SQLException if a connection cannot be obtained or configured
      */
     private Connection connect() throws SQLException {
-        Connection candidate = dataSource.getConnection();
+        Connection candidate = connectionFactory.openConnection(name);
         try {
             candidate.setAutoCommit(true);
             PGConnection postgresConnection = candidate.unwrap(PGConnection.class);
@@ -381,9 +380,8 @@ final class PostgresNotificationSubscription {
     }
 
     /**
-     * Removes all channel subscriptions before closing the connection, including when it is returned to a pool.
-     * If cleanup fails, attempts to abort the physical connection before closing the pooled handle.
-     * Abort runs synchronously so the connection cannot be returned to the pool before it is discarded.
+     * Removes all channel subscriptions before closing the physical connection.
+     * If cleanup fails, attempts to abort the connection before closing it.
      * Closing is attempted even if cleanup or abort fails.
      *
      * @param old the connection to release
@@ -429,10 +427,8 @@ final class PostgresNotificationSubscription {
      * Attempts synchronous connection abort, attaching any failure to the original cleanup exception.
      *
      * <p>If UNLISTEN fails, the physical connection may still have channel subscriptions.
-     * Closing a pooled connection normally returns it to the pool without removing those subscriptions,
-     * and a query cancellation does not necessarily cause the pool to discard it.
-     * Aborting terminates the physical connection so a later borrower cannot inherit its subscriptions.
-     * The direct executor completes the abort attempt before the pooled handle is closed.</p>
+     * Aborting explicitly terminates the physical connection when normal subscription cleanup fails.
+     * The direct executor completes the abort attempt before the final close attempt.</p>
      *
      * @param connection     the connection to abort
      * @param cleanupFailure the original cleanup exception

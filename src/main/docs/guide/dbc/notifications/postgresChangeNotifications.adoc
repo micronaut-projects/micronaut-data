@@ -1,5 +1,5 @@
 PostgreSQL notifications provide experimental table-change subscriptions with primary-key metadata and entity loading.
-Notifications use one dedicated connection per participating datasource for PostgreSQL `LISTEN`.
+Notifications use one dedicated, non-pooled connection per participating datasource for PostgreSQL `LISTEN`.
 The PostgreSQL JDBC driver and a Micronaut `JsonMapper` implementation must be available in the application.
 
 The PostgreSQL contract uses ann:data.jdbc.annotation.ChangeListener[] together with
@@ -146,9 +146,24 @@ delete, and truncate notifications:
 
 == Connections and Dispatch
 
-Reserve capacity for one long-lived connection per subscribing datasource, plus connections for entity loading
-and application queries. Use a direct PostgreSQL connection or a proxy with session pooling; transaction pooling
-cannot preserve `LISTEN` state. Configure datasource connection-acquisition and network timeouts for your deployment.
+The listener opens one long-lived, non-pooled physical connection per subscribing datasource using
+PostgreSQL's `PGSimpleDataSource`. This connection does not consume a slot in the application connection pool.
+Entity loading and application queries continue to use the configured datasource pool. Allow capacity on the
+PostgreSQL server for the additional notification connections.
+
+The notification connection factory reuses the named datasource's JDBC URL, username, and password. It also reads
+PostgreSQL driver properties from `datasources.<name>.data-source-properties`, `db-properties`, and the
+semicolon-separated `connection-properties` setting. Properties embedded in the JDBC URL take precedence.
+It lazily creates and caches one `PGSimpleDataSource` per datasource name, capturing these settings on first use.
+Each connection attempt opens a new physical connection from the cached source.
+Pool settings and connection initialization SQL do not apply to notification connections. Put any required session
+settings in PostgreSQL driver properties, such as `currentSchema` or `options`.
+
+The subscription owns each notification connection and closes it after failure or shutdown.
+Reconnection opens a new connection from the cached source.
+
+Use a direct PostgreSQL connection or a proxy with session pooling; transaction pooling cannot preserve `LISTEN`
+state. Configure PostgreSQL driver connection and network timeouts for your deployment.
 
 Each notification is submitted directly to Micronaut's blocking executor. Callbacks for the same listener
 can run concurrently, and callback execution and completion order are not guaranteed. Listener implementations

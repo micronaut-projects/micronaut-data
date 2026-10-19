@@ -101,13 +101,21 @@ class PostgresNotificationPoolSpec extends Specification implements PostgresTest
     }
 
     @Unroll
-    void "#pool shares one connection per datasource and releases subscriptions before pool reuse"() {
+    void "#pool remains available while dedicated connections share channels and reconnect independently"() {
         given:
         Map configuration = settings + getDataSourceProperties('secondary') + [
             'spec.name': 'PostgresNotificationPoolSpec',
             'spec.pool.type': pool,
             'datasources.default.enabled': false,
             'datasources.secondary.enabled': false,
+            'datasources.default.url': settings['spec.pool.url'],
+            'datasources.secondary.url': settings['spec.pool.secondary-url'],
+            'datasources.default.username': settings['spec.pool.username'],
+            'datasources.default.password': settings['spec.pool.password'],
+            'datasources.secondary.username': settings['spec.pool.username'],
+            'datasources.secondary.password': settings['spec.pool.password'],
+            'datasources.default.data-source-properties.ApplicationName': 'notification-pool-default',
+            'datasources.secondary.data-source-properties.ApplicationName': 'notification-pool-secondary',
             'micronaut.data.jdbc.notifications.postgres.poll-timeout': '100ms',
             'micronaut.data.jdbc.notifications.postgres.retry-delay': '100ms'
         ]
@@ -118,9 +126,11 @@ class PostgresNotificationPoolSpec extends Specification implements PostgresTest
 
         expect:
         new PollingConditions(timeout: 10).eventually {
-            assert active(primary) == 1
-            assert active(secondary) == 1
+            assert active(primary) == 0
+            assert active(secondary) == 0
         }
+        assertReusable(primary)
+        assertReusable(secondary)
         listener.first.poll(200, TimeUnit.MILLISECONDS) == null
         listener.second.isEmpty()
         listener.secondary.isEmpty()
@@ -199,7 +209,7 @@ class PostgresNotificationPoolSpec extends Specification implements PostgresTest
     }
 
     private static void assertReusable(DataSource source) {
-        // Borrow every pool slot together so the former LISTEN connection must also be inspected.
+        // Every pool slot remains available and has no notification subscriptions.
         try (Connection first = source.connection; Connection second = source.connection) {
             for (Connection connection : [first, second]) {
                 try (def statement = connection.createStatement(); def rows = statement.executeQuery('SELECT pg_listening_channels()')) {

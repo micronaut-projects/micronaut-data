@@ -42,7 +42,7 @@ import java.lang.annotation.Target;
  * the listener is invoked. The loaded entity reflects the database state at the time of loading,
  * which may include changes made after the notification was sent.</p>
  *
- * <p>PostgreSQL notifications use one dedicated connection per participating datasource, shared by
+ * <p>PostgreSQL notifications use one dedicated, non-pooled connection per participating datasource, shared by
  * all listener methods using that datasource. Callbacks run on the blocking executor and may
  * execute concurrently for the same listener, without guaranteed execution or completion order.
  * An {@code INVALIDATE} event is delivered after each successful reconnection so

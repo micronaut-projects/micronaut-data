@@ -52,7 +52,7 @@ import java.util.concurrent.Executor;
  * for each participating datasource. Registration supplies the complete set of discovered listener
  * methods once per datasource; later registration calls for that datasource are rejected.</p>
  *
- * <p>Each subscription owns a dedicated LISTEN connection, notification reception, reconnection,
+ * <p>Each subscription owns a dedicated, non-pooled LISTEN connection, notification reception, reconnection,
  * and listener dispatch. A {@link ShutdownEvent} initiates cleanup for all datasource subscriptions,
  * and graceful shutdown waits for connection cleanup, reception, and accepted notification callbacks.
  * {@link PreDestroy} provides a best-effort cleanup fallback if the provider is destroyed without a
@@ -69,18 +69,21 @@ final class PostgresChangeNotificationProvider implements ChangeNotificationProv
     private final Executor executor;
     private final TaskScheduler taskScheduler;
     private final PostgresNotificationConfiguration configuration;
+    private final PostgresNotificationConnectionFactory connectionFactory;
     private final Map<String, PostgresNotificationSubscription> subscriptions = new HashMap<>();
     private @Nullable CompletableFuture<Void> shutdown;
 
     PostgresChangeNotificationProvider(BeanContext beanContext, BeanProvider<JsonMapper> jsonMapperProvider,
                                        @Named(TaskExecutors.BLOCKING) Executor executor,
                                        @Named(TaskExecutors.SCHEDULED) TaskScheduler taskScheduler,
-                                       PostgresNotificationConfiguration configuration) {
+                                       PostgresNotificationConfiguration configuration,
+                                       PostgresNotificationConnectionFactory connectionFactory) {
         this.beanContext = beanContext;
         this.jsonMapperProvider = jsonMapperProvider;
         this.executor = executor;
         this.taskScheduler = taskScheduler;
         this.configuration = configuration;
+        this.connectionFactory = connectionFactory;
     }
 
     /**
@@ -108,7 +111,7 @@ final class PostgresChangeNotificationProvider implements ChangeNotificationProv
             throw new IllegalStateException("PostgreSQL notifications already registered or shutting down for " + name);
         }
         var subscription = new PostgresNotificationSubscription(name, operations, listeners, beanContext,
-            jsonMapperProvider.get(), executor, taskScheduler, configuration);
+            jsonMapperProvider.get(), executor, taskScheduler, configuration, connectionFactory);
         subscription.start();
         subscriptions.put(name, subscription);
     }

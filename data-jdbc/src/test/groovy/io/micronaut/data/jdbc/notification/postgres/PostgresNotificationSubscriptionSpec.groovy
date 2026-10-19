@@ -16,14 +16,15 @@
 package io.micronaut.data.jdbc.notification.postgres
 
 import io.micronaut.context.BeanContext
+import io.micronaut.context.env.Environment
 import io.micronaut.data.jdbc.operations.JdbcRepositoryOperations
 import io.micronaut.json.JsonMapper
 import io.micronaut.scheduling.TaskScheduler
 import org.postgresql.PGConnection
+import org.postgresql.ds.PGSimpleDataSource
 import spock.lang.Specification
 import spock.lang.Unroll
 
-import javax.sql.DataSource
 import java.sql.Connection
 import java.sql.Statement
 import java.util.concurrent.CompletableFuture
@@ -57,15 +58,15 @@ class PostgresNotificationSubscriptionSpec extends Specification {
             unwrap(PGConnection) >> postgres
             createStatement() >> statement
         }
-        def datasource = Stub(DataSource) {
+        def source = Stub(PGSimpleDataSource) {
             getConnection() >> connection
         }
-        def operations = Stub(JdbcRepositoryOperations) {
-            getDataSource() >> datasource
-        }
+        def connectionFactory = new PostgresNotificationConnectionFactory(Stub(BeanContext), Stub(Environment))
+        connectionFactory.@dataSources.put('test', source)
+        def operations = Stub(JdbcRepositoryOperations)
         def subscription = new PostgresNotificationSubscription('test', operations, [], Stub(BeanContext),
             Stub(JsonMapper), { Runnable task -> task.run() } as Executor, Stub(TaskScheduler),
-            new PostgresNotificationConfiguration())
+            new PostgresNotificationConfiguration(), connectionFactory)
         subscription.start()
         assert entered.await(10, TimeUnit.SECONDS)
 
