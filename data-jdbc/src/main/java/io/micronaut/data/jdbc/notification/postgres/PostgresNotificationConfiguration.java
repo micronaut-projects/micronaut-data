@@ -42,6 +42,11 @@ public final class PostgresNotificationConfiguration {
      * Returns the timeout passed to each notification poll. Defaults to one second.
      * This setting does not limit connection establishment or SQL statement execution.
      *
+     * <p>Increasing this timeout can delay graceful shutdown when no notifications arrive.
+     * Stopping the subscription signals the receiver to exit but does not interrupt an active poll.
+     * The receiver checks the stop signal after the poll returns, then closes the listening connection.
+     * Graceful shutdown waits for that cleanup and any running listener callbacks to finish.</p>
+     *
      * @return the notification poll timeout
      */
     public Duration getPollTimeout() {

@@ -217,6 +217,12 @@ micronaut:
 These settings apply to all subscribing datasources.
 Durations must be at least one millisecond and no greater than 2,147,483,647 milliseconds.
 
+`poll-timeout` defaults to one second and controls how long each call waits for notifications.
+Increasing it can delay graceful shutdown when no notifications arrive, because stopping the service
+does not interrupt a call already waiting for notifications. The listening connection is closed after
+that call returns. Graceful shutdown waits for the connection to close and any running listener callbacks to finish.
+Waiting for notifications does not send periodic queries to PostgreSQL.
+
 `max-retries` defaults to `-1`, which retries recovery until shutdown. Non-negative values count retries
 after the initial recovery attempt; `0` allows only that initial attempt. The first recovery attempt waits
 for `retry-delay`. Subsequent delays are multiplied by `retry-delay-multiplier`.
