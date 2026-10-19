@@ -26,6 +26,7 @@ import io.micronaut.data.model.PersistentEntityUtils;
 import io.micronaut.data.model.PersistentPropertyPath;
 import io.micronaut.data.model.query.builder.sql.Dialect;
 import io.micronaut.data.model.query.builder.sql.SqlQueryBuilder;
+import io.micronaut.data.model.query.builder.sql.postgres.PostgresIdentifiers;
 import io.micronaut.data.processor.model.SourcePersistentEntity;
 import io.micronaut.data.processor.model.criteria.impl.SourcePersistentEntityCriteriaBuilderImpl;
 import io.micronaut.inject.ast.MethodElement;
@@ -38,7 +39,6 @@ import java.nio.charset.StandardCharsets;
 import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.List;
-import java.util.Locale;
 import java.util.Objects;
 
 /**
@@ -182,8 +182,8 @@ public final class PostgresChangeNotificationVisitor implements TypeElementVisit
                 return;
             }
             String column = entity.getNamingStrategy().mappedName(key.getAssociations(), key.getProperty());
-            columns[i] = entity.getAnnotationMetadata().booleanValue(MappedEntity.class, "escape").orElse(true)
-                ? column : column.toLowerCase(Locale.ROOT);
+            columns[i] = PostgresIdentifiers.normalize(column,
+                entity.getAnnotationMetadata().booleanValue(MappedEntity.class, "escape").orElse(true));
             paths[i] = key.getPath();
         }
         element.annotate(PostgresChangeListenerQuery.class, annotation -> annotation.value(result.getQuery())

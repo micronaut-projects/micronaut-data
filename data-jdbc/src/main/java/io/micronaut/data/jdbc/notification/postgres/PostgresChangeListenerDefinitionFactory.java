@@ -22,6 +22,7 @@ import io.micronaut.data.jdbc.annotation.PostgresChangeNotification;
 import io.micronaut.data.jdbc.notification.ChangeListenerMethod;
 import io.micronaut.data.jdbc.operations.JdbcRepositoryOperations;
 import io.micronaut.data.model.PersistentPropertyPath;
+import io.micronaut.data.model.query.builder.sql.postgres.PostgresIdentifiers;
 import io.micronaut.data.model.runtime.RuntimePersistentEntity;
 import io.micronaut.data.model.runtime.RuntimePersistentProperty;
 import io.micronaut.inject.ExecutableMethod;
@@ -29,7 +30,6 @@ import io.micronaut.inject.ExecutableMethod;
 import java.util.ArrayList;
 import java.util.HashSet;
 import java.util.List;
-import java.util.Locale;
 import java.util.Set;
 
 /**
@@ -68,10 +68,9 @@ final class PostgresChangeListenerDefinitionFactory {
         String schema = entity.getAnnotationMetadata().stringValue(MappedEntity.class, "schema")
             .filter(value -> !value.isEmpty()).orElse(null);
         String table = entity.getPersistedName();
-        if (!entity.getAnnotationMetadata().booleanValue(MappedEntity.class, "escape").orElse(true)) {
-            schema = schema == null ? null : schema.toLowerCase(Locale.ROOT);
-            table = table.toLowerCase(Locale.ROOT);
-        }
+        boolean quoted = entity.getAnnotationMetadata().booleanValue(MappedEntity.class, "escape").orElse(true);
+        schema = schema == null ? null : PostgresIdentifiers.normalize(schema, quoted);
+        table = PostgresIdentifiers.normalize(table, quoted);
         return new PostgresChangeListenerDefinition(channel, schema, table, loader);
     }
 

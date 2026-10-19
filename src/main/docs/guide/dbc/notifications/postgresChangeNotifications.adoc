@@ -79,7 +79,10 @@ Entity loading follows the datasource's schema search path, which may resolve to
 from the notification's source. This can load an unrelated row with the same primary key or find no row.
 Specify a schema, such as `@MappedEntity(value = "book", schema = "public")`, or use separate channels
 for tables in different schemas to avoid this ambiguity.
-Quoted mapped identifiers retain their case; unquoted identifiers are matched in lower case.
+Identifier matching assumes a UTF-8 database and PostgreSQL's default 63-byte identifier limit.
+Quoted mapped identifiers retain their case; unquoted identifiers fold only ASCII `A`–`Z` to lower case.
+Both are truncated to 63 UTF-8 bytes without splitting a character, matching PostgreSQL's catalog names.
+Supply these actual catalog column names as the trigger's primary-key arguments.
 
 This implementation supports ordinary tables on PostgreSQL 11 or later, with scalar or composite primary keys,
 including embedded keys. Key values must be convertible from PostgreSQL's JSON text representation to the mapped
