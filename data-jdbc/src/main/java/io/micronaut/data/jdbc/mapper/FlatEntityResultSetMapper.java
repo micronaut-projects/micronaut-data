@@ -24,11 +24,13 @@ import io.micronaut.core.type.Argument;
 import io.micronaut.data.exceptions.DataAccessException;
 import io.micronaut.data.model.runtime.RuntimePersistentEntity;
 import io.micronaut.data.model.runtime.RuntimePersistentProperty;
+import io.micronaut.data.runtime.convert.DatabaseConversionContextFactory;
 import io.micronaut.data.runtime.mapper.sql.SqlTypeMapper;
 import org.jspecify.annotations.Nullable;
 
 import java.sql.ResultSet;
 import java.sql.SQLException;
+import java.util.Objects;
 import java.util.UUID;
 import java.util.function.BiFunction;
 import java.util.function.Supplier;
@@ -76,6 +78,8 @@ public final class FlatEntityResultSetMapper<R> implements SqlTypeMapper<ResultS
     private final FlatEntityMappingPlan<R> plan;
     @Nullable
     private final GeneratedRowMapper<R> generatedMapper;
+    @Nullable
+    private final GeneratedRowMapperContext generatedContext;
     private final BeanIntrospection<R> introspection;
     private final BeanProperty<R, Object>[] properties;
     private final RuntimePersistentProperty<R>[] persistentProperties;
@@ -108,8 +112,25 @@ public final class FlatEntityResultSetMapper<R> implements SqlTypeMapper<ResultS
                                      ConversionService conversionService,
                                      @Nullable BiFunction<RuntimePersistentEntity<Object>, Object, Object> loadListener,
                                      Supplier<SqlTypeMapper<ResultSet, R>> generalMapper) {
+        this(plan, conversionService, loadListener, generalMapper, null);
+    }
+
+    /**
+     * @param plan                     The plan
+     * @param conversionService        The conversion service, for the values a getter doesn't return in the property type
+     * @param loadListener             The listener invoked with every mapped entity, for the post load events
+     * @param generalMapper            Supplies the general mapper for the operations this mapper does not perform
+     * @param conversionContextFactory The factory of the conversion contexts the attribute converters of a generated
+     *                                 mapper's columns receive, or {@code null} for plain ones
+     */
+    public FlatEntityResultSetMapper(FlatEntityMappingPlan<R> plan,
+                                     ConversionService conversionService,
+                                     @Nullable BiFunction<RuntimePersistentEntity<Object>, Object, Object> loadListener,
+                                     Supplier<SqlTypeMapper<ResultSet, R>> generalMapper,
+                                     @Nullable DatabaseConversionContextFactory conversionContextFactory) {
         this.plan = plan;
         this.generatedMapper = plan.getGeneratedMapper();
+        this.generatedContext = generatedMapper == null ? null : plan.createContext(conversionService, conversionContextFactory);
         this.introspection = plan.getIntrospection();
         this.properties = plan.getProperties();
         this.persistentProperties = plan.getPersistentProperties();
@@ -166,7 +187,7 @@ public final class FlatEntityResultSetMapper<R> implements SqlTypeMapper<ResultS
         R entity;
         if (generatedMapper != null) {
             try {
-                entity = (R) generatedMapper.map(rs, ordinals, conversionService);
+                entity = (R) generatedMapper.map(rs, ordinals, Objects.requireNonNull(generatedContext));
             } catch (SQLException e) {
                 throw new DataAccessException("Error reading entity [" + plan.getEntity().getName() + "] from result set: " + e.getMessage(), e);
             }

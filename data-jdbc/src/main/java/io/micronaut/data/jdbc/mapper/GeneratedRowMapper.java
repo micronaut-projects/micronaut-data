@@ -16,7 +16,6 @@
 package io.micronaut.data.jdbc.mapper;
 
 import io.micronaut.core.annotation.Internal;
-import io.micronaut.core.convert.ConversionService;
 
 import java.sql.ResultSet;
 import java.sql.SQLException;
@@ -58,14 +57,20 @@ public interface GeneratedRowMapper<T> {
     String[] columnNames();
 
     /**
+     * @return The path of the property each column of {@link #columnNames()} is read into, in the same order, for
+     * example {@code author.id} for the foreign key of an association
+     */
+    String[] propertyPaths();
+
+    /**
      * Reads the current row.
      *
-     * @param rs                The result set, positioned on a row
-     * @param columns           The 1-based ordinal of every column of {@link #columnNames()}, in that order
-     * @param conversionService The conversion service, for the values a getter doesn't return in the property type
+     * @param rs      The result set, positioned on a row
+     * @param columns The 1-based ordinal of every column of {@link #columnNames()}, in that order
+     * @param context The conversion service and the attribute converters of the columns
      * @return The entity, declared as {@link Object} so that a generated implementation needs no bridge method
      * whatever generator wrote it
      * @throws SQLException If a column cannot be read
      */
-    Object map(ResultSet rs, int[] columns, ConversionService conversionService) throws SQLException;
+    Object map(ResultSet rs, int[] columns, GeneratedRowMapperContext context) throws SQLException;
 }

@@ -20,6 +20,7 @@ import io.micronaut.core.convert.ConversionService;
 import io.micronaut.core.annotation.Internal;
 import io.micronaut.data.annotation.InstantiateWithDefaultConstructor;
 import io.micronaut.data.annotation.MappedEntity;
+import io.micronaut.data.annotation.MappedProperty;
 import io.micronaut.data.annotation.sql.JoinColumns;
 import io.micronaut.data.exceptions.DataAccessException;
 import io.micronaut.data.model.Association;
@@ -87,7 +88,8 @@ import java.util.function.Function;
  * creator the bean introspection uses when it has parameters, through setters otherwise. The values and the
  * null handling are those of the flat entity mapper of {@code data-jdbc}, which is the mapper that delegates to
  * the generated class: a value the getter does not return in the property type (an enum, a java.time type) goes
- * through the conversion service, a SQL NULL read for a primitive leaves the property at its initial value, a
+ * through the conversion service, a property with an attribute converter is read in its persisted type and
+ * converted by the converter with the property's conversion context, a SQL NULL read for a primitive leaves the property at its initial value, a
  * non-null constructor argument fails, an association target whose identity is null is null, and a nullable
  * embedded value without a single column value is null.</p>
  *
@@ -98,10 +100,10 @@ import java.util.function.Function;
  * compile.</p>
  *
  * <p>No mapper is generated for an entity the runtime cannot read exactly that
- * way: a composite identity, an attribute converter, a JSON column, a property type without a typed read (which
- * includes arrays and custom types the conversion service converts), a join column override, an identity or
- * version that cannot be set, or a constructor argument that is not a persistent property. Such entities keep the
- * flat or the general mapper at runtime.</p>
+ * way: a composite identity, a JSON column, a property type without a typed read (which includes arrays and
+ * custom types the conversion service converts), an attribute converter that reads the result set itself or
+ * persists such a type, a join column override, an identity or version that cannot be set, or a constructor
+ * argument that is not a persistent property. Such entities keep the flat or the general mapper at runtime.</p>
  *
  * @since 5.3.0
  */
@@ -126,6 +128,8 @@ public final class JdbcRowMapperVisitor implements TypeElementVisitor<MappedEnti
     private static final ClassTypeDef SQL_EXCEPTION = ClassTypeDef.of(SQLException.class);
     private static final ClassTypeDef DATA_ACCESS_EXCEPTION = ClassTypeDef.of(DataAccessException.class);
     private static final ClassTypeDef CONVERSION_SERVICE = ClassTypeDef.of(ConversionService.class);
+    private static final ClassTypeDef CONTEXT_TYPE = ClassTypeDef.of("io.micronaut.data.jdbc.mapper.GeneratedRowMapperContext");
+    private static final String RESULT_READER_CONVERTER = "io.micronaut.data.model.runtime.convert.ResultReaderAttributeConverter";
     private static final ClassTypeDef BIG_DECIMAL = ClassTypeDef.of(BigDecimal.class);
     private static final ClassTypeDef TIMESTAMP = ClassTypeDef.of(Timestamp.class);
     private static final ClassTypeDef DATE = ClassTypeDef.of(java.sql.Date.class);
@@ -152,6 +156,13 @@ public final class JdbcRowMapperVisitor implements TypeElementVisitor<MappedEnti
     @Override
     public Set<String> getSupportedOptions() {
         return Set.of(OPTION_ENABLED, OPTION_REPORT);
+    }
+
+    @Override
+    public int getOrder() {
+        // Visitors run in descending order: after MappedEntityVisitor, whose mapping defaults (the converter and
+        // the data type of every property) the model reads from the elements
+        return MappedEntityVisitor.POSITION - 1;
     }
 
     @Override
@@ -223,8 +234,10 @@ public final class JdbcRowMapperVisitor implements TypeElementVisitor<MappedEnti
     private static ClassDef generate(String name, ClassElement element, Model model) {
         ClassTypeDef entityType = ClassTypeDef.of(element);
         List<ExpressionDef> columns = new ArrayList<>(model.leaves.size());
+        List<ExpressionDef> paths = new ArrayList<>(model.leaves.size());
         for (Leaf leaf : model.leaves) {
             columns.add(ExpressionDef.constant(leaf.column()));
+            paths.add(ExpressionDef.constant(leaf.path()));
         }
         return ClassDef.builder(name)
             .addModifiers(Modifier.PUBLIC, Modifier.FINAL)
@@ -242,43 +255,62 @@ public final class JdbcRowMapperVisitor implements TypeElementVisitor<MappedEnti
                 .overrides()
                 .returns(TypeDef.STRING.array())
                 .build((aThis, params) -> TypeDef.STRING.array().instantiate(columns).returning()))
+            .addMethod(MethodDef.builder("propertyPaths")
+                .addModifiers(Modifier.PUBLIC)
+                .overrides()
+                .returns(TypeDef.STRING.array())
+                .build((aThis, params) -> TypeDef.STRING.array().instantiate(paths).returning()))
             .addMethod(MethodDef.builder("map")
                 .addModifiers(Modifier.PUBLIC)
                 .overrides()
                 .returns(TypeDef.OBJECT)
                 .addParameter("rs", RESULT_SET)
                 .addParameter("columns", TypeDef.Primitive.INT.array())
-                .addParameter("conversionService", CONVERSION_SERVICE)
+                .addParameter("context", CONTEXT_TYPE)
                 .addThrows(SQL_EXCEPTION)
                 .build((aThis, params) -> new Body(params.get(0), params.get(1), params.get(2)).build(model.root)))
             .build();
     }
 
     private static Read getter(String name, TypeDef type) {
-        return new Read(type, (rs, c, cs) -> rs.invoke(name, type, c));
+        return new Read(type, (rs, c, ctx, i) -> rs.invoke(name, type, c));
     }
 
     private static Read support(String name, Class<?> type) {
         ClassTypeDef typeDef = ClassTypeDef.of(type);
-        return new Read(typeDef, (rs, c, cs) -> SUPPORT_TYPE.invokeStatic(name, typeDef, rs, c));
+        return new Read(typeDef, (rs, c, ctx, i) -> SUPPORT_TYPE.invokeStatic(name, typeDef, rs, c));
+    }
+
+    private static ExpressionDef conversionService(VariableDef context) {
+        return context.invoke("conversionService", CONVERSION_SERVICE);
     }
 
     /**
-     * {@code GeneratedRowMapperSupport.convert(rs.getX(c), Type.class, conversionService)}: a value the getter does
-     * not return in the property type, converted as the general mapper converts it, through the conversion
-     * service; a single read of the column.
+     * {@code GeneratedRowMapperSupport.convert(rs.getX(c), Type.class, context.conversionService())}: a value the
+     * getter does not return in the property type, converted as the general mapper converts it, through the
+     * conversion service; a single read of the column.
      */
     private static Read converted(String getter, TypeDef getterType, ClassTypeDef type) {
-        return new Read(type, (rs, c, cs) -> SUPPORT_TYPE.invokeStatic("convert", type, rs.invoke(getter, getterType, c), ExpressionDef.constant(type), cs));
+        return new Read(type, (rs, c, ctx, i) -> SUPPORT_TYPE.invokeStatic("convert", type, rs.invoke(getter, getterType, c), ExpressionDef.constant(type), conversionService(ctx)));
     }
 
     /**
-     * @return How the property is read, or {@code null} when its type has no typed read for its data type
+     * {@code (Type) context.convertToEntityValue(i, <read of the persisted type>)}: a property with an attribute
+     * converter, read with the typed getter of the persisted type and converted by the property's converter with
+     * its conversion context, as the general mapper does, {@code null} included. A primitive property is read in
+     * its wrapper and unboxed by the body.
+     */
+    private static Read attributeConverted(Read persisted, ClassElement propertyType) {
+        TypeDef type = TypeDef.of(propertyType);
+        ClassTypeDef boxed = type instanceof TypeDef.Primitive primitive ? primitive.wrapperType() : (ClassTypeDef) type;
+        return new Read(boxed, (rs, c, ctx, i) -> ctx.invoke("convertToEntityValue", TypeDef.OBJECT, ExpressionDef.constant(i), persisted.read(rs, c, ctx, i)).cast(boxed));
+    }
+
+    /**
+     * @return How a property of the type is read for the data type, or {@code null} when there is no typed read
      */
     @Nullable
-    private static Read readFor(SourcePersistentProperty property) {
-        ClassElement type = property.getType();
-        DataType dataType = property.getDataType();
+    private static Read readFor(ClassElement type, DataType dataType) {
         if (type.isEnum()) {
             if (dataType != DataType.STRING) {
                 return null;
@@ -354,7 +386,7 @@ public final class JdbcRowMapperVisitor implements TypeElementVisitor<MappedEnti
                 default -> null;
             };
             case UUID -> "java.util.UUID".equals(name)
-                ? new Read(ClassTypeDef.of(UUID.class), (rs, c, cs) -> SUPPORT_TYPE.invokeStatic("readUuid", ClassTypeDef.of(UUID.class), rs, c, cs))
+                ? new Read(ClassTypeDef.of(UUID.class), (rs, c, ctx, i) -> SUPPORT_TYPE.invokeStatic("readUuid", ClassTypeDef.of(UUID.class), rs, c, conversionService(ctx)))
                 : null;
             default -> null;
         };
@@ -448,33 +480,49 @@ public final class JdbcRowMapperVisitor implements TypeElementVisitor<MappedEnti
      * The typed read of one column.
      *
      * @param type       The type of the value
-     * @param expression Builds the read from the result set, the column and the conversion service
+     * @param expression Builds the read from the result set, the column, the context and the column index
      */
     private record Read(TypeDef type, Expression expression) {
 
-        ExpressionDef read(VariableDef rs, ExpressionDef column, VariableDef conversionService) {
-            return expression.apply(rs, column, conversionService);
+        ExpressionDef read(VariableDef rs, ExpressionDef column, VariableDef context, int index) {
+            return expression.apply(rs, column, context, index);
         }
 
+        /**
+         * Builds the read of a column.
+         */
         @FunctionalInterface
         interface Expression {
-            ExpressionDef apply(VariableDef rs, ExpressionDef column, VariableDef conversionService);
+            /**
+             * @param rs      The result set
+             * @param column  The ordinal
+             * @param context The generated row mapper context
+             * @param index   The index of the column in the mapper's columns
+             * @return The value
+             */
+            ExpressionDef apply(VariableDef rs, ExpressionDef column, VariableDef context, int index);
         }
     }
 
     /**
-     * Thrown while the model is built for an entity the mapper cannot be generated for.
+     * Thrown while the model is built for an entity the mapper cannot be generated for: flow control to the one
+     * place that reports the reason, so it carries no stack trace.
      */
-    private static final class Unsupported extends RuntimeException {
+    private static final class UnsupportedEntityException extends RuntimeException {
         private final transient Element element;
 
-        Unsupported(String message, Element element) {
+        UnsupportedEntityException(String message, Element element) {
             super(message, null, false, false);
             this.element = element;
         }
+
+        @Override
+        public synchronized Throwable fillInStackTrace() {
+            return this;
+        }
     }
 
-    private interface Member {
+    private sealed interface Member permits Leaf, Node {
     }
 
     /**
@@ -482,10 +530,11 @@ public final class JdbcRowMapperVisitor implements TypeElementVisitor<MappedEnti
      *
      * @param index    The position in the column name array
      * @param property The property
+     * @param path     The property path from the entity
      * @param column   The column name
      * @param read     The typed read
      */
-    private record Leaf(int index, SourcePersistentProperty property, String column, Read read) implements Member {
+    private record Leaf(int index, SourcePersistentProperty property, String path, String column, Read read) implements Member {
 
         boolean isPrimitive() {
             return property.getType().isPrimitive() && !property.getType().isArray();
@@ -566,11 +615,11 @@ public final class JdbcRowMapperVisitor implements TypeElementVisitor<MappedEnti
         static Model of(SourcePersistentEntity entity, VisitorContext context, boolean report) {
             try {
                 Model model = new Model(new Node(entity, null));
-                model.collect(entity);
+                model.collect(entity, context);
                 model.resolveConstructors(model.root);
                 model.index(model.root);
                 return model;
-            } catch (Unsupported e) {
+            } catch (UnsupportedEntityException e) {
                 if (report) {
                     context.info("No JDBC row mapper generated for " + entity.getName() + ": " + e.getMessage() + ". Rows are mapped at runtime.", e.element);
                 }
@@ -578,37 +627,60 @@ public final class JdbcRowMapperVisitor implements TypeElementVisitor<MappedEnti
             }
         }
 
-        private void collect(SourcePersistentEntity entity) {
+        private void collect(SourcePersistentEntity entity, VisitorContext context) {
             if (entity.hasCompositeIdentity()) {
-                throw new Unsupported("the entity has a composite identity", entity.getClassElement());
+                throw new UnsupportedEntityException("the entity has a composite identity", entity.getClassElement());
             }
             PersistentEntityUtils.traversePersistentProperties(entity, true, true, (associations, property) -> {
                 Node node = root;
                 for (Association association : associations) {
                     if (!(association instanceof Embedded) && association.getAnnotationMetadata().hasAnnotation(JoinColumns.class)) {
-                        throw new Unsupported("the association " + association.getName() + " declares join columns", element(association));
+                        throw new UnsupportedEntityException("the association " + association.getName() + " declares join columns", element(association));
                     }
                     node = node.child(association);
                 }
                 SourcePersistentProperty source = (SourcePersistentProperty) property;
                 String path = path(associations, property);
-                if (source.getConverterClassName() != null) {
-                    throw new Unsupported("the property " + path + " has an attribute converter", source.getPropertyElement());
-                }
-                if (source.getDataType() == DataType.JSON) {
-                    throw new Unsupported("the property " + path + " is a JSON column", source.getPropertyElement());
-                }
-                Read read = readFor(source);
-                if (read == null) {
-                    throw new Unsupported("the property " + path + " of type " + source.getType().getName() + " has no typed read for data type " + source.getDataType(), source.getPropertyElement());
-                }
+                Read read = readOf(source, path, context);
                 String alias = source.getAlias();
                 if (alias != null && !alias.isEmpty() && !associations.isEmpty()) {
-                    throw new Unsupported("the property " + path + " has an alias", source.getPropertyElement());
+                    throw new UnsupportedEntityException("the property " + path + " has an alias", source.getPropertyElement());
                 }
                 String column = alias != null && !alias.isEmpty() ? alias : entity.getNamingStrategy().mappedName(associations, property);
-                node.members.put(property.getName(), new Leaf(-1, source, column, read));
+                node.members.put(property.getName(), new Leaf(-1, source, path, column, read));
             });
+        }
+
+        /**
+         * How a property is read: by the typed getter of its data type, through the conversion service when the
+         * getter does not return the property type, and through its attribute converter when it has one. The
+         * converter and the data type are read from the element, where {@link MappedEntityVisitor} recorded the ones
+         * it resolved (from {@code @TypeDef} or the configured data converters); the source property cached the
+         * members before that.
+         */
+        private static Read readOf(SourcePersistentProperty source, String path, VisitorContext context) {
+            PropertyElement element = source.getPropertyElement();
+            DataType dataType = element.enumValue(MappedProperty.class, "type", DataType.class).orElseGet(source::getDataType);
+            if (dataType == DataType.JSON) {
+                throw new UnsupportedEntityException("the property " + path + " is a JSON column", element);
+            }
+            String converter = element.stringValue(MappedProperty.class, "converter").filter(c -> !Object.class.getName().equals(c)).orElse(null);
+            if (converter == null) {
+                Read read = readFor(source.getType(), dataType);
+                if (read == null) {
+                    throw new UnsupportedEntityException("the property " + path + " of type " + source.getType().getName() + " has no typed read for data type " + dataType, element);
+                }
+                return read;
+            }
+            if (context.getClassElement(converter).filter(c -> c.isAssignable(RESULT_READER_CONVERTER)).isPresent()) {
+                throw new UnsupportedEntityException("the attribute converter of the property " + path + " reads the result set itself", element);
+            }
+            ClassElement persistedType = element.stringValue(MappedProperty.class, "converterPersistedType").flatMap(context::getClassElement).orElse(null);
+            Read persisted = persistedType == null ? null : readFor(persistedType, dataType);
+            if (persisted == null) {
+                throw new UnsupportedEntityException("the attribute converter of the property " + path + " persists a type without a typed read for data type " + dataType, element);
+            }
+            return attributeConverted(persisted, source.getType());
         }
 
         /**
@@ -617,7 +689,7 @@ public final class JdbcRowMapperVisitor implements TypeElementVisitor<MappedEnti
         private void index(Node node) {
             for (Map.Entry<String, Member> entry : node.members.entrySet()) {
                 if (entry.getValue() instanceof Leaf leaf) {
-                    Leaf indexed = new Leaf(leaves.size(), leaf.property(), leaf.column(), leaf.read());
+                    Leaf indexed = new Leaf(leaves.size(), leaf.property(), leaf.path(), leaf.column(), leaf.read());
                     leaves.add(indexed);
                     entry.setValue(indexed);
                 } else {
@@ -639,11 +711,11 @@ public final class JdbcRowMapperVisitor implements TypeElementVisitor<MappedEnti
             if (constructor != null) {
                 if (node.isAssociationTarget() && !(constructor.getParameters().length == 1 && node.members.size() == 1)) {
                     // The general mapper builds the target of an unjoined association from its identity alone
-                    throw new Unsupported("the target of the association " + node.association().getName() + " cannot be built from its identity alone", element(node.association()));
+                    throw new UnsupportedEntityException("the target of the association " + node.association().getName() + " cannot be built from its identity alone", element(node.association()));
                 }
                 for (ParameterElement parameter : constructor.getParameters()) {
                     if (!node.members.containsKey(parameter.getName())) {
-                        throw new Unsupported("the constructor argument " + parameter.getName() + " of " + type.getName() + " is not a column", parameter);
+                        throw new UnsupportedEntityException("the constructor argument " + parameter.getName() + " of " + type.getName() + " is not a column", parameter);
                     }
                     arguments.add(parameter.getName());
                 }
@@ -656,7 +728,7 @@ public final class JdbcRowMapperVisitor implements TypeElementVisitor<MappedEnti
                 SourcePersistentProperty property = property(entry.getValue());
                 if (writeMethod(property) == null) {
                     if (isIdentityOrVersion(node.entity, property)) {
-                        throw new Unsupported("the property " + property.getName() + " of " + type.getName() + " cannot be set", property.getPropertyElement());
+                        throw new UnsupportedEntityException("the property " + property.getName() + " of " + type.getName() + " cannot be set", property.getPropertyElement());
                     }
                     dropped.add(entry.getKey());
                 }
@@ -677,7 +749,7 @@ public final class JdbcRowMapperVisitor implements TypeElementVisitor<MappedEnti
     private static final class Body {
         private final VariableDef rs;
         private final VariableDef columns;
-        private final VariableDef conversionService;
+        private final VariableDef context;
         private final List<StatementDef> statements = new ArrayList<>();
         /**
          * The local holding the value of each column, in the property type (the wrapper for a primitive char).
@@ -690,10 +762,10 @@ public final class JdbcRowMapperVisitor implements TypeElementVisitor<MappedEnti
         private final Map<Leaf, ExpressionDef.ConditionExpressionDef> presents = new HashMap<>();
         private int locals;
 
-        Body(VariableDef rs, VariableDef columns, VariableDef conversionService) {
+        Body(VariableDef rs, VariableDef columns, VariableDef context) {
             this.rs = rs;
             this.columns = columns;
-            this.conversionService = conversionService;
+            this.context = context;
         }
 
         StatementDef build(Node root) {
@@ -708,7 +780,7 @@ public final class JdbcRowMapperVisitor implements TypeElementVisitor<MappedEnti
             StatementDef.DefineAndAssign column = SUPPORT_TYPE.invokeStatic("column", TypeDef.Primitive.INT, columns, ExpressionDef.constant(leaf.index()))
                 .newLocal("c" + leaf.index());
             statements.add(column);
-            StatementDef.DefineAndAssign value = leaf.read().read(rs, column.variable(), conversionService).newLocal("v" + leaf.index());
+            StatementDef.DefineAndAssign value = leaf.read().read(rs, column.variable(), context, leaf.index()).newLocal("v" + leaf.index());
             statements.add(value);
             VariableDef local = value.variable();
             values.put(leaf, local);
@@ -728,12 +800,14 @@ public final class JdbcRowMapperVisitor implements TypeElementVisitor<MappedEnti
         }
 
         /**
-         * @return The value of a leaf in the property type: the local, unboxed for a primitive char
+         * @return The value of a leaf in the property type: the local, unboxed for a primitive property read in
+         * its wrapper (a char, or a converted primitive)
          */
         private ExpressionDef value(Leaf leaf) {
             VariableDef local = Objects.requireNonNull(values.get(leaf));
             if (leaf.isPrimitive() && !leaf.read().type().isPrimitive()) {
-                return local.invoke("charValue", TypeDef.Primitive.CHAR);
+                TypeDef.Primitive primitive = (TypeDef.Primitive) TypeDef.of(leaf.property().getType());
+                return local.invoke(primitive.name() + "Value", primitive);
             }
             return local;
         }

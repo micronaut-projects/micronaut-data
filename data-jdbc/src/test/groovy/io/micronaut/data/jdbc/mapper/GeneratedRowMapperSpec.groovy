@@ -22,13 +22,17 @@ import io.micronaut.data.jdbc.mapper.generated.GeneratedTypes
 import io.micronaut.data.jdbc.mapper.generated.GeoPoint
 import io.micronaut.data.jdbc.mapper.generated.JsonCreatorTag
 import io.micronaut.data.jdbc.mapper.generated.NoArgCreatorProbe
+import io.micronaut.data.jdbc.mapper.generated.Money
 import io.micronaut.data.jdbc.mapper.generated.Place
+import io.micronaut.data.jdbc.mapper.generated.Priced
 import io.micronaut.data.jdbc.mapper.generated.Probe
 import io.micronaut.data.jdbc.mapper.generated.Tag
 import io.micronaut.data.jdbc.mapper.generated.Unsupported
 import io.micronaut.data.jdbc.mapper.generated.Visit
 import io.micronaut.data.model.runtime.RuntimePersistentEntity
+import io.micronaut.data.model.runtime.RuntimeEntityRegistry
 import io.micronaut.data.runtime.convert.DataConversionService
+import io.micronaut.data.runtime.convert.DatabaseConversionContextFactory
 import io.micronaut.data.runtime.mapper.sql.SqlResultEntityTypeMapper
 import io.micronaut.data.tck.entities.Book
 import io.micronaut.data.tck.entities.Order
@@ -53,10 +57,24 @@ class GeneratedRowMapperSpec extends Specification {
 
     @Shared
     @AutoCleanup
-    ApplicationContext context = ApplicationContext.run()
+    ApplicationContext context = ApplicationContext.run(
+        // A data source, for the conversion context factory the attribute converters are given
+        'datasources.default.url': 'jdbc:h2:mem:generatedmapper;DB_CLOSE_DELAY=-1',
+        'datasources.default.driverClassName': 'org.h2.Driver',
+        'datasources.default.dialect': 'H2',
+        'datasources.default.username': 'sa',
+        'datasources.default.password': '',
+        'datasources.default.schema-generate': 'NONE',
+    )
 
     @Shared
     DataConversionService conversionService = context.getBean(DataConversionService)
+
+    @Shared
+    DatabaseConversionContextFactory conversionContextFactory = context.getBean(DatabaseConversionContextFactory)
+
+    @Shared
+    RuntimeEntityRegistry entityRegistry = context.getBean(RuntimeEntityRegistry)
 
     @Shared
     @AutoCleanup
@@ -328,6 +346,31 @@ class GeneratedRowMapperSpec extends Specification {
         execute("DROP TABLE generated_json_creator_tag")
     }
 
+    void "a property with an attribute converter is read in its persisted type and converted by the converter"() {
+        given: "the entity as the runtime registers it, with its converters resolved"
+        RuntimePersistentEntity<Priced> entity = entityRegistry.getEntity(Priced)
+        def plan = FlatEntityMappingPlan.of(entity)
+        createTable("generated_priced", ["id BIGINT", "amount BIGINT", "cents VARCHAR(20)"])
+        execute("INSERT INTO generated_priced VALUES (1, 1250, '99'), (2, NULL, NULL)")
+
+        expect:
+        plan.generatedMapper != null
+        plan.generatedMapper.propertyPaths().toList() == ["id", "amount", "cents"]
+
+        when:
+        List<Priced> generated = mapGenerated(plan, "SELECT * FROM generated_priced ORDER BY id")
+        List<Priced> general = mapGeneral(entity, "SELECT * FROM generated_priced ORDER BY id")
+
+        then: "the converter is applied to the persisted value, a NULL included, as the general mapper applies it"
+        generated*.amount == [new Money(1250L), new Money(0L)]
+        generated*.cents == [99L, 0L]
+        generated*.amount == general*.amount
+        generated*.cents == general*.cents
+
+        cleanup:
+        execute("DROP TABLE generated_priced")
+    }
+
     void "the generated mapper is used directly with resolved ordinals"() {
         given:
         def mapper = GeneratedRowMappers.find(Country)
@@ -338,7 +381,7 @@ class GeneratedRowMapperSpec extends Specification {
 
         when:
         rs.next()
-        Country country = mapper.map(rs, [2] as int[], conversionService)
+        Country country = mapper.map(rs, [2] as int[], FlatEntityMappingPlan.of(entity(Country)).createContext(conversionService, conversionContextFactory))
 
         then:
         country.id() == 42L
@@ -370,7 +413,7 @@ class GeneratedRowMapperSpec extends Specification {
         Statement statement = connection.createStatement()
         ResultSet rs = statement.executeQuery(sql)
         try {
-            def mapper = new FlatEntityResultSetMapper<T>(plan, conversionService, null, { throw new IllegalStateException("No general mapper needed") })
+            def mapper = new FlatEntityResultSetMapper<T>(plan, conversionService, null, { throw new IllegalStateException("No general mapper needed") }, conversionContextFactory)
             List<T> result = []
             while (rs.next()) {
                 result.add(mapper.readEntity(rs))
@@ -386,7 +429,7 @@ class GeneratedRowMapperSpec extends Specification {
         Statement statement = connection.createStatement()
         ResultSet rs = statement.executeQuery(sql)
         try {
-            def mapper = new SqlResultEntityTypeMapper<ResultSet, T>(entity, new ColumnNameResultSetReader(conversionService), Set.of(), null, conversionService)
+            def mapper = new SqlResultEntityTypeMapper<ResultSet, T>(entity, new ColumnNameResultSetReader(conversionService), Set.of(), null, null, conversionService, conversionContextFactory)
             List<T> result = []
             while (rs.next()) {
                 result.add(mapper.readEntity(rs))

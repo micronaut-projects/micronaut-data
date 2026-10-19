@@ -18,6 +18,8 @@ package io.micronaut.data.jdbc.mapper;
 import io.micronaut.core.annotation.Internal;
 import io.micronaut.core.beans.BeanIntrospection;
 import io.micronaut.core.beans.BeanProperty;
+import io.micronaut.core.convert.ConversionContext;
+import io.micronaut.core.convert.ConversionService;
 import io.micronaut.data.annotation.Embeddable;
 import io.micronaut.data.annotation.EmbeddedId;
 import io.micronaut.data.annotation.FlatEntity;
@@ -25,6 +27,8 @@ import io.micronaut.data.model.DataType;
 import io.micronaut.data.model.naming.NamingStrategy;
 import io.micronaut.data.model.runtime.RuntimePersistentEntity;
 import io.micronaut.data.model.runtime.RuntimePersistentProperty;
+import io.micronaut.data.model.runtime.convert.AttributeConverter;
+import io.micronaut.data.runtime.convert.DatabaseConversionContextFactory;
 import org.jspecify.annotations.Nullable;
 
 import java.math.BigDecimal;
@@ -338,6 +342,40 @@ public final class FlatEntityMappingPlan<R> {
     @Nullable
     public GeneratedRowMapper<R> getGeneratedMapper() {
         return generatedMapper;
+    }
+
+    /**
+     * Resolves what the generated mapper needs beyond the result set: the attribute converter of every column that
+     * has one, with the conversion context of its property, as the general mapper applies them.
+     *
+     * @param conversionService        The conversion service
+     * @param conversionContextFactory The factory of the conversion contexts, or {@code null} for plain ones
+     * @return The context
+     * @throws IllegalStateException if the plan holds no generated mapper
+     */
+    @SuppressWarnings("unchecked")
+    public GeneratedRowMapperContext createContext(ConversionService conversionService,
+                                                   @Nullable DatabaseConversionContextFactory conversionContextFactory) {
+        if (generatedMapper == null) {
+            throw new IllegalStateException("The plan of [" + entity.getName() + "] has no generated mapper");
+        }
+        String[] paths = generatedMapper.propertyPaths();
+        AttributeConverter<Object, Object>[] converters = new AttributeConverter[paths.length];
+        ConversionContext[] contexts = new ConversionContext[paths.length];
+        for (int i = 0; i < paths.length; i++) {
+            RuntimePersistentProperty<?> property = (RuntimePersistentProperty<?>) entity.getPropertyByPath(paths[i]).orElse(null);
+            if (property == null) {
+                continue;
+            }
+            AttributeConverter<Object, Object> converter = property.getConverter();
+            if (converter != null) {
+                converters[i] = converter;
+                contexts[i] = conversionContextFactory != null
+                    ? conversionContextFactory.forArgument(property.getArgument())
+                    : ConversionContext.of(property.getArgument());
+            }
+        }
+        return new GeneratedRowMapperContext(conversionService, converters, contexts);
     }
 
     BeanIntrospection<R> getIntrospection() {
