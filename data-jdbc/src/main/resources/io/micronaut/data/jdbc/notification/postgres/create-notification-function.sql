@@ -10,8 +10,7 @@ DECLARE
     channel_name text;
     key_name text;
     key_names text[] := ARRAY[]::text[];
-    old_row jsonb;
-    new_row jsonb;
+    key_value jsonb;
     old_keys jsonb := '{}'::jsonb;
     new_keys jsonb := '{}'::jsonb;
     operation_name text := TG_OP;
@@ -30,29 +29,35 @@ BEGIN
     ) THEN
         RAISE EXCEPTION 'Use an AFTER ROW INSERT/UPDATE/DELETE or AFTER STATEMENT TRUNCATE trigger';
     END IF;
-    IF TG_OP IN ('UPDATE', 'DELETE') THEN
-        old_row := to_jsonb(OLD);
-    END IF;
-    IF TG_OP IN ('INSERT', 'UPDATE') THEN
-        new_row := to_jsonb(NEW);
-    END IF;
     FOR i IN 1..TG_NARGS - 1 LOOP
         key_name := TG_ARGV[i];
         IF key_name = '' OR key_name = ANY(key_names) THEN
             RAISE EXCEPTION 'Primary-key column names must be non-empty and distinct';
         END IF;
         key_names := array_append(key_names, key_name);
-        IF old_row IS NOT NULL THEN
-            IF NOT (old_row ? key_name) OR jsonb_typeof(old_row -> key_name) NOT IN ('string', 'number', 'boolean') THEN
+        -- Convert only the selected key: unrelated columns may contain values that jsonb cannot represent.
+        -- Quote the column identifier and bind the record separately from the SQL text.
+        IF TG_OP IN ('UPDATE', 'DELETE') THEN
+            BEGIN
+                EXECUTE format('SELECT to_jsonb(($1).%I)', key_name) INTO key_value USING OLD;
+            EXCEPTION WHEN undefined_column THEN
+                RAISE EXCEPTION 'Old primary-key column % must exist and contain a non-null JSON scalar', key_name;
+            END;
+            IF key_value IS NULL OR jsonb_typeof(key_value) NOT IN ('string', 'number', 'boolean') THEN
                 RAISE EXCEPTION 'Old primary-key column % must exist and contain a non-null JSON scalar', key_name;
             END IF;
-            old_keys := old_keys || jsonb_build_object(key_name, old_row ->> key_name);
+            old_keys := old_keys || jsonb_build_object(key_name, key_value #>> '{}');
         END IF;
-        IF new_row IS NOT NULL THEN
-            IF NOT (new_row ? key_name) OR jsonb_typeof(new_row -> key_name) NOT IN ('string', 'number', 'boolean') THEN
+        IF TG_OP IN ('INSERT', 'UPDATE') THEN
+            BEGIN
+                EXECUTE format('SELECT to_jsonb(($1).%I)', key_name) INTO key_value USING NEW;
+            EXCEPTION WHEN undefined_column THEN
+                RAISE EXCEPTION 'New primary-key column % must exist and contain a non-null JSON scalar', key_name;
+            END;
+            IF key_value IS NULL OR jsonb_typeof(key_value) NOT IN ('string', 'number', 'boolean') THEN
                 RAISE EXCEPTION 'New primary-key column % must exist and contain a non-null JSON scalar', key_name;
             END IF;
-            new_keys := new_keys || jsonb_build_object(key_name, new_row ->> key_name);
+            new_keys := new_keys || jsonb_build_object(key_name, key_value #>> '{}');
         END IF;
     END LOOP;
     IF TG_OP = 'TRUNCATE' THEN
