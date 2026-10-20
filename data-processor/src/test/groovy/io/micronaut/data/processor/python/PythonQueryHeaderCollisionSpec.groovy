@@ -173,4 +173,135 @@ class ItemRepository(GenericRepository[Item, int], ABC):
         getParameterPropertyPaths(structural) == ['code'] as String[]
         getParameterBindingIndexes(structural) == ['0'] as String[]
     }
+
+    void "structural header projects native terminal keyword property #property"() {
+        given:
+        def definition = buildBeanDefinition('python', 'ItemRepository$Intercepted', """
+from abc import ABC, abstractmethod
+from dataclasses import dataclass
+from typing import Annotated
+from micronaut.data.annotation import Id, MappedEntity
+from micronaut.data.jdbc.annotation import JdbcRepository
+from micronaut.data.repository import GenericRepository
+
+@MappedEntity("item")
+@dataclass
+class Item:
+    id: Annotated[int, Id]
+    code: str
+    ${property}: str
+
+@JdbcRepository(dialect="H2")
+class ItemRepository(GenericRepository[Item, int], ABC):
+    @abstractmethod
+    def findDistinct${camelProperty}(self) -> list[str]: ...
+    @abstractmethod
+    def findDistinct${camelProperty}ByCode(self, code: str) -> list[str]: ...
+    @abstractmethod
+    def find_distinct_${property}(self) -> list[str]: ...
+    @abstractmethod
+    def find_distinct_${property}_by_code(self, code: str) -> list[str]: ...
+    @abstractmethod
+    def find_distinct__${property}(self) -> list[str]: ...
+    @abstractmethod
+    def find_distinct__${property}__by_code(self, code: str) -> list[str]: ...
+""")
+        def camel = definition.executableMethods.find { it.methodName == "findDistinct${camelProperty}" }
+        def filteredCamel = definition.executableMethods.find { it.methodName == "findDistinct${camelProperty}ByCode" }
+        def snake = definition.executableMethods.find { it.methodName == "find_distinct_${property}" }
+        def filteredSnake = definition.executableMethods.find { it.methodName == "find_distinct_${property}_by_code" }
+        def explicit = definition.executableMethods.find { it.methodName == "find_distinct__${property}" }
+        def filteredExplicit = definition.executableMethods.find { it.methodName == "find_distinct__${property}__by_code" }
+
+        expect:
+        getQuery(snake) == getQuery(camel)
+        getQuery(explicit) == getQuery(camel)
+        getQuery(snake) == "SELECT DISTINCT item_.`${property}` FROM `item` item_"
+        getParameterPropertyPaths(snake) == [] as String[]
+        getParameterBindingIndexes(snake) == [] as String[]
+        getQuery(filteredSnake) == getQuery(filteredCamel)
+        getQuery(filteredExplicit) == getQuery(filteredCamel)
+        getQuery(filteredSnake) == "SELECT DISTINCT item_.`${property}` FROM `item` item_ WHERE (item_.`code` = ?)"
+        getParameterPropertyPaths(filteredSnake) == ['code'] as String[]
+        getParameterBindingIndexes(filteredSnake) == ['0'] as String[]
+
+        where:
+        property             | camelProperty
+        'created_by'         | 'Created_by'
+        'last_order_by'      | 'Last_order_by'
+        'last_sort_by'       | 'Last_sort_by'
+        'previous_returning' | 'Previous_returning'
+    }
+
+    void "terminal for update remains a structural clause after a projection header"() {
+        given:
+        def definition = buildBeanDefinition('python', 'ItemRepository$Intercepted', '''
+from abc import ABC, abstractmethod
+from dataclasses import dataclass
+from typing import Annotated
+from micronaut.data.annotation import Id, MappedEntity
+from micronaut.data.jdbc.annotation import JdbcRepository
+from micronaut.data.repository import GenericRepository
+
+@MappedEntity("item")
+@dataclass
+class Item:
+    id: Annotated[int, Id]
+    last: str
+    last_for_update: str
+
+@JdbcRepository(dialect="H2")
+class ItemRepository(GenericRepository[Item, int], ABC):
+    @abstractmethod
+    def findDistinctLastForUpdate(self) -> list[str]: ...
+    @abstractmethod
+    def find_distinct_last_for_update(self) -> list[str]: ...
+    @abstractmethod
+    def find__last_for_update(self) -> list[str]: ...
+''')
+        def camel = definition.executableMethods.find { it.methodName == 'findDistinctLastForUpdate' }
+        def snake = definition.executableMethods.find { it.methodName == 'find_distinct_last_for_update' }
+        def literal = definition.executableMethods.find { it.methodName == 'find__last_for_update' }
+
+        expect:
+        getQuery(snake) == getQuery(camel)
+        getQuery(snake) == 'SELECT DISTINCT item_.`last` FROM `item` item_ FOR UPDATE'
+        getParameterPropertyPaths(snake) == [] as String[]
+        getParameterBindingIndexes(snake) == [] as String[]
+        getQuery(literal) == 'SELECT item_.`last_for_update` FROM `item` item_'
+    }
+
+    void "explicit projection endpoint preserves an internal structural keyword in a native property"() {
+        given:
+        def definition = buildBeanDefinition('python', 'ItemRepository$Intercepted', '''
+from abc import ABC, abstractmethod
+from dataclasses import dataclass
+from typing import Annotated
+from micronaut.data.annotation import Id, MappedEntity
+from micronaut.data.jdbc.annotation import JdbcRepository
+from micronaut.data.repository import GenericRepository
+
+@MappedEntity("item")
+@dataclass
+class Item:
+    id: Annotated[int, Id]
+    code: str
+    created_by_name: str
+
+@JdbcRepository(dialect="H2")
+class ItemRepository(GenericRepository[Item, int], ABC):
+    @abstractmethod
+    def findDistinctCreated_by_nameByCode(self, code: str) -> list[str]: ...
+    @abstractmethod
+    def find_distinct__created_by_name__by_code(self, code: str) -> list[str]: ...
+''')
+        def camel = definition.executableMethods.find { it.methodName == 'findDistinctCreated_by_nameByCode' }
+        def explicit = definition.executableMethods.find { it.methodName == 'find_distinct__created_by_name__by_code' }
+
+        expect:
+        getQuery(explicit) == getQuery(camel)
+        getQuery(explicit) == 'SELECT DISTINCT item_.`created_by_name` FROM `item` item_ WHERE (item_.`code` = ?)'
+        getParameterPropertyPaths(explicit) == ['code'] as String[]
+        getParameterBindingIndexes(explicit) == ['0'] as String[]
+    }
 }
