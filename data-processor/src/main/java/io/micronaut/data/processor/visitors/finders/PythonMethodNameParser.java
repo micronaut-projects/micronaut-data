@@ -51,6 +51,7 @@ final class PythonMethodNameParser {
     private static final String FOR_UPDATE = "ForUpdate";
     private static final String DISTINCT = "Distinct";
     private static final String FIRST = "First";
+    private static final String TOP = "Top";
     private static final String IGNORE_CASE = "IgnoreCase";
     private static final List<Map.Entry<String, String>> KEYWORDS = keywords();
     private static final Set<String> PROPERTY_SUFFIXES = propertySuffixes();
@@ -149,12 +150,17 @@ final class PythonMethodNameParser {
     }
 
     private boolean headerKeyword(Map.@Nullable Entry<String, String> keyword, String text) {
-        if (clause != QueryMatchId.PROJECTION || keyword == null || forceProperty) {
+        if (clause != QueryMatchId.PROJECTION || forceProperty) {
             return false;
         }
         // A header must not swallow a structural clause and drop a filter.
+        if (keyword == null) {
+            return LIMIT.matcher(remaining).find() && spansClause(text);
+        }
         String token = keyword.getValue();
-        return CLAUSES.contains(token) || (HEADER_MODIFIERS.contains(token) && spansClause(text));
+        boolean modifier = HEADER_MODIFIERS.contains(token) || AGGREGATES.contains(token)
+            || token.equals(FIRST) || token.equals(TOP);
+        return CLAUSES.contains(token) || (modifier && spansClause(text));
     }
 
     private boolean parseLimit() {
@@ -295,7 +301,7 @@ final class PythonMethodNameParser {
     private static boolean misplaced(String token, QueryMatchId clause, boolean expectProperty) {
         boolean header = clause == QueryMatchId.PROJECTION;
         return switch (token) {
-            case "All", "One", "Top", FIRST, DISTINCT, "Max", "Min", "Sum", "Avg" -> !header || !expectProperty;
+            case "All", "One", TOP, FIRST, DISTINCT, "Max", "Min", "Sum", "Avg" -> !header || !expectProperty;
             case "Asc", "Desc" -> clause != QueryMatchId.ORDER || expectProperty;
             case "And" -> expectProperty;
             case "Or" -> clause != QueryMatchId.PREDICATE || expectProperty;
@@ -426,7 +432,7 @@ final class PythonMethodNameParser {
         Map<String, String> keywords = new LinkedHashMap<>();
         List<String> names = new ArrayList<>(Restrictions.PROPERTY_RESTRICTIONS_MAP.keySet());
         names.addAll(Restrictions.RESTRICTIONS_MAP.keySet());
-        names.addAll(List.of("All", "One", "Top", FIRST, DISTINCT, "By", ORDER_BY, SORT_BY, RETURNING, FOR_UPDATE,
+        names.addAll(List.of("All", "One", TOP, FIRST, DISTINCT, "By", ORDER_BY, SORT_BY, RETURNING, FOR_UPDATE,
             "And", "Or", "Not", IGNORE_CASE, "Asc", "Desc", "Max", "Min", "Sum", "Avg"));
         for (String name : names) {
             keywords.put(NameUtils.underscoreSeparate(name).toLowerCase(Locale.ROOT), name);

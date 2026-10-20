@@ -17,6 +17,8 @@ package io.micronaut.data.processor.python
 
 import io.micronaut.python.annotation.processing.test.AbstractPythonTypeElementSpec
 
+import static io.micronaut.data.processor.visitors.TestUtils.getParameterBindingIndexes
+import static io.micronaut.data.processor.visitors.TestUtils.getParameterPropertyPaths
 import static io.micronaut.data.processor.visitors.TestUtils.getQuery
 
 class PythonQueryHeaderCollisionSpec extends AbstractPythonTypeElementSpec {
@@ -58,12 +60,17 @@ class ItemRepository(GenericRepository[Item, int], ABC):
         explicit != null
         getQuery(explicit) == getQuery(camel)
         getQuery(snake) == getQuery(camel)
+        getQuery(snake).contains(' WHERE ')
+        getParameterPropertyPaths(snake) == ['code'] as String[]
+        getParameterBindingIndexes(snake) == ['0'] as String[]
 
         where:
         camelTail      | snakeTail         | explicitTail         | returnType
         'FirstByCode'  | 'first_by_code'   | 'first__by_code'      | 'list[Item]'
         'Top3ByCode'   | 'top3_by_code'    | 'top3__by_code'       | 'list[Item]'
+        'Top3ByCode'   | 'top_3_by_code'   | 'top_3__by_code'      | 'list[Item]'
         'First3ByCode' | 'first3_by_code'  | 'first3__by_code'     | 'list[Item]'
+        'First3ByCode' | 'first_3_by_code' | 'first_3__by_code'    | 'list[Item]'
         'MaxAgeByCode' | 'max_age_by_code' | 'max__age__by_code'  | 'int'
     }
 }
