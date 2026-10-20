@@ -24,6 +24,7 @@ open class BookCatalog(private val repository: BookRepository) {
         refresh()
     }
 
+    // tag::events[]
     @ChangeListener
     @PostgresChangeNotification(channel = "book_changes")
     @Synchronized
@@ -43,6 +44,8 @@ open class BookCatalog(private val repository: BookRepository) {
             ChangeOperation.INVALIDATE -> refresh()
         }
     }
+
+    // end::events[]
 
     @Synchronized
     fun find(id: Long): Optional<Book> = Optional.ofNullable(books[id])

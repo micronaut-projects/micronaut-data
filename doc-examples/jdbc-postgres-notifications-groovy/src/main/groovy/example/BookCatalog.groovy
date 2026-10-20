@@ -27,6 +27,7 @@ class BookCatalog {
         refresh()
     }
 
+    // tag::events[]
     @ChangeListener
     @PostgresChangeNotification(channel = "book_changes")
     synchronized void changed(ChangeEvent<Book> event) {
@@ -49,6 +50,8 @@ class BookCatalog {
                 break
         }
     }
+
+    // end::events[]
 
     synchronized Optional<Book> find(Long id) {
         Optional.ofNullable(books.get(id))

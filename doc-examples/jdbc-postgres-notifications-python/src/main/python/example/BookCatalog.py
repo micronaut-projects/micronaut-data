@@ -28,6 +28,7 @@ class BookCatalog:
         with self.lock:
             self.refresh()
 
+    # tag::events[]
     @ChangeListener
     @PostgresChangeNotification(channel="book_changes")
     def changed(self, event: ChangeEvent[Book]) -> None:
@@ -49,6 +50,8 @@ class BookCatalog:
                 self.books.pop(int(metadata.oldKeys().get("id")), None)
             elif operation == ChangeOperation.INVALIDATE:
                 self.refresh()
+
+    # end::events[]
 
     def find(self, id: int) -> Optional[Book]:
         with self.lock:
