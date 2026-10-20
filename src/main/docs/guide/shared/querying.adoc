@@ -29,6 +29,7 @@ Use a double underscore to disambiguate: `find_by_name__in_list` applies the `In
 Association and leaf property names can themselves contain underscores: `find_by_home_owner__first_name` queries `home_owner.first_name` without changing either native name.
 The same boundary works for logical operators and returning clauses, such as `find_by_code__and__first_name` and `update_by_code__returning`.
 Structural clauses such as `by` and `order_by` retain their role: `find_by_code` still filters `code` even when a `by_code` property exists, and `find_all_by_code` still filters `code` when an `all_by_code` property exists. To select a header property that overlaps a structural clause, use a double underscore after the query stem: `find__by_code_by_code` selects `by_code` and filters `code`, while `find__by_code` and `find__all_by_code` select their literal properties without a named predicate.
+After a structural header modifier, projections cannot absorb the following clause: `find_max_age_by_code` aggregates `age` and filters `code` even when `age_by_code` and `max_age_by_code` properties exist. `find__max_age_by_code` instead selects the literal `max_age_by_code` property.
 Unknown properties, incomplete clauses, and unsupported method patterns fail compilation instead of silently dropping filters. Existing camelCase method names remain supported.
 
 The projection and ordering parts of the query pattern are optional (more on those later). The following snippet demonstrates 3 simple queries that use a different stem but perform the same query:

@@ -72,6 +72,7 @@ final class PythonMethodNameParser {
     private final boolean supportsPredicate;
     private String remaining;
     private boolean forceProperty;
+    private boolean structuralHeader;
     private QueryMatchId clause = QueryMatchId.PROJECTION;
     private boolean expectProperty = true;
     private boolean orderDirection;
@@ -170,6 +171,7 @@ final class PythonMethodNameParser {
         }
         normalized.append(NameUtils.capitalize(limit.group(1))).append(limit.group(2));
         required.add(QueryMatchId.LIMIT);
+        structuralHeader = true;
         remaining = consume(remaining, limit.end(), methodName);
         return true;
     }
@@ -228,6 +230,10 @@ final class PythonMethodNameParser {
         String token = keyword.getValue();
         validateKeyword(token, keyword.getKey().length());
         parsePropertySuffix(token);
+        if (clause == QueryMatchId.PROJECTION && (HEADER_MODIFIERS.contains(token)
+            || AGGREGATES.contains(token) || token.equals(FIRST))) {
+            structuralHeader = true;
+        }
         normalized.append(token);
         updateClause(token);
         expectProperty = CLAUSES.contains(token) || HEADER_MODIFIERS.contains(token)
@@ -352,12 +358,15 @@ final class PythonMethodNameParser {
     }
 
     @Nullable
-    private static PropertyToken property(PersistentEntity entity, String input) {
+    private PropertyToken property(PersistentEntity entity, String input) {
         for (int end = input.length(); end > 0; end--) {
             if (!propertyBoundary(input, end)) {
                 continue;
             }
             String candidate = input.substring(0, end);
+            if (structuralHeader && clause == QueryMatchId.PROJECTION && !forceProperty && spansClause(candidate)) {
+                continue;
+            }
             String path = path(entity, candidate);
             if (path != null) {
                 return new PropertyToken(candidate, path);
