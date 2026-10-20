@@ -1,4 +1,4 @@
-Micronaut Data JDBC supports experimental PostgreSQL table change notifications so applications can react
+Micronaut Data JDBC supports PostgreSQL table change notifications so applications can react
 when committed database changes affect a mapped entity table.
 
 Micronaut Data exposes a database-neutral listener contract through ann:data.jdbc.annotation.ChangeListener[] and
@@ -15,17 +15,14 @@ dependency:org.postgresql:postgresql[scope="runtimeOnly"]
 
 dependency:io.micronaut.serde:micronaut-serde-jackson[]
 
-This implementation supports ordinary tables on PostgreSQL 11 or later. Application migrations must install
-the notification function and triggers described below before the application starts. The migration user needs
-permission to create the function and triggers in the selected schema.
+Notifications currently target ordinary tables. The trigger examples use `EXECUTE FUNCTION`, which requires
+PostgreSQL 11 or later.
+Application migrations must install the notification function and triggers described below before the application starts.
+The migration user needs permission to create the function and triggers in the selected schema.
 
 The entity used by a listener must be a Micronaut Data persistent entity.
 The listener itself must be a Micronaut bean and must be proxyable; in particular,
 do not declare the listener class or listener method `final`.
-
-The example uses an entity with an explicit schema:
-
-snippet::example.Book[project-base="doc-examples/jdbc-postgres-notifications", source="main", tags="book", languages="java,groovy,kotlin,python"]
 
 === Installing the Trigger Function
 
