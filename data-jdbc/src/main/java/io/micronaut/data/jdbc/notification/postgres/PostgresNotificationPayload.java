@@ -30,9 +30,11 @@ import java.util.Map;
  * @param metadata The validated table identity and keys.
  */
 record PostgresNotificationPayload(ChangeOperation operation, PostgresChangeEventMetadata metadata) {
+    private static final String SUPPORTED_VERSION = "1";
+
     static PostgresNotificationPayload decode(JsonMapper mapper, String channel, String payload) throws IOException {
         Map<String, Object> object = mapper.readValue(payload, Argument.mapOf(String.class, Object.class));
-        if (object == null || !(object.get("version") instanceof Number version) || !version.toString().equals("1")) {
+        if (object == null || !(object.get("version") instanceof Number version) || !version.toString().equals(SUPPORTED_VERSION)) {
             throw new IllegalArgumentException("Unsupported PostgreSQL notification version");
         }
         var operation = ChangeOperation.valueOf(string(object.get("operation")));

@@ -134,6 +134,8 @@ class PostgresNotificationPoolSpec extends Specification implements PostgresTest
         listener.first.poll(200, TimeUnit.MILLISECONDS) == null
         listener.second.isEmpty()
         listener.secondary.isEmpty()
+        listener.otherChannel.isEmpty()
+        assertSingleListeningConnection()
 
         when: 'both methods sharing a channel receive changes from the default datasource'
         execute(writer, "INSERT INTO notification_book VALUES (1, 'primary')")
@@ -142,6 +144,17 @@ class PostgresNotificationPoolSpec extends Specification implements PostgresTest
         next(listener.first).entity().orElseThrow().title == 'primary'
         next(listener.second).entity().orElseThrow().title == 'primary'
         listener.secondary.poll(200, TimeUnit.MILLISECONDS) == null
+        listener.otherChannel.poll(200, TimeUnit.MILLISECONDS) == null
+
+        when: 'another channel on the same datasource receives a notification for the same table and row'
+        notifyOtherChannel(1)
+
+        then:
+        next(listener.otherChannel).entity().orElseThrow().title == 'primary'
+        listener.first.poll(200, TimeUnit.MILLISECONDS) == null
+        listener.second.poll(200, TimeUnit.MILLISECONDS) == null
+        listener.secondary.poll(200, TimeUnit.MILLISECONDS) == null
+        assertSingleListeningConnection()
 
         when: 'the same channel, table, and ID in the other database use the other datasource'
         execute(secondaryWriter, "INSERT INTO notification_book VALUES (1, 'secondary')")
@@ -152,18 +165,19 @@ class PostgresNotificationPoolSpec extends Specification implements PostgresTest
         listener.second.isEmpty()
 
         when: 'one datasource loses its listening session'
-        try (def statement = writer.prepareStatement("SELECT pg_terminate_backend(pid) FROM pg_stat_activity WHERE application_name = ? AND query = ?")) {
+        try (def statement = writer.prepareStatement("SELECT pg_terminate_backend(pid) FROM pg_stat_activity WHERE application_name = ? AND query LIKE 'LISTEN %'")) {
             statement.setString(1, 'notification-pool-default')
-            statement.setString(2, 'LISTEN "shared""changes"')
             try (def rows = statement.executeQuery()) {
                 assert rows.next() && rows.getBoolean(1)
                 assert !rows.next()
             }
         }
 
-        then: 'both affected listeners reconcile while the other datasource stays subscribed'
+        then: 'all affected listeners reconcile while the other datasource stays subscribed'
         next(listener.first).operation() == ChangeOperation.INVALIDATE
         next(listener.second).operation() == ChangeOperation.INVALIDATE
+        next(listener.otherChannel).operation() == ChangeOperation.INVALIDATE
+        assertSingleListeningConnection()
         listener.secondary.poll(200, TimeUnit.MILLISECONDS) == null
 
         when:
@@ -174,6 +188,16 @@ class PostgresNotificationPoolSpec extends Specification implements PostgresTest
         next(listener.first).entity().orElseThrow().title == 'reconnected'
         next(listener.second).entity().orElseThrow().title == 'reconnected'
         next(listener.secondary).entity().orElseThrow().title == 'still connected'
+        listener.otherChannel.poll(200, TimeUnit.MILLISECONDS) == null
+
+        when: 'the other channel is also subscribed after reconnection'
+        notifyOtherChannel(2)
+
+        then:
+        next(listener.otherChannel).entity().orElseThrow().title == 'reconnected'
+        listener.first.poll(200, TimeUnit.MILLISECONDS) == null
+        listener.second.poll(200, TimeUnit.MILLISECONDS) == null
+        listener.secondary.poll(200, TimeUnit.MILLISECONDS) == null
 
         when:
         def notifications = provider()
@@ -188,6 +212,26 @@ class PostgresNotificationPoolSpec extends Specification implements PostgresTest
 
         where:
         pool << ['tomcat', 'hikari']
+    }
+
+    private void notifyOtherChannel(long id) {
+        try (def statement = writer.prepareStatement('SELECT pg_notify(?, ?)')) {
+            statement.setString(1, 'other_changes')
+            statement.setString(2, """{"version":1,"schema":"notification_pool_test","table":"notification_book",
+                "operation":"INSERT","oldKeys":{},"newKeys":{"id":"$id"}}""")
+            statement.execute()
+        }
+    }
+
+    private void assertSingleListeningConnection() {
+        try (def statement = writer.prepareStatement("""SELECT count(*) FROM pg_stat_activity
+            WHERE application_name = ? AND query LIKE 'LISTEN %'""")) {
+            statement.setString(1, 'notification-pool-default')
+            try (def rows = statement.executeQuery()) {
+                assert rows.next()
+                assert rows.getInt(1) == 1
+            }
+        }
     }
 
     private ChangeNotificationProvider provider() {
@@ -241,6 +285,7 @@ class PoolBookListeners {
     final LinkedBlockingQueue<ChangeEvent<PoolBook>> first = new LinkedBlockingQueue<>()
     final LinkedBlockingQueue<ChangeEvent<PoolBook>> second = new LinkedBlockingQueue<>()
     final LinkedBlockingQueue<ChangeEvent<PoolBook>> secondary = new LinkedBlockingQueue<>()
+    final LinkedBlockingQueue<ChangeEvent<PoolBook>> otherChannel = new LinkedBlockingQueue<>()
 
     @ChangeListener
     @PostgresChangeNotification(channel = 'shared"changes')
@@ -249,6 +294,10 @@ class PoolBookListeners {
     @ChangeListener
     @PostgresChangeNotification(channel = 'shared"changes')
     void second(ChangeEvent<PoolBook> event) { second.add(event) }
+
+    @ChangeListener
+    @PostgresChangeNotification(channel = 'other_changes')
+    void otherChannel(ChangeEvent<PoolBook> event) { otherChannel.add(event) }
 
     @ChangeListener(dataSource = 'secondary')
     @PostgresChangeNotification(channel = 'shared"changes')
