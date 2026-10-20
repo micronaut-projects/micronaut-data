@@ -93,7 +93,7 @@ class ItemRepository(GenericRepository[Item, int], ABC):
 
         where:
         camel           | snake            | parameters                             | predicate                                                          | indexes
-        "GeoWithin"     | "geo_within"     | ", value: Point"                       | 'ST_Within(item_."home_point",ST_GeomFromGeoJSON(?))'                  | ["0"]
+        "GeoWithin"     | "geo_within"     | ", value: Point"                       | 'ST_CoveredBy(item_."home_point",ST_GeomFromGeoJSON(?))'               | ["0"]
         "GeoIntersects" | "geo_intersects" | ", value: Point"                       | 'ST_Intersects(item_."home_point",ST_GeomFromGeoJSON(?))'              | ["0"]
         "Near"          | "near"           | ", value: Point, distance: float"      | 'ST_DWithin(item_."home_point",ST_GeomFromGeoJSON(?),?)'               | ["0", "1"]
     }
