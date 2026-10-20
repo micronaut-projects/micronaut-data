@@ -16,28 +16,62 @@
 package io.micronaut.data.processor.python
 
 import io.micronaut.data.repository.jpa.JpaSpecificationExecutor
-import org.graalvm.polyglot.Context
-import spock.lang.Specification
+import io.micronaut.data.repository.jpa.criteria.PredicateSpecification
+import io.micronaut.data.repository.jpa.criteria.UpdateSpecification
+import io.micronaut.python.annotation.processing.test.AbstractPythonTypeElementSpec
 
 import java.lang.reflect.InvocationHandler
 import java.lang.reflect.Proxy
 
-class PythonSpecificationLambdaSpec extends Specification {
+class PythonSpecificationLambdaSpec extends AbstractPythonTypeElementSpec {
 
     void "Python lambda can select the #method specification overload"() {
         given:
+        def selectedParameterTypes = []
         def repository = Proxy.newProxyInstance(getClass().classLoader, [JpaSpecificationExecutor] as Class[],
-            { proxy, calledMethod, arguments -> 0L } as InvocationHandler)
-        def context = Context.newBuilder('python').allowAllAccess(true).build()
-        context.getBindings('python').putMember('repo', repository)
+            { proxy, calledMethod, arguments ->
+                if (calledMethod.declaringClass == Object) {
+                    switch (calledMethod.name) {
+                        case 'toString': return 'Specification repository'
+                        case 'hashCode': return System.identityHashCode(proxy)
+                        case 'equals': return proxy.is(arguments[0])
+                    }
+                }
+                assert calledMethod.name == method
+                assert calledMethod.parameterTypes.toList() == [specificationType]
+                selectedParameterTypes.add(calledMethod.parameterTypes[0])
+                if (specificationType == PredicateSpecification) {
+                    assert ((PredicateSpecification) arguments[0]).toPredicate(null, null) == null
+                } else {
+                    assert ((UpdateSpecification) arguments[0]).toPredicate(null, null, null) == null
+                }
+                0L
+            } as InvocationHandler)
+        def context = buildContext("""
+from jakarta.inject import Singleton
+from micronaut.context.annotation import Executable
+from micronaut.data.repository.jpa import JpaSpecificationExecutor
+
+@Singleton
+class SpecificationCaller:
+    @Executable
+    def apply(self, repo: JpaSpecificationExecutor) -> bool:
+        callback_arguments = []
+        result = repo.${method}(lambda ${parameters}: callback_arguments.append((${parameters})))
+        return result == 0 and callback_arguments == [${expectedArguments}]
+""", true)
+        def caller = context.getBean(context.classLoader.loadClass('python.SpecificationCaller')).asPolyglotValue()
 
         expect:
-        context.eval('python', "repo.${method}(lambda root, cb: None)").asLong() == 0L
+        caller.invokeMember('apply', repository).asBoolean()
+        selectedParameterTypes == [specificationType]
 
         cleanup:
-        context.close()
+        context?.close()
 
         where:
-        method << ['deleteAll', 'updateAll']
+        method      | specificationType      | parameters        | expectedArguments
+        'deleteAll' | PredicateSpecification | 'root, cb'        | '(None, None)'
+        'updateAll' | UpdateSpecification    | 'root, query, cb' | '(None, None, None)'
     }
 }
