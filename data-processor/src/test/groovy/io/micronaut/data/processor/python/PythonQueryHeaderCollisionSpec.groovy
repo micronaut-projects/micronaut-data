@@ -304,4 +304,47 @@ class ItemRepository(GenericRepository[Item, int], ABC):
         getParameterPropertyPaths(explicit) == ['code'] as String[]
         getParameterBindingIndexes(explicit) == ['0'] as String[]
     }
+
+    void "explicit #header header projects the complete native #property property without a filter"() {
+        given:
+        def camelSource = camelMethod == null ? '' : """
+    @abstractmethod
+    def ${camelMethod}(self) -> list[str]: ...
+"""
+        def definition = buildBeanDefinition('python', 'ItemRepository$Intercepted', """
+from abc import ABC, abstractmethod
+from dataclasses import dataclass
+from typing import Annotated
+from micronaut.data.annotation import Id, MappedEntity
+from micronaut.data.jdbc.annotation import JdbcRepository
+from micronaut.data.repository import GenericRepository
+
+@MappedEntity("item")
+@dataclass
+class Item:
+    id: Annotated[int, Id]
+    ${property}: str
+
+@JdbcRepository(dialect="H2")
+class ItemRepository(GenericRepository[Item, int], ABC):
+${camelSource}
+    @abstractmethod
+    def find_${header}__${property}(self) -> list[str]: ...
+""")
+        def explicit = definition.executableMethods.find { it.methodName == "find_${header}__${property}" }
+        def camel = camelMethod == null ? null : definition.executableMethods.find { it.methodName == camelMethod }
+
+        expect:
+        getQuery(explicit) == "SELECT ${distinct}item_.`${property}` FROM `item` item_${limit}"
+        camelMethod == null || getQuery(explicit) == getQuery(camel)
+        getParameterPropertyPaths(explicit) == [] as String[]
+        getParameterBindingIndexes(explicit) == [] as String[]
+
+        where:
+        header     | property             | camelMethod                       | distinct    | limit
+        'distinct' | 'created_by_name'    | 'findDistinctCreated_by_name'      | 'DISTINCT ' | ''
+        'distinct' | 'max_age_by_code'    | 'findDistinctMax_age_by_code'      | 'DISTINCT ' | ''
+        'distinct' | 'by_code'            | null                              | 'DISTINCT ' | ''
+        'top3'     | 'by_code'            | null                              | ''          | ' LIMIT 3'
+    }
 }

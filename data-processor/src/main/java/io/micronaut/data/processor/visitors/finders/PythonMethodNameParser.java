@@ -73,6 +73,7 @@ final class PythonMethodNameParser {
     private String remaining;
     private boolean forceProperty;
     private boolean structuralHeader;
+    private boolean explicitHeaderProjection;
     private QueryMatchId clause = QueryMatchId.PROJECTION;
     private boolean expectProperty = true;
     private boolean orderDirection;
@@ -146,12 +147,13 @@ final class PythonMethodNameParser {
         expectProperty = false;
         orderDirection = false;
         forceProperty = false;
+        explicitHeaderProjection = false;
         propertySuffix = clause == QueryMatchId.PREDICATE ? new StringBuilder() : null;
         return true;
     }
 
     private boolean headerKeyword(Map.@Nullable Entry<String, String> keyword, String text) {
-        if (clause != QueryMatchId.PROJECTION || forceProperty) {
+        if (clause != QueryMatchId.PROJECTION || forceProperty || explicitHeaderProjection) {
             return false;
         }
         // A header must not swallow a structural clause and drop a filter.
@@ -172,6 +174,7 @@ final class PythonMethodNameParser {
         normalized.append(NameUtils.capitalize(limit.group(1))).append(limit.group(2));
         required.add(QueryMatchId.LIMIT);
         structuralHeader = true;
+        explicitHeaderProjection = remaining.startsWith("__", limit.end());
         remaining = consume(remaining, limit.end(), methodName);
         return true;
     }
@@ -233,6 +236,7 @@ final class PythonMethodNameParser {
         if (clause == QueryMatchId.PROJECTION && (HEADER_MODIFIERS.contains(token)
             || AGGREGATES.contains(token) || token.equals(FIRST))) {
             structuralHeader = true;
+            explicitHeaderProjection = remaining.startsWith("__", keyword.getKey().length());
         }
         normalized.append(token);
         updateClause(token);
@@ -336,8 +340,13 @@ final class PythonMethodNameParser {
     }
 
     private static boolean spansClause(String property) {
+        return spansClause(property, true);
+    }
+
+    private static boolean spansClause(String property, boolean includeIncompleteClause) {
         return KEYWORDS.stream().anyMatch(keyword -> CLAUSES.contains(keyword.getValue())
-            && (property.contains("_" + keyword.getKey() + "_") || property.endsWith("_" + keyword.getKey())));
+            && (property.contains("_" + keyword.getKey() + "_")
+                || ((includeIncompleteClause || keyword.getValue().equals(FOR_UPDATE)) && property.endsWith("_" + keyword.getKey()))));
     }
 
     static MatchFailedException unsupported(String methodName) {
@@ -364,7 +373,8 @@ final class PythonMethodNameParser {
                 continue;
             }
             String candidate = input.substring(0, end);
-            if (structuralHeader && clause == QueryMatchId.PROJECTION && !forceProperty && spansClause(candidate)) {
+            if (structuralHeader && clause == QueryMatchId.PROJECTION && !forceProperty && !explicitHeaderProjection
+                && !input.startsWith("__", end) && spansClause(candidate, false)) {
                 continue;
             }
             String path = path(entity, candidate);
