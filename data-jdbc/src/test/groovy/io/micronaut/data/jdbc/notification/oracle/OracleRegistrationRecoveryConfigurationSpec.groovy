@@ -42,7 +42,7 @@ class OracleRegistrationRecoveryConfigurationSpec extends Specification {
 
         where:
         properties                                                                                                   | retries | delay                   | multiplier | maximumDelay
-        [:]                                                                                                          | 10      | Duration.ofSeconds(1)   | 2          | Duration.ofSeconds(60)
+        [:]                                                                                                          | -1      | Duration.ofSeconds(1)   | 2          | Duration.ofSeconds(60)
         [(OracleRegistrationRecoveryConfiguration.PREFIX + '.max-retries'): 0]                                        | 0       | Duration.ofSeconds(1)   | 2          | Duration.ofSeconds(60)
         [(OracleRegistrationRecoveryConfiguration.PREFIX + '.max-retries'): 5,
          (OracleRegistrationRecoveryConfiguration.PREFIX + '.retry-delay'): '500ms',
@@ -70,7 +70,7 @@ class OracleRegistrationRecoveryConfigurationSpec extends Specification {
 
         where:
         property      | value  | message
-        'max-retries' | -1     | 'max-retries must be greater than or equal to zero'
+        'max-retries' | -2     | 'max-retries must be greater than or equal to -1'
         'retry-delay' | '0s'   | 'retry-delay must be greater than zero'
         'retry-delay' | '-1s'  | 'retry-delay must be greater than zero'
         'retry-delay-multiplier' | 0    | 'retry-delay-multiplier must be greater than or equal to one'

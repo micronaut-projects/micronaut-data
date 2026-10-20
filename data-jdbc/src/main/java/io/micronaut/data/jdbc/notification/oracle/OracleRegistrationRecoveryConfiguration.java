@@ -40,15 +40,15 @@ public final class OracleRegistrationRecoveryConfiguration {
      */
     public static final String PREFIX = "micronaut.data.jdbc.notifications.oracle.registration-recovery";
 
-    private int maxRetries = 10;
+    private int maxRetries = -1;
     private Duration retryDelay = Duration.ofSeconds(1);
     private int retryDelayMultiplier = 2;
     private Duration maxRetryDelay = Duration.ofSeconds(60);
 
     /**
-     * Returns the number of retries after the initial recovery attempt. Defaults to ten.
+     * Returns the number of retries after the initial recovery attempt. Defaults to unlimited.
      *
-     * @return the maximum number of retries
+     * @return the maximum number of retries, or {@code -1} for unlimited retries
      */
     public int getMaxRetries() {
         return maxRetries;
@@ -57,12 +57,12 @@ public final class OracleRegistrationRecoveryConfiguration {
     /**
      * Sets the number of retries after the initial recovery attempt. Zero allows only that initial attempt.
      *
-     * @param maxRetries the non-negative maximum number of retries
-     * @throws IllegalArgumentException if the value is negative
+     * @param maxRetries the non-negative maximum number of retries, or {@code -1} for unlimited retries
+     * @throws IllegalArgumentException if the value is less than {@code -1}
      */
     public void setMaxRetries(int maxRetries) {
-        if (maxRetries < 0) {
-            throw new IllegalArgumentException("max-retries must be greater than or equal to zero");
+        if (maxRetries < -1) {
+            throw new IllegalArgumentException("max-retries must be greater than or equal to -1");
         }
         this.maxRetries = maxRetries;
     }

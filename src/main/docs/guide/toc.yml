@@ -101,7 +101,7 @@ dbc:
   dbcProcedures: Procedures
   notifications:
     title: Notifications
-    oracleQueryNotifications: Oracle Query Notifications
+    oracleQueryNotifications: Oracle Change Notifications
     postgresChangeNotifications: PostgreSQL Change Notifications
 hibernate:
   title: Micronaut Data JPA Hibernate

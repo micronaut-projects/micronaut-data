@@ -194,7 +194,7 @@ If the JDBC driver reports that it cannot restore notification delivery, Microna
 registration. After successful recovery, the listener receives an `INVALIDATE` event so it can refresh potentially
 outdated data. For other registration configurations, recovery starts when a database shutdown notification is received.
 
-If the initial replacement attempt fails, Micronaut Data retries up to ten times by default. The first retry waits
+If the initial replacement attempt fails, Micronaut Data retries without a limit by default until recovery succeeds or the application shuts down. The first retry waits
 one second; each subsequent delay doubles, up to a maximum of sixty seconds.
 Configure registration recovery globally for all Oracle notification listeners and datasources:
 
@@ -206,21 +206,22 @@ micronaut:
       notifications:
         oracle:
           registration-recovery:
-            max-retries: 10
+            max-retries: -1
             retry-delay: 1s
             retry-delay-multiplier: 2
             max-retry-delay: 60s
 ----
 
-`max-retries` must be non-negative and counts retries after the initial recovery attempt. Set it to `0` to make only
-the initial attempt. `retry-delay` sets the first retry delay. `retry-delay-multiplier` must be an integer of at least
+`max-retries` defaults to `-1` for unlimited retries. A non-negative value limits retries after the initial recovery
+attempt; set it to `0` to make only the initial attempt. `retry-delay` sets the first retry delay. `retry-delay-multiplier` must be an integer of at least
 `1`; set it to `1` for a fixed delay. `max-retry-delay` caps every retry delay, including the first.
 Both delays must be positive and accept duration values such as `500ms`, `10s`, or `1m`.
-The default ten retry delays are `1s`, `2s`, `4s`, `8s`, `16s`, `32s`, `60s`, `60s`, `60s`, and `60s`.
+The default retry delays are `1s`, `2s`, `4s`, `8s`, `16s`, `32s`, then `60s` for every subsequent retry.
 These settings control creating a replacement registration, not listener-method retries through `@Retryable`
 or the JDBC driver's notification-connection retries.
 
-If recovery cannot complete, notifications remain unavailable until the application is restarted.
+Notifications remain unavailable during recovery. If a configured retry limit is exhausted or another recovery retry
+cannot be scheduled, automatic recovery stops and the application must be restarted to restore notifications.
 Changes can be missed while a non-reliable registration is unavailable. Micronaut Data cannot detect a silently lost
 notification connection unless the JDBC driver reports the failure.
 

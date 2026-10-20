@@ -27,16 +27,17 @@ import spock.lang.Specification
 
 import java.sql.Connection
 
-class ChangeListenerMethodProcessorSpec extends Specification {
+class ChangeListenerRegistrationHandlerSpec extends Specification {
 
     void "does not resolve providers or acquire a connection without listeners"() {
         given:
         def operations = Mock(JdbcRepositoryOperations)
         def resolver = Mock(BeanProvider)
-        def processor = new ChangeListenerMethodProcessor('default', operations, resolver)
+        def registry = new ChangeListenerRegistry()
+        def handler = new ChangeListenerRegistrationHandler('default', operations, resolver, registry)
 
         when:
-        processor.onApplicationEvent(Mock(StartupEvent))
+        handler.onApplicationEvent(Mock(StartupEvent))
 
         then:
         0 * resolver._
@@ -52,7 +53,8 @@ class ChangeListenerMethodProcessorSpec extends Specification {
         def method = Mock(ExecutableMethod)
         def resolver = Mock(BeanProvider)
         resolver.get() >> new ChangeNotificationProviderResolver([provider])
-        def processor = new ChangeListenerMethodProcessor('default', operations, resolver)
+        def registry = new ChangeListenerRegistry()
+        def handler = new ChangeListenerRegistrationHandler('default', operations, resolver, registry)
         boolean resolvingProvider = false
 
         method.stringValue(ChangeListener, 'dataSource') >> Optional.empty()
@@ -68,8 +70,8 @@ class ChangeListenerMethodProcessorSpec extends Specification {
         provider.supports(connection) >> true
 
         when:
-        processor.process(beanDefinition, method)
-        processor.onApplicationEvent(Mock(StartupEvent))
+        registry.process(beanDefinition, method)
+        handler.onApplicationEvent(Mock(StartupEvent))
 
         then:
         1 * provider.register('default', operations, { it.size() == 1 && it[0].method().is(method) }) >> {
