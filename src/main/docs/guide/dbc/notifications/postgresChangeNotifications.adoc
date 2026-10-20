@@ -96,9 +96,9 @@ Listeners receive changes to the mapped table. They cannot subscribe to the resu
 
 == Runnable Migration and Listener Example
 
-The `doc-examples/jdbc-postgres-notifications-java` application installs the trigger function through Liquibase,
-then creates `public.book` and its triggers in a second changeset. Liquibase runs before listener registration;
-Micronaut Data schema generation is disabled. The application includes the PostgreSQL driver, HikariCP,
+The `doc-examples/jdbc-postgres-notifications-{java,groovy,kotlin,python}` applications install the trigger function through Liquibase,
+then create `public.book` and its triggers in a second changeset. Liquibase runs before listener registration;
+Micronaut Data schema generation is disabled. Each application includes the PostgreSQL driver, HikariCP,
 Micronaut Serialization, and Micronaut Liquibase.
 
 The first changeset loads the function directly from the `micronaut-data-jdbc` dependency:
@@ -116,12 +116,12 @@ The second changeset creates and seeds the table and adds its triggers. No funct
 
 The entity supplies an explicit schema:
 
-snippet::example.Book[project-base="doc-examples/jdbc-postgres-notifications", source="main", tags="book", languages="java"]
+snippet::example.Book[project-base="doc-examples/jdbc-postgres-notifications", source="main", tags="book", languages="java,groovy,kotlin,python"]
 
 The listener maintains an application cache. It loads its initial snapshot explicitly after subscriptions start,
 updates entries from loaded entities, removes deleted or changed primary keys, and reloads on invalidation:
 
-snippet::example.BookCatalog[project-base="doc-examples/jdbc-postgres-notifications", source="main", tags="listener", languages="java"]
+snippet::example.BookCatalog[project-base="doc-examples/jdbc-postgres-notifications", source="main", tags="listener", languages="java,groovy,kotlin,python"]
 
 Run the application from the repository root with Docker available for Micronaut Test Resources:
 
@@ -129,6 +129,8 @@ Run the application from the repository root with Docker available for Micronaut
 ----
 ./gradlew :micronaut-doc-examples:micronaut-jdbc-postgres-notifications-java:run
 ----
+
+For the Groovy or Kotlin application, replace the `-java` project suffix with `-groovy` or `-kotlin`.
 
 Test Resources supplies PostgreSQL when connection settings are absent. To use an existing disposable database,
 set `DATASOURCES_DEFAULT_URL`, `DATASOURCES_DEFAULT_USERNAME`, and `DATASOURCES_DEFAULT_PASSWORD`.
@@ -150,6 +152,9 @@ delete, and truncate notifications:
 ----
 ./gradlew :micronaut-doc-examples:micronaut-jdbc-postgres-notifications-java:test
 ----
+
+To test the other examples, replace `-java` with `-groovy`, `-kotlin`, or `-python`.
+Python tests also require the `-Ppython-ci` Gradle property.
 
 == Connections and Listener Execution
 
