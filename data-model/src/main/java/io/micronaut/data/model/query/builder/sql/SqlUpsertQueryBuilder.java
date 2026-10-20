@@ -344,7 +344,9 @@ final class SqlUpsertQueryBuilder {
         if (propertyPath == null) {
             throw new IllegalStateException("Upsert conflict property does not exist: " + conflictProperty);
         }
+        boolean[] hasBindableColumn = {false};
         PersistentEntityUtils.traversePersistentProperties(propertyPath, (associations, property) -> {
+            hasBindableColumn[0] = true;
             if (SqlQueryBuilderUtils.isGeneratedProperty(property, associations)) {
                 throw new IllegalStateException("Upsert requires a non-generated conflict property: " + conflictProperty);
             }
@@ -353,6 +355,9 @@ final class SqlUpsertQueryBuilder {
                 conflictPropertyPaths.add(path);
             }
         });
+        if (!hasBindableColumn[0]) {
+            throw new IllegalStateException("Upsert conflict property does not map to a column: " + conflictProperty);
+        }
     }
 
     private String toPathString(List<Association> associations, PersistentProperty property) {
