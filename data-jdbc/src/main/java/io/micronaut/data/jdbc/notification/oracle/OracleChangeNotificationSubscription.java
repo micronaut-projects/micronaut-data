@@ -346,7 +346,7 @@ final class OracleChangeNotificationSubscription {
             }
         }
         if (published) {
-            long replacementId = replacement.getRegId();
+            long replacementId = Objects.requireNonNull(replacement, "Published registration must have a replacement").getRegId();
             dispatcher.submitInvalidation(replacementId, () -> {
                 synchronized (lifecycleLock) {
                     return !closed && isCurrent(replacementId);

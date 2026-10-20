@@ -19,6 +19,7 @@ import io.micronaut.context.ApplicationContext
 import io.micronaut.context.BeanContext
 import io.micronaut.context.BeanProvider
 import io.micronaut.context.event.StartupEvent
+import io.micronaut.core.type.Argument
 import io.micronaut.data.jdbc.annotation.ChangeListener
 import io.micronaut.inject.BeanDefinition
 import io.micronaut.inject.ExecutableMethod
@@ -43,7 +44,7 @@ class ChangeListenerDataSourceValidatorSpec extends Specification {
         !context.getActiveBeanRegistrations(ChangeListenerDataSourceValidator).empty
         context.getActiveBeanRegistrations(ChangeNotificationProviderResolver).empty
         context.getActiveBeanRegistrations(ChangeNotificationProvider).empty
-        !datasource || !context.getActiveBeanRegistrations(ChangeListenerMethodProcessor).empty
+        !datasource || !context.getActiveBeanRegistrations(ChangeListenerRegistrationHandler).empty
 
         cleanup:
         context?.close()
@@ -56,7 +57,8 @@ class ChangeListenerDataSourceValidatorSpec extends Specification {
         given:
         def resolver = Mock(BeanProvider)
         def context = Mock(BeanContext)
-        def validator = new ChangeListenerDataSourceValidator(context, resolver)
+        def registry = new ChangeListenerRegistry()
+        def validator = new ChangeListenerDataSourceValidator(context, resolver, registry)
 
         when:
         validator.onApplicationEvent(Mock(StartupEvent))
@@ -70,9 +72,10 @@ class ChangeListenerDataSourceValidatorSpec extends Specification {
         given:
         def resolver = Mock(BeanProvider)
         def context = Mock(BeanContext)
-        def validator = new ChangeListenerDataSourceValidator(context, resolver)
+        def registry = new ChangeListenerRegistry()
+        def validator = new ChangeListenerDataSourceValidator(context, resolver, registry)
         def method = listenerMethod()
-        validator.process(Mock(BeanDefinition), method)
+        registry.process(Mock(BeanDefinition), method)
 
         when:
         validator.onApplicationEvent(Mock(StartupEvent))
@@ -88,8 +91,9 @@ class ChangeListenerDataSourceValidatorSpec extends Specification {
         def resolver = Mock(BeanProvider)
         def context = Mock(BeanContext)
         context.containsBean(DataSource, _) >> true
-        def validator = new ChangeListenerDataSourceValidator(context, resolver)
-        validator.process(Mock(BeanDefinition), listenerMethod())
+        def registry = new ChangeListenerRegistry()
+        def validator = new ChangeListenerDataSourceValidator(context, resolver, registry)
+        registry.process(Mock(BeanDefinition), listenerMethod())
 
         when:
         validator.onApplicationEvent(Mock(StartupEvent))
@@ -103,6 +107,7 @@ class ChangeListenerDataSourceValidatorSpec extends Specification {
     private ExecutableMethod listenerMethod() {
         def method = Mock(ExecutableMethod)
         method.stringValue(ChangeListener, 'dataSource') >> Optional.of('inventory')
+        method.arguments >> ([Argument.of(ChangeEvent, Argument.of(String))] as Argument[])
         method.getDescription(true) >> 'void changed(ChangeEvent<Book>)'
         method
     }
