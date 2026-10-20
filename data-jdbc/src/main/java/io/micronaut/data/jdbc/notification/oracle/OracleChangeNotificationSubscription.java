@@ -358,10 +358,11 @@ final class OracleChangeNotificationSubscription {
     }
 
     private void rescheduleRecoveryTask(int retryCount, long failedRegId, Exception e) {
-        if (retryCount < maxRetries) {
+        if (maxRetries < 0 || retryCount < maxRetries) {
             LOG.warn("DCN receiver recovery attempt failed for registration [{}], datasource [{}], and listener method [{}]; will retry",
                 failedRegId, dataSourceName, methodDescription, e);
-            scheduleRecoveryRetry(retryCount + 1, failedRegId);
+            int nextRetry = retryCount == Integer.MAX_VALUE ? retryCount : retryCount + 1;
+            scheduleRecoveryRetry(nextRetry, failedRegId);
         } else {
             LOG.error("DCN receiver recovery exhausted [{}] retries for registration [{}], datasource [{}], "
                     + "and listener method [{}]; the listener remains unavailable",
