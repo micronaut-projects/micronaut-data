@@ -33,13 +33,83 @@ The `micronaut-data-jdbc` artifact includes this SQL resource:
 io/micronaut/data/jdbc/notification/postgres/create-notification-function.sql
 ----
 
-Load this classpath resource from an application database migration and execute it on the migration connection,
-selecting the installation schema explicitly. The runnable example below uses Liquibase `sqlFile` to load it directly
-from the dependency JAR. Flyway users can load the resource in a Java migration or copy the SQL into a versioned migration.
-It creates `micronaut_data_notify_change()` in the migration's current schema and executes with the caller's privileges.
+Install the function through your database migration tool, selecting the installation schema explicitly.
+Liquibase can load the bundled resource with `sqlFile`. Flyway can load it through a Java migration;
+alternatively, copy its contents into an application SQL migration.
+The SQL resource creates `micronaut_data_notify_change()` in the migration's current schema. The function executes
+with the caller's privileges.
 The function uses only `pg_catalog` to resolve database objects while it runs. Include the installation schema
 in the function name when creating triggers, as shown below.
 The framework does not install or remove the function or triggers on application startup or shutdown.
+
+==== Liquibase
+
+Add the following changeset to your changelog to install the function in `public`:
+
+[source,xml]
+----
+include::doc-examples/jdbc-postgres-notifications-java/src/main/resources/db/changelog/db.changelog-master.xml[tags=notification-function]
+----
+
+`relativeToChangelogFile="false"` resolves the SQL resource from the classpath rather than relative to the
+application changelog. `splitStatements="false"` preserves the function definition's internal semicolons.
+The changeset runs in a transaction by default, so `SET LOCAL` selects `public` only for that transaction.
+`runOnChange="true"` reapplies the function when its bundled SQL changes, including after a dependency upgrade.
+Replace `public` with your target schema if needed. Create the table and its triggers in subsequent changesets.
+
+==== Flyway
+
+For Java migrations, make Flyway's API available at compile time:
+
+dependency:org.flywaydb:flyway-core[]
+
+To load the bundled resource without copying it, add a Java migration under a package scanned by Flyway,
+such as `src/main/java/db/migration/V1__InstallNotificationFunction.java`:
+
+[source,java]
+----
+package db.migration;
+
+import org.flywaydb.core.api.migration.BaseJavaMigration;
+import org.flywaydb.core.api.migration.Context;
+
+import java.io.InputStream;
+import java.nio.charset.StandardCharsets;
+import java.sql.Statement;
+
+public class V1__InstallNotificationFunction extends BaseJavaMigration {
+    @Override
+    public void migrate(Context context) throws Exception {
+        String resource = "/io/micronaut/data/jdbc/notification/postgres/create-notification-function.sql";
+        try (InputStream input = getClass().getResourceAsStream(resource)) {
+            if (input == null) {
+                throw new IllegalStateException("Missing SQL resource: " + resource);
+            }
+            String sql = new String(input.readAllBytes(), StandardCharsets.UTF_8);
+            try (Statement statement = context.getConnection().createStatement()) {
+                statement.execute("SET LOCAL search_path TO public");
+                statement.execute(sql);
+            }
+        }
+    }
+}
+----
+
+Use an available migration version in place of `V1`. Keep this migration transactional so `SET LOCAL` applies
+to the function installation, and replace `public` if you use another schema. The `micronaut-data-jdbc` dependency
+must be on the migration runtime classpath. Create the table and triggers in subsequent migrations.
+
+A versioned Java migration runs once. If a dependency upgrade changes the bundled function and you need to
+reinstall it, add a new migration that executes the resource again.
+See the link:https://documentation.red-gate.com/flyway/flyway-concepts/migrations/java-based-migrations[Flyway Java migration documentation]
+for discovery and naming conventions.
+
+If you prefer SQL migrations, copy the resource contents into a versioned file such as
+`src/main/resources/db/migration/V1__install_notification_function.sql`. Select the target schema before the
+function definition, for example with `SET LOCAL search_path TO public`. Add a new migration when you need to
+update the installed function.
+
+==== Creating Table Triggers
 
 For example, after installing the function in `public`, register changes to an existing `public.book` table:
 
@@ -333,19 +403,6 @@ The `doc-examples/jdbc-postgres-notifications-{java,groovy,kotlin,python}` appli
 then create `public.book` and its triggers in a second changeset. Liquibase runs before listener registration;
 Micronaut Data schema generation is disabled. Each application includes the PostgreSQL driver, HikariCP,
 Micronaut Serialization, and Micronaut Liquibase.
-
-The first changeset loads the function directly from the `micronaut-data-jdbc` dependency:
-
-[source,xml]
-----
-include::doc-examples/jdbc-postgres-notifications-java/src/main/resources/db/changelog/db.changelog-master.xml[tags=notification-function]
-----
-
-`relativeToChangelogFile="false"` resolves the SQL resource from the classpath rather than relative to the
-application changelog. `splitStatements="false"` preserves the function definition's internal semicolons.
-The changeset runs in a transaction by default, so `SET LOCAL` selects `public` only for that transaction.
-`runOnChange="true"` reapplies the function when its bundled SQL changes, including after a dependency upgrade.
-The second changeset creates and seeds the table and adds its triggers. No function SQL is duplicated in the application.
 
 Run the application from the repository root with Docker available for Micronaut Test Resources:
 
