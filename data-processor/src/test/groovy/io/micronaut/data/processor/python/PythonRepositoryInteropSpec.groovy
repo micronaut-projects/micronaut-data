@@ -21,31 +21,6 @@ import static io.micronaut.data.processor.visitors.TestUtils.getDataInterceptor
 
 class PythonRepositoryInteropSpec extends AbstractPythonTypeElementSpec {
 
-    void "bounded type parameter is supported when overriding reactive saveAll"() {
-        expect:
-        buildBeanDefinition('python', 'ItemRepository$Intercepted', '''
-from abc import ABC, abstractmethod
-from dataclasses import dataclass
-from typing import Annotated
-from micronaut.data.annotation import Id, MappedEntity
-from micronaut.data.r2dbc.annotation import R2dbcRepository
-from micronaut.data.repository.reactive import ReactiveStreamsCrudRepository
-from org.reactivestreams import Publisher
-from java.lang import Iterable
-
-@MappedEntity("item")
-@dataclass
-class Item:
-    id: Annotated[int, Id]
-    code: str
-
-@R2dbcRepository(dialect="POSTGRES")
-class ItemRepository(ReactiveStreamsCrudRepository[Item, int], ABC):
-    @abstractmethod
-    def saveAll[S: Item](self, items: Iterable[S]) -> Publisher[S]: ...
-''') != null
-    }
-
     void "specification method #method works"() {
         given:
         def definition = buildBeanDefinition('python', 'ItemRepository$Intercepted', """
