@@ -57,138 +57,191 @@ public interface QueryStatement<PS, IDX> {
      * @return The writer
      */
     default QueryStatement<PS, IDX> setDynamic(PS statement, IDX index, DataType dataType, @Nullable Object value) {
-        return switch (dataType) {
-            case STRING, JSON -> setString(statement, index, stringValue(value));
-            case INTEGER -> setInt(statement, index,
-                value instanceof Number number ? Integer.valueOf(number.intValue()) : convertRequired(requireValue(value), Integer.class));
-            case BOOLEAN -> setBoolean(statement, index, convertIfRequired(requireValue(value), Boolean.class));
-            case DATE -> setDate(statement, index, dateValue(value));
-            case TIMESTAMP -> setTimestamp(statement, index, timestampValue(value));
-            case TIME -> setTime(statement, index, timeValue(value));
-            case UUID -> setValue(statement, index, uuidValue(value));
-            case DOUBLE -> setDouble(statement, index,
-                value instanceof Number number ? Double.valueOf(number.doubleValue()) : convertRequired(requireValue(value), Double.class));
-            case BYTE_ARRAY -> setBytes(statement, index, convertIfRequired(value, byte[].class));
-            case BIGDECIMAL -> setBigDecimal(statement, index, decimalValue(value));
-            case LONG -> setLong(statement, index,
-                value instanceof Number number ? Long.valueOf(number.longValue()) : convertRequired(requireValue(value), Long.class));
-            case CHARACTER -> setChar(statement, index, convertIfRequired(requireValue(value), Character.class));
-            case FLOAT -> setFloat(statement, index,
-                value instanceof Number number ? Float.valueOf(number.floatValue()) : convertRequired(requireValue(value), Float.class));
-            case SHORT -> setShort(statement, index,
-                value instanceof Number number ? Short.valueOf(number.shortValue()) : convertRequired(requireValue(value), Short.class));
-            case BYTE -> setByte(statement, index,
-                value instanceof Number number ? Byte.valueOf(number.byteValue()) : convertRequired(requireValue(value), Byte.class));
-            default -> dataType.isArray()
-                ? setArray(statement, index, arrayValue(dataType, value))
-                : setValue(statement, index, value);
-        };
-    }
+        switch (dataType) {
+            case STRING:
+            case JSON:
+                if (value == null) {
+                    return setString(statement, index, null);
+                }
+                String str;
+                if (value instanceof CharSequence) {
+                    str = value.toString();
+                } else if (value instanceof Enum) {
+                    str = value.toString();
+                } else {
+                    str = convertRequired(value, String.class);
+                }
+                return setString(statement, index, str);
+            case INTEGER:
+                if (value == null) {
+                    throw cannotSetNullValueError();
+                }
+                if (value instanceof Number number) {
+                    return setInt(statement, index, number.intValue());
+                }
+                return setInt(statement, index, convertRequired(value, Integer.class));
+            case BOOLEAN:
+                if (value == null) {
+                    throw cannotSetNullValueError();
+                }
+                if (value instanceof Boolean bool) {
+                    return setBoolean(statement, index, bool);
+                }
+                return setBoolean(statement, index, convertRequired(value, Boolean.class));
+            case DATE:
+                if (value == null) {
+                    return setDate(statement, index, null);
+                }
+                if (value instanceof Date date) {
+                    return setDate(statement, index, date);
+                }
+                return setDate(statement, index, convertRequired(value, java.sql.Date.class));
+            case TIMESTAMP:
+                Instant instant;
+                if (value == null) {
+                    instant = null;
+                } else if (value instanceof ZonedDateTime zonedDateTime) {
+                    instant = zonedDateTime.toInstant();
+                } else if (value instanceof Instant instantVal) {
+                    instant = instantVal;
+                } else {
+                    instant = convertRequired(value, Instant.class);
+                }
+                return setTimestamp(statement, index, instant);
+            case TIME:
+                if (value == null) {
+                    return setTime(statement, index, null);
+                }
+                if (value instanceof Time time) {
+                    return setTime(statement, index, time);
+                }
+                throw new DataAccessException("Invalid time: " + value);
 
-    private Object requireValue(@Nullable Object value) {
-        if (value == null) {
-            throw cannotSetNullValueError();
+            case UUID:
+                if (value instanceof CharSequence) {
+                    return setValue(statement, index, UUID.fromString(value.toString()));
+                }
+                if (value instanceof UUID) {
+                    return setValue(statement, index, value);
+                }
+                throw new DataAccessException("Invalid UUID: " + value);
+            case DOUBLE:
+                if (value == null) {
+                    throw cannotSetNullValueError();
+                }
+                if (value instanceof Number number) {
+                    return setDouble(statement, index, number.doubleValue());
+                }
+                return setDouble(statement, index, convertRequired(value, Double.class));
+            case BYTE_ARRAY:
+                if (value == null) {
+                    return setBytes(statement, index, null);
+                }
+                if (value instanceof byte[] byteArray) {
+                    return setBytes(statement, index, byteArray);
+                }
+                return setBytes(statement, index, convertRequired(value, byte[].class));
+            case BIGDECIMAL:
+                if (value == null) {
+                    return setBigDecimal(statement, index, null);
+                }
+                if (value instanceof BigDecimal decimal) {
+                    return setBigDecimal(statement, index, decimal);
+                }
+                if (value instanceof BigInteger bigInteger) {
+                    return setBigDecimal(statement, index, new BigDecimal(bigInteger));
+                }
+                if (value instanceof Long || value instanceof Integer || value instanceof Short || value instanceof Byte) {
+                    // Exact: a double can't represent every long
+                    return setBigDecimal(statement, index, BigDecimal.valueOf(((Number) value).longValue()));
+                }
+                if (value instanceof Number number) {
+                    return setBigDecimal(statement, index, BigDecimal.valueOf(number.doubleValue()));
+                }
+                return setBigDecimal(statement, index, convertRequired(value, BigDecimal.class));
+            case LONG:
+                if (value == null) {
+                    throw cannotSetNullValueError();
+                }
+                if (value instanceof Number number) {
+                    return setLong(statement, index, number.longValue());
+                }
+                return setLong(statement, index, convertRequired(value, Long.class));
+            case CHARACTER:
+                if (value == null) {
+                    throw cannotSetNullValueError();
+                }
+                if (value instanceof Character character) {
+                    return setChar(statement, index, character);
+                }
+                return setChar(statement, index, convertRequired(value, Character.class));
+            case FLOAT:
+                if (value == null) {
+                    throw cannotSetNullValueError();
+                }
+                if (value instanceof Number number) {
+                    return setFloat(statement, index, number.floatValue());
+                }
+                return setFloat(statement, index, convertRequired(value, Float.class));
+            case SHORT:
+                if (value == null) {
+                    throw cannotSetNullValueError();
+                }
+                if (value instanceof Number number) {
+                    return setShort(statement, index, number.shortValue());
+                }
+                return setShort(statement, index, convertRequired(value, Short.class));
+            case BYTE:
+                if (value == null) {
+                    throw cannotSetNullValueError();
+                }
+                if (value instanceof Number number) {
+                    return setByte(statement, index, number.byteValue());
+                }
+                return setByte(statement, index, convertRequired(value, Byte.class));
+            case OBJECT:
+            default:
+                if (dataType.isArray()) {
+                    if (value != null && !(value instanceof Array)) {
+                        // Always convert primitive arrays to wrappers array. H2 doesn't support primitive arrays.
+                        if (!value.getClass().isArray() || value.getClass().getComponentType().isPrimitive()) {
+                            switch (dataType) {
+                                case SHORT_ARRAY:
+                                    value = convertRequired(value, Short[].class);
+                                    break;
+                                case LONG_ARRAY:
+                                    value = convertRequired(value, Long[].class);
+                                    break;
+                                case FLOAT_ARRAY:
+                                    value = convertRequired(value, Float[].class);
+                                    break;
+                                case INTEGER_ARRAY:
+                                    value = convertRequired(value, Integer[].class);
+                                    break;
+                                case DOUBLE_ARRAY:
+                                    value = convertRequired(value, Double[].class);
+                                    break;
+                                case BOOLEAN_ARRAY:
+                                    value = convertRequired(value, Boolean[].class);
+                                    break;
+                                case STRING_ARRAY:
+                                case CHARACTER_ARRAY:
+                                    value = convertRequired(value, String[].class);
+                                    break;
+                                case UUID_ARRAY:
+                                    value = convertRequired(value, UUID[].class);
+                                    break;
+                                default:
+                                    // no-op
+                            }
+                        } else if (value.getClass() == Character[].class) {
+                            value = convertRequired(value, String[].class);
+                        }
+                    }
+                    return setArray(statement, index, value);
+                }
+                return setValue(statement, index, value);
         }
-        return value;
-    }
-
-    private @Nullable String stringValue(@Nullable Object value) {
-        if (value == null) {
-            return null;
-        }
-        if (value instanceof CharSequence || value instanceof Enum) {
-            return value.toString();
-        }
-        return convertRequired(value, String.class);
-    }
-
-    private @Nullable Date dateValue(@Nullable Object value) {
-        if (value == null || value instanceof Date) {
-            return (Date) value;
-        }
-        return convertRequired(value, java.sql.Date.class);
-    }
-
-    private @Nullable Instant timestampValue(@Nullable Object value) {
-        if (value == null) {
-            return null;
-        }
-        if (value instanceof ZonedDateTime zonedDateTime) {
-            return zonedDateTime.toInstant();
-        }
-        if (value instanceof Instant instant) {
-            return instant;
-        }
-        return convertRequired(value, Instant.class);
-    }
-
-    private @Nullable Time timeValue(@Nullable Object value) {
-        if (value == null || value instanceof Time) {
-            return (Time) value;
-        }
-        throw new DataAccessException("Invalid time: " + value);
-    }
-
-    private UUID uuidValue(@Nullable Object value) {
-        if (value instanceof CharSequence) {
-            return UUID.fromString(value.toString());
-        }
-        if (value instanceof UUID uuid) {
-            return uuid;
-        }
-        throw new DataAccessException("Invalid UUID: " + value);
-    }
-
-    private @Nullable BigDecimal decimalValue(@Nullable Object value) {
-        if (value == null || value instanceof BigDecimal) {
-            return (BigDecimal) value;
-        }
-        if (value instanceof BigInteger bigInteger) {
-            return new BigDecimal(bigInteger);
-        }
-        if (value instanceof Long || value instanceof Integer || value instanceof Short || value instanceof Byte) {
-            // Exact: a double can't represent every long
-            return BigDecimal.valueOf(((Number) value).longValue());
-        }
-        if (value instanceof Number number) {
-            return BigDecimal.valueOf(number.doubleValue());
-        }
-        return convertRequired(value, BigDecimal.class);
-    }
-
-    private @Nullable <T> T convertIfRequired(@Nullable Object value, Class<T> type) {
-        if (value == null || type.isInstance(value)) {
-            return type.cast(value);
-        }
-        return convertRequired(value, type);
-    }
-
-    private @Nullable Object arrayValue(DataType dataType, @Nullable Object value) {
-        if (value == null || value instanceof Array) {
-            return value;
-        }
-        // Always convert primitive arrays to wrappers array. H2 doesn't support primitive arrays.
-        if (!value.getClass().isArray() || value.getClass().getComponentType().isPrimitive()) {
-            return convertArray(dataType, value);
-        }
-        if (value.getClass() == Character[].class) {
-            return convertRequired(value, String[].class);
-        }
-        return value;
-    }
-
-    private @Nullable Object convertArray(DataType dataType, Object value) {
-        return switch (dataType) {
-            case SHORT_ARRAY -> convertRequired(value, Short[].class);
-            case LONG_ARRAY -> convertRequired(value, Long[].class);
-            case FLOAT_ARRAY -> convertRequired(value, Float[].class);
-            case INTEGER_ARRAY -> convertRequired(value, Integer[].class);
-            case DOUBLE_ARRAY -> convertRequired(value, Double[].class);
-            case BOOLEAN_ARRAY -> convertRequired(value, Boolean[].class);
-            case STRING_ARRAY, CHARACTER_ARRAY -> convertRequired(value, String[].class);
-            case UUID_ARRAY -> convertRequired(value, UUID[].class);
-            default -> value;
-        };
     }
 
     private DataAccessException cannotSetNullValueError() {

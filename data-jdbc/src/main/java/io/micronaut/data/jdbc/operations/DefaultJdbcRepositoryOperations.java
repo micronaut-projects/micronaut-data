@@ -1106,7 +1106,7 @@ public final class DefaultJdbcRepositoryOperations extends AbstractSqlRepository
             columnNameResultSetReader,
             jsonMapper != null ? () -> jsonMapper : null,
             conversionService,
-            getConversionContextFactory()).readEntity(resultSet);
+            getConversionContextFactory()).map(resultSet, type);
     }
 
     @NonNull
@@ -1200,7 +1200,15 @@ public final class DefaultJdbcRepositoryOperations extends AbstractSqlRepository
             @NonNull
             @Override
             public <E> E readEntity(String prefix, Class<E> type) throws DataAccessException {
-                return DefaultJdbcRepositoryOperations.this.readEntity(prefix, rs, type);
+                RuntimePersistentEntity<E> entity = getEntity(type);
+                SqlResultEntityTypeMapper<ResultSet, E> mapper = new SqlResultEntityTypeMapper<>(
+                        prefix,
+                        entity,
+                        columnNameResultSetReader,
+                        jsonMapper != null ? () -> jsonMapper : null,
+                        conversionService,
+                        getConversionContextFactory());
+                return mapper.map(rs, type);
             }
 
             @NonNull
@@ -1861,7 +1869,31 @@ public final class DefaultJdbcRepositoryOperations extends AbstractSqlRepository
                     throw new OptimisticLockException("Cannot verify the affected row count of the batch: the JDBC driver didn't report the number of updated rows (Statement.SUCCESS_NO_INFO)");
                 }
                 if (shouldReadGeneratedId(storedQuery, readGeneratedKeys)) {
-                    updateGeneratedIds(ps);
+                    RuntimePersistentProperty<T> identity = persistentEntity.getIdentity();
+                    List<Object> ids = new ArrayList<>();
+                    try (ResultSet generatedKeys = ps.getGeneratedKeys()) {
+                        Dialect dialect = storedQuery.getDialect();
+                        while (generatedKeys.next()) {
+                            ids.add(getGeneratedIdentity(generatedKeys, identity, dialect));
+                        }
+                    }
+                    // The ids are matched to the entities by position, which a surplus id makes unreliable
+                    long notVetoed = entities.stream().filter(d -> !d.vetoed).count();
+                    if (ids.size() > notVetoed) {
+                        throw new DataAccessException("Expected " + notVetoed + " generated IDs, one for each inserted entity, but the database returned " + ids.size());
+                    }
+                    Iterator<Object> iterator = ids.iterator();
+                    for (Data d : entities) {
+                        if (d.vetoed) {
+                            continue;
+                        }
+                        if (!iterator.hasNext()) {
+                            throw new DataAccessException("Failed to generate ID for entity: " + d.entity);
+                        } else {
+                            Object id = iterator.next();
+                            d.entity = updateEntityId(identity.getProperty(), d.entity, id);
+                        }
+                    }
                 }
                 if (storedQuery.isOptimisticLock()) {
                     int expected = (int) entities.stream().filter(d -> !d.vetoed).count();
@@ -1869,33 +1901,6 @@ public final class DefaultJdbcRepositoryOperations extends AbstractSqlRepository
                 }
             } catch (SQLException e) {
                 throw sqlExceptionToDataAccessException(e, ctx.dialect, sqlException -> new DataAccessException("Error executing batch SQL UPDATE: " + sqlException.getMessage(), sqlException));
-            }
-        }
-
-        private void updateGeneratedIds(PreparedStatement ps) throws SQLException {
-            RuntimePersistentProperty<T> identity = persistentEntity.getIdentity();
-            List<Object> ids = new ArrayList<>();
-            try (ResultSet generatedKeys = ps.getGeneratedKeys()) {
-                Dialect dialect = storedQuery.getDialect();
-                while (generatedKeys.next()) {
-                    ids.add(getGeneratedIdentity(generatedKeys, identity, dialect));
-                }
-            }
-            // The ids are matched to the entities by position, which a surplus id makes unreliable
-            long notVetoed = entities.stream().filter(d -> !d.vetoed).count();
-            if (ids.size() > notVetoed) {
-                throw new DataAccessException("Expected " + notVetoed + " generated IDs, one for each inserted entity, but the database returned " + ids.size());
-            }
-            Iterator<Object> iterator = ids.iterator();
-            for (Data d : entities) {
-                if (d.vetoed) {
-                    continue;
-                }
-                if (!iterator.hasNext()) {
-                    throw new DataAccessException("Failed to generate ID for entity: " + d.entity);
-                }
-                Object id = iterator.next();
-                d.entity = updateEntityId(identity.getProperty(), d.entity, id);
             }
         }
 
