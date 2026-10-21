@@ -61,9 +61,7 @@ final class PostgresChangeNotificationDispatcher {
 
     // Dispatch state is guarded by this monitor; executor submissions happen outside it.
     private boolean closing;
-    private boolean invalidationPending;
-    private boolean invalidationSubmitted;
-    private boolean retryScheduled;
+    private InvalidationState invalidationState = InvalidationState.NONE;
     private int outstandingTasks;
     private long activeTasks;
 
@@ -87,11 +85,12 @@ final class PostgresChangeNotificationDispatcher {
             if (closing) {
                 return;
             }
-            overloaded = !invalidationPending && outstandingTasks >= maxOutstandingTasks;
-            collapsed = invalidationPending || overloaded;
-            if (collapsed) {
-                invalidationPending = true;
-            } else {
+            overloaded = invalidationState == InvalidationState.NONE && outstandingTasks >= maxOutstandingTasks;
+            collapsed = invalidationState != InvalidationState.NONE || overloaded;
+            if (overloaded) {
+                invalidationState = InvalidationState.PENDING;
+            }
+            if (!collapsed) {
                 outstandingTasks++;
             }
         }
@@ -106,16 +105,15 @@ final class PostgresChangeNotificationDispatcher {
         }
     }
 
-    private void execute(ChangeEvent<?> event, boolean invalidation) {
+    private void execute(ChangeEvent<?> event, boolean pendingInvalidation) {
         try {
-            executor.execute(() -> dispatchSafely(event, invalidation));
+            executor.execute(() -> dispatchSafely(event, pendingInvalidation));
         } catch (RuntimeException e) {
             synchronized (this) {
                 outstandingTasks--;
-                if (invalidation) {
-                    invalidationSubmitted = false;
+                if (pendingInvalidation || invalidationState == InvalidationState.NONE) {
+                    invalidationState = InvalidationState.PENDING;
                 }
-                invalidationPending = true;
             }
             LOG.warn("Unable to submit PostgreSQL notification operation [{}] for datasource [{}] and listener method [{}]",
                 event.operation(), dataSourceName, description, e);
@@ -128,55 +126,46 @@ final class PostgresChangeNotificationDispatcher {
     @SuppressWarnings("FutureReturnValueIgnored") // Retries check shutdown before submitting work.
     private void retryInvalidation() {
         synchronized (this) {
-            if (closing || retryScheduled || invalidationSubmitted) {
+            if (closing || invalidationState != InvalidationState.PENDING) {
                 return;
             }
-            retryScheduled = true;
+            invalidationState = InvalidationState.RETRY_SCHEDULED;
         }
         try {
-            taskScheduler.schedule(DISPATCH_RETRY_DELAY, () -> {
-                synchronized (this) {
-                    retryScheduled = false;
-                }
-                submitPendingInvalidation();
-            });
+            taskScheduler.schedule(DISPATCH_RETRY_DELAY, this::retryPendingInvalidation);
         } catch (RuntimeException e) {
             synchronized (this) {
-                retryScheduled = false;
+                invalidationState = InvalidationState.PENDING;
             }
             LOG.error("Unable to schedule PostgreSQL listener invalidation for datasource [{}] and listener method [{}]",
                 dataSourceName, description, e);
         }
     }
 
+    private void retryPendingInvalidation() {
+        synchronized (this) {
+            invalidationState = InvalidationState.PENDING;
+        }
+        submitPendingInvalidation();
+    }
+
     private void submitPendingInvalidation() {
         synchronized (this) {
-            if (closing || !invalidationPending || invalidationSubmitted || retryScheduled || outstandingTasks >= maxOutstandingTasks) {
+            if (closing || invalidationState != InvalidationState.PENDING || outstandingTasks >= maxOutstandingTasks) {
                 return;
             }
             outstandingTasks++;
-            invalidationSubmitted = true;
+            invalidationState = InvalidationState.SUBMITTED;
         }
         execute(new DefaultChangeEvent<>(ChangeOperation.INVALIDATE, null, null), true);
     }
 
-    private void dispatchSafely(ChangeEvent<?> event, boolean invalidation) {
-        if (!acceptTask(invalidation)) {
+    private void dispatchSafely(ChangeEvent<?> event, boolean pendingInvalidation) {
+        if (!acceptTask(pendingInvalidation)) {
             return;
         }
         try {
-            if (LOG.isTraceEnabled()) {
-                PostgresChangeEventMetadata metadata = event.metadata(PostgresChangeEventMetadata.class).orElse(null);
-                if (metadata == null) {
-                    LOG.trace("Accepted PostgreSQL notification operation [{}] for datasource [{}] and listener method [{}] without table metadata",
-                        event.operation(), dataSourceName, description);
-                } else {
-                    LOG.trace("Accepted PostgreSQL notification operation [{}] for datasource [{}], listener method [{}], "
-                            + "channel [{}], schema [{}], table [{}], old keys [{}], and new keys [{}]",
-                        event.operation(), dataSourceName, description, metadata.channel(), metadata.schema(), metadata.table(),
-                        metadata.oldKeys(), metadata.newKeys());
-                }
-            }
+            logEvent(event);
             listener.accept(event);
         } catch (Exception e) {
             LOG.error("PostgreSQL notification operation [{}] failed for datasource [{}] and listener method [{}]",
@@ -186,11 +175,25 @@ final class PostgresChangeNotificationDispatcher {
         }
     }
 
-    private synchronized boolean acceptTask(boolean invalidation) {
-        if (invalidation) {
+    private void logEvent(ChangeEvent<?> event) {
+        if (LOG.isTraceEnabled()) {
+            PostgresChangeEventMetadata metadata = event.metadata(PostgresChangeEventMetadata.class).orElse(null);
+            if (metadata == null) {
+                LOG.trace("Accepted PostgreSQL notification operation [{}] for datasource [{}] and listener method [{}] without table metadata",
+                    event.operation(), dataSourceName, description);
+            } else {
+                LOG.trace("Accepted PostgreSQL notification operation [{}] for datasource [{}], listener method [{}], "
+                        + "channel [{}], schema [{}], table [{}], old keys [{}], and new keys [{}]",
+                    event.operation(), dataSourceName, description, metadata.channel(), metadata.schema(), metadata.table(),
+                    metadata.oldKeys(), metadata.newKeys());
+            }
+        }
+    }
+
+    private synchronized boolean acceptTask(boolean pendingInvalidation) {
+        if (pendingInvalidation) {
             // Changes received before refresh starts are covered by it; later losses need another refresh.
-            invalidationSubmitted = false;
-            invalidationPending = false;
+            invalidationState = InvalidationState.NONE;
         }
         if (closing) {
             outstandingTasks--;
@@ -223,5 +226,12 @@ final class PostgresChangeNotificationDispatcher {
         if (closing && activeTasks == 0) {
             completion.complete(null);
         }
+    }
+
+    private enum InvalidationState {
+        NONE,
+        PENDING,
+        RETRY_SCHEDULED,
+        SUBMITTED
     }
 }

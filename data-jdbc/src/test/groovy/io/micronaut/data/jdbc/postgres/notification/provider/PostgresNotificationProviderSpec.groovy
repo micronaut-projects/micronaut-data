@@ -32,6 +32,7 @@ import io.micronaut.data.jdbc.postgres.PostgresTestPropertyProvider
 import io.micronaut.data.runtime.config.SchemaGenerate
 import spock.lang.Specification
 import spock.lang.Unroll
+import spock.util.concurrent.PollingConditions
 import jakarta.inject.Singleton
 import javax.sql.DataSource
 import java.sql.Connection
@@ -168,6 +169,68 @@ class PostgresNotificationProviderSpec extends Specification implements Postgres
         then:
         deleted.every { it.operation() == ChangeOperation.DELETE && it.entity().isEmpty() }
         deleted.collect { it.metadata(PostgresChangeEventMetadata).orElseThrow().oldKeys().BookId }.toSet() == ['1', '2', '3'].toSet()
+    }
+
+    @Unroll
+    void "overload collapses into invalidation and row delivery resumes with work limit #limit"() {
+        given:
+        start([
+            'micronaut.data.jdbc.notifications.postgres.max-outstanding-tasks': limit,
+            'spec.overload-probe': true
+        ])
+        listener.entered = new CountDownLatch(limit)
+        listener.release = new CountDownLatch(1)
+        def probe = application.getBean(OverloadNotificationProbe)
+        (1..limit).each { id ->
+            execute("INSERT INTO \"ProviderBook\" VALUES ('$TENANT', $id, 'initial')")
+        }
+        assert listener.entered.await(10, TimeUnit.SECONDS)
+
+        when: 'the listener holds every slot while a committed bulk insert arrives'
+        execute("""INSERT INTO "ProviderBook"
+            SELECT '$TENANT'::uuid, id, 'burst' FROM generate_series(100, 109) AS id""")
+        // PostgreSQL preserves notification order. Receiving this probe means the preceding row
+        // notifications have passed through the receiver, even though their listener is blocked.
+        execute("""SELECT pg_notify('provider_probe', '{"version":1,"schema":"notification_provider_test",
+            "table":"ProviderBook","operation":"INVALIDATE","oldKeys":{},"newKeys":{}}')""")
+
+        then:
+        probe.events.poll(10, TimeUnit.SECONDS) != null
+        listener.attempts.get() == limit
+        listener.events.isEmpty()
+
+        when: 'completion alone must dispatch the pending invalidation, without another database event'
+        listener.release.countDown()
+        def delivered = (1..(limit + 1)).collect { next() }
+        then:
+        def initial = delivered.findAll { it.operation() == ChangeOperation.INSERT }
+        initial.size() == limit
+        initial.collect { it.metadata(PostgresChangeEventMetadata).orElseThrow().newKeys().BookId }.toSet() ==
+            (1..limit).collect { it.toString() }.toSet()
+        def invalidations = delivered.findAll { it.operation() == ChangeOperation.INVALIDATE }
+        invalidations.size() == 1
+        invalidations.first().entity().isEmpty()
+        invalidations.first().metadata(PostgresChangeEventMetadata).isEmpty()
+        listener.attempts.get() == limit + 1
+        listener.events.isEmpty()
+
+        when: 'the listener catches up and a later change is delivered individually'
+        new PollingConditions(timeout: 10).eventually {
+            // The invalidation is recorded just before its callback returns. A write racing with
+            // that return may still collapse at limit one; keep checking observable row delivery.
+            execute('UPDATE "ProviderBook" SET title = \'resumed\' WHERE "BookId" = 1')
+            def resumed = next()
+            assert resumed.operation() == ChangeOperation.UPDATE
+            assert resumed.metadata(PostgresChangeEventMetadata).orElseThrow().newKeys() == [tenant: TENANT, BookId: '1']
+            assert resumed.entity().orElseThrow().title == 'resumed'
+        }
+
+        then:
+        listener.attempts.get() >= limit + 2
+        listener.events.poll(300, TimeUnit.MILLISECONDS) == null
+
+        where:
+        limit << [1, 2]
     }
 
     void "listener retry stays inside AOP and truncate invalidates"() {
@@ -404,6 +467,19 @@ class UnqualifiedBookChangeListener {
     @ChangeListener
     @PostgresChangeNotification(channel = 'provider_changes')
     void changed(ChangeEvent<UnqualifiedNotificationBook> event) {
+        events.add(event)
+    }
+}
+
+@Singleton
+@Requires(property = 'spec.name', value = 'PostgresNotificationProviderSpec')
+@Requires(property = 'spec.overload-probe', value = 'true')
+class OverloadNotificationProbe {
+    final LinkedBlockingQueue<ChangeEvent<NotificationBook>> events = new LinkedBlockingQueue<>()
+
+    @ChangeListener
+    @PostgresChangeNotification(channel = 'provider_probe')
+    void changed(ChangeEvent<NotificationBook> event) {
         events.add(event)
     }
 }
