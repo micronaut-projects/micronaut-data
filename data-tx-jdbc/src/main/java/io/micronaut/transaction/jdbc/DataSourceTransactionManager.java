@@ -23,7 +23,10 @@ import io.micronaut.core.order.OrderUtil;
 import org.jspecify.annotations.NonNull;
 import org.jspecify.annotations.Nullable;
 import io.micronaut.core.annotation.TypeHint;
+import io.micronaut.core.propagation.PropagatedContext;
+import io.micronaut.data.connection.ConnectionDefinition;
 import io.micronaut.data.connection.ConnectionOperations;
+import io.micronaut.data.connection.ConnectionStatus;
 import io.micronaut.data.connection.ConnectionSynchronization;
 import io.micronaut.data.connection.SynchronousConnectionManager;
 import io.micronaut.data.connection.exceptions.ConnectionException;
@@ -51,6 +54,7 @@ import java.util.ArrayList;
 import java.util.Collections;
 import java.util.List;
 import java.util.Objects;
+import java.util.function.Supplier;
 
 /**
  * The {@link DataSource} transaction manager.
@@ -188,8 +192,12 @@ public final class DataSourceTransactionManager extends AbstractDefaultTransacti
 
         List<Runnable> onComplete = new ArrayList<>(5);
 
+        // The synchronizations of the listeners are bound to the transaction, as the restore of the connection state below
+        ConnectionStatus<Connection> listenerConnectionStatus = transactionExecutionListeners.isEmpty()
+            ? status.getConnectionStatus()
+            : new TransactionBoundConnectionStatus(status);
         for (TransactionExecutionListener<Connection> transactionExecutionListener : transactionExecutionListeners) {
-            transactionExecutionListener.beforeBegin(status.getConnectionStatus(), definition);
+            transactionExecutionListener.beforeBegin(listenerConnectionStatus, definition);
         }
 
         // Registered before the connection is modified, so the changes applied before
@@ -224,7 +232,7 @@ public final class DataSourceTransactionManager extends AbstractDefaultTransacti
             throw new CannotCreateTransactionException("Could not prepare JDBC Connection for the transaction", e);
         }
         for (TransactionExecutionListener<Connection> transactionExecutionListener : transactionExecutionListeners) {
-            transactionExecutionListener.afterBegin(status.getConnectionStatus(), definition);
+            transactionExecutionListener.afterBegin(listenerConnectionStatus, definition);
         }
         if (sessionlessTransactionHandler != null && sessionlessTransactionHandler.supports(definition)) {
             TransactionResourceCommit resourceCommit = sessionlessTransactionHandler.begin(status, definition);
@@ -401,5 +409,40 @@ public final class DataSourceTransactionManager extends AbstractDefaultTransacti
             return OPERATION_NOT_SUPPORTED.equals(sqlException.getMessage());
         }
         return false;
+    }
+
+    /**
+     * The connection status given to the {@link TransactionExecutionListener}s: their synchronizations are bound
+     * to the transaction, so that the connection state a listener changes is restored when the transaction completes,
+     * also when the connection is used by an outer scope.
+     *
+     * @param status The transaction status
+     */
+    private record TransactionBoundConnectionStatus(DefaultTransactionStatus<Connection> status) implements ConnectionStatus<Connection> {
+
+        @Override
+        public boolean isNew() {
+            return status.getConnectionStatus().isNew();
+        }
+
+        @Override
+        public Connection getConnection() {
+            return status.getConnectionStatus().getConnection();
+        }
+
+        @Override
+        public ConnectionDefinition getDefinition() {
+            return status.getConnectionStatus().getDefinition();
+        }
+
+        @Override
+        public void registerSynchronization(ConnectionSynchronization synchronization) {
+            status.registerConnectionSynchronization(synchronization);
+        }
+
+        @Override
+        public <V> V propagate(PropagatedContext propagatedContext, Supplier<V> supplier) {
+            return status.getConnectionStatus().propagate(propagatedContext, supplier);
+        }
     }
 }

@@ -29,8 +29,17 @@ void updateInventory() {
 }
 ----
 
-When the transaction uses an Oracle connection, Micronaut Data sets the session `txn_priority` for the duration of the transaction and resets it afterwards.
+When the transaction uses an Oracle connection, Micronaut Data sets the session `txn_priority` when the transaction begins and restores the priority the session had before when the transaction completes, also when the transaction runs on a connection opened by an outer scope, such as a method annotated with ann:data.connection.annotation.Connectable[]. Setting the priority and reading the previous one take one round trip to the database, restoring it another.
 Non-Oracle databases ignore this property.
+
+Setting the priority of the session (`ALTER SESSION SET "txn_priority"`) needs no privilege beyond `CREATE SESSION`. Reading the previous priority needs the privilege to read `V$PARAMETER`. The narrowest grant, which must be given by `SYS`, is:
+
+[source,sql]
+----
+GRANT READ ON SYS.V_$PARAMETER TO app_user;
+----
+
+The `DB_DEVELOPER_ROLE` and `SELECT_CATALOG_ROLE` roles also allow it. Without the privilege the transaction still runs with the requested priority, and the session is reset to `HIGH`, the default priority of Oracle Database, when the transaction completes.
 
 NOTE: Oracle transaction priority requires database support and appropriate Oracle priority transaction configuration.
 Older Oracle versions that reject `txn_priority` continue without applying priority.

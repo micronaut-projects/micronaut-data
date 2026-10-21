@@ -8,88 +8,96 @@ import io.micronaut.transaction.annotation.OracleTransactional
 import io.micronaut.transaction.exceptions.CannotCreateTransactionException
 import io.micronaut.transaction.exceptions.TransactionSystemException
 import io.micronaut.transaction.impl.DefaultTransactionStatus
+import io.micronaut.transaction.support.OracleTransactionPriorityStatements
 import spock.lang.Specification
 
 import javax.sql.DataSource
+import java.sql.CallableStatement
 import java.sql.Connection
 import java.sql.DatabaseMetaData
 import java.sql.SQLException
 import java.sql.Statement
+import java.sql.Types
 
 /**
- * Verifies that Oracle transaction priority is applied (ALTER SESSION "txn_priority")
- * at transaction begin and reset after completion when @OracleTransactional is present.
+ * Verifies that Oracle transaction priority is applied at transaction begin, reading the previous priority of the session,
+ * and that the previous priority is restored after completion when @OracleTransactional is present.
  */
 class OracleTransactionPrioritySpec extends Specification {
 
-    def "applies and resets Oracle txn_priority when oracle priority is present"() {
-        given: "Mocks for Oracle connection and statement"
-        def dataSource = Mock(DataSource)
-        def connection = Mock(Connection)
-        def meta = Mock(DatabaseMetaData)
+    def "applies Oracle txn_priority and restores the previous priority of the session"() {
+        given:
+        def txManager = newTxManager()
+        def fixture = newOracleTxFixture(txManager, OracleTransactional.Priority.LOW)
+        def call = Mock(CallableStatement)
         def stmt = Mock(Statement)
 
-        and: "Connection definition carrying that annotation metadata"
-        ConnectionDefinition connDef = new DefaultConnectionDefinition("test")
-
-        and: "Connection status wrapping the connection and allowing synchronizations"
-        def status = new DefaultConnectionStatus<>(connection, connDef, true, null)
-
-        and: "A DefaultTransactionStatus with the above connection status"
-        def txDef = createWithPriority(OracleTransactional.Priority.LOW)
-        def txManager = new DataSourceTransactionManager(dataSource, Mock(io.micronaut.data.connection.ConnectionOperations), Mock(io.micronaut.data.connection.SynchronousConnectionManager), oracleListeners())
-        def txStatus = DefaultTransactionStatus.newTx(status, txDef, txManager)
-
-        and: "Oracle connection behavior"
-        connection.getMetaData() >> meta
-        meta.getDatabaseProductName() >> "Oracle"
-        connection.getAutoCommit() >> true
-        connection.setAutoCommit(false) >> { }
-        connection.isReadOnly() >> false
-        connection.getTransactionIsolation() >> Connection.TRANSACTION_READ_COMMITTED
-        2 * connection.createStatement() >> stmt
-        _ * stmt.close()
-
         when: "Beginning the transaction"
-        txManager.doBegin(txStatus)
+        txManager.doBegin(fixture.txStatus)
 
-        then: "Priority is set to LOW"
-        1 * stmt.executeUpdate('ALTER SESSION SET "txn_priority"="LOW"')
+        then: "Priority is set to LOW, reading the previous priority"
+        1 * fixture.connection.prepareCall(OracleTransactionPriorityStatements.SET_PRIORITY_READING_PREVIOUS) >> call
+        1 * call.setString(1, 'LOW')
+        1 * call.registerOutParameter(2, Types.VARCHAR)
+        1 * call.execute()
+        1 * call.getString(2) >> 'MEDIUM'
+        1 * call.close()
 
-        when: "Execution completes (triggers onComplete reset)"
-        status.complete()
+        when: "Execution completes"
+        fixture.status.complete()
 
-        then: "Priority is reset to HIGH"
+        then: "The previous priority is restored"
+        1 * fixture.connection.createStatement() >> stmt
+        1 * stmt.executeUpdate('ALTER SESSION SET "txn_priority"="MEDIUM"')
+    }
+
+    def "resets Oracle txn_priority to HIGH when the previous priority is unknown"() {
+        given:
+        def txManager = newTxManager()
+        def fixture = newOracleTxFixture(txManager, OracleTransactional.Priority.LOW)
+        def call = Mock(CallableStatement)
+        def stmt = Mock(Statement)
+        fixture.connection.prepareCall(OracleTransactionPriorityStatements.SET_PRIORITY_READING_PREVIOUS) >> call
+        call.getString(2) >> previous
+
+        when:
+        txManager.doBegin(fixture.txStatus)
+        fixture.status.complete()
+
+        then:
+        1 * fixture.connection.createStatement() >> stmt
         1 * stmt.executeUpdate('ALTER SESSION SET "txn_priority"="HIGH"')
+
+        where:
+        previous << [null, 'unknown']
     }
 
     def "ignores ORA-02248 while setting Oracle txn_priority"() {
         given:
         def txManager = newTxManager()
         def fixture = newOracleTxFixture(txManager, OracleTransactional.Priority.MEDIUM)
-        def stmt = Mock(Statement)
-        1 * fixture.connection.createStatement() >> stmt
-        _ * stmt.close()
-        stmt.executeUpdate('ALTER SESSION SET "txn_priority"="MEDIUM"') >> { throw new SQLException('ORA-02248: invalid option for ALTER SESSION', '42000', 2248) }
+        def call = Mock(CallableStatement)
+        fixture.connection.prepareCall(OracleTransactionPriorityStatements.SET_PRIORITY_READING_PREVIOUS) >> call
+        call.execute() >> { throw new SQLException('ORA-02248: invalid option for ALTER SESSION\nORA-06512: at line 9', '42000', 2248) }
 
         when:
         txManager.doBegin(fixture.txStatus)
         fixture.status.complete()
 
-        then:
+        then: "Nothing is reset"
         noExceptionThrown()
+        0 * fixture.connection.createStatement()
     }
 
     def "ignores chained ORA-02248 while setting Oracle txn_priority"() {
         given:
         def txManager = newTxManager()
         def fixture = newOracleTxFixture(txManager, OracleTransactional.Priority.MEDIUM)
-        def stmt = Mock(Statement)
-        1 * fixture.connection.createStatement() >> stmt
-        _ * stmt.close()
+        def call = Mock(CallableStatement)
+        fixture.connection.prepareCall(OracleTransactionPriorityStatements.SET_PRIORITY_READING_PREVIOUS) >> call
         def exception = new SQLException('Statement failed', '42000', 0)
         exception.setNextException(new SQLException('ORA-02248: invalid option for ALTER SESSION', '42000', 2248))
-        stmt.executeUpdate('ALTER SESSION SET "txn_priority"="MEDIUM"') >> { throw exception }
+        call.execute() >> { throw exception }
 
         when:
         txManager.doBegin(fixture.txStatus)
@@ -97,16 +105,16 @@ class OracleTransactionPrioritySpec extends Specification {
 
         then:
         noExceptionThrown()
+        0 * fixture.connection.createStatement()
     }
 
     def "rethrows non-ORA-02248 failure while setting Oracle txn_priority"() {
         given:
         def txManager = newTxManager()
         def fixture = newOracleTxFixture(txManager, OracleTransactional.Priority.MEDIUM)
-        def stmt = Mock(Statement)
-        fixture.connection.createStatement() >> stmt
-        _ * stmt.close()
-        stmt.executeUpdate('ALTER SESSION SET "txn_priority"="MEDIUM"') >> { throw new SQLException('ORA-01031: insufficient privileges', '42000', 1031) }
+        def call = Mock(CallableStatement)
+        fixture.connection.prepareCall(OracleTransactionPriorityStatements.SET_PRIORITY_READING_PREVIOUS) >> call
+        call.execute() >> { throw new SQLException('ORA-01031: insufficient privileges', '42000', 1031) }
 
         when:
         txManager.doBegin(fixture.txStatus)
@@ -121,10 +129,10 @@ class OracleTransactionPrioritySpec extends Specification {
         given:
         def txManager = newTxManager()
         def fixture = newOracleTxFixture(txManager, OracleTransactional.Priority.LOW)
+        def call = Mock(CallableStatement)
         def stmt = Mock(Statement)
-        2 * fixture.connection.createStatement() >> stmt
-        _ * stmt.close()
-        1 * stmt.executeUpdate('ALTER SESSION SET "txn_priority"="LOW"')
+        fixture.connection.prepareCall(OracleTransactionPriorityStatements.SET_PRIORITY_READING_PREVIOUS) >> call
+        fixture.connection.createStatement() >> stmt
         1 * stmt.executeUpdate('ALTER SESSION SET "txn_priority"="HIGH"') >> { throw new SQLException('ORA-02248: invalid option for ALTER SESSION', '42000', 2248) }
 
         when:
@@ -139,11 +147,12 @@ class OracleTransactionPrioritySpec extends Specification {
         given:
         def txManager = newTxManager()
         def fixture = newOracleTxFixture(txManager, OracleTransactional.Priority.LOW)
+        def call = Mock(CallableStatement)
         def stmt = Mock(Statement)
-        2 * fixture.connection.createStatement() >> stmt
-        _ * stmt.close()
-        1 * stmt.executeUpdate('ALTER SESSION SET "txn_priority"="LOW"')
-        1 * stmt.executeUpdate('ALTER SESSION SET "txn_priority"="HIGH"') >> { throw new SQLException('ORA-01031: insufficient privileges', '42000', 1031) }
+        fixture.connection.prepareCall(OracleTransactionPriorityStatements.SET_PRIORITY_READING_PREVIOUS) >> call
+        call.getString(2) >> 'MEDIUM'
+        fixture.connection.createStatement() >> stmt
+        1 * stmt.executeUpdate('ALTER SESSION SET "txn_priority"="MEDIUM"') >> { throw new SQLException('ORA-01031: insufficient privileges', '42000', 1031) }
 
         when:
         txManager.doBegin(fixture.txStatus)
@@ -153,6 +162,32 @@ class OracleTransactionPrioritySpec extends Specification {
         def e = thrown(TransactionSystemException)
         e.cause instanceof SQLException
         e.cause.errorCode == 1031
+    }
+
+    def "the priority is reset when the transaction completes, also on a connection of an outer scope"() {
+        given:
+        def txManager = newTxManager()
+        def fixture = newOracleTxFixture(txManager, OracleTransactional.Priority.LOW)
+        def call = Mock(CallableStatement)
+        def stmt = Mock(Statement)
+        fixture.connection.prepareCall(OracleTransactionPriorityStatements.SET_PRIORITY_READING_PREVIOUS) >> call
+        call.getString(2) >> 'MEDIUM'
+        fixture.connection.createStatement() >> stmt
+        // The connection is owned by an outer scope: its synchronizations run when the transaction completes
+        fixture.txStatus.bindConnectionSynchronizationsToTransaction()
+
+        when:
+        txManager.doBegin(fixture.txStatus)
+        fixture.txStatus.cleanupAfterCompletion()
+
+        then: "Reset when the transaction completes"
+        1 * stmt.executeUpdate('ALTER SESSION SET "txn_priority"="MEDIUM"')
+
+        when: "The outer scope completes"
+        fixture.status.complete()
+
+        then: "Not reset again"
+        0 * stmt.executeUpdate(_)
     }
 
     def "no priority applied for non-Oracle databases"() {
@@ -181,6 +216,7 @@ class OracleTransactionPrioritySpec extends Specification {
         then: "No ALTER SESSION is executed and the invalid Oracle-specific value is ignored"
         noExceptionThrown()
         0 * connection.createStatement()
+        0 * connection.prepareCall(_)
     }
 
     def "recognizes priority rollback only from an Oracle JDBC connection"() {

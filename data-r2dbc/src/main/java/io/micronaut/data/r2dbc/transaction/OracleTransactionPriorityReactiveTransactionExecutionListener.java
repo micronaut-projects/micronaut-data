@@ -24,13 +24,17 @@ import io.micronaut.data.connection.reactive.ReactiveConnectionSynchronization;
 import io.micronaut.transaction.TransactionDefinition;
 import io.micronaut.transaction.annotation.OracleTransactional;
 import io.micronaut.transaction.exceptions.TransactionSystemException;
+import io.micronaut.transaction.support.OracleTransactionPriorityStatements;
 import io.micronaut.transaction.support.ReactiveTransactionExecutionListener;
 import io.micronaut.transaction.support.TransactionUtil;
 import io.r2dbc.spi.Connection;
+import io.r2dbc.spi.Parameters;
 import io.r2dbc.spi.R2dbcException;
+import io.r2dbc.spi.R2dbcType;
 import io.r2dbc.spi.Result;
 import jakarta.inject.Singleton;
 import oracle.r2dbc.OracleR2dbcOptions;
+import org.jspecify.annotations.Nullable;
 import org.reactivestreams.Publisher;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -38,6 +42,7 @@ import reactor.core.publisher.Flux;
 import reactor.core.publisher.Mono;
 
 import java.util.Locale;
+import java.util.Optional;
 
 /**
  * Applies Oracle transaction priority for R2DBC transactions.
@@ -65,9 +70,11 @@ final class OracleTransactionPriorityReactiveTransactionExecutionListener implem
             return Mono.empty();
         }
         return applyOracleTxnPriority(connection, priority)
-            .flatMap(applied -> {
-                if (applied) {
-                    registerOracleTxnPriorityReset(connectionStatus, connection);
+            .flatMap(change -> {
+                if (change.applied()) {
+                    // Registered for the transaction: it is reset when the transaction completes,
+                    // also when the connection is used by an outer scope
+                    registerOracleTxnPriorityReset(connectionStatus, connection, change.previous());
                 }
                 return Mono.empty();
             });
@@ -81,57 +88,66 @@ final class OracleTransactionPriorityReactiveTransactionExecutionListener implem
         return ORACLE_PRODUCT_NAME_UPPER.equals(productName);
     }
 
-    private Mono<Boolean> applyOracleTxnPriority(Connection connection, OracleTransactional.Priority level) {
-        return executeOracleTxnPriorityStatement(connection,
-            "ALTER SESSION SET \"txn_priority\"=\"" + level.name() + "\"",
-            "Setting",
-            level.name());
-    }
-
-    private Mono<Void> resetOracleTxnPriority(Connection connection) {
-        return executeOracleTxnPriorityStatement(connection,
-            "ALTER SESSION SET \"txn_priority\"=\"HIGH\"",
-            "Resetting",
-            "HIGH")
-            .onErrorMap(e -> new TransactionSystemException("Could not reset Oracle transaction priority", e))
-            .then();
-    }
-
-    private Mono<Boolean> executeOracleTxnPriorityStatement(Connection connection,
-                                                           String sql,
-                                                           String action,
-                                                           String level) {
+    /**
+     * Sets the priority and reads the previous one in one round trip. Reading the priority of the session needs
+     * the privilege to read {@code V$PARAMETER}: without it the previous priority isn't known, and the session is
+     * reset to {@code HIGH}, the default priority.
+     */
+    private Mono<PriorityChange> applyOracleTxnPriority(Connection connection, OracleTransactional.Priority level) {
         if (LOG.isDebugEnabled()) {
-            LOG.debug("{} Oracle txn_priority to {}", action, level);
+            LOG.debug("Setting Oracle txn_priority to {}", level);
         }
-        return Flux.from(connection.createStatement(sql).execute())
-            .flatMap(Result::getRowsUpdated)
-            .then(Mono.just(true))
+        return Flux.from(connection.createStatement(OracleTransactionPriorityStatements.SET_PRIORITY_READING_PREVIOUS)
+                .bind(0, level.name())
+                .bind(1, Parameters.out(R2dbcType.VARCHAR))
+                .execute())
+            .flatMap(result -> result.map(readable -> Optional.ofNullable(readable.get(0, String.class))))
+            .collectList()
+            .map(values -> new PriorityChange(true, values.isEmpty() ? null : OracleTransactionPriorityStatements.parsePriority(values.get(0).orElse(null))))
             .onErrorResume(e -> {
                 if (isOracleTxnPriorityUnsupported(e)) {
-                    LOG.debug("{} Oracle txn_priority failed with ORA-02248; continuing without priority support", action, e);
-                    return Mono.just(false);
+                    LOG.debug("Setting Oracle txn_priority failed with ORA-02248; continuing without priority support", e);
+                    return Mono.just(new PriorityChange(false, null));
                 }
                 return Mono.error(e);
             });
     }
 
-    private void registerOracleTxnPriorityReset(ConnectionStatus<Connection> connectionStatus, Connection connection) {
+    private Mono<Void> resetOracleTxnPriority(Connection connection, OracleTransactional.@Nullable Priority previous) {
+        OracleTransactional.Priority level = previous == null ? OracleTransactional.Priority.HIGH : previous;
+        if (LOG.isDebugEnabled()) {
+            LOG.debug("Resetting Oracle txn_priority to {}", level);
+        }
+        return Flux.from(connection.createStatement(OracleTransactionPriorityStatements.setPriority(level)).execute())
+            .flatMap(Result::getRowsUpdated)
+            .then()
+            .onErrorResume(e -> {
+                if (isOracleTxnPriorityUnsupported(e)) {
+                    LOG.debug("Resetting Oracle txn_priority failed with ORA-02248; continuing without priority support", e);
+                    return Mono.empty();
+                }
+                return Mono.error(new TransactionSystemException("Could not reset Oracle transaction priority", e));
+            });
+    }
+
+    private void registerOracleTxnPriorityReset(ConnectionStatus<Connection> connectionStatus,
+                                                Connection connection,
+                                                OracleTransactional.@Nullable Priority previous) {
         if (connectionStatus instanceof ReactiveConnectionStatus<Connection> reactiveConnectionStatus) {
             reactiveConnectionStatus.registerReactiveSynchronization(new ReactiveConnectionSynchronization() {
                 @Override
                 public Publisher<Void> onComplete() {
-                    return resetOracleTxnPriority(connection);
+                    return resetOracleTxnPriority(connection, previous);
                 }
 
                 @Override
                 public Publisher<Void> onError(Throwable throwable) {
-                    return resetOracleTxnPriority(connection);
+                    return resetOracleTxnPriority(connection, previous);
                 }
 
                 @Override
                 public Publisher<Void> onCancel() {
-                    return resetOracleTxnPriority(connection);
+                    return resetOracleTxnPriority(connection, previous);
                 }
             });
             return;
@@ -139,7 +155,7 @@ final class OracleTransactionPriorityReactiveTransactionExecutionListener implem
         connectionStatus.registerSynchronization(new ConnectionSynchronization() {
             @Override
             public void executionComplete() {
-                resetOracleTxnPriority(connection).block();
+                resetOracleTxnPriority(connection, previous).block();
             }
         });
     }
@@ -156,5 +172,12 @@ final class OracleTransactionPriorityReactiveTransactionExecutionListener implem
             current = current.getCause();
         }
         return false;
+    }
+
+    /**
+     * @param applied  Whether the priority was set
+     * @param previous The priority of the session before, or {@code null} if it couldn't be read
+     */
+    private record PriorityChange(boolean applied, OracleTransactional.@Nullable Priority previous) {
     }
 }

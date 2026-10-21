@@ -170,6 +170,11 @@ public @interface OracleTransactional {
 
     /**
      * The desired transaction priority level for Oracle priority transactions.
+     * The priority is set on the session ({@code ALTER SESSION SET "txn_priority"}) when the transaction begins,
+     * which needs no privilege beyond {@code CREATE SESSION}, and the previous priority of the session is restored
+     * when the transaction completes. Reading the previous priority needs the privilege to read {@code V$PARAMETER},
+     * for example {@code GRANT READ ON SYS.V_$PARAMETER TO <user>}; without it the session is reset to
+     * {@link Priority#HIGH}, the default priority of Oracle Database.
      *
      * @return The priority level
      */
