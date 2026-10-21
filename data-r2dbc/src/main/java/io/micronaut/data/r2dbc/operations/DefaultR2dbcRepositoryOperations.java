@@ -380,10 +380,6 @@ final class DefaultR2dbcRepositoryOperations extends AbstractSqlRepositoryOperat
         return assocEntitiesOp.getEntities().then();
     }
 
-    private Mono<Number> sum(Stream<Mono<Number>> stream) {
-        return stream.reduce((m1, m2) -> m1.zipWith(m2).map(t -> t.getT1().longValue() + t.getT2().longValue())).orElse(Mono.empty());
-    }
-
     private <T> Flux<T> concatMono(Stream<Mono<T>> stream) {
         return Flux.concat(stream.toList());
     }
@@ -1161,19 +1157,10 @@ final class DefaultR2dbcRepositoryOperations extends AbstractSqlRepositoryOperat
                 final SqlStoredQuery<T, ?> storedQuery = getSqlStoredQuery(operation.getStoredQuery());
                 RuntimePersistentEntity<T> persistentEntity = storedQuery.getPersistentEntity();
                 final R2dbcOperationContext ctx = createContext(operation, connection, storedQuery);
-                if (isSupportsBatchDelete(persistentEntity, storedQuery.getDialect())) {
-                    R2dbcEntitiesOperations<T> op = new R2dbcEntitiesOperations<>(ctx, persistentEntity, operation, storedQuery);
-                    op.delete();
-                    return op.getRowsUpdated();
-                }
-                return sum(
-                    operation.split().stream()
-                        .map(deleteOp -> {
-                            R2dbcEntityOperations<T> op = new R2dbcEntityOperations<>(ctx, persistentEntity, deleteOp.getEntity(), storedQuery);
-                            op.delete();
-                            return op.getRowsUpdated();
-                        })
-                );
+                // Batch deletes are supported by every dialect (isSupportsBatchDelete)
+                R2dbcEntitiesOperations<T> op = new R2dbcEntitiesOperations<>(ctx, persistentEntity, operation, storedQuery);
+                op.delete();
+                return op.getRowsUpdated();
             });
         }
 
