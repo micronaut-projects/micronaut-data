@@ -63,8 +63,6 @@ public class QueryPath {
     static final int AUTHORS = 10;
     static final int NOVELS_PER_AUTHOR = 5;
     static final int BATCH = 100;
-    // Books written by the saveAll benchmark have this number of pages, so they can be removed after every call
-    static final int NEW_BOOK_PAGES = -1;
 
     ApplicationContext applicationContext;
     BookRepository bookRepository;
@@ -137,19 +135,24 @@ public class QueryPath {
     /**
      * The state of the saveAll benchmark: removes the books inserted by a call after that call, so that every call
      * inserts into a table of the same size. The removal runs outside the measured time on a plain JDBC connection to
-     * the same database, so that it is the same work on both sides of a comparison.
+     * the same database, so that it is the same work on both sides of a comparison. The books of each thread have
+     * their own negative number of pages, so a thread removes only its own books.
      */
     @State(Scope.Thread)
     public static class NewBooks {
 
+        private static final AtomicInteger THREADS = new AtomicInteger();
+
+        int pages;
         Connection connection;
         PreparedStatement delete;
 
         @Setup
         public void prepare(QueryPath queryPath) throws SQLException {
+            pages = -THREADS.incrementAndGet();
             String url = queryPath.applicationContext.getRequiredProperty("datasources.default.url", String.class);
             connection = DriverManager.getConnection(url, "sa", "");
-            delete = connection.prepareStatement("DELETE FROM book WHERE pages = " + NEW_BOOK_PAGES);
+            delete = connection.prepareStatement("DELETE FROM book WHERE pages = " + pages);
         }
 
         @TearDown(Level.Invocation)
@@ -227,7 +230,7 @@ public class QueryPath {
     public List<Book> saveAll(NewBooks newBooks) {
         List<Book> books = new ArrayList<>(BATCH);
         for (int i = 0; i < BATCH; i++) {
-            books.add(new Book("New", NEW_BOOK_PAGES));
+            books.add(new Book("New", newBooks.pages));
         }
         return bookRepository.saveAll(books);
     }
