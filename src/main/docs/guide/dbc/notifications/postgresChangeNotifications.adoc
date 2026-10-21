@@ -27,7 +27,7 @@ do not declare the listener class or listener method `final`.
 
 === Installing the Trigger Function
 
-The `micronaut-data-jdbc` artifact includes this SQL resource:
+The `micronaut-data-jdbc` artifact includes a row-notification SQL resource:
 
 [source,text]
 ----
@@ -67,15 +67,38 @@ micronaut:
 datasources using `schema-generate: CREATE` or `CREATE_DROP`. It has no effect for `NONE` or `VALIDATE`.
 `CREATE_DROP` drops and recreates mapped tables during startup; use it only where existing data can be discarded.
 
-After creating tables, Micronaut Data installs the bundled function in each subscribed table's schema and creates
-row-change and truncate triggers using the listeners' channels and mapped primary-key columns. Multiple listeners
-for the same table and channel share one trigger pair; different channels receive separate trigger pairs.
+After creating tables, Micronaut Data installs the selected bundled function in each subscribed table's schema.
+`schema-generate-mode` defaults to `ROW`: it creates row-change and truncate triggers using the listeners'
+channels and mapped primary-key columns. Multiple listeners for the same table and channel share one trigger
+pair; different channels receive separate trigger pairs.
+
+To generate statement-level invalidations instead, configure:
+
+[configuration]
+----
+micronaut:
+  data:
+    jdbc:
+      notifications:
+        postgres:
+          schema-generate: true
+          schema-generate-mode: STATEMENT
+----
+
+`STATEMENT` installs `create-invalidation-function.sql` and creates one `AFTER STATEMENT` trigger per table
+and channel for insert, update, delete, and truncate. Every event is `INVALIDATE`, with no row keys or entity.
+This reduces notification volume for bulk changes; see the statement-notification section below for delivery
+semantics. The selected mode applies to all subscribed tables included in schema generation. It has no effect
+when notification schema generation is disabled or the datasource uses `NONE` or `VALIDATE`.
+
 Only entities included in the datasource's schema-generation packages are considered. Installation completes
 before notification listeners subscribe, and an installation failure fails application startup.
 For a mapping without an explicit schema, installation uses the schema selected on the schema-generation connection.
 
 Generated trigger names are deterministic. Repeating schema generation replaces those triggers instead of adding
-duplicates for unchanged mappings. Removing a listener or changing its channel does not remove its old triggers;
+duplicates for unchanged mappings. Switching between `ROW` and `STATEMENT` replaces generated triggers for
+each current table/channel subscription, removing the previous mode's triggers. Previously installed functions
+remain in the schema. Removing a listener or changing its channel does not remove its old triggers;
 remove them through a migration or recreate the tables. Disabling this option does not remove previously installed
 functions or triggers. Avoid mixing generated
 notification triggers with manually managed triggers for the same table and channel, which would publish duplicate
@@ -173,6 +196,61 @@ Missing columns, duplicate column arguments, null keys, and structured JSON keys
 The function supports `AFTER ROW` insert/update/delete triggers and `AFTER STATEMENT` truncate triggers.
 Changes to the database structure, such as dropping a table, do not produce notifications.
 
+==== Statement Notifications for Bulk Changes
+
+For tables frequently changed by bulk statements, use an application-managed statement trigger that sends
+`INVALIDATE`. An update affecting a million rows then generates one table notification instead of a million
+row notifications. This option always sends invalidations, including for single-row changes; listeners must
+refresh the relevant application state instead of expecting row keys.
+
+Install the bundled statement-invalidation function using this resource instead of the row-notification resource:
+
+[source,text]
+----
+io/micronaut/data/jdbc/notification/postgres/create-invalidation-function.sql
+----
+
+It creates `micronaut_data_notify_invalidation()` in the migration's current schema. For Liquibase, use:
+
+[source,xml]
+----
+<changeSet id="postgres-invalidation-function" author="application" dbms="postgresql" runOnChange="true">
+    <sql>SET LOCAL search_path TO public</sql>
+    <sqlFile path="io/micronaut/data/jdbc/notification/postgres/create-invalidation-function.sql"
+             relativeToChangelogFile="false" splitStatements="false"/>
+</changeSet>
+----
+
+For Flyway, use the Java migration shown above with its resource path changed to
+`/io/micronaut/data/jdbc/notification/postgres/create-invalidation-function.sql`, or copy that resource into
+an application SQL migration. Use a new migration version when changing an existing installation.
+
+After installing the function, replace the `book_changes` and `book_truncate` triggers shown above:
+
+[source,sql]
+----
+DROP TRIGGER IF EXISTS book_changes ON public.book;
+DROP TRIGGER IF EXISTS book_truncate ON public.book;
+
+CREATE TRIGGER book_changes
+AFTER INSERT OR UPDATE OR DELETE OR TRUNCATE ON public.book
+FOR EACH STATEMENT EXECUTE FUNCTION public.micronaut_data_notify_invalidation('book_changes');
+----
+
+The function takes exactly one argument: the notification channel. It requires an `AFTER STATEMENT` trigger.
+Replace the trigger names if your existing triggers have different names; leaving a row trigger installed
+would continue to generate row notifications. Keep notification schema generation disabled when migrations
+manage these triggers. For development and tests, `schema-generate-mode: STATEMENT` installs the function and
+triggers automatically when notification schema generation is enabled.
+
+The existing listener annotation and `INVALIDATE` handling work without changes. These events contain schema
+and table metadata and empty key maps.
+
+A statement trigger also runs when a statement affects no rows. Notifications are delivered after commit,
+and PostgreSQL combines identical channel/payload pairs within the same transaction. Separate transactions
+still produce separate notifications. Refreshing a large cache can itself be expensive, so choose the
+refresh strategy to suit the application. Statement triggers do not report `ALTER TABLE` or `DROP TABLE`.
+
 == Declaring a Listener
 
 The following listener maintains a cache of the complete mapped `public.book` table. It loads its initial state
@@ -225,7 +303,7 @@ under its new key. For `DELETE`, `entity()` is empty; the old keys identify the 
 `TRUNCATE` produces `INVALIDATE`. An invalid payload causes `INVALIDATE` for all listeners on its channel;
 unexpected key-column names cause `INVALIDATE` for the affected listener. A payload too large for a row notification
 also produces `INVALIDATE`. The application decides whether to refresh a cache, rerun a query, or take another action.
-Invalidations caused by reconnection, executor rejection, or malformed payloads have no PostgreSQL event metadata;
+Invalidations caused by reconnection, listener overload, executor rejection, or malformed payloads have no PostgreSQL event metadata;
 check whether metadata is present before accessing it.
 
 Load any initial application state explicitly: starting a listener does not send an `INVALIDATE` event
@@ -234,9 +312,11 @@ to refresh changes they may have missed.
 
 == Table Change Notification
 
-Each affected row produces an `INSERT`, `UPDATE`, or `DELETE` notification through the installed triggers.
+With the bundled row-trigger function, each affected row produces an `INSERT`, `UPDATE`, or `DELETE` notification.
 A bulk operation can therefore produce multiple listener calls, subject to PostgreSQL's coalescing of identical
-notifications described below.
+notifications described below. Large changes can put pressure on PostgreSQL's notification queue and
+on application callback processing. Use the statement-trigger option above to reduce database notification
+volume, and the listener work limit below to bound queued and running callbacks.
 
 Notifications are matched by channel and mapped table name. Each matching listener method receives its own event,
 including when multiple methods share the same channel. If the entity mapping specifies a schema,
@@ -391,7 +471,32 @@ Listener methods run on Micronaut's blocking executor. Multiple calls to the sam
 and their execution and completion order are not guaranteed. Protect shared state, such as an application cache,
 against concurrent access and updates arriving in a different order.
 
-Micronaut's blocking executor configuration controls how many listener calls can run or wait for execution.
+Configure the maximum queued and running callbacks for each listener:
+
+[configuration]
+----
+micronaut:
+  data:
+    jdbc:
+      notifications:
+        postgres:
+          max-outstanding-tasks: 1000
+----
+
+`max-outstanding-tasks` must be positive and defaults to `1000`. The same setting applies independently to
+every listener, across all subscribing datasources. It includes invalidation callbacks. When a listener reaches
+its limit, Micronaut Data logs a warning and combines subsequent notifications into one pending `INVALIDATE`.
+That invalidation is submitted as capacity becomes available. Already accepted callbacks remain scheduled;
+new notifications are combined until the invalidation starts. Notifications lost while it runs can require
+another invalidation. Other listeners can continue accepting callbacks up to their own limits.
+
+The listening connection does not wait for callback capacity. This bound protects application callback work;
+it does not reduce notifications sent by PostgreSQL or guarantee a bound on the database notification queue.
+A large number of listeners can still create substantial total work. Use statement-trigger invalidations to
+reduce notification volume at its source. The application must tolerate concurrent row callbacks and refreshes,
+as callback ordering remains unspecified.
+
+Micronaut's blocking executor configuration also affects callback concurrency and acceptance.
 If the executor cannot accept a call, your listener may miss individual change events. Micronaut Data then retries
 submitting an `INVALIDATE` event so the listener can refresh its state. Repeated missed notifications are combined
 into one pending invalidation. Submission is retried until accepted or shutdown begins. Changes missed after the

@@ -244,6 +244,66 @@ class PostgresNotificationProtocolSpec extends Specification implements Postgres
         'before trigger' | 'BEFORE' | "'books', 'Id'"           | 'Use an AFTER ROW'
     }
 
+    void "statement resource emits one invalidation for bulk writes and respects transaction boundaries"() {
+        given:
+        installInvalidationFunction()
+        execute("""CREATE TRIGGER book_changes AFTER INSERT OR UPDATE OR DELETE OR TRUNCATE ON "Book"
+            FOR EACH STATEMENT EXECUTE FUNCTION micronaut_data_notify_invalidation('$channel')""")
+        writer.autoCommit = false
+
+        when:
+        execute("""INSERT INTO "Book" SELECT '$TENANT'::uuid, id, 'bulk' FROM generate_series(1, 1000) AS id""")
+        execute('UPDATE "Book" SET body = \'changed\'')
+
+        then:
+        !notifications.getNotifications(200)
+
+        when:
+        writer.commit()
+
+        then: 'identical invalidations within the transaction are coalesced'
+        event() == payload('INVALIDATE', [:], [:])
+        !notifications.getNotifications(200)
+
+        when:
+        execute('DELETE FROM "Book"')
+        writer.rollback()
+
+        then:
+        !notifications.getNotifications(200)
+    }
+
+    @Unroll
+    void "statement resource rejects invalid configuration: #description"() {
+        given:
+        installInvalidationFunction()
+        execute("""CREATE TRIGGER book_changes $timing INSERT ON "Book"
+            FOR EACH $level EXECUTE FUNCTION micronaut_data_notify_invalidation($arguments)""")
+
+        when:
+        execute("INSERT INTO \"Book\" VALUES ('$TENANT', 1, 'value')")
+
+        then:
+        def failure = thrown(SQLException)
+        failure.message.contains(message)
+        !notifications.getNotifications(200)
+
+        where:
+        description      | timing   | level       | arguments             | message
+        'missing channel'| 'AFTER'  | 'STATEMENT' | ''                    | 'exactly one channel'
+        'extra argument' | 'AFTER'  | 'STATEMENT' | "'books', 'id'"       | 'exactly one channel'
+        'blank channel'  | 'AFTER'  | 'STATEMENT' | "' '"                 | 'non-blank'
+        'long channel'   | 'AFTER'  | 'STATEMENT' | "'${'é' * 32}'"      | 'at most 63 UTF-8 bytes'
+        'before trigger' | 'BEFORE' | 'STATEMENT' | "'books'"             | 'Use an AFTER STATEMENT'
+        'row trigger'    | 'AFTER'  | 'ROW'       | "'books'"             | 'Use an AFTER STATEMENT'
+    }
+
+    private void installInvalidationFunction() {
+        execute('DROP TRIGGER book_changes ON "Book"')
+        execute('DROP TRIGGER book_truncate ON "Book"')
+        execute(getClass().getResource('/io/micronaut/data/jdbc/notification/postgres/create-invalidation-function.sql').getText('UTF-8'))
+    }
+
     private void execute(String sql) {
         try (def statement = writer.createStatement()) {
             statement.execute(sql)

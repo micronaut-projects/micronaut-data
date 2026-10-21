@@ -106,7 +106,8 @@ final class PostgresNotificationSubscription {
                 taskScheduler,
                 event -> invoke(context, method, event),
                 name,
-                method.method().getDescription(true));
+                method.method().getDescription(true),
+                configuration.getMaxOutstandingTasks());
             dispatchers.put(definition, dispatcher);
         }
         listenersByChannel = dispatchers.entrySet().stream().collect(Collectors.groupingBy(

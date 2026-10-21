@@ -24,15 +24,16 @@ import org.slf4j.LoggerFactory;
 
 import java.time.Duration;
 import java.util.concurrent.CompletableFuture;
-import java.util.concurrent.RejectedExecutionException;
-import java.util.concurrent.atomic.AtomicBoolean;
 import java.util.concurrent.Executor;
+import java.util.concurrent.RejectedExecutionException;
 import java.util.function.Consumer;
 
 /**
  * Submits entity loading and listener invocation directly to the supplied blocking executor.
  *
- * <p>Each notification is submitted separately. Callbacks for the same listener may run concurrently,
+ * <p>Queued and running callbacks are limited per listener. When capacity is exhausted, subsequent
+ * notifications are represented by one pending invalidation, submitted when capacity becomes available.
+ * Callbacks for the same listener may run concurrently,
  * and execution and completion order depend on the executor. The dispatcher does not maintain an
  * event queue or serialize listener invocations.</p>
  *
@@ -50,23 +51,29 @@ final class PostgresChangeNotificationDispatcher {
 
     private static final Duration DISPATCH_RETRY_DELAY = Duration.ofSeconds(1);
 
-    private final AtomicBoolean invalidationPending = new AtomicBoolean();
     private final TaskScheduler taskScheduler;
     private final CompletableFuture<Void> completion = new CompletableFuture<>();
     private final Executor executor;
     private final Consumer<ChangeEvent<?>> listener;
     private final String dataSourceName;
     private final String description;
+    private final int maxOutstandingTasks;
 
+    // Dispatch state is guarded by this monitor; executor submissions happen outside it.
     private boolean closing;
+    private boolean invalidationPending;
+    private boolean invalidationSubmitted;
+    private boolean retryScheduled;
+    private int outstandingTasks;
     private long activeTasks;
 
-    PostgresChangeNotificationDispatcher(Executor executor, TaskScheduler taskScheduler, Consumer<ChangeEvent<?>> listener, String dataSourceName, String description) {
+    PostgresChangeNotificationDispatcher(Executor executor, TaskScheduler taskScheduler, Consumer<ChangeEvent<?>> listener, String dataSourceName, String description, int maxOutstandingTasks) {
         this.executor = executor;
         this.taskScheduler = taskScheduler;
         this.listener = listener;
         this.dataSourceName = dataSourceName;
         this.description = description;
+        this.maxOutstandingTasks = maxOutstandingTasks;
     }
 
     void invalidate() {
@@ -74,15 +81,45 @@ final class PostgresChangeNotificationDispatcher {
     }
 
     void submitDispatch(ChangeEvent<?> event) {
-        if (isClosing()) {
-            return;
+        boolean collapsed;
+        boolean overloaded;
+        synchronized (this) {
+            if (closing) {
+                return;
+            }
+            overloaded = !invalidationPending && outstandingTasks >= maxOutstandingTasks;
+            collapsed = invalidationPending || overloaded;
+            if (collapsed) {
+                invalidationPending = true;
+            } else {
+                outstandingTasks++;
+            }
         }
+        if (overloaded) {
+            LOG.warn("PostgreSQL notification work limit [{}] reached for datasource [{}] and listener method [{}]; "
+                + "combining subsequent notifications into an invalidation", maxOutstandingTasks, dataSourceName, description);
+        }
+        if (collapsed) {
+            submitPendingInvalidation();
+        } else {
+            execute(event, false);
+        }
+    }
+
+    private void execute(ChangeEvent<?> event, boolean invalidation) {
         try {
-            executor.execute(() -> dispatchSafely(event));
+            executor.execute(() -> dispatchSafely(event, invalidation));
         } catch (RuntimeException e) {
+            synchronized (this) {
+                outstandingTasks--;
+                if (invalidation) {
+                    invalidationSubmitted = false;
+                }
+                invalidationPending = true;
+            }
             LOG.warn("Unable to submit PostgreSQL notification operation [{}] for datasource [{}] and listener method [{}]",
                 event.operation(), dataSourceName, description, e);
-            if (e instanceof RejectedExecutionException && invalidationPending.compareAndSet(false, true)) {
+            if (e instanceof RejectedExecutionException) {
                 retryInvalidation();
             }
         }
@@ -90,47 +127,41 @@ final class PostgresChangeNotificationDispatcher {
 
     @SuppressWarnings("FutureReturnValueIgnored") // Retries check shutdown before submitting work.
     private void retryInvalidation() {
-        if (isClosing()) {
-            invalidationPending.set(false);
-            return;
+        synchronized (this) {
+            if (closing || retryScheduled || invalidationSubmitted) {
+                return;
+            }
+            retryScheduled = true;
         }
         try {
-            taskScheduler.schedule(DISPATCH_RETRY_DELAY, this::submitPendingInvalidation);
+            taskScheduler.schedule(DISPATCH_RETRY_DELAY, () -> {
+                synchronized (this) {
+                    retryScheduled = false;
+                }
+                submitPendingInvalidation();
+            });
         } catch (RuntimeException e) {
-            invalidationPending.set(false);
+            synchronized (this) {
+                retryScheduled = false;
+            }
             LOG.error("Unable to schedule PostgreSQL listener invalidation for datasource [{}] and listener method [{}]",
                 dataSourceName, description, e);
         }
     }
 
     private void submitPendingInvalidation() {
-        if (isClosing()) {
-            invalidationPending.set(false);
-            return;
-        }
-        try {
-            executor.execute(() -> {
-                // Losses while queued are covered by this refresh. Losses during refresh need another one.
-                invalidationPending.set(false);
-                dispatchSafely(new DefaultChangeEvent<>(ChangeOperation.INVALIDATE, null, null));
-            });
-        } catch (RuntimeException e) {
-            LOG.warn("Unable to submit PostgreSQL listener invalidation for datasource [{}] and listener method [{}]",
-                dataSourceName, description, e);
-            if (e instanceof RejectedExecutionException) {
-                retryInvalidation();
-            } else {
-                invalidationPending.set(false);
+        synchronized (this) {
+            if (closing || !invalidationPending || invalidationSubmitted || retryScheduled || outstandingTasks >= maxOutstandingTasks) {
+                return;
             }
+            outstandingTasks++;
+            invalidationSubmitted = true;
         }
+        execute(new DefaultChangeEvent<>(ChangeOperation.INVALIDATE, null, null), true);
     }
 
-    private synchronized boolean isClosing() {
-        return closing;
-    }
-
-    private void dispatchSafely(ChangeEvent<?> event) {
-        if (!acceptTask()) {
+    private void dispatchSafely(ChangeEvent<?> event, boolean invalidation) {
+        if (!acceptTask(invalidation)) {
             return;
         }
         try {
@@ -155,17 +186,27 @@ final class PostgresChangeNotificationDispatcher {
         }
     }
 
-    private synchronized boolean acceptTask() {
+    private synchronized boolean acceptTask(boolean invalidation) {
+        if (invalidation) {
+            // Changes received before refresh starts are covered by it; later losses need another refresh.
+            invalidationSubmitted = false;
+            invalidationPending = false;
+        }
         if (closing) {
+            outstandingTasks--;
             return false;
         }
         activeTasks++;
         return true;
     }
 
-    private synchronized void completeTask() {
-        activeTasks--;
-        completeIfIdle();
+    private void completeTask() {
+        synchronized (this) {
+            activeTasks--;
+            outstandingTasks--;
+            completeIfIdle();
+        }
+        submitPendingInvalidation();
     }
 
     synchronized CompletableFuture<Void> stop() {

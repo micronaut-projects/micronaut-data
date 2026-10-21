@@ -65,13 +65,14 @@ class PostgresNotificationSchemaSpec extends Specification implements PostgresTe
         bootstrap?.close()
     }
 
-    private void start(String mode, boolean enabled, boolean batch = false) {
+    private void start(String mode, boolean enabled, boolean batch = false, String notificationMode = 'ROW') {
         Map configuration = settings + [
             'spec.name': 'PostgresNotificationSchemaSpec',
             'datasources.default.packages': ['io.micronaut.data.jdbc.postgres.notification.schema'],
             'datasources.default.schema-generate': mode,
             'datasources.default.batch-generate': batch,
             'micronaut.data.jdbc.notifications.postgres.schema-generate': enabled,
+            'micronaut.data.jdbc.notifications.postgres.schema-generate-mode': notificationMode,
             'micronaut.data.jdbc.notifications.postgres.poll-timeout': '100ms'
         ]
         if (mode == 'VALIDATE') {
@@ -148,6 +149,108 @@ class PostgresNotificationSchemaSpec extends Specification implements PostgresTe
         'CREATE_DROP' | true
     }
 
+    @Unroll
+    void "#mode installs statement invalidations with batch generation #batch"() {
+        when:
+        start(mode, true, batch, 'STATEMENT')
+        def listeners = application.getBean(GeneratedBookListeners)
+
+        then:
+        countFunctions() == 0
+        countFunctions('micronaut_data_notify_invalidation') == 1
+        countTriggers() == 2 // One statement trigger per channel, shared by matching listener methods.
+
+        when:
+        execute("""INSERT INTO notification_schema_test."ÄBook"
+            SELECT '$TENANT'::uuid, id, 'bulk' FROM generate_series(1, 1000) AS id""")
+
+        then:
+        assertInvalidations(listeners)
+
+        when:
+        execute('UPDATE notification_schema_test."ÄBook" SET title = \'updated\'')
+
+        then:
+        assertInvalidations(listeners)
+
+        when:
+        execute('DELETE FROM notification_schema_test."ÄBook"')
+
+        then:
+        assertInvalidations(listeners)
+
+        when: 'an empty statement still invalidates'
+        execute('DELETE FROM notification_schema_test."ÄBook"')
+
+        then:
+        assertInvalidations(listeners)
+
+        when:
+        execute('TRUNCATE notification_schema_test."ÄBook"')
+
+        then:
+        assertInvalidations(listeners)
+
+        where:
+        mode          | batch
+        'CREATE'      | false
+        'CREATE_DROP' | true
+    }
+
+    void "switching schema generation modes replaces old triggers without duplicates"() {
+        given:
+        start('CREATE', true)
+        application.close()
+
+        when:
+        start('CREATE', true, false, 'STATEMENT')
+        def listeners = application.getBean(GeneratedBookListeners)
+        execute("""INSERT INTO notification_schema_test."ÄBook" VALUES ('$TENANT', 1, 'statement')""")
+
+        then:
+        countTriggers() == 2
+        assertInvalidations(listeners)
+
+        when: 'repeating statement generation does not add triggers'
+        application.close()
+        start('CREATE', true, false, 'STATEMENT')
+        execute('UPDATE notification_schema_test."ÄBook" SET title = \'again\'')
+
+        then:
+        countTriggers() == 2
+        assertInvalidations(application.getBean(GeneratedBookListeners))
+
+        when: 'switching back restores row events'
+        application.close()
+        start('CREATE', true)
+        def restarted = application.getBean(GeneratedBookListeners)
+        execute('UPDATE notification_schema_test."ÄBook" SET title = \'row\'')
+
+        then:
+        countTriggers() == 4
+        next(restarted.first).operation() == ChangeOperation.UPDATE
+        next(restarted.second).operation() == ChangeOperation.UPDATE
+        next(restarted.other).operation() == ChangeOperation.UPDATE
+        restarted.first.poll(200, TimeUnit.MILLISECONDS) == null
+        restarted.second.isEmpty()
+        restarted.other.isEmpty()
+    }
+
+    private static boolean assertInvalidations(GeneratedBookListeners listeners) {
+        [listeners.first, listeners.second, listeners.other].each { events ->
+            def event = next(events)
+            assert event.operation() == ChangeOperation.INVALIDATE
+            assert event.entity().isEmpty()
+            def metadata = event.metadata(PostgresChangeEventMetadata).orElseThrow()
+            assert metadata.schema() == 'notification_schema_test'
+            assert metadata.table() == 'ÄBook'
+            assert metadata.oldKeys().isEmpty()
+            assert metadata.newKeys().isEmpty()
+            assert events.poll(200, TimeUnit.MILLISECONDS) == null
+        }
+        true
+    }
+
     void "mapping placeholders support generated triggers and entity delivery"() {
         when:
         application = ApplicationContext.run(settings + [
@@ -187,14 +290,19 @@ class PostgresNotificationSchemaSpec extends Specification implements PostgresTe
         application.close()
 
         when:
-        start(mode, true)
+        start(mode, true, false, notificationMode)
 
         then:
+        countFunctions('micronaut_data_notify_invalidation') == 0
         countFunctions() == 0
         countTriggers() == 0
 
         where:
-        mode << ['NONE', 'VALIDATE']
+        mode       | notificationMode
+        'NONE'     | 'ROW'
+        'NONE'     | 'STATEMENT'
+        'VALIDATE' | 'ROW'
+        'VALIDATE' | 'STATEMENT'
     }
 
     void "only listeners selecting the datasource receive generated triggers"() {
@@ -263,9 +371,9 @@ class PostgresNotificationSchemaSpec extends Specification implements PostgresTe
         countFunctions() == 0 // Listeners whose entities are outside the configured packages are ignored.
     }
 
-    private int countFunctions() {
+    private int countFunctions(String function = 'micronaut_data_notify_change') {
         count("""SELECT count(*) FROM pg_proc p JOIN pg_namespace n ON n.oid = p.pronamespace
-            WHERE n.nspname = 'notification_schema_test' AND p.proname = 'micronaut_data_notify_change'""")
+            WHERE n.nspname = 'notification_schema_test' AND p.proname = '$function'""")
     }
 
     private int countTriggers() {

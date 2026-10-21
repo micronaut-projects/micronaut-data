@@ -48,38 +48,65 @@ import java.util.Set;
 import java.util.stream.Collectors;
 
 /**
- * Installs notification functions and triggers for tables created by JDBC schema generation.
- * The shared listener registry supplies channels and generated key mappings without instantiating listeners
- * or repository operations while schema creation is in progress. Installation errors fail startup.
+ * Installs PostgreSQL notification functions and triggers during JDBC schema generation when opted in.
+ * Supports {@link SchemaGenerate#CREATE} and {@link SchemaGenerate#CREATE_DROP}.
+ *
+ * <p>The configured notification mode selects either row-change notifications with primary keys and
+ * invalidation on truncation, or table invalidations for insert, update, delete, and truncate statements.
+ * The corresponding bundled SQL resource supplies the function definition.</p>
+ *
+ * <p>The shared listener registry supplies channels and generated key mappings without instantiating
+ * listeners or repository operations during schema generation. Listeners for the same schema, table,
+ * and channel share generated triggers. Installation errors fail application startup.</p>
  */
 @Internal
 @Singleton
 @Requires(property = "micronaut.data.jdbc.notifications.postgres.schema-generate", value = "true")
 public final class PostgresNotificationSchemaGenerator {
-    private static final String FUNCTION_NAME = "micronaut_data_notify_change";
-    private static final String RESOURCE = "/io/micronaut/data/jdbc/notification/postgres/create-notification-function.sql";
+
+    private static final String SQL_RESOURCE_DIRECTORY = "/io/micronaut/data/jdbc/notification/postgres/";
+    private static final String CHANGE_FUNCTION_RESOURCE = SQL_RESOURCE_DIRECTORY + "create-notification-function.sql";
+    private static final String INVALIDATION_FUNCTION_RESOURCE = SQL_RESOURCE_DIRECTORY + "create-invalidation-function.sql";
+
+    private static final String CHANGE_FUNCTION_NAME = "micronaut_data_notify_change";
+    private static final String INVALIDATION_FUNCTION_NAME = "micronaut_data_notify_invalidation";
 
     private final ChangeListenerRegistry registry;
     private final Environment environment;
+    private final boolean statementNotifications;
 
     /**
+     * Creates a generator using the configured notification trigger mode.
+     *
      * @param registry the discovered listener metadata grouped by datasource
      * @param environment the mapping placeholder resolver
+     * @param configuration the notification schema-generation settings
      */
-    public PostgresNotificationSchemaGenerator(ChangeListenerRegistry registry, Environment environment) {
+    public PostgresNotificationSchemaGenerator(ChangeListenerRegistry registry, Environment environment, PostgresNotificationConfiguration configuration) {
         this.registry = registry;
         this.environment = environment;
+        this.statementNotifications = configuration.getSchemaGenerateMode() == PostgresNotificationConfiguration.SchemaGenerationMode.STATEMENT;
     }
 
     /**
-     * Installs objects only for PostgreSQL tables in the supplied schema-generation pass.
-     * Deterministic trigger names allow repeated creation without accumulating duplicate triggers.
-     * Functions are installed in each subscribed table's schema and are retained when the application stops.
+     * Installs the selected function and triggers for subscribed PostgreSQL tables included in this
+     * schema-generation pass. Does nothing for other dialects or schema-generation modes other than
+     * {@link SchemaGenerate#CREATE} and {@link SchemaGenerate#CREATE_DROP}.
+     *
+     * <p>The function is installed once per subscribed schema in this pass. For each table/channel
+     * subscription, all three generated trigger names are dropped before creating the selected mode's
+     * triggers. This also replaces existing triggers under {@code CREATE} and allows mode changes
+     * without leaving the previous mode's triggers active.</p>
+     *
+     * <p>Unrelated triggers and triggers for subscriptions absent from this pass are left unchanged.
+     * Previously installed functions are not removed when switching modes. Functions and triggers
+     * remain installed after application shutdown.</p>
      *
      * @param connection the schema-generation connection
      * @param configuration the datasource configuration
      * @param entities the entities included in this schema-generation pass
-     * @throws SQLException if installation fails
+     * @throws SQLException if schema resolution or SQL execution fails
+     * @throws IllegalStateException if listener key mappings are missing or conflicting, or the SQL resource cannot be read
      */
     public void generate(Connection connection, DataJdbcConfiguration configuration, PersistentEntity[] entities) throws SQLException {
         if (configuration.getDialect() != Dialect.POSTGRES
@@ -90,24 +117,44 @@ public final class PostgresNotificationSchemaGenerator {
         if (subscriptions.isEmpty()) {
             return;
         }
-        String function = readFunction();
+        String functionName = statementNotifications ? INVALIDATION_FUNCTION_NAME : CHANGE_FUNCTION_NAME;
+        String function = readFunction(statementNotifications ? INVALIDATION_FUNCTION_RESOURCE : CHANGE_FUNCTION_RESOURCE);
         Set<String> installedSchemas = new LinkedHashSet<>();
         for (Map.Entry<Subscription, List<String>> entry : subscriptions.entrySet()) {
             Subscription subscription = entry.getKey();
-            String qualifiedFunction = quote(subscription.schema()) + "." + quote(FUNCTION_NAME);
+            String qualifiedFunction = quote(subscription.schema()) + "." + quote(functionName);
             if (installedSchemas.add(subscription.schema())) {
-                execute(connection, function.replace("CREATE OR REPLACE FUNCTION " + FUNCTION_NAME + "()",
+                execute(connection, function.replace("CREATE OR REPLACE FUNCTION " + functionName + "()",
                     "CREATE OR REPLACE FUNCTION " + qualifiedFunction + "()"));
             }
             String table = quote(subscription.schema()) + "." + quote(subscription.table());
-            String arguments = literal(subscription.channel()) + ", " + entry.getValue().stream()
-                .map(PostgresNotificationSchemaGenerator::literal).collect(Collectors.joining(", "));
             String name = triggerName(subscription);
-            createTrigger(connection, table, name + "_rows", "INSERT OR UPDATE OR DELETE", "ROW", qualifiedFunction, arguments);
-            createTrigger(connection, table, name + "_truncate", "TRUNCATE", "STATEMENT", qualifiedFunction, arguments);
+            dropTrigger(connection, table, name + "_rows");
+            dropTrigger(connection, table, name + "_truncate");
+            dropTrigger(connection, table, name + "_statement");
+            if (statementNotifications) {
+                createTrigger(connection, table, name + "_statement", "INSERT OR UPDATE OR DELETE OR TRUNCATE",
+                    "STATEMENT", qualifiedFunction, literal(subscription.channel()));
+            } else {
+                String arguments = literal(subscription.channel()) + ", " + entry.getValue().stream()
+                    .map(PostgresNotificationSchemaGenerator::literal).collect(Collectors.joining(", "));
+                createTrigger(connection, table, name + "_rows", "INSERT OR UPDATE OR DELETE", "ROW", qualifiedFunction, arguments);
+                createTrigger(connection, table, name + "_truncate", "TRUNCATE", "STATEMENT", qualifiedFunction, arguments);
+            }
         }
     }
 
+    /**
+     * Groups matching listeners by resolved schema, table, and channel, requiring consistent key mappings.
+     * Mappings without an explicit schema use the schema-generation connection's current schema.
+     *
+     * @param connection the connection used to resolve the default schema
+     * @param datasource the datasource whose listeners are considered
+     * @param entities the entity mappings included in this schema-generation pass
+     * @return distinct subscriptions and their mapped primary-key column names
+     * @throws SQLException if the default schema cannot be resolved
+     * @throws IllegalStateException if generated key mappings are missing or conflicting
+     */
     private Map<Subscription, List<String>> subscriptions(Connection connection, String datasource, PersistentEntity[] entities) throws SQLException {
         Map<String, PersistentEntity> mappings = Arrays.stream(entities)
             .collect(Collectors.toMap(PersistentEntity::getName, entity -> entity));
@@ -151,15 +198,18 @@ public final class PostgresNotificationSchemaGenerator {
 
     private static void createTrigger(Connection connection, String table, String name, String operations,
                                       String level, String function, String arguments) throws SQLException {
-        execute(connection, "DROP TRIGGER IF EXISTS " + quote(name) + " ON " + table);
         execute(connection, "CREATE TRIGGER " + quote(name) + " AFTER " + operations + " ON " + table
             + " FOR EACH " + level + " EXECUTE FUNCTION " + function + "(" + arguments + ")");
     }
 
-    private static String readFunction() {
-        try (InputStream input = PostgresNotificationSchemaGenerator.class.getResourceAsStream(RESOURCE)) {
+    private static void dropTrigger(Connection connection, String table, String name) throws SQLException {
+        execute(connection, "DROP TRIGGER IF EXISTS " + quote(name) + " ON " + table);
+    }
+
+    private static String readFunction(String resource) {
+        try (InputStream input = PostgresNotificationSchemaGenerator.class.getResourceAsStream(resource)) {
             if (input == null) {
-                throw new IllegalStateException("Missing PostgreSQL notification SQL resource " + RESOURCE);
+                throw new IllegalStateException("Missing PostgreSQL notification SQL resource " + resource);
             }
             return new String(input.readAllBytes(), StandardCharsets.UTF_8);
         } catch (IOException e) {
@@ -167,6 +217,13 @@ public final class PostgresNotificationSchemaGenerator {
         }
     }
 
+    /**
+     * Derives a stable trigger-name prefix from the subscription identity, independent of trigger mode.
+     * Hashing keeps names short enough for PostgreSQL identifiers, including the trigger-specific suffix.
+     *
+     * @param subscription the schema, table, and channel identifying the subscription
+     * @return the common prefix for the subscription's generated trigger names
+     */
     private static String triggerName(Subscription subscription) {
         try {
             byte[] digest = MessageDigest.getInstance("SHA-256").digest(

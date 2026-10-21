@@ -26,6 +26,8 @@ class PostgresNotificationConfigurationSpec extends Specification {
 
         then:
         !config.schemaGenerate
+        config.schemaGenerateMode == PostgresNotificationConfiguration.SchemaGenerationMode.ROW
+        config.maxOutstandingTasks == 1000
         config.pollTimeout == Duration.ofSeconds(1)
         config.validationInterval == Duration.ofSeconds(30)
         config.validationTimeout == Duration.ofSeconds(5)
@@ -73,6 +75,8 @@ class PostgresNotificationConfigurationSpec extends Specification {
         'validationTimeout'    | Duration.ofMillis(Integer.MAX_VALUE + 1L)
         'retryDelay'           | Duration.ofMillis(-1)
         'maxRetryDelay'        | Duration.ZERO
+        'maxOutstandingTasks'  | 0
+        'maxOutstandingTasks'  | -1
         'maxRetries'           | -2
         'retryDelayMultiplier' | 0
         'retryDelayMultiplier' | -1

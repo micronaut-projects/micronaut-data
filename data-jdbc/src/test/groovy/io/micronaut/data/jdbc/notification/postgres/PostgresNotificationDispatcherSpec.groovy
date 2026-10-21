@@ -33,7 +33,7 @@ class PostgresNotificationDispatcherSpec extends Specification {
         given:
         def tasks = []
         def events = []
-        def dispatcher = new PostgresChangeNotificationDispatcher({ tasks.add(it) } as Executor, Stub(TaskScheduler), { events.add(it.operation()) }, 'default', 'test')
+        def dispatcher = new PostgresChangeNotificationDispatcher({ tasks.add(it) } as Executor, Stub(TaskScheduler), { events.add(it.operation()) }, 'default', 'test', 1000)
 
         when:
         dispatcher.submitDispatch(new DefaultChangeEvent(ChangeOperation.INSERT, null, null))
@@ -56,7 +56,7 @@ class PostgresNotificationDispatcherSpec extends Specification {
         given:
         def tasks = []
         def events = []
-        def dispatcher = new PostgresChangeNotificationDispatcher({ tasks.add(it) } as Executor, Stub(TaskScheduler), { events.add(it) }, 'default', 'test')
+        def dispatcher = new PostgresChangeNotificationDispatcher({ tasks.add(it) } as Executor, Stub(TaskScheduler), { events.add(it) }, 'default', 'test', 1000)
         dispatcher.invalidate()
         dispatcher.invalidate()
 
@@ -81,7 +81,7 @@ class PostgresNotificationDispatcherSpec extends Specification {
         def dispatcher = new PostgresChangeNotificationDispatcher(executor, Stub(TaskScheduler), {
             entered.countDown()
             assert release.await(10, TimeUnit.SECONDS)
-        }, 'default', 'test')
+        }, 'default', 'test', 1000)
 
         when:
         dispatcher.invalidate()
@@ -115,7 +115,7 @@ class PostgresNotificationDispatcherSpec extends Specification {
         int called = 0
         def dispatcher = new PostgresChangeNotificationDispatcher({ tasks.add(it) } as Executor, Stub(TaskScheduler), {
             if (++called == 1) { throw new IllegalStateException('callback failure') }
-        }, 'default', 'test')
+        }, 'default', 'test', 1000)
         dispatcher.invalidate()
         dispatcher.invalidate()
 
@@ -143,7 +143,7 @@ class PostgresNotificationDispatcherSpec extends Specification {
         def dispatcher = new PostgresChangeNotificationDispatcher({
             if (reject) { throw new RejectedExecutionException() }
             tasks.add(it)
-        } as Executor, scheduler, { events.add(it.operation()) }, 'default', 'test')
+        } as Executor, scheduler, { events.add(it.operation()) }, 'default', 'test', 1000)
 
         when:
         dispatcher.submitDispatch(new DefaultChangeEvent(ChangeOperation.INSERT, null, null))
@@ -188,12 +188,95 @@ class PostgresNotificationDispatcherSpec extends Specification {
         dispatcher.pendingTasks() == 0
     }
 
+    void "outstanding work is bounded and excess notifications share a pending invalidation"() {
+        given:
+        def tasks = []
+        def events = []
+        def dispatcher = new PostgresChangeNotificationDispatcher({ tasks.add(it) } as Executor,
+            Stub(TaskScheduler), { events.add(it.operation()) }, 'default', 'bounded', 2)
+
+        when:
+        dispatcher.submitDispatch(new DefaultChangeEvent(ChangeOperation.INSERT, null, null))
+        dispatcher.submitDispatch(new DefaultChangeEvent(ChangeOperation.UPDATE, null, null))
+        1000.times { dispatcher.submitDispatch(new DefaultChangeEvent(ChangeOperation.DELETE, null, null)) }
+
+        then:
+        tasks.size() == 2
+
+        when: 'a completion makes room for the pending refresh'
+        tasks.remove(0).run()
+        1000.times { dispatcher.invalidate() }
+
+        then:
+        tasks.size() == 2 // One original task and one invalidation, with no extra tasks for the burst.
+
+        when:
+        tasks.remove(0).run()
+        tasks.remove(0).run()
+
+        then:
+        tasks.empty
+        events == [ChangeOperation.INSERT, ChangeOperation.UPDATE, ChangeOperation.INVALIDATE]
+        dispatcher.stop().done
+    }
+
+    void "running callbacks use capacity and losses during invalidation request another refresh"() {
+        given:
+        def tasks = []
+        def events = []
+        PostgresChangeNotificationDispatcher dispatcher
+        dispatcher = new PostgresChangeNotificationDispatcher({ tasks.add(it) } as Executor,
+            Stub(TaskScheduler), {
+                events.add(it.operation())
+                if (events.size() <= 2) {
+                    10.times { dispatcher.submitDispatch(new DefaultChangeEvent(ChangeOperation.UPDATE, null, null)) }
+                    assert tasks.empty // The running callback holds the only slot.
+                }
+            }, 'default', 'bounded', 1)
+
+        when:
+        dispatcher.submitDispatch(new DefaultChangeEvent(ChangeOperation.INSERT, null, null))
+        tasks.remove(0).run()
+        tasks.remove(0).run()
+        tasks.remove(0).run()
+
+        then:
+        tasks.empty
+        events == [ChangeOperation.INSERT, ChangeOperation.INVALIDATE, ChangeOperation.INVALIDATE]
+        dispatcher.stop().done
+    }
+
+    void "limits are independent per listener and shutdown discards pending overload invalidation"() {
+        given:
+        def tasks = []
+        def events = []
+        def executor = { tasks.add(it) } as Executor
+        def first = new PostgresChangeNotificationDispatcher(executor, Stub(TaskScheduler),
+            { events.add('first') }, 'default', 'first', 1)
+        def second = new PostgresChangeNotificationDispatcher(executor, Stub(TaskScheduler),
+            { events.add('second') }, 'default', 'second', 1)
+
+        when:
+        first.invalidate()
+        first.invalidate()
+        second.invalidate()
+        first.stop()
+        tasks.remove(0).run()
+        tasks.remove(0).run()
+
+        then:
+        tasks.empty
+        events == ['second']
+        first.stop().done
+        second.stop().done
+    }
+
     void "fatal callback errors propagate and release task accounting"() {
         given:
         def tasks = []
         def dispatcher = new PostgresChangeNotificationDispatcher({ tasks.add(it) } as Executor, Stub(TaskScheduler), {
             throw new AssertionError('fatal')
-        }, 'default', 'test')
+        }, 'default', 'test', 1000)
         dispatcher.invalidate()
 
         when:
