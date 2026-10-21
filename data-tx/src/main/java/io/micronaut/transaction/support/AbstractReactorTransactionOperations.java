@@ -353,12 +353,10 @@ public abstract class AbstractReactorTransactionOperations<C> implements Reactor
      * @since 5.3.0
      */
     protected void markFailedByJoinedScope(@NonNull ReactiveTransactionStatus<C> existing) {
-        if (existing instanceof JoinedReactiveTransactionStatus<C> joined) {
-            markFailedByJoinedScope(joined.existing);
-        } else if (existing instanceof DefaultReactiveTransactionStatus<C> status) {
-            status.failedByJoinedScope = true;
-        } else {
-            existing.setRollbackOnly();
+        switch (existing) {
+            case JoinedReactiveTransactionStatus<C> joined -> markFailedByJoinedScope(joined.existing);
+            case DefaultReactiveTransactionStatus<C> status -> status.failedByJoinedScope = true;
+            default -> existing.setRollbackOnly();
         }
     }
 

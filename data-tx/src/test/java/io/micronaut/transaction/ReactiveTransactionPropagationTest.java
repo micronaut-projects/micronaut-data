@@ -159,12 +159,11 @@ class ReactiveTransactionPropagationTest {
     List<DynamicTest> failureOfAJoinedScopeIsPropagatedWhenNotRecovered() {
         return forEachShape("joined failure", fixture -> {
             IllegalStateException failure = new IllegalStateException("inner");
-
-            IllegalStateException e = assertThrows(IllegalStateException.class, () ->
-                fixture.<String>scope(TransactionDefinition.DEFAULT, outer ->
-                    fixture.<String>scope(TransactionDefinition.DEFAULT, inner -> Mono.error(failure))
-                ).block()
+            Mono<String> work = fixture.scope(TransactionDefinition.DEFAULT, outer ->
+                fixture.<String>scope(TransactionDefinition.DEFAULT, inner -> Mono.error(failure))
             );
+
+            IllegalStateException e = assertThrows(IllegalStateException.class, work::block);
 
             assertSame(failure, e);
             assertEquals(ROLLED_BACK, fixture.log());
@@ -262,10 +261,9 @@ class ReactiveTransactionPropagationTest {
     List<DynamicTest> failureIsRolledBackAndPropagated() {
         return forEachShape("failure", fixture -> {
             IllegalStateException failure = new IllegalStateException("failure");
+            Mono<String> work = fixture.scope(TransactionDefinition.DEFAULT, status -> Mono.error(failure));
 
-            IllegalStateException e = assertThrows(IllegalStateException.class, () ->
-                fixture.<String>scope(TransactionDefinition.DEFAULT, status -> Mono.error(failure)).block()
-            );
+            IllegalStateException e = assertThrows(IllegalStateException.class, work::block);
 
             assertSame(failure, e);
             assertEquals(ROLLED_BACK, fixture.log());
@@ -277,10 +275,9 @@ class ReactiveTransactionPropagationTest {
         return forEachShape("failure", fixture -> {
             DefaultTransactionDefinition noRollback = new DefaultTransactionDefinition();
             noRollback.setDontRollbackOn(List.of(IllegalStateException.class));
+            Mono<String> work = fixture.scope(noRollback, status -> Mono.error(new IllegalStateException("no rollback")));
 
-            assertThrows(IllegalStateException.class, () ->
-                fixture.<String>scope(noRollback, status -> Mono.error(new IllegalStateException("no rollback"))).block()
-            );
+            assertThrows(IllegalStateException.class, work::block);
 
             assertEquals(NEW_TX, fixture.log());
         });

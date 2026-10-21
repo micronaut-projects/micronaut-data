@@ -40,6 +40,7 @@ final class SyncConnManager extends AbstractConnectionOperations<String> {
 
     @Override
     protected void setupConnection(ConnectionStatus<String> connectionStatus) {
+        // The recorded connection has no state to set up
     }
 
     @Override

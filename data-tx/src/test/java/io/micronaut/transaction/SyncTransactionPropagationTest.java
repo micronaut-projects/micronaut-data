@@ -161,8 +161,9 @@ class SyncTransactionPropagationTest {
 
     @Test
     void recoveredFailureOfANewTransactionDoesNotAffectTheOuterOne() {
+        TransactionDefinition requiresNew = TransactionDefinition.of(Propagation.REQUIRES_NEW);
         String result = txManager.executeWrite(outer -> {
-            assertThrows(IllegalStateException.class, () -> txManager.execute(TransactionDefinition.of(Propagation.REQUIRES_NEW), inner -> {
+            assertThrows(IllegalStateException.class, () -> txManager.execute(requiresNew, inner -> {
                 throw new IllegalStateException("inner");
             }));
             assertFalse(outer.isRollbackOnly());
@@ -178,8 +179,9 @@ class SyncTransactionPropagationTest {
 
     @Test
     void recoveredFailureOfANestedTransactionRollsBackToTheSavepoint() {
+        TransactionDefinition nested = TransactionDefinition.of(Propagation.NESTED);
         String result = txManager.executeWrite(outer -> {
-            assertThrows(IllegalStateException.class, () -> txManager.execute(TransactionDefinition.of(Propagation.NESTED), inner -> {
+            assertThrows(IllegalStateException.class, () -> txManager.execute(nested, inner -> {
                 throw new IllegalStateException("inner");
             }));
             assertFalse(outer.isRollbackOnly());

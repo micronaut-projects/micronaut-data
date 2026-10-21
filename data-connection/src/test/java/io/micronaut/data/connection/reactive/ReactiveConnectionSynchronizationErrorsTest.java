@@ -35,6 +35,8 @@ import java.time.Duration;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.concurrent.CopyOnWriteArrayList;
+import java.util.concurrent.CountDownLatch;
+import java.util.concurrent.TimeUnit;
 import java.util.stream.Stream;
 
 import static org.junit.jupiter.api.Assertions.assertArrayEquals;
@@ -52,6 +54,7 @@ class ReactiveConnectionSynchronizationErrorsTest {
     private static final String C1 = "CONNECTION_1";
 
     private final List<String> events = new CopyOnWriteArrayList<>();
+    private final CountDownLatch firstAfterClose = new CountDownLatch(1);
     private final RecordingReactorConnectionOperations operations = new RecordingReactorConnectionOperations(events);
     private final IllegalStateException callbackFailure = new IllegalStateException("callback");
     private final IllegalArgumentException workFailure = new IllegalArgumentException("work");
@@ -110,7 +113,7 @@ class ReactiveConnectionSynchronizationErrorsTest {
         subscription.dispose();
 
         // There is no subscriber left: the failure is logged
-        awaitEvent("first afterClose");
+        assertTrue(firstAfterClose.await(5, TimeUnit.SECONDS), () -> "The connection wasn't released: " + events);
         assertEquals(expectedEvents("onCancel", "onCancel", failure), events);
     }
 
@@ -242,14 +245,6 @@ class ReactiveConnectionSynchronizationErrorsTest {
         return signal.getThrowable();
     }
 
-    private void awaitEvent(String event) throws InterruptedException {
-        long deadline = System.nanoTime() + Duration.ofSeconds(5).toNanos();
-        while (!events.contains(event) && System.nanoTime() < deadline) {
-            Thread.sleep(5);
-        }
-        assertTrue(events.contains(event), () -> "Missing '" + event + "' in " + events);
-    }
-
     private static void register(ConnectionStatus<String> status, ReactiveConnectionSynchronization synchronization) {
         ((ReactiveConnectionStatus<String>) status).registerReactiveSynchronization(synchronization);
     }
@@ -320,31 +315,37 @@ class ReactiveConnectionSynchronizationErrorsTest {
 
         @Override
         public Publisher<Void> onComplete() {
-            return record("onComplete");
+            return recordEvent("onComplete");
         }
 
         @Override
         public Publisher<Void> onError(Throwable throwable) {
-            return record("onError");
+            return recordEvent("onError");
         }
 
         @Override
         public Publisher<Void> onCancel() {
-            return record("onCancel");
+            return recordEvent("onCancel");
         }
 
         @Override
         public Publisher<Void> onClose() {
-            return record("onClose");
+            return recordEvent("onClose");
         }
 
         @Override
         public Publisher<Void> afterClose() {
-            return record("afterClose");
+            return recordEvent("afterClose");
         }
 
-        private Publisher<Void> record(String phase) {
-            return Mono.fromRunnable(() -> events.add(name + " " + phase));
+        private Publisher<Void> recordEvent(String phase) {
+            return Mono.fromRunnable(() -> {
+                events.add(name + " " + phase);
+                if (name.equals("first") && phase.equals("afterClose")) {
+                    // The last callback once the connection is released
+                    firstAfterClose.countDown();
+                }
+            });
         }
     }
 
