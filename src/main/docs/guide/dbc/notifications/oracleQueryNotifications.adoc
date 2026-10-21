@@ -48,12 +48,10 @@ This cache updates individual entities for `INSERT` and `UPDATE`. For `DELETE`, 
 so the example reloads the cache instead of trying to interpret the Oracle Database `ROWID` as an entity ID.
 It also reloads the complete cache for `INVALIDATE`.
 
-For `INSERT` and `UPDATE`, Oracle Database supplies a `ROWID` rather than entity values.
-Micronaut Data reloads the row and maps the complete entity before the application reads `entity()`.
-The reloaded value is the current database state at reload time, not a historical snapshot of the commit that produced
-the notification. Another transaction can therefore change or delete the row before it is reloaded.
-
-For `DELETE`, the entity is empty because the row can no longer be loaded, but Oracle Database `ROWID` metadata is retained.
+For `INSERT` and `UPDATE`, Oracle Database supplies a `ROWID`, which Micronaut Data uses to reload the entity.
+See <<notificationEntityLoading, Entity Loading>> for current-state semantics and cases where `entity()` is empty.
+For `DELETE`, Oracle Database `ROWID` metadata is retained. A `ROWID` identifies the database row and must not
+be treated as the entity's primary key.
 
 Oracle Database can report that the registered data changed without usable row details. This includes an `ALL_ROWS` or
 full-table notification, an `ALTER` or `DROP` operation, a missing `ROWID`, and, for a query notification, a change to
@@ -212,27 +210,14 @@ notification connection unless the JDBC driver reports the failure.
 
 == Delivery and Concurrency
 
-Oracle JDBC invokes its callback on a driver notification thread. Micronaut Data moves entity loading and listener
-invocation to the configured blocking executor so application work does not block that driver thread.
+See <<notificationDeliveryAndConcurrency, Delivery and Concurrency>> for shared threading requirements,
+delivery limitations, and handling of executor rejections.
 
-For ongoing registrations, if the application cannot accept a data notification because its configured executor is
-saturated, Micronaut Data requests an `INVALIDATE` event so the listener can refresh its state. Repeated missed
-notifications are combined into one pending invalidation. Submission is retried until accepted or shutdown begins.
-Changes missed after the listener starts processing that invalidation can cause an additional invalidation.
-This reconciliation does not replay the missed row notifications. If another delivery attempt cannot be scheduled,
-Micronaut Data logs an error and cannot guarantee delivery of the invalidation.
-
-Changes to individual rows within one Oracle Database notification are delivered sequentially. Separate notifications
-may invoke the same listener concurrently, with no ordering guarantee between them. Listener beans must therefore be
-thread-safe and must not depend on callback order.
+Changes to individual rows within one Oracle Database notification are delivered sequentially.
+Separate notifications may invoke the same listener concurrently, with no ordering guarantee between them.
 
 A single transaction, such as a bulk update, can produce one Oracle Database notification containing several row descriptions.
 The application receives one listener invocation for each affected row unless the notification requires an `INVALIDATE` event.
-
-Notifications describe committed database changes and are not part of the transaction that caused them.
-The API does not provide durable consumption, automatic redelivery, or event identifiers suitable for generic deduplication.
-Listener code should tolerate repeated observations and should reconcile state when an invalidation or an application-specific
-consistency check requires it.
 
 == Transactions, Retry, and Recovery
 

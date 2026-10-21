@@ -35,6 +35,42 @@ Handle `INVALIDATE` by refreshing the affected application state, for example by
 a query. An invalidation does not identify an individual changed row. Check whether metadata is present before
 accessing it; the database-specific sections describe the available metadata and invalidation conditions.
 
+[[notificationEntityLoading]]
+=== Entity Loading
+
+For `INSERT` and `UPDATE`, Micronaut Data reloads and maps the complete entity before invoking the listener.
+The entity reflects database state at reload time. It does not represent a historical snapshot of the commit
+that produced the notification. Another transaction can change or delete the row before it is loaded.
+If no row is found, `entity()` is empty, even for an insert or update event.
+
+For `DELETE` and `INVALIDATE`, `entity()` is empty. Use the database-specific metadata, when available,
+to identify a deleted row, and refresh the affected application state for an invalidation.
+The Oracle and PostgreSQL sections describe which identifiers are available and how they are used to reload entities.
+
+[[notificationDeliveryAndConcurrency]]
+== Delivery and Concurrency
+
+Entity loading and listener methods run on Micronaut's blocking executor. Multiple calls to the same listener
+can run concurrently, and their execution and completion order are not guaranteed. Protect shared state, such
+as an application cache, against concurrent access and updates arriving in a different order. This includes
+processing individual row changes while an `INVALIDATE` callback refreshes the same state.
+The database-specific sections describe any additional ordering rules and work limits.
+
+Notifications describe committed database changes and are not part of the transaction that caused them.
+Rolled-back changes produce no change notifications. Use notifications to refresh application state or maintain
+caches. The API does not provide an audit record of every write, durable consumption, automatic redelivery,
+or event identifiers suitable for generic deduplication. Listener code should tolerate repeated observations
+and refresh its state when an invalidation or an application-specific consistency check requires it.
+
+Micronaut's blocking executor configuration affects callback concurrency and acceptance. For ongoing subscriptions,
+if the executor rejects a data notification, individual change events can be missed. Micronaut Data then retries
+submitting an `INVALIDATE` event so the listener can refresh its state. Repeated missed notifications are combined
+into one pending invalidation. Submission is retried until accepted or shutdown begins. Changes missed after the
+listener starts processing that invalidation can cause an additional invalidation. This refresh does not replay
+the missed row notifications. If another delivery attempt cannot be scheduled, Micronaut Data logs an error and
+cannot guarantee delivery of the invalidation. Implement `INVALIDATE` handling even if your listener normally
+processes individual rows.
+
 [[notificationTransactionsAndRetries]]
 == Transactions, Retry, and Recovery
 

@@ -287,12 +287,10 @@ The example uses this metadata to update individual cache entries:
 
 snippet::example.BookCatalog[project-base="doc-examples/jdbc-postgres-notifications", source="main", tags="events", indent="0", languages="java,groovy,kotlin,python"]
 
-Entity loading returns current state at reload time; it cannot reconstruct a row's historical state from a notification.
-
-For `INSERT` and `UPDATE`, Micronaut Data reloads the complete entity using the new primary key before calling
-the listener. Another transaction can change or delete the row before it is reloaded, so `entity()` can be empty.
-For `UPDATE`, use the old keys to remove a cached entry if the primary key changed, then store the reloaded entity
-under its new key. For `DELETE`, `entity()` is empty; the old keys identify the removed row.
+For `INSERT` and `UPDATE`, Micronaut Data uses the new primary key to reload the entity.
+See <<notificationEntityLoading, Entity Loading>> for current-state semantics and cases where `entity()` is empty.
+For `UPDATE`, use the old keys to remove a cached entry if the primary key changed, then store the reloaded entity,
+when present, under its new key. For `DELETE`, the old keys identify the removed row.
 
 `TRUNCATE` produces `INVALIDATE`. An invalid payload causes `INVALIDATE` for all listeners on its channel;
 unexpected key-column names cause `INVALIDATE` for the affected listener. A payload too large for a row notification
@@ -460,9 +458,8 @@ notifications for that datasource until the application restarts.
 
 == Delivery and Concurrency
 
-Listener methods run on Micronaut's blocking executor. Multiple calls to the same listener can run concurrently,
-and their execution and completion order are not guaranteed. Protect shared state, such as an application cache,
-against concurrent access and updates arriving in a different order.
+See <<notificationDeliveryAndConcurrency, Delivery and Concurrency>> for shared threading requirements,
+delivery limitations, and handling of executor rejections.
 
 Configure the maximum queued and running callbacks for each listener:
 
@@ -486,26 +483,11 @@ another invalidation. Other listeners can continue accepting callbacks up to the
 A slow listener does not prevent notifications from being received for other listeners. This limit bounds
 queued and running listener calls, but PostgreSQL still sends every notification produced by your triggers.
 With many listeners, total application work can still be substantial. Use statement-trigger invalidations
-to reduce database notification volume. Ensure your listener can safely process row events and refreshes
-concurrently, since callback ordering remains unspecified.
+to reduce database notification volume.
 
-Micronaut's blocking executor configuration also affects callback concurrency and acceptance.
-If the executor cannot accept a call, your listener may miss individual change events. Micronaut Data then retries
-submitting an `INVALIDATE` event so the listener can refresh its state. Repeated missed notifications are combined
-into one pending invalidation. Submission is retried until accepted or shutdown begins. Changes missed after the
-listener starts processing that invalidation can cause an additional invalidation. This refresh does not replay
-the missed row notifications. If another delivery attempt cannot be scheduled, Micronaut Data logs an error and
-cannot guarantee delivery of the invalidation. Implement `INVALIDATE` handling even if your listener normally
-processes individual rows.
-
-Notifications are delivered only after the modifying transaction commits; rolled-back changes produce no notifications.
 PostgreSQL may coalesce identical channel/payload pairs within a transaction. For example, multiple updates to the same
-row with unchanged keys may produce one update notification. Use notifications to refresh application state or
-maintain caches. They do not provide an audit record of every write, and missed notifications cannot be replayed
+row with unchanged keys may produce one update notification. Missed notifications cannot be replayed
 after a listener disconnects.
-The API does not provide durable consumption, automatic redelivery, or event identifiers suitable for generic
-deduplication. Listener code should tolerate repeated observations and refresh its state when an invalidation
-or an application-specific consistency check requires it.
 
 Notifications are visible to all users in the database. Include only appropriate identifiers in payloads;
 channels do not provide access control. Trigger execution and PostgreSQL notification-queue failures can fail the write transaction.
