@@ -29,6 +29,7 @@ class PostgresNotificationConnectionFactorySpec extends Specification {
         def source = createSource()
 
         then:
+        source.tcpKeepAlive
         source.connectTimeout == 10
         source.loginTimeout == 30
         source.socketTimeout == 30
@@ -40,6 +41,7 @@ class PostgresNotificationConnectionFactorySpec extends Specification {
             [connectTimeout: 5, loginTimeout: 6, socketTimeout: 7])
 
         then:
+        source.tcpKeepAlive
         source.connectTimeout == 10
         source.loginTimeout == 30
         source.socketTimeout == 30
@@ -64,6 +66,13 @@ class PostgresNotificationConnectionFactorySpec extends Specification {
         source.connectTimeout == 8
         source.loginTimeout == 9
         source.socketTimeout == 11
+    }
+
+    void "preserves explicit keepalive settings and URL precedence"() {
+        expect:
+        !createSource('', [tcpKeepAlive: false]).tcpKeepAlive
+        !createSource('tcpKeepAlive=false', [tcpKeepAlive: true]).tcpKeepAlive
+        createSource('tcpKeepAlive=true', [tcpKeepAlive: false]).tcpKeepAlive
     }
 
     void "preserves fractional login timeout supported by the driver"() {

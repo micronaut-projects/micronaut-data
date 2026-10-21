@@ -335,6 +335,8 @@ micronaut:
       notifications:
         postgres:
           poll-timeout: 1s
+          validation-interval: 30s
+          validation-timeout: 5s
           max-retries: -1
           retry-delay: 1s
           retry-delay-multiplier: 2
@@ -348,7 +350,18 @@ Durations must be at least one millisecond and no greater than 2,147,483,647 mil
 Increasing it can delay graceful shutdown when no notifications arrive, because stopping the service
 does not interrupt a call already waiting for notifications. The listening connection is closed after
 that call returns. Graceful shutdown waits for the connection to close and any running listener callbacks to finish.
-Waiting for notifications does not send periodic queries to PostgreSQL.
+Waiting for notifications does not itself send queries to PostgreSQL. Separately, `validation-interval`
+(default `30s`) controls periodic connection checks using a lightweight database round trip. These checks detect
+silent network failures that would otherwise look like an idle connection. A failed check triggers reconnection
+and an `INVALIDATE` event after recovery.
+
+`validation-timeout` defaults to five seconds and is rounded up to whole seconds for JDBC validation.
+Checks run between notification polls; increasing `poll-timeout` can therefore delay failure detection.
+Graceful shutdown may also wait for a connection check already in progress.
+
+TCP keepalive is enabled on notification connections unless explicitly configured through the datasource's
+`tcpKeepAlive` driver property. Its timing depends on operating-system settings; periodic connection checks
+provide detection independently of those settings.
 
 `max-retries` defaults to `-1`, which retries recovery until shutdown. Non-negative values count retries
 after the initial recovery attempt; `0` allows only that initial attempt. The first recovery attempt waits

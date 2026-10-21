@@ -48,7 +48,7 @@ import java.util.stream.Collectors;
  * Manages PostgreSQL notifications for all listener methods assigned to one datasource.
  *
  * <p>A dedicated, non-pooled connection subscribes to each distinct listener channel. Startup opens the
- * connection synchronously, then a single receive thread handles notifications, reconnection,
+ * connection synchronously, then a single receive thread handles notifications, connection validation, reconnection,
  * and connection cleanup. Each successful reconnection submits an invalidation event for every
  * listener so it can account for changes missed while disconnected. Initial startup does not
  * submit invalidation events.</p>
@@ -69,6 +69,9 @@ final class PostgresNotificationSubscription {
     private final JsonMapper mapper;
     private final PostgresNotificationConfiguration configuration;
     private final long initialDelay;
+    private final long validationIntervalNanos;
+    private final int validationTimeoutSeconds;
+    private long lastValidation;
     private final Map<PostgresChangeListenerDefinition, PostgresChangeNotificationDispatcher> dispatchers = new LinkedHashMap<>();
     private final Map<String, List<Map.Entry<PostgresChangeListenerDefinition, PostgresChangeNotificationDispatcher>>> listenersByChannel;
     private final ExecutorService receiver;
@@ -90,6 +93,8 @@ final class PostgresNotificationSubscription {
         this.name = name;
         this.mapper = mapper;
         this.configuration = configuration;
+        validationIntervalNanos = configuration.getValidationInterval().toNanos();
+        validationTimeoutSeconds = (int) ((configuration.getValidationTimeout().toMillis() + 999) / 1000);
         initialDelay = Math.min(configuration.getRetryDelay().toMillis(), configuration.getMaxRetryDelay().toMillis());
         this.connectionFactory = connectionFactory;
         PostgresChangeListenerDefinitionFactory definitionFactory = new PostgresChangeListenerDefinitionFactory(operations);
@@ -145,6 +150,7 @@ final class PostgresNotificationSubscription {
         try {
             candidate.setAutoCommit(true);
             listen(candidate);
+            lastValidation = System.nanoTime();
             return candidate;
         } catch (Exception e) {
             try {
@@ -252,6 +258,7 @@ final class PostgresNotificationSubscription {
                         dispatchers.values().forEach(PostgresChangeNotificationDispatcher::invalidate);
                     }
                 }
+                validateConnection(active);
                 receiveNotifications(active);
             } catch (Exception e) {
                 closeConnection(true);
@@ -270,6 +277,20 @@ final class PostgresNotificationSubscription {
                 awaitReconnect(delay);
                 delay = Math.min(delay * configuration.getRetryDelayMultiplier(), configuration.getMaxRetryDelay().toMillis());
             }
+        }
+    }
+
+    /**
+     * Checks the connection with a round trip on the receive thread. Empty notification polls
+     * cannot distinguish an idle connection from a silently broken one. Validation failures
+     * enter the same recovery path as polling failures.
+     */
+    private void validateConnection(Connection active) throws SQLException {
+        if (running && System.nanoTime() - lastValidation >= validationIntervalNanos) {
+            if (!active.isValid(validationTimeoutSeconds)) {
+                throw new SQLException("PostgreSQL notification connection validation failed for datasource [" + name + "]");
+            }
+            lastValidation = System.nanoTime();
         }
     }
 

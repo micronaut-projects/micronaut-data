@@ -51,6 +51,9 @@ import java.util.concurrent.ConcurrentMap;
  * operations to fail so reception can retry or finish shutdown. The connect timeout also replaces
  * an explicitly unlimited value, while retaining pgJDBC's default of 10 seconds.</p>
  *
+ * <p>TCP keepalive is enabled unless explicitly configured. Its timing depends on the operating
+ * system; the subscription also performs periodic JDBC connection validation to detect silent failures.</p>
+ *
  * <p>Positive configured timeouts are preserved. These defaults apply only to notification connections.
  * They do not cancel JDBC operations immediately when shutdown is requested or provide an overall
  * shutdown deadline. Timed notification polling uses the subscription's poll timeout.</p>
@@ -100,6 +103,9 @@ final class PostgresNotificationConnectionFactory {
         ensureFiniteTimeout(parsed, PGProperty.CONNECT_TIMEOUT, DEFAULT_CONNECT_TIMEOUT_SECONDS, dataSourceName);
         ensureFiniteTimeout(parsed, PGProperty.LOGIN_TIMEOUT, DEFAULT_LOGIN_TIMEOUT_SECONDS, dataSourceName);
         ensureFiniteTimeout(parsed, PGProperty.SOCKET_TIMEOUT, DEFAULT_SOCKET_TIMEOUT_SECONDS, dataSourceName);
+        if (parsed.getProperty(PGProperty.TCP_KEEP_ALIVE.getName()) == null) {
+            PGProperty.TCP_KEEP_ALIVE.set(parsed, true);
+        }
         PGSimpleDataSource source = new PGSimpleDataSource();
         for (PGProperty property : PGProperty.values()) {
             source.setProperty(property, parsed.getProperty(property.getName()));

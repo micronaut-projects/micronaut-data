@@ -21,7 +21,7 @@ import java.time.Duration;
 import java.util.Objects;
 
 /**
- * Shared schema-generation, polling, and reconnection settings for PostgreSQL notification subscriptions.
+ * Shared schema-generation, polling, connection validation, and reconnection settings for PostgreSQL notification subscriptions.
  *
  * <p>Recovery settings apply after a listening connection fails; initial startup failures are
  * propagated to the application. Driver connection and socket timeouts are configured separately
@@ -34,6 +34,8 @@ import java.util.Objects;
 public final class PostgresNotificationConfiguration {
     private boolean schemaGenerate;
     private Duration pollTimeout = Duration.ofSeconds(1);
+    private Duration validationInterval = Duration.ofSeconds(30);
+    private Duration validationTimeout = Duration.ofSeconds(5);
     private int maxRetries = -1;
     private int retryDelayMultiplier = 2;
     private Duration retryDelay = Duration.ofSeconds(1);
@@ -83,6 +85,46 @@ public final class PostgresNotificationConfiguration {
      */
     public void setPollTimeout(Duration pollTimeout) {
         this.pollTimeout = positive(pollTimeout, "PollTimeout");
+    }
+
+    /**
+     * Returns the interval between listening connection checks. Defaults to thirty seconds.
+     * Checks run between notification polls, so an active poll can delay the next check.
+     *
+     * @return the connection validation interval
+     */
+    public Duration getValidationInterval() {
+        return validationInterval;
+    }
+
+    /**
+     * Sets the interval between round trips that detect silently broken listening connections.
+     *
+     * @param validationInterval the positive interval, in milliseconds, up to {@link Integer#MAX_VALUE}
+     * @throws IllegalArgumentException if the interval is outside the supported range
+     */
+    public void setValidationInterval(Duration validationInterval) {
+        this.validationInterval = positive(validationInterval, "ValidationInterval");
+    }
+
+    /**
+     * Returns the timeout for a listening connection check. Defaults to five seconds.
+     * The JDBC validation timeout is rounded up to whole seconds.
+     *
+     * @return the connection validation timeout
+     */
+    public Duration getValidationTimeout() {
+        return validationTimeout;
+    }
+
+    /**
+     * Sets the timeout for a listening connection check. Shutdown may wait for an active check.
+     *
+     * @param validationTimeout the positive timeout, in milliseconds, up to {@link Integer#MAX_VALUE}
+     * @throws IllegalArgumentException if the timeout is outside the supported range
+     */
+    public void setValidationTimeout(Duration validationTimeout) {
+        this.validationTimeout = positive(validationTimeout, "ValidationTimeout");
     }
 
     /**

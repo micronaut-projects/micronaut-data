@@ -294,6 +294,60 @@ class PostgresNotificationSubscriptionSpec extends Specification {
         'fatal cleanup failure'           | null                             | new AssertionError('cleanup')             | cleanupFailure
     }
 
+    @Unroll
+    void "periodic validation handles #scenario after empty notification polls"() {
+        given:
+        def opens = new AtomicInteger()
+        def checks = new CountDownLatch(2)
+        def postgres = Stub(PGConnection) {
+            getNotifications(_ as int) >> {
+                Thread.sleep(5)
+                null
+            }
+        }
+        def replacement = Stub(Connection) {
+            unwrap(PGConnection) >> postgres
+            createStatement() >> Stub(Statement)
+            isValid(1) >> { checks.countDown(); true }
+        }
+        def original = Stub(Connection) {
+            unwrap(PGConnection) >> postgres
+            createStatement() >> Stub(Statement)
+            isValid(1) >> {
+                checks.countDown()
+                if (validationFailure != null) {
+                    throw validationFailure
+                }
+                valid
+            }
+        }
+        def source = Stub(PGSimpleDataSource) {
+            getConnection() >> { opens.incrementAndGet() == 1 ? original : replacement }
+        }
+        def configuration = new PostgresNotificationConfiguration(
+            validationInterval: Duration.ofMillis(1), validationTimeout: Duration.ofMillis(1),
+            retryDelay: Duration.ofMillis(1))
+        def subscription = newSubscription(source, configuration)
+
+        when:
+        subscription.start()
+        assert checks.await(10, TimeUnit.SECONDS)
+        subscription.stop().get(10, TimeUnit.SECONDS)
+
+        then:
+        opens.get() == expectedOpens
+        subscription.@receiver.awaitTermination(10, TimeUnit.SECONDS)
+
+        cleanup:
+        subscription?.stop()?.get(10, TimeUnit.SECONDS)
+
+        where:
+        scenario             | valid | validationFailure                  | expectedOpens
+        'healthy connection' | true  | null                               | 1
+        'invalid connection' | false | null                               | 2
+        'validation error'   | false | new SQLException('Network failure') | 2
+    }
+
     private PostgresNotificationSubscription newSubscription(PGSimpleDataSource source,
                                                             PostgresNotificationConfiguration configuration = new PostgresNotificationConfiguration()) {
         def factory = new PostgresNotificationConnectionFactory(Stub(BeanContext), Stub(Environment))
