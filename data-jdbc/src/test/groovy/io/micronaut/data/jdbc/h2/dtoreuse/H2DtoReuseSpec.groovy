@@ -62,23 +62,43 @@ class H2DtoReuseSpec extends Specification implements H2TestPropertyProvider {
         petRepository.saveAll([new ReusePet(name: "Rex", age: 3), new ReusePet(name: "Tom", age: 7)])
     }
 
-    void "DTO queries of different entities return their own values on every call"() {
+    /**
+     * Every round calls each query once, in this order, so that from the second round on each query maps its rows
+     * with the DTO entity it built in the first round, right after the other queries used theirs.
+     */
+    void "round #round: #query returns its own rows"() {
         expect:
-            (1..3).every {
-                personRepository.findByAgeGreaterThan(35)*.name == ["Bob"] &&
-                    petRepository.findByAgeGreaterThan(5)*.name == ["Tom"] &&
-                    personRepository.findByAgeGreaterThan(0).collect { "$it.name:$it.age".toString() }.sort() == ["Ann:30", "Bob:40"] &&
-                    petRepository.findByAgeGreaterThan(0).collect { "$it.name:$it.age".toString() }.sort() == ["Rex:3", "Tom:7"]
+            run(query) == expected
+
+        where:
+            [round, query, expected] << (1..3).collectMany { int round ->
+                [
+                    [round, "people older than 35", ["Bob:40"]],
+                    [round, "pets older than 5", ["Tom:7"]],
+                    [round, "all people", ["Ann:30", "Bob:40"]],
+                    [round, "all pets", ["Rex:3", "Tom:7"]],
+                    [round, "the person named Ann", ["Ann:30"]]
+                ]
             }
     }
 
-    void "different DTO queries of the same entity return their own values on every call"() {
-        expect:
-            (1..3).every {
-                personRepository.findByAgeGreaterThan(35)*.name == ["Bob"] &&
-                    personRepository.findOneByName("Ann").age == 30 &&
-                    personRepository.findByAgeGreaterThan(35)*.age == [40]
-            }
+    /**
+     * Runs a DTO query. The people and pets queries of the same name map the same DTO type from entities whose
+     * properties are stored in differently named columns.
+     *
+     * @param query The query
+     * @return The rows as name:age, sorted
+     */
+    private List<String> run(String query) {
+        List<NameAndAge> rows = switch (query) {
+            case "people older than 35" -> personRepository.findByAgeGreaterThan(35)
+            case "pets older than 5" -> petRepository.findByAgeGreaterThan(5)
+            case "all people" -> personRepository.findByAgeGreaterThan(0)
+            case "all pets" -> petRepository.findByAgeGreaterThan(0)
+            case "the person named Ann" -> [personRepository.findOneByName("Ann")]
+            default -> throw new IllegalArgumentException(query)
+        }
+        return rows.collect { "$it.name:$it.age".toString() }.sort()
     }
 }
 

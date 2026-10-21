@@ -1547,6 +1547,9 @@ public final class DefaultJdbcRepositoryOperations extends AbstractSqlRepository
 
         /**
          * Normalizes a target version, reusing the result for the same dialect and target as the previous statement.
+         * Binders call this concurrently without locking: the holder is immutable, published through a volatile field
+         * and used only after checking that it matches the dialect and target of this call, so a race can at most
+         * normalize again. Checking each target once is left to {@code checkedTargetVersions}.
          */
         private NormalizedTargetVersion normalizeTargetVersion(Dialect dialect, String target) {
             NormalizedTargetVersion normalized = lastTargetVersion;
