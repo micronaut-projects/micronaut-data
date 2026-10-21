@@ -1,7 +1,7 @@
 Micronaut Data includes the ability to specify cursored pagination with the api:data.model.CursoredPageable[] type.
 For cursored page methods return a api:data.model.CursoredPage[] type (inspired by https://jakarta.ee/specifications/data/1.0/apidocs/jakarta.data/jakarta/data/page/cursoredpage[CursoredPage] in Jakarta Data).
 
-WARNING: Cursored pagination is currently only supported with Micronaut Data JDBC and R2DBC.
+WARNING: Cursored pagination is supported with Micronaut Data JDBC and R2DBC, and with Micronaut Data JPA Hibernate for repository query methods, which use the key-based pagination of Hibernate. A JPA specification or criteria query, Micronaut Data Hibernate Reactive, MongoDB and Azure Cosmos don't support it.
 
 The following are some example signatures:
 

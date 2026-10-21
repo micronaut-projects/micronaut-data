@@ -109,6 +109,7 @@ hibernate:
   hibernateExplicitQueries: Explicit queries
   hibernateNativeQueries: Native queries
   hibernateStreaming: Streaming Large Result Sets
+  hibernateBatching: Saving Many Entities
   hibernateProcedures: Procedures
 
 hibernateReactive: Micronaut Data Hibernate Reactive

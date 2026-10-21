@@ -8,7 +8,7 @@ Include Hibernate reactive Micronaut Data support:
 
 dependency:io.micronaut.data:micronaut-data-hibernate-reactive[]
 
-NOTE: Hibernate Reactive in Micronaut Data requires Hibernate 6
+NOTE: Micronaut Data Hibernate Reactive requires Hibernate ORM 7 and Hibernate Reactive 4. Use the versions managed by the Micronaut SQL BOM (`io.micronaut.sql:micronaut-sql-bom`).
 
 The configuration differs from the ordinary <<hibernateQuickStart, Hibernate quick start>> since Hibernate Reactive does not use traditional JDBC drivers but instead custom drivers provided by the https://vertx.io/docs/#databases[Vertx project]. You  need to select an appropriate driver for your database:
 
@@ -106,6 +106,12 @@ To delete an instance use `deleteById`:
 snippet::example.BookRepositorySpec[project-base="doc-examples/hibernate-reactive-example", tags="delete", indent="0"]
 
 NOTE: The examples are using `block` to retrieve the result, in your application you should never block the reactive repository as it can lead to performance problems, and it might not be supported by the backing implementation.
+
+== Results of a Flux
+
+Hibernate Reactive reads all the results of a query before the first one is emitted: a method returning a `Flux` holds every result in memory, it doesn't stream them from the database. When the method runs in a transaction that is started for it, the results are emitted once the transaction is committed, so the subscriber receives nothing until the whole work of the transaction is done. The results of a `saveAll` or `updateAll` that returns a `Flux` are collected in the same way.
+
+For large results, read them in bounded parts, for example with a api:data.model.Pageable[], and keep each transaction to a bounded amount of work.
 
 TIP: See the guide for https://guides.micronaut.io/latest/micronaut-data-hibernate-reactive.html[Access a Database with Micronaut Data and Hibernate Reactive] to learn more.
 
