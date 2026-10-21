@@ -89,3 +89,14 @@ Because a callback can run more than once, listener work should be idempotent. A
 after all retry attempts are exhausted, but recovery does not replay the database notification or restore the
 transaction that caused it. Database connection and registration recovery are configured separately in the
 Oracle and PostgreSQL sections.
+
+[[notificationCallbackFailures]]
+== Callback Failures
+
+If entity loading or listener execution fails and retry or recovery advice does not handle the failure,
+Micronaut Data logs it asynchronously with the listener method, operation, and available database-specific
+context. The failure is not returned to the database, does not roll back the original change, and does not
+trigger automatic redelivery. Subsequent notifications continue to be processed.
+
+If the listener is transactional, its own failed transaction can still be rolled back as described in
+<<notificationTransactionsAndRetries, Transactions, Retry, and Recovery>>.

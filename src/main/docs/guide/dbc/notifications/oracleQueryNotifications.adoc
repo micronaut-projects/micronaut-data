@@ -233,10 +233,8 @@ Micronaut Data attempts to unregister registrations already created for that dat
 cleanup failures are attached to the startup exception. If the datasource has no supported notification provider,
 startup instead fails with an `IllegalStateException`.
 
-If entity loading or listener execution fails and retry or recovery advice does not handle the failure, Micronaut Data
-logs it asynchronously with the listener method, operation, table, and `ROWID` when available. The failure is not returned
-to Oracle Database, does not roll back the original change, and does not trigger automatic redelivery.
-Subsequent notifications continue to be processed.
+See <<notificationCallbackFailures, Callback Failures>> for handling of entity-loading and listener errors.
+Oracle callback failure logs include the listener method, operation, table, and `ROWID` when available.
 
 During graceful shutdown, Micronaut Data stops accepting new notifications and stops automatic registration recovery.
 It attempts to unregister its registrations and waits for cleanup, registration recovery already in progress, and
