@@ -84,24 +84,8 @@ public final class DefaultR2dbcReactorConnectionOperations extends AbstractReact
         return connection.close();
     }
 
-    @Override
-    public <T> Publisher<T> withConnection(ConnectionDefinition definition, Function<ConnectionStatus<Connection>, Publisher<T>> handler) {
-        Function<ConnectionStatus<Connection>, Publisher<T>> finalHandler;
-        if (schemaTenantResolver != null) {
-            String schemaName = schemaTenantResolver.resolveTenantSchemaName();
-            if (schemaName != null) {
-                finalHandler = status -> Mono.fromDirect(schemaHandler.useSchema(status.getConnection(), configuration.getDialect(), schemaName))
-                    .thenReturn(status)
-                    .flatMapMany(handler);
-            } else {
-                finalHandler = handler;
-            }
-        } else {
-            finalHandler = handler;
-        }
-        // Delegates to withConnectionFlux, which restores the connection state
-        return super.withConnection(definition, finalHandler);
-    }
+    // withConnection is not overridden: the default delegates to withConnectionFlux,
+    // which sets the tenant schema and restores the connection state
 
     @Override
     public <T> Flux<T> withConnectionFlux(ConnectionDefinition definition, Function<ConnectionStatus<Connection>, Flux<T>> handler) {
