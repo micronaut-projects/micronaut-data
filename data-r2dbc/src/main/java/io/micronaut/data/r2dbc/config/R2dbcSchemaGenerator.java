@@ -46,6 +46,7 @@ import java.util.Arrays;
 import java.util.Collection;
 import java.util.Comparator;
 import java.util.List;
+import java.util.Optional;
 import java.util.stream.Collectors;
 
 /**
@@ -111,14 +112,24 @@ public class R2dbcSchemaGenerator {
                     SqlQueryBuilder builder = new SqlQueryBuilder(configuration.getDialect(), configuration.getDialectOptions().getVersion());
                     Mono.from(configuration.getConnectionFactory().create()).flatMap(connection -> {
                         Dialect dialect = configuration.getDialect();
-                        if (configuration.getSchemaGenerateNames() != null && !configuration.getSchemaGenerateNames().isEmpty()) {
-                            Mono<Void> result = Mono.empty();
-                            for (String schemaName : configuration.getSchemaGenerateNames()) {
-                                result = result.then(Mono.from(schemaHandler.createSchema(connection, dialect, schemaName)))
-                                    .then(Mono.from(schemaHandler.useSchema(connection, dialect, schemaName)))
-                                    .then(generate(connection, configuration, entities, builder));
-                            }
-                            return result.then(Mono.from(connection.close()));
+                        List<String> schemaNames = configuration.getSchemaGenerateNames();
+                        if (schemaNames != null && !schemaNames.isEmpty()) {
+                            // The connection is returned to the pool: it is switched back to its schema after the generation
+                            return Mono.from(schemaHandler.readSchemaSetting(connection, dialect))
+                                .map(Optional::of)
+                                .defaultIfEmpty(Optional.empty())
+                                .flatMap(previousSchemaSetting -> {
+                                    Mono<Void> result = Mono.empty();
+                                    for (String schemaName : schemaNames) {
+                                        result = result.then(Mono.from(schemaHandler.createSchema(connection, dialect, schemaName)))
+                                            .then(Mono.from(schemaHandler.useSchema(connection, dialect, schemaName)))
+                                            .then(generate(connection, configuration, entities, builder));
+                                    }
+                                    return result.then(previousSchemaSetting
+                                        .map(setting -> Mono.from(schemaHandler.restoreSchemaSetting(connection, dialect, setting)))
+                                        .orElse(Mono.empty()));
+                                })
+                                .then(Mono.from(connection.close()));
                         }
                         Mono<Void> result = Mono.empty();
                         if (configuration.getSchemaGenerateName() != null) {

@@ -24,6 +24,7 @@ import io.micronaut.data.connection.ConnectionStatus;
 import io.micronaut.data.connection.reactive.ReactiveConnectionStatus;
 import io.micronaut.data.connection.reactive.ReactiveConnectionSynchronization;
 import io.micronaut.data.connection.support.AbstractReactorConnectionOperations;
+import io.micronaut.data.model.query.builder.sql.Dialect;
 import io.micronaut.data.r2dbc.config.DataR2dbcConfiguration;
 import io.micronaut.data.r2dbc.operations.R2dbcSchemaHandler;
 import io.micronaut.data.runtime.multitenancy.SchemaTenantResolver;
@@ -34,7 +35,11 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import reactor.core.publisher.Flux;
 import reactor.core.publisher.Mono;
+import reactor.util.context.ContextView;
 
+import java.util.Optional;
+import java.util.Set;
+import java.util.concurrent.ConcurrentHashMap;
 import java.util.function.Function;
 
 /**
@@ -55,6 +60,8 @@ public final class DefaultR2dbcReactorConnectionOperations extends AbstractReact
     @Nullable
     private final SchemaTenantResolver schemaTenantResolver;
     private final R2dbcSchemaHandler schemaHandler;
+    // The connections whose schema is restored when they are closed
+    private final Set<ConnectionStatus<Connection>> schemaRestoringConnections = ConcurrentHashMap.newKeySet();
 
     DefaultR2dbcReactorConnectionOperations(@Parameter String dataSourceName,
                                             @Parameter ConnectionFactory connectionFactory,
@@ -93,7 +100,7 @@ public final class DefaultR2dbcReactorConnectionOperations extends AbstractReact
         if (schemaTenantResolver != null) {
             String schemaName = schemaTenantResolver.resolveTenantSchemaName();
             if (schemaName != null) {
-                finalHandler = status -> Mono.fromDirect(schemaHandler.useSchema(status.getConnection(), configuration.getDialect(), schemaName))
+                finalHandler = status -> useTenantSchema(status, schemaName)
                     .thenReturn(status)
                     .flatMapMany(handler);
             } else {
@@ -111,7 +118,7 @@ public final class DefaultR2dbcReactorConnectionOperations extends AbstractReact
         if (schemaTenantResolver != null) {
             String schemaName = schemaTenantResolver.resolveTenantSchemaName();
             if (schemaName != null) {
-                finalHandler = status -> Mono.fromDirect(schemaHandler.useSchema(status.getConnection(), configuration.getDialect(), schemaName))
+                finalHandler = status -> useTenantSchema(status, schemaName)
                     .thenReturn(status)
                     .flatMap(handler);
             } else {
@@ -145,5 +152,64 @@ public final class DefaultR2dbcReactorConnectionOperations extends AbstractReact
             }
             return handler.apply(status);
         };
+    }
+
+    private Mono<Void> useTenantSchema(ConnectionStatus<Connection> status, String schemaName) {
+        return restoreSchemaBeforeClose(status)
+            .then(Mono.defer(() -> Mono.fromDirect(schemaHandler.useSchema(status.getConnection(), configuration.getDialect(), schemaName))));
+    }
+
+    /**
+     * Switches the connection back to the schema it used before the schema of a tenant when it is closed
+     * (returned to the pool), so that a later use of the connection without a tenant doesn't run in the schema of the tenant.
+     *
+     * @param status The status of the connection that is switched to the schema of a tenant
+     * @return The publisher
+     */
+    private Mono<Void> restoreSchemaBeforeClose(ConnectionStatus<Connection> status) {
+        return Mono.deferContextual(contextView -> {
+            ReactiveConnectionStatus<Connection> owner = findConnectionOwner(status, contextView);
+            if (owner == null || !schemaRestoringConnections.add(owner)) {
+                // Not opened in a connection scope, or already restored when the connection is closed
+                return Mono.empty();
+            }
+            Connection connection = status.getConnection();
+            Dialect dialect = configuration.getDialect();
+            return Mono.from(schemaHandler.readSchemaSetting(connection, dialect))
+                .map(Optional::of)
+                .defaultIfEmpty(Optional.empty())
+                .doOnError(e -> schemaRestoringConnections.remove(owner))
+                .doOnNext(previousSchemaSetting -> owner.registerReactiveSynchronization(new ReactiveConnectionSynchronization() {
+                    @Override
+                    public Publisher<Void> onClose() {
+                        return Mono.defer(() -> {
+                            schemaRestoringConnections.remove(owner);
+                            return previousSchemaSetting
+                                .map(setting -> Mono.from(schemaHandler.restoreSchemaSetting(connection, dialect, setting)))
+                                .orElse(Mono.empty());
+                        });
+                    }
+                }))
+                .then();
+        });
+    }
+
+    /**
+     * Finds the status of the scope that opened the connection: the status itself, or the status found in the context
+     * for a reused connection. A reused status gets the connection instance of the status it reuses, so the connection
+     * is compared by identity: an equal connection of another scope is another checkout, which is closed by another scope.
+     *
+     * @param status      The status of the connection
+     * @param contextView The context
+     * @return The status of the scope that opened the connection and closes it, or {@code null} if none was found
+     */
+    @SuppressWarnings("ReferenceEquality")
+    private @Nullable ReactiveConnectionStatus<Connection> findConnectionOwner(ConnectionStatus<Connection> status, ContextView contextView) {
+        ConnectionStatus<Connection> owner = status.isNew() ? status : findConnectionStatus(contextView).orElse(null);
+        if (owner instanceof ReactiveConnectionStatus<Connection> reactiveOwner
+            && owner.isNew() && owner.getConnection() == status.getConnection()) {
+            return reactiveOwner;
+        }
+        return null;
     }
 }

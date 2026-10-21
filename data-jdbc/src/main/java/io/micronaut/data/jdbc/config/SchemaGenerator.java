@@ -153,15 +153,23 @@ public class SchemaGenerator {
                 try {
                     try (Connection connection = dataSource.getConnection()) {
                         if (configuration.getSchemaGenerateNames() != null && !configuration.getSchemaGenerateNames().isEmpty()) {
-                            for (String schemaName : configuration.getSchemaGenerateNames()) {
-                                if (schemaGenerate != SchemaGenerate.VALIDATE) {
-                                    schemaHandler.createSchema(connection, dialect, schemaName);
+                            // The connection is returned to the pool: it is switched back to its schema after the generation
+                            String previousSchemaSetting = schemaHandler.readSchemaSetting(connection, dialect);
+                            try {
+                                for (String schemaName : configuration.getSchemaGenerateNames()) {
+                                    if (schemaGenerate != SchemaGenerate.VALIDATE) {
+                                        schemaHandler.createSchema(connection, dialect, schemaName);
+                                    }
+                                    schemaHandler.useSchema(connection, dialect, schemaName);
+                                    if (schemaGenerate == SchemaGenerate.VALIDATE) {
+                                        validate(connection, configuration, entities, dialectSqlTableMappingValidatorMap, definitionProviders);
+                                    } else {
+                                        generate(connection, configuration, propertyPlaceholderResolver, entities);
+                                    }
                                 }
-                                schemaHandler.useSchema(connection, dialect, schemaName);
-                                if (schemaGenerate == SchemaGenerate.VALIDATE) {
-                                    validate(connection, configuration, entities, dialectSqlTableMappingValidatorMap, definitionProviders);
-                                } else {
-                                    generate(connection, configuration, propertyPlaceholderResolver, entities);
+                            } finally {
+                                if (previousSchemaSetting != null) {
+                                    schemaHandler.restoreSchemaSetting(connection, dialect, previousSchemaSetting);
                                 }
                             }
                         } else {

@@ -96,8 +96,8 @@ class H2TenantSchemaStatementSpec extends Specification {
 
         then: "the work runs in the schema of the tenant"
             count == 1
-        and:
-            schemaStatements() == ['SET SCHEMA foo;']
+        and: "the schema of the connection is read before the tenant schema is set, and restored before the connection is closed"
+            schemaStatements() == ['SELECT SCHEMA()', 'SET SCHEMA foo;', 'SET SCHEMA "PUBLIC"']
 
         when:
             tenantResolver.tenant = "bar"
@@ -105,7 +105,7 @@ class H2TenantSchemaStatementSpec extends Specification {
 
         then:
             countNotes() == 0
-            schemaStatements() == ['SET SCHEMA bar;']
+            schemaStatements() == ['SELECT SCHEMA()', 'SET SCHEMA bar;', 'SET SCHEMA "PUBLIC"']
     }
 
     void "each repository call sets the tenant schema once"() {
@@ -116,7 +116,7 @@ class H2TenantSchemaStatementSpec extends Specification {
             repository.count().block()
 
         then:
-            schemaStatements().size() == 1
+            schemaStatements() == ['SELECT SCHEMA()', 'SET SCHEMA foo;', 'SET SCHEMA "PUBLIC"']
     }
 
     void "each repository call in a transaction sets the tenant schema on the connection of the transaction"() {
@@ -128,8 +128,19 @@ class H2TenantSchemaStatementSpec extends Specification {
                     repository.count().then(repository.count())
             ).blockLast()
 
-        then: "once when the transaction opens the connection, and once for each repository call"
-            schemaStatements().size() == 3
+        then: "once when the transaction opens the connection, and once for each repository call; the schema is read and restored once"
+            schemaStatements() == ['SELECT SCHEMA()', 'SET SCHEMA foo;', 'SET SCHEMA foo;', 'SET SCHEMA foo;', 'SET SCHEMA "PUBLIC"']
+    }
+
+    void "a connection used without a tenant doesn't read or restore the schema"() {
+        given:
+            tenantResolver.tenant = null
+
+        when:
+            Flux.from(connectionOperations.withConnection(ConnectionDefinition.DEFAULT, status -> Mono.just(1))).blockLast()
+
+        then:
+            schemaStatements().isEmpty()
     }
 
     private long countNotes() {
@@ -140,7 +151,7 @@ class H2TenantSchemaStatementSpec extends Specification {
     }
 
     private List<String> schemaStatements() {
-        return recorder.statements.findAll { it.startsWith("SET SCHEMA") }
+        return recorder.statements.findAll { it.startsWith("SET SCHEMA") || it == "SELECT SCHEMA()" }
     }
 }
 

@@ -61,4 +61,26 @@ public final class SchemaNameUtils {
             default -> "\"" + name.replace("\"", "\"\"") + "\"";
         };
     }
+
+    /**
+     * Quotes a schema name read from the database as a dialect-compatible SQL identifier.
+     * Unlike {@link #render(Dialect, String)}, the name is always quoted and its case is kept,
+     * so the identifier names exactly the schema the database reported.
+     *
+     * @param dialect The SQL dialect
+     * @param name The schema name as stored by the database
+     * @return The quoted identifier
+     * @throws IllegalArgumentException If the name is null, empty, or contains a NUL character
+     * @since 5.3.0
+     */
+    public static String quote(Dialect dialect, String name) {
+        if (name == null || name.isEmpty() || name.indexOf('\u0000') >= 0) {
+            throw new IllegalArgumentException("Schema name must not be null, empty, or contain a NUL character");
+        }
+        return switch (dialect) {
+            case MYSQL -> "`" + name.replace("`", "``") + "`";
+            case SQL_SERVER -> "[" + name.replace("]", "]]") + "]";
+            default -> "\"" + name.replace("\"", "\"\"") + "\"";
+        };
+    }
 }

@@ -27,6 +27,7 @@ import org.jspecify.annotations.Nullable;
 import io.micronaut.core.beans.BeanProperty;
 import io.micronaut.core.convert.ArgumentConversionContext;
 import io.micronaut.core.convert.ConversionContext;
+import io.micronaut.core.propagation.PropagatedContext;
 import io.micronaut.core.type.Argument;
 import io.micronaut.core.util.ArgumentUtils;
 import io.micronaut.core.util.CollectionUtils;
@@ -34,6 +35,7 @@ import io.micronaut.data.connection.ConnectionDefinition;
 import io.micronaut.data.annotation.Fetch;
 import io.micronaut.data.connection.ConnectionOperations;
 import io.micronaut.data.connection.ConnectionStatus;
+import io.micronaut.data.connection.ConnectionSynchronization;
 import io.micronaut.data.connection.annotation.Connectable;
 import io.micronaut.data.exceptions.DataAccessException;
 import io.micronaut.data.exceptions.DataIntegrityViolationException;
@@ -182,6 +184,8 @@ public final class DefaultJdbcRepositoryOperations extends AbstractSqlRepository
     @Nullable
     private final SchemaTenantResolver schemaTenantResolver;
     private final JdbcSchemaHandler schemaHandler;
+    // The connections whose schema is restored when they are closed
+    private final Set<ConnectionStatus<Connection>> schemaRestoringConnections = ConcurrentHashMap.newKeySet();
     private final ColumnIndexCallableResultReader columnIndexCallableResultReader;
     private final Map<Dialect, List<SqlExceptionMapper>> sqlExceptionMappers = new EnumMap<>(Dialect.class);
     private final AtomicReference<JdbcBatchMetadata> cachedJdbcBatchMetadata = new AtomicReference<>();
@@ -1014,9 +1018,58 @@ public final class DefaultJdbcRepositoryOperations extends AbstractSqlRepository
         if (schemaTenantResolver != null) {
             String schema = schemaTenantResolver.resolveTenantSchemaName();
             if (schema != null) {
+                restoreSchemaBeforeClose(connection);
                 schemaHandler.useSchema(connection, jdbcConfiguration.getDialect(), schema);
             }
         }
+    }
+
+    /**
+     * Switches the connection back to the schema it used before the schema of a tenant when it is closed
+     * (returned to the pool), so that a later use of the connection without a tenant doesn't run in the schema of the tenant.
+     *
+     * @param connection The connection that is switched to the schema of a tenant
+     */
+    private void restoreSchemaBeforeClose(Connection connection) {
+        ConnectionStatus<Connection> owner = findConnectionOwner(connection);
+        if (owner == null || !schemaRestoringConnections.add(owner)) {
+            // Not opened in a connection scope, or already restored when the connection is closed
+            return;
+        }
+        Dialect dialect = jdbcConfiguration.getDialect();
+        String previousSchemaSetting;
+        try {
+            previousSchemaSetting = schemaHandler.readSchemaSetting(connection, dialect);
+        } catch (RuntimeException e) {
+            schemaRestoringConnections.remove(owner);
+            throw e;
+        }
+        owner.registerSynchronization(new ConnectionSynchronization() {
+            @Override
+            public void beforeClosed() {
+                schemaRestoringConnections.remove(owner);
+                if (previousSchemaSetting != null) {
+                    schemaHandler.restoreSchemaSetting(connection, dialect, previousSchemaSetting);
+                }
+            }
+        });
+    }
+
+    /**
+     * Finds the status of the scope that opened the connection. Every scope that reuses a connection gets the
+     * same connection instance from the status it reuses, so the connection is compared by identity: an
+     * equal connection of another scope is another checkout, which is closed by another scope.
+     *
+     * @param connection The connection
+     * @return The status of the scope that opened the connection and closes it, or {@code null} if none was found
+     */
+    @SuppressWarnings({"unchecked", "ReferenceEquality"})
+    private static @Nullable ConnectionStatus<Connection> findConnectionOwner(Connection connection) {
+        return PropagatedContext.getOrEmpty().findAll(ConnectionStatus.class)
+            .filter(status -> status.isNew() && status.getConnection() == connection)
+            .map(status -> (ConnectionStatus<Connection>) status)
+            .findFirst()
+            .orElse(null);
     }
 
     @NonNull

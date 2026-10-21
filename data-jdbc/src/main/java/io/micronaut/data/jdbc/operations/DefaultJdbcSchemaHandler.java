@@ -21,8 +21,11 @@ import io.micronaut.data.model.query.builder.sql.Dialect;
 import io.micronaut.data.runtime.config.DataSettings;
 import io.micronaut.data.runtime.multitenancy.internal.SchemaNameUtils;
 import jakarta.inject.Singleton;
+import org.jspecify.annotations.Nullable;
 
 import java.sql.Connection;
+import java.sql.PreparedStatement;
+import java.sql.ResultSet;
 import java.sql.SQLException;
 import java.sql.Statement;
 
@@ -76,6 +79,55 @@ final class DefaultJdbcSchemaHandler implements JdbcSchemaHandler {
             }
         } catch (SQLException e) {
             throw new DataAccessException("Failed to change the schema: " + e.getMessage(), e);
+        } catch (IllegalArgumentException e) {
+            throw new DataAccessException("Invalid schema name: " + e.getMessage(), e);
+        }
+    }
+
+    @Override
+    public @Nullable String readSchemaSetting(Connection connection, Dialect dialect) {
+        String query = switch (dialect) {
+            case H2 -> "SELECT SCHEMA()";
+            // The whole search path: the schema of a tenant replaces it
+            case POSTGRES -> "SELECT current_setting('search_path')";
+            case MYSQL -> "SELECT DATABASE()";
+            case SQL_SERVER -> "SELECT DB_NAME()";
+            case ORACLE -> "SELECT SYS_CONTEXT('USERENV', 'CURRENT_SCHEMA') FROM DUAL";
+            default -> null;
+        };
+        if (query == null) {
+            return null;
+        }
+        if (DataSettings.QUERY_LOG.isTraceEnabled()) {
+            DataSettings.QUERY_LOG.trace("Executing Query: {}", query);
+        }
+        try (Statement statement = connection.createStatement(); ResultSet resultSet = statement.executeQuery(query)) {
+            return resultSet.next() ? resultSet.getString(1) : null;
+        } catch (SQLException e) {
+            throw new DataAccessException("Failed to read the schema setting: " + e.getMessage(), e);
+        }
+    }
+
+    @Override
+    public void restoreSchemaSetting(Connection connection, Dialect dialect, String setting) {
+        try {
+            switch (dialect) {
+                case H2 -> executeQuery(connection, "SET SCHEMA " + SchemaNameUtils.quote(dialect, setting));
+                case POSTGRES -> {
+                    if (DataSettings.QUERY_LOG.isTraceEnabled()) {
+                        DataSettings.QUERY_LOG.trace("Restoring the connection search path to: {}", setting);
+                    }
+                    try (PreparedStatement statement = connection.prepareStatement("SELECT set_config('search_path', ?, false)")) {
+                        statement.setString(1, setting);
+                        statement.execute();
+                    }
+                }
+                case MYSQL, SQL_SERVER -> executeQuery(connection, "USE " + SchemaNameUtils.quote(dialect, setting));
+                case ORACLE -> executeQuery(connection, "ALTER SESSION SET CURRENT_SCHEMA=" + SchemaNameUtils.quote(dialect, setting));
+                default -> useSchema(connection, dialect, setting);
+            }
+        } catch (SQLException e) {
+            throw new DataAccessException("Failed to restore the schema setting: " + e.getMessage(), e);
         } catch (IllegalArgumentException e) {
             throw new DataAccessException("Invalid schema name: " + e.getMessage(), e);
         }

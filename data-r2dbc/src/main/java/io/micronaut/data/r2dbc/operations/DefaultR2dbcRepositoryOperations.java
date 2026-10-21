@@ -441,14 +441,28 @@ final class DefaultR2dbcRepositoryOperations extends AbstractSqlRepositoryOperat
             theHandler = connection -> {
                 String schemaName = schemaTenantResolver.resolveTenantSchemaName();
                 if (schemaName != null) {
-                    return Mono.fromDirect(schemaHandler.useSchema(connection, configuration.getDialect(), schemaName))
-                        .thenReturn(connection)
-                        .flatMapMany(handler::apply);
+                    Dialect dialect = configuration.getDialect();
+                    // The connection is returned to the pool: it is switched back to its schema before it is closed
+                    return Flux.usingWhen(
+                        Mono.from(schemaHandler.readSchemaSetting(connection, dialect)).map(Optional::of).defaultIfEmpty(Optional.empty()),
+                        previousSetting -> Mono.fromDirect(schemaHandler.useSchema(connection, dialect, schemaName))
+                            .thenReturn(connection)
+                            .flatMapMany(handler::apply),
+                        previousSetting -> restoreSchemaSetting(connection, dialect, previousSetting),
+                        (previousSetting, throwable) -> restoreSchemaSetting(connection, dialect, previousSetting),
+                        previousSetting -> restoreSchemaSetting(connection, dialect, previousSetting)
+                    );
                 }
                 return handler.apply(connection);
             };
         }
         return theHandler;
+    }
+
+    private Mono<Void> restoreSchemaSetting(Connection connection, Dialect dialect, Optional<String> previousSetting) {
+        return previousSetting
+            .map(setting -> Mono.from(schemaHandler.restoreSchemaSetting(connection, dialect, setting)))
+            .orElse(Mono.empty());
     }
 
     @NonNull
