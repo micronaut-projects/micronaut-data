@@ -58,8 +58,9 @@ The database-specific sections describe any additional ordering rules and work l
 
 Notifications describe committed database changes and are not part of the transaction that caused them.
 Rolled-back changes produce no change notifications. Use notifications to refresh application state or maintain
-caches. The API does not provide an audit record of every write, durable consumption, automatic redelivery,
-or event identifiers suitable for generic deduplication. Listener code should tolerate repeated observations
+caches. Micronaut Data change notifications do not provide a complete history of database writes, persistent
+storage of events for later processing, automatic redelivery of failed events, or unique event identifiers
+for detecting duplicates. Listener code should tolerate repeated observations
 and refresh its state when an invalidation or an application-specific consistency check requires it.
 
 Micronaut's blocking executor configuration affects callback concurrency and acceptance. For ongoing subscriptions,
