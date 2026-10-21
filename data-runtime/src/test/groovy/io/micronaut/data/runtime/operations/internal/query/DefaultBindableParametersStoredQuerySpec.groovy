@@ -19,7 +19,8 @@ import io.micronaut.data.runtime.operations.internal.sql.DefaultSqlStoredQuery
 import io.micronaut.data.runtime.operations.internal.sql.SqlStoredQuery
 import spock.lang.Specification
 
-import java.util.concurrent.Callable
+import java.util.concurrent.ConcurrentLinkedQueue
+import java.util.concurrent.CyclicBarrier
 import java.util.concurrent.Executors
 
 class DefaultBindableParametersStoredQuerySpec extends Specification {
@@ -291,25 +292,49 @@ class DefaultBindableParametersStoredQuerySpec extends Specification {
         e.message == "Cannot find property: missing"
     }
 
+    /**
+     * The property paths of a stored query are resolved on its first bind, so every round uses a new stored query and
+     * starts all threads at once to make them race on that first bind. A test can't prove safe publication, the
+     * volatile field does that; it checks that racing threads always bind the values of their own entity.
+     */
     def "a stored query shared between threads binds the values of each thread's entity"() {
         given:
-        def binding = new SimpleBinding(name: "title", propertyPath: ["title"] as String[])
-        def q = new DefaultBindableParametersStoredQuery<Book, Object>(new SimpleStoredQuery([binding]), new RuntimePersistentEntity<>(Book), ConversionService.SHARED)
-        def executor = Executors.newFixedThreadPool(8)
+        int threads = 8
+        int rounds = 200
+        int bindsPerRound = 20
+        def entity = new RuntimePersistentEntity<>(Book)
+        def executor = Executors.newFixedThreadPool(threads)
+        def start = new CyclicBarrier(threads)
+        def failures = new ConcurrentLinkedQueue<String>()
 
         when:
-        def futures = (0..<8).collect { int thread ->
-            executor.submit({
-                (0..<500).every { int i ->
-                    def binder = new CapturingBinder()
-                    q.bindParameters(binder, null, new Book(title: "$thread-$i"), null)
-                    binder.oneCalls*.value == ["$thread-$i".toString()]
-                }
-            } as Callable<Boolean>)
+        (1..rounds).each { int round ->
+            def title = new SimpleBinding(name: "title", propertyPath: ["title"] as String[])
+            def authorName = new SimpleBinding(name: "authorName", propertyPath: ["author", "name"] as String[])
+            def q = new DefaultBindableParametersStoredQuery<Book, Object>(new SimpleStoredQuery([title, authorName]), entity, ConversionService.SHARED)
+            def futures = (1..threads).collect { int thread ->
+                executor.submit({
+                    start.await()
+                    (1..bindsPerRound).each { int i ->
+                        def expected = ["title $round-$thread-$i".toString(), "author $round-$thread-$i".toString()]
+                        try {
+                            def binder = new CapturingBinder()
+                            q.bindParameters(binder, null, new Book(title: expected[0], author: new Author(name: expected[1])), null)
+                            def actual = binder.oneCalls*.value
+                            if (actual != expected) {
+                                failures << "round $round, thread $thread, bind $i: expected $expected but was $actual".toString()
+                            }
+                        } catch (Throwable e) {
+                            failures << "round $round, thread $thread, bind $i: $e".toString()
+                        }
+                    }
+                } as Runnable)
+            }
+            futures*.get()
         }
 
         then:
-        futures.every { it.get() }
+        failures.isEmpty()
 
         cleanup:
         executor.shutdown()
