@@ -39,8 +39,7 @@ Liquibase can load the bundled resource with `sqlFile`. Flyway can load it throu
 alternatively, copy its contents into an application SQL migration.
 The SQL resource creates `micronaut_data_notify_change()` in the migration's current schema. The function executes
 with the caller's privileges.
-The function uses only `pg_catalog` to resolve database objects while it runs. Include the installation schema
-in the function name when creating triggers, as shown below.
+Include the installation schema in the function name when creating triggers, as shown below.
 By default, Micronaut Data does not install notification functions or triggers. Opt-in schema generation can
 install them during startup as described below. Functions and triggers are not removed during application shutdown.
 
@@ -67,10 +66,9 @@ micronaut:
 datasources using `schema-generate: CREATE` or `CREATE_DROP`. It has no effect for `NONE` or `VALIDATE`.
 `CREATE_DROP` drops and recreates mapped tables during startup; use it only where existing data can be discarded.
 
-After creating tables, Micronaut Data installs the selected bundled function in each subscribed table's schema.
-`schema-generate-mode` defaults to `ROW`: it creates row-change and truncate triggers using the listeners'
-channels and mapped primary-key columns. Multiple listeners for the same table and channel share one trigger
-pair; different channels receive separate trigger pairs.
+Micronaut Data creates the notification functions and triggers for tables used by your listeners.
+`schema-generate-mode` defaults to `ROW`: listeners receive individual insert, update, and delete events
+with primary keys, and an `INVALIDATE` event when a table is truncated.
 
 To generate statement-level invalidations instead, configure:
 
@@ -85,30 +83,35 @@ micronaut:
           schema-generate-mode: STATEMENT
 ----
 
-`STATEMENT` installs `create-invalidation-function.sql` and creates one `AFTER STATEMENT` trigger per table
-and channel for insert, update, delete, and truncate. Every event is `INVALIDATE`, with no row keys or entity.
-This reduces notification volume for bulk changes; see the statement-notification section below for delivery
-semantics. The selected mode applies to all subscribed tables included in schema generation. It has no effect
+With `STATEMENT`, each insert, update, delete, or truncate statement sends a table-level `INVALIDATE`
+instead of individual row events. These events have no row keys or entity, so your listener must refresh
+its state from the database. Choose this mode for tables frequently changed by bulk statements.
+The statement-notification section below describes this behavior in more detail.
+The selected mode applies to all listener tables included in schema generation. It has no effect
 when notification schema generation is disabled or the datasource uses `NONE` or `VALIDATE`.
 
-Only entities included in the datasource's schema-generation packages are considered. Installation completes
-before notification listeners subscribe. Function and trigger installation for each schema-generation pass
-is transactional: if installation fails, its changes are rolled back and application startup fails.
-Replacing triggers does not expose an intermediate committed state with those triggers missing.
-Table creation or removal performed earlier by the schema tool is outside this transaction boundary.
-This does not coordinate concurrent schema generation by multiple application instances.
-For a mapping without an explicit schema, installation uses the schema selected on the schema-generation connection.
+Only entities included in the datasource's schema-generation packages are considered. Notification setup
+finishes before your listeners start receiving events. Functions and triggers are created in the mapped
+table's schema; without an explicit schema in the mapping, the datasource's schema selection is used.
 
-Generated trigger names are deterministic. Repeating schema generation replaces those triggers instead of adding
-duplicates for unchanged mappings. Switching between `ROW` and `STATEMENT` replaces generated triggers for
-each current table/channel subscription, removing the previous mode's triggers. Previously installed functions
-remain in the schema. Removing a listener or changing its channel does not remove its old triggers;
-remove them through a migration or recreate the tables. The generator cannot determine whether another
-application still uses those triggers, so it does not delete triggers merely because their channels are absent
-from the current application's listeners. Disabling this option does not remove previously installed
-functions or triggers. Avoid mixing generated
-notification triggers with manually managed triggers for the same table and channel, which would publish duplicate
-notifications. For migration-managed schemas, leave this setting disabled and use Liquibase or Flyway as described below.
+If notification setup fails, application startup fails and changes made during that notification setup
+are undone. Existing notification functions and triggers are restored. Changes already made to tables,
+including data removed by `CREATE_DROP`, are not undone by this rollback.
+
+Use separate databases or schemas for parallel tests. Running schema generation from multiple application
+instances against the same schema is unsupported. Use coordinated migrations for applications sharing a database.
+
+Restarting with unchanged listener settings does not add duplicate notification triggers. Switching between
+`ROW` and `STATEMENT` updates the generated triggers to use the selected mode, including with `CREATE`.
+
+Removing a listener, renaming its channel, or disabling notification schema generation does not remove
+previously installed functions or triggers. Remove obsolete triggers through a migration after confirming
+that no other application or running instance still needs them. Functions from a previously selected mode
+also remain installed until you remove them.
+
+Use either automatic schema generation or migrations to manage notification triggers for a given table
+and channel. Combining both can produce duplicate notifications. For migration-managed schemas, leave
+notification schema generation disabled and use Liquibase or Flyway as described below.
 
 ==== Liquibase
 
@@ -388,9 +391,8 @@ PostgreSQL server for the additional notification connections.
 
 Notification connections require a plain `jdbc:postgresql:` datasource URL. Wrapped URLs such as
 `jdbc:otel:postgresql:`, `jdbc:aws-wrapper:postgresql:`, `jdbc:p6spy:postgresql:`, and
-`jdbc:tc:postgresql:` are unsupported, even if pooled connections expose `PGConnection`.
-Subscription startup fails with an error identifying the unsupported JDBC scheme. Wrapper prefixes are
-not stripped because doing so can bypass authentication, instrumentation, or container provisioning.
+`jdbc:tc:postgresql:` are unsupported. Configure a plain PostgreSQL JDBC URL to use notifications;
+otherwise, application startup fails with an error identifying the unsupported JDBC scheme.
 
 The notification connection uses the selected datasource's JDBC URL, username, and password. It also reads
 PostgreSQL driver properties from `datasources.<name>.data-source-properties`, `db-properties`, and the
@@ -496,11 +498,11 @@ That invalidation is submitted as capacity becomes available. Already accepted c
 new notifications are combined until the invalidation starts. Notifications lost while it runs can require
 another invalidation. Other listeners can continue accepting callbacks up to their own limits.
 
-The listening connection does not wait for callback capacity. This bound protects application callback work;
-it does not reduce notifications sent by PostgreSQL or guarantee a bound on the database notification queue.
-A large number of listeners can still create substantial total work. Use statement-trigger invalidations to
-reduce notification volume at its source. The application must tolerate concurrent row callbacks and refreshes,
-as callback ordering remains unspecified.
+A slow listener does not prevent notifications from being received for other listeners. This limit bounds
+queued and running listener calls, but PostgreSQL still sends every notification produced by your triggers.
+With many listeners, total application work can still be substantial. Use statement-trigger invalidations
+to reduce database notification volume. Ensure your listener can safely process row events and refreshes
+concurrently, since callback ordering remains unspecified.
 
 Micronaut's blocking executor configuration also affects callback concurrency and acceptance.
 If the executor cannot accept a call, your listener may miss individual change events. Micronaut Data then retries
@@ -565,10 +567,10 @@ and closes the listening connection. Listener calls already running may finish; 
 are discarded. With Micronaut graceful shutdown enabled, the application waits for connection cleanup and running
 listener calls, up to the configured graceful shutdown timeout.
 
-Stopping wakes a pending recovery delay. Connection setup already in progress must finish or time out before
-cleanup can complete; the driver timeouts described above bound those waits. Increasing `poll-timeout` can also
-delay shutdown while a call waits for notifications. The graceful shutdown timeout limits how long the application
-waits; it does not forcibly terminate running listener code or JDBC operations.
+If the database is unavailable during shutdown, closing notification connections may take longer.
+The connection and polling timeouts described above affect how long shutdown can take.
+The graceful shutdown timeout limits how long the application waits; it does not forcibly terminate
+listener code or database operations already in progress.
 
 Connection cleanup is best effort: database unavailability or the shutdown timeout can prevent it from completing.
 Cleanup is also attempted when the application context is closed without graceful shutdown.
