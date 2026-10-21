@@ -183,19 +183,46 @@ class ReactiveConnectionSynchronizationErrorsTest {
     }
 
     @Test
-    void synchronizationOfAReusedConnectionIsNeverInvoked() {
+    void synchronizationOfAReusedConnectionIsCompletedWhenTheScopeCompletes() {
         String result = operations.withConnectionMono(outer ->
             operations.withConnectionMono(inner -> {
                 assertFalse(inner.isNew());
                 register(inner, new Recording("inner"));
                 inner.registerSynchronization(new RecordingSynchronization());
                 return Mono.just("value");
-            })
+            }).doOnNext(value -> events.add("inner scope completed"))
         ).block();
 
         assertEquals("value", result);
-        // A synchronous connection invokes executionComplete when the scope reusing the connection completes
-        assertEquals(List.of("OPEN " + C1, "CLOSE " + C1), events);
+        // As a synchronous connection: executionComplete when the scope reusing the connection completes,
+        // the close callbacks only for the scope that opened it
+        assertEquals(List.of("OPEN " + C1, "inner onComplete", "executionComplete", "inner scope completed", "CLOSE " + C1), events);
+    }
+
+    @Test
+    void synchronizationOfAReusedConnectionIsCompletedWhenTheScopeFails() {
+        Mono<String> work = operations.withConnectionMono(outer ->
+            operations.withConnectionMono(inner -> {
+                register(inner, new Recording("inner"));
+                return Mono.<String>error(workFailure);
+            })
+        );
+
+        assertSame(workFailure, failureOf(work));
+        assertEquals(List.of("OPEN " + C1, "inner onError", "CLOSE " + C1), events);
+    }
+
+    @Test
+    void synchronizationOfAReusedConnectionIsCompletedWhenTheScopeIsCancelled() {
+        List<String> values = operations.withConnectionFlux(outer ->
+            operations.withConnectionFlux(inner -> {
+                register(inner, new Recording("inner"));
+                return Flux.just("first", "second");
+            }).take(1)
+        ).collectList().block();
+
+        assertEquals(List.of("first"), values);
+        assertEquals(List.of("OPEN " + C1, "inner onCancel", "CLOSE " + C1), events);
     }
 
     private List<String> expectedEvents(String completion, String failingPhase, Failure failure) {
