@@ -17,21 +17,21 @@ package io.micronaut.data.document.mongodb
 
 import com.mongodb.client.MongoClient
 import io.micronaut.context.ApplicationContext
-import io.micronaut.data.annotation.GeneratedValue
-import io.micronaut.data.annotation.Id
-import io.micronaut.data.annotation.Join
-import io.micronaut.data.annotation.MappedEntity
-import io.micronaut.data.annotation.Relation
-import io.micronaut.data.mongodb.annotation.MongoRepository
-import io.micronaut.data.repository.CrudRepository
+import io.micronaut.data.document.mongodb.repositories.MongoAuthorRepository
+import io.micronaut.data.document.mongodb.repositories.MongoBookRepository
+import io.micronaut.data.document.tck.entities.Author
+import io.micronaut.data.document.tck.entities.Book
 import org.bson.BsonDocument
+import org.bson.BsonObjectId
+import org.bson.types.ObjectId
 import spock.lang.AutoCleanup
 import spock.lang.Shared
 import spock.lang.Specification
 
 /**
- * Entities with relations and generated String ids written and read several times through the same codecs, so that
- * codecs reused between calls keep every result correct.
+ * Entities with relations and generated String ids written and read several times, so that the codecs the entity
+ * codecs reuse between calls keep every result correct. The entities are the Java entities of the document TCK, whose
+ * relations and generated ids are mapped by the annotation processor.
  */
 class MongoCodecReuseSpec extends Specification implements MongoTestPropertyProvider {
 
@@ -40,81 +40,71 @@ class MongoCodecReuseSpec extends Specification implements MongoTestPropertyProv
     ApplicationContext applicationContext = ApplicationContext.run(getProperties())
 
     @Shared
-    CodecAuthorRepository authorRepository = applicationContext.getBean(CodecAuthorRepository)
+    MongoAuthorRepository authorRepository = applicationContext.getBean(MongoAuthorRepository)
 
     @Shared
-    CodecNovelRepository novelRepository = applicationContext.getBean(CodecNovelRepository)
+    MongoBookRepository bookRepository = applicationContext.getBean(MongoBookRepository)
 
     @Shared
     MongoClient mongoClient = applicationContext.getBean(MongoClient)
 
-    def cleanup() {
-        novelRepository.deleteAll()
-        authorRepository.deleteAll()
+    @Shared
+    List<Author> joinedAuthors
+
+    @Shared
+    List<Book> joinedBooks
+
+    /**
+     * Two authors with two books each, read by the joined query of every round.
+     */
+    def setupSpec() {
+        joinedAuthors = authorRepository.saveAll((1..2).collect { new Author(name: "Codec reuse author $it") })
+        joinedBooks = bookRepository.saveAll((1..2).collectMany { int a ->
+            (1..2).collect { int b -> new Book(title: "Codec reuse book $a-$b", totalPages: 100, author: joinedAuthors[a - 1]) }
+        })
+    }
+
+    def cleanupSpec() {
+        bookRepository.deleteAll(joinedBooks)
+        authorRepository.deleteAll(joinedAuthors)
     }
 
     void "entities with a to-many relation are stored without the relation on every save and update"() {
         given:
-            def authors = authorRepository.saveAll((1..3).collect { new CodecAuthor(name: "Author $it") })
+            def authors = authorRepository.saveAll((1..3).collect { new Author(name: "Codec update author $it") })
         when:
             (1..2).each { round ->
-                authors.eachWithIndex { author, i -> author.name = "Author ${i + 1} v$round".toString() }
+                authors.eachWithIndex { author, i -> author.name = "Codec update author ${i + 1} v$round".toString() }
                 authorRepository.updateAll(authors)
             }
-            def stored = mongoClient.getDatabase("test").getCollection("codec_reuse_authors", BsonDocument).find().into([])
+            def stored = authors.collect { author ->
+                mongoClient.getDatabase("test").getCollection("author", BsonDocument)
+                    .find(new BsonDocument("_id", new BsonObjectId(new ObjectId(author.id)))).first()
+            }
         then:
-            stored.size() == 3
-            stored.every { !it.containsKey("novels") }
-            authorRepository.findAll()*.name.sort() == ["Author 1 v2", "Author 2 v2", "Author 3 v2"]
+            stored*.getString("name")*.value == (1..3).collect { "Codec update author $it v2".toString() }
+            stored.every { !it.containsKey("books") }
+        cleanup:
+            authorRepository.deleteAll(authors)
     }
 
-    void "to-one relations and generated ids are decoded on every read"() {
-        given:
-            def authors = authorRepository.saveAll((1..2).collect { new CodecAuthor(name: "Author $it") })
-            def novels = novelRepository.saveAll(authors.collectMany { author ->
-                (1..2).collect { new CodecNovel(title: "Novel ${author.name}-$it", author: author) }
-            })
-            def expected = novels.collectEntries { [(it.id): it.author.name] }
-        expect:
-            (1..3).every {
-                def found = novelRepository.findByTitleStartsWith("Novel")
-                found.size() == 4 &&
-                    found.every { it.id ==~ /[0-9a-f]{24}/ && expected[it.id] == it.author.name && it.author.id != null }
+    /**
+     * Every round reads each book with its author again, so that from the second round on the documents are decoded
+     * by the codecs created in the first round.
+     */
+    void "round #round: #title is read with author #author and generated ids"() {
+        when:
+            Book book = bookRepository.findByTitle(title)
+        then:
+            book.id ==~ /[0-9a-f]{24}/
+            book.author.name == author
+            book.author.id ==~ /[0-9a-f]{24}/
+
+        where:
+            [round, title, author] << (1..3).collectMany { int round ->
+                (1..2).collectMany { int a ->
+                    (1..2).collect { int b -> [round, "Codec reuse book $a-$b".toString(), "Codec reuse author $a".toString()] }
+                }
             }
     }
-}
-
-@MongoRepository
-interface CodecAuthorRepository extends CrudRepository<CodecAuthor, String> {
-}
-
-@MongoRepository
-interface CodecNovelRepository extends CrudRepository<CodecNovel, String> {
-
-    @Join("author")
-    List<CodecNovel> findByTitleStartsWith(String prefix)
-}
-
-@MappedEntity("codec_reuse_authors")
-class CodecAuthor {
-    @Id
-    @GeneratedValue
-    String id
-
-    String name
-
-    @Relation(value = Relation.Kind.ONE_TO_MANY, mappedBy = "author")
-    List<CodecNovel> novels
-}
-
-@MappedEntity("codec_reuse_novels")
-class CodecNovel {
-    @Id
-    @GeneratedValue
-    String id
-
-    String title
-
-    @Relation(Relation.Kind.MANY_TO_ONE)
-    CodecAuthor author
 }
