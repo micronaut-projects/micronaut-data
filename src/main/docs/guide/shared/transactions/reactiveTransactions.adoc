@@ -1,0 +1,55 @@
+Methods that return a reactive type (a `Publisher`, `Mono` or `Flux`) and are annotated with `@Transactional` run in a reactive transaction when the datastore is accessed with a reactive driver: Micronaut Data R2DBC, the reactive MongoDB driver or Hibernate Reactive. The transaction is carried by the Reactor context instead of the current thread, so it is only visible to the operators of the same reactive flow. Programmatic reactive transactions use the api:transaction.reactive.ReactiveTransactionOperations[] API.
+
+== Propagation
+
+Reactive transaction managers do not implement every propagation in the same way as the synchronous transaction managers. The following table describes what each propagation does for a reactive transaction:
+
+.Propagation of reactive transactions
+[cols="2,4,4"]
+|===
+|*Propagation*
+|*No transaction is active*
+|*A transaction is active*
+
+|`REQUIRED`
+|A new transaction is started.
+|The work joins the transaction.
+
+|`SUPPORTS`
+|A new transaction is started. A synchronous transaction manager runs the work without a transaction.
+|The work joins the transaction.
+
+|`MANDATORY`
+|Fails with api:transaction.exceptions.NoTransactionException[].
+|The work joins the transaction.
+
+|`REQUIRES_NEW`
+|A new transaction is started.
+|A new transaction is started on a new connection. The active transaction is not suspended, it stays open until the new one completes.
+
+|`NOT_SUPPORTED`
+|A new transaction is started. A synchronous transaction manager runs the work without a transaction.
+|Fails with api:transaction.exceptions.TransactionUsageException[]. A synchronous transaction manager suspends the active transaction and runs the work without a transaction.
+
+|`NEVER`
+|A new transaction is started. A synchronous transaction manager runs the work without a transaction.
+|Fails with api:transaction.exceptions.TransactionUsageException[].
+
+|`NESTED`
+|A new transaction is started.
+|The work joins the transaction. A synchronous transaction manager that supports savepoints runs the work in a nested transaction.
+|===
+
+WARNING: A reactive transaction manager does not create a savepoint for the `NESTED` propagation: the work joins the active transaction, and its changes are not rolled back when it fails and the caller recovers from the error. A warning is logged the first time a reactive transaction manager joins a transaction for the `NESTED` propagation. Use `REQUIRES_NEW` to run work that must be rolled back on its own.
+
+TIP: To make sure that a reactive method never runs in a transaction of its own because the transaction was lost in the reactive flow, declare it with the `MANDATORY` propagation.
+
+== Failures and rollback
+
+A reactive transaction is rolled back when its publisher signals an error, unless the error is excluded with the `dontRollbackOn` member of the annotation, in which case the transaction is committed and the error is still signalled. Hibernate Reactive completes the transaction itself and rolls it back on every error.
+
+As with synchronous transactions, an error signalled by work that joined the transaction (`REQUIRED`, `SUPPORTS` or `MANDATORY`) marks the whole transaction as rollback-only, even if the caller recovers from the error with an operator such as `onErrorResume`. When the work of the transaction then completes normally, the transaction is rolled back and fails with api:transaction.exceptions.UnexpectedRollbackException[]. An error that is excluded from rollback by the work that signals it, and an error of work that uses the `NESTED` propagation, do not mark the transaction.
+
+Calling `setRollbackOnly()` on the api:transaction.reactive.ReactiveTransactionStatus[] rolls the transaction back without an error when its work completes.
+
+A subscriber that cancels a transactional `Flux` before it completes, for example by taking only its first result, can no longer be notified of a failure. The transaction is completed when the subscription is cancelled: it is committed, or rolled back if it is marked as rollback-only, in which case the unexpected rollback is logged as a warning. Hibernate Reactive emits the results of a transactional `Flux` once it has completed the transaction, so it signals the failure before the first result.
