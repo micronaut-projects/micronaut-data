@@ -21,10 +21,6 @@ Install the notification function and triggers through application migrations, o
 Micronaut Data schema generation for development and tests. The database user performing installation needs
 permission to create functions and triggers in the selected schema.
 
-The entity used by a listener must be a Micronaut Data persistent entity.
-The listener itself must be a Micronaut bean and must be proxyable; in particular,
-do not declare the listener class or listener method `final`.
-
 === Installing the Trigger Function
 
 The `micronaut-data-jdbc` artifact includes a row-notification SQL resource:
@@ -273,15 +269,8 @@ ann:data.jdbc.annotation.PostgresChangeNotification[]. The required `channel` at
 used by the table triggers. Supply the case-sensitive channel name without SQL identifier quotes, using at most
 63 UTF-8 bytes. Blank names and names containing NUL characters are rejected during compilation.
 
-Micronaut Data validates the listener contract at compilation time. A method annotated with ann:data.jdbc.annotation.ChangeListener[] must:
-
-* be a non-private, non-static instance method;
-* return `void`;
-* declare exactly one `ChangeEvent<E>` parameter; and
-* use a concrete persistent entity type for `E`.
-
-The listener uses the `default` datasource unless another datasource is specified through the `dataSource` attribute
-of ann:data.jdbc.annotation.ChangeListener[], for example `@ChangeListener(dataSource = "inventory")`.
+Follow the shared <<notificationListenerRequirements, listener requirements>>, including the method signature
+and datasource selection.
 
 Micronaut Data subscribes to each distinct channel during application startup. Listener methods using the same
 datasource share a listening connection, whether they use the same channel or different channels.
@@ -290,11 +279,7 @@ during graceful shutdown.
 
 == Handling Change Events
 
-api:data.jdbc.notification.ChangeEvent[] provides:
-
-* `operation()` -- the api:data.jdbc.notification.ChangeOperation[] reported for the event;
-* `entity()` -- the current entity state, when it is available; and
-* `metadata(Class)` -- provider-specific metadata, when it is available.
+See <<notificationChangeEvents, Handling Change Events>> for the common event API and invalidation handling.
 
 api:data.jdbc.notification.postgres.PostgresChangeEventMetadata[] exposes the channel, schema, table,
 and immutable `oldKeys` and `newKeys` maps. A deleted row can be identified from its old keys without reloading it.
@@ -530,20 +515,8 @@ for transaction, payload, and delivery behavior.
 
 == Transactions, Retry, and Recovery
 
-An ann:transaction.annotation.Transactional[] listener executes in a new transaction. It cannot participate in
-or roll back the original database transaction because that transaction has already committed before PostgreSQL
-delivers the notification.
-
-ann:retry.annotation.Retryable[] and ann:retry.annotation.Recoverable[] can be applied to the listener method.
-ann:retry.annotation.Retryable[] applies to both loading the changed entity and executing the listener method:
-
-* if loading an inserted or updated row fails, loading can be retried;
-* if loading succeeds but listener code fails, later attempts reuse the entity already loaded for that event; and
-* if the method is transactional, each retry attempt runs in a new transaction and a failed attempt is rolled back before the next attempt.
-
-Because a callback can run more than once, listener work should be idempotent. A recovery method can handle a failure
-after all retry attempts are exhausted, but recovery does not replay the PostgreSQL notification or restore the
-transaction that caused it.
+The shared <<notificationTransactionsAndRetries, transaction and retry guidance>> explains how to apply
+`@Transactional`, `@Retryable`, and `@Recoverable` to listener methods.
 
 == Startup, Shutdown, and Failures
 

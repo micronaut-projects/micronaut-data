@@ -1,1 +1,55 @@
-Micronaut Data notification integrations let an application react to committed database changes. The available capabilities depend on the database and JDBC driver.
+Micronaut Data JDBC lets an application react to committed database changes through
+ann:data.jdbc.annotation.ChangeListener[]. Oracle and PostgreSQL share the listener contract described below;
+the available notification capabilities and database setup differ.
+
+See <<oracleQueryNotifications, Oracle Change Notifications>> or
+<<postgresChangeNotifications, PostgreSQL Change Notifications>> for prerequisites, examples, and configuration.
+
+[[notificationListenerRequirements]]
+== Declaring a Listener
+
+The listener must be a Micronaut bean and must be proxyable; in particular,
+do not declare the listener class or listener method `final`.
+Micronaut Data validates the listener contract at compilation time. A method annotated with
+ann:data.jdbc.annotation.ChangeListener[] must:
+
+* be a non-private, non-static instance method;
+* return `void`;
+* declare exactly one `ChangeEvent<E>` parameter; and
+* use a concrete Micronaut Data persistent entity type for `E`.
+
+The listener uses the `default` datasource unless another datasource is specified through the `dataSource`
+attribute, for example `@ChangeListener(dataSource = "inventory")`.
+Also declare the database-specific notification annotation described in the Oracle or PostgreSQL section.
+
+[[notificationChangeEvents]]
+== Handling Change Events
+
+api:data.jdbc.notification.ChangeEvent[] provides:
+
+* `operation()` -- the api:data.jdbc.notification.ChangeOperation[] reported for the event;
+* `entity()` -- the current entity state, when it is available; and
+* `metadata(Class)` -- provider-specific metadata, when it is available.
+
+Handle `INVALIDATE` by refreshing the affected application state, for example by reloading a cache or rerunning
+a query. An invalidation does not identify an individual changed row. Check whether metadata is present before
+accessing it; the database-specific sections describe the available metadata and invalidation conditions.
+
+[[notificationTransactionsAndRetries]]
+== Transactions, Retry, and Recovery
+
+An ann:transaction.annotation.Transactional[] listener executes in a new transaction. It cannot participate in
+or roll back the original database transaction because that transaction has already committed before the
+notification is delivered.
+
+ann:retry.annotation.Retryable[] and ann:retry.annotation.Recoverable[] can be applied to the listener method.
+ann:retry.annotation.Retryable[] applies to both loading the changed entity and executing the listener method:
+
+* if loading an inserted or updated row fails, loading can be retried;
+* if loading succeeds but listener code fails, later attempts reuse the entity already loaded for that event; and
+* if the method is transactional, each retry attempt runs in a new transaction and a failed attempt is rolled back before the next attempt.
+
+Because a callback can run more than once, listener work should be idempotent. A recovery method can handle a failure
+after all retry attempts are exhausted, but recovery does not replay the database notification or restore the
+transaction that caused it. Database connection and registration recovery are configured separately in the
+Oracle and PostgreSQL sections.
