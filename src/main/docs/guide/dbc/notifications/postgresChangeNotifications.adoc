@@ -17,8 +17,9 @@ dependency:io.micronaut.serde:micronaut-serde-jackson[]
 
 Notifications currently target ordinary tables. The trigger examples use `EXECUTE FUNCTION`, which requires
 PostgreSQL 11 or later.
-Application migrations must install the notification function and triggers described below before the application starts.
-The migration user needs permission to create the function and triggers in the selected schema.
+Install the notification function and triggers through application migrations, or enable their creation alongside
+Micronaut Data schema generation for development and tests. The database user performing installation needs
+permission to create functions and triggers in the selected schema.
 
 The entity used by a listener must be a Micronaut Data persistent entity.
 The listener itself must be a Micronaut bean and must be proxyable; in particular,
@@ -33,14 +34,52 @@ The `micronaut-data-jdbc` artifact includes this SQL resource:
 io/micronaut/data/jdbc/notification/postgres/create-notification-function.sql
 ----
 
-Install the function through your database migration tool, selecting the installation schema explicitly.
+For migration-managed schemas, install the function through your database migration tool, selecting the installation schema explicitly.
 Liquibase can load the bundled resource with `sqlFile`. Flyway can load it through a Java migration;
 alternatively, copy its contents into an application SQL migration.
 The SQL resource creates `micronaut_data_notify_change()` in the migration's current schema. The function executes
 with the caller's privileges.
 The function uses only `pg_catalog` to resolve database objects while it runs. Include the installation schema
 in the function name when creating triggers, as shown below.
-The framework does not install or remove the function or triggers on application startup or shutdown.
+By default, Micronaut Data does not install notification functions or triggers. Opt-in schema generation can
+install them during startup as described below. Functions and triggers are not removed during application shutdown.
+
+==== Schema Generation
+
+For development and tests that use Micronaut Data schema generation, enable notification schema generation:
+
+[configuration]
+----
+datasources:
+  default:
+    db-type: postgresql
+    dialect: POSTGRES
+    schema-generate: CREATE_DROP
+micronaut:
+  data:
+    jdbc:
+      notifications:
+        postgres:
+          schema-generate: true
+----
+
+`micronaut.data.jdbc.notifications.postgres.schema-generate` defaults to `false` and applies to all PostgreSQL
+datasources using `schema-generate: CREATE` or `CREATE_DROP`. It has no effect for `NONE` or `VALIDATE`.
+`CREATE_DROP` drops and recreates mapped tables during startup; use it only where existing data can be discarded.
+
+After creating tables, Micronaut Data installs the bundled function in each subscribed table's schema and creates
+row-change and truncate triggers using the listeners' channels and mapped primary-key columns. Multiple listeners
+for the same table and channel share one trigger pair; different channels receive separate trigger pairs.
+Only entities included in the datasource's schema-generation packages are considered. Installation completes
+before notification listeners subscribe, and an installation failure fails application startup.
+For a mapping without an explicit schema, installation uses the schema selected on the schema-generation connection.
+
+Generated trigger names are deterministic. Repeating schema generation replaces those triggers instead of adding
+duplicates for unchanged mappings. Removing a listener or changing its channel does not remove its old triggers;
+remove them through a migration or recreate the tables. Disabling this option does not remove previously installed
+functions or triggers. Avoid mixing generated
+notification triggers with manually managed triggers for the same table and channel, which would publish duplicate
+notifications. For migration-managed schemas, leave this setting disabled and use Liquibase or Flyway as described below.
 
 ==== Liquibase
 
@@ -369,9 +408,10 @@ transaction that caused it.
 
 == Startup, Shutdown, and Failures
 
-Use application migrations to create the mapped table, its primary-key constraints, and notification triggers
-before the application starts. Micronaut Data uses the entity mapping to match notifications and load entities;
-it does not check that the table, constraints, or triggers exist during startup or reconnection.
+Create the mapped table, its primary-key constraints, and notification triggers through migrations or the opt-in
+schema-generation support described above before listeners subscribe. For migration-managed schemas,
+Micronaut Data uses the entity mapping to match notifications and load entities; it does not check that the table,
+constraints, or triggers exist during startup or reconnection.
 A missing trigger means changes produce no notifications. A missing table causes entity loading to fail when
 a matching insert or update notification arrives.
 
@@ -395,7 +435,7 @@ waits; it does not forcibly terminate running listener code or JDBC operations.
 
 Connection cleanup is best effort: database unavailability or the shutdown timeout can prevent it from completing.
 Cleanup is also attempted when the application context is closed without graceful shutdown.
-The application migrations own the trigger function and triggers. They remain installed after shutdown.
+Notification functions and triggers remain installed after shutdown, whether created by migrations or schema generation.
 
 == Runnable Migration and Listener Example
 

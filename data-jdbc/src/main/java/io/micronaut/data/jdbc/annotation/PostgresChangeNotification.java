@@ -28,7 +28,9 @@ import java.lang.annotation.Target;
  *
  * <p>Use database migrations to install the notification function and triggers for the entity's
  * table. Configure the triggers with the channel declared by this annotation and the entity's
- * primary-key column names as stored in PostgreSQL's catalogs.</p>
+ * primary-key column names as stored in PostgreSQL's catalogs. For development and tests using
+ * schema creation, {@code micronaut.data.jdbc.notifications.postgres.schema-generate=true}
+ * installs the function and triggers alongside tables generated with {@code CREATE} or {@code CREATE_DROP}.</p>
  *
  * <p>Notifications are matched by channel and mapped table name. If the entity mapping specifies
  * a schema, that schema must also match. Without an explicit schema, tables with the same name

@@ -21,7 +21,7 @@ import java.time.Duration;
 import java.util.Objects;
 
 /**
- * Shared polling and reconnection settings for PostgreSQL notification subscriptions.
+ * Shared schema-generation, polling, and reconnection settings for PostgreSQL notification subscriptions.
  *
  * <p>Recovery settings apply after a listening connection fails; initial startup failures are
  * propagated to the application. Driver connection and socket timeouts are configured separately
@@ -32,11 +32,33 @@ import java.util.Objects;
 @Experimental
 @ConfigurationProperties("micronaut.data.jdbc.notifications.postgres")
 public final class PostgresNotificationConfiguration {
+    private boolean schemaGenerate;
     private Duration pollTimeout = Duration.ofSeconds(1);
     private int maxRetries = -1;
     private int retryDelayMultiplier = 2;
     private Duration retryDelay = Duration.ofSeconds(1);
     private Duration maxRetryDelay = Duration.ofSeconds(60);
+
+    /**
+     * Whether schema creation also installs PostgreSQL notification functions and triggers. Defaults to false.
+     * Only datasources using {@code CREATE} or {@code CREATE_DROP} schema generation are modified.
+     * The datasource user must have permission to create functions and triggers.
+     *
+     * @return whether notification schema generation is enabled
+     */
+    public boolean isSchemaGenerate() {
+        return schemaGenerate;
+    }
+
+    /**
+     * Enables notification function and trigger creation alongside generated tables.
+     * Has no effect for {@code NONE} or {@code VALIDATE}; migrations remain responsible for those schemas.
+     *
+     * @param schemaGenerate whether notification schema generation is enabled
+     */
+    public void setSchemaGenerate(boolean schemaGenerate) {
+        this.schemaGenerate = schemaGenerate;
+    }
 
     /**
      * Returns the timeout passed to each notification poll. Defaults to one second.

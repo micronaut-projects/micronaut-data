@@ -25,6 +25,7 @@ class PostgresNotificationConfigurationSpec extends Specification {
         def config = new PostgresNotificationConfiguration()
 
         then:
+        !config.schemaGenerate
         config.pollTimeout == Duration.ofSeconds(1)
         config.maxRetries == -1
         config.retryDelayMultiplier == 2
