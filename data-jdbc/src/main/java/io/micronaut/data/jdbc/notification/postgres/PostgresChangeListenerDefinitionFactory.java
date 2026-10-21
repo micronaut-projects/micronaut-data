@@ -15,6 +15,7 @@
  */
 package io.micronaut.data.jdbc.notification.postgres;
 
+import io.micronaut.context.env.Environment;
 import io.micronaut.core.annotation.AnnotationValue;
 import io.micronaut.data.annotation.MappedEntity;
 import io.micronaut.data.intercept.annotation.PostgresChangeListenerQuery;
@@ -22,7 +23,6 @@ import io.micronaut.data.jdbc.annotation.PostgresChangeNotification;
 import io.micronaut.data.jdbc.notification.ChangeListenerMethod;
 import io.micronaut.data.jdbc.operations.JdbcRepositoryOperations;
 import io.micronaut.data.model.PersistentPropertyPath;
-import io.micronaut.data.model.query.builder.sql.postgres.PostgresIdentifiers;
 import io.micronaut.data.model.runtime.RuntimePersistentEntity;
 import io.micronaut.data.model.runtime.RuntimePersistentProperty;
 import io.micronaut.inject.ExecutableMethod;
@@ -36,16 +36,19 @@ import java.util.Set;
  * Builds the PostgreSQL runtime definition for a discovered change listener.
  *
  * <p>The factory reads the generated reload query and ordered key mappings, resolves their
- * Java and JDBC types, and creates the entity loader. Table identity is read from entity
- * metadata and normalized for a UTF-8 database with PostgreSQL's default identifier length limit.</p>
+ * Java and JDBC types, and creates the entity loader. Table and schema names are read from entity
+ * metadata. Property placeholders are resolved before normalization for a UTF-8 database with
+ * PostgreSQL's default identifier length limit.</p>
  *
  * <p>The annotation processor validates listener settings during compilation. Runtime checks
  * here identify missing or invalid generated metadata before subscription setup.</p>
  */
 final class PostgresChangeListenerDefinitionFactory {
     private final JdbcRepositoryOperations operations;
+    private final Environment environment;
 
-    PostgresChangeListenerDefinitionFactory(JdbcRepositoryOperations operations) {
+    PostgresChangeListenerDefinitionFactory(JdbcRepositoryOperations operations, Environment environment) {
+        this.environment = environment;
         this.operations = operations;
     }
 
@@ -69,8 +72,8 @@ final class PostgresChangeListenerDefinitionFactory {
             .filter(value -> !value.isEmpty()).orElse(null);
         String table = entity.getPersistedName();
         boolean quoted = entity.getAnnotationMetadata().booleanValue(MappedEntity.class, "escape").orElse(true);
-        schema = schema == null ? null : PostgresIdentifiers.normalize(schema, quoted);
-        table = PostgresIdentifiers.normalize(table, quoted);
+        schema = schema == null ? null : PostgresNotificationIdentifiers.resolve(schema, quoted, environment);
+        table = PostgresNotificationIdentifiers.resolve(table, quoted, environment);
         return new PostgresChangeListenerDefinition(channel, schema, table, loader);
     }
 

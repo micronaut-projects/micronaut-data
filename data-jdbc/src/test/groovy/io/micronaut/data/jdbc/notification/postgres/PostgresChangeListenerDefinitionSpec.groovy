@@ -15,6 +15,7 @@
  */
 package io.micronaut.data.jdbc.notification.postgres
 
+import io.micronaut.context.ApplicationContext
 import io.micronaut.core.annotation.AnnotationValue
 import io.micronaut.core.convert.ConversionService
 import io.micronaut.core.type.Argument
@@ -31,6 +32,14 @@ import spock.lang.Specification
 import spock.lang.Unroll
 
 class PostgresChangeListenerDefinitionSpec extends Specification {
+    private ApplicationContext context = ApplicationContext.run([
+            'app.table': 'ÄBooks', 'app.schema': 'ÄSales'
+    ])
+
+    void cleanup() {
+        context.close()
+    }
+
 
     @Unroll
     void "metadata mapping for #type.simpleName matches #changedSchema.#changedTable: #matches"() {
@@ -49,7 +58,7 @@ class PostgresChangeListenerDefinitionSpec extends Specification {
         def listener = new ChangeListenerMethod(Mock(BeanDefinition), method, Argument.of(type))
 
         when:
-        def definition = new PostgresChangeListenerDefinitionFactory(operations).create(listener)
+        def definition = new PostgresChangeListenerDefinitionFactory(operations, context.environment).create(listener)
 
         then:
         definition.schema() == schema
@@ -58,24 +67,26 @@ class PostgresChangeListenerDefinitionSpec extends Specification {
         0 * operations.execute(_)
 
         where:
-        type                | schema   | table             | changedSchema | changedTable      | matches
-        QualifiedBook       | 'Sales'  | 'Book.Items'      | 'Sales'       | 'Book.Items'      | true
-        QualifiedBook       | 'Sales'  | 'Book.Items'      | 'other'       | 'Book.Items'      | false
-        QualifiedBook       | 'Sales'  | 'Book.Items'      | 'sales'       | 'Book.Items'      | false
-        QualifiedBook       | 'Sales'  | 'Book.Items'      | 'Sales'       | 'book.items'      | false
-        UnqualifiedBook     | null     | 'Book'            | 'public'      | 'Book'            | true
-        UnqualifiedBook     | null     | 'Book'            | 'other'       | 'Book'            | true
-        UnqualifiedBook     | null     | 'Book'            | 'public'      | 'book'            | false
-        UnescapedBook       | 'sales'  | 'book'            | 'sales'       | 'book'            | true
-        UnescapedBook       | 'sales'  | 'book'            | 'Sales'       | 'book'            | false
-        UnescapedBook       | 'sales'  | 'book'            | 'sales'       | 'Book'            | false
-        DefinitionBook      | null     | 'definition_book' | 'public'      | 'definition_book' | true
-        QuotedUnicodeBook   | 'ÄSales' | 'ÄBook'           | 'ÄSales'      | 'ÄBook'           | true
-        QuotedUnicodeBook   | 'ÄSales' | 'ÄBook'           | 'Äsales'      | 'Äbook'           | false
-        UnquotedUnicodeBook | 'Äsales' | 'Äbook'           | 'Äsales'      | 'Äbook'           | true
-        UnquotedUnicodeBook | 'Äsales' | 'Äbook'           | 'äsales'      | 'äbook'           | false
-        QuotedLongBook      | 'S' * 62 | 'A' * 62          | 'S' * 62      | 'A' * 62          | true
-        UnquotedLongBook    | 's' * 62 | 'a' * 62          | 's' * 62      | 'a' * 62          | true
+        type                    | schema   | table             | changedSchema | changedTable      | matches
+        QualifiedBook           | 'Sales'  | 'Book.Items'      | 'Sales'       | 'Book.Items'      | true
+        PlaceholderBook         | 'ÄSales' | 'ÄBooks'          | 'ÄSales'      | 'ÄBooks'          | true
+        UnquotedPlaceholderBook | 'Äsales' | 'Äbooks'          | 'Äsales'      | 'Äbooks'          | true
+        QualifiedBook           | 'Sales'  | 'Book.Items'      | 'other'       | 'Book.Items'      | false
+        QualifiedBook           | 'Sales'  | 'Book.Items'      | 'sales'       | 'Book.Items'      | false
+        QualifiedBook           | 'Sales'  | 'Book.Items'      | 'Sales'       | 'book.items'      | false
+        UnqualifiedBook         | null     | 'Book'            | 'public'      | 'Book'            | true
+        UnqualifiedBook         | null     | 'Book'            | 'other'       | 'Book'            | true
+        UnqualifiedBook         | null     | 'Book'            | 'public'      | 'book'            | false
+        UnescapedBook           | 'sales'  | 'book'            | 'sales'       | 'book'            | true
+        UnescapedBook           | 'sales'  | 'book'            | 'Sales'       | 'book'            | false
+        UnescapedBook           | 'sales'  | 'book'            | 'sales'       | 'Book'            | false
+        DefinitionBook          | null     | 'definition_book' | 'public'      | 'definition_book' | true
+        QuotedUnicodeBook       | 'ÄSales' | 'ÄBook'           | 'ÄSales'      | 'ÄBook'           | true
+        QuotedUnicodeBook       | 'ÄSales' | 'ÄBook'           | 'Äsales'      | 'Äbook'           | false
+        UnquotedUnicodeBook     | 'Äsales' | 'Äbook'           | 'Äsales'      | 'Äbook'           | true
+        UnquotedUnicodeBook     | 'Äsales' | 'Äbook'           | 'äsales'      | 'äbook'           | false
+        QuotedLongBook          | 'S' * 62 | 'A' * 62          | 'S' * 62      | 'A' * 62          | true
+        UnquotedLongBook        | 's' * 62 | 'a' * 62          | 's' * 62      | 'a' * 62          | true
     }
 
     @Unroll
@@ -91,7 +102,7 @@ class PostgresChangeListenerDefinitionSpec extends Specification {
         def listener = new ChangeListenerMethod(Mock(BeanDefinition), method, Argument.of(DefinitionBook))
 
         when:
-        new PostgresChangeListenerDefinitionFactory(operations).create(listener)
+        new PostgresChangeListenerDefinitionFactory(operations, context.environment).create(listener)
 
         then:
         def error = thrown(IllegalStateException)
@@ -120,13 +131,21 @@ class PostgresChangeListenerDefinitionSpec extends Specification {
         def listener = new ChangeListenerMethod(Mock(BeanDefinition), method, Argument.of(DefinitionBook))
 
         when:
-        new PostgresChangeListenerDefinitionFactory(operations).create(listener)
+        new PostgresChangeListenerDefinitionFactory(operations, context.environment).create(listener)
 
         then:
         def error = thrown(IllegalStateException)
         error.message.contains('void changed(ChangeEvent<DefinitionBook>)')
         error.message.contains('requires @PostgresChangeNotification for a PostgreSQL datasource')
         0 * operations.execute(_)
+    }
+
+    void "unresolved mapping placeholders fail rather than becoming literal identifiers"() {
+        when:
+        PostgresNotificationIdentifiers.resolve('${missing.table}', true, context.environment)
+
+        then:
+        thrown(io.micronaut.context.exceptions.ConfigurationException)
     }
 
     private static AnnotationValue<PostgresChangeListenerQuery> queryMetadata(String query, List<String> columns, List<String> paths) {
@@ -136,6 +155,18 @@ class PostgresChangeListenerDefinitionSpec extends Specification {
             builder.value(query)
         }
         builder.build()
+    }
+
+    @MappedEntity(value = '${app.table}', schema = '${app.schema}')
+    private static class PlaceholderBook {
+        @Id
+        Long id
+    }
+
+    @MappedEntity(value = '${app.table}', schema = '${app.schema}', escape = false)
+    private static class UnquotedPlaceholderBook {
+        @Id
+        Long id
     }
 
     @MappedEntity(value = 'Book.Items', schema = 'Sales')

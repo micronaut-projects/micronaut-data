@@ -16,6 +16,7 @@
 package io.micronaut.data.jdbc.notification.postgres;
 
 import io.micronaut.context.BeanContext;
+import io.micronaut.context.env.Environment;
 import io.micronaut.data.jdbc.notification.ChangeEvent;
 import io.micronaut.data.jdbc.notification.ChangeListenerMethod;
 import io.micronaut.data.jdbc.notification.DefaultChangeEvent;
@@ -97,7 +98,7 @@ final class PostgresNotificationSubscription {
         validationTimeoutSeconds = (int) ((configuration.getValidationTimeout().toMillis() + 999) / 1000);
         initialDelay = Math.min(configuration.getRetryDelay().toMillis(), configuration.getMaxRetryDelay().toMillis());
         this.connectionFactory = connectionFactory;
-        PostgresChangeListenerDefinitionFactory definitionFactory = new PostgresChangeListenerDefinitionFactory(operations);
+        PostgresChangeListenerDefinitionFactory definitionFactory = new PostgresChangeListenerDefinitionFactory(operations, context.getBean(Environment.class));
         for (ChangeListenerMethod method : methods) {
             PostgresChangeListenerDefinition definition = definitionFactory.create(method);
             PostgresChangeNotificationDispatcher dispatcher = new PostgresChangeNotificationDispatcher(

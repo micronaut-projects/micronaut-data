@@ -352,7 +352,10 @@ class PostgresNotificationSubscriptionSpec extends Specification {
                                                             PostgresNotificationConfiguration configuration = new PostgresNotificationConfiguration()) {
         def factory = new PostgresNotificationConnectionFactory(Stub(BeanContext), Stub(Environment))
         factory.@dataSources.put('test', source)
-        new PostgresNotificationSubscription('test', Stub(JdbcRepositoryOperations), [], Stub(BeanContext),
+        def context = Stub(BeanContext) {
+            getBean(Environment) >> Stub(Environment)
+        }
+        new PostgresNotificationSubscription('test', Stub(JdbcRepositoryOperations), [], context,
             Stub(JsonMapper), { Runnable task -> task.run() } as Executor, Stub(TaskScheduler), configuration, factory)
     }
 

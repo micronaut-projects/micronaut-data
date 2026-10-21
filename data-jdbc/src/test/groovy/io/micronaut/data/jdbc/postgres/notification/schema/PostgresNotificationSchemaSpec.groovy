@@ -27,6 +27,7 @@ import io.micronaut.data.jdbc.notification.ChangeEvent
 import io.micronaut.data.jdbc.notification.ChangeOperation
 import io.micronaut.data.jdbc.notification.postgres.PostgresChangeEventMetadata
 import io.micronaut.data.jdbc.postgres.PostgresTestPropertyProvider
+import io.micronaut.data.jdbc.postgres.notification.placeholder.PlaceholderBookListener
 import io.micronaut.data.jdbc.postgres.notification.generated.UnqualifiedGeneratedBookListener
 import io.micronaut.data.runtime.config.SchemaGenerate
 import jakarta.inject.Singleton
@@ -145,6 +146,29 @@ class PostgresNotificationSchemaSpec extends Specification implements PostgresTe
         mode          | batch
         'CREATE'      | false
         'CREATE_DROP' | true
+    }
+
+    void "mapping placeholders support generated triggers and entity delivery"() {
+        when:
+        application = ApplicationContext.run(settings + [
+            'spec.name': 'PostgresNotificationPlaceholderTest',
+            'notification.test.schema': 'notification_schema_test',
+            'notification.test.table': 'ConfiguredBooks',
+            'datasources.default.packages': ['io.micronaut.data.jdbc.postgres.notification.placeholder'],
+            'datasources.default.schema-generate': 'CREATE',
+            'micronaut.data.jdbc.notifications.postgres.schema-generate': true,
+            'micronaut.data.jdbc.notifications.postgres.poll-timeout': '100ms'
+        ])
+        def listener = application.getBean(PlaceholderBookListener)
+        execute("""INSERT INTO notification_schema_test."ConfiguredBooks" VALUES (1, 'resolved')""")
+
+        then:
+        countFunctions() == 1
+        countTriggers() == 2
+        def event = listener.events.poll(10, TimeUnit.SECONDS)
+        event != null
+        event.entity().orElseThrow().title == 'resolved'
+        event.metadata(PostgresChangeEventMetadata).orElseThrow().table() == 'ConfiguredBooks'
     }
 
     void "notification schema generation is disabled by default"() {

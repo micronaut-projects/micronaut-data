@@ -26,7 +26,6 @@ import io.micronaut.data.jdbc.notification.ChangeListenerMethod;
 import io.micronaut.data.jdbc.notification.ChangeListenerRegistry;
 import io.micronaut.data.model.PersistentEntity;
 import io.micronaut.data.model.query.builder.sql.Dialect;
-import io.micronaut.data.model.query.builder.sql.postgres.PostgresIdentifiers;
 import io.micronaut.data.runtime.config.SchemaGenerate;
 import io.micronaut.inject.ExecutableMethod;
 import jakarta.inject.Singleton;
@@ -147,7 +146,7 @@ public final class PostgresNotificationSchemaGenerator {
     }
 
     private String normalize(String identifier, boolean quoted) {
-        return PostgresIdentifiers.normalize(environment.getPlaceholderResolver().resolveRequiredPlaceholders(identifier), quoted);
+        return PostgresNotificationIdentifiers.resolve(identifier, quoted, environment);
     }
 
     private static void createTrigger(Connection connection, String table, String name, String operations,
