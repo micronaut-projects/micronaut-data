@@ -242,28 +242,44 @@ public final class DefaultPreparedQuery<E, RT> extends DefaultStoredDataOperatio
         Object[] values = methodContext.getParameterValues();
         List<T> parameters = null;
         for (int i = 0; i < Math.min(arguments.length, values.length); i++) {
-            Object value = values[i];
-            if (value == null) {
-                continue;
-            }
-            T parameter;
-            if (type.isInstance(value)) {
-                //noinspection unchecked
-                parameter = (T) value;
-            } else if (type.getType().isAssignableFrom(arguments[i].getType())) {
-                parameter = conversionService.convert(value, type).orElse(null);
-                if (parameter == null) {
-                    continue;
+            T parameter = parameterOfType(type, arguments[i], values[i], conversionService);
+            if (parameter != null) {
+                if (parameters == null) {
+                    parameters = new ArrayList<>(2);
                 }
-            } else {
-                continue;
+                parameters.add(parameter);
             }
-            if (parameters == null) {
-                parameters = new ArrayList<>(2);
-            }
-            parameters.add(parameter);
         }
         return parameters == null ? List.of() : Collections.unmodifiableList(parameters);
+    }
+
+    /**
+     * Returns the value of a method parameter as the given type: the value itself when it is an instance of the type,
+     * the converted value when the parameter is declared as a subtype of the type, otherwise {@code null}.
+     *
+     * @param type              The type
+     * @param argument          The declared parameter
+     * @param value             The parameter value
+     * @param conversionService The conversion service
+     * @param <T>               The type
+     * @return The value as the type, or {@code null}
+     */
+    @Nullable
+    private static <T> T parameterOfType(Argument<T> type,
+                                         Argument<?> argument,
+                                         @Nullable Object value,
+                                         ConversionService conversionService) {
+        if (value == null) {
+            return null;
+        }
+        if (type.isInstance(value)) {
+            //noinspection unchecked
+            return (T) value;
+        }
+        if (type.getType().isAssignableFrom(argument.getType())) {
+            return conversionService.convert(value, type).orElse(null);
+        }
+        return null;
     }
 
     @Override
