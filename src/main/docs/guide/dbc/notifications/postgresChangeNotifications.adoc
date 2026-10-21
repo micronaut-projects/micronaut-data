@@ -300,6 +300,12 @@ while the application listens for changes and does not consume a slot in the app
 Entity loading and application queries continue to use the configured datasource pool. Allow capacity on the
 PostgreSQL server for the additional notification connections.
 
+Notification connections require a plain `jdbc:postgresql:` datasource URL. Wrapped URLs such as
+`jdbc:otel:postgresql:`, `jdbc:aws-wrapper:postgresql:`, `jdbc:p6spy:postgresql:`, and
+`jdbc:tc:postgresql:` are unsupported, even if pooled connections expose `PGConnection`.
+Subscription startup fails with an error identifying the unsupported JDBC scheme. Wrapper prefixes are
+not stripped because doing so can bypass authentication, instrumentation, or container provisioning.
+
 The notification connection uses the selected datasource's JDBC URL, username, and password. It also reads
 PostgreSQL driver properties from `datasources.<name>.data-source-properties`, `db-properties`, and the
 semicolon-separated `connection-properties` setting. Properties embedded in the JDBC URL take precedence.

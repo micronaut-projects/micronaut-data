@@ -104,6 +104,57 @@ class PostgresNotificationConnectionFactorySpec extends Specification {
         'loginTimeout'   | '1e30'
     }
 
+    void "rejects unsupported JDBC scheme #scheme without exposing URL credentials"() {
+        given:
+        def context = Stub(BeanContext) {
+            findBean(_, _) >> Optional.empty()
+        }
+        def environment = Stub(Environment) {
+            getProperty('datasources.test.url', String) >> Optional.of(url)
+            getProperty(_, _) >> Optional.empty()
+        }
+        def factory = new PostgresNotificationConnectionFactory(context, environment)
+
+        when:
+        factory.openConnection('test')
+
+        then:
+        def failure = thrown(ConfigurationException)
+        failure.message.contains("Unsupported JDBC URL scheme [$scheme]")
+        failure.message.contains('datasource [test]')
+        failure.message.contains('expected [jdbc:postgresql:]')
+        !failure.message.contains('secret')
+        !failure.message.contains('private-host')
+
+        where:
+        scheme              | url
+        'jdbc:otel:'        | 'jdbc:otel:postgresql://private-host/db?password=secret'
+        'jdbc:aws-wrapper:' | 'jdbc:aws-wrapper:postgresql://private-host/db?password=secret'
+        'jdbc:p6spy:'       | 'jdbc:p6spy:postgresql://private-host/db?password=secret'
+        'jdbc:tc:'          | 'jdbc:tc:postgresql:18.6:///db?password=secret'
+        'jdbc:mysql:'       | 'jdbc:mysql://private-host/db?password=secret'
+        'unrecognized'     | 'secret@private-host'
+    }
+
+    void "reports a missing notification JDBC URL"() {
+        given:
+        def context = Stub(BeanContext) {
+            findBean(_, _) >> Optional.empty()
+        }
+        def environment = Stub(Environment) {
+            getProperty(_, _) >> Optional.empty()
+        }
+
+        when:
+        new PostgresNotificationConnectionFactory(context, environment).openConnection('test')
+
+        then:
+        def failure = thrown(ConfigurationException)
+        failure.message.contains('Missing JDBC URL')
+        failure.message.contains('datasource [test]')
+        failure.message.contains('jdbc:postgresql:')
+    }
+
     private PGSimpleDataSource createSource(String query = '', Map<String, Object> properties = [:]) {
         def context = Stub(BeanContext) {
             findBean(_, _) >> Optional.empty()

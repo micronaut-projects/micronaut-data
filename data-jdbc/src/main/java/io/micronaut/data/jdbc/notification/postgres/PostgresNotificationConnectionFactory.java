@@ -33,6 +33,8 @@ import java.sql.Connection;
 import java.sql.SQLException;
 import java.util.Map;
 import java.util.Properties;
+import java.util.regex.Matcher;
+import java.util.regex.Pattern;
 
 /**
  * Opens dedicated PostgreSQL connections for notification subscriptions.
@@ -41,6 +43,10 @@ import java.util.Properties;
  * {@link PGSimpleDataSource}, including requests made during reconnection. The JDBC URL, credentials,
  * and driver properties are read again so configuration refreshes apply to subsequent connections.
  * Each request opens a physical connection outside the application connection pool.</p>
+ *
+ * <p>Only plain {@code jdbc:postgresql:} URLs are supported. Wrapped JDBC URLs cannot be passed
+ * to {@link PGSimpleDataSource}; stripping their prefixes could bypass authentication or other
+ * wrapper behavior.</p>
  *
  * <p>Credential changes must be visible through the datasource configuration bean or environment.
  * Authentication performed only by the application pool, including token generation, is not invoked
@@ -65,6 +71,7 @@ import java.util.Properties;
 @Singleton
 @Requires(classes = PGSimpleDataSource.class)
 class PostgresNotificationConnectionFactory {
+    private static final Pattern JDBC_SCHEME = Pattern.compile("^jdbc:[a-zA-Z][a-zA-Z0-9_-]*:");
     private static final int DEFAULT_CONNECT_TIMEOUT_SECONDS = 10;
     private static final int DEFAULT_LOGIN_TIMEOUT_SECONDS = 30;
     private static final int DEFAULT_SOCKET_TIMEOUT_SECONDS = 30;
@@ -152,9 +159,17 @@ class PostgresNotificationConnectionFactory {
             ? environment.getProperty(prefix + ".url", String.class)
                 .or(() -> environment.getProperty(prefix + ".jdbc-url", String.class)).orElse(null)
             : configuration.getConfiguredUrl();
-        if (url == null || !url.startsWith("jdbc:postgresql:")) {
-            throw new ConfigurationException("PostgreSQL notifications require a PostgreSQL JDBC URL for datasource ["
-                + dataSourceName + "]");
+        if (url == null) {
+            throw new ConfigurationException("Missing JDBC URL for PostgreSQL notifications on datasource ["
+                + dataSourceName + "]; expected a URL starting with [jdbc:postgresql:]");
+        }
+        if (!url.startsWith("jdbc:postgresql:")) {
+            Matcher matcher = JDBC_SCHEME.matcher(url);
+            // Report only the JDBC subprotocol, never the endpoint or URL properties containing credentials.
+            String scheme = matcher.find() ? matcher.group() : "unrecognized";
+            throw new ConfigurationException("Unsupported JDBC URL scheme [" + scheme
+                + "] for PostgreSQL notifications on datasource [" + dataSourceName
+                + "]; expected [jdbc:postgresql:]. Wrapped JDBC URLs are not supported");
         }
         return url;
     }
