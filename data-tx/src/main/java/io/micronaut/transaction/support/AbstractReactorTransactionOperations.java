@@ -417,8 +417,9 @@ public abstract class AbstractReactorTransactionOperations<C> implements Reactor
                 })
                 .as(flux -> doFinish(flux, status));
         }
-        if (LOG.isWarnEnabled()) {
-            LOG.warn("Rolling back transaction on error: " + throwable.getMessage(), throwable);
+        // The error is signalled to the subscriber, as with the synchronous transaction manager it is logged only at debug level
+        if (LOG.isDebugEnabled()) {
+            LOG.debug("Rolling back transaction on error: " + throwable.getMessage(), throwable);
         }
         Flux<Void> abort;
         try {
