@@ -228,7 +228,7 @@ public class DefaultSqlPreparedQuery<E, R> extends DefaultBindableParametersPrep
                 } else if (parameter.getRole() == null) {
                     Object parameterValue = getParameterValue(parameter);
                     int size = Math.max(1, sizeOf(parameterValue));
-                    q.ensureCapacity(q.length() + size * placeholderFormat.maxLength(inx + size) + 16);
+                    q.ensureCapacity(q.length() + size * placeholderFormat.lengthWithSeparator(inx + size) + 16);
                     for (int k = 0; k < size; k++) {
                         placeholderFormat.append(q, inx++);
                         if (k + 1 != size) {
@@ -724,10 +724,13 @@ public class DefaultSqlPreparedQuery<E, R> extends DefaultBindableParametersPrep
         }
 
         /**
+         * The capacity to reserve for each placeholder of an expanded parameter: the longest placeholder up to the given
+         * index, plus one for the separator that follows it. Only a sizing hint, the builder still grows if needed.
+         *
          * @param maxIndex The highest index that will be appended
-         * @return The length of a placeholder, plus one for a separator, when the format doesn't need formatting
+         * @return The length of a placeholder with its separator, when the format doesn't need formatting
          */
-        int maxLength(int maxIndex) {
+        int lengthWithSeparator(int maxIndex) {
             int length = prefix.length() + 1;
             if (suffix != null) {
                 length += suffix.length() + Integer.toString(maxIndex).length();

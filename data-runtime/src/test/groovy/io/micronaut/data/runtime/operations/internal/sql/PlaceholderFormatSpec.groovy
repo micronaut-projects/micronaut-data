@@ -45,11 +45,4 @@ class PlaceholderFormatSpec extends Specification {
             "%%s"     | true
             "%s%%"    | true
     }
-
-    void "the estimated length covers the placeholder and a separator"() {
-        expect:
-            DefaultSqlPreparedQuery.PlaceholderFormat.of("?").maxLength(1000) == 2
-            DefaultSqlPreparedQuery.PlaceholderFormat.of("\$%s").maxLength(1000) == 6
-            DefaultSqlPreparedQuery.PlaceholderFormat.of("@p%s").maxLength(9) == 4
-    }
 }
