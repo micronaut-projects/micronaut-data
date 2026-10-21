@@ -195,6 +195,8 @@ public final class DefaultJdbcRepositoryOperations extends AbstractSqlRepository
     private final Map<Dialect, JdbcUpsertReturningExecutor> upsertReturningExecutors = new EnumMap<>(Dialect.class);
 
     private final Integer defaultFetchSize;
+    @Nullable
+    private final Integer findAllFetchSize;
 
     /**
      * Default constructor.
@@ -279,6 +281,7 @@ public final class DefaultJdbcRepositoryOperations extends AbstractSqlRepository
         }
 
         this.defaultFetchSize = jdbcConfiguration.getDefaultFetchSize();
+        this.findAllFetchSize = jdbcConfiguration.getFindAllFetchSize();
     }
 
     @Override
@@ -473,6 +476,13 @@ public final class DefaultJdbcRepositoryOperations extends AbstractSqlRepository
             }
         }
         try (PreparedStatement ps = prepareStatement(connection::prepareStatement, preparedQuery, !applyPageable, false)) {
+            if (findAllFetchSize != null && findAllFetchSize > 0) {
+                try {
+                    ps.setFetchSize(findAllFetchSize);
+                } catch (SQLException ignored) {
+                    // driver may not support fetchSize; ignore, as for streams
+                }
+            }
             preparedQuery.bindParameters(new JdbcParameterBinder(connection, ps, preparedQuery));
             return findAll(preparedQuery, ps);
         } catch (SQLException e) {

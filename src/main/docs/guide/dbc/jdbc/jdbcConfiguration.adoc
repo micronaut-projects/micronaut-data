@@ -116,6 +116,21 @@ Read-only connections are also used by some drivers and proxies (for example, th
 
 This applies to Micronaut Data JDBC. Micronaut Data R2DBC does not set a read-only flag on its connections.
 
+=== Fetch size
+
+The fetch size tells the JDBC driver how many rows to read from the database in one round trip. A repository method that returns a `java.util.stream.Stream` uses the fetch size of its ann:data.annotation.Fetch[] annotation, or the `default-fetch-size` of the data source (1000 by default).
+
+A query that reads all its results at once, such as a method returning a list or a page, uses the driver's default fetch size. That default differs between drivers: the Oracle driver, for example, reads 10 rows per round trip, so a query that returns many rows takes many round trips. Set `find-all-fetch-size` to use another fetch size for these queries:
+
+[configuration]
+----
+datasources:
+  default:
+    find-all-fetch-size: 1000
+----
+
+A larger fetch size means fewer round trips, but the driver holds more rows in memory at a time. It doesn't limit the number of rows a query returns.
+
 === Tracing calls from Java to Oracle Database sessions
 
 Specify the configuration property `datasources.<datasource-name>.enable-oracle-client-info=true` on a per datasource basis to link database sessions with Java thread activity. By default, this will set:

@@ -80,6 +80,9 @@ public class DataJdbcConfiguration implements Named, Toggleable {
     @NonNull
     private Integer defaultFetchSize = Fetch.DEFAULT_FETCH_SIZE;
 
+    @Nullable
+    private Integer findAllFetchSize;
+
     /**
      * The configuration.
      * @param name The configuration name
@@ -293,6 +296,30 @@ public class DataJdbcConfiguration implements Named, Toggleable {
      */
     public void setDefaultFetchSize(@NonNull Integer defaultFetchSize) {
         this.defaultFetchSize = defaultFetchSize;
+    }
+
+    /**
+     * Gets the fetch size for the JDBC driver used by queries that read all their results at once,
+     * such as a repository method returning a list or a page. If not set, the JDBC driver's default
+     * fetch size is used.
+     *
+     * @return the fetch size, or {@code null} if not set
+     * @since 5.3.0
+     */
+    public @Nullable Integer getFindAllFetchSize() {
+        return findAllFetchSize;
+    }
+
+    /**
+     * Sets the fetch size for the JDBC driver used by queries that read all their results at once,
+     * such as a repository method returning a list or a page. If not set, the JDBC driver's default
+     * fetch size is used.
+     *
+     * @param findAllFetchSize the fetch size, or {@code null} to use the JDBC driver's default
+     * @since 5.3.0
+     */
+    public void setFindAllFetchSize(@Nullable Integer findAllFetchSize) {
+        this.findAllFetchSize = findAllFetchSize;
     }
 
     /**
