@@ -88,6 +88,7 @@ import org.hibernate.query.KeyedResultList;
 import org.hibernate.query.MutationQuery;
 import org.hibernate.query.Query;
 import org.hibernate.query.QueryProducer;
+import org.hibernate.query.criteria.JpaCriteriaQuery;
 
 import javax.sql.DataSource;
 import java.util.ArrayList;
@@ -767,6 +768,10 @@ final class HibernateJpaOperations extends AbstractHibernateOperations<Session, 
     @Override
     public boolean exists(CriteriaQuery<?> query) {
         return executeRead(session -> {
+            if (query instanceof JpaCriteriaQuery<?> criteriaQuery) {
+                // Selects whether a row exists, without reading the entities and their fetched associations
+                return Boolean.TRUE.equals(session.createQuery(criteriaQuery.createExistsQuery()).getSingleResult());
+            }
             try (Stream<?> stream = session.createQuery(query).stream()) {
                 return stream.findAny().isPresent();
             }

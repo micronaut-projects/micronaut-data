@@ -32,6 +32,7 @@ dependencies {
     testImplementation projects.micronautDataTck
     testImplementation libs.groovy.sql
     testImplementation mnValidation.validation
+    testImplementation mnLogging.logback.classic
 
     testRuntimeOnly mnSql.vertx.pg.client
     testRuntimeOnly mnSql.vertx.mysql.client

@@ -53,6 +53,7 @@ import jakarta.persistence.criteria.CriteriaDelete;
 import jakarta.persistence.criteria.CriteriaQuery;
 import jakarta.persistence.criteria.CriteriaUpdate;
 import org.hibernate.SessionFactory;
+import org.hibernate.query.criteria.JpaCriteriaQuery;
 import org.hibernate.reactive.stage.Stage;
 import org.jspecify.annotations.Nullable;
 import org.reactivestreams.Publisher;
@@ -195,7 +196,15 @@ final class DefaultHibernateReactiveRepositoryOperations extends AbstractHiberna
 
     @Override
     public <T> Mono<Boolean> exists(PreparedQuery<T, Boolean> preparedQuery) {
-        return findOne(preparedQuery).hasElement();
+        return readOperation(session -> {
+            // Unlike findOne, the result is limited: a derived existence query selects a scalar, without fetched collections.
+            // As in the synchronous findOne, native queries and entity graphs are not limited.
+            boolean limitOne = !preparedQuery.isNative()
+                && !preparedQuery.getAnnotationMetadata().hasAnnotation(io.micronaut.data.jpa.annotation.EntityGraph.class);
+            FirstResultCollector<Boolean> collector = new FirstResultCollector<>(limitOne);
+            collectFindOne(session, preparedQuery, collector);
+            return collector.result;
+        }).hasElement();
     }
 
     @Override
@@ -485,6 +494,11 @@ final class DefaultHibernateReactiveRepositoryOperations extends AbstractHiberna
 
     @Override
     public Publisher<Boolean> exists(CriteriaQuery<?> query) {
+        if (query instanceof JpaCriteriaQuery<?> criteriaQuery) {
+            // Selects whether a row exists, without reading the entities and their fetched associations
+            JpaCriteriaQuery<Boolean> existsQuery = criteriaQuery.createExistsQuery();
+            return withSession(session -> helper.monoFromCompletionStage(() -> session.createQuery(existsQuery).getSingleResult().thenApply(Boolean.TRUE::equals)));
+        }
         return withSession(session -> helper.monoFromCompletionStage(() -> session.createQuery(query).setMaxResults(1).getResultList().thenApply(l -> !l.isEmpty())));
     }
 
