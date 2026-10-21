@@ -19,6 +19,7 @@ import io.micronaut.context.BeanContext;
 import io.micronaut.context.annotation.Requires;
 import io.micronaut.context.env.Environment;
 import io.micronaut.context.exceptions.ConfigurationException;
+import io.micronaut.core.annotation.Internal;
 import io.micronaut.core.naming.conventions.StringConvention;
 import io.micronaut.inject.qualifiers.Qualifiers;
 import io.micronaut.jdbc.BasicJdbcConfiguration;
@@ -32,16 +33,18 @@ import java.sql.Connection;
 import java.sql.SQLException;
 import java.util.Map;
 import java.util.Properties;
-import java.util.concurrent.ConcurrentHashMap;
-import java.util.concurrent.ConcurrentMap;
 
 /**
  * Opens dedicated PostgreSQL connections for notification subscriptions.
  *
- * <p>Creates one {@link PGSimpleDataSource} per datasource name on first use and caches it for
- * the lifetime of this factory. Its JDBC URL, credentials, and driver properties are resolved
- * at that time. Each connection request opens a new physical connection outside the application
- * connection pool, including requests made during reconnection.</p>
+ * <p>Each connection request resolves the current datasource configuration and creates a new
+ * {@link PGSimpleDataSource}, including requests made during reconnection. The JDBC URL, credentials,
+ * and driver properties are read again so configuration refreshes apply to subsequent connections.
+ * Each request opens a physical connection outside the application connection pool.</p>
+ *
+ * <p>Credential changes must be visible through the datasource configuration bean or environment.
+ * Authentication performed only by the application pool, including token generation, is not invoked
+ * by this factory.</p>
  *
  * <p>Missing or zero connect, login, and socket-read timeouts are replaced with finite defaults
  * of 10, 30, and 30 seconds respectively. The connect timeout limits each TCP connection attempt;
@@ -58,16 +61,16 @@ import java.util.concurrent.ConcurrentMap;
  * They do not cancel JDBC operations immediately when shutdown is requested or provide an overall
  * shutdown deadline. Timed notification polling uses the subscription's poll timeout.</p>
  */
+@Internal
 @Singleton
 @Requires(classes = PGSimpleDataSource.class)
-final class PostgresNotificationConnectionFactory {
+class PostgresNotificationConnectionFactory {
     private static final int DEFAULT_CONNECT_TIMEOUT_SECONDS = 10;
     private static final int DEFAULT_LOGIN_TIMEOUT_SECONDS = 30;
     private static final int DEFAULT_SOCKET_TIMEOUT_SECONDS = 30;
 
     private final BeanContext beanContext;
     private final Environment environment;
-    private final ConcurrentMap<String, PGSimpleDataSource> dataSources = new ConcurrentHashMap<>();
 
     PostgresNotificationConnectionFactory(BeanContext beanContext, Environment environment) {
         this.beanContext = beanContext;
@@ -75,7 +78,7 @@ final class PostgresNotificationConnectionFactory {
     }
 
     /**
-     * Opens a new physical connection, creating the cached datasource on first use.
+     * Opens a new physical connection using the current datasource configuration.
      * The subscription owns the connection and is responsible for configuring and closing it.
      *
      * @param dataSourceName the datasource selected by the listeners
@@ -83,12 +86,11 @@ final class PostgresNotificationConnectionFactory {
      * @throws SQLException if the connection cannot be opened
      */
     Connection openConnection(String dataSourceName) throws SQLException {
-        return dataSources.computeIfAbsent(dataSourceName, this::createDataSource).getConnection();
+        return createDataSource(dataSourceName).getConnection();
     }
 
     /**
      * Configures a datasource from the named datasource's JDBC URL, credentials, and driver properties.
-     * The caller caches the source after configuration succeeds.
      */
     private PGSimpleDataSource createDataSource(String dataSourceName) {
         BasicJdbcConfiguration configuration = beanContext.findBean(BasicJdbcConfiguration.class,

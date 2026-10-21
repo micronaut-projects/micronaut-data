@@ -350,8 +350,9 @@ class PostgresNotificationSubscriptionSpec extends Specification {
 
     private PostgresNotificationSubscription newSubscription(PGSimpleDataSource source,
                                                             PostgresNotificationConfiguration configuration = new PostgresNotificationConfiguration()) {
-        def factory = new PostgresNotificationConnectionFactory(Stub(BeanContext), Stub(Environment))
-        factory.@dataSources.put('test', source)
+        def factory = Stub(PostgresNotificationConnectionFactory) {
+            openConnection('test') >> { source.connection }
+        }
         def context = Stub(BeanContext) {
             getBean(Environment) >> Stub(Environment)
         }

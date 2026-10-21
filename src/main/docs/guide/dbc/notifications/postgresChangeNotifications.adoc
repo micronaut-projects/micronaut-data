@@ -303,7 +303,14 @@ PostgreSQL server for the additional notification connections.
 The notification connection uses the selected datasource's JDBC URL, username, and password. It also reads
 PostgreSQL driver properties from `datasources.<name>.data-source-properties`, `db-properties`, and the
 semicolon-separated `connection-properties` setting. Properties embedded in the JDBC URL take precedence.
-Connection settings are read when notifications first start for a datasource and are reused for reconnection.
+Connection settings are read for every connection attempt, including reconnection. Rotated credentials are
+used when they are exposed through the datasource configuration bean or environment. Updating only the
+application pool's credentials does not update notification connections.
+
+The notification connection does not invoke authentication hooks or token generation provided by a custom
+pool or datasource. For short-lived credentials such as RDS IAM tokens, a fresh valid token must be available
+through the configuration when each connection is opened. Micronaut Data does not generate or renew these tokens.
+
 Pool settings and connection initialization SQL do not apply to notification connections. Put any required session
 settings in PostgreSQL driver properties, such as `currentSchema` or `options`.
 
