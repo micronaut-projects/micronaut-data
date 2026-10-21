@@ -20,6 +20,7 @@ import io.micronaut.context.BeanProvider;
 import io.micronaut.context.annotation.Requires;
 import io.micronaut.context.event.ApplicationEventListener;
 import io.micronaut.context.event.ShutdownEvent;
+import io.micronaut.context.exceptions.ConfigurationException;
 import io.micronaut.data.jdbc.notification.ChangeListenerMethod;
 import io.micronaut.data.jdbc.notification.ChangeNotificationProvider;
 import io.micronaut.data.jdbc.operations.JdbcRepositoryOperations;
@@ -105,11 +106,17 @@ final class PostgresChangeNotificationProvider implements ChangeNotificationProv
      * @param name       the datasource these listeners selected
      * @param operations repository operations bound to that datasource
      * @param listeners  the listener methods discovered for that datasource
+     * @throws ConfigurationException if no JSON mapper implementation is available
      */
     @Override
     public synchronized void register(String name, JdbcRepositoryOperations operations, List<ChangeListenerMethod> listeners) {
         if (shutdown != null || subscriptions.containsKey(name)) {
             throw new IllegalStateException("PostgreSQL notifications already registered or shutting down for " + name);
+        }
+        if (!jsonMapperProvider.isPresent()) {
+            throw new ConfigurationException("PostgreSQL notifications for datasource [" + name
+                + "] require a JsonMapper implementation to decode notification payloads. "
+                + "Add io.micronaut.serde:micronaut-serde-jackson or provide another JsonMapper implementation.");
         }
         var subscription = new PostgresNotificationSubscription(name, operations, listeners, beanContext,
             jsonMapperProvider.get(), executor, taskScheduler, configuration, connectionFactory);
