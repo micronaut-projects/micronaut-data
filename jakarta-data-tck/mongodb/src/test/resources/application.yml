@@ -7,3 +7,9 @@ micronaut:
 
 
 mongodb.uuid-representation: STANDARD
+
+test-resources:
+  containers:
+    mongodb:
+      # MongoDB 8 does not start on Linux kernel 6.19 and newer (SERVER-121912)
+      image-name: mongo:7.0
