@@ -29,6 +29,7 @@ import io.micronaut.data.model.query.builder.sql.Dialect;
 import io.micronaut.data.runtime.config.SchemaGenerate;
 import io.micronaut.inject.ExecutableMethod;
 import jakarta.inject.Singleton;
+import org.jspecify.annotations.Nullable;
 
 import java.io.IOException;
 import java.io.InputStream;
@@ -37,6 +38,7 @@ import java.security.MessageDigest;
 import java.security.NoSuchAlgorithmException;
 import java.sql.Connection;
 import java.sql.SQLException;
+import java.sql.Savepoint;
 import java.sql.Statement;
 import java.util.Arrays;
 import java.util.HexFormat;
@@ -98,6 +100,11 @@ public final class PostgresNotificationSchemaGenerator {
      * triggers. This also replaces existing triggers under {@code CREATE} and allows mode changes
      * without leaving the previous mode's triggers active.</p>
      *
+     * <p>Function and trigger changes in this pass are transactional. An auto-commit connection uses
+     * a new transaction; an existing transaction uses a savepoint and remains under the caller's control.
+     * Installation failure rolls back these changes. Table creation performed before this pass is
+     * outside this transaction boundary.</p>
+     *
      * <p>Unrelated triggers and triggers for subscriptions absent from this pass are left unchanged.
      * Previously installed functions are not removed when switching modes. Functions and triggers
      * remain installed after application shutdown.</p>
@@ -117,6 +124,46 @@ public final class PostgresNotificationSchemaGenerator {
         if (subscriptions.isEmpty()) {
             return;
         }
+        boolean autoCommit = connection.getAutoCommit();
+        if (autoCommit) {
+            connection.setAutoCommit(false);
+        }
+        Savepoint savepoint = autoCommit ? null : connection.setSavepoint();
+        try {
+            install(connection, subscriptions);
+            if (savepoint == null) {
+                connection.commit();
+            } else {
+                connection.releaseSavepoint(savepoint);
+            }
+        } catch (SQLException | RuntimeException | Error failure) {
+            rollback(connection, savepoint, failure);
+            throw failure;
+        }
+        if (autoCommit) {
+            connection.setAutoCommit(true);
+        }
+    }
+
+    /**
+     * Restores the caller's transaction or rolls back the transaction started for installation.
+     * Auto-commit is restored only after rollback succeeds, since enabling it can commit pending work.
+     */
+    private static void rollback(Connection connection, @Nullable Savepoint savepoint, Throwable failure) {
+        try {
+            if (savepoint == null) {
+                connection.rollback();
+                connection.setAutoCommit(true);
+            } else {
+                connection.rollback(savepoint);
+                connection.releaseSavepoint(savepoint);
+            }
+        } catch (SQLException | RuntimeException rollbackFailure) {
+            failure.addSuppressed(rollbackFailure);
+        }
+    }
+
+    private void install(Connection connection, Map<Subscription, List<String>> subscriptions) throws SQLException {
         String functionName = statementNotifications ? INVALIDATION_FUNCTION_NAME : CHANGE_FUNCTION_NAME;
         String function = readFunction(statementNotifications ? INVALIDATION_FUNCTION_RESOURCE : CHANGE_FUNCTION_RESOURCE);
         Set<String> installedSchemas = new LinkedHashSet<>();

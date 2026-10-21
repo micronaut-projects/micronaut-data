@@ -92,14 +92,20 @@ semantics. The selected mode applies to all subscribed tables included in schema
 when notification schema generation is disabled or the datasource uses `NONE` or `VALIDATE`.
 
 Only entities included in the datasource's schema-generation packages are considered. Installation completes
-before notification listeners subscribe, and an installation failure fails application startup.
+before notification listeners subscribe. Function and trigger installation for each schema-generation pass
+is transactional: if installation fails, its changes are rolled back and application startup fails.
+Replacing triggers does not expose an intermediate committed state with those triggers missing.
+Table creation or removal performed earlier by the schema tool is outside this transaction boundary.
+This does not coordinate concurrent schema generation by multiple application instances.
 For a mapping without an explicit schema, installation uses the schema selected on the schema-generation connection.
 
 Generated trigger names are deterministic. Repeating schema generation replaces those triggers instead of adding
 duplicates for unchanged mappings. Switching between `ROW` and `STATEMENT` replaces generated triggers for
 each current table/channel subscription, removing the previous mode's triggers. Previously installed functions
 remain in the schema. Removing a listener or changing its channel does not remove its old triggers;
-remove them through a migration or recreate the tables. Disabling this option does not remove previously installed
+remove them through a migration or recreate the tables. The generator cannot determine whether another
+application still uses those triggers, so it does not delete triggers merely because their channels are absent
+from the current application's listeners. Disabling this option does not remove previously installed
 functions or triggers. Avoid mixing generated
 notification triggers with manually managed triggers for the same table and channel, which would publish duplicate
 notifications. For migration-managed schemas, leave this setting disabled and use Liquibase or Flyway as described below.

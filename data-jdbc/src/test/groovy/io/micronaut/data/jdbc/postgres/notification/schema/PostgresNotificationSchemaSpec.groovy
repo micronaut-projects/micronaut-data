@@ -23,6 +23,10 @@ import io.micronaut.data.annotation.MappedProperty
 import io.micronaut.data.connection.jdbc.advice.DelegatingDataSource
 import io.micronaut.data.jdbc.annotation.ChangeListener
 import io.micronaut.data.jdbc.annotation.PostgresChangeNotification
+import io.micronaut.data.jdbc.config.DataJdbcConfiguration
+import io.micronaut.data.jdbc.notification.postgres.PostgresNotificationSchemaGenerator
+import io.micronaut.data.model.runtime.RuntimeEntityRegistry
+import io.micronaut.data.model.PersistentEntity
 import io.micronaut.data.jdbc.notification.ChangeEvent
 import io.micronaut.data.jdbc.notification.ChangeOperation
 import io.micronaut.data.jdbc.notification.postgres.PostgresChangeEventMetadata
@@ -35,6 +39,7 @@ import spock.lang.Specification
 import spock.lang.Unroll
 
 import javax.sql.DataSource
+import java.sql.SQLException
 import java.sql.Connection
 import java.util.concurrent.LinkedBlockingQueue
 import java.util.concurrent.TimeUnit
@@ -58,6 +63,10 @@ class PostgresNotificationSchemaSpec extends Specification implements PostgresTe
     void cleanup() {
         application?.close()
         if (writer != null) {
+            if (!writer.autoCommit) {
+                writer.rollback()
+                writer.autoCommit = true
+            }
             execute('DROP SCHEMA IF EXISTS notification_schema_test CASCADE')
             execute('DROP SCHEMA IF EXISTS notification_unqualified_test CASCADE')
             writer.close()
@@ -345,6 +354,113 @@ class PostgresNotificationSchemaSpec extends Specification implements PostgresTe
         def failure = thrown(Exception)
         failure.message.contains('cannot change return type')
         countTriggers() == 0
+    }
+
+    @Unroll
+    void "failed trigger replacement restores functions and triggers with auto-commit #autoCommit"() {
+        given:
+        start('CREATE', true)
+        def listeners = application.getBean(GeneratedBookListeners)
+        execute('ALTER FUNCTION notification_schema_test.micronaut_data_notify_change() SET search_path = pg_catalog, public')
+        String originalFunction = functionDefinition()
+        String eventTrigger = 'reject_notification_' + UUID.randomUUID().toString().replace('-', '')
+        execute("""CREATE FUNCTION notification_schema_test.reject_trigger_creation() RETURNS event_trigger
+            LANGUAGE plpgsql AS \$\$
+            BEGIN
+                IF current_setting('micronaut.test.reject_trigger', true) = 'on' THEN
+                    RAISE EXCEPTION 'Deliberate trigger creation failure';
+                END IF;
+            END;
+            \$\$""")
+        execute("CREATE EVENT TRIGGER $eventTrigger ON ddl_command_start WHEN TAG IN ('CREATE TRIGGER') EXECUTE FUNCTION notification_schema_test.reject_trigger_creation()")
+        writer.autoCommit = autoCommit
+        if (!autoCommit) {
+            execute("""INSERT INTO notification_schema_test."ÄBook" VALUES ('$TENANT', 1, 'caller work')""")
+        }
+        execute("SET micronaut.test.reject_trigger TO 'on'")
+
+        when:
+        generateNotifications()
+
+        then:
+        def failure = thrown(SQLException)
+        failure.message.contains('Deliberate trigger creation failure')
+        writer.autoCommit == autoCommit
+        countTriggers() == 4
+        functionDefinition() == originalFunction
+        if (!autoCommit) {
+            assert count('SELECT count(*) FROM notification_schema_test."ÄBook"') == 1
+            // Earlier caller work is neither rolled back nor committed by notification installation.
+            try (def connection = DelegatingDataSource.unwrapDataSource(bootstrap.getBean(DataSource)).connection;
+                 def statement = connection.createStatement();
+                 def rows = statement.executeQuery('SELECT count(*) FROM notification_schema_test."ÄBook"')) {
+                assert rows.next()
+                assert rows.getInt(1) == 0
+            }
+        }
+
+        when: 'the original triggers still deliver events after rollback'
+        execute("SET micronaut.test.reject_trigger TO 'off'")
+        if (autoCommit) {
+            execute("""INSERT INTO notification_schema_test."ÄBook" VALUES ('$TENANT', 1, 'after failure')""")
+        } else {
+            writer.commit()
+            writer.autoCommit = true
+        }
+
+        then:
+        next(listeners.first).operation() == ChangeOperation.INSERT
+        next(listeners.second).operation() == ChangeOperation.INSERT
+        next(listeners.other).operation() == ChangeOperation.INSERT
+
+        cleanup:
+        if (!writer.autoCommit) {
+            writer.rollback()
+            writer.autoCommit = true
+        }
+        execute("DROP EVENT TRIGGER IF EXISTS $eventTrigger")
+
+        where:
+        autoCommit << [true, false]
+    }
+
+    void "successful notification installation leaves an existing transaction under caller control"() {
+        given:
+        start('CREATE', true)
+        execute('ALTER FUNCTION notification_schema_test.micronaut_data_notify_change() SET search_path = pg_catalog, public')
+        String originalFunction = functionDefinition()
+        writer.autoCommit = false
+        execute("""INSERT INTO notification_schema_test."ÄBook" VALUES ('$TENANT', 1, 'uncommitted')""")
+
+        when:
+        generateNotifications()
+
+        then:
+        !writer.autoCommit
+        functionDefinition() != originalFunction
+        countTriggers() == 4
+
+        when: 'rolling back the caller transaction also restores the previous function'
+        writer.rollback()
+        writer.autoCommit = true
+
+        then:
+        functionDefinition() == originalFunction
+        count('SELECT count(*) FROM notification_schema_test."ÄBook"') == 0
+    }
+
+    private void generateNotifications() {
+        def entity = application.getBean(RuntimeEntityRegistry).getEntity(GeneratedBook)
+        application.getBean(PostgresNotificationSchemaGenerator).generate(writer,
+            application.getBean(DataJdbcConfiguration), [entity] as PersistentEntity[])
+    }
+
+    private String functionDefinition() {
+        try (def statement = writer.createStatement();
+             def rows = statement.executeQuery("SELECT pg_get_functiondef('notification_schema_test.micronaut_data_notify_change()'::regprocedure)")) {
+            assert rows.next()
+            rows.getString(1)
+        }
     }
 
     void "unqualified mappings install in the schema selected by schema generation"() {
