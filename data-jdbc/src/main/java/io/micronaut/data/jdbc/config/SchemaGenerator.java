@@ -173,16 +173,28 @@ public class SchemaGenerator {
                                 }
                             }
                         } else {
-                            if (configuration.getSchemaGenerateName() != null) {
-                                if (schemaGenerate != SchemaGenerate.VALIDATE) {
-                                    schemaHandler.createSchema(connection, dialect, configuration.getSchemaGenerateName());
-                                }
-                                schemaHandler.useSchema(connection, dialect, configuration.getSchemaGenerateName());
+                            String schemaGenerateName = configuration.getSchemaGenerateName();
+                            String previousSchemaSetting = null;
+                            if (schemaGenerateName != null) {
+                                // The connection is returned to the pool: it is switched back to its schema after the generation
+                                previousSchemaSetting = schemaHandler.readSchemaSetting(connection, dialect);
                             }
-                            if (schemaGenerate == SchemaGenerate.VALIDATE) {
-                                validate(connection, configuration, entities, dialectSqlTableMappingValidatorMap, definitionProviders);
-                            } else {
-                                generate(connection, configuration, propertyPlaceholderResolver, entities);
+                            try {
+                                if (schemaGenerateName != null) {
+                                    if (schemaGenerate != SchemaGenerate.VALIDATE) {
+                                        schemaHandler.createSchema(connection, dialect, schemaGenerateName);
+                                    }
+                                    schemaHandler.useSchema(connection, dialect, schemaGenerateName);
+                                }
+                                if (schemaGenerate == SchemaGenerate.VALIDATE) {
+                                    validate(connection, configuration, entities, dialectSqlTableMappingValidatorMap, definitionProviders);
+                                } else {
+                                    generate(connection, configuration, propertyPlaceholderResolver, entities);
+                                }
+                            } finally {
+                                if (previousSchemaSetting != null) {
+                                    schemaHandler.restoreSchemaSetting(connection, dialect, previousSchemaSetting);
+                                }
                             }
                         }
                     } catch (SQLException e) {

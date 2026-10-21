@@ -131,12 +131,21 @@ public class R2dbcSchemaGenerator {
                                 })
                                 .then(Mono.from(connection.close()));
                         }
-                        Mono<Void> result = Mono.empty();
-                        if (configuration.getSchemaGenerateName() != null) {
-                            result = Mono.from(schemaHandler.createSchema(connection, dialect, configuration.getSchemaGenerateName()))
-                                .then(Mono.from(schemaHandler.useSchema(connection, dialect, configuration.getSchemaGenerateName())));
+                        String schemaGenerateName = configuration.getSchemaGenerateName();
+                        if (schemaGenerateName != null) {
+                            // The connection is returned to the pool: it is switched back to its schema after the generation
+                            return Mono.from(schemaHandler.readSchemaSetting(connection, dialect))
+                                .map(Optional::of)
+                                .defaultIfEmpty(Optional.empty())
+                                .flatMap(previousSchemaSetting -> Mono.from(schemaHandler.createSchema(connection, dialect, schemaGenerateName))
+                                    .then(Mono.from(schemaHandler.useSchema(connection, dialect, schemaGenerateName)))
+                                    .then(generate(connection, configuration, entities, builder))
+                                    .then(previousSchemaSetting
+                                        .map(setting -> Mono.from(schemaHandler.restoreSchemaSetting(connection, dialect, setting)))
+                                        .orElse(Mono.empty())))
+                                .then(Mono.from(connection.close()));
                         }
-                        return result.then(generate(connection, configuration, entities, builder))
+                        return generate(connection, configuration, entities, builder)
                             .then(Mono.from(connection.close()));
                     }).block();
                 }
