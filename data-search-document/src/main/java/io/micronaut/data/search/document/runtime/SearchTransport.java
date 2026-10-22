@@ -109,8 +109,22 @@ public interface SearchTransport {
      * @param id The document id
      * @param score The relevance score, or {@code null} when the search was not scored
      * @param source The document
+     * @param highlights The highlighted fragments by field, empty when none were requested
      */
-    record SearchHit(String id, @Nullable Double score, Map<String, Object> source) {
+    record SearchHit(String id, @Nullable Double score, Map<String, Object> source, Map<String, List<String>> highlights) {
+
+        public SearchHit {
+            highlights = highlights == null ? Map.of() : highlights;
+        }
+
+        /**
+         * @param id The document id
+         * @param score The score
+         * @param source The document
+         */
+        public SearchHit(String id, @Nullable Double score, Map<String, Object> source) {
+            this(id, score, source, Map.of());
+        }
     }
 
     /**

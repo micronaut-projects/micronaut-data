@@ -33,6 +33,7 @@ import org.opensearch.client.opensearch._types.mapping.TypeMapping;
 import org.opensearch.client.opensearch._types.query_dsl.Query;
 import org.opensearch.client.opensearch.core.SearchRequest;
 import org.opensearch.client.opensearch.core.SearchResponse;
+import org.opensearch.client.opensearch.core.search.Highlight;
 import org.opensearch.client.opensearch.core.search.Hit;
 import org.opensearch.client.opensearch.core.search.TrackHits;
 
@@ -89,10 +90,14 @@ public final class OpenSearchSearchTransport implements SearchTransport {
             if (Boolean.TRUE.equals(parsed.get("track_total_hits"))) {
                 request.trackTotalHits(TrackHits.of(t -> t.enabled(true)));
             }
+            Object highlight = parsed.get("highlight");
+            if (highlight != null) {
+                request.highlight(JsonData.of(highlight, mapper).to(Highlight.class, mapper));
+            }
             SearchResponse<Map> response = client.search(request.build(), Map.class);
             List<SearchHit> hits = new ArrayList<>(response.hits().hits().size());
             for (Hit<Map> hit : response.hits().hits()) {
-                hits.add(new SearchHit(hit.id(), hit.score(), hit.source() == null ? Map.of() : (Map<String, Object>) hit.source()));
+                hits.add(new SearchHit(hit.id(), hit.score(), hit.source() == null ? Map.of() : (Map<String, Object>) hit.source(), hit.highlight()));
             }
             long total = response.hits().total() == null ? hits.size() : response.hits().total().value();
             Float maxScore = response.hits().maxScore();

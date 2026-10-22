@@ -66,7 +66,18 @@ snippet::example.BookService[project-base="doc-examples/jdbc-search-example", so
 <4> `search(SearchQuery)` returns the hits ordered by relevance.
 <5> `search(SearchQuery, Pageable)` returns one page; a sort on the pageable replaces the relevance order.
 
-`minScore` drops the hits whose score is below the threshold; it is applied to the retrieved page, so a paged result may hold fewer entities than the page size. A query is compiled at runtime through the same criteria API as a derived method, so a store that lacks the requested mode throws api:data.model.search.UnsupportedSearchFeatureException[] when the method runs rather than at compile time. Query-time boosts, highlighting and a language override are not supported by `search(SearchQuery)` yet and throw the same exception.
+`minScore` drops the hits whose score is below the threshold; it is applied to the retrieved page, so a paged result may hold fewer entities than the page size. A query is compiled at runtime through the same criteria API as a derived method, so a store that lacks the requested mode throws api:data.model.search.UnsupportedSearchFeatureException[] when the method runs rather than at compile time. Query-time boosts and a language override are not supported by `search(SearchQuery)` yet and throw the same exception.
+
+== Highlighting
+
+`highlight` names the properties whose matching terms should be returned wrapped in `<em>` tags:
+
+snippet::example.BookService[project-base="doc-examples/jdbc-search-example", source="main", tags="highlight"]
+
+<1> Each named property must be a `@SearchField`.
+<2> `SearchResult.highlights()` maps a property name to its fragments; a property that does not match the query has one fragment without tags on PostgreSQL and Oracle, and none on Elasticsearch and OpenSearch.
+
+The tags are the same on every store, so a client can render them without knowing the backend. PostgreSQL renders `ts_headline`, Oracle `CTX_DOC.POLICY_SNIPPET`, and the document stores the `highlight` request clause. MongoDB `$text` cannot highlight and throws api:data.model.search.UnsupportedSearchFeatureException[]. The criteria API exposes the same projection as `PersistentEntityCriteriaBuilder.searchHighlight(field, query, MatchMode)`.
 
 == Criteria API
 
@@ -76,7 +87,8 @@ The criteria builder exposes the same predicate through `PersistentEntityCriteri
 
 - Queries render `to_tsvector('<language>', <column>) @@ to_tsquery('<language>', ?)` and rank with `ts_rank_cd`; several fields are concatenated with `||`, wrapped in `coalesce` and `setweight` as declared.
 - The query parameter is converted to `tsquery` syntax by a parameter converter chosen for the keyword, so the SQL stays the same for every search string.
-- Fuzzy matching is not available. Highlighting and query-time boosts are not yet implemented for PostgreSQL.
+- Fuzzy matching is not available. Query-time boosts are not yet implemented for PostgreSQL.
+- Highlights render `ts_headline('<language>', <column>, to_tsquery('<language>', ?), 'StartSel=<em>,StopSel=</em>')`, which returns a fragment of the column with the default `ts_headline` length limits.
 - Stemming follows the text search configuration named by `@Searchable(language)`; use `simple` to disable it.
 
 == Oracle notes
@@ -86,4 +98,4 @@ The criteria builder exposes the same predicate through `PersistentEntityCriteri
 - `SearchAll` requires every term within one field. Terms are escaped in braces, so reserved words such as `and` or `or` are matched literally.
 - The default lexer matches words literally; there is no stemming unless the index is created with a lexer that enables it.
 - Entities stored as a JSON column (`@EntityRepresentation(columnType = JSON)`) are searched with `JSON_TEXTCONTAINS(<column>, '$.<property>', ?, n)`, which needs a JSON search index created by your migration tool and Oracle Database 23ai or later for `SCORE` support.
-- Highlighting is not available yet.
+- Highlights render `CTX_DOC.POLICY_SNIPPET('MN_SEARCH_POLICY', <column>, ?, starttag => '<em>', endtag => '</em>')` over the column text, or over `JSON_VALUE` for a JSON entity. The `MN_SEARCH_POLICY` Oracle Text policy is created by schema generation with the default lexer; create it in your migrations with `CTX_DDL.CREATE_POLICY('MN_SEARCH_POLICY')`, which needs the `CTXAPP` role.

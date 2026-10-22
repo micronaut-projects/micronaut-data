@@ -32,6 +32,7 @@ import io.micronaut.data.model.vector.search.SearchResults;
 import io.micronaut.data.operations.RepositoryOperations;
 import jakarta.persistence.criteria.Expression;
 import jakarta.persistence.criteria.ParameterExpression;
+import jakarta.persistence.criteria.Selection;
 
 import java.util.ArrayList;
 import java.util.List;
@@ -71,7 +72,13 @@ public class SearchQueryInterceptor extends AbstractSpecificationInterceptor<Obj
         ParameterExpression<String> queryParameter = cb.parameter(String.class, null, searchQuery.getQuery());
         Expression<Double> score = cb.searchScore(fields, queryParameter, searchQuery.getMode());
         criteriaQuery.where(cb.textMatch(fields, queryParameter, searchQuery.getMode()));
-        criteriaQuery.multiselect(root, score.alias(TextSearchSupport.SCORE_ALIAS));
+        List<Selection<?>> selections = new ArrayList<>(2 + searchQuery.getHighlightFields().size());
+        selections.add(root);
+        selections.add(score.alias(TextSearchSupport.SCORE_ALIAS));
+        for (String field : searchQuery.getHighlightFields()) {
+            selections.add(cb.searchHighlight(root.get(field), queryParameter, searchQuery.getMode()).alias(TextSearchSupport.highlightAlias(field)));
+        }
+        criteriaQuery.multiselect(selections);
         if (!pageable.getSort().isSorted()) {
             criteriaQuery.orderBy(cb.desc(score));
         }
@@ -97,9 +104,6 @@ public class SearchQueryInterceptor extends AbstractSpecificationInterceptor<Obj
     private static void validate(SearchQuery searchQuery) {
         if (!searchQuery.getBoosts().isEmpty()) {
             throw new UnsupportedSearchFeatureException(SearchCapability.BOOST, OPERATION);
-        }
-        if (!searchQuery.getHighlightFields().isEmpty()) {
-            throw new UnsupportedSearchFeatureException(SearchCapability.HIGHLIGHT, OPERATION);
         }
         if (searchQuery.getLanguage() != null) {
             throw new UnsupportedSearchFeatureException(SearchCapability.LANGUAGE_OVERRIDE, OPERATION);

@@ -31,4 +31,15 @@ class BookService(private val bookRepository: BookRepository) {
         // end::searchQuery[]
         return results.results().map { it.entity().title }
     }
+
+    fun highlightedTitles(query: String): List<String> {
+        // tag::highlight[]
+        val searchQuery = SearchQuery.builder(query)
+            .highlight("title") // <1>
+            .build()
+        val fragments = bookRepository.search(searchQuery)
+            .flatMap { hit -> hit.highlights()["title"] ?: emptyList() } // <2>
+        // end::highlight[]
+        return fragments
+    }
 }
