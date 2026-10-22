@@ -1,0 +1,35 @@
+import io.micronaut.testresources.buildtools.KnownModules
+
+plugins {
+    id "io.micronaut.build.internal.data-kotlin-example"
+    id "io.micronaut.test-resources"
+}
+
+application {
+    mainClass = "example.ApplicationKt"
+}
+
+micronaut {
+    version libs.versions.micronaut.platform.get()
+    runtime "netty"
+    testRuntime "junit5"
+    testResources {
+        inferClasspath = false
+        additionalModules.add(KnownModules.JDBC_POSTGRESQL)
+        clientTimeout = 300
+        version = libs.versions.micronaut.testresources.get()
+    }
+}
+
+dependencies {
+    kapt projects.micronautDataProcessor
+    kapt mnSerde.micronaut.serde.processor
+    implementation mnKotlin.micronaut.kotlin.runtime
+    implementation projects.micronautDataJdbc
+    implementation mnSerde.micronaut.serde.jackson
+    runtimeOnly mnSql.postgresql
+    runtimeOnly mnSql.micronaut.jdbc.hikari
+    runtimeOnly mnLiquibase.micronaut.liquibase
+    runtimeOnly mnLogging.logback.classic
+    testImplementation mn.micronaut.http.client
+}
