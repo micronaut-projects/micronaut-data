@@ -60,6 +60,31 @@ public interface ConnectionOperations<C> {
     <R> R execute(@NonNull ConnectionDefinition definition, @NonNull Function<ConnectionStatus<C>, R> callback);
 
     /**
+     * Executes the callback with a connection supplied by the caller as the current connection.
+     *
+     * <p>Repositories, connection-scoped operations and transactions started inside the callback use the
+     * supplied connection, as they would use a connection opened by these operations. Use it when another
+     * library owns a connection that Micronaut Data should take part in, such as the database connection of
+     * an Oracle AQ JMS session or of an XA resource. A transaction started inside the callback commits or
+     * rolls back the supplied connection; wrap the connection to suppress that when the owner commits.</p>
+     *
+     * <p>The connection is not set up (for example, read-only mode is left as it is) and is never closed:
+     * the caller remains responsible for it.</p>
+     *
+     * @param connection The connection
+     * @param definition The connection definition describing it
+     * @param callback   The call back
+     * @param <R>        The result
+     * @return The result
+     * @since 5.3.0
+     */
+    default <R> R executeWithConnection(@NonNull C connection,
+                                        @NonNull ConnectionDefinition definition,
+                                        @NonNull Function<ConnectionStatus<C>, R> callback) {
+        throw new UnsupportedOperationException(getClass().getName() + " does not support externally supplied connections");
+    }
+
+    /**
      * Execute a read-only connection within the context of the function.
      * NOTE: The connection manager might not support the read only connection!
      *

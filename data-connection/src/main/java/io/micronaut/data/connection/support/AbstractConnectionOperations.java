@@ -118,6 +118,26 @@ public abstract class AbstractConnectionOperations<C> implements ConnectionOpera
         }
     }
 
+    @Override
+    public final <R> R executeWithConnection(@NonNull C connection,
+                                             @NonNull ConnectionDefinition definition,
+                                             @NonNull Function<ConnectionStatus<C>, R> callback) {
+        // Not new: complete() runs the synchronizations but never closes a connection the caller owns
+        DefaultConnectionStatus<C> connectionStatus = new DefaultConnectionStatus<>(connection, definition, false, this);
+        try {
+            if (logger.isDebugEnabled()) {
+                logger.debug("Executing with a supplied connection: [{}]", connectionStatus);
+            }
+            for (ConnectionCustomizer<C> connectionCustomizer : connectionCustomizers) {
+                callback = connectionCustomizer.intercept(callback);
+            }
+            Function<ConnectionStatus<C>, R> finalCallback = callback;
+            return connectionStatus.propagate(() -> finalCallback.apply(connectionStatus));
+        } finally {
+            complete(connectionStatus);
+        }
+    }
+
     @NonNull
     @Override
     public DefaultConnectionStatus<C> getConnection(@NonNull ConnectionDefinition definition) {
