@@ -27,13 +27,22 @@ import java.util.Objects;
  * @param results matched results
  */
 @Experimental
-record DefaultSearchResults<T>(List<SearchResult<T>> results) implements SearchResults<T> {
+record DefaultSearchResults<T>(List<SearchResult<T>> results, long totalHits) implements SearchResults<T> {
+
+    /**
+     * @param results matched results
+     * @param totalHits total number of hits
+     */
+    DefaultSearchResults(List<SearchResult<T>> results, long totalHits) {
+        this.results = List.copyOf(Objects.requireNonNull(results, "results must not be null"));
+        this.totalHits = totalHits;
+    }
 
     /**
      * @param results matched results
      */
     DefaultSearchResults(List<SearchResult<T>> results) {
-        this.results = List.copyOf(Objects.requireNonNull(results, "results must not be null"));
+        this(results, Objects.requireNonNull(results, "results must not be null").size());
     }
 
     @Override

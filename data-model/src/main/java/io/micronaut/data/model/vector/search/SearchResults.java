@@ -16,12 +16,13 @@
 package io.micronaut.data.model.vector.search;
 
 import io.micronaut.core.annotation.Experimental;
+import org.jspecify.annotations.Nullable;
 
 import java.util.Iterator;
 import java.util.List;
 
 /**
- * Iterable wrapper of vector search results with entity and score.
+ * Iterable wrapper of vector or full-text search results with entity and score.
  *
  * @param <T> The entity type
  * @since 5.0.0
@@ -43,6 +44,47 @@ public interface SearchResults<T> extends Iterable<SearchResult<T>> {
      */
     static <T> SearchResults<T> of(List<SearchResult<T>> results) {
         return new DefaultSearchResults<>(results);
+    }
+
+    /**
+     * The total number of hits for the query, which can exceed {@code results().size()} when the
+     * results were limited or paged. Defaults to the number of results.
+     *
+     * @return The total hits
+     * @since 5.4.0
+     */
+    default long totalHits() {
+        return results().size();
+    }
+
+    /**
+     * The highest score among the results, useful to normalize scores that are not comparable
+     * across backends.
+     *
+     * @return The maximum score, or {@code null} when there are no results
+     * @since 5.4.0
+     */
+    default @Nullable Score maxScore() {
+        Score max = null;
+        for (SearchResult<T> result : results()) {
+            if (max == null || result.score().value() > max.value()) {
+                max = result.score();
+            }
+        }
+        return max;
+    }
+
+    /**
+     * Creates an immutable results wrapper with an explicit total.
+     *
+     * @param results The matched results
+     * @param totalHits The total number of hits
+     * @param <T> The entity type
+     * @return Search results wrapper
+     * @since 5.4.0
+     */
+    static <T> SearchResults<T> of(List<SearchResult<T>> results, long totalHits) {
+        return new DefaultSearchResults<>(results, totalHits);
     }
 
     /**
