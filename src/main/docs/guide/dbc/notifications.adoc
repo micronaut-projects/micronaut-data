@@ -58,9 +58,14 @@ The entity reflects database state at reload time. It does not represent a histo
 that produced the notification. Another transaction can change or delete the row before it is loaded.
 If no row is found, `entity()` is empty, even for an insert or update event.
 
-For `DELETE` and `INVALIDATE`, `entity()` is empty. Use the database-specific metadata, when available,
-to identify a deleted row, and refresh the affected application state for an invalidation.
-The Oracle and PostgreSQL sections describe which identifiers are available and how they are used to reload entities.
+For `DELETE`, `entity()` is empty because the row has been removed. Database-specific metadata, when available,
+identifies the deleted row.
+
+For `INVALIDATE`, `entity()` is empty because the event does not describe an individual row. Refresh the affected
+application state, for example by reloading a cache or rerunning a query.
+
+The Oracle and PostgreSQL sections describe the available row identifiers and how Micronaut Data uses them
+to reload entities for `INSERT` and `UPDATE` events.
 
 [[notificationDeliveryAndConcurrency]]
 == Delivery and Concurrency
@@ -71,23 +76,30 @@ as an application cache, against concurrent access and updates arriving in a dif
 processing individual row changes while an `INVALIDATE` callback refreshes the same state.
 The database-specific sections describe any additional ordering rules and work limits.
 
-Notifications describe committed database changes and are not part of the transaction that caused them.
-Rolled-back changes produce no change notifications. Use notifications to refresh application state or maintain
-caches. Micronaut Data change notifications do not provide a complete history of database writes, an event store
-that applications can read or replay, automatic redelivery of failed events, or unique event identifiers for
-detecting duplicates. Oracle's `NTF_QOS_RELIABLE` option can queue notifications during connection interruptions,
-as described in <<oracleQueryNotifications, Oracle Change Notifications>>, but does not provide an application
-replay API. Listener code should tolerate repeated observations and refresh its state when an invalidation
-or an application-specific consistency check requires it.
+Change notifications are delivered only after the database transaction commits. If the transaction is rolled back,
+its changes do not produce notifications. Listener execution is separate from the transaction that made the changes.
 
-Micronaut's blocking executor configuration affects callback concurrency and acceptance. For ongoing subscriptions,
-if the executor rejects a data notification, individual change events can be missed. Micronaut Data then retries
-submitting an `INVALIDATE` event so the listener can refresh its state. Repeated missed notifications are combined
-into one pending invalidation. Submission is retried until accepted or shutdown begins. Changes missed after the
-listener starts processing that invalidation can cause an additional invalidation. This refresh does not replay
-the missed row notifications. If another delivery attempt cannot be scheduled, Micronaut Data logs an error and
-cannot guarantee delivery of the invalidation. Implement `INVALIDATE` handling even if your listener normally
-processes individual rows.
+Use notifications to refresh application state or maintain caches. Micronaut Data change notifications do not provide
+a complete history of database writes, a stored event history that applications can read or replay, automatic redelivery
+after a listener fails, or unique event identifiers for detecting duplicates. Listener code should tolerate repeated
+notifications and refresh its state when it receives `INVALIDATE` or when application checks show that a refresh is needed.
+
+Oracle's `NTF_QOS_RELIABLE` option can queue notifications during connection interruptions, as described in
+<<oracleQueryNotifications, Oracle Change Notifications>>. This database feature does not let applications request
+replay of previously processed notifications.
+
+Micronaut's blocking executor configuration affects how many listener calls can run concurrently and whether
+additional calls can be scheduled. While the application is listening for database changes, individual change
+events can be missed if the executor cannot schedule a listener call. Micronaut Data combines these missed events
+into one pending `INVALIDATE` event so the listener can refresh its state.
+
+Micronaut Data keeps trying to schedule the invalidation callback until the executor accepts it or the application
+begins shutting down. If further events are missed after the listener starts processing the invalidation,
+Micronaut Data will schedule another `INVALIDATE` event. Refreshing state does not replay the missed row events.
+
+If Micronaut Data cannot schedule another attempt to deliver the invalidation, it logs an error and cannot guarantee
+that the listener will receive it. Implement `INVALIDATE` handling even if your listener normally processes
+individual rows.
 
 [[notificationTransactionsAndRetries]]
 == Transactions, Retry, and Recovery
