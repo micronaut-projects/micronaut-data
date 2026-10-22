@@ -23,6 +23,7 @@ class DocumentEmbeddingRepositorySpec extends Specification {
         def reloaded = repository.findById(saved.id).orElse(null)
         def near = repository.findTop2ByEmbeddingNear(vec, 2d)
         def scored = repository.searchByEmbeddingNear(vec, new Score(2d), ScoringFunction.COSINE)
+        def approximate = repository.searchTop5ByEmbeddingNear(vec, 2d)
 
         then:
         saved != null
@@ -34,5 +35,7 @@ class DocumentEmbeddingRepositorySpec extends Specification {
         near.size() == 2
         near*.id.contains(saved.id)
         !scored.results().isEmpty()
+        approximate.results().size() == 3
+        approximate.results()[0].entity().id == saved.id
     }
 }

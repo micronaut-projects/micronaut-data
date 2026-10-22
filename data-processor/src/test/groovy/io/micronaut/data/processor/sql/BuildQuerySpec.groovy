@@ -317,6 +317,77 @@ interface VectorDocRepository extends CrudRepository<VectorDoc, Long> {
             "MYSQL"    | " LIMIT 2"       | "DISTANCE("
     }
 
+    void "test #dialect approximate vector top search"() {
+        given:
+            def repository = buildRepository('test.ApproxVectorDocRepository', """
+import io.micronaut.data.annotation.ApproximateSearch;
+import io.micronaut.data.jdbc.annotation.JdbcRepository;
+import io.micronaut.data.model.query.builder.sql.Dialect;
+import io.micronaut.data.model.vector.FloatVector;
+import io.micronaut.data.model.vector.Vector;
+import io.micronaut.data.model.vector.search.SearchResults;
+import jakarta.persistence.Column;
+
+@MappedEntity
+class ApproxVectorDoc {
+    @Id
+    @GeneratedValue
+    private Long id;
+
+    @Column(length = 3)
+    private FloatVector embedding;
+
+    public Long getId() {
+        return id;
+    }
+
+    public void setId(Long id) {
+        this.id = id;
+    }
+
+    public FloatVector getEmbedding() {
+        return embedding;
+    }
+
+    public void setEmbedding(FloatVector embedding) {
+        this.embedding = embedding;
+    }
+}
+
+@JdbcRepository(dialect = Dialect.${dialect})
+interface ApproxVectorDocRepository extends CrudRepository<ApproxVectorDoc, Long> {
+    @ApproximateSearch
+    SearchResults<ApproxVectorDoc> searchTop2ByEmbeddingNear(Vector vector, Double maxDistance);
+
+    @ApproximateSearch(targetAccuracy = 90)
+    SearchResults<ApproxVectorDoc> searchTop3ByEmbeddingWithin(Vector vector, Double minDistance, Double maxDistance);
+}
+"""
+            )
+
+        when:
+            String query = getQuery(repository.getRequiredMethod(
+                    "searchTop2ByEmbeddingNear",
+                    Class.forName("io.micronaut.data.model.vector.Vector"),
+                    Double
+            ))
+            String accuracyQuery = getQuery(repository.getRequiredMethod(
+                    "searchTop3ByEmbeddingWithin",
+                    Class.forName("io.micronaut.data.model.vector.Vector"),
+                    Double,
+                    Double
+            ))
+
+        then:
+            query.endsWith(limitClause)
+            accuracyQuery.endsWith(accuracyLimitClause)
+
+        where:
+            dialect    | limitClause                         | accuracyLimitClause
+            "ORACLE"   | "FETCH APPROX FIRST 2 ROWS ONLY"    | "FETCH APPROX FIRST 3 ROWS ONLY WITH TARGET ACCURACY 90"
+            "POSTGRES" | " LIMIT 2"                          | " LIMIT 3"
+    }
+
     void "test vector search score projection uses vector parameter for matching predicate"() {
         given:
             def repository = buildRepository('test.VectorDocRepository', """

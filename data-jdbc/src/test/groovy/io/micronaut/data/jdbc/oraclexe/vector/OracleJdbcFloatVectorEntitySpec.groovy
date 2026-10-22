@@ -2,12 +2,14 @@ package io.micronaut.data.jdbc.oraclexe.vector
 
 import io.micronaut.context.ApplicationContext
 import io.micronaut.context.annotation.Parameter
+import io.micronaut.data.annotation.ApproximateSearch
 import io.micronaut.data.annotation.GeneratedValue
 import io.micronaut.data.annotation.Id
 import io.micronaut.data.annotation.MappedEntity
 import io.micronaut.data.annotation.Query
 import io.micronaut.data.jdbc.annotation.JdbcRepository
 import io.micronaut.data.jdbc.oraclexe.OracleTestPropertyProvider
+import io.micronaut.data.model.Limit
 import io.micronaut.data.model.Pageable
 import io.micronaut.data.model.Sort
 import io.micronaut.data.model.vector.Vector
@@ -308,6 +310,24 @@ class OracleJdbcFloatVectorEntitySpec extends Specification implements OracleTes
         Math.abs(exactMatch.similarity().value() - 1.0d) < 1.0e-9d
     }
 
+    void "test approximate vector search"() {
+        given:
+        vectorRepository.deleteAll()
+        [[1f, 0f, 0f], [0.9f, 0.1f, 0f], [0.5f, 0.5f, 0f], [0f, 1f, 0f]].each { v ->
+            vectorRepository.save(new VectorFloatDoc(embedding: Vector.of(v as float[])))
+        }
+        FloatVector q = Vector.of([1f, 0f, 0f] as float[])
+
+        when:
+        SearchResults<VectorFloatDoc> top2 = vectorRepository.searchTop2ByEmbeddingNear(q, 1_000_000d)
+        SearchResults<VectorFloatDoc> limited = vectorRepository.searchByEmbeddingNear(q, 1_000_000d, Limit.of(3, 0))
+
+        then:
+        top2.results().size() == 2
+        top2.results()[0].entity().embedding.toFloatArray().toList() == [1f, 0f, 0f]
+        limited.results().size() == 3
+    }
+
     void "test derived top+order vector queries for near and within"() {
         given:
         vectorRepository.deleteAll()
@@ -448,6 +468,12 @@ interface VectorFloatDocRepository extends PageableRepository<VectorFloatDoc, Lo
     SearchResults<VectorFloatDoc> searchByEmbeddingNear(Vector vector,
                                                           Score maxDistance,
                                                           ScoringFunction function)
+
+    @ApproximateSearch
+    SearchResults<VectorFloatDoc> searchTop2ByEmbeddingNear(Vector vector, Double maxDistance)
+
+    @ApproximateSearch(targetAccuracy = 90)
+    SearchResults<VectorFloatDoc> searchByEmbeddingNear(Vector vector, Double maxDistance, Limit limit)
 
     List<VectorFloatDoc> findTop2ByEmbeddingNearOrderByIdDesc(Vector vector, Double maxDistance)
 

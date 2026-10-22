@@ -40,5 +40,9 @@ class DocumentEmbeddingRepositorySpec {
 
         var scored = repository.searchByEmbeddingNear(vec, new Score(2d), ScoringFunction.COSINE);
         assertFalse(scored.results().isEmpty());
+
+        var approximate = repository.searchTop5ByEmbeddingNear(vec, 2d);
+        assertEquals(3, approximate.results().size());
+        assertEquals(saved.id(), approximate.results().get(0).entity().id());
     }
 }
