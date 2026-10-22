@@ -87,7 +87,9 @@ public interface ConnectionOperations<C> {
      * transaction. Use it when another library owns a connection that Micronaut Data should take part in, such
      * as the database connection of an Oracle AQ JMS session or of an XA resource.</p>
      *
-     * <p>When {@code ownerControlsTransaction} is {@code true}, the owner of the connection controls its
+     * <p>When {@code ownerControlsTransaction} is {@code true}, the connection must not be in auto-commit mode:
+     * with auto-commit on there is no owner transaction to join, so every statement commits as it runs and the
+     * owner cannot roll it back. The owner of the connection controls its
      * transaction, as with an AQ session, an OKafka producer or an XA resource, and transactions started inside
      * the callback join it. They don't change the auto-commit mode or the isolation level, and they don't commit
      * or roll back the connection. A {@code NESTED} transaction uses a savepoint, and {@code REQUIRES_NEW} opens

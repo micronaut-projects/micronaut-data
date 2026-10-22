@@ -92,8 +92,8 @@ public final class HibernateTransactionManager extends AbstractDefaultTransactio
                                                                              TransactionDefinition definition,
                                                                              DefaultConnectionStatus.SuppliedConnection suppliedConnection) {
         // Hibernate writes need a Hibernate transaction, which would commit or roll back the owner's transaction
-        throw new TransactionUsageException("A Hibernate transaction cannot join the transaction of a supplied connection that is not in auto-commit mode."
-            + " Use JDBC repositories on the supplied connection, or supply a connection in auto-commit mode");
+        throw new TransactionUsageException("A Hibernate transaction cannot join the owner's transaction of a supplied connection (ownerControlsTransaction is true)."
+            + " Use JDBC repositories on the supplied connection, or pass false so that the Hibernate transaction controls it");
     }
 
     @Override

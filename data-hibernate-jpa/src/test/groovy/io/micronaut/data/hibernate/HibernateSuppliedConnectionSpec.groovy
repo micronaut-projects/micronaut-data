@@ -77,7 +77,7 @@ class HibernateSuppliedConnectionSpec extends Specification {
 
         then: "nothing was written, and the owner's transaction is left as it was"
         TransactionUsageException e = thrown()
-        e.message.contains("cannot join the transaction of a supplied connection")
+        e.message.contains("cannot join the owner's transaction of a supplied connection")
         countBooks(owner) == before
         !owner.autoCommit
         countCommitted(rawDataSource) == before
