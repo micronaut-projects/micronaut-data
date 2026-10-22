@@ -2,6 +2,7 @@ package io.micronaut.data.model.runtime.convert.vector.impl
 
 import io.micronaut.core.type.Argument
 import io.micronaut.data.model.runtime.convert.DatabaseType
+import io.micronaut.data.model.runtime.convert.DataAccessType
 import io.micronaut.data.model.runtime.convert.DatabaseTypeConversionContext
 import io.micronaut.data.model.runtime.convert.vector.VectorTypeConverter
 import io.micronaut.data.model.vector.FloatVector
@@ -77,6 +78,24 @@ class VectorConverterSelectionSpec extends Specification {
         ex.message.contains("Multiple VectorTypeConverter beans registered for database ORACLE")
     }
 
+    def "selects the converter of the operation's data access type when JDBC and R2DBC converters are registered"() {
+        given:
+        def conv = new DefaultFloatVectorAttributeConverter([new OracleJdbcFloatConverter(), new OracleR2dbcFloatConverter()])
+        def jdbc = Stub(DatabaseTypeConversionContext) {
+            getDatabaseType() >> DatabaseType.ORACLE
+            getDataAccessType() >> DataAccessType.JDBC
+        }
+        def r2dbc = Stub(DatabaseTypeConversionContext) {
+            getDatabaseType() >> DatabaseType.ORACLE
+            getDataAccessType() >> DataAccessType.R2DBC
+        }
+        def vector = (FloatVector) Vector.of([1f, 2f] as float[])
+
+        expect:
+        conv.convertToPersistedValue(vector, jdbc) == "jdbc"
+        conv.convertToPersistedValue(vector, r2dbc) == "r2dbc"
+    }
+
     def "selects sparse converter for sparse vectors when both postgres converters are registered"() {
         given:
         def conv = new DefaultVectorAttributeConverter([new PostgresDenseConverter(), new PostgresSparseConverter()])
@@ -133,6 +152,30 @@ class VectorConverterSelectionSpec extends Specification {
     }
 
     private static final class OracleFloatConverterDuplicate extends OracleFloatConverter {
+    }
+
+    private static final class OracleJdbcFloatConverter extends OracleFloatConverter {
+        @Override
+        Object convert(Vector vector) {
+            return "jdbc"
+        }
+
+        @Override
+        DataAccessType dataAccessType() {
+            return DataAccessType.JDBC
+        }
+    }
+
+    private static final class OracleR2dbcFloatConverter extends OracleFloatConverter {
+        @Override
+        Object convert(Vector vector) {
+            return "r2dbc"
+        }
+
+        @Override
+        DataAccessType dataAccessType() {
+            return DataAccessType.R2DBC
+        }
     }
 
     private static class PostgresDenseConverter implements VectorTypeConverter<String> {

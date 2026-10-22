@@ -17,6 +17,7 @@ package io.micronaut.data.jdbc.convert.vendor;
 
 import io.micronaut.core.annotation.Internal;
 import io.micronaut.core.convert.ConversionService;
+import io.micronaut.data.model.runtime.convert.DataAccessType;
 import io.micronaut.data.model.runtime.convert.vector.VectorTypeConverter;
 import io.micronaut.data.model.vector.Vector;
 
@@ -66,5 +67,10 @@ abstract class AbstractJdbcVectorConverter<T> implements VectorTypeConverter<T> 
                 .orElseThrow(() -> new IllegalArgumentException("Conversion service cannot convert " + object.getClass().getName() + " to " + targetType.getName()));
         }
         throw new IllegalArgumentException(databaseType() + " does not support " + targetType.getName());
+    }
+
+    @Override
+    public DataAccessType dataAccessType() {
+        return DataAccessType.JDBC;
     }
 }

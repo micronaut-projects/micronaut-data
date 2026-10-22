@@ -21,6 +21,7 @@ import io.micronaut.core.annotation.Internal;
 import io.micronaut.core.convert.ArgumentConversionContext;
 import io.micronaut.core.convert.ConversionContext;
 import io.micronaut.core.type.Argument;
+import io.micronaut.data.model.runtime.convert.DataAccessType;
 import io.micronaut.data.model.runtime.convert.DatabaseType;
 import io.micronaut.data.model.runtime.convert.DatabaseTypeConversionContext;
 import io.micronaut.data.r2dbc.config.DataR2dbcConfiguration;
@@ -80,6 +81,14 @@ final class R2dbcDatabaseConversionContextFactory implements DatabaseConversionC
         @Override
         public DatabaseType getDatabaseType() {
             return databaseType;
+        }
+
+        /**
+         * @return the driver API of this module
+         */
+        @Override
+        public DataAccessType getDataAccessType() {
+            return DataAccessType.R2DBC;
         }
 
         /**

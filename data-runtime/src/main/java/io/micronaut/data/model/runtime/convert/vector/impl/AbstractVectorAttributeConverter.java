@@ -21,6 +21,7 @@ import io.micronaut.core.annotation.Internal;
 import io.micronaut.core.convert.ConversionContext;
 import io.micronaut.data.annotation.VectorShape;
 import io.micronaut.data.annotation.VectorStorage;
+import io.micronaut.data.model.runtime.convert.DataAccessType;
 import io.micronaut.data.model.runtime.convert.DatabaseType;
 import io.micronaut.data.model.runtime.convert.DatabaseTypeConversionContext;
 import io.micronaut.data.model.runtime.convert.SqlColumnDefinitionProvider;
@@ -86,7 +87,7 @@ abstract sealed class AbstractVectorAttributeConverter<X extends Vector, Y> impl
             return null;
         }
         final DatabaseType databaseType = extractDatabaseType(context);
-        VectorTypeConverter<?> vectorTypeConverter = databaseType != null ? selectWriteConverter(databaseType, entityValue) : null;
+        VectorTypeConverter<?> vectorTypeConverter = databaseType != null ? selectWriteConverter(databaseType, extractDataAccessType(context), entityValue) : null;
         if (vectorTypeConverter != null) {
             @SuppressWarnings("unchecked")
             Y result = (Y) vectorTypeConverter.convert(entityValue);
@@ -101,7 +102,7 @@ abstract sealed class AbstractVectorAttributeConverter<X extends Vector, Y> impl
             return null;
         }
         final DatabaseType databaseType = extractDatabaseType(context);
-        VectorTypeConverter<Y> vectorTypeConverter = databaseType != null ? (VectorTypeConverter<Y>) selectReadConverter(databaseType, persistedValue, type) : null;
+        VectorTypeConverter<Y> vectorTypeConverter = databaseType != null ? (VectorTypeConverter<Y>) selectReadConverter(databaseType, extractDataAccessType(context), persistedValue, type) : null;
         if (vectorTypeConverter != null) {
             @SuppressWarnings("unchecked")
             X result = (X) vectorTypeConverter.convert(persistedValue, (Class<Vector>) type);
@@ -115,7 +116,7 @@ abstract sealed class AbstractVectorAttributeConverter<X extends Vector, Y> impl
                                            ResultReader<R, I> reader,
                                            R resultSet,
                                            I columnName) {
-        VectorTypeConverter<?> vectorTypeConverter = selectResultSetReadConverter(conversionContext.getDatabaseType(), type);
+        VectorTypeConverter<?> vectorTypeConverter = selectResultSetReadConverter(conversionContext.getDatabaseType(), conversionContext.getDataAccessType(), type);
         if (vectorTypeConverter != null) {
             Object value = reader.getRequiredValue(resultSet, columnName, vectorTypeConverter.getPersistedType());
             if (value == null) {
@@ -128,6 +129,13 @@ abstract sealed class AbstractVectorAttributeConverter<X extends Vector, Y> impl
         throw new IllegalArgumentException("Vectors aren't supported for the database " + conversionContext.getDatabaseType());
     }
 
+    private static @Nullable DataAccessType extractDataAccessType(ConversionContext context) {
+        if (context instanceof DatabaseTypeConversionContext databaseTypeConversionContext) {
+            return databaseTypeConversionContext.getDataAccessType();
+        }
+        return null;
+    }
+
     protected static @Nullable DatabaseType extractDatabaseType(ConversionContext context) {
         if (context instanceof DatabaseTypeConversionContext databaseTypeConversionContext) {
             return databaseTypeConversionContext.getDatabaseType();
@@ -137,6 +145,10 @@ abstract sealed class AbstractVectorAttributeConverter<X extends Vector, Y> impl
 
     private static boolean isConflicting(VectorTypeConverter<?> existing, VectorTypeConverter<?> candidate) {
         if (existing.isSparseSupported() != candidate.isSparseSupported()) {
+            return false;
+        }
+        if (existing.dataAccessType() != null && candidate.dataAccessType() != null
+            && existing.dataAccessType() != candidate.dataAccessType()) {
             return false;
         }
         if (!existing.getPersistedType().equals(candidate.getPersistedType())) {
@@ -152,32 +164,38 @@ abstract sealed class AbstractVectorAttributeConverter<X extends Vector, Y> impl
         return false;
     }
 
-    private @Nullable VectorTypeConverter<?> selectWriteConverter(DatabaseType databaseType, Vector entityValue) {
+    private @Nullable VectorTypeConverter<?> selectWriteConverter(DatabaseType databaseType, @Nullable DataAccessType dataAccessType, Vector entityValue) {
         List<VectorTypeConverter<?>> converters = converterMap.get(databaseType);
         if (converters == null || converters.isEmpty()) {
             return null;
         }
         boolean sparseValue = entityValue instanceof SparseVector;
-        return selectConverter(converters, converter -> supportsVectorType(converter, entityValue.getClass()), sparseValue);
+        return selectConverter(converters, converter -> matchesDataAccessType(converter, dataAccessType)
+            && supportsVectorType(converter, entityValue.getClass()), sparseValue);
     }
 
-    private @Nullable VectorTypeConverter<?> selectReadConverter(DatabaseType databaseType, Object persistedValue, Class<? extends Vector> targetType) {
+    private @Nullable VectorTypeConverter<?> selectReadConverter(DatabaseType databaseType, @Nullable DataAccessType dataAccessType, Object persistedValue, Class<? extends Vector> targetType) {
         List<VectorTypeConverter<?>> converters = converterMap.get(databaseType);
         if (converters == null || converters.isEmpty()) {
             return null;
         }
         boolean sparseTarget = SparseVector.class.isAssignableFrom(targetType);
-        return selectConverter(converters, converter ->
-            converter.getPersistedType().isInstance(persistedValue) && supportsVectorType(converter, targetType), sparseTarget);
+        return selectConverter(converters, converter -> matchesDataAccessType(converter, dataAccessType)
+            && converter.getPersistedType().isInstance(persistedValue) && supportsVectorType(converter, targetType), sparseTarget);
     }
 
-    private @Nullable VectorTypeConverter<?> selectResultSetReadConverter(DatabaseType databaseType, Class<? extends Vector> targetType) {
+    private @Nullable VectorTypeConverter<?> selectResultSetReadConverter(DatabaseType databaseType, @Nullable DataAccessType dataAccessType, Class<? extends Vector> targetType) {
         List<VectorTypeConverter<?>> converters = converterMap.get(databaseType);
         if (converters == null || converters.isEmpty()) {
             return null;
         }
         boolean sparseTarget = SparseVector.class.isAssignableFrom(targetType);
-        return selectConverter(converters, converter -> supportsVectorType(converter, targetType), sparseTarget);
+        return selectConverter(converters, converter -> matchesDataAccessType(converter, dataAccessType)
+            && supportsVectorType(converter, targetType), sparseTarget);
+    }
+
+    private static boolean matchesDataAccessType(VectorTypeConverter<?> converter, @Nullable DataAccessType dataAccessType) {
+        return dataAccessType == null || converter.dataAccessType() == null || converter.dataAccessType() == dataAccessType;
     }
 
     private static @Nullable VectorTypeConverter<?> selectConverter(List<VectorTypeConverter<?>> converters,
