@@ -149,3 +149,16 @@ You can control the values of `ACTION`, `MODULE`, `CLIENTID` and `CLIENT_INFO` w
 
 TIP: See the guide for https://guides.micronaut.io/latest/micronaut-data-jdbc-repository.html[Access a Database with Micronaut Data JDBC] to learn more.
 
+
+=== Request boundaries
+
+Set `datasources.<datasource-name>.request-boundaries=true` to mark a request boundary around each connection that Micronaut Data opens, with the JDBC `Connection.beginRequest()` and `Connection.endRequest()` methods. A connection reused by a nested operation stays in the request of the scope that opened it.
+
+[configuration]
+----
+datasources:
+  default:
+    request-boundaries: true
+----
+
+Request boundaries tell the driver where a unit of work starts and ends. Oracle uses them for Transparent Application Continuity, to reset the session state when a request ends (`RESET_STATE`), and to release a Database Resident Connection Pooling (DRCP) server between requests. For a DRCP-enabled Oracle connection, Micronaut Data also attaches the pooled server at the start of the request and releases it at the end, which DRCP needs with connection pools other than Oracle UCP. Oracle UCP marks request boundaries itself, and nested boundaries are ignored, so the setting is harmless with UCP.
