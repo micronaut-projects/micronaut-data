@@ -29,6 +29,7 @@ import io.micronaut.transaction.support.TransactionUtil;
 import io.r2dbc.spi.Connection;
 import io.r2dbc.spi.ConnectionFactory;
 import io.r2dbc.spi.IsolationLevel;
+import io.r2dbc.spi.Option;
 import io.r2dbc.spi.R2dbcException;
 import jakarta.inject.Inject;
 import org.jspecify.annotations.Nullable;
@@ -42,6 +43,7 @@ import java.util.ArrayList;
 import java.util.Collections;
 import java.util.IdentityHashMap;
 import java.util.List;
+import java.util.Locale;
 import java.util.Set;
 
 /**
@@ -56,6 +58,16 @@ import java.util.Set;
 final class DefaultR2dbcReactorTransactionOperations extends AbstractReactorTransactionOperations<Connection> implements R2dbcReactorTransactionOperations {
 
     private static final Logger LOG = LoggerFactory.getLogger(DefaultR2dbcReactorTransactionOperations.class);
+    /**
+     * Only read-only: Oracle R2DBC rejects a definition with both an isolation level and read-only, and the
+     * isolation level is set on the connection before the transaction begins.
+     */
+    private static final io.r2dbc.spi.TransactionDefinition READ_ONLY_TRANSACTION = new io.r2dbc.spi.TransactionDefinition() {
+        @Override
+        public <T> @Nullable T getAttribute(Option<T> option) {
+            return io.r2dbc.spi.TransactionDefinition.READ_ONLY.equals(option) ? option.cast(Boolean.TRUE) : null;
+        }
+    };
     private final String dataSourceName;
     private final List<ReactiveTransactionExecutionListener<Connection>> transactionExecutionListeners;
 
@@ -101,11 +113,32 @@ final class DefaultR2dbcReactorTransactionOperations extends AbstractReactorTran
             result = result.thenMany(Flux.defer(() -> transactionExecutionListener.beforeBegin(connectionStatus, definition)));
         }
         // Deferred: some drivers (e.g. Oracle R2DBC) read the isolation level when beginTransaction is called
-        result = result.thenMany(Flux.defer(connection::beginTransaction));
+        if (definition.isReadOnly().orElse(false) && supportsReadOnlyTransactions(connection)) {
+            if (LOG.isDebugEnabled()) {
+                LOG.debug("Beginning a read-only transaction: {} for dataSource: {}", definition.getName(), dataSourceName);
+            }
+            result = result.thenMany(Flux.defer(() -> connection.beginTransaction(READ_ONLY_TRANSACTION)));
+        } else {
+            result = result.thenMany(Flux.defer(connection::beginTransaction));
+        }
         for (ReactiveTransactionExecutionListener<Connection> transactionExecutionListener : transactionExecutionListeners) {
             result = result.thenMany(Flux.defer(() -> transactionExecutionListener.afterBegin(connectionStatus, definition)));
         }
         return result;
+    }
+
+    /**
+     * Whether the driver begins read-only transactions: Oracle R2DBC runs {@code SET TRANSACTION READ ONLY} and
+     * R2DBC PostgreSQL {@code BEGIN READ ONLY}. Other drivers may reject the attribute, so they begin an ordinary
+     * transaction, as before.
+     */
+    private static boolean supportsReadOnlyTransactions(Connection connection) {
+        String productName = connection.getMetadata().getDatabaseProductName();
+        if (productName == null) {
+            return false;
+        }
+        String name = productName.toLowerCase(Locale.ROOT);
+        return name.contains("oracle") || name.contains("postgres");
     }
 
     @Override

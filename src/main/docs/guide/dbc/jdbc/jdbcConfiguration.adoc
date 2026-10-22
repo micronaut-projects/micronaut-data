@@ -114,7 +114,31 @@ The effect of the read-only flag depends on the driver:
 
 Read-only connections are also used by some drivers and proxies (for example, the AWS Advanced JDBC Wrapper) and routing data sources to send queries to read replicas. Use explicit read-only transactions or `read-only-connection-per-operation` to keep that routing for non-transactional reads.
 
-This applies to Micronaut Data JDBC. Micronaut Data R2DBC does not set a read-only flag on its connections.
+==== Oracle True Cache
+
+https://docs.oracle.com/en/database/oracle/oracle-database/26/odbtc/[Oracle True Cache] is a read-only, in-memory cache of a primary database. With the `oracle.jdbc.useTrueCacheDriverConnection` connection property, the Oracle JDBC driver sends the work of a read-only connection to the True Cache and the rest to the primary database. Micronaut Data marks a connection read-only only when you ask for it, so True Cache serves:
+
+- read-only transactions: `@Transactional(readOnly = true)`, `@ReadOnly` or `executeRead` on api:transaction.TransactionOperations[]
+- read-only connection scopes: `@Connectable(readOnly = true)` or `executeRead` on api:data.connection.ConnectionOperations[]
+- every read outside a transaction, when `read-only-connection-per-operation` is enabled
+
+[configuration]
+----
+datasources:
+  default:
+    url: jdbc:oracle:thin:@primary-host:1521/sales
+    read-only-connection-per-operation: true
+    data-source-properties:
+      oracle.jdbc.useTrueCacheDriverConnection: true
+----
+
+`data-source-properties` passes the property with Hikari; with other pools, use their connection properties, for example `connection-properties: oracle.jdbc.useTrueCacheDriverConnection=true` with Tomcat JDBC. The driver uses Oracle UCP for True Cache connections, so `com.oracle.database.jdbc:ucp11` (or `ucp17`) must be on the classpath whatever the connection pool. The database service must have a True Cache: otherwise every connection fails with `ORA-18720: True Cache service is not configured on the database`.
+
+True Cache can return slightly stale data, so keep reads that must see the latest writes in read-write transactions.
+
+==== R2DBC
+
+Micronaut Data R2DBC begins read-only transactions (`@Transactional(readOnly = true)` and `executeRead`) as read-only transactions with Oracle R2DBC (`SET TRANSACTION READ ONLY`) and R2DBC PostgreSQL (`BEGIN READ ONLY`), so writes in them fail. With other drivers, read-only transactions begin as ordinary transactions. R2DBC connections outside a transaction are not marked read-only, and Oracle True Cache routing requires JDBC.
 
 === Tracing calls from Java to Oracle Database sessions
 
