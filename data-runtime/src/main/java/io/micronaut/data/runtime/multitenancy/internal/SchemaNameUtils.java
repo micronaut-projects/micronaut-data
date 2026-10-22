@@ -61,4 +61,30 @@ public final class SchemaNameUtils {
             default -> "\"" + name.replace("\"", "\"\"") + "\"";
         };
     }
+
+    /**
+     * Builds the Oracle statement that creates a schema. An Oracle schema is a user, so the
+     * statement creates a user without credentials ({@code NO AUTHENTICATION}) and grants it
+     * quota on the database default tablespace. An existing user (ORA-01920) is accepted, so
+     * the statement can run on every startup.
+     *
+     * @param name The logical schema name
+     * @return The PL/SQL block creating the schema
+     * @throws IllegalArgumentException If the name is null, empty, or contains a NUL character
+     */
+    public static String oracleCreateSchemaStatement(String name) {
+        String identifier = render(Dialect.ORACLE, name).replace("'", "''");
+        return """
+            DECLARE
+              ts VARCHAR2(128);
+            BEGIN
+              SELECT property_value INTO ts FROM database_properties WHERE property_name = 'DEFAULT_PERMANENT_TABLESPACE';
+              EXECUTE IMMEDIATE 'CREATE USER %s NO AUTHENTICATION QUOTA UNLIMITED ON ' || DBMS_ASSERT.ENQUOTE_NAME(ts, FALSE);
+            EXCEPTION
+              WHEN OTHERS THEN
+                IF SQLCODE != -1920 THEN
+                  RAISE;
+                END IF;
+            END;""".formatted(identifier);
+    }
 }

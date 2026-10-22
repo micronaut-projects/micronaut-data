@@ -19,7 +19,9 @@ import io.micronaut.data.model.query.builder.sql.Dialect;
 import org.junit.jupiter.api.Test;
 
 import static org.junit.jupiter.api.Assertions.assertEquals;
+import static org.junit.jupiter.api.Assertions.assertFalse;
 import static org.junit.jupiter.api.Assertions.assertThrows;
+import static org.junit.jupiter.api.Assertions.assertTrue;
 
 class SchemaNameUtilsTest {
 
@@ -71,5 +73,21 @@ class SchemaNameUtilsTest {
         assertThrows(IllegalArgumentException.class, () -> SchemaNameUtils.render(Dialect.H2, null));
         assertThrows(IllegalArgumentException.class, () -> SchemaNameUtils.render(Dialect.H2, ""));
         assertThrows(IllegalArgumentException.class, () -> SchemaNameUtils.render(Dialect.H2, "tenant\u0000a"));
+    }
+
+    @Test
+    void oracleCreateSchemaCreatesAUserWithQuota() {
+        String sql = SchemaNameUtils.oracleCreateSchemaStatement("tenant_1");
+
+        assertTrue(sql.contains("EXECUTE IMMEDIATE 'CREATE USER tenant_1 NO AUTHENTICATION QUOTA UNLIMITED ON '"));
+        assertTrue(sql.contains("IF SQLCODE != -1920 THEN"));
+        assertFalse(sql.contains("CREATE DATABASE"));
+    }
+
+    @Test
+    void oracleCreateSchemaEscapesTheIdentifierInsideTheLiteral() {
+        String sql = SchemaNameUtils.oracleCreateSchemaStatement("tenant'a");
+
+        assertTrue(sql.contains("'CREATE USER \"TENANT''A\" NO AUTHENTICATION"));
     }
 }
