@@ -26,6 +26,7 @@ dependencies {
     compileOnly projects.micronautDataProcessor
 
     implementation projects.micronautDataJdbc
+    implementation(mnSql.jakarta.persistence.api)
 
     runtimeOnly mnSql.postgresql
     runtimeOnly mnSql.micronaut.jdbc.hikari
