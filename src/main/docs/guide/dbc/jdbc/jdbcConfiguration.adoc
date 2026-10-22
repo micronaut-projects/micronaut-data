@@ -116,6 +116,12 @@ Read-only connections are also used by some drivers and proxies (for example, th
 
 This applies to Micronaut Data JDBC. Micronaut Data R2DBC does not set a read-only flag on its connections.
 
+=== Batch inserts with generated identifiers
+
+`saveAll` and `insertAll` insert their entities with one JDBC batch when the dialect and driver can return the generated identifier of every row. Otherwise, each entity is inserted with its own statement.
+
+With Oracle, entities with a generated identifier, such as the default `@GeneratedValue` sequence, are inserted with one batch when the Oracle JDBC driver is version 23 or later, which returns the generated keys of a batch. With an older driver, each entity is inserted with its own statement. Entities with an assigned identifier are always batched.
+
 === Tracing calls from Java to Oracle Database sessions
 
 Specify the configuration property `datasources.<datasource-name>.enable-oracle-client-info=true` on a per datasource basis to link database sessions with Java thread activity. By default, this will set:
