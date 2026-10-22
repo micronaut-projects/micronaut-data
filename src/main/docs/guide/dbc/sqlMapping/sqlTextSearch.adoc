@@ -54,6 +54,20 @@ On Oracle the same keywords render `CONTAINS` queries: `{a} | {b}`, `{a} & {b}`,
 
 Methods that return `List`, `Page` or a DTO filter by the search without projecting a score. A sort parameter or a `Pageable` replaces the relevance order.
 
+== Programmatic queries
+
+When the fields or the match mode are only known at runtime, build a api:data.model.search.SearchQuery[] and pass it to `search`:
+
+snippet::example.BookService[project-base="doc-examples/jdbc-search-example", source="main", tags="searchQuery"]
+
+<1> The search string, in the same grammar as `search(String)`.
+<2> `fields` restricts the search to some of the `@SearchField` properties; without it every search field is searched.
+<3> `mode` selects how the terms match: `ANY` (the default), `ALL`, `PHRASE`, `PREFIX` or `FUZZY`, like the `Search`, `SearchAll`, `SearchPhrase`, `SearchPrefix` and `SearchFuzzy` keywords.
+<4> `search(SearchQuery)` returns the hits ordered by relevance.
+<5> `search(SearchQuery, Pageable)` returns one page; a sort on the pageable replaces the relevance order.
+
+`minScore` drops the hits whose score is below the threshold; it is applied to the retrieved page, so a paged result may hold fewer entities than the page size. A query is compiled at runtime through the same criteria API as a derived method, so a store that lacks the requested mode throws api:data.model.search.UnsupportedSearchFeatureException[] when the method runs rather than at compile time. Query-time boosts, highlighting and a language override are not supported by `search(SearchQuery)` yet and throw the same exception.
+
 == Criteria API
 
 The criteria builder exposes the same predicate through `PersistentEntityCriteriaBuilder.textMatch(field, query, MatchMode)` and the score through `searchScore(fields, query, MatchMode)`, so a api:data.repository.jpa.criteria.PredicateSpecification[] can combine a text match with any other restriction.
@@ -62,7 +76,7 @@ The criteria builder exposes the same predicate through `PersistentEntityCriteri
 
 - Queries render `to_tsvector('<language>', <column>) @@ to_tsquery('<language>', ?)` and rank with `ts_rank_cd`; several fields are concatenated with `||`, wrapped in `coalesce` and `setweight` as declared.
 - The query parameter is converted to `tsquery` syntax by a parameter converter chosen for the keyword, so the SQL stays the same for every search string.
-- Fuzzy matching is not available. Highlighting, query-time boosts and the programmatic `SearchQuery` are not yet implemented for PostgreSQL.
+- Fuzzy matching is not available. Highlighting and query-time boosts are not yet implemented for PostgreSQL.
 - Stemming follows the text search configuration named by `@Searchable(language)`; use `simple` to disable it.
 
 == Oracle notes

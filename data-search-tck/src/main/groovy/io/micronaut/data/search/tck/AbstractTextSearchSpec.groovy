@@ -3,7 +3,10 @@ package io.micronaut.data.search.tck
 import io.micronaut.context.ApplicationContext
 import io.micronaut.data.model.Pageable
 import io.micronaut.data.model.Sort
+import io.micronaut.data.model.search.MatchMode
 import io.micronaut.data.model.search.SearchCapability
+import io.micronaut.data.model.search.SearchQuery
+import io.micronaut.data.model.search.UnsupportedSearchFeatureException
 import io.micronaut.data.search.tck.entities.Book
 import io.micronaut.data.search.tck.repositories.BookPhraseSearchRepository
 import io.micronaut.data.search.tck.repositories.BookPrefixSearchRepository
@@ -172,5 +175,79 @@ abstract class AbstractTextSearchSpec extends Specification {
         bookSearchRepository.findBySearchAndAuthor("programming", "Nobody").isEmpty()
         bookSearchRepository.findByTitleSearchAndPagesGreaterThan("programming", 500)*.title == ["The Rust Programming Language"]
         bookSearchRepository.findBySearchOrderByPages("programming OR java")*.title == ["Java Concurrency in Practice", "Programming Kotlin", "The Rust Programming Language"]
+    }
+
+    void "search with a SearchQuery searches every field ordered by relevance"() {
+        when:
+        def results = bookSearchRepository.search(SearchQuery.of("programming"))
+
+        then:
+        results.results()*.entity()*.title as Set == ["The Rust Programming Language", "Programming Kotlin"] as Set
+        results.totalHits() == 2
+        results.results().every { it.score().value() > 0 }
+        results.results()[0].score().value() >= results.results()[1].score().value()
+        results.results()[0].entity().title == "The Rust Programming Language"
+        bookSearchRepository.search(SearchQuery.of("nothingmatchesthis")).results().isEmpty()
+    }
+
+    void "search with a SearchQuery restricts the fields and the match mode"() {
+        assumeTrue(capabilities().contains(SearchCapability.FIELD_SCOPE))
+
+        expect:
+        // 'systems' only appears in the description
+        bookSearchRepository.search(SearchQuery.builder("systems").fields("title").build()).results().isEmpty()
+        bookSearchRepository.search(SearchQuery.builder("systems").fields("description").build()).results()*.entity()*.title == ["The Rust Programming Language"]
+        bookSearchRepository.search(SearchQuery.builder("programming language").mode(MatchMode.ALL).build()).results()*.entity()*.title == ["The Rust Programming Language"]
+        bookSearchRepository.search(SearchQuery.builder("programming coffee").mode(MatchMode.ALL).build()).results().isEmpty()
+    }
+
+    void "search with a SearchQuery honours the phrase and prefix modes"() {
+        expect:
+        !capabilities().contains(SearchCapability.PHRASE) ||
+            bookSearchRepository.search(SearchQuery.builder("coffee beans").mode(MatchMode.PHRASE).build()).results()*.entity()*.title == ["Cooking with Coffee"]
+        !capabilities().contains(SearchCapability.PHRASE) ||
+            bookSearchRepository.search(SearchQuery.builder("beans coffee").mode(MatchMode.PHRASE).build()).results().isEmpty()
+        !capabilities().contains(SearchCapability.PREFIX) ||
+            bookSearchRepository.search(SearchQuery.builder("kot").mode(MatchMode.PREFIX).build()).results()*.entity()*.title == ["Programming Kotlin"]
+    }
+
+    void "search with a SearchQuery and a pageable limits the results"() {
+        when:
+        def page = bookSearchRepository.search(SearchQuery.of("programming OR java OR coffee"), Pageable.from(0, 2, Sort.of(Sort.Order.asc("title"))))
+
+        then:
+        page.results().size() == 2
+        page.results()*.entity()*.title == ["Cooking with Coffee", "Java Concurrency in Practice"]
+
+        when:
+        def best = bookSearchRepository.search(SearchQuery.of("programming OR java OR coffee"), Pageable.from(0, 1))
+
+        then:
+        best.results().size() == 1
+        best.results()[0].score().value() > 0
+    }
+
+    void "search with a SearchQuery drops hits below the minimum score"() {
+        given:
+        def all = bookSearchRepository.search(SearchQuery.of("programming"))
+        def top = all.results()[0].score().value()
+
+        expect:
+        bookSearchRepository.search(SearchQuery.builder("programming").minScore(top).build()).results()*.entity()*.title == ["The Rust Programming Language"]
+        bookSearchRepository.search(SearchQuery.builder("programming").minScore(top * 10 + 1).build()).results().isEmpty()
+    }
+
+    void "search with a SearchQuery rejects options the operation cannot honour"() {
+        when:
+        bookSearchRepository.search(SearchQuery.builder("programming").boost("title", 2).build())
+
+        then:
+        thrown(UnsupportedSearchFeatureException)
+
+        when:
+        bookSearchRepository.search(SearchQuery.builder("programming").highlight("title").build())
+
+        then:
+        thrown(UnsupportedSearchFeatureException)
     }
 }

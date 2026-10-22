@@ -21,6 +21,7 @@ import io.micronaut.data.annotation.Join;
 import io.micronaut.data.intercept.annotation.DataMethod;
 import io.micronaut.data.model.jpa.criteria.PersistentEntityCriteriaBuilder;
 import io.micronaut.data.model.jpa.criteria.PersistentEntityCriteriaQuery;
+import io.micronaut.data.model.search.SearchQuery;
 import io.micronaut.data.model.search.TextSearchSupport;
 import io.micronaut.data.model.vector.search.SearchResults;
 import io.micronaut.data.processor.visitors.MethodMatchContext;
@@ -37,6 +38,8 @@ import java.util.List;
  * Matches the {@link SearchRepository} methods {@code search(String)}, {@code search(String, Pageable)}
  * and {@code countHits(String)}, implementing them as if they were named {@code searchBySearch} and
  * {@code countBySearch}: a text match over every {@code @SearchField} property ordered by relevance.
+ * {@code search(SearchQuery)} and {@code search(SearchQuery, Pageable)} build their query at runtime
+ * through {@code SearchQueryInterceptor}.
  *
  * @since 5.4.0
  */
@@ -45,6 +48,7 @@ public final class SearchRepositoryMethodMatcher implements MethodMatcher {
 
     private static final String SEARCH = "search";
     private static final String COUNT_HITS = "countHits";
+    private static final String SEARCH_QUERY_INTERCEPTOR = "io.micronaut.data.runtime.intercept.criteria.SearchQueryInterceptor";
 
     @Override
     public int getOrder() {
@@ -59,7 +63,11 @@ public final class SearchRepositoryMethodMatcher implements MethodMatcher {
             return null;
         }
         List<ParameterElement> parameters = matchContext.getParametersNotInRole();
-        if (parameters.size() != 1 || !parameters.get(0).getType().isAssignable(String.class)) {
+        if (parameters.size() != 1) {
+            return null;
+        }
+        boolean searchQuery = parameters.get(0).getType().isAssignable(SearchQuery.class);
+        if (!searchQuery && !parameters.get(0).getType().isAssignable(String.class)) {
             return null;
         }
         if (!matchContext.hasRootEntity()) {
@@ -73,12 +81,23 @@ public final class SearchRepositoryMethodMatcher implements MethodMatcher {
             if (!returnType.getName().equals(SearchResults.class.getName())) {
                 return null;
             }
+            if (searchQuery) {
+                if (TypeUtils.isReactiveOrFuture(matchContext.getReturnType())) {
+                    throw new ProcessingException(matchContext.getMethodElement(), "search(SearchQuery) only supports a blocking SearchResults return type");
+                }
+                ClassElement resultType = returnType;
+                return mc -> new MethodMatchInfo(
+                    DataMethod.OperationType.QUERY,
+                    resultType,
+                    FindersUtils.getInterceptorElement(matchContext, SEARCH_QUERY_INTERCEPTOR)
+                );
+            }
             return new QueryCriteriaMethodMatch(List.of(
                 new MethodNameParser.Match(QueryMatchId.PREFIX, SEARCH),
                 new MethodNameParser.Match(QueryMatchId.PREDICATE, TextSearchSupport.KEYWORD)
             ));
         }
-        if (!TypeUtils.isValidCountReturnType(matchContext)) {
+        if (searchQuery || !TypeUtils.isValidCountReturnType(matchContext)) {
             return null;
         }
         return new QueryCriteriaMethodMatch(List.of(

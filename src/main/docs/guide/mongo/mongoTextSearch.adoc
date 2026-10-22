@@ -30,6 +30,8 @@ snippet::example.BookService[project-base="doc-examples/mongo-search-example", s
 
 The search string is translated to MongoDB's `$search` syntax at bind time: any term matches by default, quoted phrases are required, `-` excludes a term, and `OR` groups are flattened because MongoDB already matches any term. `SearchAll` quotes every term, which makes MongoDB require all of them; it cannot be combined with `OR`.
 
+A api:data.model.search.SearchQuery[] passed to `search(SearchQuery)` runs the same `$text` aggregation at runtime, as described in the <<sqlTextSearch, SQL full-text search section>>; its `fields` are ignored because `$text` always searches the whole index, and the `PREFIX` and `FUZZY` modes fail when the method runs.
+
 == Limitations
 
 |===
