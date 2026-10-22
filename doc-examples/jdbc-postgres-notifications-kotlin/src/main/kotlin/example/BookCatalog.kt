@@ -15,6 +15,7 @@ import java.util.Optional
 // tag::listener[]
 @Singleton
 open class BookCatalog(private val repository: BookRepository) {
+    // end::listener[]
     private val books = HashMap<Long, Book>()
 
     @EventListener
@@ -24,6 +25,7 @@ open class BookCatalog(private val repository: BookRepository) {
         refresh()
     }
 
+    // tag::listener[]
     // tag::events[]
     // tag::listener-signature[]
     @ChangeListener
@@ -33,6 +35,7 @@ open class BookCatalog(private val repository: BookRepository) {
     // tag::listener-signature[]
     open fun changed(event: ChangeEvent<Book>) {
         // Handle the change.
+        // end::listener[]
     // end::listener-signature[]
         when (event.operation()) {
             ChangeOperation.INSERT -> event.entity().ifPresent { book -> books[book.id] = book }
@@ -49,7 +52,9 @@ open class BookCatalog(private val repository: BookRepository) {
             ChangeOperation.INVALIDATE -> refresh()
         }
         // tag::listener-signature[]
+        // tag::listener[]
     }
+    // end::listener[]
     // end::listener-signature[]
 
     // end::events[]
@@ -61,5 +66,6 @@ open class BookCatalog(private val repository: BookRepository) {
         books.clear()
         repository.findAll().forEach { book -> books[book.id] = book }
     }
+    // tag::listener[]
 }
 // end::listener[]

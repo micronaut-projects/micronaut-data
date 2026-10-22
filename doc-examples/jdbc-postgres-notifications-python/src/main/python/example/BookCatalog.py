@@ -17,6 +17,7 @@ from example.BookRepository import BookRepository
 # tag::listener[]
 @Singleton
 class BookCatalog:
+    # end::listener[]
     def __init__(self, repository: BookRepository):
         self.repository = repository
         self.books = {}
@@ -28,6 +29,7 @@ class BookCatalog:
         with self.lock:
             self.refresh()
 
+    # tag::listener[]
     # tag::events[]
     # tag::listener-signature[]
     @ChangeListener
@@ -36,6 +38,7 @@ class BookCatalog:
     # tag::listener-signature[]
     def changed(self, event: ChangeEvent[Book]) -> None:
         # Handle the change.
+        # end::listener[]
     # end::listener-signature[]
         with self.lock:
             operation = event.operation()
@@ -66,4 +69,3 @@ class BookCatalog:
         self.books.clear()
         for book in self.repository.findAll():
             self.books[book.id] = book
-# end::listener[]

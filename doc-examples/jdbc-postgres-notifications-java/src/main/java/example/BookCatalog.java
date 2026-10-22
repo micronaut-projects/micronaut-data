@@ -17,6 +17,7 @@ import java.util.Optional;
 // tag::listener[]
 @Singleton
 class BookCatalog {
+    // end::listener[]
     private final BookRepository repository;
     private final Map<Long, Book> books = new HashMap<>();
 
@@ -30,6 +31,7 @@ class BookCatalog {
         refresh();
     }
 
+    // tag::listener[]
     // tag::events[]
     // tag::listener-signature[]
     @ChangeListener
@@ -38,6 +40,7 @@ class BookCatalog {
     // tag::listener-signature[]
     synchronized void changed(ChangeEvent<Book> event) {
         // Handle the change.
+        // end::listener[]
     // end::listener-signature[]
         switch (event.operation()) {
             case INSERT -> event.entity().ifPresent(book -> books.put(book.id(), book));
@@ -54,7 +57,9 @@ class BookCatalog {
             case INVALIDATE -> refresh();
         }
         // tag::listener-signature[]
+        // tag::listener[]
     }
+    // end::listener[]
     // end::listener-signature[]
 
     // end::events[]
@@ -67,5 +72,6 @@ class BookCatalog {
         books.clear();
         repository.findAll().forEach(book -> books.put(book.id(), book));
     }
+    // tag::listener[]
 }
 // end::listener[]

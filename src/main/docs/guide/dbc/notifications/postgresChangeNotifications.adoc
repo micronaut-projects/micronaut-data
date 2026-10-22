@@ -298,9 +298,7 @@ refresh strategy to suit the application. Statement triggers do not report `ALTE
 
 == Declaring a Listener
 
-The following listener maintains a cache of the complete mapped `public.book` table. It loads its initial state
-after subscriptions start, updates entries from loaded entities, removes deleted or changed primary keys,
-and reloads on invalidation:
+The following listener receives change events for the mapped `public.book` table on the `book_changes` channel:
 
 snippet::example.BookCatalog[project-base="doc-examples/jdbc-postgres-notifications", source="main", tags="listener", languages="java,groovy,kotlin,python"]
 
