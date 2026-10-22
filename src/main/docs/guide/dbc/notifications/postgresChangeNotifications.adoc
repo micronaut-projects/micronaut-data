@@ -100,10 +100,12 @@ instances against the same schema is unsupported. Use coordinated migrations for
 Restarting with unchanged listener settings does not add duplicate notification triggers. Switching between
 `ROW` and `STATEMENT` updates the generated triggers to use the selected mode, including with `CREATE`.
 
-Removing a listener, renaming its channel, or disabling notification schema generation does not remove
-previously installed functions or triggers. Remove obsolete triggers through a migration after confirming
-that no other application or running instance still needs them. Functions from a previously selected mode
-also remain installed until you remove them.
+When a table is retained, removing a listener, renaming its channel, or disabling notification schema generation
+does not remove its previously installed triggers. Remove obsolete triggers through a migration after confirming
+that no other application or running instance still needs them. If `CREATE_DROP` drops and recreates the table,
+the old triggers are removed with it; notification schema generation installs only the triggers required by the
+current listener settings when enabled. Notification functions, including those from a previously selected mode,
+remain installed until you remove them.
 
 Use either automatic schema generation or migrations to manage notification triggers for a given table
 and channel. Combining both can produce duplicate notifications. For migration-managed schemas, leave
@@ -286,6 +288,11 @@ and immutable `oldKeys` and `newKeys` maps. A deleted row can be identified from
 The example uses this metadata to update individual cache entries:
 
 snippet::example.BookCatalog[project-base="doc-examples/jdbc-postgres-notifications", source="main", tags="events", indent="0", languages="java,groovy,kotlin,python"]
+
+NOTE: Synchronizing the listener protects its cache updates but does not preserve database change order.
+Entity loading happens before the listener acquires its lock, so an older loaded value can overwrite a newer
+cached value. This cache example requires a reconciliation strategy if stale entries are unacceptable,
+such as periodic refreshes or checking the database when serving reads that require current data.
 
 For `INSERT` and `UPDATE`, Micronaut Data uses the new primary key to reload the entity.
 See <<notificationEntityLoading, Entity Loading>> for current-state semantics and cases where `entity()` is empty.

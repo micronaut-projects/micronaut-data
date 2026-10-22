@@ -31,9 +31,18 @@ api:data.jdbc.notification.ChangeEvent[] provides:
 * `entity()` -- the current entity state, when it is available; and
 * `metadata(Class)` -- provider-specific metadata, when it is available.
 
-Handle `INVALIDATE` by refreshing the affected application state, for example by reloading a cache or rerunning
-a query. An invalidation does not identify an individual changed row. Check whether metadata is present before
-accessing it; the database-specific sections describe the available metadata and invalidation conditions.
+The possible `ChangeOperation` values are:
+
+* `INSERT` -- a row was inserted;
+* `UPDATE` -- a row was updated;
+* `DELETE` -- a row was deleted; and
+* `INVALIDATE` -- application state may need refreshing without individual row details.
+
+An `INVALIDATE` event indicates that application state may be outdated without identifying individual changed rows.
+Refresh the affected state, for example by reloading a cache or rerunning a query.
+
+Event metadata is optional; check whether it is present before accessing it. The Oracle and PostgreSQL sections describe
+the available metadata and the conditions that produce invalidations.
 
 [[notificationEntityLoading]]
 === Entity Loading
@@ -58,10 +67,12 @@ The database-specific sections describe any additional ordering rules and work l
 
 Notifications describe committed database changes and are not part of the transaction that caused them.
 Rolled-back changes produce no change notifications. Use notifications to refresh application state or maintain
-caches. Micronaut Data change notifications do not provide a complete history of database writes, persistent
-storage of events for later processing, automatic redelivery of failed events, or unique event identifiers
-for detecting duplicates. Listener code should tolerate repeated observations
-and refresh its state when an invalidation or an application-specific consistency check requires it.
+caches. Micronaut Data change notifications do not provide a complete history of database writes, an event store
+that applications can read or replay, automatic redelivery of failed events, or unique event identifiers for
+detecting duplicates. Oracle's `NTF_QOS_RELIABLE` option can queue notifications during connection interruptions,
+as described in <<oracleQueryNotifications, Oracle Change Notifications>>, but does not provide an application
+replay API. Listener code should tolerate repeated observations and refresh its state when an invalidation
+or an application-specific consistency check requires it.
 
 Micronaut's blocking executor configuration affects callback concurrency and acceptance. For ongoing subscriptions,
 if the executor rejects a data notification, individual change events can be missed. Micronaut Data then retries

@@ -12,6 +12,12 @@ Query notifications require Micronaut Data JDBC and the Oracle JDBC driver:
 
 dependency:com.oracle.database.jdbc:ojdbc11[scope="runtimeOnly"]
 
+The default client-initiated notification connection requires Oracle Database 19c or later.
+For an older database with CQN support, set the `DCN_CLIENT_INIT_CONNECTION` registration property to `false`
+and configure server-initiated delivery. The database server must be able to reach the application's notification
+listener address and port. See the registration properties below and the
+link:https://docs.oracle.com/en/database/oracle/oracle-database/26/jjdbc/continuos-query-notification.html[Oracle CQN documentation].
+
 The datasource user must have Oracle Database's `CHANGE NOTIFICATION` privilege. A database administrator can grant it with:
 
 [source,sql]
@@ -47,6 +53,11 @@ snippet::example.notification.LibraryCache[project-base="doc-examples/jdbc-examp
 This cache updates individual entities for `INSERT` and `UPDATE`. For `DELETE`, the event has no entity ID,
 so the example reloads the cache instead of trying to interpret the Oracle Database `ROWID` as an entity ID.
 It also reloads the complete cache for `INVALIDATE`.
+
+NOTE: Synchronizing a listener protects its cache updates but does not preserve database change order.
+Entity loading happens before the listener acquires its lock, so an older loaded value can overwrite a newer
+cached value. These cache examples require a reconciliation strategy if stale entries are unacceptable,
+such as periodic refreshes or checking the database when serving reads that require current data.
 
 For `INSERT` and `UPDATE`, Oracle Database supplies a `ROWID`, which Micronaut Data uses to reload the entity.
 See <<notificationEntityLoading, Entity Loading>> for current-state semantics and cases where `entity()` is empty.
@@ -108,8 +119,9 @@ so notification matching compares both schema and table name.
 
 Use `OracleChangeNotification.Property` to pass Oracle JDBC registration properties by name and value,
 as shown by `DCN_QUERY_CHANGE_NOTIFICATION` in the preceding example. Micronaut Data sets
-`DCN_CLIENT_INIT_CONNECTION` to `true` by default, so the JDBC driver initiates its notification connection.
-Set it to `false` to use server-initiated notification connections. To enable a one-shot registration,
+`DCN_CLIENT_INIT_CONNECTION` to `true` by default, so the JDBC driver initiates its notification connection
+(Oracle Database 19c or later). Set it to `false` to use server-initiated notification connections, with network
+access from the database server to the application's notification listener. To enable a one-shot registration,
 add a property named `NTF_QOS_PURGE_ON_NTFN` with the value `true`.
 
 `NTF_QOS_PURGE_ON_NTFN` makes each registration one-shot: Oracle Database removes it after its first data notification,
