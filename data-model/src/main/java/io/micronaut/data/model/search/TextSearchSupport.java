@@ -52,6 +52,10 @@ public final class TextSearchSupport {
      */
     public static final String SCORE_ALIAS = "mn_score";
 
+    private static final List<MatchMode> KEYWORDS_LONGEST_FIRST = Arrays.stream(MatchMode.values())
+        .sorted(Comparator.comparingInt((MatchMode m) -> m.keyword().length()).reversed())
+        .toList();
+
     private TextSearchSupport() {
     }
 
@@ -86,10 +90,6 @@ public final class TextSearchSupport {
         }
         return null;
     }
-
-    private static final List<MatchMode> KEYWORDS_LONGEST_FIRST = Arrays.stream(MatchMode.values())
-        .sorted(Comparator.comparingInt((MatchMode m) -> m.keyword().length()).reversed())
-        .toList();
 
     /**
      * A parsed search keyword.

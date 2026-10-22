@@ -25,6 +25,7 @@ import java.util.Objects;
  *
  * @param <T> entity type
  * @param results matched results
+ * @param totalHits total number of hits
  */
 @Experimental
 record DefaultSearchResults<T>(List<SearchResult<T>> results, long totalHits) implements SearchResults<T> {
