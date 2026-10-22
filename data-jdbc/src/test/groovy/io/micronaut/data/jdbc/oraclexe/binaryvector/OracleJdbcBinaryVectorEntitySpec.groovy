@@ -1,6 +1,7 @@
 package io.micronaut.data.jdbc.oraclexe.binaryvector
 
 import io.micronaut.context.ApplicationContext
+import io.micronaut.core.annotation.Nullable
 import io.micronaut.data.annotation.GeneratedValue
 import io.micronaut.data.annotation.Id
 import io.micronaut.data.annotation.MappedEntity
@@ -89,6 +90,20 @@ class OracleJdbcBinaryVectorEntitySpec extends Specification implements OracleTe
         Math.abs(results.results()[1].similarity().value() - 8d / 9d) < 1e-6d
     }
 
+    void "a nullable binary vector property round-trips SQL NULL"() {
+        given:
+        NullableBinaryDocRepository nullableRepository = context.getBean(NullableBinaryDocRepository)
+
+        when:
+        NullableBinaryDoc empty = nullableRepository.save(new NullableBinaryDoc(name: "empty"))
+        NullableBinaryDoc filled = nullableRepository.save(new NullableBinaryDoc(name: "filled", embedding: A))
+
+        then:
+        nullableRepository.findById(empty.id).orElseThrow().embedding == null
+        nullableRepository.findById(filled.id).orElseThrow().embedding == A
+        nullableRepository.findAll().collectEntries { [(it.name): it.embedding] } == [empty: null, filled: A]
+    }
+
     void "reads a binary column mapped to a Vector property as a BinaryVector"() {
         given:
         GenericBinaryDocRepository genericRepository = context.getBean(GenericBinaryDocRepository)
@@ -138,4 +153,21 @@ class GenericBinaryDoc {
 
 @JdbcRepository(dialect = Dialect.ORACLE)
 interface GenericBinaryDocRepository extends CrudRepository<GenericBinaryDoc, Long> {
+}
+
+@MappedEntity("vector_binary_nullable_doc")
+class NullableBinaryDoc {
+    @Id
+    @GeneratedValue
+    Long id
+
+    String name
+
+    @Nullable
+    @VectorStorage(length = 16)
+    BinaryVector embedding
+}
+
+@JdbcRepository(dialect = Dialect.ORACLE)
+interface NullableBinaryDocRepository extends CrudRepository<NullableBinaryDoc, Long> {
 }

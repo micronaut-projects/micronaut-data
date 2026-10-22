@@ -112,19 +112,14 @@ abstract sealed class AbstractVectorAttributeConverter<X extends Vector, Y> impl
     }
 
     @Override
-    public <R, I> Object readFromResultSet(DatabaseTypeConversionContext conversionContext,
+    public <R, I> @Nullable Object readFromResultSet(DatabaseTypeConversionContext conversionContext,
                                            ResultReader<R, I> reader,
                                            R resultSet,
                                            I columnName) {
         VectorTypeConverter<?> vectorTypeConverter = selectResultSetReadConverter(conversionContext.getDatabaseType(), type);
         if (vectorTypeConverter != null) {
-            Object value = reader.getRequiredValue(resultSet, columnName, vectorTypeConverter.getPersistedType());
-            if (value == null) {
-                // ResultReader#getRequiredValue is expected to be non-null, but its signature is @Nullable.
-                // Guard to satisfy NullAway and provide a better error message.
-                throw new IllegalStateException("Required value for column [" + columnName + "] was null");
-            }
-            return value;
+            // SQL NULL reads as null, which convertToEntityValue maps to a null property
+            return reader.getRequiredValue(resultSet, columnName, vectorTypeConverter.getPersistedType());
         }
         throw new IllegalArgumentException("Vectors aren't supported for the database " + conversionContext.getDatabaseType());
     }
