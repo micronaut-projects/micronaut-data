@@ -7,7 +7,6 @@ import io.micronaut.data.annotation.MappedEntity
 import io.micronaut.data.annotation.MappedProperty
 import io.micronaut.data.annotation.Query
 import io.micronaut.data.annotation.VectorIndex
-import io.micronaut.data.annotation.VectorIndexType
 import io.micronaut.data.annotation.VectorStorage
 import io.micronaut.data.jdbc.annotation.JdbcRepository
 import io.micronaut.data.jdbc.oraclexe.OracleTestPropertyProvider
@@ -111,7 +110,8 @@ class BinaryDoc {
     Long id
 
     @VectorStorage(length = 16)
-    @VectorIndex(vectorIndexType = VectorIndexType.IVF, distanceType = VectorIndexType.DistanceType.HAMMING)
+    // no distance: binary vectors get HAMMING, which Oracle accepts for BINARY columns
+    @VectorIndex
     BinaryVector embedding
 }
 

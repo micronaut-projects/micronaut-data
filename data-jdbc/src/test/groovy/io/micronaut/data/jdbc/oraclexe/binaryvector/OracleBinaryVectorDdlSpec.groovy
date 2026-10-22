@@ -39,6 +39,15 @@ class OracleBinaryVectorDdlSpec extends Specification {
         BinaryVector embedding
     }
 
+    @MappedEntity("binary_default_index_doc")
+    static class DefaultIndexDoc {
+        Long id
+
+        @VectorStorage(length = 16)
+        @VectorIndex
+        BinaryVector embedding
+    }
+
     @MappedEntity("binary_plain_doc")
     static class PlainDoc {
         Long id
@@ -54,6 +63,15 @@ class OracleBinaryVectorDdlSpec extends Specification {
         then:
         statements.find { it.startsWith("CREATE TABLE") }.contains('"EMBEDDING" VECTOR(1024,BINARY) NOT NULL')
         statements.any { it.contains("CREATE VECTOR INDEX") && it.contains("DISTANCE HAMMING") }
+    }
+
+    void "a vector index without a distance uses HAMMING for a binary vector"() {
+        when:
+        String[] statements = createStatements(Dialect.ORACLE, DefaultIndexDoc)
+
+        then: "Oracle rejects COSINE for binary vectors with ORA-51910"
+        statements.any { it.contains("CREATE VECTOR INDEX") && it.contains("DISTANCE HAMMING") }
+        !statements.any { it.contains("DISTANCE COSINE") }
     }
 
     void "generates an unsized BINARY vector column and a JACCARD index"() {
