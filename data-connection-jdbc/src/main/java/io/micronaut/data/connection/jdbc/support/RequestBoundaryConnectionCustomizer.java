@@ -112,8 +112,9 @@ final class RequestBoundaryConnectionCustomizer implements ConnectionCustomizer<
 
     @Override
     public int getOrder() {
-        // Customizers wrap in order, so the last one is the outermost
-        return Ordered.LOWEST_PRECEDENCE;
+        // connectionOpened runs in order, so the request begins before the other customizers' work on the
+        // connection; it ends in its own LOWEST_PRECEDENCE synchronization, after theirs
+        return Ordered.HIGHEST_PRECEDENCE;
     }
 
     /**
