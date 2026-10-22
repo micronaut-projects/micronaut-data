@@ -1,0 +1,33 @@
+import io.micronaut.testresources.buildtools.KnownModules
+
+plugins {
+    id "groovy"
+    id "io.micronaut.build.internal.data-example"
+    id "io.micronaut.test-resources"
+}
+
+application {
+    mainClass = "example.Application"
+}
+
+micronaut {
+    version libs.versions.micronaut.platform.get()
+    runtime "netty"
+    testRuntime "spock"
+    testResources {
+        inferClasspath = false
+        additionalModules.add(KnownModules.JDBC_POSTGRESQL)
+        clientTimeout = 300
+        version = libs.versions.micronaut.testresources.get()
+    }
+}
+
+dependencies {
+    compileOnly projects.micronautDataProcessor
+
+    implementation projects.micronautDataJdbc
+
+    runtimeOnly mnSql.postgresql
+    runtimeOnly mnSql.micronaut.jdbc.hikari
+    runtimeOnly mnLogging.logback.classic
+}
