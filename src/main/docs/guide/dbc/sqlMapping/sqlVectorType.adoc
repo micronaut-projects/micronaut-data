@@ -208,15 +208,28 @@ CREATE TABLE document_embedding (
 );
 ----
 
-Oracle approximate row-limiting syntax for vector search can use `FETCH FIRST APPROX` / `APPROXIMATE` when supported by the database version and query shape:
+By default a vector search compares the query vector with every row. To let Oracle answer the top-K query from a vector index (see `@VectorIndex`), annotate the search method with api:data.annotation.ApproximateSearch[]:
+
+[source,java]
+----
+@ApproximateSearch(targetAccuracy = 90)
+SearchResults<DocumentEmbedding> searchTop5ByEmbeddingNear(Vector vector, Double maxDistance);
+
+@ApproximateSearch
+SearchResults<DocumentEmbedding> searchByEmbeddingNear(Vector vector, Double maxDistance, Limit limit);
+----
+
+The row limit, from the method name or from a `Limit` or `Pageable` argument, is then rendered as an approximate row limit:
 
 [source,sql]
 ----
-SELECT *
+SELECT ...
 FROM document_embedding d
-ORDER BY VECTOR_DISTANCE(d.embedding, :vec, COSINE)
-FETCH FIRST APPROX 2 ROWS ONLY;
+ORDER BY VECTOR_DISTANCE(d.embedding, ?, COSINE)
+FETCH APPROX FIRST 5 ROWS ONLY WITH TARGET ACCURACY 90
 ----
+
+`targetAccuracy` is a percentage from 1 to 100; the default `0` uses the accuracy of the index. A query with an offset keeps the exact row limit. Other dialects ignore the annotation; PostgreSQL, for example, uses a pgvector index for an ordered, limited query without extra syntax.
 
 == MySQL HeatWave (VECTOR)
 

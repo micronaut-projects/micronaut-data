@@ -1860,6 +1860,21 @@ public abstract class AbstractSqlLikeQueryBuilder implements QueryBuilder {
      * @param builder The builder
      */
     protected void appendLimitAndOffset(Dialect dialect, long limit, long offset, StringBuilder builder) {
+        appendLimitAndOffset(dialect, limit, offset, -1, builder);
+    }
+
+    /**
+     * Append limit and offset, optionally as an approximate row limit for vector search.
+     *
+     * @param dialect             The dialect
+     * @param limit               The limit
+     * @param offset              The offset
+     * @param approximateAccuracy The target accuracy of an approximate row limit, {@code 0} for the
+     *                            index default, or a negative value for an exact row limit
+     * @param builder             The builder
+     * @since 5.3.0
+     */
+    protected void appendLimitAndOffset(Dialect dialect, long limit, long offset, int approximateAccuracy, StringBuilder builder) {
         boolean hasLimit = limit > 0;
         boolean hasOffset = offset > 0;
         if (!hasLimit && !hasOffset) {
@@ -1885,8 +1900,15 @@ public abstract class AbstractSqlLikeQueryBuilder implements QueryBuilder {
                 if (hasLimit) {
                     if (hasOffset) {
                         builder.append(" ");
+                        builder.append("FETCH NEXT ").append(limit).append(" ROWS ONLY");
+                    } else if (approximateAccuracy >= 0) {
+                        builder.append("FETCH APPROX FIRST ").append(limit).append(" ROWS ONLY");
+                        if (approximateAccuracy > 0) {
+                            builder.append(" WITH TARGET ACCURACY ").append(approximateAccuracy);
+                        }
+                    } else {
+                        builder.append("FETCH NEXT ").append(limit).append(" ROWS ONLY");
                     }
-                    builder.append("FETCH NEXT ").append(limit).append(" ROWS ONLY");
                 }
             }
             default -> {
