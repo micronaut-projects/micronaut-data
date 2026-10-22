@@ -652,6 +652,21 @@ public final class DefaultJdbcRepositoryOperations extends AbstractSqlRepository
         return failure;
     }
 
+    @Override
+    protected <T, R> PreparedStatement prepareStatement(StatementSupplier<PreparedStatement> statementFunction,
+                                                        @NonNull PreparedQuery<T, R> preparedQuery,
+                                                        boolean isUpdate,
+                                                        boolean isSingleResult) throws SQLException {
+        PreparedStatement statement = super.prepareStatement(statementFunction, preparedQuery, isUpdate, isSingleResult);
+        OracleSqlIdLogger.log(statement);
+        return statement;
+    }
+
+    private static <S extends Statement> S logSqlId(S statement) {
+        OracleSqlIdLogger.log(statement);
+        return statement;
+    }
+
     /**
      * Closes the result set, the statement and, if owned, the connection. Each one is closed even if closing
      * an earlier one fails.
@@ -1072,7 +1087,7 @@ public final class DefaultJdbcRepositoryOperations extends AbstractSqlRepository
         try {
             R result = null;
             try {
-                PreparedStatement ps = connectionCtx.connection.prepareStatement(sql);
+                PreparedStatement ps = logSqlId(connectionCtx.connection.prepareStatement(sql));
                 try {
                     result = callback.call(ps);
                     return result;
@@ -1616,12 +1631,12 @@ public final class DefaultJdbcRepositoryOperations extends AbstractSqlRepository
                         callableStatement.registerOutParameter(storedQuery.getQueryBindings().size() + 1, Types.NUMERIC);
                         return callableStatement;
                     }
-                    return connection.prepareStatement(this.storedQuery.getQuery(), new String[]{persistentEntity.getIdentity().getPersistedName()});
+                    return logSqlId(connection.prepareStatement(this.storedQuery.getQuery(), new String[]{persistentEntity.getIdentity().getPersistedName()}));
                 } else {
-                    return connection.prepareStatement(this.storedQuery.getQuery(), readGeneratedId ? Statement.RETURN_GENERATED_KEYS : Statement.NO_GENERATED_KEYS);
+                    return logSqlId(connection.prepareStatement(this.storedQuery.getQuery(), readGeneratedId ? Statement.RETURN_GENERATED_KEYS : Statement.NO_GENERATED_KEYS));
                 }
             } else {
-                return connection.prepareStatement(this.storedQuery.getQuery());
+                return logSqlId(connection.prepareStatement(this.storedQuery.getQuery()));
             }
         }
 
@@ -1816,12 +1831,12 @@ public final class DefaultJdbcRepositoryOperations extends AbstractSqlRepository
                         callableStatement.registerOutParameter(storedQuery.getQueryBindings().size() + 1, Types.NUMERIC);
                         return callableStatement;
                     }
-                    return connection.prepareStatement(storedQuery.getQuery(), new String[]{persistentEntity.getIdentity().getPersistedName()});
+                    return logSqlId(connection.prepareStatement(storedQuery.getQuery(), new String[]{persistentEntity.getIdentity().getPersistedName()}));
                 } else {
-                    return connection.prepareStatement(storedQuery.getQuery(), readGeneratedId ? Statement.RETURN_GENERATED_KEYS : Statement.NO_GENERATED_KEYS);
+                    return logSqlId(connection.prepareStatement(storedQuery.getQuery(), readGeneratedId ? Statement.RETURN_GENERATED_KEYS : Statement.NO_GENERATED_KEYS));
                 }
             } else {
-                return connection.prepareStatement(storedQuery.getQuery());
+                return logSqlId(connection.prepareStatement(storedQuery.getQuery()));
             }
         }
 
