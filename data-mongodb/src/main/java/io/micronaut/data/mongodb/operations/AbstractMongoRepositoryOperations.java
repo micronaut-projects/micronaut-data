@@ -55,6 +55,12 @@ import io.micronaut.data.runtime.operations.internal.AbstractRepositoryOperation
 import io.micronaut.data.runtime.query.MethodContextAwareStoredQueryDecorator;
 import io.micronaut.data.runtime.query.PreparedQueryDecorator;
 import io.micronaut.data.runtime.query.internal.QueryResultStoredQuery;
+import io.micronaut.data.model.search.TextSearchSupport;
+import io.micronaut.data.model.vector.search.Score;
+import io.micronaut.data.model.vector.search.SearchResult;
+import org.bson.BsonDocumentReader;
+import org.bson.codecs.Codec;
+import org.bson.codecs.DecoderContext;
 import io.micronaut.serde.config.annotation.SerdeConfig;
 import org.bson.BsonDocument;
 import org.bson.BsonDocumentWrapper;
@@ -326,6 +332,27 @@ abstract sealed class AbstractMongoRepositoryOperations<Dtb> extends AbstractRep
      * @param <R>           The type parameter representing the result type
      * @return An `Optional` containing the mapped object, or an empty `Optional` if mapping failed or no `BeanIntrospection` was found
      */
+    /**
+     * Maps an aggregation document carrying the {@code mn_score} text score into a {@link SearchResult}.
+     *
+     * @param document The document, modified by removing the score field
+     * @param codec The entity codec
+     * @param annotationMetadata The query annotation metadata
+     * @param persistentEntity The entity
+     * @param <T> The entity type
+     * @return The search result
+     */
+    protected <T> SearchResult<T> toSearchResult(BsonDocument document,
+                                                 Codec<T> codec,
+                                                 AnnotationMetadata annotationMetadata,
+                                                 RuntimePersistentEntity<T> persistentEntity) {
+        BsonValue scoreValue = document.remove(TextSearchSupport.SCORE_ALIAS);
+        double score = scoreValue != null && scoreValue.isNumber() ? scoreValue.asNumber().doubleValue() : 0d;
+        T entity = codec.decode(new BsonDocumentReader(document), DecoderContext.builder().build());
+        entity = triggerPostLoad(entity, persistentEntity, annotationMetadata);
+        return new SearchResult<>(entity, new Score(score));
+    }
+
     protected <R> Optional<R> convertUsingIntrospected(PreparedQuery<?, ?> preparedQuery, BsonDocument result, Class<R> resultType) {
         Optional<BeanIntrospection<R>> introspection = BeanIntrospector.SHARED.findIntrospection(resultType);
         if (introspection.isPresent()) {

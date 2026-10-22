@@ -24,17 +24,15 @@ import io.micronaut.data.search.tck.entities.Book;
 import java.util.List;
 
 /**
- * The repository every full-text search backend implements for the shared TCK.
+ * The portable repository every full-text search backend implements for the shared TCK.
+ * Phrase and prefix matching are declared on {@link BookPhraseSearchRepository} and
+ * {@link BookPrefixSearchRepository} so a backend without them still compiles.
  */
 public interface BookSearchRepository extends CrudRepository<Book, Long>, SearchRepository<Book, Long> {
 
     List<Book> findByTitleSearch(String query);
 
     SearchResults<Book> searchByTitleSearchAll(String query);
-
-    SearchResults<Book> searchByDescriptionSearchPhrase(String query);
-
-    List<Book> findByTitleSearchPrefix(String query);
 
     List<Book> findBySearchAndAuthor(String query, String author);
 

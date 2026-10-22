@@ -17,6 +17,9 @@ package io.micronaut.data.model.search;
 
 import io.micronaut.core.annotation.Internal;
 import io.micronaut.data.annotation.search.SearchField;
+import io.micronaut.data.annotation.search.Searchable;
+import io.micronaut.data.model.query.builder.DelegatingQueryParameterBinding;
+import io.micronaut.data.model.query.builder.QueryParameterBinding;
 import io.micronaut.data.model.PersistentEntity;
 import io.micronaut.data.model.PersistentProperty;
 import org.jspecify.annotations.Nullable;
@@ -52,6 +55,11 @@ public final class TextSearchSupport {
      */
     public static final String SCORE_ALIAS = "mn_score";
 
+    /**
+     * The default language when an entity declares no {@code @Searchable(language)}.
+     */
+    public static final String DEFAULT_LANGUAGE = "english";
+
     private static final List<MatchMode> KEYWORDS_LONGEST_FIRST = Arrays.stream(MatchMode.values())
         .sorted(Comparator.comparingInt((MatchMode m) -> m.keyword().length()).reversed())
         .toList();
@@ -73,6 +81,34 @@ public final class TextSearchSupport {
             }
         }
         return fields;
+    }
+
+    /**
+     * Resolves the search language of an entity.
+     *
+     * @param entity The entity
+     * @return The declared {@code @Searchable(language)}, or {@link #DEFAULT_LANGUAGE}
+     */
+    public static String resolveLanguage(PersistentEntity entity) {
+        return entity.getAnnotationMetadata().stringValue(Searchable.class, Searchable.LANGUAGE)
+            .filter(l -> !l.isEmpty())
+            .orElse(DEFAULT_LANGUAGE);
+    }
+
+    /**
+     * Wraps a parameter binding so the bound value is converted with the given converter.
+     *
+     * @param binding The original binding
+     * @param converterClassName The converter class name
+     * @return The wrapped binding
+     */
+    public static QueryParameterBinding withConverter(QueryParameterBinding binding, String converterClassName) {
+        return new DelegatingQueryParameterBinding(binding) {
+            @Override
+            public String getConverterClassName() {
+                return converterClassName;
+            }
+        };
     }
 
     /**
