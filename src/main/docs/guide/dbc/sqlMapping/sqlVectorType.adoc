@@ -210,16 +210,9 @@ CREATE TABLE document_embedding (
 
 By default a vector search compares the query vector with every row. To let Oracle answer the top-K query from a vector index (see `@VectorIndex`), annotate the search method with api:data.annotation.ApproximateSearch[]:
 
-[source,java]
-----
-@ApproximateSearch(targetAccuracy = 90)
-SearchResults<DocumentEmbedding> searchTop5ByEmbeddingNear(Vector vector, Double maxDistance);
+snippet::example.DocumentEmbeddingRepository[project-base="doc-examples/jdbc-vector-example", source="main", tags="approximate"]
 
-@ApproximateSearch
-SearchResults<DocumentEmbedding> searchByEmbeddingNear(Vector vector, Double maxDistance, Limit limit);
-----
-
-The row limit, from the method name or from a `Limit` or `Pageable` argument, is then rendered as an approximate row limit:
+The row limit, from the method name as here or from a `Limit` or `Pageable` argument, is then rendered as an approximate row limit:
 
 [source,sql]
 ----
