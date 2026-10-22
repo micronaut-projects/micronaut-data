@@ -57,6 +57,12 @@ public final class SimilarityNormalizer {
             similarityValue -> 1d - (similarityValue * 2d)
         );
 
+    private static final SimilarityNormalizer JACCARD =
+        new SimilarityNormalizer(
+            scoreValue -> 1d - scoreValue,
+            similarityValue -> 1d - similarityValue
+        );
+
     private static final Map<ScoringFunction, SimilarityNormalizer> NORMALIZERS = new EnumMap<>(ScoringFunction.class);
 
     static {
@@ -65,6 +71,8 @@ public final class SimilarityNormalizer {
         NORMALIZERS.put(ScoringFunction.COSINE, COSINE);
         NORMALIZERS.put(ScoringFunction.DOT, DOT_PRODUCT);
         NORMALIZERS.put(ScoringFunction.L1_MANHATTAN, IDENTITY);
+        NORMALIZERS.put(ScoringFunction.HAMMING, IDENTITY);
+        NORMALIZERS.put(ScoringFunction.JACCARD, JACCARD);
     }
 
     private final DoubleUnaryOperator similarity;

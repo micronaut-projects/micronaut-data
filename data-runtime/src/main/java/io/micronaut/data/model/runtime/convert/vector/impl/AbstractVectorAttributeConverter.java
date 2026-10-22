@@ -55,6 +55,7 @@ abstract sealed class AbstractVectorAttributeConverter<X extends Vector, Y> impl
             DefaultSparseFloatVectorAttributeConverter,
             DefaultSparseDoubleVectorAttributeConverter,
             DefaultByteVectorAttributeConverter,
+            DefaultBinaryVectorAttributeConverter,
             DefaultSparseByteVectorAttributeConverter,
             DefaultFloatVectorAttributeConverter,
             DefaultDoubleVectorAttributeConverter {
