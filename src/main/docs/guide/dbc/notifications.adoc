@@ -91,15 +91,17 @@ replay of previously processed notifications.
 Micronaut's blocking executor configuration affects how many listener calls can run concurrently and whether
 additional calls can be scheduled. While the application is listening for database changes, individual change
 events can be missed if the executor cannot schedule a listener call. Micronaut Data combines these missed events
-into one pending `INVALIDATE` event so the listener can refresh its state.
+into one pending `INVALIDATE` event so the listener can reload the current database state. Micronaut Data does
+not deliver the individual change events that were missed.
 
 Micronaut Data keeps trying to schedule the invalidation callback until the executor accepts it or the application
 begins shutting down. If further events are missed after the listener starts processing the invalidation,
-Micronaut Data will schedule another `INVALIDATE` event. Refreshing state does not replay the missed row events.
+Micronaut Data will schedule another `INVALIDATE` event.
 
-If Micronaut Data cannot schedule another attempt to deliver the invalidation, it logs an error and cannot guarantee
-that the listener will receive it. Implement `INVALIDATE` handling even if your listener normally processes
-individual rows.
+Your listener should handle `INVALIDATE` by refreshing the affected application state, even if it normally processes
+individual row changes. This allows it to recover when individual change events are missed. If Micronaut Data cannot
+schedule another attempt to deliver the invalidation, it logs an error and cannot guarantee that the listener will
+receive it.
 
 [[notificationTransactionsAndRetries]]
 == Transactions, Retry, and Recovery
@@ -121,12 +123,15 @@ transaction that caused it. Database connection and registration recovery are co
 Oracle and PostgreSQL sections.
 
 [[notificationCallbackFailures]]
-== Callback Failures
+== Handling Listener Failures
 
-If entity loading or listener execution fails and retry or recovery advice does not handle the failure,
-Micronaut Data logs it asynchronously with the listener method, operation, and available database-specific
-context. The failure is not returned to the database, does not roll back the original change, and does not
-trigger automatic redelivery. Subsequent notifications continue to be processed.
+If entity loading or listener execution fails, the retry and recovery behavior described in
+<<notificationTransactionsAndRetries, Transactions, Retry, and Recovery>> applies when configured. If neither is
+configured, or the failure remains unhandled after retry and recovery, Micronaut Data logs the failure
+asynchronously with the listener method, operation, and available database-specific details.
 
-If the listener is transactional, its own failed transaction can still be rolled back as described in
-<<notificationTransactionsAndRetries, Transactions, Retry, and Recovery>>.
+The original database change remains committed even if entity loading or the listener fails. The notification
+is not automatically redelivered, and subsequent notifications continue to be processed.
+
+If the listener is transactional, its own transaction can be rolled back on failure. This rollback affects work
+performed by the listener and does not undo the original database change.

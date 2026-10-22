@@ -519,7 +519,7 @@ a matching insert or update notification arrives.
 An initial connection or channel-subscription failure fails application startup. Connection recovery settings
 apply only after a listening connection fails; they do not retry initial startup.
 
-See <<notificationCallbackFailures, Callback Failures>> for handling of entity-loading and listener errors.
+See <<notificationCallbackFailures, Handling Listener Failures>> for handling of entity-loading and listener errors.
 PostgreSQL callback failure logs include the datasource, listener method, and operation.
 
 When the application stops, Micronaut Data stops accepting listener calls, removes channel subscriptions,
