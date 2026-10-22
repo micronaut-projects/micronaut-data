@@ -61,7 +61,7 @@ class PostgresNotificationProviderSpec extends Specification implements Postgres
         writer = DelegatingDataSource.unwrapDataSource(bootstrap.getBean(DataSource)).connection
         execute('CREATE SCHEMA notification_provider_test')
         execute('SET search_path TO notification_provider_test')
-        execute(getClass().getResource('/io/micronaut/data/jdbc/notification/postgres/create-notification-function.sql').getText('UTF-8'))
+        execute(getClass().getResource('/io/micronaut/data/jdbc/notification/postgres/sql/create-notification-function.sql').getText('UTF-8'))
         execute('CREATE TABLE "ProviderBook" (tenant uuid, "BookId" bigint, title text, PRIMARY KEY (tenant, "BookId"))')
         execute("""CREATE TRIGGER changes AFTER INSERT OR UPDATE OR DELETE ON "ProviderBook" FOR EACH ROW
             EXECUTE FUNCTION micronaut_data_notify_change('provider_changes', 'tenant', 'BookId')""")

@@ -14,7 +14,7 @@
         <sql>SET LOCAL search_path TO public</sql>
 
         <sqlFile
-            path="io/micronaut/data/jdbc/notification/postgres/create-notification-function.sql"
+            path="io/micronaut/data/jdbc/notification/postgres/sql/create-notification-function.sql"
             relativeToChangelogFile="false"
             splitStatements="false"/>
     </changeSet>

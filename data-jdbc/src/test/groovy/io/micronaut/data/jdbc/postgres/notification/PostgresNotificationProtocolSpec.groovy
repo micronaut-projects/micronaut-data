@@ -29,7 +29,7 @@ import java.sql.Connection
 import java.sql.SQLException
 
 class PostgresNotificationProtocolSpec extends Specification implements PostgresTestPropertyProvider {
-    private static final String FUNCTION = '/io/micronaut/data/jdbc/notification/postgres/create-notification-function.sql'
+    private static final String FUNCTION = '/io/micronaut/data/jdbc/notification/postgres/sql/create-notification-function.sql'
     private static final String TENANT = 'b3d93d9a-1b6c-40ae-a761-f15d6010ad67'
     private static final String OTHER_TENANT = '54ef057d-a6d5-4b03-8865-5f347d892d19'
     private final String schema = 'notification_' + UUID.randomUUID().toString().replace('-', '')
@@ -301,7 +301,7 @@ class PostgresNotificationProtocolSpec extends Specification implements Postgres
     private void installInvalidationFunction() {
         execute('DROP TRIGGER book_changes ON "Book"')
         execute('DROP TRIGGER book_truncate ON "Book"')
-        execute(getClass().getResource('/io/micronaut/data/jdbc/notification/postgres/create-invalidation-function.sql').getText('UTF-8'))
+        execute(getClass().getResource('/io/micronaut/data/jdbc/notification/postgres/sql/create-invalidation-function.sql').getText('UTF-8'))
     }
 
     private void execute(String sql) {

@@ -43,7 +43,7 @@ Both resources are in the following classpath directory:
 
 [source,text]
 ----
-io/micronaut/data/jdbc/notification/postgres/
+io/micronaut/data/jdbc/notification/postgres/sql/
 ----
 
 For migrations, select the installation schema explicitly. Each resource creates its function in the migration's
@@ -104,7 +104,7 @@ identical notifications within the same transaction. These events have no row ke
 refresh its state from the database. Choose this mode for tables frequently changed by bulk statements.
 
 For migration-managed schemas, install the separate bundled resource
-`io/micronaut/data/jdbc/notification/postgres/create-invalidation-function.sql` and create the statement triggers
+`io/micronaut/data/jdbc/notification/postgres/sql/create-invalidation-function.sql` and create the statement triggers
 as described in <<postgresStatementNotifications, Statement Notifications for Bulk Changes>>.
 Automatic notification schema generation installs this function and its triggers without a migration.
 
@@ -180,7 +180,7 @@ import java.sql.Statement;
 public class V1__InstallNotificationFunction extends BaseJavaMigration {
     @Override
     public void migrate(Context context) throws Exception {
-        String resource = "/io/micronaut/data/jdbc/notification/postgres/create-notification-function.sql";
+        String resource = "/io/micronaut/data/jdbc/notification/postgres/sql/create-notification-function.sql";
         try (InputStream input = getClass().getResourceAsStream(resource)) {
             if (input == null) {
                 throw new IllegalStateException("Missing SQL resource: " + resource);
@@ -252,7 +252,7 @@ Install the bundled statement-invalidation function using this resource instead 
 
 [source,text]
 ----
-io/micronaut/data/jdbc/notification/postgres/create-invalidation-function.sql
+io/micronaut/data/jdbc/notification/postgres/sql/create-invalidation-function.sql
 ----
 
 It creates `micronaut_data_notify_invalidation()` in the migration's current schema. For Liquibase, use:
@@ -261,13 +261,13 @@ It creates `micronaut_data_notify_invalidation()` in the migration's current sch
 ----
 <changeSet id="postgres-invalidation-function" author="application" dbms="postgresql" runOnChange="true">
     <sql>SET LOCAL search_path TO public</sql>
-    <sqlFile path="io/micronaut/data/jdbc/notification/postgres/create-invalidation-function.sql"
+    <sqlFile path="io/micronaut/data/jdbc/notification/postgres/sql/create-invalidation-function.sql"
              relativeToChangelogFile="false" splitStatements="false"/>
 </changeSet>
 ----
 
 For Flyway, use the Java migration shown above with its resource path changed to
-`/io/micronaut/data/jdbc/notification/postgres/create-invalidation-function.sql`, or copy that resource into
+`/io/micronaut/data/jdbc/notification/postgres/sql/create-invalidation-function.sql`, or copy that resource into
 an application SQL migration. Use a new migration version when changing an existing installation.
 
 After installing the function, replace the `book_changes` and `book_truncate` triggers shown above:

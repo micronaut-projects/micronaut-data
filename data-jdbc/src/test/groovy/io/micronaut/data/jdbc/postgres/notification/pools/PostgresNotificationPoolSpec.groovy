@@ -77,7 +77,7 @@ class PostgresNotificationPoolSpec extends Specification implements PostgresTest
         for (Connection connection : [writer, secondaryWriter]) {
             execute(connection, 'CREATE SCHEMA notification_pool_test')
             execute(connection, 'SET search_path TO notification_pool_test')
-            execute(connection, getClass().getResource('/io/micronaut/data/jdbc/notification/postgres/create-notification-function.sql').text)
+            execute(connection, getClass().getResource('/io/micronaut/data/jdbc/notification/postgres/sql/create-notification-function.sql').text)
             execute(connection, 'CREATE TABLE notification_book (id bigint PRIMARY KEY, title text NOT NULL)')
             execute(connection, """CREATE TRIGGER changes AFTER INSERT ON notification_book FOR EACH ROW
                 EXECUTE FUNCTION notification_pool_test.micronaut_data_notify_change('shared"changes', 'id')""")

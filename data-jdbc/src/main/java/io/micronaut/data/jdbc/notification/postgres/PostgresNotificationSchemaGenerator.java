@@ -66,7 +66,7 @@ import java.util.stream.Collectors;
 @Requires(property = "micronaut.data.jdbc.notifications.postgres.schema-generate", value = "true")
 public final class PostgresNotificationSchemaGenerator {
 
-    private static final String SQL_RESOURCE_DIRECTORY = "/io/micronaut/data/jdbc/notification/postgres/";
+    private static final String SQL_RESOURCE_DIRECTORY = "/io/micronaut/data/jdbc/notification/postgres/sql/";
     private static final String CHANGE_FUNCTION_RESOURCE = SQL_RESOURCE_DIRECTORY + "create-notification-function.sql";
     private static final String INVALIDATION_FUNCTION_RESOURCE = SQL_RESOURCE_DIRECTORY + "create-invalidation-function.sql";
 
