@@ -166,6 +166,7 @@ public abstract class AbstractSqlLikeQueryBuilder implements QueryBuilder {
     protected static final String CANNOT_QUERY_ON_ID_WITH_ENTITY_THAT_HAS_NO_ID = "Cannot query on ID with entity that has no ID";
     protected static final String JSON_PROPERTY_ANNOTATION = "com.fasterxml.jackson.annotation.JsonProperty";
     protected static final String SERDE_CONFIG_ANNOTATION = "io.micronaut.serde.config.annotation.SerdeConfig";
+    private static final String ALIAS_REPLACE = "@.";
     private static final String CAST_FUNCTION = "CAST";
     private static final String CURRENT_DATE = "CURRENT_DATE";
     private static final String CURRENT_TIME = "CURRENT_TIME";
@@ -1574,7 +1575,35 @@ public abstract class AbstractSqlLikeQueryBuilder implements QueryBuilder {
     private Optional<String> getDataTransformerValue(@Nullable String alias, PersistentProperty prop, String val) {
         return prop.getAnnotationMetadata()
             .stringValue(DataTransformer.class, val)
-            .map(v -> resolveGeneratedETagFunction(prop, replaceAlias(alias, v)));
+            .map(v -> resolveGeneratedETagFunction(prop, replaceAlias(alias, escapeGeneratedETagColumns(prop, v))));
+    }
+
+    /**
+     * Escapes the input columns of a generated ETag read expression.
+     * The annotation processor synthesizes the expression as {@code FUNCTION(@.column, ...)} from mapped column
+     * names without knowing the dialect, so the columns are escaped here like the other columns of the query.
+     *
+     * @param prop       The property
+     * @param expression The read expression
+     * @return The expression with escaped input columns
+     */
+    private String escapeGeneratedETagColumns(PersistentProperty prop, String expression) {
+        if (!prop.getAnnotationMetadata().hasAnnotation(GeneratedETag.class) || !shouldEscape(prop.getOwner())) {
+            return expression;
+        }
+        int argumentsStart = expression.indexOf('(');
+        if (argumentsStart < 0 || !expression.endsWith(")")) {
+            return expression;
+        }
+        String arguments = expression.substring(argumentsStart + 1, expression.length() - 1);
+        if (!arguments.startsWith(ALIAS_REPLACE)) {
+            return expression;
+        }
+        StringJoiner joiner = new StringJoiner(", ");
+        for (String column : arguments.substring(ALIAS_REPLACE.length()).split(", " + ALIAS_REPLACE_QUOTED)) {
+            joiner.add(ALIAS_REPLACE + quote(column));
+        }
+        return expression.substring(0, argumentsStart + 1) + joiner + ")";
     }
 
     private String resolveGeneratedETagFunction(PersistentProperty prop, String value) {
