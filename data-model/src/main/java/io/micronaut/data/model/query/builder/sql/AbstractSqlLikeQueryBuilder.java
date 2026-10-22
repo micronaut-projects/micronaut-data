@@ -947,7 +947,11 @@ public abstract class AbstractSqlLikeQueryBuilder implements QueryBuilder {
     }
 
     @Nullable
-    private String getJsonEntityColumn(AnnotationMetadata annotationMetadata) {
+    /**
+     * @param annotationMetadata The annotation metadata
+     * @return The JSON column of a JSON-represented entity, or {@code null}
+     */
+    protected final String getJsonEntityColumn(AnnotationMetadata annotationMetadata) {
         AnnotationValue<EntityRepresentation> entityRepresentationAnnotationValue = annotationMetadata.getAnnotation(EntityRepresentation.class);
         if (entityRepresentationAnnotationValue != null) {
             return entityRepresentationAnnotationValue.getRequiredValue("column", String.class);
@@ -1717,6 +1721,24 @@ public abstract class AbstractSqlLikeQueryBuilder implements QueryBuilder {
         if (!getDialect().supportsJsonEntity()) {
             throw new IllegalArgumentException("Json representation for entity " + entity.getSimpleName() + " is not supported by the dialect " + getDialect());
         }
+    }
+
+    /**
+     * Describes where a full-text search dialect finds the entity's data.
+     *
+     * @param annotationMetadata The query annotation metadata
+     * @param entity The entity
+     * @param tableAlias The table alias
+     * @return The target
+     */
+    protected final TextSearchDialect.Target textSearchTarget(AnnotationMetadata annotationMetadata, PersistentEntity entity, @Nullable String tableAlias) {
+        if (isJsonEntity(annotationMetadata, entity)) {
+            String jsonColumn = getJsonEntityColumn(annotationMetadata);
+            if (jsonColumn != null) {
+                return new TextSearchDialect.Target(jsonColumn, tableAlias);
+            }
+        }
+        return TextSearchDialect.Target.RELATIONAL;
     }
 
     /**
@@ -2766,7 +2788,7 @@ public abstract class AbstractSqlLikeQueryBuilder implements QueryBuilder {
             if (dialect == null) {
                 throw new UnsupportedOperationException("Full-text search is not supported by dialect: " + getDialect());
             }
-            dialect.appendTextMatch(query, fields, queryExpression, mode, this::appendExpression, this::appendConvertedParameter);
+            dialect.appendTextMatch(query, fields, queryExpression, mode, textSearchTarget(annotationMetadata, persistentEntity, tableAlias), this::appendExpression, this::appendConvertedParameter);
         }
 
         @Override
@@ -3166,7 +3188,7 @@ public abstract class AbstractSqlLikeQueryBuilder implements QueryBuilder {
             MatchMode mode = modeExpression instanceof LiteralExpression<?> literal && literal.getValue() != null
                 ? MatchMode.valueOf(literal.getValue().toString())
                 : MatchMode.ANY;
-            dialect.appendSearchScore(query, fields, queryExpression, mode, this::appendExpression, this::appendConvertedParameter);
+            dialect.appendSearchScore(query, fields, queryExpression, mode, textSearchTarget(annotationMetadata, persistentEntity, tableAlias), this::appendExpression, this::appendConvertedParameter);
         }
 
         /**
@@ -3998,7 +4020,7 @@ public abstract class AbstractSqlLikeQueryBuilder implements QueryBuilder {
             columnAlias = null;
             isNestedExpression = true;
             try {
-                dialect.appendSearchScore(query, fields, queryExpression, mode, this::appendExpression, converterClassName -> expression -> {
+                dialect.appendSearchScore(query, fields, queryExpression, mode, textSearchTarget(annotationMetadata, queryState.getEntity(), tableAlias), this::appendExpression, converterClassName -> expression -> {
                     if (!(expression instanceof BindingParameter bindingParameter)) {
                         throw new IllegalStateException("A full-text search query must be a parameter, got: " + expression);
                     }
