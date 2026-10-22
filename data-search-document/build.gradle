@@ -1,0 +1,15 @@
+plugins {
+    id "io.micronaut.build.internal.data-module"
+}
+
+dependencies {
+    annotationProcessor mn.micronaut.inject.java
+
+    api projects.micronautDataModel
+    api projects.micronautDataRuntime
+    api mn.micronaut.json.core
+    compileOnly(mnSql.jakarta.persistence.api)
+
+    testImplementation mn.micronaut.inject.groovy
+    testImplementation mnSerde.micronaut.serde.jackson
+}
