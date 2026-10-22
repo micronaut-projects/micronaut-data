@@ -22,13 +22,16 @@ import io.micronaut.context.annotation.Requires;
 import org.jspecify.annotations.NonNull;
 import io.micronaut.core.annotation.TypeHint;
 import io.micronaut.data.connection.ConnectionOperations;
+import io.micronaut.data.connection.ConnectionStatus;
 import io.micronaut.data.connection.ConnectionSynchronization;
 import io.micronaut.data.connection.SynchronousConnectionManager;
+import io.micronaut.data.connection.support.DefaultConnectionStatus;
 import io.micronaut.data.connection.support.JdbcConnectionUtils;
 import io.micronaut.transaction.TransactionDefinition;
 import io.micronaut.transaction.exceptions.CannotCreateTransactionException;
 import io.micronaut.transaction.exceptions.InvalidIsolationLevelException;
 import io.micronaut.transaction.exceptions.TransactionSystemException;
+import io.micronaut.transaction.exceptions.TransactionUsageException;
 import io.micronaut.transaction.impl.DefaultTransactionStatus;
 import io.micronaut.transaction.jdbc.DataSourceTransactionManager;
 import io.micronaut.transaction.support.AbstractDefaultTransactionOperations;
@@ -82,6 +85,25 @@ public final class HibernateTransactionManager extends AbstractDefaultTransactio
     HibernateTransactionManager(@Parameter ConnectionOperations<Session> connectionOperations,
                                 @Parameter SynchronousConnectionManager<Session> synchronousConnectionManager) {
         super(connectionOperations, synchronousConnectionManager);
+    }
+
+    @Override
+    protected boolean isTransactionControlledByOwner(Session session) {
+        // A session over a supplied connection that is not in auto-commit mode is in the owner's transaction
+        try {
+            return !getConnection(session).getAutoCommit();
+        } catch (SQLException e) {
+            throw new CannotCreateTransactionException("Could not read the auto-commit mode of the supplied connection", e);
+        }
+    }
+
+    @Override
+    protected DefaultTransactionStatus<Session> createOwnerTransactionStatus(ConnectionStatus<Session> connectionStatus,
+                                                                             TransactionDefinition definition,
+                                                                             DefaultConnectionStatus.SuppliedConnection suppliedConnection) {
+        // Hibernate writes need a Hibernate transaction, which would commit or roll back the owner's transaction
+        throw new TransactionUsageException("A Hibernate transaction cannot join the transaction of a supplied connection that is not in auto-commit mode."
+            + " Use JDBC repositories on the supplied connection, or supply a connection in auto-commit mode");
     }
 
     @Override

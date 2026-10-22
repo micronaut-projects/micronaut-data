@@ -19,6 +19,7 @@ import io.micronaut.core.annotation.Internal;
 import org.jspecify.annotations.NonNull;
 import org.jspecify.annotations.Nullable;
 import io.micronaut.data.connection.ConnectionStatus;
+import io.micronaut.data.connection.support.DefaultConnectionStatus;
 import io.micronaut.transaction.TransactionDefinition;
 import io.micronaut.transaction.TransactionOperations;
 import io.micronaut.transaction.support.TransactionSynchronization;
@@ -66,6 +67,25 @@ public abstract sealed class DefaultTransactionStatus<C> extends AbstractInterna
                                                              DefaultTransactionStatus<C> existingTransaction,
                                                              TransactionOperations<C> transactionOperations) {
         return new ExistingTransactionStatus<>(connectionStatus, definition, existingTransaction, transactionOperations);
+    }
+
+    /**
+     * Creates a status for work joined to the transaction that the owner of a supplied connection controls. It
+     * neither begins, commits nor rolls back the connection's transaction: a rollback is passed on to the owner.
+     *
+     * @param connectionStatus      The status of the supplied connection
+     * @param definition            The transaction definition
+     * @param suppliedConnection    The state of the supplied connection
+     * @param transactionOperations The transaction operations
+     * @param <C>                   The connection type
+     * @return The status
+     * @since 5.3.0
+     */
+    public static <C> DefaultTransactionStatus<C> ownerTx(ConnectionStatus<C> connectionStatus,
+                                                          TransactionDefinition definition,
+                                                          DefaultConnectionStatus.SuppliedConnection suppliedConnection,
+                                                          TransactionOperations<C> transactionOperations) {
+        return new OwnerTransactionStatus<>(connectionStatus, definition, suppliedConnection, transactionOperations);
     }
 
     public boolean isTransactionOf(TransactionOperations<C> transactionOperations) {
@@ -178,6 +198,41 @@ public abstract sealed class DefaultTransactionStatus<C> extends AbstractInterna
         @Override
         public String toString() {
             return "NoTxTransactionStatus{}";
+        }
+    }
+
+    private static final class OwnerTransactionStatus<C> extends DefaultTransactionStatus<C> {
+
+        private final DefaultConnectionStatus.SuppliedConnection suppliedConnection;
+
+        private OwnerTransactionStatus(ConnectionStatus<C> connectionStatus,
+                                       TransactionDefinition definition,
+                                       DefaultConnectionStatus.SuppliedConnection suppliedConnection,
+                                       TransactionOperations<C> transactionOperations) {
+            super(connectionStatus, definition, transactionOperations);
+            this.suppliedConnection = suppliedConnection;
+        }
+
+        @Override
+        public boolean isNewTransaction() {
+            return false;
+        }
+
+        @Override
+        public void setRollbackOnly() {
+            super.setRollbackOnly();
+            // A nested transaction rolls back to its savepoint; any other rollback belongs to the owner
+            if (!isNestedTransaction()) {
+                suppliedConnection.setRollbackOnly();
+            }
+        }
+
+        @Override
+        public String toString() {
+            return "OwnerTransactionStatus{" +
+                "connectionStatus=" + connectionStatus +
+                ", definition=" + getTransactionDefinition() +
+                '}';
         }
     }
 

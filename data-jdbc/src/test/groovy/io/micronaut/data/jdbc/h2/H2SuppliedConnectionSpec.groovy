@@ -5,12 +5,19 @@ import io.micronaut.data.connection.ConnectionDefinition
 import io.micronaut.data.connection.jdbc.advice.DelegatingDataSource
 import io.micronaut.data.connection.ConnectionOperations
 import io.micronaut.data.tck.entities.Book
+import io.micronaut.data.connection.exceptions.ConnectionException
+import io.micronaut.transaction.TransactionDefinition
 import io.micronaut.transaction.TransactionOperations
+import io.micronaut.transaction.support.DefaultTransactionDefinition
 import spock.lang.AutoCleanup
 import spock.lang.Shared
 import spock.lang.Specification
 
 import javax.sql.DataSource
+import java.lang.reflect.InvocationHandler
+import java.lang.reflect.InvocationTargetException
+import java.lang.reflect.Method
+import java.lang.reflect.Proxy
 import java.sql.Connection
 
 class H2SuppliedConnectionSpec extends Specification implements H2TestPropertyProvider {
@@ -102,5 +109,146 @@ class H2SuppliedConnectionSpec extends Specification implements H2TestPropertyPr
 
         cleanup:
         supplied.close()
+    }
+
+    void "inside a caller's transaction, a transaction in the callback begins on the supplied connection"() {
+        given:
+        Connection supplied = rawDataSource.connection
+
+        when: "the caller's transaction rolls back after the callback"
+        transactionOperations.executeWrite(outer -> {
+            connectionOperations.executeWithConnection(supplied, ConnectionDefinition.DEFAULT, status ->
+                transactionOperations.executeWrite(inner -> {
+                    assert inner.connection.is(supplied)
+                    assert inner.newTransaction
+                    bookRepository.save(new Book(title: "Inner", totalPages: 40))
+                })
+            )
+            assert transactionOperations.findTransactionStatus().get().is(outer)
+            bookRepository.save(new Book(title: "Outer", totalPages: 50))
+            outer.setRollbackOnly()
+        })
+
+        then: "the inner transaction committed the supplied connection, and the caller's work rolled back"
+        bookRepository.findAll()*.title == ["Inner"]
+        !supplied.closed
+
+        cleanup:
+        supplied.close()
+    }
+
+    void "with auto-commit off, a transaction in the callback joins the owner's transaction"() {
+        given: "the owner has started a transaction and saved a book"
+        List<String> calls = []
+        Connection owner = rawDataSource.connection
+        owner.autoCommit = false
+        Connection supplied = recording(owner, calls)
+        connectionOperations.executeWithConnection(supplied, ConnectionDefinition.DEFAULT, status ->
+            bookRepository.save(new Book(title: "Owner", totalPages: 1)))
+
+        when: "a transaction inside the callback saves another and completes"
+        connectionOperations.executeWithConnection(supplied, ConnectionDefinition.DEFAULT, status ->
+            transactionOperations.execute(isolated(), tx -> {
+                assert !tx.newTransaction
+                bookRepository.save(new Book(title: "Joined", totalPages: 2))
+            })
+        )
+
+        then: "it neither changed the connection's mode nor committed it"
+        calls.findAll { it in ['setAutoCommit', 'setTransactionIsolation', 'commit', 'rollback'] }.isEmpty()
+        bookRepository.count() == 0
+
+        when: "the owner rolls back"
+        owner.rollback()
+
+        then:
+        bookRepository.count() == 0
+
+        cleanup:
+        owner.autoCommit = true
+        owner.close()
+    }
+
+    void "with auto-commit off, a failed transaction in the callback leaves the rollback to the owner"() {
+        given:
+        List<String> calls = []
+        Connection owner = rawDataSource.connection
+        owner.autoCommit = false
+        Connection supplied = recording(owner, calls)
+        connectionOperations.executeWithConnection(supplied, ConnectionDefinition.DEFAULT, status ->
+            bookRepository.save(new Book(title: "Owner", totalPages: 1)))
+
+        when: "the failure propagates"
+        connectionOperations.executeWithConnection(supplied, ConnectionDefinition.DEFAULT, status ->
+            transactionOperations.executeWrite(tx -> {
+                bookRepository.save(new Book(title: "Failed", totalPages: 2))
+                throw new IllegalStateException("boom")
+            })
+        )
+
+        then: "the exception reaches the owner, and the owner's earlier work is untouched"
+        thrown(IllegalStateException)
+        calls.findAll { it in ['setAutoCommit', 'commit', 'rollback'] }.isEmpty()
+
+        when: "the failure is handled inside the callback"
+        connectionOperations.executeWithConnection(supplied, ConnectionDefinition.DEFAULT, status -> {
+            try {
+                transactionOperations.executeWrite(tx -> { throw new IllegalStateException("handled") })
+            } catch (IllegalStateException ignored) {
+            }
+        })
+
+        then: "the owner is still told to roll back"
+        ConnectionException e = thrown()
+        e.message.contains("must roll back")
+
+        when: "the owner commits what remains, its own book and the failed transaction's insert"
+        owner.commit()
+
+        then: "rolling back was the owner's decision"
+        bookRepository.findAll()*.title.sort() == ["Failed", "Owner"]
+
+        cleanup:
+        owner.autoCommit = true
+        owner.close()
+    }
+
+    void "with auto-commit off, REQUIRES_NEW in the callback runs on a separate connection"() {
+        given:
+        Connection owner = rawDataSource.connection
+        owner.autoCommit = false
+
+        when:
+        connectionOperations.executeWithConnection(owner, ConnectionDefinition.DEFAULT, status ->
+            transactionOperations.execute(TransactionDefinition.of(TransactionDefinition.Propagation.REQUIRES_NEW), tx -> {
+                assert !tx.connection.is(owner)
+                bookRepository.save(new Book(title: "Independent", totalPages: 3))
+            })
+        )
+        owner.rollback()
+
+        then:
+        bookRepository.findAll()*.title == ["Independent"]
+
+        cleanup:
+        owner.autoCommit = true
+        owner.close()
+    }
+
+    private static TransactionDefinition isolated() {
+        DefaultTransactionDefinition definition = new DefaultTransactionDefinition()
+        definition.isolationLevel = TransactionDefinition.Isolation.SERIALIZABLE
+        return definition
+    }
+
+    private static Connection recording(Connection connection, List<String> calls) {
+        return (Connection) Proxy.newProxyInstance(Connection.classLoader, [Connection] as Class[], { proxy, Method method, Object[] args ->
+            calls << method.name
+            try {
+                return method.invoke(connection, args)
+            } catch (InvocationTargetException e) {
+                throw e.cause
+            }
+        } as InvocationHandler)
     }
 }

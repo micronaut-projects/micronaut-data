@@ -63,13 +63,32 @@ public interface ConnectionOperations<C> {
      * Executes the callback with a connection supplied by the caller as the current connection.
      *
      * <p>Repositories, connection-scoped operations and transactions started inside the callback use the
-     * supplied connection, as they would use a connection opened by these operations. Use it when another
-     * library owns a connection that Micronaut Data should take part in, such as the database connection of
-     * an Oracle AQ JMS session or of an XA resource. A transaction started inside the callback commits or
-     * rolls back the supplied connection; wrap the connection to suppress that when the owner commits.</p>
+     * supplied connection, as they would use a connection opened by these operations, even when the caller is
+     * inside a transaction on another connection: a transaction started inside the callback begins on the
+     * supplied connection instead of joining that transaction. Use it when another library owns a connection
+     * that Micronaut Data should take part in, such as the database connection of an Oracle AQ JMS session or
+     * of an XA resource.</p>
      *
-     * <p>The connection is not set up (for example, read-only mode is left as it is) and is never closed:
-     * the caller remains responsible for it.</p>
+     * <p>When the owner of the connection controls its transaction, which for JDBC means the connection is not in
+     * auto-commit mode, transactions started inside the callback join the owner's transaction: they don't change
+     * the auto-commit mode or the isolation level, and they don't commit or roll back the connection. A
+     * {@code NESTED} transaction uses a savepoint, and {@code REQUIRES_NEW} opens a separate connection. When
+     * joined work rolls back, the exception propagates, or this method throws a
+     * {@link io.micronaut.data.connection.exceptions.ConnectionException} if the exception was handled inside the
+     * callback, so that the owner rolls back its transaction. Hibernate transactions cannot join an owner's
+     * transaction, because Hibernate writes need a Hibernate transaction of their own, so they fail with a
+     * {@code TransactionUsageException}: use JDBC repositories on such a connection.</p>
+     *
+     * <p>A connection in auto-commit mode has no owner transaction: transactions started inside the callback begin,
+     * commit and roll back on the supplied connection, and restore the auto-commit mode afterwards.</p>
+     *
+     * <p>Connection operations that cannot adopt a connection, such as the Spring ones, throw
+     * {@link UnsupportedOperationException}. The JDBC and Hibernate connection operations support it; for
+     * Hibernate, the work runs on a session opened on the supplied connection.</p>
+     *
+     * <p>The connection is not set up (for example, read-only mode is left as it is), no request boundaries are
+     * marked on it and it is never closed: the caller remains responsible for it, including Oracle request
+     * boundaries and DRCP release.</p>
      *
      * @param connection The connection
      * @param definition The connection definition describing it

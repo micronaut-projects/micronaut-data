@@ -123,7 +123,8 @@ public abstract class AbstractConnectionOperations<C> implements ConnectionOpera
                                              @NonNull ConnectionDefinition definition,
                                              @NonNull Function<ConnectionStatus<C>, R> callback) {
         // Not new: complete() runs the synchronizations but never closes a connection the caller owns
-        DefaultConnectionStatus<C> connectionStatus = new DefaultConnectionStatus<>(connection, definition, false, this);
+        DefaultConnectionStatus.SuppliedConnection suppliedConnection = new DefaultConnectionStatus.SuppliedConnection();
+        DefaultConnectionStatus<C> connectionStatus = new DefaultConnectionStatus<>(connection, definition, false, this, suppliedConnection);
         try {
             if (logger.isDebugEnabled()) {
                 logger.debug("Executing with a supplied connection: [{}]", connectionStatus);
@@ -132,7 +133,11 @@ public abstract class AbstractConnectionOperations<C> implements ConnectionOpera
                 callback = connectionCustomizer.intercept(callback);
             }
             Function<ConnectionStatus<C>, R> finalCallback = callback;
-            return connectionStatus.propagate(() -> finalCallback.apply(connectionStatus));
+            R result = connectionStatus.propagate(() -> finalCallback.apply(connectionStatus));
+            if (suppliedConnection.isRollbackOnly()) {
+                throw new ConnectionException("Transactional work on the supplied connection was rolled back, so its owner must roll back its transaction");
+            }
+            return result;
         } finally {
             complete(connectionStatus);
         }
@@ -200,7 +205,8 @@ public abstract class AbstractConnectionOperations<C> implements ConnectionOpera
             existingStatus.getConnection(),
             existingStatus.getDefinition(),
             false,
-            this);
+            this,
+            existingStatus instanceof DefaultConnectionStatus<C> defaultStatus ? defaultStatus.getSuppliedConnection() : null);
     }
 
 }

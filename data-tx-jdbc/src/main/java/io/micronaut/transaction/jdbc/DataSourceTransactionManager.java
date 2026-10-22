@@ -129,6 +129,16 @@ public final class DataSourceTransactionManager extends AbstractDefaultTransacti
     }
 
     @Override
+    protected boolean isTransactionControlledByOwner(Connection connection) {
+        // A supplied connection that is not in auto-commit mode is in its owner's transaction
+        try {
+            return !connection.getAutoCommit();
+        } catch (SQLException e) {
+            throw new CannotCreateTransactionException("Could not read the auto-commit mode of the supplied connection", e);
+        }
+    }
+
+    @Override
     protected boolean supportsSessionlessTransactions(TransactionDefinition definition) {
         return sessionlessTransactionHandler != null && sessionlessTransactionHandler.supports(definition);
     }
