@@ -121,9 +121,10 @@ public abstract class AbstractConnectionOperations<C> implements ConnectionOpera
     @Override
     public final <R> R executeWithConnection(@NonNull C connection,
                                              @NonNull ConnectionDefinition definition,
+                                             boolean ownerControlsTransaction,
                                              @NonNull Function<ConnectionStatus<C>, R> callback) {
         // Not new: complete() runs the synchronizations but never closes a connection the caller owns
-        DefaultConnectionStatus.SuppliedConnection suppliedConnection = new DefaultConnectionStatus.SuppliedConnection();
+        DefaultConnectionStatus.SuppliedConnection suppliedConnection = new DefaultConnectionStatus.SuppliedConnection(ownerControlsTransaction);
         DefaultConnectionStatus<C> connectionStatus = new DefaultConnectionStatus<>(connection, definition, false, this, suppliedConnection);
         try {
             if (logger.isDebugEnabled()) {

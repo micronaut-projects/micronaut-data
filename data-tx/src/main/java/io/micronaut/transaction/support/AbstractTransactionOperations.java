@@ -116,21 +116,9 @@ public abstract class AbstractTransactionOperations<T extends InternalTransactio
                                                          @NonNull T existingTransaction);
 
     /**
-     * Whether the owner of a connection supplied by the caller controls its transaction, for example because the
-     * connection is not in auto-commit mode. Transactional work on such a connection joins the owner's transaction
-     * instead of beginning, committing or rolling back one itself.
-     *
-     * @param connection The supplied connection
-     * @return {@code false} by default
-     * @since 5.3.0
-     */
-    protected boolean isTransactionControlledByOwner(C connection) {
-        return false;
-    }
-
-    /**
      * Creates the status of work joined to the transaction that the owner of a supplied connection controls.
-     * Required when {@link #isTransactionControlledByOwner(Object)} can return {@code true}.
+     * Called for connections supplied with {@code ownerControlsTransaction} set, see
+     * {@link ConnectionOperations#executeWithConnection(Object, ConnectionDefinition, boolean, java.util.function.Function)}.
      *
      * @param connectionStatus   The status of the supplied connection
      * @param definition         The transaction definition
@@ -147,7 +135,7 @@ public abstract class AbstractTransactionOperations<T extends InternalTransactio
     private DefaultConnectionStatus.@Nullable SuppliedConnection ownerControlledConnection(@Nullable ConnectionStatus<C> connectionStatus) {
         if (connectionStatus instanceof DefaultConnectionStatus<C> defaultStatus
             && defaultStatus.getSuppliedConnection() != null
-            && isTransactionControlledByOwner(connectionStatus.getConnection())) {
+            && defaultStatus.getSuppliedConnection().isOwnerControlsTransaction()) {
             return defaultStatus.getSuppliedConnection();
         }
         return null;
@@ -157,6 +145,10 @@ public abstract class AbstractTransactionOperations<T extends InternalTransactio
                                    @NonNull ConnectionStatus<C> connectionStatus,
                                    DefaultConnectionStatus.SuppliedConnection suppliedConnection) {
         validateExistingTransaction(definition);
+        if (suppliedConnection.isRollbackOnly()) {
+            // Work joined earlier rolled back and its exception was handled: the owner's transaction is doomed
+            throw new UnexpectedRollbackException("Transaction rolled back because the owner's transaction of the supplied connection has been marked as rollback-only");
+        }
         T transaction = switch (definition.getPropagationBehavior()) {
             case SUPPORTS, NOT_SUPPORTED -> createNoTxTransactionStatus(connectionStatus, definition);
             default -> createOwnerTransactionStatus(connectionStatus, definition, suppliedConnection);

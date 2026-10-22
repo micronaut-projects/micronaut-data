@@ -61,7 +61,7 @@ class HibernateSuppliedConnectionSpec extends Specification {
         supplied?.close()
     }
 
-    void "with auto-commit off, a Hibernate transaction in the callback fails instead of taking over the owner's transaction"() {
+    void "when the owner controls the transaction, a Hibernate transaction in the callback fails instead of taking it over"() {
         given:
         DataSource rawDataSource = DelegatingDataSource.unwrapDataSource(dataSource)
         Connection owner = rawDataSource.connection
@@ -69,7 +69,7 @@ class HibernateSuppliedConnectionSpec extends Specification {
         long before = countBooks(owner)
 
         when:
-        connectionOperations.executeWithConnection(owner, ConnectionDefinition.DEFAULT, status ->
+        connectionOperations.executeWithConnection(owner, ConnectionDefinition.DEFAULT, true, status ->
             transactionOperations.executeWrite(tx -> {
                 tx.connection.persist(new Book(title: "Never written", totalPages: 10))
             })

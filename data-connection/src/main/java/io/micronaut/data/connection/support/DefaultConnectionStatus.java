@@ -173,7 +173,22 @@ public final class DefaultConnectionStatus<C> implements ConnectionStatus<C> {
      */
     public static final class SuppliedConnection {
 
+        private final boolean ownerControlsTransaction;
         private volatile boolean rollbackOnly;
+
+        /**
+         * @param ownerControlsTransaction Whether the owner of the connection controls its transaction
+         */
+        public SuppliedConnection(boolean ownerControlsTransaction) {
+            this.ownerControlsTransaction = ownerControlsTransaction;
+        }
+
+        /**
+         * @return Whether the owner of the connection controls its transaction, which transactions join
+         */
+        public boolean isOwnerControlsTransaction() {
+            return ownerControlsTransaction;
+        }
 
         /**
          * Marks that work joined to the owner's transaction was rolled back, so the owner must roll back.

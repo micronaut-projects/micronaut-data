@@ -22,6 +22,7 @@ import io.micronaut.data.connection.ConnectionStatus;
 import io.micronaut.data.connection.support.DefaultConnectionStatus;
 import io.micronaut.transaction.TransactionDefinition;
 import io.micronaut.transaction.TransactionOperations;
+import io.micronaut.transaction.exceptions.TransactionUsageException;
 import io.micronaut.transaction.support.TransactionSynchronization;
 
 /**
@@ -225,6 +226,20 @@ public abstract sealed class DefaultTransactionStatus<C> extends AbstractInterna
             if (!isNestedTransaction()) {
                 suppliedConnection.setRollbackOnly();
             }
+        }
+
+        @Override
+        public boolean isGlobalRollbackOnly() {
+            // A rollback handled by an earlier joined transaction dooms the owner's transaction
+            return super.isGlobalRollbackOnly() || !isNestedTransaction() && suppliedConnection.isRollbackOnly();
+        }
+
+        @Override
+        public void registerSynchronization(TransactionSynchronization synchronization) {
+            // afterCommit would run before the owner commits, or for work the owner rolls back
+            throw new TransactionUsageException("Transaction synchronizations, such as @TransactionalEventListener methods and afterCommit callbacks,"
+                + " cannot be registered on a transaction joined to the owner's transaction of a supplied connection,"
+                + " because Micronaut Data does not see when the owner commits");
         }
 
         @Override

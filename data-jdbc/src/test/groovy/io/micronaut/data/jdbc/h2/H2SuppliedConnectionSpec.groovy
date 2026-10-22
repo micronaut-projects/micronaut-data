@@ -8,7 +8,10 @@ import io.micronaut.data.tck.entities.Book
 import io.micronaut.data.connection.exceptions.ConnectionException
 import io.micronaut.transaction.TransactionDefinition
 import io.micronaut.transaction.TransactionOperations
+import io.micronaut.transaction.exceptions.TransactionUsageException
+import io.micronaut.transaction.exceptions.UnexpectedRollbackException
 import io.micronaut.transaction.support.DefaultTransactionDefinition
+import io.micronaut.transaction.support.TransactionSynchronization
 import spock.lang.AutoCleanup
 import spock.lang.Shared
 import spock.lang.Specification
@@ -137,17 +140,17 @@ class H2SuppliedConnectionSpec extends Specification implements H2TestPropertyPr
         supplied.close()
     }
 
-    void "with auto-commit off, a transaction in the callback joins the owner's transaction"() {
+    void "when the owner controls the transaction, a transaction in the callback joins it"() {
         given: "the owner has started a transaction and saved a book"
         List<String> calls = []
         Connection owner = rawDataSource.connection
         owner.autoCommit = false
         Connection supplied = recording(owner, calls)
-        connectionOperations.executeWithConnection(supplied, ConnectionDefinition.DEFAULT, status ->
+        connectionOperations.executeWithConnection(supplied, ConnectionDefinition.DEFAULT, true, status ->
             bookRepository.save(new Book(title: "Owner", totalPages: 1)))
 
         when: "a transaction inside the callback saves another and completes"
-        connectionOperations.executeWithConnection(supplied, ConnectionDefinition.DEFAULT, status ->
+        connectionOperations.executeWithConnection(supplied, ConnectionDefinition.DEFAULT, true, status ->
             transactionOperations.execute(isolated(), tx -> {
                 assert !tx.newTransaction
                 bookRepository.save(new Book(title: "Joined", totalPages: 2))
@@ -169,17 +172,17 @@ class H2SuppliedConnectionSpec extends Specification implements H2TestPropertyPr
         owner.close()
     }
 
-    void "with auto-commit off, a failed transaction in the callback leaves the rollback to the owner"() {
+    void "when the owner controls the transaction, a failed transaction in the callback leaves the rollback to the owner"() {
         given:
         List<String> calls = []
         Connection owner = rawDataSource.connection
         owner.autoCommit = false
         Connection supplied = recording(owner, calls)
-        connectionOperations.executeWithConnection(supplied, ConnectionDefinition.DEFAULT, status ->
+        connectionOperations.executeWithConnection(supplied, ConnectionDefinition.DEFAULT, true, status ->
             bookRepository.save(new Book(title: "Owner", totalPages: 1)))
 
         when: "the failure propagates"
-        connectionOperations.executeWithConnection(supplied, ConnectionDefinition.DEFAULT, status ->
+        connectionOperations.executeWithConnection(supplied, ConnectionDefinition.DEFAULT, true, status ->
             transactionOperations.executeWrite(tx -> {
                 bookRepository.save(new Book(title: "Failed", totalPages: 2))
                 throw new IllegalStateException("boom")
@@ -191,7 +194,7 @@ class H2SuppliedConnectionSpec extends Specification implements H2TestPropertyPr
         calls.findAll { it in ['setAutoCommit', 'commit', 'rollback'] }.isEmpty()
 
         when: "the failure is handled inside the callback"
-        connectionOperations.executeWithConnection(supplied, ConnectionDefinition.DEFAULT, status -> {
+        connectionOperations.executeWithConnection(supplied, ConnectionDefinition.DEFAULT, true, status -> {
             try {
                 transactionOperations.executeWrite(tx -> { throw new IllegalStateException("handled") })
             } catch (IllegalStateException ignored) {
@@ -213,13 +216,13 @@ class H2SuppliedConnectionSpec extends Specification implements H2TestPropertyPr
         owner.close()
     }
 
-    void "with auto-commit off, REQUIRES_NEW in the callback runs on a separate connection"() {
+    void "when the owner controls the transaction, REQUIRES_NEW in the callback runs on a separate connection"() {
         given:
         Connection owner = rawDataSource.connection
         owner.autoCommit = false
 
         when:
-        connectionOperations.executeWithConnection(owner, ConnectionDefinition.DEFAULT, status ->
+        connectionOperations.executeWithConnection(owner, ConnectionDefinition.DEFAULT, true, status ->
             transactionOperations.execute(TransactionDefinition.of(TransactionDefinition.Propagation.REQUIRES_NEW), tx -> {
                 assert !tx.connection.is(owner)
                 bookRepository.save(new Book(title: "Independent", totalPages: 3))
@@ -233,6 +236,81 @@ class H2SuppliedConnectionSpec extends Specification implements H2TestPropertyPr
         cleanup:
         owner.autoCommit = true
         owner.close()
+    }
+
+    void "a joined transaction cannot register synchronizations, since the owner's commit is not seen"() {
+        given:
+        Connection owner = rawDataSource.connection
+        owner.autoCommit = false
+
+        when:
+        connectionOperations.executeWithConnection(owner, ConnectionDefinition.DEFAULT, true, status ->
+            transactionOperations.executeWrite(tx -> {
+                tx.registerSynchronization(new TransactionSynchronization() {
+                    @Override
+                    void afterCommit() {
+                    }
+                })
+            })
+        )
+
+        then:
+        TransactionUsageException e = thrown()
+        e.message.contains("cannot be registered on a transaction joined to the owner's transaction")
+
+        cleanup:
+        owner.rollback()
+        owner.autoCommit = true
+        owner.close()
+    }
+
+    void "after a handled rollback, later joined transactions fail before running their work"() {
+        given:
+        Connection owner = rawDataSource.connection
+        owner.autoCommit = false
+        boolean secondRan = false
+
+        when:
+        connectionOperations.executeWithConnection(owner, ConnectionDefinition.DEFAULT, true, status -> {
+            try {
+                transactionOperations.executeWrite(tx -> { throw new IllegalStateException("handled") })
+            } catch (IllegalStateException ignored) {
+            }
+            transactionOperations.executeWrite(tx -> {
+                secondRan = true
+                bookRepository.save(new Book(title: "After rollback", totalPages: 1))
+            })
+        })
+
+        then:
+        thrown(UnexpectedRollbackException)
+        !secondRan
+
+        cleanup:
+        owner.rollback()
+        owner.autoCommit = true
+        owner.close()
+    }
+
+    void "without the owner flag, Micronaut Data controls the transaction even when auto-commit is off"() {
+        given:
+        Connection supplied = rawDataSource.connection
+        supplied.autoCommit = false
+
+        when:
+        connectionOperations.executeWithConnection(supplied, ConnectionDefinition.DEFAULT, status ->
+            transactionOperations.executeWrite(tx -> {
+                assert tx.newTransaction
+                bookRepository.save(new Book(title: "Committed", totalPages: 1))
+            })
+        )
+
+        then: "the transaction committed the supplied connection"
+        bookRepository.findAll()*.title == ["Committed"]
+
+        cleanup:
+        supplied.autoCommit = true
+        supplied.close()
     }
 
     private static TransactionDefinition isolated() {

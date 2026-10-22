@@ -88,16 +88,6 @@ public final class HibernateTransactionManager extends AbstractDefaultTransactio
     }
 
     @Override
-    protected boolean isTransactionControlledByOwner(Session session) {
-        // A session over a supplied connection that is not in auto-commit mode is in the owner's transaction
-        try {
-            return !getConnection(session).getAutoCommit();
-        } catch (SQLException e) {
-            throw new CannotCreateTransactionException("Could not read the auto-commit mode of the supplied connection", e);
-        }
-    }
-
-    @Override
     protected DefaultTransactionStatus<Session> createOwnerTransactionStatus(ConnectionStatus<Session> connectionStatus,
                                                                              TransactionDefinition definition,
                                                                              DefaultConnectionStatus.SuppliedConnection suppliedConnection) {
