@@ -29,9 +29,14 @@ class BookCatalog:
             self.refresh()
 
     # tag::events[]
+    # tag::listener-signature[]
     @ChangeListener
+    # end::listener-signature[]
     @PostgresChangeNotification(channel="book_changes")
+    # tag::listener-signature[]
     def changed(self, event: ChangeEvent[Book]) -> None:
+        # Handle the change.
+    # end::listener-signature[]
         with self.lock:
             operation = event.operation()
             if operation == ChangeOperation.INSERT:

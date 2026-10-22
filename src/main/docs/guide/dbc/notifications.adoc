@@ -18,9 +18,15 @@ ann:data.jdbc.annotation.ChangeListener[] must:
 * declare exactly one `ChangeEvent<E>` parameter; and
 * use a concrete Micronaut Data persistent entity type for `E`.
 
+The following excerpt shows the common annotation and method signature; the method body is omitted:
+
+snippet::example.BookCatalog[project-base="doc-examples/jdbc-postgres-notifications", source="main", tags="listener-signature", languages="java,groovy,kotlin,python"]
+
+A complete listener also requires ann:data.jdbc.annotation.OracleChangeNotification[] or
+ann:data.jdbc.annotation.PostgresChangeNotification[]. The database-specific sections show complete examples.
+
 The listener uses the `default` datasource unless another datasource is specified through the `dataSource`
-attribute, for example `@ChangeListener(dataSource = "inventory")`.
-Also declare the database-specific notification annotation described in the Oracle or PostgreSQL section.
+attribute, for example `@ChangeListener(dataSource = "library")`.
 
 [[notificationChangeEvents]]
 == Handling Change Events

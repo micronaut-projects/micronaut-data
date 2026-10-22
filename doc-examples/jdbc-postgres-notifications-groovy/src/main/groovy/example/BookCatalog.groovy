@@ -28,9 +28,14 @@ class BookCatalog {
     }
 
     // tag::events[]
+    // tag::listener-signature[]
     @ChangeListener
+    // end::listener-signature[]
     @PostgresChangeNotification(channel = "book_changes")
+    // tag::listener-signature[]
     synchronized void changed(ChangeEvent<Book> event) {
+        // Handle the change.
+    // end::listener-signature[]
         switch (event.operation()) {
             case ChangeOperation.INSERT:
                 event.entity().ifPresent { book -> books.put(book.id(), book) }
@@ -49,7 +54,9 @@ class BookCatalog {
                 refresh()
                 break
         }
+        // tag::listener-signature[]
     }
+    // end::listener-signature[]
 
     // end::events[]
 

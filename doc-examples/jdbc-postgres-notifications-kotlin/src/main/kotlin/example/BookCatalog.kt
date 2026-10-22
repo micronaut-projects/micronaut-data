@@ -25,10 +25,15 @@ open class BookCatalog(private val repository: BookRepository) {
     }
 
     // tag::events[]
+    // tag::listener-signature[]
     @ChangeListener
+    // end::listener-signature[]
     @PostgresChangeNotification(channel = "book_changes")
     @Synchronized
+    // tag::listener-signature[]
     open fun changed(event: ChangeEvent<Book>) {
+        // Handle the change.
+    // end::listener-signature[]
         when (event.operation()) {
             ChangeOperation.INSERT -> event.entity().ifPresent { book -> books[book.id] = book }
             ChangeOperation.UPDATE -> {
@@ -43,7 +48,9 @@ open class BookCatalog(private val repository: BookRepository) {
             }
             ChangeOperation.INVALIDATE -> refresh()
         }
+        // tag::listener-signature[]
     }
+    // end::listener-signature[]
 
     // end::events[]
 
