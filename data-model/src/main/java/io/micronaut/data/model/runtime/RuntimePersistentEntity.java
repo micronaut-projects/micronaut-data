@@ -75,6 +75,9 @@ public class RuntimePersistentEntity<T> extends AbstractPersistentEntity {
     private List<RuntimePersistentProperty<T>> persistentPropertiesValues;
     @Nullable
     private EnumSet<Relation.Cascade> cascadedTypes;
+    // Entities are shared between threads, the volatile field publishes the unmodifiable list
+    @Nullable
+    private volatile Collection<RuntimeAssociation<T>> associations;
 
     /**
      * Default constructor.
@@ -366,7 +369,13 @@ public class RuntimePersistentEntity<T> extends AbstractPersistentEntity {
 
     @Override
     public Collection<RuntimeAssociation<T>> getAssociations() {
-        return (Collection<RuntimeAssociation<T>>) super.getAssociations();
+        // The associations are read for every entity saved, updated or cascaded, build the list once
+        Collection<RuntimeAssociation<T>> result = associations;
+        if (result == null) {
+            result = (Collection<RuntimeAssociation<T>>) super.getAssociations();
+            associations = result;
+        }
+        return result;
     }
 
     @Nullable

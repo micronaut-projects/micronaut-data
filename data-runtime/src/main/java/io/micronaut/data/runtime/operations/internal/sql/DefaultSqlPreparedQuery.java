@@ -75,6 +75,8 @@ import static io.micronaut.data.runtime.query.internal.DefaultPreparedQuery.getP
 @Internal
 public class DefaultSqlPreparedQuery<E, R> extends DefaultBindableParametersPreparedQuery<E, R> implements SqlPreparedQuery<E, R>, DelegatePreparedQuery<E, R> {
 
+    private static final Argument<ScoringFunction> SCORING_FUNCTION_ARGUMENT = Argument.of(ScoringFunction.class);
+
     @Nullable
     protected List<QueryParameterBinding> cursorQueryBindings;
     @Nullable
@@ -138,7 +140,7 @@ public class DefaultSqlPreparedQuery<E, R> extends DefaultBindableParametersPrep
         if (!(invocationContext instanceof MethodInvocationContext<?, ?> methodInvocationContext)) {
             return;
         }
-        List<ScoringFunction> scoringFunctions = getParametersOfType(Argument.of(ScoringFunction.class),
+        List<ScoringFunction> scoringFunctions = getParametersOfType(SCORING_FUNCTION_ARGUMENT,
             methodInvocationContext,
             getConversionService());
         if (scoringFunctions.isEmpty()) {
@@ -210,20 +212,27 @@ public class DefaultSqlPreparedQuery<E, R> extends DefaultBindableParametersPrep
     public void prepare(@Nullable E entity) {
         if (isExpandableQuery()) {
             SqlQueryBuilder queryBuilder = sqlStoredQuery.getQueryBuilder();
-            String positionalParameterFormat = queryBuilder.positionalParameterFormat();
-            StringBuilder q = new StringBuilder(sqlStoredQuery.getExpandableQueryParts()[0]);
+            PlaceholderFormat placeholderFormat = PlaceholderFormat.of(queryBuilder.positionalParameterFormat());
+            String[] expandableQueryParts = sqlStoredQuery.getExpandableQueryParts();
+            int queryLength = 0;
+            for (String part : expandableQueryParts) {
+                queryLength += part.length();
+            }
+            StringBuilder q = new StringBuilder(queryLength + 16 * expandableQueryParts.length);
+            q.append(expandableQueryParts[0]);
             int queryParamIndex = 1;
             int inx = 1;
             for (QueryParameterBinding parameter : sqlStoredQuery.getQueryBindings()) {
                 if (!parameter.isExpandable()) {
-                    q.append(String.format(positionalParameterFormat, inx++));
+                    placeholderFormat.append(q, inx++);
                 } else if (parameter.getRole() == null) {
                     Object parameterValue = getParameterValue(parameter);
                     int size = Math.max(1, sizeOf(parameterValue));
+                    q.ensureCapacity(q.length() + size * placeholderFormat.lengthWithSeparator(inx + size) + 16);
                     for (int k = 0; k < size; k++) {
-                        q.append(String.format(positionalParameterFormat, inx++));
+                        placeholderFormat.append(q, inx++);
                         if (k + 1 != size) {
-                            q.append(",");
+                            q.append(',');
                         }
                     }
                 } else if (TypeRole.PAGEABLE_REQUIRED.equals(parameter.getRole())) {
@@ -255,7 +264,7 @@ public class DefaultSqlPreparedQuery<E, R> extends DefaultBindableParametersPrep
                         q.append(queryBuilder.buildLimitAndOffset(limit.maxResults(), limit.offset()));
                     }
                 }
-                q.append(sqlStoredQuery.getExpandableQueryParts()[queryParamIndex++]);
+                q.append(expandableQueryParts[queryParamIndex++]);
             }
             this.query = q.toString();
         }
@@ -660,6 +669,73 @@ public class DefaultSqlPreparedQuery<E, R> extends DefaultBindableParametersPrep
         @Override
         public Object getValue() {
             return value;
+        }
+    }
+
+    /**
+     * A positional parameter format, such as {@code ?}, {@code $%s} or {@code @p%s}, applied without
+     * {@link String#format} when the format is a literal or has a single {@code %s}.
+     *
+     * @param format The format
+     * @param prefix The text before the parameter index, or the whole literal
+     * @param suffix The text after the parameter index, {@code null} when the format doesn't contain the index
+     * @param formatted Whether the format has to go through {@link String#format}
+     */
+    record PlaceholderFormat(String format, String prefix, @Nullable String suffix, boolean formatted) {
+
+        private static final String INDEX = "%s";
+        private static final PlaceholderFormat DEFAULT = new PlaceholderFormat(SqlQueryBuilder.DEFAULT_POSITIONAL_PARAMETER_MARKER,
+            SqlQueryBuilder.DEFAULT_POSITIONAL_PARAMETER_MARKER, null, false);
+        // The last other format parsed, an application usually has at most one
+        private static volatile PlaceholderFormat last = DEFAULT;
+
+        static PlaceholderFormat of(String format) {
+            if (format.equals(DEFAULT.format)) {
+                return DEFAULT;
+            }
+            PlaceholderFormat placeholderFormat = last;
+            if (!format.equals(placeholderFormat.format)) {
+                placeholderFormat = parse(format);
+                last = placeholderFormat;
+            }
+            return placeholderFormat;
+        }
+
+        private static PlaceholderFormat parse(String format) {
+            int index = format.indexOf('%');
+            if (index == -1) {
+                // String.format ignores the index argument of a format without a specifier
+                return new PlaceholderFormat(format, format, null, false);
+            }
+            if (format.startsWith(INDEX, index) && format.indexOf('%', index + INDEX.length()) == -1) {
+                return new PlaceholderFormat(format, format.substring(0, index), format.substring(index + INDEX.length()), false);
+            }
+            return new PlaceholderFormat(format, format, null, true);
+        }
+
+        void append(StringBuilder builder, int index) {
+            if (formatted) {
+                builder.append(String.format(format, index));
+            } else if (suffix == null) {
+                builder.append(prefix);
+            } else {
+                builder.append(prefix).append(index).append(suffix);
+            }
+        }
+
+        /**
+         * The capacity to reserve for each placeholder of an expanded parameter: the longest placeholder up to the given
+         * index, plus one for the separator that follows it. Only a sizing hint, the builder still grows if needed.
+         *
+         * @param maxIndex The highest index that will be appended
+         * @return The length of a placeholder with its separator, when the format doesn't need formatting
+         */
+        int lengthWithSeparator(int maxIndex) {
+            int length = prefix.length() + 1;
+            if (suffix != null) {
+                length += suffix.length() + Integer.toString(maxIndex).length();
+            }
+            return length;
         }
     }
 }

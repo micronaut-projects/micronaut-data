@@ -71,6 +71,12 @@ public class DefaultBindableParametersStoredQuery<E, R> implements BindableParam
     private final StoredQuery<E, R> storedQuery;
     private final RuntimePersistentEntity<E> runtimePersistentEntity;
     private final ConversionService conversionService;
+    /**
+     * The property path of each query binding, in the order of the bindings, resolved on the first bind: a
+     * {@link PersistentPropertyPath} or a {@link PathResolution}. The stored query is shared between threads, the
+     * volatile field publishes the completed array.
+     */
+    private volatile Object @Nullable [] bindingPropertyPaths;
 
     /**
      * @param storedQuery             The stored query
@@ -104,8 +110,10 @@ public class DefaultBindableParametersStoredQuery<E, R> implements BindableParam
                                E entity,
                                @Nullable
                                Map<QueryParameterBinding, Object> previousValues) {
-        for (QueryParameterBinding queryParameterBinding : storedQuery.getQueryBindings()) {
-            bindParameter(binder, invocationContext, entity, previousValues, queryParameterBinding);
+        List<QueryParameterBinding> queryBindings = storedQuery.getQueryBindings();
+        Object[] propertyPaths = getBindingPropertyPaths(queryBindings);
+        for (int i = 0; i < queryBindings.size(); i++) {
+            bindParameter(binder, invocationContext, entity, previousValues, queryBindings.get(i), propertyPaths[i]);
         }
     }
 
@@ -114,6 +122,51 @@ public class DefaultBindableParametersStoredQuery<E, R> implements BindableParam
                                        @Nullable E entity,
                                        @Nullable Map<QueryParameterBinding, Object> previousValues,
                                        QueryParameterBinding binding) {
+        bindParameter(binder, invocationContext, entity, previousValues, binding, PathResolution.UNRESOLVED);
+    }
+
+    /**
+     * Returns the property path of each query binding, resolving them on the first call. Only the bindings that
+     * take their value from a method parameter or from the entity are resolved, the others are
+     * {@link PathResolution#UNRESOLVED}.
+     *
+     * @param queryBindings The query bindings
+     * @return The property path or a {@link PathResolution} for each binding
+     */
+    private Object[] getBindingPropertyPaths(List<QueryParameterBinding> queryBindings) {
+        Object[] propertyPaths = bindingPropertyPaths;
+        if (propertyPaths != null && propertyPaths.length == queryBindings.size()) {
+            return propertyPaths;
+        }
+        propertyPaths = new Object[queryBindings.size()];
+        RuntimePersistentEntity<E> persistentEntity = getPersistentEntity();
+        for (int i = 0; i < propertyPaths.length; i++) {
+            propertyPaths[i] = resolvePropertyPath(queryBindings.get(i), persistentEntity);
+        }
+        bindingPropertyPaths = propertyPaths;
+        return propertyPaths;
+    }
+
+    private static Object resolvePropertyPath(QueryParameterBinding binding, @Nullable RuntimePersistentEntity<?> persistentEntity) {
+        String[] propertyPath = binding.getPropertyPath();
+        if (persistentEntity == null || propertyPath == null || binding.isExpression() || binding.getValue() != null) {
+            return PathResolution.UNRESOLVED;
+        }
+        try {
+            PersistentPropertyPath pp = persistentEntity.getPropertyPath(propertyPath);
+            return pp == null ? PathResolution.NOT_FOUND : pp;
+        } catch (RuntimeException e) {
+            // Keep failing at bind time, as before
+            return PathResolution.UNRESOLVED;
+        }
+    }
+
+    private void bindParameter(Binder binder,
+                               @Nullable InvocationContext<?, ?> invocationContext,
+                               @Nullable E entity,
+                               @Nullable Map<QueryParameterBinding, Object> previousValues,
+                               QueryParameterBinding binding,
+                               Object resolvedPropertyPath) {
         RuntimePersistentEntity<E> persistentEntity = getPersistentEntity();
         Class<?> parameterConverter = binding.getParameterConverterClass();
         Object value = binding.getValue();
@@ -140,9 +193,9 @@ public class DefaultBindableParametersStoredQuery<E, R> implements BindableParam
                 Objects.requireNonNull(invocationContext, invocationIsRequiredMessage());
                 value = resolveParameterValue(binding, invocationContext.getParameterValues());
                 argument = invocationContext.getArguments()[binding.getParameterIndex()];
-                persistentProperty = findPersistentProperty(binding, persistentEntity);
+                persistentProperty = findPersistentProperty(binding, persistentEntity, resolvedPropertyPath);
             } else if (binding.isAutoPopulated()) {
-                PersistentPropertyPath pp = getRequiredPropertyPath(binding, persistentEntity);
+                PersistentPropertyPath pp = getRequiredPropertyPath(binding, persistentEntity, resolvedPropertyPath);
                 persistentProperty = (RuntimePersistentProperty<Object>) pp.getProperty();
                 if (binding.isRequiresPreviousPopulatedValue()) {
                     if (previousValues != null) {
@@ -170,7 +223,7 @@ public class DefaultBindableParametersStoredQuery<E, R> implements BindableParam
                 if (isJsonEntity() && binding.getDataType() == DataType.JSON) {
                     value = entity;
                 } else {
-                    PersistentPropertyPath pp = getRequiredPropertyPath(binding, persistentEntity);
+                    PersistentPropertyPath pp = getRequiredPropertyPath(binding, persistentEntity, resolvedPropertyPath);
                     value = pp.getPropertyValue(entity);
                     persistentProperty = (RuntimePersistentProperty<Object>) pp.getProperty();
                 }
@@ -362,15 +415,46 @@ public class DefaultBindableParametersStoredQuery<E, R> implements BindableParam
         return pp;
     }
 
-    @Nullable
-    private RuntimePersistentProperty<Object> findPersistentProperty(QueryParameterBinding queryParameterBinding, RuntimePersistentEntity<E> persistentEntity) {
-        String[] propertyPath = queryParameterBinding.getPropertyPath();
-        if (propertyPath == null) {
-            return null;
+    /**
+     * Returns the property path of the query binding at the given index of {@link #getQueryBindings()}, resolved
+     * once for this stored query.
+     *
+     * @param bindingIndex The index of the binding
+     * @return The property path
+     */
+    protected final PersistentPropertyPath getRequiredPropertyPath(int bindingIndex) {
+        List<QueryParameterBinding> queryBindings = storedQuery.getQueryBindings();
+        return getRequiredPropertyPath(queryBindings.get(bindingIndex), getPersistentEntity(),
+            getBindingPropertyPaths(queryBindings)[bindingIndex]);
+    }
+
+    private <T> PersistentPropertyPath getRequiredPropertyPath(QueryParameterBinding queryParameterBinding,
+                                                               RuntimePersistentEntity<T> persistentEntity,
+                                                               Object resolvedPropertyPath) {
+        if (resolvedPropertyPath instanceof PersistentPropertyPath pp) {
+            return pp;
         }
-        PersistentPropertyPath pp = persistentEntity.getPropertyPath(propertyPath);
-        if (pp == null) {
+        return getRequiredPropertyPath(queryParameterBinding, persistentEntity);
+    }
+
+    @Nullable
+    private RuntimePersistentProperty<Object> findPersistentProperty(QueryParameterBinding queryParameterBinding,
+                                                                     RuntimePersistentEntity<E> persistentEntity,
+                                                                     Object resolvedPropertyPath) {
+        PersistentPropertyPath pp;
+        if (resolvedPropertyPath instanceof PersistentPropertyPath resolved) {
+            pp = resolved;
+        } else if (resolvedPropertyPath == PathResolution.NOT_FOUND) {
             return null;
+        } else {
+            String[] propertyPath = queryParameterBinding.getPropertyPath();
+            if (propertyPath == null) {
+                return null;
+            }
+            pp = persistentEntity.getPropertyPath(propertyPath);
+            if (pp == null) {
+                return null;
+            }
         }
         RuntimePersistentProperty<Object> property = (RuntimePersistentProperty<Object>) pp.getProperty();
         DataType bindingDataType = queryParameterBinding.getDataType();
@@ -385,6 +469,20 @@ public class DefaultBindableParametersStoredQuery<E, R> implements BindableParam
 
     private String invocationIsRequiredMessage() {
         return "Invocation context is required!";
+    }
+
+    /**
+     * A binding property path that is not a resolved {@link PersistentPropertyPath}.
+     */
+    private enum PathResolution {
+        /**
+         * The property path is resolved on every call.
+         */
+        UNRESOLVED,
+        /**
+         * The property path doesn't exist in the entity.
+         */
+        NOT_FOUND
     }
 
 }

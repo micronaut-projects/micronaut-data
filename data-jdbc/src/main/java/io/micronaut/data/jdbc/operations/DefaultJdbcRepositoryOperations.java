@@ -186,6 +186,9 @@ public final class DefaultJdbcRepositoryOperations extends AbstractSqlRepository
     private final Map<Dialect, List<SqlExceptionMapper>> sqlExceptionMappers = new EnumMap<>(Dialect.class);
     private final AtomicReference<JdbcBatchMetadata> cachedJdbcBatchMetadata = new AtomicReference<>();
     private final Set<DialectTargetVersion> checkedTargetVersions = ConcurrentHashMap.newKeySet();
+    // The last SQL target version normalized for a statement, a datasource normally has one
+    @Nullable
+    private volatile NormalizedTargetVersion lastTargetVersion;
     // This @EachBean(DataSource.class) instance caches the successfully resolved version per datasource.
     private final SynchronizedLazyValue<DatabaseVersion> databaseVersion = new SynchronizedLazyValue<>();
     private final Map<Dialect, JdbcUpsertReturningExecutor> upsertReturningExecutors = new EnumMap<>(Dialect.class);
@@ -1503,16 +1506,16 @@ public final class DefaultJdbcRepositoryOperations extends AbstractSqlRepository
                 return;
             }
             Dialect dialect = storedQuery.getDialect();
-            Optional<String> normalizedTarget = SqlDialectOptions.of(dialect, target).version();
-            String targetVersion = normalizedTarget.orElse(target);
-            DialectTargetVersion targetVersionKey = new DialectTargetVersion(dialect, targetVersion);
+            NormalizedTargetVersion normalized = normalizeTargetVersion(dialect, target);
+            String targetVersion = normalized.key().version();
+            DialectTargetVersion targetVersionKey = normalized.key();
             // Only one caller validates a target version for this datasource. Other concurrent callers can proceed
             // without waiting because this diagnostic does not affect query execution.
             if (!checkedTargetVersions.add(targetVersionKey)) {
                 return;
             }
             try {
-                if (normalizedTarget.isEmpty()) {
+                if (!normalized.valid()) {
                     LOG.warn("SQL target version {} for dialect {} is invalid. JDBC target-version diagnostics are disabled for this target.",
                         target, dialect);
                     return;
@@ -1540,6 +1543,23 @@ public final class DefaultJdbcRepositoryOperations extends AbstractSqlRepository
                 checkedTargetVersions.remove(targetVersionKey);
                 throw e;
             }
+        }
+
+        /**
+         * Normalizes a target version, reusing the result for the same dialect and target as the previous statement.
+         * Binders call this concurrently without locking: the holder is immutable, published through a volatile field
+         * and used only after checking that it matches the dialect and target of this call, so a race can at most
+         * normalize again. Checking each target once is left to {@code checkedTargetVersions}.
+         */
+        private NormalizedTargetVersion normalizeTargetVersion(Dialect dialect, String target) {
+            NormalizedTargetVersion normalized = lastTargetVersion;
+            if (normalized == null || normalized.dialect() != dialect || !normalized.target().equals(target)) {
+                Optional<String> normalizedTarget = SqlDialectOptions.of(dialect, target).version();
+                normalized = new NormalizedTargetVersion(dialect, target,
+                    new DialectTargetVersion(dialect, normalizedTarget.orElse(target)), normalizedTarget.isPresent());
+                lastTargetVersion = normalized;
+            }
+            return normalized;
         }
 
         @Nullable
@@ -2065,6 +2085,17 @@ public final class DefaultJdbcRepositoryOperations extends AbstractSqlRepository
     }
 
     private record DialectTargetVersion(Dialect dialect, String version) {
+    }
+
+    /**
+     * A target version as configured and its normalized key.
+     *
+     * @param dialect The dialect
+     * @param target  The target version as configured
+     * @param key     The dialect with the normalized version, or the configured one when it is invalid
+     * @param valid   Whether the configured version is valid
+     */
+    private record NormalizedTargetVersion(Dialect dialect, String target, DialectTargetVersion key, boolean valid) {
     }
 
     private static final class DatabaseVersionLookupException extends RuntimeException {
