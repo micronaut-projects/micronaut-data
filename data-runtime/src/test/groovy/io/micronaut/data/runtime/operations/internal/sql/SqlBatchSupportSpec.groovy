@@ -40,6 +40,35 @@ class SqlBatchSupportSpec extends Specification {
         !SqlBatchSupport.isSupportsBatchInsert(entityWithGeneratedId(), Dialect.MYSQL)
     }
 
+    @Unroll
+    void "jdbc oracle batches generated-id inserts only with a driver that returns batch generated keys: #scenario"() {
+        given:
+        def metadata = new JdbcBatchMetadata("Oracle", "Oracle AI Database 26ai", driverName, true, true, driverMajorVersion)
+
+        expect:
+        resolve(entityWithGeneratedId(), Dialect.ORACLE, metadata, true) == expected
+
+        where:
+        scenario               | driverName                | driverMajorVersion || expected
+        "ojdbc 23"             | "Oracle JDBC driver"      | 23                 || JdbcBatchInsertMode.BATCH
+        "a later ojdbc"        | "Oracle JDBC driver"      | 26                 || JdbcBatchInsertMode.BATCH
+        "ojdbc 21"             | "Oracle JDBC driver"      | 21                 || JdbcBatchInsertMode.FALLBACK
+        "ojdbc 19"             | "Oracle JDBC driver"      | 19                 || JdbcBatchInsertMode.FALLBACK
+        "an unknown version"   | "Oracle JDBC driver"      | null               || JdbcBatchInsertMode.FALLBACK
+        "another driver"       | "Some proxy JDBC driver"  | 23                 || JdbcBatchInsertMode.FALLBACK
+    }
+
+    void "jdbc oracle keeps batching non-generated identities without metadata"() {
+        expect:
+        resolve(entityWithNonGeneratedId(), Dialect.ORACLE, JdbcBatchMetadata.UNKNOWN, false) == JdbcBatchInsertMode.BATCH
+        resolve(entityWithGeneratedId(), Dialect.ORACLE, JdbcBatchMetadata.UNKNOWN, true) == JdbcBatchInsertMode.FALLBACK
+    }
+
+    void "the metadata created without a driver version has none"() {
+        expect:
+        new JdbcBatchMetadata("Oracle", null, "Oracle JDBC driver", true, true).driverMajorVersion() == null
+    }
+
     void "stored query preserves sqlite batch opt-out"() {
         given:
         SqlStoredQuery<?, ?> storedQuery = Stub(SqlStoredQuery) {
