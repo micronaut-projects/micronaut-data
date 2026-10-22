@@ -18,6 +18,8 @@ package io.micronaut.data.jdbc.postgres.notification.provider
 import io.micronaut.context.ApplicationContext
 import io.micronaut.context.annotation.Requires
 import io.micronaut.context.event.ShutdownEvent
+import io.micronaut.data.annotation.Embeddable
+import io.micronaut.data.annotation.EmbeddedId
 import io.micronaut.data.annotation.Id
 import io.micronaut.data.annotation.MappedEntity
 import io.micronaut.data.annotation.MappedProperty
@@ -138,6 +140,54 @@ class PostgresNotificationProviderSpec extends Specification implements Postgres
         deleted.operation() == ChangeOperation.DELETE
         deleted.entity().isEmpty()
         deleted.metadata(PostgresChangeEventMetadata).orElseThrow().oldKeys().BookId == '9007199254740994'
+    }
+
+    void "embedded primary keys load entities and retain old and new key components"() {
+        given:
+        start(['spec.embedded-listener': 'true'])
+        def embedded = application.getBean(EmbeddedBookChangeListener)
+        def tenant = UUID.fromString(TENANT)
+        def otherTenant = UUID.fromString('9ae24496-5404-498c-9c43-ed6267a1284d')
+        execute("INSERT INTO \"ProviderBook\" VALUES ('$otherTenant', 41, 'other tenant')")
+        assert embedded.events.poll(10, TimeUnit.SECONDS).entity().orElseThrow().id.tenant == otherTenant
+
+        when:
+        execute("INSERT INTO \"ProviderBook\" VALUES ('$TENANT', 41, 'first')")
+        def inserted = embedded.events.poll(10, TimeUnit.SECONDS)
+
+        then:
+        inserted != null
+        inserted.operation() == ChangeOperation.INSERT
+        inserted.entity().orElseThrow().id.tenant == tenant
+        inserted.entity().orElseThrow().id.number == 41L
+        inserted.entity().orElseThrow().title == 'first'
+        inserted.metadata(PostgresChangeEventMetadata).orElseThrow().oldKeys() == [:]
+        inserted.metadata(PostgresChangeEventMetadata).orElseThrow().newKeys() == [tenant: TENANT, BookId: '41']
+
+        when:
+        execute("UPDATE \"ProviderBook\" SET tenant = '$otherTenant', \"BookId\" = 42, title = 'second' WHERE tenant = '$TENANT'")
+        def updated = embedded.events.poll(10, TimeUnit.SECONDS)
+
+        then:
+        updated != null
+        updated.operation() == ChangeOperation.UPDATE
+        updated.entity().orElseThrow().id.tenant == otherTenant
+        updated.entity().orElseThrow().id.number == 42L
+        updated.entity().orElseThrow().title == 'second'
+        updated.metadata(PostgresChangeEventMetadata).orElseThrow().oldKeys() == [tenant: TENANT, BookId: '41']
+        updated.metadata(PostgresChangeEventMetadata).orElseThrow().newKeys() == [tenant: otherTenant.toString(), BookId: '42']
+
+        when:
+        execute('DELETE FROM "ProviderBook" WHERE "BookId" = 42')
+        def deleted = embedded.events.poll(10, TimeUnit.SECONDS)
+
+        then:
+        deleted != null
+        deleted.operation() == ChangeOperation.DELETE
+        deleted.entity().isEmpty()
+        deleted.metadata(PostgresChangeEventMetadata).orElseThrow().oldKeys() == [tenant: otherTenant.toString(), BookId: '42']
+        deleted.metadata(PostgresChangeEventMetadata).orElseThrow().newKeys() == [:]
+        embedded.events.poll(300, TimeUnit.MILLISECONDS) == null
     }
 
     void "bulk changes load every affected entity without requiring callback order"() {
@@ -480,6 +530,33 @@ class OverloadNotificationProbe {
     @ChangeListener
     @PostgresChangeNotification(channel = 'provider_probe')
     void changed(ChangeEvent<NotificationBook> event) {
+        events.add(event)
+    }
+}
+
+@Embeddable
+class NotificationBookId {
+    UUID tenant
+    @MappedProperty('BookId')
+    Long number
+}
+
+@MappedEntity(value = 'ProviderBook', schema = 'notification_provider_test')
+class EmbeddedNotificationBook {
+    @EmbeddedId
+    NotificationBookId id
+    String title
+}
+
+@Singleton
+@Requires(property = 'spec.name', value = 'PostgresNotificationProviderSpec')
+@Requires(property = 'spec.embedded-listener', value = 'true')
+class EmbeddedBookChangeListener {
+    final LinkedBlockingQueue<ChangeEvent<EmbeddedNotificationBook>> events = new LinkedBlockingQueue<>()
+
+    @ChangeListener
+    @PostgresChangeNotification(channel = 'provider_changes')
+    void changed(ChangeEvent<EmbeddedNotificationBook> event) {
         events.add(event)
     }
 }

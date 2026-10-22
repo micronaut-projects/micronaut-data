@@ -449,8 +449,9 @@ on an established connection.
 == Connection Lifetime and Recovery
 
 The notification connection remains open while the application listens for changes. After a connection failure,
-Micronaut Data opens a new connection and subscribes to the same channels again. Each successful reconnection sends
-`INVALIDATE` to every affected listener so it can refresh changes missed while disconnected.
+Micronaut Data attempts to open a new connection and listen on the same channels again. After reconnecting, it
+schedules an `INVALIDATE` event for every affected listener so each can refresh state that may have become outdated
+while disconnected. Starting listeners for the first time does not send an initial `INVALIDATE` event.
 
 Configure polling and connection recovery globally for all PostgreSQL notification listeners and datasources:
 
@@ -470,19 +471,23 @@ micronaut:
           max-retry-delay: 60s
 ----
 
-These settings apply to all subscribing datasources.
-Durations must be at least one millisecond and no greater than 2,147,483,647 milliseconds.
+`poll-timeout`, `validation-interval`, `validation-timeout`, `retry-delay`, and `max-retry-delay` accept duration
+values such as `100ms`, `5s`, or `1m`. Each must be at least one millisecond and no greater than `Integer.MAX_VALUE`
+milliseconds (approximately 24.9 days). This shared limit matches the integer timeout range used by the PostgreSQL
+JDBC notification-polling method.
 
 `poll-timeout` defaults to one second and controls how long each call waits for notifications.
 Increasing it can delay graceful shutdown when no notifications arrive, because stopping the service
 does not interrupt a call already waiting for notifications. The listening connection is closed after
 that call returns. Graceful shutdown waits for the connection to close and any running listener callbacks to finish.
-Waiting for notifications does not itself send queries to PostgreSQL. Separately, `validation-interval`
-(default `30s`) controls periodic connection checks using a lightweight database round trip. These checks detect
-silent network failures that would otherwise look like an idle connection. A failed check triggers reconnection
-and an `INVALIDATE` event after recovery.
+Waiting for notifications does not itself send queries to PostgreSQL.
 
-`validation-timeout` defaults to five seconds and is rounded up to whole seconds for JDBC validation.
+`validation-interval` defaults to thirty seconds and controls periodic connection checks using a lightweight
+database round trip. These checks detect silent network failures that would otherwise look like an idle connection.
+A failed check starts reconnection attempts, with an `INVALIDATE` event scheduled after recovery.
+
+`validation-timeout` limits how long a connection check waits. It defaults to five seconds and is rounded up
+to whole seconds for JDBC validation.
 Checks run between notification polls; increasing `poll-timeout` can therefore delay failure detection.
 Graceful shutdown may also wait for a connection check already in progress.
 
@@ -490,21 +495,23 @@ TCP keepalive is enabled on notification connections unless explicitly configure
 `tcpKeepAlive` driver property. Its timing depends on operating-system settings; periodic connection checks
 provide detection independently of those settings.
 
-`max-retries` defaults to `-1`, which retries recovery until shutdown. Non-negative values count retries
-after the initial recovery attempt; `0` allows only that initial attempt. The first recovery attempt waits
-for `retry-delay`. Subsequent delays are multiplied by `retry-delay-multiplier`.
-All delays, including the initial delay, are capped at `max-retry-delay`.
+`max-retries` defaults to `-1`, which retries recovery until it succeeds or the application shuts down.
+Non-negative values count retries after the initial recovery attempt; `0` allows only that initial attempt.
+The first recovery attempt waits
+for `retry-delay` (default `1s`). Subsequent delays are multiplied by `retry-delay-multiplier` (default `2`).
+All delays, including the initial delay, are capped at `max-retry-delay` (default `60s`).
 The multiplier must be an integer of at least `1`; `1` uses a fixed delay.
 A successful reconnection resets the retry count and delay. These settings do not retry failed application startup
 or listener callbacks. If a finite retry limit is exhausted, the provider logs an error and stops receiving
-notifications for that datasource until the application restarts.
+notifications for that datasource until the application restarts. The default delay sequence is `1s`, `2s`,
+`4s`, `8s`, `16s`, `32s`, then `60s` for subsequent attempts.
 
 == Delivery and Concurrency
 
 See <<notificationDeliveryAndConcurrency, Delivery and Concurrency>> for shared threading requirements,
-delivery limitations, and handling of executor rejections.
+delivery limitations, and what happens when the executor cannot schedule a listener call.
 
-Configure the maximum queued and running callbacks for each listener:
+Configure the maximum number of listener calls waiting to run or already running:
 
 [configuration]
 ----
@@ -517,23 +524,27 @@ micronaut:
 ----
 
 `max-outstanding-tasks` must be positive and defaults to `1000`. The same setting applies independently to
-every listener, across all subscribing datasources. It includes invalidation callbacks. When a listener reaches
-its limit, Micronaut Data logs a warning and combines subsequent notifications into one pending `INVALIDATE`.
-That invalidation is submitted as capacity becomes available. Already accepted callbacks remain scheduled;
-new notifications are combined until the invalidation starts. Notifications lost while it runs can require
-another invalidation. Other listeners can continue accepting callbacks up to their own limits.
+each listener method across all datasources with PostgreSQL listeners. Calls handling `INVALIDATE` count toward
+this limit. When a listener reaches its limit, Micronaut Data logs a warning and combines further change events
+into one pending `INVALIDATE` event, which is scheduled when capacity becomes available.
 
-A slow listener does not prevent notifications from being received for other listeners. This limit bounds
-queued and running listener calls, but PostgreSQL still sends every notification produced by your triggers.
-With many listeners, total application work can still be substantial. Use statement-trigger invalidations
-to reduce database notification volume.
+Already accepted listener calls remain scheduled. Further change events are combined into the pending `INVALIDATE`
+until the listener starts handling it. If the listener reaches its work limit again while refreshing state,
+Micronaut Data schedules another `INVALIDATE`. Other listeners can continue accepting calls up to their own limits.
 
-PostgreSQL may coalesce identical channel/payload pairs within a transaction. For example, multiple updates to the same
-row with unchanged keys may produce one update notification. Missed notifications cannot be replayed
-after a listener disconnects.
+A slow listener does not block reception of notifications for other listeners, although listener execution
+shares Micronaut's blocking executor. The work limit bounds waiting and running listener calls; PostgreSQL still
+sends every notification produced by your triggers. With many listeners, total application work can still be
+substantial. Use <<postgresStatementNotifications, statement-trigger invalidations>> to reduce the number of
+notifications generated by bulk changes.
+
+PostgreSQL can combine notifications with the same channel and payload within a transaction. For example, multiple
+updates to the same row with unchanged keys may produce one update notification. Missed notifications cannot be
+replayed after the application loses its notification connection.
 
 Notifications are visible to all users in the database. Include only appropriate identifiers in payloads;
-channels do not provide access control. Trigger execution and PostgreSQL notification-queue failures can fail the write transaction.
+channels do not provide access control. Errors in trigger execution or PostgreSQL's notification queue can cause
+the transaction modifying the table to fail.
 
 See the PostgreSQL link:https://www.postgresql.org/docs/current/sql-notify.html[`NOTIFY` documentation]
 for transaction, payload, and delivery behavior.
