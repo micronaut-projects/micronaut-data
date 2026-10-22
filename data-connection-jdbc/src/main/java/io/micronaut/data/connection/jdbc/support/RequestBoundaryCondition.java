@@ -37,15 +37,17 @@ final class RequestBoundaryCondition implements Condition {
     @Override
     public boolean matches(ConditionContext context) {
         BeanResolutionContext beanResolutionContext = context.getBeanResolutionContext();
+        if (beanResolutionContext == null) {
+            // checked once before a bean is made per data source: let the per data source check decide
+            return true;
+        }
         String dataSourceName = "default";
-        if (beanResolutionContext != null) {
-            Qualifier<?> currentQualifier = beanResolutionContext.getCurrentQualifier();
-            if (currentQualifier == null && context.getComponent() instanceof BeanDefinition<?> definition) {
-                currentQualifier = definition.getDeclaredQualifier();
-            }
-            if (currentQualifier instanceof Named named) {
-                dataSourceName = named.getName();
-            }
+        Qualifier<?> currentQualifier = beanResolutionContext.getCurrentQualifier();
+        if (currentQualifier == null && context.getComponent() instanceof BeanDefinition<?> definition) {
+            currentQualifier = definition.getDeclaredQualifier();
+        }
+        if (currentQualifier instanceof Named named) {
+            dataSourceName = named.getName();
         }
         String property = DataSourceConstants.DATASOURCES + '.' + dataSourceName + '.' + REQUEST_BOUNDARIES;
         return context.getProperty(property, Boolean.class, false);

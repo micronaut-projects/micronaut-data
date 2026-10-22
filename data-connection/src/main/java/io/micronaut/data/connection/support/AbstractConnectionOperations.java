@@ -172,7 +172,20 @@ public abstract class AbstractConnectionOperations<C> implements ConnectionOpera
 
     private DefaultConnectionStatus<C> openNewConnectionInternal(@NonNull ConnectionDefinition definition) {
         C connection = openConnection(definition);
-        return new DefaultConnectionStatus<>(connection, definition, true, this);
+        DefaultConnectionStatus<C> connectionStatus = new DefaultConnectionStatus<>(connection, definition, true, this);
+        try {
+            for (ConnectionCustomizer<C> connectionCustomizer : connectionCustomizers) {
+                connectionCustomizer.connectionOpened(connectionStatus);
+            }
+        } catch (RuntimeException e) {
+            try {
+                complete(connectionStatus);
+            } catch (RuntimeException completeFailure) {
+                e.addSuppressed(completeFailure);
+            }
+            throw e;
+        }
+        return connectionStatus;
     }
 
     private DefaultConnectionStatus<C> reuseExistingConnectionInternal(@NonNull ConnectionStatus<C> existingStatus) {

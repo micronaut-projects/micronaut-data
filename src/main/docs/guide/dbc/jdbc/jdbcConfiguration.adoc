@@ -152,7 +152,7 @@ TIP: See the guide for https://guides.micronaut.io/latest/micronaut-data-jdbc-re
 
 === Request boundaries
 
-Set `datasources.<datasource-name>.request-boundaries=true` to mark a request boundary around each connection that Micronaut Data opens, with the JDBC `Connection.beginRequest()` and `Connection.endRequest()` methods. A connection reused by a nested operation stays in the request of the scope that opened it.
+Set `datasources.<datasource-name>.request-boundaries=true` to mark a request boundary around each connection that Micronaut Data opens, with the JDBC `Connection.beginRequest()` and `Connection.endRequest()` methods. This covers connections opened for connection operations and for transactions (`@Transactional` or `TransactionOperations`). The request begins when the connection is opened, before Micronaut Data applies its read-only or transaction settings. It ends before the connection is closed, after the transaction has committed or rolled back and those settings have been restored. A connection reused by a nested operation or a repository call stays in the request of the scope that opened it.
 
 [configuration]
 ----
@@ -161,4 +161,4 @@ datasources:
     request-boundaries: true
 ----
 
-Request boundaries tell the driver where a unit of work starts and ends. Oracle uses them for Transparent Application Continuity, to reset the session state when a request ends (`RESET_STATE`), and to release a Database Resident Connection Pooling (DRCP) server between requests. For a DRCP-enabled Oracle connection, Micronaut Data also attaches the pooled server at the start of the request and releases it at the end, which DRCP needs with connection pools other than Oracle UCP. Oracle UCP marks request boundaries itself, and nested boundaries are ignored, so the setting is harmless with UCP.
+Request boundaries tell the driver where a unit of work starts and ends. Oracle uses them for Transparent Application Continuity, to reset the session state when a request ends (`RESET_STATE`), and to release a Database Resident Connection Pooling (DRCP) server between requests. For a DRCP-enabled Oracle connection, Micronaut Data also releases the pooled server after each request with `detachServerConnection`, even when ending the request fails. DRCP needs this with connection pools other than Oracle UCP. A released connection attaches to a server again on its next round trip. The Oracle JDBC driver can also attach and release the server in `beginRequest()` and `endRequest()` itself; see its `oracle.jdbc.DRCPMultiplexingInRequestAPIs` connection property. Oracle UCP marks request boundaries itself, and nested boundaries are ignored, so the setting is harmless with UCP.
