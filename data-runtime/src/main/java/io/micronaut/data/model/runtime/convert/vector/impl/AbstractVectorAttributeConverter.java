@@ -198,7 +198,6 @@ abstract sealed class AbstractVectorAttributeConverter<X extends Vector, Y> impl
             && supportsVectorType(converter, targetType), sparseTarget);
     }
 
-
     private static @Nullable VectorTypeConverter<?> selectConverter(List<VectorTypeConverter<?>> converters,
                                                                     Predicate<VectorTypeConverter<?>> candidate,
                                                                     boolean sparse) {
