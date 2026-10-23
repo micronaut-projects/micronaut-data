@@ -240,19 +240,7 @@ public abstract class AbstractTransactionOperations<T extends InternalTransactio
             if (debugEnabled) {
                 logger.debug("Creating a new transaction with definition [{}]", definition);
             }
-            ConnectionStatus<C> connectionStatus = connectionOperations.findConnectionStatus().orElse(null);
-            DefaultConnectionStatus.SuppliedConnection ownerControlled = ownerControlledConnection(connectionStatus);
-            if (connectionStatus == null
-                || ownerControlled != null && definition.getPropagationBehavior() == TransactionDefinition.Propagation.REQUIRES_NEW) {
-                ConnectionStatus<C> newConnectionStatus = synchronousConnectionManager.getConnection(
-                    connectionStatus == null ? txConnectionDefinition(definition) : ConnectionDefinition.REQUIRES_NEW);
-                return createAndBeginTransaction(definition, newConnectionStatus,
-                    () -> synchronousConnectionManager.complete(newConnectionStatus));
-            }
-            if (ownerControlled != null) {
-                return joinOwnerTransaction(definition, connectionStatus, ownerControlled);
-            }
-            return createAndBeginTransactionOnExistingConnection(definition, connectionStatus);
+            return getTransactionWithoutExistingTransaction(definition, synchronousConnectionManager);
         }
         if (debugEnabled) {
             logger.debug("Found existing transaction [{}]", existingTransaction);
@@ -272,6 +260,23 @@ public abstract class AbstractTransactionOperations<T extends InternalTransactio
         T existingTransactionStatus = createExistingTransactionStatus(definition, existingTransaction);
         begin(existingTransactionStatus);
         return existingTransactionStatus;
+    }
+
+    private T getTransactionWithoutExistingTransaction(TransactionDefinition definition,
+                                                       SynchronousConnectionManager<C> connectionManager) {
+        ConnectionStatus<C> connectionStatus = connectionOperations.findConnectionStatus().orElse(null);
+        DefaultConnectionStatus.SuppliedConnection ownerControlled = ownerControlledConnection(connectionStatus);
+        if (connectionStatus == null
+            || ownerControlled != null && definition.getPropagationBehavior() == TransactionDefinition.Propagation.REQUIRES_NEW) {
+            ConnectionStatus<C> newConnectionStatus = connectionManager.getConnection(
+                connectionStatus == null ? txConnectionDefinition(definition) : ConnectionDefinition.REQUIRES_NEW);
+            return createAndBeginTransaction(definition, newConnectionStatus,
+                () -> connectionManager.complete(newConnectionStatus));
+        }
+        if (ownerControlled != null) {
+            return joinOwnerTransaction(definition, connectionStatus, ownerControlled);
+        }
+        return createAndBeginTransactionOnExistingConnection(definition, connectionStatus);
     }
 
     /**
