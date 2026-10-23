@@ -55,7 +55,7 @@ final class JdbcDatabaseConversionContextFactory implements DatabaseConversionCo
     @Override
     @NonNull
     public DatabaseTypeConversionContext forArgument(@NonNull Argument<?> argument) {
-        return new ArgumentDatabaseTypeContext(databaseType, argument);
+        return new ArgumentDatabaseTypeContext(databaseType, getDataAccessType(), argument);
     }
 
     @Override
@@ -70,16 +70,19 @@ final class JdbcDatabaseConversionContextFactory implements DatabaseConversionCo
         implements DatabaseTypeConversionContext, ArgumentConversionContext<Object> {
 
         private final DatabaseType databaseType;
+        private final DataAccessType dataAccessType;
         private final Argument<Object> argument;
 
         /**
          * @param databaseType database type
+         * @param dataAccessType the driver API of the factory
          * @param argument argument metadata
          */
         @SuppressWarnings("unchecked")
-        private ArgumentDatabaseTypeContext(DatabaseType databaseType, Argument<?> argument) {
+        private ArgumentDatabaseTypeContext(DatabaseType databaseType, DataAccessType dataAccessType, Argument<?> argument) {
             super(ConversionContext.of(argument));
             this.databaseType = databaseType;
+            this.dataAccessType = dataAccessType;
             this.argument = (Argument<Object>) argument;
         }
 
@@ -93,11 +96,11 @@ final class JdbcDatabaseConversionContextFactory implements DatabaseConversionCo
         }
 
         /**
-         * @return the driver API of this module
+         * @return the driver API of the factory
          */
         @Override
         public DataAccessType getDataAccessType() {
-            return DataAccessType.JDBC;
+            return dataAccessType;
         }
 
         /**

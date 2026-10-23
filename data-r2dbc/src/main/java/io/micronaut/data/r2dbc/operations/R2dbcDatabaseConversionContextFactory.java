@@ -52,7 +52,7 @@ final class R2dbcDatabaseConversionContextFactory implements DatabaseConversionC
      */
     @Override
     public DatabaseTypeConversionContext forArgument(Argument<?> argument) {
-        return new ArgumentDatabaseTypeContext(databaseType, argument);
+        return new ArgumentDatabaseTypeContext(databaseType, getDataAccessType(), argument);
     }
 
     @Override
@@ -67,16 +67,19 @@ final class R2dbcDatabaseConversionContextFactory implements DatabaseConversionC
         implements DatabaseTypeConversionContext, ArgumentConversionContext<Object> {
 
         private final DatabaseType databaseType;
+        private final DataAccessType dataAccessType;
         private final Argument<Object> argument;
 
         /**
          * @param databaseType database type
+         * @param dataAccessType the driver API of the factory
          * @param argument argument metadata
          */
         @SuppressWarnings("unchecked")
-        private ArgumentDatabaseTypeContext(DatabaseType databaseType, Argument<?> argument) {
+        private ArgumentDatabaseTypeContext(DatabaseType databaseType, DataAccessType dataAccessType, Argument<?> argument) {
             super(ConversionContext.of(argument));
             this.databaseType = databaseType;
+            this.dataAccessType = dataAccessType;
             this.argument = (Argument<Object>) argument;
         }
 
@@ -89,11 +92,11 @@ final class R2dbcDatabaseConversionContextFactory implements DatabaseConversionC
         }
 
         /**
-         * @return the driver API of this module
+         * @return the driver API of the factory
          */
         @Override
         public DataAccessType getDataAccessType() {
-            return DataAccessType.R2DBC;
+            return dataAccessType;
         }
 
         /**

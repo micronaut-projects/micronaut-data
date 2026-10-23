@@ -119,12 +119,12 @@ class VectorConverterSelectionSpec extends Specification {
         e.message == "Vectors aren't supported for the database ORACLE with R2DBC"
     }
 
-    def "a context without a data access type can still use converters of either API"() {
-        given:
-        def conv = new DefaultFloatVectorAttributeConverter([new OracleJdbcFloatConverter(), new OracleR2dbcFloatConverter()])
-
+    def "a context without a data access type uses the first registered converter of either API"() {
         expect:
-        conv.convertToPersistedValue((FloatVector) Vector.of([1f] as float[]), context(null)) in ["jdbc", "r2dbc"]
+        new DefaultFloatVectorAttributeConverter([new OracleJdbcFloatConverter(), new OracleR2dbcFloatConverter()])
+            .convertToPersistedValue((FloatVector) Vector.of([1f] as float[]), context(null)) == "jdbc"
+        new DefaultFloatVectorAttributeConverter([new OracleR2dbcFloatConverter(), new OracleJdbcFloatConverter()])
+            .convertToPersistedValue((FloatVector) Vector.of([1f] as float[]), context(null)) == "r2dbc"
     }
 
     def "selects sparse converter for sparse vectors when both postgres converters are registered"() {
