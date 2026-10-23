@@ -19,6 +19,7 @@ import io.micronaut.data.model.PersistentEntity
 import io.micronaut.data.model.query.builder.sql.Dialect
 import io.micronaut.data.model.query.builder.sql.SqlDialectOptions
 import io.micronaut.data.model.query.builder.sql.SqlQueryBuilder
+import io.micronaut.data.model.query.builder.sql.SqlSchemaNames
 import io.micronaut.data.processor.visitors.AbstractDataSpec
 import io.micronaut.data.tck.entities.Restaurant
 import io.micronaut.data.tck.jdbc.entities.Employee
@@ -1461,6 +1462,14 @@ class Teacher {
         sql[1] == 'CREATE TABLE `students`.`m2m_student_course_association` (`st_id` BIGINT NOT NULL,`cs_id` BIGINT NOT NULL, PRIMARY KEY(`st_id`,`cs_id`));'
         sql[2] == 'CREATE TABLE `students`.`m2m_student_teacher_association` (`st_id` BIGINT NOT NULL,`te_id` BIGINT NOT NULL, PRIMARY KEY(`st_id`,`te_id`));'
         sql[3] == 'CREATE TABLE `students`.`m2m_student` (`id` BIGINT PRIMARY KEY AUTO_INCREMENT,`name` VARCHAR(255) NOT NULL);'
+
+        when: 'an Oracle schema is a user'
+        sql = new SqlQueryBuilder(Dialect.ORACLE).buildCreateTableStatements(entity)
+
+        then:
+        sql[0] == SqlSchemaNames.oracleCreateSchemaStatement('students')
+        sql[0].contains("'CREATE USER students NO AUTHENTICATION")
+        !sql.any { it.startsWith('CREATE SCHEMA') }
     }
 
     @Unroll

@@ -61,6 +61,7 @@ import java.sql.DatabaseMetaData;
 import java.sql.PreparedStatement;
 import java.sql.ResultSet;
 import java.sql.SQLException;
+import java.sql.Statement;
 import java.util.Collection;
 import java.util.Collections;
 import java.util.List;
@@ -152,29 +153,37 @@ public class SchemaGenerator {
                 DataSource dataSource = DelegatingDataSource.unwrapDataSource(beanLocator.getBean(DataSource.class, Qualifiers.byName(name)));
                 try {
                     try (Connection connection = dataSource.getConnection()) {
-                        if (configuration.getSchemaGenerateNames() != null && !configuration.getSchemaGenerateNames().isEmpty()) {
-                            for (String schemaName : configuration.getSchemaGenerateNames()) {
-                                if (schemaGenerate != SchemaGenerate.VALIDATE) {
-                                    schemaHandler.createSchema(connection, dialect, schemaName);
+                        // An Oracle session keeps its current schema when the connection returns to the pool
+                        String originalOracleSchema = dialect == Dialect.ORACLE ? connection.getSchema() : null;
+                        try {
+                            if (configuration.getSchemaGenerateNames() != null && !configuration.getSchemaGenerateNames().isEmpty()) {
+                                for (String schemaName : configuration.getSchemaGenerateNames()) {
+                                    if (schemaGenerate != SchemaGenerate.VALIDATE) {
+                                        schemaHandler.createSchema(connection, dialect, schemaName);
+                                    }
+                                    schemaHandler.useSchema(connection, dialect, schemaName);
+                                    if (schemaGenerate == SchemaGenerate.VALIDATE) {
+                                        validate(connection, configuration, entities, dialectSqlTableMappingValidatorMap, definitionProviders);
+                                    } else {
+                                        generate(connection, configuration, propertyPlaceholderResolver, entities);
+                                    }
                                 }
-                                schemaHandler.useSchema(connection, dialect, schemaName);
+                            } else {
+                                if (configuration.getSchemaGenerateName() != null) {
+                                    if (schemaGenerate != SchemaGenerate.VALIDATE) {
+                                        schemaHandler.createSchema(connection, dialect, configuration.getSchemaGenerateName());
+                                    }
+                                    schemaHandler.useSchema(connection, dialect, configuration.getSchemaGenerateName());
+                                }
                                 if (schemaGenerate == SchemaGenerate.VALIDATE) {
                                     validate(connection, configuration, entities, dialectSqlTableMappingValidatorMap, definitionProviders);
                                 } else {
                                     generate(connection, configuration, propertyPlaceholderResolver, entities);
                                 }
                             }
-                        } else {
-                            if (configuration.getSchemaGenerateName() != null) {
-                                if (schemaGenerate != SchemaGenerate.VALIDATE) {
-                                    schemaHandler.createSchema(connection, dialect, configuration.getSchemaGenerateName());
-                                }
-                                schemaHandler.useSchema(connection, dialect, configuration.getSchemaGenerateName());
-                            }
-                            if (schemaGenerate == SchemaGenerate.VALIDATE) {
-                                validate(connection, configuration, entities, dialectSqlTableMappingValidatorMap, definitionProviders);
-                            } else {
-                                generate(connection, configuration, propertyPlaceholderResolver, entities);
+                        } finally {
+                            if (originalOracleSchema != null) {
+                                restoreOracleSchema(connection, originalOracleSchema);
                             }
                         }
                     } catch (SQLException e) {
@@ -188,6 +197,14 @@ public class SchemaGenerator {
     }
 
     @SuppressWarnings("java:S3776")
+
+    private static void restoreOracleSchema(Connection connection, String schema) throws SQLException {
+        // The exact name reported by the driver, quoted so that its case is kept
+        try (Statement statement = connection.createStatement()) {
+            statement.execute("ALTER SESSION SET CURRENT_SCHEMA=\"" + schema.replace("\"", "\"\"") + "\"");
+        }
+    }
+
     private void generate(Connection connection,
                           DataJdbcConfiguration configuration,
                           PropertyPlaceholderResolver propertyPlaceholderResolver,

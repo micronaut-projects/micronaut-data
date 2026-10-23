@@ -69,6 +69,16 @@ class SchemaNameUtilsTest {
     }
 
     @Test
+    void oracleQuotesReservedWordsAndLeadingUnderscoresInUpperCase() {
+        assertEquals("\"ORDER\"", SchemaNameUtils.render(Dialect.ORACLE, "order"));
+        assertEquals("\"USER\"", SchemaNameUtils.render(Dialect.ORACLE, "User"));
+        assertEquals("\"_TENANT\"", SchemaNameUtils.render(Dialect.ORACLE, "_tenant"));
+        assertEquals("orders", SchemaNameUtils.render(Dialect.ORACLE, "orders"));
+        assertEquals("order", SchemaNameUtils.render(Dialect.POSTGRES, "order"));
+        assertEquals("_tenant", SchemaNameUtils.render(Dialect.H2, "_tenant"));
+    }
+
+    @Test
     void emptyAndNulNamesAreRejected() {
         assertThrows(IllegalArgumentException.class, () -> SchemaNameUtils.render(Dialect.H2, null));
         assertThrows(IllegalArgumentException.class, () -> SchemaNameUtils.render(Dialect.H2, ""));
@@ -85,9 +95,26 @@ class SchemaNameUtilsTest {
     }
 
     @Test
+    void oracleCreateSchemaOnlyAcceptsAnExistingUser() {
+        String sql = SchemaNameUtils.oracleCreateSchemaStatement("tenant_1");
+
+        assertTrue(sql.contains("SELECT COUNT(*) INTO users FROM all_users WHERE username = 'TENANT_1';"));
+        assertTrue(sql.contains("IF users = 0 THEN"));
+    }
+
+    @Test
+    void oracleCreateSchemaQuotesReservedWords() {
+        String sql = SchemaNameUtils.oracleCreateSchemaStatement("order");
+
+        assertTrue(sql.contains("'CREATE USER \"ORDER\" NO AUTHENTICATION"));
+        assertTrue(sql.contains("WHERE username = 'ORDER';"));
+    }
+
+    @Test
     void oracleCreateSchemaEscapesTheIdentifierInsideTheLiteral() {
         String sql = SchemaNameUtils.oracleCreateSchemaStatement("tenant'a");
 
         assertTrue(sql.contains("'CREATE USER \"TENANT''A\" NO AUTHENTICATION"));
+        assertTrue(sql.contains("WHERE username = 'TENANT''A';"));
     }
 }
