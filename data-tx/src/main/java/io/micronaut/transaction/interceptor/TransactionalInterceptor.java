@@ -20,6 +20,7 @@ import io.micronaut.aop.InterceptedMethod;
 import io.micronaut.aop.MethodInterceptor;
 import io.micronaut.aop.MethodInvocationContext;
 import io.micronaut.context.BeanLocator;
+import io.micronaut.core.annotation.AnnotationMetadata;
 import io.micronaut.core.annotation.Internal;
 import io.micronaut.core.convert.ConversionService;
 import io.micronaut.inject.ExecutableMethod;
@@ -95,7 +96,7 @@ public final class TransactionalInterceptor implements MethodInterceptor<Object,
         try {
             ExecutableMethod<Object, Object> executableMethod = context.getExecutableMethod();
             @Nullable String dataSource = resolveDataSourceName(tenantDataSourceName, executableMethod);
-            TransactionInvocation<?> transactionInvocation = resolveTransactionInvocation(tenantDataSourceName, executableMethod, interceptedMethod, dataSource);
+            TransactionInvocation<?> transactionInvocation = resolveTransactionInvocation(tenantDataSourceName, context, interceptedMethod, dataSource);
             validateOracleTransactionModes(context, transactionInvocation.definition);
             return switch (interceptedMethod.resultType()) {
                 case PUBLISHER -> interceptPublisher(context, interceptedMethod, transactionInvocation);
@@ -137,17 +138,26 @@ public final class TransactionalInterceptor implements MethodInterceptor<Object,
     }
 
     private TransactionInvocation<?> resolveTransactionInvocation(@Nullable String tenantDataSourceName,
-                                                                  ExecutableMethod<Object, Object> executableMethod,
+                                                                  MethodInvocationContext<Object, Object> context,
                                                                   InterceptedMethod interceptedMethod,
                                                                   @Nullable String dataSource) {
-        return transactionInvocationMap.computeIfAbsent(
-            new TenantExecutableMethod(tenantDataSourceName, executableMethod),
-            ignore -> createTransactionInvocation(interceptedMethod, executableMethod, dataSource)
-        );
+        ExecutableMethod<Object, Object> executableMethod = context.getExecutableMethod();
+        // Executable methods of different beans are equal when they inherit the same method, yet each bean can
+        // declare its own transaction manager and definition: key by the target type, and only reuse an invocation
+        // created from the same annotation metadata
+        TenantExecutableMethod key = new TenantExecutableMethod(tenantDataSourceName, context.getTarget().getClass(), executableMethod);
+        AnnotationMetadata annotationMetadata = executableMethod.getAnnotationMetadata();
+        TransactionInvocation<?> transactionInvocation = transactionInvocationMap.get(key);
+        if (transactionInvocation == null || transactionInvocation.annotationMetadata != annotationMetadata) {
+            transactionInvocation = createTransactionInvocation(interceptedMethod, executableMethod, annotationMetadata, dataSource);
+            transactionInvocationMap.put(key, transactionInvocation);
+        }
+        return transactionInvocation;
     }
 
     private TransactionInvocation<?> createTransactionInvocation(InterceptedMethod interceptedMethod,
                                                                  ExecutableMethod<Object, Object> executableMethod,
+                                                                 AnnotationMetadata annotationMetadata,
                                                                  @Nullable String dataSource) {
         TransactionDefinition transactionDefinition = resolveTransactionDefinition(executableMethod);
         return switch (interceptedMethod.resultType()) {
@@ -155,19 +165,22 @@ public final class TransactionalInterceptor implements MethodInterceptor<Object,
                 null,
                 transactionOperationsRegistry.provideReactive(ReactiveTransactionOperations.class, dataSource),
                 null,
-                transactionDefinition
+                transactionDefinition,
+                annotationMetadata
             );
             case COMPLETION_STAGE -> new TransactionInvocation<>(
                 null,
                 null,
                 transactionOperationsRegistry.provideAsync(AsyncTransactionOperations.class, dataSource),
-                transactionDefinition
+                transactionDefinition,
+                annotationMetadata
             );
             default -> new TransactionInvocation<>(
                 transactionOperationsRegistry.provideSynchronous(TransactionOperations.class, dataSource),
                 null,
                 null,
-                transactionDefinition
+                transactionDefinition,
+                annotationMetadata
             );
         };
     }
@@ -241,15 +254,17 @@ public final class TransactionalInterceptor implements MethodInterceptor<Object,
      * @param reactiveTransactionOperations The reactive transaction manager
      * @param asyncTransactionOperations    The async transaction manager
      * @param definition                    The definition
+     * @param annotationMetadata            The annotation metadata the invocation was created from
      * @param <C>                           connection type
      */
     private record TransactionInvocation<C>(@Nullable TransactionOperations<C> transactionManager,
                                             @Nullable ReactiveTransactionOperations<C> reactiveTransactionOperations,
                                             @Nullable AsyncTransactionOperations<C> asyncTransactionOperations,
-                                            TransactionDefinition definition) {
+                                            TransactionDefinition definition,
+                                            AnnotationMetadata annotationMetadata) {
 
     }
 
-    private record TenantExecutableMethod(@Nullable String dataSource, ExecutableMethod method) {
+    private record TenantExecutableMethod(@Nullable String dataSource, Class<?> targetType, ExecutableMethod method) {
     }
 }
