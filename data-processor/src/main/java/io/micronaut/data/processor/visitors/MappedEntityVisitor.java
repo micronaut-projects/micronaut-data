@@ -358,7 +358,11 @@ public class MappedEntityVisitor implements TypeElementVisitor<MappedEntity, Obj
         }
     }
 
-    private static boolean isPostponement(RuntimeException e) {
+    /**
+     * @param e The exception a lookup threw
+     * @return Whether it postpones the element to a later round
+     */
+    static boolean isPostponement(RuntimeException e) {
         // the Java processor's PostponeToNextRoundException is not on this module's classpath
         return e instanceof ElementPostponedToNextRoundException || e.getClass().getSimpleName().equals("PostponeToNextRoundException");
     }
