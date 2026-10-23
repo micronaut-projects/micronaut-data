@@ -105,6 +105,20 @@ public interface VectorTypeConverter<T> {
     }
 
     /**
+     * Whether a converter can be used by operations of the given driver API: when either API is unknown, or both
+     * are the same. A static method, so that the rule holds for stubbed converters too.
+     *
+     * @param converter the converter
+     * @param dataAccessType the driver API of the operations, or {@code null} if unknown
+     * @return {@code true} if the converter can be used
+     * @since 5.3.0
+     */
+    static boolean supports(VectorTypeConverter<?> converter, @Nullable DataAccessType dataAccessType) {
+        DataAccessType own = converter.dataAccessType();
+        return dataAccessType == null || own == null || own == dataAccessType;
+    }
+
+    /**
      * Whether this converter is designed for sparse vectors.
      *
      * Used as a tiebreaker when multiple converters exist for the same database type.

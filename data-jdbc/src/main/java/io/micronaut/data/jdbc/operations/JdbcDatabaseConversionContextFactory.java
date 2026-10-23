@@ -58,6 +58,11 @@ final class JdbcDatabaseConversionContextFactory implements DatabaseConversionCo
         return new ArgumentDatabaseTypeContext(databaseType, argument);
     }
 
+    @Override
+    public DataAccessType getDataAccessType() {
+        return DataAccessType.JDBC;
+    }
+
     /**
      * Lightweight conversion context carrying only argument metadata and database type.
      */

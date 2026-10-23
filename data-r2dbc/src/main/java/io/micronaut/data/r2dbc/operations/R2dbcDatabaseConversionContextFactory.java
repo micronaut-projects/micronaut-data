@@ -55,6 +55,11 @@ final class R2dbcDatabaseConversionContextFactory implements DatabaseConversionC
         return new ArgumentDatabaseTypeContext(databaseType, argument);
     }
 
+    @Override
+    public DataAccessType getDataAccessType() {
+        return DataAccessType.R2DBC;
+    }
+
     /**
      * Lightweight conversion context carrying only argument metadata and database type.
      */

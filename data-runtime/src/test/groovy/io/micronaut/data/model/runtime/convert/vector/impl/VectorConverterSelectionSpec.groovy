@@ -96,6 +96,37 @@ class VectorConverterSelectionSpec extends Specification {
         conv.convertToPersistedValue(vector, r2dbc) == "r2dbc"
     }
 
+    def "a converter without a data access type serves both driver APIs"() {
+        given:
+        def conv = new DefaultFloatVectorAttributeConverter([new OracleFloatConverter()])
+        def vector = (FloatVector) Vector.of([1f, 2f] as float[])
+
+        expect:
+        conv.convertToPersistedValue(vector, context(DataAccessType.JDBC)) != null
+        conv.convertToPersistedValue(vector, context(DataAccessType.R2DBC)) != null
+        conv.convertToPersistedValue(vector, context(null)) != null
+    }
+
+    def "the error names the data access type when only another API has a converter"() {
+        given:
+        def conv = new DefaultFloatVectorAttributeConverter([new OracleJdbcFloatConverter()])
+
+        when:
+        conv.convertToPersistedValue((FloatVector) Vector.of([1f] as float[]), context(DataAccessType.R2DBC))
+
+        then:
+        IllegalArgumentException e = thrown()
+        e.message == "Vectors aren't supported for the database ORACLE with R2DBC"
+    }
+
+    def "a context without a data access type can still use converters of either API"() {
+        given:
+        def conv = new DefaultFloatVectorAttributeConverter([new OracleJdbcFloatConverter(), new OracleR2dbcFloatConverter()])
+
+        expect:
+        conv.convertToPersistedValue((FloatVector) Vector.of([1f] as float[]), context(null)) in ["jdbc", "r2dbc"]
+    }
+
     def "selects sparse converter for sparse vectors when both postgres converters are registered"() {
         given:
         def conv = new DefaultVectorAttributeConverter([new PostgresDenseConverter(), new PostgresSparseConverter()])
@@ -219,6 +250,13 @@ class VectorConverterSelectionSpec extends Specification {
         @Override
         boolean isSparseSupported() {
             return true
+        }
+    }
+
+    private DatabaseTypeConversionContext context(DataAccessType dataAccessType) {
+        return Stub(DatabaseTypeConversionContext) {
+            getDatabaseType() >> DatabaseType.ORACLE
+            getDataAccessType() >> dataAccessType
         }
     }
 }

@@ -77,7 +77,7 @@ sealed interface VectorParameterBinder permits VectorParameterBinder.DefaultVect
             return create(vectorTypeConverters);
         }
         return new DefaultVectorParameterBinder(vectorTypeConverters.stream()
-            .filter(converter -> converter.dataAccessType() == null || converter.dataAccessType() == dataAccessType)
+            .filter(converter -> VectorTypeConverter.supports(converter, dataAccessType))
             .toList());
     }
 
@@ -157,8 +157,7 @@ sealed interface VectorParameterBinder permits VectorParameterBinder.DefaultVect
             if (existing.isSparseSupported() != candidate.isSparseSupported()) {
                 return false;
             }
-            if (existing.dataAccessType() != null && candidate.dataAccessType() != null
-                && existing.dataAccessType() != candidate.dataAccessType()) {
+            if (!VectorTypeConverter.supports(existing, candidate.dataAccessType())) {
                 return false;
             }
             if (!existing.getPersistedType().equals(candidate.getPersistedType())) {

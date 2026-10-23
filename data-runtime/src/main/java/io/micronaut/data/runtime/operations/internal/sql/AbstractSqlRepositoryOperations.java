@@ -185,8 +185,7 @@ public abstract class AbstractSqlRepositoryOperations<RS, PS, Exc extends Except
             .orElseThrow(() -> new IllegalStateException("Missing VectorScoringSupportResolver bean"));
         @SuppressWarnings({"unchecked", "rawtypes"})
         Collection<VectorTypeConverter<?>> vectorTypeConverters = (Collection) beanContext.getBeansOfType(VectorTypeConverter.class);
-        this.vectorParameterBinder = VectorParameterBinder.create(vectorTypeConverters,
-            conversionContextFactory.forArgument(Argument.OBJECT_ARGUMENT).getDataAccessType());
+        this.vectorParameterBinder = VectorParameterBinder.create(vectorTypeConverters, conversionContextFactory.getDataAccessType());
         Collection<BeanDefinition<Object>> beanDefinitions = beanContext
             .getBeanDefinitions(Object.class, Qualifiers.byStereotype(Repository.class));
         for (BeanDefinition<Object> beanDefinition : beanDefinitions) {

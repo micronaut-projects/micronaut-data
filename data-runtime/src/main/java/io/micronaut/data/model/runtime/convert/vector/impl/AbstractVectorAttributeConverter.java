@@ -93,7 +93,7 @@ abstract sealed class AbstractVectorAttributeConverter<X extends Vector, Y> impl
             Y result = (Y) vectorTypeConverter.convert(entityValue);
             return result;
         }
-        throw new IllegalArgumentException("Vectors aren't supported for the database " + databaseType);
+        throw unsupported(databaseType, extractDataAccessType(context));
     }
 
     @Override
@@ -108,7 +108,7 @@ abstract sealed class AbstractVectorAttributeConverter<X extends Vector, Y> impl
             X result = (X) vectorTypeConverter.convert(persistedValue, (Class<Vector>) type);
             return result;
         }
-        throw new IllegalArgumentException("Vectors aren't supported for the database " + databaseType);
+        throw unsupported(databaseType, extractDataAccessType(context));
     }
 
     @Override
@@ -126,7 +126,12 @@ abstract sealed class AbstractVectorAttributeConverter<X extends Vector, Y> impl
             }
             return value;
         }
-        throw new IllegalArgumentException("Vectors aren't supported for the database " + conversionContext.getDatabaseType());
+        throw unsupported(conversionContext.getDatabaseType(), conversionContext.getDataAccessType());
+    }
+
+    private static IllegalArgumentException unsupported(@Nullable DatabaseType databaseType, @Nullable DataAccessType dataAccessType) {
+        return new IllegalArgumentException("Vectors aren't supported for the database " + databaseType
+            + (dataAccessType == null ? "" : " with " + dataAccessType));
     }
 
     private static @Nullable DataAccessType extractDataAccessType(ConversionContext context) {
@@ -147,8 +152,7 @@ abstract sealed class AbstractVectorAttributeConverter<X extends Vector, Y> impl
         if (existing.isSparseSupported() != candidate.isSparseSupported()) {
             return false;
         }
-        if (existing.dataAccessType() != null && candidate.dataAccessType() != null
-            && existing.dataAccessType() != candidate.dataAccessType()) {
+        if (!VectorTypeConverter.supports(existing, candidate.dataAccessType())) {
             return false;
         }
         if (!existing.getPersistedType().equals(candidate.getPersistedType())) {
@@ -170,7 +174,7 @@ abstract sealed class AbstractVectorAttributeConverter<X extends Vector, Y> impl
             return null;
         }
         boolean sparseValue = entityValue instanceof SparseVector;
-        return selectConverter(converters, converter -> matchesDataAccessType(converter, dataAccessType)
+        return selectConverter(converters, converter -> VectorTypeConverter.supports(converter, dataAccessType)
             && supportsVectorType(converter, entityValue.getClass()), sparseValue);
     }
 
@@ -180,7 +184,7 @@ abstract sealed class AbstractVectorAttributeConverter<X extends Vector, Y> impl
             return null;
         }
         boolean sparseTarget = SparseVector.class.isAssignableFrom(targetType);
-        return selectConverter(converters, converter -> matchesDataAccessType(converter, dataAccessType)
+        return selectConverter(converters, converter -> VectorTypeConverter.supports(converter, dataAccessType)
             && converter.getPersistedType().isInstance(persistedValue) && supportsVectorType(converter, targetType), sparseTarget);
     }
 
@@ -190,13 +194,10 @@ abstract sealed class AbstractVectorAttributeConverter<X extends Vector, Y> impl
             return null;
         }
         boolean sparseTarget = SparseVector.class.isAssignableFrom(targetType);
-        return selectConverter(converters, converter -> matchesDataAccessType(converter, dataAccessType)
+        return selectConverter(converters, converter -> VectorTypeConverter.supports(converter, dataAccessType)
             && supportsVectorType(converter, targetType), sparseTarget);
     }
 
-    private static boolean matchesDataAccessType(VectorTypeConverter<?> converter, @Nullable DataAccessType dataAccessType) {
-        return dataAccessType == null || converter.dataAccessType() == null || converter.dataAccessType() == dataAccessType;
-    }
 
     private static @Nullable VectorTypeConverter<?> selectConverter(List<VectorTypeConverter<?>> converters,
                                                                     Predicate<VectorTypeConverter<?>> candidate,

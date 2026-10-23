@@ -18,6 +18,7 @@ package io.micronaut.data.jdbc.convert.vendor;
 import io.micronaut.core.annotation.Internal;
 import io.micronaut.core.convert.ConversionService;
 import io.micronaut.data.model.runtime.convert.DataAccessType;
+import org.jspecify.annotations.Nullable;
 import io.micronaut.data.model.runtime.convert.vector.VectorTypeConverter;
 import io.micronaut.data.model.vector.Vector;
 
@@ -70,7 +71,7 @@ abstract class AbstractJdbcVectorConverter<T> implements VectorTypeConverter<T> 
     }
 
     @Override
-    public DataAccessType dataAccessType() {
+    public @Nullable DataAccessType dataAccessType() {
         return DataAccessType.JDBC;
     }
 }
