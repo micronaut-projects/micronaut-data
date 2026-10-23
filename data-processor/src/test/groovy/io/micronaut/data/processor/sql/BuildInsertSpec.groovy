@@ -211,19 +211,19 @@ class Test {
     }
 
     @Unroll
-    void "test Oracle UUID default for version #version and type #type"() {
+    void "test Oracle UUID default for version #version and definition #definition"() {
         given:
+        String mapping = definition ? "@MappedProperty(definition = \"$definition\")" : ""
         ClassElement element = buildClassElement("""
 package test;
 import java.util.UUID;
 import io.micronaut.data.annotation.*;
-import io.micronaut.data.model.DataType;
 
 @MappedEntity
 class Test {
     @Id
     @GeneratedValue
-    @MappedProperty(type = DataType.$type)
+    $mapping
     private UUID id;
 
     public UUID getId() {
@@ -244,11 +244,12 @@ class Test {
         sql[0].contains(column)
 
         where:
-        version | type         | column
-        null    | 'UUID'       | '"ID" VARCHAR(36) DEFAULT SYS_GUID() NOT NULL'
-        '23.4'  | 'UUID'       | '"ID" VARCHAR(36) DEFAULT SYS_GUID() NOT NULL'
-        '23.9'  | 'UUID'       | '"ID" VARCHAR(36) DEFAULT RAW_TO_UUID(UUID()) NOT NULL'
-        '23.26' | 'UUID'       | '"ID" VARCHAR(36) DEFAULT RAW_TO_UUID(UUID()) NOT NULL'
+        version | definition | column
+        null    | null       | '"ID" VARCHAR(36) DEFAULT SYS_GUID() NOT NULL'
+        '23.4'  | null       | '"ID" VARCHAR(36) DEFAULT SYS_GUID() NOT NULL'
+        '23.9'  | null       | '"ID" VARCHAR(36) DEFAULT RAW_TO_UUID(UUID()) NOT NULL'
+        '23.26' | null       | '"ID" VARCHAR(36) DEFAULT RAW_TO_UUID(UUID()) NOT NULL'
+        '23.26' | 'RAW(16)'  | '"ID" RAW(16) DEFAULT SYS_GUID() NOT NULL'
     }
 
     @Unroll
