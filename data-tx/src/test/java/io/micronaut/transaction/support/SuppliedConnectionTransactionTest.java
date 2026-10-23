@@ -82,9 +82,10 @@ class SuppliedConnectionTransactionTest {
 
     @Test
     void aNestedRollbackRollsBackItsSavepointAndLeavesTheOwnersTransactionAlone() {
+        TransactionDefinition nested = TransactionDefinition.of(TransactionDefinition.Propagation.NESTED);
         String result = connectionOperations.executeWithConnection("owner", ConnectionDefinition.DEFAULT, true, status -> {
             assertThrows(IllegalStateException.class, () ->
-                transactionOperations.execute(TransactionDefinition.of(TransactionDefinition.Propagation.NESTED), tx -> {
+                transactionOperations.execute(nested, tx -> {
                     throw new IllegalStateException("nested");
                 })
             );
@@ -120,7 +121,7 @@ class SuppliedConnectionTransactionTest {
                     transactionOperations.executeWrite(tx -> {
                         throw new IllegalStateException("handled");
                     });
-                } catch (IllegalStateException ignored) {
+                } catch (IllegalStateException _) {
                     // handled inside the callback
                 }
                 return null;
@@ -187,6 +188,7 @@ class SuppliedConnectionTransactionTest {
 
         @Override
         protected void setupConnection(ConnectionStatus<String> connectionStatus) {
+            // the test connections need no setup
         }
 
         @Override
@@ -274,14 +276,17 @@ class SuppliedConnectionTransactionTest {
 
         @Override
         protected void doBegin(DefaultTransactionStatus<String> tx) {
+            // never called: these operations refuse to join the owner's transaction before any begins
         }
 
         @Override
         protected void doCommit(DefaultTransactionStatus<String> tx) {
+            // never called: these operations refuse to join the owner's transaction before any begins
         }
 
         @Override
         protected void doRollback(DefaultTransactionStatus<String> tx) {
+            // never called: these operations refuse to join the owner's transaction before any begins
         }
     }
 }

@@ -35,7 +35,7 @@ import io.micronaut.transaction.support.TransactionSynchronization;
 @Internal
 public abstract sealed class DefaultTransactionStatus<C> extends AbstractInternalTransaction<C> implements InternalTransaction<C> {
 
-    private static final String DEFINITION = ", definition=";
+    private static final String DEFINITION_LABEL = ", definition=";
 
     protected final ConnectionStatus<C> connectionStatus;
     private final TransactionDefinition definition;
@@ -153,7 +153,7 @@ public abstract sealed class DefaultTransactionStatus<C> extends AbstractInterna
     public String toString() {
         return "DefaultTransactionStatus{" +
             "connectionStatus=" + connectionStatus +
-            DEFINITION + definition +
+            DEFINITION_LABEL + definition +
             ", transaction=" + transaction +
             ", savepoint=" + savepoint +
             ", synchronizations=" + synchronizations +
@@ -178,7 +178,7 @@ public abstract sealed class DefaultTransactionStatus<C> extends AbstractInterna
             return "NewTransactionStatus{" +
                 "transaction=" + getTransaction() +
                 ", connectionStatus=" + connectionStatus +
-                DEFINITION + getTransactionDefinition() +
+                DEFINITION_LABEL + getTransactionDefinition() +
                 ", savepoint=" + getSavepoint() +
                 ", synchronizations=" + synchronizations +
                 '}';
@@ -248,7 +248,7 @@ public abstract sealed class DefaultTransactionStatus<C> extends AbstractInterna
         public String toString() {
             return "OwnerTransactionStatus{" +
                 "connectionStatus=" + connectionStatus +
-                DEFINITION + getTransactionDefinition() +
+                DEFINITION_LABEL + getTransactionDefinition() +
                 '}';
         }
     }

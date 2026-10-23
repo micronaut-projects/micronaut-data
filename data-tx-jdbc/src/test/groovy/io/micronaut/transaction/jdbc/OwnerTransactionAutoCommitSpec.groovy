@@ -16,7 +16,12 @@ class OwnerTransactionAutoCommitSpec extends Specification {
         given:
         def manager = new DataSourceTransactionManager(Mock(DataSource), Mock(ConnectionOperations), null)
         Connection connection = Mock() {
-            getAutoCommit() >> { if (failure) throw new SQLException("closed"); autoCommit }
+            getAutoCommit() >> {
+                if (failure) {
+                    throw new SQLException("closed")
+                }
+                autoCommit
+            }
         }
         def supplied = new DefaultConnectionStatus.SuppliedConnection(true)
         def status = new DefaultConnectionStatus<Connection>(connection, ConnectionDefinition.DEFAULT, false, Mock(ConnectionOperations), supplied)
