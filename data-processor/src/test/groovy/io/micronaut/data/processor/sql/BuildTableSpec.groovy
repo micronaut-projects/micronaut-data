@@ -1468,8 +1468,32 @@ class Teacher {
 
         then:
         sql[0] == SqlSchemaNames.oracleCreateSchemaStatement('students')
-        sql[0].contains("'CREATE USER students NO AUTHENTICATION")
+        sql[0].contains("'CREATE USER \"STUDENTS\" NO AUTHENTICATION")
         !sql.any { it.startsWith('CREATE SCHEMA') }
+    }
+
+    void "test Oracle schema creation keeps a property placeholder as the table statements do"() {
+        given:
+        def entity = buildJpaEntity('test.Book', '''
+import io.micronaut.data.annotation.Id;
+import io.micronaut.data.annotation.MappedEntity;
+
+@MappedEntity(value = "ph_book", schema = "${prverify.schema}")
+class Book {
+    @Id
+    private Long id;
+    public Long getId() { return id; }
+    public void setId(Long id) { this.id = id; }
+}
+''')
+
+        when:
+        def sql = new SqlQueryBuilder(Dialect.ORACLE).buildCreateTableStatements([], [entity] as PersistentEntity[], Dialect.ORACLE)
+
+        then:
+        sql[0].contains('\'CREATE USER "${prverify.schema}" NO AUTHENTICATION')
+        sql[0].contains("WHERE username = '\${prverify.schema}';")
+        sql.any { it.startsWith('CREATE TABLE "${prverify.schema}"."PH_BOOK"') }
     }
 
     @Unroll

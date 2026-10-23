@@ -2183,8 +2183,9 @@ public class SqlQueryBuilder extends AbstractSqlLikeQueryBuilder {
 
     private String createSchemaStatement(String schema, boolean escape, boolean supportsDynamicValues) {
         if (getDialect() == Dialect.ORACLE) {
-            // An Oracle schema is a user: CREATE SCHEMA does not create one
-            return SqlSchemaNames.oracleCreateSchemaStatement(schema);
+            // An Oracle schema is a user: CREATE SCHEMA does not create one. The identifier is rendered like the
+            // schema of the table statements, keeping property placeholders as written
+            return SqlSchemaNames.oracleCreateSchemaStatement(escape ? quote(schema, true) : schema, escape);
         }
         return "CREATE SCHEMA " + (escape ? quote(schema, supportsDynamicValues) : schema) + ";";
     }

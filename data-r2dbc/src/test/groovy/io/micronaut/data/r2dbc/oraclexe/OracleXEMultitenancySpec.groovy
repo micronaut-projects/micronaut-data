@@ -46,12 +46,11 @@ class OracleXEMultitenancySpec extends AbstractR2dbcMultitenancySpec implements 
     }
 
     void "schema generation restores the session schema of the pooled connection"() {
-        given:
+        given: 'a pool of one connection, so that generation and the check share the database session'
         ApplicationContext context = ApplicationContext.run(testResourcesProperties() + getDataSourceProperties('default') + [
                 'r2dbc.datasources.default.schema-generate'     : 'CREATE',
                 'r2dbc.datasources.default.schema-generate-name': 'gen_restore_r2',
-                'r2dbc.datasources.default.options.initialSize' : '1',
-                'r2dbc.datasources.default.options.maxSize'     : '1'
+                'r2dbc.datasources.default.url'                 : pooledUrl(1)
         ], Environment.TEST)
         ConnectionFactory connectionFactory = context.getBean(ConnectionFactory)
 
@@ -70,6 +69,18 @@ class OracleXEMultitenancySpec extends AbstractR2dbcMultitenancySpec implements 
 
         cleanup:
         context?.close()
+    }
+
+    private String pooledUrl(int size) {
+        ApplicationContext context = ApplicationContext.run(testResourcesProperties() + getDataSourceProperties('default') + [
+                'r2dbc.datasources.default.schema-generate': 'NONE'
+        ], Environment.TEST)
+        try {
+            String url = context.getRequiredProperty('r2dbc.datasources.default.url', String)
+            return url.replaceFirst('^r2dbc:', 'r2dbc:pool:') + (url.contains('?') ? '&' : '?') + "initialSize=$size&maxSize=$size"
+        } finally {
+            context.close()
+        }
     }
 
     /**

@@ -196,8 +196,6 @@ public class SchemaGenerator {
         }
     }
 
-    @SuppressWarnings("java:S3776")
-
     private static void restoreOracleSchema(Connection connection, String schema) throws SQLException {
         // The exact name reported by the driver, quoted so that its case is kept
         try (Statement statement = connection.createStatement()) {
@@ -205,6 +203,7 @@ public class SchemaGenerator {
         }
     }
 
+    @SuppressWarnings("java:S3776")
     private void generate(Connection connection,
                           DataJdbcConfiguration configuration,
                           PropertyPlaceholderResolver propertyPlaceholderResolver,

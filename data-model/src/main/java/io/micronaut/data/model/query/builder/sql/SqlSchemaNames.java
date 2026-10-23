@@ -18,7 +18,6 @@ package io.micronaut.data.model.query.builder.sql;
 import io.micronaut.core.annotation.Internal;
 
 import java.util.Locale;
-import java.util.Set;
 import java.util.regex.Pattern;
 
 /**
@@ -31,33 +30,16 @@ public final class SqlSchemaNames {
 
     private static final Pattern SIMPLE_IDENTIFIER = Pattern.compile("[A-Za-z_][A-Za-z0-9_]*");
 
-    /**
-     * The Oracle SQL reserved words, which an unquoted identifier cannot be.
-     *
-     * @see <a href="https://docs.oracle.com/en/database/oracle/oracle-database/26/sqlrf/Oracle-SQL-Reserved-Words.html">Oracle SQL Reserved Words</a>
-     */
-    private static final Set<String> ORACLE_RESERVED_WORDS = Set.of(
-        "ACCESS", "ADD", "ALL", "ALTER", "AND", "ANY", "AS", "ASC", "AUDIT", "BETWEEN", "BY", "CHAR", "CHECK",
-        "CLUSTER", "COLUMN", "COMMENT", "COMPRESS", "CONNECT", "CREATE", "CURRENT", "DATE", "DECIMAL", "DEFAULT",
-        "DELETE", "DESC", "DISTINCT", "DROP", "ELSE", "EXCLUSIVE", "EXISTS", "FILE", "FLOAT", "FOR", "FROM", "GRANT",
-        "GROUP", "HAVING", "IDENTIFIED", "IMMEDIATE", "IN", "INCREMENT", "INDEX", "INITIAL", "INSERT", "INTEGER",
-        "INTERSECT", "INTO", "IS", "LEVEL", "LIKE", "LOCK", "LONG", "MAXEXTENTS", "MINUS", "MLSLABEL", "MODE",
-        "MODIFY", "NOAUDIT", "NOCOMPRESS", "NOT", "NOWAIT", "NULL", "NUMBER", "OF", "OFFLINE", "ON", "ONLINE",
-        "OPTION", "OR", "ORDER", "PCTFREE", "PRIOR", "PUBLIC", "RAW", "RENAME", "RESOURCE", "REVOKE", "ROW",
-        "ROWID", "ROWNUM", "ROWS", "SELECT", "SESSION", "SET", "SHARE", "SIZE", "SMALLINT", "START", "SUCCESSFUL",
-        "SYNONYM", "SYSDATE", "TABLE", "THEN", "TO", "TRIGGER", "UID", "UNION", "UNIQUE", "UPDATE", "USER",
-        "VALIDATE", "VALUES", "VARCHAR", "VARCHAR2", "VIEW", "WHENEVER", "WHERE", "WITH"
-    );
-
     private SqlSchemaNames() {
     }
 
     /**
      * Renders a schema name as a dialect-compatible SQL identifier. Simple identifiers are left unquoted to
      * preserve the case-folding behavior of existing applications. All other names are quoted and their
-     * delimiters escaped. On Oracle, a name that starts with {@code _} or is a reserved word is quoted in
-     * upper case, the form Oracle folds an unquoted name to. The input is always treated as a logical name;
-     * SQL quoting supplied by a caller is not interpreted.
+     * delimiters escaped. On Oracle, every name is quoted in upper case, the form Oracle folds an unquoted
+     * name to, so that names starting with {@code _} and reserved words, including ones added by later
+     * releases, work too. The input is always treated as a logical name; SQL quoting supplied by a caller
+     * is not interpreted.
      *
      * @param dialect The SQL dialect
      * @param name The logical schema name
@@ -68,7 +50,7 @@ public final class SqlSchemaNames {
         if (name == null || name.isEmpty() || name.indexOf('\u0000') >= 0) {
             throw new IllegalArgumentException("Schema name must not be null, empty, or contain a NUL character");
         }
-        if (SIMPLE_IDENTIFIER.matcher(name).matches() && !(dialect == Dialect.ORACLE && needsOracleQuotes(name))) {
+        if (dialect != Dialect.ORACLE && SIMPLE_IDENTIFIER.matcher(name).matches()) {
             return name;
         }
         return switch (dialect) {
@@ -93,8 +75,24 @@ public final class SqlSchemaNames {
      * @throws IllegalArgumentException If the name is null, empty, or contains a NUL character
      */
     public static String oracleCreateSchemaStatement(String name) {
-        String identifier = render(Dialect.ORACLE, name).replace("'", "''");
-        String userName = oracleUserName(name).replace("'", "''");
+        return oracleCreateSchemaStatement(render(Dialect.ORACLE, name), true);
+    }
+
+    /**
+     * Builds the Oracle statement that creates a schema from an identifier that is already rendered, such as one
+     * that contains property placeholders resolved later.
+     *
+     * @param identifier The SQL identifier of the schema
+     * @param quoted Whether the identifier is quoted, so that its case is kept, or folds to upper case
+     * @return The PL/SQL block creating the schema
+     */
+    public static String oracleCreateSchemaStatement(String identifier, boolean quoted) {
+        String userName;
+        if (quoted && identifier.length() > 1 && identifier.startsWith("\"") && identifier.endsWith("\"")) {
+            userName = "'" + identifier.substring(1, identifier.length() - 1).replace("\"\"", "\"").replace("'", "''") + "'";
+        } else {
+            userName = "UPPER('" + identifier.replace("'", "''") + "')";
+        }
         return """
             DECLARE
               ts VARCHAR2(128);
@@ -108,15 +106,11 @@ public final class SqlSchemaNames {
                   RAISE;
                 END IF;
                 -- ORA-01920 also means that a role has the name: only an existing user is the schema
-                SELECT COUNT(*) INTO users FROM all_users WHERE username = '%s';
+                SELECT COUNT(*) INTO users FROM all_users WHERE username = %s;
                 IF users = 0 THEN
                   RAISE;
                 END IF;
-            END;""".formatted(identifier, userName);
-    }
-
-    private static boolean needsOracleQuotes(String name) {
-        return name.charAt(0) == '_' || ORACLE_RESERVED_WORDS.contains(name.toUpperCase(Locale.ENGLISH));
+            END;""".formatted(identifier.replace("'", "''"), userName);
     }
 
     private static String oracleUserName(String name) {
