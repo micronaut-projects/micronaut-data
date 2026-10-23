@@ -211,6 +211,47 @@ class Test {
     }
 
     @Unroll
+    void "test Oracle UUID default for version #version and type #type"() {
+        given:
+        ClassElement element = buildClassElement("""
+package test;
+import java.util.UUID;
+import io.micronaut.data.annotation.*;
+import io.micronaut.data.model.DataType;
+
+@MappedEntity
+class Test {
+    @Id
+    @GeneratedValue
+    @MappedProperty(type = DataType.$type)
+    private UUID id;
+
+    public UUID getId() {
+        return id;
+    }
+
+    public void setId(UUID id) {
+        this.id = id;
+    }
+}
+
+""")
+        SqlQueryBuilder builder = new SqlQueryBuilder(Dialect.ORACLE, version)
+        def entity = new SourcePersistentEntity(element, {})
+        def sql = builder.buildCreateTableStatements(entity)
+
+        expect:
+        sql[0].contains(column)
+
+        where:
+        version | type         | column
+        null    | 'UUID'       | '"ID" VARCHAR(36) DEFAULT SYS_GUID() NOT NULL'
+        '23.4'  | 'UUID'       | '"ID" VARCHAR(36) DEFAULT SYS_GUID() NOT NULL'
+        '23.9'  | 'UUID'       | '"ID" VARCHAR(36) DEFAULT RAW_TO_UUID(UUID()) NOT NULL'
+        '23.26' | 'UUID'       | '"ID" VARCHAR(36) DEFAULT RAW_TO_UUID(UUID()) NOT NULL'
+    }
+
+    @Unroll
     void "test build insert for UUID and dialect - #dialect"() {
         given:
         BeanDefinition beanDefinition = buildRepository('test.MyInterface', """

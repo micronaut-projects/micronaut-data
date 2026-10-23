@@ -113,6 +113,11 @@ r2dbc:
         version: 23.1
 ----
 
+The target version also changes the DDL that schema generation creates for Oracle:
+
+- From `23.1`, `CREATE TABLE`, `CREATE INDEX` and `CREATE SEQUENCE` statements use `IF NOT EXISTS`, and `DROP TABLE` and `DROP VIEW` statements use `IF EXISTS`. Creating a schema that already exists no longer logs a failure for each object, and an existing object is kept as it is, even if its definition differs from the entity.
+- From `23.9`, a generated UUID identifier defaults to `RAW_TO_UUID(UUID())`, which the database formats as a UUID string, rather than to `SYS_GUID()`, which a `VARCHAR` column stores as 32 hex digits without dashes. Oracle AI Database 26ai releases, such as `23.26`, satisfy both versions.
+
 IMPORTANT: Repository SQL is generated at compilation time. Datasource configuration is used by runtime components such as schema generation and validation, but it does not change SQL that has already been generated for repository methods. Keep the build-time dialect target or repository `version` option aligned with datasource `dialect-options` when using Micronaut Data schema generation.
 
 Applications that package repositories in a separate jar are responsible for running those repositories against an Oracle database that accepts the generated SQL. A repository compiled with Oracle 23.1 target version may contain SQL that is not valid on Oracle 19c or Oracle 21c, and a consuming application cannot change that generated SQL with runtime datasource configuration.
