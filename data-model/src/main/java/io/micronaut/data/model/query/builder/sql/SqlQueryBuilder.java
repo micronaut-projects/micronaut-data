@@ -388,13 +388,13 @@ public class SqlQueryBuilder extends AbstractSqlLikeQueryBuilder {
     public String[] buildDropTableStatements(PersistentEntity entity) {
         List<String> dropStatements = new ArrayList<>();
         if (entity.getAnnotationMetadata().hasAnnotation(JsonView.class)) {
-            String sql = "DROP VIEW " + getTableName(entity);
+            String sql = "DROP VIEW " + ifExists() + getTableName(entity);
             dropStatements.add(sql);
             return dropStatements.toArray(new String[0]);
         }
         String tableName = getTableName(entity);
         boolean escape = shouldEscape(entity);
-        String sql = "DROP TABLE " + tableName;
+        String sql = "DROP TABLE " + ifExists() + tableName;
         Collection<Association> foreignKeyAssociations = SqlQueryBuilderUtils.getJoinTableAssociations(entity);
         for (Association association : foreignKeyAssociations) {
             AnnotationMetadata associationMetadata = association.getAnnotationMetadata();
@@ -403,7 +403,7 @@ public class SqlQueryBuilder extends AbstractSqlLikeQueryBuilder {
                 .stringValue(SqlQueryBuilderUtils.ANN_JOIN_TABLE, "name")
                 .orElseGet(() ->
                     getMappedName(namingStrategy, association));
-            dropStatements.add("DROP TABLE " + (escape ? quote(joinTableName, true) : joinTableName) + ";");
+            dropStatements.add("DROP TABLE " + ifExists() + (escape ? quote(joinTableName, true) : joinTableName) + ";");
         }
 
         dropStatements.add(sql);
@@ -975,7 +975,7 @@ public class SqlQueryBuilder extends AbstractSqlLikeQueryBuilder {
         }
 
         String tableName = getObjectName(schema, table.name(), escape, true);
-        StringBuilder builder = new StringBuilder("CREATE TABLE ").append(tableName).append(" (");
+        StringBuilder builder = new StringBuilder("CREATE TABLE ").append(ifNotExists()).append(tableName).append(" (");
         builder.append(String.join(",", columns));
         if (generatePkAfterColumns) {
             builder.append(", PRIMARY KEY(").append(String.join(",", primaryColumnsName)).append(')');
@@ -1094,7 +1094,7 @@ public class SqlQueryBuilder extends AbstractSqlLikeQueryBuilder {
         } else if (indexMapping.spatial() && (dialect == Dialect.MYSQL || dialect == Dialect.SQL_SERVER || dialect == Dialect.H2)) {
             indexBuilder.append("SPATIAL ");
         }
-        indexBuilder.append("INDEX ");
+        indexBuilder.append("INDEX ").append(ifNotExists());
         String indexColumnNames = escape ? String.join(", ", Arrays.stream(indexMapping.columns()).map(this::quote).toList()) : columnNames;
         indexBuilder.append(indexName).append(" ON ").append(escapedTableName);
         if (indexMapping.spatial() && dialect == Dialect.POSTGRES) {
@@ -1137,7 +1137,7 @@ public class SqlQueryBuilder extends AbstractSqlLikeQueryBuilder {
     private String createSequenceStmt(SqlTableMapping table, SqlSequenceMapping sequence, boolean escape) {
         String sequenceName = getObjectName(table.schema(), resolveSequenceName(table, sequence), escape, true);
         final boolean isSqlServer = dialect == Dialect.SQL_SERVER;
-        String createSequenceStmt = "CREATE SEQUENCE " + sequenceName;
+        String createSequenceStmt = "CREATE SEQUENCE " + ifNotExists() + sequenceName;
         if (isSqlServer) {
             createSequenceStmt += " AS BIGINT";
         }
@@ -1151,6 +1151,46 @@ public class SqlQueryBuilder extends AbstractSqlLikeQueryBuilder {
             }
         }
         return createSequenceStmt;
+    }
+
+    /**
+     * Oracle 23ai accepts {@code IF NOT EXISTS} in {@code CREATE} statements, so generating a schema that already
+     * exists does not fail.
+     *
+     * @return The clause, followed by a space, or an empty string
+     */
+    private String ifNotExists() {
+        return supportsIfExists() ? "IF NOT EXISTS " : "";
+    }
+
+    /**
+     * Oracle 23ai accepts {@code IF EXISTS} in {@code DROP} statements.
+     *
+     * @return The clause, followed by a space, or an empty string
+     */
+    private String ifExists() {
+        return supportsIfExists() ? "IF EXISTS " : "";
+    }
+
+    private boolean supportsIfExists() {
+        return dialect == Dialect.ORACLE && dialectOptions.isVersionAtLeast(SqlDialectOptions.ORACLE_23_1_0_VERSION);
+    }
+
+    /**
+     * {@code SYS_GUID()} returns 16 bytes, which a {@code VARCHAR} column stores as 32 hex digits that are not a UUID
+     * string. From 23.9, {@code UUID()} generates a version 4 UUID, and {@code RAW_TO_UUID} formats it with dashes.
+     * A custom column definition, such as {@code RAW(16)}, keeps {@code SYS_GUID()}: Oracle cannot store the
+     * formatted string in a binary column (ORA-01465).
+     *
+     * @param columnMapping The column
+     * @return The default value expression
+     */
+    private String oracleUuidDefault(SqlColumnMapping columnMapping) {
+        if (StringUtils.isEmpty(columnMapping.getDefinition())
+            && dialectOptions.isVersionAtLeast(SqlDialectOptions.ORACLE_23_9_0_VERSION)) {
+            return "RAW_TO_UUID(UUID())";
+        }
+        return "SYS_GUID()";
     }
 
     private String makeTransformedColumnList(String columnList) {
@@ -1233,7 +1273,7 @@ public class SqlQueryBuilder extends AbstractSqlLikeQueryBuilder {
                 // for Oracle, we use sequences so just add NOT NULL
                 // then alter the table for sequences
                 if (type == UUID) {
-                    column += " DEFAULT SYS_GUID() NOT NULL";
+                    column += " DEFAULT " + oracleUuidDefault(columnMapping) + " NOT NULL";
                 } else if (type == IDENTITY) {
                     if (isPk) {
                         column += " GENERATED BY DEFAULT ON NULL AS IDENTITY (MINVALUE 1 START WITH 1 CACHE 100 NOCYCLE)";

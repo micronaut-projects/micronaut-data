@@ -14,6 +14,7 @@ The configured dialect `version` is a SQL generation target.
 It tells Micronaut Data which SQL features it may use when building repository queries, criteria queries, SQL literals, bind mappings, and schema generation statements.
 It is not runtime database version detection and it is not a general datasource capability check.
 Use numeric major[.minor[.patch]] notation, such as `23.1` or `23.1.0`. Major-only values such as `23` are treated as `23.0.0` and do not enable features that require `23.1`.
+Oracle's full five-part version, such as `23.26.2.0.0` from `v$instance.version_full`, is not supported and is treated as no version, which disables every version-dependent feature: use `23.26` instead.
 Micronaut Data compares semantic version values, so a later configured version such as `23.4` also satisfies SQL features that require `23.1`.
 
 For Gradle Java projects:
@@ -112,6 +113,11 @@ r2dbc:
       dialect-options:
         version: 23.1
 ----
+
+The target version also changes the DDL that schema generation creates for Oracle:
+
+- From `23.1`, `CREATE TABLE`, `CREATE INDEX` and `CREATE SEQUENCE` statements use `IF NOT EXISTS`, and `DROP TABLE` and `DROP VIEW` statements use `IF EXISTS`. Creating a schema that already exists no longer logs a failure for each object, and an existing object is kept as it is, even if its definition differs from the entity.
+- From `23.9`, a generated UUID identifier defaults to `RAW_TO_UUID(UUID())`, which the database formats as a UUID string, rather than to `SYS_GUID()`, which a `VARCHAR` column stores as 32 hex digits without dashes. A column with a custom definition, such as `RAW(16)`, keeps `SYS_GUID()`. Oracle AI Database 26ai releases, such as `23.26`, satisfy both versions.
 
 IMPORTANT: Repository SQL is generated at compilation time. Datasource configuration is used by runtime components such as schema generation and validation, but it does not change SQL that has already been generated for repository methods. Keep the build-time dialect target or repository `version` option aligned with datasource `dialect-options` when using Micronaut Data schema generation.
 
