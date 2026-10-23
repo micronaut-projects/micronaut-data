@@ -44,6 +44,7 @@ import java.util.LinkedHashSet;
 import java.util.List;
 import java.util.Set;
 import java.util.UUID;
+import java.util.concurrent.atomic.AtomicReference;
 
 /**
  * How {@link FlatEntityResultSetMapper} reads one entity type: the column of every mapped property, the typed
@@ -100,8 +101,7 @@ public final class FlatEntityMappingPlan<R> {
     /**
      * The per-column facts of the generated mapper's columns, resolved on the first context created.
      */
-    @Nullable
-    private volatile Columns generatedColumns;
+    private final AtomicReference<Columns> generatedColumns = new AtomicReference<>();
     private final BeanIntrospection<R> introspection;
     private final RuntimePersistentProperty<R>[] persistentProperties;
     private final BeanProperty<R, Object>[] properties;
@@ -373,10 +373,10 @@ public final class FlatEntityMappingPlan<R> {
         if (generatedMapper == null) {
             throw new IllegalStateException("The plan of [" + entity.getName() + "] has no generated mapper");
         }
-        Columns columns = generatedColumns;
+        Columns columns = generatedColumns.get();
         if (columns == null) {
             columns = resolveColumns(generatedMapper, conversionContextFactory);
-            generatedColumns = columns;
+            generatedColumns.set(columns);
         }
         return new GeneratedRowMapperContext(conversionService, columns, jsonColumnReader, resultReader);
     }

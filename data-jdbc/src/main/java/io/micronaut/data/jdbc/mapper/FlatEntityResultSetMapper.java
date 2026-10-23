@@ -207,34 +207,48 @@ public final class FlatEntityResultSetMapper<R> implements SqlTypeMapper<ResultS
         if (rs != resolvedResultSet) {
             resolveOrdinals(rs);
         }
-        R entity;
-        if (generatedMapper != null) {
-            try {
-                entity = (R) generatedMapper.map(rs, ordinals, Objects.requireNonNull(generatedContext));
-            } catch (SQLException e) {
-                throw new DataAccessException("Error reading entity [" + plan.getEntity().getName() + "] from result set: " + e.getMessage(), e);
-            }
-        } else {
-            try {
-                entity = constructorArgumentCount == 0 ? introspection.instantiate() : instantiate(rs);
-            } catch (InstantiationException e) {
-                throw new DataAccessException("Error instantiating entity [" + plan.getEntity().getName() + "]: " + e.getMessage(), e);
-            }
-            if (entity == null) {
-                return null;
-            }
-            for (int i = 0; i < kinds.length; i++) {
-                if (constructorArgumentIndexes[i] >= 0) {
-                    continue;
-                }
-                Object value = read(rs, ordinals[i], kinds[i], i);
-                if (value != null) {
-                    properties[i].set(entity, value);
-                }
-            }
+        R entity = generatedMapper != null ? readGenerated(rs, generatedMapper) : readFlat(rs);
+        if (entity == null) {
+            return null;
         }
         if (loadListener != null) {
             entity = (R) loadListener.apply((RuntimePersistentEntity<Object>) plan.getEntity(), entity);
+        }
+        return entity;
+    }
+
+    @SuppressWarnings("unchecked")
+    private R readGenerated(ResultSet rs, GeneratedRowMapper<R> mapper) {
+        try {
+            return (R) mapper.map(rs, ordinals, Objects.requireNonNull(generatedContext));
+        } catch (SQLException e) {
+            throw new DataAccessException("Error reading entity [" + plan.getEntity().getName() + "] from result set: " + e.getMessage(), e);
+        }
+    }
+
+    /**
+     * Reads the entity column by column: instantiated, then every property that is not a constructor argument set
+     * when its column is not NULL.
+     */
+    @Nullable
+    private R readFlat(ResultSet rs) {
+        R entity;
+        try {
+            entity = constructorArgumentCount == 0 ? introspection.instantiate() : instantiate(rs);
+        } catch (InstantiationException e) {
+            throw new DataAccessException("Error instantiating entity [" + plan.getEntity().getName() + "]: " + e.getMessage(), e);
+        }
+        if (entity == null) {
+            return null;
+        }
+        for (int i = 0; i < kinds.length; i++) {
+            if (constructorArgumentIndexes[i] >= 0) {
+                continue;
+            }
+            Object value = read(rs, ordinals[i], kinds[i], i);
+            if (value != null) {
+                properties[i].set(entity, value);
+            }
         }
         return entity;
     }

@@ -47,8 +47,6 @@ public final class GeneratedRowMappers {
             return load(type);
         }
     };
-    @Nullable
-    private static volatile Map<String, ServiceDefinition<GeneratedRowMapper>> definitions;
 
     private GeneratedRowMappers() {
     }
@@ -66,7 +64,7 @@ public final class GeneratedRowMappers {
 
     @SuppressWarnings("rawtypes")
     private static Optional<GeneratedRowMapper<?>> load(Class<?> entityType) {
-        ServiceDefinition<GeneratedRowMapper> definition = definitions().get(entityType.getName() + GeneratedRowMapper.CLASS_NAME_SUFFIX);
+        ServiceDefinition<GeneratedRowMapper> definition = Definitions.BY_NAME.get(entityType.getName() + GeneratedRowMapper.CLASS_NAME_SUFFIX);
         if (definition == null || !definition.isPresent()) {
             return Optional.empty();
         }
@@ -74,21 +72,22 @@ public final class GeneratedRowMappers {
         return mapper.entityType() == entityType ? Optional.of(mapper) : Optional.empty();
     }
 
+    /**
+     * The service entries by class name, read when first needed.
+     */
     @SuppressWarnings("rawtypes")
-    private static Map<String, ServiceDefinition<GeneratedRowMapper>> definitions() {
-        Map<String, ServiceDefinition<GeneratedRowMapper>> resolved = definitions;
-        if (resolved == null) {
-            synchronized (GeneratedRowMappers.class) {
-                resolved = definitions;
-                if (resolved == null) {
-                    resolved = new HashMap<>();
-                    for (ServiceDefinition<GeneratedRowMapper> definition : SoftServiceLoader.load(GeneratedRowMapper.class)) {
-                        resolved.put(definition.getName(), definition);
-                    }
-                    definitions = resolved;
-                }
-            }
+    private static final class Definitions {
+        static final Map<String, ServiceDefinition<GeneratedRowMapper>> BY_NAME = load();
+
+        private Definitions() {
         }
-        return resolved;
+
+        private static Map<String, ServiceDefinition<GeneratedRowMapper>> load() {
+            Map<String, ServiceDefinition<GeneratedRowMapper>> byName = new HashMap<>();
+            for (ServiceDefinition<GeneratedRowMapper> definition : SoftServiceLoader.load(GeneratedRowMapper.class)) {
+                byName.put(definition.getName(), definition);
+            }
+            return byName;
+        }
     }
 }

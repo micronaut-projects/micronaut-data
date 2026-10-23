@@ -37,7 +37,6 @@ import io.micronaut.inject.ast.Element;
 import io.micronaut.inject.ast.MethodElement;
 import io.micronaut.inject.ast.ParameterElement;
 import io.micronaut.inject.ast.PropertyElement;
-import io.micronaut.inject.visitor.ElementPostponedToNextRoundException;
 import io.micronaut.inject.visitor.TypeElementVisitor;
 import io.micronaut.inject.visitor.VisitorContext;
 import io.micronaut.sourcegen.generator.SourceGenerator;
@@ -131,6 +130,8 @@ public final class JdbcRowMapperVisitor implements TypeElementVisitor<MappedEnti
     private static final ClassTypeDef DATA_ACCESS_EXCEPTION = ClassTypeDef.of(DataAccessException.class);
     private static final ClassTypeDef CONVERSION_SERVICE = ClassTypeDef.of(ConversionService.class);
     private static final ClassTypeDef CONTEXT_TYPE = ClassTypeDef.of("io.micronaut.data.jdbc.mapper.GeneratedRowMapperContext");
+    private static final String NO_MAPPER = "No JDBC row mapper generated for ";
+    private static final String GET_TIMESTAMP = "getTimestamp";
     private static final String RESULT_READER_CONVERTER = "io.micronaut.data.model.runtime.convert.ResultReaderAttributeConverter";
     private static final ClassTypeDef BIG_DECIMAL = ClassTypeDef.of(BigDecimal.class);
     private static final ClassTypeDef TIMESTAMP = ClassTypeDef.of(Timestamp.class);
@@ -204,19 +205,17 @@ public final class JdbcRowMapperVisitor implements TypeElementVisitor<MappedEnti
                 // mappers rather than postponing the element, which would leave the repositories of this round
                 // half processed
                 if (report) {
-                    context.info("No JDBC row mapper generated for " + element.getName() + ": a type it refers to is generated later in this compilation. Rows are mapped at runtime.", element);
+                    context.info(NO_MAPPER + element.getName() + ": a type it refers to is generated later in this compilation. Rows are mapped at runtime.", element);
                 }
                 return;
             }
             // The mapper is an optimization: a failure to generate it must not fail the build
-            context.warn("No JDBC row mapper generated for " + element.getName() + ": " + e + ". Rows are mapped at runtime.", element);
+            context.warn(NO_MAPPER + element.getName() + ": " + e + ". Rows are mapped at runtime.", element);
         }
     }
 
     private static boolean isPostponement(RuntimeException e) {
-        // The Java processor's PostponeToNextRoundException belongs to inject-java, which is only present when
-        // compiling Java, so it is recognized by name
-        return e instanceof ElementPostponedToNextRoundException || e.getClass().getSimpleName().equals("PostponeToNextRoundException");
+        return MappedEntityVisitor.isPostponement(e);
     }
 
     /**
@@ -378,12 +377,12 @@ public final class JdbcRowMapperVisitor implements TypeElementVisitor<MappedEnti
             };
             case BYTE_ARRAY -> "byte[]".equals(name) ? getter("getBytes", TypeDef.of(byte[].class)) : null;
             case TIMESTAMP -> switch (name) {
-                case "java.sql.Timestamp" -> getter("getTimestamp", TIMESTAMP);
-                case "java.time.LocalDateTime" -> converted("getTimestamp", TIMESTAMP, ClassTypeDef.of(LocalDateTime.class));
-                case "java.time.Instant" -> converted("getTimestamp", TIMESTAMP, ClassTypeDef.of(Instant.class));
-                case "java.time.OffsetDateTime" -> converted("getTimestamp", TIMESTAMP, ClassTypeDef.of(OffsetDateTime.class));
-                case "java.time.ZonedDateTime" -> converted("getTimestamp", TIMESTAMP, ClassTypeDef.of(ZonedDateTime.class));
-                case "java.time.LocalTime" -> converted("getTimestamp", TIMESTAMP, ClassTypeDef.of(LocalTime.class));
+                case "java.sql.Timestamp" -> getter(GET_TIMESTAMP, TIMESTAMP);
+                case "java.time.LocalDateTime" -> converted(GET_TIMESTAMP, TIMESTAMP, ClassTypeDef.of(LocalDateTime.class));
+                case "java.time.Instant" -> converted(GET_TIMESTAMP, TIMESTAMP, ClassTypeDef.of(Instant.class));
+                case "java.time.OffsetDateTime" -> converted(GET_TIMESTAMP, TIMESTAMP, ClassTypeDef.of(OffsetDateTime.class));
+                case "java.time.ZonedDateTime" -> converted(GET_TIMESTAMP, TIMESTAMP, ClassTypeDef.of(ZonedDateTime.class));
+                case "java.time.LocalTime" -> converted(GET_TIMESTAMP, TIMESTAMP, ClassTypeDef.of(LocalTime.class));
                 default -> null;
             };
             case DATE -> switch (name) {
@@ -418,38 +417,7 @@ public final class JdbcRowMapperVisitor implements TypeElementVisitor<MappedEnti
             return creator != null && creator.isStatic() ? creator : null;
         }
         if (type.isRecord()) {
-            // A declared creator first, by stereotype as the introspection finds it (@Creator, Jackson's
-            // @JsonCreator, ...). Enumerating the methods postpones the element when one of them names a type
-            // generated later in this compilation; the entity then keeps the runtime mappers (see visitClass)
-            MethodElement creator = type.getEnclosedElement(ElementQuery.ALL_METHODS.onlyDeclared().onlyStatic().annotated(am -> am.hasStereotype(Creator.class))).orElse(null);
-            if (creator != null) {
-                return creator;
-            }
-            creator = type.getEnclosedElement(ElementQuery.CONSTRUCTORS.annotated(am -> am.hasStereotype(Creator.class))).orElse(null);
-            if (creator != null) {
-                return creator.getParameters().length > 0 ? creator : null;
-            }
-            // Else the canonical constructor: the one with a parameter per component, whatever other constructors
-            // exist (an extra no-argument constructor can be the primary one)
-            Set<String> components = new HashSet<>();
-            for (PersistentProperty property : entity.getPersistentProperties()) {
-                components.add(property.getName());
-            }
-            if (entity.hasIdentity()) {
-                components.add(entity.getIdentity().getName());
-            }
-            if (entity.hasVersion()) {
-                components.add(entity.getVersion().getName());
-            }
-            for (MethodElement candidate : type.getEnclosedElements(ElementQuery.CONSTRUCTORS.filter(c -> !c.isPrivate()))) {
-                Set<String> names = new HashSet<>();
-                for (ParameterElement parameter : candidate.getParameters()) {
-                    names.add(parameter.getName());
-                }
-                if (!names.isEmpty() && names.equals(components)) {
-                    return candidate;
-                }
-            }
+            return recordCreator(entity);
         }
         // The introspection's creator: a static @Creator factory, whatever its arity, or a @Creator constructor
         // before anything else
@@ -460,8 +428,48 @@ public final class JdbcRowMapperVisitor implements TypeElementVisitor<MappedEnti
         return primary != null && primary.getParameters().length > 0 ? primary : null;
     }
 
+    /**
+     * A record's creator: its declared creator by stereotype as the introspection finds it ({@code @Creator},
+     * Jackson's {@code @JsonCreator}, ...), else the canonical constructor, the one with a parameter per component
+     * whatever other constructors exist (an extra no-argument constructor can be the primary one). Enumerating the methods
+     * postpones the element when one of them names a type generated later in this compilation; the entity then
+     * keeps the runtime mappers (see visitClass).
+     */
+    @Nullable
+    private static MethodElement recordCreator(SourcePersistentEntity entity) {
+        ClassElement type = entity.getClassElement();
+        MethodElement creator = type.getEnclosedElement(ElementQuery.ALL_METHODS.onlyDeclared().onlyStatic().annotated(am -> am.hasStereotype(Creator.class))).orElse(null);
+        if (creator != null) {
+            return creator;
+        }
+        creator = type.getEnclosedElement(ElementQuery.CONSTRUCTORS.annotated(am -> am.hasStereotype(Creator.class))).orElse(null);
+        if (creator != null) {
+            return creator.getParameters().length > 0 ? creator : null;
+        }
+        Set<String> components = new HashSet<>();
+        for (PersistentProperty property : entity.getPersistentProperties()) {
+            components.add(property.getName());
+        }
+        if (entity.hasIdentity()) {
+            components.add(entity.getIdentity().getName());
+        }
+        if (entity.hasVersion()) {
+            components.add(entity.getVersion().getName());
+        }
+        for (MethodElement candidate : type.getEnclosedElements(ElementQuery.CONSTRUCTORS.filter(c -> !c.isPrivate()))) {
+            Set<String> names = new HashSet<>();
+            for (ParameterElement parameter : candidate.getParameters()) {
+                names.add(parameter.getName());
+            }
+            if (!names.isEmpty() && names.equals(components)) {
+                return candidate;
+            }
+        }
+        return null;
+    }
+
     private static SourcePersistentProperty property(Member member) {
-        return member instanceof Leaf leaf ? leaf.property() : ((Node) member).association();
+        return member instanceof Leaf leaf ? leaf.property() : ((Node) member).requireAssociation();
     }
 
     private static Element element(Association association) {
@@ -573,7 +581,7 @@ public final class JdbcRowMapperVisitor implements TypeElementVisitor<MappedEnti
             return entity.getClassElement();
         }
 
-        SourceAssociation association() {
+        SourceAssociation requireAssociation() {
             return Objects.requireNonNull(association);
         }
 
@@ -632,7 +640,7 @@ public final class JdbcRowMapperVisitor implements TypeElementVisitor<MappedEnti
                 return model;
             } catch (UnsupportedEntityException e) {
                 if (report) {
-                    context.info("No JDBC row mapper generated for " + entity.getName() + ": " + e.getMessage() + ". Rows are mapped at runtime.", e.element);
+                    context.info(NO_MAPPER + entity.getName() + ": " + e.getMessage() + ". Rows are mapped at runtime.", e.element);
                 }
                 return null;
             }
@@ -719,22 +727,40 @@ public final class JdbcRowMapperVisitor implements TypeElementVisitor<MappedEnti
          * dropped, unless it is the identity or the version.
          */
         private void resolveConstructors(Node node) {
-            ClassElement type = node.type();
             MethodElement constructor = constructorOf(node.entity);
             node.constructor = constructor;
-            Set<String> arguments = new HashSet<>();
-            if (constructor != null) {
-                if (node.isAssociationTarget() && !(constructor.getParameters().length == 1 && node.members.size() == 1)) {
-                    // The general mapper builds the target of an unjoined association from its identity alone
-                    throw new UnsupportedEntityException("the target of the association " + node.association().getName() + " cannot be built from its identity alone", element(node.association()));
-                }
-                for (ParameterElement parameter : constructor.getParameters()) {
-                    if (!node.members.containsKey(parameter.getName())) {
-                        throw new UnsupportedEntityException("the constructor argument " + parameter.getName() + " of " + type.getName() + " is not a column", parameter);
-                    }
-                    arguments.add(parameter.getName());
+            Set<String> arguments = constructor == null ? Set.of() : arguments(node, constructor);
+            node.members.keySet().removeAll(unsettable(node, arguments));
+            for (Member member : node.members.values()) {
+                if (member instanceof Node child) {
+                    resolveConstructors(child);
                 }
             }
+        }
+
+        /**
+         * @return The names of the creator's arguments, each of which is a member of the object
+         */
+        private static Set<String> arguments(Node node, MethodElement constructor) {
+            if (node.isAssociationTarget() && !(constructor.getParameters().length == 1 && node.members.size() == 1)) {
+                // The general mapper builds the target of an unjoined association from its identity alone
+                throw new UnsupportedEntityException("the target of the association " + node.requireAssociation().getName() + " cannot be built from its identity alone", element(node.requireAssociation()));
+            }
+            Set<String> arguments = new HashSet<>();
+            for (ParameterElement parameter : constructor.getParameters()) {
+                if (!node.members.containsKey(parameter.getName())) {
+                    throw new UnsupportedEntityException("the constructor argument " + parameter.getName() + " of " + node.type().getName() + " is not a column", parameter);
+                }
+                arguments.add(parameter.getName());
+            }
+            return arguments;
+        }
+
+        /**
+         * @return The members that are neither creator arguments nor have a setter, which neither mapper sets;
+         * the identity or the version among them makes the entity unsupported
+         */
+        private static List<String> unsettable(Node node, Set<String> arguments) {
             List<String> dropped = new ArrayList<>();
             for (Map.Entry<String, Member> entry : node.members.entrySet()) {
                 if (arguments.contains(entry.getKey())) {
@@ -743,17 +769,12 @@ public final class JdbcRowMapperVisitor implements TypeElementVisitor<MappedEnti
                 SourcePersistentProperty property = property(entry.getValue());
                 if (writeMethod(property) == null) {
                     if (isIdentityOrVersion(node.entity, property)) {
-                        throw new UnsupportedEntityException("the property " + property.getName() + " of " + type.getName() + " cannot be set", property.getPropertyElement());
+                        throw new UnsupportedEntityException("the property " + property.getName() + " of " + node.type().getName() + " cannot be set", property.getPropertyElement());
                     }
                     dropped.add(entry.getKey());
                 }
             }
-            node.members.keySet().removeAll(dropped);
-            for (Member member : node.members.values()) {
-                if (member instanceof Node child) {
-                    resolveConstructors(child);
-                }
-            }
+            return dropped;
         }
     }
 
@@ -832,91 +853,111 @@ public final class JdbcRowMapperVisitor implements TypeElementVisitor<MappedEnti
          * holding it.
          */
         private VariableDef construct(Node node) {
-            Map<String, ExpressionDef> built = new LinkedHashMap<>();
-            Map<String, ExpressionDef.ConditionExpressionDef> isNull = new LinkedHashMap<>();
-            Map<String, ExpressionDef.ConditionExpressionDef> present = new LinkedHashMap<>();
-            for (Map.Entry<String, Member> entry : node.members.entrySet()) {
-                if (entry.getValue() instanceof Leaf leaf) {
-                    read(leaf);
-                    built.put(entry.getKey(), value(leaf));
-                    isNull.put(entry.getKey(), nulls.get(leaf));
-                    present.put(entry.getKey(), presents.get(leaf));
-                } else {
-                    VariableDef child = construct((Node) entry.getValue());
-                    built.put(entry.getKey(), child);
-                    isNull.put(entry.getKey(), child.isNull());
-                    present.put(entry.getKey(), child.isNonNull());
-                }
-            }
+            Members members = readMembers(node);
             ClassTypeDef type = ClassTypeDef.of(node.type());
             MethodElement constructor = node.constructor;
-            List<ExpressionDef> arguments = new ArrayList<>();
             Set<String> consumed = new HashSet<>();
+            List<ExpressionDef> arguments = new ArrayList<>();
             if (constructor != null) {
                 for (ParameterElement parameter : constructor.getParameters()) {
-                    arguments.add(Objects.requireNonNull(built.get(parameter.getName())));
+                    arguments.add(Objects.requireNonNull(members.built.get(parameter.getName())));
                     consumed.add(parameter.getName());
                 }
             }
-            ExpressionDef instance;
-            if (constructor == null) {
-                instance = type.instantiate();
-            } else if (constructor.isStatic()) {
-                // A static @Creator factory, called with its arguments or none
-                instance = type.invokeStatic(constructor, arguments);
-            } else {
-                instance = type.instantiate(constructor, arguments);
-            }
-            StatementDef.DefineAndAssign object;
+            ExpressionDef instance = instantiation(type, constructor, arguments);
             if (node.isRoot()) {
                 // A required argument that is NULL fails as in the general mapper
-                if (constructor != null) {
-                    for (ParameterElement parameter : constructor.getParameters()) {
-                        SourcePersistentProperty property = property(node.member(parameter.getName()));
-                        if (!property.isOptional()) {
-                            statements.add(condition(isNull, parameter.getName()).doIf(DATA_ACCESS_EXCEPTION.instantiate(
-                                ExpressionDef.constant("Null value read for non-null constructor argument [" + parameter.getName() + "] of type: " + node.type().getName())
-                            ).doThrow()));
-                        }
-                    }
+                for (String argument : requiredArguments(node, constructor)) {
+                    statements.add(condition(members.isNull, argument).doIf(DATA_ACCESS_EXCEPTION.instantiate(
+                        ExpressionDef.constant("Null value read for non-null constructor argument [" + argument + "] of type: " + node.type().getName())
+                    ).doThrow()));
                 }
-                object = instance.newLocal("o" + locals++);
+                StatementDef.DefineAndAssign object = instance.newLocal("o" + locals++);
                 statements.add(object);
-                statements.addAll(setters(node, object.variable(), built, present, consumed));
+                statements.addAll(setters(node, object.variable(), members.built, members.present, consumed));
                 return object.variable();
             }
             // An embedded value or an association target exists under a condition
-            object = ExpressionDef.nullValue().cast(type).newLocal("o" + locals++);
+            StatementDef.DefineAndAssign object = ExpressionDef.nullValue().cast(type).newLocal("o" + locals++);
             statements.add(object);
             VariableDef local = object.variable();
-            ExpressionDef.ConditionExpressionDef exists;
-            if (node.isAssociationTarget()) {
-                // The target exists when its identity is not null
-                exists = present.values().iterator().next();
-            } else if (node.association().isOptional()) {
-                // A nullable embedded value is null when none of its columns has a value
-                exists = null;
-                for (ExpressionDef.ConditionExpressionDef p : present.values()) {
-                    exists = exists == null ? p : exists.or(p);
+            ExpressionDef.ConditionExpressionDef exists = exists(node, constructor, members.present);
+            List<StatementDef> creation = new ArrayList<>();
+            creation.add(local.assign(instance));
+            creation.addAll(setters(node, local, members.built, members.present, consumed));
+            statements.add(exists == null ? StatementDef.multi(creation) : exists.doIf(StatementDef.multi(creation)));
+            return local;
+        }
+
+        private Members readMembers(Node node) {
+            Members members = new Members(new LinkedHashMap<>(), new LinkedHashMap<>(), new LinkedHashMap<>());
+            for (Map.Entry<String, Member> entry : node.members.entrySet()) {
+                if (entry.getValue() instanceof Leaf leaf) {
+                    read(leaf);
+                    members.built.put(entry.getKey(), value(leaf));
+                    members.isNull.put(entry.getKey(), nulls.get(leaf));
+                    members.present.put(entry.getKey(), presents.get(leaf));
+                } else {
+                    VariableDef child = construct((Node) entry.getValue());
+                    members.built.put(entry.getKey(), child);
+                    members.isNull.put(entry.getKey(), child.isNull());
+                    members.present.put(entry.getKey(), child.isNonNull());
                 }
-            } else {
-                // A required embedded value is null when a required constructor argument is null
-                exists = null;
-                if (constructor != null) {
-                    for (ParameterElement parameter : constructor.getParameters()) {
-                        SourcePersistentProperty property = property(node.member(parameter.getName()));
-                        if (!property.isOptional()) {
-                            ExpressionDef.ConditionExpressionDef p = condition(present, parameter.getName());
-                            exists = exists == null ? p : exists.and(p);
-                        }
+            }
+            return members;
+        }
+
+        /**
+         * {@code new T(args)}, {@code T.create(args)} for a static creator, or {@code new T()}.
+         */
+        private static ExpressionDef instantiation(ClassTypeDef type, @Nullable MethodElement constructor, List<ExpressionDef> arguments) {
+            if (constructor == null) {
+                return type.instantiate();
+            }
+            if (constructor.isStatic()) {
+                return type.invokeStatic(constructor, arguments);
+            }
+            return type.instantiate(constructor, arguments);
+        }
+
+        /**
+         * @return The names of the creator's arguments that may not be null
+         */
+        private static List<String> requiredArguments(Node node, @Nullable MethodElement constructor) {
+            List<String> required = new ArrayList<>();
+            if (constructor != null) {
+                for (ParameterElement parameter : constructor.getParameters()) {
+                    if (!property(node.member(parameter.getName())).isOptional()) {
+                        required.add(parameter.getName());
                     }
                 }
             }
-            List<StatementDef> creation = new ArrayList<>();
-            creation.add(local.assign(instance));
-            creation.addAll(setters(node, local, built, present, consumed));
-            statements.add(exists == null ? StatementDef.multi(creation) : exists.doIf(StatementDef.multi(creation)));
-            return local;
+            return required;
+        }
+
+        /**
+         * The condition under which an embedded value or an association target exists: the target when its identity
+         * is not null, a nullable embedded value when any of its columns has a value, a required embedded value when
+         * none of its required constructor arguments is null ({@code null} for always).
+         */
+        private static ExpressionDef.@Nullable ConditionExpressionDef exists(Node node,
+                                                                   @Nullable MethodElement constructor,
+                                                                   Map<String, ExpressionDef.ConditionExpressionDef> present) {
+            if (node.isAssociationTarget()) {
+                return present.values().iterator().next();
+            }
+            ExpressionDef.ConditionExpressionDef exists = null;
+            if (node.requireAssociation().isOptional()) {
+                for (ExpressionDef.ConditionExpressionDef p : present.values()) {
+                    exists = exists == null ? p : exists.or(p);
+                }
+                return exists;
+            }
+            for (String argument : requiredArguments(node, constructor)) {
+                ExpressionDef.ConditionExpressionDef p = condition(present, argument);
+                exists = exists == null ? p : exists.and(p);
+            }
+            return exists;
         }
 
         private static ExpressionDef.ConditionExpressionDef condition(Map<String, ExpressionDef.ConditionExpressionDef> conditions, String name) {
@@ -947,6 +988,19 @@ public final class JdbcRowMapperVisitor implements TypeElementVisitor<MappedEnti
                 }
             }
             return setters;
+        }
+
+        /**
+         * The values of an object's members: a column read into a local, a nested object built, with whether each
+         * is null and whether it is present.
+         *
+         * @param built   The value of each member, by name
+         * @param isNull  Whether each member is null
+         * @param present Whether each member is not null
+         */
+        private record Members(Map<String, ExpressionDef> built,
+                               Map<String, ExpressionDef.ConditionExpressionDef> isNull,
+                               Map<String, ExpressionDef.ConditionExpressionDef> present) {
         }
     }
 }
