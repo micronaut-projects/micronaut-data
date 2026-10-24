@@ -104,7 +104,7 @@ public interface TextSearchDialect {
             PersistentProperty property = asProperty(field);
             if (property != null) {
                 PersistentEntity owner = property.getOwner();
-                String language = owner.getAnnotationMetadata().stringValue(Searchable.class, Searchable.LANGUAGE).orElse(null);
+                String language = owner.getAnnotationMetadata().stringValue(Searchable.class, Searchable.MEMBER_LANGUAGE).orElse(null);
                 if (language != null && !language.isEmpty()) {
                     return language;
                 }
@@ -133,7 +133,7 @@ public interface TextSearchDialect {
         if (property == null) {
             return null;
         }
-        return property.getAnnotationMetadata().enumValue(SearchField.class, SearchField.WEIGHT, SearchWeight.class).orElse(null);
+        return property.getAnnotationMetadata().enumValue(SearchField.class, SearchField.MEMBER_WEIGHT, SearchWeight.class).orElse(null);
     }
 
     /**
