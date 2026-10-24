@@ -90,6 +90,8 @@ import java.util.Optional;
 import java.util.OptionalInt;
 import java.util.Set;
 import java.util.function.Function;
+import java.util.regex.Matcher;
+import java.util.regex.Pattern;
 import java.util.stream.Collectors;
 import java.util.stream.IntStream;
 import java.util.stream.Stream;
@@ -118,6 +120,9 @@ public class SqlQueryBuilder extends AbstractSqlLikeQueryBuilder {
     public static final String STANDARD_FOR_UPDATE_CLAUSE = " FOR UPDATE";
     public static final String SQL_SERVER_FOR_UPDATE_CLAUSE = " WITH (UPDLOCK, ROWLOCK)";
 
+    private static final Pattern CREATE_INDEX_PREFIX = Pattern.compile(
+        "\\s*CREATE\\s+(?:(?:UNIQUE|BITMAP|MULTIVALUE|SEARCH|VECTOR)\\s+)?INDEX\\s+", Pattern.CASE_INSENSITIVE);
+    private static final Pattern IF_NOT_EXISTS_PREFIX = Pattern.compile("IF\\s+NOT\\s+EXISTS\\s", Pattern.CASE_INSENSITIVE);
     private static final String VALUE_MEMBER = "value";
     private static final String BLANK_SPACE = " ";
     private static final String INSERT_INTO = "INSERT INTO ";
@@ -1076,7 +1081,7 @@ public class SqlQueryBuilder extends AbstractSqlLikeQueryBuilder {
         String columnNames = String.join(", ", indexMapping.columns());
         SqlIndexDefinitionProvider sqlIndexDefinitionProvider = indexMapping.sqlIndexDefinitionProvider();
         if (sqlIndexDefinitionProvider != null) {
-            return sqlIndexDefinitionProvider.getIndexDefinition(
+            return withIfNotExists(sqlIndexDefinitionProvider.getIndexDefinition(
                 indexName,
                 escapedTableName,
                 indexMapping.columns(),
@@ -1084,7 +1089,7 @@ public class SqlQueryBuilder extends AbstractSqlLikeQueryBuilder {
                 this::quote,
                 indexMapping,
                 dialect
-            );
+            ));
         }
 
         StringBuilder indexBuilder = new StringBuilder();
@@ -1170,6 +1175,24 @@ public class SqlQueryBuilder extends AbstractSqlLikeQueryBuilder {
      */
     private String ifExists() {
         return supportsIfExists() ? "IF EXISTS " : "";
+    }
+
+    /**
+     * Adds {@code IF NOT EXISTS} to an index statement of a {@link SqlIndexDefinitionProvider}, such as the Oracle
+     * vector index, unless the provider wrote one.
+     *
+     * @param statement The index statement
+     * @return The statement
+     */
+    private String withIfNotExists(String statement) {
+        if (!supportsIfExists()) {
+            return statement;
+        }
+        Matcher matcher = CREATE_INDEX_PREFIX.matcher(statement);
+        if (!matcher.lookingAt() || IF_NOT_EXISTS_PREFIX.matcher(statement).region(matcher.end(), statement.length()).lookingAt()) {
+            return statement;
+        }
+        return statement.substring(0, matcher.end()) + ifNotExists() + statement.substring(matcher.end());
     }
 
     private boolean supportsIfExists() {

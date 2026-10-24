@@ -114,4 +114,27 @@ class OracleXeVectorIndexDdlSpec extends Specification {
         }
     }
 
+    def "the vector index gets IF NOT EXISTS on Oracle 23ai, like the other schema statements"() {
+        when:
+        String[] statements = statementsFor(DocumentEmbeddingTestEntity, version)
+
+        then:
+        statements.findAll { it.startsWith('CREATE VECTOR INDEX ') }*.startsWith('CREATE VECTOR INDEX IF NOT EXISTS ') == [ifNotExists]
+
+        where:
+        version | ifNotExists
+        null    | false
+        '23.26' | true
+    }
+
+    private static String[] statementsFor(Class<?> type, String version) {
+        ApplicationContext ctx = ApplicationContext.run()
+        try {
+            List<DefinitionProvider> providers = new ArrayList<>(ctx.getBeansOfType(SqlColumnDefinitionProvider))
+            providers.addAll(ctx.getBeansOfType(SqlIndexDefinitionProvider))
+            return new SqlQueryBuilder(Dialect.ORACLE, version).buildCreateTableStatements(new RuntimePersistentEntity<>(type), providers)
+        } finally {
+            ctx.close()
+        }
+    }
 }
