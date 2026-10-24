@@ -39,7 +39,8 @@ import java.util.List;
  * and {@code countHits(String)}, implementing them as if they were named {@code searchBySearch} and
  * {@code countBySearch}: a text match over every {@code @SearchField} property ordered by relevance.
  * {@code search(SearchQuery)} and {@code search(SearchQuery, Pageable)} build their query at runtime
- * through {@code SearchQueryInterceptor}.
+ * through {@code SearchQueryInterceptor}, or its reactive and async variants for a {@code Publisher},
+ * future or Kotlin coroutine return type.
  *
  * @since 5.4.0
  */
@@ -49,6 +50,8 @@ public final class SearchRepositoryMethodMatcher implements MethodMatcher {
     private static final String SEARCH = "search";
     private static final String COUNT_HITS = "countHits";
     private static final String SEARCH_QUERY_INTERCEPTOR = "io.micronaut.data.runtime.intercept.criteria.SearchQueryInterceptor";
+    private static final String SEARCH_QUERY_REACTIVE_INTERCEPTOR = "io.micronaut.data.runtime.intercept.criteria.reactive.SearchQueryReactiveInterceptor";
+    private static final String SEARCH_QUERY_ASYNC_INTERCEPTOR = "io.micronaut.data.runtime.intercept.criteria.async.SearchQueryAsyncInterceptor";
 
     @Override
     public int getOrder() {
@@ -75,21 +78,31 @@ public final class SearchRepositoryMethodMatcher implements MethodMatcher {
         }
         if (SEARCH.equals(methodName)) {
             ClassElement returnType = matchContext.getReturnType();
-            if (TypeUtils.isReactiveOrFuture(returnType)) {
+            if (matchContext.getMethodElement().isSuspend()) {
+                returnType = TypeUtils.getKotlinCoroutineProducedType(matchContext.getMethodElement());
+                if (returnType == null) {
+                    return null;
+                }
+            } else if (TypeUtils.isReactiveOrFuture(returnType)) {
                 returnType = returnType.getFirstTypeArgument().orElse(returnType);
             }
             if (!returnType.getName().equals(SearchResults.class.getName())) {
                 return null;
             }
             if (searchQuery) {
-                if (TypeUtils.isReactiveOrFuture(matchContext.getReturnType())) {
-                    throw new ProcessingException(matchContext.getMethodElement(), "search(SearchQuery) only supports a blocking SearchResults return type");
-                }
                 ClassElement resultType = returnType;
+                String interceptor;
+                if (FindersUtils.isFutureType(matchContext.getMethodElement(), matchContext.getReturnType())) {
+                    interceptor = SEARCH_QUERY_ASYNC_INTERCEPTOR;
+                } else if (FindersUtils.isReactiveType(matchContext.getReturnType())) {
+                    interceptor = SEARCH_QUERY_REACTIVE_INTERCEPTOR;
+                } else {
+                    interceptor = SEARCH_QUERY_INTERCEPTOR;
+                }
                 return mc -> new MethodMatchInfo(
                     DataMethod.OperationType.QUERY,
                     resultType,
-                    FindersUtils.getInterceptorElement(matchContext, SEARCH_QUERY_INTERCEPTOR)
+                    FindersUtils.getInterceptorElement(matchContext, interceptor)
                 );
             }
             return new QueryCriteriaMethodMatch(List.of(

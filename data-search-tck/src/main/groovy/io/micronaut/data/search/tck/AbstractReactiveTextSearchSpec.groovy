@@ -1,8 +1,28 @@
+/*
+ * Copyright 2017-2026 original authors
+ *
+ * Licensed under the Apache License, Version 2.0 (the "License");
+ * you may not use this file except in compliance with the License.
+ * You may obtain a copy of the License at
+ *
+ * https://www.apache.org/licenses/LICENSE-2.0
+ *
+ * Unless required by applicable law or agreed to in writing, software
+ * distributed under the License is distributed on an "AS IS" BASIS,
+ * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+ * See the License for the specific language governing permissions and
+ * limitations under the License.
+ */
 package io.micronaut.data.search.tck
 
 import io.micronaut.context.ApplicationContext
 import io.micronaut.data.search.tck.entities.Book
+import io.micronaut.data.model.Pageable
+import io.micronaut.data.model.search.SearchQuery
+import io.micronaut.data.search.tck.repositories.AsyncBookSearchRepository
 import io.micronaut.data.search.tck.repositories.ReactorBookSearchRepository
+
+import java.util.concurrent.TimeUnit
 import spock.lang.AutoCleanup
 import spock.lang.Shared
 import spock.lang.Specification
@@ -18,6 +38,8 @@ abstract class AbstractReactiveTextSearchSpec extends Specification {
     ApplicationContext context = ApplicationContext.run(properties)
 
     abstract ReactorBookSearchRepository getBookSearchRepository()
+
+    abstract AsyncBookSearchRepository getAsyncBookSearchRepository()
 
     void setup() {
         bookSearchRepository.deleteAll().block()
@@ -74,5 +96,33 @@ abstract class AbstractReactiveTextSearchSpec extends Specification {
         then:
         bookSearchRepository.findById(saved.id).blockOptional().isEmpty()
         bookSearchRepository.count().block() == 4L
+    }
+
+    void "the reactive SearchRepository searches, pages and counts"() {
+        when:
+        def results = bookSearchRepository.search("programming").block()
+
+        then:
+        results.results()*.entity()*.title as Set == ["The Rust Programming Language", "Programming Kotlin"] as Set
+        results.results()[0].score().value() >= results.results()[1].score().value()
+        bookSearchRepository.search("programming", Pageable.from(0, 1)).block().results().size() == 1
+        bookSearchRepository.countHits("programming").block() == 2L
+        bookSearchRepository.countHits("nothingmatchesthis").block() == 0L
+
+        when:
+        def programmatic = bookSearchRepository.search(SearchQuery.builder("programming").fields("title").build()).block()
+
+        then:
+        programmatic.results()*.entity()*.title as Set == ["The Rust Programming Language", "Programming Kotlin"] as Set
+        bookSearchRepository.search(SearchQuery.of("nothingmatchesthis")).block().results().isEmpty()
+        bookSearchRepository.search(SearchQuery.of("programming"), Pageable.from(0, 1)).block().results().size() == 1
+    }
+
+    void "the async SearchRepository searches and counts"() {
+        expect:
+        asyncBookSearchRepository.search("java").get(30, TimeUnit.SECONDS).results()*.entity()*.title == ["Java Concurrency in Practice"]
+        asyncBookSearchRepository.search(SearchQuery.of("java")).get(30, TimeUnit.SECONDS).results().size() == 1
+        asyncBookSearchRepository.search(SearchQuery.of("programming"), Pageable.from(0, 1)).get(30, TimeUnit.SECONDS).results().size() == 1
+        asyncBookSearchRepository.countHits("programming").get(30, TimeUnit.SECONDS) == 2L
     }
 }
