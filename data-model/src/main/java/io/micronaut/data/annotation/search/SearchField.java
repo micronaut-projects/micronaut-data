@@ -44,22 +44,22 @@ public @interface SearchField {
     /**
      * The annotation name.
      */
-    String NAME = SearchField.class.getName();
+    String ANNOTATION_NAME = SearchField.class.getName();
 
     /**
      * The {@code weight} member.
      */
-    String WEIGHT = "weight";
+    String MEMBER_WEIGHT = "weight";
 
     /**
      * The {@code type} member.
      */
-    String TYPE = "type";
+    String MEMBER_TYPE = "type";
 
     /**
      * The name of the {@link #highlightable()} member.
      */
-    String HIGHLIGHTABLE = "highlightable";
+    String MEMBER_HIGHLIGHTABLE = "highlightable";
 
     /**
      * Optional name of the field in the search index. Defaults to the persisted property name.

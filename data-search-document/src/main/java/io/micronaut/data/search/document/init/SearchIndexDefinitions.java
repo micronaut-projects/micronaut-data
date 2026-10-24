@@ -48,7 +48,7 @@ public final class SearchIndexDefinitions {
         String analyzer = analyzerFor(TextSearchSupport.resolveLanguage(entity));
         Map<String, Object> properties = new LinkedHashMap<>();
         for (PersistentProperty property : TextSearchSupport.searchFields(entity)) {
-            SearchFieldType type = property.getAnnotationMetadata().enumValue(SearchField.class, SearchField.TYPE, SearchFieldType.class).orElse(SearchFieldType.TEXT);
+            SearchFieldType type = property.getAnnotationMetadata().enumValue(SearchField.class, SearchField.MEMBER_TYPE, SearchFieldType.class).orElse(SearchFieldType.TEXT);
             String declaredAnalyzer = property.getAnnotationMetadata().stringValue(SearchField.class, "analyzer").filter(a -> !a.isEmpty()).orElse(analyzer);
             Map<String, Object> field = new LinkedHashMap<>();
             switch (type) {
