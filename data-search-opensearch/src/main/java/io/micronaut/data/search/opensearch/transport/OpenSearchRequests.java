@@ -33,6 +33,7 @@ import org.opensearch.client.opensearch.core.search.TrackHits;
 
 import java.io.StringReader;
 import java.util.ArrayList;
+import java.util.LinkedHashMap;
 import java.util.List;
 import java.util.Map;
 
@@ -73,7 +74,7 @@ final class OpenSearchRequests {
         }
         Object highlight = parsed.get("highlight");
         if (highlight != null) {
-            request.highlight(JsonData.of(highlight, mapper).to(Highlight.class, mapper));
+            request.highlight(JsonData.of(highlightWithFieldMap(highlight), mapper).to(Highlight.class, mapper));
         }
         return request.build();
     }
@@ -100,6 +101,29 @@ final class OpenSearchRequests {
             return Query.of(q -> q.matchAll(m -> m));
         }
         return JsonData.of(query, mapper).to(Query.class, mapper);
+    }
+
+    /**
+     * The query builder lists the highlighted fields as one object per field; the OpenSearch client
+     * only reads them as a map.
+     *
+     * @param highlight The parsed highlight clause
+     * @return The clause with the fields as a map
+     */
+    @SuppressWarnings("unchecked")
+    static Object highlightWithFieldMap(Object highlight) {
+        if (highlight instanceof Map<?, ?> clause && clause.get("fields") instanceof List<?> fields) {
+            Map<String, Object> merged = new LinkedHashMap<>();
+            for (Object field : fields) {
+                if (field instanceof Map<?, ?> entry) {
+                    merged.putAll((Map<String, Object>) entry);
+                }
+            }
+            Map<String, Object> rewritten = new LinkedHashMap<>((Map<String, Object>) clause);
+            rewritten.put("fields", merged);
+            return rewritten;
+        }
+        return highlight;
     }
 
     /**
