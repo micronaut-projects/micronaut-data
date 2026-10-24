@@ -96,6 +96,15 @@ abstract class AbstractTextSearchSpec extends Specification {
     }
 
     /**
+     * @return The {@code SearchQuery.language} that analyses a query without stemming, or {@code null} when
+     * the backend has no query language override; the {@link #noStemmingLanguage()} by default
+     */
+    @Nullable
+    String noStemmingQueryLanguage() {
+        return noStemmingLanguage()
+    }
+
+    /**
      * @return Whether the backend pages with a cursor ({@code search_after} on the document stores)
      */
     boolean supportsCursoredPaging() {
@@ -297,16 +306,22 @@ abstract class AbstractTextSearchSpec extends Specification {
     }
 
     void "search with a SearchQuery rejects options the operation cannot honour"() {
-        when:
-        bookSearchRepository.search(SearchQuery.builder("programming").language("simple").build())
-
-        then:
-        thrown(UnsupportedSearchFeatureException)
-
         expect:
-        // a store without query-time boosts or a selectable edit distance rejects them
+        // a store without query-time boosts, a selectable edit distance or a query language rejects them
         rejects(SearchQuery.builder("programming").boost("title", 2).build()) == !capabilities().contains(SearchCapability.BOOST)
         rejects(SearchQuery.builder("kotlimm").fuzzy(2).build()) == !capabilities().contains(SearchCapability.FUZZINESS)
+        rejects(SearchQuery.builder("programming").language(noStemmingQueryLanguage() ?: "simple").build()) == !capabilities().contains(SearchCapability.LANGUAGE_OVERRIDE)
+    }
+
+    void "a language override selects the stemming of the query"() {
+        assumeTrue(capabilities().contains(SearchCapability.LANGUAGE_OVERRIDE) && supportsStemming() && noStemmingQueryLanguage() != null)
+
+        expect:
+        // the entity language stems 'bakers' to the 'baker' of the description; a language without stemming keeps
+        // the literal token, which no row holds, while a literal 'bread' still matches the title
+        bookSearchRepository.search(SearchQuery.builder("bakers").build()).results()*.entity()*.title == ["Baking Bread"]
+        bookSearchRepository.search(SearchQuery.builder("bakers").language(noStemmingQueryLanguage()).build()).results().isEmpty()
+        bookSearchRepository.search(SearchQuery.builder("bread").language(noStemmingQueryLanguage()).build()).results()*.entity()*.title == ["Baking Bread"]
     }
 
     private boolean rejects(SearchQuery query) {

@@ -1634,7 +1634,7 @@ public final class MongoQueryBuilder implements QueryBuilder {
             int index = queryState.pushParameter(converted, newBindingContext(null));
             Map<String, Object> text = new LinkedHashMap<>();
             text.put("$search", Map.of(QUERY_PARAMETER_PLACEHOLDER, index));
-            text.put("$language", TextSearchSupport.resolveLanguage(persistentEntity));
+            text.put("$language", options.language() != null ? options.language() : TextSearchSupport.resolveLanguage(persistentEntity));
             query.put("$text", text);
         }
 
@@ -1645,6 +1645,10 @@ public final class MongoQueryBuilder implements QueryBuilder {
             }
             if (options.fuzziness() > MAX_FUZZINESS) {
                 throw new UnsupportedSearchFeatureException(SearchCapability.FUZZINESS, "MongoDB Search fuzzy matching beyond " + MAX_FUZZINESS + " edits");
+            }
+            if (options.language() != null) {
+                // the analyzer is fixed per index
+                throw new UnsupportedSearchFeatureException(SearchCapability.LANGUAGE_OVERRIDE, "MongoDB Search");
             }
             if (queryState.searchOperator != null) {
                 throw new UnsupportedOperationException("MongoDB $search supports one search predicate per query.");

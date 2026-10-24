@@ -30,29 +30,43 @@ import java.util.Map;
  *
  * @param boosts The boost factor by property name; a boosted property replaces its index-time weight
  * @param fuzziness The maximum edit distance of a fuzzy match, {@code 0} for the store default
+ * @param language The language to analyse the query with, or {@code null} for the entity language
  * @author Graeme Rocher
  * @since 5.4.0
  */
 @Experimental
-public record TextMatchOptions(Map<String, Double> boosts, int fuzziness) {
+public record TextMatchOptions(Map<String, Double> boosts, int fuzziness, @Nullable String language) {
 
     /**
-     * No boosts and the default fuzziness.
+     * No boosts, the default fuzziness and the entity language.
      */
-    public static final TextMatchOptions NONE = new TextMatchOptions(Map.of(), 0);
+    public static final TextMatchOptions NONE = new TextMatchOptions(Map.of(), 0, null);
 
     public TextMatchOptions {
         boosts = Collections.unmodifiableMap(new LinkedHashMap<>(boosts));
         if (fuzziness < 0) {
             throw new IllegalArgumentException("The fuzziness cannot be negative: " + fuzziness);
         }
+        if (language != null && language.isBlank()) {
+            language = null;
+        }
+    }
+
+    /**
+     * Options without a language override.
+     *
+     * @param boosts The boosts by property name
+     * @param fuzziness The edit distance of a fuzzy match, {@code 0} for the store default
+     */
+    public TextMatchOptions(Map<String, Double> boosts, int fuzziness) {
+        this(boosts, fuzziness, null);
     }
 
     /**
      * @return Whether the options are the defaults
      */
     public boolean isDefault() {
-        return boosts.isEmpty() && fuzziness == 0;
+        return boosts.isEmpty() && fuzziness == 0 && language == null;
     }
 
     /**

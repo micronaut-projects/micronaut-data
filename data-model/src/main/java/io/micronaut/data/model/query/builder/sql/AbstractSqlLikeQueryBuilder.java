@@ -4046,17 +4046,17 @@ public abstract class AbstractSqlLikeQueryBuilder implements QueryBuilder {
             if (dialect == null) {
                 throw new UnsupportedOperationException("Full-text search is not supported by dialect: " + getDialect());
             }
-            if (expressions.size() != 3) {
+            // the field, the query and the mode, then the options when set
+            TextSearchSupport.ScoreArguments arguments = TextSearchSupport.scoreArguments(expressions);
+            if (arguments.fields().size() != 1) {
                 throw new IllegalStateException("Search highlight expects a field, a query and a match mode");
             }
-            @SuppressWarnings("unchecked")
-            Expression<String> queryExpression = (Expression<String>) expressions.get(1);
             String currentColumnAlias = columnAlias;
             boolean currentNestedExpression = isNestedExpression;
             columnAlias = null;
             isNestedExpression = true;
             try {
-                dialect.appendSearchHighlight(query, expressions.get(0), queryExpression, textMatchMode(expressions.get(2)),
+                dialect.appendSearchHighlight(query, arguments.fields().get(0), arguments.query(), arguments.mode(), arguments.options(),
                     textSearchTarget(annotationMetadata, queryState.getEntity(), tableAlias), this::appendExpression, converterClassName -> expression -> {
                         if (!(expression instanceof BindingParameter bindingParameter)) {
                             throw new IllegalStateException("A full-text search query must be a parameter, got: " + expression);

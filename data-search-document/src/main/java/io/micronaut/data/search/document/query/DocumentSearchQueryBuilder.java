@@ -49,6 +49,7 @@ import io.micronaut.data.model.search.TextMatchOptions;
 import io.micronaut.data.model.search.UnsupportedSearchFeatureException;
 import io.micronaut.data.model.search.TextSearchSupport;
 import io.micronaut.data.search.document.convert.SimpleQueryStringConverter;
+import io.micronaut.data.search.document.init.SearchIndexDefinitions;
 import jakarta.persistence.criteria.Expression;
 import jakarta.persistence.criteria.Order;
 import jakarta.persistence.criteria.Predicate;
@@ -582,6 +583,10 @@ public final class DocumentSearchQueryBuilder implements QueryBuilder {
             if (mode == MatchMode.PREFIX) {
                 // Analyze the prefix with the field analyzer, so a stemmed term such as "programming*" still matches
                 simpleQueryString.put("analyze_wildcard", true);
+            }
+            if (options.language() != null) {
+                // the query is analysed with the language's analyzer instead of each field's
+                simpleQueryString.put("analyzer", SearchIndexDefinitions.analyzerFor(options.language()));
             }
             result = Map.of("simple_query_string", simpleQueryString);
         }
