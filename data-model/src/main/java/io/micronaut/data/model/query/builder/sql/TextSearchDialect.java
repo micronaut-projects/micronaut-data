@@ -135,7 +135,7 @@ public interface TextSearchDialect {
         if (property == null) {
             return null;
         }
-        return property.getAnnotationMetadata().enumValue(SearchField.class, SearchField.WEIGHT, SearchWeight.class).orElse(null);
+        return property.getAnnotationMetadata().enumValue(SearchField.class, SearchField.MEMBER_WEIGHT, SearchWeight.class).orElse(null);
     }
 
     /**
