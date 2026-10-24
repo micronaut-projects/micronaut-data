@@ -147,6 +147,13 @@ final class DataEncoderContext implements Serializer.EncoderContext {
                                 encoder.encodeNull();
                                 return;
                             }
+                            if (converterPersistedType == Object.class) {
+                                // the converter declares no persisted type: serialize what it produced, such as a vector's float[]
+                                Argument<Object> actualType = (Argument<Object>) Argument.of(converted.getClass());
+                                Serializer<? super Object> actual = context.findSerializer(actualType).createSpecific(context, actualType);
+                                actual.serialize(encoder, context, actualType, converted);
+                                return;
+                            }
                             serializer.serialize(encoder, context, convertedType, converted);
                         }
 

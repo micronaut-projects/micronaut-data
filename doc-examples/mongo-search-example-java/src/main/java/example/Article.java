@@ -6,7 +6,10 @@ import io.micronaut.data.annotation.MappedEntity;
 import io.micronaut.data.annotation.search.SearchField;
 import io.micronaut.data.annotation.search.SearchWeight;
 import io.micronaut.data.annotation.search.Searchable;
+import io.micronaut.data.model.vector.Vector;
 import io.micronaut.data.mongodb.annotation.MongoSearchIndex;
+import jakarta.persistence.Column;
+import org.jspecify.annotations.Nullable;
 
 // tag::entity[]
 @MappedEntity
@@ -20,6 +23,9 @@ public record Article(
     String title,
     @SearchField
     String body,
-    String author) {
+    String author,
+    @Nullable
+    @Column(length = 3) // <4>
+    Vector embedding) {
 }
 // end::entity[]

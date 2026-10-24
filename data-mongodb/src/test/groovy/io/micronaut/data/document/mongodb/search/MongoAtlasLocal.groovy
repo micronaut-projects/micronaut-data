@@ -46,14 +46,26 @@ trait MongoAtlasLocal implements TestPropertyProvider {
      * Polls until the search index returns exactly the ids the collection holds.
      */
     void awaitSearchIndex(String collection = "atlas_book", Duration timeout = Duration.ofSeconds(90)) {
+        awaitIndex(collection, new Document('$search', new Document("index", "default")
+                .append("exists", new Document("path", "title"))), timeout)
+    }
+
+    /**
+     * Polls until the vector search index returns exactly the ids the collection holds.
+     */
+    void awaitVectorIndex(String collection, String path, int dimensions, Duration timeout = Duration.ofSeconds(90)) {
+        awaitIndex(collection, new Document('$vectorSearch', new Document("index", "vector")
+                .append("path", path)
+                .append("queryVector", (1..dimensions).collect { 0.1d })
+                .append("numCandidates", 100)
+                .append("limit", 100)), timeout)
+    }
+
+    private void awaitIndex(String collection, Document searchStage, Duration timeout) {
         long deadline = System.nanoTime() + timeout.toNanos()
         try (MongoClient client = MongoClients.create(atlas().getDatabaseConnectionString(DATABASE))) {
             def coll = client.getDatabase(DATABASE).getCollection(collection)
-            def pipeline = [
-                    new Document('$search', new Document("index", "default")
-                            .append("exists", new Document("path", "title"))),
-                    new Document('$project', new Document("_id", 1))
-            ]
+            def pipeline = [searchStage, new Document('$project', new Document("_id", 1))]
             while (true) {
                 Set stored = coll.find().projection(new Document("_id", 1)).collect { it.get("_id") } as Set
                 Set indexed

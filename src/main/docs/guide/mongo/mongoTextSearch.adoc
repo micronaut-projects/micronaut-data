@@ -41,8 +41,9 @@ snippet::example.Article[project-base="doc-examples/mongo-search-example", sourc
 <1> The language picks the Lucene analyzer of the index, `lucene.english` for `english`; `@MongoSearchIndex(analyzer)` overrides it.
 <2> The name of the search index, `default` unless set.
 <3> The index weights become query-time boosts of the field, `score: { boost: { value: 10 } }` for `HIGH`.
+<4> A api:data.model.vector.Vector[] property with a `@Column(length)` dimension is indexed for `$vectorSearch`, see <<mongoVectorSearch, below>>.
 
-When `micronaut.data.mongodb.create-collections` is enabled, Micronaut Data creates the search index together with the collection, mapping every search field as a `string` with the analyzer; `@MongoSearchIndex(dynamic = true)` also maps the remaining fields dynamically. The index is built asynchronously, so a document saved right before a search may not be found yet. On a deployment without MongoDB Search the index cannot be created and a warning is logged.
+When `micronaut.data.mongodb.create-collections` is enabled, Micronaut Data creates the search index together with the collection, mapping every search field as a `string` with the analyzer; `@MongoSearchIndex(dynamic = true)` also maps the remaining fields dynamically. The indexes are built asynchronously, so a document saved right before a search may not be found yet. On a deployment without MongoDB Search the indexes cannot be created and a warning is logged.
 
 snippet::example.ArticleRepository[project-base="doc-examples/mongo-search-example", source="main", tags="repository"]
 
@@ -51,10 +52,20 @@ snippet::example.ArticleRepository[project-base="doc-examples/mongo-search-examp
 <3> `SearchFuzzy` renders a `text` operator with `fuzzy: { maxEdits: 1 }`.
 <4> A trailing api:data.model.vector.search.Score[] parameter keeps the hits whose `searchScore` is at least its value.
 <5> The other predicates follow the `$search` stage in a `$match`; a search predicate cannot be part of an `OR`.
+<6> A vector finder renders a `$vectorSearch` stage, see <<mongoVectorSearch, below>>.
 
 The search string grammar is rendered into `compound` operators at bind time: every term becomes a `text` operator over the searched paths, a quoted phrase a `phrase` operator, a negated term a `mustNot` clause, and `OR` groups `should` clauses. `SearchAll` puts the terms in `must`, so every one is required.
 
 `search(SearchQuery)` honours the `fields`, `mode`, `highlight` and `minScore` options. Highlights are read from the `searchHighlights` metadata and returned as one fragment per field with the hits wrapped in `<em>` tags, like the other stores. The relevance score is the `searchScore`.
+
+[[mongoVectorSearch]]
+=== Vector and hybrid search
+
+An entity with a `@MongoSearchIndex` also gets a vector search index, named by `@MongoSearchIndex(vectorIndex)` (`vector` unless set), with one `vector` field per api:data.model.vector.Vector[] property. The dimension comes from the property's `@Column(length)` and the similarity from `@MongoSearchIndex(similarity)`, `cosine` unless set; a vector property without a dimension is not indexed and a warning is logged.
+
+The vector search API of the <<sqlVectorType, SQL stores>> then runs on the index: a derived finder such as `searchByEmbeddingNear(Vector, Score)` or `findTop5ByEmbeddingNear(Vector, Double)` renders a `$vectorSearch` stage as the first stage of the aggregation, with the query vector, `limit` set from the method's limit or the page requested at runtime and `numCandidates` ten times that, followed by a `$match` on the maximum distance and the other predicates. The relevance score of a api:data.model.vector.search.SearchResults[] is the cosine distance derived from the `vectorSearchScore`, so results are comparable with the other stores. Only cosine distances are mapped; a `euclidean` or `dotProduct` index returns the stage's own score.
+
+Hybrid search with `SearchQuery.vector(...)` runs the `$search` and the `$vectorSearch` aggregations separately and fuses their rankings in memory, as described in the <<sqlTextSearch, SQL full-text search section>>; `$rankFusion` is not used. A `$search` and a `$vectorSearch` stage cannot share one aggregation, so a derived method combining a search keyword and a vector predicate is rejected at compile time. The other predicates of a vector query are applied after the stage as a `$match`, so they filter the `limit` nearest candidates rather than the whole collection.
 
 == Limitations
 
@@ -62,6 +73,7 @@ The search string grammar is rendered into `compound` operators at bind time: ev
 |Feature |MongoDB `$text` |MongoDB Search (`$search`)
 
 |Field scoping (`findByTitleSearch` matching only `title`) |not supported, every search field is searched |supported
+|Vector search and hybrid search |not supported |supported, `$vectorSearch` with cosine similarity
 |`SearchPrefix` and `SearchFuzzy` |not supported, rejected at compile time |supported
 |Highlighting and minimum score |not supported |supported
 |Query-time boosts (`SearchQuery.boost`) |not supported |not supported, the index weights boost the fields

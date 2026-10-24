@@ -176,7 +176,8 @@ final class DataDecoderContext implements Deserializer.DecoderContext {
                             .orElseThrow(IllegalStateException::new);
                     Argument<Object> convertedType = Argument.of(converterPersistedType);
                     AttributeConverter<Object, Object> converter = attributeConverterRegistry.getConverter(converterClass);
-                    Deserializer<?> deserializer = findDeserializer(convertedType);
+                    // specialize for the persisted type, which may be Object when the converter declares none
+                    Deserializer<?> deserializer = findDeserializer(convertedType).createSpecific(decoderContext, convertedType);
                     return new Deserializer<>() {
                         @Override
                         public Object deserialize(Decoder decoder, DecoderContext decoderContext, Argument<? super Object> type) throws IOException {

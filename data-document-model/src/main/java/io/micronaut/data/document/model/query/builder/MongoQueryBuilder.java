@@ -72,6 +72,7 @@ import io.micronaut.data.model.search.MatchMode;
 import io.micronaut.data.model.search.SearchCapability;
 import io.micronaut.data.model.search.TextSearchSupport;
 import io.micronaut.data.model.search.UnsupportedSearchFeatureException;
+import io.micronaut.data.model.query.builder.sql.VectorScoringDialectSupport;
 import io.micronaut.serde.config.annotation.SerdeConfig;
 import jakarta.persistence.criteria.Expression;
 import jakarta.persistence.criteria.Nulls;
@@ -148,7 +149,11 @@ public final class MongoQueryBuilder implements QueryBuilder {
     private static final Map<String, Object> SEARCH_SCORE = Map.of("$meta", "searchScore");
     private static final Map<String, Object> SEARCH_HIGHLIGHTS = Map.of("$meta", "searchHighlights");
     private static final String SEARCH_STAGE = "$search";
+    private static final String VECTOR_SEARCH_STAGE = "$vectorSearch";
     private static final String DEFAULT_SEARCH_INDEX = "default";
+    private static final String DEFAULT_VECTOR_INDEX = "vector";
+    private static final int DEFAULT_VECTOR_LIMIT = 100;
+    private static final int MAX_VECTOR_CANDIDATES = 10000;
     private static final String ADD_FIELDS = "$addFields";
     private static final String NULL_RANK_FIELD_PREFIX = "__micronaut_nulls_";
     private static final String SORT_EXPRESSION_FIELD_PREFIX = "__micronaut_sort_";
@@ -185,6 +190,27 @@ public final class MongoQueryBuilder implements QueryBuilder {
             predicateObj = buildWhereClause(predicate, queryState);
         }
 
+        if (queryState.vectorSearch != null) {
+            if (queryState.searchOperator != null) {
+                throw new UnsupportedOperationException("MongoDB $vectorSearch cannot be combined with $search in one aggregation; a hybrid search runs the two queries and fuses their rankings.");
+            }
+            if (!pipeline.isEmpty()) {
+                throw new UnsupportedOperationException("MongoDB $vectorSearch must be the first stage of the aggregation, so a vector predicate cannot be combined with joins.");
+            }
+            int limit = selectQueryDefinition.limit() > 0 ? selectQueryDefinition.limit() + Math.max(selectQueryDefinition.offset(), 0) : DEFAULT_VECTOR_LIMIT;
+            Map<String, Object> vectorSearch = new LinkedHashMap<>(queryState.vectorSearch);
+            vectorSearch.put("numCandidates", Math.min(MAX_VECTOR_CANDIDATES, Math.max(limit * 10, DEFAULT_VECTOR_LIMIT)));
+            vectorSearch.put("limit", limit);
+            pipeline.add(Map.of(VECTOR_SEARCH_STAGE, vectorSearch));
+            if (!queryState.vectorScoreFields.isEmpty()) {
+                Map<String, Object> vectorMeta = new LinkedHashMap<>();
+                for (String scoreField : queryState.vectorScoreFields) {
+                    vectorMeta.put(scoreField, MongoSearchStages.VECTOR_DISTANCE);
+                }
+                // The distance is only available as metadata of the $vectorSearch stage
+                pipeline.add(Map.of(ADD_FIELDS, vectorMeta));
+            }
+        }
         if (queryState.searchOperator != null) {
             if (!pipeline.isEmpty()) {
                 throw new UnsupportedOperationException("MongoDB $search must be the first stage of the aggregation, so a search predicate cannot be combined with joins.");
@@ -352,6 +378,10 @@ public final class MongoQueryBuilder implements QueryBuilder {
     private Object asAggregationFunction(FunctionExpression<?> functionExpression, QueryState queryState) {
         if (TextSearchSupport.SCORE_FUNCTION.equals(functionExpression.getName())) {
             return usesSearchIndex(queryState.getEntity()) ? SEARCH_SCORE : TEXT_SCORE;
+        }
+        if (VectorScoringDialectSupport.SCORE_FUNCTION.equals(functionExpression.getName())) {
+            registerVectorSearch(queryState, functionExpression);
+            return MongoSearchStages.VECTOR_DISTANCE;
         }
         List<Expression<?>> arguments = functionExpression.getExpressions();
         String name = functionExpression.getName().toUpperCase(Locale.ROOT);
@@ -683,7 +713,7 @@ public final class MongoQueryBuilder implements QueryBuilder {
         } else {
             throw new IllegalStateException("Unsupported predicate type: " + predicate.getClass().getName());
         }
-        if (queryState.searchOperator != null) {
+        if (queryState.searchOperator != null || queryState.vectorSearch != null) {
             MongoSearchStages.pruneEmptyConjunction(query);
         }
         return query;
@@ -707,24 +737,43 @@ public final class MongoQueryBuilder implements QueryBuilder {
 
     /**
      * @param entity The entity
-     * @return Whether the entity is searched with MongoDB Search ({@code $search}) rather than {@code $text}
+     * @return Whether the entity is searched with MongoDB Search rather than {@code $text}
      */
     private static boolean usesSearchIndex(PersistentEntity entity) {
         return entity.getAnnotationMetadata().hasAnnotation(MongoAnnotations.SEARCH_INDEX);
     }
 
-    private Map<String, Object> buildSearchStage(QueryState queryState) {
-        Map<String, Object> search = new LinkedHashMap<>();
-        search.put("index", queryState.getEntity().getAnnotationMetadata()
-            .stringValue(MongoAnnotations.SEARCH_INDEX, "name")
-            .filter(name -> !name.isEmpty())
-            .orElse(DEFAULT_SEARCH_INDEX));
-        // The operator is rendered from the bound search string at runtime
-        search.put("compound", Map.of("must", List.of(queryState.searchOperator)));
-        if (!queryState.highlights.isEmpty()) {
-            search.put("highlight", Map.of("path", new ArrayList<>(new LinkedHashSet<>(queryState.highlights.values()))));
+    /**
+     * Records the {@code $vectorSearch} stage of a {@code mn_vector_score(field, vector)} function; the stage
+     * gets its limit when the pipeline is assembled and the vector is encoded as an array at runtime.
+     */
+    private void registerVectorSearch(QueryState queryState, FunctionExpression<?> function) {
+        if (!usesSearchIndex(queryState.getEntity())) {
+            throw new UnsupportedOperationException("Vector search needs a @MongoSearchIndex on the entity; MongoDB $text has no vector search.");
         }
-        return search;
+        if (queryState.vectorSearch != null) {
+            return;
+        }
+        PersistentPropertyPath propertyPath = requireProperty(function.getExpressions().get(0)).getPropertyPath();
+        Expression<?> vector = function.getExpressions().get(1);
+        if (!(vector instanceof BindingParameter bindingParameter)) {
+            throw new IllegalStateException("The query vector must be a parameter, got: " + vector);
+        }
+        int index = queryState.pushParameter(bindingParameter, newBindingContext(null));
+        Map<String, Object> stage = new LinkedHashMap<>();
+        stage.put("index", searchIndexMember(queryState.getEntity(), "vectorIndex", DEFAULT_VECTOR_INDEX));
+        stage.put("path", getPropertyPersistName(propertyPath));
+        stage.put("queryVector", Map.of(QUERY_PARAMETER_PLACEHOLDER, index));
+        queryState.vectorSearch = stage;
+    }
+
+    private Map<String, Object> buildSearchStage(QueryState queryState) {
+        String index = searchIndexMember(queryState.getEntity(), "name", DEFAULT_SEARCH_INDEX);
+        return MongoSearchStages.searchStage(index, Objects.requireNonNull(queryState.searchOperator), queryState.highlights.values());
+    }
+
+    private static String searchIndexMember(PersistentEntity entity, String member, String defaultValue) {
+        return entity.getAnnotationMetadata().stringValue(MongoAnnotations.SEARCH_INDEX, member).filter(v -> !v.isEmpty()).orElse(defaultValue);
     }
 
     @NonNull
@@ -1070,18 +1119,17 @@ public final class MongoQueryBuilder implements QueryBuilder {
         private final PersistentEntity entity;
 
         private final LookupsStage rootLookups;
-        /**
-         * The MongoDB Search operator placeholder of the search predicate, when the entity has a search index.
-         */
+        // The MongoDB Search operator placeholder of the search predicate, when the entity has a search index
         @Nullable
         private Map<String, Object> searchOperator;
-        /**
-         * The fields the {@code searchScore} is added as.
-         */
+        // The fields the searchScore is added as
         private final Set<String> searchScoreFields = new LinkedHashSet<>();
-        /**
-         * The highlighted field paths by the alias of the projected fragment.
-         */
+        // The $vectorSearch stage of the vector predicate, without its limit, when the entity has a search index
+        @Nullable
+        private Map<String, Object> vectorSearch;
+        // The fields the vector distance is added as
+        private final Set<String> vectorScoreFields = new LinkedHashSet<>();
+        // The highlighted field paths by the alias of the projected fragment
         private final Map<String, String> highlights = new LinkedHashMap<>();
 
         private QueryState(BaseQueryDefinition baseQueryDefinition, boolean allowJoins) {
@@ -1182,6 +1230,13 @@ public final class MongoQueryBuilder implements QueryBuilder {
                 }
                 // The score is added as a field right after the $search stage, so the $match can restrict on it
                 queryState.searchScoreFields.add(TextSearchSupport.SCORE_ALIAS);
+                query.put(TextSearchSupport.SCORE_ALIAS, Map.of(op, scalarValue(value)));
+                return;
+            }
+            if (leftExpression instanceof FunctionExpression<?> function && VectorScoringDialectSupport.SCORE_FUNCTION.equals(function.getName())) {
+                // The maximum distance restricts the distance added right after the $vectorSearch stage
+                registerVectorSearch(queryState, function);
+                queryState.vectorScoreFields.add(TextSearchSupport.SCORE_ALIAS);
                 query.put(TextSearchSupport.SCORE_ALIAS, Map.of(op, scalarValue(value)));
                 return;
             }
@@ -1628,10 +1683,8 @@ public final class MongoQueryBuilder implements QueryBuilder {
         }
 
         /**
-         * Renders a search predicate for an entity with a {@code @MongoSearchIndex}: the predicate
-         * becomes the {@code $search} stage, so it is recorded on the query state and nothing is
-         * added to the {@code $match}. The operator itself is rendered from the bound search string
-         * at runtime, see {@link #SEARCH_OPERATOR_PLACEHOLDER}.
+         * Renders a search predicate for an entity with a {@code @MongoSearchIndex} as the {@code $search}
+         * stage recorded on the query state; the operator is rendered at runtime, see {@link #SEARCH_OPERATOR_PLACEHOLDER}.
          */
         private void visitSearchIndexMatch(List<Expression<?>> fields, Expression<String> queryExpression, MatchMode mode) {
             if (!(queryExpression instanceof BindingParameter bindingParameter)) {
@@ -1916,6 +1969,11 @@ public final class MongoQueryBuilder implements QueryBuilder {
                 PersistentPropertyPath propertyPath = requireProperty(functionExpression.getExpressions().get(0)).getPropertyPath();
                 String highlightAlias = alias == null ? TextSearchSupport.highlightAlias(propertyPath.getProperty().getName()) : alias;
                 queryState.highlights.put(highlightAlias, getPropertyPersistName(propertyPath));
+                return;
+            }
+            if (VectorScoringDialectSupport.SCORE_FUNCTION.equals(functionExpression.getName())) {
+                registerVectorSearch(queryState, functionExpression);
+                queryState.vectorScoreFields.add(alias == null ? TextSearchSupport.SCORE_ALIAS : alias);
                 return;
             }
             throw new UnsupportedOperationException("Function expression is not supported by Micronaut Data MongoDB.");

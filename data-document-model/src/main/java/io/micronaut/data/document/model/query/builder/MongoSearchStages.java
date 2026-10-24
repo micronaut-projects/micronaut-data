@@ -18,6 +18,9 @@ package io.micronaut.data.document.model.query.builder;
 import io.micronaut.core.annotation.Internal;
 
 import java.util.ArrayList;
+import java.util.Collection;
+import java.util.LinkedHashMap;
+import java.util.LinkedHashSet;
 import java.util.List;
 import java.util.Map;
 
@@ -34,6 +37,11 @@ final class MongoSearchStages {
      * The temporary field holding the {@code searchHighlights} metadata.
      */
     static final String HIGHLIGHTS_FIELD = "__micronaut_highlights";
+    /**
+     * The cosine distance of a {@code $vectorSearch} hit: the stage scores a hit as {@code (1 + cosine) / 2},
+     * so the distance {@code 1 - cosine} is {@code 2 - 2 * score}, the measure the other stores return.
+     */
+    static final Map<String, Object> VECTOR_DISTANCE = Map.of("$subtract", List.of(2, Map.of("$multiply", List.of(2, Map.of("$meta", "vectorSearchScore")))));
     private static final String HIGHLIGHT_START = "<em>";
     private static final String HIGHLIGHT_END = "</em>";
     private static final String HIGHLIGHT_SEPARATOR = " ... ";
@@ -44,6 +52,25 @@ final class MongoSearchStages {
     private static final String VALUE = "$$value";
 
     private MongoSearchStages() {
+    }
+
+    /**
+     * The {@code $search} stage: the operator placeholder rendered from the bound search string at runtime,
+     * inside a compound, with the highlighted paths.
+     *
+     * @param index The index name
+     * @param operator The operator placeholder
+     * @param highlightPaths The highlighted field paths
+     * @return The stage
+     */
+    static Map<String, Object> searchStage(String index, Map<String, Object> operator, Collection<String> highlightPaths) {
+        Map<String, Object> search = new LinkedHashMap<>();
+        search.put("index", index);
+        search.put("compound", Map.of("must", List.of(operator)));
+        if (!highlightPaths.isEmpty()) {
+            search.put("highlight", Map.of("path", new ArrayList<>(new LinkedHashSet<>(highlightPaths))));
+        }
+        return search;
     }
 
     /**
