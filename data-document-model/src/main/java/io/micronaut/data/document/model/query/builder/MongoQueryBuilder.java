@@ -147,7 +147,6 @@ public final class MongoQueryBuilder implements QueryBuilder {
     private static final String DEFAULT_SEARCH_INDEX = "default";
     private static final String DEFAULT_VECTOR_INDEX = "vector";
     private static final int DEFAULT_VECTOR_LIMIT = 100;
-    private static final int MAX_VECTOR_CANDIDATES = 10000;
     private static final String ADD_FIELDS = "$addFields";
     private static final String NULL_RANK_FIELD_PREFIX = "__micronaut_nulls_";
     private static final String SORT_EXPRESSION_FIELD_PREFIX = "__micronaut_sort_";
@@ -184,7 +183,15 @@ public final class MongoQueryBuilder implements QueryBuilder {
             predicateObj = buildWhereClause(predicate, queryState);
         }
 
-        if (queryState.vectorSearch != null) {
+        if (queryState.hybrid != null) {
+            if (!pipeline.isEmpty()) {
+                throw new UnsupportedOperationException("MongoDB $rankFusion must be the first stage of the aggregation, so a hybrid search cannot be combined with joins.");
+            }
+            pipeline.add(MongoSearchStages.rankFusionStage(buildSearchStage(queryState), Objects.requireNonNull(queryState.vectorSearch), queryState.hybrid));
+            pipeline.add(Map.of(ADD_FIELDS, MongoSearchStages.scoreFields(queryState.hybridScoreFields, MongoSearchStages.FUSED_SCORE)));
+            // a hit of one ranking whose weight is zero scores nothing and is not a hit
+            pipeline.add(Map.of("$match", Map.of(queryState.hybridScoreFields.iterator().next(), Map.of("$gt", 0))));
+        } else if (queryState.vectorSearch != null) {
             if (queryState.searchOperator != null) {
                 throw new UnsupportedOperationException("MongoDB $vectorSearch cannot be combined with $search in one aggregation; a hybrid search runs the two queries and fuses their rankings.");
             }
@@ -192,19 +199,12 @@ public final class MongoQueryBuilder implements QueryBuilder {
                 throw new UnsupportedOperationException("MongoDB $vectorSearch must be the first stage of the aggregation, so a vector predicate cannot be combined with joins.");
             }
             int limit = selectQueryDefinition.limit() > 0 ? selectQueryDefinition.limit() + Math.max(selectQueryDefinition.offset(), 0) : DEFAULT_VECTOR_LIMIT;
-            Map<String, Object> vectorSearch = new LinkedHashMap<>(queryState.vectorSearch);
-            vectorSearch.put("numCandidates", Math.min(MAX_VECTOR_CANDIDATES, Math.max(limit * 10, DEFAULT_VECTOR_LIMIT)));
-            vectorSearch.put("limit", limit);
-            pipeline.add(Map.of(VECTOR_SEARCH_STAGE, vectorSearch));
+            pipeline.add(Map.of(VECTOR_SEARCH_STAGE, MongoSearchStages.vectorSearchStage(queryState.vectorSearch, limit)));
             if (!queryState.vectorScoreFields.isEmpty()) {
-                Map<String, Object> vectorMeta = new LinkedHashMap<>();
-                for (String scoreField : queryState.vectorScoreFields) {
-                    vectorMeta.put(scoreField, MongoSearchStages.VECTOR_DISTANCE);
-                }
-                pipeline.add(Map.of(ADD_FIELDS, vectorMeta));
+                pipeline.add(Map.of(ADD_FIELDS, MongoSearchStages.scoreFields(queryState.vectorScoreFields, MongoSearchStages.VECTOR_DISTANCE)));
             }
         }
-        if (queryState.searchOperator != null) {
+        if (queryState.searchOperator != null && queryState.hybrid == null) {
             if (!pipeline.isEmpty()) {
                 throw new UnsupportedOperationException("MongoDB $search must be the first stage of the aggregation, so a search predicate cannot be combined with joins.");
             }
@@ -289,7 +289,7 @@ public final class MongoQueryBuilder implements QueryBuilder {
         } else {
             String customSort = annotationMetadata.stringValue(MongoAnnotations.SORT).orElse(null);
             if (customSort != null) {
-                pipeline.add(Map.of("$sort", new RawJsonValue(customSort)));
+                pipeline.add(Map.of("$sort", new MongoPipelineJson.RawJsonValue(customSort)));
             }
         }
         if (!projectionObj.isEmpty()) {
@@ -297,7 +297,7 @@ public final class MongoQueryBuilder implements QueryBuilder {
         } else {
             String customProjection = annotationMetadata.stringValue(MongoAnnotations.PROJECTION).orElse(null);
             if (customProjection != null) {
-                pipeline.add(Map.of("$project", new RawJsonValue(customProjection)));
+                pipeline.add(Map.of("$project", new MongoPipelineJson.RawJsonValue(customProjection)));
             }
         }
         if (selectQueryDefinition.offset() > 0) {
@@ -311,9 +311,9 @@ public final class MongoQueryBuilder implements QueryBuilder {
         if (pipeline.isEmpty()) {
             q = "{}";
         } else if (isMatchOnlyStage(pipeline)) {
-            q = toJsonString(predicateObj);
+            q = MongoPipelineJson.toJsonString(predicateObj);
         } else {
-            q = toJsonString(pipeline);
+            q = MongoPipelineJson.toJsonString(pipeline);
         }
         return QueryResult.of(q, queryState.getParameterBindings());
     }
@@ -375,6 +375,10 @@ public final class MongoQueryBuilder implements QueryBuilder {
         if (VectorScoringDialectSupport.SCORE_FUNCTION.equals(functionExpression.getName())) {
             registerVectorSearch(queryState, functionExpression);
             return MongoSearchStages.VECTOR_DISTANCE;
+        }
+        if (TextSearchSupport.HYBRID_SCORE_FUNCTION.equals(functionExpression.getName())) {
+            registerHybrid(queryState, functionExpression);
+            return MongoSearchStages.FUSED_SCORE;
         }
         List<Expression<?>> arguments = functionExpression.getExpressions();
         String name = functionExpression.getName().toUpperCase(Locale.ROOT);
@@ -754,6 +758,28 @@ public final class MongoQueryBuilder implements QueryBuilder {
         queryState.vectorSearch = stage;
     }
 
+    /** Records the weights and the window of a {@code mn_hybrid_score} function and the {@code $vectorSearch} stage of its vector score. */
+    private void registerHybrid(QueryState queryState, FunctionExpression<?> function) {
+        List<Expression<?>> arguments = function.getExpressions();
+        if (arguments.size() != 5 || !(arguments.get(1) instanceof FunctionExpression<?> vectorScore)) {
+            throw new IllegalStateException("A hybrid score expects the text score, the vector score, two weights and the candidates");
+        }
+        registerVectorSearch(queryState, vectorScore);
+        if (queryState.hybrid == null) {
+            queryState.hybrid = new MongoSearchStages.RankFusion(
+                literalNumber(arguments.get(2)).doubleValue(),
+                literalNumber(arguments.get(3)).doubleValue(),
+                literalNumber(arguments.get(4)).intValue());
+        }
+    }
+
+    private static Number literalNumber(Expression<?> expression) {
+        if (expression instanceof LiteralExpression<?> literal && literal.getValue() instanceof Number number) {
+            return number;
+        }
+        throw new IllegalStateException("A hybrid score weight must be a numeric literal, got: " + expression);
+    }
+
     private Map<String, Object> buildSearchStage(QueryState queryState) {
         String index = searchIndexMember(queryState.getEntity(), "name", DEFAULT_SEARCH_INDEX);
         return MongoSearchStages.searchStage(index, Objects.requireNonNull(queryState.searchOperator), queryState.highlights.values());
@@ -829,7 +855,7 @@ public final class MongoQueryBuilder implements QueryBuilder {
 
         String predicateQuery;
         if (predicate != null) {
-            predicateQuery = toJsonString(
+            predicateQuery = MongoPipelineJson.toJsonString(
                 buildWhereClause(predicate, queryState)
             );
         } else {
@@ -891,7 +917,7 @@ public final class MongoQueryBuilder implements QueryBuilder {
         if (!muls.isEmpty()) {
             map.put("$mul", muls);
         }
-        String update = toJsonString(map);
+        String update = MongoPipelineJson.toJsonString(map);
 
         return new QueryResult() {
 
@@ -935,7 +961,7 @@ public final class MongoQueryBuilder implements QueryBuilder {
 
         String predicateQuery = "";
         if (predicate != null) {
-            predicateQuery = toJsonString(
+            predicateQuery = MongoPipelineJson.toJsonString(
                 buildWhereClause(predicate, queryState)
             );
         }
@@ -951,88 +977,6 @@ public final class MongoQueryBuilder implements QueryBuilder {
     @Override
     public String buildLimitAndOffset(long limit, long offset) {
         throw new UnsupportedOperationException();
-    }
-
-    private String toJsonString(Object obj) {
-        StringBuilder sb = new StringBuilder();
-        append(sb, obj);
-        return sb.toString();
-    }
-
-    private void appendMap(StringBuilder sb, Map<String, Object> map) {
-        sb.append("{");
-        for (Iterator<Map.Entry<String, Object>> iterator = map.entrySet().iterator(); iterator.hasNext(); ) {
-            Map.Entry<String, Object> e = iterator.next();
-            String key = e.getKey();
-            Object value = e.getValue();
-            if (!skipValue(value)) {
-                if (shouldEscapeKey(key)) {
-                    sb.append("'").append(key).append("'");
-                } else {
-                    sb.append(key);
-                }
-                sb.append(":");
-                append(sb, value);
-                if (iterator.hasNext()) {
-                    sb.append(",");
-                }
-            }
-        }
-        sb.append("}");
-    }
-
-    private boolean skipValue(Object obj) {
-        if (obj instanceof Map<?, ?> map) {
-            return map.isEmpty();
-        }
-        if (obj instanceof Collection<?> collection) {
-            return collection.isEmpty();
-        }
-        return false;
-    }
-
-    private void appendArray(StringBuilder sb, Collection<?> collection) {
-        sb.append("[");
-        for (Iterator<?> iterator = collection.iterator(); iterator.hasNext(); ) {
-            Object value = iterator.next();
-            append(sb, value);
-            if (iterator.hasNext()) {
-                sb.append(",");
-            }
-        }
-        sb.append("]");
-    }
-
-    private void append(StringBuilder sb, Object obj) {
-        if (obj instanceof Map map) {
-            appendMap(sb, map);
-        } else if (obj instanceof Collection<?> collection) {
-            appendArray(sb, collection);
-        } else if (obj instanceof RawJsonValue rawJsonValue) {
-            sb.append(rawJsonValue.value);
-        } else if (obj == null) {
-            sb.append("null");
-        } else if (obj instanceof Boolean) {
-            sb.append(obj.toString().toLowerCase(Locale.ROOT));
-        } else if (obj instanceof Number) {
-            sb.append(obj);
-        } else {
-            appendString(sb, obj.toString());
-        }
-    }
-
-    private static void appendString(StringBuilder sb, String value) {
-        // The string is single-quoted, a backslash starts an escape sequence in the JSON parsed by MongoDB
-        sb.append('\'').append(value.replace("\\", "\\\\").replace("'", "\\'")).append('\'');
-    }
-
-    private boolean shouldEscapeKey(String s) {
-        for (char c : s.toCharArray()) {
-            if (!Character.isAlphabetic(c) && !Character.isDigit(c) && c != '$' && c != '_') {
-                return true;
-            }
-        }
-        return false;
     }
 
     private BindingParameter.BindingContext newBindingContext(@Nullable PersistentPropertyPath ref) {
@@ -1118,6 +1062,9 @@ public final class MongoQueryBuilder implements QueryBuilder {
         private final Set<String> vectorScoreFields = new LinkedHashSet<>();
         // The highlighted field paths by the alias of the projected fragment
         private final Map<String, String> highlights = new LinkedHashMap<>();
+        // The weights and window of a hybrid search fused by $rankFusion, and the fields its score is added as
+        private MongoSearchStages.@Nullable RankFusion hybrid;
+        private final Set<String> hybridScoreFields = new LinkedHashSet<>();
 
         private QueryState(BaseQueryDefinition baseQueryDefinition, boolean allowJoins) {
             this.allowJoins = allowJoins;
@@ -1192,9 +1139,6 @@ public final class MongoQueryBuilder implements QueryBuilder {
     }
 
     private record RegexPattern(String value) {
-    }
-
-    private record RawJsonValue(String value) {
     }
 
     private class MongoPredicateVisitor implements AdvancedPredicateVisitor<PersistentPropertyPath> {
@@ -1977,6 +1921,11 @@ public final class MongoQueryBuilder implements QueryBuilder {
             if (VectorScoringDialectSupport.SCORE_FUNCTION.equals(functionExpression.getName())) {
                 registerVectorSearch(queryState, functionExpression);
                 queryState.vectorScoreFields.add(alias == null ? TextSearchSupport.SCORE_ALIAS : alias);
+                return;
+            }
+            if (TextSearchSupport.HYBRID_SCORE_FUNCTION.equals(functionExpression.getName())) {
+                registerHybrid(queryState, functionExpression);
+                queryState.hybridScoreFields.add(alias == null ? TextSearchSupport.SCORE_ALIAS : alias);
                 return;
             }
             throw new UnsupportedOperationException("Function expression is not supported by Micronaut Data MongoDB.");

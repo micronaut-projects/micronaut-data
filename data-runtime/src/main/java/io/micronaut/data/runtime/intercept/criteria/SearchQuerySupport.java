@@ -22,6 +22,7 @@ import io.micronaut.data.model.PersistentProperty;
 import io.micronaut.data.model.jpa.criteria.PersistentEntityCriteriaQuery;
 import io.micronaut.data.model.jpa.criteria.PersistentEntityRoot;
 import io.micronaut.data.model.jpa.criteria.impl.AbstractCriteriaBuilder;
+import io.micronaut.data.model.jpa.criteria.impl.expression.LiteralExpression;
 import io.micronaut.data.model.query.builder.sql.VectorScoringDialectSupport;
 import io.micronaut.data.model.runtime.RuntimePersistentEntity;
 import io.micronaut.data.model.runtime.RuntimePersistentProperty;
@@ -140,6 +141,82 @@ public final class SearchQuerySupport {
     }
 
     /**
+     * Builds the one query of a hybrid search a store fuses itself: the text match restricts, and the
+     * {@link TextSearchSupport#HYBRID_SCORE_FUNCTION} of the text score, the vector score, the weights
+     * and the candidate window is projected as the score and orders the hits. The result holds the whole
+     * fused window; {@link #pageHybrid} cuts the page.
+     *
+     * @param cb The criteria builder
+     * @param rootEntity The entity
+     * @param searchQuery The query
+     * @param pageable The requested page, which sizes the window
+     * @return The criteria query
+     */
+    public static PersistentEntityCriteriaQuery<SearchResults> hybridQuery(AbstractCriteriaBuilder cb,
+                                                                          Class<Object> rootEntity,
+                                                                          SearchQuery searchQuery,
+                                                                          Pageable pageable) {
+        int candidates = hybridWindow(searchQuery, pageable).getSize();
+        PersistentEntityCriteriaQuery<SearchResults> criteriaQuery = cb.createQuery(SearchResults.class);
+        PersistentEntityRoot<Object> root = criteriaQuery.from(rootEntity);
+        List<Expression<?>> fields = resolveFields(root, searchQuery);
+        ParameterExpression<String> queryParameter = cb.parameter(String.class, null, searchQuery.getQuery());
+        TextMatchOptions options = new TextMatchOptions(searchQuery.getBoosts(), searchQuery.getFuzziness());
+        Expression<Double> textScore = cb.searchScore(fields, queryParameter, searchQuery.getMode(), options);
+        Expression<Double> vectorScore = cb.function(
+            VectorScoringDialectSupport.SCORE_FUNCTION,
+            Double.class,
+            root.get(Objects.requireNonNull(searchQuery.getVectorProperty())),
+            cb.parameter(Vector.class, null, searchQuery.getVector())
+        );
+        Expression<Double> score = cb.function(
+            TextSearchSupport.HYBRID_SCORE_FUNCTION,
+            Double.class,
+            textScore,
+            vectorScore,
+            // literals, not parameters: the builder reads them while it assembles the pipeline
+            new LiteralExpression<>(searchQuery.getTextWeight()),
+            new LiteralExpression<>(searchQuery.getVectorWeight()),
+            new LiteralExpression<>(candidates)
+        );
+        criteriaQuery.where(cb.textMatch(fields, queryParameter, searchQuery.getMode(), options));
+        criteriaQuery.multiselect(root, score.alias(TextSearchSupport.SCORE_ALIAS));
+        criteriaQuery.orderBy(cb.desc(score));
+        return criteriaQuery;
+    }
+
+    /**
+     * @param operations The repository operations
+     * @param searchQuery The query
+     * @param persistentEntity The searched entity
+     * @return Whether the operations fuse this hybrid query themselves
+     */
+    public static boolean fusesNatively(Object operations, SearchQuery searchQuery, RuntimePersistentEntity<?> persistentEntity) {
+        return operations instanceof NativeHybridSearch nativeHybridSearch
+            && nativeHybridSearch.supportsNativeHybridSearch(searchQuery, persistentEntity);
+    }
+
+    /**
+     * Cuts the page of a natively fused ranking the way {@link #fuse} does: hits without a score or
+     * below the minimum are dropped, and the total counts the fused window.
+     *
+     * @param results The fused hits, best first
+     * @param searchQuery The query
+     * @param pageable The requested page
+     * @return The page
+     */
+    public static SearchResults<Object> pageHybrid(@Nullable SearchResults<Object> results, SearchQuery searchQuery, Pageable pageable) {
+        List<FusedHit> fused = new ArrayList<>();
+        for (SearchResult<Object> hit : orEmpty(results).results()) {
+            FusedHit fusedHit = new FusedHit(hit.entity());
+            fusedHit.score = hit.score().value();
+            fusedHit.highlights = hit.highlights();
+            fused.add(fusedHit);
+        }
+        return page(fused, searchQuery, pageable);
+    }
+
+    /**
      * Validates the pageable of a hybrid search and sizes the candidate window of both rankings.
      *
      * @param searchQuery The query
@@ -206,9 +283,13 @@ public final class SearchQuerySupport {
             fused.score += searchQuery.getVectorWeight() / (k + rank);
             rank++;
         }
+        return page(new ArrayList<>(hits.values()), searchQuery, pageable);
+    }
+
+    private static SearchResults<Object> page(List<FusedHit> hits, SearchQuery searchQuery, Pageable pageable) {
         Double minScore = searchQuery.getMinScore();
         List<FusedHit> fused = new ArrayList<>(hits.size());
-        for (FusedHit hit : hits.values()) {
+        for (FusedHit hit : hits) {
             if (hit.score > 0 && (minScore == null || hit.score >= minScore)) {
                 fused.add(hit);
             }

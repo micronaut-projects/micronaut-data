@@ -42,6 +42,14 @@ final class MongoSearchStages {
      * so the distance {@code 1 - cosine} is {@code 2 - 2 * score}, the measure the other stores return.
      */
     static final Map<String, Object> VECTOR_DISTANCE = Map.of("$subtract", List.of(2, Map.of("$multiply", List.of(2, Map.of("$meta", "vectorSearchScore")))));
+    /**
+     * The reciprocal rank fusion score of a {@code $rankFusion} hit.
+     */
+    static final Map<String, Object> FUSED_SCORE = Map.of("$meta", "score");
+    private static final String RANK_FUSION_STAGE = "$rankFusion";
+    private static final String LIMIT = "limit";
+    private static final int DEFAULT_VECTOR_CANDIDATES = 100;
+    private static final int MAX_VECTOR_CANDIDATES = 10000;
     private static final String HIGHLIGHT_START = "<em>";
     private static final String HIGHLIGHT_END = "</em>";
     private static final String HIGHLIGHT_SEPARATOR = " ... ";
@@ -52,6 +60,57 @@ final class MongoSearchStages {
     private static final String VALUE = "$$value";
 
     private MongoSearchStages() {
+    }
+
+    /**
+     * The {@code $vectorSearch} stage sized for a result window: {@code numCandidates} is ten times the
+     * limit within the bounds the stage accepts.
+     *
+     * @param stage The stage without its limit
+     * @param limit The hits to return
+     * @return The sized stage
+     */
+    static Map<String, Object> vectorSearchStage(Map<String, Object> stage, int limit) {
+        Map<String, Object> vectorSearch = new LinkedHashMap<>(stage);
+        vectorSearch.put("numCandidates", Math.min(MAX_VECTOR_CANDIDATES, Math.max(limit * 10, DEFAULT_VECTOR_CANDIDATES)));
+        vectorSearch.put(LIMIT, limit);
+        return vectorSearch;
+    }
+
+    /**
+     * The {@code $rankFusion} stage of a hybrid search: the {@code $search} pipeline and the
+     * {@code $vectorSearch} pipeline, each cut to the candidates, combined with reciprocal rank fusion
+     * under the weights. MongoDB fixes the rank constant at 60.
+     *
+     * @param search The {@code $search} stage
+     * @param vectorSearch The {@code $vectorSearch} stage without its limit
+     * @param fusion The weights and the window
+     * @return The stage
+     */
+    static Map<String, Object> rankFusionStage(Map<String, Object> search, Map<String, Object> vectorSearch, RankFusion fusion) {
+        Map<String, Object> pipelines = new LinkedHashMap<>();
+        pipelines.put("text", List.of(Map.of("$search", search), Map.of("$limit", fusion.candidates())));
+        pipelines.put("vector", List.of(Map.of("$vectorSearch", vectorSearchStage(vectorSearch, fusion.candidates()))));
+        Map<String, Object> weights = new LinkedHashMap<>();
+        weights.put("text", fusion.textWeight());
+        weights.put("vector", fusion.vectorWeight());
+        Map<String, Object> rankFusion = new LinkedHashMap<>();
+        rankFusion.put("input", Map.of("pipelines", pipelines));
+        rankFusion.put("combination", Map.of("weights", weights));
+        return Map.of(RANK_FUSION_STAGE, rankFusion);
+    }
+
+    /**
+     * @param fields The field names
+     * @param expression The expression every field is set to
+     * @return The {@code $addFields} document
+     */
+    static Map<String, Object> scoreFields(Collection<String> fields, Map<String, Object> expression) {
+        Map<String, Object> added = new LinkedHashMap<>();
+        for (String field : fields) {
+            added.put(field, expression);
+        }
+        return added;
     }
 
     /**
@@ -131,5 +190,15 @@ final class MongoSearchStages {
                 query.put("$and", remaining);
             }
         }
+    }
+
+    /**
+     * The weights and the candidate window of a hybrid search fused by {@code $rankFusion}.
+     *
+     * @param textWeight The weight of the text ranking
+     * @param vectorWeight The weight of the vector ranking
+     * @param candidates The hits each ranking contributes
+     */
+    record RankFusion(double textWeight, double vectorWeight, int candidates) {
     }
 }

@@ -57,6 +57,10 @@ public class SearchQueryInterceptor extends AbstractSpecificationInterceptor<Obj
         if (!searchQuery.isHybrid()) {
             return SearchQuerySupport.applyMinScore(findOne(methodKey, context, SearchQuerySupport.textQuery(cb, rootEntity, searchQuery, pageable), pageable), searchQuery);
         }
+        if (SearchQuerySupport.fusesNatively(operations, searchQuery, operations.getEntity(rootEntity))) {
+            SearchResults<Object> fused = findOne(methodKey, context, SearchQuerySupport.hybridQuery(cb, rootEntity, searchQuery, pageable), Pageable.UNPAGED);
+            return SearchQuerySupport.pageHybrid(fused, searchQuery, pageable);
+        }
         Pageable window = SearchQuerySupport.hybridWindow(searchQuery, pageable);
         SearchResults<Object> textResults = findOne(methodKey, context, SearchQuerySupport.textQuery(cb, rootEntity, searchQuery, window), window);
         SearchResults<Object> vectorResults;
