@@ -80,6 +80,44 @@ snippet::example.StudentScheduleSubView[project-base="doc-examples/jdbc-example"
 
 More documentation: https://docs.oracle.com/en/database/oracle/oracle-database/26/jsnvu/overview-json-relational-duality-views.html/[link]
 
+== Filters, hidden fields and generated fields
+
+Recent Oracle Database releases support more options in duality view definitions. They can be declared on the view class:
+
+snippet::example.ShipmentView[project-base="doc-examples/jdbc-example", source="main", tags="view"]
+
+<1> The `where` member restricts the rows of the root table that the view exposes. The `@.` prefix is replaced with the table alias. The view is created `WITH CHECK OPTION`, so inserting or updating a document that does not match the condition fails
+<2> The `hidden` member lists properties of the entity to expose as hidden fields. Hidden fields are not part of the document, but generated fields can use them. Updating a document through the view keeps the values of hidden columns
+<3> ann:data.annotation.JsonViewField[] with `updatable = false` generates the field with `NOUPDATE`, so the field cannot be changed through the view. With `etagCheck = false` the field is generated with `NOCHECK` and does not contribute to the document ETAG
+<4> ann:data.annotation.JsonViewGenerated[] with `path` declares a field computed from a SQL/JSON path expression over the document, which can reference hidden fields
+<5> ann:data.annotation.JsonViewGenerated[] with `sql` declares a field computed from a SQL expression over the table. The `@.` prefix is replaced with the table alias
+
+The following duality view definition is generated:
+
+[source,sql]
+----
+CREATE OR REPLACE JSON RELATIONAL DUALITY VIEW EU_SHIPMENT_VIEW AS
+    SELECT JSON {
+        '_id' : SH.ID,
+        'reference' : SH.REFERENCE,
+        'country' : SH.COUNTRY,
+        'trackingCode' : SH.TRACKING_CODE WITH NOUPDATE,
+        'cost' : GENERATED USING PATH '$.weight * $.rate',
+        'label' : GENERATED USING (UPPER(SH.REFERENCE)),
+        'weight' : SH.WEIGHT HIDDEN,
+        'rate' : SH.RATE HIDDEN
+    }
+    FROM TBL_SHIPMENT SH
+    WITH UPDATE INSERT DELETE
+    WHERE SH.COUNTRY IN ('FR', 'DE', 'IT') WITH CHECK OPTION
+----
+
+The database computes generated fields when it reads the document, and ignores values sent for them on insert or update.
+
+ann:data.annotation.JsonSubView[] supports the `hidden` member and the property level annotations as well. Both ann:data.annotation.JsonView[] and ann:data.annotation.JsonSubView[] accept `etagCheck = false` to exclude all columns of the table from the ETAG check.
+
+The `_id` field of a view does not have to map to the primary key: any unique column can be the identifying key. To use one, annotate the ann:data.annotation.Id[] property with `@MappedProperty` naming that column.
+
 == Optimistic Locking
 
 You can use optimistic/lock-free concurrency control with duality views, writing JSON documents or committing their updates only when other sessions haven't modified them concurrently.

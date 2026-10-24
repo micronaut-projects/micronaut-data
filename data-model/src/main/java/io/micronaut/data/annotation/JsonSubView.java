@@ -104,4 +104,23 @@ public @interface JsonSubView {
      */
     @AliasFor(annotation = MappedEntity.class, member = "alias")
     String alias() default "";
+
+    /**
+     * Properties of the {@link #entity()} to expose as hidden fields. Hidden fields are not part of the
+     * document but can be referenced by generated fields, see {@link JsonViewGenerated}.
+     * Updating the document through the view keeps the values of hidden columns.
+     *
+     * @return the entity property names to expose as hidden fields
+     * @since 5.3
+     */
+    String[] hidden() default {};
+
+    /**
+     * Whether the columns of the table contribute to the ETAG of the document. When {@code false}
+     * the table is generated with the {@code NOCHECK} annotation.
+     *
+     * @return true if the table is part of the ETAG check (default true)
+     * @since 5.3
+     */
+    boolean etagCheck() default true;
 }
