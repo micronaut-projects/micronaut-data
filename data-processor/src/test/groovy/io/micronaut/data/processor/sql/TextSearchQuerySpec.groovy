@@ -2,6 +2,7 @@ package io.micronaut.data.processor.sql
 
 import io.micronaut.data.intercept.annotation.DataMethod
 import io.micronaut.data.intercept.annotation.DataMethodQueryParameter
+import io.micronaut.data.model.runtime.convert.OracleTextQueryConverter
 import io.micronaut.data.model.runtime.convert.PostgresTsQueryConverter
 import io.micronaut.data.processor.visitors.AbstractDataSpec
 import io.micronaut.inject.BeanDefinition
@@ -40,14 +41,14 @@ class Article {
 }
 """
 
-    private BeanDefinition<?> articleRepository(String methods) {
+    private BeanDefinition<?> articleRepository(String methods, String dialect = "POSTGRES") {
         buildRepository('test.ArticleRepository', """
 import io.micronaut.data.jdbc.annotation.JdbcRepository;
 import io.micronaut.data.model.query.builder.sql.Dialect;
 import io.micronaut.data.model.vector.search.SearchResults;
 import io.micronaut.data.repository.SearchRepository;
 ${ENTITY}
-@JdbcRepository(dialect = Dialect.POSTGRES)
+@JdbcRepository(dialect = Dialect.${dialect})
 interface ArticleRepository extends CrudRepository<Article, Long>, SearchRepository<Article, Long> {
 ${methods}
 }
@@ -226,5 +227,68 @@ interface PlainRepository extends CrudRepository<Plain, Long>, SearchRepository<
         then:
         def e = thrown(RuntimeException)
         e.message.contains("declares no @SearchField properties")
+    }
+
+    void "Oracle renders CONTAINS with a label per field and SCORE"() {
+        given:
+        def repository = articleRepository("""
+    List<Article> findByTitleSearch(String q);
+    List<Article> findByTitleSearchFuzzy(String q);
+    SearchResults<Article> searchByTitleSearchPrefix(String q);
+""", "ORACLE")
+
+        expect:
+        getQuery(repository.getRequiredMethod("findByTitleSearch", String)) == 'SELECT article_."ID",article_."TITLE",article_."BODY",article_."AUTHOR" FROM "ARTICLE" article_ WHERE (CONTAINS(article_."TITLE",?,1) > 0)'
+        converters(repository.getRequiredMethod("findByTitleSearch", String)) == [OracleTextQueryConverter.Any.name]
+        converters(repository.getRequiredMethod("findByTitleSearchFuzzy", String)) == [OracleTextQueryConverter.Fuzzy.name]
+        getQuery(repository.getRequiredMethod("searchByTitleSearchPrefix", String)) == 'SELECT article_."ID",article_."TITLE",article_."BODY",article_."AUTHOR",SCORE(1) AS mn_score FROM "ARTICLE" article_ WHERE (CONTAINS(article_."TITLE",?,1) > 0) ORDER BY SCORE(1) DESC'
+        converters(repository.getRequiredMethod("searchByTitleSearchPrefix", String)) == [OracleTextQueryConverter.Prefix.name]
+    }
+
+    void "Oracle searches several fields with positive and negated term sets"() {
+        given:
+        def repository = articleRepository("", "ORACLE")
+        def search = repository.getRequiredMethod("search", String)
+        def countHits = repository.getRequiredMethod("countHits", String)
+
+        expect:
+        getQuery(search) == 'SELECT article_."ID",article_."TITLE",article_."BODY",article_."AUTHOR",(SCORE(1) * 10 + SCORE(2) * 1) AS mn_score FROM "ARTICLE" article_ WHERE (((CONTAINS(article_."TITLE",?,1) > 0 OR CONTAINS(article_."BODY",?,2) > 0) AND NOT (CONTAINS(article_."TITLE",?,3) > 0 OR CONTAINS(article_."BODY",?,4) > 0))) ORDER BY (SCORE(1) * 10 + SCORE(2) * 1) DESC'
+        converters(search) == [OracleTextQueryConverter.AnyPositive.name, OracleTextQueryConverter.AnyPositive.name, OracleTextQueryConverter.Negated.name, OracleTextQueryConverter.Negated.name]
+        getQuery(countHits) == 'SELECT COUNT(*) FROM "ARTICLE" article_ WHERE (((CONTAINS(article_."TITLE",?,1) > 0 OR CONTAINS(article_."BODY",?,2) > 0) AND NOT (CONTAINS(article_."TITLE",?,3) > 0 OR CONTAINS(article_."BODY",?,4) > 0)))'
+    }
+
+    void "Oracle JSON entities use JSON_TEXTCONTAINS"() {
+        given:
+        def repository = buildRepository('test.DocRepository', """
+import io.micronaut.data.jdbc.annotation.JdbcRepository;
+import io.micronaut.data.model.query.builder.sql.Dialect;
+import io.micronaut.data.annotation.search.SearchField;
+import io.micronaut.data.annotation.search.Searchable;
+import io.micronaut.data.annotation.EntityRepresentation;
+import io.micronaut.data.model.vector.search.SearchResults;
+
+@MappedEntity
+@Searchable
+@EntityRepresentation(type = EntityRepresentation.Type.COLUMN, columnType = EntityRepresentation.ColumnType.JSON, column = "DATA")
+class Doc {
+    @Id
+    private Long id;
+    @SearchField
+    private String title;
+    public Long getId() { return id; }
+    public void setId(Long id) { this.id = id; }
+    public String getTitle() { return title; }
+    public void setTitle(String title) { this.title = title; }
+}
+
+@JdbcRepository(dialect = Dialect.ORACLE)
+interface DocRepository extends CrudRepository<Doc, Long> {
+    SearchResults<Doc> searchByTitleSearch(String q);
+}
+""")
+
+        expect:
+        getQuery(repository.getRequiredMethod("searchByTitleSearch", String)).contains('WHERE (JSON_TEXTCONTAINS(doc_.DATA,\'$.title\',?,1))')
+        getQuery(repository.getRequiredMethod("searchByTitleSearch", String)).contains("SCORE(1) AS mn_score")
     }
 }
