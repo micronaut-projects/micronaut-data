@@ -18,11 +18,14 @@ package io.micronaut.data.jdbc.convert.vendor;
 import io.micronaut.core.annotation.Internal;
 import io.micronaut.context.annotation.Requires;
 import io.micronaut.core.convert.ConversionService;
+import io.micronaut.data.model.runtime.convert.DataAccessType;
 import io.micronaut.data.model.runtime.convert.DatabaseType;
 import io.micronaut.data.model.runtime.convert.vector.VectorTypeConverter;
 import io.micronaut.data.model.vector.FloatVector;
 import io.micronaut.data.model.vector.Vector;
 import jakarta.inject.Singleton;
+
+import org.jspecify.annotations.Nullable;
 
 import java.util.Set;
 
@@ -68,5 +71,15 @@ final class MySqlJdbcVectorConverter extends AbstractJdbcVectorConverter<byte[]>
     @Override
     public DatabaseType databaseType() {
         return DatabaseType.MYSQL;
+    }
+
+    /**
+     * The {@code byte[]} values work with any driver API, so R2DBC operations can use this converter too.
+     *
+     * @return {@code null}
+     */
+    @Override
+    public @Nullable DataAccessType dataAccessType() {
+        return null;
     }
 }
