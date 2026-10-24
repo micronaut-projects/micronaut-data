@@ -1,3 +1,18 @@
+/*
+ * Copyright 2017-2026 original authors
+ *
+ * Licensed under the Apache License, Version 2.0 (the "License");
+ * you may not use this file except in compliance with the License.
+ * You may obtain a copy of the License at
+ *
+ * https://www.apache.org/licenses/LICENSE-2.0
+ *
+ * Unless required by applicable law or agreed to in writing, software
+ * distributed under the License is distributed on an "AS IS" BASIS,
+ * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+ * See the License for the specific language governing permissions and
+ * limitations under the License.
+ */
 package io.micronaut.data.search.tck
 
 import io.micronaut.context.ApplicationContext
@@ -7,6 +22,7 @@ import io.micronaut.data.model.search.MatchMode
 import io.micronaut.data.model.search.SearchCapability
 import io.micronaut.data.model.search.SearchQuery
 import io.micronaut.data.model.search.UnsupportedSearchFeatureException
+import io.micronaut.data.model.vector.Vector
 import io.micronaut.data.search.tck.entities.Book
 import io.micronaut.data.search.tck.repositories.BookPhraseSearchRepository
 import io.micronaut.data.search.tck.repositories.BookPrefixSearchRepository
@@ -34,7 +50,7 @@ abstract class AbstractTextSearchSpec extends Specification {
      * @return The capabilities the backend supports beyond term matching and score ordering
      */
     Set<SearchCapability> capabilities() {
-        return EnumSet.of(SearchCapability.PHRASE, SearchCapability.PREFIX, SearchCapability.FIELD_SCOPE, SearchCapability.HIGHLIGHT)
+        return EnumSet.of(SearchCapability.PHRASE, SearchCapability.PREFIX, SearchCapability.FIELD_SCOPE, SearchCapability.HIGHLIGHT, SearchCapability.VECTOR)
     }
 
     /**
@@ -279,6 +295,16 @@ abstract class AbstractTextSearchSpec extends Specification {
 
         then:
         none.results().every { it.highlights().isEmpty() }
+    }
+
+    void "search with a SearchQuery rejects a vector when the store has no vector search"() {
+        assumeTrue(!capabilities().contains(SearchCapability.VECTOR))
+
+        when:
+        bookSearchRepository.search(SearchQuery.builder("programming").vector("title", Vector.of([1f, 0f, 0f] as float[])).build())
+
+        then:
+        thrown(UnsupportedSearchFeatureException)
     }
 
     void "search with a SearchQuery rejects highlighting when the store cannot highlight"() {

@@ -1,3 +1,7 @@
+test-resources:
+  containers:
+    postgres:
+      image-name: pgvector/pgvector:pg16
 datasources:
   default:
     db-type: postgresql

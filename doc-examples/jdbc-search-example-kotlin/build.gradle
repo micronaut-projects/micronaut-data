@@ -28,6 +28,7 @@ dependencies {
     kapt projects.micronautDataProcessor
 
     implementation projects.micronautDataJdbc
+    implementation(mnSql.jakarta.persistence.api)
     implementation mnKotlin.micronaut.kotlin.runtime
 
     runtimeOnly mnSql.postgresql
