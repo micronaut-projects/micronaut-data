@@ -30,6 +30,7 @@ dependencies {
     testAnnotationProcessor mn.micronaut.inject.java
 
     testImplementation projects.micronautDataGraphProcessor
+    testImplementation projects.micronautDataGraphTck
     testImplementation mnTest.micronaut.test.spock
     testImplementation(mnSql.jakarta.persistence.api)
 
