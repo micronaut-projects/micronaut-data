@@ -81,6 +81,20 @@ public final class MongoCollectionsCreator extends AbstractMongoCollectionsCreat
                 public void createCollection(MongoDatabase database, String collection) {
                     database.createCollection(collection);
                 }
+
+                @Override
+                public Set<String> listIndexNames(MongoDatabase database, String collection) {
+                    Set<String> names = new HashSet<>();
+                    for (org.bson.Document index : database.getCollection(collection).listIndexes()) {
+                        names.add(index.getString("name"));
+                    }
+                    return names;
+                }
+
+                @Override
+                public void createTextIndex(MongoDatabase database, String collection, TextIndexDefinition definition) {
+                    database.getCollection(collection).createIndex(definition.keys(), definition.options());
+                }
             };
         }, mongoCollectionNameProvider);
     }

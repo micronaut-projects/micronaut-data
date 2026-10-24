@@ -65,6 +65,11 @@ import io.micronaut.data.model.query.builder.QueryBuilder;
 import io.micronaut.data.model.query.builder.QueryParameterBinding;
 import io.micronaut.data.model.query.builder.QueryResult;
 import io.micronaut.data.model.query.impl.AdvancedPredicateVisitor;
+import io.micronaut.data.model.runtime.convert.MongoTextSearchConverter;
+import io.micronaut.data.model.search.MatchMode;
+import io.micronaut.data.model.search.SearchCapability;
+import io.micronaut.data.model.search.TextSearchSupport;
+import io.micronaut.data.model.search.UnsupportedSearchFeatureException;
 import io.micronaut.serde.config.annotation.SerdeConfig;
 import jakarta.persistence.criteria.Expression;
 import jakarta.persistence.criteria.Nulls;
@@ -120,8 +125,9 @@ public final class MongoQueryBuilder implements QueryBuilder {
     public static final String NEGATE = "$mn_negate"; // -vale
     public static final String RECIPROCATE = "$mn_reciprocate"; // 1/value
     public static final String MONGO_DATE_IDENTIFIER = "$date";
-    private static final String GEOMETRY_OPERATOR = "$geometry";
     public static final String MONGO_ID_FIELD = "_id";
+    private static final String GEOMETRY_OPERATOR = "$geometry";
+    private static final Map<String, Object> TEXT_SCORE = Map.of("$meta", "textScore");
     private static final String NULL_RANK_FIELD_PREFIX = "__micronaut_nulls_";
     private static final String SORT_EXPRESSION_FIELD_PREFIX = "__micronaut_sort_";
     private static final String STR_LEN_CP = "$strLenCP";
@@ -147,10 +153,11 @@ public final class MongoQueryBuilder implements QueryBuilder {
         Map<String, Object> group = new LinkedHashMap<>();
         Map<String, Object> projectionObj = new LinkedHashMap<>();
         Map<String, Object> countObj = new LinkedHashMap<>();
+        Map<String, Object> addFieldsObj = new LinkedHashMap<>();
 
         addLookups(selectQueryDefinition.getJoinPaths(), queryState);
         List<Map<String, Object>> pipeline = queryState.rootLookups.pipeline;
-        buildProjection(selectQueryDefinition.selection(), group, projectionObj, countObj);
+        buildProjection(selectQueryDefinition.selection(), group, projectionObj, countObj, addFieldsObj);
         Predicate predicate = selectQueryDefinition.predicate();
         if (predicate != null) {
             predicateObj = buildWhereClause(predicate, queryState);
@@ -158,6 +165,9 @@ public final class MongoQueryBuilder implements QueryBuilder {
 
         if (!predicateObj.isEmpty()) {
             pipeline.add(Map.of("$match", predicateObj));
+        }
+        if (!addFieldsObj.isEmpty()) {
+            pipeline.add(Map.of("$addFields", addFieldsObj));
         }
         if (!group.isEmpty()) {
             group.put(MONGO_ID_FIELD, null);
@@ -293,6 +303,9 @@ public final class MongoQueryBuilder implements QueryBuilder {
     }
 
     private Object asAggregationFunction(FunctionExpression<?> functionExpression, QueryState queryState) {
+        if (TextSearchSupport.SCORE_FUNCTION.equals(functionExpression.getName())) {
+            return TEXT_SCORE;
+        }
         List<Expression<?>> arguments = functionExpression.getExpressions();
         String name = functionExpression.getName().toUpperCase(Locale.ROOT);
         if (arguments.size() == 2 && ("LEFT".equals(name) || "RIGHT".equals(name))) {
@@ -629,12 +642,13 @@ public final class MongoQueryBuilder implements QueryBuilder {
     private void buildProjection(Selection<?> selection,
                                  Map<String, Object> groupObj,
                                  Map<String, Object> projectionObj,
-                                 Map<String, Object> countObj) {
+                                 Map<String, Object> countObj,
+                                 Map<String, Object> addFieldsObj) {
         if (selection == null) {
             return;
         }
         if (selection instanceof ISelection<?> selectionVisitable) {
-            selectionVisitable.visitSelection(new MongoSelectionVisitor(projectionObj, groupObj, countObj));
+            selectionVisitable.visitSelection(new MongoSelectionVisitor(projectionObj, groupObj, countObj, addFieldsObj));
         } else {
             throw new IllegalStateException("Unsupported selection type: " + selection.getClass().getName());
         }
@@ -1480,6 +1494,27 @@ public final class MongoQueryBuilder implements QueryBuilder {
         }
 
         @Override
+        public void visitTextMatch(List<Expression<?>> fields, Expression<String> queryExpression, MatchMode mode) {
+            if (mode == MatchMode.PREFIX) {
+                throw new UnsupportedSearchFeatureException(SearchCapability.PREFIX, "MongoDB $text");
+            }
+            if (mode == MatchMode.FUZZY) {
+                throw new UnsupportedSearchFeatureException(SearchCapability.FUZZY, "MongoDB $text");
+            }
+            if (!(queryExpression instanceof BindingParameter bindingParameter)) {
+                throw new IllegalStateException("A full-text search query must be a parameter, got: " + queryExpression);
+            }
+            // $text always searches the collection's text index; the fields only decide the language
+            String converter = MongoTextSearchConverter.converterFor(mode);
+            BindingParameter converted = context -> TextSearchSupport.withConverter(bindingParameter.bind(context), converter);
+            int index = queryState.pushParameter(converted, newBindingContext(null));
+            Map<String, Object> text = new LinkedHashMap<>();
+            text.put("$search", Map.of(QUERY_PARAMETER_PLACEHOLDER, index));
+            text.put("$language", TextSearchSupport.resolveLanguage(persistentEntity));
+            query.put("$text", text);
+        }
+
+        @Override
         public void visitNear(Expression<?> leftExpression, Expression<?> geometryExpression, Expression<? extends Number> distanceExpression) {
             PersistentPropertyPath propertyPath = requireProperty(leftExpression).getPropertyPath();
             query.put(getPropertyPersistName(propertyPath), Map.of(
@@ -1606,13 +1641,18 @@ public final class MongoQueryBuilder implements QueryBuilder {
         private final Map<String, Object> projectionObj;
         private final Map<String, Object> groupObj;
         private final Map<String, Object> countObj;
+        private final Map<String, Object> addFieldsObj;
         @Nullable
         private String alias;
 
-        public MongoSelectionVisitor(Map<String, Object> projectionObj, Map<String, Object> groupObj, Map<String, Object> countObj) {
+        public MongoSelectionVisitor(Map<String, Object> projectionObj,
+                                     Map<String, Object> groupObj,
+                                     Map<String, Object> countObj,
+                                     Map<String, Object> addFieldsObj) {
             this.projectionObj = projectionObj;
             this.groupObj = groupObj;
             this.countObj = countObj;
+            this.addFieldsObj = addFieldsObj;
         }
 
         @Override
@@ -1702,6 +1742,11 @@ public final class MongoQueryBuilder implements QueryBuilder {
 
         @Override
         public void visit(FunctionExpression<?> functionExpression) {
+            if (TextSearchSupport.SCORE_FUNCTION.equals(functionExpression.getName())) {
+                // The relevance score rides along the entity as an added field
+                addFieldsObj.put(alias == null ? TextSearchSupport.SCORE_ALIAS : alias, TEXT_SCORE);
+                return;
+            }
             throw new UnsupportedOperationException("Function expression is not supported by Micronaut Data MongoDB.");
         }
 
