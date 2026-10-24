@@ -17,7 +17,9 @@ package io.micronaut.data.graph.model.query.builder;
 
 import io.micronaut.core.annotation.AnnotationMetadata;
 import io.micronaut.core.annotation.Introspected;
+import io.micronaut.data.graph.annotation.Direction;
 import io.micronaut.data.graph.model.GraphEntities;
+import io.micronaut.data.graph.model.query.PathQueryDefinition;
 import io.micronaut.data.model.Association;
 import io.micronaut.data.model.PersistentEntity;
 import io.micronaut.data.model.PersistentProperty;
@@ -100,10 +102,36 @@ public class CypherQueryBuilder implements QueryBuilder {
      * The parameter name prefix.
      */
     public static final String PARAMETER_PREFIX = "p";
+    /**
+     * The variable of a path.
+     */
+    public static final String PATH = "p";
+    /**
+     * The variable of the start node of a path or relationship query.
+     */
+    public static final String PATH_START = "s";
+    /**
+     * The variable of the end node of a path or relationship query.
+     */
+    public static final String PATH_END = "e";
+    /**
+     * The variable of a relationship in a relationship query.
+     */
+    public static final String PATH_RELATIONSHIP = "r";
+    /**
+     * The column holding the start node of a returned relationship.
+     */
+    public static final String RELATIONSHIP_FROM = "f";
+    /**
+     * The column holding the end node of a returned relationship.
+     */
+    public static final String RELATIONSHIP_TO = "t";
     private static final String WITH_DISTINCT = " WITH DISTINCT ";
     private static final String DISTINCT = "DISTINCT ";
     private static final String TO_LOWER = "toLower(";
     private static final String RESULT = "result";
+    private static final String RETURN = " RETURN ";
+    private static final String AND = " AND ";
 
     @Override
     public @Nullable QueryResult buildInsert(AnnotationMetadata repositoryMetadata, InsertQueryDefinition definition) {
@@ -147,7 +175,7 @@ public class CypherQueryBuilder implements QueryBuilder {
             query.append(WITH_DISTINCT).append(ROOT);
         }
         List<String> joinColumns = selectionRenderer.entity ? appendFetchJoins(query, state) : List.of();
-        query.append(" RETURN ");
+        query.append(RETURN);
         if (distinct) {
             query.append(DISTINCT);
         }
@@ -211,6 +239,146 @@ public class CypherQueryBuilder implements QueryBuilder {
         }
         query.append(" DETACH DELETE ").append(ROOT).append(" RETURN count(*)");
         return QueryResult.of(query.toString(), List.of(query.toString()), state.parameterBindings, state.additionalRequiredParameters);
+    }
+
+    /**
+     * Builds a query for paths or relationships between nodes.
+     *
+     * @param definition The definition
+     * @return The query
+     */
+    public QueryResult buildPathQuery(PathQueryDefinition definition) {
+        PersistentEntity entity = definition.entity();
+        if (!entity.hasIdentity() && (definition.start() != null || definition.end() != null)) {
+            throw new IllegalArgumentException("Entity [" + entity.getName() + "] has no identity to match path endpoints by");
+        }
+        QueryState state = new QueryState(entity, List.of());
+        String label = GraphEntities.labelExpression(entity);
+        List<String> conditions = new ArrayList<>();
+        if (definition.start() != null) {
+            conditions.add(endpointCondition(state, entity, PATH_START, definition.start()));
+        }
+        if (definition.end() != null) {
+            conditions.add(endpointCondition(state, entity, PATH_END, definition.end()));
+        }
+        String types = relationshipTypes(definition.relationships());
+        StringBuilder query = new StringBuilder("MATCH ");
+        if (definition.kind() == PathQueryDefinition.Kind.RELATIONSHIPS) {
+            appendRelationshipQuery(query, definition, label, types, conditions);
+        } else {
+            appendPathQuery(query, definition, label, types, conditions);
+        }
+        return QueryResult.of(query.toString(), List.of(query.toString()), state.parameterBindings, state.additionalRequiredParameters);
+    }
+
+    private void appendRelationshipQuery(StringBuilder query, PathQueryDefinition definition, String label, String types, List<String> conditions) {
+        Direction direction = definition.direction();
+        if (direction == Direction.UNDIRECTED && (definition.start() == null || definition.end() == null)) {
+            // Without both endpoints an undirected pattern returns each relationship twice
+            direction = Direction.OUTGOING;
+        }
+        query.append(directed("(" + PATH_START + label + ")", "[" + PATH_RELATIONSHIP + types + "]", "(" + PATH_END + label + ")", direction));
+        appendWhere(query, conditions);
+        switch (definition.result()) {
+            case COUNT -> query.append(" RETURN count(").append(PATH_RELATIONSHIP).append(") AS result");
+            case EXISTS -> query.append(" RETURN true AS result LIMIT 1");
+            default -> query.append(RETURN).append(PATH_RELATIONSHIP).append(", startNode(").append(PATH_RELATIONSHIP)
+                .append(") AS ").append(RELATIONSHIP_FROM).append(", endNode(").append(PATH_RELATIONSHIP).append(") AS ").append(RELATIONSHIP_TO);
+        }
+    }
+
+    private void appendPathQuery(StringBuilder query, PathQueryDefinition definition, String label, String types, List<String> conditions) {
+        if (definition.start() != null && definition.end() != null && definition.kind() != PathQueryDefinition.Kind.ALL) {
+            conditions.add(PATH_START + " <> " + PATH_END);
+        }
+        query.append('(').append(PATH_START).append(label).append("), (").append(PATH_END).append(label).append(')');
+        appendWhere(query, conditions);
+        appendPathMatch(query, definition.kind(), "[" + types + pathDepth(definition) + "]", definition.direction());
+        switch (definition.result()) {
+            case COUNT -> query.append(" RETURN count(").append(PATH).append(") AS result");
+            case EXISTS -> query.append(" RETURN true AS result LIMIT 1");
+            default -> {
+                query.append(RETURN).append(PATH);
+                if (definition.kind() == PathQueryDefinition.Kind.ALL) {
+                    query.append(" ORDER BY length(").append(PATH).append(')');
+                }
+            }
+        }
+    }
+
+    private static String pathDepth(PathQueryDefinition definition) {
+        if (definition.maxDepthBound()) {
+            return "*1.." + PathQueryDefinition.PATH_LIMIT_TOKEN;
+        }
+        if (definition.maxDepth() > 0) {
+            return "*1.." + definition.maxDepth();
+        }
+        return "*";
+    }
+
+    /**
+     * Appends the clause that matches the paths, binding them to the variable {@code p}.
+     *
+     * @param query        The query
+     * @param kind         The kind of path query
+     * @param relationship The variable-length relationship pattern, for example {@code [:KNOWS*1..5]}
+     * @param direction    The direction
+     */
+    protected void appendPathMatch(StringBuilder query, PathQueryDefinition.Kind kind, String relationship, Direction direction) {
+        String pattern = directed("(" + PATH_START + ")", relationship, "(" + PATH_END + ")", direction);
+        query.append(" MATCH ").append(PATH).append(" = ");
+        switch (kind) {
+            case SHORTEST -> query.append("shortestPath(").append(pattern).append(')');
+            case ALL_SHORTEST -> query.append("allShortestPaths(").append(pattern).append(')');
+            default -> query.append(pattern);
+        }
+    }
+
+    private String endpointCondition(QueryState state, PersistentEntity entity, String variable, BindingParameter parameter) {
+        PersistentProperty identity = entity.getIdentity();
+        io.micronaut.data.model.PersistentPropertyPath idPath = io.micronaut.data.model.PersistentPropertyPath.of(List.of(), identity);
+        int index = state.pushParameter(parameter, BindingParameter.BindingContext.create()
+            .incomingMethodParameterProperty(idPath)
+            .outgoingQueryParameterProperty(idPath));
+        return identityExpression(identity, variable) + " = " + parameterPlaceholder(index);
+    }
+
+    private static void appendWhere(StringBuilder query, List<String> conditions) {
+        if (!conditions.isEmpty()) {
+            query.append(" WHERE ").append(String.join(AND, conditions));
+        }
+    }
+
+    private static String relationshipTypes(List<Association> associations) {
+        if (associations.isEmpty()) {
+            return "";
+        }
+        StringBuilder sb = new StringBuilder();
+        for (Association association : associations) {
+            String type = GraphEntities.escapeName(GraphEntities.relationshipType(association));
+            if (sb.indexOf(":" + type) >= 0 || sb.indexOf("|" + type) >= 0) {
+                continue;
+            }
+            sb.append(sb.isEmpty() ? ":" : "|").append(type);
+        }
+        return sb.toString();
+    }
+
+    /**
+     * Renders a relationship pattern between two node patterns in the given direction.
+     *
+     * @param from         The pattern of the start node
+     * @param relationship The relationship pattern
+     * @param to           The pattern of the end node
+     * @param direction    The direction
+     * @return The pattern
+     */
+    protected static String directed(String from, String relationship, String to, Direction direction) {
+        return switch (direction) {
+            case OUTGOING -> from + "-" + relationship + "->" + to;
+            case INCOMING -> from + "<-" + relationship + "-" + to;
+            case UNDIRECTED -> from + "-" + relationship + "-" + to;
+        };
     }
 
     @Override
@@ -752,7 +920,7 @@ public class CypherQueryBuilder implements QueryBuilder {
 
         @Override
         public void visit(ConjunctionPredicate conjunction) {
-            visitJunction(conjunction.getPredicates(), " AND ", "true");
+            visitJunction(conjunction.getPredicates(), AND, "true");
         }
 
         @Override
@@ -897,7 +1065,7 @@ public class CypherQueryBuilder implements QueryBuilder {
             }
             out.append('(');
             appendComparison(value, " >= ", from, false);
-            out.append(" AND ");
+            out.append(AND);
             appendComparison(value, " <= ", to, false);
             out.append(')');
         }
