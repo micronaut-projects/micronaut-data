@@ -13,7 +13,7 @@ from micronaut.data.model.vector import Vector
 @dataclass(frozen=True)
 class Book:
     id: Annotated[int | None, Id, GeneratedValue]
-    title: Annotated[str, SearchField(weight="HIGH")]  # <2>
+    title: Annotated[str, SearchField(weight="HIGH", fuzzy=True)]  # <2>
     description: Annotated[str, SearchField]  # <3>
     author: str
     embedding: Annotated[Vector | None, Column(length=3)]

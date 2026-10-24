@@ -31,6 +31,7 @@ import io.micronaut.data.model.search.UnsupportedSearchFeatureException;
 import jakarta.persistence.criteria.Expression;
 import org.jspecify.annotations.Nullable;
 
+import java.util.ArrayList;
 import java.util.List;
 import java.util.function.Consumer;
 import java.util.function.Function;
@@ -47,6 +48,11 @@ public interface TextSearchDialect {
      * The default text search configuration when the entity declares no {@link Searchable#language()}.
      */
     String DEFAULT_LANGUAGE = TextSearchSupport.DEFAULT_LANGUAGE;
+
+    /**
+     * The alias of the unnested fuzzy terms.
+     */
+    String TERM_ALIAS = "mn_term.t";
 
     /**
      * Appends the predicate {@code <fields> match <query>}.
@@ -274,8 +280,17 @@ public interface TextSearchDialect {
      *
      * @param column The column name, escaped when needed
      * @param weight The declared weight, or {@code null}
+     * @param trigramIndex The escaped name of the {@code pg_trgm} index of a fuzzy field, or {@code null}
      */
-    record SearchColumn(String column, @Nullable SearchWeight weight) {
+    record SearchColumn(String column, @Nullable SearchWeight weight, @Nullable String trigramIndex) {
+
+        /**
+         * @param column The escaped column
+         * @param weight The weight
+         */
+        SearchColumn(String column, @Nullable SearchWeight weight) {
+            this(column, weight, null);
+        }
     }
 
     /**
@@ -298,14 +313,94 @@ public interface TextSearchDialect {
                                     Target target,
                                     Consumer<Expression<?>> appendExpression,
                                     Function<String, Consumer<Expression<?>>> appendParameter) {
-            if (mode == MatchMode.FUZZY) {
-                throw new UnsupportedSearchFeatureException(SearchCapability.FUZZY, "PostgreSQL text search");
-            }
             rejectBoosts(options, "PostgreSQL text search");
+            if (mode == MatchMode.FUZZY) {
+                rejectFuzziness(options, "PostgreSQL pg_trgm");
+                appendFuzzyMatch(query, fields, queryExpression, appendExpression, appendParameter);
+                return;
+            }
             String language = resolveLanguage(fields);
             appendVector(query, fields, language, target.languageColumn(), appendExpression);
             query.append(" @@ ");
             appendTsQuery(query, queryExpression, mode, language, appendParameter);
+        }
+
+        /**
+         * Renders a fuzzy match with {@code pg_trgm}: a term matches a field when its word similarity
+         * reaches {@code pg_trgm.word_similarity_threshold} ({@code <%}); any positive term may match and
+         * no negated term may. The terms are bound as space-separated lists the query splits.
+         */
+        private void appendFuzzyMatch(StringBuilder query,
+                                      List<Expression<?>> fields,
+                                      Expression<String> queryExpression,
+                                      Consumer<Expression<?>> appendExpression,
+                                      Function<String, Consumer<Expression<?>>> appendParameter) {
+            query.append("(EXISTS ");
+            appendTermsQuery(query, fields, queryExpression, false, appendExpression, appendParameter);
+            query.append(" AND NOT EXISTS ");
+            appendTermsQuery(query, fields, queryExpression, true, appendExpression, appendParameter);
+            query.append(')');
+        }
+
+        private void appendTermsQuery(StringBuilder query,
+                                      List<Expression<?>> fields,
+                                      Expression<String> queryExpression,
+                                      boolean negated,
+                                      Consumer<Expression<?>> appendExpression,
+                                      Function<String, Consumer<Expression<?>>> appendParameter) {
+            query.append("(SELECT 1 FROM ");
+            appendTerms(query, queryExpression, negated, appendParameter);
+            query.append(" WHERE ");
+            for (int i = 0; i < fields.size(); i++) {
+                if (i > 0) {
+                    query.append(" OR ");
+                }
+                query.append(TERM_ALIAS).append(" <% ");
+                appendExpression.accept(fields.get(i));
+            }
+            query.append(')');
+        }
+
+        private void appendTerms(StringBuilder query,
+                                 Expression<String> queryExpression,
+                                 boolean negated,
+                                 Function<String, Consumer<Expression<?>>> appendParameter) {
+            query.append("unnest(string_to_array(");
+            appendParameter.apply(PostgresTsQueryConverter.fuzzyConverterFor(negated)).accept(queryExpression);
+            query.append(",' ')) AS mn_term(t)");
+        }
+
+        /**
+         * Renders the fuzzy relevance: the best word similarity of any term over the fields, each
+         * multiplied by its weight.
+         */
+        private void appendFuzzyScore(StringBuilder query,
+                                      List<Expression<?>> fields,
+                                      Expression<String> queryExpression,
+                                      Consumer<Expression<?>> appendExpression,
+                                      Function<String, Consumer<Expression<?>>> appendParameter) {
+            query.append("(SELECT coalesce(max(");
+            if (fields.size() > 1) {
+                query.append("greatest(");
+            }
+            for (int i = 0; i < fields.size(); i++) {
+                if (i > 0) {
+                    query.append(',');
+                }
+                query.append("word_similarity(").append(TERM_ALIAS).append(',');
+                appendExpression.accept(fields.get(i));
+                query.append(')');
+                SearchWeight weight = resolveWeight(fields.get(i));
+                if (weight != null) {
+                    query.append(" * ").append(weight.numericWeight());
+                }
+            }
+            if (fields.size() > 1) {
+                query.append(')');
+            }
+            query.append("),0) FROM ");
+            appendTerms(query, queryExpression, false, appendParameter);
+            query.append(')');
         }
 
         @Override
@@ -317,10 +412,12 @@ public interface TextSearchDialect {
                                       Target target,
                                       Consumer<Expression<?>> appendExpression,
                                       Function<String, Consumer<Expression<?>>> appendParameter) {
-            if (mode == MatchMode.FUZZY) {
-                throw new UnsupportedSearchFeatureException(SearchCapability.FUZZY, "PostgreSQL text search");
-            }
             rejectBoosts(options, "PostgreSQL text search");
+            if (mode == MatchMode.FUZZY) {
+                rejectFuzziness(options, "PostgreSQL pg_trgm");
+                appendFuzzyScore(query, fields, queryExpression, appendExpression, appendParameter);
+                return;
+            }
             String language = resolveLanguage(fields);
             query.append("ts_rank_cd(");
             appendVector(query, fields, language, target.languageColumn(), appendExpression);
@@ -337,14 +434,18 @@ public interface TextSearchDialect {
                                           Target target,
                                           Consumer<Expression<?>> appendExpression,
                                           Function<String, Consumer<Expression<?>>> appendParameter) {
-            if (mode == MatchMode.FUZZY) {
-                throw new UnsupportedSearchFeatureException(SearchCapability.FUZZY, "PostgreSQL text search");
-            }
             String language = resolveLanguage(List.of(field));
             query.append("ts_headline('").append(language).append("',");
             appendExpression.accept(field);
             query.append(',');
-            appendTsQuery(query, queryExpression, mode, language, appendParameter);
+            if (mode == MatchMode.FUZZY) {
+                // ts_headline has no fuzzy query, so the terms themselves are highlighted where they occur
+                query.append("plainto_tsquery('").append(language).append("',");
+                appendParameter.apply(PostgresTsQueryConverter.fuzzyConverterFor(false)).accept(queryExpression);
+                query.append(')');
+            } else {
+                appendTsQuery(query, queryExpression, mode, language, appendParameter);
+            }
             query.append(",'StartSel=").append(TextSearchSupport.HIGHLIGHT_START_TAG)
                 .append(",StopSel=").append(TextSearchSupport.HIGHLIGHT_END_TAG).append("')");
         }
@@ -370,7 +471,20 @@ public interface TextSearchDialect {
             List<SearchWeight> weights = columns.stream().map(SearchColumn::weight).toList();
             List<Consumer<StringBuilder>> renderers = columns.stream().map(c -> (Consumer<StringBuilder>) sb -> sb.append(c.column())).toList();
             appendVector(ddl, renderers, weights, language, languageColumn);
-            return List.of(ddl.append(");").toString());
+            List<String> statements = new ArrayList<>(3);
+            statements.add(ddl.append(");").toString());
+            // a pg_trgm GIN index per column marked @SearchField(fuzzy = true), after the trusted extension
+            boolean trigram = false;
+            for (SearchColumn column : columns) {
+                if (column.trigramIndex() != null) {
+                    if (!trigram) {
+                        statements.add("CREATE EXTENSION IF NOT EXISTS pg_trgm;");
+                        trigram = true;
+                    }
+                    statements.add("CREATE INDEX " + column.trigramIndex() + " ON " + escapedTableName + " USING GIN (" + column.column() + " gin_trgm_ops);");
+                }
+            }
+            return statements;
         }
 
         private void appendVector(StringBuilder query,

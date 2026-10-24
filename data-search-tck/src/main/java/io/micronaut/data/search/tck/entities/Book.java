@@ -39,7 +39,7 @@ public class Book {
     @Nullable
     private UUID id;
 
-    @SearchField(weight = SearchWeight.HIGH)
+    @SearchField(weight = SearchWeight.HIGH, fuzzy = true)
     private String title;
 
     @SearchField(weight = SearchWeight.LOW)

@@ -50,8 +50,39 @@ public abstract class PostgresTsQueryConverter implements TextSearchQueryConvert
             case ALL -> All.class.getName();
             case PHRASE -> Phrase.class.getName();
             case PREFIX -> Prefix.class.getName();
-            case FUZZY -> throw new IllegalArgumentException("PostgreSQL text search does not support fuzzy matching");
+            case FUZZY -> FuzzyPositive.class.getName();
         };
+    }
+
+    /**
+     * @param negated Whether the converter renders the negated terms
+     * @return The class name of the converter rendering the terms of a fuzzy match as the
+     * space-separated list {@code unnest(string_to_array(?, ' '))} splits
+     */
+    public static String fuzzyConverterFor(boolean negated) {
+        return negated ? FuzzyNegated.class.getName() : FuzzyPositive.class.getName();
+    }
+
+    /**
+     * Renders the terms of a fuzzy match as a space-separated list for {@code pg_trgm} word similarity;
+     * phrases contribute their words and {@code OR} groups are flattened, as every term matches on its own.
+     *
+     * @param query The search string
+     * @param negated Whether to render the negated terms instead of the positive ones
+     * @return The terms, empty when there are none
+     */
+    public static String renderFuzzy(@Nullable String query, boolean negated) {
+        StringJoiner terms = new StringJoiner(" ");
+        for (SearchTerm term : SearchQueryParser.terms(query)) {
+            if (term.negated() == negated) {
+                for (String word : term.text().trim().split("\\s+")) {
+                    if (!word.isEmpty()) {
+                        terms.add(word);
+                    }
+                }
+            }
+        }
+        return terms.toString();
     }
 
     /**
@@ -127,6 +158,38 @@ public abstract class PostgresTsQueryConverter implements TextSearchQueryConvert
     /**
      * {@link MatchMode#ANY} converter.
      */
+    /**
+     * The positive terms of a fuzzy match.
+     */
+    @Singleton
+    public static final class FuzzyPositive extends PostgresTsQueryConverter {
+        @Override
+        protected MatchMode mode() {
+            return MatchMode.FUZZY;
+        }
+
+        @Override
+        public String convertToPersistedValue(@Nullable String entityValue, ConversionContext context) {
+            return renderFuzzy(entityValue, false);
+        }
+    }
+
+    /**
+     * The negated terms of a fuzzy match.
+     */
+    @Singleton
+    public static final class FuzzyNegated extends PostgresTsQueryConverter {
+        @Override
+        protected MatchMode mode() {
+            return MatchMode.FUZZY;
+        }
+
+        @Override
+        public String convertToPersistedValue(@Nullable String entityValue, ConversionContext context) {
+            return renderFuzzy(entityValue, true);
+        }
+    }
+
     @Singleton
     public static final class Any extends PostgresTsQueryConverter {
         @Override

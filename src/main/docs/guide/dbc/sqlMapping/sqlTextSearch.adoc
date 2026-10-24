@@ -9,7 +9,7 @@ Annotate the entity with ann:data.annotation.search.Searchable[] and the propert
 snippet::example.Book[project-base="doc-examples/jdbc-search-example", source="main", tags="entity"]
 
 <1> `language` selects the text search configuration used for stemming and stop words (`english` by default); PostgreSQL passes it to `to_tsvector` and `to_tsquery`.
-<2> `weight` makes matches in this property count more in the relevance score; PostgreSQL maps `HIGH`, `MEDIUM`, `LOW` and `LOWEST` to the labels `A` to `D` of `setweight`.
+<2> `weight` makes matches in this property count more in the relevance score; PostgreSQL maps `HIGH`, `MEDIUM`, `LOW` and `LOWEST` to the labels `A` to `D` of `setweight`. `fuzzy` adds a `pg_trgm` GIN index over the column for `SearchFuzzy` queries.
 <3> A property without a declared weight is indexed without a label.
 
 A property annotated ann:data.annotation.search.Language[] holds the language of each row, with the entity language as the fallback when it is `null`: PostgreSQL uses it as the text search configuration of the row's `tsvector`, `to_tsvector(coalesce(language, 'english')::regconfig, ...)`, in the queries and in the generated index, while the query string keeps the entity language; MongoDB passes it as `language_override`. Oracle, Elasticsearch and OpenSearch ignore it, as their analysis is fixed per index.
@@ -42,6 +42,7 @@ snippet::example.BookRepository[project-base="doc-examples/jdbc-search-example",
 <5> `SearchPrefix` matches every term as a prefix, for search-as-you-type.
 <6> Search keywords combine with any other predicate.
 <7> A trailing api:data.model.vector.search.Score[] parameter after the predicate parameters keeps only the hits whose relevance score is at least its value, as a restriction rendered by the store (`ts_rank_cd(...) >= ?` on PostgreSQL, `SCORE(n) >= ?` on Oracle, `min_score` on Elasticsearch and OpenSearch, a `$match` on the `searchScore` with MongoDB Search); MongoDB `$text` cannot restrict on the score.
+<8> `SearchFuzzy` matches terms with typos; PostgreSQL uses `pg_trgm` word similarity, see the notes below.
 
 |===
 |Keyword |Meaning |PostgreSQL query
@@ -119,7 +120,8 @@ The criteria builder exposes the same predicate through `PersistentEntityCriteri
 
 - Queries render `to_tsvector('<language>', <column>) @@ to_tsquery('<language>', ?)` and rank with `ts_rank_cd`; several fields are concatenated with `||`, wrapped in `coalesce` and `setweight` as declared.
 - The query parameter is converted to `tsquery` syntax by a parameter converter chosen for the keyword, so the SQL stays the same for every search string.
-- Fuzzy matching and query-time boosts are not available.
+- Fuzzy matching (`SearchFuzzy`, `SearchQuery.fuzzy`) uses the `pg_trgm` extension: a term matches a field when `word_similarity(term, column)` reaches `pg_trgm.word_similarity_threshold` (`0.6` by default, tunable per session or database), rendered as `mn_term.t <% column` over `unnest(string_to_array(?, ' '))` of the positive terms, with the negated terms excluded by a `NOT EXISTS`. The score is the best `word_similarity` of any term over the fields, multiplied by the weights. The edit distance of `SearchQuery.fuzzy(n)` is not honoured beyond the default. `@SearchField(fuzzy = true)` makes schema generation add `CREATE EXTENSION IF NOT EXISTS pg_trgm` and a `gin_trgm_ops` index over the column; queries run without the index too, scanning the table. Highlights of a fuzzy search mark the terms where they occur literally, through `plainto_tsquery`.
+- Query-time boosts are not available.
 - Highlights render `ts_headline('<language>', <column>, to_tsquery('<language>', ?), 'StartSel=<em>,StopSel=</em>')`, which returns a fragment of the column with the default `ts_headline` length limits.
 - Stemming follows the text search configuration named by `@Searchable(language)`; use `simple` to disable it.
 
@@ -142,7 +144,7 @@ The portable API is the same on every store; the table lists which optional capa
 |Any, all and negated terms, relevance order |yes |yes |yes |yes |yes
 |Phrase (`SearchPhrase`) |yes |yes |yes |yes |yes
 |Prefix (`SearchPrefix`) |yes |yes |no |yes |yes
-|Fuzzy (`SearchFuzzy`) |no |yes |no |yes |yes
+|Fuzzy (`SearchFuzzy`) |yes, `pg_trgm` |yes |no |yes |yes
 |Field scope (`findByTitleSearch` searches only `title`) |yes |yes |no, the whole text index |yes |yes
 |Index-time weights (`@SearchField(weight)`) |yes |yes |yes |yes, as boosts |yes
 |Query-time boosts (`SearchQuery.boost`) |no |yes |no |yes |yes

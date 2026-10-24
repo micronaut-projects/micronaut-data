@@ -1024,9 +1024,15 @@ public class SqlQueryBuilder extends AbstractSqlLikeQueryBuilder {
         List<TextSearchDialect.SearchColumn> columns = new ArrayList<>(fields.size());
         for (PersistentProperty field : fields) {
             String column = namingStrategy.mappedName(Collections.emptyList(), field);
+            String trigramIndex = null;
+            if (field.getAnnotationMetadata().booleanValue(SearchField.class, SearchField.MEMBER_FUZZY).orElse(false)) {
+                String name = "idx_" + prepareNames(table.name()) + "_" + prepareNames(column) + "_trgm";
+                trigramIndex = escape ? quote(name) : name;
+            }
             columns.add(new TextSearchDialect.SearchColumn(
                 escape ? quote(column) : column,
-                field.getAnnotationMetadata().enumValue(SearchField.class, SearchField.MEMBER_WEIGHT, SearchWeight.class).orElse(null)
+                field.getAnnotationMetadata().enumValue(SearchField.class, SearchField.MEMBER_WEIGHT, SearchWeight.class).orElse(null),
+                trigramIndex
             ));
         }
         String language = entity.getAnnotationMetadata().stringValue(Searchable.class, Searchable.MEMBER_LANGUAGE)

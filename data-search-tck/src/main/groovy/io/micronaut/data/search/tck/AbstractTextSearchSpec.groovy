@@ -333,6 +333,17 @@ abstract class AbstractTextSearchSpec extends Specification {
         boosted.results().size() == 2
     }
 
+    void "fuzzy matching tolerates a typo"() {
+        assumeTrue(capabilities().contains(SearchCapability.FUZZY))
+
+        expect:
+        bookSearchRepository.search(SearchQuery.builder("kotln").fuzzy(1).build()).results()*.entity()*.title == ["Programming Kotlin"]
+        bookSearchRepository.search(SearchQuery.builder("kotln").fuzzy(1).build()).results()[0].score().value() > 0
+        // a negated term excludes; it is an exact token, as the Lucene stores do not stem fuzzy terms
+        bookSearchRepository.search(SearchQuery.builder("kotln -kotlin").fuzzy(1).build()).results().isEmpty()
+        bookSearchRepository.search(SearchQuery.builder("zzzzzz").fuzzy(1).build()).results().isEmpty()
+    }
+
     void "the fuzziness sets the edit distance of a fuzzy match"() {
         assumeTrue(capabilities().contains(SearchCapability.FUZZINESS))
 
