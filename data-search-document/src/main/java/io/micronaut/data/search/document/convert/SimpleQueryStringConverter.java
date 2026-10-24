@@ -24,6 +24,7 @@ import io.micronaut.data.model.search.SearchTerm;
 import jakarta.inject.Singleton;
 import org.jspecify.annotations.Nullable;
 
+import java.util.ArrayList;
 import java.util.List;
 import java.util.StringJoiner;
 
@@ -46,7 +47,8 @@ public abstract class SimpleQueryStringConverter implements TextSearchQueryConve
      */
     public static String converterFor(MatchMode mode) {
         return switch (mode) {
-            case ANY, ALL -> Terms.class.getName();
+            case ANY -> Any.class.getName();
+            case ALL -> All.class.getName();
             case PHRASE -> Phrase.class.getName();
             case PREFIX -> Prefix.class.getName();
             case FUZZY -> Fuzzy.class.getName();
@@ -69,9 +71,13 @@ public abstract class SimpleQueryStringConverter implements TextSearchQueryConve
             return phrase.isEmpty() ? "" : "\"" + escape(phrase) + "\"";
         }
         List<List<SearchTerm>> groups = SearchQueryParser.parse(query);
+        // The query runs with default_operator "and", so any-term matching is spelled out with "|"
+        // and a negated term always excludes, whatever the mode
+        boolean anyTerm = mode == MatchMode.ANY || mode == MatchMode.FUZZY;
         StringJoiner disjunction = new StringJoiner(" | ");
         for (List<SearchTerm> group : groups) {
-            StringJoiner terms = new StringJoiner(" ");
+            List<String> positive = new ArrayList<>(group.size());
+            List<String> negative = new ArrayList<>();
             for (SearchTerm term : group) {
                 String rendered;
                 if (term.phrase()) {
@@ -84,11 +90,19 @@ public abstract class SimpleQueryStringConverter implements TextSearchQueryConve
                         rendered += "~1";
                     }
                 }
-                terms.add(term.negated() ? "-" + rendered : rendered);
+                (term.negated() ? negative : positive).add(rendered);
             }
-            if (terms.length() > 0) {
-                disjunction.add(groups.size() > 1 ? "(" + terms + ")" : terms.toString());
+            if (positive.isEmpty() && negative.isEmpty()) {
+                continue;
             }
+            String terms = String.join(anyTerm ? " | " : " ", positive);
+            if (anyTerm && positive.size() > 1 && !negative.isEmpty()) {
+                terms = "(" + terms + ")";
+            }
+            if (!negative.isEmpty()) {
+                terms = (terms.isEmpty() ? "" : terms + " ") + "-" + String.join(" -", negative);
+            }
+            disjunction.add(groups.size() > 1 ? "(" + terms + ")" : terms);
         }
         return disjunction.toString();
     }
@@ -123,13 +137,24 @@ public abstract class SimpleQueryStringConverter implements TextSearchQueryConve
     protected abstract MatchMode mode();
 
     /**
-     * Any-term or all-terms converter; the operator is set on the query.
+     * Any-term converter.
      */
     @Singleton
-    public static final class Terms extends SimpleQueryStringConverter {
+    public static final class Any extends SimpleQueryStringConverter {
         @Override
         protected MatchMode mode() {
             return MatchMode.ANY;
+        }
+    }
+
+    /**
+     * All-terms converter.
+     */
+    @Singleton
+    public static final class All extends SimpleQueryStringConverter {
+        @Override
+        protected MatchMode mode() {
+            return MatchMode.ALL;
         }
     }
 

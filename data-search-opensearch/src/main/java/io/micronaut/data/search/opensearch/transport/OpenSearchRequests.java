@@ -19,6 +19,7 @@ import io.micronaut.core.annotation.Internal;
 import io.micronaut.data.search.document.conf.DocumentSearchConfiguration;
 import io.micronaut.data.search.document.runtime.SearchTransport;
 import jakarta.json.stream.JsonParser;
+import org.jspecify.annotations.Nullable;
 import org.opensearch.client.json.JsonData;
 import org.opensearch.client.json.JsonpMapper;
 import org.opensearch.client.opensearch._types.Refresh;
@@ -58,13 +59,16 @@ final class OpenSearchRequests {
             }
             request.sort(options);
         }
-        if (parsed.get("from") instanceof Number from) {
-            request.from(from.intValue());
+        // The parsed values are JSON-P values, not Java numbers and booleans
+        Integer from = scalar(mapper, parsed.get("from"), Integer.class);
+        if (from != null) {
+            request.from(from);
         }
-        if (parsed.get("size") instanceof Number size) {
-            request.size(size.intValue());
+        Integer size = scalar(mapper, parsed.get("size"), Integer.class);
+        if (size != null) {
+            request.size(size);
         }
-        if (Boolean.TRUE.equals(parsed.get("track_total_hits"))) {
+        if (Boolean.TRUE.equals(scalar(mapper, parsed.get("track_total_hits"), Boolean.class))) {
             request.trackTotalHits(TrackHits.of(t -> t.enabled(true)));
         }
         Object highlight = parsed.get("highlight");
@@ -96,6 +100,37 @@ final class OpenSearchRequests {
             return Query.of(q -> q.matchAll(m -> m));
         }
         return JsonData.of(query, mapper).to(Query.class, mapper);
+    }
+
+    /**
+     * Reads a scalar of a parsed body, which the JSON-P mapper leaves as a JSON value.
+     *
+     * @param mapper The mapper
+     * @param value The parsed value
+     * @param type The scalar type
+     * @param <T> The scalar type
+     * @return The value, or {@code null} when absent
+     */
+    @Nullable
+    static <T> T scalar(JsonpMapper mapper, @Nullable Object value, Class<T> type) {
+        if (value == null) {
+            return null;
+        }
+        if (type.isInstance(value)) {
+            return type.cast(value);
+        }
+        if (value instanceof Number number && type == Integer.class) {
+            return type.cast(number.intValue());
+        }
+        return JsonData.of(value, mapper).to(type, mapper);
+    }
+
+    /**
+     * @param refresh The configured refresh
+     * @return The refresh of a delete_by_query, which only accepts true or false
+     */
+    static Refresh deleteByQueryRefresh(DocumentSearchConfiguration.Refresh refresh) {
+        return refresh == DocumentSearchConfiguration.Refresh.NONE ? Refresh.False : Refresh.True;
     }
 
     static Refresh refresh(DocumentSearchConfiguration.Refresh refresh) {
