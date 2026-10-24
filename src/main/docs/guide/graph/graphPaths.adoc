@@ -31,7 +31,7 @@ ann:data.graph.annotation.PathLimit[] sets the maximum depth, either on the meth
 
 A path is returned as a api:data.graph.model.GraphPath[] holding its nodes, mapped to entities, and its relationships:
 
-snippet::example.PersonRepositorySpec[project-base="doc-examples/neo4j-example", tags="shortestPath", indent="0", languages="java,kotlin,groovy"]
+snippet::example.PersonRepositorySpec[project-base="doc-examples/neo4j-example", tags="shortestPath", indent="0", languages="java,kotlin,groovy,python"]
 
 <1> Each api:data.graph.model.PathSegment[] holds a relationship and the nodes at its ends, in path order.
 
