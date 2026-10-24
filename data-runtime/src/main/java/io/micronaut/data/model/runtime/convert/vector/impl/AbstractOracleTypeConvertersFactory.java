@@ -17,6 +17,7 @@ package io.micronaut.data.model.runtime.convert.vector.impl;
 
 import io.micronaut.core.annotation.Internal;
 import io.micronaut.data.exceptions.DataAccessException;
+import io.micronaut.data.model.vector.BinaryVector;
 import io.micronaut.data.model.vector.ByteVector;
 import io.micronaut.data.model.vector.DoubleVector;
 import io.micronaut.data.model.vector.FloatVector;
@@ -103,7 +104,8 @@ public abstract class AbstractOracleTypeConvertersFactory {
         return switch (adapter.getKind()) {
             case FLOAT32 -> Vector.of(adapter.toFloatArray());
             case FLOAT64 -> Vector.of(adapter.toDoubleArray());
-            case BINARY, INT8 -> Vector.of(adapter.toByteArray());
+            case INT8 -> Vector.of(adapter.toByteArray());
+            case BINARY -> new BinaryVector(adapter.toByteArray());
         };
     }
 
@@ -156,6 +158,25 @@ public abstract class AbstractOracleTypeConvertersFactory {
         Function<T, OracleVectorAdapter> adapterFactory) {
         return (oracleVector, targetType, context) ->
             vectorToByteArray(adapterFactory.apply(oracleVector)).map(a -> (ByteVector) Vector.of(a));
+    }
+
+    /**
+     * Creates a converter from an Oracle {@code BINARY} vector to a {@link BinaryVector}.
+     *
+     * @param adapterFactory adapter factory for the Oracle vector type
+     * @param <T> Oracle vector type
+     * @return converter to {@link BinaryVector}
+     * @since 5.3.0
+     */
+    protected static <T> DataTypeConverter<T, BinaryVector> oracleVectorToBinaryVectorConverter(
+        Function<T, OracleVectorAdapter> adapterFactory) {
+        return (oracleVector, targetType, context) -> {
+            OracleVectorAdapter adapter = adapterFactory.apply(oracleVector);
+            if (adapter.getKind() != OracleVectorKind.BINARY) {
+                throw new DataAccessException("Cannot convert an Oracle " + adapter.getKind() + " vector to a BinaryVector");
+            }
+            return Optional.of(new BinaryVector(adapter.toByteArray()));
+        };
     }
 
     /**
@@ -212,6 +233,9 @@ public abstract class AbstractOracleTypeConvertersFactory {
             }
             if (vector instanceof ByteVector byteVector) {
                 return Optional.of(factory.ofInt8Values(byteVector.toByteArray()));
+            }
+            if (vector instanceof BinaryVector binaryVector) {
+                return Optional.of(factory.ofBinaryValues(binaryVector.data()));
             }
             if (vector instanceof SparseFloatVector(int length, int[] indices, float[] values)) {
                 return Optional.of(factory.ofSparseFloat32Values(length, indices, values));
@@ -365,6 +389,7 @@ public abstract class AbstractOracleTypeConvertersFactory {
         private final OracleSparseArrayFactory<float[], T> sparseFloat32Factory;
         private final OracleSparseArrayFactory<byte[], T> sparseInt8Factory;
         private final OracleSparseArrayFactory<double[], T> sparseFloat64Factory;
+        private final OracleArrayFactory<byte[], T> binaryFactory;
 
         /**
          * @param float32Factory dense float factory
@@ -373,19 +398,45 @@ public abstract class AbstractOracleTypeConvertersFactory {
          * @param sparseFloat32Factory sparse float factory
          * @param sparseInt8Factory sparse byte factory
          * @param sparseFloat64Factory sparse double factory
+         * @deprecated Use {@link #OracleVectorFactory(OracleArrayFactory, OracleArrayFactory, OracleArrayFactory, OracleSparseArrayFactory, OracleSparseArrayFactory, OracleSparseArrayFactory, OracleArrayFactory)}, which also creates binary vectors
          */
+        @Deprecated(since = "5.3.0", forRemoval = true)
         public OracleVectorFactory(OracleArrayFactory<float[], T> float32Factory,
                                    OracleArrayFactory<double[], T> float64Factory,
                                    OracleArrayFactory<byte[], T> int8Factory,
                                    OracleSparseArrayFactory<float[], T> sparseFloat32Factory,
                                    OracleSparseArrayFactory<byte[], T> sparseInt8Factory,
                                    OracleSparseArrayFactory<double[], T> sparseFloat64Factory) {
+            this(float32Factory, float64Factory, int8Factory, sparseFloat32Factory, sparseInt8Factory, sparseFloat64Factory,
+                values -> {
+                    throw new UnsupportedOperationException("Binary vectors are not supported by this factory");
+                });
+        }
+
+        /**
+         * @param float32Factory dense float factory
+         * @param float64Factory dense double factory
+         * @param int8Factory dense byte factory
+         * @param sparseFloat32Factory sparse float factory
+         * @param sparseInt8Factory sparse byte factory
+         * @param sparseFloat64Factory sparse double factory
+         * @param binaryFactory binary factory, which takes bits packed eight per byte
+         * @since 5.3.0
+         */
+        public OracleVectorFactory(OracleArrayFactory<float[], T> float32Factory,
+                                   OracleArrayFactory<double[], T> float64Factory,
+                                   OracleArrayFactory<byte[], T> int8Factory,
+                                   OracleSparseArrayFactory<float[], T> sparseFloat32Factory,
+                                   OracleSparseArrayFactory<byte[], T> sparseInt8Factory,
+                                   OracleSparseArrayFactory<double[], T> sparseFloat64Factory,
+                                   OracleArrayFactory<byte[], T> binaryFactory) {
             this.float32Factory = float32Factory;
             this.float64Factory = float64Factory;
             this.int8Factory = int8Factory;
             this.sparseFloat32Factory = sparseFloat32Factory;
             this.sparseInt8Factory = sparseInt8Factory;
             this.sparseFloat64Factory = sparseFloat64Factory;
+            this.binaryFactory = binaryFactory;
         }
 
         /**
@@ -413,6 +464,15 @@ public abstract class AbstractOracleTypeConvertersFactory {
          */
         T ofInt8Values(byte[] values) throws Exception {
             return int8Factory.create(values);
+        }
+
+        /**
+         * @param packedValues bits packed eight per byte, most significant bit first
+         * @return native vector
+         * @throws Exception if the driver rejects the values
+         */
+        T ofBinaryValues(byte[] packedValues) throws Exception {
+            return binaryFactory.create(packedValues);
         }
 
         /**
