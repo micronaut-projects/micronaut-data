@@ -177,6 +177,37 @@ interface UnsupportedRepository extends GenericRepository<Movie, String> {
         'unbounded paths'      | ''                                                    | 'Optional<GraphPath<Movie>> findShortestPath(String from, String to);' | 'need a maximum depth'
     }
 
+    void "test schemaless properties are rejected"() {
+        when:
+        buildRepository('test.PetRepository', """
+import io.micronaut.data.graph.annotation.DynamicAttributes;
+import java.util.Map;
+
+@Node
+class Pet {
+    @Id
+    private String name;
+    @DynamicAttributes
+    private Map<String, Object> attributes;
+
+    public String getName() { return name; }
+    public void setName(String name) { this.name = name; }
+    public Map<String, Object> getAttributes() { return attributes; }
+    public void setAttributes(Map<String, Object> attributes) { this.attributes = attributes; }
+}
+
+@TestOracleRepository
+@PropertyGraph("pets")
+interface PetRepository extends GenericRepository<Pet, String> {
+    List<Pet> findByName(String name);
+}
+""")
+
+        then:
+        def e = thrown(RuntimeException)
+        e.message.contains('Schemaless properties and dynamic labels are not supported by Oracle property graphs')
+    }
+
     private static ExecutableMethod<?, ?> findMethod(BeanDefinition<?> definition, String name) {
         def method = definition.executableMethods.find { it.methodName == name }
         assert method != null: "No method $name"
