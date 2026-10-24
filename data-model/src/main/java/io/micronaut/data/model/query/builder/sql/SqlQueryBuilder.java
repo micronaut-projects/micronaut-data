@@ -558,12 +558,7 @@ public class SqlQueryBuilder extends AbstractSqlLikeQueryBuilder {
         for (PersistentEntity entity : entities) {
             String schema = SqlQueryBuilderUtils.getSchemaName(entity);
             boolean escape = shouldEscape(entity);
-            if (entity.getAnnotationMetadata().hasAnnotation(JsonView.class)) {
-                if (dialect != Dialect.ORACLE) {
-                    LOG.error("JSON View is not supported for dialect " + dialect);
-                    continue;
-                }
-                addJsonViewCreateStatement(jsonViewCreateStatements, entity);
+            if (addJsonViewCreateStatements(entity, dialect, jsonViewCreateStatements)) {
                 continue;
             }
             List<SqlTableMapping> tables = SqlSchemaUtils.getSqlTableMappings(definitionProviders, entity, dialect);
@@ -586,11 +581,32 @@ public class SqlQueryBuilder extends AbstractSqlLikeQueryBuilder {
         createStatements.addAll(searchIndexStatements);
 
         createStatements.addAll(jsonViewCreateStatements);
-        if (dialect == Dialect.POSTGRES && Arrays.stream(entities).anyMatch(SqlQueryBuilder::hasVectorProperty)) {
+        if (needsVectorExtension(dialect, entities)) {
             // pgvector's type must exist before a table with a vector column; the statement is a no-op once installed
             createStatements.add(0, "CREATE EXTENSION IF NOT EXISTS vector;");
         }
         return createStatements.toArray(new String[0]);
+    }
+
+    /**
+     * Adds the view of a {@link JsonView} entity, which has no table of its own.
+     *
+     * @return Whether the entity is a JSON view, handled or unsupported, so the caller skips it
+     */
+    private boolean addJsonViewCreateStatements(PersistentEntity entity, Dialect dialect, List<String> jsonViewCreateStatements) {
+        if (!entity.getAnnotationMetadata().hasAnnotation(JsonView.class)) {
+            return false;
+        }
+        if (dialect != Dialect.ORACLE) {
+            LOG.error("JSON View is not supported for dialect " + dialect);
+        } else {
+            addJsonViewCreateStatement(jsonViewCreateStatements, entity);
+        }
+        return true;
+    }
+
+    private static boolean needsVectorExtension(Dialect dialect, PersistentEntity[] entities) {
+        return dialect == Dialect.POSTGRES && Arrays.stream(entities).anyMatch(SqlQueryBuilder::hasVectorProperty);
     }
 
     private static boolean hasVectorProperty(PersistentEntity entity) {
