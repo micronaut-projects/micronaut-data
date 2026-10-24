@@ -449,7 +449,13 @@ public final class DocumentSearchQueryBuilder implements QueryBuilder {
             Map<String, Object> simpleQueryString = new LinkedHashMap<>();
             simpleQueryString.put(QUERY, bindings.placeholder(parameter, SimpleQueryStringConverter.converterFor(mode)));
             simpleQueryString.put("fields", fieldNames);
-            simpleQueryString.put("default_operator", mode == MatchMode.ALL || mode == MatchMode.PREFIX ? "and" : "or");
+            // Always "and": the converter spells any-term matching out with "|", so a negated term
+            // excludes rather than matching every document without it
+            simpleQueryString.put("default_operator", "and");
+            if (mode == MatchMode.PREFIX) {
+                // Analyze the prefix with the field analyzer, so a stemmed term such as "programming*" still matches
+                simpleQueryString.put("analyze_wildcard", true);
+            }
             result = Map.of("simple_query_string", simpleQueryString);
         }
 

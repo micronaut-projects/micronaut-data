@@ -18,6 +18,8 @@ package io.micronaut.data.search.document.init;
 import io.micronaut.core.annotation.Internal;
 import io.micronaut.data.annotation.search.SearchField;
 import io.micronaut.data.annotation.search.SearchFieldType;
+import io.micronaut.data.model.Association;
+import io.micronaut.data.model.DataType;
 import io.micronaut.data.model.PersistentEntity;
 import io.micronaut.data.model.PersistentProperty;
 import io.micronaut.data.model.search.TextSearchSupport;
@@ -65,7 +67,19 @@ public final class SearchIndexDefinitions {
             }
             properties.put(property.getName(), field);
         }
+        for (PersistentProperty property : entity.getPersistentProperties()) {
+            // The other string properties are compared exactly by the derived queries, so they are
+            // keywords rather than the analyzed text a dynamic mapping would give them
+            if (!properties.containsKey(property.getName()) && !(property instanceof Association) && isKeyword(property)) {
+                properties.put(property.getName(), Map.of("type", "keyword"));
+            }
+        }
         return SearchJson.write(Map.of("mappings", Map.of("properties", properties)));
+    }
+
+    private static boolean isKeyword(PersistentProperty property) {
+        DataType dataType = property.getDataType();
+        return dataType == DataType.STRING || dataType == DataType.UUID || dataType == DataType.CHARACTER || property.isEnum();
     }
 
     /**

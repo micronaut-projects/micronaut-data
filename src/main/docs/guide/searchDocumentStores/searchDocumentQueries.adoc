@@ -23,7 +23,7 @@ snippet::example.BookService[project-base="doc-examples/elasticsearch-search-exa
 <3> The `_score` of the hit.
 <4> `countHits` runs the same query through the count API.
 
-The search string uses the portable grammar and is converted to Lucene `simple_query_string` syntax at bind time: `"quoted phrases"`, `-negated` terms, `OR` groups as `(a b) | (c)`, `SearchPrefix` as `term*` and `SearchFuzzy` as `term~1`. Special characters in terms are escaped, so user input is matched literally. `SearchAll` sets `default_operator` to `and`.
+The search string uses the portable grammar and is converted to Lucene `simple_query_string` syntax at bind time with `default_operator` set to `and`: `Search` joins the terms with `|` (`coffee | tea`), `SearchAll` with spaces, `"quoted phrases"` stay phrases, `-negated` terms always exclude (`(coffee | tea) -cake`), `OR` groups become `(a b) | (c)`, `SearchPrefix` renders `term*` with `analyze_wildcard` and `SearchFuzzy` `term~1`. Special characters in terms are escaped, so user input is matched literally.
 
 == Paging and sorting
 
