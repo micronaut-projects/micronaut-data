@@ -147,10 +147,10 @@ public class CypherQueryBuilder implements QueryBuilder {
     private static final String TO_LOWER = "toLower(";
     private static final String RESULT = "result";
     private static final String RETURN = " RETURN ";
-    private static final String AND = " AND ";
     private static final String MATCH_OPEN = "MATCH (";
     private static final String CLOSE_WHERE = ") WHERE ";
     private static final String CLOSE_AS_RESULT = ") AS result";
+    private static final String AND = " AND ";
     private static final String LINK_FROM = "a";
     private static final String LINK_TO = "b";
 
@@ -339,7 +339,7 @@ public class CypherQueryBuilder implements QueryBuilder {
      * @return The query
      */
     public String buildDeleteAllQuery(PersistentEntity entity) {
-        return "MATCH (" + ROOT + labelExpression(entity) + ") DETACH DELETE " + ROOT + " RETURN count(*) AS result";
+        return MATCH_OPEN + ROOT + labelExpression(entity) + ") DETACH DELETE " + ROOT + " RETURN count(*) AS result";
     }
 
     /**
