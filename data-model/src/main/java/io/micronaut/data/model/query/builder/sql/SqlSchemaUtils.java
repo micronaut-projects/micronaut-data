@@ -302,6 +302,14 @@ public final class SqlSchemaUtils {
         }
     }
 
+    private static VectorIndexType.DistanceType vectorIndexDistanceType(AnnotationValue<VectorIndex> vectorIndex, PersistentProperty property) {
+        if (!vectorIndex.contains("distanceType") && property.isAssignable(BinaryVector.class)) {
+            // Oracle compares binary vectors with HAMMING or JACCARD only, like the derived query default
+            return VectorIndexType.DistanceType.HAMMING;
+        }
+        return vectorIndex.enumValue("distanceType", VectorIndexType.DistanceType.class).orElse(VectorIndexType.DistanceType.COSINE);
+    }
+
     /**
      * Creates a new Column object based on the provided PersistentProperty and other mapped field attributes.
      *
@@ -315,14 +323,6 @@ public final class SqlSchemaUtils {
      * @throws MappingException      if the data type of the property is unknown
      */
     @SuppressWarnings({"java:S3776", "java:S107"})
-    private static VectorIndexType.DistanceType vectorIndexDistanceType(AnnotationValue<VectorIndex> vectorIndex, PersistentProperty property) {
-        if (!vectorIndex.contains("distanceType") && property.isAssignable(BinaryVector.class)) {
-            // Oracle compares binary vectors with HAMMING or JACCARD only, like the derived query default
-            return VectorIndexType.DistanceType.HAMMING;
-        }
-        return vectorIndex.enumValue("distanceType", VectorIndexType.DistanceType.class).orElse(VectorIndexType.DistanceType.COSINE);
-    }
-
     private static SqlColumnMapping getColumnDefinition(List<SqlColumnDefinitionProvider> columnDefinitionProviders,
                                                         PersistentProperty prop,
                                                         String column,
