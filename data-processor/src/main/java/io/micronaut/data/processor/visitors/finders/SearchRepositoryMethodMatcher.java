@@ -77,42 +77,64 @@ public final class SearchRepositoryMethodMatcher implements MethodMatcher {
             throw new ProcessingException(matchContext.getMethodElement(), "Repository does not have a well-defined primary entity type");
         }
         if (SEARCH.equals(methodName)) {
-            ClassElement returnType = matchContext.getReturnType();
-            if (matchContext.getMethodElement().isSuspend()) {
-                returnType = TypeUtils.getKotlinCoroutineProducedType(matchContext.getMethodElement());
-                if (returnType == null) {
-                    return null;
-                }
-            } else if (TypeUtils.isReactiveOrFuture(returnType)) {
-                returnType = returnType.getFirstTypeArgument().orElse(returnType);
-            }
-            if (!returnType.getName().equals(SearchResults.class.getName())) {
-                return null;
-            }
-            if (searchQuery) {
-                ClassElement resultType = returnType;
-                String interceptor;
-                if (FindersUtils.isFutureType(matchContext.getMethodElement(), matchContext.getReturnType())) {
-                    interceptor = SEARCH_QUERY_ASYNC_INTERCEPTOR;
-                } else if (FindersUtils.isReactiveType(matchContext.getReturnType())) {
-                    interceptor = SEARCH_QUERY_REACTIVE_INTERCEPTOR;
-                } else {
-                    interceptor = SEARCH_QUERY_INTERCEPTOR;
-                }
-                return mc -> new MethodMatchInfo(
-                    DataMethod.OperationType.QUERY,
-                    resultType,
-                    FindersUtils.getInterceptorElement(matchContext, interceptor)
-                );
-            }
-            return new QueryCriteriaMethodMatch(List.of(
-                new MethodNameParser.Match(QueryMatchId.PREFIX, SEARCH),
-                new MethodNameParser.Match(QueryMatchId.PREDICATE, TextSearchSupport.KEYWORD)
-            ));
+            return matchSearch(matchContext, searchQuery);
         }
         if (searchQuery || !TypeUtils.isValidCountReturnType(matchContext)) {
             return null;
         }
+        return matchCountHits();
+    }
+
+    /**
+     * Matches {@code search(String)} as a derived query and {@code search(SearchQuery)} as a runtime query,
+     * for a plain, reactive, future or coroutine {@link SearchResults} return type.
+     */
+    @Nullable
+    private static MethodMatch matchSearch(MethodMatchContext matchContext, boolean searchQuery) {
+        ClassElement resultType = producedResultType(matchContext);
+        if (resultType == null || !resultType.getName().equals(SearchResults.class.getName())) {
+            return null;
+        }
+        if (searchQuery) {
+            String interceptor = searchQueryInterceptor(matchContext);
+            return mc -> new MethodMatchInfo(
+                DataMethod.OperationType.QUERY,
+                resultType,
+                FindersUtils.getInterceptorElement(matchContext, interceptor)
+            );
+        }
+        return new QueryCriteriaMethodMatch(List.of(
+            new MethodNameParser.Match(QueryMatchId.PREFIX, SEARCH),
+            new MethodNameParser.Match(QueryMatchId.PREDICATE, TextSearchSupport.KEYWORD)
+        ));
+    }
+
+    /**
+     * @return The type the method produces: the coroutine result, the publisher or future element, or the return type
+     */
+    @Nullable
+    private static ClassElement producedResultType(MethodMatchContext matchContext) {
+        ClassElement returnType = matchContext.getReturnType();
+        if (matchContext.getMethodElement().isSuspend()) {
+            return TypeUtils.getKotlinCoroutineProducedType(matchContext.getMethodElement());
+        }
+        if (TypeUtils.isReactiveOrFuture(returnType)) {
+            return returnType.getFirstTypeArgument().orElse(returnType);
+        }
+        return returnType;
+    }
+
+    private static String searchQueryInterceptor(MethodMatchContext matchContext) {
+        if (FindersUtils.isFutureType(matchContext.getMethodElement(), matchContext.getReturnType())) {
+            return SEARCH_QUERY_ASYNC_INTERCEPTOR;
+        }
+        if (FindersUtils.isReactiveType(matchContext.getReturnType())) {
+            return SEARCH_QUERY_REACTIVE_INTERCEPTOR;
+        }
+        return SEARCH_QUERY_INTERCEPTOR;
+    }
+
+    private static MethodMatch matchCountHits() {
         return new QueryCriteriaMethodMatch(List.of(
             new MethodNameParser.Match(QueryMatchId.PREFIX, "count"),
             new MethodNameParser.Match(QueryMatchId.PREDICATE, TextSearchSupport.KEYWORD)
