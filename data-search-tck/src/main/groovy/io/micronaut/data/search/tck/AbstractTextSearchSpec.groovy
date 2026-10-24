@@ -386,8 +386,13 @@ abstract class AbstractTextSearchSpec extends Specification {
         bookSearchRepository.save(literal)
 
         expect:
-        // 'bread' stems to match 'breads' in the english rows but not in the row indexed without stemming
+        // the query keeps the entity language, so 'bread' and 'breads' both stem to the 'bread' of the english
+        // rows, while the row indexed without stemming only holds the literal 'breads'
         bookSearchRepository.search("bread").results()*.entity()*.title == ["Baking Bread"]
-        bookSearchRepository.search("breads").results()*.entity()*.title as Set == ["Baking Bread", "Breads of the World"] as Set
+        bookSearchRepository.search("breads").results()*.entity()*.title == ["Baking Bread"]
+        // 'world' is left alone by the english stemmer, so the literal row matches it, but 'flatbreads' is stemmed
+        // to 'flatbread' and no longer matches the literal token
+        bookSearchRepository.search("world").results()*.entity()*.title == ["Breads of the World"]
+        bookSearchRepository.search("flatbreads").results().isEmpty()
     }
 }
