@@ -219,16 +219,16 @@ abstract class AbstractGraphRepositorySpec extends Specification {
         given:
         saveMovies()
 
-        when:
-        def page = movieRepository.findByReleasedGreaterThan(1990, Pageable.from(0, 2, Sort.of(Sort.Order.asc("title"))))
+        when: "the finder's criteria leave out Speed, released in 1994"
+        def page = movieRepository.findByReleasedGreaterThan(1995, Pageable.from(0, 1, Sort.of(Sort.Order.asc("title"))))
 
         then:
-        page.content*.title == ["Speed", "The Matrix"]
-        page.totalSize == 3
+        page.content*.title == ["The Matrix"]
+        page.totalSize == 2
         page.totalPages == 2
 
         when:
-        def second = movieRepository.findByReleasedGreaterThan(1990, page.nextPageable())
+        def second = movieRepository.findByReleasedGreaterThan(1995, page.nextPageable())
 
         then:
         second.content*.title == ["The Matrix Reloaded"]
