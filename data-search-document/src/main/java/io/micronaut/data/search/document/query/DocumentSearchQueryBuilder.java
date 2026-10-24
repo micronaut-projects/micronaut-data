@@ -196,7 +196,7 @@ public final class DocumentSearchQueryBuilder implements QueryBuilder {
      * @return Whether the property is an analysed text search field
      */
     public static boolean isAnalysed(PersistentProperty property) {
-        SearchFieldType type = property.getAnnotationMetadata().enumValue(SearchField.class, SearchField.TYPE, SearchFieldType.class).orElse(null);
+        SearchFieldType type = property.getAnnotationMetadata().enumValue(SearchField.class, SearchField.MEMBER_TYPE, SearchFieldType.class).orElse(null);
         if (type == null) {
             return property.getAnnotationMetadata().hasAnnotation(SearchField.class);
         }
@@ -443,7 +443,7 @@ public final class DocumentSearchQueryBuilder implements QueryBuilder {
             List<String> fieldNames = new ArrayList<>(fields.size());
             for (Expression<?> field : fields) {
                 PersistentPropertyPath propertyPath = requireProperty(field).getPropertyPath();
-                SearchWeight weight = propertyPath.getProperty().getAnnotationMetadata().enumValue(SearchField.class, SearchField.WEIGHT, SearchWeight.class).orElse(null);
+                SearchWeight weight = propertyPath.getProperty().getAnnotationMetadata().enumValue(SearchField.class, SearchField.MEMBER_WEIGHT, SearchWeight.class).orElse(null);
                 fieldNames.add(weight == null ? fieldName(propertyPath) : fieldName(propertyPath) + "^" + weight.numericWeight());
             }
             Map<String, Object> simpleQueryString = new LinkedHashMap<>();
