@@ -45,3 +45,21 @@ snippet::example.PersonRepositorySpec[project-base="doc-examples/neo4j-example",
 
 <1> Add a label. Saving the person adds it to the node.
 <2> Reading the person collects its labels beyond `Person`.
+
+== Dynamic relationships
+
+A map annotated with ann:data.graph.annotation.DynamicRelationships[] holds the outgoing relationships of a node whose types its entity does not declare. Each key is a relationship type and each value lists the nodes at the far end:
+
+snippet::example.Pet[project-base="doc-examples/neo4j-example", source="main", tags="relationships", languages="java,kotlin,groovy,python"]
+
+<1> The map holds the relationships of undeclared types, keyed by type.
+
+Saving an entity saves the nodes in the map and links them with `MERGE`, so saving it again does not duplicate its relationships. Reading an entity collects every outgoing relationship whose type is not declared by one of its ann:data.graph.annotation.Relationship[] properties, and maps each target node to the entity whose label it carries:
+
+snippet::example.PetRepositorySpec[project-base="doc-examples/neo4j-example", tags="dynamicRelationships", indent="0", languages="java,kotlin,groovy,python"]
+
+<1> Add a relationship of a type the entity does not declare.
+<2> Saving the entity saves the target node and the relationship.
+<3> Reading the entity reads its relationships back by type.
+
+Only the owning node writes and reads the map. Removing an entry does not delete the relationship from the database. Use an explicit query to delete it. Dynamic relationships are supported by Neo4j. Apache AGE and Oracle property graphs reject them at build time.
