@@ -254,6 +254,20 @@ public interface TextSearchDialect {
     }
 
     /**
+     * Renders the DDL of the index backing full-text search over an entity stored as one JSON column,
+     * if the dialect has one.
+     *
+     * @param indexName The escaped index name
+     * @param escapedTableName The escaped table name
+     * @param escapedJsonColumn The escaped JSON column holding the whole entity
+     * @return The {@code CREATE INDEX} statements, empty when the dialect needs no index
+     * @since 5.4.0
+     */
+    default List<String> buildJsonSearchIndex(String indexName, String escapedTableName, String escapedJsonColumn) {
+        return List.of();
+    }
+
+    /**
      * Where the searched entity lives: a JSON column for JSON-represented entities, else plain columns.
      *
      * @param jsonColumn The JSON column holding the whole entity, or {@code null} for relational entities
@@ -546,8 +560,9 @@ public interface TextSearchDialect {
      * per field and {@code SCORE(n)} for the relevance, weighted by {@link SearchField#weight()}.
      *
      * <p>A search over several fields matches any field with the positive terms and then excludes rows
-     * where any field matches a negated term. JSON-represented entities use
-     * {@code JSON_TEXTCONTAINS(column, '$.path', ?, n)} instead.</p>
+     * where any field matches a negated term. JSON-represented entities get one JSON search index over
+     * the column and use {@code CONTAINS(column, '(' || ? || ') INPATH (/path)', n) > 0}, which unlike
+     * {@code JSON_TEXTCONTAINS} carries a label for {@code SCORE(n)}.</p>
      */
     enum OracleTextSearchDialect implements TextSearchDialect {
         INSTANCE;
@@ -658,8 +673,20 @@ public interface TextSearchDialect {
                 statements.add("CREATE INDEX " + name + " ON " + escapedTableName + " (" + column.column()
                     + ") INDEXTYPE IS CTXSYS.CONTEXT PARAMETERS ('SYNC (ON COMMIT)');");
             }
-            statements.add("BEGIN CTX_DDL.CREATE_POLICY('" + POLICY_NAME + "'); EXCEPTION WHEN OTHERS THEN IF SQLCODE != -20000 THEN RAISE; END IF; END;");
+            statements.add(createPolicyStatement());
             return statements;
+        }
+
+        @Override
+        public List<String> buildJsonSearchIndex(String indexName, String escapedTableName, String escapedJsonColumn) {
+            return List.of(
+                "CREATE SEARCH INDEX " + indexName + " ON " + escapedTableName + " (" + escapedJsonColumn + ") FOR JSON PARAMETERS ('SYNC (ON COMMIT)');",
+                createPolicyStatement()
+            );
+        }
+
+        private static String createPolicyStatement() {
+            return "BEGIN CTX_DDL.CREATE_POLICY('" + POLICY_NAME + "'); EXCEPTION WHEN OTHERS THEN IF SQLCODE != -20000 THEN RAISE; END IF; END;";
         }
 
         private void appendAnyField(StringBuilder query,
@@ -685,13 +712,15 @@ public interface TextSearchDialect {
                                     Consumer<Expression<?>> appendExpression,
                                     Consumer<Expression<?>> appendQuery) {
             if (target.jsonColumn() != null && field instanceof io.micronaut.data.model.jpa.criteria.PersistentPropertyPath<?> propertyPath) {
-                query.append("JSON_TEXTCONTAINS(");
+                // CONTAINS with INPATH on the JSON search index: unlike JSON_TEXTCONTAINS it carries a label, so SCORE(n) works
+                query.append("CONTAINS(");
                 if (target.tableAlias() != null) {
                     query.append(target.tableAlias()).append('.');
                 }
-                query.append(target.jsonColumn()).append(",'$.").append(propertyPath.getPropertyPath().getPath()).append("',");
+                query.append(target.jsonColumn()).append(",'(' || ");
                 appendQuery.accept(queryExpression);
-                query.append(',').append(label).append(')');
+                query.append(" || ') INPATH (/").append(propertyPath.getPropertyPath().getPath().replace('.', '/')).append(")',")
+                    .append(label).append(CONTAINS_SUFFIX);
                 return;
             }
             query.append("CONTAINS(");

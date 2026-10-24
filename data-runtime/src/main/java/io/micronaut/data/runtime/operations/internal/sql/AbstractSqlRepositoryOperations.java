@@ -31,6 +31,8 @@ import io.micronaut.core.type.Argument;
 import io.micronaut.core.util.CollectionUtils;
 import io.micronaut.core.util.StringUtils;
 import io.micronaut.data.annotation.AutoPopulated;
+import io.micronaut.data.annotation.DataAnnotationUtils;
+import io.micronaut.data.annotation.EntityRepresentation;
 import io.micronaut.data.annotation.MappedProperty;
 import io.micronaut.data.annotation.Projection;
 import io.micronaut.data.annotation.Repository;
@@ -927,14 +929,22 @@ public abstract class AbstractSqlRepositoryOperations<RS, PS, Exc extends Except
      */
     protected <E> SearchResultsMapper<RS, E> createSearchResultsResultMapper(SqlStoredQuery<E, ?> preparedQuery, Class<RS> rsType) {
         RuntimePersistentEntity<E> persistentEntity = preparedQuery.getPersistentEntity();
-        SqlTypeMapper<RS, E> entityMapper = new SqlResultEntityTypeMapper<>(
-            getEntity(persistentEntity.getIntrospection().getBeanType()),
-            preparedQuery.isDtoProjection() ? createColumnNameResultSetReaderWithColumnExistenceAware() : columnNameResultSetReader,
-            preparedQuery.getJoinPaths(),
-            sqlJsonColumnMapperProvider.getJsonColumnReader(preparedQuery, rsType),
-            null,
-            conversionService,
-            conversionContextFactory);
+        SqlTypeMapper<RS, E> entityMapper;
+        // runtime-built criteria queries don't flag isJsonEntity(), so read the representation off the metadata
+        String jsonEntityColumn = DataAnnotationUtils.hasJsonEntityRepresentationAnnotation(preparedQuery.getAnnotationMetadata()) ? jsonEntityColumn(preparedQuery) : null;
+        if (jsonEntityColumn != null) {
+            // the entity is one JSON column, selected next to the score
+            entityMapper = createJsonQueryResultMapper(preparedQuery, jsonEntityColumn, JsonDataType.DEFAULT, rsType, persistentEntity, null);
+        } else {
+            entityMapper = new SqlResultEntityTypeMapper<>(
+                getEntity(persistentEntity.getIntrospection().getBeanType()),
+                preparedQuery.isDtoProjection() ? createColumnNameResultSetReaderWithColumnExistenceAware() : columnNameResultSetReader,
+                preparedQuery.getJoinPaths(),
+                sqlJsonColumnMapperProvider.getJsonColumnReader(preparedQuery, rsType),
+                null,
+                conversionService,
+                conversionContextFactory);
+        }
         return new SearchResultsMapper<>(
             entityMapper,
             columnNameResultSetReader,
@@ -942,6 +952,16 @@ public abstract class AbstractSqlRepositoryOperations<RS, PS, Exc extends Except
             resolveVectorScoringFunction(preparedQuery),
             TextSearchSupport.highlightedProperties(preparedQuery.getQuery())
         );
+    }
+
+    /**
+     * @param storedQuery A query over an entity stored as one JSON column
+     * @return The column, from {@code @EntityRepresentation(column)}, or {@code null} when the metadata lacks it
+     */
+    @Nullable
+    private static String jsonEntityColumn(SqlStoredQuery<?, ?> storedQuery) {
+        AnnotationValue<EntityRepresentation> representation = storedQuery.getAnnotationMetadata().getAnnotation(EntityRepresentation.class);
+        return representation == null ? null : representation.stringValue("column").orElse(null);
     }
 
     /**
