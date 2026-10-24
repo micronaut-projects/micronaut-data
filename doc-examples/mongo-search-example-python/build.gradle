@@ -16,6 +16,7 @@ dependencies {
     implementation projects.micronautDataDocumentProcessor
     implementation projects.micronautDataMongodb
     implementation mnMongo.mongo.driver
+    implementation(mnSql.jakarta.persistence.api)
     testImplementation(mnTestResources.micronaut.test.resources.extensions.junit.platform)
 
     runtimeOnly mnLogging.logback.classic
