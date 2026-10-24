@@ -167,6 +167,24 @@ public final class ElasticsearchSearchTransport implements SearchTransport {
         }
     }
 
+    @Override
+    public void deleteIndex(String index) {
+        try {
+            client.indices().delete(d -> d.index(index));
+        } catch (IOException e) {
+            throw new DataAccessException("Elasticsearch delete index failed: " + e.getMessage(), e);
+        }
+    }
+
+    @Override
+    public void refresh(String index) {
+        try {
+            client.indices().refresh(r -> r.index(index));
+        } catch (IOException e) {
+            throw new DataAccessException("Elasticsearch refresh failed: " + e.getMessage(), e);
+        }
+    }
+
     private static Refresh refresh(DocumentSearchConfiguration.Refresh refresh) {
         return ElasticsearchAsyncSearchTransport.refresh(refresh);
     }

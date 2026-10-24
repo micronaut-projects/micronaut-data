@@ -1070,6 +1070,75 @@ public class SqlQueryBuilder extends AbstractSqlLikeQueryBuilder {
     }
 
     /**
+     * The statements creating the full-text search indexes of a {@link Searchable} entity, for a runtime
+     * {@code create} after the schema exists.
+     *
+     * @param entity The entity
+     * @return The statements, empty when the entity is not searchable or the dialect needs no index
+     * @since 5.4.0
+     */
+    @Experimental
+    public List<String> buildCreateSearchIndexStatements(PersistentEntity entity) {
+        List<String> statements = new ArrayList<>();
+        if (DataAnnotationUtils.hasJsonEntityRepresentationAnnotation(entity.getAnnotationMetadata())) {
+            addJsonEntityCreateStatements(new ArrayList<>(), statements, entity);
+            return statements;
+        }
+        boolean escape = shouldEscape(entity);
+        String schema = SqlQueryBuilderUtils.getSchemaName(entity);
+        for (SqlTableMapping table : SqlSchemaUtils.getSqlTableMappings(List.of(), entity, dialect)) {
+            createSearchIndexStatement(entity, table, schema, escape, statements);
+        }
+        return statements;
+    }
+
+    /**
+     * The names of the full-text search indexes of a {@link Searchable} entity, escaped as the DDL creates them.
+     *
+     * @param entity The entity
+     * @return The index names, empty when the entity is not searchable or the dialect needs no index
+     * @since 5.4.0
+     */
+    @Experimental
+    public List<String> searchIndexNames(PersistentEntity entity) {
+        TextSearchDialect textSearchDialect = TextSearchDialect.forDialect(dialect);
+        if (textSearchDialect == null || !entity.getAnnotationMetadata().hasAnnotation(Searchable.class) || TextSearchSupport.searchFields(entity).isEmpty()) {
+            return List.of();
+        }
+        boolean escape = shouldEscape(entity);
+        if (DataAnnotationUtils.hasJsonEntityRepresentationAnnotation(entity.getAnnotationMetadata())) {
+            return List.of(escape ? quote(searchIndexName(entity)) : searchIndexName(entity));
+        }
+        return textSearchDialect.searchIndexNames(escape ? quote(searchIndexName(entity)) : searchIndexName(entity), searchColumns(entity, escape));
+    }
+
+    private String searchIndexName(PersistentEntity entity) {
+        return entity.getAnnotationMetadata().stringValue(Searchable.class, "name")
+            .filter(StringUtils::isNotEmpty)
+            .orElseGet(() -> "idx_" + prepareNames(getUnescapedTableName(entity)) + "_search");
+    }
+
+    private List<TextSearchDialect.SearchColumn> searchColumns(PersistentEntity entity, boolean escape) {
+        NamingStrategy namingStrategy = getNamingStrategy(entity);
+        List<PersistentProperty> fields = TextSearchSupport.searchFields(entity);
+        List<TextSearchDialect.SearchColumn> columns = new ArrayList<>(fields.size());
+        for (PersistentProperty field : fields) {
+            String column = namingStrategy.mappedName(Collections.emptyList(), field);
+            String trigramIndex = null;
+            if (field.getAnnotationMetadata().booleanValue(SearchField.class, SearchField.MEMBER_FUZZY).orElse(false)) {
+                String name = "idx_" + prepareNames(getUnescapedTableName(entity)) + "_" + prepareNames(column) + "_trgm";
+                trigramIndex = escape ? quote(name) : name;
+            }
+            columns.add(new TextSearchDialect.SearchColumn(
+                escape ? quote(column) : column,
+                field.getAnnotationMetadata().enumValue(SearchField.class, SearchField.MEMBER_WEIGHT, SearchWeight.class).orElse(null),
+                trigramIndex
+            ));
+        }
+        return columns;
+    }
+
+    /**
      * Adds the full-text search index of a {@link Searchable} entity, when the dialect backs search with an index.
      */
     private void createSearchIndexStatement(PersistentEntity entity, SqlTableMapping table, @Nullable String schema, boolean escape, List<String> createStatements) {

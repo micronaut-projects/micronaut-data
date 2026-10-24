@@ -26,6 +26,7 @@ import io.micronaut.data.model.search.SearchSyntax
 import io.micronaut.data.model.search.UnsupportedSearchFeatureException
 import io.micronaut.data.model.vector.Vector
 import io.micronaut.data.model.vector.search.Score
+import io.micronaut.data.runtime.search.SearchIndexOperations
 import org.jspecify.annotations.Nullable
 import io.micronaut.data.search.tck.entities.Book
 import io.micronaut.data.search.tck.repositories.BookPhraseSearchRepository
@@ -112,6 +113,16 @@ abstract class AbstractTextSearchSpec extends Specification {
     @Nullable
     String nativeProgrammingWithoutKotlinQuery() {
         return null
+    }
+
+    /**
+     * @return The index operations of the backend, or {@code null} when it has none; the first
+     * {@link SearchIndexOperations} bean by default
+     */
+    @Nullable
+    SearchIndexOperations searchIndexOperations() {
+        def beans = context.getBeansOfType(SearchIndexOperations)
+        return beans.isEmpty() ? null : beans.iterator().next()
     }
 
     /**
@@ -330,6 +341,32 @@ abstract class AbstractTextSearchSpec extends Specification {
         bookSearchRepository.findByTitleSearchNative(nativeProgrammingWithoutKotlinQuery())*.title == ["The Rust Programming Language"]
         bookSearchRepository.search(SearchQuery.builder(nativeProgrammingWithoutKotlinQuery()).syntax(SearchSyntax.NATIVE).build()).results()*.entity()*.title == ["The Rust Programming Language"]
         SearchQuery.builder("x").syntax(SearchSyntax.NATIVE).build().mode == MatchMode.NATIVE
+    }
+
+    void "the index operations drop, create and sync the search index"() {
+        def operations = searchIndexOperations()
+        assumeTrue(operations != null)
+        def type = newBook("x", "x", "x", 1).getClass()
+
+        expect:
+        operations.exists(type)
+
+        when:
+        operations.drop(type)
+
+        then:
+        !operations.exists(type)
+
+        when: "the index is created again and a new book indexed"
+        operations.create(type)
+        operations.sync(type)
+        bookSearchRepository.save(newBook("The Rebuilt Index Guide", "Indexes after a rebuild", "Builder", 90))
+        operations.sync(type)
+        awaitIndexing()
+
+        then:
+        operations.exists(type)
+        bookSearchRepository.findByTitleSearch("rebuilt")*.title == ["The Rebuilt Index Guide"]
     }
 
     void "a language override selects the stemming of the query"() {

@@ -17,6 +17,7 @@ package io.micronaut.data.search.document.conf;
 
 import io.micronaut.context.annotation.ConfigurationProperties;
 import io.micronaut.core.annotation.Nullable;
+import io.micronaut.data.runtime.config.SchemaGenerate;
 
 /**
  * Configuration of the document search stores.
@@ -40,6 +41,7 @@ public class DocumentSearchConfiguration {
     private String indexPrefix;
     private Refresh refresh = Refresh.WAIT_FOR;
     private boolean createIndexes = true;
+    private SchemaGenerate schemaGenerate = SchemaGenerate.CREATE;
 
     /**
      * @return A prefix added to every index name, for per-environment naming
@@ -75,6 +77,21 @@ public class DocumentSearchConfiguration {
      */
     public boolean isCreateIndexes() {
         return createIndexes;
+    }
+
+    /**
+     * @return How the indexes of searchable entities are generated on startup: {@code CREATE} (the default)
+     * creates the missing ones, {@code CREATE_DROP} drops and recreates them, {@code NONE} leaves them alone
+     */
+    public SchemaGenerate getSchemaGenerate() {
+        return createIndexes ? schemaGenerate : SchemaGenerate.NONE;
+    }
+
+    /**
+     * @param schemaGenerate How the indexes are generated on startup
+     */
+    public void setSchemaGenerate(SchemaGenerate schemaGenerate) {
+        this.schemaGenerate = schemaGenerate;
     }
 
     /**

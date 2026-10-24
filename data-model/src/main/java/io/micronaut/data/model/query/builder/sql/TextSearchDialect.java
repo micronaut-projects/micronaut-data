@@ -277,6 +277,57 @@ public interface TextSearchDialect {
     }
 
     /**
+     * The names of the indexes {@link #buildSearchIndex} creates, escaped like its arguments.
+     *
+     * @param indexName The escaped index name
+     * @param columns The search field columns
+     * @return The index names, empty when the dialect needs no index
+     * @since 5.4.0
+     */
+    default List<String> searchIndexNames(String indexName, List<SearchColumn> columns) {
+        return List.of();
+    }
+
+    /**
+     * @param indexName An escaped index name
+     * @return The statement dropping it
+     * @since 5.4.0
+     */
+    default String buildDropSearchIndex(String indexName) {
+        return "DROP INDEX " + indexName;
+    }
+
+    /**
+     * Renders the statements making the pending writes of the indexes searchable.
+     *
+     * @param indexNames The escaped index names
+     * @return The statements, empty when the indexes are always current
+     * @since 5.4.0
+     */
+    default List<String> buildSyncSearchIndex(List<String> indexNames) {
+        return List.of();
+    }
+
+    /**
+     * @return A query counting the indexes with the name bound as its one parameter, in the form the
+     * catalog stores it, or {@code null} when the dialect cannot tell
+     * @since 5.4.0
+     */
+    @Nullable
+    default String searchIndexExistsQuery() {
+        return null;
+    }
+
+    /**
+     * @param indexName An escaped index name
+     * @return The name as the catalog stores it
+     * @since 5.4.0
+     */
+    default String catalogIndexName(String indexName) {
+        return indexName.replace("\"", "");
+    }
+
+    /**
      * Renders the DDL of the index backing full-text search over an entity stored as one JSON column,
      * if the dialect has one.
      *
@@ -340,6 +391,14 @@ public interface TextSearchDialect {
      */
     enum PostgresTextSearchDialect implements TextSearchDialect {
         INSTANCE;
+
+        /**
+         * The immutable wrapper of the {@code text} to {@code regconfig} cast that a per-row {@code @Language}
+         * column needs inside an index expression; schema generation creates it.
+         */
+        public static final String REGCONFIG_FUNCTION = "mn_regconfig";
+        private static final String REGCONFIG_FUNCTION_DDL = "CREATE OR REPLACE FUNCTION " + REGCONFIG_FUNCTION
+            + "(cfg text) RETURNS regconfig AS 'SELECT cfg::regconfig' LANGUAGE sql IMMUTABLE;";
 
         @Override
         public void appendTextMatch(StringBuilder query,
@@ -504,12 +563,38 @@ public interface TextSearchDialect {
         }
 
         @Override
+        public List<String> searchIndexNames(String indexName, List<SearchColumn> columns) {
+            List<String> names = new ArrayList<>(1 + columns.size());
+            names.add(indexName);
+            for (SearchColumn column : columns) {
+                if (column.trigramIndex() != null) {
+                    names.add(column.trigramIndex());
+                }
+            }
+            return names;
+        }
+
+        @Override
+        public String buildDropSearchIndex(String indexName) {
+            return "DROP INDEX IF EXISTS " + indexName + ";";
+        }
+
+        @Override
+        public String searchIndexExistsQuery() {
+            return "SELECT count(*) FROM pg_indexes WHERE indexname = ?";
+        }
+
+        @Override
         public List<String> buildSearchIndex(String indexName, String escapedTableName, List<SearchColumn> columns, String language, @Nullable String languageColumn) {
             StringBuilder ddl = new StringBuilder("CREATE INDEX ").append(indexName).append(" ON ").append(escapedTableName).append(" USING GIN (");
             List<SearchWeight> weights = columns.stream().map(SearchColumn::weight).toList();
             List<Consumer<StringBuilder>> renderers = columns.stream().map(c -> (Consumer<StringBuilder>) sb -> sb.append(c.column())).toList();
             appendVector(ddl, renderers, weights, language, languageColumn);
-            List<String> statements = new ArrayList<>(3);
+            List<String> statements = new ArrayList<>(4);
+            if (languageColumn != null) {
+                // the text to regconfig cast is only stable, so an index over a per-row configuration needs an immutable wrapper
+                statements.add(REGCONFIG_FUNCTION_DDL);
+            }
             statements.add(ddl.append(");").toString());
             // a pg_trgm GIN index per column marked @SearchField(fuzzy = true), after the trusted extension
             boolean trigram = false;
@@ -544,10 +629,11 @@ public interface TextSearchDialect {
                                          List<SearchWeight> weights,
                                          String language,
                                          @Nullable String languageColumn) {
-            // a @Language column selects the text search configuration per row, the entity language is its fallback
+            // a @Language column selects the text search configuration per row, the entity language is its fallback;
+            // the cast goes through an immutable function so the expression can be indexed
             String config = languageColumn == null
                 ? "'" + language + "'"
-                : "coalesce(" + languageColumn + ",'" + language + "')::regconfig";
+                : REGCONFIG_FUNCTION + "(coalesce(" + languageColumn + ",'" + language + "'))";
             boolean multiple = fieldRenderers.size() > 1;
             if (multiple) {
                 query.append('(');
@@ -704,14 +790,46 @@ public interface TextSearchDialect {
         public List<String> buildSearchIndex(String indexName, String escapedTableName, List<SearchColumn> columns, String language) {
             List<String> statements = new java.util.ArrayList<>(columns.size());
             for (SearchColumn column : columns) {
-                String name = indexName.endsWith("\"")
-                    ? indexName.substring(0, indexName.length() - 1) + "_" + column.column().replace("\"", "") + "\""
-                    : indexName + "_" + column.column();
-                statements.add("CREATE INDEX " + name + " ON " + escapedTableName + " (" + column.column()
+                statements.add("CREATE INDEX " + columnIndexName(indexName, column) + " ON " + escapedTableName + " (" + column.column()
                     + ") INDEXTYPE IS CTXSYS.CONTEXT PARAMETERS ('SYNC (ON COMMIT)');");
             }
             statements.add(createPolicyStatement());
             return statements;
+        }
+
+        @Override
+        public List<String> searchIndexNames(String indexName, List<SearchColumn> columns) {
+            List<String> names = new java.util.ArrayList<>(columns.size());
+            for (SearchColumn column : columns) {
+                names.add(columnIndexName(indexName, column));
+            }
+            return names;
+        }
+
+        @Override
+        public List<String> buildSyncSearchIndex(List<String> indexNames) {
+            List<String> statements = new java.util.ArrayList<>(indexNames.size());
+            for (String name : indexNames) {
+                statements.add("BEGIN CTX_DDL.SYNC_INDEX('" + catalogIndexName(name) + "'); END;");
+            }
+            return statements;
+        }
+
+        @Override
+        public String searchIndexExistsQuery() {
+            return "SELECT count(*) FROM user_indexes WHERE index_name = ?";
+        }
+
+        @Override
+        public String catalogIndexName(String indexName) {
+            // an unquoted identifier is stored in upper case
+            return indexName.startsWith("\"") ? indexName.replace("\"", "") : indexName.toUpperCase(java.util.Locale.ROOT);
+        }
+
+        private static String columnIndexName(String indexName, SearchColumn column) {
+            return indexName.endsWith("\"")
+                ? indexName.substring(0, indexName.length() - 1) + "_" + column.column().replace("\"", "") + "\""
+                : indexName + "_" + column.column();
         }
 
         @Override

@@ -25,6 +25,7 @@ import io.micronaut.data.annotation.MappedEntity;
 import io.micronaut.data.annotation.search.Searchable;
 import io.micronaut.data.model.runtime.RuntimeEntityRegistry;
 import io.micronaut.data.model.runtime.RuntimePersistentEntity;
+import io.micronaut.data.runtime.config.SchemaGenerate;
 import io.micronaut.data.search.document.conf.DocumentSearchConfiguration;
 import io.micronaut.data.search.document.runtime.DocumentSearchRepositoryOperations;
 import org.slf4j.Logger;
@@ -50,7 +51,11 @@ public final class SearchIndexCreator {
      * @param operations Every document search operations bean
      * @param runtimeEntityRegistry The entity registry
      */
-    SearchIndexCreator(List<DocumentSearchRepositoryOperations> operations, RuntimeEntityRegistry runtimeEntityRegistry) {
+    SearchIndexCreator(List<DocumentSearchRepositoryOperations> operations, RuntimeEntityRegistry runtimeEntityRegistry, DocumentSearchConfiguration configuration) {
+        SchemaGenerate schemaGenerate = configuration.getSchemaGenerate();
+        if (schemaGenerate == SchemaGenerate.NONE) {
+            return;
+        }
         for (BeanIntrospection<Object> introspection : BeanIntrospector.SHARED.findIntrospections(MappedEntity.class)) {
             Class<Object> type = introspection.getBeanType();
             if (type.getName().contains("$") || Modifier.isAbstract(type.getModifiers()) || !introspection.hasAnnotation(Searchable.class)) {
@@ -59,7 +64,15 @@ public final class SearchIndexCreator {
             RuntimePersistentEntity<Object> entity = runtimeEntityRegistry.getEntity(type);
             for (DocumentSearchRepositoryOperations ops : operations) {
                 String index = ops.getIndexName(type);
-                if (!ops.getTransport().indexExists(index)) {
+                boolean exists = ops.getTransport().indexExists(index);
+                if (exists && schemaGenerate == SchemaGenerate.CREATE_DROP) {
+                    if (LOG.isInfoEnabled()) {
+                        LOG.info("Dropping search index: {} for entity: {}", index, type.getName());
+                    }
+                    ops.getTransport().deleteIndex(index);
+                    exists = false;
+                }
+                if (!exists) {
                     if (LOG.isInfoEnabled()) {
                         LOG.info("Creating search index: {} for entity: {}", index, type.getName());
                     }

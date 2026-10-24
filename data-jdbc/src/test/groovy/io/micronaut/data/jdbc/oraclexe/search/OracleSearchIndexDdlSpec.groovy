@@ -2,6 +2,7 @@ package io.micronaut.data.jdbc.oraclexe.search
 
 import io.micronaut.data.model.query.builder.sql.Dialect
 import io.micronaut.data.model.query.builder.sql.SqlQueryBuilder
+import io.micronaut.data.model.query.builder.sql.TextSearchDialect
 import io.micronaut.data.model.runtime.RuntimePersistentEntity
 import io.micronaut.data.search.tck.entities.Book
 import spock.lang.Specification
@@ -29,5 +30,21 @@ class OracleSearchIndexDdlSpec extends Specification {
         statements[0] == 'CREATE TABLE "JSON_BOOK" ("DATA" JSON NOT NULL);'
         statements[1] == 'CREATE SEARCH INDEX "IDX_JSON_BOOK_SEARCH" ON "JSON_BOOK" ("DATA") FOR JSON PARAMETERS (\'SYNC (ON COMMIT)\');'
         statements[2] == "BEGIN CTX_DDL.CREATE_POLICY('MN_SEARCH_POLICY'); EXCEPTION WHEN OTHERS THEN IF SQLCODE != -20000 THEN RAISE; END IF; END;"
+    }
+
+    void "the search index names and statements are exposed for the runtime index operations"() {
+        given:
+        def builder = new SqlQueryBuilder(Dialect.ORACLE)
+        def dialect = TextSearchDialect.forDialect(Dialect.ORACLE)
+
+        expect:
+        builder.searchIndexNames(new RuntimePersistentEntity<>(Book)) == ['"IDX_SEARCH_BOOK_SEARCH_TITLE"', '"IDX_SEARCH_BOOK_SEARCH_DESCRIPTION"']
+        builder.searchIndexNames(new RuntimePersistentEntity<>(OracleJsonBook)) == ['"IDX_JSON_BOOK_SEARCH"']
+        builder.buildCreateSearchIndexStatements(new RuntimePersistentEntity<>(Book)) == builder.buildCreateTableStatements(new RuntimePersistentEntity<>(Book)).toList().drop(1)
+        builder.buildCreateSearchIndexStatements(new RuntimePersistentEntity<>(OracleJsonBook)) == builder.buildCreateTableStatements(new RuntimePersistentEntity<>(OracleJsonBook)).toList().drop(1)
+        dialect.buildDropSearchIndex('"IDX_JSON_BOOK_SEARCH"') == 'DROP INDEX "IDX_JSON_BOOK_SEARCH"'
+        dialect.catalogIndexName('"IDX_JSON_BOOK_SEARCH"') == 'IDX_JSON_BOOK_SEARCH'
+        dialect.catalogIndexName('idx_plain') == 'IDX_PLAIN'
+        dialect.buildSyncSearchIndex(['"IDX_JSON_BOOK_SEARCH"']) == ["BEGIN CTX_DDL.SYNC_INDEX('IDX_JSON_BOOK_SEARCH'); END;"]
     }
 }

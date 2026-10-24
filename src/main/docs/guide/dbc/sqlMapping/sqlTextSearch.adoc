@@ -12,7 +12,7 @@ snippet::example.Book[project-base="doc-examples/jdbc-search-example", source="m
 <2> `weight` makes matches in this property count more in the relevance score; PostgreSQL maps `HIGH`, `MEDIUM`, `LOW` and `LOWEST` to the labels `A` to `D` of `setweight`. `fuzzy` adds a `pg_trgm` GIN index over the column for `SearchFuzzy` queries.
 <3> A property without a declared weight is indexed without a label.
 
-A property annotated ann:data.annotation.search.Language[] holds the language of each row, with the entity language as the fallback when it is `null`: PostgreSQL uses it as the text search configuration of the row's `tsvector`, `to_tsvector(coalesce(language, 'english')::regconfig, ...)`, in the queries and in the generated index, while the query string keeps the entity language; MongoDB passes it as `language_override`. Oracle, Elasticsearch and OpenSearch ignore it, as their analysis is fixed per index.
+A property annotated ann:data.annotation.search.Language[] holds the language of each row, with the entity language as the fallback when it is `null`: PostgreSQL uses it as the text search configuration of the row's `tsvector`, `to_tsvector(mn_regconfig(coalesce(language,'english')), ...)`, in the queries and in the generated index, while the query string keeps the entity language; MongoDB passes it as `language_override`. Oracle, Elasticsearch and OpenSearch ignore it, as their analysis is fixed per index.
 
 With schema generation enabled, Micronaut Data creates a `GIN` expression index over the combined `tsvector` of the search fields, so the generated queries use the index. For a production schema, create the same index with your migration tool; the expression is printed in the generated DDL.
 
@@ -135,6 +135,10 @@ The criteria builder exposes the same predicate through `PersistentEntityCriteri
 - The default lexer matches words literally; there is no stemming unless the index is created with a lexer that enables it. A `@Language` column is ignored.
 - Entities stored as a JSON column (`@EntityRepresentation(columnType = JSON)`) get one JSON search index over the column, created by schema generation as `CREATE SEARCH INDEX idx_<table>_search ON <table> (<column>) FOR JSON PARAMETERS ('SYNC (ON COMMIT)')`, and are searched with `CONTAINS(<column>, '(' || ? || ') INPATH (/<property>)', n) > 0`, which ranks with `SCORE(n)` like a relational entity. A JSON search index cannot be created on a JSON-relational duality view, so `@JsonView` entities are not searchable.
 - Highlights render `CTX_DOC.POLICY_SNIPPET('MN_SEARCH_POLICY', <column>, ?, starttag => '<em>', endtag => '</em>')` over the column text, or over `JSON_VALUE` for a JSON entity. The `MN_SEARCH_POLICY` Oracle Text policy is created by schema generation with the default lexer; create it in your migrations with `CTX_DDL.CREATE_POLICY('MN_SEARCH_POLICY')`, which needs the `CTXAPP` role.
+
+== Index operations
+
+Schema generation creates the search indexes with the tables. To manage them while the application runs, inject api:data.runtime.search.SearchIndexOperations[]: `exists`, `create`, `drop`, `recreate` and `sync` take the entity class. On a JDBC datasource (one bean per datasource) they run the dialect's DDL, `sync` runs `CTX_DDL.SYNC_INDEX` on Oracle Text and nothing on PostgreSQL, whose GIN indexes are always current. On MongoDB they manage the `$text` index or the search and vector search indexes, and `sync` waits until the search indexes are queryable. On Elasticsearch and OpenSearch the index holds the documents, so `drop` removes them; `sync` refreshes the index. The document stores also take `micronaut.data.search.schema-generate` (`CREATE` by default, `CREATE_DROP` or `NONE`) for the indexes created on startup.
 
 == Capability matrix
 
