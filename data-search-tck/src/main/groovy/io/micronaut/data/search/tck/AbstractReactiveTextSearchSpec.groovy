@@ -22,18 +22,40 @@ abstract class AbstractReactiveTextSearchSpec extends Specification {
     @Shared
     ApplicationContext context = ApplicationContext.run(properties)
 
-    abstract ReactorBookSearchRepository getBookSearchRepository()
+    /**
+     * @return The reactive repository under test, a {@link ReactorBookSearchRepository} or a repository
+     * of an entity with the same properties as {@link Book}
+     */
+    abstract def getBookSearchRepository()
 
-    abstract AsyncBookSearchRepository getAsyncBookSearchRepository()
+    /**
+     * @return The async repository under test, an {@link AsyncBookSearchRepository} or a repository
+     * of an entity with the same properties as {@link Book}
+     */
+    abstract def getAsyncBookSearchRepository()
+
+    /**
+     * Creates the entity the repository under test stores.
+     */
+    def newBook(String title, String description, String author, int pages) {
+        return new Book(title, description, author, pages)
+    }
+
+    /**
+     * Waits until the backend has indexed every saved entity, for stores that index asynchronously.
+     */
+    void awaitIndexing() {
+    }
 
     void setup() {
         bookSearchRepository.deleteAll().block()
         bookSearchRepository.saveAll([
-                new Book("The Rust Programming Language", "Learn systems programming with Rust", "Klabnik", 560),
-                new Book("Programming Kotlin", "Kotlin for the JVM and beyond", "Subramaniam", 460),
-                new Book("Java Concurrency in Practice", "Threads and locks for the Java programmer", "Goetz", 400),
-                new Book("Cooking with Coffee", "Recipes and desserts made with coffee beans", "Bean", 120),
+                newBook("The Rust Programming Language", "Learn systems programming with Rust", "Klabnik", 560),
+                newBook("Programming Kotlin", "Kotlin for the JVM and beyond", "Subramaniam", 460),
+                newBook("Java Concurrency in Practice", "Threads and locks for the Java programmer", "Goetz", 400),
+                newBook("Cooking with Coffee", "Recipes and desserts made with coffee beans", "Bean", 120),
         ]).collectList().block()
+        awaitIndexing()
     }
 
     void cleanup() {
@@ -61,7 +83,8 @@ abstract class AbstractReactiveTextSearchSpec extends Specification {
 
     void "reactive CRUD round trip"() {
         when:
-        def saved = bookSearchRepository.save(new Book("Baking Bread", "Sourdough for the home baker", "Dough", 220)).block()
+        def saved = bookSearchRepository.save(newBook("Baking Bread", "Sourdough for the home baker", "Dough", 220)).block()
+        awaitIndexing()
 
         then:
         saved.id != null

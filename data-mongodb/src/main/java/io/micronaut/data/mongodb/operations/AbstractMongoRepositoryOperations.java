@@ -73,6 +73,7 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 import java.util.Iterator;
+import java.util.LinkedHashMap;
 import java.util.List;
 import java.util.Map;
 import java.util.Optional;
@@ -348,9 +349,23 @@ abstract sealed class AbstractMongoRepositoryOperations<Dtb> extends AbstractRep
                                                  RuntimePersistentEntity<T> persistentEntity) {
         BsonValue scoreValue = document.remove(TextSearchSupport.SCORE_ALIAS);
         double score = scoreValue != null && scoreValue.isNumber() ? scoreValue.asNumber().doubleValue() : 0d;
+        Map<String, List<String>> highlights = Map.of();
+        Iterator<Map.Entry<String, BsonValue>> fields = document.entrySet().iterator();
+        while (fields.hasNext()) {
+            Map.Entry<String, BsonValue> field = fields.next();
+            if (field.getKey().startsWith(TextSearchSupport.HIGHLIGHT_ALIAS_PREFIX)) {
+                if (highlights.isEmpty()) {
+                    highlights = new LinkedHashMap<>();
+                }
+                String fragment = field.getValue().isString() ? field.getValue().asString().getValue() : null;
+                highlights.put(field.getKey().substring(TextSearchSupport.HIGHLIGHT_ALIAS_PREFIX.length()),
+                    fragment == null || fragment.isEmpty() ? List.of() : List.of(fragment));
+                fields.remove();
+            }
+        }
         T entity = codec.decode(new BsonDocumentReader(document), DecoderContext.builder().build());
         entity = triggerPostLoad(entity, persistentEntity, annotationMetadata);
-        return new SearchResult<>(entity, new Score(score));
+        return new SearchResult<>(entity, new Score(score), null, highlights);
     }
 
     protected <R> Optional<R> convertUsingIntrospected(PreparedQuery<?, ?> preparedQuery, BsonDocument result, Class<R> resultType) {

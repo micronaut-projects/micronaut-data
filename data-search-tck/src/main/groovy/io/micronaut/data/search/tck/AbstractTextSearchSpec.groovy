@@ -32,7 +32,30 @@ abstract class AbstractTextSearchSpec extends Specification {
     @Shared
     ApplicationContext context = ApplicationContext.run(properties)
 
-    abstract BookSearchRepository getBookSearchRepository()
+    /**
+     * @return The repository under test, a {@link BookSearchRepository} or a repository of an entity
+     * with the same properties as {@link Book} when the backend needs its own entity annotations
+     */
+    abstract def getBookSearchRepository()
+
+    /**
+     * Creates the entity the repository under test stores.
+     *
+     * @param title The title
+     * @param description The description
+     * @param author The author
+     * @param pages The pages
+     * @return The entity
+     */
+    def newBook(String title, String description, String author, int pages) {
+        return new Book(title, description, author, pages)
+    }
+
+    /**
+     * Waits until the backend has indexed every saved entity, for stores that index asynchronously.
+     */
+    void awaitIndexing() {
+    }
 
     /**
      * @return The capabilities the backend supports beyond term matching and score ordering
@@ -67,12 +90,13 @@ abstract class AbstractTextSearchSpec extends Specification {
     void setup() {
         bookSearchRepository.deleteAll()
         bookSearchRepository.saveAll([
-                new Book("The Rust Programming Language", "Learn systems programming with Rust", "Klabnik", 560),
-                new Book("Programming Kotlin", "Kotlin for the JVM and beyond", "Subramaniam", 460),
-                new Book("Java Concurrency in Practice", "Threads and locks for the Java programmer", "Goetz", 400),
-                new Book("Cooking with Coffee", "Recipes and desserts made with coffee beans", "Bean", 120),
-                new Book("Baking Bread", "Sourdough and yeast breads for the home baker", "Dough", 220),
+                newBook("The Rust Programming Language", "Learn systems programming with Rust", "Klabnik", 560),
+                newBook("Programming Kotlin", "Kotlin for the JVM and beyond", "Subramaniam", 460),
+                newBook("Java Concurrency in Practice", "Threads and locks for the Java programmer", "Goetz", 400),
+                newBook("Cooking with Coffee", "Recipes and desserts made with coffee beans", "Bean", 120),
+                newBook("Baking Bread", "Sourdough and yeast breads for the home baker", "Dough", 220),
         ])
+        awaitIndexing()
     }
 
     void cleanup() {
@@ -170,7 +194,7 @@ abstract class AbstractTextSearchSpec extends Specification {
 
     void "SearchPhrase requires adjacent terms in order"() {
         assumeTrue(capabilities().contains(SearchCapability.PHRASE))
-        def repository = (BookPhraseSearchRepository) bookSearchRepository
+        def repository = bookSearchRepository
 
         expect:
         repository.searchByDescriptionSearchPhrase("coffee beans").results()*.entity()*.title == ["Cooking with Coffee"]
@@ -180,7 +204,7 @@ abstract class AbstractTextSearchSpec extends Specification {
 
     void "SearchPrefix matches the start of words"() {
         assumeTrue(capabilities().contains(SearchCapability.PREFIX))
-        def repository = (BookPrefixSearchRepository) bookSearchRepository
+        def repository = bookSearchRepository
 
         expect:
         repository.findByTitleSearchPrefix("prog")*.title as Set == ["The Rust Programming Language", "Programming Kotlin"] as Set
@@ -352,7 +376,7 @@ abstract class AbstractTextSearchSpec extends Specification {
 
     void "a Score parameter restricts the relevance score of a derived search method"() {
         assumeTrue(capabilities().contains(SearchCapability.MIN_SCORE))
-        def repository = (BookPrefixSearchRepository) bookSearchRepository
+        def repository = bookSearchRepository
 
         when:
         def all = repository.searchBySearch("programming", new Score(0d))
@@ -366,9 +390,10 @@ abstract class AbstractTextSearchSpec extends Specification {
 
     void "the @Language property selects the stemming of a row"() {
         assumeTrue(supportsStemming() && noStemmingLanguage() != null)
-        def literal = new Book("Breads of the World", "Flatbreads and loaves", "Baker", 300)
+        def literal = newBook("Breads of the World", "Flatbreads and loaves", "Baker", 300)
         literal.language = noStemmingLanguage()
         bookSearchRepository.save(literal)
+        awaitIndexing()
 
         expect:
         // 'bread' stems to match 'breads' in the english rows but not in the row indexed without stemming

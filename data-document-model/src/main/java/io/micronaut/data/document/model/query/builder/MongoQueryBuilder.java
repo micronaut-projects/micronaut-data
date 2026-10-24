@@ -65,6 +65,8 @@ import io.micronaut.data.model.query.builder.QueryBuilder;
 import io.micronaut.data.model.query.builder.QueryParameterBinding;
 import io.micronaut.data.model.query.builder.QueryResult;
 import io.micronaut.data.model.query.impl.AdvancedPredicateVisitor;
+import io.micronaut.data.annotation.search.SearchField;
+import io.micronaut.data.annotation.search.SearchWeight;
 import io.micronaut.data.model.runtime.convert.MongoTextSearchConverter;
 import io.micronaut.data.model.search.MatchMode;
 import io.micronaut.data.model.search.SearchCapability;
@@ -92,6 +94,7 @@ import java.util.Comparator;
 import java.util.HashMap;
 import java.util.Iterator;
 import java.util.LinkedHashMap;
+import java.util.LinkedHashSet;
 import java.util.List;
 import java.util.Locale;
 import java.util.Map;
@@ -126,8 +129,27 @@ public final class MongoQueryBuilder implements QueryBuilder {
     public static final String RECIPROCATE = "$mn_reciprocate"; // 1/value
     public static final String MONGO_DATE_IDENTIFIER = "$date";
     public static final String MONGO_ID_FIELD = "_id";
+    /**
+     * An object with this property next to the {@link #QUERY_PARAMETER_PLACEHOLDER} is replaced with a
+     * MongoDB Search operator rendered from the bound search string at runtime; the value is the
+     * {@link MatchMode} name.
+     */
+    public static final String SEARCH_OPERATOR_PLACEHOLDER = "$mn_search";
+    /**
+     * The field paths a {@link #SEARCH_OPERATOR_PLACEHOLDER} searches.
+     */
+    public static final String SEARCH_PATHS = "$mn_paths";
+    /**
+     * The boosts of the {@link #SEARCH_PATHS}, by path, when they differ from 1.
+     */
+    public static final String SEARCH_BOOSTS = "$mn_boosts";
     private static final String GEOMETRY_OPERATOR = "$geometry";
     private static final Map<String, Object> TEXT_SCORE = Map.of("$meta", "textScore");
+    private static final Map<String, Object> SEARCH_SCORE = Map.of("$meta", "searchScore");
+    private static final Map<String, Object> SEARCH_HIGHLIGHTS = Map.of("$meta", "searchHighlights");
+    private static final String SEARCH_STAGE = "$search";
+    private static final String DEFAULT_SEARCH_INDEX = "default";
+    private static final String ADD_FIELDS = "$addFields";
     private static final String NULL_RANK_FIELD_PREFIX = "__micronaut_nulls_";
     private static final String SORT_EXPRESSION_FIELD_PREFIX = "__micronaut_sort_";
     private static final String STR_LEN_CP = "$strLenCP";
@@ -157,17 +179,42 @@ public final class MongoQueryBuilder implements QueryBuilder {
 
         addLookups(selectQueryDefinition.getJoinPaths(), queryState);
         List<Map<String, Object>> pipeline = queryState.rootLookups.pipeline;
-        buildProjection(selectQueryDefinition.selection(), group, projectionObj, countObj, addFieldsObj);
+        buildProjection(selectQueryDefinition.selection(), queryState, group, projectionObj, countObj, addFieldsObj);
         Predicate predicate = selectQueryDefinition.predicate();
         if (predicate != null) {
             predicateObj = buildWhereClause(predicate, queryState);
         }
 
+        if (queryState.searchOperator != null) {
+            if (!pipeline.isEmpty()) {
+                throw new UnsupportedOperationException("MongoDB $search must be the first stage of the aggregation, so a search predicate cannot be combined with joins.");
+            }
+            pipeline.add(Map.of(SEARCH_STAGE, buildSearchStage(queryState)));
+            Map<String, Object> searchMeta = new LinkedHashMap<>();
+            for (String scoreField : queryState.searchScoreFields) {
+                searchMeta.put(scoreField, SEARCH_SCORE);
+            }
+            if (!queryState.highlights.isEmpty()) {
+                searchMeta.put(MongoSearchStages.HIGHLIGHTS_FIELD, SEARCH_HIGHLIGHTS);
+            }
+            if (!searchMeta.isEmpty()) {
+                // The score and the highlights are only available as metadata of the $search stage
+                pipeline.add(Map.of(ADD_FIELDS, searchMeta));
+            }
+        }
         if (!predicateObj.isEmpty()) {
             pipeline.add(Map.of("$match", predicateObj));
         }
         if (!addFieldsObj.isEmpty()) {
-            pipeline.add(Map.of("$addFields", addFieldsObj));
+            pipeline.add(Map.of(ADD_FIELDS, addFieldsObj));
+        }
+        if (!queryState.highlights.isEmpty()) {
+            Map<String, Object> highlightFields = new LinkedHashMap<>();
+            for (Map.Entry<String, String> highlight : queryState.highlights.entrySet()) {
+                highlightFields.put(highlight.getKey(), MongoSearchStages.highlightExpression(highlight.getValue()));
+            }
+            pipeline.add(Map.of(ADD_FIELDS, highlightFields));
+            pipeline.add(Map.of("$unset", List.of(MongoSearchStages.HIGHLIGHTS_FIELD)));
         }
         if (!group.isEmpty()) {
             group.put(MONGO_ID_FIELD, null);
@@ -208,11 +255,11 @@ public final class MongoQueryBuilder implements QueryBuilder {
                 nullRankFields.clear();
             }
             if (!computedFields.isEmpty()) {
-                pipeline.add(Map.of("$addFields", computedFields));
+                pipeline.add(Map.of(ADD_FIELDS, computedFields));
             }
             if (!nullRankFields.isEmpty()) {
                 // A second stage, as $addFields cannot reference a field defined by the same stage
-                pipeline.add(Map.of("$addFields", nullRankFields));
+                pipeline.add(Map.of(ADD_FIELDS, nullRankFields));
             }
             pipeline.add(Map.of("$sort", sortObj));
             List<String> temporaryFields = new ArrayList<>(computedFields.keySet());
@@ -304,7 +351,7 @@ public final class MongoQueryBuilder implements QueryBuilder {
 
     private Object asAggregationFunction(FunctionExpression<?> functionExpression, QueryState queryState) {
         if (TextSearchSupport.SCORE_FUNCTION.equals(functionExpression.getName())) {
-            return TEXT_SCORE;
+            return usesSearchIndex(queryState.getEntity()) ? SEARCH_SCORE : TEXT_SCORE;
         }
         List<Expression<?>> arguments = functionExpression.getExpressions();
         String name = functionExpression.getName().toUpperCase(Locale.ROOT);
@@ -636,10 +683,14 @@ public final class MongoQueryBuilder implements QueryBuilder {
         } else {
             throw new IllegalStateException("Unsupported predicate type: " + predicate.getClass().getName());
         }
+        if (queryState.searchOperator != null) {
+            MongoSearchStages.pruneEmptyConjunction(query);
+        }
         return query;
     }
 
     private void buildProjection(Selection<?> selection,
+                                 QueryState queryState,
                                  Map<String, Object> groupObj,
                                  Map<String, Object> projectionObj,
                                  Map<String, Object> countObj,
@@ -648,10 +699,32 @@ public final class MongoQueryBuilder implements QueryBuilder {
             return;
         }
         if (selection instanceof ISelection<?> selectionVisitable) {
-            selectionVisitable.visitSelection(new MongoSelectionVisitor(projectionObj, groupObj, countObj, addFieldsObj));
+            selectionVisitable.visitSelection(new MongoSelectionVisitor(queryState, projectionObj, groupObj, countObj, addFieldsObj));
         } else {
             throw new IllegalStateException("Unsupported selection type: " + selection.getClass().getName());
         }
+    }
+
+    /**
+     * @param entity The entity
+     * @return Whether the entity is searched with MongoDB Search ({@code $search}) rather than {@code $text}
+     */
+    private static boolean usesSearchIndex(PersistentEntity entity) {
+        return entity.getAnnotationMetadata().hasAnnotation(MongoAnnotations.SEARCH_INDEX);
+    }
+
+    private Map<String, Object> buildSearchStage(QueryState queryState) {
+        Map<String, Object> search = new LinkedHashMap<>();
+        search.put("index", queryState.getEntity().getAnnotationMetadata()
+            .stringValue(MongoAnnotations.SEARCH_INDEX, "name")
+            .filter(name -> !name.isEmpty())
+            .orElse(DEFAULT_SEARCH_INDEX));
+        // The operator is rendered from the bound search string at runtime
+        search.put("compound", Map.of("must", List.of(queryState.searchOperator)));
+        if (!queryState.highlights.isEmpty()) {
+            search.put("highlight", Map.of("path", new ArrayList<>(new LinkedHashSet<>(queryState.highlights.values()))));
+        }
+        return search;
     }
 
     @NonNull
@@ -997,6 +1070,19 @@ public final class MongoQueryBuilder implements QueryBuilder {
         private final PersistentEntity entity;
 
         private final LookupsStage rootLookups;
+        /**
+         * The MongoDB Search operator placeholder of the search predicate, when the entity has a search index.
+         */
+        @Nullable
+        private Map<String, Object> searchOperator;
+        /**
+         * The fields the {@code searchScore} is added as.
+         */
+        private final Set<String> searchScoreFields = new LinkedHashSet<>();
+        /**
+         * The highlighted field paths by the alias of the projected fragment.
+         */
+        private final Map<String, String> highlights = new LinkedHashMap<>();
 
         private QueryState(BaseQueryDefinition baseQueryDefinition, boolean allowJoins) {
             this.allowJoins = allowJoins;
@@ -1081,6 +1167,7 @@ public final class MongoQueryBuilder implements QueryBuilder {
         private final PersistentEntity persistentEntity;
         private final QueryState queryState;
         private Map<String, Object> query;
+        private boolean inDisjunction;
 
         public MongoPredicateVisitor(QueryState queryState, Map<String, Object> query) {
             this.queryState = queryState;
@@ -1090,7 +1177,13 @@ public final class MongoQueryBuilder implements QueryBuilder {
 
         private void appendOperatorExpression(Expression<?> leftExpression, String op, Expression<?> value) {
             if (leftExpression instanceof FunctionExpression<?> function && TextSearchSupport.SCORE_FUNCTION.equals(function.getName())) {
-                throw new UnsupportedSearchFeatureException(SearchCapability.MIN_SCORE, "MongoDB $text");
+                if (!usesSearchIndex(persistentEntity)) {
+                    throw new UnsupportedSearchFeatureException(SearchCapability.MIN_SCORE, "MongoDB $text");
+                }
+                // The score is added as a field right after the $search stage, so the $match can restrict on it
+                queryState.searchScoreFields.add(TextSearchSupport.SCORE_ALIAS);
+                query.put(TextSearchSupport.SCORE_ALIAS, Map.of(op, scalarValue(value)));
+                return;
             }
             if (leftExpression instanceof LiteralExpression<?> leftLiteral && value instanceof LiteralExpression<?> rightLiteral) {
                 // A comparison of two constants, for example the 1 = 2 that an empty disjunction is normalized to
@@ -1210,7 +1303,20 @@ public final class MongoQueryBuilder implements QueryBuilder {
             }
             List<Object> ops = new ArrayList<>(predicates.size());
             query.put("$or", ops);
+            boolean wasInDisjunction = inDisjunction;
+            inDisjunction = true;
             visitDisjunctionPredicate(predicates, ops);
+            inDisjunction = wasInDisjunction;
+        }
+
+        private Object scalarValue(Expression<?> expression) {
+            if (expression instanceof BindingParameter bindingParameter) {
+                return Map.of(QUERY_PARAMETER_PLACEHOLDER, queryState.pushParameter(bindingParameter, newBindingContext(null)));
+            }
+            if (expression instanceof LiteralExpression<?> literalExpression) {
+                return Objects.requireNonNull(literalExpression.getValue(), "A score restriction needs a value");
+            }
+            throw new IllegalStateException("Unsupported expression: " + expression);
         }
 
         private void visitDisjunctionPredicate(Collection<? extends IExpression<Boolean>> predicates, List<Object> ops) {
@@ -1498,6 +1604,10 @@ public final class MongoQueryBuilder implements QueryBuilder {
 
         @Override
         public void visitTextMatch(List<Expression<?>> fields, Expression<String> queryExpression, MatchMode mode) {
+            if (usesSearchIndex(persistentEntity)) {
+                visitSearchIndexMatch(fields, queryExpression, mode);
+                return;
+            }
             if (mode == MatchMode.PREFIX) {
                 throw new UnsupportedSearchFeatureException(SearchCapability.PREFIX, "MongoDB $text");
             }
@@ -1515,6 +1625,47 @@ public final class MongoQueryBuilder implements QueryBuilder {
             text.put("$search", Map.of(QUERY_PARAMETER_PLACEHOLDER, index));
             text.put("$language", TextSearchSupport.resolveLanguage(persistentEntity));
             query.put("$text", text);
+        }
+
+        /**
+         * Renders a search predicate for an entity with a {@code @MongoSearchIndex}: the predicate
+         * becomes the {@code $search} stage, so it is recorded on the query state and nothing is
+         * added to the {@code $match}. The operator itself is rendered from the bound search string
+         * at runtime, see {@link #SEARCH_OPERATOR_PLACEHOLDER}.
+         */
+        private void visitSearchIndexMatch(List<Expression<?>> fields, Expression<String> queryExpression, MatchMode mode) {
+            if (!(queryExpression instanceof BindingParameter bindingParameter)) {
+                throw new IllegalStateException("A full-text search query must be a parameter, got: " + queryExpression);
+            }
+            if (queryState.searchOperator != null) {
+                throw new UnsupportedOperationException("MongoDB $search supports one search predicate per query.");
+            }
+            if (inDisjunction) {
+                throw new UnsupportedOperationException("MongoDB $search cannot be combined with OR, as the $search stage filters every document.");
+            }
+            List<String> paths = new ArrayList<>(fields.size());
+            Map<String, Object> boosts = new LinkedHashMap<>();
+            for (Expression<?> field : fields) {
+                PersistentPropertyPath propertyPath = requireProperty(field).getPropertyPath();
+                String path = getPropertyPersistName(propertyPath);
+                paths.add(path);
+                int weight = propertyPath.getProperty().getAnnotationMetadata()
+                    .enumValue(SearchField.class, SearchField.MEMBER_WEIGHT, SearchWeight.class)
+                    .map(SearchWeight::numericWeight)
+                    .orElse(1);
+                if (weight != 1) {
+                    boosts.put(path, weight);
+                }
+            }
+            int index = queryState.pushParameter(bindingParameter, newBindingContext(null));
+            Map<String, Object> operator = new LinkedHashMap<>();
+            operator.put(QUERY_PARAMETER_PLACEHOLDER, index);
+            operator.put(SEARCH_OPERATOR_PLACEHOLDER, mode.name());
+            operator.put(SEARCH_PATHS, paths);
+            if (!boosts.isEmpty()) {
+                operator.put(SEARCH_BOOSTS, boosts);
+            }
+            queryState.searchOperator = operator;
         }
 
         @Override
@@ -1641,6 +1792,7 @@ public final class MongoQueryBuilder implements QueryBuilder {
 
     private final class MongoSelectionVisitor implements SelectionVisitor {
 
+        private final QueryState queryState;
         private final Map<String, Object> projectionObj;
         private final Map<String, Object> groupObj;
         private final Map<String, Object> countObj;
@@ -1648,10 +1800,12 @@ public final class MongoQueryBuilder implements QueryBuilder {
         @Nullable
         private String alias;
 
-        public MongoSelectionVisitor(Map<String, Object> projectionObj,
+        public MongoSelectionVisitor(QueryState queryState,
+                                     Map<String, Object> projectionObj,
                                      Map<String, Object> groupObj,
                                      Map<String, Object> countObj,
                                      Map<String, Object> addFieldsObj) {
+            this.queryState = queryState;
             this.projectionObj = projectionObj;
             this.groupObj = groupObj;
             this.countObj = countObj;
@@ -1746,12 +1900,23 @@ public final class MongoQueryBuilder implements QueryBuilder {
         @Override
         public void visit(FunctionExpression<?> functionExpression) {
             if (TextSearchSupport.SCORE_FUNCTION.equals(functionExpression.getName())) {
-                // The relevance score rides along the entity as an added field
-                addFieldsObj.put(alias == null ? TextSearchSupport.SCORE_ALIAS : alias, TEXT_SCORE);
+                String scoreField = alias == null ? TextSearchSupport.SCORE_ALIAS : alias;
+                if (usesSearchIndex(queryState.getEntity())) {
+                    queryState.searchScoreFields.add(scoreField);
+                } else {
+                    // The relevance score rides along the entity as an added field
+                    addFieldsObj.put(scoreField, TEXT_SCORE);
+                }
                 return;
             }
             if (TextSearchSupport.HIGHLIGHT_FUNCTION.equals(functionExpression.getName())) {
-                throw new UnsupportedSearchFeatureException(SearchCapability.HIGHLIGHT, "MongoDB $text");
+                if (!usesSearchIndex(queryState.getEntity())) {
+                    throw new UnsupportedSearchFeatureException(SearchCapability.HIGHLIGHT, "MongoDB $text");
+                }
+                PersistentPropertyPath propertyPath = requireProperty(functionExpression.getExpressions().get(0)).getPropertyPath();
+                String highlightAlias = alias == null ? TextSearchSupport.highlightAlias(propertyPath.getProperty().getName()) : alias;
+                queryState.highlights.put(highlightAlias, getPropertyPersistName(propertyPath));
+                return;
             }
             throw new UnsupportedOperationException("Function expression is not supported by Micronaut Data MongoDB.");
         }
