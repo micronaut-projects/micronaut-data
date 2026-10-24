@@ -25,6 +25,7 @@ import io.micronaut.data.annotation.Indexes;
 import io.micronaut.data.annotation.InstantiateWithDefaultConstructor;
 import io.micronaut.data.annotation.JsonSubView;
 import io.micronaut.data.annotation.JsonView;
+import io.micronaut.data.annotation.JsonViewGenerated;
 import io.micronaut.data.annotation.MappedEntity;
 import io.micronaut.data.annotation.MappedProperty;
 import io.micronaut.data.annotation.Relation;
@@ -386,6 +387,12 @@ public class MappedEntityVisitor implements TypeElementVisitor<MappedEntity, Obj
                 for (SourcePersistentProperty property : entity.getPersistentProperties()) {
                     validateJsonViewProperty(property, entityType);
                 }
+                String[] hidden = entity.hasAnnotation(JsonView.class) ? entity.stringValues(JsonView.class, "hidden") : entity.stringValues(JsonSubView.class, "hidden");
+                for (String hiddenPropertyName : hidden) {
+                    if (entityType.findField(hiddenPropertyName).isEmpty()) {
+                        throw new ProcessingException(entity.getClassElement(), "Json View hidden field " + hiddenPropertyName + " doesn't exist in the defined entity class " + entityType.getSimpleName());
+                    }
+                }
             }
         }
     }
@@ -398,6 +405,14 @@ public class MappedEntityVisitor implements TypeElementVisitor<MappedEntity, Obj
      * @param entityType The type of the defined entity
      */
     private void validateJsonViewProperty(SourcePersistentProperty property, ClassElement entityType) {
+        if (property.getAnnotationMetadata().hasAnnotation(JsonViewGenerated.class)) {
+            boolean hasPath = property.getAnnotationMetadata().stringValue(JsonViewGenerated.class, "path").isPresent();
+            boolean hasSql = property.getAnnotationMetadata().stringValue(JsonViewGenerated.class, "sql").isPresent();
+            if (hasPath == hasSql) {
+                throw new ProcessingException(property.getPropertyElement(), "Json View generated field " + property.getName() + " must specify exactly one of path or sql");
+            }
+            return;
+        }
         if (property.getDataType() == DataType.OBJECT
                 || property.getAnnotationMetadata().stringValue(MappedProperty.class).isPresent()
                 || (property instanceof Association association && association.getKind() == Relation.Kind.EMBEDDED)

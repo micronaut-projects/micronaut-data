@@ -119,4 +119,34 @@ public @interface JsonView {
      */
     @AliasFor(annotation = MappedEntity.class, member = "alias")
     String alias() default "";
+
+    /**
+     * A SQL condition that restricts the rows of the root table exposed by the view, for example
+     * {@code @.country = 'US'}. Use the {@code @.} prefix to refer to columns of the table, it is replaced with the table alias.
+     * The view is generated {@code WITH CHECK OPTION}, so inserting or updating a document that does not satisfy the
+     * condition fails.
+     *
+     * @return the SQL condition
+     * @since 5.3
+     */
+    String where() default "";
+
+    /**
+     * Properties of the {@link #entity()} to expose as hidden fields. Hidden fields are not part of the
+     * document but can be referenced by generated fields, see {@link JsonViewGenerated}.
+     * Updating the document through the view keeps the values of hidden columns.
+     *
+     * @return the entity property names to expose as hidden fields
+     * @since 5.3
+     */
+    String[] hidden() default {};
+
+    /**
+     * Whether the columns of the table contribute to the ETAG of the document. When {@code false}
+     * the table is generated with the {@code NOCHECK} annotation.
+     *
+     * @return true if the table is part of the ETAG check (default true)
+     * @since 5.3
+     */
+    boolean etagCheck() default true;
 }

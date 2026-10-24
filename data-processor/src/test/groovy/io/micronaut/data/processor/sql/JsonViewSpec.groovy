@@ -166,6 +166,61 @@ record PersonView (@Id @GeneratedValue @MappedProperty("_id") Long id, String su
         ex.message.contains("Json View property surname doesn't exist in the defined entity class Person")
     }
 
+    void "test JsonView generated field does not need a MappedEntity property"() {
+        when:
+        buildEntity('test.PersonView', '''
+import io.micronaut.data.annotation.JsonView;
+import io.micronaut.data.annotation.JsonViewGenerated;
+import io.micronaut.data.annotation.MappedEntity;
+
+@MappedEntity("TBL_PERSON")
+record Person (@Id @GeneratedValue Long id, String name, int age) {}
+
+@JsonView(entity = Person.class, hidden = "age")
+record PersonView (@Id @GeneratedValue Long id, String name, @JsonViewGenerated(path = "$.age + 1") Integer nextAge) {}
+''')
+        then:
+        noExceptionThrown()
+    }
+
+    void "test JsonView generated field must specify path or sql"() {
+        when:
+        buildEntity('test.PersonView', """
+import io.micronaut.data.annotation.JsonView;
+import io.micronaut.data.annotation.JsonViewGenerated;
+import io.micronaut.data.annotation.MappedEntity;
+
+@MappedEntity("TBL_PERSON")
+record Person (@Id @GeneratedValue Long id, String name, int age) {}
+
+@JsonView(entity = Person.class)
+record PersonView (@Id @GeneratedValue Long id, String name, @JsonViewGenerated(${members}) String label) {}
+""")
+        then:
+        def ex = thrown(RuntimeException)
+        ex.message.contains("Json View generated field label must specify exactly one of path or sql")
+
+        where:
+        members << ['', 'path = "$.name", sql = "UPPER(@.name)"']
+    }
+
+    void "test JsonView hidden field must exist on the MappedEntity"() {
+        when:
+        buildEntity('test.PersonView', '''
+import io.micronaut.data.annotation.JsonView;
+import io.micronaut.data.annotation.MappedEntity;
+
+@MappedEntity("TBL_PERSON")
+record Person (@Id @GeneratedValue Long id, String name, int age) {}
+
+@JsonView(entity = Person.class, hidden = "salary")
+record PersonView (@Id @GeneratedValue Long id, String name) {}
+''')
+        then:
+        def ex = thrown(RuntimeException)
+        ex.message.contains("Json View hidden field salary doesn't exist in the defined entity class Person")
+    }
+
     void "test JsonView property name matches MappedEntity with @MappedProperty annotation"() {
         when:
         buildEntity('test.Person', '''
