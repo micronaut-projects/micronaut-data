@@ -32,6 +32,9 @@ class BookRepositorySpec extends Specification implements TestPropertyProvider {
     @Inject
     BookService bookService
 
+    @Inject
+    ReactiveBookRepository reactiveBookRepository
+
     void setup() {
         bookRepository.deleteAll()
         bookRepository.saveAll([
@@ -51,6 +54,13 @@ class BookRepositorySpec extends Specification implements TestPropertyProvider {
         bookRepository.countHits("coffee") == 2
         bookService.titlesMatching("bread OR sourdough") == ["Baking Bread"]
         bookRepository.search("coffee -desserts").totalHits() == 1
+    }
+
+    void "reactive search"() {
+        expect:
+        reactiveBookRepository.searchBySearch("coffee").block().totalHits() == 2
+        reactiveBookRepository.findByTitleSearch("roaster").collectList().block()*.title == ["The Coffee Roaster"]
+        reactiveBookRepository.count().block() == 3L
     }
 
     void "derived search finders"() {
