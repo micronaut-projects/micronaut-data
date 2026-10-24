@@ -67,17 +67,18 @@ public final class SearchQueryParser {
                 if (phrase != null) {
                     current.add(phrase);
                 }
-                continue;
-            }
-            String word = cursor.readWord();
-            if (!negated && OR.equals(word)) {
-                if (!current.isEmpty()) {
-                    groups.add(current);
-                    current = new ArrayList<>();
+            } else {
+                String word = cursor.readWord();
+                if (!negated && OR.equals(word)) {
+                    // an OR closes the current group
+                    if (!current.isEmpty()) {
+                        groups.add(current);
+                        current = new ArrayList<>();
+                    }
+                } else {
+                    current.add(new SearchTerm(word, false, negated));
                 }
-                continue;
             }
-            current.add(new SearchTerm(word, false, negated));
         }
         if (!current.isEmpty()) {
             groups.add(current);
