@@ -1,0 +1,31 @@
+plugins {
+    id "io.micronaut.build.internal.data-module"
+}
+
+dependencies {
+    annotationProcessor mn.micronaut.inject.java
+
+    api projects.micronautDataSearchDocument
+    api mnOpensearch.micronaut.opensearch
+    api mnOpensearch.opensearch.java
+
+    testAnnotationProcessor mn.micronaut.inject.java
+    testAnnotationProcessor projects.micronautDataDocumentProcessor
+    testAnnotationProcessor projects.micronautDataSearchDocument
+    testImplementation projects.micronautDataDocumentProcessor
+    testImplementation projects.micronautDataSearchTck
+    testImplementation mnOpensearch.micronaut.opensearch.httpclient5
+    testImplementation mn.micronaut.inject.groovy
+    testImplementation mnSerde.micronaut.serde.jackson
+    testImplementation(platform(mnTestResources.boms.testcontainers))
+    testImplementation "org.testcontainers:testcontainers"
+    testImplementation mnOpensearch.opensearch.testcontainers
+    testRuntimeOnly mnLogging.logback.classic
+}
+
+micronautBuild {
+    // New in 5.3.0, so there is no previous release to compare against yet
+    binaryCompatibility {
+        enabledAfter("5.3.0")
+    }
+}

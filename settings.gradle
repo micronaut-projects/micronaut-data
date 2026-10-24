@@ -34,6 +34,8 @@ micronautBuild {
     importMicronautCatalog("micronaut-validation")
     importMicronautCatalog("micronaut-mongo")
     importMicronautCatalog("micronaut-flyway")
+    importMicronautCatalog("micronaut-elasticsearch")
+    importMicronautCatalog("micronaut-opensearch")
     importMicronautCatalog("micronaut-coherence")
 }
 
@@ -70,6 +72,11 @@ include 'data-tx-jdbc'
 include 'data-r2dbc'
 include 'data-mongodb'
 include 'data-azure-cosmos'
+
+// Full-text search stores
+include 'data-search-document'
+include 'data-search-elasticsearch'
+include 'data-search-opensearch'
 
 // Spring compatibility
 include 'data-spring'
@@ -121,6 +128,11 @@ include 'doc-examples:mongo-search-example-java'
 include 'doc-examples:mongo-search-example-kotlin'
 include 'doc-examples:mongo-search-example-groovy'
 include 'doc-examples:mongo-search-example-python'
+
+include 'doc-examples:elasticsearch-search-example-java'
+include 'doc-examples:elasticsearch-search-example-kotlin'
+include 'doc-examples:elasticsearch-search-example-groovy'
+include 'doc-examples:elasticsearch-search-example-python'
 
 include 'doc-examples:jdbc-jakarta-data-example-java'
 include 'doc-examples:jdbc-jakarta-data-example-kotlin'
