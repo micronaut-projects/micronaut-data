@@ -36,6 +36,7 @@ import io.micronaut.data.model.runtime.DeleteOperation;
 import io.micronaut.data.model.runtime.InsertBatchOperation;
 import io.micronaut.data.model.runtime.InsertOperation;
 import io.micronaut.data.model.runtime.PagedQuery;
+import io.micronaut.data.model.runtime.PreparedQuery;
 import io.micronaut.data.model.runtime.RuntimeEntityRegistry;
 import io.micronaut.data.model.runtime.RuntimePersistentEntity;
 import io.micronaut.data.model.runtime.RuntimePersistentProperty;
@@ -217,6 +218,10 @@ final class DefaultOracleGraphRepositoryOperations extends AbstractGraphReposito
 
     @Override
     public <R> Page<R> findPage(PagedQuery<R> query) {
+        if (query instanceof PreparedQuery<?, ?>) {
+            // A finder with a Pageable, compiled to a graph query
+            return super.findPage(query);
+        }
         throw new UnsupportedOperationException(DECLARE_METHOD);
     }
 
