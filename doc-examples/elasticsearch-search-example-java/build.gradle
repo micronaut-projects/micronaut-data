@@ -10,6 +10,10 @@ micronaut {
     version libs.versions.micronaut.platform.get()
     runtime "netty"
     testRuntime "junit5"
+    testResources {
+        // the test starts its own Elasticsearch container with Testcontainers
+        enabled = false
+    }
 }
 
 dependencies {

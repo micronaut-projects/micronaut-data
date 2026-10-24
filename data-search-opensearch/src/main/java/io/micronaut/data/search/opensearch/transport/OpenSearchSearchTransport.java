@@ -118,7 +118,8 @@ public final class OpenSearchSearchTransport implements SearchTransport {
     public long deleteByQuery(String index, String body, DocumentSearchConfiguration.Refresh refresh) {
         try {
             Query query = query(parse(body));
-            Long deleted = client.deleteByQuery(d -> d.index(index).query(query).refresh(refresh(refresh))).deleted();
+            // delete_by_query only accepts true or false, not wait_for
+            Long deleted = client.deleteByQuery(d -> d.index(index).query(query).refresh(OpenSearchRequests.deleteByQueryRefresh(refresh))).deleted();
             return deleted == null ? 0 : deleted;
         } catch (IOException e) {
             throw new DataAccessException("OpenSearch delete by query failed: " + e.getMessage(), e);
