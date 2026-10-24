@@ -36,4 +36,20 @@ snippet::example.ReactiveMovieRepositorySpec[project-base="doc-examples/neo4j-ex
 
 <1> The nodes are mapped to the entity as the database returns them.
 
+== Kotlin coroutines
+
+In Kotlin, repositories can extend api:data.repository.kotlin.CoroutineCrudRepository[] and declare `suspend` functions and functions that return a `Flow`. They run on the reactive operations of the database, so with Neo4j they do not block a thread either:
+
+snippet::example.CoroutineMovieRepository[project-base="doc-examples/neo4j-example", source="main", tags="repository", languages="kotlin"]
+
+<1> Extend api:data.repository.kotlin.CoroutineCrudRepository[] for suspending CRUD operations.
+<2> A `suspend` finder returns a single result, or `null`.
+<3> A finder returning a `Flow` streams its results.
+
+snippet::example.CoroutineMovieRepositorySpec[project-base="doc-examples/neo4j-example", tags="coroutines", indent="0", languages="kotlin"]
+
+<1> Save the movies from a coroutine.
+<2> Suspend until the movie is found.
+<3> Collect the movies released after 1995.
+
 Apache AGE and Oracle property graphs on JDBC run reactive repository methods on a thread of the I/O executor, in the blocking operations of their JDBC driver. Oracle property graphs can also run on the non-blocking Oracle R2DBC driver, see <<graphOracle, Reactive repositories with R2DBC>>.

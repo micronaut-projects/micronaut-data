@@ -1,6 +1,8 @@
 package io.micronaut.data.oracle.graph
 
 import io.micronaut.data.connection.jdbc.advice.DelegatingDataSource
+import io.micronaut.data.model.Pageable
+import io.micronaut.data.model.Sort
 import io.micronaut.data.oracle.graph.bank.Account
 import io.micronaut.data.oracle.graph.bank.BankGraph
 import io.micronaut.test.extensions.spock.annotation.MicronautTest
@@ -83,6 +85,21 @@ class OracleGraphSpec extends Specification {
         bankGraph.findByNameStartsWithOrderByName("")*.name() == ["Alice", "Bob", "Carol", "Dave"]
         bankGraph.countByNameIsNotNull() == 4
         bankGraph.findNameByIdIn([1L, 3L]).sort() == ["Alice", "Carol"]
+    }
+
+    void "page through nodes with a finder"() {
+        when:
+        def page = bankGraph.findByNameStartsWith("", Pageable.from(0, 3, Sort.of(Sort.Order.asc("name"))))
+
+        then:
+        page.content*.name() == ["Alice", "Bob", "Carol"]
+        page.totalSize == 4
+
+        when:
+        def second = bankGraph.findByNameStartsWith("", page.nextPageable())
+
+        then:
+        second.content*.name() == ["Dave"]
     }
 
     void "find nodes by their relationships"() {

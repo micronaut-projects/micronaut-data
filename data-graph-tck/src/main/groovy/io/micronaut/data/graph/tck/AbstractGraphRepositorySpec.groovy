@@ -1,15 +1,19 @@
 package io.micronaut.data.graph.tck
 
+import io.micronaut.data.graph.tck.entities.Colleague
+import io.micronaut.data.graph.tck.entities.Collaboration
 import io.micronaut.data.graph.tck.entities.Friend
 import io.micronaut.data.graph.tck.entities.Movie
 import io.micronaut.data.graph.tck.entities.Person
 import io.micronaut.data.graph.tck.entities.Role
+import io.micronaut.data.graph.tck.repositories.ColleagueRepository
 import io.micronaut.data.graph.tck.repositories.FriendRepository
 import io.micronaut.data.graph.tck.repositories.MovieRepository
 import io.micronaut.data.graph.tck.repositories.PersonRepository
 import io.micronaut.data.model.Pageable
 import io.micronaut.data.model.Sort
 import io.micronaut.transaction.TransactionOperations
+import spock.lang.Requires
 import spock.lang.Specification
 
 /**
@@ -23,12 +27,33 @@ abstract class AbstractGraphRepositorySpec extends Specification {
 
     abstract FriendRepository getFriendRepository()
 
+    abstract ColleagueRepository getColleagueRepository()
+
     abstract TransactionOperations<?> getTransactionOperations()
 
     /**
      * Removes every node the specs create.
      */
     abstract void cleanupGraph()
+
+    /**
+     * Whether saving a node also writes its relationships and related nodes. Oracle property graph repositories
+     * write only the rows of their vertex tables.
+     *
+     * @return True if relationships are written
+     */
+    boolean supportsRelationshipWrites() {
+        true
+    }
+
+    /**
+     * Whether the repositories run Cypher: explicit Cypher queries, fetch joins and path finders.
+     *
+     * @return True for Cypher databases
+     */
+    boolean supportsCypher() {
+        true
+    }
 
     void setup() {
         cleanupGraph()
@@ -69,6 +94,7 @@ abstract class AbstractGraphRepositorySpec extends Specification {
         !movieRepository.existsById("Unknown")
     }
 
+    @Requires({ instance.supportsRelationshipWrites() })
     void "save generates identifiers for nodes and relationships"() {
         given:
         saveMovies()
@@ -83,6 +109,7 @@ abstract class AbstractGraphRepositorySpec extends Specification {
         personRepository.count() == 3
     }
 
+    @Requires({ instance.supportsRelationshipWrites() })
     void "saving the same related node twice does not duplicate it"() {
         given:
         saveMovies()
@@ -103,6 +130,7 @@ abstract class AbstractGraphRepositorySpec extends Specification {
         !movieRepository.existsByTitle("Point Break")
     }
 
+    @Requires({ instance.supportsRelationshipWrites() })
     void "find by criteria on relationships"() {
         given:
         saveMovies()
@@ -113,6 +141,7 @@ abstract class AbstractGraphRepositorySpec extends Specification {
         movieRepository.findByRolesPersonName("Carrie-Anne Moss")*.title == ["The Matrix"]
     }
 
+    @Requires({ instance.supportsRelationshipWrites() && instance.supportsCypher() })
     void "fetch relationships and relationship properties with joins"() {
         given:
         saveMovies()
@@ -134,6 +163,7 @@ abstract class AbstractGraphRepositorySpec extends Specification {
         unjoined.directors.isEmpty()
     }
 
+    @Requires({ instance.supportsRelationshipWrites() && instance.supportsCypher() })
     void "fetch a single relationship"() {
         given:
         def mentor = new Person("Morpheus", 1961)
@@ -173,9 +203,10 @@ abstract class AbstractGraphRepositorySpec extends Specification {
         then:
         deleted == 2
         movieRepository.findAll()*.title == ["The Matrix Reloaded"]
-        personRepository.findByName("Keanu Reeves").present
+        !supportsRelationshipWrites() || personRepository.findByName("Keanu Reeves").present
     }
 
+    @Requires({ instance.supportsRelationshipWrites() && instance.supportsCypher() })
     void "update an entity"() {
         given:
         def neo = personRepository.save(new Person("Neo", 1964))
@@ -190,6 +221,7 @@ abstract class AbstractGraphRepositorySpec extends Specification {
         personRepository.count() == 2
     }
 
+    @Requires({ instance.supportsRelationshipWrites() })
     void "delete an entity removes its relationships"() {
         given:
         saveMovies()
@@ -202,6 +234,7 @@ abstract class AbstractGraphRepositorySpec extends Specification {
         movieRepository.findByRolesPersonName("Keanu Reeves").size() == 2
     }
 
+    @Requires({ instance.supportsCypher() })
     void "explicit queries"() {
         given:
         saveMovies()
@@ -219,16 +252,16 @@ abstract class AbstractGraphRepositorySpec extends Specification {
         given:
         saveMovies()
 
-        when:
-        def page = movieRepository.findByReleasedGreaterThan(1990, Pageable.from(0, 2, Sort.of(Sort.Order.asc("title"))))
+        when: "the finder's criteria leave out Speed, released in 1994"
+        def page = movieRepository.findByReleasedGreaterThan(1995, Pageable.from(0, 1, Sort.of(Sort.Order.asc("title"))))
 
         then:
-        page.content*.title == ["Speed", "The Matrix"]
-        page.totalSize == 3
+        page.content*.title == ["The Matrix"]
+        page.totalSize == 2
         page.totalPages == 2
 
         when:
-        def second = movieRepository.findByReleasedGreaterThan(1990, page.nextPageable())
+        def second = movieRepository.findByReleasedGreaterThan(1995, page.nextPageable())
 
         then:
         second.content*.title == ["The Matrix Reloaded"]
@@ -245,6 +278,7 @@ abstract class AbstractGraphRepositorySpec extends Specification {
         friendRepository.save(fred)
     }
 
+    @Requires({ instance.supportsRelationshipWrites() && instance.supportsCypher() })
     void "find the shortest path between two nodes"() {
         given:
         saveFriends()
@@ -274,6 +308,7 @@ abstract class AbstractGraphRepositorySpec extends Specification {
         bounded.get().nodes()*.name.first() == "Fred"
     }
 
+    @Requires({ instance.supportsRelationshipWrites() && instance.supportsCypher() })
     void "find all paths and check paths exist"() {
         given:
         saveFriends()
@@ -288,6 +323,39 @@ abstract class AbstractGraphRepositorySpec extends Specification {
         !friendRepository.existsPath("Fred", "Nobody")
     }
 
+    @Requires({ instance.supportsRelationshipWrites() && instance.supportsCypher() })
+    void "explicit queries return relationships between nodes of different types"() {
+        given:
+        saveMovies()
+
+        when:
+        def actedIn = movieRepository.findActedIn("The Matrix")
+
+        then:
+        actedIn*.from()*.name.sort() == ["Carrie-Anne Moss", "Keanu Reeves"]
+        actedIn*.to()*.title == ["The Matrix", "The Matrix"]
+        actedIn*.type() == ["ACTED_IN", "ACTED_IN"]
+    }
+
+    @Requires({ instance.supportsRelationshipWrites() })
+    void "an undirected relationship saved from both ends is stored once"() {
+        given:
+        def ada = new Colleague("Ada")
+        def grace = new Colleague("Grace")
+        ada.colleagues = [new Collaboration("compiler", grace)]
+        colleagueRepository.save(ada)
+
+        when: "the relationship is saved again from its other end"
+        grace.colleagues = [new Collaboration("cobol", new Colleague("Ada"))]
+        colleagueRepository.save(grace)
+
+        then: "the relationship is matched in either direction, so its properties are updated rather than a second one created"
+        colleagueRepository.countCollaborations() == 1
+        colleagueRepository.findByColleaguesProject("cobol")*.name.sort() == ["Ada", "Grace"]
+        colleagueRepository.findByColleaguesProject("compiler").isEmpty()
+    }
+
+    @Requires({ instance.supportsRelationshipWrites() && instance.supportsCypher() })
     void "find relationships between nodes"() {
         given:
         saveFriends()

@@ -194,6 +194,10 @@ final class DefaultOracleGraphRepositoryOperations extends AbstractGraphReposito
 
     @Override
     public <R> Page<R> findPage(PagedQuery<R> query) {
+        if (query instanceof PreparedQuery<?, ?>) {
+            // A finder with a Pageable, compiled to a graph query
+            return super.findPage(query);
+        }
         throw new UnsupportedOperationException(DECLARE_METHOD);
     }
 

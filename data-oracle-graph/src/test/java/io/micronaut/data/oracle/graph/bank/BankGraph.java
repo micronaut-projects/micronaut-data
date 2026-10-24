@@ -2,6 +2,8 @@ package io.micronaut.data.oracle.graph.bank;
 
 import io.micronaut.data.annotation.Query;
 import io.micronaut.data.graph.annotation.PathLimit;
+import io.micronaut.data.model.Page;
+import io.micronaut.data.model.Pageable;
 import io.micronaut.data.graph.annotation.PropertyGraph;
 import io.micronaut.data.graph.model.GraphRelationship;
 import io.micronaut.data.oracle.graph.annotation.OracleGraphRepository;
@@ -23,6 +25,8 @@ public interface BankGraph extends GenericRepository<Account, Long> {
     void deleteById(Long id);
 
     List<Account> findByNameStartsWithOrderByName(String prefix);
+
+    Page<Account> findByNameStartsWith(String prefix, Pageable pageable);
 
     List<Account> findByTransfersAmountGreaterThan(BigDecimal amount);
 

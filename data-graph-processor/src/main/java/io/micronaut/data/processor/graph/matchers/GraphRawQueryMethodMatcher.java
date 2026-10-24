@@ -109,9 +109,6 @@ public final class GraphRawQueryMethodMatcher implements MethodMatcher {
             operationType,
             matchContext);
         ClassElement resultType = entry.returnType();
-        if (resultType == null) {
-            resultType = matchContext.getRootEntity().getType();
-        }
         boolean dto = operationType == DataMethod.OperationType.QUERY
             && resultType.hasStereotype(Introspected.class)
             && !resultType.hasStereotype(MappedEntity.class);
