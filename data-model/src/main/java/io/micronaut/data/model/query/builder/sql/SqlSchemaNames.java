@@ -28,7 +28,7 @@ import java.util.regex.Pattern;
 @Internal
 public final class SqlSchemaNames {
 
-    private static final Pattern SIMPLE_IDENTIFIER = Pattern.compile("[A-Za-z_][A-Za-z0-9_]*");
+    private static final Pattern SIMPLE_IDENTIFIER = Pattern.compile("[A-Za-z_]\\w*");
 
     private SqlSchemaNames() {
     }
