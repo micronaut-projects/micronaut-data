@@ -53,6 +53,8 @@ class BookRepositorySpec(TestPropertyProvider):
         assert self.reactive_repository.searchBySearch("coffee").block().totalHits() == 2
         assert [b.title for b in self.reactive_repository.findByTitleSearch("roaster").collectList().block()] == ["The Coffee Roaster"]
         assert self.reactive_repository.count().block() == 3
+        assert self.reactive_repository.search("coffee").block().totalHits() == 2
+        assert self.reactive_repository.countHits("coffee").block() == 2
 
     @Test
     def derivedSearchFinders(self):

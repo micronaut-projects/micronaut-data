@@ -2,7 +2,12 @@ package io.micronaut.data.search.tck
 
 import io.micronaut.context.ApplicationContext
 import io.micronaut.data.search.tck.entities.Book
+import io.micronaut.data.model.Pageable
+import io.micronaut.data.model.search.SearchQuery
+import io.micronaut.data.search.tck.repositories.AsyncBookSearchRepository
 import io.micronaut.data.search.tck.repositories.ReactorBookSearchRepository
+
+import java.util.concurrent.TimeUnit
 import spock.lang.AutoCleanup
 import spock.lang.Shared
 import spock.lang.Specification
@@ -18,6 +23,8 @@ abstract class AbstractReactiveTextSearchSpec extends Specification {
     ApplicationContext context = ApplicationContext.run(properties)
 
     abstract ReactorBookSearchRepository getBookSearchRepository()
+
+    abstract AsyncBookSearchRepository getAsyncBookSearchRepository()
 
     void setup() {
         bookSearchRepository.deleteAll().block()
@@ -74,5 +81,33 @@ abstract class AbstractReactiveTextSearchSpec extends Specification {
         then:
         bookSearchRepository.findById(saved.id).blockOptional().isEmpty()
         bookSearchRepository.count().block() == 4L
+    }
+
+    void "the reactive SearchRepository searches, pages and counts"() {
+        when:
+        def results = bookSearchRepository.search("programming").block()
+
+        then:
+        results.results()*.entity()*.title as Set == ["The Rust Programming Language", "Programming Kotlin"] as Set
+        results.results()[0].score().value() >= results.results()[1].score().value()
+        bookSearchRepository.search("programming", Pageable.from(0, 1)).block().results().size() == 1
+        bookSearchRepository.countHits("programming").block() == 2L
+        bookSearchRepository.countHits("nothingmatchesthis").block() == 0L
+
+        when:
+        def programmatic = bookSearchRepository.search(SearchQuery.builder("programming").fields("title").build()).block()
+
+        then:
+        programmatic.results()*.entity()*.title as Set == ["The Rust Programming Language", "Programming Kotlin"] as Set
+        bookSearchRepository.search(SearchQuery.of("nothingmatchesthis")).block().results().isEmpty()
+        bookSearchRepository.search(SearchQuery.of("programming"), Pageable.from(0, 1)).block().results().size() == 1
+    }
+
+    void "the async SearchRepository searches and counts"() {
+        expect:
+        asyncBookSearchRepository.search("java").get(30, TimeUnit.SECONDS).results()*.entity()*.title == ["Java Concurrency in Practice"]
+        asyncBookSearchRepository.search(SearchQuery.of("java")).get(30, TimeUnit.SECONDS).results().size() == 1
+        asyncBookSearchRepository.search(SearchQuery.of("programming"), Pageable.from(0, 1)).get(30, TimeUnit.SECONDS).results().size() == 1
+        asyncBookSearchRepository.countHits("programming").get(30, TimeUnit.SECONDS) == 2L
     }
 }

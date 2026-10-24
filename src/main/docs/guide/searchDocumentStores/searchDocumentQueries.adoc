@@ -33,11 +33,11 @@ A api:data.model.search.SearchQuery[] passed to `search(SearchQuery)` builds the
 
 == Reactive and async repositories
 
-Repositories may also extend api:data.repository.reactive.ReactorCrudRepository[] or the async and reactive-streams variants, and derived methods may return `Mono`, `Flux`, `Publisher` or `CompletableFuture`:
+Repositories may also extend api:data.repository.reactive.ReactorCrudRepository[] and api:data.repository.reactive.ReactorSearchRepository[], or the async, reactive-streams and Kotlin coroutine variants, and derived methods may return `Mono`, `Flux`, `Publisher` or `CompletableFuture`:
 
 snippet::example.ReactiveBookRepository[project-base="doc-examples/elasticsearch-search-example", source="main", tags="reactive"]
 
-<1> A reactive repository over the same entity and store.
+<1> A reactive repository over the same entity and store; `ReactorSearchRepository` adds `search(String)`, `search(SearchQuery)` and `countHits` returning `Mono`.
 <2> A `search` method returning `Mono<SearchResults<Book>>` projects the score and orders by it, like its blocking counterpart.
 <3> Any derived finder can return a `Flux`.
 

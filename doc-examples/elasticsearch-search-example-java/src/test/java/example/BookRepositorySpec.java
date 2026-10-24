@@ -48,6 +48,8 @@ class BookRepositorySpec implements ElasticsearchTestPropertyProvider {
         assertEquals(2, reactiveBookRepository.searchBySearch("coffee").block().totalHits());
         assertEquals(List.of("The Coffee Roaster"), reactiveBookRepository.findByTitleSearch("roaster").map(Book::title).collectList().block());
         assertEquals(3, reactiveBookRepository.count().block());
+        assertEquals(2, reactiveBookRepository.search("coffee").block().totalHits());
+        assertEquals(2, reactiveBookRepository.countHits("coffee").block());
     }
 
     @Test

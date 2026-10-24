@@ -60,6 +60,8 @@ class BookRepositoryTest : TestPropertyProvider {
         assertEquals(2, reactiveBookRepository.searchBySearch("coffee").block()!!.totalHits())
         assertEquals(listOf("The Coffee Roaster"), reactiveBookRepository.findByTitleSearch("roaster").map { it.title }.collectList().block())
         assertEquals(3, reactiveBookRepository.count().block())
+        assertEquals(2, reactiveBookRepository.search("coffee").block()!!.totalHits())
+        assertEquals(2, reactiveBookRepository.countHits("coffee").block())
     }
 
     @Test

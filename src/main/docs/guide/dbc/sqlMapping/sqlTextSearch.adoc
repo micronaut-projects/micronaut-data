@@ -93,6 +93,14 @@ snippet::example.BookService[project-base="doc-examples/jdbc-search-example", so
 
 Micronaut Data runs the text query and the nearest-neighbour query, each limited to `candidates` hits, and fuses the two rankings in memory, so hybrid search is available on every store that supports both text and vector search (PostgreSQL with pgvector and Oracle Database 23ai), including with a `Pageable`, which cuts the page from the fused ranking. A sort on the pageable is rejected because the fused score defines the order; `highlight` applies to the text hits; `minScore` compares the fused score. A store without vector search throws api:data.model.search.UnsupportedSearchFeatureException[].
 
+== Reactive and async search
+
+api:data.repository.reactive.ReactorSearchRepository[], api:data.repository.reactive.ReactiveStreamsSearchRepository[], api:data.repository.async.AsyncSearchRepository[] and the Kotlin api:data.repository.kotlin.CoroutineSearchRepository[] offer the same `search` and `countHits` methods as api:data.repository.SearchRepository[] with `Mono`, `Publisher`, `CompletableFuture` or `suspend` results. Derived search methods may return the same types:
+
+snippet::example.ReactiveBookRepository[project-base="doc-examples/elasticsearch-search-example", source="main", tags="reactive"]
+
+On JDBC the reactive and async variants run the blocking query on the IO executor; R2DBC, MongoDB, Elasticsearch and OpenSearch run them without blocking.
+
 == Criteria API
 
 The criteria builder exposes the same predicate through `PersistentEntityCriteriaBuilder.textMatch(field, query, MatchMode)` and the score through `searchScore(fields, query, MatchMode)`, so a api:data.repository.jpa.criteria.PredicateSpecification[] can combine a text match with any other restriction.
