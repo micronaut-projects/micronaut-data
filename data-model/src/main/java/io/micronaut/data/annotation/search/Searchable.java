@@ -44,12 +44,12 @@ public @interface Searchable {
     /**
      * The annotation name.
      */
-    String NAME = Searchable.class.getName();
+    String ANNOTATION_NAME = Searchable.class.getName();
 
     /**
      * The {@code language} member.
      */
-    String LANGUAGE = "language";
+    String MEMBER_LANGUAGE = "language";
 
     /**
      * Optional logical name of the search index. If empty, a name is derived from the entity name.
