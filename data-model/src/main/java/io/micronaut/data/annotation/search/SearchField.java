@@ -59,7 +59,7 @@ public @interface SearchField {
     /**
      * The name of the {@link #highlightable()} member.
      */
-    String HIGHLIGHTABLE = "highlightable";
+    String MEMBER_HIGHLIGHTABLE = "highlightable";
 
     /**
      * Optional name of the field in the search index. Defaults to the persisted property name.

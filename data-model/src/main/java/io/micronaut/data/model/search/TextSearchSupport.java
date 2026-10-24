@@ -150,7 +150,7 @@ public final class TextSearchSupport {
      * @return Whether it is a {@code @SearchField(highlightable = true)}
      */
     public static boolean isHighlightable(PersistentProperty property) {
-        return property.getAnnotationMetadata().booleanValue(SearchField.class, SearchField.HIGHLIGHTABLE).orElse(false);
+        return property.getAnnotationMetadata().booleanValue(SearchField.class, SearchField.MEMBER_HIGHLIGHTABLE).orElse(false);
     }
 
     public static String resolveLanguage(PersistentEntity entity) {
