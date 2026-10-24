@@ -26,8 +26,12 @@ class TextSearchCriteriaSpec extends Specification {
     })
 
     private QueryResult build(Dialect dialect) {
+        return build(dialect, SearchArticle, AnnotationMetadata.EMPTY_METADATA)
+    }
+
+    private QueryResult build(Dialect dialect, Class<?> entityType, AnnotationMetadata annotationMetadata) {
         def query = cb.createQuery(SearchResults)
-        def root = query.from(SearchArticle)
+        def root = query.from(entityType)
         def parameter = cb.parameter(String, null, "coffee")
         List<Expression<?>> fields = [root.get("title"), root.get("body")]
         query.where(cb.textMatch(fields, parameter, MatchMode.ANY))
@@ -35,7 +39,7 @@ class TextSearchCriteriaSpec extends Specification {
         query.multiselect(root, score.alias(TextSearchSupport.SCORE_ALIAS),
                 cb.searchHighlight(root.get("title"), parameter, MatchMode.ANY).alias(TextSearchSupport.highlightAlias("title")))
         query.orderBy(cb.desc(score))
-        return ((PersistentEntityCriteriaQueryBuilder) query).build(AnnotationMetadata.EMPTY_METADATA, new SqlQueryBuilder(dialect))
+        return ((PersistentEntityCriteriaQueryBuilder) query).build(annotationMetadata, new SqlQueryBuilder(dialect))
     }
 
     void "PostgreSQL highlights with ts_headline"() {
@@ -62,6 +66,15 @@ class TextSearchCriteriaSpec extends Specification {
         result.query.contains('CTX_DOC.POLICY_SNIPPET(\'MN_SEARCH_POLICY\',search_article_."TITLE",?,starttag => \'<em>\',endtag => \'</em>\') AS mn_hl_title')
         result.query.contains('(SCORE(1) * 10 + SCORE(2) * 1) AS mn_score')
         result.parameterBindings.find { it.converterClassName == OracleTextQueryConverter.Any.name } != null
+    }
+
+    void "Oracle highlights a JSON entity over JSON_VALUE of the property"() {
+        when: "the repository metadata carries the entity's JSON representation, as the processor copies it"
+        def entity = new RuntimePersistentEntity<Object>(SearchJsonArticle)
+        def result = build(Dialect.ORACLE, SearchJsonArticle, entity.annotationMetadata)
+
+        then:
+        result.query.contains('CTX_DOC.POLICY_SNIPPET(\'MN_SEARCH_POLICY\',JSON_VALUE(search_json_article_.DATA,\'$.title\'),?,starttag => \'<em>\',endtag => \'</em>\') AS mn_hl_title')
     }
 
     void "unsupported dialects reject the highlight function"() {
