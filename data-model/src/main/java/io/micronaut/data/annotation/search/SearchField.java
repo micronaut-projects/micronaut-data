@@ -44,17 +44,17 @@ public @interface SearchField {
     /**
      * The annotation name.
      */
-    String NAME = SearchField.class.getName();
+    String ANNOTATION_NAME = SearchField.class.getName();
 
     /**
      * The {@code weight} member.
      */
-    String WEIGHT = "weight";
+    String MEMBER_WEIGHT = "weight";
 
     /**
      * The {@code type} member.
      */
-    String TYPE = "type";
+    String MEMBER_TYPE = "type";
 
     /**
      * The name of the {@link #highlightable()} member.
