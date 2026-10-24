@@ -35,4 +35,9 @@ class OracleTextSearchSpec extends AbstractTextSearchSpec implements Oracle23Tes
         // The default Oracle Text lexer matches words literally
         return false
     }
+
+    @Override
+    String nativeProgrammingWithoutKotlinQuery() {
+        return "programming NOT kotlin"
+    }
 }

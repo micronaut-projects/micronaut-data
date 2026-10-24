@@ -40,4 +40,9 @@ class OracleJsonTextSearchSpec extends AbstractTextSearchSpec implements Oracle2
     boolean supportsStemming() {
         return false
     }
+
+    @Override
+    String nativeProgrammingWithoutKotlinQuery() {
+        return "programming NOT kotlin"
+    }
 }

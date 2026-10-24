@@ -68,6 +68,7 @@ public abstract class SimpleQueryStringConverter implements TextSearchQueryConve
             case PHRASE -> Phrase.class.getName();
             case PREFIX -> Prefix.class.getName();
             case FUZZY -> Fuzzy.class.getName();
+            case NATIVE -> Native.class.getName();
         };
     }
 
@@ -93,6 +94,10 @@ public abstract class SimpleQueryStringConverter implements TextSearchQueryConve
     public static String render(@Nullable String query, MatchMode mode, int fuzziness) {
         if (query == null) {
             return "";
+        }
+        if (mode == MatchMode.NATIVE) {
+            // the caller wrote query_string syntax
+            return query;
         }
         if (mode == MatchMode.PHRASE) {
             String phrase = query.replace("\"", "").trim();
@@ -227,7 +232,18 @@ public abstract class SimpleQueryStringConverter implements TextSearchQueryConve
     }
 
     /**
-     * Fuzzy converter with two edits, the most Lucene allows.
+     * {@link MatchMode#NATIVE} converter: the string is {@code query_string} syntax already.
+     */
+    @Singleton
+    public static final class Native extends SimpleQueryStringConverter {
+        @Override
+        protected MatchMode mode() {
+            return MatchMode.NATIVE;
+        }
+    }
+
+    /**
+     * {@link MatchMode#FUZZY} converter with two edits.
      */
     @Singleton
     public static final class Fuzzy2 extends SimpleQueryStringConverter {

@@ -34,4 +34,9 @@ class OracleTextSearchSpec extends AbstractTextSearchSpec implements Oracle23Tes
     boolean supportsStemming() {
         return false
     }
+
+    @Override
+    String nativeProgrammingWithoutKotlinQuery() {
+        return "programming NOT kotlin"
+    }
 }

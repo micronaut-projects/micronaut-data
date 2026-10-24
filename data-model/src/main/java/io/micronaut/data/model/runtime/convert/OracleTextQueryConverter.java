@@ -83,6 +83,7 @@ public abstract class OracleTextQueryConverter implements TextSearchQueryConvert
             case PHRASE -> positive ? PhrasePositive.class.getName() : Phrase.class.getName();
             case PREFIX -> positive ? PrefixPositive.class.getName() : Prefix.class.getName();
             case FUZZY -> positive ? FuzzyPositive.class.getName() : Fuzzy.class.getName();
+            case NATIVE -> Native.class.getName();
         };
     }
 
@@ -97,6 +98,10 @@ public abstract class OracleTextQueryConverter implements TextSearchQueryConvert
     public static String render(@Nullable String query, MatchMode mode, Part part) {
         if (query == null) {
             return MATCH_NOTHING;
+        }
+        if (mode == MatchMode.NATIVE) {
+            // the caller wrote CONTAINS query syntax
+            return query.isBlank() ? MATCH_NOTHING : query;
         }
         if (part == Part.NEGATED) {
             StringJoiner negated = new StringJoiner(" | ");
@@ -308,7 +313,23 @@ public abstract class OracleTextQueryConverter implements TextSearchQueryConvert
     }
 
     /**
-     * Negated terms converter.
+     * {@link MatchMode#NATIVE} converter: the string is {@code CONTAINS} query syntax already.
+     */
+    @Singleton
+    public static final class Native extends OracleTextQueryConverter {
+        @Override
+        protected MatchMode mode() {
+            return MatchMode.NATIVE;
+        }
+
+        @Override
+        protected Part part() {
+            return Part.FULL;
+        }
+    }
+
+    /**
+     * The negated terms of a multi-field search, see {@link Part#NEGATED}.
      */
     @Singleton
     public static final class Negated extends OracleTextQueryConverter {
