@@ -63,7 +63,7 @@ As seen in the configuration above you should also configure the dialect. Althou
 |SQL Server 2012 or above
 
 |api:data.model.query.builder.sql.Dialect#ORACLE[]
-|Oracle 12c or above
+|Oracle 19c or above. Generated SQL targets 19c by default; to use 23ai and later features such as the native `BOOLEAN` type, set the dialect version as described in <<sqlOracleBoolean, Oracle BOOLEAN>>
 
 |api:data.model.query.builder.sql.Dialect#SQLITE[]
 |SQLite (requires `io.micronaut.sql:micronaut-jdbc-sqlite`)
