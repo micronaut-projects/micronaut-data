@@ -786,7 +786,9 @@ public class QueryCriteriaMethodMatch extends AbstractCriteriaMethodMatch {
         for (String part : LOGICAL_OPERATOR_PATTERN.split(predicate)) {
             TextSearchSupport.SearchKeyword keyword = TextSearchSupport.parseKeyword(part);
             if (keyword != null) {
-                return new TextPredicate(NameUtils.decapitalize(keyword.propertyName()), keyword.mode(), parameterIndex);
+                // the property name is empty, never null, for a keyword without a property
+                String propertyName = Objects.requireNonNull(NameUtils.decapitalize(keyword.propertyName()));
+                return new TextPredicate(propertyName, keyword.mode(), parameterIndex);
             }
             parameterIndex += requiredParameters(part);
         }
