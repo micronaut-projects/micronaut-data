@@ -15,6 +15,8 @@
  */
 package io.micronaut.data.search.tck.repositories;
 
+import io.micronaut.data.model.vector.search.Score;
+import io.micronaut.data.model.vector.search.SearchResults;
 import io.micronaut.data.search.tck.entities.Book;
 
 import java.util.List;
@@ -25,4 +27,6 @@ import java.util.List;
 public interface BookPrefixSearchRepository extends BookPhraseSearchRepository {
 
     List<Book> findByTitleSearchPrefix(String query);
+
+    SearchResults<Book> searchBySearch(String query, Score minScore);
 }

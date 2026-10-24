@@ -114,7 +114,11 @@ public final class DocumentSearchQueryBuilder implements QueryBuilder {
         PersistentEntity entity = definition.persistentEntity();
         Bindings bindings = new Bindings();
         Map<String, Object> body = new LinkedHashMap<>();
-        body.put(QUERY, buildQuery(definition.predicate(), entity, bindings));
+        DocumentPredicateVisitor visitor = new DocumentPredicateVisitor(entity, bindings);
+        body.put(QUERY, definition.predicate() == null ? Map.of("match_all", Map.of()) : visitor.build(definition.predicate()));
+        if (visitor.minScore != null) {
+            body.put("min_score", visitor.minScore);
+        }
         Map<String, Object> highlightFields = new LinkedHashMap<>();
         if (definition.selection() != null) {
             collectHighlightFields(definition.selection(), highlightFields);
@@ -268,6 +272,8 @@ public final class DocumentSearchQueryBuilder implements QueryBuilder {
         private final PersistentEntity entity;
         private final Bindings bindings;
         private Map<String, Object> result = Map.of();
+        @Nullable
+        private Object minScore;
 
         DocumentPredicateVisitor(PersistentEntity entity, Bindings bindings) {
             this.entity = entity;
@@ -372,6 +378,12 @@ public final class DocumentSearchQueryBuilder implements QueryBuilder {
 
         @Override
         public void visitGreaterThanOrEquals(Expression<?> leftExpression, Expression<?> rightExpression) {
+            if (leftExpression instanceof FunctionExpression<?> function && TextSearchSupport.SCORE_FUNCTION.equals(function.getName())) {
+                // a minimum relevance score is a request parameter, not a query clause
+                minScore = value(rightExpression, null);
+                result = Map.of("match_all", Map.of());
+                return;
+            }
             result = range(leftExpression, "gte", rightExpression);
         }
 

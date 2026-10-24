@@ -19,7 +19,7 @@ class PostgresSearchIndexDdlSpec extends Specification {
         then:
         statements.size() == 2
         statements[0].startsWith('CREATE TABLE "search_book"')
-        statements[1] == 'CREATE INDEX "idx_search_book_search" ON "search_book" USING GIN ((setweight(to_tsvector(\'english\',coalesce("title",\'\')),\'A\') || setweight(to_tsvector(\'english\',coalesce("description",\'\')),\'C\')));'
+        statements[1] == 'CREATE INDEX "idx_search_book_search" ON "search_book" USING GIN ((setweight(to_tsvector(coalesce("language",\'english\')::regconfig,coalesce("title",\'\')),\'A\') || setweight(to_tsvector(coalesce("language",\'english\')::regconfig,coalesce("description",\'\')),\'C\')));'
 
         when:
         def all = builder.buildCreateTableStatements([entity] as RuntimePersistentEntity[])

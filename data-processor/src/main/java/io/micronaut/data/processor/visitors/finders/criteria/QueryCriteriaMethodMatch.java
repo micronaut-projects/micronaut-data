@@ -50,6 +50,7 @@ import io.micronaut.data.model.query.builder.sql.VectorScoringDialectSupport;
 import io.micronaut.data.model.search.MatchMode;
 import io.micronaut.data.model.search.TextSearchSupport;
 import io.micronaut.data.model.vector.Vector;
+import io.micronaut.data.model.vector.search.Score;
 import io.micronaut.data.model.vector.search.SearchResults;
 import io.micronaut.data.processor.model.SourcePersistentEntity;
 import io.micronaut.data.processor.model.SourcePersistentProperty;
@@ -570,7 +571,9 @@ public class QueryCriteriaMethodMatch extends AbstractCriteriaMethodMatch {
                                      PersistentEntityRoot<T> root,
                                      PersistentEntityQuery<?> query,
                                      PersistentEntityCriteriaBuilder cb) {
-        Predicate predicate = extractPredicates(querySequence, parameters.iterator(), root, cb);
+        Iterator<ParameterElement> parametersIt = parameters.iterator();
+        Predicate predicate = extractPredicates(querySequence, parametersIt, root, cb);
+        predicate = applyMinScore(matchContext, cb, (PersistentEntityRoot<Object>) root, predicate, parametersIt);
         predicate = interceptPredicate(matchContext, List.of(), root, cb, predicate);
         if (predicate != null) {
             query.where(predicate);
@@ -760,6 +763,36 @@ public class QueryCriteriaMethodMatch extends AbstractCriteriaMethodMatch {
         ParameterExpression<Vector> vectorParameter = scb.parameter(vectorElement, propertyPath);
         Expression<Double> scoreExpr = cb.function(VectorScoringDialectSupport.SCORE_FUNCTION, Double.class, vectorPropertyExpression, vectorParameter);
         query.orderBy(cb.asc(scoreExpr));
+    }
+
+    /**
+     * A {@code Score} parameter following the predicate parameters of a method with a text predicate
+     * restricts the relevance score: {@code searchByTitleSearch(String query, Score minScore)}.
+     */
+    @Nullable
+    private Predicate applyMinScore(MethodMatchContext matchContext,
+                                    PersistentEntityCriteriaBuilder cb,
+                                    PersistentEntityRoot<Object> root,
+                                    @Nullable Predicate predicate,
+                                    Iterator<ParameterElement> remaining) {
+        if (!remaining.hasNext()) {
+            return predicate;
+        }
+        ParameterElement parameter = remaining.next();
+        if (!parameter.getType().isAssignable(Score.class)) {
+            return predicate;
+        }
+        List<MethodNameParser.Match> predicateMatches = matches.stream().filter(m -> m.id() == QueryMatchId.PREDICATE).toList();
+        TextPredicate textPredicate = predicateMatches.isEmpty() ? null : resolveTextPredicate(predicateMatches);
+        if (textPredicate == null) {
+            throw new MatchFailedException("A Score parameter requires a Search predicate: " + matchContext.getMethodElement().getName());
+        }
+        Expression<Double> score = textScoreExpression(matchContext, cb, root, textPredicate);
+        SourcePersistentEntityCriteriaBuilder scb = (SourcePersistentEntityCriteriaBuilder) cb;
+        @SuppressWarnings("unchecked")
+        Expression<Double> minScore = (Expression<Double>) (Expression<?>) scb.parameter(parameter, null);
+        Predicate restriction = cb.greaterThanOrEqualTo(score, minScore);
+        return predicate == null ? restriction : cb.and(predicate, restriction);
     }
 
     /**

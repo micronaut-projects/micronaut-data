@@ -380,4 +380,60 @@ interface AsyncArticleRepository extends AsyncSearchRepository<Article, Long> {
         reactive.getRequiredMethod("countHits", String).stringValue(DataMethod, DataMethod.META_MEMBER_INTERCEPTOR).get().contains("Reactive")
         async.getRequiredMethod("countHits", String).stringValue(DataMethod, DataMethod.META_MEMBER_INTERCEPTOR).get().contains("Async")
     }
+
+    void "a Score parameter restricts the relevance score"() {
+        given:
+        def repository = articleRepository("""
+    SearchResults<Article> searchByTitleSearch(String q, io.micronaut.data.model.vector.search.Score minScore);
+    List<Article> findBySearch(String q, io.micronaut.data.model.vector.search.Score minScore);
+""")
+        def search = repository.getRequiredMethod("searchByTitleSearch", String, io.micronaut.data.model.vector.search.Score)
+        def find = repository.getRequiredMethod("findBySearch", String, io.micronaut.data.model.vector.search.Score)
+
+        expect:
+        getQuery(search).contains("WHERE (setweight(to_tsvector('english',article_.\"title\"),'A') @@ to_tsquery('english',?) AND ts_rank_cd(setweight(to_tsvector('english',article_.\"title\"),'A'),to_tsquery('english',?)) >= ?)")
+        getQuery(find).contains(" >= ?)")
+        // the score projection, the match, the score restriction and the order bind the query; the Score binds plainly
+        converters(search).size() == 5
+        converters(search).count { it == null } == 1
+        converters(search).count { it == PostgresTsQueryConverter.Any.name } == 4
+    }
+
+    void "a @Language property selects the text search configuration per row"() {
+        given:
+        def repository = buildRepository('test.PostRepository', """
+import io.micronaut.data.jdbc.annotation.JdbcRepository;
+import io.micronaut.data.model.query.builder.sql.Dialect;
+import io.micronaut.data.annotation.search.Language;
+import io.micronaut.data.annotation.search.SearchField;
+import io.micronaut.data.annotation.search.Searchable;
+import io.micronaut.data.model.vector.search.SearchResults;
+
+@MappedEntity
+@Searchable(language = "german")
+class Post {
+    @Id
+    @GeneratedValue
+    private Long id;
+    @SearchField
+    private String title;
+    @Language
+    private String lang;
+    public Long getId() { return id; }
+    public void setId(Long id) { this.id = id; }
+    public String getTitle() { return title; }
+    public void setTitle(String title) { this.title = title; }
+    public String getLang() { return lang; }
+    public void setLang(String lang) { this.lang = lang; }
+}
+
+@JdbcRepository(dialect = Dialect.POSTGRES)
+interface PostRepository extends CrudRepository<Post, Long> {
+    SearchResults<Post> searchBySearch(String q);
+}
+""")
+
+        expect:
+        getQuery(repository.getRequiredMethod("searchBySearch", String)).contains("to_tsvector(coalesce(post_.\"lang\",'german')::regconfig,post_.\"title\") @@ to_tsquery('german',?)")
+    }
 }

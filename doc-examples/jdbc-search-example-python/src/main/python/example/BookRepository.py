@@ -1,6 +1,6 @@
 from micronaut.data.jdbc.annotation import JdbcRepository
 from micronaut.data.model.query.builder.sql import Dialect
-from micronaut.data.model.vector.search import SearchResults
+from micronaut.data.model.vector.search import Score, SearchResults
 from micronaut.data.repository import CrudRepository, SearchRepository
 
 from example.Book import Book
@@ -19,4 +19,6 @@ class BookRepository(CrudRepository[Book, int], SearchRepository[Book, int]):  #
     def findByTitleSearchPrefix(self, query: str) -> list[Book]: ...  # <5>
 
     def findBySearchAndAuthor(self, query: str, author: str) -> list[Book]: ...  # <6>
+
+    def searchByTitleSearch(self, query: str, minScore: Score) -> SearchResults[Book]: ...  # <7>
 # end::repository[]
