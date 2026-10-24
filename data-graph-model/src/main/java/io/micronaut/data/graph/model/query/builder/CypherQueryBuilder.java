@@ -130,6 +130,8 @@ public class CypherQueryBuilder implements QueryBuilder {
     private static final String DISTINCT = "DISTINCT ";
     private static final String TO_LOWER = "toLower(";
     private static final String RESULT = "result";
+    private static final String RETURN = " RETURN ";
+    private static final String AND = " AND ";
 
     @Override
     public @Nullable QueryResult buildInsert(AnnotationMetadata repositoryMetadata, InsertQueryDefinition definition) {
@@ -173,7 +175,7 @@ public class CypherQueryBuilder implements QueryBuilder {
             query.append(WITH_DISTINCT).append(ROOT);
         }
         List<String> joinColumns = selectionRenderer.entity ? appendFetchJoins(query, state) : List.of();
-        query.append(" RETURN ");
+        query.append(RETURN);
         if (distinct) {
             query.append(DISTINCT);
         }
@@ -262,46 +264,56 @@ public class CypherQueryBuilder implements QueryBuilder {
         String types = relationshipTypes(definition.relationships());
         StringBuilder query = new StringBuilder("MATCH ");
         if (definition.kind() == PathQueryDefinition.Kind.RELATIONSHIPS) {
-            Direction direction = definition.direction();
-            if (direction == Direction.UNDIRECTED && (definition.start() == null || definition.end() == null)) {
-                // Without both endpoints an undirected pattern returns each relationship twice
-                direction = Direction.OUTGOING;
-            }
-            query.append(directed("(" + PATH_START + label + ")", "[" + PATH_RELATIONSHIP + types + "]", "(" + PATH_END + label + ")", direction));
-            appendWhere(query, conditions);
-            switch (definition.result()) {
-                case COUNT -> query.append(" RETURN count(").append(PATH_RELATIONSHIP).append(") AS result");
-                case EXISTS -> query.append(" RETURN true AS result LIMIT 1");
-                default -> query.append(" RETURN ").append(PATH_RELATIONSHIP).append(", startNode(").append(PATH_RELATIONSHIP)
-                    .append(") AS ").append(RELATIONSHIP_FROM).append(", endNode(").append(PATH_RELATIONSHIP).append(") AS ").append(RELATIONSHIP_TO);
-            }
-            return QueryResult.of(query.toString(), List.of(query.toString()), state.parameterBindings, state.additionalRequiredParameters);
+            appendRelationshipQuery(query, definition, label, types, conditions);
+        } else {
+            appendPathQuery(query, definition, label, types, conditions);
         }
+        return QueryResult.of(query.toString(), List.of(query.toString()), state.parameterBindings, state.additionalRequiredParameters);
+    }
+
+    private void appendRelationshipQuery(StringBuilder query, PathQueryDefinition definition, String label, String types, List<String> conditions) {
+        Direction direction = definition.direction();
+        if (direction == Direction.UNDIRECTED && (definition.start() == null || definition.end() == null)) {
+            // Without both endpoints an undirected pattern returns each relationship twice
+            direction = Direction.OUTGOING;
+        }
+        query.append(directed("(" + PATH_START + label + ")", "[" + PATH_RELATIONSHIP + types + "]", "(" + PATH_END + label + ")", direction));
+        appendWhere(query, conditions);
+        switch (definition.result()) {
+            case COUNT -> query.append(" RETURN count(").append(PATH_RELATIONSHIP).append(") AS result");
+            case EXISTS -> query.append(" RETURN true AS result LIMIT 1");
+            default -> query.append(RETURN).append(PATH_RELATIONSHIP).append(", startNode(").append(PATH_RELATIONSHIP)
+                .append(") AS ").append(RELATIONSHIP_FROM).append(", endNode(").append(PATH_RELATIONSHIP).append(") AS ").append(RELATIONSHIP_TO);
+        }
+    }
+
+    private void appendPathQuery(StringBuilder query, PathQueryDefinition definition, String label, String types, List<String> conditions) {
         if (definition.start() != null && definition.end() != null && definition.kind() != PathQueryDefinition.Kind.ALL) {
             conditions.add(PATH_START + " <> " + PATH_END);
         }
         query.append('(').append(PATH_START).append(label).append("), (").append(PATH_END).append(label).append(')');
         appendWhere(query, conditions);
-        String depth;
-        if (definition.maxDepthBound()) {
-            depth = "*1.." + PathQueryDefinition.PATH_LIMIT_TOKEN;
-        } else if (definition.maxDepth() > 0) {
-            depth = "*1.." + definition.maxDepth();
-        } else {
-            depth = "*";
-        }
-        appendPathMatch(query, definition.kind(), "[" + types + depth + "]", definition.direction());
+        appendPathMatch(query, definition.kind(), "[" + types + pathDepth(definition) + "]", definition.direction());
         switch (definition.result()) {
             case COUNT -> query.append(" RETURN count(").append(PATH).append(") AS result");
             case EXISTS -> query.append(" RETURN true AS result LIMIT 1");
             default -> {
-                query.append(" RETURN ").append(PATH);
+                query.append(RETURN).append(PATH);
                 if (definition.kind() == PathQueryDefinition.Kind.ALL) {
                     query.append(" ORDER BY length(").append(PATH).append(')');
                 }
             }
         }
-        return QueryResult.of(query.toString(), List.of(query.toString()), state.parameterBindings, state.additionalRequiredParameters);
+    }
+
+    private static String pathDepth(PathQueryDefinition definition) {
+        if (definition.maxDepthBound()) {
+            return "*1.." + PathQueryDefinition.PATH_LIMIT_TOKEN;
+        }
+        if (definition.maxDepth() > 0) {
+            return "*1.." + definition.maxDepth();
+        }
+        return "*";
     }
 
     /**
@@ -333,7 +345,7 @@ public class CypherQueryBuilder implements QueryBuilder {
 
     private static void appendWhere(StringBuilder query, List<String> conditions) {
         if (!conditions.isEmpty()) {
-            query.append(" WHERE ").append(String.join(" AND ", conditions));
+            query.append(" WHERE ").append(String.join(AND, conditions));
         }
     }
 
@@ -908,7 +920,7 @@ public class CypherQueryBuilder implements QueryBuilder {
 
         @Override
         public void visit(ConjunctionPredicate conjunction) {
-            visitJunction(conjunction.getPredicates(), " AND ", "true");
+            visitJunction(conjunction.getPredicates(), AND, "true");
         }
 
         @Override
@@ -1053,7 +1065,7 @@ public class CypherQueryBuilder implements QueryBuilder {
             }
             out.append('(');
             appendComparison(value, " >= ", from, false);
-            out.append(" AND ");
+            out.append(AND);
             appendComparison(value, " <= ", to, false);
             out.append(')');
         }
