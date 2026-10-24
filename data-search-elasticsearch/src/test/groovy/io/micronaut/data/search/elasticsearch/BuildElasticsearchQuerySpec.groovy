@@ -122,24 +122,26 @@ ${methods}
         def search = repository.getRequiredMethod("search", String)
 
         expect:
-        query(repository.getRequiredMethod("findByTitleSearch", String)) == '{"query":{"simple_query_string":{"query":{"$mn_qp":0},"fields":["title^10"],"default_operator":"or"}}}'
-        converters(repository.getRequiredMethod("findByTitleSearch", String)) == [SimpleQueryStringConverter.Terms.name]
+        query(repository.getRequiredMethod("findByTitleSearch", String)) == '{"query":{"simple_query_string":{"query":{"$mn_qp":0},"fields":["title^10"],"default_operator":"and"}}}'
+        converters(repository.getRequiredMethod("findByTitleSearch", String)) == [SimpleQueryStringConverter.Any.name]
         query(repository.getRequiredMethod("searchByTitleSearchAll", String)) == '{"query":{"simple_query_string":{"query":{"$mn_qp":0},"fields":["title^10"],"default_operator":"and"}},"sort":[{"_score":{"order":"desc"}}]}'
         converters(repository.getRequiredMethod("findByBodySearchPhrase", String)) == [SimpleQueryStringConverter.Phrase.name]
-        query(repository.getRequiredMethod("findByTitleSearchPrefix", String)) == '{"query":{"simple_query_string":{"query":{"$mn_qp":0},"fields":["title^10"],"default_operator":"and"}}}'
+        query(repository.getRequiredMethod("findByTitleSearchPrefix", String)) == '{"query":{"simple_query_string":{"query":{"$mn_qp":0},"fields":["title^10"],"default_operator":"and","analyze_wildcard":true}}}'
         converters(repository.getRequiredMethod("findByTitleSearchFuzzy", String)) == [SimpleQueryStringConverter.Fuzzy.name]
-        query(search) == '{"query":{"simple_query_string":{"query":{"$mn_qp":0},"fields":["title^10","body","category"],"default_operator":"or"}},"sort":[{"_score":{"order":"desc"}}]}'
-        query(repository.getRequiredMethod("countHits", String)) == '{"query":{"simple_query_string":{"query":{"$mn_qp":0},"fields":["title^10","body","category"],"default_operator":"or"}}}'
+        query(search) == '{"query":{"simple_query_string":{"query":{"$mn_qp":0},"fields":["title^10","body","category"],"default_operator":"and"}},"sort":[{"_score":{"order":"desc"}}]}'
+        query(repository.getRequiredMethod("countHits", String)) == '{"query":{"simple_query_string":{"query":{"$mn_qp":0},"fields":["title^10","body","category"],"default_operator":"and"}}}'
     }
 
     void "the query string converter renders the portable grammar"() {
         expect:
-        SimpleQueryStringConverter.render("bake coffee -cake", io.micronaut.data.model.search.MatchMode.ANY) == "bake coffee -cake"
-        SimpleQueryStringConverter.render('"ken burns" tea OR coffee', io.micronaut.data.model.search.MatchMode.ANY) == '("ken burns" tea) | (coffee)'
+        SimpleQueryStringConverter.render("bake coffee -cake", io.micronaut.data.model.search.MatchMode.ANY) == "(bake | coffee) -cake"
+        SimpleQueryStringConverter.render("bake coffee -cake", io.micronaut.data.model.search.MatchMode.ALL) == "bake coffee -cake"
+        SimpleQueryStringConverter.render("-cake", io.micronaut.data.model.search.MatchMode.ANY) == "-cake"
+        SimpleQueryStringConverter.render('"ken burns" tea OR coffee', io.micronaut.data.model.search.MatchMode.ANY) == '("ken burns" | tea) | (coffee)'
         SimpleQueryStringConverter.render("mic dat", io.micronaut.data.model.search.MatchMode.PREFIX) == "mic* dat*"
         SimpleQueryStringConverter.render("coffe", io.micronaut.data.model.search.MatchMode.FUZZY) == "coffe~1"
         SimpleQueryStringConverter.render("fat rats", io.micronaut.data.model.search.MatchMode.PHRASE) == '"fat rats"'
-        SimpleQueryStringConverter.render("a+b (c)", io.micronaut.data.model.search.MatchMode.ANY) == 'a\\+b \\(c\\)'
+        SimpleQueryStringConverter.render("a+b (c)", io.micronaut.data.model.search.MatchMode.ANY) == 'a\\+b | \\(c\\)'
     }
 
     void "a vector Near predicate renders a knn query with the distance as a similarity threshold"() {

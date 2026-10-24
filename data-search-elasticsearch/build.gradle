@@ -21,3 +21,10 @@ dependencies {
     testImplementation libs.testcontainers.elasticsearch
     testRuntimeOnly mnLogging.logback.classic
 }
+
+micronautBuild {
+    // New in 5.3.0, so there is no previous release to compare against yet
+    binaryCompatibility {
+        enabledAfter("5.3.0")
+    }
+}

@@ -198,9 +198,10 @@ public final class DefaultDocumentSearchRepositoryOperations extends AbstractDoc
     @Override
     public <T, R> Iterable<R> findAll(PreparedQuery<T, R> preparedQuery) {
         DocumentStoredQuery<T, R> storedQuery = storedQuery(preparedQuery);
-        if (storedQuery.isCount()) {
-            R count = findOne(preparedQuery);
-            return count == null ? List.of() : List.of(count);
+        if (storedQuery.isCount() || preparedQuery.getResultType() == SearchResults.class) {
+            // A count or a SearchResults is one value built from the whole response
+            R result = findOne(preparedQuery);
+            return result == null ? List.of() : List.of(result);
         }
         Map<String, Object> body = body(preparedQuery, storedQuery);
         RuntimePersistentEntity<T> entity = storedQuery.getPersistentEntity();
