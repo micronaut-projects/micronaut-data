@@ -28,3 +28,21 @@ class PersonRepositorySpec:
         # end::labels[]
 
         assert list(labels) == ["Actor"]
+
+    @Test
+    def testShortestPath(self):
+        joe = Person("Joe", 1973)
+        barney = Person("Barney", 1971, [joe])
+        wilma = Person("Wilma", 1972, [joe])
+        fred = self.personRepository.save(Person("Fred", 1970, [barney, wilma]))
+        joe = self.personRepository.findByName("Joe")
+
+        # tag::shortestPath[]
+        path = self.personRepository.findShortestPath(fred, joe)
+        for segment in path.segments():  # <1>
+            print(f"{segment.start().name} -> {segment.end().name}")
+        # end::shortestPath[]
+
+        assert path.length() == 2
+        assert path.start().name == "Fred"
+        assert path.end().name == "Joe"
