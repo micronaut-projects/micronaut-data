@@ -437,10 +437,27 @@ public abstract class AbstractGraphRepositoryOperations extends AbstractReposito
             Map<String, Object> values = record.size() == 1 && first instanceof GraphNode node ? node.properties() : record.asMap();
             return readDto(values, resultType);
         }
-        return (R) mapValue(record, first, resultType, nodeType(resultArgument, preparedQuery.getRootEntity()), preparedQuery.getAnnotationMetadata());
+        Class<?> nodeType = nodeType(resultArgument, preparedQuery.getRootEntity());
+        return (R) mapValue(record, first, resultType, nodeType, targetNodeType(resultArgument, nodeType), preparedQuery.getAnnotationMetadata());
     }
 
     private @Nullable Object mapValue(GraphRecord record, @Nullable Object first, Class<?> resultType, Class<?> nodeType, AnnotationMetadata annotationMetadata) {
+        return mapValue(record, first, resultType, nodeType, nodeType, annotationMetadata);
+    }
+
+    /**
+     * Maps a row to the result type of a method.
+     *
+     * @param record             The row
+     * @param first              The first value of the row, or null
+     * @param resultType         The result type
+     * @param nodeType           The type of the nodes in the result, and of the start node of a relationship
+     * @param targetNodeType     The type of the end node of a relationship
+     * @param annotationMetadata The annotation metadata of the method
+     * @return The value
+     */
+    private @Nullable Object mapValue(GraphRecord record, @Nullable Object first, Class<?> resultType, Class<?> nodeType,
+                                      Class<?> targetNodeType, AnnotationMetadata annotationMetadata) {
         if (resultType == GraphRecord.class) {
             return record;
         }
@@ -458,7 +475,7 @@ public abstract class AbstractGraphRepositoryOperations extends AbstractReposito
             if (from == null || to == null) {
                 throw new DataAccessException("A query returning relationships must also return their start and end nodes as columns f and t");
             }
-            return mapper.readRelationship(edge, from, to, nodeType, nodeType);
+            return mapper.readRelationship(edge, from, to, nodeType, targetNodeType);
         }
         if (first instanceof GraphNode node) {
             if (resultType != Object.class && isEntity(resultType)) {
@@ -494,6 +511,22 @@ public abstract class AbstractGraphRepositoryOperations extends AbstractReposito
         return BeanIntrospector.SHARED.findIntrospection(type)
             .map(introspection -> introspection.hasStereotype(io.micronaut.data.annotation.MappedEntity.class))
             .orElse(false);
+    }
+
+    /**
+     * The type of the end node of a relationship result: the second type argument of {@code GraphRelationship<F, T>},
+     * or the type of its start node.
+     *
+     * @param resultArgument The result argument
+     * @param nodeType       The type of the start node
+     * @return The type
+     */
+    private static Class<?> targetNodeType(Argument<?> resultArgument, Class<?> nodeType) {
+        Argument<?>[] typeParameters = resultArgument.getTypeParameters();
+        if (GraphRelationship.class.isAssignableFrom(resultArgument.getType()) && typeParameters.length > 1) {
+            return typeParameters[1].getType();
+        }
+        return nodeType;
     }
 
     private static Class<?> nodeType(Argument<?> resultArgument, Class<?> rootEntity) {

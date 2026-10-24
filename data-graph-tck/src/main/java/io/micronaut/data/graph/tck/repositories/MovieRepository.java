@@ -3,8 +3,10 @@ package io.micronaut.data.graph.tck.repositories;
 import io.micronaut.data.annotation.Id;
 import io.micronaut.data.annotation.Join;
 import io.micronaut.data.annotation.Query;
+import io.micronaut.data.graph.model.GraphRelationship;
 import io.micronaut.data.graph.tck.entities.Movie;
 import io.micronaut.data.graph.tck.entities.MovieSummary;
+import io.micronaut.data.graph.tck.entities.Person;
 import io.micronaut.data.model.Page;
 import io.micronaut.data.model.Pageable;
 import io.micronaut.data.repository.CrudRepository;
@@ -47,4 +49,7 @@ public interface MovieRepository extends CrudRepository<Movie, String> {
 
     @Query("MATCH (m:Movie {title: $title}) SET m.votes = coalesce(m.votes, 0) + 1")
     void vote(String title);
+
+    @Query("MATCH (p:Person)-[r:ACTED_IN]->(m:Movie) WHERE m.title = $title RETURN r, p AS f, m AS t")
+    List<GraphRelationship<Person, Movie>> findActedIn(String title);
 }
