@@ -1,3 +1,18 @@
+/*
+ * Copyright 2017-2026 original authors
+ *
+ * Licensed under the Apache License, Version 2.0 (the "License");
+ * you may not use this file except in compliance with the License.
+ * You may obtain a copy of the License at
+ *
+ * https://www.apache.org/licenses/LICENSE-2.0
+ *
+ * Unless required by applicable law or agreed to in writing, software
+ * distributed under the License is distributed on an "AS IS" BASIS,
+ * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+ * See the License for the specific language governing permissions and
+ * limitations under the License.
+ */
 package io.micronaut.data.search.tck
 
 import io.micronaut.context.ApplicationContext
@@ -396,8 +411,13 @@ abstract class AbstractTextSearchSpec extends Specification {
         awaitIndexing()
 
         expect:
-        // 'bread' stems to match 'breads' in the english rows but not in the row indexed without stemming
+        // the query keeps the entity language, so 'bread' and 'breads' both stem to the 'bread' of the english
+        // rows, while the row indexed without stemming only holds the literal 'breads'
         bookSearchRepository.search("bread").results()*.entity()*.title == ["Baking Bread"]
-        bookSearchRepository.search("breads").results()*.entity()*.title as Set == ["Baking Bread", "Breads of the World"] as Set
+        bookSearchRepository.search("breads").results()*.entity()*.title == ["Baking Bread"]
+        // 'world' is left alone by the english stemmer, so the literal row matches it, but 'flatbreads' is stemmed
+        // to 'flatbread' and no longer matches the literal token
+        bookSearchRepository.search("world").results()*.entity()*.title == ["Breads of the World"]
+        bookSearchRepository.search("flatbreads").results().isEmpty()
     }
 }

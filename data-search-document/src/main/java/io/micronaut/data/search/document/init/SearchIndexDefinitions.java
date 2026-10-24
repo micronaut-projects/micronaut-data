@@ -18,6 +18,8 @@ package io.micronaut.data.search.document.init;
 import io.micronaut.core.annotation.Internal;
 import io.micronaut.data.annotation.search.SearchField;
 import io.micronaut.data.annotation.search.SearchFieldType;
+import io.micronaut.data.model.Association;
+import io.micronaut.data.model.DataType;
 import io.micronaut.data.model.PersistentEntity;
 import io.micronaut.data.model.PersistentProperty;
 import io.micronaut.data.model.search.TextSearchSupport;
@@ -26,7 +28,9 @@ import org.jspecify.annotations.Nullable;
 import io.micronaut.data.search.document.runtime.SearchTransport;
 import io.micronaut.data.model.vector.Vector;
 
+import java.util.ArrayList;
 import java.util.LinkedHashMap;
+import java.util.List;
 import java.util.Map;
 
 /**
@@ -90,6 +94,18 @@ public final class SearchIndexDefinitions {
             }
             properties.put(property.getName(), field);
         }
+        // The other string properties are compared exactly by the derived queries, so they are
+        // keywords rather than the analyzed text a dynamic mapping would give them; the id is one of
+        // them, as the cursored pages sort on it as a tiebreaker
+        List<PersistentProperty> others = new ArrayList<>(entity.getPersistentProperties());
+        if (entity.getIdentity() != null) {
+            others.add(entity.getIdentity());
+        }
+        for (PersistentProperty property : others) {
+            if (!properties.containsKey(property.getName()) && !(property instanceof Association) && isKeyword(property)) {
+                properties.put(property.getName(), Map.of("type", "keyword"));
+            }
+        }
         Map<String, Object> body = new LinkedHashMap<>();
         if (transport != null && !transport.indexSettings().isEmpty()) {
             body.put("settings", transport.indexSettings());
@@ -106,6 +122,11 @@ public final class SearchIndexDefinitions {
      */
     public static int vectorDimensions(PersistentProperty property) {
         return property.getAnnotationMetadata().intValue("jakarta.persistence.Column", "length").orElse(-1);
+    }
+
+    private static boolean isKeyword(PersistentProperty property) {
+        DataType dataType = property.getDataType();
+        return dataType == DataType.STRING || dataType == DataType.UUID || dataType == DataType.CHARACTER || property.isEnum();
     }
 
     /**

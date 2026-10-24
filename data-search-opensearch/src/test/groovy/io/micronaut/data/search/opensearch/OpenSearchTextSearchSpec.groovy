@@ -5,24 +5,12 @@ import io.micronaut.data.model.search.SearchCapability
 import io.micronaut.data.search.tck.AbstractTextSearchSpec
 import io.micronaut.data.search.tck.repositories.BookSearchRepository
 import io.micronaut.test.support.TestPropertyProvider
-import org.opensearch.testcontainers.OpenSearchContainer
-import org.testcontainers.utility.DockerImageName
-import spock.lang.AutoCleanup
-import spock.lang.Shared
 
 class OpenSearchTextSearchSpec extends AbstractTextSearchSpec implements TestPropertyProvider {
 
-    @Shared
-    @AutoCleanup
-    OpenSearchContainer opensearch = new OpenSearchContainer(DockerImageName.parse("opensearchproject/opensearch:3.2.0"))
-
     @Override
     Map<String, String> getProperties() {
-        opensearch.start()
-        return [
-                "micronaut.opensearch.httpclient5.http-hosts": opensearch.httpHostAddress,
-                "micronaut.data.search.index-prefix": "test_"
-        ]
+        return OpenSearchTestContainer.properties()
     }
 
     @Memoized
