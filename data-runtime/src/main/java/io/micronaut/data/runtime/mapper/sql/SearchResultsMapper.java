@@ -16,6 +16,7 @@
 package io.micronaut.data.runtime.mapper.sql;
 
 import io.micronaut.core.annotation.Internal;
+import io.micronaut.data.model.search.TextSearchSupport;
 import io.micronaut.data.model.vector.search.Score;
 import io.micronaut.data.model.vector.search.ScoringFunction;
 import io.micronaut.data.model.vector.search.SearchResult;
@@ -26,7 +27,9 @@ import io.micronaut.data.runtime.mapper.ResultReader;
 import org.jspecify.annotations.Nullable;
 
 import java.util.ArrayList;
+import java.util.LinkedHashMap;
 import java.util.List;
+import java.util.Map;
 
 /**
  * Internal row mapper that composes entity payloads with vector score/similarity metadata.
@@ -47,6 +50,7 @@ public final class SearchResultsMapper<R, E> {
     private final String scoreAlias;
     @Nullable
     private final ScoringFunction scoringFunction;
+    private final List<String> highlightedProperties;
 
     /**
      * @param entityMapper Entity mapper used to map each row entity payload
@@ -69,10 +73,27 @@ public final class SearchResultsMapper<R, E> {
                                ResultReader<R, String> resultReader,
                                String scoreAlias,
                                @Nullable ScoringFunction scoringFunction) {
+        this(entityMapper, resultReader, scoreAlias, scoringFunction, List.of());
+    }
+
+    /**
+     * @param entityMapper The entity mapper
+     * @param resultReader The result reader
+     * @param scoreAlias The score column alias
+     * @param scoringFunction The vector scoring function, or {@code null} for a text search
+     * @param highlightedProperties The properties whose highlighted fragments the query projects, see
+     * {@link TextSearchSupport#highlightAlias(String)}
+     */
+    public SearchResultsMapper(SqlTypeMapper<R, E> entityMapper,
+                               ResultReader<R, String> resultReader,
+                               String scoreAlias,
+                               @Nullable ScoringFunction scoringFunction,
+                               List<String> highlightedProperties) {
         this.entityMapper = entityMapper;
         this.resultReader = resultReader;
         this.scoreAlias = scoreAlias;
         this.scoringFunction = scoringFunction;
+        this.highlightedProperties = highlightedProperties;
     }
 
     /**
@@ -121,6 +142,18 @@ public final class SearchResultsMapper<R, E> {
         Similarity similarity = scoringFunction == null ? null : new Similarity(
             SimilarityNormalizer.forScoringFunction(scoringFunction).getSimilarity(scoreValue)
         );
-        return new SearchResult<>(entity, score, similarity);
+        return new SearchResult<>(entity, score, similarity, readHighlights(rs));
+    }
+
+    private Map<String, List<String>> readHighlights(R rs) {
+        if (highlightedProperties.isEmpty()) {
+            return Map.of();
+        }
+        Map<String, List<String>> highlights = new LinkedHashMap<>();
+        for (String property : highlightedProperties) {
+            String fragment = resultReader.getRequiredValue(rs, TextSearchSupport.highlightAlias(property), String.class);
+            highlights.put(property, fragment == null ? List.of() : List.of(fragment));
+        }
+        return highlights;
     }
 }

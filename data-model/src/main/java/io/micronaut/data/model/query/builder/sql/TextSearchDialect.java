@@ -86,6 +86,27 @@ public interface TextSearchDialect {
                            Function<String, Consumer<Expression<?>>> appendParameter);
 
     /**
+     * Renders the highlighted fragment of one field: the field's text with the matched terms wrapped in
+     * {@link TextSearchSupport#HIGHLIGHT_START_TAG} and {@link TextSearchSupport#HIGHLIGHT_END_TAG}.
+     *
+     * @param query The query being built
+     * @param field The field expression
+     * @param queryExpression The search string parameter
+     * @param mode The match mode
+     * @param target Where the entity lives
+     * @param appendExpression Renders an expression
+     * @param appendParameter Creates a renderer binding the search string with the named converter
+     * @throws UnsupportedSearchFeatureException if the dialect cannot highlight
+     */
+    void appendSearchHighlight(StringBuilder query,
+                               Expression<?> field,
+                               Expression<String> queryExpression,
+                               MatchMode mode,
+                               Target target,
+                               Consumer<Expression<?>> appendExpression,
+                               Function<String, Consumer<Expression<?>>> appendParameter);
+
+    /**
      * Resolves the text search strategy for a SQL dialect.
      *
      * @param dialect The SQL dialect
@@ -229,6 +250,26 @@ public interface TextSearchDialect {
             query.append(')');
         }
 
+        @Override
+        public void appendSearchHighlight(StringBuilder query,
+                                          Expression<?> field,
+                                          Expression<String> queryExpression,
+                                          MatchMode mode,
+                                          Target target,
+                                          Consumer<Expression<?>> appendExpression,
+                                          Function<String, Consumer<Expression<?>>> appendParameter) {
+            if (mode == MatchMode.FUZZY) {
+                throw new UnsupportedSearchFeatureException(SearchCapability.FUZZY, "PostgreSQL text search");
+            }
+            String language = resolveLanguage(List.of(field));
+            query.append("ts_headline('").append(language).append("',");
+            appendExpression.accept(field);
+            query.append(',');
+            appendTsQuery(query, queryExpression, mode, language, appendParameter);
+            query.append(",'StartSel=").append(TextSearchSupport.HIGHLIGHT_START_TAG)
+                .append(",StopSel=").append(TextSearchSupport.HIGHLIGHT_END_TAG).append("')");
+        }
+
         private void appendTsQuery(StringBuilder query,
                                    Expression<String> queryExpression,
                                    MatchMode mode,
@@ -307,6 +348,12 @@ public interface TextSearchDialect {
     enum OracleTextSearchDialect implements TextSearchDialect {
         INSTANCE;
 
+        /**
+         * The Oracle Text policy highlights are rendered with; schema generation creates it with the
+         * default lexer, matching the {@code CONTEXT} indexes.
+         */
+        public static final String POLICY_NAME = "MN_SEARCH_POLICY";
+
         private static final String CONTAINS_SUFFIX = ") > 0";
 
         @Override
@@ -358,6 +405,35 @@ public interface TextSearchDialect {
             query.append(')');
         }
 
+        /**
+         * Renders {@code CTX_DOC.POLICY_SNIPPET(policy, document, query, starttag, endtag)} over the field's
+         * text, which needs the {@link #POLICY_NAME} policy created by schema generation but no index key.
+         * A JSON entity highlights {@code JSON_VALUE(column, '$.path')}.
+         */
+        @Override
+        public void appendSearchHighlight(StringBuilder query,
+                                          Expression<?> field,
+                                          Expression<String> queryExpression,
+                                          MatchMode mode,
+                                          Target target,
+                                          Consumer<Expression<?>> appendExpression,
+                                          Function<String, Consumer<Expression<?>>> appendParameter) {
+            query.append("CTX_DOC.POLICY_SNIPPET('").append(POLICY_NAME).append("',");
+            if (target.jsonColumn() != null && field instanceof io.micronaut.data.model.jpa.criteria.PersistentPropertyPath<?> propertyPath) {
+                query.append("JSON_VALUE(");
+                if (target.tableAlias() != null) {
+                    query.append(target.tableAlias()).append('.');
+                }
+                query.append(target.jsonColumn()).append(",'$.").append(propertyPath.getPropertyPath().getPath()).append("')");
+            } else {
+                appendExpression.accept(field);
+            }
+            query.append(',');
+            appendParameter.apply(OracleTextQueryConverter.converterFor(mode, OracleTextQueryConverter.Part.FULL)).accept(queryExpression);
+            query.append(",starttag => '").append(TextSearchSupport.HIGHLIGHT_START_TAG)
+                .append("',endtag => '").append(TextSearchSupport.HIGHLIGHT_END_TAG).append("')");
+        }
+
         @Override
         public List<String> buildSearchIndex(String indexName, String escapedTableName, List<SearchColumn> columns, String language) {
             List<String> statements = new java.util.ArrayList<>(columns.size());
@@ -368,6 +444,7 @@ public interface TextSearchDialect {
                 statements.add("CREATE INDEX " + name + " ON " + escapedTableName + " (" + column.column()
                     + ") INDEXTYPE IS CTXSYS.CONTEXT PARAMETERS ('SYNC (ON COMMIT)');");
             }
+            statements.add("BEGIN CTX_DDL.CREATE_POLICY('" + POLICY_NAME + "'); EXCEPTION WHEN OTHERS THEN IF SQLCODE != -20000 THEN RAISE; END IF; END;");
             return statements;
         }
 
