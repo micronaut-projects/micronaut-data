@@ -55,41 +55,21 @@ public final class SearchQueryParser {
      */
     public static List<List<SearchTerm>> parse(@Nullable String query) {
         List<List<SearchTerm>> groups = new ArrayList<>();
-        List<SearchTerm> current = new ArrayList<>();
         if (query == null) {
             return groups;
         }
-        int length = query.length();
-        int i = 0;
-        while (i < length) {
-            char c = query.charAt(i);
-            if (Character.isWhitespace(c)) {
-                i++;
+        List<SearchTerm> current = new ArrayList<>();
+        Cursor cursor = new Cursor(query);
+        while (cursor.skipWhitespace()) {
+            boolean negated = cursor.consumeNegation();
+            if (cursor.peek() == '"') {
+                SearchTerm phrase = cursor.readPhrase(negated);
+                if (phrase != null) {
+                    current.add(phrase);
+                }
                 continue;
             }
-            boolean negated = false;
-            if (c == '-' && i + 1 < length && !Character.isWhitespace(query.charAt(i + 1))) {
-                negated = true;
-                i++;
-                c = query.charAt(i);
-            }
-            if (c == '"') {
-                int end = query.indexOf('"', i + 1);
-                if (end < 0) {
-                    end = length;
-                }
-                String phrase = query.substring(i + 1, end).trim();
-                if (!phrase.isEmpty()) {
-                    current.add(new SearchTerm(phrase, phrase.indexOf(' ') > 0, negated));
-                }
-                i = end + 1;
-                continue;
-            }
-            int start = i;
-            while (i < length && !Character.isWhitespace(query.charAt(i))) {
-                i++;
-            }
-            String word = query.substring(start, i);
+            String word = cursor.readWord();
             if (!negated && OR.equals(word)) {
                 if (!current.isEmpty()) {
                     groups.add(current);
@@ -117,5 +97,66 @@ public final class SearchQueryParser {
             terms.addAll(group);
         }
         return terms;
+    }
+
+    /**
+     * A position in the search string.
+     */
+    private static final class Cursor {
+        private final String query;
+        private int position;
+
+        Cursor(String query) {
+            this.query = query;
+        }
+
+        /**
+         * @return Whether a character follows the skipped whitespace
+         */
+        boolean skipWhitespace() {
+            while (position < query.length() && Character.isWhitespace(query.charAt(position))) {
+                position++;
+            }
+            return position < query.length();
+        }
+
+        char peek() {
+            return query.charAt(position);
+        }
+
+        /**
+         * Consumes a {@code -} directly followed by a term.
+         */
+        boolean consumeNegation() {
+            if (peek() == '-' && position + 1 < query.length() && !Character.isWhitespace(query.charAt(position + 1))) {
+                position++;
+                return true;
+            }
+            return false;
+        }
+
+        /**
+         * Reads a quoted phrase, to the closing quote or the end of the string.
+         *
+         * @return The term, or {@code null} for an empty phrase
+         */
+        @Nullable
+        SearchTerm readPhrase(boolean negated) {
+            int end = query.indexOf('"', position + 1);
+            if (end < 0) {
+                end = query.length();
+            }
+            String phrase = query.substring(position + 1, end).trim();
+            position = end + 1;
+            return phrase.isEmpty() ? null : new SearchTerm(phrase, phrase.contains(" "), negated);
+        }
+
+        String readWord() {
+            int start = position;
+            while (position < query.length() && !Character.isWhitespace(query.charAt(position))) {
+                position++;
+            }
+            return query.substring(start, position);
+        }
     }
 }
