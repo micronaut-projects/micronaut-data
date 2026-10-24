@@ -28,7 +28,9 @@ import org.jspecify.annotations.Nullable;
 import io.micronaut.data.search.document.runtime.SearchTransport;
 import io.micronaut.data.model.vector.Vector;
 
+import java.util.ArrayList;
 import java.util.LinkedHashMap;
+import java.util.List;
 import java.util.Map;
 
 /**
@@ -92,9 +94,14 @@ public final class SearchIndexDefinitions {
             }
             properties.put(property.getName(), field);
         }
-        for (PersistentProperty property : entity.getPersistentProperties()) {
-            // The other string properties are compared exactly by the derived queries, so they are
-            // keywords rather than the analyzed text a dynamic mapping would give them
+        // The other string properties are compared exactly by the derived queries, so they are
+        // keywords rather than the analyzed text a dynamic mapping would give them; the id is one of
+        // them, as the cursored pages sort on it as a tiebreaker
+        List<PersistentProperty> others = new ArrayList<>(entity.getPersistentProperties());
+        if (entity.getIdentity() != null) {
+            others.add(entity.getIdentity());
+        }
+        for (PersistentProperty property : others) {
             if (!properties.containsKey(property.getName()) && !(property instanceof Association) && isKeyword(property)) {
                 properties.put(property.getName(), Map.of("type", "keyword"));
             }
