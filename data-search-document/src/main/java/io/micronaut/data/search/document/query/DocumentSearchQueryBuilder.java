@@ -120,7 +120,12 @@ public final class DocumentSearchQueryBuilder implements QueryBuilder {
             collectHighlightFields(definition.selection(), highlightFields);
         }
         if (!highlightFields.isEmpty()) {
-            body.put("highlight", Map.of("fields", highlightFields));
+            // One object per field, the ordered form every Elasticsearch client version accepts
+            List<Map<String, Object>> fields = new ArrayList<>(highlightFields.size());
+            for (Map.Entry<String, Object> field : highlightFields.entrySet()) {
+                fields.add(Map.of(field.getKey(), field.getValue()));
+            }
+            body.put("highlight", Map.of("fields", fields));
         }
         List<Map<String, Object>> sort = new ArrayList<>();
         for (Order order : definition.order()) {
@@ -483,7 +488,13 @@ public final class DocumentSearchQueryBuilder implements QueryBuilder {
             Map<String, Object> simpleQueryString = new LinkedHashMap<>();
             simpleQueryString.put(QUERY, bindings.placeholder(parameter, SimpleQueryStringConverter.converterFor(mode)));
             simpleQueryString.put("fields", fieldNames);
-            simpleQueryString.put("default_operator", mode == MatchMode.ALL || mode == MatchMode.PREFIX ? "and" : "or");
+            // Always "and": the converter spells any-term matching out with "|", so a negated term
+            // excludes rather than matching every document without it
+            simpleQueryString.put("default_operator", "and");
+            if (mode == MatchMode.PREFIX) {
+                // Analyze the prefix with the field analyzer, so a stemmed term such as "programming*" still matches
+                simpleQueryString.put("analyze_wildcard", true);
+            }
             result = Map.of("simple_query_string", simpleQueryString);
         }
 
