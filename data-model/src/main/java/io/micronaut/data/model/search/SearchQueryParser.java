@@ -44,6 +44,11 @@ public final class SearchQueryParser {
 
     private static final String OR = "OR";
 
+    /**
+     * The token {@link #readTerm} returns for an {@code OR} separating two groups.
+     */
+    private static final SearchTerm GROUP_SEPARATOR = new SearchTerm(OR, false, false);
+
     private SearchQueryParser() {
     }
 
@@ -61,29 +66,37 @@ public final class SearchQueryParser {
         List<SearchTerm> current = new ArrayList<>();
         Cursor cursor = new Cursor(query);
         while (cursor.skipWhitespace()) {
-            boolean negated = cursor.consumeNegation();
-            if (cursor.peek() == '"') {
-                SearchTerm phrase = cursor.readPhrase(negated);
-                if (phrase != null) {
-                    current.add(phrase);
+            SearchTerm term = readTerm(cursor);
+            if (term == GROUP_SEPARATOR) {
+                // an OR closes the current group
+                if (!current.isEmpty()) {
+                    groups.add(current);
+                    current = new ArrayList<>();
                 }
-            } else {
-                String word = cursor.readWord();
-                if (!negated && OR.equals(word)) {
-                    // an OR closes the current group
-                    if (!current.isEmpty()) {
-                        groups.add(current);
-                        current = new ArrayList<>();
-                    }
-                } else {
-                    current.add(new SearchTerm(word, false, negated));
-                }
+            } else if (term != null) {
+                current.add(term);
             }
         }
         if (!current.isEmpty()) {
             groups.add(current);
         }
         return groups;
+    }
+
+    /**
+     * Reads the next term, phrase or {@code OR}.
+     *
+     * @param cursor The cursor, on a non-whitespace character
+     * @return The term, {@link #GROUP_SEPARATOR} for an {@code OR}, or {@code null} for an empty phrase
+     */
+    @Nullable
+    private static SearchTerm readTerm(Cursor cursor) {
+        boolean negated = cursor.consumeNegation();
+        if (cursor.peek() == '"') {
+            return cursor.readPhrase(negated);
+        }
+        String word = cursor.readWord();
+        return !negated && OR.equals(word) ? GROUP_SEPARATOR : new SearchTerm(word, false, negated);
     }
 
     /**
