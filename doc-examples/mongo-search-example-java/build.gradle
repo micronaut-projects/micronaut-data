@@ -25,5 +25,6 @@ dependencies {
     annotationProcessor projects.micronautDataDocumentProcessor
     implementation projects.micronautDataMongodb
     implementation mnMongo.mongo.driver
+    implementation(mnSql.jakarta.persistence.api)
     runtimeOnly mnLogging.logback.classic
 }
