@@ -33,7 +33,9 @@ import io.micronaut.data.model.runtime.RuntimeEntityRegistry;
 import io.micronaut.data.r2dbc.operations.R2dbcSchemaHandler;
 import io.micronaut.data.runtime.config.DataSettings;
 import io.micronaut.data.runtime.config.SchemaGenerate;
+import io.micronaut.data.runtime.config.SqlDialectOptionsConfiguration;
 import io.r2dbc.spi.Connection;
+import org.jspecify.annotations.Nullable;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import reactor.core.publisher.Flux;
@@ -108,9 +110,10 @@ public class R2dbcSchemaGenerator {
                         .sorted(Comparator.comparing(i -> i.hasAnnotation(JsonView.class)))
                         .map(e -> runtimeEntityRegistry.getEntity(e.getBeanType())).toArray(PersistentEntity[]::new);
                 if (ArrayUtils.isNotEmpty(entities)) {
-                    SqlQueryBuilder builder = new SqlQueryBuilder(configuration.getDialect(), configuration.getDialectOptions().getVersion());
                     Mono.from(configuration.getConnectionFactory().create()).flatMap(connection -> {
                         Dialect dialect = configuration.getDialect();
+                        String dialectVersion = configuration.getDialectOptions().resolveVersion(() -> detectVersion(connection, configuration.getName()));
+                        SqlQueryBuilder builder = new SqlQueryBuilder(dialect, dialectVersion);
                         if (configuration.getSchemaGenerateNames() != null && !configuration.getSchemaGenerateNames().isEmpty()) {
                             Mono<Void> result = Mono.empty();
                             for (String schemaName : configuration.getSchemaGenerateNames()) {
@@ -131,6 +134,17 @@ public class R2dbcSchemaGenerator {
                 }
             }
         }
+    }
+
+    private static @Nullable String detectVersion(Connection connection, String dataSourceName) {
+        String version = SqlDialectOptionsConfiguration.parseMajorMinor(connection.getMetadata().getDatabaseVersion());
+        if (version == null) {
+            LOG.warn("Unable to detect the database version of datasource [{}] from [{}]: schema generation uses no target version",
+                dataSourceName, connection.getMetadata().getDatabaseVersion());
+        } else if (LOG.isInfoEnabled()) {
+            LOG.info("Schema generation for datasource [{}] targets the detected database version {}", dataSourceName, version);
+        }
+        return version;
     }
 
     private Mono<Void> generate(Connection connection,

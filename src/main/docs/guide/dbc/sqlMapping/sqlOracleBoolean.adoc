@@ -119,6 +119,20 @@ The target version also changes the DDL that schema generation creates for Oracl
 - From `23.1`, `CREATE TABLE`, `CREATE INDEX` and `CREATE SEQUENCE` statements use `IF NOT EXISTS`, and `DROP TABLE` and `DROP VIEW` statements use `IF EXISTS`. Creating a schema that already exists no longer logs a failure for each object, and an existing object is kept as it is, even if its definition differs from the entity.
 - From `23.9`, a generated UUID identifier defaults to `RAW_TO_UUID(UUID())`, which the database formats as a UUID string, rather than to `SYS_GUID()`, which a `VARCHAR` column stores as 32 hex digits without dashes. A column with a custom definition, such as `RAW(16)`, keeps `SYS_GUID()`. Oracle AI Database 26ai releases, such as `23.26`, satisfy both versions.
 
+Instead of configuring the version, a datasource can opt in to targeting the version the database reports. Schema generation and validation then read the server version from the connection: JDBC database metadata, or the R2DBC connection metadata. A configured `version` always wins, and detection is off by default:
+
+.Schema generation for the detected database version
+[configuration]
+----
+datasources:
+  default:
+    dialect: ORACLE
+    dialect-options:
+      detect-version: true
+----
+
+Detection only changes the DDL that schema generation creates, for example `BOOLEAN` instead of `NUMBER(1)` columns, `IF NOT EXISTS` clauses and the `UUID()` default on Oracle 23ai and 26ai. It is logged at `INFO` when the datasource starts. Repository SQL stays as compiled: a repository compiled without a target version keeps its 19c SQL, which still reads and writes native `BOOLEAN` columns.
+
 IMPORTANT: Repository SQL is generated at compilation time. Datasource configuration is used by runtime components such as schema generation and validation, but it does not change SQL that has already been generated for repository methods. Keep the build-time dialect target or repository `version` option aligned with datasource `dialect-options` when using Micronaut Data schema generation.
 
 Applications that package repositories in a separate jar are responsible for running those repositories against an Oracle database that accepts the generated SQL. A repository compiled with Oracle 23.1 target version may contain SQL that is not valid on Oracle 19c or Oracle 21c, and a consuming application cannot change that generated SQL with runtime datasource configuration.
