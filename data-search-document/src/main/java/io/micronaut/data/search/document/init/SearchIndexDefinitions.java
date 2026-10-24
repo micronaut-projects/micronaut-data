@@ -22,6 +22,9 @@ import io.micronaut.data.model.PersistentEntity;
 import io.micronaut.data.model.PersistentProperty;
 import io.micronaut.data.model.search.TextSearchSupport;
 import io.micronaut.data.search.document.query.SearchJson;
+import org.jspecify.annotations.Nullable;
+import io.micronaut.data.search.document.runtime.SearchTransport;
+import io.micronaut.data.model.vector.Vector;
 
 import java.util.LinkedHashMap;
 import java.util.Map;
@@ -45,8 +48,30 @@ public final class SearchIndexDefinitions {
      * @return The create-index request body JSON
      */
     public static String mappingFor(PersistentEntity entity) {
+        return mappingFor(entity, null);
+    }
+
+    /**
+     * The index body of an entity: the search field mappings, the vector field mappings and the
+     * index settings of the store.
+     *
+     * @param entity The entity
+     * @param transport The transport creating the index, for store-specific vector mappings and settings
+     * @return The create-index body as JSON
+     */
+    public static String mappingFor(PersistentEntity entity, @Nullable SearchTransport transport) {
         String analyzer = analyzerFor(TextSearchSupport.resolveLanguage(entity));
         Map<String, Object> properties = new LinkedHashMap<>();
+        if (transport != null) {
+            for (PersistentProperty property : entity.getPersistentProperties()) {
+                if (property.isAssignable(Vector.class)) {
+                    Map<String, Object> mapping = transport.vectorFieldMapping(vectorDimensions(property));
+                    if (mapping != null) {
+                        properties.put(property.getName(), mapping);
+                    }
+                }
+            }
+        }
         for (PersistentProperty property : TextSearchSupport.searchFields(entity)) {
             SearchFieldType type = property.getAnnotationMetadata().enumValue(SearchField.class, SearchField.TYPE, SearchFieldType.class).orElse(SearchFieldType.TEXT);
             String declaredAnalyzer = property.getAnnotationMetadata().stringValue(SearchField.class, "analyzer").filter(a -> !a.isEmpty()).orElse(analyzer);
@@ -65,7 +90,22 @@ public final class SearchIndexDefinitions {
             }
             properties.put(property.getName(), field);
         }
-        return SearchJson.write(Map.of("mappings", Map.of("properties", properties)));
+        Map<String, Object> body = new LinkedHashMap<>();
+        if (transport != null && !transport.indexSettings().isEmpty()) {
+            body.put("settings", transport.indexSettings());
+        }
+        body.put("mappings", Map.of("properties", properties));
+        return SearchJson.write(body);
+    }
+
+    /**
+     * The dimension of a vector property, declared with {@code @Column(length)}.
+     *
+     * @param property The property
+     * @return The dimension, or {@code -1}
+     */
+    public static int vectorDimensions(PersistentProperty property) {
+        return property.getAnnotationMetadata().intValue("jakarta.persistence.Column", "length").orElse(-1);
     }
 
     /**

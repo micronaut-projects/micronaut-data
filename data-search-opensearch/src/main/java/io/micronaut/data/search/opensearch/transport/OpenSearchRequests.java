@@ -43,6 +43,7 @@ import org.opensearch.client.opensearch.core.search.TrackHits;
 
 import java.io.StringReader;
 import java.util.ArrayList;
+import java.util.LinkedHashMap;
 import java.util.List;
 import java.util.Map;
 import java.util.concurrent.CompletionException;
@@ -53,6 +54,11 @@ import java.util.concurrent.CompletionException;
  */
 @Internal
 final class OpenSearchRequests {
+
+    /**
+     * The index settings enabling the k-NN plugin.
+     */
+    static final Map<String, Object> KNN_SETTINGS = Map.of("index.knn", true);
 
     private static final String QUERY = "query";
 
@@ -192,7 +198,60 @@ final class OpenSearchRequests {
         if (query == null) {
             return Query.of(q -> q.matchAll(m -> m));
         }
-        return JsonData.of(query, mapper).to(Query.class, mapper);
+        return JsonData.of(translateKnn(query), mapper).to(Query.class, mapper);
+    }
+
+    /**
+     * @param dimensions The vector dimension
+     * @return The {@code knn_vector} mapping with the Lucene HNSW engine and cosine similarity, or {@code null}
+     * without a dimension, which OpenSearch requires
+     */
+    @Nullable
+    static Map<String, Object> knnVectorMapping(int dimensions) {
+        if (dimensions <= 0) {
+            return null;
+        }
+        Map<String, Object> mapping = new LinkedHashMap<>();
+        mapping.put("type", "knn_vector");
+        mapping.put("dimension", dimensions);
+        mapping.put("method", Map.of("name", "hnsw", "space_type", "cosinesimil", "engine", "lucene"));
+        return mapping;
+    }
+
+    /**
+     * Rewrites the Elasticsearch-shaped {@code knn} clauses the query builder renders into the OpenSearch
+     * {@code knn} query: {@code {"knn": {"<field>": {"vector": [...], "k": n, "max_distance": d}}}}.
+     */
+    @SuppressWarnings("unchecked")
+    static Object translateKnn(Object node) {
+        if (node instanceof Map<?, ?> map) {
+            Map<String, Object> copy = new LinkedHashMap<>();
+            for (Map.Entry<?, ?> entry : map.entrySet()) {
+                String key = String.valueOf(entry.getKey());
+                Object value = entry.getValue();
+                if ("knn".equals(key) && value instanceof Map<?, ?> knn && knn.containsKey("field")) {
+                    Map<String, Object> clause = new LinkedHashMap<>();
+                    clause.put("vector", knn.get("query_vector"));
+                    clause.put("k", knn.get("k"));
+                    Object similarity = knn.get("similarity");
+                    if (similarity instanceof Number number) {
+                        clause.put("max_distance", 1d - number.doubleValue());
+                    }
+                    copy.put("knn", Map.of(String.valueOf(knn.get("field")), clause));
+                } else {
+                    copy.put(key, translateKnn(value));
+                }
+            }
+            return copy;
+        }
+        if (node instanceof List<?> list) {
+            List<Object> copy = new ArrayList<>(list.size());
+            for (Object item : list) {
+                copy.add(translateKnn(item));
+            }
+            return copy;
+        }
+        return node;
     }
 
     static Refresh refresh(DocumentSearchConfiguration.Refresh refresh) {

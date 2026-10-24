@@ -24,6 +24,8 @@ import io.micronaut.data.model.runtime.RuntimePersistentEntity;
 import io.micronaut.data.model.runtime.RuntimePersistentProperty;
 import io.micronaut.data.model.runtime.StoredQuery;
 import io.micronaut.data.runtime.operations.internal.query.DefaultBindableParametersStoredQuery;
+import io.micronaut.data.model.vector.Vector;
+import io.micronaut.data.model.vector.search.Score;
 import io.micronaut.data.search.document.query.DocumentSearchQueryBuilder;
 import io.micronaut.json.JsonMapper;
 import org.jspecify.annotations.Nullable;
@@ -86,8 +88,11 @@ public final class DocumentStoredQuery<E, R> extends DefaultBindableParametersSt
         if (node instanceof Map<?, ?> map) {
             Object placeholder = map.get(DocumentSearchQueryBuilder.QUERY_PARAMETER_PLACEHOLDER);
             if (placeholder instanceof Number index) {
-                Object value = index.intValue() < 0 ? map.get("value") : values.get(index.intValue());
+                Object value = normalize(index.intValue() < 0 ? map.get("value") : values.get(index.intValue()));
                 Object hint = map.get(DocumentSearchQueryBuilder.WILDCARD_HINT);
+                if (DocumentSearchQueryBuilder.COSINE_SIMILARITY_HINT.equals(hint)) {
+                    return value instanceof Number distance ? 1d - distance.doubleValue() : value;
+                }
                 return hint == null ? value : wildcard(value, hint.toString());
             }
             Map<String, Object> copy = new LinkedHashMap<>();
@@ -104,6 +109,25 @@ public final class DocumentStoredQuery<E, R> extends DefaultBindableParametersSt
             return copy;
         }
         return node;
+    }
+
+    /**
+     * Vectors and scores bind as plain JSON numbers.
+     */
+    @Nullable
+    private static Object normalize(@Nullable Object value) {
+        if (value instanceof Vector vector) {
+            double[] doubles = vector.toDoubleArray();
+            List<Object> list = new ArrayList<>(doubles.length);
+            for (double d : doubles) {
+                list.add(d);
+            }
+            return list;
+        }
+        if (value instanceof Score score) {
+            return score.value();
+        }
+        return value;
     }
 
     private static Object wildcard(@Nullable Object value, String hint) {
