@@ -22,25 +22,15 @@ import io.micronaut.data.search.document.conf.DocumentSearchConfiguration;
 import io.micronaut.data.search.document.runtime.SearchTransport;
 import jakarta.inject.Named;
 import jakarta.inject.Singleton;
-import jakarta.json.stream.JsonParser;
 import org.jspecify.annotations.Nullable;
 import org.opensearch.client.json.JsonData;
 import org.opensearch.client.json.JsonpMapper;
 import org.opensearch.client.opensearch.OpenSearchClient;
 import org.opensearch.client.opensearch._types.Refresh;
-import org.opensearch.client.opensearch._types.SortOptions;
 import org.opensearch.client.opensearch._types.mapping.TypeMapping;
 import org.opensearch.client.opensearch._types.query_dsl.Query;
-import org.opensearch.client.opensearch.core.SearchRequest;
-import org.opensearch.client.opensearch.core.SearchResponse;
-import org.opensearch.client.opensearch.core.search.Highlight;
-import org.opensearch.client.opensearch.core.search.Hit;
-import org.opensearch.client.opensearch.core.search.TrackHits;
 
 import java.io.IOException;
-import java.io.StringReader;
-import java.util.ArrayList;
-import java.util.List;
 import java.util.Map;
 
 /**
@@ -54,8 +44,6 @@ import java.util.Map;
 @Named("default")
 @Requires(beans = OpenSearchClient.class)
 public final class OpenSearchSearchTransport implements SearchTransport {
-
-    private static final String QUERY = "query";
 
     private final OpenSearchClient client;
     private final JsonpMapper mapper;
@@ -71,37 +59,7 @@ public final class OpenSearchSearchTransport implements SearchTransport {
     @Override
     public SearchHits search(String index, String body) {
         try {
-            Map<String, Object> parsed = parse(body);
-            SearchRequest.Builder request = new SearchRequest.Builder().index(index).query(query(parsed));
-            Object sort = parsed.get("sort");
-            if (sort instanceof List<?> entries) {
-                List<SortOptions> options = new ArrayList<>(entries.size());
-                for (Object entry : entries) {
-                    options.add(JsonData.of(entry, mapper).to(SortOptions.class, mapper));
-                }
-                request.sort(options);
-            }
-            if (parsed.get("from") instanceof Number from) {
-                request.from(from.intValue());
-            }
-            if (parsed.get("size") instanceof Number size) {
-                request.size(size.intValue());
-            }
-            if (Boolean.TRUE.equals(parsed.get("track_total_hits"))) {
-                request.trackTotalHits(TrackHits.of(t -> t.enabled(true)));
-            }
-            Object highlight = parsed.get("highlight");
-            if (highlight != null) {
-                request.highlight(JsonData.of(highlight, mapper).to(Highlight.class, mapper));
-            }
-            SearchResponse<Map> response = client.search(request.build(), Map.class);
-            List<SearchHit> hits = new ArrayList<>(response.hits().hits().size());
-            for (Hit<Map> hit : response.hits().hits()) {
-                hits.add(new SearchHit(hit.id(), hit.score(), hit.source() == null ? Map.of() : (Map<String, Object>) hit.source(), hit.highlight()));
-            }
-            long total = response.hits().total() == null ? hits.size() : response.hits().total().value();
-            Float maxScore = response.hits().maxScore();
-            return new SearchHits(hits, total, maxScore == null ? null : maxScore.doubleValue());
+            return OpenSearchRequests.toHits(client.search(OpenSearchRequests.searchRequest(mapper, index, body), Map.class));
         } catch (IOException e) {
             throw new DataAccessException("OpenSearch search failed: " + e.getMessage(), e);
         }
@@ -184,24 +142,14 @@ public final class OpenSearchSearchTransport implements SearchTransport {
     }
 
     private Map<String, Object> parse(String body) {
-        try (JsonParser parser = mapper.jsonProvider().createParser(new StringReader(body))) {
-            return (Map<String, Object>) JsonData.from(parser, mapper).to(Map.class, mapper);
-        }
+        return OpenSearchRequests.parse(mapper, body);
     }
 
     private Query query(Map<String, Object> body) {
-        Object query = body.get(QUERY);
-        if (query == null) {
-            return Query.of(q -> q.matchAll(m -> m));
-        }
-        return JsonData.of(query, mapper).to(Query.class, mapper);
+        return OpenSearchRequests.query(mapper, body);
     }
 
     private static Refresh refresh(DocumentSearchConfiguration.Refresh refresh) {
-        return switch (refresh) {
-            case NONE -> Refresh.False;
-            case WAIT_FOR -> Refresh.WaitFor;
-            case TRUE -> Refresh.True;
-        };
+        return OpenSearchRequests.refresh(refresh);
     }
 }

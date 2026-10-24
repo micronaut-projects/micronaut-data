@@ -31,8 +31,19 @@ A api:data.model.search.SearchQuery[] passed to `search(SearchQuery)` builds the
 
 `Pageable` and `Sort` parameters set `from`, `size` and `sort`; a `Page` is built with `track_total_hits` so its total is exact. Sorting on an analysed search field sorts on its `keyword` sub-field. Cursored pagination is not supported yet.
 
+== Reactive and async repositories
+
+Repositories may also extend api:data.repository.reactive.ReactorCrudRepository[] or the async and reactive-streams variants, and derived methods may return `Mono`, `Flux`, `Publisher` or `CompletableFuture`:
+
+snippet::example.ReactiveBookRepository[project-base="doc-examples/elasticsearch-search-example", source="main", tags="reactive"]
+
+<1> A reactive repository over the same entity and store.
+<2> A `search` method returning `Mono<SearchResults<Book>>` projects the score and orders by it, like its blocking counterpart.
+<3> Any derived finder can return a `Flux`.
+
+Elasticsearch and OpenSearch run reactive and async repositories on their async clients through api:data.search.document.runtime.AsyncSearchTransport[], so no thread blocks on a request. A store that provides only a blocking api:data.search.document.runtime.SearchTransport[] still gets reactive repositories, run on the IO executor. `search(SearchQuery)` of api:data.repository.SearchRepository[] stays blocking.
+
 == Limitations
 
 - Joins, `@Where`, update queries (`updateBy...`) and subqueries are not supported; update entities with `update(...)`.
 - Highlighting, aggregations and the raw query DSL are not exposed yet.
-- Writes are synchronous; reactive and async repositories are not supported yet.
