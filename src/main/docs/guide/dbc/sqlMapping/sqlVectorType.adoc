@@ -5,7 +5,7 @@ Micronaut Data provides vector value types in `io.micronaut.data.model.vector`:
 - `FloatVector`: `float[]` backed values.
 - `DoubleVector`: `double[]` backed values.
 - `ByteVector`: `byte[]` backed values.
-- `BinaryVector`: one bit per dimension, packed eight per byte (Oracle only, see <<binaryVectors, Binary vectors>>).
+- `BinaryVector`: one bit per dimension, packed eight per byte (Oracle, and PostgreSQL with JDBC; see <<binaryVectors, Binary vectors>>).
 
 Sparse vectors are represented by:
 
@@ -107,14 +107,14 @@ Only one `ScoringFunction` parameter is allowed for vector derived search method
 
 Current derived-search scoring function support by dialect:
 
-- PostgreSQL: `COSINE`, `L2_EUCLIDEAN`, `DOT`
+- PostgreSQL: `COSINE`, `L2_EUCLIDEAN`, `DOT`, and `HAMMING` and `JACCARD` for binary vectors
 - Oracle: `COSINE`, `L2_EUCLIDEAN`, `L2_EUCLIDEAN_SQUARED`, `DOT`, `L1_MANHATTAN`, and `HAMMING` and `JACCARD` for binary vectors
 - MySQL: `COSINE`, `L2_EUCLIDEAN`, `DOT`
 
 If an unsupported function is requested for the active dialect, Micronaut Data fails fast with an `IllegalArgumentException`.
 
 [[binaryVectors]]
-== Binary vectors (Oracle)
+== Binary vectors
 
 Oracle stores binary vectors in `VECTOR(n, BINARY)` columns, where each dimension is a single bit. Map them with `BinaryVector`. Set the number of dimensions, in bits, with `@VectorStorage(length = N)`. Oracle requires it to be a multiple of 8.
 
@@ -134,7 +134,11 @@ snippet::example.ImageFingerprintRepositorySpec[project-base="doc-examples/jdbc-
 
 The Hamming score is the number of bits that differ, and its `Similarity` is the same value. The Jaccard score runs from `0` (the same set bits) to `1` (no set bits in common), and its `Similarity` is one minus the score.
 
-The array conversions of the `Vector` API return one element per dimension, `0` or `1`. `BinaryVector.data()` returns the packed bytes. Oracle JDBC and Oracle R2DBC both support binary vectors. Other databases get the same `VARCHAR(255)` fallback column as vectors on databases without vector support.
+The array conversions of the `Vector` API return one element per dimension, `0` or `1`. `BinaryVector.data()` returns the packed bytes. Oracle JDBC and Oracle R2DBC both support binary vectors.
+
+On PostgreSQL, pgvector stores binary vectors in `bit(n)` columns, where `n` is the `@VectorStorage` length in bits, or `bit varying` when no length is set. Derived search methods use pgvector's Hamming distance operator (`<~>`) by default, and its Jaccard distance operator (`<%>`) when `JACCARD` is selected. The scores and similarities are the same as on Oracle. `@VectorIndex` uses the `bit_hamming_ops` or `bit_jaccard_ops` operator class. Jaccard distance needs an `HNSW` index. Set a length on indexed columns. Binary vectors on PostgreSQL need JDBC with the pgvector Java library; the PostgreSQL R2DBC driver has no codec for them.
+
+Other databases get the same `VARCHAR(255)` fallback column as vectors on databases without vector support.
 
 == Oracle sparse vector columns
 
@@ -174,7 +178,7 @@ snippet::example.DocumentEmbeddingService[project-base="doc-examples/jdbc-vector
 
 Micronaut Data determines vector dimensions from `@VectorStorage(length = N)`, or from `@jakarta.persistence.Column(length = N)` when `@VectorStorage` does not define a length:
 
-- PostgreSQL (pgvector): `vector(N)` / `vector` by default, or `sparsevec(N)` / `sparsevec` when `@VectorStorage(shape = VectorShape.SPARSE)` is set
+- PostgreSQL (pgvector): `vector(N)` / `vector` by default, `sparsevec(N)` / `sparsevec` when `@VectorStorage(shape = VectorShape.SPARSE)` is set, or `bit(N)` / `bit varying` for `BinaryVector`
 - Oracle: `VECTOR(N, <TYPE>)` or `VECTOR(*, <TYPE>)` when no length is present
 - MySQL HeatWave: `VECTOR(N)` or `VECTOR`
 
@@ -195,6 +199,7 @@ If the dialect does not support vectors, Micronaut Data emits `VARCHAR(255)` for
 - PostgreSQL vector storage is float32-based. Dense mappings use `FloatVector` semantics, and sparse mappings use `SparseFloatVector` semantics; generic `Vector` values are coerced through those float-based paths.
 - Use `@VectorStorage(length = N)` (or `@Column(length = N)`) to define the dimension in schema generation
 - Sparse index DDL uses `HNSW` with `sparsevec_*_ops` operator classes; sparse + `IVF` is rejected.
+- `BinaryVector` columns use `bit(N)` and the `bit_hamming_ops` or `bit_jaccard_ops` operator classes (JDBC only).
 - PostgreSQL JDBC supports dense and sparse conversion paths.
 - Postgres R2DBC currently supports dense `vector` only; sparse-like payloads are rejected with an explicit unsupported error because the current R2DBC path uses the dense vector codec from the PostgreSQL R2DBC driver.
 
