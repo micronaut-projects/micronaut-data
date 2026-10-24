@@ -61,7 +61,7 @@ import java.util.regex.Pattern;
 @Internal
 public final class GraphRawQueryMethodMatcher implements MethodMatcher {
 
-    private static final Pattern PARAMETER_PATTERN = Pattern.compile("\\$([a-zA-Z_][a-zA-Z0-9_]*)");
+    private static final Pattern PARAMETER_PATTERN = Pattern.compile("\\$([a-zA-Z_]\\w*)");
     private static final Pattern WRITE_PATTERN = Pattern.compile("\\b(CREATE|MERGE|SET|REMOVE|INSERT|UPDATE)\\b");
     private static final Pattern DELETE_PATTERN = Pattern.compile("\\bDELETE\\b");
     private static final Pattern RETURN_PATTERN = Pattern.compile("\\bRETURN\\b");
@@ -157,10 +157,7 @@ public final class GraphRawQueryMethodMatcher implements MethodMatcher {
         if (writes || !readOnly) {
             return DataMethod.OperationType.UPDATE;
         }
-        if (!returnsResults) {
-            throw new MatchFailedException("A graph query must have a RETURN clause, or write with CREATE, MERGE, SET, REMOVE or DELETE");
-        }
-        return DataMethod.OperationType.QUERY;
+        throw new MatchFailedException("A graph query must have a RETURN clause, or write with CREATE, MERGE, SET, REMOVE or DELETE");
     }
 
     private static QueryResult buildQueryResult(MethodMatchContext matchContext,
@@ -215,57 +212,98 @@ public final class GraphRawQueryMethodMatcher implements MethodMatcher {
      * @return The masked query
      */
     static String maskLiterals(String query) {
-        StringBuilder sb = new StringBuilder(query.length());
-        char quote = 0;
-        boolean lineComment = false;
-        boolean blockComment = false;
-        for (int i = 0; i < query.length(); i++) {
-            char c = query.charAt(i);
-            char next = i + 1 < query.length() ? query.charAt(i + 1) : 0;
-            if (lineComment) {
-                if (c == '\n') {
-                    lineComment = false;
-                    sb.append(c);
-                } else {
-                    sb.append(' ');
-                }
-            } else if (blockComment) {
-                if (c == '*' && next == '/') {
-                    blockComment = false;
-                    sb.append("  ");
-                    i++;
-                } else {
-                    sb.append(' ');
-                }
-            } else if (quote != 0) {
-                if (c == '\\' && next != 0) {
-                    sb.append("  ");
-                    i++;
-                } else {
-                    if (c == quote) {
-                        quote = 0;
-                    }
-                    sb.append(c == quote || quote == 0 ? c : ' ');
-                }
-            } else if (c == '\'' || c == '"' || c == '`') {
-                quote = c;
-                sb.append(c);
-            } else if (c == '/' && next == '/') {
-                lineComment = true;
-                sb.append("  ");
-                i++;
-            } else if (c == '/' && next == '*') {
-                blockComment = true;
-                sb.append("  ");
-                i++;
-            } else {
-                sb.append(c);
-            }
-        }
-        return sb.toString();
+        return new LiteralMasker(query).mask();
     }
 
     private static String stripLiterals(String query) {
         return maskLiterals(query);
+    }
+
+    /**
+     * Masks string literals and comments, keeping the offsets of everything else.
+     */
+    private static final class LiteralMasker {
+        private final String query;
+        private final StringBuilder out;
+        private int position;
+        private char quote;
+        private boolean lineComment;
+        private boolean blockComment;
+
+        private LiteralMasker(String query) {
+            this.query = query;
+            this.out = new StringBuilder(query.length());
+        }
+
+        private String mask() {
+            while (position < query.length()) {
+                char c = query.charAt(position);
+                char next = position + 1 < query.length() ? query.charAt(position + 1) : 0;
+                if (lineComment) {
+                    maskLineComment(c);
+                } else if (blockComment) {
+                    maskBlockComment(c, next);
+                } else if (quote != 0) {
+                    maskQuoted(c, next);
+                } else {
+                    scan(c, next);
+                }
+            }
+            return out.toString();
+        }
+
+        private void maskLineComment(char c) {
+            if (c == '\n') {
+                lineComment = false;
+                append(c);
+            } else {
+                append(' ');
+            }
+        }
+
+        private void maskBlockComment(char c, char next) {
+            if (c == '*' && next == '/') {
+                blockComment = false;
+                appendTwo("  ");
+            } else {
+                append(' ');
+            }
+        }
+
+        private void maskQuoted(char c, char next) {
+            if (c == '\\' && next != 0) {
+                appendTwo("  ");
+            } else if (c == quote) {
+                quote = 0;
+                append(c);
+            } else {
+                append(' ');
+            }
+        }
+
+        private void scan(char c, char next) {
+            if (c == '\'' || c == '"' || c == '`') {
+                quote = c;
+                append(c);
+            } else if (c == '/' && next == '/') {
+                lineComment = true;
+                appendTwo("  ");
+            } else if (c == '/' && next == '*') {
+                blockComment = true;
+                appendTwo("  ");
+            } else {
+                append(c);
+            }
+        }
+
+        private void append(char c) {
+            out.append(c);
+            position++;
+        }
+
+        private void appendTwo(String text) {
+            out.append(text);
+            position += 2;
+        }
     }
 }

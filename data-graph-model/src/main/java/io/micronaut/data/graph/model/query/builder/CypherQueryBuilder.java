@@ -149,7 +149,14 @@ public class CypherQueryBuilder implements GraphQueryBuilder {
      * The parameter holding the identifier of the target in a link query.
      */
     public static final String LINK_TO_PARAMETER = "to";
+    private static final String WITH_DISTINCT = " WITH DISTINCT ";
+    private static final String DISTINCT = "DISTINCT ";
+    private static final String TO_LOWER = "toLower(";
+    private static final String RESULT = "result";
     private static final String RETURN = " RETURN ";
+    private static final String MATCH_OPEN = "MATCH (";
+    private static final String CLOSE_WHERE = ") WHERE ";
+    private static final String CLOSE_AS_RESULT = ") AS result";
     private static final String AND = " AND ";
     private static final String LINK_FROM = "a";
     private static final String LINK_TO = "b";
@@ -178,30 +185,7 @@ public class CypherQueryBuilder implements GraphQueryBuilder {
 
         StringBuilder query = new StringBuilder();
         appendMatch(query, state, where);
-        if (selectionRenderer.entity) {
-            if (state.hasPatterns()) {
-                query.append(" WITH DISTINCT ").append(ROOT);
-            }
-            List<String> joinColumns = appendFetchJoins(query, state);
-            appendDynamicRelationships(query, state.entity, joinColumns);
-            query.append(RETURN);
-            if (definition.isDistinct()) {
-                query.append("DISTINCT ");
-            }
-            query.append(ROOT);
-            for (String joinColumn : joinColumns) {
-                query.append(", ").append(joinColumn);
-            }
-        } else {
-            if (state.hasPatterns() && selectionRenderer.rootOnly) {
-                query.append(" WITH DISTINCT ").append(ROOT);
-            }
-            query.append(RETURN);
-            if (definition.isDistinct()) {
-                query.append("DISTINCT ");
-            }
-            query.append(selectionRenderer.out);
-        }
+        appendReturn(query, state, selectionRenderer, definition.isDistinct());
         if (!orderBy.isEmpty()) {
             query.append(" ORDER BY ").append(orderBy);
         }
@@ -212,6 +196,29 @@ public class CypherQueryBuilder implements GraphQueryBuilder {
             query.append(" LIMIT 1");
         }
         return QueryResult.of(query.toString(), List.of(query.toString()), state.parameterBindings, state.additionalRequiredParameters);
+    }
+
+    private void appendReturn(StringBuilder query, QueryState state, SelectionRenderer selectionRenderer, boolean distinct) {
+        if (state.hasPatterns() && (selectionRenderer.entity || selectionRenderer.rootOnly)) {
+            query.append(WITH_DISTINCT).append(ROOT);
+        }
+        List<String> joinColumns = List.of();
+        if (selectionRenderer.entity) {
+            joinColumns = appendFetchJoins(query, state);
+            appendDynamicRelationships(query, state.entity, joinColumns);
+        }
+        query.append(RETURN);
+        if (distinct) {
+            query.append(DISTINCT);
+        }
+        if (selectionRenderer.entity) {
+            query.append(ROOT);
+            for (String joinColumn : joinColumns) {
+                query.append(", ").append(joinColumn);
+            }
+        } else {
+            query.append(selectionRenderer.out);
+        }
     }
 
     @Override
@@ -247,7 +254,7 @@ public class CypherQueryBuilder implements GraphQueryBuilder {
         StringBuilder query = new StringBuilder();
         appendMatch(query, state, where);
         if (state.hasPatterns()) {
-            query.append(" WITH DISTINCT ").append(ROOT);
+            query.append(WITH_DISTINCT).append(ROOT);
         }
         query.append(" SET ").append(sets).append(" RETURN count(*)");
         return QueryResult.of(query.toString(), List.of(query.toString()), state.parameterBindings, state.additionalRequiredParameters);
@@ -260,7 +267,7 @@ public class CypherQueryBuilder implements GraphQueryBuilder {
         StringBuilder query = new StringBuilder();
         appendMatch(query, state, where);
         if (state.hasPatterns()) {
-            query.append(" WITH DISTINCT ").append(ROOT);
+            query.append(WITH_DISTINCT).append(ROOT);
         }
         query.append(" DETACH DELETE ").append(ROOT).append(" RETURN count(*)");
         return QueryResult.of(query.toString(), List.of(query.toString()), state.parameterBindings, state.additionalRequiredParameters);
@@ -274,7 +281,7 @@ public class CypherQueryBuilder implements GraphQueryBuilder {
      */
     @Override
     public String buildFindByIdQuery(PersistentEntity entity) {
-        StringBuilder query = new StringBuilder("MATCH (" + ROOT + labelExpression(entity) + ") WHERE "
+        StringBuilder query = new StringBuilder(MATCH_OPEN + ROOT + labelExpression(entity) + CLOSE_WHERE
             + identityExpression(entity.getIdentity(), ROOT) + " = $" + ID_PARAMETER);
         List<String> columns = new ArrayList<>();
         appendDynamicRelationships(query, entity, columns);
@@ -293,7 +300,7 @@ public class CypherQueryBuilder implements GraphQueryBuilder {
      */
     @Override
     public String buildFindAllQuery(PersistentEntity entity) {
-        return "MATCH (" + ROOT + labelExpression(entity) + ") RETURN " + ROOT;
+        return MATCH_OPEN + ROOT + labelExpression(entity) + ") RETURN " + ROOT;
     }
 
     /**
@@ -304,7 +311,7 @@ public class CypherQueryBuilder implements GraphQueryBuilder {
      */
     @Override
     public String buildCountAllQuery(PersistentEntity entity) {
-        return "MATCH (" + ROOT + labelExpression(entity) + ") RETURN count(" + ROOT + ") AS result";
+        return MATCH_OPEN + ROOT + labelExpression(entity) + ") RETURN count(" + ROOT + CLOSE_AS_RESULT;
     }
 
     /**
@@ -331,7 +338,7 @@ public class CypherQueryBuilder implements GraphQueryBuilder {
         if (identity == null || (nativeId && !idPresent)) {
             query.append("CREATE (").append(ROOT).append(labels).append(')');
         } else if (nativeId) {
-            query.append("MATCH (").append(ROOT).append(labels).append(") WHERE ")
+            query.append(MATCH_OPEN).append(ROOT).append(labels).append(CLOSE_WHERE)
                 .append(identityExpression(identity, ROOT)).append(" = $").append(ID_PARAMETER);
         } else {
             query.append("MERGE (").append(ROOT).append(labels).append(" {")
@@ -358,7 +365,7 @@ public class CypherQueryBuilder implements GraphQueryBuilder {
      */
     @Override
     public String buildDynamicLinkQuery(PersistentEntity owner, PersistentEntity target, String type) {
-        return "MATCH (" + LINK_FROM + labelExpression(owner) + "), (" + LINK_TO + labelExpression(target) + ") WHERE "
+        return MATCH_OPEN + LINK_FROM + labelExpression(owner) + "), (" + LINK_TO + labelExpression(target) + CLOSE_WHERE
             + identityExpression(owner.getIdentity(), LINK_FROM) + " = $" + LINK_FROM_PARAMETER + " AND "
             + identityExpression(target.getIdentity(), LINK_TO) + " = $" + LINK_TO_PARAMETER
             + " MERGE (" + LINK_FROM + ")-[" + PATH_RELATIONSHIP + ":" + GraphEntities.escapeName(type) + "]->(" + LINK_TO + ")"
@@ -367,7 +374,7 @@ public class CypherQueryBuilder implements GraphQueryBuilder {
 
     @Override
     public String buildAddLabelsQuery(PersistentEntity entity, List<String> labels) {
-        StringBuilder query = new StringBuilder("MATCH (").append(ROOT).append(labelExpression(entity)).append(") WHERE ")
+        StringBuilder query = new StringBuilder(MATCH_OPEN).append(ROOT).append(labelExpression(entity)).append(CLOSE_WHERE)
             .append(identityExpression(entity.getIdentity(), ROOT)).append(" = $").append(ID_PARAMETER)
             .append(" SET ").append(ROOT);
         for (String label : labels) {
@@ -378,7 +385,7 @@ public class CypherQueryBuilder implements GraphQueryBuilder {
 
     @Override
     public String buildDeleteAllQuery(PersistentEntity entity) {
-        return "MATCH (" + ROOT + labelExpression(entity) + ") DETACH DELETE " + ROOT + " RETURN count(*) AS result";
+        return MATCH_OPEN + ROOT + labelExpression(entity) + ") DETACH DELETE " + ROOT + " RETURN count(*) AS result";
     }
 
     /**
@@ -389,7 +396,7 @@ public class CypherQueryBuilder implements GraphQueryBuilder {
      */
     @Override
     public String buildDeleteByIdQuery(PersistentEntity entity) {
-        return "MATCH (" + ROOT + labelExpression(entity) + ") WHERE "
+        return MATCH_OPEN + ROOT + labelExpression(entity) + CLOSE_WHERE
             + identityExpression(entity.getIdentity(), ROOT) + " = $" + ID_PARAMETER + " DETACH DELETE " + ROOT + " RETURN count(*) AS result";
     }
 
@@ -411,9 +418,9 @@ public class CypherQueryBuilder implements GraphQueryBuilder {
                                  PersistentEntity target,
                                  List<String> propertyNames,
                                  @Nullable PersistentProperty relationshipIdentity) {
-        StringBuilder query = new StringBuilder("MATCH (")
+        StringBuilder query = new StringBuilder(MATCH_OPEN)
             .append(LINK_FROM).append(labelExpression(owner)).append("), (")
-            .append(LINK_TO).append(labelExpression(target)).append(") WHERE ")
+            .append(LINK_TO).append(labelExpression(target)).append(CLOSE_WHERE)
             .append(identityExpression(owner.getIdentity(), LINK_FROM)).append(" = $").append(LINK_FROM_PARAMETER)
             .append(" AND ")
             .append(identityExpression(target.getIdentity(), LINK_TO)).append(" = $").append(LINK_TO_PARAMETER)
@@ -491,7 +498,7 @@ public class CypherQueryBuilder implements GraphQueryBuilder {
         query.append(directed("(" + PATH_START + label + ")", "[" + PATH_RELATIONSHIP + types + "]", "(" + PATH_END + label + ")", direction));
         appendWhere(query, conditions);
         switch (definition.result()) {
-            case COUNT -> query.append(" RETURN count(").append(PATH_RELATIONSHIP).append(") AS result");
+            case COUNT -> query.append(" RETURN count(").append(PATH_RELATIONSHIP).append(CLOSE_AS_RESULT);
             case EXISTS -> query.append(" RETURN true AS result LIMIT 1");
             default -> query.append(RETURN).append(PATH_RELATIONSHIP).append(", startNode(").append(PATH_RELATIONSHIP)
                 .append(") AS ").append(RELATIONSHIP_FROM).append(", endNode(").append(PATH_RELATIONSHIP).append(") AS ").append(RELATIONSHIP_TO);
@@ -525,7 +532,7 @@ public class CypherQueryBuilder implements GraphQueryBuilder {
      */
     protected void appendPathReturn(StringBuilder query, PathQueryDefinition definition) {
         switch (definition.result()) {
-            case COUNT -> query.append(" RETURN count(").append(PATH).append(") AS result");
+            case COUNT -> query.append(" RETURN count(").append(PATH).append(CLOSE_AS_RESULT);
             case EXISTS -> query.append(" RETURN true AS result LIMIT 1");
             default -> {
                 query.append(RETURN).append(PATH);
@@ -676,7 +683,7 @@ public class CypherQueryBuilder implements GraphQueryBuilder {
     }
 
     private void appendMatch(StringBuilder query, QueryState state, @Nullable String where) {
-        query.append("MATCH (").append(ROOT).append(labelExpression(state.entity)).append(')');
+        query.append(MATCH_OPEN).append(ROOT).append(labelExpression(state.entity)).append(')');
         for (Pattern pattern : state.patterns.values()) {
             query.append(", ").append(pattern.text);
         }
@@ -715,22 +722,25 @@ public class CypherQueryBuilder implements GraphQueryBuilder {
     private List<String> appendFetchJoins(StringBuilder query, QueryState state) {
         List<String> columns = new ArrayList<>();
         for (JoinPath joinPath : state.joinPaths) {
-            if (!joinPath.getJoinType().isFetch()) {
-                continue;
+            if (joinPath.getJoinType().isFetch()) {
+                appendFetchJoin(query, joinPath, columns);
             }
-            Association[] associationPath = joinPath.getAssociationPath();
-            Association association = associationPath[0];
-            boolean relationshipEntity = GraphEntities.isRelationshipEntity(association.getAssociatedEntity());
-            if (associationPath.length > 2 || (associationPath.length == 2 && !(relationshipEntity && isTargetNode(associationPath[1])))) {
-                throw new IllegalArgumentException("Graph repositories can only join direct relationships, found join path: " + joinPath.getPath());
-            }
-            if (!GraphEntities.isRelationship(association)) {
-                throw new IllegalArgumentException("Association [" + association.getName() + "] is not a @Relationship and cannot be joined");
-            }
-            String column = JOIN_COLUMN_PREFIX + association.getName();
-            if (columns.contains(column)) {
-                continue;
-            }
+        }
+        return columns;
+    }
+
+    private void appendFetchJoin(StringBuilder query, JoinPath joinPath, List<String> columns) {
+        Association[] associationPath = joinPath.getAssociationPath();
+        Association association = associationPath[0];
+        boolean relationshipEntity = GraphEntities.isRelationshipEntity(association.getAssociatedEntity());
+        if (associationPath.length > 2 || (associationPath.length == 2 && !(relationshipEntity && isTargetNode(associationPath[1])))) {
+            throw new IllegalArgumentException("Graph repositories can only join direct relationships, found join path: " + joinPath.getPath());
+        }
+        if (!GraphEntities.isRelationship(association)) {
+            throw new IllegalArgumentException("Association [" + association.getName() + "] is not a @Relationship and cannot be joined");
+        }
+        String column = JOIN_COLUMN_PREFIX + association.getName();
+        if (!columns.contains(column)) {
             int index = columns.size();
             String nodeVariable = "j" + index;
             PersistentEntity target = GraphEntities.targetNodeEntity(association);
@@ -752,7 +762,6 @@ public class CypherQueryBuilder implements GraphQueryBuilder {
             query.append(", ").append(collect).append(" AS ").append(column);
             columns.add(column);
         }
-        return columns;
     }
 
     private static boolean isTargetNode(Association association) {
@@ -779,29 +788,34 @@ public class CypherQueryBuilder implements GraphQueryBuilder {
         StringBuilder sb = new StringBuilder();
         Iterator<Order> iterator = orders.iterator();
         while (iterator.hasNext()) {
-            Order order = iterator.next();
-            StringBuilder expression = new StringBuilder();
-            ExpressionRenderer renderer = new ExpressionRenderer(state, expression);
-            boolean ignoreCase = order instanceof DefaultOrder<?> defaultOrder && defaultOrder.isIgnoreCase();
-            Nulls nulls = order instanceof DefaultOrder<?> defaultOrder ? defaultOrder.getNullPrecedence() : Nulls.NONE;
-            if (ignoreCase) {
-                expression.append("toLower(");
-                renderer.appendExpression(order.getExpression(), null);
-                expression.append(')');
-            } else {
-                renderer.appendExpression(order.getExpression(), null);
-            }
-            if (nulls == Nulls.FIRST) {
-                sb.append("CASE WHEN ").append(expression).append(" IS NULL THEN 0 ELSE 1 END, ");
-            } else if (nulls == Nulls.LAST) {
-                sb.append("CASE WHEN ").append(expression).append(" IS NULL THEN 1 ELSE 0 END, ");
-            }
-            sb.append(expression).append(order.isAscending() ? " ASC" : " DESC");
+            appendOrder(sb, iterator.next(), state);
             if (iterator.hasNext()) {
                 sb.append(", ");
             }
         }
         return sb.toString();
+    }
+
+    private void appendOrder(StringBuilder sb, Order order, QueryState state) {
+        StringBuilder expression = new StringBuilder();
+        ExpressionRenderer renderer = new ExpressionRenderer(state, expression);
+        boolean ignoreCase = order instanceof DefaultOrder<?> defaultOrder && defaultOrder.isIgnoreCase();
+        Nulls nulls = order instanceof DefaultOrder<?> defaultOrder ? defaultOrder.getNullPrecedence() : Nulls.NONE;
+        if (ignoreCase) {
+            expression.append(TO_LOWER);
+            renderer.appendExpression(order.getExpression(), null);
+            expression.append(')');
+        } else {
+            renderer.appendExpression(order.getExpression(), null);
+        }
+        switch (nulls) {
+            case FIRST -> sb.append("CASE WHEN ").append(expression).append(" IS NULL THEN 0 ELSE 1 END, ");
+            case LAST -> sb.append("CASE WHEN ").append(expression).append(" IS NULL THEN 1 ELSE 0 END, ");
+            default -> {
+                // No null precedence
+            }
+        }
+        sb.append(expression).append(order.isAscending() ? " ASC" : " DESC");
     }
 
     /**
@@ -901,17 +915,7 @@ public class CypherQueryBuilder implements GraphQueryBuilder {
                     throw new IllegalArgumentException("Association [" + association.getName() + "] is not a @Relationship and cannot be queried");
                 }
                 String from = variable;
-                Pattern pattern = patterns.computeIfAbsent(path.toString(), key -> {
-                    int index = patterns.size();
-                    String nodeVariable = "a" + index;
-                    PersistentEntity target = GraphEntities.targetNodeEntity(association);
-                    String nodePattern = "(" + nodeVariable + labelExpression(target) + ")";
-                    if (GraphEntities.isRelationshipEntity(association.getAssociatedEntity())) {
-                        String relVariable = "ar" + index;
-                        return new Pattern(GraphEntities.relationshipPattern(association, from, relVariable, nodePattern), nodeVariable, relVariable);
-                    }
-                    return new Pattern(GraphEntities.relationshipPattern(association, from, null, nodePattern), nodeVariable, null);
-                });
+                Pattern pattern = patterns.computeIfAbsent(path.toString(), key -> newPattern(association, from));
                 if (pattern.relVariable() != null) {
                     variable = pattern.relVariable();
                     relationshipEntityPattern = pattern;
@@ -919,6 +923,22 @@ public class CypherQueryBuilder implements GraphQueryBuilder {
                     variable = pattern.nodeVariable();
                 }
             }
+            return propertyExpression(propertyPath, variable);
+        }
+
+        private Pattern newPattern(Association association, String from) {
+            int index = patterns.size();
+            String nodeVariable = "a" + index;
+            PersistentEntity target = GraphEntities.targetNodeEntity(association);
+            String nodePattern = "(" + nodeVariable + labelExpression(target) + ")";
+            if (GraphEntities.isRelationshipEntity(association.getAssociatedEntity())) {
+                String relVariable = "ar" + index;
+                return new Pattern(GraphEntities.relationshipPattern(association, from, relVariable, nodePattern), nodeVariable, relVariable);
+            }
+            return new Pattern(GraphEntities.relationshipPattern(association, from, null, nodePattern), nodeVariable, null);
+        }
+
+        private String propertyExpression(io.micronaut.data.model.PersistentPropertyPath propertyPath, String variable) {
             PersistentProperty property = propertyPath.getProperty();
             PersistentEntity owner = property.getOwner();
             if (owner.hasIdentity() && owner.getIdentity().getName().equals(property.getName())) {
@@ -1016,7 +1036,7 @@ public class CypherQueryBuilder implements GraphQueryBuilder {
                 case COUNT -> {
                     out.append("count(");
                     if (expression instanceof PersistentEntityRoot<?> && state.hasPatterns()) {
-                        out.append("DISTINCT ");
+                        out.append(DISTINCT);
                     }
                     appendExpression(expression, null);
                     out.append(')');
@@ -1234,9 +1254,9 @@ public class CypherQueryBuilder implements GraphQueryBuilder {
                 bound = findPropertyPath(right);
             }
             if (ignoreCase) {
-                out.append("toLower(");
+                out.append(TO_LOWER);
                 appendExpression(left, bound);
-                out.append(')').append(operator).append("toLower(");
+                out.append(')').append(operator).append(TO_LOWER);
                 appendExpression(right, bound);
                 out.append(')');
             } else {
@@ -1438,7 +1458,7 @@ public class CypherQueryBuilder implements GraphQueryBuilder {
         public void visit(UnaryExpression<?> unaryExpression) {
             super.visit(unaryExpression);
             if (depth == 0) {
-                appendAlias("result");
+                appendAlias(RESULT);
             }
         }
 
@@ -1455,7 +1475,7 @@ public class CypherQueryBuilder implements GraphQueryBuilder {
             super.visit(literalExpression);
             if (depth == 0) {
                 literal = true;
-                appendAlias("result");
+                appendAlias(RESULT);
             }
         }
 
@@ -1463,7 +1483,7 @@ public class CypherQueryBuilder implements GraphQueryBuilder {
         public void visit(BinaryExpression<?> binaryExpression) {
             super.visit(binaryExpression);
             if (depth == 0) {
-                appendAlias("result");
+                appendAlias(RESULT);
             }
         }
 
@@ -1471,7 +1491,7 @@ public class CypherQueryBuilder implements GraphQueryBuilder {
         public void visit(FunctionExpression<?> functionExpression) {
             super.visit(functionExpression);
             if (depth == 0) {
-                appendAlias("result");
+                appendAlias(RESULT);
             }
         }
 

@@ -51,6 +51,8 @@ import java.util.Map;
 @Introspected
 public class AgeCypherQueryBuilder extends CypherQueryBuilder {
 
+    private static final String MATCH = " MATCH ";
+
     // Every query is wrapped in the SQL statement that runs it, so nothing is parsed at runtime
 
     @Override
@@ -131,7 +133,7 @@ public class AgeCypherQueryBuilder extends CypherQueryBuilder {
             .append(" WITH a, b, existing WHERE existing IS NULL CREATE ")
             .append(directed("(a)", "[" + PATH_RELATIONSHIP + type + "]", "(b)", createDirection));
         appendSetProperties(query, PATH_RELATIONSHIP, propertyNames);
-        query.append(id).append(" UNION ").append(nodes).append(" MATCH ")
+        query.append(id).append(" UNION ").append(nodes).append(MATCH)
             .append(directed("(a)", "[" + PATH_RELATIONSHIP + type + "]", "(b)", direction));
         appendSetProperties(query, PATH_RELATIONSHIP, propertyNames);
         return AgeStatements.wrap(query.append(id).toString());
@@ -184,13 +186,13 @@ public class AgeCypherQueryBuilder extends CypherQueryBuilder {
     protected void appendPathMatch(StringBuilder query, PathQueryDefinition.Kind kind, String relationship, Direction direction) {
         String pattern = directed("(" + PATH_START + ")", relationship, "(" + PATH_END + ")", direction);
         if (kind == PathQueryDefinition.Kind.ALL_SHORTEST) {
-            query.append(" MATCH ").append(PATH).append(" = ").append(pattern)
+            query.append(MATCH).append(PATH).append(" = ").append(pattern)
                 .append(" WITH ").append(PATH_START).append(", ").append(PATH_END)
                 .append(", min(length(").append(PATH).append(")) AS shortest");
-            query.append(" MATCH ").append(PATH).append(" = ").append(pattern)
+            query.append(MATCH).append(PATH).append(" = ").append(pattern)
                 .append(" WHERE length(").append(PATH).append(") = shortest");
         } else {
-            query.append(" MATCH ").append(PATH).append(" = ").append(pattern);
+            query.append(MATCH).append(PATH).append(" = ").append(pattern);
         }
     }
 
