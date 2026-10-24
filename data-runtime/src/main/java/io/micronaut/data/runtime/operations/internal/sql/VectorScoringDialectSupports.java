@@ -53,7 +53,9 @@ final class VectorScoringDialectSupports {
             return EnumSet.of(
                 ScoringFunction.COSINE,
                 ScoringFunction.L2_EUCLIDEAN,
-                ScoringFunction.DOT
+                ScoringFunction.DOT,
+                ScoringFunction.HAMMING,
+                ScoringFunction.JACCARD
             );
         }
 
@@ -68,9 +70,12 @@ final class VectorScoringDialectSupports {
                 case COSINE -> "<=>";
                 case L2_EUCLIDEAN -> "<->";
                 case DOT -> "<#>";
+                case HAMMING -> "<~>";
+                case JACCARD -> "<%>";
                 default -> throw new IllegalArgumentException("Scoring function " + selected + " is not supported for PostgreSQL");
             };
-            return query.replace("<=>", operator);
+            // derived queries default to cosine distance, or to Hamming distance for bit vectors
+            return query.replace("<=>", operator).replace("<~>", operator);
         }
     }
 

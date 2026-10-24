@@ -17,11 +17,13 @@ package io.micronaut.data.model.runtime.convert.vector.impl;
 
 import io.micronaut.core.annotation.Internal;
 import io.micronaut.core.type.Argument;
+import io.micronaut.data.annotation.VectorStorage;
 import io.micronaut.data.model.runtime.convert.DatabaseType;
 import io.micronaut.data.model.runtime.convert.vector.BinaryVectorAttributeConverter;
 import io.micronaut.data.model.runtime.convert.vector.VectorTypeConverter;
 import io.micronaut.data.model.vector.BinaryVector;
 import jakarta.inject.Singleton;
+import jakarta.persistence.Column;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -55,7 +57,14 @@ final class DefaultBinaryVectorAttributeConverter extends AbstractVectorAttribut
         if (databaseType == DatabaseType.ORACLE) {
             return super.getColumnDefinition(argument, databaseType);
         }
-        LOG.warn("Binary vectors are supported for Oracle only, not for the database {}. Falling back to VARCHAR(255) column definition.", databaseType);
+        if (databaseType == DatabaseType.POSTGRES) {
+            // pgvector stores binary vectors in the bit type, one bit per dimension
+            int dimensions = argument.getAnnotationMetadata()
+                .intValue(VectorStorage.class, "length")
+                .orElseGet(() -> argument.getAnnotationMetadata().intValue(Column.class, "length").orElse(-1));
+            return dimensions > 0 ? "bit(%d)".formatted(dimensions) : "bit varying";
+        }
+        LOG.warn("Binary vectors are supported for Oracle and PostgreSQL only, not for the database {}. Falling back to VARCHAR(255) column definition.", databaseType);
         return "VARCHAR(255)";
     }
 }
