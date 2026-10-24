@@ -90,7 +90,8 @@ public class PostgresDbInit implements BeanCreatedEventListener<DefaultBasicR2db
             waitUntilPortIsReachable(url, info);
         }
 
-        boolean createVectorExtension = "PostgresR2dbcVectorEntitySpec".equals(specName);
+        // the vector entity specs and the hybrid search spec create tables with pgvector columns
+        boolean createVectorExtension = specName.contains("Vector") || specName.contains("Hybrid");
         boolean createUuidOsspExtension = "PostgresUpsertSpec".equals(specName);
         if (createVectorExtension || createUuidOsspExtension) {
             try (Connection connection = DriverManager.getConnection(url, info)) {
