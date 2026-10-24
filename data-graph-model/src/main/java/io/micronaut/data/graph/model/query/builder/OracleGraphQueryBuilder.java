@@ -510,8 +510,13 @@ public class OracleGraphQueryBuilder implements GraphQueryBuilder {
             }
             column("'" + GraphEntities.primaryLabel(nodeEntity).replace("'", "''") + "'", variable + SEPARATOR + LABEL_COLUMN);
             for (PersistentProperty property : nodeEntity.getPersistentProperties()) {
-                if (property instanceof Association || property.getAnnotationMetadata().hasAnnotation(DynamicAttributes.class)
+                if (property.getAnnotationMetadata().hasAnnotation(DynamicAttributes.class)
                     || property.getAnnotationMetadata().hasAnnotation(Labels.class)) {
+                    // A vertex table has fixed columns and its labels come from the graph definition
+                    throw new IllegalArgumentException("Schemaless properties and dynamic labels are not supported by Oracle property graphs, entity ["
+                        + nodeEntity.getName() + "] declares [" + property.getName() + "]");
+                }
+                if (property instanceof Association) {
                     continue;
                 }
                 column(property(variable, property), variable + SEPARATOR + GraphEntities.propertyName(property));
