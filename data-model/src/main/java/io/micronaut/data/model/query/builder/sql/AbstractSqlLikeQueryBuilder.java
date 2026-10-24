@@ -3157,10 +3157,6 @@ public abstract class AbstractSqlLikeQueryBuilder implements QueryBuilder {
                 appendSearchScore(expressions);
                 return;
             }
-            if (TextSearchSupport.HIGHLIGHT_FUNCTION.equals(functionName)) {
-                appendSearchHighlight(expressions);
-                return;
-            }
             String aggregateFunction = getDistinctAggregateFunction(functionName);
             if (aggregateFunction != null) {
                 if (expressions.size() != 1) {
@@ -3206,26 +3202,6 @@ public abstract class AbstractSqlLikeQueryBuilder implements QueryBuilder {
             }
             TextSearchSupport.ScoreArguments arguments = TextSearchSupport.scoreArguments(expressions);
             dialect.appendSearchScore(query, arguments.fields(), arguments.query(), arguments.mode(), arguments.options(), textSearchTarget(annotationMetadata, persistentEntity, tableAlias), this::appendExpression, this::appendConvertedParameter);
-        }
-
-        /**
-         * Renders the arguments of the synthetic {@link TextSearchSupport#HIGHLIGHT_FUNCTION}: the field,
-         * the query parameter and a literal holding the {@link MatchMode} name.
-         *
-         * @param expressions The function arguments
-         */
-        protected final void appendSearchHighlight(List<Expression<?>> expressions) {
-            TextSearchDialect dialect = TextSearchDialect.forDialect(getDialect());
-            if (dialect == null) {
-                throw new UnsupportedOperationException("Full-text search is not supported by dialect: " + getDialect());
-            }
-            if (expressions.size() != 3) {
-                throw new IllegalStateException("Search highlight expects a field, a query and a match mode");
-            }
-            @SuppressWarnings("unchecked")
-            Expression<String> queryExpression = (Expression<String>) expressions.get(1);
-            dialect.appendSearchHighlight(query, expressions.get(0), queryExpression, textMatchMode(expressions.get(2)),
-                textSearchTarget(annotationMetadata, persistentEntity, tableAlias), this::appendExpression, this::appendConvertedParameter);
         }
 
         /**
