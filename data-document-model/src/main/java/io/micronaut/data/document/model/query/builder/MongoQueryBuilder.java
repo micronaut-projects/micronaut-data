@@ -128,6 +128,7 @@ public final class MongoQueryBuilder implements QueryBuilder {
     public static final String MONGO_ID_FIELD = "_id";
     private static final String GEOMETRY_OPERATOR = "$geometry";
     private static final Map<String, Object> TEXT_SCORE = Map.of("$meta", "textScore");
+    private static final String ADD_FIELDS = "$addFields";
     private static final String NULL_RANK_FIELD_PREFIX = "__micronaut_nulls_";
     private static final String SORT_EXPRESSION_FIELD_PREFIX = "__micronaut_sort_";
     private static final String STR_LEN_CP = "$strLenCP";
@@ -167,7 +168,7 @@ public final class MongoQueryBuilder implements QueryBuilder {
             pipeline.add(Map.of("$match", predicateObj));
         }
         if (!addFieldsObj.isEmpty()) {
-            pipeline.add(Map.of("$addFields", addFieldsObj));
+            pipeline.add(Map.of(ADD_FIELDS, addFieldsObj));
         }
         if (!group.isEmpty()) {
             group.put(MONGO_ID_FIELD, null);
@@ -177,7 +178,17 @@ public final class MongoQueryBuilder implements QueryBuilder {
             pipeline.add(countObj);
         }
         // Order should be before project as it can remove fields that are needed for ordering
-        List<Order> orders = selectQueryDefinition.order();
+        appendSort(annotationMetadata, selectQueryDefinition.order(), queryState, pipeline);
+        appendProjection(annotationMetadata, projectionObj, pipeline);
+        appendSkipAndLimit(selectQueryDefinition, pipeline);
+        return QueryResult.of(render(pipeline, predicateObj), queryState.getParameterBindings());
+    }
+
+    /**
+     * Adds the {@code $sort} stage, with the computed fields and null ranks it sorts on defined before it
+     * and removed after it, or the repository's custom sort.
+     */
+    private void appendSort(AnnotationMetadata annotationMetadata, List<Order> orders, QueryState queryState, List<Map<String, Object>> pipeline) {
         if (!orders.isEmpty()) {
             Map<String, Object> sortObj = new LinkedHashMap<>();
             Map<String, Object> computedFields = new LinkedHashMap<>();
@@ -208,11 +219,11 @@ public final class MongoQueryBuilder implements QueryBuilder {
                 nullRankFields.clear();
             }
             if (!computedFields.isEmpty()) {
-                pipeline.add(Map.of("$addFields", computedFields));
+                pipeline.add(Map.of(ADD_FIELDS, computedFields));
             }
             if (!nullRankFields.isEmpty()) {
                 // A second stage, as $addFields cannot reference a field defined by the same stage
-                pipeline.add(Map.of("$addFields", nullRankFields));
+                pipeline.add(Map.of(ADD_FIELDS, nullRankFields));
             }
             pipeline.add(Map.of("$sort", sortObj));
             List<String> temporaryFields = new ArrayList<>(computedFields.keySet());
@@ -226,6 +237,10 @@ public final class MongoQueryBuilder implements QueryBuilder {
                 pipeline.add(Map.of("$sort", new RawJsonValue(customSort)));
             }
         }
+    }
+
+    /** Adds the {@code $project} stage of the projection, or the repository's custom projection. */
+    private static void appendProjection(AnnotationMetadata annotationMetadata, Map<String, Object> projectionObj, List<Map<String, Object>> pipeline) {
         if (!projectionObj.isEmpty()) {
             pipeline.add(Map.of("$project", projectionObj));
         } else {
@@ -234,22 +249,26 @@ public final class MongoQueryBuilder implements QueryBuilder {
                 pipeline.add(Map.of("$project", new RawJsonValue(customProjection)));
             }
         }
+    }
+
+    private static void appendSkipAndLimit(SelectQueryDefinition selectQueryDefinition, List<Map<String, Object>> pipeline) {
         if (selectQueryDefinition.offset() > 0) {
             pipeline.add(Map.of("$skip", selectQueryDefinition.offset()));
         }
         if (selectQueryDefinition.limit() != -1) {
             pipeline.add(Map.of("$limit", selectQueryDefinition.limit()));
         }
+    }
 
-        String q;
+    /** @return The pipeline as JSON, or the bare filter when the pipeline is one {@code $match} stage */
+    private String render(List<Map<String, Object>> pipeline, Map<String, Object> predicateObj) {
         if (pipeline.isEmpty()) {
-            q = "{}";
-        } else if (isMatchOnlyStage(pipeline)) {
-            q = toJsonString(predicateObj);
-        } else {
-            q = toJsonString(pipeline);
+            return "{}";
         }
-        return QueryResult.of(q, queryState.getParameterBindings());
+        if (isMatchOnlyStage(pipeline)) {
+            return toJsonString(predicateObj);
+        }
+        return toJsonString(pipeline);
     }
 
     /**
