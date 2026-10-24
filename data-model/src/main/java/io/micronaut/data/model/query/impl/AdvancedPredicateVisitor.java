@@ -23,11 +23,14 @@ import io.micronaut.data.model.jpa.criteria.impl.predicate.BetweenPredicate;
 import io.micronaut.data.model.jpa.criteria.impl.predicate.BinaryPredicate;
 import io.micronaut.data.model.jpa.criteria.impl.predicate.InPredicate;
 import io.micronaut.data.model.jpa.criteria.impl.predicate.NearPredicate;
+import io.micronaut.data.model.jpa.criteria.impl.predicate.TextMatchPredicate;
+import io.micronaut.data.model.search.MatchMode;
 import io.micronaut.data.model.jpa.criteria.impl.predicate.UnaryPredicate;
 import io.micronaut.data.model.jpa.criteria.impl.predicate.PredicateBinaryOp;
 import jakarta.persistence.criteria.Expression;
 
 import java.util.Collection;
+import java.util.List;
 
 /**
  * A variation of {@link PredicateVisitor} that visits more expression methods.
@@ -69,6 +72,11 @@ public interface AdvancedPredicateVisitor<P> extends PredicateVisitor {
     @Override
     default void visit(NearPredicate nearPredicate) {
         visitNear(nearPredicate.getValue(), nearPredicate.getGeometry(), nearPredicate.getDistance());
+    }
+
+    @Override
+    default void visit(TextMatchPredicate textMatchPredicate) {
+        visitTextMatch(textMatchPredicate.getFields(), textMatchPredicate.getQuery(), textMatchPredicate.getMode());
     }
 
     @Override
@@ -130,6 +138,18 @@ public interface AdvancedPredicateVisitor<P> extends PredicateVisitor {
 
     default void visitArrayContains(Expression<?> leftExpression, Expression<?> expression) {
         throw new UnsupportedOperationException("ArrayContains is not supported by this implementation.");
+    }
+
+    /**
+     * Visit a full-text match.
+     *
+     * @param fields The field expressions
+     * @param query The query expression
+     * @param mode The match mode
+     * @since 5.4.0
+     */
+    default void visitTextMatch(List<Expression<?>> fields, Expression<String> query, MatchMode mode) {
+        throw new UnsupportedOperationException("Full-text search is not supported by this implementation.");
     }
 
     void visitStartsWith(Expression<?> leftExpression, Expression<?> rightExpression, boolean ignoreCase);

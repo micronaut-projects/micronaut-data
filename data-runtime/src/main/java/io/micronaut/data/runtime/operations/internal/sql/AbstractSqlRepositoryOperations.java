@@ -58,6 +58,7 @@ import io.micronaut.data.model.runtime.RuntimeEntityRegistry;
 import io.micronaut.data.model.runtime.RuntimePersistentEntity;
 import io.micronaut.data.model.runtime.RuntimePersistentProperty;
 import io.micronaut.data.model.runtime.StoredQuery;
+import io.micronaut.data.model.runtime.convert.TextSearchQueryConverter;
 import io.micronaut.data.model.runtime.convert.vector.VectorTypeConverter;
 import io.micronaut.data.operations.HintsCapableRepository;
 import io.micronaut.data.runtime.config.DataSettings;
@@ -981,10 +982,31 @@ public abstract class AbstractSqlRepositoryOperations<RS, PS, Exc extends Except
      */
     @Nullable
     protected final ScoringFunction resolveVectorScoringFunction(SqlStoredQuery<?, ?> preparedQuery) {
+        if (isTextSearchQuery(preparedQuery)) {
+            // A relevance rank, not a vector distance: nothing to normalize
+            return null;
+        }
         if (preparedQuery instanceof DefaultSqlPreparedQuery<?, ?> sqlPreparedQuery) {
             return sqlPreparedQuery.getVectorScoringFunction();
         }
         return vectorScoringSupportResolver.resolve(preparedQuery.getDialect()).defaultScoringFunction();
+    }
+
+    /**
+     * Whether the query is a full-text search, recognised by a query parameter bound through a
+     * {@link TextSearchQueryConverter}.
+     *
+     * @param storedQuery The stored query
+     * @return True if it is a text search
+     */
+    protected static boolean isTextSearchQuery(SqlStoredQuery<?, ?> storedQuery) {
+        for (io.micronaut.data.model.runtime.QueryParameterBinding binding : storedQuery.getQueryBindings()) {
+            Class<?> converter = binding.getParameterConverterClass();
+            if (converter != null && TextSearchQueryConverter.class.isAssignableFrom(converter)) {
+                return true;
+            }
+        }
+        return false;
     }
 
     protected final <E, R> RuntimePersistentEntity<R> resolveDtoPersistentEntity(AnnotationMetadata annotationMetadata,
