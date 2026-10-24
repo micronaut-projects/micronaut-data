@@ -107,7 +107,7 @@ final class DefaultNeo4jReactorRepositoryOperations extends AbstractReactiveGrap
                         .collectList()
                         .flatMap(records -> Mono.from(result.consume()).map(summary -> {
                             SummaryCounters counters = summary.counters();
-                            long updateCount = counters.nodesCreated() + counters.nodesDeleted() + counters.relationshipsCreated()
+                            long updateCount = (long) counters.nodesCreated() + counters.nodesDeleted() + counters.relationshipsCreated()
                                 + counters.relationshipsDeleted() + counters.propertiesSet();
                             return new GraphResult(records, updateCount);
                         })));

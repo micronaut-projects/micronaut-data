@@ -680,10 +680,10 @@ public abstract class AbstractGraphRepositoryOperations extends AbstractReposito
         return bean;
     }
 
-    static RuntimeAssociation<?> targetNode(RuntimePersistentEntity<?> relationshipEntity) {
+    static RuntimeAssociation<Object> targetNode(RuntimePersistentEntity<?> relationshipEntity) {
         for (RuntimePersistentProperty<?> property : relationshipEntity.getPersistentProperties()) {
             if (property instanceof RuntimeAssociation<?> association && property.getAnnotationMetadata().hasStereotype(TargetNode.class)) {
-                return association;
+                return (RuntimeAssociation<Object>) association;
             }
         }
         throw new DataAccessException("Relationship entity [" + relationshipEntity.getName() + "] has no @TargetNode property");

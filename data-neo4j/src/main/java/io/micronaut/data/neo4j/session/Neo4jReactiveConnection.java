@@ -20,6 +20,8 @@ import org.neo4j.driver.reactivestreams.ReactiveQueryRunner;
 import org.neo4j.driver.reactivestreams.ReactiveSession;
 import org.neo4j.driver.reactivestreams.ReactiveTransaction;
 
+import java.util.concurrent.atomic.AtomicReference;
+
 /**
  * A reactive Neo4j session with the transaction open in it, if any.
  *
@@ -29,7 +31,7 @@ import org.neo4j.driver.reactivestreams.ReactiveTransaction;
 public final class Neo4jReactiveConnection {
 
     private final ReactiveSession session;
-    private volatile @Nullable ReactiveTransaction transaction;
+    private final AtomicReference<@Nullable ReactiveTransaction> transaction = new AtomicReference<>();
 
     /**
      * @param session The reactive session
@@ -49,21 +51,21 @@ public final class Neo4jReactiveConnection {
      * @return The open transaction, or null
      */
     public @Nullable ReactiveTransaction getTransaction() {
-        return transaction;
+        return transaction.get();
     }
 
     /**
      * @param transaction The transaction now open in the session, or null when it ended
      */
     public void setTransaction(@Nullable ReactiveTransaction transaction) {
-        this.transaction = transaction;
+        this.transaction.set(transaction);
     }
 
     /**
      * @return The transaction if one is open, otherwise the session for auto-commit queries
      */
     public ReactiveQueryRunner getQueryRunner() {
-        ReactiveTransaction tx = transaction;
+        ReactiveTransaction tx = transaction.get();
         return tx != null ? tx : session;
     }
 }

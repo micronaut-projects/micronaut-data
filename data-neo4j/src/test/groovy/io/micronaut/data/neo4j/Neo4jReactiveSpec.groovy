@@ -3,6 +3,8 @@ package io.micronaut.data.neo4j
 import io.micronaut.data.graph.tck.entities.Movie
 import io.micronaut.data.graph.tck.entities.Person
 import io.micronaut.data.graph.tck.entities.Role
+import io.micronaut.data.model.Pageable
+import io.micronaut.data.model.Sort
 import io.micronaut.data.neo4j.features.Pet
 import io.micronaut.data.neo4j.features.ReactiveMovieRepository
 import io.micronaut.data.neo4j.features.ReactiveMovieService
@@ -192,5 +194,47 @@ class Neo4jReactiveSpec extends Specification implements TestPropertyProvider {
 
     private long count(String query) {
         return operations.executeQuery(query, [:])[0].get(0) as long
+    }
+
+    void "reactive pages, sorting, batch updates and deletes"() {
+        given:
+        movieRepository.saveAll([
+            new Movie("Speed", "Get ready for rush hour", 1994),
+            new Movie("The Matrix", "Welcome to the Real World", 1999),
+            new Movie("Jaws", "Don't go in the water", 1975)
+        ]).collectList().block()
+
+        expect:
+        movieRepository.findByTitle("Jaws").block().released == 1975
+        movieRepository.findByTitle("Alien").blockOptional().empty
+        movieRepository.findAll(Sort.of(Sort.Order.desc("released"))).collectList().block()*.title == ["The Matrix", "Speed", "Jaws"]
+
+        when:
+        def page = movieRepository.findAll(Pageable.from(0, 2, Sort.of(Sort.Order.asc("title")))).block()
+
+        then:
+        page.content*.title == ["Jaws", "Speed"]
+        page.totalSize == 3
+
+        when:
+        def movies = movieRepository.findAll().collectList().block()
+        movies.each { it.votes = 7 }
+        movieRepository.updateAll(movies).collectList().block()
+
+        then:
+        movieRepository.findAll().collectList().block()*.votes == [7, 7, 7]
+
+        when:
+        movieRepository.delete(movieRepository.findByTitle("Jaws").block()).block()
+        movieRepository.deleteAll([movieRepository.findByTitle("Speed").block()]).block()
+
+        then:
+        movieRepository.findAll().collectList().block()*.title == ["The Matrix"]
+
+        when:
+        movieRepository.deleteAll().block()
+
+        then:
+        movieRepository.count().block() == 0
     }
 }

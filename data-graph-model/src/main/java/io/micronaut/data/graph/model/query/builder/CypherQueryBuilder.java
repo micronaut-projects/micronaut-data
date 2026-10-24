@@ -287,7 +287,7 @@ public class CypherQueryBuilder implements GraphQueryBuilder {
             + identityExpression(entity.getIdentity(), ROOT) + " = $" + ID_PARAMETER);
         List<String> columns = new ArrayList<>();
         appendDynamicRelationships(query, entity, columns);
-        query.append(" RETURN ").append(ROOT);
+        query.append(RETURN).append(ROOT);
         for (String column : columns) {
             query.append(", ").append(column);
         }
@@ -368,7 +368,7 @@ public class CypherQueryBuilder implements GraphQueryBuilder {
     @Override
     public String buildDynamicLinkQuery(PersistentEntity owner, PersistentEntity target, String type) {
         return MATCH_OPEN + LINK_FROM + labelExpression(owner) + "), (" + LINK_TO + labelExpression(target) + CLOSE_WHERE
-            + identityExpression(owner.getIdentity(), LINK_FROM) + " = $" + LINK_FROM_PARAMETER + " AND "
+            + identityExpression(owner.getIdentity(), LINK_FROM) + " = $" + LINK_FROM_PARAMETER + AND
             + identityExpression(target.getIdentity(), LINK_TO) + " = $" + LINK_TO_PARAMETER
             + " MERGE (" + LINK_FROM + ")-[" + PATH_RELATIONSHIP + ":" + GraphEntities.escapeName(type) + "]->(" + LINK_TO + ")"
             + " RETURN null AS " + ID_PARAMETER;

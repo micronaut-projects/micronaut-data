@@ -462,19 +462,7 @@ public abstract class AbstractReactiveGraphRepositoryOperations implements React
             }
             Object fromId = mapper.writeIdentity(persistentEntity, instance);
             Map<String, List<Object>> targetsByType = new LinkedHashMap<>();
-            relationships.forEach((type, value) -> {
-                List<Object> targets = new ArrayList<>();
-                if (value instanceof Iterable<?> iterable) {
-                    for (Object target : iterable) {
-                        if (target != null) {
-                            targets.add(target);
-                        }
-                    }
-                } else if (value != null) {
-                    targets.add(value);
-                }
-                targetsByType.put(String.valueOf(type), targets);
-            });
+            relationships.forEach((type, value) -> targetsByType.put(String.valueOf(type), targets(value)));
             Map<String, List<Object>> written = new LinkedHashMap<>();
             return Flux.fromIterable(targetsByType.entrySet())
                 .concatMap(entry -> Flux.fromIterable(entry.getValue())
@@ -491,6 +479,20 @@ public abstract class AbstractReactiveGraphRepositoryOperations implements React
                     }
                     return AbstractGraphRepositoryOperations.withProperty((BeanProperty<T, Object>) (BeanProperty<?, ?>) property, instance, written);
                 }));
+        }
+
+        private static List<Object> targets(@Nullable Object value) {
+            List<Object> targets = new ArrayList<>();
+            if (value instanceof Iterable<?> iterable) {
+                for (Object target : iterable) {
+                    if (target != null) {
+                        targets.add(target);
+                    }
+                }
+            } else if (value != null) {
+                targets.add(value);
+            }
+            return targets;
         }
 
         private Mono<Object> linkDynamic(String type, @Nullable Object fromId, Object target) {
@@ -530,14 +532,17 @@ public abstract class AbstractReactiveGraphRepositoryOperations implements React
 
         @Override
         protected void cascadePre(Relation.Cascade cascadeType) {
+            // Deleting a node detaches its relationships, there is nothing to cascade
         }
 
         @Override
         protected void cascadePost(Relation.Cascade cascadeType) {
+            // Deleting a node detaches its relationships, there is nothing to cascade
         }
 
         @Override
         protected void collectAutoPopulatedPreviousValues() {
+            // Deletes match the node by its identifier only
         }
 
         @Override
