@@ -326,7 +326,7 @@ public final class MongoQueryBuilder implements QueryBuilder {
     }
 
     /** @return The pipeline as JSON, or the bare filter when the pipeline is one {@code $match} stage */
-    private static String render(List<Map<String, Object>> pipeline, Map<String, Object> predicateObj) {
+    private String render(List<Map<String, Object>> pipeline, Map<String, Object> predicateObj) {
         if (pipeline.isEmpty()) {
             return "{}";
         }
