@@ -1,0 +1,44 @@
+To use Micronaut Data with https://age.apache.org[Apache AGE], add the AGE module to your build, along with the <<graphQuickStart, graph annotation processor>>, a connection pool and the PostgreSQL JDBC driver:
+
+dependency:io.micronaut.data:micronaut-data-postgres-age[]
+
+dependency:io.micronaut.sql:micronaut-jdbc-hikari[scope="runtimeOnly"]
+
+dependency:org.postgresql:postgresql[scope="runtimeOnly"]
+
+The graph is stored in PostgreSQL and queried through a JDBC data source. Name the graph with `micronaut.data.age.graph`. It is created when it does not exist:
+
+[configuration]
+----
+include::doc-examples/age-example-java/src/main/resources/application.yml[tag=config]
+----
+
+With https://micronaut-projects.github.io/micronaut-test-resources/latest/guide/[Micronaut Test Resources], set `test-resources.containers.postgres.image-name` to an Apache AGE image, such as `apache/age:release_PG16_1.5.0`, to start a PostgreSQL container with AGE installed for tests and development. `create-extension` runs `CREATE EXTENSION age`, which needs a privileged user.
+
+Annotate classes with ann:data.graph.annotation.Node[] to map them to nodes:
+
+snippet::example.Person[project-base="doc-examples/age-example", source="main", tags="person", languages="java,kotlin,groovy,python"]
+
+<1> The class is mapped to nodes labelled `Person`.
+<2> The name is the identifier, assigned by the application.
+
+snippet::example.Movie[project-base="doc-examples/age-example", source="main", tags="movie", languages="java,kotlin,groovy,python"]
+
+<1> The directors are `DIRECTED` relationships pointing at the movie.
+
+Then define a repository annotated with ann:data.age.annotation.AgeRepository[]:
+
+snippet::example.MovieRepository[project-base="doc-examples/age-example", source="main", tags="repository", languages="java,kotlin,groovy,python"]
+
+<1> The repository is an Apache AGE repository, its queries are compiled to Cypher run through the `cypher()` function.
+<2> `CrudRepository` provides the usual create, read, update and delete operations.
+<3> A finder that traverses the `DIRECTED` relationships.
+
+Saving a node saves the nodes it is related to and links them:
+
+snippet::example.MovieRepositorySpec[project-base="doc-examples/age-example", tags="save", indent="0", languages="java,kotlin,groovy,python"]
+
+<1> The movie and its director are written, along with the `DIRECTED` relationship.
+<2> Find the movies directed by Lana Wachowski.
+
+See <<graphAge, Apache AGE>> for the Cypher features AGE supports.

@@ -1,0 +1,64 @@
+Micronaut Data Graph covers the querying features of https://grails.apache.org/docs-legacy-gorm/latest/neo4j/manual/[GORM for Neo4j] and the mapping model of https://docs.spring.io/spring-data/neo4j/reference/[Spring Data Neo4j], with queries computed at build time.
+
+[cols="2,3"]
+|===
+|GORM for Neo4j |Micronaut Data Graph
+
+|`Club.findByName("Arsenal")`
+|`clubRepository.findByName("Arsenal")`
+
+|`Club.where { name == "Arsenal" }`, criteria
+|Criteria specifications, see <<criteria, Query Criteria>>
+
+|`fetch: [teams: 'join']`, `join 'teams'`
+|`@Join("teams")` on the finder
+
+|`Club.find("MATCH (n:Club) WHERE n.name = {1} RETURN n", name)`
+|`@Query("MATCH (n:Club) WHERE n.name = $name RETURN n")`
+
+|`Club.executeCypher(...)`, `Club.executeQuery(...)`
+|`operations.executeQuery(query, parameters)` and `operations.executeQuery(query, parameters, Club.class)`
+
+|`name index: true`, `unique: true`
+|Declare indexes and constraints in Cypher migrations
+
+|`Person.findShortestPath(fred, joe, 15)`
+|`findShortestPath(Person from, Person to, @PathLimit int maxDepth)`
+
+|`Person.findPath(...)` with Cypher
+|`@Query("MATCH p = shortestPath(...) RETURN p") Optional<GraphPath<Person>> findPath(...)`
+
+|`Person.findRelationship(fred, joe)`, `findRelationships(...)`
+|`findRelationship(Person from, Person to)`, `findRelationships(...)`
+
+|`class CastMember implements Relationship<Person, Movie>`
+|`@RelationshipProperties` class with a `@TargetNode`
+
+|`labels { ... }` dynamic labels
+|`@Labels` property
+
+|`person['goesInPatch'] = true`
+|`@DynamicAttributes` and `DynamicAttributeHolder`
+|===
+
+[cols="2,3"]
+|===
+|Spring Data Neo4j |Micronaut Data Graph
+
+|`@Node`, `@Id`, `@GeneratedValue`, `@Property`
+|`@Node`, `@Id`, `@GeneratedValue`, `@MappedProperty`
+
+|`@Relationship(type = "ACTED_IN", direction = INCOMING)`
+|The same annotation from `io.micronaut.data.graph.annotation`
+
+|`@RelationshipProperties`, `@RelationshipId`, `@TargetNode`
+|The same annotations from `io.micronaut.data.graph.annotation`
+
+|`Neo4jRepository`, `ReactiveNeo4jRepository`
+|`@Neo4jRepository` on a `CrudRepository`, `ReactorCrudRepository` or `CoroutineCrudRepository`
+
+|`Neo4jClient` and custom queries
+|`@Query` methods returning entities, DTOs, paths or relationships, and `Neo4jRepositoryOperations.executeQuery`
+|===
+
+Unlike Spring Data Neo4j, related nodes are not loaded unless a finder joins them, and saving an entity does not remove relationships missing from its collections.

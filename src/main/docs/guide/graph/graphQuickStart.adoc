@@ -1,0 +1,11 @@
+Graph repositories need the graph annotation processor, which compiles their queries:
+
+dependency:io.micronaut.data:micronaut-data-graph-processor[scope="annotationProcessor"]
+
+NOTE: For Kotlin use `kapt` or `ksp` for the processor. For Groovy add it as a `compileOnly` dependency. For Python, which Micronaut Data supports through https://pyronaut.io[Pyronaut], add it as an `implementation` dependency: the Python compiler uses the compile classpath as its annotation processor path.
+
+Each database has its own module and repository annotation. Entities and finders are the same for every database, so an application can move between them by changing the module and the annotation. Start with the quick start of your database:
+
+* <<graphNeo4jQuickStart, Neo4j>>
+* <<graphOracleQuickStart, Oracle property graphs>>
+* <<graphAgeQuickStart, PostgreSQL with Apache AGE>>
