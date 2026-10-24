@@ -288,6 +288,19 @@ abstract class AbstractGraphRepositorySpec extends Specification {
         !friendRepository.existsPath("Fred", "Nobody")
     }
 
+    void "explicit queries return relationships between nodes of different types"() {
+        given:
+        saveMovies()
+
+        when:
+        def actedIn = movieRepository.findActedIn("The Matrix")
+
+        then:
+        actedIn*.from()*.name.sort() == ["Carrie-Anne Moss", "Keanu Reeves"]
+        actedIn*.to()*.title == ["The Matrix", "The Matrix"]
+        actedIn*.type() == ["ACTED_IN", "ACTED_IN"]
+    }
+
     void "find relationships between nodes"() {
         given:
         saveFriends()
