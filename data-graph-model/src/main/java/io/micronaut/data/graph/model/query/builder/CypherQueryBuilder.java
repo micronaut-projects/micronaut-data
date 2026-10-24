@@ -158,6 +158,8 @@ public class CypherQueryBuilder implements GraphQueryBuilder {
     private static final String CLOSE_WHERE = ") WHERE ";
     private static final String CLOSE_AS_RESULT = ") AS result";
     private static final String AND = " AND ";
+    private static final String SET = " SET ";
+    private static final String RETURN_COUNT_RESULT = " RETURN count(*) AS result";
     private static final String LINK_FROM = "a";
     private static final String LINK_TO = "b";
 
@@ -256,7 +258,7 @@ public class CypherQueryBuilder implements GraphQueryBuilder {
         if (state.hasPatterns()) {
             query.append(WITH_DISTINCT).append(ROOT);
         }
-        query.append(" SET ").append(sets).append(" RETURN count(*)");
+        query.append(SET).append(sets).append(" RETURN count(*)");
         return QueryResult.of(query.toString(), List.of(query.toString()), state.parameterBindings, state.additionalRequiredParameters);
     }
 
@@ -285,7 +287,7 @@ public class CypherQueryBuilder implements GraphQueryBuilder {
             + identityExpression(entity.getIdentity(), ROOT) + " = $" + ID_PARAMETER);
         List<String> columns = new ArrayList<>();
         appendDynamicRelationships(query, entity, columns);
-        query.append(" RETURN ").append(ROOT);
+        query.append(RETURN).append(ROOT);
         for (String column : columns) {
             query.append(", ").append(column);
         }
@@ -331,7 +333,7 @@ public class CypherQueryBuilder implements GraphQueryBuilder {
      */
     @Override
     public String buildWriteNodeQuery(PersistentEntity entity, List<String> propertyNames, boolean idPresent) {
-        PersistentProperty identity = entity.getIdentity();
+        PersistentProperty identity = entity.hasIdentity() ? entity.getIdentity() : null;
         String labels = labelExpression(entity);
         StringBuilder query = new StringBuilder();
         boolean nativeId = identity != null && GraphEntities.isNativeId(identity);
@@ -345,7 +347,7 @@ public class CypherQueryBuilder implements GraphQueryBuilder {
                 .append(GraphEntities.escapeName(GraphEntities.propertyName(identity))).append(": $").append(ID_PARAMETER).append("})");
         }
         appendSetProperties(query, ROOT, propertyNames);
-        query.append(" RETURN ");
+        query.append(RETURN);
         if (identity == null) {
             query.append("null");
         } else {
@@ -366,7 +368,7 @@ public class CypherQueryBuilder implements GraphQueryBuilder {
     @Override
     public String buildDynamicLinkQuery(PersistentEntity owner, PersistentEntity target, String type) {
         return MATCH_OPEN + LINK_FROM + labelExpression(owner) + "), (" + LINK_TO + labelExpression(target) + CLOSE_WHERE
-            + identityExpression(owner.getIdentity(), LINK_FROM) + " = $" + LINK_FROM_PARAMETER + " AND "
+            + identityExpression(owner.getIdentity(), LINK_FROM) + " = $" + LINK_FROM_PARAMETER + AND
             + identityExpression(target.getIdentity(), LINK_TO) + " = $" + LINK_TO_PARAMETER
             + " MERGE (" + LINK_FROM + ")-[" + PATH_RELATIONSHIP + ":" + GraphEntities.escapeName(type) + "]->(" + LINK_TO + ")"
             + " RETURN null AS " + ID_PARAMETER;
@@ -376,16 +378,16 @@ public class CypherQueryBuilder implements GraphQueryBuilder {
     public String buildAddLabelsQuery(PersistentEntity entity, List<String> labels) {
         StringBuilder query = new StringBuilder(MATCH_OPEN).append(ROOT).append(labelExpression(entity)).append(CLOSE_WHERE)
             .append(identityExpression(entity.getIdentity(), ROOT)).append(" = $").append(ID_PARAMETER)
-            .append(" SET ").append(ROOT);
+            .append(SET).append(ROOT);
         for (String label : labels) {
             query.append(':').append(GraphEntities.escapeName(label));
         }
-        return query.append(" RETURN count(*) AS result").toString();
+        return query.append(RETURN_COUNT_RESULT).toString();
     }
 
     @Override
     public String buildDeleteAllQuery(PersistentEntity entity) {
-        return MATCH_OPEN + ROOT + labelExpression(entity) + ") DETACH DELETE " + ROOT + " RETURN count(*) AS result";
+        return MATCH_OPEN + ROOT + labelExpression(entity) + ") DETACH DELETE " + ROOT + RETURN_COUNT_RESULT;
     }
 
     /**
@@ -397,7 +399,7 @@ public class CypherQueryBuilder implements GraphQueryBuilder {
     @Override
     public String buildDeleteByIdQuery(PersistentEntity entity) {
         return MATCH_OPEN + ROOT + labelExpression(entity) + CLOSE_WHERE
-            + identityExpression(entity.getIdentity(), ROOT) + " = $" + ID_PARAMETER + " DETACH DELETE " + ROOT + " RETURN count(*) AS result";
+            + identityExpression(entity.getIdentity(), ROOT) + " = $" + ID_PARAMETER + " DETACH DELETE " + ROOT + RETURN_COUNT_RESULT;
     }
 
     /**
@@ -422,13 +424,13 @@ public class CypherQueryBuilder implements GraphQueryBuilder {
             .append(LINK_FROM).append(labelExpression(owner)).append("), (")
             .append(LINK_TO).append(labelExpression(target)).append(CLOSE_WHERE)
             .append(identityExpression(owner.getIdentity(), LINK_FROM)).append(" = $").append(LINK_FROM_PARAMETER)
-            .append(" AND ")
+            .append(AND)
             .append(identityExpression(target.getIdentity(), LINK_TO)).append(" = $").append(LINK_TO_PARAMETER)
             .append(" MERGE ");
         String rel = "[" + PATH_RELATIONSHIP + ":" + GraphEntities.escapeName(GraphEntities.relationshipType(association)) + "]";
         query.append(directed("(" + LINK_FROM + ")", rel, "(" + LINK_TO + ")", GraphEntities.direction(association)));
         appendSetProperties(query, PATH_RELATIONSHIP, propertyNames);
-        query.append(" RETURN ");
+        query.append(RETURN);
         if (relationshipIdentity != null) {
             query.append(identityExpression(relationshipIdentity, PATH_RELATIONSHIP));
         } else {
@@ -448,7 +450,7 @@ public class CypherQueryBuilder implements GraphQueryBuilder {
         if (propertyNames.isEmpty()) {
             return;
         }
-        query.append(" SET ");
+        query.append(SET);
         for (int i = 0; i < propertyNames.size(); i++) {
             if (i > 0) {
                 query.append(", ");

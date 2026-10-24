@@ -57,6 +57,7 @@ final class DefaultNeo4jConnectionOperations extends AbstractConnectionOperation
 
     @Override
     protected void setupConnection(ConnectionStatus<Neo4jConnection> connectionStatus) {
+        // Sessions need no setup: the database is chosen when the session is opened
     }
 
     @Override

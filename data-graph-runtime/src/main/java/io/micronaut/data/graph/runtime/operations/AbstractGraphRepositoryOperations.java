@@ -496,25 +496,10 @@ public abstract class AbstractGraphRepositoryOperations extends AbstractReposito
             return path == null ? null : mapper.readPath(path, nodeType);
         }
         if (GraphRelationship.class.isAssignableFrom(resultType)) {
-            GraphEdge edge = record.get(CypherQueryBuilder.PATH_RELATIONSHIP) instanceof GraphEdge e ? e : firstValue(record, GraphEdge.class);
-            if (edge == null) {
-                return null;
-            }
-            GraphNode from = (GraphNode) record.get(CypherQueryBuilder.RELATIONSHIP_FROM);
-            GraphNode to = (GraphNode) record.get(CypherQueryBuilder.RELATIONSHIP_TO);
-            if (from == null || to == null) {
-                throw new DataAccessException("A query returning relationships must also return their start and end nodes as columns f and t");
-            }
-            return mapper.readRelationship(edge, from, to, nodeType, targetNodeType);
+            return mapRelationship(record, nodeType, targetNodeType);
         }
         if (first instanceof GraphNode node) {
-            if (resultType != Object.class && isEntity(resultType)) {
-                RuntimePersistentEntity<?> entity = getEntity(resultType);
-                if (node.labels().contains(GraphEntities.primaryLabel(entity))) {
-                    return readEntity(entity, record, annotationMetadata);
-                }
-            }
-            return mapper.readNodeAs(node, resultType);
+            return mapNode(record, node, resultType, annotationMetadata);
         }
         if (first instanceof GraphPathValue path) {
             return mapper.readPath(path, nodeType);
@@ -523,6 +508,29 @@ public abstract class AbstractGraphRepositoryOperations extends AbstractReposito
             return record.asMap();
         }
         return mapper.convert(first, Argument.of(resultType));
+    }
+
+    private @Nullable Object mapRelationship(GraphRecord record, Class<?> nodeType, Class<?> targetNodeType) {
+        GraphEdge edge = record.get(CypherQueryBuilder.PATH_RELATIONSHIP) instanceof GraphEdge e ? e : firstValue(record, GraphEdge.class);
+        if (edge == null) {
+            return null;
+        }
+        GraphNode from = (GraphNode) record.get(CypherQueryBuilder.RELATIONSHIP_FROM);
+        GraphNode to = (GraphNode) record.get(CypherQueryBuilder.RELATIONSHIP_TO);
+        if (from == null || to == null) {
+            throw new DataAccessException("A query returning relationships must also return their start and end nodes as columns f and t");
+        }
+        return mapper.readRelationship(edge, from, to, nodeType, targetNodeType);
+    }
+
+    private Object mapNode(GraphRecord record, GraphNode node, Class<?> resultType, AnnotationMetadata annotationMetadata) {
+        if (resultType != Object.class && isEntity(resultType)) {
+            RuntimePersistentEntity<?> entity = getEntity(resultType);
+            if (node.labels().contains(GraphEntities.primaryLabel(entity))) {
+                return readEntity(entity, record, annotationMetadata);
+            }
+        }
+        return mapper.readNodeAs(node, resultType);
     }
 
     final <T> T readEntity(RuntimePersistentEntity<T> entity, GraphRecord record, AnnotationMetadata annotationMetadata) {
@@ -660,10 +668,10 @@ public abstract class AbstractGraphRepositoryOperations extends AbstractReposito
         return bean;
     }
 
-    static RuntimeAssociation<?> targetNode(RuntimePersistentEntity<?> relationshipEntity) {
+    static RuntimeAssociation<Object> targetNode(RuntimePersistentEntity<?> relationshipEntity) {
         for (RuntimePersistentProperty<?> property : relationshipEntity.getPersistentProperties()) {
             if (property instanceof RuntimeAssociation<?> association && property.getAnnotationMetadata().hasStereotype(TargetNode.class)) {
-                return association;
+                return (RuntimeAssociation<Object>) association;
             }
         }
         throw new DataAccessException("Relationship entity [" + relationshipEntity.getName() + "] has no @TargetNode property");
@@ -1168,10 +1176,12 @@ public abstract class AbstractGraphRepositoryOperations extends AbstractReposito
 
         @Override
         protected void cascadePre(Relation.Cascade cascadeType) {
+            // Deleting a node detaches its relationships, there is nothing to cascade
         }
 
         @Override
         protected void cascadePost(Relation.Cascade cascadeType) {
+            // Deleting a node detaches its relationships, there is nothing to cascade
         }
 
         @Override

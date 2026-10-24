@@ -97,47 +97,51 @@ public final class OracleGraphSql {
     public static void appendSortAndLimit(StringBuilder query, RuntimePersistentEntity<?> entity, @Nullable Sort sort, @Nullable Limit limit) {
         boolean sqlPgq = query.indexOf("GRAPH_TABLE (") >= 0;
         if (sort != null && sort.isSorted() && query.indexOf(" ORDER BY ") < 0) {
-            query.append(" ORDER BY ");
-            Iterator<Sort.Order> iterator = sort.getOrderBy().iterator();
-            while (iterator.hasNext()) {
-                Sort.Order order = iterator.next();
-                RuntimePersistentProperty<?> property = entity.getPropertyByName(order.getProperty());
-                if (property == null && entity.hasIdentity() && entity.getIdentity().getName().equals(order.getProperty())) {
-                    property = entity.getIdentity();
-                }
-                if (property == null) {
-                    throw new IllegalArgumentException("Cannot sort on non-existent property: " + order.getProperty());
-                }
-                String expression = sqlPgq
-                    ? "\"n" + OracleGraphQueryBuilder.SEPARATOR + property.getPersistedName() + "\""
-                    : "n." + property.getPersistedName();
-                if (order.isIgnoreCase()) {
-                    expression = "LOWER(" + expression + ")";
-                }
-                query.append(expression).append(order.isAscending() ? " ASC" : " DESC");
-                if (iterator.hasNext()) {
-                    query.append(", ");
-                }
-            }
+            appendOrderBy(query, entity, sort, sqlPgq);
         }
         if (limit != null && limit.isLimited() && query.indexOf(" LIMIT ") < 0 && query.indexOf(" FETCH ") < 0) {
-            long offset = limit.offset();
-            int max = limit.maxResults();
-            if (sqlPgq) {
-                if (offset > 0) {
-                    query.append(" OFFSET ").append(offset).append(" ROWS");
-                }
-                if (max > 0) {
-                    query.append(" FETCH NEXT ").append(max).append(" ROWS ONLY");
-                }
-            } else {
-                if (offset > 0) {
-                    query.append(" OFFSET ").append(offset);
-                }
-                if (max > 0) {
-                    query.append(" LIMIT ").append(max);
-                }
+            appendLimit(query, limit, sqlPgq);
+        }
+    }
+
+    private static void appendOrderBy(StringBuilder query, RuntimePersistentEntity<?> entity, Sort sort, boolean sqlPgq) {
+        query.append(" ORDER BY ");
+        Iterator<Sort.Order> iterator = sort.getOrderBy().iterator();
+        while (iterator.hasNext()) {
+            Sort.Order order = iterator.next();
+            RuntimePersistentProperty<?> property = sortProperty(entity, order.getProperty());
+            String expression = sqlPgq
+                ? "\"n" + OracleGraphQueryBuilder.SEPARATOR + property.getPersistedName() + "\""
+                : "n." + property.getPersistedName();
+            if (order.isIgnoreCase()) {
+                expression = "LOWER(" + expression + ")";
             }
+            query.append(expression).append(order.isAscending() ? " ASC" : " DESC");
+            if (iterator.hasNext()) {
+                query.append(", ");
+            }
+        }
+    }
+
+    private static RuntimePersistentProperty<?> sortProperty(RuntimePersistentEntity<?> entity, String name) {
+        RuntimePersistentProperty<?> property = entity.getPropertyByName(name);
+        if (property == null && entity.hasIdentity() && entity.getIdentity().getName().equals(name)) {
+            property = entity.getIdentity();
+        }
+        if (property == null) {
+            throw new IllegalArgumentException("Cannot sort on non-existent property: " + name);
+        }
+        return property;
+    }
+
+    private static void appendLimit(StringBuilder query, Limit limit, boolean sqlPgq) {
+        long offset = limit.offset();
+        int max = limit.maxResults();
+        if (offset > 0) {
+            query.append(" OFFSET ").append(offset).append(sqlPgq ? " ROWS" : "");
+        }
+        if (max > 0) {
+            query.append(sqlPgq ? " FETCH NEXT " + max + " ROWS ONLY" : " LIMIT " + max);
         }
     }
 }

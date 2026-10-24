@@ -46,6 +46,8 @@ import java.util.Map;
 @Internal
 public final class GraphValueDecoder extends LimitingStream implements Decoder {
 
+    private static final String EXPECTED = "Expected ";
+
     private final @Nullable Iterator<? extends Map.Entry<?, ?>> entries;
     private final @Nullable Iterator<?> elements;
     private @Nullable Object current;
@@ -105,7 +107,7 @@ public final class GraphValueDecoder extends LimitingStream implements Decoder {
     private Object takeNonNull(String expected) throws IOException {
         Object value = take();
         if (value == null) {
-            throw createDeserializationException("Expected " + expected + " but found null", null);
+            throw createDeserializationException(EXPECTED + expected + " but found null", null);
         }
         return value;
     }
@@ -119,10 +121,10 @@ public final class GraphValueDecoder extends LimitingStream implements Decoder {
                 try {
                     yield new BigDecimal(text.toString().trim());
                 } catch (NumberFormatException e) {
-                    throw createDeserializationException("Expected " + expected + " but found [" + text + "]", value);
+                    throw createDeserializationException(EXPECTED + expected + " but found [" + text + "]", value);
                 }
             }
-            default -> throw createDeserializationException("Expected " + expected + " but found " + value.getClass().getName(), value);
+            default -> throw createDeserializationException(EXPECTED + expected + " but found " + value.getClass().getName(), value);
         };
     }
 
@@ -140,7 +142,7 @@ public final class GraphValueDecoder extends LimitingStream implements Decoder {
             }
             iterator = list.iterator();
         } else {
-            throw createDeserializationException("Expected an array but found " + value.getClass().getName(), value);
+            throw createDeserializationException(EXPECTED + "an array but found " + value.getClass().getName(), value);
         }
         return new GraphValueDecoder(childLimits(), null, false, null, iterator);
     }
@@ -156,7 +158,7 @@ public final class GraphValueDecoder extends LimitingStream implements Decoder {
         if (value instanceof Map<?, ?> map) {
             return new GraphValueDecoder(childLimits(), null, false, map.entrySet().iterator(), null);
         }
-        throw createDeserializationException("Expected an object but found " + value.getClass().getName(), value);
+        throw createDeserializationException(EXPECTED + "an object but found " + value.getClass().getName(), value);
     }
 
     @Override
@@ -214,7 +216,7 @@ public final class GraphValueDecoder extends LimitingStream implements Decoder {
             default -> {
                 String text = value.toString();
                 if (text.length() != 1) {
-                    throw createDeserializationException("Expected a single character but found [" + text + "]", value);
+                    throw createDeserializationException(EXPECTED + "a single character but found [" + text + "]", value);
                 }
                 yield text.charAt(0);
             }
@@ -279,7 +281,7 @@ public final class GraphValueDecoder extends LimitingStream implements Decoder {
                 }
                 yield bytes;
             }
-            default -> throw createDeserializationException("Expected binary data but found " + value.getClass().getName(), value);
+            default -> throw createDeserializationException(EXPECTED + "binary data but found " + value.getClass().getName(), value);
         };
     }
 
@@ -361,21 +363,24 @@ public final class GraphValueDecoder extends LimitingStream implements Decoder {
     public void finishStructure(boolean consumeLeftElements) throws IOException {
         if (consumeLeftElements) {
             hasCurrent = false;
-            if (entries != null) {
-                while (entries.hasNext()) {
-                    entries.next();
-                }
-            }
-            if (elements != null) {
-                while (elements.hasNext()) {
-                    elements.next();
-                }
-            }
-            return;
-        }
-        if (hasCurrent || (entries != null && entries.hasNext()) || (elements != null && elements.hasNext())) {
+            drain(entries);
+            drain(elements);
+        } else if (hasCurrent || hasNext(entries) || hasNext(elements)) {
             throw new SerdeException("Unexpected element remaining in the structure");
         }
+    }
+
+    private static void drain(@Nullable Iterator<?> iterator) {
+        if (iterator == null) {
+            return;
+        }
+        while (iterator.hasNext()) {
+            iterator.next();
+        }
+    }
+
+    private static boolean hasNext(@Nullable Iterator<?> iterator) {
+        return iterator != null && iterator.hasNext();
     }
 
     @Override

@@ -2,9 +2,11 @@ package io.micronaut.data.oracle.graph
 
 import io.micronaut.data.connection.jdbc.advice.DelegatingDataSource
 import io.micronaut.data.model.Pageable
+import io.micronaut.data.model.runtime.PagedQuery
 import io.micronaut.data.model.Sort
 import io.micronaut.data.oracle.graph.bank.Account
 import io.micronaut.data.oracle.graph.bank.BankGraph
+import io.micronaut.data.oracle.graph.operations.OracleGraphRepositoryOperations
 import io.micronaut.test.extensions.spock.annotation.MicronautTest
 import jakarta.inject.Inject
 import spock.lang.Shared
@@ -21,6 +23,9 @@ class OracleGraphSpec extends Specification {
 
     @Inject
     BankGraph bankGraph
+
+    @Inject
+    OracleGraphRepositoryOperations operations
 
     @Inject
     DataSource dataSource
@@ -131,5 +136,51 @@ class OracleGraphSpec extends Specification {
         expect:
         bankGraph.largeTransfers(100)*.source() == ["Alice", "Bob"]
         bankGraph.largeTransfers(100)*.target() == ["Bob", "Carol"]
+    }
+
+    void "sort and page at runtime"() {
+        expect: "a sort by a property, ignoring case, or by the identifier"
+        bankGraph.findByIdGreaterThan(0L, Sort.of(Sort.Order.desc("name", true)))*.name() == ["Dave", "Carol", "Bob", "Alice"]
+        bankGraph.findByIdGreaterThan(1L, Sort.of(Sort.Order.desc("id")))*.name() == ["Dave", "Carol", "Bob"]
+
+        when:
+        def page = bankGraph.findByIdGreaterThan(0L, Pageable.from(1, 2, Sort.of(Sort.Order.asc("id"))))
+
+        then:
+        page.content*.name() == ["Carol", "Dave"]
+        page.totalSize == 4
+
+        when:
+        bankGraph.findByIdGreaterThan(0L, Sort.of(Sort.Order.asc("balance")))
+
+        then:
+        def e = thrown(Exception)
+        e.message.contains("Cannot sort on non-existent property: balance")
+    }
+
+    void "operations without a query method are rejected"() {
+        when:
+        operations.findOne(Account, 1L)
+
+        then:
+        thrown(UnsupportedOperationException)
+
+        when:
+        operations.findAll((PagedQuery) null)
+
+        then:
+        thrown(UnsupportedOperationException)
+
+        when:
+        operations.count((PagedQuery) null)
+
+        then:
+        thrown(UnsupportedOperationException)
+
+        when:
+        operations.findStream((PagedQuery) null)
+
+        then:
+        thrown(UnsupportedOperationException)
     }
 }
