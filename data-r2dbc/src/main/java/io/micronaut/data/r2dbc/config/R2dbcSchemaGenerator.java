@@ -238,8 +238,13 @@ public class R2dbcSchemaGenerator {
     }
 
     private Mono<Void> restoreOracleSchema(Connection connection, String schema) {
-        // The exact name reported by the database, quoted so that its case is kept
-        return execute(connection, "ALTER SESSION SET CURRENT_SCHEMA=\"" + schema.replace("\"", "\"\"") + "\"");
+        // The exact name reported by the database, bound and quoted by the database so that its case is kept
+        return Flux.from(connection.createStatement(
+                "BEGIN EXECUTE IMMEDIATE 'ALTER SESSION SET CURRENT_SCHEMA = ' || DBMS_ASSERT.ENQUOTE_NAME(?, FALSE); END;")
+                .bind(0, schema)
+                .execute())
+            .flatMap(result -> Flux.from(result.getRowsUpdated()))
+            .then();
     }
 
     private Mono<Void> execute(Connection connection, String sql) {

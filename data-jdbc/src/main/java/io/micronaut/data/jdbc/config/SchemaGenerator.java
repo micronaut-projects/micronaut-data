@@ -56,12 +56,12 @@ import org.slf4j.LoggerFactory;
 
 import javax.sql.DataSource;
 import java.lang.reflect.Modifier;
+import java.sql.CallableStatement;
 import java.sql.Connection;
 import java.sql.DatabaseMetaData;
 import java.sql.PreparedStatement;
 import java.sql.ResultSet;
 import java.sql.SQLException;
-import java.sql.Statement;
 import java.util.Collection;
 import java.util.Collections;
 import java.util.List;
@@ -79,6 +79,8 @@ public class SchemaGenerator {
     private static final String MATCH_ALL = "%";
 
     private static final Logger LOG = LoggerFactory.getLogger(SchemaGenerator.class);
+    private static final String RESTORE_ORACLE_SCHEMA =
+        "BEGIN EXECUTE IMMEDIATE 'ALTER SESSION SET CURRENT_SCHEMA = ' || DBMS_ASSERT.ENQUOTE_NAME(?, FALSE); END;";
 
     private final List<DataJdbcConfiguration> configurations;
     private final JdbcSchemaHandler schemaHandler;
@@ -197,9 +199,10 @@ public class SchemaGenerator {
     }
 
     private static void restoreOracleSchema(Connection connection, String schema) throws SQLException {
-        // The exact name reported by the driver, quoted so that its case is kept
-        try (Statement statement = connection.createStatement()) {
-            statement.execute("ALTER SESSION SET CURRENT_SCHEMA=\"" + schema.replace("\"", "\"\"") + "\"");
+        // The exact name reported by the driver, bound and quoted by the database so that its case is kept
+        try (CallableStatement statement = connection.prepareCall(RESTORE_ORACLE_SCHEMA)) {
+            statement.setString(1, schema);
+            statement.execute();
         }
     }
 
