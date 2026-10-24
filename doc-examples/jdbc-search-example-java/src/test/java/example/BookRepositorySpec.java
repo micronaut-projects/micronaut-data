@@ -2,6 +2,7 @@ package example;
 
 import io.micronaut.data.model.search.SearchQuery;
 import io.micronaut.data.model.vector.Vector;
+import io.micronaut.data.model.vector.search.Score;
 import io.micronaut.data.model.vector.search.SearchResults;
 import io.micronaut.test.extensions.junit5.annotation.MicronautTest;
 import jakarta.inject.Inject;
@@ -50,6 +51,8 @@ class BookRepositorySpec {
         assertEquals(0, bookRepository.findByDescriptionSearchPhrase("beans coffee").size());
         assertEquals(2, bookRepository.findByTitleSearchPrefix("coff").size());
         assertEquals(1, bookRepository.findBySearchAndAuthor("coffee", "Bean").size());
+        assertEquals(2, bookRepository.searchByTitleSearch("coffee", new Score(0)).totalHits());
+        assertEquals(0, bookRepository.searchByTitleSearch("coffee", new Score(100)).totalHits());
     }
 
     @Test

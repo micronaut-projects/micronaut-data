@@ -1732,13 +1732,17 @@ public abstract class AbstractSqlLikeQueryBuilder implements QueryBuilder {
      * @return The target
      */
     protected final TextSearchDialect.Target textSearchTarget(AnnotationMetadata annotationMetadata, PersistentEntity entity, @Nullable String tableAlias) {
-        if (isJsonEntity(annotationMetadata, entity)) {
-            String jsonColumn = getJsonEntityColumn(annotationMetadata);
-            if (jsonColumn != null) {
-                return new TextSearchDialect.Target(jsonColumn, tableAlias);
+        String jsonColumn = isJsonEntity(annotationMetadata, entity) ? getJsonEntityColumn(annotationMetadata) : null;
+        String languageColumn = null;
+        PersistentProperty language = TextSearchSupport.languageProperty(entity);
+        if (language != null && jsonColumn == null) {
+            String column = getColumnName(language);
+            if (shouldEscape(entity)) {
+                column = quote(column);
             }
+            languageColumn = tableAlias == null ? column : tableAlias + DOT + column;
         }
-        return TextSearchDialect.Target.RELATIONAL;
+        return new TextSearchDialect.Target(jsonColumn, tableAlias, languageColumn);
     }
 
     /**
