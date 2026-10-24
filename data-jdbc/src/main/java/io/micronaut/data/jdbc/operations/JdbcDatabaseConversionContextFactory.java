@@ -18,15 +18,13 @@ package io.micronaut.data.jdbc.operations;
 import io.micronaut.context.annotation.EachBean;
 import io.micronaut.context.annotation.Parameter;
 import io.micronaut.core.annotation.Internal;
-import io.micronaut.core.convert.ArgumentConversionContext;
-import io.micronaut.core.convert.ConversionContext;
 import io.micronaut.core.type.Argument;
 import io.micronaut.data.jdbc.config.DataJdbcConfiguration;
 import io.micronaut.data.model.runtime.convert.DataAccessType;
 import io.micronaut.data.model.runtime.convert.DatabaseType;
 import io.micronaut.data.model.runtime.convert.DatabaseTypeConversionContext;
+import io.micronaut.data.runtime.convert.ArgumentDatabaseTypeConversionContext;
 import io.micronaut.data.runtime.convert.DatabaseConversionContextFactory;
-import io.micronaut.data.runtime.support.AbstractConversionContext;
 import org.jspecify.annotations.NonNull;
 
 import javax.sql.DataSource;
@@ -55,69 +53,11 @@ final class JdbcDatabaseConversionContextFactory implements DatabaseConversionCo
     @Override
     @NonNull
     public DatabaseTypeConversionContext forArgument(@NonNull Argument<?> argument) {
-        return new ArgumentDatabaseTypeContext(databaseType, getDataAccessType(), argument);
+        return new ArgumentDatabaseTypeConversionContext(databaseType, getDataAccessType(), argument);
     }
 
     @Override
     public DataAccessType getDataAccessType() {
         return DataAccessType.JDBC;
-    }
-
-    /**
-     * Lightweight conversion context carrying only argument metadata and database type.
-     */
-    private static final class ArgumentDatabaseTypeContext extends AbstractConversionContext
-        implements DatabaseTypeConversionContext, ArgumentConversionContext<Object> {
-
-        private final DatabaseType databaseType;
-        private final DataAccessType dataAccessType;
-        private final Argument<Object> argument;
-
-        /**
-         * @param databaseType database type
-         * @param dataAccessType the driver API of the factory
-         * @param argument argument metadata
-         */
-        @SuppressWarnings("unchecked")
-        private ArgumentDatabaseTypeContext(DatabaseType databaseType, DataAccessType dataAccessType, Argument<?> argument) {
-            super(ConversionContext.of(argument));
-            this.databaseType = databaseType;
-            this.dataAccessType = dataAccessType;
-            this.argument = (Argument<Object>) argument;
-        }
-
-        /**
-         * @return resolved database type
-         */
-        @Override
-        @NonNull
-        public DatabaseType getDatabaseType() {
-            return databaseType;
-        }
-
-        /**
-         * @return the driver API of the factory
-         */
-        @Override
-        public DataAccessType getDataAccessType() {
-            return dataAccessType;
-        }
-
-        /**
-         * @return conversion argument metadata
-         */
-        @Override
-        @NonNull
-        public Argument<Object> getArgument() {
-            return argument;
-        }
-
-        /**
-         * @return argument type parameters
-         */
-        @Override
-        public Argument<?> @NonNull [] getTypeParameters() {
-            return argument.getTypeParameters();
-        }
     }
 }
