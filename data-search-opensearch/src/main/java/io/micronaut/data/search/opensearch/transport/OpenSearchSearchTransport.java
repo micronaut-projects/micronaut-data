@@ -40,6 +40,7 @@ import org.opensearch.client.opensearch.core.search.TrackHits;
 import java.io.IOException;
 import java.io.StringReader;
 import java.util.ArrayList;
+import java.util.LinkedHashMap;
 import java.util.List;
 import java.util.Map;
 
@@ -95,7 +96,7 @@ public final class OpenSearchSearchTransport implements SearchTransport {
             }
             Object highlight = parsed.get("highlight");
             if (highlight != null) {
-                request.highlight(JsonData.of(highlight, mapper).to(Highlight.class, mapper));
+                request.highlight(JsonData.of(highlightWithFieldMap(highlight), mapper).to(Highlight.class, mapper));
             }
             SearchResponse<Map> response = client.search(request.build(), Map.class);
             List<SearchHit> hits = new ArrayList<>(response.hits().hits().size());
@@ -199,6 +200,29 @@ public final class OpenSearchSearchTransport implements SearchTransport {
             return type.cast(number.intValue());
         }
         return JsonData.of(value, mapper).to(type, mapper);
+    }
+
+    /**
+     * The query builder lists the highlighted fields as one object per field; the OpenSearch client
+     * only reads them as a map.
+     *
+     * @param highlight The parsed highlight clause
+     * @return The clause with the fields as a map
+     */
+    @SuppressWarnings("unchecked")
+    static Object highlightWithFieldMap(Object highlight) {
+        if (highlight instanceof Map<?, ?> clause && clause.get("fields") instanceof List<?> fields) {
+            Map<String, Object> merged = new LinkedHashMap<>();
+            for (Object field : fields) {
+                if (field instanceof Map<?, ?> entry) {
+                    merged.putAll((Map<String, Object>) entry);
+                }
+            }
+            Map<String, Object> rewritten = new LinkedHashMap<>((Map<String, Object>) clause);
+            rewritten.put("fields", merged);
+            return rewritten;
+        }
+        return highlight;
     }
 
     private Map<String, Object> parse(String body) {
