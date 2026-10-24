@@ -352,7 +352,8 @@ public abstract class AbstractGraphRepositoryOperations extends AbstractReposito
     @Override
     public List<GraphRecord> executeQuery(String query, Map<String, Object> parameters) {
         Map<String, Object> encoded = encodeParameters(parameters);
-        return write(AnnotationMetadata.EMPTY_METADATA, session -> session.run(query, encoded).records());
+        String statement = finishedQuery(query);
+        return write(AnnotationMetadata.EMPTY_METADATA, session -> session.run(statement, encoded).records());
     }
 
     @Override
@@ -404,33 +405,49 @@ public abstract class AbstractGraphRepositoryOperations extends AbstractReposito
         return new GraphQuery(query.toString(), parameters);
     }
 
-    private void appendSortAndLimit(StringBuilder query, RuntimePersistentEntity<?> entity, Sort sort, Limit limit) {
+    /**
+     * Appends the ordering and limits requested by method arguments to a query.
+     *
+     * @param query  The query
+     * @param entity The root entity
+     * @param sort   The sort
+     * @param limit  The limit
+     */
+    protected void appendSortAndLimit(StringBuilder query, RuntimePersistentEntity<?> entity, Sort sort, Limit limit) {
         boolean rootQuery = query.indexOf("MATCH (" + CypherQueryBuilder.ROOT) == 0;
         if (sort != null && sort.isSorted() && rootQuery && query.indexOf(" ORDER BY ") < 0) {
-            query.append(" ORDER BY ");
-            Iterator<Sort.Order> iterator = sort.getOrderBy().iterator();
-            while (iterator.hasNext()) {
-                Sort.Order order = iterator.next();
-                RuntimePersistentProperty<?> property = entity.getPropertyByName(order.getProperty());
-                if (property == null && entity.hasIdentity() && entity.getIdentity().getName().equals(order.getProperty())) {
-                    property = entity.getIdentity();
-                }
-                if (property == null) {
-                    throw new IllegalArgumentException("Cannot sort on non-existent property: " + order.getProperty());
-                }
-                String expression = CypherQueryBuilder.ROOT + "." + GraphEntities.escapeName(property.getPersistedName());
-                if (order.isIgnoreCase()) {
-                    expression = "toLower(" + expression + ")";
-                }
-                query.append(expression).append(order.isAscending() ? " ASC" : " DESC");
-                if (iterator.hasNext()) {
-                    query.append(", ");
-                }
-            }
+            appendOrderBy(query, entity, sort);
         }
         if (limit != null && limit.isLimited() && query.indexOf(" LIMIT ") < 0 && query.indexOf(" SKIP ") < 0) {
             query.append(queryBuilder.buildLimitAndOffset(limit.maxResults(), limit.offset()));
         }
+    }
+
+    private void appendOrderBy(StringBuilder query, RuntimePersistentEntity<?> entity, Sort sort) {
+        query.append(" ORDER BY ");
+        Iterator<Sort.Order> iterator = sort.getOrderBy().iterator();
+        while (iterator.hasNext()) {
+            Sort.Order order = iterator.next();
+            String expression = CypherQueryBuilder.ROOT + "." + GraphEntities.escapeName(sortProperty(entity, order.getProperty()).getPersistedName());
+            if (order.isIgnoreCase()) {
+                expression = "toLower(" + expression + ")";
+            }
+            query.append(expression).append(order.isAscending() ? " ASC" : " DESC");
+            if (iterator.hasNext()) {
+                query.append(", ");
+            }
+        }
+    }
+
+    private RuntimePersistentProperty<?> sortProperty(RuntimePersistentEntity<?> entity, String name) {
+        RuntimePersistentProperty<?> property = entity.getPropertyByName(name);
+        if (property == null && entity.hasIdentity() && entity.getIdentity().getName().equals(name)) {
+            property = entity.getIdentity();
+        }
+        if (property == null) {
+            throw new IllegalArgumentException("Cannot sort on non-existent property: " + name);
+        }
+        return property;
     }
 
     // Result mapping
@@ -623,8 +640,7 @@ public abstract class AbstractGraphRepositoryOperations extends AbstractReposito
     public <T> Optional<Number> deleteAll(DeleteBatchOperation<T> operation) {
         RuntimePersistentEntity<T> entity = getEntity(operation.getRootEntity());
         if (operation.all()) {
-            String query = "MATCH (" + CypherQueryBuilder.ROOT + GraphEntities.labelExpression(entity) + ") DETACH DELETE "
-                + CypherQueryBuilder.ROOT + " RETURN count(*) AS result";
+            String query = deleteAllQuery(entity);
             return Optional.of(write(operation.getAnnotationMetadata(), session -> updateCount(session.run(query, Map.of()))));
         }
         return Optional.of(write(operation.getAnnotationMetadata(), session -> {
@@ -661,6 +677,22 @@ public abstract class AbstractGraphRepositoryOperations extends AbstractReposito
             }
         }
         throw new DataAccessException("Relationship entity [" + relationshipEntity.getName() + "] has no @TargetNode property");
+    }
+
+    /**
+     * @param entity The root entity
+     * @return The query that deletes all nodes of the entity, returning their count
+     */
+    final String deleteAllQuery(RuntimePersistentEntity<?> entity) {
+        return queryCache.computeIfAbsent("deleteAll:" + entity.getName(), k -> queryBuilder.buildDeleteAllQuery(entity));
+    }
+
+    /**
+     * @param query A query in the database's query language, passed to the operations at runtime
+     * @return The statement that runs it
+     */
+    final String finishedQuery(String query) {
+        return queryCache.computeIfAbsent("query:" + query, k -> queryBuilder.finishQuery(query));
     }
 
     /**
