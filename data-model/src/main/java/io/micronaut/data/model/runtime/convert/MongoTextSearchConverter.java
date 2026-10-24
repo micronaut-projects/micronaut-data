@@ -40,6 +40,15 @@ import java.util.StringJoiner;
 @Internal
 public abstract class MongoTextSearchConverter implements TextSearchQueryConverter {
 
+    private final MatchMode mode;
+
+    /**
+     * @param mode The match mode this converter renders
+     */
+    protected MongoTextSearchConverter(MatchMode mode) {
+        this.mode = mode;
+    }
+
     /**
      * @param mode The match mode
      * @return The class name of the converter for the mode
@@ -75,12 +84,16 @@ public abstract class MongoTextSearchConverter implements TextSearchQueryConvert
         StringJoiner joiner = new StringJoiner(" ");
         for (List<SearchTerm> group : groups) {
             for (SearchTerm term : group) {
-                boolean quoted = term.phrase() || mode == MatchMode.ALL || term.text().indexOf('"') >= 0;
-                String rendered = quoted ? quote(term.text()) : term.text();
-                joiner.add(term.negated() ? "-" + rendered : rendered);
+                joiner.add(renderTerm(term, mode));
             }
         }
         return joiner.toString();
+    }
+
+    private static String renderTerm(SearchTerm term, MatchMode mode) {
+        boolean quoted = term.phrase() || mode == MatchMode.ALL || term.text().indexOf('"') >= 0;
+        String rendered = quoted ? quote(term.text()) : term.text();
+        return term.negated() ? "-" + rendered : rendered;
     }
 
     private static String quote(String text) {
@@ -90,7 +103,7 @@ public abstract class MongoTextSearchConverter implements TextSearchQueryConvert
     @Override
     @Nullable
     public String convertToPersistedValue(@Nullable String entityValue, ConversionContext context) {
-        return render(entityValue, mode());
+        return render(entityValue, mode);
     }
 
     @Override
@@ -100,18 +113,12 @@ public abstract class MongoTextSearchConverter implements TextSearchQueryConvert
     }
 
     /**
-     * @return The match mode this converter renders
-     */
-    protected abstract MatchMode mode();
-
-    /**
      * {@link MatchMode#ANY} converter.
      */
     @Singleton
     public static final class Any extends MongoTextSearchConverter {
-        @Override
-        protected MatchMode mode() {
-            return MatchMode.ANY;
+        public Any() {
+            super(MatchMode.ANY);
         }
     }
 
@@ -120,9 +127,8 @@ public abstract class MongoTextSearchConverter implements TextSearchQueryConvert
      */
     @Singleton
     public static final class All extends MongoTextSearchConverter {
-        @Override
-        protected MatchMode mode() {
-            return MatchMode.ALL;
+        public All() {
+            super(MatchMode.ALL);
         }
     }
 
@@ -131,9 +137,8 @@ public abstract class MongoTextSearchConverter implements TextSearchQueryConvert
      */
     @Singleton
     public static final class Phrase extends MongoTextSearchConverter {
-        @Override
-        protected MatchMode mode() {
-            return MatchMode.PHRASE;
+        public Phrase() {
+            super(MatchMode.PHRASE);
         }
     }
 }
