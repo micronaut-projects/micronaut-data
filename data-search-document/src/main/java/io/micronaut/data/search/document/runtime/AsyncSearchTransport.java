@@ -18,8 +18,11 @@ package io.micronaut.data.search.document.runtime;
 import io.micronaut.data.search.document.conf.DocumentSearchConfiguration;
 import org.jspecify.annotations.Nullable;
 
+import java.util.ArrayList;
+import java.util.List;
 import java.util.Map;
 import java.util.Optional;
+import java.util.concurrent.CompletableFuture;
 import java.util.concurrent.CompletionStage;
 
 /**
@@ -60,6 +63,25 @@ public interface AsyncSearchTransport {
      * @return The document id
      */
     CompletionStage<String> index(String index, @Nullable String id, Map<String, Object> source, DocumentSearchConfiguration.Refresh refresh);
+
+    /**
+     * Indexes several documents in one request. The default sends one request per document, in sequence.
+     *
+     * @param index The index name
+     * @param documents The documents, in order
+     * @param refresh The refresh policy
+     * @return The document ids, in the same order
+     */
+    default CompletionStage<List<String>> bulkIndex(String index, List<SearchTransport.BulkDocument> documents, DocumentSearchConfiguration.Refresh refresh) {
+        CompletionStage<List<String>> ids = CompletableFuture.completedFuture(new ArrayList<>(documents.size()));
+        for (SearchTransport.BulkDocument document : documents) {
+            ids = ids.thenCompose(list -> index(index, document.id(), document.source(), refresh).thenApply(id -> {
+                list.add(id);
+                return list;
+            }));
+        }
+        return ids;
+    }
 
     /**
      * Reads a document.

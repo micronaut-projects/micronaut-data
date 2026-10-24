@@ -16,6 +16,7 @@
 package io.micronaut.data.search.opensearch.transport;
 
 import io.micronaut.core.annotation.Internal;
+import io.micronaut.data.exceptions.DataAccessException;
 import io.micronaut.data.search.document.conf.DocumentSearchConfiguration;
 import io.micronaut.data.search.document.runtime.SearchTransport;
 import jakarta.json.stream.JsonParser;
@@ -25,7 +26,11 @@ import org.opensearch.client.json.JsonpMapper;
 import org.opensearch.client.opensearch._types.Refresh;
 import org.opensearch.client.opensearch._types.SortOptions;
 import org.opensearch.client.opensearch._types.query_dsl.Query;
+import org.opensearch.client.opensearch.core.BulkRequest;
+import org.opensearch.client.opensearch.core.BulkResponse;
 import org.opensearch.client.opensearch.core.SearchRequest;
+import org.opensearch.client.opensearch.core.bulk.BulkOperation;
+import org.opensearch.client.opensearch.core.bulk.BulkResponseItem;
 import org.opensearch.client.opensearch.core.SearchResponse;
 import org.opensearch.client.opensearch.core.search.Highlight;
 import org.opensearch.client.opensearch.core.search.Hit;
@@ -87,6 +92,25 @@ final class OpenSearchRequests {
         long total = response.hits().total() == null ? hits.size() : response.hits().total().value();
         Float maxScore = response.hits().maxScore();
         return new SearchTransport.SearchHits(hits, total, maxScore == null ? null : maxScore.doubleValue());
+    }
+
+    static BulkRequest bulkRequest(String index, List<SearchTransport.BulkDocument> documents, DocumentSearchConfiguration.Refresh refresh) {
+        List<BulkOperation> operations = new ArrayList<>(documents.size());
+        for (SearchTransport.BulkDocument document : documents) {
+            operations.add(BulkOperation.of(op -> op.index(i -> i.id(document.id()).document(document.source()))));
+        }
+        return BulkRequest.of(b -> b.index(index).operations(operations).refresh(refresh(refresh)));
+    }
+
+    static List<String> bulkIds(BulkResponse response) {
+        List<String> ids = new ArrayList<>(response.items().size());
+        for (BulkResponseItem item : response.items()) {
+            if (item.error() != null) {
+                throw new DataAccessException("OpenSearch bulk item failed: " + item.error().reason());
+            }
+            ids.add(item.id());
+        }
+        return ids;
     }
 
     static Map<String, Object> parse(JsonpMapper mapper, String body) {

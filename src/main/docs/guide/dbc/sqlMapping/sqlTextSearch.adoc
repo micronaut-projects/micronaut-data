@@ -77,6 +77,8 @@ snippet::example.BookService[project-base="doc-examples/jdbc-search-example", so
 <1> Each named property must be a `@SearchField`.
 <2> `SearchResult.highlights()` maps a property name to its fragments; a property that does not match the query has one fragment without tags on PostgreSQL and Oracle, and none on Elasticsearch and OpenSearch.
 
+A property declared `@SearchField(highlightable = true)` is highlighted by default: a `search` method returning `SearchResults` projects the fragment of every highlightable property it searches, and `SearchQuery.highlight()` without arguments requests the highlightable properties.
+
 The tags are the same on every store, so a client can render them without knowing the backend. PostgreSQL renders `ts_headline`, Oracle `CTX_DOC.POLICY_SNIPPET`, and the document stores the `highlight` request clause. MongoDB `$text` cannot highlight and throws api:data.model.search.UnsupportedSearchFeatureException[]. The criteria API exposes the same projection as `PersistentEntityCriteriaBuilder.searchHighlight(field, query, MatchMode)`.
 
 == Hybrid search
@@ -111,3 +113,23 @@ The criteria builder exposes the same predicate through `PersistentEntityCriteri
 - The default lexer matches words literally; there is no stemming unless the index is created with a lexer that enables it.
 - Entities stored as a JSON column (`@EntityRepresentation(columnType = JSON)`) are searched with `JSON_TEXTCONTAINS(<column>, '$.<property>', ?, n)`, which needs a JSON search index created by your migration tool and Oracle Database 23ai or later for `SCORE` support.
 - Highlights render `CTX_DOC.POLICY_SNIPPET('MN_SEARCH_POLICY', <column>, ?, starttag => '<em>', endtag => '</em>')` over the column text, or over `JSON_VALUE` for a JSON entity. The `MN_SEARCH_POLICY` Oracle Text policy is created by schema generation with the default lexer; create it in your migrations with `CTX_DDL.CREATE_POLICY('MN_SEARCH_POLICY')`, which needs the `CTXAPP` role.
+
+== Capability matrix
+
+The portable API is the same on every store; the table lists which optional capabilities each store honours. A capability a store lacks fails at compile time for a derived method and throws api:data.model.search.UnsupportedSearchFeatureException[] from `search(SearchQuery)`.
+
+|===
+|Capability |PostgreSQL |Oracle |MongoDB `$text` |Elasticsearch / OpenSearch
+
+|Any, all and negated terms, relevance order |yes |yes |yes |yes
+|Phrase (`SearchPhrase`) |yes |yes |yes |yes
+|Prefix (`SearchPrefix`) |yes |yes |no |yes
+|Fuzzy (`SearchFuzzy`) |no |yes |no |yes
+|Field scope (`findByTitleSearch` searches only `title`) |yes |yes |no, the whole text index |yes
+|Index-time weights (`@SearchField(weight)`) |yes |yes |yes |yes
+|Query-time boosts (`SearchQuery.boost`) |no |no |no |no, planned
+|Highlighting |yes |yes |no |yes
+|Vector search and hybrid search |yes, pgvector |yes, 23ai |no |no, planned
+|Reactive and async repositories |yes |yes |yes |yes
+|===
+

@@ -1,4 +1,4 @@
-An entity maps to one index, named after `@MappedEntity` with the optional `index-prefix`. Properties become document fields with the names Micronaut Serialization gives them.
+An entity maps to one index, named after `@Searchable(name)` or, when that is empty, after `@MappedEntity`, behind the optional `index-prefix`. Properties become document fields with the names Micronaut Serialization gives them.
 
 snippet::example.Book[project-base="doc-examples/elasticsearch-search-example", source="main", tags="entity"]
 

@@ -57,6 +57,11 @@ public @interface SearchField {
     String MEMBER_TYPE = "type";
 
     /**
+     * The name of the {@link #highlightable()} member.
+     */
+    String MEMBER_HIGHLIGHTABLE = "highlightable";
+
+    /**
      * Optional name of the field in the search index. Defaults to the persisted property name.
      *
      * @return The field name
@@ -86,16 +91,11 @@ public @interface SearchField {
     String analyzer() default "";
 
     /**
-     * Whether highlighted fragments can be requested for this field.
+     * Whether the field is highlighted by default: a {@code search} method returning {@code SearchResults}
+     * projects the highlighted fragment of every highlightable field it searches, and
+     * {@code SearchQuery.highlight()} without arguments requests the highlightable fields.
      *
      * @return True if highlightable
      */
     boolean highlightable() default false;
-
-    /**
-     * Whether results can be sorted on this field. Only meaningful for {@link SearchFieldType#KEYWORD}.
-     *
-     * @return True if sortable
-     */
-    boolean sortable() default false;
 }
