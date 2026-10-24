@@ -298,16 +298,48 @@ abstract class AbstractTextSearchSpec extends Specification {
 
     void "search with a SearchQuery rejects options the operation cannot honour"() {
         when:
-        bookSearchRepository.search(SearchQuery.builder("programming").boost("title", 2).build())
-
-        then:
-        thrown(UnsupportedSearchFeatureException)
-
-        when:
         bookSearchRepository.search(SearchQuery.builder("programming").language("simple").build())
 
         then:
         thrown(UnsupportedSearchFeatureException)
+
+        expect:
+        // a store without query-time boosts or a selectable edit distance rejects them
+        rejects(SearchQuery.builder("programming").boost("title", 2).build()) == !capabilities().contains(SearchCapability.BOOST)
+        rejects(SearchQuery.builder("kotlimm").fuzzy(2).build()) == !capabilities().contains(SearchCapability.FUZZINESS)
+    }
+
+    private boolean rejects(SearchQuery query) {
+        try {
+            bookSearchRepository.search(query)
+            return false
+        } catch (UnsupportedSearchFeatureException e) {
+            return true
+        }
+    }
+
+    void "query-time boosts weigh a field's matches"() {
+        assumeTrue(capabilities().contains(SearchCapability.BOOST))
+
+        when: "the title is boosted far above the description"
+        def boosted = bookSearchRepository.search(SearchQuery.builder("programming").boost("title", 10).boost("description", 1).build())
+        def plain = bookSearchRepository.search(SearchQuery.builder("programming").boost("title", 1).boost("description", 1).build())
+
+        then:
+        // 'Programming Kotlin' matches in the title only, so its score grows with the title boost
+        def kotlinBoosted = boosted.results().find { it.entity().title == "Programming Kotlin" }
+        def kotlinPlain = plain.results().find { it.entity().title == "Programming Kotlin" }
+        kotlinBoosted.score().value() > kotlinPlain.score().value()
+        boosted.results().size() == 2
+    }
+
+    void "the fuzziness sets the edit distance of a fuzzy match"() {
+        assumeTrue(capabilities().contains(SearchCapability.FUZZINESS))
+
+        expect:
+        // 'kotlimm' is two edits away from 'kotlin'
+        bookSearchRepository.search(SearchQuery.builder("kotlimm").fuzzy(2).build()).results()*.entity()*.title == ["Programming Kotlin"]
+        bookSearchRepository.search(SearchQuery.builder("kotlimm").fuzzy(1).build()).results().isEmpty()
     }
 
     void "search with a SearchQuery highlights the matched terms of the requested fields"() {

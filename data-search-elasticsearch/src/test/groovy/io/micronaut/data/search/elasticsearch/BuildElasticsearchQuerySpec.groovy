@@ -140,6 +140,9 @@ ${methods}
         SimpleQueryStringConverter.render('"ken burns" tea OR coffee', io.micronaut.data.model.search.MatchMode.ANY) == '("ken burns" | tea) | (coffee)'
         SimpleQueryStringConverter.render("mic dat", io.micronaut.data.model.search.MatchMode.PREFIX) == "mic* dat*"
         SimpleQueryStringConverter.render("coffe", io.micronaut.data.model.search.MatchMode.FUZZY) == "coffe~1"
+        SimpleQueryStringConverter.render("coffe", io.micronaut.data.model.search.MatchMode.FUZZY, 2) == "coffe~2"
+        SimpleQueryStringConverter.converterFor(io.micronaut.data.model.search.MatchMode.FUZZY, 2) == SimpleQueryStringConverter.Fuzzy2.name
+        SimpleQueryStringConverter.converterFor(io.micronaut.data.model.search.MatchMode.FUZZY, 0) == SimpleQueryStringConverter.Fuzzy.name
         SimpleQueryStringConverter.render("fat rats", io.micronaut.data.model.search.MatchMode.PHRASE) == '"fat rats"'
         SimpleQueryStringConverter.render("a+b (c)", io.micronaut.data.model.search.MatchMode.ANY) == 'a\\+b | \\(c\\)'
     }

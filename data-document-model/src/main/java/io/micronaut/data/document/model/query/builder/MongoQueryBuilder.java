@@ -70,6 +70,7 @@ import io.micronaut.data.annotation.search.SearchWeight;
 import io.micronaut.data.model.runtime.convert.MongoTextSearchConverter;
 import io.micronaut.data.model.search.MatchMode;
 import io.micronaut.data.model.search.SearchCapability;
+import io.micronaut.data.model.search.TextMatchOptions;
 import io.micronaut.data.model.search.TextSearchSupport;
 import io.micronaut.data.model.search.UnsupportedSearchFeatureException;
 import io.micronaut.data.model.query.builder.sql.VectorScoringDialectSupport;
@@ -122,28 +123,21 @@ import static java.util.Arrays.asList;
 @Internal
 public final class MongoQueryBuilder implements QueryBuilder {
 
-    /**
-     * An object with this property is replaced with an actual query parameter at the runtime.
-     */
+    /** An object with this property is replaced with an actual query parameter at the runtime. */
     public static final String QUERY_PARAMETER_PLACEHOLDER = "$mn_qp";
     public static final String NEGATE = "$mn_negate"; // -vale
     public static final String RECIPROCATE = "$mn_reciprocate"; // 1/value
     public static final String MONGO_DATE_IDENTIFIER = "$date";
     public static final String MONGO_ID_FIELD = "_id";
-    /**
-     * An object with this property next to the {@link #QUERY_PARAMETER_PLACEHOLDER} is replaced with a
-     * MongoDB Search operator rendered from the bound search string at runtime; the value is the
-     * {@link MatchMode} name.
-     */
+    /** Next to the {@link #QUERY_PARAMETER_PLACEHOLDER}: a MongoDB Search operator rendered at runtime from the bound string; the value is the {@link MatchMode} name. */
     public static final String SEARCH_OPERATOR_PLACEHOLDER = "$mn_search";
-    /**
-     * The field paths a {@link #SEARCH_OPERATOR_PLACEHOLDER} searches.
-     */
+    /** The field paths a {@link #SEARCH_OPERATOR_PLACEHOLDER} searches. */
     public static final String SEARCH_PATHS = "$mn_paths";
-    /**
-     * The boosts of the {@link #SEARCH_PATHS}, by path, when they differ from 1.
-     */
+    /** The boosts of the {@link #SEARCH_PATHS}, by path, when they differ from 1. */
     public static final String SEARCH_BOOSTS = "$mn_boosts";
+    /** The maximum edit distance of a fuzzy {@link #SEARCH_OPERATOR_PLACEHOLDER}, when set. */
+    public static final String SEARCH_FUZZINESS = "$mn_fuzzy";
+    private static final int MAX_FUZZINESS = 2;
     private static final String GEOMETRY_OPERATOR = "$geometry";
     private static final Map<String, Object> TEXT_SCORE = Map.of("$meta", "textScore");
     private static final Map<String, Object> SEARCH_SCORE = Map.of("$meta", "searchScore");
@@ -207,7 +201,6 @@ public final class MongoQueryBuilder implements QueryBuilder {
                 for (String scoreField : queryState.vectorScoreFields) {
                     vectorMeta.put(scoreField, MongoSearchStages.VECTOR_DISTANCE);
                 }
-                // The distance is only available as metadata of the $vectorSearch stage
                 pipeline.add(Map.of(ADD_FIELDS, vectorMeta));
             }
         }
@@ -735,18 +728,12 @@ public final class MongoQueryBuilder implements QueryBuilder {
         }
     }
 
-    /**
-     * @param entity The entity
-     * @return Whether the entity is searched with MongoDB Search rather than {@code $text}
-     */
+    /** @return Whether the entity is searched with MongoDB Search rather than {@code $text} */
     private static boolean usesSearchIndex(PersistentEntity entity) {
         return entity.getAnnotationMetadata().hasAnnotation(MongoAnnotations.SEARCH_INDEX);
     }
 
-    /**
-     * Records the {@code $vectorSearch} stage of a {@code mn_vector_score(field, vector)} function; the stage
-     * gets its limit when the pipeline is assembled and the vector is encoded as an array at runtime.
-     */
+    /** Records the {@code $vectorSearch} stage of a {@code mn_vector_score} function; it gets its limit when the pipeline is assembled. */
     private void registerVectorSearch(QueryState queryState, FunctionExpression<?> function) {
         if (!usesSearchIndex(queryState.getEntity())) {
             throw new UnsupportedOperationException("Vector search needs a @MongoSearchIndex on the entity; MongoDB $text has no vector search.");
@@ -1234,7 +1221,6 @@ public final class MongoQueryBuilder implements QueryBuilder {
                 return;
             }
             if (leftExpression instanceof FunctionExpression<?> function && VectorScoringDialectSupport.SCORE_FUNCTION.equals(function.getName())) {
-                // The maximum distance restricts the distance added right after the $vectorSearch stage
                 registerVectorSearch(queryState, function);
                 queryState.vectorScoreFields.add(TextSearchSupport.SCORE_ALIAS);
                 query.put(TextSearchSupport.SCORE_ALIAS, Map.of(op, scalarValue(value)));
@@ -1659,9 +1645,17 @@ public final class MongoQueryBuilder implements QueryBuilder {
 
         @Override
         public void visitTextMatch(List<Expression<?>> fields, Expression<String> queryExpression, MatchMode mode) {
+            visitTextMatch(fields, queryExpression, mode, TextMatchOptions.NONE);
+        }
+
+        @Override
+        public void visitTextMatch(List<Expression<?>> fields, Expression<String> queryExpression, MatchMode mode, TextMatchOptions options) {
             if (usesSearchIndex(persistentEntity)) {
-                visitSearchIndexMatch(fields, queryExpression, mode);
+                visitSearchIndexMatch(fields, queryExpression, mode, options);
                 return;
+            }
+            if (!options.boosts().isEmpty()) {
+                throw new UnsupportedSearchFeatureException(SearchCapability.BOOST, "MongoDB $text");
             }
             if (mode == MatchMode.PREFIX) {
                 throw new UnsupportedSearchFeatureException(SearchCapability.PREFIX, "MongoDB $text");
@@ -1682,13 +1676,13 @@ public final class MongoQueryBuilder implements QueryBuilder {
             query.put("$text", text);
         }
 
-        /**
-         * Renders a search predicate for an entity with a {@code @MongoSearchIndex} as the {@code $search}
-         * stage recorded on the query state; the operator is rendered at runtime, see {@link #SEARCH_OPERATOR_PLACEHOLDER}.
-         */
-        private void visitSearchIndexMatch(List<Expression<?>> fields, Expression<String> queryExpression, MatchMode mode) {
+        /** Records the {@code $search} stage of a {@code @MongoSearchIndex} entity; the operator is rendered at runtime, see {@link #SEARCH_OPERATOR_PLACEHOLDER}. */
+        private void visitSearchIndexMatch(List<Expression<?>> fields, Expression<String> queryExpression, MatchMode mode, TextMatchOptions options) {
             if (!(queryExpression instanceof BindingParameter bindingParameter)) {
                 throw new IllegalStateException("A full-text search query must be a parameter, got: " + queryExpression);
+            }
+            if (options.fuzziness() > MAX_FUZZINESS) {
+                throw new UnsupportedSearchFeatureException(SearchCapability.FUZZINESS, "MongoDB Search fuzzy matching beyond " + MAX_FUZZINESS + " edits");
             }
             if (queryState.searchOperator != null) {
                 throw new UnsupportedOperationException("MongoDB $search supports one search predicate per query.");
@@ -1702,11 +1696,17 @@ public final class MongoQueryBuilder implements QueryBuilder {
                 PersistentPropertyPath propertyPath = requireProperty(field).getPropertyPath();
                 String path = getPropertyPersistName(propertyPath);
                 paths.add(path);
-                int weight = propertyPath.getProperty().getAnnotationMetadata()
-                    .enumValue(SearchField.class, SearchField.MEMBER_WEIGHT, SearchWeight.class)
-                    .map(SearchWeight::numericWeight)
-                    .orElse(1);
-                if (weight != 1) {
+                Double boost = options.boostFor(propertyPath.getProperty().getName());
+                Number weight;
+                if (boost != null) {
+                    weight = boost;
+                } else {
+                    weight = propertyPath.getProperty().getAnnotationMetadata()
+                        .enumValue(SearchField.class, SearchField.MEMBER_WEIGHT, SearchWeight.class)
+                        .map(SearchWeight::numericWeight)
+                        .orElse(1);
+                }
+                if (weight.doubleValue() != 1d) {
                     boosts.put(path, weight);
                 }
             }
@@ -1717,6 +1717,9 @@ public final class MongoQueryBuilder implements QueryBuilder {
             operator.put(SEARCH_PATHS, paths);
             if (!boosts.isEmpty()) {
                 operator.put(SEARCH_BOOSTS, boosts);
+            }
+            if (options.fuzziness() > 0) {
+                operator.put(SEARCH_FUZZINESS, options.fuzziness());
             }
             queryState.searchOperator = operator;
         }

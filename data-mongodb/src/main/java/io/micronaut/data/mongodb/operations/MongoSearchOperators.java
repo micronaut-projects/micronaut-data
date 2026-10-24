@@ -55,6 +55,7 @@ public final class MongoSearchOperators {
     private static final String MINIMUM_SHOULD_MATCH = "minimumShouldMatch";
     private static final String PATH = "path";
     private static final String QUERY = "query";
+    private static final int MAX_EDITS = 2;
 
     private MongoSearchOperators() {
     }
@@ -69,17 +70,32 @@ public final class MongoSearchOperators {
      * @return The operator document
      */
     public static BsonDocument render(@Nullable String query, MatchMode mode, List<String> paths, Map<String, Number> boosts) {
+        return render(query, mode, paths, boosts, 0);
+    }
+
+    /**
+     * Renders a search string.
+     *
+     * @param query The search string
+     * @param mode The match mode
+     * @param paths The searched field paths
+     * @param boosts The boost of the paths with a weight other than 1
+     * @param fuzziness The maximum edit distance of a fuzzy match, {@code 0} for the default of one edit
+     * @return The operator document
+     */
+    public static BsonDocument render(@Nullable String query, MatchMode mode, List<String> paths, Map<String, Number> boosts, int fuzziness) {
+        int maxEdits = fuzziness <= 0 ? 1 : Math.min(fuzziness, MAX_EDITS);
         if (query == null || query.isBlank()) {
             return matchNothing(paths);
         }
         if (mode == MatchMode.PHRASE) {
             String phrase = query.replace("\"", "").trim();
-            return phrase.isEmpty() ? matchNothing(paths) : termOperator(new SearchTerm(phrase, true, false), mode, paths, boosts);
+            return phrase.isEmpty() ? matchNothing(paths) : termOperator(new SearchTerm(phrase, true, false), mode, paths, boosts, maxEdits);
         }
         List<List<SearchTerm>> groups = SearchQueryParser.parse(query);
         List<BsonValue> rendered = new ArrayList<>(groups.size());
         for (List<SearchTerm> group : groups) {
-            BsonDocument clause = renderGroup(group, mode, paths, boosts);
+            BsonDocument clause = renderGroup(group, mode, paths, boosts, maxEdits);
             if (clause != null) {
                 rendered.add(clause);
             }
@@ -94,14 +110,14 @@ public final class MongoSearchOperators {
     }
 
     @Nullable
-    private static BsonDocument renderGroup(List<SearchTerm> group, MatchMode mode, List<String> paths, Map<String, Number> boosts) {
+    private static BsonDocument renderGroup(List<SearchTerm> group, MatchMode mode, List<String> paths, Map<String, Number> boosts, int maxEdits) {
         BsonArray positive = new BsonArray();
         BsonArray negative = new BsonArray();
         for (SearchTerm term : group) {
             if (term.text().isBlank()) {
                 continue;
             }
-            (term.negated() ? negative : positive).add(termOperator(term, mode, paths, boosts));
+            (term.negated() ? negative : positive).add(termOperator(term, mode, paths, boosts, maxEdits));
         }
         if (positive.isEmpty() && negative.isEmpty()) {
             return null;
@@ -130,23 +146,23 @@ public final class MongoSearchOperators {
     /**
      * Renders one term over the paths, one operator per boost so each can carry its score.
      */
-    private static BsonDocument termOperator(SearchTerm term, MatchMode mode, List<String> paths, Map<String, Number> boosts) {
+    private static BsonDocument termOperator(SearchTerm term, MatchMode mode, List<String> paths, Map<String, Number> boosts, int maxEdits) {
         Map<Number, List<String>> pathsByBoost = new LinkedHashMap<>();
         for (String path : paths) {
             pathsByBoost.computeIfAbsent(boosts.getOrDefault(path, 1), k -> new ArrayList<>()).add(path);
         }
         if (pathsByBoost.size() == 1) {
             Map.Entry<Number, List<String>> only = pathsByBoost.entrySet().iterator().next();
-            return operator(term, mode, only.getValue(), only.getKey());
+            return operator(term, mode, only.getValue(), only.getKey(), maxEdits);
         }
         BsonArray should = new BsonArray();
         for (Map.Entry<Number, List<String>> entry : pathsByBoost.entrySet()) {
-            should.add(operator(term, mode, entry.getValue(), entry.getKey()));
+            should.add(operator(term, mode, entry.getValue(), entry.getKey(), maxEdits));
         }
         return new BsonDocument(COMPOUND, new BsonDocument(SHOULD, should).append(MINIMUM_SHOULD_MATCH, new BsonInt32(1)));
     }
 
-    private static BsonDocument operator(SearchTerm term, MatchMode mode, List<String> paths, Number boost) {
+    private static BsonDocument operator(SearchTerm term, MatchMode mode, List<String> paths, Number boost, int maxEdits) {
         BsonValue path = paths.size() == 1 ? new BsonString(paths.get(0)) : new BsonArray(paths.stream().map(p -> (BsonValue) new BsonString(p)).toList());
         BsonDocument options = new BsonDocument();
         String name;
@@ -162,7 +178,7 @@ public final class MongoSearchOperators {
             name = "text";
             options.append(QUERY, new BsonString(term.text())).append(PATH, path);
             if (mode == MatchMode.FUZZY) {
-                options.append("fuzzy", new BsonDocument("maxEdits", new BsonInt32(1)));
+                options.append("fuzzy", new BsonDocument("maxEdits", new BsonInt32(maxEdits)));
             }
         }
         if (boost.doubleValue() != 1d) {

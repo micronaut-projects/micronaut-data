@@ -39,6 +39,10 @@ import java.util.StringJoiner;
 @Internal
 public abstract class SimpleQueryStringConverter implements TextSearchQueryConverter {
 
+    /**
+     * The most edits Lucene fuzzy matching allows.
+     */
+    public static final int MAX_FUZZINESS = 2;
     private static final String SPECIALS = "+|-\"*()~\\";
 
     /**
@@ -46,6 +50,18 @@ public abstract class SimpleQueryStringConverter implements TextSearchQueryConve
      * @return The class name of the converter for the mode
      */
     public static String converterFor(MatchMode mode) {
+        return converterFor(mode, 0);
+    }
+
+    /**
+     * @param mode The match mode
+     * @param fuzziness The maximum edit distance of a fuzzy match, {@code 0} for the default of one edit
+     * @return The class name of the converter for the mode
+     */
+    public static String converterFor(MatchMode mode, int fuzziness) {
+        if (mode == MatchMode.FUZZY && fuzziness >= MAX_FUZZINESS) {
+            return Fuzzy2.class.getName();
+        }
         return switch (mode) {
             case ANY -> Any.class.getName();
             case ALL -> All.class.getName();
@@ -63,6 +79,18 @@ public abstract class SimpleQueryStringConverter implements TextSearchQueryConve
      * @return The {@code simple_query_string} query
      */
     public static String render(@Nullable String query, MatchMode mode) {
+        return render(query, mode, 1);
+    }
+
+    /**
+     * Renders a search string for the mode.
+     *
+     * @param query The search string
+     * @param mode The match mode
+     * @param fuzziness The maximum edit distance of a fuzzy match
+     * @return The {@code simple_query_string} query
+     */
+    public static String render(@Nullable String query, MatchMode mode, int fuzziness) {
         if (query == null) {
             return "";
         }
@@ -87,7 +115,7 @@ public abstract class SimpleQueryStringConverter implements TextSearchQueryConve
                     if (mode == MatchMode.PREFIX) {
                         rendered += "*";
                     } else if (mode == MatchMode.FUZZY) {
-                        rendered += "~1";
+                        rendered += "~" + fuzziness;
                     }
                 }
                 (term.negated() ? negative : positive).add(rendered);
@@ -122,7 +150,7 @@ public abstract class SimpleQueryStringConverter implements TextSearchQueryConve
     @Override
     @Nullable
     public String convertToPersistedValue(@Nullable String entityValue, ConversionContext context) {
-        return render(entityValue, mode());
+        return render(entityValue, mode(), fuzziness());
     }
 
     @Override
@@ -135,6 +163,13 @@ public abstract class SimpleQueryStringConverter implements TextSearchQueryConve
      * @return The match mode this converter renders
      */
     protected abstract MatchMode mode();
+
+    /**
+     * @return The maximum edit distance this converter renders for a fuzzy match
+     */
+    protected int fuzziness() {
+        return 1;
+    }
 
     /**
      * Any-term converter.
@@ -188,6 +223,22 @@ public abstract class SimpleQueryStringConverter implements TextSearchQueryConve
         @Override
         protected MatchMode mode() {
             return MatchMode.FUZZY;
+        }
+    }
+
+    /**
+     * Fuzzy converter with two edits, the most Lucene allows.
+     */
+    @Singleton
+    public static final class Fuzzy2 extends SimpleQueryStringConverter {
+        @Override
+        protected MatchMode mode() {
+            return MatchMode.FUZZY;
+        }
+
+        @Override
+        protected int fuzziness() {
+            return MAX_FUZZINESS;
         }
     }
 }

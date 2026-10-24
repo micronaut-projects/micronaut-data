@@ -44,6 +44,9 @@ import io.micronaut.data.model.query.builder.QueryResult;
 import io.micronaut.data.model.query.builder.sql.VectorScoringDialectSupport;
 import io.micronaut.data.model.query.impl.AdvancedPredicateVisitor;
 import io.micronaut.data.model.search.MatchMode;
+import io.micronaut.data.model.search.SearchCapability;
+import io.micronaut.data.model.search.TextMatchOptions;
+import io.micronaut.data.model.search.UnsupportedSearchFeatureException;
 import io.micronaut.data.model.search.TextSearchSupport;
 import io.micronaut.data.search.document.convert.SimpleQueryStringConverter;
 import jakarta.persistence.criteria.Expression;
@@ -547,17 +550,31 @@ public final class DocumentSearchQueryBuilder implements QueryBuilder {
 
         @Override
         public void visitTextMatch(List<Expression<?>> fields, Expression<String> query, MatchMode mode) {
+            visitTextMatch(fields, query, mode, TextMatchOptions.NONE);
+        }
+
+        @Override
+        public void visitTextMatch(List<Expression<?>> fields, Expression<String> query, MatchMode mode, TextMatchOptions options) {
             if (!(query instanceof BindingParameter parameter)) {
                 throw new IllegalStateException("A full-text search query must be a parameter, got: " + query);
+            }
+            if (options.fuzziness() > SimpleQueryStringConverter.MAX_FUZZINESS) {
+                throw new UnsupportedSearchFeatureException(SearchCapability.FUZZINESS, "Lucene fuzzy matching beyond " + SimpleQueryStringConverter.MAX_FUZZINESS + " edits");
             }
             List<String> fieldNames = new ArrayList<>(fields.size());
             for (Expression<?> field : fields) {
                 PersistentPropertyPath propertyPath = requireProperty(field).getPropertyPath();
+                // a query-time boost replaces the index-time weight of the field
+                Double boost = options.boostFor(propertyPath.getProperty().getName());
                 SearchWeight weight = propertyPath.getProperty().getAnnotationMetadata().enumValue(SearchField.class, SearchField.MEMBER_WEIGHT, SearchWeight.class).orElse(null);
-                fieldNames.add(weight == null ? fieldName(propertyPath) : fieldName(propertyPath) + "^" + weight.numericWeight());
+                if (boost != null) {
+                    fieldNames.add(fieldName(propertyPath) + "^" + boost);
+                } else {
+                    fieldNames.add(weight == null ? fieldName(propertyPath) : fieldName(propertyPath) + "^" + weight.numericWeight());
+                }
             }
             Map<String, Object> simpleQueryString = new LinkedHashMap<>();
-            simpleQueryString.put(QUERY, bindings.placeholder(parameter, SimpleQueryStringConverter.converterFor(mode)));
+            simpleQueryString.put(QUERY, bindings.placeholder(parameter, SimpleQueryStringConverter.converterFor(mode, options.fuzziness())));
             simpleQueryString.put("fields", fieldNames);
             // Always "and": the converter spells any-term matching out with "|", so a negated term
             // excludes rather than matching every document without it

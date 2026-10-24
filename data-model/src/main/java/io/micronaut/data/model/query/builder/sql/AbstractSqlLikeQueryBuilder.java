@@ -86,6 +86,7 @@ import io.micronaut.data.model.jpa.criteria.impl.selection.CompoundSelection;
 import io.micronaut.data.model.naming.NamingStrategy;
 import io.micronaut.data.model.query.BindingParameter;
 import io.micronaut.data.model.search.MatchMode;
+import io.micronaut.data.model.search.TextMatchOptions;
 import io.micronaut.data.model.search.TextSearchSupport;
 import io.micronaut.data.model.query.JoinPath;
 import io.micronaut.data.model.query.builder.GeneratedEntityUpdateQueryDefinition;
@@ -2800,11 +2801,16 @@ public abstract class AbstractSqlLikeQueryBuilder implements QueryBuilder {
 
         @Override
         public void visitTextMatch(List<Expression<?>> fields, Expression<String> queryExpression, MatchMode mode) {
+            visitTextMatch(fields, queryExpression, mode, TextMatchOptions.NONE);
+        }
+
+        @Override
+        public void visitTextMatch(List<Expression<?>> fields, Expression<String> queryExpression, MatchMode mode, TextMatchOptions options) {
             TextSearchDialect dialect = TextSearchDialect.forDialect(getDialect());
             if (dialect == null) {
                 throw new UnsupportedOperationException("Full-text search is not supported by dialect: " + getDialect());
             }
-            dialect.appendTextMatch(query, fields, queryExpression, mode, textSearchTarget(annotationMetadata, persistentEntity, tableAlias), this::appendExpression, this::appendConvertedParameter);
+            dialect.appendTextMatch(query, fields, queryExpression, mode, options, textSearchTarget(annotationMetadata, persistentEntity, tableAlias), this::appendExpression, this::appendConvertedParameter);
         }
 
         @Override
@@ -3198,17 +3204,8 @@ public abstract class AbstractSqlLikeQueryBuilder implements QueryBuilder {
             if (dialect == null) {
                 throw new UnsupportedOperationException("Full-text search is not supported by dialect: " + getDialect());
             }
-            if (expressions.size() < 3) {
-                throw new IllegalStateException("Search score expects fields, a query and a match mode");
-            }
-            List<Expression<?>> fields = expressions.subList(0, expressions.size() - 2);
-            @SuppressWarnings("unchecked")
-            Expression<String> queryExpression = (Expression<String>) expressions.get(expressions.size() - 2);
-            Expression<?> modeExpression = expressions.get(expressions.size() - 1);
-            MatchMode mode = modeExpression instanceof LiteralExpression<?> literal && literal.getValue() != null
-                ? MatchMode.valueOf(literal.getValue().toString())
-                : MatchMode.ANY;
-            dialect.appendSearchScore(query, fields, queryExpression, mode, textSearchTarget(annotationMetadata, persistentEntity, tableAlias), this::appendExpression, this::appendConvertedParameter);
+            TextSearchSupport.ScoreArguments arguments = TextSearchSupport.scoreArguments(expressions);
+            dialect.appendSearchScore(query, arguments.fields(), arguments.query(), arguments.mode(), arguments.options(), textSearchTarget(annotationMetadata, persistentEntity, tableAlias), this::appendExpression, this::appendConvertedParameter);
         }
 
         /**
@@ -4049,22 +4046,13 @@ public abstract class AbstractSqlLikeQueryBuilder implements QueryBuilder {
             if (dialect == null) {
                 throw new UnsupportedOperationException("Full-text search is not supported by dialect: " + getDialect());
             }
-            if (expressions.size() < 3) {
-                throw new IllegalStateException("Search score expects fields, a query and a match mode");
-            }
-            List<Expression<?>> fields = expressions.subList(0, expressions.size() - 2);
-            @SuppressWarnings("unchecked")
-            Expression<String> queryExpression = (Expression<String>) expressions.get(expressions.size() - 2);
-            Expression<?> modeExpression = expressions.get(expressions.size() - 1);
-            MatchMode mode = modeExpression instanceof LiteralExpression<?> literal && literal.getValue() != null
-                ? MatchMode.valueOf(literal.getValue().toString())
-                : MatchMode.ANY;
+            TextSearchSupport.ScoreArguments arguments = TextSearchSupport.scoreArguments(expressions);
             String currentColumnAlias = columnAlias;
             boolean currentNestedExpression = isNestedExpression;
             columnAlias = null;
             isNestedExpression = true;
             try {
-                dialect.appendSearchScore(query, fields, queryExpression, mode, textSearchTarget(annotationMetadata, queryState.getEntity(), tableAlias), this::appendExpression, converterClassName -> expression -> {
+                dialect.appendSearchScore(query, arguments.fields(), arguments.query(), arguments.mode(), arguments.options(), textSearchTarget(annotationMetadata, queryState.getEntity(), tableAlias), this::appendExpression, converterClassName -> expression -> {
                     if (!(expression instanceof BindingParameter bindingParameter)) {
                         throw new IllegalStateException("A full-text search query must be a parameter, got: " + expression);
                     }
