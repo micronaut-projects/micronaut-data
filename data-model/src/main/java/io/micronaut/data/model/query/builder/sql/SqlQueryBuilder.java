@@ -60,6 +60,7 @@ import io.micronaut.data.model.PersistentAssociationPath;
 import io.micronaut.data.model.PersistentEntity;
 import io.micronaut.data.model.PersistentEntityUtils;
 import io.micronaut.data.model.PersistentProperty;
+import io.micronaut.data.model.vector.Vector;
 import io.micronaut.data.model.PersistentPropertyPath;
 import io.micronaut.data.model.jpa.criteria.impl.DefaultPersistentPropertyPath;
 import io.micronaut.data.model.jpa.criteria.impl.DefaultOrder;
@@ -585,7 +586,20 @@ public class SqlQueryBuilder extends AbstractSqlLikeQueryBuilder {
         createStatements.addAll(searchIndexStatements);
 
         createStatements.addAll(jsonViewCreateStatements);
+        if (dialect == Dialect.POSTGRES && Arrays.stream(entities).anyMatch(SqlQueryBuilder::hasVectorProperty)) {
+            // pgvector's type must exist before a table with a vector column; the statement is a no-op once installed
+            createStatements.add(0, "CREATE EXTENSION IF NOT EXISTS vector;");
+        }
         return createStatements.toArray(new String[0]);
+    }
+
+    private static boolean hasVectorProperty(PersistentEntity entity) {
+        for (PersistentProperty property : entity.getPersistentProperties()) {
+            if (property.isAssignable(Vector.class)) {
+                return true;
+            }
+        }
+        return false;
     }
 
     private Optional<PersistentEntity> getJsonViewEntity(@NonNull PersistentEntity entity) {
