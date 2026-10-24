@@ -234,8 +234,8 @@ public abstract class AbstractOracleTypeConvertersFactory {
             if (vector instanceof ByteVector byteVector) {
                 return Optional.of(factory.ofInt8Values(byteVector.toByteArray()));
             }
-            if (vector instanceof BinaryVector binaryVector) {
-                return Optional.of(factory.ofBinaryValues(binaryVector.data()));
+            if (vector instanceof BinaryVector(byte[] data)) {
+                return Optional.of(factory.ofBinaryValues(data));
             }
             if (vector instanceof SparseFloatVector(int length, int[] indices, float[] values)) {
                 return Optional.of(factory.ofSparseFloat32Values(length, indices, values));
