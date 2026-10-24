@@ -9,8 +9,10 @@ import org.junit.jupiter.api.Assertions.assertEquals
 import org.junit.jupiter.api.Assertions.assertTrue
 import org.junit.jupiter.api.BeforeEach
 import org.junit.jupiter.api.Test
+import org.junit.jupiter.api.TestInstance
 
 @MicronautTest(transactional = false)
+@TestInstance(TestInstance.Lifecycle.PER_CLASS) // TestPropertyProvider needs one instance per class
 class BookRepositoryTest : TestPropertyProvider {
 
     companion object {

@@ -15,3 +15,10 @@ dependencies {
     testImplementation mn.micronaut.inject.groovy
     testImplementation mnSerde.micronaut.serde.jackson
 }
+
+micronautBuild {
+    // New in 5.3.0, so there is no previous release to compare against yet
+    binaryCompatibility {
+        enabledAfter("5.3.0")
+    }
+}
