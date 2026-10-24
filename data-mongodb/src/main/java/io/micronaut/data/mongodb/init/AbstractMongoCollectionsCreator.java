@@ -169,7 +169,7 @@ public class AbstractMongoCollectionsCreator<Dtbs> {
         }
         Map<String, Integer> weights = new LinkedHashMap<>();
         for (PersistentProperty field : fields) {
-            int weight = field.getAnnotationMetadata().enumValue(SearchField.class, SearchField.WEIGHT, SearchWeight.class)
+            int weight = field.getAnnotationMetadata().enumValue(SearchField.class, SearchField.MEMBER_WEIGHT, SearchWeight.class)
                 .map(SearchWeight::numericWeight)
                 .orElse(1);
             weights.put(persistedFieldName(field), weight);
