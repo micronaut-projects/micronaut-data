@@ -121,12 +121,15 @@ public class AgeCypherQueryBuilder extends CypherQueryBuilder {
             + identityExpression(target.getIdentity(), "b") + " = $" + LINK_TO_PARAMETER;
         String type = ":" + GraphEntities.escapeName(GraphEntities.relationshipType(association));
         Direction direction = GraphEntities.direction(association);
+        // AGE creates directed relationships only: an undirected one is matched in either direction, so saving it from
+        // either end finds it, and created as outgoing from the node that saves it
+        Direction createDirection = direction == Direction.UNDIRECTED ? Direction.OUTGOING : direction;
         String id = " RETURN " + (relationshipIdentity != null ? identityExpression(relationshipIdentity, PATH_RELATIONSHIP) : "null")
             + " AS " + ID_PARAMETER;
         StringBuilder query = new StringBuilder(nodes)
             .append(" OPTIONAL MATCH ").append(directed("(a)", "[existing" + type + "]", "(b)", direction))
             .append(" WITH a, b, existing WHERE existing IS NULL CREATE ")
-            .append(directed("(a)", "[" + PATH_RELATIONSHIP + type + "]", "(b)", direction));
+            .append(directed("(a)", "[" + PATH_RELATIONSHIP + type + "]", "(b)", createDirection));
         appendSetProperties(query, PATH_RELATIONSHIP, propertyNames);
         query.append(id).append(" UNION ").append(nodes).append(" MATCH ")
             .append(directed("(a)", "[" + PATH_RELATIONSHIP + type + "]", "(b)", direction));
