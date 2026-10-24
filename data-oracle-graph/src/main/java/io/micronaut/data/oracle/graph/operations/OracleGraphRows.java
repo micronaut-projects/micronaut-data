@@ -58,37 +58,38 @@ final class OracleGraphRows {
         char quote = 0;
         for (int i = 0; i < query.length(); i++) {
             char c = query.charAt(i);
-            if (quote != 0) {
-                if (c == quote) {
+            if (quote != 0 || c == '\'' || c == '"') {
+                // Inside a literal, or opening or closing one
+                if (quote == 0) {
+                    quote = c;
+                } else if (c == quote) {
                     quote = 0;
                 }
-                sb.append(c);
-            } else if (c == '\'' || c == '"') {
-                quote = c;
                 sb.append(c);
             } else if (c == '?') {
                 if (index >= parameters.size()) {
                     throw new IllegalStateException("The query has more parameters than values: " + query);
                 }
-                Object value = parameters.get(index++);
-                if (value instanceof Collection<?> collection) {
-                    if (collection.isEmpty()) {
-                        sb.append("NULL");
-                    } else {
-                        for (int j = 0; j < collection.size(); j++) {
-                            sb.append(j == 0 ? "?" : ", ?");
-                        }
-                        flattened.addAll(collection);
-                    }
-                } else {
-                    sb.append('?');
-                    flattened.add(value);
-                }
+                appendParameter(sb, flattened, parameters.get(index++));
             } else {
                 sb.append(c);
             }
         }
         return new Expanded(sb.toString(), flattened);
+    }
+
+    private static void appendParameter(StringBuilder sb, List<Object> flattened, @Nullable Object value) {
+        if (!(value instanceof Collection<?> collection)) {
+            sb.append('?');
+            flattened.add(value);
+        } else if (collection.isEmpty()) {
+            sb.append("NULL");
+        } else {
+            for (int j = 0; j < collection.size(); j++) {
+                sb.append(j == 0 ? "?" : ", ?");
+            }
+            flattened.addAll(collection);
+        }
     }
 
     /**

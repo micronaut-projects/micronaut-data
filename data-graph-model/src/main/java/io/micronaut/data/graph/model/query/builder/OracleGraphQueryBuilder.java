@@ -119,6 +119,10 @@ public class OracleGraphQueryBuilder implements GraphQueryBuilder {
     private static final String START = "s";
     private static final String END = "t";
     private static final String EDGE = "x";
+    private static final String RESULT = "result";
+    private static final String COUNT_AS = "COUNT(*) AS ";
+    private static final String LOWER = "LOWER(";
+    private static final String AND = " AND ";
     private static final String READ_ONLY = "Oracle property graphs are read only views over tables: write to the tables with a JDBC repository";
 
     private final String graph;
@@ -224,7 +228,7 @@ public class OracleGraphQueryBuilder implements GraphQueryBuilder {
     @Override
     public String buildCountAllQuery(PersistentEntity entity) {
         Query query = new Query(entity);
-        query.select.add("COUNT(*) AS " + alias("result"));
+        query.select.add(COUNT_AS + alias(RESULT));
         query.ref(property(ROOT, entity.getIdentity()));
         return query.render(false);
     }
@@ -238,13 +242,7 @@ public class OracleGraphQueryBuilder implements GraphQueryBuilder {
             }
         }
         Query query = new Query(entity);
-        Predicate predicate = definition.predicate();
-        if (predicate != null) {
-            if (!(predicate instanceof IPredicate iPredicate)) {
-                throw new IllegalStateException("Unsupported predicate: " + predicate);
-            }
-            iPredicate.visitPredicate(new PredicateRenderer(query, query.where));
-        }
+        appendPredicate(query, definition.predicate());
         Selection<?> selection = definition.selection();
         SelectionRenderer selectionRenderer = new SelectionRenderer(query);
         if (selection instanceof ISelection<?> iSelection) {
@@ -255,21 +253,7 @@ public class OracleGraphQueryBuilder implements GraphQueryBuilder {
         if (selectionRenderer.entity) {
             query.entityColumns(ROOT, entity);
         }
-        List<Order> orders = definition.order();
-        if (orders != null && !orders.isEmpty()) {
-            StringBuilder orderBy = new StringBuilder();
-            for (Order order : orders) {
-                if (!orderBy.isEmpty()) {
-                    orderBy.append(", ");
-                }
-                StringBuilder expression = new StringBuilder();
-                new ExpressionRenderer(query, expression).appendExpression(order.getExpression());
-                String ref = query.ref(expression.toString());
-                boolean ignoreCase = order instanceof DefaultOrder<?> defaultOrder && defaultOrder.isIgnoreCase();
-                orderBy.append(ignoreCase ? "LOWER(" + ref + ")" : ref).append(order.isAscending() ? " ASC" : " DESC");
-            }
-            query.orderBy = orderBy.toString();
-        }
+        appendOrderBy(query, definition.order());
         boolean distinct = definition.isDistinct() || (selectionRenderer.entity && !query.patterns.isEmpty());
         String text = query.render(distinct);
         if (definition.offset() > 0 || definition.limit() > 0) {
@@ -280,42 +264,42 @@ public class OracleGraphQueryBuilder implements GraphQueryBuilder {
         return QueryResult.of(text, List.of(text), query.bindings, Map.of());
     }
 
+    private void appendPredicate(Query query, @Nullable Predicate predicate) {
+        if (predicate == null) {
+            return;
+        }
+        if (!(predicate instanceof IPredicate iPredicate)) {
+            throw new IllegalStateException("Unsupported predicate: " + predicate);
+        }
+        iPredicate.visitPredicate(new PredicateRenderer(query, query.where));
+    }
+
+    private void appendOrderBy(Query query, @Nullable List<Order> orders) {
+        if (orders == null || orders.isEmpty()) {
+            return;
+        }
+        StringBuilder orderBy = new StringBuilder();
+        for (Order order : orders) {
+            if (!orderBy.isEmpty()) {
+                orderBy.append(", ");
+            }
+            StringBuilder expression = new StringBuilder();
+            new ExpressionRenderer(query, expression).appendExpression(order.getExpression());
+            String ref = query.ref(expression.toString());
+            boolean ignoreCase = order instanceof DefaultOrder<?> defaultOrder && defaultOrder.isIgnoreCase();
+            orderBy.append(ignoreCase ? LOWER + ref + ")" : ref).append(order.isAscending() ? " ASC" : " DESC");
+        }
+        query.orderBy = orderBy.toString();
+    }
+
     @Override
     public QueryResult buildPathQuery(PathQueryDefinition definition) {
         PersistentEntity entity = definition.entity();
         String types = edgeTypes(definition.relationships());
         if (definition.kind() == PathQueryDefinition.Kind.RELATIONSHIPS) {
-            if (definition.relationships().size() != 1) {
-                throw new IllegalArgumentException("Relationship finders on Oracle property graphs need exactly one relationship type, for example findRelationshipsByFriends");
-            }
-            Direction direction = definition.direction() == Direction.UNDIRECTED ? Direction.OUTGOING : definition.direction();
-            Query query = new Query(entity);
-            query.pattern = directed(node(START, entity), edge("r", types, ""), node(END, entity), direction);
-            endpoints(query, definition, entity);
-            switch (definition.result()) {
-                case COUNT -> query.select.add("COUNT(*) AS " + alias("result"));
-                case EXISTS -> query.select.add("1 AS " + alias("result"));
-                default -> {
-                    query.entityColumns(START, entity);
-                    query.entityColumns(END, entity);
-                    query.column("'" + GraphEntities.relationshipType(definition.relationships().get(0)) + "'", "r" + SEPARATOR + TYPE_COLUMN);
-                }
-            }
-            if (query.select.isEmpty() || definition.result() != PathQueryDefinition.Result.ELEMENTS) {
-                query.ref(property(START, entity.getIdentity()));
-            }
-            String text = query.render(false);
-            if (definition.result() == PathQueryDefinition.Result.EXISTS) {
-                text += buildLimitAndOffset(1, 0);
-            }
-            return QueryResult.of(text, List.of(text), query.bindings, Map.of());
+            return buildRelationshipsQuery(definition, entity, types);
         }
-        if (definition.maxDepthBound() || definition.maxDepth() <= 0) {
-            if (definition.maxDepth() <= 0 && !definition.maxDepthBound()) {
-                throw new IllegalArgumentException("Oracle property graph path queries need a maximum depth: annotate the method with @PathLimit(n)");
-            }
-            throw new IllegalArgumentException("Oracle property graph path queries need a fixed maximum depth: annotate the method with @PathLimit(n) rather than a parameter");
-        }
+        requireFixedDepth(definition);
         String quantifier = "{1," + definition.maxDepth() + "}";
         Query query = new Query(entity);
         boolean elements = definition.result() == PathQueryDefinition.Result.ELEMENTS;
@@ -324,30 +308,12 @@ public class OracleGraphQueryBuilder implements GraphQueryBuilder {
         }
         String edgeVariable = elements ? EDGE : "";
         String pattern = directed(node(START, entity), edge(edgeVariable, types, "") + quantifier, node(END, entity), definition.direction());
-        if (!sqlPgq()) {
-            String prefix = switch (definition.kind()) {
-                case SHORTEST -> elements ? "ANY SHORTEST " : "ANY ";
-                case ALL_SHORTEST -> "ALL SHORTEST ";
-                default -> "ALL ";
-            };
-            pattern = prefix + pattern;
-        }
-        query.pattern = pattern;
+        query.pattern = sqlPgq() ? pattern : pathPrefix(definition.kind(), elements) + pattern;
         if (elements) {
-            query.rowsPer = "ONE ROW PER STEP (" + STEP_START + ", " + EDGE + ", " + STEP_END + ")";
-            query.column("MATCHNUM(" + STEP_START + ")", PATH_MATCH_COLUMN);
-            query.column("ELEMENT_NUMBER(" + EDGE + ")", PATH_STEP_COLUMN);
-            query.entityColumns(STEP_START, entity);
-            query.entityColumns(STEP_END, entity);
-            if (definition.relationships().size() == 1) {
-                query.column("'" + GraphEntities.relationshipType(definition.relationships().get(0)) + "'", EDGE + SEPARATOR + TYPE_COLUMN);
-            }
-            query.orderBy = "MATCHNUM(" + STEP_START + "), ELEMENT_NUMBER(" + EDGE + ")";
-        } else if (definition.result() == PathQueryDefinition.Result.COUNT) {
-            query.select.add("COUNT(*) AS " + alias("result"));
-            query.ref(property(START, entity.getIdentity()));
+            appendStepColumns(query, definition, entity);
         } else {
-            query.select.add("1 AS " + alias("result"));
+            String result = definition.result() == PathQueryDefinition.Result.COUNT ? COUNT_AS : "1 AS ";
+            query.select.add(result + alias(RESULT));
             query.ref(property(START, entity.getIdentity()));
         }
         endpoints(query, definition, entity);
@@ -356,6 +322,62 @@ public class OracleGraphQueryBuilder implements GraphQueryBuilder {
             text += buildLimitAndOffset(1, 0);
         }
         return QueryResult.of(text, List.of(text), query.bindings, Map.of());
+    }
+
+    private static String pathPrefix(PathQueryDefinition.Kind kind, boolean elements) {
+        return switch (kind) {
+            case SHORTEST -> elements ? "ANY SHORTEST " : "ANY ";
+            case ALL_SHORTEST -> "ALL SHORTEST ";
+            default -> "ALL ";
+        };
+    }
+
+    private void appendStepColumns(Query query, PathQueryDefinition definition, PersistentEntity entity) {
+        query.rowsPer = "ONE ROW PER STEP (" + STEP_START + ", " + EDGE + ", " + STEP_END + ")";
+        query.column("MATCHNUM(" + STEP_START + ")", PATH_MATCH_COLUMN);
+        query.column("ELEMENT_NUMBER(" + EDGE + ")", PATH_STEP_COLUMN);
+        query.entityColumns(STEP_START, entity);
+        query.entityColumns(STEP_END, entity);
+        if (definition.relationships().size() == 1) {
+            query.column("'" + GraphEntities.relationshipType(definition.relationships().get(0)) + "'", EDGE + SEPARATOR + TYPE_COLUMN);
+        }
+        query.orderBy = "MATCHNUM(" + STEP_START + "), ELEMENT_NUMBER(" + EDGE + ")";
+    }
+
+    private QueryResult buildRelationshipsQuery(PathQueryDefinition definition, PersistentEntity entity, String types) {
+        if (definition.relationships().size() != 1) {
+            throw new IllegalArgumentException("Relationship finders on Oracle property graphs need exactly one relationship type, for example findRelationshipsByFriends");
+        }
+        Direction direction = definition.direction() == Direction.UNDIRECTED ? Direction.OUTGOING : definition.direction();
+        Query query = new Query(entity);
+        query.pattern = directed(node(START, entity), edge("r", types, ""), node(END, entity), direction);
+        endpoints(query, definition, entity);
+        switch (definition.result()) {
+            case COUNT -> query.select.add(COUNT_AS + alias(RESULT));
+            case EXISTS -> query.select.add("1 AS " + alias(RESULT));
+            default -> {
+                query.entityColumns(START, entity);
+                query.entityColumns(END, entity);
+                query.column("'" + GraphEntities.relationshipType(definition.relationships().get(0)) + "'", "r" + SEPARATOR + TYPE_COLUMN);
+            }
+        }
+        if (query.select.isEmpty() || definition.result() != PathQueryDefinition.Result.ELEMENTS) {
+            query.ref(property(START, entity.getIdentity()));
+        }
+        String text = query.render(false);
+        if (definition.result() == PathQueryDefinition.Result.EXISTS) {
+            text += buildLimitAndOffset(1, 0);
+        }
+        return QueryResult.of(text, List.of(text), query.bindings, Map.of());
+    }
+
+    private static void requireFixedDepth(PathQueryDefinition definition) {
+        if (definition.maxDepthBound() || definition.maxDepth() <= 0) {
+            if (definition.maxDepth() <= 0 && !definition.maxDepthBound()) {
+                throw new IllegalArgumentException("Oracle property graph path queries need a maximum depth: annotate the method with @PathLimit(n)");
+            }
+            throw new IllegalArgumentException("Oracle property graph path queries need a fixed maximum depth: annotate the method with @PathLimit(n) rather than a parameter");
+        }
     }
 
     private void endpoints(Query query, PathQueryDefinition definition, PersistentEntity entity) {
@@ -450,7 +472,7 @@ public class OracleGraphQueryBuilder implements GraphQueryBuilder {
 
         void and(String condition) {
             if (!where.isEmpty()) {
-                where.append(" AND ");
+                where.append(AND);
             }
             where.append(condition);
         }
@@ -511,6 +533,22 @@ public class OracleGraphQueryBuilder implements GraphQueryBuilder {
         }
 
         String render(boolean distinct) {
+            StringBuilder sb = new StringBuilder("SELECT ");
+            if (distinct) {
+                sb.append("DISTINCT ");
+            }
+            if (sqlPgq()) {
+                renderGraphTable(sb);
+            } else {
+                renderPgql(sb);
+            }
+            if (orderBy != null) {
+                sb.append(" ORDER BY ").append(orderBy);
+            }
+            return sb.toString();
+        }
+
+        private void renderGraphTable(StringBuilder sb) {
             String match = pattern;
             if (match == null) {
                 List<String> parts = new ArrayList<>();
@@ -520,55 +558,42 @@ public class OracleGraphQueryBuilder implements GraphQueryBuilder {
                 }
                 match = String.join(", ", parts);
             }
-            StringBuilder sb = new StringBuilder("SELECT ");
-            if (distinct) {
-                sb.append("DISTINCT ");
+            sb.append(select.isEmpty() ? "*" : String.join(", ", select));
+            sb.append(" FROM GRAPH_TABLE (").append(graph).append(" MATCH ").append(match);
+            appendRowsAndWhere(sb);
+            sb.append(" COLUMNS (");
+            Iterator<Map.Entry<String, String>> iterator = columns.entrySet().iterator();
+            while (iterator.hasNext()) {
+                Map.Entry<String, String> entry = iterator.next();
+                sb.append(entry.getValue()).append(" AS ").append(entry.getKey());
+                if (iterator.hasNext()) {
+                    sb.append(", ");
+                }
             }
-            if (sqlPgq()) {
-                if (select.isEmpty()) {
-                    sb.append('*');
-                } else {
-                    sb.append(String.join(", ", select));
-                }
-                sb.append(" FROM GRAPH_TABLE (").append(graph).append(" MATCH ").append(match);
-                if (rowsPer != null) {
-                    sb.append(' ').append(rowsPer);
-                }
-                if (!where.isEmpty()) {
-                    sb.append(" WHERE ").append(where);
-                }
-                sb.append(" COLUMNS (");
-                Iterator<Map.Entry<String, String>> iterator = columns.entrySet().iterator();
-                while (iterator.hasNext()) {
-                    Map.Entry<String, String> entry = iterator.next();
-                    sb.append(entry.getValue()).append(" AS ").append(entry.getKey());
-                    if (iterator.hasNext()) {
-                        sb.append(", ");
-                    }
-                }
-                sb.append("))");
+            sb.append("))");
+        }
+
+        private void renderPgql(StringBuilder sb) {
+            sb.append(String.join(", ", select));
+            sb.append(" FROM ");
+            if (pattern != null) {
+                sb.append("MATCH ").append(pattern).append(" ON ").append(graph);
             } else {
-                sb.append(String.join(", ", select));
-                sb.append(" FROM ");
-                if (pattern != null) {
-                    sb.append("MATCH ").append(pattern).append(" ON ").append(graph);
-                } else {
-                    sb.append("MATCH ").append(node(ROOT, entity)).append(" ON ").append(graph);
-                    for (String[] value : patterns.values()) {
-                        sb.append(", MATCH ").append(value[0]).append(" ON ").append(graph);
-                    }
-                }
-                if (rowsPer != null) {
-                    sb.append(' ').append(rowsPer);
-                }
-                if (!where.isEmpty()) {
-                    sb.append(" WHERE ").append(where);
+                sb.append("MATCH ").append(node(ROOT, entity)).append(" ON ").append(graph);
+                for (String[] value : patterns.values()) {
+                    sb.append(", MATCH ").append(value[0]).append(" ON ").append(graph);
                 }
             }
-            if (orderBy != null) {
-                sb.append(" ORDER BY ").append(orderBy);
+            appendRowsAndWhere(sb);
+        }
+
+        private void appendRowsAndWhere(StringBuilder sb) {
+            if (rowsPer != null) {
+                sb.append(' ').append(rowsPer);
             }
-            return sb.toString();
+            if (!where.isEmpty()) {
+                sb.append(" WHERE ").append(where);
+            }
         }
 
         /**
@@ -592,22 +617,12 @@ public class OracleGraphQueryBuilder implements GraphQueryBuilder {
                     throw new IllegalArgumentException("Association [" + association.getName() + "] is not a @Relationship and cannot be queried");
                 }
                 String from = variable;
-                String[] pattern = patterns.computeIfAbsent(path.toString(), key -> {
-                    int index = patterns.size();
-                    String nodeVariable = "a" + index;
-                    PersistentEntity target = GraphEntities.targetNodeEntity(association);
-                    boolean relationshipEntity = GraphEntities.isRelationshipEntity(association.getAssociatedEntity());
-                    String relVariable = relationshipEntity ? "ar" + index : "";
-                    String text = directed("(" + from + ")",
-                        edge(relVariable, GraphEntities.escapeName(GraphEntities.relationshipType(association)), ""),
-                        node(nodeVariable, target), GraphEntities.direction(association));
-                    return new String[] {text, nodeVariable, relVariable};
-                });
-                if (!pattern[2].isEmpty()) {
-                    variable = pattern[2];
-                    relationshipEntityNode = pattern[1];
+                String[] match = patterns.computeIfAbsent(path.toString(), key -> newPattern(association, from));
+                if (!match[2].isEmpty()) {
+                    variable = match[2];
+                    relationshipEntityNode = match[1];
                 } else {
-                    variable = pattern[1];
+                    variable = match[1];
                 }
             }
             PersistentProperty property = propertyPath.getProperty();
@@ -618,6 +633,18 @@ public class OracleGraphQueryBuilder implements GraphQueryBuilder {
                 return resolve(io.micronaut.data.model.PersistentPropertyPath.of(associations, target.getIdentity()));
             }
             return property(variable, property);
+        }
+
+        private String[] newPattern(Association association, String from) {
+            int index = patterns.size();
+            String nodeVariable = "a" + index;
+            PersistentEntity target = GraphEntities.targetNodeEntity(association);
+            boolean relationshipEntity = GraphEntities.isRelationshipEntity(association.getAssociatedEntity());
+            String relVariable = relationshipEntity ? "ar" + index : "";
+            String text = directed("(" + from + ")",
+                edge(relVariable, GraphEntities.escapeName(GraphEntities.relationshipType(association)), ""),
+                node(nodeVariable, target), GraphEntities.direction(association));
+            return new String[] {text, nodeVariable, relVariable};
         }
     }
 
@@ -807,7 +834,7 @@ public class OracleGraphQueryBuilder implements GraphQueryBuilder {
 
         @Override
         public void visit(ConjunctionPredicate conjunction) {
-            junction(conjunction.getPredicates(), " AND ", "1 = 1");
+            junction(conjunction.getPredicates(), AND, "1 = 1");
         }
 
         @Override
@@ -853,9 +880,9 @@ public class OracleGraphQueryBuilder implements GraphQueryBuilder {
                 path = propertyPathOf(right);
             }
             if (ignoreCase) {
-                out.append("LOWER(");
+                out.append(LOWER);
                 appendExpression(left, path);
-                out.append(')').append(operator).append("LOWER(");
+                out.append(')').append(operator).append(LOWER);
                 appendExpression(right, path);
                 out.append(')');
             } else {
@@ -871,7 +898,7 @@ public class OracleGraphQueryBuilder implements GraphQueryBuilder {
             }
             io.micronaut.data.model.PersistentPropertyPath path = propertyPathOf(left);
             if (ignoreCase) {
-                out.append("LOWER(");
+                out.append(LOWER);
             }
             appendExpression(left, path);
             if (ignoreCase) {
@@ -879,7 +906,7 @@ public class OracleGraphQueryBuilder implements GraphQueryBuilder {
             }
             out.append(" LIKE ").append(prefix);
             if (ignoreCase) {
-                out.append("LOWER(");
+                out.append(LOWER);
             }
             appendExpression(right, path);
             if (ignoreCase) {
@@ -957,7 +984,7 @@ public class OracleGraphQueryBuilder implements GraphQueryBuilder {
             }
             out.append('(');
             comparison(value, " >= ", from, false);
-            out.append(" AND ");
+            out.append(AND);
             comparison(value, " <= ", to, false);
             out.append(')');
         }
@@ -1072,7 +1099,7 @@ public class OracleGraphQueryBuilder implements GraphQueryBuilder {
         public void visit(LiteralExpression<?> literalExpression) {
             literal = true;
             query.ref(property(ROOT, query.entity.getIdentity()));
-            query.select.add(literal(literalExpression.getValue()) + " AS " + alias(alias != null ? alias : "result"));
+            query.select.add(literal(literalExpression.getValue()) + " AS " + alias(alias != null ? alias : RESULT));
         }
 
         @Override
@@ -1082,7 +1109,7 @@ public class OracleGraphQueryBuilder implements GraphQueryBuilder {
                 String id = query.ref(property(ROOT, query.entity.getIdentity()));
                 boolean distinct = unaryExpression.getType() == io.micronaut.data.model.jpa.criteria.impl.expression.UnaryExpressionType.COUNT_DISTINCT
                     || !query.patterns.isEmpty();
-                query.select.add((distinct ? "COUNT(DISTINCT " + id + ")" : "COUNT(*)") + " AS " + alias(alias != null ? alias : "result"));
+                query.select.add((distinct ? "COUNT(DISTINCT " + id + ")" : "COUNT(*)") + " AS " + alias(alias != null ? alias : RESULT));
                 return;
             }
             String aggregate = switch (unaryExpression.getType()) {
@@ -1096,12 +1123,12 @@ public class OracleGraphQueryBuilder implements GraphQueryBuilder {
                 case LOWER -> "LOWER({})";
                 case LENGTH -> "LENGTH({})";
             };
-            item(expression, "result", aggregate);
+            item(expression, RESULT, aggregate);
         }
 
         @Override
         public void visit(BinaryExpression<?> binaryExpression) {
-            item(binaryExpression, "result", null);
+            item(binaryExpression, RESULT, null);
         }
 
         @Override
@@ -1112,7 +1139,7 @@ public class OracleGraphQueryBuilder implements GraphQueryBuilder {
 
         @Override
         public void visit(FunctionExpression<?> functionExpression) {
-            item(functionExpression, "result", null);
+            item(functionExpression, RESULT, null);
         }
 
         @Override
