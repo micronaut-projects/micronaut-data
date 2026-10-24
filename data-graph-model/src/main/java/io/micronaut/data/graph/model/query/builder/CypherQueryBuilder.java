@@ -100,6 +100,10 @@ public class CypherQueryBuilder implements QueryBuilder {
      * The parameter name prefix.
      */
     public static final String PARAMETER_PREFIX = "p";
+    private static final String WITH_DISTINCT = " WITH DISTINCT ";
+    private static final String DISTINCT = "DISTINCT ";
+    private static final String TO_LOWER = "toLower(";
+    private static final String RESULT = "result";
 
     @Override
     public @Nullable QueryResult buildInsert(AnnotationMetadata repositoryMetadata, InsertQueryDefinition definition) {
@@ -125,29 +129,7 @@ public class CypherQueryBuilder implements QueryBuilder {
 
         StringBuilder query = new StringBuilder();
         appendMatch(query, state, where);
-        if (selectionRenderer.entity) {
-            if (state.hasPatterns()) {
-                query.append(" WITH DISTINCT ").append(ROOT);
-            }
-            List<String> joinColumns = appendFetchJoins(query, state);
-            query.append(" RETURN ");
-            if (definition.isDistinct()) {
-                query.append("DISTINCT ");
-            }
-            query.append(ROOT);
-            for (String joinColumn : joinColumns) {
-                query.append(", ").append(joinColumn);
-            }
-        } else {
-            if (state.hasPatterns() && selectionRenderer.rootOnly) {
-                query.append(" WITH DISTINCT ").append(ROOT);
-            }
-            query.append(" RETURN ");
-            if (definition.isDistinct()) {
-                query.append("DISTINCT ");
-            }
-            query.append(selectionRenderer.out);
-        }
+        appendReturn(query, state, selectionRenderer, definition.isDistinct());
         if (!orderBy.isEmpty()) {
             query.append(" ORDER BY ").append(orderBy);
         }
@@ -158,6 +140,25 @@ public class CypherQueryBuilder implements QueryBuilder {
             query.append(" LIMIT 1");
         }
         return QueryResult.of(query.toString(), List.of(query.toString()), state.parameterBindings, state.additionalRequiredParameters);
+    }
+
+    private void appendReturn(StringBuilder query, QueryState state, SelectionRenderer selectionRenderer, boolean distinct) {
+        if (state.hasPatterns() && (selectionRenderer.entity || selectionRenderer.rootOnly)) {
+            query.append(WITH_DISTINCT).append(ROOT);
+        }
+        List<String> joinColumns = selectionRenderer.entity ? appendFetchJoins(query, state) : List.of();
+        query.append(" RETURN ");
+        if (distinct) {
+            query.append(DISTINCT);
+        }
+        if (selectionRenderer.entity) {
+            query.append(ROOT);
+            for (String joinColumn : joinColumns) {
+                query.append(", ").append(joinColumn);
+            }
+        } else {
+            query.append(selectionRenderer.out);
+        }
     }
 
     @Override
@@ -193,7 +194,7 @@ public class CypherQueryBuilder implements QueryBuilder {
         StringBuilder query = new StringBuilder();
         appendMatch(query, state, where);
         if (state.hasPatterns()) {
-            query.append(" WITH DISTINCT ").append(ROOT);
+            query.append(WITH_DISTINCT).append(ROOT);
         }
         query.append(" SET ").append(sets).append(" RETURN count(*)");
         return QueryResult.of(query.toString(), List.of(query.toString()), state.parameterBindings, state.additionalRequiredParameters);
@@ -206,7 +207,7 @@ public class CypherQueryBuilder implements QueryBuilder {
         StringBuilder query = new StringBuilder();
         appendMatch(query, state, where);
         if (state.hasPatterns()) {
-            query.append(" WITH DISTINCT ").append(ROOT);
+            query.append(WITH_DISTINCT).append(ROOT);
         }
         query.append(" DETACH DELETE ").append(ROOT).append(" RETURN count(*)");
         return QueryResult.of(query.toString(), List.of(query.toString()), state.parameterBindings, state.additionalRequiredParameters);
@@ -276,22 +277,25 @@ public class CypherQueryBuilder implements QueryBuilder {
     private List<String> appendFetchJoins(StringBuilder query, QueryState state) {
         List<String> columns = new ArrayList<>();
         for (JoinPath joinPath : state.joinPaths) {
-            if (!joinPath.getJoinType().isFetch()) {
-                continue;
+            if (joinPath.getJoinType().isFetch()) {
+                appendFetchJoin(query, joinPath, columns);
             }
-            Association[] associationPath = joinPath.getAssociationPath();
-            Association association = associationPath[0];
-            boolean relationshipEntity = GraphEntities.isRelationshipEntity(association.getAssociatedEntity());
-            if (associationPath.length > 2 || (associationPath.length == 2 && !(relationshipEntity && isTargetNode(associationPath[1])))) {
-                throw new IllegalArgumentException("Graph repositories can only join direct relationships, found join path: " + joinPath.getPath());
-            }
-            if (!GraphEntities.isRelationship(association)) {
-                throw new IllegalArgumentException("Association [" + association.getName() + "] is not a @Relationship and cannot be joined");
-            }
-            String column = JOIN_COLUMN_PREFIX + association.getName();
-            if (columns.contains(column)) {
-                continue;
-            }
+        }
+        return columns;
+    }
+
+    private void appendFetchJoin(StringBuilder query, JoinPath joinPath, List<String> columns) {
+        Association[] associationPath = joinPath.getAssociationPath();
+        Association association = associationPath[0];
+        boolean relationshipEntity = GraphEntities.isRelationshipEntity(association.getAssociatedEntity());
+        if (associationPath.length > 2 || (associationPath.length == 2 && !(relationshipEntity && isTargetNode(associationPath[1])))) {
+            throw new IllegalArgumentException("Graph repositories can only join direct relationships, found join path: " + joinPath.getPath());
+        }
+        if (!GraphEntities.isRelationship(association)) {
+            throw new IllegalArgumentException("Association [" + association.getName() + "] is not a @Relationship and cannot be joined");
+        }
+        String column = JOIN_COLUMN_PREFIX + association.getName();
+        if (!columns.contains(column)) {
             int index = columns.size();
             String nodeVariable = "j" + index;
             PersistentEntity target = GraphEntities.targetNodeEntity(association);
@@ -313,7 +317,6 @@ public class CypherQueryBuilder implements QueryBuilder {
             query.append(", ").append(collect).append(" AS ").append(column);
             columns.add(column);
         }
-        return columns;
     }
 
     private static boolean isTargetNode(Association association) {
@@ -340,29 +343,34 @@ public class CypherQueryBuilder implements QueryBuilder {
         StringBuilder sb = new StringBuilder();
         Iterator<Order> iterator = orders.iterator();
         while (iterator.hasNext()) {
-            Order order = iterator.next();
-            StringBuilder expression = new StringBuilder();
-            ExpressionRenderer renderer = new ExpressionRenderer(state, expression);
-            boolean ignoreCase = order instanceof DefaultOrder<?> defaultOrder && defaultOrder.isIgnoreCase();
-            Nulls nulls = order instanceof DefaultOrder<?> defaultOrder ? defaultOrder.getNullPrecedence() : Nulls.NONE;
-            if (ignoreCase) {
-                expression.append("toLower(");
-                renderer.appendExpression(order.getExpression(), null);
-                expression.append(')');
-            } else {
-                renderer.appendExpression(order.getExpression(), null);
-            }
-            if (nulls == Nulls.FIRST) {
-                sb.append("CASE WHEN ").append(expression).append(" IS NULL THEN 0 ELSE 1 END, ");
-            } else if (nulls == Nulls.LAST) {
-                sb.append("CASE WHEN ").append(expression).append(" IS NULL THEN 1 ELSE 0 END, ");
-            }
-            sb.append(expression).append(order.isAscending() ? " ASC" : " DESC");
+            appendOrder(sb, iterator.next(), state);
             if (iterator.hasNext()) {
                 sb.append(", ");
             }
         }
         return sb.toString();
+    }
+
+    private void appendOrder(StringBuilder sb, Order order, QueryState state) {
+        StringBuilder expression = new StringBuilder();
+        ExpressionRenderer renderer = new ExpressionRenderer(state, expression);
+        boolean ignoreCase = order instanceof DefaultOrder<?> defaultOrder && defaultOrder.isIgnoreCase();
+        Nulls nulls = order instanceof DefaultOrder<?> defaultOrder ? defaultOrder.getNullPrecedence() : Nulls.NONE;
+        if (ignoreCase) {
+            expression.append(TO_LOWER);
+            renderer.appendExpression(order.getExpression(), null);
+            expression.append(')');
+        } else {
+            renderer.appendExpression(order.getExpression(), null);
+        }
+        switch (nulls) {
+            case FIRST -> sb.append("CASE WHEN ").append(expression).append(" IS NULL THEN 0 ELSE 1 END, ");
+            case LAST -> sb.append("CASE WHEN ").append(expression).append(" IS NULL THEN 1 ELSE 0 END, ");
+            default -> {
+                // No null precedence
+            }
+        }
+        sb.append(expression).append(order.isAscending() ? " ASC" : " DESC");
     }
 
     /**
@@ -462,17 +470,7 @@ public class CypherQueryBuilder implements QueryBuilder {
                     throw new IllegalArgumentException("Association [" + association.getName() + "] is not a @Relationship and cannot be queried");
                 }
                 String from = variable;
-                Pattern pattern = patterns.computeIfAbsent(path.toString(), key -> {
-                    int index = patterns.size();
-                    String nodeVariable = "a" + index;
-                    PersistentEntity target = GraphEntities.targetNodeEntity(association);
-                    String nodePattern = "(" + nodeVariable + GraphEntities.labelExpression(target) + ")";
-                    if (GraphEntities.isRelationshipEntity(association.getAssociatedEntity())) {
-                        String relVariable = "ar" + index;
-                        return new Pattern(GraphEntities.relationshipPattern(association, from, relVariable, nodePattern), nodeVariable, relVariable);
-                    }
-                    return new Pattern(GraphEntities.relationshipPattern(association, from, null, nodePattern), nodeVariable, null);
-                });
+                Pattern pattern = patterns.computeIfAbsent(path.toString(), key -> newPattern(association, from));
                 if (pattern.relVariable() != null) {
                     variable = pattern.relVariable();
                     relationshipEntityPattern = pattern;
@@ -480,6 +478,22 @@ public class CypherQueryBuilder implements QueryBuilder {
                     variable = pattern.nodeVariable();
                 }
             }
+            return propertyExpression(propertyPath, variable);
+        }
+
+        private Pattern newPattern(Association association, String from) {
+            int index = patterns.size();
+            String nodeVariable = "a" + index;
+            PersistentEntity target = GraphEntities.targetNodeEntity(association);
+            String nodePattern = "(" + nodeVariable + GraphEntities.labelExpression(target) + ")";
+            if (GraphEntities.isRelationshipEntity(association.getAssociatedEntity())) {
+                String relVariable = "ar" + index;
+                return new Pattern(GraphEntities.relationshipPattern(association, from, relVariable, nodePattern), nodeVariable, relVariable);
+            }
+            return new Pattern(GraphEntities.relationshipPattern(association, from, null, nodePattern), nodeVariable, null);
+        }
+
+        private String propertyExpression(io.micronaut.data.model.PersistentPropertyPath propertyPath, String variable) {
             PersistentProperty property = propertyPath.getProperty();
             PersistentEntity owner = property.getOwner();
             if (owner.hasIdentity() && owner.getIdentity().getName().equals(property.getName())) {
@@ -577,7 +591,7 @@ public class CypherQueryBuilder implements QueryBuilder {
                 case COUNT -> {
                     out.append("count(");
                     if (expression instanceof PersistentEntityRoot<?> && state.hasPatterns()) {
-                        out.append("DISTINCT ");
+                        out.append(DISTINCT);
                     }
                     appendExpression(expression, null);
                     out.append(')');
@@ -795,9 +809,9 @@ public class CypherQueryBuilder implements QueryBuilder {
                 bound = findPropertyPath(right);
             }
             if (ignoreCase) {
-                out.append("toLower(");
+                out.append(TO_LOWER);
                 appendExpression(left, bound);
-                out.append(')').append(operator).append("toLower(");
+                out.append(')').append(operator).append(TO_LOWER);
                 appendExpression(right, bound);
                 out.append(')');
             } else {
@@ -999,7 +1013,7 @@ public class CypherQueryBuilder implements QueryBuilder {
         public void visit(UnaryExpression<?> unaryExpression) {
             super.visit(unaryExpression);
             if (depth == 0) {
-                appendAlias("result");
+                appendAlias(RESULT);
             }
         }
 
@@ -1016,7 +1030,7 @@ public class CypherQueryBuilder implements QueryBuilder {
             super.visit(literalExpression);
             if (depth == 0) {
                 literal = true;
-                appendAlias("result");
+                appendAlias(RESULT);
             }
         }
 
@@ -1024,7 +1038,7 @@ public class CypherQueryBuilder implements QueryBuilder {
         public void visit(BinaryExpression<?> binaryExpression) {
             super.visit(binaryExpression);
             if (depth == 0) {
-                appendAlias("result");
+                appendAlias(RESULT);
             }
         }
 
@@ -1032,7 +1046,7 @@ public class CypherQueryBuilder implements QueryBuilder {
         public void visit(FunctionExpression<?> functionExpression) {
             super.visit(functionExpression);
             if (depth == 0) {
-                appendAlias("result");
+                appendAlias(RESULT);
             }
         }
 
