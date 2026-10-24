@@ -4,6 +4,8 @@ import io.micronaut.context.annotation.Property
 import io.micronaut.data.connection.jdbc.advice.DelegatingDataSource
 import io.micronaut.data.jdbc.config.DataJdbcConfiguration
 import io.micronaut.data.jdbc.config.JdbcSchemaContributor
+import io.micronaut.data.runtime.config.SchemaGenerate
+import io.micronaut.data.runtime.schema.SchemaContext
 import io.micronaut.data.model.runtime.RuntimeEntityRegistry
 import io.micronaut.data.oracle.graph.bank.Account
 import io.micronaut.data.oracle.graph.bank.Transfer
@@ -81,15 +83,16 @@ class OraclePropertyGraphSchemaSpec extends Specification {
     void "the statements generated for the bank graph"() {
         given:
         def entities = [entityRegistry.getEntity(Account), entityRegistry.getEntity(Transfer)]
-        def contributor = contributors.find { !it.selectEntities(configuration, entities).isEmpty() }
+        def context = new SchemaContext(configuration.name, configuration.dialect, configuration.dialectOptions.version, SchemaGenerate.CREATE_DROP, entities)
+        def contributor = contributors.find { !it.selectEntities(context, entities).isEmpty() }
 
         expect:
-        contributor.buildCreateStatements(configuration, entities) == [
+        contributor.buildCreateStatements(context, entities) == [
             'CREATE TABLE "ACCOUNTS" ("ID" NUMBER(19) NOT NULL,"NAME" VARCHAR(255) NOT NULL, PRIMARY KEY("ID"))',
             'CREATE TABLE "TRANSFER" ("ID" NUMBER(19) NOT NULL,"AMOUNT" FLOAT(126) NOT NULL,"TOID" NUMBER(19) NOT NULL,"ACCOUNTID" NUMBER(19) NOT NULL, PRIMARY KEY("ID"))',
             'CREATE PROPERTY GRAPH bank_graph VERTEX TABLES ("ACCOUNTS" KEY ("ID") LABEL Account PROPERTIES ("ID", "NAME")) EDGE TABLES ("TRANSFER" KEY ("ID") SOURCE KEY ("ACCOUNTID") REFERENCES "ACCOUNTS" ("ID") DESTINATION KEY ("TOID") REFERENCES "ACCOUNTS" ("ID") LABEL TRANSFERS PROPERTIES ("ID", "AMOUNT"))'
         ]
-        contributor.buildDropStatements(configuration, entities) == [
+        contributor.buildDropStatements(context, entities) == [
             'DROP PROPERTY GRAPH bank_graph',
             'DROP TABLE "TRANSFER"',
             'DROP TABLE "ACCOUNTS"'

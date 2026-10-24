@@ -40,6 +40,20 @@ types are not matching then the application will report an error and stop.
 
 Please note this option is currently regarded as experimental.
 
+[[schemaContributors]]
+==== Schema Contributors
+
+Schema generation creates a table for each entity. To add other database objects to the generated schema, such as views, domains or queues, or to generate the schema of some entities yourself, register a bean that implements api:data.jdbc.config.JdbcSchemaContributor[], or api:data.r2dbc.config.R2dbcSchemaContributor[] for <<r2dbcConfiguration, R2DBC schema generation>>. A contributor that applies to both drivers implements both. The following contributor creates a view over the `book` table:
+
+snippet::example.BookTitlesViewContributor[project-base="doc-examples/jdbc-example", source="main", tags="contributor"]
+
+<1> The bean implements `JdbcSchemaContributor`, the api:data.runtime.schema.SchemaContributor[] of JDBC schema generation.
+<2> Contributors are called for every data source with schema generation enabled. The api:data.runtime.schema.SchemaContext[] gives the data source name, dialect, target dialect version, schema generation mode and entities, so a contributor can decide whether it applies.
+<3> Create statements run after the tables are created.
+<4> With `create-drop`, drop statements run before the tables are dropped. A failed drop statement is ignored, as the object may not exist yet.
+
+A contributor can also return statements from `buildBeforeTablesStatements`, which run before the tables are created, such as the domains the tables use. And it can take over entities with `selectEntities`: the schema generator leaves the selected entities out of the tables it creates, drops and validates, and the contributor builds their schema instead. Micronaut Data's graph support uses this to create the vertex and edge tables and the property graphs of graph entities. Contributors run in `Ordered` order. A failed create statement is logged, as for the generated tables, and the statements of JDBC schema generation can contain property placeholders.
+
 === Setting the Dialect
 
 As seen in the configuration above you should also configure the dialect. Although queries are precomputed in the repository some cases (like pagination) still require the dialect to specify. The following table summarizes the supported dialects:
