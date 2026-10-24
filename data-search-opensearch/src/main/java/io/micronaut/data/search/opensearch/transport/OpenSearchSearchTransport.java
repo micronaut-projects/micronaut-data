@@ -80,13 +80,16 @@ public final class OpenSearchSearchTransport implements SearchTransport {
                 }
                 request.sort(options);
             }
-            if (parsed.get("from") instanceof Number from) {
-                request.from(from.intValue());
+            // The parsed values are JSON-P values, not Java numbers and booleans
+            Integer from = scalar(parsed.get("from"), Integer.class);
+            if (from != null) {
+                request.from(from);
             }
-            if (parsed.get("size") instanceof Number size) {
-                request.size(size.intValue());
+            Integer size = scalar(parsed.get("size"), Integer.class);
+            if (size != null) {
+                request.size(size);
             }
-            if (Boolean.TRUE.equals(parsed.get("track_total_hits"))) {
+            if (Boolean.TRUE.equals(scalar(parsed.get("track_total_hits"), Boolean.class))) {
                 request.trackTotalHits(TrackHits.of(t -> t.enabled(true)));
             }
             SearchResponse<Map> response = client.search(request.build(), Map.class);
@@ -145,7 +148,8 @@ public final class OpenSearchSearchTransport implements SearchTransport {
     public long deleteByQuery(String index, String body, DocumentSearchConfiguration.Refresh refresh) {
         try {
             Query query = query(parse(body));
-            Long deleted = client.deleteByQuery(d -> d.index(index).query(query).refresh(refresh(refresh))).deleted();
+            // delete_by_query only accepts true or false, not wait_for
+            Long deleted = client.deleteByQuery(d -> d.index(index).query(query).refresh(refresh == DocumentSearchConfiguration.Refresh.NONE ? Refresh.False : Refresh.True)).deleted();
             return deleted == null ? 0 : deleted;
         } catch (IOException e) {
             throw new DataAccessException("OpenSearch delete by query failed: " + e.getMessage(), e);
@@ -176,6 +180,20 @@ public final class OpenSearchSearchTransport implements SearchTransport {
         } catch (IOException e) {
             throw new DataAccessException("OpenSearch create index failed: " + e.getMessage(), e);
         }
+    }
+
+    @Nullable
+    private <T> T scalar(@Nullable Object value, Class<T> type) {
+        if (value == null) {
+            return null;
+        }
+        if (type.isInstance(value)) {
+            return type.cast(value);
+        }
+        if (value instanceof Number number && type == Integer.class) {
+            return type.cast(number.intValue());
+        }
+        return JsonData.of(value, mapper).to(type, mapper);
     }
 
     private Map<String, Object> parse(String body) {

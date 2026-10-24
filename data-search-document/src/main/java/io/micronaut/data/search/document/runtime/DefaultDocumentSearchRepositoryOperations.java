@@ -178,6 +178,11 @@ public final class DefaultDocumentSearchRepositoryOperations extends AbstractRep
     @Override
     public <T, R> Iterable<R> findAll(PreparedQuery<T, R> preparedQuery) {
         DocumentStoredQuery<T, R> storedQuery = storedQuery(preparedQuery);
+        if (storedQuery.isCount() || preparedQuery.getResultType() == SearchResults.class) {
+            // A count or a SearchResults is one value built from the whole response
+            R result = findOne(preparedQuery);
+            return result == null ? List.of() : List.of(result);
+        }
         Map<String, Object> body = body(preparedQuery, storedQuery);
         RuntimePersistentEntity<T> entity = storedQuery.getPersistentEntity();
         applyPageable(body, preparedQuery.getPageable(), entity);
@@ -365,7 +370,7 @@ public final class DefaultDocumentSearchRepositoryOperations extends AbstractRep
         T value = fromDocument(source, entity);
         if (preparedQuery != null) {
             Class<?> resultType = preparedQuery.getResultType();
-            if (!resultType.isAssignableFrom(entity.getIntrospection().getBeanType())) {
+            if (resultType != SearchResults.class && !resultType.isAssignableFrom(entity.getIntrospection().getBeanType())) {
                 try {
                     return (R) Objects.requireNonNull(jsonMapper.readValue(jsonMapper.writeValueAsBytes(source), Argument.of(resultType)));
                 } catch (IOException e) {
