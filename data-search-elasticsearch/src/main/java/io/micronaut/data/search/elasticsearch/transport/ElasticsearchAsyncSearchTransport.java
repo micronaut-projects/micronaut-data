@@ -16,7 +16,11 @@
 package io.micronaut.data.search.elasticsearch.transport;
 
 import co.elastic.clients.elasticsearch.ElasticsearchAsyncClient;
+import co.elastic.clients.elasticsearch._types.ElasticsearchException;
+import co.elastic.clients.elasticsearch._types.FieldValue;
 import co.elastic.clients.elasticsearch._types.Refresh;
+import co.elastic.clients.elasticsearch._types.VersionType;
+import co.elastic.clients.elasticsearch.core.IndexRequest;
 import co.elastic.clients.elasticsearch.core.BulkRequest;
 import co.elastic.clients.elasticsearch.core.BulkResponse;
 import co.elastic.clients.elasticsearch.core.SearchResponse;
@@ -26,6 +30,7 @@ import co.elastic.clients.elasticsearch.core.search.Hit;
 import io.micronaut.context.annotation.Requires;
 import io.micronaut.core.annotation.Internal;
 import io.micronaut.data.exceptions.DataAccessException;
+import io.micronaut.data.exceptions.OptimisticLockException;
 import io.micronaut.data.search.document.conf.DocumentSearchConfiguration;
 import io.micronaut.data.search.document.runtime.AsyncSearchTransport;
 import io.micronaut.data.search.document.runtime.SearchTransport;
@@ -38,6 +43,7 @@ import java.util.ArrayList;
 import java.util.List;
 import java.util.Map;
 import java.util.Optional;
+import java.util.concurrent.CompletionException;
 import java.util.concurrent.CompletionStage;
 
 /**
@@ -69,7 +75,8 @@ public final class ElasticsearchAsyncSearchTransport implements AsyncSearchTrans
     static SearchTransport.SearchHits toHits(SearchResponse<Map> response) {
         List<SearchTransport.SearchHit> hits = new ArrayList<>(response.hits().hits().size());
         for (Hit<Map> hit : response.hits().hits()) {
-            hits.add(new SearchTransport.SearchHit(hit.id(), hit.score(), hit.source() == null ? Map.of() : (Map<String, Object>) hit.source(), hit.highlight()));
+            hits.add(new SearchTransport.SearchHit(hit.id(), hit.score(), hit.source() == null ? Map.of() : (Map<String, Object>) hit.source(),
+                hit.highlight(), hit.version(), sortValues(hit.sort())));
         }
         long total = response.hits().total() == null ? hits.size() : response.hits().total().value();
         return new SearchTransport.SearchHits(hits, total, response.hits().maxScore());
@@ -82,7 +89,59 @@ public final class ElasticsearchAsyncSearchTransport implements AsyncSearchTrans
 
     @Override
     public CompletionStage<String> index(String index, @Nullable String id, Map<String, Object> source, DocumentSearchConfiguration.Refresh refresh) {
-        return client.index(i -> i.index(index).id(id).document(source).refresh(refresh(refresh))).thenApply(response -> response.id());
+        return index(index, id, source, null, refresh);
+    }
+
+    @Override
+    public CompletionStage<String> index(String index, @Nullable String id, Map<String, Object> source, @Nullable Long version, DocumentSearchConfiguration.Refresh refresh) {
+        return client.index(i -> indexRequest(i, index, id, source, version, refresh))
+            .handle((response, error) -> {
+                if (error != null) {
+                    throw conflictOrFailure(error, id);
+                }
+                return response.id();
+            });
+    }
+
+    static <T> IndexRequest.Builder<T> indexRequest(IndexRequest.Builder<T> builder, String index, @Nullable String id, T source, @Nullable Long version, DocumentSearchConfiguration.Refresh refresh) {
+        builder.index(index).id(id).document(source).refresh(refresh(refresh));
+        if (version != null) {
+            builder.version(version).versionType(VersionType.External);
+        }
+        return builder;
+    }
+
+    /**
+     * Maps a version conflict (HTTP 409) to {@link OptimisticLockException}; other failures pass through.
+     */
+    static RuntimeException conflictOrFailure(Throwable error, @Nullable String id) {
+        Throwable cause = error instanceof CompletionException && error.getCause() != null ? error.getCause() : error;
+        if (cause instanceof ElasticsearchException elasticsearchException && elasticsearchException.status() == 409) {
+            return new OptimisticLockException("Document " + id + " was modified concurrently: " + elasticsearchException.error().reason(), cause);
+        }
+        if (cause instanceof RuntimeException runtime) {
+            return runtime;
+        }
+        return new DataAccessException("Elasticsearch request failed: " + cause.getMessage(), cause);
+    }
+
+    static List<Object> sortValues(List<FieldValue> sort) {
+        if (sort == null || sort.isEmpty()) {
+            return List.of();
+        }
+        List<Object> values = new ArrayList<>(sort.size());
+        for (FieldValue value : sort) {
+            values.add(value._get());
+        }
+        return values;
+    }
+
+    @Override
+    public CompletionStage<Optional<SearchTransport.SearchHit>> getHit(String index, String id) {
+        return client.get(g -> g.index(index).id(id), Map.class)
+            .thenApply(response -> response.found()
+                ? Optional.of(new SearchTransport.SearchHit(id, null, (Map<String, Object>) response.source(), Map.of(), response.version(), List.of()))
+                : Optional.empty());
     }
 
     @Override
@@ -93,7 +152,13 @@ public final class ElasticsearchAsyncSearchTransport implements AsyncSearchTrans
     static BulkRequest bulkRequest(String index, List<SearchTransport.BulkDocument> documents, DocumentSearchConfiguration.Refresh refresh) {
         List<BulkOperation> operations = new ArrayList<>(documents.size());
         for (SearchTransport.BulkDocument document : documents) {
-            operations.add(BulkOperation.of(op -> op.index(i -> i.id(document.id()).document(document.source()))));
+            operations.add(BulkOperation.of(op -> op.index(i -> {
+                i.id(document.id()).document(document.source());
+                if (document.version() != null) {
+                    i.version(document.version()).versionType(VersionType.External);
+                }
+                return i;
+            })));
         }
         return BulkRequest.of(b -> b.index(index).operations(operations).refresh(refresh(refresh)));
     }
@@ -102,6 +167,9 @@ public final class ElasticsearchAsyncSearchTransport implements AsyncSearchTrans
         List<String> ids = new ArrayList<>(response.items().size());
         for (BulkResponseItem item : response.items()) {
             if (item.error() != null) {
+                if (item.status() == 409) {
+                    throw new OptimisticLockException("Document " + item.id() + " was modified concurrently: " + item.error().reason());
+                }
                 throw new DataAccessException("Elasticsearch bulk item failed: " + item.error().reason());
             }
             ids.add(item.id());

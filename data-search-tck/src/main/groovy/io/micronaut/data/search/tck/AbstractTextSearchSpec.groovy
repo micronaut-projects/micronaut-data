@@ -1,6 +1,7 @@
 package io.micronaut.data.search.tck
 
 import io.micronaut.context.ApplicationContext
+import io.micronaut.data.model.CursoredPageable
 import io.micronaut.data.model.Pageable
 import io.micronaut.data.model.Sort
 import io.micronaut.data.model.search.MatchMode
@@ -42,6 +43,13 @@ abstract class AbstractTextSearchSpec extends Specification {
      * @return Whether the backend stems words, so that {@code breads} matches {@code bread}
      */
     boolean supportsStemming() {
+        return true
+    }
+
+    /**
+     * @return Whether the backend pages with a cursor ({@code search_after} on the document stores)
+     */
+    boolean supportsCursoredPaging() {
         return true
     }
 
@@ -300,5 +308,34 @@ abstract class AbstractTextSearchSpec extends Specification {
 
         then:
         thrown(UnsupportedSearchFeatureException)
+    }
+
+    void "cursored paging walks forward and backward"() {
+        assumeTrue(supportsCursoredPaging())
+
+        when:
+        def first = bookSearchRepository.findAll(CursoredPageable.from(2, Sort.of(Sort.Order.asc("title"))))
+
+        then:
+        first.content*.title == ["Baking Bread", "Cooking with Coffee"]
+        first.hasNext()
+
+        when:
+        def second = bookSearchRepository.findAll(first.nextPageable())
+
+        then:
+        second.content*.title == ["Java Concurrency in Practice", "Programming Kotlin"]
+
+        when:
+        def third = bookSearchRepository.findAll(second.nextPageable())
+
+        then:
+        third.content*.title == ["The Rust Programming Language"]
+
+        when:
+        def back = bookSearchRepository.findAll(third.previousPageable())
+
+        then:
+        back.content*.title == ["Java Concurrency in Practice", "Programming Kotlin"]
     }
 }
