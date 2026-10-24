@@ -66,7 +66,7 @@ final class OracleSqlIdLogger {
             if (statement.isWrapperFor(OracleStatement.class)) {
                 return statement.unwrap(OracleStatement.class).getSqlId();
             }
-        } catch (SQLException | RuntimeException e) {
+        } catch (SQLException | RuntimeException _) {
             // the SQL ID is diagnostic only, so a driver that cannot provide it is ignored
             return null;
         }
