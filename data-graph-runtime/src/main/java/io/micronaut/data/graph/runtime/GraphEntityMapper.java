@@ -106,21 +106,28 @@ public final class GraphEntityMapper {
             Object id = GraphEntities.isNativeId(identity) ? nativeId(identity, node.id()) : node.properties().get(identity.getPersistedName());
             values.put(identity.getName(), readValue(identity, id));
         }
+        readProperties(entity, node, row, values);
+        readSchemaless(entity, node, values);
+        return instantiate(entity, values);
+    }
+
+    private <T> void readProperties(RuntimePersistentEntity<T> entity, GraphNode node, @Nullable GraphRecord row, Map<String, Object> values) {
         for (RuntimePersistentProperty<T> property : entity.getPersistentProperties()) {
             if (isSchemalessHolder(property)) {
                 continue;
             }
             if (property instanceof RuntimeAssociation<T> association) {
-                if (row != null && row.has(CypherQueryBuilder.JOIN_COLUMN_PREFIX + association.getName())) {
-                    values.put(association.getName(), readFetched(association, row.get(CypherQueryBuilder.JOIN_COLUMN_PREFIX + association.getName())));
+                String column = CypherQueryBuilder.JOIN_COLUMN_PREFIX + association.getName();
+                if (row != null && row.has(column)) {
+                    values.put(association.getName(), readFetched(association, row.get(column)));
                 }
-                continue;
-            }
-            Map<String, Object> properties = node.properties();
-            if (properties.containsKey(property.getPersistedName())) {
-                values.put(property.getName(), readValue(property, properties.get(property.getPersistedName())));
+            } else if (node.properties().containsKey(property.getPersistedName())) {
+                values.put(property.getName(), readValue(property, node.properties().get(property.getPersistedName())));
             }
         }
+    }
+
+    private void readSchemaless(RuntimePersistentEntity<?> entity, GraphNode node, Map<String, Object> values) {
         Schemaless schemaless = schemaless(entity);
         if (schemaless.attributes() != null) {
             Map<String, Object> attributes = new LinkedHashMap<>();
@@ -136,7 +143,6 @@ public final class GraphEntityMapper {
             labels.removeAll(GraphEntities.labels(entity));
             values.put(schemaless.labels().getName(), convert(labels, schemaless.labels().asArgument()));
         }
-        return instantiate(entity, values);
     }
 
     /**

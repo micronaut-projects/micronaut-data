@@ -150,6 +150,8 @@ public class CypherQueryBuilder implements GraphQueryBuilder {
     private static final String CLOSE_WHERE = ") WHERE ";
     private static final String CLOSE_AS_RESULT = ") AS result";
     private static final String AND = " AND ";
+    private static final String SET = " SET ";
+    private static final String RETURN_COUNT_RESULT = " RETURN count(*) AS result";
     private static final String LINK_FROM = "a";
     private static final String LINK_TO = "b";
 
@@ -244,7 +246,7 @@ public class CypherQueryBuilder implements GraphQueryBuilder {
         if (state.hasPatterns()) {
             query.append(WITH_DISTINCT).append(ROOT);
         }
-        query.append(" SET ").append(sets).append(" RETURN count(*)");
+        query.append(SET).append(sets).append(" RETURN count(*)");
         return QueryResult.of(query.toString(), List.of(query.toString()), state.parameterBindings, state.additionalRequiredParameters);
     }
 
@@ -337,7 +339,7 @@ public class CypherQueryBuilder implements GraphQueryBuilder {
 
     @Override
     public String buildDeleteAllQuery(PersistentEntity entity) {
-        return MATCH_OPEN + ROOT + labelExpression(entity) + ") DETACH DELETE " + ROOT + " RETURN count(*) AS result";
+        return MATCH_OPEN + ROOT + labelExpression(entity) + ") DETACH DELETE " + ROOT + RETURN_COUNT_RESULT;
     }
 
     /**
@@ -348,19 +350,19 @@ public class CypherQueryBuilder implements GraphQueryBuilder {
      */
     @Override
     public String buildAddLabelsQuery(PersistentEntity entity, List<String> labels) {
-        StringBuilder query = new StringBuilder("MATCH (").append(ROOT).append(labelExpression(entity)).append(") WHERE ")
+        StringBuilder query = new StringBuilder(MATCH_OPEN).append(ROOT).append(labelExpression(entity)).append(CLOSE_WHERE)
             .append(identityExpression(entity.getIdentity(), ROOT)).append(" = $").append(ID_PARAMETER)
-            .append(" SET ").append(ROOT);
+            .append(SET).append(ROOT);
         for (String label : labels) {
             query.append(':').append(GraphEntities.escapeName(label));
         }
-        return query.append(" RETURN count(*) AS result").toString();
+        return query.append(RETURN_COUNT_RESULT).toString();
     }
 
     @Override
     public String buildDeleteByIdQuery(PersistentEntity entity) {
         return MATCH_OPEN + ROOT + labelExpression(entity) + CLOSE_WHERE
-            + identityExpression(entity.getIdentity(), ROOT) + " = $" + ID_PARAMETER + " DETACH DELETE " + ROOT + " RETURN count(*) AS result";
+            + identityExpression(entity.getIdentity(), ROOT) + " = $" + ID_PARAMETER + " DETACH DELETE " + ROOT + RETURN_COUNT_RESULT;
     }
 
     /**
@@ -411,7 +413,7 @@ public class CypherQueryBuilder implements GraphQueryBuilder {
         if (propertyNames.isEmpty()) {
             return;
         }
-        query.append(" SET ");
+        query.append(SET);
         for (int i = 0; i < propertyNames.size(); i++) {
             if (i > 0) {
                 query.append(", ");
