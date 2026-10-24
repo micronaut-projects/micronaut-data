@@ -17,7 +17,6 @@ package io.micronaut.data.graph.runtime.operations;
 
 import io.micronaut.aop.MethodInvocationContext;
 import io.micronaut.core.annotation.AnnotationMetadata;
-import io.micronaut.core.beans.BeanIntrospection;
 import io.micronaut.core.beans.BeanIntrospector;
 import io.micronaut.core.beans.BeanProperty;
 import io.micronaut.core.convert.ConversionContext;
@@ -41,6 +40,7 @@ import io.micronaut.data.graph.runtime.GraphResult;
 import io.micronaut.data.graph.runtime.GraphSession;
 import io.micronaut.data.graph.runtime.GraphValueEncoderRegistrar;
 import io.micronaut.data.graph.runtime.GraphValueEncoders;
+import io.micronaut.data.graph.runtime.serde.GraphSerde;
 import io.micronaut.data.model.Limit;
 import io.micronaut.data.model.Page;
 import io.micronaut.data.model.Pageable;
@@ -123,6 +123,8 @@ public abstract class AbstractGraphRepositoryOperations extends AbstractReposito
 
     private final GraphValueEncoders encoders = GraphValueEncoders.defaults();
 
+    private final GraphSerde graphSerde;
+
     private final SyncCascadeOperations<OperationContext> noCascade;
 
     /**
@@ -133,6 +135,7 @@ public abstract class AbstractGraphRepositoryOperations extends AbstractReposito
      * @param attributeConverterRegistry The attribute converter registry
      * @param executorService            The executor for asynchronous and reactive operations
      * @param encoderRegistrars          The registrars of the encoders of the application
+     * @param graphSerde                 Reads entities and DTOs with Micronaut Serialization
      */
     protected AbstractGraphRepositoryOperations(GraphQueryBuilder queryBuilder,
                                                 DateTimeProvider<Object> dateTimeProvider,
@@ -140,14 +143,16 @@ public abstract class AbstractGraphRepositoryOperations extends AbstractReposito
                                                 DataConversionService conversionService,
                                                 AttributeConverterRegistry attributeConverterRegistry,
                                                 @Nullable ExecutorService executorService,
-                                                List<GraphValueEncoderRegistrar> encoderRegistrars) {
+                                                List<GraphValueEncoderRegistrar> encoderRegistrars,
+                                                GraphSerde graphSerde) {
         super(dateTimeProvider, runtimeEntityRegistry, conversionService, attributeConverterRegistry);
         this.queryBuilder = queryBuilder;
         registerEncoders(encoders);
         for (GraphValueEncoderRegistrar registrar : encoderRegistrars) {
             registrar.register(encoders);
         }
-        this.mapper = new GraphEntityMapper(runtimeEntityRegistry, conversionService, this::encodeValue);
+        this.graphSerde = graphSerde;
+        this.mapper = new GraphEntityMapper(runtimeEntityRegistry, conversionService, this::encodeValue, graphSerde);
         this.executorServiceResolver = new ExecutorServiceResolver(executorService);
         this.noCascade = new SyncCascadeOperations<>(conversionService, new RelationshipsWrittenByNode());
     }
@@ -572,24 +577,7 @@ public abstract class AbstractGraphRepositoryOperations extends AbstractReposito
     }
 
     private <R> R readDto(Map<String, Object> values, Class<R> type) {
-        BeanIntrospection<R> introspection = BeanIntrospection.getIntrospection(type);
-        Argument<Object>[] constructorArguments = (Argument<Object>[]) introspection.getConstructorArguments();
-        R instance;
-        if (constructorArguments.length == 0) {
-            instance = introspection.instantiate();
-        } else {
-            Object[] arguments = new Object[constructorArguments.length];
-            for (int i = 0; i < constructorArguments.length; i++) {
-                arguments[i] = mapper.convert(values.get(constructorArguments[i].getName()), constructorArguments[i]);
-            }
-            instance = introspection.instantiate(false, arguments);
-        }
-        for (BeanProperty<R, Object> property : introspection.getBeanProperties()) {
-            if (!property.isReadOnly() && values.containsKey(property.getName())) {
-                property.set(instance, mapper.convert(values.get(property.getName()), property.asArgument()));
-            }
-        }
-        return instance;
+        return graphSerde.read(type, values);
     }
 
     // Writes
