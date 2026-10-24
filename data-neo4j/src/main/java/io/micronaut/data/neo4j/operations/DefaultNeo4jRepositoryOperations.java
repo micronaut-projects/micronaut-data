@@ -112,7 +112,7 @@ final class DefaultNeo4jRepositoryOperations extends AbstractGraphRepositoryOper
                 decoded.add(Neo4jValues.decode(record));
             }
             SummaryCounters counters = result.consume().counters();
-            long updateCount = counters.nodesCreated() + counters.nodesDeleted() + counters.relationshipsCreated()
+            long updateCount = (long) counters.nodesCreated() + counters.nodesDeleted() + counters.relationshipsCreated()
                 + counters.relationshipsDeleted() + counters.propertiesSet();
             return new GraphResult(decoded, updateCount);
         } catch (Neo4jException e) {

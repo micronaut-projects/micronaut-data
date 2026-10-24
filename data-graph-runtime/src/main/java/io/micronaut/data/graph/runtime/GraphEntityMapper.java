@@ -152,16 +152,8 @@ public final class GraphEntityMapper {
             RuntimePersistentEntity<?> associated = association.getAssociatedEntity();
             boolean relationshipEntity = GraphEntities.isRelationshipEntity(associated);
             for (Object item : collection) {
-                if (item == null) {
-                    continue;
-                }
-                if (relationshipEntity && item instanceof Map<?, ?> map && map.get(CypherQueryBuilder.REL_KEY) instanceof GraphEdge edge) {
-                    GraphNode target = map.get(CypherQueryBuilder.NODE_KEY) instanceof GraphNode node ? node : null;
-                    items.add(readRelationshipEntity(associated, edge, target));
-                } else if (item instanceof GraphNode node) {
-                    items.add(readNode(associated, node, null));
-                } else {
-                    throw new DataAccessException("Unexpected value for relationship [" + association.getName() + "]: " + item);
+                if (item != null) {
+                    items.add(readFetchedItem(association, associated, relationshipEntity, item));
                 }
             }
         }
@@ -169,6 +161,17 @@ public final class GraphEntityMapper {
             return items.isEmpty() ? null : items.get(0);
         }
         return items;
+    }
+
+    private Object readFetchedItem(RuntimeAssociation<?> association, RuntimePersistentEntity<?> associated, boolean relationshipEntity, Object item) {
+        if (relationshipEntity && item instanceof Map<?, ?> map && map.get(CypherQueryBuilder.REL_KEY) instanceof GraphEdge edge) {
+            GraphNode target = map.get(CypherQueryBuilder.NODE_KEY) instanceof GraphNode node ? node : null;
+            return readRelationshipEntity(associated, edge, target);
+        }
+        if (item instanceof GraphNode node) {
+            return readNode(associated, node, null);
+        }
+        throw new DataAccessException("Unexpected value for relationship [" + association.getName() + "]: " + item);
     }
 
     /**
@@ -390,33 +393,36 @@ public final class GraphEntityMapper {
             Object[] arguments = new Object[constructorArguments.length];
             for (int i = 0; i < constructorArguments.length; i++) {
                 Argument<Object> argument = constructorArguments[i];
-                Object value = values.get(argument.getName());
                 consumed.add(argument.getName());
-                if (value == null) {
-                    value = argument.isPrimitive() ? Array.get(Array.newInstance(argument.getType(), 1), 0) : null;
-                } else if (!argument.getType().isInstance(value)) {
-                    value = convert(value, argument);
-                }
-                arguments[i] = value;
+                arguments[i] = constructorArgument(argument, values.get(argument.getName()));
             }
             instance = introspection.instantiate(false, arguments);
         }
         for (BeanProperty<T, Object> property : introspection.getBeanProperties()) {
             String name = property.getName();
-            if (consumed.contains(name) || !values.containsKey(name)) {
-                continue;
-            }
-            Object value = values.get(name);
-            if (value != null && !property.getType().isInstance(value)) {
-                value = convert(value, property.asArgument());
-            }
-            if (!property.isReadOnly()) {
-                property.set(instance, value);
-            } else if (property.hasSetterOrConstructorArgument()) {
-                instance = property.withValue(instance, value);
+            if (!consumed.contains(name) && values.containsKey(name)) {
+                instance = setProperty(instance, property, values.get(name));
             }
         }
         return instance;
+    }
+
+    private @Nullable Object constructorArgument(Argument<Object> argument, @Nullable Object value) {
+        if (value == null) {
+            return argument.isPrimitive() ? Array.get(Array.newInstance(argument.getType(), 1), 0) : null;
+        }
+        return argument.getType().isInstance(value) ? value : convert(value, argument);
+    }
+
+    private <T> T setProperty(T instance, BeanProperty<T, Object> property, @Nullable Object value) {
+        if (value != null && !property.getType().isInstance(value)) {
+            value = convert(value, property.asArgument());
+        }
+        if (!property.isReadOnly()) {
+            property.set(instance, value);
+            return instance;
+        }
+        return property.hasSetterOrConstructorArgument() ? property.withValue(instance, value) : instance;
     }
 
     private static boolean isNodeEntity(Class<?> type) {

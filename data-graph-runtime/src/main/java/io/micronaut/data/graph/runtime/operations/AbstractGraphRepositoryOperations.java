@@ -407,30 +407,38 @@ public abstract class AbstractGraphRepositoryOperations extends AbstractReposito
     private void appendSortAndLimit(StringBuilder query, RuntimePersistentEntity<?> entity, Sort sort, Limit limit) {
         boolean rootQuery = query.indexOf("MATCH (" + CypherQueryBuilder.ROOT) == 0;
         if (sort != null && sort.isSorted() && rootQuery && query.indexOf(" ORDER BY ") < 0) {
-            query.append(" ORDER BY ");
-            Iterator<Sort.Order> iterator = sort.getOrderBy().iterator();
-            while (iterator.hasNext()) {
-                Sort.Order order = iterator.next();
-                RuntimePersistentProperty<?> property = entity.getPropertyByName(order.getProperty());
-                if (property == null && entity.hasIdentity() && entity.getIdentity().getName().equals(order.getProperty())) {
-                    property = entity.getIdentity();
-                }
-                if (property == null) {
-                    throw new IllegalArgumentException("Cannot sort on non-existent property: " + order.getProperty());
-                }
-                String expression = CypherQueryBuilder.ROOT + "." + GraphEntities.escapeName(property.getPersistedName());
-                if (order.isIgnoreCase()) {
-                    expression = "toLower(" + expression + ")";
-                }
-                query.append(expression).append(order.isAscending() ? " ASC" : " DESC");
-                if (iterator.hasNext()) {
-                    query.append(", ");
-                }
-            }
+            appendOrderBy(query, entity, sort);
         }
         if (limit != null && limit.isLimited() && query.indexOf(" LIMIT ") < 0 && query.indexOf(" SKIP ") < 0) {
             query.append(queryBuilder.buildLimitAndOffset(limit.maxResults(), limit.offset()));
         }
+    }
+
+    private void appendOrderBy(StringBuilder query, RuntimePersistentEntity<?> entity, Sort sort) {
+        query.append(" ORDER BY ");
+        Iterator<Sort.Order> iterator = sort.getOrderBy().iterator();
+        while (iterator.hasNext()) {
+            Sort.Order order = iterator.next();
+            String expression = CypherQueryBuilder.ROOT + "." + GraphEntities.escapeName(sortProperty(entity, order.getProperty()).getPersistedName());
+            if (order.isIgnoreCase()) {
+                expression = "toLower(" + expression + ")";
+            }
+            query.append(expression).append(order.isAscending() ? " ASC" : " DESC");
+            if (iterator.hasNext()) {
+                query.append(", ");
+            }
+        }
+    }
+
+    private RuntimePersistentProperty<?> sortProperty(RuntimePersistentEntity<?> entity, String name) {
+        RuntimePersistentProperty<?> property = entity.getPropertyByName(name);
+        if (property == null && entity.hasIdentity() && entity.getIdentity().getName().equals(name)) {
+            property = entity.getIdentity();
+        }
+        if (property == null) {
+            throw new IllegalArgumentException("Cannot sort on non-existent property: " + name);
+        }
+        return property;
     }
 
     // Result mapping
@@ -472,25 +480,10 @@ public abstract class AbstractGraphRepositoryOperations extends AbstractReposito
             return path == null ? null : mapper.readPath(path, nodeType);
         }
         if (GraphRelationship.class.isAssignableFrom(resultType)) {
-            GraphEdge edge = record.get(CypherQueryBuilder.PATH_RELATIONSHIP) instanceof GraphEdge e ? e : firstValue(record, GraphEdge.class);
-            if (edge == null) {
-                return null;
-            }
-            GraphNode from = (GraphNode) record.get(CypherQueryBuilder.RELATIONSHIP_FROM);
-            GraphNode to = (GraphNode) record.get(CypherQueryBuilder.RELATIONSHIP_TO);
-            if (from == null || to == null) {
-                throw new DataAccessException("A query returning relationships must also return their start and end nodes as columns f and t");
-            }
-            return mapper.readRelationship(edge, from, to, nodeType, targetNodeType);
+            return mapRelationship(record, nodeType, targetNodeType);
         }
         if (first instanceof GraphNode node) {
-            if (resultType != Object.class && isEntity(resultType)) {
-                RuntimePersistentEntity<?> entity = getEntity(resultType);
-                if (node.labels().contains(GraphEntities.primaryLabel(entity))) {
-                    return readEntity(entity, record, annotationMetadata);
-                }
-            }
-            return mapper.readNodeAs(node, resultType);
+            return mapNode(record, node, resultType, annotationMetadata);
         }
         if (first instanceof GraphPathValue path) {
             return mapper.readPath(path, nodeType);
@@ -499,6 +492,29 @@ public abstract class AbstractGraphRepositoryOperations extends AbstractReposito
             return record.asMap();
         }
         return mapper.convert(first, Argument.of(resultType));
+    }
+
+    private @Nullable Object mapRelationship(GraphRecord record, Class<?> nodeType, Class<?> targetNodeType) {
+        GraphEdge edge = record.get(CypherQueryBuilder.PATH_RELATIONSHIP) instanceof GraphEdge e ? e : firstValue(record, GraphEdge.class);
+        if (edge == null) {
+            return null;
+        }
+        GraphNode from = (GraphNode) record.get(CypherQueryBuilder.RELATIONSHIP_FROM);
+        GraphNode to = (GraphNode) record.get(CypherQueryBuilder.RELATIONSHIP_TO);
+        if (from == null || to == null) {
+            throw new DataAccessException("A query returning relationships must also return their start and end nodes as columns f and t");
+        }
+        return mapper.readRelationship(edge, from, to, nodeType, targetNodeType);
+    }
+
+    private Object mapNode(GraphRecord record, GraphNode node, Class<?> resultType, AnnotationMetadata annotationMetadata) {
+        if (resultType != Object.class && isEntity(resultType)) {
+            RuntimePersistentEntity<?> entity = getEntity(resultType);
+            if (node.labels().contains(GraphEntities.primaryLabel(entity))) {
+                return readEntity(entity, record, annotationMetadata);
+            }
+        }
+        return mapper.readNodeAs(node, resultType);
     }
 
     private <T> T readEntity(RuntimePersistentEntity<T> entity, GraphRecord record, AnnotationMetadata annotationMetadata) {
@@ -967,10 +983,12 @@ public abstract class AbstractGraphRepositoryOperations extends AbstractReposito
 
         @Override
         protected void cascadePre(Relation.Cascade cascadeType) {
+            // Deleting a node detaches its relationships, there is nothing to cascade
         }
 
         @Override
         protected void cascadePost(Relation.Cascade cascadeType) {
+            // Deleting a node detaches its relationships, there is nothing to cascade
         }
 
         @Override
