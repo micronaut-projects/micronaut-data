@@ -28,6 +28,7 @@ import org.jspecify.annotations.Nullable;
 
 import java.io.IOException;
 import java.io.StringReader;
+import java.util.List;
 import java.util.Map;
 
 /**
@@ -74,6 +75,15 @@ public final class ElasticsearchSearchTransport implements SearchTransport {
             return client.index(i -> i.index(index).id(id).document(source).refresh(refresh(refresh))).id();
         } catch (IOException e) {
             throw new DataAccessException("Elasticsearch index failed: " + e.getMessage(), e);
+        }
+    }
+
+    @Override
+    public List<String> bulkIndex(String index, List<BulkDocument> documents, DocumentSearchConfiguration.Refresh refresh) {
+        try {
+            return ElasticsearchAsyncSearchTransport.bulkIds(client.bulk(ElasticsearchAsyncSearchTransport.bulkRequest(index, documents, refresh)));
+        } catch (IOException e) {
+            throw new DataAccessException("Elasticsearch bulk failed: " + e.getMessage(), e);
         }
     }
 

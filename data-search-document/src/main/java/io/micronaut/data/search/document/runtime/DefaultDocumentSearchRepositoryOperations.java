@@ -238,8 +238,26 @@ public final class DefaultDocumentSearchRepositoryOperations extends AbstractDoc
     public <T> Iterable<T> persistAll(InsertBatchOperation<T> operation) {
         RuntimePersistentEntity<T> entity = runtimeEntityRegistry.getEntity(operation.getRootEntity());
         List<T> persisted = new ArrayList<>();
+        List<T> toIndex = new ArrayList<>();
+        List<SearchTransport.BulkDocument> documents = new ArrayList<>();
         for (T value : operation) {
-            persisted.add(persistOne(value, entity));
+            T current = prePersist(value, entity);
+            if (current == null) {
+                persisted.add(value);
+            } else {
+                persisted.add(current);
+                toIndex.add(current);
+                documents.add(new SearchTransport.BulkDocument(documentId(current, entity), toDocument(current, entity)));
+            }
+        }
+        if (documents.isEmpty()) {
+            return persisted;
+        }
+        List<String> ids = transport.bulkIndex(indexName(entity), documents, configuration.getRefresh());
+        for (int i = 0; i < toIndex.size(); i++) {
+            T current = toIndex.get(i);
+            T result = postPersist(current, entity, ids.get(i));
+            persisted.set(persisted.indexOf(current), result);
         }
         return persisted;
     }

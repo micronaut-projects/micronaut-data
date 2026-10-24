@@ -105,4 +105,27 @@ abstract class AbstractHybridSearchSpec extends Specification {
         results.results()[0].highlights()["title"][0].contains("<em>Bread</em>")
         results.results()[1].highlights().isEmpty()
     }
+
+    void "highlightable fields are highlighted by default"() {
+        when:
+        def derived = articleRepository.searchByTitleSearch("coffee")
+
+        then:
+        derived.results().size() == 2
+        derived.results().every { it.highlights().keySet() == ["title"] as Set }
+        derived.results().every { it.highlights()["title"][0].contains("<em>Coffee</em>") }
+
+        when:
+        def declared = articleRepository.search(SearchQuery.builder("coffee").highlight().build())
+
+        then:
+        declared.results().size() == 2
+        declared.results().every { it.highlights().keySet() == ["title"] as Set }
+
+        when:
+        def plain = articleRepository.search(SearchQuery.of("coffee"))
+
+        then:
+        plain.results().every { it.highlights().isEmpty() }
+    }
 }

@@ -40,6 +40,7 @@ import io.micronaut.json.JsonMapper;
 import reactor.core.publisher.Flux;
 import reactor.core.publisher.Mono;
 
+import java.util.ArrayList;
 import java.util.List;
 import java.util.Map;
 
@@ -172,7 +173,30 @@ public final class DefaultDocumentSearchReactiveRepositoryOperations extends Abs
     @Override
     public <T> Flux<T> persistAll(InsertBatchOperation<T> operation) {
         RuntimePersistentEntity<T> entity = runtimeEntityRegistry.getEntity(operation.getRootEntity());
-        return Flux.fromIterable(operation).concatMap(value -> persistOne(value, entity));
+        List<T> vetoed = new ArrayList<>();
+        List<T> toIndex = new ArrayList<>();
+        List<SearchTransport.BulkDocument> documents = new ArrayList<>();
+        for (T value : operation) {
+            T current = prePersist(value, entity);
+            if (current == null) {
+                vetoed.add(value);
+            } else {
+                toIndex.add(current);
+                documents.add(new SearchTransport.BulkDocument(documentId(current, entity), toDocument(current, entity)));
+            }
+        }
+        if (documents.isEmpty()) {
+            return Flux.fromIterable(vetoed);
+        }
+        return Mono.fromCompletionStage(() -> transport.bulkIndex(indexName(entity), documents, configuration.getRefresh()))
+            .flatMapIterable(ids -> {
+                List<T> results = new ArrayList<>(toIndex.size() + vetoed.size());
+                for (int i = 0; i < toIndex.size(); i++) {
+                    results.add(postPersist(toIndex.get(i), entity, ids.get(i)));
+                }
+                results.addAll(vetoed);
+                return results;
+            });
     }
 
     @Override
