@@ -146,7 +146,7 @@ public final class TextSearchSupport {
     }
 
     public static String resolveLanguage(PersistentEntity entity) {
-        return entity.getAnnotationMetadata().stringValue(Searchable.class, Searchable.LANGUAGE)
+        return entity.getAnnotationMetadata().stringValue(Searchable.class, Searchable.MEMBER_LANGUAGE)
             .filter(l -> !l.isEmpty())
             .orElse(DEFAULT_LANGUAGE);
     }

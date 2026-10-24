@@ -1026,10 +1026,10 @@ public class SqlQueryBuilder extends AbstractSqlLikeQueryBuilder {
             String column = namingStrategy.mappedName(Collections.emptyList(), field);
             columns.add(new TextSearchDialect.SearchColumn(
                 escape ? quote(column) : column,
-                field.getAnnotationMetadata().enumValue(SearchField.class, SearchField.WEIGHT, SearchWeight.class).orElse(null)
+                field.getAnnotationMetadata().enumValue(SearchField.class, SearchField.MEMBER_WEIGHT, SearchWeight.class).orElse(null)
             ));
         }
-        String language = entity.getAnnotationMetadata().stringValue(Searchable.class, Searchable.LANGUAGE)
+        String language = entity.getAnnotationMetadata().stringValue(Searchable.class, Searchable.MEMBER_LANGUAGE)
             .filter(StringUtils::isNotEmpty)
             .orElse(TextSearchDialect.DEFAULT_LANGUAGE);
         String indexName = entity.getAnnotationMetadata().stringValue(Searchable.class, "name")
