@@ -21,8 +21,10 @@ import io.micronaut.data.exceptions.OptimisticLockException;
 import io.micronaut.data.search.document.conf.DocumentSearchConfiguration;
 import io.micronaut.data.search.document.runtime.SearchTransport;
 import org.jspecify.annotations.Nullable;
+import jakarta.json.JsonNumber;
+import jakarta.json.JsonString;
+import jakarta.json.JsonValue;
 import jakarta.json.stream.JsonParser;
-import org.jspecify.annotations.Nullable;
 import org.opensearch.client.json.JsonData;
 import org.opensearch.client.json.JsonpMapper;
 import org.opensearch.client.opensearch._types.FieldValue;
@@ -47,6 +49,7 @@ import java.util.ArrayList;
 import java.util.LinkedHashMap;
 import java.util.List;
 import java.util.Map;
+import java.util.Objects;
 import java.util.concurrent.CompletionException;
 
 /**
@@ -95,6 +98,10 @@ final class OpenSearchRequests {
         }
         if (Boolean.TRUE.equals(parsed.get("version"))) {
             request.version(true);
+        }
+        Double minScore = scalar(mapper, parsed.get("min_score"), Double.class);
+        if (minScore != null) {
+            request.minScore(minScore);
         }
         if (parsed.get("search_after") instanceof List<?> after) {
             List<FieldValue> values = new ArrayList<>(after.size());
@@ -193,8 +200,56 @@ final class OpenSearchRequests {
 
     static Map<String, Object> parse(JsonpMapper mapper, String body) {
         try (JsonParser parser = mapper.jsonProvider().createParser(new StringReader(body))) {
-            return (Map<String, Object>) JsonData.from(parser, mapper).to(Map.class, mapper);
+            return (Map<String, Object>) Objects.requireNonNull(plain(JsonData.from(parser, mapper).to(Map.class, mapper)));
         }
+    }
+
+    /**
+     * Turns the JSON-P values the mapper leaves in a parsed body into plain Java values, so the
+     * rewritten clauses serialize as JSON again instead of as beans.
+     *
+     * @param value The parsed value
+     * @return The plain value
+     */
+    @Nullable
+    static Object plain(@Nullable Object value) {
+        if (value instanceof JsonValue json) {
+            return switch (json.getValueType()) {
+                case OBJECT -> {
+                    Map<String, Object> map = new LinkedHashMap<>();
+                    json.asJsonObject().forEach((key, member) -> map.put(key, plain(member)));
+                    yield map;
+                }
+                case ARRAY -> {
+                    List<Object> list = new ArrayList<>();
+                    for (JsonValue item : json.asJsonArray()) {
+                        list.add(plain(item));
+                    }
+                    yield list;
+                }
+                case STRING -> ((JsonString) json).getString();
+                case NUMBER -> {
+                    JsonNumber number = (JsonNumber) json;
+                    yield number.isIntegral() ? (Object) number.longValue() : (Object) number.doubleValue();
+                }
+                case TRUE -> Boolean.TRUE;
+                case FALSE -> Boolean.FALSE;
+                case NULL -> null;
+            };
+        }
+        if (value instanceof Map<?, ?> map) {
+            Map<String, Object> copy = new LinkedHashMap<>();
+            map.forEach((key, member) -> copy.put(String.valueOf(key), plain(member)));
+            return copy;
+        }
+        if (value instanceof List<?> list) {
+            List<Object> copy = new ArrayList<>(list.size());
+            for (Object item : list) {
+                copy.add(plain(item));
+            }
+            return copy;
+        }
+        return value;
     }
 
     static Query query(JsonpMapper mapper, Map<String, Object> body) {
@@ -300,6 +355,9 @@ final class OpenSearchRequests {
         }
         if (value instanceof Number number && type == Integer.class) {
             return type.cast(number.intValue());
+        }
+        if (value instanceof Number number && type == Double.class) {
+            return type.cast(number.doubleValue());
         }
         return JsonData.of(value, mapper).to(type, mapper);
     }
