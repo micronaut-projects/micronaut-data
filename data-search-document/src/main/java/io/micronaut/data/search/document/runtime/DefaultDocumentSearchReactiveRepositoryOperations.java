@@ -83,10 +83,8 @@ public final class DefaultDocumentSearchReactiveRepositoryOperations extends Abs
     public <T> Mono<T> findOne(Class<T> type, Object id) {
         RuntimePersistentEntity<T> entity = runtimeEntityRegistry.getEntity(type);
         String documentId = idString(id);
-        return Mono.fromCompletionStage(() -> transport.get(indexName(entity), documentId))
-            .flatMap(source -> source.isEmpty()
-                ? Mono.empty()
-                : Mono.just(this.<T, T>toEntity(new SearchTransport.SearchHit(documentId, null, source.get()), entity, null)));
+        return Mono.fromCompletionStage(() -> transport.getHit(indexName(entity), documentId))
+            .flatMap(hit -> hit.isEmpty() ? Mono.empty() : Mono.just(this.<T, T>toEntity(hit.get(), entity, null)));
     }
 
     @Override
@@ -159,7 +157,7 @@ public final class DefaultDocumentSearchReactiveRepositoryOperations extends Abs
         RuntimePersistentEntity<R> entity = runtimeEntityRegistry.getEntity(pagedQuery.getRootEntity());
         PreparedQuery<R, R> preparedQuery = pagedQuery instanceof PreparedQuery<?, ?> pq ? (PreparedQuery<R, R>) pq : null;
         return search(pagedBody(pagedQuery, entity), entity)
-            .map(hits -> Page.of(toEntities(hits, entity, preparedQuery), pagedQuery.getPageable(), hits.total()));
+            .map(hits -> toPage(hits, pagedQuery, entity, preparedQuery));
     }
 
     // ---------- writes
@@ -182,7 +180,8 @@ public final class DefaultDocumentSearchReactiveRepositoryOperations extends Abs
                 vetoed.add(value);
             } else {
                 toIndex.add(current);
-                documents.add(new SearchTransport.BulkDocument(documentId(current, entity), toDocument(current, entity)));
+                Long version = persistVersion(current, entity);
+                documents.add(new SearchTransport.BulkDocument(documentId(current, entity), toDocument(current, entity), version));
             }
         }
         if (documents.isEmpty()) {
@@ -251,9 +250,10 @@ public final class DefaultDocumentSearchReactiveRepositoryOperations extends Abs
         if (current == null) {
             return Mono.just(value);
         }
+        Long version = persistVersion(current, entity);
         Map<String, Object> document = toDocument(current, entity);
         String documentId = documentId(current, entity);
-        return Mono.fromCompletionStage(() -> transport.index(indexName(entity), documentId, document, configuration.getRefresh()))
+        return Mono.fromCompletionStage(() -> transport.index(indexName(entity), documentId, document, version, configuration.getRefresh()))
             .map(assignedId -> postPersist(current, entity, assignedId));
     }
 
@@ -262,9 +262,10 @@ public final class DefaultDocumentSearchReactiveRepositoryOperations extends Abs
         if (current == null) {
             return Mono.just(value);
         }
+        Long version = updateVersion(current, entity);
         Map<String, Object> document = toDocument(current, entity);
         String documentId = documentId(current, entity);
-        return Mono.fromCompletionStage(() -> transport.index(indexName(entity), documentId, document, configuration.getRefresh()))
+        return Mono.fromCompletionStage(() -> transport.index(indexName(entity), documentId, document, version, configuration.getRefresh()))
             .map(ignored -> postUpdate(current, entity));
     }
 
@@ -278,7 +279,7 @@ public final class DefaultDocumentSearchReactiveRepositoryOperations extends Abs
     }
 
     private <T> Mono<SearchTransport.SearchHits> search(Map<String, Object> body, RuntimePersistentEntity<T> entity) {
-        String json = SearchJson.write(body);
+        String json = searchJson(body, entity);
         return Mono.fromCompletionStage(() -> transport.search(indexName(entity), json));
     }
 }

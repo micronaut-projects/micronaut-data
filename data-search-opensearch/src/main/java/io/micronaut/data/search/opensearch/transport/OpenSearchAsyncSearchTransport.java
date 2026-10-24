@@ -72,7 +72,26 @@ public final class OpenSearchAsyncSearchTransport implements AsyncSearchTranspor
 
     @Override
     public CompletionStage<String> index(String index, @Nullable String id, Map<String, Object> source, DocumentSearchConfiguration.Refresh refresh) {
-        return call(() -> client.index(i -> i.index(index).id(id).document(source).refresh(OpenSearchRequests.refresh(refresh)))).thenApply(response -> response.id());
+        return index(index, id, source, null, refresh);
+    }
+
+    @Override
+    public CompletionStage<String> index(String index, @Nullable String id, Map<String, Object> source, @Nullable Long version, DocumentSearchConfiguration.Refresh refresh) {
+        return call(() -> client.index(i -> OpenSearchRequests.indexRequest(i, index, id, source, version, refresh)))
+            .handle((response, error) -> {
+                if (error != null) {
+                    throw OpenSearchRequests.conflictOrFailure(error, id);
+                }
+                return response.id();
+            });
+    }
+
+    @Override
+    public CompletionStage<Optional<SearchTransport.SearchHit>> getHit(String index, String id) {
+        return call(() -> client.get(g -> g.index(index).id(id), Map.class))
+            .thenApply(response -> response.found()
+                ? Optional.of(new SearchTransport.SearchHit(id, null, (Map<String, Object>) response.source(), Map.of(), response.version(), List.of()))
+                : Optional.empty());
     }
 
     @Override

@@ -168,7 +168,7 @@ public final class DefaultDocumentSearchRepositoryOperations extends AbstractDoc
         RuntimePersistentEntity<T> entity = storedQuery.getPersistentEntity();
         if (preparedQuery.getResultType() == SearchResults.class) {
             applyPageable(body, preparedQuery.getPageable(), entity);
-            return (R) toSearchResults(transport.search(indexName(entity), SearchJson.write(body)), entity, preparedQuery);
+            return (R) toSearchResults(transport.search(indexName(entity), searchJson(body, entity)), entity, preparedQuery);
         }
         body.put("size", 1);
         List<R> results = search(body, entity, preparedQuery);
@@ -223,8 +223,8 @@ public final class DefaultDocumentSearchRepositoryOperations extends AbstractDoc
     public <R> Page<R> findPage(PagedQuery<R> query) {
         RuntimePersistentEntity<R> entity = runtimeEntityRegistry.getEntity(query.getRootEntity());
         PreparedQuery<R, R> preparedQuery = query instanceof PreparedQuery<?, ?> pq ? (PreparedQuery<R, R>) pq : null;
-        SearchTransport.SearchHits hits = transport.search(indexName(entity), SearchJson.write(pagedBody(query, entity)));
-        return Page.of(toEntities(hits, entity, preparedQuery), query.getPageable(), hits.total());
+        SearchTransport.SearchHits hits = transport.search(indexName(entity), searchJson(pagedBody(query, entity), entity));
+        return toPage(hits, query, entity, preparedQuery);
     }
 
     // ---------- writes
@@ -248,7 +248,8 @@ public final class DefaultDocumentSearchRepositoryOperations extends AbstractDoc
             } else {
                 persisted.add(current);
                 toIndex.add(current);
-                documents.add(new SearchTransport.BulkDocument(documentId(current, entity), toDocument(current, entity)));
+                Long version = persistVersion(current, entity);
+                documents.add(new SearchTransport.BulkDocument(documentId(current, entity), toDocument(current, entity), version));
             }
         }
         if (documents.isEmpty()) {
@@ -294,11 +295,11 @@ public final class DefaultDocumentSearchRepositoryOperations extends AbstractDoc
     @Nullable
     public <T> T findOne(Class<T> type, Object id) {
         RuntimePersistentEntity<T> entity = runtimeEntityRegistry.getEntity(type);
-        Map<String, Object> source = transport.get(indexName(entity), idString(id));
-        if (source == null) {
+        SearchTransport.SearchHit hit = transport.getHit(indexName(entity), idString(id));
+        if (hit == null) {
             return null;
         }
-        return toEntity(new SearchTransport.SearchHit(idString(id), null, source), entity, null);
+        return toEntity(hit, entity, null);
     }
 
     @Override
@@ -326,7 +327,8 @@ public final class DefaultDocumentSearchRepositoryOperations extends AbstractDoc
         if (current == null) {
             return value;
         }
-        String documentId = transport.index(indexName(entity), documentId(current, entity), toDocument(current, entity), configuration.getRefresh());
+        Long version = persistVersion(current, entity);
+        String documentId = transport.index(indexName(entity), documentId(current, entity), toDocument(current, entity), version, configuration.getRefresh());
         return postPersist(current, entity, documentId);
     }
 
@@ -335,7 +337,8 @@ public final class DefaultDocumentSearchRepositoryOperations extends AbstractDoc
         if (current == null) {
             return value;
         }
-        transport.index(indexName(entity), documentId(current, entity), toDocument(current, entity), configuration.getRefresh());
+        Long version = updateVersion(current, entity);
+        transport.index(indexName(entity), documentId(current, entity), toDocument(current, entity), version, configuration.getRefresh());
         return postUpdate(current, entity);
     }
 
@@ -350,6 +353,6 @@ public final class DefaultDocumentSearchRepositoryOperations extends AbstractDoc
     }
 
     private <T, R> List<R> search(Map<String, Object> body, RuntimePersistentEntity<T> entity, @Nullable PreparedQuery<T, R> preparedQuery) {
-        return toEntities(transport.search(indexName(entity), SearchJson.write(body)), entity, preparedQuery);
+        return toEntities(transport.search(indexName(entity), searchJson(body, entity)), entity, preparedQuery);
     }
 }

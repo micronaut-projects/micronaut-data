@@ -17,13 +17,19 @@ package io.micronaut.data.search.opensearch.transport;
 
 import io.micronaut.core.annotation.Internal;
 import io.micronaut.data.exceptions.DataAccessException;
+import io.micronaut.data.exceptions.OptimisticLockException;
 import io.micronaut.data.search.document.conf.DocumentSearchConfiguration;
 import io.micronaut.data.search.document.runtime.SearchTransport;
+import org.jspecify.annotations.Nullable;
 import jakarta.json.stream.JsonParser;
 import org.jspecify.annotations.Nullable;
 import org.opensearch.client.json.JsonData;
 import org.opensearch.client.json.JsonpMapper;
+import org.opensearch.client.opensearch._types.FieldValue;
+import org.opensearch.client.opensearch._types.OpenSearchException;
 import org.opensearch.client.opensearch._types.Refresh;
+import org.opensearch.client.opensearch._types.VersionType;
+import org.opensearch.client.opensearch.core.IndexRequest;
 import org.opensearch.client.opensearch._types.SortOptions;
 import org.opensearch.client.opensearch._types.query_dsl.Query;
 import org.opensearch.client.opensearch.core.BulkRequest;
@@ -41,6 +47,7 @@ import java.util.ArrayList;
 import java.util.LinkedHashMap;
 import java.util.List;
 import java.util.Map;
+import java.util.concurrent.CompletionException;
 
 /**
  * Translates the JSON request bodies of the document search store into OpenSearch client requests,
@@ -81,13 +88,70 @@ final class OpenSearchRequests {
         if (highlight != null) {
             request.highlight(JsonData.of(highlightWithFieldMap(highlight), mapper).to(Highlight.class, mapper));
         }
+        if (Boolean.TRUE.equals(parsed.get("version"))) {
+            request.version(true);
+        }
+        if (parsed.get("search_after") instanceof List<?> after) {
+            List<FieldValue> values = new ArrayList<>(after.size());
+            for (Object value : after) {
+                values.add(fieldValue(value));
+            }
+            request.searchAfter(values);
+        }
         return request.build();
+    }
+
+    static FieldValue fieldValue(Object value) {
+        if (value instanceof Long || value instanceof Integer || value instanceof Short || value instanceof Byte) {
+            return FieldValue.of(((Number) value).longValue());
+        }
+        if (value instanceof Number number) {
+            return FieldValue.of(number.doubleValue());
+        }
+        if (value instanceof Boolean bool) {
+            return FieldValue.of(bool);
+        }
+        return FieldValue.of(String.valueOf(value));
+    }
+
+    static List<Object> sortValues(List<FieldValue> sort) {
+        if (sort == null || sort.isEmpty()) {
+            return List.of();
+        }
+        List<Object> values = new ArrayList<>(sort.size());
+        for (FieldValue value : sort) {
+            values.add(value._get());
+        }
+        return values;
+    }
+
+    static <T> IndexRequest.Builder<T> indexRequest(IndexRequest.Builder<T> builder, String index, @Nullable String id, T source, @Nullable Long version, DocumentSearchConfiguration.Refresh refresh) {
+        builder.index(index).id(id).document(source).refresh(refresh(refresh));
+        if (version != null) {
+            builder.version(version).versionType(VersionType.External);
+        }
+        return builder;
+    }
+
+    /**
+     * Maps a version conflict (HTTP 409) to {@link OptimisticLockException}; other failures pass through.
+     */
+    static RuntimeException conflictOrFailure(Throwable error, @Nullable String id) {
+        Throwable cause = error instanceof CompletionException && error.getCause() != null ? error.getCause() : error;
+        if (cause instanceof OpenSearchException openSearchException && openSearchException.status() == 409) {
+            return new OptimisticLockException("Document " + id + " was modified concurrently: " + openSearchException.error().reason(), cause);
+        }
+        if (cause instanceof RuntimeException runtime) {
+            return runtime;
+        }
+        return new DataAccessException("OpenSearch request failed: " + cause.getMessage(), cause);
     }
 
     static SearchTransport.SearchHits toHits(SearchResponse<Map> response) {
         List<SearchTransport.SearchHit> hits = new ArrayList<>(response.hits().hits().size());
         for (Hit<Map> hit : response.hits().hits()) {
-            hits.add(new SearchTransport.SearchHit(hit.id(), hit.score(), hit.source() == null ? Map.of() : (Map<String, Object>) hit.source(), hit.highlight()));
+            hits.add(new SearchTransport.SearchHit(hit.id(), hit.score(), hit.source() == null ? Map.of() : (Map<String, Object>) hit.source(),
+                hit.highlight(), hit.version(), sortValues(hit.sort())));
         }
         long total = response.hits().total() == null ? hits.size() : response.hits().total().value();
         Float maxScore = response.hits().maxScore();
@@ -97,7 +161,13 @@ final class OpenSearchRequests {
     static BulkRequest bulkRequest(String index, List<SearchTransport.BulkDocument> documents, DocumentSearchConfiguration.Refresh refresh) {
         List<BulkOperation> operations = new ArrayList<>(documents.size());
         for (SearchTransport.BulkDocument document : documents) {
-            operations.add(BulkOperation.of(op -> op.index(i -> i.id(document.id()).document(document.source()))));
+            operations.add(BulkOperation.of(op -> op.index(i -> {
+                i.id(document.id()).document(document.source());
+                if (document.version() != null) {
+                    i.version(document.version()).versionType(VersionType.External);
+                }
+                return i;
+            })));
         }
         return BulkRequest.of(b -> b.index(index).operations(operations).refresh(refresh(refresh)));
     }
@@ -106,6 +176,9 @@ final class OpenSearchRequests {
         List<String> ids = new ArrayList<>(response.items().size());
         for (BulkResponseItem item : response.items()) {
             if (item.error() != null) {
+                if (item.status() == 409) {
+                    throw new OptimisticLockException("Document " + item.id() + " was modified concurrently: " + item.error().reason());
+                }
                 throw new DataAccessException("OpenSearch bulk item failed: " + item.error().reason());
             }
             ids.add(item.id());
