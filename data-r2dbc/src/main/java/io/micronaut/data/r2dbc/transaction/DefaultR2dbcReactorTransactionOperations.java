@@ -113,18 +113,21 @@ final class DefaultR2dbcReactorTransactionOperations extends AbstractReactorTran
             result = result.thenMany(Flux.defer(() -> transactionExecutionListener.beforeBegin(connectionStatus, definition)));
         }
         // Deferred: some drivers (e.g. Oracle R2DBC) read the isolation level when beginTransaction is called
-        if (definition.isReadOnly().orElse(false) && supportsReadOnlyTransactions(connection)) {
-            if (LOG.isDebugEnabled()) {
-                LOG.debug("Beginning a read-only transaction: {} for dataSource: {}", definition.getName(), dataSourceName);
-            }
-            result = result.thenMany(Flux.defer(() -> connection.beginTransaction(READ_ONLY_TRANSACTION)));
-        } else {
-            result = result.thenMany(Flux.defer(connection::beginTransaction));
-        }
+        result = result.thenMany(Flux.defer(() -> begin(connection, definition)));
         for (ReactiveTransactionExecutionListener<Connection> transactionExecutionListener : transactionExecutionListeners) {
             result = result.thenMany(Flux.defer(() -> transactionExecutionListener.afterBegin(connectionStatus, definition)));
         }
         return result;
+    }
+
+    private Publisher<Void> begin(Connection connection, TransactionDefinition definition) {
+        if (definition.isReadOnly().orElse(false) && supportsReadOnlyTransactions(connection)) {
+            if (LOG.isDebugEnabled()) {
+                LOG.debug("Beginning a read-only transaction: {} for dataSource: {}", definition.getName(), dataSourceName);
+            }
+            return connection.beginTransaction(READ_ONLY_TRANSACTION);
+        }
+        return connection.beginTransaction();
     }
 
     /**
