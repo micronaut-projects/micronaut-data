@@ -149,6 +149,8 @@ public class CypherQueryBuilder implements GraphQueryBuilder {
      * The parameter holding the identifier of the target in a link query.
      */
     public static final String LINK_TO_PARAMETER = "to";
+    private static final String RETURN = " RETURN ";
+    private static final String AND = " AND ";
     private static final String LINK_FROM = "a";
     private static final String LINK_TO = "b";
 
@@ -182,7 +184,7 @@ public class CypherQueryBuilder implements GraphQueryBuilder {
             }
             List<String> joinColumns = appendFetchJoins(query, state);
             appendDynamicRelationships(query, state.entity, joinColumns);
-            query.append(" RETURN ");
+            query.append(RETURN);
             if (definition.isDistinct()) {
                 query.append("DISTINCT ");
             }
@@ -194,7 +196,7 @@ public class CypherQueryBuilder implements GraphQueryBuilder {
             if (state.hasPatterns() && selectionRenderer.rootOnly) {
                 query.append(" WITH DISTINCT ").append(ROOT);
             }
-            query.append(" RETURN ");
+            query.append(RETURN);
             if (definition.isDistinct()) {
                 query.append("DISTINCT ");
             }
@@ -473,39 +475,37 @@ public class CypherQueryBuilder implements GraphQueryBuilder {
         String types = relationshipTypes(definition.relationships());
         StringBuilder query = new StringBuilder("MATCH ");
         if (definition.kind() == PathQueryDefinition.Kind.RELATIONSHIPS) {
-            Direction direction = definition.direction();
-            if (direction == Direction.UNDIRECTED && (definition.start() == null || definition.end() == null)) {
-                // Without both endpoints an undirected pattern returns each relationship twice
-                direction = Direction.OUTGOING;
-            }
-            query.append(directed("(" + PATH_START + label + ")", "[" + PATH_RELATIONSHIP + types + "]", "(" + PATH_END + label + ")", direction));
-            appendWhere(query, conditions);
-            switch (definition.result()) {
-                case COUNT -> query.append(" RETURN count(").append(PATH_RELATIONSHIP).append(") AS result");
-                case EXISTS -> query.append(" RETURN true AS result LIMIT 1");
-                default -> query.append(" RETURN ").append(PATH_RELATIONSHIP).append(", startNode(").append(PATH_RELATIONSHIP)
-                    .append(") AS ").append(RELATIONSHIP_FROM).append(", endNode(").append(PATH_RELATIONSHIP).append(") AS ").append(RELATIONSHIP_TO);
-            }
-            return QueryResult.of(query.toString(), List.of(query.toString()), state.parameterBindings, state.additionalRequiredParameters);
+            appendRelationshipQuery(query, definition, label, types, conditions);
+        } else {
+            appendPathQuery(query, definition, label, types, conditions);
         }
+        return QueryResult.of(query.toString(), List.of(query.toString()), state.parameterBindings, state.additionalRequiredParameters);
+    }
+
+    private void appendRelationshipQuery(StringBuilder query, PathQueryDefinition definition, String label, String types, List<String> conditions) {
+        Direction direction = definition.direction();
+        if (direction == Direction.UNDIRECTED && (definition.start() == null || definition.end() == null)) {
+            // Without both endpoints an undirected pattern returns each relationship twice
+            direction = Direction.OUTGOING;
+        }
+        query.append(directed("(" + PATH_START + label + ")", "[" + PATH_RELATIONSHIP + types + "]", "(" + PATH_END + label + ")", direction));
+        appendWhere(query, conditions);
+        switch (definition.result()) {
+            case COUNT -> query.append(" RETURN count(").append(PATH_RELATIONSHIP).append(") AS result");
+            case EXISTS -> query.append(" RETURN true AS result LIMIT 1");
+            default -> query.append(RETURN).append(PATH_RELATIONSHIP).append(", startNode(").append(PATH_RELATIONSHIP)
+                .append(") AS ").append(RELATIONSHIP_FROM).append(", endNode(").append(PATH_RELATIONSHIP).append(") AS ").append(RELATIONSHIP_TO);
+        }
+    }
+
+    private void appendPathQuery(StringBuilder query, PathQueryDefinition definition, String label, String types, List<String> conditions) {
         if (definition.start() != null && definition.end() != null && definition.kind() != PathQueryDefinition.Kind.ALL) {
             conditions.add(PATH_START + " <> " + PATH_END);
         }
         query.append('(').append(PATH_START).append(label).append("), (").append(PATH_END).append(label).append(')');
         appendWhere(query, conditions);
-        String depth;
-        if (definition.maxDepthBound()) {
-            depth = "*1.." + PathQueryDefinition.PATH_LIMIT_TOKEN;
-        } else if (definition.maxDepth() > 0) {
-            depth = "*1.." + definition.maxDepth();
-        } else if (supportsUnboundedPaths()) {
-            depth = "*";
-        } else {
-            throw new IllegalArgumentException("This database needs a maximum depth for path queries: add an int parameter annotated with @PathLimit, or annotate the method with @PathLimit(n)");
-        }
-        appendPathMatch(query, definition.kind(), "[" + types + depth + "]", definition.direction());
+        appendPathMatch(query, definition.kind(), "[" + types + pathDepth(definition) + "]", definition.direction());
         appendPathReturn(query, definition);
-        return QueryResult.of(query.toString(), List.of(query.toString()), state.parameterBindings, state.additionalRequiredParameters);
     }
 
     /**
@@ -528,12 +528,25 @@ public class CypherQueryBuilder implements GraphQueryBuilder {
             case COUNT -> query.append(" RETURN count(").append(PATH).append(") AS result");
             case EXISTS -> query.append(" RETURN true AS result LIMIT 1");
             default -> {
-                query.append(" RETURN ").append(PATH);
+                query.append(RETURN).append(PATH);
                 if (definition.kind() == PathQueryDefinition.Kind.ALL) {
                     query.append(" ORDER BY length(").append(PATH).append(')');
                 }
             }
         }
+    }
+
+    private String pathDepth(PathQueryDefinition definition) {
+        if (definition.maxDepthBound()) {
+            return "*1.." + PathQueryDefinition.PATH_LIMIT_TOKEN;
+        }
+        if (definition.maxDepth() > 0) {
+            return "*1.." + definition.maxDepth();
+        }
+        if (supportsUnboundedPaths()) {
+            return "*";
+        }
+        throw new IllegalArgumentException("This database needs a maximum depth for path queries: add an int parameter annotated with @PathLimit, or annotate the method with @PathLimit(n)");
     }
 
     /**
@@ -575,7 +588,7 @@ public class CypherQueryBuilder implements GraphQueryBuilder {
 
     private static void appendWhere(StringBuilder query, List<String> conditions) {
         if (!conditions.isEmpty()) {
-            query.append(" WHERE ").append(String.join(" AND ", conditions));
+            query.append(" WHERE ").append(String.join(AND, conditions));
         }
     }
 
@@ -1164,7 +1177,7 @@ public class CypherQueryBuilder implements GraphQueryBuilder {
 
         @Override
         public void visit(ConjunctionPredicate conjunction) {
-            visitJunction(conjunction.getPredicates(), " AND ", "true");
+            visitJunction(conjunction.getPredicates(), AND, "true");
         }
 
         @Override
@@ -1309,7 +1322,7 @@ public class CypherQueryBuilder implements GraphQueryBuilder {
             }
             out.append('(');
             appendComparison(value, " >= ", from, false);
-            out.append(" AND ");
+            out.append(AND);
             appendComparison(value, " <= ", to, false);
             out.append(')');
         }

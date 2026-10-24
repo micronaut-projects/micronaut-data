@@ -130,29 +130,10 @@ public final class GraphPathMethodMatcher implements MethodMatcher {
         Direction direction = resolveDirection(relationships);
 
         ParameterElement[] allParameters = matchContext.getParameters();
-        List<ParameterElement> endpoints = new ArrayList<>(2);
         int maxDepth = matchContext.getMethodElement().intValue(PathLimit.class).orElse(-1);
-        int limitParameterIndex = -1;
-        for (ParameterElement parameter : matchContext.getParametersNotInRole()) {
-            if (parameter.hasAnnotation(PathLimit.class)) {
-                if (!TypeUtils.isNumber(parameter.getType())) {
-                    throw new MatchFailedException("@PathLimit parameter [" + parameter.getName() + "] must be a number");
-                }
-                limitParameterIndex = Arrays.asList(allParameters).indexOf(parameter);
-            } else {
-                endpoints.add(parameter);
-            }
-        }
-        if (endpoints.size() != 0 && endpoints.size() != 2) {
-            throw new MatchFailedException("A path or relationship finder takes two endpoint parameters, the start and the end node or their identifiers, found " + endpoints.size());
-        }
-        if (endpoints.isEmpty() && kind != PathQueryDefinition.Kind.RELATIONSHIPS) {
-            throw new MatchFailedException("A path finder needs the start and the end node as its first two parameters");
-        }
-        boolean bounded = maxDepth > 0 || limitParameterIndex >= 0;
-        if (kind == PathQueryDefinition.Kind.ALL && !bounded) {
-            throw new MatchFailedException("Finding all paths needs a maximum depth: add an int parameter annotated with @PathLimit, or annotate the method with @PathLimit(n)");
-        }
+        Endpoints parameters = endpoints(matchContext, kind, maxDepth);
+        List<ParameterElement> endpoints = parameters.endpoints();
+        int limitParameterIndex = parameters.limitParameterIndex();
 
         BindingParameter start = endpoints.isEmpty() ? null : endpointParameter(matchContext, entity, allParameters, endpoints.get(0));
         BindingParameter end = endpoints.isEmpty() ? null : endpointParameter(matchContext, entity, allParameters, endpoints.get(1));
@@ -171,33 +152,77 @@ public final class GraphPathMethodMatcher implements MethodMatcher {
             case EXISTS -> FindersUtils.pickExistsInterceptor(matchContext, matchContext.getReturnType());
             default -> FindersUtils.resolveInterceptorTypeByOperationType(false, false, operationType, matchContext);
         };
-        ClassElement resultType = entry.returnType();
-        if (result == PathQueryDefinition.Result.ELEMENTS) {
-            Class<?> expected = kind == PathQueryDefinition.Kind.RELATIONSHIPS ? GraphRelationship.class : GraphPath.class;
-            if (resultType == null || !resultType.isAssignable(expected)) {
-                throw new MatchFailedException("Method must return " + expected.getSimpleName() + ", or a container of " + expected.getSimpleName() + ", found: " + (resultType == null ? "void" : resultType.getName()));
-            }
-        }
-        if (resultType == null) {
-            resultType = matchContext.getReturnType();
-        }
+        ClassElement resultType = resultType(matchContext, kind, result, entry.returnType());
 
         MethodMatchInfo methodMatchInfo = new MethodMatchInfo(operationType, resultType, entry.interceptor());
         methodMatchInfo.queryResult(buildPathQuery(queryBuilder, definition));
-        if (result == PathQueryDefinition.Result.ELEMENTS && TypeUtils.isContainerType(matchContext.getReturnType())) {
-            ClassElement returnType = matchContext.getReturnType();
-            if (returnType.isAssignable("io.micronaut.data.model.Page")) {
-                PathQueryDefinition countDefinition = new PathQueryDefinition(
-                    entity, kind, PathQueryDefinition.Result.COUNT, relationships, direction, maxDepth, limitParameterIndex >= 0, start, end
-                );
-                methodMatchInfo.countQueryResult(buildPathQuery(queryBuilder, countDefinition));
-            }
+        if (result == PathQueryDefinition.Result.ELEMENTS && matchContext.getReturnType().isAssignable("io.micronaut.data.model.Page")) {
+            // A page of relationships also needs their count
+            PathQueryDefinition countDefinition = new PathQueryDefinition(
+                entity, kind, PathQueryDefinition.Result.COUNT, relationships, direction, maxDepth, limitParameterIndex >= 0, start, end
+            );
+            methodMatchInfo.countQueryResult(buildPathQuery(queryBuilder, countDefinition));
         }
         if (limitParameterIndex >= 0) {
             int index = limitParameterIndex;
             matchContext.getMethodElement().annotate(PathLimitParameter.class, builder -> builder.value(index));
         }
         return methodMatchInfo;
+    }
+
+    /**
+     * Finds the endpoint parameters of a path or relationship finder, and its {@link PathLimit} parameter.
+     *
+     * @param matchContext The match context
+     * @param kind         The kind of query
+     * @param maxDepth     The maximum depth set on the method, or -1
+     * @return The endpoints and the index of the limit parameter, or -1
+     */
+    private static Endpoints endpoints(MethodMatchContext matchContext, PathQueryDefinition.Kind kind, int maxDepth) {
+        List<ParameterElement> allParameters = Arrays.asList(matchContext.getParameters());
+        List<ParameterElement> endpoints = new ArrayList<>(2);
+        int limitParameterIndex = -1;
+        for (ParameterElement parameter : matchContext.getParametersNotInRole()) {
+            if (!parameter.hasAnnotation(PathLimit.class)) {
+                endpoints.add(parameter);
+            } else if (TypeUtils.isNumber(parameter.getType())) {
+                limitParameterIndex = allParameters.indexOf(parameter);
+            } else {
+                throw new MatchFailedException("@PathLimit parameter [" + parameter.getName() + "] must be a number");
+            }
+        }
+        if (!endpoints.isEmpty() && endpoints.size() != 2) {
+            throw new MatchFailedException("A path or relationship finder takes two endpoint parameters, the start and the end node or their identifiers, found " + endpoints.size());
+        }
+        if (endpoints.isEmpty() && kind != PathQueryDefinition.Kind.RELATIONSHIPS) {
+            throw new MatchFailedException("A path finder needs the start and the end node as its first two parameters");
+        }
+        if (kind == PathQueryDefinition.Kind.ALL && maxDepth <= 0 && limitParameterIndex < 0) {
+            throw new MatchFailedException("Finding all paths needs a maximum depth: add an int parameter annotated with @PathLimit, or annotate the method with @PathLimit(n)");
+        }
+        return new Endpoints(endpoints, limitParameterIndex);
+    }
+
+    /**
+     * Checks that a finder returning paths or relationships declares them as its result type.
+     *
+     * @param matchContext The match context
+     * @param kind         The kind of query
+     * @param result       The result of the query
+     * @param resultType   The result type of the interceptor, or null
+     * @return The result type
+     */
+    private static ClassElement resultType(MethodMatchContext matchContext,
+                                           PathQueryDefinition.Kind kind,
+                                           PathQueryDefinition.Result result,
+                                           @Nullable ClassElement resultType) {
+        if (result == PathQueryDefinition.Result.ELEMENTS) {
+            Class<?> expected = kind == PathQueryDefinition.Kind.RELATIONSHIPS ? GraphRelationship.class : GraphPath.class;
+            if (resultType == null || !resultType.isAssignable(expected)) {
+                throw new MatchFailedException("Method must return " + expected.getSimpleName() + ", or a container of " + expected.getSimpleName() + ", found: " + (resultType == null ? "void" : resultType.getName()));
+            }
+        }
+        return resultType != null ? resultType : matchContext.getReturnType();
     }
 
     private static io.micronaut.data.model.query.builder.QueryResult buildPathQuery(GraphQueryBuilder queryBuilder, PathQueryDefinition definition) {
@@ -274,5 +299,14 @@ public final class GraphPathMethodMatcher implements MethodMatcher {
             return bindingContext -> expression.bind(bindingContext.parameterBindingPath(idPath));
         }
         return expression;
+    }
+
+    /**
+     * The endpoint parameters of a finder and the index of its limit parameter.
+     *
+     * @param endpoints           The endpoint parameters
+     * @param limitParameterIndex The index of the limit parameter, or -1
+     */
+    private record Endpoints(List<ParameterElement> endpoints, int limitParameterIndex) {
     }
 }
