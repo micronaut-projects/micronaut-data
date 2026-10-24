@@ -24,7 +24,6 @@ import io.micronaut.context.exceptions.NoSuchBeanException;
 import io.micronaut.core.annotation.Internal;
 import io.micronaut.core.beans.BeanIntrospection;
 import io.micronaut.core.beans.BeanIntrospector;
-import io.micronaut.core.util.ArrayUtils;
 import io.micronaut.core.util.CollectionUtils;
 import io.micronaut.core.util.StringUtils;
 import io.micronaut.data.annotation.JsonSubView;
@@ -48,6 +47,8 @@ import io.micronaut.data.model.schema.sql.metadata.SqlColumnMetadata;
 import io.micronaut.data.model.schema.sql.metadata.SqlTableMetadata;
 import io.micronaut.data.runtime.config.DataSettings;
 import io.micronaut.data.runtime.config.SchemaGenerate;
+import io.micronaut.data.runtime.schema.SchemaContext;
+import io.micronaut.data.runtime.schema.SchemaContributions;
 import io.micronaut.inject.qualifiers.Qualifiers;
 import io.micronaut.data.connection.jdbc.advice.DelegatingDataSource;
 
@@ -62,11 +63,9 @@ import java.sql.DatabaseMetaData;
 import java.sql.PreparedStatement;
 import java.sql.ResultSet;
 import java.sql.SQLException;
-import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.Collection;
 import java.util.Collections;
-import java.util.LinkedHashMap;
 import java.util.List;
 import java.util.Map;
 import java.util.Set;
@@ -175,13 +174,10 @@ public class SchemaGenerator {
                 .sorted(Comparator.comparing(i -> i.hasAnnotation(JsonView.class)))
                 .map(beanIntrospection -> runtimeEntityRegistry.getEntity(beanIntrospection.getBeanType()))
                 .toArray(PersistentEntity[]::new);
-            Map<JdbcSchemaContributor, List<PersistentEntity>> contributions = selectContributions(configuration, entities);
+            SchemaContributions contributions = SchemaContributions.of(schemaContributors,
+                new SchemaContext(name, dialect, configuration.getDialectOptions().getVersion(), schemaGenerate, Arrays.asList(entities)));
+            entities = contributions.tableEntities();
             if (!contributions.isEmpty()) {
-                List<PersistentEntity> remaining = new ArrayList<>(Arrays.asList(entities));
-                contributions.values().forEach(remaining::removeAll);
-                entities = remaining.toArray(PersistentEntity[]::new);
-            }
-            if (ArrayUtils.isNotEmpty(entities) || !contributions.isEmpty()) {
                 DataSource dataSource = DelegatingDataSource.unwrapDataSource(beanLocator.getBean(DataSource.class, Qualifiers.byName(name)));
                 try {
                     try (Connection connection = dataSource.getConnection()) {
@@ -220,64 +216,45 @@ public class SchemaGenerator {
         }
     }
 
-    private Map<JdbcSchemaContributor, List<PersistentEntity>> selectContributions(DataJdbcConfiguration configuration,
-                                                                                PersistentEntity[] entities) {
-        if (schemaContributors.isEmpty()) {
-            return Map.of();
-        }
-        Map<JdbcSchemaContributor, List<PersistentEntity>> contributions = new LinkedHashMap<>();
-        List<PersistentEntity> remaining = new ArrayList<>(Arrays.asList(entities));
-        for (JdbcSchemaContributor contributor : schemaContributors) {
-            List<PersistentEntity> selected = contributor.selectEntities(configuration, List.copyOf(remaining));
-            if (!selected.isEmpty()) {
-                contributions.put(contributor, selected);
-                remaining.removeAll(selected);
-            }
-        }
-        return contributions;
-    }
-
     private void generate(Connection connection,
                           DataJdbcConfiguration configuration,
                           PropertyPlaceholderResolver propertyPlaceholderResolver,
                           PersistentEntity[] entities,
-                          Map<JdbcSchemaContributor, List<PersistentEntity>> contributions) throws SQLException {
-        SchemaGenerate schemaGenerate = configuration.getSchemaGenerate();
-        if (schemaGenerate == SchemaGenerate.CREATE_DROP) {
-            // Contributed objects, such as property graphs, can depend on the tables, so they are dropped first
-            for (Map.Entry<JdbcSchemaContributor, List<PersistentEntity>> contribution : contributions.entrySet()) {
-                for (String statement : contribution.getKey().buildDropStatements(configuration, contribution.getValue())) {
-                    String sql = resolveSql(propertyPlaceholderResolver, statement);
-                    if (DataSettings.QUERY_LOG.isDebugEnabled()) {
-                        DataSettings.QUERY_LOG.debug("Executing DROP statement: \n{}", sql);
-                    }
-                    try (PreparedStatement ps = connection.prepareStatement(sql)) {
-                        ps.executeUpdate();
-                    } catch (SQLException e) {
-                        if (DataSettings.QUERY_LOG.isTraceEnabled()) {
-                            DataSettings.QUERY_LOG.trace("Drop Unsuccessful: " + e.getMessage());
-                        }
-                    }
+                          SchemaContributions contributions) throws SQLException {
+        // Contributed objects, such as property graphs, can depend on the tables, so they are dropped first
+        for (String statement : contributions.dropStatements()) {
+            String sql = resolveSql(propertyPlaceholderResolver, statement);
+            if (DataSettings.QUERY_LOG.isDebugEnabled()) {
+                DataSettings.QUERY_LOG.debug("Executing DROP statement: \n{}", sql);
+            }
+            try (PreparedStatement ps = connection.prepareStatement(sql)) {
+                ps.executeUpdate();
+            } catch (SQLException e) {
+                if (DataSettings.QUERY_LOG.isTraceEnabled()) {
+                    DataSettings.QUERY_LOG.trace("Drop Unsuccessful: " + e.getMessage());
                 }
             }
         }
+        executeCreateStatements(connection, propertyPlaceholderResolver, contributions.beforeTablesStatements());
         if (entities.length > 0) {
             generateTables(connection, configuration, propertyPlaceholderResolver, entities);
         }
-        if (schemaGenerate == SchemaGenerate.CREATE_DROP || schemaGenerate == SchemaGenerate.CREATE) {
-            for (Map.Entry<JdbcSchemaContributor, List<PersistentEntity>> contribution : contributions.entrySet()) {
-                for (String statement : contribution.getKey().buildCreateStatements(configuration, contribution.getValue())) {
-                    String sql = resolveSql(propertyPlaceholderResolver, statement);
-                    if (DataSettings.QUERY_LOG.isDebugEnabled()) {
-                        DataSettings.QUERY_LOG.debug("Executing CREATE statement: \n{}", sql);
-                    }
-                    try (PreparedStatement ps = connection.prepareStatement(sql)) {
-                        ps.executeUpdate();
-                    } catch (SQLException e) {
-                        if (DataSettings.QUERY_LOG.isWarnEnabled()) {
-                            DataSettings.QUERY_LOG.warn("CREATE Statement Unsuccessful: " + e.getMessage());
-                        }
-                    }
+        executeCreateStatements(connection, propertyPlaceholderResolver, contributions.createStatements());
+    }
+
+    private static void executeCreateStatements(Connection connection,
+                                                PropertyPlaceholderResolver propertyPlaceholderResolver,
+                                                List<String> statements) {
+        for (String statement : statements) {
+            String sql = resolveSql(propertyPlaceholderResolver, statement);
+            if (DataSettings.QUERY_LOG.isDebugEnabled()) {
+                DataSettings.QUERY_LOG.debug("Executing CREATE statement: \n{}", sql);
+            }
+            try (PreparedStatement ps = connection.prepareStatement(sql)) {
+                ps.executeUpdate();
+            } catch (SQLException e) {
+                if (DataSettings.QUERY_LOG.isWarnEnabled()) {
+                    DataSettings.QUERY_LOG.warn("CREATE Statement Unsuccessful: " + e.getMessage());
                 }
             }
         }

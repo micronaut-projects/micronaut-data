@@ -15,50 +15,15 @@
  */
 package io.micronaut.data.r2dbc.config;
 
-import io.micronaut.core.annotation.Experimental;
-import io.micronaut.data.model.PersistentEntity;
-
-import java.util.List;
+import io.micronaut.data.runtime.schema.SchemaContributor;
 
 /**
- * Generates the schema of some of the entities of a data source in place of the {@link R2dbcSchemaGenerator}, for entities
- * whose tables the generator cannot derive on its own, such as the vertex and edge tables of a property graph.
- *
- * <p>The schema generator asks each contributor which entities it generates, leaves those out of the tables it
- * creates, drops and validates, and runs the statements of the contributor: its drop statements before the tables are
- * dropped and its create statements after they are created.</p>
+ * A {@link SchemaContributor} of R2DBC schema generation, which the {@link R2dbcSchemaGenerator} runs for the R2DBC data
+ * sources with schema generation enabled. A contributor that applies to both drivers also implements
+ * {@code JdbcSchemaContributor}.
  *
  * @author graemerocher
  * @since 5.3.0
  */
-@Experimental
-public interface R2dbcSchemaContributor {
-
-    /**
-     * Selects the entities whose schema this contributor generates.
-     *
-     * @param configuration The configuration of the data source
-     * @param entities      The entities of the data source not yet selected by another contributor
-     * @return The entities this contributor generates, empty for none
-     */
-    List<PersistentEntity> selectEntities(DataR2dbcConfiguration configuration, List<PersistentEntity> entities);
-
-    /**
-     * Builds the statements that create the schema of the selected entities.
-     *
-     * @param configuration The configuration of the data source
-     * @param entities      The entities this contributor selected
-     * @return The statements, run in order
-     */
-    List<String> buildCreateStatements(DataR2dbcConfiguration configuration, List<PersistentEntity> entities);
-
-    /**
-     * Builds the statements that drop the schema of the selected entities. Failures are ignored, as the objects may
-     * not exist yet.
-     *
-     * @param configuration The configuration of the data source
-     * @param entities      The entities this contributor selected
-     * @return The statements, run in order
-     */
-    List<String> buildDropStatements(DataR2dbcConfiguration configuration, List<PersistentEntity> entities);
+public interface R2dbcSchemaContributor extends SchemaContributor {
 }
