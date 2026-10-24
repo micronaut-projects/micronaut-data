@@ -12,6 +12,8 @@ import io.micronaut.data.exceptions.OptimisticLockException
 import io.micronaut.data.search.document.runtime.SearchTransport
 import io.micronaut.data.search.document.runtime.SearchTransport.SearchHit
 import io.micronaut.data.search.document.runtime.SearchTransport.SearchHits
+import io.micronaut.data.model.vector.Vector
+import io.micronaut.data.search.tck.entities.Article
 import io.micronaut.data.search.tck.entities.Book
 import io.micronaut.inject.qualifiers.Qualifiers
 import jakarta.inject.Named
@@ -82,6 +84,33 @@ class StubTransportReactiveSpec extends Specification {
 
         cleanup:
         versioned.deleteAll()
+    }
+
+    void "vectors serialize as arrays and a hybrid query reaches the transport as a knn clause"() {
+        given:
+        def articles = context.getBean(StubArticleRepository)
+        def transport = context.getBean(StubSearchTransport)
+
+        when:
+        def saved = articles.save(new Article("Cooking with Coffee", "Recipes", Vector.of([1f, 0f, 0f] as float[])))
+        def loaded = articles.findById(saved.id).get()
+
+        then:
+        loaded.embedding.toFloatArray() == [1f, 0f, 0f] as float[]
+        transport.docs(context.getBean(DefaultDocumentSearchRepositoryOperations, Qualifiers.byName("stub")).getIndexName(Article)).values()[0].embedding == [1.0d, 0.0d, 0.0d]
+
+        when:
+        transport.bodies.clear()
+        def results = articles.search(SearchQuery.builder("coffee").vector("embedding", Vector.of([1f, 0f, 0f] as float[])).build())
+
+        then:
+        results.results()*.entity()*.title == ["Cooking with Coffee"]
+        // the text query and the nearest-neighbour query both ran; the latter carries the knn clause with the bound vector
+        transport.bodies.size() == 2
+        transport.bodies.any { it.contains('"knn":{"field":"embedding","query_vector":[1.0,0.0,0.0],"k":100,"num_candidates":1000}') }
+
+        cleanup:
+        articles.deleteAll()
     }
 
     void "saveAll indexes in bulk through the async transport"() {
@@ -158,6 +187,7 @@ class StubTransportReactiveSpec extends Specification {
         final Map<String, Map<String, Map<String, Object>>> indexes = [:]
         final Map<String, Long> versions = [:]
         final List<String> calls = []
+        final List<String> bodies = []
 
         Map<String, Map<String, Object>> docs(String index) {
             return indexes.computeIfAbsent(index, { new LinkedHashMap<>() })
@@ -201,6 +231,7 @@ class StubTransportReactiveSpec extends Specification {
         @Override
         SearchHits search(String index, String body) {
             calls.add("sync:search")
+            bodies.add(body)
             return hits(index)
         }
 
@@ -274,6 +305,7 @@ class StubTransportReactiveSpec extends Specification {
 
         @Override
         CompletionStage<SearchTransport.SearchHits> search(String index, String body) {
+            store.bodies.add(body)
             return done("search", store.hits(index))
         }
 

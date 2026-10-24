@@ -28,6 +28,7 @@ import org.opensearch.client.json.JsonpMapper;
 import org.opensearch.client.opensearch.OpenSearchClient;
 import org.opensearch.client.opensearch._types.Refresh;
 import org.opensearch.client.opensearch._types.mapping.TypeMapping;
+import org.opensearch.client.opensearch.indices.IndexSettings;
 import org.opensearch.client.opensearch._types.query_dsl.Query;
 
 import java.io.IOException;
@@ -147,6 +148,17 @@ public final class OpenSearchSearchTransport implements SearchTransport {
     }
 
     @Override
+    @Nullable
+    public Map<String, Object> vectorFieldMapping(int dimensions) {
+        return OpenSearchRequests.knnVectorMapping(dimensions);
+    }
+
+    @Override
+    public Map<String, Object> indexSettings() {
+        return OpenSearchRequests.KNN_SETTINGS;
+    }
+
+    @Override
     public boolean indexExists(String index) {
         try {
             return client.indices().exists(e -> e.index(index)).value();
@@ -160,8 +172,12 @@ public final class OpenSearchSearchTransport implements SearchTransport {
         try {
             Map<String, Object> parsed = parse(body);
             Object mappings = parsed.get("mappings");
+            Object settings = parsed.get("settings");
             client.indices().create(c -> {
                 c.index(index);
+                if (settings != null) {
+                    c.settings(JsonData.of(settings, mapper).to(IndexSettings.class, mapper));
+                }
                 if (mappings != null) {
                     c.mappings(JsonData.of(mappings, mapper).to(TypeMapping.class, mapper));
                 }

@@ -27,6 +27,10 @@ The search string uses the portable grammar and is converted to Lucene `simple_q
 
 A api:data.model.search.SearchQuery[] passed to `search(SearchQuery)` builds the same `simple_query_string` request at runtime, as described in the <<sqlTextSearch, SQL full-text search section>>: its `fields` select the fields to search, with their declared weights as boosts, and its `mode` selects the operator and the prefix or fuzzy suffix, and its `highlight` properties are requested in the `highlight` clause and returned through `SearchResult.highlights()` with the default `<em>` tags.
 
+== Vector and hybrid search
+
+A derived method with the `Near` keyword on a vector property, `searchByEmbeddingNear(Vector vector, Score maxDistance)`, renders a `knn` query whose `k` follows the requested size, with the maximum cosine distance turned into the store's similarity threshold. Hits carry the store's similarity score rather than the distance the SQL stores return, highest first. api:data.model.search.SearchQuery[]`.vector(property, vector)` runs the same nearest-neighbour query and fuses it with the text ranking as described in the <<sqlTextSearch, SQL full-text search section>>; the native `rrf` retriever and the OpenSearch hybrid pipeline are not used, so hybrid search works on the basic licence.
+
 == Paging and sorting
 
 `Pageable` and `Sort` parameters set `from`, `size` and `sort`; a `Page` is built with `track_total_hits` so its total is exact. Sorting on an analysed search field sorts on its `keyword` sub-field.
@@ -55,4 +59,4 @@ Elasticsearch and OpenSearch run reactive and async repositories on their async 
 
 - Joins, `@Where`, update queries (`updateBy...`) and subqueries are not supported; update entities with `update(...)`.
 - `@Transactional` is not supported; see above.
-- Highlighting, aggregations and the raw query DSL are not exposed yet.
+- Aggregations and the raw query DSL are not exposed yet.

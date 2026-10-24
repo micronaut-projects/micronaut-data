@@ -138,6 +138,18 @@ public final class ElasticsearchSearchTransport implements SearchTransport {
     }
 
     @Override
+    public Map<String, Object> vectorFieldMapping(int dimensions) {
+        Map<String, Object> mapping = new java.util.LinkedHashMap<>();
+        mapping.put("type", "dense_vector");
+        if (dimensions > 0) {
+            mapping.put("dims", dimensions);
+        }
+        mapping.put("index", true);
+        mapping.put("similarity", "cosine");
+        return mapping;
+    }
+
+    @Override
     public boolean indexExists(String index) {
         try {
             return client.indices().exists(e -> e.index(index)).value();

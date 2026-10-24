@@ -144,6 +144,27 @@ public interface SearchTransport {
     boolean indexExists(String index);
 
     /**
+     * The field mapping of a {@link io.micronaut.data.model.vector.Vector} property, or {@code null} to
+     * leave the field to dynamic mapping.
+     *
+     * @param dimensions The vector dimension, or {@code -1} when the entity declares none
+     * @return The mapping of the field
+     */
+    @Nullable
+    default Map<String, Object> vectorFieldMapping(int dimensions) {
+        return null;
+    }
+
+    /**
+     * Index settings every index of this store needs, empty by default.
+     *
+     * @return The settings
+     */
+    default Map<String, Object> indexSettings() {
+        return Map.of();
+    }
+
+    /**
      * Creates an index.
      *
      * @param index The index
