@@ -316,6 +316,12 @@ public abstract class AbstractGraphRepositoryOperations extends AbstractReposito
 
     @Override
     public <R> Page<R> findPage(PagedQuery<R> query) {
+        if (query instanceof PreparedQuery<?, ?> preparedQuery) {
+            // A finder with a Pageable: its own query reads the page, and the interceptor runs its count query
+            @SuppressWarnings("unchecked")
+            List<R> page = findList((PreparedQuery<Object, R>) preparedQuery);
+            return Page.of(page, query.getPageable(), null);
+        }
         List<R> content = new ArrayList<>();
         findAll(query).forEach(content::add);
         Pageable pageable = query.getPageable();
