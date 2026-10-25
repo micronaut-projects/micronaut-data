@@ -87,4 +87,14 @@ class Neo4jFeaturesSpec extends Specification implements TestPropertyProvider {
         operations.executeQuery("MATCH (t:Tag) RETURN t.name AS name", [:])*.get("name") == ["graph"]
         operations.executeQuery("MATCH (t:Tag {name: \$name}) RETURN count(t)", [name: "graph"], Long) == [1L]
     }
+
+    void "saveAll creates nodes with database generated identifiers in one batch"() {
+        when:
+        def tags = tagRepository.saveAll([new Tag("graph"), new Tag("nosql"), new Tag("cypher")])
+
+        then: "each instance gets the identifier of its own node"
+        tags*.id.every { it != null }
+        tags*.id.unique().size() == 3
+        tags.collect { tagRepository.findById(it.id).get().name } == ["graph", "nosql", "cypher"]
+    }
 }

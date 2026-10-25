@@ -164,6 +164,24 @@ class CypherCriteriaQuerySpec extends Specification {
         new AgeCypherQueryBuilder().buildCreateIndexStatements(registry.getEntity(Person)).isEmpty()
     }
 
+    void "test batched node writes"() {
+        given:
+        def registry = new TestEntityRegistry()
+        def builder = new CypherQueryBuilder()
+
+        expect:
+        builder.supportsBatchNodeWrites()
+        !new AgeCypherQueryBuilder().supportsBatchNodeWrites()
+        builder.buildWriteNodesQuery(registry.getEntity(Person), false, false) ==
+            'UNWIND $rows AS row CREATE (n:Person) SET n += row.properties RETURN row.position AS position, id(n) AS id'
+        builder.buildWriteNodesQuery(registry.getEntity(Person), true, false) ==
+            'UNWIND $rows AS row MATCH (n:Person) WHERE id(n) = row.id SET n += row.properties RETURN row.position AS position, id(n) AS id'
+        builder.buildWriteNodesQuery(registry.getEntity(Note), true, false) ==
+            'UNWIND $rows AS row MERGE (n:Note {code: row.id}) SET n += row.properties RETURN row.position AS position, n.code AS id'
+        builder.buildWriteNodesQuery(registry.getEntity(Note), true, true) ==
+            'UNWIND $rows AS row MATCH (n:Note) WHERE n.code = row.id AND n.version = row.version SET n += row.properties RETURN row.position AS position, n.code AS id'
+    }
+
     private String select(Closure<?> definition) {
         def query = cb.createQuery(Person)
         PersistentEntityRoot root = query.from(Person)

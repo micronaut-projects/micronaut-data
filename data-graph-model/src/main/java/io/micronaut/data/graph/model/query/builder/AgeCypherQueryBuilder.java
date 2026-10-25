@@ -154,6 +154,16 @@ public class AgeCypherQueryBuilder extends CypherQueryBuilder {
         return '"' + value.replace("\"", "\"\"") + '"';
     }
 
+    /**
+     * Nodes are written one statement at a time on Apache AGE, so no batched {@code UNWIND} writes are generated.
+     *
+     * @return False
+     */
+    @Override
+    public boolean supportsBatchNodeWrites() {
+        return false;
+    }
+
     @Override
     public String buildUpdateVersionedNodeQuery(PersistentEntity entity, List<String> propertyNames) {
         return AgeStatements.wrap(super.buildUpdateVersionedNodeQuery(entity, propertyNames));

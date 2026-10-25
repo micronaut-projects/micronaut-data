@@ -7,6 +7,8 @@ from org.junit.jupiter.api import AfterEach, BeforeEach, Test
 
 from example.Movie import Movie
 from example.MovieRepository import MovieRepository
+from example.MovieSpecificationRepository import MovieSpecificationRepository
+from example.MovieSpecifications import directed_by, released_after
 from example.Person import Person
 from example.PersonRepository import PersonRepository
 from example.Role import Role
@@ -17,6 +19,7 @@ class MovieRepositorySpec:
 
     movieRepository: Annotated[MovieRepository, Inject]
     personRepository: Annotated[PersonRepository, Inject]
+    movieSpecificationRepository: Annotated[MovieSpecificationRepository, Inject]
 
     @BeforeEach
     def beforeEach(self):
@@ -70,3 +73,13 @@ class MovieRepositorySpec:
 
         assert neo.roles == ["Neo"]
         assert [d.name for d in matrix.directors] == ["Lana Wachowski"]
+
+    @Test
+    def testSpecifications(self):
+        # tag::useSpecifications[]
+        recent = self.movieSpecificationRepository.findAll(released_after(1995))  # <1>
+        by_lana = self.movieSpecificationRepository.count(directed_by("Lana Wachowski"))  # <2>
+        # end::useSpecifications[]
+
+        assert sorted(m.title for m in recent) == ["The Matrix", "The Matrix Reloaded"]
+        assert by_lana == 2
