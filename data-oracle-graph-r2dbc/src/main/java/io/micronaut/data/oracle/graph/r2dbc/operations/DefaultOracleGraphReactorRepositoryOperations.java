@@ -168,8 +168,11 @@ final class DefaultOracleGraphReactorRepositoryOperations extends AbstractReacti
         public Flux<GraphRecord> stream(String query, Map<String, Object> parameters) {
             return Flux.defer(() -> {
                 OracleGraphRows.Expanded expanded = OracleGraphRows.expand(query, new ArrayList<>(parameters.values()));
-                if (LOG.isDebugEnabled()) {
-                    LOG.debug("Executing reactive Oracle graph query: {} with parameters {}", expanded.query(), expanded.parameters());
+                if (LOG.isTraceEnabled()) {
+                    // Parameter values may hold personal data, so they are logged at TRACE only
+                    LOG.trace("Executing reactive Oracle graph query: {} with parameters {}", expanded.query(), expanded.parameters());
+                } else if (LOG.isDebugEnabled()) {
+                    LOG.debug("Executing reactive Oracle graph query: {}", expanded.query());
                 }
                 Statement statement = connection.createStatement(expanded.query());
                 bind(statement, expanded.parameters());

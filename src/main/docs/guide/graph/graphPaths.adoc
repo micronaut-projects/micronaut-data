@@ -29,6 +29,16 @@ snippet::example.PersonRepository[project-base="doc-examples/neo4j-example", sou
 
 ann:data.graph.annotation.PathLimit[] sets the maximum depth, either on the method or on an `int` parameter. The direction follows the relationship properties named after `By`. Without them, paths follow any relationship in either direction.
 
+A variable-length path visits every path up to its depth, so a depth passed as an argument is capped: an argument above `micronaut.data.graph.max-path-depth` (10 by default) is rejected with an `IllegalArgumentException` before the query runs. Raise the limit in configuration when a repository needs deeper searches:
+
+[configuration]
+----
+micronaut:
+  data:
+    graph:
+      max-path-depth: 20
+----
+
 A path is returned as a api:data.graph.model.GraphPath[] holding its nodes, mapped to entities, and its relationships:
 
 snippet::example.PersonRepositorySpec[project-base="doc-examples/neo4j-example", tags="shortestPath", indent="0", languages="java,kotlin,groovy,python"]

@@ -134,8 +134,11 @@ final class DefaultNeo4jRepositoryOperations extends AbstractGraphRepositoryOper
     }
 
     private static GraphResult run(Neo4jConnection connection, String query, Map<String, Object> parameters) {
-        if (LOG.isDebugEnabled()) {
-            LOG.debug("Executing Cypher: {} with parameters {}", query, parameters);
+        if (LOG.isTraceEnabled()) {
+            // Parameter values may hold personal data, so they are logged at TRACE only
+            LOG.trace("Executing Cypher: {} with parameters {}", query, parameters);
+        } else if (LOG.isDebugEnabled()) {
+            LOG.debug("Executing Cypher: {}", query);
         }
         try {
             Result result = connection.getQueryRunner().run(query, parameters);
