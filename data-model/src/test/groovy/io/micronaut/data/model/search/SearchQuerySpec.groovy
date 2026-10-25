@@ -40,4 +40,9 @@ class SearchQuerySpec extends Specification {
         SearchQuery.builder("a").fields("x").build() == SearchQuery.builder("a").fields("x").build()
         SearchQuery.builder("a").fields("x").build() != SearchQuery.builder("a").fields("y").build()
     }
+
+    void "toString leaves the search string out"() {
+        expect:
+        SearchQuery.of("secret words").toString() == "SearchQuery{queryLength=12, fields=[], mode=ANY}"
+    }
 }
