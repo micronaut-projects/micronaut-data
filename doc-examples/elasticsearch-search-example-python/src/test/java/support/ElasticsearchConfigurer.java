@@ -15,12 +15,9 @@
  */
 package support;
 
-import io.micronaut.context.ApplicationContext;
+import io.micronaut.context.ApplicationContextBuilder;
 import io.micronaut.context.ApplicationContextConfigurer;
 import io.micronaut.context.annotation.ContextConfigurer;
-import io.micronaut.context.env.Environment;
-import io.micronaut.context.env.PropertySource;
-import io.micronaut.context.env.SystemPropertiesPropertySource;
 import org.testcontainers.DockerClientFactory;
 import org.testcontainers.elasticsearch.ElasticsearchContainer;
 import org.testcontainers.utility.DockerImageName;
@@ -30,7 +27,7 @@ import java.util.Map;
 /**
  * Starts Elasticsearch for the Python tests. A Python test class cannot declare the per-class
  * test instance lifecycle that a {@code TestPropertyProvider} needs, so the container is
- * configured when the application context starts instead.
+ * configured when the application context is built instead.
  */
 @ContextConfigurer
 public class ElasticsearchConfigurer implements ApplicationContextConfigurer {
@@ -41,13 +38,11 @@ public class ElasticsearchConfigurer implements ApplicationContextConfigurer {
         .withEnv("ES_JAVA_OPTS", "-Xms512m -Xmx512m");
 
     @Override
-    public void configure(ApplicationContext applicationContext) {
-        Environment environment = applicationContext.getEnvironment();
-        if (environment.getActiveNames().contains(Environment.TEST) && DockerClientFactory.instance().isDockerAvailable()) {
+    public void configure(ApplicationContextBuilder builder) {
+        // The Elasticsearch client configuration requires the hosts before the context is built
+        if (DockerClientFactory.instance().isDockerAvailable()) {
             ELASTICSEARCH.start();
-            environment.addPropertySource(PropertySource.of("elasticsearch-container",
-                Map.of("elasticsearch.http-hosts", "http://" + ELASTICSEARCH.getHttpHostAddress()),
-                SystemPropertiesPropertySource.POSITION + 100));
+            builder.properties(Map.of("elasticsearch.http-hosts", "http://" + ELASTICSEARCH.getHttpHostAddress()));
         }
     }
 }
