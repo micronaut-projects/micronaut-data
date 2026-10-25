@@ -405,11 +405,17 @@ public abstract class AbstractGraphRepositoryOperations extends AbstractReposito
     }
 
     private void appendSortAndLimit(StringBuilder query, RuntimePersistentEntity<?> entity, Sort sort, Limit limit) {
-        boolean rootQuery = query.indexOf("MATCH (" + CypherQueryBuilder.ROOT) == 0;
-        if (sort != null && sort.isSorted() && rootQuery && query.indexOf(" ORDER BY ") < 0) {
+        if (sort != null && sort.isSorted()) {
+            boolean rootQuery = query.indexOf("MATCH (" + CypherQueryBuilder.ROOT) == 0;
+            if (!rootQuery || query.indexOf(" ORDER BY ") >= 0) {
+                throw new DataAccessException("Cannot apply the sort " + sort.getOrderBy() + " to the query [" + query + "]: sort an explicit query with its own ORDER BY clause");
+            }
             appendOrderBy(query, entity, sort);
         }
-        if (limit != null && limit.isLimited() && query.indexOf(" LIMIT ") < 0 && query.indexOf(" SKIP ") < 0) {
+        if (limit != null && limit.isLimited()) {
+            if (query.indexOf(" LIMIT ") >= 0 || query.indexOf(" SKIP ") >= 0) {
+                throw new DataAccessException("Cannot page the query [" + query + "]: it declares SKIP or LIMIT itself");
+            }
             query.append(queryBuilder.buildLimitAndOffset(limit.maxResults(), limit.offset()));
         }
     }
@@ -781,6 +787,19 @@ public abstract class AbstractGraphRepositoryOperations extends AbstractReposito
             return result;
         }
 
+        /**
+         * Records the instance that now stands for a node whose write completed, so that a related
+         * node that links back to it while its relationships are still being written sees the
+         * instance carrying the generated identifier rather than the original. The two differ for
+         * immutable entities such as records.
+         *
+         * @param instance The instance the save was called with
+         * @param written  The instance after the node was written
+         */
+        void written(Object instance, Object written) {
+            saved.put(instance, written);
+        }
+
         <T> int delete(RuntimePersistentEntity<T> entity, T instance) {
             DeleteNodeOperation<T> operation = new DeleteNodeOperation<>(this, entity, instance);
             operation.delete();
@@ -799,10 +818,12 @@ public abstract class AbstractGraphRepositoryOperations extends AbstractReposito
      */
     private final class NodeOperation<T> extends AbstractSyncEntityOperations<OperationContext, T, RuntimeException> {
         private final Persister persister;
+        private final T original;
 
         NodeOperation(Persister persister, RuntimePersistentEntity<T> entity, T instance, boolean insert) {
             super(persister.context, AbstractGraphRepositoryOperations.this.noCascade, entityEventRegistry, entity, AbstractGraphRepositoryOperations.this.conversionService, instance, insert);
             this.persister = persister;
+            this.original = instance;
         }
 
         @Override
@@ -846,6 +867,7 @@ public abstract class AbstractGraphRepositoryOperations extends AbstractReposito
                 }
                 entity = updateEntityId((BeanProperty<T, Object>) identity.getProperty(), entity, generatedId);
             }
+            persister.written(original, entity);
             writeRelationships();
         }
 
