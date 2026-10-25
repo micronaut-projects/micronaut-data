@@ -172,6 +172,7 @@ public class CypherQueryBuilder implements GraphQueryBuilder {
      * The key of the properties of a node in the row of a batched write.
      */
     public static final String ROW_PROPERTIES = "properties";
+    private static final String WITH = " WITH ";
     private static final String WITH_DISTINCT = " WITH DISTINCT ";
     private static final String DISTINCT = "DISTINCT ";
     private static final String TO_LOWER = "toLower(";
@@ -266,7 +267,7 @@ public class CypherQueryBuilder implements GraphQueryBuilder {
         for (OrderItem order : orders) {
             if (order.onAssociation) {
                 if (carried.isEmpty()) {
-                    query.append(" WITH ").append(ROOT);
+                    query.append(WITH).append(ROOT);
                 }
                 String alias = "o" + carried.size();
                 query.append(", ").append(order.ascending ? "min(" : "max(").append(order.expression).append(CLOSE_AS).append(alias);
