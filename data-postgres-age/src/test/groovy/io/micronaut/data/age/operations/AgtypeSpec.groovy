@@ -22,6 +22,9 @@ class AgtypeSpec extends Specification {
         '1.5'               | 1.5d
         '1.5::float'        | 1.5d
         '3::numeric'        | new BigDecimal("3")
+        '12345678901234567.89::numeric' | new BigDecimal("12345678901234567.89")
+        '99999999999999999999::numeric' | new BigDecimal("99999999999999999999")
+        '99999999999999999999' | new BigDecimal("99999999999999999999")
         'true'              | true
         '"a \\"b\\" \\n c"' | 'a "b" \n c'
         '"\\u00e9"'         | 'é'
