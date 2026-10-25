@@ -151,6 +151,7 @@ class StubTransportReactiveSpec extends Specification {
         results.results().size() == 1
         results.results()[0].score().value() == 1d
         results.totalHits() == 1
+        context.getBean(StubSearchTransport).bodies.last().contains('"track_total_hits":true')
         repository.findByTitleSearch("kotlin").collectList().block()*.title == ["Programming Kotlin"]
         repository.countBySearch("kotlin").block() == 1L
         // the reactive and async SearchRepository variants run through the reactive criteria operations

@@ -77,5 +77,10 @@ public interface NoteRepository extends PageableRepository<Note, String>, Search
 
     List<Note> findByTitleNotInList(List<String> titles);
 
+    List<Note> findByTitleInList(String[] titles);
+
+    @Nullable
+    Note findFirstByPagesGreaterThan(int pages, io.micronaut.data.model.Sort sort);
+
     List<Note> findByTitleNotEqual(String title);
 }

@@ -263,6 +263,8 @@ abstract class AbstractTextSearchSpec extends Specification {
     }
 
     void "search with a SearchQuery drops hits below the minimum score"() {
+        assumeTrue(capabilities().contains(SearchCapability.MIN_SCORE))
+
         given:
         def all = bookSearchRepository.search(SearchQuery.of("programming"))
         def top = all.results()[0].score().value()
@@ -270,6 +272,16 @@ abstract class AbstractTextSearchSpec extends Specification {
         expect:
         bookSearchRepository.search(SearchQuery.builder("programming").minScore(top).build()).results()*.entity()*.title == ["The Rust Programming Language"]
         bookSearchRepository.search(SearchQuery.builder("programming").minScore(top * 10 + 1).build()).results().isEmpty()
+    }
+
+    void "search with a SearchQuery rejects a minimum score the store cannot restrict on"() {
+        assumeTrue(!capabilities().contains(SearchCapability.MIN_SCORE))
+
+        when:
+        bookSearchRepository.search(SearchQuery.builder("programming").minScore(0.1).build())
+
+        then:
+        thrown(UnsupportedSearchFeatureException)
     }
 
     void "search with a SearchQuery rejects options the operation cannot honour"() {
