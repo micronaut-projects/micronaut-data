@@ -207,6 +207,40 @@ public interface GraphQueryBuilder extends QueryBuilder {
                           @Nullable PersistentProperty relationshipIdentity);
 
     /**
+     * Whether relationships can be merged in batches with
+     * {@link #buildLinksQuery(Association, PersistentEntity, PersistentEntity, List, PersistentProperty)}.
+     *
+     * @return True if batched link writes are supported
+     * @since 5.3.0
+     */
+    default boolean supportsBatchedLinks() {
+        return false;
+    }
+
+    /**
+     * Builds the query that links an owner to many target nodes with the relationship of an association, bound to
+     * {@code $rows}: a list of maps holding the position of the link in the batch under {@code position}, the
+     * identifier of the owner under {@code from}, the identifier of the target under {@code to} and the properties
+     * of the relationship under {@code properties}. The query returns a row with the position and the identifier of
+     * each relationship it merged.
+     *
+     * @param association          The association
+     * @param owner                The entity that declares the association
+     * @param target               The node entity at the far end
+     * @param propertyNames        The stored names of the relationship properties every row writes
+     * @param relationshipIdentity The identity of the relationship entity, or null if none
+     * @return The query
+     * @since 5.3.0
+     */
+    default String buildLinksQuery(Association association,
+                                   PersistentEntity owner,
+                                   PersistentEntity target,
+                                   List<String> propertyNames,
+                                   @Nullable PersistentProperty relationshipIdentity) {
+        throw new UnsupportedOperationException("Batched link writes are not supported by " + getClass().getSimpleName());
+    }
+
+    /**
      * Builds the query that links two nodes with an outgoing relationship of a type the owner does not declare.
      * The identifiers of the owner and the target are bound to {@code $from} and {@code $to}.
      *

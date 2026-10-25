@@ -20,6 +20,7 @@ import io.micronaut.core.annotation.Internal;
 import io.micronaut.core.naming.NameUtils;
 import io.micronaut.data.annotation.AutoPopulated;
 import io.micronaut.data.annotation.GeneratedValue;
+import io.micronaut.data.annotation.Relation;
 import io.micronaut.data.graph.annotation.Direction;
 import io.micronaut.data.graph.annotation.Node;
 import io.micronaut.data.graph.annotation.Relationship;
@@ -221,6 +222,20 @@ public final class GraphEntities {
         return association.getAnnotationMetadata()
             .enumValue(Relationship.class, "direction", Direction.class)
             .orElse(Direction.OUTGOING);
+    }
+
+    /**
+     * What saving the owner of an association does to the related node, declared by
+     * {@link Relationship#cascade()}.
+     *
+     * @param association The association
+     * @return The cascade behaviour, {@link Relation.Cascade#ALL} unless declared otherwise
+     * @since 5.3.0
+     */
+    public static Relation.Cascade cascade(Association association) {
+        return association.getAnnotationMetadata()
+            .enumValue(Relationship.class, "cascade", Relation.Cascade.class)
+            .orElse(Relation.Cascade.ALL);
     }
 
     /**

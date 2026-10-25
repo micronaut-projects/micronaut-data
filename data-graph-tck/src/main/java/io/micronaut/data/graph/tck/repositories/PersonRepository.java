@@ -14,6 +14,10 @@ public interface PersonRepository extends CrudRepository<Person, UUID> {
 
     Optional<Person> findByName(String name);
 
+    List<Person> findByAcquaintancesName(String name);
+
+    List<Person> findByEndorsersName(String name);
+
     List<Person> findByMentorName(String name);
 
     @PathLimit(5)

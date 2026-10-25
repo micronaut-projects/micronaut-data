@@ -110,6 +110,47 @@ class AgeR2dbcSpec extends Specification {
         !personRepository.existsPathByMentorBetweenName("Lilly Wachowski", "Keanu Reeves").block()
     }
 
+    void "a reactive save that fails while writing its relationships writes nothing"() {
+        given:
+        def movie = new Movie("Bound", "In the end, it's all about the money", 1996)
+        movie.roles = [new Role(["Corky"], new Person("Gina Gershon", 1962)), new Role(["Violet"], null)]
+
+        when:
+        movieRepository.save(movie).block()
+
+        then:
+        thrown(io.micronaut.data.exceptions.DataAccessException)
+        !movieRepository.existsById("Bound").block()
+        count("MATCH (p:Person) RETURN count(p)") == 0
+    }
+
+    void "relationships of a type are written in one batch and cascade as declared"() {
+        given:
+        def keanu = new Person("Keanu Reeves", 1964)
+        def carrie = new Person("Carrie-Anne Moss", 1967)
+        def matrix = new Movie("The Matrix", "Welcome to the Real World", 1999)
+        matrix.roles = [new Role(["Neo"], keanu), new Role(["Trinity"], carrie)]
+
+        when:
+        def saved = movieRepository.save(matrix).block()
+
+        then:
+        saved.roles*.id.every { it != null }
+        count("MATCH (:Person)-[r:ACTED_IN]->(:Movie {title: 'The Matrix'}) RETURN count(r)") == 2
+        count("MATCH (:Person {name: 'Keanu Reeves'})-[r:ACTED_IN {roles: ['Neo']}]->(:Movie) RETURN count(r)") == 1
+
+        when: "a person endorsed by a stale copy of a saved node, which the relationship does not cascade to"
+        def stale = new Person("Keanu Reeves", 1900)
+        stale.id = saved.roles[0].person.id
+        def lana = new Person("Lana Wachowski", 1965)
+        lana.endorsers = [stale]
+        personRepository.save(lana).block()
+
+        then:
+        count("MATCH (:Person {name: 'Lana Wachowski'})-[r:ENDORSED_BY]->(:Person {name: 'Keanu Reeves', born: 1964}) RETURN count(r)") == 1
+        count("MATCH (p:Person) RETURN count(p)") == 3
+    }
+
     void "commit and roll back reactive transactions"() {
         when:
         transactionOperations.withTransaction(status -> movieRepository.save(new Movie("Speed", null, 1994))).blockLast()

@@ -27,7 +27,9 @@ import io.micronaut.data.graph.runtime.ReactiveGraphSession;
 import io.micronaut.data.graph.runtime.age.AgeParameters;
 import io.micronaut.data.graph.runtime.age.Agtype;
 import io.micronaut.data.graph.runtime.operations.AbstractReactiveGraphRepositoryOperations;
+import io.micronaut.data.r2dbc.transaction.R2dbcReactorTransactionOperations;
 import io.micronaut.json.JsonMapper;
+import io.micronaut.transaction.TransactionDefinition;
 import io.r2dbc.postgresql.codec.PostgresqlObjectId;
 import io.r2dbc.spi.ColumnMetadata;
 import io.r2dbc.spi.Connection;
@@ -47,7 +49,8 @@ import java.util.function.Function;
 
 /**
  * Runs Apache AGE statements on the reactive connections of an R2DBC connection factory, within the current reactive
- * transaction when there is one. AGE is loaded on each connection before its first statement.
+ * transaction when there is one. AGE is loaded on each connection before its first statement. Writes of entities,
+ * which run several statements, run in a transaction of their own when none is active.
  *
  * @author graemerocher
  * @since 5.3.0
@@ -60,6 +63,7 @@ final class DefaultAgeReactorRepositoryOperations extends AbstractReactiveGraphR
     private static final String R2DBC_PARAMETER = "$$, $1)";
 
     private final ReactorConnectionOperations<Connection> connectionOperations;
+    private final R2dbcReactorTransactionOperations transactionOperations;
     private final JsonMapper jsonMapper;
     private final String graph;
     private final boolean createExtension;
@@ -68,12 +72,14 @@ final class DefaultAgeReactorRepositoryOperations extends AbstractReactiveGraphR
 
     DefaultAgeReactorRepositoryOperations(DefaultAgeR2dbcRepositoryOperations operations,
                                           ReactorConnectionOperations<Connection> connectionOperations,
+                                          R2dbcReactorTransactionOperations transactionOperations,
                                           JsonMapper jsonMapper,
                                           String graph,
                                           boolean createExtension,
                                           boolean createGraph) {
         super(operations);
         this.connectionOperations = connectionOperations;
+        this.transactionOperations = transactionOperations;
         this.jsonMapper = jsonMapper;
         this.graph = graph;
         this.createExtension = createExtension;
@@ -94,6 +100,19 @@ final class DefaultAgeReactorRepositoryOperations extends AbstractReactiveGraphR
             ConnectionDefinition.DEFAULT.withAnnotationMetadata(annotationMetadata),
             status -> prepare(status.getConnection()).thenMany(Flux.defer(() -> work.apply(new Session(status.getConnection()))))
         );
+    }
+
+    @Override
+    protected <R> Mono<R> withTransactionMono(AnnotationMetadata annotationMetadata, Function<ReactiveGraphSession, Mono<R>> work) {
+        // Joins the transaction of the Reactor context, or begins one so that the statements of the write commit or roll back together
+        return transactionOperations.withTransactionMono(TransactionDefinition.DEFAULT,
+            status -> prepare(status.getConnection()).then(Mono.defer(() -> work.apply(new Session(status.getConnection())))));
+    }
+
+    @Override
+    protected <R> Flux<R> withTransactionFlux(AnnotationMetadata annotationMetadata, Function<ReactiveGraphSession, Flux<R>> work) {
+        return transactionOperations.withTransactionFlux(TransactionDefinition.DEFAULT,
+            status -> prepare(status.getConnection()).thenMany(Flux.defer(() -> work.apply(new Session(status.getConnection())))));
     }
 
     /**

@@ -42,6 +42,7 @@ import io.micronaut.data.model.runtime.AttributeConverterRegistry;
 import io.micronaut.data.model.runtime.RuntimeEntityRegistry;
 import io.micronaut.data.runtime.convert.DataConversionService;
 import io.micronaut.data.runtime.date.DateTimeProvider;
+import io.micronaut.transaction.TransactionOperations;
 import jakarta.inject.Named;
 import org.jspecify.annotations.Nullable;
 import org.slf4j.Logger;
@@ -68,6 +69,7 @@ import java.util.function.Function;
 /**
  * Repository operations for a graph in PostgreSQL with Apache AGE. Each Cypher query runs through the
  * {@code cypher()} function on the JDBC connection of the current transaction, or on a connection opened for the operation.
+ * Writes of entities, which run several statements, run in a transaction of their own when none is active.
  *
  * @author graemerocher
  * @since 5.3.0
@@ -79,6 +81,7 @@ final class DefaultAgeRepositoryOperations extends AbstractGraphRepositoryOperat
     private static final Logger LOG = LoggerFactory.getLogger(DefaultAgeRepositoryOperations.class);
 
     private final ConnectionOperations<Connection> connectionOperations;
+    private final TransactionOperations<Connection> transactionOperations;
     private final String graph;
     private final boolean createExtension;
     private final boolean createGraph;
@@ -87,6 +90,7 @@ final class DefaultAgeRepositoryOperations extends AbstractGraphRepositoryOperat
     private volatile boolean graphReady;
 
     DefaultAgeRepositoryOperations(@Parameter ConnectionOperations<Connection> connectionOperations,
+                                   @Parameter TransactionOperations<Connection> transactionOperations,
                                    @Parameter String dataSourceName,
                                    AgeConfiguration configuration,
                                    JsonMapper jsonMapper,
@@ -99,6 +103,7 @@ final class DefaultAgeRepositoryOperations extends AbstractGraphRepositoryOperat
                                    GraphSerde graphSerde) {
         super(new AgeCypherQueryBuilder(), dateTimeProvider, runtimeEntityRegistry, conversionService, attributeConverterRegistry, executorService, encoderRegistrars, graphSerde);
         this.connectionOperations = connectionOperations;
+        this.transactionOperations = transactionOperations;
         this.graph = AgeStatements.validateGraphName(configuration.graphFor(dataSourceName));
         this.createExtension = configuration.isCreateExtension();
         this.createGraph = configuration.isCreateGraph();
@@ -148,6 +153,12 @@ final class DefaultAgeRepositoryOperations extends AbstractGraphRepositoryOperat
     @Override
     protected <R> R write(AnnotationMetadata annotationMetadata, Function<GraphSession, R> work) {
         return run(annotationMetadata, work);
+    }
+
+    @Override
+    protected <R> R writeInTransaction(AnnotationMetadata annotationMetadata, Function<GraphSession, R> work) {
+        // Joins the current transaction, or begins one so that the statements of the write commit or roll back together
+        return transactionOperations.executeWrite(status -> work.apply(session(status.getConnection())));
     }
 
     private <R> R run(AnnotationMetadata annotationMetadata, Function<GraphSession, R> work) {

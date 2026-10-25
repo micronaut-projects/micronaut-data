@@ -36,6 +36,7 @@ import io.micronaut.data.model.runtime.AttributeConverterRegistry;
 import io.micronaut.data.model.runtime.RuntimeEntityRegistry;
 import io.micronaut.data.model.runtime.RuntimePersistentEntity;
 import io.micronaut.data.operations.async.AsyncRepositoryOperations;
+import io.micronaut.data.r2dbc.transaction.R2dbcReactorTransactionOperations;
 import io.micronaut.data.runtime.convert.DataConversionService;
 import io.micronaut.data.runtime.operations.ReactorToAsyncOperationsAdaptor;
 import io.micronaut.data.runtime.operations.internal.SynchronizedLazyValue;
@@ -64,6 +65,7 @@ final class DefaultAgeR2dbcRepositoryOperations extends AbstractGraphRepositoryO
     private final SynchronizedLazyValue<AsyncRepositoryOperations> asyncOperations = new SynchronizedLazyValue<>();
 
     DefaultAgeR2dbcRepositoryOperations(@Parameter ReactorConnectionOperations<Connection> connectionOperations,
+                                        @Parameter R2dbcReactorTransactionOperations transactionOperations,
                                         @Parameter String dataSourceName,
                                         AgeConfiguration configuration,
                                         JsonMapper jsonMapper,
@@ -75,7 +77,7 @@ final class DefaultAgeR2dbcRepositoryOperations extends AbstractGraphRepositoryO
                                         GraphSerde graphSerde) {
         super(new AgeCypherQueryBuilder(), dateTimeProvider, runtimeEntityRegistry, conversionService,
             attributeConverterRegistry, null, encoderRegistrars, graphSerde);
-        this.reactiveOperations = new DefaultAgeReactorRepositoryOperations(this, connectionOperations, jsonMapper,
+        this.reactiveOperations = new DefaultAgeReactorRepositoryOperations(this, connectionOperations, transactionOperations, jsonMapper,
             AgeStatements.validateGraphName(configuration.graphFor(dataSourceName)), configuration.isCreateExtension(), configuration.isCreateGraph());
     }
 

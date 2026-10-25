@@ -1,5 +1,6 @@
 package io.micronaut.data.graph.tck
 
+import io.micronaut.data.exceptions.DataAccessException
 import io.micronaut.data.exceptions.OptimisticLockException
 import io.micronaut.data.graph.tck.entities.Article
 import io.micronaut.data.graph.tck.entities.Colleague
@@ -346,6 +347,86 @@ abstract class AbstractGraphRepositorySpec extends Specification {
         then:
         !movieRepository.existsById("Speed")
         movieRepository.findByRolesPersonName("Keanu Reeves").size() == 2
+    }
+
+    @Requires({ instance.supportsRelationshipWrites() })
+    void "a relationship that cascades PERSIST creates new nodes and links existing nodes without updating them"() {
+        given:
+        def keanu = personRepository.save(new Person("Keanu Reeves", 1964))
+
+        when: "one acquaintance is a stale copy of the saved node and the other is new"
+        def stale = new Person("Keanu Reeves", 1900)
+        stale.id = keanu.id
+        def carrie = new Person("Carrie-Anne Moss", 1967)
+        carrie.acquaintances = [stale, new Person("Laurence Fishburne", 1961)]
+        def saved = personRepository.save(carrie)
+
+        then:
+        saved.acquaintances*.id.every { it != null }
+        personRepository.findByAcquaintancesName("Keanu Reeves")*.name == ["Carrie-Anne Moss"]
+        personRepository.findByAcquaintancesName("Laurence Fishburne")*.name == ["Carrie-Anne Moss"]
+        personRepository.findByName("Keanu Reeves").get().born == 1964
+        personRepository.count() == 3
+    }
+
+    @Requires({ instance.supportsRelationshipWrites() })
+    void "a relationship that does not cascade links existing nodes only"() {
+        given:
+        def keanu = personRepository.save(new Person("Keanu Reeves", 1964))
+
+        when: "the endorser is a stale copy of the saved node"
+        def stale = new Person("Keanu Reeves", 1900)
+        stale.id = keanu.id
+        def carrie = new Person("Carrie-Anne Moss", 1967)
+        carrie.endorsers = [stale]
+        personRepository.save(carrie)
+
+        then: "the relationship is written and the node is left as it was"
+        personRepository.findByEndorsersName("Keanu Reeves")*.name == ["Carrie-Anne Moss"]
+        personRepository.findByName("Keanu Reeves").get().born == 1964
+        personRepository.count() == 2
+
+        when: "the endorser has no identifier"
+        def lana = new Person("Lana Wachowski", 1965)
+        lana.endorsers = [new Person("Lilly Wachowski", 1967)]
+        personRepository.save(lana)
+
+        then:
+        def noId = thrown(DataAccessException)
+        noId.message.contains("without an identifier")
+
+        and: "the save wrote nothing"
+        !personRepository.findByName("Lana Wachowski").present
+        personRepository.count() == 2
+
+        when: "the endorser does not exist"
+        def ghost = new Person("Nobody", 2000)
+        ghost.id = UUID.randomUUID()
+        lana.mentor = new Person("Lilly Wachowski", 1967)
+        lana.endorsers = [ghost]
+        personRepository.save(lana)
+
+        then:
+        def missing = thrown(DataAccessException)
+        missing.message.contains("does not exist")
+
+        and: "neither the node nor the mentor it cascaded to remain"
+        personRepository.count() == 2
+    }
+
+    @Requires({ instance.supportsRelationshipWrites() })
+    void "a save that fails while writing its relationships writes nothing"() {
+        given:
+        def movie = new Movie("Bound", "In the end, it's all about the money", 1996)
+        movie.roles = [new Role(["Corky"], new Person("Gina Gershon", 1962)), new Role(["Violet"], null)]
+
+        when:
+        movieRepository.save(movie)
+
+        then:
+        thrown(DataAccessException)
+        !movieRepository.existsById("Bound")
+        !personRepository.findByName("Gina Gershon").present
     }
 
     @Requires({ instance.supportsExplicitQueries() })

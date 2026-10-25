@@ -139,6 +139,50 @@ class Neo4jReactiveSpec extends Specification implements TestPropertyProvider {
         count("MATCH (p:Person) RETURN count(p)") == 2
     }
 
+    void "a reactive save that fails while writing its relationships writes nothing"() {
+        given:
+        def movie = new Movie("Bound", "In the end, it's all about the money", 1996)
+        movie.roles = [new Role(["Corky"], new Person("Gina Gershon", 1962)), new Role(["Violet"], null)]
+
+        when:
+        movieRepository.save(movie).block()
+
+        then:
+        thrown(io.micronaut.data.exceptions.DataAccessException)
+        !movieRepository.existsById("Bound").block()
+        count("MATCH (p:Person) RETURN count(p)") == 0
+    }
+
+    void "a relationship that does not cascade links existing nodes reactively"() {
+        given:
+        def keanu = new Person("Keanu Reeves", 1964)
+        movieRepository.save(new Movie("Speed", null, 1994).tap { roles = [new Role(["Jack Traven"], keanu)] }).block()
+        def stale = new Person("Keanu Reeves", 1900)
+        stale.id = keanu.id
+
+        when:
+        def carrie = new Person("Carrie-Anne Moss", 1967)
+        carrie.endorsers = [stale]
+        def matrix = new Movie("The Matrix", null, 1999)
+        matrix.roles = [new Role(["Trinity"], carrie)]
+        movieRepository.save(matrix).block()
+
+        then:
+        count("MATCH (:Person {name: 'Carrie-Anne Moss'})-[r:ENDORSED_BY]->(:Person {name: 'Keanu Reeves', born: 1964}) RETURN count(r)") == 1
+        count("MATCH (p:Person) RETURN count(p)") == 2
+
+        when: "the endorser has no identifier"
+        def lana = new Person("Lana Wachowski", 1965)
+        lana.endorsers = [new Person("Lilly Wachowski", 1967)]
+        movieRepository.save(new Movie("Bound", null, 1996).tap { directors = [lana] }).block()
+
+        then:
+        def e = thrown(io.micronaut.data.exceptions.DataAccessException)
+        e.message.contains("without an identifier")
+        !movieRepository.existsById("Bound").block()
+        count("MATCH (p:Person) RETURN count(p)") == 2
+    }
+
     void "save immutable records that reference each other reactively"() {
         given: "a team whose player refers back to the team instance being saved"
         def players = []
