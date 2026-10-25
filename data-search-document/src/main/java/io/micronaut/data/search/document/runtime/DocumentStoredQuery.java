@@ -25,6 +25,7 @@ import io.micronaut.data.model.runtime.RuntimePersistentProperty;
 import io.micronaut.data.model.runtime.StoredQuery;
 import io.micronaut.data.runtime.operations.internal.query.DefaultBindableParametersStoredQuery;
 import io.micronaut.data.search.document.query.DocumentSearchQueryBuilder;
+import io.micronaut.data.search.document.query.SearchJson;
 import io.micronaut.json.JsonMapper;
 import org.jspecify.annotations.Nullable;
 
@@ -87,6 +88,10 @@ public final class DocumentStoredQuery<E, R> extends DefaultBindableParametersSt
             Object placeholder = map.get(DocumentSearchQueryBuilder.QUERY_PARAMETER_PLACEHOLDER);
             if (placeholder instanceof Number index) {
                 Object value = index.intValue() < 0 ? map.get("value") : values.get(index.intValue());
+                if (value != null && value.getClass().isArray()) {
+                    // an array bound to an In predicate is spliced into the list like a collection
+                    value = SearchJson.arrayToList(value);
+                }
                 Object hint = map.get(DocumentSearchQueryBuilder.WILDCARD_HINT);
                 return hint == null ? value : wildcard(value, hint.toString());
             }
