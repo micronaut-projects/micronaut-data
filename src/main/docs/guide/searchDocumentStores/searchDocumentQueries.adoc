@@ -65,6 +65,14 @@ snippet::example.ReactiveBookRepository[project-base="doc-examples/elasticsearch
 <2> A `search` method returning `Mono<SearchResults<Book>>` projects the score and orders by it, like its blocking counterpart.
 <3> Any derived finder can return a `Flux`.
 
+In Kotlin, api:data.repository.kotlin.CoroutineCrudRepository[] and api:data.repository.kotlin.CoroutineSearchRepository[] expose the same operations as `suspend` functions:
+
+snippet::example.CoroutineBookRepository[project-base="doc-examples/elasticsearch-search-example", source="main", tags="coroutine", languages="kotlin"]
+
+<1> A coroutine repository; `CoroutineSearchRepository` adds `search(String)`, `search(SearchQuery)` and `countHits` as `suspend` functions.
+<2> A `suspend` search method returns `SearchResults<Book>` directly.
+<3> A derived finder can return a `Flow`.
+
 Elasticsearch and OpenSearch run reactive and async repositories on their async clients through api:data.search.document.runtime.AsyncSearchTransport[], so no thread blocks on a request. A store that provides only a blocking api:data.search.document.runtime.SearchTransport[] still gets reactive repositories, run on the IO executor. `search(SearchQuery)` of api:data.repository.SearchRepository[] stays blocking.
 
 == Limitations
