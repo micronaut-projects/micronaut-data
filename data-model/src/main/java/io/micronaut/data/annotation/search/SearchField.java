@@ -69,7 +69,9 @@ public @interface SearchField {
     String name() default "";
 
     /**
-     * How the field is indexed.
+     * How the field is indexed. Elasticsearch and OpenSearch map {@link SearchFieldType#KEYWORD} and
+     * {@link SearchFieldType#AUTOCOMPLETE} fields accordingly; the SQL stores and MongoDB index every
+     * search field as analysed text, whatever its type.
      *
      * @return The field type
      */
@@ -83,8 +85,9 @@ public @interface SearchField {
     SearchWeight weight() default SearchWeight.MEDIUM;
 
     /**
-     * Optional analyzer name. Analyzers are resolved per backend; an empty value uses the
-     * backend default for the entity {@link Searchable#language()}.
+     * Optional analyzer name, read by Elasticsearch and OpenSearch only; an empty value uses the
+     * analyzer of the entity {@link Searchable#language()}. MongoDB Search takes its analyzer from the
+     * index ({@code @MongoSearchIndex}) and the SQL stores from the entity language.
      *
      * @return The analyzer name
      */

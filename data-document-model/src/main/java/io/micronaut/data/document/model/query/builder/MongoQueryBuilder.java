@@ -67,6 +67,7 @@ import io.micronaut.data.model.query.builder.QueryResult;
 import io.micronaut.data.model.query.impl.AdvancedPredicateVisitor;
 import io.micronaut.data.annotation.search.SearchField;
 import io.micronaut.data.annotation.search.SearchWeight;
+import io.micronaut.data.model.runtime.RuntimePersistentEntity;
 import io.micronaut.data.model.runtime.convert.MongoTextSearchConverter;
 import io.micronaut.data.model.search.MatchMode;
 import io.micronaut.data.model.search.SearchCapability;
@@ -1643,7 +1644,11 @@ public final class MongoQueryBuilder implements QueryBuilder {
             if (!(queryExpression instanceof BindingParameter bindingParameter)) {
                 throw new IllegalStateException("A full-text search query must be a parameter, got: " + queryExpression);
             }
-            // $text always searches the collection's text index; the fields only decide the language
+            // $text always searches the collection's text index. A derived property keyword is documented to
+            // widen to it, but fields chosen at runtime through a SearchQuery are rejected rather than ignored
+            if (persistentEntity instanceof RuntimePersistentEntity<?> && fields.size() < TextSearchSupport.searchFields(persistentEntity).size()) {
+                throw new UnsupportedSearchFeatureException(SearchCapability.FIELD_SCOPE, "MongoDB $text");
+            }
             String converter = MongoTextSearchConverter.converterFor(mode);
             BindingParameter converted = context -> TextSearchSupport.withConverter(bindingParameter.bind(context), converter);
             int index = queryState.pushParameter(converted, newBindingContext(null));
