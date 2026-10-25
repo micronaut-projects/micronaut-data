@@ -496,13 +496,20 @@ public interface TextSearchDialect {
                 }
                 query.append("SCORE(").append(i + 1).append(')');
                 if (weighted) {
-                    // a query-time boost replaces the index-time weight of the field
-                    Double boost = boostOf(fields.get(i), options);
-                    SearchWeight weight = resolveWeight(fields.get(i));
-                    query.append(" * ").append(boost != null ? factor(boost) : String.valueOf(weight == null ? 1 : weight.numericWeight()));
+                    query.append(" * ").append(scoreFactor(fields.get(i), options));
                 }
             }
             query.append(')');
+        }
+
+        /** A query-time boost replaces the index-time weight of the field. */
+        private String scoreFactor(Expression<?> field, TextMatchOptions options) {
+            Double boost = boostOf(field, options);
+            if (boost != null) {
+                return factor(boost);
+            }
+            SearchWeight weight = resolveWeight(field);
+            return String.valueOf(weight == null ? 1 : weight.numericWeight());
         }
 
         /**
