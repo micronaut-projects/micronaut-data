@@ -1,0 +1,23 @@
+The `micronaut-data-oracle-graph` module queries property graphs that Oracle Database defines over tables with `CREATE PROPERTY GRAPH`, such as the bank transfers graph of the https://github.com/oracle-samples/oracle-graph[Oracle graph samples]:
+
+[source,sql]
+----
+include::doc-examples/oracle-graph-example-java/src/test/sql/bank-graph.sql[tag=graph]
+----
+
+dependency:io.micronaut.data:micronaut-data-oracle-graph[]
+
+Repositories are annotated with ann:data.oracle.graph.annotation.OracleGraphRepository[], which names the graph and the query language, as shown in the <<graphOracleQuickStart, quick start>>. Explicit queries are written in the query language of the repository:
+
+snippet::example.BankGraph[project-base="doc-examples/oracle-graph-example", source="main", tags="query", languages="java,kotlin,groovy,python"]
+
+The columns of the query are mapped to the properties of the result type by name:
+
+snippet::example.TransferView[project-base="doc-examples/oracle-graph-example", source="main", tags="view", languages="java,kotlin,groovy,python"]
+
+The query language is one of:
+
+`PGQL`:: The default. Queries are compiled to https://pgql-lang.org[PGQL] and need a data source that uses the PGQL JDBC driver from `com.oracle.database.graph:opg-pgql-jdbc`. Path finders return paths with `ANY SHORTEST`, `ALL SHORTEST` and `ALL` searches.
+`SQL_PGQ`:: Queries are compiled to SQL/PGQ `GRAPH_TABLE` queries, which run on any Oracle Database 23ai data source. Path finders check for paths and count them, and `StartsWith`, `EndsWith` and `Contains` are supported through `LIKE`.
+
+Property graphs over tables are read only views: write the tables with a JDBC repository, for example a ann:data.jdbc.annotation.JdbcRepository[] over the same entities. Path finders need a fixed maximum depth set with ann:data.graph.annotation.PathLimit[] on the method, and relationship finders a single relationship type.
