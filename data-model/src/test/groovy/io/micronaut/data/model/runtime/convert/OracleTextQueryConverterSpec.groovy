@@ -31,8 +31,10 @@ class OracleTextQueryConverterSpec extends Specification {
         '"quoted" words'           | MatchMode.PHRASE | POSITIVE | "{quoted words}"
         "mic dat"                  | MatchMode.PREFIX | FULL     | "mic% & dat%"
         '"exact words" mic'        | MatchMode.PREFIX | FULL     | "{exact words} & mic%"
-        "coffe"                    | MatchMode.FUZZY  | FULL     | "fuzzy(coffe,60,100)"
-        "coffe tee"                | MatchMode.FUZZY  | FULL     | "fuzzy(coffe,60,100) | fuzzy(tee,60,100)"
+        "coffe"                    | MatchMode.FUZZY  | FULL     | "fuzzy({coffe},60,100)"
+        "coffe tee"                | MatchMode.FUZZY  | FULL     | "fuzzy({coffe},60,100) | fuzzy({tee},60,100)"
+        "near about"               | MatchMode.FUZZY  | FULL     | "fuzzy({near},60,100) | fuzzy({about},60,100)"
+        "a_c"                      | MatchMode.PREFIX | FULL     | "ac%"
         "and or not"               | MatchMode.ANY    | FULL     | "{and} | {or} | {not}"
         "a{b}c"                    | MatchMode.ANY    | FULL     | "{abc}"
         ""                         | MatchMode.ANY    | FULL     | "{mn_no_match_0}"
@@ -47,6 +49,6 @@ class OracleTextQueryConverterSpec extends Specification {
         OracleTextQueryConverter.converterFor(MatchMode.ANY, FULL) == OracleTextQueryConverter.Any.name
         OracleTextQueryConverter.converterFor(MatchMode.ALL, POSITIVE) == OracleTextQueryConverter.AllPositive.name
         OracleTextQueryConverter.converterFor(MatchMode.PHRASE, NEGATED) == OracleTextQueryConverter.Negated.name
-        new OracleTextQueryConverter.FuzzyPositive().convertToPersistedValue("coffe -x", null) == "fuzzy(coffe,60,100)"
+        new OracleTextQueryConverter.FuzzyPositive().convertToPersistedValue("coffe -x", null) == "fuzzy({coffe},60,100)"
     }
 }

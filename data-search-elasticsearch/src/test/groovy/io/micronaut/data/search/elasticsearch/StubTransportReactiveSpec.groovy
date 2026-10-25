@@ -85,6 +85,7 @@ class StubTransportReactiveSpec extends Specification {
         results.results().size() == 1
         results.results()[0].score().value() == 1d
         results.totalHits() == 1
+        context.getBean(StubSearchTransport).bodies.last().contains('"track_total_hits":true')
         repository.findByTitleSearch("kotlin").collectList().block()*.title == ["Programming Kotlin"]
         repository.countBySearch("kotlin").block() == 1L
         // the reactive and async SearchRepository variants run through the reactive criteria operations
@@ -120,6 +121,7 @@ class StubTransportReactiveSpec extends Specification {
 
         final Map<String, Map<String, Map<String, Object>>> indexes = [:]
         final List<String> calls = []
+        final List<String> bodies = []
 
         Map<String, Map<String, Object>> docs(String index) {
             return indexes.computeIfAbsent(index, { new LinkedHashMap<>() })
@@ -206,6 +208,7 @@ class StubTransportReactiveSpec extends Specification {
 
         @Override
         CompletionStage<SearchTransport.SearchHits> search(String index, String body) {
+            store.bodies.add(body)
             return done("search", store.hits(index))
         }
 
