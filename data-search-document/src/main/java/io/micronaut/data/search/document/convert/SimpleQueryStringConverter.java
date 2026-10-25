@@ -45,6 +45,15 @@ public abstract class SimpleQueryStringConverter implements TextSearchQueryConve
     public static final int MAX_FUZZINESS = 2;
     private static final String SPECIALS = "+|-\"*()~\\";
 
+    private final MatchMode mode;
+
+    /**
+     * @param mode The match mode this converter renders
+     */
+    protected SimpleQueryStringConverter(MatchMode mode) {
+        this.mode = mode;
+    }
+
     /**
      * @param mode The match mode
      * @return The class name of the converter for the mode
@@ -162,7 +171,7 @@ public abstract class SimpleQueryStringConverter implements TextSearchQueryConve
     @Override
     @Nullable
     public String convertToPersistedValue(@Nullable String entityValue, ConversionContext context) {
-        return render(entityValue, mode(), fuzziness());
+        return render(entityValue, mode, fuzziness());
     }
 
     @Override
@@ -170,11 +179,6 @@ public abstract class SimpleQueryStringConverter implements TextSearchQueryConve
     public String convertToEntityValue(@Nullable String persistedValue, ConversionContext context) {
         return persistedValue;
     }
-
-    /**
-     * @return The match mode this converter renders
-     */
-    protected abstract MatchMode mode();
 
     /**
      * @return The maximum edit distance this converter renders for a fuzzy match
@@ -188,9 +192,8 @@ public abstract class SimpleQueryStringConverter implements TextSearchQueryConve
      */
     @Singleton
     public static final class Any extends SimpleQueryStringConverter {
-        @Override
-        protected MatchMode mode() {
-            return MatchMode.ANY;
+        Any() {
+            super(MatchMode.ANY);
         }
     }
 
@@ -199,9 +202,8 @@ public abstract class SimpleQueryStringConverter implements TextSearchQueryConve
      */
     @Singleton
     public static final class All extends SimpleQueryStringConverter {
-        @Override
-        protected MatchMode mode() {
-            return MatchMode.ALL;
+        All() {
+            super(MatchMode.ALL);
         }
     }
 
@@ -210,9 +212,8 @@ public abstract class SimpleQueryStringConverter implements TextSearchQueryConve
      */
     @Singleton
     public static final class Phrase extends SimpleQueryStringConverter {
-        @Override
-        protected MatchMode mode() {
-            return MatchMode.PHRASE;
+        Phrase() {
+            super(MatchMode.PHRASE);
         }
     }
 
@@ -221,9 +222,8 @@ public abstract class SimpleQueryStringConverter implements TextSearchQueryConve
      */
     @Singleton
     public static final class Prefix extends SimpleQueryStringConverter {
-        @Override
-        protected MatchMode mode() {
-            return MatchMode.PREFIX;
+        Prefix() {
+            super(MatchMode.PREFIX);
         }
     }
 
@@ -232,9 +232,8 @@ public abstract class SimpleQueryStringConverter implements TextSearchQueryConve
      */
     @Singleton
     public static final class Fuzzy extends SimpleQueryStringConverter {
-        @Override
-        protected MatchMode mode() {
-            return MatchMode.FUZZY;
+        Fuzzy() {
+            super(MatchMode.FUZZY);
         }
     }
 
@@ -243,9 +242,8 @@ public abstract class SimpleQueryStringConverter implements TextSearchQueryConve
      */
     @Singleton
     public static final class Fuzzy2 extends SimpleQueryStringConverter {
-        @Override
-        protected MatchMode mode() {
-            return MatchMode.FUZZY;
+        Fuzzy2() {
+            super(MatchMode.FUZZY);
         }
 
         @Override
