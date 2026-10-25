@@ -414,24 +414,6 @@ public class CypherQueryBuilder implements QueryBuilder {
     }
 
     /**
-     * A rendered {@code ORDER BY} item.
-     */
-    private static final class OrderItem {
-        private final String expression;
-        private final boolean ascending;
-        private final Nulls nulls;
-        private final boolean onAssociation;
-        private @Nullable String alias;
-
-        private OrderItem(String expression, boolean ascending, Nulls nulls, boolean onAssociation) {
-            this.expression = expression;
-            this.ascending = ascending;
-            this.nulls = nulls;
-            this.onAssociation = onAssociation;
-        }
-    }
-
-    /**
      * Renders a literal value.
      *
      * @param value The value
@@ -1151,6 +1133,24 @@ public class CypherQueryBuilder implements QueryBuilder {
 
         private void appendAlias(String defaultAlias) {
             out.append(" AS ").append(GraphEntities.escapeName(alias != null ? alias : defaultAlias));
+        }
+    }
+
+    /**
+     * A rendered {@code ORDER BY} item.
+     */
+    private static final class OrderItem {
+        private final String expression;
+        private final boolean ascending;
+        private final Nulls nulls;
+        private final boolean onAssociation;
+        private @Nullable String alias;
+
+        private OrderItem(String expression, boolean ascending, Nulls nulls, boolean onAssociation) {
+            this.expression = expression;
+            this.ascending = ascending;
+            this.nulls = nulls;
+            this.onAssociation = onAssociation;
         }
     }
 }
