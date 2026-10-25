@@ -46,9 +46,9 @@ public final class SearchIndexDefinitions {
 
     private static final String KEYWORD = "keyword";
     private static final String FIELDS = "fields";
-    private static final Map<String, Object> KEYWORD_SUB_FIELD = Map.of("keyword", Map.of("type", "keyword", "ignore_above", 1024));
     private static final String ANALYZER = "analyzer";
     private static final String TYPE = "type";
+    private static final Map<String, Object> KEYWORD_SUB_FIELD = Map.of(KEYWORD, Map.of(TYPE, KEYWORD, "ignore_above", 1024));
 
     private SearchIndexDefinitions() {
     }
