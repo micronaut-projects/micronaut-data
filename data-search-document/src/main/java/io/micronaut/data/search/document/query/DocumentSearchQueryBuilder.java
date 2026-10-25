@@ -104,11 +104,13 @@ public final class DocumentSearchQueryBuilder implements QueryBuilder {
 
     private static final String KEYWORD_SUFFIX = ".keyword";
     private static final String QUERY = "query";
+    private static final Map<String, Object> MATCH_ALL = Map.of("match_all", Map.of());
     private static final String BOOL = "bool";
     private static final String MUST = "must";
     private static final String MUST_NOT = "must_not";
     private static final String SHOULD = "should";
     private static final String TERM = "term";
+    private static final String VALUE = "value";
     private static final String RANGE = "range";
     private static final String ORDER = "order";
 
@@ -125,7 +127,7 @@ public final class DocumentSearchQueryBuilder implements QueryBuilder {
         Bindings bindings = new Bindings();
         Map<String, Object> body = new LinkedHashMap<>();
         DocumentPredicateVisitor visitor = new DocumentPredicateVisitor(entity, bindings, definition.limit());
-        Map<String, Object> query = definition.predicate() == null ? Map.of("match_all", Map.of()) : visitor.build(definition.predicate());
+        Map<String, Object> query = definition.predicate() == null ? MATCH_ALL : visitor.build(definition.predicate());
         if (visitor.knnFields.isEmpty()) {
             // a vector ordering without a vector restriction is a nearest-neighbour search
             for (Order order : definition.order()) {
@@ -215,7 +217,7 @@ public final class DocumentSearchQueryBuilder implements QueryBuilder {
 
     private Map<String, Object> buildQuery(@Nullable Predicate predicate, PersistentEntity entity, Bindings bindings) {
         if (predicate == null) {
-            return Map.of("match_all", Map.of());
+            return MATCH_ALL;
         }
         return new DocumentPredicateVisitor(entity, bindings, -1).build(predicate);
     }
@@ -419,7 +421,7 @@ public final class DocumentSearchQueryBuilder implements QueryBuilder {
                 return;
             }
             if (ignoreCase) {
-                result = Map.of(TERM, Map.of(keywordPath(propertyPath), Map.of("value", value(rightExpression, propertyPath), "case_insensitive", true)));
+                result = Map.of(TERM, Map.of(keywordPath(propertyPath), Map.of(VALUE, value(rightExpression, propertyPath), "case_insensitive", true)));
                 return;
             }
             result = Map.of(TERM, Map.of(keywordPath(propertyPath), value(rightExpression, propertyPath)));
@@ -441,7 +443,7 @@ public final class DocumentSearchQueryBuilder implements QueryBuilder {
             if (leftExpression instanceof FunctionExpression<?> function && TextSearchSupport.SCORE_FUNCTION.equals(function.getName())) {
                 // a minimum relevance score is a request parameter, not a query clause
                 minScore = value(rightExpression, null);
-                result = Map.of("match_all", Map.of());
+                result = MATCH_ALL;
                 return;
             }
             result = range(leftExpression, "gte", rightExpression);
@@ -582,7 +584,7 @@ public final class DocumentSearchQueryBuilder implements QueryBuilder {
                 value = Map.of(QUERY_PARAMETER_PLACEHOLDER, -1, WILDCARD_HINT, hint, "value", literal(expression));
             }
             Map<String, Object> options = new LinkedHashMap<>();
-            options.put("value", value);
+            options.put(VALUE, value);
             if (hint.endsWith("_ignore_case")) {
                 options.put("case_insensitive", true);
             }
