@@ -247,9 +247,8 @@ public abstract class SimpleQueryStringConverter implements TextSearchQueryConve
      */
     @Singleton
     public static final class Native extends SimpleQueryStringConverter {
-        @Override
-        protected MatchMode mode() {
-            return MatchMode.NATIVE;
+        Native() {
+            super(MatchMode.NATIVE);
         }
     }
 
