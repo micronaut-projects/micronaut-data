@@ -20,7 +20,7 @@ import io.micronaut.core.annotation.Experimental;
 /**
  * Manages the full-text search index of a {@link io.micronaut.data.annotation.search.Searchable} entity at
  * runtime, beyond the create-if-missing of schema generation: one bean per store (a JDBC datasource, the
- * MongoDB client, the document search transports).
+ * MongoDB client, the document search transports). An R2DBC datasource has none, as the operations block.
  *
  * @since 5.4.0
  */
@@ -42,7 +42,7 @@ public interface SearchIndexOperations {
 
     /**
      * Drops the indexes backing the entity's search. On a document store this drops the index holding
-     * the documents themselves.
+     * the documents themselves, so the data is gone: do not expose it to untrusted callers.
      *
      * @param entityType The entity
      */
@@ -58,7 +58,7 @@ public interface SearchIndexOperations {
     void sync(Class<?> entityType);
 
     /**
-     * Drops and creates the indexes.
+     * Drops and creates the indexes. On a document store this deletes the stored documents.
      *
      * @param entityType The entity
      */

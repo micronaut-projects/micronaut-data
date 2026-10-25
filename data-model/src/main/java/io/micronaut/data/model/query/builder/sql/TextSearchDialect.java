@@ -402,7 +402,7 @@ public interface TextSearchDialect {
          */
         public static final String REGCONFIG_FUNCTION = "mn_regconfig";
         private static final String REGCONFIG_FUNCTION_DDL = "CREATE OR REPLACE FUNCTION " + REGCONFIG_FUNCTION
-            + "(cfg text) RETURNS regconfig AS 'SELECT cfg::regconfig' LANGUAGE sql IMMUTABLE;";
+            + "(cfg text) RETURNS regconfig AS 'SELECT cfg::regconfig' LANGUAGE sql IMMUTABLE SET search_path = pg_catalog, pg_temp;";
 
         @Override
         public void appendTextMatch(StringBuilder query,
