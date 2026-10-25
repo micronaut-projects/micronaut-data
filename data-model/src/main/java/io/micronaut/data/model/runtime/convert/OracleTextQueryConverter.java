@@ -175,11 +175,13 @@ public abstract class OracleTextQueryConverter implements TextSearchQueryConvert
         if (term.phrase() || mode == MatchMode.ANY || mode == MatchMode.ALL) {
             return escape(term.text());
         }
-        String word = term.text().replaceAll("[^\\p{L}\\p{N}_]", "");
+        // an underscore is Oracle Text's single-character wildcard, so it goes with the other symbols
+        String word = term.text().replaceAll("[^\\p{L}\\p{N}]", "");
         if (word.isEmpty()) {
             return null;
         }
-        return mode == MatchMode.PREFIX ? word + "%" : "fuzzy(" + word + FUZZY_SUFFIX;
+        // a reserved word such as near or about is escaped in braces inside fuzzy(); braces do not combine with %
+        return mode == MatchMode.PREFIX ? word + "%" : "fuzzy({" + word + "}" + FUZZY_SUFFIX;
     }
 
     private static String escape(String text) {
