@@ -27,6 +27,7 @@ import io.micronaut.data.graph.runtime.GraphSession;
 import io.micronaut.data.graph.runtime.GraphValueEncoderRegistrar;
 import io.micronaut.data.graph.runtime.GraphValueEncoders;
 import io.micronaut.data.graph.runtime.age.AgeConfiguration;
+import io.micronaut.data.graph.runtime.age.AgeGraphTenantResolver;
 import io.micronaut.data.graph.runtime.age.AgeParameters;
 import io.micronaut.data.graph.runtime.operations.AbstractGraphRepositoryOperations;
 import io.micronaut.data.graph.runtime.serde.GraphSerde;
@@ -36,6 +37,7 @@ import io.micronaut.data.model.runtime.AttributeConverterRegistry;
 import io.micronaut.data.model.runtime.RuntimeEntityRegistry;
 import io.micronaut.data.model.runtime.RuntimePersistentEntity;
 import io.micronaut.data.operations.async.AsyncRepositoryOperations;
+import io.micronaut.data.r2dbc.transaction.R2dbcReactorTransactionOperations;
 import io.micronaut.data.runtime.convert.DataConversionService;
 import io.micronaut.data.runtime.operations.ReactorToAsyncOperationsAdaptor;
 import io.micronaut.data.runtime.operations.internal.SynchronizedLazyValue;
@@ -43,6 +45,7 @@ import io.micronaut.data.runtime.date.DateTimeProvider;
 import io.micronaut.json.JsonMapper;
 import io.r2dbc.spi.Connection;
 import io.r2dbc.spi.ConnectionFactory;
+import org.jspecify.annotations.Nullable;
 
 import java.util.List;
 import java.util.function.Function;
@@ -64,6 +67,7 @@ final class DefaultAgeR2dbcRepositoryOperations extends AbstractGraphRepositoryO
     private final SynchronizedLazyValue<AsyncRepositoryOperations> asyncOperations = new SynchronizedLazyValue<>();
 
     DefaultAgeR2dbcRepositoryOperations(@Parameter ReactorConnectionOperations<Connection> connectionOperations,
+                                        @Parameter R2dbcReactorTransactionOperations transactionOperations,
                                         @Parameter String dataSourceName,
                                         AgeConfiguration configuration,
                                         JsonMapper jsonMapper,
@@ -72,11 +76,13 @@ final class DefaultAgeR2dbcRepositoryOperations extends AbstractGraphRepositoryO
                                         DataConversionService conversionService,
                                         AttributeConverterRegistry attributeConverterRegistry,
                                         List<GraphValueEncoderRegistrar> encoderRegistrars,
-                                        GraphSerde graphSerde) {
+                                        GraphSerde graphSerde,
+                                        @Nullable AgeGraphTenantResolver tenantResolver) {
         super(new AgeCypherQueryBuilder(), dateTimeProvider, runtimeEntityRegistry, conversionService,
             attributeConverterRegistry, null, encoderRegistrars, graphSerde);
-        this.reactiveOperations = new DefaultAgeReactorRepositoryOperations(this, connectionOperations, jsonMapper,
-            AgeStatements.validateGraphName(configuration.graphFor(dataSourceName)), configuration.isCreateExtension(), configuration.isCreateGraph());
+        this.reactiveOperations = new DefaultAgeReactorRepositoryOperations(this, connectionOperations, transactionOperations, jsonMapper,
+            AgeStatements.validateGraphName(configuration.graphFor(dataSourceName)), tenantResolver,
+            configuration.isCreateExtension(), configuration.isCreateGraph());
     }
 
     @Override

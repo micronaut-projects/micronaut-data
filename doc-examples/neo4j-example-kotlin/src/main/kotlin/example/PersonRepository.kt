@@ -13,6 +13,7 @@ import java.util.UUID
 interface PersonRepository : CrudRepository<Person, UUID> {
 
     fun findByName(name: String): Person?
+    fun findByKnowsName(name: String): List<Person>
 
     // tag::paths[]
     fun findShortestPath(from: Person, to: Person): GraphPath<Person>? // <1>

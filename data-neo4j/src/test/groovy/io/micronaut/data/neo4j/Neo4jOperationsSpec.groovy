@@ -1,7 +1,12 @@
 package io.micronaut.data.neo4j
 
+import ch.qos.logback.classic.Logger
+import ch.qos.logback.classic.spi.ILoggingEvent
+import ch.qos.logback.core.read.ListAppender
 import io.micronaut.core.annotation.AnnotationMetadata
 import io.micronaut.data.graph.tck.entities.Movie
+import io.micronaut.data.graph.tck.entities.Person
+import io.micronaut.data.graph.tck.entities.Role
 import io.micronaut.data.model.Pageable
 import io.micronaut.data.model.Sort
 import io.micronaut.data.model.runtime.PagedQuery
@@ -10,6 +15,7 @@ import io.micronaut.data.neo4j.tck.Neo4jMovieRepository
 import io.micronaut.test.extensions.spock.annotation.MicronautTest
 import io.micronaut.test.support.TestPropertyProvider
 import jakarta.inject.Inject
+import org.slf4j.LoggerFactory
 import spock.lang.Specification
 
 /**
@@ -63,6 +69,39 @@ class Neo4jOperationsSpec extends Specification implements TestPropertyProvider 
 
         then:
         movieRepository.count() == 0
+    }
+
+    void "saveAll writes the nodes and the relationships of each type in batches"() {
+        given: "the statements the operations run are captured"
+        def logger = (Logger) LoggerFactory.getLogger("io.micronaut.data.neo4j.operations.DefaultNeo4jRepositoryOperations")
+        def appender = new ListAppender<ILoggingEvent>()
+        appender.start()
+        logger.addAppender(appender)
+        def movies = (1..3).collect { i ->
+            def movie = new Movie("Movie $i".toString(), null, 2000 + i)
+            movie.roles = (1..2).collect { j -> new Role(["Role $i.$j".toString()], new Person("Actor $i.$j".toString(), 1970)) }
+            movie
+        }
+
+        when:
+        def saved = movieRepository.saveAll(movies)
+        def statements = appender.list*.formattedMessage.findAll { it.startsWith("Executing Cypher") }
+
+        then: "one query writes the movies, then one writes the people and one the roles of each movie"
+        statements.size() == 1 + 3 + 3
+        statements.count { it.contains('UNWIND $rows AS row MERGE (n:Movie') } == 1
+        statements.count { it.contains('UNWIND $rows AS row MERGE (n:Person') } == 3
+        statements.count { it.contains('UNWIND $rows AS row MATCH (a:Movie), (b:Person)') && it.contains('MERGE (a)<-[r:ACTED_IN]-(b) SET r += row.properties') } == 3
+
+        and:
+        saved*.roles*.id.flatten().every { it != null }
+        saved*.roles*.person*.id.flatten().every { it != null }
+        movieRepository.count() == 3
+        operations.executeQuery("MATCH (p:Person) RETURN count(p)", [:], Long) == [6L]
+        operations.executeQuery("MATCH (:Person)-[r:ACTED_IN]->(:Movie) RETURN count(r)", [:], Long) == [6L]
+
+        cleanup:
+        logger.detachAppender(appender)
     }
 
     void "find, count, stream and page without a query method"() {

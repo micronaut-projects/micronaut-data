@@ -562,7 +562,74 @@ public class CypherQueryBuilder implements GraphQueryBuilder {
      * @param propertyNames The stored names of the properties every node of the batch writes
      */
     protected void appendBatchProperties(StringBuilder query, String row, List<String> propertyNames) {
-        query.append(SET).append(ROOT).append(" += ").append(row).append('.').append(ROW_PROPERTIES);
+        appendBatchProperties(query, ROOT, row, propertyNames);
+    }
+
+    /**
+     * Appends the {@code SET} of the properties of a graph element of a batched write from the map of its row.
+     *
+     * @param query         The query
+     * @param variable      The variable of the graph element
+     * @param row           The variable of the row
+     * @param propertyNames The stored names of the properties every row of the batch writes
+     * @since 5.3.0
+     */
+    protected void appendBatchProperties(StringBuilder query, String variable, String row, List<String> propertyNames) {
+        query.append(SET).append(variable).append(" += ").append(row).append('.').append(ROW_PROPERTIES);
+    }
+
+    @Override
+    public boolean supportsBatchedLinks() {
+        return true;
+    }
+
+    /**
+     * Builds an {@code UNWIND} over the rows that matches the owner and the target of each row and merges the
+     * relationship between them like {@link #buildLinkQuery(Association, PersistentEntity, PersistentEntity, List, PersistentProperty)}.
+     *
+     * @param association          The association
+     * @param owner                The entity that declares the association
+     * @param target               The node entity at the far end
+     * @param propertyNames        The stored names of the relationship properties every row writes
+     * @param relationshipIdentity The identity of the relationship entity, or null if none
+     * @return The query
+     */
+    @Override
+    public String buildLinksQuery(Association association,
+                                  PersistentEntity owner,
+                                  PersistentEntity target,
+                                  List<String> propertyNames,
+                                  @Nullable PersistentProperty relationshipIdentity) {
+        String row = "row";
+        StringBuilder query = new StringBuilder("UNWIND $").append(ROWS_PARAMETER).append(" AS ").append(row).append(' ');
+        appendLinkNodes(query, owner, target, row);
+        query.append(" MERGE ");
+        String rel = "[" + PATH_RELATIONSHIP + ":" + GraphEntities.escapeName(GraphEntities.relationshipType(association)) + "]";
+        query.append(directed("(" + LINK_FROM + ")", rel, "(" + LINK_TO + ")", GraphEntities.direction(association)));
+        if (!propertyNames.isEmpty()) {
+            appendBatchProperties(query, PATH_RELATIONSHIP, row, propertyNames);
+        }
+        return query.append(RETURN).append(row).append('.').append(ROW_POSITION).append(" AS ").append(ROW_POSITION).append(", ")
+            .append(relationshipIdentity != null ? identityExpression(relationshipIdentity, PATH_RELATIONSHIP) : "null")
+            .append(" AS ").append(ID_PARAMETER).toString();
+    }
+
+    /**
+     * Appends the {@code MATCH} of the owner and the target of a row of a batched link write, as {@code a} and {@code b}.
+     *
+     * @param query  The query
+     * @param owner  The entity that declares the association
+     * @param target The node entity at the far end
+     * @param row    The variable of the row
+     * @since 5.3.0
+     */
+    protected void appendLinkNodes(StringBuilder query, PersistentEntity owner, PersistentEntity target, String row) {
+        query.append(MATCH_OPEN)
+            .append(LINK_FROM).append(labelExpression(owner)).append("), (")
+            .append(LINK_TO).append(labelExpression(target)).append(CLOSE_WHERE)
+            .append(identityExpression(owner.getIdentity(), LINK_FROM)).append(" = ").append(row).append('.').append(LINK_FROM_PARAMETER)
+            .append(AND)
+            .append(identityExpression(target.getIdentity(), LINK_TO)).append(" = ").append(row).append('.').append(LINK_TO_PARAMETER);
     }
 
     private String versionedMatch(PersistentEntity entity) {

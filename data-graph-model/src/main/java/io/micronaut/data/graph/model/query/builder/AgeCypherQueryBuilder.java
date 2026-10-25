@@ -179,11 +179,51 @@ public class AgeCypherQueryBuilder extends CypherQueryBuilder {
      */
     @Override
     protected void appendBatchProperties(StringBuilder query, String row, List<String> propertyNames) {
+        appendBatchProperties(query, ROOT, row, propertyNames);
+    }
+
+    @Override
+    protected void appendBatchProperties(StringBuilder query, String variable, String row, List<String> propertyNames) {
         for (int i = 0; i < propertyNames.size(); i++) {
             String name = GraphEntities.escapeName(propertyNames.get(i));
-            query.append(i == 0 ? " SET " : ", ").append(ROOT).append('.').append(name)
+            query.append(i == 0 ? " SET " : ", ").append(variable).append('.').append(name)
                 .append(" = ").append(row).append('.').append(ROW_PROPERTIES).append('.').append(name);
         }
+    }
+
+    /**
+     * Builds the batched link write of Apache AGE, which does not merge a relationship for every row of an
+     * {@code UNWIND}: the relationship of each row is created when it does not exist, or matched and updated.
+     *
+     * @param association          The association
+     * @param owner                The entity that declares the association
+     * @param target               The node entity at the far end
+     * @param propertyNames        The stored names of the relationship properties every row writes
+     * @param relationshipIdentity The identity of the relationship entity, or null if none
+     * @return The query
+     */
+    @Override
+    public String buildLinksQuery(Association association, PersistentEntity owner, PersistentEntity target,
+                                  List<String> propertyNames, @Nullable PersistentProperty relationshipIdentity) {
+        String row = "row";
+        StringBuilder nodes = new StringBuilder("UNWIND $").append(ROWS_PARAMETER).append(" AS ").append(row).append(' ');
+        appendLinkNodes(nodes, owner, target, row);
+        String type = ":" + GraphEntities.escapeName(GraphEntities.relationshipType(association));
+        Direction direction = GraphEntities.direction(association);
+        // AGE creates directed relationships only: an undirected one is matched in either direction and created as
+        // outgoing from the node that saves it
+        Direction createDirection = direction == Direction.UNDIRECTED ? Direction.OUTGOING : direction;
+        String id = " RETURN " + row + "." + ROW_POSITION + " AS " + ROW_POSITION + ", "
+            + (relationshipIdentity != null ? identityExpression(relationshipIdentity, PATH_RELATIONSHIP) : "null") + " AS " + ID_PARAMETER;
+        StringBuilder query = new StringBuilder(nodes)
+            .append(" OPTIONAL MATCH ").append(directed("(a)", "[existing" + type + "]", "(b)", direction))
+            .append(" WITH ").append(row).append(", a, b, existing WHERE existing IS NULL CREATE ")
+            .append(directed("(a)", "[" + PATH_RELATIONSHIP + type + "]", "(b)", createDirection));
+        appendBatchProperties(query, PATH_RELATIONSHIP, row, propertyNames);
+        query.append(id).append(" UNION ").append(nodes).append(MATCH)
+            .append(directed("(a)", "[" + PATH_RELATIONSHIP + type + "]", "(b)", direction));
+        appendBatchProperties(query, PATH_RELATIONSHIP, row, propertyNames);
+        return AgeStatements.wrap(query.append(id).toString());
     }
 
     @Override

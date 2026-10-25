@@ -15,6 +15,7 @@ import io.micronaut.data.model.jpa.criteria.impl.expression.LiteralExpression
 import io.micronaut.data.model.jpa.criteria.impl.predicate.LikePredicate
 import io.micronaut.data.model.jpa.criteria.PersistentEntityCriteriaQueryBuilder
 import io.micronaut.data.model.query.builder.QueryResult
+import io.micronaut.data.model.runtime.RuntimeAssociation
 import io.micronaut.data.model.runtime.RuntimeEntityRegistry
 import io.micronaut.data.model.runtime.RuntimePersistentEntity
 import io.micronaut.data.model.runtime.RuntimePersistentProperty
@@ -227,6 +228,28 @@ class CypherCriteriaQuerySpec extends Specification {
             'UNWIND $rows AS row MERGE (n:Note {code: row.id}) SET n += row.properties RETURN row.position AS position, n.code AS id'
         builder.buildWriteNodesQuery(registry.getEntity(Note), ['code', 'text'], true, true) ==
             'UNWIND $rows AS row MATCH (n:Note) WHERE n.code = row.id AND n.version = row.version SET n += row.properties RETURN row.position AS position, n.code AS id'
+    }
+
+    void "test batched link writes"() {
+        given:
+        def registry = new TestEntityRegistry()
+        def person = registry.getEntity(Person)
+        def movie = registry.getEntity(Movie)
+        def movies = person.getPropertyByName("movies") as RuntimeAssociation
+        def nodes = 'UNWIND $rows AS row MATCH (a:Person), (b:Movie) WHERE id(a) = row.from AND b.title = row.to'
+
+        expect:
+        new CypherQueryBuilder().supportsBatchedLinks()
+        new AgeCypherQueryBuilder().supportsBatchedLinks()
+        new CypherQueryBuilder().buildLinksQuery(movies, person, movie, [], null) ==
+            nodes + ' MERGE (a)-[r:ACTED_IN]->(b) RETURN row.position AS position, null AS id'
+        new CypherQueryBuilder().buildLinksQuery(movies, person, movie, ['roles', 'since'], person.getPropertyByName('id')) ==
+            nodes + ' MERGE (a)-[r:ACTED_IN]->(b) SET r += row.properties RETURN row.position AS position, id(r) AS id'
+        new AgeCypherQueryBuilder().buildLinksQuery(movies, person, movie, ['roles'], null).contains(
+            nodes + ' OPTIONAL MATCH (a)-[existing:ACTED_IN]->(b) WITH row, a, b, existing WHERE existing IS NULL CREATE (a)-[r:ACTED_IN]->(b)'
+                + ' SET r.roles = row.properties.roles RETURN row.position AS position, null AS id UNION '
+                + nodes + ' MATCH (a)-[r:ACTED_IN]->(b) SET r.roles = row.properties.roles RETURN row.position AS position, null AS id')
+        new AgeCypherQueryBuilder().buildLinksQuery(movies, person, movie, [], null).endsWith('AS ("position" ag_catalog.agtype, "id" ag_catalog.agtype)')
     }
 
     private String select(Closure<?> definition) {
