@@ -72,11 +72,6 @@ public final class ElasticsearchSearchTransport implements SearchTransport {
     }
 
     @Override
-    public String index(String index, @Nullable String id, Map<String, Object> source, DocumentSearchConfiguration.Refresh refresh) {
-        return index(index, id, source, null, refresh);
-    }
-
-    @Override
     public String index(String index, @Nullable String id, Map<String, Object> source, @Nullable Long version, DocumentSearchConfiguration.Refresh refresh) {
         try {
             return client.index(i -> ElasticsearchAsyncSearchTransport.indexRequest(i, index, id, source, version, refresh)).id();
@@ -84,17 +79,6 @@ public final class ElasticsearchSearchTransport implements SearchTransport {
             throw new DataAccessException("Elasticsearch index failed: " + e.getMessage(), e);
         } catch (RuntimeException e) {
             throw ElasticsearchAsyncSearchTransport.conflictOrFailure(e, id);
-        }
-    }
-
-    @Override
-    @Nullable
-    public SearchHit getHit(String index, String id) {
-        try {
-            var response = client.get(g -> g.index(index).id(id), Map.class);
-            return response.found() ? new SearchHit(id, null, (Map<String, Object>) response.source(), Map.of(), response.version(), List.of()) : null;
-        } catch (IOException e) {
-            throw new DataAccessException("Elasticsearch get failed: " + e.getMessage(), e);
         }
     }
 
@@ -163,4 +147,21 @@ public final class ElasticsearchSearchTransport implements SearchTransport {
     private static Refresh refresh(DocumentSearchConfiguration.Refresh refresh) {
         return ElasticsearchAsyncSearchTransport.refresh(refresh);
     }
+
+    @Override
+    public String index(String index, @Nullable String id, Map<String, Object> source, DocumentSearchConfiguration.Refresh refresh) {
+        return index(index, id, source, null, refresh);
+    }
+
+    @Override
+    @Nullable
+    public SearchHit getHit(String index, String id) {
+        try {
+            var response = client.get(g -> g.index(index).id(id), Map.class);
+            return response.found() ? new SearchHit(id, null, (Map<String, Object>) response.source(), Map.of(), response.version(), List.of()) : null;
+        } catch (IOException e) {
+            throw new DataAccessException("Elasticsearch get failed: " + e.getMessage(), e);
+        }
+    }
+
 }
