@@ -82,6 +82,7 @@ class PersonRepositorySpec extends AbstractNeo4jSpec {
         followedBy
         !personRepository.hasPathByFollows(joe, fred, Direction.OUTGOING)
         personRepository.hasPathByFollows(joe, fred, Direction.UNDIRECTED)
+    }
 
     void "link a node without saving it"() {
         when:

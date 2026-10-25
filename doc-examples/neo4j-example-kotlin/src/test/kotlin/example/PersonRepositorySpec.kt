@@ -85,6 +85,7 @@ class PersonRepositorySpec : AbstractNeo4jTest() {
         assertTrue(followedBy)
         assertFalse(personRepository.hasPathByFollows(joe, fred, Direction.OUTGOING))
         assertTrue(personRepository.hasPathByFollows(joe, fred, Direction.UNDIRECTED))
+    }
 
     @Test
     fun testCascade() {
