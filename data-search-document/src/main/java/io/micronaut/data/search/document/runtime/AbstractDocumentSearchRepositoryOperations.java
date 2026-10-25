@@ -308,20 +308,22 @@ abstract class AbstractDocumentSearchRepositoryOperations extends AbstractReposi
         if (sort.isSorted()) {
             List<Map<String, Object>> entries = new ArrayList<>();
             for (Sort.Order order : sort.getOrderBy()) {
-                String field;
-                if (DocumentSearchQueryBuilder.SCORE_FIELD.equals(order.getProperty())) {
-                    field = DocumentSearchQueryBuilder.SCORE_FIELD;
-                } else {
-                    io.micronaut.data.model.PersistentPropertyPath path = entity.getPropertyPath(order.getProperty());
-                    if (path == null) {
-                        throw new DataAccessException("Cannot sort on unknown property: " + order.getProperty());
-                    }
-                    field = DocumentSearchQueryBuilder.keywordPath(path);
-                }
-                entries.add(Map.of(field, Map.of("order", order.isAscending() ? "asc" : "desc")));
+                entries.add(Map.of(sortField(order, entity), Map.of("order", order.isAscending() ? "asc" : "desc")));
             }
             body.put("sort", entries);
         }
+    }
+
+    /** The field a sort order applies to: the score, or the keyword path of an entity property. */
+    private static String sortField(Sort.Order order, RuntimePersistentEntity<?> entity) {
+        if (DocumentSearchQueryBuilder.SCORE_FIELD.equals(order.getProperty())) {
+            return DocumentSearchQueryBuilder.SCORE_FIELD;
+        }
+        io.micronaut.data.model.PersistentPropertyPath path = entity.getPropertyPath(order.getProperty());
+        if (path == null) {
+            throw new DataAccessException("Cannot sort on unknown property: " + order.getProperty());
+        }
+        return DocumentSearchQueryBuilder.keywordPath(path);
     }
 
     /**
