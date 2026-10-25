@@ -37,6 +37,7 @@ import io.micronaut.data.model.vector.search.SearchResult;
 import io.micronaut.data.model.vector.search.SearchResults;
 import jakarta.persistence.criteria.Expression;
 import jakarta.persistence.criteria.ParameterExpression;
+import jakarta.persistence.criteria.Predicate;
 import jakarta.persistence.criteria.Selection;
 import org.jspecify.annotations.Nullable;
 
@@ -96,7 +97,13 @@ public final class SearchQuerySupport {
         ParameterExpression<String> queryParameter = cb.parameter(String.class, null, searchQuery.getQuery());
         TextMatchOptions options = new TextMatchOptions(searchQuery.getBoosts(), searchQuery.getFuzziness(), searchQuery.getLanguage());
         Expression<Double> score = cb.searchScore(fields, queryParameter, searchQuery.getMode(), options);
-        criteriaQuery.where(cb.textMatch(fields, queryParameter, searchQuery.getMode(), options));
+        Predicate match = cb.textMatch(fields, queryParameter, searchQuery.getMode(), options);
+        if (searchQuery.getMinScore() != null && !searchQuery.isHybrid()) {
+            // the store drops the hits below the threshold, so the page and the total are exact; a hybrid
+            // threshold compares the fused score instead, in fuse()
+            match = cb.and(match, cb.greaterThanOrEqualTo(score, cb.parameter(Double.class, null, searchQuery.getMinScore())));
+        }
+        criteriaQuery.where(match);
         Set<String> highlightFields = resolveHighlightFields(root, searchQuery);
         List<Selection<?>> selections = new ArrayList<>(2 + highlightFields.size());
         selections.add(root);
@@ -305,17 +312,17 @@ public final class SearchQuerySupport {
     }
 
     /**
-     * Drops the hits below the query's minimum score. The filter runs on the retrieved page, as the
-     * stores disagree on whether a score can appear in a restriction.
+     * The results of a text query, empty rather than null. The query's minimum score is a restriction of
+     * {@link #textQuery} since 5.4, so nothing is filtered here any more.
      *
      * @param results The results
      * @param searchQuery The query
-     * @return The filtered results
+     * @return The results
      */
     public static SearchResults<Object> applyMinScore(@Nullable SearchResults<Object> results, SearchQuery searchQuery) {
         SearchResults<Object> present = orEmpty(results);
         Double minScore = searchQuery.getMinScore();
-        if (minScore == null) {
+        if (minScore == null || !searchQuery.isHybrid()) {
             return present;
         }
         List<SearchResult<Object>> kept = new ArrayList<>(present.results().size());
