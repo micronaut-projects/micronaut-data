@@ -8,4 +8,19 @@ dependencies {
     implementation mnMongo.mongo.driver
     implementation(mnTestResources.testcontainers.mongodb)
     runtimeOnly mn.snakeyaml
+
+    jmh projects.micronautDataMongodb
+    jmh mnMongo.mongo.driver
+    jmh mn.micronaut.runtime
+}
+
+jmh {
+    includes = ['MongoMapping']
+    fork = 2
+    warmupIterations = 3
+    warmup = '1s'
+    iterations = 5
+    timeOnIteration = '1s'
+    benchmarkMode = ['thrpt']
+    timeUnit = 's'
 }
