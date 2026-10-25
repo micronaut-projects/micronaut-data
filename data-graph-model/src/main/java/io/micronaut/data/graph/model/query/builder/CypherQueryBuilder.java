@@ -26,8 +26,6 @@ import io.micronaut.data.graph.model.criteria.RelatedPredicate;
 import io.micronaut.data.graph.model.GraphIndex;
 import io.micronaut.data.graph.model.query.PathQueryDefinition;
 import io.micronaut.data.model.Association;
-import io.micronaut.data.model.DataType;
-import io.micronaut.data.model.JsonDataType;
 import io.micronaut.data.model.PersistentEntity;
 import io.micronaut.data.model.PersistentProperty;
 import io.micronaut.data.model.jpa.criteria.IExpression;
@@ -1831,97 +1829,6 @@ public class CypherQueryBuilder implements GraphQueryBuilder {
         @Override
         public void visit(ExistsSubqueryPredicate existsSubqueryPredicate) {
             throw new UnsupportedOperationException("Subqueries are not supported by graph repositories");
-        }
-    }
-
-    /**
-     * The parameter of a {@code LIKE} pattern: either the regular expression of a pattern known when the query is
-     * built, or the pattern itself with the converter that translates it at bind time.
-     */
-    private static final class LikeParameterBinding implements QueryParameterBinding {
-        private final QueryParameterBinding delegate;
-        private final @Nullable String regex;
-        private final @Nullable String converterClassName;
-
-        private LikeParameterBinding(QueryParameterBinding delegate, @Nullable String regex, @Nullable String converterClassName) {
-            this.delegate = delegate;
-            this.regex = regex;
-            this.converterClassName = converterClassName;
-        }
-
-        @Override
-        public @Nullable Object getValue() {
-            return regex != null ? regex : delegate.getValue();
-        }
-
-        @Override
-        public @Nullable String getConverterClassName() {
-            return converterClassName != null ? converterClassName : delegate.getConverterClassName();
-        }
-
-        @Override
-        public @Nullable String getName() {
-            return delegate.getName();
-        }
-
-        @Override
-        public String getKey() {
-            return delegate.getKey();
-        }
-
-        @Override
-        public DataType getDataType() {
-            return delegate.getDataType();
-        }
-
-        @Override
-        public JsonDataType getJsonDataType() {
-            return delegate.getJsonDataType();
-        }
-
-        @Override
-        public int getParameterIndex() {
-            return delegate.getParameterIndex();
-        }
-
-        @Override
-        public String @Nullable [] getParameterBindingPath() {
-            return delegate.getParameterBindingPath();
-        }
-
-        @Override
-        public String @Nullable [] getPropertyPath() {
-            return delegate.getPropertyPath();
-        }
-
-        @Override
-        public boolean isAutoPopulated() {
-            return delegate.isAutoPopulated();
-        }
-
-        @Override
-        public boolean isRequiresPreviousPopulatedValue() {
-            return delegate.isRequiresPreviousPopulatedValue();
-        }
-
-        @Override
-        public boolean isExpandable() {
-            return delegate.isExpandable();
-        }
-
-        @Override
-        public boolean isExpression() {
-            return delegate.isExpression();
-        }
-
-        @Override
-        public @Nullable String getRole() {
-            return delegate.getRole();
-        }
-
-        @Override
-        public @Nullable String getTableAlias() {
-            return delegate.getTableAlias();
         }
     }
 
