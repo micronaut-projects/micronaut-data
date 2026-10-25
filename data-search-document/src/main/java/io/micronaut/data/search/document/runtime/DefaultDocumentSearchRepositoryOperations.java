@@ -120,7 +120,7 @@ public final class DefaultDocumentSearchRepositoryOperations extends AbstractRep
 
     private String indexName(RuntimePersistentEntity<?> entity) {
         String prefix = configuration.getIndexPrefix();
-        return prefix == null ? entity.getPersistedName() : prefix + entity.getPersistedName();
+        return SearchIndexNames.validate(prefix == null ? entity.getPersistedName() : prefix + entity.getPersistedName());
     }
 
     @Override
@@ -143,6 +143,8 @@ public final class DefaultDocumentSearchRepositoryOperations extends AbstractRep
         RuntimePersistentEntity<T> entity = storedQuery.getPersistentEntity();
         if (preparedQuery.getResultType() == SearchResults.class) {
             applyPageable(body, preparedQuery.getPageable(), entity);
+            // totalHits is exact, not capped at the result window
+            body.put("track_total_hits", true);
             SearchTransport.SearchHits hits = transport.search(indexName(entity), SearchJson.write(body));
             List<SearchResult<T>> results = new ArrayList<>(hits.hits().size());
             for (SearchTransport.SearchHit hit : hits.hits()) {
@@ -150,6 +152,8 @@ public final class DefaultDocumentSearchRepositoryOperations extends AbstractRep
             }
             return (R) SearchResults.of(results, hits.total());
         }
+        // a single result still honours a Sort parameter, which decides which hit comes first
+        applyPageable(body, preparedQuery.getPageable(), entity);
         body.put("size", 1);
         List<R> results = search(body, entity, preparedQuery);
         return results.isEmpty() ? null : results.get(0);

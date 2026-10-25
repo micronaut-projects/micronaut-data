@@ -59,6 +59,14 @@ abstract class AbstractTextSearchSpec extends Specification {
         return true
     }
 
+    /**
+     * @return Whether {@code SearchAll} over several search fields matches terms spread across the
+     * fields; Oracle requires every term within one field
+     */
+    boolean allTermsAcrossFields() {
+        return true
+    }
+
     void setup() {
         bookSearchRepository.deleteAll()
         bookSearchRepository.saveAll([
@@ -163,6 +171,11 @@ abstract class AbstractTextSearchSpec extends Specification {
         bookSearchRepository.searchByTitleSearchAll("programming coffee").results().isEmpty()
     }
 
+    void "SearchAll over every search field follows the store's rule for terms in different fields"() {
+        expect: "cooking is only in the title of the coffee book and beans only in its description"
+        bookSearchRepository.countBySearchAll("cooking beans") == (allTermsAcrossFields() ? 1 : 0)
+    }
+
     void "SearchPhrase requires adjacent terms in order"() {
         assumeTrue(capabilities().contains(SearchCapability.PHRASE))
         def repository = (BookPhraseSearchRepository) bookSearchRepository
@@ -250,6 +263,26 @@ abstract class AbstractTextSearchSpec extends Specification {
         expect:
         bookSearchRepository.search(SearchQuery.builder("programming").minScore(top).build()).results()*.entity()*.title == ["The Rust Programming Language"]
         bookSearchRepository.search(SearchQuery.builder("programming").minScore(top * 10 + 1).build()).results().isEmpty()
+    }
+
+    void "search with a SearchQuery rejects a field that is not a search field"() {
+        when:
+        bookSearchRepository.search(SearchQuery.builder("programming").fields("author").build())
+
+        then:
+        IllegalArgumentException e = thrown()
+        e.message.contains("'author'")
+        e.message.contains("is not a @SearchField")
+    }
+
+    void "search with a SearchQuery rejects field scoping the store cannot honour"() {
+        assumeTrue(!capabilities().contains(SearchCapability.FIELD_SCOPE))
+
+        when:
+        bookSearchRepository.search(SearchQuery.builder("systems").fields("title").build())
+
+        then:
+        thrown(UnsupportedSearchFeatureException)
     }
 
     void "search with a SearchQuery rejects options the operation cannot honour"() {
