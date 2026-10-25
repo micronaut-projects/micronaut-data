@@ -385,9 +385,18 @@ public final class DocumentSearchQueryBuilder implements QueryBuilder {
         public void visit(ConjunctionPredicate conjunction) {
             List<Map<String, Object>> must = new ArrayList<>();
             for (IExpression<Boolean> predicate : conjunction.getPredicates()) {
-                must.add(render(predicate));
+                Map<String, Object> rendered = render(predicate);
+                // match_all restricts nothing but adds 1.0 to every hit's score inside "must", which would
+                // shift the scores a min_score compares against
+                if (!MATCH_ALL.equals(rendered)) {
+                    must.add(rendered);
+                }
             }
-            result = must.size() == 1 ? must.get(0) : Map.of(BOOL, Map.of(MUST, must));
+            if (must.isEmpty()) {
+                result = MATCH_ALL;
+            } else {
+                result = must.size() == 1 ? must.get(0) : Map.of(BOOL, Map.of(MUST, must));
+            }
         }
 
         @Override
