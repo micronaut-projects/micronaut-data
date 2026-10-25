@@ -309,7 +309,7 @@ public final class DocumentSearchQueryBuilder implements QueryBuilder {
 
         @Override
         public void visitIdEquals(Expression<?> expression) {
-            result = Map.of("ids", Map.of("values", List.of(value(expression, null))));
+            result = Map.of("ids", Map.of("values", List.of(requireValue(value(expression, null), expression))));
         }
 
         @Override
@@ -470,7 +470,7 @@ public final class DocumentSearchQueryBuilder implements QueryBuilder {
             if (expression instanceof BindingParameter parameter) {
                 value = bindings.placeholder(parameter, propertyPath, hint);
             } else {
-                value = Map.of(QUERY_PARAMETER_PLACEHOLDER, -1, WILDCARD_HINT, hint, VALUE, literal(expression));
+                value = Map.of(QUERY_PARAMETER_PLACEHOLDER, -1, WILDCARD_HINT, hint, VALUE, requireValue(literal(expression), expression));
             }
             Map<String, Object> options = new LinkedHashMap<>();
             options.put(VALUE, value);
@@ -486,6 +486,14 @@ public final class DocumentSearchQueryBuilder implements QueryBuilder {
                 return bindings.placeholder(parameter, propertyPath, null);
             }
             return literal(expression);
+        }
+
+        /** A literal that the query cannot express as null, such as an id or a pattern. */
+        private static Object requireValue(@Nullable Object value, Expression<?> expression) {
+            if (value == null) {
+                throw new IllegalArgumentException("A null literal is not supported here by document search stores: " + expression + "; use an IS NULL predicate");
+            }
+            return value;
         }
 
         @Nullable
