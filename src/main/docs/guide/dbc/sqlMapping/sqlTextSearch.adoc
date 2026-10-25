@@ -27,7 +27,7 @@ snippet::example.BookService[project-base="doc-examples/jdbc-search-example", so
 <3> The relevance score of the hit. On PostgreSQL it is the `ts_rank_cd` rank. Scores order the results and are not comparable between stores; `SearchResults.maxScore()` helps to normalise them.
 <4> `countHits(String)` counts the matches.
 
-The search string uses a portable grammar: words separated by whitespace match any term, `"quoted words"` match a phrase, a leading `-` excludes a term, and `OR` separates alternatives. `bake coffee -cake OR tea` matches rows containing `bake` or `coffee` but not `cake`, or rows containing `tea`. User input is always safe: Micronaut Data parses the string itself and converts it to the store's query syntax at bind time.
+The search string uses a portable grammar: words separated by whitespace match any term, `"quoted words"` match a phrase, a leading `-` excludes a term, and `OR` separates alternatives. `bake coffee -cake OR tea` matches rows containing `bake` or `coffee` but not `cake`, or rows containing `tea`. The search string is safe to take from user input: Micronaut Data parses it itself, converts it to the store's query syntax at bind time and binds it as a parameter. The other `SearchQuery` options are not meant for user input: `language` must be a configuration name and is rejected otherwise, `syntax(NATIVE)` passes the store's own syntax through, and `candidates` sizes the hybrid fetch.
 
 == Derived search methods
 
