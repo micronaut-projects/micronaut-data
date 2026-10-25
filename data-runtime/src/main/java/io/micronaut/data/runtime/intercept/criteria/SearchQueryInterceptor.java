@@ -269,7 +269,7 @@ public class SearchQueryInterceptor extends AbstractSpecificationInterceptor<Obj
         if (kept.size() == results.results().size()) {
             return results;
         }
-        long dropped = results.results().size() - kept.size();
+        long dropped = (long) results.results().size() - kept.size();
         return SearchResults.of(kept, Math.max(results.totalHits() - dropped, kept.size()));
     }
 
