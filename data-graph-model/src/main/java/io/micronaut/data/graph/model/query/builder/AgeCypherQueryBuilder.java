@@ -269,6 +269,20 @@ public class AgeCypherQueryBuilder extends CypherQueryBuilder {
     }
 
     @Override
+    protected String existsPattern(String pattern, @Nullable String where) {
+        if (where != null) {
+            // AGE has no EXISTS subqueries, and a graph id cannot appear in a pattern's property map
+            throw new IllegalArgumentException("Apache AGE cannot match a related node by its database identifier: give the target entity an assigned identifier");
+        }
+        if (pattern.contains("*1..")) {
+            // A variable-length pattern inside EXISTS crashes the AGE 1.5 backend
+            throw new IllegalArgumentException("Apache AGE cannot test for a chain of relationships in a criterion: use a path finder with @PathLimit");
+        }
+        // AGE reads a pattern in WHERE only through the EXISTS function
+        return "EXISTS(" + pattern + ")";
+    }
+
+    @Override
     protected boolean supportsUnboundedPaths() {
         return false;
     }

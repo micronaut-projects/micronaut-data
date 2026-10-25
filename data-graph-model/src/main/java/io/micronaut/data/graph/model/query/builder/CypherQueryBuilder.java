@@ -19,6 +19,10 @@ import io.micronaut.core.annotation.AnnotationMetadata;
 import io.micronaut.core.annotation.Introspected;
 import io.micronaut.data.graph.annotation.Direction;
 import io.micronaut.data.graph.model.GraphEntities;
+import io.micronaut.data.graph.model.criteria.DynamicPropertyExpression;
+import io.micronaut.data.graph.model.criteria.GraphExpressionVisitor;
+import io.micronaut.data.graph.model.criteria.GraphPredicateVisitor;
+import io.micronaut.data.graph.model.criteria.RelatedPredicate;
 import io.micronaut.data.graph.model.GraphIndex;
 import io.micronaut.data.graph.model.query.PathQueryDefinition;
 import io.micronaut.data.model.Association;
@@ -849,6 +853,19 @@ public class CypherQueryBuilder implements GraphQueryBuilder {
     }
 
     /**
+     * Renders the predicate that a pattern starting at the root node exists. A plain pattern is a
+     * predicate on its own; a pattern that needs a condition on one of its nodes becomes an
+     * {@code EXISTS} subquery.
+     *
+     * @param pattern The pattern
+     * @param where   The condition on the nodes of the pattern, or null
+     * @return The predicate
+     */
+    protected String existsPattern(String pattern, @Nullable String where) {
+        return where == null ? pattern : "EXISTS { MATCH " + pattern + " WHERE " + where + " }";
+    }
+
+    /**
      * Renders the expression that collects the fetched values of a relationship entity association.
      *
      * @param relVariable  The variable of the relationship
@@ -1130,6 +1147,7 @@ public class CypherQueryBuilder implements GraphQueryBuilder {
         private final List<QueryParameterBinding> parameterBindings = new ArrayList<>();
         private final Map<String, String> additionalRequiredParameters = new LinkedHashMap<>();
         private int position;
+        private int relatedVariables;
 
         private QueryState(PersistentEntity entity, Collection<JoinPath> joinPaths) {
             this.entity = entity;
@@ -1138,6 +1156,10 @@ public class CypherQueryBuilder implements GraphQueryBuilder {
 
         private boolean hasPatterns() {
             return !patterns.isEmpty();
+        }
+
+        private String nextRelatedVariable() {
+            return "m" + relatedVariables++;
         }
 
         private int pushParameter(BindingParameter bindingParameter, BindingParameter.BindingContext bindingContext) {
@@ -1238,7 +1260,7 @@ public class CypherQueryBuilder implements GraphQueryBuilder {
     /**
      * Renders expressions.
      */
-    private class ExpressionRenderer implements ExpressionVisitor {
+    private class ExpressionRenderer implements ExpressionVisitor, GraphExpressionVisitor {
         final QueryState state;
         final StringBuilder out;
         int depth;
@@ -1353,6 +1375,12 @@ public class CypherQueryBuilder implements GraphQueryBuilder {
         }
 
         @Override
+        public void visit(DynamicPropertyExpression<?> expression) {
+            // A schemaless property is read straight off the root node; a node without it yields null
+            out.append(ROOT).append('.').append(GraphEntities.escapeName(expression.getName()));
+        }
+
+        @Override
         public void visit(IdExpression<?, ?> idExpression) {
             PersistentEntity entity = state.entity;
             if (!entity.hasIdentity()) {
@@ -1429,10 +1457,58 @@ public class CypherQueryBuilder implements GraphQueryBuilder {
     /**
      * Renders predicates.
      */
-    private final class PredicateRenderer extends ExpressionRenderer implements AdvancedPredicateVisitor<io.micronaut.data.model.PersistentPropertyPath> {
+    private final class PredicateRenderer extends ExpressionRenderer implements AdvancedPredicateVisitor<io.micronaut.data.model.PersistentPropertyPath>, GraphPredicateVisitor {
 
         private PredicateRenderer(QueryState state, StringBuilder out) {
             super(state, out);
+        }
+
+        @Override
+        public void visit(RelatedPredicate predicate) {
+            PersistentEntity entity = state.entity;
+            String type = "";
+            Direction direction = Direction.UNDIRECTED;
+            PersistentEntity target = entity;
+            String relationship = predicate.getRelationship();
+            if (relationship != null) {
+                PersistentProperty property = entity.getPropertyByName(relationship);
+                if (!(property instanceof Association association) || !GraphEntities.isRelationship(association)) {
+                    throw new IllegalArgumentException("Entity [" + entity.getName() + "] has no @Relationship property named [" + relationship + "]");
+                }
+                type = ":" + GraphEntities.escapeName(GraphEntities.relationshipType(association));
+                direction = GraphEntities.direction(association);
+                target = GraphEntities.targetNodeEntity(association);
+            }
+            String hops = "[" + type + (predicate.getMaxDepth() > 1 ? "*1.." + predicate.getMaxDepth() : "") + "]";
+            Expression<?> targetId = predicate.getTarget();
+            if (targetId == null) {
+                out.append(existsPattern(relatedPattern(direction, hops, "()"), null));
+                return;
+            }
+            PersistentProperty identity = target.getIdentity();
+            if (identity == null) {
+                throw new IllegalArgumentException("Entity [" + target.getName() + "] has no identifier to match a related node by");
+            }
+            io.micronaut.data.model.PersistentPropertyPath idPath = io.micronaut.data.model.PersistentPropertyPath.of(List.of(), identity);
+            StringBuilder value = new StringBuilder();
+            new ExpressionRenderer(state, value).appendExpression(targetId, idPath);
+            if (GraphEntities.isNativeId(identity)) {
+                // A database identifier is not a property, so the node needs a variable and a condition
+                String variable = state.nextRelatedVariable();
+                String node = "(" + variable + labelExpression(target) + ")";
+                out.append(existsPattern(relatedPattern(direction, hops, node), identityExpression(identity, variable) + " = " + value));
+            } else {
+                String node = "(" + labelExpression(target) + " {" + GraphEntities.escapeName(GraphEntities.propertyName(identity)) + ": " + value + "})";
+                out.append(existsPattern(relatedPattern(direction, hops, node), null));
+            }
+        }
+
+        private String relatedPattern(Direction direction, String hops, String to) {
+            return switch (direction) {
+                case OUTGOING -> "(" + ROOT + ")-" + hops + "->" + to;
+                case INCOMING -> "(" + ROOT + ")<-" + hops + "-" + to;
+                case UNDIRECTED -> "(" + ROOT + ")-" + hops + "-" + to;
+            };
         }
 
         @Override
@@ -1945,6 +2021,14 @@ public class CypherQueryBuilder implements GraphQueryBuilder {
             super.visit(functionExpression);
             if (depth == 0) {
                 appendAlias(RESULT);
+            }
+        }
+
+        @Override
+        public void visit(DynamicPropertyExpression<?> expression) {
+            super.visit(expression);
+            if (depth == 0) {
+                appendAlias(expression.getName());
             }
         }
 

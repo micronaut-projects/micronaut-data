@@ -13,6 +13,7 @@ import io.micronaut.data.graph.tck.repositories.ColleagueRepository
 import io.micronaut.data.graph.tck.repositories.FriendRepository
 import io.micronaut.data.graph.tck.repositories.MovieQueryRepository
 import io.micronaut.data.graph.tck.repositories.MovieRepository
+import io.micronaut.data.graph.model.criteria.GraphCriteria
 import io.micronaut.data.graph.tck.repositories.MovieSpecificationRepository
 import io.micronaut.data.graph.tck.repositories.PersonQueryRepository
 import io.micronaut.data.graph.tck.repositories.PersonRepository
@@ -76,11 +77,81 @@ abstract class AbstractGraphRepositorySpec extends Specification {
     }
 
     /**
+     * Whether finders traverse relationships: {@code findByDirectorsName}, criteria specifications that join an
+     * association and path checks such as {@code existsPathByMentorBetweenName}. The relationships are written by
+     * {@link #saveMovie} and {@link #savePerson}, through the repositories or another way.
+     *
+     * @return True if relationships can be queried
+     */
+    boolean supportsRelationshipFinders() {
+        supportsRelationshipWrites()
+    }
+
+    /**
+     * Whether {@code @Join} fetches relationships and related nodes into the entity.
+     *
+     * @return True if fetch joins are supported
+     */
+    boolean supportsRelationshipReads() {
+        true
+    }
+
+    /**
+     * Whether finders return paths and relationships: {@code GraphPath} and {@code GraphRelationship} results.
+     *
+     * @return True if path finders are supported
+     */
+    boolean supportsPaths() {
+        true
+    }
+
+    /**
+     * Whether the repositories run explicit Cypher queries.
+     *
+     * @return True if {@code @Query} takes Cypher
+     */
+    boolean supportsExplicitQueries() {
+        true
+    }
+
+    /**
      * Whether the repositories run Cypher: explicit Cypher queries, fetch joins and path finders.
      *
      * @return True for Cypher databases
      */
     boolean supportsCypher() {
+        supportsRelationshipReads() && supportsPaths() && supportsExplicitQueries()
+    }
+
+    /**
+     * Saves a movie with its roles and directors. Implementations whose repositories write node rows only
+     * override this method to write the people and the relationships another way.
+     *
+     * @param movie The movie
+     * @return The saved movie
+     */
+    protected Movie saveMovie(Movie movie) {
+        movieRepository.save(movie)
+    }
+
+    /**
+     * Saves a person with the chain of mentors. Implementations whose repositories write node rows only override
+     * this method to write the mentors and the relationships another way.
+     *
+     * @param person The person
+     * @return The saved person
+     */
+    protected Person savePerson(Person person) {
+        personRepository.save(person)
+    }
+
+    /**
+     * Whether criteria can test for a chain of relationships, as {@code GraphCriteria.connected} does. Apache AGE
+     * cannot run a variable-length pattern inside {@code EXISTS}.
+     *
+     * @return True if connected criteria are supported
+     */
+    boolean supportsConnectedCriteria() {
         true
     }
 
@@ -104,9 +175,9 @@ abstract class AbstractGraphRepositorySpec extends Specification {
         reloaded.directors = [lana]
         def speed = new Movie("Speed", "Get ready for rush hour", 1994)
         speed.roles = [new Role(["Jack Traven"], keanu)]
-        movieRepository.save(matrix)
-        movieRepository.save(reloaded)
-        movieRepository.save(speed)
+        saveMovie(matrix)
+        saveMovie(reloaded)
+        saveMovie(speed)
     }
 
     void "save and find a node by its assigned identifier"() {
@@ -159,7 +230,7 @@ abstract class AbstractGraphRepositorySpec extends Specification {
         !movieRepository.existsByTitle("Point Break")
     }
 
-    @Requires({ instance.supportsRelationshipWrites() })
+    @Requires({ instance.supportsRelationshipFinders() })
     void "find by criteria on relationships"() {
         given:
         saveMovies()
@@ -170,7 +241,7 @@ abstract class AbstractGraphRepositorySpec extends Specification {
         movieRepository.findByRolesPersonName("Carrie-Anne Moss")*.title == ["The Matrix"]
     }
 
-    @Requires({ instance.supportsRelationshipWrites() && instance.supportsCypher() })
+    @Requires({ instance.supportsRelationshipWrites() && instance.supportsRelationshipReads() })
     void "fetch relationships and relationship properties with joins"() {
         given:
         saveMovies()
@@ -192,7 +263,23 @@ abstract class AbstractGraphRepositorySpec extends Specification {
         unjoined.directors.isEmpty()
     }
 
-    @Requires({ instance.supportsRelationshipWrites() && instance.supportsCypher() })
+    @Requires({ instance.supportsRelationshipFinders() })
+    void "find nodes by a single relationship"() {
+        given:
+        def mentor = new Person("Morpheus", 1961)
+        def student = new Person("Neo", 1964)
+        student.mentor = mentor
+        savePerson(student)
+
+        expect:
+        personRepository.findByMentorName("Morpheus")*.name == ["Neo"]
+        personRepository.findByMentorName("Neo").isEmpty()
+
+        and: "the relationship is not fetched without a join"
+        personRepository.findByName("Neo").get().mentor == null
+    }
+
+    @Requires({ instance.supportsRelationshipWrites() && instance.supportsRelationshipReads() })
     void "fetch a single relationship"() {
         given:
         def mentor = new Person("Morpheus", 1961)
@@ -201,9 +288,7 @@ abstract class AbstractGraphRepositorySpec extends Specification {
         personRepository.save(student)
 
         expect:
-        personRepository.findByMentorName("Morpheus")*.name == ["Neo"]
         personRepository.queryByName("Neo").get().mentor.name == "Morpheus"
-        personRepository.findByName("Neo").get().mentor == null
     }
 
     void "projections and aggregates"() {
@@ -232,10 +317,10 @@ abstract class AbstractGraphRepositorySpec extends Specification {
         then:
         deleted == 2
         movieRepository.findAll()*.title == ["The Matrix Reloaded"]
-        !supportsRelationshipWrites() || personRepository.findByName("Keanu Reeves").present
+        !supportsRelationshipFinders() || personRepository.findByName("Keanu Reeves").present
     }
 
-    @Requires({ instance.supportsRelationshipWrites() && instance.supportsCypher() })
+    @Requires({ instance.supportsRelationshipWrites() && instance.supportsRelationshipReads() })
     void "update an entity"() {
         given:
         def neo = personRepository.save(new Person("Neo", 1964))
@@ -263,7 +348,7 @@ abstract class AbstractGraphRepositorySpec extends Specification {
         movieRepository.findByRolesPersonName("Keanu Reeves").size() == 2
     }
 
-    @Requires({ instance.supportsCypher() })
+    @Requires({ instance.supportsExplicitQueries() })
     void "explicit queries"() {
         given:
         saveMovies()
@@ -307,7 +392,7 @@ abstract class AbstractGraphRepositorySpec extends Specification {
         friendRepository.save(fred)
     }
 
-    @Requires({ instance.supportsRelationshipWrites() && instance.supportsCypher() })
+    @Requires({ instance.supportsRelationshipWrites() && instance.supportsPaths() })
     void "find the shortest path between two nodes"() {
         given:
         saveFriends()
@@ -344,7 +429,7 @@ abstract class AbstractGraphRepositorySpec extends Specification {
         e.message.contains("max-path-depth")
     }
 
-    @Requires({ instance.supportsRelationshipWrites() && instance.supportsCypher() })
+    @Requires({ instance.supportsRelationshipWrites() && instance.supportsPaths() })
     void "find all paths and check paths exist"() {
         given:
         saveFriends()
@@ -359,7 +444,7 @@ abstract class AbstractGraphRepositorySpec extends Specification {
         !friendRepository.existsPath("Fred", "Nobody")
     }
 
-    @Requires({ instance.supportsRelationshipWrites() && instance.supportsCypher() })
+    @Requires({ instance.supportsRelationshipWrites() && instance.supportsExplicitQueries() })
     void "explicit queries return relationships between nodes of different types"() {
         given:
         saveMovies()
@@ -391,7 +476,7 @@ abstract class AbstractGraphRepositorySpec extends Specification {
         colleagueRepository.findByColleaguesProject("compiler").isEmpty()
     }
 
-    @Requires({ instance.supportsRelationshipWrites() && instance.supportsCypher() })
+    @Requires({ instance.supportsRelationshipWrites() && instance.supportsPaths() })
     void "find relationships between nodes"() {
         given:
         saveFriends()
@@ -555,7 +640,7 @@ abstract class AbstractGraphRepositorySpec extends Specification {
         page.totalSize == 3
     }
 
-    @Requires({ instance.movieSpecificationRepository != null && instance.supportsRelationshipWrites() })
+    @Requires({ instance.movieSpecificationRepository != null && instance.supportsRelationshipFinders() })
     void "criteria specifications follow relationships"() {
         given:
         saveMovies()
@@ -563,6 +648,43 @@ abstract class AbstractGraphRepositorySpec extends Specification {
         expect:
         movieSpecificationRepository.findAll({ root, cb ->
             cb.equal(root.join("directors").get("name"), "Lana Wachowski")
+        } as PredicateSpecification<Movie>)*.title.sort() == ["The Matrix", "The Matrix Reloaded"]
+    }
+
+    @Requires({ instance.movieSpecificationRepository != null && instance.supportsRelationshipWrites() })
+    void "graph criteria match relationships of the root node"() {
+        given:
+        saveMovies()
+        def lana = personRepository.findByName("Lana Wachowski").get()
+        def keanu = personRepository.findByName("Keanu Reeves").get()
+        def specs = movieSpecificationRepository
+
+        expect: "movies with any director"
+        specs.findAll({ root, cb -> GraphCriteria.related(root, "directors") } as PredicateSpecification<Movie>)*.title.sort() == ["The Matrix", "The Matrix Reloaded"]
+
+        and: "movies without a director"
+        specs.findAll({ root, cb -> cb.not(GraphCriteria.related(root, "directors")) } as PredicateSpecification<Movie>)*.title == ["Speed"]
+
+        and: "movies directed by a given person, matched by identifier"
+        specs.findAll({ root, cb -> GraphCriteria.relatedTo(root, "directors", cb.literal(lana.id)) } as PredicateSpecification<Movie>)*.title.sort() == ["The Matrix", "The Matrix Reloaded"]
+
+        and: "movies with a role played by a given person, through the relationship entity"
+        specs.count({ root, cb -> GraphCriteria.relatedTo(root, "roles", cb.literal(keanu.id)) } as PredicateSpecification<Movie>) == 3
+
+        and: "graph criteria combine with property criteria"
+        specs.findAll({ root, cb ->
+            cb.and(GraphCriteria.related(root, "directors"), cb.greaterThan(root.get("released"), 2000))
+        } as PredicateSpecification<Movie>)*.title == ["The Matrix Reloaded"]
+    }
+
+    @Requires({ instance.movieSpecificationRepository != null && instance.supportsRelationshipWrites() && instance.supportsConnectedCriteria() })
+    void "graph criteria follow chains of relationships"() {
+        given:
+        saveMovies()
+
+        expect: "movies within two hops of Speed over any relationship: those sharing an actor"
+        movieSpecificationRepository.findAll({ root, cb ->
+            GraphCriteria.connected(root, null, cb.literal("Speed"), 2)
         } as PredicateSpecification<Movie>)*.title.sort() == ["The Matrix", "The Matrix Reloaded"]
     }
 
@@ -592,7 +714,7 @@ abstract class AbstractGraphRepositorySpec extends Specification {
         movieRepository.findAll()*.title == ["The Matrix Reloaded"]
     }
 
-    @Requires({ instance.supportsRelationshipWrites() })
+    @Requires({ instance.supportsRelationshipFinders() })
     void "path finders match endpoints by a property and override the direction"() {
         given:
         def barbara = new Person("Barbara Liskov", 1939)
@@ -600,7 +722,7 @@ abstract class AbstractGraphRepositorySpec extends Specification {
         grace.mentor = barbara
         def ada = new Person("Ada Lovelace", 1815)
         ada.mentor = grace
-        personRepository.save(ada)
+        savePerson(ada)
 
         expect: "MENTORED_BY points from the mentee to the mentor"
         personRepository.existsPathByMentorBetweenName("Ada Lovelace", "Barbara Liskov")
@@ -611,7 +733,7 @@ abstract class AbstractGraphRepositorySpec extends Specification {
         !personRepository.hasPathByMentorBetweenName("Ada Lovelace", "Barbara Liskov")
     }
 
-    @Requires({ instance.supportsRelationshipWrites() && instance.supportsCypher() })
+    @Requires({ instance.supportsRelationshipWrites() && instance.supportsPaths() })
     void "find the shortest path between nodes matched by a property"() {
         given:
         def barbara = new Person("Barbara Liskov", 1939)
@@ -629,7 +751,7 @@ abstract class AbstractGraphRepositorySpec extends Specification {
         path.get().nodes()*.name == ["Ada Lovelace", "Grace Hopper", "Barbara Liskov"]
     }
 
-    @Requires({ instance.supportsRelationshipWrites() && instance.supportsCypher() })
+    @Requires({ instance.supportsRelationshipWrites() && instance.supportsRelationshipReads() && instance.supportsExplicitQueries() })
     void "fetch the relationships of related nodes and collect values into a DTO"() {
         given:
         def mentor = new Person("Andrzej Wajda", 1926)

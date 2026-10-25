@@ -44,3 +44,19 @@ snippet::example.MovieRepositorySpec[project-base="doc-examples/neo4j-example", 
 <2> Count them.
 
 Specifications are rendered by the same query builder as finders, so they support the same operators: `like` is not supported.
+
+=== Graph criteria
+
+api:data.graph.model.criteria.GraphCriteria[] adds criteria that reach the graph. `related` holds when the root node has a relationship of the property, `relatedTo` when it has one to the node with a given identifier, `connected` when a chain of relationships no longer than a depth reaches that node, and `dynamic` reads a schemaless property, see <<graphSchemaless>>:
+
+snippet::example.MovieSpecifications[project-base="doc-examples/neo4j-example", source="main", tags="graphCriteria", languages="java,kotlin,groovy,python"]
+
+<1> Movies with at least one `ACTED_IN` relationship.
+<2> Movies within two relationships of the movie with the title, over relationships of any type. The identifier of the target node is passed through `literal`, so it is bound as a parameter. Passing `null` for the relationship follows any type and matches the far node by the identifier of the entity.
+
+snippet::example.MovieRepositorySpec[project-base="doc-examples/neo4j-example", source="test", tags="useGraphCriteria", languages="java,kotlin,groovy,python"]
+
+<1> The three movies of the sample have a cast.
+<2> `The Matrix` and `The Matrix Reloaded` share an actor with `Speed`.
+
+The predicates render as patterns in the `WHERE` clause, so a node is matched once however many relationships satisfy them, and they combine with the other criteria through `and`, `or` and `not`. Apache AGE cannot test a chain of relationships in a criterion, and Oracle property graphs support only `dynamic`.

@@ -12,6 +12,8 @@ import org.junit.jupiter.api.TestInstance;
 
 import java.util.List;
 
+import static example.MovieSpecifications.connectedTo;
+import static example.MovieSpecifications.withRoles;
 import static example.MovieSpecifications.directedBy;
 import static example.MovieSpecifications.releasedAfter;
 import static org.junit.jupiter.api.Assertions.assertEquals;
@@ -142,5 +144,16 @@ class MovieRepositorySpec extends AbstractNeo4jTest {
 
         assertEquals(List.of("The Matrix", "The Matrix Reloaded"), recent.stream().map(Movie::getTitle).sorted().toList());
         assertEquals(2, byLana);
+    }
+
+    @Test
+    void testGraphCriteria() {
+        // tag::useGraphCriteria[]
+        long withCast = movieSpecificationRepository.count(withRoles()); // <1>
+        List<Movie> nearSpeed = movieSpecificationRepository.findAll(connectedTo("Speed", 2)); // <2>
+        // end::useGraphCriteria[]
+
+        assertEquals(3, withCast);
+        assertEquals(List.of("The Matrix", "The Matrix Reloaded"), nearSpeed.stream().map(Movie::getTitle).sorted().toList());
     }
 }

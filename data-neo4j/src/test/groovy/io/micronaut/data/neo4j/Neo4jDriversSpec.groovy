@@ -5,6 +5,7 @@ import io.micronaut.data.exceptions.DataAccessException
 import io.micronaut.data.neo4j.features.OtherDriverTagRepository
 import io.micronaut.data.neo4j.features.Tag
 import io.micronaut.data.neo4j.features.TagRepository
+import io.micronaut.data.neo4j.session.Neo4jDriverRegistration
 import io.micronaut.data.neo4j.session.Neo4jSessionConfigurer
 import io.micronaut.data.runtime.multitenancy.SchemaTenantResolver
 import io.micronaut.inject.qualifiers.Qualifiers
@@ -46,6 +47,41 @@ class Neo4jDriversSpec extends Specification {
         cleanup:
         enabled?.close()
         disabled?.close()
+    }
+
+    void "a write is seen by the next session through the bookmarks of the driver"() {
+        given:
+        def context = ApplicationContext.run(['neo4j.uri': EmbeddedNeo4j.boltUri()])
+        def bookmarks = context.getBean(Neo4jDriverRegistration, Qualifiers.byName("default")).driver().executableQueryBookmarkManager()
+        def tags = context.getBean(TagRepository)
+        tags.deleteAll()
+
+        expect: "the sessions of the repositories carry the bookmark manager of the driver"
+        context.getBean(Neo4jSessionConfigurer, Qualifiers.byName("default")).sessionConfig().bookmarkManager().get().is(bookmarks)
+
+        when: "a node is written in one session"
+        def before = bookmarks.bookmarks
+        def saved = tags.save(new Tag("causal"))
+
+        then: "the session leaves the bookmark of its transaction in the manager when it closes"
+        def after = bookmarks.bookmarks
+        !after.isEmpty()
+        after != before
+
+        and: "the next repository calls open sessions that start after the write and read it"
+        tags.findById(saved.id).get().name == "causal"
+        tags.findByName("causal").get().id == saved.id
+        tags.count() == 1
+
+        when: "the node is deleted in another session"
+        tags.deleteById(saved.id)
+
+        then: "the bookmark moves on and the next read no longer sees the node"
+        bookmarks.bookmarks != after
+        !tags.existsById(saved.id)
+
+        cleanup:
+        context?.close()
     }
 
     void "sessions use the database of the current tenant"() {

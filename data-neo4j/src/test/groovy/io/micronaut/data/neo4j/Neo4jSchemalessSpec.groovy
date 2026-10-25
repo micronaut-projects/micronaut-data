@@ -1,7 +1,10 @@
 package io.micronaut.data.neo4j
 
 import io.micronaut.data.neo4j.features.Pet
+import io.micronaut.data.graph.model.criteria.GraphCriteria
 import io.micronaut.data.neo4j.features.PetRepository
+import io.micronaut.data.neo4j.features.PetSpecificationRepository
+import io.micronaut.data.repository.jpa.criteria.PredicateSpecification
 import io.micronaut.data.neo4j.features.Tag
 import io.micronaut.data.neo4j.operations.Neo4jRepositoryOperations
 import io.micronaut.test.extensions.spock.annotation.MicronautTest
@@ -14,6 +17,9 @@ class Neo4jSchemalessSpec extends Specification implements TestPropertyProvider 
 
     @Inject
     PetRepository petRepository
+
+    @Inject
+    PetSpecificationRepository petSpecificationRepository
 
     @Inject
     Neo4jRepositoryOperations operations
@@ -85,6 +91,31 @@ class Neo4jSchemalessSpec extends Specification implements TestPropertyProvider 
         then:
         def labelError = thrown(io.micronaut.data.exceptions.DataAccessException)
         labelError.message.contains("Label [")
+    }
+
+    void "query schemaless properties with criteria"() {
+        given:
+        def dino = new Pet("Dino")
+        dino.set("goesInPatch", true)
+        dino.set("legs", 4)
+        def hoppy = new Pet("Hoppy")
+        hoppy.set("goesInPatch", false)
+        hoppy.set("legs", 2)
+        petRepository.saveAll([dino, hoppy, new Pet("Tom")])
+
+        expect:
+        petSpecificationRepository.findAll({ root, cb ->
+            cb.isTrue(GraphCriteria.dynamic(root, "goesInPatch", Boolean))
+        } as PredicateSpecification<Pet>)*.name == ["Dino"]
+        petSpecificationRepository.findAll({ root, cb ->
+            cb.greaterThan(GraphCriteria.dynamic(root, "legs", Integer), 3)
+        } as PredicateSpecification<Pet>)*.name == ["Dino"]
+        petSpecificationRepository.findAll({ root, cb ->
+            cb.isNull(GraphCriteria.dynamic(root, "legs", Integer))
+        } as PredicateSpecification<Pet>)*.name == ["Tom"]
+        petSpecificationRepository.count({ root, cb ->
+            cb.isNotNull(GraphCriteria.dynamic(root, "legs", Integer))
+        } as PredicateSpecification<Pet>) == 2
     }
 
     void "query schemaless properties with explicit queries"() {
