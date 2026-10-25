@@ -188,10 +188,27 @@ public final class GraphEntityMapper {
         List<String> declared = GraphEntities.labels(entity);
         for (Object label : iterable) {
             if (label != null && !declared.contains(label.toString())) {
-                result.add(label.toString());
+                result.add(requireName(label.toString(), "Label", entity));
             }
         }
         return result;
+    }
+
+    /**
+     * Checks a name supplied at runtime, through a schemaless map or a label set, before it is
+     * quoted into a query.
+     *
+     * @param name   The name
+     * @param what   What the name is, for the message
+     * @param entity The entity
+     * @return The name
+     */
+    private static String requireName(String name, String what, RuntimePersistentEntity<?> entity) {
+        try {
+            return GraphEntities.requireName(name);
+        } catch (IllegalArgumentException e) {
+            throw new DataAccessException(what + " [" + name + "] of [" + entity.getSimpleName() + "] cannot be stored: " + e.getMessage(), e);
+        }
     }
 
     private static boolean isSchemalessHolder(RuntimePersistentProperty<?> property) {
@@ -348,7 +365,8 @@ public final class GraphEntityMapper {
                 if (schemaless.declared().contains(key) || values.containsKey(key)) {
                     throw new DataAccessException("Dynamic attribute [" + key + "] of [" + entity.getSimpleName() + "] has the name of a declared property");
                 }
-                values.put(key, encode(value));
+                // The key becomes a property name in the query text, so it must be one that can be quoted
+                values.put(requireName(key, "Dynamic attribute", entity), encode(value));
             });
         }
         return values;
