@@ -129,7 +129,7 @@ The criteria builder exposes the same predicate through `PersistentEntityCriteri
 
 == Oracle notes
 
-- Each search field gets its own Oracle Text `CONTEXT` index, created by schema generation as `CREATE INDEX idx_<table>_search_<column> ON <table> (<column>) INDEXTYPE IS CTXSYS.CONTEXT PARAMETERS ('SYNC (ON COMMIT)')`. The index is synchronised on commit, so rows are searchable as soon as the transaction that wrote them commits.
+- Each search field gets its own Oracle Text `CONTEXT` index, created by schema generation as `CREATE INDEX idx_<table>_search_<column> ON <table> (<column>) INDEXTYPE IS CTXSYS.CONTEXT PARAMETERS ('SYNC (ON COMMIT)')`. The index is synchronised on commit, so rows are searchable as soon as the transaction that wrote them commits. ann:data.annotation.search.OracleTextIndex[]`(parameters)` on the entity replaces the parameters clause, for another sync mode, a lexer, a wordlist or the index memory; it applies to the JSON search index of a JSON entity too.
 - A single-field search renders `CONTAINS(<column>, ?, 1) > 0` and ranks with `SCORE(1)`. A search over every search field matches any field with the positive terms and then excludes rows where any field matches a negated term; the score is the sum of the per-field scores multiplied by their numeric weights (`HIGH` 10, `MEDIUM` 5, `LOW` 2, `LOWEST` 1).
 - `SearchAll` requires every term within one field. Terms are escaped in braces, so reserved words such as `and` or `or` are matched literally.
 - The default lexer matches words literally; there is no stemming unless the index is created with a lexer that enables it. A `@Language` column is ignored.

@@ -277,6 +277,36 @@ public interface TextSearchDialect {
     }
 
     /**
+     * Renders the DDL of the index backing full-text search, with store-specific index parameters.
+     *
+     * @param indexName The escaped index name
+     * @param escapedTableName The escaped table name
+     * @param columns The search field columns, escaped when needed
+     * @param language The default text search language
+     * @param languageColumn The escaped column holding the per-row language, or {@code null}
+     * @param parameters The store's index parameters ({@code @OracleTextIndex}), or {@code null} for its defaults
+     * @return The {@code CREATE INDEX} statements
+     * @since 5.4.0
+     */
+    default List<String> buildSearchIndex(String indexName, String escapedTableName, List<SearchColumn> columns, String language, @Nullable String languageColumn, @Nullable String parameters) {
+        return buildSearchIndex(indexName, escapedTableName, columns, language, languageColumn);
+    }
+
+    /**
+     * Renders the DDL of the JSON search index with store-specific index parameters.
+     *
+     * @param indexName The escaped index name
+     * @param escapedTableName The escaped table name
+     * @param escapedJsonColumn The escaped JSON column holding the whole entity
+     * @param parameters The store's index parameters, or {@code null} for its defaults
+     * @return The {@code CREATE INDEX} statements, empty when the dialect needs no index
+     * @since 5.4.0
+     */
+    default List<String> buildJsonSearchIndex(String indexName, String escapedTableName, String escapedJsonColumn, @Nullable String parameters) {
+        return buildJsonSearchIndex(indexName, escapedTableName, escapedJsonColumn);
+    }
+
+    /**
      * The names of the indexes {@link #buildSearchIndex} creates, escaped like its arguments.
      *
      * @param indexName The escaped index name
@@ -683,6 +713,7 @@ public interface TextSearchDialect {
          */
         public static final String POLICY_NAME = "MN_SEARCH_POLICY";
         private static final String ORACLE_TEXT = "Oracle Text";
+        private static final String DEFAULT_INDEX_PARAMETERS = "SYNC (ON COMMIT)";
 
         private static final String CONTAINS_SUFFIX = ") > 0";
 
@@ -788,13 +819,22 @@ public interface TextSearchDialect {
 
         @Override
         public List<String> buildSearchIndex(String indexName, String escapedTableName, List<SearchColumn> columns, String language) {
+            return buildSearchIndex(indexName, escapedTableName, columns, language, null, null);
+        }
+
+        @Override
+        public List<String> buildSearchIndex(String indexName, String escapedTableName, List<SearchColumn> columns, String language, @Nullable String languageColumn, @Nullable String parameters) {
             List<String> statements = new java.util.ArrayList<>(columns.size());
             for (SearchColumn column : columns) {
                 statements.add("CREATE INDEX " + columnIndexName(indexName, column) + " ON " + escapedTableName + " (" + column.column()
-                    + ") INDEXTYPE IS CTXSYS.CONTEXT PARAMETERS ('SYNC (ON COMMIT)');");
+                    + ") INDEXTYPE IS CTXSYS.CONTEXT PARAMETERS ('" + indexParameters(parameters) + "');");
             }
             statements.add(createPolicyStatement());
             return statements;
+        }
+
+        private static String indexParameters(@Nullable String parameters) {
+            return parameters == null || parameters.isBlank() ? DEFAULT_INDEX_PARAMETERS : parameters.replace("'", "''");
         }
 
         @Override
@@ -834,8 +874,13 @@ public interface TextSearchDialect {
 
         @Override
         public List<String> buildJsonSearchIndex(String indexName, String escapedTableName, String escapedJsonColumn) {
+            return buildJsonSearchIndex(indexName, escapedTableName, escapedJsonColumn, null);
+        }
+
+        @Override
+        public List<String> buildJsonSearchIndex(String indexName, String escapedTableName, String escapedJsonColumn, @Nullable String parameters) {
             return List.of(
-                "CREATE SEARCH INDEX " + indexName + " ON " + escapedTableName + " (" + escapedJsonColumn + ") FOR JSON PARAMETERS ('SYNC (ON COMMIT)');",
+                "CREATE SEARCH INDEX " + indexName + " ON " + escapedTableName + " (" + escapedJsonColumn + ") FOR JSON PARAMETERS ('" + indexParameters(parameters) + "');",
                 createPolicyStatement()
             );
         }
