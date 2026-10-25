@@ -67,12 +67,10 @@ import org.jspecify.annotations.Nullable;
 
 import java.util.ArrayList;
 import java.util.Collection;
-import java.util.HashSet;
 import java.util.Iterator;
 import java.util.LinkedHashMap;
 import java.util.List;
 import java.util.Map;
-import java.util.Set;
 import java.util.function.UnaryOperator;
 
 /**
@@ -173,17 +171,17 @@ public class CypherQueryBuilder implements GraphQueryBuilder {
      * The key of the properties of a node in the row of a batched write.
      */
     public static final String ROW_PROPERTIES = "properties";
-    private static final String WITH = " WITH ";
-    private static final String WITH_DISTINCT = " WITH DISTINCT ";
+    static final String WITH = " WITH ";
+    static final String WITH_DISTINCT = " WITH DISTINCT ";
+    static final String CLOSE_AS = ") AS ";
+    static final String AND = " AND ";
     private static final String DISTINCT = "DISTINCT ";
     private static final String TO_LOWER = "toLower(";
     private static final String RESULT = "result";
-    private static final String CLOSE_AS = ") AS ";
     private static final String RETURN = " RETURN ";
     private static final String MATCH_OPEN = "MATCH (";
     private static final String CLOSE_WHERE = ") WHERE ";
     private static final String CLOSE_AS_RESULT = ") AS result";
-    private static final String AND = " AND ";
     private static final String SET = " SET ";
     private static final String RETURN_COUNT_RESULT = " RETURN count(*) AS result";
     private static final String DETACH_DELETE = " DETACH DELETE ";
@@ -215,7 +213,7 @@ public class CypherQueryBuilder implements GraphQueryBuilder {
         StringBuilder query = new StringBuilder();
         appendMatch(query, state, where);
         appendReturn(query, state, selectionRenderer, definition.isDistinct(), orders);
-        String orderBy = orderByClause(orders);
+        String orderBy = CypherFragments.orderByClause(orders);
         if (!orderBy.isEmpty()) {
             query.append(" ORDER BY ").append(orderBy);
         }
@@ -231,7 +229,7 @@ public class CypherQueryBuilder implements GraphQueryBuilder {
     private void appendReturn(StringBuilder query, QueryState state, SelectionRenderer selectionRenderer, boolean distinct, List<OrderItem> orders) {
         List<String> carried = List.of();
         if (state.hasPatterns() && (selectionRenderer.entity || selectionRenderer.rootOnly)) {
-            carried = appendDistinctRoot(query, orders);
+            carried = CypherFragments.appendDistinctRoot(query, orders);
         }
         List<String> joinColumns = List.of();
         if (selectionRenderer.entity) {
@@ -250,35 +248,6 @@ public class CypherQueryBuilder implements GraphQueryBuilder {
         } else {
             query.append(selectionRenderer.out);
         }
-    }
-
-    /**
-     * Reduces the rows of the relationship patterns added by criteria back to one row per root node.
-     * A sort on a property reached through such a pattern is aggregated here, because the pattern
-     * variables leave the scope at this point: an ascending order sorts by the smallest value of the
-     * related nodes, a descending one by the largest.
-     *
-     * @param query  The query
-     * @param orders The orders of the query
-     * @return The aliases of the aggregated order values, which later {@code WITH} clauses must carry
-     */
-    private static List<String> appendDistinctRoot(StringBuilder query, List<OrderItem> orders) {
-        List<String> carried = new ArrayList<>();
-        for (OrderItem order : orders) {
-            if (order.onAssociation) {
-                if (carried.isEmpty()) {
-                    query.append(WITH).append(ROOT);
-                }
-                String alias = "o" + carried.size();
-                query.append(", ").append(order.ascending ? "min(" : "max(").append(order.expression).append(CLOSE_AS).append(alias);
-                order.alias = alias;
-                carried.add(alias);
-            }
-        }
-        if (carried.isEmpty()) {
-            query.append(WITH_DISTINCT).append(ROOT);
-        }
-        return carried;
     }
 
     @Override
@@ -728,7 +697,7 @@ public class CypherQueryBuilder implements GraphQueryBuilder {
             boolean identity = definition.endEndpointProperty() == null && definition.endpointProperty() == null;
             conditions.add(endpointCondition(state, definition.endEndpointMatchProperty(), identity, PATH_END, definition.end()));
         }
-        String types = relationshipTypes(definition.relationships());
+        String types = CypherFragments.relationshipTypes(definition.relationships());
         StringBuilder query = new StringBuilder("MATCH ");
         if (definition.kind() == PathQueryDefinition.Kind.RELATIONSHIPS) {
             appendRelationshipQuery(query, definition, label, endLabel, types, conditions);
@@ -745,7 +714,7 @@ public class CypherQueryBuilder implements GraphQueryBuilder {
             direction = Direction.OUTGOING;
         }
         query.append(pathPattern(definition, direction, "(" + PATH_START + label + ")", "[" + PATH_RELATIONSHIP + types + "]", "(" + PATH_END + endLabel + ")"));
-        appendWhere(query, conditions);
+        CypherFragments.appendWhere(query, conditions);
         switch (definition.result()) {
             case COUNT -> query.append(" RETURN count(").append(PATH_RELATIONSHIP).append(CLOSE_AS_RESULT);
             case EXISTS -> query.append(" RETURN true AS result LIMIT 1");
@@ -767,7 +736,7 @@ public class CypherQueryBuilder implements GraphQueryBuilder {
             conditions.add(PATH_START + " <> " + PATH_END);
         }
         query.append('(').append(PATH_START).append(label).append("), (").append(PATH_END).append(endLabel).append(')');
-        appendWhere(query, conditions);
+        CypherFragments.appendWhere(query, conditions);
         appendPathMatch(query, definition, "[" + types + pathDepth(definition) + "]");
         appendPathReturn(query, definition);
     }
@@ -883,27 +852,6 @@ public class CypherQueryBuilder implements GraphQueryBuilder {
             ? identityExpression(property, variable)
             : variable + "." + GraphEntities.escapeName(GraphEntities.propertyName(property));
         return expression + " = " + parameterPlaceholder(index);
-    }
-
-    private static void appendWhere(StringBuilder query, List<String> conditions) {
-        if (!conditions.isEmpty()) {
-            query.append(" WHERE ").append(String.join(AND, conditions));
-        }
-    }
-
-    private static String relationshipTypes(List<Association> associations) {
-        if (associations.isEmpty()) {
-            return "";
-        }
-        StringBuilder sb = new StringBuilder();
-        Set<String> seen = new HashSet<>();
-        for (Association association : associations) {
-            String type = GraphEntities.escapeName(GraphEntities.relationshipType(association));
-            if (seen.add(type)) {
-                sb.append(sb.isEmpty() ? ":" : "|").append(type);
-            }
-        }
-        return sb.toString();
     }
 
     /**
@@ -1110,7 +1058,7 @@ public class CypherQueryBuilder implements GraphQueryBuilder {
         Association[] associationPath = joinPath.getAssociationPath();
         Association association = associationPath[0];
         boolean relationshipEntity = GraphEntities.isRelationshipEntity(association.getAssociatedEntity());
-        if (associationPath.length > 2 || (associationPath.length == 2 && !(relationshipEntity && isTargetNode(associationPath[1])))) {
+        if (associationPath.length > 2 || (associationPath.length == 2 && !(relationshipEntity && CypherFragments.isTargetNode(associationPath[1])))) {
             throw new IllegalArgumentException("Graph repositories can only join a relationship with properties and its target node, found join path: " + joinPath.getPath());
         }
         if (!GraphEntities.isRelationship(association)) {
@@ -1142,10 +1090,6 @@ public class CypherQueryBuilder implements GraphQueryBuilder {
             query.append(", ").append(collect).append(" AS ").append(column);
             columns.add(column);
         }
-    }
-
-    private static boolean isTargetNode(Association association) {
-        return association.getAnnotationMetadata().hasStereotype("io.micronaut.data.graph.annotation.TargetNode");
     }
 
     private @Nullable String renderWhere(@Nullable Predicate predicate, QueryState state) {
@@ -1185,25 +1129,6 @@ public class CypherQueryBuilder implements GraphQueryBuilder {
         return items;
     }
 
-    private static String orderByClause(List<OrderItem> orders) {
-        StringBuilder sb = new StringBuilder();
-        for (OrderItem order : orders) {
-            if (!sb.isEmpty()) {
-                sb.append(", ");
-            }
-            String expression = order.alias != null ? order.alias : order.expression;
-            switch (order.nulls) {
-                case FIRST -> sb.append("CASE WHEN ").append(expression).append(" IS NULL THEN 0 ELSE 1 END, ");
-                case LAST -> sb.append("CASE WHEN ").append(expression).append(" IS NULL THEN 1 ELSE 0 END, ");
-                default -> {
-                    // No null precedence
-                }
-            }
-            sb.append(expression).append(order.ascending ? " ASC" : " DESC");
-        }
-        return sb.toString();
-    }
-
     /**
      * Renders a literal value.
      *
@@ -1218,7 +1143,7 @@ public class CypherQueryBuilder implements GraphQueryBuilder {
             return value.toString();
         }
         if (value instanceof Enum<?> e) {
-            return quote(e.name());
+            return CypherFragments.quote(e.name());
         }
         if (value instanceof Collection<?> collection) {
             StringBuilder sb = new StringBuilder("[");
@@ -1231,11 +1156,7 @@ public class CypherQueryBuilder implements GraphQueryBuilder {
             }
             return sb.append(']').toString();
         }
-        return quote(value.toString());
-    }
-
-    private static String quote(String value) {
-        return "'" + value.replace("\\", "\\\\").replace("'", "\\'") + "'";
+        return CypherFragments.quote(value.toString());
     }
 
     /**
@@ -1310,7 +1231,7 @@ public class CypherQueryBuilder implements GraphQueryBuilder {
                     path.append('.');
                 }
                 path.append(association.getName());
-                if (relationshipEntityPattern != null && isTargetNode(association)) {
+                if (relationshipEntityPattern != null && CypherFragments.isTargetNode(association)) {
                     variable = relationshipEntityPattern.nodeVariable();
                     relationshipEntityPattern = null;
                     continue;
@@ -1902,7 +1823,7 @@ public class CypherQueryBuilder implements GraphQueryBuilder {
                         .incomingMethodParameterProperty(bound)
                         .outgoingQueryParameterProperty(bound),
                     binding -> likeBinding(binding, escape));
-                out.append('(').append(quote(flags)).append(" + ").append(parameterPlaceholder(index)).append(')');
+                out.append('(').append(CypherFragments.quote(flags)).append(" + ").append(parameterPlaceholder(index)).append(')');
             } else {
                 throw new UnsupportedOperationException("Unsupported LIKE pattern: " + pattern);
             }
