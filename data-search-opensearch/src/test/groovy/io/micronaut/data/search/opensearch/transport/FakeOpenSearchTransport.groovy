@@ -96,5 +96,6 @@ class FakeOpenSearchTransport implements OpenSearchTransport {
 
     @Override
     void close() {
+        // the fake holds no connection to release
     }
 }
