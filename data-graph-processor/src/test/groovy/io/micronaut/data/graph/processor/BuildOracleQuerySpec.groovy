@@ -58,6 +58,8 @@ interface SqlRepository extends GenericRepository<Movie, String> {
     List<String> findTitleByReleasedGreaterThan(int released);
     Integer findMaxReleased();
     List<MovieSummary> findByReleasedLessThan(Integer released);
+    @Query("SELECT COUNT(*) AS result FROM v\$session WHERE sid = \$sid AND path <> 'C:\\\\' -- see \$ticket")
+    long sessions(long sid);
 }
 """)
         paths = buildRepository('test.PathRepository', """
@@ -128,6 +130,72 @@ interface PathRepository extends GenericRepository<Person, String> {
         expect:
         method.annotationMetadata.stringValue(Query, 'rawQuery').get() == 'SELECT m.title AS title FROM MATCH (m:Movie) ON movies WHERE m.released > ? AND m.released < ? + 10'
         getParameterNames(method) == ['p0', 'p1']
+    }
+
+    void "test a dollar inside a name, a SQL comment and a backslash in a literal are not parameters"() {
+        given:
+        def method = findMethod(sql, 'sessions')
+
+        expect:
+        def rawQuery = method.annotationMetadata.stringValue(Query, 'rawQuery').get()
+        rawQuery.startsWith("SELECT COUNT(*) AS result FROM v\$session WHERE sid = ? AND path <> 'C:\\")
+        rawQuery.endsWith("' -- see \$ticket")
+        getParameterNames(method) == ['p0']
+    }
+
+    void "test names that need quoting use double quotes"() {
+        given:
+        def repository = buildRepository('test.QuotedRepository', """
+@Node("Movie Node")
+class Quoted {
+    @Id
+    private String title;
+    @MappedProperty("first name")
+    private String firstName;
+    @Relationship(type = "ACTED IN", direction = Direction.INCOMING)
+    private List<Quoted> cast = new ArrayList<>();
+
+    public String getTitle() { return title; }
+    public void setTitle(String title) { this.title = title; }
+    public String getFirstName() { return firstName; }
+    public void setFirstName(String firstName) { this.firstName = firstName; }
+    public List<Quoted> getCast() { return cast; }
+    public void setCast(List<Quoted> cast) { this.cast = cast; }
+}
+
+@TestOracleRepository
+@PropertyGraph(value = "movies", language = PropertyGraph.QueryLanguage.SQL_PGQ)
+interface QuotedRepository extends GenericRepository<Quoted, String> {
+    List<Quoted> findByFirstName(String name);
+    List<Quoted> findByCastTitle(String title);
+}
+""")
+
+        expect:
+        getQuery(findMethod(repository, 'findByFirstName')).contains('MATCH (n IS "Movie Node") WHERE (n."first name" = ?)')
+        getQuery(findMethod(repository, 'findByCastTitle')).contains('MATCH (n IS "Movie Node"), (n) <-[IS "ACTED IN"]- (a0 IS "Movie Node") WHERE (a0.title = ?)')
+    }
+
+    void "test a node without an identifier is rejected"() {
+        when:
+        buildRepository('test.NoIdRepository', """
+@Node
+class Anonymous {
+    private String name;
+    public String getName() { return name; }
+    public void setName(String name) { this.name = name; }
+}
+
+@TestOracleRepository
+@PropertyGraph("movies")
+interface NoIdRepository extends GenericRepository<Anonymous, String> {
+    long countByName(String name);
+}
+""")
+
+        then: "the build fails with a message rather than a NullPointerException"
+        def e = thrown(RuntimeException)
+        e.message.contains("doesn't have an identity") || e.message.contains('has no identifier')
     }
 
     void "test PGQL path finders"() {
