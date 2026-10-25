@@ -9,6 +9,7 @@ import io.micronaut.data.search.document.runtime.AsyncSearchTransport
 import io.micronaut.data.search.document.runtime.DefaultDocumentSearchReactiveRepositoryOperations
 import io.micronaut.data.search.document.runtime.DefaultDocumentSearchRepositoryOperations
 import io.micronaut.data.exceptions.OptimisticLockException
+import io.micronaut.data.search.document.runtime.SearchQueryExecutor
 import io.micronaut.data.search.document.runtime.SearchTransport
 import io.micronaut.data.search.document.runtime.SearchTransport.SearchHit
 import io.micronaut.data.search.document.runtime.SearchTransport.SearchHits
@@ -42,6 +43,40 @@ class StubTransportReactiveSpec extends Specification {
     void "the reactive repository of a store with an async transport does not block"() {
         expect:
         context.getBean(DefaultDocumentSearchRepositoryOperations, Qualifiers.byName("stub")).reactive() instanceof DefaultDocumentSearchReactiveRepositoryOperations
+    }
+
+    void "a @Query method sends its body with the named parameters replaced"() {
+        given:
+        def transport = context.getBean(SearchTransport, Qualifiers.byName("stub"))
+
+        when:
+        repository.rawTitle("rust").collectList().block()
+
+        then:
+        transport.bodies.last().contains('"match":{"title":"rust"}')
+        transport.bodies.last().contains('"size":5')
+
+        when:
+        repository.rawSearch("coffee | tea", 100).block()
+
+        then:
+        transport.bodies.last().contains('"simple_query_string":{"query":"coffee | tea","fields":["title"]}')
+        transport.bodies.last().contains('"range":{"pages":{"gte":100}}')
+    }
+
+    void "the SearchQueryExecutor runs a raw body against the entity index"() {
+        given:
+        def executor = context.getBean(SearchQueryExecutor, Qualifiers.byName("stub"))
+        def transport = context.getBean(SearchTransport, Qualifiers.byName("stub"))
+
+        when:
+        def results = executor.search(Book, '{"query": {"match_all": {}}}')
+        def found = executor.find(Book, '{"query": {"match_all": {}}, "size": 1}')
+
+        then:
+        results.results().size() == found.size() || results.results().isEmpty()
+        transport.bodies.last().contains('"match_all":{}')
+        executor.count(Book, '{"query": {"match_all": {}}}') == repository.count().block()
     }
 
     void "the index is named after @Searchable(name) when set"() {

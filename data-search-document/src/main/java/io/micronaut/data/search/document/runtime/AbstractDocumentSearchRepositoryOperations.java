@@ -245,7 +245,7 @@ abstract class AbstractDocumentSearchRepositoryOperations extends AbstractReposi
         return results;
     }
 
-    protected final <T> SearchResults<T> toSearchResults(SearchTransport.SearchHits hits, RuntimePersistentEntity<T> entity, PreparedQuery<T, ?> preparedQuery) {
+    protected final <T> SearchResults<T> toSearchResults(SearchTransport.SearchHits hits, RuntimePersistentEntity<T> entity, @Nullable PreparedQuery<T, ?> preparedQuery) {
         List<SearchResult<T>> results = new ArrayList<>(hits.hits().size());
         for (SearchTransport.SearchHit hit : hits.hits()) {
             results.add(new SearchResult<>(toEntity(hit, entity, preparedQuery), new Score(hit.score() == null ? 0d : hit.score()), hit.highlights()));
