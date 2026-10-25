@@ -265,6 +265,26 @@ abstract class AbstractTextSearchSpec extends Specification {
         bookSearchRepository.search(SearchQuery.builder("programming").minScore(top * 10 + 1).build()).results().isEmpty()
     }
 
+    void "search with a SearchQuery rejects a field that is not a search field"() {
+        when:
+        bookSearchRepository.search(SearchQuery.builder("programming").fields("author").build())
+
+        then:
+        IllegalArgumentException e = thrown()
+        e.message.contains("'author'")
+        e.message.contains("is not a @SearchField")
+    }
+
+    void "search with a SearchQuery rejects field scoping the store cannot honour"() {
+        assumeTrue(!capabilities().contains(SearchCapability.FIELD_SCOPE))
+
+        when:
+        bookSearchRepository.search(SearchQuery.builder("systems").fields("title").build())
+
+        then:
+        thrown(UnsupportedSearchFeatureException)
+    }
+
     void "search with a SearchQuery rejects options the operation cannot honour"() {
         when:
         bookSearchRepository.search(SearchQuery.builder("programming").boost("title", 2).build())

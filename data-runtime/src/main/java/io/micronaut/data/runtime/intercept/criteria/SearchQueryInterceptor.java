@@ -120,7 +120,12 @@ public class SearchQueryInterceptor extends AbstractSpecificationInterceptor<Obj
                 throw new IllegalStateException("Entity " + root.getPersistentEntity().getName() + " has no @SearchField properties to search");
             }
         } else {
+            List<String> searchFields = TextSearchSupport.searchFields(root.getPersistentEntity()).stream().map(PersistentProperty::getName).toList();
             for (String field : searchQuery.getFields()) {
+                if (!searchFields.contains(field)) {
+                    throw new IllegalArgumentException("Property '" + field + "' of entity " + root.getPersistentEntity().getSimpleName()
+                        + " is not a @SearchField; the search fields are " + searchFields);
+                }
                 fields.add(root.get(field));
             }
         }
