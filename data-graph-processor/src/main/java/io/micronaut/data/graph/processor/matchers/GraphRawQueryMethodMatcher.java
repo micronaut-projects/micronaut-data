@@ -103,6 +103,8 @@ public final class GraphRawQueryMethodMatcher implements MethodMatcher {
         if (operationType == DataMethod.OperationType.QUERY) {
             entityParameter = null;
             entitiesParameter = null;
+        } else {
+            query = countingQuery(matchContext, query);
         }
 
         FindersUtils.InterceptorMatch entry = FindersUtils.resolveInterceptorTypeByOperationType(
@@ -160,6 +162,27 @@ public final class GraphRawQueryMethodMatcher implements MethodMatcher {
             return DataMethod.OperationType.UPDATE;
         }
         throw new MatchFailedException("A graph query must have a RETURN clause, or write with CREATE, MERGE, SET, REMOVE or DELETE");
+    }
+
+    /**
+     * A write query whose method returns a number reports the number of rows it wrote. The query
+     * returns that count itself, so every database reports the same number, rather than the sum of
+     * the driver's counters, which differs between databases and counts properties rather than rows.
+     *
+     * @param matchContext The match context
+     * @param query        The write query
+     * @return The query, returning its row count when the method asks for one
+     */
+    private static String countingQuery(MethodMatchContext matchContext, String query) {
+        ClassElement returnType = TypeUtils.getMethodProducingItemType(matchContext.getMethodElement());
+        if (returnType == null || !TypeUtils.isNumber(returnType)) {
+            return query;
+        }
+        String upper = stripLiterals(query).toUpperCase(Locale.ENGLISH);
+        if (RETURN_PATTERN.matcher(upper).find()) {
+            return query;
+        }
+        return query + " RETURN count(*)";
     }
 
     private static QueryResult buildQueryResult(MethodMatchContext matchContext,
