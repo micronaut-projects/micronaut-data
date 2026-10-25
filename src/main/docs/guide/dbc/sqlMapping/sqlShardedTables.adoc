@@ -1,0 +1,36 @@
+Micronaut Data JDBC and R2DBC can generate the schema of an https://docs.oracle.com/en/database/oracle/oracle-database/26/shard/[Oracle Globally Distributed Database] with ann:data.annotation.Sharded[] and ann:data.annotation.Duplicated[]. A sharded table is partitioned across the shards by consistent hash of its sharding key (system-managed sharding), while a duplicated table is replicated to every shard, so that queries of sharded tables join it locally.
+
+Annotate the root table of a table family with ann:data.annotation.Sharded[]:
+
+snippet::example.Subscriber[project-base="doc-examples/jdbc-example", source="main", tags="root"]
+
+<1> `tablespaceSet` names the tablespace set that stores the partitions. Set it unless the shard catalog has a default tablespace set
+<2> The sharding key defaults to the primary key. Oracle requires the sharding key to be part of the primary key, so the `key` member, which lists the properties of the key, is only needed when the primary key has more columns
+
+A child table names the root table of its family with `parent`, so that its rows are stored in the shard of the parent rows with the same sharding key:
+
+snippet::example.Subscription[project-base="doc-examples/jdbc-example", source="main", tags="child"]
+
+<1> The sharding key of a child table defaults to the one of its parent, here `SUBSCRIBER_ID`
+<2> The primary key of the child table contains the sharding key
+
+Reference data that every shard needs is a duplicated table:
+
+snippet::example.Plan[project-base="doc-examples/jdbc-example", source="main", tags="duplicated"]
+
+With the Oracle dialect, the following tables are generated:
+
+[source,sql]
+----
+CREATE SHARDED TABLE "SUBSCRIBER" ("SUBSCRIBER_ID" VARCHAR(255) NOT NULL, "NAME" VARCHAR(255) NOT NULL, PRIMARY KEY("SUBSCRIBER_ID"))
+    PARTITION BY CONSISTENT HASH ("SUBSCRIBER_ID") PARTITIONS AUTO TABLESPACE SET TS_SUBSCRIBERS
+
+CREATE SHARDED TABLE "SUBSCRIPTION" ("SUBSCRIBER_ID" VARCHAR(255) NOT NULL, "SUBSCRIPTION_NO" NUMBER(19) NOT NULL, "PLAN" VARCHAR(255) NOT NULL, PRIMARY KEY("SUBSCRIBER_ID","SUBSCRIPTION_NO"))
+    PARENT "SUBSCRIBER" PARTITION BY CONSISTENT HASH ("SUBSCRIBER_ID") PARTITIONS AUTO TABLESPACE SET TS_SUBSCRIBERS
+
+CREATE DUPLICATED TABLE "PLAN" ("CODE" VARCHAR(255) NOT NULL, "NAME" VARCHAR(255) NOT NULL, PRIMARY KEY("CODE")) TABLESPACE PLANS_TSP
+----
+
+The statements must run on the shard catalog, in a session with shard DDL enabled (`ALTER SESSION ENABLE SHARD DDL`), which then creates the tables on the shards. A child table is related to its parent by equi-partitioning (`PARENT`) rather than by a foreign key, since Micronaut Data does not generate foreign keys. Other dialects ignore both annotations and generate plain tables, so that tests can run on H2 or Oracle Free, which cannot host sharded tables. Micronaut Data validates that the sharding key is part of the primary key and that the parent is a sharded root table, but it does not detect whether the database is sharded.
+
+To route the connections of an application to the shard of a sharding key, see the sharding module of https://micronaut-projects.github.io/micronaut-oracledb/latest/guide/[Micronaut Oracle Database].

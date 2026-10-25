@@ -68,6 +68,7 @@ import io.micronaut.data.model.runtime.convert.SqlIndexDefinitionProvider;
 import io.micronaut.data.model.schema.sql.SqlColumnMapping;
 import io.micronaut.data.model.schema.sql.SqlIndexMapping;
 import io.micronaut.data.model.schema.sql.SqlSequenceMapping;
+import io.micronaut.data.model.schema.sql.SqlTableDistribution;
 import io.micronaut.data.model.schema.sql.SqlTableMapping;
 import jakarta.persistence.criteria.Order;
 import jakarta.persistence.criteria.Predicate;
@@ -975,13 +976,17 @@ public class SqlQueryBuilder extends AbstractSqlLikeQueryBuilder {
         }
 
         String tableName = getObjectName(schema, table.name(), escape, true);
-        StringBuilder builder = new StringBuilder("CREATE TABLE ").append(tableName).append(" (");
+        SqlTableDistribution distribution = dialect == Dialect.ORACLE ? table.distribution() : null;
+        StringBuilder builder = new StringBuilder(createTableKeywords(distribution)).append(tableName).append(" (");
         builder.append(String.join(",", columns));
         if (generatePkAfterColumns) {
             builder.append(", PRIMARY KEY(").append(String.join(",", primaryColumnsName)).append(')');
         }
         if (dialect == Dialect.ORACLE) {
             builder.append(")");
+            if (distribution != null) {
+                appendDistributionClauses(builder, distribution, escape);
+            }
         } else {
             builder.append(");");
         }
@@ -991,6 +996,33 @@ public class SqlQueryBuilder extends AbstractSqlLikeQueryBuilder {
         }
         createAuxiliaryStatements(table, createStatements);
         createIndexStatements(table, tableName, escape, createStatements);
+    }
+
+    private static String createTableKeywords(@Nullable SqlTableDistribution distribution) {
+        if (distribution == null) {
+            return "CREATE TABLE ";
+        }
+        return switch (distribution.type()) {
+            case SHARDED -> "CREATE SHARDED TABLE ";
+            case DUPLICATED -> "CREATE DUPLICATED TABLE ";
+        };
+    }
+
+    private void appendDistributionClauses(StringBuilder builder, SqlTableDistribution distribution, boolean escape) {
+        if (distribution.type() == SqlTableDistribution.Type.SHARDED) {
+            SqlTableMapping parent = distribution.parent();
+            if (parent != null) {
+                builder.append(" PARENT ").append(getObjectName(parent.schema(), parent.name(), parent.escape(), true));
+            }
+            builder.append(" PARTITION BY CONSISTENT HASH (")
+                .append(distribution.keyColumns().stream().map(column -> escape ? quote(column) : column).collect(Collectors.joining(",")))
+                .append(") PARTITIONS AUTO");
+            if (StringUtils.isNotEmpty(distribution.tablespace())) {
+                builder.append(" TABLESPACE SET ").append(distribution.tablespace());
+            }
+        } else if (StringUtils.isNotEmpty(distribution.tablespace())) {
+            builder.append(" TABLESPACE ").append(distribution.tablespace());
+        }
     }
 
     private String appendReservableAndCheckConstraints(String column, SqlColumnMapping tableColumn, boolean escape) {

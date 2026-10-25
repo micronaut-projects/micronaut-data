@@ -19,6 +19,7 @@ import io.micronaut.core.annotation.AnnotationClassValue;
 import io.micronaut.core.annotation.AnnotationMetadata;
 import io.micronaut.core.annotation.AnnotationValue;
 import io.micronaut.core.util.StringUtils;
+import io.micronaut.data.annotation.Duplicated;
 import io.micronaut.data.annotation.EmbeddedNaming;
 import io.micronaut.data.annotation.Index;
 import io.micronaut.data.annotation.Indexes;
@@ -28,6 +29,7 @@ import io.micronaut.data.annotation.JsonView;
 import io.micronaut.data.annotation.MappedEntity;
 import io.micronaut.data.annotation.MappedProperty;
 import io.micronaut.data.annotation.Relation;
+import io.micronaut.data.annotation.Sharded;
 import io.micronaut.data.annotation.TypeDef;
 import io.micronaut.data.annotation.sql.JoinColumn;
 import io.micronaut.data.annotation.sql.JoinColumns;
@@ -170,6 +172,30 @@ public class MappedEntityVisitor implements TypeElementVisitor<MappedEntity, Obj
         if (entity.hasAnnotation(JSON_VIEW_ANNOTATION) || entity.hasAnnotation(JSON_SUB_VIEW_ANNOTATION)) {
             validateJsonView(entity, context);
         }
+        validateDistribution(entity, context);
+    }
+
+    private void validateDistribution(SourcePersistentEntity entity, VisitorContext context) {
+        boolean sharded = entity.hasAnnotation(Sharded.class);
+        if (sharded && entity.hasAnnotation(Duplicated.class)) {
+            throw new ProcessingException(entity.getClassElement(), "Entity " + entity.getSimpleName() + " cannot be both @Sharded and @Duplicated");
+        }
+        if (!sharded) {
+            return;
+        }
+        for (String key : entity.stringValues(Sharded.class, "key")) {
+            if (entity.getPropertyPath(key) == null) {
+                throw new ProcessingException(entity.getClassElement(), "The sharding key property " + key + " doesn't exist in the entity " + entity.getSimpleName());
+            }
+        }
+        entity.stringValue(Sharded.class, "parent")
+            .filter(parent -> !"void".equals(parent))
+            .flatMap(context::getClassElement)
+            .ifPresent(parent -> {
+                if (!parent.hasAnnotation(Sharded.class)) {
+                    throw new ProcessingException(entity.getClassElement(), "The parent " + parent.getSimpleName() + " of the sharded entity " + entity.getSimpleName() + " must be @Sharded");
+                }
+            });
     }
 
     /**
