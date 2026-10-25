@@ -233,7 +233,7 @@ public final class MongoQueryBuilder implements QueryBuilder {
         if (!queryState.vectorScoreFields.isEmpty()) {
             Map<String, Object> vectorMeta = new LinkedHashMap<>();
             for (String scoreField : queryState.vectorScoreFields) {
-                vectorMeta.put(scoreField, MongoSearchStages.VECTOR_DISTANCE);
+                vectorMeta.put(scoreField, MongoSearchStages.vectorDistance(queryState.getEntity()));
             }
             // The distance is only available as metadata of the $vectorSearch stage
             pipeline.add(Map.of(ADD_FIELDS, vectorMeta));
@@ -420,7 +420,7 @@ public final class MongoQueryBuilder implements QueryBuilder {
         }
         if (VectorScoringDialectSupport.SCORE_FUNCTION.equals(functionExpression.getName())) {
             registerVectorSearch(queryState, functionExpression);
-            return MongoSearchStages.VECTOR_DISTANCE;
+            return MongoSearchStages.vectorDistance(queryState.getEntity());
         }
         List<Expression<?>> arguments = functionExpression.getExpressions();
         String name = functionExpression.getName().toUpperCase(Locale.ROOT);
