@@ -126,6 +126,7 @@ The portable API is the same on every store; the table lists which optional capa
 |Prefix (`SearchPrefix`) |yes |yes |no |yes
 |Fuzzy (`SearchFuzzy`) |no |yes |no |yes
 |Field scope (`findByTitleSearch` searches only `title`) |yes |yes |no, the whole text index |yes
+|`SearchAll` over several fields matches terms spread across them |yes |no, every term in one field |yes |yes
 |Index-time weights (`@SearchField(weight)`) |yes |yes |yes |yes
 |Query-time boosts (`SearchQuery.boost`) |no |no |no |no, planned
 |Highlighting |yes |yes |no |yes
