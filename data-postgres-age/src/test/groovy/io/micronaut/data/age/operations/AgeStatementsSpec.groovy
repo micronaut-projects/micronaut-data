@@ -21,6 +21,7 @@ class AgeStatementsSpec extends Specification {
         'MATCH (m {title: $title}) SET m.votes = 1'                                                | '("result" ag_catalog.agtype)'
         'MATCH (n) RETURN n.title'                                                                 | '("n.title" ag_catalog.agtype)'
         'MATCH (n) RETURN n AS `the node`'                                                         | '("the node" ag_catalog.agtype)'
+        'MATCH (n) RETURN n.limit AS limit, n.order AS order, n.skip, $skip AS s ORDER BY n.order' | '("limit" ag_catalog.agtype, "order" ag_catalog.agtype, "n.skip" ag_catalog.agtype, "s" ag_catalog.agtype)'
     }
 
     void "wrap a query in a cypher() call for the graph token"() {

@@ -63,10 +63,12 @@ import org.jspecify.annotations.Nullable;
 
 import java.util.ArrayList;
 import java.util.Collection;
+import java.util.HashSet;
 import java.util.Iterator;
 import java.util.LinkedHashMap;
 import java.util.List;
 import java.util.Map;
+import java.util.Set;
 
 /**
  * Builds Cypher queries for graph repositories at compile time.
@@ -189,11 +191,12 @@ public class CypherQueryBuilder implements GraphQueryBuilder {
         } else {
             selectionRenderer.entity = true;
         }
-        String orderBy = renderOrderBy(definition.order(), state);
+        List<OrderItem> orders = renderOrders(definition.order(), state);
 
         StringBuilder query = new StringBuilder();
         appendMatch(query, state, where);
-        appendReturn(query, state, selectionRenderer, definition.isDistinct());
+        appendReturn(query, state, selectionRenderer, definition.isDistinct(), orders);
+        String orderBy = orderByClause(orders);
         if (!orderBy.isEmpty()) {
             query.append(" ORDER BY ").append(orderBy);
         }
@@ -206,14 +209,15 @@ public class CypherQueryBuilder implements GraphQueryBuilder {
         return QueryResult.of(query.toString(), List.of(query.toString()), state.parameterBindings, state.additionalRequiredParameters);
     }
 
-    private void appendReturn(StringBuilder query, QueryState state, SelectionRenderer selectionRenderer, boolean distinct) {
+    private void appendReturn(StringBuilder query, QueryState state, SelectionRenderer selectionRenderer, boolean distinct, List<OrderItem> orders) {
+        List<String> carried = List.of();
         if (state.hasPatterns() && (selectionRenderer.entity || selectionRenderer.rootOnly)) {
-            query.append(WITH_DISTINCT).append(ROOT);
+            carried = appendDistinctRoot(query, orders);
         }
         List<String> joinColumns = List.of();
         if (selectionRenderer.entity) {
-            joinColumns = appendFetchJoins(query, state);
-            appendDynamicRelationships(query, state.entity, joinColumns);
+            joinColumns = appendFetchJoins(query, state, carried);
+            appendDynamicRelationships(query, state.entity, joinColumns, carried);
         }
         query.append(RETURN);
         if (distinct) {
@@ -227,6 +231,35 @@ public class CypherQueryBuilder implements GraphQueryBuilder {
         } else {
             query.append(selectionRenderer.out);
         }
+    }
+
+    /**
+     * Reduces the rows of the relationship patterns added by criteria back to one row per root node.
+     * A sort on a property reached through such a pattern is aggregated here, because the pattern
+     * variables leave the scope at this point: an ascending order sorts by the smallest value of the
+     * related nodes, a descending one by the largest.
+     *
+     * @param query  The query
+     * @param orders The orders of the query
+     * @return The aliases of the aggregated order values, which later {@code WITH} clauses must carry
+     */
+    private static List<String> appendDistinctRoot(StringBuilder query, List<OrderItem> orders) {
+        List<String> carried = new ArrayList<>();
+        for (OrderItem order : orders) {
+            if (order.onAssociation) {
+                if (carried.isEmpty()) {
+                    query.append(" WITH ").append(ROOT);
+                }
+                String alias = "o" + carried.size();
+                query.append(", ").append(order.ascending ? "min(" : "max(").append(order.expression).append(") AS ").append(alias);
+                order.alias = alias;
+                carried.add(alias);
+            }
+        }
+        if (carried.isEmpty()) {
+            query.append(WITH_DISTINCT).append(ROOT);
+        }
+        return carried;
     }
 
     @Override
@@ -292,7 +325,7 @@ public class CypherQueryBuilder implements GraphQueryBuilder {
         StringBuilder query = new StringBuilder(MATCH_OPEN + ROOT + labelExpression(entity) + CLOSE_WHERE
             + identityExpression(entity.getIdentity(), ROOT) + " = $" + ID_PARAMETER);
         List<String> columns = new ArrayList<>();
-        appendDynamicRelationships(query, entity, columns);
+        appendDynamicRelationships(query, entity, columns, List.of());
         query.append(RETURN).append(ROOT);
         for (String column : columns) {
             query.append(", ").append(column);
@@ -665,12 +698,12 @@ public class CypherQueryBuilder implements GraphQueryBuilder {
             return "";
         }
         StringBuilder sb = new StringBuilder();
+        Set<String> seen = new HashSet<>();
         for (Association association : associations) {
             String type = GraphEntities.escapeName(GraphEntities.relationshipType(association));
-            if (sb.indexOf(":" + type) >= 0 || sb.indexOf("|" + type) >= 0) {
-                continue;
+            if (seen.add(type)) {
+                sb.append(sb.isEmpty() ? ":" : "|").append(type);
             }
-            sb.append(sb.isEmpty() ? ":" : "|").append(type);
         }
         return sb.toString();
     }
@@ -761,8 +794,9 @@ public class CypherQueryBuilder implements GraphQueryBuilder {
      * @param query   The query, positioned after the matches of the root node
      * @param entity  The entity
      * @param columns The columns already carried with the root node; the new column is added
+     * @param carried Further values carried with the root node, such as aggregated order keys
      */
-    protected void appendDynamicRelationships(StringBuilder query, PersistentEntity entity, List<String> columns) {
+    protected void appendDynamicRelationships(StringBuilder query, PersistentEntity entity, List<String> columns, List<String> carried) {
         if (GraphEntities.findDynamicRelationships(entity) == null) {
             return;
         }
@@ -772,6 +806,9 @@ public class CypherQueryBuilder implements GraphQueryBuilder {
             query.append(" WHERE NOT type(dr) IN ").append(asLiteral(declared));
         }
         query.append(" WITH ").append(ROOT);
+        for (String alias : carried) {
+            query.append(", ").append(alias);
+        }
         for (String column : columns) {
             query.append(", ").append(column);
         }
@@ -780,17 +817,17 @@ public class CypherQueryBuilder implements GraphQueryBuilder {
         columns.add(DYNAMIC_RELATIONSHIPS_COLUMN);
     }
 
-    private List<String> appendFetchJoins(StringBuilder query, QueryState state) {
+    private List<String> appendFetchJoins(StringBuilder query, QueryState state, List<String> carried) {
         List<String> columns = new ArrayList<>();
         for (JoinPath joinPath : state.joinPaths) {
             if (joinPath.getJoinType().isFetch()) {
-                appendFetchJoin(query, joinPath, columns);
+                appendFetchJoin(query, joinPath, columns, carried);
             }
         }
         return columns;
     }
 
-    private void appendFetchJoin(StringBuilder query, JoinPath joinPath, List<String> columns) {
+    private void appendFetchJoin(StringBuilder query, JoinPath joinPath, List<String> columns, List<String> carried) {
         Association[] associationPath = joinPath.getAssociationPath();
         Association association = associationPath[0];
         boolean relationshipEntity = GraphEntities.isRelationshipEntity(association.getAssociatedEntity());
@@ -817,6 +854,9 @@ public class CypherQueryBuilder implements GraphQueryBuilder {
                 collect = "collect(" + nodeVariable + ")";
             }
             query.append(" WITH ").append(ROOT);
+            for (String alias : carried) {
+                query.append(", ").append(alias);
+            }
             for (String previous : columns) {
                 query.append(", ").append(previous);
             }
@@ -842,41 +882,47 @@ public class CypherQueryBuilder implements GraphQueryBuilder {
         return sb.toString();
     }
 
-    private String renderOrderBy(List<Order> orders, QueryState state) {
+    private List<OrderItem> renderOrders(List<Order> orders, QueryState state) {
         if (orders == null || orders.isEmpty()) {
-            return "";
+            return List.of();
         }
-        StringBuilder sb = new StringBuilder();
-        Iterator<Order> iterator = orders.iterator();
-        while (iterator.hasNext()) {
-            appendOrder(sb, iterator.next(), state);
-            if (iterator.hasNext()) {
-                sb.append(", ");
+        List<OrderItem> items = new ArrayList<>(orders.size());
+        for (Order order : orders) {
+            StringBuilder expression = new StringBuilder();
+            ExpressionRenderer renderer = new ExpressionRenderer(state, expression);
+            boolean ignoreCase = order instanceof DefaultOrder<?> defaultOrder && defaultOrder.isIgnoreCase();
+            Nulls nulls = order instanceof DefaultOrder<?> defaultOrder ? defaultOrder.getNullPrecedence() : Nulls.NONE;
+            if (ignoreCase) {
+                expression.append(TO_LOWER);
+                renderer.appendExpression(order.getExpression(), null);
+                expression.append(')');
+            } else {
+                renderer.appendExpression(order.getExpression(), null);
             }
+            boolean onAssociation = order.getExpression() instanceof io.micronaut.data.model.jpa.criteria.PersistentPropertyPath<?> propertyPath
+                && !propertyPath.getPropertyPath().getAssociations().isEmpty();
+            items.add(new OrderItem(expression.toString(), order.isAscending(), nulls, onAssociation));
         }
-        return sb.toString();
+        return items;
     }
 
-    private void appendOrder(StringBuilder sb, Order order, QueryState state) {
-        StringBuilder expression = new StringBuilder();
-        ExpressionRenderer renderer = new ExpressionRenderer(state, expression);
-        boolean ignoreCase = order instanceof DefaultOrder<?> defaultOrder && defaultOrder.isIgnoreCase();
-        Nulls nulls = order instanceof DefaultOrder<?> defaultOrder ? defaultOrder.getNullPrecedence() : Nulls.NONE;
-        if (ignoreCase) {
-            expression.append(TO_LOWER);
-            renderer.appendExpression(order.getExpression(), null);
-            expression.append(')');
-        } else {
-            renderer.appendExpression(order.getExpression(), null);
-        }
-        switch (nulls) {
-            case FIRST -> sb.append("CASE WHEN ").append(expression).append(" IS NULL THEN 0 ELSE 1 END, ");
-            case LAST -> sb.append("CASE WHEN ").append(expression).append(" IS NULL THEN 1 ELSE 0 END, ");
-            default -> {
-                // No null precedence
+    private static String orderByClause(List<OrderItem> orders) {
+        StringBuilder sb = new StringBuilder();
+        for (OrderItem order : orders) {
+            if (!sb.isEmpty()) {
+                sb.append(", ");
             }
+            String expression = order.alias != null ? order.alias : order.expression;
+            switch (order.nulls) {
+                case FIRST -> sb.append("CASE WHEN ").append(expression).append(" IS NULL THEN 0 ELSE 1 END, ");
+                case LAST -> sb.append("CASE WHEN ").append(expression).append(" IS NULL THEN 1 ELSE 0 END, ");
+                default -> {
+                    // No null precedence
+                }
+            }
+            sb.append(expression).append(order.ascending ? " ASC" : " DESC");
         }
-        sb.append(expression).append(order.isAscending() ? " ASC" : " DESC");
+        return sb.toString();
     }
 
     /**
@@ -956,10 +1002,21 @@ public class CypherQueryBuilder implements GraphQueryBuilder {
          * @return The expression
          */
         private String resolve(io.micronaut.data.model.PersistentPropertyPath propertyPath) {
+            return propertyExpression(propertyPath, resolveVariable(propertyPath.getAssociations()));
+        }
+
+        /**
+         * Resolves the variable of the graph element at the end of a chain of associations,
+         * adding relationship patterns for the associations.
+         *
+         * @param associations The associations
+         * @return The variable
+         */
+        private String resolveVariable(List<Association> associations) {
             String variable = ROOT;
             Pattern relationshipEntityPattern = null;
             StringBuilder path = new StringBuilder();
-            for (Association association : propertyPath.getAssociations()) {
+            for (Association association : associations) {
                 if (!path.isEmpty()) {
                     path.append('.');
                 }
@@ -970,7 +1027,7 @@ public class CypherQueryBuilder implements GraphQueryBuilder {
                     continue;
                 }
                 if (association.isEmbedded()) {
-                    throw new IllegalArgumentException("Embedded properties are not supported by graph repositories: " + propertyPath.getPath());
+                    throw new IllegalArgumentException("Embedded properties are not supported by graph repositories: " + path);
                 }
                 if (!GraphEntities.isRelationship(association)) {
                     throw new IllegalArgumentException("Association [" + association.getName() + "] is not a @Relationship and cannot be queried");
@@ -984,7 +1041,7 @@ public class CypherQueryBuilder implements GraphQueryBuilder {
                     variable = pattern.nodeVariable();
                 }
             }
-            return propertyExpression(propertyPath, variable);
+            return variable;
         }
 
         private Pattern newPattern(Association association, String from) {
@@ -1434,6 +1491,11 @@ public class CypherQueryBuilder implements GraphQueryBuilder {
 
         @Override
         public void visitIsEmpty(Expression<?> expression) {
+            String pattern = relationshipExistsPattern(expression);
+            if (pattern != null) {
+                out.append("NOT ").append(pattern);
+                return;
+            }
             StringBuilder e = new StringBuilder();
             new ExpressionRenderer(state, e).appendExpression(expression, null);
             out.append('(').append(e).append(" IS NULL OR size(").append(e).append(") = 0)");
@@ -1441,9 +1503,34 @@ public class CypherQueryBuilder implements GraphQueryBuilder {
 
         @Override
         public void visitIsNotEmpty(Expression<?> expression) {
+            String pattern = relationshipExistsPattern(expression);
+            if (pattern != null) {
+                out.append(pattern);
+                return;
+            }
             StringBuilder e = new StringBuilder();
             new ExpressionRenderer(state, e).appendExpression(expression, null);
             out.append('(').append(e).append(" IS NOT NULL AND size(").append(e).append(") > 0)");
+        }
+
+        /**
+         * An emptiness check on a relationship asks whether the node has any such relationship,
+         * which is a pattern predicate rather than a property check.
+         *
+         * @param expression The expression
+         * @return The pattern, or null if the expression is not a relationship
+         */
+        private @Nullable String relationshipExistsPattern(Expression<?> expression) {
+            if (expression instanceof io.micronaut.data.model.jpa.criteria.PersistentPropertyPath<?> persistentPropertyPath) {
+                io.micronaut.data.model.PersistentPropertyPath propertyPath = persistentPropertyPath.getPropertyPath();
+                if (propertyPath.getProperty() instanceof Association association
+                    && !association.isEmbedded()
+                    && GraphEntities.isRelationship(association)) {
+                    String variable = state.resolveVariable(propertyPath.getAssociations());
+                    return GraphEntities.relationshipPattern(association, variable, null, "()");
+                }
+            }
+            return null;
         }
 
         @Override
@@ -1558,6 +1645,24 @@ public class CypherQueryBuilder implements GraphQueryBuilder {
 
         private void appendAlias(String defaultAlias) {
             out.append(" AS ").append(GraphEntities.escapeName(alias != null ? alias : defaultAlias));
+        }
+    }
+
+    /**
+     * A rendered {@code ORDER BY} item.
+     */
+    private static final class OrderItem {
+        private final String expression;
+        private final boolean ascending;
+        private final Nulls nulls;
+        private final boolean onAssociation;
+        private @Nullable String alias;
+
+        private OrderItem(String expression, boolean ascending, Nulls nulls, boolean onAssociation) {
+            this.expression = expression;
+            this.ascending = ascending;
+            this.nulls = nulls;
+            this.onAssociation = onAssociation;
         }
     }
 }

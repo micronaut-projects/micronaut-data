@@ -61,11 +61,21 @@ import java.util.regex.Pattern;
 @Internal
 public final class GraphRawQueryMethodMatcher implements MethodMatcher {
 
-    private static final Pattern PARAMETER_PATTERN = Pattern.compile("\\$([a-zA-Z_]\\w*)");
+    /**
+     * A parameter reference. A dollar inside a name, as in Oracle's {@code v$session}, is not one.
+     */
+    private static final Pattern PARAMETER_PATTERN = Pattern.compile("(?<![\\w$])\\$([a-zA-Z_]\\w*)");
     private static final Pattern WRITE_PATTERN = Pattern.compile("\\b(CREATE|MERGE|SET|REMOVE|INSERT|UPDATE)\\b");
     private static final Pattern DELETE_PATTERN = Pattern.compile("\\bDELETE\\b");
     private static final Pattern RETURN_PATTERN = Pattern.compile("\\bRETURN\\b");
     private static final Pattern SELECT_PATTERN = Pattern.compile("^\\s*SELECT\\b");
+    /**
+     * Names that are not clauses: parameters, property accesses, labels and relationship types,
+     * map keys and aliases. They are blanked before the clause keywords are looked for, so that a
+     * property called {@code set} or a parameter called {@code merge} does not turn a read into a write.
+     */
+    private static final Pattern NAME_PATTERN = Pattern.compile("\\$\\w+|[.:]\\s*\\w+|\\bAS\\s+\\w+", Pattern.CASE_INSENSITIVE);
+    private static final Pattern MAP_KEY_PATTERN = Pattern.compile("\\w+\\s*:");
 
     @Override
     public int getOrder() {
@@ -101,6 +111,9 @@ public final class GraphRawQueryMethodMatcher implements MethodMatcher {
         if (operationType == DataMethod.OperationType.QUERY) {
             entityParameter = null;
             entitiesParameter = null;
+        } else if (!positional) {
+            // SQL and PGQL statements report their row count through JDBC
+            query = countingQuery(matchContext, query);
         }
 
         FindersUtils.InterceptorMatch entry = FindersUtils.resolveInterceptorTypeByOperationType(
@@ -160,6 +173,27 @@ public final class GraphRawQueryMethodMatcher implements MethodMatcher {
         throw new MatchFailedException("A graph query must have a RETURN clause, or write with CREATE, MERGE, SET, REMOVE or DELETE");
     }
 
+    /**
+     * A write query whose method returns a number reports the number of rows it wrote. The query
+     * returns that count itself, so every database reports the same number, rather than the sum of
+     * the driver's counters, which differs between databases and counts properties rather than rows.
+     *
+     * @param matchContext The match context
+     * @param query        The write query
+     * @return The query, returning its row count when the method asks for one
+     */
+    private static String countingQuery(MethodMatchContext matchContext, String query) {
+        ClassElement returnType = TypeUtils.getMethodProducingItemType(matchContext.getMethodElement());
+        if (returnType == null || !TypeUtils.isNumber(returnType)) {
+            return query;
+        }
+        String upper = stripLiterals(query).toUpperCase(Locale.ENGLISH);
+        if (RETURN_PATTERN.matcher(upper).find()) {
+            return query;
+        }
+        return query + " RETURN count(*)";
+    }
+
     private static QueryResult buildQueryResult(MethodMatchContext matchContext,
                                                 String query,
                                                 @Nullable ParameterElement entityParam,
@@ -170,7 +204,7 @@ public final class GraphRawQueryMethodMatcher implements MethodMatcher {
             .getAnnotationMetadata()
             .getAnnotationValuesByType(ParameterExpression.class);
         List<QueryParameterBinding> bindings = new ArrayList<>();
-        String scanned = maskLiterals(query);
+        String scanned = maskLiterals(query, positional);
         Matcher matcher = PARAMETER_PATTERN.matcher(scanned);
         StringBuilder rewritten = new StringBuilder();
         int lastEnd = 0;
@@ -212,11 +246,24 @@ public final class GraphRawQueryMethodMatcher implements MethodMatcher {
      * @return The masked query
      */
     static String maskLiterals(String query) {
-        return new LiteralMasker(query).mask();
+        return maskLiterals(query, false);
+    }
+
+    /**
+     * Replaces the content of string literals and comments with spaces, keeping offsets.
+     *
+     * @param query The query
+     * @param sql   Whether the query is SQL or PGQL, where {@code --} opens a comment and a quote is
+     *              doubled rather than escaped with a backslash
+     * @return The masked query
+     */
+    static String maskLiterals(String query, boolean sql) {
+        return new LiteralMasker(query, sql).mask();
     }
 
     private static String stripLiterals(String query) {
-        return maskLiterals(query);
+        String names = NAME_PATTERN.matcher(maskLiterals(query)).replaceAll(" ");
+        return MAP_KEY_PATTERN.matcher(names).replaceAll(" ");
     }
 
     /**
@@ -224,14 +271,16 @@ public final class GraphRawQueryMethodMatcher implements MethodMatcher {
      */
     private static final class LiteralMasker {
         private final String query;
+        private final boolean sql;
         private final StringBuilder out;
         private int position;
         private char quote;
         private boolean lineComment;
         private boolean blockComment;
 
-        private LiteralMasker(String query) {
+        private LiteralMasker(String query, boolean sql) {
             this.query = query;
+            this.sql = sql;
             this.out = new StringBuilder(query.length());
         }
 
@@ -271,7 +320,7 @@ public final class GraphRawQueryMethodMatcher implements MethodMatcher {
         }
 
         private void maskQuoted(char c, char next) {
-            if (c == '\\' && next != 0) {
+            if (c == '\\' && next != 0 && !sql) {
                 appendTwo("  ");
             } else if (c == quote) {
                 quote = 0;
@@ -285,7 +334,7 @@ public final class GraphRawQueryMethodMatcher implements MethodMatcher {
             if (c == '\'' || c == '"' || c == '`') {
                 quote = c;
                 append(c);
-            } else if (c == '/' && next == '/') {
+            } else if ((c == '/' && next == '/') || (sql && c == '-' && next == '-')) {
                 lineComment = true;
                 appendTwo("  ");
             } else if (c == '/' && next == '*') {
