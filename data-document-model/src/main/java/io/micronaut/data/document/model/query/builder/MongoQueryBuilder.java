@@ -240,7 +240,7 @@ public final class MongoQueryBuilder implements QueryBuilder {
         pipeline.add(Map.of(VECTOR_SEARCH_STAGE, MongoSearchStages.vectorSearchStage(queryState.vectorSearch, limit)));
         if (!queryState.vectorScoreFields.isEmpty()) {
             // The distance is only available as metadata of the $vectorSearch stage
-            pipeline.add(Map.of(ADD_FIELDS, MongoSearchStages.scoreFields(queryState.vectorScoreFields, MongoSearchStages.VECTOR_DISTANCE)));
+            pipeline.add(Map.of(ADD_FIELDS, MongoSearchStages.scoreFields(queryState.vectorScoreFields, MongoSearchStages.vectorDistance(queryState.getEntity()))));
         }
     }
 
@@ -411,7 +411,7 @@ public final class MongoQueryBuilder implements QueryBuilder {
         }
         if (VectorScoringDialectSupport.SCORE_FUNCTION.equals(functionExpression.getName())) {
             registerVectorSearch(queryState, functionExpression);
-            return MongoSearchStages.VECTOR_DISTANCE;
+            return MongoSearchStages.vectorDistance(queryState.getEntity());
         }
         if (TextSearchSupport.HYBRID_SCORE_FUNCTION.equals(functionExpression.getName())) {
             registerHybrid(queryState, functionExpression);
