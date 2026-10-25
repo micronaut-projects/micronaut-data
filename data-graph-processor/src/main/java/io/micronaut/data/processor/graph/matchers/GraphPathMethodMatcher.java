@@ -53,6 +53,7 @@ import org.jspecify.annotations.Nullable;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.List;
+import java.util.Objects;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 
@@ -257,7 +258,7 @@ public final class GraphPathMethodMatcher implements MethodMatcher {
         }
         List<Association> associations = new ArrayList<>();
         for (String part : token.split("Or(?=[A-Z])")) {
-            String propertyName = NameUtils.decapitalize(part);
+            String propertyName = Objects.requireNonNullElse(NameUtils.decapitalize(part), part);
             PersistentProperty property = entity.getPropertyByName(propertyName);
             if (!(property instanceof Association association) || !GraphEntities.isRelationship(association)) {
                 throw new MatchFailedException("Entity [" + entity.getSimpleName() + "] has no @Relationship property named [" + propertyName + "]");
