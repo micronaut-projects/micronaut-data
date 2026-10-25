@@ -112,7 +112,7 @@ public final class SearchRepositoryMethodMatcher implements MethodMatcher {
         if (TypeUtils.isReactiveOrFuture(returnType)) {
             returnType = returnType.getFirstTypeArgument().orElse(returnType);
         }
-        if (!returnType.getName().equals(SearchResults.class.getName())) {
+        if (returnType == null || !returnType.getName().equals(SearchResults.class.getName())) {
             return null;
         }
         if (searchQuery) {
