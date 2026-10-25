@@ -144,9 +144,10 @@ public final class MongoQueryBuilder implements QueryBuilder {
      */
     public static final String SEARCH_BOOSTS = "$mn_boosts";
     private static final String GEOMETRY_OPERATOR = "$geometry";
-    private static final Map<String, Object> TEXT_SCORE = Map.of("$meta", "textScore");
-    private static final Map<String, Object> SEARCH_SCORE = Map.of("$meta", "searchScore");
-    private static final Map<String, Object> SEARCH_HIGHLIGHTS = Map.of("$meta", "searchHighlights");
+    private static final String META = "$meta";
+    private static final Map<String, Object> TEXT_SCORE = Map.of(META, "textScore");
+    private static final Map<String, Object> SEARCH_SCORE = Map.of(META, "searchScore");
+    private static final Map<String, Object> SEARCH_HIGHLIGHTS = Map.of(META, "searchHighlights");
     private static final String SEARCH_STAGE = "$search";
     private static final String DEFAULT_SEARCH_INDEX = "default";
     private static final String ADD_FIELDS = "$addFields";
@@ -185,37 +186,14 @@ public final class MongoQueryBuilder implements QueryBuilder {
             predicateObj = buildWhereClause(predicate, queryState);
         }
 
-        if (queryState.searchOperator != null) {
-            if (!pipeline.isEmpty()) {
-                throw new UnsupportedOperationException("MongoDB $search must be the first stage of the aggregation, so a search predicate cannot be combined with joins.");
-            }
-            pipeline.add(Map.of(SEARCH_STAGE, buildSearchStage(queryState)));
-            Map<String, Object> searchMeta = new LinkedHashMap<>();
-            for (String scoreField : queryState.searchScoreFields) {
-                searchMeta.put(scoreField, SEARCH_SCORE);
-            }
-            if (!queryState.highlights.isEmpty()) {
-                searchMeta.put(MongoSearchStages.HIGHLIGHTS_FIELD, SEARCH_HIGHLIGHTS);
-            }
-            if (!searchMeta.isEmpty()) {
-                // The score and the highlights are only available as metadata of the $search stage
-                pipeline.add(Map.of(ADD_FIELDS, searchMeta));
-            }
-        }
+        appendSearchStages(queryState, pipeline);
         if (!predicateObj.isEmpty()) {
             pipeline.add(Map.of("$match", predicateObj));
         }
         if (!addFieldsObj.isEmpty()) {
             pipeline.add(Map.of(ADD_FIELDS, addFieldsObj));
         }
-        if (!queryState.highlights.isEmpty()) {
-            Map<String, Object> highlightFields = new LinkedHashMap<>();
-            for (Map.Entry<String, String> highlight : queryState.highlights.entrySet()) {
-                highlightFields.put(highlight.getKey(), MongoSearchStages.highlightExpression(highlight.getValue()));
-            }
-            pipeline.add(Map.of(ADD_FIELDS, highlightFields));
-            pipeline.add(Map.of("$unset", List.of(MongoSearchStages.HIGHLIGHTS_FIELD)));
-        }
+        appendHighlightFields(queryState, pipeline);
         if (!group.isEmpty()) {
             group.put(MONGO_ID_FIELD, null);
             pipeline.add(Map.of("$group", group));
@@ -228,6 +206,41 @@ public final class MongoQueryBuilder implements QueryBuilder {
         appendProjection(annotationMetadata, projectionObj, pipeline);
         appendSkipAndLimit(selectQueryDefinition, pipeline);
         return QueryResult.of(render(pipeline, predicateObj), queryState.getParameterBindings());
+    }
+
+    /** Adds the {@code $search} stage of a search predicate, with its score and highlight metadata as fields. */
+    private void appendSearchStages(QueryState queryState, List<Map<String, Object>> pipeline) {
+        if (queryState.searchOperator == null) {
+            return;
+        }
+        if (!pipeline.isEmpty()) {
+            throw new UnsupportedOperationException("MongoDB $search must be the first stage of the aggregation, so a search predicate cannot be combined with joins.");
+        }
+        pipeline.add(Map.of(SEARCH_STAGE, buildSearchStage(queryState)));
+        Map<String, Object> searchMeta = new LinkedHashMap<>();
+        for (String scoreField : queryState.searchScoreFields) {
+            searchMeta.put(scoreField, SEARCH_SCORE);
+        }
+        if (!queryState.highlights.isEmpty()) {
+            searchMeta.put(MongoSearchStages.HIGHLIGHTS_FIELD, SEARCH_HIGHLIGHTS);
+        }
+        if (!searchMeta.isEmpty()) {
+            // The score and the highlights are only available as metadata of the $search stage
+            pipeline.add(Map.of(ADD_FIELDS, searchMeta));
+        }
+    }
+
+    /** Renders the highlighted fragments of each highlighted path and drops the raw metadata. */
+    private static void appendHighlightFields(QueryState queryState, List<Map<String, Object>> pipeline) {
+        if (queryState.highlights.isEmpty()) {
+            return;
+        }
+        Map<String, Object> highlightFields = new LinkedHashMap<>();
+        for (Map.Entry<String, String> highlight : queryState.highlights.entrySet()) {
+            highlightFields.put(highlight.getKey(), MongoSearchStages.highlightExpression(highlight.getValue()));
+        }
+        pipeline.add(Map.of(ADD_FIELDS, highlightFields));
+        pipeline.add(Map.of("$unset", List.of(MongoSearchStages.HIGHLIGHTS_FIELD)));
     }
 
     /**
@@ -1205,14 +1218,21 @@ public final class MongoQueryBuilder implements QueryBuilder {
             persistentEntity = queryState.getEntity();
         }
 
-        private void appendOperatorExpression(Expression<?> leftExpression, String op, Expression<?> value) {
-            if (leftExpression instanceof FunctionExpression<?> function && TextSearchSupport.SCORE_FUNCTION.equals(function.getName())) {
+        /** Restricts on a search score: the score is added as a field right after the {@code $search} stage, so the {@code $match} can test it. */
+        private boolean appendScoreRestriction(FunctionExpression<?> function, String op, Expression<?> value) {
+            if (TextSearchSupport.SCORE_FUNCTION.equals(function.getName())) {
                 if (!usesSearchIndex(persistentEntity)) {
                     throw new UnsupportedSearchFeatureException(SearchCapability.MIN_SCORE, "MongoDB $text");
                 }
-                // The score is added as a field right after the $search stage, so the $match can restrict on it
                 queryState.searchScoreFields.add(TextSearchSupport.SCORE_ALIAS);
                 query.put(TextSearchSupport.SCORE_ALIAS, Map.of(op, scalarValue(value)));
+                return true;
+            }
+            return false;
+        }
+
+        private void appendOperatorExpression(Expression<?> leftExpression, String op, Expression<?> value) {
+            if (leftExpression instanceof FunctionExpression<?> function && appendScoreRestriction(function, op, value)) {
                 return;
             }
             if (leftExpression instanceof LiteralExpression<?> leftLiteral && value instanceof LiteralExpression<?> rightLiteral) {
