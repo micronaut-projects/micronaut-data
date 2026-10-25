@@ -404,21 +404,34 @@ public final class GraphEntityMapper {
             }
             values.put(property.getPersistedName(), writeValue(property, property.getProperty().get(instance)));
         }
+        writeDynamicAttributes(entity, instance, values);
+        return values;
+    }
+
+    /**
+     * Adds the dynamic attributes of an instance to its stored values.
+     *
+     * @param entity   The entity
+     * @param instance The instance
+     * @param values   The stored values of the declared properties, extended in place
+     * @param <T>      The entity type
+     */
+    private <T> void writeDynamicAttributes(RuntimePersistentEntity<T> entity, T instance, Map<String, Object> values) {
         Schemaless schemaless = schemaless(entity);
         BeanProperty<Object, Object> attributesProperty = schemaless.attributes();
-        if (attributesProperty != null && attributesProperty.get(instance) instanceof Map<?, ?> attributes) {
-            attributes.forEach((name, value) -> {
-                String key = String.valueOf(name);
-                // Stored as a node property, a key that names the identifier, a declared property or a
-                // relationship would be dropped or read back into the declared property
-                if (schemaless.declared().contains(key) || values.containsKey(key)) {
-                    throw new DataAccessException("Dynamic attribute [" + key + "] of [" + entity.getSimpleName() + "] has the name of a declared property");
-                }
-                // The key becomes a property name in the query text, so it must be one that can be quoted
-                values.put(requireName(key, "Dynamic attribute", entity), encode(value));
-            });
+        if (attributesProperty == null || !(attributesProperty.get(instance) instanceof Map<?, ?> attributes)) {
+            return;
         }
-        return values;
+        attributes.forEach((name, value) -> {
+            String key = String.valueOf(name);
+            // Stored as a node property, a key that names the identifier, a declared property or a
+            // relationship would be dropped or read back into the declared property
+            if (schemaless.declared().contains(key) || values.containsKey(key)) {
+                throw new DataAccessException("Dynamic attribute [" + key + "] of [" + entity.getSimpleName() + "] has the name of a declared property");
+            }
+            // The key becomes a property name in the query text, so it must be one that can be quoted
+            values.put(requireName(key, "Dynamic attribute", entity), encode(value));
+        });
     }
 
     /**
