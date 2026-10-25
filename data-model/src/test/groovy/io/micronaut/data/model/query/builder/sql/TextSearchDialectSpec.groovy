@@ -31,4 +31,21 @@ class TextSearchDialectSpec extends Specification {
         new TextSearchDialect.Target("data", "b") == new TextSearchDialect.Target("data", "b", null)
         TextSearchDialect.Target.RELATIONAL.languageColumn() == null
     }
+
+    void "a query language that is not a configuration name is rejected before it reaches the SQL"() {
+        when:
+        TextSearchDialect.resolveLanguage([], new io.micronaut.data.model.search.TextMatchOptions(Map.of(), 0, language))
+
+        then:
+        thrown(IllegalArgumentException)
+
+        where:
+        language << ["english'", "english',title),'') OR 1=1 --", "en-US", "english;"]
+    }
+
+    void "a configuration name is accepted as the query language"() {
+        expect:
+        TextSearchDialect.resolveLanguage([], new io.micronaut.data.model.search.TextMatchOptions(Map.of(), 0, "german")) == "german"
+        io.micronaut.data.model.search.SearchQuery.builder("x").language("simple").build().language == "simple"
+    }
 }
