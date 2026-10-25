@@ -229,7 +229,8 @@ public interface TextSearchDialect {
      * @return The options' language override, else the language of the entity owning the fields
      */
     static String resolveLanguage(List<Expression<?>> fields, TextMatchOptions options) {
-        return options.language() != null ? options.language() : resolveLanguage(fields);
+        // the language is rendered inside the statement, so a query-time value is checked before it gets there
+        return options.language() != null ? TextSearchSupport.requireLanguageName(options.language()) : resolveLanguage(fields);
     }
 
     static @Nullable SearchWeight resolveWeight(Expression<?> field) {
