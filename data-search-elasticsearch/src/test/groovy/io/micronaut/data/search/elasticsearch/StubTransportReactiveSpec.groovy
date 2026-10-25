@@ -65,6 +65,16 @@ class StubTransportReactiveSpec extends Specification {
         repository.deleteAll().block()
     }
 
+    void "the reactive and async operations are created once and the async ones adapt the reactive ones"() {
+        given:
+        def operations = context.getBean(DefaultDocumentSearchRepositoryOperations, Qualifiers.byName("stub"))
+
+        expect:
+        operations.reactive().is(operations.reactive())
+        operations.async().is(operations.async())
+        operations.async().class.simpleName == "ReactorToAsyncOperationsAdaptor"
+    }
+
     void "reactive CRUD and search run through the async transport"() {
         when:
         def saved = repository.save(new Book("Programming Kotlin", "Kotlin for the JVM", "Subramaniam", 460)).block()
@@ -178,6 +188,7 @@ class StubTransportReactiveSpec extends Specification {
 
         @Override
         void createIndex(String index, String body) {
+            // the stub keeps documents only, so there is no mapping to create
         }
     }
 
