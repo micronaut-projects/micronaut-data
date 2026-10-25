@@ -64,6 +64,13 @@ public final class GraphRawQueryMethodMatcher implements MethodMatcher {
     private static final Pattern WRITE_PATTERN = Pattern.compile("\\b(CREATE|MERGE|SET|REMOVE|INSERT|UPDATE)\\b");
     private static final Pattern DELETE_PATTERN = Pattern.compile("\\bDELETE\\b");
     private static final Pattern RETURN_PATTERN = Pattern.compile("\\bRETURN\\b");
+    /**
+     * Names that are not clauses: parameters, property accesses, labels and relationship types,
+     * map keys and aliases. They are blanked before the clause keywords are looked for, so that a
+     * property called {@code set} or a parameter called {@code merge} does not turn a read into a write.
+     */
+    private static final Pattern NAME_PATTERN = Pattern.compile("\\$\\w+|[.:]\\s*\\w+|\\bAS\\s+\\w+", Pattern.CASE_INSENSITIVE);
+    private static final Pattern MAP_KEY_PATTERN = Pattern.compile("\\w+\\s*:");
 
     @Override
     public int getOrder() {
@@ -193,7 +200,8 @@ public final class GraphRawQueryMethodMatcher implements MethodMatcher {
     }
 
     private static String stripLiterals(String query) {
-        return maskLiterals(query);
+        String names = NAME_PATTERN.matcher(maskLiterals(query)).replaceAll(" ");
+        return MAP_KEY_PATTERN.matcher(names).replaceAll(" ");
     }
 
     /**
