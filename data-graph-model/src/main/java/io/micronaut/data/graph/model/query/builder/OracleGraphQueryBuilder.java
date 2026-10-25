@@ -143,7 +143,7 @@ public class OracleGraphQueryBuilder implements GraphQueryBuilder {
      * @param repositoryMetadata The annotation metadata of the repository
      */
     public OracleGraphQueryBuilder(AnnotationMetadata repositoryMetadata) {
-        this.graph = repositoryMetadata.stringValue(PropertyGraph.class).filter(s -> !s.isEmpty()).orElse("graph");
+        this.graph = graphName(repositoryMetadata.stringValue(PropertyGraph.class).filter(s -> !s.isEmpty()).orElse("graph"));
         this.language = repositoryMetadata.enumValue(PropertyGraph.class, "language", PropertyGraph.QueryLanguage.class)
             .orElse(PropertyGraph.QueryLanguage.PGQL);
     }
@@ -350,7 +350,7 @@ public class OracleGraphQueryBuilder implements GraphQueryBuilder {
         query.entityColumns(STEP_START, entity);
         query.entityColumns(STEP_END, entity);
         if (definition.relationships().size() == 1) {
-            query.column("'" + GraphEntities.relationshipType(definition.relationships().get(0)) + "'", EDGE + SEPARATOR + TYPE_COLUMN);
+            query.column(literal(GraphEntities.relationshipType(definition.relationships().get(0))), EDGE + SEPARATOR + TYPE_COLUMN);
         }
         query.orderBy = "MATCHNUM(" + STEP_START + "), ELEMENT_NUMBER(" + EDGE + ")";
     }
@@ -369,7 +369,7 @@ public class OracleGraphQueryBuilder implements GraphQueryBuilder {
             default -> {
                 query.entityColumns(START, entity);
                 query.entityColumns(END, entity);
-                query.column("'" + GraphEntities.relationshipType(definition.relationships().get(0)) + "'", "r" + SEPARATOR + TYPE_COLUMN);
+                query.column(literal(GraphEntities.relationshipType(definition.relationships().get(0))), "r" + SEPARATOR + TYPE_COLUMN);
             }
         }
         if (query.select.isEmpty() || definition.result() != PathQueryDefinition.Result.ELEMENTS) {
@@ -453,7 +453,21 @@ public class OracleGraphQueryBuilder implements GraphQueryBuilder {
         if (GraphEntities.isPlainIdentifier(name)) {
             return name;
         }
-        return "\"" + name.replace("\"", "\"\"") + "\"";
+        return "\"" + GraphEntities.requireName(name).replace("\"", "\"\"") + "\"";
+    }
+
+    /**
+     * The name of the property graph, which is spliced into every statement and so must be a plain
+     * identifier or a quoted one.
+     *
+     * @param name The name from the annotation
+     * @return The name
+     */
+    private static String graphName(String name) {
+        if (GraphEntities.isPlainIdentifier(name)) {
+            return name;
+        }
+        throw new IllegalArgumentException("Property graph name [" + name + "] is not a plain identifier: a name needs a letter followed by letters, digits or underscores");
     }
 
     /**
@@ -546,7 +560,7 @@ public class OracleGraphQueryBuilder implements GraphQueryBuilder {
                 column(property(variable, identity), variable + SEPARATOR + ID_COLUMN);
                 column(property(variable, identity), variable + SEPARATOR + GraphEntities.propertyName(identity));
             }
-            column("'" + GraphEntities.primaryLabel(nodeEntity).replace("'", "''") + "'", variable + SEPARATOR + LABEL_COLUMN);
+            column(literal(GraphEntities.primaryLabel(nodeEntity)), variable + SEPARATOR + LABEL_COLUMN);
             for (PersistentProperty property : nodeEntity.getPersistentProperties()) {
                 if (property.getAnnotationMetadata().hasAnnotation(DynamicRelationships.class)) {
                     throw new UnsupportedOperationException("Dynamic relationships are not supported for Oracle property graphs: " + nodeEntity.getName());

@@ -38,8 +38,15 @@ import java.util.Map;
 @Internal
 final class Agtype {
 
+    /**
+     * How deeply objects and arrays may nest. Stored values are parsed recursively, so a value
+     * nested deeper than any sensible graph property is refused rather than exhausting the stack.
+     */
+    private static final int MAX_DEPTH = 64;
+
     private final String text;
     private int position;
+    private int depth;
     private @Nullable String numberText;
 
     private Agtype(String text) {
@@ -160,10 +167,12 @@ final class Agtype {
 
     private Map<String, Object> object() {
         position++;
+        enter();
         Map<String, Object> map = new LinkedHashMap<>();
         skipWhitespace();
         if (peek() == '}') {
             position++;
+            depth--;
             return map;
         }
         while (true) {
@@ -175,6 +184,7 @@ final class Agtype {
             skipWhitespace();
             char c = next();
             if (c == '}') {
+                depth--;
                 return map;
             }
             if (c != ',') {
@@ -185,10 +195,12 @@ final class Agtype {
 
     private List<Object> array() {
         position++;
+        enter();
         List<Object> list = new ArrayList<>();
         skipWhitespace();
         if (peek() == ']') {
             position++;
+            depth--;
             return list;
         }
         while (true) {
@@ -196,11 +208,18 @@ final class Agtype {
             skipWhitespace();
             char c = next();
             if (c == ']') {
+                depth--;
                 return list;
             }
             if (c != ',') {
                 throw error("Expected , or ] in array");
             }
+        }
+    }
+
+    private void enter() {
+        if (++depth > MAX_DEPTH) {
+            throw error("Value nests deeper than " + MAX_DEPTH + " levels");
         }
     }
 
@@ -221,7 +240,14 @@ final class Agtype {
                     case 'b' -> sb.append('\b');
                     case 'f' -> sb.append('\f');
                     case 'u' -> {
-                        sb.append((char) Integer.parseInt(text.substring(position, position + 4), 16));
+                        if (position + 4 > text.length()) {
+                            throw error("Unicode escape is cut short");
+                        }
+                        try {
+                            sb.append((char) Integer.parseInt(text.substring(position, position + 4), 16));
+                        } catch (NumberFormatException e) {
+                            throw error("Invalid unicode escape");
+                        }
                         position += 4;
                     }
                     default -> sb.append(escaped);
@@ -298,6 +324,7 @@ final class Agtype {
     }
 
     private IllegalArgumentException error(String message) {
-        return new IllegalArgumentException(message + " at position " + position + " of agtype value: " + text);
+        // The value is a database row, which may hold personal data, so only its length is reported
+        return new IllegalArgumentException(message + " at position " + position + " of an agtype value of " + text.length() + " characters");
     }
 }
