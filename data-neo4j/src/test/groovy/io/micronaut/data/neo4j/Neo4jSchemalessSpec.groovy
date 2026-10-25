@@ -63,6 +63,29 @@ class Neo4jSchemalessSpec extends Specification implements TestPropertyProvider 
         name << ['name', 'species']
     }
 
+    void "a schemaless property or label that cannot be quoted is rejected"() {
+        given:
+        def pet = new Pet("Dino")
+        pet.set("x` = 1 WITH n DETACH DELETE n //", true)
+
+        when:
+        petRepository.save(pet)
+
+        then:
+        def e = thrown(io.micronaut.data.exceptions.DataAccessException)
+        e.message.contains("cannot be stored")
+        petRepository.count() == 0
+
+        when:
+        def cat = new Pet("Tom")
+        cat.labels = ["Cat`) DETACH DELETE (n"] as Set
+        petRepository.save(cat)
+
+        then:
+        def labelError = thrown(io.micronaut.data.exceptions.DataAccessException)
+        labelError.message.contains("Label [")
+    }
+
     void "query schemaless properties with explicit queries"() {
         given:
         def dino = new Pet("Dino")
