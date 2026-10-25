@@ -99,7 +99,14 @@ public final class DocumentStoredQuery<E, R> extends DefaultBindableParametersSt
         if (node instanceof Collection<?> collection) {
             List<Object> copy = new ArrayList<>(collection.size());
             for (Object item : collection) {
-                copy.add(replace(item, values));
+                Object replaced = replace(item, values);
+                if (item instanceof Map<?, ?> map && map.containsKey(DocumentSearchQueryBuilder.QUERY_PARAMETER_PLACEHOLDER)
+                    && replaced instanceof Collection<?> bound) {
+                    // a parameter bound to a collection, such as the values of an In predicate, contributes its elements
+                    copy.addAll(bound);
+                } else {
+                    copy.add(replaced);
+                }
             }
             return copy;
         }

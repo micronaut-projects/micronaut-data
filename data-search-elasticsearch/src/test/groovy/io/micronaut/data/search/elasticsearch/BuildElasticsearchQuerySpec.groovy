@@ -11,6 +11,10 @@ import io.micronaut.inject.writer.BeanDefinitionVisitor
 
 class BuildElasticsearchQuerySpec extends AbstractTypeElementSpec {
 
+    private static jakarta.json.JsonObject json(String text) {
+        jakarta.json.Json.createReader(new StringReader(text)).withCloseable { it.readObject() }
+    }
+
     private BeanDefinition<?> articleRepository(String methods) {
         buildBeanDefinition('test.ArticleRepository' + BeanDefinitionVisitor.PROXY_SUFFIX, """
 package test;
@@ -126,6 +130,54 @@ ${methods}
         converters(repository.getRequiredMethod("findByTitleSearchFuzzy", String)) == [SimpleQueryStringConverter.Fuzzy.name]
         query(search) == '{"query":{"simple_query_string":{"query":{"$mn_qp":0},"fields":["title^10","body","category"],"default_operator":"and"}},"sort":[{"_score":{"order":"desc"}}]}'
         query(repository.getRequiredMethod("countHits", String)) == '{"query":{"simple_query_string":{"query":{"$mn_qp":0},"fields":["title^10","body","category"],"default_operator":"and"}}}'
+    }
+
+    void "derived operators render wildcard, regexp, range, emptiness and negated queries"() {
+        given:
+        def repository = articleRepository("""
+    List<Article> findByAuthorStartsWith(String prefix);
+    List<Article> findByAuthorStartsWithIgnoreCase(String prefix);
+    List<Article> findByAuthorEndsWith(String suffix);
+    List<Article> findByAuthorContains(String part);
+    List<Article> findByAuthorLike(String pattern);
+    List<Article> findByAuthorIgnoreCase(String author);
+    List<Article> findByAuthorRegex(String pattern);
+    List<Article> findByPagesGreaterThanEqualsAndPagesLessThanEquals(int min, int max);
+    List<Article> findByAuthorIsEmpty();
+    List<Article> findByAuthorIsNotEmpty();
+    List<Article> findByAuthorOrCategory(String author, String category);
+    List<Article> findByAuthorNotInList(List<String> authors);
+    List<Article> findByIdInList(List<String> ids);
+    List<Article> findByPublishedTrue();
+    List<Article> findByAuthorNotEqual(String author);
+    List<Article> findByAuthorIsNull();
+    List<Article> findByAuthorIsNotNull();
+    List<Article> findByAuthorOrderByPagesAsc(String author);
+""")
+
+        expect:
+        json(query(repository.getRequiredMethod(method, *types))) == json(expected)
+
+        where:
+        method                                               | types                  | expected
+        "findByAuthorStartsWith"                             | [String]               | '{"query":{"wildcard":{"author":{"value":{"$mn_qp":0,"$mn_wildcard":"starts_with"}}}}}'
+        "findByAuthorStartsWithIgnoreCase"                   | [String]               | '{"query":{"wildcard":{"author":{"value":{"$mn_qp":0,"$mn_wildcard":"starts_with_ignore_case"},"case_insensitive":true}}}}'
+        "findByAuthorEndsWith"                               | [String]               | '{"query":{"wildcard":{"author":{"value":{"$mn_qp":0,"$mn_wildcard":"ends_with"}}}}}'
+        "findByAuthorContains"                               | [String]               | '{"query":{"wildcard":{"author":{"value":{"$mn_qp":0,"$mn_wildcard":"contains"}}}}}'
+        "findByAuthorLike"                                   | [String]               | '{"query":{"wildcard":{"author":{"value":{"$mn_qp":0,"$mn_wildcard":"like"}}}}}'
+        "findByAuthorIgnoreCase"                             | [String]               | '{"query":{"term":{"author":{"value":{"$mn_qp":0},"case_insensitive":true}}}}'
+        "findByAuthorRegex"                                  | [String]               | '{"query":{"regexp":{"author":{"$mn_qp":0}}}}'
+        "findByPagesGreaterThanEqualsAndPagesLessThanEquals" | [int, int]             | '{"query":{"bool":{"must":[{"range":{"pages":{"gte":{"$mn_qp":0}}}},{"range":{"pages":{"lte":{"$mn_qp":1}}}}]}}}'
+        "findByAuthorIsEmpty"                                | []                     | '{"query":{"bool":{"should":[{"bool":{"must_not":{"exists":{"field":"author"}}}},{"term":{"author":""}}],"minimum_should_match":1}}}'
+        "findByAuthorIsNotEmpty"                             | []                     | '{"query":{"bool":{"must_not":{"bool":{"should":[{"bool":{"must_not":{"exists":{"field":"author"}}}},{"term":{"author":""}}],"minimum_should_match":1}}}}}'
+        "findByAuthorOrCategory"                             | [String, String]       | '{"query":{"bool":{"should":[{"term":{"author":{"$mn_qp":0}}},{"term":{"category":{"$mn_qp":1}}}],"minimum_should_match":1}}}'
+        "findByAuthorNotInList"                              | [List]                 | '{"query":{"bool":{"must_not":{"terms":{"author":[{"$mn_qp":0}]}}}}}'
+        "findByIdInList"                                     | [List]                 | '{"query":{"ids":{"values":[{"$mn_qp":0}]}}}'
+        "findByPublishedTrue"                                | []                     | '{"query":{"term":{"published":true}}}'
+        "findByAuthorNotEqual"                               | [String]               | '{"query":{"bool":{"must_not":{"term":{"author":{"$mn_qp":0}}}}}}'
+        "findByAuthorIsNull"                                 | []                     | '{"query":{"bool":{"must_not":{"exists":{"field":"author"}}}}}'
+        "findByAuthorIsNotNull"                              | []                     | '{"query":{"exists":{"field":"author"}}}'
+        "findByAuthorOrderByPagesAsc"                        | [String]               | '{"query":{"term":{"author":{"$mn_qp":0}}},"sort":[{"pages":{"order":"asc"}}]}'
     }
 
     void "the query string converter renders the portable grammar"() {
