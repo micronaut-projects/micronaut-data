@@ -54,7 +54,7 @@ public final class ElasticsearchSearchTransport implements SearchTransport {
     @Override
     public SearchHits search(String index, String body) {
         try {
-            return ElasticsearchAsyncSearchTransport.toHits(client.search(s -> s.index(index).withJson(new StringReader(body)), Map.class));
+            return ElasticsearchAsyncSearchTransport.toHits(client.search(s -> s.index(index).withJson(new StringReader(body)).ignoreUnavailable(true), Map.class));
         } catch (IOException e) {
             throw new DataAccessException("Elasticsearch search failed: " + e.getMessage(), e);
         }
@@ -63,7 +63,7 @@ public final class ElasticsearchSearchTransport implements SearchTransport {
     @Override
     public long count(String index, String body) {
         try {
-            return client.count(c -> c.index(index).withJson(new StringReader(body))).count();
+            return client.count(c -> c.index(index).withJson(new StringReader(body)).ignoreUnavailable(true)).count();
         } catch (IOException e) {
             throw new DataAccessException("Elasticsearch count failed: " + e.getMessage(), e);
         }
@@ -130,7 +130,7 @@ public final class ElasticsearchSearchTransport implements SearchTransport {
     @Override
     public long deleteByQuery(String index, String body, DocumentSearchConfiguration.Refresh refresh) {
         try {
-            Long deleted = client.deleteByQuery(d -> d.index(index).withJson(new StringReader(body)).refresh(refresh != DocumentSearchConfiguration.Refresh.NONE)).deleted();
+            Long deleted = client.deleteByQuery(d -> d.index(index).withJson(new StringReader(body)).ignoreUnavailable(true).refresh(refresh != DocumentSearchConfiguration.Refresh.NONE)).deleted();
             return deleted == null ? 0 : deleted;
         } catch (IOException e) {
             throw new DataAccessException("Elasticsearch delete by query failed: " + e.getMessage(), e);

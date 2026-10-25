@@ -15,6 +15,7 @@
  */
 package io.micronaut.data.search.document.init;
 
+import io.micronaut.context.BeanContext;
 import io.micronaut.context.annotation.Context;
 import io.micronaut.context.annotation.Requires;
 import io.micronaut.core.annotation.Internal;
@@ -22,20 +23,29 @@ import io.micronaut.core.beans.BeanIntrospection;
 import io.micronaut.core.beans.BeanIntrospector;
 import io.micronaut.core.util.StringUtils;
 import io.micronaut.data.annotation.MappedEntity;
+import io.micronaut.data.annotation.Repository;
+import io.micronaut.data.annotation.RepositoryConfiguration;
 import io.micronaut.data.annotation.search.Searchable;
+import io.micronaut.data.intercept.annotation.DataMethod;
 import io.micronaut.data.model.runtime.RuntimeEntityRegistry;
 import io.micronaut.data.model.runtime.RuntimePersistentEntity;
 import io.micronaut.data.runtime.config.SchemaGenerate;
 import io.micronaut.data.search.document.conf.DocumentSearchConfiguration;
 import io.micronaut.data.search.document.runtime.DocumentSearchRepositoryOperations;
+import io.micronaut.inject.BeanDefinition;
+import io.micronaut.inject.ExecutableMethod;
+import io.micronaut.inject.qualifiers.Qualifiers;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 import java.lang.reflect.Modifier;
+import java.util.LinkedHashSet;
 import java.util.List;
+import java.util.Set;
 
 /**
- * Creates the index of every {@link Searchable} entity on startup when it does not exist.
+ * Creates on startup the index of every {@link Searchable} entity and of every entity a document
+ * search repository stores, so each index has explicit keyword mappings rather than dynamic ones.
  *
  * @since 5.4.0
  */
@@ -50,35 +60,66 @@ public final class SearchIndexCreator {
     /**
      * @param operations Every document search operations bean
      * @param runtimeEntityRegistry The entity registry
+     * @param configuration The configuration
+     * @param beanContext The bean context, to find the document search repositories
      */
-    SearchIndexCreator(List<DocumentSearchRepositoryOperations> operations, RuntimeEntityRegistry runtimeEntityRegistry, DocumentSearchConfiguration configuration) {
+    SearchIndexCreator(List<DocumentSearchRepositoryOperations> operations,
+                       RuntimeEntityRegistry runtimeEntityRegistry,
+                       DocumentSearchConfiguration configuration,
+                       BeanContext beanContext) {
         SchemaGenerate schemaGenerate = configuration.getSchemaGenerate();
         if (schemaGenerate == SchemaGenerate.NONE) {
             return;
         }
+        for (Class<?> type : indexedTypes(beanContext)) {
+            RuntimePersistentEntity<?> entity = runtimeEntityRegistry.getEntity(type);
+            for (DocumentSearchRepositoryOperations ops : operations) {
+                createIndex(ops, entity, schemaGenerate);
+            }
+        }
+    }
+
+    /**
+     * @param beanContext The bean context
+     * @return The searchable entities and the root entities of the document search repositories
+     */
+    private static Set<Class<?>> indexedTypes(BeanContext beanContext) {
+        Set<Class<?>> types = new LinkedHashSet<>();
         for (BeanIntrospection<Object> introspection : BeanIntrospector.SHARED.findIntrospections(MappedEntity.class)) {
             Class<Object> type = introspection.getBeanType();
-            if (type.getName().contains("$") || Modifier.isAbstract(type.getModifiers()) || !introspection.hasAnnotation(Searchable.class)) {
-                continue;
+            if (!type.getName().contains("$") && !Modifier.isAbstract(type.getModifiers()) && introspection.hasAnnotation(Searchable.class)) {
+                types.add(type);
             }
-            RuntimePersistentEntity<Object> entity = runtimeEntityRegistry.getEntity(type);
-            for (DocumentSearchRepositoryOperations ops : operations) {
-                String index = ops.getIndexName(type);
-                boolean exists = ops.getTransport().indexExists(index);
-                if (exists && schemaGenerate == SchemaGenerate.CREATE_DROP) {
-                    if (LOG.isInfoEnabled()) {
-                        LOG.info("Dropping search index: {} for entity: {}", index, type.getName());
-                    }
-                    ops.getTransport().deleteIndex(index);
-                    exists = false;
-                }
-                if (!exists) {
-                    if (LOG.isInfoEnabled()) {
-                        LOG.info("Creating search index: {} for entity: {}", index, type.getName());
-                    }
-                    ops.getTransport().createIndex(index, SearchIndexDefinitions.mappingFor(entity, ops.getTransport()));
+        }
+        for (BeanDefinition<?> definition : beanContext.getBeanDefinitions(Qualifiers.byStereotype(Repository.class))) {
+            boolean documentStore = definition.classValue(RepositoryConfiguration.class, "operations")
+                .filter(DocumentSearchRepositoryOperations.class::isAssignableFrom)
+                .isPresent();
+            if (documentStore) {
+                for (ExecutableMethod<?, ?> method : definition.getExecutableMethods()) {
+                    method.classValue(DataMethod.class, DataMethod.META_MEMBER_ROOT_ENTITY).ifPresent(types::add);
                 }
             }
+        }
+        return types;
+    }
+
+    private static void createIndex(DocumentSearchRepositoryOperations ops, RuntimePersistentEntity<?> entity, SchemaGenerate schemaGenerate) {
+        Class<?> type = entity.getIntrospection().getBeanType();
+        String index = ops.getIndexName(type);
+        boolean exists = ops.getTransport().indexExists(index);
+        if (exists && schemaGenerate == SchemaGenerate.CREATE_DROP) {
+            if (LOG.isInfoEnabled()) {
+                LOG.info("Dropping search index: {} for entity: {}", index, type.getName());
+            }
+            ops.getTransport().deleteIndex(index);
+            exists = false;
+        }
+        if (!exists) {
+            if (LOG.isInfoEnabled()) {
+                LOG.info("Creating search index: {} for entity: {}", index, type.getName());
+            }
+            ops.getTransport().createIndex(index, SearchIndexDefinitions.mappingFor(entity, ops.getTransport()));
         }
     }
 }

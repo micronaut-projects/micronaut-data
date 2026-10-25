@@ -29,6 +29,8 @@ dependencies {
 
     compileOnly projects.micronautDataJdbc
     compileOnly projects.micronautDataMongodb
+    compileOnly projects.micronautDataSearchElasticsearch
+    compileOnly projects.micronautDataSearchOpensearch
 }
 
 dependencies {

@@ -133,7 +133,7 @@ ${methods}
         query(repository.getRequiredMethod("findByTitleSearchPrefix", String)) == '{"query":{"simple_query_string":{"query":{"$mn_qp":0},"fields":["title^10"],"default_operator":"and","analyze_wildcard":true}}}'
         converters(repository.getRequiredMethod("findByTitleSearchFuzzy", String)) == [SimpleQueryStringConverter.Fuzzy.name]
         query(search) == '{"query":{"simple_query_string":{"query":{"$mn_qp":0},"fields":["title^10","body","category"],"default_operator":"and"}},"sort":[{"_score":{"order":"desc"}}]}'
-        query(repository.getRequiredMethod("countHits", String)) == '{"query":{"simple_query_string":{"query":{"$mn_qp":0},"fields":["title^10","body","category"],"default_operator":"and"}}}'
+        query(repository.getRequiredMethod("countHits", String)) == '{"query":{"simple_query_string":{"query":{"$mn_qp":0},"fields":["title^10","body","category"],"default_operator":"and"}},"$mn_count":true}'
     }
 
     void "a Score parameter becomes the min_score of the request"() {

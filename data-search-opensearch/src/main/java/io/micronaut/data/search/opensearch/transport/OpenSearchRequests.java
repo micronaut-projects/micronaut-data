@@ -71,7 +71,7 @@ final class OpenSearchRequests {
 
     static SearchRequest searchRequest(JsonpMapper mapper, String index, String body) {
         Map<String, Object> parsed = parse(mapper, body);
-        SearchRequest.Builder request = new SearchRequest.Builder().index(index).query(query(mapper, parsed));
+        SearchRequest.Builder request = new SearchRequest.Builder().index(index).ignoreUnavailable(true).query(query(mapper, parsed));
         Object sort = parsed.get("sort");
         if (sort instanceof List<?> entries) {
             List<SortOptions> options = new ArrayList<>(entries.size());

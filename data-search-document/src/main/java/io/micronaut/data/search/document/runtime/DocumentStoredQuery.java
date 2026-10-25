@@ -50,6 +50,7 @@ import java.util.Objects;
 public final class DocumentStoredQuery<E, R> extends DefaultBindableParametersStoredQuery<E, R> {
 
     private final Map<String, Object> body;
+    private final boolean countProjection;
 
     /**
      * @param storedQuery The stored query
@@ -63,10 +64,17 @@ public final class DocumentStoredQuery<E, R> extends DefaultBindableParametersSt
                                JsonMapper jsonMapper) {
         super(storedQuery, persistentEntity, conversionService);
         try {
-            this.body = Objects.requireNonNull(jsonMapper.readValue(storedQuery.getQuery(), Argument.mapOf(String.class, Object.class)), "query body");
+            Map<String, Object> parsed = Objects.requireNonNull(jsonMapper.readValue(storedQuery.getQuery(), Argument.mapOf(String.class, Object.class)), "query body");
+            this.countProjection = Boolean.TRUE.equals(parsed.remove(DocumentSearchQueryBuilder.COUNT_MARKER));
+            this.body = parsed;
         } catch (IOException e) {
             throw new IllegalStateException("Cannot parse the search query of " + storedQuery.getName() + ": " + storedQuery.getQuery(), e);
         }
+    }
+
+    @Override
+    public boolean isCount() {
+        return countProjection || super.isCount();
     }
 
     /**
