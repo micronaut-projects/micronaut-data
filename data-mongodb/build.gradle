@@ -50,6 +50,7 @@ dependencies {
     testImplementation mnReactor.micronaut.reactor
     testImplementation(mnSql.jakarta.persistence.api)
     testImplementation mnValidation.micronaut.validation
+    testRuntimeOnly mn.snakeyaml
 
     testCompileOnly mn.micronaut.inject.groovy
     testCompileOnly mn.jackson.annotations
