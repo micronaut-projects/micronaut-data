@@ -177,28 +177,30 @@ public final class DefaultDocumentSearchReactiveRepositoryOperations extends Abs
     @Override
     public <T> Flux<T> persistAll(InsertBatchOperation<T> operation) {
         RuntimePersistentEntity<T> entity = runtimeEntityRegistry.getEntity(operation.getRootEntity());
-        List<T> vetoed = new ArrayList<>();
+        // the results keep the input order, with vetoed entities in place
+        List<T> results = new ArrayList<>();
         List<T> toIndex = new ArrayList<>();
+        List<Integer> positions = new ArrayList<>();
         List<SearchTransport.BulkDocument> documents = new ArrayList<>();
         for (T value : operation) {
             T current = prePersist(value, entity);
             if (current == null) {
-                vetoed.add(value);
+                results.add(value);
             } else {
+                positions.add(results.size());
+                results.add(current);
                 toIndex.add(current);
                 documents.add(new SearchTransport.BulkDocument(documentId(current, entity), toDocument(current, entity)));
             }
         }
         if (documents.isEmpty()) {
-            return Flux.fromIterable(vetoed);
+            return Flux.fromIterable(results);
         }
         return Mono.fromCompletionStage(() -> transport.bulkIndex(indexName(entity), documents, configuration.getRefresh()))
             .flatMapIterable(ids -> {
-                List<T> results = new ArrayList<>(toIndex.size() + vetoed.size());
                 for (int i = 0; i < toIndex.size(); i++) {
-                    results.add(postPersist(toIndex.get(i), entity, ids.get(i)));
+                    results.set(positions.get(i), postPersist(toIndex.get(i), entity, ids.get(i)));
                 }
-                results.addAll(vetoed);
                 return results;
             });
     }

@@ -244,12 +244,15 @@ public final class DefaultDocumentSearchRepositoryOperations extends AbstractDoc
         RuntimePersistentEntity<T> entity = runtimeEntityRegistry.getEntity(operation.getRootEntity());
         List<T> persisted = new ArrayList<>();
         List<T> toIndex = new ArrayList<>();
+        // the position of each indexed entity in the result, as equal entities cannot be told apart by indexOf
+        List<Integer> positions = new ArrayList<>();
         List<SearchTransport.BulkDocument> documents = new ArrayList<>();
         for (T value : operation) {
             T current = prePersist(value, entity);
             if (current == null) {
                 persisted.add(value);
             } else {
+                positions.add(persisted.size());
                 persisted.add(current);
                 toIndex.add(current);
                 documents.add(new SearchTransport.BulkDocument(documentId(current, entity), toDocument(current, entity)));
@@ -262,7 +265,7 @@ public final class DefaultDocumentSearchRepositoryOperations extends AbstractDoc
         for (int i = 0; i < toIndex.size(); i++) {
             T current = toIndex.get(i);
             T result = postPersist(current, entity, ids.get(i));
-            persisted.set(persisted.indexOf(current), result);
+            persisted.set(positions.get(i), result);
         }
         return persisted;
     }

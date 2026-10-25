@@ -83,6 +83,16 @@ class DocumentSearchOperationsSpec extends Specification {
         transport.indexes["test_notes"].size() == 1
     }
 
+    void "equal entities in one batch each get their own generated id"() {
+        when:
+        def saved = tags.saveAll([new Tag(null, "beverages"), new Tag(null, "beverages"), new Tag(null, "beverages")])
+
+        then:
+        saved*.id().every { it != null }
+        saved*.id().toSet().size() == 3
+        transport.indexes["test_tags"].size() == 3
+    }
+
     void "a sort on a single result decides which hit comes first"() {
         given:
         notes.saveAll([new Note("Coffee", "Roasting beans", 120), new Note("Bread", "Sourdough", 80)])
