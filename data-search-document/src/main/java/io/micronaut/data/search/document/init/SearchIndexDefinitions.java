@@ -44,6 +44,10 @@ import java.util.Map;
 @Internal
 public final class SearchIndexDefinitions {
 
+    private static final String KEYWORD = "keyword";
+    private static final String ANALYZER = "analyzer";
+    private static final String TYPE = "type";
+
     private SearchIndexDefinitions() {
     }
 
@@ -67,32 +71,10 @@ public final class SearchIndexDefinitions {
         String analyzer = analyzerFor(TextSearchSupport.resolveLanguage(entity));
         Map<String, Object> properties = new LinkedHashMap<>();
         if (transport != null) {
-            for (PersistentProperty property : entity.getPersistentProperties()) {
-                if (property.isAssignable(Vector.class)) {
-                    Map<String, Object> mapping = transport.vectorFieldMapping(vectorDimensions(property));
-                    if (mapping != null) {
-                        properties.put(property.getName(), mapping);
-                    }
-                }
-            }
+            addVectorMappings(entity, transport, properties);
         }
         for (PersistentProperty property : TextSearchSupport.searchFields(entity)) {
-            SearchFieldType type = property.getAnnotationMetadata().enumValue(SearchField.class, SearchField.MEMBER_TYPE, SearchFieldType.class).orElse(SearchFieldType.TEXT);
-            String declaredAnalyzer = property.getAnnotationMetadata().stringValue(SearchField.class, "analyzer").filter(a -> !a.isEmpty()).orElse(analyzer);
-            Map<String, Object> field = new LinkedHashMap<>();
-            switch (type) {
-                case KEYWORD -> field.put("type", "keyword");
-                case AUTOCOMPLETE -> {
-                    field.put("type", "search_as_you_type");
-                    field.put("analyzer", declaredAnalyzer);
-                }
-                default -> {
-                    field.put("type", "text");
-                    field.put("analyzer", declaredAnalyzer);
-                    field.put("fields", Map.of("keyword", Map.of("type", "keyword", "ignore_above", 1024)));
-                }
-            }
-            properties.put(property.getName(), field);
+            properties.put(property.getName(), searchFieldMapping(property, analyzer));
         }
         // The other string properties are compared exactly by the derived queries, so they are
         // keywords rather than the analyzed text a dynamic mapping would give them; the id is one of
@@ -103,7 +85,7 @@ public final class SearchIndexDefinitions {
         }
         for (PersistentProperty property : others) {
             if (!properties.containsKey(property.getName()) && !(property instanceof Association) && isKeyword(property)) {
-                properties.put(property.getName(), Map.of("type", "keyword"));
+                properties.put(property.getName(), Map.of(TYPE, KEYWORD));
             }
         }
         Map<String, Object> body = new LinkedHashMap<>();
@@ -122,6 +104,37 @@ public final class SearchIndexDefinitions {
      */
     public static int vectorDimensions(PersistentProperty property) {
         return property.getAnnotationMetadata().intValue("jakarta.persistence.Column", "length").orElse(-1);
+    }
+
+    private static void addVectorMappings(PersistentEntity entity, SearchTransport transport, Map<String, Object> properties) {
+        for (PersistentProperty property : entity.getPersistentProperties()) {
+            if (property.isAssignable(Vector.class)) {
+                Map<String, Object> mapping = transport.vectorFieldMapping(vectorDimensions(property));
+                if (mapping != null) {
+                    properties.put(property.getName(), mapping);
+                }
+            }
+        }
+    }
+
+    /** The mapping of a {@code @SearchField}: keyword, search-as-you-type or analysed text with a keyword sub-field. */
+    private static Map<String, Object> searchFieldMapping(PersistentProperty property, String analyzer) {
+        SearchFieldType type = property.getAnnotationMetadata().enumValue(SearchField.class, SearchField.MEMBER_TYPE, SearchFieldType.class).orElse(SearchFieldType.TEXT);
+        String declaredAnalyzer = property.getAnnotationMetadata().stringValue(SearchField.class, ANALYZER).filter(a -> !a.isEmpty()).orElse(analyzer);
+        Map<String, Object> field = new LinkedHashMap<>();
+        switch (type) {
+            case KEYWORD -> field.put(TYPE, KEYWORD);
+            case AUTOCOMPLETE -> {
+                field.put(TYPE, "search_as_you_type");
+                field.put(ANALYZER, declaredAnalyzer);
+            }
+            default -> {
+                field.put(TYPE, "text");
+                field.put(ANALYZER, declaredAnalyzer);
+                field.put("fields", Map.of(KEYWORD, Map.of(TYPE, KEYWORD, "ignore_above", 1024)));
+            }
+        }
+        return field;
     }
 
     private static boolean isKeyword(PersistentProperty property) {
