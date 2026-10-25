@@ -15,12 +15,14 @@
  */
 package io.micronaut.data.jdbc.convert.vendor;
 
+import com.pgvector.PGbit;
 import com.pgvector.PGvector;
 import com.pgvector.PGsparsevec;
 import io.micronaut.context.annotation.Factory;
 import io.micronaut.context.annotation.Prototype;
 import io.micronaut.context.annotation.Requires;
 import io.micronaut.core.annotation.Internal;
+import io.micronaut.data.model.vector.BinaryVector;
 import io.micronaut.data.model.vector.FloatVector;
 import io.micronaut.data.model.vector.SparseFloatVector;
 import io.micronaut.data.model.vector.Vector;
@@ -74,6 +76,43 @@ final class PostgresTypeConvertersFactory {
     @Prototype
     DataTypeConverter<PGobject, PGvector> fromPgObjectToPgVector() {
         return (pg, targetType, context) -> toDenseFloatArray(pg).map(PGvector::new);
+    }
+
+    @Prototype
+    DataTypeConverter<BinaryVector, PGbit> fromBinaryVectorToPgBit() {
+        return (vector, targetType, context) -> Optional.of(new PGbit(vector.data()));
+    }
+
+    @Prototype
+    DataTypeConverter<PGobject, PGbit> fromPgObjectToPgBit() {
+        return (pg, targetType, context) -> toPgBit(pg);
+    }
+
+    @Prototype
+    DataTypeConverter<PGobject, BinaryVector> fromPgObjectToBinaryVector() {
+        return (pg, targetType, context) -> toPgBit(pg).map(PostgresTypeConvertersFactory::toBinaryVector);
+    }
+
+    private static Optional<PGbit> toPgBit(PGobject pg) {
+        if (pg == null) {
+            return Optional.empty();
+        }
+        if (pg instanceof PGbit bit) {
+            return Optional.of(bit);
+        }
+        try {
+            return Optional.of(new PGbit(pg.getValue()));
+        } catch (SQLException e) {
+            return Optional.empty();
+        }
+    }
+
+    private static BinaryVector toBinaryVector(PGbit bit) {
+        if (bit.length() % Byte.SIZE != 0) {
+            // BinaryVector packs eight dimensions per byte, so padding the bits would change the vector
+            throw new IllegalArgumentException("A bit value of " + bit.length() + " bits cannot be read as a BinaryVector: the length must be a multiple of 8");
+        }
+        return new BinaryVector(bit.toByteArray());
     }
 
     private static Optional<float[]> toDenseFloatArray(PGobject pg) {

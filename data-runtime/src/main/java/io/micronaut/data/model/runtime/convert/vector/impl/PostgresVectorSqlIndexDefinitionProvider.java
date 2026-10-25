@@ -80,6 +80,13 @@ final class PostgresVectorSqlIndexDefinitionProvider implements SqlIndexDefiniti
             case L1_MANHATTAN -> sparse ? "sparsevec_l1_ops" : "vector_l1_ops";
             case L2_EUCLIDEAN_SQUARED -> sparse ? "sparsevec_l2_ops" : "vector_l2_ops";
             case L2_EUCLIDEAN -> sparse ? "sparsevec_l2_ops" : "vector_l2_ops";
+            case HAMMING -> "bit_hamming_ops";
+            case JACCARD -> {
+                if (!hnsw) {
+                    throw new IllegalArgumentException("PostgreSQL supports Jaccard distance with HNSW indexes only");
+                }
+                yield "bit_jaccard_ops";
+            }
             default -> throw new IllegalArgumentException("Distance type " + meta.distanceType() + " is not supported for PostgreSQL vector indexes");
         };
 
