@@ -84,8 +84,11 @@ import io.micronaut.data.runtime.query.PreparedQueryDecorator;
 import io.micronaut.data.annotation.Relation;
 import org.jspecify.annotations.Nullable;
 
+import jakarta.inject.Inject;
+
 import java.util.ArrayList;
 import java.util.Collection;
+import java.util.Collections;
 import java.util.IdentityHashMap;
 import java.util.Iterator;
 import java.util.LinkedHashMap;
@@ -93,7 +96,6 @@ import java.util.List;
 import java.util.Map;
 import java.util.Objects;
 import java.util.Optional;
-import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.Executor;
 import java.util.concurrent.ExecutorService;
 import java.util.function.Function;
@@ -121,7 +123,20 @@ public abstract class AbstractGraphRepositoryOperations extends AbstractReposito
 
     private final SynchronizedLazyValue<ExecutorAsyncOperations> asyncOperations = new SynchronizedLazyValue<>();
 
-    private final Map<String, String> queryCache = new ConcurrentHashMap<>();
+    /**
+     * Generated queries by key. Writes of entities with schemaless properties generate a query per set
+     * of property names, which callers control, so the cache evicts its least recently used entries.
+     */
+    private final Map<String, String> queryCache = Collections.synchronizedMap(new LinkedHashMap<>(64, 0.75f, true) {
+        @Override
+        protected boolean removeEldestEntry(Map.Entry<String, String> eldest) {
+            return size() > queryCacheSize;
+        }
+    });
+
+    private volatile int queryCacheSize = GraphOperationsConfiguration.DEFAULT_QUERY_CACHE_SIZE;
+
+    private volatile int maxPathDepth = GraphOperationsConfiguration.DEFAULT_MAX_PATH_DEPTH;
 
     private final GraphValueEncoders encoders = GraphValueEncoders.defaults();
 
@@ -157,6 +172,17 @@ public abstract class AbstractGraphRepositoryOperations extends AbstractReposito
         this.mapper = new GraphEntityMapper(runtimeEntityRegistry, conversionService, this::encodeValue, graphSerde);
         this.executorServiceResolver = new ExecutorServiceResolver(executorService);
         this.noCascade = new SyncCascadeOperations<>(conversionService, new RelationshipsWrittenByNode());
+    }
+
+    /**
+     * Applies the limits configured under {@code micronaut.data.graph}.
+     *
+     * @param configuration The configuration
+     */
+    @Inject
+    public void setConfiguration(GraphOperationsConfiguration configuration) {
+        this.maxPathDepth = configuration.getMaxPathDepth();
+        this.queryCacheSize = configuration.getQueryCacheSize();
     }
 
     /**
@@ -417,6 +443,11 @@ public abstract class AbstractGraphRepositoryOperations extends AbstractReposito
             int depth = limit instanceof Number number ? number.intValue() : -1;
             if (depth < 1) {
                 throw new IllegalArgumentException("The @PathLimit argument must be at least 1, was: " + limit);
+            }
+            if (depth > maxPathDepth) {
+                // A variable-length path visits every path up to its depth, so a caller-supplied depth is capped
+                throw new IllegalArgumentException("The @PathLimit argument " + depth + " is larger than "
+                    + GraphOperationsConfiguration.PREFIX + ".max-path-depth (" + maxPathDepth + ")");
             }
             query.replace(tokenPosition, tokenPosition + PathQueryDefinition.PATH_LIMIT_TOKEN.length(), String.valueOf(depth));
         }
@@ -866,6 +897,12 @@ public abstract class AbstractGraphRepositoryOperations extends AbstractReposito
                                @Nullable Object fromId, @Nullable Object toId) {
         if (fromId == null || toId == null) {
             throw new DataAccessException("Cannot link a [" + type + "] relationship without the identifiers of both nodes");
+        }
+        try {
+            // The type comes from a schemaless map and becomes part of the query text
+            GraphEntities.requireName(type);
+        } catch (IllegalArgumentException e) {
+            throw new DataAccessException("Relationship type [" + type + "] of [" + owner.getSimpleName() + "] cannot be stored: " + e.getMessage(), e);
         }
         String key = "dynamicLink:" + owner.getName() + ":" + target.getName() + ":" + type;
         String query = queryCache.computeIfAbsent(key, k -> queryBuilder.buildDynamicLinkQuery(owner, target, type));

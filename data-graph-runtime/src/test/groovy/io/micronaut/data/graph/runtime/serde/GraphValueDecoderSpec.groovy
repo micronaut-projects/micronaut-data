@@ -13,6 +13,32 @@ import java.time.LocalDate
  */
 class GraphValueDecoderSpec extends Specification {
 
+    void "values nested deeper than 64 levels are refused"() {
+        given:
+        def nested = [] as List
+        64.times { nested = [nested] }
+
+        when:
+        GraphValueDecoder.of(nested).decodeArbitrary()
+
+        then:
+        def e = thrown(IllegalArgumentException)
+        e.message.contains('deeper than 64')
+
+        when:
+        GraphValueDecoder.of(nested).decodeNode()
+
+        then:
+        thrown(IllegalArgumentException)
+
+        when: "64 levels are fine"
+        def limit = [] as List
+        63.times { limit = [limit] }
+
+        then:
+        GraphValueDecoder.of(limit).decodeArbitrary() instanceof List
+    }
+
     @Unroll
     void "decode #description"() {
         expect:

@@ -47,6 +47,7 @@ import java.util.Map;
 public final class GraphValueDecoder extends LimitingStream implements Decoder {
 
     private static final String EXPECTED = "Expected ";
+    private static final int MAX_DEPTH = 64;
 
     private final @Nullable Iterator<? extends Map.Entry<?, ?>> entries;
     private final @Nullable Iterator<?> elements;
@@ -296,20 +297,22 @@ public final class GraphValueDecoder extends LimitingStream implements Decoder {
 
     @Override
     public @Nullable Object decodeArbitrary() throws IOException {
-        return arbitrary(take());
+        return arbitrary(take(), 0);
     }
 
-    private static @Nullable Object arbitrary(@Nullable Object value) {
+    private static @Nullable Object arbitrary(@Nullable Object value, int depth) {
         return switch (value) {
             case Map<?, ?> map -> {
+                int inner = nested(depth);
                 Map<String, Object> copy = new LinkedHashMap<>(map.size());
-                map.forEach((k, v) -> copy.put(String.valueOf(k), arbitrary(v)));
+                map.forEach((k, v) -> copy.put(String.valueOf(k), arbitrary(v, inner)));
                 yield copy;
             }
             case List<?> list -> {
+                int inner = nested(depth);
                 List<Object> copy = new ArrayList<>(list.size());
                 for (Object item : list) {
-                    copy.add(arbitrary(item));
+                    copy.add(arbitrary(item, inner));
                 }
                 yield copy;
             }
@@ -317,23 +320,36 @@ public final class GraphValueDecoder extends LimitingStream implements Decoder {
         };
     }
 
-    @Override
-    public JsonNode decodeNode() throws IOException {
-        return node(take());
+    /**
+     * Stored values are copied recursively, so a value nested deeper than any sensible graph
+     * property is refused rather than exhausting the stack.
+     */
+    private static int nested(int depth) {
+        if (depth >= MAX_DEPTH) {
+            throw new IllegalArgumentException("Graph value nests deeper than " + MAX_DEPTH + " levels");
+        }
+        return depth + 1;
     }
 
-    private static JsonNode node(@Nullable Object value) {
+    @Override
+    public JsonNode decodeNode() throws IOException {
+        return node(take(), 0);
+    }
+
+    private static JsonNode node(@Nullable Object value, int depth) {
         return switch (value) {
             case null -> JsonNode.nullNode();
             case Map<?, ?> map -> {
+                int inner = nested(depth);
                 Map<String, JsonNode> nodes = new LinkedHashMap<>(map.size());
-                map.forEach((k, v) -> nodes.put(String.valueOf(k), node(v)));
+                map.forEach((k, v) -> nodes.put(String.valueOf(k), node(v, inner)));
                 yield JsonNode.createObjectNode(nodes);
             }
             case List<?> list -> {
+                int inner = nested(depth);
                 List<JsonNode> nodes = new ArrayList<>(list.size());
                 for (Object item : list) {
-                    nodes.add(node(item));
+                    nodes.add(node(item, inner));
                 }
                 yield JsonNode.createArrayNode(nodes);
             }
