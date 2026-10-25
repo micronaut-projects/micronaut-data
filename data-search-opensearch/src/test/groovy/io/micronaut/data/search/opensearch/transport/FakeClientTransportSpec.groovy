@@ -129,6 +129,14 @@ class FakeClientTransportSpec extends Specification {
     }
 
     @Unroll("#kind search without total")
+    void "a knn clause with a similarity threshold becomes a radial search without k"() {
+        expect:
+        OpenSearchRequests.translateKnn([knn: [field: "embedding", query_vector: [1d, 0d], k: 10, num_candidates: 100, similarity: 0.5d]]) ==
+            [knn: [embedding: [vector: [1d, 0d], max_distance: 0.5d]]]
+        OpenSearchRequests.translateKnn([knn: [field: "embedding", query_vector: [1d, 0d], k: 10, num_candidates: 100]]) ==
+            [knn: [embedding: [vector: [1d, 0d], k: 10]]]
+    }
+
     void "a response without total or max score counts the hits"() {
         given:
         driver.fake.answer(SearchRequest, SEARCH_RESPONSE_WITHOUT_TOTAL)
@@ -375,6 +383,20 @@ class FakeClientTransportSpec extends Specification {
     }
 
     @Unroll("#kind bulk item error")
+    void "a body key the transport cannot forward fails instead of being dropped"() {
+        when:
+        driver.search("books", '{"query":{"match_all":{}},"aggs":{"authors":{"terms":{"field":"author"}}}}')
+
+        then:
+        DataAccessException e = thrown()
+        e.message.contains("'aggs'")
+        driver.fake.requests.isEmpty()
+
+        where:
+        kind << KINDS
+        driver = driver(kind)
+    }
+
     void "a failed bulk item is a DataAccessException"() {
         given:
         driver.fake.answer(BulkRequest, bulkResponse(bulkItem("1", 201), bulkItem("2", 400, '{"type":"mapper_parsing_exception","reason":"failed to parse"}')))

@@ -48,4 +48,9 @@ public @interface HybridSearchMethod {
      * @return The vector property
      */
     String vectorProperty();
+
+    /**
+     * @return The name of the method parameter holding the search string
+     */
+    String queryParameter() default "";
 }
