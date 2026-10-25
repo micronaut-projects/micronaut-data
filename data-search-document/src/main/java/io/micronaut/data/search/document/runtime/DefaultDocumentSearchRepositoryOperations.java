@@ -61,6 +61,7 @@ import java.util.List;
 import java.util.Map;
 import java.util.Optional;
 import java.util.concurrent.ExecutorService;
+import java.util.concurrent.atomic.AtomicReference;
 import java.util.stream.Stream;
 
 /**
@@ -80,10 +81,8 @@ public final class DefaultDocumentSearchRepositoryOperations extends AbstractDoc
     private final SearchTransport transport;
     private final BeanContext beanContext;
     private final ExecutorServiceResolver executorServiceResolver;
-    @Nullable
-    private volatile ReactiveRepositoryOperations reactiveOperations;
-    @Nullable
-    private volatile AsyncRepositoryOperations asyncOperations;
+    private final AtomicReference<ReactiveRepositoryOperations> reactiveOperations = new AtomicReference<>();
+    private final AtomicReference<AsyncRepositoryOperations> asyncOperations = new AtomicReference<>();
 
     /**
      * @param name The transport bean name
@@ -134,28 +133,27 @@ public final class DefaultDocumentSearchRepositoryOperations extends AbstractDoc
 
     @Override
     public ReactiveRepositoryOperations reactive() {
-        ReactiveRepositoryOperations operations = reactiveOperations;
-        if (operations == null) {
-            Optional<DefaultDocumentSearchReactiveRepositoryOperations> nonBlocking =
-                beanContext.findBean(DefaultDocumentSearchReactiveRepositoryOperations.class, Qualifiers.byName(name));
-            operations = nonBlocking.isPresent()
-                ? nonBlocking.get()
-                : new ExecutorReactiveOperations(this, executorServiceResolver.get(), conversionService);
-            reactiveOperations = operations;
-        }
-        return operations;
+        // created on first use: the reactive bean of the same name is looked up after this bean exists
+        return reactiveOperations.updateAndGet(current -> current != null ? current : createReactive());
+    }
+
+    private ReactiveRepositoryOperations createReactive() {
+        Optional<DefaultDocumentSearchReactiveRepositoryOperations> nonBlocking =
+            beanContext.findBean(DefaultDocumentSearchReactiveRepositoryOperations.class, Qualifiers.byName(name));
+        return nonBlocking.isPresent()
+            ? nonBlocking.get()
+            : new ExecutorReactiveOperations(this, executorServiceResolver.get(), conversionService);
     }
 
     @Override
     public AsyncRepositoryOperations async() {
-        AsyncRepositoryOperations operations = asyncOperations;
-        if (operations == null) {
-            operations = reactive() instanceof DefaultDocumentSearchReactiveRepositoryOperations reactor
-                ? new ReactorToAsyncOperationsAdaptor(reactor, executorServiceResolver.get())
-                : new ExecutorAsyncOperations(this, executorServiceResolver.get());
-            asyncOperations = operations;
-        }
-        return operations;
+        return asyncOperations.updateAndGet(current -> current != null ? current : createAsync());
+    }
+
+    private AsyncRepositoryOperations createAsync() {
+        return reactive() instanceof DefaultDocumentSearchReactiveRepositoryOperations reactor
+            ? new ReactorToAsyncOperationsAdaptor(reactor, executorServiceResolver.get())
+            : new ExecutorAsyncOperations(this, executorServiceResolver.get());
     }
 
     // ---------- raw bodies
