@@ -228,12 +228,32 @@ public final class AgeStatements {
             } else if (c == ')' || c == ']' || c == '}') {
                 depth--;
             } else if (i >= from && depth == 0 && upper.startsWith(keyword, i)
-                && (i == 0 || !Character.isLetterOrDigit(upper.charAt(i - 1)))
-                && (i + keyword.length() == upper.length() || !Character.isLetterOrDigit(upper.charAt(i + keyword.length())))) {
+                && (i == 0 || !isNameCharacter(upper.charAt(i - 1)))
+                && (i + keyword.length() == upper.length() || !isNameCharacter(upper.charAt(i + keyword.length())))
+                && !isAlias(upper, i)) {
                 return i;
             }
         }
         return -1;
+    }
+
+    /**
+     * A property access such as {@code n.limit} or a parameter such as {@code $skip} is a name, not a clause.
+     */
+    private static boolean isNameCharacter(char c) {
+        return Character.isLetterOrDigit(c) || c == '_' || c == '.' || c == '$' || c == '`';
+    }
+
+    /**
+     * A word after {@code AS} is an alias, not a clause, as in {@code RETURN count(n) AS limit}.
+     */
+    private static boolean isAlias(String upper, int index) {
+        int i = index - 1;
+        while (i >= 0 && Character.isWhitespace(upper.charAt(i))) {
+            i--;
+        }
+        return i >= 1 && upper.charAt(i) == 'S' && upper.charAt(i - 1) == 'A'
+            && (i < 2 || !isNameCharacter(upper.charAt(i - 2)));
     }
 
     /**
