@@ -16,6 +16,8 @@ import java.sql.SQLException;
 import java.util.Properties;
 
 @Requires(notEnv = "oracle-jsonview")
+// the Test Pilot database has a descriptor rather than a host and port
+@Requires(missingProperty = "spec.testpilot.descriptor")
 @Singleton
 public class OracleXEDbInit implements BeanCreatedEventListener<DefaultBasicR2dbcProperties>, Ordered {
 
