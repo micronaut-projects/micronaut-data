@@ -41,6 +41,8 @@ public class AgeConfiguration {
 
     private String graph = DEFAULT_GRAPH;
     private Map<String, String> graphs = Map.of();
+    private Map<String, String> tenantGraphs = Map.of();
+    private String tenantGraphPrefix = "";
     private boolean createExtension;
     private boolean createGraph = true;
 
@@ -86,6 +88,55 @@ public class AgeConfiguration {
      */
     public @NonNull String graphFor(@NonNull String dataSource) {
         return graphs.getOrDefault(dataSource, graph);
+    }
+
+    /**
+     * The graph of each tenant, by tenant id, when multi-tenancy keeps a graph per tenant:
+     * {@code micronaut.data.age.tenant-graphs.acme: acme_graph}. A tenant without an entry uses its id, after
+     * {@link #getTenantGraphPrefix()}, as its graph name.
+     *
+     * @return The graphs by tenant id
+     * @since 5.3.0
+     */
+    public @NonNull Map<String, String> getTenantGraphs() {
+        return tenantGraphs;
+    }
+
+    /**
+     * @param tenantGraphs The graphs by tenant id
+     */
+    public void setTenantGraphs(@NonNull Map<String, String> tenantGraphs) {
+        this.tenantGraphs = tenantGraphs;
+    }
+
+    /**
+     * The prefix put before the id of a tenant without an entry in {@link #getTenantGraphs()} to name its graph,
+     * for example {@code tenant_}. Default empty: the tenant id is the graph name.
+     *
+     * @return The prefix
+     * @since 5.3.0
+     */
+    public @NonNull String getTenantGraphPrefix() {
+        return tenantGraphPrefix;
+    }
+
+    /**
+     * @param tenantGraphPrefix The prefix
+     */
+    public void setTenantGraphPrefix(@NonNull String tenantGraphPrefix) {
+        this.tenantGraphPrefix = tenantGraphPrefix;
+    }
+
+    /**
+     * The graph of a tenant: its entry in {@link #getTenantGraphs()}, else its id after {@link #getTenantGraphPrefix()}.
+     *
+     * @param tenantId The tenant id
+     * @return The graph name
+     * @since 5.3.0
+     */
+    public @NonNull String tenantGraph(@NonNull String tenantId) {
+        String mapped = tenantGraphs.get(tenantId);
+        return mapped != null ? mapped : tenantGraphPrefix + tenantId;
     }
 
     /**

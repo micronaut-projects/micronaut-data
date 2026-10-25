@@ -26,8 +26,6 @@ import io.micronaut.data.graph.model.criteria.RelatedPredicate;
 import io.micronaut.data.graph.model.GraphIndex;
 import io.micronaut.data.graph.model.query.PathQueryDefinition;
 import io.micronaut.data.model.Association;
-import io.micronaut.data.model.DataType;
-import io.micronaut.data.model.JsonDataType;
 import io.micronaut.data.model.PersistentEntity;
 import io.micronaut.data.model.PersistentProperty;
 import io.micronaut.data.model.jpa.criteria.IExpression;
@@ -175,6 +173,7 @@ public class CypherQueryBuilder implements GraphQueryBuilder {
      * The key of the properties of a node in the row of a batched write.
      */
     public static final String ROW_PROPERTIES = "properties";
+    private static final String WITH = " WITH ";
     private static final String WITH_DISTINCT = " WITH DISTINCT ";
     private static final String DISTINCT = "DISTINCT ";
     private static final String TO_LOWER = "toLower(";
@@ -188,7 +187,6 @@ public class CypherQueryBuilder implements GraphQueryBuilder {
     private static final String SET = " SET ";
     private static final String RETURN_COUNT_RESULT = " RETURN count(*) AS result";
     private static final String DETACH_DELETE = " DETACH DELETE ";
-    private static final String WITH = " WITH ";
     private static final String LINK_FROM = "a";
     private static final String LINK_TO = "b";
 
@@ -269,7 +267,7 @@ public class CypherQueryBuilder implements GraphQueryBuilder {
         for (OrderItem order : orders) {
             if (order.onAssociation) {
                 if (carried.isEmpty()) {
-                    query.append(" WITH ").append(ROOT);
+                    query.append(WITH).append(ROOT);
                 }
                 String alias = "o" + carried.size();
                 query.append(", ").append(order.ascending ? "min(" : "max(").append(order.expression).append(CLOSE_AS).append(alias);
@@ -1898,97 +1896,6 @@ public class CypherQueryBuilder implements GraphQueryBuilder {
         @Override
         public void visit(ExistsSubqueryPredicate existsSubqueryPredicate) {
             throw new UnsupportedOperationException("Subqueries are not supported by graph repositories");
-        }
-    }
-
-    /**
-     * The parameter of a {@code LIKE} pattern: either the regular expression of a pattern known when the query is
-     * built, or the pattern itself with the converter that translates it at bind time.
-     */
-    private static final class LikeParameterBinding implements QueryParameterBinding {
-        private final QueryParameterBinding delegate;
-        private final @Nullable String regex;
-        private final @Nullable String converterClassName;
-
-        private LikeParameterBinding(QueryParameterBinding delegate, @Nullable String regex, @Nullable String converterClassName) {
-            this.delegate = delegate;
-            this.regex = regex;
-            this.converterClassName = converterClassName;
-        }
-
-        @Override
-        public @Nullable Object getValue() {
-            return regex != null ? regex : delegate.getValue();
-        }
-
-        @Override
-        public @Nullable String getConverterClassName() {
-            return converterClassName != null ? converterClassName : delegate.getConverterClassName();
-        }
-
-        @Override
-        public @Nullable String getName() {
-            return delegate.getName();
-        }
-
-        @Override
-        public String getKey() {
-            return delegate.getKey();
-        }
-
-        @Override
-        public DataType getDataType() {
-            return delegate.getDataType();
-        }
-
-        @Override
-        public JsonDataType getJsonDataType() {
-            return delegate.getJsonDataType();
-        }
-
-        @Override
-        public int getParameterIndex() {
-            return delegate.getParameterIndex();
-        }
-
-        @Override
-        public String @Nullable [] getParameterBindingPath() {
-            return delegate.getParameterBindingPath();
-        }
-
-        @Override
-        public String @Nullable [] getPropertyPath() {
-            return delegate.getPropertyPath();
-        }
-
-        @Override
-        public boolean isAutoPopulated() {
-            return delegate.isAutoPopulated();
-        }
-
-        @Override
-        public boolean isRequiresPreviousPopulatedValue() {
-            return delegate.isRequiresPreviousPopulatedValue();
-        }
-
-        @Override
-        public boolean isExpandable() {
-            return delegate.isExpandable();
-        }
-
-        @Override
-        public boolean isExpression() {
-            return delegate.isExpression();
-        }
-
-        @Override
-        public @Nullable String getRole() {
-            return delegate.getRole();
-        }
-
-        @Override
-        public @Nullable String getTableAlias() {
-            return delegate.getTableAlias();
         }
     }
 

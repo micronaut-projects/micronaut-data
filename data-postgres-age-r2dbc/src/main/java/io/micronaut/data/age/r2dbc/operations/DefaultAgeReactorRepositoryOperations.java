@@ -24,6 +24,7 @@ import io.micronaut.data.graph.model.query.builder.AgeStatements;
 import io.micronaut.data.graph.runtime.GraphRecord;
 import io.micronaut.data.graph.runtime.GraphResult;
 import io.micronaut.data.graph.runtime.ReactiveGraphSession;
+import io.micronaut.data.graph.runtime.age.AgeGraphTenantResolver;
 import io.micronaut.data.graph.runtime.age.AgeParameters;
 import io.micronaut.data.graph.runtime.age.Agtype;
 import io.micronaut.data.graph.runtime.operations.AbstractReactiveGraphRepositoryOperations;
@@ -45,12 +46,18 @@ import reactor.core.publisher.Mono;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Map;
+import java.util.Set;
+import java.util.concurrent.ConcurrentHashMap;
 import java.util.function.Function;
 
 /**
  * Runs Apache AGE statements on the reactive connections of an R2DBC connection factory, within the current reactive
  * transaction when there is one. AGE is loaded on each connection before its first statement. Writes of entities,
  * which run several statements, run in a transaction of their own when none is active.
+ *
+ * <p>The graph of an operation is that of the current tenant when there is an {@link AgeGraphTenantResolver}, else
+ * the configured graph of the connection factory. The tenant is resolved when the operation is subscribed to, on the
+ * subscribing thread, so a tenant resolver that reads the request must read it from the propagated context.</p>
  *
  * @author graemerocher
  * @since 5.3.0
@@ -65,41 +72,59 @@ final class DefaultAgeReactorRepositoryOperations extends AbstractReactiveGraphR
     private final ReactorConnectionOperations<Connection> connectionOperations;
     private final R2dbcReactorTransactionOperations transactionOperations;
     private final JsonMapper jsonMapper;
-    private final String graph;
+    private final String defaultGraph;
+    private final @Nullable AgeGraphTenantResolver tenantResolver;
     private final boolean createExtension;
     private final boolean createGraph;
-    private volatile boolean graphReady;
+    private final Set<String> readyGraphs = ConcurrentHashMap.newKeySet();
 
     DefaultAgeReactorRepositoryOperations(DefaultAgeR2dbcRepositoryOperations operations,
                                           ReactorConnectionOperations<Connection> connectionOperations,
                                           R2dbcReactorTransactionOperations transactionOperations,
                                           JsonMapper jsonMapper,
-                                          String graph,
+                                          String defaultGraph,
+                                          @Nullable AgeGraphTenantResolver tenantResolver,
                                           boolean createExtension,
                                           boolean createGraph) {
         super(operations);
         this.connectionOperations = connectionOperations;
         this.transactionOperations = transactionOperations;
         this.jsonMapper = jsonMapper;
-        this.graph = graph;
+        this.defaultGraph = defaultGraph;
+        this.tenantResolver = tenantResolver;
         this.createExtension = createExtension;
         this.createGraph = createGraph;
     }
 
+    /**
+     * The graph of the current tenant, or the configured graph when there is no tenant.
+     */
+    private String currentGraph() {
+        String tenantGraph = tenantResolver == null ? null : tenantResolver.resolveTenantGraph();
+        return tenantGraph == null ? defaultGraph : AgeStatements.validateGraphName(tenantGraph);
+    }
+
     @Override
     protected <R> Mono<R> withSessionMono(AnnotationMetadata annotationMetadata, Function<ReactiveGraphSession, Mono<R>> work) {
-        return connectionOperations.withConnectionMono(
-            ConnectionDefinition.DEFAULT.withAnnotationMetadata(annotationMetadata),
-            status -> prepare(status.getConnection()).then(Mono.defer(() -> work.apply(new Session(status.getConnection()))))
-        );
+        // The tenant is resolved on subscription, once, so that the queries of one operation run on one graph
+        return Mono.defer(() -> {
+            String graph = currentGraph();
+            return connectionOperations.withConnectionMono(
+                ConnectionDefinition.DEFAULT.withAnnotationMetadata(annotationMetadata),
+                status -> prepare(status.getConnection(), graph).then(Mono.defer(() -> work.apply(new Session(status.getConnection(), graph))))
+            );
+        });
     }
 
     @Override
     protected <R> Flux<R> withSessionFlux(AnnotationMetadata annotationMetadata, Function<ReactiveGraphSession, Flux<R>> work) {
-        return connectionOperations.withConnectionFlux(
-            ConnectionDefinition.DEFAULT.withAnnotationMetadata(annotationMetadata),
-            status -> prepare(status.getConnection()).thenMany(Flux.defer(() -> work.apply(new Session(status.getConnection()))))
-        );
+        return Flux.defer(() -> {
+            String graph = currentGraph();
+            return connectionOperations.withConnectionFlux(
+                ConnectionDefinition.DEFAULT.withAnnotationMetadata(annotationMetadata),
+                status -> prepare(status.getConnection(), graph).thenMany(Flux.defer(() -> work.apply(new Session(status.getConnection(), graph))))
+            );
+        });
     }
 
     @Override
@@ -119,7 +144,7 @@ final class DefaultAgeReactorRepositoryOperations extends AbstractReactiveGraphR
      * Loads AGE, which a pooled connection may not have loaded yet, puts its catalog on the search path, and creates
      * the graph on first use.
      */
-    private Mono<Void> prepare(Connection connection) {
+    private Mono<Void> prepare(Connection connection, String graph) {
         Mono<Void> prepare = Mono.empty();
         if (createExtension) {
             prepare = prepare.then(execute(connection, "CREATE EXTENSION IF NOT EXISTS age"));
@@ -130,8 +155,8 @@ final class DefaultAgeReactorRepositoryOperations extends AbstractReactiveGraphR
             // schema of the path
             .then(execute(connection, "SELECT set_config('search_path', current_setting('search_path') || ', ag_catalog', false)"
                 + " WHERE current_setting('search_path') NOT LIKE '%ag_catalog%'"));
-        if (createGraph && !graphReady) {
-            prepare = prepare.then(createGraph());
+        if (createGraph && !readyGraphs.contains(graph)) {
+            prepare = prepare.then(createGraph(graph));
         }
         return prepare.onErrorMap(R2dbcException.class, e -> new DataAccessException("Error preparing Apache AGE graph [" + graph + "]: " + e.getMessage(), e));
     }
@@ -139,14 +164,15 @@ final class DefaultAgeReactorRepositoryOperations extends AbstractReactiveGraphR
     /**
      * Creates the graph on a connection of its own, outside any transaction of the caller, so that the graph
      * outlives a transaction that rolls back.
+     *
+     * @param graph The graph name, a validated identifier
      */
-    private Mono<Void> createGraph() {
-        // The graph name is a validated identifier
+    private Mono<Void> createGraph(String graph) {
         String sql = "SELECT ag_catalog.create_graph('" + graph + "') WHERE NOT EXISTS (SELECT 1 FROM ag_catalog.ag_graph WHERE name = '" + graph + "')";
         return connectionOperations.withConnectionMono(ConnectionDefinition.REQUIRES_NEW, status -> execute(status.getConnection(), sql))
             // Another instance created it between the check and the call
             .onErrorResume(R2dbcException.class, e -> e.getMessage() != null && e.getMessage().contains("already exists") ? Mono.empty() : Mono.error(e))
-            .doOnSuccess(ignored -> graphReady = true);
+            .doOnSuccess(ignored -> readyGraphs.add(graph));
     }
 
     private static Mono<Void> execute(Connection connection, String sql) {
@@ -162,9 +188,11 @@ final class DefaultAgeReactorRepositoryOperations extends AbstractReactiveGraphR
     private final class Session implements ReactiveGraphSession {
 
         private final Connection connection;
+        private final String graph;
 
-        private Session(Connection connection) {
+        private Session(Connection connection, String graph) {
             this.connection = connection;
+            this.graph = graph;
         }
 
         @Override
