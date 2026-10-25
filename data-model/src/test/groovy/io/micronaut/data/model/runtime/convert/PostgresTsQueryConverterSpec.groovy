@@ -29,6 +29,8 @@ class PostgresTsQueryConverterSpec extends Specification {
         "the fat rats"                 | MatchMode.PHRASE | "'the fat rats'"
         '"quoted phrase"'              | MatchMode.PHRASE | "'quoted phrase'"
         "o'reilly"                     | MatchMode.ANY    | "'o''reilly'"
+        'foo\\'                        | MatchMode.ANY    | "'foo\\\\'"
+        'C:\\dir'                      | MatchMode.ANY    | "'C:\\\\dir'"
         "fat & rat | !cat"             | MatchMode.ANY    | "'fat' | '&' | 'rat' | '|' | '!cat'"
         ""                             | MatchMode.ANY    | "'mn_no_match_0'"
         "-only"                        | MatchMode.ANY    | "'mn_no_match_0'"

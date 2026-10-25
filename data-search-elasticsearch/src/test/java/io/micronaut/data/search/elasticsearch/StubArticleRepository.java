@@ -8,4 +8,8 @@ import io.micronaut.data.search.tck.repositories.ArticleHybridSearchRepository;
  */
 @ElasticsearchRepository("stub")
 public interface StubArticleRepository extends ArticleHybridSearchRepository {
+
+    io.micronaut.data.model.vector.search.SearchResults<io.micronaut.data.search.tck.entities.Article> searchByEmbeddingNear(io.micronaut.data.model.vector.Vector vector,
+                                                                                                                   io.micronaut.data.model.vector.search.Score maxDistance,
+                                                                                                                   io.micronaut.data.model.Pageable pageable);
 }

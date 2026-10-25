@@ -135,7 +135,8 @@ public abstract class PostgresTsQueryConverter implements TextSearchQueryConvert
     }
 
     private static String quote(String lexeme) {
-        return "'" + lexeme.replace("'", "''") + "'";
+        // inside a quoted lexeme a backslash escapes the next character, so it is doubled like the quote
+        return "'" + lexeme.replace("\\", "\\\\").replace("'", "''") + "'";
     }
 
     @Override
