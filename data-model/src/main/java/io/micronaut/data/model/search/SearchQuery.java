@@ -165,7 +165,8 @@ public final class SearchQuery {
 
     @Override
     public String toString() {
-        return "SearchQuery{query='" + query + "', fields=" + fields + ", mode=" + mode + '}';
+        // the search string is user input, so only its length is shown
+        return "SearchQuery{queryLength=" + (query == null ? 0 : query.length()) + ", fields=" + fields + ", mode=" + mode + '}';
     }
 
     /**
