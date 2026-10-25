@@ -53,6 +53,12 @@ class BookingServiceTest extends Specification {
         when:
         // tag::propagation[]
         transactionPropagationOperations.withPropagation(suspendedSeat.transactionId()) {
+            bookingService.confirmPayment(suspendedSeat.seatId())
+            assert transactionPropagationOperations.currentTransactionId().orElseThrow() == suspendedSeat.transactionId()
+        }
+        assert seatRepository.findAll().isEmpty()
+
+        transactionPropagationOperations.withPropagation(suspendedSeat.transactionId()) {
             bookingService.ticketSeat(suspendedSeat.seatId())
         }
         // end::propagation[]
