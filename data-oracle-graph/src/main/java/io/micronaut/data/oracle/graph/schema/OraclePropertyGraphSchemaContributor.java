@@ -139,27 +139,30 @@ final class OraclePropertyGraphSchemaContributor implements JdbcSchemaContributo
         }
         Map<String, PersistentEntity> edgeOwners = new LinkedHashMap<>();
         for (PersistentEntity entity : entities) {
-            if (!isNode(entity)) {
-                continue;
-            }
-            for (PersistentProperty property : entity.getPersistentProperties()) {
-                if (!(property instanceof Association association) || !GraphEntities.isRelationship(association)) {
-                    continue;
-                }
-                PersistentEntity associated = association.getAssociatedEntity();
-                if (GraphEntities.isRelationshipEntity(associated)) {
-                    PersistentEntity owner = edgeOwners.putIfAbsent(associated.getName(), entity);
-                    if (owner != null && !owner.getName().equals(entity.getName())) {
-                        throw new IllegalStateException("Relationship entity [" + associated.getName() + "] is used by the nodes ["
-                            + owner.getName() + "] and [" + entity.getName() + "]: an edge table references the vertex table of a single node, so each node needs its own relationship entity");
-                    }
-                    schema.add(relationshipEntityEdge(entity, association));
-                } else {
-                    schema.add(nodeEdge(entity, association));
-                }
+            if (isNode(entity)) {
+                addEdges(schema, entity, edgeOwners);
             }
         }
         return schema;
+    }
+
+    private static void addEdges(Schema schema, PersistentEntity entity, Map<String, PersistentEntity> edgeOwners) {
+        for (PersistentProperty property : entity.getPersistentProperties()) {
+            if (!(property instanceof Association association) || !GraphEntities.isRelationship(association)) {
+                continue;
+            }
+            PersistentEntity associated = association.getAssociatedEntity();
+            if (GraphEntities.isRelationshipEntity(associated)) {
+                PersistentEntity owner = edgeOwners.putIfAbsent(associated.getName(), entity);
+                if (owner != null && !owner.getName().equals(entity.getName())) {
+                    throw new IllegalStateException("Relationship entity [" + associated.getName() + "] is used by the nodes ["
+                        + owner.getName() + "] and [" + entity.getName() + "]: an edge table references the vertex table of a single node, so each node needs its own relationship entity");
+                }
+                schema.add(relationshipEntityEdge(entity, association));
+            } else {
+                schema.add(nodeEdge(entity, association));
+            }
+        }
     }
 
     private static Vertex vertex(PersistentEntity entity) {
