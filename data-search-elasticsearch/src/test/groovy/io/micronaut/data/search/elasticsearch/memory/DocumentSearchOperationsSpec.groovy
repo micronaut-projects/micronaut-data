@@ -83,6 +83,18 @@ class DocumentSearchOperationsSpec extends Specification {
         transport.indexes["test_notes"].size() == 1
     }
 
+    void "a sort on a single result decides which hit comes first"() {
+        given:
+        notes.saveAll([new Note("Coffee", "Roasting beans", 120), new Note("Bread", "Sourdough", 80)])
+
+        when:
+        notes.findFirstByPagesGreaterThan(1, Sort.of(Sort.Order.desc("title")))
+
+        then:
+        transport.lastBody().contains('"sort":[{"title.keyword":{"order":"desc"}}]')
+        transport.lastBody().contains('"size":1')
+    }
+
     void "an update without an id fails"() {
         when:
         notes.update(new Note("No id", "None", 1))
@@ -268,6 +280,7 @@ class DocumentSearchOperationsSpec extends Specification {
         "findByTitleIsNotEmpty"                               | []                       | '{"query":{"bool":{"must_not":{"bool":{"should":[{"bool":{"must_not":{"exists":{"field":"title"}}}},{"term":{"title.keyword":""}}],"minimum_should_match":1}}}}}'
         "findByTitleOrBody"                                   | ["Coffee", "Beans"]      | '{"query":{"bool":{"should":[{"term":{"title.keyword":"Coffee"}},{"term":{"body.keyword":"Beans"}}],"minimum_should_match":1}}}'
         "findByTitleNotInList"                                | [["Coffee", "Tea"]]      | '{"query":{"bool":{"must_not":{"terms":{"title.keyword":["Coffee","Tea"]}}}}}'
+        "findByTitleInList"                                   | [["Coffee", "Tea"] as String[]] | '{"query":{"terms":{"title.keyword":["Coffee","Tea"]}}}'
         "findByTitleNotEqual"                                 | ["Coffee"]               | '{"query":{"bool":{"must_not":{"term":{"title.keyword":"Coffee"}}}}}'
     }
 
@@ -277,7 +290,7 @@ class DocumentSearchOperationsSpec extends Specification {
 
         then:
         mapping.contains('"cuisine":{"type":"keyword"}')
-        mapping.contains('"name":{"type":"search_as_you_type","analyzer":"standard"}')
+        mapping.contains('"name":{"type":"search_as_you_type","analyzer":"standard","fields":{"keyword":{')
         mapping.contains('"steps":{"type":"text","analyzer":"whitespace"')
         mapping.contains('"reference":{"type":"keyword"}')
     }

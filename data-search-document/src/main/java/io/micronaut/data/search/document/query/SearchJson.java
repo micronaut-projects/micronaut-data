@@ -18,6 +18,7 @@ package io.micronaut.data.search.document.query;
 import io.micronaut.core.annotation.Internal;
 
 import java.util.Collection;
+import java.util.List;
 import java.util.Map;
 import org.jspecify.annotations.Nullable;
 
@@ -55,11 +56,26 @@ public final class SearchJson {
             appendMap(sb, map);
         } else if (value instanceof Collection<?> collection) {
             appendCollection(sb, collection);
+        } else if (value.getClass().isArray()) {
+            appendCollection(sb, arrayToList(value));
         } else if (value instanceof Enum<?> e) {
             appendString(sb, e.name());
         } else {
             appendString(sb, value.toString());
         }
+    }
+
+    /**
+     * @param array An array, of objects or primitives
+     * @return Its elements as a list
+     */
+    public static List<Object> arrayToList(Object array) {
+        int length = java.lang.reflect.Array.getLength(array);
+        List<Object> list = new java.util.ArrayList<>(length);
+        for (int i = 0; i < length; i++) {
+            list.add(java.lang.reflect.Array.get(array, i));
+        }
+        return list;
     }
 
     private static void appendMap(StringBuilder sb, Map<?, ?> map) {
