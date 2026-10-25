@@ -90,6 +90,14 @@ public class CypherQueryBuilder implements GraphQueryBuilder {
      */
     public static final String JOIN_COLUMN_PREFIX = "j_";
     /**
+     * The column holding the relationships of types the entity does not declare.
+     */
+    public static final String DYNAMIC_RELATIONSHIPS_COLUMN = "d_relationships";
+    /**
+     * The key of the relationship type in a collected dynamic relationship map.
+     */
+    public static final String DYNAMIC_TYPE_KEY = "type";
+    /**
      * The key of the relationship in a collected relationship entity map.
      */
     public static final String REL_KEY = "rel";
@@ -196,7 +204,11 @@ public class CypherQueryBuilder implements GraphQueryBuilder {
         if (state.hasPatterns() && (selectionRenderer.entity || selectionRenderer.rootOnly)) {
             query.append(WITH_DISTINCT).append(ROOT);
         }
-        List<String> joinColumns = selectionRenderer.entity ? appendFetchJoins(query, state) : List.of();
+        List<String> joinColumns = List.of();
+        if (selectionRenderer.entity) {
+            joinColumns = appendFetchJoins(query, state);
+            appendDynamicRelationships(query, state.entity, joinColumns);
+        }
         query.append(RETURN);
         if (distinct) {
             query.append(DISTINCT);
@@ -271,8 +283,15 @@ public class CypherQueryBuilder implements GraphQueryBuilder {
      */
     @Override
     public String buildFindByIdQuery(PersistentEntity entity) {
-        return MATCH_OPEN + ROOT + labelExpression(entity) + CLOSE_WHERE
-            + identityExpression(entity.getIdentity(), ROOT) + " = $" + ID_PARAMETER + RETURN + ROOT;
+        StringBuilder query = new StringBuilder(MATCH_OPEN + ROOT + labelExpression(entity) + CLOSE_WHERE
+            + identityExpression(entity.getIdentity(), ROOT) + " = $" + ID_PARAMETER);
+        List<String> columns = new ArrayList<>();
+        appendDynamicRelationships(query, entity, columns);
+        query.append(RETURN).append(ROOT);
+        for (String column : columns) {
+            query.append(", ").append(column);
+        }
+        return query.toString();
     }
 
     /**
@@ -337,17 +356,24 @@ public class CypherQueryBuilder implements GraphQueryBuilder {
         return query.append(" AS ").append(ID_PARAMETER).toString();
     }
 
-    @Override
-    public String buildDeleteAllQuery(PersistentEntity entity) {
-        return MATCH_OPEN + ROOT + labelExpression(entity) + ") DETACH DELETE " + ROOT + RETURN_COUNT_RESULT;
-    }
-
     /**
-     * Builds the query that deletes a node by its identifier, bound to {@code $id}, with its relationships.
+     * Builds the query that links two nodes with a relationship of a type the owner does not declare. {@code MERGE}
+     * keeps saving the owner again from duplicating the relationship.
      *
-     * @param entity The entity
+     * @param owner  The entity of the owning node
+     * @param target The entity of the target node
+     * @param type   The relationship type
      * @return The query
      */
+    @Override
+    public String buildDynamicLinkQuery(PersistentEntity owner, PersistentEntity target, String type) {
+        return MATCH_OPEN + LINK_FROM + labelExpression(owner) + "), (" + LINK_TO + labelExpression(target) + CLOSE_WHERE
+            + identityExpression(owner.getIdentity(), LINK_FROM) + " = $" + LINK_FROM_PARAMETER + AND
+            + identityExpression(target.getIdentity(), LINK_TO) + " = $" + LINK_TO_PARAMETER
+            + " MERGE (" + LINK_FROM + ")-[" + PATH_RELATIONSHIP + ":" + GraphEntities.escapeName(type) + "]->(" + LINK_TO + ")"
+            + " RETURN null AS " + ID_PARAMETER;
+    }
+
     @Override
     public String buildAddLabelsQuery(PersistentEntity entity, List<String> labels) {
         StringBuilder query = new StringBuilder(MATCH_OPEN).append(ROOT).append(labelExpression(entity)).append(CLOSE_WHERE)
@@ -359,6 +385,17 @@ public class CypherQueryBuilder implements GraphQueryBuilder {
         return query.append(RETURN_COUNT_RESULT).toString();
     }
 
+    @Override
+    public String buildDeleteAllQuery(PersistentEntity entity) {
+        return MATCH_OPEN + ROOT + labelExpression(entity) + ") DETACH DELETE " + ROOT + RETURN_COUNT_RESULT;
+    }
+
+    /**
+     * Builds the query that deletes a node by its identifier, bound to {@code $id}, with its relationships.
+     *
+     * @param entity The entity
+     * @return The query
+     */
     @Override
     public String buildDeleteByIdQuery(PersistentEntity entity) {
         return MATCH_OPEN + ROOT + labelExpression(entity) + CLOSE_WHERE
@@ -655,6 +692,33 @@ public class CypherQueryBuilder implements GraphQueryBuilder {
         if (where != null && !where.isEmpty()) {
             query.append(" WHERE ").append(where);
         }
+    }
+
+    /**
+     * Appends the clause that collects the relationships of types the entity does not declare into the column
+     * {@link #DYNAMIC_RELATIONSHIPS_COLUMN}, when the entity has a
+     * {@link io.micronaut.data.graph.annotation.DynamicRelationships} property.
+     *
+     * @param query   The query, positioned after the matches of the root node
+     * @param entity  The entity
+     * @param columns The columns already carried with the root node; the new column is added
+     */
+    protected void appendDynamicRelationships(StringBuilder query, PersistentEntity entity, List<String> columns) {
+        if (GraphEntities.findDynamicRelationships(entity) == null) {
+            return;
+        }
+        query.append(" OPTIONAL MATCH (").append(ROOT).append(")-[dr]->(dn)");
+        List<String> declared = GraphEntities.outgoingRelationshipTypes(entity);
+        if (!declared.isEmpty()) {
+            query.append(" WHERE NOT type(dr) IN ").append(asLiteral(declared));
+        }
+        query.append(" WITH ").append(ROOT);
+        for (String column : columns) {
+            query.append(", ").append(column);
+        }
+        query.append(", collect(CASE WHEN dr IS NULL THEN NULL ELSE {").append(DYNAMIC_TYPE_KEY).append(": type(dr), ")
+            .append(NODE_KEY).append(": dn} END) AS ").append(DYNAMIC_RELATIONSHIPS_COLUMN);
+        columns.add(DYNAMIC_RELATIONSHIPS_COLUMN);
     }
 
     private List<String> appendFetchJoins(StringBuilder query, QueryState state) {
