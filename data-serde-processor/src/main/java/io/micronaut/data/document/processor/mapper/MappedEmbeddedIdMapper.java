@@ -47,7 +47,7 @@ public class MappedEmbeddedIdMapper implements TypedAnnotationMapper<EmbeddedId>
         // generation off for the whole entity
         return Collections.singletonList(
                 AnnotationValue.builder(SerdeConfig.class)
-                        .member(SerdeConfig.ALIASES, new String[]{MONGO_ID})
+                        .member(SerdeConfig.ALIASES, MONGO_ID)
                         .build()
         );
     }

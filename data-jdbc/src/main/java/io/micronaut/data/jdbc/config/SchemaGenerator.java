@@ -53,6 +53,7 @@ import io.micronaut.inject.qualifiers.Qualifiers;
 import io.micronaut.data.connection.jdbc.advice.DelegatingDataSource;
 
 import jakarta.annotation.PostConstruct;
+import org.jspecify.annotations.Nullable;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -156,63 +157,73 @@ public class SchemaGenerator {
                 }
                 continue;
             }
-            Dialect dialect = configuration.getDialect();
-            String name = configuration.getName();
-            List<String> packages = configuration.getPackages();
-
-            Collection<BeanIntrospection<Object>> introspections;
-            if (CollectionUtils.isNotEmpty(packages)) {
-                introspections = BeanIntrospector.SHARED.findIntrospections(MappedEntity.class, packages.toArray(new String[0]));
-            } else {
-                introspections = BeanIntrospector.SHARED.findIntrospections(MappedEntity.class);
-            }
-            PersistentEntity[] entities = introspections.stream()
-                // filter out inner / internal / abstract(MappedSuperClass) classes
-                .filter(i -> !i.getBeanType().getName().contains("$"))
-                .filter(i -> !Modifier.isAbstract(i.getBeanType().getModifiers()))
-                .filter(i -> !i.hasAnnotation(JsonSubView.class))
-                .sorted(Comparator.comparing(i -> i.hasAnnotation(JsonView.class)))
-                .map(beanIntrospection -> runtimeEntityRegistry.getEntity(beanIntrospection.getBeanType()))
-                .toArray(PersistentEntity[]::new);
-            SchemaContributions contributions = SchemaContributions.of(schemaContributors,
-                new SchemaContext(name, dialect, configuration.getDialectOptions().getVersion(), schemaGenerate, Arrays.asList(entities)));
-            entities = contributions.tableEntities();
+            PersistentEntity[] entities = findEntities(configuration, runtimeEntityRegistry);
+            SchemaContributions contributions = SchemaContributions.of(schemaContributors, new SchemaContext(configuration.getName(),
+                configuration.getDialect(), configuration.getDialectOptions().getVersion(), schemaGenerate, Arrays.asList(entities)));
             if (!contributions.isEmpty()) {
-                DataSource dataSource = DelegatingDataSource.unwrapDataSource(beanLocator.getBean(DataSource.class, Qualifiers.byName(name)));
-                try {
-                    try (Connection connection = dataSource.getConnection()) {
-                        if (configuration.getSchemaGenerateNames() != null && !configuration.getSchemaGenerateNames().isEmpty()) {
-                            for (String schemaName : configuration.getSchemaGenerateNames()) {
-                                if (schemaGenerate != SchemaGenerate.VALIDATE) {
-                                    schemaHandler.createSchema(connection, dialect, schemaName);
-                                }
-                                schemaHandler.useSchema(connection, dialect, schemaName);
-                                if (schemaGenerate == SchemaGenerate.VALIDATE) {
-                                    validate(connection, configuration, entities, dialectSqlTableMappingValidatorMap, definitionProviders);
-                                } else {
-                                    generate(connection, configuration, propertyPlaceholderResolver, entities, contributions);
-                                }
-                            }
-                        } else {
-                            if (configuration.getSchemaGenerateName() != null) {
-                                if (schemaGenerate != SchemaGenerate.VALIDATE) {
-                                    schemaHandler.createSchema(connection, dialect, configuration.getSchemaGenerateName());
-                                }
-                                schemaHandler.useSchema(connection, dialect, configuration.getSchemaGenerateName());
-                            }
-                            if (schemaGenerate == SchemaGenerate.VALIDATE) {
-                                validate(connection, configuration, entities, dialectSqlTableMappingValidatorMap, definitionProviders);
-                            } else {
-                                generate(connection, configuration, propertyPlaceholderResolver, entities, contributions);
-                            }
-                        }
-                    } catch (SQLException e) {
-                        throw new DataAccessException("Unable to create database schema: " + e.getMessage(), e);
-                    }
-                } catch (NoSuchBeanException e) {
-                    throw new ConfigurationException("No DataSource configured for setting [" + DataJdbcConfiguration.PREFIX + name + "]. Ensure the DataSource is configured correctly and try again.", e);
-                }
+                createOrValidateSchema(beanLocator, configuration, contributions.tableEntities(), contributions);
             }
+        }
+    }
+
+    private static PersistentEntity[] findEntities(DataJdbcConfiguration configuration, RuntimeEntityRegistry runtimeEntityRegistry) {
+        List<String> packages = configuration.getPackages();
+        Collection<BeanIntrospection<Object>> introspections;
+        if (CollectionUtils.isNotEmpty(packages)) {
+            introspections = BeanIntrospector.SHARED.findIntrospections(MappedEntity.class, packages.toArray(new String[0]));
+        } else {
+            introspections = BeanIntrospector.SHARED.findIntrospections(MappedEntity.class);
+        }
+        return introspections.stream()
+            // filter out inner / internal / abstract(MappedSuperClass) classes
+            .filter(i -> !i.getBeanType().getName().contains("$"))
+            .filter(i -> !Modifier.isAbstract(i.getBeanType().getModifiers()))
+            .filter(i -> !i.hasAnnotation(JsonSubView.class))
+            .sorted(Comparator.comparing(i -> i.hasAnnotation(JsonView.class)))
+            .map(beanIntrospection -> runtimeEntityRegistry.getEntity(beanIntrospection.getBeanType()))
+            .toArray(PersistentEntity[]::new);
+    }
+
+    private void createOrValidateSchema(BeanLocator beanLocator,
+                                        DataJdbcConfiguration configuration,
+                                        PersistentEntity[] entities,
+                                        SchemaContributions contributions) {
+        String name = configuration.getName();
+        try {
+            DataSource dataSource = DelegatingDataSource.unwrapDataSource(beanLocator.getBean(DataSource.class, Qualifiers.byName(name)));
+            try (Connection connection = dataSource.getConnection()) {
+                if (configuration.getSchemaGenerateNames() != null && !configuration.getSchemaGenerateNames().isEmpty()) {
+                    for (String schemaName : configuration.getSchemaGenerateNames()) {
+                        createOrValidateSchema(connection, configuration, schemaName, entities, contributions);
+                    }
+                } else {
+                    createOrValidateSchema(connection, configuration, configuration.getSchemaGenerateName(), entities, contributions);
+                }
+            } catch (SQLException e) {
+                throw new DataAccessException("Unable to create database schema: " + e.getMessage(), e);
+            }
+        } catch (NoSuchBeanException e) {
+            throw new ConfigurationException("No DataSource configured for setting [" + DataJdbcConfiguration.PREFIX + name + "]. Ensure the DataSource is configured correctly and try again.", e);
+        }
+    }
+
+    private void createOrValidateSchema(Connection connection,
+                                        DataJdbcConfiguration configuration,
+                                        @Nullable String schemaName,
+                                        PersistentEntity[] entities,
+                                        SchemaContributions contributions) throws SQLException {
+        SchemaGenerate schemaGenerate = configuration.getSchemaGenerate();
+        Dialect dialect = configuration.getDialect();
+        if (schemaName != null) {
+            if (schemaGenerate != SchemaGenerate.VALIDATE) {
+                schemaHandler.createSchema(connection, dialect, schemaName);
+            }
+            schemaHandler.useSchema(connection, dialect, schemaName);
+        }
+        if (schemaGenerate == SchemaGenerate.VALIDATE) {
+            validate(connection, configuration, entities, dialectSqlTableMappingValidatorMap, definitionProviders);
+        } else {
+            generate(connection, configuration, propertyPlaceholderResolver, entities, contributions);
         }
     }
 
@@ -222,38 +233,34 @@ public class SchemaGenerator {
                           PersistentEntity[] entities,
                           SchemaContributions contributions) throws SQLException {
         // Contributed objects, such as property graphs, can depend on the tables, so they are dropped first
-        for (String statement : contributions.dropStatements()) {
-            String sql = resolveSql(propertyPlaceholderResolver, statement);
-            if (DataSettings.QUERY_LOG.isDebugEnabled()) {
-                DataSettings.QUERY_LOG.debug("Executing DROP statement: \n{}", sql);
-            }
-            try (PreparedStatement ps = connection.prepareStatement(sql)) {
-                ps.executeUpdate();
-            } catch (SQLException e) {
-                if (DataSettings.QUERY_LOG.isTraceEnabled()) {
-                    DataSettings.QUERY_LOG.trace("Drop Unsuccessful: " + e.getMessage());
-                }
-            }
-        }
-        executeCreateStatements(connection, propertyPlaceholderResolver, contributions.beforeTablesStatements());
+        executeContributed(connection, propertyPlaceholderResolver, contributions.dropStatements(), "DROP");
+        executeContributed(connection, propertyPlaceholderResolver, contributions.beforeTablesStatements(), "CREATE");
         if (entities.length > 0) {
             generateTables(connection, configuration, propertyPlaceholderResolver, entities);
         }
-        executeCreateStatements(connection, propertyPlaceholderResolver, contributions.createStatements());
+        executeContributed(connection, propertyPlaceholderResolver, contributions.createStatements(), "CREATE");
     }
 
-    private static void executeCreateStatements(Connection connection,
-                                                PropertyPlaceholderResolver propertyPlaceholderResolver,
-                                                List<String> statements) {
+    /**
+     * Runs the statements of a schema contributor. A failed DROP is expected when the object does not exist yet, so
+     * it is traced, while a failed CREATE is logged as a warning.
+     */
+    private static void executeContributed(Connection connection,
+                                           PropertyPlaceholderResolver propertyPlaceholderResolver,
+                                           List<String> statements,
+                                           String kind) {
+        boolean drop = "DROP".equals(kind);
         for (String statement : statements) {
             String sql = resolveSql(propertyPlaceholderResolver, statement);
             if (DataSettings.QUERY_LOG.isDebugEnabled()) {
-                DataSettings.QUERY_LOG.debug("Executing CREATE statement: \n{}", sql);
+                DataSettings.QUERY_LOG.debug("Executing {} statement: \n{}", kind, sql);
             }
             try (PreparedStatement ps = connection.prepareStatement(sql)) {
                 ps.executeUpdate();
             } catch (SQLException e) {
-                if (DataSettings.QUERY_LOG.isWarnEnabled()) {
+                if (drop && DataSettings.QUERY_LOG.isTraceEnabled()) {
+                    DataSettings.QUERY_LOG.trace("Drop Unsuccessful: " + e.getMessage());
+                } else if (!drop && DataSettings.QUERY_LOG.isWarnEnabled()) {
                     DataSettings.QUERY_LOG.warn("CREATE Statement Unsuccessful: " + e.getMessage());
                 }
             }

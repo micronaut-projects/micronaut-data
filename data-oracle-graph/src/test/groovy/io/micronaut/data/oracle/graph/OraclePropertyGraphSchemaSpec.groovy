@@ -20,6 +20,7 @@ import jakarta.inject.Inject
 import spock.lang.Specification
 
 import javax.sql.DataSource
+import java.sql.ResultSet
 
 /**
  * Generates the vertex and edge tables and the property graph of the library entities with schema generation.
@@ -111,12 +112,16 @@ class OraclePropertyGraphSchemaSpec extends Specification {
         List<String> values = []
         DelegatingDataSource.unwrapDataSource(dataSource).connection.withCloseable { connection ->
             connection.createStatement().withCloseable { statement ->
-                statement.executeQuery(query).withCloseable { rs ->
-                    while (rs.next()) {
-                        values << rs.getString(1)
-                    }
-                }
+                statement.executeQuery(query).withCloseable { rs -> values.addAll(strings(rs)) }
             }
+        }
+        values
+    }
+
+    private static List<String> strings(ResultSet rs) {
+        List<String> values = []
+        while (rs.next()) {
+            values << rs.getString(1)
         }
         values
     }

@@ -168,27 +168,30 @@ public final class OraclePropertyGraphSchema {
         }
         Map<String, PersistentEntity> edgeOwners = new LinkedHashMap<>();
         for (PersistentEntity entity : entities) {
-            if (!isNode(entity)) {
-                continue;
-            }
-            for (PersistentProperty property : entity.getPersistentProperties()) {
-                if (!(property instanceof Association association) || !GraphEntities.isRelationship(association)) {
-                    continue;
-                }
-                PersistentEntity associated = association.getAssociatedEntity();
-                if (GraphEntities.isRelationshipEntity(associated)) {
-                    PersistentEntity owner = edgeOwners.putIfAbsent(associated.getName(), entity);
-                    if (owner != null && !owner.getName().equals(entity.getName())) {
-                        throw new IllegalStateException("Relationship entity [" + associated.getName() + "] is used by the nodes ["
-                            + owner.getName() + "] and [" + entity.getName() + "]: an edge table references the vertex table of a single node, so each node needs its own relationship entity");
-                    }
-                    schema.add(relationshipEntityEdge(entity, association));
-                } else {
-                    schema.add(nodeEdge(entity, association));
-                }
+            if (isNode(entity)) {
+                addEdges(schema, entity, edgeOwners);
             }
         }
         return schema;
+    }
+
+    private static void addEdges(Schema schema, PersistentEntity node, Map<String, PersistentEntity> edgeOwners) {
+        for (PersistentProperty property : node.getPersistentProperties()) {
+            if (!(property instanceof Association association) || !GraphEntities.isRelationship(association)) {
+                continue;
+            }
+            PersistentEntity associated = association.getAssociatedEntity();
+            if (GraphEntities.isRelationshipEntity(associated)) {
+                PersistentEntity owner = edgeOwners.putIfAbsent(associated.getName(), node);
+                if (owner != null && !owner.getName().equals(node.getName())) {
+                    throw new IllegalStateException("Relationship entity [" + associated.getName() + "] is used by the nodes ["
+                        + owner.getName() + "] and [" + node.getName() + "]: an edge table references the vertex table of a single node, so each node needs its own relationship entity");
+                }
+                schema.add(relationshipEntityEdge(node, association));
+            } else {
+                schema.add(nodeEdge(node, association));
+            }
+        }
     }
 
     private static Vertex vertex(PersistentEntity entity) {
@@ -229,8 +232,8 @@ public final class OraclePropertyGraphSchema {
             .forEach(properties::add);
         return edge(owner, association, targetNode.getAssociatedEntity(),
             withColumns(table, table.name(), table.primaryKeyColumns(), columns),
-            table.primaryKeyColumns().stream().map(SqlColumnMapping::getName).toList(),
-            ownerColumn, targetColumn, properties);
+            new EdgeKeys(table.primaryKeyColumns().stream().map(SqlColumnMapping::getName).toList(), ownerColumn, targetColumn),
+            properties);
     }
 
     private static Edge nodeEdge(PersistentEntity owner, Association association) {
@@ -247,26 +250,24 @@ public final class OraclePropertyGraphSchema {
             identityColumn(target).asReference(targetColumn)
         );
         SqlTableMapping table = new SqlTableMapping(null, tableName, true, SqlTableMapping.TableType.MAIN, keys, List.of());
-        return edge(owner, association, target, table, List.of(ownerColumn, targetColumn), ownerColumn, targetColumn, List.of());
+        return edge(owner, association, target, table, new EdgeKeys(List.of(ownerColumn, targetColumn), ownerColumn, targetColumn), List.of());
     }
 
     private static Edge edge(PersistentEntity owner,
                              Association association,
                              PersistentEntity target,
                              SqlTableMapping table,
-                             List<String> keyColumns,
-                             String ownerColumn,
-                             String targetColumn,
+                             EdgeKeys keys,
                              List<String> properties) {
         // A relationship pointing at its owner is stored as an edge from the target to the owner
         boolean incoming = GraphEntities.direction(association) == Direction.INCOMING;
         return new Edge(
             table,
-            keyColumns,
+            keys.keyColumns(),
             incoming ? target : owner,
-            incoming ? targetColumn : ownerColumn,
+            incoming ? keys.targetColumn() : keys.ownerColumn(),
             incoming ? owner : target,
-            incoming ? ownerColumn : targetColumn,
+            incoming ? keys.ownerColumn() : keys.targetColumn(),
             GraphEntities.relationshipType(association),
             properties
         );
@@ -323,19 +324,17 @@ public final class OraclePropertyGraphSchema {
         for (BeanDefinition<?> repository : repositories) {
             String dataSource = repository.stringValue(Repository.class).orElse("default");
             String graph = repository.stringValue(PropertyGraph.class).orElse(null);
-            if (graph == null || !dataSource.equals(dataSourceName)) {
-                continue;
-            }
-            List<Argument<?>> typeArguments = repository.getTypeArguments(GenericRepository.class);
-            if (typeArguments.isEmpty()) {
-                continue;
-            }
-            PersistentEntity root = vertices.get(typeArguments.get(0).getType().getName());
+            PersistentEntity root = graph != null && dataSource.equals(dataSourceName) ? rootVertex(repository, vertices) : null;
             if (root != null) {
                 reachable(root, vertices, graphs.computeIfAbsent(graph, name -> new LinkedHashSet<>()));
             }
         }
         return graphs;
+    }
+
+    private static @Nullable PersistentEntity rootVertex(BeanDefinition<?> repository, Map<String, PersistentEntity> vertices) {
+        List<Argument<?>> typeArguments = repository.getTypeArguments(GenericRepository.class);
+        return typeArguments.isEmpty() ? null : vertices.get(typeArguments.get(0).getType().getName());
     }
 
     private static void reachable(PersistentEntity root, Map<String, PersistentEntity> vertices, Set<PersistentEntity> graph) {
@@ -437,6 +436,9 @@ public final class OraclePropertyGraphSchema {
     }
 
     private record Vertex(PersistentEntity entity, SqlTableMapping table) {
+    }
+
+    private record EdgeKeys(List<String> keyColumns, String ownerColumn, String targetColumn) {
     }
 
     private record Edge(SqlTableMapping table,
