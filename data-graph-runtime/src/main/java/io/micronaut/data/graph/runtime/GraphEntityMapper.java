@@ -419,13 +419,17 @@ public final class GraphEntityMapper {
             }
             values.put(property.getPersistedName(), writeValue(property, property.getProperty().get(instance)));
         }
-        BeanProperty<Object, Object> attributesProperty = schemaless(entity).attributes();
+        Schemaless schemaless = schemaless(entity);
+        BeanProperty<Object, Object> attributesProperty = schemaless.attributes();
         if (attributesProperty != null && attributesProperty.get(instance) instanceof Map<?, ?> attributes) {
             attributes.forEach((name, value) -> {
                 String key = String.valueOf(name);
-                if (!values.containsKey(key)) {
-                    values.put(key, encode(value));
+                // Stored as a node property, a key that names the identifier, a declared property or a
+                // relationship would be dropped or read back into the declared property
+                if (schemaless.declared().contains(key) || values.containsKey(key)) {
+                    throw new DataAccessException("Dynamic attribute [" + key + "] of [" + entity.getSimpleName() + "] has the name of a declared property");
                 }
+                values.put(key, encode(value));
             });
         }
         return values;

@@ -64,6 +64,7 @@ import java.sql.PreparedStatement;
 import java.sql.ResultSet;
 import java.sql.ResultSetMetaData;
 import java.sql.SQLException;
+import java.sql.Types;
 import java.util.ArrayList;
 import java.util.Iterator;
 import java.util.List;
@@ -160,7 +161,13 @@ final class DefaultOracleGraphRepositoryOperations extends AbstractGraphReposito
         try (PreparedStatement statement = connection.prepareStatement(expanded.query())) {
             List<Object> values = expanded.parameters();
             for (int i = 0; i < values.size(); i++) {
-                statement.setObject(i + 1, values.get(i));
+                Object value = values.get(i);
+                if (value == null) {
+                    // Oracle rejects an untyped null bound through setObject
+                    statement.setNull(i + 1, Types.NULL);
+                } else {
+                    statement.setObject(i + 1, value);
+                }
             }
             try (ResultSet resultSet = statement.executeQuery()) {
                 ResultSetMetaData metaData = resultSet.getMetaData();
