@@ -1,5 +1,6 @@
 package example;
 
+import io.micronaut.data.graph.annotation.Direction;
 import io.micronaut.data.graph.model.GraphPath;
 import io.micronaut.data.graph.model.PathSegment;
 import io.micronaut.test.extensions.junit5.annotation.MicronautTest;
@@ -86,6 +87,19 @@ class PersonRepositorySpec extends AbstractNeo4jTest {
         // end::labels[]
 
         assertEquals(Set.of("Actor"), labels);
+    }
+
+    @Test
+    void testPathDirection() {
+        // tag::pathDirection[]
+        boolean follows = personRepository.hasPathByFollows(fred, joe, Direction.OUTGOING);
+        boolean followedBy = personRepository.hasPathByFollows(joe, fred, Direction.INCOMING);
+        // end::pathDirection[]
+
+        assertTrue(follows);
+        assertTrue(followedBy);
+        assertFalse(personRepository.hasPathByFollows(joe, fred, Direction.OUTGOING));
+        assertTrue(personRepository.hasPathByFollows(joe, fred, Direction.UNDIRECTED));
     }
 
     @Test

@@ -36,6 +36,11 @@ public interface PersonRepository extends CrudRepository<Person, UUID> {
     boolean existsPathByFollowsBetweenName(String from, String to);
     // end::pathOptions[]
 
+    // tag::pathDirection[]
+    @PathLimit(4)
+    boolean hasPathByFollows(Person from, Person to, @PathDirection Direction direction); // <1>
+    // end::pathDirection[]
+
     // tag::relationships[]
     List<GraphRelationship<Person, Person>> findRelationships(Person from, Person to);
 

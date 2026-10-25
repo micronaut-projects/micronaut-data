@@ -288,9 +288,9 @@ public class AgeCypherQueryBuilder extends CypherQueryBuilder {
     }
 
     @Override
-    protected void appendPathMatch(StringBuilder query, PathQueryDefinition.Kind kind, String relationship, Direction direction) {
-        String pattern = directed("(" + PATH_START + ")", relationship, "(" + PATH_END + ")", direction);
-        if (kind == PathQueryDefinition.Kind.ALL_SHORTEST) {
+    protected void appendPathMatch(StringBuilder query, PathQueryDefinition definition, String relationship) {
+        String pattern = pathPattern(definition, definition.direction(), "(" + PATH_START + ")", relationship, "(" + PATH_END + ")");
+        if (definition.kind() == PathQueryDefinition.Kind.ALL_SHORTEST) {
             query.append(MATCH).append(PATH).append(" = ").append(pattern)
                 .append(" WITH ").append(PATH_START).append(", ").append(PATH_END)
                 .append(", min(length(").append(PATH).append(")) AS shortest");

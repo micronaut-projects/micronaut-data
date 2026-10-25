@@ -1,6 +1,7 @@
 from typing import Annotated
 
 from jakarta.inject import Inject
+from micronaut.data.graph.annotation import Direction
 from micronaut.test.extensions.junit5.annotation import MicronautTest
 from org.junit.jupiter.api import AfterEach, Test
 
@@ -31,11 +32,8 @@ class PersonRepositorySpec:
 
     @Test
     def testShortestPath(self):
-        joe = Person("Joe", 1973)
-        barney = Person("Barney", 1971, [joe])
-        wilma = Person("Wilma", 1972, [joe])
-        fred = self.personRepository.save(Person("Fred", 1970, [barney, wilma]))
-        joe = self.personRepository.findByName("Joe")
+        joe = self.personRepository.save(Person("Joe", 1973))
+        fred = self.personRepository.save(Person("Fred", 1970, [Person("Barney", 1971, [joe]), Person("Wilma", 1972, [joe])]))
 
         # tag::shortestPath[]
         path = self.personRepository.findShortestPath(fred, joe)
@@ -48,8 +46,23 @@ class PersonRepositorySpec:
         assert path.end().name == "Joe"
 
     @Test
+    def testPathDirection(self):
+        joe = self.personRepository.save(Person("Joe", 1973))
+        fred = self.personRepository.save(Person("Fred", 1970, [Person("Barney", 1971, [joe]), Person("Wilma", 1972, [joe])]))
+
+        # tag::pathDirection[]
+        follows = self.personRepository.hasPathByFollows(fred, joe, Direction.OUTGOING)
+        followed_by = self.personRepository.hasPathByFollows(joe, fred, Direction.INCOMING)
+        # end::pathDirection[]
+
+        assert follows
+        assert followed_by
+        assert not self.personRepository.hasPathByFollows(joe, fred, Direction.OUTGOING)
+        assert self.personRepository.hasPathByFollows(joe, fred, Direction.UNDIRECTED)
+
+    @Test
     def testPathOptions(self):
-        joe = Person("Joe", 1973)
+        joe = self.personRepository.save(Person("Joe", 1973))
         self.personRepository.save(Person("Fred", 1970, [Person("Barney", 1971, [joe]), Person("Wilma", 1972, [joe])]))
 
         assert self.personRepository.findShortestPathByFollowsBetweenName("Fred", "Joe", 3).end().name == "Joe"

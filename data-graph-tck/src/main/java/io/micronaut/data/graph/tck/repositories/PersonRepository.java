@@ -22,4 +22,7 @@ public interface PersonRepository extends CrudRepository<Person, UUID> {
     @PathLimit(5)
     @PathDirection(Direction.INCOMING)
     boolean hasPathByMentorBetweenName(String from, String to);
+
+    @PathLimit(5)
+    long countPathsByMentorBetweenName(String from, String to, @PathDirection Direction direction);
 }

@@ -643,52 +643,83 @@ public class CypherQueryBuilder implements GraphQueryBuilder {
     @Override
     public QueryResult buildPathQuery(PathQueryDefinition definition) {
         PersistentEntity entity = definition.entity();
-        if (definition.endpointProperty() == null && !entity.hasIdentity() && (definition.start() != null || definition.end() != null)) {
+        PersistentEntity endEntity = definition.endNodeEntity();
+        if (definition.start() != null && definition.endpointProperty() == null && !entity.hasIdentity()) {
             throw new IllegalArgumentException("Entity [" + entity.getName() + "] has no identity to match path endpoints by");
+        }
+        if (definition.end() != null && definition.endEndpointMatchProperty() == null) {
+            throw new IllegalArgumentException("Entity [" + endEntity.getName() + "] has no identity to match path endpoints by");
         }
         QueryState state = new QueryState(entity, List.of());
         String label = labelExpression(entity);
+        String endLabel = labelExpression(endEntity);
         List<String> conditions = new ArrayList<>();
         if (definition.start() != null) {
-            conditions.add(endpointCondition(state, definition, PATH_START, definition.start()));
+            conditions.add(endpointCondition(state, definition.endpointMatchProperty(), definition.endpointProperty() == null, PATH_START, definition.start()));
         }
         if (definition.end() != null) {
-            conditions.add(endpointCondition(state, definition, PATH_END, definition.end()));
+            boolean identity = definition.endEndpointProperty() == null && definition.endpointProperty() == null;
+            conditions.add(endpointCondition(state, definition.endEndpointMatchProperty(), identity, PATH_END, definition.end()));
         }
         String types = relationshipTypes(definition.relationships());
         StringBuilder query = new StringBuilder("MATCH ");
         if (definition.kind() == PathQueryDefinition.Kind.RELATIONSHIPS) {
-            appendRelationshipQuery(query, definition, label, types, conditions);
+            appendRelationshipQuery(query, definition, label, endLabel, types, conditions);
         } else {
-            appendPathQuery(query, definition, label, types, conditions);
+            appendPathQuery(query, definition, label, endLabel, types, conditions);
         }
         return QueryResult.of(query.toString(), List.of(query.toString()), state.parameterBindings, state.additionalRequiredParameters);
     }
 
-    private void appendRelationshipQuery(StringBuilder query, PathQueryDefinition definition, String label, String types, List<String> conditions) {
+    private void appendRelationshipQuery(StringBuilder query, PathQueryDefinition definition, String label, String endLabel, String types, List<String> conditions) {
         Direction direction = definition.direction();
         if (direction == Direction.UNDIRECTED && (definition.start() == null || definition.end() == null)) {
-            // Without both endpoints an undirected pattern returns each relationship twice
+            // Without both endpoints an undirected pattern returns each relationship twice; the runtime does the same for a bound direction
             direction = Direction.OUTGOING;
         }
-        query.append(directed("(" + PATH_START + label + ")", "[" + PATH_RELATIONSHIP + types + "]", "(" + PATH_END + label + ")", direction));
+        query.append(pathPattern(definition, direction, "(" + PATH_START + label + ")", "[" + PATH_RELATIONSHIP + types + "]", "(" + PATH_END + endLabel + ")"));
         appendWhere(query, conditions);
         switch (definition.result()) {
             case COUNT -> query.append(" RETURN count(").append(PATH_RELATIONSHIP).append(CLOSE_AS_RESULT);
             case EXISTS -> query.append(" RETURN true AS result LIMIT 1");
-            default -> query.append(RETURN).append(PATH_RELATIONSHIP).append(", startNode(").append(PATH_RELATIONSHIP)
-                .append(CLOSE_AS).append(RELATIONSHIP_FROM).append(", endNode(").append(PATH_RELATIONSHIP).append(CLOSE_AS).append(RELATIONSHIP_TO);
+            default -> {
+                query.append(RETURN).append(PATH_RELATIONSHIP).append(", ");
+                if (definition.relationshipEntity()) {
+                    // The relationship entity reads its target node from the far end of the pattern
+                    query.append(PATH_START).append(" AS ").append(RELATIONSHIP_FROM).append(", ").append(PATH_END).append(" AS ").append(RELATIONSHIP_TO);
+                } else {
+                    query.append("startNode(").append(PATH_RELATIONSHIP).append(CLOSE_AS).append(RELATIONSHIP_FROM)
+                        .append(", endNode(").append(PATH_RELATIONSHIP).append(CLOSE_AS).append(RELATIONSHIP_TO);
+                }
+            }
         }
     }
 
-    private void appendPathQuery(StringBuilder query, PathQueryDefinition definition, String label, String types, List<String> conditions) {
-        if (definition.start() != null && definition.end() != null && definition.kind() != PathQueryDefinition.Kind.ALL) {
+    private void appendPathQuery(StringBuilder query, PathQueryDefinition definition, String label, String endLabel, String types, List<String> conditions) {
+        if (definition.start() != null && definition.end() != null && definition.kind() != PathQueryDefinition.Kind.ALL && !definition.hasDifferentEndEntity()) {
             conditions.add(PATH_START + " <> " + PATH_END);
         }
-        query.append('(').append(PATH_START).append(label).append("), (").append(PATH_END).append(label).append(')');
+        query.append('(').append(PATH_START).append(label).append("), (").append(PATH_END).append(endLabel).append(')');
         appendWhere(query, conditions);
-        appendPathMatch(query, definition.kind(), "[" + types + pathDepth(definition) + "]", definition.direction());
+        appendPathMatch(query, definition, "[" + types + pathDepth(definition) + "]");
         appendPathReturn(query, definition);
+    }
+
+    /**
+     * Renders the pattern of a path query, leaving the direction to the runtime when it is a method argument.
+     *
+     * @param definition   The definition
+     * @param direction    The direction to render when it is not bound
+     * @param from         The pattern of the start node
+     * @param relationship The relationship pattern
+     * @param to           The pattern of the end node
+     * @return The pattern
+     */
+    protected static String pathPattern(PathQueryDefinition definition, Direction direction, String from, String relationship, String to) {
+        if (definition.directionBound()) {
+            return from + PathQueryDefinition.PATH_LEFT_TOKEN + relationship + PathQueryDefinition.PATH_RIGHT_TOKEN + to;
+        }
+        return directed(from, relationship, to, direction);
     }
 
     /**
@@ -749,9 +780,25 @@ public class CypherQueryBuilder implements GraphQueryBuilder {
      * @param kind         The kind of path query
      * @param relationship The variable-length relationship pattern, for example {@code [:KNOWS*1..5]}
      * @param direction    The direction
+     * @deprecated Use {@link #appendPathMatch(StringBuilder, PathQueryDefinition, String)}, which renders a bound direction
      */
+    @Deprecated(since = "5.3.0")
     protected void appendPathMatch(StringBuilder query, PathQueryDefinition.Kind kind, String relationship, Direction direction) {
-        String pattern = directed("(" + PATH_START + ")", relationship, "(" + PATH_END + ")", direction);
+        appendPathMatch(query, kind, directed("(" + PATH_START + ")", relationship, "(" + PATH_END + ")", direction));
+    }
+
+    /**
+     * Appends the clause that matches the paths, binding them to the variable {@code p}.
+     *
+     * @param query        The query
+     * @param definition   The definition
+     * @param relationship The variable-length relationship pattern, for example {@code [:KNOWS*1..5]}
+     */
+    protected void appendPathMatch(StringBuilder query, PathQueryDefinition definition, String relationship) {
+        appendPathMatch(query, definition.kind(), pathPattern(definition, definition.direction(), "(" + PATH_START + ")", relationship, "(" + PATH_END + ")"));
+    }
+
+    private static void appendPathMatch(StringBuilder query, PathQueryDefinition.Kind kind, String pattern) {
         query.append(" MATCH ").append(PATH).append(" = ");
         switch (kind) {
             case SHORTEST -> query.append("shortestPath(").append(pattern).append(')');
@@ -760,13 +807,12 @@ public class CypherQueryBuilder implements GraphQueryBuilder {
         }
     }
 
-    private String endpointCondition(QueryState state, PathQueryDefinition definition, String variable, BindingParameter parameter) {
-        PersistentProperty property = definition.endpointMatchProperty();
+    private String endpointCondition(QueryState state, PersistentProperty property, boolean identity, String variable, BindingParameter parameter) {
         io.micronaut.data.model.PersistentPropertyPath path = io.micronaut.data.model.PersistentPropertyPath.of(List.of(), property);
         int index = state.pushParameter(parameter, BindingParameter.BindingContext.create()
             .incomingMethodParameterProperty(path)
             .outgoingQueryParameterProperty(path));
-        String expression = definition.endpointProperty() == null
+        String expression = identity
             ? identityExpression(property, variable)
             : variable + "." + GraphEntities.escapeName(GraphEntities.propertyName(property));
         return expression + " = " + parameterPlaceholder(index);
@@ -1941,40 +1987,6 @@ public class CypherQueryBuilder implements GraphQueryBuilder {
 
         private void appendAlias(String defaultAlias) {
             out.append(" AS ").append(GraphEntities.escapeName(alias != null ? alias : defaultAlias));
-        }
-    }
-
-    /**
-     * A relationship to fetch and the relationships of its nodes to fetch with it.
-     */
-    private static final class JoinTree {
-        private final Association association;
-        private final Map<String, JoinTree> children = new LinkedHashMap<>();
-
-        private JoinTree(Association association) {
-            this.association = association;
-        }
-
-        private JoinTree child(Association child) {
-            return children.computeIfAbsent(child.getName(), name -> new JoinTree(child));
-        }
-    }
-
-    /**
-     * A rendered {@code ORDER BY} item.
-     */
-    private static final class OrderItem {
-        private final String expression;
-        private final boolean ascending;
-        private final Nulls nulls;
-        private final boolean onAssociation;
-        private @Nullable String alias;
-
-        private OrderItem(String expression, boolean ascending, Nulls nulls, boolean onAssociation) {
-            this.expression = expression;
-            this.ascending = ascending;
-            this.nulls = nulls;
-            this.onAssociation = onAssociation;
         }
     }
 }

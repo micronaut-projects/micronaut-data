@@ -17,6 +17,7 @@ package io.micronaut.data.graph.runtime.operations;
 
 import io.micronaut.aop.MethodInvocationContext;
 import io.micronaut.core.annotation.AnnotationMetadata;
+import io.micronaut.core.annotation.AnnotationValue;
 import io.micronaut.core.beans.BeanIntrospection;
 import io.micronaut.core.beans.BeanIntrospector;
 import io.micronaut.core.beans.BeanProperty;
@@ -27,10 +28,12 @@ import io.micronaut.data.event.EntityEventListener;
 import io.micronaut.data.exceptions.DataAccessException;
 import io.micronaut.data.exceptions.NonUniqueResultException;
 import io.micronaut.data.exceptions.OptimisticLockException;
+import io.micronaut.data.graph.annotation.Direction;
 import io.micronaut.data.graph.annotation.TargetNode;
 import io.micronaut.data.graph.model.GraphEntities;
 import io.micronaut.data.graph.model.GraphPath;
 import io.micronaut.data.graph.model.GraphRelationship;
+import io.micronaut.data.graph.model.query.PathDirectionParameter;
 import io.micronaut.data.graph.model.query.PathLimitParameter;
 import io.micronaut.data.graph.model.query.PathQueryDefinition;
 import io.micronaut.data.graph.model.query.builder.CypherQueryBuilder;
@@ -459,11 +462,48 @@ public abstract class AbstractGraphRepositoryOperations extends AbstractReposito
             }
             query.replace(tokenPosition, tokenPosition + PathQueryDefinition.PATH_LIMIT_TOKEN.length(), String.valueOf(depth));
         }
+        applyDirection(preparedQuery, query);
         if (applyLimits && !preparedQuery.isCount()) {
             RuntimePersistentEntity<?> entity = getEntity(preparedQuery.getRootEntity());
             appendSortAndLimit(query, entity, preparedQuery.getSort(), preparedQuery.getQueryLimit());
         }
         return new GraphQuery(query.toString(), parameters);
+    }
+
+    /**
+     * Renders the {@link io.micronaut.data.graph.annotation.PathDirection} argument of a path or relationship finder
+     * in place of the direction tokens of its query.
+     *
+     * @param preparedQuery The prepared query
+     * @param query         The query
+     */
+    private static void applyDirection(PreparedQuery<?, ?> preparedQuery, StringBuilder query) {
+        int left = query.indexOf(PathQueryDefinition.PATH_LEFT_TOKEN);
+        if (left < 0) {
+            return;
+        }
+        AnnotationValue<PathDirectionParameter> parameter = preparedQuery.getAnnotationMetadata().getAnnotation(PathDirectionParameter.class);
+        if (parameter == null) {
+            throw new DataAccessException("Path query has no @PathDirection argument: " + query);
+        }
+        Object argument = preparedQuery.getParameterArray()[parameter.intValue().orElseThrow()];
+        if (!(argument instanceof Direction direction)) {
+            throw new IllegalArgumentException("The @PathDirection argument must be a Direction, was: " + argument);
+        }
+        if (direction == Direction.UNDIRECTED && parameter.booleanValue("outgoingIfUndirected").orElse(false)) {
+            direction = Direction.OUTGOING;
+        }
+        String leftArrow = direction == Direction.INCOMING ? "<-" : "-";
+        String rightArrow = direction == Direction.OUTGOING ? "->" : "-";
+        while (left >= 0) {
+            query.replace(left, left + PathQueryDefinition.PATH_LEFT_TOKEN.length(), leftArrow);
+            left = query.indexOf(PathQueryDefinition.PATH_LEFT_TOKEN);
+        }
+        int right = query.indexOf(PathQueryDefinition.PATH_RIGHT_TOKEN);
+        while (right >= 0) {
+            query.replace(right, right + PathQueryDefinition.PATH_RIGHT_TOKEN.length(), rightArrow);
+            right = query.indexOf(PathQueryDefinition.PATH_RIGHT_TOKEN);
+        }
     }
 
     /**
@@ -591,6 +631,11 @@ public abstract class AbstractGraphRepositoryOperations extends AbstractReposito
         if (GraphRelationship.class.isAssignableFrom(resultType)) {
             return mapRelationship(record, nodeType, targetNodeType);
         }
+        if (first instanceof GraphEdge edge && isRelationshipEntity(resultType)) {
+            // A relationship finder returning the relationship entity, whose target node is the far end of the pattern
+            GraphNode to = record.get(CypherQueryBuilder.RELATIONSHIP_TO) instanceof GraphNode node ? node : null;
+            return readRelationshipEntity(getEntity(resultType), edge, to, annotationMetadata);
+        }
         if (first instanceof GraphNode node) {
             return mapNode(record, node, resultType, annotationMetadata);
         }
@@ -641,6 +686,16 @@ public abstract class AbstractGraphRepositoryOperations extends AbstractReposito
     private static boolean isEntity(Class<?> type) {
         return BeanIntrospector.SHARED.findIntrospection(type)
             .map(introspection -> introspection.hasStereotype(io.micronaut.data.annotation.MappedEntity.class))
+            .orElse(false);
+    }
+
+    private <T> T readRelationshipEntity(RuntimePersistentEntity<T> entity, GraphEdge edge, @Nullable GraphNode to, AnnotationMetadata annotationMetadata) {
+        return triggerPostLoad(mapper.readRelationshipEntity(entity, edge, to), entity, annotationMetadata);
+    }
+
+    private static boolean isRelationshipEntity(Class<?> type) {
+        return BeanIntrospector.SHARED.findIntrospection(type)
+            .map(introspection -> introspection.hasStereotype(io.micronaut.data.graph.annotation.RelationshipProperties.class))
             .orElse(false);
     }
 

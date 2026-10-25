@@ -1,6 +1,7 @@
 package io.micronaut.data.graph.processor
 
 import io.micronaut.data.annotation.Query
+import io.micronaut.data.graph.model.query.PathDirectionParameter
 import io.micronaut.data.graph.model.query.PathLimitParameter
 import io.micronaut.data.intercept.annotation.DataMethod
 import io.micronaut.inject.BeanDefinition
@@ -36,6 +37,9 @@ class Friend {
     @Shared
     BeanDefinition<?> repository
 
+    @Shared
+    BeanDefinition<?> movies
+
     void setupSpec() {
         repository = buildRepository('test.FriendRepository', """
 import io.micronaut.data.graph.model.*;
@@ -44,6 +48,10 @@ $FRIENDS
 
 @TestGraphRepository
 interface FriendRepository extends CrudRepository<Friend, String> {
+    @PathLimit(3)
+    boolean existsPathByFriends(String from, String to, @PathDirection Direction direction);
+    List<GraphRelationship<Friend, Friend>> findRelationshipsByFriends(String from, String to, @PathDirection Direction direction);
+    long countRelationshipsByFriends(@PathDirection Direction direction);
     Optional<GraphPath<Friend>> findShortestPath(Friend from, Friend to);
     Optional<GraphPath<Friend>> findShortestPathByFriends(String from, String to, @PathLimit int maxDepth);
     @PathLimit(4)
@@ -61,6 +69,107 @@ interface FriendRepository extends CrudRepository<Friend, String> {
     boolean hasRelationship(String from, String to);
 }
 """)
+        movies = buildRepository('test.MovieRepository', """
+import io.micronaut.data.graph.model.*;
+
+$MOVIES
+
+@TestGraphRepository
+interface MovieRepository extends CrudRepository<Movie, String> {
+    List<Role> findRelationshipsByRoles(String title, String person);
+    Optional<Role> findRelationship(Movie movie, Person person);
+    Page<Role> findRelationshipsByRoles(Pageable pageable);
+    List<GraphRelationship<Person, Movie>> findRelationshipsByDirectors(String title, String director);
+    long countRelationshipsByRoles();
+    boolean existsRelationshipByDirectorsBetweenTitleAndName(String title, String name);
+    @PathLimit(3)
+    List<GraphPath<Object>> findAllPathsToPerson(String title, String person);
+    Optional<GraphPath<Object>> findShortestPath(Movie from, Person to);
+    @PathLimit(2)
+    boolean existsPathByDirectorsBetweenTitleAndName(String title, String name);
+    @PathLimit(2)
+    long countPathsToPersonBetweenTitleAndName(String title, String name, @PathDirection Direction direction);
+}
+""")
+    }
+
+    @Unroll
+    void "test path query with a direction argument for #method"() {
+        given:
+        def found = findMethod(repository, method, parameters)
+
+        expect:
+        getQuery(found) == query
+        found.annotationMetadata.intValue(PathDirectionParameter).asInt == parameters - 1
+        found.annotationMetadata.booleanValue(PathDirectionParameter, 'outgoingIfUndirected').orElse(false) == outgoingIfUndirected
+
+        where:
+        method                      | parameters | outgoingIfUndirected | query
+        'existsPathByFriends'       | 3     | false                | 'MATCH (s:Friend), (e:Friend) WHERE s.name = $p0 AND e.name = $p1 AND s <> e MATCH p = shortestPath((s)$__pathLeft[:FRIENDS*1..3]$__pathRight(e)) RETURN true AS result LIMIT 1'
+        'findRelationshipsByFriends' | 3    | false                | 'MATCH (s:Friend)$__pathLeft[r:FRIENDS]$__pathRight(e:Friend) WHERE s.name = $p0 AND e.name = $p1 RETURN r, startNode(r) AS f, endNode(r) AS t'
+        'countRelationshipsByFriends' | 1   | true                 | 'MATCH (s:Friend)$__pathLeft[r:FRIENDS]$__pathRight(e:Friend) RETURN count(r) AS result'
+    }
+
+    @Unroll
+    void "test path query between movies and people for #method"() {
+        expect:
+        getQuery(findMethod(movies, method, parameters)) == query
+
+        where:
+        method                                          | parameters | query
+        'findRelationshipsByRoles'                      | 2 | 'MATCH (s:Movie)<-[r:ACTED_IN]-(e:Person:Actor) WHERE s.title = $p0 AND elementId(e) = $p1 RETURN r, s AS f, e AS t'
+        'findRelationship'                              | 2 | 'MATCH (s:Movie)<-[r:ACTED_IN]-(e:Person:Actor) WHERE s.title = $p0 AND elementId(e) = $p1 RETURN r, s AS f, e AS t'
+        'findRelationshipsByDirectors'                  | 2 | 'MATCH (s:Movie)<-[r:DIRECTED]-(e:Person:Actor) WHERE s.title = $p0 AND elementId(e) = $p1 RETURN r, startNode(r) AS f, endNode(r) AS t'
+        'countRelationshipsByRoles'                     | 0 | 'MATCH (s:Movie)<-[r:ACTED_IN]-(e:Person:Actor) RETURN count(r) AS result'
+        'existsRelationshipByDirectorsBetweenTitleAndName' | 2 | 'MATCH (s:Movie)<-[r:DIRECTED]-(e:Person:Actor) WHERE s.title = $p0 AND e.name = $p1 RETURN true AS result LIMIT 1'
+        'findAllPathsToPerson'                          | 2 | 'MATCH (s:Movie), (e:Person:Actor) WHERE s.title = $p0 AND elementId(e) = $p1 MATCH p = (s)-[*1..3]-(e) RETURN p ORDER BY length(p)'
+        'findShortestPath'                              | 2 | 'MATCH (s:Movie), (e:Person:Actor) WHERE s.title = $p0 AND elementId(e) = $p1 MATCH p = shortestPath((s)-[*]-(e)) RETURN p'
+        'existsPathByDirectorsBetweenTitleAndName'      | 2 | 'MATCH (s:Movie), (e:Person:Actor) WHERE s.title = $p0 AND e.name = $p1 MATCH p = shortestPath((s)<-[:DIRECTED*1..2]-(e)) RETURN true AS result LIMIT 1'
+        'countPathsToPersonBetweenTitleAndName'         | 3 | 'MATCH (s:Movie), (e:Person:Actor) WHERE s.title = $p0 AND e.name = $p1 MATCH p = (s)$__pathLeft[*1..2]$__pathRight(e) RETURN count(p) AS result'
+    }
+
+    void "test a page of relationship entities has a count query"() {
+        expect:
+        findMethod(movies, 'findRelationshipsByRoles', 1).annotationMetadata.stringValue(Query, 'countQuery').get() == 'MATCH (s:Movie)<-[r:ACTED_IN]-(e:Person:Actor) RETURN count(r) AS result'
+    }
+
+    void "test entity endpoints of different types bind the identifier of each"() {
+        given:
+        def method = findMethod(movies, 'findShortestPath')
+        def parameters = method.annotationMetadata.getAnnotation(DataMethod)
+            .getAnnotations(DataMethod.META_MEMBER_PARAMETERS, io.micronaut.data.intercept.annotation.DataMethodQueryParameter)
+
+        expect:
+        parameters*.stringValues(io.micronaut.data.intercept.annotation.DataMethodQueryParameter.META_MEMBER_PARAMETER_BINDING_PATH).collect { it.toList() } == [['title'], ['id']]
+    }
+
+    @Unroll
+    void "test #description is rejected"() {
+        when:
+        buildRepository('test.RejectedRepository', """
+import io.micronaut.data.graph.model.*;
+
+$MOVIES
+
+@TestGraphRepository
+interface RejectedRepository extends CrudRepository<Movie, String> {
+    $method
+}
+""")
+
+        then:
+        def e = thrown(RuntimeException)
+        e.message.contains(message)
+
+        where:
+        description                              | method                                                                                   | message
+        'a relationship entity of another property' | 'List<Role> findRelationshipsByDirectors(String title, String director);'              | 'is not a [Role], return GraphRelationship instead'
+        'a relationship entity with no property' | 'List<Movie> findRelationships(String title, String director);'                           | 'Method must return GraphRelationship or a @RelationshipProperties entity'
+        'an unknown end entity'                  | '@PathLimit(2) boolean existsPathToStudio(String title, String studio);'                 | 'No entity named [Studio] is reachable from [Movie]'
+        'an end entity that is not the parameter' | '@PathLimit(2) boolean existsPathToPerson(Movie from, Movie to);'                       | 'The end node is a [Person] but parameter [to] is a Movie'
+        'a direction parameter of another type'  | '@PathLimit(2) boolean existsPath(String from, String to, @PathDirection String direction);' | 'must be a io.micronaut.data.graph.annotation.Direction'
+        'three endpoint properties'              | '@PathLimit(2) boolean existsPathToPersonBetweenTitleAndNameAndBorn(String title, String name);' | 'Between names the property of the start node and the property of the end node'
+        'a property of the wrong endpoint'       | '@PathLimit(2) boolean existsPathToPersonBetweenName(String title, String name);'        | 'Entity [Movie] has no property named [name]'
     }
 
     @Unroll
@@ -170,7 +279,11 @@ interface WrongReturnRepository extends CrudRepository<Friend, String> {
     }
 
     private ExecutableMethod<?, ?> findMethod(String name) {
-        def method = repository.executableMethods.find { it.methodName == name }
+        findMethod(repository, name)
+    }
+
+    private static ExecutableMethod<?, ?> findMethod(BeanDefinition<?> definition, String name, int parameters = -1) {
+        def method = definition.executableMethods.find { it.methodName == name && (parameters < 0 || it.arguments.length == parameters) }
         assert method != null: "No method $name"
         return method
     }

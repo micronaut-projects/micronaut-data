@@ -26,16 +26,19 @@ import java.lang.annotation.Target;
  * relationship properties it names. For example, {@code @PathDirection(Direction.UNDIRECTED)} finds paths that follow
  * relationships either way.
  *
+ * <p>On a parameter of type {@link Direction} the direction is chosen by the caller, overriding the direction
+ * set on the method: {@code existsPathByFollows(Person from, Person to, @PathDirection Direction direction)}.</p>
+ *
  * @author graemerocher
  * @since 5.3.0
  */
 @Retention(RetentionPolicy.RUNTIME)
-@Target(ElementType.METHOD)
+@Target({ElementType.METHOD, ElementType.PARAMETER})
 @Documented
 public @interface PathDirection {
 
     /**
-     * @return The direction
+     * @return The direction, when used on a method
      */
-    Direction value();
+    Direction value() default Direction.UNDIRECTED;
 }

@@ -33,6 +33,11 @@ interface PersonRepository : CrudRepository<Person, UUID> {
     fun existsPathByFollowsBetweenName(from: String, to: String): Boolean
     // end::pathOptions[]
 
+    // tag::pathDirection[]
+    @PathLimit(4)
+    fun hasPathByFollows(from: Person, to: Person, @PathDirection direction: Direction): Boolean // <1>
+    // end::pathDirection[]
+
     // tag::relationships[]
     fun findRelationships(from: Person, to: Person): List<GraphRelationship<Person, Person>>
 
