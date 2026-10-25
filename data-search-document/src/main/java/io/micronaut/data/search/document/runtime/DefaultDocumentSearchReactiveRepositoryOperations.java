@@ -113,8 +113,12 @@ public final class DefaultDocumentSearchReactiveRepositoryOperations extends Abs
         Map<String, Object> body = body(preparedQuery, storedQuery);
         if (preparedQuery.getResultType() == SearchResults.class) {
             applyPageable(body, preparedQuery.getPageable(), entity);
+            // totalHits is exact, not capped at the result window
+            body.put("track_total_hits", true);
             return search(body, entity).map(hits -> (R) toSearchResults(hits, entity, preparedQuery));
         }
+        // a single result still honours a Sort parameter, which decides which hit comes first
+        applyPageable(body, preparedQuery.getPageable(), entity);
         body.put("size", 1);
         return search(body, entity).flatMap(hits -> {
             List<R> results = toEntities(hits, entity, preparedQuery);
