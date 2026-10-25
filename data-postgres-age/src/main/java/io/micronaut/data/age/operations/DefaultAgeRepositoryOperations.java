@@ -59,6 +59,7 @@ import java.time.Instant;
 import java.time.ZoneOffset;
 import java.time.temporal.Temporal;
 import java.time.temporal.TemporalAmount;
+import java.util.Collection;
 import java.util.ArrayList;
 import java.util.Base64;
 import java.util.Collections;
@@ -121,6 +122,36 @@ final class DefaultAgeRepositoryOperations extends AbstractGraphRepositoryOperat
             .register(java.sql.Date.class, (value, e) -> value.toLocalDate().toString())
             .register(Date.class, (value, e) -> value.toInstant().atOffset(ZoneOffset.UTC).toString())
             .register(byte[].class, (value, e) -> Base64.getEncoder().encodeToString(value));
+    }
+
+    /**
+     * Creates the vertex label tables and indexes of entities in the graph.
+     *
+     * @param entityTypes The entity types
+     */
+    void createIndexes(Collection<Class<?>> entityTypes) {
+        List<String> statements = buildCreateIndexStatements(entityTypes);
+        if (statements.isEmpty()) {
+            return;
+        }
+        connectionOperations.execute(ConnectionDefinition.DEFAULT, status -> {
+            Connection connection = status.getConnection();
+            try {
+                prepare(connection);
+                try (Statement statement = connection.createStatement()) {
+                    for (String sql : statements) {
+                        String forGraph = AgeStatements.forGraph(sql, graph);
+                        if (LOG.isDebugEnabled()) {
+                            LOG.debug("Creating an Apache AGE index: {}", forGraph);
+                        }
+                        statement.execute(forGraph);
+                    }
+                }
+            } catch (SQLException e) {
+                throw new DataAccessException("Error creating the indexes of graph [" + graph + "]: " + e.getMessage(), e);
+            }
+            return null;
+        });
     }
 
     @Override

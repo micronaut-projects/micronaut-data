@@ -45,6 +45,7 @@ import org.neo4j.driver.summary.SummaryCounters;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
+import java.util.Collection;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Map;
@@ -86,6 +87,25 @@ final class DefaultNeo4jRepositoryOperations extends AbstractGraphRepositoryOper
     @Override
     public Neo4jReactorRepositoryOperations reactive() {
         return reactiveOperations.get();
+    }
+
+    /**
+     * Creates the indexes and unique constraints of entities, each in its own auto-committed statement since Neo4j
+     * does not change the schema and the data in one transaction.
+     *
+     * @param entityTypes The entity types
+     */
+    void createIndexes(Collection<Class<?>> entityTypes) {
+        List<String> statements = buildCreateIndexStatements(entityTypes);
+        if (statements.isEmpty()) {
+            return;
+        }
+        connectionOperations.execute(ConnectionDefinition.DEFAULT, status -> {
+            for (String statement : statements) {
+                run(status.getConnection(), statement, Map.of());
+            }
+            return null;
+        });
     }
 
     @Override

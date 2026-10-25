@@ -1,0 +1,48 @@
+Graph entities use the ann:data.annotation.Index[] and ann:data.annotation.Version[] annotations of Micronaut Data for indexes and optimistic locking:
+
+snippet::example.Article[project-base="doc-examples/neo4j-example", source="main", tags="article", languages="java,kotlin,groovy,python"]
+
+<1> Articles are indexed by author.
+<2> An assigned identifier is indexed as unique.
+<3> The version is set to `0` when the article is first saved and incremented by each update.
+
+== Optimistic locking
+
+An update or delete of an entity with a ann:data.annotation.Version[] property only matches the node while it still has the version the entity was read with, and increments the version. When another update got there first, the node is not changed and the repository throws `OptimisticLockException`:
+
+snippet::example.ArticleRepositorySpec[project-base="doc-examples/neo4j-example", source="test", tags="optimisticLocking", languages="java,kotlin,groovy,python"]
+
+<1> The article is saved with version `0`.
+<2> The first update matches version `0` and stores version `1`.
+<3> The second update still expects version `0`, so it fails.
+
+Reactive repositories check the version the same way, failing their publisher with `OptimisticLockException`. Oracle property graph repositories write through Micronaut Data JDBC or R2DBC, which check the version of the row.
+
+== Indexes and unique constraints
+
+Each node entity of a repository gets:
+
+* A unique index on its identifier, unless the database generates it.
+* An index for each ann:data.annotation.Index[] on the class, over the properties named by `columns`, unique when `unique` is `true`.
+* An index for each ann:data.annotation.Index[] on a property.
+
+The index is named by `name`, or after the label and the properties, such as `Article_author_index` or `Article_slug_unique`.
+
+For Neo4j and Apache AGE, the indexes are created at startup when enabled, and left in place when they exist:
+
+[configuration]
+----
+micronaut:
+  data:
+    neo4j:
+      create-indexes: true
+    age:
+      create-indexes: true
+----
+
+* Neo4j gets a uniqueness constraint for each unique index and a range index for the others.
+* Apache AGE gets a PostgreSQL expression index on the properties of the vertex label table, unique for unique indexes. The label table is created first when no node has the label yet.
+
+Saving a node that breaks a unique index fails with a `DataAccessException`.
+
+For Oracle property graphs, the indexes are part of the vertex tables created by <<graphOracleSchema, schema generation>>.

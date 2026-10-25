@@ -209,20 +209,31 @@ public final class GraphEntityMapper {
                     labels = (BeanProperty<Object, Object>) property;
                 }
             }
-            Set<String> declared = new HashSet<>();
-            if (entity.getIdentity() != null) {
-                declared.add(entity.getIdentity().getPersistedName());
-            }
-            for (RuntimePersistentProperty<?> property : entity.getPersistentProperties()) {
-                if (!isSchemalessHolder(property)) {
-                    declared.add(property.getPersistedName());
-                }
-            }
+            Set<String> declared = declaredProperties(entity);
             PersistentProperty relationshipsProperty = GraphEntities.findDynamicRelationships(entity);
             BeanProperty<Object, Object> relationships = relationshipsProperty == null ? null
                 : (BeanProperty<Object, Object>) entity.getIntrospection().getRequiredProperty(relationshipsProperty.getName(), Object.class);
             return new Schemaless(attributes, labels, relationships, declared);
         });
+    }
+
+    /**
+     * The stored names of the properties an entity declares, which are not schemaless properties.
+     */
+    private static Set<String> declaredProperties(RuntimePersistentEntity<?> entity) {
+        Set<String> declared = new HashSet<>();
+        if (entity.getIdentity() != null) {
+            declared.add(entity.getIdentity().getPersistedName());
+        }
+        if (entity.hasVersion()) {
+            declared.add(entity.getVersion().getPersistedName());
+        }
+        for (RuntimePersistentProperty<?> property : entity.getPersistentProperties()) {
+            if (!isSchemalessHolder(property)) {
+                declared.add(property.getPersistedName());
+            }
+        }
+        return declared;
     }
 
     /**
@@ -338,16 +349,28 @@ public final class GraphEntityMapper {
             }
             values.put(property.getPersistedName(), writeValue(property, property.getProperty().get(instance)));
         }
+        if (entity.hasVersion()) {
+            RuntimePersistentProperty<T> version = entity.getVersion();
+            values.put(version.getPersistedName(), writeValue(version, version.getProperty().get(instance)));
+        }
+        writeDynamicAttributes(entity, instance, values);
+        return values;
+    }
+
+    /**
+     * Adds the schemaless properties of an instance to its stored values, unless a declared property has the name.
+     */
+    private <T> void writeDynamicAttributes(RuntimePersistentEntity<T> entity, T instance, Map<String, Object> values) {
         BeanProperty<Object, Object> attributesProperty = schemaless(entity).attributes();
         if (attributesProperty != null && attributesProperty.get(instance) instanceof Map<?, ?> attributes) {
             attributes.forEach((name, value) -> {
+                // A null value is kept: it removes the property
                 String key = String.valueOf(name);
                 if (!values.containsKey(key)) {
                     values.put(key, encode(value));
                 }
             });
         }
-        return values;
     }
 
     /**

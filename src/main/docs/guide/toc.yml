@@ -151,6 +151,7 @@ graph:
     graphAgeQuickStart: Apache AGE
   graphMapping: Mapping Nodes and Relationships
   graphRepositories: Repositories and Finders
+  graphIndexesAndLocking: Indexes and Optimistic Locking
   graphTraversal: Querying Relationships
   graphPaths: Paths and Shortest Paths
   graphExplicitQueries: Explicit Queries

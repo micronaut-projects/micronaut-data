@@ -1,11 +1,14 @@
 package io.micronaut.data.graph.tck
 
+import io.micronaut.data.exceptions.OptimisticLockException
+import io.micronaut.data.graph.tck.entities.Article
 import io.micronaut.data.graph.tck.entities.Colleague
 import io.micronaut.data.graph.tck.entities.Collaboration
 import io.micronaut.data.graph.tck.entities.Friend
 import io.micronaut.data.graph.tck.entities.Movie
 import io.micronaut.data.graph.tck.entities.Person
 import io.micronaut.data.graph.tck.entities.Role
+import io.micronaut.data.graph.tck.repositories.ArticleRepository
 import io.micronaut.data.graph.tck.repositories.ColleagueRepository
 import io.micronaut.data.graph.tck.repositories.FriendRepository
 import io.micronaut.data.graph.tck.repositories.MovieRepository
@@ -30,6 +33,16 @@ abstract class AbstractGraphRepositorySpec extends Specification {
     abstract ColleagueRepository getColleagueRepository()
 
     abstract TransactionOperations<?> getTransactionOperations()
+
+    /**
+     * The repository of an entity with a {@code @Version} property, or null if the implementation writes nodes
+     * through another module that covers optimistic locking.
+     *
+     * @return The repository
+     */
+    ArticleRepository getArticleRepository() {
+        null
+    }
 
     /**
      * Removes every node the specs create.
@@ -393,5 +406,71 @@ abstract class AbstractGraphRepositorySpec extends Specification {
 
         then:
         movieRepository.existsById("John Wick")
+    }
+
+    @Requires({ instance.articleRepository != null })
+    void "a @Version property starts at zero and is incremented by each update"() {
+        when:
+        def article = articleRepository.save(new Article("graphs", "Graphs"))
+
+        then:
+        article.version == 0L
+        articleRepository.findById("graphs").get().version == 0L
+
+        when:
+        def loaded = articleRepository.findById("graphs").get()
+        loaded.title = "Graph databases"
+        def updated = articleRepository.update(loaded)
+
+        then:
+        updated.version == 1L
+        with(articleRepository.findById("graphs").get()) {
+            title == "Graph databases"
+            version == 1L
+        }
+    }
+
+    @Requires({ instance.articleRepository != null })
+    void "updating a stale node fails with an optimistic lock exception"() {
+        given:
+        articleRepository.save(new Article("graphs", "Graphs"))
+        def first = articleRepository.findById("graphs").get()
+        def stale = articleRepository.findById("graphs").get()
+        first.title = "First"
+        articleRepository.update(first)
+
+        when:
+        stale.title = "Stale"
+        articleRepository.update(stale)
+
+        then:
+        thrown(OptimisticLockException)
+        with(articleRepository.findById("graphs").get()) {
+            title == "First"
+            version == 1L
+        }
+    }
+
+    @Requires({ instance.articleRepository != null })
+    void "deleting a stale node fails with an optimistic lock exception"() {
+        given:
+        articleRepository.save(new Article("graphs", "Graphs"))
+        def stale = articleRepository.findById("graphs").get()
+        def current = articleRepository.findById("graphs").get()
+        current.title = "Current"
+        articleRepository.update(current)
+
+        when:
+        articleRepository.delete(stale)
+
+        then:
+        thrown(OptimisticLockException)
+        articleRepository.existsById("graphs")
+
+        when:
+        articleRepository.delete(articleRepository.findById("graphs").get())
+
+        then:
+        !articleRepository.existsById("graphs")
     }
 }

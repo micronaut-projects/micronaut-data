@@ -19,6 +19,7 @@ import io.micronaut.core.annotation.AnnotationMetadata;
 import io.micronaut.core.annotation.Introspected;
 import io.micronaut.data.graph.annotation.Direction;
 import io.micronaut.data.graph.model.GraphEntities;
+import io.micronaut.data.graph.model.GraphIndex;
 import io.micronaut.data.graph.model.query.PathQueryDefinition;
 import io.micronaut.data.model.Association;
 import io.micronaut.data.model.PersistentEntity;
@@ -149,6 +150,10 @@ public class CypherQueryBuilder implements GraphQueryBuilder {
      * The parameter holding the identifier of the target in a link query.
      */
     public static final String LINK_TO_PARAMETER = "to";
+    /**
+     * The parameter holding the version an entity was read with in versioned writes.
+     */
+    public static final String VERSION_PARAMETER = "version";
     private static final String WITH_DISTINCT = " WITH DISTINCT ";
     private static final String DISTINCT = "DISTINCT ";
     private static final String TO_LOWER = "toLower(";
@@ -160,6 +165,7 @@ public class CypherQueryBuilder implements GraphQueryBuilder {
     private static final String AND = " AND ";
     private static final String SET = " SET ";
     private static final String RETURN_COUNT_RESULT = " RETURN count(*) AS result";
+    private static final String DETACH_DELETE = " DETACH DELETE ";
     private static final String LINK_FROM = "a";
     private static final String LINK_TO = "b";
 
@@ -271,7 +277,7 @@ public class CypherQueryBuilder implements GraphQueryBuilder {
         if (state.hasPatterns()) {
             query.append(WITH_DISTINCT).append(ROOT);
         }
-        query.append(" DETACH DELETE ").append(ROOT).append(" RETURN count(*)");
+        query.append(DETACH_DELETE).append(ROOT).append(" RETURN count(*)");
         return QueryResult.of(query.toString(), List.of(query.toString()), state.parameterBindings, state.additionalRequiredParameters);
     }
 
@@ -399,7 +405,60 @@ public class CypherQueryBuilder implements GraphQueryBuilder {
     @Override
     public String buildDeleteByIdQuery(PersistentEntity entity) {
         return MATCH_OPEN + ROOT + labelExpression(entity) + CLOSE_WHERE
-            + identityExpression(entity.getIdentity(), ROOT) + " = $" + ID_PARAMETER + " DETACH DELETE " + ROOT + RETURN_COUNT_RESULT;
+            + identityExpression(entity.getIdentity(), ROOT) + " = $" + ID_PARAMETER + DETACH_DELETE + ROOT + RETURN_COUNT_RESULT;
+    }
+
+    @Override
+    public String buildUpdateVersionedNodeQuery(PersistentEntity entity, List<String> propertyNames) {
+        PersistentProperty identity = entity.getIdentity();
+        StringBuilder query = new StringBuilder(versionedMatch(entity));
+        appendSetProperties(query, ROOT, propertyNames);
+        return query.append(RETURN).append(identityExpression(identity, ROOT)).append(" AS ").append(ID_PARAMETER).toString();
+    }
+
+    @Override
+    public String buildDeleteVersionedNodeQuery(PersistentEntity entity) {
+        return versionedMatch(entity) + DETACH_DELETE + ROOT + RETURN_COUNT_RESULT;
+    }
+
+    /**
+     * Builds {@code CREATE CONSTRAINT ... IS UNIQUE} for unique indexes and {@code CREATE INDEX} for the others,
+     * each with {@code IF NOT EXISTS}.
+     *
+     * @param entity The entity
+     * @return The statements
+     */
+    @Override
+    public List<String> buildCreateIndexStatements(PersistentEntity entity) {
+        List<String> statements = new ArrayList<>();
+        for (GraphIndex index : GraphIndex.of(entity)) {
+            StringBuilder properties = new StringBuilder();
+            for (String property : index.properties()) {
+                if (!properties.isEmpty()) {
+                    properties.append(", ");
+                }
+                properties.append(ROOT).append('.').append(GraphEntities.escapeName(property));
+            }
+            String target = GraphEntities.escapeName(index.name()) + " IF NOT EXISTS FOR (" + ROOT + ":" + GraphEntities.escapeName(index.label()) + ")";
+            if (index.unique()) {
+                String required = index.properties().size() == 1 ? properties.toString() : "(" + properties + ")";
+                statements.add("CREATE CONSTRAINT " + target + " REQUIRE " + required + " IS UNIQUE");
+            } else {
+                statements.add("CREATE INDEX " + target + " ON (" + properties + ")");
+            }
+        }
+        return statements;
+    }
+
+    private String versionedMatch(PersistentEntity entity) {
+        PersistentProperty identity = entity.getIdentity();
+        PersistentProperty version = entity.hasVersion() ? entity.getVersion() : null;
+        if (identity == null || version == null) {
+            throw new IllegalArgumentException("Entity [" + entity.getName() + "] needs an identity and a @Version property for versioned writes");
+        }
+        return MATCH_OPEN + ROOT + labelExpression(entity) + CLOSE_WHERE
+            + identityExpression(identity, ROOT) + " = $" + ID_PARAMETER + AND
+            + ROOT + "." + GraphEntities.escapeName(GraphEntities.propertyName(version)) + " = $" + VERSION_PARAMETER;
     }
 
     /**

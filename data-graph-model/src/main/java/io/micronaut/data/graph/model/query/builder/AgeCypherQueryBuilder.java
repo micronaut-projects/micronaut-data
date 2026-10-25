@@ -19,6 +19,7 @@ import io.micronaut.core.annotation.AnnotationMetadata;
 import io.micronaut.core.annotation.Introspected;
 import io.micronaut.data.graph.annotation.Direction;
 import io.micronaut.data.graph.model.GraphEntities;
+import io.micronaut.data.graph.model.GraphIndex;
 import io.micronaut.data.graph.model.query.PathQueryDefinition;
 import io.micronaut.data.model.Association;
 import io.micronaut.data.model.DataType;
@@ -31,6 +32,7 @@ import io.micronaut.data.model.query.builder.QueryResult;
 import io.micronaut.data.model.query.builder.QueryOutParameterBinding;
 import org.jspecify.annotations.Nullable;
 
+import java.util.ArrayList;
 import java.util.Collection;
 import java.util.List;
 import java.util.Map;
@@ -103,6 +105,63 @@ public class AgeCypherQueryBuilder extends CypherQueryBuilder {
     @Override
     public String buildDeleteByIdQuery(PersistentEntity entity) {
         return AgeStatements.wrap(super.buildDeleteByIdQuery(entity));
+    }
+
+    /**
+     * Builds the SQL that creates the vertex label table of each indexed label when it does not exist yet, then a
+     * PostgreSQL expression index on the indexed properties of the table, unique for unique indexes. The statements
+     * reference the graph with {@link AgeStatements#GRAPH_TOKEN}.
+     *
+     * @param entity The entity
+     * @return The statements
+     */
+    @Override
+    public List<String> buildCreateIndexStatements(PersistentEntity entity) {
+        List<GraphIndex> indexes = GraphIndex.of(entity);
+        if (indexes.isEmpty()) {
+            return List.of();
+        }
+        String label = indexes.get(0).label();
+        String labelLiteral = sqlLiteral(label);
+        List<String> statements = new ArrayList<>();
+        statements.add("DO $do$ BEGIN IF NOT EXISTS (SELECT 1 FROM ag_catalog.ag_label l JOIN ag_catalog.ag_graph g ON l.graph = g.graphid"
+            + " WHERE g.name = '" + AgeStatements.GRAPH_TOKEN + "' AND l.name = " + labelLiteral + ")"
+            + " THEN PERFORM ag_catalog.create_vlabel('" + AgeStatements.GRAPH_TOKEN + "', " + labelLiteral + "); END IF; END $do$");
+        for (GraphIndex index : indexes) {
+            StringBuilder sql = new StringBuilder("CREATE ");
+            if (index.unique()) {
+                sql.append("UNIQUE ");
+            }
+            sql.append("INDEX IF NOT EXISTS ").append(sqlIdentifier(index.name()))
+                .append(" ON ").append(sqlIdentifier(AgeStatements.GRAPH_TOKEN)).append('.').append(sqlIdentifier(index.label())).append(" (");
+            for (int i = 0; i < index.properties().size(); i++) {
+                if (i > 0) {
+                    sql.append(", ");
+                }
+                String key = "\"" + index.properties().get(i).replace("\\", "\\\\").replace("\"", "\\\"") + "\"";
+                sql.append("ag_catalog.agtype_access_operator(properties, ").append(sqlLiteral(key)).append("::agtype)");
+            }
+            statements.add(sql.append(')').toString());
+        }
+        return statements;
+    }
+
+    private static String sqlLiteral(String value) {
+        return "'" + value.replace("'", "''") + "'";
+    }
+
+    private static String sqlIdentifier(String value) {
+        return '"' + value.replace("\"", "\"\"") + '"';
+    }
+
+    @Override
+    public String buildUpdateVersionedNodeQuery(PersistentEntity entity, List<String> propertyNames) {
+        return AgeStatements.wrap(super.buildUpdateVersionedNodeQuery(entity, propertyNames));
+    }
+
+    @Override
+    public String buildDeleteVersionedNodeQuery(PersistentEntity entity) {
+        return AgeStatements.wrap(super.buildDeleteVersionedNodeQuery(entity));
     }
 
     @Override
