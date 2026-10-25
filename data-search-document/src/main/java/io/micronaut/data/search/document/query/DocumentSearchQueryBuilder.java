@@ -614,7 +614,7 @@ public final class DocumentSearchQueryBuilder implements QueryBuilder {
             if (expression instanceof BindingParameter parameter) {
                 value = bindings.placeholder(parameter, propertyPath, hint);
             } else {
-                value = Map.of(QUERY_PARAMETER_PLACEHOLDER, -1, WILDCARD_HINT, hint, "value", literal(expression));
+                value = Map.of(QUERY_PARAMETER_PLACEHOLDER, -1, WILDCARD_HINT, hint, VALUE, literal(expression));
             }
             Map<String, Object> options = new LinkedHashMap<>();
             options.put(VALUE, value);

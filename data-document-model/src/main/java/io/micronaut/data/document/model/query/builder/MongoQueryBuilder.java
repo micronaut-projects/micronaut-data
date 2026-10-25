@@ -150,6 +150,7 @@ public final class MongoQueryBuilder implements QueryBuilder {
     private static final int DEFAULT_VECTOR_LIMIT = 100;
     private static final String ADD_FIELDS = "$addFields";
     private static final String MATCH = "$match";
+    private static final String EXPR = "$expr";
     private static final String NULL_RANK_FIELD_PREFIX = "__micronaut_nulls_";
     private static final String SORT_EXPRESSION_FIELD_PREFIX = "__micronaut_sort_";
     private static final String STR_LEN_CP = "$strLenCP";
@@ -702,9 +703,9 @@ public final class MongoQueryBuilder implements QueryBuilder {
 
         Map<String, Object> match;
         if (matches.size() > 1) {
-            match = Map.of(MATCH, Map.of("$expr", Map.of("$and", matches)));
+            match = Map.of(MATCH, Map.of(EXPR, Map.of("$and", matches)));
         } else {
-            match = Map.of(MATCH, Map.of("$expr", matches.iterator().next()));
+            match = Map.of(MATCH, Map.of(EXPR, matches.iterator().next()));
         }
 
         return lookup(from, let, match, pipeline, as);
@@ -1216,7 +1217,7 @@ public final class MongoQueryBuilder implements QueryBuilder {
             }
             if (leftExpression instanceof LiteralExpression<?> leftLiteral && value instanceof LiteralExpression<?> rightLiteral) {
                 // A comparison of two constants, for example the 1 = 2 that an empty disjunction is normalized to
-                query.put("$expr", Map.of(op, asList(leftLiteral.getValue(), rightLiteral.getValue())));
+                query.put(EXPR, Map.of(op, asList(leftLiteral.getValue(), rightLiteral.getValue())));
                 return;
             }
             if (leftExpression instanceof BinaryExpression<?> binaryExpression) {
@@ -1232,7 +1233,7 @@ public final class MongoQueryBuilder implements QueryBuilder {
                     throw new IllegalStateException("Unsupported expression type: " + binaryExpression);
                 }
                 if (binaryExpression.getType() == BinaryExpressionType.PROD) {
-                    query.put("$expr", Map.of(
+                    query.put(EXPR, Map.of(
                         op,
                         asList(
                             Map.of("$multiply", List.of(
@@ -1249,7 +1250,7 @@ public final class MongoQueryBuilder implements QueryBuilder {
             if (leftExpression instanceof UnaryExpression<?> unaryExpression) {
                 PersistentPropertyPath propertyPath = CriteriaUtils.requireProperty(unaryExpression.getExpression()).getPropertyPath();
                 if (unaryExpression.getType() == UnaryExpressionType.LENGTH) {
-                    query.put("$expr", Map.of(
+                    query.put(EXPR, Map.of(
                         op,
                         asList(
                             Map.of(STR_LEN_CP, "$" + propertyPath.getPath()),
@@ -1267,7 +1268,7 @@ public final class MongoQueryBuilder implements QueryBuilder {
         private void appendOperatorExpression(String op, Expression<?> value, PersistentPropertyPath propertyPath) {
             if (value instanceof io.micronaut.data.model.jpa.criteria.PersistentPropertyPath<?> persistentPropertyPath) {
                 PersistentPropertyPath p2 = getRequiredProperty(persistentPropertyPath);
-                query.put("$expr", Map.of(
+                query.put(EXPR, Map.of(
                     op,
                     asList(
                         "$" + propertyPath.getPath(), "$" + p2.getPath()
