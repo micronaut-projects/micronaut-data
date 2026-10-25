@@ -17,13 +17,18 @@ package io.micronaut.data.search.document.init;
 
 import io.micronaut.context.annotation.Requires;
 import io.micronaut.core.annotation.Experimental;
+import io.micronaut.data.annotation.search.Searchable;
 import io.micronaut.data.model.runtime.RuntimeEntityRegistry;
 import io.micronaut.data.model.runtime.RuntimePersistentEntity;
+import io.micronaut.data.model.search.SearchCapability;
+import io.micronaut.data.runtime.search.SearchCapabilities;
 import io.micronaut.data.runtime.search.SearchIndexOperations;
 import io.micronaut.data.search.document.runtime.DocumentSearchRepositoryOperations;
 import jakarta.inject.Singleton;
 
+import java.util.EnumSet;
 import java.util.List;
+import java.util.Set;
 
 /**
  * {@link SearchIndexOperations} of the document search stores: the index of an entity holds its documents,
@@ -34,7 +39,12 @@ import java.util.List;
 @Experimental
 @Singleton
 @Requires(beans = DocumentSearchRepositoryOperations.class)
-public final class DocumentSearchIndexOperations implements SearchIndexOperations {
+public final class DocumentSearchIndexOperations implements SearchIndexOperations, SearchCapabilities {
+
+    // Elasticsearch and OpenSearch serve every portable feature natively, vectors through dense_vector and knn_vector
+    private static final Set<SearchCapability> CAPABILITIES = EnumSet.of(SearchCapability.PHRASE, SearchCapability.PREFIX, SearchCapability.FUZZY,
+        SearchCapability.FUZZINESS, SearchCapability.FIELD_SCOPE, SearchCapability.BOOST, SearchCapability.HIGHLIGHT, SearchCapability.LANGUAGE_OVERRIDE,
+        SearchCapability.MIN_SCORE, SearchCapability.VECTOR, SearchCapability.HYBRID);
 
     private final List<DocumentSearchRepositoryOperations> operations;
     private final RuntimeEntityRegistry runtimeEntityRegistry;
@@ -42,6 +52,11 @@ public final class DocumentSearchIndexOperations implements SearchIndexOperation
     DocumentSearchIndexOperations(List<DocumentSearchRepositoryOperations> operations, RuntimeEntityRegistry runtimeEntityRegistry) {
         this.operations = operations;
         this.runtimeEntityRegistry = runtimeEntityRegistry;
+    }
+
+    @Override
+    public Set<SearchCapability> getSearchCapabilities(Class<?> entityType) {
+        return runtimeEntityRegistry.getEntity(entityType).getAnnotationMetadata().hasAnnotation(Searchable.class) ? CAPABILITIES : Set.of();
     }
 
     @Override

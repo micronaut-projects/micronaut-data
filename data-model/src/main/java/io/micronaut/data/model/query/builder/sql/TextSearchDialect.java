@@ -18,7 +18,6 @@ package io.micronaut.data.model.query.builder.sql;
 import io.micronaut.core.annotation.Internal;
 import io.micronaut.data.annotation.search.SearchField;
 import io.micronaut.data.annotation.search.SearchWeight;
-import io.micronaut.data.annotation.search.Searchable;
 import io.micronaut.data.model.PersistentProperty;
 import io.micronaut.data.model.query.builder.QueryParameterBinding;
 import io.micronaut.data.model.runtime.convert.OracleTextQueryConverter;
@@ -32,7 +31,9 @@ import jakarta.persistence.criteria.Expression;
 import org.jspecify.annotations.Nullable;
 
 import java.util.ArrayList;
+import java.util.EnumSet;
 import java.util.List;
+import java.util.Set;
 import java.util.function.Consumer;
 import java.util.function.Function;
 
@@ -45,7 +46,7 @@ import java.util.function.Function;
 public interface TextSearchDialect {
 
     /**
-     * The default text search configuration when the entity declares no {@link Searchable#language()}.
+     * The default text search configuration when the entity declares no {@link io.micronaut.data.annotation.search.Searchable#language()}.
      */
     /** The start of an index DDL statement. */
     String CREATE_INDEX = "CREATE INDEX ";
@@ -56,6 +57,17 @@ public interface TextSearchDialect {
      * The alias of the unnested fuzzy terms.
      */
     String TERM_ALIAS = "mn_term.t";
+
+    /**
+     * The search features this dialect honours beyond term matching and score ordering, including
+     * vector and hybrid search, which the SQL stores serve through their vector support.
+     *
+     * @return The supported capabilities
+     * @since 5.4.0
+     */
+    default Set<SearchCapability> capabilities() {
+        return Set.of();
+    }
 
     /**
      * Appends the predicate {@code <fields> match <query>}.
@@ -434,6 +446,13 @@ public interface TextSearchDialect {
             + "(cfg text) RETURNS regconfig AS 'SELECT cfg::regconfig' LANGUAGE sql IMMUTABLE;";
 
         @Override
+        public Set<SearchCapability> capabilities() {
+            // pg_trgm gives fuzzy matching with a similarity threshold rather than an edit distance, and weights are fixed by the index
+            return EnumSet.of(SearchCapability.PHRASE, SearchCapability.PREFIX, SearchCapability.FUZZY, SearchCapability.FIELD_SCOPE,
+                SearchCapability.HIGHLIGHT, SearchCapability.LANGUAGE_OVERRIDE, SearchCapability.MIN_SCORE, SearchCapability.VECTOR, SearchCapability.HYBRID);
+        }
+
+        @Override
         public void appendTextMatch(StringBuilder query,
                                     List<Expression<?>> fields,
                                     Expression<String> queryExpression,
@@ -719,6 +738,13 @@ public interface TextSearchDialect {
         private static final String DEFAULT_INDEX_PARAMETERS = "SYNC (ON COMMIT)";
 
         private static final String CONTAINS_SUFFIX = ") > 0";
+
+        @Override
+        public Set<SearchCapability> capabilities() {
+            // Oracle Text fixes the fuzzy similarity and the lexer per index
+            return EnumSet.of(SearchCapability.PHRASE, SearchCapability.PREFIX, SearchCapability.FUZZY, SearchCapability.FIELD_SCOPE,
+                SearchCapability.BOOST, SearchCapability.HIGHLIGHT, SearchCapability.MIN_SCORE, SearchCapability.VECTOR, SearchCapability.HYBRID);
+        }
 
         @Override
         public void appendTextMatch(StringBuilder query,

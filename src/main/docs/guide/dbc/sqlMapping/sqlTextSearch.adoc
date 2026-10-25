@@ -144,6 +144,8 @@ Schema generation creates the search indexes with the tables. To manage them whi
 
 The portable API is the same on every store; the table lists which optional capabilities each store honours. A capability a store lacks fails at compile time for a derived method and throws api:data.model.search.UnsupportedSearchFeatureException[] from `search(SearchQuery)`.
 
+An application can check the matrix at runtime before it builds a query: inject api:data.runtime.search.SearchCapabilities[] and call `getSearchCapabilities(entityType)` or `supports(entityType, capability)` with a api:data.model.search.SearchCapability[] value (`PHRASE`, `PREFIX`, `FUZZY`, `FIELD_SCOPE`, `BOOST`, `FUZZINESS`, `HIGHLIGHT`, `LANGUAGE_OVERRIDE`, `MIN_SCORE`, `VECTOR` or `HYBRID`). Each JDBC and R2DBC datasource registers one bean that answers by its dialect, MongoDB answers by whether the entity declares a `@MongoSearchIndex`, and Elasticsearch and OpenSearch answer with the full set. An entity without `@Searchable` reports no capabilities.
+
 |===
 |Capability |PostgreSQL |Oracle |MongoDB `$text` |MongoDB Search |Elasticsearch / OpenSearch
 

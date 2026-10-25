@@ -26,6 +26,7 @@ import io.micronaut.data.model.search.SearchSyntax
 import io.micronaut.data.model.search.UnsupportedSearchFeatureException
 import io.micronaut.data.model.vector.Vector
 import io.micronaut.data.model.vector.search.Score
+import io.micronaut.data.runtime.search.SearchCapabilities
 import io.micronaut.data.runtime.search.SearchIndexOperations
 import org.jspecify.annotations.Nullable
 import io.micronaut.data.search.tck.entities.Book
@@ -126,6 +127,16 @@ abstract class AbstractTextSearchSpec extends Specification {
     }
 
     /**
+     * @return The capabilities the backend reports at runtime, or {@code null} when it reports none; the
+     * first {@link SearchCapabilities} bean by default
+     */
+    @Nullable
+    SearchCapabilities searchCapabilities() {
+        def beans = context.getBeansOfType(SearchCapabilities)
+        return beans.isEmpty() ? null : beans.iterator().next()
+    }
+
+    /**
      * @return Whether the backend pages with a cursor ({@code search_after} on the document stores)
      */
     boolean supportsCursoredPaging() {
@@ -142,6 +153,16 @@ abstract class AbstractTextSearchSpec extends Specification {
                 newBook("Baking Bread", "Sourdough and yeast breads for the home baker", "Dough", 220),
         ])
         awaitIndexing()
+    }
+
+    void "the backend reports the capabilities the specs exercise"() {
+        given:
+        def reported = searchCapabilities()
+        def entityType = newBook("Title", "Description", "Author", 1).getClass()
+
+        expect:
+        reported == null || reported.getSearchCapabilities(entityType) == capabilities()
+        reported == null || capabilities().every { reported.supports(entityType, it) }
     }
 
     void cleanup() {
