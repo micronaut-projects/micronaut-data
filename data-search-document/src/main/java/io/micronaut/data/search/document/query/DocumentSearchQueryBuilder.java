@@ -447,7 +447,17 @@ public final class DocumentSearchQueryBuilder implements QueryBuilder {
         @Override
         public void visit(LikePredicate likePredicate) {
             PersistentPropertyPath propertyPath = requireProperty(likePredicate.getExpression()).getPropertyPath();
-            result = wildcard(propertyPath, likePredicate.getPattern(), "like");
+            StringBuilder hint = new StringBuilder("like");
+            if (likePredicate.isCaseInsensitive()) {
+                hint.append("_ignore_case");
+            }
+            if (likePredicate.getEscapeChar() instanceof LiteralExpression<?> escape && escape.getValue() instanceof Character c) {
+                hint.append(':').append(c);
+            }
+            result = wildcard(propertyPath, likePredicate.getPattern(), hint.toString());
+            if (likePredicate.isNegated()) {
+                result = Map.of(BOOL, Map.of(MUST_NOT, result));
+            }
         }
 
         @Override
@@ -682,7 +692,7 @@ public final class DocumentSearchQueryBuilder implements QueryBuilder {
             }
             Map<String, Object> options = new LinkedHashMap<>();
             options.put(VALUE, value);
-            if (hint.endsWith("_ignore_case")) {
+            if (hint.contains("_ignore_case")) {
                 options.put("case_insensitive", true);
             }
             return Map.of("wildcard", Map.of(keywordPath(propertyPath), options));

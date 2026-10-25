@@ -198,14 +198,41 @@ public final class DocumentStoredQuery<E, R> extends DefaultBindableParametersSt
     }
 
     private static Object wildcard(@Nullable Object value, String hint) {
+        String kind = hint.replace("_ignore_case", "");
+        if (kind.startsWith("like")) {
+            // like, or like:<escape character>
+            Character escape = kind.length() > "like:".length() ? kind.charAt("like:".length()) : null;
+            return likeToWildcard(value == null ? "" : value.toString(), escape);
+        }
         String text = value == null ? "" : escapeWildcard(value.toString());
-        return switch (hint.replace("_ignore_case", "")) {
+        return switch (kind) {
             case "starts_with" -> text + "*";
             case "ends_with" -> "*" + text;
             case "contains" -> "*" + text + "*";
-            case "like" -> (value == null ? "" : value.toString()).replace("%", "*").replace("_", "?");
             default -> text;
         };
+    }
+
+    /**
+     * Converts a SQL LIKE pattern into a wildcard pattern: {@code %} and {@code _} become {@code *} and
+     * {@code ?}, the wildcard characters of the pattern's literal text are escaped, and the escape
+     * character makes the next character literal.
+     */
+    static String likeToWildcard(String pattern, @Nullable Character escape) {
+        StringBuilder sb = new StringBuilder(pattern.length() + 8);
+        for (int i = 0; i < pattern.length(); i++) {
+            char c = pattern.charAt(i);
+            if (escape != null && c == escape && i + 1 < pattern.length()) {
+                sb.append(escapeWildcard(String.valueOf(pattern.charAt(++i))));
+            } else if (c == '%') {
+                sb.append('*');
+            } else if (c == '_') {
+                sb.append('?');
+            } else {
+                sb.append(escapeWildcard(String.valueOf(c)));
+            }
+        }
+        return sb.toString();
     }
 
     private static String escapeWildcard(String text) {

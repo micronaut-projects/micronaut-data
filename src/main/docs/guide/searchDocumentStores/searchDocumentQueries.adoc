@@ -77,6 +77,11 @@ Elasticsearch and OpenSearch run reactive and async repositories on their async 
 
 == Limitations
 
-- Joins, `@Where`, update queries (`updateBy...`) and subqueries are not supported; update entities with `update(...)`.
+- Joins, `@Where`, update queries (`updateBy...`, `UPDATE` in Jakarta Data queries) and subqueries are not supported; update entities with `update(...)`.
 - `@Transactional` is not supported; see above.
-- Aggregations and the raw query DSL are not exposed yet.
+- A query returns whole entities or DTOs mapped from them: selecting individual attributes (`SELECT name`, a record of chosen attributes) and functions such as `LEFT`, `CONCAT`, `LENGTH` or casts are not supported, nor is ordering by an expression. `count` projections run as count requests.
+- A comparison between two properties, such as `WHERE numBitsRequired = floorOfSquareRoot`, and a case-insensitive range run as Painless `script` queries, which evaluate every candidate document.
+- A query without a `Pageable` or limit returns at most 10,000 hits, the default `index.max_result_window`; page through larger results.
+- Aggregations are not exposed.
+
+The Elasticsearch and OpenSearch modules run the Jakarta Data TCK, apart from the tests that need the features above, stateful repositories or CDI events.
