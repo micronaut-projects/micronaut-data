@@ -33,6 +33,7 @@ import io.micronaut.data.exceptions.DataAccessException;
 import io.micronaut.data.exceptions.OptimisticLockException;
 import io.micronaut.data.search.document.conf.DocumentSearchConfiguration;
 import io.micronaut.data.search.document.runtime.AsyncSearchTransport;
+import io.micronaut.data.search.document.runtime.BulkResponses;
 import io.micronaut.data.search.document.runtime.SearchTransport;
 import jakarta.inject.Named;
 import jakarta.inject.Singleton;
@@ -164,17 +165,7 @@ public final class ElasticsearchAsyncSearchTransport implements AsyncSearchTrans
     }
 
     static List<String> bulkIds(BulkResponse response) {
-        List<String> ids = new ArrayList<>(response.items().size());
-        for (BulkResponseItem item : response.items()) {
-            if (item.error() != null) {
-                if (item.status() == 409) {
-                    throw new OptimisticLockException("Document " + item.id() + " was modified concurrently: " + item.error().reason());
-                }
-                throw new DataAccessException("Elasticsearch bulk item failed: " + item.error().reason());
-            }
-            ids.add(item.id());
-        }
-        return ids;
+        return BulkResponses.ids("Elasticsearch", response.items(), item -> item.error() == null ? null : item.error().reason(), BulkResponseItem::id, BulkResponseItem::status);
     }
 
     @Override
