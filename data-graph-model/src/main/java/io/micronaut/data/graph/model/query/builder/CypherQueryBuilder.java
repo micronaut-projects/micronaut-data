@@ -155,6 +155,7 @@ public class CypherQueryBuilder implements GraphQueryBuilder {
     private static final String DISTINCT = "DISTINCT ";
     private static final String TO_LOWER = "toLower(";
     private static final String RESULT = "result";
+    private static final String CLOSE_AS = ") AS ";
     private static final String RETURN = " RETURN ";
     private static final String MATCH_OPEN = "MATCH (";
     private static final String CLOSE_WHERE = ") WHERE ";
@@ -245,7 +246,7 @@ public class CypherQueryBuilder implements GraphQueryBuilder {
                     query.append(" WITH ").append(ROOT);
                 }
                 String alias = "o" + carried.size();
-                query.append(", ").append(order.ascending ? "min(" : "max(").append(order.expression).append(") AS ").append(alias);
+                query.append(", ").append(order.ascending ? "min(" : "max(").append(order.expression).append(CLOSE_AS).append(alias);
                 order.alias = alias;
                 carried.add(alias);
             }
@@ -536,7 +537,7 @@ public class CypherQueryBuilder implements GraphQueryBuilder {
             case COUNT -> query.append(" RETURN count(").append(PATH_RELATIONSHIP).append(CLOSE_AS_RESULT);
             case EXISTS -> query.append(" RETURN true AS result LIMIT 1");
             default -> query.append(RETURN).append(PATH_RELATIONSHIP).append(", startNode(").append(PATH_RELATIONSHIP)
-                .append(") AS ").append(RELATIONSHIP_FROM).append(", endNode(").append(PATH_RELATIONSHIP).append(") AS ").append(RELATIONSHIP_TO);
+                .append(CLOSE_AS).append(RELATIONSHIP_FROM).append(", endNode(").append(PATH_RELATIONSHIP).append(CLOSE_AS).append(RELATIONSHIP_TO);
         }
     }
 
