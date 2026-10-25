@@ -60,6 +60,7 @@ class TextSearchDialectSpec extends Specification {
                                        java.util.function.Consumer appendExpression, java.util.function.Function appendParameter) {
             }
         }.capabilities().isEmpty()
+    }
 
     void "a query language that is not a configuration name is rejected before it reaches the SQL"() {
         when:
