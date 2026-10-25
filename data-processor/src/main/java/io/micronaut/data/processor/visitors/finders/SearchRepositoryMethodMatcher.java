@@ -157,4 +157,5 @@ public final class SearchRepositoryMethodMatcher implements MethodMatcher {
             }
         };
     }
+
 }

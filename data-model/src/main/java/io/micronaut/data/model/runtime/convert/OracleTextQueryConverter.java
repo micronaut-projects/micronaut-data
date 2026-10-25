@@ -104,26 +104,34 @@ public abstract class OracleTextQueryConverter implements TextSearchQueryConvert
             return query.isBlank() ? MATCH_NOTHING : query;
         }
         if (part == Part.NEGATED) {
-            StringJoiner negated = new StringJoiner(" | ");
-            for (SearchTerm term : SearchQueryParser.terms(query)) {
-                if (term.negated()) {
-                    negated.add(escape(term.text()));
-                }
-            }
-            return negated.length() == 0 ? MATCH_NOTHING : negated.toString();
+            return renderNegated(query);
         }
         if (mode == MatchMode.PHRASE) {
             String phrase = query.replace("\"", "").trim();
             return phrase.isEmpty() ? MATCH_NOTHING : escape(phrase);
         }
-        List<List<SearchTerm>> groups = SearchQueryParser.parse(query);
         List<String> rendered = new ArrayList<>();
-        for (List<SearchTerm> group : groups) {
+        for (List<SearchTerm> group : SearchQueryParser.parse(query)) {
             String groupQuery = renderGroup(group, mode, part == Part.FULL);
             if (groupQuery != null) {
                 rendered.add(groupQuery);
             }
         }
+        return joinGroups(rendered);
+    }
+
+    /** The negated terms of a query as one disjunction, for the exclusion of a multi-field search. */
+    private static String renderNegated(String query) {
+        StringJoiner negated = new StringJoiner(" | ");
+        for (SearchTerm term : SearchQueryParser.terms(query)) {
+            if (term.negated()) {
+                negated.add(escape(term.text()));
+            }
+        }
+        return negated.length() == 0 ? MATCH_NOTHING : negated.toString();
+    }
+
+    private static String joinGroups(List<String> rendered) {
         if (rendered.isEmpty()) {
             return MATCH_NOTHING;
         }

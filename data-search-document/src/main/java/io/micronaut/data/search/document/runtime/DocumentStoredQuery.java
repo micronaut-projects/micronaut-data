@@ -134,12 +134,7 @@ public final class DocumentStoredQuery<E, R> extends DefaultBindableParametersSt
         if (node instanceof Map<?, ?> map) {
             Object placeholder = map.get(DocumentSearchQueryBuilder.QUERY_PARAMETER_PLACEHOLDER);
             if (placeholder instanceof Number index) {
-                Object value = normalize(index.intValue() < 0 ? map.get("value") : values.get(index.intValue()));
-                Object hint = map.get(DocumentSearchQueryBuilder.WILDCARD_HINT);
-                if (DocumentSearchQueryBuilder.COSINE_SIMILARITY_HINT.equals(hint)) {
-                    return value instanceof Number distance ? 1d - distance.doubleValue() : value;
-                }
-                return hint == null ? value : wildcard(value, hint.toString());
+                return resolvePlaceholder(map, index.intValue(), values);
             }
             Map<String, Object> copy = new LinkedHashMap<>();
             for (Map.Entry<?, ?> entry : map.entrySet()) {
@@ -155,6 +150,17 @@ public final class DocumentStoredQuery<E, R> extends DefaultBindableParametersSt
             return copy;
         }
         return node;
+    }
+
+    /** The bound value of a placeholder, with its wildcard or similarity hint applied. */
+    @Nullable
+    private static Object resolvePlaceholder(Map<?, ?> placeholder, int index, List<Object> values) {
+        Object value = normalize(index < 0 ? placeholder.get("value") : values.get(index));
+        Object hint = placeholder.get(DocumentSearchQueryBuilder.WILDCARD_HINT);
+        if (DocumentSearchQueryBuilder.COSINE_SIMILARITY_HINT.equals(hint)) {
+            return value instanceof Number distance ? 1d - distance.doubleValue() : value;
+        }
+        return hint == null ? value : wildcard(value, hint.toString());
     }
 
     /**
