@@ -154,8 +154,11 @@ final class DefaultAgeReactorRepositoryOperations extends AbstractReactiveGraphR
             return Flux.defer(() -> {
                 boolean takesParameters = AgeStatements.takesParameters(sql);
                 String r2dbcSql = takesParameters ? sql.replace(JDBC_PARAMETER, R2DBC_PARAMETER) : sql;
-                if (LOG.isDebugEnabled()) {
-                    LOG.debug("Executing reactive Cypher on Apache AGE: {} with parameters {}", r2dbcSql, parameters);
+                if (LOG.isTraceEnabled()) {
+                    // Parameter values may hold personal data, so they are logged at TRACE only
+                    LOG.trace("Executing reactive Cypher on Apache AGE: {} with parameters {}", r2dbcSql, parameters);
+                } else if (LOG.isDebugEnabled()) {
+                    LOG.debug("Executing reactive Cypher on Apache AGE: {}", r2dbcSql);
                 }
                 Statement statement = connection.createStatement(r2dbcSql);
                 if (takesParameters) {

@@ -213,7 +213,8 @@ public final class OracleGraphRows {
         String text = json instanceof byte[] bytes ? new String(bytes, StandardCharsets.UTF_8) : json.toString();
         // agtype text is a superset of JSON
         if (!(Agtype.parse(text) instanceof Map<?, ?> map)) {
-            throw new IllegalStateException("Expected a JSON object of schemaless properties, found: " + text);
+            // The column holds row data, which may be personal, so only its length is reported
+            throw new IllegalStateException("Expected a JSON object of schemaless properties, found a value of " + text.length() + " characters");
         }
         Map<String, Object> attributes = new LinkedHashMap<>();
         map.forEach((key, value) -> {
