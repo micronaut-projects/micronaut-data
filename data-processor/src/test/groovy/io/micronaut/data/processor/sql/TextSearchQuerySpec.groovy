@@ -490,6 +490,7 @@ interface HybridRepository extends CrudRepository<Doc, Long> {
         titled.stringValue(DataMethod, DataMethod.META_MEMBER_INTERCEPTOR).get() == "io.micronaut.data.runtime.intercept.criteria.SearchQueryInterceptor"
         titled.stringValues(HybridSearchMethod, "fields") == ["title"] as String[]
         titled.stringValue(HybridSearchMethod, "vectorProperty").get() == "embedding"
+        titled.stringValue(HybridSearchMethod, "queryParameter").get() == "query"
         all.stringValues(HybridSearchMethod, "fields").length == 0
         all.stringValue(HybridSearchMethod, "vectorProperty").get() == "embedding"
     }

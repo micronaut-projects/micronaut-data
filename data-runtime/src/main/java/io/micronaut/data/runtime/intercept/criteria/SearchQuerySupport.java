@@ -74,17 +74,23 @@ public final class SearchQuerySupport {
     public static SearchQuery findSearchQuery(MethodInvocationContext<?, ?> context) {
         String text = null;
         Vector vector = null;
-        for (Object value : context.getParameterValues()) {
+        AnnotationValue<HybridSearchMethod> hybrid = context.getAnnotation(HybridSearchMethod.class);
+        String queryParameter = hybrid == null ? null : hybrid.stringValue("queryParameter").orElse(null);
+        Object[] values = context.getParameterValues();
+        io.micronaut.core.type.Argument<?>[] arguments = context.getArguments();
+        for (int i = 0; i < values.length; i++) {
+            Object value = values[i];
             if (value instanceof SearchQuery searchQuery) {
                 return searchQuery;
             }
-            if (value instanceof String string && text == null) {
+            // the search string is the parameter the matcher named, or the first String when it named none
+            boolean isQuery = queryParameter == null || queryParameter.isEmpty() ? value instanceof String : arguments[i].getName().equals(queryParameter);
+            if (isQuery && value instanceof String string && text == null) {
                 text = string;
             } else if (value instanceof Vector v && vector == null) {
                 vector = v;
             }
         }
-        AnnotationValue<HybridSearchMethod> hybrid = context.getAnnotation(HybridSearchMethod.class);
         if (hybrid == null) {
             throw new IllegalArgumentException("The search query may not be null.");
         }
