@@ -151,18 +151,7 @@ public final class DocumentStoredQuery<E, R> extends DefaultBindableParametersSt
             return copy;
         }
         if (node instanceof Collection<?> collection) {
-            List<Object> copy = new ArrayList<>(collection.size());
-            for (Object item : collection) {
-                Object replaced = replace(item, values);
-                if (item instanceof Map<?, ?> map && map.containsKey(DocumentSearchQueryBuilder.QUERY_PARAMETER_PLACEHOLDER)
-                    && replaced instanceof Collection<?> bound) {
-                    // a parameter bound to a collection, such as the values of an In predicate, contributes its elements
-                    copy.addAll(bound);
-                } else {
-                    copy.add(replaced);
-                }
-            }
-            return copy;
+            return replaceItems(collection, values);
         }
         return node;
     }
@@ -195,6 +184,21 @@ public final class DocumentStoredQuery<E, R> extends DefaultBindableParametersSt
             return score.value();
         }
         return value;
+    }
+
+    /** Replaces the items of a list; a parameter bound to a collection, such as the values of an In predicate, contributes its elements. */
+    private List<Object> replaceItems(Collection<?> collection, List<Object> values) {
+        List<Object> copy = new ArrayList<>(collection.size());
+        for (Object item : collection) {
+            Object replaced = replace(item, values);
+            boolean placeholder = item instanceof Map<?, ?> map && map.containsKey(DocumentSearchQueryBuilder.QUERY_PARAMETER_PLACEHOLDER);
+            if (placeholder && replaced instanceof Collection<?> bound) {
+                copy.addAll(bound);
+            } else {
+                copy.add(replaced);
+            }
+        }
+        return copy;
     }
 
     private static Object wildcard(@Nullable Object value, String hint) {
