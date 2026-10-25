@@ -62,6 +62,7 @@ import io.micronaut.data.model.runtime.UpdateBatchOperation;
 import io.micronaut.data.model.runtime.UpdateOperation;
 import io.micronaut.data.model.runtime.convert.AttributeConverter;
 import io.micronaut.data.operations.async.AsyncCapableRepository;
+import io.micronaut.data.operations.async.AsyncRepositoryOperations;
 import io.micronaut.data.operations.reactive.ReactiveCapableRepository;
 import io.micronaut.data.operations.reactive.ReactiveRepositoryOperations;
 import io.micronaut.data.runtime.convert.DataConversionService;
@@ -93,6 +94,7 @@ import java.util.Map;
 import java.util.Objects;
 import java.util.Optional;
 import java.util.concurrent.ConcurrentHashMap;
+import java.util.concurrent.Executor;
 import java.util.concurrent.ExecutorService;
 import java.util.function.Function;
 import java.util.stream.Stream;
@@ -208,13 +210,26 @@ public abstract class AbstractGraphRepositoryOperations extends AbstractReposito
     }
 
     @Override
-    public ExecutorAsyncOperations async() {
+    public AsyncRepositoryOperations async() {
+        return executorAsync();
+    }
+
+    private ExecutorAsyncOperations executorAsync() {
         return asyncOperations.get(() -> new ExecutorAsyncOperations(this, executorServiceResolver.get()));
+    }
+
+    /**
+     * The executor that runs asynchronous operations.
+     *
+     * @return The executor
+     */
+    protected Executor executor() {
+        return executorServiceResolver.get();
     }
 
     @Override
     public ReactiveRepositoryOperations reactive() {
-        return new ExecutorReactiveOperations(async(), conversionService);
+        return new ExecutorReactiveOperations(executorAsync(), conversionService);
     }
 
     @Override
