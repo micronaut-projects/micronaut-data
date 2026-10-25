@@ -235,54 +235,56 @@ public final class MongoQueryBuilder implements QueryBuilder {
      * and removed after it, or the repository's custom sort.
      */
     private void appendSort(AnnotationMetadata annotationMetadata, List<Order> orders, QueryState queryState, List<Map<String, Object>> pipeline) {
-        if (!orders.isEmpty()) {
-            Map<String, Object> sortObj = new LinkedHashMap<>();
-            Map<String, Object> computedFields = new LinkedHashMap<>();
-            Map<String, Object> nullRankFields = new LinkedHashMap<>();
-            boolean nullRanksOverComputedFields = false;
-            for (Order order : orders) {
-                Expression<?> orderExpression = order.getExpression();
-                String fieldName;
-                if (orderExpression instanceof io.micronaut.data.model.jpa.criteria.PersistentPropertyPath<?> persistentPropertyPath) {
-                    fieldName = asSortFieldName(persistentPropertyPath);
-                } else {
-                    // Ordering by a computed expression, which MongoDB can only do against a field
-                    fieldName = SORT_EXPRESSION_FIELD_PREFIX + computedFields.size();
-                    computedFields.put(fieldName, asAggregationExpression(orderExpression, queryState));
-                }
-                Nulls nullPrecedence = order instanceof DefaultOrder<?> defaultOrder ? defaultOrder.getNullPrecedence() : Nulls.NONE;
-                if (nullPrecedence != Nulls.NONE) {
-                    String rankField = NULL_RANK_FIELD_PREFIX + nullRankFields.size();
-                    nullRankFields.put(rankField, nullRankExpression(fieldName, nullPrecedence));
-                    sortObj.put(rankField, 1);
-                    nullRanksOverComputedFields |= computedFields.containsKey(fieldName);
-                }
-                sortObj.put(fieldName, order.isAscending() ? 1 : -1);
-            }
-            if (!computedFields.isEmpty() && !nullRanksOverComputedFields) {
-                // Nothing ranks a computed field, so one stage can define them all
-                computedFields.putAll(nullRankFields);
-                nullRankFields.clear();
-            }
-            if (!computedFields.isEmpty()) {
-                pipeline.add(Map.of(ADD_FIELDS, computedFields));
-            }
-            if (!nullRankFields.isEmpty()) {
-                // A second stage, as $addFields cannot reference a field defined by the same stage
-                pipeline.add(Map.of(ADD_FIELDS, nullRankFields));
-            }
-            pipeline.add(Map.of("$sort", sortObj));
-            List<String> temporaryFields = new ArrayList<>(computedFields.keySet());
-            temporaryFields.addAll(nullRankFields.keySet());
-            if (!temporaryFields.isEmpty()) {
-                pipeline.add(Map.of("$unset", temporaryFields));
-            }
-        } else {
+        if (orders.isEmpty()) {
             String customSort = annotationMetadata.stringValue(MongoAnnotations.SORT).orElse(null);
             if (customSort != null) {
                 pipeline.add(Map.of("$sort", new RawJsonValue(customSort)));
             }
+            return;
         }
+        SortStages stages = new SortStages();
+        for (Order order : orders) {
+            appendOrder(order, stages, queryState);
+        }
+        if (!stages.computedFields.isEmpty() && !stages.nullRanksOverComputedFields) {
+            // Nothing ranks a computed field, so one stage can define them all
+            stages.computedFields.putAll(stages.nullRankFields);
+            stages.nullRankFields.clear();
+        }
+        if (!stages.computedFields.isEmpty()) {
+            pipeline.add(Map.of(ADD_FIELDS, stages.computedFields));
+        }
+        if (!stages.nullRankFields.isEmpty()) {
+            // A second stage, as $addFields cannot reference a field defined by the same stage
+            pipeline.add(Map.of(ADD_FIELDS, stages.nullRankFields));
+        }
+        pipeline.add(Map.of("$sort", stages.sortObj));
+        List<String> temporaryFields = new ArrayList<>(stages.computedFields.keySet());
+        temporaryFields.addAll(stages.nullRankFields.keySet());
+        if (!temporaryFields.isEmpty()) {
+            pipeline.add(Map.of("$unset", temporaryFields));
+        }
+    }
+
+    /** Adds one order to the sort: a property, or a computed field, with its null rank when one is asked for. */
+    private void appendOrder(Order order, SortStages stages, QueryState queryState) {
+        Expression<?> orderExpression = order.getExpression();
+        String fieldName;
+        if (orderExpression instanceof io.micronaut.data.model.jpa.criteria.PersistentPropertyPath<?> persistentPropertyPath) {
+            fieldName = asSortFieldName(persistentPropertyPath);
+        } else {
+            // Ordering by a computed expression, which MongoDB can only do against a field
+            fieldName = SORT_EXPRESSION_FIELD_PREFIX + stages.computedFields.size();
+            stages.computedFields.put(fieldName, asAggregationExpression(orderExpression, queryState));
+        }
+        Nulls nullPrecedence = order instanceof DefaultOrder<?> defaultOrder ? defaultOrder.getNullPrecedence() : Nulls.NONE;
+        if (nullPrecedence != Nulls.NONE) {
+            String rankField = NULL_RANK_FIELD_PREFIX + stages.nullRankFields.size();
+            stages.nullRankFields.put(rankField, nullRankExpression(fieldName, nullPrecedence));
+            stages.sortObj.put(rankField, 1);
+            stages.nullRanksOverComputedFields |= stages.computedFields.containsKey(fieldName);
+        }
+        stages.sortObj.put(fieldName, order.isAscending() ? 1 : -1);
     }
 
     /** Adds the {@code $project} stage of the projection, or the repository's custom projection. */
@@ -1059,6 +1061,16 @@ public final class MongoQueryBuilder implements QueryBuilder {
             return "'" + Pattern.quote(regexPattern.value) + "'";
         }
         return value;
+    }
+
+    /**
+     * The fields a {@code $sort} stage needs defined around it.
+     */
+    private static final class SortStages {
+        private final Map<String, Object> sortObj = new LinkedHashMap<>();
+        private final Map<String, Object> computedFields = new LinkedHashMap<>();
+        private final Map<String, Object> nullRankFields = new LinkedHashMap<>();
+        private boolean nullRanksOverComputedFields;
     }
 
     /**
