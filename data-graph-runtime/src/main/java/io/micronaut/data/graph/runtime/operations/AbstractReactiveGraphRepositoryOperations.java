@@ -312,6 +312,19 @@ public abstract class AbstractReactiveGraphRepositoryOperations implements React
             });
         }
 
+        /**
+         * Records the instance that now stands for a node whose write completed, so that a related
+         * node that links back to it while its relationships are still being written sees the
+         * instance carrying the generated identifier rather than the original. The two differ for
+         * immutable entities such as records.
+         *
+         * @param instance The instance the save was called with
+         * @param written  The instance after the node was written
+         */
+        void written(Object instance, Object written) {
+            saved.put(instance, written);
+        }
+
         <T> Mono<Number> delete(RuntimePersistentEntity<T> entity, T instance) {
             return Mono.defer(() -> {
                 DeleteNodeOperation<T> operation = new DeleteNodeOperation<>(this, entity, instance);
@@ -332,11 +345,13 @@ public abstract class AbstractReactiveGraphRepositoryOperations implements React
      */
     private final class NodeOperation<T> extends AbstractReactiveEntityOperations<OperationContext, T, RuntimeException> {
         private final Persister persister;
+        private final T original;
         private @Nullable Object previousVersion;
 
         NodeOperation(Persister persister, RuntimePersistentEntity<T> entity, T instance, boolean insert) {
             super(persister.context, noCascade, operations.getConversionService(), operations.entityEventListener(), entity, instance, insert);
             this.persister = persister;
+            this.original = instance;
         }
 
         @Override
@@ -383,7 +398,10 @@ public abstract class AbstractReactiveGraphRepositoryOperations implements React
                     : instance;
                 AbstractGraphRepositoryOperations.GraphQuery addLabels = operations.planAddLabels(persistentEntity, written);
                 Mono<T> labelled = addLabels == null ? Mono.just(written) : persister.run(addLabels).thenReturn(written);
-                return labelled.flatMap(this::writeRelationships).flatMap(this::writeDynamicRelationships);
+                return labelled
+                    .doOnNext(labelledInstance -> persister.written(original, labelledInstance))
+                    .flatMap(this::writeRelationships)
+                    .flatMap(this::writeDynamicRelationships);
             });
         }
 

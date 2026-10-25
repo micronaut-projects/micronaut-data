@@ -19,4 +19,6 @@ public interface WalletGraph extends ReactorCrudRepository<Wallet, Long> {
 
     @PathLimit(3)
     Mono<Boolean> existsPathByPayments(Long from, Long to);
+
+    java.util.concurrent.CompletableFuture<Long> countByOwnerStartsWith(String prefix);
 }

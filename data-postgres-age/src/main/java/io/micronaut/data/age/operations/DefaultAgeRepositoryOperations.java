@@ -86,6 +86,7 @@ final class DefaultAgeRepositoryOperations extends AbstractGraphRepositoryOperat
     private static final Argument<Map<String, Object>> PARAMETERS = Argument.mapOf(String.class, Object.class);
 
     private final ConnectionOperations<Connection> connectionOperations;
+    private final DataSource dataSource;
     private final String graph;
     private final boolean createExtension;
     private final boolean createGraph;
@@ -94,6 +95,7 @@ final class DefaultAgeRepositoryOperations extends AbstractGraphRepositoryOperat
     private volatile boolean graphReady;
 
     DefaultAgeRepositoryOperations(@Parameter ConnectionOperations<Connection> connectionOperations,
+                                   @Parameter DataSource dataSource,
                                    JsonMapper jsonMapper,
                                    @Value("${micronaut.data.age.graph:graph}") String graph,
                                    @Value("${micronaut.data.age.create-extension:false}") boolean createExtension,
@@ -107,6 +109,7 @@ final class DefaultAgeRepositoryOperations extends AbstractGraphRepositoryOperat
                                    GraphSerde graphSerde) {
         super(new AgeCypherQueryBuilder(), dateTimeProvider, runtimeEntityRegistry, conversionService, attributeConverterRegistry, executorService, encoderRegistrars, graphSerde);
         this.connectionOperations = connectionOperations;
+        this.dataSource = dataSource;
         this.graph = AgeStatements.validateGraphName(graph);
         this.createExtension = createExtension;
         this.createGraph = createGraph;
@@ -255,27 +258,43 @@ final class DefaultAgeRepositoryOperations extends AbstractGraphRepositoryOperat
                 statement.execute("CREATE EXTENSION IF NOT EXISTS age");
             }
             statement.execute("LOAD 'age'");
-            statement.execute("SET search_path = ag_catalog, \"$user\", public");
+            // The agtype operators resolve through the search path. ag_catalog goes last, so that unqualified
+            // DDL run on the same pooled connection later still lands in the first schema of the path
+            statement.execute("SELECT set_config('search_path', current_setting('search_path') || ', ag_catalog', false)"
+                + " WHERE current_setting('search_path') NOT LIKE '%ag_catalog%'");
         }
         if (createGraph && !graphReady) {
             synchronized (this) {
                 if (!graphReady) {
-                    try (PreparedStatement exists = connection.prepareStatement("SELECT count(*) FROM ag_catalog.ag_graph WHERE name = ?")) {
-                        exists.setString(1, graph);
-                        try (ResultSet resultSet = exists.executeQuery()) {
-                            resultSet.next();
-                            if (resultSet.getInt(1) == 0) {
-                                try (PreparedStatement create = connection.prepareStatement("SELECT ag_catalog.create_graph(?)")) {
-                                    create.setString(1, graph);
-                                    create.execute();
-                                }
-                            }
-                        }
-                    }
+                    createGraph();
                     graphReady = true;
                 }
             }
         }
         preparedConnections.add(connection);
+    }
+
+    /**
+     * Creates the graph on a connection of its own that commits at once, so that the graph outlives a
+     * transaction of the caller that rolls back.
+     */
+    private void createGraph() throws SQLException {
+        try (Connection connection = dataSource.getConnection()) {
+            boolean autoCommit = connection.getAutoCommit();
+            connection.setAutoCommit(true);
+            try (PreparedStatement create = connection.prepareStatement(
+                "SELECT ag_catalog.create_graph(?) WHERE NOT EXISTS (SELECT 1 FROM ag_catalog.ag_graph WHERE name = ?)")) {
+                create.setString(1, graph);
+                create.setString(2, graph);
+                create.execute();
+            } catch (SQLException e) {
+                // Another instance created it between the check and the call
+                if (e.getMessage() == null || !e.getMessage().contains("already exists")) {
+                    throw e;
+                }
+            } finally {
+                connection.setAutoCommit(autoCommit);
+            }
+        }
     }
 }

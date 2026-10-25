@@ -63,6 +63,7 @@ import io.micronaut.data.model.runtime.UpdateBatchOperation;
 import io.micronaut.data.model.runtime.UpdateOperation;
 import io.micronaut.data.model.runtime.convert.AttributeConverter;
 import io.micronaut.data.operations.async.AsyncCapableRepository;
+import io.micronaut.data.operations.async.AsyncRepositoryOperations;
 import io.micronaut.data.operations.reactive.ReactiveCapableRepository;
 import io.micronaut.data.operations.reactive.ReactiveRepositoryOperations;
 import io.micronaut.data.runtime.convert.DataConversionService;
@@ -95,6 +96,7 @@ import java.util.Map;
 import java.util.Objects;
 import java.util.Optional;
 import java.util.concurrent.ConcurrentHashMap;
+import java.util.concurrent.Executor;
 import java.util.concurrent.ExecutorService;
 import java.util.function.Function;
 import java.util.stream.Stream;
@@ -210,13 +212,26 @@ public abstract class AbstractGraphRepositoryOperations extends AbstractReposito
     }
 
     @Override
-    public ExecutorAsyncOperations async() {
+    public AsyncRepositoryOperations async() {
+        return executorAsync();
+    }
+
+    private ExecutorAsyncOperations executorAsync() {
         return asyncOperations.get(() -> new ExecutorAsyncOperations(this, executorServiceResolver.get()));
+    }
+
+    /**
+     * The executor that runs asynchronous operations.
+     *
+     * @return The executor
+     */
+    protected Executor executor() {
+        return executorServiceResolver.get();
     }
 
     @Override
     public ReactiveRepositoryOperations reactive() {
-        return new ExecutorReactiveOperations(async(), conversionService);
+        return new ExecutorReactiveOperations(executorAsync(), conversionService);
     }
 
     @Override
@@ -415,7 +430,9 @@ public abstract class AbstractGraphRepositoryOperations extends AbstractReposito
     }
 
     /**
-     * Appends the ordering and limits requested by method arguments to a query.
+     * Appends the ordering and limits requested by method arguments to a query. A query that cannot
+     * take them, because it is an explicit query or already sorts or limits itself, is rejected
+     * rather than silently returned unsorted or unpaged.
      *
      * @param query  The query
      * @param entity The root entity
@@ -423,11 +440,17 @@ public abstract class AbstractGraphRepositoryOperations extends AbstractReposito
      * @param limit  The limit
      */
     protected void appendSortAndLimit(StringBuilder query, RuntimePersistentEntity<?> entity, Sort sort, Limit limit) {
-        boolean rootQuery = query.indexOf("MATCH (" + CypherQueryBuilder.ROOT) == 0;
-        if (sort != null && sort.isSorted() && rootQuery && query.indexOf(" ORDER BY ") < 0) {
+        if (sort != null && sort.isSorted()) {
+            boolean rootQuery = query.indexOf("MATCH (" + CypherQueryBuilder.ROOT) == 0;
+            if (!rootQuery || query.indexOf(" ORDER BY ") >= 0) {
+                throw new DataAccessException("Cannot apply the sort " + sort.getOrderBy() + " to the query [" + query + "]: sort an explicit query with its own ORDER BY clause");
+            }
             appendOrderBy(query, entity, sort);
         }
-        if (limit != null && limit.isLimited() && query.indexOf(" LIMIT ") < 0 && query.indexOf(" SKIP ") < 0) {
+        if (limit != null && limit.isLimited()) {
+            if (query.indexOf(" LIMIT ") >= 0 || query.indexOf(" SKIP ") >= 0) {
+                throw new DataAccessException("Cannot page the query [" + query + "]: it declares SKIP or LIMIT itself");
+            }
             query.append(queryBuilder.buildLimitAndOffset(limit.maxResults(), limit.offset()));
         }
     }
@@ -1133,6 +1156,19 @@ public abstract class AbstractGraphRepositoryOperations extends AbstractReposito
             return operation.getEntities();
         }
 
+        /**
+         * Records the instance that now stands for a node whose write completed, so that a related
+         * node that links back to it while its relationships are still being written sees the
+         * instance carrying the generated identifier rather than the original. The two differ for
+         * immutable entities such as records.
+         *
+         * @param instance The instance the save was called with
+         * @param written  The instance after the node was written
+         */
+        void written(Object instance, Object written) {
+            saved.put(instance, written);
+        }
+
         <T> int delete(RuntimePersistentEntity<T> entity, T instance) {
             DeleteNodeOperation<T> operation = new DeleteNodeOperation<>(this, entity, instance);
             operation.delete();
@@ -1151,11 +1187,13 @@ public abstract class AbstractGraphRepositoryOperations extends AbstractReposito
      */
     private final class NodeOperation<T> extends AbstractSyncEntityOperations<OperationContext, T, RuntimeException> {
         private final Persister persister;
+        private final T original;
         private @Nullable Object previousVersion;
 
         NodeOperation(Persister persister, RuntimePersistentEntity<T> entity, T instance, boolean insert) {
             super(persister.context, AbstractGraphRepositoryOperations.this.noCascade, entityEventRegistry, entity, AbstractGraphRepositoryOperations.this.conversionService, instance, insert);
             this.persister = persister;
+            this.original = instance;
         }
 
         @Override
@@ -1182,7 +1220,7 @@ public abstract class AbstractGraphRepositoryOperations extends AbstractReposito
             if (generatedId != null && identity != null) {
                 entity = updateEntityId((BeanProperty<T, Object>) identity.getProperty(), entity, generatedId);
             }
-            entity = new RelationshipWriter<>(persister, persistentEntity, entity).write();
+            entity = new RelationshipWriter<>(persister, persistentEntity, original, entity).write();
         }
     }
 
@@ -1226,9 +1264,12 @@ public abstract class AbstractGraphRepositoryOperations extends AbstractReposito
         @Override
         protected void execute() {
             List<Data> pending = new ArrayList<>();
+            // The instances the save was called with: a node write may replace an immutable instance
+            Map<Data, T> originals = new IdentityHashMap<>();
             for (Data d : entities) {
                 if (!d.vetoed) {
                     persister.saved.put(d.entity, d.entity);
+                    originals.put(d, d.entity);
                     pending.add(d);
                 }
             }
@@ -1239,7 +1280,9 @@ public abstract class AbstractGraphRepositoryOperations extends AbstractReposito
             }
             batches.forEach(this::writeNodes);
             for (Data d : pending) {
-                d.entity = new RelationshipWriter<>(persister, persistentEntity, d.entity).write();
+                T original = Objects.requireNonNull(originals.get(d));
+                d.entity = new RelationshipWriter<>(persister, persistentEntity, original, d.entity).write();
+                persister.saved.put(original, d.entity);
                 persister.saved.put(d.entity, d.entity);
             }
         }
@@ -1281,11 +1324,20 @@ public abstract class AbstractGraphRepositoryOperations extends AbstractReposito
     private final class RelationshipWriter<T> {
         private final Persister persister;
         private final RuntimePersistentEntity<T> persistentEntity;
+        private final T original;
         private T entity;
 
-        RelationshipWriter(Persister persister, RuntimePersistentEntity<T> persistentEntity, T entity) {
+        /**
+         * @param persister        The persister
+         * @param persistentEntity The entity
+         * @param original         The instance the save was called with
+         * @param entity           The instance after the node was written, which differs from the original
+         *                         for an immutable entity that received a generated identifier
+         */
+        RelationshipWriter(Persister persister, RuntimePersistentEntity<T> persistentEntity, T original, T entity) {
             this.persister = persister;
             this.persistentEntity = persistentEntity;
+            this.original = original;
             this.entity = entity;
         }
 
@@ -1294,6 +1346,7 @@ public abstract class AbstractGraphRepositoryOperations extends AbstractReposito
             if (addLabels != null) {
                 persister.run(addLabels);
             }
+            persister.written(original, entity);
             writeRelationships();
             writeDynamicRelationships();
             return entity;

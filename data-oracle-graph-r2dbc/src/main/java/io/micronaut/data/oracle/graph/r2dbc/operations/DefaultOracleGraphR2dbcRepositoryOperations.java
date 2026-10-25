@@ -35,8 +35,11 @@ import io.micronaut.data.model.runtime.PreparedQuery;
 import io.micronaut.data.model.runtime.RuntimeEntityRegistry;
 import io.micronaut.data.model.runtime.RuntimePersistentEntity;
 import io.micronaut.data.model.runtime.StoredQuery;
+import io.micronaut.data.operations.async.AsyncRepositoryOperations;
 import io.micronaut.data.r2dbc.operations.R2dbcRepositoryOperations;
 import io.micronaut.data.operations.reactive.ReactorReactiveRepositoryOperations;
+import io.micronaut.data.runtime.operations.ReactorToAsyncOperationsAdaptor;
+import io.micronaut.data.runtime.operations.internal.SynchronizedLazyValue;
 import io.micronaut.data.runtime.convert.DataConversionService;
 import io.micronaut.data.runtime.date.DateTimeProvider;
 import io.r2dbc.spi.Connection;
@@ -59,6 +62,7 @@ import java.util.function.Function;
 final class DefaultOracleGraphR2dbcRepositoryOperations extends AbstractGraphRepositoryOperations implements OracleGraphR2dbcRepositoryOperations {
 
     private final DefaultOracleGraphReactorRepositoryOperations reactiveOperations;
+    private final SynchronizedLazyValue<AsyncRepositoryOperations> asyncOperations = new SynchronizedLazyValue<>();
 
     DefaultOracleGraphR2dbcRepositoryOperations(@Parameter ReactorConnectionOperations<Connection> connectionOperations,
                                                 @Parameter R2dbcRepositoryOperations r2dbcOperations,
@@ -79,6 +83,12 @@ final class DefaultOracleGraphR2dbcRepositoryOperations extends AbstractGraphRep
     @Override
     public OracleGraphReactorRepositoryOperations reactive() {
         return reactiveOperations;
+    }
+
+    @Override
+    public AsyncRepositoryOperations async() {
+        // The blocking operations throw, so asynchronous methods run on the reactive operations
+        return asyncOperations.get(() -> new ReactorToAsyncOperationsAdaptor(reactiveOperations, executor()));
     }
 
     @Override
