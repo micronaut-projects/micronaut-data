@@ -232,30 +232,38 @@ public final class Agtype {
                 return sb.toString();
             }
             if (c == '\\') {
-                char escaped = next();
-                switch (escaped) {
-                    case 'n' -> sb.append('\n');
-                    case 'r' -> sb.append('\r');
-                    case 't' -> sb.append('\t');
-                    case 'b' -> sb.append('\b');
-                    case 'f' -> sb.append('\f');
-                    case 'u' -> {
-                        if (position + 4 > text.length()) {
-                            throw error("Unicode escape is cut short");
-                        }
-                        try {
-                            sb.append((char) Integer.parseInt(text.substring(position, position + 4), 16));
-                        } catch (NumberFormatException e) {
-                            throw error("Invalid unicode escape");
-                        }
-                        position += 4;
-                    }
-                    default -> sb.append(escaped);
-                }
+                escape(sb);
             } else {
                 sb.append(c);
             }
         }
+    }
+
+    private void escape(StringBuilder sb) {
+        char escaped = next();
+        switch (escaped) {
+            case 'n' -> sb.append('\n');
+            case 'r' -> sb.append('\r');
+            case 't' -> sb.append('\t');
+            case 'b' -> sb.append('\b');
+            case 'f' -> sb.append('\f');
+            case 'u' -> sb.append(unicodeEscape());
+            default -> sb.append(escaped);
+        }
+    }
+
+    private char unicodeEscape() {
+        if (position + 4 > text.length()) {
+            throw error("Unicode escape is cut short");
+        }
+        char c;
+        try {
+            c = (char) Integer.parseInt(text.substring(position, position + 4), 16);
+        } catch (NumberFormatException e) {
+            throw error("Invalid unicode escape");
+        }
+        position += 4;
+        return c;
     }
 
     private Object number() {
