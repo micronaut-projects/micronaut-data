@@ -130,14 +130,20 @@ final class DefaultAgeReactorRepositoryOperations extends AbstractReactiveGraphR
     @Override
     protected <R> Mono<R> withTransactionMono(AnnotationMetadata annotationMetadata, Function<ReactiveGraphSession, Mono<R>> work) {
         // Joins the transaction of the Reactor context, or begins one so that the statements of the write commit or roll back together
-        return transactionOperations.withTransactionMono(TransactionDefinition.DEFAULT,
-            status -> prepare(status.getConnection()).then(Mono.defer(() -> work.apply(new Session(status.getConnection())))));
+        return Mono.defer(() -> {
+            String graph = currentGraph();
+            return transactionOperations.withTransactionMono(TransactionDefinition.DEFAULT,
+                status -> prepare(status.getConnection(), graph).then(Mono.defer(() -> work.apply(new Session(status.getConnection(), graph)))));
+        });
     }
 
     @Override
     protected <R> Flux<R> withTransactionFlux(AnnotationMetadata annotationMetadata, Function<ReactiveGraphSession, Flux<R>> work) {
-        return transactionOperations.withTransactionFlux(TransactionDefinition.DEFAULT,
-            status -> prepare(status.getConnection()).thenMany(Flux.defer(() -> work.apply(new Session(status.getConnection())))));
+        return Flux.defer(() -> {
+            String graph = currentGraph();
+            return transactionOperations.withTransactionFlux(TransactionDefinition.DEFAULT,
+                status -> prepare(status.getConnection(), graph).thenMany(Flux.defer(() -> work.apply(new Session(status.getConnection(), graph)))));
+        });
     }
 
     /**
