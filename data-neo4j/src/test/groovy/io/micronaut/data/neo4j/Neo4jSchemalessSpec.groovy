@@ -48,6 +48,22 @@ class Neo4jSchemalessSpec extends Specification implements TestPropertyProvider 
         !found.attributes.containsKey("species")
     }
 
+    void "a schemaless property cannot take the name of a declared one"() {
+        given:
+        def pet = new Pet("Dino")
+        pet.set(name, "x")
+
+        when:
+        petRepository.save(pet)
+
+        then:
+        def e = thrown(io.micronaut.data.exceptions.DataAccessException)
+        e.message.contains("Dynamic attribute [$name]")
+
+        where:
+        name << ['name', 'species']
+    }
+
     void "query schemaless properties with explicit queries"() {
         given:
         def dino = new Pet("Dino")

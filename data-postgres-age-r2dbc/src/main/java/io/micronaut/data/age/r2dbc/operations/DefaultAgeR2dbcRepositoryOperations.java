@@ -35,7 +35,10 @@ import io.micronaut.data.model.Sort;
 import io.micronaut.data.model.runtime.AttributeConverterRegistry;
 import io.micronaut.data.model.runtime.RuntimeEntityRegistry;
 import io.micronaut.data.model.runtime.RuntimePersistentEntity;
+import io.micronaut.data.operations.async.AsyncRepositoryOperations;
 import io.micronaut.data.runtime.convert.DataConversionService;
+import io.micronaut.data.runtime.operations.ReactorToAsyncOperationsAdaptor;
+import io.micronaut.data.runtime.operations.internal.SynchronizedLazyValue;
 import io.micronaut.data.runtime.date.DateTimeProvider;
 import io.micronaut.json.JsonMapper;
 import io.r2dbc.spi.Connection;
@@ -58,6 +61,7 @@ import java.util.function.Function;
 final class DefaultAgeR2dbcRepositoryOperations extends AbstractGraphRepositoryOperations implements AgeR2dbcRepositoryOperations {
 
     private final DefaultAgeReactorRepositoryOperations reactiveOperations;
+    private final SynchronizedLazyValue<AsyncRepositoryOperations> asyncOperations = new SynchronizedLazyValue<>();
 
     DefaultAgeR2dbcRepositoryOperations(@Parameter ReactorConnectionOperations<Connection> connectionOperations,
                                         JsonMapper jsonMapper,
@@ -79,6 +83,12 @@ final class DefaultAgeR2dbcRepositoryOperations extends AbstractGraphRepositoryO
     @Override
     public AgeReactorRepositoryOperations reactive() {
         return reactiveOperations;
+    }
+
+    @Override
+    public AsyncRepositoryOperations async() {
+        // The blocking operations throw, so asynchronous methods run on the reactive operations
+        return asyncOperations.get(() -> new ReactorToAsyncOperationsAdaptor(reactiveOperations, executor()));
     }
 
     @Override

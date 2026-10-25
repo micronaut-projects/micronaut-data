@@ -52,6 +52,9 @@ class AgeR2dbcSpec extends Specification {
         movieRepository.findByTitle("Speed").block().description == "Get ready for rush hour"
         movieRepository.findByReleasedGreaterThan(1995).collectList().block()*.title == ["The Matrix"]
 
+        and: "asynchronous methods run on the reactive operations"
+        movieRepository.countByReleasedGreaterThan(1995).get() == 1L
+
         when:
         def matrix = movieRepository.findById("The Matrix").block()
         matrix.votes = 42

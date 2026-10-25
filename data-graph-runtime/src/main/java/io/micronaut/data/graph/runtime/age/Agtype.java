@@ -40,6 +40,7 @@ public final class Agtype {
 
     private final String text;
     private int position;
+    private @Nullable String numberText;
 
     private Agtype(String text) {
         this.text = text;
@@ -126,7 +127,7 @@ public final class Agtype {
                 }
                 yield new GraphPathValue(nodes, edges);
             }
-            case "numeric" -> value instanceof Number n ? new BigDecimal(n.toString()) : value;
+            case "numeric" -> value instanceof Number && numberText != null ? new BigDecimal(numberText) : value;
             case "float" -> value instanceof Number n ? n.doubleValue() : value;
             case "integer" -> value instanceof Number n ? n.longValue() : value;
             default -> value;
@@ -261,7 +262,14 @@ public final class Agtype {
         if (number.isEmpty()) {
             throw error("Unexpected character");
         }
-        return decimal ? (Object) Double.valueOf(number) : (Object) Long.valueOf(number);
+        // Kept for a following ::numeric annotation, which must not go through a double
+        numberText = number;
+        try {
+            return decimal ? (Object) Double.valueOf(number) : (Object) Long.valueOf(number);
+        } catch (NumberFormatException e) {
+            // Larger than a long: agtype integers are 64-bit, so this is a numeric literal
+            return new BigDecimal(number);
+        }
     }
 
     private void skipWhitespace() {

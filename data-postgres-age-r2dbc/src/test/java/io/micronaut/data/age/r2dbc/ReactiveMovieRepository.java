@@ -11,4 +11,6 @@ public interface ReactiveMovieRepository extends ReactorPageableRepository<Movie
     Flux<Movie> findByReleasedGreaterThan(int released);
 
     Mono<Movie> findByTitle(String title);
+
+    java.util.concurrent.CompletableFuture<Long> countByReleasedGreaterThan(int released);
 }

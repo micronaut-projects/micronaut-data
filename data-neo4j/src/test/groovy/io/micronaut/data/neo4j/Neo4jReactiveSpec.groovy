@@ -11,11 +11,14 @@ import io.micronaut.data.neo4j.features.Pet
 import io.micronaut.data.neo4j.features.ReactiveArticleRepository
 import io.micronaut.data.neo4j.features.ReactiveMovieRepository
 import io.micronaut.data.neo4j.features.ReactiveMovieService
+import io.micronaut.data.neo4j.features.Player
 import io.micronaut.data.neo4j.features.ReactiveMovieSpecificationRepository
 import io.micronaut.data.repository.jpa.criteria.PredicateSpecification
 import io.micronaut.data.neo4j.features.ReactivePetRepository
 import io.micronaut.data.neo4j.features.ReactiveTagRepository
+import io.micronaut.data.neo4j.features.ReactiveTeamRepository
 import io.micronaut.data.neo4j.features.Tag
+import io.micronaut.data.neo4j.features.Team
 import io.micronaut.data.neo4j.operations.Neo4jReactorRepositoryOperations
 import io.micronaut.data.neo4j.operations.Neo4jRepositoryOperations
 import io.micronaut.data.neo4j.transaction.Neo4jReactorTransactionOperations
@@ -43,6 +46,9 @@ class Neo4jReactiveSpec extends Specification implements TestPropertyProvider {
 
     @Inject
     ReactiveMovieSpecificationRepository movieSpecificationRepository
+
+    @Inject
+    ReactiveTeamRepository teamRepository
 
     @Inject
     ReactiveMovieService movieService
@@ -131,6 +137,23 @@ class Neo4jReactiveSpec extends Specification implements TestPropertyProvider {
 
         then:
         count("MATCH (p:Person) RETURN count(p)") == 2
+    }
+
+    void "save immutable records that reference each other reactively"() {
+        given: "a team whose player refers back to the team instance being saved"
+        def players = []
+        def team = new Team(null, "Wanderers", players)
+        players << new Player(null, "Ada", team)
+
+        when:
+        def saved = teamRepository.save(team).block()
+
+        then:
+        saved.id() != null
+        saved.players()*.id().every { it != null }
+        teamRepository.findByName("Wanderers").block().players()*.name() == ["Ada"]
+        count("MATCH (p:Player)-[:PLAYS_FOR]->(t:Team) RETURN count(t)") == 1
+        count("MATCH (t:Team) RETURN count(t)") == 1
     }
 
     void "save dynamic relationships and labels reactively"() {

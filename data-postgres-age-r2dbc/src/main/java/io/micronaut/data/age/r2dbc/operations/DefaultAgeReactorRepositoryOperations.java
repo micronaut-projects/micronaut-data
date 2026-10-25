@@ -106,14 +106,28 @@ final class DefaultAgeReactorRepositoryOperations extends AbstractReactiveGraphR
             prepare = prepare.then(execute(connection, "CREATE EXTENSION IF NOT EXISTS age"));
         }
         prepare = prepare.then(execute(connection, "LOAD 'age'"))
-            // The operators of agtype, which Cypher writes use, are resolved through the search path
-            .then(execute(connection, "SET search_path = ag_catalog, \"$user\", public"));
+            // The operators of agtype, which Cypher writes use, are resolved through the search path. ag_catalog
+            // goes last, so that unqualified DDL run on the same pooled connection later still lands in the first
+            // schema of the path
+            .then(execute(connection, "SELECT set_config('search_path', current_setting('search_path') || ', ag_catalog', false)"
+                + " WHERE current_setting('search_path') NOT LIKE '%ag_catalog%'"));
         if (createGraph && !graphReady) {
-            // The graph name is a validated identifier
-            String sql = "SELECT ag_catalog.create_graph('" + graph + "') WHERE NOT EXISTS (SELECT 1 FROM ag_catalog.ag_graph WHERE name = '" + graph + "')";
-            prepare = prepare.then(execute(connection, sql)).doOnSuccess(ignored -> graphReady = true);
+            prepare = prepare.then(createGraph());
         }
         return prepare.onErrorMap(R2dbcException.class, e -> new DataAccessException("Error preparing Apache AGE graph [" + graph + "]: " + e.getMessage(), e));
+    }
+
+    /**
+     * Creates the graph on a connection of its own, outside any transaction of the caller, so that the graph
+     * outlives a transaction that rolls back.
+     */
+    private Mono<Void> createGraph() {
+        // The graph name is a validated identifier
+        String sql = "SELECT ag_catalog.create_graph('" + graph + "') WHERE NOT EXISTS (SELECT 1 FROM ag_catalog.ag_graph WHERE name = '" + graph + "')";
+        return connectionOperations.withConnectionMono(ConnectionDefinition.REQUIRES_NEW, status -> execute(status.getConnection(), sql))
+            // Another instance created it between the check and the call
+            .onErrorResume(R2dbcException.class, e -> e.getMessage() != null && e.getMessage().contains("already exists") ? Mono.empty() : Mono.error(e))
+            .doOnSuccess(ignored -> graphReady = true);
     }
 
     private static Mono<Void> execute(Connection connection, String sql) {
@@ -125,8 +139,6 @@ final class DefaultAgeReactorRepositoryOperations extends AbstractReactiveGraphR
     /**
      * Runs statements built by the AGE query builder, whose result columns carry the names of the columns of their
      * Cypher query.
-     *
-     * @param connection The connection
      */
     private final class Session implements ReactiveGraphSession {
 

@@ -329,6 +329,19 @@ public abstract class AbstractReactiveGraphRepositoryOperations implements React
             });
         }
 
+        /**
+         * Records the instance that now stands for a node whose write completed, so that a related
+         * node that links back to it while its relationships are still being written sees the
+         * instance carrying the generated identifier rather than the original. The two differ for
+         * immutable entities such as records.
+         *
+         * @param instance The instance the save was called with
+         * @param written  The instance after the node was written
+         */
+        void written(Object instance, Object written) {
+            saved.put(instance, written);
+        }
+
         <T> Mono<Number> delete(RuntimePersistentEntity<T> entity, T instance) {
             return Mono.defer(() -> {
                 DeleteNodeOperation<T> operation = new DeleteNodeOperation<>(this, entity, instance);
@@ -349,11 +362,13 @@ public abstract class AbstractReactiveGraphRepositoryOperations implements React
      */
     private final class NodeOperation<T> extends AbstractReactiveEntityOperations<OperationContext, T, RuntimeException> {
         private final Persister persister;
+        private final T original;
         private @Nullable Object previousVersion;
 
         NodeOperation(Persister persister, RuntimePersistentEntity<T> entity, T instance, boolean insert) {
             super(persister.context, noCascade, operations.getConversionService(), operations.entityEventListener(), entity, instance, insert);
             this.persister = persister;
+            this.original = instance;
         }
 
         @Override
@@ -398,6 +413,7 @@ public abstract class AbstractReactiveGraphRepositoryOperations implements React
                 T written = generatedId != null && identity != null
                     ? updateEntityId((BeanProperty<T, Object>) identity.getProperty(), instance, generatedId)
                     : instance;
+                persister.written(original, written);
                 return new RelationshipWriter<>(persister, persistentEntity).write(written);
             });
         }
@@ -447,10 +463,13 @@ public abstract class AbstractReactiveGraphRepositoryOperations implements React
         protected void execute() {
             entities = entities.flatMap(list -> {
                 List<Data> pending = new ArrayList<>();
+                // The instances the save was called with: a node write may replace an immutable instance
+                Map<Data, T> originals = new IdentityHashMap<>();
                 Map<AbstractGraphRepositoryOperations.NodeBatch, List<Data>> batches = new LinkedHashMap<>();
                 for (Data d : list) {
                     if (!d.vetoed) {
                         persister.saved.put(d.entity, d.entity);
+                        originals.put(d, d.entity);
                         pending.add(d);
                         batches.computeIfAbsent(operations.planNodeBatch(persistentEntity, d.entity, previousVersions.get(d)), k -> new ArrayList<>()).add(d);
                     }
@@ -458,11 +477,16 @@ public abstract class AbstractReactiveGraphRepositoryOperations implements React
                 return Flux.fromIterable(batches.entrySet())
                     .concatMap(batch -> writeNodes(batch.getKey(), batch.getValue()))
                     .then(Flux.fromIterable(pending)
-                        .concatMap(d -> new RelationshipWriter<>(persister, persistentEntity).write(d.entity).map(written -> {
-                            d.entity = written;
-                            persister.saved.put(written, written);
-                            return d;
-                        }))
+                        .concatMap(d -> {
+                            T original = Objects.requireNonNull(originals.get(d));
+                            persister.written(original, d.entity);
+                            return new RelationshipWriter<>(persister, persistentEntity).write(d.entity).map(written -> {
+                                d.entity = written;
+                                persister.saved.put(original, written);
+                                persister.saved.put(written, written);
+                                return d;
+                            });
+                        })
                         .then(Mono.just(list)));
             });
         }

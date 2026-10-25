@@ -226,27 +226,50 @@ final class DefaultAgeRepositoryOperations extends AbstractGraphRepositoryOperat
                 statement.execute("CREATE EXTENSION IF NOT EXISTS age");
             }
             statement.execute("LOAD 'age'");
-            statement.execute("SET search_path = ag_catalog, \"$user\", public");
+            // The agtype operators resolve through the search path. ag_catalog goes last, so that unqualified
+            // DDL run on the same pooled connection later still lands in the first schema of the path
+            statement.execute("SELECT set_config('search_path', current_setting('search_path') || ', ag_catalog', false)"
+                + " WHERE current_setting('search_path') NOT LIKE '%ag_catalog%'");
         }
         if (createGraph && !graphReady) {
             synchronized (this) {
                 if (!graphReady) {
-                    try (PreparedStatement exists = connection.prepareStatement("SELECT count(*) FROM ag_catalog.ag_graph WHERE name = ?")) {
-                        exists.setString(1, graph);
-                        try (ResultSet resultSet = exists.executeQuery()) {
-                            resultSet.next();
-                            if (resultSet.getInt(1) == 0) {
-                                try (PreparedStatement create = connection.prepareStatement("SELECT ag_catalog.create_graph(?)")) {
-                                    create.setString(1, graph);
-                                    create.execute();
-                                }
-                            }
-                        }
-                    }
+                    createGraph();
                     graphReady = true;
                 }
             }
         }
         preparedConnections.add(connection);
+    }
+
+    /**
+     * Creates the graph on a connection of its own that commits at once, so that the graph outlives a
+     * transaction of the caller that rolls back.
+     */
+    private void createGraph() {
+        // A connection of its own, outside any transaction of the caller, that commits at once
+        connectionOperations.execute(ConnectionDefinition.REQUIRES_NEW, status -> {
+            Connection connection = status.getConnection();
+            try {
+                boolean autoCommit = connection.getAutoCommit();
+                connection.setAutoCommit(true);
+                try (PreparedStatement create = connection.prepareStatement(
+                    "SELECT ag_catalog.create_graph(?) WHERE NOT EXISTS (SELECT 1 FROM ag_catalog.ag_graph WHERE name = ?)")) {
+                    create.setString(1, graph);
+                    create.setString(2, graph);
+                    create.execute();
+                } catch (SQLException e) {
+                    // Another instance created it between the check and the call
+                    if (e.getMessage() == null || !e.getMessage().contains("already exists")) {
+                        throw e;
+                    }
+                } finally {
+                    connection.setAutoCommit(autoCommit);
+                }
+            } catch (SQLException e) {
+                throw new DataAccessException("Error creating Apache AGE graph [" + graph + "]: " + e.getMessage(), e);
+            }
+            return null;
+        });
     }
 }
