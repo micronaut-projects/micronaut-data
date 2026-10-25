@@ -60,5 +60,21 @@ class TextSearchDialectSpec extends Specification {
                                        java.util.function.Consumer appendExpression, java.util.function.Function appendParameter) {
             }
         }.capabilities().isEmpty()
+
+    void "a query language that is not a configuration name is rejected before it reaches the SQL"() {
+        when:
+        TextSearchDialect.resolveLanguage([], new io.micronaut.data.model.search.TextMatchOptions(Map.of(), 0, language))
+
+        then:
+        thrown(IllegalArgumentException)
+
+        where:
+        language << ["english'", "english',title),'') OR 1=1 --", "en-US", "english;"]
+    }
+
+    void "a configuration name is accepted as the query language"() {
+        expect:
+        TextSearchDialect.resolveLanguage([], new io.micronaut.data.model.search.TextMatchOptions(Map.of(), 0, "german")) == "german"
+        io.micronaut.data.model.search.SearchQuery.builder("x").language("simple").build().language == "simple"
     }
 }
