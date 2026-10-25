@@ -19,6 +19,8 @@ class Friend {
     private List<Friend> friends = new ArrayList<>();
     @Relationship(type = "WORKS_WITH", direction = Direction.UNDIRECTED)
     private List<Friend> colleagues = new ArrayList<>();
+    @Relationship("FRIENDS_OF_FRIENDS")
+    private List<Friend> acquaintances = new ArrayList<>();
 
     public String getName() { return name; }
     public void setName(String name) { this.name = name; }
@@ -26,6 +28,8 @@ class Friend {
     public void setFriends(List<Friend> friends) { this.friends = friends; }
     public List<Friend> getColleagues() { return colleagues; }
     public void setColleagues(List<Friend> colleagues) { this.colleagues = colleagues; }
+    public List<Friend> getAcquaintances() { return acquaintances; }
+    public void setAcquaintances(List<Friend> acquaintances) { this.acquaintances = acquaintances; }
 }
 '''
 
@@ -46,6 +50,7 @@ interface FriendRepository extends CrudRepository<Friend, String> {
     Optional<GraphPath<Friend>> findPath(String from, String to);
     List<GraphPath<Friend>> findAllShortestPaths(String from, String to);
     List<GraphPath<Friend>> findAllPathsByFriendsOrColleagues(String from, String to, @PathLimit int maxDepth);
+    List<GraphPath<Friend>> findAllPathsByAcquaintancesOrFriends(String from, String to, @PathLimit int maxDepth);
     boolean existsPath(String from, String to);
     @PathLimit(3)
     long countPaths(String from, String to);
@@ -70,6 +75,7 @@ interface FriendRepository extends CrudRepository<Friend, String> {
         'findPath'                          | 'MATCH (s:Friend), (e:Friend) WHERE s.name = $p0 AND e.name = $p1 AND s <> e MATCH p = shortestPath((s)-[*1..4]-(e)) RETURN p'
         'findAllShortestPaths'              | 'MATCH (s:Friend), (e:Friend) WHERE s.name = $p0 AND e.name = $p1 AND s <> e MATCH p = allShortestPaths((s)-[*]-(e)) RETURN p'
         'findAllPathsByFriendsOrColleagues' | 'MATCH (s:Friend), (e:Friend) WHERE s.name = $p0 AND e.name = $p1 MATCH p = (s)-[:FRIENDS|WORKS_WITH*1..$__pathLimit]-(e) RETURN p ORDER BY length(p)'
+        'findAllPathsByAcquaintancesOrFriends' | 'MATCH (s:Friend), (e:Friend) WHERE s.name = $p0 AND e.name = $p1 MATCH p = (s)-[:FRIENDS_OF_FRIENDS|FRIENDS*1..$__pathLimit]->(e) RETURN p ORDER BY length(p)'
         'existsPath'                        | 'MATCH (s:Friend), (e:Friend) WHERE s.name = $p0 AND e.name = $p1 AND s <> e MATCH p = shortestPath((s)-[*]-(e)) RETURN true AS result LIMIT 1'
         'countPaths'                        | 'MATCH (s:Friend), (e:Friend) WHERE s.name = $p0 AND e.name = $p1 MATCH p = (s)-[*1..3]-(e) RETURN count(p) AS result'
         'findRelationship'                  | 'MATCH (s:Friend)-[r]-(e:Friend) WHERE s.name = $p0 AND e.name = $p1 RETURN r, startNode(r) AS f, endNode(r) AS t'

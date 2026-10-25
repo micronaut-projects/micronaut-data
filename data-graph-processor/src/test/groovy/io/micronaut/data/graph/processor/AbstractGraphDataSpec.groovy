@@ -113,6 +113,10 @@ $source
         return metadata.getAnnotationMetadata().stringValue(Query).orElseThrow()
     }
 
+    static String getRawQuery(AnnotationMetadataProvider metadata) {
+        return metadata.getAnnotationMetadata().stringValue(Query, DataMethod.META_MEMBER_RAW_QUERY).orElseThrow()
+    }
+
     static List<String> getParameterNames(AnnotationMetadataProvider metadata) {
         return metadata.getAnnotationMetadata().getAnnotation(DataMethod)
             .getAnnotations(DataMethod.META_MEMBER_PARAMETERS, DataMethodQueryParameter)
