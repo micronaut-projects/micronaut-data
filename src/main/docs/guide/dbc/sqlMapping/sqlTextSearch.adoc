@@ -14,6 +14,8 @@ snippet::example.Book[project-base="doc-examples/jdbc-search-example", source="m
 
 A property annotated ann:data.annotation.search.Language[] holds the language of each row, with the entity language as the fallback when it is `null`: PostgreSQL uses it as the text search configuration of the row's `tsvector`, `to_tsvector(mn_regconfig(coalesce(language,'english')), ...)`, in the queries and in the generated index, while the query string keeps the entity language; MongoDB passes it as `language_override`. Oracle, Elasticsearch and OpenSearch ignore it, as their analysis is fixed per index.
 
+On PostgreSQL every `@Language` value must name an existing text search configuration (`english`, `german`, `simple`, ...): an unknown value fails the insert, because the GIN index expression casts it, and fails a search that reaches the row. Validate the values in the application or constrain the column with a `CHECK` or an enum. Schema generation creates the `mn_regconfig` function with `CREATE OR REPLACE FUNCTION`, which needs the `CREATE` privilege on the schema and fails when another role owns the function; the function pins its `search_path` to `pg_catalog`.
+
 With schema generation enabled, Micronaut Data creates a `GIN` expression index over the combined `tsvector` of the search fields, so the generated queries use the index. For a production schema, create the same index with your migration tool; the expression is printed in the generated DDL.
 
 == Searching
@@ -51,7 +53,7 @@ snippet::example.BookRepository[project-base="doc-examples/jdbc-search-example",
 |`SearchAll` |every term |`to_tsquery('a' & 'b')`
 |`SearchPhrase` |adjacent terms, in order |`to_tsquery('a b')`
 |`SearchPrefix` |every term as a prefix |`to_tsquery('a:*' & 'b:*')`
-|`SearchFuzzy` |edit-distance match |not supported, fails at compile time
+|`SearchFuzzy` |terms with typos |`pg_trgm` word similarity (`mn_term.t <% column`), see the notes below
 |===
 
 On Oracle the same keywords render `CONTAINS` queries: `{a} | {b}`, `{a} & {b}`, `{a b}`, `a% & b%` and `fuzzy(a,60,100)` respectively, so `SearchFuzzy` is available there.
@@ -68,13 +70,13 @@ snippet::example.BookService[project-base="doc-examples/jdbc-search-example", so
 <2> `fields` restricts the search to some of the `@SearchField` properties; without it every search field is searched.
 <3> `mode` selects how the terms match: `ANY` (the default), `ALL`, `PHRASE`, `PREFIX` or `FUZZY`, like the `Search`, `SearchAll`, `SearchPhrase`, `SearchPrefix` and `SearchFuzzy` keywords.
 <4> `search(SearchQuery)` returns the hits ordered by relevance.
-<5> `search(SearchQuery, Pageable)` returns one page; a sort on the pageable replaces the relevance order.
+<5> `search(SearchQuery, Pageable)` returns one page; a sort on the pageable replaces the relevance order. Its `totalHits()` is the number of hits on the page, as the SQL stores and MongoDB do not count the matches while searching; use `countHits` for the total. Elasticsearch and OpenSearch report the real total.
 
 `minScore` restricts the hits to those whose score reaches the threshold, as a predicate the store evaluates (`ts_rank_cd(...) >= ?`, `SCORE(n) >= ?`, `min_score`), so pages are full and `totalHits` counts only the hits above it; MongoDB `$text` cannot restrict on its score and throws api:data.model.search.UnsupportedSearchFeatureException[]. On a hybrid search the threshold compares the fused score instead. A query is compiled at runtime through the same criteria API as a derived method, so a store that lacks the requested mode throws api:data.model.search.UnsupportedSearchFeatureException[] when the method runs rather than at compile time.
 
 `boost(field, factor)` weighs the matches of a property at query time, replacing its `@SearchField(weight)`: Oracle multiplies the field's `SCORE(n)`, Elasticsearch and OpenSearch boost the field (`title^2`) and MongoDB Search sets the operator's `score.boost`; PostgreSQL and MongoDB `$text` throw `UnsupportedSearchFeatureException`. `fuzzy(maxEdits)` selects the `FUZZY` mode with the edit distance: Elasticsearch, OpenSearch and MongoDB Search honour one or two edits (`term~2`, `fuzzy.maxEdits`), Oracle's `fuzzy` operator has a fixed similarity and rejects more than one edit. `language(name)` analyses the query with another text search configuration than the entity's: PostgreSQL passes it to `to_tsvector` and `to_tsquery` in place of `@Searchable(language)`, MongoDB `$text` sets `$language`, and Elasticsearch and OpenSearch analyse the query with the language's analyzer (`simple` disables stemming); Oracle and MongoDB Search, whose analysis is fixed per index, throw `UnsupportedSearchFeatureException`. The criteria API carries all three as api:data.model.search.TextMatchOptions[] on `textMatch`, `searchScore` and `searchHighlight`.
 
-`syntax(SearchSyntax.NATIVE)`, or the `SearchNative` method keyword, passes the search string to the store unparsed instead of the portable grammar: PostgreSQL takes `tsquery` syntax (`programming & !kotlin`), Oracle Text a `CONTAINS` query (`programming NOT kotlin`), MongoDB `$text` its search string (`programming -kotlin`), MongoDB Search a `queryString` operator with the first searched field as `defaultPath`, and Elasticsearch and OpenSearch a `query_string` query over the searched fields. A malformed native query fails at the store, so reserve it for trusted input; the portable grammar escapes what it binds.
+`syntax(SearchSyntax.NATIVE)`, or the `SearchNative` method keyword, passes the search string to the store unparsed instead of the portable grammar: PostgreSQL takes `tsquery` syntax (`programming & !kotlin`), Oracle Text a `CONTAINS` query (`programming NOT kotlin`), MongoDB `$text` its search string (`programming -kotlin`), MongoDB Search a `queryString` operator with the first searched field as `defaultPath`, and Elasticsearch and OpenSearch a `query_string` query over the searched fields. A malformed native query fails at the store, and a well-formed one can widen the search: on Elasticsearch and OpenSearch `field:value` reaches fields outside the search fields, so reserve the native syntax for trusted input; the portable grammar escapes what it binds. Leading wildcards are disabled in the Elasticsearch and OpenSearch `query_string`.
 
 snippet::example.BookService[project-base="doc-examples/elasticsearch-search-example", source="main", tags="options"]
 
@@ -92,7 +94,7 @@ snippet::example.BookService[project-base="doc-examples/jdbc-search-example", so
 
 A property declared `@SearchField(highlightable = true)` is highlighted by default: a `search` method returning `SearchResults` projects the fragment of every highlightable property it searches, and `SearchQuery.highlight()` without arguments requests the highlightable properties.
 
-The tags are the same on every store, so a client can render them without knowing the backend. PostgreSQL renders `ts_headline`, Oracle `CTX_DOC.POLICY_SNIPPET`, the document stores the `highlight` request clause, and MongoDB Search the `highlight` option of `$search` with the `searchHighlights` metadata. MongoDB `$text` cannot highlight and throws api:data.model.search.UnsupportedSearchFeatureException[]. The criteria API exposes the same projection as `PersistentEntityCriteriaBuilder.searchHighlight(field, query, MatchMode)`.
+The tags are the same on every store, so a client can render them without knowing the backend. A fragment is document text with the tags inserted and is not HTML-escaped, so it carries any markup stored in the document; before putting fragments into an HTML page, use `SearchResult.escapedHighlights()`, which escapes the text and keeps only the `<em>` and `</em>` tags. PostgreSQL renders `ts_headline`, Oracle `CTX_DOC.POLICY_SNIPPET`, the document stores the `highlight` request clause, and MongoDB Search the `highlight` option of `$search` with the `searchHighlights` metadata. MongoDB `$text` cannot highlight and throws api:data.model.search.UnsupportedSearchFeatureException[]. The criteria API exposes the same projection as `PersistentEntityCriteriaBuilder.searchHighlight(field, query, MatchMode)`.
 
 == Hybrid search
 
@@ -138,7 +140,9 @@ The criteria builder exposes the same predicate through `PersistentEntityCriteri
 
 == Index operations
 
-Schema generation creates the search indexes with the tables. To manage them while the application runs, inject api:data.runtime.search.SearchIndexOperations[]: `exists`, `create`, `drop`, `recreate` and `sync` take the entity class. On a JDBC datasource (one bean per datasource) they run the dialect's DDL, `sync` runs `CTX_DDL.SYNC_INDEX` on Oracle Text and nothing on PostgreSQL, whose GIN indexes are always current. On MongoDB they manage the `$text` index or the search and vector search indexes, and `sync` waits until the search indexes are queryable. On Elasticsearch and OpenSearch the index holds the documents, so `drop` removes them; `sync` refreshes the index. The document stores also take `micronaut.data.search.schema-generate` (`CREATE` by default, `CREATE_DROP` or `NONE`) for the indexes created on startup.
+Schema generation creates the search indexes with the tables. To manage them while the application runs, inject api:data.runtime.search.SearchIndexOperations[]: `exists`, `create`, `drop`, `recreate` and `sync` take the entity class. On a JDBC datasource (one bean per datasource) they run the dialect's DDL, `sync` runs `CTX_DDL.SYNC_INDEX` on Oracle Text and nothing on PostgreSQL, whose GIN indexes are always current. On MongoDB they manage the `$text` index or the search and vector search indexes, and `sync` waits until the search indexes are queryable. On Elasticsearch and OpenSearch the index holds the documents, so `drop` removes them; `sync` refreshes the index. An R2DBC datasource has no `SearchIndexOperations` bean, as the operations are blocking; create its indexes with schema generation or a migration tool. The document stores also take `micronaut.data.search.schema-generate` (`CREATE` by default, `CREATE_DROP` or `NONE`) for the indexes created on startup.
+
+WARNING: On Elasticsearch and OpenSearch `drop`, `recreate` and `schema-generate: CREATE_DROP` delete the stored documents, not only an index over them. Keep them out of reach of untrusted callers and use `CREATE_DROP` for tests only.
 
 == Capability matrix
 
@@ -152,6 +156,7 @@ The portable API is the same on every store; the table lists which optional capa
 |Prefix (`SearchPrefix`) |yes |yes |no |yes |yes
 |Fuzzy (`SearchFuzzy`) |yes, `pg_trgm` |yes |no |yes |yes
 |Field scope (`findByTitleSearch` searches only `title`) |yes |yes |no, the whole text index |yes |yes
+|`SearchAll` over several fields matches terms spread across them |yes |no, every term in one field |yes |yes |yes
 |Index-time weights (`@SearchField(weight)`) |yes |yes |yes |yes, as boosts |yes
 |Query-time boosts (`SearchQuery.boost`) |no |yes |no |yes |yes
 |Edit distance (`SearchQuery.fuzzy(n)`) |no |no, one edit |no |yes, up to 2 |yes, up to 2
