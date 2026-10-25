@@ -35,6 +35,7 @@ import io.micronaut.data.graph.runtime.GraphValueEncoderRegistrar;
 import io.micronaut.data.graph.runtime.serde.GraphSerde;
 import io.micronaut.data.graph.runtime.GraphValueEncoders;
 import io.micronaut.data.graph.runtime.age.AgeConfiguration;
+import io.micronaut.data.graph.runtime.age.AgeGraphTenantResolver;
 import io.micronaut.data.graph.runtime.age.AgeParameters;
 import io.micronaut.data.graph.runtime.age.Agtype;
 import io.micronaut.data.graph.runtime.operations.AbstractGraphRepositoryOperations;
@@ -62,12 +63,16 @@ import java.util.List;
 import java.util.Map;
 import java.util.Set;
 import java.util.WeakHashMap;
+import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.ExecutorService;
 import java.util.function.Function;
 
 /**
  * Repository operations for a graph in PostgreSQL with Apache AGE. Each Cypher query runs through the
  * {@code cypher()} function on the JDBC connection of the current transaction, or on a connection opened for the operation.
+ *
+ * <p>The graph of an operation is that of the current tenant when there is an {@link AgeGraphTenantResolver}, else
+ * the graph configured for the data source. Graphs are created on first use, once per name.</p>
  *
  * @author graemerocher
  * @since 5.3.0
@@ -79,12 +84,14 @@ final class DefaultAgeRepositoryOperations extends AbstractGraphRepositoryOperat
     private static final Logger LOG = LoggerFactory.getLogger(DefaultAgeRepositoryOperations.class);
 
     private final ConnectionOperations<Connection> connectionOperations;
-    private final String graph;
+    private final String defaultGraph;
+    private final @Nullable AgeGraphTenantResolver tenantResolver;
     private final boolean createExtension;
     private final boolean createGraph;
     private final JsonMapper jsonMapper;
     private final Set<Connection> preparedConnections = Collections.synchronizedSet(Collections.newSetFromMap(new WeakHashMap<>()));
-    private volatile boolean graphReady;
+    private final Set<String> readyGraphs = ConcurrentHashMap.newKeySet();
+    private volatile List<String> indexStatements = List.of();
 
     DefaultAgeRepositoryOperations(@Parameter ConnectionOperations<Connection> connectionOperations,
                                    @Parameter String dataSourceName,
@@ -96,13 +103,23 @@ final class DefaultAgeRepositoryOperations extends AbstractGraphRepositoryOperat
                                    AttributeConverterRegistry attributeConverterRegistry,
                                    @Named("io") @Nullable ExecutorService executorService,
                                    List<GraphValueEncoderRegistrar> encoderRegistrars,
-                                   GraphSerde graphSerde) {
+                                   GraphSerde graphSerde,
+                                   @Nullable AgeGraphTenantResolver tenantResolver) {
         super(new AgeCypherQueryBuilder(), dateTimeProvider, runtimeEntityRegistry, conversionService, attributeConverterRegistry, executorService, encoderRegistrars, graphSerde);
         this.connectionOperations = connectionOperations;
-        this.graph = AgeStatements.validateGraphName(configuration.graphFor(dataSourceName));
+        this.defaultGraph = AgeStatements.validateGraphName(configuration.graphFor(dataSourceName));
+        this.tenantResolver = tenantResolver;
         this.createExtension = configuration.isCreateExtension();
         this.createGraph = configuration.isCreateGraph();
         this.jsonMapper = jsonMapper;
+    }
+
+    /**
+     * The graph of the current tenant, or the configured graph when there is no tenant.
+     */
+    private String currentGraph() {
+        String tenantGraph = tenantResolver == null ? null : tenantResolver.resolveTenantGraph();
+        return tenantGraph == null ? defaultGraph : AgeStatements.validateGraphName(tenantGraph);
     }
 
     @Override
@@ -111,7 +128,8 @@ final class DefaultAgeRepositoryOperations extends AbstractGraphRepositoryOperat
     }
 
     /**
-     * Creates the vertex label tables and indexes of entities in the graph.
+     * Creates the vertex label tables and indexes of entities in the configured graph, and in each tenant graph
+     * created later.
      *
      * @param entityTypes The entity types
      */
@@ -120,24 +138,29 @@ final class DefaultAgeRepositoryOperations extends AbstractGraphRepositoryOperat
         if (statements.isEmpty()) {
             return;
         }
+        this.indexStatements = statements;
         connectionOperations.execute(ConnectionDefinition.DEFAULT, status -> {
             Connection connection = status.getConnection();
             try {
-                prepare(connection);
-                try (Statement statement = connection.createStatement()) {
-                    for (String sql : statements) {
-                        String forGraph = AgeStatements.forGraph(sql, graph);
-                        if (LOG.isDebugEnabled()) {
-                            LOG.debug("Creating an Apache AGE index: {}", forGraph);
-                        }
-                        statement.execute(forGraph);
-                    }
-                }
+                prepare(connection, defaultGraph);
+                createIndexes(connection, defaultGraph);
             } catch (SQLException e) {
-                throw new DataAccessException("Error creating the indexes of graph [" + graph + "]: " + e.getMessage(), e);
+                throw new DataAccessException("Error creating the indexes of graph [" + defaultGraph + "]: " + e.getMessage(), e);
             }
             return null;
         });
+    }
+
+    private void createIndexes(Connection connection, String graph) throws SQLException {
+        try (Statement statement = connection.createStatement()) {
+            for (String sql : indexStatements) {
+                String forGraph = AgeStatements.forGraph(sql, graph);
+                if (LOG.isDebugEnabled()) {
+                    LOG.debug("Creating an Apache AGE index: {}", forGraph);
+                }
+                statement.execute(forGraph);
+            }
+        }
     }
 
     @Override
@@ -151,26 +174,28 @@ final class DefaultAgeRepositoryOperations extends AbstractGraphRepositoryOperat
     }
 
     private <R> R run(AnnotationMetadata annotationMetadata, Function<GraphSession, R> work) {
+        // Resolved once, so that the queries of one operation run on one graph
+        String graph = currentGraph();
         return connectionOperations.findConnectionStatus()
-            .map(status -> work.apply(session(status.getConnection())))
+            .map(status -> work.apply(session(status.getConnection(), graph)))
             .orElseGet(() -> connectionOperations.execute(
                 ConnectionDefinition.DEFAULT.withAnnotationMetadata(annotationMetadata),
-                status -> work.apply(session(status.getConnection()))
+                status -> work.apply(session(status.getConnection(), graph))
             ));
     }
 
-    private GraphSession session(Connection connection) {
-        return (query, parameters) -> run(connection, query, parameters);
+    private GraphSession session(Connection connection, String graph) {
+        return (query, parameters) -> run(connection, graph, query, parameters);
     }
 
     /**
      * Runs a statement built by {@link AgeCypherQueryBuilder} when the repository was compiled, whose result columns
      * carry the names of the columns of its Cypher query.
      */
-    private GraphResult run(Connection connection, String statement, Map<String, Object> parameters) {
+    private GraphResult run(Connection connection, String graph, String statement, Map<String, Object> parameters) {
         String sql = AgeStatements.forGraph(statement, graph);
         try {
-            prepare(connection);
+            prepare(connection, graph);
             if (LOG.isTraceEnabled()) {
                 // Parameter values may hold personal data, so they are logged at TRACE only
                 LOG.trace("Executing Cypher on Apache AGE: {} with parameters {}", sql, parameters);
@@ -219,7 +244,28 @@ final class DefaultAgeRepositoryOperations extends AbstractGraphRepositoryOperat
         query.replace(start, end, cypher.toString());
     }
 
-    private void prepare(Connection connection) throws SQLException {
+    /**
+     * Loads AGE on the connection, once, and creates the graph on first use.
+     *
+     * @param connection The connection
+     * @param graph      The graph of the operation
+     */
+    private void prepare(Connection connection, String graph) throws SQLException {
+        loadAge(connection);
+        if (createGraph && !readyGraphs.contains(graph)) {
+            synchronized (readyGraphs) {
+                if (!readyGraphs.contains(graph)) {
+                    createGraph(graph);
+                    readyGraphs.add(graph);
+                }
+            }
+        }
+    }
+
+    /**
+     * Loads AGE on a connection and puts its catalog on the search path, once per connection.
+     */
+    private void loadAge(Connection connection) throws SQLException {
         if (preparedConnections.contains(connection)) {
             return;
         }
@@ -233,22 +279,16 @@ final class DefaultAgeRepositoryOperations extends AbstractGraphRepositoryOperat
             statement.execute("SELECT set_config('search_path', current_setting('search_path') || ', ag_catalog', false)"
                 + " WHERE current_setting('search_path') NOT LIKE '%ag_catalog%'");
         }
-        if (createGraph && !graphReady) {
-            synchronized (this) {
-                if (!graphReady) {
-                    createGraph();
-                    graphReady = true;
-                }
-            }
-        }
         preparedConnections.add(connection);
     }
 
     /**
      * Creates the graph on a connection of its own that commits at once, so that the graph outlives a
-     * transaction of the caller that rolls back.
+     * transaction of the caller that rolls back, with the indexes of the entities when they were created at startup.
+     *
+     * @param graph The graph name, a validated identifier
      */
-    private void createGraph() {
+    private void createGraph(String graph) {
         // A connection of its own, outside any transaction of the caller, that commits at once
         connectionOperations.execute(ConnectionDefinition.REQUIRES_NEW, status -> {
             Connection connection = status.getConnection();
@@ -260,6 +300,11 @@ final class DefaultAgeRepositoryOperations extends AbstractGraphRepositoryOperat
                     create.setString(1, graph);
                     create.setString(2, graph);
                     create.execute();
+                    if (!indexStatements.isEmpty() && !graph.equals(defaultGraph)) {
+                        // A tenant graph created after startup gets the indexes created at startup
+                        loadAge(connection);
+                        createIndexes(connection, graph);
+                    }
                 } catch (SQLException e) {
                     // Another instance created it between the check and the call
                     if (e.getMessage() == null || !e.getMessage().contains("already exists")) {

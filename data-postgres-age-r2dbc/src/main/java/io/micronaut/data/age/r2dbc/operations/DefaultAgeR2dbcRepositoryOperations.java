@@ -27,6 +27,7 @@ import io.micronaut.data.graph.runtime.GraphSession;
 import io.micronaut.data.graph.runtime.GraphValueEncoderRegistrar;
 import io.micronaut.data.graph.runtime.GraphValueEncoders;
 import io.micronaut.data.graph.runtime.age.AgeConfiguration;
+import io.micronaut.data.graph.runtime.age.AgeGraphTenantResolver;
 import io.micronaut.data.graph.runtime.age.AgeParameters;
 import io.micronaut.data.graph.runtime.operations.AbstractGraphRepositoryOperations;
 import io.micronaut.data.graph.runtime.serde.GraphSerde;
@@ -43,6 +44,7 @@ import io.micronaut.data.runtime.date.DateTimeProvider;
 import io.micronaut.json.JsonMapper;
 import io.r2dbc.spi.Connection;
 import io.r2dbc.spi.ConnectionFactory;
+import org.jspecify.annotations.Nullable;
 
 import java.util.List;
 import java.util.function.Function;
@@ -72,11 +74,13 @@ final class DefaultAgeR2dbcRepositoryOperations extends AbstractGraphRepositoryO
                                         DataConversionService conversionService,
                                         AttributeConverterRegistry attributeConverterRegistry,
                                         List<GraphValueEncoderRegistrar> encoderRegistrars,
-                                        GraphSerde graphSerde) {
+                                        GraphSerde graphSerde,
+                                        @Nullable AgeGraphTenantResolver tenantResolver) {
         super(new AgeCypherQueryBuilder(), dateTimeProvider, runtimeEntityRegistry, conversionService,
             attributeConverterRegistry, null, encoderRegistrars, graphSerde);
         this.reactiveOperations = new DefaultAgeReactorRepositoryOperations(this, connectionOperations, jsonMapper,
-            AgeStatements.validateGraphName(configuration.graphFor(dataSourceName)), configuration.isCreateExtension(), configuration.isCreateGraph());
+            AgeStatements.validateGraphName(configuration.graphFor(dataSourceName)), tenantResolver,
+            configuration.isCreateExtension(), configuration.isCreateGraph());
     }
 
     @Override
