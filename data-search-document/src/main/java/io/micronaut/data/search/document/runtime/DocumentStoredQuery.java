@@ -87,13 +87,7 @@ public final class DocumentStoredQuery<E, R> extends DefaultBindableParametersSt
         if (node instanceof Map<?, ?> map) {
             Object placeholder = map.get(DocumentSearchQueryBuilder.QUERY_PARAMETER_PLACEHOLDER);
             if (placeholder instanceof Number index) {
-                Object value = index.intValue() < 0 ? map.get("value") : values.get(index.intValue());
-                if (value != null && value.getClass().isArray()) {
-                    // an array bound to an In predicate is spliced into the list like a collection
-                    value = SearchJson.arrayToList(value);
-                }
-                Object hint = map.get(DocumentSearchQueryBuilder.WILDCARD_HINT);
-                return hint == null ? value : wildcard(value, hint.toString());
+                return resolvePlaceholder(map, index.intValue(), values);
             }
             Map<String, Object> copy = new LinkedHashMap<>();
             for (Map.Entry<?, ?> entry : map.entrySet()) {
@@ -120,6 +114,18 @@ public final class DocumentStoredQuery<E, R> extends DefaultBindableParametersSt
             }
         }
         return copy;
+    }
+
+    /** The value a placeholder stands for: a bound parameter, or the literal it carries when the index is negative. */
+    @Nullable
+    private static Object resolvePlaceholder(Map<?, ?> placeholder, int index, List<Object> values) {
+        Object value = index < 0 ? placeholder.get("value") : values.get(index);
+        if (value != null && value.getClass().isArray()) {
+            // an array bound to an In predicate is spliced into the list like a collection
+            value = SearchJson.arrayToList(value);
+        }
+        Object hint = placeholder.get(DocumentSearchQueryBuilder.WILDCARD_HINT);
+        return hint == null ? value : wildcard(value, hint.toString());
     }
 
     private static Object wildcard(@Nullable Object value, String hint) {
