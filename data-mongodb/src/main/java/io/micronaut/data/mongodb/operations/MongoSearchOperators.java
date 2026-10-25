@@ -129,20 +129,23 @@ public final class MongoSearchOperators {
         if (positive.size() == 1 && negative.isEmpty()) {
             return positive.get(0).asDocument();
         }
+        return compound(positive, negative, mode, paths);
+    }
+
+    /** Combines a group's terms: all or any of the positive ones, and none of the negated ones. */
+    private static BsonDocument compound(BsonArray positive, BsonArray negative, MatchMode mode, List<String> paths) {
         BsonDocument compound = new BsonDocument();
-        if (!positive.isEmpty()) {
-            if (mode == MatchMode.ALL) {
-                compound.append(MUST, positive);
-            } else {
-                compound.append(SHOULD, positive).append(MINIMUM_SHOULD_MATCH, new BsonInt32(1));
-            }
+        if (positive.isEmpty()) {
+            // A purely negative query still has to select something to exclude from
+            return new BsonDocument(COMPOUND, compound.append(MUST_NOT, negative).append(MUST, new BsonArray(List.of(exists(paths.get(0))))));
+        }
+        if (mode == MatchMode.ALL) {
+            compound.append(MUST, positive);
+        } else {
+            compound.append(SHOULD, positive).append(MINIMUM_SHOULD_MATCH, new BsonInt32(1));
         }
         if (!negative.isEmpty()) {
             compound.append(MUST_NOT, negative);
-            if (positive.isEmpty()) {
-                // A purely negative query still has to select something to exclude from
-                compound.append(MUST, new BsonArray(List.of(exists(paths.get(0)))));
-            }
         }
         return new BsonDocument(COMPOUND, compound);
     }
