@@ -94,7 +94,8 @@ public final class HybridSearchMethodMatcher implements MethodMatcher {
             }
             fields = new String[]{property};
         }
-        method.annotate(HybridSearchMethod.class, builder -> builder.member("fields", fields).member("vectorProperty", vectorProperty));
+        String queryParameter = parameters.get(0).getName();
+        method.annotate(HybridSearchMethod.class, builder -> builder.member("fields", fields).member("vectorProperty", vectorProperty).member("queryParameter", queryParameter));
         String interceptor = searchQueryInterceptor(matchContext);
         return mc -> new MethodMatchInfo(
             DataMethod.OperationType.QUERY,
