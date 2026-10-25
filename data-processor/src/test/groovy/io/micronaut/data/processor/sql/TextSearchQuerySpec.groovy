@@ -206,6 +206,23 @@ interface ArticleRepository extends CrudRepository<Article, Long> {
         e.message.contains("Full-text search is not supported by dialect: H2")
     }
 
+    void "a search(String) method that does not return SearchResults names the expected type"() {
+        when:
+        buildRepository('test.ArticleRepository', """
+import io.micronaut.data.jdbc.annotation.JdbcRepository;
+import io.micronaut.data.model.query.builder.sql.Dialect;
+${ENTITY}
+@JdbcRepository(dialect = Dialect.POSTGRES)
+interface ArticleRepository extends CrudRepository<Article, Long> {
+    List<Article> search(String q);
+}
+""")
+
+        then:
+        def e = thrown(RuntimeException)
+        e.message.contains("A search(String) method must return SearchResults<Article>")
+    }
+
     void "an entity without search fields cannot be searched"() {
         when:
         buildRepository('test.PlainRepository', """
