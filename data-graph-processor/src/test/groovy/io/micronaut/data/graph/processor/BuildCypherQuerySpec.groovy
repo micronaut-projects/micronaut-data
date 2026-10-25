@@ -35,6 +35,9 @@ interface MovieRepository extends CrudRepository<Movie, String> {
     long countByReleasedGreaterThan(int year);
     boolean existsByTitle(String title);
     List<Movie> findByDirectorsName(String name);
+    List<Movie> findByDirectorsNameOrderByDirectorsBorn(String name);
+    @Join("directors")
+    List<Movie> findByReleasedOrderByDirectorsNameDesc(Integer released);
     List<Movie> findByRolesPersonName(String name);
     List<Movie> findByRolesRolesArrayContains(String role);
     @Join("directors")
@@ -57,6 +60,12 @@ interface MovieRepository extends CrudRepository<Movie, String> {
     void purge(String title);
     @Query("MATCH (m:Movie) WHERE m.title = '\$notAParameter' AND m.released = \$released RETURN m")
     List<Movie> literal(Integer released);
+    @Query("MATCH (m:Movie) WHERE m.released IN \$set RETURN count(m)")
+    long countIn(List<Integer> set);
+    @Query("MATCH (m:Movie:Set {merge: \$merge}) WHERE m.create IS NULL RETURN count(m) AS delete")
+    int names(String merge);
+    @Query("MATCH (m:Movie {title: \$title}) SET m.set = \$title RETURN count(m)")
+    int setSet(String title);
 }
 """)
         personRepository = buildRepository('test.PersonRepository', """
@@ -93,6 +102,8 @@ interface PersonRepository extends CrudRepository<Person, String> {
         'countByReleasedGreaterThan'               | 1     | 'MATCH (n:Movie) WHERE n.released > $p0 RETURN count(n) AS result'
         'existsByTitle'                            | 1     | 'MATCH (n:Movie) WHERE n.title = $p0 RETURN true AS result LIMIT 1'
         'findByDirectorsName'                      | 1     | 'MATCH (n:Movie), (n)<-[:DIRECTED]-(a0:Person:Actor) WHERE a0.name = $p0 WITH DISTINCT n RETURN n'
+        'findByDirectorsNameOrderByDirectorsBorn'  | 1     | 'MATCH (n:Movie), (n)<-[:DIRECTED]-(a0:Person:Actor) WHERE a0.name = $p0 WITH n, min(a0.born) AS o0 RETURN n ORDER BY o0 ASC'
+        'findByReleasedOrderByDirectorsNameDesc'   | 1     | 'MATCH (n:Movie), (n)<-[:DIRECTED]-(a0:Person:Actor) WHERE n.released = $p0 WITH n, max(a0.name) AS o0 OPTIONAL MATCH (n)<-[:DIRECTED]-(j0:Person:Actor) WITH n, o0, collect(j0) AS j_directors RETURN n, j_directors ORDER BY o0 DESC'
         'findByRolesPersonName'                    | 1     | 'MATCH (n:Movie), (n)<-[ar0:ACTED_IN]-(a0:Person:Actor) WHERE a0.name = $p0 WITH DISTINCT n RETURN n'
         'findByRolesRolesArrayContains'            | 1     | 'MATCH (n:Movie), (n)<-[ar0:ACTED_IN]-(a0:Person:Actor) WHERE $p0 IN ar0.roles WITH DISTINCT n RETURN n'
         'findByReleased'                           | 1     | 'MATCH (n:Movie) WHERE n.released = $p0 OPTIONAL MATCH (n)<-[:DIRECTED]-(j0:Person:Actor) WITH n, collect(j0) AS j_directors RETURN n, j_directors'
@@ -141,6 +152,9 @@ interface PersonRepository extends CrudRepository<Person, String> {
         'vote'    | DataMethod.OperationType.UPDATE   | 'MATCH (m:Movie {title: $title}) SET m.votes = coalesce(m.votes, 0) + 1'
         'purge'   | DataMethod.OperationType.DELETE   | 'MATCH (m:Movie {title: $title}) DETACH DELETE m'
         'literal' | DataMethod.OperationType.QUERY    | 'MATCH (m:Movie) WHERE m.title = \'$notAParameter\' AND m.released = $released RETURN m'
+        'countIn' | DataMethod.OperationType.QUERY    | 'MATCH (m:Movie) WHERE m.released IN $set RETURN count(m)'
+        'names'   | DataMethod.OperationType.QUERY    | 'MATCH (m:Movie:Set {merge: $merge}) WHERE m.create IS NULL RETURN count(m) AS delete'
+        'setSet'  | DataMethod.OperationType.UPDATE   | 'MATCH (m:Movie {title: $title}) SET m.set = $title RETURN count(m)'
     }
 
     void "test parameters inside string literals are ignored"() {
