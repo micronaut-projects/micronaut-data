@@ -68,7 +68,7 @@ snippet::example.BookService[project-base="doc-examples/jdbc-search-example", so
 <2> `fields` restricts the search to some of the `@SearchField` properties; without it every search field is searched.
 <3> `mode` selects how the terms match: `ANY` (the default), `ALL`, `PHRASE`, `PREFIX` or `FUZZY`, like the `Search`, `SearchAll`, `SearchPhrase`, `SearchPrefix` and `SearchFuzzy` keywords.
 <4> `search(SearchQuery)` returns the hits ordered by relevance.
-<5> `search(SearchQuery, Pageable)` returns one page; a sort on the pageable replaces the relevance order.
+<5> `search(SearchQuery, Pageable)` returns one page; a sort on the pageable replaces the relevance order. Its `totalHits()` is the number of hits on the page, as the SQL stores and MongoDB do not count the matches while searching; use `countHits` for the total. Elasticsearch and OpenSearch report the real total.
 
 `minScore` restricts the hits to those whose score reaches the threshold, as a predicate the store evaluates (`ts_rank_cd(...) >= ?`, `SCORE(n) >= ?`, `min_score`), so pages are full and `totalHits` counts only the hits above it; MongoDB `$text` cannot restrict on its score and throws api:data.model.search.UnsupportedSearchFeatureException[]. On a hybrid search the threshold compares the fused score instead. A query is compiled at runtime through the same criteria API as a derived method, so a store that lacks the requested mode throws api:data.model.search.UnsupportedSearchFeatureException[] when the method runs rather than at compile time.
 
@@ -90,7 +90,7 @@ snippet::example.BookService[project-base="doc-examples/jdbc-search-example", so
 
 A property declared `@SearchField(highlightable = true)` is highlighted by default: a `search` method returning `SearchResults` projects the fragment of every highlightable property it searches, and `SearchQuery.highlight()` without arguments requests the highlightable properties.
 
-The tags are the same on every store, so a client can render them without knowing the backend. PostgreSQL renders `ts_headline`, Oracle `CTX_DOC.POLICY_SNIPPET`, the document stores the `highlight` request clause, and MongoDB Search the `highlight` option of `$search` with the `searchHighlights` metadata. MongoDB `$text` cannot highlight and throws api:data.model.search.UnsupportedSearchFeatureException[]. The criteria API exposes the same projection as `PersistentEntityCriteriaBuilder.searchHighlight(field, query, MatchMode)`.
+The tags are the same on every store, so a client can render them without knowing the backend. A fragment is document text with the tags inserted and is not HTML-escaped, so it carries any markup stored in the document; before putting fragments into an HTML page, use `SearchResult.escapedHighlights()`, which escapes the text and keeps only the `<em>` and `</em>` tags. PostgreSQL renders `ts_headline`, Oracle `CTX_DOC.POLICY_SNIPPET`, the document stores the `highlight` request clause, and MongoDB Search the `highlight` option of `$search` with the `searchHighlights` metadata. MongoDB `$text` cannot highlight and throws api:data.model.search.UnsupportedSearchFeatureException[]. The criteria API exposes the same projection as `PersistentEntityCriteriaBuilder.searchHighlight(field, query, MatchMode)`.
 
 == Hybrid search
 
@@ -146,6 +146,7 @@ The portable API is the same on every store; the table lists which optional capa
 |Prefix (`SearchPrefix`) |yes |yes |no |yes |yes
 |Fuzzy (`SearchFuzzy`) |yes, `pg_trgm` |yes |no |yes |yes
 |Field scope (`findByTitleSearch` searches only `title`) |yes |yes |no, the whole text index |yes |yes
+|`SearchAll` over several fields matches terms spread across them |yes |no, every term in one field |yes |yes |yes
 |Index-time weights (`@SearchField(weight)`) |yes |yes |yes |yes, as boosts |yes
 |Query-time boosts (`SearchQuery.boost`) |no |yes |no |yes |yes
 |Edit distance (`SearchQuery.fuzzy(n)`) |no |no, one edit |no |yes, up to 2 |yes, up to 2
