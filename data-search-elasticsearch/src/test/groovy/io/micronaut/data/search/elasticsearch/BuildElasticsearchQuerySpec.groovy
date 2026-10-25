@@ -139,7 +139,7 @@ ${methods}
 """)
 
         expect:
-        query(repository.getRequiredMethod("searchByTitleSearch", String, io.micronaut.data.model.vector.search.Score)) == '{"query":{"bool":{"must":[{"simple_query_string":{"query":{"$mn_qp":0},"fields":["title^10"],"default_operator":"and"}},{"match_all":{}}]}},"min_score":{"$mn_qp":1},"sort":[{"_score":{"order":"desc"}}]}'
+        query(repository.getRequiredMethod("searchByTitleSearch", String, io.micronaut.data.model.vector.search.Score)) == '{"query":{"simple_query_string":{"query":{"$mn_qp":0},"fields":["title^10"],"default_operator":"and"}},"min_score":{"$mn_qp":1},"sort":[{"_score":{"order":"desc"}}]}'
     }
 
     void "derived operators render wildcard, regexp, range, emptiness and negated queries"() {
