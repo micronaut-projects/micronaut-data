@@ -47,6 +47,9 @@ public interface TextSearchDialect {
     /**
      * The default text search configuration when the entity declares no {@link Searchable#language()}.
      */
+    /** The start of an index DDL statement. */
+    String CREATE_INDEX = "CREATE INDEX ";
+
     String DEFAULT_LANGUAGE = TextSearchSupport.DEFAULT_LANGUAGE;
 
     /**
@@ -481,7 +484,7 @@ public interface TextSearchDialect {
 
         @Override
         public List<String> buildSearchIndex(String indexName, String escapedTableName, List<SearchColumn> columns, String language, @Nullable String languageColumn) {
-            StringBuilder ddl = new StringBuilder("CREATE INDEX ").append(indexName).append(" ON ").append(escapedTableName).append(" USING GIN (");
+            StringBuilder ddl = new StringBuilder(CREATE_INDEX).append(indexName).append(" ON ").append(escapedTableName).append(" USING GIN (");
             List<SearchWeight> weights = columns.stream().map(SearchColumn::weight).toList();
             List<Consumer<StringBuilder>> renderers = columns.stream().map(c -> (Consumer<StringBuilder>) sb -> sb.append(c.column())).toList();
             appendVector(ddl, renderers, weights, language, languageColumn);
@@ -495,7 +498,7 @@ public interface TextSearchDialect {
                         statements.add("CREATE EXTENSION IF NOT EXISTS pg_trgm;");
                         trigram = true;
                     }
-                    statements.add("CREATE INDEX " + column.trigramIndex() + " ON " + escapedTableName + " USING GIN (" + column.column() + " gin_trgm_ops);");
+                    statements.add(CREATE_INDEX + column.trigramIndex() + " ON " + escapedTableName + " USING GIN (" + column.column() + " gin_trgm_ops);");
                 }
             }
             return statements;
@@ -625,13 +628,20 @@ public interface TextSearchDialect {
                 }
                 query.append("SCORE(").append(i + 1).append(')');
                 if (weighted) {
-                    // a query-time boost replaces the index-time weight of the field
-                    Double boost = boostOf(fields.get(i), options);
-                    SearchWeight weight = resolveWeight(fields.get(i));
-                    query.append(" * ").append(boost != null ? factor(boost) : String.valueOf(weight == null ? 1 : weight.numericWeight()));
+                    query.append(" * ").append(scoreFactor(fields.get(i), options));
                 }
             }
             query.append(')');
+        }
+
+        /** A query-time boost replaces the index-time weight of the field. */
+        private String scoreFactor(Expression<?> field, TextMatchOptions options) {
+            Double boost = boostOf(field, options);
+            if (boost != null) {
+                return factor(boost);
+            }
+            SearchWeight weight = resolveWeight(field);
+            return String.valueOf(weight == null ? 1 : weight.numericWeight());
         }
 
         /**
@@ -670,7 +680,7 @@ public interface TextSearchDialect {
                 String name = indexName.endsWith("\"")
                     ? indexName.substring(0, indexName.length() - 1) + "_" + column.column().replace("\"", "") + "\""
                     : indexName + "_" + column.column();
-                statements.add("CREATE INDEX " + name + " ON " + escapedTableName + " (" + column.column()
+                statements.add(CREATE_INDEX + name + " ON " + escapedTableName + " (" + column.column()
                     + ") INDEXTYPE IS CTXSYS.CONTEXT PARAMETERS ('SYNC (ON COMMIT)');");
             }
             statements.add(createPolicyStatement());
