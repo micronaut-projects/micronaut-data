@@ -143,13 +143,13 @@ interface PersonRepository extends CrudRepository<Person, String> {
         def m = findMethod(movieRepository, method, 1)
 
         expect:
-        getQuery(m) == query
+        getRawQuery(m) == query
         m.annotationMetadata.enumValue(DataMethod, DataMethod.META_MEMBER_OPERATION_TYPE, DataMethod.OperationType).get() == operation
 
         where:
         method    | operation                         | query
         'search'  | DataMethod.OperationType.QUERY    | 'MATCH (m:Movie) WHERE m.title CONTAINS $title RETURN m'
-        'vote'    | DataMethod.OperationType.UPDATE   | 'MATCH (m:Movie {title: $title}) SET m.votes = coalesce(m.votes, 0) + 1'
+        'vote'    | DataMethod.OperationType.UPDATE   | 'MATCH (m:Movie {title: $title}) SET m.votes = coalesce(m.votes, 0) + 1 RETURN count(*)'
         'purge'   | DataMethod.OperationType.DELETE   | 'MATCH (m:Movie {title: $title}) DETACH DELETE m'
         'literal' | DataMethod.OperationType.QUERY    | 'MATCH (m:Movie) WHERE m.title = \'$notAParameter\' AND m.released = $released RETURN m'
         'countIn' | DataMethod.OperationType.QUERY    | 'MATCH (m:Movie) WHERE m.released IN $set RETURN count(m)'
