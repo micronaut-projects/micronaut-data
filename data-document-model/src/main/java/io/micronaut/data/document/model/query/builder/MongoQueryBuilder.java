@@ -145,9 +145,10 @@ public final class MongoQueryBuilder implements QueryBuilder {
      */
     public static final String SEARCH_BOOSTS = "$mn_boosts";
     private static final String GEOMETRY_OPERATOR = "$geometry";
-    private static final Map<String, Object> TEXT_SCORE = Map.of("$meta", "textScore");
-    private static final Map<String, Object> SEARCH_SCORE = Map.of("$meta", "searchScore");
-    private static final Map<String, Object> SEARCH_HIGHLIGHTS = Map.of("$meta", "searchHighlights");
+    private static final String META = "$meta";
+    private static final Map<String, Object> TEXT_SCORE = Map.of(META, "textScore");
+    private static final Map<String, Object> SEARCH_SCORE = Map.of(META, "searchScore");
+    private static final Map<String, Object> SEARCH_HIGHLIGHTS = Map.of(META, "searchHighlights");
     private static final String SEARCH_STAGE = "$search";
     private static final String VECTOR_SEARCH_STAGE = "$vectorSearch";
     private static final String DEFAULT_SEARCH_INDEX = "default";
@@ -190,58 +191,15 @@ public final class MongoQueryBuilder implements QueryBuilder {
             predicateObj = buildWhereClause(predicate, queryState);
         }
 
-        if (queryState.vectorSearch != null) {
-            if (queryState.searchOperator != null) {
-                throw new UnsupportedOperationException("MongoDB $vectorSearch cannot be combined with $search in one aggregation; a hybrid search runs the two queries and fuses their rankings.");
-            }
-            if (!pipeline.isEmpty()) {
-                throw new UnsupportedOperationException("MongoDB $vectorSearch must be the first stage of the aggregation, so a vector predicate cannot be combined with joins.");
-            }
-            int limit = selectQueryDefinition.limit() > 0 ? selectQueryDefinition.limit() + Math.max(selectQueryDefinition.offset(), 0) : DEFAULT_VECTOR_LIMIT;
-            Map<String, Object> vectorSearch = new LinkedHashMap<>(queryState.vectorSearch);
-            vectorSearch.put("numCandidates", Math.min(MAX_VECTOR_CANDIDATES, Math.max(limit * 10, DEFAULT_VECTOR_LIMIT)));
-            vectorSearch.put("limit", limit);
-            pipeline.add(Map.of(VECTOR_SEARCH_STAGE, vectorSearch));
-            if (!queryState.vectorScoreFields.isEmpty()) {
-                Map<String, Object> vectorMeta = new LinkedHashMap<>();
-                for (String scoreField : queryState.vectorScoreFields) {
-                    vectorMeta.put(scoreField, MongoSearchStages.VECTOR_DISTANCE);
-                }
-                // The distance is only available as metadata of the $vectorSearch stage
-                pipeline.add(Map.of(ADD_FIELDS, vectorMeta));
-            }
-        }
-        if (queryState.searchOperator != null) {
-            if (!pipeline.isEmpty()) {
-                throw new UnsupportedOperationException("MongoDB $search must be the first stage of the aggregation, so a search predicate cannot be combined with joins.");
-            }
-            pipeline.add(Map.of(SEARCH_STAGE, buildSearchStage(queryState)));
-            Map<String, Object> searchMeta = new LinkedHashMap<>();
-            for (String scoreField : queryState.searchScoreFields) {
-                searchMeta.put(scoreField, SEARCH_SCORE);
-            }
-            if (!queryState.highlights.isEmpty()) {
-                searchMeta.put(MongoSearchStages.HIGHLIGHTS_FIELD, SEARCH_HIGHLIGHTS);
-            }
-            if (!searchMeta.isEmpty()) {
-                // The score and the highlights are only available as metadata of the $search stage
-                pipeline.add(Map.of(ADD_FIELDS, searchMeta));
-            }
-        }
+        appendVectorSearchStage(queryState, selectQueryDefinition, pipeline);
+        appendSearchStages(queryState, pipeline);
         if (!predicateObj.isEmpty()) {
             pipeline.add(Map.of("$match", predicateObj));
         }
         if (!addFieldsObj.isEmpty()) {
             pipeline.add(Map.of(ADD_FIELDS, addFieldsObj));
         }
-        if (!queryState.highlights.isEmpty()) {
-            Map<String, Object> highlightFields = new LinkedHashMap<>();
-            for (Map.Entry<String, String> highlight : queryState.highlights.entrySet()) {
-                highlightFields.put(highlight.getKey(), MongoSearchStages.highlightExpression(highlight.getValue()));
-            }
-            pipeline.add(Map.of(ADD_FIELDS, highlightFields));
-            pipeline.add(Map.of("$unset", List.of(MongoSearchStages.HIGHLIGHTS_FIELD)));
-        }
+        appendHighlightFields(queryState, pipeline);
         if (!group.isEmpty()) {
             group.put(MONGO_ID_FIELD, null);
             pipeline.add(Map.of("$group", group));
@@ -256,59 +214,122 @@ public final class MongoQueryBuilder implements QueryBuilder {
         return QueryResult.of(render(pipeline, predicateObj), queryState.getParameterBindings());
     }
 
+    /** Adds the {@code $vectorSearch} stage of a vector predicate or ordering, sized for the query's window, with its distance as a field. */
+    private void appendVectorSearchStage(QueryState queryState, SelectQueryDefinition selectQueryDefinition, List<Map<String, Object>> pipeline) {
+        if (queryState.vectorSearch == null) {
+            return;
+        }
+        if (queryState.searchOperator != null) {
+            throw new UnsupportedOperationException("MongoDB $vectorSearch cannot be combined with $search in one aggregation; a hybrid search runs the two queries and fuses their rankings.");
+        }
+        if (!pipeline.isEmpty()) {
+            throw new UnsupportedOperationException("MongoDB $vectorSearch must be the first stage of the aggregation, so a vector predicate cannot be combined with joins.");
+        }
+        int limit = selectQueryDefinition.limit() > 0 ? selectQueryDefinition.limit() + Math.max(selectQueryDefinition.offset(), 0) : DEFAULT_VECTOR_LIMIT;
+        Map<String, Object> vectorSearch = new LinkedHashMap<>(queryState.vectorSearch);
+        vectorSearch.put("numCandidates", Math.min(MAX_VECTOR_CANDIDATES, Math.max(limit * 10, DEFAULT_VECTOR_LIMIT)));
+        vectorSearch.put("limit", limit);
+        pipeline.add(Map.of(VECTOR_SEARCH_STAGE, vectorSearch));
+        if (!queryState.vectorScoreFields.isEmpty()) {
+            Map<String, Object> vectorMeta = new LinkedHashMap<>();
+            for (String scoreField : queryState.vectorScoreFields) {
+                vectorMeta.put(scoreField, MongoSearchStages.VECTOR_DISTANCE);
+            }
+            // The distance is only available as metadata of the $vectorSearch stage
+            pipeline.add(Map.of(ADD_FIELDS, vectorMeta));
+        }
+    }
+
+    /** Adds the {@code $search} stage of a search predicate, with its score and highlight metadata as fields. */
+    private void appendSearchStages(QueryState queryState, List<Map<String, Object>> pipeline) {
+        if (queryState.searchOperator == null) {
+            return;
+        }
+        if (!pipeline.isEmpty()) {
+            throw new UnsupportedOperationException("MongoDB $search must be the first stage of the aggregation, so a search predicate cannot be combined with joins.");
+        }
+        pipeline.add(Map.of(SEARCH_STAGE, buildSearchStage(queryState)));
+        Map<String, Object> searchMeta = new LinkedHashMap<>();
+        for (String scoreField : queryState.searchScoreFields) {
+            searchMeta.put(scoreField, SEARCH_SCORE);
+        }
+        if (!queryState.highlights.isEmpty()) {
+            searchMeta.put(MongoSearchStages.HIGHLIGHTS_FIELD, SEARCH_HIGHLIGHTS);
+        }
+        if (!searchMeta.isEmpty()) {
+            // The score and the highlights are only available as metadata of the $search stage
+            pipeline.add(Map.of(ADD_FIELDS, searchMeta));
+        }
+    }
+
+    /** Renders the highlighted fragments of each highlighted path and drops the raw metadata. */
+    private static void appendHighlightFields(QueryState queryState, List<Map<String, Object>> pipeline) {
+        if (queryState.highlights.isEmpty()) {
+            return;
+        }
+        Map<String, Object> highlightFields = new LinkedHashMap<>();
+        for (Map.Entry<String, String> highlight : queryState.highlights.entrySet()) {
+            highlightFields.put(highlight.getKey(), MongoSearchStages.highlightExpression(highlight.getValue()));
+        }
+        pipeline.add(Map.of(ADD_FIELDS, highlightFields));
+        pipeline.add(Map.of("$unset", List.of(MongoSearchStages.HIGHLIGHTS_FIELD)));
+    }
+
     /**
      * Adds the {@code $sort} stage, with the computed fields and null ranks it sorts on defined before it
      * and removed after it, or the repository's custom sort.
      */
     private void appendSort(AnnotationMetadata annotationMetadata, List<Order> orders, QueryState queryState, List<Map<String, Object>> pipeline) {
-        if (!orders.isEmpty()) {
-            Map<String, Object> sortObj = new LinkedHashMap<>();
-            Map<String, Object> computedFields = new LinkedHashMap<>();
-            Map<String, Object> nullRankFields = new LinkedHashMap<>();
-            boolean nullRanksOverComputedFields = false;
-            for (Order order : orders) {
-                Expression<?> orderExpression = order.getExpression();
-                String fieldName;
-                if (orderExpression instanceof io.micronaut.data.model.jpa.criteria.PersistentPropertyPath<?> persistentPropertyPath) {
-                    fieldName = asSortFieldName(persistentPropertyPath);
-                } else {
-                    // Ordering by a computed expression, which MongoDB can only do against a field
-                    fieldName = SORT_EXPRESSION_FIELD_PREFIX + computedFields.size();
-                    computedFields.put(fieldName, asAggregationExpression(orderExpression, queryState));
-                }
-                Nulls nullPrecedence = order instanceof DefaultOrder<?> defaultOrder ? defaultOrder.getNullPrecedence() : Nulls.NONE;
-                if (nullPrecedence != Nulls.NONE) {
-                    String rankField = NULL_RANK_FIELD_PREFIX + nullRankFields.size();
-                    nullRankFields.put(rankField, nullRankExpression(fieldName, nullPrecedence));
-                    sortObj.put(rankField, 1);
-                    nullRanksOverComputedFields |= computedFields.containsKey(fieldName);
-                }
-                sortObj.put(fieldName, order.isAscending() ? 1 : -1);
-            }
-            if (!computedFields.isEmpty() && !nullRanksOverComputedFields) {
-                // Nothing ranks a computed field, so one stage can define them all
-                computedFields.putAll(nullRankFields);
-                nullRankFields.clear();
-            }
-            if (!computedFields.isEmpty()) {
-                pipeline.add(Map.of(ADD_FIELDS, computedFields));
-            }
-            if (!nullRankFields.isEmpty()) {
-                // A second stage, as $addFields cannot reference a field defined by the same stage
-                pipeline.add(Map.of(ADD_FIELDS, nullRankFields));
-            }
-            pipeline.add(Map.of("$sort", sortObj));
-            List<String> temporaryFields = new ArrayList<>(computedFields.keySet());
-            temporaryFields.addAll(nullRankFields.keySet());
-            if (!temporaryFields.isEmpty()) {
-                pipeline.add(Map.of("$unset", temporaryFields));
-            }
-        } else {
+        if (orders.isEmpty()) {
             String customSort = annotationMetadata.stringValue(MongoAnnotations.SORT).orElse(null);
             if (customSort != null) {
-                pipeline.add(Map.of("$sort", new RawJsonValue(customSort)));
+                pipeline.add(Map.of("$sort", new MongoPipelineJson.RawJsonValue(customSort)));
             }
+            return;
         }
+        SortStages stages = new SortStages();
+        for (Order order : orders) {
+            appendOrder(order, stages, queryState);
+        }
+        if (!stages.computedFields.isEmpty() && !stages.nullRanksOverComputedFields) {
+            // Nothing ranks a computed field, so one stage can define them all
+            stages.computedFields.putAll(stages.nullRankFields);
+            stages.nullRankFields.clear();
+        }
+        if (!stages.computedFields.isEmpty()) {
+            pipeline.add(Map.of(ADD_FIELDS, stages.computedFields));
+        }
+        if (!stages.nullRankFields.isEmpty()) {
+            // A second stage, as $addFields cannot reference a field defined by the same stage
+            pipeline.add(Map.of(ADD_FIELDS, stages.nullRankFields));
+        }
+        pipeline.add(Map.of("$sort", stages.sortObj));
+        List<String> temporaryFields = new ArrayList<>(stages.computedFields.keySet());
+        temporaryFields.addAll(stages.nullRankFields.keySet());
+        if (!temporaryFields.isEmpty()) {
+            pipeline.add(Map.of("$unset", temporaryFields));
+        }
+    }
+
+    /** Adds one order to the sort: a property, or a computed field, with its null rank when one is asked for. */
+    private void appendOrder(Order order, SortStages stages, QueryState queryState) {
+        Expression<?> orderExpression = order.getExpression();
+        String fieldName;
+        if (orderExpression instanceof io.micronaut.data.model.jpa.criteria.PersistentPropertyPath<?> persistentPropertyPath) {
+            fieldName = asSortFieldName(persistentPropertyPath);
+        } else {
+            // Ordering by a computed expression, which MongoDB can only do against a field
+            fieldName = SORT_EXPRESSION_FIELD_PREFIX + stages.computedFields.size();
+            stages.computedFields.put(fieldName, asAggregationExpression(orderExpression, queryState));
+        }
+        Nulls nullPrecedence = order instanceof DefaultOrder<?> defaultOrder ? defaultOrder.getNullPrecedence() : Nulls.NONE;
+        if (nullPrecedence != Nulls.NONE) {
+            String rankField = NULL_RANK_FIELD_PREFIX + stages.nullRankFields.size();
+            stages.nullRankFields.put(rankField, nullRankExpression(fieldName, nullPrecedence));
+            stages.sortObj.put(rankField, 1);
+            stages.nullRanksOverComputedFields |= stages.computedFields.containsKey(fieldName);
+        }
+        stages.sortObj.put(fieldName, order.isAscending() ? 1 : -1);
     }
 
     /** Adds the {@code $project} stage of the projection, or the repository's custom projection. */
@@ -318,7 +339,7 @@ public final class MongoQueryBuilder implements QueryBuilder {
         } else {
             String customProjection = annotationMetadata.stringValue(MongoAnnotations.PROJECTION).orElse(null);
             if (customProjection != null) {
-                pipeline.add(Map.of("$project", new RawJsonValue(customProjection)));
+                pipeline.add(Map.of("$project", new MongoPipelineJson.RawJsonValue(customProjection)));
             }
         }
     }
@@ -338,9 +359,9 @@ public final class MongoQueryBuilder implements QueryBuilder {
             return "{}";
         }
         if (isMatchOnlyStage(pipeline)) {
-            return toJsonString(predicateObj);
+            return MongoPipelineJson.toJsonString(predicateObj);
         }
-        return toJsonString(pipeline);
+        return MongoPipelineJson.toJsonString(pipeline);
     }
 
     /**
@@ -860,7 +881,7 @@ public final class MongoQueryBuilder implements QueryBuilder {
 
         String predicateQuery;
         if (predicate != null) {
-            predicateQuery = toJsonString(
+            predicateQuery = MongoPipelineJson.toJsonString(
                 buildWhereClause(predicate, queryState)
             );
         } else {
@@ -922,7 +943,7 @@ public final class MongoQueryBuilder implements QueryBuilder {
         if (!muls.isEmpty()) {
             map.put("$mul", muls);
         }
-        String update = toJsonString(map);
+        String update = MongoPipelineJson.toJsonString(map);
 
         return new QueryResult() {
 
@@ -966,7 +987,7 @@ public final class MongoQueryBuilder implements QueryBuilder {
 
         String predicateQuery = "";
         if (predicate != null) {
-            predicateQuery = toJsonString(
+            predicateQuery = MongoPipelineJson.toJsonString(
                 buildWhereClause(predicate, queryState)
             );
         }
@@ -982,88 +1003,6 @@ public final class MongoQueryBuilder implements QueryBuilder {
     @Override
     public String buildLimitAndOffset(long limit, long offset) {
         throw new UnsupportedOperationException();
-    }
-
-    private String toJsonString(Object obj) {
-        StringBuilder sb = new StringBuilder();
-        append(sb, obj);
-        return sb.toString();
-    }
-
-    private void appendMap(StringBuilder sb, Map<String, Object> map) {
-        sb.append("{");
-        for (Iterator<Map.Entry<String, Object>> iterator = map.entrySet().iterator(); iterator.hasNext(); ) {
-            Map.Entry<String, Object> e = iterator.next();
-            String key = e.getKey();
-            Object value = e.getValue();
-            if (!skipValue(value)) {
-                if (shouldEscapeKey(key)) {
-                    sb.append("'").append(key).append("'");
-                } else {
-                    sb.append(key);
-                }
-                sb.append(":");
-                append(sb, value);
-                if (iterator.hasNext()) {
-                    sb.append(",");
-                }
-            }
-        }
-        sb.append("}");
-    }
-
-    private boolean skipValue(Object obj) {
-        if (obj instanceof Map<?, ?> map) {
-            return map.isEmpty();
-        }
-        if (obj instanceof Collection<?> collection) {
-            return collection.isEmpty();
-        }
-        return false;
-    }
-
-    private void appendArray(StringBuilder sb, Collection<?> collection) {
-        sb.append("[");
-        for (Iterator<?> iterator = collection.iterator(); iterator.hasNext(); ) {
-            Object value = iterator.next();
-            append(sb, value);
-            if (iterator.hasNext()) {
-                sb.append(",");
-            }
-        }
-        sb.append("]");
-    }
-
-    private void append(StringBuilder sb, Object obj) {
-        if (obj instanceof Map map) {
-            appendMap(sb, map);
-        } else if (obj instanceof Collection<?> collection) {
-            appendArray(sb, collection);
-        } else if (obj instanceof RawJsonValue rawJsonValue) {
-            sb.append(rawJsonValue.value);
-        } else if (obj == null) {
-            sb.append("null");
-        } else if (obj instanceof Boolean) {
-            sb.append(obj.toString().toLowerCase(Locale.ROOT));
-        } else if (obj instanceof Number) {
-            sb.append(obj);
-        } else {
-            appendString(sb, obj.toString());
-        }
-    }
-
-    private static void appendString(StringBuilder sb, String value) {
-        // The string is single-quoted, a backslash starts an escape sequence in the JSON parsed by MongoDB
-        sb.append('\'').append(value.replace("\\", "\\\\").replace("'", "\\'")).append('\'');
-    }
-
-    private boolean shouldEscapeKey(String s) {
-        for (char c : s.toCharArray()) {
-            if (!Character.isAlphabetic(c) && !Character.isDigit(c) && c != '$' && c != '_') {
-                return true;
-            }
-        }
-        return false;
     }
 
     private BindingParameter.BindingContext newBindingContext(@Nullable PersistentPropertyPath ref) {
@@ -1108,6 +1047,16 @@ public final class MongoQueryBuilder implements QueryBuilder {
             return "'" + Pattern.quote(regexPattern.value) + "'";
         }
         return value;
+    }
+
+    /**
+     * The fields a {@code $sort} stage needs defined around it.
+     */
+    private static final class SortStages {
+        private final Map<String, Object> sortObj = new LinkedHashMap<>();
+        private final Map<String, Object> computedFields = new LinkedHashMap<>();
+        private final Map<String, Object> nullRankFields = new LinkedHashMap<>();
+        private boolean nullRanksOverComputedFields;
     }
 
     /**
@@ -1225,9 +1174,6 @@ public final class MongoQueryBuilder implements QueryBuilder {
     private record RegexPattern(String value) {
     }
 
-    private record RawJsonValue(String value) {
-    }
-
     private class MongoPredicateVisitor implements AdvancedPredicateVisitor<PersistentPropertyPath> {
 
         private final PersistentEntity persistentEntity;
@@ -1241,21 +1187,28 @@ public final class MongoQueryBuilder implements QueryBuilder {
             persistentEntity = queryState.getEntity();
         }
 
-        private void appendOperatorExpression(Expression<?> leftExpression, String op, Expression<?> value) {
-            if (leftExpression instanceof FunctionExpression<?> function && TextSearchSupport.SCORE_FUNCTION.equals(function.getName())) {
+        /** Restricts on a search score: the score is added as a field right after the {@code $search} stage, so the {@code $match} can test it. */
+        private boolean appendScoreRestriction(FunctionExpression<?> function, String op, Expression<?> value) {
+            if (TextSearchSupport.SCORE_FUNCTION.equals(function.getName())) {
                 if (!usesSearchIndex(persistentEntity)) {
                     throw new UnsupportedSearchFeatureException(SearchCapability.MIN_SCORE, "MongoDB $text");
                 }
-                // The score is added as a field right after the $search stage, so the $match can restrict on it
                 queryState.searchScoreFields.add(TextSearchSupport.SCORE_ALIAS);
                 query.put(TextSearchSupport.SCORE_ALIAS, Map.of(op, scalarValue(value)));
-                return;
+                return true;
             }
-            if (leftExpression instanceof FunctionExpression<?> function && VectorScoringDialectSupport.SCORE_FUNCTION.equals(function.getName())) {
+            if (VectorScoringDialectSupport.SCORE_FUNCTION.equals(function.getName())) {
                 // The maximum distance restricts the distance added right after the $vectorSearch stage
                 registerVectorSearch(queryState, function);
                 queryState.vectorScoreFields.add(TextSearchSupport.SCORE_ALIAS);
                 query.put(TextSearchSupport.SCORE_ALIAS, Map.of(op, scalarValue(value)));
+                return true;
+            }
+            return false;
+        }
+
+        private void appendOperatorExpression(Expression<?> leftExpression, String op, Expression<?> value) {
+            if (leftExpression instanceof FunctionExpression<?> function && appendScoreRestriction(function, op, value)) {
                 return;
             }
             if (leftExpression instanceof LiteralExpression<?> leftLiteral && value instanceof LiteralExpression<?> rightLiteral) {
