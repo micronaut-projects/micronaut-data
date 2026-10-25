@@ -104,35 +104,47 @@ public abstract class SimpleQueryStringConverter implements TextSearchQueryConve
         boolean anyTerm = mode == MatchMode.ANY || mode == MatchMode.FUZZY;
         StringJoiner disjunction = new StringJoiner(" | ");
         for (List<SearchTerm> group : groups) {
-            List<String> positive = new ArrayList<>(group.size());
-            List<String> negative = new ArrayList<>();
-            for (SearchTerm term : group) {
-                String rendered;
-                if (term.phrase()) {
-                    rendered = "\"" + escape(term.text()) + "\"";
-                } else {
-                    rendered = escape(term.text());
-                    if (mode == MatchMode.PREFIX) {
-                        rendered += "*";
-                    } else if (mode == MatchMode.FUZZY) {
-                        rendered += "~" + fuzziness;
-                    }
-                }
-                (term.negated() ? negative : positive).add(rendered);
+            String terms = renderGroup(group, mode, anyTerm, fuzziness);
+            if (terms != null) {
+                disjunction.add(groups.size() > 1 ? "(" + terms + ")" : terms);
             }
-            if (positive.isEmpty() && negative.isEmpty()) {
-                continue;
-            }
-            String terms = String.join(anyTerm ? " | " : " ", positive);
-            if (anyTerm && positive.size() > 1 && !negative.isEmpty()) {
-                terms = "(" + terms + ")";
-            }
-            if (!negative.isEmpty()) {
-                terms = (terms.isEmpty() ? "" : terms + " ") + "-" + String.join(" -", negative);
-            }
-            disjunction.add(groups.size() > 1 ? "(" + terms + ")" : terms);
         }
         return disjunction.toString();
+    }
+
+    /** One group: the positive terms joined for the mode, then the negated terms excluded. */
+    @Nullable
+    private static String renderGroup(List<SearchTerm> group, MatchMode mode, boolean anyTerm, int fuzziness) {
+        List<String> positive = new ArrayList<>(group.size());
+        List<String> negative = new ArrayList<>();
+        for (SearchTerm term : group) {
+            (term.negated() ? negative : positive).add(renderTerm(term, mode, fuzziness));
+        }
+        if (positive.isEmpty() && negative.isEmpty()) {
+            return null;
+        }
+        String terms = String.join(anyTerm ? " | " : " ", positive);
+        if (anyTerm && positive.size() > 1 && !negative.isEmpty()) {
+            terms = "(" + terms + ")";
+        }
+        if (!negative.isEmpty()) {
+            terms = (terms.isEmpty() ? "" : terms + " ") + "-" + String.join(" -", negative);
+        }
+        return terms;
+    }
+
+    private static String renderTerm(SearchTerm term, MatchMode mode, int fuzziness) {
+        if (term.phrase()) {
+            return "\"" + escape(term.text()) + "\"";
+        }
+        String rendered = escape(term.text());
+        if (mode == MatchMode.PREFIX) {
+            return rendered + "*";
+        }
+        if (mode == MatchMode.FUZZY) {
+            return rendered + "~" + fuzziness;
+        }
+        return rendered;
     }
 
     private static String escape(String text) {

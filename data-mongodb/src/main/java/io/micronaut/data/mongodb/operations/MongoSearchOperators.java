@@ -92,14 +92,18 @@ public final class MongoSearchOperators {
             String phrase = query.replace("\"", "").trim();
             return phrase.isEmpty() ? matchNothing(paths) : termOperator(new SearchTerm(phrase, true, false), mode, paths, boosts, maxEdits);
         }
-        List<List<SearchTerm>> groups = SearchQueryParser.parse(query);
-        List<BsonValue> rendered = new ArrayList<>(groups.size());
-        for (List<SearchTerm> group : groups) {
+        List<BsonValue> rendered = new ArrayList<>();
+        for (List<SearchTerm> group : SearchQueryParser.parse(query)) {
             BsonDocument clause = renderGroup(group, mode, paths, boosts, maxEdits);
             if (clause != null) {
                 rendered.add(clause);
             }
         }
+        return joinGroups(rendered, paths);
+    }
+
+    /** One group stands alone; several are alternatives in a compound {@code should}. */
+    private static BsonDocument joinGroups(List<BsonValue> rendered, List<String> paths) {
         if (rendered.isEmpty()) {
             return matchNothing(paths);
         }
