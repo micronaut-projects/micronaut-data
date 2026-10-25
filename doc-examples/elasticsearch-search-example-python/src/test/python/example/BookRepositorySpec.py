@@ -2,9 +2,6 @@ from typing import Annotated
 
 from jakarta.inject import Inject
 from micronaut.test.extensions.junit5.annotation import MicronautTest
-from micronaut.test.support import TestPropertyProvider
-from org.testcontainers.elasticsearch import ElasticsearchContainer
-from org.testcontainers.utility import DockerImageName
 from org.junit.jupiter.api import BeforeEach, Test
 
 from example.Book import Book
@@ -13,18 +10,9 @@ from example.BookService import BookService
 from example.ReactiveBookRepository import ReactiveBookRepository
 
 
-ELASTICSEARCH = (ElasticsearchContainer(DockerImageName.parse("docker.elastic.co/elasticsearch/elasticsearch:9.1.0"))
-                 .withEnv("xpack.security.enabled", "false")
-                 .withEnv("discovery.type", "single-node")
-                 .withEnv("ES_JAVA_OPTS", "-Xms512m -Xmx512m"))
-
-
+# support.ElasticsearchConfigurer starts the Elasticsearch container for the test context
 @MicronautTest(transactional=False)
-class BookRepositorySpec(TestPropertyProvider):
-
-    def getProperties(self) -> dict[str, str]:
-        ELASTICSEARCH.start()
-        return {"elasticsearch.http-hosts": "http://" + ELASTICSEARCH.getHttpHostAddress()}
+class BookRepositorySpec:
 
     repository: Annotated[BookRepository, Inject]
     service: Annotated[BookService, Inject]
