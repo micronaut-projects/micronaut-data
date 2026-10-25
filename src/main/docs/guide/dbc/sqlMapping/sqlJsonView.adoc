@@ -114,6 +114,8 @@ CREATE OR REPLACE JSON RELATIONAL DUALITY VIEW EU_SHIPMENT_VIEW AS
 
 The database computes generated fields when it reads the document, and ignores values sent for them on insert or update.
 
+NOTE: Oracle AI Database Free 23.26.3 returns a wrong document when a session runs a cached query on a duality view again after updating that document through the view: the document has the hidden fields and lacks the fields generated with `path`. This happens with an implicit statement cache, which Oracle R2DBC enables. A query in another session, or without a statement cache, returns the right document.
+
 ann:data.annotation.JsonSubView[] supports the `hidden` member and the property level annotations as well. Both ann:data.annotation.JsonView[] and ann:data.annotation.JsonSubView[] accept `etagCheck = false` to exclude all columns of the table from the ETAG check.
 
 The `_id` field of a view does not have to map to the primary key: any unique column can be the identifying key. To use one, annotate the ann:data.annotation.Id[] property with `@MappedProperty` naming that column.
