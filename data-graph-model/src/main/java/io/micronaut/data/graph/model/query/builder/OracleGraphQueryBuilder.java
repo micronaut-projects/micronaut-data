@@ -486,11 +486,10 @@ public class OracleGraphQueryBuilder implements GraphQueryBuilder {
      * @return The identity
      */
     private static PersistentProperty identity(PersistentEntity entity) {
-        PersistentProperty identity = entity.getIdentity();
-        if (identity == null) {
+        if (!entity.hasIdentity()) {
             throw new IllegalArgumentException("Entity [" + entity.getName() + "] has no identifier: an Oracle property graph node needs an @Id property");
         }
-        return identity;
+        return entity.getIdentity();
     }
 
     private static String alias(String name) {
