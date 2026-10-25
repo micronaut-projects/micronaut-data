@@ -16,8 +16,8 @@
 package io.micronaut.data.search.opensearch.transport;
 
 import io.micronaut.core.annotation.Internal;
-import io.micronaut.data.exceptions.DataAccessException;
 import io.micronaut.data.search.document.conf.DocumentSearchConfiguration;
+import io.micronaut.data.search.document.runtime.BulkResponses;
 import io.micronaut.data.search.document.runtime.SearchTransport;
 import jakarta.json.stream.JsonParser;
 import org.jspecify.annotations.Nullable;
@@ -103,14 +103,7 @@ final class OpenSearchRequests {
     }
 
     static List<String> bulkIds(BulkResponse response) {
-        List<String> ids = new ArrayList<>(response.items().size());
-        for (BulkResponseItem item : response.items()) {
-            if (item.error() != null) {
-                throw new DataAccessException("OpenSearch bulk item failed: " + item.error().reason());
-            }
-            ids.add(item.id());
-        }
-        return ids;
+        return BulkResponses.ids("OpenSearch", response.items(), item -> item.error() == null ? null : item.error().reason(), BulkResponseItem::id);
     }
 
     static Map<String, Object> parse(JsonpMapper mapper, String body) {
