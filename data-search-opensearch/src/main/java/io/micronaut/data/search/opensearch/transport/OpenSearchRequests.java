@@ -65,6 +65,9 @@ final class OpenSearchRequests {
      */
     static final Map<String, Object> KNN_SETTINGS = Map.of("index.knn", true);
 
+    /** The keys of a request body the transport forwards; every other key is rejected rather than dropped. */
+    private static final java.util.Set<String> REQUEST_KEYS = java.util.Set.of("query", "sort", "from", "size", "track_total_hits", "highlight", "version", "min_score", "search_after");
+
     private static final String QUERY = "query";
 
     private OpenSearchRequests() {
@@ -72,6 +75,12 @@ final class OpenSearchRequests {
 
     static SearchRequest searchRequest(JsonpMapper mapper, String index, String body) {
         Map<String, Object> parsed = parse(mapper, body);
+        for (String key : parsed.keySet()) {
+            if (!REQUEST_KEYS.contains(key)) {
+                // the request is rebuilt key by key, so an unknown key would be dropped silently
+                throw new DataAccessException("The request body key '" + key + "' is not supported by the OpenSearch transport; supported keys: " + REQUEST_KEYS);
+            }
+        }
         SearchRequest.Builder request = new SearchRequest.Builder().index(index).query(query(mapper, parsed));
         Object sort = parsed.get("sort");
         if (sort instanceof List<?> entries) {

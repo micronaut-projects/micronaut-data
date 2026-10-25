@@ -39,6 +39,8 @@ SearchResults<Book> longBooksAbout(String title, int minPages);
 
 The same body can be run without a repository method through the api:data.search.document.runtime.SearchQueryExecutor[] bean of the store (qualified by the store name): `search(Class, body)` returns `SearchResults`, `find(Class, body)` the entities and `count(Class, body)` the count. Aggregations and facets have no portable result type and stay with the store client.
 
+Elasticsearch sends the body as it is. The OpenSearch transport rebuilds the request from its typed client and forwards `query`, `sort`, `from`, `size`, `track_total_hits`, `highlight`, `version`, `min_score` and `search_after`; a body with any other top-level key fails with a `DataAccessException` naming the key rather than running without it. Bound values become JSON values of their own type, so a placeholder must not stand in `script`, `runtime_mappings` or `script_fields`, where it would become code.
+
 == Vector and hybrid search
 
 A derived method with the `Near` keyword on a vector property, `searchByEmbeddingNear(Vector vector, Score maxDistance)`, renders a `knn` query whose `k` follows the method's limit and grows to cover a `Pageable` passed at runtime, with the maximum cosine distance turned into the store's similarity threshold. Hits carry the store's similarity score rather than the distance the SQL stores return, highest first. api:data.model.search.SearchQuery[]`.vector(property, vector)` runs the same nearest-neighbour query and fuses it with the text ranking as described in the <<sqlTextSearch, SQL full-text search section>>; the native `rrf` retriever and the OpenSearch hybrid pipeline are not used, so hybrid search works on the basic licence.
