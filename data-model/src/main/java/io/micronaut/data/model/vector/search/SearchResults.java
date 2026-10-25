@@ -50,6 +50,11 @@ public interface SearchResults<T> extends Iterable<SearchResult<T>> {
      * The total number of hits for the query, which can exceed {@code results().size()} when the
      * results were limited or paged. Defaults to the number of results.
      *
+     * <p>Only a store that counts the matches while searching reports a total beyond the returned
+     * results: Elasticsearch and OpenSearch do. The SQL stores and MongoDB would need a second query,
+     * so they report the number of results returned; use {@code countHits} or a count method for the
+     * full count.</p>
+     *
      * @return The total hits
      * @since 5.4.0
      */

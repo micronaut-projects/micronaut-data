@@ -120,7 +120,7 @@ public final class DefaultDocumentSearchRepositoryOperations extends AbstractRep
 
     private String indexName(RuntimePersistentEntity<?> entity) {
         String prefix = configuration.getIndexPrefix();
-        return prefix == null ? entity.getPersistedName() : prefix + entity.getPersistedName();
+        return SearchIndexNames.validate(prefix == null ? entity.getPersistedName() : prefix + entity.getPersistedName());
     }
 
     @Override
