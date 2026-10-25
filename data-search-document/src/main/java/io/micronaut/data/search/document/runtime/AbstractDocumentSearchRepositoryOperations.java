@@ -81,7 +81,7 @@ abstract class AbstractDocumentSearchRepositoryOperations extends AbstractReposi
 
     protected final String indexName(RuntimePersistentEntity<?> entity) {
         String prefix = configuration.getIndexPrefix();
-        return prefix == null ? entity.getPersistedName() : prefix + entity.getPersistedName();
+        return SearchIndexNames.validate(prefix == null ? entity.getPersistedName() : prefix + entity.getPersistedName());
     }
 
     // ---------- entity events around writes

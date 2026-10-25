@@ -47,6 +47,12 @@ public final class SearchQuery {
      */
     public static final int DEFAULT_RANK_CONSTANT = 60;
 
+    /**
+     * The largest {@link Builder#candidates(int)}: each ranking is fetched and fused in memory on the SQL
+     * stores and MongoDB, so the value bounds the rows a hybrid search loads.
+     */
+    public static final int MAX_CANDIDATES = 10_000;
+
     private final String query;
     private final Set<String> fields;
     private final MatchMode mode;
@@ -248,7 +254,8 @@ public final class SearchQuery {
 
     @Override
     public String toString() {
-        return "SearchQuery{query='" + query + "', fields=" + fields + ", mode=" + mode + '}';
+        // the search string is user input, so only its length is shown
+        return "SearchQuery{queryLength=" + (query == null ? 0 : query.length()) + ", fields=" + fields + ", mode=" + mode + '}';
     }
 
     /**
@@ -385,12 +392,13 @@ public final class SearchQuery {
 
         /**
          * @param candidates How many hits each ranking of a hybrid search contributes before fusion,
-         * {@value #DEFAULT_CANDIDATES} by default
+         * {@value #DEFAULT_CANDIDATES} by default and at most {@value #MAX_CANDIDATES}. It sizes the rows
+         * loaded per ranking, so it should not come from user input unchecked
          * @return This builder
          */
         public Builder candidates(int candidates) {
-            if (candidates < 1) {
-                throw new IllegalArgumentException("candidates must be positive");
+            if (candidates < 1 || candidates > MAX_CANDIDATES) {
+                throw new IllegalArgumentException("candidates must be between 1 and " + MAX_CANDIDATES + ", got " + candidates);
             }
             this.candidates = candidates;
             return this;
