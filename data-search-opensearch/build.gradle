@@ -7,7 +7,6 @@ dependencies {
 
     api projects.micronautDataSearchDocument
     api mnOpensearch.micronaut.opensearch
-    api mnOpensearch.opensearch.java
 
     testAnnotationProcessor mn.micronaut.inject.java
     testAnnotationProcessor projects.micronautDataDocumentProcessor
