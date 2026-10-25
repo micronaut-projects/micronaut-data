@@ -108,11 +108,14 @@ public final class DocumentSearchQueryBuilder implements QueryBuilder {
 
     private static final String KEYWORD_SUFFIX = ".keyword";
     private static final String QUERY = "query";
+    private static final Map<String, Object> MATCH_ALL = Map.of("match_all", Map.of());
     private static final String BOOL = "bool";
     private static final String MUST = "must";
     private static final String MUST_NOT = "must_not";
     private static final String SHOULD = "should";
     private static final String TERM = "term";
+    private static final String VALUE = "value";
+    private static final String FIELD = "field";
     private static final String RANGE = "range";
     private static final String ORDER = "order";
 
@@ -129,32 +132,11 @@ public final class DocumentSearchQueryBuilder implements QueryBuilder {
         Bindings bindings = new Bindings();
         Map<String, Object> body = new LinkedHashMap<>();
         DocumentPredicateVisitor visitor = new DocumentPredicateVisitor(entity, bindings, definition.limit());
-        Map<String, Object> query = definition.predicate() == null ? Map.of("match_all", Map.of()) : visitor.build(definition.predicate());
-        if (visitor.knnFields.isEmpty()) {
-            // a vector ordering without a vector restriction is a nearest-neighbour search
-            for (Order order : definition.order()) {
-                if (order.getExpression() instanceof FunctionExpression<?> function && VectorScoringDialectSupport.SCORE_FUNCTION.equals(function.getName())) {
-                    query = visitor.knn(function, null);
-                    break;
-                }
-            }
-        }
-        body.put(QUERY, query);
+        body.put(QUERY, queryOf(definition, visitor));
         if (visitor.minScore != null) {
             body.put("min_score", visitor.minScore);
         }
-        Map<String, Object> highlightFields = new LinkedHashMap<>();
-        if (definition.selection() != null) {
-            collectHighlightFields(definition.selection(), highlightFields);
-        }
-        if (!highlightFields.isEmpty()) {
-            // One object per field, the ordered form every Elasticsearch client version accepts
-            List<Map<String, Object>> fields = new ArrayList<>(highlightFields.size());
-            for (Map.Entry<String, Object> field : highlightFields.entrySet()) {
-                fields.add(Map.of(field.getKey(), field.getValue()));
-            }
-            body.put("highlight", Map.of("fields", fields));
-        }
+        addHighlight(definition, body);
         List<Map<String, Object>> sort = new ArrayList<>();
         for (Order order : definition.order()) {
             sort.add(sortEntry(order));
@@ -217,9 +199,40 @@ public final class DocumentSearchQueryBuilder implements QueryBuilder {
         }
     }
 
+    /** The predicate's query, or a nearest-neighbour {@code knn} when only a vector ordering asks for one. */
+    private static Map<String, Object> queryOf(SelectQueryDefinition definition, DocumentPredicateVisitor visitor) {
+        Map<String, Object> query = definition.predicate() == null ? MATCH_ALL : visitor.build(definition.predicate());
+        if (!visitor.knnFields.isEmpty()) {
+            return query;
+        }
+        // a vector ordering without a vector restriction is a nearest-neighbour search
+        for (Order order : definition.order()) {
+            if (order.getExpression() instanceof FunctionExpression<?> function && VectorScoringDialectSupport.SCORE_FUNCTION.equals(function.getName())) {
+                return visitor.knn(function, null);
+            }
+        }
+        return query;
+    }
+
+    private static void addHighlight(SelectQueryDefinition definition, Map<String, Object> body) {
+        Map<String, Object> highlightFields = new LinkedHashMap<>();
+        if (definition.selection() != null) {
+            collectHighlightFields(definition.selection(), highlightFields);
+        }
+        if (highlightFields.isEmpty()) {
+            return;
+        }
+        // One object per field, the ordered form every Elasticsearch client version accepts
+        List<Map<String, Object>> fields = new ArrayList<>(highlightFields.size());
+        for (Map.Entry<String, Object> field : highlightFields.entrySet()) {
+            fields.add(Map.of(field.getKey(), field.getValue()));
+        }
+        body.put("highlight", Map.of("fields", fields));
+    }
+
     private Map<String, Object> buildQuery(@Nullable Predicate predicate, PersistentEntity entity, Bindings bindings) {
         if (predicate == null) {
-            return Map.of("match_all", Map.of());
+            return MATCH_ALL;
         }
         return new DocumentPredicateVisitor(entity, bindings, -1).build(predicate);
     }
@@ -324,7 +337,7 @@ public final class DocumentSearchQueryBuilder implements QueryBuilder {
             PersistentPropertyPath propertyPath = requireProperty(function.getExpressions().get(0)).getPropertyPath();
             Expression<?> vector = function.getExpressions().get(1);
             Map<String, Object> knn = new LinkedHashMap<>();
-            knn.put("field", fieldName(propertyPath));
+            knn.put(FIELD, fieldName(propertyPath));
             knn.put("query_vector", value(vector, propertyPath));
             int k = limit > 0 ? limit : DEFAULT_K;
             knn.put("k", k);
@@ -423,7 +436,7 @@ public final class DocumentSearchQueryBuilder implements QueryBuilder {
                 return;
             }
             if (ignoreCase) {
-                result = Map.of(TERM, Map.of(keywordPath(propertyPath), Map.of("value", value(rightExpression, propertyPath), "case_insensitive", true)));
+                result = Map.of(TERM, Map.of(keywordPath(propertyPath), Map.of(VALUE, value(rightExpression, propertyPath), "case_insensitive", true)));
                 return;
             }
             result = Map.of(TERM, Map.of(keywordPath(propertyPath), value(rightExpression, propertyPath)));
@@ -445,7 +458,7 @@ public final class DocumentSearchQueryBuilder implements QueryBuilder {
             if (leftExpression instanceof FunctionExpression<?> function && TextSearchSupport.SCORE_FUNCTION.equals(function.getName())) {
                 // a minimum relevance score is a request parameter, not a query clause
                 minScore = value(rightExpression, null);
-                result = Map.of("match_all", Map.of());
+                result = MATCH_ALL;
                 return;
             }
             result = range(leftExpression, "gte", rightExpression);
@@ -510,7 +523,7 @@ public final class DocumentSearchQueryBuilder implements QueryBuilder {
 
         @Override
         public void visitIsNotNull(Expression<?> expression) {
-            result = Map.of("exists", Map.of("field", fieldName(requireProperty(expression).getPropertyPath())));
+            result = Map.of("exists", Map.of(FIELD, fieldName(requireProperty(expression).getPropertyPath())));
         }
 
         @Override
@@ -523,7 +536,7 @@ public final class DocumentSearchQueryBuilder implements QueryBuilder {
         public void visitIsEmpty(Expression<?> expression) {
             PersistentPropertyPath propertyPath = requireProperty(expression).getPropertyPath();
             result = Map.of(BOOL, Map.of(SHOULD, List.of(
-                Map.of(BOOL, Map.of(MUST_NOT, Map.of("exists", Map.of("field", fieldName(propertyPath))))),
+                Map.of(BOOL, Map.of(MUST_NOT, Map.of("exists", Map.of(FIELD, fieldName(propertyPath))))),
                 Map.of(TERM, Map.of(keywordPath(propertyPath), ""))
             ), "minimum_should_match", 1));
         }
@@ -604,7 +617,7 @@ public final class DocumentSearchQueryBuilder implements QueryBuilder {
                 value = Map.of(QUERY_PARAMETER_PLACEHOLDER, -1, WILDCARD_HINT, hint, "value", literal(expression));
             }
             Map<String, Object> options = new LinkedHashMap<>();
-            options.put("value", value);
+            options.put(VALUE, value);
             if (hint.endsWith("_ignore_case")) {
                 options.put("case_insensitive", true);
             }
