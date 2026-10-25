@@ -16,7 +16,14 @@
 package io.micronaut.data.document.model.query.builder;
 
 import io.micronaut.core.annotation.Internal;
+import io.micronaut.data.model.PersistentEntity;
 import io.micronaut.data.model.jpa.criteria.impl.expression.LiteralExpression;
+import io.micronaut.data.model.runtime.RuntimePersistentEntity;
+import io.micronaut.data.model.search.MatchMode;
+import io.micronaut.data.model.search.SearchCapability;
+import io.micronaut.data.model.search.TextMatchOptions;
+import io.micronaut.data.model.search.TextSearchSupport;
+import io.micronaut.data.model.search.UnsupportedSearchFeatureException;
 import jakarta.persistence.criteria.Expression;
 
 import java.util.ArrayList;
@@ -170,6 +177,32 @@ final class MongoSearchStages {
                 texts
             ))
         ));
+    }
+
+    /**
+     * Rejects what MongoDB {@code $text} cannot honour: boosts, prefix and fuzzy matching, and fields chosen
+     * at runtime through a SearchQuery. {@code $text} always searches the whole text index; a derived
+     * property keyword is documented to widen to it, so only a runtime entity's narrower field list fails.
+     *
+     * @param entity The entity
+     * @param fields The number of fields searched
+     * @param mode The match mode
+     * @param options The match options
+     */
+    static void requireTextSupport(PersistentEntity entity, int fields, MatchMode mode, TextMatchOptions options) {
+        SearchCapability missing = null;
+        if (!options.boosts().isEmpty()) {
+            missing = SearchCapability.BOOST;
+        } else if (mode == MatchMode.PREFIX) {
+            missing = SearchCapability.PREFIX;
+        } else if (mode == MatchMode.FUZZY) {
+            missing = SearchCapability.FUZZY;
+        } else if (entity instanceof RuntimePersistentEntity<?> && fields < TextSearchSupport.searchFields(entity).size()) {
+            missing = SearchCapability.FIELD_SCOPE;
+        }
+        if (missing != null) {
+            throw new UnsupportedSearchFeatureException(missing, "MongoDB $text");
+        }
     }
 
     /**
