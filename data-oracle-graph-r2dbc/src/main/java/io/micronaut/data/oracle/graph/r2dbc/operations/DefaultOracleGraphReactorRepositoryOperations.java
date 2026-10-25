@@ -39,6 +39,8 @@ import io.micronaut.data.operations.reactive.ReactorReactiveRepositoryOperations
 import io.r2dbc.spi.ColumnMetadata;
 import io.r2dbc.spi.Connection;
 import io.r2dbc.spi.R2dbcException;
+import io.r2dbc.spi.Row;
+import io.r2dbc.spi.RowMetadata;
 import io.r2dbc.spi.Statement;
 import org.jspecify.annotations.Nullable;
 import org.slf4j.Logger;
@@ -170,31 +172,36 @@ final class DefaultOracleGraphReactorRepositoryOperations extends AbstractReacti
                     LOG.debug("Executing reactive Oracle graph query: {} with parameters {}", expanded.query(), expanded.parameters());
                 }
                 Statement statement = connection.createStatement(expanded.query());
-                List<@Nullable Object> values = expanded.parameters();
-                for (int i = 0; i < values.size(); i++) {
-                    Object value = values.get(i);
-                    if (value == null) {
-                        statement.bindNull(i, String.class);
-                    } else {
-                        statement.bind(i, value);
-                    }
-                }
+                bind(statement, expanded.parameters());
                 AtomicInteger rowIndex = new AtomicInteger();
                 return Flux.from(statement.execute())
-                    .concatMap(result -> result.map((row, metadata) -> {
-                        List<String> columns = new ArrayList<>();
-                        List<@Nullable Object> rowValues = new ArrayList<>();
-                        List<? extends ColumnMetadata> columnMetadatas = metadata.getColumnMetadatas();
-                        for (int i = 0; i < columnMetadatas.size(); i++) {
-                            columns.add(columnMetadatas.get(i).getName());
-                            rowValues.add(row.get(i));
-                        }
-                        if (columns.contains(OracleGraphQueryBuilder.PATH_MATCH_COLUMN)) {
-                            throw new IllegalStateException("Paths are returned by PGQL queries, which are not available over R2DBC");
-                        }
-                        return OracleGraphRows.decodeRow(columns, rowValues, rowIndex.getAndIncrement());
-                    }));
+                    .concatMap(result -> result.map((row, metadata) -> decode(row, metadata, rowIndex.getAndIncrement())));
             }).onErrorMap(R2dbcException.class, e -> new DataAccessException("Error executing Oracle graph query [" + query + "]: " + e.getMessage(), e));
+        }
+
+        private static void bind(Statement statement, List<@Nullable Object> values) {
+            for (int i = 0; i < values.size(); i++) {
+                Object value = values.get(i);
+                if (value == null) {
+                    statement.bindNull(i, String.class);
+                } else {
+                    statement.bind(i, value);
+                }
+            }
+        }
+
+        private static GraphRecord decode(Row row, RowMetadata metadata, int rowIndex) {
+            List<String> columns = new ArrayList<>();
+            List<@Nullable Object> rowValues = new ArrayList<>();
+            List<? extends ColumnMetadata> columnMetadatas = metadata.getColumnMetadatas();
+            for (int i = 0; i < columnMetadatas.size(); i++) {
+                columns.add(columnMetadatas.get(i).getName());
+                rowValues.add(row.get(i));
+            }
+            if (columns.contains(OracleGraphQueryBuilder.PATH_MATCH_COLUMN)) {
+                throw new IllegalStateException("Paths are returned by PGQL queries, which are not available over R2DBC");
+            }
+            return OracleGraphRows.decodeRow(columns, rowValues, rowIndex);
         }
 
         @Override
