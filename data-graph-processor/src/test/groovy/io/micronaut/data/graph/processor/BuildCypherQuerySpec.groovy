@@ -209,6 +209,28 @@ $MOVIES
         introspection.getRequiredProperty('mentor', Object).annotationMetadata.enumValue(Relation, Relation.Kind).get() == Relation.Kind.MANY_TO_ONE
     }
 
+    void "test names that cannot be quoted are rejected"() {
+        when:
+        buildRepository('test.HostileRepository', """
+@Node("Movie`) DETACH DELETE (n")
+class Hostile {
+    @Id
+    private String title;
+    public String getTitle() { return title; }
+    public void setTitle(String title) { this.title = title; }
+}
+
+@TestGraphRepository
+interface HostileRepository extends CrudRepository<Hostile, String> {
+    List<Hostile> findByTitle(String title);
+}
+""")
+
+        then:
+        def e = thrown(RuntimeException)
+        e.message.contains('cannot appear in a graph query')
+    }
+
     void "test LIKE is rejected"() {
         when:
         buildRepository('test.LikeRepository', """
