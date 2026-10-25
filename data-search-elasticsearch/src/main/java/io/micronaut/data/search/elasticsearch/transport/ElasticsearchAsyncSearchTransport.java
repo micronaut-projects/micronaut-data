@@ -151,17 +151,16 @@ public final class ElasticsearchAsyncSearchTransport implements AsyncSearchTrans
     }
 
     static BulkRequest bulkRequest(String index, List<SearchTransport.BulkDocument> documents, DocumentSearchConfiguration.Refresh refresh) {
-        List<BulkOperation> operations = new ArrayList<>(documents.size());
-        for (SearchTransport.BulkDocument document : documents) {
-            operations.add(BulkOperation.of(op -> op.index(i -> {
-                i.id(document.id()).document(document.source());
-                if (document.version() != null) {
-                    i.version(document.version()).versionType(VersionType.External);
-                }
-                return i;
-            })));
-        }
+        List<BulkOperation> operations = documents.stream().map(ElasticsearchAsyncSearchTransport::indexOperation).toList();
         return BulkRequest.of(b -> b.index(index).operations(operations).refresh(refresh(refresh)));
+    }
+
+    /** One index operation of a bulk request; a versioned document is written with external versioning. */
+    private static BulkOperation indexOperation(SearchTransport.BulkDocument document) {
+        Long version = document.version();
+        return BulkOperation.of(op -> op.index(i -> version == null
+            ? i.id(document.id()).document(document.source())
+            : i.id(document.id()).document(document.source()).version(version).versionType(VersionType.External)));
     }
 
     static List<String> bulkIds(BulkResponse response) {
