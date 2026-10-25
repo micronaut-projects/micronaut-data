@@ -375,6 +375,18 @@ abstract class AbstractDocumentSearchRepositoryOperations extends AbstractReposi
         }
     }
 
+    /** The field a sort order applies to: the score, or the keyword path of an entity property. */
+    private static String sortField(Sort.Order order, RuntimePersistentEntity<?> entity) {
+        if (DocumentSearchQueryBuilder.SCORE_FIELD.equals(order.getProperty())) {
+            return DocumentSearchQueryBuilder.SCORE_FIELD;
+        }
+        io.micronaut.data.model.PersistentPropertyPath path = entity.getPropertyPath(order.getProperty());
+        if (path == null) {
+            throw new DataAccessException("Cannot sort on unknown property: " + order.getProperty());
+        }
+        return DocumentSearchQueryBuilder.keywordPath(path);
+    }
+
     /**
      * Cursored pagination with {@code search_after}: the requested sort plus the entity id as a
      * tiebreaker, reversed for a backward page, and the cursor as the {@code search_after} values.
@@ -408,18 +420,8 @@ abstract class AbstractDocumentSearchRepositoryOperations extends AbstractReposi
     private <T> List<Map<String, Object>> sortEntries(List<Sort.Order> orders, RuntimePersistentEntity<T> entity, boolean reversed) {
         List<Map<String, Object>> entries = new ArrayList<>();
         for (Sort.Order order : orders) {
-            String field;
-            if (DocumentSearchQueryBuilder.SCORE_FIELD.equals(order.getProperty())) {
-                field = DocumentSearchQueryBuilder.SCORE_FIELD;
-            } else {
-                io.micronaut.data.model.PersistentPropertyPath path = entity.getPropertyPath(order.getProperty());
-                if (path == null) {
-                    throw new DataAccessException("Cannot sort on unknown property: " + order.getProperty());
-                }
-                field = DocumentSearchQueryBuilder.keywordPath(path);
-            }
             boolean ascending = order.isAscending() != reversed;
-            entries.add(Map.of(field, Map.of("order", ascending ? "asc" : "desc")));
+            entries.add(Map.of(sortField(order, entity), Map.of("order", ascending ? "asc" : "desc")));
         }
         return entries;
     }
