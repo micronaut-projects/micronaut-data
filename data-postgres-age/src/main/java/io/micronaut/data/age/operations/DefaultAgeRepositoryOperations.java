@@ -155,8 +155,11 @@ final class DefaultAgeRepositoryOperations extends AbstractGraphRepositoryOperat
         String sql = AgeStatements.forGraph(statement, graph);
         try {
             prepare(connection);
-            if (LOG.isDebugEnabled()) {
-                LOG.debug("Executing Cypher on Apache AGE: {} with parameters {}", sql, parameters);
+            if (LOG.isTraceEnabled()) {
+                // Parameter values may hold personal data, so they are logged at TRACE only
+                LOG.trace("Executing Cypher on Apache AGE: {} with parameters {}", sql, parameters);
+            } else if (LOG.isDebugEnabled()) {
+                LOG.debug("Executing Cypher on Apache AGE: {}", sql);
             }
             try (PreparedStatement preparedStatement = connection.prepareStatement(sql)) {
                 if (AgeStatements.takesParameters(statement)) {

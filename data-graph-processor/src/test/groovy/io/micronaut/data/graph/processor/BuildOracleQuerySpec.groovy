@@ -211,6 +211,23 @@ interface QuotedRepository extends GenericRepository<Quoted, String> {
         getQuery(findMethod(repository, 'findByCastTitle')).contains('MATCH (n IS "Movie Node"), (n) <-[IS "ACTED IN"]- (a0 IS "Movie Node") WHERE (a0.title = ?)')
     }
 
+    void "test a property graph name must be a plain identifier"() {
+        when:
+        buildRepository('test.HostileGraphRepository', """
+$MOVIES
+
+@TestOracleRepository
+@PropertyGraph("movies MATCH (x) COLUMNS (1 AS y)) --")
+interface HostileGraphRepository extends GenericRepository<Movie, String> {
+    long countByReleasedLessThan(int year);
+}
+""")
+
+        then:
+        def e = thrown(RuntimeException)
+        e.message.contains('is not a plain identifier')
+    }
+
     void "test a node without an identifier is rejected"() {
         when:
         buildRepository('test.NoIdRepository', """
