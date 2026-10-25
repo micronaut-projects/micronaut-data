@@ -24,7 +24,7 @@ class BuildOracleQuerySpec extends AbstractGraphDataSpec {
 $MOVIES
 
 @TestOracleRepository
-@PropertyGraph("movies")
+@PropertyGraph(value = "movies", language = PropertyGraph.QueryLanguage.PGQL)
 interface PgqlRepository extends GenericRepository<Movie, String> {
     Optional<Movie> findById(String id);
     List<Movie> findByReleasedGreaterThanOrderByReleased(int year);
@@ -66,7 +66,7 @@ import io.micronaut.data.graph.model.*;
 $MOVIES
 
 @TestOracleRepository
-@PropertyGraph("people")
+@PropertyGraph(value = "people", language = PropertyGraph.QueryLanguage.PGQL)
 interface PathRepository extends GenericRepository<Person, String> {
     @PathLimit(5)
     Optional<GraphPath<Person>> findShortestPathByMentor(String from, String to);
@@ -206,15 +206,15 @@ interface UnsupportedRepository extends GenericRepository<Movie, String> {
         where:
         description            | language                                              | method                                                              | message
 
-        'LIKE in PGQL'         | ''                                                    | 'List<Movie> findByTitleStartsWith(String prefix);'                 | 'PGQL has no LIKE'
+        'LIKE in PGQL'         | ', language = PropertyGraph.QueryLanguage.PGQL'                                                    | 'List<Movie> findByTitleStartsWith(String prefix);'                 | 'PGQL has no LIKE'
         'fetch joins'          | ''                                                    | '@Join("directors") List<Movie> findByReleased(Integer released);' | 'not supported for Oracle property graphs'
         'paths in SQL/PGQ'     | ', language = PropertyGraph.QueryLanguage.SQL_PGQ'    | '@PathLimit(3) Optional<GraphPath<Movie>> findShortestPath(String from, String to);' | 'use @PropertyGraph(language = PGQL)'
         'unbounded paths'      | ''                                                    | 'Optional<GraphPath<Movie>> findShortestPath(String from, String to);' | 'need a maximum depth'
     }
 
-    void "test schemaless properties are rejected"() {
+    void "test schemaless properties are read from a JSON column"() {
         when:
-        buildRepository('test.PetRepository', """
+        def repository = buildRepository('test.PetRepository', """
 import io.micronaut.data.graph.annotation.DynamicAttributes;
 import java.util.Map;
 
@@ -232,15 +232,14 @@ class Pet {
 }
 
 @TestOracleRepository
-@PropertyGraph("pets")
+@PropertyGraph(value = "pets", language = PropertyGraph.QueryLanguage.SQL_PGQ)
 interface PetRepository extends GenericRepository<Pet, String> {
     List<Pet> findByName(String name);
 }
 """)
 
         then:
-        def e = thrown(RuntimeException)
-        e.message.contains('Schemaless properties and dynamic labels are not supported by Oracle property graphs')
+        getQuery(findMethod(repository, 'findByName')) == '''SELECT * FROM GRAPH_TABLE (pets MATCH (n IS Pet) WHERE (n.name = ?) COLUMNS (n.name AS "n__ID_", n.name AS "n__name", 'Pet' AS "n__LABEL_", n.attributes AS "n__DYN_"))'''
     }
 
     private static ExecutableMethod<?, ?> findMethod(BeanDefinition<?> definition, String name) {

@@ -1,5 +1,7 @@
 package example
 
+import io.micronaut.data.graph.annotation.Direction
+import io.micronaut.data.graph.annotation.PathDirection
 import io.micronaut.data.graph.annotation.PathLimit
 import io.micronaut.data.graph.model.GraphPath
 import io.micronaut.data.graph.model.GraphRelationship
@@ -22,6 +24,14 @@ interface PersonRepository : CrudRepository<Person, UUID> {
 
     fun existsPathByFollows(from: Person, to: Person): Boolean // <4>
     // end::paths[]
+
+    // tag::pathOptions[]
+    fun findShortestPathByFollowsBetweenName(from: String, to: String, @PathLimit maxDepth: Int): GraphPath<Person>? // <1>
+
+    @PathLimit(4)
+    @PathDirection(Direction.UNDIRECTED) // <2>
+    fun existsPathByFollowsBetweenName(from: String, to: String): Boolean
+    // end::pathOptions[]
 
     // tag::relationships[]
     fun findRelationships(from: Person, to: Person): List<GraphRelationship<Person, Person>>

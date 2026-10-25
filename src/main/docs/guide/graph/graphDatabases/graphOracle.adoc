@@ -17,8 +17,8 @@ snippet::example.TransferView[project-base="doc-examples/oracle-graph-example", 
 
 The query language is one of:
 
-`PGQL`:: The default. Queries are compiled to https://pgql-lang.org[PGQL] and need a data source that uses the PGQL JDBC driver from `com.oracle.database.graph:opg-pgql-jdbc`. Path finders return paths with `ANY SHORTEST`, `ALL SHORTEST` and `ALL` searches.
-`SQL_PGQ`:: Queries are compiled to SQL/PGQ `GRAPH_TABLE` queries, which run on any Oracle Database 23ai data source. Path finders check for paths and count them, and `StartsWith`, `EndsWith` and `Contains` are supported through `LIKE`.
+`SQL_PGQ`:: The default. Queries are compiled to SQL/PGQ `GRAPH_TABLE` queries, which run on any Oracle Database 23ai data source. Path finders check for paths and count them, and `StartsWith`, `EndsWith` and `Contains` are supported through `LIKE`.
+`PGQL`:: Queries are compiled to https://pgql-lang.org[PGQL], which only runs on a data source that uses the PGQL JDBC driver from `com.oracle.database.graph:opg-pgql-jdbc`, with a URL that starts with `jdbc:oracle:pgql:`. Running a PGQL query on another data source fails with a `DataAccessException`. Path finders return paths with `ANY SHORTEST`, `ALL SHORTEST` and `ALL` searches.
 
 Path finders need a fixed maximum depth set with ann:data.graph.annotation.PathLimit[] on the method, and relationship finders a single relationship type.
 
@@ -65,7 +65,10 @@ CREATE PROPERTY GRAPH bank_graph
     SOURCE KEY ("ACCOUNTID") REFERENCES "ACCOUNTS" ("ID")
     DESTINATION KEY ("TOID") REFERENCES "ACCOUNTS" ("ID")
     LABEL TRANSFERS PROPERTIES ("ID", "AMOUNT"))
+  OPTIONS (ALLOW MIXED PROPERTY TYPES)
 ----
+
+The generated graphs allow mixed property types, so tables may map a property name, such as `ID`, to different column types.
 
 `CREATE_DROP` drops the property graphs before the tables. Graph repositories save nodes only, so rows of edge tables are written with SQL or a ann:data.jdbc.annotation.JdbcRepository[] over an entity of the edge table, which also supplies the identifier of a relationship entity. `VALIDATE` does not check the tables of graph entities.
 

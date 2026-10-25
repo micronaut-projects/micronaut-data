@@ -13,7 +13,7 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package io.micronaut.data.age.operations;
+package io.micronaut.data.graph.runtime.age;
 
 import io.micronaut.core.annotation.Internal;
 import io.micronaut.data.graph.runtime.GraphEdge;
@@ -36,7 +36,7 @@ import java.util.Map;
  * @since 5.3.0
  */
 @Internal
-final class Agtype {
+public final class Agtype {
 
     private final String text;
     private int position;
@@ -51,7 +51,7 @@ final class Agtype {
      * @param text The text, or null for SQL NULL
      * @return The value: null, String, Boolean, Long, Double, BigDecimal, List, Map, GraphNode, GraphEdge or GraphPathValue
      */
-    static @Nullable Object parse(@Nullable String text) {
+    public static @Nullable Object parse(@Nullable String text) {
         if (text == null) {
             return null;
         }

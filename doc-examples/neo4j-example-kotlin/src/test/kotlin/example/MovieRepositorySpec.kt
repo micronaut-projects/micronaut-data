@@ -90,6 +90,19 @@ class MovieRepositorySpec : AbstractNeo4jTest() {
     }
 
     @Test
+    fun testNestedJoin() {
+        val lilly = personRepository.save(Person(name = "Lilly Wachowski", born = 1967, follows = listOf(Person(name = "Lana Wachowski", born = 1965))))
+        movieRepository.save(Movie("Bound", "In the end, it's all about the money", 1996, directors = listOf(lilly)))
+
+        // tag::nestedFetch[]
+        val fetched = movieRepository.findByReleased(1996).first()
+        val followed = fetched.directors.first().follows.first() // <1>
+        // end::nestedFetch[]
+
+        assertEquals("Lana Wachowski", followed.name)
+    }
+
+    @Test
     fun testProjectionsAndQueries() {
         movieRepository.vote("Speed")
 

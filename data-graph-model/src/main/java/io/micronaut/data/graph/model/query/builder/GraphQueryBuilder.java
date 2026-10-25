@@ -153,7 +153,7 @@ public interface GraphQueryBuilder extends QueryBuilder {
     }
 
     /**
-     * Whether nodes can be written in batches with {@link #buildWriteNodesQuery(PersistentEntity, boolean, boolean)}.
+     * Whether nodes can be written in batches with {@link #buildWriteNodesQuery(PersistentEntity, List, boolean, boolean)}.
      *
      * @return True if batched node writes are supported
      * @since 5.3.0
@@ -163,18 +163,30 @@ public interface GraphQueryBuilder extends QueryBuilder {
     }
 
     /**
+     * Whether batched node writes can merge nodes on assigned identifiers. When they cannot, nodes with assigned
+     * identifiers are written one at a time.
+     *
+     * @return True if a batch can merge nodes
+     * @since 5.3.0
+     */
+    default boolean supportsBatchedMerge() {
+        return supportsBatchNodeWrites();
+    }
+
+    /**
      * Builds the query that writes a batch of nodes, bound to {@code $rows}: a list of maps holding the position of the
      * node in the batch under {@code position}, its identifier under {@code id}, the version it was read with under
      * {@code version} and its properties under {@code properties}. The query returns a row with the index and
      * identifier of each node it wrote.
      *
-     * @param entity    The entity
-     * @param idPresent Whether the nodes have identifiers: nodes with database-assigned identifiers are created without
-     * @param versioned Whether the nodes are only updated while they still have the version they were read with
+     * @param entity        The entity
+     * @param propertyNames The stored names of the properties every node of the batch writes
+     * @param idPresent     Whether the nodes have identifiers: nodes with database-assigned identifiers are created without
+     * @param versioned     Whether the nodes are only updated while they still have the version they were read with
      * @return The query
      * @since 5.3.0
      */
-    default String buildWriteNodesQuery(PersistentEntity entity, boolean idPresent, boolean versioned) {
+    default String buildWriteNodesQuery(PersistentEntity entity, List<String> propertyNames, boolean idPresent, boolean versioned) {
         throw new UnsupportedOperationException("Batched node writes are not supported by " + getClass().getSimpleName());
     }
 

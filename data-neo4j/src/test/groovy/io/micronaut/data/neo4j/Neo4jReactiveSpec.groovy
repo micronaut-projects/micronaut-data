@@ -14,6 +14,7 @@ import io.micronaut.data.neo4j.features.ReactiveMovieService
 import io.micronaut.data.neo4j.features.ReactiveMovieSpecificationRepository
 import io.micronaut.data.repository.jpa.criteria.PredicateSpecification
 import io.micronaut.data.neo4j.features.ReactivePetRepository
+import io.micronaut.data.neo4j.features.ReactiveTagRepository
 import io.micronaut.data.neo4j.features.Tag
 import io.micronaut.data.neo4j.operations.Neo4jReactorRepositoryOperations
 import io.micronaut.data.neo4j.operations.Neo4jRepositoryOperations
@@ -36,6 +37,9 @@ class Neo4jReactiveSpec extends Specification implements TestPropertyProvider {
 
     @Inject
     ReactiveArticleRepository articleRepository
+
+    @Inject
+    ReactiveTagRepository tagRepository
 
     @Inject
     ReactiveMovieSpecificationRepository movieSpecificationRepository
@@ -297,5 +301,32 @@ class Neo4jReactiveSpec extends Specification implements TestPropertyProvider {
         movieSpecificationRepository.count(after1995).block() == 1
         movieSpecificationRepository.exists(after1995).block()
         movieSpecificationRepository.findOne(after1995).block().title == "The Matrix"
+    }
+
+    void "reactive saveAll and updateAll write nodes in batches"() {
+        when:
+        def tags = tagRepository.saveAll([new Tag("graph"), new Tag("nosql"), new Tag("cypher")]).collectList().block()
+
+        then: "each instance gets the identifier of its own node"
+        tags*.id.unique().size() == 3
+        tags.collect { tagRepository.findById(it.id).block().name } == ["graph", "nosql", "cypher"]
+
+        when:
+        def articles = articleRepository.saveAll([new Article("a", "A"), new Article("b", "B")]).collectList().block()
+        def stale = articleRepository.findById("b").block()
+        articles.each { it.title = it.title.toLowerCase() }
+        def updated = articleRepository.updateAll(articles).collectList().block()
+
+        then:
+        updated*.version == [1L, 1L]
+
+        when:
+        articleRepository.updateAll([articleRepository.findById("a").block(), stale]).collectList().block()
+
+        then:
+        thrown(OptimisticLockException)
+
+        cleanup:
+        tagRepository.deleteAll().block()
     }
 }

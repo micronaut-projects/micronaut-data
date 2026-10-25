@@ -21,8 +21,10 @@ import io.micronaut.data.graph.runtime.GraphEdge;
 import io.micronaut.data.graph.runtime.GraphNode;
 import io.micronaut.data.graph.runtime.GraphPathValue;
 import io.micronaut.data.graph.runtime.GraphRecord;
+import io.micronaut.data.graph.runtime.age.Agtype;
 import org.jspecify.annotations.Nullable;
 
+import java.nio.charset.StandardCharsets;
 import java.util.ArrayList;
 import java.util.Collection;
 import java.util.LinkedHashMap;
@@ -99,6 +101,16 @@ public final class OracleGraphRows {
      * @param rows    The rows
      * @return The records
      */
+    /**
+     * Whether a column holds the schemaless properties of a node, which drivers read as JSON text.
+     *
+     * @param column The column label
+     * @return Whether to read the column as a string
+     */
+    public static boolean isJsonText(String column) {
+        return column.endsWith(SEPARATOR + OracleGraphQueryBuilder.DYNAMIC_ATTRIBUTES_COLUMN);
+    }
+
     public static List<GraphRecord> decode(List<String> columns, List<List<@Nullable Object>> rows) {
         if (columns.contains(OracleGraphQueryBuilder.PATH_MATCH_COLUMN)) {
             return decodePaths(columns, rows);
@@ -181,11 +193,36 @@ public final class OracleGraphRows {
         Object label = fields.get(OracleGraphQueryBuilder.LABEL_COLUMN);
         Map<String, Object> properties = new LinkedHashMap<>();
         fields.forEach((name, value) -> {
-            if (!name.equals(OracleGraphQueryBuilder.ID_COLUMN) && !name.equals(OracleGraphQueryBuilder.LABEL_COLUMN)) {
+            if (!name.equals(OracleGraphQueryBuilder.ID_COLUMN) && !name.equals(OracleGraphQueryBuilder.LABEL_COLUMN)
+                && !name.equals(OracleGraphQueryBuilder.DYNAMIC_ATTRIBUTES_COLUMN)) {
                 properties.put(name, value);
             }
         });
+        dynamicAttributes(fields.get(OracleGraphQueryBuilder.DYNAMIC_ATTRIBUTES_COLUMN)).forEach(properties::putIfAbsent);
         return new GraphNode(id == null ? rowIndex : id, label == null ? List.of() : List.of(label.toString()), properties);
+    }
+
+    /**
+     * Reads the JSON object of the schemaless properties of a node. The driver returns the JSON column as text or as
+     * an {@code oracle.sql.json.OracleJsonObject}, whose string form is its JSON text.
+     */
+    private static Map<String, Object> dynamicAttributes(@Nullable Object json) {
+        if (json == null) {
+            return Map.of();
+        }
+        String text = json instanceof byte[] bytes ? new String(bytes, StandardCharsets.UTF_8) : json.toString();
+        // agtype text is a superset of JSON
+        if (!(Agtype.parse(text) instanceof Map<?, ?> map)) {
+            throw new IllegalStateException("Expected a JSON object of schemaless properties, found: " + text);
+        }
+        Map<String, Object> attributes = new LinkedHashMap<>();
+        map.forEach((key, value) -> {
+            // A property set to null was removed
+            if (value != null) {
+                attributes.put(key.toString(), value);
+            }
+        });
+        return attributes;
     }
 
     private static Map<String, Map<String, @Nullable Object>> group(List<String> columns, List<@Nullable Object> row) {

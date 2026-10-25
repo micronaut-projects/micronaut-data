@@ -15,8 +15,10 @@
  */
 package io.micronaut.data.neo4j.operations;
 
-import io.micronaut.context.BeanProvider;
-import io.micronaut.context.annotation.Requires;
+import io.micronaut.inject.qualifiers.Qualifiers;
+import io.micronaut.context.BeanLocator;
+import io.micronaut.context.annotation.Parameter;
+import io.micronaut.context.annotation.EachBean;
 import io.micronaut.core.annotation.AnnotationMetadata;
 import io.micronaut.core.annotation.Internal;
 import io.micronaut.data.connection.ConnectionDefinition;
@@ -30,14 +32,13 @@ import io.micronaut.data.graph.runtime.serde.GraphSerde;
 import io.micronaut.data.graph.runtime.operations.AbstractGraphRepositoryOperations;
 import io.micronaut.data.model.runtime.AttributeConverterRegistry;
 import io.micronaut.data.model.runtime.RuntimeEntityRegistry;
+import io.micronaut.data.neo4j.session.Neo4jDriverRegistration;
 import io.micronaut.data.neo4j.session.Neo4jConnection;
 import io.micronaut.data.neo4j.session.Neo4jConnectionOperations;
 import io.micronaut.data.runtime.convert.DataConversionService;
 import io.micronaut.data.runtime.date.DateTimeProvider;
 import jakarta.inject.Named;
-import jakarta.inject.Singleton;
 import org.jspecify.annotations.Nullable;
-import org.neo4j.driver.Driver;
 import org.neo4j.driver.Record;
 import org.neo4j.driver.Result;
 import org.neo4j.driver.exceptions.Neo4jException;
@@ -59,19 +60,19 @@ import java.util.function.Function;
  * @author graemerocher
  * @since 5.3.0
  */
-@Singleton
-@Named("default")
-@Requires(beans = Driver.class)
+@EachBean(Neo4jDriverRegistration.class)
 @Internal
 final class DefaultNeo4jRepositoryOperations extends AbstractGraphRepositoryOperations implements Neo4jRepositoryOperations {
 
     private static final Logger LOG = LoggerFactory.getLogger(DefaultNeo4jRepositoryOperations.class);
 
     private final Neo4jConnectionOperations connectionOperations;
-    private final BeanProvider<Neo4jReactorRepositoryOperations> reactiveOperations;
+    private final BeanLocator beanLocator;
+    private final String driverName;
 
-    DefaultNeo4jRepositoryOperations(Neo4jConnectionOperations connectionOperations,
-                                     BeanProvider<Neo4jReactorRepositoryOperations> reactiveOperations,
+    DefaultNeo4jRepositoryOperations(@Parameter Neo4jDriverRegistration registration,
+                                     @Parameter Neo4jConnectionOperations connectionOperations,
+                                     BeanLocator beanLocator,
                                      DateTimeProvider<Object> dateTimeProvider,
                                      RuntimeEntityRegistry runtimeEntityRegistry,
                                      DataConversionService conversionService,
@@ -81,12 +82,13 @@ final class DefaultNeo4jRepositoryOperations extends AbstractGraphRepositoryOper
                                      GraphSerde graphSerde) {
         super(new CypherQueryBuilder(), dateTimeProvider, runtimeEntityRegistry, conversionService, attributeConverterRegistry, executorService, encoderRegistrars, graphSerde);
         this.connectionOperations = connectionOperations;
-        this.reactiveOperations = reactiveOperations;
+        this.beanLocator = beanLocator;
+        this.driverName = registration.name();
     }
 
     @Override
     public Neo4jReactorRepositoryOperations reactive() {
-        return reactiveOperations.get();
+        return beanLocator.getBean(Neo4jReactorRepositoryOperations.class, Qualifiers.byName(driverName));
     }
 
     /**

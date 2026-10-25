@@ -1,0 +1,17 @@
+micronaut:
+  application:
+    name: age-r2dbc-example
+# tag::config[]
+r2dbc:
+  datasources:
+    default:
+      db-type: postgres
+      dialect: POSTGRES
+micronaut.data.age:
+  graph: movies
+  create-extension: true
+# end::config[]
+test-resources:
+  containers:
+    postgres:
+      image-name: apache/age:release_PG16_1.5.0

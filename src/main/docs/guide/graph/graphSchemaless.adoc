@@ -33,6 +33,8 @@ snippet::example.PetRepositorySpec[project-base="doc-examples/neo4j-example", ta
 
 Values must be types the database stores: strings, numbers, booleans, temporal values and lists of those. Setting a value to `null` removes the property when the entity is saved. As schemaless properties are not known at build time, finders cannot refer to them. Use an explicit query instead.
 
+Oracle property graphs store the map in a JSON column of the vertex table, named after the property, whose entries are read as properties of the node. Schema generation creates the column. Dynamic labels and dynamic relationships are not supported by Oracle.
+
 == Dynamic labels
 
 A collection of strings annotated with ann:data.graph.annotation.Labels[] holds the labels of a node beyond those its entity declares. Saving adds them to the node and reading collects them. Dynamic labels are supported by Neo4j.

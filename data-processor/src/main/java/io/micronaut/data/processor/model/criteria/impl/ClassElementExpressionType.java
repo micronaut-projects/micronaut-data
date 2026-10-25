@@ -67,4 +67,9 @@ public final class ClassElementExpressionType<T> implements ExpressionType<T> {
     public Class<T> getJavaType() {
         throw notSupportedOperation();
     }
+
+    @Override
+    public boolean isCollection() {
+        return type.isArray() || type.isAssignable(Iterable.class) || type.isAssignable(java.util.Map.class);
+    }
 }

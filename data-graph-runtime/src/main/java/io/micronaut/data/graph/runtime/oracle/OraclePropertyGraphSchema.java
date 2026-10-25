@@ -389,6 +389,8 @@ public final class OraclePropertyGraphSchema {
         if (!edgeTables.isEmpty()) {
             sql.append(" EDGE TABLES (").append(String.join(", ", edgeTables)).append(')');
         }
+        // Tables may map a property name to different types, such as a string node id and a numeric relationship id
+        sql.append(" OPTIONS (ALLOW MIXED PROPERTY TYPES)");
         return sql.toString();
     }
 

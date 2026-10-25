@@ -425,10 +425,22 @@ public abstract class AbstractCriteriaMethodMatch implements MethodMatcher.Metho
         if (propertyName.endsWith(IGNORE_CASE)) {
             restrictionName += IGNORE_CASE;
             propertyName = extractPropertyName(propertyName, IGNORE_CASE);
+            rejectIgnoreCaseIn(propertyName);
         }
         Restrictions.PropertyRestriction<Object> restriction = Restrictions.findPropertyRestriction(restrictionName);
         Objects.requireNonNull(restriction, "Cannot find restriction for expression: " + expression);
         return getPropertyRestriction(propertyName, root, cb, parameters, restriction);
+    }
+
+    /**
+     * In restrictions compare collections, which cannot ignore case.
+     */
+    private static void rejectIgnoreCaseIn(String propertyName) {
+        for (String inRestriction : List.of("NotIn", "InList", "In")) {
+            if (propertyName.endsWith(inRestriction) && propertyName.length() > inRestriction.length()) {
+                throw new MatchFailedException("IgnoreCase is not supported with " + inRestriction + ": compare the values with the case they are stored in, or use an explicit query");
+            }
+        }
     }
 
     private static String extractPropertyName(String queryParameter, String clause) {

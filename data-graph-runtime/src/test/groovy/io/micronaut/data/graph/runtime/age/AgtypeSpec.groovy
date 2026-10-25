@@ -1,9 +1,8 @@
-package io.micronaut.data.age.operations
+package io.micronaut.data.graph.runtime.age
 
 import io.micronaut.data.graph.runtime.GraphEdge
 import io.micronaut.data.graph.runtime.GraphNode
 import io.micronaut.data.graph.runtime.GraphPathValue
-import io.micronaut.json.JsonMapper
 import spock.lang.Specification
 
 
@@ -77,14 +76,5 @@ class AgtypeSpec extends Specification {
 
         then:
         thrown(IllegalArgumentException)
-    }
-
-    void "write parameters as JSON with Micronaut Serialization"() {
-        given:
-        def jsonMapper = JsonMapper.createDefault()
-
-        expect:
-        DefaultAgeRepositoryOperations.writeParameters(jsonMapper, [p0: "it's \"quoted\"", p1: 2L, p2: [1, 2], p3: null, p4: true, p5: [k: 1.5d]]) ==
-            '{"p0":"it\'s \\"quoted\\"","p1":2,"p2":[1,2],"p3":null,"p4":true,"p5":{"k":1.5}}'
     }
 }

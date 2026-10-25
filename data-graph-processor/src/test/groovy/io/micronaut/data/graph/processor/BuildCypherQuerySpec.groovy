@@ -267,9 +267,9 @@ interface LikeRepository extends CrudRepository<Movie, String> {
         e.message.contains('LIKE is not supported by graph repositories')
     }
 
-    void "test joins deeper than one relationship are rejected"() {
+    void "test joins deeper than one relationship fetch nested nodes"() {
         when:
-        buildRepository('test.DeepRepository', """
+        def repository = buildRepository('test.DeepRepository', """
 $MOVIES
 
 @TestGraphRepository
@@ -280,8 +280,7 @@ interface DeepRepository extends CrudRepository<Movie, String> {
 """)
 
         then:
-        def e = thrown(RuntimeException)
-        e.message.contains('can only join direct relationships')
+        getQuery(findMethod(repository, 'findByReleased', 1)) == 'MATCH (n:Movie) WHERE n.released = $p0 OPTIONAL MATCH (n)<-[:DIRECTED]-(j0:Person:Actor) OPTIONAL MATCH (j0)-[:FOLLOWS]->(j0_0n:Person:Actor) WITH n, j0, collect(j0_0n) AS j0_0 WITH n, collect(CASE WHEN j0 IS NULL THEN NULL ELSE {node: j0, mentor: j0_0} END) AS j_directors RETURN n, j_directors'
     }
 
     private static ExecutableMethod<?, ?> findMethod(BeanDefinition<?> definition, String name, int arity) {

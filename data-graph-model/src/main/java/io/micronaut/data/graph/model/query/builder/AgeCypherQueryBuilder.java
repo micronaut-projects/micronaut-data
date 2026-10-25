@@ -155,13 +155,35 @@ public class AgeCypherQueryBuilder extends CypherQueryBuilder {
     }
 
     /**
-     * Nodes are written one statement at a time on Apache AGE, so no batched {@code UNWIND} writes are generated.
+     * Apache AGE 1.5 only sets the properties of the first node an {@code UNWIND} merges, so nodes with assigned
+     * identifiers are written one at a time.
      *
      * @return False
      */
     @Override
-    public boolean supportsBatchNodeWrites() {
+    public boolean supportsBatchedMerge() {
         return false;
+    }
+
+    @Override
+    public String buildWriteNodesQuery(PersistentEntity entity, List<String> propertyNames, boolean idPresent, boolean versioned) {
+        return AgeStatements.wrap(super.buildWriteNodesQuery(entity, propertyNames, idPresent, versioned));
+    }
+
+    /**
+     * Apache AGE cannot set properties from a map, so each property is set from the map of the row.
+     *
+     * @param query         The query
+     * @param row           The variable of the row
+     * @param propertyNames The stored names of the properties every node of the batch writes
+     */
+    @Override
+    protected void appendBatchProperties(StringBuilder query, String row, List<String> propertyNames) {
+        for (int i = 0; i < propertyNames.size(); i++) {
+            String name = GraphEntities.escapeName(propertyNames.get(i));
+            query.append(i == 0 ? " SET " : ", ").append(ROOT).append('.').append(name)
+                .append(" = ").append(row).append('.').append(ROW_PROPERTIES).append('.').append(name);
+        }
     }
 
     @Override

@@ -171,14 +171,16 @@ class CypherCriteriaQuerySpec extends Specification {
 
         expect:
         builder.supportsBatchNodeWrites()
-        !new AgeCypherQueryBuilder().supportsBatchNodeWrites()
-        builder.buildWriteNodesQuery(registry.getEntity(Person), false, false) ==
+        new AgeCypherQueryBuilder().supportsBatchNodeWrites()
+        new AgeCypherQueryBuilder().buildWriteNodesQuery(registry.getEntity(Note), ['code', 'text'], true, false)
+            .contains('MERGE (n:Note {code: row.id}) SET n.code = row.properties.code, n.text = row.properties.text RETURN')
+        builder.buildWriteNodesQuery(registry.getEntity(Person), ['name'], false, false) ==
             'UNWIND $rows AS row CREATE (n:Person) SET n += row.properties RETURN row.position AS position, id(n) AS id'
-        builder.buildWriteNodesQuery(registry.getEntity(Person), true, false) ==
+        builder.buildWriteNodesQuery(registry.getEntity(Person), ['name'], true, false) ==
             'UNWIND $rows AS row MATCH (n:Person) WHERE id(n) = row.id SET n += row.properties RETURN row.position AS position, id(n) AS id'
-        builder.buildWriteNodesQuery(registry.getEntity(Note), true, false) ==
+        builder.buildWriteNodesQuery(registry.getEntity(Note), ['code', 'text'], true, false) ==
             'UNWIND $rows AS row MERGE (n:Note {code: row.id}) SET n += row.properties RETURN row.position AS position, n.code AS id'
-        builder.buildWriteNodesQuery(registry.getEntity(Note), true, true) ==
+        builder.buildWriteNodesQuery(registry.getEntity(Note), ['code', 'text'], true, true) ==
             'UNWIND $rows AS row MATCH (n:Note) WHERE n.code = row.id AND n.version = row.version SET n += row.properties RETURN row.position AS position, n.code AS id'
     }
 

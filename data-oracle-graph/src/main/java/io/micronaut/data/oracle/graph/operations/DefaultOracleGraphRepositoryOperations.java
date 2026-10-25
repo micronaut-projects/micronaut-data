@@ -81,6 +81,7 @@ final class DefaultOracleGraphRepositoryOperations extends AbstractGraphReposito
 
     private static final Logger LOG = LoggerFactory.getLogger(DefaultOracleGraphRepositoryOperations.class);
     private static final String DECLARE_METHOD = "Declare a query method on the Oracle graph repository instead";
+    private static final String PGQL_URL_PREFIX = "jdbc:oracle:pgql:";
 
     private final ConnectionOperations<Connection> connectionOperations;
     private final JdbcRepositoryOperations jdbcOperations;
@@ -136,6 +137,7 @@ final class DefaultOracleGraphRepositoryOperations extends AbstractGraphReposito
     }
 
     private static GraphResult run(Connection connection, String query, Map<String, Object> parameters) {
+        requirePgqlDriver(connection, query);
         OracleGraphRows.Expanded expanded = OracleGraphRows.expand(query, new ArrayList<>(parameters.values()));
         if (LOG.isDebugEnabled()) {
             LOG.debug("Executing Oracle graph query: {} with parameters {}", expanded.query(), expanded.parameters());
@@ -156,7 +158,8 @@ final class DefaultOracleGraphRepositoryOperations extends AbstractGraphReposito
                 while (resultSet.next()) {
                     List<Object> row = new ArrayList<>(count);
                     for (int i = 1; i <= count; i++) {
-                        row.add(resultSet.getObject(i));
+                        // A JSON column needs a driver property to be read as an object, but reads as text
+                        row.add(OracleGraphRows.isJsonText(columns.get(i - 1)) ? resultSet.getString(i) : resultSet.getObject(i));
                     }
                     rows.add(row);
                 }
@@ -164,6 +167,27 @@ final class DefaultOracleGraphRepositoryOperations extends AbstractGraphReposito
             }
         } catch (SQLException e) {
             throw new DataAccessException("Error executing Oracle graph query [" + expanded.query() + "]: " + e.getMessage(), e);
+        }
+    }
+
+    /**
+     * Fails a PGQL query on a connection that does not use the PGQL JDBC driver, which would otherwise read the labels
+     * of the query, such as {@code :Account}, as named bind parameters.
+     */
+    static void requirePgqlDriver(Connection connection, String query) {
+        if (!OracleGraphSql.isPgql(query)) {
+            return;
+        }
+        String url;
+        try {
+            url = connection.getMetaData().getURL();
+        } catch (SQLException e) {
+            return;
+        }
+        if (url != null && !url.startsWith(PGQL_URL_PREFIX)) {
+            throw new DataAccessException("The query [" + query + "] is PGQL, which needs a data source that uses the PGQL JDBC driver, "
+                + "with a URL that starts with " + PGQL_URL_PREFIX + ". Use @OracleGraphRepository(language = SQL_PGQ) to query the graph on "
+                + "this data source: " + url);
         }
     }
 
