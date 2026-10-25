@@ -265,6 +265,15 @@ abstract class AbstractTextSearchSpec extends Specification {
         bookSearchRepository.search(SearchQuery.builder("programming").minScore(top * 10 + 1).build()).results().isEmpty()
     }
 
+    void "search with a SearchQuery rejects highlighting a property that is not a search field"() {
+        when:
+        bookSearchRepository.search(SearchQuery.builder("programming").highlight("author").build())
+
+        then:
+        IllegalArgumentException e = thrown()
+        e.message.contains("'author'")
+    }
+
     void "search with a SearchQuery rejects a field that is not a search field"() {
         when:
         bookSearchRepository.search(SearchQuery.builder("programming").fields("author").build())

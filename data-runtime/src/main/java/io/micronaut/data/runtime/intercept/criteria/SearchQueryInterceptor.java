@@ -76,7 +76,7 @@ public class SearchQueryInterceptor extends AbstractSpecificationInterceptor<Obj
         selections.add(root);
         selections.add(score.alias(TextSearchSupport.SCORE_ALIAS));
         for (String field : searchQuery.getHighlightFields()) {
-            selections.add(cb.searchHighlight(root.get(field), queryParameter, searchQuery.getMode()).alias(TextSearchSupport.highlightAlias(field)));
+            selections.add(cb.searchHighlight(root.get(requireSearchField(root, field)), queryParameter, searchQuery.getMode()).alias(TextSearchSupport.highlightAlias(field)));
         }
         criteriaQuery.multiselect(selections);
         if (!pageable.getSort().isSorted()) {
@@ -114,6 +114,16 @@ public class SearchQueryInterceptor extends AbstractSpecificationInterceptor<Obj
      * Resolves the properties to search: the query's fields when given, otherwise every search field
      * of the entity.
      */
+    /** A field named by a SearchQuery, which must be one of the entity's search fields. */
+    private static String requireSearchField(PersistentEntityRoot<Object> root, String field) {
+        List<String> searchFields = TextSearchSupport.searchFields(root.getPersistentEntity()).stream().map(PersistentProperty::getName).toList();
+        if (!searchFields.contains(field)) {
+            throw new IllegalArgumentException("Property '" + field + "' of entity " + root.getPersistentEntity().getSimpleName()
+                + " is not a @SearchField; the search fields are " + searchFields);
+        }
+        return field;
+    }
+
     private static List<Expression<?>> resolveFields(PersistentEntityRoot<Object> root, SearchQuery searchQuery) {
         List<Expression<?>> fields = new ArrayList<>();
         if (searchQuery.getFields().isEmpty()) {
@@ -124,13 +134,8 @@ public class SearchQueryInterceptor extends AbstractSpecificationInterceptor<Obj
                 throw new IllegalStateException("Entity " + root.getPersistentEntity().getName() + " has no @SearchField properties to search");
             }
         } else {
-            List<String> searchFields = TextSearchSupport.searchFields(root.getPersistentEntity()).stream().map(PersistentProperty::getName).toList();
             for (String field : searchQuery.getFields()) {
-                if (!searchFields.contains(field)) {
-                    throw new IllegalArgumentException("Property '" + field + "' of entity " + root.getPersistentEntity().getSimpleName()
-                        + " is not a @SearchField; the search fields are " + searchFields);
-                }
-                fields.add(root.get(field));
+                fields.add(root.get(requireSearchField(root, field)));
             }
         }
         return fields;
