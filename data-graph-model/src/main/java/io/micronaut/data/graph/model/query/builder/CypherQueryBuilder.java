@@ -270,7 +270,7 @@ public class CypherQueryBuilder implements QueryBuilder {
      */
     public String buildFindByIdQuery(PersistentEntity entity) {
         return MATCH_OPEN + ROOT + GraphEntities.labelExpression(entity) + CLOSE_WHERE
-            + identityExpression(entity.getIdentity(), ROOT) + " = $" + ID_PARAMETER + " RETURN " + ROOT;
+            + identityExpression(entity.getIdentity(), ROOT) + " = $" + ID_PARAMETER + RETURN + ROOT;
     }
 
     /**
