@@ -375,7 +375,7 @@ final class OraclePropertyGraphSchemaContributor implements JdbcSchemaContributo
      * Quotes a table or column name the way the SQL query builder does for Oracle: in upper case.
      */
     private static String quote(String name) {
-        return '"' + name.toUpperCase(Locale.ENGLISH) + '"';
+        return '"' + GraphEntities.requireName(name).toUpperCase(Locale.ENGLISH).replace("\"", "\"\"") + '"';
     }
 
     /**

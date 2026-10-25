@@ -175,7 +175,11 @@ interface AccountRepository extends CrudRepository<Account, Long> {
         def rawQuery = method.annotationMetadata.stringValue(Query, 'rawQuery').get()
         rawQuery.startsWith("SELECT COUNT(*) AS result FROM v\$session WHERE sid = ? AND path <> 'C:\\")
         rawQuery.endsWith("' -- see \$ticket")
-        getParameterNames(method) == ['p0']
+
+        and: "only the sid is bound"
+        method.annotationMetadata.getAnnotation(io.micronaut.data.intercept.annotation.DataMethod)
+            .getAnnotations(io.micronaut.data.intercept.annotation.DataMethod.META_MEMBER_PARAMETERS, io.micronaut.data.intercept.annotation.DataMethodQueryParameter)
+            *.intValue(io.micronaut.data.intercept.annotation.DataMethodQueryParameter.META_MEMBER_PARAMETER_INDEX)*.asInt == [0]
     }
 
     void "test names that need quoting use double quotes"() {
@@ -209,6 +213,23 @@ interface QuotedRepository extends GenericRepository<Quoted, String> {
         expect:
         getQuery(findMethod(repository, 'findByFirstName')).contains('MATCH (n IS "Movie Node") WHERE (n."first name" = ?)')
         getQuery(findMethod(repository, 'findByCastTitle')).contains('MATCH (n IS "Movie Node"), (n) <-[IS "ACTED IN"]- (a0 IS "Movie Node") WHERE (a0.title = ?)')
+    }
+
+    void "test a property graph name must be a plain identifier"() {
+        when:
+        buildRepository('test.HostileGraphRepository', """
+$MOVIES
+
+@TestOracleRepository
+@PropertyGraph("movies MATCH (x) COLUMNS (1 AS y)) --")
+interface HostileGraphRepository extends GenericRepository<Movie, String> {
+    long countByReleasedLessThan(int year);
+}
+""")
+
+        then:
+        def e = thrown(RuntimeException)
+        e.message.contains('is not a plain identifier')
     }
 
     void "test a node without an identifier is rejected"() {
