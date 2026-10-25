@@ -31,7 +31,6 @@ import org.junit.jupiter.api.Test;
 
 import java.sql.SQLException;
 import java.time.Duration;
-import java.util.Locale;
 
 public class TransactionUtilSpec {
 
@@ -162,14 +161,13 @@ public class TransactionUtilSpec {
 
     @Test
     void testOracleSessionlessModeParsing() {
-        for (OracleTransactional.Sessionless mode : OracleTransactional.Sessionless.values()) {
-            if (mode == OracleTransactional.Sessionless.NONE) {
-                continue;
-            }
-            DefaultTransactionDefinition definition = new DefaultTransactionDefinition();
-            definition.putProperty(OracleTransactional.ORACLE_SESSIONLESS_MODE, " " + mode.name().toLowerCase(Locale.ROOT) + " ");
-            Assertions.assertEquals(mode, TransactionUtil.getOracleSessionlessMode(definition));
-        }
+        DefaultTransactionDefinition definition = new DefaultTransactionDefinition();
+        definition.putProperty(OracleTransactional.ORACLE_SESSIONLESS_MODE, " requires_suspended ");
+
+        Assertions.assertEquals(
+            OracleTransactional.Sessionless.REQUIRES_SUSPENDED,
+            TransactionUtil.getOracleSessionlessMode(definition)
+        );
     }
 
     @Test

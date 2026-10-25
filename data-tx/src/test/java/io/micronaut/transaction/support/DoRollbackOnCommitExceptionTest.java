@@ -261,7 +261,6 @@ class DoRollbackOnCommitExceptionTest {
     void unsupportedOracleSessionlessModeIsRejectedBeforeTransactionalWork() {
         assertUnsupportedOracleSessionlessMode(OracleTransactional.Sessionless.SUSPEND);
         assertUnsupportedOracleSessionlessMode(OracleTransactional.Sessionless.REQUIRES_SUSPENDED);
-        assertUnsupportedOracleSessionlessMode(OracleTransactional.Sessionless.RESUME_AND_SUSPEND);
 
         assertEquals(List.of(), txManager.calls);
     }
@@ -270,7 +269,6 @@ class DoRollbackOnCommitExceptionTest {
     void unsupportedOracleSessionlessModeIsRejectedBeforeProgrammaticTransactionCreation() {
         assertUnsupportedProgrammaticOracleSessionlessMode(OracleTransactional.Sessionless.SUSPEND);
         assertUnsupportedProgrammaticOracleSessionlessMode(OracleTransactional.Sessionless.REQUIRES_SUSPENDED);
-        assertUnsupportedProgrammaticOracleSessionlessMode(OracleTransactional.Sessionless.RESUME_AND_SUSPEND);
 
         assertEquals(List.of(), txManager.calls);
     }

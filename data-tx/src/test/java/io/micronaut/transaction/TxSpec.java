@@ -259,7 +259,6 @@ public class TxSpec {
 
             assertUnsupportedReactiveOracleSessionlessMode(txManager, OracleTransactional.Sessionless.SUSPEND);
             assertUnsupportedReactiveOracleSessionlessMode(txManager, OracleTransactional.Sessionless.REQUIRES_SUSPENDED);
-            assertUnsupportedReactiveOracleSessionlessMode(txManager, OracleTransactional.Sessionless.RESUME_AND_SUSPEND);
         }
     }
 

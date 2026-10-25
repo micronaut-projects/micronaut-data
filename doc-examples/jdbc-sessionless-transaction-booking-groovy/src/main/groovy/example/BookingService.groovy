@@ -17,13 +17,6 @@ class BookingService {
         return seatRepository.save(seat).id
     }
 
-    @OracleTransactional(sessionless = OracleTransactional.Sessionless.RESUME_AND_SUSPEND)
-    void confirmPayment(Long id) {
-        Seat seat = seatRepository.findById(id).orElseThrow { new RuntimeException("Seat not found") }
-        seat.status = "PAID"
-        seatRepository.update(seat)
-    }
-
     @OracleTransactional(sessionless = OracleTransactional.Sessionless.REQUIRES_SUSPENDED)
     void ticketSeat(Long id) {
         Seat seat = seatRepository.findById(id).orElseThrow { new RuntimeException("Seat not found") }

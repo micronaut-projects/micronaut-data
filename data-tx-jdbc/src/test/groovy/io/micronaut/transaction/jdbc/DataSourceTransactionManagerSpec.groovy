@@ -26,8 +26,7 @@ class DataSourceTransactionManagerSpec extends Specification {
         where:
         mode << [
             OracleTransactional.Sessionless.SUSPEND,
-            OracleTransactional.Sessionless.REQUIRES_SUSPENDED,
-            OracleTransactional.Sessionless.RESUME_AND_SUSPEND
+            OracleTransactional.Sessionless.REQUIRES_SUSPENDED
         ]
     }
 
@@ -45,8 +44,7 @@ class DataSourceTransactionManagerSpec extends Specification {
         where:
         mode << [
             OracleTransactional.Sessionless.SUSPEND,
-            OracleTransactional.Sessionless.REQUIRES_SUSPENDED,
-            OracleTransactional.Sessionless.RESUME_AND_SUSPEND
+            OracleTransactional.Sessionless.REQUIRES_SUSPENDED
         ]
     }
 

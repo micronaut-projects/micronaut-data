@@ -68,11 +68,6 @@ class RecoverableSpec {
                 "Oracle sessionless transaction mode 'REQUIRES_SUSPENDED' cannot be combined with @OracleTransactional.Recoverable",
                 resumeException.getMessage()
             );
-            TransactionUsageException stageException = assertThrows(TransactionUsageException.class, service::resumeAndSuspend);
-            assertEquals(
-                "Oracle sessionless transaction mode 'RESUME_AND_SUSPEND' cannot be combined with @OracleTransactional.Recoverable",
-                stageException.getMessage()
-            );
             assertEquals(0, transactionManager.beginAttempts.get());
         }
     }
@@ -343,12 +338,6 @@ class RecoverableSpec {
         void suspend() {
             // Intentionally empty: the advice rejects this annotation combination before the body runs,
             // so reaching this point at all would mean the validation failed.
-        }
-
-        @OracleTransactional(sessionless = OracleTransactional.Sessionless.RESUME_AND_SUSPEND)
-        @OracleTransactional.Recoverable
-        void resumeAndSuspend() {
-            // Intentionally empty: see suspend().
         }
 
         @OracleTransactional(sessionless = OracleTransactional.Sessionless.REQUIRES_SUSPENDED)

@@ -34,9 +34,3 @@ testModules.configure {
 test {
     useJUnitPlatform()
 }
-
-tasks.withType(GroovyCompile).configureEach {
-    // Gradle reuses one compiler daemon for every module's Groovy sources, and its 512 MiB worker default
-    // runs out late in a full build (the examples give theirs 1g and a marker, see data-example)
-    groovyOptions.forkOptions.memoryMaximumSize = '2g'
-}

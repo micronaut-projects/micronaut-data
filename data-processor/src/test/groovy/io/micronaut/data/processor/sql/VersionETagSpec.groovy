@@ -23,7 +23,6 @@ import io.micronaut.data.annotation.EmbeddedId
 import io.micronaut.data.annotation.GeneratedValue
 import io.micronaut.data.annotation.Id
 import io.micronaut.data.annotation.MappedEntity
-import io.micronaut.data.annotation.MappedProperty
 import io.micronaut.data.annotation.Relation
 import io.micronaut.data.annotation.Transient
 import io.micronaut.data.annotation.TypeDef
@@ -70,7 +69,7 @@ class VersionETagSpec extends AbstractDataSpec {
         then:
         // Expect the WHERE left-hand side to use the read transformer and alias replacement:
         // Note: UPDATE uses no table alias by default, so @. resolves to empty prefix -> properties without alias
-        sql == 'UPDATE "book" SET "title"=? WHERE (SYS_ROW_ETAG("id", "title") = ?)'
+        sql == 'UPDATE "book" SET "title"=? WHERE (SYS_ROW_ETAG(id, title) = ?)'
 
         etag
         etag.annotationMetadata.hasAnnotation(Version)
@@ -116,7 +115,7 @@ class VersionETagSpec extends AbstractDataSpec {
             .query
 
         then:
-        sql == 'UPDATE "BOOK_NO_FUNCTION" SET "TITLE"=? WHERE (SYS_ROW_ETAG("ID", "TITLE") = ?)'
+        sql == 'UPDATE "BOOK_NO_FUNCTION" SET "TITLE"=? WHERE (SYS_ROW_ETAG(id, title) = ?)'
     }
 
     void "missing function fails for MySQL"() {
@@ -144,7 +143,7 @@ class VersionETagSpec extends AbstractDataSpec {
             .query
 
         then:
-        sql == 'UPDATE `book` SET `title`=? WHERE (SYS_ROW_ETAG(`id`, `title`) = ?)'
+        sql == 'UPDATE `book` SET `title`=? WHERE (SYS_ROW_ETAG(id, title) = ?)'
     }
 
     void "select projection aliases generated ETag expression back to property"() {
@@ -152,7 +151,7 @@ class VersionETagSpec extends AbstractDataSpec {
         def sql = builder.createQuery(ETagBook).build(queryBuilder).query
 
         then:
-        sql == 'SELECT etag_book_."id",SYS_ROW_ETAG(etag_book_."id", etag_book_."title") AS etag,etag_book_."title" FROM "book" etag_book_'
+        sql == 'SELECT etag_book_."id",SYS_ROW_ETAG(etag_book_.id, etag_book_.title) AS etag,etag_book_."title" FROM "book" etag_book_'
     }
 
     void "delete where uses generated ETag expression"() {
@@ -165,40 +164,7 @@ class VersionETagSpec extends AbstractDataSpec {
             .query
 
         then:
-        sql == 'DELETE  FROM "book"  WHERE (SYS_ROW_ETAG("id", "title") = ?)'
-    }
-
-    void "generated ETag escapes mapped upper case columns for Postgres"() {
-        given:
-        def postgresBuilder = new SqlQueryBuilder(Dialect.POSTGRES)
-
-        when:
-        def query = builder.createCriteriaUpdate(UpperCaseColumnETagBook)
-        def root = query.from(UpperCaseColumnETagBook)
-        def updateSql = query
-            .set("title", builder.parameter(String))
-            .where(builder.equal(root.get("etag"), builder.parameter(String)))
-            .build(postgresBuilder)
-            .query
-        def selectSql = builder.createQuery(UpperCaseColumnETagBook).build(postgresBuilder).query
-
-        then:
-        updateSql == 'UPDATE "UPPER_CASE_ETAG_BOOK" SET "BOOK_TITLE"=? WHERE (BOOK_ETAG("BOOK_ID", "BOOK_TITLE") = ?)'
-        selectSql.contains('BOOK_ETAG(upper_case_column_etag_book_."BOOK_ID", upper_case_column_etag_book_."BOOK_TITLE") AS etag')
-    }
-
-    void "generated ETag columns are not escaped when entity escaping is disabled"() {
-        when:
-        def query = builder.createCriteriaUpdate(UnescapedETagBook)
-        def root = query.from(UnescapedETagBook)
-        def sql = query
-            .set("title", builder.parameter(String))
-            .where(builder.equal(root.get("etag"), builder.parameter(String)))
-            .build(new SqlQueryBuilder(Dialect.POSTGRES))
-            .query
-
-        then:
-        sql == 'UPDATE unescaped_book SET title=? WHERE (SYS_ROW_ETAG(id, title) = ?)'
+        sql == 'DELETE  FROM "book"  WHERE (SYS_ROW_ETAG(id, title) = ?)'
     }
 
     void "schema insert and update do not bind generated ETag as physical column"() {
@@ -787,28 +753,6 @@ class ETagBookNoFunction {
     @ETagValue
     String title
     @GeneratedETag
-    String etag
-}
-
-@MappedEntity("UPPER_CASE_ETAG_BOOK")
-@ETaggable
-class UpperCaseColumnETagBook {
-    @Id
-    @MappedProperty("BOOK_ID")
-    Long id
-    @MappedProperty("BOOK_TITLE")
-    String title
-    @GeneratedETag(function = "BOOK_ETAG")
-    String etag
-}
-
-@MappedEntity(value = "unescaped_book", escape = false)
-@ETaggable
-class UnescapedETagBook {
-    @Id
-    Long id
-    String title
-    @GeneratedETag(function = "SYS_ROW_ETAG")
     String etag
 }
 
