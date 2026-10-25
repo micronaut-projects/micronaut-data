@@ -114,6 +114,17 @@ ${methods}
         query(repository.getRequiredMethod("findTop3ByAuthorNotEqual", String)) == '{"query":{"bool":{"must_not":{"term":{"author":{"$mn_qp":0}}}}},"size":3}'
     }
 
+    void "the native syntax renders query_string without leading wildcards"() {
+        given:
+        def repository = articleRepository("""
+    List<Article> findByTitleSearchNative(String q);
+""")
+
+        expect:
+        query(repository.getRequiredMethod("findByTitleSearchNative", String)).contains('"query_string":{')
+        query(repository.getRequiredMethod("findByTitleSearchNative", String)).contains('"allow_leading_wildcard":false')
+    }
+
     void "search keywords render simple_query_string over the weighted fields"() {
         given:
         def repository = articleRepository("""

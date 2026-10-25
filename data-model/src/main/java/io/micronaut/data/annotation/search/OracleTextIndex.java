@@ -29,6 +29,9 @@ import java.lang.annotation.Target;
  * the {@code PARAMETERS ('...')} clause of each {@code CONTEXT} index, or of the JSON search index of a
  * JSON entity, which names the sync mode, the lexer, the wordlist or the memory. The other stores ignore it.
  *
+ * <p>The parameters are trusted configuration copied into the DDL as written: they can name any datastore,
+ * lexer or other preference the schema user can reach, so they must not come from user input.</p>
+ *
  * @since 5.4.0
  */
 @Retention(RetentionPolicy.RUNTIME)

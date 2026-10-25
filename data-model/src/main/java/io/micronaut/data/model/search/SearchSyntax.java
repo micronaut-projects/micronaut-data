@@ -31,6 +31,10 @@ public enum SearchSyntax {
     SIMPLE,
     /**
      * The store's own query syntax, passed through unparsed; see {@link MatchMode#NATIVE}.
+     *
+     * <p>Only pass trusted input: the native syntax is not escaped, so a user could widen the query.
+     * On Elasticsearch and OpenSearch {@code field:value} reaches fields outside the search fields;
+     * leading wildcards are disabled there.</p>
      */
     NATIVE
 }

@@ -647,6 +647,9 @@ public final class DocumentSearchQueryBuilder implements QueryBuilder {
             // excludes rather than matching every document without it
             if (mode != MatchMode.NATIVE) {
                 simpleQueryString.put("default_operator", "and");
+            } else {
+                // a leading wildcard scans every term of the index
+                simpleQueryString.put("allow_leading_wildcard", false);
             }
             if (mode == MatchMode.PREFIX) {
                 // Analyze the prefix with the field analyzer, so a stemmed term such as "programming*" still matches

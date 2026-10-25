@@ -52,7 +52,8 @@ public class DocumentSearchConfiguration {
     }
 
     /**
-     * @param indexPrefix A prefix added to every index name
+     * @param indexPrefix A prefix added to every index name. It is trusted configuration that goes into
+     *                    request paths; the resulting names are checked against the index naming rules
      */
     public void setIndexPrefix(@Nullable String indexPrefix) {
         this.indexPrefix = indexPrefix;
@@ -81,7 +82,8 @@ public class DocumentSearchConfiguration {
 
     /**
      * @return How the indexes of searchable entities are generated on startup: {@code CREATE} (the default)
-     * creates the missing ones, {@code CREATE_DROP} drops and recreates them, {@code NONE} leaves them alone
+     * creates the missing ones, {@code CREATE_DROP} drops and recreates them, deleting the stored documents,
+     * and {@code NONE} leaves them alone
      */
     public SchemaGenerate getSchemaGenerate() {
         return createIndexes ? schemaGenerate : SchemaGenerate.NONE;
