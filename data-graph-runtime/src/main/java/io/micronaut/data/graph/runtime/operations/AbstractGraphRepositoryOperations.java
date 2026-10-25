@@ -17,12 +17,15 @@ package io.micronaut.data.graph.runtime.operations;
 
 import io.micronaut.aop.MethodInvocationContext;
 import io.micronaut.core.annotation.AnnotationMetadata;
+import io.micronaut.core.beans.BeanIntrospection;
 import io.micronaut.core.beans.BeanIntrospector;
 import io.micronaut.core.beans.BeanProperty;
 import io.micronaut.core.convert.ConversionContext;
 import io.micronaut.core.type.Argument;
+import io.micronaut.data.annotation.Projection;
 import io.micronaut.data.event.EntityEventListener;
 import io.micronaut.data.exceptions.DataAccessException;
+import io.micronaut.data.exceptions.NonUniqueResultException;
 import io.micronaut.data.exceptions.OptimisticLockException;
 import io.micronaut.data.graph.annotation.TargetNode;
 import io.micronaut.data.graph.model.GraphEntities;
@@ -289,6 +292,9 @@ public abstract class AbstractGraphRepositoryOperations extends AbstractReposito
             if (records.isEmpty()) {
                 return null;
             }
+            if (records.size() > 1) {
+                throw new NonUniqueResultException();
+            }
             return mapRecord(preparedQuery, records.get(0));
         });
     }
@@ -473,10 +479,23 @@ public abstract class AbstractGraphRepositoryOperations extends AbstractReposito
     protected void appendSortAndLimit(StringBuilder query, RuntimePersistentEntity<?> entity, Sort sort, Limit limit) {
         if (sort != null && sort.isSorted()) {
             boolean rootQuery = query.indexOf("MATCH (" + CypherQueryBuilder.ROOT) == 0;
-            if (!rootQuery || query.indexOf(" ORDER BY ") >= 0) {
-                throw new DataAccessException("Cannot apply the sort " + sort.getOrderBy() + " to the query [" + query + "]: sort an explicit query with its own ORDER BY clause");
+            if (!rootQuery) {
+                throw new DataAccessException("Cannot apply the sort " + sort.getOrderBy() + " to the query [" + query + "]: it does not match the root node as " + CypherQueryBuilder.ROOT);
             }
-            appendOrderBy(query, entity, sort);
+            // The ordering the query declares takes precedence, and SKIP and LIMIT stay last
+            int returnIndex = query.lastIndexOf(" RETURN ");
+            int tailIndex = clauseIndex(query, " SKIP ", returnIndex);
+            int limitIndex = clauseIndex(query, " LIMIT ", returnIndex);
+            if (tailIndex < 0 || (limitIndex >= 0 && limitIndex < tailIndex)) {
+                tailIndex = limitIndex;
+            }
+            String tail = tailIndex < 0 ? "" : query.substring(tailIndex);
+            if (tailIndex >= 0) {
+                query.setLength(tailIndex);
+            }
+            query.append(clauseIndex(query, " ORDER BY ", returnIndex) >= 0 ? ", " : " ORDER BY ");
+            appendOrderItems(query, entity, sort);
+            query.append(tail);
         }
         if (limit != null && limit.isLimited()) {
             if (query.indexOf(" LIMIT ") >= 0 || query.indexOf(" SKIP ") >= 0) {
@@ -486,12 +505,26 @@ public abstract class AbstractGraphRepositoryOperations extends AbstractReposito
         }
     }
 
-    private void appendOrderBy(StringBuilder query, RuntimePersistentEntity<?> entity, Sort sort) {
-        query.append(" ORDER BY ");
+    /**
+     * @return The index of a clause that follows the {@code RETURN} clause, or -1
+     */
+    private static int clauseIndex(StringBuilder query, String clause, int returnIndex) {
+        int index = query.lastIndexOf(clause);
+        return index > returnIndex ? index : -1;
+    }
+
+    private void appendOrderItems(StringBuilder query, RuntimePersistentEntity<?> entity, Sort sort) {
         Iterator<Sort.Order> iterator = sort.getOrderBy().iterator();
         while (iterator.hasNext()) {
             Sort.Order order = iterator.next();
-            String expression = CypherQueryBuilder.ROOT + "." + GraphEntities.escapeName(sortProperty(entity, order.getProperty()).getPersistedName());
+            RuntimePersistentProperty<?> property = sortProperty(entity, order.getProperty());
+            String expression;
+            if (GraphEntities.isNativeId(property)) {
+                // A database generated identifier is not a property of the node
+                expression = (property.getType() == String.class ? "elementId(" : "id(") + CypherQueryBuilder.ROOT + ")";
+            } else {
+                expression = CypherQueryBuilder.ROOT + "." + GraphEntities.escapeName(property.getPersistedName());
+            }
             if (order.isIgnoreCase()) {
                 expression = "toLower(" + expression + ")";
             }
@@ -521,7 +554,11 @@ public abstract class AbstractGraphRepositoryOperations extends AbstractReposito
         Class<R> resultType = preparedQuery.getResultType();
         if (preparedQuery.isDtoProjection()) {
             Map<String, Object> values = record.size() == 1 && first instanceof GraphNode node ? node.properties() : record.asMap();
-            return readDto(values, resultType);
+            if (resultType == Object[].class) {
+                // Object[] rows are the values of the columns, in column order
+                return (R) values.values().toArray();
+            }
+            return readDto(projected(values, resultType, preparedQuery.getAnnotationMetadata()), resultType);
         }
         Class<?> nodeType = nodeType(resultArgument, preparedQuery.getRootEntity());
         return (R) mapValue(record, first, resultType, nodeType, targetNodeType(resultArgument, nodeType), preparedQuery.getAnnotationMetadata());
@@ -642,6 +679,39 @@ public abstract class AbstractGraphRepositoryOperations extends AbstractReposito
 
     private <R> R readDto(Map<String, Object> values, Class<R> type) {
         return graphSerde.read(type, values);
+    }
+
+    /**
+     * Adds the columns a DTO selects under another name with {@link Projection} under the names of its properties.
+     * The projection is declared on the property, or on the method for the properties in order that declare none.
+     *
+     * @param values             The columns of the row
+     * @param type               The DTO type
+     * @param annotationMetadata The annotation metadata of the method
+     * @return The columns, under the names of the DTO properties
+     */
+    private static Map<String, Object> projected(Map<String, Object> values, Class<?> type, AnnotationMetadata annotationMetadata) {
+        Optional<BeanIntrospection<Object>> introspection = BeanIntrospector.SHARED.findIntrospection((Class<Object>) type);
+        if (introspection.isEmpty()) {
+            return values;
+        }
+        Iterator<String> methodProjections = annotationMetadata.getAnnotationValuesByType(Projection.class).stream()
+            .flatMap(projection -> projection.stringValue().stream())
+            .iterator();
+        Map<String, Object> projected = null;
+        for (BeanProperty<Object, Object> property : introspection.get().getBeanProperties()) {
+            String projection = property.stringValue(Projection.class).orElse(null);
+            if (projection == null && methodProjections.hasNext()) {
+                projection = methodProjections.next();
+            }
+            if (projection != null && !projection.equals(property.getName()) && values.containsKey(projection) && !values.containsKey(property.getName())) {
+                if (projected == null) {
+                    projected = new LinkedHashMap<>(values);
+                }
+                projected.put(property.getName(), values.get(projection));
+            }
+        }
+        return projected == null ? values : projected;
     }
 
     // Writes

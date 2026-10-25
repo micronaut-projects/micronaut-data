@@ -22,6 +22,8 @@ import io.micronaut.data.graph.model.GraphEntities;
 import io.micronaut.data.graph.model.GraphIndex;
 import io.micronaut.data.graph.model.query.PathQueryDefinition;
 import io.micronaut.data.model.Association;
+import io.micronaut.data.model.DataType;
+import io.micronaut.data.model.JsonDataType;
 import io.micronaut.data.model.PersistentEntity;
 import io.micronaut.data.model.PersistentProperty;
 import io.micronaut.data.model.jpa.criteria.IExpression;
@@ -69,6 +71,7 @@ import java.util.LinkedHashMap;
 import java.util.List;
 import java.util.Map;
 import java.util.Set;
+import java.util.function.UnaryOperator;
 
 /**
  * Builds Cypher queries for graph repositories at compile time.
@@ -1138,8 +1141,13 @@ public class CypherQueryBuilder implements GraphQueryBuilder {
         }
 
         private int pushParameter(BindingParameter bindingParameter, BindingParameter.BindingContext bindingContext) {
+            return pushParameter(bindingParameter, bindingContext, UnaryOperator.identity());
+        }
+
+        private int pushParameter(BindingParameter bindingParameter, BindingParameter.BindingContext bindingContext,
+                                  UnaryOperator<QueryParameterBinding> decorator) {
             int index = position++;
-            parameterBindings.add(bindingParameter.bind(bindingContext.index(index).name(PARAMETER_PREFIX + index)));
+            parameterBindings.add(decorator.apply(bindingParameter.bind(bindingContext.index(index).name(PARAMETER_PREFIX + index))));
             return index;
         }
 
@@ -1335,6 +1343,7 @@ public class CypherQueryBuilder implements GraphQueryBuilder {
             appendExpression(binaryExpression.getLeft(), bound);
             out.append(switch (binaryExpression.getType()) {
                 case SUM, CONCAT -> " + ";
+                case DIFF -> " - ";
                 case PROD -> " * ";
                 case QUOT -> " / ";
                 default -> throw new UnsupportedOperationException("Unsupported binary expression: " + binaryExpression.getType());
@@ -1681,14 +1690,162 @@ public class CypherQueryBuilder implements GraphQueryBuilder {
             return null;
         }
 
+        /**
+         * Cypher has no {@code LIKE}: the pattern is matched as an anchored regular expression. A literal pattern
+         * is translated when the query is built, one bound at runtime by {@link LikePatternConverter} at bind time.
+         *
+         * @param likePredicate The predicate
+         */
         @Override
         public void visit(LikePredicate likePredicate) {
-            throw new UnsupportedOperationException("LIKE is not supported by graph repositories. Use StartsWith, EndsWith, Contains or Regex instead.");
+            Expression<String> expression = likePredicate.getExpression();
+            io.micronaut.data.model.PersistentPropertyPath bound = findPropertyPath(expression);
+            Character escape = likeEscape(likePredicate.getEscapeChar());
+            String flags = likePredicate.isCaseInsensitive() ? "(?si)" : "(?s)";
+            if (likePredicate.isNegated()) {
+                out.append("NOT (");
+            }
+            appendExpression(expression, bound);
+            out.append(" =~ ");
+            Expression<String> pattern = likePredicate.getPattern();
+            if (pattern instanceof LiteralExpression<?> literal) {
+                out.append(asLiteral(flags + LikePatternConverter.toRegex(String.valueOf(literal.getValue()), escape)));
+            } else if (pattern instanceof BindingParameter bindingParameter) {
+                int index = state.pushParameter(bindingParameter, BindingParameter.BindingContext.create()
+                        .incomingMethodParameterProperty(bound)
+                        .outgoingQueryParameterProperty(bound),
+                    binding -> likeBinding(binding, escape));
+                out.append('(').append(quote(flags)).append(" + ").append(parameterPlaceholder(index)).append(')');
+            } else {
+                throw new UnsupportedOperationException("Unsupported LIKE pattern: " + pattern);
+            }
+            if (likePredicate.isNegated()) {
+                out.append(')');
+            }
+        }
+
+        private QueryParameterBinding likeBinding(QueryParameterBinding binding, @Nullable Character escape) {
+            if (binding.getValue() instanceof String pattern) {
+                // A runtime literal: the pattern is known, so bind the regular expression in its place
+                return new LikeParameterBinding(binding, LikePatternConverter.toRegex(pattern, escape), null);
+            }
+            if (escape != null && escape != LikePatternConverter.DEFAULT_ESCAPE) {
+                throw new UnsupportedOperationException("A LIKE pattern bound as a method argument uses the escape character '\\', not '" + escape + "'");
+            }
+            return new LikeParameterBinding(binding, null, LikePatternConverter.class.getName());
+        }
+
+        private @Nullable Character likeEscape(@Nullable Expression<Character> escapeChar) {
+            Object value = null;
+            if (escapeChar instanceof LiteralExpression<?> literal) {
+                value = literal.getValue();
+            } else if (escapeChar instanceof BindingParameter bindingParameter) {
+                // A runtime literal carries its value; the escape character is not a query parameter
+                value = bindingParameter.bind(BindingParameter.BindingContext.create()).getValue();
+            }
+            if (value instanceof Character c) {
+                return c;
+            }
+            if (value instanceof String s && !s.isEmpty()) {
+                return s.charAt(0);
+            }
+            return null;
         }
 
         @Override
         public void visit(ExistsSubqueryPredicate existsSubqueryPredicate) {
             throw new UnsupportedOperationException("Subqueries are not supported by graph repositories");
+        }
+    }
+
+    /**
+     * The parameter of a {@code LIKE} pattern: either the regular expression of a pattern known when the query is
+     * built, or the pattern itself with the converter that translates it at bind time.
+     */
+    private static final class LikeParameterBinding implements QueryParameterBinding {
+        private final QueryParameterBinding delegate;
+        private final @Nullable String regex;
+        private final @Nullable String converterClassName;
+
+        private LikeParameterBinding(QueryParameterBinding delegate, @Nullable String regex, @Nullable String converterClassName) {
+            this.delegate = delegate;
+            this.regex = regex;
+            this.converterClassName = converterClassName;
+        }
+
+        @Override
+        public @Nullable Object getValue() {
+            return regex != null ? regex : delegate.getValue();
+        }
+
+        @Override
+        public @Nullable String getConverterClassName() {
+            return converterClassName != null ? converterClassName : delegate.getConverterClassName();
+        }
+
+        @Override
+        public @Nullable String getName() {
+            return delegate.getName();
+        }
+
+        @Override
+        public String getKey() {
+            return delegate.getKey();
+        }
+
+        @Override
+        public DataType getDataType() {
+            return delegate.getDataType();
+        }
+
+        @Override
+        public JsonDataType getJsonDataType() {
+            return delegate.getJsonDataType();
+        }
+
+        @Override
+        public int getParameterIndex() {
+            return delegate.getParameterIndex();
+        }
+
+        @Override
+        public String @Nullable [] getParameterBindingPath() {
+            return delegate.getParameterBindingPath();
+        }
+
+        @Override
+        public String @Nullable [] getPropertyPath() {
+            return delegate.getPropertyPath();
+        }
+
+        @Override
+        public boolean isAutoPopulated() {
+            return delegate.isAutoPopulated();
+        }
+
+        @Override
+        public boolean isRequiresPreviousPopulatedValue() {
+            return delegate.isRequiresPreviousPopulatedValue();
+        }
+
+        @Override
+        public boolean isExpandable() {
+            return delegate.isExpandable();
+        }
+
+        @Override
+        public boolean isExpression() {
+            return delegate.isExpression();
+        }
+
+        @Override
+        public @Nullable String getRole() {
+            return delegate.getRole();
+        }
+
+        @Override
+        public @Nullable String getTableAlias() {
+            return delegate.getTableAlias();
         }
     }
 

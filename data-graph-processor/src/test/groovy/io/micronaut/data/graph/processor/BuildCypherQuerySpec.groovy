@@ -1,5 +1,7 @@
 package io.micronaut.data.graph.processor
 
+import io.micronaut.data.graph.model.query.builder.LikePatternConverter
+import io.micronaut.data.intercept.annotation.DataMethodQueryParameter
 import io.micronaut.data.annotation.Query
 import io.micronaut.data.annotation.Relation
 import io.micronaut.data.intercept.annotation.DataMethod
@@ -291,20 +293,24 @@ interface HostileRepository extends CrudRepository<Hostile, String> {
         e.message.contains('cannot appear in a graph query')
     }
 
-    void "test LIKE is rejected"() {
+    void "test LIKE is matched as a regular expression built from the pattern"() {
         when:
-        buildRepository('test.LikeRepository', """
+        def repository = buildRepository('test.LikeRepository', """
 $MOVIES
 
 @TestGraphRepository
 interface LikeRepository extends CrudRepository<Movie, String> {
     List<Movie> findByTitleLike(String title);
+    List<Movie> findByTitleNotLike(String title);
 }
 """)
+        def like = repository.executableMethods.find { it.methodName == 'findByTitleLike' }
+        def notLike = repository.executableMethods.find { it.methodName == 'findByTitleNotLike' }
 
-        then:
-        def e = thrown(RuntimeException)
-        e.message.contains('LIKE is not supported by graph repositories')
+        then: "the pattern is translated when it is bound"
+        getQuery(like) == "MATCH (n:Movie) WHERE n.title =~ ('(?s)' + \$p0) RETURN n"
+        like.getAnnotation(DataMethod).getAnnotations('parameters', DataMethodQueryParameter).first().classValue('converter').get() == LikePatternConverter
+        getQuery(notLike) == "MATCH (n:Movie) WHERE NOT (n.title =~ ('(?s)' + \$p0)) RETURN n"
     }
 
     void "test joins deeper than one relationship fetch nested nodes"() {

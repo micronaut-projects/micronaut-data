@@ -1,6 +1,8 @@
 package io.micronaut.data.neo4j
 
+import io.micronaut.data.exceptions.NonUniqueResultException
 import io.micronaut.data.graph.tck.entities.Movie
+import io.micronaut.data.model.Sort
 import io.micronaut.data.neo4j.features.ReactiveMovieRepository
 import io.micronaut.data.neo4j.features.Player
 import io.micronaut.data.neo4j.features.Tag
@@ -56,6 +58,41 @@ class Neo4jFeaturesSpec extends Specification implements TestPropertyProvider {
 
         then:
         tagRepository.count() == 0
+    }
+
+    void "a dynamic sort follows the ordering of the query and precedes its limit"() {
+        given:
+        def first = tagRepository.save(new Tag("a"))
+        def second = tagRepository.save(new Tag("a"))
+        tagRepository.save(new Tag("b"))
+        tagRepository.save(new Tag("c"))
+
+        expect: "the declared ordering takes precedence over the sort"
+        tagRepository.findByNameStartsWithOrderByNameDesc("a", Sort.of(Sort.Order.asc("id")))*.id == [second.id, first.id].sort()
+        tagRepository.findByNameStartsWithOrderByNameDesc("a", Sort.of(Sort.Order.desc("id")))*.id == [second.id, first.id].sort().reverse()
+
+        and: "the sort is applied before the limit of the query"
+        tagRepository.findFirst2ByNameStartsWith("", Sort.of(Sort.Order.desc("name")))*.name == ["c", "b"]
+    }
+
+    void "a query with more than one result is not a single result"() {
+        given:
+        tagRepository.save(new Tag("dup"))
+        tagRepository.save(new Tag("dup"))
+
+        when:
+        tagRepository.findByName("dup")
+
+        then:
+        thrown(NonUniqueResultException)
+    }
+
+    void "a DTO reads the columns it selects under another name"() {
+        given:
+        tagRepository.save(new Tag("graph"))
+
+        expect:
+        tagRepository.findAllByNameStartsWith("gr")*.label == ["graph"]
     }
 
     void "database generated element identifiers on immutable records"() {
