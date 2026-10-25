@@ -282,10 +282,12 @@ final class OpenSearchRequests {
                 if ("knn".equals(key) && value instanceof Map<?, ?> knn && knn.containsKey("field")) {
                     Map<String, Object> clause = new LinkedHashMap<>();
                     clause.put("vector", knn.get("query_vector"));
-                    clause.put("k", knn.get("k"));
                     Object similarity = knn.get("similarity");
                     if (similarity instanceof Number number) {
+                        // a radial search takes exactly one of k, max_distance and min_score
                         clause.put("max_distance", 1d - number.doubleValue());
+                    } else {
+                        clause.put("k", knn.get("k"));
                     }
                     copy.put("knn", Map.of(String.valueOf(knn.get("field")), clause));
                 } else {
