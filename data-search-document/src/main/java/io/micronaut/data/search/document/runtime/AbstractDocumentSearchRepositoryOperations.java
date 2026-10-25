@@ -70,8 +70,6 @@ abstract class AbstractDocumentSearchRepositoryOperations extends AbstractReposi
 
     protected static final String QUERY = "query";
     private static final Argument<Map<String, Object>> DOCUMENT = Argument.mapOf(String.class, Object.class);
-    // the most hits an unpaged query returns, the default index.max_result_window of Elasticsearch and OpenSearch
-    private static final int MAX_RESULT_WINDOW = 10_000;
 
     protected final JsonMapper jsonMapper;
     protected final DocumentSearchConfiguration configuration;
@@ -411,7 +409,7 @@ abstract class AbstractDocumentSearchRepositoryOperations extends AbstractReposi
         }
         if (pageable.isUnpaged()) {
             // without a size the stores return only their default of 10 hits; a query's own limit stays
-            body.putIfAbsent("size", MAX_RESULT_WINDOW);
+            body.putIfAbsent("size", configuration.getMaxResults());
         } else {
             body.put("from", pageable.getOffset());
             body.put("size", pageable.getSize());
