@@ -95,7 +95,7 @@ abstract class AbstractDocumentSearchRepositoryOperations extends AbstractReposi
             .filter(n -> !n.isEmpty())
             .orElseGet(entity::getPersistedName);
         String prefix = configuration.getIndexPrefix();
-        return prefix == null ? name : prefix + name;
+        return SearchIndexNames.validate(prefix == null ? name : prefix + name);
     }
 
     // ---------- entity events around writes

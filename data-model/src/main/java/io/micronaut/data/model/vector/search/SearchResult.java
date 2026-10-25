@@ -30,7 +30,10 @@ import java.util.Map;
  * @param entity The matched entity
  * @param score The computed score
  * @param similarity The normalized similarity derived from score when scoring function is known
- * @param highlights Highlighted fragments by property name, empty when none were requested
+ * @param highlights Highlighted fragments by property name, empty when none were requested. Each
+ *                   fragment is document text with {@code <em>} and {@code </em>} around the matched
+ *                   terms and is not HTML-escaped: use {@link #escapedHighlights()} before rendering it
+ *                   as HTML
  * @since 5.0.0
  */
 @Experimental
@@ -81,5 +84,37 @@ public record SearchResult<T>(@NonNull T entity,
      */
     public SearchResult(@NonNull T entity, @NonNull Score score, @NonNull Map<String, List<String>> highlights) {
         this(entity, score, null, highlights);
+    }
+
+    /**
+     * The highlights made safe for an HTML page: the document text of each fragment is HTML-escaped
+     * and only the {@code <em>} and {@code </em>} markers around the matched terms remain tags.
+     *
+     * @return The escaped fragments by property name
+     * @since 5.4.0
+     */
+    public @NonNull Map<String, List<String>> escapedHighlights() {
+        if (highlights.isEmpty()) {
+            return highlights;
+        }
+        Map<String, List<String>> escaped = new java.util.LinkedHashMap<>(highlights.size());
+        highlights.forEach((property, fragments) -> escaped.put(property, fragments.stream().map(SearchResult::escapeFragment).toList()));
+        return java.util.Collections.unmodifiableMap(escaped);
+    }
+
+    private static String escapeFragment(String fragment) {
+        StringBuilder sb = new StringBuilder(fragment.length() + 16);
+        for (int i = 0; i < fragment.length(); i++) {
+            char c = fragment.charAt(i);
+            switch (c) {
+                case '&' -> sb.append("&amp;");
+                case '<' -> sb.append("&lt;");
+                case '>' -> sb.append("&gt;");
+                case '"' -> sb.append("&quot;");
+                case '\'' -> sb.append("&#39;");
+                default -> sb.append(c);
+            }
+        }
+        return sb.toString().replace("&lt;em&gt;", "<em>").replace("&lt;/em&gt;", "</em>");
     }
 }

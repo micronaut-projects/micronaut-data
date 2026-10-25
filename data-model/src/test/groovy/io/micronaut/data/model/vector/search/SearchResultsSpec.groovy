@@ -41,4 +41,14 @@ class SearchResultsSpec extends Specification {
         then:
         thrown(NullPointerException)
     }
+
+    void "escaped highlights keep only the match markers as tags"() {
+        given:
+        def result = new SearchResult("e", new Score(1d), [title: ['<script>alert("x")</script> & <em>coffee</em>\'s']])
+
+        expect:
+        result.escapedHighlights() == [title: ['&lt;script&gt;alert(&quot;x&quot;)&lt;/script&gt; &amp; <em>coffee</em>&#39;s']]
+        result.highlights().title[0].startsWith('<script>')
+        new SearchResult("e", new Score(1d)).escapedHighlights().isEmpty()
+    }
 }
