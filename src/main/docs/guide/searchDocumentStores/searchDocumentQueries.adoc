@@ -49,7 +49,7 @@ snippet::example.ReactiveBookRepository[project-base="doc-examples/elasticsearch
 <2> A `search` method returning `Mono<SearchResults<Book>>` projects the score and orders by it, like its blocking counterpart.
 <3> Any derived finder can return a `Flux`.
 
-Elasticsearch and OpenSearch run reactive and async repositories on their async clients through api:data.search.document.runtime.AsyncSearchTransport[], so no thread blocks on a request. A store that provides only a blocking api:data.search.document.runtime.SearchTransport[] still gets reactive repositories, run on the IO executor. `search(SearchQuery)` of api:data.repository.SearchRepository[] stays blocking.
+Elasticsearch and OpenSearch run reactive and async repositories on their async clients through api:data.search.document.runtime.AsyncSearchTransport[], so no thread blocks on a request. A store that provides only a blocking api:data.search.document.runtime.SearchTransport[] still gets reactive repositories, run on the IO executor. `search(SearchQuery)` of the reactive, async and coroutine search repositories runs on the same async client.
 
 == Limitations
 
