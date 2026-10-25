@@ -333,6 +333,13 @@ abstract class AbstractGraphRepositorySpec extends Specification {
         then:
         bounded.present
         bounded.get().nodes()*.name.first() == "Fred"
+
+        when: "a depth above micronaut.data.graph.max-path-depth is asked for"
+        friendRepository.findShortestPathByFriends("Fred", "Joe", 11)
+
+        then:
+        def e = thrown(IllegalArgumentException)
+        e.message.contains("max-path-depth")
     }
 
     @Requires({ instance.supportsRelationshipWrites() && instance.supportsCypher() })
