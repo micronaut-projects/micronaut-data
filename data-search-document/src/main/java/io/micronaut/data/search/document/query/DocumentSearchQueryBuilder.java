@@ -117,7 +117,7 @@ public final class DocumentSearchQueryBuilder implements QueryBuilder {
         Bindings bindings = new Bindings();
         Map<String, Object> body = new LinkedHashMap<>();
         DocumentPredicateVisitor visitor = new DocumentPredicateVisitor(entity, bindings);
-        body.put(QUERY, definition.predicate() == null ? Map.of("match_all", Map.of()) : visitor.build(definition.predicate()));
+        body.put(QUERY, definition.predicate() == null ? MATCH_ALL : visitor.build(definition.predicate()));
         if (visitor.minScore != null) {
             body.put("min_score", visitor.minScore);
         }
@@ -388,7 +388,7 @@ public final class DocumentSearchQueryBuilder implements QueryBuilder {
             if (leftExpression instanceof FunctionExpression<?> function && TextSearchSupport.SCORE_FUNCTION.equals(function.getName())) {
                 // a minimum relevance score is a request parameter, not a query clause
                 minScore = value(rightExpression, null);
-                result = Map.of("match_all", Map.of());
+                result = MATCH_ALL;
                 return;
             }
             result = range(leftExpression, "gte", rightExpression);
