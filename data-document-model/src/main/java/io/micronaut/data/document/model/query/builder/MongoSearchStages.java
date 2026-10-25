@@ -16,6 +16,8 @@
 package io.micronaut.data.document.model.query.builder;
 
 import io.micronaut.core.annotation.Internal;
+import io.micronaut.data.model.jpa.criteria.impl.expression.LiteralExpression;
+import jakarta.persistence.criteria.Expression;
 
 import java.util.ArrayList;
 import java.util.Collection;
@@ -95,7 +97,7 @@ final class MongoSearchStages {
         weights.put("text", fusion.textWeight());
         weights.put("vector", fusion.vectorWeight());
         Map<String, Object> rankFusion = new LinkedHashMap<>();
-        rankFusion.put("input", Map.of("pipelines", pipelines));
+        rankFusion.put(INPUT, Map.of("pipelines", pipelines));
         rankFusion.put("combination", Map.of("weights", weights));
         return Map.of(RANK_FUSION_STAGE, rankFusion);
     }
@@ -193,6 +195,21 @@ final class MongoSearchStages {
     }
 
     /**
+     * @param highlights The highlighted paths by the alias of their fragments
+     * @return The stages that render the fragments of each highlighted path and drop the raw metadata
+     */
+    static List<Map<String, Object>> highlightStages(Map<String, String> highlights) {
+        if (highlights.isEmpty()) {
+            return List.of();
+        }
+        Map<String, Object> highlightFields = new LinkedHashMap<>();
+        for (Map.Entry<String, String> highlight : highlights.entrySet()) {
+            highlightFields.put(highlight.getKey(), highlightExpression(highlight.getValue()));
+        }
+        return List.of(Map.of("$addFields", highlightFields), Map.of("$unset", List.of(HIGHLIGHTS_FIELD)));
+    }
+
+    /**
      * The weights and the candidate window of a hybrid search fused by {@code $rankFusion}.
      *
      * @param textWeight The weight of the text ranking
@@ -200,5 +217,22 @@ final class MongoSearchStages {
      * @param candidates The hits each ranking contributes
      */
     record RankFusion(double textWeight, double vectorWeight, int candidates) {
+
+        /**
+         * @param textWeight The literal weight of the text ranking
+         * @param vectorWeight The literal weight of the vector ranking
+         * @param candidates The literal number of hits each ranking contributes
+         * @return The fusion of a {@code mn_hybrid_score} function's literal arguments
+         */
+        static RankFusion of(Expression<?> textWeight, Expression<?> vectorWeight, Expression<?> candidates) {
+            return new RankFusion(literalNumber(textWeight).doubleValue(), literalNumber(vectorWeight).doubleValue(), literalNumber(candidates).intValue());
+        }
+
+        private static Number literalNumber(Expression<?> expression) {
+            if (expression instanceof LiteralExpression<?> literal && literal.getValue() instanceof Number number) {
+                return number;
+            }
+            throw new IllegalStateException("A hybrid score weight must be a numeric literal, got: " + expression);
+        }
     }
 }

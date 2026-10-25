@@ -147,16 +147,23 @@ abstract sealed class AbstractVectorAttributeConverter<X extends Vector, Y> impl
         if (SparseVector.class.isAssignableFrom(type)) {
             throw new IllegalArgumentException("Sparse vectors need a database with a vector type");
         }
-        double[] doubles;
+        return type.cast(vectorOf(toDoubles(persistedValue)));
+    }
+
+    /** The plain numbers of an array or a collection as doubles. */
+    private static double[] toDoubles(Object persistedValue) {
         if (persistedValue instanceof double[] array) {
-            doubles = array;
-        } else if (persistedValue instanceof float[] array) {
-            doubles = new double[array.length];
+            return array;
+        }
+        if (persistedValue instanceof float[] array) {
+            double[] doubles = new double[array.length];
             for (int i = 0; i < array.length; i++) {
                 doubles[i] = array[i];
             }
-        } else if (persistedValue instanceof Collection<?> collection) {
-            doubles = new double[collection.size()];
+            return doubles;
+        }
+        if (persistedValue instanceof Collection<?> collection) {
+            double[] doubles = new double[collection.size()];
             int i = 0;
             for (Object element : collection) {
                 if (!(element instanceof Number number)) {
@@ -164,29 +171,35 @@ abstract sealed class AbstractVectorAttributeConverter<X extends Vector, Y> impl
                 }
                 doubles[i++] = number.doubleValue();
             }
-        } else if (persistedValue instanceof Number[] array) {
-            doubles = new double[array.length];
+            return doubles;
+        }
+        if (persistedValue instanceof Number[] array) {
+            double[] doubles = new double[array.length];
             for (int i = 0; i < array.length; i++) {
                 doubles[i] = array[i].doubleValue();
             }
-        } else {
-            throw new IllegalArgumentException("Cannot read a vector from " + persistedValue.getClass().getName());
+            return doubles;
         }
+        throw new IllegalArgumentException("Cannot read a vector from " + persistedValue.getClass().getName());
+    }
+
+    /** A vector of the converter's type holding the doubles. */
+    private Vector vectorOf(double[] doubles) {
         if (type == FloatVector.class) {
             float[] floats = new float[doubles.length];
             for (int i = 0; i < doubles.length; i++) {
                 floats[i] = (float) doubles[i];
             }
-            return type.cast(Vector.of(floats));
+            return Vector.of(floats);
         }
         if (type == ByteVector.class) {
             byte[] bytes = new byte[doubles.length];
             for (int i = 0; i < doubles.length; i++) {
                 bytes[i] = (byte) doubles[i];
             }
-            return type.cast(Vector.of(bytes));
+            return Vector.of(bytes);
         }
-        return type.cast(Vector.of(doubles));
+        return Vector.of(doubles);
     }
 
     @Override
