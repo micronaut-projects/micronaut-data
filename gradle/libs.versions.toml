@@ -1,6 +1,6 @@
 [versions]
-micronaut = "5.2.15"
-micronaut-platform = "5.2.2"
+micronaut = "5.2.20"
+micronaut-platform = "5.2.3"
 micronaut-docs = "3.0.0"
 micronaut-gradle-plugin = "5.0.2"
 micronaut-testresources = "4.3.1"
@@ -10,7 +10,7 @@ micronaut-reactor = "4.3.0"
 micronaut-rxjava3 = "4.1.0"
 micronaut-r2dbc = "7.2.0"
 micronaut-sql = "7.2.0"
-micronaut-serde = "3.2.4"
+micronaut-serde = "3.2.6"
 micronaut-spring = "6.1.0"
 micronaut-test = "5.1.1"
 micronaut-mongo = "6.2.0"
@@ -20,7 +20,7 @@ micronaut-validation = "5.2.1"
 micronaut-logging = "2.1.0"
 micronaut-flyway = "8.1.1"
 micronaut-coherence = "7.1.0"
-micronaut-sourcegen = "2.2.3"
+micronaut-sourcegen = "2.2.4"
 
 groovy = "5.1.3"
 
@@ -29,7 +29,7 @@ managed-jakarta-data = "1.1.0-M4"
 jakarta-servlet-api = "6.1.0"
 managed-pg-vector = "0.1.6"
 
-spring-data = "4.1.1"
+spring-data = "4.1.2"
 
 # Lombok
 
@@ -37,7 +37,7 @@ lombok = "1.18.48"
 
 # Testing and benchmarking
 
-benchmark-spring-data = "2026.0.1"
+benchmark-spring-data = "2026.0.2"
 jmh = "1.37"
 h2gis = "2.2.5"
 
@@ -46,18 +46,18 @@ h2gis = "2.2.5"
 ksp-gradle-plugin = "2.3.12"
 kotlin-gradle-plugin = "2.4.21"
 jmh-gradle-plugin = "0.7.3"
-spring-boot-gradle-plugin = "4.1.1"
+spring-boot-gradle-plugin = "4.1.2"
 spring-dependency-management-gradle-plugin = "1.1.7"
 shadow-gradle-plugin = "9.6.1"
 errorprone-gradle-plugin = "5.1.1"
-nullaway = "0.14.2"
-error_prone_core = "2.50.0"
+nullaway = "0.14.3"
+error_prone_core = "2.51.0"
 groovy_yaml = "5.1.3"
 
 antlr = "4.13.2"
 
-jackson-override = "2.22.3"
-micrometer-override = "1.17.1"
+jackson-override = "2.22.4"
+micrometer-override = "1.17.2"
 commons-lang3 = "3.21.0"
 
 [libraries]
