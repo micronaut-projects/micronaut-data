@@ -41,6 +41,10 @@ import java.util.Map;
 @Internal
 public final class SearchIndexDefinitions {
 
+    private static final String KEYWORD = "keyword";
+    private static final String ANALYZER = "analyzer";
+    private static final String TYPE = "type";
+
     private SearchIndexDefinitions() {
     }
 
@@ -53,18 +57,18 @@ public final class SearchIndexDefinitions {
         Map<String, Object> properties = new LinkedHashMap<>();
         for (PersistentProperty property : TextSearchSupport.searchFields(entity)) {
             SearchFieldType type = property.getAnnotationMetadata().enumValue(SearchField.class, SearchField.MEMBER_TYPE, SearchFieldType.class).orElse(SearchFieldType.TEXT);
-            String declaredAnalyzer = property.getAnnotationMetadata().stringValue(SearchField.class, "analyzer").filter(a -> !a.isEmpty()).orElse(analyzer);
+            String declaredAnalyzer = property.getAnnotationMetadata().stringValue(SearchField.class, ANALYZER).filter(a -> !a.isEmpty()).orElse(analyzer);
             Map<String, Object> field = new LinkedHashMap<>();
             switch (type) {
-                case KEYWORD -> field.put("type", "keyword");
+                case KEYWORD -> field.put(TYPE, KEYWORD);
                 case AUTOCOMPLETE -> {
-                    field.put("type", "search_as_you_type");
-                    field.put("analyzer", declaredAnalyzer);
+                    field.put(TYPE, "search_as_you_type");
+                    field.put(ANALYZER, declaredAnalyzer);
                 }
                 default -> {
-                    field.put("type", "text");
-                    field.put("analyzer", declaredAnalyzer);
-                    field.put("fields", Map.of("keyword", Map.of("type", "keyword", "ignore_above", 1024)));
+                    field.put(TYPE, "text");
+                    field.put(ANALYZER, declaredAnalyzer);
+                    field.put("fields", Map.of(KEYWORD, Map.of(TYPE, KEYWORD, "ignore_above", 1024)));
                 }
             }
             properties.put(property.getName(), field);
@@ -78,7 +82,7 @@ public final class SearchIndexDefinitions {
         }
         for (PersistentProperty property : others) {
             if (!properties.containsKey(property.getName()) && !(property instanceof Association) && isKeyword(property)) {
-                properties.put(property.getName(), Map.of("type", "keyword"));
+                properties.put(property.getName(), Map.of(TYPE, KEYWORD));
             }
         }
         return SearchJson.write(Map.of("mappings", Map.of("properties", properties)));

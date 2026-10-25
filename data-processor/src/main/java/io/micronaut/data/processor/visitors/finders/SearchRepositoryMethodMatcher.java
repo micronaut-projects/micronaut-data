@@ -157,4 +157,34 @@ public final class SearchRepositoryMethodMatcher implements MethodMatcher {
             }
         };
     }
+
+    /**
+     * Matches {@code search(String)} as a derived query and {@code search(SearchQuery)} as a runtime query
+     * for a {@link SearchResults} return type.
+     */
+    @Nullable
+    private static MethodMatch matchSearch(MethodMatchContext matchContext, boolean searchQuery) {
+        ClassElement returnType = matchContext.getReturnType();
+        if (TypeUtils.isReactiveOrFuture(returnType)) {
+            returnType = returnType.getFirstTypeArgument().orElse(returnType);
+        }
+        if (!returnType.getName().equals(SearchResults.class.getName())) {
+            return null;
+        }
+        if (searchQuery) {
+            if (TypeUtils.isReactiveOrFuture(matchContext.getReturnType())) {
+                throw new ProcessingException(matchContext.getMethodElement(), "search(SearchQuery) only supports a blocking SearchResults return type");
+            }
+            ClassElement resultType = returnType;
+            return mc -> new MethodMatchInfo(
+                DataMethod.OperationType.QUERY,
+                resultType,
+                FindersUtils.getInterceptorElement(matchContext, SEARCH_QUERY_INTERCEPTOR)
+            );
+        }
+        return new QueryCriteriaMethodMatch(List.of(
+            new MethodNameParser.Match(QueryMatchId.PREFIX, SEARCH),
+            new MethodNameParser.Match(QueryMatchId.PREDICATE, TextSearchSupport.KEYWORD)
+        ));
+    }
 }
