@@ -46,7 +46,8 @@ final class PainlessScripts {
      * @return The script query
      */
     static Map<String, Object> compare(String left, String operator, String right, boolean numeric) {
-        String comparison = numeric
+        // numbers and booleans compare with the operator itself; booleans only for equality
+        String comparison = numeric || "==".equals(operator) || "!=".equals(operator)
             ? doc(left) + ".value " + operator + " " + doc(right) + ".value"
             : doc(left) + ".value.compareTo(" + doc(right) + ".value) " + operator + " 0";
         return script(doc(left) + ".size() != 0 && " + doc(right) + ".size() != 0 && " + comparison, null);
@@ -63,9 +64,10 @@ final class PainlessScripts {
      */
     static Map<String, Object> caseFoldedRange(String field, boolean upper, @Nullable Object from, @Nullable Object to) {
         String fold = upper ? ".toUpperCase()" : ".toLowerCase()";
-        String source = "if (" + doc(field) + ".size() == 0) { return false; } "
+        // a missing value or a null bound is no match, and the bounds are folded as strings
+        String source = "if (" + doc(field) + ".size() == 0 || params.from == null || params.to == null) { return false; } "
             + "String v = " + doc(field) + ".value" + fold + "; "
-            + "return v.compareTo(params.from" + fold + ") >= 0 && v.compareTo(params.to" + fold + ") <= 0;";
+            + "return v.compareTo(params.from.toString()" + fold + ") >= 0 && v.compareTo(params.to.toString()" + fold + ") <= 0;";
         Map<String, Object> params = new LinkedHashMap<>();
         params.put("from", from);
         params.put("to", to);

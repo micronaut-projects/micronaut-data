@@ -19,13 +19,9 @@ import io.micronaut.context.BeanContext;
 import io.micronaut.context.annotation.Context;
 import io.micronaut.context.annotation.Requires;
 import io.micronaut.core.annotation.Internal;
-import io.micronaut.core.beans.BeanIntrospection;
-import io.micronaut.core.beans.BeanIntrospector;
 import io.micronaut.core.util.StringUtils;
-import io.micronaut.data.annotation.MappedEntity;
 import io.micronaut.data.annotation.Repository;
 import io.micronaut.data.annotation.RepositoryConfiguration;
-import io.micronaut.data.annotation.search.Searchable;
 import io.micronaut.data.intercept.annotation.DataMethod;
 import io.micronaut.data.model.runtime.RuntimeEntityRegistry;
 import io.micronaut.data.model.runtime.RuntimePersistentEntity;
@@ -38,14 +34,13 @@ import io.micronaut.inject.qualifiers.Qualifiers;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
-import java.lang.reflect.Modifier;
 import java.util.LinkedHashSet;
 import java.util.List;
 import java.util.Set;
 
 /**
- * Creates on startup the index of every {@link Searchable} entity and of every entity a document
- * search repository stores, so each index has explicit keyword mappings rather than dynamic ones.
+ * Creates on startup the index of every entity a document search repository stores, so each index
+ * has explicit keyword mappings rather than dynamic ones.
  *
  * @since 5.4.0
  */
@@ -81,16 +76,11 @@ public final class SearchIndexCreator {
 
     /**
      * @param beanContext The bean context
-     * @return The searchable entities and the root entities of the document search repositories
+     * @return The root entities of the document search repositories
      */
     private static Set<Class<?>> indexedTypes(BeanContext beanContext) {
+        // only the entities of document search repositories: a @Searchable entity of a SQL or MongoDB repository has no index here
         Set<Class<?>> types = new LinkedHashSet<>();
-        for (BeanIntrospection<Object> introspection : BeanIntrospector.SHARED.findIntrospections(MappedEntity.class)) {
-            Class<Object> type = introspection.getBeanType();
-            if (!type.getName().contains("$") && !Modifier.isAbstract(type.getModifiers()) && introspection.hasAnnotation(Searchable.class)) {
-                types.add(type);
-            }
-        }
         for (BeanDefinition<?> definition : beanContext.getBeanDefinitions(Qualifiers.byStereotype(Repository.class))) {
             boolean documentStore = definition.classValue(RepositoryConfiguration.class, "operations")
                 .filter(DocumentSearchRepositoryOperations.class::isAssignableFrom)
