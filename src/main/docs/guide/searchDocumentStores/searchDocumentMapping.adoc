@@ -15,14 +15,18 @@ When `micronaut.data.search.create-indexes` is enabled, Micronaut Data creates t
 
 |`TEXT` |`text` with the language analyzer, plus a `keyword` sub-field (`<field>.keyword`) used for exact matches and sorting
 |`KEYWORD` |`keyword`
-|`AUTOCOMPLETE` |`search_as_you_type` with the language analyzer
+|`AUTOCOMPLETE` |`search_as_you_type` with the language analyzer, plus the same `keyword` sub-field
 |===
 
 `@SearchField(analyzer = "...")` overrides the analyzer of one field with any analyzer the index defines. For settings and analyzers beyond this mapping, create the index with your own tooling before the application starts; an existing index is left untouched.
 
+An `@Embedded` property is indexed as an object, so its fields can be searched and matched by path (`address.city`). An association (`@Relation`) is not indexed: the document holds the entity's own properties only, and `nested` and `geo_distance` queries are not rendered in this release.
+
+Index names go into request paths, so the `index-prefix` and the entity's index name must follow the store's index naming rules: lower case, no spaces and none of `\ / * ? " < > | , # :`, not starting with `-`, `_` or `+`. A name that breaks them fails with an `IllegalArgumentException` before any request is sent.
+
 == Settings and hand-written mappings
 
-ann:data.annotation.search.SearchIndexSettings[] on the entity carries the JSON of the create-index request's `settings`, merged over the store defaults: shards and replicas, or an `analysis` section defining custom analyzers that `@SearchField(analyzer)` can then name. ann:data.annotation.search.SearchMapping[] on a property carries the JSON of that field's mapping and replaces the generated one, for options the portable annotations do not expose such as `fielddata`, `ignore_above` or a `dense_vector` with its own index options. Both apply when schema generation or `SearchIndexOperations` creates the index; an existing index is not updated.
+ann:data.annotation.search.SearchIndexSettings[] on the entity carries the JSON of the create-index request's `settings`, merged over the store defaults: shards and replicas, or an `analysis` section defining custom analyzers that `@SearchField(analyzer)` can then name. ann:data.annotation.search.SearchMapping[] on a property carries the JSON of that field's mapping and replaces the generated one, for options the portable annotations do not expose such as `fielddata`, `ignore_above` or a `dense_vector` with its own index options. Both apply when schema generation or `SearchIndexOperations` creates the index; an existing index is not updated. Both are trusted configuration, sent to the store as written.
 
 == Vectors
 

@@ -20,7 +20,7 @@ class PostgresSearchIndexDdlSpec extends Specification {
         then:
         statements.size() == 5
         statements[0].startsWith('CREATE TABLE "search_book"')
-        statements[1] == "CREATE OR REPLACE FUNCTION mn_regconfig(cfg text) RETURNS regconfig AS 'SELECT cfg::regconfig' LANGUAGE sql IMMUTABLE;"
+        statements[1] == "CREATE OR REPLACE FUNCTION mn_regconfig(cfg text) RETURNS regconfig AS 'SELECT cfg::regconfig' LANGUAGE sql IMMUTABLE SET search_path = pg_catalog, pg_temp;"
         statements[2] == 'CREATE INDEX "idx_search_book_search" ON "search_book" USING GIN ((setweight(to_tsvector(mn_regconfig(coalesce("language",\'english\')),coalesce("title",\'\')),\'A\') || setweight(to_tsvector(mn_regconfig(coalesce("language",\'english\')),coalesce("description",\'\')),\'C\')));'
         // the fuzzy title gets a pg_trgm index
         statements[3] == 'CREATE EXTENSION IF NOT EXISTS pg_trgm;'

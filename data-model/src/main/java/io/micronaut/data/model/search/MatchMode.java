@@ -50,6 +50,10 @@ public enum MatchMode {
      * {@code tsquery} on PostgreSQL, a {@code CONTAINS} query on Oracle Text, a {@code $text} search
      * string on MongoDB, a {@code queryString} on MongoDB Search and a {@code query_string} on
      * Elasticsearch and OpenSearch.
+     *
+     * <p>Only pass trusted input: the native syntax is not escaped, so a user could widen the query.
+     * On Elasticsearch and OpenSearch {@code field:value} reaches fields outside the search fields;
+     * leading wildcards are disabled there.</p>
      */
     NATIVE;
 

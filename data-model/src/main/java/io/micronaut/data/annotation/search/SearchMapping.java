@@ -29,6 +29,8 @@ import java.lang.annotation.Target;
  * analyzer and {@code fielddata}, a {@code dense_vector} with its own options. The SQL stores and MongoDB
  * ignore it.
  *
+ * <p>The JSON is trusted configuration and is sent as written.</p>
+ *
  * @since 5.4.0
  */
 @Retention(RetentionPolicy.RUNTIME)
