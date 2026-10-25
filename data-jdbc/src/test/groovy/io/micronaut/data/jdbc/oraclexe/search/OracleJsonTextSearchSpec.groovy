@@ -40,4 +40,10 @@ class OracleJsonTextSearchSpec extends AbstractTextSearchSpec implements Oracle2
     boolean supportsStemming() {
         return false
     }
+
+    @Override
+    boolean allTermsAcrossFields() {
+        // each property is searched with its own CONTAINS ... INPATH, so SearchAll needs every term in one property
+        return false
+    }
 }
