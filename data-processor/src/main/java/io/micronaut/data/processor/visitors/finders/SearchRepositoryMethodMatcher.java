@@ -71,7 +71,9 @@ public final class SearchRepositoryMethodMatcher implements MethodMatcher {
                 returnType = returnType.getFirstTypeArgument().orElse(returnType);
             }
             if (!returnType.getName().equals(SearchResults.class.getName())) {
-                return null;
+                throw new ProcessingException(matchContext.getMethodElement(), "A search(String) method must return SearchResults<"
+                    + matchContext.getRootEntity().getSimpleName() + ">, optionally inside a reactive type or a CompletionStage, but returns "
+                    + matchContext.getReturnType().getName());
             }
             return new QueryCriteriaMethodMatch(List.of(
                 new MethodNameParser.Match(QueryMatchId.PREFIX, SEARCH),
