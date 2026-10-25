@@ -39,6 +39,7 @@ import io.micronaut.data.model.vector.search.SearchResult;
 import io.micronaut.data.model.vector.search.SearchResults;
 import jakarta.persistence.criteria.Expression;
 import jakarta.persistence.criteria.ParameterExpression;
+import jakarta.persistence.criteria.Predicate;
 import jakarta.persistence.criteria.Selection;
 import org.jspecify.annotations.Nullable;
 
@@ -73,17 +74,23 @@ public final class SearchQuerySupport {
     public static SearchQuery findSearchQuery(MethodInvocationContext<?, ?> context) {
         String text = null;
         Vector vector = null;
-        for (Object value : context.getParameterValues()) {
+        AnnotationValue<HybridSearchMethod> hybrid = context.getAnnotation(HybridSearchMethod.class);
+        String queryParameter = hybrid == null ? null : hybrid.stringValue("queryParameter").orElse(null);
+        Object[] values = context.getParameterValues();
+        io.micronaut.core.type.Argument<?>[] arguments = context.getArguments();
+        for (int i = 0; i < values.length; i++) {
+            Object value = values[i];
             if (value instanceof SearchQuery searchQuery) {
                 return searchQuery;
             }
-            if (value instanceof String string && text == null) {
+            // the search string is the parameter the matcher named, or the first String when it named none
+            boolean isQuery = queryParameter == null || queryParameter.isEmpty() ? value instanceof String : arguments[i].getName().equals(queryParameter);
+            if (isQuery && value instanceof String string && text == null) {
                 text = string;
             } else if (value instanceof Vector v && vector == null) {
                 vector = v;
             }
         }
-        AnnotationValue<HybridSearchMethod> hybrid = context.getAnnotation(HybridSearchMethod.class);
         if (hybrid == null) {
             throw new IllegalArgumentException("The search query may not be null.");
         }
@@ -116,7 +123,13 @@ public final class SearchQuerySupport {
         ParameterExpression<String> queryParameter = cb.parameter(String.class, null, searchQuery.getQuery());
         TextMatchOptions options = new TextMatchOptions(searchQuery.getBoosts(), searchQuery.getFuzziness(), searchQuery.getLanguage());
         Expression<Double> score = cb.searchScore(fields, queryParameter, searchQuery.getMode(), options);
-        criteriaQuery.where(cb.textMatch(fields, queryParameter, searchQuery.getMode(), options));
+        Predicate match = cb.textMatch(fields, queryParameter, searchQuery.getMode(), options);
+        if (searchQuery.getMinScore() != null && !searchQuery.isHybrid()) {
+            // the store drops the hits below the threshold, so the page and the total are exact; a hybrid
+            // threshold compares the fused score instead, in fuse()
+            match = cb.and(match, cb.greaterThanOrEqualTo(score, cb.parameter(Double.class, null, searchQuery.getMinScore())));
+        }
+        criteriaQuery.where(match);
         Set<String> highlightFields = resolveHighlightFields(root, searchQuery);
         List<Selection<?>> selections = new ArrayList<>(2 + highlightFields.size());
         selections.add(root);
@@ -325,17 +338,17 @@ public final class SearchQuerySupport {
     }
 
     /**
-     * Drops the hits below the query's minimum score. The filter runs on the retrieved page, as the
-     * stores disagree on whether a score can appear in a restriction.
+     * The results of a text query, empty rather than null. The query's minimum score is a restriction of
+     * {@link #textQuery} since 5.4, so nothing is filtered here any more.
      *
      * @param results The results
      * @param searchQuery The query
-     * @return The filtered results
+     * @return The results
      */
     public static SearchResults<Object> applyMinScore(@Nullable SearchResults<Object> results, SearchQuery searchQuery) {
         SearchResults<Object> present = orEmpty(results);
         Double minScore = searchQuery.getMinScore();
-        if (minScore == null) {
+        if (minScore == null || !searchQuery.isHybrid()) {
             return present;
         }
         List<SearchResult<Object>> kept = new ArrayList<>(present.results().size());

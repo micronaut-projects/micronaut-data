@@ -27,6 +27,7 @@ import io.micronaut.data.runtime.operations.internal.query.DefaultBindableParame
 import io.micronaut.data.model.vector.Vector;
 import io.micronaut.data.model.vector.search.Score;
 import io.micronaut.data.search.document.query.DocumentSearchQueryBuilder;
+import io.micronaut.data.search.document.query.SearchJson;
 import io.micronaut.json.JsonMapper;
 import org.jspecify.annotations.Nullable;
 
@@ -174,6 +175,10 @@ public final class DocumentStoredQuery<E, R> extends DefaultBindableParametersSt
         }
         if (value instanceof Score score) {
             return score.value();
+        }
+        if (value != null && value.getClass().isArray()) {
+            // an array bound to an In predicate is spliced into the list like a collection
+            return SearchJson.arrayToList(value);
         }
         return value;
     }
