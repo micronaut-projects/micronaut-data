@@ -22,26 +22,25 @@ import io.micronaut.core.beans.BeanProperty;
 import io.micronaut.core.convert.ConversionContext;
 import io.micronaut.core.convert.ConversionService;
 import io.micronaut.core.type.Argument;
+import io.micronaut.data.annotation.MappedProperty;
 import io.micronaut.data.exceptions.DataAccessException;
 import io.micronaut.data.graph.annotation.DynamicAttributes;
 import io.micronaut.data.graph.annotation.Node;
 import io.micronaut.data.graph.model.GraphEntities;
+import io.micronaut.data.graph.runtime.serde.GraphSerde;
 import io.micronaut.data.graph.model.GraphPath;
 import io.micronaut.data.graph.model.GraphRelationship;
 import io.micronaut.data.graph.model.query.builder.CypherQueryBuilder;
 import io.micronaut.data.model.Association;
 import io.micronaut.data.model.PersistentProperty;
-import io.micronaut.data.model.runtime.RuntimeAssociation;
 import io.micronaut.data.model.runtime.RuntimeEntityRegistry;
 import io.micronaut.data.model.runtime.RuntimePersistentEntity;
 import io.micronaut.data.model.runtime.RuntimePersistentProperty;
 import io.micronaut.data.model.runtime.convert.AttributeConverter;
 import org.jspecify.annotations.Nullable;
 
-import java.lang.reflect.Array;
 import java.util.ArrayList;
 import java.util.Collection;
-import java.util.HashMap;
 import java.util.HashSet;
 import java.util.LinkedHashMap;
 import java.util.List;
@@ -65,6 +64,8 @@ public final class GraphEntityMapper {
 
     private final Function<Object, Object> encoder;
 
+    private final GraphSerde serde;
+
     private final Map<String, Optional<Class<?>>> entitiesByLabel = new ConcurrentHashMap<>();
 
     private final Map<String, Schemaless> schemaless = new ConcurrentHashMap<>();
@@ -72,14 +73,17 @@ public final class GraphEntityMapper {
     /**
      * @param entityRegistry    The entity registry
      * @param conversionService The conversion service
-     * @param encoder           Encodes Java values into values the database accepts
+     * @param encoder           Encodes a Java value into a value the database accepts
+     * @param serde             Reads entities with Micronaut Serialization
      */
     public GraphEntityMapper(RuntimeEntityRegistry entityRegistry,
                              ConversionService conversionService,
-                             Function<Object, Object> encoder) {
+                             Function<Object, Object> encoder,
+                             GraphSerde serde) {
         this.entityRegistry = entityRegistry;
         this.conversionService = conversionService;
         this.encoder = encoder;
+        this.serde = serde;
     }
 
     /**
@@ -101,66 +105,54 @@ public final class GraphEntityMapper {
      * @return The entity instance
      */
     public <T> T readNode(RuntimePersistentEntity<T> entity, GraphNode node, @Nullable GraphRecord row) {
-        Map<String, Object> values = new HashMap<>();
-        RuntimePersistentProperty<T> identity = entity.getIdentity();
-        if (identity != null) {
-            Object id = GraphEntities.isNativeId(identity) ? nativeId(identity, node.id()) : node.properties().get(identity.getPersistedName());
-            values.put(identity.getName(), readValue(identity, id));
-        }
-        readProperties(entity, node, row, values);
-        readSchemaless(entity, node, values);
-        readDynamicRelationships(entity, row, values);
-        return instantiate(entity, values);
-    }
-
-    private <T> void readProperties(RuntimePersistentEntity<T> entity, GraphNode node, @Nullable GraphRecord row, Map<String, Object> values) {
-        for (RuntimePersistentProperty<T> property : entity.getPersistentProperties()) {
-            if (isSchemalessHolder(property)) {
-                continue;
-            }
-            if (property instanceof RuntimeAssociation<T> association) {
-                String column = CypherQueryBuilder.JOIN_COLUMN_PREFIX + association.getName();
-                if (row != null && row.has(column)) {
-                    values.put(association.getName(), readFetched(association, row.get(column)));
-                }
-            } else if (node.properties().containsKey(property.getPersistedName())) {
-                values.put(property.getName(), readValue(property, node.properties().get(property.getPersistedName())));
-            }
-        }
-    }
-
-    private void readSchemaless(RuntimePersistentEntity<?> entity, GraphNode node, Map<String, Object> values) {
         Schemaless schemaless = schemaless(entity);
+        BeanProperty<Object, Object> relationshipsProperty = schemaless.relationships();
+        if (!schemaless.present() && relationshipsProperty == null) {
+            return serde.readNode(entity, node, row);
+        }
+        // Schemaless data lives outside the declared properties of the node: it is read here and added to what the
+        // deserializer sees under the names of its holder properties
+        Map<String, @Nullable Object> extras = new LinkedHashMap<>();
         if (schemaless.attributes() != null) {
-            Map<String, Object> attributes = new LinkedHashMap<>();
-            node.properties().forEach((name, value) -> {
-                if (!schemaless.declared().contains(name)) {
-                    attributes.put(name, value);
-                }
-            });
-            values.put(schemaless.attributes().getName(), attributes);
+            extras.put(schemaless.attributes().getName(), undeclaredProperties(schemaless, node));
         }
         if (schemaless.labels() != null) {
-            List<String> labels = new ArrayList<>(node.labels());
-            labels.removeAll(GraphEntities.labels(entity));
-            values.put(schemaless.labels().getName(), convert(labels, schemaless.labels().asArgument()));
+            extras.put(schemaless.labels().getName(), extraLabels(entity, node));
         }
+        if (relationshipsProperty != null && row != null && row.has(CypherQueryBuilder.DYNAMIC_RELATIONSHIPS_COLUMN)) {
+            // The targets are read here, by their labels, and reach the deserializer as entities
+            extras.put(relationshipsProperty.getName(), dynamicRelationships(row));
+        }
+        return serde.readNode(entity, node, row, extras, schemaless.attributes() != null ? schemaless.declared() : null);
     }
 
-    private void readDynamicRelationships(RuntimePersistentEntity<?> entity, @Nullable GraphRecord row, Map<String, Object> values) {
-        BeanProperty<Object, Object> relationshipsProperty = dynamicRelationshipsProperty(entity);
-        if (relationshipsProperty != null && row != null && row.has(CypherQueryBuilder.DYNAMIC_RELATIONSHIPS_COLUMN)) {
-            Map<String, List<Object>> relationships = new LinkedHashMap<>();
-            if (row.get(CypherQueryBuilder.DYNAMIC_RELATIONSHIPS_COLUMN) instanceof Collection<?> collection) {
-                for (Object item : collection) {
-                    if (item instanceof Map<?, ?> map && map.get(CypherQueryBuilder.NODE_KEY) instanceof GraphNode target) {
-                        String type = String.valueOf(map.get(CypherQueryBuilder.DYNAMIC_TYPE_KEY));
-                        relationships.computeIfAbsent(type, k -> new ArrayList<>()).add(readNodeAs(target, Object.class));
-                    }
+    private static Map<String, Object> undeclaredProperties(Schemaless schemaless, GraphNode node) {
+        Map<String, Object> attributes = new LinkedHashMap<>();
+        node.properties().forEach((name, value) -> {
+            if (!schemaless.declared().contains(name)) {
+                attributes.put(name, value);
+            }
+        });
+        return attributes;
+    }
+
+    private static List<String> extraLabels(RuntimePersistentEntity<?> entity, GraphNode node) {
+        List<String> labels = new ArrayList<>(node.labels());
+        labels.removeAll(GraphEntities.labels(entity));
+        return labels;
+    }
+
+    private Map<String, List<Object>> dynamicRelationships(GraphRecord row) {
+        Map<String, List<Object>> relationships = new LinkedHashMap<>();
+        if (row.get(CypherQueryBuilder.DYNAMIC_RELATIONSHIPS_COLUMN) instanceof Collection<?> collection) {
+            for (Object item : collection) {
+                if (item instanceof Map<?, ?> map && map.get(CypherQueryBuilder.NODE_KEY) instanceof GraphNode target) {
+                    String type = String.valueOf(map.get(CypherQueryBuilder.DYNAMIC_TYPE_KEY));
+                    relationships.computeIfAbsent(type, k -> new ArrayList<>()).add(readNodeAs(target, Object.class));
                 }
             }
-            values.put(relationshipsProperty.getName(), relationships);
         }
+        return relationships;
     }
 
     /**
@@ -171,11 +163,7 @@ public final class GraphEntityMapper {
      * @return The property, or null if the entity has none
      */
     public @Nullable BeanProperty<Object, Object> dynamicRelationshipsProperty(RuntimePersistentEntity<?> entity) {
-        PersistentProperty property = GraphEntities.findDynamicRelationships(entity);
-        if (property == null) {
-            return null;
-        }
-        return (BeanProperty<Object, Object>) entity.getIntrospection().getRequiredProperty(property.getName(), Object.class);
+        return schemaless(entity).relationships();
     }
 
     /**
@@ -210,30 +198,6 @@ public final class GraphEntityMapper {
         return GraphEntities.isSchemalessHolder(property);
     }
 
-    /**
-     * The value of a constructor argument the node has no value for: the default of a primitive, an empty collection
-     * for relationships that were not fetched, otherwise null.
-     */
-    private static @Nullable Object emptyValue(Argument<?> argument) {
-        Class<?> type = argument.getType();
-        if (argument.isPrimitive()) {
-            return Array.get(Array.newInstance(type, 1), 0);
-        }
-        if (type == Object.class) {
-            return null;
-        }
-        if (type.isAssignableFrom(ArrayList.class)) {
-            return new ArrayList<>();
-        }
-        if (type.isAssignableFrom(java.util.LinkedHashSet.class)) {
-            return new java.util.LinkedHashSet<>();
-        }
-        if (type.isAssignableFrom(LinkedHashMap.class)) {
-            return new LinkedHashMap<>();
-        }
-        return null;
-    }
-
     private Schemaless schemaless(RuntimePersistentEntity<?> entity) {
         return schemaless.computeIfAbsent(entity.getName(), name -> {
             BeanProperty<Object, Object> attributes = null;
@@ -254,7 +218,10 @@ public final class GraphEntityMapper {
                     declared.add(property.getPersistedName());
                 }
             }
-            return new Schemaless(attributes, labels, declared);
+            PersistentProperty relationshipsProperty = GraphEntities.findDynamicRelationships(entity);
+            BeanProperty<Object, Object> relationships = relationshipsProperty == null ? null
+                : (BeanProperty<Object, Object>) entity.getIntrospection().getRequiredProperty(relationshipsProperty.getName(), Object.class);
+            return new Schemaless(attributes, labels, relationships, declared);
         });
     }
 
@@ -268,55 +235,7 @@ public final class GraphEntityMapper {
      * @return The entity instance
      */
     public <T> T readRelationshipEntity(RuntimePersistentEntity<T> entity, GraphEdge edge, @Nullable GraphNode target) {
-        Map<String, Object> values = new HashMap<>();
-        RuntimePersistentProperty<T> identity = entity.getIdentity();
-        if (identity != null) {
-            Object id = GraphEntities.isNativeId(identity) ? nativeId(identity, edge.id()) : edge.properties().get(identity.getPersistedName());
-            values.put(identity.getName(), readValue(identity, id));
-        }
-        for (RuntimePersistentProperty<T> property : entity.getPersistentProperties()) {
-            if (isSchemalessHolder(property)) {
-                continue;
-            }
-            if (property instanceof RuntimeAssociation<T> association) {
-                if (target != null && association.getAnnotationMetadata().hasStereotype(io.micronaut.data.graph.annotation.TargetNode.class)) {
-                    values.put(association.getName(), readNode(association.getAssociatedEntity(), target, null));
-                }
-                continue;
-            }
-            if (edge.properties().containsKey(property.getPersistedName())) {
-                values.put(property.getName(), readValue(property, edge.properties().get(property.getPersistedName())));
-            }
-        }
-        return instantiate(entity, values);
-    }
-
-    private @Nullable Object readFetched(RuntimeAssociation<?> association, @Nullable Object value) {
-        List<Object> items = new ArrayList<>();
-        if (value instanceof Collection<?> collection) {
-            RuntimePersistentEntity<?> associated = association.getAssociatedEntity();
-            boolean relationshipEntity = GraphEntities.isRelationshipEntity(associated);
-            for (Object item : collection) {
-                if (item != null) {
-                    items.add(readFetchedItem(association, associated, relationshipEntity, item));
-                }
-            }
-        }
-        if (association.getKind().isSingleEnded()) {
-            return items.isEmpty() ? null : items.get(0);
-        }
-        return items;
-    }
-
-    private Object readFetchedItem(RuntimeAssociation<?> association, RuntimePersistentEntity<?> associated, boolean relationshipEntity, Object item) {
-        if (relationshipEntity && item instanceof Map<?, ?> map && map.get(CypherQueryBuilder.REL_KEY) instanceof GraphEdge edge) {
-            GraphNode target = map.get(CypherQueryBuilder.NODE_KEY) instanceof GraphNode node ? node : null;
-            return readRelationshipEntity(associated, edge, target);
-        }
-        if (item instanceof GraphNode node) {
-            return readNode(associated, node, null);
-        }
-        throw new DataAccessException("Unexpected value for relationship [" + association.getName() + "]: " + item);
+        return serde.readEdge(entity, edge, target);
     }
 
     /**
@@ -462,7 +381,7 @@ public final class GraphEntityMapper {
      * @param id       The identifier
      * @return The identifier to convert
      */
-    private static @Nullable Object nativeId(RuntimePersistentProperty<?> identity, @Nullable Object id) {
+    public static @Nullable Object nativeId(RuntimePersistentProperty<?> identity, @Nullable Object id) {
         if (id instanceof String s && !CharSequence.class.isAssignableFrom(identity.getType())) {
             int separator = s.lastIndexOf(':');
             if (separator >= 0) {
@@ -507,7 +426,12 @@ public final class GraphEntityMapper {
     public @Nullable Object readValue(RuntimePersistentProperty<?> property, @Nullable Object value) {
         AttributeConverter<Object, Object> converter = property.getConverter();
         if (converter != null) {
-            return converter.convertToEntityValue(value, ConversionContext.of(property.getArgument()));
+            // The driver's value, such as a Long, becomes the type the converter persists, such as an Integer
+            Object persisted = property.getAnnotationMetadata()
+                .classValue(MappedProperty.class, "converterPersistedType")
+                .map(type -> value == null ? null : convert(value, Argument.of(type)))
+                .orElse(value);
+            return converter.convertToEntityValue(persisted, ConversionContext.of(property.getArgument()));
         }
         return convert(value, property.getArgument());
     }
@@ -532,54 +456,6 @@ public final class GraphEntityMapper {
             return converted.get();
         }
         throw new DataAccessException("Cannot convert value [" + value + "] of type " + value.getClass().getName() + " to " + argument.getTypeName());
-    }
-
-    /**
-     * Instantiates an entity through its constructor, then sets the properties that were read. The introspection
-     * builder is not used, as it assigns null to every settable property not read, which discards the values a class
-     * initializes its properties with, such as empty collections of relationships that were not fetched.
-     */
-    private <T> T instantiate(RuntimePersistentEntity<T> entity, Map<String, Object> values) {
-        BeanIntrospection<T> introspection = entity.getIntrospection();
-        Argument<Object>[] constructorArguments = (Argument<Object>[]) introspection.getConstructorArguments();
-        Set<String> consumed = new HashSet<>();
-        T instance;
-        if (constructorArguments.length == 0) {
-            instance = introspection.instantiate();
-        } else {
-            Object[] arguments = new Object[constructorArguments.length];
-            for (int i = 0; i < constructorArguments.length; i++) {
-                Argument<Object> argument = constructorArguments[i];
-                consumed.add(argument.getName());
-                arguments[i] = constructorArgument(argument, values.get(argument.getName()));
-            }
-            instance = introspection.instantiate(false, arguments);
-        }
-        for (BeanProperty<T, Object> property : introspection.getBeanProperties()) {
-            String name = property.getName();
-            if (!consumed.contains(name) && values.containsKey(name)) {
-                instance = setProperty(instance, property, values.get(name));
-            }
-        }
-        return instance;
-    }
-
-    private @Nullable Object constructorArgument(Argument<Object> argument, @Nullable Object value) {
-        if (value == null) {
-            return emptyValue(argument);
-        }
-        return argument.getType().isInstance(value) ? value : convert(value, argument);
-    }
-
-    private <T> T setProperty(T instance, BeanProperty<T, Object> property, @Nullable Object value) {
-        if (value != null && !property.getType().isInstance(value)) {
-            value = convert(value, property.asArgument());
-        }
-        if (!property.isReadOnly()) {
-            property.set(instance, value);
-            return instance;
-        }
-        return property.hasSetterOrConstructorArgument() ? property.withValue(instance, value) : instance;
     }
 
     private static boolean isNodeEntity(Class<?> type) {
@@ -612,12 +488,18 @@ public final class GraphEntityMapper {
     /**
      * The schemaless properties of an entity.
      *
-     * @param attributes The property holding schemaless properties, or null
-     * @param labels     The property holding dynamic labels, or null
-     * @param declared   The stored names of the declared properties
+     * @param attributes    The property holding schemaless properties, or null
+     * @param labels        The property holding dynamic labels, or null
+     * @param relationships The property holding dynamic relationships, or null
+     * @param declared      The stored names of the declared properties
      */
     private record Schemaless(@Nullable BeanProperty<Object, Object> attributes,
                               @Nullable BeanProperty<Object, Object> labels,
+                              @Nullable BeanProperty<Object, Object> relationships,
                               Set<String> declared) {
+
+        boolean present() {
+            return attributes != null || labels != null;
+        }
     }
 }

@@ -5,6 +5,7 @@ plugins {
 dependencies {
     api projects.micronautDataProcessor
     api projects.micronautDataGraphModel
+    api projects.micronautDataSerdeProcessor
 
     compileOnly mn.micronaut.inject.java
     compileOnly mn.micronaut.inject.groovy

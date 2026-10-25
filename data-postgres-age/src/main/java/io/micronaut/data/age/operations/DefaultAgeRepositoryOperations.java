@@ -34,6 +34,7 @@ import io.micronaut.data.graph.runtime.GraphRecord;
 import io.micronaut.data.graph.runtime.GraphResult;
 import io.micronaut.data.graph.runtime.GraphSession;
 import io.micronaut.data.graph.runtime.GraphValueEncoderRegistrar;
+import io.micronaut.data.graph.runtime.serde.GraphSerde;
 import io.micronaut.data.graph.runtime.GraphValueEncoders;
 import io.micronaut.data.graph.runtime.operations.AbstractGraphRepositoryOperations;
 import io.micronaut.data.model.runtime.AttributeConverterRegistry;
@@ -101,8 +102,9 @@ final class DefaultAgeRepositoryOperations extends AbstractGraphRepositoryOperat
                                    DataConversionService conversionService,
                                    AttributeConverterRegistry attributeConverterRegistry,
                                    @Named("io") @Nullable ExecutorService executorService,
-                                   List<GraphValueEncoderRegistrar> encoderRegistrars) {
-        super(new AgeCypherQueryBuilder(), dateTimeProvider, runtimeEntityRegistry, conversionService, attributeConverterRegistry, executorService, encoderRegistrars);
+                                   List<GraphValueEncoderRegistrar> encoderRegistrars,
+                                   GraphSerde graphSerde) {
+        super(new AgeCypherQueryBuilder(), dateTimeProvider, runtimeEntityRegistry, conversionService, attributeConverterRegistry, executorService, encoderRegistrars, graphSerde);
         this.connectionOperations = connectionOperations;
         this.graph = AgeStatements.validateGraphName(graph);
         this.createExtension = createExtension;
