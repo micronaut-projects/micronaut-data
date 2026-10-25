@@ -1674,8 +1674,7 @@ public final class MongoQueryBuilder implements QueryBuilder {
                 throw new UnsupportedSearchFeatureException(SearchCapability.FUZZINESS, "MongoDB Search fuzzy matching beyond " + MAX_FUZZINESS + " edits");
             }
             if (options.language() != null) {
-                // the analyzer is fixed per index
-                throw new UnsupportedSearchFeatureException(SearchCapability.LANGUAGE_OVERRIDE, "MongoDB Search");
+                throw new UnsupportedSearchFeatureException(SearchCapability.LANGUAGE_OVERRIDE, "MongoDB Search, whose analyzer is fixed per index");
             }
             if (queryState.searchOperator != null) {
                 throw new UnsupportedOperationException("MongoDB $search supports one search predicate per query.");
