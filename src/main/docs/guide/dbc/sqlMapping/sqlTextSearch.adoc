@@ -51,7 +51,7 @@ snippet::example.BookRepository[project-base="doc-examples/jdbc-search-example",
 |`SearchAll` |every term |`to_tsquery('a' & 'b')`
 |`SearchPhrase` |adjacent terms, in order |`to_tsquery('a b')`
 |`SearchPrefix` |every term as a prefix |`to_tsquery('a:*' & 'b:*')`
-|`SearchFuzzy` |edit-distance match |not supported, fails at compile time
+|`SearchFuzzy` |terms with typos |`pg_trgm` word similarity (`mn_term.t <% column`), see the notes below
 |===
 
 On Oracle the same keywords render `CONTAINS` queries: `{a} | {b}`, `{a} & {b}`, `{a b}`, `a% & b%` and `fuzzy(a,60,100)` respectively, so `SearchFuzzy` is available there.
