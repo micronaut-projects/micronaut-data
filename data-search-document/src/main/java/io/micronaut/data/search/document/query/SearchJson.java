@@ -19,6 +19,7 @@ import io.micronaut.core.annotation.Internal;
 
 import java.util.Collection;
 import java.util.Map;
+import org.jspecify.annotations.Nullable;
 
 /**
  * Minimal JSON writer for the query bodies built at compile time, where no JSON library is guaranteed.
@@ -37,13 +38,13 @@ public final class SearchJson {
      * @param value The value
      * @return The JSON text
      */
-    public static String write(Object value) {
+    public static String write(@Nullable Object value) {
         StringBuilder sb = new StringBuilder();
         append(sb, value);
         return sb.toString();
     }
 
-    private static void append(StringBuilder sb, Object value) {
+    private static void append(StringBuilder sb, @Nullable Object value) {
         if (value == null) {
             sb.append("null");
         } else if (value instanceof String s) {
@@ -51,34 +52,42 @@ public final class SearchJson {
         } else if (value instanceof Number || value instanceof Boolean) {
             sb.append(value);
         } else if (value instanceof Map<?, ?> map) {
-            sb.append('{');
-            boolean first = true;
-            for (Map.Entry<?, ?> entry : map.entrySet()) {
-                if (!first) {
-                    sb.append(',');
-                }
-                first = false;
-                appendString(sb, String.valueOf(entry.getKey()));
-                sb.append(':');
-                append(sb, entry.getValue());
-            }
-            sb.append('}');
+            appendMap(sb, map);
         } else if (value instanceof Collection<?> collection) {
-            sb.append('[');
-            boolean first = true;
-            for (Object item : collection) {
-                if (!first) {
-                    sb.append(',');
-                }
-                first = false;
-                append(sb, item);
-            }
-            sb.append(']');
+            appendCollection(sb, collection);
         } else if (value instanceof Enum<?> e) {
             appendString(sb, e.name());
         } else {
             appendString(sb, value.toString());
         }
+    }
+
+    private static void appendMap(StringBuilder sb, Map<?, ?> map) {
+        sb.append('{');
+        boolean first = true;
+        for (Map.Entry<?, ?> entry : map.entrySet()) {
+            if (!first) {
+                sb.append(',');
+            }
+            first = false;
+            appendString(sb, String.valueOf(entry.getKey()));
+            sb.append(':');
+            append(sb, entry.getValue());
+        }
+        sb.append('}');
+    }
+
+    private static void appendCollection(StringBuilder sb, Collection<?> collection) {
+        sb.append('[');
+        boolean first = true;
+        for (Object item : collection) {
+            if (!first) {
+                sb.append(',');
+            }
+            first = false;
+            append(sb, item);
+        }
+        sb.append(']');
     }
 
     private static void appendString(StringBuilder sb, String s) {

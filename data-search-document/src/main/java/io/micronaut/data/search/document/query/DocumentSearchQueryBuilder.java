@@ -99,6 +99,7 @@ public final class DocumentSearchQueryBuilder implements QueryBuilder {
     private static final String MUST_NOT = "must_not";
     private static final String SHOULD = "should";
     private static final String TERM = "term";
+    private static final String VALUE = "value";
     private static final String RANGE = "range";
     private static final String ORDER = "order";
 
@@ -358,7 +359,7 @@ public final class DocumentSearchQueryBuilder implements QueryBuilder {
                 return;
             }
             if (ignoreCase) {
-                result = Map.of(TERM, Map.of(keywordPath(propertyPath), Map.of("value", value(rightExpression, propertyPath), "case_insensitive", true)));
+                result = Map.of(TERM, Map.of(keywordPath(propertyPath), Map.of(VALUE, value(rightExpression, propertyPath), "case_insensitive", true)));
                 return;
             }
             result = Map.of(TERM, Map.of(keywordPath(propertyPath), value(rightExpression, propertyPath)));
@@ -511,7 +512,7 @@ public final class DocumentSearchQueryBuilder implements QueryBuilder {
                 value = Map.of(QUERY_PARAMETER_PLACEHOLDER, -1, WILDCARD_HINT, hint, "value", literal(expression));
             }
             Map<String, Object> options = new LinkedHashMap<>();
-            options.put("value", value);
+            options.put(VALUE, value);
             if (hint.endsWith("_ignore_case")) {
                 options.put("case_insensitive", true);
             }
