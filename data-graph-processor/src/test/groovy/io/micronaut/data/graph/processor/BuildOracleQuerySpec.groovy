@@ -175,7 +175,11 @@ interface AccountRepository extends CrudRepository<Account, Long> {
         def rawQuery = method.annotationMetadata.stringValue(Query, 'rawQuery').get()
         rawQuery.startsWith("SELECT COUNT(*) AS result FROM v\$session WHERE sid = ? AND path <> 'C:\\")
         rawQuery.endsWith("' -- see \$ticket")
-        getParameterNames(method) == ['p0']
+
+        and: "only the sid is bound"
+        method.annotationMetadata.getAnnotation(io.micronaut.data.intercept.annotation.DataMethod)
+            .getAnnotations(io.micronaut.data.intercept.annotation.DataMethod.META_MEMBER_PARAMETERS, io.micronaut.data.intercept.annotation.DataMethodQueryParameter)
+            *.intValue(io.micronaut.data.intercept.annotation.DataMethodQueryParameter.META_MEMBER_PARAMETER_INDEX)*.asInt == [0]
     }
 
     void "test names that need quoting use double quotes"() {
