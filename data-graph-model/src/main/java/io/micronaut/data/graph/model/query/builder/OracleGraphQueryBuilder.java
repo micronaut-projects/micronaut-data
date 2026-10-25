@@ -24,6 +24,10 @@ import io.micronaut.data.graph.annotation.Labels;
 import io.micronaut.data.graph.annotation.PropertyGraph;
 import io.micronaut.data.graph.annotation.TargetNode;
 import io.micronaut.data.graph.model.GraphEntities;
+import io.micronaut.data.graph.model.criteria.DynamicPropertyExpression;
+import io.micronaut.data.graph.model.criteria.GraphExpressionVisitor;
+import io.micronaut.data.graph.model.criteria.GraphPredicateVisitor;
+import io.micronaut.data.graph.model.criteria.RelatedPredicate;
 import io.micronaut.data.graph.model.query.PathQueryDefinition;
 import io.micronaut.data.model.Association;
 import io.micronaut.data.model.PersistentEntity;
@@ -722,7 +726,7 @@ public class OracleGraphQueryBuilder implements GraphQueryBuilder {
     /**
      * Renders expressions in the graph pattern scope.
      */
-    private class ExpressionRenderer implements io.micronaut.data.model.jpa.criteria.impl.ExpressionVisitor {
+    private class ExpressionRenderer implements io.micronaut.data.model.jpa.criteria.impl.ExpressionVisitor, GraphExpressionVisitor {
         final Query query;
         final StringBuilder out;
         int depth;
@@ -813,6 +817,21 @@ public class OracleGraphQueryBuilder implements GraphQueryBuilder {
         }
 
         @Override
+        public void visit(DynamicPropertyExpression<?> expression) {
+            // Schemaless properties live in the JSON column of the vertex table
+            PersistentProperty attributes = null;
+            for (PersistentProperty property : query.entity.getPersistentProperties()) {
+                if (property.getAnnotationMetadata().hasAnnotation(DynamicAttributes.class)) {
+                    attributes = property;
+                }
+            }
+            if (attributes == null) {
+                throw new IllegalArgumentException("Entity [" + query.entity.getName() + "] has no @DynamicAttributes property to read [" + expression.getName() + "] from");
+            }
+            out.append("JSON_VALUE(").append(property(ROOT, attributes)).append(", '$.").append(expression.getName().replace("'", "''")).append("')");
+        }
+
+        @Override
         public void visit(IdExpression<?, ?> idExpression) {
             out.append(property(ROOT, identity(query.entity)));
         }
@@ -868,10 +887,15 @@ public class OracleGraphQueryBuilder implements GraphQueryBuilder {
     /**
      * Renders predicates.
      */
-    private final class PredicateRenderer extends ExpressionRenderer implements AdvancedPredicateVisitor<io.micronaut.data.model.PersistentPropertyPath> {
+    private final class PredicateRenderer extends ExpressionRenderer implements AdvancedPredicateVisitor<io.micronaut.data.model.PersistentPropertyPath>, GraphPredicateVisitor {
 
         PredicateRenderer(Query query, StringBuilder out) {
             super(query, out);
+        }
+
+        @Override
+        public void visit(RelatedPredicate predicate) {
+            throw new UnsupportedOperationException("Relationship criteria are not supported for Oracle property graphs: use a finder on the relationship property");
         }
 
         @Override

@@ -45,6 +45,12 @@ class AgeGraphRepositorySpec extends AbstractGraphRepositorySpec {
     AgeRepositoryOperations operations
 
     @Override
+    boolean supportsConnectedCriteria() {
+        // A variable-length pattern inside EXISTS crashes the AGE 1.5 backend
+        false
+    }
+
+    @Override
     void cleanupGraph() {
         operations.executeQuery("MATCH (n) DETACH DELETE n", [:])
     }

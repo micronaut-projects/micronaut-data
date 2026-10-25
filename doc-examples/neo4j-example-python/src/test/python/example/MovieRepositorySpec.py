@@ -8,7 +8,7 @@ from org.junit.jupiter.api import AfterEach, BeforeEach, Test
 from example.Movie import Movie
 from example.MovieRepository import MovieRepository
 from example.MovieSpecificationRepository import MovieSpecificationRepository
-from example.MovieSpecifications import directed_by, released_after
+from example.MovieSpecifications import connected_to, directed_by, released_after, with_roles
 from example.Person import Person
 from example.PersonRepository import PersonRepository
 from example.Role import Role
@@ -24,15 +24,15 @@ class MovieRepositorySpec:
     @BeforeEach
     def beforeEach(self):
         # tag::save[]
-        keanu = Person("Keanu Reeves", 1964)
-        carrie = Person("Carrie-Anne Moss", 1967)
-        lana = Person("Lana Wachowski", 1965)
+        keanu = self.personRepository.save(Person("Keanu Reeves", 1964))  # <1>
+        carrie = self.personRepository.save(Person("Carrie-Anne Moss", 1967))
+        lana = self.personRepository.save(Person("Lana Wachowski", 1965))
 
         matrix = Movie("The Matrix", "Welcome to the Real World", 1999)
         matrix.roles = [Role(["Neo"], keanu), Role(["Trinity"], carrie)]
         matrix.directors = [lana]
 
-        self.movieRepository.save(matrix)  # <1>
+        self.movieRepository.save(matrix)  # <2>
         # end::save[]
         self.movieRepository.save(Movie("The Matrix Reloaded", "Free your mind", 2003, [Role(["Neo"], keanu)], [lana]))
         self.movieRepository.save(Movie("Speed", "Get ready for rush hour", 1994, [Role(["Jack Traven"], keanu)]))
@@ -95,3 +95,14 @@ class MovieRepositorySpec:
 
         assert sorted(m.title for m in recent) == ["The Matrix", "The Matrix Reloaded"]
         assert by_lana == 2
+
+    @Test
+    def testGraphCriteria(self):
+        # tag::useGraphCriteria[]
+        with_cast = self.movieSpecificationRepository.count(with_roles())  # <1>
+        near_speed = self.movieSpecificationRepository.findAll(connected_to("Speed", 2))  # <2>
+        # end::useGraphCriteria[]
+
+        assert with_cast == 3, f"with_cast={with_cast!r}"
+        titles = sorted(m.title for m in near_speed)
+        assert titles == ["The Matrix", "The Matrix Reloaded"], f"titles={titles!r}"

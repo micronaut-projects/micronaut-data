@@ -4,6 +4,7 @@ import io.micronaut.context.ApplicationContext
 import io.micronaut.core.annotation.AnnotationMetadata
 import io.micronaut.data.annotation.Join
 import io.micronaut.data.event.EntityEventListener
+import io.micronaut.data.graph.model.criteria.GraphCriteria
 import io.micronaut.data.graph.model.query.builder.entities.Movie
 import io.micronaut.data.graph.model.query.builder.entities.Note
 import io.micronaut.data.graph.model.query.builder.entities.Person
@@ -57,6 +58,15 @@ class CypherCriteriaQuerySpec extends Specification {
         'null precedence'      | { q, r -> q.orderBy(new DefaultOrder(r.get("name"), true, false, Nulls.FIRST), new DefaultOrder(r.get("age"), false, false, Nulls.LAST)) } | 'MATCH (n:Person) RETURN n ORDER BY CASE WHEN n.name IS NULL THEN 0 ELSE 1 END, n.name ASC, CASE WHEN n.age IS NULL THEN 1 ELSE 0 END, n.age DESC'
         'offset and limit'     | { q, r -> q.offset(5).limit(10) }                                                                                                          | 'MATCH (n:Person) RETURN n SKIP 5 LIMIT 10'
         'empty conjunction'    | { q, r -> q.where(cb.and()) }                                                                                                              | 'MATCH (n:Person) RETURN n'
+        'related'              | { q, r -> q.where(GraphCriteria.related(r, "movies")) }                                                                                    | 'MATCH (n:Person) WHERE (n)-[:ACTED_IN]->() RETURN n'
+        'not related'          | { q, r -> q.where(cb.not(GraphCriteria.related(r, "movies"))) }                                                                            | 'MATCH (n:Person) WHERE NOT ((n)-[:ACTED_IN]->()) RETURN n'
+        'related to'           | { q, r -> q.where(GraphCriteria.relatedTo(r, "movies", cb.literal("Matrix"))) }                                                            | 'MATCH (n:Person) WHERE (n)-[:ACTED_IN]->(:Movie {title: $p0}) RETURN n'
+        'connected'            | { q, r -> q.where(GraphCriteria.connected(r, "movies", cb.literal("Matrix"), 3)) }                                                         | 'MATCH (n:Person) WHERE (n)-[:ACTED_IN*1..3]->(:Movie {title: $p0}) RETURN n'
+        'connected by any'     | { q, r -> q.where(GraphCriteria.connected(r, null, cb.literal(42L), 2)) }                                                                 | 'MATCH (n:Person) WHERE EXISTS { MATCH (n)-[*1..2]-(m0:Person) WHERE id(m0) = $p0 } RETURN n'
+        'related and property' | { q, r -> q.where(cb.and(GraphCriteria.related(r, "movies"), cb.equal(r.get("name"), "Keanu"))) }                                        | 'MATCH (n:Person) WHERE ((n)-[:ACTED_IN]->() AND n.name = $p0) RETURN n'
+        'dynamic property'     | { q, r -> q.where(cb.isTrue(GraphCriteria.dynamic(r, "goesInPatch", Boolean))) }                                                           | 'MATCH (n:Person) WHERE n.goesInPatch = true RETURN n'
+        'dynamic comparison'   | { q, r -> q.where(cb.greaterThan(GraphCriteria.dynamic(r, "legs", Integer), 2)) }                                                          | 'MATCH (n:Person) WHERE n.legs > $p0 RETURN n'
+        'dynamic selection'    | { q, r -> q.select(GraphCriteria.dynamic(r, "nick name", String)) }                                                                        | 'MATCH (n:Person) RETURN n.`nick name` AS `nick name`'
         'single conjunction'   | { q, r -> q.where(cb.and(cb.equal(r.get("name"), "a"))) }                                                                                  | 'MATCH (n:Person) WHERE n.name = $p0 RETURN n'
         'disjunction'          | { q, r -> q.where(cb.or(cb.equal(r.get("name"), "a"), cb.isTrue(r.get("active")))) }                                                       | 'MATCH (n:Person) WHERE (n.name = $p0 OR n.active = true) RETURN n'
         'negation'             | { q, r -> q.where(cb.not(cb.equal(r.get("name"), "a"))) }                                                                                  | 'MATCH (n:Person) WHERE NOT (n.name = $p0) RETURN n'
