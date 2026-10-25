@@ -50,7 +50,8 @@ public class DocumentSearchConfiguration {
     }
 
     /**
-     * @param indexPrefix A prefix added to every index name
+     * @param indexPrefix A prefix added to every index name. It is trusted configuration that goes into
+     *                    request paths; the resulting names are checked against the index naming rules
      */
     public void setIndexPrefix(@Nullable String indexPrefix) {
         this.indexPrefix = indexPrefix;
