@@ -19,4 +19,13 @@ class SearchIndexDefinitionsSpec extends Specification {
         body.contains('"isbn":{"type":"keyword","ignore_above":64}')
         body.contains('"id":{"type":"keyword"}')
     }
+
+    void "an autocomplete field keeps the keyword sub-field that exact matches and sorts use"() {
+        when:
+        def body = SearchIndexDefinitions.mappingFor(new RuntimePersistentEntity<io.micronaut.data.search.elasticsearch.memory.Recipe>(io.micronaut.data.search.elasticsearch.memory.Recipe), null)
+
+        then:
+        body.contains('"name":{"type":"search_as_you_type","analyzer":"standard","fields":{"keyword":{')
+        body.contains('"cuisine":{"type":"keyword"}')
+    }
 }
