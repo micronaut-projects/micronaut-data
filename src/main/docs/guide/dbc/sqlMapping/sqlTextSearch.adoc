@@ -69,7 +69,7 @@ snippet::example.BookService[project-base="doc-examples/jdbc-search-example", so
 <4> `search(SearchQuery)` returns the hits ordered by relevance.
 <5> `search(SearchQuery, Pageable)` returns one page; a sort on the pageable replaces the relevance order.
 
-`minScore` drops the hits whose score is below the threshold; it is applied to the retrieved page, so a paged result may hold fewer entities than the page size. A query is compiled at runtime through the same criteria API as a derived method, so a store that lacks the requested mode throws api:data.model.search.UnsupportedSearchFeatureException[] when the method runs rather than at compile time. Query-time boosts and a language override are not supported by `search(SearchQuery)` yet and throw the same exception.
+`minScore` restricts the hits to those whose score reaches the threshold, as a predicate the store evaluates (`ts_rank_cd(...) >= ?`, `SCORE(n) >= ?`, `min_score`), so pages are full and `totalHits` counts only the hits above it; MongoDB `$text` cannot restrict on its score and throws api:data.model.search.UnsupportedSearchFeatureException[]. On a hybrid search the threshold compares the fused score instead. A query is compiled at runtime through the same criteria API as a derived method, so a store that lacks the requested mode throws api:data.model.search.UnsupportedSearchFeatureException[] when the method runs rather than at compile time. Query-time boosts and a language override are not supported by `search(SearchQuery)` yet and throw the same exception.
 
 == Highlighting
 
