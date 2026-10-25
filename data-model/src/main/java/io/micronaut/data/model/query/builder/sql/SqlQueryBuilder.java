@@ -1155,9 +1155,7 @@ public class SqlQueryBuilder extends AbstractSqlLikeQueryBuilder {
         for (PersistentProperty field : fields) {
             columns.add(searchColumn(field, table.name(), namingStrategy, escape));
         }
-        String language = entity.getAnnotationMetadata().stringValue(Searchable.class, Searchable.MEMBER_LANGUAGE)
-            .filter(StringUtils::isNotEmpty)
-            .orElse(TextSearchDialect.DEFAULT_LANGUAGE);
+        String language = TextSearchSupport.resolveLanguage(entity);
         String indexName = entity.getAnnotationMetadata().stringValue(Searchable.class, "name")
             .filter(StringUtils::isNotEmpty)
             .orElseGet(() -> "idx_" + prepareNames(table.name()) + "_search");
