@@ -148,6 +148,20 @@ class StubTransportReactiveSpec extends Specification {
         articles.deleteAll()
     }
 
+    void "a page beyond the knn window of a Near method raises k to cover it"() {
+        given:
+        def articles = context.getBean(StubArticleRepository)
+        def transport = context.getBean(StubSearchTransport)
+        transport.bodies.clear()
+
+        when:
+        articles.searchByEmbeddingNear(Vector.of([1f, 0f, 0f] as float[]), new io.micronaut.data.model.vector.search.Score(0.5d), io.micronaut.data.model.Pageable.from(2, 10))
+
+        then:
+        transport.bodies.last().contains('"k":30,"num_candidates":300')
+        transport.bodies.last().contains('"from":20,"size":10')
+    }
+
     void "saveAll indexes in bulk through the async transport"() {
         when:
         def saved = repository.saveAll([
@@ -186,6 +200,7 @@ class StubTransportReactiveSpec extends Specification {
         results.results().size() == 1
         results.results()[0].score().value() == 1d
         results.totalHits() == 1
+        context.getBean(StubSearchTransport).bodies.last().contains('"track_total_hits":true')
         repository.findByTitleSearch("kotlin").collectList().block()*.title == ["Programming Kotlin"]
         repository.countBySearch("kotlin").block() == 1L
         // the reactive and async SearchRepository variants run through the reactive criteria operations

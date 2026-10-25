@@ -44,6 +44,8 @@ final class MongoSearchStages {
      * so the distance {@code 1 - cosine} is {@code 2 - 2 * score}, the measure the other stores return.
      */
     static final Map<String, Object> VECTOR_DISTANCE = Map.of("$subtract", List.of(2, Map.of("$multiply", List.of(2, Map.of("$meta", "vectorSearchScore")))));
+    // euclidean: score = 1 / (1 + distance), so distance = 1 / score - 1
+    static final Map<String, Object> EUCLIDEAN_DISTANCE = Map.of("$subtract", List.of(Map.of("$divide", List.of(1, Map.of("$meta", "vectorSearchScore"))), 1));
     /**
      * The reciprocal rank fusion score of a {@code $rankFusion} hit.
      */
@@ -168,6 +170,18 @@ final class MongoSearchStages {
                 texts
             ))
         ));
+    }
+
+    /**
+     * The distance an entity's {@code $vectorSearch} score maps back to, by the similarity of its index:
+     * cosine and dotProduct scores are {@code (1 + similarity) / 2}, euclidean scores {@code 1 / (1 + distance)}.
+     *
+     * @param entity The entity, with its {@code @MongoSearchIndex(similarity)}
+     * @return The distance expression
+     */
+    static Map<String, Object> vectorDistance(io.micronaut.data.model.PersistentEntity entity) {
+        String similarity = entity.getAnnotationMetadata().stringValue(io.micronaut.data.document.mongo.MongoAnnotations.SEARCH_INDEX, "similarity").orElse("cosine");
+        return "euclidean".equals(similarity) ? EUCLIDEAN_DISTANCE : VECTOR_DISTANCE;
     }
 
     /**

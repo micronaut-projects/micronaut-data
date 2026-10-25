@@ -41,7 +41,7 @@ The same body can be run without a repository method through the api:data.search
 
 == Vector and hybrid search
 
-A derived method with the `Near` keyword on a vector property, `searchByEmbeddingNear(Vector vector, Score maxDistance)`, renders a `knn` query whose `k` follows the requested size, with the maximum cosine distance turned into the store's similarity threshold. Hits carry the store's similarity score rather than the distance the SQL stores return, highest first. api:data.model.search.SearchQuery[]`.vector(property, vector)` runs the same nearest-neighbour query and fuses it with the text ranking as described in the <<sqlTextSearch, SQL full-text search section>>; the native `rrf` retriever and the OpenSearch hybrid pipeline are not used, so hybrid search works on the basic licence.
+A derived method with the `Near` keyword on a vector property, `searchByEmbeddingNear(Vector vector, Score maxDistance)`, renders a `knn` query whose `k` follows the method's limit and grows to cover a `Pageable` passed at runtime, with the maximum cosine distance turned into the store's similarity threshold. Hits carry the store's similarity score rather than the distance the SQL stores return, highest first. api:data.model.search.SearchQuery[]`.vector(property, vector)` runs the same nearest-neighbour query and fuses it with the text ranking as described in the <<sqlTextSearch, SQL full-text search section>>; the native `rrf` retriever and the OpenSearch hybrid pipeline are not used, so hybrid search works on the basic licence.
 
 == Paging and sorting
 
