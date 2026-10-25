@@ -7,7 +7,6 @@ dependencies {
 
     api projects.micronautDataSearchDocument
     api mnElasticsearch.micronaut.elasticsearch
-    api mnElasticsearch.elasticsearch.java
 
     testAnnotationProcessor mn.micronaut.inject.java
     testAnnotationProcessor projects.micronautDataDocumentProcessor
