@@ -113,6 +113,20 @@ class StubTransportReactiveSpec extends Specification {
         articles.deleteAll()
     }
 
+    void "a page beyond the knn window of a Near method raises k to cover it"() {
+        given:
+        def articles = context.getBean(StubArticleRepository)
+        def transport = context.getBean(StubSearchTransport)
+        transport.bodies.clear()
+
+        when:
+        articles.searchByEmbeddingNear(Vector.of([1f, 0f, 0f] as float[]), new io.micronaut.data.model.vector.search.Score(0.5d), io.micronaut.data.model.Pageable.from(2, 10))
+
+        then:
+        transport.bodies.last().contains('"k":30,"num_candidates":300')
+        transport.bodies.last().contains('"from":20,"size":10')
+    }
+
     void "saveAll indexes in bulk through the async transport"() {
         when:
         def saved = repository.saveAll([
