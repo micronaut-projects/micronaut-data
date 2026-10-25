@@ -17,7 +17,17 @@ micronaut:
       create-extension: false
 ----
 
-The graph named by `micronaut.data.age.graph` is created on first use unless `create-graph` is `false`. Set `create-extension` to `true` to run `CREATE EXTENSION age`, which needs a privileged user.
+The graph named by `micronaut.data.age.graph` is created on first use unless `create-graph` is `false`. Set `create-extension` to `true` to run `CREATE EXTENSION age`, which needs a privileged user. An application with several data sources names the graph of each under `micronaut.data.age.graphs`, keyed by the data source name; a data source without an entry uses `micronaut.data.age.graph`:
+
+[configuration]
+----
+micronaut:
+  data:
+    age:
+      graph: movies
+      graphs:
+        reporting: analytics
+----
 
 Apache AGE implements a subset of Cypher, which the module accounts for at build time:
 

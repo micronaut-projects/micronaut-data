@@ -18,7 +18,7 @@ snippet::example.TransferView[project-base="doc-examples/oracle-graph-example", 
 The query language is one of:
 
 `SQL_PGQ`:: The default. Queries are compiled to SQL/PGQ `GRAPH_TABLE` queries, which run on any Oracle Database 23ai data source. Path finders check for paths and count them, and `StartsWith`, `EndsWith` and `Contains` are supported through `LIKE`.
-`PGQL`:: Queries are compiled to https://pgql-lang.org[PGQL], which only runs on a data source that uses the PGQL JDBC driver from `com.oracle.database.graph:opg-pgql-jdbc`, with a URL that starts with `jdbc:oracle:pgql:`. Running a PGQL query on another data source fails with a `DataAccessException`. Path finders return paths with `ANY SHORTEST`, `ALL SHORTEST` and `ALL` searches.
+`PGQL`:: Queries are compiled to https://pgql-lang.org[PGQL], which only runs on a data source that uses the PGQL JDBC driver from `com.oracle.database.graph:opg-pgql-jdbc`, with a URL that starts with `jdbc:oracle:pgql:`. Running a PGQL query on another data source fails with a `DataAccessException`. Path finders compile to `ANY SHORTEST`, `ALL SHORTEST` and `ALL` searches that return paths. The PGQL driver is not on Maven Central, so the module's own tests check the compiled PGQL text and do not run it against a database: treat PGQL support as experimental until a PGQL data source has been exercised in your own tests.
 
 Path finders need a fixed maximum depth set with ann:data.graph.annotation.PathLimit[] on the method, and relationship finders a single relationship type.
 
@@ -44,7 +44,7 @@ When schema generation is enabled for the data source, the JDBC schema generator
 ----
 datasources:
   default:
-    schema-generate: CREATE_DROP
+    schema-generate: CREATE
 ----
 
 The tables follow the mapping of the entities:
@@ -115,7 +115,7 @@ The R2DBC schema generator creates the tables of the graph entities and the prop
 r2dbc:
   datasources:
     default:
-      schema-generate: CREATE_DROP
+      schema-generate: CREATE
 ----
 
 Rows of edge tables are written with SQL or a ann:data.r2dbc.annotation.R2dbcRepository[] over an entity of the edge table. R2DBC schema generation does not support `VALIDATE`.
