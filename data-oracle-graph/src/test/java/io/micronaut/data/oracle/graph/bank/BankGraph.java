@@ -11,6 +11,7 @@ import io.micronaut.data.oracle.graph.annotation.OracleGraphRepository;
 import io.micronaut.data.repository.GenericRepository;
 
 import java.math.BigDecimal;
+import java.time.LocalDateTime;
 import java.util.List;
 import java.util.Optional;
 
@@ -40,6 +41,14 @@ public interface BankGraph extends GenericRepository<Account, Long> {
 
     @PathLimit(3)
     long countPathsByTransfers(Long from, Long to);
+
+    /**
+     * The argument overrides the depth of the annotation.
+     */
+    @PathLimit(3)
+    long countPathsByTransfers(Long from, Long to, @PathLimit int maxDepth);
+
+    List<Account> findByOpenedGreaterThan(LocalDateTime opened);
 
     List<GraphRelationship<Account, Account>> findRelationshipsByTransfers(Long from, Long to);
 
