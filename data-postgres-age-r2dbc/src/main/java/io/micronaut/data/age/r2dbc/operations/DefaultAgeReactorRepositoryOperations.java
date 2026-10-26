@@ -34,6 +34,7 @@ import io.r2dbc.spi.Connection;
 import io.r2dbc.spi.Parameters;
 import io.r2dbc.spi.R2dbcException;
 import io.r2dbc.spi.Statement;
+import io.r2dbc.spi.Wrapped;
 import org.jspecify.annotations.Nullable;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -41,19 +42,27 @@ import reactor.core.publisher.Flux;
 import reactor.core.publisher.Mono;
 
 import java.util.ArrayList;
+import java.util.Collections;
 import java.util.List;
 import java.util.Map;
+import java.util.Set;
+import java.util.WeakHashMap;
 import java.util.function.Function;
 
 /**
  * Runs Apache AGE statements on the reactive connections of an R2DBC connection factory, within the current reactive
- * transaction when there is one. AGE is loaded on each connection before its first statement.
+ * transaction when there is one. AGE is loaded on each physical connection before its first statement.
  *
  * @author graemerocher
  * @since 5.3.0
  */
 @Internal
 final class DefaultAgeReactorRepositoryOperations extends AbstractReactiveGraphRepositoryOperations implements AgeReactorRepositoryOperations {
+
+    /**
+     * The session setting that records that AGE is loaded on a connection and its catalog on the search path.
+     */
+    static final String PREPARED_SETTING = "micronaut.age.prepared";
 
     private static final Logger LOG = LoggerFactory.getLogger(DefaultAgeReactorRepositoryOperations.class);
     private static final String JDBC_PARAMETER = "$$, ?)";
@@ -64,6 +73,14 @@ final class DefaultAgeReactorRepositoryOperations extends AbstractReactiveGraphR
     private final String graph;
     private final boolean createExtension;
     private final boolean createGraph;
+    /**
+     * The physical connections AGE is loaded on, for good: the loading was committed.
+     */
+    private final Set<Connection> preparedConnections = Collections.synchronizedSet(Collections.newSetFromMap(new WeakHashMap<>()));
+    /**
+     * The connections of checkouts that loaded AGE inside a transaction, which may still roll the loading back.
+     */
+    private final Set<Connection> preparedCheckouts = Collections.synchronizedSet(Collections.newSetFromMap(new WeakHashMap<>()));
     private volatile boolean graphReady;
 
     DefaultAgeReactorRepositoryOperations(DefaultAgeR2dbcRepositoryOperations operations,
@@ -97,20 +114,10 @@ final class DefaultAgeReactorRepositoryOperations extends AbstractReactiveGraphR
     }
 
     /**
-     * Loads AGE, which a pooled connection may not have loaded yet, puts its catalog on the search path, and creates
-     * the graph on first use.
+     * Loads AGE on the connection, once per physical connection, and creates the graph on first use.
      */
     private Mono<Void> prepare(Connection connection) {
-        Mono<Void> prepare = Mono.empty();
-        if (createExtension) {
-            prepare = prepare.then(execute(connection, "CREATE EXTENSION IF NOT EXISTS age"));
-        }
-        prepare = prepare.then(execute(connection, "LOAD 'age'"))
-            // The operators of agtype, which Cypher writes use, are resolved through the search path. ag_catalog
-            // goes last, so that unqualified DDL run on the same pooled connection later still lands in the first
-            // schema of the path
-            .then(execute(connection, "SELECT set_config('search_path', current_setting('search_path') || ', ag_catalog', false)"
-                + " WHERE current_setting('search_path') NOT LIKE '%ag_catalog%'"));
+        Mono<Void> prepare = loadAge(connection);
         if (createGraph && !graphReady) {
             prepare = prepare.then(createGraph());
         }
@@ -118,16 +125,107 @@ final class DefaultAgeReactorRepositoryOperations extends AbstractReactiveGraphR
     }
 
     /**
+     * Loads AGE on a connection and puts its catalog on the search path, unless the session has them already:
+     * a pooled connection keeps both across checkouts, and records that it does in the session setting
+     * {@value #PREPARED_SETTING}, which a transaction that rolls back reverts along with the search path.
+     */
+    private Mono<Void> loadAge(Connection connection) {
+        return Mono.defer(() -> {
+            Connection physical = physicalConnection(connection);
+            if (preparedConnections.contains(physical) || preparedCheckouts.contains(connection)) {
+                return Mono.empty();
+            }
+            boolean autoCommit = connection.isAutoCommit();
+            return isPrepared(connection).flatMap(loaded -> {
+                Mono<Void> load = loaded ? Mono.empty() : load(connection);
+                return load.then(Mono.fromRunnable(() -> {
+                    if (loaded || autoCommit) {
+                        // Committed: by an earlier checkout, or at once
+                        preparedConnections.add(physical);
+                    } else {
+                        // Set in a transaction that may yet roll it back: taken as read for this checkout only
+                        preparedCheckouts.add(connection);
+                    }
+                }));
+            });
+        });
+    }
+
+    private Mono<Void> load(Connection connection) {
+        LOG.debug("Loading Apache AGE on a connection");
+        Mono<Void> load = Mono.empty();
+        if (createExtension) {
+            load = load.then(execute(connection, "CREATE EXTENSION IF NOT EXISTS age"));
+        }
+        return load.then(execute(connection, "LOAD 'age'"))
+            // The operators of agtype, which Cypher writes use, are resolved through the search path. ag_catalog
+            // goes last, so that unqualified DDL run on the same pooled connection later still lands in the first
+            // schema of the path
+            .then(execute(connection, "SELECT set_config('search_path', current_setting('search_path') || ', ag_catalog', false)"
+                + " WHERE current_setting('search_path') NOT LIKE '%ag_catalog%'"))
+            .then(execute(connection, "SELECT set_config('" + PREPARED_SETTING + "', 'true', false)"));
+    }
+
+    private static Mono<Boolean> isPrepared(Connection connection) {
+        return Flux.from(connection.createStatement("SELECT current_setting('" + PREPARED_SETTING + "', true)").execute())
+            .flatMap(result -> result.map((row, metadata) -> "true".equals(row.get(0, String.class))))
+            .collectList()
+            .map(values -> !values.isEmpty() && values.get(0));
+    }
+
+    /**
+     * The connection a pool wrapper wraps, which outlives the wrapper handed out for one checkout.
+     *
+     * @param connection The connection
+     * @return The underlying connection, or the connection itself when it wraps none
+     */
+    private static Connection physicalConnection(Connection connection) {
+        Connection current = connection;
+        while (current instanceof Wrapped<?> wrapped && wrapped.unwrap() instanceof Connection unwrapped) {
+            current = unwrapped;
+        }
+        return current;
+    }
+
+    /**
      * Creates the graph on a connection of its own, outside any transaction of the caller, so that the graph
      * outlives a transaction that rolls back.
      */
     private Mono<Void> createGraph() {
-        // The graph name is a validated identifier
-        String sql = "SELECT ag_catalog.create_graph('" + graph + "') WHERE NOT EXISTS (SELECT 1 FROM ag_catalog.ag_graph WHERE name = '" + graph + "')";
-        return connectionOperations.withConnectionMono(ConnectionDefinition.REQUIRES_NEW, status -> execute(status.getConnection(), sql))
-            // Another instance created it between the check and the call
-            .onErrorResume(R2dbcException.class, e -> e.getMessage() != null && e.getMessage().contains("already exists") ? Mono.empty() : Mono.error(e))
+        return connectionOperations.withConnectionMono(ConnectionDefinition.REQUIRES_NEW, status -> createGraph(status.getConnection(), graph))
             .doOnSuccess(ignored -> graphReady = true);
+    }
+
+    /**
+     * Creates a graph unless it exists. Another instance may create it between the check and the call, in which
+     * case the call fails on the schema or the catalog row the other instance created: the failure is tolerated
+     * when the graph exists afterwards.
+     *
+     * @param connection A connection in auto-commit mode
+     * @param graph      The graph name, a validated identifier
+     * @return Completes when the graph exists, or fails when it can neither be created nor found
+     */
+    static Mono<Void> createGraph(Connection connection, String graph) {
+        return graphExists(connection, graph).flatMap(exists -> {
+            if (exists) {
+                return Mono.empty();
+            }
+            return execute(connection, "SELECT ag_catalog.create_graph('" + graph + "')")
+                .onErrorResume(R2dbcException.class, e -> graphExists(connection, graph).flatMap(found -> {
+                    if (!found) {
+                        return Mono.error(e);
+                    }
+                    LOG.debug("Apache AGE graph [{}] was created by another instance: {}", graph, e.getMessage());
+                    return Mono.empty();
+                }));
+        });
+    }
+
+    private static Mono<Boolean> graphExists(Connection connection, String graph) {
+        return Flux.from(connection.createStatement("SELECT 1 FROM ag_catalog.ag_graph WHERE name = '" + graph + "'").execute())
+            .flatMap(result -> result.map((row, metadata) -> Boolean.TRUE))
+            .collectList()
+            .map(rows -> !rows.isEmpty());
     }
 
     private static Mono<Void> execute(Connection connection, String sql) {
