@@ -273,6 +273,19 @@ final class OpenSearchRequests {
      * {@code knn} query: {@code {"knn": {"<field>": {"vector": [...], "k": n, "max_distance": d}}}}.
      */
     @SuppressWarnings("unchecked")
+    /** The OpenSearch form of an Elasticsearch knn clause: the vector with k, or a radial search by distance. */
+    private static Map<String, Object> knnClause(Map<?, ?> knn) {
+        Map<String, Object> clause = new LinkedHashMap<>();
+        clause.put("vector", knn.get("query_vector"));
+        if (knn.get("similarity") instanceof Number number) {
+            // a radial search takes exactly one of k, max_distance and min_score
+            clause.put("max_distance", 1d - number.doubleValue());
+        } else {
+            clause.put("k", knn.get("k"));
+        }
+        return clause;
+    }
+
     static Object translateKnn(Object node) {
         if (node instanceof Map<?, ?> map) {
             Map<String, Object> copy = new LinkedHashMap<>();
@@ -280,16 +293,7 @@ final class OpenSearchRequests {
                 String key = String.valueOf(entry.getKey());
                 Object value = entry.getValue();
                 if ("knn".equals(key) && value instanceof Map<?, ?> knn && knn.containsKey("field")) {
-                    Map<String, Object> clause = new LinkedHashMap<>();
-                    clause.put("vector", knn.get("query_vector"));
-                    Object similarity = knn.get("similarity");
-                    if (similarity instanceof Number number) {
-                        // a radial search takes exactly one of k, max_distance and min_score
-                        clause.put("max_distance", 1d - number.doubleValue());
-                    } else {
-                        clause.put("k", knn.get("k"));
-                    }
-                    copy.put("knn", Map.of(String.valueOf(knn.get("field")), clause));
+                    copy.put("knn", Map.of(String.valueOf(knn.get("field")), knnClause(knn)));
                 } else {
                     copy.put(key, translateKnn(value));
                 }
