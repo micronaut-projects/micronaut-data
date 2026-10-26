@@ -2280,13 +2280,19 @@ public class SqlQueryBuilder extends AbstractSqlLikeQueryBuilder {
      * @since 5.3.0
      */
     public String buildLimitAndOffset(long limit, long offset, AnnotationMetadata annotationMetadata) {
+        int approximateAccuracy = approximateAccuracy(annotationMetadata);
+        if (approximateAccuracy < 0) {
+            // exact limits keep going through the overload that builders such as the Cosmos one override
+            return buildLimitAndOffset(limit, offset);
+        }
         StringBuilder builder = new StringBuilder();
-        appendLimitAndOffset(getDialect(), limit, offset, approximateAccuracy(annotationMetadata), builder);
+        appendLimitAndOffset(getDialect(), limit, offset, approximateAccuracy, builder);
         return builder.toString();
     }
 
     private static int approximateAccuracy(AnnotationMetadata annotationMetadata) {
-        if (!annotationMetadata.hasAnnotation(ApproximateSearch.class)) {
+        // also as the stereotype of a composed annotation
+        if (!annotationMetadata.hasStereotype(ApproximateSearch.class)) {
             return -1;
         }
         int accuracy = annotationMetadata.intValue(ApproximateSearch.class, "targetAccuracy").orElse(0);
@@ -2306,7 +2312,12 @@ public class SqlQueryBuilder extends AbstractSqlLikeQueryBuilder {
             appendOrder(annotationMetadata, definition, queryState);
         }
         if (appendLimit) {
-            appendLimitAndOffset(getDialect(), definition.limit(), definition.offset(), approximateAccuracy(annotationMetadata), queryState.getQuery());
+            int approximateAccuracy = approximateAccuracy(annotationMetadata);
+            if (approximateAccuracy < 0) {
+                appendLimitAndOffset(getDialect(), definition.limit(), definition.offset(), queryState.getQuery());
+            } else {
+                appendLimitAndOffset(getDialect(), definition.limit(), definition.offset(), approximateAccuracy, queryState.getQuery());
+            }
         }
         Map<Integer, String> parametersInRole = definition.parametersInRole();
        if (parameterInRoleModifiesOrder(parametersInRole) || parameterInRoleModifiesLimit(parametersInRole)) {
