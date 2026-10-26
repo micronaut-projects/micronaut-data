@@ -88,7 +88,7 @@ final class CypherFragments {
 
     static void appendWhere(StringBuilder query, List<String> conditions) {
         if (!conditions.isEmpty()) {
-            query.append(" WHERE ").append(String.join(CypherQueryBuilder.AND, conditions));
+            query.append(CypherQueryBuilder.WHERE).append(String.join(CypherQueryBuilder.AND, conditions));
         }
     }
 

@@ -31,5 +31,5 @@ public interface GraphPredicateVisitor {
      *
      * @param predicate The predicate
      */
-    void visit(RelatedPredicate predicate);
+    void visit(RelatedPredicate<?, ?> predicate);
 }

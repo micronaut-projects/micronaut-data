@@ -31,5 +31,5 @@ public interface GraphExpressionVisitor {
      *
      * @param expression The expression
      */
-    void visit(DynamicPropertyExpression<?> expression);
+    void visit(DynamicPropertyExpression<?, ?> expression);
 }
