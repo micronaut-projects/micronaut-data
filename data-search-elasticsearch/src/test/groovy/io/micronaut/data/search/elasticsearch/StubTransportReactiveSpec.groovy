@@ -4,6 +4,7 @@ import io.micronaut.context.ApplicationContext
 import io.micronaut.context.annotation.Requires
 import io.micronaut.data.model.Pageable
 import io.micronaut.data.model.search.SearchQuery
+import io.micronaut.data.runtime.query.internal.DefaultPagedQuery
 import io.micronaut.data.search.document.conf.DocumentSearchConfiguration
 import io.micronaut.data.search.document.runtime.AsyncSearchTransport
 import io.micronaut.data.search.document.runtime.DefaultDocumentSearchReactiveRepositoryOperations
@@ -75,6 +76,38 @@ class StubTransportReactiveSpec extends Specification {
         operations.reactive().is(operations.reactive())
         operations.async().is(operations.async())
         operations.async().class.simpleName == "ReactorToAsyncOperationsAdaptor"
+    }
+
+    void "the reactive operations find by id, page, and update and delete in batches"() {
+        given:
+        def operations = (DefaultDocumentSearchReactiveRepositoryOperations) context.getBean(DefaultDocumentSearchRepositoryOperations, Qualifiers.byName("stub")).reactive()
+        def saved = repository.saveAll([
+                new Book("Baking Bread", "Sourdough", "Dough", 220),
+                new Book("Cooking with Coffee", "Recipes", "Bean", 120),
+        ]).collectList().block()
+        def method = context.getBeanDefinition(StubBookRepository).getRequiredMethod("findAll")
+        def query = new DefaultPagedQuery<Book>(method, Book, Pageable.from(0, 5))
+
+        expect:
+        operations.findOne(Book, saved[0].id).block().title == "Baking Bread"
+        operations.findOptional(Book, saved[1].id).block().title == "Cooking with Coffee"
+        operations.findOne(Book, UUID.randomUUID()).block() == null
+        operations.findAll(query).collectList().block().size() == 2
+        operations.count(query).block() == 2L
+        operations.findPage(query).block().totalSize == 2
+
+        when:
+        saved.each { it.title = it.title + " (2nd edition)" }
+        repository.updateAll(saved).collectList().block()
+
+        then:
+        repository.findAll().collectList().block()*.title.every { it.endsWith("(2nd edition)") }
+
+        when:
+        repository.deleteAll(saved).block()
+
+        then:
+        repository.count().block() == 0L
     }
 
     void "reactive CRUD and search run through the async transport"() {
