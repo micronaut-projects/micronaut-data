@@ -19,8 +19,13 @@ import co.elastic.clients.elasticsearch.ElasticsearchClient;
 import co.elastic.clients.elasticsearch.core.BulkResponse;
 import co.elastic.clients.elasticsearch.core.BulkRequest;
 import co.elastic.clients.elasticsearch._types.Refresh;
+import co.elastic.clients.elasticsearch.core.CountRequest;
+import co.elastic.clients.elasticsearch.core.DeleteByQueryRequest;
+import co.elastic.clients.elasticsearch.core.SearchRequest;
+import co.elastic.clients.elasticsearch.indices.CreateIndexRequest;
 import io.micronaut.context.annotation.Requires;
 import io.micronaut.core.annotation.Internal;
+import io.micronaut.core.annotation.TypeHint;
 import io.micronaut.data.exceptions.DataAccessException;
 import io.micronaut.data.search.document.conf.DocumentSearchConfiguration;
 import io.micronaut.data.search.document.runtime.SearchTransport;
@@ -41,6 +46,9 @@ import java.util.Map;
 @Internal
 @Singleton
 @Named("default")
+// withJson finds each request's deserializer through its public static _DESERIALIZER field, by reflection
+@TypeHint(value = {SearchRequest.class, CountRequest.class, DeleteByQueryRequest.class, CreateIndexRequest.class},
+    accessType = TypeHint.AccessType.ALL_PUBLIC_FIELDS)
 @Requires(beans = ElasticsearchClient.class)
 public final class ElasticsearchSearchTransport implements SearchTransport {
 
