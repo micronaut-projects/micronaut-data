@@ -35,6 +35,9 @@ class OracleSequenceBatchInsertSpec extends Specification implements OracleTestP
     SequenceBookRepository repository = context.getBean(SequenceBookRepository)
 
     @Shared
+    IdentityBookRepository identityRepository = context.getBean(IdentityBookRepository)
+
+    @Shared
     StatementRecorder recorder = context.getBean(StatementRecorder)
 
     @Override
@@ -44,6 +47,7 @@ class OracleSequenceBatchInsertSpec extends Specification implements OracleTestP
 
     void setup() {
         repository.deleteAll()
+        identityRepository.deleteAll()
         recorder.calls.clear()
     }
 
@@ -69,6 +73,20 @@ class OracleSequenceBatchInsertSpec extends Specification implements OracleTestP
         recorder.calls.count('executeBatch') == 1
         recorder.calls.count('executeUpdate') == 0
         repository.count() == 3
+    }
+
+    void "saveAll inserts entities with identity ids in one batch and assigns each its id"() {
+        when:
+        List<IdentityBook> saved = identityRepository.saveAll((1..5).collect { new IdentityBook(title: "Identity $it") })
+
+        then:
+        recorder.calls.count('executeBatch') == 1
+        recorder.calls.count('executeUpdate') == 0
+
+        and:
+        saved*.id.every { it != null }
+        saved*.id.toUnique().size() == 5
+        saved.every { book -> identityRepository.findById(book.id).get().title == book.title }
     }
 
     /**
@@ -123,6 +141,19 @@ class SequenceBook {
     @GeneratedValue
     Long id
     String title
+}
+
+@MappedEntity("identity_book")
+class IdentityBook {
+    @Id
+    @GeneratedValue(GeneratedValue.Type.IDENTITY)
+    Long id
+    String title
+}
+
+@Requires(property = 'spec.name', value = 'OracleSequenceBatchInsertSpec')
+@JdbcRepository(dialect = Dialect.ORACLE)
+interface IdentityBookRepository extends CrudRepository<IdentityBook, Long> {
 }
 
 @Requires(property = 'spec.name', value = 'OracleSequenceBatchInsertSpec')
