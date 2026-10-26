@@ -41,6 +41,7 @@ import org.jspecify.annotations.Nullable;
 import java.lang.reflect.Array;
 import java.util.ArrayList;
 import java.util.Collection;
+import java.util.Comparator;
 import java.util.HashMap;
 import java.util.HashSet;
 import java.util.LinkedHashMap;
@@ -59,13 +60,13 @@ import java.util.function.Function;
  */
 @Internal
 public final class GraphEntityMapper {
+    private static final int MAX_CACHED_LABEL_SETS = 1024;
     private final RuntimeEntityRegistry entityRegistry;
 
     private final ConversionService conversionService;
 
     private final Function<Object, Object> encoder;
-
-    private final Map<String, Optional<Class<?>>> entitiesByLabel = new ConcurrentHashMap<>();
+    private final Map<List<String>, Optional<Class<?>>> entitiesByLabels = new ConcurrentHashMap<>();
 
     private final Map<String, Schemaless> schemaless = new ConcurrentHashMap<>();
 
@@ -623,25 +624,61 @@ public final class GraphEntityMapper {
             .orElse(false);
     }
 
+    /**
+     * Finds the entity mapped to the labels of a node: the entity that declares the most of them, and among those
+     * the one that declares exactly them, then the one whose declared labels the node all carries.
+     *
+     * @param labels The labels of the node
+     * @return The entity, or null if no entity declares any of the labels
+     */
     private @Nullable Class<?> findEntityByLabels(List<String> labels) {
-        for (String label : labels) {
-            Optional<Class<?>> type = entitiesByLabel.computeIfAbsent(label, this::lookupEntity);
-            if (type.isPresent()) {
-                return type.get();
-            }
+        List<String> key = List.copyOf(labels);
+        if (entitiesByLabels.size() >= MAX_CACHED_LABEL_SETS) {
+            // Dynamic labels can produce many combinations: look the rest up without caching them
+            return lookupEntity(key).orElse(null);
         }
-        return null;
+        return entitiesByLabels.computeIfAbsent(key, this::lookupEntity).orElse(null);
     }
 
-    private Optional<Class<?>> lookupEntity(String label) {
+    private Optional<Class<?>> lookupEntity(List<String> labels) {
+        LabelMatch best = null;
         for (BeanIntrospection<Object> introspection : BeanIntrospector.SHARED.findIntrospections(Node.class)) {
             Class<Object> type = introspection.getBeanType();
-            RuntimePersistentEntity<Object> entity = getEntity(type);
-            if (GraphEntities.primaryLabel(entity).equals(label)) {
-                return Optional.of(type);
+            List<String> declared = GraphEntities.labels(getEntity(type));
+            int common = 0;
+            for (String label : declared) {
+                if (labels.contains(label)) {
+                    common++;
+                }
+            }
+            if (common > 0) {
+                LabelMatch match = new LabelMatch(type, common, common == declared.size() && declared.size() == labels.size(),
+                    common == declared.size(), labels.contains(declared.get(0)), declared.size());
+                if (best == null || LabelMatch.ORDER.compare(match, best) > 0) {
+                    best = match;
+                }
             }
         }
-        return Optional.empty();
+        return best == null ? Optional.empty() : Optional.of(best.type());
+    }
+
+    /**
+     * How well the labels of an entity match the labels of a node: the most labels in common, then exactly the
+     * labels of the node, then all of the labels of the entity, then its primary label, then the fewest labels.
+     *
+     * @param type        The entity type
+     * @param common      The number of labels the entity declares that the node carries
+     * @param exact       Whether the entity declares exactly the labels of the node
+     * @param allDeclared Whether the node carries every label the entity declares
+     * @param primary     Whether the node carries the primary label of the entity
+     * @param declared    The number of labels the entity declares
+     */
+    private record LabelMatch(Class<?> type, int common, boolean exact, boolean allDeclared, boolean primary, int declared) {
+        private static final Comparator<LabelMatch> ORDER = Comparator.comparingInt(LabelMatch::common)
+            .thenComparing(LabelMatch::exact)
+            .thenComparing(LabelMatch::allDeclared)
+            .thenComparing(LabelMatch::primary)
+            .thenComparing(Comparator.comparingInt(LabelMatch::declared).reversed());
     }
 
     /**

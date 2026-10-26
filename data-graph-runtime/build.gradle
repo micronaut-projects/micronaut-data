@@ -12,6 +12,10 @@ dependencies {
     api mn.reactor
 
     compileOnly(mnSql.jakarta.persistence.api)
+
+    testAnnotationProcessor mn.micronaut.inject.java
+    testAnnotationProcessor projects.micronautDataProcessor
+    testImplementation(mnSql.jakarta.persistence.api)
 }
 
 micronautBuild {
