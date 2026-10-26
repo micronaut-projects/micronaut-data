@@ -61,6 +61,8 @@ import jakarta.persistence.criteria.Predicate;
 import jakarta.persistence.criteria.Selection;
 import org.jspecify.annotations.Nullable;
 
+import java.time.temporal.Temporal;
+import java.time.temporal.TemporalAmount;
 import java.util.ArrayList;
 import java.util.Collection;
 import java.util.HashSet;
@@ -69,6 +71,8 @@ import java.util.LinkedHashMap;
 import java.util.List;
 import java.util.Map;
 import java.util.Set;
+import java.util.UUID;
+import java.util.stream.Collectors;
 
 /**
  * Builds Cypher queries for graph repositories at compile time.
@@ -293,14 +297,11 @@ public class CypherQueryBuilder implements GraphQueryBuilder {
             }
             io.micronaut.data.model.PersistentPropertyPath propertyPath = io.micronaut.data.model.PersistentPropertyPath.of(List.of(), property);
             sets.append(ROOT).append('.').append(GraphEntities.escapeName(GraphEntities.propertyName(property))).append(" = ");
-            Object value = entry.getValue();
             ExpressionRenderer renderer = new ExpressionRenderer(state, sets);
-            if (value instanceof BindingParameter bindingParameter) {
-                renderer.appendParameter(bindingParameter, propertyPath, propertyPath);
-            } else if (value instanceof Expression<?> expression) {
-                renderer.appendExpression(expression, propertyPath);
-            } else {
-                sets.append(asLiteral(value));
+            switch (entry.getValue()) {
+                case BindingParameter bindingParameter -> renderer.appendParameter(bindingParameter, propertyPath, propertyPath);
+                case Expression<?> expression -> renderer.appendExpression(expression, propertyPath);
+                case null, default -> sets.append(asLiteral(entry.getValue()));
             }
             if (iterator.hasNext()) {
                 sets.append(", ");
@@ -991,33 +992,25 @@ public class CypherQueryBuilder implements GraphQueryBuilder {
     }
 
     /**
-     * Renders a literal value.
+     * Renders a literal value. Temporal values are rendered through the Cypher temporal functions, so that they
+     * compare with the temporal properties the values are stored as.
      *
      * @param value The value
      * @return The Cypher literal
      */
     protected String asLiteral(@Nullable Object value) {
-        if (value == null) {
-            return "null";
-        }
-        if (value instanceof Number || value instanceof Boolean) {
-            return value.toString();
-        }
-        if (value instanceof Enum<?> e) {
-            return quote(e.name());
-        }
-        if (value instanceof Collection<?> collection) {
-            StringBuilder sb = new StringBuilder("[");
-            Iterator<?> iterator = collection.iterator();
-            while (iterator.hasNext()) {
-                sb.append(asLiteral(iterator.next()));
-                if (iterator.hasNext()) {
-                    sb.append(", ");
-                }
-            }
-            return sb.append(']').toString();
-        }
-        return quote(value.toString());
+        return switch (value) {
+            case null -> "null";
+            case Number number -> number.toString();
+            case Boolean bool -> bool.toString();
+            case Enum<?> e -> quote(e.name());
+            case Collection<?> collection -> collection.stream().map(this::asLiteral).collect(Collectors.joining(", ", "[", "]"));
+            case Temporal temporal -> CypherTemporals.literal(temporal);
+            case TemporalAmount amount -> CypherTemporals.literal(amount);
+            // Deliberately a string: Cypher has no UUID type, so UUID properties are stored and compared as strings
+            case UUID uuid -> quote(uuid.toString());
+            default -> quote(value.toString());
+        };
     }
 
     private static String quote(String value) {
@@ -1163,12 +1156,10 @@ public class CypherQueryBuilder implements GraphQueryBuilder {
             this.boundProperty = boundProperty;
             depth++;
             try {
-                if (expression instanceof BindingParameter bindingParameter) {
-                    appendParameter(bindingParameter, boundProperty, boundProperty);
-                } else if (expression instanceof IExpression<?> iExpression) {
-                    iExpression.visitExpression(this);
-                } else {
-                    throw new IllegalStateException("Unsupported expression: " + expression);
+                switch (expression) {
+                    case BindingParameter bindingParameter -> appendParameter(bindingParameter, boundProperty, boundProperty);
+                    case IExpression<?> iExpression -> iExpression.visitExpression(this);
+                    default -> throw new IllegalStateException("Unsupported expression: " + expression);
                 }
             } finally {
                 depth--;
@@ -1349,12 +1340,10 @@ public class CypherQueryBuilder implements GraphQueryBuilder {
         }
 
         private void visitBoolean(IExpression<Boolean> expression) {
-            if (expression instanceof IPredicate predicate) {
-                predicate.visitPredicate(this);
-            } else if (expression instanceof io.micronaut.data.model.jpa.criteria.PersistentPropertyPath<?>) {
-                visitIsTrue(expression);
-            } else {
-                throw new IllegalStateException("Unknown boolean expression: " + expression);
+            switch (expression) {
+                case IPredicate predicate -> predicate.visitPredicate(this);
+                case io.micronaut.data.model.jpa.criteria.PersistentPropertyPath<?> property -> visitIsTrue(property);
+                default -> throw new IllegalStateException("Unknown boolean expression: " + expression);
             }
         }
 
@@ -1663,7 +1652,8 @@ public class CypherQueryBuilder implements GraphQueryBuilder {
             }
             super.visit(persistentPropertyPath);
             if (depth == 0) {
-                out.append(" AS ").append(GraphEntities.escapeName(alias != null ? alias : propertyPath.getProperty().getName()));
+                // A joined property is named after its path, so that it does not collide with a root property of the same name
+                appendAlias(propertyPath.getPath().replace('.', '_'));
             }
         }
 

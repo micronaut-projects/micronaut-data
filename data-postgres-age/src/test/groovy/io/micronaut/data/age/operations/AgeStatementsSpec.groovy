@@ -22,6 +22,8 @@ class AgeStatementsSpec extends Specification {
         'MATCH (n) RETURN n.title'                                                                 | '("n.title" ag_catalog.agtype)'
         'MATCH (n) RETURN n AS `the node`'                                                         | '("the node" ag_catalog.agtype)'
         'MATCH (n) RETURN n.limit AS limit, n.order AS order, n.skip, $skip AS s ORDER BY n.order' | '("limit" ag_catalog.agtype, "order" ag_catalog.agtype, "n.skip" ag_catalog.agtype, "s" ag_catalog.agtype)'
+        'MATCH (n) // RETURN x AS y\nRETURN n'                                                     | '("n" ag_catalog.agtype)'
+        'MATCH (n) /* RETURN x AS y */ RETURN n'                                                   | '("n" ag_catalog.agtype)'
     }
 
     void "wrap a query in a cypher() call for the graph token"() {
@@ -39,6 +41,8 @@ class AgeStatementsSpec extends Specification {
         !AgeStatements.takesParameters(AgeStatements.wrap('MATCH (n) RETURN n'))
         !AgeStatements.takesParameters(AgeStatements.wrap("MATCH (n) WHERE n.title = '\$title' RETURN n"))
         !AgeStatements.takesParameters(AgeStatements.wrap('MATCH p = (a)-[*1..$__pathLimit]->(b) RETURN p'))
+        !AgeStatements.takesParameters(AgeStatements.wrap('MATCH (n) // $title\nRETURN n'))
+        !AgeStatements.takesParameters(AgeStatements.wrap('MATCH (n) /* $title */ RETURN n'))
     }
 
     void "find the Cypher query inside a statement"() {
