@@ -46,6 +46,41 @@ class GraphDecoderContextSpec extends Specification {
         then:
         1 * parent.findDeserializer(_) >> { throw new SerdeException("none") }
         fallback instanceof NativeValueDeserializer
+        fallback.unresolved().message == 'none'
+    }
+
+    void "a value serde cannot read fails with the registry's reason as the cause and without the value"() {
+        given:
+        def unresolved = new SerdeException("No deserializer found for type java.lang.Thread")
+        parent.findDeserializer(_) >> { throw unresolved }
+        def fallback = context.findDeserializer(Argument.of(Thread))
+        def decoder = GraphValueDecoder.of([poster: [url: 'secret']])
+        def object = decoder.decodeObject()
+
+        when:
+        object.decodeKey()
+        fallback.deserialize(object, context, Argument.of(Thread, 'poster'))
+
+        then:
+        def e = thrown(SerdeException)
+        e.cause.is(unresolved)
+        e.message == 'Cannot convert a value of type java.util.LinkedHashMap to java.lang.Thread: No deserializer found for type java.lang.Thread (property [poster])'
+        !e.message.contains('secret')
+
+        when: "a native value is passed through"
+        def point = new Object()
+        def value = fallback.deserialize(GraphValueDecoder.of(point), context, Argument.of(Object))
+
+        then:
+        value.is(point)
+
+        when: "the decoder is not a graph decoder"
+        fallback.deserialize(Mock(io.micronaut.serde.Decoder), context, Argument.of(Thread))
+
+        then:
+        e = thrown(SerdeException)
+        e.cause.is(unresolved)
+        e.message == 'No deserializer for java.lang.Thread: No deserializer found for type java.lang.Thread'
     }
 
     void "everything else is delegated to the registry context"() {

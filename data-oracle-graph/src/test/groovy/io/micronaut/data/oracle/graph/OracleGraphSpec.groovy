@@ -13,6 +13,7 @@ import spock.lang.Shared
 import spock.lang.Specification
 
 import javax.sql.DataSource
+import java.time.LocalDateTime
 
 /**
  * Queries a SQL property graph on Oracle Database 23ai, started by Micronaut Test Resources.
@@ -42,17 +43,19 @@ class OracleGraphSpec extends Specification {
                 ["DROP PROPERTY GRAPH IF EXISTS bank_graph",
                  "DROP TABLE IF EXISTS transfers",
                  "DROP TABLE IF EXISTS accounts",
-                 "CREATE TABLE accounts (id NUMBER PRIMARY KEY, name VARCHAR2(100))",
+                 "CREATE TABLE accounts (id NUMBER PRIMARY KEY, name VARCHAR2(100), opened TIMESTAMP)",
                  "CREATE TABLE transfers (id NUMBER PRIMARY KEY, src NUMBER REFERENCES accounts (id), dst NUMBER REFERENCES accounts (id), amount NUMBER(10, 2))",
-                 "INSERT INTO accounts VALUES (1, 'Alice')",
-                 "INSERT INTO accounts VALUES (2, 'Bob')",
-                 "INSERT INTO accounts VALUES (3, 'Carol')",
-                 "INSERT INTO accounts VALUES (4, 'Dave')",
+                 "INSERT INTO accounts VALUES (1, 'Alice', TIMESTAMP '2024-01-15 09:30:00')",
+                 "INSERT INTO accounts VALUES (2, 'Bob', TIMESTAMP '2024-02-20 14:45:30')",
+                 "INSERT INTO accounts VALUES (3, 'Carol', TIMESTAMP '2024-03-25 08:00:00')",
+                 "INSERT INTO accounts VALUES (4, 'Dave', NULL)",
                  "INSERT INTO transfers VALUES (1, 1, 2, 500)",
                  "INSERT INTO transfers VALUES (2, 2, 3, 1500)",
                  "INSERT INTO transfers VALUES (3, 1, 3, 50)",
+                 // Dave moves money between his own accounts: a cycle of one step
+                 "INSERT INTO transfers VALUES (4, 4, 4, 10)",
                  """CREATE PROPERTY GRAPH bank_graph
-                    VERTEX TABLES (accounts KEY (id) LABEL Account PROPERTIES (id, name))
+                    VERTEX TABLES (accounts KEY (id) LABEL Account PROPERTIES (id, name, opened))
                     EDGE TABLES (transfers KEY (id)
                         SOURCE KEY (src) REFERENCES accounts (id)
                         DESTINATION KEY (dst) REFERENCES accounts (id)
@@ -119,6 +122,32 @@ class OracleGraphSpec extends Specification {
         !bankGraph.existsPathByTransfers(3L, 1L)
         !bankGraph.existsPathByTransfers(1L, 4L)
         bankGraph.countPathsByTransfers(1L, 3L) == 2
+
+        and: "a node has no shortest path to itself, while the paths from it back to itself are its cycles, as in Cypher"
+        !bankGraph.existsPathByTransfers(4L, 4L)
+        !bankGraph.existsPathByTransfers(1L, 1L)
+        bankGraph.countPathsByTransfers(1L, 1L) == 0
+        // SQL/PGQ matches walks, so the one-step cycle is walked once, twice and three times within the depth of 3
+        bankGraph.countPathsByTransfers(4L, 4L) == 3
+
+        and: "a @PathLimit argument overrides the depth of the annotation"
+        bankGraph.countPathsByTransfers(4L, 4L, 1) == 1
+        bankGraph.countPathsByTransfers(4L, 4L, 2) == 2
+        bankGraph.countPathsByTransfers(1L, 3L, 1) == 1
+
+        when: "a depth above micronaut.data.graph.max-path-depth is asked for"
+        bankGraph.countPathsByTransfers(4L, 4L, 11)
+
+        then:
+        def e = thrown(IllegalArgumentException)
+        e.message.contains("max-path-depth")
+    }
+
+    void "read and match temporal properties"() {
+        expect: "a TIMESTAMP column is read as the LocalDateTime property of the node"
+        bankGraph.findById(1L).get().opened() == LocalDateTime.of(2024, 1, 15, 9, 30)
+        bankGraph.findById(4L).get().opened() == null
+        bankGraph.findByOpenedGreaterThan(LocalDateTime.of(2024, 2, 1, 0, 0))*.name().sort() == ["Bob", "Carol"]
     }
 
     void "find relationships"() {
