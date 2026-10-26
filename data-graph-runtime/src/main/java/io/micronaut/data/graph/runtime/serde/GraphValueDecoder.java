@@ -401,6 +401,18 @@ public final class GraphValueDecoder extends LimitingStream implements Decoder {
 
     @Override
     public IOException createDeserializationException(String message, @Nullable Object invalidValue) {
-        return new SerdeException(currentKey == null ? message : message + " (property [" + currentKey + "])");
+        return error(message, null);
+    }
+
+    /**
+     * An exception naming the property being read, if any.
+     *
+     * @param message The message
+     * @param cause   The cause, or null
+     * @return The exception
+     */
+    SerdeException error(String message, @Nullable Throwable cause) {
+        String described = currentKey == null ? message : message + " (property [" + currentKey + "])";
+        return cause == null ? new SerdeException(described) : new SerdeException(described, cause);
     }
 }

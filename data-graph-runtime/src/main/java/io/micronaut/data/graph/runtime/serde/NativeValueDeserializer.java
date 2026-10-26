@@ -33,34 +33,53 @@ import java.util.Optional;
  *
  * @param conversionService The conversion service
  * @param fallback          The deserializer for decoders other than {@link GraphValueDecoder}, or null
+ * @param unresolved        Why the serde registry has no deserializer for the type, or null when the type is read
+ *                          natively by choice. A value that cannot be read fails with it as the cause
  * @author graemerocher
  * @since 5.3.0
  */
 @Internal
 record NativeValueDeserializer(ConversionService conversionService,
-                               @Nullable Deserializer<Object> fallback) implements Deserializer<Object> {
+                               @Nullable Deserializer<Object> fallback,
+                               @Nullable SerdeException unresolved) implements Deserializer<Object> {
 
     @Override
     public Object deserialize(Decoder decoder, DecoderContext context, Argument<? super Object> type) throws IOException {
         Decoder unwrapped = WrappedDecoder.unwrap(decoder);
         if (!(unwrapped instanceof GraphValueDecoder graphDecoder)) {
             if (fallback == null) {
-                throw new SerdeException("No deserializer for " + type.getTypeName());
+                throw failure(null, "No deserializer for " + type.getTypeName());
             }
             return fallback.deserialize(decoder, context, type);
         }
         Object value = graphDecoder.decodeNative();
         if (value == null) {
-            throw new SerdeException("Expected a value of " + type.getTypeName() + " but found null");
+            throw failure(graphDecoder, "Expected a value of " + type.getTypeName() + " but found null");
         }
         if (type.getType().isInstance(value)) {
             return value;
         }
         Optional<?> converted = conversionService.convert(value, type);
         if (converted.isEmpty()) {
-            throw new SerdeException("Cannot convert [" + value + "] of type " + value.getClass().getName() + " to " + type.getTypeName());
+            // The value is not in the message: it is row data
+            throw failure(graphDecoder, "Cannot convert a value of type " + value.getClass().getName() + " to " + type.getTypeName());
         }
         return converted.get();
+    }
+
+    /**
+     * A failure to read a value natively, naming the property being read and the reason serde could not read the type.
+     *
+     * @param decoder The graph decoder, which knows the property, or null
+     * @param message The message
+     * @return The exception, with {@link #unresolved()} as its cause
+     */
+    private SerdeException failure(@Nullable GraphValueDecoder decoder, String message) {
+        if (unresolved == null) {
+            return decoder == null ? new SerdeException(message) : decoder.error(message, null);
+        }
+        String described = message + ": " + unresolved.getMessage();
+        return decoder == null ? new SerdeException(described, unresolved) : decoder.error(described, unresolved);
     }
 
     @Override
