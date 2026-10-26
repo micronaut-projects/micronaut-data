@@ -4,7 +4,9 @@ import io.micronaut.context.ApplicationContext
 import io.micronaut.core.annotation.AnnotationMetadata
 import io.micronaut.data.annotation.Join
 import io.micronaut.data.event.EntityEventListener
+import io.micronaut.data.graph.model.criteria.DynamicPropertyExpression
 import io.micronaut.data.graph.model.criteria.GraphCriteria
+import io.micronaut.data.graph.model.criteria.RelatedPredicate
 import io.micronaut.data.graph.model.query.builder.entities.Movie
 import io.micronaut.data.graph.model.query.builder.entities.Note
 import io.micronaut.data.graph.model.query.builder.entities.Person
@@ -13,6 +15,8 @@ import io.micronaut.data.model.jpa.criteria.PersistentEntityRoot
 import io.micronaut.data.model.jpa.criteria.impl.DefaultOrder
 import io.micronaut.data.model.jpa.criteria.impl.expression.LiteralExpression
 import io.micronaut.data.model.jpa.criteria.impl.predicate.LikePredicate
+import io.micronaut.data.model.jpa.criteria.impl.ExpressionVisitor
+import io.micronaut.data.model.jpa.criteria.impl.PredicateVisitor
 import io.micronaut.data.model.jpa.criteria.PersistentEntityCriteriaQueryBuilder
 import io.micronaut.data.model.query.builder.QueryResult
 import io.micronaut.data.model.runtime.RuntimeEntityRegistry
@@ -20,6 +24,7 @@ import io.micronaut.data.model.runtime.RuntimePersistentEntity
 import io.micronaut.data.model.runtime.RuntimePersistentProperty
 import io.micronaut.data.runtime.criteria.RuntimeCriteriaBuilder
 import jakarta.persistence.criteria.Nulls
+import jakarta.persistence.criteria.Root
 import spock.lang.Shared
 import spock.lang.Specification
 import spock.lang.Unroll
@@ -252,6 +257,86 @@ class CypherCriteriaQuerySpec extends Specification {
 
     private QueryResult build(def query) {
         return ((PersistentEntityCriteriaQueryBuilder) query).build(AnnotationMetadata.EMPTY_METADATA, new CypherQueryBuilder())
+    }
+
+    void "test graph criteria on Apache AGE #description"() {
+        given:
+        def query = cb.createQuery(Person)
+        PersistentEntityRoot root = query.from(Person)
+        definition.call(query, root)
+
+        expect:
+        ((PersistentEntityCriteriaQueryBuilder) query).build(AnnotationMetadata.EMPTY_METADATA, new AgeCypherQueryBuilder()).query.contains(fragment)
+
+        where:
+        description  | definition                                                                         | fragment
+        'related'    | { q, r -> q.where(GraphCriteria.related(r, "movies")) }                           | 'WHERE EXISTS((n)-[:ACTED_IN]->())'
+        'related to' | { q, r -> q.where(GraphCriteria.relatedTo(r, "movies", cb.literal("Matrix"))) }  | 'WHERE EXISTS((n)-[:ACTED_IN]->(:Movie {title: $p0}))'
+    }
+
+    void "test graph criteria Apache AGE cannot render are rejected: #description"() {
+        given:
+        def query = cb.createQuery(Person)
+        PersistentEntityRoot root = query.from(Person)
+        definition.call(query, root)
+
+        when:
+        ((PersistentEntityCriteriaQueryBuilder) query).build(AnnotationMetadata.EMPTY_METADATA, new AgeCypherQueryBuilder())
+
+        then:
+        def e = thrown(IllegalArgumentException)
+        e.message.contains(message)
+
+        where:
+        description             | definition                                                                      | message
+        'a chain'               | { q, r -> q.where(GraphCriteria.connected(r, "movies", cb.literal("Matrix"), 3)) } | 'cannot test for a chain of relationships'
+        'a database identifier' | { q, r -> q.where(GraphCriteria.connected(r, null, cb.literal(42L), 2)) }       | 'cannot match a related node by its database identifier'
+    }
+
+    void "test graph criteria check their arguments"() {
+        given:
+        PersistentEntityRoot root = cb.createQuery(Person).from(Person)
+
+        when:
+        GraphCriteria.connected(root, "movies", cb.literal("Matrix"), 0)
+
+        then:
+        def depth = thrown(IllegalArgumentException)
+        depth.message.contains("at least 1")
+
+        when:
+        new RelatedPredicate<>(root, null, null, 1)
+
+        then:
+        def target = thrown(IllegalArgumentException)
+        target.message.contains("needs a target node")
+
+        when:
+        GraphCriteria.related(Mock(Root), "movies")
+
+        then:
+        def plain = thrown(IllegalArgumentException)
+        plain.message.contains("root of a Micronaut Data query")
+
+        when:
+        GraphCriteria.related(root, "movies").visitPredicate(Mock(PredicateVisitor))
+
+        then:
+        def predicate = thrown(UnsupportedOperationException)
+        predicate.message.contains("graph repositories")
+
+        when:
+        GraphCriteria.dynamic(root, "legs", Integer).visitExpression(Mock(ExpressionVisitor))
+
+        then:
+        def expression = thrown(UnsupportedOperationException)
+        expression.message.contains("graph repositories")
+
+        expect:
+        GraphCriteria.related(root, "movies").toString() == 'RelatedPredicate{relationship=movies, target=null, maxDepth=1}'
+        GraphCriteria.dynamic(root, "legs", Integer).toString() == 'DynamicPropertyExpression{name=legs}'
+        ((RelatedPredicate) GraphCriteria.related(root, "movies")).root == root
+        ((DynamicPropertyExpression) GraphCriteria.dynamic(root, "legs", Integer)).root == root
     }
 
     private static final class TestEntityRegistry implements RuntimeEntityRegistry {

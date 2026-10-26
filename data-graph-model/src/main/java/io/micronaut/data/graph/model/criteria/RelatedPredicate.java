@@ -28,14 +28,16 @@ import org.jspecify.annotations.Nullable;
  * one to a given node, or a chain of them up to a maximum depth that reaches a given node.
  *
  * @author graemerocher
+ * @param <E> The entity type of the root
+ * @param <T> The type of the target identifier
  * @since 5.3.0
  */
 @Internal
-public final class RelatedPredicate extends AbstractPredicate {
+public final class RelatedPredicate<E, T> extends AbstractPredicate {
 
-    private final PersistentEntityRoot<?> root;
+    private final PersistentEntityRoot<E> root;
     private final @Nullable String relationship;
-    private final @Nullable Expression<?> target;
+    private final @Nullable Expression<T> target;
     private final int maxDepth;
 
     /**
@@ -44,7 +46,7 @@ public final class RelatedPredicate extends AbstractPredicate {
      * @param target       The identifier of the node at the far end, or null for any node
      * @param maxDepth     The number of relationships to follow, 1 for a direct relationship
      */
-    public RelatedPredicate(PersistentEntityRoot<?> root, @Nullable String relationship, @Nullable Expression<?> target, int maxDepth) {
+    public RelatedPredicate(PersistentEntityRoot<E> root, @Nullable String relationship, @Nullable Expression<T> target, int maxDepth) {
         if (maxDepth < 1) {
             throw new IllegalArgumentException("The maximum depth must be at least 1, was: " + maxDepth);
         }
@@ -60,7 +62,7 @@ public final class RelatedPredicate extends AbstractPredicate {
     /**
      * @return The root of the query
      */
-    public PersistentEntityRoot<?> getRoot() {
+    public PersistentEntityRoot<E> getRoot() {
         return root;
     }
 
@@ -74,7 +76,7 @@ public final class RelatedPredicate extends AbstractPredicate {
     /**
      * @return The identifier of the node at the far end, or null for any node
      */
-    public @Nullable Expression<?> getTarget() {
+    public @Nullable Expression<T> getTarget() {
         return target;
     }
 
