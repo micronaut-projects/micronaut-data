@@ -31,6 +31,8 @@ import io.micronaut.data.model.query.builder.QueryResult;
 import io.micronaut.data.model.query.builder.QueryOutParameterBinding;
 import org.jspecify.annotations.Nullable;
 
+import java.time.temporal.Temporal;
+import java.time.temporal.TemporalAmount;
 import java.util.Collection;
 import java.util.List;
 import java.util.Map;
@@ -59,6 +61,18 @@ public class AgeCypherQueryBuilder extends CypherQueryBuilder {
     @Override
     public String finishQuery(String query) {
         return AgeStatements.wrap(query);
+    }
+
+    /**
+     * {@inheritDoc} agtype has no temporal types and AGE no temporal functions: temporal values are stored as
+     * their ISO-8601 strings, so their literals are strings too.
+     */
+    @Override
+    protected String asLiteral(@Nullable Object value) {
+        if (value instanceof Temporal || value instanceof TemporalAmount) {
+            return super.asLiteral(value.toString());
+        }
+        return super.asLiteral(value);
     }
 
     @Override
