@@ -47,16 +47,20 @@ final class MongoSearchStages {
      */
     static final String HIGHLIGHTS_FIELD = "__micronaut_highlights";
     /**
+     * The aggregation operator that reads the metadata of a search stage.
+     */
+    static final String META = "$meta";
+    /**
      * The cosine distance of a {@code $vectorSearch} hit: the stage scores a hit as {@code (1 + cosine) / 2},
      * so the distance {@code 1 - cosine} is {@code 2 - 2 * score}, the measure the other stores return.
      */
-    static final Map<String, Object> VECTOR_DISTANCE = Map.of("$subtract", List.of(2, Map.of("$multiply", List.of(2, Map.of("$meta", "vectorSearchScore")))));
+    static final Map<String, Object> VECTOR_DISTANCE = Map.of("$subtract", List.of(2, Map.of("$multiply", List.of(2, Map.of(META, "vectorSearchScore")))));
     // euclidean: score = 1 / (1 + distance), so distance = 1 / score - 1
-    static final Map<String, Object> EUCLIDEAN_DISTANCE = Map.of("$subtract", List.of(Map.of("$divide", List.of(1, Map.of("$meta", "vectorSearchScore"))), 1));
+    static final Map<String, Object> EUCLIDEAN_DISTANCE = Map.of("$subtract", List.of(Map.of("$divide", List.of(1, Map.of(META, "vectorSearchScore"))), 1));
     /**
      * The reciprocal rank fusion score of a {@code $rankFusion} hit.
      */
-    static final Map<String, Object> FUSED_SCORE = Map.of("$meta", "score");
+    static final Map<String, Object> FUSED_SCORE = Map.of(META, "score");
     private static final String RANK_FUSION_STAGE = "$rankFusion";
     private static final String LIMIT = "limit";
     private static final int DEFAULT_VECTOR_CANDIDATES = 100;
