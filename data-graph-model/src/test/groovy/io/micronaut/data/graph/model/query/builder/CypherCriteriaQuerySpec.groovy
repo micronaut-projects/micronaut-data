@@ -139,11 +139,57 @@ class CypherCriteriaQuerySpec extends Specification {
         result.query == "MATCH (n:Person) WHERE n.name =~ '(?si)^50%.\$' RETURN n"
         result.parameterBindings.empty
 
+        when: "the escape character is a string literal"
+        query = cb.createQuery(Person)
+        root = query.from(Person)
+        query.where(new LikePredicate(root.get("name"), new LiteralExpression<>("a!%b"), new LiteralExpression<>("!"), false, false))
+        result = build(query)
+
+        then:
+        result.query == "MATCH (n:Person) WHERE n.name =~ '(?s)^a%b\$' RETURN n"
+
+        when: "a method argument is combined with another escape character"
+        query = cb.createQuery(Person)
+        root = query.from(Person)
+        query.where(cb.like(root.get("name"), cb.parameter(String), '!' as char))
+        build(query)
+
+        then:
+        def e = thrown(UnsupportedOperationException)
+        e.message.contains("uses the escape character")
+
         expect:
         LikePatternConverter.toRegex('a%b_c', null) == '^a.*b.c$'
         LikePatternConverter.toRegex('100!%', '!' as char) == '^100%$'
         LikePatternConverter.toRegex('(a.b)*[c]', null) == '^\\(a\\.b\\)\\*\\[c\\]$'
         new LikePatternConverter().convertToPersistedValue('\\_%', null) == '^_.*$'
+        new LikePatternConverter().convertToPersistedValue(null, null) == null
+        new LikePatternConverter().convertToEntityValue('^a$', null) == '^a$'
+    }
+
+    void "test the binding of a LIKE pattern delegates everything but its value and converter"() {
+        given:
+        def query = cb.createQuery(Person)
+        PersistentEntityRoot root = query.from(Person)
+        query.where(cb.like(root.get("name"), cb.parameter(String)))
+        def binding = build(query).parameterBindings[0]
+
+        expect:
+        binding.name == 'p0'
+        binding.key != null
+        binding.dataType != null
+        binding.jsonDataType != null
+        binding.parameterIndex == -1
+        binding.parameterBindingPath == null
+        binding.propertyPath == ['name']
+        !binding.autoPopulated
+        !binding.requiresPreviousPopulatedValue
+        !binding.expandable
+        !binding.expression
+        binding.role == null
+        binding.tableAlias == null
+        binding.value == null
+        binding.converterClassName == LikePatternConverter.name
     }
 
     void "test subqueries are rejected"() {

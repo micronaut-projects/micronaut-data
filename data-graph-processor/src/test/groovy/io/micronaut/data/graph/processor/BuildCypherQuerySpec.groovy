@@ -271,6 +271,22 @@ interface DtoRepository extends CrudRepository<Movie, String> {
         e.message.contains('Graph repositories read DTOs with Micronaut Serialization: annotate [test.TitleOnly] with @Serdeable')
     }
 
+    void "test Object[] rows are read without a deserializer"() {
+        when:
+        def repository = buildRepository('test.RowsRepository', """
+$MOVIES
+
+@TestGraphRepository
+interface RowsRepository extends CrudRepository<Movie, String> {
+    @Query("MATCH (n:Movie) RETURN n.title AS title, n.released AS released")
+    List<Object[]> titlesAndYears();
+}
+""")
+
+        then:
+        getQuery(findMethod(repository, 'titlesAndYears', 0)) == 'MATCH (n:Movie) RETURN n.title AS title, n.released AS released'
+    }
+
     void "test names that cannot be quoted are rejected"() {
         when:
         buildRepository('test.HostileRepository', """

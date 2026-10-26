@@ -42,6 +42,7 @@ public class FilterExtension implements ExecutionCondition {
     );
 
     public FilterExtension() {
+        // Registered through META-INF/services, so JUnit instantiates it reflectively
     }
 
     @Override
