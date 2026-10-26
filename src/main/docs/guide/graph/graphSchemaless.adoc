@@ -65,3 +65,5 @@ snippet::example.PetRepositorySpec[project-base="doc-examples/neo4j-example", ta
 <3> Reading the entity reads its relationships back by type.
 
 Only the owning node writes and reads the map. Removing an entry does not delete the relationship from the database. Use an explicit query to delete it. Dynamic relationships are supported by Neo4j. Apache AGE and Oracle property graphs reject them at build time.
+
+The read has no limit. Every read of the entity, by any finder, collects all of its undeclared relationships and their target nodes, so a node with many of them is costly to read, and paging bounds the entities only. Keep the map for nodes with few undeclared relationships. Declare a relationship whose size grows with ann:data.graph.annotation.Relationship[], so that it is loaded only by the finders that join it.

@@ -200,12 +200,42 @@ public final class GraphValueDecoder extends LimitingStream implements Decoder {
 
     @Override
     public byte decodeByte() throws IOException {
-        return takeNumber("a byte").byteValue();
+        return (byte) takeIntegral("a byte", Byte.MIN_VALUE, Byte.MAX_VALUE);
     }
 
     @Override
     public short decodeShort() throws IOException {
-        return takeNumber("a short").shortValue();
+        return (short) takeIntegral("a short", Short.MIN_VALUE, Short.MAX_VALUE);
+    }
+
+    /**
+     * Takes a number that fits the range of an integral type, rather than narrowing it silently. A fraction is
+     * dropped, as the Java narrowing conversions drop it.
+     *
+     * @param expected What is expected, for the error message
+     * @param min      The smallest value of the type
+     * @param max      The largest value of the type
+     * @return The value
+     * @throws IOException If the value is not a number, or does not fit
+     */
+    private long takeIntegral(String expected, long min, long max) throws IOException {
+        Number number = takeNumber(expected);
+        try {
+            long value = switch (number) {
+                case Long l -> l;
+                case Integer i -> i;
+                case Short s -> s;
+                case Byte b -> b;
+                case BigInteger bigInteger -> bigInteger.longValueExact();
+                default -> new BigDecimal(number.toString()).toBigInteger().longValueExact();
+            };
+            if (value >= min && value <= max) {
+                return value;
+            }
+        } catch (ArithmeticException | NumberFormatException e) {
+            // Beyond a long, or not a finite number: reported below
+        }
+        throw createDeserializationException(EXPECTED + expected + " but found [" + number + "], which does not fit in " + expected, number);
     }
 
     @Override
@@ -231,12 +261,12 @@ public final class GraphValueDecoder extends LimitingStream implements Decoder {
 
     @Override
     public int decodeInt() throws IOException {
-        return takeNumber("an int").intValue();
+        return (int) takeIntegral("an int", Integer.MIN_VALUE, Integer.MAX_VALUE);
     }
 
     @Override
     public long decodeLong() throws IOException {
-        return takeNumber("a long").longValue();
+        return takeIntegral("a long", Long.MIN_VALUE, Long.MAX_VALUE);
     }
 
     @Override
@@ -401,6 +431,18 @@ public final class GraphValueDecoder extends LimitingStream implements Decoder {
 
     @Override
     public IOException createDeserializationException(String message, @Nullable Object invalidValue) {
-        return new SerdeException(currentKey == null ? message : message + " (property [" + currentKey + "])");
+        return error(message, null);
+    }
+
+    /**
+     * An exception naming the property being read, if any.
+     *
+     * @param message The message
+     * @param cause   The cause, or null
+     * @return The exception
+     */
+    SerdeException error(String message, @Nullable Throwable cause) {
+        String described = currentKey == null ? message : message + " (property [" + currentKey + "])";
+        return cause == null ? new SerdeException(described) : new SerdeException(described, cause);
     }
 }
