@@ -171,6 +171,9 @@ public abstract class AbstractSqlLikeQueryBuilder implements QueryBuilder {
     private static final String CURRENT_DATE = "CURRENT_DATE";
     private static final String CURRENT_TIME = "CURRENT_TIME";
     private static final String CURRENT_TIMESTAMP = "CURRENT_TIMESTAMP";
+    private static final String OFFSET = "OFFSET ";
+    private static final String FETCH_NEXT = "FETCH NEXT ";
+    private static final String ROWS_ONLY = " ROWS ONLY";
     private static final String DISTINCT_AGGREGATE_SUFFIX = "_DISTINCT";
     private static final String EQUAL_TO_TRUE_SUFFIX = ") = 'TRUE'";
     private static final Pattern NATIVE_QUERY_SORT_PROPERTY_PATTERN = Pattern.compile("[A-Za-z_][A-Za-z0-9_]*(?:\\.[A-Za-z_][A-Za-z0-9_]*)*");
@@ -1882,35 +1885,8 @@ public abstract class AbstractSqlLikeQueryBuilder implements QueryBuilder {
         }
         builder.append(' ');
         switch (dialect) {
-            case SQL_SERVER -> {
-                // SQL server requires OFFSET always
-                if (hasOffset) {
-                    builder.append("OFFSET ").append(offset).append(" ROWS ");
-                } else {
-                    builder.append("OFFSET 0 ROWS ");
-                }
-                if (hasLimit) {
-                    builder.append("FETCH NEXT ").append(limit).append(" ROWS ONLY");
-                }
-            }
-            case ORACLE -> {
-                if (hasOffset) {
-                    builder.append("OFFSET ").append(offset).append(" ROWS");
-                }
-                if (hasLimit) {
-                    if (hasOffset) {
-                        builder.append(" ");
-                        builder.append("FETCH NEXT ").append(limit).append(" ROWS ONLY");
-                    } else if (approximateAccuracy >= 0) {
-                        builder.append("FETCH APPROX FIRST ").append(limit).append(" ROWS ONLY");
-                        if (approximateAccuracy > 0) {
-                            builder.append(" WITH TARGET ACCURACY ").append(approximateAccuracy);
-                        }
-                    } else {
-                        builder.append("FETCH NEXT ").append(limit).append(" ROWS ONLY");
-                    }
-                }
-            }
+            case SQL_SERVER -> appendSqlServerLimitAndOffset(limit, offset, builder);
+            case ORACLE -> appendOracleLimitAndOffset(limit, offset, approximateAccuracy, builder);
             default -> {
                 if (hasLimit) {
                     builder.append("LIMIT ").append(limit);
@@ -1919,9 +1895,38 @@ public abstract class AbstractSqlLikeQueryBuilder implements QueryBuilder {
                     if (hasLimit) {
                         builder.append(" ");
                     }
-                    builder.append("OFFSET ").append(offset);
+                    builder.append(OFFSET).append(offset);
                 }
             }
+        }
+    }
+
+    private static void appendSqlServerLimitAndOffset(long limit, long offset, StringBuilder builder) {
+        // SQL server requires OFFSET always
+        builder.append(OFFSET).append(Math.max(offset, 0)).append(" ROWS ");
+        if (limit > 0) {
+            builder.append(FETCH_NEXT).append(limit).append(ROWS_ONLY);
+        }
+    }
+
+    private static void appendOracleLimitAndOffset(long limit, long offset, int approximateAccuracy, StringBuilder builder) {
+        boolean hasOffset = offset > 0;
+        if (hasOffset) {
+            builder.append(OFFSET).append(offset).append(" ROWS");
+        }
+        if (limit <= 0) {
+            return;
+        }
+        if (hasOffset) {
+            builder.append(' ').append(FETCH_NEXT).append(limit).append(ROWS_ONLY);
+        } else if (approximateAccuracy >= 0) {
+            // an approximate row limit can't follow an offset
+            builder.append("FETCH APPROX FIRST ").append(limit).append(ROWS_ONLY);
+            if (approximateAccuracy > 0) {
+                builder.append(" WITH TARGET ACCURACY ").append(approximateAccuracy);
+            }
+        } else {
+            builder.append(FETCH_NEXT).append(limit).append(ROWS_ONLY);
         }
     }
 
