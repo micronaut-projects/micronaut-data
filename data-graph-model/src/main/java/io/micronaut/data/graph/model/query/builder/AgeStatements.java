@@ -256,33 +256,7 @@ public final class AgeStatements {
             && (i < 2 || !isNameCharacter(upper.charAt(i - 2)));
     }
 
-    /**
-     * Replaces the content of string literals with spaces, keeping offsets.
-     */
     private static String mask(String query) {
-        StringBuilder sb = new StringBuilder(query.length());
-        char quote = 0;
-        for (int i = 0; i < query.length(); i++) {
-            char c = query.charAt(i);
-            if (quote != 0) {
-                if (c == '\\' && i + 1 < query.length()) {
-                    sb.append("  ");
-                    i++;
-                    continue;
-                }
-                if (c == quote) {
-                    quote = 0;
-                    sb.append(c);
-                } else {
-                    sb.append(' ');
-                }
-            } else if (c == '\'' || c == '"' || c == '`') {
-                quote = c;
-                sb.append(c);
-            } else {
-                sb.append(c);
-            }
-        }
-        return sb.toString();
+        return LiteralMasker.mask(query);
     }
 }

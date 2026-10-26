@@ -50,7 +50,7 @@ datasources:
 The tables follow the mapping of the entities:
 
 * Each ann:data.graph.annotation.Node[] entity gets a vertex table named by its ann:data.graph.annotation.Node[] value, with columns for its properties but not for its relationships.
-* A relationship to a ann:data.graph.annotation.RelationshipProperties[] entity is stored in the table of that entity, which gets a column referencing the node that owns the relationship, named after the owner, such as `ACCOUNTID`. The ann:data.graph.annotation.TargetNode[] property is the column referencing the other end.
+* A relationship to a ann:data.graph.annotation.RelationshipProperties[] entity is stored in the table of that entity, which gets a column referencing the node that owns the relationship, named after the owner, such as `ACCOUNTID`. The ann:data.graph.annotation.TargetNode[] property is the column referencing the other end. The ann:data.graph.annotation.RelationshipId[] is the key of the edge table, so two relationships can link the same pair of nodes, such as a person playing two roles in one movie; the pair of columns is indexed.
 * A relationship to a node is stored in an edge table named after the owner's table and the relationship type, such as `MEMBERS_FOLLOWS`, with a column referencing the owner and a column named after the property referencing the target.
 
 Each graph named by an ann:data.oracle.graph.annotation.OracleGraphRepository[] of the data source, or an ann:data.oracle.graph.r2dbc.annotation.OracleGraphR2dbcRepository[] of the connection factory with <<graphOracleR2dbcSchema, R2DBC>>, is then created with `CREATE PROPERTY GRAPH`, over the vertex tables of the entities its repositories reach through their relationships and the edge tables between them. Incoming relationships are stored as edges from their target to their owner. For the `Account` and `Transfer` entities of the <<graphOracleQuickStart, quick start>>, the generator runs:
@@ -59,6 +59,7 @@ Each graph named by an ann:data.oracle.graph.annotation.OracleGraphRepository[] 
 ----
 CREATE TABLE "ACCOUNTS" ("ID" NUMBER(19) NOT NULL,"NAME" VARCHAR(255) NOT NULL, PRIMARY KEY("ID"))
 CREATE TABLE "TRANSFER" ("ID" NUMBER(19) NOT NULL,"AMOUNT" FLOAT(126) NOT NULL,"TOID" NUMBER(19) NOT NULL,"ACCOUNTID" NUMBER(19) NOT NULL, PRIMARY KEY("ID"))
+CREATE INDEX "IDX_TRANSFER_ACCOUNTID_TOID" ON "TRANSFER" ("ACCOUNTID", "TOID")
 CREATE PROPERTY GRAPH bank_graph
   VERTEX TABLES ("ACCOUNTS" KEY ("ID") LABEL Account PROPERTIES ("ID", "NAME"))
   EDGE TABLES ("TRANSFER" KEY ("ID")

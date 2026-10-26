@@ -60,6 +60,8 @@ class OraclePropertyGraphSchemaSpec extends Specification {
         sql("INSERT INTO books_wrote (authorsId, bookId) VALUES (1, 10)",
             "INSERT INTO loan (id, days, bookId, memberId) VALUES (1, 21, 10, 100)",
             "INSERT INTO loan (id, days, bookId, memberId) VALUES (2, 7, 11, 101)",
+            // Ged borrows A Wizard of Earthsea a second time: the relationship identifier keys the edge table, not the pair
+            "INSERT INTO loan (id, days, bookId, memberId) VALUES (3, 14, 10, 100)",
             "INSERT INTO members_follows (memberId, followsId) VALUES (101, 100)")
     }
 
@@ -75,6 +77,7 @@ class OraclePropertyGraphSchemaSpec extends Specification {
     void "the property graph is created over the generated tables"() {
         expect:
         query("SELECT graph_name FROM user_property_graphs") .contains("LIBRARY_GRAPH")
+        query("SELECT index_name FROM user_indexes WHERE table_name = 'LOAN'").contains("IDX_LOAN_MEMBERID_BOOKID")
         query("SELECT table_name FROM user_tables").containsAll(["MEMBERS", "BOOKS", "AUTHORS", "LOAN", "MEMBERS_FOLLOWS", "BOOKS_WROTE"])
         !query("SELECT table_name FROM user_tables").contains("MEMBERLOAN")
     }
@@ -88,6 +91,8 @@ class OraclePropertyGraphSchemaSpec extends Specification {
         contributor.buildCreateStatements(configuration, entities) == [
             'CREATE TABLE "ACCOUNTS" ("ID" NUMBER(19) NOT NULL,"NAME" VARCHAR(255) NOT NULL, PRIMARY KEY("ID"))',
             'CREATE TABLE "TRANSFER" ("ID" NUMBER(19) NOT NULL,"AMOUNT" FLOAT(126) NOT NULL,"TOID" NUMBER(19) NOT NULL,"ACCOUNTID" NUMBER(19) NOT NULL, PRIMARY KEY("ID"))',
+            // The relationship identifier is the key of the edge table, so two transfers can link the same accounts; the pair is indexed
+            'CREATE INDEX "IDX_TRANSFER_ACCOUNTID_TOID" ON "TRANSFER" ("ACCOUNTID", "TOID")',
             'CREATE PROPERTY GRAPH bank_graph VERTEX TABLES ("ACCOUNTS" KEY ("ID") LABEL Account PROPERTIES ("ID", "NAME")) EDGE TABLES ("TRANSFER" KEY ("ID") SOURCE KEY ("ACCOUNTID") REFERENCES "ACCOUNTS" ("ID") DESTINATION KEY ("TOID") REFERENCES "ACCOUNTS" ("ID") LABEL TRANSFERS PROPERTIES ("ID", "AMOUNT")) OPTIONS (ALLOW MIXED PROPERTY TYPES)'
         ]
         contributor.buildDropStatements(configuration, entities) == [
