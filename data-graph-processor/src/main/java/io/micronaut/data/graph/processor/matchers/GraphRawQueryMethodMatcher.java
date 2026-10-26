@@ -24,7 +24,6 @@ import io.micronaut.data.annotation.Query;
 import io.micronaut.data.annotation.TypeRole;
 import io.micronaut.data.graph.annotation.GraphRepository;
 import io.micronaut.data.graph.model.query.builder.GraphQueryBuilder;
-import io.micronaut.data.graph.model.query.builder.CypherQueryBuilder;
 import io.micronaut.data.graph.model.query.builder.LiteralMasker;
 import io.micronaut.data.intercept.annotation.DataMethod;
 import io.micronaut.data.model.query.BindingParameter.BindingContext;
