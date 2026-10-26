@@ -82,6 +82,11 @@ import java.util.function.Function;
 @Internal
 final class DefaultAgeRepositoryOperations extends AbstractGraphRepositoryOperations implements AgeRepositoryOperations {
 
+    /**
+     * The session setting that records that AGE is loaded on a connection and its catalog on the search path.
+     */
+    static final String PREPARED_SETTING = "micronaut.age.prepared";
+
     private static final Logger LOG = LoggerFactory.getLogger(DefaultAgeRepositoryOperations.class);
     private static final Argument<Map<String, Object>> PARAMETERS = Argument.mapOf(String.class, Object.class);
 
@@ -91,7 +96,14 @@ final class DefaultAgeRepositoryOperations extends AbstractGraphRepositoryOperat
     private final boolean createExtension;
     private final boolean createGraph;
     private final JsonMapper jsonMapper;
+    /**
+     * The physical connections AGE is loaded on, for good: the loading was committed.
+     */
     private final Set<Connection> preparedConnections = Collections.synchronizedSet(Collections.newSetFromMap(new WeakHashMap<>()));
+    /**
+     * The connections of checkouts that loaded AGE inside a transaction, which may still roll the loading back.
+     */
+    private final Set<Connection> preparedCheckouts = Collections.synchronizedSet(Collections.newSetFromMap(new WeakHashMap<>()));
     private volatile boolean graphReady;
 
     DefaultAgeRepositoryOperations(@Parameter ConnectionOperations<Connection> connectionOperations,
@@ -252,19 +264,15 @@ final class DefaultAgeRepositoryOperations extends AbstractGraphRepositoryOperat
         query.replace(start, end, cypher.toString());
     }
 
+    /**
+     * Loads AGE on the connection, once per physical connection, and creates the graph on first use.
+     *
+     * @param connection The connection
+     */
     private void prepare(Connection connection) throws SQLException {
-        if (preparedConnections.contains(connection)) {
-            return;
-        }
-        try (Statement statement = connection.createStatement()) {
-            if (createExtension) {
-                statement.execute("CREATE EXTENSION IF NOT EXISTS age");
-            }
-            statement.execute("LOAD 'age'");
-            // The agtype operators resolve through the search path. ag_catalog goes last, so that unqualified
-            // DDL run on the same pooled connection later still lands in the first schema of the path
-            statement.execute("SELECT set_config('search_path', current_setting('search_path') || ', ag_catalog', false)"
-                + " WHERE current_setting('search_path') NOT LIKE '%ag_catalog%'");
+        Connection physical = physicalConnection(connection);
+        if (!preparedConnections.contains(physical) && !preparedCheckouts.contains(connection)) {
+            loadAge(connection, physical);
         }
         if (createGraph && !graphReady) {
             synchronized (this) {
@@ -274,7 +282,66 @@ final class DefaultAgeRepositoryOperations extends AbstractGraphRepositoryOperat
                 }
             }
         }
-        preparedConnections.add(connection);
+    }
+
+    /**
+     * Loads AGE on a connection and puts its catalog on the search path, unless the session has them already:
+     * a pooled connection keeps both across checkouts, and records that it does in the session setting
+     * {@value #PREPARED_SETTING}, which a transaction that rolls back reverts along with the search path.
+     *
+     * @param connection The connection of the operation
+     * @param physical   The connection it wraps
+     */
+    private void loadAge(Connection connection, Connection physical) throws SQLException {
+        boolean autoCommit = connection.getAutoCommit();
+        try (Statement statement = connection.createStatement()) {
+            boolean loaded = isPrepared(statement);
+            if (!loaded) {
+                LOG.debug("Loading Apache AGE on a connection");
+                if (createExtension) {
+                    statement.execute("CREATE EXTENSION IF NOT EXISTS age");
+                }
+                statement.execute("LOAD 'age'");
+                // The agtype operators resolve through the search path. ag_catalog goes last, so that unqualified
+                // DDL run on the same pooled connection later still lands in the first schema of the path
+                statement.execute("SELECT set_config('search_path', current_setting('search_path') || ', ag_catalog', false)"
+                    + " WHERE current_setting('search_path') NOT LIKE '%ag_catalog%'");
+                statement.execute("SELECT set_config('" + PREPARED_SETTING + "', 'true', false)");
+            }
+            if (loaded || autoCommit) {
+                // Committed: by an earlier checkout, or at once
+                preparedConnections.add(physical);
+            } else {
+                // Set in a transaction that may yet roll it back: taken as read for this checkout only
+                preparedCheckouts.add(connection);
+            }
+        }
+    }
+
+    private static boolean isPrepared(Statement statement) throws SQLException {
+        try (ResultSet resultSet = statement.executeQuery("SELECT current_setting('" + PREPARED_SETTING + "', true)")) {
+            return resultSet.next() && "true".equals(resultSet.getString(1));
+        }
+    }
+
+    /**
+     * The connection a pool proxy wraps, which outlives the proxy handed out for one checkout.
+     *
+     * @param connection The connection
+     * @return The underlying connection, or the connection itself when it wraps none
+     */
+    private static Connection physicalConnection(Connection connection) {
+        try {
+            if (connection.isWrapperFor(Connection.class)) {
+                Connection unwrapped = connection.unwrap(Connection.class);
+                if (unwrapped != null) {
+                    return unwrapped;
+                }
+            }
+        } catch (SQLException e) {
+            LOG.debug("Cannot unwrap the connection, AGE is loaded once per checkout: {}", e.getMessage());
+        }
+        return connection;
     }
 
     /**
@@ -285,18 +352,43 @@ final class DefaultAgeRepositoryOperations extends AbstractGraphRepositoryOperat
         try (Connection connection = dataSource.getConnection()) {
             boolean autoCommit = connection.getAutoCommit();
             connection.setAutoCommit(true);
-            try (PreparedStatement create = connection.prepareStatement(
-                "SELECT ag_catalog.create_graph(?) WHERE NOT EXISTS (SELECT 1 FROM ag_catalog.ag_graph WHERE name = ?)")) {
-                create.setString(1, graph);
-                create.setString(2, graph);
-                create.execute();
-            } catch (SQLException e) {
-                // Another instance created it between the check and the call
-                if (e.getMessage() == null || !e.getMessage().contains("already exists")) {
-                    throw e;
-                }
+            try {
+                createGraph(connection, graph);
             } finally {
                 connection.setAutoCommit(autoCommit);
+            }
+        }
+    }
+
+    /**
+     * Creates a graph unless it exists. Another instance may create it between the check and the call, in which
+     * case the call fails on the schema or the catalog row the other instance created: the failure is tolerated
+     * when the graph exists afterwards.
+     *
+     * @param connection A connection in auto-commit mode
+     * @param graph      The graph name, a validated identifier
+     * @throws SQLException if the graph can neither be created nor found
+     */
+    static void createGraph(Connection connection, String graph) throws SQLException {
+        if (graphExists(connection, graph)) {
+            return;
+        }
+        try (PreparedStatement create = connection.prepareStatement("SELECT ag_catalog.create_graph(?)")) {
+            create.setString(1, graph);
+            create.execute();
+        } catch (SQLException e) {
+            if (!graphExists(connection, graph)) {
+                throw e;
+            }
+            LOG.debug("Apache AGE graph [{}] was created by another instance: {}", graph, e.getMessage());
+        }
+    }
+
+    private static boolean graphExists(Connection connection, String graph) throws SQLException {
+        try (PreparedStatement exists = connection.prepareStatement("SELECT 1 FROM ag_catalog.ag_graph WHERE name = ?")) {
+            exists.setString(1, graph);
+            try (ResultSet resultSet = exists.executeQuery()) {
+                return resultSet.next();
             }
         }
     }

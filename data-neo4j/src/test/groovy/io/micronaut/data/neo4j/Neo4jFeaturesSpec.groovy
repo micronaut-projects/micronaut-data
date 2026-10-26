@@ -1,6 +1,8 @@
 package io.micronaut.data.neo4j
 
+import io.micronaut.data.exceptions.DataAccessException
 import io.micronaut.data.graph.tck.entities.Movie
+import io.micronaut.data.model.Pageable
 import io.micronaut.data.neo4j.features.ReactiveMovieRepository
 import io.micronaut.data.neo4j.features.Player
 import io.micronaut.data.neo4j.features.Tag
@@ -112,5 +114,22 @@ class Neo4jFeaturesSpec extends Specification implements TestPropertyProvider {
         operations.executeQuery("MATCH (t:Tag) RETURN t", [:], Tag)*.name == ["graph"]
         operations.executeQuery("MATCH (t:Tag) RETURN t.name AS name", [:])*.get("name") == ["graph"]
         operations.executeQuery("MATCH (t:Tag {name: \$name}) RETURN count(t)", [name: "graph"], Long) == [1L]
+    }
+
+    void "page an explicit query that limits a WITH clause, not one that limits its RETURN"() {
+        given:
+        ["c", "a", "b"].each { tagRepository.save(new Tag(it)) }
+
+        expect: "the page is taken from the two tags the WITH clause keeps"
+        tagRepository.findFirstTwo(Pageable.unpaged())*.name == ["a", "b"]
+        tagRepository.findFirstTwo(Pageable.from(1, 1))*.name == ["b"]
+        tagRepository.findFirstTwo(Pageable.from(2, 1)).empty
+
+        when:
+        tagRepository.findTwo(Pageable.from(0, 1))
+
+        then:
+        def e = thrown(DataAccessException)
+        e.message.contains("declares SKIP or LIMIT itself")
     }
 }
