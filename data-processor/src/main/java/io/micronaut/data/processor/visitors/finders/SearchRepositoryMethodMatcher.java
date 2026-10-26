@@ -108,14 +108,15 @@ public final class SearchRepositoryMethodMatcher implements MethodMatcher {
      */
     @Nullable
     private static MethodMatch matchSearch(MethodMatchContext matchContext, boolean searchQuery) {
-        ClassElement returnType = matchContext.getReturnType();
+        ClassElement declared = matchContext.getReturnType();
+        ClassElement returnType = declared;
         if (TypeUtils.isReactiveOrFuture(returnType)) {
             returnType = returnType.getFirstTypeArgument().orElse(returnType);
         }
         if (returnType == null || !returnType.getName().equals(SearchResults.class.getName())) {
             throw new ProcessingException(matchContext.getMethodElement(), "A search(" + (searchQuery ? "SearchQuery" : "String")
                 + ") method must return SearchResults<" + matchContext.getRootEntity().getSimpleName()
-                + ">, optionally inside a reactive type or a CompletionStage, but returns " + matchContext.getReturnType().getName());
+                + ">, optionally inside a reactive type or a CompletionStage, but returns " + (declared == null ? "nothing" : declared.getName()));
         }
         if (searchQuery) {
             if (TypeUtils.isReactiveOrFuture(matchContext.getReturnType())) {
