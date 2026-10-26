@@ -4,6 +4,7 @@ plugins {
 
 dependencies {
     annotationProcessor mn.micronaut.inject.java
+    annotationProcessor mn.micronaut.graal
 
     api projects.micronautDataSearchDocument
     api mnElasticsearch.micronaut.elasticsearch
