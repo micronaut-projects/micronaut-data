@@ -151,6 +151,61 @@ interface UnknownRepository extends CrudRepository<Friend, String> {
         e.message.contains('has no @Relationship property named [enemies]')
     }
 
+    void "test a finder on a property named path is left to the ordinary finders"() {
+        given:
+        def repository = buildRepository('test.WaypointRepository', """
+import io.micronaut.data.graph.model.*;
+
+@Node
+class Waypoint {
+    @Id
+    private String name;
+    private String path;
+    private List<String> relationships;
+
+    public String getName() { return name; }
+    public void setName(String name) { this.name = name; }
+    public String getPath() { return path; }
+    public void setPath(String path) { this.path = path; }
+    public List<String> getRelationships() { return relationships; }
+    public void setRelationships(List<String> relationships) { this.relationships = relationships; }
+}
+
+@TestGraphRepository
+interface WaypointRepository extends CrudRepository<Waypoint, String> {
+    List<String> findPathByName(String name);
+    List<String> findPathByNameOrderByPath(String name);
+    List<List<String>> findRelationshipsByName(String name);
+    List<Waypoint> findByPath(String path);
+}
+""")
+
+        expect:
+        getQuery(repository.executableMethods.find { it.methodName == 'findPathByName' }) == 'MATCH (n:Waypoint) WHERE n.name = $p0 RETURN n.path AS path'
+        getQuery(repository.executableMethods.find { it.methodName == 'findPathByNameOrderByPath' }) == 'MATCH (n:Waypoint) WHERE n.name = $p0 RETURN n.path AS path ORDER BY n.path ASC'
+        getQuery(repository.executableMethods.find { it.methodName == 'findRelationshipsByName' }) == 'MATCH (n:Waypoint) WHERE n.name = $p0 RETURN n.relationships AS relationships'
+        getQuery(repository.executableMethods.find { it.methodName == 'findByPath' }) == 'MATCH (n:Waypoint) WHERE n.path = $p0 RETURN n'
+    }
+
+    void "test ordering a path finder is rejected with a clear message"() {
+        when:
+        buildRepository('test.OrderedRepository', """
+import io.micronaut.data.graph.model.*;
+
+$FRIENDS
+
+@TestGraphRepository
+interface OrderedRepository extends CrudRepository<Friend, String> {
+    List<GraphRelationship<Friend, Friend>> findRelationshipsByFriendsOrderByName();
+}
+""")
+
+        then:
+        def e = thrown(RuntimeException)
+        e.message.contains('Path and relationship finders cannot be ordered, found [findRelationshipsByFriendsOrderByName]')
+        !e.message.contains('has no @Relationship property')
+    }
+
     void "test path finders must return paths"() {
         when:
         buildRepository('test.WrongReturnRepository', """

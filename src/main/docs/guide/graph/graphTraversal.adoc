@@ -36,6 +36,8 @@ WITH n, j_roles, collect(j1) AS j_directors
 RETURN n, j_roles, j_directors
 ----
 
+A join has no limit of its own. Every node of a joined relationship is collected into the row of its root node, so a node with many relationships returns a large row, and paging bounds the root nodes only, not the nodes collected with them. Join relationships whose size is known to be small. Read a large relationship with an explicit query, which can limit the nodes it collects.
+
 snippet::example.MovieRepositorySpec[project-base="doc-examples/neo4j-example", tags="fetch", indent="0", languages="java,kotlin,groovy,python"]
 
 Joins load the relationships of the root node. Joins deeper than one relationship are rejected at build time.
