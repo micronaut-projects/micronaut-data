@@ -24,6 +24,8 @@ import io.micronaut.data.annotation.Query;
 import io.micronaut.data.annotation.TypeRole;
 import io.micronaut.data.graph.annotation.GraphRepository;
 import io.micronaut.data.graph.model.query.builder.GraphQueryBuilder;
+import io.micronaut.data.graph.model.query.builder.CypherQueryBuilder;
+import io.micronaut.data.graph.model.query.builder.LiteralMasker;
 import io.micronaut.data.intercept.annotation.DataMethod;
 import io.micronaut.data.model.query.BindingParameter.BindingContext;
 import io.micronaut.data.model.query.builder.QueryParameterBinding;
@@ -258,101 +260,11 @@ public final class GraphRawQueryMethodMatcher implements MethodMatcher {
      * @return The masked query
      */
     static String maskLiterals(String query, boolean sql) {
-        return new LiteralMasker(query, sql).mask();
+        return LiteralMasker.mask(query, sql);
     }
 
     private static String stripLiterals(String query) {
         String names = NAME_PATTERN.matcher(maskLiterals(query)).replaceAll(" ");
         return MAP_KEY_PATTERN.matcher(names).replaceAll(" ");
-    }
-
-    /**
-     * Masks string literals and comments, keeping the offsets of everything else.
-     */
-    private static final class LiteralMasker {
-        private final String query;
-        private final boolean sql;
-        private final StringBuilder out;
-        private int position;
-        private char quote;
-        private boolean lineComment;
-        private boolean blockComment;
-
-        private LiteralMasker(String query, boolean sql) {
-            this.query = query;
-            this.sql = sql;
-            this.out = new StringBuilder(query.length());
-        }
-
-        private String mask() {
-            while (position < query.length()) {
-                char c = query.charAt(position);
-                char next = position + 1 < query.length() ? query.charAt(position + 1) : 0;
-                if (lineComment) {
-                    maskLineComment(c);
-                } else if (blockComment) {
-                    maskBlockComment(c, next);
-                } else if (quote != 0) {
-                    maskQuoted(c, next);
-                } else {
-                    scan(c, next);
-                }
-            }
-            return out.toString();
-        }
-
-        private void maskLineComment(char c) {
-            if (c == '\n') {
-                lineComment = false;
-                append(c);
-            } else {
-                append(' ');
-            }
-        }
-
-        private void maskBlockComment(char c, char next) {
-            if (c == '*' && next == '/') {
-                blockComment = false;
-                appendTwo("  ");
-            } else {
-                append(' ');
-            }
-        }
-
-        private void maskQuoted(char c, char next) {
-            if (c == '\\' && next != 0 && !sql) {
-                appendTwo("  ");
-            } else if (c == quote) {
-                quote = 0;
-                append(c);
-            } else {
-                append(' ');
-            }
-        }
-
-        private void scan(char c, char next) {
-            if (c == '\'' || c == '"' || c == '`') {
-                quote = c;
-                append(c);
-            } else if ((c == '/' && next == '/') || (sql && c == '-' && next == '-')) {
-                lineComment = true;
-                appendTwo("  ");
-            } else if (c == '/' && next == '*') {
-                blockComment = true;
-                appendTwo("  ");
-            } else {
-                append(c);
-            }
-        }
-
-        private void append(char c) {
-            out.append(c);
-            position++;
-        }
-
-        private void appendTwo(String text) {
-            out.append(text);
-            position += 2;
-        }
     }
 }
