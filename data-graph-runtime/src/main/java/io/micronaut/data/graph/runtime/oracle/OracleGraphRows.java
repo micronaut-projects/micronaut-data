@@ -154,26 +154,42 @@ public final class OracleGraphRows {
             paths.computeIfAbsent(match == null ? paths.size() : match, k -> new ArrayList<>()).add(groups);
         }
         List<GraphRecord> records = new ArrayList<>(paths.size());
-        int rowIndex = 0;
+        int[] nextId = {0};
         for (Map.Entry<Object, List<Map<String, Map<String, @Nullable Object>>>> path : paths.entrySet()) {
             List<GraphNode> nodes = new ArrayList<>();
             List<GraphEdge> edges = new ArrayList<>();
+            // The vertices of the path without an identifier column, told apart by their label and properties
+            Map<Map<String, @Nullable Object>, Integer> anonymous = new LinkedHashMap<>();
             List<Map<String, Map<String, @Nullable Object>>> steps = path.getValue();
             for (int i = 0; i < steps.size(); i++) {
                 Map<String, Map<String, @Nullable Object>> step = steps.get(i);
-                GraphNode start = node(step.getOrDefault(OracleGraphQueryBuilder.STEP_START, Map.of()), rowIndex);
-                GraphNode end = node(step.getOrDefault(OracleGraphQueryBuilder.STEP_END, Map.of()), rowIndex);
+                // Each step starts where the previous one ended
+                GraphNode start = i == 0
+                    ? pathNode(step.getOrDefault(OracleGraphQueryBuilder.STEP_START, Map.of()), anonymous, nextId)
+                    : nodes.get(nodes.size() - 1);
+                GraphNode end = pathNode(step.getOrDefault(OracleGraphQueryBuilder.STEP_END, Map.of()), anonymous, nextId);
                 if (i == 0) {
                     nodes.add(start);
                 }
                 Object type = step.getOrDefault("x", Map.of()).get(OracleGraphQueryBuilder.TYPE_COLUMN);
                 edges.add(new GraphEdge(path.getKey() + "/" + i, type == null ? "" : type.toString(), start.id(), end.id(), Map.of()));
                 nodes.add(end);
-                rowIndex++;
             }
             records.add(new GraphRecord(List.of("p"), List.of(new GraphPathValue(nodes, edges))));
         }
         return records;
+    }
+
+    /**
+     * A vertex of a path. A vertex without an identifier column, or whose identifier is null, is given a synthetic
+     * identifier: the same one when it appears again in the path with the same label and properties, so that a
+     * cycle closes on one node while the other vertices stay distinct.
+     */
+    private static GraphNode pathNode(Map<String, @Nullable Object> fields, Map<Map<String, @Nullable Object>, Integer> anonymous, int[] nextId) {
+        if (fields.get(OracleGraphQueryBuilder.ID_COLUMN) != null) {
+            return node(fields, 0);
+        }
+        return node(fields, anonymous.computeIfAbsent(fields, key -> nextId[0]++));
     }
 
     private static GraphNode node(Map<String, @Nullable Object> fields, int rowIndex) {
