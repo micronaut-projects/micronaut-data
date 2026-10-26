@@ -26,14 +26,15 @@ import io.micronaut.data.model.jpa.criteria.impl.util.Joiner;
 /**
  * A schemaless property of the root node, which the entity does not declare and the build cannot check.
  *
+ * @param <E> The entity type of the root
  * @param <T> The type of the value
  * @author graemerocher
  * @since 5.3.0
  */
 @Internal
-public final class DynamicPropertyExpression<T> extends AbstractExpression<T> {
+public final class DynamicPropertyExpression<E, T> extends AbstractExpression<T> {
 
-    private final PersistentEntityRoot<?> root;
+    private final PersistentEntityRoot<E> root;
     private final String name;
 
     /**
@@ -41,7 +42,7 @@ public final class DynamicPropertyExpression<T> extends AbstractExpression<T> {
      * @param name The property name
      * @param type The type of the value
      */
-    public DynamicPropertyExpression(PersistentEntityRoot<?> root, String name, Class<T> type) {
+    public DynamicPropertyExpression(PersistentEntityRoot<E> root, String name, Class<T> type) {
         super(new ClassExpressionType<>(type));
         this.root = root;
         this.name = GraphEntities.requireName(name);
@@ -50,7 +51,7 @@ public final class DynamicPropertyExpression<T> extends AbstractExpression<T> {
     /**
      * @return The root of the query
      */
-    public PersistentEntityRoot<?> getRoot() {
+    public PersistentEntityRoot<E> getRoot() {
         return root;
     }
 
