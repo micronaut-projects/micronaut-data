@@ -33,6 +33,7 @@ import io.micronaut.inject.processing.ProcessingException;
 import org.jspecify.annotations.Nullable;
 
 import java.util.List;
+import java.util.Objects;
 
 /**
  * Matches the {@link SearchRepository} methods {@code search(String)}, {@code search(String, Pageable)}
@@ -108,7 +109,7 @@ public final class SearchRepositoryMethodMatcher implements MethodMatcher {
      */
     @Nullable
     private static MethodMatch matchSearch(MethodMatchContext matchContext, boolean searchQuery) {
-        ClassElement declared = matchContext.getReturnType();
+        ClassElement declared = Objects.requireNonNull(matchContext.getReturnType(), "return type");
         ClassElement returnType = declared;
         if (TypeUtils.isReactiveOrFuture(returnType)) {
             returnType = returnType.getFirstTypeArgument().orElse(returnType);
