@@ -92,16 +92,19 @@ class AgeGraphCreationSpec extends Specification {
     private void waitUntilBlocked() {
         long deadline = System.currentTimeMillis() + 10_000
         while (System.currentTimeMillis() < deadline) {
-            boolean blocked = withConnection { Connection connection ->
-                connection.createStatement().withCloseable { statement ->
-                    statement.executeQuery("SELECT count(*) FROM pg_stat_activity WHERE wait_event_type = 'Lock' AND query LIKE '%create_graph%'")
-                        .withCloseable { it.next(); it.getInt(1) > 0 }
-                }
-            }
-            if (blocked) {
+            if (createGraphBlocked()) {
                 return
             }
             Thread.sleep(50)
+        }
+    }
+
+    private boolean createGraphBlocked() {
+        withConnection { Connection connection ->
+            connection.createStatement().withCloseable { statement ->
+                statement.executeQuery("SELECT count(*) FROM pg_stat_activity WHERE wait_event_type = 'Lock' AND query LIKE '%create_graph%'")
+                    .withCloseable { it.next(); it.getInt(1) > 0 }
+            }
         }
     }
 
