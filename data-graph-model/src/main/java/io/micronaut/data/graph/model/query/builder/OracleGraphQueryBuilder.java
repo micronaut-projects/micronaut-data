@@ -318,12 +318,14 @@ public class OracleGraphQueryBuilder implements GraphQueryBuilder {
         if (definition.kind() == PathQueryDefinition.Kind.RELATIONSHIPS) {
             return buildRelationshipsQuery(definition, entity, types);
         }
-        requireFixedDepth(definition);
+        requireMaxDepth(definition);
         if (definition.hasDifferentEndEntity()) {
             throw new IllegalArgumentException("Oracle property graph path finders match paths between nodes of the repository entity, the end node cannot be a ["
                 + definition.endNodeEntity().getName() + "]");
         }
-        String quantifier = "{1," + definition.maxDepth() + "}";
+        // A @PathLimit argument wins over @PathLimit(n) on the method, as it does for Cypher: the runtime renders it
+        // in place of the token, capped by micronaut.data.graph.max-path-depth
+        String quantifier = "{1," + (definition.maxDepthBound() ? PathQueryDefinition.PATH_LIMIT_TOKEN : String.valueOf(definition.maxDepth())) + "}";
         Query query = new Query(entity);
         boolean elements = definition.result() == PathQueryDefinition.Result.ELEMENTS;
         if (elements && sqlPgq()) {
@@ -340,6 +342,13 @@ public class OracleGraphQueryBuilder implements GraphQueryBuilder {
             query.ref(property(START, identity(entity)));
         }
         endpoints(query, definition, entity);
+        if (definition.start() != null && definition.end() != null && definition.kind() != PathQueryDefinition.Kind.ALL) {
+            // A shortest path from a node to itself is the empty path, so the shortest kinds exclude it as the Cypher
+            // builder does with s <> e: existsPath(a, a) is false, while the ALL kind of countPaths(a, a) counts the
+            // cycles through a (the quantifier starts at one step, so no path of length zero is counted)
+            PersistentProperty identity = identity(entity);
+            query.and(property(START, identity) + " <> " + property(END, identity));
+        }
         String text = query.render(false);
         if (definition.result() == PathQueryDefinition.Result.EXISTS) {
             text += buildLimitAndOffset(1, 0);
@@ -363,6 +372,10 @@ public class OracleGraphQueryBuilder implements GraphQueryBuilder {
         query.entityColumns(STEP_END, entity);
         if (definition.relationships().size() == 1) {
             query.column(literal(GraphEntities.relationshipType(definition.relationships().get(0))), EDGE + SEPARATOR + TYPE_COLUMN);
+        } else {
+            // A path over several relationship types, or over any type, reads the type of each step from the label
+            // of its edge, which the graph definition gives each edge table
+            query.column("LABEL(" + EDGE + ")", EDGE + SEPARATOR + TYPE_COLUMN);
         }
         query.orderBy = "MATCHNUM(" + STEP_START + "), ELEMENT_NUMBER(" + EDGE + ")";
     }
@@ -399,12 +412,13 @@ public class OracleGraphQueryBuilder implements GraphQueryBuilder {
         return QueryResult.of(text, List.of(text), query.bindings, Map.of());
     }
 
-    private static void requireFixedDepth(PathQueryDefinition definition) {
-        if (definition.maxDepthBound() || definition.maxDepth() <= 0) {
-            if (definition.maxDepth() <= 0 && !definition.maxDepthBound()) {
-                throw new IllegalArgumentException("Oracle property graph path queries need a maximum depth: annotate the method with @PathLimit(n)");
-            }
-            throw new IllegalArgumentException("Oracle property graph path queries need a fixed maximum depth: annotate the method with @PathLimit(n) rather than a parameter");
+    /**
+     * Oracle searches paths up to a bounded quantifier only: the depth comes from {@code @PathLimit(n)} on the method
+     * or from a {@code @PathLimit} argument, which the runtime renders in place of the token.
+     */
+    private static void requireMaxDepth(PathQueryDefinition definition) {
+        if (!definition.maxDepthBound() && definition.maxDepth() <= 0) {
+            throw new IllegalArgumentException("Oracle property graph path queries need a maximum depth: annotate the method with @PathLimit(n), or add an int parameter annotated with @PathLimit");
         }
     }
 

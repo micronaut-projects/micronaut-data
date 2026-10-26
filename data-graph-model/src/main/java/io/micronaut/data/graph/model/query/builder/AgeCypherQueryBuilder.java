@@ -33,6 +33,8 @@ import io.micronaut.data.model.query.builder.QueryOutParameterBinding;
 import org.jspecify.annotations.Nullable;
 
 import java.util.ArrayList;
+import java.time.temporal.Temporal;
+import java.time.temporal.TemporalAmount;
 import java.util.Collection;
 import java.util.List;
 import java.util.Map;
@@ -54,12 +56,25 @@ import java.util.Map;
 public class AgeCypherQueryBuilder extends CypherQueryBuilder {
 
     private static final String MATCH = " MATCH ";
+    private static final String ALL_SHORTEST_PATH = "q";
 
     // Every query is wrapped in the SQL statement that runs it, so nothing is parsed at runtime
 
     @Override
     public String finishQuery(String query) {
         return AgeStatements.wrap(query);
+    }
+
+    /**
+     * {@inheritDoc} agtype has no temporal types and AGE no temporal functions: temporal values are stored as
+     * their ISO-8601 strings, so their literals are strings too.
+     */
+    @Override
+    protected String asLiteral(@Nullable Object value) {
+        if (value instanceof Temporal || value instanceof TemporalAmount) {
+            return super.asLiteral(value.toString());
+        }
+        return super.asLiteral(value);
     }
 
     @Override
@@ -327,6 +342,11 @@ public class AgeCypherQueryBuilder extends CypherQueryBuilder {
         return false;
     }
 
+    /**
+     * All shortest paths are the paths up to the maximum depth whose length is the shortest, matched a second time
+     * once that length is known. AGE cannot bind the path variable again after the {@code WITH} that dropped it,
+     * so the second match binds {@value #ALL_SHORTEST_PATH}, returned as the path.
+     */
     @Override
     protected void appendPathMatch(StringBuilder query, PathQueryDefinition definition, String relationship) {
         String pattern = pathPattern(definition, definition.direction(), "(" + PATH_START + ")", relationship, "(" + PATH_END + ")");
@@ -334,18 +354,32 @@ public class AgeCypherQueryBuilder extends CypherQueryBuilder {
             query.append(MATCH).append(PATH).append(" = ").append(pattern)
                 .append(" WITH ").append(PATH_START).append(", ").append(PATH_END)
                 .append(", min(length(").append(PATH).append(")) AS shortest");
-            query.append(MATCH).append(PATH).append(" = ").append(pattern)
-                .append(" WHERE length(").append(PATH).append(") = shortest");
+            query.append(MATCH).append(ALL_SHORTEST_PATH).append(" = ").append(pattern)
+                .append(" WHERE length(").append(ALL_SHORTEST_PATH).append(") = shortest");
         } else {
             query.append(MATCH).append(PATH).append(" = ").append(pattern);
         }
     }
 
+    /**
+     * A shortest path is the shortest of the paths up to the maximum depth, kept by a {@code WITH} clause ahead of
+     * the {@code RETURN}: a count then counts that one path, and a page can limit the {@code RETURN}.
+     *
+     * @param query      The query
+     * @param definition The definition
+     */
     @Override
     protected void appendPathReturn(StringBuilder query, PathQueryDefinition definition) {
-        if (definition.kind() == PathQueryDefinition.Kind.SHORTEST && definition.result() == PathQueryDefinition.Result.ELEMENTS) {
-            query.append(" RETURN ").append(PATH).append(" ORDER BY length(").append(PATH).append(") LIMIT 1");
+        if (definition.kind() == PathQueryDefinition.Kind.ALL_SHORTEST) {
+            switch (definition.result()) {
+                case COUNT -> query.append(" RETURN count(").append(ALL_SHORTEST_PATH).append(") AS result");
+                case EXISTS -> query.append(" RETURN true AS result LIMIT 1");
+                default -> query.append(" RETURN ").append(ALL_SHORTEST_PATH).append(" AS ").append(PATH);
+            }
             return;
+        }
+        if (definition.kind() == PathQueryDefinition.Kind.SHORTEST && definition.result() != PathQueryDefinition.Result.EXISTS) {
+            query.append(" WITH ").append(PATH).append(" ORDER BY length(").append(PATH).append(") LIMIT 1");
         }
         super.appendPathReturn(query, definition);
     }

@@ -62,13 +62,14 @@ final class GraphDecoderContext implements Deserializer.DecoderContext {
     public <T> Deserializer<? extends T> findDeserializer(Argument<? extends T> type) throws SerdeException {
         Class<? extends T> javaType = type.getType();
         if (isNative(javaType)) {
-            return (Deserializer<? extends T>) new NativeValueDeserializer(conversionService, null);
+            return (Deserializer<? extends T>) new NativeValueDeserializer(conversionService, null, null);
         }
         try {
             return parent.findDeserializer(type);
         } catch (SerdeException e) {
-            // A driver type serde has no deserializer for, such as a spatial point: pass it through
-            return (Deserializer<? extends T>) new NativeValueDeserializer(conversionService, null);
+            // A driver type serde has no deserializer for, such as a spatial point, is passed through. A value that
+            // is not one fails with this exception as the cause, so the reason serde cannot read the type is kept
+            return (Deserializer<? extends T>) new NativeValueDeserializer(conversionService, null, e);
         }
     }
 

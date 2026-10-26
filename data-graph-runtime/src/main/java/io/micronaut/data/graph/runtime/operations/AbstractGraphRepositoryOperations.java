@@ -537,7 +537,10 @@ public abstract class AbstractGraphRepositoryOperations extends AbstractReposito
             appendSort(query, entity, sort);
         }
         if (limit != null && limit.isLimited()) {
-            if (query.indexOf(" LIMIT ") >= 0 || query.indexOf(" SKIP ") >= 0) {
+            // A WITH clause may limit what it carries, as the shortest of the paths up to a depth; the final RETURN may not
+            int lastReturn = query.lastIndexOf(" RETURN ");
+            String returnClause = lastReturn < 0 ? query.toString() : query.substring(lastReturn);
+            if (returnClause.contains(" LIMIT ") || returnClause.contains(" SKIP ")) {
                 throw new DataAccessException("Cannot page the query [" + query + "]: it declares SKIP or LIMIT itself");
             }
             query.append(queryBuilder.buildLimitAndOffset(limit.maxResults(), limit.offset()));

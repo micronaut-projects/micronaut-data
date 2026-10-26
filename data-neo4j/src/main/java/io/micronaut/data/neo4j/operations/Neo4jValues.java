@@ -16,6 +16,7 @@
 package io.micronaut.data.neo4j.operations;
 
 import io.micronaut.core.annotation.Internal;
+import io.micronaut.data.exceptions.DataAccessException;
 import io.micronaut.data.graph.runtime.GraphEdge;
 import io.micronaut.data.graph.runtime.GraphNode;
 import io.micronaut.data.graph.runtime.GraphPathValue;
@@ -99,17 +100,21 @@ final class Neo4jValues {
     }
 
     /**
-     * Adapts a Neo4j duration to the Java type it can be represented by exactly: a {@link Duration} when it has no
-     * months, a {@link Period} when it has no time, or the duration itself otherwise.
+     * Adapts a Neo4j duration to the Java type that represents it exactly: a {@link Duration} when it only has
+     * seconds and nanoseconds, a {@link Period} when it only has months and days. A duration with both, such as
+     * {@code P1DT2H}, has no exact Java counterpart because a day is not a fixed number of seconds, and is rejected
+     * rather than passed through as a driver type.
      */
     private static Object duration(IsoDuration duration) {
-        if (duration.months() == 0) {
-            return Duration.ofDays(duration.days()).plusSeconds(duration.seconds()).plusNanos(duration.nanoseconds());
+        boolean calendar = duration.months() != 0 || duration.days() != 0;
+        boolean time = duration.seconds() != 0 || duration.nanoseconds() != 0;
+        if (calendar && time) {
+            throw new DataAccessException("Cannot read the Neo4j duration [" + duration + "]: it has both a calendar part (months or days) and a time part, which no java.time type represents exactly. Return it as a string with toString(), or return its components");
         }
-        if (duration.seconds() == 0 && duration.nanoseconds() == 0) {
+        if (calendar) {
             return Period.of(0, Math.toIntExact(duration.months()), Math.toIntExact(duration.days()));
         }
-        return duration;
+        return Duration.ofSeconds(duration.seconds(), duration.nanoseconds());
     }
 
     private static GraphNode node(Node node) {
