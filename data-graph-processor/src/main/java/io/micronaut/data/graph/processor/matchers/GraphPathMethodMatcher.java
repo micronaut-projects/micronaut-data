@@ -78,9 +78,11 @@ import java.util.regex.Pattern;
 public final class GraphPathMethodMatcher implements MethodMatcher {
 
     private static final String PREFIXES = "(?:find|get|query|search|read|retrieve|list)";
-    private static final Pattern FIND_PATTERN = Pattern.compile("^" + PREFIXES + "(ShortestPath|AllShortestPaths|AllPaths|Paths|Path|Relationships|Relationship)(?:By([A-Z]\\w*))?$");
-    private static final Pattern EXISTS_PATTERN = Pattern.compile("^(?:exists|has)(Path|Relationship)(?:By([A-Z]\\w*))?$");
-    private static final Pattern COUNT_PATTERN = Pattern.compile("^count(Paths|Relationships)(?:By([A-Z]\\w*))?$");
+    // The relationship token stops at OrderBy, which path finders do not support and report
+    private static final String SUFFIX = "(?:By([A-Z]\\w*?))?(?<order>OrderBy\\w*)?$";
+    private static final Pattern FIND_PATTERN = Pattern.compile("^" + PREFIXES + "(ShortestPath|AllShortestPaths|AllPaths|Paths|Path|Relationships|Relationship)" + SUFFIX);
+    private static final Pattern EXISTS_PATTERN = Pattern.compile("^(?:exists|has)(Path|Relationship)" + SUFFIX);
+    private static final Pattern COUNT_PATTERN = Pattern.compile("^count(Paths|Relationships)" + SUFFIX);
 
     @Override
     public int getOrder() {
@@ -97,19 +99,54 @@ public final class GraphPathMethodMatcher implements MethodMatcher {
         String name = matchContext.getMethodElement().getName();
         Matcher matcher = FIND_PATTERN.matcher(name);
         if (matcher.matches()) {
+            if (isPropertyFinder(matchContext, matcher.group(1))) {
+                return null;
+            }
+            rejectOrdering(name, matcher);
             return context -> buildMatchInfo(context, kindOf(matcher.group(1)), PathQueryDefinition.Result.ELEMENTS, matcher.group(2));
         }
         Matcher exists = EXISTS_PATTERN.matcher(name);
         if (exists.matches()) {
+            rejectOrdering(name, exists);
             PathQueryDefinition.Kind kind = exists.group(1).equals("Path") ? PathQueryDefinition.Kind.SHORTEST : PathQueryDefinition.Kind.RELATIONSHIPS;
             return context -> buildMatchInfo(context, kind, PathQueryDefinition.Result.EXISTS, exists.group(2));
         }
         Matcher count = COUNT_PATTERN.matcher(name);
         if (count.matches()) {
+            rejectOrdering(name, count);
             PathQueryDefinition.Kind kind = count.group(1).equals("Paths") ? PathQueryDefinition.Kind.ALL : PathQueryDefinition.Kind.RELATIONSHIPS;
             return context -> buildMatchInfo(context, kind, PathQueryDefinition.Result.COUNT, count.group(2));
         }
         return null;
+    }
+
+    /**
+     * Whether the method is an ordinary finder on a property of the entity that happens to be named like a path
+     * query, for example {@code findPathByName} on an entity with a {@code path} property. Such a method does not
+     * return paths or relationships and is left to the finder matchers.
+     *
+     * @param matchContext The match context
+     * @param token        The path token of the method name, for example {@code Path}
+     * @return Whether the finder matchers should match the method instead
+     */
+    private static boolean isPropertyFinder(MethodMatchContext matchContext, String token) {
+        String propertyName = Objects.requireNonNullElse(NameUtils.decapitalize(token), token);
+        if (matchContext.getRootEntity().getPropertyByName(propertyName) == null) {
+            return false;
+        }
+        ClassElement returnType = matchContext.getReturnType();
+        return !refersTo(returnType, GraphPath.class) && !refersTo(returnType, GraphRelationship.class);
+    }
+
+    private static boolean refersTo(ClassElement type, Class<?> expected) {
+        return type.isAssignable(expected) || type.getFirstTypeArgument().map(argument -> refersTo(argument, expected)).orElse(false);
+    }
+
+    private static void rejectOrdering(String name, Matcher matcher) {
+        if (matcher.group("order") != null) {
+            throw new MatchFailedException("Path and relationship finders cannot be ordered, found [" + name
+                + "]: sort the result in the application, or declare the query with @Query");
+        }
     }
 
     private static PathQueryDefinition.Kind kindOf(String token) {
