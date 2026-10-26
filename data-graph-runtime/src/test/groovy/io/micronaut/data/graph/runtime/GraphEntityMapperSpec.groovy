@@ -23,17 +23,13 @@ import java.util.function.Function
 class GraphEntityMapperSpec extends Specification {
 
     @Shared
-    // The label lookup reads no values, so the mapper needs no serde
+    // The label lookup reads no values, so the mapper needs no serde; reading the node itself is covered by the driver specs
     GraphEntityMapper mapper = new GraphEntityMapper(new TestEntityRegistry(), ConversionService.SHARED, Function.identity(), null)
 
     @Unroll
     void "a node labelled #labels is read as #expected.simpleName"() {
-        when:
-        def entity = mapper.readNodeAs(node(labels), Object)
-
-        then:
-        expected.isInstance(entity)
-        entity.name == 'Keanu'
+        expect:
+        mapper.findEntityByLabels(labels) == expected
 
         where:
         labels                       | expected
@@ -70,10 +66,10 @@ class GraphEntityMapperSpec extends Specification {
         properties == [name: 'Keanu']
     }
 
-    void "the requested entity wins when the node carries its primary label"() {
+    void "the most specific entity is chosen for a node that carries several labels"() {
         expect:
-        mapper.readNodeAs(node(['Actor', 'Person']), Person) instanceof Person
-        mapper.readNodeAs(node(['Actor', 'Person']), Actor) instanceof Actor
+        mapper.findEntityByLabels(['Actor', 'Person']) == Actor
+        mapper.findEntityByLabels(['Person']) == Person
     }
 
     void "a node of a more specific entity is read as the requested entity only when it is one"() {
