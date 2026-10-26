@@ -39,6 +39,8 @@ import java.time.temporal.TemporalAmount;
 @Internal
 final class CypherTemporals {
 
+    private static final String DATETIME = "datetime";
+
     private CypherTemporals() {
     }
 
@@ -54,9 +56,9 @@ final class CypherTemporals {
             case LocalDateTime ignored -> "localdatetime";
             case LocalTime ignored -> "localtime";
             case OffsetTime ignored -> "time";
-            case ZonedDateTime ignored -> "datetime";
-            case OffsetDateTime ignored -> "datetime";
-            case Instant ignored -> "datetime";
+            case ZonedDateTime ignored -> DATETIME;
+            case OffsetDateTime ignored -> DATETIME;
+            case Instant ignored -> DATETIME;
             default -> null;
         };
         return function == null ? "'" + value + "'" : function + "('" + value + "')";
