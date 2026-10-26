@@ -1,5 +1,7 @@
 package io.micronaut.data.neo4j.features;
 
+import io.micronaut.data.annotation.Query;
+import io.micronaut.data.model.Pageable;
 import io.micronaut.data.model.Sort;
 import io.micronaut.data.neo4j.annotation.Neo4jRepository;
 import io.micronaut.data.repository.CrudRepository;
@@ -16,4 +18,10 @@ public interface TagRepository extends CrudRepository<Tag, Long> {
     List<Tag> findFirst2ByNameStartsWith(String prefix, Sort sort);
 
     List<TagSummary> findAllByNameStartsWith(String prefix);
+
+    @Query("MATCH (t:Tag) RETURN t")
+    List<Tag> allTags(Sort sort);
+
+    @Query("MATCH (n:Tag) RETURN n LIMIT 1")
+    List<Tag> firstTag(Pageable pageable);
 }

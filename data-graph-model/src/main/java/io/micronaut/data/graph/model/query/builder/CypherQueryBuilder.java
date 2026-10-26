@@ -182,6 +182,7 @@ public class CypherQueryBuilder implements GraphQueryBuilder {
     private static final String RETURN = " RETURN ";
     private static final String MATCH_OPEN = "MATCH (";
     private static final String CLOSE_WHERE = ") WHERE ";
+    private static final String NOT_OPEN = "NOT (";
     private static final String CLOSE_AS_RESULT = ") AS result";
     private static final String SET = " SET ";
     private static final String RETURN_COUNT_RESULT = " RETURN count(*) AS result";
@@ -1591,7 +1592,7 @@ public class CypherQueryBuilder implements GraphQueryBuilder {
 
         @Override
         public void visit(NegatedPredicate negate) {
-            out.append("NOT (");
+            out.append(NOT_OPEN);
             visitBoolean(negate.getNegated());
             out.append(')');
         }
@@ -1605,7 +1606,7 @@ public class CypherQueryBuilder implements GraphQueryBuilder {
         public void visitIn(Expression<?> expression, Collection<?> values, boolean negated) {
             io.micronaut.data.model.PersistentPropertyPath bound = findPropertyPath(expression);
             if (negated) {
-                out.append("NOT (");
+                out.append(NOT_OPEN);
             }
             appendExpression(expression, bound);
             out.append(" IN ");
@@ -1812,7 +1813,7 @@ public class CypherQueryBuilder implements GraphQueryBuilder {
             Character escape = likeEscape(likePredicate.getEscapeChar());
             String flags = likePredicate.isCaseInsensitive() ? "(?si)" : "(?s)";
             if (likePredicate.isNegated()) {
-                out.append("NOT (");
+                out.append(NOT_OPEN);
             }
             appendExpression(expression, bound);
             out.append(" =~ ");
