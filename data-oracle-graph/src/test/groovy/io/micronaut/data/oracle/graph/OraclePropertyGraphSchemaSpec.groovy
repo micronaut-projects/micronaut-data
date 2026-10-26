@@ -3,7 +3,10 @@ package io.micronaut.data.oracle.graph
 import io.micronaut.context.annotation.Property
 import io.micronaut.data.connection.jdbc.advice.DelegatingDataSource
 import io.micronaut.data.jdbc.config.DataJdbcConfiguration
+import io.micronaut.data.graph.runtime.oracle.OraclePropertyGraphSchema
 import io.micronaut.data.jdbc.config.JdbcSchemaContributor
+import io.micronaut.data.oracle.graph.annotation.OracleGraphRepository
+import io.micronaut.context.BeanContext
 import io.micronaut.data.model.runtime.RuntimeEntityRegistry
 import io.micronaut.data.oracle.graph.bank.Account
 import io.micronaut.data.oracle.graph.bank.Transfer
@@ -48,6 +51,9 @@ class OraclePropertyGraphSchemaSpec extends Specification {
 
     @Inject
     RuntimeEntityRegistry entityRegistry
+
+    @Inject
+    BeanContext beanContext
 
     void setup() {
         sql("DELETE FROM members_follows", "DELETE FROM loan", "DELETE FROM books_wrote", "DELETE FROM members", "DELETE FROM books", "DELETE FROM authors")
@@ -100,6 +106,25 @@ class OraclePropertyGraphSchemaSpec extends Specification {
             'DROP TABLE "TRANSFER"',
             'DROP TABLE "ACCOUNTS"'
         ]
+    }
+
+    void "the mixed property types of the graphs need Oracle Database 23.4"() {
+        given:
+        def entities = [entityRegistry.getEntity(Account), entityRegistry.getEntity(Transfer)]
+        def schema = OraclePropertyGraphSchema.of(beanContext, OracleGraphRepository, "default", entities)
+
+        expect: "a dialect version at or above 23.4, or none, creates the graph with ALLOW MIXED PROPERTY TYPES"
+        schema.buildCreateStatements(null).last().endsWith(" OPTIONS (ALLOW MIXED PROPERTY TYPES)")
+        schema.buildCreateStatements("23.4").last().endsWith(" OPTIONS (ALLOW MIXED PROPERTY TYPES)")
+        schema.buildCreateStatements("26").last().endsWith(" OPTIONS (ALLOW MIXED PROPERTY TYPES)")
+
+        when: "the dialect version is below 23.4"
+        schema.buildCreateStatements("23.3")
+
+        then:
+        def e = thrown(IllegalStateException)
+        e.message.contains("needs Oracle Database 23.4 or later")
+        e.message.contains("[23.3.0]")
     }
 
     private void sql(String... statements) {

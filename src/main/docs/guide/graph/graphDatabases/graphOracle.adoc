@@ -69,7 +69,7 @@ CREATE PROPERTY GRAPH bank_graph
   OPTIONS (ALLOW MIXED PROPERTY TYPES)
 ----
 
-The generated graphs allow mixed property types, so tables may map a property name, such as `ID`, to different column types.
+The generated graphs allow mixed property types, so tables may map a property name, such as `ID`, to different column types. `ALLOW MIXED PROPERTY TYPES` needs Oracle Database 23.4 or later: when the data source configures an older dialect version, with `datasources.default.dialect-options.version`, schema generation fails at startup with a message that says so rather than leaving the graph uncreated.
 
 `CREATE_DROP` drops the property graphs before the tables. Graph repositories save nodes only, so rows of edge tables are written with SQL or a ann:data.jdbc.annotation.JdbcRepository[] over an entity of the edge table, which also supplies the identifier of a relationship entity. `VALIDATE` does not check the tables of graph entities.
 

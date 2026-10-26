@@ -75,6 +75,11 @@ import java.util.stream.Collectors;
 @Internal
 public final class OraclePropertyGraphSchema {
 
+    /**
+     * The first version of Oracle Database with {@code ALLOW MIXED PROPERTY TYPES}.
+     */
+    public static final String MIXED_PROPERTY_TYPES_VERSION = "23.4";
+
     private final Schema schema;
     private final Map<String, Set<PersistentEntity>> graphs;
 
@@ -124,6 +129,7 @@ public final class OraclePropertyGraphSchema {
      */
     public List<String> buildCreateStatements(@Nullable String dialectVersion) {
         SqlQueryBuilder builder = new SqlQueryBuilder(Dialect.ORACLE, dialectVersion);
+        requireMixedPropertyTypes(builder);
         List<String> statements = new ArrayList<>();
         for (Vertex vertex : schema.vertices.values()) {
             statements.addAll(List.of(builder.buildCreateTableStatements(vertex.table)));
@@ -154,6 +160,19 @@ public final class OraclePropertyGraphSchema {
             statements.add("DROP TABLE " + quote(vertex.table.name()));
         }
         return statements;
+    }
+
+    /**
+     * The graphs are created with {@code ALLOW MIXED PROPERTY TYPES}, which Oracle Database 23.4 introduced: a
+     * dialect version below it, when one is configured, fails here rather than at the first query of a graph that
+     * could not be created.
+     */
+    private static void requireMixedPropertyTypes(SqlQueryBuilder builder) {
+        String version = builder.getDialectVersion();
+        if (version != null && !builder.isDialectVersionAtLeast(MIXED_PROPERTY_TYPES_VERSION)) {
+            throw new IllegalStateException("Oracle property graph schema generation needs Oracle Database " + MIXED_PROPERTY_TYPES_VERSION
+                + " or later, which introduced ALLOW MIXED PROPERTY TYPES, but the dialect version is configured as [" + version + "]");
+        }
     }
 
     private static boolean isNode(PersistentEntity entity) {
@@ -404,7 +423,8 @@ public final class OraclePropertyGraphSchema {
         if (!edgeTables.isEmpty()) {
             sql.append(" EDGE TABLES (").append(String.join(", ", edgeTables)).append(')');
         }
-        // Tables may map a property name to different types, such as a string node id and a numeric relationship id
+        // Tables may map a property name to different types, such as a string node id and a numeric relationship id;
+        // the option needs Oracle Database 23.4, see requireMixedPropertyTypes
         sql.append(" OPTIONS (ALLOW MIXED PROPERTY TYPES)");
         return sql.toString();
     }
