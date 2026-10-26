@@ -18,7 +18,6 @@ package io.micronaut.data.graph.runtime.operations;
 import io.micronaut.core.annotation.AnnotationMetadata;
 import io.micronaut.core.beans.BeanProperty;
 import io.micronaut.data.annotation.Relation;
-import io.micronaut.data.exceptions.DataAccessException;
 import io.micronaut.data.graph.model.GraphEntities;
 import io.micronaut.data.graph.runtime.GraphEntityMapper;
 import io.micronaut.data.graph.runtime.GraphRecord;
@@ -644,75 +643,32 @@ public abstract class AbstractReactiveGraphRepositoryOperations implements React
         private Mono<T> writeRelationship(T instance, RuntimeAssociation<T> association) {
             BeanProperty<T, Object> beanProperty = association.getProperty();
             Object value = beanProperty.get(instance);
-            if (value == null) {
-                return Mono.just(instance);
-            }
-            boolean many = value instanceof Iterable<?>;
-            List<Object> items = new ArrayList<>();
-            if (many) {
-                for (Object item : (Iterable<?>) value) {
-                    if (item != null) {
-                        items.add(item);
-                    }
-                }
-            } else {
-                items.add(value);
-            }
+            List<Object> items = RelationshipTarget.relatedItems(value);
             if (items.isEmpty()) {
                 return Mono.just(instance);
             }
-            RuntimePersistentEntity<Object> associated = (RuntimePersistentEntity<Object>) association.getAssociatedEntity();
-            boolean relationshipEntity = GraphEntities.isRelationshipEntity(associated);
-            RuntimeAssociation<Object> targetAssociation = relationshipEntity
-                ? (RuntimeAssociation<Object>) AbstractGraphRepositoryOperations.targetNode(associated)
-                : null;
-            RuntimePersistentEntity<Object> targetEntity = targetAssociation != null
-                ? (RuntimePersistentEntity<Object>) targetAssociation.getAssociatedEntity()
-                : associated;
-            List<Object> targets = new ArrayList<>(items.size());
-            for (Object item : items) {
-                Object target = targetAssociation != null ? targetAssociation.getProperty().get(item) : item;
-                if (target == null) {
-                    return Mono.error(new DataAccessException("Relationship [" + associated.getSimpleName() + "] has no @TargetNode value"));
-                }
-                targets.add(target);
-            }
+            RelationshipTarget target = RelationshipTarget.of(association);
             Object fromId = mapper.writeIdentity(persistentEntity, instance);
-            RuntimePersistentProperty<Object> relationshipIdentity = relationshipEntity ? associated.getIdentity() : null;
-            return persister.saveTargets(association, persistentEntity, targetEntity, targets).flatMap(savedTargets -> {
-                List<Object> written = new ArrayList<>(items.size());
-                List<AbstractGraphRepositoryOperations.LinkRow> rows = new ArrayList<>(items.size());
-                for (int i = 0; i < items.size(); i++) {
-                    Object item = items.get(i);
-                    Object savedTarget = savedTargets.get(i);
-                    Map<String, Object> properties = Map.of();
-                    if (targetAssociation != null) {
-                        if (savedTarget != targets.get(i)) {
-                            item = AbstractGraphRepositoryOperations.withProperty(targetAssociation.getProperty(), item, savedTarget);
-                        }
-                        properties = mapper.writeProperties(associated, item);
-                    } else {
-                        item = savedTarget;
-                    }
-                    written.add(item);
-                    rows.add(AbstractGraphRepositoryOperations.linkRow(association, i, fromId, mapper.writeIdentity(targetEntity, savedTarget), properties));
-                }
-                return runLinks(association, targetEntity, rows, relationshipIdentity).map(relationshipIds -> {
-                    if (relationshipIdentity != null && GraphEntities.isNativeId(relationshipIdentity)) {
-                        BeanProperty<Object, Object> idProperty = relationshipIdentity.getProperty();
-                        for (int i = 0; i < written.size(); i++) {
-                            Object relationshipId = relationshipIds.get(i);
-                            if (relationshipId != null) {
-                                written.set(i, AbstractGraphRepositoryOperations.withProperty(idProperty, written.get(i), mapper.readValue(relationshipIdentity, relationshipId)));
-                            }
-                        }
-                    }
-                    if (sameItems(items, written)) {
-                        return instance;
-                    }
-                    Object newValue = many ? operations.getConversionService().convertRequired(written, beanProperty.asArgument()) : written.get(0);
-                    return AbstractGraphRepositoryOperations.withProperty(beanProperty, instance, newValue);
-                });
+            return Mono.fromCallable(() -> target.targets(items))
+                .flatMap(targets -> persister.saveTargets(association, persistentEntity, target.entity(), targets))
+                .flatMap(savedTargets -> linkTargets(association, target, fromId, items, savedTargets))
+                .map(written -> operations.withWritten(beanProperty, instance, value instanceof Iterable<?>, items, written));
+        }
+
+        /**
+         * Merges the relationships to the saved target nodes and returns the items as written, with the generated
+         * relationship identifiers set.
+         */
+        private Mono<List<Object>> linkTargets(RuntimeAssociation<T> association,
+                                               RelationshipTarget target,
+                                               @Nullable Object fromId,
+                                               List<Object> items,
+                                               List<Object> savedTargets) {
+            List<Object> written = target.written(items, savedTargets);
+            List<AbstractGraphRepositoryOperations.LinkRow> rows = target.linkRows(association, mapper, fromId, written, savedTargets);
+            return runLinks(association, target.entity(), rows, target.identity()).map(relationshipIds -> {
+                target.applyRelationshipIds(mapper, written, relationshipIds);
+                return written;
             });
         }
 
@@ -756,7 +712,7 @@ public abstract class AbstractReactiveGraphRepositoryOperations implements React
             }
             Object fromId = mapper.writeIdentity(persistentEntity, instance);
             Map<String, List<Object>> targetsByType = new LinkedHashMap<>();
-            relationships.forEach((type, value) -> targetsByType.put(String.valueOf(type), targets(value)));
+            relationships.forEach((type, value) -> targetsByType.put(String.valueOf(type), RelationshipTarget.relatedItems(value)));
             Map<String, List<Object>> written = new LinkedHashMap<>();
             return Flux.fromIterable(targetsByType.entrySet())
                 .concatMap(entry -> Flux.fromIterable(entry.getValue())
@@ -766,27 +722,13 @@ public abstract class AbstractReactiveGraphRepositoryOperations implements React
                 .then(Mono.fromSupplier(() -> {
                     boolean changed = false;
                     for (Map.Entry<String, List<Object>> entry : targetsByType.entrySet()) {
-                        changed |= !sameItems(entry.getValue(), written.getOrDefault(entry.getKey(), List.of()));
+                        changed |= !RelationshipTarget.sameItems(entry.getValue(), written.getOrDefault(entry.getKey(), List.of()));
                     }
                     if (!changed) {
                         return instance;
                     }
                     return AbstractGraphRepositoryOperations.withProperty((BeanProperty<T, Object>) (BeanProperty<?, ?>) property, instance, written);
                 }));
-        }
-
-        private static List<Object> targets(@Nullable Object value) {
-            List<Object> targets = new ArrayList<>();
-            if (value instanceof Iterable<?> iterable) {
-                for (Object target : iterable) {
-                    if (target != null) {
-                        targets.add(target);
-                    }
-                }
-            } else if (value != null) {
-                targets.add(value);
-            }
-            return targets;
         }
 
         private Mono<Object> linkDynamic(String type, @Nullable Object fromId, Object target) {
@@ -796,18 +738,6 @@ public abstract class AbstractReactiveGraphRepositoryOperations implements React
                     mapper.writeIdentity(targetEntity, savedTarget));
                 return persister.run(query).thenReturn(savedTarget);
             });
-        }
-
-        private static boolean sameItems(List<Object> original, List<Object> written) {
-            if (original.size() != written.size()) {
-                return false;
-            }
-            for (int i = 0; i < original.size(); i++) {
-                if (original.get(i) != written.get(i)) {
-                    return false;
-                }
-            }
-            return true;
         }
     }
 

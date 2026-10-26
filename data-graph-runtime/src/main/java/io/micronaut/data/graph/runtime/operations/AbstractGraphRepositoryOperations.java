@@ -1263,6 +1263,26 @@ public abstract class AbstractGraphRepositoryOperations extends AbstractReposito
     }
 
     /**
+     * Replaces the instances a relationship property holds with the instances that were written, when the write
+     * changed any of them.
+     *
+     * @param property The relationship property
+     * @param bean     The owner
+     * @param many     Whether the property holds many instances
+     * @param items    The instances the property held
+     * @param written  The written instances
+     * @param <B>      The owner type
+     * @return The owner holding the written instances
+     */
+    final <B> B withWritten(BeanProperty<B, Object> property, B bean, boolean many, List<Object> items, List<Object> written) {
+        if (RelationshipTarget.sameItems(items, written)) {
+            return bean;
+        }
+        Object value = many ? conversionService.convertRequired(written, property.asArgument()) : written.get(0);
+        return withProperty(property, bean, value);
+    }
+
+    /**
      * Whether saving the owner of an association creates a related node that has no identifier yet.
      *
      * @param association The association
@@ -1773,75 +1793,19 @@ public abstract class AbstractGraphRepositoryOperations extends AbstractReposito
         private void writeRelationship(RuntimeAssociation<T> association) {
             BeanProperty<T, Object> beanProperty = association.getProperty();
             Object value = beanProperty.get(entity);
-            if (value == null) {
-                return;
-            }
-            boolean many = value instanceof Iterable<?>;
-            List<Object> items = new ArrayList<>();
-            if (many) {
-                for (Object item : (Iterable<?>) value) {
-                    if (item != null) {
-                        items.add(item);
-                    }
-                }
-            } else {
-                items.add(value);
-            }
+            List<Object> items = RelationshipTarget.relatedItems(value);
             if (items.isEmpty()) {
                 return;
             }
-            RuntimePersistentEntity<Object> associated = (RuntimePersistentEntity<Object>) association.getAssociatedEntity();
-            boolean relationshipEntity = GraphEntities.isRelationshipEntity(associated);
-            RuntimeAssociation<Object> targetAssociation = relationshipEntity ? (RuntimeAssociation<Object>) targetNode(associated) : null;
-            RuntimePersistentEntity<Object> targetEntity = targetAssociation != null
-                ? (RuntimePersistentEntity<Object>) targetAssociation.getAssociatedEntity()
-                : associated;
-            List<Object> targets = new ArrayList<>(items.size());
-            for (Object item : items) {
-                Object target = targetAssociation != null ? targetAssociation.getProperty().get(item) : item;
-                if (target == null) {
-                    throw new DataAccessException("Relationship [" + associated.getSimpleName() + "] has no @TargetNode value");
-                }
-                targets.add(target);
-            }
-            List<Object> savedTargets = persister.saveTargets(association, persistentEntity, targetEntity, targets);
+            RelationshipTarget target = RelationshipTarget.of(association);
+            List<Object> targets = target.targets(items);
+            List<Object> savedTargets = persister.saveTargets(association, persistentEntity, target.entity(), targets);
             Object fromId = mapper.writeIdentity(persistentEntity, entity);
-            List<Object> written = new ArrayList<>(items.size());
-            List<LinkRow> rows = new ArrayList<>(items.size());
-            for (int i = 0; i < items.size(); i++) {
-                Object item = items.get(i);
-                Object savedTarget = savedTargets.get(i);
-                Map<String, Object> properties = Map.of();
-                if (targetAssociation != null) {
-                    if (savedTarget != targets.get(i)) {
-                        item = withProperty(targetAssociation.getProperty(), item, savedTarget);
-                    }
-                    properties = mapper.writeProperties(associated, item);
-                } else {
-                    item = savedTarget;
-                }
-                written.add(item);
-                rows.add(linkRow(association, i, fromId, mapper.writeIdentity(targetEntity, savedTarget), properties));
-            }
-            RuntimePersistentProperty<Object> relationshipIdentity = relationshipEntity ? associated.getIdentity() : null;
-            Map<Integer, Object> relationshipIds = runLinks(association, targetEntity, rows, relationshipIdentity);
-            if (relationshipIdentity != null && GraphEntities.isNativeId(relationshipIdentity)) {
-                BeanProperty<Object, Object> idProperty = relationshipIdentity.getProperty();
-                for (int i = 0; i < written.size(); i++) {
-                    Object relationshipId = relationshipIds.get(i);
-                    if (relationshipId != null) {
-                        written.set(i, withProperty(idProperty, written.get(i), mapper.readValue(relationshipIdentity, relationshipId)));
-                    }
-                }
-            }
-            boolean changed = false;
-            for (int i = 0; i < items.size(); i++) {
-                changed |= written.get(i) != items.get(i);
-            }
-            if (changed) {
-                Object newValue = many ? conversionService.convertRequired(written, beanProperty.asArgument()) : written.get(0);
-                entity = withProperty(beanProperty, entity, newValue);
-            }
+            List<Object> written = target.written(items, savedTargets);
+            List<LinkRow> rows = target.linkRows(association, mapper, fromId, written, savedTargets);
+            Map<Integer, Object> relationshipIds = runLinks(association, target.entity(), rows, target.identity());
+            target.applyRelationshipIds(mapper, written, relationshipIds);
+            entity = withWritten(beanProperty, entity, value instanceof Iterable<?>, items, written);
         }
 
         /**
