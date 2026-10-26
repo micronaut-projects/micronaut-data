@@ -34,10 +34,10 @@ dependencies {
     testImplementation mnTest.micronaut.test.spock
     testImplementation(mnSql.jakarta.persistence.api)
 
-    testRuntimeOnly mnSql.micronaut.jdbc.hikari
+    testImplementation mnSql.micronaut.jdbc.hikari
     testRuntimeOnly mnSql.postgresql
     testResourcesService mnSql.postgresql
-    testRuntimeOnly mnLogging.logback.classic
+    testImplementation mnLogging.logback.classic
 
     testCompileOnly mn.micronaut.inject.groovy
 }
