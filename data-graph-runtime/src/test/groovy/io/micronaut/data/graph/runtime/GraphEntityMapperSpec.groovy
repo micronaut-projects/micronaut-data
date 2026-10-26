@@ -23,7 +23,8 @@ import java.util.function.Function
 class GraphEntityMapperSpec extends Specification {
 
     @Shared
-    GraphEntityMapper mapper = new GraphEntityMapper(new TestEntityRegistry(), ConversionService.SHARED, Function.identity())
+    // The label lookup reads no values, so the mapper needs no serde
+    GraphEntityMapper mapper = new GraphEntityMapper(new TestEntityRegistry(), ConversionService.SHARED, Function.identity(), null)
 
     @Unroll
     void "a node labelled #labels is read as #expected.simpleName"() {
