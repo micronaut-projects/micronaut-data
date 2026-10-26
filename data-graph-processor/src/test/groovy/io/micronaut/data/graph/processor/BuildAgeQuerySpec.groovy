@@ -207,6 +207,8 @@ interface DynamicRepository extends CrudRepository<Pet, String> {
         then:
         def e = thrown(RuntimeException)
         e.message.contains('Dynamic relationships are not supported by Apache AGE')
+    }
+
     void "test temporal literals stay strings, as AGE stores them"() {
         given:
         def builder = new AgeCypherQueryBuilder()
