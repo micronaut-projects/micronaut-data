@@ -213,7 +213,7 @@ public class AgeCypherQueryBuilder extends CypherQueryBuilder {
         // AGE creates directed relationships only: an undirected one is matched in either direction and created as
         // outgoing from the node that saves it
         Direction createDirection = direction == Direction.UNDIRECTED ? Direction.OUTGOING : direction;
-        String id = " RETURN " + row + "." + ROW_POSITION + " AS " + ROW_POSITION + ", "
+        String id = RETURN + row + "." + ROW_POSITION + " AS " + ROW_POSITION + ", "
             + (relationshipIdentity != null ? identityExpression(relationshipIdentity, PATH_RELATIONSHIP) : "null") + " AS " + ID_PARAMETER;
         StringBuilder query = new StringBuilder(nodes)
             .append(" OPTIONAL MATCH ").append(directed("(a)", "[existing" + type + "]", "(b)", direction))
@@ -257,7 +257,7 @@ public class AgeCypherQueryBuilder extends CypherQueryBuilder {
         // AGE creates directed relationships only: an undirected one is matched in either direction, so saving it from
         // either end finds it, and created as outgoing from the node that saves it
         Direction createDirection = direction == Direction.UNDIRECTED ? Direction.OUTGOING : direction;
-        String id = " RETURN " + (relationshipIdentity != null ? identityExpression(relationshipIdentity, PATH_RELATIONSHIP) : "null")
+        String id = RETURN + (relationshipIdentity != null ? identityExpression(relationshipIdentity, PATH_RELATIONSHIP) : "null")
             + " AS " + ID_PARAMETER;
         StringBuilder query = new StringBuilder(nodes)
             .append(" OPTIONAL MATCH ").append(directed("(a)", "[existing" + type + "]", "(b)", direction))
@@ -344,7 +344,7 @@ public class AgeCypherQueryBuilder extends CypherQueryBuilder {
     @Override
     protected void appendPathReturn(StringBuilder query, PathQueryDefinition definition) {
         if (definition.kind() == PathQueryDefinition.Kind.SHORTEST && definition.result() == PathQueryDefinition.Result.ELEMENTS) {
-            query.append(" RETURN ").append(PATH).append(" ORDER BY length(").append(PATH).append(") LIMIT 1");
+            query.append(RETURN).append(PATH).append(" ORDER BY length(").append(PATH).append(") LIMIT 1");
             return;
         }
         super.appendPathReturn(query, definition);

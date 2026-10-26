@@ -176,10 +176,10 @@ public class CypherQueryBuilder implements GraphQueryBuilder {
     static final String CLOSE_AS = ") AS ";
     static final String AND = " AND ";
     static final String WHERE = " WHERE ";
+    static final String RETURN = " RETURN ";
     private static final String DISTINCT = "DISTINCT ";
     private static final String TO_LOWER = "toLower(";
     private static final String RESULT = "result";
-    private static final String RETURN = " RETURN ";
     private static final String MATCH_OPEN = "MATCH (";
     private static final String CLOSE_WHERE = ") WHERE ";
     private static final String NOT_OPEN = "NOT (";
