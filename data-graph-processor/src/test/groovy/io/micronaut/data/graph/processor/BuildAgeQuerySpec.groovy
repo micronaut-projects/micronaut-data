@@ -4,8 +4,13 @@ import io.micronaut.data.annotation.Query
 import io.micronaut.inject.BeanDefinition
 import io.micronaut.inject.ExecutableMethod
 import spock.lang.Shared
+import io.micronaut.data.graph.model.query.builder.AgeCypherQueryBuilder
 import io.micronaut.data.graph.model.query.builder.AgeStatements
 import spock.lang.Unroll
+
+import java.time.Duration
+import java.time.Instant
+import java.time.LocalDate
 
 class BuildAgeQuerySpec extends AbstractGraphDataSpec {
 
@@ -156,6 +161,18 @@ interface LabelsRepository extends CrudRepository<Person, String> {
         then:
         def e = thrown(RuntimeException)
         e.message.contains('Apache AGE nodes have a single label')
+    }
+
+    void "test temporal literals stay strings, as AGE stores them"() {
+        given:
+        def builder = new AgeCypherQueryBuilder()
+
+        expect:
+        builder.asLiteral(LocalDate.of(2024, 1, 31)) == "'2024-01-31'"
+        builder.asLiteral(Instant.parse("2024-01-31T10:15:30Z")) == "'2024-01-31T10:15:30Z'"
+        builder.asLiteral(Duration.ofMinutes(90)) == "'PT1H30M'"
+        builder.asLiteral([LocalDate.of(2024, 1, 31), 1]) == "['2024-01-31', 1]"
+        builder.asLiteral(42) == '42'
     }
 
     private static ExecutableMethod<?, ?> findMethod(BeanDefinition<?> definition, String name) {
