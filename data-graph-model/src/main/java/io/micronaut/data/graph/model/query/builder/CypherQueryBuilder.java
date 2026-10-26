@@ -182,6 +182,7 @@ public class CypherQueryBuilder implements GraphQueryBuilder {
     private static final String RETURN = " RETURN ";
     private static final String MATCH_OPEN = "MATCH (";
     private static final String CLOSE_WHERE = ") WHERE ";
+    private static final String WHERE = " WHERE ";
     private static final String CLOSE_AS_RESULT = ") AS result";
     private static final String AND = " AND ";
     private static final String SET = " SET ";
@@ -774,7 +775,7 @@ public class CypherQueryBuilder implements GraphQueryBuilder {
 
     private static void appendWhere(StringBuilder query, List<String> conditions) {
         if (!conditions.isEmpty()) {
-            query.append(" WHERE ").append(String.join(AND, conditions));
+            query.append(WHERE).append(String.join(AND, conditions));
         }
     }
 
@@ -860,7 +861,7 @@ public class CypherQueryBuilder implements GraphQueryBuilder {
      * @return The predicate
      */
     protected String existsPattern(String pattern, @Nullable String where) {
-        return where == null ? pattern : "EXISTS { MATCH " + pattern + " WHERE " + where + " }";
+        return where == null ? pattern : "EXISTS { MATCH " + pattern + WHERE + where + " }";
     }
 
     /**
@@ -880,7 +881,7 @@ public class CypherQueryBuilder implements GraphQueryBuilder {
             query.append(", ").append(pattern.text);
         }
         if (where != null && !where.isEmpty()) {
-            query.append(" WHERE ").append(where);
+            query.append(WHERE).append(where);
         }
     }
 
@@ -1373,7 +1374,7 @@ public class CypherQueryBuilder implements GraphQueryBuilder {
         }
 
         @Override
-        public void visit(DynamicPropertyExpression<?> expression) {
+        public void visit(DynamicPropertyExpression<?, ?> expression) {
             // A schemaless property is read straight off the root node; a node without it yields null
             out.append(ROOT).append('.').append(GraphEntities.escapeName(expression.getName()));
         }
@@ -1462,7 +1463,7 @@ public class CypherQueryBuilder implements GraphQueryBuilder {
         }
 
         @Override
-        public void visit(RelatedPredicate predicate) {
+        public void visit(RelatedPredicate<?, ?> predicate) {
             PersistentEntity entity = state.entity;
             String type = "";
             Direction direction = Direction.UNDIRECTED;
@@ -1483,10 +1484,10 @@ public class CypherQueryBuilder implements GraphQueryBuilder {
                 out.append(existsPattern(relatedPattern(direction, hops, "()"), null));
                 return;
             }
-            PersistentProperty identity = target.getIdentity();
-            if (identity == null) {
+            if (!target.hasIdentity()) {
                 throw new IllegalArgumentException("Entity [" + target.getName() + "] has no identifier to match a related node by");
             }
+            PersistentProperty identity = target.getIdentity();
             io.micronaut.data.model.PersistentPropertyPath idPath = io.micronaut.data.model.PersistentPropertyPath.of(List.of(), identity);
             StringBuilder value = new StringBuilder();
             new ExpressionRenderer(state, value).appendExpression(targetId, idPath);
@@ -1932,7 +1933,7 @@ public class CypherQueryBuilder implements GraphQueryBuilder {
         }
 
         @Override
-        public void visit(DynamicPropertyExpression<?> expression) {
+        public void visit(DynamicPropertyExpression<?, ?> expression) {
             super.visit(expression);
             if (depth == 0) {
                 appendAlias(expression.getName());
