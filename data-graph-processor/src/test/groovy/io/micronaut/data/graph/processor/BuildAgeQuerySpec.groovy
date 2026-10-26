@@ -140,6 +140,7 @@ interface FriendRepository extends CrudRepository<Friend, String> {
     @PathLimit(3)
     boolean existsPathByFriends(String from, String to, @PathDirection Direction direction);
     long countRelationshipsByFriends(@PathDirection Direction direction);
+    @PathLimit(3)
     Page<GraphPath<Friend>> findPathByFriends(String from, String to, Pageable pageable);
     @PathLimit(3)
     Page<GraphPath<Friend>> findAllShortestPathsByFriends(String from, String to, Pageable pageable);

@@ -440,7 +440,7 @@ interface NoIdRepository extends GenericRepository<Anonymous, String> {
     void "test PGQL path finders with a direction argument"() {
         expect:
         getQuery(findMethod(paths, 'existsPathByMentor', 3)) ==
-            'SELECT 1 AS "result" FROM MATCH ANY (s:Person) $__pathLeft[:FOLLOWS]$__pathRight{1,5} (t:Person) ON people WHERE s.id = ? AND t.id = ? LIMIT 1'
+            'SELECT 1 AS "result" FROM MATCH ANY (s:Person) $__pathLeft[:FOLLOWS]$__pathRight{1,5} (t:Person) ON people WHERE s.id = ? AND t.id = ? AND s.id <> t.id LIMIT 1'
         getQuery(findMethod(moviePaths, 'countRelationshipsByDirectors', 1)) ==
             'SELECT COUNT(*) AS "result" FROM MATCH (s:Movie) $__pathLeft[r:DIRECTED]$__pathRight (t:Person) ON movies'
     }
