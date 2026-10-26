@@ -211,6 +211,7 @@ public final class OracleGraphRows {
             return Map.of();
         }
         String text = json instanceof byte[] bytes ? new String(bytes, StandardCharsets.UTF_8) : json.toString();
+        int length = text.length();
         // agtype text is a superset of JSON
         if (Agtype.parse(text) instanceof Map<?, ?> map) {
             Map<String, Object> attributes = new LinkedHashMap<>();
@@ -223,7 +224,7 @@ public final class OracleGraphRows {
             return attributes;
         }
         // The column holds row data, which may be personal, so only its length is reported
-        throw new IllegalStateException("Expected a JSON object of schemaless properties, found a value of " + text.length() + " characters");
+        throw new IllegalStateException("Expected a JSON object of schemaless properties, found a value of " + length + " characters");
     }
 
     private static Map<String, Map<String, @Nullable Object>> group(List<String> columns, List<@Nullable Object> row) {
