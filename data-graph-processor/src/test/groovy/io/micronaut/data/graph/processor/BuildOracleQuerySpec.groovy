@@ -58,6 +58,8 @@ interface SqlRepository extends GenericRepository<Movie, String> {
     List<String> findTitleByReleasedGreaterThan(int released);
     Integer findMaxReleased();
     List<MovieSummary> findByReleasedLessThan(Integer released);
+    @Query("SELECT COUNT(*) AS result FROM v\$session WHERE sid = \$sid AND path <> 'C:\\\\' -- see \$ticket")
+    long sessions(long sid);
 }
 """)
         paths = buildRepository('test.PathRepository', """
@@ -76,6 +78,9 @@ interface PathRepository extends GenericRepository<Person, String> {
     boolean existsPathByMentor(String from, String to);
     @PathLimit(5)
     long countPaths(String from, String to);
+    @PathLimit(5)
+    long countPathsByMentor(String from, String to, @PathLimit int depth);
+    Optional<GraphPath<Person>> findShortestPath(String from, String to, @PathLimit int depth);
     List<GraphRelationship<Person, Person>> findRelationshipsByMentor(String from, String to);
 }
 """)
@@ -165,6 +170,93 @@ interface AccountRepository extends CrudRepository<Account, Long> {
         getParameterNames(method) == ['', '']
     }
 
+    void "test a dollar inside a name, a SQL comment and a backslash in a literal are not parameters"() {
+        given:
+        def method = findMethod(sql, 'sessions')
+
+        expect:
+        def rawQuery = method.annotationMetadata.stringValue(Query, 'rawQuery').get()
+        rawQuery.startsWith("SELECT COUNT(*) AS result FROM v\$session WHERE sid = ? AND path <> 'C:\\")
+        rawQuery.endsWith("' -- see \$ticket")
+
+        and: "only the sid is bound"
+        method.annotationMetadata.getAnnotation(io.micronaut.data.intercept.annotation.DataMethod)
+            .getAnnotations(io.micronaut.data.intercept.annotation.DataMethod.META_MEMBER_PARAMETERS, io.micronaut.data.intercept.annotation.DataMethodQueryParameter)
+            *.intValue(io.micronaut.data.intercept.annotation.DataMethodQueryParameter.META_MEMBER_PARAMETER_INDEX)*.asInt == [0]
+    }
+
+    void "test names that need quoting use double quotes"() {
+        given:
+        def repository = buildRepository('test.QuotedRepository', """
+@Node("Movie Node")
+class Quoted {
+    @Id
+    private String title;
+    @MappedProperty("first name")
+    private String firstName;
+    @Relationship(type = "ACTED IN", direction = Direction.INCOMING)
+    private List<Quoted> cast = new ArrayList<>();
+
+    public String getTitle() { return title; }
+    public void setTitle(String title) { this.title = title; }
+    public String getFirstName() { return firstName; }
+    public void setFirstName(String firstName) { this.firstName = firstName; }
+    public List<Quoted> getCast() { return cast; }
+    public void setCast(List<Quoted> cast) { this.cast = cast; }
+}
+
+@TestOracleRepository
+@PropertyGraph(value = "movies", language = PropertyGraph.QueryLanguage.SQL_PGQ)
+interface QuotedRepository extends GenericRepository<Quoted, String> {
+    List<Quoted> findByFirstName(String name);
+    List<Quoted> findByCastTitle(String title);
+}
+""")
+
+        expect:
+        getQuery(findMethod(repository, 'findByFirstName')).contains('MATCH (n IS "Movie Node") WHERE (n."first name" = ?)')
+        getQuery(findMethod(repository, 'findByCastTitle')).contains('MATCH (n IS "Movie Node"), (n) <-[IS "ACTED IN"]- (a0 IS "Movie Node") WHERE (a0.title = ?)')
+    }
+
+    void "test a property graph name must be a plain identifier"() {
+        when:
+        buildRepository('test.HostileGraphRepository', """
+$MOVIES
+
+@TestOracleRepository
+@PropertyGraph("movies MATCH (x) COLUMNS (1 AS y)) --")
+interface HostileGraphRepository extends GenericRepository<Movie, String> {
+    long countByReleasedLessThan(int year);
+}
+""")
+
+        then:
+        def e = thrown(RuntimeException)
+        e.message.contains('is not a plain identifier')
+    }
+
+    void "test a node without an identifier is rejected"() {
+        when:
+        buildRepository('test.NoIdRepository', """
+@Node
+class Anonymous {
+    private String name;
+    public String getName() { return name; }
+    public void setName(String name) { this.name = name; }
+}
+
+@TestOracleRepository
+@PropertyGraph("movies")
+interface NoIdRepository extends GenericRepository<Anonymous, String> {
+    long countByName(String name);
+}
+""")
+
+        then: "the build fails with a message rather than a NullPointerException"
+        def e = thrown(RuntimeException)
+        e.message.contains("doesn't have an identity") || e.message.contains('has no identifier')
+    }
+
     void "test PGQL path finders"() {
         given:
         def person = 's.id AS "%1$s__ID_", s.id AS "%1$s__id", \'Person\' AS "%1$s__LABEL_", s.name AS "%1$s__name", s.born AS "%1$s__born"'
@@ -172,14 +264,24 @@ interface AccountRepository extends CrudRepository<Account, Long> {
         def v2 = 'v2.id AS "v2__ID_", v2.id AS "v2__id", \'Person\' AS "v2__LABEL_", v2.name AS "v2__name", v2.born AS "v2__born"'
         def steps = "MATCHNUM(v1) AS \"p__M_\", ELEMENT_NUMBER(x) AS \"p__I_\", $v1, $v2, 'FOLLOWS' AS \"x__TYPE_\""
 
-        expect:
+        expect: "the shortest kinds exclude the empty path from a node to itself, as the Cypher builder does"
         getQuery(findMethod(paths, 'findShortestPathByMentor')) ==
-            "SELECT $steps FROM MATCH ANY SHORTEST (s:Person) -[x:FOLLOWS]->{1,5} (t:Person) ON people ONE ROW PER STEP (v1, x, v2) WHERE s.id = ? AND t.id = ? ORDER BY MATCHNUM(v1), ELEMENT_NUMBER(x)"
+            "SELECT $steps FROM MATCH ANY SHORTEST (s:Person) -[x:FOLLOWS]->{1,5} (t:Person) ON people ONE ROW PER STEP (v1, x, v2) WHERE s.id = ? AND t.id = ? AND s.id <> t.id ORDER BY MATCHNUM(v1), ELEMENT_NUMBER(x)"
         getQuery(findMethod(paths, 'findAllShortestPathsByMentor')).contains("FROM MATCH ALL SHORTEST (s:Person) -[x:FOLLOWS]->{1,5} (t:Person) ON people")
         getQuery(findMethod(paths, 'existsPathByMentor')) ==
-            'SELECT 1 AS "result" FROM MATCH ANY (s:Person) -[:FOLLOWS]->{1,5} (t:Person) ON people WHERE s.id = ? AND t.id = ? LIMIT 1'
+            'SELECT 1 AS "result" FROM MATCH ANY (s:Person) -[:FOLLOWS]->{1,5} (t:Person) ON people WHERE s.id = ? AND t.id = ? AND s.id <> t.id LIMIT 1'
+
+        and: "all paths from a node to itself are its cycles"
         getQuery(findMethod(paths, 'countPaths')) ==
             'SELECT COUNT(*) AS "result" FROM MATCH ALL (s:Person) -[]-{1,5} (t:Person) ON people WHERE s.id = ? AND t.id = ?'
+
+        and: "a @PathLimit argument is rendered by the runtime in place of the token, over the depth of the annotation"
+        getQuery(findMethod(paths, 'countPathsByMentor')) ==
+            'SELECT COUNT(*) AS "result" FROM MATCH ALL (s:Person) -[:FOLLOWS]->{1,$__pathLimit} (t:Person) ON people WHERE s.id = ? AND t.id = ?'
+
+        and: "a path over any relationship type reads the type of each step from the label of its edge"
+        getQuery(findMethod(paths, 'findShortestPath')) ==
+            "SELECT ${steps.replace("'FOLLOWS' AS", 'LABEL(x) AS')} FROM MATCH ANY SHORTEST (s:Person) -[x]-{1,\$__pathLimit} (t:Person) ON people ONE ROW PER STEP (v1, x, v2) WHERE s.id = ? AND t.id = ? AND s.id <> t.id ORDER BY MATCHNUM(v1), ELEMENT_NUMBER(x)"
         getQuery(findMethod(paths, 'findRelationshipsByMentor')) ==
             "SELECT ${String.format(person, 's')}, ${String.format(person, 's').replace('s.', 't.').replace('"s__', '"t__')}, 'FOLLOWS' AS \"r__TYPE_\" FROM MATCH (s:Person) -[r:FOLLOWS]-> (t:Person) ON people WHERE s.id = ? AND t.id = ?"
     }

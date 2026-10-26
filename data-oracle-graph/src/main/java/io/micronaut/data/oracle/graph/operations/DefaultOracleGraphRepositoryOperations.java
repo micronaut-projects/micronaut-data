@@ -60,6 +60,8 @@ import java.sql.PreparedStatement;
 import java.sql.ResultSet;
 import java.sql.ResultSetMetaData;
 import java.sql.SQLException;
+import java.sql.Types;
+import java.time.OffsetDateTime;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Map;
@@ -81,6 +83,14 @@ final class DefaultOracleGraphRepositoryOperations extends AbstractGraphReposito
 
     private static final Logger LOG = LoggerFactory.getLogger(DefaultOracleGraphRepositoryOperations.class);
     private static final String DECLARE_METHOD = "Declare a query method on the Oracle graph repository instead";
+    /**
+     * {@code oracle.jdbc.OracleTypes.TIMESTAMPTZ}, the type of a TIMESTAMP WITH TIME ZONE column.
+     */
+    private static final int ORACLE_TIMESTAMP_WITH_TIME_ZONE = -101;
+    /**
+     * {@code oracle.jdbc.OracleTypes.TIMESTAMPLTZ}, the type of a TIMESTAMP WITH LOCAL TIME ZONE column.
+     */
+    private static final int ORACLE_TIMESTAMP_WITH_LOCAL_TIME_ZONE = -102;
 
     private final ConnectionOperations<Connection> connectionOperations;
     private final JdbcRepositoryOperations jdbcOperations;
@@ -137,26 +147,37 @@ final class DefaultOracleGraphRepositoryOperations extends AbstractGraphReposito
 
     private static GraphResult run(Connection connection, String query, Map<String, Object> parameters) {
         OracleGraphRows.Expanded expanded = OracleGraphRows.expand(query, new ArrayList<>(parameters.values()));
-        if (LOG.isDebugEnabled()) {
-            LOG.debug("Executing Oracle graph query: {} with parameters {}", expanded.query(), expanded.parameters());
+        if (LOG.isTraceEnabled()) {
+            // Parameter values may hold personal data, so they are logged at TRACE only
+            LOG.trace("Executing Oracle graph query: {} with parameters {}", expanded.query(), expanded.parameters());
+        } else if (LOG.isDebugEnabled()) {
+            LOG.debug("Executing Oracle graph query: {}", expanded.query());
         }
         try (PreparedStatement statement = connection.prepareStatement(expanded.query())) {
             List<Object> values = expanded.parameters();
             for (int i = 0; i < values.size(); i++) {
-                statement.setObject(i + 1, values.get(i));
+                Object value = values.get(i);
+                if (value == null) {
+                    // Oracle rejects an untyped null bound through setObject
+                    statement.setNull(i + 1, Types.NULL);
+                } else {
+                    statement.setObject(i + 1, value);
+                }
             }
             try (ResultSet resultSet = statement.executeQuery()) {
                 ResultSetMetaData metaData = resultSet.getMetaData();
                 int count = metaData.getColumnCount();
                 List<String> columns = new ArrayList<>(count);
+                int[] types = new int[count];
                 for (int i = 1; i <= count; i++) {
                     columns.add(metaData.getColumnLabel(i));
+                    types[i - 1] = metaData.getColumnType(i);
                 }
                 List<List<Object>> rows = new ArrayList<>();
                 while (resultSet.next()) {
                     List<Object> row = new ArrayList<>(count);
                     for (int i = 1; i <= count; i++) {
-                        row.add(resultSet.getObject(i));
+                        row.add(readValue(resultSet, i, types[i - 1]));
                     }
                     rows.add(row);
                 }
@@ -165,6 +186,19 @@ final class DefaultOracleGraphRepositoryOperations extends AbstractGraphReposito
         } catch (SQLException e) {
             throw new DataAccessException("Error executing Oracle graph query [" + expanded.query() + "]: " + e.getMessage(), e);
         }
+    }
+
+    /**
+     * Reads a column of a row. Temporal columns are read as JDBC temporal values rather than through
+     * {@link ResultSet#getObject(int)}, which the Oracle driver answers with its own {@code oracle.sql.TIMESTAMP}
+     * types that the conversion service cannot convert to the temporal type of the entity property.
+     */
+    private static @Nullable Object readValue(ResultSet resultSet, int index, int type) throws SQLException {
+        return switch (type) {
+            case Types.DATE, Types.TIMESTAMP, ORACLE_TIMESTAMP_WITH_LOCAL_TIME_ZONE -> resultSet.getTimestamp(index);
+            case Types.TIMESTAMP_WITH_TIMEZONE, ORACLE_TIMESTAMP_WITH_TIME_ZONE -> resultSet.getObject(index, OffsetDateTime.class);
+            default -> resultSet.getObject(index);
+        };
     }
 
     @Override

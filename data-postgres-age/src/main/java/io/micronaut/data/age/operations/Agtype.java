@@ -38,8 +38,16 @@ import java.util.Map;
 @Internal
 final class Agtype {
 
+    /**
+     * How deeply objects and arrays may nest. Stored values are parsed recursively, so a value
+     * nested deeper than any sensible graph property is refused rather than exhausting the stack.
+     */
+    private static final int MAX_DEPTH = 64;
+
     private final String text;
     private int position;
+    private int depth;
+    private @Nullable String numberText;
 
     private Agtype(String text) {
         this.text = text;
@@ -126,7 +134,7 @@ final class Agtype {
                 }
                 yield new GraphPathValue(nodes, edges);
             }
-            case "numeric" -> value instanceof Number n ? new BigDecimal(n.toString()) : value;
+            case "numeric" -> value instanceof Number && numberText != null ? new BigDecimal(numberText) : value;
             case "float" -> value instanceof Number n ? n.doubleValue() : value;
             case "integer" -> value instanceof Number n ? n.longValue() : value;
             default -> value;
@@ -159,10 +167,12 @@ final class Agtype {
 
     private Map<String, Object> object() {
         position++;
+        enter();
         Map<String, Object> map = new LinkedHashMap<>();
         skipWhitespace();
         if (peek() == '}') {
             position++;
+            depth--;
             return map;
         }
         while (true) {
@@ -174,6 +184,7 @@ final class Agtype {
             skipWhitespace();
             char c = next();
             if (c == '}') {
+                depth--;
                 return map;
             }
             if (c != ',') {
@@ -184,10 +195,12 @@ final class Agtype {
 
     private List<Object> array() {
         position++;
+        enter();
         List<Object> list = new ArrayList<>();
         skipWhitespace();
         if (peek() == ']') {
             position++;
+            depth--;
             return list;
         }
         while (true) {
@@ -195,11 +208,18 @@ final class Agtype {
             skipWhitespace();
             char c = next();
             if (c == ']') {
+                depth--;
                 return list;
             }
             if (c != ',') {
                 throw error("Expected , or ] in array");
             }
+        }
+    }
+
+    private void enter() {
+        if (++depth > MAX_DEPTH) {
+            throw error("Value nests deeper than " + MAX_DEPTH + " levels");
         }
     }
 
@@ -212,23 +232,38 @@ final class Agtype {
                 return sb.toString();
             }
             if (c == '\\') {
-                char escaped = next();
-                switch (escaped) {
-                    case 'n' -> sb.append('\n');
-                    case 'r' -> sb.append('\r');
-                    case 't' -> sb.append('\t');
-                    case 'b' -> sb.append('\b');
-                    case 'f' -> sb.append('\f');
-                    case 'u' -> {
-                        sb.append((char) Integer.parseInt(text.substring(position, position + 4), 16));
-                        position += 4;
-                    }
-                    default -> sb.append(escaped);
-                }
+                escape(sb);
             } else {
                 sb.append(c);
             }
         }
+    }
+
+    private void escape(StringBuilder sb) {
+        char escaped = next();
+        switch (escaped) {
+            case 'n' -> sb.append('\n');
+            case 'r' -> sb.append('\r');
+            case 't' -> sb.append('\t');
+            case 'b' -> sb.append('\b');
+            case 'f' -> sb.append('\f');
+            case 'u' -> sb.append(unicodeEscape());
+            default -> sb.append(escaped);
+        }
+    }
+
+    private char unicodeEscape() {
+        if (position + 4 > text.length()) {
+            throw error("Unicode escape is cut short");
+        }
+        char c;
+        try {
+            c = (char) Integer.parseInt(text.substring(position, position + 4), 16);
+        } catch (NumberFormatException e) {
+            throw error("Invalid unicode escape");
+        }
+        position += 4;
+        return c;
     }
 
     private Object number() {
@@ -261,7 +296,14 @@ final class Agtype {
         if (number.isEmpty()) {
             throw error("Unexpected character");
         }
-        return decimal ? (Object) Double.valueOf(number) : (Object) Long.valueOf(number);
+        // Kept for a following ::numeric annotation, which must not go through a double
+        numberText = number;
+        try {
+            return decimal ? (Object) Double.valueOf(number) : (Object) Long.valueOf(number);
+        } catch (NumberFormatException e) {
+            // Larger than a long: agtype integers are 64-bit, so this is a numeric literal
+            return new BigDecimal(number);
+        }
     }
 
     private void skipWhitespace() {
@@ -290,6 +332,7 @@ final class Agtype {
     }
 
     private IllegalArgumentException error(String message) {
-        return new IllegalArgumentException(message + " at position " + position + " of agtype value: " + text);
+        // The value is a database row, which may hold personal data, so only its length is reported
+        return new IllegalArgumentException(message + " at position " + position + " of an agtype value of " + text.length() + " characters");
     }
 }

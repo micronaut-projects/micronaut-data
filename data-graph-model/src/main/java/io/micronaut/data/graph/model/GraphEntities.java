@@ -279,10 +279,40 @@ public final class GraphEntities {
         if (isPlainIdentifier(name)) {
             return name;
         }
-        return "`" + name.replace("`", "``") + "`";
+        return "`" + requireName(name) + "`";
     }
 
-    private static boolean isPlainIdentifier(String name) {
+    /**
+     * Checks that a label, relationship type or property name can be quoted into a query. A name
+     * holding a backtick, a dollar sign or a control character is rejected rather than escaped, as
+     * the databases differ in how they read such escapes and the names reach the query text from
+     * annotations and from schemaless maps alike.
+     *
+     * @param name The name
+     * @return The name
+     * @throws IllegalArgumentException If the name cannot appear in a query
+     */
+    public static String requireName(String name) {
+        if (name.isEmpty()) {
+            throw new IllegalArgumentException("A label, relationship type or property name cannot be empty");
+        }
+        for (int i = 0; i < name.length(); i++) {
+            char c = name.charAt(i);
+            if (c == '`' || c == '$' || Character.isISOControl(c)) {
+                throw new IllegalArgumentException("Name [" + name + "] cannot appear in a graph query: it contains a backtick, a dollar sign or a control character");
+            }
+        }
+        return name;
+    }
+
+    /**
+     * Whether a name can appear in a query without quoting: a letter or underscore followed by
+     * letters, digits and underscores.
+     *
+     * @param name The name
+     * @return True if it needs no quoting
+     */
+    public static boolean isPlainIdentifier(String name) {
         if (name.isEmpty() || !Character.isLetter(name.charAt(0))) {
             return false;
         }

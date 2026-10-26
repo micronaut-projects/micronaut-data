@@ -47,6 +47,7 @@ import java.util.Map;
 public final class GraphValueDecoder extends LimitingStream implements Decoder {
 
     private static final String EXPECTED = "Expected ";
+    private static final int MAX_DEPTH = 64;
 
     private final @Nullable Iterator<? extends Map.Entry<?, ?>> entries;
     private final @Nullable Iterator<?> elements;
@@ -199,12 +200,42 @@ public final class GraphValueDecoder extends LimitingStream implements Decoder {
 
     @Override
     public byte decodeByte() throws IOException {
-        return takeNumber("a byte").byteValue();
+        return (byte) takeIntegral("a byte", Byte.MIN_VALUE, Byte.MAX_VALUE);
     }
 
     @Override
     public short decodeShort() throws IOException {
-        return takeNumber("a short").shortValue();
+        return (short) takeIntegral("a short", Short.MIN_VALUE, Short.MAX_VALUE);
+    }
+
+    /**
+     * Takes a number that fits the range of an integral type, rather than narrowing it silently. A fraction is
+     * dropped, as the Java narrowing conversions drop it.
+     *
+     * @param expected What is expected, for the error message
+     * @param min      The smallest value of the type
+     * @param max      The largest value of the type
+     * @return The value
+     * @throws IOException If the value is not a number, or does not fit
+     */
+    private long takeIntegral(String expected, long min, long max) throws IOException {
+        Number number = takeNumber(expected);
+        try {
+            long value = switch (number) {
+                case Long l -> l;
+                case Integer i -> i;
+                case Short s -> s;
+                case Byte b -> b;
+                case BigInteger bigInteger -> bigInteger.longValueExact();
+                default -> new BigDecimal(number.toString()).toBigInteger().longValueExact();
+            };
+            if (value >= min && value <= max) {
+                return value;
+            }
+        } catch (ArithmeticException | NumberFormatException e) {
+            // Beyond a long, or not a finite number: reported below
+        }
+        throw createDeserializationException(EXPECTED + expected + " but found [" + number + "], which does not fit in " + expected, number);
     }
 
     @Override
@@ -230,12 +261,12 @@ public final class GraphValueDecoder extends LimitingStream implements Decoder {
 
     @Override
     public int decodeInt() throws IOException {
-        return takeNumber("an int").intValue();
+        return (int) takeIntegral("an int", Integer.MIN_VALUE, Integer.MAX_VALUE);
     }
 
     @Override
     public long decodeLong() throws IOException {
-        return takeNumber("a long").longValue();
+        return takeIntegral("a long", Long.MIN_VALUE, Long.MAX_VALUE);
     }
 
     @Override
@@ -296,20 +327,22 @@ public final class GraphValueDecoder extends LimitingStream implements Decoder {
 
     @Override
     public @Nullable Object decodeArbitrary() throws IOException {
-        return arbitrary(take());
+        return arbitrary(take(), 0);
     }
 
-    private static @Nullable Object arbitrary(@Nullable Object value) {
+    private static @Nullable Object arbitrary(@Nullable Object value, int depth) {
         return switch (value) {
             case Map<?, ?> map -> {
+                int inner = nested(depth);
                 Map<String, Object> copy = new LinkedHashMap<>(map.size());
-                map.forEach((k, v) -> copy.put(String.valueOf(k), arbitrary(v)));
+                map.forEach((k, v) -> copy.put(String.valueOf(k), arbitrary(v, inner)));
                 yield copy;
             }
             case List<?> list -> {
+                int inner = nested(depth);
                 List<Object> copy = new ArrayList<>(list.size());
                 for (Object item : list) {
-                    copy.add(arbitrary(item));
+                    copy.add(arbitrary(item, inner));
                 }
                 yield copy;
             }
@@ -317,23 +350,36 @@ public final class GraphValueDecoder extends LimitingStream implements Decoder {
         };
     }
 
-    @Override
-    public JsonNode decodeNode() throws IOException {
-        return node(take());
+    /**
+     * Stored values are copied recursively, so a value nested deeper than any sensible graph
+     * property is refused rather than exhausting the stack.
+     */
+    private static int nested(int depth) {
+        if (depth >= MAX_DEPTH) {
+            throw new IllegalArgumentException("Graph value nests deeper than " + MAX_DEPTH + " levels");
+        }
+        return depth + 1;
     }
 
-    private static JsonNode node(@Nullable Object value) {
+    @Override
+    public JsonNode decodeNode() throws IOException {
+        return node(take(), 0);
+    }
+
+    private static JsonNode node(@Nullable Object value, int depth) {
         return switch (value) {
             case null -> JsonNode.nullNode();
             case Map<?, ?> map -> {
+                int inner = nested(depth);
                 Map<String, JsonNode> nodes = new LinkedHashMap<>(map.size());
-                map.forEach((k, v) -> nodes.put(String.valueOf(k), node(v)));
+                map.forEach((k, v) -> nodes.put(String.valueOf(k), node(v, inner)));
                 yield JsonNode.createObjectNode(nodes);
             }
             case List<?> list -> {
+                int inner = nested(depth);
                 List<JsonNode> nodes = new ArrayList<>(list.size());
                 for (Object item : list) {
-                    nodes.add(node(item));
+                    nodes.add(node(item, inner));
                 }
                 yield JsonNode.createArrayNode(nodes);
             }
@@ -385,6 +431,18 @@ public final class GraphValueDecoder extends LimitingStream implements Decoder {
 
     @Override
     public IOException createDeserializationException(String message, @Nullable Object invalidValue) {
-        return new SerdeException(currentKey == null ? message : message + " (property [" + currentKey + "])");
+        return error(message, null);
+    }
+
+    /**
+     * An exception naming the property being read, if any.
+     *
+     * @param message The message
+     * @param cause   The cause, or null
+     * @return The exception
+     */
+    SerdeException error(String message, @Nullable Throwable cause) {
+        String described = currentKey == null ? message : message + " (property [" + currentKey + "])";
+        return cause == null ? new SerdeException(described) : new SerdeException(described, cause);
     }
 }

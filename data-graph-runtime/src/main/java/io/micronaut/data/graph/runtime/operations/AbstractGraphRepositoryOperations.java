@@ -62,6 +62,7 @@ import io.micronaut.data.model.runtime.UpdateBatchOperation;
 import io.micronaut.data.model.runtime.UpdateOperation;
 import io.micronaut.data.model.runtime.convert.AttributeConverter;
 import io.micronaut.data.operations.async.AsyncCapableRepository;
+import io.micronaut.data.operations.async.AsyncRepositoryOperations;
 import io.micronaut.data.operations.reactive.ReactiveCapableRepository;
 import io.micronaut.data.operations.reactive.ReactiveRepositoryOperations;
 import io.micronaut.data.runtime.convert.DataConversionService;
@@ -83,8 +84,11 @@ import io.micronaut.data.runtime.query.PreparedQueryDecorator;
 import io.micronaut.data.annotation.Relation;
 import org.jspecify.annotations.Nullable;
 
+import jakarta.inject.Inject;
+
 import java.util.ArrayList;
 import java.util.Collection;
+import java.util.Collections;
 import java.util.IdentityHashMap;
 import java.util.Iterator;
 import java.util.LinkedHashMap;
@@ -92,7 +96,7 @@ import java.util.List;
 import java.util.Map;
 import java.util.Objects;
 import java.util.Optional;
-import java.util.concurrent.ConcurrentHashMap;
+import java.util.concurrent.Executor;
 import java.util.concurrent.ExecutorService;
 import java.util.function.Function;
 import java.util.stream.Stream;
@@ -119,7 +123,20 @@ public abstract class AbstractGraphRepositoryOperations extends AbstractReposito
 
     private final SynchronizedLazyValue<ExecutorAsyncOperations> asyncOperations = new SynchronizedLazyValue<>();
 
-    private final Map<String, String> queryCache = new ConcurrentHashMap<>();
+    /**
+     * Generated queries by key. Writes of entities with schemaless properties generate a query per set
+     * of property names, which callers control, so the cache evicts its least recently used entries.
+     */
+    private final Map<String, String> queryCache = Collections.synchronizedMap(new LinkedHashMap<>(64, 0.75f, true) {
+        @Override
+        protected boolean removeEldestEntry(Map.Entry<String, String> eldest) {
+            return size() > queryCacheSize;
+        }
+    });
+
+    private volatile int queryCacheSize = GraphOperationsConfiguration.DEFAULT_QUERY_CACHE_SIZE;
+
+    private volatile int maxPathDepth = GraphOperationsConfiguration.DEFAULT_MAX_PATH_DEPTH;
 
     private final GraphValueEncoders encoders = GraphValueEncoders.defaults();
 
@@ -155,6 +172,17 @@ public abstract class AbstractGraphRepositoryOperations extends AbstractReposito
         this.mapper = new GraphEntityMapper(runtimeEntityRegistry, conversionService, this::encodeValue, graphSerde);
         this.executorServiceResolver = new ExecutorServiceResolver(executorService);
         this.noCascade = new SyncCascadeOperations<>(conversionService, new RelationshipsWrittenByNode());
+    }
+
+    /**
+     * Applies the limits configured under {@code micronaut.data.graph}.
+     *
+     * @param configuration The configuration
+     */
+    @Inject
+    public void setConfiguration(GraphOperationsConfiguration configuration) {
+        this.maxPathDepth = configuration.getMaxPathDepth();
+        this.queryCacheSize = configuration.getQueryCacheSize();
     }
 
     /**
@@ -208,13 +236,26 @@ public abstract class AbstractGraphRepositoryOperations extends AbstractReposito
     }
 
     @Override
-    public ExecutorAsyncOperations async() {
+    public AsyncRepositoryOperations async() {
+        return executorAsync();
+    }
+
+    private ExecutorAsyncOperations executorAsync() {
         return asyncOperations.get(() -> new ExecutorAsyncOperations(this, executorServiceResolver.get()));
+    }
+
+    /**
+     * The executor that runs asynchronous operations.
+     *
+     * @return The executor
+     */
+    protected Executor executor() {
+        return executorServiceResolver.get();
     }
 
     @Override
     public ReactiveRepositoryOperations reactive() {
-        return new ExecutorReactiveOperations(async(), conversionService);
+        return new ExecutorReactiveOperations(executorAsync(), conversionService);
     }
 
     @Override
@@ -403,6 +444,11 @@ public abstract class AbstractGraphRepositoryOperations extends AbstractReposito
             if (depth < 1) {
                 throw new IllegalArgumentException("The @PathLimit argument must be at least 1, was: " + limit);
             }
+            if (depth > maxPathDepth) {
+                // A variable-length path visits every path up to its depth, so a caller-supplied depth is capped
+                throw new IllegalArgumentException("The @PathLimit argument " + depth + " is larger than "
+                    + GraphOperationsConfiguration.PREFIX + ".max-path-depth (" + maxPathDepth + ")");
+            }
             query.replace(tokenPosition, tokenPosition + PathQueryDefinition.PATH_LIMIT_TOKEN.length(), String.valueOf(depth));
         }
         if (applyLimits && !preparedQuery.isCount()) {
@@ -413,7 +459,9 @@ public abstract class AbstractGraphRepositoryOperations extends AbstractReposito
     }
 
     /**
-     * Appends the ordering and limits requested by method arguments to a query.
+     * Appends the ordering and limits requested by method arguments to a query. A query that cannot
+     * take them, because it is an explicit query or already sorts or limits itself, is rejected
+     * rather than silently returned unsorted or unpaged.
      *
      * @param query  The query
      * @param entity The root entity
@@ -421,11 +469,20 @@ public abstract class AbstractGraphRepositoryOperations extends AbstractReposito
      * @param limit  The limit
      */
     protected void appendSortAndLimit(StringBuilder query, RuntimePersistentEntity<?> entity, Sort sort, Limit limit) {
-        boolean rootQuery = query.indexOf("MATCH (" + CypherQueryBuilder.ROOT) == 0;
-        if (sort != null && sort.isSorted() && rootQuery && query.indexOf(" ORDER BY ") < 0) {
+        if (sort != null && sort.isSorted()) {
+            boolean rootQuery = query.indexOf("MATCH (" + CypherQueryBuilder.ROOT) == 0;
+            if (!rootQuery || query.indexOf(" ORDER BY ") >= 0) {
+                throw new DataAccessException("Cannot apply the sort " + sort.getOrderBy() + " to the query [" + query + "]: sort an explicit query with its own ORDER BY clause");
+            }
             appendOrderBy(query, entity, sort);
         }
-        if (limit != null && limit.isLimited() && query.indexOf(" LIMIT ") < 0 && query.indexOf(" SKIP ") < 0) {
+        if (limit != null && limit.isLimited()) {
+            // A WITH clause may limit what it carries, as the shortest of the paths up to a depth; the final RETURN may not
+            int lastReturn = query.lastIndexOf(" RETURN ");
+            String returnClause = lastReturn < 0 ? query.toString() : query.substring(lastReturn);
+            if (returnClause.contains(" LIMIT ") || returnClause.contains(" SKIP ")) {
+                throw new DataAccessException("Cannot page the query [" + query + "]: it declares SKIP or LIMIT itself");
+            }
             query.append(queryBuilder.buildLimitAndOffset(limit.maxResults(), limit.offset()));
         }
     }
@@ -844,6 +901,12 @@ public abstract class AbstractGraphRepositoryOperations extends AbstractReposito
         if (fromId == null || toId == null) {
             throw new DataAccessException("Cannot link a [" + type + "] relationship without the identifiers of both nodes");
         }
+        try {
+            // The type comes from a schemaless map and becomes part of the query text
+            GraphEntities.requireName(type);
+        } catch (IllegalArgumentException e) {
+            throw new DataAccessException("Relationship type [" + type + "] of [" + owner.getSimpleName() + "] cannot be stored: " + e.getMessage(), e);
+        }
         String key = "dynamicLink:" + owner.getName() + ":" + target.getName() + ":" + type;
         String query = queryCache.computeIfAbsent(key, k -> queryBuilder.buildDynamicLinkQuery(owner, target, type));
         return new GraphQuery(query, Map.of(CypherQueryBuilder.LINK_FROM_PARAMETER, fromId, CypherQueryBuilder.LINK_TO_PARAMETER, toId));
@@ -977,6 +1040,19 @@ public abstract class AbstractGraphRepositoryOperations extends AbstractReposito
             return result;
         }
 
+        /**
+         * Records the instance that now stands for a node whose write completed, so that a related
+         * node that links back to it while its relationships are still being written sees the
+         * instance carrying the generated identifier rather than the original. The two differ for
+         * immutable entities such as records.
+         *
+         * @param instance The instance the save was called with
+         * @param written  The instance after the node was written
+         */
+        void written(Object instance, Object written) {
+            saved.put(instance, written);
+        }
+
         <T> int delete(RuntimePersistentEntity<T> entity, T instance) {
             DeleteNodeOperation<T> operation = new DeleteNodeOperation<>(this, entity, instance);
             operation.delete();
@@ -995,10 +1071,12 @@ public abstract class AbstractGraphRepositoryOperations extends AbstractReposito
      */
     private final class NodeOperation<T> extends AbstractSyncEntityOperations<OperationContext, T, RuntimeException> {
         private final Persister persister;
+        private final T original;
 
         NodeOperation(Persister persister, RuntimePersistentEntity<T> entity, T instance, boolean insert) {
             super(persister.context, AbstractGraphRepositoryOperations.this.noCascade, entityEventRegistry, entity, AbstractGraphRepositoryOperations.this.conversionService, instance, insert);
             this.persister = persister;
+            this.original = instance;
         }
 
         @Override
@@ -1024,6 +1102,7 @@ public abstract class AbstractGraphRepositoryOperations extends AbstractReposito
             if (addLabels != null) {
                 persister.run(addLabels);
             }
+            persister.written(original, entity);
             writeRelationships();
             writeDynamicRelationships();
         }

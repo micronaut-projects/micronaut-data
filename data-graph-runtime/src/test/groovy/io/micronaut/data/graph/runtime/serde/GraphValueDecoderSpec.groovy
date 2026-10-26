@@ -13,6 +13,32 @@ import java.time.LocalDate
  */
 class GraphValueDecoderSpec extends Specification {
 
+    void "values nested deeper than 64 levels are refused"() {
+        given:
+        def nested = [] as List
+        64.times { nested = [nested] }
+
+        when:
+        GraphValueDecoder.of(nested).decodeArbitrary()
+
+        then:
+        def e = thrown(IllegalArgumentException)
+        e.message.contains('deeper than 64')
+
+        when:
+        GraphValueDecoder.of(nested).decodeNode()
+
+        then:
+        thrown(IllegalArgumentException)
+
+        when: "64 levels are fine"
+        def limit = [] as List
+        63.times { limit = [limit] }
+
+        then:
+        GraphValueDecoder.of(limit).decodeArbitrary() instanceof List
+    }
+
     @Unroll
     void "decode #description"() {
         expect:
@@ -146,6 +172,27 @@ class GraphValueDecoderSpec extends Specification {
         'a string as array'   | "x"           | { it.decodeArray(Argument.of(List)) }       | "Expected an array but found java.lang.String"
         'a string as object'  | "x"           | { it.decodeObject(Argument.of(Map)) }       | "Expected an object but found java.lang.String"
         'a consumed value'    | "x"           | { it.decodeString(); it.decodeString() }    | "No value to decode"
+        'a long as an int'    | 3_000_000_000L | { it.decodeInt() }                         | "Expected an int but found [3000000000], which does not fit in an int"
+        'an int as a short'   | 40_000        | { it.decodeShort() }                        | "Expected a short but found [40000], which does not fit in a short"
+        'an int as a byte'    | -129          | { it.decodeByte() }                         | "Expected a byte but found [-129], which does not fit in a byte"
+        'a double as an int'  | 1e10d         | { it.decodeInt() }                          | "Expected an int but found [1.0E10], which does not fit in an int"
+        'text as a byte'      | "300"         | { it.decodeByte() }                         | "Expected a byte but found [300], which does not fit in a byte"
+        'a big integer as a long' | 2G ** 64  | { it.decodeLong() }                         | "Expected a long but found [18446744073709551616], which does not fit in a long"
+    }
+
+    @Unroll
+    void "narrowing #description keeps the value"() {
+        expect:
+        decode.call(GraphValueDecoder.of(value)) == expected
+
+        where:
+        description              | value               | decode              | expected
+        'the largest int'        | 2147483647L         | { it.decodeInt() }  | Integer.MAX_VALUE
+        'the smallest int'       | -2147483648L        | { it.decodeInt() }  | Integer.MIN_VALUE
+        'a fraction to an int'   | 12.75d              | { it.decodeInt() }  | 12
+        'a short'                | 32767L              | { it.decodeShort() } | (short) 32767
+        'a byte'                 | -128L               | { it.decodeByte() } | (byte) -128
+        'a decimal to a long'    | new BigDecimal("9007199254740993") | { it.decodeLong() } | 9007199254740993L
     }
 
     void "errors name the property being decoded"() {

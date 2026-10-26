@@ -62,6 +62,12 @@ class OracleGraphR2dbcSpec extends Specification {
         walletGraph.findById(2L).block().owner() == "Bob"
     }
 
+    void "asynchronous methods run on the reactive operations"() {
+        expect:
+        walletGraph.countByOwnerStartsWith("").get() == 3L
+        walletGraph.countByOwnerStartsWith("A").get() == 1L
+    }
+
     void "nodes are written to their vertex table through R2DBC"() {
         when:
         walletGraph.save(new Wallet(4L, "Dave", [])).block()

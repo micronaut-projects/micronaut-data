@@ -48,6 +48,45 @@ class Neo4jSchemalessSpec extends Specification implements TestPropertyProvider 
         !found.attributes.containsKey("species")
     }
 
+    void "a schemaless property cannot take the name of a declared one"() {
+        given:
+        def pet = new Pet("Dino")
+        pet.set(name, "x")
+
+        when:
+        petRepository.save(pet)
+
+        then:
+        def e = thrown(io.micronaut.data.exceptions.DataAccessException)
+        e.message.contains("Dynamic attribute [$name]")
+
+        where:
+        name << ['name', 'species']
+    }
+
+    void "a schemaless property or label that cannot be quoted is rejected"() {
+        given:
+        def pet = new Pet("Dino")
+        pet.set("x` = 1 WITH n DETACH DELETE n //", true)
+
+        when:
+        petRepository.save(pet)
+
+        then:
+        def e = thrown(io.micronaut.data.exceptions.DataAccessException)
+        e.message.contains("cannot be stored")
+        petRepository.count() == 0
+
+        when:
+        def cat = new Pet("Tom")
+        cat.labels = ["Cat`) DETACH DELETE (n"] as Set
+        petRepository.save(cat)
+
+        then:
+        def labelError = thrown(io.micronaut.data.exceptions.DataAccessException)
+        labelError.message.contains("Label [")
+    }
+
     void "query schemaless properties with explicit queries"() {
         given:
         def dino = new Pet("Dino")
@@ -98,6 +137,19 @@ class Neo4jSchemalessSpec extends Specification implements TestPropertyProvider 
 
         then:
         petRepository.findById("Dino").get().related.PLAYS_WITH.size() == 2
+    }
+
+    void "a dynamic relationship type that cannot be quoted is rejected"() {
+        given:
+        def dino = new Pet("Dino")
+        dino.related = ["PLAYS_WITH`]->() WITH n DETACH DELETE n //": [new Pet("Hoppy")]]
+
+        when:
+        petRepository.save(dino)
+
+        then:
+        def e = thrown(io.micronaut.data.exceptions.DataAccessException)
+        e.message.contains("Relationship type [")
     }
 
     void "dynamic labels"() {

@@ -22,6 +22,9 @@ class AgtypeSpec extends Specification {
         '1.5'               | 1.5d
         '1.5::float'        | 1.5d
         '3::numeric'        | new BigDecimal("3")
+        '12345678901234567.89::numeric' | new BigDecimal("12345678901234567.89")
+        '99999999999999999999::numeric' | new BigDecimal("99999999999999999999")
+        '99999999999999999999' | new BigDecimal("99999999999999999999")
         'true'              | true
         '"a \\"b\\" \\n c"' | 'a "b" \n c'
         '"\\u00e9"'         | 'é'
@@ -73,10 +76,24 @@ class AgtypeSpec extends Specification {
 
     void "reject malformed values"() {
         when:
-        Agtype.parse('{"a": }')
+        Agtype.parse(text)
 
         then:
-        thrown(IllegalArgumentException)
+        def e = thrown(IllegalArgumentException)
+        e.message.contains(message)
+        !e.message.contains('secret')
+
+        where:
+        text                                  | message
+        '{"a": }'                             | 'Unexpected character'
+        '{"secret": "\\u00'                   | 'cut short'
+        '{"secret": "\\uzzzz"}'               | 'Invalid unicode escape'
+        '[' * 65 + ']' * 65                   | 'nests deeper than 64'
+    }
+
+    void "parse values nested to the limit"() {
+        expect:
+        Agtype.parse('[' * 64 + ']' * 64) instanceof List
     }
 
     void "write parameters as JSON with Micronaut Serialization"() {

@@ -143,7 +143,7 @@ public class OracleGraphQueryBuilder implements GraphQueryBuilder {
      * @param repositoryMetadata The annotation metadata of the repository
      */
     public OracleGraphQueryBuilder(AnnotationMetadata repositoryMetadata) {
-        this.graph = repositoryMetadata.stringValue(PropertyGraph.class).filter(s -> !s.isEmpty()).orElse("graph");
+        this.graph = graphName(repositoryMetadata.stringValue(PropertyGraph.class).filter(s -> !s.isEmpty()).orElse("graph"));
         this.language = repositoryMetadata.enumValue(PropertyGraph.class, "language", PropertyGraph.QueryLanguage.class)
             .orElse(PropertyGraph.QueryLanguage.PGQL);
     }
@@ -224,7 +224,7 @@ public class OracleGraphQueryBuilder implements GraphQueryBuilder {
     @Override
     public String buildFindByIdQuery(PersistentEntity entity) {
         Query query = new Query(entity);
-        query.where.append(property(ROOT, entity.getIdentity())).append(" = ?");
+        query.where.append(property(ROOT, identity(entity))).append(" = ?");
         query.entityColumns(ROOT, entity);
         return query.render(false);
     }
@@ -240,7 +240,7 @@ public class OracleGraphQueryBuilder implements GraphQueryBuilder {
     public String buildCountAllQuery(PersistentEntity entity) {
         Query query = new Query(entity);
         query.select.add(COUNT_AS + alias(RESULT));
-        query.ref(property(ROOT, entity.getIdentity()));
+        query.ref(property(ROOT, identity(entity)));
         return query.render(false);
     }
 
@@ -310,8 +310,10 @@ public class OracleGraphQueryBuilder implements GraphQueryBuilder {
         if (definition.kind() == PathQueryDefinition.Kind.RELATIONSHIPS) {
             return buildRelationshipsQuery(definition, entity, types);
         }
-        requireFixedDepth(definition);
-        String quantifier = "{1," + definition.maxDepth() + "}";
+        requireMaxDepth(definition);
+        // A @PathLimit argument wins over @PathLimit(n) on the method, as it does for Cypher: the runtime renders it
+        // in place of the token, capped by micronaut.data.graph.max-path-depth
+        String quantifier = "{1," + (definition.maxDepthBound() ? PathQueryDefinition.PATH_LIMIT_TOKEN : String.valueOf(definition.maxDepth())) + "}";
         Query query = new Query(entity);
         boolean elements = definition.result() == PathQueryDefinition.Result.ELEMENTS;
         if (elements && sqlPgq()) {
@@ -325,9 +327,16 @@ public class OracleGraphQueryBuilder implements GraphQueryBuilder {
         } else {
             String result = definition.result() == PathQueryDefinition.Result.COUNT ? COUNT_AS : "1 AS ";
             query.select.add(result + alias(RESULT));
-            query.ref(property(START, entity.getIdentity()));
+            query.ref(property(START, identity(entity)));
         }
         endpoints(query, definition, entity);
+        if (definition.start() != null && definition.end() != null && definition.kind() != PathQueryDefinition.Kind.ALL) {
+            // A shortest path from a node to itself is the empty path, so the shortest kinds exclude it as the Cypher
+            // builder does with s <> e: existsPath(a, a) is false, while the ALL kind of countPaths(a, a) counts the
+            // cycles through a (the quantifier starts at one step, so no path of length zero is counted)
+            PersistentProperty identity = identity(entity);
+            query.and(property(START, identity) + " <> " + property(END, identity));
+        }
         String text = query.render(false);
         if (definition.result() == PathQueryDefinition.Result.EXISTS) {
             text += buildLimitAndOffset(1, 0);
@@ -350,7 +359,11 @@ public class OracleGraphQueryBuilder implements GraphQueryBuilder {
         query.entityColumns(STEP_START, entity);
         query.entityColumns(STEP_END, entity);
         if (definition.relationships().size() == 1) {
-            query.column("'" + GraphEntities.relationshipType(definition.relationships().get(0)) + "'", EDGE + SEPARATOR + TYPE_COLUMN);
+            query.column(literal(GraphEntities.relationshipType(definition.relationships().get(0))), EDGE + SEPARATOR + TYPE_COLUMN);
+        } else {
+            // A path over several relationship types, or over any type, reads the type of each step from the label
+            // of its edge, which the graph definition gives each edge table
+            query.column("LABEL(" + EDGE + ")", EDGE + SEPARATOR + TYPE_COLUMN);
         }
         query.orderBy = "MATCHNUM(" + STEP_START + "), ELEMENT_NUMBER(" + EDGE + ")";
     }
@@ -369,11 +382,11 @@ public class OracleGraphQueryBuilder implements GraphQueryBuilder {
             default -> {
                 query.entityColumns(START, entity);
                 query.entityColumns(END, entity);
-                query.column("'" + GraphEntities.relationshipType(definition.relationships().get(0)) + "'", "r" + SEPARATOR + TYPE_COLUMN);
+                query.column(literal(GraphEntities.relationshipType(definition.relationships().get(0))), "r" + SEPARATOR + TYPE_COLUMN);
             }
         }
         if (query.select.isEmpty() || definition.result() != PathQueryDefinition.Result.ELEMENTS) {
-            query.ref(property(START, entity.getIdentity()));
+            query.ref(property(START, identity(entity)));
         }
         String text = query.render(false);
         if (definition.result() == PathQueryDefinition.Result.EXISTS) {
@@ -382,17 +395,18 @@ public class OracleGraphQueryBuilder implements GraphQueryBuilder {
         return QueryResult.of(text, List.of(text), query.bindings, Map.of());
     }
 
-    private static void requireFixedDepth(PathQueryDefinition definition) {
-        if (definition.maxDepthBound() || definition.maxDepth() <= 0) {
-            if (definition.maxDepth() <= 0 && !definition.maxDepthBound()) {
-                throw new IllegalArgumentException("Oracle property graph path queries need a maximum depth: annotate the method with @PathLimit(n)");
-            }
-            throw new IllegalArgumentException("Oracle property graph path queries need a fixed maximum depth: annotate the method with @PathLimit(n) rather than a parameter");
+    /**
+     * Oracle searches paths up to a bounded quantifier only: the depth comes from {@code @PathLimit(n)} on the method
+     * or from a {@code @PathLimit} argument, which the runtime renders in place of the token.
+     */
+    private static void requireMaxDepth(PathQueryDefinition definition) {
+        if (!definition.maxDepthBound() && definition.maxDepth() <= 0) {
+            throw new IllegalArgumentException("Oracle property graph path queries need a maximum depth: annotate the method with @PathLimit(n), or add an int parameter annotated with @PathLimit");
         }
     }
 
     private void endpoints(Query query, PathQueryDefinition definition, PersistentEntity entity) {
-        PersistentProperty identity = entity.getIdentity();
+        PersistentProperty identity = identity(entity);
         io.micronaut.data.model.PersistentPropertyPath idPath = io.micronaut.data.model.PersistentPropertyPath.of(List.of(), identity);
         if (definition.start() != null) {
             query.and(property(START, identity) + " = ?");
@@ -405,7 +419,7 @@ public class OracleGraphQueryBuilder implements GraphQueryBuilder {
     }
 
     private String node(String variable, PersistentEntity entity) {
-        String label = GraphEntities.escapeName(GraphEntities.primaryLabel(entity));
+        String label = identifier(GraphEntities.primaryLabel(entity));
         return sqlPgq() ? "(" + variable + " IS " + label + ")" : "(" + variable + ":" + label + ")";
     }
 
@@ -419,7 +433,7 @@ public class OracleGraphQueryBuilder implements GraphQueryBuilder {
     private static String edgeTypes(List<Association> associations) {
         List<String> types = new ArrayList<>();
         for (Association association : associations) {
-            String type = GraphEntities.escapeName(GraphEntities.relationshipType(association));
+            String type = identifier(GraphEntities.relationshipType(association));
             if (!types.contains(type)) {
                 types.add(type);
             }
@@ -439,7 +453,49 @@ public class OracleGraphQueryBuilder implements GraphQueryBuilder {
     }
 
     private static String property(String variable, PersistentProperty property) {
-        return variable + "." + GraphEntities.escapeName(GraphEntities.propertyName(property));
+        return variable + "." + identifier(GraphEntities.propertyName(property));
+    }
+
+    /**
+     * Quotes a label, relationship type or property name for SQL/PGQ and PGQL, which use double quotes
+     * where Cypher uses backticks.
+     *
+     * @param name The name
+     * @return The identifier
+     */
+    private static String identifier(String name) {
+        if (GraphEntities.isPlainIdentifier(name)) {
+            return name;
+        }
+        return "\"" + GraphEntities.requireName(name).replace("\"", "\"\"") + "\"";
+    }
+
+    /**
+     * The name of the property graph, which is spliced into every statement and so must be a plain
+     * identifier or a quoted one.
+     *
+     * @param name The name from the annotation
+     * @return The name
+     */
+    private static String graphName(String name) {
+        if (GraphEntities.isPlainIdentifier(name)) {
+            return name;
+        }
+        throw new IllegalArgumentException("Property graph name [" + name + "] is not a plain identifier: a name needs a letter followed by letters, digits or underscores");
+    }
+
+    /**
+     * The identifier property of an entity, which every Oracle property graph query needs: vertex
+     * tables carry their key and the rows of a query are matched through it.
+     *
+     * @param entity The entity
+     * @return The identity
+     */
+    private static PersistentProperty identity(PersistentEntity entity) {
+        if (!entity.hasIdentity()) {
+            throw new IllegalArgumentException("Entity [" + entity.getName() + "] has no identifier: an Oracle property graph node needs an @Id property");
+        }
+        return entity.getIdentity();
     }
 
     private static String alias(String name) {
@@ -517,7 +573,7 @@ public class OracleGraphQueryBuilder implements GraphQueryBuilder {
                 column(property(variable, identity), variable + SEPARATOR + ID_COLUMN);
                 column(property(variable, identity), variable + SEPARATOR + GraphEntities.propertyName(identity));
             }
-            column("'" + GraphEntities.primaryLabel(nodeEntity).replace("'", "''") + "'", variable + SEPARATOR + LABEL_COLUMN);
+            column(literal(GraphEntities.primaryLabel(nodeEntity)), variable + SEPARATOR + LABEL_COLUMN);
             for (PersistentProperty property : nodeEntity.getPersistentProperties()) {
                 if (property.getAnnotationMetadata().hasAnnotation(DynamicRelationships.class)) {
                     throw new UnsupportedOperationException("Dynamic relationships are not supported for Oracle property graphs: " + nodeEntity.getName());
@@ -650,7 +706,7 @@ public class OracleGraphQueryBuilder implements GraphQueryBuilder {
                 PersistentEntity target = GraphEntities.targetNodeEntity(association);
                 List<Association> associations = new ArrayList<>(propertyPath.getAssociations());
                 associations.add(association);
-                return resolve(io.micronaut.data.model.PersistentPropertyPath.of(associations, target.getIdentity()));
+                return resolve(io.micronaut.data.model.PersistentPropertyPath.of(associations, identity(target)));
             }
             return property(variable, property);
         }
@@ -662,7 +718,7 @@ public class OracleGraphQueryBuilder implements GraphQueryBuilder {
             boolean relationshipEntity = GraphEntities.isRelationshipEntity(association.getAssociatedEntity());
             String relVariable = relationshipEntity ? "ar" + index : "";
             String text = directed("(" + from + ")",
-                edge(relVariable, GraphEntities.escapeName(GraphEntities.relationshipType(association)), ""),
+                edge(relVariable, identifier(GraphEntities.relationshipType(association)), ""),
                 node(nodeVariable, target), GraphEntities.direction(association));
             return new String[] {text, nodeVariable, relVariable};
         }
@@ -712,7 +768,7 @@ public class OracleGraphQueryBuilder implements GraphQueryBuilder {
 
         @Override
         public void visit(PersistentEntityRoot<?> entityRoot) {
-            out.append(property(ROOT, query.entity.getIdentity()));
+            out.append(property(ROOT, identity(query.entity)));
         }
 
         @Override
@@ -763,7 +819,7 @@ public class OracleGraphQueryBuilder implements GraphQueryBuilder {
 
         @Override
         public void visit(IdExpression<?, ?> idExpression) {
-            out.append(property(ROOT, query.entity.getIdentity()));
+            out.append(property(ROOT, identity(query.entity)));
         }
 
         @Override
@@ -937,7 +993,7 @@ public class OracleGraphQueryBuilder implements GraphQueryBuilder {
 
         @Override
         public void visitIdEquals(Expression<?> expression) {
-            PersistentProperty identity = query.entity.getIdentity();
+            PersistentProperty identity = identity(query.entity);
             out.append(property(ROOT, identity)).append(" = ");
             appendExpression(expression, io.micronaut.data.model.PersistentPropertyPath.of(List.of(), identity));
         }
@@ -1118,7 +1174,7 @@ public class OracleGraphQueryBuilder implements GraphQueryBuilder {
         @Override
         public void visit(LiteralExpression<?> literalExpression) {
             literal = true;
-            query.ref(property(ROOT, query.entity.getIdentity()));
+            query.ref(property(ROOT, identity(query.entity)));
             query.select.add(literal(literalExpression.getValue()) + " AS " + alias(alias != null ? alias : RESULT));
         }
 
@@ -1126,7 +1182,7 @@ public class OracleGraphQueryBuilder implements GraphQueryBuilder {
         public void visit(UnaryExpression<?> unaryExpression) {
             Expression<?> expression = unaryExpression.getExpression();
             if (expression instanceof PersistentEntityRoot<?>) {
-                String id = query.ref(property(ROOT, query.entity.getIdentity()));
+                String id = query.ref(property(ROOT, identity(query.entity)));
                 boolean distinct = unaryExpression.getType() == io.micronaut.data.model.jpa.criteria.impl.expression.UnaryExpressionType.COUNT_DISTINCT
                     || !query.patterns.isEmpty();
                 query.select.add((distinct ? "COUNT(DISTINCT " + id + ")" : "COUNT(*)") + " AS " + alias(alias != null ? alias : RESULT));
@@ -1153,8 +1209,8 @@ public class OracleGraphQueryBuilder implements GraphQueryBuilder {
 
         @Override
         public void visit(IdExpression<?, ?> idExpression) {
-            String ref = query.ref(property(ROOT, query.entity.getIdentity()));
-            query.select.add(ref + " AS " + alias(alias != null ? alias : query.entity.getIdentity().getName()));
+            String ref = query.ref(property(ROOT, identity(query.entity)));
+            query.select.add(ref + " AS " + alias(alias != null ? alias : identity(query.entity).getName()));
         }
 
         @Override

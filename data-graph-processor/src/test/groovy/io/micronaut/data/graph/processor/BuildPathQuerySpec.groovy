@@ -19,6 +19,8 @@ class Friend {
     private List<Friend> friends = new ArrayList<>();
     @Relationship(type = "WORKS_WITH", direction = Direction.UNDIRECTED)
     private List<Friend> colleagues = new ArrayList<>();
+    @Relationship("FRIENDS_OF_FRIENDS")
+    private List<Friend> acquaintances = new ArrayList<>();
 
     public String getName() { return name; }
     public void setName(String name) { this.name = name; }
@@ -26,6 +28,8 @@ class Friend {
     public void setFriends(List<Friend> friends) { this.friends = friends; }
     public List<Friend> getColleagues() { return colleagues; }
     public void setColleagues(List<Friend> colleagues) { this.colleagues = colleagues; }
+    public List<Friend> getAcquaintances() { return acquaintances; }
+    public void setAcquaintances(List<Friend> acquaintances) { this.acquaintances = acquaintances; }
 }
 '''
 
@@ -46,6 +50,7 @@ interface FriendRepository extends CrudRepository<Friend, String> {
     Optional<GraphPath<Friend>> findPath(String from, String to);
     List<GraphPath<Friend>> findAllShortestPaths(String from, String to);
     List<GraphPath<Friend>> findAllPathsByFriendsOrColleagues(String from, String to, @PathLimit int maxDepth);
+    List<GraphPath<Friend>> findAllPathsByAcquaintancesOrFriends(String from, String to, @PathLimit int maxDepth);
     boolean existsPath(String from, String to);
     @PathLimit(3)
     long countPaths(String from, String to);
@@ -70,6 +75,7 @@ interface FriendRepository extends CrudRepository<Friend, String> {
         'findPath'                          | 'MATCH (s:Friend), (e:Friend) WHERE s.name = $p0 AND e.name = $p1 AND s <> e MATCH p = shortestPath((s)-[*1..4]-(e)) RETURN p'
         'findAllShortestPaths'              | 'MATCH (s:Friend), (e:Friend) WHERE s.name = $p0 AND e.name = $p1 AND s <> e MATCH p = allShortestPaths((s)-[*]-(e)) RETURN p'
         'findAllPathsByFriendsOrColleagues' | 'MATCH (s:Friend), (e:Friend) WHERE s.name = $p0 AND e.name = $p1 MATCH p = (s)-[:FRIENDS|WORKS_WITH*1..$__pathLimit]-(e) RETURN p ORDER BY length(p)'
+        'findAllPathsByAcquaintancesOrFriends' | 'MATCH (s:Friend), (e:Friend) WHERE s.name = $p0 AND e.name = $p1 MATCH p = (s)-[:FRIENDS_OF_FRIENDS|FRIENDS*1..$__pathLimit]->(e) RETURN p ORDER BY length(p)'
         'existsPath'                        | 'MATCH (s:Friend), (e:Friend) WHERE s.name = $p0 AND e.name = $p1 AND s <> e MATCH p = shortestPath((s)-[*]-(e)) RETURN true AS result LIMIT 1'
         'countPaths'                        | 'MATCH (s:Friend), (e:Friend) WHERE s.name = $p0 AND e.name = $p1 MATCH p = (s)-[*1..3]-(e) RETURN count(p) AS result'
         'findRelationship'                  | 'MATCH (s:Friend)-[r]-(e:Friend) WHERE s.name = $p0 AND e.name = $p1 RETURN r, startNode(r) AS f, endNode(r) AS t'
@@ -143,6 +149,61 @@ interface UnknownRepository extends CrudRepository<Friend, String> {
         then:
         def e = thrown(RuntimeException)
         e.message.contains('has no @Relationship property named [enemies]')
+    }
+
+    void "test a finder on a property named path is left to the ordinary finders"() {
+        given:
+        def repository = buildRepository('test.WaypointRepository', """
+import io.micronaut.data.graph.model.*;
+
+@Node
+class Waypoint {
+    @Id
+    private String name;
+    private String path;
+    private List<String> relationships;
+
+    public String getName() { return name; }
+    public void setName(String name) { this.name = name; }
+    public String getPath() { return path; }
+    public void setPath(String path) { this.path = path; }
+    public List<String> getRelationships() { return relationships; }
+    public void setRelationships(List<String> relationships) { this.relationships = relationships; }
+}
+
+@TestGraphRepository
+interface WaypointRepository extends CrudRepository<Waypoint, String> {
+    List<String> findPathByName(String name);
+    List<String> findPathByNameOrderByPath(String name);
+    List<List<String>> findRelationshipsByName(String name);
+    List<Waypoint> findByPath(String path);
+}
+""")
+
+        expect:
+        getQuery(repository.executableMethods.find { it.methodName == 'findPathByName' }) == 'MATCH (n:Waypoint) WHERE n.name = $p0 RETURN n.path AS path'
+        getQuery(repository.executableMethods.find { it.methodName == 'findPathByNameOrderByPath' }) == 'MATCH (n:Waypoint) WHERE n.name = $p0 RETURN n.path AS path ORDER BY n.path ASC'
+        getQuery(repository.executableMethods.find { it.methodName == 'findRelationshipsByName' }) == 'MATCH (n:Waypoint) WHERE n.name = $p0 RETURN n.relationships AS relationships'
+        getQuery(repository.executableMethods.find { it.methodName == 'findByPath' }) == 'MATCH (n:Waypoint) WHERE n.path = $p0 RETURN n'
+    }
+
+    void "test ordering a path finder is rejected with a clear message"() {
+        when:
+        buildRepository('test.OrderedRepository', """
+import io.micronaut.data.graph.model.*;
+
+$FRIENDS
+
+@TestGraphRepository
+interface OrderedRepository extends CrudRepository<Friend, String> {
+    List<GraphRelationship<Friend, Friend>> findRelationshipsByFriendsOrderByName();
+}
+""")
+
+        then:
+        def e = thrown(RuntimeException)
+        e.message.contains('Path and relationship finders cannot be ordered, found [findRelationshipsByFriendsOrderByName]')
+        !e.message.contains('has no @Relationship property')
     }
 
     void "test path finders must return paths"() {

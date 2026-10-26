@@ -115,8 +115,11 @@ final class DefaultNeo4jReactorRepositoryOperations extends AbstractReactiveGrap
         }
 
         private static void log(String query, Map<String, Object> parameters) {
-            if (LOG.isDebugEnabled()) {
-                LOG.debug("Executing reactive Cypher: {} with parameters {}", query, parameters);
+            if (LOG.isTraceEnabled()) {
+                // Parameter values may hold personal data, so they are logged at TRACE only
+                LOG.trace("Executing reactive Cypher: {} with parameters {}", query, parameters);
+            } else if (LOG.isDebugEnabled()) {
+                LOG.debug("Executing reactive Cypher: {}", query);
             }
         }
     }

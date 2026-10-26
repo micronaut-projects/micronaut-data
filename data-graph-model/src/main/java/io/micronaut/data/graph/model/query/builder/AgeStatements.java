@@ -228,8 +228,9 @@ public final class AgeStatements {
             } else if (c == ')' || c == ']' || c == '}') {
                 depth--;
             } else if (i >= from && depth == 0 && upper.startsWith(keyword, i)
-                && (i == 0 || !Character.isLetterOrDigit(upper.charAt(i - 1)))
-                && (i + keyword.length() == upper.length() || !Character.isLetterOrDigit(upper.charAt(i + keyword.length())))) {
+                && (i == 0 || !isNameCharacter(upper.charAt(i - 1)))
+                && (i + keyword.length() == upper.length() || !isNameCharacter(upper.charAt(i + keyword.length())))
+                && !isAlias(upper, i)) {
                 return i;
             }
         }
@@ -237,32 +238,25 @@ public final class AgeStatements {
     }
 
     /**
-     * Replaces the content of string literals with spaces, keeping offsets.
+     * A property access such as {@code n.limit} or a parameter such as {@code $skip} is a name, not a clause.
      */
-    private static String mask(String query) {
-        StringBuilder sb = new StringBuilder(query.length());
-        char quote = 0;
-        for (int i = 0; i < query.length(); i++) {
-            char c = query.charAt(i);
-            if (quote != 0) {
-                if (c == '\\' && i + 1 < query.length()) {
-                    sb.append("  ");
-                    i++;
-                    continue;
-                }
-                if (c == quote) {
-                    quote = 0;
-                    sb.append(c);
-                } else {
-                    sb.append(' ');
-                }
-            } else if (c == '\'' || c == '"' || c == '`') {
-                quote = c;
-                sb.append(c);
-            } else {
-                sb.append(c);
-            }
+    private static boolean isNameCharacter(char c) {
+        return Character.isLetterOrDigit(c) || c == '_' || c == '.' || c == '$' || c == '`';
+    }
+
+    /**
+     * A word after {@code AS} is an alias, not a clause, as in {@code RETURN count(n) AS limit}.
+     */
+    private static boolean isAlias(String upper, int index) {
+        int i = index - 1;
+        while (i >= 0 && Character.isWhitespace(upper.charAt(i))) {
+            i--;
         }
-        return sb.toString();
+        return i >= 1 && upper.charAt(i) == 'S' && upper.charAt(i - 1) == 'A'
+            && (i < 2 || !isNameCharacter(upper.charAt(i - 2)));
+    }
+
+    private static String mask(String query) {
+        return LiteralMasker.mask(query);
     }
 }

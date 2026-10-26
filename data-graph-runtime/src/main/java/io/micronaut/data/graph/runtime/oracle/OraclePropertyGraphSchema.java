@@ -33,6 +33,7 @@ import io.micronaut.data.model.query.builder.sql.Dialect;
 import io.micronaut.data.model.query.builder.sql.SqlQueryBuilder;
 import io.micronaut.data.model.query.builder.sql.SqlSchemaUtils;
 import io.micronaut.data.model.schema.sql.SqlColumnMapping;
+import io.micronaut.data.model.schema.sql.SqlIndexMapping;
 import io.micronaut.data.model.schema.sql.SqlTableMapping;
 import io.micronaut.data.repository.GenericRepository;
 import io.micronaut.inject.BeanDefinition;
@@ -215,6 +216,10 @@ public final class OraclePropertyGraphSchema {
             throw new IllegalStateException("Relationship entity [" + relationshipEntity.getName() + "] has no @TargetNode property");
         }
         SqlTableMapping table = mainTable(relationshipEntity);
+        if (table.primaryKeyColumns().isEmpty()) {
+            throw new IllegalStateException("Relationship entity [" + relationshipEntity.getName()
+                + "] has no @RelationshipId property: its table is an edge table keyed by the relationship identifier");
+        }
         String targetColumn = singleColumn(relationshipEntity, targetNode);
         Set<String> columnNames = table.columns().stream().map(SqlColumnMapping::getName).collect(Collectors.toSet());
         table.primaryKeyColumns().forEach(column -> columnNames.add(column.getName()));
@@ -230,8 +235,13 @@ public final class OraclePropertyGraphSchema {
             .map(SqlColumnMapping::getName)
             .filter(name -> !name.equals(targetColumn))
             .forEach(properties::add);
+        // The relationship identifier is the key of the edge table, so two relationships may link the same pair of
+        // nodes, such as a person playing two roles in a movie; the pair is indexed for the traversals
+        List<SqlIndexMapping> indexes = new ArrayList<>(table.indexes());
+        // The name is derived from the table and the columns, as for the indexes of the entity
+        indexes.add(new SqlIndexMapping("", false, new String[] {ownerColumn, targetColumn}));
         return edge(owner, association, targetNode.getAssociatedEntity(),
-            withColumns(table, table.name(), table.primaryKeyColumns(), columns),
+            withColumns(table, table.name(), table.primaryKeyColumns(), columns, indexes),
             new EdgeKeys(table.primaryKeyColumns().stream().map(SqlColumnMapping::getName).toList(), ownerColumn, targetColumn),
             properties);
     }
@@ -309,8 +319,13 @@ public final class OraclePropertyGraphSchema {
     }
 
     private static SqlTableMapping withColumns(SqlTableMapping table, String name, List<SqlColumnMapping> primaryKeyColumns, List<SqlColumnMapping> columns) {
+        return withColumns(table, name, primaryKeyColumns, columns, table.indexes());
+    }
+
+    private static SqlTableMapping withColumns(SqlTableMapping table, String name, List<SqlColumnMapping> primaryKeyColumns,
+                                               List<SqlColumnMapping> columns, List<SqlIndexMapping> indexes) {
         return new SqlTableMapping(table.schema(), name, table.escape(), SqlTableMapping.TableType.MAIN, primaryKeyColumns, columns,
-            table.sequences(), table.indexes(), table.auxiliaryStatements());
+            table.sequences(), indexes, table.auxiliaryStatements());
     }
 
     private static Map<String, Set<PersistentEntity>> graphs(BeanContext beanContext,
@@ -403,7 +418,7 @@ public final class OraclePropertyGraphSchema {
      * Quotes a table or column name the way the SQL query builder does for Oracle: in upper case.
      */
     private static String quote(String name) {
-        return '"' + name.toUpperCase(Locale.ENGLISH) + '"';
+        return '"' + GraphEntities.requireName(name).toUpperCase(Locale.ENGLISH).replace("\"", "\"\"") + '"';
     }
 
     /**
