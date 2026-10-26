@@ -66,7 +66,7 @@ import java.util.Map;
 import java.util.Set;
 import java.util.WeakHashMap;
 import java.util.concurrent.ConcurrentHashMap;
-import java.util.concurrent.atomic.AtomicReference;
+import java.util.concurrent.CopyOnWriteArrayList;
 import java.util.concurrent.ExecutorService;
 import java.util.function.Function;
 
@@ -108,7 +108,7 @@ final class DefaultAgeRepositoryOperations extends AbstractGraphRepositoryOperat
      * The connections of checkouts that loaded AGE inside a transaction, which may still roll the loading back.
      */
     private final Set<Connection> preparedCheckouts = Collections.synchronizedSet(Collections.newSetFromMap(new WeakHashMap<>()));
-    private final AtomicReference<List<String>> indexStatements = new AtomicReference<>(List.of());
+    private final List<String> indexStatements = new CopyOnWriteArrayList<>();
 
     DefaultAgeRepositoryOperations(@Parameter ConnectionOperations<Connection> connectionOperations,
                                    @Parameter TransactionOperations<Connection> transactionOperations,
@@ -165,7 +165,8 @@ final class DefaultAgeRepositoryOperations extends AbstractGraphRepositoryOperat
         if (statements.isEmpty()) {
             return;
         }
-        this.indexStatements.set(statements);
+        this.indexStatements.clear();
+        this.indexStatements.addAll(statements);
         connectionOperations.execute(ConnectionDefinition.DEFAULT, status -> {
             Connection connection = status.getConnection();
             try {
@@ -180,7 +181,7 @@ final class DefaultAgeRepositoryOperations extends AbstractGraphRepositoryOperat
 
     private void createIndexes(Connection connection, String graph) throws SQLException {
         try (Statement statement = connection.createStatement()) {
-            for (String sql : indexStatements.get()) {
+            for (String sql : indexStatements) {
                 String forGraph = AgeStatements.forGraph(sql, graph);
                 if (LOG.isDebugEnabled()) {
                     LOG.debug("Creating an Apache AGE index: {}", forGraph);
@@ -374,7 +375,7 @@ final class DefaultAgeRepositoryOperations extends AbstractGraphRepositoryOperat
                 connection.setAutoCommit(true);
                 try {
                     createGraph(connection, graph);
-                    if (!indexStatements.get().isEmpty() && !graph.equals(defaultGraph)) {
+                    if (!indexStatements.isEmpty() && !graph.equals(defaultGraph)) {
                         // A tenant graph created after startup gets the indexes created at startup
                         loadAge(connection);
                         createIndexes(connection, graph);
