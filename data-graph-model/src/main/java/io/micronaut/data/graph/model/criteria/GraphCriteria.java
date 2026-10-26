@@ -53,7 +53,7 @@ public final class GraphCriteria {
      * @return The predicate
      */
     public static @NonNull Predicate related(@NonNull Root<?> root, @NonNull String relationship) {
-        return new RelatedPredicate(entityRoot(root), relationship, null, 1);
+        return new RelatedPredicate<>(entityRoot(root), relationship, null, 1);
     }
 
     /**
@@ -65,7 +65,7 @@ public final class GraphCriteria {
      * @return The predicate
      */
     public static @NonNull Predicate relatedTo(@NonNull Root<?> root, @NonNull String relationship, @NonNull Expression<?> target) {
-        return new RelatedPredicate(entityRoot(root), relationship, target, 1);
+        return new RelatedPredicate<>(entityRoot(root), relationship, target, 1);
     }
 
     /**
@@ -79,7 +79,7 @@ public final class GraphCriteria {
      * @return The predicate
      */
     public static @NonNull Predicate connected(@NonNull Root<?> root, @Nullable String relationship, @NonNull Expression<?> target, int maxDepth) {
-        return new RelatedPredicate(entityRoot(root), relationship, target, maxDepth);
+        return new RelatedPredicate<>(entityRoot(root), relationship, target, maxDepth);
     }
 
     /**
@@ -96,8 +96,8 @@ public final class GraphCriteria {
         return new DynamicPropertyExpression<>(entityRoot(root), name, type);
     }
 
-    private static PersistentEntityRoot<?> entityRoot(Root<?> root) {
-        if (root instanceof PersistentEntityRoot<?> entityRoot) {
+    private static <E> PersistentEntityRoot<E> entityRoot(Root<E> root) {
+        if (root instanceof PersistentEntityRoot<E> entityRoot) {
             return entityRoot;
         }
         throw new IllegalArgumentException("Graph criteria need the root of a Micronaut Data query, got: " + root);

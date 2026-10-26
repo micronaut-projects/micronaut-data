@@ -836,7 +836,7 @@ public class OracleGraphQueryBuilder implements GraphQueryBuilder {
         }
 
         @Override
-        public void visit(DynamicPropertyExpression<?> expression) {
+        public void visit(DynamicPropertyExpression<?, ?> expression) {
             // Schemaless properties live in the JSON column of the vertex table
             PersistentProperty attributes = null;
             for (PersistentProperty property : query.entity.getPersistentProperties()) {
@@ -913,7 +913,7 @@ public class OracleGraphQueryBuilder implements GraphQueryBuilder {
         }
 
         @Override
-        public void visit(RelatedPredicate predicate) {
+        public void visit(RelatedPredicate<?, ?> predicate) {
             throw new UnsupportedOperationException("Relationship criteria are not supported for Oracle property graphs: use a finder on the relationship property");
         }
 

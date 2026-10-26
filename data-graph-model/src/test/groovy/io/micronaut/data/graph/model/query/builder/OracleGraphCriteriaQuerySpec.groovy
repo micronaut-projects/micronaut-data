@@ -7,7 +7,9 @@ import io.micronaut.data.event.EntityEventListener
 import io.micronaut.data.graph.annotation.Direction
 import io.micronaut.data.graph.annotation.PropertyGraph
 import io.micronaut.data.graph.model.query.PathQueryDefinition
+import io.micronaut.data.graph.model.criteria.GraphCriteria
 import io.micronaut.data.graph.model.query.builder.entities.Person
+import io.micronaut.data.graph.model.query.builder.entities.Pet
 import io.micronaut.data.model.jpa.criteria.PersistentEntityCriteriaBuilder
 import io.micronaut.data.model.jpa.criteria.PersistentEntityCriteriaQueryBuilder
 import io.micronaut.data.model.jpa.criteria.PersistentEntityRoot
@@ -90,6 +92,23 @@ class OracleGraphCriteriaQuerySpec extends Specification {
         PropertyGraph.QueryLanguage.PGQL | 'fetch' | { q, r -> r.join("movies", Join.Type.FETCH); q.select(r) } | 'UnsupportedOperationException' | '''Fetching relationships with @Join is not supported for Oracle property graphs: movies'''
         PropertyGraph.QueryLanguage.SQL_PGQ | 'fetch' | { q, r -> r.join("movies", Join.Type.FETCH); q.select(r) } | 'UnsupportedOperationException' | '''Fetching relationships with @Join is not supported for Oracle property graphs: movies'''
         PropertyGraph.QueryLanguage.PGQL | 'like' | { q, r -> q.where(cb.like(r.get("name"), "a%")) } | 'UnsupportedOperationException' | '''PGQL has no LIKE: use exact matches, a regular expression with Regex, or @PropertyGraph(language = SQL_PGQ)'''
+        PropertyGraph.QueryLanguage.SQL_PGQ | 'related' | { q, r -> q.where(GraphCriteria.related(r, "movies")) } | 'UnsupportedOperationException' | '''Relationship criteria are not supported for Oracle property graphs: use a finder on the relationship property'''
+        PropertyGraph.QueryLanguage.SQL_PGQ | 'dynamic without attributes' | { q, r -> q.where(cb.isTrue(GraphCriteria.dynamic(r, "active", Boolean))) } | 'IllegalArgumentException' | '''Entity [io.micronaut.data.graph.model.query.builder.entities.Person] has no @DynamicAttributes property to read [active] from'''
+    }
+
+    void "test #language dynamic properties read the JSON column"() {
+        given:
+        def query = cb.createQuery(Pet)
+        PersistentEntityRoot root = query.from(Pet)
+        query.where(cb.greaterThan(GraphCriteria.dynamic(root, "legs", Integer), 2))
+
+        expect:
+        ((PersistentEntityCriteriaQueryBuilder) query).build(AnnotationMetadata.EMPTY_METADATA, builder(language)).query.contains(fragment)
+
+        where:
+        language                             | fragment
+        PropertyGraph.QueryLanguage.PGQL    | "WHERE (JSON_VALUE(n.attributes, '\$.legs') > ?)"
+        PropertyGraph.QueryLanguage.SQL_PGQ | "WHERE (JSON_VALUE(n.attributes, '\$.legs') > ?)"
     }
 
     void "test #language path query #description"() {
