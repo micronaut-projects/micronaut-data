@@ -30,6 +30,19 @@ import spock.lang.Shared
 import spock.lang.Specification
 import spock.lang.Unroll
 
+import java.time.Duration
+import java.time.Instant
+import java.time.LocalDate
+import java.time.LocalDateTime
+import java.time.LocalTime
+import java.time.OffsetDateTime
+import java.time.OffsetTime
+import java.time.Period
+import java.time.YearMonth
+import java.time.ZoneId
+import java.time.ZoneOffset
+import java.time.ZonedDateTime
+
 /**
  * Checks the Cypher rendered for queries built with the criteria API, which reaches expressions that finders do not.
  */
@@ -48,7 +61,9 @@ class CypherCriteriaQuerySpec extends Specification {
         'distinct join'        | { q, r -> q.select(r).distinct(true).where(cb.equal(r.join("movies").get("title"), "Matrix")) }                                            | 'MATCH (n:Person), (n)-[:ACTED_IN]->(a0:Movie) WHERE a0.title = $p0 WITH DISTINCT n RETURN DISTINCT n'
         'distinct projection'  | { q, r -> q.select(r.get("name")).distinct(true) }                                                                                         | 'MATCH (n:Person) RETURN DISTINCT n.name AS name'
         'projection with join' | { q, r -> q.select(r.get("name")).where(cb.equal(r.join("movies").get("title"), "Matrix")) }                                               | 'MATCH (n:Person), (n)-[:ACTED_IN]->(a0:Movie) WHERE a0.title = $p0 WITH DISTINCT n RETURN n.name AS name'
-        'joined projection'    | { q, r -> q.select(r.join("movies").get("title")) }                                                                                        | 'MATCH (n:Person), (n)-[:ACTED_IN]->(a0:Movie) RETURN a0.title AS title'
+        'joined projection'    | { q, r -> q.select(r.join("movies").get("title")) }                                                                                        | 'MATCH (n:Person), (n)-[:ACTED_IN]->(a0:Movie) RETURN a0.title AS movies_title'
+        'root and joined'      | { q, r -> q.multiselect(r.get("name"), r.join("movies").get("title"), r.join("movies").get("released")) }                                  | 'MATCH (n:Person), (n)-[:ACTED_IN]->(a0:Movie) RETURN n.name AS name, a0.title AS movies_title, a0.released AS movies_released'
+        'aliased joined'       | { q, r -> q.multiselect(r.get("name"), r.join("movies").get("title").alias("title")) }                                                    | 'MATCH (n:Person), (n)-[:ACTED_IN]->(a0:Movie) RETURN n.name AS name, a0.title AS title'
         'compound selection'   | { q, r -> q.multiselect(r.get("name").alias("n"), r.get("age"), cb.count(r).alias("total")) }                                              | 'MATCH (n:Person) RETURN n.name AS n, n.age AS age, count(n) AS total'
         'id selection'         | { q, r -> q.select(r.id()) }                                                                                                               | 'MATCH (n:Person) RETURN id(n) AS id'
         'sum'                  | { q, r -> q.select(cb.sum(r.get("age"), 1)) }                                                                                              | 'MATCH (n:Person) RETURN (n.age + $p0) AS result'
@@ -217,6 +232,18 @@ class CypherCriteriaQuerySpec extends Specification {
         builder.asLiteral(Person.Status.ACTIVE) == "'ACTIVE'"
         builder.asLiteral(["a", 1]) == "['a', 1]"
         builder.asLiteral("it's a \\ path") == "'it\\'s a \\\\ path'"
+        builder.asLiteral(LocalDate.of(2024, 1, 31)) == "date('2024-01-31')"
+        builder.asLiteral(LocalDateTime.of(2024, 1, 31, 10, 15, 30)) == "localdatetime('2024-01-31T10:15:30')"
+        builder.asLiteral(LocalTime.of(10, 15, 30)) == "localtime('10:15:30')"
+        builder.asLiteral(OffsetTime.of(10, 15, 30, 0, ZoneOffset.ofHours(1))) == "time('10:15:30+01:00')"
+        builder.asLiteral(ZonedDateTime.of(2024, 1, 31, 10, 15, 30, 0, ZoneId.of("Europe/London"))) == "datetime('2024-01-31T10:15:30Z[Europe/London]')"
+        builder.asLiteral(OffsetDateTime.of(2024, 1, 31, 10, 15, 30, 0, ZoneOffset.ofHours(2))) == "datetime('2024-01-31T10:15:30+02:00')"
+        builder.asLiteral(Instant.parse("2024-01-31T10:15:30Z")) == "datetime('2024-01-31T10:15:30Z')"
+        builder.asLiteral(Duration.ofMinutes(90)) == "duration('PT1H30M')"
+        builder.asLiteral(Period.ofMonths(14)) == "duration('P14M')"
+        builder.asLiteral(YearMonth.of(2024, 1)) == "'2024-01'"
+        builder.asLiteral([LocalDate.of(2024, 1, 31)]) == "[date('2024-01-31')]"
+        builder.asLiteral(UUID.fromString("123e4567-e89b-12d3-a456-426614174000")) == "'123e4567-e89b-12d3-a456-426614174000'"
         builder.buildLimitAndOffset(0, 0) == ''
         builder.buildInsert(AnnotationMetadata.EMPTY_METADATA, null) == null
     }

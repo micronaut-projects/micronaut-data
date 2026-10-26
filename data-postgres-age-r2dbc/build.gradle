@@ -35,7 +35,7 @@ dependencies {
 
     testRuntimeOnly mnR2dbc.r2dbc.postgresql
     testResourcesService mnR2dbc.r2dbc.postgresql
-    testRuntimeOnly mnLogging.logback.classic
+    testImplementation mnLogging.logback.classic
 
     testCompileOnly mn.micronaut.inject.groovy
 }

@@ -3,7 +3,10 @@ package io.micronaut.data.oracle.graph
 import io.micronaut.context.annotation.Property
 import io.micronaut.data.connection.jdbc.advice.DelegatingDataSource
 import io.micronaut.data.jdbc.config.DataJdbcConfiguration
+import io.micronaut.data.graph.runtime.oracle.OraclePropertyGraphSchema
 import io.micronaut.data.jdbc.config.JdbcSchemaContributor
+import io.micronaut.data.oracle.graph.annotation.OracleGraphRepository
+import io.micronaut.context.BeanContext
 import io.micronaut.data.model.runtime.RuntimeEntityRegistry
 import io.micronaut.data.oracle.graph.bank.Account
 import io.micronaut.data.oracle.graph.bank.Transfer
@@ -49,6 +52,9 @@ class OraclePropertyGraphSchemaSpec extends Specification {
     @Inject
     RuntimeEntityRegistry entityRegistry
 
+    @Inject
+    BeanContext beanContext
+
     void setup() {
         sql("DELETE FROM members_follows", "DELETE FROM loan", "DELETE FROM books_wrote", "DELETE FROM members", "DELETE FROM books", "DELETE FROM authors")
         authorRepository.save(new Author(1L, "Ursula K. Le Guin"))
@@ -60,6 +66,8 @@ class OraclePropertyGraphSchemaSpec extends Specification {
         sql("INSERT INTO books_wrote (authorsId, bookId) VALUES (1, 10)",
             "INSERT INTO loan (id, days, bookId, memberId) VALUES (1, 21, 10, 100)",
             "INSERT INTO loan (id, days, bookId, memberId) VALUES (2, 7, 11, 101)",
+            // Ged borrows A Wizard of Earthsea a second time: the relationship identifier keys the edge table, not the pair
+            "INSERT INTO loan (id, days, bookId, memberId) VALUES (3, 14, 10, 100)",
             "INSERT INTO members_follows (memberId, followsId) VALUES (101, 100)")
     }
 
@@ -75,6 +83,7 @@ class OraclePropertyGraphSchemaSpec extends Specification {
     void "the property graph is created over the generated tables"() {
         expect:
         query("SELECT graph_name FROM user_property_graphs") .contains("LIBRARY_GRAPH")
+        query("SELECT index_name FROM user_indexes WHERE table_name = 'LOAN'").contains("IDX_LOAN_MEMBERID_BOOKID")
         query("SELECT table_name FROM user_tables").containsAll(["MEMBERS", "BOOKS", "AUTHORS", "LOAN", "MEMBERS_FOLLOWS", "BOOKS_WROTE"])
         !query("SELECT table_name FROM user_tables").contains("MEMBERLOAN")
     }
@@ -88,6 +97,8 @@ class OraclePropertyGraphSchemaSpec extends Specification {
         contributor.buildCreateStatements(configuration, entities) == [
             'CREATE TABLE "ACCOUNTS" ("ID" NUMBER(19) NOT NULL,"NAME" VARCHAR(255) NOT NULL, PRIMARY KEY("ID"))',
             'CREATE TABLE "TRANSFER" ("ID" NUMBER(19) NOT NULL,"AMOUNT" FLOAT(126) NOT NULL,"TOID" NUMBER(19) NOT NULL,"ACCOUNTID" NUMBER(19) NOT NULL, PRIMARY KEY("ID"))',
+            // The relationship identifier is the key of the edge table, so two transfers can link the same accounts; the pair is indexed
+            'CREATE INDEX "IDX_TRANSFER_ACCOUNTID_TOID" ON "TRANSFER" ("ACCOUNTID", "TOID")',
             'CREATE PROPERTY GRAPH bank_graph VERTEX TABLES ("ACCOUNTS" KEY ("ID") LABEL Account PROPERTIES ("ID", "NAME")) EDGE TABLES ("TRANSFER" KEY ("ID") SOURCE KEY ("ACCOUNTID") REFERENCES "ACCOUNTS" ("ID") DESTINATION KEY ("TOID") REFERENCES "ACCOUNTS" ("ID") LABEL TRANSFERS PROPERTIES ("ID", "AMOUNT")) OPTIONS (ALLOW MIXED PROPERTY TYPES)'
         ]
         contributor.buildDropStatements(configuration, entities) == [
@@ -95,6 +106,25 @@ class OraclePropertyGraphSchemaSpec extends Specification {
             'DROP TABLE "TRANSFER"',
             'DROP TABLE "ACCOUNTS"'
         ]
+    }
+
+    void "the mixed property types of the graphs need Oracle Database 23.4"() {
+        given:
+        def entities = [entityRegistry.getEntity(Account), entityRegistry.getEntity(Transfer)]
+        def schema = OraclePropertyGraphSchema.of(beanContext, OracleGraphRepository, "default", entities)
+
+        expect: "a dialect version at or above 23.4, or none, creates the graph with ALLOW MIXED PROPERTY TYPES"
+        schema.buildCreateStatements(null).last().endsWith(" OPTIONS (ALLOW MIXED PROPERTY TYPES)")
+        schema.buildCreateStatements("23.4").last().endsWith(" OPTIONS (ALLOW MIXED PROPERTY TYPES)")
+        schema.buildCreateStatements("26").last().endsWith(" OPTIONS (ALLOW MIXED PROPERTY TYPES)")
+
+        when: "the dialect version is below 23.4"
+        schema.buildCreateStatements("23.3")
+
+        then:
+        def e = thrown(IllegalStateException)
+        e.message.contains("needs Oracle Database 23.4 or later")
+        e.message.contains("[23.3.0]")
     }
 
     private void sql(String... statements) {

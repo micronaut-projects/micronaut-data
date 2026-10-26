@@ -33,6 +33,7 @@ import io.micronaut.data.model.query.builder.sql.Dialect;
 import io.micronaut.data.model.query.builder.sql.SqlQueryBuilder;
 import io.micronaut.data.model.query.builder.sql.SqlSchemaUtils;
 import io.micronaut.data.model.schema.sql.SqlColumnMapping;
+import io.micronaut.data.model.schema.sql.SqlIndexMapping;
 import io.micronaut.data.model.schema.sql.SqlTableMapping;
 import io.micronaut.data.repository.GenericRepository;
 import io.micronaut.inject.BeanDefinition;
@@ -73,6 +74,11 @@ import java.util.stream.Collectors;
  */
 @Internal
 public final class OraclePropertyGraphSchema {
+
+    /**
+     * The first version of Oracle Database with {@code ALLOW MIXED PROPERTY TYPES}.
+     */
+    public static final String MIXED_PROPERTY_TYPES_VERSION = "23.4";
 
     private final Schema schema;
     private final Map<String, Set<PersistentEntity>> graphs;
@@ -123,6 +129,7 @@ public final class OraclePropertyGraphSchema {
      */
     public List<String> buildCreateStatements(@Nullable String dialectVersion) {
         SqlQueryBuilder builder = new SqlQueryBuilder(Dialect.ORACLE, dialectVersion);
+        requireMixedPropertyTypes(builder);
         List<String> statements = new ArrayList<>();
         for (Vertex vertex : schema.vertices.values()) {
             statements.addAll(List.of(builder.buildCreateTableStatements(vertex.table)));
@@ -153,6 +160,19 @@ public final class OraclePropertyGraphSchema {
             statements.add("DROP TABLE " + quote(vertex.table.name()));
         }
         return statements;
+    }
+
+    /**
+     * The graphs are created with {@code ALLOW MIXED PROPERTY TYPES}, which Oracle Database 23.4 introduced: a
+     * dialect version below it, when one is configured, fails here rather than at the first query of a graph that
+     * could not be created.
+     */
+    private static void requireMixedPropertyTypes(SqlQueryBuilder builder) {
+        String version = builder.getDialectVersion();
+        if (version != null && !builder.isDialectVersionAtLeast(MIXED_PROPERTY_TYPES_VERSION)) {
+            throw new IllegalStateException("Oracle property graph schema generation needs Oracle Database " + MIXED_PROPERTY_TYPES_VERSION
+                + " or later, which introduced ALLOW MIXED PROPERTY TYPES, but the dialect version is configured as [" + version + "]");
+        }
     }
 
     private static boolean isNode(PersistentEntity entity) {
@@ -215,6 +235,10 @@ public final class OraclePropertyGraphSchema {
             throw new IllegalStateException("Relationship entity [" + relationshipEntity.getName() + "] has no @TargetNode property");
         }
         SqlTableMapping table = mainTable(relationshipEntity);
+        if (table.primaryKeyColumns().isEmpty()) {
+            throw new IllegalStateException("Relationship entity [" + relationshipEntity.getName()
+                + "] has no @RelationshipId property: its table is an edge table keyed by the relationship identifier");
+        }
         String targetColumn = singleColumn(relationshipEntity, targetNode);
         Set<String> columnNames = table.columns().stream().map(SqlColumnMapping::getName).collect(Collectors.toSet());
         table.primaryKeyColumns().forEach(column -> columnNames.add(column.getName()));
@@ -230,8 +254,13 @@ public final class OraclePropertyGraphSchema {
             .map(SqlColumnMapping::getName)
             .filter(name -> !name.equals(targetColumn))
             .forEach(properties::add);
+        // The relationship identifier is the key of the edge table, so two relationships may link the same pair of
+        // nodes, such as a person playing two roles in a movie; the pair is indexed for the traversals
+        List<SqlIndexMapping> indexes = new ArrayList<>(table.indexes());
+        // The name is derived from the table and the columns, as for the indexes of the entity
+        indexes.add(new SqlIndexMapping("", false, new String[] {ownerColumn, targetColumn}));
         return edge(owner, association, targetNode.getAssociatedEntity(),
-            withColumns(table, table.name(), table.primaryKeyColumns(), columns),
+            withColumns(table, table.name(), table.primaryKeyColumns(), columns, indexes),
             new EdgeKeys(table.primaryKeyColumns().stream().map(SqlColumnMapping::getName).toList(), ownerColumn, targetColumn),
             properties);
     }
@@ -309,8 +338,13 @@ public final class OraclePropertyGraphSchema {
     }
 
     private static SqlTableMapping withColumns(SqlTableMapping table, String name, List<SqlColumnMapping> primaryKeyColumns, List<SqlColumnMapping> columns) {
+        return withColumns(table, name, primaryKeyColumns, columns, table.indexes());
+    }
+
+    private static SqlTableMapping withColumns(SqlTableMapping table, String name, List<SqlColumnMapping> primaryKeyColumns,
+                                               List<SqlColumnMapping> columns, List<SqlIndexMapping> indexes) {
         return new SqlTableMapping(table.schema(), name, table.escape(), SqlTableMapping.TableType.MAIN, primaryKeyColumns, columns,
-            table.sequences(), table.indexes(), table.auxiliaryStatements());
+            table.sequences(), indexes, table.auxiliaryStatements());
     }
 
     private static Map<String, Set<PersistentEntity>> graphs(BeanContext beanContext,
@@ -389,7 +423,8 @@ public final class OraclePropertyGraphSchema {
         if (!edgeTables.isEmpty()) {
             sql.append(" EDGE TABLES (").append(String.join(", ", edgeTables)).append(')');
         }
-        // Tables may map a property name to different types, such as a string node id and a numeric relationship id
+        // Tables may map a property name to different types, such as a string node id and a numeric relationship id;
+        // the option needs Oracle Database 23.4, see requireMixedPropertyTypes
         sql.append(" OPTIONS (ALLOW MIXED PROPERTY TYPES)");
         return sql.toString();
     }
