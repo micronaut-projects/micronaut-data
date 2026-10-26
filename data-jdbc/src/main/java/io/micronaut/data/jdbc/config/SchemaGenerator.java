@@ -289,7 +289,8 @@ public class SchemaGenerator {
                 if (drop && DataSettings.QUERY_LOG.isTraceEnabled()) {
                     DataSettings.QUERY_LOG.trace("Drop Unsuccessful: " + e.getMessage());
                 } else if (!drop && DataSettings.QUERY_LOG.isWarnEnabled()) {
-                    DataSettings.QUERY_LOG.warn("CREATE Statement Unsuccessful: " + e.getMessage());
+                    // A failed CREATE is a warning, as it is for the tables: with CREATE the objects may exist already
+                    DataSettings.QUERY_LOG.warn("CREATE Statement Unsuccessful: {}, {}", e.getMessage(), sql);
                 }
             }
         }
