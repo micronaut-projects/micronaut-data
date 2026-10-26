@@ -65,4 +65,31 @@ ${entity('Movie', [title: String])}
         def e = thrown(RuntimeException)
         e.message.contains("IgnoreCase is not supported with In")
     }
+
+    void "test a property named builtIn is a property, not an In restriction"() {
+        given:
+        def repository = buildRepository('test.MovieRepository', """
+import io.micronaut.data.jdbc.annotation.JdbcRepository;
+import io.micronaut.data.model.query.builder.sql.Dialect;
+
+@JdbcRepository(dialect = Dialect.POSTGRES)
+@io.micronaut.context.annotation.Executable
+interface MovieRepository extends CrudRepository<Movie, Long> {
+    java.util.List<Movie> findByBuiltInIgnoreCase(String builtIn);
+    java.util.List<Movie> findByBuiltIn(String builtIn);
+    java.util.List<Movie> findByBuiltInEquals(String builtIn);
+    java.util.List<Movie> findByBuiltInIn(java.util.List<String> builtIns);
+    java.util.List<Movie> findByTitleIn(java.util.List<String> titles);
+}
+
+${entity('Movie', [title: String, builtIn: String])}
+""")
+
+        expect:
+        getQuery(repository.findPossibleMethods('findByBuiltInIgnoreCase').findFirst().get()).endsWith('WHERE (LOWER(movie_."built_in") = LOWER(?))')
+        getQuery(repository.findPossibleMethods('findByBuiltIn').findFirst().get()).endsWith('WHERE (movie_."built_in" = ?)')
+        getQuery(repository.findPossibleMethods('findByBuiltInEquals').findFirst().get()).endsWith('WHERE (movie_."built_in" = ?)')
+        getQuery(repository.findPossibleMethods('findByBuiltInIn').findFirst().get()).endsWith('WHERE (movie_."built_in" IN (?))')
+        getQuery(repository.findPossibleMethods('findByTitleIn').findFirst().get()).endsWith('WHERE (movie_."title" IN (?))')
+    }
 }
