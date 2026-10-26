@@ -112,6 +112,9 @@ interface PathRepository extends GenericRepository<Person, String> {
     boolean existsPathByMentor(String from, String to);
     @PathLimit(5)
     long countPaths(String from, String to);
+    @PathLimit(5)
+    long countPathsByMentor(String from, String to, @PathLimit int depth);
+    Optional<GraphPath<Person>> findShortestPath(String from, String to, @PathLimit int depth);
     List<GraphRelationship<Person, Person>> findRelationshipsByMentor(String from, String to);
 }
 """)
@@ -393,14 +396,24 @@ interface NoIdRepository extends GenericRepository<Anonymous, String> {
         def v2 = 'v2.id AS "v2__ID_", v2.id AS "v2__id", \'Person\' AS "v2__LABEL_", v2.name AS "v2__name", v2.born AS "v2__born"'
         def steps = "MATCHNUM(v1) AS \"p__M_\", ELEMENT_NUMBER(x) AS \"p__I_\", $v1, $v2, 'FOLLOWS' AS \"x__TYPE_\""
 
-        expect:
+        expect: "the shortest kinds exclude the empty path from a node to itself, as the Cypher builder does"
         getQuery(findMethod(paths, 'findShortestPathByMentor')) ==
-            "SELECT $steps FROM MATCH ANY SHORTEST (s:Person) -[x:FOLLOWS]->{1,5} (t:Person) ON people ONE ROW PER STEP (v1, x, v2) WHERE s.id = ? AND t.id = ? ORDER BY MATCHNUM(v1), ELEMENT_NUMBER(x)"
+            "SELECT $steps FROM MATCH ANY SHORTEST (s:Person) -[x:FOLLOWS]->{1,5} (t:Person) ON people ONE ROW PER STEP (v1, x, v2) WHERE s.id = ? AND t.id = ? AND s.id <> t.id ORDER BY MATCHNUM(v1), ELEMENT_NUMBER(x)"
         getQuery(findMethod(paths, 'findAllShortestPathsByMentor')).contains("FROM MATCH ALL SHORTEST (s:Person) -[x:FOLLOWS]->{1,5} (t:Person) ON people")
         getQuery(findMethod(paths, 'existsPathByMentor')) ==
-            'SELECT 1 AS "result" FROM MATCH ANY (s:Person) -[:FOLLOWS]->{1,5} (t:Person) ON people WHERE s.id = ? AND t.id = ? LIMIT 1'
+            'SELECT 1 AS "result" FROM MATCH ANY (s:Person) -[:FOLLOWS]->{1,5} (t:Person) ON people WHERE s.id = ? AND t.id = ? AND s.id <> t.id LIMIT 1'
+
+        and: "all paths from a node to itself are its cycles"
         getQuery(findMethod(paths, 'countPaths')) ==
             'SELECT COUNT(*) AS "result" FROM MATCH ALL (s:Person) -[]-{1,5} (t:Person) ON people WHERE s.id = ? AND t.id = ?'
+
+        and: "a @PathLimit argument is rendered by the runtime in place of the token, over the depth of the annotation"
+        getQuery(findMethod(paths, 'countPathsByMentor')) ==
+            'SELECT COUNT(*) AS "result" FROM MATCH ALL (s:Person) -[:FOLLOWS]->{1,$__pathLimit} (t:Person) ON people WHERE s.id = ? AND t.id = ?'
+
+        and: "a path over any relationship type reads the type of each step from the label of its edge"
+        getQuery(findMethod(paths, 'findShortestPath')) ==
+            "SELECT ${steps.replace("'FOLLOWS' AS", 'LABEL(x) AS')} FROM MATCH ANY SHORTEST (s:Person) -[x]-{1,\$__pathLimit} (t:Person) ON people ONE ROW PER STEP (v1, x, v2) WHERE s.id = ? AND t.id = ? AND s.id <> t.id ORDER BY MATCHNUM(v1), ELEMENT_NUMBER(x)"
         getQuery(findMethod(paths, 'findRelationshipsByMentor')) ==
             "SELECT ${String.format(person, 's')}, ${String.format(person, 's').replace('s.', 't.').replace('"s__', '"t__')}, 'FOLLOWS' AS \"r__TYPE_\" FROM MATCH (s:Person) -[r:FOLLOWS]-> (t:Person) ON people WHERE s.id = ? AND t.id = ?"
     }

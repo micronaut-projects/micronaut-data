@@ -24,4 +24,9 @@ public interface TagRepository extends CrudRepository<Tag, Long> {
 
     @Query("MATCH (n:Tag) RETURN n LIMIT 1")
     List<Tag> firstTag(Pageable pageable);
+    @Query("MATCH (t:Tag) WITH t ORDER BY t.name LIMIT 2 RETURN t")
+    List<Tag> findFirstTwo(Pageable pageable);
+
+    @Query("MATCH (t:Tag) RETURN t ORDER BY t.name LIMIT 2")
+    List<Tag> findTwo(Pageable pageable);
 }
