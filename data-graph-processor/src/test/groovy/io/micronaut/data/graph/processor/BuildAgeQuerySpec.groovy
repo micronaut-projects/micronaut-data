@@ -56,6 +56,10 @@ interface FriendRepository extends CrudRepository<Friend, String> {
     List<GraphPath<Friend>> findAllShortestPaths(String from, String to);
     @PathLimit(3)
     boolean existsPath(String from, String to);
+    @PathLimit(3)
+    Page<GraphPath<Friend>> findPathByFriends(String from, String to, Pageable pageable);
+    @PathLimit(3)
+    Page<GraphPath<Friend>> findAllShortestPathsByFriends(String from, String to, Pageable pageable);
     List<Friend> findByNameStartsWith(String prefix);
 }
 """)
@@ -76,10 +80,26 @@ interface AccountRepository extends CrudRepository<Account, Long> {
 
         where:
         method                      | query
-        'findShortestPathByFriends' | 'MATCH (s:Friend), (e:Friend) WHERE s.name = $p0 AND e.name = $p1 AND s <> e MATCH p = (s)-[:FRIENDS*1..$__pathLimit]->(e) RETURN p ORDER BY length(p) LIMIT 1'
-        'findAllShortestPaths'      | 'MATCH (s:Friend), (e:Friend) WHERE s.name = $p0 AND e.name = $p1 AND s <> e MATCH p = (s)-[*1..3]-(e) WITH s, e, min(length(p)) AS shortest MATCH p = (s)-[*1..3]-(e) WHERE length(p) = shortest RETURN p'
+        'findShortestPathByFriends' | 'MATCH (s:Friend), (e:Friend) WHERE s.name = $p0 AND e.name = $p1 AND s <> e MATCH p = (s)-[:FRIENDS*1..$__pathLimit]->(e) WITH p ORDER BY length(p) LIMIT 1 RETURN p'
+        'findAllShortestPaths'      | 'MATCH (s:Friend), (e:Friend) WHERE s.name = $p0 AND e.name = $p1 AND s <> e MATCH p = (s)-[*1..3]-(e) WITH s, e, min(length(p)) AS shortest MATCH q = (s)-[*1..3]-(e) WHERE length(q) = shortest RETURN q AS p'
         'existsPath'                | 'MATCH (s:Friend), (e:Friend) WHERE s.name = $p0 AND e.name = $p1 AND s <> e MATCH p = (s)-[*1..3]-(e) RETURN true AS result LIMIT 1'
         'findByNameStartsWith'      | 'MATCH (n:Friend) WHERE n.name STARTS WITH $p0 RETURN n'
+    }
+
+    void "test a page of a shortest path counts the shortest path"() {
+        given:
+        def shortest = findMethod(friends, 'findPathByFriends')
+        def allShortest = findMethod(friends, 'findAllShortestPathsByFriends')
+
+        expect: "the one shortest path is kept by a WITH clause, which the page limits and the count query counts"
+        getQuery(shortest) == AgeStatements.wrap('MATCH (s:Friend), (e:Friend) WHERE s.name = $p0 AND e.name = $p1 AND s <> e MATCH p = (s)-[:FRIENDS*1..3]->(e) WITH p ORDER BY length(p) LIMIT 1 RETURN p')
+        shortest.annotationMetadata.stringValue(Query, 'countQuery').get() ==
+            AgeStatements.wrap('MATCH (s:Friend), (e:Friend) WHERE s.name = $p0 AND e.name = $p1 AND s <> e MATCH p = (s)-[:FRIENDS*1..3]->(e) WITH p ORDER BY length(p) LIMIT 1 RETURN count(p) AS result')
+
+        and: "all shortest paths are matched again by another variable, which AGE needs, and counted"
+        getQuery(allShortest) == AgeStatements.wrap('MATCH (s:Friend), (e:Friend) WHERE s.name = $p0 AND e.name = $p1 AND s <> e MATCH p = (s)-[:FRIENDS*1..3]->(e) WITH s, e, min(length(p)) AS shortest MATCH q = (s)-[:FRIENDS*1..3]->(e) WHERE length(q) = shortest RETURN q AS p')
+        allShortest.annotationMetadata.stringValue(Query, 'countQuery').get() ==
+            AgeStatements.wrap('MATCH (s:Friend), (e:Friend) WHERE s.name = $p0 AND e.name = $p1 AND s <> e MATCH p = (s)-[:FRIENDS*1..3]->(e) WITH s, e, min(length(p)) AS shortest MATCH q = (s)-[:FRIENDS*1..3]->(e) WHERE length(q) = shortest RETURN count(q) AS result')
     }
 
     void "test database assigned identifiers are graph ids"() {
