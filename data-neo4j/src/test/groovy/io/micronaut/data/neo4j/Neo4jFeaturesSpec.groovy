@@ -2,6 +2,8 @@ package io.micronaut.data.neo4j
 
 import io.micronaut.data.exceptions.NonUniqueResultException
 import io.micronaut.data.graph.tck.entities.Movie
+import io.micronaut.data.exceptions.DataAccessException
+import io.micronaut.data.model.Pageable
 import io.micronaut.data.model.Sort
 import io.micronaut.data.neo4j.features.ReactiveMovieRepository
 import io.micronaut.data.neo4j.features.Player
@@ -73,6 +75,22 @@ class Neo4jFeaturesSpec extends Specification implements TestPropertyProvider {
 
         and: "the sort is applied before the limit of the query"
         tagRepository.findFirst2ByNameStartsWith("", Sort.of(Sort.Order.desc("name")))*.name == ["c", "b"]
+    }
+
+    void "a sort or a page that an explicit query cannot take is rejected"() {
+        when: "the query does not match the root node as n"
+        tagRepository.allTags(Sort.of(Sort.Order.asc("name")))
+
+        then:
+        def sorted = thrown(DataAccessException)
+        sorted.message.contains("does not match the root node")
+
+        when: "the query limits itself"
+        tagRepository.firstTag(Pageable.from(0, 1))
+
+        then:
+        def paged = thrown(DataAccessException)
+        paged.message.contains("declares SKIP or LIMIT itself")
     }
 
     void "a query with more than one result is not a single result"() {

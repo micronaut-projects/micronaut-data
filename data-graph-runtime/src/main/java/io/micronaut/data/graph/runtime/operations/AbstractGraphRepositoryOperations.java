@@ -478,24 +478,7 @@ public abstract class AbstractGraphRepositoryOperations extends AbstractReposito
      */
     protected void appendSortAndLimit(StringBuilder query, RuntimePersistentEntity<?> entity, Sort sort, Limit limit) {
         if (sort != null && sort.isSorted()) {
-            boolean rootQuery = query.indexOf("MATCH (" + CypherQueryBuilder.ROOT) == 0;
-            if (!rootQuery) {
-                throw new DataAccessException("Cannot apply the sort " + sort.getOrderBy() + " to the query [" + query + "]: it does not match the root node as " + CypherQueryBuilder.ROOT);
-            }
-            // The ordering the query declares takes precedence, and SKIP and LIMIT stay last
-            int returnIndex = query.lastIndexOf(" RETURN ");
-            int tailIndex = clauseIndex(query, " SKIP ", returnIndex);
-            int limitIndex = clauseIndex(query, " LIMIT ", returnIndex);
-            if (tailIndex < 0 || (limitIndex >= 0 && limitIndex < tailIndex)) {
-                tailIndex = limitIndex;
-            }
-            String tail = tailIndex < 0 ? "" : query.substring(tailIndex);
-            if (tailIndex >= 0) {
-                query.setLength(tailIndex);
-            }
-            query.append(clauseIndex(query, " ORDER BY ", returnIndex) >= 0 ? ", " : " ORDER BY ");
-            appendOrderItems(query, entity, sort);
-            query.append(tail);
+            appendSort(query, entity, sort);
         }
         if (limit != null && limit.isLimited()) {
             if (query.indexOf(" LIMIT ") >= 0 || query.indexOf(" SKIP ") >= 0) {
@@ -503,6 +486,27 @@ public abstract class AbstractGraphRepositoryOperations extends AbstractReposito
             }
             query.append(queryBuilder.buildLimitAndOffset(limit.maxResults(), limit.offset()));
         }
+    }
+
+    private void appendSort(StringBuilder query, RuntimePersistentEntity<?> entity, Sort sort) {
+        boolean rootQuery = query.indexOf("MATCH (" + CypherQueryBuilder.ROOT) == 0;
+        if (!rootQuery) {
+            throw new DataAccessException("Cannot apply the sort " + sort.getOrderBy() + " to the query [" + query + "]: it does not match the root node as " + CypherQueryBuilder.ROOT);
+        }
+        // The ordering the query declares takes precedence, and SKIP and LIMIT stay last
+        int returnIndex = query.lastIndexOf(" RETURN ");
+        int tailIndex = clauseIndex(query, " SKIP ", returnIndex);
+        int limitIndex = clauseIndex(query, " LIMIT ", returnIndex);
+        if (tailIndex < 0 || (limitIndex >= 0 && limitIndex < tailIndex)) {
+            tailIndex = limitIndex;
+        }
+        String tail = tailIndex < 0 ? "" : query.substring(tailIndex);
+        if (tailIndex >= 0) {
+            query.setLength(tailIndex);
+        }
+        query.append(clauseIndex(query, " ORDER BY ", returnIndex) >= 0 ? ", " : " ORDER BY ");
+        appendOrderItems(query, entity, sort);
+        query.append(tail);
     }
 
     /**
