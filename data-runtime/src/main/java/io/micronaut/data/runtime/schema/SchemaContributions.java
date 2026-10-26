@@ -77,11 +77,11 @@ public record SchemaContributions(PersistentEntity[] tableEntities,
 
     @Override
     public boolean equals(Object o) {
-        return o instanceof SchemaContributions other
-            && Arrays.equals(tableEntities, other.tableEntities)
-            && dropStatements.equals(other.dropStatements)
-            && beforeTablesStatements.equals(other.beforeTablesStatements)
-            && createStatements.equals(other.createStatements);
+        return o instanceof SchemaContributions(PersistentEntity[] otherTables, List<String> otherDrop, List<String> otherBeforeTables, List<String> otherCreate)
+            && Arrays.equals(tableEntities, otherTables)
+            && dropStatements.equals(otherDrop)
+            && beforeTablesStatements.equals(otherBeforeTables)
+            && createStatements.equals(otherCreate);
     }
 
     @Override

@@ -6,6 +6,8 @@ import jakarta.inject.Inject
 import spock.lang.Specification
 
 import java.sql.Connection
+import java.sql.PreparedStatement
+import java.sql.ResultSet
 
 @MicronautTest(transactional = false)
 class BookTitlesViewSpec extends Specification {
@@ -19,19 +21,20 @@ class BookTitlesViewSpec extends Specification {
     void "the contributed view is created over the book table"() {
         when:
         bookRepository.save(new Book("The Left Hand of Darkness", 300))
-        List<String> titles = transactionOperations.executeRead { status ->
-            List<String> result = []
-            status.connection.prepareStatement("SELECT title FROM book_titles").withCloseable { ps ->
-                ps.executeQuery().withCloseable { rs ->
-                    while (rs.next()) {
-                        result << rs.getString(1)
-                    }
-                }
-            }
-            return result
-        }
+        List<String> titles = transactionOperations.executeRead { status -> selectTitles(status.connection) }
 
         then:
         titles.contains("The Left Hand of Darkness")
+    }
+
+    private static List<String> selectTitles(Connection connection) {
+        List<String> titles = []
+        try (PreparedStatement statement = connection.prepareStatement("SELECT title FROM book_titles")
+             ResultSet resultSet = statement.executeQuery()) {
+            while (resultSet.next()) {
+                titles << resultSet.getString(1)
+            }
+        }
+        return titles
     }
 }

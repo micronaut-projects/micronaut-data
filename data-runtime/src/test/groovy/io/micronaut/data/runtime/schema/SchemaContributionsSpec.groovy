@@ -78,6 +78,30 @@ class SchemaContributionsSpec extends Specification {
         context.entities() == [book]
     }
 
+    void "contributions are equal when their tables and statements are"() {
+        given:
+        def contributions = new SchemaContributions([book] as PersistentEntity[], ['DROP'], ['BEFORE'], ['CREATE'])
+        def same = new SchemaContributions([book] as PersistentEntity[], ['DROP'], ['BEFORE'], ['CREATE'])
+
+        expect:
+        contributions == same
+        contributions.hashCode() == same.hashCode()
+        contributions != new SchemaContributions([author] as PersistentEntity[], ['DROP'], ['BEFORE'], ['CREATE'])
+        contributions != new SchemaContributions([book] as PersistentEntity[], [], ['BEFORE'], ['CREATE'])
+        contributions != new SchemaContributions([book] as PersistentEntity[], ['DROP'], [], ['CREATE'])
+        contributions != new SchemaContributions([book] as PersistentEntity[], ['DROP'], ['BEFORE'], [])
+        !contributions.equals('CREATE')
+        contributions.toString() == 'SchemaContributions{tables=1, drop=[DROP], beforeTables=[BEFORE], create=[CREATE]}'
+    }
+
+    void "contributions without tables or statements are empty"() {
+        expect:
+        new SchemaContributions(new PersistentEntity[0], [], [], []).isEmpty()
+        !new SchemaContributions(new PersistentEntity[0], ['DROP'], [], []).isEmpty()
+        !new SchemaContributions(new PersistentEntity[0], [], ['BEFORE'], []).isEmpty()
+        !new SchemaContributions(new PersistentEntity[0], [], [], ['CREATE']).isEmpty()
+    }
+
     private SchemaContext context(SchemaGenerate schemaGenerate) {
         return new SchemaContext('default', Dialect.H2, null, schemaGenerate, [book, author, vertex])
     }
