@@ -71,6 +71,13 @@ final class DefaultAgeReactorRepositoryOperations extends AbstractReactiveGraphR
     static final String PREPARED_SETTING = "micronaut.age.prepared";
 
     private static final Logger LOG = LoggerFactory.getLogger(DefaultAgeReactorRepositoryOperations.class);
+    /**
+     * Puts the AGE catalog last on the search path, unless it is on it: the agtype operators Cypher writes use
+     * resolve through the search path, and ag_catalog goes last so that unqualified DDL run on the same pooled
+     * connection later still lands in the first schema of the path.
+     */
+    private static final String SEARCH_PATH = "SELECT set_config('search_path', current_setting('search_path') || ', ag_catalog', false)"
+        + " WHERE current_setting('search_path') NOT LIKE '%ag_catalog%'";
     private static final String JDBC_PARAMETER = "$$, ?)";
     private static final String R2DBC_PARAMETER = "$$, $1)";
 
@@ -157,11 +164,11 @@ final class DefaultAgeReactorRepositoryOperations extends AbstractReactiveGraphR
         return Mono.defer(() -> {
             Connection physical = physicalConnection(connection);
             if (preparedConnections.contains(physical) || preparedCheckouts.contains(connection)) {
-                return Mono.empty();
+                return searchPath(connection);
             }
             boolean autoCommit = connection.isAutoCommit();
             return isPrepared(connection).flatMap(loaded -> {
-                Mono<Void> load = loaded ? Mono.empty() : load(connection);
+                Mono<Void> load = loaded ? searchPath(connection) : load(connection);
                 return load.then(Mono.fromRunnable(() -> {
                     if (loaded || autoCommit) {
                         // Committed: by an earlier checkout, or at once
@@ -175,6 +182,14 @@ final class DefaultAgeReactorRepositoryOperations extends AbstractReactiveGraphR
         });
     }
 
+    /**
+     * The {@code SCHEMA} multi-tenancy mode sets the search path of each operation of a tenant to the tenant schema,
+     * which drops the AGE catalog from a connection that has it loaded: the catalog goes back on the path.
+     */
+    private Mono<Void> searchPath(Connection connection) {
+        return tenantResolver == null ? Mono.empty() : execute(connection, SEARCH_PATH);
+    }
+
     private Mono<Void> load(Connection connection) {
         LOG.debug("Loading Apache AGE on a connection");
         Mono<Void> load = Mono.empty();
@@ -182,11 +197,7 @@ final class DefaultAgeReactorRepositoryOperations extends AbstractReactiveGraphR
             load = load.then(execute(connection, "CREATE EXTENSION IF NOT EXISTS age"));
         }
         return load.then(execute(connection, "LOAD 'age'"))
-            // The operators of agtype, which Cypher writes use, are resolved through the search path. ag_catalog
-            // goes last, so that unqualified DDL run on the same pooled connection later still lands in the first
-            // schema of the path
-            .then(execute(connection, "SELECT set_config('search_path', current_setting('search_path') || ', ag_catalog', false)"
-                + " WHERE current_setting('search_path') NOT LIKE '%ag_catalog%'"))
+            .then(execute(connection, SEARCH_PATH))
             .then(execute(connection, "SELECT set_config('" + PREPARED_SETTING + "', 'true', false)"));
     }
 
