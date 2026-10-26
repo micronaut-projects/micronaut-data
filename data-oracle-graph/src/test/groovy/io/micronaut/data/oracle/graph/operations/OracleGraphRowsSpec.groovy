@@ -88,4 +88,63 @@ class OracleGraphRowsSpec extends Specification {
         ((GraphPathValue) records[0].get("p")).relationships()*.type() == ["FRIENDS", "FRIENDS"]
         ((GraphPathValue) records[0].get("p")).relationships()*.startId() == [1, 2]
     }
+
+    void "decode the type of each step of a path over several relationship types"() {
+        given:
+        def columns = ["p__M_", "p__I_", "v1__ID_", "v1__LABEL_", "v1__name", "v2__ID_", "v2__LABEL_", "v2__name", "x__TYPE_"]
+        def rows = [
+            [1, 2, 1, "Person", "Ada", 2, "Person", "Grace", "MENTORED_BY"],
+            [1, 4, 2, "Person", "Grace", 3, "Person", "Barbara", "FOLLOWS"]
+        ]
+
+        when:
+        def path = (GraphPathValue) OracleGraphRows.decode(columns, rows)[0].get("p")
+
+        then:
+        path.nodes()*.id() == [1, 2, 3]
+        path.relationships()*.type() == ["MENTORED_BY", "FOLLOWS"]
+        path.relationships()*.startId() == [1, 2]
+        path.relationships()*.endId() == [2, 3]
+    }
+
+    void "decode a path whose vertices have no identifier column"() {
+        given: "Fred -> Barney -> Fred -> Wilma: the cycle closes on Fred, the other vertices stay distinct"
+        def columns = ["p__M_", "p__I_", "v1__LABEL_", "v1__name", "v2__LABEL_", "v2__name", "x__TYPE_"]
+        def rows = [
+            [1, 2, "Friend", "Fred", "Friend", "Barney", "FRIENDS"],
+            [1, 4, "Friend", "Barney", "Friend", "Fred", "FRIENDS"],
+            [1, 6, "Friend", "Fred", "Friend", "Wilma", "FRIENDS"],
+            [2, 2, "Friend", "Wilma", "Friend", "Wilma", "FRIENDS"]
+        ]
+
+        when:
+        def records = OracleGraphRows.decode(columns, rows)
+        def path = (GraphPathValue) records[0].get("p")
+        def loop = (GraphPathValue) records[1].get("p")
+
+        then:
+        path.nodes()*.properties()*.name == ["Fred", "Barney", "Fred", "Wilma"]
+        path.nodes()*.id() == [0, 1, 0, 2]
+        path.relationships()*.startId() == [0, 1, 0]
+        path.relationships()*.endId() == [1, 0, 2]
+
+        and: "a step from a vertex to itself is one node"
+        loop.nodes()*.properties()*.name == ["Wilma", "Wilma"]
+        loop.nodes()*.id().unique().size() == 1
+        loop.relationships()[0].startId() == loop.relationships()[0].endId()
+    }
+
+    void "decode a path whose identifier column is null"() {
+        given:
+        def columns = ["p__M_", "p__I_", "v1__ID_", "v1__LABEL_", "v1__name", "v2__ID_", "v2__LABEL_", "v2__name", "x__TYPE_"]
+        def rows = [[1, 2, null, "Friend", "Fred", null, "Friend", "Barney", "FRIENDS"]]
+
+        when:
+        def path = (GraphPathValue) OracleGraphRows.decode(columns, rows)[0].get("p")
+
+        then:
+        path.nodes()*.properties()*.name == ["Fred", "Barney"]
+        path.nodes()*.id().unique().size() == 2
+        path.relationships()[0].startId() != path.relationships()[0].endId()
+    }
 }
