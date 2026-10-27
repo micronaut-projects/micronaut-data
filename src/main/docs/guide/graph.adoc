@@ -1,0 +1,30 @@
+Micronaut Data Graph adds repositories for property graph databases: graphs of nodes connected by relationships, where both nodes and relationships carry properties.
+
+As with every Micronaut Data module, queries are computed at build time. A repository method such as `findByDirectorsName` is compiled to the query language of the database when the application is compiled, so there is no runtime query parsing, no reflection and no proxies.
+
+The module supports three databases:
+
+[cols="1,2,2"]
+|===
+|Database |Query language |Module
+
+|https://neo4j.com[Neo4j]
+|Cypher
+|`micronaut-data-neo4j`
+
+|https://www.oracle.com/database/integrated-graph-database/[Oracle Database property graphs]
+|https://pgql-lang.org[PGQL] or SQL/PGQ `GRAPH_TABLE` queries
+|`micronaut-data-oracle-graph`
+
+|https://age.apache.org[PostgreSQL with Apache AGE]
+|Cypher, run through the `cypher()` function
+|`micronaut-data-postgres-age`
+|===
+
+Beyond the finder methods of every Micronaut Data repository, graph repositories add:
+
+* Relationships, including relationships with properties, mapped with `@Relationship` and `@RelationshipProperties`.
+* Finders that traverse relationships, such as `findByRolesPersonName`, and fetch joins with `@Join`.
+* Path finders such as `findShortestPath`, `findAllShortestPaths`, `findAllPaths` and `existsPath`, returning api:data.graph.model.GraphPath[].
+* Relationship finders such as `findRelationships`, returning api:data.graph.model.GraphRelationship[].
+* Schemaless properties and labels, read and written alongside the declared ones.
