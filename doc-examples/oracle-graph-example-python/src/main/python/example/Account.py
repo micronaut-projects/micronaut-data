@@ -9,7 +9,7 @@ if TYPE_CHECKING:
     from example.Transfer import Transfer
 
 
-@Node("Account")  # <1>
+@Node(value="accounts", labels=["Account"])  # <1>
 @dataclass
 class Account:
     id: Annotated[int, Id]  # <2>
