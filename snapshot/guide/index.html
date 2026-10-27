@@ -13156,7 +13156,7 @@ class ETagBook {
 <div class="paragraph">
 <p>When <code>function</code> is omitted on <code>@GeneratedETag</code>, Micronaut Data resolves it from the SQL dialect at query-build time. Oracle defaults to <code>SYS_ROW_ETAG</code>; for other dialects you must provide an explicit function value.
 The <code>function</code> value should be a function name or schema-qualified function name only; do not include parentheses, argument placeholders, or column references because Micronaut Data supplies the resolved ETag input columns.
-Micronaut Data supplies those columns in a deterministic entity traversal order. The ETag function should not depend on argument order. Oracle&#8217;s <code>SYS_ROW_ETAG</code> treats its column arguments as an unordered set, so reordering mapped properties does not change the ETag when the selected columns remain the same. Changing the selected columns or their mappings does change the ETag inputs.</p>
+Micronaut Data supplies those columns in a deterministic order: identity columns first, wherever they are declared, then the other properties in declaration order, followed by any foreign-key columns. Oracle&#8217;s <code>SYS_ROW_ETAG</code> ignores the order of its column arguments, so reordering mapped properties does not change the ETag as long as the selected columns stay the same. Changing the selected columns or their mappings does change the ETag inputs.</p>
 </div>
 
 <h2 id="pessimisticLocking"><a class="anchor" href="#pessimisticLocking"></a>4.3.3 Pessimistic Locking</h2>
