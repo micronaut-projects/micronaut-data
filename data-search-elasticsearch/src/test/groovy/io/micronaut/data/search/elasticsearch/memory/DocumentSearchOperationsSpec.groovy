@@ -283,20 +283,20 @@ class DocumentSearchOperationsSpec extends Specification {
 
         where:
         method                                                | args                     | expected
-        "findByTitleStartsWith"                               | ["Co*"]                  | '{"query":{"wildcard":{"title.keyword":{"value":"Co\\\\**"}}}}'
-        "findByTitleStartsWithIgnoreCase"                     | ["co"]                   | '{"query":{"wildcard":{"title.keyword":{"value":"co*","case_insensitive":true}}}}'
-        "findByTitleEndsWith"                                 | ["fee"]                  | '{"query":{"wildcard":{"title.keyword":{"value":"*fee"}}}}'
-        "findByTitleContains"                                 | ["ff"]                   | '{"query":{"wildcard":{"title.keyword":{"value":"*ff*"}}}}'
-        "findByTitleLike"                                     | ["C_f%"]                 | '{"query":{"wildcard":{"title.keyword":{"value":"C?f*"}}}}'
-        "findByTitleIgnoreCase"                               | ["coffee"]               | '{"query":{"term":{"title.keyword":{"value":"coffee","case_insensitive":true}}}}'
-        "findByTitleRegex"                                    | ["Co.*"]                 | '{"query":{"regexp":{"title.keyword":"Co.*"}}}'
-        "findByPagesGreaterThanEqualsAndPagesLessThanEquals"  | [10, 20]                 | '{"query":{"bool":{"must":[{"range":{"pages":{"gte":10}}},{"range":{"pages":{"lte":20}}}]}}}'
-        "findByTitleIsEmpty"                                  | []                       | '{"query":{"bool":{"should":[{"bool":{"must_not":{"exists":{"field":"title"}}}},{"term":{"title.keyword":""}}],"minimum_should_match":1}}}'
-        "findByTitleIsNotEmpty"                               | []                       | '{"query":{"bool":{"must_not":{"bool":{"should":[{"bool":{"must_not":{"exists":{"field":"title"}}}},{"term":{"title.keyword":""}}],"minimum_should_match":1}}}}}'
-        "findByTitleOrBody"                                   | ["Coffee", "Beans"]      | '{"query":{"bool":{"should":[{"term":{"title.keyword":"Coffee"}},{"term":{"body.keyword":"Beans"}}],"minimum_should_match":1}}}'
-        "findByTitleNotInList"                                | [["Coffee", "Tea"]]      | '{"query":{"bool":{"must_not":{"terms":{"title.keyword":["Coffee","Tea"]}}}}}'
-        "findByTitleInList"                                   | [["Coffee", "Tea"] as String[]] | '{"query":{"terms":{"title.keyword":["Coffee","Tea"]}}}'
-        "findByTitleNotEqual"                                 | ["Coffee"]               | '{"query":{"bool":{"must_not":{"term":{"title.keyword":"Coffee"}}}}}'
+        "findByTitleStartsWith"                               | ["Co*"]                  | '{"query":{"wildcard":{"title.keyword":{"value":"Co\\\\**"}}},"size":10000}'
+        "findByTitleStartsWithIgnoreCase"                     | ["co"]                   | '{"query":{"wildcard":{"title.keyword":{"value":"co*","case_insensitive":true}}},"size":10000}'
+        "findByTitleEndsWith"                                 | ["fee"]                  | '{"query":{"wildcard":{"title.keyword":{"value":"*fee"}}},"size":10000}'
+        "findByTitleContains"                                 | ["ff"]                   | '{"query":{"wildcard":{"title.keyword":{"value":"*ff*"}}},"size":10000}'
+        "findByTitleLike"                                     | ["C_f%"]                 | '{"query":{"wildcard":{"title.keyword":{"value":"C?f*"}}},"size":10000}'
+        "findByTitleIgnoreCase"                               | ["coffee"]               | '{"query":{"term":{"title.keyword":{"value":"coffee","case_insensitive":true}}},"size":10000}'
+        "findByTitleRegex"                                    | ["Co.*"]                 | '{"query":{"regexp":{"title.keyword":"Co.*"}},"size":10000}'
+        "findByPagesGreaterThanEqualsAndPagesLessThanEquals"  | [10, 20]                 | '{"query":{"bool":{"must":[{"range":{"pages":{"gte":10}}},{"range":{"pages":{"lte":20}}}]}},"size":10000}'
+        "findByTitleIsEmpty"                                  | []                       | '{"query":{"bool":{"should":[{"bool":{"must_not":{"exists":{"field":"title"}}}},{"term":{"title.keyword":""}}],"minimum_should_match":1}},"size":10000}'
+        "findByTitleIsNotEmpty"                               | []                       | '{"query":{"bool":{"must_not":{"bool":{"should":[{"bool":{"must_not":{"exists":{"field":"title"}}}},{"term":{"title.keyword":""}}],"minimum_should_match":1}}}},"size":10000}'
+        "findByTitleOrBody"                                   | ["Coffee", "Beans"]      | '{"query":{"bool":{"should":[{"term":{"title.keyword":"Coffee"}},{"term":{"body.keyword":"Beans"}}],"minimum_should_match":1}},"size":10000}'
+        "findByTitleNotInList"                                | [["Coffee", "Tea"]]      | '{"query":{"bool":{"must_not":{"terms":{"title.keyword":["Coffee","Tea"]}}}},"size":10000}'
+        "findByTitleInList"                                   | [["Coffee", "Tea"] as String[]] | '{"query":{"terms":{"title.keyword":["Coffee","Tea"]}},"size":10000}'
+        "findByTitleNotEqual"                                 | ["Coffee"]               | '{"query":{"bool":{"must_not":{"term":{"title.keyword":"Coffee"}}}},"size":10000}'
     }
 
     void "the index mapping renders keyword, autocomplete and analyzer fields"() {

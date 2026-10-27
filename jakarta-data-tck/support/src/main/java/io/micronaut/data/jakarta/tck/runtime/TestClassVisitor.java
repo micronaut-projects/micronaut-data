@@ -28,6 +28,8 @@ import io.micronaut.data.annotation.Transient;
 import io.micronaut.data.jdbc.annotation.JdbcRepository;
 import io.micronaut.data.model.query.builder.sql.Dialect;
 import io.micronaut.data.mongodb.annotation.MongoRepository;
+import io.micronaut.data.search.elasticsearch.annotation.ElasticsearchRepository;
+import io.micronaut.data.search.opensearch.annotation.OpenSearchRepository;
 import io.micronaut.inject.ast.ClassElement;
 import io.micronaut.inject.ast.FieldElement;
 import io.micronaut.inject.ast.MethodElement;
@@ -47,6 +49,8 @@ public final class TestClassVisitor implements TypeElementVisitor<Object, Object
 
     private final boolean isJdbcImplementation;
     private final boolean isMongoDBImplementation;
+    private final boolean isElasticsearchImplementation;
+    private final boolean isOpenSearchImplementation;
 
     private boolean introspected;
 
@@ -72,6 +76,8 @@ public final class TestClassVisitor implements TypeElementVisitor<Object, Object
         Object implementation = prop.getOrDefault("implementation", "");
         isJdbcImplementation = implementation.equals("jdbc");
         isMongoDBImplementation = implementation.equals("mongodb");
+        isElasticsearchImplementation = implementation.equals("elasticsearch");
+        isOpenSearchImplementation = implementation.equals("opensearch");
     }
 
     @Override
@@ -97,6 +103,12 @@ public final class TestClassVisitor implements TypeElementVisitor<Object, Object
         }
         if (element.hasStereotype(Repository.class) && isMongoDBImplementation) {
             element.annotate(MongoRepository.class);
+        }
+        if (element.hasStereotype(Repository.class) && isElasticsearchImplementation) {
+            element.annotate(ElasticsearchRepository.class);
+        }
+        if (element.hasStereotype(Repository.class) && isOpenSearchImplementation) {
+            element.annotate(OpenSearchRepository.class);
         }
         if (element.getName().startsWith("ee.jakarta.tck.data") && !element.isEnum()) {
             if (element.hasStereotype(Introspected.class)) {
@@ -125,7 +137,7 @@ public final class TestClassVisitor implements TypeElementVisitor<Object, Object
 
     @Override
     public void visitField(FieldElement element, VisitorContext context) {
-        if (isJdbcImplementation || isMongoDBImplementation) {
+        if (isJdbcImplementation || isMongoDBImplementation || isElasticsearchImplementation || isOpenSearchImplementation) {
             if (element.getOwningType().hasStereotype(Entity.class)) {
                 element.annotate(Nullable.class);
             }

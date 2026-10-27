@@ -8,7 +8,7 @@ snippet::example.Book[project-base="doc-examples/elasticsearch-search-example", 
 
 == Index mapping
 
-When `micronaut.data.search.create-indexes` is enabled, Micronaut Data creates the index of a `@Searchable` entity on startup with an explicit mapping for its search fields; every other string, enum and UUID property is a `keyword`, so the derived queries compare it exactly, and the remaining properties are mapped dynamically by the store:
+When `micronaut.data.search.create-indexes` is enabled, Micronaut Data creates on startup the index of every entity an Elasticsearch or OpenSearch repository stores, with an explicit mapping for its `@SearchField` properties; every other string, enum and UUID property is a `keyword`, so the derived queries compare it exactly, and the remaining properties are mapped dynamically by the store:
 
 |===
 |`@SearchField` type |Mapping

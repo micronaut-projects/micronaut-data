@@ -21,10 +21,12 @@ import io.micronaut.core.beans.BeanProperty;
 import io.micronaut.core.type.Argument;
 import io.micronaut.data.annotation.search.Searchable;
 import io.micronaut.data.event.EntityEventContext;
+import io.micronaut.data.annotation.TypeRole;
 import io.micronaut.data.exceptions.DataAccessException;
 import io.micronaut.data.model.CursoredPage;
 import io.micronaut.data.model.CursoredPageable;
 import io.micronaut.data.model.Page;
+import io.micronaut.data.model.Limit;
 import io.micronaut.data.model.Pageable;
 import io.micronaut.data.model.Sort;
 import io.micronaut.data.model.runtime.AttributeConverterRegistry;
@@ -345,7 +347,7 @@ abstract class AbstractDocumentSearchRepositoryOperations extends AbstractReposi
         } else {
             body = matchAll();
         }
-        applyPageable(body, query.getPageable(), entity);
+        applyPageable(body, query, entity);
         body.put("track_total_hits", true);
         return body;
     }
@@ -360,20 +362,60 @@ abstract class AbstractDocumentSearchRepositoryOperations extends AbstractReposi
         return SearchJson.write(Map.of(QUERY, body.getOrDefault(QUERY, Map.of("match_all", Map.of()))));
     }
 
+    /**
+     * Applies the window and the sort of a query: its pageable, or else its limit, such as a Jakarta Data
+     * {@code Limit} parameter, with its sort.
+     */
+    protected final <T> void applyPageable(Map<String, Object> body, io.micronaut.data.model.runtime.PagedQuery<?> query, RuntimePersistentEntity<T> entity) {
+        Pageable pageable = query.getPageable();
+        if (query instanceof PreparedQuery<?, ?> preparedQuery && pageable.isUnpaged()) {
+            Limit limit = preparedQuery.getQueryLimit();
+            if (!limit.isLimited()) {
+                limit = preparedQuery.getParameterInRole(TypeRole.LIMIT, Limit.class).orElse(limit);
+            }
+            if (limit.isLimited()) {
+                if (limit.offset() > 0) {
+                    body.put("from", limit.offset());
+                }
+                body.put("size", limit.maxResults());
+            }
+            applyPageable(body, Pageable.UNPAGED.withSort(preparedQuery.getSort()), entity);
+            return;
+        }
+        applyPageable(body, pageable, entity);
+    }
+
+    /**
+     * Adds the sort of a pageable after the query's own {@code OrderBy}, which takes precedence.
+     */
+    private <T> void appendSort(Map<String, Object> body, Sort sort, RuntimePersistentEntity<T> entity) {
+        if (!sort.isSorted()) {
+            return;
+        }
+        List<Map<String, Object>> entries = new ArrayList<>();
+        if (body.get("sort") instanceof List<?> declared) {
+            for (Object entry : declared) {
+                entries.add((Map<String, Object>) entry);
+            }
+        }
+        entries.addAll(sortEntries(sort.getOrderBy(), entity, false));
+        body.put("sort", entries);
+    }
+
     protected final <T> void applyPageable(Map<String, Object> body, Pageable pageable, RuntimePersistentEntity<T> entity) {
         if (pageable instanceof CursoredPageable cursored) {
             applyCursoredPageable(body, cursored, entity);
             return;
         }
-        if (!pageable.isUnpaged()) {
+        if (pageable.isUnpaged()) {
+            // without a size the stores return only their default of 10 hits; a query's own limit stays
+            body.putIfAbsent("size", configuration.getMaxResults());
+        } else {
             body.put("from", pageable.getOffset());
             body.put("size", pageable.getSize());
             sizeKnn(body, (int) Math.min(Integer.MAX_VALUE, pageable.getOffset() + pageable.getSize()));
         }
-        Sort sort = pageable.getSort();
-        if (sort.isSorted()) {
-            body.put("sort", sortEntries(sort.getOrderBy(), entity, false));
-        }
+        appendSort(body, pageable.getSort(), entity);
     }
 
     /** The field a sort order applies to: the score, or the keyword path of an entity property. */
@@ -445,7 +487,8 @@ abstract class AbstractDocumentSearchRepositoryOperations extends AbstractReposi
         List<Map<String, Object>> entries = new ArrayList<>();
         for (Sort.Order order : orders) {
             boolean ascending = order.isAscending() != reversed;
-            entries.add(Map.of(sortField(order, entity), Map.of("order", ascending ? "asc" : "desc")));
+            entries.add(Map.of(sortField(order, entity), DocumentSearchQueryBuilder.sortOptions(ascending,
+                order.getNullOrdering() == Sort.Order.NullOrdering.FIRST, order.getNullOrdering() == Sort.Order.NullOrdering.LAST)));
         }
         return entries;
     }

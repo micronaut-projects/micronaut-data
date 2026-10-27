@@ -28,8 +28,11 @@ import io.micronaut.data.model.jpa.criteria.IExpression;
 import io.micronaut.data.model.jpa.criteria.IPredicate;
 import io.micronaut.data.model.jpa.criteria.PersistentEntityRoot;
 import io.micronaut.data.model.jpa.criteria.impl.CriteriaUtils;
+import io.micronaut.data.model.jpa.criteria.impl.DefaultOrder;
 import io.micronaut.data.model.jpa.criteria.impl.expression.FunctionExpression;
 import io.micronaut.data.model.jpa.criteria.impl.expression.LiteralExpression;
+import io.micronaut.data.model.jpa.criteria.impl.expression.UnaryExpression;
+import io.micronaut.data.model.jpa.criteria.impl.expression.UnaryExpressionType;
 import io.micronaut.data.model.jpa.criteria.impl.predicate.ConjunctionPredicate;
 import io.micronaut.data.model.jpa.criteria.impl.predicate.DisjunctionPredicate;
 import io.micronaut.data.model.jpa.criteria.impl.predicate.ExistsSubqueryPredicate;
@@ -51,6 +54,7 @@ import io.micronaut.data.model.search.TextSearchSupport;
 import io.micronaut.data.search.document.convert.SimpleQueryStringConverter;
 import io.micronaut.data.search.document.init.SearchIndexDefinitions;
 import jakarta.persistence.criteria.Expression;
+import jakarta.persistence.criteria.Nulls;
 import jakarta.persistence.criteria.Order;
 import jakarta.persistence.criteria.Predicate;
 import jakarta.persistence.criteria.Selection;
@@ -103,10 +107,16 @@ public final class DocumentSearchQueryBuilder implements QueryBuilder {
      */
     public static final String COSINE_SIMILARITY_HINT = "cosine_similarity";
 
+    /**
+     * Marks the body of a query that projects a count, which the operations run as a count request.
+     */
+    public static final String COUNT_MARKER = "$mn_count";
+
     private static final int DEFAULT_K = 10;
     private static final int DEFAULT_NUM_CANDIDATES = 100;
 
     private static final String KEYWORD_SUFFIX = ".keyword";
+    private static final Map<String, String> RANGE_OPERATORS = Map.of("gt", ">", "gte", ">=", "lt", "<", "lte", "<=");
     private static final String QUERY = "query";
     private static final Map<String, Object> MATCH_ALL = Map.of("match_all", Map.of());
     private static final String BOOL = "bool";
@@ -133,6 +143,10 @@ public final class DocumentSearchQueryBuilder implements QueryBuilder {
         Map<String, Object> body = new LinkedHashMap<>();
         DocumentPredicateVisitor visitor = new DocumentPredicateVisitor(entity, bindings, definition.limit());
         body.put(QUERY, queryOf(definition, visitor));
+        if (definition.selection() instanceof UnaryExpression<?> unary && unary.getType() == UnaryExpressionType.COUNT) {
+            // a COUNT projection, such as the Jakarta Data query SELECT count(this), runs as a count request
+            body.put(COUNT_MARKER, true);
+        }
         if (visitor.minScore != null) {
             body.put("min_score", visitor.minScore);
         }
@@ -250,7 +264,25 @@ public final class DocumentSearchQueryBuilder implements QueryBuilder {
         } else {
             throw new UnsupportedOperationException("Ordering by expression " + expression + " is not supported by document search stores");
         }
-        return Map.of(field, Map.of(ORDER, order.isAscending() ? "asc" : "desc"));
+        Nulls nulls = order instanceof DefaultOrder<?> defaultOrder ? defaultOrder.getNullPrecedence() : Nulls.NONE;
+        return Map.of(field, sortOptions(order.isAscending(), nulls == Nulls.FIRST, nulls == Nulls.LAST));
+    }
+
+    /**
+     * The options of a sort entry: the direction and, when requested, where the documents without a value go.
+     *
+     * @param ascending Whether the order is ascending
+     * @param nullsFirst Whether documents without a value come first
+     * @param nullsLast Whether documents without a value come last
+     * @return The options
+     */
+    public static Map<String, Object> sortOptions(boolean ascending, boolean nullsFirst, boolean nullsLast) {
+        Map<String, Object> options = new LinkedHashMap<>();
+        options.put(ORDER, ascending ? "asc" : "desc");
+        if (nullsFirst || nullsLast) {
+            options.put("missing", nullsFirst ? "_first" : "_last");
+        }
+        return options;
     }
 
     /**
@@ -424,7 +456,17 @@ public final class DocumentSearchQueryBuilder implements QueryBuilder {
         @Override
         public void visit(LikePredicate likePredicate) {
             PersistentPropertyPath propertyPath = requireProperty(likePredicate.getExpression()).getPropertyPath();
-            result = wildcard(propertyPath, likePredicate.getPattern(), "like");
+            StringBuilder hint = new StringBuilder("like");
+            if (likePredicate.isCaseInsensitive()) {
+                hint.append("_ignore_case");
+            }
+            if (likePredicate.getEscapeChar() instanceof LiteralExpression<?> escape && escape.getValue() instanceof Character c) {
+                hint.append(':').append(c);
+            }
+            result = wildcard(propertyPath, likePredicate.getPattern(), hint.toString());
+            if (likePredicate.isNegated()) {
+                result = Map.of(BOOL, Map.of(MUST_NOT, result));
+            }
         }
 
         @Override
@@ -439,6 +481,10 @@ public final class DocumentSearchQueryBuilder implements QueryBuilder {
 
         @Override
         public void visitEquals(Expression<?> leftExpression, Expression<?> rightExpression, boolean ignoreCase) {
+            if (rightExpression instanceof io.micronaut.data.model.jpa.criteria.PersistentPropertyPath<?>) {
+                result = compareProperties(leftExpression, "==", rightExpression);
+                return;
+            }
             PersistentPropertyPath propertyPath = requireProperty(leftExpression).getPropertyPath();
             if (isIdentity(propertyPath)) {
                 visitIdEquals(rightExpression);
@@ -489,11 +535,18 @@ public final class DocumentSearchQueryBuilder implements QueryBuilder {
 
         @Override
         public void visitInBetween(Expression<?> value, Expression<?> from, Expression<?> to, boolean negated) {
-            PersistentPropertyPath propertyPath = requireProperty(value).getPropertyPath();
-            Map<String, Object> bounds = new LinkedHashMap<>();
-            bounds.put("gte", value(from, propertyPath));
-            bounds.put("lte", value(to, propertyPath));
-            result = Map.of(RANGE, Map.of(fieldName(propertyPath), bounds));
+            if (value instanceof UnaryExpression<?> unary && (unary.getType() == UnaryExpressionType.LOWER || unary.getType() == UnaryExpressionType.UPPER)) {
+                // a range query has no case folding, so the bounds compare in a script
+                PersistentPropertyPath propertyPath = requireProperty(unary.getExpression()).getPropertyPath();
+                result = PainlessScripts.caseFoldedRange(keywordPath(propertyPath), unary.getType() == UnaryExpressionType.UPPER,
+                    value(unfold(from), propertyPath), value(unfold(to), propertyPath));
+            } else {
+                PersistentPropertyPath propertyPath = requireProperty(value).getPropertyPath();
+                Map<String, Object> bounds = new LinkedHashMap<>();
+                bounds.put("gte", value(from, propertyPath));
+                bounds.put("lte", value(to, propertyPath));
+                result = Map.of(RANGE, Map.of(fieldName(propertyPath), bounds));
+            }
             if (negated) {
                 result = Map.of(BOOL, Map.of(MUST_NOT, result));
             }
@@ -620,8 +673,26 @@ public final class DocumentSearchQueryBuilder implements QueryBuilder {
         }
 
         private Map<String, Object> range(Expression<?> leftExpression, String operator, Expression<?> rightExpression) {
+            if (rightExpression instanceof io.micronaut.data.model.jpa.criteria.PersistentPropertyPath<?>) {
+                return compareProperties(leftExpression, Objects.requireNonNull(RANGE_OPERATORS.get(operator)), rightExpression);
+            }
             PersistentPropertyPath propertyPath = requireProperty(leftExpression).getPropertyPath();
             return Map.of(RANGE, Map.of(fieldName(propertyPath), Map.of(operator, value(rightExpression, propertyPath))));
+        }
+
+        /** Compares two properties of a document, which the query DSL cannot do, in a script. */
+        private Map<String, Object> compareProperties(Expression<?> leftExpression, String operator, Expression<?> rightExpression) {
+            PersistentPropertyPath left = requireProperty(leftExpression).getPropertyPath();
+            PersistentPropertyPath right = requireProperty(rightExpression).getPropertyPath();
+            boolean numeric = left.getProperty().getDataType().isNumeric() && right.getProperty().getDataType().isNumeric();
+            return PainlessScripts.compare(keywordPath(left), operator, keywordPath(right), numeric);
+        }
+
+        /** The operand of a lower or upper case function, as the bound values are folded in the script. */
+        private static Expression<?> unfold(Expression<?> expression) {
+            return expression instanceof UnaryExpression<?> unary && (unary.getType() == UnaryExpressionType.LOWER || unary.getType() == UnaryExpressionType.UPPER)
+                ? unary.getExpression()
+                : expression;
         }
 
         private Map<String, Object> wildcard(PersistentPropertyPath propertyPath, Expression<?> expression, String hint) {
@@ -633,7 +704,7 @@ public final class DocumentSearchQueryBuilder implements QueryBuilder {
             }
             Map<String, Object> options = new LinkedHashMap<>();
             options.put(VALUE, value);
-            if (hint.endsWith("_ignore_case")) {
+            if (hint.contains("_ignore_case")) {
                 options.put("case_insensitive", true);
             }
             return Map.of("wildcard", Map.of(keywordPath(propertyPath), options));

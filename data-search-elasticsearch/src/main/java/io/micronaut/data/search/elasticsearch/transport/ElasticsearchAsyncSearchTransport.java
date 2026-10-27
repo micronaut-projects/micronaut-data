@@ -70,7 +70,7 @@ public final class ElasticsearchAsyncSearchTransport implements AsyncSearchTrans
 
     @Override
     public CompletionStage<SearchTransport.SearchHits> search(String index, String body) {
-        return client.search(s -> s.index(index).withJson(new StringReader(body)), Map.class).thenApply(ElasticsearchAsyncSearchTransport::toHits);
+        return client.search(s -> s.index(index).withJson(new StringReader(body)).ignoreUnavailable(true), Map.class).thenApply(ElasticsearchAsyncSearchTransport::toHits);
     }
 
     static SearchTransport.SearchHits toHits(SearchResponse<Map> response) {
@@ -85,7 +85,7 @@ public final class ElasticsearchAsyncSearchTransport implements AsyncSearchTrans
 
     @Override
     public CompletionStage<Long> count(String index, String body) {
-        return client.count(c -> c.index(index).withJson(new StringReader(body))).thenApply(response -> response.count());
+        return client.count(c -> c.index(index).withJson(new StringReader(body)).ignoreUnavailable(true)).thenApply(response -> response.count());
     }
 
     @Override
@@ -180,7 +180,7 @@ public final class ElasticsearchAsyncSearchTransport implements AsyncSearchTrans
 
     @Override
     public CompletionStage<Long> deleteByQuery(String index, String body, DocumentSearchConfiguration.Refresh refresh) {
-        return client.deleteByQuery(d -> d.index(index).withJson(new StringReader(body)).refresh(refresh != DocumentSearchConfiguration.Refresh.NONE))
+        return client.deleteByQuery(d -> d.index(index).withJson(new StringReader(body)).ignoreUnavailable(true).refresh(refresh != DocumentSearchConfiguration.Refresh.NONE))
             .thenApply(response -> response.deleted() == null ? 0L : response.deleted());
     }
 

@@ -71,7 +71,7 @@ public final class OpenSearchSearchTransport implements SearchTransport {
     public long count(String index, String body) {
         try {
             Query query = query(parse(body));
-            return client.count(c -> c.index(index).query(query)).count();
+            return client.count(c -> c.index(index).query(query).ignoreUnavailable(true)).count();
         } catch (IOException e) {
             throw new DataAccessException("OpenSearch count failed: " + e.getMessage(), e);
         }
@@ -140,7 +140,7 @@ public final class OpenSearchSearchTransport implements SearchTransport {
         try {
             Query query = query(parse(body));
             // delete_by_query only accepts true or false, not wait_for
-            Long deleted = client.deleteByQuery(d -> d.index(index).query(query).refresh(OpenSearchRequests.deleteByQueryRefresh(refresh))).deleted();
+            Long deleted = client.deleteByQuery(d -> d.index(index).query(query).ignoreUnavailable(true).refresh(OpenSearchRequests.deleteByQueryRefresh(refresh))).deleted();
             return deleted == null ? 0 : deleted;
         } catch (IOException e) {
             throw new DataAccessException("OpenSearch delete by query failed: " + e.getMessage(), e);

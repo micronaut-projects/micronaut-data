@@ -81,7 +81,7 @@ final class OpenSearchRequests {
                 throw new DataAccessException("The request body key '" + key + "' is not supported by the OpenSearch transport; supported keys: " + REQUEST_KEYS);
             }
         }
-        SearchRequest.Builder request = new SearchRequest.Builder().index(index).query(query(mapper, parsed));
+        SearchRequest.Builder request = new SearchRequest.Builder().index(index).ignoreUnavailable(true).query(query(mapper, parsed));
         Object sort = parsed.get("sort");
         if (sort instanceof List<?> entries) {
             List<SortOptions> options = new ArrayList<>(entries.size());

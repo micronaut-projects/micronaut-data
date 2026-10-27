@@ -110,13 +110,13 @@ public final class DefaultDocumentSearchReactiveRepositoryOperations extends Abs
         }
         Map<String, Object> body = body(preparedQuery, storedQuery);
         if (preparedQuery.getResultType() == SearchResults.class) {
-            applyPageable(body, preparedQuery.getPageable(), entity);
+            applyPageable(body, preparedQuery, entity);
             // totalHits is exact, not capped at the result window
             body.put("track_total_hits", true);
             return search(body, entity).map(hits -> (R) toSearchResults(hits, entity, preparedQuery));
         }
         // a single result still honours a Sort parameter, which decides which hit comes first
-        applyPageable(body, preparedQuery.getPageable(), entity);
+        applyPageable(body, preparedQuery, entity);
         body.put("size", 1);
         return search(body, entity).flatMap(hits -> {
             List<R> results = toEntities(hits, entity, preparedQuery);
@@ -133,7 +133,7 @@ public final class DefaultDocumentSearchReactiveRepositoryOperations extends Abs
     public <T> Flux<T> findAll(PagedQuery<T> pagedQuery) {
         RuntimePersistentEntity<T> entity = runtimeEntityRegistry.getEntity(pagedQuery.getRootEntity());
         Map<String, Object> body = matchAll();
-        applyPageable(body, pagedQuery.getPageable(), entity);
+        applyPageable(body, pagedQuery, entity);
         return search(body, entity).flatMapIterable(hits -> this.<T, T>toEntities(hits, entity, null));
     }
 
@@ -152,7 +152,7 @@ public final class DefaultDocumentSearchReactiveRepositoryOperations extends Abs
             return findOne(preparedQuery).flux();
         }
         Map<String, Object> body = body(preparedQuery, storedQuery);
-        applyPageable(body, preparedQuery.getPageable(), entity);
+        applyPageable(body, preparedQuery, entity);
         return search(body, entity).flatMapIterable(hits -> toEntities(hits, entity, preparedQuery));
     }
 

@@ -23,6 +23,7 @@ import io.micronaut.data.annotation.search.SearchIndexSettings;
 import io.micronaut.data.annotation.search.SearchMapping;
 import io.micronaut.data.model.Association;
 import io.micronaut.data.model.DataType;
+import io.micronaut.data.model.Embedded;
 import io.micronaut.data.model.PersistentEntity;
 import io.micronaut.data.model.PersistentProperty;
 import io.micronaut.data.model.search.TextSearchSupport;
@@ -95,8 +96,11 @@ public final class SearchIndexDefinitions {
             Map<String, Object> declaredMapping = declaredMapping(property);
             if (declaredMapping != null) {
                 properties.put(property.getName(), declaredMapping);
-            } else if (!properties.containsKey(property.getName()) && !(property instanceof Association) && isKeyword(property)) {
-                properties.put(property.getName(), Map.of(TYPE, KEYWORD));
+            } else if (!properties.containsKey(property.getName())) {
+                Map<String, Object> mapping = otherMapping(property);
+                if (mapping != null) {
+                    properties.put(property.getName(), mapping);
+                }
             }
         }
         Map<String, Object> body = new LinkedHashMap<>();
@@ -176,6 +180,25 @@ public final class SearchIndexDefinitions {
             }
         }
         return field;
+    }
+
+    /**
+     * The mapping of a property that is not searched: a keyword for a string-like value, and the keyword
+     * mappings of an embedded object's properties, so exact matches and sorts work on them too.
+     */
+    @Nullable
+    private static Map<String, Object> otherMapping(PersistentProperty property) {
+        if (property instanceof Embedded embedded) {
+            Map<String, Object> nested = new LinkedHashMap<>();
+            for (PersistentProperty embeddedProperty : embedded.getAssociatedEntity().getPersistentProperties()) {
+                Map<String, Object> mapping = otherMapping(embeddedProperty);
+                if (mapping != null) {
+                    nested.put(embeddedProperty.getName(), mapping);
+                }
+            }
+            return nested.isEmpty() ? null : Map.of("properties", nested);
+        }
+        return !(property instanceof Association) && isKeyword(property) ? Map.of(TYPE, KEYWORD) : null;
     }
 
     private static boolean isKeyword(PersistentProperty property) {

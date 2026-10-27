@@ -197,13 +197,13 @@ public final class DefaultDocumentSearchRepositoryOperations extends AbstractDoc
         Map<String, Object> body = body(preparedQuery, storedQuery);
         RuntimePersistentEntity<T> entity = storedQuery.getPersistentEntity();
         if (preparedQuery.getResultType() == SearchResults.class) {
-            applyPageable(body, preparedQuery.getPageable(), entity);
+            applyPageable(body, preparedQuery, entity);
             // totalHits is exact, not capped at the result window
             body.put("track_total_hits", true);
             return (R) toSearchResults(transport.search(indexName(entity), searchJson(body, entity)), entity, preparedQuery);
         }
         // a single result still honours a Sort parameter, which decides which hit comes first
-        applyPageable(body, preparedQuery.getPageable(), entity);
+        applyPageable(body, preparedQuery, entity);
         body.put("size", 1);
         List<R> results = search(body, entity, preparedQuery);
         return results.isEmpty() ? null : results.get(0);
@@ -219,7 +219,7 @@ public final class DefaultDocumentSearchRepositoryOperations extends AbstractDoc
     public <T> Iterable<T> findAll(PagedQuery<T> query) {
         RuntimePersistentEntity<T> entity = runtimeEntityRegistry.getEntity(query.getRootEntity());
         Map<String, Object> body = matchAll();
-        applyPageable(body, query.getPageable(), entity);
+        applyPageable(body, query, entity);
         return search(body, entity, null);
     }
 
@@ -239,7 +239,7 @@ public final class DefaultDocumentSearchRepositoryOperations extends AbstractDoc
         }
         Map<String, Object> body = body(preparedQuery, storedQuery);
         RuntimePersistentEntity<T> entity = storedQuery.getPersistentEntity();
-        applyPageable(body, preparedQuery.getPageable(), entity);
+        applyPageable(body, preparedQuery, entity);
         return search(body, entity, preparedQuery);
     }
 

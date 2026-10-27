@@ -57,6 +57,7 @@ snippet::example.BookRepository[project-base="doc-examples/elasticsearch-search-
 
 |`micronaut.data.search.index-prefix` | |Prefix added to every index name, for per-environment indexes
 |`micronaut.data.search.refresh` |`WAIT_FOR` |Refresh policy of writes: `NONE`, `WAIT_FOR` or `TRUE`. `WAIT_FOR` makes a saved entity searchable before `save` returns
-|`micronaut.data.search.create-indexes` |`true` |Create the index of every `@Searchable` entity on startup when it does not exist
+|`micronaut.data.search.create-indexes` |`true` |Create the index of every entity a document repository stores on startup when it does not exist
+|`micronaut.data.search.max-results` |`10000` |The most hits a query without a `Pageable` or limit fetches
 |`micronaut.data.search.schema-generate` |`CREATE` |What happens to the indexes on startup: `CREATE` creates the missing ones, `CREATE_DROP` drops and recreates every index, deleting its documents, and `NONE` leaves them alone. `create-indexes: false` is the same as `NONE`
 |===
