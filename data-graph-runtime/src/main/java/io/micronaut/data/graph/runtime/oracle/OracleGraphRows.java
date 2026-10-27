@@ -13,7 +13,7 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package io.micronaut.data.oracle.graph.operations;
+package io.micronaut.data.graph.runtime.oracle;
 
 import io.micronaut.core.annotation.Internal;
 import io.micronaut.data.graph.model.query.builder.OracleGraphQueryBuilder;
@@ -37,7 +37,7 @@ import java.util.Map;
  * @since 5.3.0
  */
 @Internal
-final class OracleGraphRows {
+public final class OracleGraphRows {
 
     private static final String SEPARATOR = OracleGraphQueryBuilder.SEPARATOR;
 
@@ -51,7 +51,7 @@ final class OracleGraphRows {
      * @param parameters The parameters in order
      * @return The query and the flattened parameters
      */
-    static Expanded expand(String query, List<@Nullable Object> parameters) {
+    public static Expanded expand(String query, List<@Nullable Object> parameters) {
         StringBuilder sb = new StringBuilder(query.length());
         List<Object> flattened = new ArrayList<>(parameters.size());
         int index = 0;
@@ -99,7 +99,7 @@ final class OracleGraphRows {
      * @param rows    The rows
      * @return The records
      */
-    static List<GraphRecord> decode(List<String> columns, List<List<@Nullable Object>> rows) {
+    public static List<GraphRecord> decode(List<String> columns, List<List<@Nullable Object>> rows) {
         if (columns.contains(OracleGraphQueryBuilder.PATH_MATCH_COLUMN)) {
             return decodePaths(columns, rows);
         }
@@ -110,7 +110,7 @@ final class OracleGraphRows {
         return records;
     }
 
-    private static GraphRecord decodeRow(List<String> columns, List<@Nullable Object> row, int rowIndex) {
+    public static GraphRecord decodeRow(List<String> columns, List<@Nullable Object> row, int rowIndex) {
         Map<String, Map<String, @Nullable Object>> groups = group(columns, row);
         List<String> keys = new ArrayList<>();
         List<Object> values = new ArrayList<>();
@@ -146,7 +146,7 @@ final class OracleGraphRows {
         return new GraphRecord(keys, values);
     }
 
-    private static List<GraphRecord> decodePaths(List<String> columns, List<List<@Nullable Object>> rows) {
+    public static List<GraphRecord> decodePaths(List<String> columns, List<List<@Nullable Object>> rows) {
         Map<Object, List<Map<String, Map<String, @Nullable Object>>>> paths = new LinkedHashMap<>();
         for (List<@Nullable Object> row : rows) {
             Map<String, Map<String, @Nullable Object>> groups = group(columns, row);
@@ -222,6 +222,6 @@ final class OracleGraphRows {
      * @param query      The query
      * @param parameters The parameters
      */
-    record Expanded(String query, List<@Nullable Object> parameters) {
+    public record Expanded(String query, List<@Nullable Object> parameters) {
     }
 }
