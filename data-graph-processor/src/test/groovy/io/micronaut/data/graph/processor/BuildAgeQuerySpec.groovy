@@ -183,6 +183,32 @@ interface LabelsRepository extends CrudRepository<Person, String> {
         e.message.contains('Apache AGE nodes have a single label')
     }
 
+    void "test dynamic relationships are rejected"() {
+        when:
+        buildRepository('test.DynamicRepository', """
+@Node
+class Pet {
+    @Id
+    private String name;
+    @DynamicRelationships
+    private Map<String, List<Object>> related = new HashMap<>();
+    public String getName() { return name; }
+    public void setName(String name) { this.name = name; }
+    public Map<String, List<Object>> getRelated() { return related; }
+    public void setRelated(Map<String, List<Object>> related) { this.related = related; }
+}
+
+@TestAgeRepository
+interface DynamicRepository extends CrudRepository<Pet, String> {
+    List<Pet> findByNameStartsWith(String prefix);
+}
+""")
+
+        then:
+        def e = thrown(RuntimeException)
+        e.message.contains('Dynamic relationships are not supported by Apache AGE')
+    }
+
     void "test temporal literals stay strings, as AGE stores them"() {
         given:
         def builder = new AgeCypherQueryBuilder()
