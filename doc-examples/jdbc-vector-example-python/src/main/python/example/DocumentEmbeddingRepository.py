@@ -1,4 +1,4 @@
-from micronaut.data.annotation import Repository
+from micronaut.data.annotation import ApproximateSearch, Repository
 from micronaut.data.jdbc.annotation import JdbcRepository
 from micronaut.data.model.query.builder.sql import Dialect
 from micronaut.data.model.vector import Vector
@@ -18,3 +18,8 @@ class DocumentEmbeddingRepository(CrudRepository[DocumentEmbedding, int]):
     def findTop2ByEmbeddingNear(self, vec: Vector, maxDistance: float) -> list[DocumentEmbedding]: ...
 
     def searchByEmbeddingNear(self, vector: Vector, maxDistance: Score, function: ScoringFunction) -> SearchResults[DocumentEmbedding]: ...
+
+    # tag::approximate[]
+    @ApproximateSearch(targetAccuracy=90)
+    def searchTop5ByEmbeddingNear(self, vector: Vector, maxDistance: float) -> SearchResults[DocumentEmbedding]: ...
+    # end::approximate[]

@@ -1,5 +1,6 @@
 package example;
 
+import io.micronaut.data.annotation.ApproximateSearch;
 import io.micronaut.data.annotation.Repository;
 import io.micronaut.data.jdbc.annotation.JdbcRepository;
 import io.micronaut.data.model.query.builder.sql.Dialect;
@@ -24,4 +25,9 @@ interface DocumentEmbeddingRepository extends CrudRepository<DocumentEmbedding, 
     SearchResults<DocumentEmbedding> searchByEmbeddingNear(Vector vector,
                                                            Score maxDistance,
                                                            ScoringFunction function);
+
+    // tag::approximate[]
+    @ApproximateSearch(targetAccuracy = 90)
+    SearchResults<DocumentEmbedding> searchTop5ByEmbeddingNear(Vector vector, Double maxDistance);
+    // end::approximate[]
 }

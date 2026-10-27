@@ -35,6 +35,7 @@ import io.micronaut.core.util.ArgumentUtils;
 import io.micronaut.core.util.CollectionUtils;
 import io.micronaut.core.util.StringUtils;
 import io.micronaut.data.annotation.EntityRepresentation;
+import io.micronaut.data.annotation.ApproximateSearch;
 import io.micronaut.data.annotation.GeneratedValue;
 import io.micronaut.data.annotation.Join;
 import io.micronaut.data.annotation.Relation;
@@ -2269,6 +2270,39 @@ public class SqlQueryBuilder extends AbstractSqlLikeQueryBuilder {
         return DEFAULT_POSITIONAL_PARAMETER_MARKER;
     }
 
+    /**
+     * Builds the limit and offset clause of a query, honouring {@link ApproximateSearch} on the method.
+     *
+     * @param limit              The limit
+     * @param offset             The offset
+     * @param annotationMetadata The annotation metadata of the repository method
+     * @return The clause
+     * @since 5.3.0
+     */
+    public String buildLimitAndOffset(long limit, long offset, AnnotationMetadata annotationMetadata) {
+        // other dialects ignore @ApproximateSearch, so they and exact Oracle limits keep going through the overload
+        // that builders such as the Cosmos one override
+        int approximateAccuracy = getDialect() == Dialect.ORACLE ? approximateAccuracy(annotationMetadata) : -1;
+        if (approximateAccuracy < 0) {
+            return buildLimitAndOffset(limit, offset);
+        }
+        StringBuilder builder = new StringBuilder();
+        appendLimitAndOffset(getDialect(), limit, offset, approximateAccuracy, builder);
+        return builder.toString();
+    }
+
+    private static int approximateAccuracy(AnnotationMetadata annotationMetadata) {
+        // also as the stereotype of a composed annotation
+        if (!annotationMetadata.hasStereotype(ApproximateSearch.class)) {
+            return -1;
+        }
+        int accuracy = annotationMetadata.intValue(ApproximateSearch.class, "targetAccuracy").orElse(0);
+        if (accuracy < 0 || accuracy > 100) {
+            throw new IllegalArgumentException("@ApproximateSearch targetAccuracy must be between 0 and 100, but was " + accuracy);
+        }
+        return accuracy;
+    }
+
     @Override
     protected void appendLimitAndOrder(AnnotationMetadata annotationMetadata,
                                        SelectQueryDefinition definition,
@@ -2279,7 +2313,12 @@ public class SqlQueryBuilder extends AbstractSqlLikeQueryBuilder {
             appendOrder(annotationMetadata, definition, queryState);
         }
         if (appendLimit) {
-            appendLimitAndOffset(getDialect(), definition.limit(), definition.offset(), queryState.getQuery());
+            int approximateAccuracy = approximateAccuracy(annotationMetadata);
+            if (approximateAccuracy < 0) {
+                appendLimitAndOffset(getDialect(), definition.limit(), definition.offset(), queryState.getQuery());
+            } else {
+                appendLimitAndOffset(getDialect(), definition.limit(), definition.offset(), approximateAccuracy, queryState.getQuery());
+            }
         }
         Map<Integer, String> parametersInRole = definition.parametersInRole();
        if (parameterInRoleModifiesOrder(parametersInRole) || parameterInRoleModifiesLimit(parametersInRole)) {
