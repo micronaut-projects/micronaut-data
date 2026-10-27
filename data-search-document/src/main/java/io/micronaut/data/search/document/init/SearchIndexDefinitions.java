@@ -16,14 +16,19 @@
 package io.micronaut.data.search.document.init;
 
 import io.micronaut.core.annotation.Internal;
+import io.micronaut.core.type.Argument;
 import io.micronaut.data.annotation.search.SearchField;
 import io.micronaut.data.annotation.search.SearchFieldType;
+import io.micronaut.data.annotation.search.SearchIndexSettings;
+import io.micronaut.data.annotation.search.SearchMapping;
 import io.micronaut.data.model.Association;
 import io.micronaut.data.model.DataType;
 import io.micronaut.data.model.PersistentEntity;
 import io.micronaut.data.model.PersistentProperty;
 import io.micronaut.data.model.search.TextSearchSupport;
 import io.micronaut.data.search.document.query.SearchJson;
+import io.micronaut.json.JsonMapper;
+import java.io.IOException;
 import org.jspecify.annotations.Nullable;
 import io.micronaut.data.search.document.runtime.SearchTransport;
 import io.micronaut.data.model.vector.Vector;
@@ -76,7 +81,8 @@ public final class SearchIndexDefinitions {
             addVectorMappings(entity, transport, properties);
         }
         for (PersistentProperty property : TextSearchSupport.searchFields(entity)) {
-            properties.put(property.getName(), searchFieldMapping(property, analyzer));
+            Map<String, Object> declaredMapping = declaredMapping(property);
+            properties.put(property.getName(), declaredMapping != null ? declaredMapping : searchFieldMapping(property, analyzer));
         }
         // The other string properties are compared exactly by the derived queries, so they are
         // keywords rather than the analyzed text a dynamic mapping would give them; the id is one of
@@ -86,16 +92,47 @@ public final class SearchIndexDefinitions {
             others.add(entity.getIdentity());
         }
         for (PersistentProperty property : others) {
-            if (!properties.containsKey(property.getName()) && !(property instanceof Association) && isKeyword(property)) {
+            Map<String, Object> declaredMapping = declaredMapping(property);
+            if (declaredMapping != null) {
+                properties.put(property.getName(), declaredMapping);
+            } else if (!properties.containsKey(property.getName()) && !(property instanceof Association) && isKeyword(property)) {
                 properties.put(property.getName(), Map.of(TYPE, KEYWORD));
             }
         }
         Map<String, Object> body = new LinkedHashMap<>();
-        if (transport != null && !transport.indexSettings().isEmpty()) {
-            body.put("settings", transport.indexSettings());
+        Map<String, Object> settings = new LinkedHashMap<>();
+        if (transport != null) {
+            settings.putAll(transport.indexSettings());
+        }
+        entity.getAnnotationMetadata().stringValue(SearchIndexSettings.class)
+            .filter(json -> !json.isBlank())
+            .ifPresent(json -> settings.putAll(readJson(json, "@SearchIndexSettings of " + entity.getName())));
+        if (!settings.isEmpty()) {
+            body.put("settings", settings);
         }
         body.put("mappings", Map.of("properties", properties));
         return SearchJson.write(body);
+    }
+
+    /**
+     * @param property A property
+     * @return Its {@code @SearchMapping} JSON as a map, or {@code null} when it declares none
+     */
+    @Nullable
+    private static Map<String, Object> declaredMapping(PersistentProperty property) {
+        return property.getAnnotationMetadata().stringValue(SearchMapping.class)
+            .filter(json -> !json.isBlank())
+            .map(json -> readJson(json, "@SearchMapping of " + property.getName()))
+            .orElse(null);
+    }
+
+    private static Map<String, Object> readJson(String json, String what) {
+        try {
+            Map<String, Object> map = JsonMapper.createDefault().readValue(json, Argument.mapOf(String.class, Object.class));
+            return map == null ? Map.of() : map;
+        } catch (IOException e) {
+            throw new IllegalStateException("Cannot parse the " + what + ": " + e.getMessage(), e);
+        }
     }
 
     /**

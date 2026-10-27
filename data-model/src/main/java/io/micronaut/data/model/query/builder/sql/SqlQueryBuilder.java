@@ -27,6 +27,7 @@ import io.micronaut.core.annotation.NonNull;
 import io.micronaut.data.annotation.DataAnnotationUtils;
 import io.micronaut.data.annotation.EmbeddedId;
 import io.micronaut.data.annotation.Relation.Kind;
+import io.micronaut.data.annotation.search.OracleTextIndex;
 import io.micronaut.data.model.runtime.RuntimePersistentProperty;
 import io.micronaut.data.model.runtime.convert.GeometryWktConverter;
 import jakarta.persistence.criteria.JoinType;
@@ -1064,7 +1065,7 @@ public class SqlQueryBuilder extends AbstractSqlLikeQueryBuilder {
         String indexName = entity.getAnnotationMetadata().stringValue(Searchable.class, "name")
             .filter(StringUtils::isNotEmpty)
             .orElseGet(() -> "idx_" + prepareNames(getUnescapedTableName(entity)) + "_search");
-        for (String ddl : textSearchDialect.buildJsonSearchIndex(escape ? quote(indexName) : indexName, tableName, escapedJsonColumn)) {
+        for (String ddl : textSearchDialect.buildJsonSearchIndex(escape ? quote(indexName) : indexName, tableName, escapedJsonColumn, indexParameters(entity))) {
             addToCollectionIfNotContains(searchIndexStatements, ddl);
         }
     }
@@ -1112,6 +1113,11 @@ public class SqlQueryBuilder extends AbstractSqlLikeQueryBuilder {
         return textSearchDialect.searchIndexNames(escape ? quote(searchIndexName(entity)) : searchIndexName(entity), searchColumns(entity, escape));
     }
 
+    @Nullable
+    private static String indexParameters(PersistentEntity entity) {
+        return entity.getAnnotationMetadata().stringValue(OracleTextIndex.class, OracleTextIndex.MEMBER_PARAMETERS).filter(StringUtils::isNotEmpty).orElse(null);
+    }
+
     private String searchIndexName(PersistentEntity entity) {
         return entity.getAnnotationMetadata().stringValue(Searchable.class, "name")
             .filter(StringUtils::isNotEmpty)
@@ -1154,7 +1160,7 @@ public class SqlQueryBuilder extends AbstractSqlLikeQueryBuilder {
             .filter(StringUtils::isNotEmpty)
             .orElseGet(() -> "idx_" + prepareNames(table.name()) + "_search");
         String languageColumn = languageColumn(entity, namingStrategy, escape);
-        for (String ddl : textSearchDialect.buildSearchIndex(escape ? quote(indexName) : indexName, escapedTableName, columns, language, languageColumn)) {
+        for (String ddl : textSearchDialect.buildSearchIndex(escape ? quote(indexName) : indexName, escapedTableName, columns, language, languageColumn, indexParameters(entity))) {
             addToCollectionIfNotContains(createStatements, ddl);
         }
     }

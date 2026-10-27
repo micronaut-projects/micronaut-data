@@ -47,4 +47,12 @@ class OracleSearchIndexDdlSpec extends Specification {
         dialect.catalogIndexName('idx_plain') == 'IDX_PLAIN'
         dialect.buildSyncSearchIndex(['"IDX_JSON_BOOK_SEARCH"']) == ["BEGIN CTX_DDL.SYNC_INDEX('IDX_JSON_BOOK_SEARCH'); END;"]
     }
+
+    void "@OracleTextIndex sets the parameters of the CONTEXT indexes"() {
+        when:
+        def statements = new SqlQueryBuilder(Dialect.ORACLE).buildCreateTableStatements(new RuntimePersistentEntity<>(OracleTunedBook))
+
+        then:
+        statements.find { it.startsWith('CREATE INDEX') } == 'CREATE INDEX "IDX_TUNED_BOOK_SEARCH_TITLE" ON "TUNED_BOOK" ("TITLE") INDEXTYPE IS CTXSYS.CONTEXT PARAMETERS (\'SYNC (EVERY "FREQ=MINUTELY") MEMORY 50M\');'
+    }
 }
