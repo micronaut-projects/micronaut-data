@@ -13,6 +13,8 @@ import io.micronaut.data.exceptions.OptimisticLockException
 import io.micronaut.data.search.document.runtime.SearchTransport
 import io.micronaut.data.search.document.runtime.SearchTransport.SearchHit
 import io.micronaut.data.search.document.runtime.SearchTransport.SearchHits
+import io.micronaut.data.model.vector.Vector
+import io.micronaut.data.search.tck.entities.Article
 import io.micronaut.data.search.tck.entities.Book
 import io.micronaut.inject.qualifiers.Qualifiers
 import jakarta.inject.Named
@@ -83,6 +85,47 @@ class StubTransportReactiveSpec extends Specification {
 
         cleanup:
         versioned.deleteAll()
+    }
+
+    void "vectors serialize as arrays and a hybrid query reaches the transport as a knn clause"() {
+        given:
+        def articles = context.getBean(StubArticleRepository)
+        def transport = context.getBean(StubSearchTransport)
+
+        when:
+        def saved = articles.save(new Article("Cooking with Coffee", "Recipes", Vector.of([1f, 0f, 0f] as float[])))
+        def loaded = articles.findById(saved.id).get()
+
+        then:
+        loaded.embedding.toFloatArray() == [1f, 0f, 0f] as float[]
+        transport.docs(context.getBean(DefaultDocumentSearchRepositoryOperations, Qualifiers.byName("stub")).getIndexName(Article)).values()[0].embedding == [1.0d, 0.0d, 0.0d]
+
+        when:
+        transport.bodies.clear()
+        def results = articles.search(SearchQuery.builder("coffee").vector("embedding", Vector.of([1f, 0f, 0f] as float[])).build())
+
+        then:
+        results.results()*.entity()*.title == ["Cooking with Coffee"]
+        // the text query and the nearest-neighbour query both ran; the latter carries the knn clause with the bound vector
+        transport.bodies.size() == 2
+        transport.bodies.any { it.contains('"knn":{"field":"embedding","query_vector":[1.0,0.0,0.0],"k":100,"num_candidates":1000}') }
+
+        cleanup:
+        articles.deleteAll()
+    }
+
+    void "a page beyond the knn window of a Near method raises k to cover it"() {
+        given:
+        def articles = context.getBean(StubArticleRepository)
+        def transport = context.getBean(StubSearchTransport)
+        transport.bodies.clear()
+
+        when:
+        articles.searchByEmbeddingNear(Vector.of([1f, 0f, 0f] as float[]), new io.micronaut.data.model.vector.search.Score(0.5d), io.micronaut.data.model.Pageable.from(2, 10))
+
+        then:
+        transport.bodies.last().contains('"k":30,"num_candidates":300')
+        transport.bodies.last().contains('"from":20,"size":10')
     }
 
     void "saveAll indexes in bulk through the async transport"() {
@@ -246,6 +289,7 @@ class StubTransportReactiveSpec extends Specification {
         @Override
         SearchHits search(String index, String body) {
             calls.add("sync:search")
+            bodies.add(body)
             return hits(index)
         }
 

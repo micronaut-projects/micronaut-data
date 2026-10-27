@@ -60,6 +60,11 @@ import java.util.concurrent.CompletionException;
 @Internal
 final class OpenSearchRequests {
 
+    /**
+     * The index settings enabling the k-NN plugin.
+     */
+    static final Map<String, Object> KNN_SETTINGS = Map.of("index.knn", true);
+
     private static final String QUERY = "query";
 
     private OpenSearchRequests() {
@@ -243,7 +248,66 @@ final class OpenSearchRequests {
         if (query == null) {
             return Query.of(q -> q.matchAll(m -> m));
         }
-        return JsonData.of(query, mapper).to(Query.class, mapper);
+        return JsonData.of(translateKnn(query), mapper).to(Query.class, mapper);
+    }
+
+    /**
+     * @param dimensions The vector dimension
+     * @return The {@code knn_vector} mapping with the Lucene HNSW engine and cosine similarity, or {@code null}
+     * without a dimension, which OpenSearch requires
+     */
+    @Nullable
+    static Map<String, Object> knnVectorMapping(int dimensions) {
+        if (dimensions <= 0) {
+            return null;
+        }
+        Map<String, Object> mapping = new LinkedHashMap<>();
+        mapping.put("type", "knn_vector");
+        mapping.put("dimension", dimensions);
+        mapping.put("method", Map.of("name", "hnsw", "space_type", "cosinesimil", "engine", "lucene"));
+        return mapping;
+    }
+
+    /**
+     * Rewrites the Elasticsearch-shaped {@code knn} clauses the query builder renders into the OpenSearch
+     * {@code knn} query: {@code {"knn": {"<field>": {"vector": [...], "k": n, "max_distance": d}}}}.
+     */
+    @SuppressWarnings("unchecked")
+    /** The OpenSearch form of an Elasticsearch knn clause: the vector with k, or a radial search by distance. */
+    private static Map<String, Object> knnClause(Map<?, ?> knn) {
+        Map<String, Object> clause = new LinkedHashMap<>();
+        clause.put("vector", knn.get("query_vector"));
+        if (knn.get("similarity") instanceof Number number) {
+            // a radial search takes exactly one of k, max_distance and min_score
+            clause.put("max_distance", 1d - number.doubleValue());
+        } else {
+            clause.put("k", knn.get("k"));
+        }
+        return clause;
+    }
+
+    static Object translateKnn(Object node) {
+        if (node instanceof Map<?, ?> map) {
+            Map<String, Object> copy = new LinkedHashMap<>();
+            for (Map.Entry<?, ?> entry : map.entrySet()) {
+                String key = String.valueOf(entry.getKey());
+                Object value = entry.getValue();
+                if ("knn".equals(key) && value instanceof Map<?, ?> knn && knn.containsKey("field")) {
+                    copy.put("knn", Map.of(String.valueOf(knn.get("field")), knnClause(knn)));
+                } else {
+                    copy.put(key, translateKnn(value));
+                }
+            }
+            return copy;
+        }
+        if (node instanceof List<?> list) {
+            List<Object> copy = new ArrayList<>(list.size());
+            for (Object item : list) {
+                copy.add(translateKnn(item));
+            }
+            return copy;
+        }
+        return node;
     }
 
     /**

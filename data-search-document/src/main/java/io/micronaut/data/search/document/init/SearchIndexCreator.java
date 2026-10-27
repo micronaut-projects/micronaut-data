@@ -63,7 +63,7 @@ public final class SearchIndexCreator {
                     if (LOG.isInfoEnabled()) {
                         LOG.info("Creating search index: {} for entity: {}", index, type.getName());
                     }
-                    ops.getTransport().createIndex(index, SearchIndexDefinitions.mappingFor(entity));
+                    ops.getTransport().createIndex(index, SearchIndexDefinitions.mappingFor(entity, ops.getTransport()));
                 }
             }
         }

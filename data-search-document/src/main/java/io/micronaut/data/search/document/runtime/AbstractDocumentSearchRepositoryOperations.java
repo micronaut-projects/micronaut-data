@@ -368,6 +368,7 @@ abstract class AbstractDocumentSearchRepositoryOperations extends AbstractReposi
         if (!pageable.isUnpaged()) {
             body.put("from", pageable.getOffset());
             body.put("size", pageable.getSize());
+            sizeKnn(body, (int) Math.min(Integer.MAX_VALUE, pageable.getOffset() + pageable.getSize()));
         }
         Sort sort = pageable.getSort();
         if (sort.isSorted()) {
@@ -385,6 +386,29 @@ abstract class AbstractDocumentSearchRepositoryOperations extends AbstractReposi
             throw new DataAccessException("Cannot sort on unknown property: " + order.getProperty());
         }
         return DocumentSearchQueryBuilder.keywordPath(path);
+    }
+
+    /**
+     * A {@code knn} clause compiled with the method's limit returns at most {@code k} hits, so a page beyond
+     * that window would be empty: {@code k} and {@code num_candidates} grow to cover the requested window.
+     */
+    @SuppressWarnings("unchecked")
+    private static void sizeKnn(Object node, int window) {
+        if (node instanceof Map<?, ?> map) {
+            for (Map.Entry<?, ?> entry : map.entrySet()) {
+                if ("knn".equals(entry.getKey()) && entry.getValue() instanceof Map<?, ?> knn && knn.get("k") instanceof Number k && k.intValue() < window) {
+                    Map<String, Object> clause = (Map<String, Object>) knn;
+                    clause.put("k", window);
+                    clause.put("num_candidates", Math.max(window * 10, knn.get("num_candidates") instanceof Number c ? c.intValue() : 0));
+                } else {
+                    sizeKnn(entry.getValue(), window);
+                }
+            }
+        } else if (node instanceof List<?> list) {
+            for (Object item : list) {
+                sizeKnn(item, window);
+            }
+        }
     }
 
     /**

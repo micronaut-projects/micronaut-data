@@ -28,6 +28,8 @@ import io.micronaut.data.runtime.mapper.ResultReader;
 import io.micronaut.data.model.runtime.convert.ResultReaderAttributeConverter;
 import io.micronaut.data.model.runtime.convert.vector.VectorTypeConverter;
 import io.micronaut.data.model.vector.SparseVector;
+import io.micronaut.data.model.vector.ByteVector;
+import io.micronaut.data.model.vector.FloatVector;
 import io.micronaut.data.model.vector.Vector;
 import io.micronaut.core.type.Argument;
 import jakarta.persistence.Column;
@@ -35,6 +37,7 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 import java.util.ArrayList;
+import java.util.Collection;
 import java.util.EnumMap;
 import java.util.List;
 import java.util.Map;
@@ -86,7 +89,13 @@ abstract sealed class AbstractVectorAttributeConverter<X extends Vector, Y> impl
             return null;
         }
         final DatabaseType databaseType = extractDatabaseType(context);
-        VectorTypeConverter<?> vectorTypeConverter = databaseType != null ? selectWriteConverter(databaseType, entityValue) : null;
+        if (databaseType == null) {
+            // no database: a document store or a JSON mapper serializes the plain numbers
+            @SuppressWarnings("unchecked")
+            Y array = (Y) toNumbers(entityValue);
+            return array;
+        }
+        VectorTypeConverter<?> vectorTypeConverter = selectWriteConverter(databaseType, entityValue);
         if (vectorTypeConverter != null) {
             @SuppressWarnings("unchecked")
             Y result = (Y) vectorTypeConverter.convert(entityValue);
@@ -101,13 +110,96 @@ abstract sealed class AbstractVectorAttributeConverter<X extends Vector, Y> impl
             return null;
         }
         final DatabaseType databaseType = extractDatabaseType(context);
-        VectorTypeConverter<Y> vectorTypeConverter = databaseType != null ? (VectorTypeConverter<Y>) selectReadConverter(databaseType, persistedValue, type) : null;
+        if (databaseType == null) {
+            return fromNumbers(persistedValue);
+        }
+        VectorTypeConverter<Y> vectorTypeConverter = (VectorTypeConverter<Y>) selectReadConverter(databaseType, persistedValue, type);
         if (vectorTypeConverter != null) {
             @SuppressWarnings("unchecked")
             X result = (X) vectorTypeConverter.convert(persistedValue, (Class<Vector>) type);
             return result;
         }
         throw new IllegalArgumentException("Vectors aren't supported for the database " + databaseType);
+    }
+
+    /**
+     * The plain numbers of a vector, for a store without a vector type: {@code float[]} for a
+     * {@link FloatVector}, {@code double[]} otherwise. Sparse vectors have no plain form.
+     */
+    private Object toNumbers(X entityValue) {
+        if (entityValue instanceof SparseVector) {
+            throw new IllegalArgumentException("Sparse vectors need a database with a vector type");
+        }
+        if (entityValue instanceof FloatVector floatVector) {
+            return floatVector.toFloatArray();
+        }
+        return entityValue.toDoubleArray();
+    }
+
+    /**
+     * Rebuilds a vector of the converter's type from plain numbers: an array, or a collection of numbers
+     * as a JSON mapper reads it.
+     */
+    private X fromNumbers(Y persistedValue) {
+        if (type.isInstance(persistedValue)) {
+            return type.cast(persistedValue);
+        }
+        if (SparseVector.class.isAssignableFrom(type)) {
+            throw new IllegalArgumentException("Sparse vectors need a database with a vector type");
+        }
+        return type.cast(vectorOf(toDoubles(persistedValue)));
+    }
+
+    /** The plain numbers of an array or a collection as doubles. */
+    private static double[] toDoubles(Object persistedValue) {
+        if (persistedValue instanceof double[] array) {
+            return array;
+        }
+        if (persistedValue instanceof float[] array) {
+            double[] doubles = new double[array.length];
+            for (int i = 0; i < array.length; i++) {
+                doubles[i] = array[i];
+            }
+            return doubles;
+        }
+        if (persistedValue instanceof Collection<?> collection) {
+            double[] doubles = new double[collection.size()];
+            int i = 0;
+            for (Object element : collection) {
+                if (!(element instanceof Number number)) {
+                    throw new IllegalArgumentException("Cannot read a vector from " + element);
+                }
+                doubles[i++] = number.doubleValue();
+            }
+            return doubles;
+        }
+        if (persistedValue instanceof Number[] array) {
+            double[] doubles = new double[array.length];
+            for (int i = 0; i < array.length; i++) {
+                doubles[i] = array[i].doubleValue();
+            }
+            return doubles;
+        }
+        throw new IllegalArgumentException("Cannot read a vector from " + persistedValue.getClass().getName());
+    }
+
+    /** A vector of the converter's type holding the doubles. */
+    private Vector vectorOf(double[] doubles) {
+        if (type == FloatVector.class) {
+            float[] floats = new float[doubles.length];
+            for (int i = 0; i < doubles.length; i++) {
+                floats[i] = (float) doubles[i];
+            }
+            return Vector.of(floats);
+        }
+        if (type == ByteVector.class) {
+            byte[] bytes = new byte[doubles.length];
+            for (int i = 0; i < doubles.length; i++) {
+                bytes[i] = (byte) doubles[i];
+            }
+            return Vector.of(bytes);
+        }
+        return Vector.of(doubles);
     }
 
     @Override
