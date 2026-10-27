@@ -94,6 +94,7 @@ public final class DocumentSearchQueryBuilder implements QueryBuilder {
 
     private static final String KEYWORD_SUFFIX = ".keyword";
     private static final String QUERY = "query";
+    private static final Map<String, Object> MATCH_ALL = Map.of("match_all", Map.of());
     private static final String BOOL = "bool";
     private static final String MUST = "must";
     private static final String MUST_NOT = "must_not";
@@ -192,7 +193,7 @@ public final class DocumentSearchQueryBuilder implements QueryBuilder {
 
     private Map<String, Object> buildQuery(@Nullable Predicate predicate, PersistentEntity entity, Bindings bindings) {
         if (predicate == null) {
-            return Map.of("match_all", Map.of());
+            return MATCH_ALL;
         }
         return new DocumentPredicateVisitor(entity, bindings).build(predicate);
     }
