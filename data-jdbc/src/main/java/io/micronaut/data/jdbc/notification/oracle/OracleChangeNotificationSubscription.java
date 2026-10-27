@@ -74,7 +74,7 @@ final class OracleChangeNotificationSubscription {
     /** Identifies the failed registration whose replacement is being attempted. */
     private @Nullable Long recoveryRegistrationId;
 
-    /** Identifies the new registration already created in the database whose setup is still in progress */
+    /** Identifies the new registration already created in the database whose setup is still in progress. */
     private @Nullable Long pendingRegistrationId;
 
     /** Lifecycle callbacks received during setup determine whether the pending registration can become current. */
@@ -380,21 +380,7 @@ final class OracleChangeNotificationSubscription {
             replacement = registrar.createRegistration(this, dispatcher);
             synchronized (lifecycleLock) {
                 outcome = pendingOutcome;
-                if (!closed && recoveryAttempt == attempt && Objects.equals(recoveryRegistrationId, failedRegId)) {
-                    pendingRegistrationId = null;
-                    switch (outcome) {
-                        case READY -> {
-                            recoveryRegistrationId = null;
-                            currentRegistration = replacement;
-                            published = true;
-                            // A callback for the published registration can now claim its own recovery.
-                            recoveryAttempt = null;
-                        }
-                        case RETRY -> recoveryFailure = new IllegalStateException("DCN registration became unavailable during setup");
-                        case STOP -> recoveryRegistrationId = null;
-                        default -> throw new IllegalStateException("Unexpected pending registration outcome: " + outcome);
-                    }
-                }
+                published = completeReplacementSetup(replacement, failedRegId, attempt);
             }
         } catch (Exception e) {
             synchronized (lifecycleLock) {
@@ -429,6 +415,38 @@ final class OracleChangeNotificationSubscription {
         } else if (recoveryFailure != null && !closed) {
             rescheduleRecoveryTask(retryCount, failedRegId, recoveryFailure);
         }
+    }
+
+    /**
+     * Applies the pending lifecycle outcome while holding the lifecycle lock. A ready replacement
+     * becomes current and releases recovery ownership atomically; a failed replacement enters the
+     * caller's recovery error handling.
+     *
+     * @param replacement the newly created registration
+     * @param failedRegId the registration being replaced
+     * @param attempt     the recovery attempt that must still own setup
+     * @return whether the replacement became current
+     */
+    private boolean completeReplacementSetup(DatabaseChangeRegistration replacement, long failedRegId, Object attempt) {
+        if (closed || recoveryAttempt != attempt || !Objects.equals(recoveryRegistrationId, failedRegId)) {
+            return false;
+        }
+        pendingRegistrationId = null;
+        return switch (pendingOutcome) {
+            case READY -> {
+                recoveryRegistrationId = null;
+                currentRegistration = replacement;
+                // A callback for the current registration can now claim its own recovery.
+                recoveryAttempt = null;
+                yield true;
+            }
+            case RETRY -> throw new IllegalStateException("DCN registration became unavailable during setup");
+            case STOP -> {
+                recoveryRegistrationId = null;
+                yield false;
+            }
+            default -> throw new IllegalStateException("Unexpected pending registration outcome: " + pendingOutcome);
+        };
     }
 
     /**
