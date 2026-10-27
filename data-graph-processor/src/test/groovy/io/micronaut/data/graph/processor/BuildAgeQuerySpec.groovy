@@ -138,6 +138,9 @@ interface FriendRepository extends CrudRepository<Friend, String> {
     @PathLimit(3)
     boolean existsPath(String from, String to);
     @PathLimit(3)
+    boolean existsPathByFriends(String from, String to, @PathDirection Direction direction);
+    long countRelationshipsByFriends(@PathDirection Direction direction);
+    @PathLimit(3)
     Page<GraphPath<Friend>> findPathByFriends(String from, String to, Pageable pageable);
     @PathLimit(3)
     Page<GraphPath<Friend>> findAllShortestPathsByFriends(String from, String to, Pageable pageable);
@@ -164,6 +167,8 @@ interface AccountRepository extends CrudRepository<Account, Long> {
         'findShortestPathByFriends' | 'MATCH (s:Friend), (e:Friend) WHERE s.name = $p0 AND e.name = $p1 AND s <> e MATCH p = (s)-[:FRIENDS*1..$__pathLimit]->(e) WITH p ORDER BY length(p) LIMIT 1 RETURN p'
         'findAllShortestPaths'      | 'MATCH (s:Friend), (e:Friend) WHERE s.name = $p0 AND e.name = $p1 AND s <> e MATCH p = (s)-[*1..3]-(e) WITH s, e, min(length(p)) AS shortest MATCH q = (s)-[*1..3]-(e) WHERE length(q) = shortest RETURN q AS p'
         'existsPath'                | 'MATCH (s:Friend), (e:Friend) WHERE s.name = $p0 AND e.name = $p1 AND s <> e MATCH p = (s)-[*1..3]-(e) RETURN true AS result LIMIT 1'
+        'existsPathByFriends'       | 'MATCH (s:Friend), (e:Friend) WHERE s.name = $p0 AND e.name = $p1 AND s <> e MATCH p = (s)$__pathLeft[:FRIENDS*1..3]$__pathRight(e) RETURN true AS result LIMIT 1'
+        'countRelationshipsByFriends' | 'MATCH (s:Friend)$__pathLeft[r:FRIENDS]$__pathRight(e:Friend) RETURN count(r) AS result'
         'findByNameStartsWith'      | 'MATCH (n:Friend) WHERE n.name STARTS WITH $p0 RETURN n'
     }
 

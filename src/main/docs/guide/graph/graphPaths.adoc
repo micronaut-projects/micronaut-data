@@ -54,6 +54,33 @@ snippet::example.PersonRepository[project-base="doc-examples/neo4j-example", sou
 <1> The shortest path from the person with the first name to the person with the second.
 <2> Whether the two people are connected by `FOLLOWS` relationships in either direction.
 
+ann:data.graph.annotation.PathDirection[] on a parameter of type api:data.graph.annotation.Direction[] leaves the direction to the caller, overriding the direction of the relationships and of the method:
+
+snippet::example.PersonRepository[project-base="doc-examples/neo4j-example", source="main", tags="pathDirection", languages="java,kotlin,groovy,python"]
+
+<1> The direction is an argument rather than part of the method.
+
+snippet::example.PersonRepositorySpec[project-base="doc-examples/neo4j-example", tags="pathDirection", indent="0", languages="java,kotlin,groovy,python"]
+
+The direction is rendered into the query rather than bound as a parameter, so each distinct direction compiles its own statement. A relationship finder without endpoints counts each relationship once when it is called with `UNDIRECTED`, as it does when it is declared undirected.
+
+== Paths to other entities
+
+A path or relationship finder starts at a node of the repository entity and ends at a node of the same entity, unless the finder says otherwise. The end node is another entity when the name says `To<Entity>`, when the end parameter is an entity of another type, when a `GraphRelationship<F, T>` result names another entity at either end, or when the relationship properties after `By` all point at another entity:
+
+snippet::example.MovieRepository[project-base="doc-examples/neo4j-example", source="main", tags="crossType", languages="java,kotlin,groovy,python"]
+
+<1> `directors` points at `Person`, so the relationships end at a person. `GraphRelationship<F, T>` holds the node the relationship starts at and the node it ends at: a `DIRECTED` relationship starts at the person.
+<2> Every path from the movie to the person, at most 3 relationships long. The nodes along the way are of any type, so they are declared as `Object` and mapped to the entity of their labels.
+<3> `Between<Start>And<End>` matches each endpoint by its own property.
+
+snippet::example.MovieRepositorySpec[project-base="doc-examples/neo4j-example", tags="crossType", indent="0", languages="java,kotlin,groovy,python"]
+
+<1> The person the relationship starts at.
+<2> The node at the end of the path is a `Person`.
+
+Oracle property graph repositories support relationship finders that end at another entity, and reject path finders that do.
+
 == Querying relationships
 
 Relationship finders return the relationships between two nodes, or between any nodes of the entity, as api:data.graph.model.GraphRelationship[] values with the type, properties and both nodes:
@@ -61,3 +88,16 @@ Relationship finders return the relationships between two nodes, or between any 
 snippet::example.PersonRepository[project-base="doc-examples/neo4j-example", source="main", tags="relationships", languages="java,kotlin,groovy,python"]
 
 `findRelationship`, `findRelationships`, `hasRelationship` and `countRelationships` accept the same `By` suffix as path finders, and `findRelationships` accepts a `Pageable`.
+
+A relationship finder that traverses a property of a ann:data.graph.annotation.RelationshipProperties[] entity can return that entity instead, with its properties, identifier and ann:data.graph.annotation.TargetNode[] read from the relationship and the node at its far end:
+
+snippet::example.MovieRepository[project-base="doc-examples/neo4j-example", source="main", tags="relationshipEntities", languages="java,kotlin,groovy,python"]
+
+<1> `roles` is a list of `Role`, so the finder returns the roles between the movie and the person.
+
+snippet::example.MovieRepositorySpec[project-base="doc-examples/neo4j-example", tags="relationshipEntities", indent="0", languages="java,kotlin,groovy,python"]
+
+<1> The properties stored on the relationship.
+<2> The node at the far end, read into the `@TargetNode` property.
+
+Without a `By` suffix the finder traverses every relationship property of the returned entity. Oracle property graph repositories return relationships as `GraphRelationship` only.

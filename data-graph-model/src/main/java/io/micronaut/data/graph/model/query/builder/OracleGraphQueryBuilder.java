@@ -319,6 +319,10 @@ public class OracleGraphQueryBuilder implements GraphQueryBuilder {
             return buildRelationshipsQuery(definition, entity, types);
         }
         requireMaxDepth(definition);
+        if (definition.hasDifferentEndEntity()) {
+            throw new IllegalArgumentException("Oracle property graph path finders match paths between nodes of the repository entity, the end node cannot be a ["
+                + definition.endNodeEntity().getName() + "]");
+        }
         // A @PathLimit argument wins over @PathLimit(n) on the method, as it does for Cypher: the runtime renders it
         // in place of the token, capped by micronaut.data.graph.max-path-depth
         String quantifier = "{1," + (definition.maxDepthBound() ? PathQueryDefinition.PATH_LIMIT_TOKEN : String.valueOf(definition.maxDepth())) + "}";
@@ -328,7 +332,7 @@ public class OracleGraphQueryBuilder implements GraphQueryBuilder {
             throw new IllegalArgumentException("Returning paths is not supported by the SQL/PGQ dialect, use @PropertyGraph(language = PGQL)");
         }
         String edgeVariable = elements ? EDGE : "";
-        String pattern = directed(node(START, entity), edge(edgeVariable, types, "") + quantifier, node(END, entity), definition.direction());
+        String pattern = pathPattern(definition, definition.direction(), node(START, entity), edge(edgeVariable, types, "") + quantifier, node(END, entity));
         query.pattern = sqlPgq() ? pattern : pathPrefix(definition.kind(), elements) + pattern;
         if (elements) {
             appendStepColumns(query, definition, entity);
@@ -380,16 +384,21 @@ public class OracleGraphQueryBuilder implements GraphQueryBuilder {
         if (definition.relationships().size() != 1) {
             throw new IllegalArgumentException("Relationship finders on Oracle property graphs need exactly one relationship type, for example findRelationshipsByFriends");
         }
+        if (definition.relationshipEntity()) {
+            throw new IllegalArgumentException("Relationship finders on Oracle property graphs return GraphRelationship, not the relationship entity ["
+                + definition.relationships().get(0).getAssociatedEntity().getName() + "]");
+        }
         Direction direction = definition.direction() == Direction.UNDIRECTED ? Direction.OUTGOING : definition.direction();
+        PersistentEntity endEntity = definition.endNodeEntity();
         Query query = new Query(entity);
-        query.pattern = directed(node(START, entity), edge("r", types, ""), node(END, entity), direction);
+        query.pattern = pathPattern(definition, direction, node(START, entity), edge("r", types, ""), node(END, endEntity));
         endpoints(query, definition, entity);
         switch (definition.result()) {
             case COUNT -> query.select.add(COUNT_AS + alias(RESULT));
             case EXISTS -> query.select.add("1 AS " + alias(RESULT));
             default -> {
                 query.entityColumns(START, entity);
-                query.entityColumns(END, entity);
+                query.entityColumns(END, endEntity);
                 query.column(literal(GraphEntities.relationshipType(definition.relationships().get(0))), "r" + SEPARATOR + TYPE_COLUMN);
             }
         }
@@ -414,16 +423,27 @@ public class OracleGraphQueryBuilder implements GraphQueryBuilder {
     }
 
     private void endpoints(Query query, PathQueryDefinition definition, PersistentEntity entity) {
-        PersistentProperty property = definition.endpointMatchProperty();
-        io.micronaut.data.model.PersistentPropertyPath path = io.micronaut.data.model.PersistentPropertyPath.of(List.of(), property);
         if (definition.start() != null) {
+            PersistentProperty property = definition.endpointMatchProperty();
             query.and(property(START, property) + " = ?");
-            query.push(definition.start(), path);
+            query.push(definition.start(), io.micronaut.data.model.PersistentPropertyPath.of(List.of(), property));
         }
         if (definition.end() != null) {
+            PersistentProperty property = definition.endEndpointMatchProperty();
             query.and(property(END, property) + " = ?");
-            query.push(definition.end(), path);
+            query.push(definition.end(), io.micronaut.data.model.PersistentPropertyPath.of(List.of(), property));
         }
+    }
+
+    /**
+     * Renders the pattern of a path query, leaving the direction to the runtime when it is a method argument.
+     */
+    private static String pathPattern(PathQueryDefinition definition, Direction direction, String from, String edge, String to) {
+        if (!definition.directionBound()) {
+            return directed(from, edge, to, direction);
+        }
+        int quantifier = edge.indexOf(']') + 1;
+        return from + " " + PathQueryDefinition.PATH_LEFT_TOKEN + edge.substring(0, quantifier) + PathQueryDefinition.PATH_RIGHT_TOKEN + edge.substring(quantifier) + " " + to;
     }
 
     private String node(String variable, PersistentEntity entity) {

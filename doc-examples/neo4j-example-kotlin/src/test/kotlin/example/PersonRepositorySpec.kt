@@ -1,5 +1,6 @@
 package example
 
+import io.micronaut.data.graph.annotation.Direction
 import io.micronaut.test.extensions.junit5.annotation.MicronautTest
 import jakarta.inject.Inject
 import org.junit.jupiter.api.AfterEach
@@ -71,6 +72,19 @@ class PersonRepositorySpec : AbstractNeo4jTest() {
         // end::labels[]
 
         assertEquals(setOf("Actor"), labels)
+    }
+
+    @Test
+    fun testPathDirection() {
+        // tag::pathDirection[]
+        val follows = personRepository.hasPathByFollows(fred, joe, Direction.OUTGOING)
+        val followedBy = personRepository.hasPathByFollows(joe, fred, Direction.INCOMING)
+        // end::pathDirection[]
+
+        assertTrue(follows)
+        assertTrue(followedBy)
+        assertFalse(personRepository.hasPathByFollows(joe, fred, Direction.OUTGOING))
+        assertTrue(personRepository.hasPathByFollows(joe, fred, Direction.UNDIRECTED))
     }
 
     @Test

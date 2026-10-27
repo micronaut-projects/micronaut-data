@@ -95,6 +95,46 @@ class MovieRepositorySpec extends AbstractNeo4jSpec {
         followed.name == "Lana Wachowski"
     }
 
+    void "paths to people"() {
+        given:
+        def keanu = personRepository.findByName("Keanu Reeves").get()
+        def lana = personRepository.findByName("Lana Wachowski").get()
+
+        when:
+        // tag::crossType[]
+        def directed = movieRepository.findRelationshipsByDirectors("The Matrix", lana.id)[0]
+        def director = directed.from().name // <1>
+
+        def path = movieRepository.findShortestPathToPersonBetweenTitleAndName("Speed", "Carrie-Anne Moss").get()
+        def end = path.end() // <2>
+        // end::crossType[]
+
+        then:
+        director == "Lana Wachowski"
+        directed.to().title == "The Matrix"
+        path.length() == 3
+        end instanceof Person
+        end.name == "Carrie-Anne Moss"
+        path.start() instanceof Movie
+        movieRepository.findAllPathsToPerson("The Matrix", keanu.id)[0].length() == 1
+    }
+
+    void "relationship entities"() {
+        given:
+        def keanu = personRepository.findByName("Keanu Reeves").get()
+
+        when:
+        // tag::relationshipEntities[]
+        def role = movieRepository.findRelationshipsByRoles("The Matrix", keanu.id)[0]
+        def characters = role.roles // <1>
+        def actor = role.person // <2>
+        // end::relationshipEntities[]
+
+        then:
+        characters == ["Neo"]
+        actor.name == "Keanu Reeves"
+    }
+
     void "projections and explicit queries"() {
         when:
         movieRepository.vote("Speed")
