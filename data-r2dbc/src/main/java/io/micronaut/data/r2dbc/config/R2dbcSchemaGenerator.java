@@ -118,14 +118,14 @@ public class R2dbcSchemaGenerator {
                                     .then(Mono.from(schemaHandler.useSchema(connection, dialect, schemaName)))
                                     .then(generate(connection, configuration, entities, builder));
                             }
-                            return result.then(Mono.from(connection.close()));
+                            return restoringOracleSchema(connection, dialect, result).then(Mono.from(connection.close()));
                         }
                         Mono<Void> result = Mono.empty();
                         if (configuration.getSchemaGenerateName() != null) {
                             result = Mono.from(schemaHandler.createSchema(connection, dialect, configuration.getSchemaGenerateName()))
                                 .then(Mono.from(schemaHandler.useSchema(connection, dialect, configuration.getSchemaGenerateName())));
                         }
-                        return result.then(generate(connection, configuration, entities, builder))
+                        return restoringOracleSchema(connection, dialect, result.then(generate(connection, configuration, entities, builder)))
                             .then(Mono.from(connection.close()));
                     }).block();
                 }
@@ -215,6 +215,36 @@ public class R2dbcSchemaGenerator {
             case CREATE -> createTables;
             default -> Mono.empty();
         };
+    }
+
+    /**
+     * Generation switches the session schema on Oracle, and the connection may go back to a pool, so the
+     * schema in use before the generation is restored afterwards.
+     */
+    private Mono<Void> restoringOracleSchema(Connection connection, Dialect dialect, Mono<Void> generation) {
+        if (dialect != Dialect.ORACLE) {
+            return generation;
+        }
+        Mono<String> currentSchema = Flux.from(connection.createStatement("SELECT SYS_CONTEXT('USERENV', 'CURRENT_SCHEMA') FROM DUAL").execute())
+            .flatMap(result -> result.map((row, metadata) -> row.get(0, String.class)))
+            .next();
+        return Mono.usingWhen(
+            currentSchema,
+            schema -> generation,
+            schema -> restoreOracleSchema(connection, schema),
+            (schema, error) -> restoreOracleSchema(connection, schema),
+            schema -> restoreOracleSchema(connection, schema)
+        );
+    }
+
+    private Mono<Void> restoreOracleSchema(Connection connection, String schema) {
+        // The exact name reported by the database, bound and quoted by the database so that its case is kept
+        return Flux.from(connection.createStatement(
+                "BEGIN EXECUTE IMMEDIATE 'ALTER SESSION SET CURRENT_SCHEMA = ' || DBMS_ASSERT.ENQUOTE_NAME(?, FALSE); END;")
+                .bind(0, schema)
+                .execute())
+            .flatMap(result -> Flux.from(result.getRowsUpdated()))
+            .then();
     }
 
     private Mono<Void> execute(Connection connection, String sql) {

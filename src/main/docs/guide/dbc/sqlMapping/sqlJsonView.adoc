@@ -179,4 +179,4 @@ NOTE: Using `@Version` is not supported in Json Duality View mapped classes.
 
 == Limitations
 
-* During schema creation, json view mapped entities are skipped, and it is expected for users to create them manually or via migration scripts.
+* Schema generation creates a duality view with `CREATE OR REPLACE JSON RELATIONAL DUALITY VIEW` after the tables it reads. Classes annotated with `@JsonSubView` are part of their parent view and get no DDL of their own. For production databases, create the views with a migration tool.
