@@ -393,7 +393,7 @@ public abstract class AbstractCriteriaMethodMatch implements MethodMatcher.Metho
                                               PersistentEntityCriteriaBuilder cb,
                                               Iterator<ParameterElement> parameters) {
         Optional<String> optionalRestrictionName = PROPERTY_RESTRICTIONS.stream().filter(expression::endsWith).findFirst();
-        if (optionalRestrictionName.isPresent()) {
+        if (optionalRestrictionName.isPresent() && !isPropertyNamedLikeRestriction(root.getPersistentEntity(), expression, optionalRestrictionName.get())) {
             String restrictionName = optionalRestrictionName.get();
             String propertyName = extractPropertyName(expression, restrictionName);
             if (StringUtils.isEmpty(propertyName)) {
@@ -425,10 +425,44 @@ public abstract class AbstractCriteriaMethodMatch implements MethodMatcher.Metho
         if (propertyName.endsWith(IGNORE_CASE)) {
             restrictionName += IGNORE_CASE;
             propertyName = extractPropertyName(propertyName, IGNORE_CASE);
+            rejectIgnoreCaseIn(root.getPersistentEntity(), propertyName);
         }
         Restrictions.PropertyRestriction<Object> restriction = Restrictions.findPropertyRestriction(restrictionName);
         Objects.requireNonNull(restriction, "Cannot find restriction for expression: " + expression);
         return getPropertyRestriction(propertyName, root, cb, parameters, restriction);
+    }
+
+    /**
+     * In restrictions compare collections, which cannot ignore case. The {@code In} is a restriction token only
+     * when the whole name is not a property of the entity, so {@code findByBuiltInIgnoreCase} compares the
+     * property {@code builtIn}.
+     */
+    private static void rejectIgnoreCaseIn(PersistentEntity entity, String propertyName) {
+        if (isProperty(entity, propertyName)) {
+            return;
+        }
+        for (String inRestriction : List.of("NotIn", "InList", "In")) {
+            if (propertyName.endsWith(inRestriction) && propertyName.length() > inRestriction.length()) {
+                throw new MatchFailedException("IgnoreCase is not supported with " + inRestriction + ": compare the values with the case they are stored in, or use an explicit query");
+            }
+        }
+    }
+
+    /**
+     * Whether a name such as {@code BuiltIn} is a property of the entity, rather than a restriction such as
+     * {@code In} on a property named {@code Built}.
+     */
+    private static boolean isPropertyNamedLikeRestriction(PersistentEntity entity, String expression, String restrictionName) {
+        return isProperty(entity, expression) && !isProperty(entity, extractPropertyName(expression, restrictionName));
+    }
+
+    /**
+     * Whether a token of a method name, such as {@code BuiltIn}, names a property or a property path of the entity.
+     */
+    private static boolean isProperty(PersistentEntity entity, String token) {
+        String propertyName = NameUtils.decapitalize(token);
+        return entity.getPropertyByName(propertyName) != null
+            || PersistentEntityUtils.getPersistentPropertyPath(entity, propertyName).isPresent();
     }
 
     private static String extractPropertyName(String queryParameter, String clause) {

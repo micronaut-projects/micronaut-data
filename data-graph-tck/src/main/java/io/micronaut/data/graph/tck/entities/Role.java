@@ -1,8 +1,12 @@
 package io.micronaut.data.graph.tck.entities;
 
+import io.micronaut.data.annotation.TypeDef;
 import io.micronaut.data.graph.annotation.RelationshipId;
 import io.micronaut.data.graph.annotation.RelationshipProperties;
 import io.micronaut.data.graph.annotation.TargetNode;
+
+import io.micronaut.data.model.DataType;
+import org.jspecify.annotations.Nullable;
 
 import java.util.List;
 
@@ -10,6 +14,8 @@ import java.util.List;
 public class Role {
     @RelationshipId
     private Long id;
+    @TypeDef(type = DataType.JSON) // a JSON column in SQL schemas, a list property in graph databases
+    @Nullable
     private final List<String> roles;
     @TargetNode
     private final Person person;

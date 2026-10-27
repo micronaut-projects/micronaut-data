@@ -15,16 +15,16 @@
  */
 package io.micronaut.data.neo4j.transaction;
 
-import io.micronaut.context.annotation.Requires;
+import io.micronaut.context.annotation.Parameter;
+import io.micronaut.context.annotation.EachBean;
 import io.micronaut.core.annotation.Internal;
 import io.micronaut.data.connection.ConnectionStatus;
+import io.micronaut.data.neo4j.session.Neo4jDriverRegistration;
 import io.micronaut.data.neo4j.session.Neo4jReactiveConnection;
 import io.micronaut.data.neo4j.session.Neo4jReactorConnectionOperations;
 import io.micronaut.transaction.TransactionDefinition;
 import io.micronaut.transaction.exceptions.TransactionUsageException;
 import io.micronaut.transaction.support.AbstractReactorTransactionOperations;
-import jakarta.inject.Singleton;
-import org.neo4j.driver.Driver;
 import org.neo4j.driver.TransactionConfig;
 import org.neo4j.driver.reactivestreams.ReactiveTransaction;
 import org.reactivestreams.Publisher;
@@ -38,15 +38,14 @@ import reactor.core.publisher.Mono;
  * @author graemerocher
  * @since 5.3.0
  */
-@Singleton
-@Requires(beans = Driver.class)
+@EachBean(Neo4jDriverRegistration.class)
 @Internal
 final class DefaultNeo4jReactorTransactionOperations extends AbstractReactorTransactionOperations<Neo4jReactiveConnection>
     implements Neo4jReactorTransactionOperations {
 
     private static final Logger LOG = LoggerFactory.getLogger(DefaultNeo4jReactorTransactionOperations.class);
 
-    DefaultNeo4jReactorTransactionOperations(Neo4jReactorConnectionOperations connectionOperations) {
+    DefaultNeo4jReactorTransactionOperations(@Parameter Neo4jReactorConnectionOperations connectionOperations) {
         super(connectionOperations);
     }
 

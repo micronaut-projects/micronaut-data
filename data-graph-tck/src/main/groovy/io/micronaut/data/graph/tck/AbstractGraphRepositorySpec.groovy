@@ -11,8 +11,10 @@ import io.micronaut.data.graph.tck.entities.Role
 import io.micronaut.data.graph.tck.repositories.ArticleRepository
 import io.micronaut.data.graph.tck.repositories.ColleagueRepository
 import io.micronaut.data.graph.tck.repositories.FriendRepository
+import io.micronaut.data.graph.tck.repositories.MovieQueryRepository
 import io.micronaut.data.graph.tck.repositories.MovieRepository
 import io.micronaut.data.graph.tck.repositories.MovieSpecificationRepository
+import io.micronaut.data.graph.tck.repositories.PersonQueryRepository
 import io.micronaut.data.graph.tck.repositories.PersonRepository
 import io.micronaut.data.model.Pageable
 import io.micronaut.data.model.Sort
@@ -588,5 +590,75 @@ abstract class AbstractGraphRepositorySpec extends Specification {
         then:
         deleted == 2
         movieRepository.findAll()*.title == ["The Matrix Reloaded"]
+    }
+
+    @Requires({ instance.supportsRelationshipWrites() })
+    void "path finders match endpoints by a property and override the direction"() {
+        given:
+        def barbara = new Person("Barbara Liskov", 1939)
+        def grace = new Person("Grace Hopper", 1906)
+        grace.mentor = barbara
+        def ada = new Person("Ada Lovelace", 1815)
+        ada.mentor = grace
+        personRepository.save(ada)
+
+        expect: "MENTORED_BY points from the mentee to the mentor"
+        personRepository.existsPathByMentorBetweenName("Ada Lovelace", "Barbara Liskov")
+        !personRepository.existsPathByMentorBetweenName("Barbara Liskov", "Ada Lovelace")
+
+        and: "an incoming path follows the relationships backwards"
+        personRepository.hasPathByMentorBetweenName("Barbara Liskov", "Ada Lovelace")
+        !personRepository.hasPathByMentorBetweenName("Ada Lovelace", "Barbara Liskov")
+    }
+
+    @Requires({ instance.supportsRelationshipWrites() && instance.supportsCypher() })
+    void "find the shortest path between nodes matched by a property"() {
+        given:
+        def barbara = new Person("Barbara Liskov", 1939)
+        def grace = new Person("Grace Hopper", 1906)
+        grace.mentor = barbara
+        def ada = new Person("Ada Lovelace", 1815)
+        ada.mentor = grace
+        personRepository.save(ada)
+
+        when:
+        def path = ((PersonQueryRepository) personRepository).findShortestPathByMentorBetweenName("Ada Lovelace", "Barbara Liskov")
+
+        then:
+        path.present
+        path.get().nodes()*.name == ["Ada Lovelace", "Grace Hopper", "Barbara Liskov"]
+    }
+
+    @Requires({ instance.supportsRelationshipWrites() && instance.supportsCypher() })
+    void "fetch the relationships of related nodes and collect values into a DTO"() {
+        given:
+        def mentor = new Person("Andrzej Wajda", 1926)
+        def director = new Person("Agnieszka Holland", 1948)
+        director.mentor = mentor
+        def movie = new Movie("Europa Europa", "A boy survives the war", 1990)
+        movie.directors = [director, new Person("Second Unit", 1960)]
+        movieRepository.save(movie)
+        def queries = (MovieQueryRepository) movieRepository
+
+        when:
+        def found = queries.queryByTitle("Europa Europa").get()
+
+        then: "each director carries the mentor fetched with it"
+        found.directors*.name.sort() == ["Agnieszka Holland", "Second Unit"]
+        found.directors.find { it.name == "Agnieszka Holland" }.mentor.name == "Andrzej Wajda"
+        found.directors.find { it.name == "Second Unit" }.mentor == null
+
+        when:
+        def names = queries.findDirectorNames("Europa Europa").get()
+
+        then:
+        names.title() == "Europa Europa"
+        names.directors().sort() == ["Agnieszka Holland", "Second Unit"]
+
+        when: "an explicit query returns related nodes in a j_ column"
+        def withDirectors = queries.findWithDirectors("Europa Europa").get()
+
+        then:
+        withDirectors.directors*.name.sort() == ["Agnieszka Holland", "Second Unit"]
     }
 }

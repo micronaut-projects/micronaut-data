@@ -62,4 +62,17 @@ class AgeIndexSpec extends Specification {
         accountRepository.count() == 1
     }
 
+
+    void "saveAll creates nodes with database generated identifiers in one batch"() {
+        when:
+        def accounts = accountRepository.saveAll([
+            new Account("a@example.com", "UK", "London", "a"),
+            new Account("b@example.com", "UK", "Leeds", "b"),
+            new Account("c@example.com", "FR", "Paris", "c")
+        ])
+
+        then:
+        accounts*.id.unique().size() == 3
+        accounts.collect { accountRepository.findById(it.id).get().email } == ["a@example.com", "b@example.com", "c@example.com"]
+    }
 }

@@ -87,6 +87,16 @@ public final class OracleGraphSql {
     }
 
     /**
+     * Whether a query is PGQL rather than SQL/PGQ: PGQL selects {@code FROM MATCH}, SQL/PGQ from {@code GRAPH_TABLE}.
+     *
+     * @param query The query
+     * @return True for PGQL
+     */
+    public static boolean isPgql(String query) {
+        return query.contains(" FROM MATCH ") && !query.contains("GRAPH_TABLE (");
+    }
+
+    /**
      * Appends the ordering and paging of a query, in the syntax of its query language.
      *
      * @param query  The query

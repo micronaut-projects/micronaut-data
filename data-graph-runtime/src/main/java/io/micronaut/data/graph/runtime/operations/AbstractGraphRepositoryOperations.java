@@ -863,7 +863,10 @@ public abstract class AbstractGraphRepositoryOperations extends AbstractReposito
         if (identity != null && !GraphEntities.isNativeId(identity) && id == null) {
             throw new DataAccessException("Entity [" + entity.getSimpleName() + "] needs its identifier [" + identity.getName() + "] assigned before it is saved");
         }
-        return new NodeBatch(id != null, id != null && entity.hasVersion() && previousVersion != null);
+        List<String> names = List.copyOf(mapper.writeProperties(entity, instance).keySet());
+        boolean versioned = id != null && entity.hasVersion() && previousVersion != null;
+        boolean merge = identity != null && !GraphEntities.isNativeId(identity) && !versioned;
+        return new NodeBatch(names, id != null, versioned, !merge || queryBuilder.supportsBatchedMerge());
     }
 
     /**
@@ -888,13 +891,47 @@ public abstract class AbstractGraphRepositoryOperations extends AbstractReposito
     }
 
     /**
+     * Fails a batched write that wrote fewer nodes than it was given.
+     *
+     * @param entity   The entity
+     * @param batch    The batch
+     * @param expected The number of nodes in the batch
+     * @param written  The number of nodes the query returned
+     */
+    final void checkBatchWritten(RuntimePersistentEntity<?> entity, NodeBatch batch, int expected, int written) {
+        if (written == expected) {
+            return;
+        }
+        if (batch.versioned()) {
+            throw new OptimisticLockException("Expected to update " + expected + " nodes of [" + entity.getSimpleName()
+                + "] but " + written + " still had the version they were read with");
+        }
+        throw new DataAccessException("Expected to write " + expected + " nodes of [" + entity.getSimpleName() + "] but wrote " + written);
+    }
+
+    /**
+     * Reads the identifier the database generated for a node of a batched write.
+     *
+     * @param entity The entity
+     * @param record The row of the node
+     * @return The identifier
+     */
+    final Object batchGeneratedId(RuntimePersistentEntity<?> entity, GraphRecord record) {
+        Object generatedId = mapper.readValue(entity.getIdentity(), record.get(CypherQueryBuilder.ID_PARAMETER));
+        if (generatedId == null) {
+            throw new DataAccessException("The database returned no identifier for a new node of [" + entity.getSimpleName() + "]");
+        }
+        return generatedId;
+    }
+
+    /**
      * @param entity The entity
      * @param batch  The batch
      * @return The query that writes the nodes of a batch
      */
     final String batchQuery(RuntimePersistentEntity<?> entity, NodeBatch batch) {
         return queryCache.computeIfAbsent("writeNodes:" + entity.getName() + ":" + batch,
-            k -> queryBuilder.buildWriteNodesQuery(entity, batch.idPresent(), batch.versioned()));
+            k -> queryBuilder.buildWriteNodesQuery(entity, batch.propertyNames(), batch.idPresent(), batch.versioned()));
     }
 
     /**
@@ -1067,12 +1104,14 @@ public abstract class AbstractGraphRepositoryOperations extends AbstractReposito
     }
 
     /**
-     * The kind of a batched node write.
+     * The kind of a batched node write: nodes written together set the same properties.
      *
-     * @param idPresent Whether the nodes have identifiers
-     * @param versioned Whether the write checks the version of the nodes
+     * @param propertyNames The stored names of the properties the nodes write
+     * @param idPresent     Whether the nodes have identifiers
+     * @param versioned     Whether the write checks the version of the nodes
+     * @param batched       Whether the nodes are written with one query, or one at a time
      */
-    record NodeBatch(boolean idPresent, boolean versioned) {
+    record NodeBatch(List<String> propertyNames, boolean idPresent, boolean versioned, boolean batched) {
     }
 
     /**
@@ -1328,30 +1367,27 @@ public abstract class AbstractGraphRepositoryOperations extends AbstractReposito
         }
 
         private void writeNodes(NodeBatch batch, List<Data> nodes) {
+            if (!batch.batched()) {
+                for (Data d : nodes) {
+                    NodeWrite write = planNodeWrite(persistentEntity, d.entity, previousVersions.get(d));
+                    generatedId(persistentEntity, write, persister.run(write.query()).records());
+                }
+                return;
+            }
             List<Map<String, @Nullable Object>> rows = new ArrayList<>(nodes.size());
             for (int i = 0; i < nodes.size(); i++) {
                 Data d = nodes.get(i);
                 rows.add(nodeRow(persistentEntity, d.entity, i, batch.versioned() ? previousVersions.get(d) : null));
             }
             List<GraphRecord> records = persister.run(new GraphQuery(batchQuery(persistentEntity, batch), Map.of(CypherQueryBuilder.ROWS_PARAMETER, rows))).records();
-            if (records.size() != rows.size()) {
-                if (batch.versioned()) {
-                    throw new OptimisticLockException("Expected to update " + rows.size() + " nodes of [" + persistentEntity.getSimpleName()
-                        + "] but " + records.size() + " still had the version they were read with");
-                }
-                throw new DataAccessException("Expected to write " + rows.size() + " nodes of [" + persistentEntity.getSimpleName() + "] but wrote " + records.size());
-            }
+            checkBatchWritten(persistentEntity, batch, rows.size(), records.size());
             RuntimePersistentProperty<T> identity = persistentEntity.getIdentity();
             if (batch.idPresent() || identity == null || !GraphEntities.isNativeId(identity)) {
                 return;
             }
             for (GraphRecord record : records) {
                 Data d = nodes.get(((Number) Objects.requireNonNull(record.get(CypherQueryBuilder.ROW_POSITION))).intValue());
-                Object generatedId = mapper.readValue(identity, record.get(CypherQueryBuilder.ID_PARAMETER));
-                if (generatedId == null) {
-                    throw new DataAccessException("The database returned no identifier for a new node of [" + persistentEntity.getSimpleName() + "]");
-                }
-                d.entity = updateEntityId((BeanProperty<T, Object>) identity.getProperty(), d.entity, generatedId);
+                d.entity = updateEntityId((BeanProperty<T, Object>) identity.getProperty(), d.entity, batchGeneratedId(persistentEntity, record));
             }
         }
     }

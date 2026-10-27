@@ -38,7 +38,10 @@ public enum PredicateUnaryOp {
     void validate(Expression<?> expression) {
         switch (this) {
             case IS_EMPTY, IS_NOT_EMPTY -> {
-                CriteriaUtils.requireStringExpression(expression);
+                // Strings are empty when blank, collections, arrays and maps when they have no elements
+                if (!CriteriaUtils.isCollectionExpression(expression)) {
+                    CriteriaUtils.requireStringExpression(expression);
+                }
             }
             case IS_TRUE, IS_FALSE -> {
                 // Boolean?

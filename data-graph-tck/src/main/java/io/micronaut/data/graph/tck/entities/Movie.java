@@ -5,6 +5,7 @@ import io.micronaut.data.annotation.MappedProperty;
 import io.micronaut.data.graph.annotation.Direction;
 import io.micronaut.data.graph.annotation.Node;
 import io.micronaut.data.graph.annotation.Relationship;
+import org.jspecify.annotations.Nullable;
 
 import java.util.ArrayList;
 import java.util.List;
@@ -14,8 +15,11 @@ public class Movie {
     @Id
     private final String title;
     @MappedProperty("tagline")
+    @Nullable
     private final String description;
+    @Nullable
     private final Integer released;
+    @Nullable
     private Long votes;
     @Relationship(type = "ACTED_IN", direction = Direction.INCOMING)
     private List<Role> roles = new ArrayList<>();

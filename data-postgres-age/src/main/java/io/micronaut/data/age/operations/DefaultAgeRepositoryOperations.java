@@ -24,7 +24,6 @@ import io.micronaut.data.connection.ConnectionDefinition;
 import io.micronaut.data.connection.ConnectionOperations;
 import io.micronaut.data.exceptions.DataAccessException;
 import io.micronaut.data.graph.model.query.builder.AgeCypherQueryBuilder;
-import io.micronaut.core.type.Argument;
 import io.micronaut.data.graph.model.query.builder.AgeStatements;
 import io.micronaut.json.JsonMapper;
 import io.micronaut.data.model.Limit;
@@ -36,6 +35,8 @@ import io.micronaut.data.graph.runtime.GraphSession;
 import io.micronaut.data.graph.runtime.GraphValueEncoderRegistrar;
 import io.micronaut.data.graph.runtime.serde.GraphSerde;
 import io.micronaut.data.graph.runtime.GraphValueEncoders;
+import io.micronaut.data.graph.runtime.age.AgeParameters;
+import io.micronaut.data.graph.runtime.age.Agtype;
 import io.micronaut.data.graph.runtime.operations.AbstractGraphRepositoryOperations;
 import io.micronaut.data.model.runtime.AttributeConverterRegistry;
 import io.micronaut.data.model.runtime.RuntimeEntityRegistry;
@@ -47,7 +48,6 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 import javax.sql.DataSource;
-import java.io.IOException;
 import java.sql.Connection;
 import java.sql.PreparedStatement;
 import java.sql.ResultSet;
@@ -55,15 +55,9 @@ import java.sql.ResultSetMetaData;
 import java.sql.SQLException;
 import java.sql.Statement;
 import java.sql.Types;
-import java.time.Instant;
-import java.time.ZoneOffset;
-import java.time.temporal.Temporal;
-import java.time.temporal.TemporalAmount;
 import java.util.Collection;
 import java.util.ArrayList;
-import java.util.Base64;
 import java.util.Collections;
-import java.util.Date;
 import java.util.List;
 import java.util.Map;
 import java.util.Set;
@@ -88,10 +82,8 @@ final class DefaultAgeRepositoryOperations extends AbstractGraphRepositoryOperat
     static final String PREPARED_SETTING = "micronaut.age.prepared";
 
     private static final Logger LOG = LoggerFactory.getLogger(DefaultAgeRepositoryOperations.class);
-    private static final Argument<Map<String, Object>> PARAMETERS = Argument.mapOf(String.class, Object.class);
 
     private final ConnectionOperations<Connection> connectionOperations;
-    private final DataSource dataSource;
     private final String graph;
     private final boolean createExtension;
     private final boolean createGraph;
@@ -107,7 +99,6 @@ final class DefaultAgeRepositoryOperations extends AbstractGraphRepositoryOperat
     private volatile boolean graphReady;
 
     DefaultAgeRepositoryOperations(@Parameter ConnectionOperations<Connection> connectionOperations,
-                                   @Parameter DataSource dataSource,
                                    JsonMapper jsonMapper,
                                    @Value("${micronaut.data.age.graph:graph}") String graph,
                                    @Value("${micronaut.data.age.create-extension:false}") boolean createExtension,
@@ -121,7 +112,6 @@ final class DefaultAgeRepositoryOperations extends AbstractGraphRepositoryOperat
                                    GraphSerde graphSerde) {
         super(new AgeCypherQueryBuilder(), dateTimeProvider, runtimeEntityRegistry, conversionService, attributeConverterRegistry, executorService, encoderRegistrars, graphSerde);
         this.connectionOperations = connectionOperations;
-        this.dataSource = dataSource;
         this.graph = AgeStatements.validateGraphName(graph);
         this.createExtension = createExtension;
         this.createGraph = createGraph;
@@ -130,13 +120,7 @@ final class DefaultAgeRepositoryOperations extends AbstractGraphRepositoryOperat
 
     @Override
     protected void registerEncoders(GraphValueEncoders encoders) {
-        // agtype has no temporal or binary types: temporal values are ISO-8601 strings and bytes Base64 strings
-        encoders.register(Temporal.class, (value, e) -> value.toString())
-            .register(TemporalAmount.class, (value, e) -> value.toString())
-            .register(Instant.class, (value, e) -> value.toString())
-            .register(java.sql.Date.class, (value, e) -> value.toLocalDate().toString())
-            .register(Date.class, (value, e) -> value.toInstant().atOffset(ZoneOffset.UTC).toString())
-            .register(byte[].class, (value, e) -> Base64.getEncoder().encodeToString(value));
+        AgeParameters.registerEncoders(encoders);
     }
 
     /**
@@ -208,7 +192,7 @@ final class DefaultAgeRepositoryOperations extends AbstractGraphRepositoryOperat
             }
             try (PreparedStatement preparedStatement = connection.prepareStatement(sql)) {
                 if (AgeStatements.takesParameters(statement)) {
-                    preparedStatement.setObject(1, writeParameters(jsonMapper, parameters), Types.OTHER);
+                    preparedStatement.setObject(1, AgeParameters.write(jsonMapper, parameters), Types.OTHER);
                 }
                 List<GraphRecord> records = new ArrayList<>();
                 try (ResultSet resultSet = preparedStatement.executeQuery()) {
@@ -230,22 +214,6 @@ final class DefaultAgeRepositoryOperations extends AbstractGraphRepositoryOperat
             }
         } catch (SQLException e) {
             throw new DataAccessException("Error executing Cypher query on Apache AGE [" + sql + "]: " + e.getMessage(), e);
-        }
-    }
-
-    /**
-     * Writes the parameter map of a statement as JSON, which AGE reads as an agtype map. The values are already
-     * encoded: strings, numbers, booleans, lists and maps.
-     *
-     * @param jsonMapper The JSON mapper of Micronaut Serialization
-     * @param parameters The parameters
-     * @return The JSON text
-     */
-    static String writeParameters(JsonMapper jsonMapper, Map<String, Object> parameters) {
-        try {
-            return jsonMapper.writeValueAsString(PARAMETERS, parameters);
-        } catch (IOException e) {
-            throw new DataAccessException("Cannot write the parameters of an Apache AGE query as JSON: " + e.getMessage(), e);
         }
     }
 
@@ -348,16 +316,23 @@ final class DefaultAgeRepositoryOperations extends AbstractGraphRepositoryOperat
      * Creates the graph on a connection of its own that commits at once, so that the graph outlives a
      * transaction of the caller that rolls back.
      */
-    private void createGraph() throws SQLException {
-        try (Connection connection = dataSource.getConnection()) {
-            boolean autoCommit = connection.getAutoCommit();
-            connection.setAutoCommit(true);
+    private void createGraph() {
+        // A connection of its own, outside any transaction of the caller, that commits at once
+        connectionOperations.execute(ConnectionDefinition.REQUIRES_NEW, status -> {
+            Connection connection = status.getConnection();
             try {
-                createGraph(connection, graph);
-            } finally {
-                connection.setAutoCommit(autoCommit);
+                boolean autoCommit = connection.getAutoCommit();
+                connection.setAutoCommit(true);
+                try {
+                    createGraph(connection, graph);
+                } finally {
+                    connection.setAutoCommit(autoCommit);
+                }
+            } catch (SQLException e) {
+                throw new DataAccessException("Error creating Apache AGE graph [" + graph + "]: " + e.getMessage(), e);
             }
-        }
+            return null;
+        });
     }
 
     /**

@@ -198,8 +198,9 @@ final class DefaultOracleGraphReactorRepositoryOperations extends AbstractReacti
             List<@Nullable Object> rowValues = new ArrayList<>();
             List<? extends ColumnMetadata> columnMetadatas = metadata.getColumnMetadatas();
             for (int i = 0; i < columnMetadatas.size(); i++) {
-                columns.add(columnMetadatas.get(i).getName());
-                rowValues.add(row.get(i));
+                String column = columnMetadatas.get(i).getName();
+                columns.add(column);
+                rowValues.add(OracleGraphRows.isJsonText(column) ? row.get(i, String.class) : row.get(i));
             }
             if (columns.contains(OracleGraphQueryBuilder.PATH_MATCH_COLUMN)) {
                 throw new IllegalStateException("Paths are returned by PGQL queries, which are not available over R2DBC");

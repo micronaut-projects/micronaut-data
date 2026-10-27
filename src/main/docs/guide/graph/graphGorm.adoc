@@ -62,3 +62,17 @@ Micronaut Data Graph covers the querying features of https://grails.apache.org/d
 |===
 
 Unlike Spring Data Neo4j, related nodes are not loaded unless a finder joins them, and saving an entity does not remove relationships missing from its collections.
+
+== Fetching related nodes
+
+Spring Data Neo4j loads the nodes reachable from an entity when it is read, and GORM can load relationships lazily through proxies. Micronaut Data Graph does neither: entities are plain objects without proxies, and a query reads only what it returns, as elsewhere in Micronaut Data. Choose what each finder loads:
+
+* `@Join` loads relationships with the entity, including the relationships of related nodes with paths such as `@Join("directors.follows")`. See <<graphTraversal, Querying Relationships>>.
+* A finder without joins loads the node alone, and a projection or DTO loads only the properties it names.
+* A `@Query` method maps the nodes it returns to the entity type of the method, and reads related nodes from collected columns named `j_<relationship>`, as joins do. This replaces `@Query` mapping hints such as the `entities` of other frameworks.
+
+Without lazy loading, a relationship that was not fetched is an empty collection or `null`, rather than a query run when it is first accessed. Reading related data is then visible in the repository, and works the same in reactive repositories and native images.
+
+== Query languages
+
+Each repository stereotype compiles queries to the language of its database: Cypher for Neo4j, the subset of Cypher that Apache AGE runs, and SQL/PGQ or PGQL for Oracle. A separate dialect selector is therefore not needed. ISO GQL is not generated: Neo4j runs the Cypher that GQL standardises, and Oracle implements the graph queries of SQL:2023, SQL/PGQ, which the Oracle module generates.

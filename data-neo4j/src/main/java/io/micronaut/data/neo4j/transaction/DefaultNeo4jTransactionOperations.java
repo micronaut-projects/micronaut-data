@@ -15,17 +15,17 @@
  */
 package io.micronaut.data.neo4j.transaction;
 
-import io.micronaut.context.annotation.Requires;
+import io.micronaut.context.annotation.Parameter;
+import io.micronaut.context.annotation.EachBean;
 import io.micronaut.core.annotation.Internal;
 import io.micronaut.data.connection.ConnectionOperations;
 import io.micronaut.data.connection.SynchronousConnectionManager;
+import io.micronaut.data.neo4j.session.Neo4jDriverRegistration;
 import io.micronaut.data.neo4j.session.Neo4jConnection;
 import io.micronaut.transaction.exceptions.NoTransactionException;
 import io.micronaut.transaction.impl.DefaultTransactionStatus;
 import io.micronaut.transaction.support.AbstractDefaultTransactionOperations;
-import jakarta.inject.Singleton;
 import org.jspecify.annotations.Nullable;
-import org.neo4j.driver.Driver;
 import org.neo4j.driver.Transaction;
 import org.neo4j.driver.TransactionConfig;
 
@@ -35,13 +35,12 @@ import org.neo4j.driver.TransactionConfig;
  * @author graemerocher
  * @since 5.3.0
  */
-@Singleton
-@Requires(beans = Driver.class)
+@EachBean(Neo4jDriverRegistration.class)
 @Internal
 final class DefaultNeo4jTransactionOperations extends AbstractDefaultTransactionOperations<Neo4jConnection> implements Neo4jTransactionOperations {
 
-    DefaultNeo4jTransactionOperations(ConnectionOperations<Neo4jConnection> connectionOperations,
-                                      @Nullable SynchronousConnectionManager<Neo4jConnection> synchronousConnectionManager) {
+    DefaultNeo4jTransactionOperations(@Parameter ConnectionOperations<Neo4jConnection> connectionOperations,
+                                      @Parameter @Nullable SynchronousConnectionManager<Neo4jConnection> synchronousConnectionManager) {
         super(connectionOperations, synchronousConnectionManager);
     }
 

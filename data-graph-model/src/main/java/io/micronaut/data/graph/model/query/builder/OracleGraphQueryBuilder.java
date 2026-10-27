@@ -100,6 +100,10 @@ public class OracleGraphQueryBuilder implements GraphQueryBuilder {
      */
     public static final String LABEL_COLUMN = "LABEL_";
     /**
+     * The suffix of the column holding the schemaless properties of a node, stored as a JSON object.
+     */
+    public static final String DYNAMIC_ATTRIBUTES_COLUMN = "DYN_";
+    /**
      * The suffix of the column holding the type of a relationship.
      */
     public static final String TYPE_COLUMN = "TYPE_";
@@ -145,7 +149,7 @@ public class OracleGraphQueryBuilder implements GraphQueryBuilder {
     public OracleGraphQueryBuilder(AnnotationMetadata repositoryMetadata) {
         this.graph = graphName(repositoryMetadata.stringValue(PropertyGraph.class).filter(s -> !s.isEmpty()).orElse("graph"));
         this.language = repositoryMetadata.enumValue(PropertyGraph.class, "language", PropertyGraph.QueryLanguage.class)
-            .orElse(PropertyGraph.QueryLanguage.PGQL);
+            .orElse(PropertyGraph.QueryLanguage.SQL_PGQ);
     }
 
     /**
@@ -406,15 +410,15 @@ public class OracleGraphQueryBuilder implements GraphQueryBuilder {
     }
 
     private void endpoints(Query query, PathQueryDefinition definition, PersistentEntity entity) {
-        PersistentProperty identity = identity(entity);
-        io.micronaut.data.model.PersistentPropertyPath idPath = io.micronaut.data.model.PersistentPropertyPath.of(List.of(), identity);
+        PersistentProperty property = definition.endpointMatchProperty();
+        io.micronaut.data.model.PersistentPropertyPath path = io.micronaut.data.model.PersistentPropertyPath.of(List.of(), property);
         if (definition.start() != null) {
-            query.and(property(START, identity) + " = ?");
-            query.push(definition.start(), idPath);
+            query.and(property(START, property) + " = ?");
+            query.push(definition.start(), path);
         }
         if (definition.end() != null) {
-            query.and(property(END, identity) + " = ?");
-            query.push(definition.end(), idPath);
+            query.and(property(END, property) + " = ?");
+            query.push(definition.end(), path);
         }
     }
 
@@ -578,11 +582,15 @@ public class OracleGraphQueryBuilder implements GraphQueryBuilder {
                 if (property.getAnnotationMetadata().hasAnnotation(DynamicRelationships.class)) {
                     throw new UnsupportedOperationException("Dynamic relationships are not supported for Oracle property graphs: " + nodeEntity.getName());
                 }
-                if (property.getAnnotationMetadata().hasAnnotation(DynamicAttributes.class)
-                    || property.getAnnotationMetadata().hasAnnotation(Labels.class)) {
-                    // A vertex table has fixed columns and its labels come from the graph definition
-                    throw new IllegalArgumentException("Schemaless properties and dynamic labels are not supported by Oracle property graphs, entity ["
+                if (property.getAnnotationMetadata().hasAnnotation(Labels.class)) {
+                    // The labels of a vertex table come from the graph definition
+                    throw new IllegalArgumentException("Dynamic labels are not supported by Oracle property graphs, entity ["
                         + nodeEntity.getName() + "] declares [" + property.getName() + "]");
+                }
+                if (property.getAnnotationMetadata().hasAnnotation(DynamicAttributes.class)) {
+                    // Schemaless properties are stored in a JSON column, whose entries become properties of the node
+                    column(property(variable, property), variable + SEPARATOR + DYNAMIC_ATTRIBUTES_COLUMN);
+                    continue;
                 }
                 if (property instanceof Association) {
                     continue;

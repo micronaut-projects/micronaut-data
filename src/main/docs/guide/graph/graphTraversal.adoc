@@ -40,4 +40,26 @@ A join has no limit of its own. Every node of a joined relationship is collected
 
 snippet::example.MovieRepositorySpec[project-base="doc-examples/neo4j-example", tags="fetch", indent="0", languages="java,kotlin,groovy,python"]
 
-Joins load the relationships of the root node. Joins deeper than one relationship are rejected at build time.
+A join path through several relationships also loads the relationships of the related nodes:
+
+snippet::example.MovieRepository[project-base="doc-examples/neo4j-example", source="main", tags="nestedJoin", languages="java,kotlin,groovy,python"]
+
+<1> The directors are loaded with the people they follow.
+
+Each node of the outer relationship is collected with the nodes of its own relationships, so the query still returns one row per movie:
+
+[source,cypher]
+----
+MATCH (n:Movie) WHERE n.released = $p0
+OPTIONAL MATCH (n)<-[:DIRECTED]-(j0:Person)
+OPTIONAL MATCH (j0)-[:FOLLOWS]->(j0_0n:Person)
+WITH n, j0, collect(j0_0n) AS j0_0
+WITH n, collect(CASE WHEN j0 IS NULL THEN NULL ELSE {node: j0, follows: j0_0} END) AS j_directors
+RETURN n, j_directors
+----
+
+snippet::example.MovieRepositorySpec[project-base="doc-examples/neo4j-example", tags="nestedFetch", indent="0", languages="java,kotlin,groovy,python"]
+
+<1> The people a director follows are loaded.
+
+A relationship with properties can only be joined at the start of a join path, as in `@Join("roles.person")`. Oracle property graphs do not support fetch joins.

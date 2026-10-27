@@ -2936,11 +2936,36 @@ public abstract class AbstractSqlLikeQueryBuilder implements QueryBuilder {
 
         @Override
         public void visitIsEmpty(Expression<?> expression) {
+            if (appendSqlArrayEmptiness(expression, true)) {
+                return;
+            }
             appendEmptyExpression(" IS NULL" + " " + OR + StringUtils.SPACE, " = ''", " IS EMPTY", expression);
+        }
+
+        /**
+         * SQL has no {@code IS EMPTY}: an array column is empty when it is null or has no elements, which PostgreSQL
+         * checks with {@code cardinality}.
+         */
+        private boolean appendSqlArrayEmptiness(Expression<?> expression, boolean empty) {
+            if (!computePropertyPaths() || !CriteriaUtils.isCollectionExpression(expression)) {
+                return false;
+            }
+            if (getDialect() != Dialect.POSTGRES) {
+                throw new IllegalArgumentException("IsEmpty and IsNotEmpty on a collection are only supported for PostgreSQL arrays, not for the dialect " + getDialect());
+            }
+            query.append('(');
+            appendExpression(expression);
+            query.append(empty ? " IS NULL OR cardinality(" : " IS NOT NULL AND cardinality(");
+            appendExpression(expression);
+            query.append(empty ? ") = 0)" : ") > 0)");
+            return true;
         }
 
         @Override
         public void visitIsNotEmpty(Expression<?> expression) {
+            if (appendSqlArrayEmptiness(expression, false)) {
+                return;
+            }
             if (getDialect() == Dialect.ORACLE) {
                 PersistentPropertyPath propertyPath = requireProperty(expression).getPropertyPath();
                 // Oracle treats blank and null the same
