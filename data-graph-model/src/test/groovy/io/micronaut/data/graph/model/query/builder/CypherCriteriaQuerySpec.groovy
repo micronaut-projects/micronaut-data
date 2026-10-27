@@ -13,6 +13,8 @@ import io.micronaut.data.graph.model.query.builder.entities.Person
 import io.micronaut.data.model.jpa.criteria.PersistentEntityCriteriaBuilder
 import io.micronaut.data.model.jpa.criteria.PersistentEntityRoot
 import io.micronaut.data.model.jpa.criteria.impl.DefaultOrder
+import io.micronaut.data.model.jpa.criteria.impl.expression.LiteralExpression
+import io.micronaut.data.model.jpa.criteria.impl.predicate.LikePredicate
 import io.micronaut.data.model.jpa.criteria.impl.ExpressionVisitor
 import io.micronaut.data.model.jpa.criteria.impl.PredicateVisitor
 import io.micronaut.data.model.jpa.criteria.PersistentEntityCriteriaQueryBuilder
@@ -65,6 +67,7 @@ class CypherCriteriaQuerySpec extends Specification {
         'id selection'         | { q, r -> q.select(r.id()) }                                                                                                               | 'MATCH (n:Person) RETURN id(n) AS id'
         'sum'                  | { q, r -> q.select(cb.sum(r.get("age"), 1)) }                                                                                              | 'MATCH (n:Person) RETURN (n.age + $p0) AS result'
         'product and quotient' | { q, r -> q.select(cb.quot(cb.prod(r.get("age"), 2), 3)) }                                                                                 | 'MATCH (n:Person) RETURN ((n.age * $p0) / $p1) AS result'
+        'difference'           | { q, r -> q.select(cb.diff(r.get("age"), 1)) }                                                                                             | 'MATCH (n:Person) RETURN (n.age - $p0) AS result'
         'concat'               | { q, r -> q.select(cb.concat(r.get("name"), "!")) }                                                                                        | 'MATCH (n:Person) RETURN (n.name + $p0) AS result'
         'function'             | { q, r -> q.select(cb.function("toUpper", String, r.get("name"))) }                                                                        | 'MATCH (n:Person) RETURN toUpper(n.name) AS result'
         'function arguments'   | { q, r -> q.select(cb.function("coalesce", String, r.get("name"), cb.literal("x"))) }                                                      | 'MATCH (n:Person) RETURN coalesce(n.name, $p0) AS result'
@@ -119,14 +122,92 @@ class CypherCriteriaQuerySpec extends Specification {
         e.message == 'Cannot update non-existent property: missing'
     }
 
-    void "test LIKE and subqueries are rejected"() {
-        when:
-        select { q, r -> q.where(cb.like(r.get("name"), "K%")) }
+    void "test LIKE is matched as a regular expression"() {
+        when: "the pattern is a runtime literal"
+        def query = cb.createQuery(Person)
+        PersistentEntityRoot root = query.from(Person)
+        query.where(cb.like(root.get("name"), "K_e%.%", '\\' as char))
+        def result = build(query)
+
+        then: "the regular expression is bound in its place"
+        result.query == "MATCH (n:Person) WHERE n.name =~ ('(?s)' + \$p0) RETURN n"
+        result.parameterBindings[0].value == '^K.e.*\\..*$'
+        result.parameterBindings[0].converterClassName == null
+
+        when: "the pattern is a method argument"
+        query = cb.createQuery(Person)
+        root = query.from(Person)
+        query.where(cb.not(cb.like(root.get("name"), cb.parameter(String))))
+        result = build(query)
+
+        then: "the pattern is converted when it is bound"
+        result.query == "MATCH (n:Person) WHERE NOT (n.name =~ ('(?s)' + \$p0)) RETURN n"
+        result.parameterBindings[0].converterClassName == LikePatternConverter.name
+
+        when: "the pattern is a build time literal"
+        query = cb.createQuery(Person)
+        root = query.from(Person)
+        query.where(new LikePredicate(root.get("name"), new LiteralExpression<>("50\\%_"), new LiteralExpression<>('\\' as char), false, true))
+        result = build(query)
+
+        then: "the regular expression is part of the query"
+        result.query == "MATCH (n:Person) WHERE n.name =~ '(?si)^50%.\$' RETURN n"
+        result.parameterBindings.empty
+
+        when: "the escape character is a string literal"
+        query = cb.createQuery(Person)
+        root = query.from(Person)
+        query.where(new LikePredicate(root.get("name"), new LiteralExpression<>("a!%b"), new LiteralExpression<>("!"), false, false))
+        result = build(query)
+
+        then:
+        result.query == "MATCH (n:Person) WHERE n.name =~ '(?s)^a%b\$' RETURN n"
+
+        when: "a method argument is combined with another escape character"
+        query = cb.createQuery(Person)
+        root = query.from(Person)
+        query.where(cb.like(root.get("name"), cb.parameter(String), '!' as char))
+        build(query)
 
         then:
         def e = thrown(UnsupportedOperationException)
-        e.message.startsWith('LIKE is not supported by graph repositories')
+        e.message.contains("uses the escape character")
 
+        expect:
+        LikePatternConverter.toRegex('a%b_c', null) == '^a.*b.c$'
+        LikePatternConverter.toRegex('100!%', '!' as char) == '^100%$'
+        LikePatternConverter.toRegex('(a.b)*[c]', null) == '^\\(a\\.b\\)\\*\\[c\\]$'
+        new LikePatternConverter().convertToPersistedValue('\\_%', null) == '^_.*$'
+        new LikePatternConverter().convertToPersistedValue(null, null) == null
+        new LikePatternConverter().convertToEntityValue('^a$', null) == '^a$'
+    }
+
+    void "test the binding of a LIKE pattern delegates everything but its value and converter"() {
+        given:
+        def query = cb.createQuery(Person)
+        PersistentEntityRoot root = query.from(Person)
+        query.where(cb.like(root.get("name"), cb.parameter(String)))
+        def binding = build(query).parameterBindings[0]
+
+        expect:
+        binding.name == 'p0'
+        binding.key != null
+        binding.dataType != null
+        binding.jsonDataType != null
+        binding.parameterIndex == -1
+        binding.parameterBindingPath == null
+        binding.propertyPath == ['name']
+        !binding.autoPopulated
+        !binding.requiresPreviousPopulatedValue
+        !binding.expandable
+        !binding.expression
+        binding.role == null
+        binding.tableAlias == null
+        binding.value == null
+        binding.converterClassName == LikePatternConverter.name
+    }
+
+    void "test subqueries are rejected"() {
         when:
         select { q, r ->
             def subquery = q.subquery(String)
@@ -135,7 +216,7 @@ class CypherCriteriaQuerySpec extends Specification {
         }
 
         then:
-        e = thrown(UnsupportedOperationException)
+        def e = thrown(UnsupportedOperationException)
         e.message == 'Subqueries are not supported by graph repositories'
     }
 

@@ -19,7 +19,7 @@ snippet::example.MovieSummary[project-base="doc-examples/neo4j-example", source=
 
 DTOs are read with Micronaut Serialization and must be annotated with `@Serdeable`. A repository method that returns a DTO without it fails to compile.
 
-NOTE: `Like` is not supported, as Cypher has no `LIKE` operator. Use `StartsWith`, `EndsWith`, `Contains` or `Regex`.
+NOTE: Cypher has no `LIKE` operator, so `Like` is compiled to an anchored regular expression: a pattern known at build time is translated by the processor, and one passed as a method argument is translated when it is bound, with `\` as the escape character. PGQL has no `LIKE` either and rejects `Like`; SQL/PGQ supports it natively.
 
 Repositories may return `Optional`, nullable types, lists, streams and pages, and Reactor, RxJava and Kotlin coroutine types. Reactive and coroutine methods run the blocking driver on an I/O executor.
 
@@ -43,7 +43,7 @@ snippet::example.MovieRepositorySpec[project-base="doc-examples/neo4j-example", 
 <1> Find the movies that match a specification.
 <2> Count them.
 
-Specifications are rendered by the same query builder as finders, so they support the same operators: `like` is not supported.
+Specifications are rendered by the same query builder as finders, so they support the same operators, including `like`.
 
 === Graph criteria
 
