@@ -18,7 +18,7 @@ public record Book(
     @GeneratedValue
     Long id,
 
-    @SearchField(weight = SearchWeight.HIGH) // <2>
+    @SearchField(weight = SearchWeight.HIGH, fuzzy = true) // <2>
     String title,
 
     @SearchField // <3>

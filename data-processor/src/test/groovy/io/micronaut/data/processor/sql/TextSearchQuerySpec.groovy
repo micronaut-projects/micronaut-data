@@ -171,15 +171,21 @@ interface NoteRepository extends CrudRepository<Note, Long> {
         getQuery(repository.getRequiredMethod("findByTextSearch", String)) == 'SELECT note_."id",note_."text" FROM "note" note_ WHERE (to_tsvector(\'german\',note_."text") @@ to_tsquery(\'german\',?))'
     }
 
-    void "fuzzy search is rejected on PostgreSQL at compile time"() {
-        when:
-        articleRepository("""
+    void "fuzzy search renders pg_trgm word similarity on PostgreSQL"() {
+        given:
+        def repository = articleRepository("""
     List<Article> findByTitleSearchFuzzy(String q);
+    SearchResults<Article> searchBySearchFuzzy(String q);
 """)
+        def finder = repository.getRequiredMethod("findByTitleSearchFuzzy", String)
+        def search = repository.getRequiredMethod("searchBySearchFuzzy", String)
 
-        then:
-        def e = thrown(RuntimeException)
-        e.message.contains("FUZZY is not supported by PostgreSQL text search")
+        expect:
+        getQuery(finder) == 'SELECT article_."id",article_."title",article_."body",article_."author" FROM "article" article_ WHERE ((EXISTS (SELECT 1 FROM unnest(string_to_array(?,\' \')) AS mn_term(t) WHERE mn_term.t <% article_."title") AND NOT EXISTS (SELECT 1 FROM unnest(string_to_array(?,\' \')) AS mn_term(t) WHERE mn_term.t <% article_."title")))'
+        converters(finder) == [PostgresTsQueryConverter.FuzzyPositive.name, PostgresTsQueryConverter.FuzzyNegated.name]
+        getQuery(search).startsWith('SELECT article_."id",article_."title",article_."body",article_."author",(SELECT coalesce(max(greatest(word_similarity(mn_term.t,article_."title") * 10,word_similarity(mn_term.t,article_."body") * 1)),0) FROM unnest(string_to_array(?,\' \')) AS mn_term(t)) AS mn_score FROM "article" article_ WHERE ((EXISTS (SELECT 1 FROM unnest(string_to_array(?,\' \')) AS mn_term(t) WHERE mn_term.t <% article_."title" OR mn_term.t <% article_."body") AND NOT EXISTS')
+        PostgresTsQueryConverter.renderFuzzy('kotln "fast rats" -cake OR tea', false) == "kotln fast rats tea"
+        PostgresTsQueryConverter.renderFuzzy('kotln "fast rats" -cake OR tea', true) == "cake"
     }
 
     void "search is rejected on a dialect without text search"() {

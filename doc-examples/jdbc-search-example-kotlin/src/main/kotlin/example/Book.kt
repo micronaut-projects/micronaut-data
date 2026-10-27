@@ -17,7 +17,7 @@ data class Book(
     @field:GeneratedValue
     val id: Long? = null,
 
-    @field:SearchField(weight = SearchWeight.HIGH) // <2>
+    @field:SearchField(weight = SearchWeight.HIGH, fuzzy = true) // <2>
     val title: String,
 
     @field:SearchField // <3>
