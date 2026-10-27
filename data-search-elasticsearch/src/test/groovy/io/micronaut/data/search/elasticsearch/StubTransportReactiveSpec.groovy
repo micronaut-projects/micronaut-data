@@ -9,6 +9,7 @@ import io.micronaut.data.search.document.conf.DocumentSearchConfiguration
 import io.micronaut.data.search.document.runtime.AsyncSearchTransport
 import io.micronaut.data.search.document.runtime.DefaultDocumentSearchReactiveRepositoryOperations
 import io.micronaut.data.search.document.runtime.DefaultDocumentSearchRepositoryOperations
+import io.micronaut.data.exceptions.OptimisticLockException
 import io.micronaut.data.search.document.runtime.SearchTransport
 import io.micronaut.data.search.document.runtime.SearchTransport.SearchHit
 import io.micronaut.data.search.document.runtime.SearchTransport.SearchHits
@@ -49,6 +50,39 @@ class StubTransportReactiveSpec extends Specification {
         expect:
         operations.getIndexName(Book) == "search_book"
         operations.getIndexName(NamedBook) == "named_books"
+    }
+
+    void "a @Version property is the document version and stale updates fail"() {
+        given:
+        def versioned = context.getBean(StubVersionedBookRepository)
+
+        when:
+        def saved = versioned.save(new VersionedBook("v1", "Programming Kotlin"))
+
+        then:
+        saved.version == 0L
+        versioned.findById("v1").get().version == 0L
+
+        when:
+        saved.title = "Programming Scala"
+        def updated = versioned.update(saved)
+
+        then:
+        updated.version == 1L
+        versioned.findById("v1").get().version == 1L
+        versioned.findById("v1").get().title == "Programming Scala"
+
+        when: "an instance loaded before the update is saved again"
+        def stale = new VersionedBook("v1", "Programming Rust")
+        stale.version = 0L
+        versioned.update(stale)
+
+        then:
+        thrown(OptimisticLockException)
+        versioned.findById("v1").get().title == "Programming Scala"
+
+        cleanup:
+        versioned.deleteAll()
     }
 
     void "saveAll indexes in bulk through the async transport"() {
@@ -111,6 +145,9 @@ class StubTransportReactiveSpec extends Specification {
     }
 
     void "reactive CRUD and search run through the async transport"() {
+        given:
+        context.getBean(StubSearchTransport).calls.clear()
+
         when:
         def saved = repository.save(new Book("Programming Kotlin", "Kotlin for the JVM", "Subramaniam", 460)).block()
 
@@ -163,6 +200,7 @@ class StubTransportReactiveSpec extends Specification {
     static class StubSearchTransport implements SearchTransport {
 
         final Map<String, Map<String, Map<String, Object>>> indexes = [:]
+        final Map<String, Long> versions = [:]
         final List<String> calls = []
         final List<String> bodies = []
 
@@ -171,14 +209,32 @@ class StubTransportReactiveSpec extends Specification {
         }
 
         SearchHits hits(String index) {
-            def docs = docs(index).entrySet().collect { new SearchHit(it.key, 1d, it.value) }
+            def docs = docs(index).entrySet().collect { new SearchHit(it.key, 1d, it.value, Map.of(), versions.get(index + "/" + it.key), List.of()) }
             return new SearchHits(docs, docs.size(), docs.isEmpty() ? null : 1d)
         }
 
         String put(String index, @Nullable String id, Map<String, Object> source) {
+            return put(index, id, source, null)
+        }
+
+        String put(String index, @Nullable String id, Map<String, Object> source, @Nullable Long version) {
             String documentId = id ?: UUID.randomUUID().toString()
+            String key = index + "/" + documentId
+            if (version != null) {
+                Long current = versions.get(key)
+                if (current != null && current >= version) {
+                    throw new OptimisticLockException("Document " + documentId + " is at version " + current + ", not below " + version)
+                }
+                versions.put(key, version)
+            }
             docs(index).put(documentId, source)
             return documentId
+        }
+
+        @Nullable
+        SearchHit hit(String index, String id) {
+            def source = docs(index).get(id)
+            return source == null ? null : new SearchHit(id, null, source, Map.of(), versions.get(index + "/" + id), List.of())
         }
 
         long clear(String index) {
@@ -203,6 +259,18 @@ class StubTransportReactiveSpec extends Specification {
         String index(String index, @Nullable String id, Map<String, Object> source, DocumentSearchConfiguration.Refresh refresh) {
             calls.add("sync:index")
             return put(index, id, source)
+        }
+
+        @Override
+        String index(String index, @Nullable String id, Map<String, Object> source, @Nullable Long version, DocumentSearchConfiguration.Refresh refresh) {
+            calls.add("sync:index")
+            return put(index, id, source, version)
+        }
+
+        @Override
+        SearchHit getHit(String index, String id) {
+            calls.add("sync:get")
+            return hit(index, id)
         }
 
         @Override
@@ -267,8 +335,22 @@ class StubTransportReactiveSpec extends Specification {
         }
 
         @Override
+        CompletionStage<String> index(String index, @Nullable String id, Map<String, Object> source, @Nullable Long version, DocumentSearchConfiguration.Refresh refresh) {
+            try {
+                return done("index", store.put(index, id, source, version))
+            } catch (OptimisticLockException e) {
+                return CompletableFuture.failedFuture(e)
+            }
+        }
+
+        @Override
+        CompletionStage<Optional<SearchTransport.SearchHit>> getHit(String index, String id) {
+            return done("get", Optional.ofNullable(store.hit(index, id)))
+        }
+
+        @Override
         CompletionStage<List<String>> bulkIndex(String index, List<SearchTransport.BulkDocument> documents, DocumentSearchConfiguration.Refresh refresh) {
-            return done("bulkIndex", documents.collect { store.put(index, it.id(), it.source()) })
+            return done("bulkIndex", documents.collect { store.put(index, it.id(), it.source(), it.version()) })
         }
 
         @Override

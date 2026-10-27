@@ -15,6 +15,12 @@ class MongoTextSearchSpec extends AbstractTextSearchSpec implements MongoTestPro
     }
 
     @Override
+    boolean supportsCursoredPaging() {
+        // MongoDB repositories page by offset only
+        return false
+    }
+
+    @Override
     Set<SearchCapability> capabilities() {
         // $text searches the whole text index and has no prefix matching
         return EnumSet.of(SearchCapability.PHRASE, SearchCapability.LANGUAGE_OVERRIDE)
