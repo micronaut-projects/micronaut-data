@@ -1121,6 +1121,9 @@ public final class MongoQueryBuilder implements QueryBuilder {
         }
 
         private void appendOperatorExpression(Expression<?> leftExpression, String op, Expression<?> value) {
+            if (leftExpression instanceof FunctionExpression<?> function && TextSearchSupport.SCORE_FUNCTION.equals(function.getName())) {
+                throw new UnsupportedSearchFeatureException(SearchCapability.MIN_SCORE, "MongoDB $text");
+            }
             if (leftExpression instanceof LiteralExpression<?> leftLiteral && value instanceof LiteralExpression<?> rightLiteral) {
                 // A comparison of two constants, for example the 1 = 2 that an empty disjunction is normalized to
                 query.put("$expr", Map.of(op, asList(leftLiteral.getValue(), rightLiteral.getValue())));

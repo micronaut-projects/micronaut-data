@@ -132,6 +132,16 @@ ${methods}
         query(repository.getRequiredMethod("countHits", String)) == '{"query":{"simple_query_string":{"query":{"$mn_qp":0},"fields":["title^10","body","category"],"default_operator":"and"}}}'
     }
 
+    void "a Score parameter becomes the min_score of the request"() {
+        given:
+        def repository = articleRepository("""
+    SearchResults<Article> searchByTitleSearch(String q, io.micronaut.data.model.vector.search.Score minScore);
+""")
+
+        expect:
+        query(repository.getRequiredMethod("searchByTitleSearch", String, io.micronaut.data.model.vector.search.Score)) == '{"query":{"simple_query_string":{"query":{"$mn_qp":0},"fields":["title^10"],"default_operator":"and"}},"min_score":{"$mn_qp":1},"sort":[{"_score":{"order":"desc"}}]}'
+    }
+
     void "derived operators render wildcard, regexp, range, emptiness and negated queries"() {
         given:
         def repository = articleRepository("""

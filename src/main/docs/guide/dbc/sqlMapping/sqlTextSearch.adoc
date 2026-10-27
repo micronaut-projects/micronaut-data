@@ -12,6 +12,8 @@ snippet::example.Book[project-base="doc-examples/jdbc-search-example", source="m
 <2> `weight` makes matches in this property count more in the relevance score; PostgreSQL maps `HIGH`, `MEDIUM`, `LOW` and `LOWEST` to the labels `A` to `D` of `setweight`.
 <3> A property without a declared weight is indexed without a label.
 
+A property annotated ann:data.annotation.search.Language[] holds the language of each row, with the entity language as the fallback when it is `null`: PostgreSQL uses it as the text search configuration of the row's `tsvector`, `to_tsvector(coalesce(language, 'english')::regconfig, ...)`, in the queries and in the generated index, while the query string keeps the entity language; MongoDB passes it as `language_override`. Oracle, Elasticsearch and OpenSearch ignore it, as their analysis is fixed per index.
+
 With schema generation enabled, Micronaut Data creates a `GIN` expression index over the combined `tsvector` of the search fields, so the generated queries use the index. For a production schema, create the same index with your migration tool; the expression is printed in the generated DDL.
 
 == Searching
@@ -39,6 +41,7 @@ snippet::example.BookRepository[project-base="doc-examples/jdbc-search-example",
 <4> `SearchPhrase` requires the terms to be adjacent and in order.
 <5> `SearchPrefix` matches every term as a prefix, for search-as-you-type.
 <6> Search keywords combine with any other predicate.
+<7> A trailing api:data.model.vector.search.Score[] parameter after the predicate parameters keeps only the hits whose relevance score is at least its value, as a restriction rendered by the store (`ts_rank_cd(...) >= ?` on PostgreSQL, `SCORE(n) >= ?` on Oracle, `min_score` on Elasticsearch and OpenSearch); MongoDB `$text` cannot restrict on the score.
 
 |===
 |Keyword |Meaning |PostgreSQL query
@@ -66,7 +69,7 @@ snippet::example.BookService[project-base="doc-examples/jdbc-search-example", so
 <4> `search(SearchQuery)` returns the hits ordered by relevance.
 <5> `search(SearchQuery, Pageable)` returns one page; a sort on the pageable replaces the relevance order. Its `totalHits()` is the number of hits on the page, as the SQL stores and MongoDB do not count the matches while searching; use `countHits` for the total. Elasticsearch and OpenSearch report the real total.
 
-`minScore` drops the hits whose score is below the threshold; it is applied to the retrieved page, so a paged result may hold fewer entities than the page size. A query is compiled at runtime through the same criteria API as a derived method, so a store that lacks the requested mode throws api:data.model.search.UnsupportedSearchFeatureException[] when the method runs rather than at compile time. Query-time boosts and a language override are not supported by `search(SearchQuery)` yet and throw the same exception.
+`minScore` restricts the hits to those whose score reaches the threshold, as a predicate the store evaluates (`ts_rank_cd(...) >= ?`, `SCORE(n) >= ?`, `min_score`), so pages are full and `totalHits` counts only the hits above it; MongoDB `$text` cannot restrict on its score and throws api:data.model.search.UnsupportedSearchFeatureException[]. On a hybrid search the threshold compares the fused score instead. A query is compiled at runtime through the same criteria API as a derived method, so a store that lacks the requested mode throws api:data.model.search.UnsupportedSearchFeatureException[] when the method runs rather than at compile time. Query-time boosts and a language override are not supported by `search(SearchQuery)` yet and throw the same exception.
 
 == Highlighting
 
@@ -118,7 +121,7 @@ The criteria builder exposes the same predicate through `PersistentEntityCriteri
 - Each search field gets its own Oracle Text `CONTEXT` index, created by schema generation as `CREATE INDEX idx_<table>_search_<column> ON <table> (<column>) INDEXTYPE IS CTXSYS.CONTEXT PARAMETERS ('SYNC (ON COMMIT)')`. The index is synchronised on commit, so rows are searchable as soon as the transaction that wrote them commits.
 - A single-field search renders `CONTAINS(<column>, ?, 1) > 0` and ranks with `SCORE(1)`. A search over every search field matches any field with the positive terms and then excludes rows where any field matches a negated term; the score is the sum of the per-field scores multiplied by their numeric weights (`HIGH` 10, `MEDIUM` 5, `LOW` 2, `LOWEST` 1).
 - `SearchAll` requires every term within one field. Terms are escaped in braces, so reserved words such as `and` or `or` are matched literally.
-- The default lexer matches words literally; there is no stemming unless the index is created with a lexer that enables it.
+- The default lexer matches words literally; there is no stemming unless the index is created with a lexer that enables it. A `@Language` column is ignored.
 - Entities stored as a JSON column (`@EntityRepresentation(columnType = JSON)`) are searched with `JSON_TEXTCONTAINS(<column>, '$.<property>', ?, n)`, which needs a JSON search index created by your migration tool and Oracle Database 23ai or later for `SCORE` support.
 - Highlights render `CTX_DOC.POLICY_SNIPPET('MN_SEARCH_POLICY', <column>, ?, starttag => '<em>', endtag => '</em>')` over the column text, or over `JSON_VALUE` for a JSON entity. The `MN_SEARCH_POLICY` Oracle Text policy is created by schema generation with the default lexer; create it in your migrations with `CTX_DDL.CREATE_POLICY('MN_SEARCH_POLICY')`, which needs the `CTXAPP` role.
 
@@ -140,5 +143,7 @@ The portable API is the same on every store; the table lists which optional capa
 |Highlighting |yes |yes |no |yes
 |Vector search and hybrid search |yes, pgvector |yes, 23ai |no |no, planned
 |Reactive and async repositories |yes |yes |yes |yes
+|Minimum score (`Score` parameter) |yes |yes |no |yes
+|Per-row language (`@Language`) |yes |no |yes |no
 |===
 

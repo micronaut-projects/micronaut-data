@@ -24,6 +24,8 @@ import io.micronaut.data.model.search.SearchCapability
 import io.micronaut.data.model.search.SearchQuery
 import io.micronaut.data.model.search.UnsupportedSearchFeatureException
 import io.micronaut.data.model.vector.Vector
+import io.micronaut.data.model.vector.search.Score
+import org.jspecify.annotations.Nullable
 import io.micronaut.data.search.tck.entities.Book
 import io.micronaut.data.search.tck.repositories.BookPhraseSearchRepository
 import io.micronaut.data.search.tck.repositories.BookPrefixSearchRepository
@@ -51,7 +53,7 @@ abstract class AbstractTextSearchSpec extends Specification {
      * @return The capabilities the backend supports beyond term matching and score ordering
      */
     Set<SearchCapability> capabilities() {
-        return EnumSet.of(SearchCapability.PHRASE, SearchCapability.PREFIX, SearchCapability.FIELD_SCOPE, SearchCapability.HIGHLIGHT, SearchCapability.VECTOR)
+        return EnumSet.of(SearchCapability.PHRASE, SearchCapability.PREFIX, SearchCapability.FIELD_SCOPE, SearchCapability.HIGHLIGHT, SearchCapability.VECTOR, SearchCapability.MIN_SCORE)
     }
 
     /**
@@ -59,6 +61,15 @@ abstract class AbstractTextSearchSpec extends Specification {
      */
     boolean supportsStemming() {
         return true
+    }
+
+    /**
+     * @return The value of the {@code @Language} property that disables stemming for a row, or {@code null}
+     * when the backend ignores the per-row language
+     */
+    @Nullable
+    String noStemmingLanguage() {
+        return "simple"
     }
 
     /**
@@ -265,6 +276,8 @@ abstract class AbstractTextSearchSpec extends Specification {
     }
 
     void "search with a SearchQuery drops hits below the minimum score"() {
+        assumeTrue(capabilities().contains(SearchCapability.MIN_SCORE))
+
         given:
         def all = bookSearchRepository.search(SearchQuery.of("programming"))
         def top = all.results()[0].score().value()
@@ -272,6 +285,16 @@ abstract class AbstractTextSearchSpec extends Specification {
         expect:
         bookSearchRepository.search(SearchQuery.builder("programming").minScore(top).build()).results()*.entity()*.title == ["The Rust Programming Language"]
         bookSearchRepository.search(SearchQuery.builder("programming").minScore(top * 10 + 1).build()).results().isEmpty()
+    }
+
+    void "search with a SearchQuery rejects a minimum score the store cannot restrict on"() {
+        assumeTrue(!capabilities().contains(SearchCapability.MIN_SCORE))
+
+        when:
+        bookSearchRepository.search(SearchQuery.builder("programming").minScore(0.1).build())
+
+        then:
+        thrown(UnsupportedSearchFeatureException)
     }
 
     void "search with a SearchQuery rejects highlighting a property that is not a search field"() {
@@ -394,5 +417,36 @@ abstract class AbstractTextSearchSpec extends Specification {
 
         then:
         back.content*.title == ["Java Concurrency in Practice", "Programming Kotlin"]
+    }
+
+    void "a Score parameter restricts the relevance score of a derived search method"() {
+        assumeTrue(capabilities().contains(SearchCapability.MIN_SCORE))
+        def repository = (BookPrefixSearchRepository) bookSearchRepository
+
+        when:
+        def all = repository.searchBySearch("programming", new Score(0d))
+        def top = all.results()[0].score().value()
+
+        then:
+        all.results().size() == 2
+        repository.searchBySearch("programming", new Score(top)).results()*.entity()*.title == ["The Rust Programming Language"]
+        repository.searchBySearch("programming", new Score(top * 10 + 1)).results().isEmpty()
+    }
+
+    void "the @Language property selects the stemming of a row"() {
+        assumeTrue(supportsStemming() && noStemmingLanguage() != null)
+        def literal = new Book("Breads of the World", "Flatbreads and loaves", "Baker", 300)
+        literal.language = noStemmingLanguage()
+        bookSearchRepository.save(literal)
+
+        expect:
+        // the query keeps the entity language, so 'bread' and 'breads' both stem to the 'bread' of the english
+        // rows, while the row indexed without stemming only holds the literal 'breads'
+        bookSearchRepository.search("bread").results()*.entity()*.title == ["Baking Bread"]
+        bookSearchRepository.search("breads").results()*.entity()*.title == ["Baking Bread"]
+        // 'world' is left alone by the english stemmer, so the literal row matches it, but 'flatbreads' is stemmed
+        // to 'flatbread' and no longer matches the literal token
+        bookSearchRepository.search("world").results()*.entity()*.title == ["Breads of the World"]
+        bookSearchRepository.search("flatbreads").results().isEmpty()
     }
 }
