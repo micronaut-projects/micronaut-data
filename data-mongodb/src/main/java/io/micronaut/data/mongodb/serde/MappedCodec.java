@@ -105,20 +105,30 @@ class MappedCodec<T> implements Codec<T> {
     public void encode(BsonWriter writer, T value, EncoderContext encoderContext) {
         try {
             if (manyAssociationProperties.isEmpty()) {
-                serializer.serialize(new BsonWriterEncoder(writer, LimitingStream.DEFAULT_LIMITS), this.encoderContext, argument, value);
+                serializer.serialize(new BsonWriterEncoder(documentWriter(writer), LimitingStream.DEFAULT_LIMITS), this.encoderContext, argument, value);
             } else {
                 // To-many relations are represented by join collections, so the relation serializer writes them
                 // as null in the owning document. Do not persist those explicit nulls: serde's strict null
                 // contract rejects null BSON values for non-null collection constructor arguments, while an
                 // absent field lets immutable entities use their default relation value.
                 BsonDocument document = new BsonDocument();
-                serializer.serialize(new BsonWriterEncoder(new BsonDocumentWriter(document), LimitingStream.DEFAULT_LIMITS), this.encoderContext, argument, value);
+                serializer.serialize(new BsonWriterEncoder(documentWriter(new BsonDocumentWriter(document)), LimitingStream.DEFAULT_LIMITS), this.encoderContext, argument, value);
                 removeNullManyAssociations(document);
                 new BsonDocumentCodec(codecRegistry).encode(writer, document, encoderContext);
             }
         } catch (IOException e) {
             throw new DataAccessException("Cannot serialize: " + value, e);
         }
+    }
+
+    /**
+     * The writer the serializer writes the document to.
+     *
+     * @param writer The writer of the codec
+     * @return The writer to serialize to
+     */
+    protected BsonWriter documentWriter(BsonWriter writer) {
+        return writer;
     }
 
     @Override

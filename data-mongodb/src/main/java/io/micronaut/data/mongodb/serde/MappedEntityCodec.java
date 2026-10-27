@@ -21,7 +21,9 @@ import io.micronaut.data.annotation.GeneratedValue;
 import io.micronaut.data.mongodb.operations.MongoUtils;
 import io.micronaut.data.model.runtime.RuntimePersistentEntity;
 import io.micronaut.data.model.runtime.RuntimePersistentProperty;
+import io.micronaut.serde.config.annotation.SerdeConfig;
 import org.bson.BsonValue;
+import org.bson.BsonWriter;
 import org.bson.codecs.CollectibleCodec;
 import org.bson.codecs.configuration.CodecRegistry;
 import org.bson.types.ObjectId;
@@ -40,6 +42,8 @@ class MappedEntityCodec<T> extends MappedCodec<T> implements CollectibleCodec<T>
     private final boolean isGeneratedObjectIdAsString;
     private final boolean isGeneratedObjectId;
     private final BeanProperty<T, Object> identityProperty;
+    private final String identitySerializedName;
+    private final boolean isGeneratedStringId;
 
     /**
      * Default constructor.
@@ -59,6 +63,15 @@ class MappedEntityCodec<T> extends MappedCodec<T> implements CollectibleCodec<T>
         isGeneratedId = identity.isAnnotationPresent(GeneratedValue.class);
         isGeneratedObjectId = isGeneratedId && identity.getType().isAssignableFrom(ObjectId.class);
         isGeneratedObjectIdAsString = !isGeneratedObjectId && identity.getType().isAssignableFrom(String.class);
+        isGeneratedStringId = isGeneratedId && identity.getType() == String.class;
+        identitySerializedName = identity.getAnnotationMetadata()
+            .stringValue(SerdeConfig.class, SerdeConfig.PROPERTY)
+            .orElseGet(identity::getName);
+    }
+
+    @Override
+    protected BsonWriter documentWriter(BsonWriter writer) {
+        return new IdRenamingBsonWriter(writer, identitySerializedName, isGeneratedStringId);
     }
 
     @Override
