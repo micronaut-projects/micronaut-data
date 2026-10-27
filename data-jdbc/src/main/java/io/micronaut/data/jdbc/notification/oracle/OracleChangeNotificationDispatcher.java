@@ -42,13 +42,15 @@ import java.util.concurrent.atomic.AtomicBoolean;
 import java.util.function.BiConsumer;
 import java.util.function.BooleanSupplier;
 import java.util.function.LongConsumer;
+import java.util.function.LongPredicate;
 
 /**
  * Dispatches Oracle database change events for one listener definition.
  *
  * <p>The subscription owns this dispatcher and reuses it when recovering its registration.
  * Each submitted callback retains its registration options snapshot even if recovery configures
- * different options for a replacement registration.</p>
+ * different options for a replacement registration. Data notifications must belong to the current
+ * or pending registration, both when received and when queued processing begins.</p>
  *
  * <p>The Oracle driver invokes this listener on its notification thread. To avoid blocking that
  * thread, the dispatcher submits row reload and listener invocation to the blocking executor.</p>
@@ -97,6 +99,7 @@ final class OracleChangeNotificationDispatcher implements DatabaseChangeListener
     private final BiConsumer<Long, DatabaseChangeEvent.AdditionalEventType> deregistrationHandler;
     private final LongConsumer queryDeregistrationHandler;
     private final LongConsumer databaseShutdownHandler;
+    private final LongPredicate acceptsDataNotification;
 
     /** Held until a loss-triggered invalidation starts, including time spent queued on the executor. */
     private final AtomicBoolean invalidationPending = new AtomicBoolean();
@@ -119,7 +122,8 @@ final class OracleChangeNotificationDispatcher implements DatabaseChangeListener
                                        LongConsumer registrationPurgedHandler,
                                        BiConsumer<Long, DatabaseChangeEvent.AdditionalEventType> deregistrationHandler,
                                        LongConsumer queryDeregistrationHandler,
-                                       LongConsumer databaseShutdownHandler) {
+                                       LongConsumer databaseShutdownHandler,
+                                       LongPredicate acceptsDataNotification) {
         this.dataSourceName = dataSourceName;
         this.listenerDefinition = listenerDefinition;
         this.methodDescription = listenerDefinition.method().getDescription(true);
@@ -131,6 +135,7 @@ final class OracleChangeNotificationDispatcher implements DatabaseChangeListener
         this.deregistrationHandler = deregistrationHandler;
         this.queryDeregistrationHandler = queryDeregistrationHandler;
         this.databaseShutdownHandler = databaseShutdownHandler;
+        this.acceptsDataNotification = acceptsDataNotification;
     }
 
     /**
@@ -169,7 +174,15 @@ final class OracleChangeNotificationDispatcher implements DatabaseChangeListener
                 dataSourceName, methodDescription);
             return;
         }
+        if (isStaleDataNotification(event)) {
+            return;
+        }
         submitDispatch(event, configuredOptions);
+    }
+
+    /** Checks whether a data notification belongs to neither the current nor pending registration. */
+    private boolean isStaleDataNotification(DatabaseChangeEvent event) {
+        return isDataNotification(event) && !acceptsDataNotification.test(event.getRegId());
     }
 
     /**
@@ -357,6 +370,9 @@ final class OracleChangeNotificationDispatcher implements DatabaseChangeListener
      */
     private void dispatchSafely(DatabaseChangeEvent event, RegistrationOptions options) {
         dispatchSafely(event.getRegId(), () -> {
+            if (isStaleDataNotification(event)) {
+                return;
+            }
             if (LOG.isTraceEnabled()) {
                 LOG.trace("Accepted DCN event of type [{}] for datasource [{}], registration [{}], listener method [{}], " +
                         "database [{}], transaction XID (raw hex) [{}], and table changes [{}]",

@@ -30,6 +30,8 @@ import oracle.jdbc.dcn.DatabaseChangeEvent
 import oracle.jdbc.dcn.DatabaseChangeListener
 import oracle.jdbc.dcn.DatabaseChangeRegistration
 import oracle.jdbc.dcn.FailureListener
+import oracle.jdbc.dcn.QueryChangeDescription
+import oracle.jdbc.dcn.TableChangeDescription
 import spock.lang.Specification
 
 import java.sql.Connection
@@ -151,6 +153,77 @@ class OracleChangeNotificationSubscriptionSpec extends Specification {
         delivered == [ChangeOperation.INVALIDATE]
         1 * fixture.oracleConnection.unregisterDatabaseChangeNotification(original)
         1 * fixture.oracleConnection.unregisterDatabaseChangeNotification(replacement)
+    }
+
+    void "discards stale #eventType notifications received or queued before replacement"() {
+        given:
+        def original = Mock(DatabaseChangeRegistration)
+        def replacement = Mock(DatabaseChangeRegistration)
+        def fixture = registrarFixture([original, replacement])
+        fixture.oracleConnection.unregisterDatabaseChangeNotification(original) >> {
+            throw new DataAccessException('Old registration remains in the database')
+        }
+        List<Runnable> queued = []
+        def delivered = []
+        def subscription = subscription(fixture.registrar, Mock(TaskScheduler), new OracleChangeNotificationTaskTracker(),
+            { Runnable task -> queued.add(task) } as Executor,
+            { ChangeEvent<?> event -> delivered.add(event) })
+        subscription.start()
+        def dispatcher = fixture.registeredListeners[0]
+        def stale = dataEvent(original.getRegId(), eventType)
+        dispatcher.onDatabaseChangeNotification(stale)
+        fixture.failureListeners[0].onFailure(new SQLException('Receiver failed'))
+        queued.remove(1).run() // Recover while the original data callback is still queued.
+        queued.remove(1).run() // Deliver the recovery invalidation.
+        delivered.clear()
+
+        when:
+        dispatcher.onDatabaseChangeNotification(stale)
+        dispatcher.onDatabaseChangeNotification(dataEvent(999L, eventType))
+
+        then:
+        queued.size() == 1
+
+        when:
+        dispatcher.onDatabaseChangeNotification(dataEvent(replacement.getRegId(), eventType))
+        while (!queued.empty) {
+            queued.remove(0).run()
+        }
+
+        then:
+        delivered.size() == 1
+        delivered[0].operation() == ChangeOperation.INVALIDATE
+        0 * stale.getTableChangeDescription()
+
+        where:
+        eventType << [DatabaseChangeEvent.EventType.OBJCHANGE, DatabaseChangeEvent.EventType.QUERYCHANGE]
+    }
+
+    void "accepts #eventType notifications during query association"() {
+        given:
+        def registration = Mock(DatabaseChangeRegistration)
+        def delivered = []
+        def fixture
+        fixture = registrarFixture([registration], { int ignored ->
+            fixture.registeredListeners[0].onDatabaseChangeNotification(dataEvent(registration.getRegId(), eventType))
+        })
+        def subscription = subscription(fixture.registrar, Mock(TaskScheduler), new OracleChangeNotificationTaskTracker(),
+            { Runnable task -> task.run() } as Executor, { ChangeEvent<?> event -> delivered.add(event) })
+
+        when:
+        subscription.start()
+
+        then:
+        delivered.size() == 1
+
+        when:
+        fixture.registeredListeners[0].onDatabaseChangeNotification(dataEvent(registration.getRegId(), eventType))
+
+        then:
+        delivered.size() == 2
+
+        where:
+        eventType << [DatabaseChangeEvent.EventType.OBJCHANGE, DatabaseChangeEvent.EventType.QUERYCHANGE]
     }
 
     void "retries receiver recovery after executor rejection"() {
@@ -737,6 +810,25 @@ class OracleChangeNotificationSubscriptionSpec extends Specification {
         } else {
             dispatcher.onDatabaseChangeNotification(event)
         }
+    }
+
+    private DatabaseChangeEvent dataEvent(long registrationId,
+                                         DatabaseChangeEvent.EventType eventType) {
+        def table = Mock(TableChangeDescription)
+        table.tableName >> 'BOOK'
+        table.tableOperations >> EnumSet.of(TableChangeDescription.TableOperation.ALL_ROWS)
+        def event = Mock(DatabaseChangeEvent)
+        event.regId >> registrationId
+        event.eventType >> eventType
+        if (eventType == DatabaseChangeEvent.EventType.OBJCHANGE) {
+            event.tableChangeDescription >> ([table] as TableChangeDescription[])
+        } else {
+            def query = Mock(QueryChangeDescription)
+            query.queryChangeEventType >> QueryChangeDescription.QueryChangeEventType.QUERYCHANGE
+            query.tableChangeDescription >> ([table] as TableChangeDescription[])
+            event.queryChangeDescription >> ([query] as QueryChangeDescription[])
+        }
+        event
     }
 
     private RegistrarFixture registrarFixture(List<DatabaseChangeRegistration> registrations,

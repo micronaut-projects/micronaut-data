@@ -84,6 +84,7 @@ final class OracleChangeNotificationRegistrar {
                 effectiveOptions.putAll(registration.getRegistrationOptions());
                 OracleChangeNotificationOptionsValidator.validateEffectiveOptions(effectiveOptions, definition, dataSourceName);
                 dispatcher.configureRegistrationOptions(effectiveOptions);
+                subscription.setPendingRegistrationId(registration.getRegId());
                 registration.addFailureListener(failure -> subscription.handleRegistrationUnavailable(registration.getRegId(), failure));
                 try (Statement statement = connection.createStatement()) {
                     statement.unwrap(OracleStatement.class).setDatabaseChangeRegistration(registration);
@@ -95,6 +96,7 @@ final class OracleChangeNotificationRegistrar {
                 }
                 return registration;
             } catch (SQLException | RuntimeException e) {
+                subscription.setPendingRegistrationId(null);
                 try {
                     oracleConnection.unregisterDatabaseChangeNotification(registration);
                 } catch (SQLException | RuntimeException cleanupException) {

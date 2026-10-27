@@ -40,6 +40,7 @@ import java.util.concurrent.atomic.AtomicBoolean
 import java.util.concurrent.atomic.AtomicInteger
 import java.util.function.BiConsumer
 import java.util.function.LongConsumer
+import java.util.function.LongPredicate
 
 class OracleChangeNotificationDispatcherSpec extends Specification {
 
@@ -150,7 +151,8 @@ class OracleChangeNotificationDispatcherSpec extends Specification {
             { long ignored -> } as LongConsumer,
             { Long ignored, DatabaseChangeEvent.AdditionalEventType ignoredType -> } as BiConsumer,
             { long ignored -> } as LongConsumer,
-            { long ignored -> } as LongConsumer)
+            { long ignored -> } as LongConsumer,
+            { long ignored -> true } as LongPredicate)
 
         when:
         dispatcher.onDatabaseChangeNotification(event)
@@ -1312,7 +1314,8 @@ class OracleChangeNotificationDispatcherSpec extends Specification {
             registrationPurgedHandler,
             deregistrationHandler,
             queryDeregistrationHandler,
-            databaseShutdownHandler
+            databaseShutdownHandler,
+            { long ignored -> true } as LongPredicate
         )
         dispatcher.configureRegistrationOptions(definition.registrationProperties())
         return dispatcher

@@ -69,6 +69,7 @@ final class OracleChangeNotificationSubscription {
     private final Object lifecycleLock = new Object();
 
     private @Nullable DatabaseChangeRegistration registration;
+    private @Nullable Long pendingRegistrationId;
     /**
      * Failed registrations awaiting cleanup on the next recovery attempt or shutdown. Entries are
      * claimed under the lifecycle lock before JDBC cleanup and returned here if cleanup fails.
@@ -112,7 +113,7 @@ final class OracleChangeNotificationSubscription {
         this.dispatcher = new OracleChangeNotificationDispatcher(
             dataSourceName, definition, beanContext, blockingExecutor, taskScheduler, taskTracker,
             this::handleRegistrationPurged, this::handleRegistrationDeregistered,
-            this::handleQueryDeregistered, this::handleDatabaseShutdown);
+            this::handleQueryDeregistered, this::handleDatabaseShutdown, this::acceptsDataNotification);
     }
 
     OracleChangeListenerDefinition getDefinition() {
@@ -136,6 +137,7 @@ final class OracleChangeNotificationSubscription {
             }
             DatabaseChangeRegistration created = registrar.createRegistration(this, dispatcher);
             synchronized (lifecycleLock) {
+                pendingRegistrationId = null;
                 if (!closed) {
                     registration = created;
                     return;
@@ -144,6 +146,19 @@ final class OracleChangeNotificationSubscription {
             unregister(created, registrar::unregisterRegistration);
         } finally {
             taskTracker.completeTask();
+        }
+    }
+
+    /** Tracks the registration being associated so its first data callbacks can be accepted. */
+    void setPendingRegistrationId(@Nullable Long registrationId) {
+        synchronized (lifecycleLock) {
+            pendingRegistrationId = registrationId;
+        }
+    }
+
+    private boolean acceptsDataNotification(long registrationId) {
+        synchronized (lifecycleLock) {
+            return !closed && (isCurrent(registrationId) || isPending(registrationId));
         }
     }
 
@@ -334,6 +349,7 @@ final class OracleChangeNotificationSubscription {
             replacement = registrar.createRegistration(this, dispatcher);
             synchronized (lifecycleLock) {
                 if (!closed && recoveryAttempt == attempt && Objects.equals(recoveryRegistrationId, failedRegId)) {
+                    pendingRegistrationId = null;
                     registration = replacement;
                     recoveryRegistrationId = null;
                     published = true;
@@ -347,6 +363,7 @@ final class OracleChangeNotificationSubscription {
             }
             synchronized (lifecycleLock) {
                 if (recoveryAttempt == attempt) {
+                    pendingRegistrationId = null;
                     recoveryAttempt = null;
                 }
             }
@@ -469,6 +486,10 @@ final class OracleChangeNotificationSubscription {
 
     private boolean isCurrent(long regId) {
         return Objects.equals(getRegId(), regId);
+    }
+
+    private boolean isPending(long regId) {
+        return Objects.equals(pendingRegistrationId, regId);
     }
 
 }
