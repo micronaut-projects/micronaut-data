@@ -121,4 +121,15 @@ class MovieRepositorySpec : AbstractNeo4jTest() {
         assertEquals(listOf("The Matrix", "The Matrix Reloaded"), recent.map { it.title }.sorted())
         assertEquals(2L, byLana)
     }
+
+    @Test
+    fun testGraphCriteria() {
+        // tag::useGraphCriteria[]
+        val withCast = movieSpecificationRepository.count(MovieSpecifications.withRoles()) // <1>
+        val nearSpeed = movieSpecificationRepository.findAll(MovieSpecifications.connectedTo("Speed", 2)) // <2>
+        // end::useGraphCriteria[]
+
+        assertEquals(3L, withCast)
+        assertEquals(listOf("The Matrix", "The Matrix Reloaded"), nearSpeed.map { it.title }.sorted())
+    }
 }

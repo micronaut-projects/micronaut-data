@@ -13,6 +13,7 @@ import io.micronaut.data.graph.tck.repositories.ColleagueRepository
 import io.micronaut.data.graph.tck.repositories.FriendRepository
 import io.micronaut.data.graph.tck.repositories.MovieQueryRepository
 import io.micronaut.data.graph.tck.repositories.MovieRepository
+import io.micronaut.data.graph.model.criteria.GraphCriteria
 import io.micronaut.data.graph.tck.repositories.MovieSpecificationRepository
 import io.micronaut.data.graph.tck.repositories.PersonQueryRepository
 import io.micronaut.data.graph.tck.repositories.PersonRepository
@@ -142,6 +143,16 @@ abstract class AbstractGraphRepositorySpec extends Specification {
      */
     protected Person savePerson(Person person) {
         personRepository.save(person)
+    }
+
+    /**
+     * Whether criteria can test for a chain of relationships, as {@code GraphCriteria.connected} does. Apache AGE
+     * cannot run a variable-length pattern inside {@code EXISTS}.
+     *
+     * @return True if connected criteria are supported
+     */
+    boolean supportsConnectedCriteria() {
+        true
     }
 
     void setup() {
@@ -637,6 +648,43 @@ abstract class AbstractGraphRepositorySpec extends Specification {
         expect:
         movieSpecificationRepository.findAll({ root, cb ->
             cb.equal(root.join("directors").get("name"), "Lana Wachowski")
+        } as PredicateSpecification<Movie>)*.title.sort() == ["The Matrix", "The Matrix Reloaded"]
+    }
+
+    @Requires({ instance.movieSpecificationRepository != null && instance.supportsRelationshipWrites() })
+    void "graph criteria match relationships of the root node"() {
+        given:
+        saveMovies()
+        def lana = personRepository.findByName("Lana Wachowski").get()
+        def keanu = personRepository.findByName("Keanu Reeves").get()
+        def specs = movieSpecificationRepository
+
+        expect: "movies with any director"
+        specs.findAll({ root, cb -> GraphCriteria.related(root, "directors") } as PredicateSpecification<Movie>)*.title.sort() == ["The Matrix", "The Matrix Reloaded"]
+
+        and: "movies without a director"
+        specs.findAll({ root, cb -> cb.not(GraphCriteria.related(root, "directors")) } as PredicateSpecification<Movie>)*.title == ["Speed"]
+
+        and: "movies directed by a given person, matched by identifier"
+        specs.findAll({ root, cb -> GraphCriteria.relatedTo(root, "directors", cb.literal(lana.id)) } as PredicateSpecification<Movie>)*.title.sort() == ["The Matrix", "The Matrix Reloaded"]
+
+        and: "movies with a role played by a given person, through the relationship entity"
+        specs.count({ root, cb -> GraphCriteria.relatedTo(root, "roles", cb.literal(keanu.id)) } as PredicateSpecification<Movie>) == 3
+
+        and: "graph criteria combine with property criteria"
+        specs.findAll({ root, cb ->
+            cb.and(GraphCriteria.related(root, "directors"), cb.greaterThan(root.get("released"), 2000))
+        } as PredicateSpecification<Movie>)*.title == ["The Matrix Reloaded"]
+    }
+
+    @Requires({ instance.movieSpecificationRepository != null && instance.supportsRelationshipWrites() && instance.supportsConnectedCriteria() })
+    void "graph criteria follow chains of relationships"() {
+        given:
+        saveMovies()
+
+        expect: "movies within two hops of Speed over any relationship: those sharing an actor"
+        movieSpecificationRepository.findAll({ root, cb ->
+            GraphCriteria.connected(root, null, cb.literal("Speed"), 2)
         } as PredicateSpecification<Movie>)*.title.sort() == ["The Matrix", "The Matrix Reloaded"]
     }
 
