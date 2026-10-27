@@ -383,6 +383,20 @@ class FakeClientTransportSpec extends Specification {
     }
 
     @Unroll("#kind bulk item error")
+    void "a body key the transport cannot forward fails instead of being dropped"() {
+        when:
+        driver.search("books", '{"query":{"match_all":{}},"aggs":{"authors":{"terms":{"field":"author"}}}}')
+
+        then:
+        DataAccessException e = thrown()
+        e.message.contains("'aggs'")
+        driver.fake.requests.isEmpty()
+
+        where:
+        kind << KINDS
+        driver = driver(kind)
+    }
+
     void "a failed bulk item is a DataAccessException"() {
         given:
         driver.fake.answer(BulkRequest, bulkResponse(bulkItem("1", 201), bulkItem("2", 400, '{"type":"mapper_parsing_exception","reason":"failed to parse"}')))
