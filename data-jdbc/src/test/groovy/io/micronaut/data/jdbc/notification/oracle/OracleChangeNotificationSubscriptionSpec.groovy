@@ -16,6 +16,7 @@
 package io.micronaut.data.jdbc.notification.oracle
 
 import io.micronaut.context.BeanContext
+import io.micronaut.data.exceptions.DataAccessException
 import io.micronaut.data.jdbc.notification.ChangeEvent
 import io.micronaut.data.jdbc.notification.ChangeOperation
 import io.micronaut.data.jdbc.runtime.ConnectionCallback
@@ -183,6 +184,131 @@ class OracleChangeNotificationSubscriptionSpec extends Specification {
 
         then:
         fixture.registrationIndex.get() == 2
+    }
+
+    void "retries failed unregistration before replacement retry and drops it after #outcome"() {
+        given:
+        def original = Mock(DatabaseChangeRegistration)
+        original.state >> oracle.jdbc.NotificationRegistration.RegistrationState.CLOSED
+        def failedReplacement = Mock(DatabaseChangeRegistration)
+        def replacement = Mock(DatabaseChangeRegistration)
+        def fixture = registrarFixture([original, failedReplacement, replacement], { int index ->
+            if (index == 2) {
+                throw new SQLException('Unable to associate replacement query')
+            }
+        })
+        List<Runnable> scheduled = []
+        def subscription = subscription(fixture.registrar, scheduler(scheduled))
+
+        when:
+        subscription.start()
+        fixture.failureListeners[0].onFailure(new SQLException('Receiver failed'))
+
+        then:
+        fixture.registrationIndex.get() == 2
+        scheduled.size() == 1
+        1 * fixture.oracleConnection.unregisterDatabaseChangeNotification(original) >> {
+            throw new DataAccessException('Database unavailable during cleanup')
+        }
+        1 * fixture.oracleConnection.unregisterDatabaseChangeNotification(failedReplacement)
+
+        when:
+        scheduled[0].run()
+
+        then:
+        1 * fixture.oracleConnection.unregisterDatabaseChangeNotification(original) >> {
+            assert fixture.registrationIndex.get() == 2
+            if (outcome == 'ORA-29970') {
+                throw new SQLException('Specified registration id does not exist', '72000', 29970)
+            }
+        }
+        fixture.registrationIndex.get() == 3
+        scheduled.size() == 1
+
+        when:
+        subscription.stop()
+
+        then:
+        0 * fixture.oracleConnection.unregisterDatabaseChangeNotification(original)
+        0 * fixture.oracleConnection.unregisterDatabaseChangeNotification(failedReplacement)
+        1 * fixture.oracleConnection.unregisterDatabaseChangeNotification(replacement)
+
+        where:
+        outcome << ['successful unregister', 'ORA-29970']
+    }
+
+    void "retains failed cleanup across successful replacements and retries every old registration on shutdown"() {
+        given:
+        def original = Mock(DatabaseChangeRegistration)
+        original.state >> oracle.jdbc.NotificationRegistration.RegistrationState.CLOSED
+        def firstReplacement = Mock(DatabaseChangeRegistration)
+        firstReplacement.state >> oracle.jdbc.NotificationRegistration.RegistrationState.CLOSED
+        def secondReplacement = Mock(DatabaseChangeRegistration)
+        def fixture = registrarFixture([original, firstReplacement, secondReplacement])
+        def subscription = subscription(fixture.registrar, Mock(TaskScheduler))
+
+        when:
+        subscription.start()
+        fixture.failureListeners[0].onFailure(new SQLException('Receiver failed'))
+
+        then:
+        fixture.registrationIndex.get() == 2
+        1 * fixture.oracleConnection.unregisterDatabaseChangeNotification(original) >> {
+            throw new DataAccessException('Unable to clean up original registration')
+        }
+
+        when:
+        fixture.failureListeners[1].onFailure(new SQLException('Replacement receiver failed'))
+
+        then:
+        fixture.registrationIndex.get() == 3
+        1 * fixture.oracleConnection.unregisterDatabaseChangeNotification(original) >> {
+            throw new DataAccessException('Original registration still cannot be cleaned up')
+        }
+        1 * fixture.oracleConnection.unregisterDatabaseChangeNotification(firstReplacement) >> {
+            throw new DataAccessException('Unable to clean up first replacement')
+        }
+
+        when:
+        subscription.stop()
+        subscription.stop()
+
+        then:
+        1 * fixture.oracleConnection.unregisterDatabaseChangeNotification(original)
+        1 * fixture.oracleConnection.unregisterDatabaseChangeNotification(firstReplacement)
+        1 * fixture.oracleConnection.unregisterDatabaseChangeNotification(secondReplacement)
+    }
+
+    void "retries old registration cleanup on shutdown after recovery retries are exhausted"() {
+        given:
+        def original = Mock(DatabaseChangeRegistration)
+        def failedReplacement = Mock(DatabaseChangeRegistration)
+        def fixture = registrarFixture([original, failedReplacement], { int index ->
+            if (index == 2) {
+                throw new SQLException('Unable to associate replacement query')
+            }
+        })
+        List<Runnable> scheduled = []
+        def subscription = subscription(fixture.registrar, scheduler(scheduled), new OracleChangeNotificationTaskTracker(),
+            { Runnable command -> command.run() } as Executor, { ChangeEvent<?> ignored -> },
+            new OracleRegistrationRecoveryConfiguration(maxRetries: 0))
+
+        when:
+        subscription.start()
+        subscription.handleDatabaseShutdown(original.getRegId())
+
+        then:
+        scheduled.empty
+        1 * fixture.oracleConnection.unregisterDatabaseChangeNotification(original) >> {
+            throw new DataAccessException('Database unavailable during cleanup')
+        }
+        1 * fixture.oracleConnection.unregisterDatabaseChangeNotification(failedReplacement)
+
+        when:
+        subscription.stop()
+
+        then:
+        1 * fixture.oracleConnection.unregisterDatabaseChangeNotification(original)
     }
 
     void "cancels a scheduled retry and skips it if it runs after shutdown"() {
@@ -490,9 +616,12 @@ class OracleChangeNotificationSubscriptionSpec extends Specification {
         !completion.isDone()
         tracker.reportActiveTasks().getAsLong() == 1
         1 * fixture.oracleConnection.unregisterDatabaseChangeNotification(original) >> {
-            if (phase == 'unregistration') {
+            if (phase == 'unregistration' || phase == 'failed unregistration') {
                 entered.countDown()
                 assert release.await(5, TimeUnit.SECONDS)
+                if (phase == 'failed unregistration') {
+                    throw new DataAccessException('Unregistration failed after shutdown started')
+                }
             }
         }
 
@@ -506,6 +635,7 @@ class OracleChangeNotificationSubscriptionSpec extends Specification {
         delivered.empty
         queued.empty
         fixture.registrationIndex.get() == (phase == 'registration' ? 2 : 1)
+        (phase == 'failed unregistration' ? 1 : 0) * fixture.oracleConnection.unregisterDatabaseChangeNotification(original)
         (phase == 'registration' ? 1 : 0) * fixture.oracleConnection.unregisterDatabaseChangeNotification(replacement)
 
         cleanup:
@@ -514,7 +644,7 @@ class OracleChangeNotificationSubscriptionSpec extends Specification {
         stopThread?.join(5000)
 
         where:
-        phase << ['unregistration', 'registration']
+        phase << ['unregistration', 'failed unregistration', 'registration']
     }
 
     void "tracks recovery invalidation without blocking subscription shutdown on the listener"() {

@@ -194,6 +194,11 @@ If the JDBC driver reports that it cannot restore notification delivery, Microna
 registration. After successful recovery, the listener receives an `INVALIDATE` event so it can refresh potentially
 outdated data. For other registration configurations, recovery starts when a database shutdown notification is received.
 
+If cleanup of an old registration fails during recovery, Micronaut Data retains it and retries unregistration at
+the start of subsequent recovery attempts and during shutdown. Successful replacement does not discard pending
+cleanup of older registrations. A pending registration is released after unregistration succeeds or Oracle Database
+reports that it no longer exists. Cleanup remains best effort if the database is unavailable during shutdown.
+
 If the initial replacement attempt fails, Micronaut Data retries without a limit by default until recovery succeeds or the application shuts down. The first retry waits
 one second; each subsequent delay doubles, up to a maximum of sixty seconds.
 Configure registration recovery globally for all Oracle notification listeners and datasources:

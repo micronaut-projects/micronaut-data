@@ -24,7 +24,10 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 import java.time.Duration;
+import java.util.HashSet;
+import java.util.List;
 import java.util.Objects;
+import java.util.Set;
 import java.util.concurrent.Executor;
 import java.util.concurrent.RejectedExecutionException;
 import java.util.concurrent.ScheduledFuture;
@@ -66,6 +69,11 @@ final class OracleChangeNotificationSubscription {
     private final Object lifecycleLock = new Object();
 
     private @Nullable DatabaseChangeRegistration registration;
+    /**
+     * Failed registrations awaiting cleanup on the next recovery attempt or shutdown. Entries are
+     * claimed under the lifecycle lock before JDBC cleanup and returned here if cleanup fails.
+     */
+    private final Set<DatabaseChangeRegistration> pendingUnregistrations = new HashSet<>();
     /**
      * The failed registration whose replacement is being retried after cleanup.
      */
@@ -151,8 +159,8 @@ final class OracleChangeNotificationSubscription {
     }
 
     /**
-     * Closes the subscription and cleans up the detached registration outside the lifecycle lock.
-     * An in-flight recovery owns cleanup of any registration it has not published yet.
+     * Closes the subscription and cleans up pending and current registrations outside the lifecycle
+     * lock. An in-flight recovery owns cleanup of any registrations it has already claimed.
      */
     void stop() {
         close();
@@ -161,6 +169,7 @@ final class OracleChangeNotificationSubscription {
             detached = registration;
             registration = null;
         }
+        unregisterFailedRegistrations();
         if (detached != null) {
             unregister(detached, registrar::unregisterRegistration);
         }
@@ -286,7 +295,6 @@ final class OracleChangeNotificationSubscription {
 
     private void beginRegistrationRecovery(int retryCount, long failedRegId) {
         Object attempt = new Object();
-        DatabaseChangeRegistration failed;
         synchronized (lifecycleLock) {
             if (closed || recoveryAttempt != null || (registration != null && !isCurrent(failedRegId))) {
                 return;
@@ -296,10 +304,12 @@ final class OracleChangeNotificationSubscription {
             }
             recoveryAttempt = attempt;
             recoveryRegistrationId = failedRegId;
-            failed = registration;
+            if (registration != null) {
+                pendingUnregistrations.add(registration);
+            }
             registration = null;
         }
-        replaceFailedRegistration(retryCount, failedRegId, attempt, failed);
+        replaceFailedRegistration(retryCount, failedRegId, attempt);
     }
 
     /**
@@ -309,17 +319,13 @@ final class OracleChangeNotificationSubscription {
      * @param retryCount  the number of retries already attempted
      * @param failedRegId the registration being recovered
      * @param attempt     the claimed recovery attempt
-     * @param failed      the detached registration, or {@code null} if already detached
      */
-    private void replaceFailedRegistration(int retryCount, long failedRegId, Object attempt,
-                                           @Nullable DatabaseChangeRegistration failed) {
+    private void replaceFailedRegistration(int retryCount, long failedRegId, Object attempt) {
         Exception recoveryFailure = null;
         DatabaseChangeRegistration replacement = null;
         boolean published = false;
         try {
-            if (failed != null) {
-                unregister(failed, registrar::unregisterRegistrationAfterFailure);
-            }
+            unregisterFailedRegistrations();
             if (closed) {
                 return;
             }
@@ -343,6 +349,10 @@ final class OracleChangeNotificationSubscription {
                 if (recoveryAttempt == attempt) {
                     recoveryAttempt = null;
                 }
+            }
+            if (closed) {
+                // stop() may have run while this attempt owned an unregister call that later failed.
+                unregisterFailedRegistrations();
             }
         }
         if (published) {
@@ -408,14 +418,40 @@ final class OracleChangeNotificationSubscription {
     }
 
     /**
-     * Cleans up a registration owned by the caller without holding the lifecycle lock.
+     * Attempts to unregister failed registrations awaiting cleanup during recovery or shutdown.
+     * Claims them under the lifecycle lock and performs JDBC cleanup outside it, preventing
+     * concurrent unregistration of the same registration. Failed cleanup returns the registration
+     * to the pending set; successful cleanup, including an already absent registration, releases it.
+     * The database call is attempted even if the driver has marked the registration closed.
      */
-    private void unregister(DatabaseChangeRegistration detached, Consumer<DatabaseChangeRegistration> unregistration) {
+    private void unregisterFailedRegistrations() {
+        List<DatabaseChangeRegistration> pending;
+        synchronized (lifecycleLock) {
+            pending = List.copyOf(pendingUnregistrations);
+            pendingUnregistrations.clear();
+        }
+        for (DatabaseChangeRegistration detached : pending) {
+            if (!unregister(detached, registrar::unregisterRegistrationAfterFailure)) {
+                synchronized (lifecycleLock) {
+                    pendingUnregistrations.add(detached);
+                }
+            }
+        }
+    }
+
+    /**
+     * Cleans up a registration owned by the caller without holding the lifecycle lock.
+     *
+     * @return whether cleanup succeeded, including a registration already absent from the database
+     */
+    private boolean unregister(DatabaseChangeRegistration detached, Consumer<DatabaseChangeRegistration> unregistration) {
         try {
             unregistration.accept(detached);
+            return true;
         } catch (RuntimeException e) {
             LOG.warn("Unable to unregister DCN registration [{}] for datasource [{}] and listener method [{}]",
                 detached.getRegId(), dataSourceName, methodDescription, e);
+            return false;
         }
     }
 
