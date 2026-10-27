@@ -19,6 +19,7 @@ import io.micronaut.context.BeanLocator;
 import io.micronaut.context.annotation.EachBean;
 import io.micronaut.context.annotation.Parameter;
 import io.micronaut.core.annotation.Experimental;
+import io.micronaut.data.annotation.search.Searchable;
 import io.micronaut.data.connection.jdbc.advice.DelegatingDataSource;
 import io.micronaut.data.exceptions.DataAccessException;
 import io.micronaut.data.jdbc.config.DataJdbcConfiguration;
@@ -26,7 +27,9 @@ import io.micronaut.data.model.PersistentEntity;
 import io.micronaut.data.model.query.builder.sql.SqlQueryBuilder;
 import io.micronaut.data.model.query.builder.sql.TextSearchDialect;
 import io.micronaut.data.model.runtime.RuntimeEntityRegistry;
+import io.micronaut.data.model.search.SearchCapability;
 import io.micronaut.data.runtime.config.DataSettings;
+import io.micronaut.data.runtime.search.SearchCapabilities;
 import io.micronaut.data.runtime.search.SearchIndexOperations;
 import io.micronaut.inject.qualifiers.Qualifiers;
 
@@ -35,6 +38,7 @@ import java.sql.PreparedStatement;
 import java.sql.ResultSet;
 import java.sql.SQLException;
 import java.util.List;
+import java.util.Set;
 import org.jspecify.annotations.Nullable;
 
 import javax.sql.DataSource;
@@ -47,7 +51,7 @@ import javax.sql.DataSource;
  */
 @Experimental
 @EachBean(DataJdbcConfiguration.class)
-public class JdbcSearchIndexOperations implements SearchIndexOperations {
+public class JdbcSearchIndexOperations implements SearchIndexOperations, SearchCapabilities {
 
     private final DataJdbcConfiguration configuration;
     private final BeanLocator beanLocator;
@@ -69,6 +73,14 @@ public class JdbcSearchIndexOperations implements SearchIndexOperations {
         this.runtimeEntityRegistry = runtimeEntityRegistry;
         this.queryBuilder = new SqlQueryBuilder(configuration.getDialect());
         this.textSearchDialect = TextSearchDialect.forDialect(configuration.getDialect());
+    }
+
+    @Override
+    public Set<SearchCapability> getSearchCapabilities(Class<?> entityType) {
+        if (textSearchDialect == null || !runtimeEntityRegistry.getEntity(entityType).getAnnotationMetadata().hasAnnotation(Searchable.class)) {
+            return Set.of();
+        }
+        return textSearchDialect.capabilities();
     }
 
     @Override

@@ -1,6 +1,7 @@
 package io.micronaut.data.model.query.builder.sql
 
 import io.micronaut.data.annotation.search.SearchWeight
+import io.micronaut.data.model.search.SearchCapability
 import spock.lang.Specification
 
 class TextSearchDialectSpec extends Specification {
@@ -30,6 +31,35 @@ class TextSearchDialectSpec extends Specification {
         expect:
         new TextSearchDialect.Target("data", "b") == new TextSearchDialect.Target("data", "b", null)
         TextSearchDialect.Target.RELATIONAL.languageColumn() == null
+    }
+
+    void "each dialect reports the search features it honours"() {
+        expect:
+        TextSearchDialect.forDialect(Dialect.POSTGRES).capabilities() == EnumSet.of(SearchCapability.PHRASE, SearchCapability.PREFIX,
+            SearchCapability.FUZZY, SearchCapability.FIELD_SCOPE, SearchCapability.HIGHLIGHT, SearchCapability.LANGUAGE_OVERRIDE,
+            SearchCapability.MIN_SCORE, SearchCapability.VECTOR, SearchCapability.HYBRID)
+        TextSearchDialect.forDialect(Dialect.ORACLE).capabilities() == EnumSet.of(SearchCapability.PHRASE, SearchCapability.PREFIX,
+            SearchCapability.FUZZY, SearchCapability.FIELD_SCOPE, SearchCapability.BOOST, SearchCapability.HIGHLIGHT,
+            SearchCapability.MIN_SCORE, SearchCapability.VECTOR, SearchCapability.HYBRID)
+        new TextSearchDialect() {
+            @Override
+            void appendTextMatch(StringBuilder query, List fields, jakarta.persistence.criteria.Expression queryExpression, io.micronaut.data.model.search.MatchMode mode,
+                                 io.micronaut.data.model.search.TextMatchOptions options, TextSearchDialect.Target target,
+                                 java.util.function.Consumer appendExpression, java.util.function.Function appendParameter) {
+            }
+
+            @Override
+            void appendSearchScore(StringBuilder query, List fields, jakarta.persistence.criteria.Expression queryExpression, io.micronaut.data.model.search.MatchMode mode,
+                                   io.micronaut.data.model.search.TextMatchOptions options, TextSearchDialect.Target target,
+                                   java.util.function.Consumer appendExpression, java.util.function.Function appendParameter) {
+            }
+
+            @Override
+            void appendSearchHighlight(StringBuilder query, jakarta.persistence.criteria.Expression field, jakarta.persistence.criteria.Expression queryExpression,
+                                       io.micronaut.data.model.search.MatchMode mode, io.micronaut.data.model.search.TextMatchOptions options, TextSearchDialect.Target target,
+                                       java.util.function.Consumer appendExpression, java.util.function.Function appendParameter) {
+            }
+        }.capabilities().isEmpty()
     }
 
     void "a query language that is not a configuration name is rejected before it reaches the SQL"() {
