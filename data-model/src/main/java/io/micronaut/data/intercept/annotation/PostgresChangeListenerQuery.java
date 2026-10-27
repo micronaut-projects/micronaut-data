@@ -1,0 +1,50 @@
+/*
+ * Copyright 2017-2026 original authors
+ *
+ * Licensed under the Apache License, Version 2.0 (the "License");
+ * you may not use this file except in compliance with the License.
+ * You may obtain a copy of the License at
+ *
+ * https://www.apache.org/licenses/LICENSE-2.0
+ *
+ * Unless required by applicable law or agreed to in writing, software
+ * distributed under the License is distributed on an "AS IS" BASIS,
+ * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+ * See the License for the specific language governing permissions and
+ * limitations under the License.
+ */
+package io.micronaut.data.intercept.annotation;
+
+import io.micronaut.core.annotation.Internal;
+
+import java.lang.annotation.ElementType;
+import java.lang.annotation.Retention;
+import java.lang.annotation.RetentionPolicy;
+import java.lang.annotation.Target;
+
+/**
+ * Internal, compile-time generated PostgreSQL primary-key reload query and ordered key mapping for a change listener.
+ *
+ * <p>Column names and Java property paths use the same order as the generated query's parameters.
+ * Column names are normalized to the identifiers reported by PostgreSQL notification triggers.</p>
+ */
+@Internal
+@Retention(RetentionPolicy.RUNTIME)
+@Target(ElementType.METHOD)
+public @interface PostgresChangeListenerQuery {
+
+    /**
+     * @return The generated SQL query.
+     */
+    String value();
+
+    /**
+     * @return The mapped primary-key column names in query binding order.
+     */
+    String[] columns();
+
+    /**
+     * @return The Java property paths in query binding order.
+     */
+    String[] paths();
+}
