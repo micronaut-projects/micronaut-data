@@ -1,6 +1,7 @@
 package io.micronaut.data.age
 
 import io.micronaut.data.age.operations.AgeRepositoryOperations
+import io.micronaut.data.age.tck.AgeArticleRepository
 import io.micronaut.data.age.tck.AgeColleagueRepository
 import io.micronaut.data.age.tck.AgeFriendRepository
 import io.micronaut.data.age.tck.AgeMovieRepository
@@ -19,6 +20,9 @@ import java.sql.Connection
  */
 @MicronautTest(transactional = false)
 class AgeGraphRepositorySpec extends AbstractGraphRepositorySpec {
+
+    @Inject
+    AgeArticleRepository articleRepository
 
     @Inject
     AgeMovieRepository movieRepository

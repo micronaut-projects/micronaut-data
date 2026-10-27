@@ -5,6 +5,7 @@ import io.micronaut.core.annotation.AnnotationMetadata
 import io.micronaut.data.annotation.Join
 import io.micronaut.data.event.EntityEventListener
 import io.micronaut.data.graph.model.query.builder.entities.Movie
+import io.micronaut.data.graph.model.query.builder.entities.Note
 import io.micronaut.data.graph.model.query.builder.entities.Person
 import io.micronaut.data.model.jpa.criteria.PersistentEntityCriteriaBuilder
 import io.micronaut.data.model.jpa.criteria.PersistentEntityRoot
@@ -148,6 +149,46 @@ class CypherCriteriaQuerySpec extends Specification {
         builder.asLiteral(UUID.fromString("123e4567-e89b-12d3-a456-426614174000")) == "'123e4567-e89b-12d3-a456-426614174000'"
         builder.buildLimitAndOffset(0, 0) == ''
         builder.buildInsert(AnnotationMetadata.EMPTY_METADATA, null) == null
+    }
+
+    void "test versioned writes match the version the entity was read with"() {
+        given:
+        def note = new TestEntityRegistry().getEntity(Note)
+        def builder = new CypherQueryBuilder()
+
+        expect:
+        builder.buildUpdateVersionedNodeQuery(note, ["code", "text", "version"]) ==
+            'MATCH (n:Note) WHERE n.code = $id AND n.version = $version SET n.code = $v0, n.text = $v1, n.version = $v2 RETURN n.code AS id'
+        builder.buildDeleteVersionedNodeQuery(note) ==
+            'MATCH (n:Note) WHERE n.code = $id AND n.version = $version DETACH DELETE n RETURN count(*) AS result'
+        new AgeCypherQueryBuilder().buildDeleteVersionedNodeQuery(note).contains('n.version = $version')
+
+        when:
+        builder.buildDeleteVersionedNodeQuery(new TestEntityRegistry().getEntity(Movie))
+
+        then:
+        thrown(IllegalArgumentException)
+    }
+
+    void "test index statements"() {
+        given:
+        def registry = new TestEntityRegistry()
+        def note = registry.getEntity(Note)
+
+        expect: "an assigned identifier is unique and declared indexes follow"
+        new CypherQueryBuilder().buildCreateIndexStatements(note) == [
+            'CREATE CONSTRAINT Note_code_unique IF NOT EXISTS FOR (n:Note) REQUIRE n.code IS UNIQUE',
+            'CREATE INDEX Note_text_index IF NOT EXISTS FOR (n:Note) ON (n.text)'
+        ]
+        new AgeCypherQueryBuilder().buildCreateIndexStatements(note).drop(1) == [
+            'CREATE UNIQUE INDEX IF NOT EXISTS "Note_code_unique" ON "$__graph"."Note" (ag_catalog.agtype_access_operator(properties, \'"code"\'::agtype))',
+            'CREATE INDEX IF NOT EXISTS "Note_text_index" ON "$__graph"."Note" (ag_catalog.agtype_access_operator(properties, \'"text"\'::agtype))'
+        ]
+        new AgeCypherQueryBuilder().buildCreateIndexStatements(note)[0].contains('create_vlabel(\'$__graph\', \'Note\')')
+
+        and: "a node with a generated identifier and no indexes has none"
+        new CypherQueryBuilder().buildCreateIndexStatements(registry.getEntity(Person)).isEmpty()
+        new AgeCypherQueryBuilder().buildCreateIndexStatements(registry.getEntity(Person)).isEmpty()
     }
 
     private String select(Closure<?> definition) {

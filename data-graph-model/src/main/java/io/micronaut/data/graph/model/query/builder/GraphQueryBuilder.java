@@ -115,6 +115,44 @@ public interface GraphQueryBuilder extends QueryBuilder {
     String buildDeleteByIdQuery(PersistentEntity entity);
 
     /**
+     * Builds the query that updates a node with a {@code @Version} property only when the stored version still matches.
+     * The identifier is bound to {@code $id}, the version read with the entity to {@code $version} and the property
+     * values to {@code $v0}, {@code $v1} and so on. The query returns no rows when the version no longer matches.
+     *
+     * @param entity        The entity
+     * @param propertyNames The stored names of the properties to write
+     * @return The query
+     * @since 5.3.0
+     */
+    default String buildUpdateVersionedNodeQuery(PersistentEntity entity, List<String> propertyNames) {
+        throw new UnsupportedOperationException("Versioned node updates are not supported by " + getClass().getSimpleName());
+    }
+
+    /**
+     * Builds the query that deletes a node with a {@code @Version} property only when the stored version still matches,
+     * returning the number of deleted nodes. The identifier is bound to {@code $id} and the version to {@code $version}.
+     *
+     * @param entity The entity
+     * @return The query
+     * @since 5.3.0
+     */
+    default String buildDeleteVersionedNodeQuery(PersistentEntity entity) {
+        throw new UnsupportedOperationException("Versioned node deletes are not supported by " + getClass().getSimpleName());
+    }
+
+    /**
+     * Builds the statements that create the indexes and unique constraints of a node entity when they do not exist
+     * yet, see {@link io.micronaut.data.graph.model.GraphIndex#of(PersistentEntity)}.
+     *
+     * @param entity The entity
+     * @return The statements, empty if the database gets no indexes from graph repositories
+     * @since 5.3.0
+     */
+    default List<String> buildCreateIndexStatements(PersistentEntity entity) {
+        return List.of();
+    }
+
+    /**
      * Builds the query that links two nodes with the relationship of an association.
      *
      * @param association          The association
