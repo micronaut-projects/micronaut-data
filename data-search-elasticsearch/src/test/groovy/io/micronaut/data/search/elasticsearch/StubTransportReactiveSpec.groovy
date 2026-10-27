@@ -41,6 +41,32 @@ class StubTransportReactiveSpec extends Specification {
         context.getBean(DefaultDocumentSearchRepositoryOperations, Qualifiers.byName("stub")).reactive() instanceof DefaultDocumentSearchReactiveRepositoryOperations
     }
 
+    void "the index is named after @Searchable(name) when set"() {
+        given:
+        def operations = context.getBean(DefaultDocumentSearchRepositoryOperations, Qualifiers.byName("stub"))
+
+        expect:
+        operations.getIndexName(Book) == "search_book"
+        operations.getIndexName(NamedBook) == "named_books"
+    }
+
+    void "saveAll indexes in bulk through the async transport"() {
+        when:
+        def saved = repository.saveAll([
+                new Book("Baking Bread", "Sourdough", "Dough", 220),
+                new Book("Cooking with Coffee", "Recipes", "Bean", 120),
+        ]).collectList().block()
+
+        then:
+        saved.size() == 2
+        saved.every { it.id != null }
+        repository.count().block() == 2L
+        context.getBean(StubSearchTransport).calls.count { it == "async:bulkIndex" } == 1
+
+        cleanup:
+        repository.deleteAll().block()
+    }
+
     void "the reactive and async operations are created once and the async ones adapt the reactive ones"() {
         given:
         def operations = context.getBean(DefaultDocumentSearchRepositoryOperations, Qualifiers.byName("stub"))
@@ -230,6 +256,11 @@ class StubTransportReactiveSpec extends Specification {
         @Override
         CompletionStage<String> index(String index, @Nullable String id, Map<String, Object> source, DocumentSearchConfiguration.Refresh refresh) {
             return done("index", store.put(index, id, source))
+        }
+
+        @Override
+        CompletionStage<List<String>> bulkIndex(String index, List<SearchTransport.BulkDocument> documents, DocumentSearchConfiguration.Refresh refresh) {
+            return done("bulkIndex", documents.collect { store.put(index, it.id(), it.source()) })
         }
 
         @Override

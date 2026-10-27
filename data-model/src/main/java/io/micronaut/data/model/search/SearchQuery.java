@@ -59,6 +59,7 @@ public final class SearchQuery {
     private final int fuzziness;
     private final Map<String, Double> boosts;
     private final Set<String> highlightFields;
+    private final boolean highlightDeclaredFields;
     @Nullable
     private final Double minScore;
     @Nullable
@@ -85,6 +86,7 @@ public final class SearchQuery {
         this.fuzziness = builder.fuzziness;
         this.boosts = Collections.unmodifiableMap(new LinkedHashMap<>(builder.boosts));
         this.highlightFields = Collections.unmodifiableSet(new LinkedHashSet<>(builder.highlightFields));
+        this.highlightDeclaredFields = builder.highlightDeclaredFields;
         this.minScore = builder.minScore;
         this.language = builder.language;
     }
@@ -149,6 +151,14 @@ public final class SearchQuery {
      */
     public Set<String> getHighlightFields() {
         return highlightFields;
+    }
+
+    /**
+     * @return Whether the {@code @SearchField(highlightable = true)} properties are highlighted, in
+     * addition to {@link #getHighlightFields()}
+     */
+    public boolean isHighlightingDeclaredFields() {
+        return highlightDeclaredFields;
     }
 
     /**
@@ -236,6 +246,7 @@ public final class SearchQuery {
             && mode == that.mode
             && boosts.equals(that.boosts)
             && highlightFields.equals(that.highlightFields)
+            && highlightDeclaredFields == that.highlightDeclaredFields
             && Objects.equals(minScore, that.minScore)
             && Objects.equals(language, that.language)
             && Objects.equals(vectorProperty, that.vectorProperty)
@@ -248,7 +259,7 @@ public final class SearchQuery {
 
     @Override
     public int hashCode() {
-        return Objects.hash(query, fields, mode, fuzziness, boosts, highlightFields, minScore, language,
+        return Objects.hash(query, fields, mode, fuzziness, boosts, highlightFields, highlightDeclaredFields, minScore, language,
             vectorProperty, vector, textWeight, vectorWeight, candidates, rankConstant);
     }
 
@@ -268,6 +279,7 @@ public final class SearchQuery {
         private int fuzziness;
         private final Map<String, Double> boosts = new LinkedHashMap<>();
         private final Set<String> highlightFields = new LinkedHashSet<>();
+        private boolean highlightDeclaredFields;
         @Nullable
         private Double minScore;
         @Nullable
@@ -330,12 +342,16 @@ public final class SearchQuery {
         }
 
         /**
-         * Requests highlighted fragments for the given properties.
+         * Requests highlighted fragments for the given properties, or, without arguments, for every
+         * {@code @SearchField(highlightable = true)} property of the entity.
          *
          * @param fields The property names
          * @return This builder
          */
         public Builder highlight(String... fields) {
+            if (fields.length == 0) {
+                highlightDeclaredFields = true;
+            }
             Collections.addAll(this.highlightFields, fields);
             return this;
         }

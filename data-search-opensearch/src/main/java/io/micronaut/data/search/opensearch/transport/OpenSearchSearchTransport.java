@@ -31,6 +31,7 @@ import org.opensearch.client.opensearch._types.mapping.TypeMapping;
 import org.opensearch.client.opensearch._types.query_dsl.Query;
 
 import java.io.IOException;
+import java.util.List;
 import java.util.Map;
 
 /**
@@ -81,6 +82,15 @@ public final class OpenSearchSearchTransport implements SearchTransport {
             return client.index(i -> i.index(index).id(id).document(source).refresh(refresh(refresh))).id();
         } catch (IOException e) {
             throw new DataAccessException("OpenSearch index failed: " + e.getMessage(), e);
+        }
+    }
+
+    @Override
+    public List<String> bulkIndex(String index, List<BulkDocument> documents, DocumentSearchConfiguration.Refresh refresh) {
+        try {
+            return OpenSearchRequests.bulkIds(client.bulk(OpenSearchRequests.bulkRequest(index, documents, refresh)));
+        } catch (IOException e) {
+            throw new DataAccessException("OpenSearch bulk failed: " + e.getMessage(), e);
         }
     }
 

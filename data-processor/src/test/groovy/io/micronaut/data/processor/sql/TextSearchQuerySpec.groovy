@@ -324,4 +324,47 @@ interface DocRepository extends CrudRepository<Doc, Long> {
         paged.stringValue(DataMethod, DataMethod.META_MEMBER_INTERCEPTOR).get() == "io.micronaut.data.runtime.intercept.criteria.SearchQueryInterceptor"
         paged.stringValue(DataMethod, io.micronaut.data.annotation.TypeRole.PAGEABLE).isPresent()
     }
+
+    void "highlightable search fields are projected by search methods returning SearchResults"() {
+        given:
+        def repository = buildRepository('test.PostRepository', """
+import io.micronaut.data.jdbc.annotation.JdbcRepository;
+import io.micronaut.data.model.query.builder.sql.Dialect;
+import io.micronaut.data.annotation.search.SearchField;
+import io.micronaut.data.annotation.search.Searchable;
+import io.micronaut.data.model.vector.search.SearchResults;
+
+@MappedEntity
+@Searchable
+class Post {
+    @Id
+    @GeneratedValue
+    private Long id;
+    @SearchField(highlightable = true)
+    private String title;
+    @SearchField
+    private String body;
+    public Long getId() { return id; }
+    public void setId(Long id) { this.id = id; }
+    public String getTitle() { return title; }
+    public void setTitle(String title) { this.title = title; }
+    public String getBody() { return body; }
+    public void setBody(String body) { this.body = body; }
+}
+
+@JdbcRepository(dialect = Dialect.POSTGRES)
+interface PostRepository extends CrudRepository<Post, Long> {
+    SearchResults<Post> searchBySearch(String q);
+    SearchResults<Post> searchByBodySearch(String q);
+    List<Post> findBySearch(String q);
+}
+""")
+
+        expect:
+        getQuery(repository.getRequiredMethod("searchBySearch", String)).contains("ts_headline('english',post_.\"title\",to_tsquery('english',?),'StartSel=<em>,StopSel=</em>') AS mn_hl_title")
+        !getQuery(repository.getRequiredMethod("searchBySearch", String)).contains("mn_hl_body")
+        // only the searched fields are highlighted
+        !getQuery(repository.getRequiredMethod("searchByBodySearch", String)).contains("mn_hl_")
+        !getQuery(repository.getRequiredMethod("findBySearch", String)).contains("ts_headline")
+    }
 }
