@@ -3,6 +3,7 @@ package example
 import io.micronaut.data.model.Pageable
 import io.micronaut.data.model.search.MatchMode
 import io.micronaut.data.model.search.SearchQuery
+import io.micronaut.data.model.vector.Vector
 import jakarta.inject.Singleton
 
 @Singleton
@@ -29,6 +30,20 @@ class BookService(private val bookRepository: BookRepository) {
         val results = bookRepository.search(searchQuery) // <4>
         val firstPage = bookRepository.search(searchQuery, Pageable.from(0, 10)) // <5>
         // end::searchQuery[]
+        return results.results().map { it.entity().title }
+    }
+
+    fun hybridTitles(query: String, embedding: Vector): List<String> {
+        // tag::hybrid[]
+        val searchQuery = SearchQuery.builder(query)
+            .vector("embedding", embedding) // <1>
+            .textWeight(1.0).vectorWeight(1.0).candidates(50) // <2>
+            .build()
+        val results = bookRepository.search(searchQuery)
+        for (hit in results) {
+            val fusedScore = hit.score().value() // <3>
+        }
+        // end::hybrid[]
         return results.results().map { it.entity().title }
     }
 

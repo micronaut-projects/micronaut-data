@@ -6,6 +6,9 @@ import io.micronaut.data.annotation.MappedEntity
 import io.micronaut.data.annotation.search.SearchField
 import io.micronaut.data.annotation.search.SearchWeight
 import io.micronaut.data.annotation.search.Searchable
+import io.micronaut.data.model.vector.Vector
+import jakarta.persistence.Column
+import org.jspecify.annotations.Nullable
 
 // tag::entity[]
 @MappedEntity
@@ -23,10 +26,19 @@ class Book {
 
     String author
 
+    @Nullable
+    @Column(length = 3)
+    Vector embedding
+
     Book(String title, String description, String author) {
+        this(title, description, author, null)
+    }
+
+    Book(String title, String description, String author, Vector embedding) {
         this.title = title
         this.description = description
         this.author = author
+        this.embedding = embedding
     }
 }
 // end::entity[]

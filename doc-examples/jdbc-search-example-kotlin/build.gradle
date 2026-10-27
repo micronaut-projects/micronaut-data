@@ -28,9 +28,11 @@ dependencies {
     kapt projects.micronautDataProcessor
 
     implementation projects.micronautDataJdbc
+    implementation(mnSql.jakarta.persistence.api)
     implementation mnKotlin.micronaut.kotlin.runtime
 
     runtimeOnly mnSql.postgresql
+    runtimeOnly libs.managed.pg.vector // pgvector JDBC type for the vector column
     runtimeOnly mnSql.micronaut.jdbc.hikari
     runtimeOnly mnLogging.logback.classic
 
