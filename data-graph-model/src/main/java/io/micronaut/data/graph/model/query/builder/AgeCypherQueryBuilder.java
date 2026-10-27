@@ -232,7 +232,7 @@ public class AgeCypherQueryBuilder extends CypherQueryBuilder {
             + (relationshipIdentity != null ? identityExpression(relationshipIdentity, PATH_RELATIONSHIP) : "null") + " AS " + ID_PARAMETER;
         StringBuilder query = new StringBuilder(nodes)
             .append(" OPTIONAL MATCH ").append(directed("(a)", "[existing" + type + "]", "(b)", direction))
-            .append(" WITH ").append(row).append(", a, b, existing WHERE existing IS NULL CREATE ")
+            .append(WITH).append(row).append(", a, b, existing WHERE existing IS NULL CREATE ")
             .append(directed("(a)", "[" + PATH_RELATIONSHIP + type + "]", "(b)", createDirection));
         appendBatchProperties(query, PATH_RELATIONSHIP, row, propertyNames);
         query.append(id).append(" UNION ").append(nodes).append(MATCH)
@@ -352,7 +352,7 @@ public class AgeCypherQueryBuilder extends CypherQueryBuilder {
         String pattern = pathPattern(definition, definition.direction(), "(" + PATH_START + ")", relationship, "(" + PATH_END + ")");
         if (definition.kind() == PathQueryDefinition.Kind.ALL_SHORTEST) {
             query.append(MATCH).append(PATH).append(" = ").append(pattern)
-                .append(" WITH ").append(PATH_START).append(", ").append(PATH_END)
+                .append(WITH).append(PATH_START).append(", ").append(PATH_END)
                 .append(", min(length(").append(PATH).append(")) AS shortest");
             query.append(MATCH).append(ALL_SHORTEST_PATH).append(" = ").append(pattern)
                 .append(" WHERE length(").append(ALL_SHORTEST_PATH).append(") = shortest");
@@ -379,7 +379,7 @@ public class AgeCypherQueryBuilder extends CypherQueryBuilder {
             return;
         }
         if (definition.kind() == PathQueryDefinition.Kind.SHORTEST && definition.result() != PathQueryDefinition.Result.EXISTS) {
-            query.append(" WITH ").append(PATH).append(" ORDER BY length(").append(PATH).append(") LIMIT 1");
+            query.append(WITH).append(PATH).append(" ORDER BY length(").append(PATH).append(") LIMIT 1");
         }
         super.appendPathReturn(query, definition);
     }
