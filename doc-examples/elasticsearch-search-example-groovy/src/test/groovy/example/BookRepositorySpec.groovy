@@ -61,6 +61,8 @@ class BookRepositorySpec extends Specification implements TestPropertyProvider {
         reactiveBookRepository.searchBySearch("coffee").block().totalHits() == 2
         reactiveBookRepository.findByTitleSearch("roaster").collectList().block()*.title == ["The Coffee Roaster"]
         reactiveBookRepository.count().block() == 3L
+        reactiveBookRepository.search("coffee").block().totalHits() == 2
+        reactiveBookRepository.countHits("coffee").block() == 2L
     }
 
     void "derived search finders"() {
