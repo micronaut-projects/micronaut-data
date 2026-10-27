@@ -160,6 +160,18 @@ public class CypherQueryBuilder implements GraphQueryBuilder {
      * The parameter holding the version an entity was read with in versioned writes.
      */
     public static final String VERSION_PARAMETER = "version";
+    /**
+     * The parameter holding the rows of a batched node write.
+     */
+    public static final String ROWS_PARAMETER = "rows";
+    /**
+     * The key of the position of a node in the row of a batched write, and the column returning it.
+     */
+    public static final String ROW_POSITION = "position";
+    /**
+     * The key of the properties of a node in the row of a batched write.
+     */
+    public static final String ROW_PROPERTIES = "properties";
     private static final String WITH = " WITH ";
     private static final String WITH_DISTINCT = " WITH DISTINCT ";
     private static final String DISTINCT = "DISTINCT ";
@@ -484,6 +496,57 @@ public class CypherQueryBuilder implements GraphQueryBuilder {
             }
         }
         return statements;
+    }
+
+    @Override
+    public boolean supportsBatchNodeWrites() {
+        return true;
+    }
+
+    /**
+     * Builds an {@code UNWIND} over the rows that creates, matches or merges each node like
+     * {@link #buildWriteNodeQuery(PersistentEntity, List, boolean)} and sets its properties from the map of the row.
+     *
+     * @param entity    The entity
+     * @param idPresent Whether the nodes have identifiers
+     * @param versioned Whether the nodes are only updated while they still have the version they were read with
+     * @return The query
+     */
+    @Override
+    public String buildWriteNodesQuery(PersistentEntity entity, boolean idPresent, boolean versioned) {
+        PersistentProperty identity = entity.hasIdentity() ? entity.getIdentity() : null;
+        String row = "row";
+        String idColumn = identity == null ? "null" : identityExpression(identity, ROOT);
+        StringBuilder query = new StringBuilder("UNWIND $").append(ROWS_PARAMETER).append(" AS ").append(row).append(' ');
+        appendNodesClause(query, entity, identity, row, idPresent, versioned);
+        return query.append(SET).append(ROOT).append(" += ").append(row).append('.').append(ROW_PROPERTIES)
+            .append(RETURN).append(row).append('.').append(ROW_POSITION).append(" AS ").append(ROW_POSITION).append(", ")
+            .append(idColumn).append(" AS ").append(ID_PARAMETER).toString();
+    }
+
+    /**
+     * Appends the clause that creates, matches or merges the node of each row.
+     */
+    private void appendNodesClause(StringBuilder query, PersistentEntity entity, @Nullable PersistentProperty identity,
+                                   String row, boolean idPresent, boolean versioned) {
+        String labels = labelExpression(entity);
+        if (identity == null || (GraphEntities.isNativeId(identity) && !idPresent)) {
+            query.append("CREATE (").append(ROOT).append(labels).append(')');
+        } else if (GraphEntities.isNativeId(identity) || versioned) {
+            query.append(MATCH_OPEN).append(ROOT).append(labels).append(CLOSE_WHERE)
+                .append(identityExpression(identity, ROOT)).append(" = ").append(row).append('.').append(ID_PARAMETER);
+            if (versioned) {
+                PersistentProperty version = entity.hasVersion() ? entity.getVersion() : null;
+                if (version == null) {
+                    throw new IllegalArgumentException("Entity [" + entity.getName() + "] has no @Version property");
+                }
+                query.append(AND).append(ROOT).append('.').append(GraphEntities.escapeName(GraphEntities.propertyName(version)))
+                    .append(" = ").append(row).append('.').append(VERSION_PARAMETER);
+            }
+        } else {
+            query.append("MERGE (").append(ROOT).append(labels).append(" {")
+                .append(GraphEntities.escapeName(GraphEntities.propertyName(identity))).append(": ").append(row).append('.').append(ID_PARAMETER).append("})");
+        }
     }
 
     private String versionedMatch(PersistentEntity entity) {

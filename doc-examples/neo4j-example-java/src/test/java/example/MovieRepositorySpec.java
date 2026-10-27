@@ -12,6 +12,8 @@ import org.junit.jupiter.api.TestInstance;
 
 import java.util.List;
 
+import static example.MovieSpecifications.directedBy;
+import static example.MovieSpecifications.releasedAfter;
 import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertTrue;
 
@@ -24,6 +26,9 @@ class MovieRepositorySpec extends AbstractNeo4jTest {
 
     @Inject
     PersonRepository personRepository;
+
+    @Inject
+    MovieSpecificationRepository movieSpecificationRepository;
 
     @BeforeEach
     void setup() {
@@ -109,5 +114,16 @@ class MovieRepositorySpec extends AbstractNeo4jTest {
 
         assertEquals(List.of("Speed", "The Matrix", "The Matrix Reloaded"), movies.stream().map(Movie::getTitle).toList());
         assertTrue(movieRepository.existsById("Speed"));
+    }
+
+    @Test
+    void testSpecifications() {
+        // tag::useSpecifications[]
+        List<Movie> recent = movieSpecificationRepository.findAll(releasedAfter(1995)); // <1>
+        long byLana = movieSpecificationRepository.count(directedBy("Lana Wachowski")); // <2>
+        // end::useSpecifications[]
+
+        assertEquals(List.of("The Matrix", "The Matrix Reloaded"), recent.stream().map(Movie::getTitle).sorted().toList());
+        assertEquals(2, byLana);
     }
 }

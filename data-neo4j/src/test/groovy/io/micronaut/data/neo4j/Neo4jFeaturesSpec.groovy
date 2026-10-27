@@ -96,6 +96,25 @@ class Neo4jFeaturesSpec extends Specification implements TestPropertyProvider {
         teamRepository.count() == 1
     }
 
+    void "immutable records that reference each other are batched"() {
+        given: "two teams whose players refer back to the team instances being saved"
+        def teams = ["Wanderers", "Rovers"].collect { name ->
+            def players = []
+            def team = new Team(null, name, players)
+            players << new Player(null, "Player of $name".toString(), team)
+            team
+        }
+
+        when:
+        def saved = teamRepository.saveAll(teams)
+
+        then:
+        saved*.id().every { it != null }
+        saved.collectMany { it.players() }*.id().every { it != null }
+        operations.executeQuery("MATCH (p:Player)-[:PLAYS_FOR]->(t:Team) RETURN count(t)", [:], Long) == [2L]
+        teamRepository.count() == 2
+    }
+
     void "reactive repositories"() {
         when:
         reactiveMovieRepository.save(new Movie("Speed", "Get ready for rush hour", 1994)).block()
@@ -114,6 +133,16 @@ class Neo4jFeaturesSpec extends Specification implements TestPropertyProvider {
         operations.executeQuery("MATCH (t:Tag) RETURN t", [:], Tag)*.name == ["graph"]
         operations.executeQuery("MATCH (t:Tag) RETURN t.name AS name", [:])*.get("name") == ["graph"]
         operations.executeQuery("MATCH (t:Tag {name: \$name}) RETURN count(t)", [name: "graph"], Long) == [1L]
+    }
+
+    void "saveAll creates nodes with database generated identifiers in one batch"() {
+        when:
+        def tags = tagRepository.saveAll([new Tag("graph"), new Tag("nosql"), new Tag("cypher")])
+
+        then: "each instance gets the identifier of its own node"
+        tags*.id.every { it != null }
+        tags*.id.unique().size() == 3
+        tags.collect { tagRepository.findById(it.id).get().name } == ["graph", "nosql", "cypher"]
     }
 
     void "page an explicit query that limits a WITH clause, not one that limits its RETURN"() {

@@ -22,3 +22,25 @@ DTOs are read with Micronaut Serialization and must be annotated with `@Serdeabl
 NOTE: `Like` is not supported, as Cypher has no `LIKE` operator. Use `StartsWith`, `EndsWith`, `Contains` or `Regex`.
 
 Repositories may return `Optional`, nullable types, lists, streams and pages, and Reactor, RxJava and Kotlin coroutine types. Reactive and coroutine methods run the blocking driver on an I/O executor.
+
+== Criteria specifications
+
+Queries built at runtime with the JPA Criteria API run on graph repositories that extend `JpaSpecificationExecutor`, or one of its reactive variants:
+
+snippet::example.MovieSpecificationRepository[project-base="doc-examples/neo4j-example", source="main", tags="repository", languages="java,kotlin,groovy,python"]
+
+<1> The repository gets the `findOne`, `findAll`, `count`, `exists`, `updateAll` and `deleteAll` methods of `JpaSpecificationExecutor`. Python declares the ones it uses.
+
+A specification builds a predicate on the root node. Paths through a ann:data.graph.annotation.Relationship[] property match the related nodes:
+
+snippet::example.MovieSpecifications[project-base="doc-examples/neo4j-example", source="main", tags="specifications", languages="java,kotlin,groovy,python"]
+
+<1> Movies released after a year.
+<2> Movies with a `DIRECTED` relationship from a person with the name.
+
+snippet::example.MovieRepositorySpec[project-base="doc-examples/neo4j-example", source="test", tags="useSpecifications", languages="java,kotlin,groovy,python"]
+
+<1> Find the movies that match a specification.
+<2> Count them.
+
+Specifications are rendered by the same query builder as finders, so they support the same operators: `like` is not supported.

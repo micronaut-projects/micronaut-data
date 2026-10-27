@@ -12,6 +12,8 @@ import io.micronaut.data.neo4j.features.ReactiveArticleRepository
 import io.micronaut.data.neo4j.features.ReactiveMovieRepository
 import io.micronaut.data.neo4j.features.ReactiveMovieService
 import io.micronaut.data.neo4j.features.Player
+import io.micronaut.data.neo4j.features.ReactiveMovieSpecificationRepository
+import io.micronaut.data.repository.jpa.criteria.PredicateSpecification
 import io.micronaut.data.neo4j.features.ReactivePetRepository
 import io.micronaut.data.neo4j.features.ReactiveTeamRepository
 import io.micronaut.data.neo4j.features.Tag
@@ -37,6 +39,9 @@ class Neo4jReactiveSpec extends Specification implements TestPropertyProvider {
 
     @Inject
     ReactiveArticleRepository articleRepository
+
+    @Inject
+    ReactiveMovieSpecificationRepository movieSpecificationRepository
 
     @Inject
     ReactiveTeamRepository teamRepository
@@ -300,5 +305,20 @@ class Neo4jReactiveSpec extends Specification implements TestPropertyProvider {
 
         then:
         !articleRepository.existsById("graphs").block()
+    }
+
+    void "reactive criteria specifications"() {
+        given:
+        movieRepository.saveAll([
+            new Movie("Speed", "Get ready for rush hour", 1994),
+            new Movie("The Matrix", "Welcome to the Real World", 1999)
+        ]).collectList().block()
+        def after1995 = { root, cb -> cb.greaterThan(root.get("released"), 1995) } as PredicateSpecification<Movie>
+
+        expect:
+        movieSpecificationRepository.findAll(after1995).collectList().block()*.title == ["The Matrix"]
+        movieSpecificationRepository.count(after1995).block() == 1
+        movieSpecificationRepository.exists(after1995).block()
+        movieSpecificationRepository.findOne(after1995).block().title == "The Matrix"
     }
 }
