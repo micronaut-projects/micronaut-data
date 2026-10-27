@@ -24,6 +24,8 @@ snippet::example.MovieRepository[project-base="doc-examples/neo4j-example", sour
 
 <1> The roles, with the people who played them, and the directors are loaded with the movie.
 
+Without a join a relationship property is left as the entity declares it: `null` for a single node and empty for a collection. Nothing is loaded lazily, and there are no proxies, so a finder that needs related nodes names its joins. A join is always optional: a movie without directors is still returned, with an empty collection, whether or not the property is annotated with `@Nullable`.
+
 Each join adds an `OPTIONAL MATCH` whose results are collected, so the query returns one row per movie:
 
 [source,cypher]

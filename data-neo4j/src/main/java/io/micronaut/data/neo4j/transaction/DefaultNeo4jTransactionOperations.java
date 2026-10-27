@@ -23,6 +23,7 @@ import io.micronaut.data.connection.SynchronousConnectionManager;
 import io.micronaut.data.neo4j.session.Neo4jDriverRegistration;
 import io.micronaut.data.neo4j.session.Neo4jConnection;
 import io.micronaut.transaction.exceptions.NoTransactionException;
+import io.micronaut.transaction.exceptions.TransactionUsageException;
 import io.micronaut.transaction.impl.DefaultTransactionStatus;
 import io.micronaut.transaction.support.AbstractDefaultTransactionOperations;
 import org.jspecify.annotations.Nullable;
@@ -54,6 +55,10 @@ final class DefaultNeo4jTransactionOperations extends AbstractDefaultTransaction
 
     @Override
     protected void doBegin(DefaultTransactionStatus<Neo4jConnection> tx) {
+        if (tx.getTransactionDefinition().getIsolationLevel().isPresent()) {
+            // The driver has no isolation levels; refusing matches the reactive operations rather than ignoring the request
+            throw new TransactionUsageException("Neo4j does not support setting the isolation level");
+        }
         TransactionConfig.Builder config = TransactionConfig.builder();
         determineTimeout(tx.getTransactionDefinition()).ifPresent(config::withTimeout);
         tx.getConnection().setTransaction(tx.getConnection().getSession().beginTransaction(config.build()));
