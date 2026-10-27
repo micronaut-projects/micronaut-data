@@ -76,7 +76,8 @@ Hybrid search with `SearchQuery.vector(...)` runs the `$search` and the `$vector
 |Vector search and hybrid search |not supported |supported, `$vectorSearch` with cosine similarity
 |`SearchPrefix` and `SearchFuzzy` |not supported, rejected at compile time |supported
 |Highlighting and minimum score |not supported |supported
-|Query-time boosts (`SearchQuery.boost`) |not supported |not supported, the index weights boost the fields
+|Query-time boosts (`SearchQuery.boost`) |not supported |supported, as the operator's `score.boost`
+|Edit distance (`SearchQuery.fuzzy(n)`) |not supported |supported, up to two edits
 |Per-document language (`@Language`) |`language_override` |not supported, the analyzer is fixed per index
 |Search with joins |`$text` must be the first stage, so joined queries fail at runtime |`$search` must be the first stage, so joined queries are rejected at compile time
 |Search predicate inside `OR` |supported |rejected at compile time

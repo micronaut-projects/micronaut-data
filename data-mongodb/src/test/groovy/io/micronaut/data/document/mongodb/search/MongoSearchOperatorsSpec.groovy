@@ -33,6 +33,7 @@ class MongoSearchOperatorsSpec extends Specification {
         render("fat rats", MatchMode.PHRASE) == '{"phrase": {"query": "fat rats", "path": ["title", "body"]}}'
         render("Mic", MatchMode.PREFIX, ["title"]) == '{"wildcard": {"query": "mic*", "path": "title", "allowAnalyzedField": true}}'
         render("coffe", MatchMode.FUZZY, ["title"]) == '{"text": {"query": "coffe", "path": "title", "fuzzy": {"maxEdits": 1}}}'
+        MongoSearchOperators.render("coffe", MatchMode.FUZZY, ["title"], [:], 2).toJson() == '{"text": {"query": "coffe", "path": "title", "fuzzy": {"maxEdits": 2}}}'
     }
 
     void "weighted paths are searched by separate boosted operators"() {

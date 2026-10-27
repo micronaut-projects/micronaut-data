@@ -413,7 +413,8 @@ final class DefaultMongoStoredQuery<E, R> extends DefaultBindableParametersStore
                 boosts.put(boost.getKey(), number.isInt32() ? number.asInt32().getValue() : number.asNumber().doubleValue());
             }
         }
-        return MongoSearchOperators.render(value == null ? null : value.toString(), mode, paths, boosts);
+        BsonValue fuzziness = placeholder.get(MongoQueryBuilder.SEARCH_FUZZINESS);
+        return MongoSearchOperators.render(value == null ? null : value.toString(), mode, paths, boosts, fuzziness == null ? 0 : fuzziness.asNumber().intValue());
     }
 
     private List<Bson> replaceQueryParametersInList(List<Bson> values, @Nullable InvocationContext<?, ?> invocationContext, @Nullable E entity) {

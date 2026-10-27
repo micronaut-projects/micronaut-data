@@ -25,6 +25,7 @@ import io.micronaut.data.model.runtime.convert.OracleTextQueryConverter;
 import io.micronaut.data.model.runtime.convert.PostgresTsQueryConverter;
 import io.micronaut.data.model.search.MatchMode;
 import io.micronaut.data.model.search.SearchCapability;
+import io.micronaut.data.model.search.TextMatchOptions;
 import io.micronaut.data.model.search.TextSearchSupport;
 import io.micronaut.data.model.search.UnsupportedSearchFeatureException;
 import jakarta.persistence.criteria.Expression;
@@ -54,6 +55,7 @@ public interface TextSearchDialect {
      * @param fields The matched field expressions
      * @param queryExpression The query parameter expression
      * @param mode The match mode
+     * @param options The boosts and fuzziness
      * @param target Where the entity data lives
      * @param appendExpression Renders a child expression
      * @param appendParameter Renders the query parameter with the given parameter converter class name
@@ -62,6 +64,7 @@ public interface TextSearchDialect {
                          List<Expression<?>> fields,
                          Expression<String> queryExpression,
                          MatchMode mode,
+                         TextMatchOptions options,
                          Target target,
                          Consumer<Expression<?>> appendExpression,
                          Function<String, Consumer<Expression<?>>> appendParameter);
@@ -73,6 +76,7 @@ public interface TextSearchDialect {
      * @param fields The matched field expressions
      * @param queryExpression The query parameter expression
      * @param mode The match mode
+     * @param options The boosts and fuzziness
      * @param target Where the entity data lives
      * @param appendExpression Renders a child expression
      * @param appendParameter Renders the query parameter with the given parameter converter class name
@@ -81,6 +85,7 @@ public interface TextSearchDialect {
                            List<Expression<?>> fields,
                            Expression<String> queryExpression,
                            MatchMode mode,
+                           TextMatchOptions options,
                            Target target,
                            Consumer<Expression<?>> appendExpression,
                            Function<String, Consumer<Expression<?>>> appendParameter);
@@ -151,6 +156,50 @@ public interface TextSearchDialect {
      * @param field A field expression
      * @return The declared {@link SearchField#weight()}, or {@code null} when the property has none
      */
+    /**
+     * @param field The field expression
+     * @param options The options
+     * @return The query-time boost of the field, or {@code null}
+     */
+    static @Nullable Double boostOf(Expression<?> field, TextMatchOptions options) {
+        if (options.boosts().isEmpty() || !(field instanceof io.micronaut.data.model.jpa.criteria.PersistentPropertyPath<?> propertyPath)) {
+            return null;
+        }
+        return options.boostFor(propertyPath.getProperty().getName());
+    }
+
+    /**
+     * @param boost The boost
+     * @return The boost as a SQL literal, without a fractional part when it is whole
+     */
+    static String factor(double boost) {
+        return boost == Math.rint(boost) ? String.valueOf((long) boost) : String.valueOf(boost);
+    }
+
+    /**
+     * Rejects query-time boosts on a store without them.
+     *
+     * @param options The options
+     * @param store The store name
+     */
+    static void rejectBoosts(TextMatchOptions options, String store) {
+        if (!options.boosts().isEmpty()) {
+            throw new UnsupportedSearchFeatureException(SearchCapability.BOOST, store);
+        }
+    }
+
+    /**
+     * Rejects an edit distance other than the default on a store whose fuzzy matching is fixed.
+     *
+     * @param options The options
+     * @param store The store name
+     */
+    static void rejectFuzziness(TextMatchOptions options, String store) {
+        if (options.fuzziness() > 1) {
+            throw new UnsupportedSearchFeatureException(SearchCapability.FUZZINESS, store);
+        }
+    }
+
     static @Nullable SearchWeight resolveWeight(Expression<?> field) {
         PersistentProperty property = asProperty(field);
         if (property == null) {
@@ -245,12 +294,14 @@ public interface TextSearchDialect {
                                     List<Expression<?>> fields,
                                     Expression<String> queryExpression,
                                     MatchMode mode,
+                                    TextMatchOptions options,
                                     Target target,
                                     Consumer<Expression<?>> appendExpression,
                                     Function<String, Consumer<Expression<?>>> appendParameter) {
             if (mode == MatchMode.FUZZY) {
                 throw new UnsupportedSearchFeatureException(SearchCapability.FUZZY, "PostgreSQL text search");
             }
+            rejectBoosts(options, "PostgreSQL text search");
             String language = resolveLanguage(fields);
             appendVector(query, fields, language, target.languageColumn(), appendExpression);
             query.append(" @@ ");
@@ -262,9 +313,14 @@ public interface TextSearchDialect {
                                       List<Expression<?>> fields,
                                       Expression<String> queryExpression,
                                       MatchMode mode,
+                                      TextMatchOptions options,
                                       Target target,
                                       Consumer<Expression<?>> appendExpression,
                                       Function<String, Consumer<Expression<?>>> appendParameter) {
+            if (mode == MatchMode.FUZZY) {
+                throw new UnsupportedSearchFeatureException(SearchCapability.FUZZY, "PostgreSQL text search");
+            }
+            rejectBoosts(options, "PostgreSQL text search");
             String language = resolveLanguage(fields);
             query.append("ts_rank_cd(");
             appendVector(query, fields, language, target.languageColumn(), appendExpression);
@@ -395,9 +451,11 @@ public interface TextSearchDialect {
                                     List<Expression<?>> fields,
                                     Expression<String> queryExpression,
                                     MatchMode mode,
+                                    TextMatchOptions options,
                                     Target target,
                                     Consumer<Expression<?>> appendExpression,
                                     Function<String, Consumer<Expression<?>>> appendParameter) {
+            rejectFuzziness(options, "Oracle Text");
             if (fields.size() == 1) {
                 appendContains(query, fields.get(0), 1, queryExpression, target, appendExpression,
                     appendParameter.apply(OracleTextQueryConverter.converterFor(mode, OracleTextQueryConverter.Part.FULL)));
@@ -417,14 +475,20 @@ public interface TextSearchDialect {
                                       List<Expression<?>> fields,
                                       Expression<String> queryExpression,
                                       MatchMode mode,
+                                      TextMatchOptions options,
                                       Target target,
                                       Consumer<Expression<?>> appendExpression,
                                       Function<String, Consumer<Expression<?>>> appendParameter) {
+            rejectFuzziness(options, "Oracle Text");
             if (fields.size() == 1) {
                 query.append("SCORE(1)");
+                Double boost = boostOf(fields.get(0), options);
+                if (boost != null) {
+                    query.append(" * ").append(factor(boost));
+                }
                 return;
             }
-            boolean weighted = fields.stream().anyMatch(f -> resolveWeight(f) != null);
+            boolean weighted = !options.boosts().isEmpty() || fields.stream().anyMatch(f -> resolveWeight(f) != null);
             query.append('(');
             for (int i = 0; i < fields.size(); i++) {
                 if (i > 0) {
@@ -432,11 +496,20 @@ public interface TextSearchDialect {
                 }
                 query.append("SCORE(").append(i + 1).append(')');
                 if (weighted) {
-                    SearchWeight weight = resolveWeight(fields.get(i));
-                    query.append(" * ").append(weight == null ? 1 : weight.numericWeight());
+                    query.append(" * ").append(scoreFactor(fields.get(i), options));
                 }
             }
             query.append(')');
+        }
+
+        /** A query-time boost replaces the index-time weight of the field. */
+        private String scoreFactor(Expression<?> field, TextMatchOptions options) {
+            Double boost = boostOf(field, options);
+            if (boost != null) {
+                return factor(boost);
+            }
+            SearchWeight weight = resolveWeight(field);
+            return String.valueOf(weight == null ? 1 : weight.numericWeight());
         }
 
         /**

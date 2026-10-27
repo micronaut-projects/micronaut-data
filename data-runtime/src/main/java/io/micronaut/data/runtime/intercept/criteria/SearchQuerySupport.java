@@ -27,6 +27,7 @@ import io.micronaut.data.model.runtime.RuntimePersistentEntity;
 import io.micronaut.data.model.runtime.RuntimePersistentProperty;
 import io.micronaut.data.model.search.SearchCapability;
 import io.micronaut.data.model.search.SearchQuery;
+import io.micronaut.data.model.search.TextMatchOptions;
 import io.micronaut.data.model.search.TextSearchSupport;
 import io.micronaut.data.model.search.UnsupportedSearchFeatureException;
 import io.micronaut.data.model.vector.Vector;
@@ -71,9 +72,6 @@ public final class SearchQuerySupport {
     public static SearchQuery findSearchQuery(MethodInvocationContext<?, ?> context) {
         for (Object value : context.getParameterValues()) {
             if (value instanceof SearchQuery searchQuery) {
-                if (!searchQuery.getBoosts().isEmpty()) {
-                    throw new UnsupportedSearchFeatureException(SearchCapability.BOOST, OPERATION);
-                }
                 if (searchQuery.getLanguage() != null) {
                     throw new UnsupportedSearchFeatureException(SearchCapability.LANGUAGE_OVERRIDE, OPERATION);
                 }
@@ -101,8 +99,9 @@ public final class SearchQuerySupport {
         PersistentEntityRoot<Object> root = criteriaQuery.from(rootEntity);
         List<Expression<?>> fields = resolveFields(root, searchQuery);
         ParameterExpression<String> queryParameter = cb.parameter(String.class, null, searchQuery.getQuery());
-        Expression<Double> score = cb.searchScore(fields, queryParameter, searchQuery.getMode());
-        Predicate match = cb.textMatch(fields, queryParameter, searchQuery.getMode());
+        TextMatchOptions options = new TextMatchOptions(searchQuery.getBoosts(), searchQuery.getFuzziness());
+        Expression<Double> score = cb.searchScore(fields, queryParameter, searchQuery.getMode(), options);
+        Predicate match = cb.textMatch(fields, queryParameter, searchQuery.getMode(), options);
         if (searchQuery.getMinScore() != null && !searchQuery.isHybrid()) {
             // the store drops the hits below the threshold, so the page and the total are exact; a hybrid
             // threshold compares the fused score instead, in fuse()
