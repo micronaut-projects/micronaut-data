@@ -27,6 +27,7 @@ class LibraryCache:
     def __init__(self, repository: LibraryRepository):
         self.repository = repository
         self.libraries = AtomicReference(ConcurrentHashMap())
+        self.cacheEnabled = True
         self.lock = RLock()
         self.log = LoggerFactory.getLogger("example.notification.LibraryCache")
 
@@ -35,10 +36,12 @@ class LibraryCache:
         self.refreshCache()
 
     def find(self, name: str) -> Optional[Library]:
-        for library in self.libraries.get().values():
-            if library.name == name:
-                return Optional.of(library)
-        return Optional.empty()
+        with self.lock:
+            currentLibraries = self.libraries.get().values() if self.cacheEnabled else self.repository.findAll()
+            for library in currentLibraries:
+                if library.name == name:
+                    return Optional.of(library)
+            return Optional.empty()
 
     # tag::listener[]
     # tag::events[]
@@ -50,12 +53,17 @@ class LibraryCache:
         if metadata is not None:
             self.log.debug("Changed library ROWID: {}", metadata.rowId())
         with self.lock:
+            if not self.cacheEnabled:
+                return
             if event.operation() in (ChangeOperation.INSERT, ChangeOperation.UPDATE):
                 library = event.entity().orElse(None)
                 if library is not None:
                     self.libraries.get().put(library.id, library)
             elif event.operation() in (ChangeOperation.DELETE, ChangeOperation.INVALIDATE):
                 self.refreshCache()
+            elif event.operation() == ChangeOperation.TERMINATED:
+                self.cacheEnabled = False
+                self.libraries.get().clear()
     # end::events[]
 
     def refreshCache(self) -> None:

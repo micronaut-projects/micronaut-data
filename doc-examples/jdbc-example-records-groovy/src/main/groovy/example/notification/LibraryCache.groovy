@@ -22,6 +22,7 @@ class LibraryCache {
 
     private final LibraryRepository repository
     private volatile Map<Long, Library> libraries = new ConcurrentHashMap<>()
+    private volatile boolean cacheEnabled = true
 
     LibraryCache(LibraryRepository repository) {
         this.repository = repository
@@ -33,7 +34,8 @@ class LibraryCache {
     }
 
     Optional<Library> find(String name) {
-        libraries.values().stream()
+        def currentLibraries = cacheEnabled ? libraries.values() : repository.findAll()
+        currentLibraries.stream()
             .filter { library -> library.name() == name }
             .findFirst()
     }
@@ -43,6 +45,9 @@ class LibraryCache {
     @ChangeListener
     @OracleChangeNotification
     synchronized void onLibraryChanged(ChangeEvent<Library> event) {
+        if (!cacheEnabled) {
+            return
+        }
         // end::listener[]
         event.metadata(OracleChangeEventMetadata).ifPresent { metadata ->
             LOG.debug("Changed library ROWID: {}", metadata.rowId())
@@ -55,6 +60,10 @@ class LibraryCache {
             case ChangeOperation.DELETE:
             case ChangeOperation.INVALIDATE:
                 refreshCache()
+                break
+            case ChangeOperation.TERMINATED:
+                cacheEnabled = false
+                libraries.clear()
                 break
         }
         // tag::listener[]

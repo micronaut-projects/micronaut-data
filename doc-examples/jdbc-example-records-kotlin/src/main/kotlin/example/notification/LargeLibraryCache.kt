@@ -17,14 +17,19 @@ open class LargeLibraryCache(private val repository: LibraryRepository) {
     @Volatile
     private var libraries = ConcurrentHashMap<Long, Library>()
 
+    @Volatile
+    private var cacheEnabled = true
+
     @PostConstruct
     fun initialize() {
         refreshCache()
     }
 
-    fun find(name: String): Optional<Library> = libraries.values
-        .firstOrNull { library -> library.name == name }
-        ?.let { Optional.of(it) } ?: Optional.empty()
+    fun find(name: String): Optional<Library> {
+        val currentLibraries = if (cacheEnabled) libraries.values else repository.findByCapacityGreaterThanEquals(10000)
+        return currentLibraries.firstOrNull { library -> library.name == name }
+            ?.let { Optional.of(it) } ?: Optional.empty()
+    }
 
     // tag::query[]
     @Synchronized
@@ -40,6 +45,9 @@ open class LargeLibraryCache(private val repository: LibraryRepository) {
         ]
     )
     open fun onLibraryChanged(event: ChangeEvent<Library>) {
+        if (!cacheEnabled) {
+            return
+        }
         when (event.operation()) {
             ChangeOperation.INSERT, ChangeOperation.UPDATE -> event.entity().ifPresent { library ->
                 if (library.capacity >= 10000) {
@@ -49,6 +57,10 @@ open class LargeLibraryCache(private val repository: LibraryRepository) {
                 }
             }
             ChangeOperation.DELETE, ChangeOperation.INVALIDATE -> refreshCache()
+            ChangeOperation.TERMINATED -> {
+                cacheEnabled = false
+                libraries.clear()
+            }
         }
     }
     // end::query[]

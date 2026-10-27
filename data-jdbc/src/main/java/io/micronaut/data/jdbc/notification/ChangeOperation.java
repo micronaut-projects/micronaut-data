@@ -34,5 +34,12 @@ public enum ChangeOperation {
      * The provider cannot identify one affected row, or the listener should refresh or reconcile its
      * view of the registered data. Applications determine how to respond to this event.
      */
-    INVALIDATE
+    INVALIDATE,
+    /**
+     * The subscription has permanently stopped delivering notifications. Applications should stop
+     * trusting state maintained by this subscription and use another source, such as database reads.
+     * No entity is associated with this event. This event can be delivered while an earlier
+     * notification is still being processed.
+     */
+    TERMINATED
 }

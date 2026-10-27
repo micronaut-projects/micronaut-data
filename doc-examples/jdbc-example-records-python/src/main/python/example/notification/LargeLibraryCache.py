@@ -23,6 +23,7 @@ class LargeLibraryCache:
     def __init__(self, repository: LibraryRepository):
         self.repository = repository
         self.libraries = AtomicReference(ConcurrentHashMap())
+        self.cacheEnabled = True
         self.lock = RLock()
 
     @PostConstruct
@@ -30,10 +31,12 @@ class LargeLibraryCache:
         self.refreshCache()
 
     def find(self, name: str) -> Optional[Library]:
-        for library in self.libraries.get().values():
-            if library.name == name:
-                return Optional.of(library)
-        return Optional.empty()
+        with self.lock:
+            currentLibraries = self.libraries.get().values() if self.cacheEnabled else self.repository.findByCapacityGreaterThanEquals(10000)
+            for library in currentLibraries:
+                if library.name == name:
+                    return Optional.of(library)
+            return Optional.empty()
 
     # tag::query[]
     @ChangeListener
@@ -49,6 +52,8 @@ class LargeLibraryCache:
     )
     def onLibraryChanged(self, event: ChangeEvent[Library]) -> None:
         with self.lock:
+            if not self.cacheEnabled:
+                return
             if event.operation() in (ChangeOperation.INSERT, ChangeOperation.UPDATE):
                 library = event.entity().orElse(None)
                 if library is not None:
@@ -58,6 +63,9 @@ class LargeLibraryCache:
                         self.libraries.get().remove(library.id)
             elif event.operation() in (ChangeOperation.DELETE, ChangeOperation.INVALIDATE):
                 self.refreshCache()
+            elif event.operation() == ChangeOperation.TERMINATED:
+                self.cacheEnabled = False
+                self.libraries.get().clear()
     # end::query[]
 
     def refreshCache(self) -> None:

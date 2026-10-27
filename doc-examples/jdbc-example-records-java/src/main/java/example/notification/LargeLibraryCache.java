@@ -17,6 +17,7 @@ class LargeLibraryCache {
 
     private final LibraryRepository repository;
     private volatile Map<Long, Library> libraries = new ConcurrentHashMap<>();
+    private volatile boolean cacheEnabled = true;
 
     LargeLibraryCache(LibraryRepository repository) {
         this.repository = repository;
@@ -28,7 +29,8 @@ class LargeLibraryCache {
     }
 
     public Optional<Library> find(String name) {
-        return libraries.values()
+        var currentLibraries = cacheEnabled ? libraries.values() : repository.findByCapacityGreaterThanEquals(10000);
+        return currentLibraries
             .stream()
             .filter(library -> library.name().equals(name))
             .findFirst();
@@ -45,6 +47,9 @@ class LargeLibraryCache {
         )
     )
     synchronized void onLibraryChanged(ChangeEvent<Library> event) {
+        if (!cacheEnabled) {
+            return;
+        }
         switch (event.operation()) {
             case INSERT, UPDATE -> event.entity().ifPresent(library -> {
                 if (library.capacity() >= 10000) {
@@ -54,6 +59,10 @@ class LargeLibraryCache {
                 }
             });
             case DELETE, INVALIDATE -> refreshCache();
+            case TERMINATED -> {
+                cacheEnabled = false;
+                libraries.clear();
+            }
         }
     }
     // end::query[]

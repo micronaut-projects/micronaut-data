@@ -41,8 +41,10 @@ import java.lang.annotation.Target;
  *
  * <p>Registrations do not expire by default. A positive {@code NTF_TIMEOUT} property makes Oracle
  * Database expire the registration after the specified number of seconds; Micronaut Data does not
- * renew it. When Oracle Database reports a deregistration, that listener becomes
- * unavailable. If the JDBC driver reports a notification-connection failure or Oracle Database
+ * renew it. When Oracle Database reports a deregistration, that listener receives
+ * {@link io.micronaut.data.jdbc.notification.ChangeOperation#TERMINATED} and notifications stop.
+ * Exhausting recovery retries or failing to schedule another recovery attempt also reports termination.
+ * If the JDBC driver reports a notification-connection failure or Oracle Database
  * reports a shutdown, Micronaut Data attempts to create a replacement registration and dispatches
  * an invalidation event after recovery succeeds. Registrations are also unregistered during
  * application shutdown.</p>

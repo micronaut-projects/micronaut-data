@@ -16,6 +16,7 @@
 package io.micronaut.data.jdbc.notification.oracle;
 
 import io.micronaut.context.BeanContext;
+import io.micronaut.data.jdbc.notification.ChangeOperation;
 import io.micronaut.scheduling.TaskScheduler;
 import oracle.jdbc.dcn.DatabaseChangeEvent;
 import oracle.jdbc.dcn.DatabaseChangeRegistration;
@@ -98,7 +99,7 @@ final class OracleChangeNotificationSubscription {
      */
     private volatile boolean closed;
 
-    /** Stops recovery after a terminal event while allowing its final invalidation before shutdown. */
+    /** Stops recovery after a terminal event while allowing its termination notification before shutdown. */
     private volatile boolean terminated;
 
     OracleChangeNotificationSubscription(String dataSourceName,
@@ -303,7 +304,7 @@ final class OracleChangeNotificationSubscription {
                 registrationId, dataSourceName, methodDescription, additionalEventType);
             currentRegistration = null;
         }
-        submitTerminalInvalidation(registrationId);
+        submitTermination(registrationId);
     }
 
     /**
@@ -323,7 +324,7 @@ final class OracleChangeNotificationSubscription {
             registration = currentRegistration;
             currentRegistration = null;
         }
-        submitTerminalInvalidation(registrationId);
+        submitTermination(registrationId);
         if (registration != null) {
             unregister(registration, registrar::unregisterRegistration);
         }
@@ -343,9 +344,9 @@ final class OracleChangeNotificationSubscription {
         return true;
     }
 
-    private void submitTerminalInvalidation(long registrationId) {
+    private void submitTermination(long registrationId) {
         cancelRecoveryRetryTask();
-        dispatcher.submitInvalidation(registrationId, "after DCN notifications stopped", () -> !closed);
+        dispatcher.submitLifecycleEvent(registrationId, ChangeOperation.TERMINATED, "after DCN notifications stopped", () -> !closed);
     }
 
     /** Stops the matching recovery sequence once and notifies outside the lifecycle lock. */
@@ -364,7 +365,7 @@ final class OracleChangeNotificationSubscription {
                 currentRegistration = null;
             }
         }
-        submitTerminalInvalidation(registrationId);
+        submitTermination(registrationId);
     }
 
     private void submitRecoveryTask(int retryCount, long failedRegId) {
@@ -455,7 +456,7 @@ final class OracleChangeNotificationSubscription {
         }
         if (published) {
             long replacementId = Objects.requireNonNull(replacement, "Published registration must have a replacement").getRegId();
-            dispatcher.submitInvalidation(replacementId, "after DCN registration recovery", () -> {
+            dispatcher.submitLifecycleEvent(replacementId, ChangeOperation.INVALIDATE, "after DCN registration recovery", () -> {
                 synchronized (lifecycleLock) {
                     return !closed && isCurrent(replacementId);
                 }

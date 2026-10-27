@@ -321,11 +321,16 @@ final class OracleChangeNotificationDispatcher implements DatabaseChangeListener
             invalidationPending.set(false);
             return;
         }
+        if (!invalidationPending.get()) {
+            return;
+        }
         try {
             blockingExecutor.execute(() -> {
                 // A loss during the listener's refresh needs another invalidation: its snapshot
                 // may already have been read. Losses while queued are covered by this refresh.
-                invalidationPending.set(false);
+                if (!invalidationPending.getAndSet(false)) {
+                    return;
+                }
                 dispatchSafely(registrationId, () -> dispatchInvalidation(registrationId, "after rejected data notifications"));
             });
         } catch (RuntimeException e) {
@@ -602,29 +607,38 @@ final class OracleChangeNotificationDispatcher implements DatabaseChangeListener
     }
 
     /**
-     * Submits lifecycle invalidation through the same admission and accounting as driver callbacks.
+     * Submits a lifecycle event through the same admission and accounting as driver callbacks.
      * Eligibility is checked again when execution starts, without holding a lock during user code.
      * Rejected submissions are retried until accepted or shutdown starts.
      *
      * @param registrationId the registration associated with the lifecycle event
-     * @param reason the invalidation reason included in the trace message
-     * @param shouldDispatch whether the invalidation is still relevant
+     * @param operation {@link ChangeOperation#INVALIDATE} for recovery or {@link ChangeOperation#TERMINATED}
+     *                  when notifications have permanently stopped
+     * @param reason the lifecycle event reason included in the trace message
+     * @param shouldDispatch whether the event is still relevant
      */
-    void submitInvalidation(long registrationId, String reason, BooleanSupplier shouldDispatch) {
+    void submitLifecycleEvent(long registrationId, ChangeOperation operation, String reason, BooleanSupplier shouldDispatch) {
         if (taskTracker.isShutdownStarted() || !shouldDispatch.getAsBoolean()) {
             return;
+        }
+        if (operation == ChangeOperation.TERMINATED) {
+            // A deferred refresh cannot restore a subscription that has permanently stopped.
+            invalidationPending.set(false);
         }
         try {
             blockingExecutor.execute(() -> dispatchSafely(registrationId, () -> {
                 if (shouldDispatch.getAsBoolean()) {
-                    dispatchInvalidation(registrationId, reason);
+                    LOG.trace("Dispatching {} {} for datasource [{}], registration [{}], and listener method [{}]",
+                        operation, reason, dataSourceName, registrationId, methodDescription);
+                    dispatchListener(new DefaultChangeEvent<>(operation, null, null), null);
                 }
             }));
         } catch (RuntimeException e) {
-            LOG.warn("Unable to submit lifecycle invalidation for datasource [{}], registration [{}], and listener method [{}]",
+            LOG.warn("Unable to submit lifecycle event for datasource [{}], registration [{}], and listener method [{}]",
                 dataSourceName, registrationId, methodDescription, e);
             if (e instanceof RejectedExecutionException) {
-                scheduleRetry(registrationId, "lifecycle invalidation", () -> submitInvalidation(registrationId, reason, shouldDispatch));
+                scheduleRetry(registrationId, "lifecycle event " + operation,
+                    () -> submitLifecycleEvent(registrationId, operation, reason, shouldDispatch));
             }
         }
     }
@@ -660,7 +674,7 @@ final class OracleChangeNotificationDispatcher implements DatabaseChangeListener
      * changes. JVM errors are not intercepted and propagate to the executor's error handling.
      *
      * @param event the change event passed to the listener
-     * @param rowId the affected Oracle ROWID, or {@code null} for an invalidation
+     * @param rowId the affected Oracle ROWID, or {@code null} for an event without row-specific data
      */
     private void dispatchListener(ChangeEvent<?> event, @Nullable String rowId) {
         try {
