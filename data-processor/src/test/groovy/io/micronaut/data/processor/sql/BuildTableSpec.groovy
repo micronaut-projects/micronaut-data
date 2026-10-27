@@ -878,10 +878,95 @@ class Test {
         version                                 | statement
         null                                          | 'CREATE TABLE "TEST" ("ID" NUMBER(19) NOT NULL PRIMARY KEY,"ACTIVE" NUMBER(1) NOT NULL)' + System.lineSeparator() +
                                                         'CREATE SEQUENCE "TEST_SEQ" MINVALUE 1 START WITH 1 CACHE 100 NOCYCLE'
-        SqlDialectOptions.ORACLE_23_1_0_VERSION | 'CREATE TABLE "TEST" ("ID" NUMBER(19) NOT NULL PRIMARY KEY,"ACTIVE" BOOLEAN NOT NULL)' + System.lineSeparator() +
-                                                        'CREATE SEQUENCE "TEST_SEQ" MINVALUE 1 START WITH 1 CACHE 100 NOCYCLE'
-        "23.4"                                | 'CREATE TABLE "TEST" ("ID" NUMBER(19) NOT NULL PRIMARY KEY,"ACTIVE" BOOLEAN NOT NULL)' + System.lineSeparator() +
-                                                        'CREATE SEQUENCE "TEST_SEQ" MINVALUE 1 START WITH 1 CACHE 100 NOCYCLE'
+        SqlDialectOptions.ORACLE_23_1_0_VERSION | 'CREATE TABLE IF NOT EXISTS "TEST" ("ID" NUMBER(19) NOT NULL PRIMARY KEY,"ACTIVE" BOOLEAN NOT NULL)' + System.lineSeparator() +
+                                                        'CREATE SEQUENCE IF NOT EXISTS "TEST_SEQ" MINVALUE 1 START WITH 1 CACHE 100 NOCYCLE'
+        "23.4"                                | 'CREATE TABLE IF NOT EXISTS "TEST" ("ID" NUMBER(19) NOT NULL PRIMARY KEY,"ACTIVE" BOOLEAN NOT NULL)' + System.lineSeparator() +
+                                                        'CREATE SEQUENCE IF NOT EXISTS "TEST_SEQ" MINVALUE 1 START WITH 1 CACHE 100 NOCYCLE'
+    }
+
+    void "test Oracle 23ai generates IF NOT EXISTS and IF EXISTS for version #version"() {
+        given:
+        def entity = buildJpaEntity('test.Test', '''
+import io.micronaut.data.annotation.Index;
+import io.micronaut.data.annotation.Indexes;
+import java.util.List;
+
+@Entity
+@Indexes({@Index(columns = "name"), @Index(name = "test_code_idx", columns = "code", unique = true)})
+class Test {
+
+    @javax.persistence.Id
+    @GeneratedValue
+    private Long id;
+
+    private String name;
+
+    private String code;
+
+    @ManyToMany
+    private List<Tag> tags;
+
+    public Long getId() { return id; }
+    public void setId(Long id) { this.id = id; }
+    public String getName() { return name; }
+    public void setName(String name) { this.name = name; }
+    public String getCode() { return code; }
+    public void setCode(String code) { this.code = code; }
+    public List<Tag> getTags() { return tags; }
+    public void setTags(List<Tag> tags) { this.tags = tags; }
+}
+
+@Entity
+class Tag {
+    @javax.persistence.Id
+    private Long id;
+    public Long getId() { return id; }
+    public void setId(Long id) { this.id = id; }
+}
+''')
+        SqlQueryBuilder builder = new SqlQueryBuilder(Dialect.ORACLE, version)
+
+        when:
+        def create = builder.buildCreateTableStatements(entity)
+        def drop = builder.buildDropTableStatements(entity)
+
+        then:
+        create.findAll { it.startsWith('CREATE ') }.every { it.contains(' IF NOT EXISTS ') == ifExists }
+        create.any { it.startsWith("CREATE TABLE ${clause}\"TEST\" (") }
+        create.contains("CREATE SEQUENCE ${clause}\"TEST_SEQ\" MINVALUE 1 START WITH 1 CACHE 100 NOCYCLE".toString())
+        create.contains("CREATE INDEX ${clause}\"IDX_TEST_NAME\" ON \"TEST\" (\"NAME\")".toString())
+        create.contains("CREATE UNIQUE INDEX ${clause}\"TEST_CODE_IDX\" ON \"TEST\" (\"CODE\")".toString())
+        drop.toList() == ["DROP TABLE ${dropClause}\"TEST_TAG\";".toString(), "DROP TABLE ${dropClause}\"TEST\"".toString()]
+
+        where:
+        version  | ifExists
+        null     | false
+        '21'     | false
+        '23.1'   | true
+        '23.26'  | true
+        clause = ifExists ? 'IF NOT EXISTS ' : ''
+        dropClause = ifExists ? 'IF EXISTS ' : ''
+    }
+
+    void "test Oracle IF NOT EXISTS is not generated for other dialects"() {
+        given:
+        def entity = buildJpaEntity('test.Test', '''
+@Entity
+class Test {
+    @javax.persistence.Id
+    @GeneratedValue
+    private Long id;
+    public Long getId() { return id; }
+    public void setId(Long id) { this.id = id; }
+}
+''')
+
+        expect:
+        !new SqlQueryBuilder(dialect, '23.26').buildBatchCreateTableStatement(List.of(), entity).contains('IF NOT EXISTS')
+        !new SqlQueryBuilder(dialect, '23.26').buildDropTableStatements(entity).any { it.contains('IF EXISTS') }
+
+        where:
+        dialect << [Dialect.H2, Dialect.POSTGRES, Dialect.MYSQL, Dialect.SQL_SERVER]
     }
 
     void "test custom column definition"() {

@@ -46,6 +46,13 @@ public record SqlDialectOptions(
     public static final String ORACLE_23_1_0_VERSION = "23.1.0";
 
     /**
+     * Oracle version that adds the {@code UUID()} SQL function.
+     *
+     * @since 5.3
+     */
+    public static final String ORACLE_23_9_0_VERSION = "23.9.0";
+
+    /**
      * Build-time configuration prefix for SQL dialect options.
      *
      * <p>The annotation processor reads dialect-scoped values from its processor context and
