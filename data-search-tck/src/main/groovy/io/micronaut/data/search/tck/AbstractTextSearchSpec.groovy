@@ -22,6 +22,7 @@ import io.micronaut.data.model.Sort
 import io.micronaut.data.model.search.MatchMode
 import io.micronaut.data.model.search.SearchCapability
 import io.micronaut.data.model.search.SearchQuery
+import io.micronaut.data.model.search.SearchSyntax
 import io.micronaut.data.model.search.UnsupportedSearchFeatureException
 import io.micronaut.data.model.vector.Vector
 import io.micronaut.data.model.vector.search.Score
@@ -102,6 +103,15 @@ abstract class AbstractTextSearchSpec extends Specification {
     @Nullable
     String noStemmingQueryLanguage() {
         return noStemmingLanguage()
+    }
+
+    /**
+     * @return A query in the backend's own syntax matching the books about programming other than the Kotlin
+     * one, or {@code null} when the backend has no native syntax to test
+     */
+    @Nullable
+    String nativeProgrammingWithoutKotlinQuery() {
+        return null
     }
 
     /**
@@ -365,6 +375,15 @@ abstract class AbstractTextSearchSpec extends Specification {
         rejects(SearchQuery.builder("programming").boost("title", 2).build()) == !capabilities().contains(SearchCapability.BOOST)
         rejects(SearchQuery.builder("kotlimm").fuzzy(2).build()) == !capabilities().contains(SearchCapability.FUZZINESS)
         rejects(SearchQuery.builder("programming").language(noStemmingQueryLanguage() ?: "simple").build()) == !capabilities().contains(SearchCapability.LANGUAGE_OVERRIDE)
+    }
+
+    void "the native syntax passes the query string to the store unparsed"() {
+        assumeTrue(nativeProgrammingWithoutKotlinQuery() != null)
+
+        expect:
+        bookSearchRepository.findByTitleSearchNative(nativeProgrammingWithoutKotlinQuery())*.title == ["The Rust Programming Language"]
+        bookSearchRepository.search(SearchQuery.builder(nativeProgrammingWithoutKotlinQuery()).syntax(SearchSyntax.NATIVE).build()).results()*.entity()*.title == ["The Rust Programming Language"]
+        SearchQuery.builder("x").syntax(SearchSyntax.NATIVE).build().mode == MatchMode.NATIVE
     }
 
     void "a language override selects the stemming of the query"() {

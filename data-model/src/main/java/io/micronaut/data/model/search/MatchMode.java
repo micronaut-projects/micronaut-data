@@ -44,7 +44,18 @@ public enum MatchMode {
     /**
      * Terms match within an edit distance, where the backend supports it.
      */
-    FUZZY;
+    FUZZY,
+    /**
+     * The search string is the store's own query syntax and is passed through unparsed: a
+     * {@code tsquery} on PostgreSQL, a {@code CONTAINS} query on Oracle Text, a {@code $text} search
+     * string on MongoDB, a {@code queryString} on MongoDB Search and a {@code query_string} on
+     * Elasticsearch and OpenSearch.
+     *
+     * <p>Only pass trusted input: the native syntax is not escaped, so a user could widen the query.
+     * On Elasticsearch and OpenSearch {@code field:value} reaches fields outside the search fields;
+     * leading wildcards are disabled there.</p>
+     */
+    NATIVE;
 
     /**
      * Resolves the match mode of a method keyword such as {@code SearchAll} or {@code SearchPhrase}.
@@ -60,6 +71,7 @@ public enum MatchMode {
             case "Phrase" -> PHRASE;
             case "Prefix" -> PREFIX;
             case "Fuzzy" -> FUZZY;
+            case "Native" -> NATIVE;
             default -> null;
         };
     }
@@ -74,6 +86,7 @@ public enum MatchMode {
             case PHRASE -> TextSearchSupport.KEYWORD + "Phrase";
             case PREFIX -> TextSearchSupport.KEYWORD + "Prefix";
             case FUZZY -> TextSearchSupport.KEYWORD + "Fuzzy";
+            case NATIVE -> TextSearchSupport.KEYWORD + "Native";
         };
     }
 }

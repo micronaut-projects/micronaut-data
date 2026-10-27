@@ -133,6 +133,13 @@ public final class SearchQuery {
     }
 
     /**
+     * @return The syntax of the query string: {@link SearchSyntax#NATIVE} when the mode is {@link MatchMode#NATIVE}
+     */
+    public SearchSyntax getSyntax() {
+        return mode == MatchMode.NATIVE ? SearchSyntax.NATIVE : SearchSyntax.SIMPLE;
+    }
+
+    /**
      * @return The maximum edit distance for {@link MatchMode#FUZZY}, {@code 0} for the backend default
      */
     public int getFuzziness() {
@@ -314,6 +321,23 @@ public final class SearchQuery {
          */
         public Builder mode(MatchMode mode) {
             this.mode = Objects.requireNonNull(mode, "mode must not be null");
+            return this;
+        }
+
+        /**
+         * Selects the syntax of the query string: {@link SearchSyntax#NATIVE} passes it to the store
+         * unparsed, as the {@link MatchMode#NATIVE} mode; {@link SearchSyntax#SIMPLE} keeps the portable
+         * grammar and the mode set so far.
+         *
+         * @param syntax The syntax
+         * @return This builder
+         */
+        public Builder syntax(SearchSyntax syntax) {
+            if (Objects.requireNonNull(syntax, "syntax must not be null") == SearchSyntax.NATIVE) {
+                this.mode = MatchMode.NATIVE;
+            } else if (this.mode == MatchMode.NATIVE) {
+                this.mode = MatchMode.ANY;
+            }
             return this;
         }
 
