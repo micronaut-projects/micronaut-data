@@ -256,7 +256,14 @@ public final class GraphEntities {
         return name;
     }
 
-    private static boolean isPlainIdentifier(String name) {
+    /**
+     * Whether a name can appear in a query without quoting: a letter or underscore followed by
+     * letters, digits and underscores.
+     *
+     * @param name The name
+     * @return True if it needs no quoting
+     */
+    public static boolean isPlainIdentifier(String name) {
         if (name.isEmpty() || !Character.isLetter(name.charAt(0))) {
             return false;
         }
