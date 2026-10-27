@@ -10,7 +10,7 @@ import io.micronaut.inject.ExecutableMethod
  */
 class BuildMongoSearchIndexQuerySpec extends AbstractDataSpec {
 
-    private BeanDefinition<?> articleRepository(String methods) {
+    private BeanDefinition<?> articleRepository(String methods, String searchIndex = 'name = "articles_search"') {
         buildRepository('test.ArticleRepository', """
 import io.micronaut.data.annotation.search.SearchField;
 import io.micronaut.data.annotation.search.SearchWeight;
@@ -23,7 +23,7 @@ import io.micronaut.data.repository.SearchRepository;
 
 @MappedEntity
 @Searchable(language = "german")
-@MongoSearchIndex(name = "articles_search")
+@MongoSearchIndex(${searchIndex})
 class Article {
     @Id
     @GeneratedValue
@@ -33,7 +33,10 @@ class Article {
     @SearchField
     private String body;
     private String author;
+    private io.micronaut.data.model.vector.FloatVector embedding;
 
+    public io.micronaut.data.model.vector.FloatVector getEmbedding() { return embedding; }
+    public void setEmbedding(io.micronaut.data.model.vector.FloatVector embedding) { this.embedding = embedding; }
     public String getId() { return id; }
     public void setId(String id) { this.id = id; }
     public String getTitle() { return title; }
@@ -97,6 +100,33 @@ ${methods}
         and: "a minimum score restricts on the added score field"
         TestUtils.getQuery(repository.getRequiredMethod("searchBySearch", String, io.micronaut.data.model.vector.search.Score)).startsWith(
                 '[{$search:{index:\'articles_search\',compound:{must:[{$mn_qp:0,$mn_search:\'ANY\',$mn_paths:[\'title\',\'body\'],$mn_boosts:{title:10}}]}}},{$addFields:{mn_score:{$meta:\'searchScore\'}}},{$match:{mn_score:{$gte:{$mn_qp:1}}}},')
+    }
+
+    void "a vector predicate renders a \$vectorSearch stage with the distance as an added field"() {
+        given:
+        def repository = articleRepository("""
+    SearchResults<Article> searchByEmbeddingNear(io.micronaut.data.model.vector.Vector vector, Score maxDistance);
+    List<Article> findTop5ByEmbeddingNear(io.micronaut.data.model.vector.Vector vector, Double maxDistance);
+""")
+        def distance = '{$subtract:[2,{$multiply:[2,{$meta:\'vectorSearchScore\'}]}]}'
+
+        expect:
+        TestUtils.getQuery(repository.getRequiredMethod("searchByEmbeddingNear", io.micronaut.data.model.vector.Vector, io.micronaut.data.model.vector.search.Score)).startsWith(
+                '[{$vectorSearch:{index:\'vector\',path:\'embedding\',queryVector:{$mn_qp:0},numCandidates:1000,limit:100}},{$addFields:{mn_score:' + distance + '}},{$match:{mn_score:{$lte:{$mn_qp:1}}}},')
+        TestUtils.getQuery(repository.getRequiredMethod("findTop5ByEmbeddingNear", io.micronaut.data.model.vector.Vector, Double)).startsWith(
+                '[{$vectorSearch:{index:\'vector\',path:\'embedding\',queryVector:{$mn_qp:0},numCandidates:100,limit:5}},{$addFields:{mn_score:' + distance + '}},{$match:{mn_score:{$lte:{$mn_qp:1}}}},')
+    }
+
+    void "a euclidean vector index maps the stage score back to the euclidean distance"() {
+        given:
+        def repository = articleRepository("""
+    SearchResults<Article> searchByEmbeddingNear(io.micronaut.data.model.vector.Vector vector, Score maxDistance);
+""", 'name = "articles_search", similarity = "euclidean"')
+        def distance = '{$subtract:[{$divide:[1,{$meta:\'vectorSearchScore\'}]},1]}'
+
+        expect:
+        TestUtils.getQuery(repository.getRequiredMethod("searchByEmbeddingNear", io.micronaut.data.model.vector.Vector, io.micronaut.data.model.vector.search.Score)).startsWith(
+                '[{$vectorSearch:{index:\'vector\',path:\'embedding\',queryVector:{$mn_qp:0},numCandidates:1000,limit:100}},{$addFields:{mn_score:' + distance + '}},{$match:{mn_score:{$lte:{$mn_qp:1}}}},')
     }
 
     void "a search predicate cannot be combined with OR"() {

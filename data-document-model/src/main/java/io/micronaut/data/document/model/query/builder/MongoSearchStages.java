@@ -18,6 +18,9 @@ package io.micronaut.data.document.model.query.builder;
 import io.micronaut.core.annotation.Internal;
 
 import java.util.ArrayList;
+import java.util.Collection;
+import java.util.LinkedHashMap;
+import java.util.LinkedHashSet;
 import java.util.List;
 import java.util.Map;
 
@@ -34,6 +37,13 @@ final class MongoSearchStages {
      * The temporary field holding the {@code searchHighlights} metadata.
      */
     static final String HIGHLIGHTS_FIELD = "__micronaut_highlights";
+    /**
+     * The cosine distance of a {@code $vectorSearch} hit: the stage scores a hit as {@code (1 + cosine) / 2},
+     * so the distance {@code 1 - cosine} is {@code 2 - 2 * score}, the measure the other stores return.
+     */
+    static final Map<String, Object> VECTOR_DISTANCE = Map.of("$subtract", List.of(2, Map.of("$multiply", List.of(2, Map.of("$meta", "vectorSearchScore")))));
+    // euclidean: score = 1 / (1 + distance), so distance = 1 / score - 1
+    static final Map<String, Object> EUCLIDEAN_DISTANCE = Map.of("$subtract", List.of(Map.of("$divide", List.of(1, Map.of("$meta", "vectorSearchScore"))), 1));
     private static final String HIGHLIGHT_START = "<em>";
     private static final String HIGHLIGHT_END = "</em>";
     private static final String HIGHLIGHT_SEPARATOR = " ... ";
@@ -44,6 +54,25 @@ final class MongoSearchStages {
     private static final String VALUE = "$$value";
 
     private MongoSearchStages() {
+    }
+
+    /**
+     * The {@code $search} stage: the operator placeholder rendered from the bound search string at runtime,
+     * inside a compound, with the highlighted paths.
+     *
+     * @param index The index name
+     * @param operator The operator placeholder
+     * @param highlightPaths The highlighted field paths
+     * @return The stage
+     */
+    static Map<String, Object> searchStage(String index, Map<String, Object> operator, Collection<String> highlightPaths) {
+        Map<String, Object> search = new LinkedHashMap<>();
+        search.put("index", index);
+        search.put("compound", Map.of("must", List.of(operator)));
+        if (!highlightPaths.isEmpty()) {
+            search.put("highlight", Map.of("path", new ArrayList<>(new LinkedHashSet<>(highlightPaths))));
+        }
+        return search;
     }
 
     /**
@@ -80,6 +109,18 @@ final class MongoSearchStages {
                 texts
             ))
         ));
+    }
+
+    /**
+     * The distance an entity's {@code $vectorSearch} score maps back to, by the similarity of its index:
+     * cosine and dotProduct scores are {@code (1 + similarity) / 2}, euclidean scores {@code 1 / (1 + distance)}.
+     *
+     * @param entity The entity, with its {@code @MongoSearchIndex(similarity)}
+     * @return The distance expression
+     */
+    static Map<String, Object> vectorDistance(io.micronaut.data.model.PersistentEntity entity) {
+        String similarity = entity.getAnnotationMetadata().stringValue(io.micronaut.data.document.mongo.MongoAnnotations.SEARCH_INDEX, "similarity").orElse("cosine");
+        return "euclidean".equals(similarity) ? EUCLIDEAN_DISTANCE : VECTOR_DISTANCE;
     }
 
     /**

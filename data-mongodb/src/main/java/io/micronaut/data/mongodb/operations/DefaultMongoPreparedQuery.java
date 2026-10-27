@@ -54,6 +54,9 @@ final class DefaultMongoPreparedQuery<E, R> extends DefaultBindableParametersPre
     private static final String SORT_STAGE = "$sort";
     private static final String SKIP_STAGE = "$skip";
     private static final String LIMIT_STAGE = "$limit";
+    private static final String VECTOR_SEARCH_STAGE = "$vectorSearch";
+    private static final int DEFAULT_VECTOR_CANDIDATES = 100;
+    private static final int MAX_VECTOR_CANDIDATES = 10000;
 
     private final DefaultPreparedQuery<E, R> defaultPreparedQuery;
     private final MongoStoredQuery<E, R> mongoStoredQuery;
@@ -223,6 +226,7 @@ final class DefaultMongoPreparedQuery<E, R> extends DefaultBindableParametersPre
             // The criteria query builder bakes the limit into the pipeline from the very same
             // parameter we are about to apply, so drop its stages rather than paginating twice
             removeTrailingPaginationStages(pipeline);
+            sizeVectorSearch(pipeline, (int) queryLimit.offset() + queryLimit.maxResults());
         }
         if (sort.isSorted()) {
             int existingSortIndex = -1;
@@ -267,6 +271,33 @@ final class DefaultMongoPreparedQuery<E, R> extends DefaultBindableParametersPre
                 pipeline.add(new BsonDocument().append(LIMIT_STAGE, new BsonInt32(maxResults)));
             }
         }
+    }
+
+    /**
+     * A {@code $vectorSearch} stage returns at most its {@code limit} hits, so the page must fit in it.
+     *
+     * @param pipeline The pipeline
+     * @param required The hits the page needs
+     */
+    private static void sizeVectorSearch(List<Bson> pipeline, int required) {
+        if (pipeline.isEmpty() || required <= 0) {
+            return;
+        }
+        BsonDocument first = pipeline.get(0).toBsonDocument();
+        BsonValue stage = first == null ? null : first.get(VECTOR_SEARCH_STAGE);
+        if (stage == null || !stage.isDocument()) {
+            return;
+        }
+        BsonDocument vectorSearch = stage.asDocument();
+        BsonValue limit = vectorSearch.get("limit");
+        if (limit == null || !limit.isNumber() || limit.asNumber().intValue() >= required) {
+            return;
+        }
+        // the stage belongs to the stored query's cached pipeline, so size a copy for this invocation only
+        BsonDocument sized = vectorSearch.clone();
+        sized.put("limit", new BsonInt32(required));
+        sized.put("numCandidates", new BsonInt32(Math.min(MAX_VECTOR_CANDIDATES, Math.max(required * 10, DEFAULT_VECTOR_CANDIDATES))));
+        pipeline.set(0, new BsonDocument(VECTOR_SEARCH_STAGE, sized));
     }
 
     /**

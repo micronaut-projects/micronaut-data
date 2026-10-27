@@ -110,6 +110,11 @@ public final class MongoReactiveCollectionsCreator extends AbstractMongoCollecti
                 public void createSearchIndex(MongoDatabase database, String collection, SearchIndexDefinition definition) {
                     Mono.from(database.getCollection(collection).createSearchIndex(definition.name(), definition.definition())).block();
                 }
+
+                @Override
+                public void createVectorIndex(MongoDatabase database, String collection, VectorIndexDefinition definition) {
+                    Flux.from(database.getCollection(collection).createSearchIndexes(List.of(definition.model()))).blockLast();
+                }
             };
         }, mongoCollectionNameProvider);
     }

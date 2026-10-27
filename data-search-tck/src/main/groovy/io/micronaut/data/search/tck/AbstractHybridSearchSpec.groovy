@@ -19,6 +19,7 @@ import io.micronaut.context.ApplicationContext
 import io.micronaut.data.model.Pageable
 import io.micronaut.data.model.Sort
 import io.micronaut.data.model.search.SearchQuery
+import io.micronaut.data.model.vector.FloatVector
 import io.micronaut.data.model.vector.Vector
 import io.micronaut.data.search.tck.entities.Article
 import io.micronaut.data.search.tck.repositories.ArticleHybridSearchRepository
@@ -38,16 +39,34 @@ abstract class AbstractHybridSearchSpec extends Specification {
     @Shared
     ApplicationContext context = ApplicationContext.run(properties)
 
-    abstract ArticleHybridSearchRepository getArticleRepository()
+    /**
+     * @return The repository under test, an {@link ArticleHybridSearchRepository} or a repository of an
+     * entity with the same properties as {@link Article} when the backend needs its own entity annotations
+     */
+    abstract def getArticleRepository()
+
+    /**
+     * Creates the entity the repository under test stores.
+     */
+    def newArticle(String title, String body, Vector embedding) {
+        return new Article(title, body, embedding as FloatVector)
+    }
+
+    /**
+     * Waits until the backend has indexed every saved entity, for stores that index asynchronously.
+     */
+    void awaitIndexing() {
+    }
 
     void setup() {
         articleRepository.deleteAll()
         articleRepository.saveAll([
-                new Article("Cooking with Coffee", "Recipes and desserts made with coffee beans", Vector.of([1f, 0f, 0f] as float[])),
-                new Article("Coffee Roasting", "Roasting green coffee beans at home", Vector.of([0.9f, 0.1f, 0f] as float[])),
-                new Article("Baking Bread", "Sourdough and yeast loaves for the home baker", Vector.of([0.2f, 0.9f, 0f] as float[])),
-                new Article("Java Concurrency", "Threads and locks for the working programmer", Vector.of([0f, 0.3f, 1f] as float[])),
+                newArticle("Cooking with Coffee", "Recipes and desserts made with coffee beans", Vector.of([1f, 0f, 0f] as float[])),
+                newArticle("Coffee Roasting", "Roasting green coffee beans at home", Vector.of([0.9f, 0.1f, 0f] as float[])),
+                newArticle("Baking Bread", "Sourdough and yeast loaves for the home baker", Vector.of([0.2f, 0.9f, 0f] as float[])),
+                newArticle("Java Concurrency", "Threads and locks for the working programmer", Vector.of([0f, 0.3f, 1f] as float[])),
         ])
+        awaitIndexing()
     }
 
     void cleanup() {

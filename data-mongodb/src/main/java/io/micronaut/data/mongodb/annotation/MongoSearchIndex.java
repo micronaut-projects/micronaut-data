@@ -66,6 +66,16 @@ public @interface MongoSearchIndex {
     String MEMBER_DYNAMIC = "dynamic";
 
     /**
+     * The vector index member.
+     */
+    String MEMBER_VECTOR_INDEX = "vectorIndex";
+
+    /**
+     * The similarity member.
+     */
+    String MEMBER_SIMILARITY = "similarity";
+
+    /**
      * @return The name of the search index, {@code default} unless set
      */
     String name() default "default";
@@ -80,4 +90,15 @@ public @interface MongoSearchIndex {
      * @return Whether the index maps every field dynamically in addition to the search fields
      */
     boolean dynamic() default false;
+
+    /**
+     * @return The name of the vector search index created for the {@link io.micronaut.data.model.vector.Vector}
+     * properties of the entity and searched with {@code $vectorSearch}, {@code vector} unless set
+     */
+    String vectorIndex() default "vector";
+
+    /**
+     * @return The similarity of the vector search index: {@code cosine}, {@code euclidean} or {@code dotProduct}
+     */
+    String similarity() default "cosine";
 }
