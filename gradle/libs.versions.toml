@@ -13,6 +13,8 @@ micronaut-sql = "7.2.0"
 micronaut-serde = "3.2.4"
 micronaut-spring = "6.1.0"
 micronaut-test = "5.1.1"
+micronaut-elasticsearch = "6.1.0"
+micronaut-opensearch = "2.1.1"
 micronaut-mongo = "6.2.0"
 micronaut-kotlin = "5.1.0"
 micronaut-multitenancy = "6.1.0"
@@ -76,6 +78,8 @@ micronaut-testresources = { module = 'io.micronaut.testresources:micronaut-test-
 micronaut-validation = { module = 'io.micronaut.validation:micronaut-validation-bom', version.ref = "micronaut-validation" }
 micronaut-logging = { module = "io.micronaut.logging:micronaut-logging-bom", version.ref = "micronaut-logging" }
 micronaut-mongo = { module = "io.micronaut.mongodb:micronaut-mongo-bom", version.ref = "micronaut-mongo" }
+micronaut-elasticsearch = { module = "io.micronaut.elasticsearch:micronaut-elasticsearch-bom", version.ref = "micronaut-elasticsearch" }
+micronaut-opensearch = { module = "io.micronaut.opensearch:micronaut-opensearch-bom", version.ref = "micronaut-opensearch" }
 micronaut-spring = { module = "io.micronaut.spring:micronaut-spring-bom", version.ref = "micronaut-spring" }
 micronaut-sql = { module = "io.micronaut.sql:micronaut-sql-bom", version.ref = "micronaut-sql" }
 micronaut-r2dbc = { module = "io.micronaut.r2dbc:micronaut-r2dbc-bom", version.ref = "micronaut-r2dbc" }
@@ -144,6 +148,7 @@ benchmark-spring-data-bom = { module = "org.springframework.data:spring-data-bom
 # TESTCONTAINERS
 
 testcontainers-azure = { module = "org.testcontainers:testcontainers-azure" }
+testcontainers-elasticsearch = { module = "org.testcontainers:testcontainers-elasticsearch" }
 
 # PLUGINS
 
