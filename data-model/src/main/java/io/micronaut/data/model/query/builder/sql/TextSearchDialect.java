@@ -107,6 +107,7 @@ public interface TextSearchDialect {
      * @param field The field expression
      * @param queryExpression The search string parameter
      * @param mode The match mode
+     * @param options The match options, with the language override when set
      * @param target Where the entity lives
      * @param appendExpression Renders an expression
      * @param appendParameter Creates a renderer binding the search string with the named converter
@@ -116,6 +117,7 @@ public interface TextSearchDialect {
                                Expression<?> field,
                                Expression<String> queryExpression,
                                MatchMode mode,
+                               TextMatchOptions options,
                                Target target,
                                Consumer<Expression<?>> appendExpression,
                                Function<String, Consumer<Expression<?>>> appendParameter);
@@ -207,6 +209,28 @@ public interface TextSearchDialect {
         if (options.fuzziness() > 1) {
             throw new UnsupportedSearchFeatureException(SearchCapability.FUZZINESS, store);
         }
+    }
+
+    /**
+     * Rejects a language override on a store whose analysis is fixed per index.
+     *
+     * @param options The options
+     * @param store The store name
+     */
+    static void rejectLanguage(TextMatchOptions options, String store) {
+        if (options.language() != null) {
+            throw new UnsupportedSearchFeatureException(SearchCapability.LANGUAGE_OVERRIDE, store);
+        }
+    }
+
+    /**
+     * @param fields The searched fields
+     * @param options The options
+     * @return The options' language override, else the language of the entity owning the fields
+     */
+    static String resolveLanguage(List<Expression<?>> fields, TextMatchOptions options) {
+        // the language is rendered inside the statement, so a query-time value is checked before it gets there
+        return options.language() != null ? TextSearchSupport.requireLanguageName(options.language()) : resolveLanguage(fields);
     }
 
     static @Nullable SearchWeight resolveWeight(Expression<?> field) {
@@ -336,7 +360,7 @@ public interface TextSearchDialect {
                 appendFuzzyMatch(query, fields, queryExpression, appendExpression, appendParameter);
                 return;
             }
-            String language = resolveLanguage(fields);
+            String language = resolveLanguage(fields, options);
             appendVector(query, fields, language, target.languageColumn(), appendExpression);
             query.append(" @@ ");
             appendTsQuery(query, queryExpression, mode, language, appendParameter);
@@ -435,7 +459,7 @@ public interface TextSearchDialect {
                 appendFuzzyScore(query, fields, queryExpression, appendExpression, appendParameter);
                 return;
             }
-            String language = resolveLanguage(fields);
+            String language = resolveLanguage(fields, options);
             query.append("ts_rank_cd(");
             appendVector(query, fields, language, target.languageColumn(), appendExpression);
             query.append(',');
@@ -448,10 +472,11 @@ public interface TextSearchDialect {
                                           Expression<?> field,
                                           Expression<String> queryExpression,
                                           MatchMode mode,
+                                          TextMatchOptions options,
                                           Target target,
                                           Consumer<Expression<?>> appendExpression,
                                           Function<String, Consumer<Expression<?>>> appendParameter) {
-            String language = resolveLanguage(List.of(field));
+            String language = resolveLanguage(List.of(field), options);
             query.append("ts_headline('").append(language).append("',");
             appendExpression.accept(field);
             query.append(',');
@@ -575,6 +600,7 @@ public interface TextSearchDialect {
          * default lexer, matching the {@code CONTEXT} indexes.
          */
         public static final String POLICY_NAME = "MN_SEARCH_POLICY";
+        private static final String ORACLE_TEXT = "Oracle Text";
 
         private static final String CONTAINS_SUFFIX = ") > 0";
 
@@ -587,7 +613,8 @@ public interface TextSearchDialect {
                                     Target target,
                                     Consumer<Expression<?>> appendExpression,
                                     Function<String, Consumer<Expression<?>>> appendParameter) {
-            rejectFuzziness(options, "Oracle Text");
+            rejectFuzziness(options, ORACLE_TEXT);
+            rejectLanguage(options, ORACLE_TEXT);
             if (fields.size() == 1) {
                 appendContains(query, fields.get(0), 1, queryExpression, target, appendExpression,
                     appendParameter.apply(OracleTextQueryConverter.converterFor(mode, OracleTextQueryConverter.Part.FULL)));
@@ -611,7 +638,8 @@ public interface TextSearchDialect {
                                       Target target,
                                       Consumer<Expression<?>> appendExpression,
                                       Function<String, Consumer<Expression<?>>> appendParameter) {
-            rejectFuzziness(options, "Oracle Text");
+            rejectFuzziness(options, ORACLE_TEXT);
+            rejectLanguage(options, ORACLE_TEXT);
             if (fields.size() == 1) {
                 query.append("SCORE(1)");
                 Double boost = boostOf(fields.get(0), options);
@@ -654,9 +682,11 @@ public interface TextSearchDialect {
                                           Expression<?> field,
                                           Expression<String> queryExpression,
                                           MatchMode mode,
+                                          TextMatchOptions options,
                                           Target target,
                                           Consumer<Expression<?>> appendExpression,
                                           Function<String, Consumer<Expression<?>>> appendParameter) {
+            rejectLanguage(options, ORACLE_TEXT);
             query.append("CTX_DOC.POLICY_SNIPPET('").append(POLICY_NAME).append("',");
             if (target.jsonColumn() != null && field instanceof io.micronaut.data.model.jpa.criteria.PersistentPropertyPath<?> propertyPath) {
                 query.append("JSON_VALUE(");

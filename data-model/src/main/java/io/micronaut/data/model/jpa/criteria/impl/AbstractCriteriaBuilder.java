@@ -1403,6 +1403,16 @@ public abstract class AbstractCriteriaBuilder implements PersistentEntityCriteri
     }
 
     @Override
+    public Expression<String> searchHighlight(Expression<?> field, Expression<String> query, MatchMode mode, TextMatchOptions options) {
+        if (options.isDefault()) {
+            return searchHighlight(field, query, mode);
+        }
+        // a trailing literal the query builders read back with TextSearchSupport.scoreArguments
+        return new FunctionExpression<>(TextSearchSupport.HIGHLIGHT_FUNCTION,
+            List.of(field, query, new LiteralExpression<>(mode.name()), new LiteralExpression<>(options)), String.class);
+    }
+
+    @Override
     public Expression<LocalDate> localDate() {
         return parameter(LocalDate.class, null, (Supplier<LocalDate>) () -> localDateTimeSupplier.get().toLocalDate());
     }

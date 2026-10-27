@@ -27,7 +27,7 @@ snippet::example.BookService[project-base="doc-examples/jdbc-search-example", so
 <3> The relevance score of the hit. On PostgreSQL it is the `ts_rank_cd` rank. Scores order the results and are not comparable between stores; `SearchResults.maxScore()` helps to normalise them.
 <4> `countHits(String)` counts the matches.
 
-The search string uses a portable grammar: words separated by whitespace match any term, `"quoted words"` match a phrase, a leading `-` excludes a term, and `OR` separates alternatives. `bake coffee -cake OR tea` matches rows containing `bake` or `coffee` but not `cake`, or rows containing `tea`. User input is always safe: Micronaut Data parses the string itself and converts it to the store's query syntax at bind time.
+The search string uses a portable grammar: words separated by whitespace match any term, `"quoted words"` match a phrase, a leading `-` excludes a term, and `OR` separates alternatives. `bake coffee -cake OR tea` matches rows containing `bake` or `coffee` but not `cake`, or rows containing `tea`. The search string is safe to take from user input: Micronaut Data parses it itself, converts it to the store's query syntax at bind time and binds it as a parameter. The other `SearchQuery` options are not meant for user input: `language` must be a configuration name and is rejected otherwise, `syntax(NATIVE)` passes the store's own syntax through, and `candidates` sizes the hybrid fetch.
 
 == Derived search methods
 
@@ -72,7 +72,7 @@ snippet::example.BookService[project-base="doc-examples/jdbc-search-example", so
 
 `minScore` restricts the hits to those whose score reaches the threshold, as a predicate the store evaluates (`ts_rank_cd(...) >= ?`, `SCORE(n) >= ?`, `min_score`), so pages are full and `totalHits` counts only the hits above it; MongoDB `$text` cannot restrict on its score and throws api:data.model.search.UnsupportedSearchFeatureException[]. On a hybrid search the threshold compares the fused score instead. A query is compiled at runtime through the same criteria API as a derived method, so a store that lacks the requested mode throws api:data.model.search.UnsupportedSearchFeatureException[] when the method runs rather than at compile time.
 
-`boost(field, factor)` weighs the matches of a property at query time, replacing its `@SearchField(weight)`: Oracle multiplies the field's `SCORE(n)`, Elasticsearch and OpenSearch boost the field (`title^2`) and MongoDB Search sets the operator's `score.boost`; PostgreSQL and MongoDB `$text` throw `UnsupportedSearchFeatureException`. `fuzzy(maxEdits)` selects the `FUZZY` mode with the edit distance: Elasticsearch, OpenSearch and MongoDB Search honour one or two edits (`term~2`, `fuzzy.maxEdits`), Oracle's `fuzzy` operator has a fixed similarity and rejects more than one edit. The criteria API carries both as api:data.model.search.TextMatchOptions[] on `textMatch` and `searchScore`. A language override is not supported by `search(SearchQuery)` and throws the same exception.
+`boost(field, factor)` weighs the matches of a property at query time, replacing its `@SearchField(weight)`: Oracle multiplies the field's `SCORE(n)`, Elasticsearch and OpenSearch boost the field (`title^2`) and MongoDB Search sets the operator's `score.boost`; PostgreSQL and MongoDB `$text` throw `UnsupportedSearchFeatureException`. `fuzzy(maxEdits)` selects the `FUZZY` mode with the edit distance: Elasticsearch, OpenSearch and MongoDB Search honour one or two edits (`term~2`, `fuzzy.maxEdits`), Oracle's `fuzzy` operator has a fixed similarity and rejects more than one edit. `language(name)` analyses the query with another text search configuration than the entity's: PostgreSQL passes it to `to_tsvector` and `to_tsquery` in place of `@Searchable(language)`, MongoDB `$text` sets `$language`, and Elasticsearch and OpenSearch analyse the query with the language's analyzer (`simple` disables stemming); Oracle and MongoDB Search, whose analysis is fixed per index, throw `UnsupportedSearchFeatureException`. The criteria API carries all three as api:data.model.search.TextMatchOptions[] on `textMatch`, `searchScore` and `searchHighlight`.
 
 snippet::example.BookService[project-base="doc-examples/elasticsearch-search-example", source="main", tags="options"]
 
@@ -155,5 +155,6 @@ The portable API is the same on every store; the table lists which optional capa
 |Reactive and async repositories |yes |yes |yes |yes |yes
 |Minimum score (`Score` parameter) |yes |yes |no |yes |yes
 |Per-row language (`@Language`) |yes |no |yes |no |no
+|Query language (`SearchQuery.language`) |yes |no |yes |no |yes
 |===
 

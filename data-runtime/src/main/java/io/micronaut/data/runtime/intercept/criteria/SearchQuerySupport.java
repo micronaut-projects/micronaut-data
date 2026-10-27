@@ -59,13 +59,11 @@ import java.util.Set;
 @Internal
 public final class SearchQuerySupport {
 
-    private static final String OPERATION = "search(SearchQuery)";
-
     private SearchQuerySupport() {
     }
 
     /**
-     * Finds the {@link SearchQuery} argument and rejects the options no store honours yet.
+     * Finds the {@link SearchQuery} argument.
      *
      * @param context The invocation context
      * @return The query
@@ -73,9 +71,6 @@ public final class SearchQuerySupport {
     public static SearchQuery findSearchQuery(MethodInvocationContext<?, ?> context) {
         for (Object value : context.getParameterValues()) {
             if (value instanceof SearchQuery searchQuery) {
-                if (searchQuery.getLanguage() != null) {
-                    throw new UnsupportedSearchFeatureException(SearchCapability.LANGUAGE_OVERRIDE, OPERATION);
-                }
                 return searchQuery;
             }
         }
@@ -100,7 +95,7 @@ public final class SearchQuerySupport {
         PersistentEntityRoot<Object> root = criteriaQuery.from(rootEntity);
         List<Expression<?>> fields = resolveFields(root, searchQuery);
         ParameterExpression<String> queryParameter = cb.parameter(String.class, null, searchQuery.getQuery());
-        TextMatchOptions options = new TextMatchOptions(searchQuery.getBoosts(), searchQuery.getFuzziness());
+        TextMatchOptions options = new TextMatchOptions(searchQuery.getBoosts(), searchQuery.getFuzziness(), searchQuery.getLanguage());
         Expression<Double> score = cb.searchScore(fields, queryParameter, searchQuery.getMode(), options);
         Predicate match = cb.textMatch(fields, queryParameter, searchQuery.getMode(), options);
         if (searchQuery.getMinScore() != null && !searchQuery.isHybrid()) {
@@ -114,7 +109,7 @@ public final class SearchQuerySupport {
         selections.add(root);
         selections.add(score.alias(TextSearchSupport.SCORE_ALIAS));
         for (String field : highlightFields) {
-            selections.add(cb.searchHighlight(root.get(requireSearchField(root, field)), queryParameter, searchQuery.getMode()).alias(TextSearchSupport.highlightAlias(field)));
+            selections.add(cb.searchHighlight(root.get(requireSearchField(root, field)), queryParameter, searchQuery.getMode(), options).alias(TextSearchSupport.highlightAlias(field)));
         }
         criteriaQuery.multiselect(selections);
         if (!pageable.getSort().isSorted()) {
@@ -168,7 +163,7 @@ public final class SearchQuerySupport {
         PersistentEntityRoot<Object> root = criteriaQuery.from(rootEntity);
         List<Expression<?>> fields = resolveFields(root, searchQuery);
         ParameterExpression<String> queryParameter = cb.parameter(String.class, null, searchQuery.getQuery());
-        TextMatchOptions options = new TextMatchOptions(searchQuery.getBoosts(), searchQuery.getFuzziness());
+        TextMatchOptions options = new TextMatchOptions(searchQuery.getBoosts(), searchQuery.getFuzziness(), searchQuery.getLanguage());
         Expression<Double> textScore = cb.searchScore(fields, queryParameter, searchQuery.getMode(), options);
         Expression<Double> vectorScore = cb.function(
             VectorScoringDialectSupport.SCORE_FUNCTION,

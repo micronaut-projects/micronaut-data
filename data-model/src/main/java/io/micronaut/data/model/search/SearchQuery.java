@@ -366,10 +366,16 @@ public final class SearchQuery {
         }
 
         /**
+         * Analyses the query with another language than the entity's. The SQL stores render the
+         * language inside the statement, so only a configuration name of letters, digits and
+         * underscores is accepted; pass an application constant, not user input.
+         *
          * @param language The language to analyse the query with
          * @return This builder
+         * @throws IllegalArgumentException When the language holds other characters
          */
         public Builder language(String language) {
+            TextSearchSupport.requireLanguageName(language);
             this.language = language;
             return this;
         }

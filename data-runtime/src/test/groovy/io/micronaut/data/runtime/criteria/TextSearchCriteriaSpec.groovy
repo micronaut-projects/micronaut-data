@@ -13,6 +13,11 @@ import io.micronaut.data.model.search.MatchMode
 import io.micronaut.data.model.search.TextSearchSupport
 import io.micronaut.data.model.vector.search.SearchResults
 import jakarta.persistence.criteria.Expression
+import io.micronaut.data.model.Pageable
+import io.micronaut.data.model.search.SearchCapability
+import io.micronaut.data.model.search.SearchQuery
+import io.micronaut.data.model.search.UnsupportedSearchFeatureException
+import io.micronaut.data.runtime.intercept.criteria.SearchQuerySupport
 import spock.lang.Specification
 
 /**
@@ -75,6 +80,29 @@ class TextSearchCriteriaSpec extends Specification {
 
         then:
         result.query.contains('CTX_DOC.POLICY_SNIPPET(\'MN_SEARCH_POLICY\',JSON_VALUE(search_json_article_.DATA,\'$.title\'),?,starttag => \'<em>\',endtag => \'</em>\') AS mn_hl_title')
+    }
+
+    void "a language override replaces the entity language of a PostgreSQL query and is rejected on Oracle"() {
+        given:
+        def searchQuery = SearchQuery.builder("coffee").language("simple").highlight("title").build()
+
+        when:
+        def postgres = ((PersistentEntityCriteriaQueryBuilder) SearchQuerySupport.textQuery(cb, SearchArticle as Class<Object>, searchQuery, Pageable.UNPAGED))
+                .build(AnnotationMetadata.EMPTY_METADATA, new SqlQueryBuilder(Dialect.POSTGRES))
+
+        then:
+        postgres.query.contains("to_tsvector('simple',coalesce(search_article_.\"title\",''))")
+        postgres.query.contains("to_tsquery('simple',?)")
+        postgres.query.contains("ts_headline('simple',search_article_.\"title\",to_tsquery('simple',?)")
+        !postgres.query.contains("'english'")
+
+        when:
+        ((PersistentEntityCriteriaQueryBuilder) SearchQuerySupport.textQuery(cb, SearchArticle as Class<Object>, searchQuery, Pageable.UNPAGED))
+                .build(AnnotationMetadata.EMPTY_METADATA, new SqlQueryBuilder(Dialect.ORACLE))
+
+        then:
+        def e = thrown(UnsupportedSearchFeatureException)
+        e.capability == SearchCapability.LANGUAGE_OVERRIDE
     }
 
     void "unsupported dialects reject the highlight function"() {
