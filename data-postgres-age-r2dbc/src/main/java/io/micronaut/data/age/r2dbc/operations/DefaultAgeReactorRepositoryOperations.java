@@ -28,7 +28,9 @@ import io.micronaut.data.graph.runtime.age.AgeGraphTenantResolver;
 import io.micronaut.data.graph.runtime.age.AgeParameters;
 import io.micronaut.data.graph.runtime.age.Agtype;
 import io.micronaut.data.graph.runtime.operations.AbstractReactiveGraphRepositoryOperations;
+import io.micronaut.data.r2dbc.transaction.R2dbcReactorTransactionOperations;
 import io.micronaut.json.JsonMapper;
+import io.micronaut.transaction.TransactionDefinition;
 import io.r2dbc.postgresql.codec.PostgresqlObjectId;
 import io.r2dbc.spi.ColumnMetadata;
 import io.r2dbc.spi.Connection;
@@ -53,7 +55,8 @@ import java.util.function.Function;
 
 /**
  * Runs Apache AGE statements on the reactive connections of an R2DBC connection factory, within the current reactive
- * transaction when there is one. AGE is loaded on each physical connection before its first statement.
+ * transaction when there is one. AGE is loaded on each physical connection before its first statement. Writes of
+ * entities, which run several statements, run in a transaction of their own when none is active.
  *
  * <p>The graph of an operation is that of the current tenant when there is an {@link AgeGraphTenantResolver}, else
  * the configured graph of the connection factory. The tenant is resolved when the operation is subscribed to, on the
@@ -82,6 +85,7 @@ final class DefaultAgeReactorRepositoryOperations extends AbstractReactiveGraphR
     private static final String R2DBC_PARAMETER = "$$, $1)";
 
     private final ReactorConnectionOperations<Connection> connectionOperations;
+    private final R2dbcReactorTransactionOperations transactionOperations;
     private final JsonMapper jsonMapper;
     private final String defaultGraph;
     private final @Nullable AgeGraphTenantResolver tenantResolver;
@@ -99,6 +103,7 @@ final class DefaultAgeReactorRepositoryOperations extends AbstractReactiveGraphR
 
     DefaultAgeReactorRepositoryOperations(DefaultAgeR2dbcRepositoryOperations operations,
                                           ReactorConnectionOperations<Connection> connectionOperations,
+                                          R2dbcReactorTransactionOperations transactionOperations,
                                           JsonMapper jsonMapper,
                                           String defaultGraph,
                                           @Nullable AgeGraphTenantResolver tenantResolver,
@@ -106,6 +111,7 @@ final class DefaultAgeReactorRepositoryOperations extends AbstractReactiveGraphR
                                           boolean createGraph) {
         super(operations);
         this.connectionOperations = connectionOperations;
+        this.transactionOperations = transactionOperations;
         this.jsonMapper = jsonMapper;
         this.defaultGraph = defaultGraph;
         this.tenantResolver = tenantResolver;
@@ -141,6 +147,25 @@ final class DefaultAgeReactorRepositoryOperations extends AbstractReactiveGraphR
                 ConnectionDefinition.DEFAULT.withAnnotationMetadata(annotationMetadata),
                 status -> prepare(status.getConnection(), graph).thenMany(Flux.defer(() -> work.apply(new Session(status.getConnection(), graph))))
             );
+        });
+    }
+
+    @Override
+    protected <R> Mono<R> withTransactionMono(AnnotationMetadata annotationMetadata, Function<ReactiveGraphSession, Mono<R>> work) {
+        // Joins the transaction of the Reactor context, or begins one so that the statements of the write commit or roll back together
+        return Mono.defer(() -> {
+            String graph = currentGraph();
+            return transactionOperations.withTransactionMono(TransactionDefinition.DEFAULT,
+                status -> prepare(status.getConnection(), graph).then(Mono.defer(() -> work.apply(new Session(status.getConnection(), graph)))));
+        });
+    }
+
+    @Override
+    protected <R> Flux<R> withTransactionFlux(AnnotationMetadata annotationMetadata, Function<ReactiveGraphSession, Flux<R>> work) {
+        return Flux.defer(() -> {
+            String graph = currentGraph();
+            return transactionOperations.withTransactionFlux(TransactionDefinition.DEFAULT,
+                status -> prepare(status.getConnection(), graph).thenMany(Flux.defer(() -> work.apply(new Session(status.getConnection(), graph)))));
         });
     }
 

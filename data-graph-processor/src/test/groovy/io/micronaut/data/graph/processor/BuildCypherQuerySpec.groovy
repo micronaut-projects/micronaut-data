@@ -4,6 +4,10 @@ import io.micronaut.data.graph.model.query.builder.LikePatternConverter
 import io.micronaut.data.intercept.annotation.DataMethodQueryParameter
 import io.micronaut.data.annotation.Query
 import io.micronaut.data.annotation.Relation
+import io.micronaut.data.graph.annotation.Relationship
+import io.micronaut.data.graph.model.GraphEntities
+import io.micronaut.data.model.runtime.RuntimeAssociation
+import io.micronaut.data.model.runtime.RuntimePersistentEntity
 import io.micronaut.data.intercept.annotation.DataMethod
 import io.micronaut.inject.BeanDefinition
 import io.micronaut.inject.ExecutableMethod
@@ -213,6 +217,39 @@ $MOVIES
 
         expect:
         introspection.getRequiredProperty('mentor', Object).annotationMetadata.enumValue(Relation, Relation.Kind).get() == Relation.Kind.MANY_TO_ONE
+    }
+
+    void "test the cascade of a relationship is carried to the entity metadata"() {
+        given:
+        def introspection = buildBeanIntrospection('test.Author', '''
+package test;
+
+import io.micronaut.data.annotation.*;
+import io.micronaut.data.graph.annotation.*;
+import java.util.*;
+
+@Node
+class Author {
+    @Id
+    private String name;
+    @Relationship(value = "CITES", cascade = Relation.Cascade.NONE)
+    private List<Author> cites = new ArrayList<>();
+    @Relationship("FOLLOWS")
+    private List<Author> follows = new ArrayList<>();
+    public String getName() { return name; }
+    public void setName(String name) { this.name = name; }
+    public List<Author> getCites() { return cites; }
+    public void setCites(List<Author> cites) { this.cites = cites; }
+    public List<Author> getFollows() { return follows; }
+    public void setFollows(List<Author> follows) { this.follows = follows; }
+}
+''')
+        def entity = new RuntimePersistentEntity(introspection)
+
+        expect:
+        introspection.getRequiredProperty('cites', List).annotationMetadata.enumValue(Relationship, 'cascade', Relation.Cascade).get() == Relation.Cascade.NONE
+        GraphEntities.cascade(entity.getPropertyByName('cites') as RuntimeAssociation) == Relation.Cascade.NONE
+        GraphEntities.cascade(entity.getPropertyByName('follows') as RuntimeAssociation) == Relation.Cascade.ALL
     }
 
     void "test dynamic relationships are collected apart from declared ones"() {

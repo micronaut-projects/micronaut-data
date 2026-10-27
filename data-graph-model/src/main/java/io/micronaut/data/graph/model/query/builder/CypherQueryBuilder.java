@@ -69,12 +69,10 @@ import java.time.temporal.Temporal;
 import java.time.temporal.TemporalAmount;
 import java.util.ArrayList;
 import java.util.Collection;
-import java.util.HashSet;
 import java.util.Iterator;
 import java.util.LinkedHashMap;
 import java.util.List;
 import java.util.Map;
-import java.util.Set;
 import java.util.function.UnaryOperator;
 import java.util.UUID;
 import java.util.stream.Collectors;
@@ -177,19 +175,19 @@ public class CypherQueryBuilder implements GraphQueryBuilder {
      * The key of the properties of a node in the row of a batched write.
      */
     public static final String ROW_PROPERTIES = "properties";
-    private static final String WITH = " WITH ";
-    private static final String WITH_DISTINCT = " WITH DISTINCT ";
+    static final String WITH = " WITH ";
+    static final String WITH_DISTINCT = " WITH DISTINCT ";
+    static final String CLOSE_AS = ") AS ";
+    static final String AND = " AND ";
+    static final String WHERE = " WHERE ";
+    static final String RETURN = " RETURN ";
     private static final String DISTINCT = "DISTINCT ";
     private static final String TO_LOWER = "toLower(";
     private static final String RESULT = "result";
-    private static final String CLOSE_AS = ") AS ";
-    private static final String RETURN = " RETURN ";
     private static final String MATCH_OPEN = "MATCH (";
     private static final String CLOSE_WHERE = ") WHERE ";
     private static final String NOT_OPEN = "NOT (";
-    private static final String WHERE = " WHERE ";
     private static final String CLOSE_AS_RESULT = ") AS result";
-    private static final String AND = " AND ";
     private static final String SET = " SET ";
     private static final String RETURN_COUNT_RESULT = " RETURN count(*) AS result";
     private static final String DETACH_DELETE = " DETACH DELETE ";
@@ -221,7 +219,7 @@ public class CypherQueryBuilder implements GraphQueryBuilder {
         StringBuilder query = new StringBuilder();
         appendMatch(query, state, where);
         appendReturn(query, state, selectionRenderer, definition.isDistinct(), orders);
-        String orderBy = orderByClause(orders);
+        String orderBy = CypherFragments.orderByClause(orders);
         if (!orderBy.isEmpty()) {
             query.append(" ORDER BY ").append(orderBy);
         }
@@ -237,7 +235,7 @@ public class CypherQueryBuilder implements GraphQueryBuilder {
     private void appendReturn(StringBuilder query, QueryState state, SelectionRenderer selectionRenderer, boolean distinct, List<OrderItem> orders) {
         List<String> carried = List.of();
         if (state.hasPatterns() && (selectionRenderer.entity || selectionRenderer.rootOnly)) {
-            carried = appendDistinctRoot(query, orders);
+            carried = CypherFragments.appendDistinctRoot(query, orders);
         }
         List<String> joinColumns = List.of();
         if (selectionRenderer.entity) {
@@ -256,35 +254,6 @@ public class CypherQueryBuilder implements GraphQueryBuilder {
         } else {
             query.append(selectionRenderer.out);
         }
-    }
-
-    /**
-     * Reduces the rows of the relationship patterns added by criteria back to one row per root node.
-     * A sort on a property reached through such a pattern is aggregated here, because the pattern
-     * variables leave the scope at this point: an ascending order sorts by the smallest value of the
-     * related nodes, a descending one by the largest.
-     *
-     * @param query  The query
-     * @param orders The orders of the query
-     * @return The aliases of the aggregated order values, which later {@code WITH} clauses must carry
-     */
-    private static List<String> appendDistinctRoot(StringBuilder query, List<OrderItem> orders) {
-        List<String> carried = new ArrayList<>();
-        for (OrderItem order : orders) {
-            if (order.onAssociation) {
-                if (carried.isEmpty()) {
-                    query.append(WITH).append(ROOT);
-                }
-                String alias = "o" + carried.size();
-                query.append(", ").append(order.ascending ? "min(" : "max(").append(order.expression).append(CLOSE_AS).append(alias);
-                order.alias = alias;
-                carried.add(alias);
-            }
-        }
-        if (carried.isEmpty()) {
-            query.append(WITH_DISTINCT).append(ROOT);
-        }
-        return carried;
     }
 
     @Override
@@ -565,7 +534,74 @@ public class CypherQueryBuilder implements GraphQueryBuilder {
      * @param propertyNames The stored names of the properties every node of the batch writes
      */
     protected void appendBatchProperties(StringBuilder query, String row, List<String> propertyNames) {
-        query.append(SET).append(ROOT).append(" += ").append(row).append('.').append(ROW_PROPERTIES);
+        appendBatchProperties(query, ROOT, row, propertyNames);
+    }
+
+    /**
+     * Appends the {@code SET} of the properties of a graph element of a batched write from the map of its row.
+     *
+     * @param query         The query
+     * @param variable      The variable of the graph element
+     * @param row           The variable of the row
+     * @param propertyNames The stored names of the properties every row of the batch writes
+     * @since 5.3.0
+     */
+    protected void appendBatchProperties(StringBuilder query, String variable, String row, List<String> propertyNames) {
+        query.append(SET).append(variable).append(" += ").append(row).append('.').append(ROW_PROPERTIES);
+    }
+
+    @Override
+    public boolean supportsBatchedLinks() {
+        return true;
+    }
+
+    /**
+     * Builds an {@code UNWIND} over the rows that matches the owner and the target of each row and merges the
+     * relationship between them like {@link #buildLinkQuery(Association, PersistentEntity, PersistentEntity, List, PersistentProperty)}.
+     *
+     * @param association          The association
+     * @param owner                The entity that declares the association
+     * @param target               The node entity at the far end
+     * @param propertyNames        The stored names of the relationship properties every row writes
+     * @param relationshipIdentity The identity of the relationship entity, or null if none
+     * @return The query
+     */
+    @Override
+    public String buildLinksQuery(Association association,
+                                  PersistentEntity owner,
+                                  PersistentEntity target,
+                                  List<String> propertyNames,
+                                  @Nullable PersistentProperty relationshipIdentity) {
+        String row = "row";
+        StringBuilder query = new StringBuilder("UNWIND $").append(ROWS_PARAMETER).append(" AS ").append(row).append(' ');
+        appendLinkNodes(query, owner, target, row);
+        query.append(" MERGE ");
+        String rel = "[" + PATH_RELATIONSHIP + ":" + GraphEntities.escapeName(GraphEntities.relationshipType(association)) + "]";
+        query.append(directed("(" + LINK_FROM + ")", rel, "(" + LINK_TO + ")", GraphEntities.direction(association)));
+        if (!propertyNames.isEmpty()) {
+            appendBatchProperties(query, PATH_RELATIONSHIP, row, propertyNames);
+        }
+        return query.append(RETURN).append(row).append('.').append(ROW_POSITION).append(" AS ").append(ROW_POSITION).append(", ")
+            .append(relationshipIdentity != null ? identityExpression(relationshipIdentity, PATH_RELATIONSHIP) : "null")
+            .append(" AS ").append(ID_PARAMETER).toString();
+    }
+
+    /**
+     * Appends the {@code MATCH} of the owner and the target of a row of a batched link write, as {@code a} and {@code b}.
+     *
+     * @param query  The query
+     * @param owner  The entity that declares the association
+     * @param target The node entity at the far end
+     * @param row    The variable of the row
+     * @since 5.3.0
+     */
+    protected void appendLinkNodes(StringBuilder query, PersistentEntity owner, PersistentEntity target, String row) {
+        query.append(MATCH_OPEN)
+            .append(LINK_FROM).append(labelExpression(owner)).append("), (")
+            .append(LINK_TO).append(labelExpression(target)).append(CLOSE_WHERE)
+            .append(identityExpression(owner.getIdentity(), LINK_FROM)).append(" = ").append(row).append('.').append(LINK_FROM_PARAMETER)
+            .append(AND)
+            .append(identityExpression(target.getIdentity(), LINK_TO)).append(" = ").append(row).append('.').append(LINK_TO_PARAMETER);
     }
 
     private String versionedMatch(PersistentEntity entity) {
@@ -658,7 +694,7 @@ public class CypherQueryBuilder implements GraphQueryBuilder {
         if (definition.end() != null) {
             conditions.add(endpointCondition(state, definition, PATH_END, definition.end()));
         }
-        String types = relationshipTypes(definition.relationships());
+        String types = CypherFragments.relationshipTypes(definition.relationships());
         StringBuilder query = new StringBuilder("MATCH ");
         if (definition.kind() == PathQueryDefinition.Kind.RELATIONSHIPS) {
             appendRelationshipQuery(query, definition, label, types, conditions);
@@ -675,7 +711,7 @@ public class CypherQueryBuilder implements GraphQueryBuilder {
             direction = Direction.OUTGOING;
         }
         query.append(directed("(" + PATH_START + label + ")", "[" + PATH_RELATIONSHIP + types + "]", "(" + PATH_END + label + ")", direction));
-        appendWhere(query, conditions);
+        CypherFragments.appendWhere(query, conditions);
         switch (definition.result()) {
             case COUNT -> query.append(" RETURN count(").append(PATH_RELATIONSHIP).append(CLOSE_AS_RESULT);
             case EXISTS -> query.append(" RETURN true AS result LIMIT 1");
@@ -689,7 +725,7 @@ public class CypherQueryBuilder implements GraphQueryBuilder {
             conditions.add(PATH_START + " <> " + PATH_END);
         }
         query.append('(').append(PATH_START).append(label).append("), (").append(PATH_END).append(label).append(')');
-        appendWhere(query, conditions);
+        CypherFragments.appendWhere(query, conditions);
         appendPathMatch(query, definition.kind(), "[" + types + pathDepth(definition) + "]", definition.direction());
         appendPathReturn(query, definition);
     }
@@ -773,27 +809,6 @@ public class CypherQueryBuilder implements GraphQueryBuilder {
             ? identityExpression(property, variable)
             : variable + "." + GraphEntities.escapeName(GraphEntities.propertyName(property));
         return expression + " = " + parameterPlaceholder(index);
-    }
-
-    private static void appendWhere(StringBuilder query, List<String> conditions) {
-        if (!conditions.isEmpty()) {
-            query.append(WHERE).append(String.join(AND, conditions));
-        }
-    }
-
-    private static String relationshipTypes(List<Association> associations) {
-        if (associations.isEmpty()) {
-            return "";
-        }
-        StringBuilder sb = new StringBuilder();
-        Set<String> seen = new HashSet<>();
-        for (Association association : associations) {
-            String type = GraphEntities.escapeName(GraphEntities.relationshipType(association));
-            if (seen.add(type)) {
-                sb.append(sb.isEmpty() ? ":" : "|").append(type);
-            }
-        }
-        return sb.toString();
     }
 
     /**
@@ -1000,7 +1015,7 @@ public class CypherQueryBuilder implements GraphQueryBuilder {
         Association[] associationPath = joinPath.getAssociationPath();
         Association association = associationPath[0];
         boolean relationshipEntity = GraphEntities.isRelationshipEntity(association.getAssociatedEntity());
-        if (associationPath.length > 2 || (associationPath.length == 2 && !(relationshipEntity && isTargetNode(associationPath[1])))) {
+        if (associationPath.length > 2 || (associationPath.length == 2 && !(relationshipEntity && CypherFragments.isTargetNode(associationPath[1])))) {
             throw new IllegalArgumentException("Graph repositories can only join a relationship with properties and its target node, found join path: " + joinPath.getPath());
         }
         if (!GraphEntities.isRelationship(association)) {
@@ -1032,10 +1047,6 @@ public class CypherQueryBuilder implements GraphQueryBuilder {
             query.append(", ").append(collect).append(" AS ").append(column);
             columns.add(column);
         }
-    }
-
-    private static boolean isTargetNode(Association association) {
-        return association.getAnnotationMetadata().hasStereotype("io.micronaut.data.graph.annotation.TargetNode");
     }
 
     private @Nullable String renderWhere(@Nullable Predicate predicate, QueryState state) {
@@ -1075,25 +1086,6 @@ public class CypherQueryBuilder implements GraphQueryBuilder {
         return items;
     }
 
-    private static String orderByClause(List<OrderItem> orders) {
-        StringBuilder sb = new StringBuilder();
-        for (OrderItem order : orders) {
-            if (!sb.isEmpty()) {
-                sb.append(", ");
-            }
-            String expression = order.alias != null ? order.alias : order.expression;
-            switch (order.nulls) {
-                case FIRST -> sb.append("CASE WHEN ").append(expression).append(" IS NULL THEN 0 ELSE 1 END, ");
-                case LAST -> sb.append("CASE WHEN ").append(expression).append(" IS NULL THEN 1 ELSE 0 END, ");
-                default -> {
-                    // No null precedence
-                }
-            }
-            sb.append(expression).append(order.ascending ? " ASC" : " DESC");
-        }
-        return sb.toString();
-    }
-
     /**
      * Renders a literal value. Temporal values are rendered through the Cypher temporal functions, so that they
      * compare with the temporal properties the values are stored as.
@@ -1106,18 +1098,14 @@ public class CypherQueryBuilder implements GraphQueryBuilder {
             case null -> "null";
             case Number number -> number.toString();
             case Boolean bool -> bool.toString();
-            case Enum<?> e -> quote(e.name());
+            case Enum<?> e -> CypherFragments.quote(e.name());
             case Collection<?> collection -> collection.stream().map(this::asLiteral).collect(Collectors.joining(", ", "[", "]"));
             case Temporal temporal -> CypherTemporals.literal(temporal);
             case TemporalAmount amount -> CypherTemporals.literal(amount);
             // Deliberately a string: Cypher has no UUID type, so UUID properties are stored and compared as strings
-            case UUID uuid -> quote(uuid.toString());
-            default -> quote(value.toString());
+            case UUID uuid -> CypherFragments.quote(uuid.toString());
+            default -> CypherFragments.quote(value.toString());
         };
-    }
-
-    private static String quote(String value) {
-        return "'" + value.replace("\\", "\\\\").replace("'", "\\'") + "'";
     }
 
     /**
@@ -1192,7 +1180,7 @@ public class CypherQueryBuilder implements GraphQueryBuilder {
                     path.append('.');
                 }
                 path.append(association.getName());
-                if (relationshipEntityPattern != null && isTargetNode(association)) {
+                if (relationshipEntityPattern != null && CypherFragments.isTargetNode(association)) {
                     variable = relationshipEntityPattern.nodeVariable();
                     relationshipEntityPattern = null;
                     continue;
@@ -1780,7 +1768,7 @@ public class CypherQueryBuilder implements GraphQueryBuilder {
                         .incomingMethodParameterProperty(bound)
                         .outgoingQueryParameterProperty(bound),
                     binding -> likeBinding(binding, escape));
-                out.append('(').append(quote(flags)).append(" + ").append(parameterPlaceholder(index)).append(')');
+                out.append('(').append(CypherFragments.quote(flags)).append(" + ").append(parameterPlaceholder(index)).append(')');
             } else {
                 throw new UnsupportedOperationException("Unsupported LIKE pattern: " + pattern);
             }
@@ -1936,37 +1924,4 @@ public class CypherQueryBuilder implements GraphQueryBuilder {
         }
     }
 
-    /**
-     * A relationship to fetch and the relationships of its nodes to fetch with it.
-     */
-    private static final class JoinTree {
-        private final Association association;
-        private final Map<String, JoinTree> children = new LinkedHashMap<>();
-
-        private JoinTree(Association association) {
-            this.association = association;
-        }
-
-        private JoinTree child(Association child) {
-            return children.computeIfAbsent(child.getName(), name -> new JoinTree(child));
-        }
-    }
-
-    /**
-     * A rendered {@code ORDER BY} item.
-     */
-    private static final class OrderItem {
-        private final String expression;
-        private final boolean ascending;
-        private final Nulls nulls;
-        private final boolean onAssociation;
-        private @Nullable String alias;
-
-        private OrderItem(String expression, boolean ascending, Nulls nulls, boolean onAssociation) {
-            this.expression = expression;
-            this.ascending = ascending;
-            this.nulls = nulls;
-            this.onAssociation = onAssociation;
-        }
-    }
 }
