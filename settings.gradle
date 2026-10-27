@@ -117,6 +117,11 @@ include 'doc-examples:jdbc-search-example-kotlin'
 include 'doc-examples:jdbc-search-example-groovy'
 include 'doc-examples:jdbc-search-example-python'
 
+include 'doc-examples:mongo-search-example-java'
+include 'doc-examples:mongo-search-example-kotlin'
+include 'doc-examples:mongo-search-example-groovy'
+include 'doc-examples:mongo-search-example-python'
+
 include 'doc-examples:jdbc-jakarta-data-example-java'
 include 'doc-examples:jdbc-jakarta-data-example-kotlin'
 include 'doc-examples:jdbc-jakarta-data-example-groovy'

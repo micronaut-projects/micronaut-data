@@ -19,12 +19,12 @@ import io.micronaut.core.annotation.Internal;
 import io.micronaut.data.annotation.search.SearchField;
 import io.micronaut.data.annotation.search.SearchWeight;
 import io.micronaut.data.annotation.search.Searchable;
-import io.micronaut.data.model.PersistentEntity;
 import io.micronaut.data.model.PersistentProperty;
 import io.micronaut.data.model.query.builder.QueryParameterBinding;
 import io.micronaut.data.model.runtime.convert.PostgresTsQueryConverter;
 import io.micronaut.data.model.search.MatchMode;
 import io.micronaut.data.model.search.SearchCapability;
+import io.micronaut.data.model.search.TextSearchSupport;
 import io.micronaut.data.model.search.UnsupportedSearchFeatureException;
 import jakarta.persistence.criteria.Expression;
 import org.jspecify.annotations.Nullable;
@@ -44,7 +44,7 @@ public interface TextSearchDialect {
     /**
      * The default text search configuration when the entity declares no {@link Searchable#language()}.
      */
-    String DEFAULT_LANGUAGE = "english";
+    String DEFAULT_LANGUAGE = TextSearchSupport.DEFAULT_LANGUAGE;
 
     /**
      * Appends the predicate {@code <fields> match <query>}.
@@ -103,11 +103,7 @@ public interface TextSearchDialect {
         for (Expression<?> field : fields) {
             PersistentProperty property = asProperty(field);
             if (property != null) {
-                PersistentEntity owner = property.getOwner();
-                String language = owner.getAnnotationMetadata().stringValue(Searchable.class, Searchable.MEMBER_LANGUAGE).orElse(null);
-                if (language != null && !language.isEmpty()) {
-                    return language;
-                }
+                return TextSearchSupport.resolveLanguage(property.getOwner());
             }
         }
         return DEFAULT_LANGUAGE;
@@ -144,12 +140,7 @@ public interface TextSearchDialect {
      * @return The wrapped binding
      */
     static QueryParameterBinding withConverter(QueryParameterBinding binding, String converterClassName) {
-        return new DelegatingBuilderParameterBinding(binding) {
-            @Override
-            public String getConverterClassName() {
-                return converterClassName;
-            }
-        };
+        return TextSearchSupport.withConverter(binding, converterClassName);
     }
 
     /**
