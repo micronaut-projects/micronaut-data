@@ -5,6 +5,7 @@ Micronaut Data provides vector value types in `io.micronaut.data.model.vector`:
 - `FloatVector`: `float[]` backed values.
 - `DoubleVector`: `double[]` backed values.
 - `ByteVector`: `byte[]` backed values.
+- `BinaryVector`: one bit per dimension, packed eight per byte (Oracle only, see <<binaryVectors, Binary vectors>>).
 
 Sparse vectors are represented by:
 
@@ -107,10 +108,33 @@ Only one `ScoringFunction` parameter is allowed for vector derived search method
 Current derived-search scoring function support by dialect:
 
 - PostgreSQL: `COSINE`, `L2_EUCLIDEAN`, `DOT`
-- Oracle: `COSINE`, `L2_EUCLIDEAN`, `L2_EUCLIDEAN_SQUARED`, `DOT`, `L1_MANHATTAN`
+- Oracle: `COSINE`, `L2_EUCLIDEAN`, `L2_EUCLIDEAN_SQUARED`, `DOT`, `L1_MANHATTAN`, and `HAMMING` and `JACCARD` for binary vectors
 - MySQL: `COSINE`, `L2_EUCLIDEAN`, `DOT`
 
 If an unsupported function is requested for the active dialect, Micronaut Data fails fast with an `IllegalArgumentException`.
+
+[[binaryVectors]]
+== Binary vectors (Oracle)
+
+Oracle stores binary vectors in `VECTOR(n, BINARY)` columns, where each dimension is a single bit. Map them with `BinaryVector`. Set the number of dimensions, in bits, with `@VectorStorage(length = N)`. Oracle requires it to be a multiple of 8.
+
+Binary vectors are compared with Hamming distance (`HAMMING`) or Jaccard distance (`JACCARD`), and `@VectorIndex` accepts both as its `distanceType`:
+
+snippet::example.ImageFingerprint[project-base="doc-examples/jdbc-vector-example", source="main"]
+
+`BinaryVector` holds the bits packed eight per byte, most significant bit first, which is the layout Oracle uses. Create one from packed bytes, or from one `boolean` per bit with `BinaryVector.of`:
+
+snippet::example.ImageFingerprintRepositorySpec[project-base="doc-examples/jdbc-vector-example", tags="binary_vector"]
+
+Derived search methods on a binary vector property use `HAMMING` by default, because Oracle compares binary vectors with `HAMMING` and `JACCARD` only. A `ScoringFunction` parameter selects `JACCARD`:
+
+snippet::example.ImageFingerprintRepository[project-base="doc-examples/jdbc-vector-example", source="main"]
+
+snippet::example.ImageFingerprintRepositorySpec[project-base="doc-examples/jdbc-vector-example", tags="binary_search"]
+
+The Hamming score is the number of bits that differ, and its `Similarity` is the same value. The Jaccard score runs from `0` (the same set bits) to `1` (no set bits in common), and its `Similarity` is one minus the score.
+
+The array conversions of the `Vector` API return one element per dimension, `0` or `1`. `BinaryVector.data()` returns the packed bytes. Oracle JDBC and Oracle R2DBC both support binary vectors. Other databases get the same `VARCHAR(255)` fallback column as vectors on databases without vector support.
 
 == Oracle sparse vector columns
 
@@ -158,6 +182,7 @@ The Oracle `<TYPE>` is inferred from the vector subtype:
 - `DoubleVector` -> `FLOAT64`
 - `FloatVector`  -> `FLOAT32`
 - `ByteVector`   -> `INT8`
+- `BinaryVector` -> `BINARY`
 
 For sparse columns declared as generic `Vector` (`@VectorStorage(shape = VectorShape.SPARSE)`), Oracle defaults to `FLOAT32`.
 
@@ -193,6 +218,7 @@ CREATE TABLE document_embedding (
   - `DoubleVector` -> `FLOAT64`
   - `FloatVector`  -> `FLOAT32`
   - `ByteVector`   -> `INT8`
+  - `BinaryVector` -> `BINARY`
 - Use `@VectorStorage(length = N)` (or `@Column(length = N)`) to set the dimension; when omitted, `*` is used.
 - JDBC and R2DBC derived `SearchResults` mappings both return empty `SearchResults` when no rows match.
 - Oracle JDBC and Oracle R2DBC both support sparse vector columns (`VECTOR(..., SPARSE)`) for derived search scenarios.

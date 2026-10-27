@@ -75,6 +75,8 @@ final class OracleVectorSqlIndexDefinitionProvider implements SqlIndexDefinition
             case L2_EUCLIDEAN_SQUARED -> "EUCLIDEAN SQUARED";
             case L2_EUCLIDEAN -> "EUCLIDEAN";
             case L1_MANHATTAN -> "MANHATTAN";
+            case HAMMING -> "HAMMING";
+            case JACCARD -> "JACCARD";
             default -> throw new IllegalArgumentException("Distance type " + meta.distanceType() + " is not supported for Oracle vector indexes");
         };
         StringBuilder vec = new StringBuilder();

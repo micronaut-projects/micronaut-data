@@ -58,6 +58,7 @@ import io.micronaut.data.model.schema.sql.SqlIndexMapping;
 import io.micronaut.data.model.schema.sql.SqlSequenceMapping;
 import io.micronaut.data.model.schema.sql.SqlTableMapping;
 import io.micronaut.data.model.schema.sql.metadata.VectorIndexMetadata;
+import io.micronaut.data.model.vector.BinaryVector;
 import org.jspecify.annotations.Nullable;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -299,6 +300,14 @@ public final class SqlSchemaUtils {
                 joinTableColumns.add(getColumnDefinition(sqlColumnDefinitionProviders, pp.getProperty(), columnName, entity.getPersistedName(), true, true, true, dialect));
             }
         }
+    }
+
+    private static VectorIndexType.DistanceType vectorIndexDistanceType(AnnotationValue<VectorIndex> vectorIndex, PersistentProperty property) {
+        if (!vectorIndex.contains("distanceType") && property.isAssignable(BinaryVector.class)) {
+            // Oracle compares binary vectors with HAMMING or JACCARD only, like the derived query default
+            return VectorIndexType.DistanceType.HAMMING;
+        }
+        return vectorIndex.enumValue("distanceType", VectorIndexType.DistanceType.class).orElse(VectorIndexType.DistanceType.COSINE);
     }
 
     /**
@@ -810,7 +819,7 @@ public final class SqlSchemaUtils {
             if (vi != null) {
                 String name = vi.stringValue("name").orElse("");
                 VectorIndexType indexType = vi.enumValue("vectorIndexType", VectorIndexType.class).orElse(VectorIndexType.IVF);
-                VectorIndexType.DistanceType distanceType = vi.enumValue("distanceType", VectorIndexType.DistanceType.class).orElse(VectorIndexType.DistanceType.COSINE);
+                VectorIndexType.DistanceType distanceType = vectorIndexDistanceType(vi, prop);
                 int accuracy = vi.intValue("accuracy").orElse(90);
                 boolean sparse = VectorShape.isSparse(prop.getAnnotationMetadata());
                 String columnName = namingStrategy.mappedName(associations, prop);
