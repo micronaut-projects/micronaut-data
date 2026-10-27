@@ -66,22 +66,149 @@ class OracleChangeNotificationSubscriptionSpec extends Specification {
         1 * fixture.oracleConnection.unregisterDatabaseChangeNotification(registration)
     }
 
-    void "closes a deregistered registration without attempting recovery"() {
+    void "invalidates a deregistered registration once without attempting recovery (#reason)"() {
         given:
         def registration = Mock(DatabaseChangeRegistration)
         def unusedReplacement = Mock(DatabaseChangeRegistration)
         def fixture = registrarFixture([registration, unusedReplacement])
         def scheduler = Mock(TaskScheduler)
-        def subscription = subscription(fixture.registrar, scheduler)
+        def delivered = []
+        def subscription = subscription(fixture.registrar, scheduler, new OracleChangeNotificationTaskTracker(),
+            { Runnable task -> task.run() } as Executor, { ChangeEvent<?> event -> delivered.add(event) })
 
         when:
         subscription.start()
-        subscription.handleRegistrationDeregistered(registration.getRegId(), DatabaseChangeEvent.AdditionalEventType.TIMEOUT)
+        subscription.handleRegistrationDeregistered(999L, reason)
+
+        then:
+        delivered.empty
+
+        when:
+        subscription.handleRegistrationDeregistered(registration.getRegId(), reason)
+        subscription.handleRegistrationDeregistered(registration.getRegId(), reason)
+        subscription.handleQueryDeregistered(registration.getRegId())
+        fixture.failureListeners[0].onFailure(new SQLException('Late receiver failure'))
+        subscription.start()
 
         then:
         fixture.registrationIndex.get() == 1
+        delivered.size() == 1
+        delivered[0].operation() == ChangeOperation.INVALIDATE
+        delivered[0].entity().isEmpty()
+        delivered[0].metadata(OracleChangeEventMetadata).isEmpty()
         0 * scheduler.schedule(_ as Duration, _ as Runnable)
         0 * fixture.oracleConnection.unregisterDatabaseChangeNotification(registration)
+
+        where:
+        reason << DatabaseChangeEvent.AdditionalEventType.values()
+    }
+
+    void "invalidates query deregistration once even when unregister fails (#cleanupFails)"() {
+        given:
+        def registration = Mock(DatabaseChangeRegistration)
+        def fixture = registrarFixture([registration])
+        def scheduler = Mock(TaskScheduler)
+        def delivered = []
+        def subscription = subscription(fixture.registrar, scheduler, new OracleChangeNotificationTaskTracker(),
+            { Runnable task -> task.run() } as Executor, { ChangeEvent<?> event -> delivered.add(event) })
+        subscription.start()
+
+        when:
+        subscription.handleQueryDeregistered(999L)
+        subscription.handleQueryDeregistered(registration.getRegId())
+        subscription.handleQueryDeregistered(registration.getRegId())
+        subscription.handleRegistrationDeregistered(registration.getRegId(), DatabaseChangeEvent.AdditionalEventType.NONE)
+        fixture.failureListeners[0].onFailure(new SQLException('Late receiver failure'))
+
+        then:
+        fixture.registrationIndex.get() == 1
+        delivered.size() == 1
+        delivered[0].operation() == ChangeOperation.INVALIDATE
+        0 * scheduler.schedule(_ as Duration, _ as Runnable)
+        1 * fixture.oracleConnection.unregisterDatabaseChangeNotification(registration) >> {
+            if (cleanupFails) {
+                throw new DataAccessException('Unable to unregister')
+            }
+        }
+
+        where:
+        cleanupFails << [false, true]
+    }
+
+    void "discards queued terminal invalidation when shutdown starts (#callback)"() {
+        given:
+        def registration = Mock(DatabaseChangeRegistration)
+        def fixture = registrarFixture([registration])
+        List<Runnable> queued = []
+        def delivered = []
+        def tracker = new OracleChangeNotificationTaskTracker()
+        def subscription = subscription(fixture.registrar, Mock(TaskScheduler), tracker,
+            { Runnable task -> queued.add(task) } as Executor, { ChangeEvent<?> event -> delivered.add(event) })
+        subscription.start()
+
+        when:
+        if (callback == 'query') {
+            subscription.handleQueryDeregistered(1L)
+        } else {
+            subscription.handleRegistrationDeregistered(1L, DatabaseChangeEvent.AdditionalEventType.TIMEOUT)
+        }
+
+        then:
+        queued.size() == 1
+        delivered.empty
+
+        when:
+        subscription.stop()
+        queued.remove(0).run()
+
+        then:
+        delivered.empty
+        tracker.shutdownGracefully().toCompletableFuture().isDone()
+
+        where:
+        callback << ['registration', 'query']
+    }
+
+    void "retries rejected terminal invalidation without recreating the registration (#stopBeforeRetry)"() {
+        given:
+        def registration = Mock(DatabaseChangeRegistration)
+        def fixture = registrarFixture([registration])
+        def attempts = new AtomicInteger()
+        List<Runnable> scheduled = []
+        def delivered = []
+        def subscription = subscription(fixture.registrar, scheduler(scheduled), new OracleChangeNotificationTaskTracker(),
+            { Runnable task ->
+                if (attempts.incrementAndGet() == 1) {
+                    throw new RejectedExecutionException('Executor saturated')
+                }
+                task.run()
+            } as Executor, { ChangeEvent<?> event -> delivered.add(event) })
+        subscription.start()
+
+        when:
+        subscription.handleRegistrationDeregistered(1L, DatabaseChangeEvent.AdditionalEventType.NONE)
+
+        then:
+        delivered.empty
+        scheduled.size() == 1
+
+        when:
+        if (stopBeforeRetry) {
+            subscription.stop()
+        }
+        scheduled.remove(0).run()
+        subscription.handleQueryDeregistered(1L)
+        fixture.failureListeners[0].onFailure(new SQLException('Late receiver failure'))
+
+        then:
+        fixture.registrationIndex.get() == 1
+        delivered.size() == (stopBeforeRetry ? 0 : 1)
+        delivered.every { it.operation() == ChangeOperation.INVALIDATE }
+        attempts.get() == (stopBeforeRetry ? 1 : 2)
+        scheduled.empty
+
+        where:
+        stopBeforeRetry << [false, true]
     }
 
     void "delivers the notification that purges a one-shot registration"() {
@@ -103,6 +230,8 @@ class OracleChangeNotificationSubscriptionSpec extends Specification {
 
         when:
         dispatcher.onDatabaseChangeNotification(event)
+        subscription.handleRegistrationDeregistered(registration.getRegId(), DatabaseChangeEvent.AdditionalEventType.NONE)
+        subscription.handleQueryDeregistered(registration.getRegId())
         subscription.stop()
 
         then:
@@ -266,7 +395,7 @@ class OracleChangeNotificationSubscriptionSpec extends Specification {
 
         then:
         fixture.registrationIndex.get() == pendingIndex
-        delivered.size() == (callback == 'purge' ? 1 : 0)
+        delivered.size() == (retry ? 0 : 1)
         scheduled.size() == (retry ? 1 : 0)
         1 * fixture.oracleConnection.unregisterDatabaseChangeNotification(registrations[pendingIndex - 1])
 
@@ -279,7 +408,7 @@ class OracleChangeNotificationSubscriptionSpec extends Specification {
 
         then:
         fixture.registrationIndex.get() == pendingIndex + (retry ? 1 : 0)
-        delivered.size() == (retry ? 2 : (callback == 'purge' ? 1 : 0))
+        delivered.size() == (retry ? 2 : 1)
         scheduled.empty
         0 * fixture.oracleConnection.unregisterDatabaseChangeNotification(registrations[pendingIndex - 1])
 
@@ -664,11 +793,12 @@ class OracleChangeNotificationSubscriptionSpec extends Specification {
         })
         List<Runnable> scheduledTasks = []
         List<Duration> scheduledDelays = []
+        def delivered = []
         def configuration = new OracleRegistrationRecoveryConfiguration(maxRetries: maxRetries, retryDelay: initialDelay,
             retryDelayMultiplier: multiplier, maxRetryDelay: maximumDelay)
         def scheduler = Mock(TaskScheduler)
         def subscription = subscription(fixture.registrar, scheduler, new OracleChangeNotificationTaskTracker(),
-            { Runnable command -> command.run() } as Executor, { ChangeEvent<?> ignored -> }, configuration)
+            { Runnable command -> command.run() } as Executor, { ChangeEvent<?> event -> delivered.add(event) }, configuration)
 
         when:
         subscription.start()
@@ -681,6 +811,8 @@ class OracleChangeNotificationSubscriptionSpec extends Specification {
         fixture.registrationIndex.get() == maxRetries + 2
         scheduledTasks.size() == maxRetries
         scheduledDelays == expectedDelays
+        delivered.size() == 1
+        delivered[0].operation() == ChangeOperation.INVALIDATE
         maxRetries * scheduler.schedule(_ as Duration, _ as Runnable) >> { Duration delay, Runnable task ->
             scheduledDelays.add(delay)
             scheduledTasks.add(task)
@@ -689,10 +821,15 @@ class OracleChangeNotificationSubscriptionSpec extends Specification {
         0 * scheduler.schedule(_, _)
 
         when:
+        fixture.failureListeners[0].onFailure(new SQLException('Late receiver failure'))
+        scheduledTasks.each { it.run() }
         subscription.stop()
 
         then:
         noExceptionThrown()
+        fixture.registrationIndex.get() == maxRetries + 2
+        delivered.size() == 1
+        0 * scheduler.schedule(_, _)
 
         where:
         maxRetries | initialDelay                 | multiplier | maximumDelay                       | expectedDelays
@@ -715,8 +852,9 @@ class OracleChangeNotificationSubscriptionSpec extends Specification {
             }
         })
         def scheduler = Mock(TaskScheduler)
-        scheduler.schedule(_ as Duration, _ as Runnable) >> { throw new RejectedExecutionException('Scheduler rejected retry') }
-        def subscription = subscription(fixture.registrar, scheduler)
+        def delivered = []
+        def subscription = subscription(fixture.registrar, scheduler, new OracleChangeNotificationTaskTracker(),
+            { Runnable task -> task.run() } as Executor, { ChangeEvent<?> event -> delivered.add(event) })
 
         when:
         subscription.start()
@@ -724,29 +862,104 @@ class OracleChangeNotificationSubscriptionSpec extends Specification {
 
         then:
         fixture.registrationIndex.get() == 2
-        1 * scheduler.schedule(_ as Duration, _ as Runnable)
+        delivered.size() == 1
+        delivered[0].operation() == ChangeOperation.INVALIDATE
+        1 * scheduler.schedule(_ as Duration, _ as Runnable) >> { throw new RejectedExecutionException('Scheduler rejected retry') }
+
+        when:
+        fixture.failureListeners[0].onFailure(new SQLException('Late receiver failure'))
+        subscription.stop()
+
+        then:
+        noExceptionThrown()
+        fixture.registrationIndex.get() == 2
+        delivered.size() == 1
+    }
+
+    void "invalidates when the initial recovery retry cannot be scheduled"() {
+        given:
+        def registration = Mock(DatabaseChangeRegistration)
+        def fixture
+        fixture = registrarFixture([registration], { int ignored ->
+            fixture.failureListeners[0].onFailure(new SQLException('Receiver failed during setup'))
+        })
+        def scheduler = Mock(TaskScheduler)
+        scheduler.schedule(_ as Duration, _ as Runnable) >> { throw new RejectedExecutionException('Scheduler stopped') }
+        def delivered = []
+        def subscription = subscription(fixture.registrar, scheduler, new OracleChangeNotificationTaskTracker(),
+            { Runnable task -> task.run() } as Executor, { ChangeEvent<?> event -> delivered.add(event) })
+
+        when:
+        subscription.start()
+        fixture.failureListeners[0].onFailure(new SQLException('Late receiver failure'))
+
+        then:
+        fixture.registrationIndex.get() == 1
+        delivered.size() == 1
+        delivered[0].operation() == ChangeOperation.INVALIDATE
+    }
+
+    void "invalidates without replacement when recovery submission is rejected and no retries remain"() {
+        given:
+        def registration = Mock(DatabaseChangeRegistration)
+        registration.state >> oracle.jdbc.NotificationRegistration.RegistrationState.CLOSED
+        def fixture = registrarFixture([registration])
+        def scheduler = Mock(TaskScheduler)
+        def attempts = new AtomicInteger()
+        def delivered = []
+        def subscription = subscription(fixture.registrar, scheduler, new OracleChangeNotificationTaskTracker(),
+            { Runnable task ->
+                if (attempts.incrementAndGet() == 1) {
+                    throw new RejectedExecutionException('Recovery rejected')
+                }
+                task.run()
+            } as Executor, { ChangeEvent<?> event -> delivered.add(event) },
+            new OracleRegistrationRecoveryConfiguration(maxRetries: 0))
+        subscription.start()
+
+        when:
+        fixture.failureListeners[0].onFailure(new SQLException('Receiver failed'))
+        fixture.failureListeners[0].onFailure(new SQLException('Late receiver failure'))
+
+        then:
+        fixture.registrationIndex.get() == 1
+        delivered.size() == 1
+        delivered[0].operation() == ChangeOperation.INVALIDATE
+        0 * scheduler.schedule(_ as Duration, _ as Runnable)
 
         when:
         subscription.stop()
 
         then:
-        noExceptionThrown()
+        1 * fixture.oracleConnection.unregisterDatabaseChangeNotification(registration)
     }
 
-    void "ignores a late failure callback from a replaced registration"() {
+    void "ignores late lifecycle callbacks from a replaced registration"() {
         given:
         def original = Mock(DatabaseChangeRegistration)
         def replacement = Mock(DatabaseChangeRegistration)
         def fixture = registrarFixture([original, replacement])
-        def subscription = subscription(fixture.registrar, Mock(TaskScheduler))
+        def delivered = []
+        def subscription = subscription(fixture.registrar, Mock(TaskScheduler), new OracleChangeNotificationTaskTracker(),
+            { Runnable task -> task.run() } as Executor, { ChangeEvent<?> event -> delivered.add(event) })
+        def currentData = dataEvent(2L, DatabaseChangeEvent.EventType.OBJCHANGE)
 
         when:
         subscription.start()
         fixture.failureListeners[0].onFailure(new SQLException('Receiver failed'))
         fixture.failureListeners[0].onFailure(new SQLException('Late callback'))
+        subscription.handleRegistrationDeregistered(1L, DatabaseChangeEvent.AdditionalEventType.NONE)
+        subscription.handleQueryDeregistered(1L)
 
         then:
         fixture.registrationIndex.get() == 2
+        delivered.size() == 1 // Only successful recovery invalidation.
+
+        when:
+        fixture.registeredListeners[1].onDatabaseChangeNotification(currentData)
+
+        then:
+        delivered.size() == 2
     }
 
     void "queues failed registration cleanup before creating its replacement"() {
@@ -931,7 +1144,7 @@ class OracleChangeNotificationSubscriptionSpec extends Specification {
         phase << ['unregistration', 'failed unregistration', 'registration']
     }
 
-    void "tracks recovery invalidation without blocking subscription shutdown on the listener"() {
+    void "tracks #reason invalidation without blocking subscription shutdown on the listener"() {
         given:
         def original = Mock(DatabaseChangeRegistration)
         def replacement = Mock(DatabaseChangeRegistration)
@@ -949,8 +1162,14 @@ class OracleChangeNotificationSubscriptionSpec extends Specification {
                 assert release.await(5, TimeUnit.SECONDS)
             })
         subscription.start()
-        fixture.failureListeners[0].onFailure(new SQLException('Receiver failed'))
-        queued.remove(0).run()
+        if (reason == 'recovery') {
+            fixture.failureListeners[0].onFailure(new SQLException('Receiver failed'))
+            queued.remove(0).run()
+        } else if (reason == 'query deregistration') {
+            subscription.handleQueryDeregistered(1L)
+        } else {
+            subscription.handleRegistrationDeregistered(1L, DatabaseChangeEvent.AdditionalEventType.NONE)
+        }
         Thread callbackThread
         Thread stopThread
 
@@ -967,7 +1186,7 @@ class OracleChangeNotificationSubscriptionSpec extends Specification {
         then:
         !completion.isDone()
         tracker.reportActiveTasks().getAsLong() == 1
-        1 * fixture.oracleConnection.unregisterDatabaseChangeNotification(replacement)
+        (reason == 'recovery' ? 1 : 0) * fixture.oracleConnection.unregisterDatabaseChangeNotification(replacement)
 
         when:
         release.countDown()
@@ -981,6 +1200,9 @@ class OracleChangeNotificationSubscriptionSpec extends Specification {
         release.countDown()
         callbackThread?.join(5000)
         stopThread?.join(5000)
+
+        where:
+        reason << ['recovery', 'registration deregistration', 'query deregistration']
     }
 
     void "discards queued recovery invalidation after #reason"() {
@@ -1009,6 +1231,14 @@ class OracleChangeNotificationSubscriptionSpec extends Specification {
 
         then:
         delivered.empty
+
+        when:
+        while (!queued.empty) {
+            queued.remove(0).run()
+        }
+
+        then:
+        delivered.size() == (reason == 'deregistration' ? 1 : 0)
 
         where:
         reason << ['shutdown', 'deregistration']

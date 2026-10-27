@@ -602,25 +602,30 @@ final class OracleChangeNotificationDispatcher implements DatabaseChangeListener
     }
 
     /**
-     * Submits recovery invalidation through the same admission and accounting as driver callbacks.
-     * The registration is checked again when execution starts, without holding its lock during user code.
+     * Submits lifecycle invalidation through the same admission and accounting as driver callbacks.
+     * Eligibility is checked again when execution starts, without holding a lock during user code.
+     * Rejected submissions are retried until accepted or shutdown starts.
      *
-     * @param registrationId the recovered registration
-     * @param isCurrent whether this registration is still active
+     * @param registrationId the registration associated with the lifecycle event
+     * @param reason the invalidation reason included in the trace message
+     * @param shouldDispatch whether the invalidation is still relevant
      */
-    void submitInvalidation(long registrationId, BooleanSupplier isCurrent) {
-        if (taskTracker.isShutdownStarted()) {
+    void submitInvalidation(long registrationId, String reason, BooleanSupplier shouldDispatch) {
+        if (taskTracker.isShutdownStarted() || !shouldDispatch.getAsBoolean()) {
             return;
         }
         try {
             blockingExecutor.execute(() -> dispatchSafely(registrationId, () -> {
-                if (isCurrent.getAsBoolean()) {
-                    dispatchInvalidation(registrationId, "after DCN registration recovery");
+                if (shouldDispatch.getAsBoolean()) {
+                    dispatchInvalidation(registrationId, reason);
                 }
             }));
         } catch (RuntimeException e) {
-            LOG.warn("Unable to submit recovery invalidation for datasource [{}], registration [{}], and listener method [{}]",
+            LOG.warn("Unable to submit lifecycle invalidation for datasource [{}], registration [{}], and listener method [{}]",
                 dataSourceName, registrationId, methodDescription, e);
+            if (e instanceof RejectedExecutionException) {
+                scheduleRetry(registrationId, "lifecycle invalidation", () -> submitInvalidation(registrationId, reason, shouldDispatch));
+            }
         }
     }
 

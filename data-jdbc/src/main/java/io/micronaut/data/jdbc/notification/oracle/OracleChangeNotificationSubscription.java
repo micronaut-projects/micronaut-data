@@ -98,6 +98,9 @@ final class OracleChangeNotificationSubscription {
      */
     private volatile boolean closed;
 
+    /** Stops recovery after a terminal event while allowing its final invalidation before shutdown. */
+    private volatile boolean terminated;
+
     OracleChangeNotificationSubscription(String dataSourceName,
                                          OracleChangeListenerDefinition definition,
                                          OracleChangeNotificationRegistrar registrar,
@@ -139,7 +142,7 @@ final class OracleChangeNotificationSubscription {
             return;
         }
         try {
-            if (closed) {
+            if (isStopped()) {
                 return;
             }
             DatabaseChangeRegistration registration = registrar.createRegistration(this, dispatcher);
@@ -147,7 +150,7 @@ final class OracleChangeNotificationSubscription {
             synchronized (lifecycleLock) {
                 outcome = pendingOutcome;
                 pendingRegistrationId = null;
-                if (!closed) {
+                if (!isStopped()) {
                     if (outcome == PendingOutcome.READY) {
                         currentRegistration = registration;
                         return;
@@ -189,8 +192,13 @@ final class OracleChangeNotificationSubscription {
 
     private boolean acceptsDataNotification(long registrationId) {
         synchronized (lifecycleLock) {
-            return !closed && (isCurrent(registrationId) || (isPending(registrationId) && pendingOutcome == PendingOutcome.READY));
+            return !isStopped() && (isCurrent(registrationId) || (isPending(registrationId) && pendingOutcome == PendingOutcome.READY));
         }
+    }
+
+    /** Whether the subscription no longer accepts data notifications or recovery work. */
+    private boolean isStopped() {
+        return closed || terminated;
     }
 
     /**
@@ -239,14 +247,14 @@ final class OracleChangeNotificationSubscription {
      */
     void handleRegistrationUnavailable(long registrationId, @Nullable Throwable failure) {
         synchronized (lifecycleLock) {
-            if (closed || recordPendingOutcome(registrationId, PendingOutcome.RETRY)) {
+            if (isStopped() || recordPendingOutcome(registrationId, PendingOutcome.RETRY)) {
                 return;
             }
         }
         try {
             blockingExecutor.execute(() -> {
                 synchronized (lifecycleLock) {
-                    if (closed || !isCurrent(registrationId)) {
+                    if (isStopped() || !isCurrent(registrationId)) {
                         return;
                     }
                 }
@@ -288,13 +296,14 @@ final class OracleChangeNotificationSubscription {
     void handleRegistrationDeregistered(long registrationId,
                                         DatabaseChangeEvent.AdditionalEventType additionalEventType) {
         synchronized (lifecycleLock) {
-            if (closed || recordPendingOutcome(registrationId, PendingOutcome.STOP) || !isCurrent(registrationId)) {
+            if (!beginDeregistration(registrationId)) {
                 return;
             }
             LOG.warn("DCN registration [{}] for datasource [{}] and listener method [{}] was deregistered; reason [{}]",
                 registrationId, dataSourceName, methodDescription, additionalEventType);
             currentRegistration = null;
         }
+        submitTerminalInvalidation(registrationId);
     }
 
     /**
@@ -305,7 +314,7 @@ final class OracleChangeNotificationSubscription {
     void handleQueryDeregistered(long registrationId) {
         DatabaseChangeRegistration registration;
         synchronized (lifecycleLock) {
-            if (closed || recordPendingOutcome(registrationId, PendingOutcome.STOP) || !isCurrent(registrationId)) {
+            if (!beginDeregistration(registrationId)) {
                 return;
             }
             LOG.trace("Closing DCN subscription after query deregistration [{}] for datasource [{}] and listener method [{}]",
@@ -314,13 +323,52 @@ final class OracleChangeNotificationSubscription {
             registration = currentRegistration;
             currentRegistration = null;
         }
+        submitTerminalInvalidation(registrationId);
         if (registration != null) {
             unregister(registration, registrar::unregisterRegistration);
         }
     }
 
+    /** Claims deregistration under the lifecycle lock; one-shot data purges already notify the listener. */
+    private boolean beginDeregistration(long registrationId) {
+        if (isStopped() || (!isCurrent(registrationId) && !isPending(registrationId))) {
+            return false;
+        }
+        if (isPending(registrationId) && pendingOutcome == PendingOutcome.STOP) {
+            return false;
+        }
+        recordPendingOutcome(registrationId, PendingOutcome.STOP);
+        terminated = true;
+        recoveryRegistrationId = null;
+        return true;
+    }
+
+    private void submitTerminalInvalidation(long registrationId) {
+        cancelRecoveryRetryTask();
+        dispatcher.submitInvalidation(registrationId, "after DCN notifications stopped", () -> !closed);
+    }
+
+    /** Stops the matching recovery sequence once and notifies outside the lifecycle lock. */
+    private void handleRecoveryStopped(long registrationId) {
+        synchronized (lifecycleLock) {
+            if (isStopped() || recoveryAttempt != null) {
+                return;
+            }
+            if (!isCurrent(registrationId) && !Objects.equals(recoveryRegistrationId, registrationId)) {
+                return;
+            }
+            terminated = true;
+            recoveryRegistrationId = null;
+            if (currentRegistration != null) {
+                orphanedRegistrations.add(currentRegistration);
+                currentRegistration = null;
+            }
+        }
+        submitTerminalInvalidation(registrationId);
+    }
+
     private void submitRecoveryTask(int retryCount, long failedRegId) {
-        if (closed || taskTracker.isShutdownStarted()) {
+        if (isStopped() || taskTracker.isShutdownStarted()) {
             return;
         }
         try {
@@ -337,7 +385,7 @@ final class OracleChangeNotificationSubscription {
         try {
             Object attempt = new Object();
             synchronized (lifecycleLock) {
-                if (closed || recoveryAttempt != null || (currentRegistration != null && !isCurrent(failedRegId))) {
+                if (isStopped() || recoveryAttempt != null || (currentRegistration != null && !isCurrent(failedRegId))) {
                     return;
                 }
                 if (currentRegistration == null && !Objects.equals(recoveryRegistrationId, failedRegId)) {
@@ -407,7 +455,7 @@ final class OracleChangeNotificationSubscription {
         }
         if (published) {
             long replacementId = Objects.requireNonNull(replacement, "Published registration must have a replacement").getRegId();
-            dispatcher.submitInvalidation(replacementId, () -> {
+            dispatcher.submitInvalidation(replacementId, "after DCN registration recovery", () -> {
                 synchronized (lifecycleLock) {
                     return !closed && isCurrent(replacementId);
                 }
@@ -428,7 +476,7 @@ final class OracleChangeNotificationSubscription {
      * @return whether the replacement became current
      */
     private boolean completeReplacementSetup(DatabaseChangeRegistration replacement, long failedRegId, Object attempt) {
-        if (closed || recoveryAttempt != attempt || !Objects.equals(recoveryRegistrationId, failedRegId)) {
+        if (isStopped() || recoveryAttempt != attempt || !Objects.equals(recoveryRegistrationId, failedRegId)) {
             return false;
         }
         pendingRegistrationId = null;
@@ -472,6 +520,9 @@ final class OracleChangeNotificationSubscription {
     }
 
     private void rescheduleRecoveryTask(int retryCount, long failedRegId, Exception e) {
+        if (isStopped()) {
+            return;
+        }
         if (maxRetries < 0 || retryCount < maxRetries) {
             LOG.warn("DCN receiver recovery attempt failed for registration [{}], datasource [{}], and listener method [{}]; will retry",
                 failedRegId, dataSourceName, methodDescription, e);
@@ -481,22 +532,26 @@ final class OracleChangeNotificationSubscription {
             LOG.error("DCN receiver recovery exhausted [{}] retries for registration [{}], datasource [{}], "
                     + "and listener method [{}]; the listener remains unavailable",
                 maxRetries, failedRegId, dataSourceName, methodDescription, e);
+            handleRecoveryStopped(failedRegId);
         }
     }
 
-    private synchronized void scheduleRecoveryRetry(int retryCount, long failedRegId) {
-        if (closed) {
-            return;
-        }
+    private void scheduleRecoveryRetry(int retryCount, long failedRegId) {
         try {
-            Duration delay = recoveryRetryDelay(retryCount);
-            recoveryRetryTask = taskScheduler.schedule(delay, () -> submitRecoveryTask(retryCount, failedRegId));
-            LOG.warn("Scheduled DCN receiver recovery retry after [{}] for datasource [{}], listener method [{}], and registration [{}]",
-                delay, dataSourceName, methodDescription, failedRegId);
+            synchronized (this) {
+                if (isStopped()) {
+                    return;
+                }
+                Duration delay = recoveryRetryDelay(retryCount);
+                recoveryRetryTask = taskScheduler.schedule(delay, () -> submitRecoveryTask(retryCount, failedRegId));
+                LOG.warn("Scheduled DCN receiver recovery retry after [{}] for datasource [{}], listener method [{}], and registration [{}]",
+                    delay, dataSourceName, methodDescription, failedRegId);
+            }
         } catch (RuntimeException schedulingFailure) {
             LOG.error("Unable to schedule DCN receiver recovery for registration [{}], datasource [{}], "
                     + "and listener method [{}]; automatic recovery has stopped and the listener remains unavailable",
                 failedRegId, dataSourceName, methodDescription, schedulingFailure);
+            handleRecoveryStopped(failedRegId);
         }
     }
 

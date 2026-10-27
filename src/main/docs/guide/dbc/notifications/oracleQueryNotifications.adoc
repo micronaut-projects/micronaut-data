@@ -186,7 +186,10 @@ the application is still running. A one-shot registration configured with `NTF_Q
 its first data notification.
 
 If Oracle Database deregisters a registration or a registered QRCN query, the affected listener stops receiving notifications.
+Micronaut Data sends a final `INVALIDATE` event to the listener and does not create a replacement registration.
 The application must correct the database or registration condition and restart the application if a new registration is required.
+A one-shot data notification remains the final notification for a registration purged by `NTF_QOS_PURGE_ON_NTFN`;
+it does not cause an additional terminal invalidation.
 
 With both a client-initiated connection and `NTF_QOS_RELIABLE` enabled, Micronaut Data leaves notification-connection
 retries to the JDBC driver. Oracle Database can queue reliable notifications for delivery after reconnect.
@@ -227,6 +230,11 @@ or the JDBC driver's notification-connection retries.
 
 Notifications remain unavailable during recovery. If a configured retry limit is exhausted or another recovery retry
 cannot be scheduled, automatic recovery stops and the application must be restarted to restore notifications.
+Micronaut Data also sends a final `INVALIDATE` in these cases. This event requests reconciliation; it does not restore
+notifications or guarantee that a refreshed cache stays current. The event uses the same `INVALIDATE` operation as other
+invalidation notifications and does not carry a separate subscription-availability status.
+Final invalidations run on the blocking executor. Rejected submissions are retried until accepted or application shutdown
+begins. Application shutdown suppresses delivery. Delivery is best effort if the executor and retry scheduler are unavailable.
 Changes can be missed while a non-reliable registration is unavailable. Micronaut Data cannot detect a silently lost
 notification connection unless the JDBC driver reports the failure.
 
