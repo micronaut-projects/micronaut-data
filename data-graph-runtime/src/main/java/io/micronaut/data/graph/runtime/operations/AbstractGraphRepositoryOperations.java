@@ -928,6 +928,14 @@ public abstract class AbstractGraphRepositoryOperations extends AbstractReposito
                 }
                 entity = updateEntityId((BeanProperty<T, Object>) identity.getProperty(), entity, generatedId);
             }
+            List<String> labels = mapper.dynamicLabels(persistentEntity, entity);
+            if (!labels.isEmpty()) {
+                Object nodeId = mapper.writeIdentity(persistentEntity, entity);
+                if (nodeId == null) {
+                    throw new DataAccessException("Cannot add labels to [" + persistentEntity.getSimpleName() + "] without an identifier");
+                }
+                persister.run(queryBuilder.buildAddLabelsQuery(persistentEntity, labels), Map.of(CypherQueryBuilder.ID_PARAMETER, nodeId));
+            }
             persister.written(original, entity);
             writeRelationships();
         }
