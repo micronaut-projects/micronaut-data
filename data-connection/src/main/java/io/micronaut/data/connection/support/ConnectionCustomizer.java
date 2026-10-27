@@ -43,4 +43,17 @@ public interface ConnectionCustomizer<C> extends Ordered {
      * @return the operation callback
      */
     <R> Function<ConnectionStatus<C>, R> intercept(Function<ConnectionStatus<C>, R> operation);
+
+    /**
+     * Called when a new connection is opened, before it is used, both for a connection operation and for the
+     * connection of a transaction, which the transaction manager opens without going through
+     * {@link #intercept(Function)}. Register a {@link io.micronaut.data.connection.ConnectionSynchronization} on
+     * the status to act when the connection is completed and closed. If this method throws, the connection is
+     * completed and closed.
+     *
+     * @param connectionStatus The status of the new connection
+     * @since 5.3.0
+     */
+    default void connectionOpened(ConnectionStatus<C> connectionStatus) {
+    }
 }
