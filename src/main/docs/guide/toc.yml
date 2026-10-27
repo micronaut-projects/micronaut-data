@@ -91,6 +91,7 @@ dbc:
     sqlJsonView: JSON View
     sqlOracleBoolean: Oracle BOOLEAN Support
     sqlVectorType: SQL Vector Type Mapping
+    sqlTextSearch: Full-Text Search
     javaRecords: Support for Java Records
     kotlinData: Support for Kotlin immutable data classes
   dbcDataTypes: Data Types
