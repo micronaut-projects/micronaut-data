@@ -90,6 +90,22 @@ abstract class AbstractHybridSearchSpec extends Specification {
         Math.abs(results.results()[1].score().value() - 1d / 61) < 1e-9
     }
 
+    void "a derived hybrid finder fuses the text and the vector ranking"() {
+        when:
+        def results = articleRepository.searchByTitleSearchAndEmbeddingNear("bread", COFFEE_LIKE)
+
+        then:
+        results.results()*.entity()*.title == ["Baking Bread", "Cooking with Coffee", "Coffee Roasting", "Java Concurrency"]
+        Math.abs(results.results()[0].score().value() - (1d / 61 + 1d / 63)) < 1e-9
+
+        when:
+        def page = articleRepository.searchBySearchAndEmbeddingNear("bread", COFFEE_LIKE, Pageable.from(1, 2))
+
+        then:
+        page.results()*.entity()*.title == ["Coffee Roasting", "Java Concurrency"]
+        page.totalHits() == 4
+    }
+
     void "the weights select the rankings"() {
         expect:
         articleRepository.search(SearchQuery.builder("bread").vector("embedding", COFFEE_LIKE).vectorWeight(0).build())

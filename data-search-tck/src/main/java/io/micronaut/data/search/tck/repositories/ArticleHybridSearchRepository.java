@@ -15,6 +15,8 @@
  */
 package io.micronaut.data.search.tck.repositories;
 
+import io.micronaut.data.model.Pageable;
+import io.micronaut.data.model.vector.Vector;
 import io.micronaut.data.model.vector.search.SearchResults;
 import io.micronaut.data.repository.CrudRepository;
 import io.micronaut.data.repository.SearchRepository;
@@ -28,4 +30,8 @@ import java.util.UUID;
 public interface ArticleHybridSearchRepository extends CrudRepository<Article, UUID>, SearchRepository<Article, UUID> {
 
     SearchResults<Article> searchByTitleSearch(String query);
+
+    SearchResults<Article> searchByTitleSearchAndEmbeddingNear(String query, Vector vector);
+
+    SearchResults<Article> searchBySearchAndEmbeddingNear(String query, Vector vector, Pageable pageable);
 }

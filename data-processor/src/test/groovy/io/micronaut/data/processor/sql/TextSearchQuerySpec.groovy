@@ -1,6 +1,7 @@
 package io.micronaut.data.processor.sql
 
 import io.micronaut.data.intercept.annotation.DataMethod
+import io.micronaut.data.annotation.search.HybridSearchMethod
 import io.micronaut.data.intercept.annotation.DataMethodQueryParameter
 import io.micronaut.data.model.runtime.convert.OracleTextQueryConverter
 import io.micronaut.data.model.runtime.convert.PostgresTsQueryConverter
@@ -458,5 +459,56 @@ interface PostRepository extends CrudRepository<Post, Long> {
 
         expect:
         getQuery(repository.getRequiredMethod("searchBySearch", String)).contains("to_tsvector(coalesce(post_.\"lang\",'german')::regconfig,post_.\"title\") @@ to_tsquery('german',?)")
+    }
+
+    void "a derived hybrid finder records its fields and vector property and runs through the search query interceptor"() {
+        given:
+        def repository = buildRepository('test.HybridRepository', """
+import io.micronaut.data.jdbc.annotation.JdbcRepository;
+import io.micronaut.data.model.query.builder.sql.Dialect;
+import io.micronaut.data.model.Pageable;
+import io.micronaut.data.model.vector.Vector;
+import io.micronaut.data.model.vector.search.SearchResults;
+import io.micronaut.data.annotation.search.SearchField;
+import io.micronaut.data.annotation.search.Searchable;
+
+@MappedEntity
+@Searchable
+class Doc {
+    @Id
+    @GeneratedValue
+    private Long id;
+    @SearchField
+    private String title;
+    @SearchField
+    private String body;
+    @jakarta.persistence.Column(length = 3)
+    private Vector embedding;
+    public Long getId() { return id; }
+    public void setId(Long id) { this.id = id; }
+    public String getTitle() { return title; }
+    public void setTitle(String title) { this.title = title; }
+    public String getBody() { return body; }
+    public void setBody(String body) { this.body = body; }
+    public Vector getEmbedding() { return embedding; }
+    public void setEmbedding(Vector embedding) { this.embedding = embedding; }
+}
+
+@JdbcRepository(dialect = Dialect.POSTGRES)
+interface HybridRepository extends CrudRepository<Doc, Long> {
+    SearchResults<Doc> searchByTitleSearchAndEmbeddingNear(String query, Vector vector);
+    SearchResults<Doc> searchBySearchAndEmbeddingNear(String query, Vector vector, Pageable pageable);
+}
+""")
+        def titled = repository.getExecutableMethods().find { it.name == "searchByTitleSearchAndEmbeddingNear" }
+        def all = repository.getExecutableMethods().find { it.name == "searchBySearchAndEmbeddingNear" }
+
+        expect:
+        titled.stringValue(DataMethod, DataMethod.META_MEMBER_INTERCEPTOR).get() == "io.micronaut.data.runtime.intercept.criteria.SearchQueryInterceptor"
+        titled.stringValues(HybridSearchMethod, "fields") == ["title"] as String[]
+        titled.stringValue(HybridSearchMethod, "vectorProperty").get() == "embedding"
+        titled.stringValue(HybridSearchMethod, "queryParameter").get() == "query"
+        all.stringValues(HybridSearchMethod, "fields").length == 0
+        all.stringValue(HybridSearchMethod, "vectorProperty").get() == "embedding"
     }
 }

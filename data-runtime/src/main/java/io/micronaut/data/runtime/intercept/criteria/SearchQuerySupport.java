@@ -16,7 +16,9 @@
 package io.micronaut.data.runtime.intercept.criteria;
 
 import io.micronaut.aop.MethodInvocationContext;
+import io.micronaut.core.annotation.AnnotationValue;
 import io.micronaut.core.annotation.Internal;
+import io.micronaut.data.annotation.search.HybridSearchMethod;
 import io.micronaut.data.model.Pageable;
 import io.micronaut.data.model.PersistentProperty;
 import io.micronaut.data.model.jpa.criteria.PersistentEntityCriteriaQuery;
@@ -63,18 +65,42 @@ public final class SearchQuerySupport {
     }
 
     /**
-     * Finds the {@link SearchQuery} argument.
+     * Finds the {@link SearchQuery} argument, or builds it from the search string and the vector of a
+     * derived hybrid finder such as {@code searchByTitleSearchAndEmbeddingNear(String, Vector)}.
      *
      * @param context The invocation context
      * @return The query
      */
     public static SearchQuery findSearchQuery(MethodInvocationContext<?, ?> context) {
-        for (Object value : context.getParameterValues()) {
+        String text = null;
+        Vector vector = null;
+        AnnotationValue<HybridSearchMethod> hybrid = context.getAnnotation(HybridSearchMethod.class);
+        String queryParameter = hybrid == null ? null : hybrid.stringValue("queryParameter").orElse(null);
+        Object[] values = context.getParameterValues();
+        io.micronaut.core.type.Argument<?>[] arguments = context.getArguments();
+        for (int i = 0; i < values.length; i++) {
+            Object value = values[i];
             if (value instanceof SearchQuery searchQuery) {
                 return searchQuery;
             }
+            // the search string is the parameter the matcher named, or the first String when it named none
+            boolean isQuery = queryParameter == null || queryParameter.isEmpty() ? value instanceof String : arguments[i].getName().equals(queryParameter);
+            if (isQuery && value instanceof String string && text == null) {
+                text = string;
+            } else if (value instanceof Vector v && vector == null) {
+                vector = v;
+            }
         }
-        throw new IllegalArgumentException("The search query may not be null.");
+        if (hybrid == null) {
+            throw new IllegalArgumentException("The search query may not be null.");
+        }
+        if (text == null || vector == null) {
+            throw new IllegalArgumentException("A hybrid search finder needs the search string and the query vector");
+        }
+        return SearchQuery.builder(text)
+            .fields(hybrid.stringValues("fields"))
+            .vector(hybrid.getRequiredValue("vectorProperty", String.class), vector)
+            .build();
     }
 
     /**
