@@ -70,6 +70,8 @@ final class OracleChangeNotificationSubscription {
 
     private @Nullable DatabaseChangeRegistration registration;
     private @Nullable Long pendingRegistrationId;
+    /** Lifecycle callbacks received during setup determine whether the pending registration can be published. */
+    private PendingOutcome pendingOutcome = PendingOutcome.READY;
     /**
      * Failed registrations awaiting cleanup on the next recovery attempt or shutdown. Entries are
      * claimed under the lifecycle lock before JDBC cleanup and returned here if cleanup fails.
@@ -136,29 +138,51 @@ final class OracleChangeNotificationSubscription {
                 return;
             }
             DatabaseChangeRegistration created = registrar.createRegistration(this, dispatcher);
+            PendingOutcome outcome;
             synchronized (lifecycleLock) {
+                outcome = pendingOutcome;
                 pendingRegistrationId = null;
-                if (!closed) {
+                if (!closed && outcome == PendingOutcome.READY) {
                     registration = created;
                     return;
                 }
+                if (!closed && outcome == PendingOutcome.RETRY) {
+                    recoveryRegistrationId = created.getRegId();
+                }
             }
-            unregister(created, registrar::unregisterRegistration);
+            unregisterUnpublishedRegistration(created, outcome);
+            if (!closed && outcome == PendingOutcome.RETRY) {
+                scheduleRecoveryRetry(0, created.getRegId());
+            }
         } finally {
             taskTracker.completeTask();
         }
     }
 
-    /** Tracks the registration being associated so its first data callbacks can be accepted. */
+    /** Starts tracking a registration, or clears its ID while preserving the outcome for error handling. */
     void setPendingRegistrationId(@Nullable Long registrationId) {
         synchronized (lifecycleLock) {
             pendingRegistrationId = registrationId;
+            if (registrationId != null) {
+                pendingOutcome = PendingOutcome.READY;
+            }
         }
+    }
+
+    /** Records early lifecycle callbacks under the lifecycle lock; terminal events take precedence over recovery. */
+    private boolean recordPendingOutcome(long registrationId, PendingOutcome outcome) {
+        if (!isPending(registrationId)) {
+            return false;
+        }
+        if (pendingOutcome != PendingOutcome.STOP) {
+            pendingOutcome = outcome;
+        }
+        return true;
     }
 
     private boolean acceptsDataNotification(long registrationId) {
         synchronized (lifecycleLock) {
-            return !closed && (isCurrent(registrationId) || isPending(registrationId));
+            return !closed && (isCurrent(registrationId) || (isPending(registrationId) && pendingOutcome == PendingOutcome.READY));
         }
     }
 
@@ -207,8 +231,10 @@ final class OracleChangeNotificationSubscription {
      *                       reports a shutdown
      */
     void handleRegistrationUnavailable(long registrationId, @Nullable Throwable failure) {
-        if (closed) {
-            return;
+        synchronized (lifecycleLock) {
+            if (closed || recordPendingOutcome(registrationId, PendingOutcome.RETRY)) {
+                return;
+            }
         }
         try {
             blockingExecutor.execute(() -> {
@@ -238,10 +264,10 @@ final class OracleChangeNotificationSubscription {
      */
     void handleRegistrationPurged(long registrationId) {
         synchronized (lifecycleLock) {
-            if (closed || !isCurrent(registrationId)) {
+            if (closed || recordPendingOutcome(registrationId, PendingOutcome.STOP) || !isCurrent(registrationId)) {
                 return;
             }
-            LOG.trace("Handling purged DCN [{}] for datasource [{}] and listener method [{}]", getRegId(), dataSourceName, methodDescription);
+            LOG.trace("Handling purged DCN [{}] for datasource [{}] and listener method [{}]", registrationId, dataSourceName, methodDescription);
             registration = null;
         }
     }
@@ -255,7 +281,7 @@ final class OracleChangeNotificationSubscription {
     void handleRegistrationDeregistered(long registrationId,
                                         DatabaseChangeEvent.AdditionalEventType additionalEventType) {
         synchronized (lifecycleLock) {
-            if (closed || !isCurrent(registrationId)) {
+            if (closed || recordPendingOutcome(registrationId, PendingOutcome.STOP) || !isCurrent(registrationId)) {
                 return;
             }
             LOG.warn("DCN registration [{}] for datasource [{}] and listener method [{}] was deregistered; reason [{}]",
@@ -272,7 +298,7 @@ final class OracleChangeNotificationSubscription {
     void handleQueryDeregistered(long registrationId) {
         DatabaseChangeRegistration detached;
         synchronized (lifecycleLock) {
-            if (closed || !isCurrent(registrationId)) {
+            if (closed || recordPendingOutcome(registrationId, PendingOutcome.STOP) || !isCurrent(registrationId)) {
                 return;
             }
             LOG.trace("Closing DCN subscription after query deregistration [{}] for datasource [{}] and listener method [{}]",
@@ -302,29 +328,26 @@ final class OracleChangeNotificationSubscription {
             return;
         }
         try {
-            beginRegistrationRecovery(retryCount, failedRegId);
+            Object attempt = new Object();
+            synchronized (lifecycleLock) {
+                if (closed || recoveryAttempt != null || (registration != null && !isCurrent(failedRegId))) {
+                    return;
+                }
+                if (registration == null && !Objects.equals(recoveryRegistrationId, failedRegId)) {
+                    return;
+                }
+                recoveryAttempt = attempt;
+                recoveryRegistrationId = failedRegId;
+                pendingOutcome = PendingOutcome.READY;
+                if (registration != null) {
+                    pendingUnregistrations.add(registration);
+                }
+                registration = null;
+            }
+            replaceFailedRegistration(retryCount, failedRegId, attempt);
         } finally {
             taskTracker.completeTask();
         }
-    }
-
-    private void beginRegistrationRecovery(int retryCount, long failedRegId) {
-        Object attempt = new Object();
-        synchronized (lifecycleLock) {
-            if (closed || recoveryAttempt != null || (registration != null && !isCurrent(failedRegId))) {
-                return;
-            }
-            if (registration == null && !Objects.equals(recoveryRegistrationId, failedRegId)) {
-                return;
-            }
-            recoveryAttempt = attempt;
-            recoveryRegistrationId = failedRegId;
-            if (registration != null) {
-                pendingUnregistrations.add(registration);
-            }
-            registration = null;
-        }
-        replaceFailedRegistration(retryCount, failedRegId, attempt);
     }
 
     /**
@@ -338,6 +361,7 @@ final class OracleChangeNotificationSubscription {
     private void replaceFailedRegistration(int retryCount, long failedRegId, Object attempt) {
         Exception recoveryFailure = null;
         DatabaseChangeRegistration replacement = null;
+        PendingOutcome outcome = PendingOutcome.READY;
         boolean published = false;
         try {
             unregisterFailedRegistrations();
@@ -348,18 +372,34 @@ final class OracleChangeNotificationSubscription {
                 dataSourceName, methodDescription);
             replacement = registrar.createRegistration(this, dispatcher);
             synchronized (lifecycleLock) {
+                outcome = pendingOutcome;
                 if (!closed && recoveryAttempt == attempt && Objects.equals(recoveryRegistrationId, failedRegId)) {
                     pendingRegistrationId = null;
-                    registration = replacement;
-                    recoveryRegistrationId = null;
-                    published = true;
+                    switch (outcome) {
+                        case READY -> {
+                            recoveryRegistrationId = null;
+                            registration = replacement;
+                            published = true;
+                            // A callback for the published registration can now claim its own recovery.
+                            recoveryAttempt = null;
+                        }
+                        case RETRY -> recoveryFailure = new IllegalStateException("DCN registration became unavailable during setup");
+                        case STOP -> recoveryRegistrationId = null;
+                        default -> throw new IllegalStateException("Unexpected pending registration outcome: " + outcome);
+                    }
                 }
             }
         } catch (Exception e) {
-            recoveryFailure = e;
+            synchronized (lifecycleLock) {
+                if (pendingOutcome == PendingOutcome.STOP) {
+                    recoveryRegistrationId = null;
+                } else {
+                    recoveryFailure = e;
+                }
+            }
         } finally {
             if (replacement != null && !published) {
-                unregister(replacement, registrar::unregisterRegistration);
+                unregisterUnpublishedRegistration(replacement, outcome);
             }
             synchronized (lifecycleLock) {
                 if (recoveryAttempt == attempt) {
@@ -381,6 +421,18 @@ final class OracleChangeNotificationSubscription {
             });
         } else if (recoveryFailure != null && !closed) {
             rescheduleRecoveryTask(retryCount, failedRegId, recoveryFailure);
+        }
+    }
+
+    /** Failed setup registrations need database cleanup even when the driver has already closed them. */
+    private void unregisterUnpublishedRegistration(DatabaseChangeRegistration created, PendingOutcome outcome) {
+        if (outcome == PendingOutcome.RETRY) {
+            synchronized (lifecycleLock) {
+                pendingUnregistrations.add(created);
+            }
+            unregisterFailedRegistrations();
+        } else {
+            unregister(created, registrar::unregisterRegistration);
         }
     }
 
@@ -479,17 +531,18 @@ final class OracleChangeNotificationSubscription {
         }
     }
 
-    @Nullable
-    private Long getRegId() {
-        return registration == null ? null : registration.getRegId();
-    }
-
     private boolean isCurrent(long regId) {
-        return Objects.equals(getRegId(), regId);
+        return registration != null && registration.getRegId() == regId;
     }
 
     private boolean isPending(long regId) {
         return Objects.equals(pendingRegistrationId, regId);
+    }
+
+    private enum PendingOutcome {
+        READY,
+        RETRY,
+        STOP
     }
 
 }

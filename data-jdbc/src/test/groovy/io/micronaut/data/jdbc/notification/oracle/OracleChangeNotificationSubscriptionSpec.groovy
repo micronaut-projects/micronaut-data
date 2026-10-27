@@ -226,6 +226,217 @@ class OracleChangeNotificationSubscriptionSpec extends Specification {
         eventType << [DatabaseChangeEvent.EventType.OBJCHANGE, DatabaseChangeEvent.EventType.QUERYCHANGE]
     }
 
+    void "handles #callback during #phase of pending registration #pendingIndex"() {
+        given:
+        boolean retry = callback in ['failure', 'shutdown']
+        def registrations = (1..(pendingIndex + 1)).collect { Mock(DatabaseChangeRegistration) }
+        if (retry) {
+            registrations[pendingIndex - 1].state >> oracle.jdbc.NotificationRegistration.RegistrationState.CLOSED
+        }
+        def event = pendingLifecycleEvent(pendingIndex, callback)
+        def staleData = dataEvent(pendingIndex, DatabaseChangeEvent.EventType.OBJCHANGE)
+        def currentData = dataEvent(pendingIndex + 1, DatabaseChangeEvent.EventType.OBJCHANGE)
+        def fixture
+        Closure duringSetup = { int index ->
+            if (index == pendingIndex) {
+                def dispatcher = (OracleChangeNotificationDispatcher) fixture.registeredListeners[index - 1]
+                if (callback == 'purge') {
+                    def options = new Properties()
+                    options.setProperty(OracleConnection.NTF_QOS_PURGE_ON_NTFN, 'true')
+                    dispatcher.configureRegistrationOptions(options)
+                }
+                invokeDriverCallback(callback, fixture.failureListeners[index - 1], dispatcher, event)
+                assert fixture.registrationIndex.get() == index
+            }
+        }
+        fixture = registrarFixture(registrations,
+            phase == 'association' ? duringSetup : { int ignored -> },
+            phase == 'publication' ? duringSetup : { int ignored -> })
+        List<Runnable> scheduled = []
+        def delivered = []
+        def subscription = subscription(fixture.registrar, scheduler(scheduled), new OracleChangeNotificationTaskTracker(),
+            { Runnable task -> task.run() } as Executor, { ChangeEvent<?> notification -> delivered.add(notification) })
+
+        when:
+        subscription.start()
+        if (pendingIndex == 2) {
+            fixture.failureListeners[0].onFailure(new SQLException('Original receiver failed'))
+        }
+        fixture.registeredListeners.last().onDatabaseChangeNotification(staleData)
+
+        then:
+        fixture.registrationIndex.get() == pendingIndex
+        delivered.size() == (callback == 'purge' ? 1 : 0)
+        scheduled.size() == (retry ? 1 : 0)
+        1 * fixture.oracleConnection.unregisterDatabaseChangeNotification(registrations[pendingIndex - 1])
+
+        when:
+        if (retry) {
+            scheduled.remove(0).run()
+            fixture.registeredListeners.last().onDatabaseChangeNotification(currentData)
+        }
+        subscription.stop()
+
+        then:
+        fixture.registrationIndex.get() == pendingIndex + (retry ? 1 : 0)
+        delivered.size() == (retry ? 2 : (callback == 'purge' ? 1 : 0))
+        scheduled.empty
+        0 * fixture.oracleConnection.unregisterDatabaseChangeNotification(registrations[pendingIndex - 1])
+
+        where:
+        [callback, phase, pendingIndex] << [
+            ['failure', 'shutdown', 'deregistration', 'query deregistration', 'purge'],
+            ['association', 'publication'], [1, 2]
+        ].combinations()
+    }
+
+    void "initial setup failure gets a recovery attempt with zero retries and retains failed cleanup"() {
+        given:
+        def failed = Mock(DatabaseChangeRegistration)
+        failed.state >> oracle.jdbc.NotificationRegistration.RegistrationState.CLOSED
+        def replacement = Mock(DatabaseChangeRegistration)
+        def fixture
+        fixture = registrarFixture([failed, replacement], { int index ->
+            if (index == 1) {
+                fixture.failureListeners[0].onFailure(new SQLException('Receiver failed during setup'))
+            }
+        })
+        List<Runnable> scheduled = []
+        def configuration = new OracleRegistrationRecoveryConfiguration()
+        configuration.setMaxRetries(0)
+        def subscription = subscription(fixture.registrar, scheduler(scheduled), new OracleChangeNotificationTaskTracker(),
+            { Runnable task -> task.run() } as Executor, { ChangeEvent<?> ignored -> }, configuration)
+
+        when:
+        subscription.start()
+
+        then:
+        fixture.registrationIndex.get() == 1
+        scheduled.size() == 1
+        1 * fixture.oracleConnection.unregisterDatabaseChangeNotification(failed) >> {
+            throw new DataAccessException('Database unavailable during cleanup')
+        }
+
+        when:
+        scheduled.remove(0).run()
+
+        then:
+        fixture.registrationIndex.get() == 2
+        scheduled.empty
+        1 * fixture.oracleConnection.unregisterDatabaseChangeNotification(failed)
+
+        when:
+        subscription.stop()
+
+        then:
+        0 * fixture.oracleConnection.unregisterDatabaseChangeNotification(failed)
+        1 * fixture.oracleConnection.unregisterDatabaseChangeNotification(replacement)
+    }
+
+    void "terminal pending callback prevents recovery when failure arrives #order"() {
+        given:
+        def registration = Mock(DatabaseChangeRegistration)
+        def fixture
+        OracleChangeNotificationSubscription subscription
+        fixture = registrarFixture([registration], { int ignored ->
+            if (order == 'first') {
+                fixture.failureListeners[0].onFailure(new SQLException('Receiver failed'))
+            }
+            subscription.handleRegistrationDeregistered(1L, DatabaseChangeEvent.AdditionalEventType.TIMEOUT)
+            if (order == 'last') {
+                fixture.failureListeners[0].onFailure(new SQLException('Receiver failed'))
+            }
+        })
+        def scheduler = Mock(TaskScheduler)
+        subscription = this.subscription(fixture.registrar, scheduler)
+
+        when:
+        subscription.start()
+        subscription.stop()
+
+        then:
+        fixture.registrationIndex.get() == 1
+        0 * scheduler.schedule(_ as Duration, _ as Runnable)
+        1 * fixture.oracleConnection.unregisterDatabaseChangeNotification(registration)
+
+        where:
+        order << ['first', 'last']
+    }
+
+    void "preserves #callback outcome when replacement query association throws"() {
+        given:
+        def original = Mock(DatabaseChangeRegistration)
+        def replacement = Mock(DatabaseChangeRegistration)
+        def event = pendingLifecycleEvent(2L, callback)
+        def fixture
+        fixture = registrarFixture([original, replacement], { int index ->
+            if (index == 2) {
+                def dispatcher = (OracleChangeNotificationDispatcher) fixture.registeredListeners[1]
+                if (callback == 'purge') {
+                    def options = new Properties()
+                    options.setProperty(OracleConnection.NTF_QOS_PURGE_ON_NTFN, 'true')
+                    dispatcher.configureRegistrationOptions(options)
+                }
+                invokeDriverCallback(callback, fixture.failureListeners[1], dispatcher, event)
+                throw new SQLException('Query association failed after the lifecycle callback')
+            }
+        })
+        List<Runnable> scheduled = []
+        def tracker = new OracleChangeNotificationTaskTracker()
+        def subscription = subscription(fixture.registrar, scheduler(scheduled), tracker)
+
+        when:
+        subscription.start()
+        fixture.failureListeners[0].onFailure(new SQLException('Original receiver failed'))
+
+        then:
+        fixture.registrationIndex.get() == 2
+        scheduled.size() == (callback in ['failure', 'shutdown'] ? 1 : 0)
+        1 * fixture.oracleConnection.unregisterDatabaseChangeNotification(original)
+        1 * fixture.oracleConnection.unregisterDatabaseChangeNotification(replacement)
+
+        when:
+        subscription.stop()
+
+        then:
+        tracker.shutdownGracefully().toCompletableFuture().isDone()
+        0 * fixture.oracleConnection.unregisterDatabaseChangeNotification(_)
+
+        where:
+        callback << ['failure', 'shutdown', 'deregistration', 'query deregistration', 'purge']
+    }
+
+    void "shutdown prevents recovery of pending registration #pendingIndex"() {
+        given:
+        def registrations = (1..pendingIndex).collect { Mock(DatabaseChangeRegistration) }
+        def fixture
+        OracleChangeNotificationSubscription subscription
+        fixture = registrarFixture(registrations, { int index ->
+            if (index == pendingIndex) {
+                fixture.failureListeners[index - 1].onFailure(new SQLException('Receiver failed during setup'))
+                subscription.stop()
+            }
+        })
+        def scheduler = Mock(TaskScheduler)
+        def tracker = new OracleChangeNotificationTaskTracker()
+        subscription = this.subscription(fixture.registrar, scheduler, tracker)
+
+        when:
+        subscription.start()
+        if (pendingIndex == 2) {
+            fixture.failureListeners[0].onFailure(new SQLException('Original receiver failed'))
+        }
+
+        then:
+        fixture.registrationIndex.get() == pendingIndex
+        tracker.shutdownGracefully().toCompletableFuture().isDone()
+        0 * scheduler.schedule(_ as Duration, _ as Runnable)
+        1 * fixture.oracleConnection.unregisterDatabaseChangeNotification(registrations[pendingIndex - 1])
+
+        where:
+        pendingIndex << [1, 2]
+    }
+
     void "retries receiver recovery after executor rejection"() {
         given:
         def original = Mock(DatabaseChangeRegistration)
@@ -831,8 +1042,27 @@ class OracleChangeNotificationSubscriptionSpec extends Specification {
         event
     }
 
+    private DatabaseChangeEvent pendingLifecycleEvent(long registrationId, String callback) {
+        if (callback == 'purge') {
+            return dataEvent(registrationId, DatabaseChangeEvent.EventType.OBJCHANGE)
+        }
+        def event = Mock(DatabaseChangeEvent)
+        event.regId >> registrationId
+        if (callback == 'query deregistration') {
+            def query = Mock(QueryChangeDescription)
+            query.queryChangeEventType >> QueryChangeDescription.QueryChangeEventType.DEREG
+            event.eventType >> DatabaseChangeEvent.EventType.QUERYCHANGE
+            event.queryChangeDescription >> ([query] as QueryChangeDescription[])
+        } else {
+            event.eventType >> (callback == 'shutdown' ? DatabaseChangeEvent.EventType.SHUTDOWN : DatabaseChangeEvent.EventType.DEREG)
+            event.additionalEventType >> DatabaseChangeEvent.AdditionalEventType.TIMEOUT
+        }
+        event
+    }
+
     private RegistrarFixture registrarFixture(List<DatabaseChangeRegistration> registrations,
-                                              Closure<?> associationAction = { int ignored -> }) {
+                                              Closure<?> associationAction = { int ignored -> },
+                                              Closure<?> beforePublication = { int ignored -> }) {
         def operations = Mock(JdbcOperations)
         def connection = Mock(Connection)
         def oracleConnection = Mock(OracleConnection)
@@ -844,7 +1074,14 @@ class OracleChangeNotificationSubscriptionSpec extends Specification {
         List<Properties> registrationOptions = registrations.collect { new Properties() }
         List<FailureListener> failureListeners = []
         List<DatabaseChangeListener> registeredListeners = []
-        operations.execute(_ as ConnectionCallback) >> { ConnectionCallback<?> callback -> callback.call(connection) }
+        operations.execute(_ as ConnectionCallback) >> { ConnectionCallback<?> callback ->
+            int previousIndex = registrationIndex.get()
+            def result = callback.call(connection)
+            if (registrationIndex.get() != previousIndex) {
+                beforePublication.call(registrationIndex.get())
+            }
+            result
+        }
         connection.unwrap(OracleConnection) >> oracleConnection
         connection.createStatement() >> statement
         statement.unwrap(OracleStatement) >> oracleStatement
