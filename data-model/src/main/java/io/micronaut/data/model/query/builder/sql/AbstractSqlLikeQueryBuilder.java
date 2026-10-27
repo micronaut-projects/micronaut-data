@@ -1742,6 +1742,18 @@ public abstract class AbstractSqlLikeQueryBuilder implements QueryBuilder {
     }
 
     /**
+     * The match mode carried by the last argument of a synthetic text search function.
+     *
+     * @param modeExpression The literal
+     * @return The mode
+     */
+    protected static MatchMode textMatchMode(Expression<?> modeExpression) {
+        return modeExpression instanceof LiteralExpression<?> literal && literal.getValue() != null
+            ? MatchMode.valueOf(literal.getValue().toString())
+            : MatchMode.ANY;
+    }
+
+    /**
      * Checks whether {@link EntityRepresentation} annotation with JSON type is used for the repository method.
      * If current dialect does not support handling JSON entity representations, {@link IllegalArgumentException} is thrown.
      *
@@ -3945,6 +3957,10 @@ public abstract class AbstractSqlLikeQueryBuilder implements QueryBuilder {
                 appendSearchScore(expressions);
                 return;
             }
+            if (TextSearchSupport.HIGHLIGHT_FUNCTION.equals(functionName)) {
+                appendSearchHighlight(expressions);
+                return;
+            }
             String aggregateFunction = getDistinctAggregateFunction(functionName);
             if (aggregateFunction != null) {
                 if (expressions.size() != 1) {
@@ -4027,6 +4043,35 @@ public abstract class AbstractSqlLikeQueryBuilder implements QueryBuilder {
                     BindingParameter converted = context -> TextSearchDialect.withConverter(bindingParameter.bind(context), converterClassName);
                     queryState.pushParameter(converted, newBindingContext(null));
                 });
+            } finally {
+                columnAlias = currentColumnAlias;
+                isNestedExpression = currentNestedExpression;
+            }
+        }
+
+        private void appendSearchHighlight(List<Expression<?>> expressions) {
+            TextSearchDialect dialect = TextSearchDialect.forDialect(getDialect());
+            if (dialect == null) {
+                throw new UnsupportedOperationException("Full-text search is not supported by dialect: " + getDialect());
+            }
+            if (expressions.size() != 3) {
+                throw new IllegalStateException("Search highlight expects a field, a query and a match mode");
+            }
+            @SuppressWarnings("unchecked")
+            Expression<String> queryExpression = (Expression<String>) expressions.get(1);
+            String currentColumnAlias = columnAlias;
+            boolean currentNestedExpression = isNestedExpression;
+            columnAlias = null;
+            isNestedExpression = true;
+            try {
+                dialect.appendSearchHighlight(query, expressions.get(0), queryExpression, textMatchMode(expressions.get(2)),
+                    textSearchTarget(annotationMetadata, queryState.getEntity(), tableAlias), this::appendExpression, converterClassName -> expression -> {
+                        if (!(expression instanceof BindingParameter bindingParameter)) {
+                            throw new IllegalStateException("A full-text search query must be a parameter, got: " + expression);
+                        }
+                        BindingParameter converted = context -> TextSearchDialect.withConverter(bindingParameter.bind(context), converterClassName);
+                        queryState.pushParameter(converted, newBindingContext(null));
+                    });
             } finally {
                 columnAlias = currentColumnAlias;
                 isNestedExpression = currentNestedExpression;

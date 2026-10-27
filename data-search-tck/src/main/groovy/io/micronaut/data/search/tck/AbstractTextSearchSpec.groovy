@@ -49,7 +49,7 @@ abstract class AbstractTextSearchSpec extends Specification {
      * @return The capabilities the backend supports beyond term matching and score ordering
      */
     Set<SearchCapability> capabilities() {
-        return EnumSet.of(SearchCapability.PHRASE, SearchCapability.PREFIX, SearchCapability.FIELD_SCOPE)
+        return EnumSet.of(SearchCapability.PHRASE, SearchCapability.PREFIX, SearchCapability.FIELD_SCOPE, SearchCapability.HIGHLIGHT)
     }
 
     /**
@@ -265,6 +265,15 @@ abstract class AbstractTextSearchSpec extends Specification {
         bookSearchRepository.search(SearchQuery.builder("programming").minScore(top * 10 + 1).build()).results().isEmpty()
     }
 
+    void "search with a SearchQuery rejects highlighting a property that is not a search field"() {
+        when:
+        bookSearchRepository.search(SearchQuery.builder("programming").highlight("author").build())
+
+        then:
+        IllegalArgumentException e = thrown()
+        e.message.contains("'author'")
+    }
+
     void "search with a SearchQuery rejects a field that is not a search field"() {
         when:
         bookSearchRepository.search(SearchQuery.builder("programming").fields("author").build())
@@ -291,6 +300,46 @@ abstract class AbstractTextSearchSpec extends Specification {
 
         then:
         thrown(UnsupportedSearchFeatureException)
+
+        when:
+        bookSearchRepository.search(SearchQuery.builder("programming").language("simple").build())
+
+        then:
+        thrown(UnsupportedSearchFeatureException)
+    }
+
+    void "search with a SearchQuery highlights the matched terms of the requested fields"() {
+        assumeTrue(capabilities().contains(SearchCapability.HIGHLIGHT))
+
+        when:
+        def results = bookSearchRepository.search(SearchQuery.builder("programming").highlight("title").build())
+
+        then:
+        results.results().size() == 2
+        results.results().every { it.highlights().keySet() == ["title"] as Set }
+        results.results().every { it.highlights()["title"].size() == 1 }
+        results.results().every { it.highlights()["title"][0].contains("<em>Programming</em>") }
+        results.results().every { !it.highlights()["title"][0].contains("<em>Rust</em>") }
+
+        when:
+        def both = bookSearchRepository.search(SearchQuery.builder("rust").highlight("title", "description").build())
+
+        then:
+        both.results()*.entity()*.title == ["The Rust Programming Language"]
+        both.results()[0].highlights()["title"][0].contains("<em>Rust</em>")
+        both.results()[0].highlights()["description"][0].contains("<em>Rust</em>")
+        // the entity itself is untouched
+        both.results()[0].entity().title == "The Rust Programming Language"
+
+        when:
+        def none = bookSearchRepository.search(SearchQuery.builder("programming").build())
+
+        then:
+        none.results().every { it.highlights().isEmpty() }
+    }
+
+    void "search with a SearchQuery rejects highlighting when the store cannot highlight"() {
+        assumeTrue(!capabilities().contains(SearchCapability.HIGHLIGHT))
 
         when:
         bookSearchRepository.search(SearchQuery.builder("programming").highlight("title").build())

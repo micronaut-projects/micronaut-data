@@ -13,9 +13,10 @@ class OracleSearchIndexDdlSpec extends Specification {
         def statements = new SqlQueryBuilder(Dialect.ORACLE).buildCreateTableStatements(new RuntimePersistentEntity<>(Book))
 
         then:
-        statements.size() == 3
+        statements.size() == 4
         statements[0].startsWith('CREATE TABLE "SEARCH_BOOK"')
         statements[1] == 'CREATE INDEX "IDX_SEARCH_BOOK_SEARCH_TITLE" ON "SEARCH_BOOK" ("TITLE") INDEXTYPE IS CTXSYS.CONTEXT PARAMETERS (\'SYNC (ON COMMIT)\');'
         statements[2] == 'CREATE INDEX "IDX_SEARCH_BOOK_SEARCH_DESCRIPTION" ON "SEARCH_BOOK" ("DESCRIPTION") INDEXTYPE IS CTXSYS.CONTEXT PARAMETERS (\'SYNC (ON COMMIT)\');'
+        statements[3] == "BEGIN CTX_DDL.CREATE_POLICY('MN_SEARCH_POLICY'); EXCEPTION WHEN OTHERS THEN IF SQLCODE != -20000 THEN RAISE; END IF; END;"
     }
 }

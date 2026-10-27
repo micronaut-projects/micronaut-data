@@ -1783,6 +1783,9 @@ public final class MongoQueryBuilder implements QueryBuilder {
                 addFieldsObj.put(alias == null ? TextSearchSupport.SCORE_ALIAS : alias, TEXT_SCORE);
                 return;
             }
+            if (TextSearchSupport.HIGHLIGHT_FUNCTION.equals(functionExpression.getName())) {
+                throw new UnsupportedSearchFeatureException(SearchCapability.HIGHLIGHT, "MongoDB $text");
+            }
             throw new UnsupportedOperationException("Function expression is not supported by Micronaut Data MongoDB.");
         }
 
