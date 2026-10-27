@@ -102,6 +102,7 @@ import io.micronaut.data.repository.*;
 import io.micronaut.data.annotation.*;
 import io.micronaut.data.graph.annotation.*;
 import io.micronaut.data.graph.processor.TestGraphRepository;
+import io.micronaut.data.graph.processor.TestAgeRepository;
 import java.util.*;
 
 $source

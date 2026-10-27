@@ -2,6 +2,7 @@ package io.micronaut.data.neo4j
 
 import io.micronaut.data.graph.tck.AbstractGraphRepositorySpec
 import io.micronaut.data.neo4j.operations.Neo4jRepositoryOperations
+import io.micronaut.data.neo4j.tck.Neo4jColleagueRepository
 import io.micronaut.data.neo4j.tck.Neo4jFriendRepository
 import io.micronaut.data.neo4j.tck.Neo4jMovieRepository
 import io.micronaut.data.neo4j.tck.Neo4jPersonRepository
@@ -21,6 +22,9 @@ class Neo4jGraphRepositorySpec extends AbstractGraphRepositorySpec implements Te
 
     @Inject
     Neo4jFriendRepository friendRepository
+
+    @Inject
+    Neo4jColleagueRepository colleagueRepository
 
     @Inject
     Neo4jTransactionOperations transactionOperations
