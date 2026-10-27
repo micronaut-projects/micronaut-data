@@ -514,6 +514,23 @@ public class SqlQueryBuilder extends AbstractSqlLikeQueryBuilder {
     }
 
     /**
+     * Builds the {@code CREATE TABLE} statements of a table mapping, for tables that are not the table of a single
+     * entity, such as the edge tables of a property graph.
+     *
+     * @param table The table
+     * @return The statements, in execution order
+     * @since 5.3.0
+     */
+    @Internal
+    public String[] buildCreateTableStatements(SqlTableMapping table) {
+        List<String> createStatements = new ArrayList<>();
+        Boolean shouldEscapeDialect = shouldEscapeDialect(dialect);
+        boolean escape = Objects.requireNonNullElseGet(shouldEscapeDialect, table::escape);
+        addTableCreateStatements(createStatements, table, table.schema(), escape);
+        return createStatements.toArray(new String[0]);
+    }
+
+    /**
      * Builds the create table statements for a collection of entities. Designed for testing and not production usage. For production a
      * SQL migration tool such as Flyway or Liquibase is recommended.
      *
