@@ -26,7 +26,15 @@ import spock.lang.Specification
 
 import java.sql.Connection
 import java.sql.SQLException
+import java.time.Duration
+import java.util.concurrent.Callable
+import java.util.concurrent.CompletableFuture
+import java.util.concurrent.CountDownLatch
 import java.util.concurrent.Executor
+import java.util.concurrent.Executors
+import java.util.concurrent.TimeUnit
+import java.util.concurrent.TimeoutException
+import java.util.concurrent.atomic.AtomicInteger
 
 class OracleChangeNotificationProviderSpec extends Specification {
 
@@ -150,7 +158,129 @@ class OracleChangeNotificationProviderSpec extends Specification {
         exception.message.contains('after provider shutdown has started')
     }
 
-    private OracleChangeNotificationProvider provider() {
-        new OracleChangeNotificationProvider(Mock(BeanContext), Mock(Executor), Mock(TaskScheduler), new OracleRegistrationRecoveryConfiguration())
+    void "waits for pending cleanup in #hook"() {
+        given:
+        def provider = provider(gracefulShutdownEnabled)
+        def cleanup = new CompletableFuture<Void>()
+        provider.@shutdownStage = cleanup
+        def executor = Executors.newSingleThreadExecutor()
+        def started = new CountDownLatch(1)
+
+        when:
+        def shutdown = executor.submit {
+            started.countDown()
+            if (hook == 'shutdown event') {
+                provider.onApplicationEvent(new ShutdownEvent(Mock(BeanContext)))
+            } else {
+                provider.close()
+            }
+        }
+        assert started.await(5, TimeUnit.SECONDS)
+        shutdown.get(100, TimeUnit.MILLISECONDS)
+
+        then:
+        thrown(TimeoutException)
+
+        when:
+        cleanup.complete(null)
+        shutdown.get(5, TimeUnit.SECONDS)
+
+        then:
+        noExceptionThrown()
+
+        cleanup:
+        cleanup.complete(null)
+        executor.shutdownNow()
+
+        where:
+        hook               | gracefulShutdownEnabled
+        'shutdown event'   | false
+        'bean destruction' | false
+        'bean destruction' | true
+    }
+
+    void "leaves the wait to graceful shutdown without extending it during bean destruction"() {
+        given:
+        def provider = provider(true)
+        def cleanup = new CompletableFuture<Void>()
+        provider.@shutdownStage = cleanup
+        def executor = Executors.newSingleThreadExecutor()
+
+        when:
+        executor.submit {
+            provider.onApplicationEvent(new ShutdownEvent(Mock(BeanContext)))
+            provider.close()
+        }.get(1, TimeUnit.SECONDS)
+
+        then:
+        !cleanup.done
+
+        cleanup:
+        cleanup.complete(null)
+        executor.shutdownNow()
+    }
+
+    void "bounds cleanup wait and does not wait again during bean destruction"() {
+        given:
+        def provider = provider(false, Duration.ofMillis(20))
+        def waits = new AtomicInteger()
+        def cleanup = new CompletableFuture<Void>() {
+            @Override
+            Void get(long timeout, TimeUnit unit) {
+                waits.incrementAndGet()
+                super.get(timeout, unit)
+            }
+        }
+        provider.@shutdownStage = cleanup
+        def executor = Executors.newSingleThreadExecutor()
+
+        when:
+        executor.submit {
+            provider.onApplicationEvent(new ShutdownEvent(Mock(BeanContext)))
+        }.get(5, TimeUnit.SECONDS)
+
+        then:
+        !cleanup.done
+        !cleanup.cancelled
+
+        when:
+        provider.close()
+        provider.onApplicationEvent(new ShutdownEvent(Mock(BeanContext)))
+
+        then:
+        waits.get() == 1
+
+        cleanup:
+        cleanup.complete(null)
+        executor.shutdownNow()
+    }
+
+    void "preserves interruption while waiting for cleanup"() {
+        given:
+        def provider = provider()
+        def cleanup = new CompletableFuture<Void>()
+        provider.@shutdownStage = cleanup
+        def executor = Executors.newSingleThreadExecutor()
+
+        when:
+        def interrupted = executor.submit({
+            Thread.currentThread().interrupt()
+            provider.onApplicationEvent(new ShutdownEvent(Mock(BeanContext)))
+            Thread.interrupted()
+        } as Callable<Boolean>).get(5, TimeUnit.SECONDS)
+
+        then:
+        interrupted
+        !cleanup.done
+
+        cleanup:
+        cleanup.complete(null)
+        executor.shutdownNow()
+    }
+
+    private OracleChangeNotificationProvider provider(boolean gracefulShutdownEnabled = false,
+                                                       Duration gracePeriod = Duration.ofSeconds(15)) {
+        new OracleChangeNotificationProvider(Mock(BeanContext), Mock(Executor), Mock(TaskScheduler),
+            new OracleRegistrationRecoveryConfiguration(), gracefulShutdownEnabled, gracePeriod)
     }
 }

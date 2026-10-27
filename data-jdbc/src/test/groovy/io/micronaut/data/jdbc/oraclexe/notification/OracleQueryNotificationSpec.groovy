@@ -104,6 +104,47 @@ class OracleQueryNotificationSpec extends Specification implements OracleTestPro
         }
     }
 
+    void "context close unregisters its listeners with graceful shutdown #enabled"() {
+        given:
+        // Use the original context as an independent observer whose pool survives the tested close.
+        def before = registrationIds()
+        def closingContext = ApplicationContext.run(properties + [
+            "query-notification.enabled": "true",
+            "datasources.default.schema-generate": "NONE",
+            "micronaut.lifecycle.graceful-shutdown.enabled": enabled
+        ])
+        def owned = registrationIds() - before
+        assert !owned.empty
+
+        when:
+        closingContext.close()
+
+        then:
+        def remaining = registrationIds()
+        remaining.intersect(owned).empty
+        remaining.containsAll(before)
+
+        cleanup:
+        closingContext?.close()
+
+        where:
+        enabled << [false, true]
+    }
+
+    private Set<Long> registrationIds() {
+        context.getBean(DefaultJdbcRepositoryOperations).execute { connection ->
+            connection.createStatement().withCloseable { statement ->
+                statement.executeQuery("SELECT DISTINCT regid FROM user_change_notification_regs").withCloseable { rows ->
+                    Set<Long> ids = []
+                    while (rows.next()) {
+                        ids.add(rows.getLong(1))
+                    }
+                    ids
+                }
+            }
+        }
+    }
+
     void "change listener receives an entity after an Oracle row is inserted"() {
         when:
         def saved = objectChangeRepository.save(new ObjectChangeNotificationBook(title: "Continuous Query Notification"))

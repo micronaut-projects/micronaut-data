@@ -287,7 +287,11 @@ Callbacks waiting to run, including invalidation after registration recovery, ar
 A replacement registration created during shutdown is cleaned up without activating it or notifying the listener.
 Already-running callbacks are allowed to finish; the shutdown timeout does not forcibly terminate listener code or JDBC
 operations. Registration cleanup is best effort: database unavailability or shutdown timeout can prevent it from
-completing. Cleanup is also attempted when the application context is closed without graceful shutdown.
+completing. When graceful shutdown is disabled, closing the application context still waits for cleanup before
+datasources and executors are destroyed. This wait uses `micronaut.lifecycle.graceful-shutdown.grace-period`
+(15 seconds by default), including running callbacks and recovery. If the deadline expires, context destruction
+continues and registrations may remain in Oracle Database. Bean destruction does not start a second wait after
+the shutdown event.
 
 An abrupt process or host failure cannot run that cleanup. Oracle Database automatically cleans up ordinary
 (non-reliable) registrations after their owning client has permanently disconnected. Registrations become eligible

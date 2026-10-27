@@ -17,6 +17,7 @@ package io.micronaut.data.jdbc.notification.oracle;
 
 import io.micronaut.context.BeanContext;
 import io.micronaut.context.annotation.Requires;
+import io.micronaut.context.annotation.Value;
 import io.micronaut.context.event.ApplicationEventListener;
 import io.micronaut.context.event.ShutdownEvent;
 import io.micronaut.core.annotation.Order;
@@ -37,13 +38,18 @@ import org.slf4j.LoggerFactory;
 
 import java.sql.Connection;
 import java.sql.SQLException;
+import java.time.Duration;
 import java.util.List;
 import java.util.Map;
 import java.util.OptionalLong;
 import java.util.concurrent.CompletableFuture;
 import java.util.concurrent.CompletionStage;
 import java.util.concurrent.ConcurrentHashMap;
+import java.util.concurrent.ExecutionException;
 import java.util.concurrent.Executor;
+import java.util.concurrent.TimeUnit;
+import java.util.concurrent.TimeoutException;
+import java.util.concurrent.atomic.AtomicBoolean;
 
 /**
  * Oracle implementation of the generic JDBC change-notification provider.
@@ -55,9 +61,10 @@ import java.util.concurrent.Executor;
  * methods once per datasource; later registration calls for that datasource are rejected.</p>
  *
  * <p>Each subscription manager owns the physical Oracle registrations and their lifecycle.
- * A {@link ShutdownEvent} initiates cleanup for all datasource managers, and graceful shutdown
- * waits for registration cleanup, recovery, and notification callbacks that are already running. {@link PreDestroy} provides a
- * best-effort cleanup fallback if the provider is destroyed without a context shutdown event.</p>
+ * A {@link ShutdownEvent} initiates cleanup for all datasource managers. Shutdown waits for
+ * registration cleanup, recovery, and notification callbacks that are already running, bounded by
+ * the configured grace period, before singleton destruction. {@link PreDestroy} provides the same
+ * bounded cleanup fallback if the provider is destroyed without a context shutdown event.</p>
  */
 @Singleton
 @Requires(classes = OracleConnection.class)
@@ -70,17 +77,24 @@ final class OracleChangeNotificationProvider implements ChangeNotificationProvid
     private final Executor blockingExecutor;
     private final TaskScheduler taskScheduler;
     private final OracleRegistrationRecoveryConfiguration recoveryConfiguration;
+    private final boolean gracefulShutdownEnabled;
+    private final Duration shutdownGracePeriod;
+    private final AtomicBoolean shutdownHandled = new AtomicBoolean();
     private final Map<String, OracleChangeNotificationSubscriptionManager> subscriptionManagers = new ConcurrentHashMap<>();
     private @Nullable CompletableFuture<Void> shutdownStage;
 
     OracleChangeNotificationProvider(BeanContext beanContext,
                                      @Named(TaskExecutors.BLOCKING) Executor blockingExecutor,
                                      @Named(TaskExecutors.SCHEDULED) TaskScheduler taskScheduler,
-                                     OracleRegistrationRecoveryConfiguration recoveryConfiguration) {
+                                     OracleRegistrationRecoveryConfiguration recoveryConfiguration,
+                                     @Value("${micronaut.lifecycle.graceful-shutdown.enabled:false}") boolean gracefulShutdownEnabled,
+                                     @Value("${micronaut.lifecycle.graceful-shutdown.grace-period:15s}") Duration shutdownGracePeriod) {
         this.beanContext = beanContext;
         this.blockingExecutor = blockingExecutor;
         this.taskScheduler = taskScheduler;
         this.recoveryConfiguration = recoveryConfiguration;
+        this.gracefulShutdownEnabled = gracefulShutdownEnabled;
+        this.shutdownGracePeriod = shutdownGracePeriod;
     }
 
     /**
@@ -134,13 +148,19 @@ final class OracleChangeNotificationProvider implements ChangeNotificationProvid
     }
 
     /**
-     * Initiates registration cleanup when the application context begins shutting down.
+     * Initiates registration cleanup before singleton destruction. When the framework's graceful
+     * shutdown listener is disabled, waits here while the datasources and executors are still available.
      *
      * @param event the context shutdown event
      */
     @Override
     public void onApplicationEvent(ShutdownEvent event) {
-        stopManagers();
+        if (shutdownHandled.compareAndSet(false, true)) {
+            CompletionStage<?> completion = stopManagers();
+            if (!gracefulShutdownEnabled) {
+                awaitShutdown(completion);
+            }
+        }
     }
 
     /**
@@ -161,11 +181,27 @@ final class OracleChangeNotificationProvider implements ChangeNotificationProvid
     }
 
     /**
-     * Starts best-effort registration cleanup if this bean is destroyed without a context shutdown event.
+     * Waits for cleanup if this bean is destroyed without a context shutdown event. A shutdown event
+     * already owns the wait, so bean destruction must not extend its deadline.
      */
     @PreDestroy
     void close() {
-        stopManagers();
+        if (shutdownHandled.compareAndSet(false, true)) {
+            awaitShutdown(stopManagers());
+        }
+    }
+
+    private void awaitShutdown(CompletionStage<?> completion) {
+        try {
+            completion.toCompletableFuture().get(shutdownGracePeriod.toMillis(), TimeUnit.MILLISECONDS);
+        } catch (InterruptedException e) {
+            Thread.currentThread().interrupt();
+            LOG.warn("Interrupted while waiting for DCN registration cleanup", e);
+        } catch (ExecutionException e) {
+            LOG.warn("Error during DCN registration cleanup", e);
+        } catch (TimeoutException e) {
+            LOG.warn("Timed out waiting for DCN registration cleanup after [{}]; registrations may remain in Oracle Database", shutdownGracePeriod);
+        }
     }
 
     /**
