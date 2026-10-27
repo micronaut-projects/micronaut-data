@@ -44,6 +44,7 @@ public class InMemorySearchTransport implements SearchTransport {
     final Map<String, String> createdIndexes = new LinkedHashMap<>();
     final List<String> bodies = new ArrayList<>();
     final List<DocumentSearchConfiguration.Refresh> refreshes = new ArrayList<>();
+    final List<String> refreshed = new ArrayList<>();
     private int generated;
 
     private Map<String, Map<String, Object>> documents(String index) {
@@ -115,5 +116,16 @@ public class InMemorySearchTransport implements SearchTransport {
     @Override
     public void createIndex(String index, String body) {
         createdIndexes.put(index, body);
+    }
+
+    @Override
+    public void deleteIndex(String index) {
+        createdIndexes.remove(index);
+        indexes.remove(index);
+    }
+
+    @Override
+    public void refresh(String index) {
+        refreshed.add(index);
     }
 }

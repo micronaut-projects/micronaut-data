@@ -341,6 +341,15 @@ class StubTransportReactiveSpec extends Specification {
         }
 
         @Override
+        void deleteIndex(String index) {
+            indexes.remove(index)
+        }
+
+        @Override
+        void refresh(String index) {
+        }
+
+        @Override
         void createIndex(String index, String body) {
             // the stub keeps documents only, so there is no mapping to create
         }

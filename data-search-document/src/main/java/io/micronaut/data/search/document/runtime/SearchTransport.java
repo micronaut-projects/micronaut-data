@@ -173,6 +173,22 @@ public interface SearchTransport {
     void createIndex(String index, String body);
 
     /**
+     * Deletes an index with its documents.
+     *
+     * @param index The index name
+     * @since 5.4.0
+     */
+    void deleteIndex(String index);
+
+    /**
+     * Refreshes an index, so the documents indexed so far are searchable.
+     *
+     * @param index The index name
+     * @since 5.4.0
+     */
+    void refresh(String index);
+
+    /**
      * One search hit.
      *
      * @param id The document id

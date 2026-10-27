@@ -697,6 +697,17 @@ class FakeClientTransportSpec extends Specification {
      */
     static class BlockingOverAsync implements SearchTransport {
 
+        // the async SPI has no index management; these only exist to satisfy the blocking SPI from 5.4
+        @Override
+        void deleteIndex(String index) {
+            throw new UnsupportedOperationException("not part of the async transport")
+        }
+
+        @Override
+        void refresh(String index) {
+            throw new UnsupportedOperationException("not part of the async transport")
+        }
+
         private final AsyncSearchTransport delegate
 
         BlockingOverAsync(AsyncSearchTransport delegate) {

@@ -459,7 +459,7 @@ interface PostRepository extends CrudRepository<Post, Long> {
 """)
 
         expect:
-        getQuery(repository.getRequiredMethod("searchBySearch", String)).contains("to_tsvector(coalesce(post_.\"lang\",'german')::regconfig,post_.\"title\") @@ to_tsquery('german',?)")
+        getQuery(repository.getRequiredMethod("searchBySearch", String)).contains("to_tsvector(mn_regconfig(coalesce(post_.\"lang\",'german')),post_.\"title\") @@ to_tsquery('german',?)")
     }
 
     void "the SearchNative keyword binds the query string unparsed"() {

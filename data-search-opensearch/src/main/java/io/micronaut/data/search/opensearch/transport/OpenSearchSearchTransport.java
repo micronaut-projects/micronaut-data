@@ -188,6 +188,24 @@ public final class OpenSearchSearchTransport implements SearchTransport {
         }
     }
 
+    @Override
+    public void deleteIndex(String index) {
+        try {
+            client.indices().delete(d -> d.index(index));
+        } catch (IOException e) {
+            throw new DataAccessException("OpenSearch delete index failed: " + e.getMessage(), e);
+        }
+    }
+
+    @Override
+    public void refresh(String index) {
+        try {
+            client.indices().refresh(r -> r.index(index));
+        } catch (IOException e) {
+            throw new DataAccessException("OpenSearch refresh failed: " + e.getMessage(), e);
+        }
+    }
+
     private Map<String, Object> parse(String body) {
         return OpenSearchRequests.parse(mapper, body);
     }
