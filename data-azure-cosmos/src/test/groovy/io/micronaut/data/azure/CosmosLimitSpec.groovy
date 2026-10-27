@@ -16,7 +16,9 @@
 package io.micronaut.data.azure
 
 import io.micronaut.core.annotation.AnnotationMetadata
+import io.micronaut.data.annotation.ApproximateSearch
 import io.micronaut.data.document.model.query.builder.CosmosSqlQueryBuilder
+import io.micronaut.inject.annotation.MutableAnnotationMetadata
 import spock.lang.Specification
 
 class CosmosLimitSpec extends Specification {
@@ -29,5 +31,17 @@ class CosmosLimitSpec extends Specification {
         builder.buildLimitAndOffset(3, 0, AnnotationMetadata.EMPTY_METADATA) == " OFFSET 0 LIMIT 3 "
         builder.buildLimitAndOffset(3, 6, AnnotationMetadata.EMPTY_METADATA) == " OFFSET 6 LIMIT 3 "
         builder.buildLimitAndOffset(3, 6) == " OFFSET 6 LIMIT 3 "
+    }
+
+    void "test runtime pagination of a method with @ApproximateSearch keeps the Cosmos OFFSET LIMIT syntax"() {
+        given:
+        def builder = new CosmosSqlQueryBuilder(AnnotationMetadata.EMPTY_METADATA)
+        def metadata = new MutableAnnotationMetadata()
+        metadata.addDeclaredAnnotation(ApproximateSearch.name, [targetAccuracy: 90])
+
+        expect: "other dialects than Oracle ignore the annotation"
+        metadata.hasStereotype(ApproximateSearch)
+        builder.buildLimitAndOffset(3, 0, metadata) == " OFFSET 0 LIMIT 3 "
+        builder.buildLimitAndOffset(3, 6, metadata) == " OFFSET 6 LIMIT 3 "
     }
 }

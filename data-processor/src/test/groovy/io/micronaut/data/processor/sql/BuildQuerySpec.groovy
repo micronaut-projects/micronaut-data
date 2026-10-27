@@ -458,6 +458,10 @@ interface FastVectorDocRepository extends CrudRepository<FastVectorDoc, Long> {
                 .endsWith("FETCH APPROX FIRST 5 ROWS ONLY WITH TARGET ACCURACY 90")
             new SqlQueryBuilder(Dialect.ORACLE).buildLimitAndOffset(5, 10, pagedMethod.annotationMetadata)
                 .endsWith("OFFSET 10 ROWS FETCH NEXT 5 ROWS ONLY")
+
+        and: "other dialects ignore the annotation"
+            new SqlQueryBuilder(Dialect.POSTGRES).buildLimitAndOffset(5, 0, pagedMethod.annotationMetadata) == " LIMIT 5"
+            new SqlQueryBuilder(Dialect.POSTGRES).buildLimitAndOffset(5, 10, pagedMethod.annotationMetadata) == " LIMIT 5 OFFSET 10"
     }
 
     void "test vector search score projection uses vector parameter for matching predicate"() {

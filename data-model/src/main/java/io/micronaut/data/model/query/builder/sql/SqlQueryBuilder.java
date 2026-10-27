@@ -2280,9 +2280,10 @@ public class SqlQueryBuilder extends AbstractSqlLikeQueryBuilder {
      * @since 5.3.0
      */
     public String buildLimitAndOffset(long limit, long offset, AnnotationMetadata annotationMetadata) {
-        int approximateAccuracy = approximateAccuracy(annotationMetadata);
+        // other dialects ignore @ApproximateSearch, so they and exact Oracle limits keep going through the overload
+        // that builders such as the Cosmos one override
+        int approximateAccuracy = getDialect() == Dialect.ORACLE ? approximateAccuracy(annotationMetadata) : -1;
         if (approximateAccuracy < 0) {
-            // exact limits keep going through the overload that builders such as the Cosmos one override
             return buildLimitAndOffset(limit, offset);
         }
         StringBuilder builder = new StringBuilder();
