@@ -502,7 +502,12 @@ public abstract class AbstractGraphRepositoryOperations extends AbstractReposito
         if (parameter == null) {
             throw new DataAccessException("Path query has no @PathDirection argument: " + query);
         }
-        Object argument = preparedQuery.getParameterArray()[parameter.intValue().orElseThrow()];
+        Object[] parameters = preparedQuery.getParameterArray();
+        int index = parameter.intValue().orElse(-1);
+        if (index < 0 || index >= parameters.length) {
+            throw new DataAccessException("Path query has no @PathDirection argument at index " + index + ": " + query);
+        }
+        Object argument = parameters[index];
         if (!(argument instanceof Direction direction)) {
             throw new IllegalArgumentException("The @PathDirection argument must be a Direction, was: " + argument);
         }

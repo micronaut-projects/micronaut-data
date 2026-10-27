@@ -269,16 +269,23 @@ public final class GraphPathMethodMatcher implements MethodMatcher {
                 endpoints.add(parameter);
             }
         }
-        if (!endpoints.isEmpty() && endpoints.size() != 2) {
-            throw new MatchFailedException("A path or relationship finder takes two endpoint parameters, the start and the end node or their identifiers, found " + endpoints.size());
+        validateEndpoints(kind, maxDepth, endpoints.size(), limitParameterIndex);
+        return new Endpoints(endpoints, limitParameterIndex, directionParameterIndex);
+    }
+
+    /**
+     * Checks the number of endpoint parameters and that finding all paths has a maximum depth.
+     */
+    private static void validateEndpoints(PathQueryDefinition.Kind kind, int maxDepth, int endpointCount, int limitParameterIndex) {
+        if (endpointCount != 0 && endpointCount != 2) {
+            throw new MatchFailedException("A path or relationship finder takes two endpoint parameters, the start and the end node or their identifiers, found " + endpointCount);
         }
-        if (endpoints.isEmpty() && kind != PathQueryDefinition.Kind.RELATIONSHIPS) {
+        if (endpointCount == 0 && kind != PathQueryDefinition.Kind.RELATIONSHIPS) {
             throw new MatchFailedException("A path finder needs the start and the end node as its first two parameters");
         }
         if (kind == PathQueryDefinition.Kind.ALL && maxDepth <= 0 && limitParameterIndex < 0) {
             throw new MatchFailedException("Finding all paths needs a maximum depth: add an int parameter annotated with @PathLimit, or annotate the method with @PathLimit(n)");
         }
-        return new Endpoints(endpoints, limitParameterIndex, directionParameterIndex);
     }
 
     /**
@@ -295,15 +302,25 @@ public final class GraphPathMethodMatcher implements MethodMatcher {
                                            PathQueryDefinition.Result result,
                                            @Nullable ClassElement resultType) {
         if (result == PathQueryDefinition.Result.ELEMENTS) {
-            if (kind == PathQueryDefinition.Kind.RELATIONSHIPS) {
-                if (resultType == null || !(resultType.isAssignable(GraphRelationship.class) || resultType.hasStereotype(RelationshipProperties.class))) {
-                    throw new MatchFailedException("Method must return GraphRelationship or a @RelationshipProperties entity, or a container of them, found: " + (resultType == null ? "void" : resultType.getName()));
-                }
-            } else if (resultType == null || !resultType.isAssignable(GraphPath.class)) {
-                throw new MatchFailedException("Method must return GraphPath, or a container of GraphPath, found: " + (resultType == null ? "void" : resultType.getName()));
-            }
+            checkElementResultType(kind, resultType);
         }
         return resultType != null ? resultType : matchContext.getReturnType();
+    }
+
+    /**
+     * Checks that a finder returning elements returns relationships or paths, according to its kind.
+     */
+    private static void checkElementResultType(PathQueryDefinition.Kind kind, @Nullable ClassElement resultType) {
+        String found = resultType == null ? "void" : resultType.getName();
+        if (kind == PathQueryDefinition.Kind.RELATIONSHIPS) {
+            if (resultType == null || !(resultType.isAssignable(GraphRelationship.class) || resultType.hasStereotype(RelationshipProperties.class))) {
+                throw new MatchFailedException("Method must return GraphRelationship or a @RelationshipProperties entity, or a container of them, found: " + found);
+            }
+            return;
+        }
+        if (resultType == null || !resultType.isAssignable(GraphPath.class)) {
+            throw new MatchFailedException("Method must return GraphPath, or a container of GraphPath, found: " + found);
+        }
     }
 
     private static io.micronaut.data.model.query.builder.QueryResult buildPathQuery(GraphQueryBuilder queryBuilder, PathQueryDefinition definition) {
@@ -384,22 +401,9 @@ public final class GraphPathMethodMatcher implements MethodMatcher {
                                                            List<ParameterElement> endpoints,
                                                            ClassElement resultType) {
         SourcePersistentEntity named = token == null ? null : findEntity(matchContext, entity, token);
-        SourcePersistentEntity endEntity = named;
-        if (endpoints.size() == 2 && TypeUtils.isEntity(endpoints.get(1).getGenericType())) {
-            SourcePersistentEntity parameterEntity = matchContext.getEntity(endpoints.get(1).getGenericType());
-            if (named != null && !named.getName().equals(parameterEntity.getName())) {
-                throw new MatchFailedException("The end node is a [" + token + "] but parameter [" + endpoints.get(1).getName() + "] is a " + parameterEntity.getSimpleName());
-            }
-            endEntity = parameterEntity;
-        }
+        SourcePersistentEntity endEntity = endParameterEntity(matchContext, named, token, endpoints);
         if (endEntity == null && resultType.isAssignable(GraphRelationship.class)) {
-            // The node of GraphRelationship<F, T> that is not the repository entity, at whichever end the relationship points
-            for (ClassElement nodeType : resultType.getTypeArguments().values()) {
-                if (TypeUtils.isEntity(nodeType) && !nodeType.getName().equals(entity.getName())) {
-                    endEntity = matchContext.getEntity(nodeType);
-                    break;
-                }
-            }
+            endEntity = relationshipNodeEntity(matchContext, entity, resultType);
         }
         if (endEntity == null) {
             endEntity = commonTarget(relationships);
@@ -411,6 +415,39 @@ public final class GraphPathMethodMatcher implements MethodMatcher {
             throw new MatchFailedException("The end node of a path or relationship finder must be a @Node entity, found: " + endEntity.getName());
         }
         return endEntity;
+    }
+
+    /**
+     * The entity of the end parameter when it is an entity, checked against the one named by {@code To<Entity>},
+     * otherwise the named entity.
+     */
+    private static @Nullable SourcePersistentEntity endParameterEntity(MethodMatchContext matchContext,
+                                                                      @Nullable SourcePersistentEntity named,
+                                                                      @Nullable String token,
+                                                                      List<ParameterElement> endpoints) {
+        if (endpoints.size() != 2 || !TypeUtils.isEntity(endpoints.get(1).getGenericType())) {
+            return named;
+        }
+        SourcePersistentEntity parameterEntity = matchContext.getEntity(endpoints.get(1).getGenericType());
+        if (named != null && !named.getName().equals(parameterEntity.getName())) {
+            throw new MatchFailedException("The end node is a [" + token + "] but parameter [" + endpoints.get(1).getName() + "] is a " + parameterEntity.getSimpleName());
+        }
+        return parameterEntity;
+    }
+
+    /**
+     * The node of {@code GraphRelationship<F, T>} that is not the repository entity, at whichever end the
+     * relationship points, or null.
+     */
+    private static @Nullable SourcePersistentEntity relationshipNodeEntity(MethodMatchContext matchContext,
+                                                                          SourcePersistentEntity entity,
+                                                                          ClassElement resultType) {
+        for (ClassElement nodeType : resultType.getTypeArguments().values()) {
+            if (TypeUtils.isEntity(nodeType) && !nodeType.getName().equals(entity.getName())) {
+                return matchContext.getEntity(nodeType);
+            }
+        }
+        return null;
     }
 
     private static @Nullable SourcePersistentEntity commonTarget(List<Association> relationships) {
