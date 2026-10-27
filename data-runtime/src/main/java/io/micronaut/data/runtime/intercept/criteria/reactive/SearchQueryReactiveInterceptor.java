@@ -59,6 +59,9 @@ public class SearchQueryReactiveInterceptor extends AbstractReactiveSpecificatio
         if (!searchQuery.isHybrid()) {
             results = findOne(methodKey, context, SearchQuerySupport.textQuery(cb, rootEntity, searchQuery, pageable), pageable)
                 .map(found -> SearchQuerySupport.applyMinScore(found, searchQuery));
+        } else if (SearchQuerySupport.fusesNatively(operations, searchQuery, operations.getEntity(rootEntity))) {
+            results = findOne(methodKey, context, SearchQuerySupport.hybridQuery(cb, rootEntity, searchQuery, pageable), Pageable.UNPAGED)
+                .map(fused -> SearchQuerySupport.pageHybrid(fused, searchQuery, pageable));
         } else {
             Pageable window = SearchQuerySupport.hybridWindow(searchQuery, pageable);
             RuntimePersistentEntity<Object> persistentEntity = operations.getEntity(rootEntity);

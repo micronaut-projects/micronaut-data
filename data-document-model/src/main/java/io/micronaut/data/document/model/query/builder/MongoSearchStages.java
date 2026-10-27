@@ -16,6 +16,15 @@
 package io.micronaut.data.document.model.query.builder;
 
 import io.micronaut.core.annotation.Internal;
+import io.micronaut.data.model.PersistentEntity;
+import io.micronaut.data.model.jpa.criteria.impl.expression.LiteralExpression;
+import io.micronaut.data.model.runtime.RuntimePersistentEntity;
+import io.micronaut.data.model.search.MatchMode;
+import io.micronaut.data.model.search.SearchCapability;
+import io.micronaut.data.model.search.TextMatchOptions;
+import io.micronaut.data.model.search.TextSearchSupport;
+import io.micronaut.data.model.search.UnsupportedSearchFeatureException;
+import jakarta.persistence.criteria.Expression;
 
 import java.util.ArrayList;
 import java.util.Collection;
@@ -38,12 +47,24 @@ final class MongoSearchStages {
      */
     static final String HIGHLIGHTS_FIELD = "__micronaut_highlights";
     /**
+     * The aggregation operator that reads the metadata of a search stage.
+     */
+    static final String META = "$meta";
+    /**
      * The cosine distance of a {@code $vectorSearch} hit: the stage scores a hit as {@code (1 + cosine) / 2},
      * so the distance {@code 1 - cosine} is {@code 2 - 2 * score}, the measure the other stores return.
      */
-    static final Map<String, Object> VECTOR_DISTANCE = Map.of("$subtract", List.of(2, Map.of("$multiply", List.of(2, Map.of("$meta", "vectorSearchScore")))));
+    static final Map<String, Object> VECTOR_DISTANCE = Map.of("$subtract", List.of(2, Map.of("$multiply", List.of(2, Map.of(META, "vectorSearchScore")))));
     // euclidean: score = 1 / (1 + distance), so distance = 1 / score - 1
-    static final Map<String, Object> EUCLIDEAN_DISTANCE = Map.of("$subtract", List.of(Map.of("$divide", List.of(1, Map.of("$meta", "vectorSearchScore"))), 1));
+    static final Map<String, Object> EUCLIDEAN_DISTANCE = Map.of("$subtract", List.of(Map.of("$divide", List.of(1, Map.of(META, "vectorSearchScore"))), 1));
+    /**
+     * The reciprocal rank fusion score of a {@code $rankFusion} hit.
+     */
+    static final Map<String, Object> FUSED_SCORE = Map.of(META, "score");
+    private static final String RANK_FUSION_STAGE = "$rankFusion";
+    private static final String LIMIT = "limit";
+    private static final int DEFAULT_VECTOR_CANDIDATES = 100;
+    private static final int MAX_VECTOR_CANDIDATES = 10000;
     private static final String HIGHLIGHT_START = "<em>";
     private static final String HIGHLIGHT_END = "</em>";
     private static final String HIGHLIGHT_SEPARATOR = " ... ";
@@ -54,6 +75,57 @@ final class MongoSearchStages {
     private static final String VALUE = "$$value";
 
     private MongoSearchStages() {
+    }
+
+    /**
+     * The {@code $vectorSearch} stage sized for a result window: {@code numCandidates} is ten times the
+     * limit within the bounds the stage accepts.
+     *
+     * @param stage The stage without its limit
+     * @param limit The hits to return
+     * @return The sized stage
+     */
+    static Map<String, Object> vectorSearchStage(Map<String, Object> stage, int limit) {
+        Map<String, Object> vectorSearch = new LinkedHashMap<>(stage);
+        vectorSearch.put("numCandidates", Math.min(MAX_VECTOR_CANDIDATES, Math.max(limit * 10, DEFAULT_VECTOR_CANDIDATES)));
+        vectorSearch.put(LIMIT, limit);
+        return vectorSearch;
+    }
+
+    /**
+     * The {@code $rankFusion} stage of a hybrid search: the {@code $search} pipeline and the
+     * {@code $vectorSearch} pipeline, each cut to the candidates, combined with reciprocal rank fusion
+     * under the weights. MongoDB fixes the rank constant at 60.
+     *
+     * @param search The {@code $search} stage
+     * @param vectorSearch The {@code $vectorSearch} stage without its limit
+     * @param fusion The weights and the window
+     * @return The stage
+     */
+    static Map<String, Object> rankFusionStage(Map<String, Object> search, Map<String, Object> vectorSearch, RankFusion fusion) {
+        Map<String, Object> pipelines = new LinkedHashMap<>();
+        pipelines.put("text", List.of(Map.of("$search", search), Map.of("$limit", fusion.candidates())));
+        pipelines.put("vector", List.of(Map.of("$vectorSearch", vectorSearchStage(vectorSearch, fusion.candidates()))));
+        Map<String, Object> weights = new LinkedHashMap<>();
+        weights.put("text", fusion.textWeight());
+        weights.put("vector", fusion.vectorWeight());
+        Map<String, Object> rankFusion = new LinkedHashMap<>();
+        rankFusion.put(INPUT, Map.of("pipelines", pipelines));
+        rankFusion.put("combination", Map.of("weights", weights));
+        return Map.of(RANK_FUSION_STAGE, rankFusion);
+    }
+
+    /**
+     * @param fields The field names
+     * @param expression The expression every field is set to
+     * @return The {@code $addFields} document
+     */
+    static Map<String, Object> scoreFields(Collection<String> fields, Map<String, Object> expression) {
+        Map<String, Object> added = new LinkedHashMap<>();
+        for (String field : fields) {
+            added.put(field, expression);
+        }
+        return added;
     }
 
     /**
@@ -112,6 +184,32 @@ final class MongoSearchStages {
     }
 
     /**
+     * Rejects what MongoDB {@code $text} cannot honour: boosts, prefix and fuzzy matching, and fields chosen
+     * at runtime through a SearchQuery. {@code $text} always searches the whole text index; a derived
+     * property keyword is documented to widen to it, so only a runtime entity's narrower field list fails.
+     *
+     * @param entity The entity
+     * @param fields The number of fields searched
+     * @param mode The match mode
+     * @param options The match options
+     */
+    static void requireTextSupport(PersistentEntity entity, int fields, MatchMode mode, TextMatchOptions options) {
+        SearchCapability missing = null;
+        if (!options.boosts().isEmpty()) {
+            missing = SearchCapability.BOOST;
+        } else if (mode == MatchMode.PREFIX) {
+            missing = SearchCapability.PREFIX;
+        } else if (mode == MatchMode.FUZZY) {
+            missing = SearchCapability.FUZZY;
+        } else if (entity instanceof RuntimePersistentEntity<?> && fields < TextSearchSupport.searchFields(entity).size()) {
+            missing = SearchCapability.FIELD_SCOPE;
+        }
+        if (missing != null) {
+            throw new UnsupportedSearchFeatureException(missing, "MongoDB $text");
+        }
+    }
+
+    /**
      * The distance an entity's {@code $vectorSearch} score maps back to, by the similarity of its index:
      * cosine and dotProduct scores are {@code (1 + similarity) / 2}, euclidean scores {@code 1 / (1 + distance)}.
      *
@@ -144,6 +242,48 @@ final class MongoSearchStages {
             } else if (!remaining.isEmpty()) {
                 query.put("$and", remaining);
             }
+        }
+    }
+
+    /**
+     * @param highlights The highlighted paths by the alias of their fragments
+     * @return The stages that render the fragments of each highlighted path and drop the raw metadata
+     */
+    static List<Map<String, Object>> highlightStages(Map<String, String> highlights) {
+        if (highlights.isEmpty()) {
+            return List.of();
+        }
+        Map<String, Object> highlightFields = new LinkedHashMap<>();
+        for (Map.Entry<String, String> highlight : highlights.entrySet()) {
+            highlightFields.put(highlight.getKey(), highlightExpression(highlight.getValue()));
+        }
+        return List.of(Map.of("$addFields", highlightFields), Map.of("$unset", List.of(HIGHLIGHTS_FIELD)));
+    }
+
+    /**
+     * The weights and the candidate window of a hybrid search fused by {@code $rankFusion}.
+     *
+     * @param textWeight The weight of the text ranking
+     * @param vectorWeight The weight of the vector ranking
+     * @param candidates The hits each ranking contributes
+     */
+    record RankFusion(double textWeight, double vectorWeight, int candidates) {
+
+        /**
+         * @param textWeight The literal weight of the text ranking
+         * @param vectorWeight The literal weight of the vector ranking
+         * @param candidates The literal number of hits each ranking contributes
+         * @return The fusion of a {@code mn_hybrid_score} function's literal arguments
+         */
+        static RankFusion of(Expression<?> textWeight, Expression<?> vectorWeight, Expression<?> candidates) {
+            return new RankFusion(literalNumber(textWeight).doubleValue(), literalNumber(vectorWeight).doubleValue(), literalNumber(candidates).intValue());
+        }
+
+        private static Number literalNumber(Expression<?> expression) {
+            if (expression instanceof LiteralExpression<?> literal && literal.getValue() instanceof Number number) {
+                return number;
+            }
+            throw new IllegalStateException("A hybrid score weight must be a numeric literal, got: " + expression);
         }
     }
 }

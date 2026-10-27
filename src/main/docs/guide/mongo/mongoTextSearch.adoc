@@ -65,7 +65,7 @@ An entity with a `@MongoSearchIndex` also gets a vector search index, named by `
 
 The vector search API of the <<sqlVectorType, SQL stores>> then runs on the index: a derived finder such as `searchByEmbeddingNear(Vector, Score)` or `findTop5ByEmbeddingNear(Vector, Double)` renders a `$vectorSearch` stage as the first stage of the aggregation, with the query vector, `limit` set from the method's limit or the page requested at runtime and `numCandidates` ten times that, followed by a `$match` on the maximum distance and the other predicates. The relevance score of a api:data.model.vector.search.SearchResults[] is the distance derived from the `vectorSearchScore` according to `@MongoSearchIndex(similarity)` (`2 - 2 * score` for `cosine` and `dotProduct`, `1 / score - 1` for `euclidean`), so results are comparable with the other stores.
 
-Hybrid search with `SearchQuery.vector(...)` runs the `$search` and the `$vectorSearch` aggregations separately and fuses their rankings in memory, as described in the <<sqlTextSearch, SQL full-text search section>>; `$rankFusion` is not used. A `$search` and a `$vectorSearch` stage cannot share one aggregation, so a derived method combining a search keyword and a vector predicate is rejected at compile time. The other predicates of a vector query are applied after the stage as a `$match`, so they filter the `limit` nearest candidates rather than the whole collection.
+Hybrid search with `SearchQuery.vector(...)` runs one `$rankFusion` aggregation whose input pipelines are the `$search` stage and the `$vectorSearch` stage, each cut to `candidates` hits, combined with reciprocal rank fusion under the query's weights; the fused score is read from `{ $meta: "score" }`. `$rankFusion` needs MongoDB 8.1 or later. Because the stage fixes the rank constant at 60 and carries no highlights, a query with another `rankConstant` or with highlighting runs the `$search` and the `$vectorSearch` aggregations separately and fuses their rankings in memory, as described in the <<sqlTextSearch, SQL full-text search section>>, with the same scores. A `$search` and a `$vectorSearch` stage cannot otherwise share one aggregation, so a derived method combining a search keyword and a vector predicate is rejected at compile time. The other predicates of a vector query are applied after the stage as a `$match`, so they filter the `limit` nearest candidates rather than the whole collection.
 
 == Limitations
 
@@ -73,7 +73,7 @@ Hybrid search with `SearchQuery.vector(...)` runs the `$search` and the `$vector
 |Feature |MongoDB `$text` |MongoDB Search (`$search`)
 
 |Field scoping (`findByTitleSearch` matching only `title`) |not supported, every search field is searched |supported
-|Vector search and hybrid search |not supported |supported, `$vectorSearch` with cosine similarity
+|Vector search and hybrid search |not supported |supported, `$vectorSearch` with cosine similarity and `$rankFusion` (MongoDB 8.1+)
 |`SearchPrefix` and `SearchFuzzy` |not supported, rejected at compile time |supported
 |Highlighting and minimum score |not supported |supported
 |Query-time boosts (`SearchQuery.boost`) |not supported |supported, as the operator's `score.boost`
