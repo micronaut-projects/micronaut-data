@@ -72,7 +72,7 @@ final class OracleChangeNotificationSubscription {
     /** The current registration after successful setup, or {@code null} when no registration is current. */
     private @Nullable DatabaseChangeRegistration currentRegistration;
 
-    /** Identifies the failed registration whose replacement is being attempted. */
+    /** Identifies the failed registration whose recovery is queued, running, or waiting to retry. */
     private @Nullable Long recoveryRegistrationId;
 
     /** Identifies the new registration already created in the database whose setup is still in progress. */
@@ -251,26 +251,20 @@ final class OracleChangeNotificationSubscription {
             if (isStopped() || recordPendingOutcome(registrationId, PendingOutcome.RETRY)) {
                 return;
             }
+            if (!isCurrent(registrationId) || recoveryRegistrationId != null) {
+                return;
+            }
+            // Claim the recovery sequence before submission so duplicate callbacks cannot start another.
+            recoveryRegistrationId = registrationId;
         }
-        try {
-            blockingExecutor.execute(() -> {
-                synchronized (lifecycleLock) {
-                    if (isStopped() || !isCurrent(registrationId)) {
-                        return;
-                    }
-                }
-                if (failure == null) {
-                    LOG.warn("DCN registration [{}] became unavailable for datasource [{}] and listener method [{}] after Oracle Database shutdown; attempting recovery",
-                        registrationId, dataSourceName, methodDescription);
-                } else {
-                    LOG.error("DCN registration [{}] became unavailable for datasource [{}] and listener method [{}]; attempting recovery",
-                        registrationId, dataSourceName, methodDescription, failure);
-                }
-                attemptRegistrationRecovery(0, registrationId);
-            });
-        } catch (RejectedExecutionException e) {
-            rescheduleRecoveryTask(0, registrationId, e);
+        if (failure == null) {
+            LOG.warn("DCN registration [{}] became unavailable for datasource [{}] and listener method [{}] after Oracle Database shutdown; attempting recovery",
+                registrationId, dataSourceName, methodDescription);
+        } else {
+            LOG.error("DCN registration [{}] became unavailable for datasource [{}] and listener method [{}]; attempting recovery",
+                registrationId, dataSourceName, methodDescription, failure);
         }
+        submitRecoveryTask(0, registrationId);
     }
 
     /**
@@ -285,6 +279,7 @@ final class OracleChangeNotificationSubscription {
             }
             LOG.trace("Handling purged DCN [{}] for datasource [{}] and listener method [{}]", registrationId, dataSourceName, methodDescription);
             currentRegistration = null;
+            recoveryRegistrationId = null;
         }
     }
 
@@ -375,7 +370,10 @@ final class OracleChangeNotificationSubscription {
         try {
             blockingExecutor.execute(() -> attemptRegistrationRecovery(retryCount, failedRegId));
         } catch (RejectedExecutionException e) {
-            rescheduleRecoveryTask(retryCount, failedRegId, e);
+            LOG.warn("Unable to submit DCN recovery for registration [{}], datasource [{}], and listener method [{}]; rescheduling the same attempt",
+                failedRegId, dataSourceName, methodDescription, e);
+            // Executor saturation is not a failed registration attempt and must not consume the retry budget.
+            scheduleRecoveryRetry(retryCount, failedRegId);
         }
     }
 
@@ -386,14 +384,10 @@ final class OracleChangeNotificationSubscription {
         try {
             Object attempt = new Object();
             synchronized (lifecycleLock) {
-                if (isStopped() || recoveryAttempt != null || (currentRegistration != null && !isCurrent(failedRegId))) {
-                    return;
-                }
-                if (currentRegistration == null && !Objects.equals(recoveryRegistrationId, failedRegId)) {
+                if (isStopped() || recoveryAttempt != null || !Objects.equals(recoveryRegistrationId, failedRegId)) {
                     return;
                 }
                 recoveryAttempt = attempt;
-                recoveryRegistrationId = failedRegId;
                 pendingOutcome = PendingOutcome.READY;
                 if (currentRegistration != null) {
                     orphanedRegistrations.add(currentRegistration);

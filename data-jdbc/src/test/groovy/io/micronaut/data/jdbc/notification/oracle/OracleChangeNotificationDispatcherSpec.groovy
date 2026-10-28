@@ -38,6 +38,7 @@ import java.util.concurrent.RejectedExecutionException
 import java.util.concurrent.TimeUnit
 import java.util.concurrent.atomic.AtomicBoolean
 import java.util.concurrent.atomic.AtomicInteger
+import java.util.concurrent.atomic.AtomicReference
 import java.util.function.BiConsumer
 import java.util.function.LongConsumer
 import java.util.function.LongPredicate
@@ -602,7 +603,7 @@ class OracleChangeNotificationDispatcherSpec extends Specification {
         taskTracker.shutdownGracefully().toCompletableFuture().isDone()
     }
 
-    void "coalesces rejected #eventType notifications until invalidation begins"() {
+    void "coalesces rejected #eventType notifications and recovery invalidations (#recoveryFirst)"() {
         given:
         List<Runnable> scheduled = []
         List<Runnable> queued = []
@@ -629,7 +630,13 @@ class OracleChangeNotificationDispatcherSpec extends Specification {
         event.regId >> 41L
 
         when:
-        20.times { dispatcher.onDatabaseChangeNotification(event) }
+        if (recoveryFirst) {
+            dispatcher.submitLifecycleEvent(41L, ChangeOperation.INVALIDATE, 'after recovery', { true })
+        }
+        20.times {
+            dispatcher.onDatabaseChangeNotification(event)
+            dispatcher.submitLifecycleEvent(41L, ChangeOperation.INVALIDATE, 'after recovery', { true })
+        }
 
         then:
         scheduled.size() == 1
@@ -648,7 +655,10 @@ class OracleChangeNotificationDispatcherSpec extends Specification {
         reject.set(false)
         scheduled.remove(0).run()
         reject.set(true)
-        20.times { dispatcher.onDatabaseChangeNotification(event) }
+        20.times {
+            dispatcher.onDatabaseChangeNotification(event)
+            dispatcher.submitLifecycleEvent(41L, ChangeOperation.INVALIDATE, 'after recovery', { true })
+        }
 
         then:
         scheduled.empty
@@ -667,7 +677,112 @@ class OracleChangeNotificationDispatcherSpec extends Specification {
         0 * event.getTableChangeDescription()
 
         where:
-        eventType << [DatabaseChangeEvent.EventType.OBJCHANGE, DatabaseChangeEvent.EventType.QUERYCHANGE]
+        [eventType, recoveryFirst] << [
+            [DatabaseChangeEvent.EventType.OBJCHANGE, DatabaseChangeEvent.EventType.QUERYCHANGE],
+            [true, false]
+        ].combinations()
+    }
+
+    void "updates a #phase invalidation to the latest recovered registration"() {
+        given:
+        List<Runnable> queued = []
+        List<Runnable> scheduled = []
+        def reject = new AtomicBoolean(phase == 'scheduled')
+        Executor executor = { Runnable task ->
+            if (reject.get()) {
+                throw new RejectedExecutionException('Executor busy')
+            }
+            queued.add(task)
+        } as Executor
+        def scheduler = Mock(TaskScheduler)
+        scheduler.schedule(_ as Duration, _ as Runnable) >> { Duration ignored, Runnable task -> scheduled.add(task); null }
+        List<ChangeEvent<?>> delivered = []
+        def method = Mock(ExecutableMethod)
+        method.invoke(_, _) >> { Object[] arguments -> delivered.add(eventArgument(arguments)); null }
+        def tracker = new OracleChangeNotificationTaskTracker()
+        def dispatcher = dispatcher(definition(null, method, new Properties()), Mock(BeanContext), Mock(LongConsumer),
+            Mock(BiConsumer), Mock(LongConsumer), Mock(LongConsumer), executor, tracker, scheduler)
+        def originalCurrent = new AtomicBoolean(true)
+        def replacementCurrent = new AtomicBoolean(true)
+
+        when:
+        dispatcher.submitLifecycleEvent(41L, ChangeOperation.INVALIDATE, 'after first recovery', { originalCurrent.get() })
+        originalCurrent.set(false)
+        dispatcher.submitLifecycleEvent(42L, ChangeOperation.INVALIDATE, 'after second recovery', { replacementCurrent.get() })
+
+        then:
+        queued.size() == (phase == 'queued' ? 1 : 0)
+        scheduled.size() == (phase == 'scheduled' ? 1 : 0)
+        delivered.empty
+
+        when:
+        reject.set(false)
+        if (phase == 'scheduled') {
+            scheduled.remove(0).run()
+        }
+        queued.remove(0).run()
+
+        then:
+        delivered.size() == 1
+        delivered[0].operation() == ChangeOperation.INVALIDATE
+        queued.empty
+        scheduled.empty
+        tracker.shutdownGracefully().toCompletableFuture().isDone()
+
+        where:
+        phase << ['queued', 'scheduled']
+    }
+
+    void "a delayed stale invalidation cannot overwrite the current registration's refresh"() {
+        given:
+        List<Runnable> queued = Collections.synchronizedList(new ArrayList<Runnable>())
+        def method = Mock(ExecutableMethod)
+        def tracker = new OracleChangeNotificationTaskTracker()
+        def dispatcher = dispatcher(definition(null, method, new Properties()), Mock(BeanContext), Mock(LongConsumer),
+            Mock(BiConsumer), Mock(LongConsumer), Mock(LongConsumer),
+            { Runnable task -> queued.add(task) } as Executor, tracker)
+        def eligible = new AtomicBoolean(true)
+        def evaluations = new AtomicInteger()
+        def entered = new CountDownLatch(1)
+        def release = new CountDownLatch(1)
+        def failure = new AtomicReference<Throwable>()
+        Thread requester
+
+        when:
+        requester = Thread.startDaemon {
+            try {
+                dispatcher.submitLifecycleEvent(41L, ChangeOperation.INVALIDATE, 'after first recovery', {
+                    boolean current = eligible.get()
+                    if (evaluations.incrementAndGet() == 2) {
+                        entered.countDown()
+                        assert release.await(5, TimeUnit.SECONDS)
+                    }
+                    current
+                })
+            } catch (Throwable e) {
+                failure.set(e)
+            }
+        }
+        assert entered.await(5, TimeUnit.SECONDS)
+        eligible.set(false)
+        dispatcher.submitLifecycleEvent(42L, ChangeOperation.INVALIDATE, 'after second recovery', { true })
+        release.countDown()
+        requester.join(5000)
+        queued.remove(0).run()
+
+        then:
+        !requester.alive
+        failure.get() == null
+        queued.empty
+        1 * method.invoke(_, _) >> { Object[] arguments ->
+            assert eventArgument(arguments).operation() == ChangeOperation.INVALIDATE
+            null
+        }
+        tracker.shutdownGracefully().toCompletableFuture().isDone()
+
+        cleanup:
+        release.countDown()
+        requester?.join(5000)
     }
 
     void "requests another invalidation for a loss during refresh and tracks the callback"() {

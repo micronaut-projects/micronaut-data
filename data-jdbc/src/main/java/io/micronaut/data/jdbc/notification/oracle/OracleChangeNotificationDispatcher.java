@@ -38,7 +38,7 @@ import java.util.Properties;
 import java.util.StringJoiner;
 import java.util.concurrent.Executor;
 import java.util.concurrent.RejectedExecutionException;
-import java.util.concurrent.atomic.AtomicBoolean;
+import java.util.concurrent.atomic.AtomicReference;
 import java.util.function.BiConsumer;
 import java.util.function.BooleanSupplier;
 import java.util.function.LongConsumer;
@@ -101,8 +101,13 @@ final class OracleChangeNotificationDispatcher implements DatabaseChangeListener
     private final LongConsumer databaseShutdownHandler;
     private final LongPredicate acceptsDataNotification;
 
-    /** Held until a loss-triggered invalidation starts, including time spent queued on the executor. */
-    private final AtomicBoolean invalidationPending = new AtomicBoolean();
+    /**
+     * Holds the task that sends an {@code INVALIDATE} event after missed notifications or registration
+     * recovery, or {@code null} when none is pending. Additional requests update the pending task
+     * without scheduling another. Cleared before execution so notifications missed while the listener
+     * is running can request another invalidation.
+     */
+    private final AtomicReference<@Nullable Runnable> pendingInvalidation = new AtomicReference<>();
 
     /**
      * Options reported by the driver and captured for callbacks after query association.
@@ -269,6 +274,7 @@ final class OracleChangeNotificationDispatcher implements DatabaseChangeListener
                 dataSourceName, event.getRegId(), methodDescription);
             return;
         }
+        long registrationId = event.getRegId();
         try {
             blockingExecutor.execute(() -> dispatchSafely(event, options));
         } catch (RuntimeException e) {
@@ -277,8 +283,9 @@ final class OracleChangeNotificationDispatcher implements DatabaseChangeListener
             if (e instanceof RejectedExecutionException) {
                 if (requiresLifecycleHandling(event, options)) {
                     retryLifecycleDispatch(event, options);
-                } else if (isDataNotification(event) && invalidationPending.compareAndSet(false, true)) {
-                    retryInvalidation(event.getRegId());
+                } else if (isDataNotification(event) && markInvalidationPending(registrationId, "after rejected data notifications",
+                    () -> acceptsDataNotification.test(registrationId))) {
+                    retryInvalidation(registrationId);
                 }
             }
         }
@@ -291,8 +298,7 @@ final class OracleChangeNotificationDispatcher implements DatabaseChangeListener
     private boolean requiresLifecycleHandling(DatabaseChangeEvent event, RegistrationOptions options) {
         return event.getEventType() == DatabaseChangeEvent.EventType.DEREG
             || (event.getEventType() == DatabaseChangeEvent.EventType.SHUTDOWN && !options.driverReconnectRetryEnabled())
-            || (event.getEventType() == DatabaseChangeEvent.EventType.QUERYCHANGE
-                && findDeregisteredQuery(event.getQueryChangeDescription()) != null)
+            || (event.getEventType() == DatabaseChangeEvent.EventType.QUERYCHANGE && findDeregisteredQuery(event.getQueryChangeDescription()) != null)
             || (options.purgeOnNotificationEnabled() && isDataNotification(event));
     }
 
@@ -311,27 +317,49 @@ final class OracleChangeNotificationDispatcher implements DatabaseChangeListener
      * Keeps one invalidation pending across executor rejections without retaining lost row events.
      */
     private void retryInvalidation(long registrationId) {
-        if (!scheduleRetry(registrationId, "invalidation after rejected data notifications", () -> submitPendingInvalidation(registrationId))) {
-            invalidationPending.set(false);
+        if (!scheduleRetry(registrationId, "pending invalidation", () -> submitPendingInvalidation(registrationId))) {
+            pendingInvalidation.set(null);
         }
+    }
+
+    /**
+     * Updates a queued refresh to the latest eligible registration. Rechecking eligibility on each
+     * CAS prevents a delayed request for an older registration from replacing its successor's refresh.
+     *
+     * @return whether the caller must submit or schedule the refresh
+     */
+    private boolean markInvalidationPending(long registrationId, String reason, BooleanSupplier shouldDispatch) {
+        Runnable invalidation = () -> dispatchSafely(registrationId, () -> {
+            if (shouldDispatch.getAsBoolean()) {
+                dispatchInvalidation(registrationId, reason);
+            }
+        });
+        @Nullable Runnable pending;
+        do {
+            pending = pendingInvalidation.get();
+            if (!shouldDispatch.getAsBoolean()) {
+                return false;
+            }
+        } while (!pendingInvalidation.compareAndSet(pending, invalidation));
+        return pending == null;
     }
 
     private void submitPendingInvalidation(long registrationId) {
         if (taskTracker.isShutdownStarted()) {
-            invalidationPending.set(false);
+            pendingInvalidation.set(null);
             return;
         }
-        if (!invalidationPending.get()) {
+        if (pendingInvalidation.get() == null) {
             return;
         }
         try {
             blockingExecutor.execute(() -> {
                 // A loss during the listener's refresh needs another invalidation: its snapshot
                 // may already have been read. Losses while queued are covered by this refresh.
-                if (!invalidationPending.getAndSet(false)) {
-                    return;
+                Runnable invalidation = pendingInvalidation.getAndSet(null);
+                if (invalidation != null) {
+                    invalidation.run();
                 }
-                dispatchSafely(registrationId, () -> dispatchInvalidation(registrationId, "after rejected data notifications"));
             });
         } catch (RuntimeException e) {
             LOG.warn("Unable to submit DCN invalidation for datasource [{}], registration [{}], and listener method [{}]",
@@ -339,7 +367,7 @@ final class OracleChangeNotificationDispatcher implements DatabaseChangeListener
             if (e instanceof RejectedExecutionException) {
                 retryInvalidation(registrationId);
             } else {
-                invalidationPending.set(false);
+                pendingInvalidation.set(null);
             }
         }
     }
@@ -621,9 +649,15 @@ final class OracleChangeNotificationDispatcher implements DatabaseChangeListener
         if (taskTracker.isShutdownStarted() || !shouldDispatch.getAsBoolean()) {
             return;
         }
+        if (operation == ChangeOperation.INVALIDATE) {
+            if (markInvalidationPending(registrationId, reason, shouldDispatch)) {
+                submitPendingInvalidation(registrationId);
+            }
+            return;
+        }
         if (operation == ChangeOperation.TERMINATED) {
             // A deferred refresh cannot restore a subscription that has permanently stopped.
-            invalidationPending.set(false);
+            pendingInvalidation.set(null);
         }
         try {
             blockingExecutor.execute(() -> dispatchSafely(registrationId, () -> {

@@ -202,8 +202,10 @@ it does not cause an additional `TERMINATED` event.
 With both a client-initiated connection and `NTF_QOS_RELIABLE` enabled, Micronaut Data leaves notification-connection
 retries to the JDBC driver. Oracle Database can queue reliable notifications for delivery after reconnect.
 If the JDBC driver reports that it cannot restore notification delivery, Micronaut Data attempts to create a replacement
-registration. After successful recovery, the listener receives an `INVALIDATE` event so it can refresh potentially
-outdated data. For other registration configurations, recovery starts when a database shutdown notification is received.
+registration. For other registration configurations, recovery starts when a database shutdown notification is received.
+
+After successful recovery, the listener receives an `INVALIDATE` event so it can refresh potentially outdated data.
+If the blocking executor is saturated, delivery of the `INVALIDATE` event after recovery is retried.
 
 If cleanup of an old registration fails during recovery, Micronaut Data retains it and retries unregistration at
 the start of subsequent recovery attempts and during shutdown. Successful replacement does not discard pending
@@ -229,7 +231,10 @@ micronaut:
 ----
 
 `max-retries` defaults to `-1` for unlimited retries. A non-negative value limits retries after the initial recovery
-attempt; set it to `0` to make only the initial attempt. `retry-delay` sets the first retry delay. `retry-delay-multiplier` must be an integer of at least
+attempt; set it to `0` to make only the initial attempt.
+Waiting for the blocking executor to accept recovery work does not count toward `max-retries`.
+
+`retry-delay` sets the first retry delay. `retry-delay-multiplier` must be an integer of at least
 `1`; set it to `1` for a fixed delay. `max-retry-delay` caps every retry delay, including the first.
 Both delays must be positive and accept duration values such as `500ms`, `10s`, or `1m`.
 The default retry delays are `1s`, `2s`, `4s`, `8s`, `16s`, `32s`, then `60s` for every subsequent retry.
