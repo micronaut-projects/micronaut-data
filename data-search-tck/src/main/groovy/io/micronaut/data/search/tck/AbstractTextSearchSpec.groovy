@@ -177,6 +177,15 @@ abstract class AbstractTextSearchSpec extends Specification {
         bookSearchRepository.deleteAll()
     }
 
+    void "an entity without @Searchable reports no capabilities"() {
+        given:
+        def reported = searchCapabilities()
+
+        expect:
+        reported == null || reported.getSearchCapabilities(io.micronaut.data.search.tck.entities.Shelf).isEmpty()
+        reported == null || !reported.supports(io.micronaut.data.search.tck.entities.Shelf, SearchCapability.PHRASE)
+    }
+
     void "search matches any term across every search field ordered by relevance"() {
         when:
         def results = bookSearchRepository.search("programming")

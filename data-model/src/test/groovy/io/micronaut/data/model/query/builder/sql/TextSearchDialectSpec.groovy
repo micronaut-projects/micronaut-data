@@ -46,18 +46,21 @@ class TextSearchDialectSpec extends Specification {
             void appendTextMatch(StringBuilder query, List fields, jakarta.persistence.criteria.Expression queryExpression, io.micronaut.data.model.search.MatchMode mode,
                                  io.micronaut.data.model.search.TextMatchOptions options, TextSearchDialect.Target target,
                                  java.util.function.Consumer appendExpression, java.util.function.Function appendParameter) {
+                // only capabilities() is under test
             }
 
             @Override
             void appendSearchScore(StringBuilder query, List fields, jakarta.persistence.criteria.Expression queryExpression, io.micronaut.data.model.search.MatchMode mode,
                                    io.micronaut.data.model.search.TextMatchOptions options, TextSearchDialect.Target target,
                                    java.util.function.Consumer appendExpression, java.util.function.Function appendParameter) {
+                // only capabilities() is under test
             }
 
             @Override
             void appendSearchHighlight(StringBuilder query, jakarta.persistence.criteria.Expression field, jakarta.persistence.criteria.Expression queryExpression,
                                        io.micronaut.data.model.search.MatchMode mode, io.micronaut.data.model.search.TextMatchOptions options, TextSearchDialect.Target target,
                                        java.util.function.Consumer appendExpression, java.util.function.Function appendParameter) {
+                // only capabilities() is under test
             }
         }.capabilities().isEmpty()
     }
