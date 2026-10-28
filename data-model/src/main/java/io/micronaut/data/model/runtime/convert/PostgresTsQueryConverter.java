@@ -94,13 +94,8 @@ public abstract class PostgresTsQueryConverter implements TextSearchQueryConvert
      * @return The {@code tsquery} source text
      */
     public static String render(@Nullable String query, MatchMode mode) {
-        if (mode == MatchMode.NATIVE) {
-            // the caller wrote tsquery syntax
-            return query == null || query.isBlank() ? MATCH_NOTHING : query;
-        }
-        if (mode == MatchMode.PHRASE) {
-            String phrase = query == null ? "" : query.replace("\"", "").trim();
-            return phrase.isEmpty() ? MATCH_NOTHING : quote(phrase);
+        if (mode == MatchMode.NATIVE || mode == MatchMode.PHRASE) {
+            return renderWhole(query, mode);
         }
         List<List<SearchTerm>> groups = SearchQueryParser.parse(query);
         StringJoiner disjunction = new StringJoiner(" | ");
@@ -111,6 +106,16 @@ public abstract class PostgresTsQueryConverter implements TextSearchQueryConvert
             }
         }
         return disjunction.length() == 0 ? MATCH_NOTHING : disjunction.toString();
+    }
+
+    /** The modes that take the search string whole: native tsquery syntax, or one phrase. */
+    private static String renderWhole(@Nullable String query, MatchMode mode) {
+        if (mode == MatchMode.NATIVE) {
+            // the caller wrote tsquery syntax
+            return query == null || query.isBlank() ? MATCH_NOTHING : query;
+        }
+        String phrase = query == null ? "" : query.replace("\"", "").trim();
+        return phrase.isEmpty() ? MATCH_NOTHING : quote(phrase);
     }
 
     @Nullable
