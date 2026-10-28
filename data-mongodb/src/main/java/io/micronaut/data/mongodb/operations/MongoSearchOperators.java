@@ -90,7 +90,7 @@ public final class MongoSearchOperators {
         }
         if (mode == MatchMode.NATIVE) {
             // the caller wrote queryString syntax; the first path is the default field
-            return new BsonDocument("queryString", new BsonDocument("defaultPath", new BsonString(paths.get(0))).append("query", new BsonString(query)));
+            return new BsonDocument("queryString", new BsonDocument("defaultPath", new BsonString(paths.get(0))).append(QUERY, new BsonString(query)));
         }
         if (mode == MatchMode.PHRASE) {
             String phrase = query.replace("\"", "").trim();
