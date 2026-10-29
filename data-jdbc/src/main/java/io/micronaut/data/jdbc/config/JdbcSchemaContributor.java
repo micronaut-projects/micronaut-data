@@ -15,51 +15,15 @@
  */
 package io.micronaut.data.jdbc.config;
 
-import io.micronaut.core.annotation.Experimental;
-import io.micronaut.data.model.PersistentEntity;
-
-import java.util.List;
+import io.micronaut.data.runtime.schema.SchemaContributor;
 
 /**
- * Generates the schema of some of the entities of a data source in place of the {@link SchemaGenerator}, for entities
- * whose tables the generator cannot derive on its own, such as the vertex and edge tables of a property graph.
- *
- * <p>The schema generator asks each contributor which entities it generates, leaves those out of the tables it
- * creates, drops and validates, and runs the statements of the contributor: its drop statements before the tables are
- * dropped and its create statements after they are created.</p>
+ * A {@link SchemaContributor} of JDBC schema generation, which the {@link SchemaGenerator} runs for the JDBC data
+ * sources with schema generation enabled. A contributor that applies to both drivers also implements
+ * {@code R2dbcSchemaContributor}.
  *
  * @author graemerocher
  * @since 5.3.0
  */
-@Experimental
-public interface JdbcSchemaContributor {
-
-    /**
-     * Selects the entities whose schema this contributor generates.
-     *
-     * @param configuration The configuration of the data source
-     * @param entities      The entities of the data source not yet selected by another contributor
-     * @return The entities this contributor generates, empty for none
-     */
-    List<PersistentEntity> selectEntities(DataJdbcConfiguration configuration, List<PersistentEntity> entities);
-
-    /**
-     * Builds the statements that create the schema of the selected entities.
-     *
-     * @param configuration The configuration of the data source
-     * @param entities      The entities this contributor selected
-     * @return The statements, run in order
-     */
-    List<String> buildCreateStatements(DataJdbcConfiguration configuration, List<PersistentEntity> entities);
-
-    /**
-     * Builds the statements that drop the schema of the selected entities. The statements should succeed when the
-     * objects do not exist yet, for example with {@code IF EXISTS}, as a failure is logged as a warning and the
-     * generation carries on.
-     *
-     * @param configuration The configuration of the data source
-     * @param entities      The entities this contributor selected
-     * @return The statements, run in order
-     */
-    List<String> buildDropStatements(DataJdbcConfiguration configuration, List<PersistentEntity> entities);
+public interface JdbcSchemaContributor extends SchemaContributor {
 }

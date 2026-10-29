@@ -18,9 +18,9 @@ package io.micronaut.data.oracle.graph.r2dbc.schema;
 import io.micronaut.context.BeanContext;
 import io.micronaut.core.annotation.Internal;
 import io.micronaut.data.graph.runtime.oracle.OraclePropertyGraphSchema;
-import io.micronaut.data.r2dbc.config.DataR2dbcConfiguration;
 import io.micronaut.data.r2dbc.config.R2dbcSchemaContributor;
 import io.micronaut.data.model.PersistentEntity;
+import io.micronaut.data.runtime.schema.SchemaContext;
 import io.micronaut.data.oracle.graph.r2dbc.annotation.OracleGraphR2dbcRepository;
 import jakarta.inject.Singleton;
 
@@ -45,21 +45,21 @@ final class OraclePropertyGraphR2dbcSchemaContributor implements R2dbcSchemaCont
     }
 
     @Override
-    public List<PersistentEntity> selectEntities(DataR2dbcConfiguration configuration, List<PersistentEntity> entities) {
-        return OraclePropertyGraphSchema.selectEntities(configuration.getDialect(), entities);
+    public List<PersistentEntity> selectEntities(SchemaContext context, List<PersistentEntity> entities) {
+        return OraclePropertyGraphSchema.selectEntities(context.dialect(), entities);
     }
 
     @Override
-    public List<String> buildCreateStatements(DataR2dbcConfiguration configuration, List<PersistentEntity> entities) {
-        return schema(configuration, entities).buildCreateStatements(configuration.getDialectOptions().getVersion());
+    public List<String> buildCreateStatements(SchemaContext context, List<PersistentEntity> entities) {
+        return schema(context, entities).buildCreateStatements(context.dialectVersion());
     }
 
     @Override
-    public List<String> buildDropStatements(DataR2dbcConfiguration configuration, List<PersistentEntity> entities) {
-        return schema(configuration, entities).buildDropStatements();
+    public List<String> buildDropStatements(SchemaContext context, List<PersistentEntity> entities) {
+        return schema(context, entities).buildDropStatements();
     }
 
-    private OraclePropertyGraphSchema schema(DataR2dbcConfiguration configuration, List<PersistentEntity> entities) {
-        return OraclePropertyGraphSchema.of(beanContext, OracleGraphR2dbcRepository.class, configuration.getName(), entities);
+    private OraclePropertyGraphSchema schema(SchemaContext context, List<PersistentEntity> entities) {
+        return OraclePropertyGraphSchema.of(beanContext, OracleGraphR2dbcRepository.class, context.dataSourceName(), entities);
     }
 }

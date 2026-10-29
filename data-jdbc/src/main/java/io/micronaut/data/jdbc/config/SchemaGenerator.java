@@ -24,7 +24,6 @@ import io.micronaut.context.exceptions.NoSuchBeanException;
 import io.micronaut.core.annotation.Internal;
 import io.micronaut.core.beans.BeanIntrospection;
 import io.micronaut.core.beans.BeanIntrospector;
-import io.micronaut.core.util.ArrayUtils;
 import io.micronaut.core.util.CollectionUtils;
 import io.micronaut.core.util.StringUtils;
 import io.micronaut.data.annotation.JsonSubView;
@@ -48,6 +47,8 @@ import io.micronaut.data.model.schema.sql.metadata.SqlColumnMetadata;
 import io.micronaut.data.model.schema.sql.metadata.SqlTableMetadata;
 import io.micronaut.data.runtime.config.DataSettings;
 import io.micronaut.data.runtime.config.SchemaGenerate;
+import io.micronaut.data.runtime.schema.SchemaContext;
+import io.micronaut.data.runtime.schema.SchemaContributions;
 import io.micronaut.inject.qualifiers.Qualifiers;
 import io.micronaut.data.connection.jdbc.advice.DelegatingDataSource;
 
@@ -63,11 +64,9 @@ import java.sql.DatabaseMetaData;
 import java.sql.PreparedStatement;
 import java.sql.ResultSet;
 import java.sql.SQLException;
-import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.Collection;
 import java.util.Collections;
-import java.util.LinkedHashMap;
 import java.util.List;
 import java.util.Map;
 import java.util.Set;
@@ -159,14 +158,10 @@ public class SchemaGenerator {
                 continue;
             }
             PersistentEntity[] entities = findEntities(configuration, runtimeEntityRegistry);
-            Map<JdbcSchemaContributor, List<PersistentEntity>> contributions = selectContributions(configuration, entities);
+            SchemaContributions contributions = SchemaContributions.of(schemaContributors, new SchemaContext(configuration.getName(),
+                configuration.getDialect(), configuration.getDialectOptions().getVersion(), schemaGenerate, Arrays.asList(entities)));
             if (!contributions.isEmpty()) {
-                List<PersistentEntity> remaining = new ArrayList<>(Arrays.asList(entities));
-                contributions.values().forEach(remaining::removeAll);
-                entities = remaining.toArray(PersistentEntity[]::new);
-            }
-            if (ArrayUtils.isNotEmpty(entities) || !contributions.isEmpty()) {
-                createOrValidateSchema(beanLocator, configuration, entities, contributions);
+                createOrValidateSchema(beanLocator, configuration, contributions.tableEntities(), contributions);
             }
         }
     }
@@ -192,7 +187,7 @@ public class SchemaGenerator {
     private void createOrValidateSchema(BeanLocator beanLocator,
                                         DataJdbcConfiguration configuration,
                                         PersistentEntity[] entities,
-                                        Map<JdbcSchemaContributor, List<PersistentEntity>> contributions) {
+                                        SchemaContributions contributions) {
         String name = configuration.getName();
         try {
             DataSource dataSource = DelegatingDataSource.unwrapDataSource(beanLocator.getBean(DataSource.class, Qualifiers.byName(name)));
@@ -216,7 +211,7 @@ public class SchemaGenerator {
                                         DataJdbcConfiguration configuration,
                                         @Nullable String schemaName,
                                         PersistentEntity[] entities,
-                                        Map<JdbcSchemaContributor, List<PersistentEntity>> contributions) throws SQLException {
+                                        SchemaContributions contributions) throws SQLException {
         SchemaGenerate schemaGenerate = configuration.getSchemaGenerate();
         Dialect dialect = configuration.getDialect();
         if (schemaName != null) {
@@ -232,41 +227,18 @@ public class SchemaGenerator {
         }
     }
 
-    private Map<JdbcSchemaContributor, List<PersistentEntity>> selectContributions(DataJdbcConfiguration configuration,
-                                                                                PersistentEntity[] entities) {
-        if (schemaContributors.isEmpty()) {
-            return Map.of();
-        }
-        Map<JdbcSchemaContributor, List<PersistentEntity>> contributions = new LinkedHashMap<>();
-        List<PersistentEntity> remaining = new ArrayList<>(Arrays.asList(entities));
-        for (JdbcSchemaContributor contributor : schemaContributors) {
-            List<PersistentEntity> selected = contributor.selectEntities(configuration, List.copyOf(remaining));
-            if (!selected.isEmpty()) {
-                contributions.put(contributor, selected);
-                remaining.removeAll(selected);
-            }
-        }
-        return contributions;
-    }
-
     private void generate(Connection connection,
                           DataJdbcConfiguration configuration,
                           PropertyPlaceholderResolver propertyPlaceholderResolver,
                           PersistentEntity[] entities,
-                          Map<JdbcSchemaContributor, List<PersistentEntity>> contributions) throws SQLException {
-        SchemaGenerate schemaGenerate = configuration.getSchemaGenerate();
-        if (schemaGenerate == SchemaGenerate.CREATE_DROP) {
-            // Contributed objects, such as property graphs, can depend on the tables, so they are dropped first
-            contributions.forEach((contributor, contributed) ->
-                executeContributed(connection, propertyPlaceholderResolver, contributor.buildDropStatements(configuration, contributed), "DROP"));
-        }
+                          SchemaContributions contributions) throws SQLException {
+        // Contributed objects, such as property graphs, can depend on the tables, so they are dropped first
+        executeContributed(connection, propertyPlaceholderResolver, contributions.dropStatements(), "DROP");
+        executeContributed(connection, propertyPlaceholderResolver, contributions.beforeTablesStatements(), "CREATE");
         if (entities.length > 0) {
             generateTables(connection, configuration, propertyPlaceholderResolver, entities);
         }
-        if (schemaGenerate == SchemaGenerate.CREATE_DROP || schemaGenerate == SchemaGenerate.CREATE) {
-            contributions.forEach((contributor, contributed) ->
-                executeContributed(connection, propertyPlaceholderResolver, contributor.buildCreateStatements(configuration, contributed), "CREATE"));
-        }
+        executeContributed(connection, propertyPlaceholderResolver, contributions.createStatements(), "CREATE");
     }
 
     /**
