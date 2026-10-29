@@ -127,13 +127,12 @@ abstract class AbstractTextSearchSpec extends Specification {
     }
 
     /**
-     * @return The capabilities the backend reports at runtime, or {@code null} when it reports none; the
-     * first {@link SearchCapabilities} bean by default
+     * @return The capabilities the backend reports at runtime: the one {@link SearchCapabilities} bean of the
+     * spec's context by default
      */
-    @Nullable
     SearchCapabilities searchCapabilities() {
-        def beans = context.getBeansOfType(SearchCapabilities)
-        return beans.isEmpty() ? null : beans.iterator().next()
+        // one store per spec context, so exactly one bean answers for the backend under test
+        return context.getBean(SearchCapabilities)
     }
 
     /**
@@ -169,8 +168,8 @@ abstract class AbstractTextSearchSpec extends Specification {
         def entityType = newBook("Title", "Description", "Author", 1).getClass()
 
         expect:
-        reported == null || reported.getSearchCapabilities(entityType) == capabilities()
-        reported == null || capabilities().every { reported.supports(entityType, it) }
+        reported.getSearchCapabilities(entityType) == capabilities()
+        capabilities().every { reported.supports(entityType, it) }
     }
 
     void cleanup() {
@@ -182,8 +181,8 @@ abstract class AbstractTextSearchSpec extends Specification {
         def reported = searchCapabilities()
 
         expect:
-        reported == null || reported.getSearchCapabilities(io.micronaut.data.search.tck.entities.Shelf).isEmpty()
-        reported == null || !reported.supports(io.micronaut.data.search.tck.entities.Shelf, SearchCapability.PHRASE)
+        reported.getSearchCapabilities(io.micronaut.data.search.tck.entities.Shelf).isEmpty()
+        !reported.supports(io.micronaut.data.search.tck.entities.Shelf, SearchCapability.PHRASE)
     }
 
     void "search matches any term across every search field ordered by relevance"() {
