@@ -22,7 +22,6 @@ import io.micronaut.data.model.Association;
 import io.micronaut.data.model.DataType;
 import io.micronaut.data.model.PersistentEntity;
 import io.micronaut.data.model.PersistentProperty;
-import io.micronaut.data.model.query.builder.sql.TextSearchDialect;
 import io.micronaut.data.model.search.TextSearchSupport;
 import io.micronaut.data.search.document.query.SearchJson;
 import org.jspecify.annotations.Nullable;
@@ -79,7 +78,7 @@ public final class SearchIndexDefinitions {
             addVectorMappings(entity, transport, properties);
         }
         for (PersistentProperty property : TextSearchSupport.searchFields(entity)) {
-            properties.put(TextSearchDialect.jsonKey(property), searchFieldMapping(property, analyzer));
+            properties.put(property.getName(), searchFieldMapping(property, analyzer));
         }
         // The other string properties are compared exactly by the derived queries, so they are
         // keywords rather than the analyzed text a dynamic mapping would give them; the id is one of
@@ -89,8 +88,8 @@ public final class SearchIndexDefinitions {
             others.add(entity.getIdentity());
         }
         for (PersistentProperty property : others) {
-            if (!properties.containsKey(TextSearchDialect.jsonKey(property)) && !(property instanceof Association) && isKeyword(property)) {
-                properties.put(TextSearchDialect.jsonKey(property), Map.of(TYPE, KEYWORD));
+            if (!properties.containsKey(property.getName()) && !(property instanceof Association) && isKeyword(property)) {
+                properties.put(property.getName(), Map.of(TYPE, KEYWORD));
             }
         }
         Map<String, Object> body = new LinkedHashMap<>();
@@ -116,7 +115,7 @@ public final class SearchIndexDefinitions {
             if (property.isAssignable(Vector.class)) {
                 Map<String, Object> mapping = transport.vectorFieldMapping(vectorDimensions(property));
                 if (mapping != null) {
-                    properties.put(TextSearchDialect.jsonKey(property), mapping);
+                    properties.put(property.getName(), mapping);
                 }
             }
         }
