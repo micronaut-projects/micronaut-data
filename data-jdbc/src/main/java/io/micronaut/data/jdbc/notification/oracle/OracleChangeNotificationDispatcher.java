@@ -311,15 +311,20 @@ final class OracleChangeNotificationDispatcher implements DatabaseChangeListener
             if (options.purgeOnNotificationEnabled()) {
                 // Oracle has already purged this registration. Preserve its final notification even
                 // if the subsequent deregistration callback arrives before the worker can run it.
-                notificationQueue.enqueueFinal(() -> runTracked(registrationId, () -> routeNotification(event, options)));
+                notificationQueue.enqueueFinal(
+                    () -> runTracked(registrationId, () -> routeNotification(event, options))
+                );
             } else {
-                Runnable reconcile = () -> runTracked(registrationId, () -> {
+                Runnable invalidation = () -> {
                     if (subscription.acceptsDataNotification(registrationId)) {
                         dispatchInvalidation(registrationId, "after the notification queue reached its limit");
                     }
-                });
-                subscription.enqueueDataNotification(registrationId,
-                    () -> notificationQueue.enqueue(() -> processNotification(event, options), reconcile));
+                };
+                Runnable enqueueData = () -> notificationQueue.enqueue(
+                    () -> processNotification(event, options),
+                    () -> runTracked(registrationId, invalidation)
+                );
+                subscription.enqueueDataNotification(registrationId, enqueueData);
             }
         } catch (RuntimeException e) {
             LOG.warn("Unable to submit DCN event of type [{}] for datasource [{}], registration [{}], and listener method [{}]",
