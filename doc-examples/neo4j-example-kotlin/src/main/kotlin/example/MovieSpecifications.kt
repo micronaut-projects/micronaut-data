@@ -21,7 +21,7 @@ object MovieSpecifications {
     }
 
     fun connectedTo(title: String, hops: Int) = PredicateSpecification<Movie> { root, criteriaBuilder -> // <2>
-        GraphCriteria.connected(root, null, criteriaBuilder.literal(title), hops)
+        GraphCriteria.connected(root, Movie::class.java, criteriaBuilder.literal(title), hops)
     }
     // end::graphCriteria[]
 // tag::specifications[]

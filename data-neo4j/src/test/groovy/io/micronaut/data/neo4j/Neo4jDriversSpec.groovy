@@ -1,15 +1,26 @@
 package io.micronaut.data.neo4j
 
 import io.micronaut.context.ApplicationContext
+import io.micronaut.context.exceptions.BeanInstantiationException
+import io.micronaut.context.exceptions.ConfigurationException
 import io.micronaut.data.exceptions.DataAccessException
+import io.micronaut.data.neo4j.features.BookmarkRecorder
 import io.micronaut.data.neo4j.features.OtherDriverTagRepository
 import io.micronaut.data.neo4j.features.Tag
 import io.micronaut.data.neo4j.features.TagRepository
-import io.micronaut.data.neo4j.session.Neo4jDriverRegistration
+import io.micronaut.data.neo4j.features.TagService
+import io.micronaut.data.neo4j.operations.Neo4jReactorRepositoryOperations
+import io.micronaut.data.neo4j.operations.Neo4jRepositoryOperations
+import io.micronaut.data.neo4j.session.Neo4jConnectionOperations
 import io.micronaut.data.neo4j.session.Neo4jSessionConfigurer
+import io.micronaut.data.neo4j.transaction.Neo4jReactorTransactionOperations
+import io.micronaut.data.neo4j.transaction.Neo4jTransactionOperations
 import io.micronaut.data.runtime.multitenancy.SchemaTenantResolver
 import io.micronaut.inject.qualifiers.Qualifiers
 import spock.lang.Specification
+
+import java.util.concurrent.Callable
+import java.util.concurrent.Executors
 
 /**
  * Checks repositories on several drivers, bookmarks shared by the sessions of a driver and a database per tenant.
@@ -35,6 +46,66 @@ class Neo4jDriversSpec extends Specification {
         context?.close()
     }
 
+    void "beans injected without a name use the default driver when another driver is configured"() {
+        given:
+        def context = ApplicationContext.run(['neo4j.uri': EmbeddedNeo4j.boltUri(), 'micronaut.data.neo4j.drivers.other.uri': EmbeddedNeo4j.boltUri()])
+        def tags = context.getBean(TagRepository)
+        tags.deleteAll()
+
+        expect: "each driver has its own beans, and the unqualified ones are those of the default driver"
+        context.getBeansOfType(Neo4jRepositoryOperations).size() == 2
+        context.getBean(Neo4jRepositoryOperations).is(context.getBean(Neo4jRepositoryOperations, Qualifiers.byName("default")))
+        context.getBean(Neo4jReactorRepositoryOperations).is(context.getBean(Neo4jReactorRepositoryOperations, Qualifiers.byName("default")))
+        context.getBean(Neo4jConnectionOperations).is(context.getBean(Neo4jConnectionOperations, Qualifiers.byName("default")))
+        context.getBean(Neo4jTransactionOperations).is(context.getBean(Neo4jTransactionOperations, Qualifiers.byName("default")))
+        context.getBean(Neo4jReactorTransactionOperations).is(context.getBean(Neo4jReactorTransactionOperations, Qualifiers.byName("default")))
+
+        when: "a plain @Transactional method fails"
+        context.getBean(TagService).saveAndFail("rolled back")
+
+        then: "its transaction on the default driver is rolled back"
+        thrown(IllegalStateException)
+        tags.count() == 0
+
+        cleanup:
+        context?.close()
+    }
+
+    void "a configured driver needs both a username and a password"() {
+        when:
+        def context = ApplicationContext.run(['neo4j.uri': EmbeddedNeo4j.boltUri(), 'micronaut.data.neo4j.drivers.other.uri': EmbeddedNeo4j.boltUri(), 'micronaut.data.neo4j.drivers.other.username': 'neo4j'])
+        context.getBean(OtherDriverTagRepository).count()
+
+        then:
+        def e = thrown(BeanInstantiationException)
+        rootCause(e) instanceof ConfigurationException
+        rootCause(e).message == 'Neo4j driver [other] needs both micronaut.data.neo4j.drivers.other.username and micronaut.data.neo4j.drivers.other.password, or neither for a server without authentication'
+
+        cleanup:
+        context?.close()
+    }
+
+    void "a configured driver cannot be named default"() {
+        when:
+        def context = ApplicationContext.run(['neo4j.uri': EmbeddedNeo4j.boltUri(), 'micronaut.data.neo4j.drivers.default.uri': EmbeddedNeo4j.boltUri()])
+        context.getBean(TagRepository).count()
+
+        then:
+        def e = thrown(BeanInstantiationException)
+        rootCause(e) instanceof ConfigurationException
+        rootCause(e).message.startsWith('The Neo4j driver name [default] is reserved for the driver of micronaut-neo4j')
+
+        cleanup:
+        context?.close()
+    }
+
+    private static Throwable rootCause(Throwable e) {
+        while (e.cause != null && e.cause != e) {
+            e = e.cause
+        }
+        return e
+    }
+
     void "sessions of a driver share a bookmark manager unless disabled"() {
         given:
         def enabled = ApplicationContext.run(['neo4j.uri': EmbeddedNeo4j.boltUri()])
@@ -49,38 +120,59 @@ class Neo4jDriversSpec extends Specification {
         disabled?.close()
     }
 
-    void "a write is seen by the next session through the bookmarks of the driver"() {
+    void "sessions on other threads and in transactions begin with the bookmarks of the writes before them"() {
         given:
-        def context = ApplicationContext.run(['neo4j.uri': EmbeddedNeo4j.boltUri()])
-        def bookmarks = context.getBean(Neo4jDriverRegistration, Qualifiers.byName("default")).driver().executableQueryBookmarkManager()
+        def context = ApplicationContext.run(['neo4j.uri': EmbeddedNeo4j.boltUri(), 'spec.name': 'Neo4jDriversSpec'])
+        def recorder = context.getBean(BookmarkRecorder)
         def tags = context.getBean(TagRepository)
+        def service = context.getBean(TagService)
+        def executor = Executors.newSingleThreadExecutor()
+        def otherThread = executor.submit({ Thread.currentThread().name } as Callable<String>).get()
         tags.deleteAll()
 
-        expect: "the sessions of the repositories carry the bookmark manager of the driver"
-        context.getBean(Neo4jSessionConfigurer, Qualifiers.byName("default")).sessionConfig().bookmarkManager().get().is(bookmarks)
-
-        when: "a node is written in one session"
-        def before = bookmarks.bookmarks
+        when: "a node is written on this thread and read on another"
+        recorder.reset()
         def saved = tags.save(new Tag("causal"))
+        def written = recorder.received.last()
+        recorder.reset()
+        def found = executor.submit({ tags.findById(saved.id) } as Callable<Optional<Tag>>).get()
 
-        then: "the session leaves the bookmark of its transaction in the manager when it closes"
-        def after = bookmarks.bookmarks
-        !after.isEmpty()
-        after != before
+        then: "the session of the other thread shares the bookmark manager, which hands its transaction the bookmark of the write"
+        !written.isEmpty()
+        recorder.sessions*.thread() == [otherThread]
+        recorder.sessions[0].bookmarkManager().is(recorder.manager)
+        !recorder.handedOut.isEmpty()
+        recorder.handedOut.every { it.containsAll(written) }
+        found.get().name == "causal"
 
-        and: "the next repository calls open sessions that start after the write and read it"
-        tags.findById(saved.id).get().name == "causal"
-        tags.findByName("causal").get().id == saved.id
-        tags.count() == 1
+        when: "a node is written on the other thread and changed in a transaction on this thread"
+        recorder.reset()
+        def other = executor.submit({ tags.save(new Tag("other")) } as Callable<Tag>).get()
+        def writtenElsewhere = recorder.received.last()
+        recorder.reset()
+        def renamed = service.renameAndFind(other.id, "renamed")
+        def committed = recorder.received.last()
 
-        when: "the node is deleted in another session"
-        tags.deleteById(saved.id)
+        then: "the transaction runs in one session that begins with the bookmark of the other thread's write"
+        renamed.get() == "renamed"
+        recorder.sessions*.thread() == [Thread.currentThread().name]
+        recorder.sessions[0].bookmarkManager().is(recorder.manager)
+        !recorder.handedOut.isEmpty()
+        recorder.handedOut.every { it.containsAll(writtenElsewhere) }
+        recorder.received.size() == 1
+        committed != writtenElsewhere
 
-        then: "the bookmark moves on and the next read no longer sees the node"
-        bookmarks.bookmarks != after
-        !tags.existsById(saved.id)
+        when: "the other thread reads after the transaction commits"
+        recorder.reset()
+        def readElsewhere = executor.submit({ tags.findById(other.id) } as Callable<Optional<Tag>>).get()
+
+        then: "its session begins with the bookmark of the transaction"
+        recorder.handedOut.every { it.containsAll(committed) }
+        !recorder.handedOut.isEmpty()
+        readElsewhere.get().name == "renamed"
 
         cleanup:
+        executor?.shutdownNow()
         context?.close()
     }
 

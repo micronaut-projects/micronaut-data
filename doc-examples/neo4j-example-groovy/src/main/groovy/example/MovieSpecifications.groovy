@@ -21,7 +21,7 @@ class MovieSpecifications {
     }
 
     static PredicateSpecification<Movie> connectedTo(String title, int hops) { // <2>
-        { root, criteriaBuilder -> GraphCriteria.connected(root, null, criteriaBuilder.literal(title), hops) } as PredicateSpecification<Movie>
+        { root, criteriaBuilder -> GraphCriteria.connected(root, Movie, criteriaBuilder.literal(title), hops) } as PredicateSpecification<Movie>
     }
     // end::graphCriteria[]
 // tag::specifications[]

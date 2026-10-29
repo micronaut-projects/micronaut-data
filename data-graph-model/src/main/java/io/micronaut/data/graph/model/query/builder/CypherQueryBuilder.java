@@ -191,6 +191,10 @@ public class CypherQueryBuilder implements GraphQueryBuilder {
     private static final String SET = " SET ";
     private static final String RETURN_COUNT_RESULT = " RETURN count(*) AS result";
     private static final String DETACH_DELETE = " DETACH DELETE ";
+    private static final String EXISTING = "existing";
+    private static final String LOCK_PROPERTY = "__lock";
+    private static final String ROW = "row";
+    private static final String UNWIND_ROWS = "UNWIND $" + ROWS_PARAMETER + " AS " + ROW + " ";
     private static final String LINK_FROM = "a";
     private static final String LINK_TO = "b";
 
@@ -432,6 +436,27 @@ public class CypherQueryBuilder implements GraphQueryBuilder {
             + identityExpression(entity.getIdentity(), ROOT) + " = $" + ID_PARAMETER + DETACH_DELETE + ROOT + RETURN_COUNT_RESULT;
     }
 
+    /**
+     * Builds {@code OPTIONAL MATCH} on the identifier, counting the existing nodes, followed by {@code CREATE} only when
+     * there are none: the query returns no rows when a node with the identifier exists. A uniqueness constraint on
+     * the identifier, see {@link GraphIndex}, also rejects a concurrent insert of the same identifier.
+     */
+    @Override
+    public String buildInsertNodeQuery(PersistentEntity entity, List<String> propertyNames) {
+        PersistentProperty identity = entity.hasIdentity() ? entity.getIdentity() : null;
+        if (identity == null || GraphEntities.isNativeId(identity)) {
+            return buildWriteNodeQuery(entity, propertyNames, false);
+        }
+        String labels = labelExpression(entity);
+        StringBuilder query = new StringBuilder("OPTIONAL MATCH (").append(EXISTING).append(labels).append(CLOSE_WHERE)
+            .append(identityExpression(identity, EXISTING)).append(" = $").append(ID_PARAMETER)
+            .append(WITH).append("count(").append(EXISTING).append(") AS found WHERE found = 0")
+            .append(" CREATE (").append(ROOT).append(labels).append(" {")
+            .append(GraphEntities.escapeName(GraphEntities.propertyName(identity))).append(": $").append(ID_PARAMETER).append("})");
+        appendSetProperties(query, ROOT, propertyNames);
+        return query.append(RETURN).append(identityExpression(identity, ROOT)).append(" AS ").append(ID_PARAMETER).toString();
+    }
+
     @Override
     public String buildUpdateVersionedNodeQuery(PersistentEntity entity, List<String> propertyNames) {
         PersistentProperty identity = entity.getIdentity();
@@ -482,6 +507,8 @@ public class CypherQueryBuilder implements GraphQueryBuilder {
     /**
      * Builds an {@code UNWIND} over the rows that creates, matches or merges each node like
      * {@link #buildWriteNodeQuery(PersistentEntity, List, boolean)} and sets its properties from the map of the row.
+     * A versioned write locks the nodes like {@link #buildUpdateVersionedNodeQuery(PersistentEntity, List)}, then
+     * collects them and writes them only when every row still has its version, so that it writes all nodes or none.
      *
      * @param entity        The entity
      * @param propertyNames The stored names of the properties every node of the batch writes
@@ -492,12 +519,36 @@ public class CypherQueryBuilder implements GraphQueryBuilder {
     @Override
     public String buildWriteNodesQuery(PersistentEntity entity, List<String> propertyNames, boolean idPresent, boolean versioned) {
         PersistentProperty identity = entity.hasIdentity() ? entity.getIdentity() : null;
-        String row = "row";
+        StringBuilder query = new StringBuilder(UNWIND_ROWS);
+        appendNodesClause(query, entity, identity, idPresent, versioned);
+        return appendSetRowProperties(query, identity, propertyNames);
+    }
+
+    /**
+     * Builds {@code OPTIONAL MATCH} on the identifiers of all rows, counting the existing nodes, followed by an
+     * {@code UNWIND} that creates the nodes only when there are none, like
+     * {@link #buildInsertNodeQuery(PersistentEntity, List)}: the query writes all nodes or none.
+     */
+    @Override
+    public String buildInsertNodesQuery(PersistentEntity entity, List<String> propertyNames) {
+        PersistentProperty identity = entity.hasIdentity() ? entity.getIdentity() : null;
+        if (identity == null || GraphEntities.isNativeId(identity)) {
+            return buildWriteNodesQuery(entity, propertyNames, false, false);
+        }
+        String labels = labelExpression(entity);
+        StringBuilder query = new StringBuilder("OPTIONAL MATCH (").append(EXISTING).append(labels).append(CLOSE_WHERE)
+            .append(identityExpression(identity, EXISTING)).append(" IN [").append(ROW).append(" IN $").append(ROWS_PARAMETER)
+            .append(" | ").append(ROW).append('.').append(ID_PARAMETER).append(']')
+            .append(WITH).append("count(").append(EXISTING).append(") AS found WHERE found = 0 ").append(UNWIND_ROWS)
+            .append("CREATE (").append(ROOT).append(labels).append(" {")
+            .append(GraphEntities.escapeName(GraphEntities.propertyName(identity))).append(": ").append(ROW).append('.').append(ID_PARAMETER).append("})");
+        return appendSetRowProperties(query, identity, propertyNames);
+    }
+
+    private String appendSetRowProperties(StringBuilder query, @Nullable PersistentProperty identity, List<String> propertyNames) {
         String idColumn = identity == null ? "null" : identityExpression(identity, ROOT);
-        StringBuilder query = new StringBuilder("UNWIND $").append(ROWS_PARAMETER).append(" AS ").append(row).append(' ');
-        appendNodesClause(query, entity, identity, row, idPresent, versioned);
-        appendBatchProperties(query, row, propertyNames);
-        return query.append(RETURN).append(row).append('.').append(ROW_POSITION).append(" AS ").append(ROW_POSITION).append(", ")
+        appendBatchProperties(query, ROW, propertyNames);
+        return query.append(RETURN).append(ROW).append('.').append(ROW_POSITION).append(" AS ").append(ROW_POSITION).append(", ")
             .append(idColumn).append(" AS ").append(ID_PARAMETER).toString();
     }
 
@@ -505,8 +556,9 @@ public class CypherQueryBuilder implements GraphQueryBuilder {
      * Appends the clause that creates, matches or merges the node of each row.
      */
     private void appendNodesClause(StringBuilder query, PersistentEntity entity, @Nullable PersistentProperty identity,
-                                   String row, boolean idPresent, boolean versioned) {
+                                   boolean idPresent, boolean versioned) {
         String labels = labelExpression(entity);
+        String row = ROW;
         if (identity == null || (GraphEntities.isNativeId(identity) && !idPresent)) {
             query.append("CREATE (").append(ROOT).append(labels).append(')');
         } else if (GraphEntities.isNativeId(identity) || versioned) {
@@ -517,8 +569,14 @@ public class CypherQueryBuilder implements GraphQueryBuilder {
                 if (version == null) {
                     throw new IllegalArgumentException("Entity [" + entity.getName() + "] has no @Version property");
                 }
-                query.append(AND).append(ROOT).append('.').append(GraphEntities.escapeName(GraphEntities.propertyName(version)))
-                    .append(" = ").append(row).append('.').append(VERSION_PARAMETER);
+                String matched = "matched";
+                query.append(SET).append(ROOT).append('.').append(LOCK_PROPERTY).append(" = true REMOVE ").append(ROOT).append('.').append(LOCK_PROPERTY)
+                    .append(WITH).append("collect(CASE WHEN ").append(ROOT).append('.').append(GraphEntities.escapeName(GraphEntities.propertyName(version)))
+                    .append(" = ").append(row).append('.').append(VERSION_PARAMETER)
+                    .append(" THEN {node: ").append(ROOT).append(", row: ").append(row).append("} END) AS ").append(matched)
+                    .append(" WHERE size(").append(matched).append(") = size($").append(ROWS_PARAMETER).append(')')
+                    .append(" UNWIND ").append(matched).append(" AS current")
+                    .append(" WITH current.node AS ").append(ROOT).append(", current.row AS ").append(row);
             }
         } else {
             query.append("MERGE (").append(ROOT).append(labels).append(" {")
@@ -604,15 +662,23 @@ public class CypherQueryBuilder implements GraphQueryBuilder {
             .append(identityExpression(target.getIdentity(), LINK_TO)).append(" = ").append(row).append('.').append(LINK_TO_PARAMETER);
     }
 
+    /**
+     * Matches the node of a versioned write. Setting and removing a lock property takes the write lock of the node,
+     * without leaving a property behind, before the version is compared: a write that committed while the lock was
+     * awaited is seen rather than overwritten. Neither setting the version to itself, whose value is read before the
+     * lock is taken, nor removing a property the node does not have, which Neo4j skips, takes the lock in time.
+     */
     private String versionedMatch(PersistentEntity entity) {
         PersistentProperty identity = entity.getIdentity();
         PersistentProperty version = entity.hasVersion() ? entity.getVersion() : null;
         if (identity == null || version == null) {
             throw new IllegalArgumentException("Entity [" + entity.getName() + "] needs an identity and a @Version property for versioned writes");
         }
+        String versionProperty = ROOT + "." + GraphEntities.escapeName(GraphEntities.propertyName(version));
         return MATCH_OPEN + ROOT + labelExpression(entity) + CLOSE_WHERE
-            + identityExpression(identity, ROOT) + " = $" + ID_PARAMETER + AND
-            + ROOT + "." + GraphEntities.escapeName(GraphEntities.propertyName(version)) + " = $" + VERSION_PARAMETER;
+            + identityExpression(identity, ROOT) + " = $" + ID_PARAMETER
+            + SET + ROOT + "." + LOCK_PROPERTY + " = true REMOVE " + ROOT + "." + LOCK_PROPERTY
+            + WITH + ROOT + WHERE + versionProperty + " = $" + VERSION_PARAMETER;
     }
 
     /**
@@ -935,7 +1001,9 @@ public class CypherQueryBuilder implements GraphQueryBuilder {
 
     private List<String> appendFetchJoins(StringBuilder query, QueryState state, List<String> carried) {
         List<String> columns = new ArrayList<>();
-        Map<Association, JoinTree> nested = new LinkedHashMap<>();
+        // Trees are keyed by relationship name at every level, so joins such as directors.mentor and
+        // directors.awards share one tree for directors
+        Map<String, JoinTree> nested = new LinkedHashMap<>();
         List<JoinPath> direct = new ArrayList<>();
         for (JoinPath joinPath : state.joinPaths) {
             if (!joinPath.getJoinType().isFetch()) {
@@ -945,7 +1013,8 @@ public class CypherQueryBuilder implements GraphQueryBuilder {
             boolean relationshipEntity = GraphEntities.isRelationshipEntity(associationPath[0].getAssociatedEntity());
             if (associationPath.length > 1 && !relationshipEntity) {
                 // A path through node relationships, such as directors.mentor, is fetched as a tree
-                JoinTree tree = nested.computeIfAbsent(associationPath[0], JoinTree::new);
+                Association first = associationPath[0];
+                JoinTree tree = nested.computeIfAbsent(first.getName(), name -> new JoinTree(first));
                 for (int i = 1; i < associationPath.length; i++) {
                     tree = tree.child(associationPath[i]);
                 }
@@ -956,8 +1025,7 @@ public class CypherQueryBuilder implements GraphQueryBuilder {
         for (JoinPath joinPath : direct) {
             // A relationship fetched as a tree already includes its nodes
             Association[] associationPath = joinPath.getAssociationPath();
-            String name = associationPath[0].getName();
-            if (associationPath.length > 1 || nested.keySet().stream().noneMatch(a -> a.getName().equals(name))) {
+            if (associationPath.length > 1 || !nested.containsKey(associationPath[0].getName())) {
                 appendFetchJoin(query, joinPath, columns, carried);
             }
         }
@@ -994,8 +1062,10 @@ public class CypherQueryBuilder implements GraphQueryBuilder {
         PersistentEntity target = GraphEntities.targetNodeEntity(association);
         query.append(" OPTIONAL MATCH ")
             .append(GraphEntities.relationshipPattern(association, from, null, "(" + variable + labelExpression(target) + ")"));
+        // The collects are DISTINCT: a node reached through parallel relationships, or the rows a sibling branch
+        // multiplied, would otherwise be collected more than once
         if (tree.children.isEmpty()) {
-            return "collect(" + variable + ")";
+            return "collect(DISTINCT " + variable + ")";
         }
         List<String> scope = new ArrayList<>(carried);
         scope.add(variable);
@@ -1008,7 +1078,7 @@ public class CypherQueryBuilder implements GraphQueryBuilder {
             scope.add(childColumn);
             map.append(", ").append(GraphEntities.escapeName(child.association.getName())).append(": ").append(childColumn);
         }
-        return "collect(CASE WHEN " + variable + " IS NULL THEN NULL ELSE " + map.append('}') + " END)";
+        return "collect(DISTINCT CASE WHEN " + variable + " IS NULL THEN NULL ELSE " + map.append('}') + " END)";
     }
 
     private void appendFetchJoin(StringBuilder query, JoinPath joinPath, List<String> columns, List<String> carried) {
@@ -1447,7 +1517,7 @@ public class CypherQueryBuilder implements GraphQueryBuilder {
             PersistentEntity entity = state.entity;
             String type = "";
             Direction direction = Direction.UNDIRECTED;
-            PersistentEntity target = entity;
+            PersistentEntity target = null;
             String relationship = predicate.getRelationship();
             if (relationship != null) {
                 PersistentProperty property = entity.getPropertyByName(relationship);
@@ -1457,12 +1527,19 @@ public class CypherQueryBuilder implements GraphQueryBuilder {
                 type = ":" + GraphEntities.escapeName(GraphEntities.relationshipType(association));
                 direction = GraphEntities.direction(association);
                 target = GraphEntities.targetNodeEntity(association);
+            } else if (predicate.getTargetType() != null) {
+                // Relationships of any type: the far node is of the entity the criterion names, not necessarily the root's
+                Class<?> targetType = predicate.getTargetType();
+                target = entity.getName().equals(targetType.getName()) ? entity : PersistentEntity.of(targetType);
             }
             String hops = "[" + type + (predicate.getMaxDepth() > 1 ? "*1.." + predicate.getMaxDepth() : "") + "]";
             Expression<?> targetId = predicate.getTarget();
             if (targetId == null) {
                 out.append(existsPattern(relatedPattern(direction, hops, "()"), null));
                 return;
+            }
+            if (target == null) {
+                throw new IllegalArgumentException("A predicate on relationships of any type needs the entity of the node at the far end to match its identifier");
             }
             if (!target.hasIdentity()) {
                 throw new IllegalArgumentException("Entity [" + target.getName() + "] has no identifier to match a related node by");

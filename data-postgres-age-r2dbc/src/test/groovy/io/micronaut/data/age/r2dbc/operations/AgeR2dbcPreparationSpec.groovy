@@ -5,6 +5,8 @@ import ch.qos.logback.classic.Logger
 import ch.qos.logback.classic.spi.ILoggingEvent
 import ch.qos.logback.core.read.ListAppender
 import io.micronaut.context.annotation.Property
+import io.micronaut.data.connection.ConnectionDefinition
+import io.micronaut.data.connection.reactive.ReactorConnectionOperations
 import io.micronaut.test.extensions.spock.annotation.MicronautTest
 import io.micronaut.transaction.reactive.ReactorReactiveTransactionOperations
 import io.r2dbc.spi.Connection
@@ -38,6 +40,9 @@ class AgeR2dbcPreparationSpec extends Specification {
 
     @Inject
     ReactorReactiveTransactionOperations<Connection> transactionOperations
+
+    @Inject
+    ReactorConnectionOperations<Connection> connectionOperations
 
     ListAppender<ILoggingEvent> appender = new ListAppender<>()
     Logger logger = (Logger) LoggerFactory.getLogger(DefaultAgeReactorRepositoryOperations)
@@ -114,6 +119,21 @@ class AgeR2dbcPreparationSpec extends Specification {
         loads() == 1
     }
 
+    void "a transaction after one that rolled the loading back on the same connection loads AGE again"() {
+        when: "one connection runs two transactions, one after the other, and the first rolls back"
+        String searchPath = connectionOperations.withConnectionMono(ConnectionDefinition.DEFAULT) { connectionStatus ->
+            transactionOperations.withTransactionMono { status ->
+                operations.reactive().executeQuery(QUERY, [:]).then(Mono.fromRunnable { status.setRollbackOnly() })
+            }.then(transactionOperations.withTransactionMono { status ->
+                operations.reactive().executeQuery(QUERY, [:]).then(showSearchPath(connectionStatus.connection))
+            })
+        }.block()
+
+        then:
+        loads() == 2
+        searchPath.contains("ag_catalog")
+    }
+
     private void runQuery() {
         operations.reactive().executeQuery(QUERY, [:]).blockLast()
     }
@@ -137,10 +157,12 @@ class AgeR2dbcPreparationSpec extends Specification {
     }
 
     private String searchPath() {
-        withConnection { Connection connection ->
-            Flux.from(connection.createStatement("SHOW search_path").execute())
-                .flatMap { it.map { row, metadata -> row.get(0, String) } }.next()
-        }
+        withConnection { Connection connection -> showSearchPath(connection) }
+    }
+
+    private static Mono<String> showSearchPath(Connection connection) {
+        Flux.from(connection.createStatement("SHOW search_path").execute())
+            .flatMap { it.map { row, metadata -> row.get(0, String) } }.next()
     }
 
     private static Mono<Void> execute(Connection connection, String sql) {
