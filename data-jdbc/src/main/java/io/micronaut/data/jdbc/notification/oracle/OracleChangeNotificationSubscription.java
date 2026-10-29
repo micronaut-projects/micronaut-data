@@ -108,6 +108,21 @@ class OracleChangeNotificationSubscription {
                                          OracleChangeNotificationRegistrar registrar,
                                          BeanContext beanContext,
                                          Executor blockingExecutor,
+                                         OracleNotificationConfiguration notificationConfiguration,
+                                         TaskScheduler taskScheduler,
+                                         OracleChangeNotificationTaskTracker taskTracker,
+                                         OracleRegistrationRecoveryConfiguration recoveryConfiguration) {
+        this(dataSourceName, definition, registrar, beanContext, blockingExecutor,
+            new ChangeNotificationQueue("oracle-notifications-" + dataSourceName + "-" + definition.method().getDescription(true),
+                notificationConfiguration.getQueueCapacity()),
+            taskScheduler, taskTracker, recoveryConfiguration);
+    }
+
+    OracleChangeNotificationSubscription(String dataSourceName,
+                                         OracleChangeListenerDefinition definition,
+                                         OracleChangeNotificationRegistrar registrar,
+                                         BeanContext beanContext,
+                                         Executor blockingExecutor,
                                          ChangeNotificationQueue notificationQueue,
                                          TaskScheduler taskScheduler,
                                          OracleChangeNotificationTaskTracker taskTracker,
