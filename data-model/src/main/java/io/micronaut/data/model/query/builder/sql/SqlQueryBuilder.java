@@ -503,7 +503,7 @@ public class SqlQueryBuilder extends AbstractSqlLikeQueryBuilder {
             addJsonViewCreateStatement(createStatements, entity);
             return createStatements.toArray(new String[0]);
         }
-        if (DataAnnotationUtils.hasJsonEntityRepresentationAnnotation(entity.getAnnotationMetadata())) {
+        if (isSearchableJsonEntity(entity)) {
             addJsonEntityCreateStatements(createStatements, createStatements, entity);
             return createStatements.toArray(new String[0]);
         }
@@ -566,7 +566,7 @@ public class SqlQueryBuilder extends AbstractSqlLikeQueryBuilder {
             if (addJsonViewCreateStatements(entity, dialect, jsonViewCreateStatements)) {
                 continue;
             }
-            if (DataAnnotationUtils.hasJsonEntityRepresentationAnnotation(entity.getAnnotationMetadata())) {
+            if (isSearchableJsonEntity(entity)) {
                 addJsonEntityCreateStatements(createStatements, searchIndexStatements, entity);
                 continue;
             }
@@ -1044,6 +1044,16 @@ public class SqlQueryBuilder extends AbstractSqlLikeQueryBuilder {
     }
 
     /**
+     * Whether the entity is a {@link Searchable} entity stored as one JSON column on Oracle, the one case the
+     * JSON table and its search index are generated for; every other entity keeps the relational DDL.
+     */
+    private boolean isSearchableJsonEntity(PersistentEntity entity) {
+        return dialect == Dialect.ORACLE
+            && entity.getAnnotationMetadata().hasAnnotation(Searchable.class)
+            && DataAnnotationUtils.hasJsonEntityRepresentationAnnotation(entity.getAnnotationMetadata());
+    }
+
+    /**
      * Adds the table of an entity stored as one JSON column ({@code @EntityRepresentation(columnType = JSON)}),
      * and the JSON search index when the entity is {@link Searchable}.
      */
@@ -1166,7 +1176,8 @@ public class SqlQueryBuilder extends AbstractSqlLikeQueryBuilder {
         String column = namingStrategy.mappedName(Collections.emptyList(), field);
         String trigramIndex = null;
         if (field.getAnnotationMetadata().booleanValue(SearchField.class, SearchField.MEMBER_FUZZY).orElse(false)) {
-            String name = "idx_" + prepareNames(tableName) + "_" + prepareNames(column) + "_trgm";
+            // kept within PostgreSQL's 63 bytes with a hash suffix, so long names do not collide after truncation
+            String name = normalizeAlias("idx_" + prepareNames(tableName) + "_" + prepareNames(column) + "_trgm");
             trigramIndex = escape ? quote(name) : name;
         }
         return new TextSearchDialect.SearchColumn(

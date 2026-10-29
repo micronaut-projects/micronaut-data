@@ -333,7 +333,11 @@ public final class DefaultDocumentSearchRepositoryOperations extends AbstractDoc
             return value;
         }
         Long version = persistVersion(current, entity);
-        String documentId = transport.index(indexName(entity), documentId(current, entity), toDocument(current, entity), version, configuration.getRefresh());
+        // a create-only write, so saving an entity with the id of an existing document fails instead of
+        // replacing it; a versioned entity relies on the external version instead
+        String documentId = version == null
+            ? transport.create(indexName(entity), documentId(current, entity), toDocument(current, entity), configuration.getRefresh())
+            : transport.index(indexName(entity), documentId(current, entity), toDocument(current, entity), version, configuration.getRefresh());
         return postPersist(current, entity, documentId);
     }
 
@@ -352,8 +356,10 @@ public final class DefaultDocumentSearchRepositoryOperations extends AbstractDoc
         if (id == null) {
             return false;
         }
-        boolean deleted = transport.delete(indexName(entity), id, configuration.getRefresh());
-        postRemove(value, entity);
+        boolean deleted = transport.delete(indexName(entity), id, deleteVersion(value, entity), configuration.getRefresh());
+        if (deleted) {
+            postRemove(value, entity);
+        }
         return deleted;
     }
 

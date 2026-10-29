@@ -89,8 +89,13 @@ public final class MongoSearchOperators {
             return matchNothing(paths);
         }
         if (mode == MatchMode.NATIVE) {
-            // the caller wrote queryString syntax; the first path is the default field
-            return new BsonDocument("queryString", new BsonDocument("defaultPath", new BsonString(paths.get(0))).append(QUERY, new BsonString(query)));
+            // the caller wrote queryString syntax, which takes one default field: each searched path gets
+            // its own queryString, and a document matching any of them matches
+            List<BsonValue> perPath = new ArrayList<>(paths.size());
+            for (String path : paths) {
+                perPath.add(new BsonDocument("queryString", new BsonDocument("defaultPath", new BsonString(path)).append(QUERY, new BsonString(query))));
+            }
+            return joinGroups(perPath, paths);
         }
         if (mode == MatchMode.PHRASE) {
             String phrase = query.replace("\"", "").trim();
