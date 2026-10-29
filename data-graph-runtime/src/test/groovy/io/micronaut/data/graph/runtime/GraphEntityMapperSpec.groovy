@@ -6,6 +6,7 @@ import io.micronaut.data.event.EntityEventListener
 import io.micronaut.data.exceptions.DataAccessException
 import io.micronaut.data.graph.runtime.entities.Actor
 import io.micronaut.data.graph.runtime.entities.Director
+import io.micronaut.data.graph.runtime.entities.Gadget
 import io.micronaut.data.graph.runtime.entities.Person
 import io.micronaut.data.graph.runtime.entities.Star
 import io.micronaut.data.model.runtime.RuntimeEntityRegistry
@@ -79,6 +80,30 @@ class GraphEntityMapperSpec extends Specification {
         then:
         def e = thrown(DataAccessException)
         e.message.startsWith('Node with labels [Person] is not a Actor')
+    }
+
+    void "a schemaless property with the name of a declared property is rejected"() {
+        given:
+        def entity = mapper.getEntity(Gadget)
+        def gadget = new Gadget(name: 'Phone', price: 500)
+        gadget.attributes.colour = 'black'
+
+        when:
+        mapper.checkDynamicAttributes(entity, gadget)
+
+        then:
+        noExceptionThrown()
+
+        when:
+        gadget.attributes[key] = 1
+        mapper.checkDynamicAttributes(entity, gadget)
+
+        then:
+        def e = thrown(DataAccessException)
+        e.message == "Dynamic attribute [$key] of [Gadget] has the name of a declared property"
+
+        where:
+        key << ['price', 'name']
     }
 
     private static GraphNode node(List<String> labels) {

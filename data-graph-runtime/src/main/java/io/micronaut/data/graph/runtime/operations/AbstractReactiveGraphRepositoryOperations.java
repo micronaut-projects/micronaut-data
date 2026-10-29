@@ -85,6 +85,21 @@ public abstract class AbstractReactiveGraphRepositoryOperations implements React
     }
 
     /**
+     * Checks that no schemaless property of the instances has the name of a declared property, for writes that
+     * store the schemaless properties in a column of their own, which reads would hide behind the declared column.
+     *
+     * @param type      The entity type
+     * @param instances The instances to write
+     * @param <T>       The entity type
+     */
+    protected final <T> void checkDynamicAttributes(Class<T> type, Iterable<T> instances) {
+        RuntimePersistentEntity<T> entity = mapper.getEntity(type);
+        for (T instance : instances) {
+            mapper.checkDynamicAttributes(entity, instance);
+        }
+    }
+
+    /**
      * Runs work that produces one result within the current reactive connection or a new one.
      *
      * @param annotationMetadata The annotation metadata of the operation

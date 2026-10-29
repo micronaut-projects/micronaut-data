@@ -750,6 +750,21 @@ public abstract class AbstractGraphRepositoryOperations extends AbstractReposito
     }
 
     /**
+     * Checks that no schemaless property of the instances has the name of a declared property, for writes that
+     * store the schemaless properties in a column of their own, which reads would hide behind the declared column.
+     *
+     * @param type      The entity type
+     * @param instances The instances to write
+     * @param <T>       The entity type
+     */
+    protected final <T> void checkDynamicAttributes(Class<T> type, Iterable<T> instances) {
+        RuntimePersistentEntity<T> entity = mapper.getEntity(type);
+        for (T instance : instances) {
+            mapper.checkDynamicAttributes(entity, instance);
+        }
+    }
+
+    /**
      * @param query A query in the database's query language, passed to the operations at runtime
      * @return The statement that runs it
      */
