@@ -294,6 +294,7 @@ row notifications. The limit counts whole Oracle notifications; one notification
 
 Notifications accepted into a listener's queue are processed sequentially in the order they enter the queue, including
 entity loading and listener invocation. Changes to individual rows within one notification are also delivered sequentially.
+These ordering guarantees require the listener to execute on its worker; `@Async` offloads its work to another executor.
 Different listeners can run concurrently, so shared application state still requires synchronization. Each listener performs
 at most one entity reload at a time; listeners still share the datasource's connection pool.
 Entity loading reads the current database state; sequential processing does not provide a historical snapshot of each change.
@@ -311,16 +312,24 @@ consistency check requires it.
 An ann:transaction.annotation.Transactional[] listener executes in a new transaction. It cannot participate in
 or roll back the original database transaction because that transaction has already committed before Oracle Database
 emits the notification.
+The ROWID reload runs before the listener's transaction starts. `@Transactional` applies to listener execution,
+not to the preceding entity load.
 
 ann:retry.annotation.Retryable[] and ann:retry.annotation.Recoverable[] can be applied to the listener method.
-ann:retry.annotation.Retryable[] applies to both loading the changed entity and executing the listener method:
+ann:retry.annotation.Retryable[] can retry entity loading and, for listeners without `@Async`, listener execution:
 
 * if loading an inserted or updated row fails, loading can be retried;
 * if loading succeeds but listener code fails, later attempts reuse the entity already loaded for that event; and
-* if the method is transactional, each retry attempt runs in a new transaction and a failed attempt is rolled back before the next attempt.
+* if the method is transactional, its transaction starts after loading succeeds; failed listener attempts are rolled back before retrying.
 
 Because a callback can run more than once, listener work should be idempotent. A recovery method can handle a failure
 after all retry attempts are exhausted, but recovery does not replay the Oracle Database notification or restore the transaction that caused it.
+
+With `@Async`, entity loading still runs on the listener worker before listener execution is scheduled on the async
+executor. Loading failures can be retried. Failures during async listener execution cannot reach retry or recovery advice
+because the `void` call has already returned. The subscription's queue ordering and shutdown tracking cover loading and
+submission, not completion of the async listener work. Use the dedicated listener worker without `@Async` when listener
+retries, ordered completion, and subscription shutdown tracking are required.
 
 == Startup, Shutdown, and Failures
 
@@ -331,8 +340,8 @@ Micronaut Data attempts to unregister registrations already created for that dat
 cleanup failures are attached to the startup exception. If the datasource has no supported notification provider,
 startup instead fails with an `IllegalStateException`.
 
-If entity loading or listener execution fails and retry or recovery advice does not handle the failure, Micronaut Data
-logs it asynchronously with the listener method, operation, table, and `ROWID` when available. The failure is not returned
+If entity loading or synchronous listener execution fails and retry or recovery advice does not handle the failure,
+Micronaut Data logs it asynchronously with the listener method, operation, table, and `ROWID` when available. The failure is not returned
 to Oracle Database, does not roll back the original change, and does not trigger automatic redelivery.
 Subsequent notifications continue to be processed.
 

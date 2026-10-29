@@ -25,11 +25,12 @@ import jakarta.inject.Singleton;
 import org.jspecify.annotations.Nullable;
 
 /**
- * Materializes provider-deferred entity state immediately before invoking a change listener.
+ * Materializes provider-deferred entity state before change-listener execution.
  *
- * <p>The interceptor is ordered immediately inside Micronaut's retry advice. Consequently, a
- * loader failure reaches the retry interceptor without invoking the listener, while a successfully
- * materialized event is reused if the listener itself subsequently fails and is retried.</p>
+ * <p>The interceptor runs immediately inside retry advice and before transaction and async advice.
+ * Loading can therefore be retried without invoking or scheduling the listener. The listener's
+ * transaction advice does not wrap the preceding load, and async advice only offloads listener execution.
+ * A successfully materialized event is reused if synchronous listener execution is retried.</p>
  */
 @Internal
 @Singleton
@@ -42,7 +43,8 @@ public final class ChangeListenerEntityLoadingInterceptor implements MethodInter
     }
 
     /**
-     * Materializes a deferred notification entity before proceeding to the listener and outer advice.
+     * Materializes a deferred notification entity before proceeding to transaction and async
+     * advice and the listener.
      *
      * @param context the listener invocation context
      * @return the listener invocation result

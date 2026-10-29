@@ -39,8 +39,13 @@ import java.lang.annotation.Target;
  * <p>This annotation can also be used as a meta-annotation to define a composed listener
  * annotation.</p>
  *
- * <p>When retry advice is also applied to the method, provider-deferred entity loading executes
- * within the same retry boundary as the listener invocation.</p>
+ * <p>Provider-deferred entity loading occurs before the listener's transaction advice.
+ * {@code @Transactional} applies to listener execution, not the preceding load. With {@code @Async},
+ * loading occurs on the calling thread before listener execution is scheduled on the async executor.</p>
+ *
+ * <p>Retry advice can retry entity loading and synchronous listener failures. A successful load is
+ * reused on subsequent retry attempts. Since listener methods return {@code void}, failures during
+ * async listener execution cannot reach retry advice.</p>
  *
  * @since 5.3.0
  */
