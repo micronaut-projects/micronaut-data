@@ -74,6 +74,15 @@ import java.util.function.Function;
 @Internal
 public class AbstractMongoCollectionsCreator<Dtbs> {
     private static final Logger LOG = LoggerFactory.getLogger(AbstractMongoCollectionsCreator.class);
+    // CommandNotFound, CommandNotSupported, SearchNotEnabled and "only allowed on MongoDB Atlas": a deployment
+    // without MongoDB Search
+    private static final Set<Integer> SEARCH_UNAVAILABLE_CODES = Set.of(59, 115, 31082, 6047401);
+    // the languages MongoDB Search has a lucene.<language> analyzer for
+    private static final Set<String> LANGUAGE_ANALYZERS = Set.of("arabic", "armenian", "basque", "bengali", "brazilian", "bulgarian",
+        "catalan", "chinese", "cjk", "czech", "danish", "dutch", "english", "finnish", "french", "galician", "german", "greek", "hindi",
+        "hungarian", "indonesian", "irish", "italian", "japanese", "korean", "kuromoji", "latvian", "lithuanian", "morfologik", "nori",
+        "norwegian", "persian", "polish", "portuguese", "romanian", "russian", "smartcn", "sorani", "spanish", "swedish", "thai",
+        "turkish", "ukrainian");
 
     /**
      * Get MongoDB database factory.
@@ -138,7 +147,8 @@ public class AbstractMongoCollectionsCreator<Dtbs> {
                     }
                 } else {
                     TextIndexDefinition textIndex = textIndexDefinition(entity, persistedName);
-                    if (textIndex != null && !databaseOperations.listIndexNames(database, persistedName).contains(textIndex.name())) {
+                    // a collection holds at most one text index, whatever its name, so any existing one is kept as it is
+                    if (textIndex != null && !databaseOperations.hasTextIndex(database, persistedName)) {
                         if (LOG.isInfoEnabled()) {
                             LOG.info("Creating text index: {} on collection: {} in database: {}", textIndex.name(), persistedName, databaseOperations.getDatabaseName(database));
                         }
@@ -177,6 +187,10 @@ public class AbstractMongoCollectionsCreator<Dtbs> {
             }
             databaseOperations.createSearchIndex(database, collection, searchIndex);
         } catch (MongoCommandException e) {
+            if (!SEARCH_UNAVAILABLE_CODES.contains(e.getErrorCode())) {
+                // an invalid definition, such as an unknown analyzer, must not leave the application without its index
+                throw e;
+            }
             // Search indexes exist on Atlas and the Atlas local deployment only
             LOG.warn("Cannot create search index: {} on collection: {}; MongoDB Search is not available on this deployment: {}", searchIndex.name(), collection, e.getErrorMessage());
         }
@@ -268,8 +282,15 @@ public class AbstractMongoCollectionsCreator<Dtbs> {
     static String analyzerFor(String language) {
         String lower = language.toLowerCase(Locale.ROOT);
         return switch (lower) {
-            case "none", "simple", "standard" -> "lucene.standard";
-            default -> "lucene." + lower;
+            case "none", "standard" -> "lucene.standard";
+            case "simple" -> "lucene.simple";
+            default -> {
+                if (!LANGUAGE_ANALYZERS.contains(lower)) {
+                    throw new IllegalStateException("MongoDB Search has no analyzer for language '" + language
+                        + "'; set @MongoSearchIndex(analyzer) to one of its analyzers");
+                }
+                yield "lucene." + lower;
+            }
         };
     }
 
@@ -305,6 +326,15 @@ public class AbstractMongoCollectionsCreator<Dtbs> {
             .filter(n -> !n.isEmpty())
             .orElse(collection + "_text");
         return new TextIndexDefinition(name, weights, TextSearchSupport.resolveLanguage(entity), languageOverride);
+    }
+
+    /**
+     * @param index An index description from {@code listIndexes}
+     * @return True if it is a text index, whose key holds the {@code _fts} field
+     */
+    static boolean isTextIndex(Document index) {
+        Object key = index.get("key");
+        return key instanceof Document keyDocument && keyDocument.containsKey("_fts");
     }
 
     private static String persistedFieldName(PersistentProperty property) {
@@ -462,13 +492,13 @@ public class AbstractMongoCollectionsCreator<Dtbs> {
         void createCollection(Dtbs database, String collection);
 
         /**
-         * List the index names of a collection.
+         * Whether the collection already has a text index, under any name.
          *
          * @param database The database
          * @param collection The collection
-         * @return The index names
+         * @return True if a text index exists
          */
-        Set<String> listIndexNames(Dtbs database, String collection);
+        boolean hasTextIndex(Dtbs database, String collection);
 
         /**
          * Create the text index of a searchable entity.

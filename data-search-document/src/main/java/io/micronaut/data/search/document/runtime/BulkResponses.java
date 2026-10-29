@@ -37,7 +37,8 @@ public final class BulkResponses {
     }
 
     /**
-     * Collects the ids of the indexed documents, failing on the first item the store rejected.
+     * Collects the ids of the indexed documents, failing when the store rejected any item. A bulk
+     * request is not atomic: the error names every rejected item and how many others were written.
      *
      * @param store The store name, for the error message
      * @param items The response items, in request order
@@ -46,19 +47,27 @@ public final class BulkResponses {
      * @param status Reads an item's HTTP status; a 409 is a version conflict
      * @param <I> The item type of the client library
      * @return The ids, in request order
-     * @throws OptimisticLockException When an item's version did not match
+     * @throws OptimisticLockException When an item conflicted with the stored document
      */
     public static <I> List<String> ids(String store, List<I> items, Function<I, @Nullable String> error, Function<I, String> id, ToIntFunction<I> status) {
         List<String> ids = new ArrayList<>(items.size());
-        for (I item : items) {
+        List<String> failures = new ArrayList<>();
+        boolean conflict = false;
+        for (int i = 0; i < items.size(); i++) {
+            I item = items.get(i);
             String reason = error.apply(item);
             if (reason != null) {
                 if (status.applyAsInt(item) == 409) {
-                    throw new OptimisticLockException("Document " + id.apply(item) + " was modified concurrently: " + reason);
+                    conflict = true;
                 }
-                throw new DataAccessException(store + " bulk item failed: " + reason);
+                failures.add("item " + i + " (id " + id.apply(item) + "): " + reason);
             }
             ids.add(id.apply(item));
+        }
+        if (!failures.isEmpty()) {
+            String message = store + " bulk request rejected " + failures.size() + " of " + items.size()
+                + " documents, the other " + (items.size() - failures.size()) + " were written: " + String.join("; ", failures);
+            throw conflict ? new OptimisticLockException(message) : new DataAccessException(message);
         }
         return ids;
     }

@@ -108,7 +108,7 @@ class StubTransportReactiveSpec extends Specification {
         results.results()*.entity()*.title == ["Cooking with Coffee"]
         // the text query and the nearest-neighbour query both ran; the latter carries the knn clause with the bound vector
         transport.bodies.size() == 2
-        transport.bodies.any { it.contains('"knn":{"field":"embedding","query_vector":[1.0,0.0,0.0],"k":100,"num_candidates":1000}') }
+        transport.bodies.any { it.contains('"knn":{"field":"embedding","query_vector":[1.0,0.0,0.0],"k":100,"num_candidates":1000,"filter":{"exists":{"field":"embedding"}}}') }
 
         cleanup:
         articles.deleteAll()
@@ -185,6 +185,30 @@ class StubTransportReactiveSpec extends Specification {
 
         then:
         repository.count().block() == 0L
+    }
+
+    void "a reactive write runs on subscription only, and again on each retry"() {
+        given:
+        def transport = context.getBean(StubSearchTransport)
+        def before = transport.calls.size()
+
+        when:
+        def save = repository.save(new Book("Unsubscribed", "Never sent", "Nobody", 1))
+
+        then:
+        transport.calls.size() == before
+
+        when:
+        def saved = save.block()
+
+        then:
+        transport.calls.size() == before + 1
+        transport.calls.last() == "async:create"
+
+        cleanup:
+        if (saved != null) {
+            repository.delete(saved).block()
+        }
     }
 
     void "reactive CRUD and search run through the async transport"() {
@@ -395,6 +419,11 @@ class StubTransportReactiveSpec extends Specification {
         @Override
         CompletionStage<List<String>> bulkIndex(String index, List<SearchTransport.BulkDocument> documents, DocumentSearchConfiguration.Refresh refresh) {
             return done("bulkIndex", documents.collect { store.put(index, it.id(), it.source(), it.version()) })
+        }
+
+        @Override
+        CompletionStage<String> create(String index, @Nullable String id, Map<String, Object> source, DocumentSearchConfiguration.Refresh refresh) {
+            return done("create", store.put(index, id, source))
         }
 
         @Override

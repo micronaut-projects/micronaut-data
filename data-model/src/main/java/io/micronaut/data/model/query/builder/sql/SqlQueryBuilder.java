@@ -1055,9 +1055,9 @@ public class SqlQueryBuilder extends AbstractSqlLikeQueryBuilder {
         for (PersistentProperty field : fields) {
             columns.add(searchColumn(field, table.name(), namingStrategy, escape));
         }
-        String language = entity.getAnnotationMetadata().stringValue(Searchable.class, Searchable.MEMBER_LANGUAGE)
+        String language = TextSearchDialect.requireLanguageName(entity.getAnnotationMetadata().stringValue(Searchable.class, Searchable.MEMBER_LANGUAGE)
             .filter(StringUtils::isNotEmpty)
-            .orElse(TextSearchDialect.DEFAULT_LANGUAGE);
+            .orElse(TextSearchDialect.DEFAULT_LANGUAGE));
         String indexName = entity.getAnnotationMetadata().stringValue(Searchable.class, "name")
             .filter(StringUtils::isNotEmpty)
             .orElseGet(() -> "idx_" + prepareNames(table.name()) + "_search");
@@ -1074,7 +1074,8 @@ public class SqlQueryBuilder extends AbstractSqlLikeQueryBuilder {
         String column = namingStrategy.mappedName(Collections.emptyList(), field);
         String trigramIndex = null;
         if (field.getAnnotationMetadata().booleanValue(SearchField.class, SearchField.MEMBER_FUZZY).orElse(false)) {
-            String name = "idx_" + prepareNames(tableName) + "_" + prepareNames(column) + "_trgm";
+            // kept within PostgreSQL's 63 bytes with a hash suffix, so long names do not collide after truncation
+            String name = normalizeAlias("idx_" + prepareNames(tableName) + "_" + prepareNames(column) + "_trgm");
             trigramIndex = escape ? quote(name) : name;
         }
         return new TextSearchDialect.SearchColumn(
