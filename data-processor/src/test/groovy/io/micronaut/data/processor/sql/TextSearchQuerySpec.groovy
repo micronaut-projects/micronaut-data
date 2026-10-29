@@ -262,6 +262,19 @@ interface PlainRepository extends CrudRepository<Plain, Long>, SearchRepository<
         converters(repository.getRequiredMethod("searchByTitleSearchPrefix", String)) == [OracleTextQueryConverter.Prefix.name]
     }
 
+    void "Oracle gives each text match in a statement its own CONTAINS labels"() {
+        given:
+        def repository = articleRepository("""
+    List<Article> findByTitleSearchAndBodySearch(String title, String body);
+    SearchResults<Article> searchByTitleSearchAndAuthor(String title, String author);
+""", "ORACLE")
+
+        expect:
+        getQuery(repository.getRequiredMethod("findByTitleSearchAndBodySearch", String, String)).contains('(CONTAINS(article_."TITLE",?,1) > 0 AND CONTAINS(article_."BODY",?,2) > 0)')
+        getQuery(repository.getRequiredMethod("searchByTitleSearchAndAuthor", String, String)).contains('SCORE(1) AS mn_score')
+        getQuery(repository.getRequiredMethod("searchByTitleSearchAndAuthor", String, String)).contains('CONTAINS(article_."TITLE",?,1) > 0')
+    }
+
     void "Oracle searches several fields with positive and negated term sets"() {
         given:
         def repository = articleRepository("", "ORACLE")
@@ -292,20 +305,29 @@ class Doc {
     private Long id;
     @SearchField
     private String title;
+    @SearchField
+    @com.fasterxml.jackson.annotation.JsonProperty("summary")
+    private String body;
     public Long getId() { return id; }
     public void setId(Long id) { this.id = id; }
     public String getTitle() { return title; }
     public void setTitle(String title) { this.title = title; }
+    public String getBody() { return body; }
+    public void setBody(String body) { this.body = body; }
 }
 
 @JdbcRepository(dialect = Dialect.ORACLE)
 interface DocRepository extends CrudRepository<Doc, Long> {
     SearchResults<Doc> searchByTitleSearch(String q);
+    SearchResults<Doc> searchByBodySearch(String q);
 }
 """)
 
         expect:
         getQuery(repository.getRequiredMethod("searchByTitleSearch", String)).contains('WHERE (JSON_TEXTCONTAINS(doc_.DATA,\'$.title\',?,1))')
         getQuery(repository.getRequiredMethod("searchByTitleSearch", String)).contains("SCORE(1) AS mn_score")
+
+        and: "a renamed property is searched under its serialized key"
+        getQuery(repository.getRequiredMethod("searchByBodySearch", String)).contains('JSON_TEXTCONTAINS(doc_.DATA,\'$.summary\',?,1)')
     }
 }
