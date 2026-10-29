@@ -85,7 +85,8 @@ public interface SchemaContributor extends Ordered {
 
     /**
      * Builds the statements that drop the contributed objects with {@code CREATE_DROP}, run before the tables of the
-     * schema generator are dropped. Failures are ignored, as the objects may not exist yet.
+     * schema generator are dropped. The statements should succeed when the objects do not exist yet, for example with
+     * {@code IF EXISTS}, as a failure is logged as a warning and the generation carries on.
      *
      * @param context  The schema generation of the data source
      * @param entities The entities this contributor selected
