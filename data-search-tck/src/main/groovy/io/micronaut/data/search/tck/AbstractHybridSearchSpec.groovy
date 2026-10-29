@@ -121,6 +121,15 @@ abstract class AbstractHybridSearchSpec extends Specification {
         thrown(IllegalArgumentException)
     }
 
+    void "a hybrid page must end within the candidate limit"() {
+        when:
+        articleRepository.search(SearchQuery.builder("bread").vector("embedding", COFFEE_LIKE).build(), Pageable.from(500, 100))
+
+        then:
+        def e = thrown(IllegalArgumentException)
+        e.message.contains("first " + SearchQuery.MAX_CANDIDATES + " fused hits")
+    }
+
     void "candidates and the minimum score limit the fused ranking"() {
         expect:
         // only the best vector hit joins the text hit
