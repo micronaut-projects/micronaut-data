@@ -51,7 +51,7 @@ public final class SearchQuery {
         this.query = builder.query;
         this.fields = Collections.unmodifiableSet(new LinkedHashSet<>(builder.fields));
         this.mode = builder.mode;
-        this.fuzziness = builder.fuzziness;
+        this.fuzziness = builder.mode == MatchMode.FUZZY ? builder.fuzziness : 0;
         this.boosts = Collections.unmodifiableMap(new LinkedHashMap<>(builder.boosts));
         this.highlightFields = Collections.unmodifiableSet(new LinkedHashSet<>(builder.highlightFields));
         this.minScore = builder.minScore;
@@ -211,10 +211,14 @@ public final class SearchQuery {
         /**
          * Requests fuzzy matching with the given maximum edit distance.
          *
-         * @param maxEdits The maximum edit distance, {@code 0} for the backend default
+         * @param maxEdits The maximum edit distance from {@code 0} to {@code 2}, {@code 0} for the backend default
          * @return This builder
+         * @throws IllegalArgumentException When the edit distance is outside that range
          */
         public Builder fuzzy(int maxEdits) {
+            if (maxEdits < 0 || maxEdits > 2) {
+                throw new IllegalArgumentException("The fuzzy edit distance must be between 0 and 2: " + maxEdits);
+            }
             this.mode = MatchMode.FUZZY;
             this.fuzziness = maxEdits;
             return this;

@@ -106,11 +106,26 @@ public interface TextSearchDialect {
                 PersistentEntity owner = property.getOwner();
                 String language = owner.getAnnotationMetadata().stringValue(Searchable.class, Searchable.MEMBER_LANGUAGE).orElse(null);
                 if (language != null && !language.isEmpty()) {
-                    return language;
+                    return requireLanguageName(language);
                 }
             }
         }
         return DEFAULT_LANGUAGE;
+    }
+
+    /**
+     * Checks that a language is a plain text search configuration name, as it is rendered inside the
+     * statement rather than bound: a letter followed by letters, digits and underscores.
+     *
+     * @param language The language
+     * @return The language
+     * @throws IllegalArgumentException When the language holds any other character
+     */
+    static String requireLanguageName(String language) {
+        if (!language.matches("[A-Za-z][A-Za-z0-9_]*")) {
+            throw new IllegalArgumentException("A search language must be a text search configuration name of letters, digits and underscores: " + language);
+        }
+        return language;
     }
 
     /**

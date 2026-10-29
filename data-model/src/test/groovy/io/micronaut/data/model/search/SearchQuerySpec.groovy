@@ -35,6 +35,28 @@ class SearchQuerySpec extends Specification {
         SearchQuery.of("coffee").fields.empty
     }
 
+    void "a fuzzy edit distance outside 0 to 2 is rejected"() {
+        when:
+        SearchQuery.builder("coffe").fuzzy(maxEdits)
+
+        then:
+        thrown(IllegalArgumentException)
+
+        where:
+        maxEdits << [-1, 3]
+    }
+
+    void "fuzziness is dropped when another mode replaces fuzzy"() {
+        when:
+        def query = SearchQuery.builder("coffee").fuzzy(2).mode(MatchMode.ANY).build()
+
+        then:
+        query.mode == MatchMode.ANY
+        query.fuzziness == 0
+        query == SearchQuery.of("coffee")
+        query.hashCode() == SearchQuery.of("coffee").hashCode()
+    }
+
     void "queries are value objects"() {
         expect:
         SearchQuery.builder("a").fields("x").build() == SearchQuery.builder("a").fields("x").build()
