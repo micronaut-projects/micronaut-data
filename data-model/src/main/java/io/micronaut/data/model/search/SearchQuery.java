@@ -345,7 +345,9 @@ public final class SearchQuery {
         }
 
         /**
-         * @param minScore The minimum relevance score
+         * @param minScore The minimum relevance score. On a hybrid search it applies to the fused score,
+         * the sum of {@code weight / (rankConstant + rank)} over both rankings, which is at most
+         * {@code (textWeight + vectorWeight) / (rankConstant + 1)}: about {@code 0.033} with the defaults
          * @return This builder
          */
         public Builder minScore(double minScore) {
@@ -379,19 +381,28 @@ public final class SearchQuery {
         /**
          * @param textWeight The weight of the text rank in the hybrid score, {@code 1} by default
          * @return This builder
+         * @throws IllegalArgumentException When the weight is negative or not finite
          */
         public Builder textWeight(double textWeight) {
-            this.textWeight = textWeight;
+            this.textWeight = requireWeight("textWeight", textWeight);
             return this;
         }
 
         /**
          * @param vectorWeight The weight of the vector rank in the hybrid score, {@code 1} by default
          * @return This builder
+         * @throws IllegalArgumentException When the weight is negative or not finite
          */
         public Builder vectorWeight(double vectorWeight) {
-            this.vectorWeight = vectorWeight;
+            this.vectorWeight = requireWeight("vectorWeight", vectorWeight);
             return this;
+        }
+
+        private static double requireWeight(String name, double weight) {
+            if (!Double.isFinite(weight) || weight < 0) {
+                throw new IllegalArgumentException(name + " must be a finite number of at least 0, got " + weight);
+            }
+            return weight;
         }
 
         /**
