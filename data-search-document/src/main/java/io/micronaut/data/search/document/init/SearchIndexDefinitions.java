@@ -110,7 +110,7 @@ public final class SearchIndexDefinitions {
         }
         entity.getAnnotationMetadata().stringValue(SearchIndexSettings.class)
             .filter(json -> !json.isBlank())
-            .ifPresent(json -> settings.putAll(readJson(json, "@SearchIndexSettings of " + entity.getName())));
+            .ifPresent(json -> deepMerge(settings, readJson(json, "@SearchIndexSettings of " + entity.getName())));
         if (!settings.isEmpty()) {
             body.put("settings", settings);
         }
@@ -128,6 +128,23 @@ public final class SearchIndexDefinitions {
             .filter(json -> !json.isBlank())
             .map(json -> readJson(json, "@SearchMapping of " + property.getName()))
             .orElse(null);
+    }
+
+    /**
+     * Merges the declared settings into the store's defaults: nested objects are merged key by key, so
+     * declaring {@code "index": {...}} keeps the defaults under {@code index} it does not name.
+     */
+    @SuppressWarnings("unchecked")
+    private static void deepMerge(Map<String, Object> target, Map<String, Object> source) {
+        for (Map.Entry<String, Object> entry : source.entrySet()) {
+            if (entry.getValue() instanceof Map<?, ?> nested && target.get(entry.getKey()) instanceof Map<?, ?> existing) {
+                Map<String, Object> merged = new LinkedHashMap<>((Map<String, Object>) existing);
+                deepMerge(merged, (Map<String, Object>) nested);
+                target.put(entry.getKey(), merged);
+            } else {
+                target.put(entry.getKey(), entry.getValue());
+            }
+        }
     }
 
     private static Map<String, Object> readJson(String json, String what) {
