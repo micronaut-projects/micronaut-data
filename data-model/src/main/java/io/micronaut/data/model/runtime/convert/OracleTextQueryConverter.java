@@ -43,9 +43,10 @@ import java.util.StringJoiner;
 public abstract class OracleTextQueryConverter implements TextSearchQueryConverter {
 
     /**
-     * A {@code CONTAINS} query that matches nothing, bound for an empty search string.
+     * A {@code CONTAINS} query that matches nothing, bound for an empty search string: a term and its
+     * negation, false for every row whatever it contains.
      */
-    public static final String MATCH_NOTHING = "{mn_no_match_0}";
+    public static final String MATCH_NOTHING = "{mn_no_match_0} ~ {mn_no_match_0}";
 
     /**
      * The shortest term {@code SearchPrefix} expands with {@code %}; a shorter one is matched exactly, as a

@@ -32,6 +32,7 @@ import org.opensearch.client.opensearch._types.FieldValue;
 import org.opensearch.client.opensearch._types.OpenSearchException;
 import org.opensearch.client.opensearch._types.Refresh;
 import org.opensearch.client.opensearch._types.VersionType;
+import org.opensearch.client.opensearch.core.DeleteRequest;
 import org.opensearch.client.opensearch.core.IndexRequest;
 import org.opensearch.client.opensearch._types.SortOptions;
 import org.opensearch.client.opensearch._types.query_dsl.Query;
@@ -149,6 +150,18 @@ final class OpenSearchRequests {
     /**
      * Maps a version conflict (HTTP 409) to {@link OptimisticLockException}; other failures pass through.
      */
+    /**
+     * A delete checked against the version the entity was read at: {@code external_gte} accepts that
+     * version and rejects the delete when the stored document is newer.
+     */
+    static DeleteRequest.Builder deleteRequest(DeleteRequest.Builder builder, String index, String id, @Nullable Long version, DocumentSearchConfiguration.Refresh refresh) {
+        builder.index(index).id(id).refresh(refresh(refresh));
+        if (version != null) {
+            builder.version(version).versionType(VersionType.ExternalGte);
+        }
+        return builder;
+    }
+
     static RuntimeException conflictOrFailure(Throwable error, @Nullable String id) {
         Throwable cause = error instanceof CompletionException && error.getCause() != null ? error.getCause() : error;
         if (cause instanceof OpenSearchException openSearchException && openSearchException.status() == 409) {
@@ -174,13 +187,14 @@ final class OpenSearchRequests {
     static BulkRequest bulkRequest(String index, List<SearchTransport.BulkDocument> documents, DocumentSearchConfiguration.Refresh refresh) {
         List<BulkOperation> operations = new ArrayList<>(documents.size());
         for (SearchTransport.BulkDocument document : documents) {
-            operations.add(BulkOperation.of(op -> op.index(i -> {
-                i.id(document.id()).document(document.source());
-                if (document.version() != null) {
-                    i.version(document.version()).versionType(VersionType.External);
-                }
-                return i;
-            })));
+            Long version = document.version();
+            if (version == null) {
+                // a new document without a version is a create-only write
+                operations.add(BulkOperation.of(op -> op.create(c -> c.id(document.id()).document(document.source()))));
+            } else {
+                operations.add(BulkOperation.of(op -> op.index(i -> i.id(document.id()).document(document.source())
+                    .version(version).versionType(VersionType.External))));
+            }
         }
         return BulkRequest.of(b -> b.index(index).operations(operations).refresh(refresh(refresh)));
     }
@@ -253,13 +267,13 @@ final class OpenSearchRequests {
 
     /**
      * @param dimensions The vector dimension
-     * @return The {@code knn_vector} mapping with the Lucene HNSW engine and cosine similarity, or {@code null}
-     * without a dimension, which OpenSearch requires
+     * @return The {@code knn_vector} mapping with the Lucene HNSW engine and cosine similarity
+     * @throws IllegalStateException Without a dimension, which OpenSearch requires, so the index creation fails
+     * rather than the first vector query
      */
-    @Nullable
     static Map<String, Object> knnVectorMapping(int dimensions) {
         if (dimensions <= 0) {
-            return null;
+            throw new IllegalStateException("An OpenSearch knn_vector field needs a dimension: declare it with @Column(length = n) on the Vector property");
         }
         Map<String, Object> mapping = new LinkedHashMap<>();
         mapping.put("type", "knn_vector");
@@ -269,11 +283,9 @@ final class OpenSearchRequests {
     }
 
     /**
-     * Rewrites the Elasticsearch-shaped {@code knn} clauses the query builder renders into the OpenSearch
-     * {@code knn} query: {@code {"knn": {"<field>": {"vector": [...], "k": n, "max_distance": d}}}}.
+     * The OpenSearch form of an Elasticsearch knn clause: the vector with k, or a radial search by distance,
+     * and the filter the nearest neighbours are searched among.
      */
-    @SuppressWarnings("unchecked")
-    /** The OpenSearch form of an Elasticsearch knn clause: the vector with k, or a radial search by distance. */
     private static Map<String, Object> knnClause(Map<?, ?> knn) {
         Map<String, Object> clause = new LinkedHashMap<>();
         clause.put("vector", knn.get("query_vector"));
@@ -283,9 +295,19 @@ final class OpenSearchRequests {
         } else {
             clause.put("k", knn.get("k"));
         }
+        if (knn.get("filter") != null) {
+            clause.put("filter", translateKnn(knn.get("filter")));
+        }
         return clause;
     }
 
+    /**
+     * Rewrites the Elasticsearch-shaped {@code knn} clauses the query builder renders into the OpenSearch
+     * {@code knn} query: {@code {"knn": {"<field>": {"vector": [...], "k": n, "max_distance": d}}}}.
+     *
+     * @param node A query node
+     * @return The node with its knn clauses rewritten
+     */
     static Object translateKnn(Object node) {
         if (node instanceof Map<?, ?> map) {
             Map<String, Object> copy = new LinkedHashMap<>();
