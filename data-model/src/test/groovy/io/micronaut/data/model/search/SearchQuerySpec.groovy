@@ -74,6 +74,17 @@ class SearchQuerySpec extends Specification {
         value << [0, SearchQuery.MAX_CANDIDATES + 1]
     }
 
+    void "a boost must be a finite number above 0"() {
+        when:
+        SearchQuery.builder("a").boost("title", boost)
+
+        then:
+        thrown(IllegalArgumentException)
+
+        where:
+        boost << [0d, -1d, Double.NaN, Double.POSITIVE_INFINITY]
+    }
+
     void "hybrid weights must be finite and not negative"() {
         when:
         SearchQuery.builder("a").textWeight(weight)

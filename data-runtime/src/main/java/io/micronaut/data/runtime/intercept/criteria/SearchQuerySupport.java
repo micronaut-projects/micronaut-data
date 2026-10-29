@@ -99,6 +99,10 @@ public final class SearchQuerySupport {
         PersistentEntityRoot<Object> root = criteriaQuery.from(rootEntity);
         List<Expression<?>> fields = resolveFields(root, searchQuery);
         ParameterExpression<String> queryParameter = cb.parameter(String.class, null, searchQuery.getQuery());
+        for (String boosted : searchQuery.getBoosts().keySet()) {
+            // a boost of a property that is not searched would otherwise be ignored silently
+            requireSearchField(root, boosted);
+        }
         TextMatchOptions options = new TextMatchOptions(searchQuery.getBoosts(), searchQuery.getFuzziness());
         Expression<Double> score = cb.searchScore(fields, queryParameter, searchQuery.getMode(), options);
         Predicate match = cb.textMatch(fields, queryParameter, searchQuery.getMode(), options);
