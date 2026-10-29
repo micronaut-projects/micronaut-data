@@ -15,7 +15,6 @@
  */
 package io.micronaut.data.search.elasticsearch.memory;
 
-import com.fasterxml.jackson.annotation.JsonProperty;
 import io.micronaut.data.annotation.Id;
 import io.micronaut.data.annotation.MappedEntity;
 import io.micronaut.data.annotation.search.SearchField;
@@ -32,7 +31,7 @@ import java.util.UUID;
  * @param id The id
  * @param cuisine The cuisine, matched exactly
  * @param name The name, completed as typed
- * @param steps The steps, analyzed by whitespace and stored as {@code instructions}
+ * @param steps The steps, analyzed by whitespace
  * @param reference A reference, mapped as a keyword
  */
 @MappedEntity("recipes")
@@ -42,6 +41,6 @@ public record Recipe(
     @Id @Nullable String id,
     @SearchField(type = SearchFieldType.KEYWORD) String cuisine,
     @SearchField(type = SearchFieldType.AUTOCOMPLETE) String name,
-    @SearchField(analyzer = "whitespace") @JsonProperty("instructions") String steps,
+    @SearchField(analyzer = "whitespace") String steps,
     @Nullable UUID reference) {
 }
