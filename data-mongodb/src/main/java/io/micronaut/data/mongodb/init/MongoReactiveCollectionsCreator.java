@@ -84,12 +84,10 @@ public final class MongoReactiveCollectionsCreator extends AbstractMongoCollecti
                 }
 
                 @Override
-                public Set<String> listIndexNames(MongoDatabase database, String collection) {
-                    Set<String> names = Flux.from(database.getCollection(collection).listIndexes())
-                        .map(index -> index.getString("name"))
-                        .collect(Collectors.toSet())
-                        .block();
-                    return names == null ? Set.of() : names;
+                public boolean hasTextIndex(MongoDatabase database, String collection) {
+                    return Boolean.TRUE.equals(Flux.from(database.getCollection(collection).listIndexes())
+                        .any(AbstractMongoCollectionsCreator::isTextIndex)
+                        .block());
                 }
 
                 @Override

@@ -371,6 +371,33 @@ class FakeClientTransportSpec extends Specification {
         "async" | asyncAsBlocking
     }
 
+    void "a versioned delete accepts the version read and rejects a newer document (#name)"() {
+        given:
+        fake.respond("es/delete") { DeleteRequest request -> writeResponse(request.id(), "deleted", 4) }
+
+        expect:
+        transport.delete(INDEX, "k1", 3L, NONE)
+        with(fake.request(0) as DeleteRequest) {
+            id() == "k1"
+            version() == 3L
+            versionType() == VersionType.ExternalGte
+        }
+
+        when:
+        def conflict = FakeElasticsearchTransport.error("es/delete", 409, "version_conflict_engine_exception", "current version [5] is higher")
+        fake.fail("es/delete", conflict)
+        transport.delete(INDEX, "k1", 3L, NONE)
+
+        then:
+        OptimisticLockException e = thrown()
+        e.message == "Document k1 was modified concurrently: current version [5] is higher"
+
+        where:
+        name    | transport
+        "sync"  | sync
+        "async" | asyncAsBlocking
+    }
+
     void "deleteByQuery returns the deleted count and refreshes unless the policy is NONE (#name, #policy)"() {
         given:
         fake.respond("es/delete_by_query", '{"took":5,"timed_out":false,"total":3,"deleted":3,"batches":1,"version_conflicts":0,"noops":0,"retries":{"bulk":0,"search":0},"throttled_millis":0,"requests_per_second":-1.0,"throttled_until_millis":0,"failures":[]}')
@@ -412,7 +439,7 @@ class FakeClientTransportSpec extends Specification {
 
     // --- bulk -----------------------------------------------------------------------------------
 
-    void "bulkIndex sends one index operation per document and returns the ids in order (#name)"() {
+    void "bulkIndex sends a versioned index or a create operation per document and returns the ids in order (#name)"() {
         given:
         fake.respond("es/bulk", """{"took":4,"errors":false,"items":[
             ${bulkItem("k1", 201, "created")},
@@ -434,24 +461,23 @@ class FakeClientTransportSpec extends Specification {
             index() == INDEX
             refresh() == Refresh.WaitFor
             operations().size() == 3
-            operations().every { it.isIndex() }
+            operations()[0].isIndex()
             with(operations()[0].index()) {
                 id() == "k1"
                 document() == [title: "One"]
                 version() == 1L
                 versionType() == VersionType.External
             }
-            with(operations()[1].index()) {
+            // a document without a version is a create-only write
+            operations()[1].isCreate()
+            with(operations()[1].create()) {
                 id() == null
                 document() == [title: "Two"]
-                version() == null
-                versionType() == null
             }
-            with(operations()[2].index()) {
+            operations()[2].isCreate()
+            with(operations()[2].create()) {
                 id() == "k3"
                 document() == [title: "Three"]
-                version() == null
-                versionType() == null
             }
         }
 
@@ -474,7 +500,7 @@ class FakeClientTransportSpec extends Specification {
         then:
         DataAccessException e = thrown()
         !(e instanceof OptimisticLockException)
-        e.message == "Elasticsearch bulk item failed: failed to parse field [pages]"
+        e.message == "Elasticsearch bulk request rejected 1 of 2 documents, the other 1 were written: item 1 (id k2): failed to parse field [pages]"
 
         where:
         name    | transport
@@ -494,7 +520,7 @@ class FakeClientTransportSpec extends Specification {
 
         then:
         OptimisticLockException e = thrown()
-        e.message == "Document k1 was modified concurrently: current version [5] is higher"
+        e.message == "Elasticsearch bulk request rejected 1 of 2 documents, the other 1 were written: item 0 (id k1): current version [5] is higher"
 
         where:
         name    | transport
@@ -603,7 +629,7 @@ class FakeClientTransportSpec extends Specification {
 
     // --- shared helpers -------------------------------------------------------------------------
 
-    void "BulkResponses.ids collects the ids and fails on the first rejected item"() {
+    void "BulkResponses.ids collects the ids and names every rejected item"() {
         given:
         def ok = [[id: "a", error: null, status: 201], [id: "b", error: null, status: 200]]
         def rejected = [[id: "a", error: null, status: 201], [id: "b", error: "bad document", status: 400], [id: "c", error: null, status: 201]]
@@ -619,14 +645,14 @@ class FakeClientTransportSpec extends Specification {
         then:
         DataAccessException e = thrown()
         !(e instanceof OptimisticLockException)
-        e.message == "Store bulk item failed: bad document"
+        e.message == "Store bulk request rejected 1 of 3 documents, the other 2 were written: item 1 (id b): bad document"
 
         when:
         ids(conflicting)
 
         then:
         OptimisticLockException conflict = thrown()
-        conflict.message == "Document a was modified concurrently: stale"
+        conflict.message == "Store bulk request rejected 1 of 1 documents, the other 0 were written: item 0 (id a): stale"
     }
 
     void "conflictOrFailure unwraps a CompletionException and keeps the cause"() {
@@ -749,6 +775,16 @@ class FakeClientTransportSpec extends Specification {
         @Override
         boolean delete(String index, String id, DocumentSearchConfiguration.Refresh refresh) {
             return await(delegate.delete(index, id, refresh))
+        }
+
+        @Override
+        boolean delete(String index, String id, @Nullable Long version, DocumentSearchConfiguration.Refresh refresh) {
+            return await(delegate.delete(index, id, version, refresh))
+        }
+
+        @Override
+        String create(String index, @Nullable String id, Map<String, Object> source, DocumentSearchConfiguration.Refresh refresh) {
+            return await(delegate.create(index, id, source, refresh))
         }
 
         @Override

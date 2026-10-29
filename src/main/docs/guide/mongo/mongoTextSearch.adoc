@@ -28,7 +28,9 @@ snippet::example.BookRepository[project-base="doc-examples/mongo-search-example"
 
 snippet::example.BookService[project-base="doc-examples/mongo-search-example", source="main", tags="search"]
 
-The search string is translated to MongoDB's `$search` syntax at bind time: any term matches by default, quoted phrases are required, `-` excludes a term, and `OR` groups are flattened because MongoDB already matches any term. `SearchAll` quotes every term, which makes MongoDB require all of them; it cannot be combined with `OR`.
+The search string is translated to MongoDB's `$search` syntax at bind time: any term matches by default, quoted phrases are required, `-` excludes a term, and `OR` groups are flattened because MongoDB already matches any term. `SearchAll` quotes every term, which makes MongoDB require all of them; it cannot be combined with `OR`, and a search string that does so fails with an `UnsupportedOperationException` that the application can turn into a client error. Because MongoDB requires every quoted phrase, a phrase in an any-term search is required too: `coffee "french press"` matches only documents containing the phrase.
+
+The query sets `$language` to the entity's language, which is also the text index's `default_language`, so a document with its own language in the `language_override` field is still indexed with that language; only the search string is stemmed with the entity's.
 
 A api:data.model.search.SearchQuery[] passed to `search(SearchQuery)` runs the same `$text` aggregation at runtime, as described in the <<sqlTextSearch, SQL full-text search section>>; its `fields` are ignored because `$text` always searches the whole index, and the `PREFIX` and `FUZZY` modes fail when the method runs.
 
@@ -66,8 +68,8 @@ The search string grammar is rendered into `compound` operators at bind time: ev
 |Highlighting and minimum score |not supported |supported
 |Query-time boosts (`SearchQuery.boost`) |not supported |not supported, the index weights boost the fields
 |Per-document language (`@Language`) |`language_override` |not supported, the analyzer is fixed per index
-|Search with joins |`$text` must be the first stage, so joined queries fail at runtime |`$search` must be the first stage, so joined queries are rejected at compile time
-|Search predicate inside `OR` |supported |rejected at compile time
+|Search with joins |the `$text` match is moved ahead of the join lookups, as MongoDB requires it in the first stage |`$search` must be the first stage, so joined queries are rejected at compile time
+|Search predicate inside `OR` |rejected at compile time, as is `NOT`: MongoDB only allows `$text` as a top-level condition |rejected at compile time
 |Cursored paging |not supported |not supported
 |===
 

@@ -152,6 +152,7 @@ public final class MongoQueryBuilder implements QueryBuilder {
     private static final String SEARCH_STAGE = "$search";
     private static final String DEFAULT_SEARCH_INDEX = "default";
     private static final String ADD_FIELDS = "$addFields";
+    private static final String TEXT = "$text";
     private static final String NULL_RANK_FIELD_PREFIX = "__micronaut_nulls_";
     private static final String SORT_EXPRESSION_FIELD_PREFIX = "__micronaut_sort_";
     private static final String STR_LEN_CP = "$strLenCP";
@@ -187,6 +188,13 @@ public final class MongoQueryBuilder implements QueryBuilder {
             predicateObj = buildWhereClause(predicate, queryState);
         }
 
+        if (!pipeline.isEmpty()) {
+            // MongoDB only accepts $text in the first stage, so it moves ahead of the join lookups
+            Object text = removeTextMatch(predicateObj);
+            if (text != null) {
+                pipeline.add(0, Map.of("$match", Map.of(TEXT, text)));
+            }
+        }
         appendSearchStages(queryState, pipeline);
         if (!predicateObj.isEmpty()) {
             pipeline.add(Map.of("$match", predicateObj));
@@ -703,6 +711,37 @@ public final class MongoQueryBuilder implements QueryBuilder {
         return Map.of("$unwind", unwind);
     }
 
+    /**
+     * Removes the {@code $text} condition from a filter, where the predicate visitor allows it: at the top
+     * level or as one operand of the top-level {@code $and}.
+     *
+     * @param predicateObj The filter
+     * @return The {@code $text} value, or {@code null} when the filter has none
+     */
+    @Nullable
+    private static Object removeTextMatch(Map<String, Object> predicateObj) {
+        Object text = predicateObj.remove(TEXT);
+        if (text != null) {
+            return text;
+        }
+        if (predicateObj.get("$and") instanceof List<?> operands) {
+            for (Object operand : operands) {
+                if (operand instanceof Map<?, ?> map && map.size() == 1 && map.containsKey(TEXT)) {
+                    List<Object> remaining = new ArrayList<>(operands);
+                    remaining.remove(operand);
+                    if (remaining.size() == 1 && remaining.get(0) instanceof Map<?, ?> single) {
+                        predicateObj.remove("$and");
+                        single.forEach((k, v) -> predicateObj.put(k.toString(), v));
+                    } else {
+                        predicateObj.put("$and", remaining);
+                    }
+                    return map.get(TEXT);
+                }
+            }
+        }
+        return null;
+    }
+
     private boolean isMatchOnlyStage(List<Map<String, Object>> pipeline) {
         return pipeline.size() == 1 && pipeline.iterator().next().containsKey("$match");
     }
@@ -1212,6 +1251,8 @@ public final class MongoQueryBuilder implements QueryBuilder {
         private final QueryState queryState;
         private Map<String, Object> query;
         private boolean inDisjunction;
+        // the number of OR and NOT predicates around the one being visited, where $text is not allowed
+        private int textForbiddenDepth;
 
         public MongoPredicateVisitor(QueryState queryState, Map<String, Object> query) {
             this.queryState = queryState;
@@ -1356,8 +1397,13 @@ public final class MongoQueryBuilder implements QueryBuilder {
             query.put("$or", ops);
             boolean wasInDisjunction = inDisjunction;
             inDisjunction = true;
-            visitDisjunctionPredicate(predicates, ops);
-            inDisjunction = wasInDisjunction;
+            textForbiddenDepth++;
+            try {
+                visitDisjunctionPredicate(predicates, ops);
+            } finally {
+                textForbiddenDepth--;
+                inDisjunction = wasInDisjunction;
+            }
         }
 
         private Object scalarValue(Expression<?> expression) {
@@ -1395,7 +1441,12 @@ public final class MongoQueryBuilder implements QueryBuilder {
                 visitInBetween(betweenPredicate.getValue(), betweenPredicate.getFrom(), betweenPredicate.getTo(), true);
                 return;
             }
-            visitPredicate(negate.getNegated());
+            textForbiddenDepth++;
+            try {
+                visitPredicate(negate.getNegated());
+            } finally {
+                textForbiddenDepth--;
+            }
             negate(query);
         }
 
@@ -1665,6 +1716,9 @@ public final class MongoQueryBuilder implements QueryBuilder {
             if (mode == MatchMode.FUZZY) {
                 throw new UnsupportedSearchFeatureException(SearchCapability.FUZZY, "MongoDB $text");
             }
+            if (textForbiddenDepth > 0) {
+                throw new UnsupportedOperationException("MongoDB $text cannot be combined with OR or negated: a full-text search must be a top-level condition, joined to the others with AND");
+            }
             if (!(queryExpression instanceof BindingParameter bindingParameter)) {
                 throw new IllegalStateException("A full-text search query must be a parameter, got: " + queryExpression);
             }
@@ -1679,7 +1733,7 @@ public final class MongoQueryBuilder implements QueryBuilder {
             Map<String, Object> text = new LinkedHashMap<>();
             text.put("$search", Map.of(QUERY_PARAMETER_PLACEHOLDER, index));
             text.put("$language", TextSearchSupport.resolveLanguage(persistentEntity));
-            query.put("$text", text);
+            query.put(TEXT, text);
         }
 
         /**
