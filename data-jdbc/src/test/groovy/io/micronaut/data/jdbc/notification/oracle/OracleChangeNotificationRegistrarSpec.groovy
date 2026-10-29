@@ -16,7 +16,7 @@
 package io.micronaut.data.jdbc.notification.oracle
 
 import io.micronaut.context.BeanContext
-import io.micronaut.data.jdbc.notification.ChangeNotificationExecutor
+import io.micronaut.data.jdbc.notification.ChangeNotificationQueue
 import io.micronaut.data.exceptions.DataAccessException
 import io.micronaut.data.jdbc.runtime.ConnectionCallback
 import io.micronaut.data.jdbc.runtime.JdbcOperations
@@ -160,7 +160,7 @@ class OracleChangeNotificationRegistrarSpec extends Specification {
         def definition = new OracleChangeListenerDefinition(null, method, null, 'SELECT * FROM BOOK', null, requested)
         def registrar = registrar(operations)
         def subscription = new OracleChangeNotificationSubscription('default', definition, registrar,
-                Mock(BeanContext), Mock(Executor), Mock(ChangeNotificationExecutor), Mock(TaskScheduler), new OracleChangeNotificationTaskTracker(),
+                Mock(BeanContext), Mock(Executor), Mock(ChangeNotificationQueue), Mock(TaskScheduler), new OracleChangeNotificationTaskTracker(),
                 new OracleRegistrationRecoveryConfiguration())
         connection.unwrap(OracleConnection) >> oracleConnection
         oracleConnection.properties >> connectionProperties
@@ -193,7 +193,7 @@ class OracleChangeNotificationRegistrarSpec extends Specification {
         def definition = new OracleChangeListenerDefinition(null, method, null, 'SELECT * FROM BOOK', null, requested)
         def registrar = registrar(operations)
         def subscription = new OracleChangeNotificationSubscription('default', definition, registrar,
-                Mock(BeanContext), Mock(Executor), Mock(ChangeNotificationExecutor), Mock(TaskScheduler), new OracleChangeNotificationTaskTracker(),
+                Mock(BeanContext), Mock(Executor), Mock(ChangeNotificationQueue), Mock(TaskScheduler), new OracleChangeNotificationTaskTracker(),
                 new OracleRegistrationRecoveryConfiguration())
         connection.unwrap(OracleConnection) >> oracleConnection
         oracleConnection.properties >> new Properties()

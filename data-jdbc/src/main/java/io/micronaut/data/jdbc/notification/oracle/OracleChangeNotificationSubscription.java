@@ -17,7 +17,7 @@ package io.micronaut.data.jdbc.notification.oracle;
 
 import io.micronaut.context.BeanContext;
 import io.micronaut.data.jdbc.notification.ChangeOperation;
-import io.micronaut.data.jdbc.notification.ChangeNotificationExecutor;
+import io.micronaut.data.jdbc.notification.ChangeNotificationQueue;
 import io.micronaut.scheduling.TaskScheduler;
 import oracle.jdbc.dcn.DatabaseChangeEvent;
 import oracle.jdbc.dcn.DatabaseChangeRegistration;
@@ -108,7 +108,7 @@ final class OracleChangeNotificationSubscription {
                                          OracleChangeNotificationRegistrar registrar,
                                          BeanContext beanContext,
                                          Executor blockingExecutor,
-                                         ChangeNotificationExecutor notificationExecutor,
+                                         ChangeNotificationQueue notificationQueue,
                                          TaskScheduler taskScheduler,
                                          OracleChangeNotificationTaskTracker taskTracker,
                                          OracleRegistrationRecoveryConfiguration recoveryConfiguration) {
@@ -124,9 +124,9 @@ final class OracleChangeNotificationSubscription {
         this.retryDelayMultiplier = recoveryConfiguration.getRetryDelayMultiplier();
         this.maxRetryDelay = recoveryConfiguration.getMaxRetryDelay();
         this.dispatcher = new OracleChangeNotificationDispatcher(
-            dataSourceName, definition, beanContext, notificationExecutor, taskScheduler, taskTracker,
+            dataSourceName, definition, beanContext, notificationQueue, taskScheduler, taskTracker,
             this::handleRegistrationPurged, this::handleRegistrationDeregistered,
-            this::handleQueryDeregistered, this::handleDatabaseShutdown, this::acceptsDataNotification);
+            this::handleQueryDeregistered, this::handleDatabaseShutdown, this::acceptsDataNotification, this::enqueueDataNotification);
     }
 
     OracleChangeListenerDefinition getDefinition() {
@@ -195,7 +195,21 @@ final class OracleChangeNotificationSubscription {
 
     private boolean acceptsDataNotification(long registrationId) {
         synchronized (lifecycleLock) {
-            return !isStopped() && (isCurrent(registrationId) || (isPending(registrationId) && pendingOutcome == PendingOutcome.READY));
+            return !isStopped()
+                && ((isCurrent(registrationId) && recoveryRegistrationId == null)
+                    || (isPending(registrationId) && pendingOutcome == PendingOutcome.READY));
+        }
+    }
+
+    /**
+     * Validates and enqueues atomically with registration transitions that discard queued data.
+     * The action only submits to the queue; listener execution takes place on its worker thread.
+     */
+    private void enqueueDataNotification(long registrationId, Runnable enqueue) {
+        synchronized (lifecycleLock) {
+            if (acceptsDataNotification(registrationId)) {
+                enqueue.run();
+            }
         }
     }
 
@@ -251,7 +265,11 @@ final class OracleChangeNotificationSubscription {
      */
     void handleRegistrationUnavailable(long registrationId, @Nullable Throwable failure) {
         synchronized (lifecycleLock) {
-            if (isStopped() || recordPendingOutcome(registrationId, PendingOutcome.RETRY)) {
+            if (isStopped()) {
+                return;
+            }
+            if (recordPendingOutcome(registrationId, PendingOutcome.RETRY)) {
+                dispatcher.discardPending();
                 return;
             }
             if (!isCurrent(registrationId) || recoveryRegistrationId != null) {
@@ -259,6 +277,7 @@ final class OracleChangeNotificationSubscription {
             }
             // Claim the recovery sequence before submission so duplicate callbacks cannot start another.
             recoveryRegistrationId = registrationId;
+            dispatcher.discardPending();
         }
         if (failure == null) {
             LOG.warn("DCN registration [{}] became unavailable for datasource [{}] and listener method [{}] after Oracle Database shutdown; attempting recovery",
@@ -321,10 +340,25 @@ final class OracleChangeNotificationSubscription {
 
             registration = currentRegistration;
             currentRegistration = null;
+            if (registration != null) {
+                orphanedRegistrations.add(registration);
+            }
         }
         submitTermination(registrationId);
         if (registration != null) {
-            unregister(registration, registrar::unregisterRegistration);
+            try {
+                blockingExecutor.execute(() -> {
+                    if (taskTracker.acceptTask()) {
+                        try {
+                            unregisterOrphanedRegistrations();
+                        } finally {
+                            taskTracker.completeTask();
+                        }
+                    }
+                });
+            } catch (RejectedExecutionException e) {
+                LOG.warn("Unable to submit query deregistration cleanup; retained for shutdown", e);
+            }
         }
     }
 
@@ -337,6 +371,7 @@ final class OracleChangeNotificationSubscription {
             return false;
         }
         recordPendingOutcome(registrationId, PendingOutcome.STOP);
+        dispatcher.discardPending();
         terminated = true;
         recoveryRegistrationId = null;
         return true;

@@ -17,7 +17,7 @@ package io.micronaut.data.jdbc.notification.oracle
 
 import io.micronaut.context.BeanContext
 import io.micronaut.data.jdbc.notification.ChangeEvent
-import io.micronaut.data.jdbc.notification.ChangeNotificationExecutor
+import io.micronaut.data.jdbc.notification.ChangeNotificationQueue
 import io.micronaut.data.jdbc.notification.ChangeOperation
 import io.micronaut.data.jdbc.notification.DefaultChangeEvent
 import io.micronaut.data.jdbc.notification.DeferredChangeEvent
@@ -106,7 +106,7 @@ class OracleChangeNotificationDispatcherSpec extends Specification {
         recoveryRequests.empty
     }
 
-    void "queued callbacks retain the configured options snapshot (#reliable)"() {
+    void "lifecycle callbacks use the options configured at receipt (#reliable)"() {
         given:
         def properties = new Properties()
         properties.setProperty(OracleConnection.DCN_CLIENT_INIT_CONNECTION, 'true')
@@ -128,14 +128,12 @@ class OracleChangeNotificationDispatcherSpec extends Specification {
         dispatcher.onDatabaseChangeNotification(event)
         properties.setProperty(OracleConnection.NTF_QOS_RELIABLE, (!reliable).toString())
         dispatcher.configureRegistrationOptions(properties)
-        queuedTasks.first().run()
 
         then:
         recoveryRequests == (reliable ? [] : [41L])
 
         when:
         dispatcher.onDatabaseChangeNotification(event)
-        queuedTasks.last().run()
 
         then:
         recoveryRequests == [41L]
@@ -150,12 +148,13 @@ class OracleChangeNotificationDispatcherSpec extends Specification {
         def event = Mock(DatabaseChangeEvent)
         def dispatcher = new OracleChangeNotificationDispatcher(
             'inventory', definition(null, Mock(ExecutableMethod), new Properties()), Mock(BeanContext),
-            notificationExecutor(executor), Mock(TaskScheduler), new OracleChangeNotificationTaskTracker(),
+            notificationQueue(executor), Mock(TaskScheduler), new OracleChangeNotificationTaskTracker(),
             { long ignored -> } as LongConsumer,
             { Long ignored, DatabaseChangeEvent.AdditionalEventType ignoredType -> } as BiConsumer,
             { long ignored -> } as LongConsumer,
             { long ignored -> } as LongConsumer,
-            { long ignored -> true } as LongPredicate)
+            { long ignored -> true } as LongPredicate,
+            { Long ignored, Runnable enqueue -> enqueue.run() } as BiConsumer)
 
         when:
         dispatcher.onDatabaseChangeNotification(event)
@@ -972,7 +971,7 @@ class OracleChangeNotificationDispatcherSpec extends Specification {
         scheduled.remove(0).run()
 
         then:
-        handled.empty
+        handled == [expectedHandler]
         queued.empty
         scheduled.size() == 1
 
@@ -980,7 +979,7 @@ class OracleChangeNotificationDispatcherSpec extends Specification {
         scheduled.remove(0).run()
 
         then:
-        handled.empty
+        handled == [expectedHandler]
         queued.size() == 1
         scheduled.empty
 
@@ -994,60 +993,27 @@ class OracleChangeNotificationDispatcherSpec extends Specification {
 
         where:
         eventType                              | purge | expectedHandler
-        DatabaseChangeEvent.EventType.DEREG       | false | 'deregistration'
-        DatabaseChangeEvent.EventType.SHUTDOWN    | false | 'shutdown'
-        DatabaseChangeEvent.EventType.QUERYCHANGE | false | 'query deregistration'
         DatabaseChangeEvent.EventType.OBJCHANGE   | true  | 'purge'
     }
 
-    void "stops lifecycle resubmission when shutdown starts"() {
-        given:
-        List<Runnable> scheduled = []
-        def scheduler = Mock(TaskScheduler)
-        scheduler.schedule(_ as Duration, _ as Runnable) >> { Duration ignored, Runnable task ->
-            scheduled.add(task)
-            null
-        }
-        def executor = Mock(Executor)
-        def tracker = new OracleChangeNotificationTaskTracker()
-        def handler = Mock(BiConsumer)
-        def dispatcher = dispatcher(definition(), Mock(BeanContext), Mock(LongConsumer), handler,
-            Mock(LongConsumer), Mock(LongConsumer), executor, tracker, scheduler)
-        def event = Mock(DatabaseChangeEvent)
-        event.eventType >> DatabaseChangeEvent.EventType.DEREG
-
-        when:
-        dispatcher.onDatabaseChangeNotification(event)
-        def completion = tracker.shutdownGracefully().toCompletableFuture()
-        scheduled.remove(0).run()
-
-        then:
-        1 * executor.execute(_) >> { throw new RejectedExecutionException('Executor busy') }
-        0 * handler._
-        completion.isDone()
-        scheduled.empty
-    }
-
-    void "contains lifecycle retry scheduler failure on the driver callback thread"() {
+    void "driver lifecycle handling bypasses the listener executor and retry scheduler"() {
         given:
         def executor = Mock(Executor)
         def scheduler = Mock(TaskScheduler)
-        def tracker = new OracleChangeNotificationTaskTracker()
         def handler = Mock(BiConsumer)
         def dispatcher = dispatcher(definition(), Mock(BeanContext), Mock(LongConsumer), handler,
-            Mock(LongConsumer), Mock(LongConsumer), executor, tracker, scheduler)
+            Mock(LongConsumer), Mock(LongConsumer), executor, new OracleChangeNotificationTaskTracker(), scheduler)
         def event = Mock(DatabaseChangeEvent)
         event.eventType >> DatabaseChangeEvent.EventType.DEREG
+        event.regId >> 41L
 
         when:
         dispatcher.onDatabaseChangeNotification(event)
 
         then:
-        noExceptionThrown()
-        1 * executor.execute(_) >> { throw new RejectedExecutionException('Executor busy') }
-        1 * scheduler.schedule(_ as Duration, _ as Runnable) >> { throw new RejectedExecutionException('Scheduler stopped') }
-        0 * handler._
-        tracker.shutdownGracefully().toCompletableFuture().isDone()
+        1 * handler.accept(41L, _)
+        0 * executor._
+        0 * scheduler._
     }
 
     void "ignores callbacks after graceful shutdown starts"() {
@@ -1071,12 +1037,13 @@ class OracleChangeNotificationDispatcherSpec extends Specification {
         List<Runnable> queued = []
         def shutdownRequests = []
         Executor executor = { Runnable command -> queued << command } as Executor
-        def dispatcher = dispatcher(definition(), Mock(BeanContext), Mock(LongConsumer),
+        def method = Mock(ExecutableMethod)
+        def dispatcher = dispatcher(definition(null, method, new Properties()), Mock(BeanContext), Mock(LongConsumer),
             Mock(BiConsumer), Mock(LongConsumer),
             { long registrationId -> shutdownRequests << registrationId } as LongConsumer,
             executor, taskTracker)
         def event = Mock(DatabaseChangeEvent)
-        event.eventType >> DatabaseChangeEvent.EventType.SHUTDOWN
+        event.eventType >> DatabaseChangeEvent.EventType.OBJCHANGE
         event.regId >> 41L
 
         when:
@@ -1091,6 +1058,7 @@ class OracleChangeNotificationDispatcherSpec extends Specification {
         queued.first().run()
 
         then:
+        0 * method.invoke(_, _)
         shutdownRequests.empty
         taskTracker.reportActiveTasks().getAsLong() == 0L
     }
@@ -1125,28 +1093,29 @@ class OracleChangeNotificationDispatcherSpec extends Specification {
         def taskTracker = new OracleChangeNotificationTaskTracker()
         def callbacksStarted = new CountDownLatch(1)
         def releaseCallbacks = new CountDownLatch(1)
-        def executor = new ChangeNotificationExecutor('oracle-serial-shutdown', 2)
+        def executor = new ChangeNotificationQueue('oracle-serial-shutdown', 2)
         def shutdownRequests = new AtomicInteger()
-        LongConsumer shutdownHandler = { long ignored ->
-            shutdownRequests.incrementAndGet()
-            callbacksStarted.countDown()
-            if (!releaseCallbacks.await(5, TimeUnit.SECONDS)) {
-                throw new AssertionError("Timed out waiting to release the shutdown callback")
+        def method = Stub(ExecutableMethod) {
+            invoke(_, _) >> {
+                shutdownRequests.incrementAndGet()
+                callbacksStarted.countDown()
+                assert releaseCallbacks.await(5, TimeUnit.SECONDS)
+                null
             }
-        } as LongConsumer
-        def dispatcher = dispatcher(definition(), Mock(BeanContext), Mock(LongConsumer),
-            Mock(BiConsumer), Mock(LongConsumer), shutdownHandler, executor, taskTracker)
+        }
+        def dispatcher = dispatcher(definition(null, method, new Properties()), Mock(BeanContext), Mock(LongConsumer),
+            Mock(BiConsumer), Mock(LongConsumer), Mock(LongConsumer), executor, taskTracker)
         def firstEvent = Mock(DatabaseChangeEvent)
-        firstEvent.eventType >> DatabaseChangeEvent.EventType.SHUTDOWN
+        firstEvent.eventType >> DatabaseChangeEvent.EventType.OBJCHANGE
         firstEvent.regId >> 41L
         def secondEvent = Mock(DatabaseChangeEvent)
-        secondEvent.eventType >> DatabaseChangeEvent.EventType.SHUTDOWN
+        secondEvent.eventType >> DatabaseChangeEvent.EventType.OBJCHANGE
         secondEvent.regId >> 42L
 
         when:
         dispatcher.onDatabaseChangeNotification(firstEvent)
-        dispatcher.onDatabaseChangeNotification(secondEvent)
         boolean firstCallbackStarted = callbacksStarted.await(5, TimeUnit.SECONDS)
+        dispatcher.onDatabaseChangeNotification(secondEvent)
         def shutdown = taskTracker.shutdownGracefully().toCompletableFuture()
         long outstandingCallbacks = taskTracker.reportActiveTasks().orElseThrow()
         releaseCallbacks.countDown()
@@ -1398,7 +1367,7 @@ class OracleChangeNotificationDispatcherSpec extends Specification {
                                                             LongConsumer registrationPurgedHandler,
                                                             BiConsumer<Long, DatabaseChangeEvent.AdditionalEventType> deregistrationHandler,
                                                             LongConsumer queryDeregistrationHandler,
-                                                            Executor executor,
+                                                            Object executor,
                                                             OracleChangeNotificationTaskTracker taskTracker) {
         return dispatcher(definition, beanContext, registrationPurgedHandler,
             deregistrationHandler, queryDeregistrationHandler,
@@ -1411,33 +1380,36 @@ class OracleChangeNotificationDispatcherSpec extends Specification {
                                                             BiConsumer<Long, DatabaseChangeEvent.AdditionalEventType> deregistrationHandler,
                                                             LongConsumer queryDeregistrationHandler,
                                                             LongConsumer databaseShutdownHandler,
-                                                            Executor executor,
+                                                            Object executor,
                                                             OracleChangeNotificationTaskTracker taskTracker,
                                                             TaskScheduler scheduler = null) {
         def dispatcher = new OracleChangeNotificationDispatcher(
             "inventory",
             definition,
             beanContext,
-            notificationExecutor(executor),
+            notificationQueue(executor),
             scheduler ?: Mock(TaskScheduler),
             taskTracker,
             registrationPurgedHandler,
             deregistrationHandler,
             queryDeregistrationHandler,
             databaseShutdownHandler,
-            { long ignored -> true } as LongPredicate
+            { long ignored -> true } as LongPredicate,
+            { Long ignored, Runnable enqueue -> enqueue.run() } as BiConsumer
         )
         dispatcher.configureRegistrationOptions(definition.registrationProperties())
         return dispatcher
     }
 
-    private ChangeNotificationExecutor notificationExecutor(Executor executor) {
-        if (executor instanceof ChangeNotificationExecutor) {
-            return (ChangeNotificationExecutor) executor
+    private ChangeNotificationQueue notificationQueue(Object executor) {
+        if (executor instanceof ChangeNotificationQueue) {
+            return (ChangeNotificationQueue) executor
         }
         def stopped = new AtomicBoolean()
-        Stub(ChangeNotificationExecutor) {
-            execute(_ as Runnable) >> { Runnable task -> executor.execute(task) }
+        Stub(ChangeNotificationQueue) {
+            enqueue(_ as Runnable, _ as Runnable) >> { Runnable task, Runnable refresh -> executor.execute(task) }
+            enqueueInvalidation(_ as Runnable) >> { Runnable task -> executor.execute(task) }
+            enqueueFinal(_ as Runnable) >> { Runnable task -> executor.execute(task) }
             stop() >> { stopped.set(true); CompletableFuture.completedStage(null) }
             isStopped() >> { stopped.get() }
         }

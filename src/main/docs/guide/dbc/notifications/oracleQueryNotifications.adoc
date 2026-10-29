@@ -204,7 +204,7 @@ If the JDBC driver reports that it cannot restore notification delivery, Microna
 registration. For other registration configurations, recovery starts when a database shutdown notification is received.
 
 After successful recovery, the listener receives an `INVALIDATE` event so it can refresh potentially outdated data.
-If the listener's notification queue is full, delivery of the `INVALIDATE` event after recovery is retried.
+The `INVALIDATE` event after recovery replaces waiting notifications in the listener queue.
 
 If cleanup of an old registration fails during recovery, Micronaut Data retains it and retries unregistration at
 the start of subsequent recovery attempts and during shutdown. Successful replacement does not discard pending
@@ -244,25 +244,27 @@ Notifications remain unavailable during recovery. If a configured retry limit is
 cannot be scheduled, automatic recovery stops and the application must be restarted to restore notifications.
 Micronaut Data sends a final `TERMINATED` event in these cases. The listener should stop using notification-backed caches
 rather than refresh them and expect further updates. Termination does not create a replacement registration.
-Termination events run on the listener's dedicated worker. If its queue is full, submission is retried until accepted or
-application shutdown begins. Application shutdown suppresses delivery. Delivery is best effort if the worker or retry
-scheduler is unavailable; applications that require independent detection of notification loss should also use their own consistency checks.
-Changes can be missed while a non-reliable registration is unavailable. Micronaut Data cannot detect a silently lost
-notification connection unless the JDBC driver reports the failure.
+Termination discards waiting notifications and delivers `TERMINATED` on the listener's dedicated worker after any
+callback already running finishes. Further notifications are ignored. Application shutdown suppresses delivery.
+Delivery is best effort if the worker or retry scheduler is unavailable; applications that require independent detection
+of notification loss should also use their own consistency checks. Changes can be missed while a non-reliable registration
+is unavailable. Micronaut Data cannot detect a silently lost notification connection unless the JDBC driver reports the failure.
 
 == Delivery and Concurrency
 
-Each listener has a dedicated worker thread and a queue holding up to 1024 waiting notifications. Oracle JDBC callbacks
-add notifications to that queue; the worker performs entity loading and invokes the listener. Application work therefore
-does not block the driver's notification thread. Registration recovery and cleanup use the configured blocking executor.
+Each listener has a dedicated worker thread and a queue with a limit of 1024 waiting notifications. Oracle JDBC data
+callbacks add notifications to that queue; the worker performs entity loading and invokes the listener. Driver lifecycle
+callbacks update subscription state directly. An accepted recovery or deregistration discards waiting data notifications.
+Registration recovery and query deregistration cleanup use the configured blocking executor, keeping JDBC cleanup and
+application listener work off the driver's notification thread.
 The listener worker starts when needed, remains available across registration recovery, and stops when the subscription
 closes or finishes delivering its final termination or one-shot notification.
 
-For ongoing registrations, if the listener's queue is full, Micronaut Data requests an `INVALIDATE` event so the listener
-can refresh its state. Repeated missed notifications are combined into one pending invalidation. Submission is retried until accepted or shutdown begins.
-Changes missed after the listener starts processing that invalidation can cause an additional invalidation.
-This reconciliation does not replay the missed row notifications. If another delivery attempt cannot be scheduled,
-Micronaut Data logs an error and cannot guarantee delivery of the invalidation.
+When the queue reaches its limit, waiting notifications are removed and replaced with one `INVALIDATE` event so the
+listener can refresh its state. Further data notifications are covered by this pending refresh until processing begins.
+Notifications arriving during the refresh are queued normally and may trigger another invalidation if the limit is reached
+again. A callback already running finishes before the invalidation is delivered. Reconciliation does not replay discarded
+row notifications. The limit counts whole Oracle notifications; one notification may contain changes to many rows.
 
 Notifications accepted into a listener's queue are processed sequentially in the order they enter the queue, including
 entity loading and listener invocation. Changes to individual rows within one notification are also delivered sequentially.

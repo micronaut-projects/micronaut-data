@@ -18,7 +18,7 @@ package io.micronaut.data.jdbc.notification.oracle
 import io.micronaut.context.BeanContext
 import io.micronaut.data.exceptions.DataAccessException
 import io.micronaut.data.jdbc.notification.ChangeEvent
-import io.micronaut.data.jdbc.notification.ChangeNotificationExecutor
+import io.micronaut.data.jdbc.notification.ChangeNotificationQueue
 import io.micronaut.data.jdbc.notification.ChangeOperation
 import io.micronaut.data.jdbc.runtime.ConnectionCallback
 import io.micronaut.data.jdbc.runtime.JdbcOperations
@@ -159,7 +159,7 @@ class OracleChangeNotificationSubscriptionSpec extends Specification {
         }
 
         then:
-        queued.size() == 1
+        queued.size() == (callback == 'query' ? 2 : 1)
         delivered.empty
 
         when:
@@ -1171,6 +1171,7 @@ class OracleChangeNotificationSubscriptionSpec extends Specification {
             subscription.stop()
         } else if (cleanup == 'query deregistration') {
             subscription.handleQueryDeregistered(original.getRegId())
+            queued.remove(queued.size() - 1).run()
         } else {
             fixture.failureListeners[0].onFailure(new SQLException('Receiver failed'))
             queued.remove(0).run()
@@ -1405,7 +1406,7 @@ class OracleChangeNotificationSubscriptionSpec extends Specification {
         def original = Mock(DatabaseChangeRegistration)
         def replacement = Mock(DatabaseChangeRegistration)
         def fixture = registrarFixture([original, replacement])
-        def notifications = new ChangeNotificationExecutor('oracle-recovery-listener', 4)
+        def notifications = new ChangeNotificationQueue('oracle-recovery-listener', 4)
         List<Runnable> recoveryTasks = []
         def delivered = new CopyOnWriteArrayList<ChangeOperation>()
         def threads = new CopyOnWriteArrayList<Thread>()
@@ -1448,16 +1449,17 @@ class OracleChangeNotificationSubscriptionSpec extends Specification {
     void "a full queue handles #reason termination and stops its worker (scheduler fails: #schedulerFails)"() {
         given:
         def fixture = registrarFixture([Mock(DatabaseChangeRegistration)])
-        def notifications = new ChangeNotificationExecutor('oracle-terminal-listener', 1)
+        def notifications = new ChangeNotificationQueue('oracle-terminal-listener', 1)
         def started = new CountDownLatch(1)
         def release = new CountDownLatch(1)
         def delivered = new CopyOnWriteArrayList<ChangeOperation>()
         List<Runnable> scheduled = []
+        List<Runnable> cleanupTasks = []
         def taskScheduler = schedulerFails ? Stub(TaskScheduler) {
             schedule(_ as Duration, _ as Runnable) >> { throw new RejectedExecutionException('scheduler stopped') }
         } : scheduler(scheduled)
         def subscription = subscription(fixture.registrar, taskScheduler, new OracleChangeNotificationTaskTracker(),
-            { Runnable task -> task.run() } as Executor,
+            { Runnable task -> cleanupTasks.add(task) } as Executor,
             { ChangeEvent<?> change ->
                 delivered.add(change.operation())
                 if (change.operation() == ChangeOperation.INVALIDATE) {
@@ -1472,30 +1474,24 @@ class OracleChangeNotificationSubscriptionSpec extends Specification {
         fixture.registeredListeners[0].onDatabaseChangeNotification(event)
 
         when:
-        if (reason == 'query deregistration') {
-            subscription.handleQueryDeregistered(1L)
-        } else {
-            subscription.handleRegistrationDeregistered(1L, DatabaseChangeEvent.AdditionalEventType.TIMEOUT)
-        }
+        fixture.registeredListeners[0].onDatabaseChangeNotification(pendingLifecycleEvent(1L, reason))
 
         then:
-        scheduled.size() == (schedulerFails ? 0 : 1)
-        notifications.stopped == schedulerFails
+        scheduled.empty
+        notifications.stopped
+        cleanupTasks.size() == (reason == 'query deregistration' ? 1 : 0)
 
         when:
         release.countDown()
-        if (!schedulerFails) {
-            awaitQueuedNotifications(notifications)
-            scheduled.remove(0).run()
-        }
 
         then:
         awaitNotificationStop(notifications)
-        delivered == (schedulerFails ? [ChangeOperation.INVALIDATE] : [ChangeOperation.INVALIDATE, ChangeOperation.TERMINATED])
+        delivered == [ChangeOperation.INVALIDATE, ChangeOperation.TERMINATED]
         scheduled.empty
         fixture.registrationIndex.get() == 1
 
         cleanup:
+        cleanupTasks.each { it.run() }
         release.countDown()
         subscription.stop()
         awaitNotificationStop(notifications)
@@ -1504,10 +1500,112 @@ class OracleChangeNotificationSubscriptionSpec extends Specification {
         [reason, schedulerFails] << [['registration deregistration', 'query deregistration'], [false, true]].combinations()
     }
 
+    void "a delayed old data submission cannot replace recovery invalidation"() {
+        given:
+        def fixture = registrarFixture([Mock(DatabaseChangeRegistration), Mock(DatabaseChangeRegistration)])
+        def notifications = new ChangeNotificationQueue('oracle-admission-race', 1)
+        def workerStarted = new CountDownLatch(1)
+        def releaseWorker = new CountDownLatch(1)
+        def admissionReached = new CountDownLatch(1)
+        def releaseProducer = new CountDownLatch(1)
+        def reconciled = new CountDownLatch(1)
+        def failure = new AtomicReference<Throwable>()
+        def delivered = new CopyOnWriteArrayList<ChangeOperation>()
+        OracleChangeNotificationSubscription subscription
+        subscription = this.subscription(fixture.registrar, Mock(TaskScheduler), new OracleChangeNotificationTaskTracker(),
+            { Runnable task -> task.run() } as Executor,
+            { ChangeEvent<?> event ->
+                assert !Thread.holdsLock(subscription.lifecycleLock)
+                delivered.add(event.operation())
+                reconciled.countDown()
+            }, new OracleRegistrationRecoveryConfiguration(), notifications)
+        subscription.start()
+        Runnable blocker = { workerStarted.countDown(); assert releaseWorker.await(5, TimeUnit.SECONDS) }
+        notifications.enqueue(blocker, blocker)
+        assert workerStarted.await(5, TimeUnit.SECONDS)
+        def reads = new AtomicInteger()
+        def oldEvent = Mock(DatabaseChangeEvent)
+        oldEvent.eventType >> DatabaseChangeEvent.EventType.OBJCHANGE
+        oldEvent.regId >> {
+            if (reads.incrementAndGet() == 2) {
+                // Receipt validation has passed; delay the submission until recovery replaces it.
+                admissionReached.countDown()
+                assert releaseProducer.await(5, TimeUnit.SECONDS)
+            }
+            1L
+        }
+        def producer = Thread.start {
+            try {
+                fixture.registeredListeners[0].onDatabaseChangeNotification(oldEvent)
+            } catch (Throwable e) {
+                failure.set(e)
+            }
+        }
+        assert admissionReached.await(5, TimeUnit.SECONDS)
+
+        when:
+        subscription.handleRegistrationUnavailable(1L, new SQLException('Connection failed'))
+        releaseProducer.countDown()
+        producer.join(5000)
+        releaseWorker.countDown()
+
+        then:
+        !producer.alive
+        failure.get() == null
+        reconciled.await(5, TimeUnit.SECONDS)
+        delivered == [ChangeOperation.INVALIDATE]
+        fixture.registrationIndex.get() == 2
+
+        cleanup:
+        releaseProducer.countDown()
+        releaseWorker.countDown()
+        producer.join(5000)
+        subscription.stop()
+        awaitNotificationStop(notifications)
+    }
+
+    void "stale lifecycle callbacks leave the current listener backlog intact"() {
+        given:
+        def fixture = registrarFixture([Mock(DatabaseChangeRegistration)])
+        def notifications = new ChangeNotificationQueue('oracle-stale-lifecycle', 4)
+        def started = new CountDownLatch(1)
+        def release = new CountDownLatch(1)
+        def delivered = new CountDownLatch(2)
+        def subscription = subscription(fixture.registrar, Mock(TaskScheduler), new OracleChangeNotificationTaskTracker(),
+            { Runnable task -> task.run() } as Executor,
+            { ChangeEvent<?> change ->
+                assert change.operation() == ChangeOperation.INVALIDATE
+                started.countDown()
+                assert release.await(5, TimeUnit.SECONDS)
+                delivered.countDown()
+            }, new OracleRegistrationRecoveryConfiguration(), notifications)
+        subscription.start()
+        def listener = fixture.registeredListeners[0]
+        listener.onDatabaseChangeNotification(dataEvent(1L, DatabaseChangeEvent.EventType.OBJCHANGE))
+        assert started.await(5, TimeUnit.SECONDS)
+        listener.onDatabaseChangeNotification(dataEvent(1L, DatabaseChangeEvent.EventType.OBJCHANGE))
+
+        when:
+        listener.onDatabaseChangeNotification(pendingLifecycleEvent(99L, 'shutdown'))
+        listener.onDatabaseChangeNotification(pendingLifecycleEvent(99L, 'registration deregistration'))
+        listener.onDatabaseChangeNotification(pendingLifecycleEvent(99L, 'query deregistration'))
+        release.countDown()
+
+        then:
+        delivered.await(5, TimeUnit.SECONDS)
+        fixture.registrationIndex.get() == 1
+        !notifications.stopped
+
+        cleanup:
+        release.countDown()
+        subscription.stop()
+        awaitNotificationStop(notifications)
+    }
+
     void "combines data lost to a full listener queue into one reconciliation"() {
         given:
         def fixture = registrarFixture([Mock(DatabaseChangeRegistration)])
-        def notifications = new ChangeNotificationExecutor('oracle-overflow-listener', 1)
+        def notifications = new ChangeNotificationQueue('oracle-overflow-listener', 1)
         def started = new CountDownLatch(1)
         def release = new CountDownLatch(1)
         def reconciled = new CountDownLatch(2)
@@ -1533,12 +1631,10 @@ class OracleChangeNotificationSubscriptionSpec extends Specification {
         20.times { fixture.registeredListeners[0].onDatabaseChangeNotification(event) }
 
         then:
-        scheduled.size() == 1
+        scheduled.empty
 
         when:
         release.countDown()
-        awaitQueuedNotifications(notifications)
-        scheduled.remove(0).run()
 
         then:
         reconciled.await(5, TimeUnit.SECONDS)
@@ -1551,10 +1647,45 @@ class OracleChangeNotificationSubscriptionSpec extends Specification {
         awaitNotificationStop(notifications)
     }
 
+    void "one-shot data survives deregistration before its queued callback starts"() {
+        given:
+        def fixture = registrarFixture([Mock(DatabaseChangeRegistration)])
+        def notifications = new ChangeNotificationQueue('oracle-queued-one-shot', 1)
+        def started = new CountDownLatch(1)
+        def release = new CountDownLatch(1)
+        def delivered = new CopyOnWriteArrayList<ChangeOperation>()
+        def subscription = subscription(fixture.registrar, Mock(TaskScheduler), new OracleChangeNotificationTaskTracker(),
+            { Runnable task -> task.run() } as Executor, { ChangeEvent<?> event -> delivered.add(event.operation()) },
+            new OracleRegistrationRecoveryConfiguration(), notifications)
+        subscription.start()
+        def listener = fixture.registeredListeners[0]
+        def options = new Properties()
+        options.setProperty(OracleConnection.NTF_QOS_PURGE_ON_NTFN, 'true')
+        listener.configureRegistrationOptions(options)
+        Runnable blocker = { started.countDown(); assert release.await(5, TimeUnit.SECONDS) }
+        notifications.enqueue(blocker, blocker)
+        assert started.await(5, TimeUnit.SECONDS)
+
+        when:
+        listener.onDatabaseChangeNotification(dataEvent(1L, DatabaseChangeEvent.EventType.OBJCHANGE))
+        listener.onDatabaseChangeNotification(pendingLifecycleEvent(1L, 'registration deregistration'))
+        release.countDown()
+
+        then:
+        awaitNotificationStop(notifications)
+        delivered == [ChangeOperation.INVALIDATE]
+        fixture.registrationIndex.get() == 1
+
+        cleanup:
+        release.countDown()
+        subscription.stop()
+        awaitNotificationStop(notifications)
+    }
+
     void "stops the worker after delivering a one-shot notification"() {
         given:
         def fixture = registrarFixture([Mock(DatabaseChangeRegistration)])
-        def notifications = new ChangeNotificationExecutor('oracle-one-shot-listener', 1)
+        def notifications = new ChangeNotificationQueue('oracle-one-shot-listener', 1)
         def delivered = new CopyOnWriteArrayList<ChangeOperation>()
         def subscription = subscription(fixture.registrar, Mock(TaskScheduler), new OracleChangeNotificationTaskTracker(),
             { Runnable task -> task.run() } as Executor, { ChangeEvent<?> event -> delivered.add(event.operation()) },
@@ -1577,23 +1708,9 @@ class OracleChangeNotificationSubscriptionSpec extends Specification {
         awaitNotificationStop(notifications)
     }
 
-    private static void awaitQueuedNotifications(ChangeNotificationExecutor notifications) {
-        def drained = new CountDownLatch(1)
-        new PollingConditions(timeout: 5).eventually {
-            try {
-                notifications.execute({ drained.countDown() })
-            } catch (RejectedExecutionException ignored) {
-                assert false: 'Waiting for space behind the previously queued notification'
-            }
-        }
-        assert drained.await(5, TimeUnit.SECONDS)
-    }
-
-    private static boolean awaitNotificationStop(ChangeNotificationExecutor notifications) {
-        new PollingConditions(timeout: 5).eventually {
-            assert notifications.stopped
-        }
-        notifications.stop().toCompletableFuture().get(5, TimeUnit.SECONDS)
+    private static boolean awaitNotificationStop(ChangeNotificationQueue notifications) {
+        notifications.completion().toCompletableFuture().get(5, TimeUnit.SECONDS)
+        assert notifications.stopped
         true
     }
 
@@ -1695,7 +1812,7 @@ class OracleChangeNotificationSubscriptionSpec extends Specification {
                                                               Executor executor = { Runnable command -> command.run() } as Executor,
                                                               Closure<?> listenerInvocation = { ChangeEvent<?> ignored -> },
                                                               OracleRegistrationRecoveryConfiguration recoveryConfiguration = new OracleRegistrationRecoveryConfiguration(),
-                                                              ChangeNotificationExecutor notificationExecutor = null) {
+                                                              ChangeNotificationQueue notificationQueue = null) {
         def method = Mock(ExecutableMethod)
         method.getDescription(true) >> 'void onChange(ChangeEvent<Book>)'
         method.invoke(_, _) >> { Object[] arguments ->
@@ -1711,8 +1828,10 @@ class OracleChangeNotificationSubscriptionSpec extends Specification {
         def beanContext = Mock(BeanContext)
         beanContext.getBean(_ as BeanDefinition) >> new Object()
         def stopped = new AtomicBoolean()
-        def notifications = notificationExecutor ?: Stub(ChangeNotificationExecutor) {
-            execute(_ as Runnable) >> { Runnable task -> executor.execute(task) }
+        def notifications = notificationQueue ?: Stub(ChangeNotificationQueue) {
+            enqueue(_ as Runnable, _ as Runnable) >> { Runnable task, Runnable refresh -> executor.execute(task) }
+            enqueueInvalidation(_ as Runnable) >> { Runnable task -> executor.execute(task) }
+            enqueueFinal(_ as Runnable) >> { Runnable task -> executor.execute(task) }
             stop() >> { stopped.set(true); CompletableFuture.completedStage(null) }
             isStopped() >> { stopped.get() }
         }
