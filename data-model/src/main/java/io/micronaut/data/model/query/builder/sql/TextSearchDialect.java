@@ -245,7 +245,7 @@ public interface TextSearchDialect {
 
         @Override
         public String buildSearchIndex(String indexName, String escapedTableName, List<SearchColumn> columns, String language) {
-            StringBuilder ddl = new StringBuilder("CREATE INDEX ").append(indexName).append(" ON ").append(escapedTableName).append(" USING GIN (");
+            StringBuilder ddl = new StringBuilder("CREATE INDEX IF NOT EXISTS ").append(indexName).append(" ON ").append(escapedTableName).append(" USING GIN (");
             List<SearchWeight> weights = columns.stream().map(SearchColumn::weight).toList();
             List<Consumer<StringBuilder>> renderers = columns.stream().map(c -> (Consumer<StringBuilder>) sb -> sb.append(c.column())).toList();
             appendVector(ddl, renderers, weights, language);
