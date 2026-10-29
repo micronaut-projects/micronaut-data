@@ -503,7 +503,7 @@ public interface TextSearchDialect {
         /**
          * Renders {@code CTX_DOC.POLICY_SNIPPET(policy, document, query, starttag, endtag)} over the field's
          * text, which needs the {@link #POLICY_NAME} policy created by schema generation but no index key.
-         * A JSON entity highlights {@code JSON_VALUE(column, '$.path')}.
+         * A JSON entity highlights {@code JSON_VALUE(column, '$.path' RETURNING CLOB)}.
          */
         @Override
         public void appendSearchHighlight(StringBuilder query,
@@ -519,7 +519,8 @@ public interface TextSearchDialect {
                 if (target.tableAlias() != null) {
                     query.append(target.tableAlias()).append('.');
                 }
-                query.append(target.jsonColumn()).append(",'$.").append(propertyPath.getPropertyPath().getPath()).append("')");
+                // RETURNING CLOB, as the default VARCHAR2(4000) is NULL for a longer value
+                query.append(target.jsonColumn()).append(",'$.").append(jsonKeyPath(propertyPath.getPropertyPath())).append("' RETURNING CLOB)");
             } else {
                 appendExpression.accept(field);
             }
