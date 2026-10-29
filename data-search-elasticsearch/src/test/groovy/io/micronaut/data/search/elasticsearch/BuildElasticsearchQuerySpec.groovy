@@ -90,6 +90,8 @@ ${methods}
     List<Article> findByCategory(String category);
     List<Article> findByPagesGreaterThan(int pages);
     List<Article> findByPagesBetween(int from, int to);
+    List<Article> findByTitleBetween(String from, String to);
+    List<Article> findByTitleGreaterThan(String title);
     List<Article> findByAuthorStartsWith(String prefix);
     List<Article> findByAuthorInList(List<String> authors);
     List<Article> findByAuthorIsNull();
@@ -105,6 +107,8 @@ ${methods}
         query(repository.getRequiredMethod("findByCategory", String)) == '{"query":{"term":{"category":{"$mn_qp":0}}}}'
         query(repository.getRequiredMethod("findByPagesGreaterThan", int)) == '{"query":{"range":{"pages":{"gt":{"$mn_qp":0}}}}}'
         query(repository.getRequiredMethod("findByPagesBetween", int, int)) == '{"query":{"range":{"pages":{"gte":{"$mn_qp":0},"lte":{"$mn_qp":1}}}}}'
+        query(repository.getRequiredMethod("findByTitleBetween", String, String)) == '{"query":{"range":{"title.keyword":{"gte":{"$mn_qp":0},"lte":{"$mn_qp":1}}}}}'
+        query(repository.getRequiredMethod("findByTitleGreaterThan", String)) == '{"query":{"range":{"title.keyword":{"gt":{"$mn_qp":0}}}}}'
         query(repository.getRequiredMethod("findByAuthorStartsWith", String)) == '{"query":{"wildcard":{"author":{"value":{"$mn_qp":0,"$mn_wildcard":"starts_with"}}}}}'
         query(repository.getRequiredMethod("findByAuthorInList", List)) == '{"query":{"terms":{"author":[{"$mn_qp":0}]}}}'
         query(repository.getRequiredMethod("findByAuthorIsNull")) == '{"query":{"bool":{"must_not":{"exists":{"field":"author"}}}}}'
@@ -232,5 +236,27 @@ ${methods}
             '{"query":{"knn":{"field":"embedding","query_vector":{"$mn_qp":0},"k":10,"num_candidates":100,"similarity":{"$mn_qp":1,"$mn_wildcard":"cosine_similarity"}}},"sort":[{"_score":{"order":"desc"}}]}'
         query(repository.getRequiredMethod("findTop5ByEmbeddingNear", io.micronaut.data.model.vector.Vector, Double)) ==
             '{"query":{"knn":{"field":"embedding","query_vector":{"$mn_qp":0},"k":5,"num_candidates":100,"similarity":{"$mn_qp":1,"$mn_wildcard":"cosine_similarity"}}},"sort":[{"_score":{"order":"desc"}}],"size":5}'
+    }
+
+    void "the other conditions of a vector search become the filter of the knn query"() {
+        given:
+        def repository = articleRepository("""
+    List<Article> findTop5ByCategoryAndEmbeddingNear(String category, io.micronaut.data.model.vector.Vector vector, Double maxDistance);
+""")
+
+        expect:
+        query(repository.getRequiredMethod("findTop5ByCategoryAndEmbeddingNear", String, io.micronaut.data.model.vector.Vector, Double)) ==
+            '{"query":{"knn":{"field":"embedding","query_vector":{"$mn_qp":1},"k":5,"num_candidates":100,"similarity":{"$mn_qp":2,"$mn_wildcard":"cosine_similarity"},"filter":{"term":{"category":{"$mn_qp":0}}}}},"sort":[{"_score":{"order":"desc"}}],"size":5}'
+    }
+
+    void "a delete by a vector predicate is rejected at compile time"() {
+        when:
+        articleRepository("""
+    long deleteByEmbeddingNear(io.micronaut.data.model.vector.Vector vector, Double maxDistance);
+""")
+
+        then:
+        def e = thrown(RuntimeException)
+        e.message.contains("A vector search cannot select the documents of a delete or an update")
     }
 }

@@ -93,6 +93,20 @@ class DocumentSearchOperationsSpec extends Specification {
         transport.indexes["test_tags"].size() == 3
     }
 
+    void "saving an entity with the id of an existing document fails instead of replacing it"() {
+        given:
+        def note = new Note("Tea", "Green tea", 40)
+        note.id = "tea"
+        notes.save(note)
+
+        when:
+        notes.save(new Note("Other", "Black tea", 10).tap { id = "tea" })
+
+        then:
+        thrown(io.micronaut.data.exceptions.DataAccessException)
+        transport.indexes["test_notes"]["tea"].title == "Tea"
+    }
+
     void "a sort on a single result decides which hit comes first"() {
         given:
         notes.saveAll([new Note("Coffee", "Roasting beans", 120), new Note("Bread", "Sourdough", 80)])
@@ -251,6 +265,17 @@ class DocumentSearchOperationsSpec extends Specification {
         !transport.lastBody().contains('"search_after"')
     }
 
+    void "a cursored page keeps the method's OrderBy ahead of the pageable sort and the id tiebreaker"() {
+        given:
+        notes.saveAll([new Note("Coffee", "Roasting beans", 120), new Note("Bread", "Sourdough", 80)])
+
+        when:
+        notes.findByPagesLessThanOrderByTitleDesc(500, CursoredPageable.from(10, Sort.of(Sort.Order.asc("pages"))))
+
+        then:
+        transport.lastBody().contains('"sort":[{"title.keyword":{"order":"desc"}},{"pages":{"order":"asc"}},{"id":{"order":"asc"}}]')
+    }
+
     void "deletes remove documents by id and by query"() {
         given:
         def saved = notes.saveAll([new Note("Coffee", "Roasting beans", 120), new Note("Bread", "Sourdough", 80), new Note("Tea", "Green", 40)])
@@ -306,7 +331,9 @@ class DocumentSearchOperationsSpec extends Specification {
         then:
         mapping.contains('"cuisine":{"type":"keyword"}')
         mapping.contains('"name":{"type":"search_as_you_type","analyzer":"standard","fields":{"keyword":{')
-        mapping.contains('"steps":{"type":"text","analyzer":"whitespace"')
+        mapping.contains('"instructions":{"type":"text","analyzer":"whitespace"')
+        !mapping.contains('"steps"')
+        mapping.contains('"ignore_above":8191')
         mapping.contains('"reference":{"type":"keyword"}')
     }
 
@@ -332,6 +359,7 @@ class DocumentSearchOperationsSpec extends Specification {
         expect:
         SearchJson.write([text: 'a"b\\c\nd\re\tf\u0001', refresh: DocumentSearchConfiguration.Refresh.TRUE, none: null, id: uuid, flag: true, list: [1, 2.5]]) ==
             '{"text":"a\\"b\\\\c\\nd\\re\\tf\\u0001","refresh":"TRUE","none":null,"id":"00000000-0000-0000-0000-000000000001","flag":true,"list":[1,2.5]}'
+        SearchJson.write([nan: Double.NaN, inf: Float.POSITIVE_INFINITY, finite: 1.5d]) == '{"nan":null,"inf":null,"finite":1.5}'
     }
 
     void "the configuration holds the refresh policy and the index creation switch"() {

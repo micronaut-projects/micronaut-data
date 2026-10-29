@@ -52,6 +52,15 @@ public class SearchQueryAsyncInterceptor extends AbstractAsyncSpecificationInter
 
     @Override
     public Object intercept(RepositoryMethodKey methodKey, MethodInvocationContext<Object, Object> context) {
+        try {
+            return search(methodKey, context);
+        } catch (RuntimeException e) {
+            // an invalid query completes the future exceptionally rather than throwing from the repository call
+            return CompletableFuture.failedFuture(e);
+        }
+    }
+
+    private CompletableFuture<SearchResults<Object>> search(RepositoryMethodKey methodKey, MethodInvocationContext<Object, Object> context) {
         SearchQuery searchQuery = SearchQuerySupport.findSearchQuery(context);
         Pageable pageable = getPageable(context);
         Class<Object> rootEntity = getRequiredRootEntity(context);
@@ -63,20 +72,40 @@ public class SearchQueryAsyncInterceptor extends AbstractAsyncSpecificationInter
         RuntimePersistentEntity<Object> persistentEntity = operations.getEntity(rootEntity);
         if (SearchQuerySupport.fusesNatively(operations, searchQuery, persistentEntity)) {
             return findOne(methodKey, context, SearchQuerySupport.hybridQuery(cb, rootEntity, searchQuery, pageable), Pageable.UNPAGED)
-                .thenApply(fused -> SearchQuerySupport.pageHybrid(fused, searchQuery, pageable));
+                .thenApply(fused -> SearchQuerySupport.pageHybrid(fused, searchQuery, pageable))
+                .exceptionallyCompose(e -> SearchQuerySupport.nativeFusionUnavailable(operations, e)
+                    ? fuseInMemory(methodKey, context, searchQuery, pageable, persistentEntity)
+                    : CompletableFuture.failedFuture(e));
         }
+        return fuseInMemory(methodKey, context, searchQuery, pageable, persistentEntity);
+    }
+
+    private CompletableFuture<SearchResults<Object>> fuseInMemory(RepositoryMethodKey methodKey,
+                                                                  MethodInvocationContext<Object, Object> context,
+                                                                  SearchQuery searchQuery,
+                                                                  Pageable pageable,
+                                                                  RuntimePersistentEntity<Object> persistentEntity) {
+        AbstractCriteriaBuilder cb = (AbstractCriteriaBuilder) criteriaBuilder;
+        Class<Object> rootEntity = getRequiredRootEntity(context);
         Pageable window = SearchQuerySupport.hybridWindow(searchQuery, pageable);
         CompletableFuture<SearchResults<Object>> text = findOne(methodKey, context, SearchQuerySupport.textQuery(cb, rootEntity, searchQuery, window), window);
-        CompletableFuture<SearchResults<Object>> vector;
+        // one ranking after the other: in a transaction both share one connection, which cannot run two statements at once
+        return text.thenCompose(t -> vectorSearch(methodKey, context, searchQuery, window)
+            .thenApply(v -> SearchQuerySupport.fuse(persistentEntity, t, v, searchQuery, pageable)));
+    }
+
+    private CompletableFuture<SearchResults<Object>> vectorSearch(RepositoryMethodKey methodKey,
+                                                                  MethodInvocationContext<Object, Object> context,
+                                                                  SearchQuery searchQuery,
+                                                                  Pageable window) {
         try {
-            vector = findOne(methodKey, context, SearchQuerySupport.vectorQuery(cb, rootEntity, searchQuery), window)
+            return findOne(methodKey, context, SearchQuerySupport.vectorQuery((AbstractCriteriaBuilder) criteriaBuilder, getRequiredRootEntity(context), searchQuery), window)
                 .exceptionally(e -> {
                     throw SearchQuerySupport.vectorFailure(e instanceof java.util.concurrent.CompletionException && e.getCause() != null ? e.getCause() : e, operations);
                 });
         } catch (RuntimeException e) {
-            throw SearchQuerySupport.vectorFailure(e, operations);
+            return CompletableFuture.failedFuture(SearchQuerySupport.vectorFailure(e, operations));
         }
-        return text.thenCombine(vector, (t, v) -> SearchQuerySupport.fuse(persistentEntity, t, v, searchQuery, pageable));
     }
 
     private CompletableFuture<SearchResults<Object>> findOne(RepositoryMethodKey methodKey,

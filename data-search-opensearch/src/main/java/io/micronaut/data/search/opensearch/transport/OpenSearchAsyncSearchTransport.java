@@ -26,6 +26,7 @@ import jakarta.inject.Singleton;
 import org.jspecify.annotations.Nullable;
 import org.opensearch.client.json.JsonpMapper;
 import org.opensearch.client.opensearch.OpenSearchAsyncClient;
+import org.opensearch.client.opensearch._types.OpType;
 import org.opensearch.client.opensearch._types.query_dsl.Query;
 import org.opensearch.client.transport.OpenSearchTransport;
 
@@ -100,6 +101,11 @@ public final class OpenSearchAsyncSearchTransport implements AsyncSearchTranspor
     }
 
     @Override
+    public CompletionStage<String> create(String index, @Nullable String id, Map<String, Object> source, DocumentSearchConfiguration.Refresh refresh) {
+        return call(() -> client.index(i -> i.index(index).id(id).opType(OpType.Create).document(source).refresh(OpenSearchRequests.refresh(refresh)))).thenApply(response -> response.id());
+    }
+
+    @Override
     public CompletionStage<Optional<Map<String, Object>>> get(String index, String id) {
         return call(() -> client.get(g -> g.index(index).id(id), Map.class))
             .thenApply(response -> response.found() ? Optional.of((Map<String, Object>) response.source()) : Optional.empty());
@@ -108,6 +114,17 @@ public final class OpenSearchAsyncSearchTransport implements AsyncSearchTranspor
     @Override
     public CompletionStage<Boolean> delete(String index, String id, DocumentSearchConfiguration.Refresh refresh) {
         return call(() -> client.delete(d -> d.index(index).id(id).refresh(OpenSearchRequests.refresh(refresh)))).thenApply(response -> response.result().jsonValue().equals("deleted"));
+    }
+
+    @Override
+    public CompletionStage<Boolean> delete(String index, String id, @Nullable Long version, DocumentSearchConfiguration.Refresh refresh) {
+        return call(() -> client.delete(d -> OpenSearchRequests.deleteRequest(d, index, id, version, refresh)))
+            .handle((response, error) -> {
+                if (error != null) {
+                    throw OpenSearchRequests.conflictOrFailure(error, id);
+                }
+                return response.result().jsonValue().equals("deleted");
+            });
     }
 
     @Override

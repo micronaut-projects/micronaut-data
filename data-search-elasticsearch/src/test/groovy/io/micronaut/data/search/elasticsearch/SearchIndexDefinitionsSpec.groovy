@@ -28,4 +28,17 @@ class SearchIndexDefinitionsSpec extends Specification {
         body.contains('"name":{"type":"search_as_you_type","analyzer":"standard","fields":{"keyword":{')
         body.contains('"cuisine":{"type":"keyword"}')
     }
+
+    void "declared settings are merged into the store's defaults object by object"() {
+        given:
+        def transport = Stub(io.micronaut.data.search.document.runtime.SearchTransport) {
+            indexSettings() >> [analysis: [filter: [shingles: [type: "shingle"]]]]
+        }
+
+        when:
+        def body = SearchIndexDefinitions.mappingFor(new RuntimePersistentEntity<TunedBook>(TunedBook), transport)
+
+        then:
+        body.contains('"settings":{"analysis":{"filter":{"shingles":{"type":"shingle"}},"analyzer":{"folded":{"tokenizer":"standard","filter":["lowercase","asciifolding"]}}},"number_of_shards":2}')
+    }
 }

@@ -355,7 +355,7 @@ class FakeClientTransportSpec extends Specification {
     }
 
     @Unroll("#kind bulk")
-    void "bulkIndex sends one index operation per document and collects the ids"() {
+    void "bulkIndex sends a create or a versioned index operation per document and collects the ids"() {
         given:
         driver.fake.answer(BulkRequest, bulkResponse(bulkItem("1", 201), bulkItem("2", 200)))
 
@@ -368,10 +368,11 @@ class FakeClientTransportSpec extends Specification {
         request.index() == "books"
         request.refresh().jsonValue() == "wait_for"
         request.operations().size() == 2
-        request.operations().every { it.isIndex() }
-        request.operations()[0].index().id() == "1"
-        request.operations()[0].index().version() == null
-        request.operations()[0].index().document() == [title: "Kotlin"]
+        // a document without a version is a create-only write
+        request.operations()[0].isCreate()
+        request.operations()[0].create().id() == "1"
+        request.operations()[0].create().document() == [title: "Kotlin"]
+        request.operations()[1].isIndex()
         request.operations()[1].index().id() == null
         request.operations()[1].index().version() == 4L
         request.operations()[1].index().versionType() == VersionType.External
@@ -407,7 +408,7 @@ class FakeClientTransportSpec extends Specification {
         then:
         DataAccessException e = thrown()
         !(e instanceof OptimisticLockException)
-        e.message == "OpenSearch bulk item failed: failed to parse"
+        e.message == "OpenSearch bulk request rejected 1 of 2 documents, the other 1 were written: item 1 (id 2): failed to parse"
 
         where:
         kind << KINDS
@@ -424,7 +425,7 @@ class FakeClientTransportSpec extends Specification {
 
         then:
         OptimisticLockException e = thrown()
-        e.message == "Document 2 was modified concurrently: version conflict"
+        e.message == "OpenSearch bulk request rejected 1 of 1 documents, the other 0 were written: item 0 (id 2): version conflict"
 
         where:
         kind << KINDS
@@ -692,14 +693,14 @@ class FakeClientTransportSpec extends Specification {
 
         then:
         DataAccessException e = thrown()
-        e.message == "OpenSearch bulk item failed: bad"
+        e.message == "OpenSearch bulk request rejected 1 of 2 documents, the other 1 were written: item 1 (id 2): bad"
 
         when:
         BulkResponses.ids("OpenSearch", stale, { it.error }, { it.id }, { it.status })
 
         then:
         OptimisticLockException lock = thrown()
-        lock.message == "Document 3 was modified concurrently: conflict"
+        lock.message == "OpenSearch bulk request rejected 1 of 1 documents, the other 0 were written: item 0 (id 3): conflict"
     }
 
     // ---- drivers ----
