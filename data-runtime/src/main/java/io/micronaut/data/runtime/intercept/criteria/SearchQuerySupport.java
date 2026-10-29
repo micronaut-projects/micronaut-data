@@ -99,6 +99,10 @@ public final class SearchQuerySupport {
         PersistentEntityRoot<Object> root = criteriaQuery.from(rootEntity);
         List<Expression<?>> fields = resolveFields(root, searchQuery);
         ParameterExpression<String> queryParameter = cb.parameter(String.class, null, searchQuery.getQuery());
+        for (String boosted : searchQuery.getBoosts().keySet()) {
+            // a boost of a property that is not searched would otherwise be ignored silently
+            requireSearchField(root, boosted);
+        }
         TextMatchOptions options = new TextMatchOptions(searchQuery.getBoosts(), searchQuery.getFuzziness());
         Expression<Double> score = cb.searchScore(fields, queryParameter, searchQuery.getMode(), options);
         Predicate match = cb.textMatch(fields, queryParameter, searchQuery.getMode(), options);
@@ -142,6 +146,8 @@ public final class SearchQuerySupport {
             cb.parameter(Vector.class, null, searchQuery.getVector())
         );
         criteriaQuery.multiselect(root, score.alias(TextSearchSupport.SCORE_ALIAS));
+        // rows without an embedding have no distance and must not take candidate places
+        criteriaQuery.where(cb.isNotNull(root.get(searchQuery.getVectorProperty())));
         criteriaQuery.orderBy(cb.asc(score));
         return criteriaQuery;
     }
@@ -162,7 +168,12 @@ public final class SearchQuerySupport {
         }
         int candidates = searchQuery.getCandidates();
         if (!pageable.isUnpaged()) {
-            candidates = (int) Math.max(candidates, pageable.getOffset() + pageable.getSize());
+            long needed = pageable.getOffset() + pageable.getSize();
+            if (needed > SearchQuery.MAX_CANDIDATES) {
+                throw new IllegalArgumentException("A hybrid search pages within the first " + SearchQuery.MAX_CANDIDATES
+                    + " fused hits; the page ends at " + needed);
+            }
+            candidates = Math.max(candidates, (int) needed);
         }
         return Pageable.from(0, candidates);
     }
@@ -176,7 +187,9 @@ public final class SearchQuerySupport {
      */
     public static RuntimeException vectorFailure(Throwable e, Object operations) {
         if (e instanceof UnsupportedOperationException || e instanceof IllegalStateException) {
-            return new UnsupportedSearchFeatureException(SearchCapability.HYBRID, operations.getClass().getSimpleName());
+            UnsupportedSearchFeatureException unsupported = new UnsupportedSearchFeatureException(SearchCapability.HYBRID, operations.getClass().getSimpleName());
+            unsupported.initCause(e);
+            return unsupported;
         }
         return e instanceof RuntimeException runtime ? runtime : new IllegalStateException(e);
     }
