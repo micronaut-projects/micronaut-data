@@ -48,6 +48,8 @@ import org.slf4j.LoggerFactory;
 import reactor.core.publisher.Flux;
 import reactor.core.publisher.Mono;
 
+import java.sql.Timestamp;
+import java.time.LocalDateTime;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Map;
@@ -168,6 +170,14 @@ final class DefaultOracleGraphReactorRepositoryOperations extends AbstractReacti
         public Flux<GraphRecord> stream(String query, Map<String, Object> parameters) {
             return Flux.defer(() -> {
                 OracleGraphRows.Expanded expanded = OracleGraphRows.expand(query, new ArrayList<>(parameters.values()));
+                return execute(expanded)
+                    // The expanded query is the one that ran: collection parameters were spread over several bind variables
+                    .onErrorMap(R2dbcException.class, e -> new DataAccessException("Error executing Oracle graph query [" + expanded.query() + "]: " + e.getMessage(), e));
+            });
+        }
+
+        private Flux<GraphRecord> execute(OracleGraphRows.Expanded expanded) {
+            return Flux.defer(() -> {
                 if (LOG.isTraceEnabled()) {
                     // Parameter values may hold personal data, so they are logged at TRACE only
                     LOG.trace("Executing reactive Oracle graph query: {} with parameters {}", expanded.query(), expanded.parameters());
@@ -179,14 +189,16 @@ final class DefaultOracleGraphReactorRepositoryOperations extends AbstractReacti
                 AtomicInteger rowIndex = new AtomicInteger();
                 return Flux.from(statement.execute())
                     .concatMap(result -> result.map((row, metadata) -> decode(row, metadata, rowIndex.getAndIncrement())));
-            }).onErrorMap(R2dbcException.class, e -> new DataAccessException("Error executing Oracle graph query [" + query + "]: " + e.getMessage(), e));
+            });
         }
 
         private static void bind(Statement statement, List<@Nullable Object> values) {
             for (int i = 0; i < values.size(); i++) {
                 Object value = values.get(i);
                 if (value == null) {
-                    statement.bindNull(i, String.class);
+                    // Oracle R2DBC binds an untyped null whatever the class, as JDBC does with setNull(Types.NULL),
+                    // so a null compared with a NUMBER column is not sent as a VARCHAR
+                    statement.bindNull(i, Object.class);
                 } else {
                     statement.bind(i, value);
                 }
@@ -199,12 +211,21 @@ final class DefaultOracleGraphReactorRepositoryOperations extends AbstractReacti
             List<? extends ColumnMetadata> columnMetadatas = metadata.getColumnMetadatas();
             for (int i = 0; i < columnMetadatas.size(); i++) {
                 columns.add(columnMetadatas.get(i).getName());
-                rowValues.add(row.get(i));
+                rowValues.add(normalize(row.get(i)));
             }
             if (columns.contains(OracleGraphQueryBuilder.PATH_MATCH_COLUMN)) {
                 throw new IllegalStateException("Paths are returned by PGQL queries, which are not available over R2DBC");
             }
             return OracleGraphRows.decodeRow(columns, rowValues, rowIndex);
+        }
+
+        /**
+         * Reads DATE and TIMESTAMP columns as the JDBC operations do. The R2DBC driver returns them as
+         * {@link LocalDateTime} where JDBC returns a {@link Timestamp}, which converts to every temporal property type,
+         * {@link java.time.Instant} and {@link java.util.Date} included.
+         */
+        private static @Nullable Object normalize(@Nullable Object value) {
+            return value instanceof LocalDateTime dateTime ? Timestamp.valueOf(dateTime) : value;
         }
 
         @Override
