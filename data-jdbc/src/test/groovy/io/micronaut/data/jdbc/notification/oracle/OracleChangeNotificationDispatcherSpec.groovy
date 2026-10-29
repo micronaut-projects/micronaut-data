@@ -17,6 +17,7 @@ package io.micronaut.data.jdbc.notification.oracle
 
 import io.micronaut.context.BeanContext
 import io.micronaut.data.jdbc.notification.ChangeEvent
+import io.micronaut.data.jdbc.notification.ChangeNotificationExecutor
 import io.micronaut.data.jdbc.notification.ChangeOperation
 import io.micronaut.data.jdbc.notification.DefaultChangeEvent
 import io.micronaut.data.jdbc.notification.DeferredChangeEvent
@@ -34,6 +35,7 @@ import spock.lang.Specification
 import java.time.Duration
 import java.util.concurrent.CountDownLatch
 import java.util.concurrent.Executor
+import java.util.concurrent.CompletableFuture
 import java.util.concurrent.RejectedExecutionException
 import java.util.concurrent.TimeUnit
 import java.util.concurrent.atomic.AtomicBoolean
@@ -148,7 +150,7 @@ class OracleChangeNotificationDispatcherSpec extends Specification {
         def event = Mock(DatabaseChangeEvent)
         def dispatcher = new OracleChangeNotificationDispatcher(
             'inventory', definition(null, Mock(ExecutableMethod), new Properties()), Mock(BeanContext),
-            executor, Mock(TaskScheduler), new OracleChangeNotificationTaskTracker(),
+            notificationExecutor(executor), Mock(TaskScheduler), new OracleChangeNotificationTaskTracker(),
             { long ignored -> } as LongConsumer,
             { Long ignored, DatabaseChangeEvent.AdditionalEventType ignoredType -> } as BiConsumer,
             { long ignored -> } as LongConsumer,
@@ -932,7 +934,7 @@ class OracleChangeNotificationDispatcherSpec extends Specification {
         tracker.shutdownGracefully().toCompletableFuture().isDone()
     }
 
-    void "resubmits rejected #eventType lifecycle handling on the blocking executor"() {
+    void "resubmits rejected #eventType lifecycle handling to the listener worker"() {
         given:
         List<Runnable> scheduled = []
         List<Runnable> queued = []
@@ -1118,12 +1120,12 @@ class OracleChangeNotificationDispatcherSpec extends Specification {
         completionDuringDispatch.done
     }
 
-    void "waits for all concurrently running callbacks during graceful shutdown"() {
+    void "waits for one running callback and discards the next during graceful shutdown"() {
         given:
         def taskTracker = new OracleChangeNotificationTaskTracker()
-        def callbacksStarted = new CountDownLatch(2)
+        def callbacksStarted = new CountDownLatch(1)
         def releaseCallbacks = new CountDownLatch(1)
-        List<Thread> callbackThreads = Collections.synchronizedList(new ArrayList<Thread>())
+        def executor = new ChangeNotificationExecutor('oracle-serial-shutdown', 2)
         def shutdownRequests = new AtomicInteger()
         LongConsumer shutdownHandler = { long ignored ->
             shutdownRequests.incrementAndGet()
@@ -1132,11 +1134,6 @@ class OracleChangeNotificationDispatcherSpec extends Specification {
                 throw new AssertionError("Timed out waiting to release the shutdown callback")
             }
         } as LongConsumer
-        Executor executor = { Runnable command ->
-            Thread callbackThread = new Thread(command)
-            callbackThreads.add(callbackThread)
-            callbackThread.start()
-        } as Executor
         def dispatcher = dispatcher(definition(), Mock(BeanContext), Mock(LongConsumer),
             Mock(BiConsumer), Mock(LongConsumer), shutdownHandler, executor, taskTracker)
         def firstEvent = Mock(DatabaseChangeEvent)
@@ -1149,27 +1146,25 @@ class OracleChangeNotificationDispatcherSpec extends Specification {
         when:
         dispatcher.onDatabaseChangeNotification(firstEvent)
         dispatcher.onDatabaseChangeNotification(secondEvent)
-        boolean bothCallbacksStarted = callbacksStarted.await(5, TimeUnit.SECONDS)
+        boolean firstCallbackStarted = callbacksStarted.await(5, TimeUnit.SECONDS)
         def shutdown = taskTracker.shutdownGracefully().toCompletableFuture()
         long outstandingCallbacks = taskTracker.reportActiveTasks().orElseThrow()
         releaseCallbacks.countDown()
-        callbackThreads.each { it.join(5000) }
+        dispatcher.close()
+        assert executor.stop().toCompletableFuture().get(5, TimeUnit.SECONDS) == null
         shutdown.get(5, TimeUnit.SECONDS)
 
         then:
-        bothCallbacksStarted
-        outstandingCallbacks == 2L
-        shutdownRequests.get() == 2
-        callbackThreads.every { !it.isAlive() }
+        firstCallbackStarted
+        outstandingCallbacks == 1L
+        shutdownRequests.get() == 1
+        executor.stopped
         taskTracker.reportActiveTasks().orElseThrow() == 0L
 
         cleanup:
         releaseCallbacks.countDown()
-        callbackThreads.each {
-            if (it.isAlive()) {
-                it.join(5000)
-            }
-        }
+        dispatcher.close()
+        executor.stop().toCompletableFuture().get(5, TimeUnit.SECONDS) == null
     }
 
     void "dispatches a full-table notification as one invalidation without row details"() {
@@ -1423,7 +1418,7 @@ class OracleChangeNotificationDispatcherSpec extends Specification {
             "inventory",
             definition,
             beanContext,
-            executor,
+            notificationExecutor(executor),
             scheduler ?: Mock(TaskScheduler),
             taskTracker,
             registrationPurgedHandler,
@@ -1434,6 +1429,18 @@ class OracleChangeNotificationDispatcherSpec extends Specification {
         )
         dispatcher.configureRegistrationOptions(definition.registrationProperties())
         return dispatcher
+    }
+
+    private ChangeNotificationExecutor notificationExecutor(Executor executor) {
+        if (executor instanceof ChangeNotificationExecutor) {
+            return (ChangeNotificationExecutor) executor
+        }
+        def stopped = new AtomicBoolean()
+        Stub(ChangeNotificationExecutor) {
+            execute(_ as Runnable) >> { Runnable task -> executor.execute(task) }
+            stop() >> { stopped.set(true); CompletableFuture.completedStage(null) }
+            isStopped() >> { stopped.get() }
+        }
     }
 
     private static boolean isInvalidation(Object[] arguments) {

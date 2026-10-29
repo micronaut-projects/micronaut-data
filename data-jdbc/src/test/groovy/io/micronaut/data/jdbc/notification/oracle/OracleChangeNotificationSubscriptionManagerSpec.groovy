@@ -35,6 +35,10 @@ import java.sql.ResultSet
 import java.sql.SQLException
 import java.sql.Statement
 import java.util.concurrent.Executor
+import java.util.concurrent.CountDownLatch
+import java.util.concurrent.TimeUnit
+import java.util.concurrent.atomic.AtomicInteger
+import java.util.concurrent.atomic.AtomicReference
 import java.util.concurrent.RejectedExecutionException
 
 class OracleChangeNotificationSubscriptionManagerSpec extends Specification {
@@ -173,6 +177,17 @@ class OracleChangeNotificationSubscriptionManagerSpec extends Specification {
         def statement = Mock(Statement)
         def oracleStatement = Mock(OracleStatement)
         def method = Mock(ExecutableMethod)
+        def started = new CountDownLatch(1)
+        def release = new CountDownLatch(1)
+        def calls = new AtomicInteger()
+        def worker = new AtomicReference<Thread>()
+        method.invoke(_, _) >> {
+            worker.set(Thread.currentThread())
+            calls.incrementAndGet()
+            started.countDown()
+            assert release.await(5, TimeUnit.SECONDS)
+            null
+        }
         List<Runnable> queued = []
         Executor executor = { Runnable task -> queued.add(task) } as Executor
         def manager = new OracleChangeNotificationSubscriptionManager("inventory", operations, Mock(BeanContext), executor,
@@ -193,28 +208,37 @@ class OracleChangeNotificationSubscriptionManagerSpec extends Specification {
         when:
         manager.start()
         listener.onDatabaseChangeNotification(event)
+        assert started.await(5, TimeUnit.SECONDS)
+        listener.onDatabaseChangeNotification(event)
         def completion = manager.stop().toCompletableFuture()
 
         then:
         !completion.isDone()
         manager.stop().is(completion)
-        queued.size() == 2
-        manager.reportActiveTasks().getAsLong() == 1
+        queued.size() == 1 // Only registration cleanup uses the shared blocking executor.
+        manager.reportActiveTasks().getAsLong() == 2
 
         when:
         queued.remove(0).run()
 
         then:
         !completion.isDone()
-        0 * method.invoke(_, _)
+        1 * oracleConnection.unregisterDatabaseChangeNotification(registration)
+        manager.reportActiveTasks().getAsLong() == 1
 
         when:
-        queued.remove(0).run()
+        release.countDown()
+        completion.get(5, TimeUnit.SECONDS)
+        worker.get().join(5000)
 
         then:
-        1 * oracleConnection.unregisterDatabaseChangeNotification(registration)
-        completion.isDone()
+        calls.get() == 1
+        !worker.get().alive
         manager.reportActiveTasks().getAsLong() == 0
+
+        cleanup:
+        release.countDown()
+        worker.get()?.join(5000)
     }
 
     void "completes shutdown accounting when the executor rejects cleanup"() {
@@ -313,6 +337,17 @@ class OracleChangeNotificationSubscriptionManagerSpec extends Specification {
         def secondMethod = Mock(ExecutableMethod)
         firstMethod.getDescription(true) >> "void firstListener(ChangeEvent<Book>)"
         secondMethod.getDescription(true) >> "void failingListener(ChangeEvent<Book>)"
+        def started = new CountDownLatch(1)
+        def release = new CountDownLatch(1)
+        def calls = new AtomicInteger()
+        def worker = new AtomicReference<Thread>()
+        firstMethod.invoke(_, _) >> {
+            worker.set(Thread.currentThread())
+            calls.incrementAndGet()
+            started.countDown()
+            assert release.await(5, TimeUnit.SECONDS)
+            null
+        }
         List<Runnable> queued = []
         List<DatabaseChangeListener> listeners = []
         Executor executor = { Runnable command -> queued.add(command) } as Executor
@@ -339,6 +374,8 @@ class OracleChangeNotificationSubscriptionManagerSpec extends Specification {
         event.eventType >> DatabaseChangeEvent.EventType.OBJCHANGE
         secondStatement.executeQuery("INVALID SQL") >> {
             listeners[0].onDatabaseChangeNotification(event)
+            assert started.await(5, TimeUnit.SECONDS)
+            listeners[0].onDatabaseChangeNotification(event)
             throw new SQLException("Invalid registration query")
         }
 
@@ -354,11 +391,22 @@ class OracleChangeNotificationSubscriptionManagerSpec extends Specification {
         1 * oracleConnection.unregisterDatabaseChangeNotification(secondRegistration)
         1 * oracleConnection.unregisterDatabaseChangeNotification(firstRegistration) >> {
             assert manager.reportActiveTasks().isPresent()
-            assert queued.size() == 1
-            queued.remove(0).run()
+            assert queued.empty
         }
-        0 * firstMethod.invoke(_, _)
+        manager.reportActiveTasks().getAsLong() == 1
+
+        when:
+        release.countDown()
+        worker.get().join(5000)
+
+        then:
+        calls.get() == 1
+        !worker.get().alive
         manager.reportActiveTasks().getAsLong() == 0
+
+        cleanup:
+        release.countDown()
+        worker.get()?.join(5000)
     }
 
     private static OracleChangeListenerDefinition definition(String query, ExecutableMethod<?, ?> method) {

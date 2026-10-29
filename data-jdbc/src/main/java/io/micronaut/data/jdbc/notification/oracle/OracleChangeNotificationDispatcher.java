@@ -18,6 +18,7 @@ package io.micronaut.data.jdbc.notification.oracle;
 import io.micronaut.context.BeanContext;
 import io.micronaut.data.jdbc.notification.ChangeEvent;
 import io.micronaut.data.jdbc.notification.ChangeOperation;
+import io.micronaut.data.jdbc.notification.ChangeNotificationExecutor;
 import io.micronaut.data.jdbc.notification.DefaultChangeEvent;
 import io.micronaut.data.jdbc.notification.DeferredChangeEvent;
 import io.micronaut.inject.ExecutableMethod;
@@ -36,7 +37,6 @@ import java.time.Duration;
 import java.util.HexFormat;
 import java.util.Properties;
 import java.util.StringJoiner;
-import java.util.concurrent.Executor;
 import java.util.concurrent.RejectedExecutionException;
 import java.util.concurrent.atomic.AtomicReference;
 import java.util.function.BiConsumer;
@@ -49,19 +49,12 @@ import java.util.function.LongPredicate;
  *
  * <p>The subscription owns this dispatcher and reuses it when recovering its registration.
  * Each submitted callback retains its registration options snapshot even if recovery configures
- * different options for a replacement registration. Data notifications must belong to the current
- * or pending registration, both when received and when queued processing begins.</p>
+ * different options for a replacement registration.</p>
  *
- * <p>The Oracle driver invokes this listener on its notification thread. To avoid blocking that
- * thread, the dispatcher submits row reload and listener invocation to the blocking executor.</p>
+ * <h2>Data change events</h2>
  *
- * <p>If the executor rejects a lifecycle callback, the scheduler retries submission until it is
- * accepted or shutdown begins. This also applies to one-shot data notifications because they
- * clear the purged registration. Other rejected data callbacks request a deferred invalidation.
- * Repeated losses are combined while that invalidation is waiting to run.</p>
- *
- * <p>Running tasks are tracked so graceful shutdown can wait for them to complete. Queued tasks
- * are discarded if shutdown starts before they run. Inserts and updates reload current entity
+ * <p>Table and query change notifications must belong to the current or pending registration,
+ * both when received and when queued processing begins. Inserts and updates reload current entity
  * state by ROWID. Deletes are dispatched without entity state because the deleted row can no
  * longer be reloaded.</p>
  *
@@ -71,17 +64,39 @@ import java.util.function.LongPredicate;
  * for dependent tables. Invalidation applies to the complete event and suppresses any row-level
  * changes reported by that same event.</p>
  *
- * <p>A registration-level deregistration removes the already-closed registration from subscription
- * tracking. A query-level deregistration unregisters the enclosing registration as well because each
- * framework registration contains exactly one listener query. A database-wide shutdown normally
- * starts registration recovery; after a replacement is activated, the listener receives an
- * invalidation. When reliable notifications and a client-initiated connection are enabled, the
- * dispatcher leaves notification-connection retries to the JDBC driver and relies on the
- * registration failure callback to start framework recovery if the driver's retries are exhausted.
- * A shutdown affecting one RAC instance is logged only.</p>
+ * <p>Rejected data callbacks request a deferred invalidation. Repeated losses are combined while
+ * that invalidation is waiting to run. One-shot data notifications are retained and retried instead,
+ * because processing them also clears the purged registration from subscription tracking.</p>
  *
- * <p>Listener invocation failures are logged and do not prevent subsequent changes from being
- * dispatched.</p>
+ * <h2>Lifecycle events</h2>
+ *
+ * <p>Registration and query deregistration callbacks are forwarded to the subscription. A
+ * registration-level deregistration removes the already-closed registration from tracking.
+ * A query-level deregistration unregisters the enclosing registration as well because each
+ * framework registration contains exactly one listener query. The subscription requests a final
+ * {@link ChangeOperation#TERMINATED} event when notifications have permanently stopped.</p>
+ *
+ * <p>A database-wide shutdown normally starts registration recovery; after a replacement is
+ * activated, the listener receives an invalidation. When reliable notifications and a
+ * client-initiated connection are enabled, the dispatcher leaves notification-connection retries
+ * to the JDBC driver and relies on the registration failure callback to start framework recovery
+ * if the driver's retries are exhausted. A shutdown affecting one RAC instance is logged only.</p>
+ *
+ * <p>If the queue rejects a lifecycle callback, the scheduler retries submission until it is
+ * accepted or shutdown begins. Recovery invalidations use the same pending-invalidation mechanism
+ * as rejected data notifications.</p>
+ *
+ * <h2>Execution and shutdown</h2>
+ *
+ * <p>The Oracle driver invokes this listener on its notification thread. To avoid blocking that
+ * thread, the dispatcher submits notification processing, entity loading, and listener invocation
+ * to a bounded queue. A dedicated worker processes callbacks sequentially for this listener;
+ * different listeners can run concurrently. Listener invocation failures are logged and do not
+ * prevent subsequent changes from being dispatched.</p>
+ *
+ * <p>Running tasks are tracked so graceful shutdown can wait for them to complete. Queued tasks
+ * are discarded if shutdown starts before they run. The dedicated worker stops after subscription
+ * closure or after delivering the final termination or one-shot notification.</p>
  */
 final class OracleChangeNotificationDispatcher implements DatabaseChangeListener {
     private static final Logger LOG = LoggerFactory.getLogger(OracleChangeNotificationDispatcher.class);
@@ -92,7 +107,7 @@ final class OracleChangeNotificationDispatcher implements DatabaseChangeListener
     private final OracleChangeListenerDefinition listenerDefinition;
     private final String methodDescription;
     private final BeanContext beanContext;
-    private final Executor blockingExecutor;
+    private final ChangeNotificationExecutor notificationExecutor;
     private final TaskScheduler taskScheduler;
     private final OracleChangeNotificationTaskTracker taskTracker;
     private final LongConsumer registrationPurgedHandler;
@@ -121,7 +136,7 @@ final class OracleChangeNotificationDispatcher implements DatabaseChangeListener
     OracleChangeNotificationDispatcher(String dataSourceName,
                                        OracleChangeListenerDefinition listenerDefinition,
                                        BeanContext beanContext,
-                                       Executor blockingExecutor,
+                                       ChangeNotificationExecutor notificationExecutor,
                                        TaskScheduler taskScheduler,
                                        OracleChangeNotificationTaskTracker taskTracker,
                                        LongConsumer registrationPurgedHandler,
@@ -133,7 +148,7 @@ final class OracleChangeNotificationDispatcher implements DatabaseChangeListener
         this.listenerDefinition = listenerDefinition;
         this.methodDescription = listenerDefinition.method().getDescription(true);
         this.beanContext = beanContext;
-        this.blockingExecutor = blockingExecutor;
+        this.notificationExecutor = notificationExecutor;
         this.taskScheduler = taskScheduler;
         this.taskTracker = taskTracker;
         this.registrationPurgedHandler = registrationPurgedHandler;
@@ -141,6 +156,16 @@ final class OracleChangeNotificationDispatcher implements DatabaseChangeListener
         this.queryDeregistrationHandler = queryDeregistrationHandler;
         this.databaseShutdownHandler = databaseShutdownHandler;
         this.acceptsDataNotification = acceptsDataNotification;
+    }
+
+    /** Stops callback admission and releases the dedicated listener worker. */
+    void close() {
+        notificationExecutor.stop();
+        pendingInvalidation.set(null);
+    }
+
+    private boolean isStopped() {
+        return taskTracker.isShutdownStarted() || notificationExecutor.isStopped();
     }
 
     /**
@@ -163,13 +188,13 @@ final class OracleChangeNotificationDispatcher implements DatabaseChangeListener
     }
 
     /**
-     * Receives a driver callback and submits processing to the blocking executor.
+     * Receives a driver callback and submits processing to the listener's queue.
      *
      * @param event the callback event supplied by the Oracle JDBC driver
      */
     @Override
     public void onDatabaseChangeNotification(DatabaseChangeEvent event) {
-        if (taskTracker.isShutdownStarted()) {
+        if (isStopped()) {
             return;
         }
         RegistrationOptions configuredOptions = registrationOptions;
@@ -269,14 +294,14 @@ final class OracleChangeNotificationDispatcher implements DatabaseChangeListener
      * @param options the configured options captured when the callback was received
      */
     private void submitDispatch(DatabaseChangeEvent event, RegistrationOptions options) {
-        if (taskTracker.isShutdownStarted()) {
+        if (isStopped()) {
             LOG.trace("Ignored DCN callback for datasource [{}], registration [{}], and listener method [{}] because graceful shutdown has started",
                 dataSourceName, event.getRegId(), methodDescription);
             return;
         }
         long registrationId = event.getRegId();
         try {
-            blockingExecutor.execute(() -> dispatchSafely(event, options));
+            notificationExecutor.execute(() -> dispatchSafely(event, options));
         } catch (RuntimeException e) {
             LOG.warn("Unable to submit DCN event of type [{}] for datasource [{}], registration [{}], and listener method [{}]",
                 event.getEventType(), dataSourceName, event.getRegId(), methodDescription, e);
@@ -303,8 +328,8 @@ final class OracleChangeNotificationDispatcher implements DatabaseChangeListener
     }
 
     /**
-     * Retains a rejected lifecycle callback for resubmission. Retries continue until the blocking
-     * executor accepts it or shutdown starts. The scheduler never performs JDBC or listener work.
+     * Retains a rejected lifecycle callback for resubmission. Retries continue until the listener's
+     * queue accepts it or shutdown starts. The scheduler never performs JDBC or listener work.
      *
      * @param event the rejected lifecycle callback
      * @param options the options captured when the callback was received
@@ -345,7 +370,7 @@ final class OracleChangeNotificationDispatcher implements DatabaseChangeListener
     }
 
     private void submitPendingInvalidation(long registrationId) {
-        if (taskTracker.isShutdownStarted()) {
+        if (isStopped()) {
             pendingInvalidation.set(null);
             return;
         }
@@ -353,7 +378,7 @@ final class OracleChangeNotificationDispatcher implements DatabaseChangeListener
             return;
         }
         try {
-            blockingExecutor.execute(() -> {
+            notificationExecutor.execute(() -> {
                 // A loss during the listener's refresh needs another invalidation: its snapshot
                 // may already have been read. Losses while queued are covered by this refresh.
                 Runnable invalidation = pendingInvalidation.getAndSet(null);
@@ -373,13 +398,13 @@ final class OracleChangeNotificationDispatcher implements DatabaseChangeListener
     }
 
     /**
-     * Reschedules submission only; JDBC and listener work always runs through the blocking executor.
+     * Reschedules submission only; JDBC and listener work always runs on the listener's worker.
      *
      * @return whether a retry was scheduled
      */
     @SuppressWarnings("FutureReturnValueIgnored") // Retries check shutdown before submitting work.
     private boolean scheduleRetry(long registrationId, String description, Runnable retry) {
-        if (taskTracker.isShutdownStarted()) {
+        if (isStopped()) {
             return false;
         }
         try {
@@ -413,10 +438,17 @@ final class OracleChangeNotificationDispatcher implements DatabaseChangeListener
                     event.getDatabaseName(), describeTransactionId(event),
                     describeTableChanges(event.getTableChangeDescription()));
             }
-            if (options.purgeOnNotificationEnabled() && isDataNotification(event)) {
-                registrationPurgedHandler.accept(event.getRegId());
+            boolean purged = options.purgeOnNotificationEnabled() && isDataNotification(event);
+            try {
+                if (purged) {
+                    registrationPurgedHandler.accept(event.getRegId());
+                }
+                dispatch(event, options);
+            } finally {
+                if (purged) {
+                    close();
+                }
             }
-            dispatch(event, options);
         });
     }
 
@@ -646,7 +678,7 @@ final class OracleChangeNotificationDispatcher implements DatabaseChangeListener
      * @param shouldDispatch whether the event is still relevant
      */
     void submitLifecycleEvent(long registrationId, ChangeOperation operation, String reason, BooleanSupplier shouldDispatch) {
-        if (taskTracker.isShutdownStarted() || !shouldDispatch.getAsBoolean()) {
+        if (isStopped() || !shouldDispatch.getAsBoolean()) {
             return;
         }
         if (operation == ChangeOperation.INVALIDATE) {
@@ -655,24 +687,28 @@ final class OracleChangeNotificationDispatcher implements DatabaseChangeListener
             }
             return;
         }
-        if (operation == ChangeOperation.TERMINATED) {
-            // A deferred refresh cannot restore a subscription that has permanently stopped.
-            pendingInvalidation.set(null);
-        }
+        // TERMINATED is the other lifecycle operation; a refresh cannot restore this subscription.
+        pendingInvalidation.set(null);
         try {
-            blockingExecutor.execute(() -> dispatchSafely(registrationId, () -> {
-                if (shouldDispatch.getAsBoolean()) {
-                    LOG.trace("Dispatching {} {} for datasource [{}], registration [{}], and listener method [{}]",
-                        operation, reason, dataSourceName, registrationId, methodDescription);
-                    dispatchListener(new DefaultChangeEvent<>(operation, null, null), null);
+            notificationExecutor.execute(() -> dispatchSafely(registrationId, () -> {
+                try {
+                    if (shouldDispatch.getAsBoolean()) {
+                        LOG.trace("Dispatching {} {} for datasource [{}], registration [{}], and listener method [{}]",
+                            operation, reason, dataSourceName, registrationId, methodDescription);
+                        dispatchListener(new DefaultChangeEvent<>(operation, null, null), null);
+                    }
+                } finally {
+                    close();
                 }
             }));
         } catch (RuntimeException e) {
             LOG.warn("Unable to submit lifecycle event for datasource [{}], registration [{}], and listener method [{}]",
                 dataSourceName, registrationId, methodDescription, e);
-            if (e instanceof RejectedExecutionException) {
-                scheduleRetry(registrationId, "lifecycle event " + operation,
+            boolean retryScheduled = e instanceof RejectedExecutionException
+                && scheduleRetry(registrationId, "lifecycle event " + operation,
                     () -> submitLifecycleEvent(registrationId, operation, reason, shouldDispatch));
+            if (!retryScheduled) {
+                close();
             }
         }
     }

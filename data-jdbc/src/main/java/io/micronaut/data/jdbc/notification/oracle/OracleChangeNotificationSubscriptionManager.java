@@ -18,6 +18,7 @@ package io.micronaut.data.jdbc.notification.oracle;
 import io.micronaut.context.BeanContext;
 import io.micronaut.data.exceptions.DataAccessException;
 import io.micronaut.data.jdbc.runtime.JdbcOperations;
+import io.micronaut.data.jdbc.notification.ChangeNotificationExecutor;
 import io.micronaut.scheduling.TaskScheduler;
 import org.jspecify.annotations.Nullable;
 import org.slf4j.Logger;
@@ -47,9 +48,10 @@ import java.util.concurrent.atomic.AtomicBoolean;
  * <p>During shutdown, the manager stops accepting callbacks, cancels scheduled recovery retries,
  * closes each subscription, and submits registration cleanup to the blocking executor. Shutdown
  * waits for cleanup, registration work, and notification callbacks already running. Callbacks still
- * queued on the executor are not included in that wait.</p>
+ * queued for their listener are not included in that wait.</p>
  */
 final class OracleChangeNotificationSubscriptionManager {
+    private static final int NOTIFICATION_QUEUE_CAPACITY = 1024;
     private static final Logger LOG = LoggerFactory.getLogger(OracleChangeNotificationSubscriptionManager.class);
 
     private final String dataSourceName;
@@ -71,7 +73,10 @@ final class OracleChangeNotificationSubscriptionManager {
         OracleChangeNotificationRegistrar registrar = new OracleChangeNotificationRegistrar(dataSourceName, operations);
         this.subscriptions = listenerDefinitions.stream()
             .map(definition -> new OracleChangeNotificationSubscription(
-                dataSourceName, definition, registrar, beanContext, blockingExecutor, taskScheduler, taskTracker, recoveryConfiguration))
+                dataSourceName, definition, registrar, beanContext, blockingExecutor,
+                new ChangeNotificationExecutor("oracle-notifications-" + dataSourceName + "-" + definition.method().getDescription(true),
+                    NOTIFICATION_QUEUE_CAPACITY),
+                taskScheduler, taskTracker, recoveryConfiguration))
             .toList();
     }
 

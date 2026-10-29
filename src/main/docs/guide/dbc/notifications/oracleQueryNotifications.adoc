@@ -83,8 +83,7 @@ so the listener can reconcile changes that may have been missed during recovery.
 
 `TERMINATED` means that the subscription has permanently stopped delivering notifications. It has no entity or
 row-specific metadata. Applications should stop trusting state maintained by the subscription and fall back to database
-reads or another consistency mechanism. This event can be delivered while an earlier notification is still being
-processed. The listener should keep notification-backed caches disabled even if an earlier callback completes later.
+reads or another consistency mechanism. Keep notification-backed caches disabled after handling this event.
 Handle `TERMINATED` explicitly in listener switches, separately from `INVALIDATE`, which requests reconciliation.
 
 == Object Change Notification
@@ -205,7 +204,7 @@ If the JDBC driver reports that it cannot restore notification delivery, Microna
 registration. For other registration configurations, recovery starts when a database shutdown notification is received.
 
 After successful recovery, the listener receives an `INVALIDATE` event so it can refresh potentially outdated data.
-If the blocking executor is saturated, delivery of the `INVALIDATE` event after recovery is retried.
+If the listener's notification queue is full, delivery of the `INVALIDATE` event after recovery is retried.
 
 If cleanup of an old registration fails during recovery, Micronaut Data retains it and retries unregistration at
 the start of subsequent recovery attempts and during shutdown. Successful replacement does not discard pending
@@ -245,27 +244,32 @@ Notifications remain unavailable during recovery. If a configured retry limit is
 cannot be scheduled, automatic recovery stops and the application must be restarted to restore notifications.
 Micronaut Data sends a final `TERMINATED` event in these cases. The listener should stop using notification-backed caches
 rather than refresh them and expect further updates. Termination does not create a replacement registration.
-Termination events run on the blocking executor. Rejected submissions are retried until accepted or application shutdown
-begins. Application shutdown suppresses delivery. Delivery is best effort if the executor and retry scheduler are unavailable;
-applications that require independent detection of notification loss should also use their own consistency checks.
+Termination events run on the listener's dedicated worker. If its queue is full, submission is retried until accepted or
+application shutdown begins. Application shutdown suppresses delivery. Delivery is best effort if the worker or retry
+scheduler is unavailable; applications that require independent detection of notification loss should also use their own consistency checks.
 Changes can be missed while a non-reliable registration is unavailable. Micronaut Data cannot detect a silently lost
 notification connection unless the JDBC driver reports the failure.
 
 == Delivery and Concurrency
 
-Oracle JDBC invokes its callback on a driver notification thread. Micronaut Data moves entity loading and listener
-invocation to the configured blocking executor so application work does not block that driver thread.
+Each listener has a dedicated worker thread and a queue holding up to 1024 waiting notifications. Oracle JDBC callbacks
+add notifications to that queue; the worker performs entity loading and invokes the listener. Application work therefore
+does not block the driver's notification thread. Registration recovery and cleanup use the configured blocking executor.
+The listener worker starts when needed, remains available across registration recovery, and stops when the subscription
+closes or finishes delivering its final termination or one-shot notification.
 
-For ongoing registrations, if the application cannot accept a data notification because its configured executor is
-saturated, Micronaut Data requests an `INVALIDATE` event so the listener can refresh its state. Repeated missed
-notifications are combined into one pending invalidation. Submission is retried until accepted or shutdown begins.
+For ongoing registrations, if the listener's queue is full, Micronaut Data requests an `INVALIDATE` event so the listener
+can refresh its state. Repeated missed notifications are combined into one pending invalidation. Submission is retried until accepted or shutdown begins.
 Changes missed after the listener starts processing that invalidation can cause an additional invalidation.
 This reconciliation does not replay the missed row notifications. If another delivery attempt cannot be scheduled,
 Micronaut Data logs an error and cannot guarantee delivery of the invalidation.
 
-Changes to individual rows within one Oracle Database notification are delivered sequentially. Separate notifications
-may invoke the same listener concurrently, with no ordering guarantee between them. Listener beans must therefore be
-thread-safe and must not depend on callback order.
+Notifications accepted into a listener's queue are processed sequentially in the order they enter the queue, including
+entity loading and listener invocation. Changes to individual rows within one notification are also delivered sequentially.
+Different listeners can run concurrently, so shared application state still requires synchronization. Each listener performs
+at most one entity reload at a time; listeners still share the datasource's connection pool.
+Rejected notifications handled through retries or invalidation do not retain their original position in that order.
+Entity loading reads the current database state; sequential processing does not provide a historical snapshot of each change.
 
 A single transaction, such as a bulk update, can produce one Oracle Database notification containing several row descriptions.
 The application receives one listener invocation for each affected row unless the notification requires an `INVALIDATE` event.

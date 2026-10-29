@@ -17,6 +17,7 @@ package io.micronaut.data.jdbc.notification.oracle;
 
 import io.micronaut.context.BeanContext;
 import io.micronaut.data.jdbc.notification.ChangeOperation;
+import io.micronaut.data.jdbc.notification.ChangeNotificationExecutor;
 import io.micronaut.scheduling.TaskScheduler;
 import oracle.jdbc.dcn.DatabaseChangeEvent;
 import oracle.jdbc.dcn.DatabaseChangeRegistration;
@@ -107,6 +108,7 @@ final class OracleChangeNotificationSubscription {
                                          OracleChangeNotificationRegistrar registrar,
                                          BeanContext beanContext,
                                          Executor blockingExecutor,
+                                         ChangeNotificationExecutor notificationExecutor,
                                          TaskScheduler taskScheduler,
                                          OracleChangeNotificationTaskTracker taskTracker,
                                          OracleRegistrationRecoveryConfiguration recoveryConfiguration) {
@@ -122,7 +124,7 @@ final class OracleChangeNotificationSubscription {
         this.retryDelayMultiplier = recoveryConfiguration.getRetryDelayMultiplier();
         this.maxRetryDelay = recoveryConfiguration.getMaxRetryDelay();
         this.dispatcher = new OracleChangeNotificationDispatcher(
-            dataSourceName, definition, beanContext, blockingExecutor, taskScheduler, taskTracker,
+            dataSourceName, definition, beanContext, notificationExecutor, taskScheduler, taskTracker,
             this::handleRegistrationPurged, this::handleRegistrationDeregistered,
             this::handleQueryDeregistered, this::handleDatabaseShutdown, this::acceptsDataNotification);
     }
@@ -210,6 +212,7 @@ final class OracleChangeNotificationSubscription {
             closed = true;
             recoveryRegistrationId = null;
         }
+        dispatcher.close();
         cancelRecoveryRetryTask();
     }
 
