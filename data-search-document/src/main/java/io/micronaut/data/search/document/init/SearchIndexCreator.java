@@ -19,9 +19,13 @@ import io.micronaut.context.BeanContext;
 import io.micronaut.context.annotation.Context;
 import io.micronaut.context.annotation.Requires;
 import io.micronaut.core.annotation.Internal;
+import io.micronaut.core.beans.BeanIntrospection;
+import io.micronaut.core.beans.BeanIntrospector;
 import io.micronaut.core.util.StringUtils;
+import io.micronaut.data.annotation.MappedEntity;
 import io.micronaut.data.annotation.Repository;
 import io.micronaut.data.annotation.RepositoryConfiguration;
+import io.micronaut.data.annotation.search.Searchable;
 import io.micronaut.data.intercept.annotation.DataMethod;
 import io.micronaut.data.model.runtime.RuntimeEntityRegistry;
 import io.micronaut.data.model.runtime.RuntimePersistentEntity;
@@ -34,6 +38,8 @@ import io.micronaut.inject.qualifiers.Qualifiers;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
+import java.lang.reflect.Modifier;
+import java.util.HashSet;
 import java.util.LinkedHashSet;
 import java.util.List;
 import java.util.Set;
@@ -76,19 +82,26 @@ public final class SearchIndexCreator {
 
     /**
      * @param beanContext The bean context
-     * @return The root entities of the document search repositories
+     * @return The root entities of the document search repositories, and the {@link Searchable} entities no
+     * other repository stores, which the operations bean or a {@code SearchQueryExecutor} may index
      */
     private static Set<Class<?>> indexedTypes(BeanContext beanContext) {
-        // only the entities of document search repositories: a @Searchable entity of a SQL or MongoDB repository has no index here
+        // a @Searchable entity of a SQL or MongoDB repository has no index here
         Set<Class<?>> types = new LinkedHashSet<>();
+        Set<Class<?>> otherStores = new HashSet<>();
         for (BeanDefinition<?> definition : beanContext.getBeanDefinitions(Qualifiers.byStereotype(Repository.class))) {
             boolean documentStore = definition.classValue(RepositoryConfiguration.class, "operations")
                 .filter(DocumentSearchRepositoryOperations.class::isAssignableFrom)
                 .isPresent();
-            if (documentStore) {
-                for (ExecutableMethod<?, ?> method : definition.getExecutableMethods()) {
-                    method.classValue(DataMethod.class, DataMethod.META_MEMBER_ROOT_ENTITY).ifPresent(types::add);
-                }
+            for (ExecutableMethod<?, ?> method : definition.getExecutableMethods()) {
+                method.classValue(DataMethod.class, DataMethod.META_MEMBER_ROOT_ENTITY).ifPresent(documentStore ? types::add : otherStores::add);
+            }
+        }
+        for (BeanIntrospection<Object> introspection : BeanIntrospector.SHARED.findIntrospections(MappedEntity.class)) {
+            Class<Object> type = introspection.getBeanType();
+            if (introspection.hasAnnotation(Searchable.class) && !otherStores.contains(type)
+                && !type.getName().contains("$") && !Modifier.isAbstract(type.getModifiers())) {
+                types.add(type);
             }
         }
         return types;
