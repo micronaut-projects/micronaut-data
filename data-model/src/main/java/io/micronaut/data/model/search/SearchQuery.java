@@ -327,7 +327,8 @@ public final class SearchQuery {
         /**
          * Selects the syntax of the query string: {@link SearchSyntax#NATIVE} passes it to the store
          * unparsed, as the {@link MatchMode#NATIVE} mode; {@link SearchSyntax#SIMPLE} keeps the portable
-         * grammar and the mode set so far.
+         * grammar and the mode set so far, except a {@link MatchMode#NATIVE} mode, which becomes
+         * {@link MatchMode#ANY}.
          *
          * @param syntax The syntax
          * @return This builder
