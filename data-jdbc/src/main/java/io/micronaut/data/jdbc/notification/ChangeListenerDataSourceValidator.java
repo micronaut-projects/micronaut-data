@@ -18,6 +18,7 @@ package io.micronaut.data.jdbc.notification;
 import io.micronaut.context.BeanContext;
 import io.micronaut.context.BeanProvider;
 import io.micronaut.context.annotation.Context;
+import io.micronaut.context.annotation.Requires;
 import io.micronaut.context.event.ApplicationEventListener;
 import io.micronaut.context.event.StartupEvent;
 import io.micronaut.core.annotation.Order;
@@ -35,6 +36,7 @@ import java.util.Map;
  */
 @Context
 @Order(Ordered.HIGHEST_PRECEDENCE)
+@Requires(property = "micronaut.data.jdbc.notifications.enabled", value = "true", defaultValue = "true")
 final class ChangeListenerDataSourceValidator implements ApplicationEventListener<StartupEvent> {
 
     private final BeanContext beanContext;

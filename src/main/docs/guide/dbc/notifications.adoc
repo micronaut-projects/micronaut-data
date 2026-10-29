@@ -1,2 +1,18 @@
 Micronaut Data notification integrations let an application react to committed database changes and notification-subscription
 termination. The available capabilities depend on the database and JDBC driver.
+
+JDBC change listeners are enabled by default. To disable them, for example in tests using H2 or another database
+without a notification provider, set the following in the test environment's configuration:
+
+[configuration]
+----
+micronaut:
+  data:
+    jdbc:
+      notifications:
+        enabled: false
+----
+
+This setting disables automatic notification registration and startup datasource/provider validation for all JDBC
+datasources. Listener beans remain available, but receive no database notifications. Compile-time validation of listener
+methods still applies. When notifications are enabled, missing datasources or notification providers cause startup to fail.
