@@ -47,6 +47,12 @@ public abstract class OracleTextQueryConverter implements TextSearchQueryConvert
      */
     public static final String MATCH_NOTHING = "{mn_no_match_0}";
 
+    /**
+     * The shortest term {@code SearchPrefix} expands with {@code %}; a shorter one is matched exactly, as a
+     * one-letter prefix expands to more terms than Oracle Text's wildcard limit allows (DRG-51030).
+     */
+    public static final int MIN_PREFIX_LENGTH = 2;
+
     private static final String FUZZY_SUFFIX = ",60,100)";
 
     /**
@@ -102,8 +108,8 @@ public abstract class OracleTextQueryConverter implements TextSearchQueryConvert
             return renderNegated(query);
         }
         if (mode == MatchMode.PHRASE) {
-            String phrase = query.replace("\"", "").trim();
-            return phrase.isEmpty() ? MATCH_NOTHING : escape(phrase);
+            String phrase = escape(query.replace("\"", ""));
+            return phrase == null ? MATCH_NOTHING : phrase;
         }
         List<String> rendered = new ArrayList<>();
         for (List<SearchTerm> group : SearchQueryParser.parse(query)) {
@@ -119,8 +125,9 @@ public abstract class OracleTextQueryConverter implements TextSearchQueryConvert
     private static String renderNegated(String query) {
         StringJoiner negated = new StringJoiner(" | ");
         for (SearchTerm term : SearchQueryParser.terms(query)) {
-            if (term.negated()) {
-                negated.add(escape(term.text()));
+            String escaped = escape(term.text());
+            if (term.negated() && escaped != null) {
+                negated.add(escaped);
             }
         }
         return negated.length() == 0 ? MATCH_NOTHING : negated.toString();
@@ -148,7 +155,7 @@ public abstract class OracleTextQueryConverter implements TextSearchQueryConvert
                 continue;
             }
             if (term.negated()) {
-                negated.add(escape(term.text()));
+                negated.add(rendered);
             } else {
                 positive.add(rendered);
             }
@@ -167,7 +174,7 @@ public abstract class OracleTextQueryConverter implements TextSearchQueryConvert
 
     @Nullable
     private static String renderTerm(SearchTerm term, MatchMode mode) {
-        if (term.phrase() || mode == MatchMode.ANY || mode == MatchMode.ALL) {
+        if (term.phrase() || term.negated() || mode == MatchMode.ANY || mode == MatchMode.ALL) {
             return escape(term.text());
         }
         // an underscore is Oracle Text's single-character wildcard, so it goes with the other symbols
@@ -176,11 +183,17 @@ public abstract class OracleTextQueryConverter implements TextSearchQueryConvert
             return null;
         }
         // a reserved word such as near or about is escaped in braces inside fuzzy(); braces do not combine with %
-        return mode == MatchMode.PREFIX ? word + "%" : "fuzzy({" + word + "}" + FUZZY_SUFFIX;
+        if (mode == MatchMode.PREFIX) {
+            return word.length() < MIN_PREFIX_LENGTH ? "{" + word + "}" : word + "%";
+        }
+        return "fuzzy({" + word + "}" + FUZZY_SUFFIX;
     }
 
+    /** A term in braces, matched literally; {@code null} when nothing but braces or spaces remains. */
+    @Nullable
     private static String escape(String text) {
-        return "{" + text.replace("}", "").replace("{", "") + "}";
+        String literal = text.replace("}", "").replace("{", "").trim();
+        return literal.isEmpty() ? null : "{" + literal + "}";
     }
 
     @Override
