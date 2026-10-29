@@ -293,6 +293,11 @@ final class DefaultMongoPreparedQuery<E, R> extends DefaultBindableParametersPre
         if (limit == null || !limit.isNumber() || limit.asNumber().intValue() >= required) {
             return;
         }
+        if (required > MAX_VECTOR_CANDIDATES) {
+            // the limit cannot exceed numCandidates, which MongoDB caps at 10000
+            throw new IllegalArgumentException("A MongoDB vector search pages within the first " + MAX_VECTOR_CANDIDATES
+                + " neighbours; the page ends at " + required);
+        }
         // the stage belongs to the stored query's cached pipeline, so size a copy for this invocation only
         BsonDocument sized = vectorSearch.clone();
         sized.put("limit", new BsonInt32(required));

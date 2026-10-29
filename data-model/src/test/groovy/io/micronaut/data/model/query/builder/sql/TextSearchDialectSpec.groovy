@@ -81,4 +81,9 @@ class TextSearchDialectSpec extends Specification {
         TextSearchDialect.resolveLanguage([], new io.micronaut.data.model.search.TextMatchOptions(Map.of(), 0, "german")) == "german"
         io.micronaut.data.model.search.SearchQuery.builder("x").language("simple").build().language == "simple"
     }
+
+    void "the query builder leaves analyzer names to the document stores"() {
+        expect:
+        io.micronaut.data.model.search.SearchQuery.builder("x").language("my-folding").build().language == "my-folding"
+    }
 }

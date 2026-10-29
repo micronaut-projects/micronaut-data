@@ -31,14 +31,16 @@ import java.util.StringJoiner;
  * {@link MatchMode}, so the generated SQL can always use {@code to_tsquery(config, ?)}.
  *
  * <p>Lexemes are quoted, which makes any user input safe for {@code to_tsquery}; a quoted
- * multi-word lexeme becomes a phrase. Negated terms are joined with {@code & !}.</p>
+ * multi-word lexeme becomes a phrase. Negated terms are joined with {@code & !}. A group made only
+ * of negated terms is dropped, so a query such as {@code -spam} matches nothing.</p>
  *
  * @since 5.4.0
  */
 @Internal
 public abstract class PostgresTsQueryConverter implements TextSearchQueryConverter {
 
-    private static final String MATCH_NOTHING = "'mn_no_match_0'";
+    // a lexeme and its negation: false for every document, whatever it contains
+    private static final String MATCH_NOTHING = "'mn_no_match_0' & !'mn_no_match_0'";
 
     /**
      * @param mode The match mode
@@ -201,6 +203,9 @@ public abstract class PostgresTsQueryConverter implements TextSearchQueryConvert
         }
     }
 
+    /**
+     * {@link MatchMode#ANY} converter.
+     */
     @Singleton
     public static final class Any extends PostgresTsQueryConverter {
         @Override
