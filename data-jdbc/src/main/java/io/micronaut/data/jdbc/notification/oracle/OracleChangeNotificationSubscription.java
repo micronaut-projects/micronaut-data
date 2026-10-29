@@ -48,7 +48,7 @@ import java.util.function.Consumer;
  * become stale while notifications were unavailable.</p>
  */
 @SuppressWarnings("ReferenceEquality")
-final class OracleChangeNotificationSubscription {
+class OracleChangeNotificationSubscription {
     private static final Logger LOG = LoggerFactory.getLogger(OracleChangeNotificationSubscription.class);
 
     private final String dataSourceName;
@@ -124,10 +124,7 @@ final class OracleChangeNotificationSubscription {
         this.retryDelayMultiplier = recoveryConfiguration.getRetryDelayMultiplier();
         this.maxRetryDelay = recoveryConfiguration.getMaxRetryDelay();
         this.dispatcher = new OracleChangeNotificationDispatcher(
-            dataSourceName, definition, beanContext, notificationQueue, taskTracker,
-            this::handleRegistrationPurged, this::handleRegistrationDeregistered,
-            this::handleQueryDeregistered, this::handleDatabaseShutdown, this::acceptsDataNotification,
-            this::enqueueDataNotification);
+            dataSourceName, definition, beanContext, notificationQueue, taskTracker, this);
     }
 
     OracleChangeListenerDefinition getDefinition() {
@@ -194,7 +191,8 @@ final class OracleChangeNotificationSubscription {
         return true;
     }
 
-    private boolean acceptsDataNotification(long registrationId) {
+    /** Checks whether data belongs to an accepted current or pending registration under the lifecycle lock. */
+    boolean acceptsDataNotification(long registrationId) {
         synchronized (lifecycleLock) {
             return !isStopped()
                 && ((isCurrent(registrationId) && recoveryRegistrationId == null)
@@ -206,7 +204,7 @@ final class OracleChangeNotificationSubscription {
      * Validates and enqueues data or reconciliation atomically with registration transitions that discard queued data.
      * The action only submits to the queue; listener execution takes place on its worker thread.
      */
-    private void enqueueDataNotification(long registrationId, Runnable enqueue) {
+    void enqueueDataNotification(long registrationId, Runnable enqueue) {
         synchronized (lifecycleLock) {
             if (acceptsDataNotification(registrationId)) {
                 enqueue.run();

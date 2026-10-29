@@ -39,7 +39,6 @@ import java.util.concurrent.atomic.AtomicBoolean
 import java.util.concurrent.atomic.AtomicInteger
 import java.util.function.BiConsumer
 import java.util.function.LongConsumer
-import java.util.function.LongPredicate
 
 class OracleChangeNotificationDispatcherSpec extends Specification {
 
@@ -144,13 +143,7 @@ class OracleChangeNotificationDispatcherSpec extends Specification {
         def event = Mock(DatabaseChangeEvent)
         def dispatcher = new OracleChangeNotificationDispatcher(
             'inventory', definition(null, Mock(ExecutableMethod), new Properties()), Mock(BeanContext),
-            notificationQueue(executor), new OracleChangeNotificationTaskTracker(),
-            { long ignored -> } as LongConsumer,
-            { Long ignored, DatabaseChangeEvent.AdditionalEventType ignoredType -> } as BiConsumer,
-            { long ignored -> } as LongConsumer,
-            { long ignored -> } as LongConsumer,
-            { long ignored -> true } as LongPredicate,
-            { Long ignored, Runnable enqueue -> enqueue.run() } as BiConsumer)
+            notificationQueue(executor), new OracleChangeNotificationTaskTracker(), Stub(OracleChangeNotificationSubscription))
 
         when:
         dispatcher.onDatabaseChangeNotification(event)
@@ -985,19 +978,18 @@ class OracleChangeNotificationDispatcherSpec extends Specification {
                                                             LongConsumer databaseShutdownHandler,
                                                             Object executor,
                                                             OracleChangeNotificationTaskTracker taskTracker) {
+        def subscription = Stub(OracleChangeNotificationSubscription) {
+            handleRegistrationPurged(_) >> { long id -> registrationPurgedHandler.accept(id) }
+            handleRegistrationDeregistered(_, _) >> { long id, DatabaseChangeEvent.AdditionalEventType reason ->
+                deregistrationHandler.accept(id, reason)
+            }
+            handleQueryDeregistered(_) >> { long id -> queryDeregistrationHandler.accept(id) }
+            handleDatabaseShutdown(_) >> { long id -> databaseShutdownHandler.accept(id) }
+            acceptsDataNotification(_) >> true
+            enqueueDataNotification(_, _) >> { long id, Runnable enqueue -> enqueue.run() }
+        }
         def dispatcher = new OracleChangeNotificationDispatcher(
-            "inventory",
-            definition,
-            beanContext,
-            notificationQueue(executor),
-            taskTracker,
-            registrationPurgedHandler,
-            deregistrationHandler,
-            queryDeregistrationHandler,
-            databaseShutdownHandler,
-            { long ignored -> true } as LongPredicate,
-            { Long ignored, Runnable enqueue -> enqueue.run() } as BiConsumer
-        )
+            "inventory", definition, beanContext, notificationQueue(executor), taskTracker, subscription)
         dispatcher.configureRegistrationOptions(definition.registrationProperties())
         return dispatcher
     }

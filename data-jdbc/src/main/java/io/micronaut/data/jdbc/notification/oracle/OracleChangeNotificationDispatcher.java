@@ -35,10 +35,7 @@ import org.slf4j.LoggerFactory;
 import java.util.HexFormat;
 import java.util.Properties;
 import java.util.StringJoiner;
-import java.util.function.BiConsumer;
 import java.util.function.BooleanSupplier;
-import java.util.function.LongConsumer;
-import java.util.function.LongPredicate;
 
 /**
  * Dispatches Oracle database change events for one listener definition.
@@ -109,12 +106,7 @@ final class OracleChangeNotificationDispatcher implements DatabaseChangeListener
     private final BeanContext beanContext;
     private final ChangeNotificationQueue notificationQueue;
     private final OracleChangeNotificationTaskTracker taskTracker;
-    private final LongConsumer registrationPurgedHandler;
-    private final BiConsumer<Long, DatabaseChangeEvent.AdditionalEventType> deregistrationHandler;
-    private final LongConsumer queryDeregistrationHandler;
-    private final LongConsumer databaseShutdownHandler;
-    private final LongPredicate acceptsDataNotification;
-    private final BiConsumer<Long, Runnable> enqueueDataNotification;
+    private final OracleChangeNotificationSubscription subscription;
 
     /**
      * Options reported by the driver and captured for callbacks after query association.
@@ -130,24 +122,14 @@ final class OracleChangeNotificationDispatcher implements DatabaseChangeListener
                                        BeanContext beanContext,
                                        ChangeNotificationQueue notificationQueue,
                                        OracleChangeNotificationTaskTracker taskTracker,
-                                       LongConsumer registrationPurgedHandler,
-                                       BiConsumer<Long, DatabaseChangeEvent.AdditionalEventType> deregistrationHandler,
-                                       LongConsumer queryDeregistrationHandler,
-                                       LongConsumer databaseShutdownHandler,
-                                       LongPredicate acceptsDataNotification,
-                                       BiConsumer<Long, Runnable> enqueueDataNotification) {
+                                       OracleChangeNotificationSubscription subscription) {
         this.dataSourceName = dataSourceName;
         this.listenerDefinition = listenerDefinition;
         this.methodDescription = listenerDefinition.method().getDescription(true);
         this.beanContext = beanContext;
         this.notificationQueue = notificationQueue;
         this.taskTracker = taskTracker;
-        this.registrationPurgedHandler = registrationPurgedHandler;
-        this.deregistrationHandler = deregistrationHandler;
-        this.queryDeregistrationHandler = queryDeregistrationHandler;
-        this.databaseShutdownHandler = databaseShutdownHandler;
-        this.acceptsDataNotification = acceptsDataNotification;
-        this.enqueueDataNotification = enqueueDataNotification;
+        this.subscription = subscription;
     }
 
     /** Stops callback admission and releases the dedicated listener worker. */
@@ -205,7 +187,7 @@ final class OracleChangeNotificationDispatcher implements DatabaseChangeListener
         }
         if (isDataNotification(event)) {
             if (configuredOptions.purgeOnNotificationEnabled()) {
-                registrationPurgedHandler.accept(event.getRegId());
+                subscription.handleRegistrationPurged(event.getRegId());
             }
             submitDispatch(event, configuredOptions);
         } else {
@@ -215,7 +197,7 @@ final class OracleChangeNotificationDispatcher implements DatabaseChangeListener
 
     /** Checks whether a data notification belongs to neither the current nor pending registration. */
     private boolean isStaleDataNotification(DatabaseChangeEvent event) {
-        return isDataNotification(event) && !acceptsDataNotification.test(event.getRegId());
+        return isDataNotification(event) && !subscription.acceptsDataNotification(event.getRegId());
     }
 
     /**
@@ -257,7 +239,7 @@ final class OracleChangeNotificationDispatcher implements DatabaseChangeListener
         if (eventType == DatabaseChangeEvent.EventType.DEREG) {
             LOG.warn("Received DCN event [{}] for registration [{}], datasource [{}], and listener method [{}]; deregistration reason [{}]",
                 eventType, registrationId, dataSourceName, methodDescription, event.getAdditionalEventType());
-            deregistrationHandler.accept(registrationId, event.getAdditionalEventType());
+            subscription.handleRegistrationDeregistered(registrationId, event.getAdditionalEventType());
             return;
         }
         if (eventType == DatabaseChangeEvent.EventType.SHUTDOWN) {
@@ -270,7 +252,7 @@ final class OracleChangeNotificationDispatcher implements DatabaseChangeListener
             LOG.warn("Received DCN event [{}] for registration [{}], datasource [{}], and listener method [{}]; " +
                     "marking listener state for reconciliation and starting registration recovery",
                 eventType, registrationId, dataSourceName, methodDescription);
-            databaseShutdownHandler.accept(registrationId);
+            subscription.handleDatabaseShutdown(registrationId);
             return;
         }
         if (eventType == DatabaseChangeEvent.EventType.SHUTDOWN_ANY) {
@@ -310,11 +292,11 @@ final class OracleChangeNotificationDispatcher implements DatabaseChangeListener
                 notificationQueue.enqueueFinal(() -> dispatchSafely(registrationId, () -> dispatch(event, options)));
             } else {
                 Runnable reconcile = () -> dispatchSafely(registrationId, () -> {
-                    if (acceptsDataNotification.test(registrationId)) {
+                    if (subscription.acceptsDataNotification(registrationId)) {
                         dispatchInvalidation(registrationId, "after the notification queue reached its limit");
                     }
                 });
-                enqueueDataNotification.accept(registrationId,
+                subscription.enqueueDataNotification(registrationId,
                     () -> notificationQueue.enqueue(() -> dispatchSafely(event, options), reconcile));
             }
         } catch (RuntimeException e) {
@@ -440,7 +422,7 @@ final class OracleChangeNotificationDispatcher implements DatabaseChangeListener
         LOG.warn("DCN query [{}] for datasource [{}], listener method [{}], and registration [{}] "
                 + "was deregistered; the listener is unavailable",
             queryId, dataSourceName, methodDescription, registrationId);
-        queryDeregistrationHandler.accept(registrationId);
+        subscription.handleQueryDeregistered(registrationId);
     }
 
     /**
