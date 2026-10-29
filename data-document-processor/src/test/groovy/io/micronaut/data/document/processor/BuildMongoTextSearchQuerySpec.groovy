@@ -79,6 +79,75 @@ ${methods}
         TestUtils.getQuery(repository.getRequiredMethod("countHits", String)) == '[{$match:{$text:{$search:{$mn_qp:0},$language:\'german\'}}},{$count:\'result\'}]'
     }
 
+    void "a search under OR or NOT is rejected at compile time"() {
+        when:
+        articleRepository("""
+    List<Article> findBySearchOrAuthor(String q, String author);
+""")
+
+        then:
+        def e = thrown(RuntimeException)
+        e.message.contains("MongoDB \$text cannot be combined with OR or negated")
+    }
+
+    void "the text match of a joined query is the first stage"() {
+        given:
+        def repository = buildRepository('test.PostRepository', """
+import io.micronaut.data.annotation.Join;
+import io.micronaut.data.annotation.Relation;
+import io.micronaut.data.annotation.search.SearchField;
+import io.micronaut.data.annotation.search.Searchable;
+import io.micronaut.data.mongodb.annotation.MongoRepository;
+
+@MappedEntity
+class Writer {
+    @Id
+    @GeneratedValue
+    private String id;
+    private String name;
+    public String getId() { return id; }
+    public void setId(String id) { this.id = id; }
+    public String getName() { return name; }
+    public void setName(String name) { this.name = name; }
+}
+
+@MappedEntity
+@Searchable
+class Post {
+    @Id
+    @GeneratedValue
+    private String id;
+    @SearchField
+    private String title;
+    @Relation(Relation.Kind.MANY_TO_ONE)
+    private Writer writer;
+    public String getId() { return id; }
+    public void setId(String id) { this.id = id; }
+    public String getTitle() { return title; }
+    public void setTitle(String title) { this.title = title; }
+    public Writer getWriter() { return writer; }
+    public void setWriter(Writer writer) { this.writer = writer; }
+}
+
+@MongoRepository
+interface PostRepository extends CrudRepository<Post, String> {
+    @Join("writer")
+    List<Post> findBySearch(String q);
+    @Join("writer")
+    List<Post> findBySearchAndWriterName(String q, String name);
+}
+""")
+        def search = TestUtils.getQuery(repository.getRequiredMethod("findBySearch", String))
+        def combined = TestUtils.getQuery(repository.getRequiredMethod("findBySearchAndWriterName", String, String))
+
+        expect:
+        search.startsWith('[{$match:{$text:{$search:{$mn_qp:0},$language:\'english\'}}},{$lookup:')
+        search.count('$text') == 1
+        combined.startsWith('[{$match:{$text:{$search:{$mn_qp:0},$language:\'english\'}}},{$lookup:')
+        combined.count('$text') == 1
+        combined.contains('{$match:{\'writer.name\':{$eq:{$mn_qp:1}}}}')
+    }
+
     void "prefix and fuzzy searches are rejected at compile time"() {
         when:
         articleRepository("""

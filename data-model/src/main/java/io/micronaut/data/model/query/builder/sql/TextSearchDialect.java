@@ -109,10 +109,25 @@ public interface TextSearchDialect {
         for (Expression<?> field : fields) {
             PersistentProperty property = asProperty(field);
             if (property != null) {
-                return TextSearchSupport.resolveLanguage(property.getOwner());
+                return requireLanguageName(TextSearchSupport.resolveLanguage(property.getOwner()));
             }
         }
         return DEFAULT_LANGUAGE;
+    }
+
+    /**
+     * Checks that a language is a plain text search configuration name, as it is rendered inside the
+     * statement rather than bound: a letter followed by letters, digits and underscores.
+     *
+     * @param language The language
+     * @return The language
+     * @throws IllegalArgumentException When the language holds any other character
+     */
+    static String requireLanguageName(String language) {
+        if (!language.matches("[A-Za-z][A-Za-z0-9_]*")) {
+            throw new IllegalArgumentException("A search language must be a text search configuration name of letters, digits and underscores: " + language);
+        }
+        return language;
     }
 
     /**
@@ -315,7 +330,7 @@ public interface TextSearchDialect {
 
         @Override
         public List<String> buildSearchIndex(String indexName, String escapedTableName, List<SearchColumn> columns, String language) {
-            StringBuilder ddl = new StringBuilder("CREATE INDEX ").append(indexName).append(" ON ").append(escapedTableName).append(" USING GIN (");
+            StringBuilder ddl = new StringBuilder("CREATE INDEX IF NOT EXISTS ").append(indexName).append(" ON ").append(escapedTableName).append(" USING GIN (");
             List<SearchWeight> weights = columns.stream().map(SearchColumn::weight).toList();
             List<Consumer<StringBuilder>> renderers = columns.stream().map(c -> (Consumer<StringBuilder>) sb -> sb.append(c.column())).toList();
             appendVector(ddl, renderers, weights, language);

@@ -1029,9 +1029,9 @@ public class SqlQueryBuilder extends AbstractSqlLikeQueryBuilder {
                 field.getAnnotationMetadata().enumValue(SearchField.class, SearchField.MEMBER_WEIGHT, SearchWeight.class).orElse(null)
             ));
         }
-        String language = entity.getAnnotationMetadata().stringValue(Searchable.class, Searchable.MEMBER_LANGUAGE)
+        String language = TextSearchDialect.requireLanguageName(entity.getAnnotationMetadata().stringValue(Searchable.class, Searchable.MEMBER_LANGUAGE)
             .filter(StringUtils::isNotEmpty)
-            .orElse(TextSearchDialect.DEFAULT_LANGUAGE);
+            .orElse(TextSearchDialect.DEFAULT_LANGUAGE));
         String indexName = entity.getAnnotationMetadata().stringValue(Searchable.class, "name")
             .filter(StringUtils::isNotEmpty)
             .orElseGet(() -> "idx_" + prepareNames(table.name()) + "_search");
