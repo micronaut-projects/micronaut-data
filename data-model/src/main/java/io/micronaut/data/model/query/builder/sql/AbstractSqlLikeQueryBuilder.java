@@ -2021,6 +2021,7 @@ public abstract class AbstractSqlLikeQueryBuilder implements QueryBuilder {
         private final boolean escape;
         private final PersistentEntity entity;
         private List<JoinPath> joinPaths = new ArrayList<>();
+        private final TextSearchDialect.Labels textSearchLabels = new TextSearchDialect.Labels();
 
         private QueryState(QueryBuilder queryBuilder, BaseQueryDefinition query, boolean allowJoins, boolean useAlias) {
             this(queryBuilder, query, allowJoins, useAlias, null);
@@ -2070,6 +2071,13 @@ public abstract class AbstractSqlLikeQueryBuilder implements QueryBuilder {
         /**
          * @return The entity
          */
+        /**
+         * @return The {@code CONTAINS} labels handed out so far in this statement
+         */
+        public TextSearchDialect.Labels getTextSearchLabels() {
+            return textSearchLabels;
+        }
+
         public PersistentEntity getEntity() {
             return entity;
         }
@@ -2804,7 +2812,7 @@ public abstract class AbstractSqlLikeQueryBuilder implements QueryBuilder {
             if (dialect == null) {
                 throw new UnsupportedOperationException("Full-text search is not supported by dialect: " + getDialect());
             }
-            dialect.appendTextMatch(query, fields, queryExpression, mode, textSearchTarget(annotationMetadata, persistentEntity, tableAlias), this::appendExpression, this::appendConvertedParameter);
+            dialect.appendTextMatch(query, fields, queryExpression, mode, textSearchTarget(annotationMetadata, persistentEntity, tableAlias).withLabels(queryState.getTextSearchLabels()), this::appendExpression, this::appendConvertedParameter);
         }
 
         @Override
@@ -3204,7 +3212,7 @@ public abstract class AbstractSqlLikeQueryBuilder implements QueryBuilder {
             MatchMode mode = modeExpression instanceof LiteralExpression<?> literal && literal.getValue() != null
                 ? MatchMode.valueOf(literal.getValue().toString())
                 : MatchMode.ANY;
-            dialect.appendSearchScore(query, fields, queryExpression, mode, textSearchTarget(annotationMetadata, persistentEntity, tableAlias), this::appendExpression, this::appendConvertedParameter);
+            dialect.appendSearchScore(query, fields, queryExpression, mode, textSearchTarget(annotationMetadata, persistentEntity, tableAlias).withLabels(queryState.getTextSearchLabels()), this::appendExpression, this::appendConvertedParameter);
         }
 
         /**
@@ -4040,7 +4048,7 @@ public abstract class AbstractSqlLikeQueryBuilder implements QueryBuilder {
             columnAlias = null;
             isNestedExpression = true;
             try {
-                dialect.appendSearchScore(query, fields, queryExpression, mode, textSearchTarget(annotationMetadata, queryState.getEntity(), tableAlias), this::appendExpression, converterClassName -> expression -> {
+                dialect.appendSearchScore(query, fields, queryExpression, mode, textSearchTarget(annotationMetadata, queryState.getEntity(), tableAlias).withLabels(queryState.getTextSearchLabels()), this::appendExpression, converterClassName -> expression -> {
                     if (!(expression instanceof BindingParameter bindingParameter)) {
                         throw new IllegalStateException("A full-text search query must be a parameter, got: " + expression);
                     }

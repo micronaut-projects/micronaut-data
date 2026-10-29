@@ -41,6 +41,12 @@ class OracleTextQueryConverterSpec extends Specification {
         "-only"                    | MatchMode.ANY    | FULL     | "{mn_no_match_0}"
         "coffee"                   | MatchMode.ANY    | NEGATED  | "{mn_no_match_0}"
         null                       | MatchMode.PHRASE | FULL     | "{mn_no_match_0}"
+        "{}"                       | MatchMode.ANY    | FULL     | "{mn_no_match_0}"
+        "{} coffee"                | MatchMode.ANY    | FULL     | "{coffee}"
+        "coffee -{}"               | MatchMode.ANY    | NEGATED  | "{mn_no_match_0}"
+        '"{}"'                     | MatchMode.PHRASE | FULL     | "{mn_no_match_0}"
+        "a"                        | MatchMode.PREFIX | FULL     | "{a}"
+        "a mic"                    | MatchMode.PREFIX | FULL     | "{a} & mic%"
     }
 
     void "converters exist for every mode and part"() {
