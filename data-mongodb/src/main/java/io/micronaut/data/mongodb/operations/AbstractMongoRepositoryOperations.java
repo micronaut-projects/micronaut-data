@@ -15,6 +15,7 @@
  */
 package io.micronaut.data.mongodb.operations;
 
+import com.mongodb.MongoCommandException;
 import com.mongodb.bulk.BulkWriteResult;
 import com.mongodb.client.model.Collation;
 import com.mongodb.client.model.DeleteOptions;
@@ -99,9 +100,12 @@ abstract sealed class AbstractMongoRepositoryOperations<Dtb> extends AbstractRep
     protected static final Logger QUERY_LOG = DataSettings.QUERY_LOG;
 
     private static final Logger LOG = LoggerFactory.getLogger(AbstractMongoRepositoryOperations.class);
+    // the "Unrecognized pipeline stage name" error of a server without $rankFusion
+    private static final int UNRECOGNIZED_STAGE = 40324;
 
     protected final MongoCollectionNameProvider collectionNameProvider;
     protected final MongoDatabaseNameProvider databaseNameProvider;
+    private volatile boolean rankFusionUnavailable;
 
     /**
      * Default constructor.
@@ -131,7 +135,8 @@ abstract sealed class AbstractMongoRepositoryOperations<Dtb> extends AbstractRep
      */
     @Override
     public boolean supportsNativeHybridSearch(SearchQuery searchQuery, RuntimePersistentEntity<?> persistentEntity) {
-        if (!persistentEntity.getAnnotationMetadata().hasAnnotation(MongoAnnotations.SEARCH_INDEX)
+        if (rankFusionUnavailable
+            || !persistentEntity.getAnnotationMetadata().hasAnnotation(MongoAnnotations.SEARCH_INDEX)
             || searchQuery.getRankConstant() != SearchQuery.DEFAULT_RANK_CONSTANT
             || !searchQuery.getHighlightFields().isEmpty()) {
             return false;
@@ -144,6 +149,28 @@ abstract sealed class AbstractMongoRepositoryOperations<Dtb> extends AbstractRep
             }
         }
         return true;
+    }
+
+    /**
+     * A server before MongoDB 8.1 rejects {@code $rankFusion} as an unknown stage: the hybrid searches are then
+     * fused in memory, as they are on any other store.
+     */
+    @Override
+    public boolean nativeHybridSearchUnavailable(Throwable failure) {
+        if (isUnknownRankFusion(failure)) {
+            rankFusionUnavailable = true;
+            return true;
+        }
+        return false;
+    }
+
+    /**
+     * @param failure A failure of a {@code $rankFusion} aggregation
+     * @return Whether the server does not know the stage
+     */
+    static boolean isUnknownRankFusion(Throwable failure) {
+        return failure instanceof MongoCommandException commandException
+            && (commandException.getErrorCode() == UNRECOGNIZED_STAGE || String.valueOf(commandException.getErrorMessage()).contains("$rankFusion"));
     }
 
     protected final ReplaceOptions getReplaceOptions(AnnotationMetadata annotationMetadata) {

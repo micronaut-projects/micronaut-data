@@ -210,6 +210,16 @@ public final class SearchQuerySupport {
     }
 
     /**
+     * @param operations The operations that ran a natively fused query
+     * @param failure Its failure, unwrapped from a {@link java.util.concurrent.CompletionException}
+     * @return Whether the store cannot fuse natively, so the query is fused in memory instead
+     */
+    public static boolean nativeFusionUnavailable(Object operations, Throwable failure) {
+        Throwable cause = failure instanceof java.util.concurrent.CompletionException && failure.getCause() != null ? failure.getCause() : failure;
+        return operations instanceof NativeHybridSearch nativeHybridSearch && nativeHybridSearch.nativeHybridSearchUnavailable(cause);
+    }
+
+    /**
      * Cuts the page of a natively fused ranking the way {@link #fuse} does: hits without a score or
      * below the minimum are dropped, and the total counts the fused window.
      *
