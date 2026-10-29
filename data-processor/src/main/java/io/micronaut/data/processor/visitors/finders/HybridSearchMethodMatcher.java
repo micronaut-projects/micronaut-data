@@ -39,7 +39,9 @@ import java.util.regex.Pattern;
  * Matches the derived hybrid finder {@code searchBy[Property]SearchAnd<Vector>Near(String, Vector[, Pageable])}
  * returning {@link SearchResults}. No store runs a text match and a nearest-neighbour ranking in one query,
  * so the method is executed by the {@code search(SearchQuery)} interceptors, which fuse the two rankings;
- * the processor records the search fields and the vector property on the method.
+ * the processor records the search fields and the vector property on the method. A method with the name
+ * but another shape, such as a {@code List} result or a {@code Near(Vector, distance)} parameter, is left to
+ * the other matchers, so it keeps its meaning as a vector search filtered by a text match.
  *
  * @since 5.4.0
  */
@@ -68,20 +70,22 @@ public final class HybridSearchMethodMatcher implements MethodMatcher {
         if (!matchContext.hasRootEntity()) {
             throw new ProcessingException(method, "Repository does not have a well-defined primary entity type");
         }
+        // only the exact hybrid shape is claimed: SearchResults of (String, Vector), with a search field and a
+        // vector property; anything else is a vector search with a text predicate for the other matchers
         ClassElement resultType = producedResultType(matchContext);
         if (resultType == null || !resultType.getName().equals(SearchResults.class.getName())) {
-            throw new ProcessingException(method, "A hybrid search finder must return SearchResults");
+            return null;
         }
         List<ParameterElement> parameters = matchContext.getParametersNotInRole();
         if (parameters.size() != 2 || !parameters.get(0).getType().isAssignable(String.class) || !parameters.get(1).getType().isAssignable(Vector.class)) {
-            throw new ProcessingException(method, "A hybrid search finder takes the search string and the query vector, in this order, plus an optional Pageable");
+            return null;
         }
         SourcePersistentEntity entity = matchContext.getRootEntity();
         String textProperty = matcher.group(1);
         String vectorProperty = NameUtils.decapitalize(matcher.group(2));
         SourcePersistentProperty vector = entity.getPropertyByName(vectorProperty);
         if (vector == null || !vector.getType().isAssignable(Vector.class)) {
-            throw new ProcessingException(method, "Cannot find a vector property named " + vectorProperty + " on entity " + entity.getName());
+            return null;
         }
         String[] fields;
         if (textProperty.isEmpty()) {
@@ -90,7 +94,7 @@ public final class HybridSearchMethodMatcher implements MethodMatcher {
             String property = NameUtils.decapitalize(textProperty);
             SourcePersistentProperty field = entity.getPropertyByName(property);
             if (field == null || !field.hasAnnotation(SearchField.class)) {
-                throw new ProcessingException(method, "Cannot find a @SearchField property named " + property + " on entity " + entity.getName());
+                return null;
             }
             fields = new String[]{property};
         }

@@ -89,6 +89,14 @@ public class InMemorySearchTransport implements SearchTransport {
     }
 
     @Override
+    public String create(String index, @Nullable String id, Map<String, Object> source, DocumentSearchConfiguration.Refresh refresh) {
+        if (id != null && documents(index).containsKey(id)) {
+            throw new io.micronaut.data.exceptions.DataAccessException("A document with id " + id + " already exists in index " + index);
+        }
+        return index(index, id, source, refresh);
+    }
+
+    @Override
     public @Nullable Map<String, Object> get(String index, String id) {
         return documents(index).get(id);
     }

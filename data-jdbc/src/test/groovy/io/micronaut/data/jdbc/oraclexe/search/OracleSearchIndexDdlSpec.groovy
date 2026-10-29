@@ -21,6 +21,15 @@ class OracleSearchIndexDdlSpec extends Specification {
         statements[3] == "BEGIN CTX_DDL.CREATE_POLICY('MN_SEARCH_POLICY'); EXCEPTION WHEN OTHERS THEN IF SQLCODE != -20000 THEN RAISE; END IF; END;"
     }
 
+    void "a JSON entity on another dialect keeps the relational DDL"() {
+        when:
+        def statements = new SqlQueryBuilder(Dialect.POSTGRES).buildCreateTableStatements(new RuntimePersistentEntity<>(OracleJsonBook))
+
+        then:
+        !statements.any { it.contains(" JSON NOT NULL") }
+        statements[0].startsWith('CREATE TABLE ')
+    }
+
     void "a JSON entity gets one JSON search index over its column on Oracle"() {
         when:
         def statements = new SqlQueryBuilder(Dialect.ORACLE).buildCreateTableStatements(new RuntimePersistentEntity<>(OracleJsonBook))

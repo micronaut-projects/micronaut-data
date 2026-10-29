@@ -34,4 +34,16 @@ public interface NativeHybridSearch {
      * @return Whether the store fuses this query itself
      */
     boolean supportsNativeHybridSearch(SearchQuery searchQuery, RuntimePersistentEntity<?> persistentEntity);
+
+    /**
+     * Called when a natively fused query failed. Returning {@code true} tells {@code search(SearchQuery)} that
+     * the store cannot fuse at all, such as a server without the stage, so the query is fused in memory, and
+     * {@link #supportsNativeHybridSearch} answers {@code false} from then on.
+     *
+     * @param failure The failure
+     * @return Whether to fall back to fusing in memory
+     */
+    default boolean nativeHybridSearchUnavailable(Throwable failure) {
+        return false;
+    }
 }
