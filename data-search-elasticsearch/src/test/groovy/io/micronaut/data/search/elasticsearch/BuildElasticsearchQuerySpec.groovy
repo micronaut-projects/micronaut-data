@@ -86,6 +86,8 @@ ${methods}
     List<Article> findByCategory(String category);
     List<Article> findByPagesGreaterThan(int pages);
     List<Article> findByPagesBetween(int from, int to);
+    List<Article> findByTitleBetween(String from, String to);
+    List<Article> findByTitleGreaterThan(String title);
     List<Article> findByAuthorStartsWith(String prefix);
     List<Article> findByAuthorInList(List<String> authors);
     List<Article> findByAuthorIsNull();
@@ -101,6 +103,8 @@ ${methods}
         query(repository.getRequiredMethod("findByCategory", String)) == '{"query":{"term":{"category":{"$mn_qp":0}}}}'
         query(repository.getRequiredMethod("findByPagesGreaterThan", int)) == '{"query":{"range":{"pages":{"gt":{"$mn_qp":0}}}}}'
         query(repository.getRequiredMethod("findByPagesBetween", int, int)) == '{"query":{"range":{"pages":{"gte":{"$mn_qp":0},"lte":{"$mn_qp":1}}}}}'
+        query(repository.getRequiredMethod("findByTitleBetween", String, String)) == '{"query":{"range":{"title.keyword":{"gte":{"$mn_qp":0},"lte":{"$mn_qp":1}}}}}'
+        query(repository.getRequiredMethod("findByTitleGreaterThan", String)) == '{"query":{"range":{"title.keyword":{"gt":{"$mn_qp":0}}}}}'
         query(repository.getRequiredMethod("findByAuthorStartsWith", String)) == '{"query":{"wildcard":{"author":{"value":{"$mn_qp":0,"$mn_wildcard":"starts_with"}}}}}'
         query(repository.getRequiredMethod("findByAuthorInList", List)) == '{"query":{"terms":{"author":[{"$mn_qp":0}]}}}'
         query(repository.getRequiredMethod("findByAuthorIsNull")) == '{"query":{"bool":{"must_not":{"exists":{"field":"author"}}}}}'
