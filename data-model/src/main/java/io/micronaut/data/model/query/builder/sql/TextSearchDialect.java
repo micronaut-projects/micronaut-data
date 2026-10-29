@@ -271,24 +271,99 @@ public interface TextSearchDialect {
     }
 
     /**
+     * @param propertyPath A property path of a JSON-represented entity
+     * @return The path of its keys in the JSON document, honouring {@code @SerdeConfig(property)} and {@code @JsonProperty}
+     */
+    static String jsonKeyPath(io.micronaut.data.model.PersistentPropertyPath propertyPath) {
+        java.util.StringJoiner path = new java.util.StringJoiner(".");
+        for (PersistentProperty association : propertyPath.getAssociations()) {
+            path.add(jsonKey(association));
+        }
+        path.add(jsonKey(propertyPath.getProperty()));
+        return path.toString();
+    }
+
+    private static String jsonKey(PersistentProperty property) {
+        return property.getAnnotationMetadata().stringValue("io.micronaut.serde.config.annotation.SerdeConfig", "property")
+            .or(() -> property.getAnnotationMetadata().stringValue("com.fasterxml.jackson.annotation.JsonProperty"))
+            .filter(name -> !name.isEmpty())
+            .orElse(property.getName());
+    }
+
+    /**
      * Where the searched entity lives: a JSON column for JSON-represented entities, else plain columns.
      *
      * @param jsonColumn The JSON column holding the whole entity, or {@code null} for relational entities
      * @param tableAlias The table alias in the query, or {@code null}
      * @param languageColumn The rendered {@code @Language} column holding the per-row language, or {@code null}
+     * @param labels The {@code CONTAINS} labels of the statement being built, or {@code null} to start at 1
      */
-    record Target(@Nullable String jsonColumn, @Nullable String tableAlias, @Nullable String languageColumn) {
+    record Target(@Nullable String jsonColumn, @Nullable String tableAlias, @Nullable String languageColumn, @Nullable Labels labels) {
         /**
          * A relational target without alias.
          */
-        public static final Target RELATIONAL = new Target(null, null, null);
+        public static final Target RELATIONAL = new Target(null, null, null, null);
 
         /**
-         * @param jsonColumn The JSON column, or {@code null}
-         * @param tableAlias The table alias, or {@code null}
+         * @param jsonColumn The JSON column holding the whole entity, or {@code null} for relational entities
+         * @param tableAlias The table alias in the query, or {@code null}
          */
         public Target(@Nullable String jsonColumn, @Nullable String tableAlias) {
-            this(jsonColumn, tableAlias, null);
+            this(jsonColumn, tableAlias, null, null);
+        }
+
+        /**
+         * @param jsonColumn The JSON column holding the whole entity, or {@code null} for relational entities
+         * @param tableAlias The table alias in the query, or {@code null}
+         * @param languageColumn The rendered {@code @Language} column, or {@code null}
+         */
+        public Target(@Nullable String jsonColumn, @Nullable String tableAlias, @Nullable String languageColumn) {
+            this(jsonColumn, tableAlias, languageColumn, null);
+        }
+
+        /**
+         * @param labels The labels of the statement being built
+         * @return This target with the statement's labels
+         */
+        public Target withLabels(Labels labels) {
+            return new Target(jsonColumn, tableAlias, languageColumn, labels);
+        }
+    }
+
+    /**
+     * The {@code CONTAINS} labels of one statement. Each text match takes its own range, and its score,
+     * rendered in the select list and the order, reads the same labels: a match is known by its fields
+     * and its query parameter, as each clause holds its own copy of the expressions.
+     */
+    final class Labels {
+        private final java.util.Map<String, Integer> bases = new java.util.HashMap<>();
+        private int next = 1;
+
+        /**
+         * @param fields The fields of the text match
+         * @param queryExpression The query expression of the text match
+         * @param count The number of labels the match uses
+         * @return The first label of the match
+         */
+        public int base(List<Expression<?>> fields, Expression<?> queryExpression, int count) {
+            return bases.computeIfAbsent(key(fields, queryExpression), k -> {
+                int base = next;
+                next += count;
+                return base;
+            });
+        }
+
+        private static String key(List<Expression<?>> fields, Expression<?> queryExpression) {
+            java.util.StringJoiner key = new java.util.StringJoiner(",", "", "|");
+            for (Expression<?> field : fields) {
+                key.add(field instanceof io.micronaut.data.model.jpa.criteria.PersistentPropertyPath<?> path
+                    ? path.getPropertyPath().getPath()
+                    : String.valueOf(field));
+            }
+            String parameter = queryExpression instanceof jakarta.persistence.criteria.ParameterExpression<?> p && p.getName() != null
+                ? p.getName()
+                : "";
+            return key + parameter;
         }
     }
 
@@ -588,17 +663,18 @@ public interface TextSearchDialect {
                                     Consumer<Expression<?>> appendExpression,
                                     Function<String, Consumer<Expression<?>>> appendParameter) {
             rejectFuzziness(options, "Oracle Text");
+            int base = firstLabel(fields, queryExpression, target);
             if (fields.size() == 1) {
-                appendContains(query, fields.get(0), 1, queryExpression, target, appendExpression,
+                appendContains(query, fields.get(0), base, queryExpression, target, appendExpression,
                     appendParameter.apply(OracleTextQueryConverter.converterFor(mode, OracleTextQueryConverter.Part.FULL)));
                 return;
             }
             query.append("((");
             Consumer<Expression<?>> positive = appendParameter.apply(OracleTextQueryConverter.converterFor(mode, OracleTextQueryConverter.Part.POSITIVE));
-            appendAnyField(query, fields, 1, queryExpression, target, appendExpression, positive);
+            appendAnyField(query, fields, base, queryExpression, target, appendExpression, positive);
             query.append(") AND NOT (");
             Consumer<Expression<?>> negated = appendParameter.apply(OracleTextQueryConverter.converterFor(mode, OracleTextQueryConverter.Part.NEGATED));
-            appendAnyField(query, fields, fields.size() + 1, queryExpression, target, appendExpression, negated);
+            appendAnyField(query, fields, base + fields.size(), queryExpression, target, appendExpression, negated);
             query.append("))");
         }
 
@@ -612,8 +688,9 @@ public interface TextSearchDialect {
                                       Consumer<Expression<?>> appendExpression,
                                       Function<String, Consumer<Expression<?>>> appendParameter) {
             rejectFuzziness(options, "Oracle Text");
+            int base = firstLabel(fields, queryExpression, target);
             if (fields.size() == 1) {
-                query.append("SCORE(1)");
+                query.append("SCORE(").append(base).append(')');
                 Double boost = boostOf(fields.get(0), options);
                 if (boost != null) {
                     query.append(" * ").append(factor(boost));
@@ -626,7 +703,7 @@ public interface TextSearchDialect {
                 if (i > 0) {
                     query.append(" + ");
                 }
-                query.append("SCORE(").append(i + 1).append(')');
+                query.append("SCORE(").append(base + i).append(')');
                 if (weighted) {
                     query.append(" * ").append(scoreFactor(fields.get(i), options));
                 }
@@ -663,7 +740,7 @@ public interface TextSearchDialect {
                 if (target.tableAlias() != null) {
                     query.append(target.tableAlias()).append('.');
                 }
-                query.append(target.jsonColumn()).append(",'$.").append(propertyPath.getPropertyPath().getPath()).append("')");
+                query.append(target.jsonColumn()).append(",'$.").append(TextSearchDialect.jsonKeyPath(propertyPath.getPropertyPath())).append("')");
             } else {
                 appendExpression.accept(field);
             }
@@ -699,6 +776,16 @@ public interface TextSearchDialect {
             return "BEGIN CTX_DDL.CREATE_POLICY('" + POLICY_NAME + "'); EXCEPTION WHEN OTHERS THEN IF SQLCODE != -20000 THEN RAISE; END IF; END;";
         }
 
+        /**
+         * The first label of a match: from the statement's labels when the builder passes them, so two
+         * matches in one statement never share a label, else 1. A single field takes one label; several
+         * fields take one per field for the positive terms and one per field for the negated ones.
+         */
+        private static int firstLabel(List<Expression<?>> fields, Expression<String> queryExpression, Target target) {
+            Labels labels = target.labels();
+            return labels == null ? 1 : labels.base(fields, queryExpression, fields.size() == 1 ? 1 : 2 * fields.size());
+        }
+
         private void appendAnyField(StringBuilder query,
                                     List<Expression<?>> fields,
                                     int firstLabel,
@@ -729,7 +816,7 @@ public interface TextSearchDialect {
                 }
                 query.append(target.jsonColumn()).append(",'(' || ");
                 appendQuery.accept(queryExpression);
-                query.append(" || ') INPATH (/").append(propertyPath.getPropertyPath().getPath().replace('.', '/')).append(")',")
+                query.append(" || ') INPATH (/").append(TextSearchDialect.jsonKeyPath(propertyPath.getPropertyPath()).replace('.', '/')).append(")',")
                     .append(label).append(CONTAINS_SUFFIX);
                 return;
             }
