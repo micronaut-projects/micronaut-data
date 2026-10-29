@@ -6,6 +6,8 @@ import ch.qos.logback.classic.spi.ILoggingEvent
 import ch.qos.logback.core.read.ListAppender
 import com.zaxxer.hikari.HikariDataSource
 import io.micronaut.context.annotation.Property
+import io.micronaut.data.connection.ConnectionDefinition
+import io.micronaut.data.connection.ConnectionOperations
 import io.micronaut.data.connection.jdbc.advice.DelegatingDataSource
 import io.micronaut.test.extensions.spock.annotation.MicronautTest
 import io.micronaut.transaction.TransactionOperations
@@ -38,6 +40,9 @@ class AgePreparationSpec extends Specification {
 
     @Inject
     TransactionOperations<Connection> transactionOperations
+
+    @Inject
+    ConnectionOperations<Connection> connectionOperations
 
     ListAppender<ILoggingEvent> appender = new ListAppender<>()
     Logger logger = (Logger) LoggerFactory.getLogger(DefaultAgeRepositoryOperations)
@@ -117,6 +122,25 @@ class AgePreparationSpec extends Specification {
         loads() == 1
     }
 
+    void "a transaction after one that rolled the loading back on the same connection loads AGE again"() {
+        when: "one connection runs two transactions, one after the other, and the first rolls back"
+        String searchPath = connectionOperations.execute(ConnectionDefinition.DEFAULT) { connectionStatus ->
+            transactionOperations.executeWrite { status ->
+                operations.executeQuery(QUERY, [:])
+                status.setRollbackOnly()
+                null
+            }
+            transactionOperations.executeWrite { status ->
+                operations.executeQuery(QUERY, [:])
+                showSearchPath(connectionStatus.connection)
+            }
+        }
+
+        then:
+        loads() == 2
+        searchPath.contains("ag_catalog")
+    }
+
     private int loads() {
         appender.list.count { it.formattedMessage.startsWith("Loading Apache AGE") }
     }
@@ -134,10 +158,12 @@ class AgePreparationSpec extends Specification {
     }
 
     private String searchPath() {
-        withConnection { Connection connection ->
-            connection.createStatement().withCloseable { statement ->
-                statement.executeQuery("SHOW search_path").withCloseable { it.next(); it.getString(1) }
-            }
+        withConnection { Connection connection -> showSearchPath(connection) }
+    }
+
+    private static String showSearchPath(Connection connection) {
+        connection.createStatement().withCloseable { statement ->
+            statement.executeQuery("SHOW search_path").withCloseable { it.next(); it.getString(1) }
         }
     }
 

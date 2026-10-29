@@ -23,6 +23,8 @@ import io.micronaut.data.graph.runtime.GraphPathValue;
 import io.micronaut.data.graph.runtime.GraphRecord;
 import io.micronaut.data.graph.runtime.age.Agtype;
 import org.jspecify.annotations.Nullable;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
 import java.nio.charset.StandardCharsets;
 import java.util.ArrayList;
@@ -30,6 +32,8 @@ import java.util.Collection;
 import java.util.LinkedHashMap;
 import java.util.List;
 import java.util.Map;
+import java.util.Set;
+import java.util.concurrent.ConcurrentHashMap;
 
 /**
  * Turns the rows of Oracle property graph queries into graph records, rebuilding nodes, relationships and paths
@@ -42,6 +46,11 @@ import java.util.Map;
 public final class OracleGraphRows {
 
     private static final String SEPARATOR = OracleGraphQueryBuilder.SEPARATOR;
+    private static final Logger LOG = LoggerFactory.getLogger(OracleGraphRows.class);
+    /**
+     * The schemaless properties hidden by a column, by label, that a warning has been logged for.
+     */
+    private static final Set<String> HIDDEN_ATTRIBUTES = ConcurrentHashMap.newKeySet();
 
     private OracleGraphRows() {
     }
@@ -214,7 +223,15 @@ public final class OracleGraphRows {
                 properties.put(name, value);
             }
         });
-        dynamicAttributes(fields.get(OracleGraphQueryBuilder.DYNAMIC_ATTRIBUTES_COLUMN)).forEach(properties::putIfAbsent);
+        dynamicAttributes(fields.get(OracleGraphQueryBuilder.DYNAMIC_ATTRIBUTES_COLUMN)).forEach((name, value) -> {
+            if (!properties.containsKey(name)) {
+                properties.put(name, value);
+            } else if (HIDDEN_ATTRIBUTES.add(label + "." + name) && LOG.isWarnEnabled()) {
+                // Writes reject such a key, so it was written another way, or the column was added later: the
+                // declared column wins, also when it is null
+                LOG.warn("Schemaless property [{}] of a [{}] vertex has the name of a column and is ignored", name, label);
+            }
+        });
         return new GraphNode(id == null ? rowIndex : id, label == null ? List.of() : List.of(label.toString()), properties);
     }
 

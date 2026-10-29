@@ -23,6 +23,7 @@ import io.micronaut.core.convert.ConversionContext;
 import io.micronaut.core.type.Argument;
 import io.micronaut.data.event.EntityEventListener;
 import io.micronaut.data.exceptions.DataAccessException;
+import io.micronaut.data.exceptions.EntityExistsException;
 import io.micronaut.data.exceptions.OptimisticLockException;
 import io.micronaut.data.graph.annotation.TargetNode;
 import io.micronaut.data.graph.model.GraphEntities;
@@ -98,6 +99,7 @@ import java.util.List;
 import java.util.Map;
 import java.util.Objects;
 import java.util.Optional;
+import java.util.Set;
 import java.util.concurrent.Executor;
 import java.util.concurrent.ExecutorService;
 import java.util.function.Function;
@@ -750,6 +752,21 @@ public abstract class AbstractGraphRepositoryOperations extends AbstractReposito
     }
 
     /**
+     * Checks that no schemaless property of the instances has the name of a declared property, for writes that
+     * store the schemaless properties in a column of their own, which reads would hide behind the declared column.
+     *
+     * @param type      The entity type
+     * @param instances The instances to write
+     * @param <T>       The entity type
+     */
+    protected final <T> void checkDynamicAttributes(Class<T> type, Iterable<T> instances) {
+        RuntimePersistentEntity<T> entity = mapper.getEntity(type);
+        for (T instance : instances) {
+            mapper.checkDynamicAttributes(entity, instance);
+        }
+    }
+
+    /**
      * @param query A query in the database's query language, passed to the operations at runtime
      * @return The statement that runs it
      */
@@ -766,20 +783,23 @@ public abstract class AbstractGraphRepositoryOperations extends AbstractReposito
      * @return The query, with the identifier written, or null when the database generates it
      */
     final <T> NodeWrite planNodeWrite(RuntimePersistentEntity<T> entity, T instance) {
-        return planNodeWrite(entity, instance, null);
+        return planNodeWrite(entity, instance, false, null);
     }
 
     /**
-     * Plans the query that creates or updates a node. An update of an entity with a {@code @Version} property only
-     * matches the node while it still has the version the entity was read with.
+     * Plans the query that creates or updates a node. An insert of an entity with a {@code @Version} property and an
+     * assigned identifier writes nothing when a node with the identifier exists, rather than overwrite it. An update
+     * of an entity with a {@code @Version} property only matches the node while it still has the version the entity
+     * was read with.
      *
      * @param entity          The entity
      * @param instance        The instance
+     * @param insert          Whether the node is inserted
      * @param previousVersion The version the entity was read with, or null to write without checking it
      * @param <T>             The entity type
      * @return The query, with the identifier written, or null when the database generates it
      */
-    final <T> NodeWrite planNodeWrite(RuntimePersistentEntity<T> entity, T instance, @Nullable Object previousVersion) {
+    final <T> NodeWrite planNodeWrite(RuntimePersistentEntity<T> entity, T instance, boolean insert, @Nullable Object previousVersion) {
         RuntimePersistentProperty<T> identity = entity.getIdentity();
         Map<String, Object> properties = mapper.writeProperties(entity, instance);
         Object id = mapper.writeIdentity(entity, instance);
@@ -789,10 +809,14 @@ public abstract class AbstractGraphRepositoryOperations extends AbstractReposito
         List<String> names = new ArrayList<>(properties.keySet());
         RuntimePersistentProperty<T> version = entity.hasVersion() ? entity.getVersion() : null;
         boolean versioned = id != null && version != null && previousVersion != null;
-        String key = (versioned ? "writeVersioned:" : "write:") + entity.getName() + ":" + (id != null) + ":" + names;
+        // Saving merges a node on its assigned identifier, but a new versioned entity must not overwrite the node and
+        // its version
+        boolean assignedInsert = insert && version != null && id != null && identity != null && !GraphEntities.isNativeId(identity);
+        String kind = versioned ? "writeVersioned:" : assignedInsert ? "insert:" : "write:";
+        String key = kind + entity.getName() + ":" + (id != null) + ":" + names;
         String query = queryCache.computeIfAbsent(key, k -> versioned
             ? queryBuilder.buildUpdateVersionedNodeQuery(entity, names)
-            : queryBuilder.buildWriteNodeQuery(entity, names, id != null));
+            : assignedInsert ? queryBuilder.buildInsertNodeQuery(entity, names) : queryBuilder.buildWriteNodeQuery(entity, names, id != null));
         Map<String, Object> parameters = new LinkedHashMap<>();
         int i = 0;
         for (Object value : properties.values()) {
@@ -804,7 +828,7 @@ public abstract class AbstractGraphRepositoryOperations extends AbstractReposito
         if (versioned && version != null) {
             parameters.put(CypherQueryBuilder.VERSION_PARAMETER, mapper.writeValue(version, previousVersion));
         }
-        return new NodeWrite(new GraphQuery(query, parameters), id, versioned ? previousVersion : null);
+        return new NodeWrite(new GraphQuery(query, parameters), id, versioned ? previousVersion : null, assignedInsert);
     }
 
     /**
@@ -849,15 +873,18 @@ public abstract class AbstractGraphRepositoryOperations extends AbstractReposito
     }
 
     /**
-     * Plans which batched write a node joins: nodes are created, updated or updated with a version check together.
+     * Plans which batched write a node joins: nodes are created, updated or updated with a version check together,
+     * and new versioned nodes with assigned identifiers are inserted without overwriting existing nodes, see
+     * {@link #planNodeWrite(RuntimePersistentEntity, Object, boolean, Object)}.
      *
      * @param entity          The entity
      * @param instance        The instance
+     * @param insert          Whether the node is inserted
      * @param previousVersion The version the instance was read with, or null
      * @param <T>             The entity type
      * @return The batch
      */
-    final <T> NodeBatch planNodeBatch(RuntimePersistentEntity<T> entity, T instance, @Nullable Object previousVersion) {
+    final <T> NodeBatch planNodeBatch(RuntimePersistentEntity<T> entity, T instance, boolean insert, @Nullable Object previousVersion) {
         RuntimePersistentProperty<T> identity = entity.getIdentity();
         Object id = mapper.writeIdentity(entity, instance);
         if (identity != null && !GraphEntities.isNativeId(identity) && id == null) {
@@ -865,8 +892,11 @@ public abstract class AbstractGraphRepositoryOperations extends AbstractReposito
         }
         List<String> names = List.copyOf(mapper.writeProperties(entity, instance).keySet());
         boolean versioned = id != null && entity.hasVersion() && previousVersion != null;
+        boolean assignedInsert = insert && entity.hasVersion() && id != null && identity != null && !GraphEntities.isNativeId(identity);
+        // Nodes with assigned identifiers are merged, or inserted when new and versioned, which some databases cannot
+        // do for more than one node of an UNWIND
         boolean merge = identity != null && !GraphEntities.isNativeId(identity) && !versioned;
-        return new NodeBatch(names, id != null, versioned, !merge || queryBuilder.supportsBatchedMerge());
+        return new NodeBatch(names, id != null, versioned, assignedInsert, !merge || queryBuilder.supportsBatchedMerge());
     }
 
     /**
@@ -891,20 +921,26 @@ public abstract class AbstractGraphRepositoryOperations extends AbstractReposito
     }
 
     /**
-     * Fails a batched write that wrote fewer nodes than it was given.
+     * Fails a batched write that wrote fewer nodes than it was given. A versioned update or an insert writes all
+     * nodes or none.
      *
-     * @param entity   The entity
-     * @param batch    The batch
-     * @param expected The number of nodes in the batch
-     * @param written  The number of nodes the query returned
+     * @param entity  The entity
+     * @param batch   The batch
+     * @param rows    The rows of the nodes in the batch
+     * @param written The number of nodes the query returned
      */
-    final void checkBatchWritten(RuntimePersistentEntity<?> entity, NodeBatch batch, int expected, int written) {
+    final void checkBatchWritten(RuntimePersistentEntity<?> entity, NodeBatch batch, List<Map<String, @Nullable Object>> rows, int written) {
+        int expected = rows.size();
         if (written == expected) {
             return;
         }
         if (batch.versioned()) {
             throw new OptimisticLockException("Expected to update " + expected + " nodes of [" + entity.getSimpleName()
-                + "] but " + written + " still had the version they were read with");
+                + "] but not all of them still had the version they were read with, so none was updated");
+        }
+        if (batch.insert()) {
+            throw new EntityExistsException("A node of [" + entity.getSimpleName() + "] with one of the identifiers "
+                + rows.stream().map(row -> row.get(CypherQueryBuilder.ID_PARAMETER)).toList() + " already exists, so none was inserted");
         }
         throw new DataAccessException("Expected to write " + expected + " nodes of [" + entity.getSimpleName() + "] but wrote " + written);
     }
@@ -930,8 +966,9 @@ public abstract class AbstractGraphRepositoryOperations extends AbstractReposito
      * @return The query that writes the nodes of a batch
      */
     final String batchQuery(RuntimePersistentEntity<?> entity, NodeBatch batch) {
-        return queryCache.computeIfAbsent("writeNodes:" + entity.getName() + ":" + batch,
-            k -> queryBuilder.buildWriteNodesQuery(entity, batch.propertyNames(), batch.idPresent(), batch.versioned()));
+        return queryCache.computeIfAbsent("writeNodes:" + entity.getName() + ":" + batch, k -> batch.insert()
+            ? queryBuilder.buildInsertNodesQuery(entity, batch.propertyNames())
+            : queryBuilder.buildWriteNodesQuery(entity, batch.propertyNames(), batch.idPresent(), batch.versioned()));
     }
 
     /**
@@ -947,6 +984,9 @@ public abstract class AbstractGraphRepositoryOperations extends AbstractReposito
             if (write.previousVersion() != null) {
                 throw new OptimisticLockException("The node of [" + entity.getSimpleName() + "] with identifier [" + write.id()
                     + "] was changed or deleted since it was read with version [" + write.previousVersion() + "]");
+            }
+            if (write.insert()) {
+                throw new EntityExistsException("A node of [" + entity.getSimpleName() + "] with identifier [" + write.id() + "] already exists");
             }
             throw new DataAccessException("No node of [" + entity.getSimpleName() + "] with identifier [" + write.id() + "] to update");
         }
@@ -1099,8 +1139,9 @@ public abstract class AbstractGraphRepositoryOperations extends AbstractReposito
      * @param query           The query
      * @param id              The written identifier, or null when the database generates it
      * @param previousVersion The version the update checks, or null if it does not check one
+     * @param insert          Whether the query inserts a versioned node with an assigned identifier, writing nothing if it exists
      */
-    record NodeWrite(GraphQuery query, @Nullable Object id, @Nullable Object previousVersion) {
+    record NodeWrite(GraphQuery query, @Nullable Object id, @Nullable Object previousVersion, boolean insert) {
     }
 
     /**
@@ -1109,9 +1150,10 @@ public abstract class AbstractGraphRepositoryOperations extends AbstractReposito
      * @param propertyNames The stored names of the properties the nodes write
      * @param idPresent     Whether the nodes have identifiers
      * @param versioned     Whether the write checks the version of the nodes
+     * @param insert        Whether the write inserts versioned nodes with assigned identifiers, writing none if one exists
      * @param batched       Whether the nodes are written with one query, or one at a time
      */
-    record NodeBatch(List<String> propertyNames, boolean idPresent, boolean versioned, boolean batched) {
+    record NodeBatch(List<String> propertyNames, boolean idPresent, boolean versioned, boolean insert, boolean batched) {
     }
 
     /**
@@ -1219,20 +1261,37 @@ public abstract class AbstractGraphRepositoryOperations extends AbstractReposito
         <T> List<T> saveAll(RuntimePersistentEntity<T> entity, Iterable<T> instances, boolean insert) {
             List<T> list = new ArrayList<>();
             instances.forEach(list::add);
-            if (list.size() < 2 || !queryBuilder.supportsBatchNodeWrites()) {
+            // An instance passed twice is written once, as save() does for an instance it meets again
+            Set<T> seen = Collections.newSetFromMap(new IdentityHashMap<>());
+            List<T> distinct = new ArrayList<>(list.size());
+            for (T instance : list) {
+                if (seen.add(instance)) {
+                    distinct.add(instance);
+                }
+            }
+            if (distinct.size() < 2 || !queryBuilder.supportsBatchNodeWrites()) {
                 List<T> results = new ArrayList<>(list.size());
                 for (T instance : list) {
                     results.add(save(entity, instance, insert));
                 }
                 return results;
             }
-            NodesOperation<T> operation = new NodesOperation<>(this, entity, list, insert);
+            NodesOperation<T> operation = new NodesOperation<>(this, entity, distinct, insert);
             if (insert) {
                 operation.persist();
             } else {
                 operation.update();
             }
-            return operation.getEntities();
+            List<T> written = operation.getEntities();
+            Map<T, T> results = new IdentityHashMap<>();
+            for (int i = 0; i < distinct.size(); i++) {
+                results.put(distinct.get(i), written.get(i));
+            }
+            List<T> ordered = new ArrayList<>(list.size());
+            for (T instance : list) {
+                ordered.add(results.get(instance));
+            }
+            return ordered;
         }
 
         /**
@@ -1291,8 +1350,16 @@ public abstract class AbstractGraphRepositoryOperations extends AbstractReposito
         }
 
         @Override
+        protected void failed(Exception e, String operation) {
+            if (e instanceof EntityExistsException entityExists) {
+                throw entityExists;
+            }
+            super.failed(e, operation);
+        }
+
+        @Override
         protected void execute() {
-            NodeWrite write = planNodeWrite(persistentEntity, entity, previousVersion);
+            NodeWrite write = planNodeWrite(persistentEntity, entity, insert, previousVersion);
             List<GraphRecord> records = persister.run(write.query()).records();
             Object generatedId = generatedId(persistentEntity, write, records);
             RuntimePersistentProperty<T> identity = persistentEntity.getIdentity();
@@ -1320,6 +1387,14 @@ public abstract class AbstractGraphRepositoryOperations extends AbstractReposito
         @Override
         protected void cascadePre(Relation.Cascade cascadeType) {
             // Relationships are written after the nodes, see execute()
+        }
+
+        @Override
+        protected void failed(Exception e, String operation) {
+            if (e instanceof EntityExistsException entityExists) {
+                throw entityExists;
+            }
+            super.failed(e, operation);
         }
 
         @Override
@@ -1354,10 +1429,15 @@ public abstract class AbstractGraphRepositoryOperations extends AbstractReposito
             }
             Map<NodeBatch, List<Data>> batches = new LinkedHashMap<>();
             for (Data d : pending) {
-                NodeBatch batch = planNodeBatch(persistentEntity, d.entity, previousVersions.get(d));
+                NodeBatch batch = planNodeBatch(persistentEntity, d.entity, insert, previousVersions.get(d));
                 batches.computeIfAbsent(batch, k -> new ArrayList<>()).add(d);
             }
             batches.forEach(this::writeNodes);
+            // A node whose relationships are linked first may point to a node later in the batch, which must be
+            // found with the identifier it was just given: an immutable instance was replaced by the write
+            for (Data d : pending) {
+                persister.written(Objects.requireNonNull(originals.get(d)), d.entity);
+            }
             for (Data d : pending) {
                 T original = Objects.requireNonNull(originals.get(d));
                 d.entity = new RelationshipWriter<>(persister, persistentEntity, original, d.entity).write();
@@ -1369,7 +1449,7 @@ public abstract class AbstractGraphRepositoryOperations extends AbstractReposito
         private void writeNodes(NodeBatch batch, List<Data> nodes) {
             if (!batch.batched()) {
                 for (Data d : nodes) {
-                    NodeWrite write = planNodeWrite(persistentEntity, d.entity, previousVersions.get(d));
+                    NodeWrite write = planNodeWrite(persistentEntity, d.entity, insert, previousVersions.get(d));
                     generatedId(persistentEntity, write, persister.run(write.query()).records());
                 }
                 return;
@@ -1380,7 +1460,7 @@ public abstract class AbstractGraphRepositoryOperations extends AbstractReposito
                 rows.add(nodeRow(persistentEntity, d.entity, i, batch.versioned() ? previousVersions.get(d) : null));
             }
             List<GraphRecord> records = persister.run(new GraphQuery(batchQuery(persistentEntity, batch), Map.of(CypherQueryBuilder.ROWS_PARAMETER, rows))).records();
-            checkBatchWritten(persistentEntity, batch, rows.size(), records.size());
+            checkBatchWritten(persistentEntity, batch, rows, records.size());
             RuntimePersistentProperty<T> identity = persistentEntity.getIdentity();
             if (batch.idPresent() || identity == null || !GraphEntities.isNativeId(identity)) {
                 return;

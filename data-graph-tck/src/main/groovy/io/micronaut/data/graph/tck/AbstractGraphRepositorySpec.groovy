@@ -1,5 +1,6 @@
 package io.micronaut.data.graph.tck
 
+import io.micronaut.data.exceptions.EntityExistsException
 import io.micronaut.data.exceptions.OptimisticLockException
 import io.micronaut.data.graph.tck.entities.Article
 import io.micronaut.data.graph.tck.entities.Colleague
@@ -24,6 +25,11 @@ import io.micronaut.data.repository.jpa.criteria.UpdateSpecification
 import io.micronaut.transaction.TransactionOperations
 import spock.lang.Requires
 import spock.lang.Specification
+
+import java.util.concurrent.Callable
+import java.util.concurrent.CountDownLatch
+import java.util.concurrent.Executors
+import java.util.concurrent.TimeUnit
 
 /**
  * Behaviour every graph repository implementation supports.
@@ -592,11 +598,39 @@ abstract class AbstractGraphRepositorySpec extends Specification {
 
         when: "one node of a batch was changed since it was read"
         def again = articleRepository.findAll().sort { it.slug }
+        again.each { it.title = it.title.toUpperCase() }
         again[1] = stale
         articleRepository.updateAll(again)
 
-        then:
+        then: "no node of the batch is updated"
         thrown(OptimisticLockException)
+        articleRepository.findAll().sort { it.slug }.collect { [it.title, it.version] } == [["a", 1L], ["b", 1L], ["c", 1L]]
+
+        when: "one node of a batch of new nodes has the identifier of an existing node"
+        articleRepository.saveAll([new Article("d", "D"), new Article("b", "Other"), new Article("e", "E")])
+
+        then: "no node of the batch is inserted and the existing node is kept"
+        thrown(EntityExistsException)
+        articleRepository.count() == 3
+        with(articleRepository.findById("b").get()) {
+            title == "b"
+            version == 1L
+        }
+    }
+
+    @Requires({ instance.supportsCypher() })
+    void "saveAll writes an instance passed twice once"() {
+        given:
+        def ada = new Person("Ada Lovelace", 1815)
+
+        when:
+        def saved = personRepository.saveAll([ada, new Person("Grace Hopper", 1906), ada])
+
+        then:
+        saved.size() == 3
+        saved[0].id != null
+        saved[0].id == saved[2].id
+        personRepository.count() == 2
     }
 
     private static PredicateSpecification<Movie> releasedAfter(int year) {
@@ -734,5 +768,103 @@ abstract class AbstractGraphRepositorySpec extends Specification {
 
         then:
         withDirectors.directors*.name.sort() == ["Agnieszka Holland", "Second Unit"]
+
+        when: "a director is linked to the movie by a second, parallel relationship"
+        queries.addDirector("Agnieszka Holland", "Europa Europa")
+        found = queries.queryByTitle("Europa Europa").get()
+
+        then: "the director is fetched once"
+        found.directors*.name.sort() == ["Agnieszka Holland", "Second Unit"]
+        found.directors.find { it.name == "Agnieszka Holland" }.mentor.name == "Andrzej Wajda"
+    }
+
+    @Requires({ instance.articleRepository != null })
+    void "inserting a node with the identifier of an existing node fails rather than overwrite it"() {
+        given:
+        articleRepository.save(new Article("graphs", "Graphs"))
+        def loaded = articleRepository.findById("graphs").get()
+        loaded.title = "Graph databases"
+        articleRepository.update(loaded)
+
+        when:
+        articleRepository.save(new Article("graphs", "Other"))
+
+        then:
+        thrown(EntityExistsException)
+        with(articleRepository.findById("graphs").get()) {
+            title == "Graph databases"
+            version == 1L
+        }
+        articleRepository.count() == 1
+    }
+
+    @Requires({ instance.articleRepository != null })
+    void "concurrent updates of the same version fail rather than lose an update"() {
+        given:
+        articleRepository.save(new Article("graphs", "Graphs"))
+        def first = articleRepository.findById("graphs").get()
+        def second = articleRepository.findById("graphs").get()
+
+        when: "the second update runs while the first holds the node uncommitted"
+        def error = concurrently({ first.title = "First"; articleRepository.update(first) },
+            { second.title = "Second"; articleRepository.update(second) })
+
+        then:
+        error instanceof OptimisticLockException
+        with(articleRepository.findById("graphs").get()) {
+            title == "First"
+            version == 1L
+        }
+    }
+
+    @Requires({ instance.articleRepository != null })
+    void "a delete concurrent with an update of the same version fails rather than delete the update"() {
+        given:
+        articleRepository.save(new Article("graphs", "Graphs"))
+        def first = articleRepository.findById("graphs").get()
+        def stale = articleRepository.findById("graphs").get()
+
+        when:
+        def error = concurrently({ first.title = "First"; articleRepository.update(first) }, { articleRepository.delete(stale) })
+
+        then:
+        error instanceof OptimisticLockException
+        articleRepository.findById("graphs").get().title == "First"
+    }
+
+    /**
+     * Runs a write in a transaction that stays open for a while after it, and another write in its own transaction
+     * once the first has written.
+     *
+     * @return The error of the second write, or null
+     */
+    private Throwable concurrently(Closure<?> firstWrite, Closure<?> secondWrite) {
+        def written = new CountDownLatch(1)
+        def executor = Executors.newSingleThreadExecutor()
+        try {
+            def first = executor.submit({
+                transactionOperations.executeWrite { status ->
+                    firstWrite.call()
+                    written.countDown()
+                    // Hold the lock of the node while the second write reads it
+                    Thread.sleep(1000)
+                    null
+                }
+            } as Callable)
+            assert written.await(30, TimeUnit.SECONDS)
+            Throwable error = null
+            try {
+                transactionOperations.executeWrite { status ->
+                    secondWrite.call()
+                    null
+                }
+            } catch (Throwable e) {
+                error = e
+            }
+            first.get(30, TimeUnit.SECONDS)
+            return error
+        } finally {
+            executor.shutdownNow()
+        }
     }
 }

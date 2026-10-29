@@ -5,7 +5,11 @@ import io.micronaut.data.graph.tck.entities.Movie
 import io.micronaut.data.model.Pageable
 import io.micronaut.data.neo4j.features.ReactiveMovieRepository
 import io.micronaut.data.neo4j.features.Player
+import io.micronaut.data.neo4j.features.Station
+import io.micronaut.data.neo4j.features.StationRepository
 import io.micronaut.data.neo4j.features.Tag
+import io.micronaut.data.neo4j.features.Member
+import io.micronaut.data.neo4j.features.MemberRepository
 import io.micronaut.data.neo4j.features.TagRepository
 import io.micronaut.data.neo4j.features.Team
 import io.micronaut.data.neo4j.features.TeamRepository
@@ -28,6 +32,12 @@ class Neo4jFeaturesSpec extends Specification implements TestPropertyProvider {
 
     @Inject
     TeamRepository teamRepository
+
+    @Inject
+    StationRepository stationRepository
+
+    @Inject
+    MemberRepository memberRepository
 
     @Inject
     ReactiveMovieRepository reactiveMovieRepository
@@ -115,6 +125,18 @@ class Neo4jFeaturesSpec extends Specification implements TestPropertyProvider {
         teamRepository.count() == 2
     }
 
+    void "path finders match endpoints by a database generated identifier"() {
+        given:
+        def saved = stationRepository.save(new Station(null, "A", [new Station(null, "B", [new Station(null, "C", [])])]))
+        def a = saved.id()
+        def c = saved.links()[0].links()[0].id()
+
+        expect:
+        stationRepository.existsPathByLinksBetweenId(a, c)
+        !stationRepository.existsPathByLinksBetweenId(c, a)
+        stationRepository.findShortestPathByLinksBetweenId(a, c).get().nodes()*.name() == ["A", "B", "C"]
+    }
+
     void "reactive repositories"() {
         when:
         reactiveMovieRepository.save(new Movie("Speed", "Get ready for rush hour", 1994)).block()
@@ -133,6 +155,35 @@ class Neo4jFeaturesSpec extends Specification implements TestPropertyProvider {
         operations.executeQuery("MATCH (t:Tag) RETURN t", [:], Tag)*.name == ["graph"]
         operations.executeQuery("MATCH (t:Tag) RETURN t.name AS name", [:])*.get("name") == ["graph"]
         operations.executeQuery("MATCH (t:Tag {name: \$name}) RETURN count(t)", [name: "graph"], Long) == [1L]
+    }
+
+    void "a record in a batch links to a record later in the same batch by its generated identifier"() {
+        given:
+        def mentor = new Member(null, "Grace", null)
+        def mentee = new Member(null, "Ada", mentor)
+
+        when:
+        def saved = memberRepository.saveAll([mentee, mentor])
+
+        then:
+        saved*.id().every { it != null }
+        saved[0].mentor().id() == saved[1].id()
+        memberRepository.count() == 2
+        operations.executeQuery("MATCH (:Member {name: 'Ada'})-[:MENTORED_BY]->(m:Member {name: 'Grace'}) RETURN count(m)", [:], Long) == [1L]
+    }
+
+    void "saveAll writes an instance passed twice once"() {
+        given:
+        def tag = new Tag("graph")
+
+        when:
+        def saved = tagRepository.saveAll([tag, new Tag("nosql"), tag])
+
+        then:
+        saved.size() == 3
+        saved[0].id != null
+        saved[0].id == saved[2].id
+        tagRepository.count() == 2
     }
 
     void "saveAll creates nodes with database generated identifiers in one batch"() {
