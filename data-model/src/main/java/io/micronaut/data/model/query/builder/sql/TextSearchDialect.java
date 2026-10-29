@@ -183,12 +183,15 @@ public interface TextSearchDialect {
      * @return The path of its keys in the JSON document, honouring {@code @SerdeConfig(property)} and {@code @JsonProperty}
      */
     static String jsonKeyPath(io.micronaut.data.model.PersistentPropertyPath propertyPath) {
-        java.util.StringJoiner path = new java.util.StringJoiner(".");
-        for (PersistentProperty association : propertyPath.getAssociations()) {
-            path.add(jsonKey(association));
+        // the property path as the model names it, with the leaf renamed when it declares its JSON key;
+        // the path itself stays as built, as embedded and joined paths do not list every step as an association
+        String path = propertyPath.getPath();
+        PersistentProperty property = propertyPath.getProperty();
+        String key = jsonKey(property);
+        if (key.equals(property.getName()) || !path.endsWith(property.getName())) {
+            return path;
         }
-        path.add(jsonKey(propertyPath.getProperty()));
-        return path.toString();
+        return path.substring(0, path.length() - property.getName().length()) + key;
     }
 
     private static String jsonKey(PersistentProperty property) {
