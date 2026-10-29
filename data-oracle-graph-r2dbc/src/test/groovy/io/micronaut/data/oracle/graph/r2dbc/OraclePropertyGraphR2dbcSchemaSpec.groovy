@@ -1,5 +1,6 @@
 package io.micronaut.data.oracle.graph.r2dbc
 
+import io.micronaut.context.ApplicationContext
 import io.micronaut.context.annotation.Property
 import io.micronaut.data.oracle.graph.r2dbc.library.Author
 import io.micronaut.data.oracle.graph.r2dbc.library.AuthorRepository
@@ -34,6 +35,9 @@ class OraclePropertyGraphR2dbcSchemaSpec extends Specification {
     @Inject
     ConnectionFactory connectionFactory
 
+    @Inject
+    ApplicationContext applicationContext
+
     void setup() {
         sql("DELETE FROM members_follows", "DELETE FROM loan", "DELETE FROM books_wrote", "DELETE FROM members", "DELETE FROM books", "DELETE FROM authors")
         authorRepository.save(new Author(1L, "Ursula K. Le Guin")).block()
@@ -62,6 +66,40 @@ class OraclePropertyGraphR2dbcSchemaSpec extends Specification {
         query("SELECT graph_name FROM user_property_graphs").contains("LIBRARY_GRAPH")
         query("SELECT table_name FROM user_tables").containsAll(["MEMBERS", "BOOKS", "AUTHORS", "LOAN", "MEMBERS_FOLLOWS", "BOOKS_WROTE"])
         !query("SELECT table_name FROM user_tables").contains("MEMBERLOAN")
+    }
+
+    void "a second start with CREATE_DROP drops the existing graph and tables"() {
+        when:
+        restart("CREATE_DROP")
+
+        then:
+        query("SELECT graph_name FROM user_property_graphs").contains("LIBRARY_GRAPH")
+        query("SELECT TO_CHAR(COUNT(*)) FROM members") == ["0"]
+        query("SELECT TO_CHAR(COUNT(*)) FROM loan") == ["0"]
+    }
+
+    void "a start with CREATE keeps the tables and replaces the graph"() {
+        when:
+        restart("CREATE")
+
+        then:
+        query("SELECT graph_name FROM user_property_graphs").contains("LIBRARY_GRAPH")
+        libraryGraph.findByLoansBookTitle("A Wizard of Earthsea").map { it.name() }.collectList().block() == ["Ged"]
+        libraryGraph.findByFollowsName("Ged").map { it.name() }.collectList().block() == ["Tenar"]
+    }
+
+    /**
+     * Starts another application against the same database, which runs the schema generation again.
+     */
+    private void restart(String schemaGenerate) {
+        Map<String, Object> properties = [
+            "r2dbc.datasources.default.schema-generate": schemaGenerate,
+            "r2dbc.datasources.default.packages"       : "io.micronaut.data.oracle.graph.r2dbc.library"
+        ]
+        ["url", "username", "password", "db-type", "dialect"].each { name ->
+            applicationContext.getProperty("r2dbc.datasources.default." + name, String).ifPresent { properties["r2dbc.datasources.default." + name] = it }
+        }
+        ApplicationContext.run(properties).close()
     }
 
     private void sql(String... statements) {

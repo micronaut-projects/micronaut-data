@@ -270,14 +270,13 @@ public class SchemaGenerator {
     }
 
     /**
-     * Runs the statements of a schema contributor. A failed DROP is expected when the object does not exist yet, so
-     * it is traced, while a failed CREATE is logged as a warning.
+     * Runs the statements of a schema contributor. Contributed DROP statements tolerate missing objects,
+     * so a failed DROP, such as one blocked by a foreign key from another table, is logged as a warning like a failed CREATE.
      */
     private static void executeContributed(Connection connection,
                                            PropertyPlaceholderResolver propertyPlaceholderResolver,
                                            List<String> statements,
                                            String kind) {
-        boolean drop = "DROP".equals(kind);
         for (String statement : statements) {
             String sql = resolveSql(propertyPlaceholderResolver, statement);
             if (DataSettings.QUERY_LOG.isDebugEnabled()) {
@@ -286,11 +285,9 @@ public class SchemaGenerator {
             try (PreparedStatement ps = connection.prepareStatement(sql)) {
                 ps.executeUpdate();
             } catch (SQLException e) {
-                if (drop && DataSettings.QUERY_LOG.isTraceEnabled()) {
-                    DataSettings.QUERY_LOG.trace("Drop Unsuccessful: " + e.getMessage());
-                } else if (!drop && DataSettings.QUERY_LOG.isWarnEnabled()) {
-                    // A failed CREATE is a warning, as it is for the tables: with CREATE the objects may exist already
-                    DataSettings.QUERY_LOG.warn("CREATE Statement Unsuccessful: {}, {}", e.getMessage(), sql);
+                if (DataSettings.QUERY_LOG.isWarnEnabled()) {
+                    // As for the tables, a failure is a warning and the generation carries on
+                    DataSettings.QUERY_LOG.warn("{} Statement Unsuccessful: {}, {}", kind, e.getMessage(), sql);
                 }
             }
         }
