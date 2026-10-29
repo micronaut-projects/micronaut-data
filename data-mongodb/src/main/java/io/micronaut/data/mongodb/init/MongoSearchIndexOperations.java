@@ -30,6 +30,7 @@ import jakarta.inject.Singleton;
 import org.bson.Document;
 
 import java.time.Duration;
+import java.util.ArrayList;
 import java.util.HashSet;
 import java.util.List;
 import java.util.Set;
@@ -107,13 +108,18 @@ public final class MongoSearchIndexOperations implements SearchIndexOperations {
         AbstractMongoCollectionsCreator.SearchIndexDefinition searchIndex = AbstractMongoCollectionsCreator.searchIndexDefinition(entity);
         if (searchIndex != null) {
             Set<String> names = searchIndexNames(collection);
+            List<String> dropped = new ArrayList<>(2);
             if (names.contains(searchIndex.name())) {
                 collection.dropSearchIndex(searchIndex.name());
+                dropped.add(searchIndex.name());
             }
             AbstractMongoCollectionsCreator.VectorIndexDefinition vectorIndex = AbstractMongoCollectionsCreator.vectorIndexDefinition(entity);
             if (vectorIndex != null && names.contains(vectorIndex.name())) {
                 collection.dropSearchIndex(vectorIndex.name());
+                dropped.add(vectorIndex.name());
             }
+            // MongoDB drops a search index in the background, so wait until it is gone, or a recreate fails
+            awaitDropped(collection, dropped, entityType);
             return;
         }
         AbstractMongoCollectionsCreator.TextIndexDefinition textIndex = AbstractMongoCollectionsCreator.textIndexDefinition(entity, collection.getNamespace().getCollectionName());
@@ -149,6 +155,21 @@ public final class MongoSearchIndexOperations implements SearchIndexOperations {
             } catch (InterruptedException e) {
                 Thread.currentThread().interrupt();
                 throw new DataAccessException("Interrupted while waiting for the search indexes of " + entityType.getName(), e);
+            }
+        }
+    }
+
+    private static void awaitDropped(MongoCollection<Document> collection, List<String> dropped, Class<?> entityType) {
+        long deadline = System.nanoTime() + SYNC_TIMEOUT.toNanos();
+        while (!dropped.isEmpty() && searchIndexNames(collection).stream().anyMatch(dropped::contains)) {
+            if (System.nanoTime() > deadline) {
+                throw new DataAccessException("The search indexes of " + entityType.getName() + " were not dropped within " + SYNC_TIMEOUT);
+            }
+            try {
+                Thread.sleep(250);
+            } catch (InterruptedException e) {
+                Thread.currentThread().interrupt();
+                throw new DataAccessException("Interrupted while waiting for the search indexes of " + entityType.getName() + " to be dropped", e);
             }
         }
     }

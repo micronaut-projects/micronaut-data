@@ -37,6 +37,8 @@ import java.sql.Connection;
 import java.sql.PreparedStatement;
 import java.sql.ResultSet;
 import java.sql.SQLException;
+import java.util.ArrayList;
+import java.util.LinkedHashSet;
 import java.util.List;
 import java.util.Set;
 import org.jspecify.annotations.Nullable;
@@ -86,37 +88,27 @@ public class JdbcSearchIndexOperations implements SearchIndexOperations, SearchC
     @Override
     public boolean exists(Class<?> entityType) {
         List<String> names = searchIndexNames(entityType);
-        TextSearchDialect dialect = textSearchDialect;
-        if (dialect == null || names.isEmpty()) {
+        if (textSearchDialect == null || names.isEmpty() || textSearchDialect.searchIndexExistsQuery() == null) {
             return false;
         }
-        String query = dialect.searchIndexExistsQuery();
-        if (query == null) {
-            return false;
-        }
-        try (Connection connection = dataSource().getConnection()) {
-            for (String name : names) {
-                try (PreparedStatement ps = connection.prepareStatement(query)) {
-                    ps.setString(1, dialect.catalogIndexName(name));
-                    try (ResultSet rs = ps.executeQuery()) {
-                        if (!rs.next() || rs.getLong(1) == 0) {
-                            return false;
-                        }
-                    }
-                }
-            }
-            return true;
-        } catch (SQLException e) {
-            throw new DataAccessException("Cannot read the search indexes of " + entityType.getName() + ": " + e.getMessage(), e);
-        }
+        return existingIndexes(entityType, names).size() == names.size();
     }
 
     @Override
     public void create(Class<?> entityType) {
-        if (exists(entityType)) {
+        List<String> names = searchIndexNames(entityType);
+        Set<String> existing = existingIndexes(entityType, names);
+        if (!names.isEmpty() && existing.size() == names.size()) {
             return;
         }
-        execute(entityType, queryBuilder.buildCreateSearchIndexStatements(entity(entityType)));
+        // an index created earlier, for example before a failure, is kept, so the others can be added
+        List<String> statements = new ArrayList<>();
+        for (String statement : queryBuilder.buildCreateSearchIndexStatements(entity(entityType))) {
+            if (existing.stream().noneMatch(name -> statement.startsWith(TextSearchDialect.CREATE_INDEX + name + " "))) {
+                statements.add(statement);
+            }
+        }
+        execute(entityType, statements);
     }
 
     @Override
@@ -124,11 +116,46 @@ public class JdbcSearchIndexOperations implements SearchIndexOperations, SearchC
         if (textSearchDialect == null) {
             return;
         }
-        List<String> statements = new java.util.ArrayList<>();
-        for (String name : searchIndexNames(entityType)) {
-            statements.add(textSearchDialect.buildDropSearchIndex(name));
+        List<String> names = searchIndexNames(entityType);
+        // only the indexes that exist are dropped, as Oracle has no DROP INDEX IF EXISTS before 23ai
+        Set<String> existing = textSearchDialect.searchIndexExistsQuery() == null ? new LinkedHashSet<>(names) : existingIndexes(entityType, names);
+        List<String> statements = new ArrayList<>();
+        for (String name : names) {
+            if (existing.contains(name)) {
+                statements.add(textSearchDialect.buildDropSearchIndex(name));
+            }
         }
         execute(entityType, statements);
+    }
+
+    /**
+     * @return The names among the given ones of the indexes that exist
+     */
+    private Set<String> existingIndexes(Class<?> entityType, List<String> names) {
+        TextSearchDialect dialect = textSearchDialect;
+        Set<String> existing = new LinkedHashSet<>();
+        if (dialect == null || names.isEmpty()) {
+            return existing;
+        }
+        String query = dialect.searchIndexExistsQuery();
+        if (query == null) {
+            return existing;
+        }
+        try (Connection connection = dataSource().getConnection()) {
+            for (String name : names) {
+                try (PreparedStatement ps = connection.prepareStatement(query)) {
+                    ps.setString(1, dialect.catalogIndexName(name));
+                    try (ResultSet rs = ps.executeQuery()) {
+                        if (rs.next() && rs.getLong(1) > 0) {
+                            existing.add(name);
+                        }
+                    }
+                }
+            }
+            return existing;
+        } catch (SQLException e) {
+            throw new DataAccessException("Cannot read the search indexes of " + entityType.getName() + ": " + e.getMessage(), e);
+        }
     }
 
     @Override

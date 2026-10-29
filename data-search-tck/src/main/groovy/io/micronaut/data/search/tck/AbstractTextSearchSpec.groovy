@@ -127,13 +127,12 @@ abstract class AbstractTextSearchSpec extends Specification {
     }
 
     /**
-     * @return The capabilities the backend reports at runtime, or {@code null} when it reports none; the
-     * first {@link SearchCapabilities} bean by default
+     * @return The capabilities the backend reports at runtime: the one {@link SearchCapabilities} bean of the
+     * spec's context by default
      */
-    @Nullable
     SearchCapabilities searchCapabilities() {
-        def beans = context.getBeansOfType(SearchCapabilities)
-        return beans.isEmpty() ? null : beans.iterator().next()
+        // one store per spec context, so exactly one bean answers for the backend under test
+        return context.getBean(SearchCapabilities)
     }
 
     /**
@@ -169,8 +168,8 @@ abstract class AbstractTextSearchSpec extends Specification {
         def entityType = newBook("Title", "Description", "Author", 1).getClass()
 
         expect:
-        reported == null || reported.getSearchCapabilities(entityType) == capabilities()
-        reported == null || capabilities().every { reported.supports(entityType, it) }
+        reported.getSearchCapabilities(entityType) == capabilities()
+        capabilities().every { reported.supports(entityType, it) }
     }
 
     void cleanup() {
@@ -182,8 +181,8 @@ abstract class AbstractTextSearchSpec extends Specification {
         def reported = searchCapabilities()
 
         expect:
-        reported == null || reported.getSearchCapabilities(io.micronaut.data.search.tck.entities.Shelf).isEmpty()
-        reported == null || !reported.supports(io.micronaut.data.search.tck.entities.Shelf, SearchCapability.PHRASE)
+        reported.getSearchCapabilities(io.micronaut.data.search.tck.entities.Shelf).isEmpty()
+        !reported.supports(io.micronaut.data.search.tck.entities.Shelf, SearchCapability.PHRASE)
     }
 
     void "search matches any term across every search field ordered by relevance"() {
@@ -400,6 +399,16 @@ abstract class AbstractTextSearchSpec extends Specification {
         e.message.contains("is not a @SearchField")
     }
 
+    void "search with a SearchQuery rejects a boost of a property that is not a search field"() {
+        when:
+        bookSearchRepository.search(SearchQuery.builder("programming").boost("titel", 2d).build())
+
+        then:
+        IllegalArgumentException e = thrown()
+        e.message.contains("'titel'")
+        e.message.contains("is not a @SearchField")
+    }
+
     void "search with a SearchQuery rejects field scoping the store cannot honour"() {
         assumeTrue(!capabilities().contains(SearchCapability.FIELD_SCOPE))
 
@@ -441,6 +450,13 @@ abstract class AbstractTextSearchSpec extends Specification {
         then:
         !operations.exists(type)
 
+        when: "dropping an index that is gone does nothing"
+        operations.drop(type)
+
+        then:
+        noExceptionThrown()
+        !operations.exists(type)
+
         when: "the index is created again and a new book indexed"
         operations.create(type)
         operations.sync(type)
@@ -451,6 +467,14 @@ abstract class AbstractTextSearchSpec extends Specification {
         then:
         operations.exists(type)
         bookSearchRepository.findByTitleSearch("rebuilt")*.title == ["The Rebuilt Index Guide"]
+
+        when: "an index that exists is created again or recreated; a document store's index holds its documents, so they go with it"
+        operations.create(type)
+        operations.recreate(type)
+        operations.sync(type)
+
+        then:
+        operations.exists(type)
     }
 
     void "a language override selects the stemming of the query"() {

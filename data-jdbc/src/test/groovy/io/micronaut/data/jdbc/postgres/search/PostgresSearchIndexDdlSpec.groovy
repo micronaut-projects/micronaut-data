@@ -21,16 +21,28 @@ class PostgresSearchIndexDdlSpec extends Specification {
         statements.size() == 5
         statements[0].startsWith('CREATE TABLE "search_book"')
         statements[1] == "CREATE OR REPLACE FUNCTION mn_regconfig(cfg text) RETURNS regconfig AS 'SELECT cfg::regconfig' LANGUAGE sql IMMUTABLE SET search_path = pg_catalog, pg_temp;"
-        statements[2] == 'CREATE INDEX "idx_search_book_search" ON "search_book" USING GIN ((setweight(to_tsvector(mn_regconfig(coalesce("language",\'english\')),coalesce("title",\'\')),\'A\') || setweight(to_tsvector(mn_regconfig(coalesce("language",\'english\')),coalesce("description",\'\')),\'C\')));'
+        statements[2] == 'CREATE INDEX IF NOT EXISTS "idx_search_book_search" ON "search_book" USING GIN ((setweight(to_tsvector(mn_regconfig(coalesce("language",\'english\')),coalesce("title",\'\')),\'A\') || setweight(to_tsvector(mn_regconfig(coalesce("language",\'english\')),coalesce("description",\'\')),\'C\')));'
         // the fuzzy title gets a pg_trgm index
         statements[3] == 'CREATE EXTENSION IF NOT EXISTS pg_trgm;'
-        statements[4] == 'CREATE INDEX "idx_search_book_title_trgm" ON "search_book" USING GIN ("title" gin_trgm_ops);'
+        statements[4] == 'CREATE INDEX IF NOT EXISTS "idx_search_book_title_trgm" ON "search_book" USING GIN ("title" gin_trgm_ops);'
 
         when:
         def all = builder.buildCreateTableStatements([entity] as RuntimePersistentEntity[])
 
         then:
         all.last() == statements[4]
+    }
+
+    void "a trigram index name longer than PostgreSQL keeps is shortened with a hash"() {
+        when:
+        def statements = new SqlQueryBuilder(Dialect.POSTGRES).buildCreateTableStatements(new RuntimePersistentEntity<>(LongNamedRecipe))
+        def trigram = statements.find { it.contains("gin_trgm_ops") }
+        def name = (trigram =~ /CREATE INDEX IF NOT EXISTS "([^"]+)"/)[0][1] as String
+
+        then:
+        name.length() == 63
+        name.startsWith("idx_seasonal_recipes_from_the_regional_kitchen")
+        name ==~ /.*_[0-9a-f]{16}/
     }
 
     void "no search index is generated for dialects without text search"() {

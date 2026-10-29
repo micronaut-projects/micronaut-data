@@ -151,6 +151,7 @@ public final class MongoQueryBuilder implements QueryBuilder {
     private static final String ADD_FIELDS = "$addFields";
     private static final String MATCH = "$match";
     private static final String EXPR = "$expr";
+    private static final String TEXT = "$text";
     private static final String NULL_RANK_FIELD_PREFIX = "__micronaut_nulls_";
     private static final String SORT_EXPRESSION_FIELD_PREFIX = "__micronaut_sort_";
     private static final String STR_LEN_CP = "$strLenCP";
@@ -186,6 +187,13 @@ public final class MongoQueryBuilder implements QueryBuilder {
             predicateObj = buildWhereClause(predicate, queryState);
         }
 
+        if (!pipeline.isEmpty()) {
+            // MongoDB only accepts $text in the first stage, so it moves ahead of the join lookups
+            Object text = removeTextMatch(predicateObj);
+            if (text != null) {
+                pipeline.add(0, Map.of(MATCH, Map.of(TEXT, text)));
+            }
+        }
         MongoSearchStages.RankFusion hybrid = queryState.hybrid;
         if (hybrid != null) {
             appendRankFusionStages(queryState, hybrid, pipeline);
@@ -237,10 +245,25 @@ public final class MongoQueryBuilder implements QueryBuilder {
             throw new UnsupportedOperationException("MongoDB $vectorSearch must be the first stage of the aggregation, so a vector predicate cannot be combined with joins.");
         }
         int limit = selectQueryDefinition.limit() > 0 ? selectQueryDefinition.limit() + Math.max(selectQueryDefinition.offset(), 0) : DEFAULT_VECTOR_LIMIT;
+        if (limit > MongoSearchStages.MAX_VECTOR_CANDIDATES) {
+            // the limit cannot exceed numCandidates, which MongoDB caps at 10000
+            throw new UnsupportedOperationException("A MongoDB vector search returns at most " + MongoSearchStages.MAX_VECTOR_CANDIDATES + " neighbours; the query asks for " + limit);
+        }
         pipeline.add(Map.of(VECTOR_SEARCH_STAGE, MongoSearchStages.vectorSearchStage(queryState.vectorSearch, limit)));
         if (!queryState.vectorScoreFields.isEmpty()) {
             // The distance is only available as metadata of the $vectorSearch stage
             pipeline.add(Map.of(ADD_FIELDS, MongoSearchStages.scoreFields(queryState.vectorScoreFields, MongoSearchStages.vectorDistance(queryState.getEntity()))));
+        }
+    }
+
+    /**
+     * A MongoDB Search predicate is an aggregation stage, not part of the filter a delete or an update
+     * takes, so without this check it would select every document of the collection.
+     */
+    private static void rejectSearchSelection(QueryState queryState, String operation) {
+        if (queryState.searchOperator != null) {
+            throw new UnsupportedOperationException("A MongoDB Search predicate cannot select the documents of " + operation
+                + ": $search is an aggregation stage and a filter cannot hold it. Find the entities first and delete or update them by id.");
         }
     }
 
@@ -733,6 +756,37 @@ public final class MongoQueryBuilder implements QueryBuilder {
         return Map.of("$unwind", unwind);
     }
 
+    /**
+     * Removes the {@code $text} condition from a filter, where the predicate visitor allows it: at the top
+     * level or as one operand of the top-level {@code $and}.
+     *
+     * @param predicateObj The filter
+     * @return The {@code $text} value, or {@code null} when the filter has none
+     */
+    @Nullable
+    private static Object removeTextMatch(Map<String, Object> predicateObj) {
+        Object text = predicateObj.remove(TEXT);
+        if (text != null) {
+            return text;
+        }
+        if (predicateObj.get("$and") instanceof List<?> operands) {
+            for (Object operand : operands) {
+                if (operand instanceof Map<?, ?> map && map.size() == 1 && map.containsKey(TEXT)) {
+                    List<Object> remaining = new ArrayList<>(operands);
+                    remaining.remove(operand);
+                    if (remaining.size() == 1 && remaining.get(0) instanceof Map<?, ?> single) {
+                        predicateObj.remove("$and");
+                        single.forEach((k, v) -> predicateObj.put(k.toString(), v));
+                    } else {
+                        predicateObj.put("$and", remaining);
+                    }
+                    return map.get(TEXT);
+                }
+            }
+        }
+        return null;
+    }
+
     private boolean isMatchOnlyStage(List<Map<String, Object>> pipeline) {
         return pipeline.size() == 1 && pipeline.iterator().next().containsKey(MATCH);
     }
@@ -885,6 +939,7 @@ public final class MongoQueryBuilder implements QueryBuilder {
             predicateQuery = MongoPipelineJson.toJsonString(
                 buildWhereClause(predicate, queryState)
             );
+            rejectSearchSelection(queryState, "an update");
         } else {
             predicateQuery = "";
         }
@@ -991,6 +1046,7 @@ public final class MongoQueryBuilder implements QueryBuilder {
             predicateQuery = MongoPipelineJson.toJsonString(
                 buildWhereClause(predicate, queryState)
             );
+            rejectSearchSelection(queryState, "a delete");
         }
 
         return QueryResult.of(
@@ -1184,6 +1240,8 @@ public final class MongoQueryBuilder implements QueryBuilder {
         private final QueryState queryState;
         private Map<String, Object> query;
         private boolean inDisjunction;
+        // the number of OR and NOT predicates around the one being visited, where $text is not allowed
+        private int textForbiddenDepth;
 
         public MongoPredicateVisitor(QueryState queryState, Map<String, Object> query) {
             this.queryState = queryState;
@@ -1335,8 +1393,13 @@ public final class MongoQueryBuilder implements QueryBuilder {
             query.put("$or", ops);
             boolean wasInDisjunction = inDisjunction;
             inDisjunction = true;
-            visitDisjunctionPredicate(predicates, ops);
-            inDisjunction = wasInDisjunction;
+            textForbiddenDepth++;
+            try {
+                visitDisjunctionPredicate(predicates, ops);
+            } finally {
+                textForbiddenDepth--;
+                inDisjunction = wasInDisjunction;
+            }
         }
 
         private Object scalarValue(Expression<?> expression) {
@@ -1374,7 +1437,12 @@ public final class MongoQueryBuilder implements QueryBuilder {
                 visitInBetween(betweenPredicate.getValue(), betweenPredicate.getFrom(), betweenPredicate.getTo(), true);
                 return;
             }
-            visitPredicate(negate.getNegated());
+            textForbiddenDepth++;
+            try {
+                visitPredicate(negate.getNegated());
+            } finally {
+                textForbiddenDepth--;
+            }
             negate(query);
         }
 
@@ -1644,6 +1712,9 @@ public final class MongoQueryBuilder implements QueryBuilder {
                 return;
             }
             MongoSearchStages.requireTextSupport(persistentEntity, fields.size(), mode, options);
+            if (textForbiddenDepth > 0) {
+                throw new UnsupportedOperationException("MongoDB $text cannot be combined with OR or negated: a full-text search must be a top-level condition, joined to the others with AND");
+            }
             if (!(queryExpression instanceof BindingParameter bindingParameter)) {
                 throw new IllegalStateException("A full-text search query must be a parameter, got: " + queryExpression);
             }
@@ -1653,7 +1724,7 @@ public final class MongoQueryBuilder implements QueryBuilder {
             Map<String, Object> text = new LinkedHashMap<>();
             text.put("$search", Map.of(QUERY_PARAMETER_PLACEHOLDER, index));
             text.put("$language", options.language() != null ? options.language() : TextSearchSupport.resolveLanguage(persistentEntity));
-            query.put("$text", text);
+            query.put(TEXT, text);
         }
 
         /** Records the {@code $search} stage of a {@code @MongoSearchIndex} entity; the operator is rendered at runtime, see {@link #SEARCH_OPERATOR_PLACEHOLDER}. */
