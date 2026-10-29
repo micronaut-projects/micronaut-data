@@ -447,9 +447,9 @@ interface AsyncArticleRepository extends AsyncSearchRepository<Article, Long> {
         expect:
         reactive.getRequiredMethod("search", io.micronaut.data.model.search.SearchQuery).stringValue(DataMethod, DataMethod.META_MEMBER_INTERCEPTOR).get() == "io.micronaut.data.runtime.intercept.criteria.reactive.SearchQueryReactiveInterceptor"
         async.getRequiredMethod("search", io.micronaut.data.model.search.SearchQuery).stringValue(DataMethod, DataMethod.META_MEMBER_INTERCEPTOR).get() == "io.micronaut.data.runtime.intercept.criteria.async.SearchQueryAsyncInterceptor"
-        reactive.getRequiredMethod("search", String).stringValue(DataMethod, DataMethod.META_MEMBER_INTERCEPTOR).get().contains("Reactive")
-        async.getRequiredMethod("search", String).stringValue(DataMethod, DataMethod.META_MEMBER_INTERCEPTOR).get().contains("Async")
-        reactive.getRequiredMethod("countHits", String).stringValue(DataMethod, DataMethod.META_MEMBER_INTERCEPTOR).get().contains("Reactive")
-        async.getRequiredMethod("countHits", String).stringValue(DataMethod, DataMethod.META_MEMBER_INTERCEPTOR).get().contains("Async")
+        reactive.getRequiredMethod("search", String).stringValue(DataMethod, DataMethod.META_MEMBER_INTERCEPTOR).get() == "io.micronaut.data.intercept.reactive.FindOneReactiveInterceptor"
+        async.getRequiredMethod("search", String).stringValue(DataMethod, DataMethod.META_MEMBER_INTERCEPTOR).get() == "io.micronaut.data.intercept.async.FindOneAsyncInterceptor"
+        reactive.getRequiredMethod("countHits", String).stringValue(DataMethod, DataMethod.META_MEMBER_INTERCEPTOR).get() == "io.micronaut.data.intercept.reactive.CountReactiveInterceptor"
+        async.getRequiredMethod("countHits", String).stringValue(DataMethod, DataMethod.META_MEMBER_INTERCEPTOR).get() == "io.micronaut.data.intercept.async.CountAsyncInterceptor"
     }
 }
