@@ -900,7 +900,9 @@ public class CypherQueryBuilder implements GraphQueryBuilder {
 
     private List<String> appendFetchJoins(StringBuilder query, QueryState state, List<String> carried) {
         List<String> columns = new ArrayList<>();
-        Map<Association, JoinTree> nested = new LinkedHashMap<>();
+        // Trees are keyed by relationship name at every level, so joins such as directors.mentor and
+        // directors.awards share one tree for directors
+        Map<String, JoinTree> nested = new LinkedHashMap<>();
         List<JoinPath> direct = new ArrayList<>();
         for (JoinPath joinPath : state.joinPaths) {
             if (!joinPath.getJoinType().isFetch()) {
@@ -910,7 +912,8 @@ public class CypherQueryBuilder implements GraphQueryBuilder {
             boolean relationshipEntity = GraphEntities.isRelationshipEntity(associationPath[0].getAssociatedEntity());
             if (associationPath.length > 1 && !relationshipEntity) {
                 // A path through node relationships, such as directors.mentor, is fetched as a tree
-                JoinTree tree = nested.computeIfAbsent(associationPath[0], JoinTree::new);
+                Association first = associationPath[0];
+                JoinTree tree = nested.computeIfAbsent(first.getName(), name -> new JoinTree(first));
                 for (int i = 1; i < associationPath.length; i++) {
                     tree = tree.child(associationPath[i]);
                 }
@@ -921,8 +924,7 @@ public class CypherQueryBuilder implements GraphQueryBuilder {
         for (JoinPath joinPath : direct) {
             // A relationship fetched as a tree already includes its nodes
             Association[] associationPath = joinPath.getAssociationPath();
-            String name = associationPath[0].getName();
-            if (associationPath.length > 1 || nested.keySet().stream().noneMatch(a -> a.getName().equals(name))) {
+            if (associationPath.length > 1 || !nested.containsKey(associationPath[0].getName())) {
                 appendFetchJoin(query, joinPath, columns, carried);
             }
         }
@@ -959,8 +961,10 @@ public class CypherQueryBuilder implements GraphQueryBuilder {
         PersistentEntity target = GraphEntities.targetNodeEntity(association);
         query.append(" OPTIONAL MATCH ")
             .append(GraphEntities.relationshipPattern(association, from, null, "(" + variable + labelExpression(target) + ")"));
+        // The collects are DISTINCT: a node reached through parallel relationships, or the rows a sibling branch
+        // multiplied, would otherwise be collected more than once
         if (tree.children.isEmpty()) {
-            return "collect(" + variable + ")";
+            return "collect(DISTINCT " + variable + ")";
         }
         List<String> scope = new ArrayList<>(carried);
         scope.add(variable);
@@ -973,7 +977,7 @@ public class CypherQueryBuilder implements GraphQueryBuilder {
             scope.add(childColumn);
             map.append(", ").append(GraphEntities.escapeName(child.association.getName())).append(": ").append(childColumn);
         }
-        return "collect(CASE WHEN " + variable + " IS NULL THEN NULL ELSE " + map.append('}') + " END)";
+        return "collect(DISTINCT CASE WHEN " + variable + " IS NULL THEN NULL ELSE " + map.append('}') + " END)";
     }
 
     private void appendFetchJoin(StringBuilder query, JoinPath joinPath, List<String> columns, List<String> carried) {

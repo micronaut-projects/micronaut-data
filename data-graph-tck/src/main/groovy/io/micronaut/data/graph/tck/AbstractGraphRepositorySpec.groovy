@@ -660,5 +660,13 @@ abstract class AbstractGraphRepositorySpec extends Specification {
 
         then:
         withDirectors.directors*.name.sort() == ["Agnieszka Holland", "Second Unit"]
+
+        when: "a director is linked to the movie by a second, parallel relationship"
+        queries.addDirector("Agnieszka Holland", "Europa Europa")
+        found = queries.queryByTitle("Europa Europa").get()
+
+        then: "the director is fetched once"
+        found.directors*.name.sort() == ["Agnieszka Holland", "Second Unit"]
+        found.directors.find { it.name == "Agnieszka Holland" }.mentor.name == "Andrzej Wajda"
     }
 }
