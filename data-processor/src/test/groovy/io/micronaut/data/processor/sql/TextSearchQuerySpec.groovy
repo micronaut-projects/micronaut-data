@@ -170,6 +170,39 @@ interface NoteRepository extends CrudRepository<Note, Long> {
         getQuery(repository.getRequiredMethod("findByTextSearch", String)) == 'SELECT note_."id",note_."text" FROM "note" note_ WHERE (to_tsvector(\'german\',note_."text") @@ to_tsquery(\'german\',?))'
     }
 
+    void "a language that is not a configuration name is rejected at compile time"() {
+        when:
+        buildRepository('test.NoteRepository', """
+import io.micronaut.data.jdbc.annotation.JdbcRepository;
+import io.micronaut.data.model.query.builder.sql.Dialect;
+import io.micronaut.data.annotation.search.SearchField;
+import io.micronaut.data.annotation.search.Searchable;
+
+@MappedEntity
+@Searchable(language = "english') OR 1=1 --")
+class Note {
+    @Id
+    @GeneratedValue
+    private Long id;
+    @SearchField
+    private String text;
+    public Long getId() { return id; }
+    public void setId(Long id) { this.id = id; }
+    public String getText() { return text; }
+    public void setText(String text) { this.text = text; }
+}
+
+@JdbcRepository(dialect = Dialect.POSTGRES)
+interface NoteRepository extends CrudRepository<Note, Long> {
+    List<Note> findByTextSearch(String q);
+}
+""")
+
+        then:
+        def e = thrown(RuntimeException)
+        e.message.contains("A search language must be a text search configuration name")
+    }
+
     void "fuzzy search is rejected on PostgreSQL at compile time"() {
         when:
         articleRepository("""
