@@ -17,7 +17,7 @@ micronaut:
       create-extension: false
 ----
 
-The graph named by `micronaut.data.age.graph` is created on first use unless `create-graph` is `false`. Set `create-extension` to `true` to run `CREATE EXTENSION age`, which needs a privileged user.
+The graph named by `micronaut.data.age.graph` is created on first use unless `create-graph` is `false`. It is created on the connection of that first operation, so a first operation inside a transaction creates the graph with the transaction, and the next operation creates it again if the transaction rolls back. Set `create-extension` to `true` to run `CREATE EXTENSION age`, which needs a privileged user.
 
 Apache AGE implements a subset of Cypher, which the module accounts for at build time:
 
