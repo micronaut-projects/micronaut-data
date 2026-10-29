@@ -22,6 +22,7 @@ import io.micronaut.data.model.Association;
 import io.micronaut.data.model.DataType;
 import io.micronaut.data.model.PersistentEntity;
 import io.micronaut.data.model.PersistentProperty;
+import io.micronaut.data.model.query.builder.sql.TextSearchDialect;
 import io.micronaut.data.model.search.TextSearchSupport;
 import io.micronaut.data.search.document.query.SearchJson;
 
@@ -45,7 +46,9 @@ public final class SearchIndexDefinitions {
     private static final String FIELDS = "fields";
     private static final String ANALYZER = "analyzer";
     private static final String TYPE = "type";
-    private static final Map<String, Object> KEYWORD_SUB_FIELD = Map.of(KEYWORD, Map.of(TYPE, KEYWORD, "ignore_above", 1024));
+    // the longest value in characters whose UTF-8 bytes always fit the 32766-byte limit of a keyword term
+    private static final int KEYWORD_IGNORE_ABOVE = 8191;
+    private static final Map<String, Object> KEYWORD_SUB_FIELD = Map.of(KEYWORD, Map.of(TYPE, KEYWORD, "ignore_above", KEYWORD_IGNORE_ABOVE));
 
     private SearchIndexDefinitions() {
     }
@@ -75,7 +78,7 @@ public final class SearchIndexDefinitions {
                     field.put(FIELDS, KEYWORD_SUB_FIELD);
                 }
             }
-            properties.put(property.getName(), field);
+            properties.put(TextSearchDialect.jsonKey(property), field);
         }
         // The other string properties are compared exactly by the derived queries, so they are
         // keywords rather than the analyzed text a dynamic mapping would give them; the id is one of
@@ -85,8 +88,8 @@ public final class SearchIndexDefinitions {
             others.add(entity.getIdentity());
         }
         for (PersistentProperty property : others) {
-            if (!properties.containsKey(property.getName()) && !(property instanceof Association) && isKeyword(property)) {
-                properties.put(property.getName(), Map.of(TYPE, KEYWORD));
+            if (!properties.containsKey(TextSearchDialect.jsonKey(property)) && !(property instanceof Association) && isKeyword(property)) {
+                properties.put(TextSearchDialect.jsonKey(property), Map.of(TYPE, KEYWORD));
             }
         }
         return SearchJson.write(Map.of("mappings", Map.of("properties", properties)));

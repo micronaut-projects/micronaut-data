@@ -18,6 +18,7 @@ package io.micronaut.data.search.elasticsearch.transport;
 import co.elastic.clients.elasticsearch.ElasticsearchAsyncClient;
 import co.elastic.clients.elasticsearch._types.ElasticsearchException;
 import co.elastic.clients.elasticsearch._types.FieldValue;
+import co.elastic.clients.elasticsearch._types.OpType;
 import co.elastic.clients.elasticsearch._types.Refresh;
 import co.elastic.clients.elasticsearch._types.VersionType;
 import co.elastic.clients.elasticsearch.core.IndexRequest;
@@ -158,13 +159,20 @@ public final class ElasticsearchAsyncSearchTransport implements AsyncSearchTrans
     /** One index operation of a bulk request; a versioned document is written with external versioning. */
     private static BulkOperation indexOperation(SearchTransport.BulkDocument document) {
         Long version = document.version();
-        return BulkOperation.of(op -> op.index(i -> version == null
-            ? i.id(document.id()).document(document.source())
-            : i.id(document.id()).document(document.source()).version(version).versionType(VersionType.External)));
+        if (version == null) {
+            // a new document without a version is a create-only write
+            return BulkOperation.of(op -> op.create(c -> c.id(document.id()).document(document.source())));
+        }
+        return BulkOperation.of(op -> op.index(i -> i.id(document.id()).document(document.source()).version(version).versionType(VersionType.External)));
     }
 
     static List<String> bulkIds(BulkResponse response) {
         return BulkResponses.ids("Elasticsearch", response.items(), item -> item.error() == null ? null : item.error().reason(), BulkResponseItem::id, BulkResponseItem::status);
+    }
+
+    @Override
+    public CompletionStage<String> create(String index, @Nullable String id, Map<String, Object> source, DocumentSearchConfiguration.Refresh refresh) {
+        return client.index(i -> i.index(index).id(id).opType(OpType.Create).document(source).refresh(refresh(refresh))).thenApply(response -> response.id());
     }
 
     @Override

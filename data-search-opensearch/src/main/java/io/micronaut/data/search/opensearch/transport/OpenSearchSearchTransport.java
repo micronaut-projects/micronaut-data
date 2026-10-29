@@ -26,6 +26,8 @@ import org.jspecify.annotations.Nullable;
 import org.opensearch.client.json.JsonData;
 import org.opensearch.client.json.JsonpMapper;
 import org.opensearch.client.opensearch.OpenSearchClient;
+import org.opensearch.client.opensearch._types.OpType;
+import org.opensearch.client.opensearch._types.OpenSearchException;
 import org.opensearch.client.opensearch._types.Refresh;
 import org.opensearch.client.opensearch._types.mapping.TypeMapping;
 import org.opensearch.client.opensearch._types.query_dsl.Query;
@@ -45,6 +47,8 @@ import java.util.Map;
 @Named("default")
 @Requires(beans = OpenSearchClient.class)
 public final class OpenSearchSearchTransport implements SearchTransport {
+
+    private static final int CONFLICT = 409;
 
     private final OpenSearchClient client;
     private final JsonpMapper mapper;
@@ -111,6 +115,20 @@ public final class OpenSearchSearchTransport implements SearchTransport {
             throw new DataAccessException("OpenSearch bulk failed: " + e.getMessage(), e);
         } catch (RuntimeException e) {
             throw OpenSearchRequests.conflictOrFailure(e, null);
+        }
+    }
+
+    @Override
+    public String create(String index, @Nullable String id, Map<String, Object> source, DocumentSearchConfiguration.Refresh refresh) {
+        try {
+            return client.index(i -> i.index(index).id(id).opType(OpType.Create).document(source).refresh(refresh(refresh))).id();
+        } catch (OpenSearchException e) {
+            if (e.status() == CONFLICT) {
+                throw new DataAccessException("A document with id " + id + " already exists in index " + index, e);
+            }
+            throw e;
+        } catch (IOException e) {
+            throw new DataAccessException("OpenSearch index failed: " + e.getMessage(), e);
         }
     }
 

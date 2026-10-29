@@ -35,6 +35,28 @@ class SearchQuerySpec extends Specification {
         SearchQuery.of("coffee").fields.empty
     }
 
+    void "a fuzzy edit distance outside 0 to 2 is rejected"() {
+        when:
+        SearchQuery.builder("coffe").fuzzy(maxEdits)
+
+        then:
+        thrown(IllegalArgumentException)
+
+        where:
+        maxEdits << [-1, 3]
+    }
+
+    void "fuzziness is dropped when another mode replaces fuzzy"() {
+        when:
+        def query = SearchQuery.builder("coffee").fuzzy(2).mode(MatchMode.ANY).build()
+
+        then:
+        query.mode == MatchMode.ANY
+        query.fuzziness == 0
+        query == SearchQuery.of("coffee")
+        query.hashCode() == SearchQuery.of("coffee").hashCode()
+    }
+
     void "queries are value objects"() {
         expect:
         SearchQuery.builder("a").fields("x").build() == SearchQuery.builder("a").fields("x").build()
@@ -50,6 +72,23 @@ class SearchQuerySpec extends Specification {
 
         where:
         value << [0, SearchQuery.MAX_CANDIDATES + 1]
+    }
+
+    void "hybrid weights must be finite and not negative"() {
+        when:
+        SearchQuery.builder("a").textWeight(weight)
+
+        then:
+        thrown(IllegalArgumentException)
+
+        when:
+        SearchQuery.builder("a").vectorWeight(weight)
+
+        then:
+        thrown(IllegalArgumentException)
+
+        where:
+        weight << [-1d, Double.NaN, Double.POSITIVE_INFINITY]
     }
 
     void "toString leaves the search string out"() {
