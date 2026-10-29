@@ -79,7 +79,9 @@ public interface SearchTransport {
     }
 
     /**
-     * Indexes several documents in one request. The default sends one request per document.
+     * Indexes several new documents in one request, each a create-only write like
+     * {@link #create(String, String, Map, DocumentSearchConfiguration.Refresh)}. The default sends one
+     * request per document.
      *
      * @param index The index name
      * @param documents The documents, in order
@@ -89,9 +91,27 @@ public interface SearchTransport {
     default List<String> bulkIndex(String index, List<BulkDocument> documents, DocumentSearchConfiguration.Refresh refresh) {
         List<String> ids = new java.util.ArrayList<>(documents.size());
         for (BulkDocument document : documents) {
-            ids.add(index(index, document.id(), document.source(), document.version(), refresh));
+            ids.add(document.version() == null
+                ? create(index, document.id(), document.source(), refresh)
+                : index(index, document.id(), document.source(), document.version(), refresh));
         }
         return ids;
+    }
+
+    /**
+     * Indexes a new document, failing when a document with the same id exists. The default replaces
+     * like {@link #index(String, String, Map, DocumentSearchConfiguration.Refresh)}; the store
+     * transports override it with a create-only write.
+     *
+     * @param index The index
+     * @param id The document id, or {@code null} to let the store generate one
+     * @param source The document
+     * @param refresh The refresh policy
+     * @return The document id
+     * @throws io.micronaut.data.exceptions.DataAccessException When a document with the id exists
+     */
+    default String create(String index, @Nullable String id, Map<String, Object> source, DocumentSearchConfiguration.Refresh refresh) {
+        return index(index, id, source, refresh);
     }
 
     /**
@@ -126,6 +146,23 @@ public interface SearchTransport {
      * @return Whether a document was deleted
      */
     boolean delete(String index, String id, DocumentSearchConfiguration.Refresh refresh);
+
+    /**
+     * Deletes a document only if the store holds it at the given external version or an earlier one.
+     *
+     * @param index The index
+     * @param id The id
+     * @param version The version the entity was read at, or {@code null} for an unconditional delete
+     * @param refresh The refresh policy
+     * @return Whether a document was deleted
+     * @throws io.micronaut.data.exceptions.OptimisticLockException When the stored document is newer
+     */
+    default boolean delete(String index, String id, @Nullable Long version, DocumentSearchConfiguration.Refresh refresh) {
+        if (version != null) {
+            throw new UnsupportedOperationException("Versioned deletes are not supported by " + getClass().getName());
+        }
+        return delete(index, id, refresh);
+    }
 
     /**
      * Deletes the documents matching a query.
