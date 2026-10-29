@@ -91,7 +91,7 @@ public interface SearchTransport {
     default List<String> bulkIndex(String index, List<BulkDocument> documents, DocumentSearchConfiguration.Refresh refresh) {
         List<String> ids = new java.util.ArrayList<>(documents.size());
         for (BulkDocument document : documents) {
-            ids.add(document.version() == null
+            ids.add(document.create()
                 ? create(index, document.id(), document.source(), refresh)
                 : index(index, document.id(), document.source(), document.version(), refresh));
         }
@@ -239,8 +239,20 @@ public interface SearchTransport {
      * @param id The document id, or {@code null} to let the store assign one
      * @param source The document
      * @param version The external version, or {@code null} for an unconditional write
+     * @param create Whether the write fails when a document with the id exists, rather than replacing it
      */
-    record BulkDocument(@Nullable String id, Map<String, Object> source, @Nullable Long version) {
+    record BulkDocument(@Nullable String id, Map<String, Object> source, @Nullable Long version, boolean create) {
+
+        /**
+         * A new document, created only when no document has the id, or written at its version.
+         *
+         * @param id The document id, or {@code null}
+         * @param source The document
+         * @param version The external version, or {@code null}
+         */
+        public BulkDocument(@Nullable String id, Map<String, Object> source, @Nullable Long version) {
+            this(id, source, version, version == null);
+        }
 
         /**
          * @param id The document id, or {@code null}

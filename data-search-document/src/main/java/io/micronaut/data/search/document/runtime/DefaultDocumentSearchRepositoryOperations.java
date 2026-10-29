@@ -266,12 +266,13 @@ public final class DefaultDocumentSearchRepositoryOperations extends AbstractDoc
     @Override
     public <T> T persist(InsertOperation<T> operation) {
         RuntimePersistentEntity<T> entity = runtimeEntityRegistry.getEntity(operation.getRootEntity());
-        return persistOne(operation.getEntity(), entity);
+        return persistOne(operation.getEntity(), entity, replacesExisting(operation.getAnnotationMetadata()));
     }
 
     @Override
     public <T> Iterable<T> persistAll(InsertBatchOperation<T> operation) {
         RuntimePersistentEntity<T> entity = runtimeEntityRegistry.getEntity(operation.getRootEntity());
+        boolean replace = replacesExisting(operation.getAnnotationMetadata());
         List<T> persisted = new ArrayList<>();
         List<T> toIndex = new ArrayList<>();
         // the position of each indexed entity in the result, as equal entities cannot be told apart by indexOf
@@ -286,7 +287,7 @@ public final class DefaultDocumentSearchRepositoryOperations extends AbstractDoc
                 persisted.add(current);
                 toIndex.add(current);
                 Long version = persistVersion(current, entity);
-                documents.add(new SearchTransport.BulkDocument(documentId(current, entity), toDocument(current, entity), version));
+                documents.add(new SearchTransport.BulkDocument(documentId(current, entity), toDocument(current, entity), version, !replace && version == null));
             }
         }
         if (documents.isEmpty()) {
@@ -359,7 +360,7 @@ public final class DefaultDocumentSearchRepositoryOperations extends AbstractDoc
 
     // ---------- helpers
 
-    private <T> T persistOne(T value, RuntimePersistentEntity<T> entity) {
+    private <T> T persistOne(T value, RuntimePersistentEntity<T> entity, boolean replace) {
         T current = prePersist(value, entity);
         if (current == null) {
             return value;
@@ -367,7 +368,7 @@ public final class DefaultDocumentSearchRepositoryOperations extends AbstractDoc
         Long version = persistVersion(current, entity);
         // a create-only write, so saving an entity with the id of an existing document fails instead of
         // replacing it; a versioned entity relies on the external version instead
-        String documentId = version == null
+        String documentId = version == null && !replace
             ? transport.create(indexName(entity), documentId(current, entity), toDocument(current, entity), configuration.getRefresh())
             : transport.index(indexName(entity), documentId(current, entity), toDocument(current, entity), version, configuration.getRefresh());
         return postPersist(current, entity, documentId);

@@ -167,6 +167,17 @@ abstract class AbstractDocumentSearchRepositoryOperations extends AbstractReposi
      * @param <T> The entity type
      * @return The version, or {@code null} for an entity without a version property
      */
+    /**
+     * Whether a save may replace a document with the same id: Jakarta Data's {@code @Save} inserts or
+     * replaces, while an insert is a create-only write.
+     *
+     * @param annotationMetadata The metadata of the repository method
+     * @return True to write without the create-only check
+     */
+    protected static boolean replacesExisting(io.micronaut.core.annotation.AnnotationMetadata annotationMetadata) {
+        return annotationMetadata.hasAnnotation("jakarta.data.repository.Save");
+    }
+
     @Nullable
     protected final <T> Long deleteVersion(T current, RuntimePersistentEntity<T> entity) {
         return documentVersion(current, entity);

@@ -187,7 +187,8 @@ public final class DefaultDocumentSearchReactiveRepositoryOperations extends Abs
 
     @Override
     public <T> Mono<T> persist(InsertOperation<T> operation) {
-        return Mono.defer(() -> persistOne(operation.getEntity(), runtimeEntityRegistry.getEntity(operation.getRootEntity())));
+        return Mono.defer(() -> persistOne(operation.getEntity(), runtimeEntityRegistry.getEntity(operation.getRootEntity()),
+            replacesExisting(operation.getAnnotationMetadata())));
     }
 
     @Override
@@ -195,6 +196,7 @@ public final class DefaultDocumentSearchReactiveRepositoryOperations extends Abs
         return Flux.defer(() -> {
             // built per subscription, so listeners run on subscribe and a retry starts from fresh state
             RuntimePersistentEntity<T> entity = runtimeEntityRegistry.getEntity(operation.getRootEntity());
+            boolean replace = replacesExisting(operation.getAnnotationMetadata());
             // the results keep the input order, with vetoed entities in place
             List<T> results = new ArrayList<>();
             List<T> toIndex = new ArrayList<>();
@@ -209,7 +211,7 @@ public final class DefaultDocumentSearchReactiveRepositoryOperations extends Abs
                     results.add(current);
                     toIndex.add(current);
                     Long version = persistVersion(current, entity);
-                    documents.add(new SearchTransport.BulkDocument(documentId(current, entity), toDocument(current, entity), version));
+                    documents.add(new SearchTransport.BulkDocument(documentId(current, entity), toDocument(current, entity), version, !replace && version == null));
                 }
             }
             if (documents.isEmpty()) {
@@ -276,7 +278,7 @@ public final class DefaultDocumentSearchReactiveRepositoryOperations extends Abs
 
     // ---------- helpers
 
-    private <T> Mono<T> persistOne(T value, RuntimePersistentEntity<T> entity) {
+    private <T> Mono<T> persistOne(T value, RuntimePersistentEntity<T> entity, boolean replace) {
         return Mono.defer(() -> {
             T current = prePersist(value, entity);
             if (current == null) {
@@ -287,7 +289,7 @@ public final class DefaultDocumentSearchReactiveRepositoryOperations extends Abs
             String documentId = documentId(current, entity);
             // a create-only write, so saving an entity with the id of an existing document fails instead of
             // replacing it; a versioned entity relies on the external version instead
-            return call(() -> version == null
+            return call(() -> version == null && !replace
                 ? transport.create(indexName(entity), documentId, document, configuration.getRefresh())
                 : transport.index(indexName(entity), documentId, document, version, configuration.getRefresh()))
                 .map(assignedId -> postPersist(current, entity, assignedId));

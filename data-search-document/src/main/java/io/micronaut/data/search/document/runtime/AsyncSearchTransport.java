@@ -95,7 +95,7 @@ public interface AsyncSearchTransport {
     default CompletionStage<List<String>> bulkIndex(String index, List<SearchTransport.BulkDocument> documents, DocumentSearchConfiguration.Refresh refresh) {
         CompletionStage<List<String>> ids = CompletableFuture.completedFuture(new ArrayList<>(documents.size()));
         for (SearchTransport.BulkDocument document : documents) {
-            ids = ids.thenCompose(list -> (document.version() == null
+            ids = ids.thenCompose(list -> (document.create()
                 ? create(index, document.id(), document.source(), refresh)
                 : index(index, document.id(), document.source(), document.version(), refresh)).thenApply(id -> {
                 list.add(id);
