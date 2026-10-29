@@ -60,6 +60,22 @@ public interface SearchTransport {
     String index(String index, @Nullable String id, Map<String, Object> source, DocumentSearchConfiguration.Refresh refresh);
 
     /**
+     * Indexes a new document, failing when a document with the same id exists. The default replaces
+     * like {@link #index(String, String, Map, DocumentSearchConfiguration.Refresh)}; the store
+     * transports override it with a create-only write.
+     *
+     * @param index The index
+     * @param id The document id, or {@code null} to let the store generate one
+     * @param source The document
+     * @param refresh The refresh policy
+     * @return The document id
+     * @throws io.micronaut.data.exceptions.DataAccessException When a document with the id exists
+     */
+    default String create(String index, @Nullable String id, Map<String, Object> source, DocumentSearchConfiguration.Refresh refresh) {
+        return index(index, id, source, refresh);
+    }
+
+    /**
      * Gets a document by id.
      *
      * @param index The index
