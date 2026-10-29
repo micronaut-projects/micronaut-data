@@ -84,6 +84,21 @@ public interface AsyncSearchTransport {
     }
 
     /**
+     * Indexes a new document, failing when a document with the same id exists. The default replaces
+     * like {@link #index(String, String, Map, DocumentSearchConfiguration.Refresh)}; the store
+     * transports override it with a create-only write.
+     *
+     * @param index The index name
+     * @param id The document id, or {@code null} to let the store assign one
+     * @param source The document
+     * @param refresh The refresh policy
+     * @return The document id
+     */
+    default CompletionStage<String> create(String index, @Nullable String id, Map<String, Object> source, DocumentSearchConfiguration.Refresh refresh) {
+        return index(index, id, source, refresh);
+    }
+
+    /**
      * Reads a document.
      *
      * @param index The index name

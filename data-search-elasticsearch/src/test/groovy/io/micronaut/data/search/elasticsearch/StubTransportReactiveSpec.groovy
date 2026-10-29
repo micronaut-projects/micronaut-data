@@ -109,6 +109,30 @@ class StubTransportReactiveSpec extends Specification {
         repository.count().block() == 0L
     }
 
+    void "a reactive write runs on subscription only, and again on each retry"() {
+        given:
+        def transport = context.getBean(StubSearchTransport)
+        def before = transport.calls.size()
+
+        when:
+        def save = repository.save(new Book("Unsubscribed", "Never sent", "Nobody", 1))
+
+        then:
+        transport.calls.size() == before
+
+        when:
+        def saved = save.block()
+
+        then:
+        transport.calls.size() == before + 1
+        transport.calls.last() == "async:create"
+
+        cleanup:
+        if (saved != null) {
+            repository.delete(saved).block()
+        }
+    }
+
     void "reactive CRUD and search run through the async transport"() {
         when:
         def saved = repository.save(new Book("Programming Kotlin", "Kotlin for the JVM", "Subramaniam", 460)).block()
@@ -261,6 +285,11 @@ class StubTransportReactiveSpec extends Specification {
         @Override
         CompletionStage<List<String>> bulkIndex(String index, List<SearchTransport.BulkDocument> documents, DocumentSearchConfiguration.Refresh refresh) {
             return done("bulkIndex", documents.collect { store.put(index, it.id(), it.source()) })
+        }
+
+        @Override
+        CompletionStage<String> create(String index, @Nullable String id, Map<String, Object> source, DocumentSearchConfiguration.Refresh refresh) {
+            return done("create", store.put(index, id, source))
         }
 
         @Override

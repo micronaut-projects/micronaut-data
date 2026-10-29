@@ -26,6 +26,7 @@ import jakarta.inject.Singleton;
 import org.jspecify.annotations.Nullable;
 import org.opensearch.client.json.JsonpMapper;
 import org.opensearch.client.opensearch.OpenSearchAsyncClient;
+import org.opensearch.client.opensearch._types.OpType;
 import org.opensearch.client.opensearch._types.query_dsl.Query;
 import org.opensearch.client.transport.OpenSearchTransport;
 
@@ -78,6 +79,11 @@ public final class OpenSearchAsyncSearchTransport implements AsyncSearchTranspor
     @Override
     public CompletionStage<List<String>> bulkIndex(String index, List<SearchTransport.BulkDocument> documents, DocumentSearchConfiguration.Refresh refresh) {
         return call(() -> client.bulk(OpenSearchRequests.bulkRequest(index, documents, refresh))).thenApply(OpenSearchRequests::bulkIds);
+    }
+
+    @Override
+    public CompletionStage<String> create(String index, @Nullable String id, Map<String, Object> source, DocumentSearchConfiguration.Refresh refresh) {
+        return call(() -> client.index(i -> i.index(index).id(id).opType(OpType.Create).document(source).refresh(OpenSearchRequests.refresh(refresh)))).thenApply(response -> response.id());
     }
 
     @Override
