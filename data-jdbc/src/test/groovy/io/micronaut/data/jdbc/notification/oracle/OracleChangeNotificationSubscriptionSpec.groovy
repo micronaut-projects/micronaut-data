@@ -71,6 +71,123 @@ class OracleChangeNotificationSubscriptionSpec extends Specification {
         1 * fixture.oracleConnection.unregisterDatabaseChangeNotification(registration)
     }
 
+    void "retries failed setup cleanup during shutdown (#cleanupFailure)"() {
+        given:
+        def registration = Mock(DatabaseChangeRegistration)
+        registration.state >> oracle.jdbc.NotificationRegistration.RegistrationState.CLOSED
+        def setupFailure = new IllegalStateException('Query association failed')
+        def fixture = registrarFixture([registration], { int ignored -> throw setupFailure })
+        def subscription = subscription(fixture.registrar, Mock(TaskScheduler))
+
+        when:
+        subscription.start()
+
+        then:
+        def failure = thrown(IllegalStateException)
+        failure.is(setupFailure)
+        setupFailure.suppressed.toList() == [cleanupFailure]
+        1 * fixture.oracleConnection.unregisterDatabaseChangeNotification(registration) >> { throw cleanupFailure }
+
+        when:
+        subscription.stop()
+        subscription.stop()
+
+        then:
+        1 * fixture.oracleConnection.unregisterDatabaseChangeNotification(registration)
+
+        where:
+        cleanupFailure << [new SQLException('Cleanup unavailable'), new IllegalStateException('Cleanup unavailable')]
+    }
+
+    void "retries failed setup cleanup before the next recovery registration (#cleanupFailure)"() {
+        given:
+        def original = Mock(DatabaseChangeRegistration)
+        def failed = Mock(DatabaseChangeRegistration)
+        failed.state >> oracle.jdbc.NotificationRegistration.RegistrationState.CLOSED
+        def replacement = Mock(DatabaseChangeRegistration)
+        def setupFailure = new SQLException('Query association failed')
+        def steps = []
+        def fixture = registrarFixture([original, failed, replacement], { int index ->
+            if (index == 2) {
+                throw setupFailure
+            }
+            if (index == 3) {
+                steps.add('setup')
+            }
+        })
+        List<Runnable> scheduled = []
+        def delivered = []
+        def subscription = subscription(fixture.registrar, scheduler(scheduled), new OracleChangeNotificationTaskTracker(),
+            { Runnable task -> task.run() } as Executor, { ChangeEvent<?> event -> delivered.add(event.operation()) })
+        subscription.start()
+
+        when:
+        fixture.failureListeners[0].onFailure(new SQLException('Receiver failed'))
+
+        then:
+        fixture.registrationIndex.get() == 2
+        scheduled.size() == 1
+        delivered.empty
+        setupFailure.suppressed.toList() == [cleanupFailure]
+        1 * fixture.oracleConnection.unregisterDatabaseChangeNotification(original)
+        1 * fixture.oracleConnection.unregisterDatabaseChangeNotification(failed) >> { throw cleanupFailure }
+
+        when:
+        scheduled.remove(0).run()
+
+        then:
+        1 * fixture.oracleConnection.unregisterDatabaseChangeNotification(failed) >> { steps.add('cleanup') }
+        steps == ['cleanup', 'setup']
+        fixture.registrationIndex.get() == 3
+        scheduled.empty
+        delivered == [ChangeOperation.INVALIDATE]
+
+        when:
+        subscription.stop()
+
+        then:
+        1 * fixture.oracleConnection.unregisterDatabaseChangeNotification(replacement)
+        0 * fixture.oracleConnection.unregisterDatabaseChangeNotification(failed)
+
+        where:
+        cleanupFailure << [new SQLException('Cleanup unavailable'), new IllegalStateException('Cleanup unavailable')]
+    }
+
+    void "retries setup cleanup when shutdown precedes retention of the failed registration"() {
+        given:
+        def original = Mock(DatabaseChangeRegistration)
+        def failed = Mock(DatabaseChangeRegistration)
+        failed.state >> oracle.jdbc.NotificationRegistration.RegistrationState.CLOSED
+        def setupFailure = new SQLException('Query association failed')
+        def cleanupFailure = new SQLException('Cleanup unavailable')
+        def fixture = registrarFixture([original, failed], { int index ->
+            if (index == 2) {
+                throw setupFailure
+            }
+        })
+        def tracker = new OracleChangeNotificationTaskTracker()
+        List<Runnable> scheduled = []
+        def subscription = subscription(fixture.registrar, scheduler(scheduled), tracker)
+        int cleanupAttempts = 0
+        subscription.start()
+
+        when:
+        fixture.failureListeners[0].onFailure(new SQLException('Receiver failed'))
+
+        then:
+        1 * fixture.oracleConnection.unregisterDatabaseChangeNotification(original)
+        2 * fixture.oracleConnection.unregisterDatabaseChangeNotification(failed) >> {
+            if (++cleanupAttempts == 1) {
+                subscription.stop()
+                throw cleanupFailure
+            }
+        }
+        fixture.registrationIndex.get() == 2
+        setupFailure.suppressed.toList() == [cleanupFailure]
+        scheduled.empty
+        tracker.shutdownGracefully().toCompletableFuture().isDone()
+    }
+
     void "reports registration termination once without attempting recovery (#reason)"() {
         given:
         def registration = Mock(DatabaseChangeRegistration)

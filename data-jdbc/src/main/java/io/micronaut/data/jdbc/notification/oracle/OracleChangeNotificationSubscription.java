@@ -195,6 +195,13 @@ class OracleChangeNotificationSubscription {
         }
     }
 
+    /** Retains a registration whose setup cleanup failed for retry during recovery or shutdown. */
+    void retainOrphanedRegistration(DatabaseChangeRegistration registration) {
+        synchronized (lifecycleLock) {
+            orphanedRegistrations.add(registration);
+        }
+    }
+
     /** Records early lifecycle callbacks under the lifecycle lock; terminal events take precedence over recovery. */
     private boolean recordPendingOutcome(long registrationId, PendingOutcome outcome) {
         if (!isPending(registrationId)) {
