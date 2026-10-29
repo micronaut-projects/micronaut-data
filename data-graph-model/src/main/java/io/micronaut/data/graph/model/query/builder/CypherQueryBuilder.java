@@ -171,9 +171,12 @@ public class CypherQueryBuilder implements GraphQueryBuilder {
     private static final String CLOSE_WHERE = ") WHERE ";
     private static final String CLOSE_AS_RESULT = ") AS result";
     private static final String AND = " AND ";
+    private static final String WHERE = " WHERE ";
     private static final String SET = " SET ";
     private static final String RETURN_COUNT_RESULT = " RETURN count(*) AS result";
     private static final String DETACH_DELETE = " DETACH DELETE ";
+    private static final String EXISTING = "existing";
+    private static final String LOCK_PROPERTY = "__lock";
     private static final String LINK_FROM = "a";
     private static final String LINK_TO = "b";
 
@@ -444,6 +447,27 @@ public class CypherQueryBuilder implements GraphQueryBuilder {
             + identityExpression(entity.getIdentity(), ROOT) + " = $" + ID_PARAMETER + DETACH_DELETE + ROOT + RETURN_COUNT_RESULT;
     }
 
+    /**
+     * Builds {@code OPTIONAL MATCH} on the identifier, counting the existing nodes, followed by {@code CREATE} only when
+     * there are none: the query returns no rows when a node with the identifier exists. A uniqueness constraint on
+     * the identifier, see {@link GraphIndex}, also rejects a concurrent insert of the same identifier.
+     */
+    @Override
+    public String buildInsertNodeQuery(PersistentEntity entity, List<String> propertyNames) {
+        PersistentProperty identity = entity.hasIdentity() ? entity.getIdentity() : null;
+        if (identity == null || GraphEntities.isNativeId(identity)) {
+            return buildWriteNodeQuery(entity, propertyNames, false);
+        }
+        String labels = labelExpression(entity);
+        StringBuilder query = new StringBuilder("OPTIONAL MATCH (").append(EXISTING).append(labels).append(CLOSE_WHERE)
+            .append(identityExpression(identity, EXISTING)).append(" = $").append(ID_PARAMETER)
+            .append(WITH).append("count(").append(EXISTING).append(") AS found WHERE found = 0")
+            .append(" CREATE (").append(ROOT).append(labels).append(" {")
+            .append(GraphEntities.escapeName(GraphEntities.propertyName(identity))).append(": $").append(ID_PARAMETER).append("})");
+        appendSetProperties(query, ROOT, propertyNames);
+        return query.append(RETURN).append(identityExpression(identity, ROOT)).append(" AS ").append(ID_PARAMETER).toString();
+    }
+
     @Override
     public String buildUpdateVersionedNodeQuery(PersistentEntity entity, List<String> propertyNames) {
         PersistentProperty identity = entity.getIdentity();
@@ -486,15 +510,23 @@ public class CypherQueryBuilder implements GraphQueryBuilder {
         return statements;
     }
 
+    /**
+     * Matches the node of a versioned write. Setting and removing a lock property takes the write lock of the node,
+     * without leaving a property behind, before the version is compared: a write that committed while the lock was
+     * awaited is seen rather than overwritten. Neither setting the version to itself, whose value is read before the
+     * lock is taken, nor removing a property the node does not have, which Neo4j skips, takes the lock in time.
+     */
     private String versionedMatch(PersistentEntity entity) {
         PersistentProperty identity = entity.getIdentity();
         PersistentProperty version = entity.hasVersion() ? entity.getVersion() : null;
         if (identity == null || version == null) {
             throw new IllegalArgumentException("Entity [" + entity.getName() + "] needs an identity and a @Version property for versioned writes");
         }
+        String versionProperty = ROOT + "." + GraphEntities.escapeName(GraphEntities.propertyName(version));
         return MATCH_OPEN + ROOT + labelExpression(entity) + CLOSE_WHERE
-            + identityExpression(identity, ROOT) + " = $" + ID_PARAMETER + AND
-            + ROOT + "." + GraphEntities.escapeName(GraphEntities.propertyName(version)) + " = $" + VERSION_PARAMETER;
+            + identityExpression(identity, ROOT) + " = $" + ID_PARAMETER
+            + SET + ROOT + "." + LOCK_PROPERTY + " = true REMOVE " + ROOT + "." + LOCK_PROPERTY
+            + WITH + ROOT + WHERE + versionProperty + " = $" + VERSION_PARAMETER;
     }
 
     /**
