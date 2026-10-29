@@ -223,4 +223,26 @@ ${methods}
         query(repository.getRequiredMethod("findTop5ByEmbeddingNear", io.micronaut.data.model.vector.Vector, Double)) ==
             '{"query":{"knn":{"field":"embedding","query_vector":{"$mn_qp":0},"k":5,"num_candidates":100,"similarity":{"$mn_qp":1,"$mn_wildcard":"cosine_similarity"}}},"sort":[{"_score":{"order":"desc"}}],"size":5}'
     }
+
+    void "the other conditions of a vector search become the filter of the knn query"() {
+        given:
+        def repository = articleRepository("""
+    List<Article> findTop5ByCategoryAndEmbeddingNear(String category, io.micronaut.data.model.vector.Vector vector, Double maxDistance);
+""")
+
+        expect:
+        query(repository.getRequiredMethod("findTop5ByCategoryAndEmbeddingNear", String, io.micronaut.data.model.vector.Vector, Double)) ==
+            '{"query":{"knn":{"field":"embedding","query_vector":{"$mn_qp":1},"k":5,"num_candidates":100,"similarity":{"$mn_qp":2,"$mn_wildcard":"cosine_similarity"},"filter":{"term":{"category":{"$mn_qp":0}}}}},"sort":[{"_score":{"order":"desc"}}],"size":5}'
+    }
+
+    void "a delete by a vector predicate is rejected at compile time"() {
+        when:
+        articleRepository("""
+    long deleteByEmbeddingNear(io.micronaut.data.model.vector.Vector vector, Double maxDistance);
+""")
+
+        then:
+        def e = thrown(RuntimeException)
+        e.message.contains("A vector search cannot select the documents of a delete or an update")
+    }
 }

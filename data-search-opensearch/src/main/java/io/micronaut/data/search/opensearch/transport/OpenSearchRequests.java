@@ -267,13 +267,13 @@ final class OpenSearchRequests {
 
     /**
      * @param dimensions The vector dimension
-     * @return The {@code knn_vector} mapping with the Lucene HNSW engine and cosine similarity, or {@code null}
-     * without a dimension, which OpenSearch requires
+     * @return The {@code knn_vector} mapping with the Lucene HNSW engine and cosine similarity
+     * @throws IllegalStateException Without a dimension, which OpenSearch requires, so the index creation fails
+     * rather than the first vector query
      */
-    @Nullable
     static Map<String, Object> knnVectorMapping(int dimensions) {
         if (dimensions <= 0) {
-            return null;
+            throw new IllegalStateException("An OpenSearch knn_vector field needs a dimension: declare it with @Column(length = n) on the Vector property");
         }
         Map<String, Object> mapping = new LinkedHashMap<>();
         mapping.put("type", "knn_vector");
@@ -283,11 +283,9 @@ final class OpenSearchRequests {
     }
 
     /**
-     * Rewrites the Elasticsearch-shaped {@code knn} clauses the query builder renders into the OpenSearch
-     * {@code knn} query: {@code {"knn": {"<field>": {"vector": [...], "k": n, "max_distance": d}}}}.
+     * The OpenSearch form of an Elasticsearch knn clause: the vector with k, or a radial search by distance,
+     * and the filter the nearest neighbours are searched among.
      */
-    @SuppressWarnings("unchecked")
-    /** The OpenSearch form of an Elasticsearch knn clause: the vector with k, or a radial search by distance. */
     private static Map<String, Object> knnClause(Map<?, ?> knn) {
         Map<String, Object> clause = new LinkedHashMap<>();
         clause.put("vector", knn.get("query_vector"));
@@ -297,9 +295,19 @@ final class OpenSearchRequests {
         } else {
             clause.put("k", knn.get("k"));
         }
+        if (knn.get("filter") != null) {
+            clause.put("filter", translateKnn(knn.get("filter")));
+        }
         return clause;
     }
 
+    /**
+     * Rewrites the Elasticsearch-shaped {@code knn} clauses the query builder renders into the OpenSearch
+     * {@code knn} query: {@code {"knn": {"<field>": {"vector": [...], "k": n, "max_distance": d}}}}.
+     *
+     * @param node A query node
+     * @return The node with its knn clauses rewritten
+     */
     static Object translateKnn(Object node) {
         if (node instanceof Map<?, ?> map) {
             Map<String, Object> copy = new LinkedHashMap<>();

@@ -202,13 +202,31 @@ public final class DocumentSearchQueryBuilder implements QueryBuilder {
         if (!visitor.knnFields.isEmpty()) {
             return query;
         }
-        // a vector ordering without a vector restriction is a nearest-neighbour search
+        // a vector ordering without a vector restriction is a nearest-neighbour search among the documents the
+        // predicate selects
         for (Order order : definition.order()) {
             if (order.getExpression() instanceof FunctionExpression<?> function && VectorScoringDialectSupport.SCORE_FUNCTION.equals(function.getName())) {
-                return visitor.knn(function, null);
+                return withFilter(visitor.knn(function, null), MATCH_ALL.equals(query) ? List.of() : List.of(query));
             }
         }
         return query;
+    }
+
+    /**
+     * Puts restrictions into the {@code filter} of a {@code knn} query, so the nearest neighbours are searched
+     * among the documents they select rather than the top {@code k} being filtered afterwards.
+     */
+    private static Map<String, Object> withFilter(Map<String, Object> knnQuery, List<Map<String, Object>> filters) {
+        if (filters.isEmpty()) {
+            return knnQuery;
+        }
+        Map<String, Object> knn = new LinkedHashMap<>((Map<String, Object>) knnQuery.get("knn"));
+        knn.put("filter", filters.size() == 1 ? filters.get(0) : Map.of(BOOL, Map.of(MUST, filters)));
+        return Map.of("knn", knn);
+    }
+
+    private static boolean isKnn(Map<String, Object> query) {
+        return query.size() == 1 && query.get("knn") instanceof Map<?, ?>;
     }
 
     private static void addHighlight(SelectQueryDefinition definition, Map<String, Object> body) {
@@ -231,7 +249,13 @@ public final class DocumentSearchQueryBuilder implements QueryBuilder {
         if (predicate == null) {
             return MATCH_ALL;
         }
-        return new DocumentPredicateVisitor(entity, bindings, -1).build(predicate);
+        DocumentPredicateVisitor visitor = new DocumentPredicateVisitor(entity, bindings, -1);
+        Map<String, Object> query = visitor.build(predicate);
+        if (!visitor.knnFields.isEmpty()) {
+            // a knn query returns the k nearest neighbours only, so it cannot select every matching document
+            throw new UnsupportedOperationException("A vector search cannot select the documents of a delete or an update in a document search store");
+        }
+        return query;
     }
 
     private Map<String, Object> sortEntry(Order order) {
@@ -393,7 +417,13 @@ public final class DocumentSearchQueryBuilder implements QueryBuilder {
                     must.add(rendered);
                 }
             }
-            if (must.isEmpty()) {
+            List<Map<String, Object>> knn = must.stream().filter(DocumentSearchQueryBuilder::isKnn).toList();
+            if (knn.size() == 1 && must.size() > 1 && minScore == null) {
+                // the other conditions select the documents the nearest neighbours are searched among
+                List<Map<String, Object>> filters = new ArrayList<>(must);
+                filters.remove(knn.get(0));
+                result = withFilter(knn.get(0), filters);
+            } else if (must.isEmpty()) {
                 result = MATCH_ALL;
             } else {
                 result = must.size() == 1 ? must.get(0) : Map.of(BOOL, Map.of(MUST, must));

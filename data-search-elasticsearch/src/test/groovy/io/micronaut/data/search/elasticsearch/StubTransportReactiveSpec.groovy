@@ -108,7 +108,7 @@ class StubTransportReactiveSpec extends Specification {
         results.results()*.entity()*.title == ["Cooking with Coffee"]
         // the text query and the nearest-neighbour query both ran; the latter carries the knn clause with the bound vector
         transport.bodies.size() == 2
-        transport.bodies.any { it.contains('"knn":{"field":"embedding","query_vector":[1.0,0.0,0.0],"k":100,"num_candidates":1000}') }
+        transport.bodies.any { it.contains('"knn":{"field":"embedding","query_vector":[1.0,0.0,0.0],"k":100,"num_candidates":1000,"filter":{"exists":{"field":"embedding"}}}') }
 
         cleanup:
         articles.deleteAll()
