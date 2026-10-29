@@ -199,7 +199,7 @@ final class OracleChangeNotificationDispatcher implements DatabaseChangeListener
             }
             enqueueDataNotification(event, configuredOptions);
         } else {
-            processNotification(event, configuredOptions);
+            runTracked(event.getRegId(), () -> handleLifecycleNotification(event, configuredOptions));
         }
     }
 
@@ -246,13 +246,14 @@ final class OracleChangeNotificationDispatcher implements DatabaseChangeListener
     }
 
     /**
-     * Routes driver lifecycle callbacks to subscription handlers and data to table or query
-     * processing. Runs synchronously; callers place data processing on the listener worker.
+     * Handles driver lifecycle callbacks on the calling driver thread. Registration and query
+     * deregistration are delegated to the subscription, as is shutdown requiring framework recovery.
+     * Query deregistration takes precedence over any row changes in the same notification.
      *
      * @param event   the Oracle Database notification
      * @param options the effective registration options captured on receipt
      */
-    private void routeNotification(DatabaseChangeEvent event, RegistrationOptions options) {
+    private void handleLifecycleNotification(DatabaseChangeEvent event, RegistrationOptions options) {
         long registrationId = event.getRegId();
         DatabaseChangeEvent.EventType eventType = event.getEventType();
         if (eventType == DatabaseChangeEvent.EventType.DEREG) {
@@ -280,14 +281,13 @@ final class OracleChangeNotificationDispatcher implements DatabaseChangeListener
                 eventType, registrationId, dataSourceName, methodDescription);
             return;
         }
-        if (eventType == DatabaseChangeEvent.EventType.STARTUP) {
-            return;
-        }
-        TableChangeDescription[] tables = event.getTableChangeDescription();
-        if (tables != null) {
-            dispatchTableChanges(tables, options.queryChangeNotificationEnabled(), registrationId);
-        } else {
-            dispatchQueryChanges(event.getQueryChangeDescription(), registrationId);
+        if (eventType == DatabaseChangeEvent.EventType.QUERYCHANGE) {
+            QueryChangeDescription deregisteredQuery = findDeregisteredQuery(event.getQueryChangeDescription());
+            if (deregisteredQuery != null) {
+                LOG.warn("DCN query [{}] for datasource [{}], listener method [{}], and registration [{}] was deregistered; the listener is unavailable",
+                    deregisteredQuery.getQueryId(), dataSourceName, methodDescription, registrationId);
+                subscription.handleQueryDeregistered(registrationId);
+            }
         }
     }
 
@@ -312,7 +312,7 @@ final class OracleChangeNotificationDispatcher implements DatabaseChangeListener
                 // Oracle has already purged this registration. Preserve its final notification even
                 // if the subsequent deregistration callback arrives before the worker can run it.
                 notificationQueue.enqueueFinal(
-                    () -> runTracked(registrationId, () -> routeNotification(event, options))
+                    () -> runTracked(registrationId, () -> dispatchDataNotification(event, options))
                 );
             } else {
                 Runnable invalidation = () -> {
@@ -321,7 +321,7 @@ final class OracleChangeNotificationDispatcher implements DatabaseChangeListener
                     }
                 };
                 Runnable enqueueData = () -> notificationQueue.enqueue(
-                    () -> processNotification(event, options),
+                    () -> processDataNotification(event, options),
                     () -> runTracked(registrationId, invalidation)
                 );
                 subscription.enqueueDataNotification(registrationId, enqueueData);
@@ -333,14 +333,14 @@ final class OracleChangeNotificationDispatcher implements DatabaseChangeListener
     }
 
     /**
-     * Rechecks data acceptance, traces the notification, and routes it within a tracked task.
-     * Driver lifecycle callbacks bypass the data check and are validated by subscription handlers.
-     * Ordinary data runs on the listener worker; driver lifecycle handling runs on the calling thread.
+     * Processes ordinary queued data on the listener worker within a tracked task. Rechecks
+     * subscription acceptance before tracing and dispatching the data notification. One-shot
+     * data bypasses this method because its registration has already been purged.
      *
      * @param event the database notification
      * @param options the effective registration options captured on receipt
      */
-    private void processNotification(DatabaseChangeEvent event, RegistrationOptions options) {
+    private void processDataNotification(DatabaseChangeEvent event, RegistrationOptions options) {
         runTracked(event.getRegId(), () -> {
             if (isStaleDataNotification(event)) {
                 return;
@@ -352,8 +352,25 @@ final class OracleChangeNotificationDispatcher implements DatabaseChangeListener
                     event.getDatabaseName(), describeTransactionId(event),
                     describeTableChanges(event.getTableChangeDescription()));
             }
-            routeNotification(event, options);
+            dispatchDataNotification(event, options);
         });
+    }
+
+    /**
+     * Dispatches an already classified data notification as table or query changes on the listener
+     * worker. One-shot data also uses this method after its registration has been purged.
+     *
+     * @param event   the data notification supplied by Oracle Database
+     * @param options the effective registration options captured on receipt
+     */
+    private void dispatchDataNotification(DatabaseChangeEvent event, RegistrationOptions options) {
+        long registrationId = event.getRegId();
+        TableChangeDescription[] tables = event.getTableChangeDescription();
+        if (tables != null) {
+            dispatchTableChanges(tables, options.queryChangeNotificationEnabled(), registrationId);
+        } else {
+            dispatchQueryChanges(event.getQueryChangeDescription(), registrationId);
+        }
     }
 
     /**
@@ -458,9 +475,8 @@ final class OracleChangeNotificationDispatcher implements DatabaseChangeListener
     }
 
     /**
-     * Dispatches query-level changes unless the event requires a single invalidation.
-     * Query deregistration takes precedence over row descriptions because this framework
-     * registration represents exactly one listener query.
+     * Dispatches query-level row changes unless the notification requires a single invalidation.
+     * The caller has already excluded query deregistration, which uses the driver lifecycle path.
      *
      * @param queries        query descriptions supplied by Oracle Database, if any
      * @param registrationId the registration that received the event
@@ -468,11 +484,6 @@ final class OracleChangeNotificationDispatcher implements DatabaseChangeListener
     private void dispatchQueryChanges(QueryChangeDescription @Nullable [] queries, long registrationId) {
         if (queries == null || queries.length == 0) {
             dispatchInvalidation(registrationId, DCN_EVENT_INVALIDATION_REASON);
-            return;
-        }
-        QueryChangeDescription deregisteredQuery = findDeregisteredQuery(queries);
-        if (deregisteredQuery != null) {
-            handleQueryDeregistration(deregisteredQuery.getQueryId(), registrationId);
             return;
         }
         if (requiresQueryInvalidation(queries)) {
@@ -485,20 +496,6 @@ final class OracleChangeNotificationDispatcher implements DatabaseChangeListener
                 dispatchRows(queryTables);
             }
         }
-    }
-
-    /**
-     * Logs query deregistration and asks the subscription to terminate the matching subscription
-     * and schedule cleanup of its enclosing registration. Performs no JDBC cleanup here.
-     *
-     * @param queryId the deregistered Oracle query identifier
-     * @param registrationId the registration that owned the query
-     */
-    private void handleQueryDeregistration(long queryId, long registrationId) {
-        LOG.warn("DCN query [{}] for datasource [{}], listener method [{}], and registration [{}] "
-                + "was deregistered; the listener is unavailable",
-            queryId, dataSourceName, methodDescription, registrationId);
-        subscription.handleQueryDeregistered(registrationId);
     }
 
     /**

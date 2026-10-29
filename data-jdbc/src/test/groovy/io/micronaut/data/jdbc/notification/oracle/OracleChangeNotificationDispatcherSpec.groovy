@@ -386,7 +386,7 @@ class OracleChangeNotificationDispatcherSpec extends Specification {
         0 * purgeHandler.accept(_)
     }
 
-    void "query deregistration takes precedence over other query descriptions"() {
+    void "query deregistration takes precedence over row details (#withTableDetails)"() {
         given:
         def queryDeregistrationHandler = Mock(LongConsumer)
         def changedQuery = Mock(QueryChangeDescription)
@@ -396,7 +396,7 @@ class OracleChangeNotificationDispatcherSpec extends Specification {
         deregisteredQuery.getQueryChangeEventType() >> QueryChangeDescription.QueryChangeEventType.DEREG
         def event = Mock(DatabaseChangeEvent)
         event.getEventType() >> DatabaseChangeEvent.EventType.QUERYCHANGE
-        event.getTableChangeDescription() >> null
+        event.getTableChangeDescription() >> (withTableDetails ? [Mock(TableChangeDescription)] as TableChangeDescription[] : null)
         event.getQueryChangeDescription() >> ([changedQuery, deregisteredQuery] as QueryChangeDescription[])
         event.getRegId() >> 44L
         def dispatcher = dispatcher(definition(), Mock(BeanContext), Mock(LongConsumer),
@@ -408,6 +408,10 @@ class OracleChangeNotificationDispatcherSpec extends Specification {
         then:
         1 * queryDeregistrationHandler.accept(44L)
         0 * changedQuery.getTableChangeDescription()
+        0 * event.getTableChangeDescription()
+
+        where:
+        withTableDetails << [false, true]
     }
 
     void "dispatches one invalidation when a query notification has no query descriptions"() {
@@ -419,6 +423,7 @@ class OracleChangeNotificationDispatcherSpec extends Specification {
         def method = Mock(ExecutableMethod)
         method.getDescription(true) >> "void onChange(ChangeEvent<Book>)"
         def event = Mock(DatabaseChangeEvent)
+        event.getEventType() >> DatabaseChangeEvent.EventType.QUERYCHANGE
         event.getTableChangeDescription() >> null
         event.getQueryChangeDescription() >> queries
         def dispatcher = dispatcher(definition(beanDefinition, method, new Properties()), beanContext)
@@ -439,6 +444,7 @@ class OracleChangeNotificationDispatcherSpec extends Specification {
         table.getTableName() >> "OTHER_TABLE"
         table.getTableOperations() >> EnumSet.of(TableChangeDescription.TableOperation.UPDATE)
         def event = Mock(DatabaseChangeEvent)
+        event.getEventType() >> DatabaseChangeEvent.EventType.OBJCHANGE
         event.getTableChangeDescription() >> ([table] as TableChangeDescription[])
         def dispatcher = dispatcher()
 
@@ -468,6 +474,7 @@ class OracleChangeNotificationDispatcherSpec extends Specification {
         table.getTableOperations() >> EnumSet.of(TableChangeDescription.TableOperation.UPDATE)
         table.getRowChangeDescription() >> ([row] as RowChangeDescription[])
         def event = Mock(DatabaseChangeEvent)
+        event.getEventType() >> DatabaseChangeEvent.EventType.OBJCHANGE
         event.getTableChangeDescription() >> ([table] as TableChangeDescription[])
         def operations = []
         def metadataRowIds = []
@@ -505,6 +512,7 @@ class OracleChangeNotificationDispatcherSpec extends Specification {
         table.getTableOperations() >> EnumSet.of(TableChangeDescription.TableOperation.UPDATE)
         table.getRowChangeDescription() >> ([row] as RowChangeDescription[])
         def event = Mock(DatabaseChangeEvent)
+        event.getEventType() >> DatabaseChangeEvent.EventType.OBJCHANGE
         event.getTableChangeDescription() >> ([table] as TableChangeDescription[])
         def events = []
         method.invoke(bean, _) >> { Object[] arguments ->
@@ -553,6 +561,7 @@ class OracleChangeNotificationDispatcherSpec extends Specification {
         table.getTableOperations() >> EnumSet.of(TableChangeDescription.TableOperation.DELETE)
         table.getRowChangeDescription() >> ([firstRow, secondRow] as RowChangeDescription[])
         def event = Mock(DatabaseChangeEvent)
+        event.getEventType() >> DatabaseChangeEvent.EventType.OBJCHANGE
         event.getTableChangeDescription() >> ([table] as TableChangeDescription[])
         def invokedRowIds = []
         method.invoke(bean, _) >> { Object[] arguments ->
@@ -745,6 +754,7 @@ class OracleChangeNotificationDispatcherSpec extends Specification {
         table.getTableName() >> "BOOK"
         table.getTableOperations() >> EnumSet.of(TableChangeDescription.TableOperation.ALL_ROWS)
         def event = Mock(DatabaseChangeEvent)
+        event.getEventType() >> DatabaseChangeEvent.EventType.OBJCHANGE
         event.getTableChangeDescription() >> ([table] as TableChangeDescription[])
         def dispatcher = dispatcher(definition, beanContext)
 
@@ -768,6 +778,7 @@ class OracleChangeNotificationDispatcherSpec extends Specification {
         table.getTableName() >> "BOOK"
         table.getTableOperations() >> EnumSet.of(operation)
         def event = Mock(DatabaseChangeEvent)
+        event.getEventType() >> DatabaseChangeEvent.EventType.OBJCHANGE
         event.getTableChangeDescription() >> ([table] as TableChangeDescription[])
         def dispatcher = dispatcher(definition(beanDefinition, method, new Properties()), beanContext)
 
@@ -795,6 +806,7 @@ class OracleChangeNotificationDispatcherSpec extends Specification {
         table.getTableOperations() >> EnumSet.of(TableChangeDescription.TableOperation.UPDATE)
         table.getRowChangeDescription() >> rows
         def event = Mock(DatabaseChangeEvent)
+        event.getEventType() >> DatabaseChangeEvent.EventType.OBJCHANGE
         event.getTableChangeDescription() >> ([table] as TableChangeDescription[])
         def dispatcher = dispatcher(definition(beanDefinition, method, new Properties()), beanContext)
 
@@ -827,6 +839,7 @@ class OracleChangeNotificationDispatcherSpec extends Specification {
         table.getTableOperations() >> EnumSet.of(TableChangeDescription.TableOperation.INSERT)
         table.getRowChangeDescription() >> ([validRow, rowWithoutId] as RowChangeDescription[])
         def event = Mock(DatabaseChangeEvent)
+        event.getEventType() >> DatabaseChangeEvent.EventType.OBJCHANGE
         event.getTableChangeDescription() >> ([table] as TableChangeDescription[])
         def dispatcher = dispatcher(definition(beanDefinition, method, new Properties()), beanContext)
 
@@ -854,6 +867,7 @@ class OracleChangeNotificationDispatcherSpec extends Specification {
         table.getTableOperations() >> EnumSet.of(TableChangeDescription.TableOperation.UPDATE)
         table.getRowChangeDescription() >> ([row] as RowChangeDescription[])
         def event = Mock(DatabaseChangeEvent)
+        event.getEventType() >> DatabaseChangeEvent.EventType.OBJCHANGE
         event.getTableChangeDescription() >> ([table] as TableChangeDescription[])
         def dispatcher = dispatcher(definition(beanDefinition, method, new Properties()), beanContext)
 
@@ -880,6 +894,7 @@ class OracleChangeNotificationDispatcherSpec extends Specification {
         def query = Mock(QueryChangeDescription)
         query.getTableChangeDescription() >> ([table] as TableChangeDescription[])
         def event = Mock(DatabaseChangeEvent)
+        event.getEventType() >> DatabaseChangeEvent.EventType.QUERYCHANGE
         event.getTableChangeDescription() >> null
         event.getQueryChangeDescription() >> ([query] as QueryChangeDescription[])
         def dispatcher = dispatcher(definition, beanContext)
@@ -895,6 +910,7 @@ class OracleChangeNotificationDispatcherSpec extends Specification {
     void "handles unexpected asynchronous dispatch exceptions"() {
         given:
         def event = Mock(DatabaseChangeEvent)
+        event.getEventType() >> DatabaseChangeEvent.EventType.OBJCHANGE
         event.getTableChangeDescription() >> { throw new IllegalStateException("Unexpected dispatch failure") }
         def dispatcher = dispatcher()
 
@@ -908,6 +924,7 @@ class OracleChangeNotificationDispatcherSpec extends Specification {
     void "allows JVM errors from asynchronous dispatch to propagate"() {
         given:
         def event = Mock(DatabaseChangeEvent)
+        event.getEventType() >> DatabaseChangeEvent.EventType.OBJCHANGE
         event.getTableChangeDescription() >> { throw new AssertionError("Fatal dispatch failure") }
         def dispatcher = dispatcher()
 
