@@ -51,7 +51,6 @@ import java.util.concurrent.atomic.AtomicBoolean;
  * queued for their listener are not included in that wait.</p>
  */
 final class OracleChangeNotificationSubscriptionManager {
-    private static final int NOTIFICATION_QUEUE_CAPACITY = 1024;
     private static final Logger LOG = LoggerFactory.getLogger(OracleChangeNotificationSubscriptionManager.class);
 
     private final String dataSourceName;
@@ -67,6 +66,7 @@ final class OracleChangeNotificationSubscriptionManager {
                                                 Executor blockingExecutor,
                                                 TaskScheduler taskScheduler,
                                                 List<OracleChangeListenerDefinition> listenerDefinitions,
+                                                OracleNotificationConfiguration notificationConfiguration,
                                                 OracleRegistrationRecoveryConfiguration recoveryConfiguration) {
         this.dataSourceName = dataSourceName;
         this.blockingExecutor = blockingExecutor;
@@ -75,7 +75,7 @@ final class OracleChangeNotificationSubscriptionManager {
             .map(definition -> new OracleChangeNotificationSubscription(
                 dataSourceName, definition, registrar, beanContext, blockingExecutor,
                 new ChangeNotificationQueue("oracle-notifications-" + dataSourceName + "-" + definition.method().getDescription(true),
-                    NOTIFICATION_QUEUE_CAPACITY),
+                    notificationConfiguration.getQueueCapacity()),
                 taskScheduler, taskTracker, recoveryConfiguration))
             .toList();
     }

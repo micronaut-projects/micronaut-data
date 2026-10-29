@@ -16,6 +16,8 @@
 package io.micronaut.data.jdbc.notification.oracle
 
 import io.micronaut.context.BeanContext
+import io.micronaut.data.jdbc.notification.ChangeEvent
+import io.micronaut.data.jdbc.notification.ChangeOperation
 import io.micronaut.data.exceptions.DataAccessException
 import io.micronaut.data.jdbc.runtime.ConnectionCallback
 import io.micronaut.data.jdbc.runtime.JdbcOperations
@@ -28,6 +30,9 @@ import oracle.jdbc.dcn.DatabaseChangeListener
 import oracle.jdbc.dcn.DatabaseChangeRegistration
 import oracle.jdbc.dcn.FailureListener
 import oracle.jdbc.dcn.QueryChangeDescription
+import oracle.jdbc.dcn.RowChangeDescription
+import oracle.jdbc.dcn.TableChangeDescription
+import oracle.sql.ROWID
 import spock.lang.Specification
 
 import java.sql.Connection
@@ -35,6 +40,7 @@ import java.sql.ResultSet
 import java.sql.SQLException
 import java.sql.Statement
 import java.util.concurrent.Executor
+import java.util.concurrent.CopyOnWriteArrayList
 import java.util.concurrent.CountDownLatch
 import java.util.concurrent.TimeUnit
 import java.util.concurrent.atomic.AtomicInteger
@@ -57,7 +63,7 @@ class OracleChangeNotificationSubscriptionManagerSpec extends Specification {
         Executor executor = { Runnable command -> command.run() } as Executor
         def listenerDefinitions = [definition("SELECT * FROM BOOK", method)]
         def manager = new OracleChangeNotificationSubscriptionManager("inventory", operations, Mock(BeanContext), executor,
-            scheduler(), listenerDefinitions, new OracleRegistrationRecoveryConfiguration())
+            scheduler(), listenerDefinitions, new OracleNotificationConfiguration(), new OracleRegistrationRecoveryConfiguration())
         listenerDefinitions.clear()
         listenerDefinitions.add(definition("SELECT * FROM LATE_BOOK", method))
 
@@ -97,7 +103,7 @@ class OracleChangeNotificationSubscriptionManagerSpec extends Specification {
         secondRegistration.addFailureListener(_ as FailureListener) >> { FailureListener listener -> failures.add(listener) }
         Executor executor = { Runnable command -> queued.add(command) } as Executor
         def manager = new OracleChangeNotificationSubscriptionManager("inventory", operations, Mock(BeanContext), executor,
-            scheduler(), [definition("SELECT * FROM FIRST_BOOK", firstMethod), definition("SELECT * FROM SECOND_BOOK", secondMethod)], new OracleRegistrationRecoveryConfiguration())
+            scheduler(), [definition("SELECT * FROM FIRST_BOOK", firstMethod), definition("SELECT * FROM SECOND_BOOK", secondMethod)], new OracleNotificationConfiguration(), new OracleRegistrationRecoveryConfiguration())
 
         operations.execute(_ as ConnectionCallback) >> { ConnectionCallback<?> callback -> callback.call(connection) }
         connection.unwrap(OracleConnection) >> oracleConnection
@@ -148,7 +154,7 @@ class OracleChangeNotificationSubscriptionManagerSpec extends Specification {
         method.getDescription(true) >> "void onChange(ChangeEvent<Book>)"
         Executor executor = { Runnable command -> command.run() } as Executor
         def manager = new OracleChangeNotificationSubscriptionManager("inventory", operations, Mock(BeanContext), executor,
-            scheduler(), [definition("SELECT * FROM BOOK", method)], new OracleRegistrationRecoveryConfiguration())
+            scheduler(), [definition("SELECT * FROM BOOK", method)], new OracleNotificationConfiguration(), new OracleRegistrationRecoveryConfiguration())
 
         operations.execute(_ as ConnectionCallback) >> { ConnectionCallback<?> callback -> callback.call(connection) }
         connection.unwrap(OracleConnection) >> oracleConnection
@@ -191,7 +197,7 @@ class OracleChangeNotificationSubscriptionManagerSpec extends Specification {
         List<Runnable> queued = []
         Executor executor = { Runnable task -> queued.add(task) } as Executor
         def manager = new OracleChangeNotificationSubscriptionManager("inventory", operations, Mock(BeanContext), executor,
-            scheduler(), [definition("SELECT * FROM BOOK", method)], new OracleRegistrationRecoveryConfiguration())
+            scheduler(), [definition("SELECT * FROM BOOK", method)], new OracleNotificationConfiguration(), new OracleRegistrationRecoveryConfiguration())
         DatabaseChangeListener listener
         operations.execute(_ as ConnectionCallback) >> { ConnectionCallback<?> callback -> callback.call(connection) }
         connection.unwrap(OracleConnection) >> oracleConnection
@@ -246,7 +252,7 @@ class OracleChangeNotificationSubscriptionManagerSpec extends Specification {
         Executor executor = { Runnable task -> throw new RejectedExecutionException('Executor stopped') } as Executor
         def manager = new OracleChangeNotificationSubscriptionManager(
             "inventory", Mock(JdbcOperations), Mock(BeanContext), executor, scheduler(),
-            [definition("SELECT * FROM BOOK", Mock(ExecutableMethod))], new OracleRegistrationRecoveryConfiguration())
+            [definition("SELECT * FROM BOOK", Mock(ExecutableMethod))], new OracleNotificationConfiguration(), new OracleRegistrationRecoveryConfiguration())
 
         when:
         def completion = manager.stop().toCompletableFuture()
@@ -261,7 +267,7 @@ class OracleChangeNotificationSubscriptionManagerSpec extends Specification {
         given:
         def manager = new OracleChangeNotificationSubscriptionManager(
             "inventory", Mock(JdbcOperations), Mock(BeanContext),
-            { Runnable command -> command.run() } as Executor, scheduler(), [], new OracleRegistrationRecoveryConfiguration())
+            { Runnable command -> command.run() } as Executor, scheduler(), [], new OracleNotificationConfiguration(), new OracleRegistrationRecoveryConfiguration())
 
         when:
         manager.start()
@@ -284,7 +290,7 @@ class OracleChangeNotificationSubscriptionManagerSpec extends Specification {
         method.getDescription(true) >> "void onChange(ChangeEvent<Book>)"
         Executor executor = { Runnable command -> command.run() } as Executor
         def manager = new OracleChangeNotificationSubscriptionManager("inventory", operations, Mock(BeanContext), executor,
-            scheduler(), [definition("SELECT * FROM BOOK", method)], new OracleRegistrationRecoveryConfiguration())
+            scheduler(), [definition("SELECT * FROM BOOK", method)], new OracleNotificationConfiguration(), new OracleRegistrationRecoveryConfiguration())
         DatabaseChangeListener listener
 
         operations.execute(_ as ConnectionCallback) >> { ConnectionCallback<?> callback ->
@@ -352,7 +358,7 @@ class OracleChangeNotificationSubscriptionManagerSpec extends Specification {
         List<DatabaseChangeListener> listeners = []
         Executor executor = { Runnable command -> queued.add(command) } as Executor
         def manager = new OracleChangeNotificationSubscriptionManager("inventory", operations, Mock(BeanContext), executor,
-            scheduler(), [definition("SELECT * FROM BOOK", firstMethod), definition("INVALID SQL", secondMethod)], new OracleRegistrationRecoveryConfiguration())
+            scheduler(), [definition("SELECT * FROM BOOK", firstMethod), definition("INVALID SQL", secondMethod)], new OracleNotificationConfiguration(), new OracleRegistrationRecoveryConfiguration())
 
         operations.execute(_ as ConnectionCallback) >> { ConnectionCallback<?> callback ->
             try {
@@ -407,6 +413,76 @@ class OracleChangeNotificationSubscriptionManagerSpec extends Specification {
         cleanup:
         release.countDown()
         worker.get()?.join(5000)
+    }
+
+    void "uses the configured capacity to replace queued row notifications with invalidation"() {
+        given:
+        def operations = Mock(JdbcOperations)
+        def connection = Mock(Connection)
+        def oracleConnection = mockOracleConnection()
+        def registration = mockRegistration()
+        registration.getRegId() >> 7L
+        def statement = Mock(Statement)
+        def oracleStatement = Mock(OracleStatement)
+        def method = Mock(ExecutableMethod)
+        method.getDescription(true) >> 'void onChange(ChangeEvent<Book>)'
+        def started = new CountDownLatch(1)
+        def release = new CountDownLatch(1)
+        def completed = new CountDownLatch(2)
+        def delivered = new CopyOnWriteArrayList<ChangeOperation>()
+        method.invoke(_, _) >> { List arguments ->
+            ChangeEvent<?> change = arguments.flatten().find { it instanceof ChangeEvent }
+            delivered.add(change.operation())
+            if (delivered.size() == 1) {
+                started.countDown()
+                assert release.await(5, TimeUnit.SECONDS)
+            }
+            completed.countDown()
+            null
+        }
+        def manager = new OracleChangeNotificationSubscriptionManager('inventory', operations, Mock(BeanContext),
+            { Runnable task -> task.run() } as Executor, scheduler(), [definition('SELECT * FROM BOOK', method)],
+            new OracleNotificationConfiguration(queueCapacity: 2), new OracleRegistrationRecoveryConfiguration())
+        DatabaseChangeListener listener
+        operations.execute(_ as ConnectionCallback) >> { ConnectionCallback<?> callback -> callback.call(connection) }
+        connection.unwrap(OracleConnection) >> oracleConnection
+        oracleConnection.registerDatabaseChangeNotification(_ as Properties, _ as DatabaseChangeListener) >> {
+            Properties ignored, DatabaseChangeListener callback ->
+                listener = callback
+                registration
+        }
+        connection.createStatement() >> statement
+        statement.unwrap(OracleStatement) >> oracleStatement
+        statement.executeQuery(_) >> Mock(ResultSet)
+        def rowId = Mock(ROWID)
+        rowId.stringValue() >> 'AAEH7kAAEAAABv3AAA'
+        def row = Mock(RowChangeDescription)
+        row.rowid >> rowId
+        row.rowOperations >> EnumSet.of(RowChangeDescription.RowOperation.DELETE)
+        def table = Mock(TableChangeDescription)
+        table.tableName >> 'BOOK'
+        table.tableOperations >> EnumSet.of(TableChangeDescription.TableOperation.DELETE)
+        table.rowChangeDescription >> ([row] as RowChangeDescription[])
+        def notification = Mock(DatabaseChangeEvent)
+        notification.eventType >> DatabaseChangeEvent.EventType.OBJCHANGE
+        notification.regId >> 7L
+        notification.tableChangeDescription >> ([table] as TableChangeDescription[])
+        manager.start()
+        listener.onDatabaseChangeNotification(notification)
+        assert started.await(5, TimeUnit.SECONDS)
+
+        when:
+        listener.onDatabaseChangeNotification(notification)
+        listener.onDatabaseChangeNotification(notification)
+        release.countDown()
+
+        then:
+        completed.await(5, TimeUnit.SECONDS)
+        delivered == [ChangeOperation.DELETE, ChangeOperation.INVALIDATE]
+
+        cleanup:
+        release.countDown()
+        manager.stop().toCompletableFuture().get(5, TimeUnit.SECONDS)
     }
 
     private static OracleChangeListenerDefinition definition(String query, ExecutableMethod<?, ?> method) {

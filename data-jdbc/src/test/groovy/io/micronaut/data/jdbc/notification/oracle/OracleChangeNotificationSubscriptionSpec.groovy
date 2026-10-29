@@ -237,7 +237,7 @@ class OracleChangeNotificationSubscriptionSpec extends Specification {
 
         when:
         subscription.start()
-        subscription.handleDatabaseShutdown(original.getRegId())
+        subscription.handleRegistrationUnavailable(original.getRegId(), null)
         subscription.stop()
 
         then:
@@ -672,7 +672,7 @@ class OracleChangeNotificationSubscriptionSpec extends Specification {
 
         when:
         subscription.start()
-        subscription.handleDatabaseShutdown(original.getRegId())
+        subscription.handleRegistrationUnavailable(original.getRegId(), null)
 
         then:
         scheduled.empty
@@ -964,11 +964,11 @@ class OracleChangeNotificationSubscriptionSpec extends Specification {
 
         when:
         if (shutdownFirst) {
-            subscription.handleDatabaseShutdown(1L)
+            subscription.handleRegistrationUnavailable(1L, null)
         } else {
             fixture.failureListeners[0].onFailure(new SQLException('Receiver failed'))
         }
-        subscription.handleDatabaseShutdown(1L)
+        subscription.handleRegistrationUnavailable(1L, null)
         fixture.failureListeners[0].onFailure(new SQLException('Duplicate failure'))
 
         then:
@@ -977,7 +977,7 @@ class OracleChangeNotificationSubscriptionSpec extends Specification {
 
         when:
         queued.remove(0).run()
-        subscription.handleDatabaseShutdown(1L)
+        subscription.handleRegistrationUnavailable(1L, null)
         fixture.failureListeners[0].onFailure(new SQLException('Failure while waiting for retry'))
 
         then:
@@ -987,7 +987,7 @@ class OracleChangeNotificationSubscriptionSpec extends Specification {
 
         when:
         scheduled.remove(0).run()
-        subscription.handleDatabaseShutdown(1L)
+        subscription.handleRegistrationUnavailable(1L, null)
         fixture.failureListeners[0].onFailure(new SQLException('Failure while retry is queued'))
 
         then:

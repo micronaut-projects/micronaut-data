@@ -247,15 +247,6 @@ class OracleChangeNotificationSubscription {
     }
 
     /**
-     * Starts recovery when Oracle Database reports a shutdown for the current registration.
-     *
-     * @param registrationId the registration identifier reported in the shutdown event
-     */
-    void handleDatabaseShutdown(long registrationId) {
-        handleRegistrationUnavailable(registrationId, null);
-    }
-
-    /**
      * Submits recovery without blocking the driver's failure-callback thread on JDBC cleanup.
      *
      * @param registrationId the unavailable registration identifier

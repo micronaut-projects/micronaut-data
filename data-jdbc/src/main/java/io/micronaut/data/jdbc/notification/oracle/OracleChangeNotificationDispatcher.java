@@ -256,7 +256,7 @@ final class OracleChangeNotificationDispatcher implements DatabaseChangeListener
             LOG.warn("Received DCN event [{}] for registration [{}], datasource [{}], and listener method [{}]; " +
                     "marking listener state for reconciliation and starting registration recovery",
                 eventType, registrationId, dataSourceName, methodDescription);
-            subscription.handleDatabaseShutdown(registrationId);
+            subscription.handleRegistrationUnavailable(registrationId, null);
             return;
         }
         if (eventType == DatabaseChangeEvent.EventType.SHUTDOWN_ANY) {

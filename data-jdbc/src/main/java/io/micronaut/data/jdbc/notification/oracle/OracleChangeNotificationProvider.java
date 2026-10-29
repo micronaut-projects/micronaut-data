@@ -76,6 +76,7 @@ final class OracleChangeNotificationProvider implements ChangeNotificationProvid
     private final BeanContext beanContext;
     private final Executor blockingExecutor;
     private final TaskScheduler taskScheduler;
+    private final OracleNotificationConfiguration notificationConfiguration;
     private final OracleRegistrationRecoveryConfiguration recoveryConfiguration;
     private final boolean gracefulShutdownEnabled;
     private final Duration shutdownGracePeriod;
@@ -86,12 +87,14 @@ final class OracleChangeNotificationProvider implements ChangeNotificationProvid
     OracleChangeNotificationProvider(BeanContext beanContext,
                                      @Named(TaskExecutors.BLOCKING) Executor blockingExecutor,
                                      @Named(TaskExecutors.SCHEDULED) TaskScheduler taskScheduler,
+                                     OracleNotificationConfiguration notificationConfiguration,
                                      OracleRegistrationRecoveryConfiguration recoveryConfiguration,
                                      @Value("${micronaut.lifecycle.graceful-shutdown.enabled:false}") boolean gracefulShutdownEnabled,
                                      @Value("${micronaut.lifecycle.graceful-shutdown.grace-period:15s}") Duration shutdownGracePeriod) {
         this.beanContext = beanContext;
         this.blockingExecutor = blockingExecutor;
         this.taskScheduler = taskScheduler;
+        this.notificationConfiguration = notificationConfiguration;
         this.recoveryConfiguration = recoveryConfiguration;
         this.gracefulShutdownEnabled = gracefulShutdownEnabled;
         this.shutdownGracePeriod = shutdownGracePeriod;
@@ -127,7 +130,7 @@ final class OracleChangeNotificationProvider implements ChangeNotificationProvid
             .map(definitionFactory::create)
             .toList();
         OracleChangeNotificationSubscriptionManager subscriptionManager = new OracleChangeNotificationSubscriptionManager(
-            dataSourceName, operations, beanContext, blockingExecutor, taskScheduler, listenerDefinitions, recoveryConfiguration);
+            dataSourceName, operations, beanContext, blockingExecutor, taskScheduler, listenerDefinitions, notificationConfiguration, recoveryConfiguration);
         if (subscriptionManagers.putIfAbsent(dataSourceName, subscriptionManager) != null) {
             throw new IllegalStateException("DCN subscriptions for datasource [" + dataSourceName
                 + "] have already been discovered; additional registrations are not supported");

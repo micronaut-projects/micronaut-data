@@ -252,13 +252,27 @@ is unavailable. Micronaut Data cannot detect a silently lost notification connec
 
 == Delivery and Concurrency
 
-Each listener has a dedicated worker thread and a queue with a limit of 1024 waiting notifications. Oracle JDBC data
-callbacks add notifications to that queue; the worker performs entity loading and invokes the listener. Driver lifecycle
+Each listener has a dedicated worker thread and a bounded queue. Oracle JDBC data callbacks add notifications to that
+queue; the worker performs entity loading and invokes the listener. Driver lifecycle
 callbacks update subscription state directly. An accepted recovery or deregistration discards waiting data notifications.
 Registration recovery and query deregistration cleanup use the configured blocking executor, keeping JDBC cleanup and
 application listener work off the driver's notification thread.
 The listener worker starts when needed, remains available across registration recovery, and stops when the subscription
 closes or finishes delivering its final termination or one-shot notification.
+
+By default, each listener queue has a limit of 1000 waiting notifications, excluding the callback currently running.
+Configure `micronaut.data.jdbc.notifications.oracle.queue-capacity` to change this limit globally for all Oracle
+notification listeners and datasources. The value must be an integer of at least `1`:
+
+[configuration]
+----
+micronaut:
+  data:
+    jdbc:
+      notifications:
+        oracle:
+          queue-capacity: 2048
+----
 
 When the queue reaches its limit, waiting notifications are removed and replaced with one `INVALIDATE` event so the
 listener can refresh its state. Further data notifications are covered by this pending refresh until processing begins.

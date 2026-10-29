@@ -1001,7 +1001,7 @@ class OracleChangeNotificationDispatcherSpec extends Specification {
                 deregistrationHandler.accept(id, reason)
             }
             handleQueryDeregistered(_) >> { long id -> queryDeregistrationHandler.accept(id) }
-            handleDatabaseShutdown(_) >> { long id -> databaseShutdownHandler.accept(id) }
+            handleRegistrationUnavailable(_, null) >> { long id, Throwable ignored -> databaseShutdownHandler.accept(id) }
             acceptsDataNotification(_) >> true
             enqueueDataNotification(_, _) >> { long id, Runnable enqueue -> enqueue.run() }
         }

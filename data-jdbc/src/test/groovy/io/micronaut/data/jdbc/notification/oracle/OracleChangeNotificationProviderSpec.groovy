@@ -281,6 +281,6 @@ class OracleChangeNotificationProviderSpec extends Specification {
     private OracleChangeNotificationProvider provider(boolean gracefulShutdownEnabled = false,
                                                        Duration gracePeriod = Duration.ofSeconds(15)) {
         new OracleChangeNotificationProvider(Mock(BeanContext), Mock(Executor), Mock(TaskScheduler),
-            new OracleRegistrationRecoveryConfiguration(), gracefulShutdownEnabled, gracePeriod)
+            new OracleNotificationConfiguration(), new OracleRegistrationRecoveryConfiguration(), gracefulShutdownEnabled, gracePeriod)
     }
 }
