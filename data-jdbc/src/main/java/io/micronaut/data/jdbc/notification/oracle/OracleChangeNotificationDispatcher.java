@@ -293,8 +293,9 @@ final class OracleChangeNotificationDispatcher implements DatabaseChangeListener
 
     /**
      * Queues ordinary data through the subscription's admission check with an overflow
-     * invalidation callback. One-shot data instead uses final delivery: its purge has already
-     * been reported, so its registration is not checked again when the callback runs.
+     * invalidation callback and rechecks acceptance when the queued callback runs. One-shot data
+     * instead uses final delivery: its purge has already been reported, so its registration is
+     * not checked again when the callback runs.
      * Queued callbacks are counted as active only when execution starts.
      *
      * @param event the accepted data notification
@@ -309,19 +310,22 @@ final class OracleChangeNotificationDispatcher implements DatabaseChangeListener
         long registrationId = event.getRegId();
         try {
             if (options.purgeOnNotificationEnabled()) {
-                // Oracle has already purged this registration. Preserve its final notification even
-                // if the subsequent deregistration callback arrives before the worker can run it.
-                notificationQueue.enqueueFinal(
-                    () -> runTracked(registrationId, () -> dispatchDataNotification(event, options))
-                );
+                // Oracle Database has already purged this registration. Preserve its final notification
+                // even if the subsequent deregistration callback arrives before the worker can run it.
+                notificationQueue.enqueueFinal(() -> dispatchDataNotification(event, options));
             } else {
+                Runnable processData = () -> {
+                    if (subscription.acceptsDataNotification(registrationId)) {
+                        dispatchDataNotification(event, options);
+                    }
+                };
                 Runnable invalidation = () -> {
                     if (subscription.acceptsDataNotification(registrationId)) {
                         dispatchInvalidation(registrationId, "after the notification queue reached its limit");
                     }
                 };
                 Runnable enqueueData = () -> notificationQueue.enqueue(
-                    () -> processDataNotification(event, options),
+                    processData,
                     () -> runTracked(registrationId, invalidation)
                 );
                 subscription.enqueueDataNotification(registrationId, enqueueData);
@@ -333,18 +337,15 @@ final class OracleChangeNotificationDispatcher implements DatabaseChangeListener
     }
 
     /**
-     * Processes ordinary queued data on the listener worker within a tracked task. Rechecks
-     * subscription acceptance before tracing and dispatching the data notification. One-shot
-     * data bypasses this method because its registration has already been purged.
+     * Tracks, traces, and dispatches accepted data on the listener worker. Ordinary callbacks
+     * must recheck subscription acceptance before calling this method. One-shot callbacks call
+     * it directly after their registration has been purged.
      *
-     * @param event the database notification
+     * @param event   the database notification
      * @param options the effective registration options captured on receipt
      */
-    private void processDataNotification(DatabaseChangeEvent event, RegistrationOptions options) {
+    private void dispatchDataNotification(DatabaseChangeEvent event, RegistrationOptions options) {
         runTracked(event.getRegId(), () -> {
-            if (isStaleDataNotification(event)) {
-                return;
-            }
             if (LOG.isTraceEnabled()) {
                 LOG.trace("Accepted DCN event of type [{}] for datasource [{}], registration [{}], listener method [{}], " +
                         "database [{}], transaction XID (raw hex) [{}], and table changes [{}]",
@@ -352,25 +353,14 @@ final class OracleChangeNotificationDispatcher implements DatabaseChangeListener
                     event.getDatabaseName(), describeTransactionId(event),
                     describeTableChanges(event.getTableChangeDescription()));
             }
-            dispatchDataNotification(event, options);
+            long registrationId = event.getRegId();
+            TableChangeDescription[] tables = event.getTableChangeDescription();
+            if (tables != null) {
+                dispatchTableChanges(tables, options.queryChangeNotificationEnabled(), registrationId);
+            } else {
+                dispatchQueryChanges(event.getQueryChangeDescription(), registrationId);
+            }
         });
-    }
-
-    /**
-     * Dispatches an already classified data notification as table or query changes on the listener
-     * worker. One-shot data also uses this method after its registration has been purged.
-     *
-     * @param event   the data notification supplied by Oracle Database
-     * @param options the effective registration options captured on receipt
-     */
-    private void dispatchDataNotification(DatabaseChangeEvent event, RegistrationOptions options) {
-        long registrationId = event.getRegId();
-        TableChangeDescription[] tables = event.getTableChangeDescription();
-        if (tables != null) {
-            dispatchTableChanges(tables, options.queryChangeNotificationEnabled(), registrationId);
-        } else {
-            dispatchQueryChanges(event.getQueryChangeDescription(), registrationId);
-        }
     }
 
     /**
