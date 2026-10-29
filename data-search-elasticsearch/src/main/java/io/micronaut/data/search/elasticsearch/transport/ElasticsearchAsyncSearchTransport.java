@@ -16,6 +16,7 @@
 package io.micronaut.data.search.elasticsearch.transport;
 
 import co.elastic.clients.elasticsearch.ElasticsearchAsyncClient;
+import co.elastic.clients.elasticsearch._types.OpType;
 import co.elastic.clients.elasticsearch._types.Refresh;
 import co.elastic.clients.elasticsearch.core.SearchResponse;
 import co.elastic.clients.elasticsearch.core.search.Hit;
@@ -78,6 +79,11 @@ public final class ElasticsearchAsyncSearchTransport implements AsyncSearchTrans
     @Override
     public CompletionStage<String> index(String index, @Nullable String id, Map<String, Object> source, DocumentSearchConfiguration.Refresh refresh) {
         return client.index(i -> i.index(index).id(id).document(source).refresh(refresh(refresh))).thenApply(response -> response.id());
+    }
+
+    @Override
+    public CompletionStage<String> create(String index, @Nullable String id, Map<String, Object> source, DocumentSearchConfiguration.Refresh refresh) {
+        return client.index(i -> i.index(index).id(id).opType(OpType.Create).document(source).refresh(refresh(refresh))).thenApply(response -> response.id());
     }
 
     @Override
