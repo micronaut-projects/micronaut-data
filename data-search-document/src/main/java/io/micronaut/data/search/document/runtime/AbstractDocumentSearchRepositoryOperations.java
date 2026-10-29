@@ -480,7 +480,12 @@ abstract class AbstractDocumentSearchRepositoryOperations extends AbstractReposi
                 entries.add(pageable.isBackward() ? reversed((Map<String, Object>) entry) : (Map<String, Object>) entry);
             }
         }
-        entries.addAll(sortEntries(orders, entity, pageable.isBackward()));
+        for (Map<String, Object> entry : sortEntries(orders, entity, pageable.isBackward())) {
+            // a field the OrderBy already sorts on is one sort value, not two
+            if (entries.stream().noneMatch(declared -> declared.keySet().equals(entry.keySet()))) {
+                entries.add(entry);
+            }
+        }
         body.put("sort", entries);
         if (pageable.getSize() > 0) {
             body.put("size", pageable.getSize());

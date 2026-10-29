@@ -26,7 +26,6 @@ import io.micronaut.data.model.DataType;
 import io.micronaut.data.model.Embedded;
 import io.micronaut.data.model.PersistentEntity;
 import io.micronaut.data.model.PersistentProperty;
-import io.micronaut.data.model.query.builder.sql.TextSearchDialect;
 import io.micronaut.data.model.search.TextSearchSupport;
 import io.micronaut.data.search.document.query.SearchJson;
 import io.micronaut.json.JsonMapper;
@@ -86,7 +85,7 @@ public final class SearchIndexDefinitions {
         }
         for (PersistentProperty property : TextSearchSupport.searchFields(entity)) {
             Map<String, Object> declaredMapping = declaredMapping(property);
-            properties.put(TextSearchDialect.jsonKey(property), declaredMapping != null ? declaredMapping : searchFieldMapping(property, analyzer));
+            properties.put(property.getName(), declaredMapping != null ? declaredMapping : searchFieldMapping(property, analyzer));
         }
         // The other string properties are compared exactly by the derived queries, so they are
         // keywords rather than the analyzed text a dynamic mapping would give them; the id is one of
@@ -97,7 +96,7 @@ public final class SearchIndexDefinitions {
         }
         for (PersistentProperty property : others) {
             Map<String, Object> declaredMapping = declaredMapping(property);
-            String key = TextSearchDialect.jsonKey(property);
+            String key = property.getName();
             if (declaredMapping != null) {
                 properties.put(key, declaredMapping);
             } else if (!properties.containsKey(key)) {
@@ -175,7 +174,7 @@ public final class SearchIndexDefinitions {
             if (property.isAssignable(Vector.class)) {
                 Map<String, Object> mapping = transport.vectorFieldMapping(vectorDimensions(property));
                 if (mapping != null) {
-                    properties.put(TextSearchDialect.jsonKey(property), mapping);
+                    properties.put(property.getName(), mapping);
                 }
             }
         }

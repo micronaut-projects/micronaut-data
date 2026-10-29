@@ -274,6 +274,12 @@ class DocumentSearchOperationsSpec extends Specification {
 
         then:
         transport.lastBody().contains('"sort":[{"title.keyword":{"order":"desc"}},{"pages":{"order":"asc"}},{"id":{"order":"asc"}}]')
+
+        when: "the pageable sorts on the OrderBy field too"
+        notes.findByPagesLessThanOrderByTitleDesc(500, CursoredPageable.from(10, Sort.of(Sort.Order.desc("title"))))
+
+        then:
+        transport.lastBody().contains('"sort":[{"title.keyword":{"order":"desc"}},{"id":{"order":"asc"}}]')
     }
 
     void "deletes remove documents by id and by query"() {
@@ -331,8 +337,7 @@ class DocumentSearchOperationsSpec extends Specification {
         then:
         mapping.contains('"cuisine":{"type":"keyword"}')
         mapping.contains('"name":{"type":"search_as_you_type","analyzer":"standard","fields":{"keyword":{')
-        mapping.contains('"instructions":{"type":"text","analyzer":"whitespace"')
-        !mapping.contains('"steps"')
+        mapping.contains('"steps":{"type":"text","analyzer":"whitespace"')
         mapping.contains('"ignore_above":8191')
         mapping.contains('"reference":{"type":"keyword"}')
     }
