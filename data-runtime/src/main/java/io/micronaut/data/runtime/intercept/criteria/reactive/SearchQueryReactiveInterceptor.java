@@ -51,23 +51,27 @@ public class SearchQueryReactiveInterceptor extends AbstractReactiveSpecificatio
 
     @Override
     public Object intercept(RepositoryMethodKey methodKey, MethodInvocationContext<Object, Object> context) {
+        // deferred, so an invalid query is an error signal rather than a throw from the repository call
+        Mono<SearchResults<Object>> results = Mono.defer(() -> search(methodKey, context));
+        return Publishers.convertPublisher(conversionService, results, context.getReturnType().getType());
+    }
+
+    private Mono<SearchResults<Object>> search(RepositoryMethodKey methodKey, MethodInvocationContext<Object, Object> context) {
         SearchQuery searchQuery = SearchQuerySupport.findSearchQuery(context);
         Pageable pageable = getPageable(context);
         Class<Object> rootEntity = getRequiredRootEntity(context);
         AbstractCriteriaBuilder cb = (AbstractCriteriaBuilder) criteriaBuilder;
-        Mono<SearchResults<Object>> results;
         if (!searchQuery.isHybrid()) {
-            results = findOne(methodKey, context, SearchQuerySupport.textQuery(cb, rootEntity, searchQuery, pageable), pageable)
+            return findOne(methodKey, context, SearchQuerySupport.textQuery(cb, rootEntity, searchQuery, pageable), pageable)
                 .map(found -> SearchQuerySupport.applyMinScore(found, searchQuery));
-        } else {
-            Pageable window = SearchQuerySupport.hybridWindow(searchQuery, pageable);
-            RuntimePersistentEntity<Object> persistentEntity = operations.getEntity(rootEntity);
-            Mono<SearchResults<Object>> text = findOne(methodKey, context, SearchQuerySupport.textQuery(cb, rootEntity, searchQuery, window), window);
-            Mono<SearchResults<Object>> vector = Mono.defer(() -> findOne(methodKey, context, SearchQuerySupport.vectorQuery(cb, rootEntity, searchQuery), window))
-                .onErrorMap(e -> SearchQuerySupport.vectorFailure(e, operations));
-            results = Mono.zip(text, vector).map(both -> SearchQuerySupport.fuse(persistentEntity, both.getT1(), both.getT2(), searchQuery, pageable));
         }
-        return Publishers.convertPublisher(conversionService, results, context.getReturnType().getType());
+        Pageable window = SearchQuerySupport.hybridWindow(searchQuery, pageable);
+        RuntimePersistentEntity<Object> persistentEntity = operations.getEntity(rootEntity);
+        Mono<SearchResults<Object>> text = findOne(methodKey, context, SearchQuerySupport.textQuery(cb, rootEntity, searchQuery, window), window);
+        Mono<SearchResults<Object>> vector = Mono.defer(() -> findOne(methodKey, context, SearchQuerySupport.vectorQuery(cb, rootEntity, searchQuery), window))
+            .onErrorMap(e -> SearchQuerySupport.vectorFailure(e, operations));
+        // one ranking after the other: in a transaction both share one connection, which cannot run two statements at once
+        return text.flatMap(t -> vector.map(v -> SearchQuerySupport.fuse(persistentEntity, t, v, searchQuery, pageable)));
     }
 
     private Mono<SearchResults<Object>> findOne(RepositoryMethodKey methodKey,

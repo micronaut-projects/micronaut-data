@@ -41,6 +41,7 @@ import io.micronaut.data.model.query.BindingParameter;
 import io.micronaut.data.model.query.builder.QueryBuilder;
 import io.micronaut.data.model.query.builder.QueryParameterBinding;
 import io.micronaut.data.model.query.builder.QueryResult;
+import io.micronaut.data.model.query.builder.sql.TextSearchDialect;
 import io.micronaut.data.model.query.builder.sql.VectorScoringDialectSupport;
 import io.micronaut.data.model.query.impl.AdvancedPredicateVisitor;
 import io.micronaut.data.model.search.MatchMode;
@@ -201,13 +202,31 @@ public final class DocumentSearchQueryBuilder implements QueryBuilder {
         if (!visitor.knnFields.isEmpty()) {
             return query;
         }
-        // a vector ordering without a vector restriction is a nearest-neighbour search
+        // a vector ordering without a vector restriction is a nearest-neighbour search among the documents the
+        // predicate selects
         for (Order order : definition.order()) {
             if (order.getExpression() instanceof FunctionExpression<?> function && VectorScoringDialectSupport.SCORE_FUNCTION.equals(function.getName())) {
-                return visitor.knn(function, null);
+                return withFilter(visitor.knn(function, null), MATCH_ALL.equals(query) ? List.of() : List.of(query));
             }
         }
         return query;
+    }
+
+    /**
+     * Puts restrictions into the {@code filter} of a {@code knn} query, so the nearest neighbours are searched
+     * among the documents they select rather than the top {@code k} being filtered afterwards.
+     */
+    private static Map<String, Object> withFilter(Map<String, Object> knnQuery, List<Map<String, Object>> filters) {
+        if (filters.isEmpty()) {
+            return knnQuery;
+        }
+        Map<String, Object> knn = new LinkedHashMap<>((Map<String, Object>) knnQuery.get("knn"));
+        knn.put("filter", filters.size() == 1 ? filters.get(0) : Map.of(BOOL, Map.of(MUST, filters)));
+        return Map.of("knn", knn);
+    }
+
+    private static boolean isKnn(Map<String, Object> query) {
+        return query.size() == 1 && query.get("knn") instanceof Map<?, ?>;
     }
 
     private static void addHighlight(SelectQueryDefinition definition, Map<String, Object> body) {
@@ -230,7 +249,13 @@ public final class DocumentSearchQueryBuilder implements QueryBuilder {
         if (predicate == null) {
             return MATCH_ALL;
         }
-        return new DocumentPredicateVisitor(entity, bindings, -1).build(predicate);
+        DocumentPredicateVisitor visitor = new DocumentPredicateVisitor(entity, bindings, -1);
+        Map<String, Object> query = visitor.build(predicate);
+        if (!visitor.knnFields.isEmpty()) {
+            // a knn query returns the k nearest neighbours only, so it cannot select every matching document
+            throw new UnsupportedOperationException("A vector search cannot select the documents of a delete or an update in a document search store");
+        }
+        return query;
     }
 
     private Map<String, Object> sortEntry(Order order) {
@@ -250,13 +275,14 @@ public final class DocumentSearchQueryBuilder implements QueryBuilder {
     }
 
     /**
-     * The persisted field name of a property path.
+     * The persisted field name of a property path: the keys Serde writes, honouring
+     * {@code @SerdeConfig(property)} and {@code @JsonProperty}.
      *
      * @param propertyPath The property path
      * @return The field name
      */
     public static String fieldName(PersistentPropertyPath propertyPath) {
-        return propertyPath.getPath();
+        return TextSearchDialect.jsonKeyPath(propertyPath);
     }
 
     /**
@@ -317,6 +343,8 @@ public final class DocumentSearchQueryBuilder implements QueryBuilder {
         private Map<String, Object> result = Map.of();
         @Nullable
         private Object minScore;
+        // the number of OR and NOT predicates around the one being visited, where a score restriction cannot apply
+        private int scoreForbiddenDepth;
 
         DocumentPredicateVisitor(PersistentEntity entity, Bindings bindings, int limit) {
             this.entity = entity;
@@ -389,7 +417,13 @@ public final class DocumentSearchQueryBuilder implements QueryBuilder {
                     must.add(rendered);
                 }
             }
-            if (must.isEmpty()) {
+            List<Map<String, Object>> knn = must.stream().filter(DocumentSearchQueryBuilder::isKnn).toList();
+            if (knn.size() == 1 && must.size() > 1 && minScore == null) {
+                // the other conditions select the documents the nearest neighbours are searched among
+                List<Map<String, Object>> filters = new ArrayList<>(must);
+                filters.remove(knn.get(0));
+                result = withFilter(knn.get(0), filters);
+            } else if (must.isEmpty()) {
                 result = MATCH_ALL;
             } else {
                 result = must.size() == 1 ? must.get(0) : Map.of(BOOL, Map.of(MUST, must));
@@ -399,8 +433,13 @@ public final class DocumentSearchQueryBuilder implements QueryBuilder {
         @Override
         public void visit(DisjunctionPredicate disjunction) {
             List<Map<String, Object>> should = new ArrayList<>();
-            for (IExpression<Boolean> predicate : disjunction.getPredicates()) {
-                should.add(render(predicate));
+            scoreForbiddenDepth++;
+            try {
+                for (IExpression<Boolean> predicate : disjunction.getPredicates()) {
+                    should.add(render(predicate));
+                }
+            } finally {
+                scoreForbiddenDepth--;
             }
             if (should.size() == 1) {
                 result = should.get(0);
@@ -414,7 +453,12 @@ public final class DocumentSearchQueryBuilder implements QueryBuilder {
 
         @Override
         public void visit(NegatedPredicate negate) {
-            result = Map.of(BOOL, Map.of(MUST_NOT, render(negate.getNegated())));
+            scoreForbiddenDepth++;
+            try {
+                result = Map.of(BOOL, Map.of(MUST_NOT, render(negate.getNegated())));
+            } finally {
+                scoreForbiddenDepth--;
+            }
         }
 
         @Override
@@ -461,7 +505,11 @@ public final class DocumentSearchQueryBuilder implements QueryBuilder {
         @Override
         public void visitGreaterThanOrEquals(Expression<?> leftExpression, Expression<?> rightExpression) {
             if (leftExpression instanceof FunctionExpression<?> function && TextSearchSupport.SCORE_FUNCTION.equals(function.getName())) {
-                // a minimum relevance score is a request parameter, not a query clause
+                // a minimum relevance score is a request parameter, not a query clause, so it applies to the
+                // whole query and can only be one of its top-level AND conditions
+                if (scoreForbiddenDepth > 0) {
+                    throw new UnsupportedOperationException("A minimum score applies to the whole search request and cannot be combined with OR or negated");
+                }
                 minScore = value(rightExpression, null);
                 result = MATCH_ALL;
                 return;
@@ -489,7 +537,7 @@ public final class DocumentSearchQueryBuilder implements QueryBuilder {
             Map<String, Object> bounds = new LinkedHashMap<>();
             bounds.put("gte", value(from, propertyPath));
             bounds.put("lte", value(to, propertyPath));
-            result = Map.of(RANGE, Map.of(fieldName(propertyPath), bounds));
+            result = Map.of(RANGE, Map.of(keywordPath(propertyPath), bounds));
             if (negated) {
                 result = Map.of(BOOL, Map.of(MUST_NOT, result));
             }
@@ -593,7 +641,8 @@ public final class DocumentSearchQueryBuilder implements QueryBuilder {
 
         private Map<String, Object> range(Expression<?> leftExpression, String operator, Expression<?> rightExpression) {
             PersistentPropertyPath propertyPath = requireProperty(leftExpression).getPropertyPath();
-            return Map.of(RANGE, Map.of(fieldName(propertyPath), Map.of(operator, value(rightExpression, propertyPath))));
+            // the keyword sub-field of an analysed field, so a range compares whole values like equality and sort
+            return Map.of(RANGE, Map.of(keywordPath(propertyPath), Map.of(operator, value(rightExpression, propertyPath))));
         }
 
         private Map<String, Object> wildcard(PersistentPropertyPath propertyPath, Expression<?> expression, String hint) {
