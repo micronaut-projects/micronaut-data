@@ -246,7 +246,7 @@ Micronaut Data sends a final `TERMINATED` event in these cases. The listener sho
 rather than refresh them and expect further updates. Termination does not create a replacement registration.
 Termination discards waiting notifications and delivers `TERMINATED` on the listener's dedicated worker after any
 callback already running finishes. Further notifications are ignored. Application shutdown suppresses delivery.
-Delivery is best effort if the worker or retry scheduler is unavailable; applications that require independent detection
+Delivery is best effort if the worker is unavailable; applications that require independent detection
 of notification loss should also use their own consistency checks. Changes can be missed while a non-reliable registration
 is unavailable. Micronaut Data cannot detect a silently lost notification connection unless the JDBC driver reports the failure.
 
@@ -270,7 +270,6 @@ Notifications accepted into a listener's queue are processed sequentially in the
 entity loading and listener invocation. Changes to individual rows within one notification are also delivered sequentially.
 Different listeners can run concurrently, so shared application state still requires synchronization. Each listener performs
 at most one entity reload at a time; listeners still share the datasource's connection pool.
-Rejected notifications handled through retries or invalidation do not retain their original position in that order.
 Entity loading reads the current database state; sequential processing does not provide a historical snapshot of each change.
 
 A single transaction, such as a bulk update, can produce one Oracle Database notification containing several row descriptions.

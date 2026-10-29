@@ -124,9 +124,10 @@ final class OracleChangeNotificationSubscription {
         this.retryDelayMultiplier = recoveryConfiguration.getRetryDelayMultiplier();
         this.maxRetryDelay = recoveryConfiguration.getMaxRetryDelay();
         this.dispatcher = new OracleChangeNotificationDispatcher(
-            dataSourceName, definition, beanContext, notificationQueue, taskScheduler, taskTracker,
+            dataSourceName, definition, beanContext, notificationQueue, taskTracker,
             this::handleRegistrationPurged, this::handleRegistrationDeregistered,
-            this::handleQueryDeregistered, this::handleDatabaseShutdown, this::acceptsDataNotification, this::enqueueDataNotification);
+            this::handleQueryDeregistered, this::handleDatabaseShutdown, this::acceptsDataNotification,
+            this::enqueueDataNotification);
     }
 
     OracleChangeListenerDefinition getDefinition() {
@@ -202,7 +203,7 @@ final class OracleChangeNotificationSubscription {
     }
 
     /**
-     * Validates and enqueues atomically with registration transitions that discard queued data.
+     * Validates and enqueues data or reconciliation atomically with registration transitions that discard queued data.
      * The action only submits to the queue; listener execution takes place on its worker thread.
      */
     private void enqueueDataNotification(long registrationId, Runnable enqueue) {
@@ -379,7 +380,9 @@ final class OracleChangeNotificationSubscription {
 
     private void submitTermination(long registrationId) {
         cancelRecoveryRetryTask();
-        dispatcher.submitLifecycleEvent(registrationId, ChangeOperation.TERMINATED, "after DCN notifications stopped", () -> !closed);
+        synchronized (lifecycleLock) {
+            dispatcher.submitLifecycleEvent(registrationId, ChangeOperation.TERMINATED, "after DCN notifications stopped", () -> !closed);
+        }
     }
 
     /** Stops the matching recovery sequence once and notifies outside the lifecycle lock. */
@@ -488,11 +491,8 @@ final class OracleChangeNotificationSubscription {
         }
         if (published) {
             long replacementId = Objects.requireNonNull(replacement, "Published registration must have a replacement").getRegId();
-            dispatcher.submitLifecycleEvent(replacementId, ChangeOperation.INVALIDATE, "after DCN registration recovery", () -> {
-                synchronized (lifecycleLock) {
-                    return !closed && isCurrent(replacementId);
-                }
-            });
+            enqueueDataNotification(replacementId, () -> dispatcher.submitLifecycleEvent(replacementId,
+                ChangeOperation.INVALIDATE, "after DCN registration recovery", () -> acceptsDataNotification(replacementId)));
         } else if (recoveryFailure != null && !closed) {
             rescheduleRecoveryTask(retryCount, failedRegId, recoveryFailure);
         }
