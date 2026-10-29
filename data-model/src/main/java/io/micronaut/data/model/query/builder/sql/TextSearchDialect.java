@@ -44,12 +44,12 @@ import java.util.function.Function;
 @Internal
 public interface TextSearchDialect {
 
-    /**
-     * The default text search configuration when the entity declares no {@link Searchable#language()}.
-     */
     /** The start of an index DDL statement. */
     String CREATE_INDEX = "CREATE INDEX ";
 
+    /**
+     * The default text search configuration when the entity declares no {@link Searchable#language()}.
+     */
     String DEFAULT_LANGUAGE = TextSearchSupport.DEFAULT_LANGUAGE;
 
     /**
@@ -388,7 +388,11 @@ public interface TextSearchDialect {
         return path.toString();
     }
 
-    private static String jsonKey(PersistentProperty property) {
+    /**
+     * @param property A property of a JSON-represented entity
+     * @return Its key in the JSON document, honouring {@code @SerdeConfig(property)} and {@code @JsonProperty}
+     */
+    static String jsonKey(PersistentProperty property) {
         return property.getAnnotationMetadata().stringValue("io.micronaut.serde.config.annotation.SerdeConfig", "property")
             .or(() -> property.getAnnotationMetadata().stringValue("com.fasterxml.jackson.annotation.JsonProperty"))
             .filter(name -> !name.isEmpty())
@@ -508,6 +512,8 @@ public interface TextSearchDialect {
         public static final String REGCONFIG_FUNCTION = "mn_regconfig";
         private static final String REGCONFIG_FUNCTION_DDL = "CREATE OR REPLACE FUNCTION " + REGCONFIG_FUNCTION
             + "(cfg text) RETURNS regconfig AS 'SELECT cfg::regconfig' LANGUAGE sql IMMUTABLE SET search_path = pg_catalog, pg_temp;";
+        // PostgreSQL can skip an index that exists, so schema generation can run against an existing database
+        private static final String CREATE_INDEX_IF_NOT_EXISTS = "CREATE INDEX IF NOT EXISTS ";
 
         @Override
         public void appendTextMatch(StringBuilder query,
@@ -690,12 +696,13 @@ public interface TextSearchDialect {
 
         @Override
         public String searchIndexExistsQuery() {
-            return "SELECT count(*) FROM pg_indexes WHERE indexname = ?";
+            // index names are unique per schema, so the lookup stays in the schema the indexes are created in
+            return "SELECT count(*) FROM pg_indexes WHERE schemaname = current_schema() AND indexname = ?";
         }
 
         @Override
         public List<String> buildSearchIndex(String indexName, String escapedTableName, List<SearchColumn> columns, String language, @Nullable String languageColumn) {
-            StringBuilder ddl = new StringBuilder(CREATE_INDEX).append(indexName).append(" ON ").append(escapedTableName).append(" USING GIN (");
+            StringBuilder ddl = new StringBuilder(CREATE_INDEX_IF_NOT_EXISTS).append(indexName).append(" ON ").append(escapedTableName).append(" USING GIN (");
             List<SearchWeight> weights = columns.stream().map(SearchColumn::weight).toList();
             List<Consumer<StringBuilder>> renderers = columns.stream().map(c -> (Consumer<StringBuilder>) sb -> sb.append(c.column())).toList();
             appendVector(ddl, renderers, weights, language, languageColumn);
@@ -713,7 +720,7 @@ public interface TextSearchDialect {
                         statements.add("CREATE EXTENSION IF NOT EXISTS pg_trgm;");
                         trigram = true;
                     }
-                    statements.add(CREATE_INDEX + column.trigramIndex() + " ON " + escapedTableName + " USING GIN (" + column.column() + " gin_trgm_ops);");
+                    statements.add(CREATE_INDEX_IF_NOT_EXISTS + column.trigramIndex() + " ON " + escapedTableName + " USING GIN (" + column.column() + " gin_trgm_ops);");
                 }
             }
             return statements;
@@ -877,7 +884,7 @@ public interface TextSearchDialect {
         /**
          * Renders {@code CTX_DOC.POLICY_SNIPPET(policy, document, query, starttag, endtag)} over the field's
          * text, which needs the {@link #POLICY_NAME} policy created by schema generation but no index key.
-         * A JSON entity highlights {@code JSON_VALUE(column, '$.path')}.
+         * A JSON entity highlights {@code JSON_VALUE(column, '$.path' RETURNING CLOB)}.
          */
         @Override
         public void appendSearchHighlight(StringBuilder query,
@@ -895,7 +902,8 @@ public interface TextSearchDialect {
                 if (target.tableAlias() != null) {
                     query.append(target.tableAlias()).append('.');
                 }
-                query.append(target.jsonColumn()).append(",'$.").append(TextSearchDialect.jsonKeyPath(propertyPath.getPropertyPath())).append("')");
+                // RETURNING CLOB, as the default VARCHAR2(4000) is NULL for a longer value
+                query.append(target.jsonColumn()).append(",'$.").append(jsonKeyPath(propertyPath.getPropertyPath())).append("' RETURNING CLOB)");
             } else {
                 appendExpression.accept(field);
             }

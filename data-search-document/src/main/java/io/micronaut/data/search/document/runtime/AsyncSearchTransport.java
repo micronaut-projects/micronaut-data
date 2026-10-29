@@ -83,7 +83,9 @@ public interface AsyncSearchTransport {
     }
 
     /**
-     * Indexes several documents in one request. The default sends one request per document, in sequence.
+     * Indexes several new documents in one request, each a create-only write like
+     * {@link #create(String, String, Map, DocumentSearchConfiguration.Refresh)}. The default sends one
+     * request per document, in sequence.
      *
      * @param index The index name
      * @param documents The documents, in order
@@ -93,12 +95,29 @@ public interface AsyncSearchTransport {
     default CompletionStage<List<String>> bulkIndex(String index, List<SearchTransport.BulkDocument> documents, DocumentSearchConfiguration.Refresh refresh) {
         CompletionStage<List<String>> ids = CompletableFuture.completedFuture(new ArrayList<>(documents.size()));
         for (SearchTransport.BulkDocument document : documents) {
-            ids = ids.thenCompose(list -> index(index, document.id(), document.source(), document.version(), refresh).thenApply(id -> {
+            ids = ids.thenCompose(list -> (document.version() == null
+                ? create(index, document.id(), document.source(), refresh)
+                : index(index, document.id(), document.source(), document.version(), refresh)).thenApply(id -> {
                 list.add(id);
                 return list;
             }));
         }
         return ids;
+    }
+
+    /**
+     * Indexes a new document, failing when a document with the same id exists. The default replaces
+     * like {@link #index(String, String, Map, DocumentSearchConfiguration.Refresh)}; the store
+     * transports override it with a create-only write.
+     *
+     * @param index The index name
+     * @param id The document id, or {@code null} to let the store assign one
+     * @param source The document
+     * @param refresh The refresh policy
+     * @return The document id
+     */
+    default CompletionStage<String> create(String index, @Nullable String id, Map<String, Object> source, DocumentSearchConfiguration.Refresh refresh) {
+        return index(index, id, source, refresh);
     }
 
     /**
@@ -130,6 +149,23 @@ public interface AsyncSearchTransport {
      * @return Whether a document was deleted
      */
     CompletionStage<Boolean> delete(String index, String id, DocumentSearchConfiguration.Refresh refresh);
+
+    /**
+     * Deletes a document with a version check, see
+     * {@link SearchTransport#delete(String, String, Long, DocumentSearchConfiguration.Refresh)}.
+     *
+     * @param index The index name
+     * @param id The document id
+     * @param version The version the entity was read at, or {@code null} for an unconditional delete
+     * @param refresh The refresh policy
+     * @return Whether a document was deleted
+     */
+    default CompletionStage<Boolean> delete(String index, String id, @Nullable Long version, DocumentSearchConfiguration.Refresh refresh) {
+        if (version != null) {
+            return CompletableFuture.failedStage(new UnsupportedOperationException("Versioned deletes are not supported by " + getClass().getName()));
+        }
+        return delete(index, id, refresh);
+    }
 
     /**
      * Deletes the documents matching a query.

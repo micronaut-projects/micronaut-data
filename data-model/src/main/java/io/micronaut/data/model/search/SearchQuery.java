@@ -83,7 +83,7 @@ public final class SearchQuery {
         this.rankConstant = builder.rankConstant;
         this.fields = Collections.unmodifiableSet(new LinkedHashSet<>(builder.fields));
         this.mode = builder.mode;
-        this.fuzziness = builder.fuzziness;
+        this.fuzziness = builder.mode == MatchMode.FUZZY ? builder.fuzziness : 0;
         this.boosts = Collections.unmodifiableMap(new LinkedHashMap<>(builder.boosts));
         this.highlightFields = Collections.unmodifiableSet(new LinkedHashSet<>(builder.highlightFields));
         this.highlightDeclaredFields = builder.highlightDeclaredFields;
@@ -327,7 +327,8 @@ public final class SearchQuery {
         /**
          * Selects the syntax of the query string: {@link SearchSyntax#NATIVE} passes it to the store
          * unparsed, as the {@link MatchMode#NATIVE} mode; {@link SearchSyntax#SIMPLE} keeps the portable
-         * grammar and the mode set so far.
+         * grammar and the mode set so far, except a {@link MatchMode#NATIVE} mode, which becomes
+         * {@link MatchMode#ANY}.
          *
          * @param syntax The syntax
          * @return This builder
@@ -344,10 +345,14 @@ public final class SearchQuery {
         /**
          * Requests fuzzy matching with the given maximum edit distance.
          *
-         * @param maxEdits The maximum edit distance, {@code 0} for the backend default
+         * @param maxEdits The maximum edit distance from {@code 0} to {@code 2}, {@code 0} for the backend default
          * @return This builder
+         * @throws IllegalArgumentException When the edit distance is outside that range
          */
         public Builder fuzzy(int maxEdits) {
+            if (maxEdits < 0 || maxEdits > 2) {
+                throw new IllegalArgumentException("The fuzzy edit distance must be between 0 and 2: " + maxEdits);
+            }
             this.mode = MatchMode.FUZZY;
             this.fuzziness = maxEdits;
             return this;
@@ -356,12 +361,16 @@ public final class SearchQuery {
         /**
          * Boosts matches in the given property.
          *
-         * @param field The property name
-         * @param boost The boost factor
+         * @param field The property name, one of the entity's search fields
+         * @param boost The boost factor, a finite number above 0
          * @return This builder
+         * @throws IllegalArgumentException When the boost is not a finite number above 0
          */
         public Builder boost(String field, double boost) {
-            boosts.put(field, boost);
+            if (!Double.isFinite(boost) || boost <= 0) {
+                throw new IllegalArgumentException("The boost of " + field + " must be a finite number above 0, got " + boost);
+            }
+            boosts.put(Objects.requireNonNull(field, "field must not be null"), boost);
             return this;
         }
 
@@ -381,7 +390,9 @@ public final class SearchQuery {
         }
 
         /**
-         * @param minScore The minimum relevance score
+         * @param minScore The minimum relevance score. On a hybrid search it applies to the fused score,
+         * the sum of {@code weight / (rankConstant + rank)} over both rankings, which is at most
+         * {@code (textWeight + vectorWeight) / (rankConstant + 1)}: about {@code 0.033} with the defaults
          * @return This builder
          */
         public Builder minScore(double minScore) {
@@ -391,16 +402,15 @@ public final class SearchQuery {
 
         /**
          * Analyses the query with another language than the entity's. The SQL stores render the
-         * language inside the statement, so only a configuration name of letters, digits and
-         * underscores is accepted; pass an application constant, not user input.
+         * language inside the statement, so they accept only a configuration name of letters, digits
+         * and underscores and reject any other value when the search runs; the document stores take
+         * their analyzer names as they are. Pass an application constant, not user input.
          *
          * @param language The language to analyse the query with
          * @return This builder
-         * @throws IllegalArgumentException When the language holds other characters
          */
         public Builder language(String language) {
-            TextSearchSupport.requireLanguageName(language);
-            this.language = language;
+            this.language = Objects.requireNonNull(language, "language must not be null");
             return this;
         }
 
@@ -421,19 +431,28 @@ public final class SearchQuery {
         /**
          * @param textWeight The weight of the text rank in the hybrid score, {@code 1} by default
          * @return This builder
+         * @throws IllegalArgumentException When the weight is negative or not finite
          */
         public Builder textWeight(double textWeight) {
-            this.textWeight = textWeight;
+            this.textWeight = requireWeight("textWeight", textWeight);
             return this;
         }
 
         /**
          * @param vectorWeight The weight of the vector rank in the hybrid score, {@code 1} by default
          * @return This builder
+         * @throws IllegalArgumentException When the weight is negative or not finite
          */
         public Builder vectorWeight(double vectorWeight) {
-            this.vectorWeight = vectorWeight;
+            this.vectorWeight = requireWeight("vectorWeight", vectorWeight);
             return this;
+        }
+
+        private static double requireWeight(String name, double weight) {
+            if (!Double.isFinite(weight) || weight < 0) {
+                throw new IllegalArgumentException(name + " must be a finite number of at least 0, got " + weight);
+            }
+            return weight;
         }
 
         /**
