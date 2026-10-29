@@ -28,7 +28,9 @@ snippet::example.BookRepository[project-base="doc-examples/mongo-search-example"
 
 snippet::example.BookService[project-base="doc-examples/mongo-search-example", source="main", tags="search"]
 
-The search string is translated to MongoDB's `$search` syntax at bind time: any term matches by default, quoted phrases are required, `-` excludes a term, and `OR` groups are flattened because MongoDB already matches any term. `SearchAll` quotes every term, which makes MongoDB require all of them; it cannot be combined with `OR`.
+The search string is translated to MongoDB's `$search` syntax at bind time: any term matches by default, quoted phrases are required, `-` excludes a term, and `OR` groups are flattened because MongoDB already matches any term. `SearchAll` quotes every term, which makes MongoDB require all of them; it cannot be combined with `OR`, and a search string that does so fails with an `UnsupportedOperationException` that the application can turn into a client error. Because MongoDB requires every quoted phrase, a phrase in an any-term search is required too: `coffee "french press"` matches only documents containing the phrase.
+
+The query sets `$language` to the entity's language, which is also the text index's `default_language`, so a document with its own language in the `language_override` field is still indexed with that language; only the search string is stemmed with the entity's.
 
 == Limitations
 
@@ -38,7 +40,8 @@ The search string is translated to MongoDB's `$search` syntax at bind time: any 
 |Field scoping (`findByTitleSearch` matching only `title`) |not supported, every search field is searched
 |`SearchPrefix` and `SearchFuzzy` |not supported, rejected at compile time
 |Highlighting and query-time boosts |not supported
-|`$text` with joins or `@Where` stages |`$text` must be the first stage, so joined queries fail at runtime
+|`$text` under `OR` or `NOT` |rejected at compile time, as MongoDB only allows `$text` as a top-level condition
+|`$text` with joins |the `$text` match is moved ahead of the join lookups, as MongoDB requires it in the first stage
 |===
 
 A `Pageable` or `Sort` parameter replaces the relevance order, as on SQL stores.
