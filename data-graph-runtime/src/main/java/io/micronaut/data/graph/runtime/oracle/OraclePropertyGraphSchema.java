@@ -65,7 +65,7 @@ import java.util.stream.Collectors;
  *     table of that entity as its edge table, with a column referencing the node that owns the relationship.</li>
  *     <li>Each relationship to a node gets an edge table named after the table of its owner and the relationship
  *     type, with columns referencing the owner and the target.</li>
- *     <li>Each graph named by a graph repository of the data source is created with {@code CREATE PROPERTY GRAPH}
+ *     <li>Each graph named by a graph repository of the data source is created with {@code CREATE OR REPLACE PROPERTY GRAPH}, so a restart with {@code CREATE} picks up changed entities,
  *     over the vertex and edge tables reachable from the entities of its repositories.</li>
  * </ul>
  *
@@ -145,13 +145,13 @@ public final class OraclePropertyGraphSchema {
     public List<String> buildDropStatements() {
         List<String> statements = new ArrayList<>();
         for (String graph : graphs.keySet()) {
-            statements.add("DROP PROPERTY GRAPH " + identifier(graph));
+            statements.add("DROP PROPERTY GRAPH IF EXISTS " + identifier(graph));
         }
         for (Edge edge : schema.edges) {
-            statements.add("DROP TABLE " + quote(edge.table.name()));
+            statements.add("DROP TABLE IF EXISTS " + quote(edge.table.name()));
         }
         for (Vertex vertex : schema.vertices.values()) {
-            statements.add("DROP TABLE " + quote(vertex.table.name()));
+            statements.add("DROP TABLE IF EXISTS " + quote(vertex.table.name()));
         }
         return statements;
     }
@@ -375,7 +375,7 @@ public final class OraclePropertyGraphSchema {
         Set<String> names = vertices.stream().map(PersistentEntity::getName).collect(Collectors.toSet());
         Function<PersistentEntity, String> tableOf = entity -> quote(schema.vertex(entity).table.name());
         Function<PersistentEntity, String> keyOf = entity -> quote(identityColumn(entity).getName());
-        StringBuilder sql = new StringBuilder("CREATE PROPERTY GRAPH ").append(identifier(name)).append(" VERTEX TABLES (");
+        StringBuilder sql = new StringBuilder("CREATE OR REPLACE PROPERTY GRAPH ").append(identifier(name)).append(" VERTEX TABLES (");
         List<String> vertexTables = new ArrayList<>();
         for (PersistentEntity entity : vertices) {
             SqlTableMapping table = schema.vertex(entity).table;
