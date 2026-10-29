@@ -1,5 +1,7 @@
 from micronaut.data.graph.model.criteria import GraphCriteria
 
+from example.Movie import Movie
+
 
 # tag::specifications[]
 def released_after(year: int):  # <1>
@@ -17,5 +19,5 @@ def with_roles():  # <1>
 
 
 def connected_to(title: str, hops: int):  # <2>
-    return lambda root, criteria_builder: GraphCriteria.connected(root, None, criteria_builder.literal(title), hops)
+    return lambda root, criteria_builder: GraphCriteria.connected(root, Movie, criteria_builder.literal(title), hops)
 # end::graphCriteria[]

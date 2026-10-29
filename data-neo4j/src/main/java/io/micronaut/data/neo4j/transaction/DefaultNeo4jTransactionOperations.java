@@ -56,7 +56,8 @@ final class DefaultNeo4jTransactionOperations extends AbstractDefaultTransaction
     @Override
     protected void doBegin(DefaultTransactionStatus<Neo4jConnection> tx) {
         if (tx.getTransactionDefinition().getIsolationLevel().isPresent()) {
-            // The driver has no isolation levels; refusing matches the reactive operations rather than ignoring the request
+            // The driver has no isolation levels; refusing matches the reactive operations rather than ignoring the request.
+            // Like JDBC, a call that joins an existing transaction is not begun here, so its definition is not checked
             throw new TransactionUsageException("Neo4j does not support setting the isolation level");
         }
         TransactionConfig.Builder config = TransactionConfig.builder();

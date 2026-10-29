@@ -37,24 +37,35 @@ public final class RelatedPredicate<E, T> extends AbstractPredicate {
 
     private final PersistentEntityRoot<E> root;
     private final @Nullable String relationship;
+    private final @Nullable Class<?> targetType;
     private final @Nullable Expression<T> target;
     private final int maxDepth;
 
     /**
      * @param root         The root of the query
      * @param relationship The name of the relationship property, or null for relationships of any type
+     * @param targetType   The entity of the node at the far end of relationships of any type, which the
+     *                     relationship property gives otherwise
      * @param target       The identifier of the node at the far end, or null for any node
      * @param maxDepth     The number of relationships to follow, 1 for a direct relationship
      */
-    public RelatedPredicate(PersistentEntityRoot<E> root, @Nullable String relationship, @Nullable Expression<T> target, int maxDepth) {
+    public RelatedPredicate(PersistentEntityRoot<E> root, @Nullable String relationship, @Nullable Class<?> targetType, @Nullable Expression<T> target, int maxDepth) {
         if (maxDepth < 1) {
             throw new IllegalArgumentException("The maximum depth must be at least 1, was: " + maxDepth);
         }
         if (relationship == null && maxDepth == 1 && target == null) {
             throw new IllegalArgumentException("A predicate on relationships of any type needs a target node or a depth above 1");
         }
+        if (relationship != null && targetType != null) {
+            throw new IllegalArgumentException("The relationship property [" + relationship + "] gives the entity of the node at the far end: pass no target type");
+        }
+        if (relationship == null && target != null && targetType == null) {
+            // Relationships of any type can lead to a node of any entity, whose identifier the query could not match
+            throw new IllegalArgumentException("A predicate on relationships of any type needs the entity of the node at the far end to match its identifier");
+        }
         this.root = root;
         this.relationship = relationship;
+        this.targetType = targetType;
         this.target = target;
         this.maxDepth = maxDepth;
     }
@@ -71,6 +82,13 @@ public final class RelatedPredicate<E, T> extends AbstractPredicate {
      */
     public @Nullable String getRelationship() {
         return relationship;
+    }
+
+    /**
+     * @return The entity of the node at the far end of relationships of any type, or null when the relationship property gives it
+     */
+    public @Nullable Class<?> getTargetType() {
+        return targetType;
     }
 
     /**
@@ -99,6 +117,7 @@ public final class RelatedPredicate<E, T> extends AbstractPredicate {
 
     @Override
     public String toString() {
-        return "RelatedPredicate{relationship=" + relationship + ", target=" + target + ", maxDepth=" + maxDepth + '}';
+        return "RelatedPredicate{relationship=" + relationship + ", targetType=" + (targetType != null ? targetType.getName() : null)
+            + ", target=" + target + ", maxDepth=" + maxDepth + '}';
     }
 }

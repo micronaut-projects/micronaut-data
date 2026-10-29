@@ -1,5 +1,7 @@
 package io.micronaut.data.graph.runtime.age
 
+import io.micronaut.context.ApplicationContext
+import io.micronaut.context.env.PropertySource
 import spock.lang.Specification
 
 class AgeConfigurationSpec extends Specification {
@@ -26,5 +28,24 @@ class AgeConfigurationSpec extends Specification {
         configuration.graphs == [reporting: "analytics"]
         configuration.createExtension
         !configuration.createGraph
+    }
+
+    void "the graph of a data source with a camel case name is found however configuration binds it"() {
+        given: "configuration binds the keys of the graphs in hyphenated form"
+        def context = ApplicationContext.builder()
+            .properties('micronaut.data.age.graphs.reportingDb': 'analytics')
+            .propertySources(PropertySource.of('env', ['MICRONAUT_DATA_AGE_GRAPHS_AUDIT_DB': 'audit'], PropertySource.PropertyConvention.ENVIRONMENT_VARIABLE))
+            .start()
+        def configuration = context.getBean(AgeConfiguration)
+
+        expect:
+        configuration.graphs.keySet() == ['reporting-db', 'audit-db'] as Set
+        configuration.graphFor("reportingDb") == "analytics"
+        configuration.graphFor("reporting-db") == "analytics"
+        configuration.graphFor("auditDb") == "audit"
+        configuration.graphFor("default") == AgeConfiguration.DEFAULT_GRAPH
+
+        cleanup:
+        context?.close()
     }
 }

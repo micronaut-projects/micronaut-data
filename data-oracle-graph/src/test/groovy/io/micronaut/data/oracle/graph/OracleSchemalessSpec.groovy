@@ -1,6 +1,7 @@
 package io.micronaut.data.oracle.graph
 
 import io.micronaut.context.annotation.Property
+import io.micronaut.data.exceptions.DataAccessException
 import io.micronaut.data.oracle.graph.schemaless.Gadget
 import io.micronaut.data.oracle.graph.schemaless.GadgetGraph
 import io.micronaut.test.extensions.spock.annotation.MicronautTest
@@ -50,5 +51,19 @@ class OracleSchemalessSpec extends Specification {
 
         then:
         updated.dynamicAttributes() == [cameras: [12L, 48L], waterproof: true, storage: 256L]
+    }
+
+    void "a schemaless property named like a column is rejected when saved"() {
+        given:
+        def phone = new Gadget("Phone", 500)
+        phone.set("price", 1)
+
+        when:
+        gadgetGraph.save(phone)
+
+        then:
+        def e = thrown(DataAccessException)
+        e.message == "Dynamic attribute [price] of [Gadget] has the name of a declared property"
+        gadgetGraph.count() == 0
     }
 }

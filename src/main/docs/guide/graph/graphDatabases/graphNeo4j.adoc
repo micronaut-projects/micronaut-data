@@ -4,7 +4,7 @@ dependency:io.micronaut.data:micronaut-data-neo4j[]
 
 Repositories are annotated with ann:data.neo4j.annotation.Neo4jRepository[].
 
-Each operation runs in the Neo4j transaction of the current Micronaut transaction, started with `@Transactional` or api:data.neo4j.transaction.Neo4jTransactionOperations[]. Without one, each operation runs as an auto-commit query in a session opened for it.
+Each operation runs in the Neo4j transaction of the current Micronaut transaction, started with `@Transactional` or api:data.neo4j.transaction.Neo4jTransactionOperations[]. Without one, each operation runs as an auto-commit query in a session opened for it. Neo4j has no isolation levels, so a transaction that asks for one fails to begin. A call that joins an existing transaction runs in it whatever isolation level it asks for, as with Micronaut Data JDBC, which does not validate the definition of a joined transaction either.
 
 <<graphReactive, Reactive repositories>> run on the reactive sessions of the driver, in the transaction started by a reactive `@Transactional` method or api:data.neo4j.transaction.Neo4jReactorTransactionOperations[]. The database defaults to the default database of the server, `micronaut.data.neo4j.database` selects another.
 
@@ -39,7 +39,7 @@ snippet::example.ArchivedMovieRepository[project-base="doc-examples/neo4j-exampl
 
 <1> The repository runs on the `archive` driver. Repositories without a name use the `default` driver.
 
-`micronaut.data.neo4j.databases.<name>` selects the database of a configured driver. Transactions are started on a driver by the api:data.neo4j.transaction.Neo4jTransactionOperations[] bean of the same name.
+A configured driver sets both `username` and `password`, or neither for a server without authentication, and cannot be named `default`. `micronaut.data.neo4j.databases.<name>` selects the database of a configured driver. Beans injected without a name, such as the operations or the transactions of `@Transactional`, use the `default` driver. Transactions are started on a driver by the api:data.neo4j.transaction.Neo4jTransactionOperations[] bean of the same name.
 
 == Multi-tenancy
 

@@ -8,6 +8,7 @@ import io.micronaut.data.graph.annotation.Direction
 import io.micronaut.data.graph.annotation.PropertyGraph
 import io.micronaut.data.graph.model.query.PathQueryDefinition
 import io.micronaut.data.graph.model.criteria.GraphCriteria
+import io.micronaut.data.graph.model.query.builder.entities.Chimera
 import io.micronaut.data.graph.model.query.builder.entities.Person
 import io.micronaut.data.graph.model.query.builder.entities.Pet
 import io.micronaut.data.model.jpa.criteria.PersistentEntityCriteriaBuilder
@@ -21,6 +22,12 @@ import io.micronaut.data.runtime.criteria.RuntimeCriteriaBuilder
 import io.micronaut.inject.annotation.MutableAnnotationMetadata
 import spock.lang.Shared
 import spock.lang.Specification
+
+import java.time.Instant
+import java.time.LocalDate
+import java.time.LocalDateTime
+import java.time.OffsetDateTime
+import java.time.ZonedDateTime
 
 /**
  * Checks the PGQL and SQL/PGQ rendered for queries built with the criteria API and for path queries.
@@ -107,8 +114,86 @@ class OracleGraphCriteriaQuerySpec extends Specification {
 
         where:
         language                             | fragment
-        PropertyGraph.QueryLanguage.PGQL    | "WHERE (JSON_VALUE(n.attributes, '\$.legs') > ?)"
-        PropertyGraph.QueryLanguage.SQL_PGQ | "WHERE (JSON_VALUE(n.attributes, '\$.legs') > ?)"
+        PropertyGraph.QueryLanguage.PGQL    | "WHERE (JSON_VALUE(n.attributes, '\$.\"legs\"' RETURNING NUMBER) > ?)"
+        PropertyGraph.QueryLanguage.SQL_PGQ | "WHERE (JSON_VALUE(n.attributes, '\$.\"legs\"' RETURNING NUMBER) > ?)"
+    }
+
+    void "test dynamic property of type #type.simpleName reads the JSON value as #returning"() {
+        given:
+        def query = cb.createQuery(Pet)
+        PersistentEntityRoot root = query.from(Pet)
+        query.where(cb.isNotNull(GraphCriteria.dynamic(root, "value", type)))
+
+        expect:
+        ((PersistentEntityCriteriaQueryBuilder) query).build(AnnotationMetadata.EMPTY_METADATA, builder(PropertyGraph.QueryLanguage.SQL_PGQ)).query
+            .contains("WHERE (JSON_VALUE(n.attributes, '\$.\"value\"'" + returning + ") IS NOT NULL)")
+
+        where:
+        type           | returning
+        Integer        | ' RETURNING NUMBER'
+        int            | ' RETURNING NUMBER'
+        Long           | ' RETURNING NUMBER'
+        Double         | ' RETURNING NUMBER'
+        BigDecimal     | ' RETURNING NUMBER'
+        Boolean        | ' RETURNING BOOLEAN'
+        boolean        | ' RETURNING BOOLEAN'
+        LocalDate      | ' RETURNING DATE'
+        LocalDateTime  | ' RETURNING TIMESTAMP'
+        OffsetDateTime | ' RETURNING TIMESTAMP WITH TIME ZONE'
+        ZonedDateTime  | ' RETURNING TIMESTAMP WITH TIME ZONE'
+        Instant        | ' RETURNING TIMESTAMP WITH TIME ZONE'
+        String         | ''
+        Object         | ''
+    }
+
+    void "test dynamic property names are quoted keys of the JSON path: #name"() {
+        given:
+        def query = cb.createQuery(Pet)
+        PersistentEntityRoot root = query.from(Pet)
+        query.where(cb.equal(GraphCriteria.dynamic(root, name, String), "x"))
+
+        expect:
+        ((PersistentEntityCriteriaQueryBuilder) query).build(AnnotationMetadata.EMPTY_METADATA, builder(PropertyGraph.QueryLanguage.SQL_PGQ)).query
+            .contains("WHERE (JSON_VALUE(n.attributes, " + path + ") = ?)")
+
+        where:
+        name          | path
+        'first.name'  | $/'$."first.name"'/$
+        'nick name'   | $/'$."nick name"'/$
+        "it's"        | $/'$."it''s"'/$
+    }
+
+    void "test dynamic property names a JSON path would need to escape are rejected: #name"() {
+        given:
+        def query = cb.createQuery(Pet)
+        PersistentEntityRoot root = query.from(Pet)
+        query.where(cb.equal(GraphCriteria.dynamic(root, name, String), "x"))
+
+        when:
+        ((PersistentEntityCriteriaQueryBuilder) query).build(AnnotationMetadata.EMPTY_METADATA, builder(language))
+
+        then:
+        def e = thrown(IllegalArgumentException)
+        e.message == "Schemaless property [" + name + "] cannot be read from an Oracle property graph: its name holds a double quote or a backslash, which a JSON path would need to escape"
+
+        where:
+        language                            | name
+        PropertyGraph.QueryLanguage.SQL_PGQ | 'say "hi"'
+        PropertyGraph.QueryLanguage.PGQL    | 'back\\slash'
+    }
+
+    void "test a dynamic property of an entity with two attribute maps is rejected"() {
+        given:
+        def query = cb.createQuery(Chimera)
+        PersistentEntityRoot root = query.from(Chimera)
+        query.where(cb.isNotNull(GraphCriteria.dynamic(root, "legs", Integer)))
+
+        when:
+        ((PersistentEntityCriteriaQueryBuilder) query).build(AnnotationMetadata.EMPTY_METADATA, builder(PropertyGraph.QueryLanguage.SQL_PGQ))
+
+        then:
+        def e = thrown(IllegalArgumentException)
+        e.message == 'Entity [io.micronaut.data.graph.model.query.builder.entities.Chimera] has more than one @DynamicAttributes property: [attributes] and [extra]'
     }
 
     void "test #language path query #description"() {
