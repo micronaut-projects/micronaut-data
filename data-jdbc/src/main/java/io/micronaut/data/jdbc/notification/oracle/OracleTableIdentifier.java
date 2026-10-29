@@ -49,19 +49,19 @@ record OracleTableIdentifier(@Nullable String schema, String table, String sqlNa
 
     /**
      * Returns whether an Oracle table name reported in a notification identifies this table.
+     * Reported names are raw {@code OWNER.TABLE} strings, not SQL identifiers. The first dot
+     * separates the owner; the remaining table name is compared literally, preserving case,
+     * spaces, dots, and quote characters.
      * A reported schema is required to match only when the mapped table specifies one.
      *
      * @param changedTableName The table name reported by Oracle
      * @return {@code true} if it identifies this table
      */
     boolean matches(String changedTableName) {
-        final OracleTableIdentifier changed;
-        try {
-            changed = parse(changedTableName);
-        } catch (IllegalArgumentException _) {
-            return false;
-        }
-        return table.equals(changed.table) && (schema == null || schema.equals(changed.schema));
+        int separator = changedTableName.indexOf('.');
+        String changedTable = changedTableName.substring(separator + 1);
+        return table.equals(changedTable)
+            && (schema == null || (separator >= 0 && schema.equals(changedTableName.substring(0, separator))));
     }
 
     private static int findSchemaSeparator(String value) {

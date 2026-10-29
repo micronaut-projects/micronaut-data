@@ -24,18 +24,34 @@ class OracleTableIdentifierSpec extends Specification {
         OracleTableIdentifier.parse(mappedTableName).matches(changedTableName) == matches
 
         where:
-        mappedTableName | changedTableName     || matches
-        "book"          | "BOOK"               || true
-        "BOOK"          | "APP.BOOK"           || true
-        '"BOOK"'        | '"APP"."BOOK"'       || true
-        '"Book"'        | '"APP"."Book"'       || true
-        '"Book"'        | '"APP"."BOOK"'       || false
-        '"APP"."BOOK"'  | '"APP"."BOOK"'       || true
-        '"APP"."BOOK"'  | '"OTHER_APP"."BOOK"' || false
-        '"APP"."A.B"'   | '"APP"."A.B"'        || true
-        '"APP"."A.B"'   | '"APP.A"."B"'        || false
-        '"APP"."A""B"'  | '"APP"."A""B"'       || true
-        "BOOK"          | "APP.BOOK_HISTORY"   || false
+        mappedTableName        | changedTableName     || matches
+        'book'                 | 'BOOK'               || true
+        'BOOK'                 | 'APP.BOOK'           || true
+        '"BOOK"'               | 'APP.BOOK'           || true
+        '"Book"'               | 'APP.Book'           || true
+        '"Book"'               | 'APP.BOOK'           || false
+        'BOOK'                 | 'APP.book'           || false
+        'app.book'             | 'APP.BOOK'           || true
+        '"App"."Book"'         | 'App.Book'           || true
+        '"App"."Book"'         | 'APP.Book'           || false
+        '"APP"."BOOK"'         | 'APP.BOOK'           || true
+        '"APP"."BOOK"'         | 'OTHER_APP.BOOK'     || false
+        '"APP"."BOOK"'         | 'BOOK'               || false
+        '"APP"."BOOK"'         | '"APP"."BOOK"'       || false
+        '"APP"."A.B"'          | 'APP.A.B'            || true
+        '"A.B"'                | 'APP.A.B'            || true
+        '"APP"."A.B"'          | 'APP.A.B.C'          || false
+        '"APP"."A.B"'          | 'OTHER_APP.A.B'      || false
+        '"APP"."MY BOOK"'      | 'APP.MY BOOK'        || true
+        '"MY BOOK"'            | 'APP.MY BOOK'        || true
+        '"APP"."A""B"'         | 'APP.A"B'            || true
+        '"APP"."A""B"'         | 'APP.A""B'           || false
+        '"MY APP"."My Book"'   | 'MY APP.My Book'     || true
+        '"APP"." BOOK "'       | 'APP. BOOK '         || true
+        'BOOK'                 | 'APP. BOOK'          || false
+        'BOOK'                 | 'APP.BOOK '          || false
+        '"APP"."BOOK"'         | ' APP.BOOK'          || false
+        'BOOK'                 | 'APP.BOOK_HISTORY'   || false
     }
 
     void "preserves the Oracle SQL identifier"() {

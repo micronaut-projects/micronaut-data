@@ -15,6 +15,10 @@
  */
 package io.micronaut.data.jdbc.notification.oracle
 
+import ch.qos.logback.classic.Level
+import ch.qos.logback.classic.Logger
+import ch.qos.logback.classic.spi.ILoggingEvent
+import ch.qos.logback.core.read.ListAppender
 import io.micronaut.context.BeanContext
 import io.micronaut.data.jdbc.notification.ChangeEvent
 import io.micronaut.data.jdbc.notification.ChangeNotificationQueue
@@ -29,6 +33,7 @@ import oracle.jdbc.dcn.RowChangeDescription
 import oracle.jdbc.dcn.TableChangeDescription
 import oracle.jdbc.OracleConnection
 import oracle.sql.ROWID
+import org.slf4j.LoggerFactory
 import spock.lang.Specification
 
 import java.util.concurrent.CountDownLatch
@@ -438,21 +443,139 @@ class OracleChangeNotificationDispatcherSpec extends Specification {
         queries << [null, [] as QueryChangeDescription[]]
     }
 
-    void "ignores an unmatched table for object change notification"() {
+    void "invalidates an unmatched table and warns only for OCN (QRCN=#queryChangeNotification)"() {
         given:
+        def beanDefinition = Mock(BeanDefinition)
+        def bean = new Object()
+        def beanContext = Mock(BeanContext)
+        beanContext.getBean(beanDefinition) >> bean
+        def method = Mock(ExecutableMethod)
+        method.getDescription(true) >> 'void onChange(ChangeEvent<Book>)'
+        def properties = new Properties()
+        properties.setProperty(OracleConnection.DCN_QUERY_CHANGE_NOTIFICATION, queryChangeNotification.toString())
+        Logger logger = LoggerFactory.getLogger(OracleChangeNotificationDispatcher) as Logger
+        def previousLevel = logger.level
+        def appender = new ListAppender<ILoggingEvent>()
+        appender.start()
+        logger.level = Level.WARN
+        logger.addAppender(appender)
         def table = Mock(TableChangeDescription)
-        table.getTableName() >> "OTHER_TABLE"
+        table.getTableName() >> 'APP.OTHER_TABLE'
         table.getTableOperations() >> EnumSet.of(TableChangeDescription.TableOperation.UPDATE)
         def event = Mock(DatabaseChangeEvent)
         event.getEventType() >> DatabaseChangeEvent.EventType.OBJCHANGE
         event.getTableChangeDescription() >> ([table] as TableChangeDescription[])
-        def dispatcher = dispatcher()
+        def dispatcher = dispatcher(definition(beanDefinition, method, properties), beanContext)
 
         when:
         dispatcher.onDatabaseChangeNotification(event)
 
         then:
+        1 * method.invoke(bean, { Object[] arguments -> isInvalidation(arguments) })
         0 * table.getRowChangeDescription()
+        def warnings = appender.list.findAll { it.level == Level.WARN }
+        warnings.size() == (queryChangeNotification ? 0 : 1)
+        warnings.every {
+            it.formattedMessage.contains('APP.OTHER_TABLE') &&
+                it.formattedMessage.contains('mapped table [BOOK]') &&
+                it.formattedMessage.contains('datasource [inventory]') &&
+                it.formattedMessage.contains('void onChange(ChangeEvent<Book>)')
+        }
+
+        cleanup:
+        logger.detachAppender(appender)
+        logger.level = previousLevel
+        appender.stop()
+
+        where:
+        queryChangeNotification << [false, true]
+    }
+
+    void "dispatches raw Oracle table name #reportedName as row changes (QRCN=#queryChangeNotification)"() {
+        given:
+        def beanDefinition = Mock(BeanDefinition)
+        def bean = new Object()
+        def beanContext = Mock(BeanContext)
+        beanContext.getBean(beanDefinition) >> bean
+        def method = Mock(ExecutableMethod)
+        method.getDescription(true) >> 'void onChange(ChangeEvent<Book>)'
+        def properties = new Properties()
+        properties.setProperty(OracleConnection.DCN_QUERY_CHANGE_NOTIFICATION, queryChangeNotification.toString())
+        def definition = new OracleChangeListenerDefinition(beanDefinition, method,
+            OracleTableIdentifier.parse(mappedName), 'SELECT * FROM ' + mappedName, null, properties)
+        def rowId = Mock(ROWID)
+        rowId.stringValue() >> 'AAEH7kAAEAAABv3AAA'
+        def row = Mock(RowChangeDescription)
+        row.getRowid() >> rowId
+        row.getRowOperations() >> EnumSet.of(RowChangeDescription.RowOperation.DELETE)
+        def table = Mock(TableChangeDescription)
+        table.getTableName() >> reportedName
+        table.getTableOperations() >> EnumSet.of(TableChangeDescription.TableOperation.DELETE)
+        table.getRowChangeDescription() >> ([row] as RowChangeDescription[])
+        def event = Mock(DatabaseChangeEvent)
+        if (queryChangeNotification) {
+            def query = Mock(QueryChangeDescription)
+            query.getTableChangeDescription() >> ([table] as TableChangeDescription[])
+            event.getEventType() >> DatabaseChangeEvent.EventType.QUERYCHANGE
+            event.getQueryChangeDescription() >> ([query] as QueryChangeDescription[])
+        } else {
+            event.getEventType() >> DatabaseChangeEvent.EventType.OBJCHANGE
+            event.getTableChangeDescription() >> ([table] as TableChangeDescription[])
+        }
+        def dispatcher = dispatcher(definition, beanContext)
+
+        when:
+        dispatcher.onDatabaseChangeNotification(event)
+
+        then:
+        1 * method.invoke(bean, { Object[] arguments ->
+            ChangeEvent<?> change = eventArgument(arguments)
+            change.operation() == ChangeOperation.DELETE &&
+                change.metadata(OracleChangeEventMetadata).orElseThrow().rowId() == 'AAEH7kAAEAAABv3AAA'
+        })
+
+        where:
+        mappedName             | reportedName       | queryChangeNotification
+        '"APP"."BOOK.ITEMS"'   | 'APP.BOOK.ITEMS'    | false
+        '"APP"."BOOK.ITEMS"'   | 'APP.BOOK.ITEMS'    | true
+        '"APP"."MY BOOK"'      | 'APP.MY BOOK'       | false
+        '"APP"."MY BOOK"'      | 'APP.MY BOOK'       | true
+        '"App"."Book.Items"'   | 'App.Book.Items'    | false
+        '"App"."Book.Items"'   | 'App.Book.Items'    | true
+        '"APP"."A""B"'         | 'APP.A"B'           | false
+        '"APP"."A""B"'         | 'APP.A"B'           | true
+    }
+
+    void "invalidates the complete notification when another table does not match"() {
+        given:
+        def beanDefinition = Mock(BeanDefinition)
+        def bean = new Object()
+        def beanContext = Mock(BeanContext)
+        beanContext.getBean(beanDefinition) >> bean
+        def method = Mock(ExecutableMethod)
+        method.getDescription(true) >> 'void onChange(ChangeEvent<Book>)'
+        def rowId = Mock(ROWID)
+        def row = Mock(RowChangeDescription)
+        row.getRowid() >> rowId
+        row.getRowOperations() >> EnumSet.of(RowChangeDescription.RowOperation.DELETE)
+        def matched = Mock(TableChangeDescription)
+        matched.getTableName() >> 'APP.BOOK'
+        matched.getTableOperations() >> EnumSet.of(TableChangeDescription.TableOperation.DELETE)
+        matched.getRowChangeDescription() >> ([row] as RowChangeDescription[])
+        def unmatched = Mock(TableChangeDescription)
+        unmatched.getTableName() >> 'APP.UNRELATED'
+        def event = Mock(DatabaseChangeEvent)
+        event.getEventType() >> DatabaseChangeEvent.EventType.OBJCHANGE
+        event.getTableChangeDescription() >> ([matched, unmatched] as TableChangeDescription[])
+        def dispatcher = dispatcher(definition(beanDefinition, method, new Properties()), beanContext)
+
+        when:
+        dispatcher.onDatabaseChangeNotification(event)
+
+        then:
+        1 * method.invoke(bean, { Object[] arguments -> isInvalidation(arguments) })
+        0 * rowId.stringValue()
+        0 * unmatched.getRowChangeDescription()
     }
 
     void "dispatches row operations with their ROWID metadata"() {

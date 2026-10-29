@@ -54,7 +54,7 @@ import java.util.function.BooleanSupplier;
  * <p>Full-table and DDL changes, missing row details, and query notifications for dependent tables
  * require one {@link ChangeOperation#INVALIDATE} event without entity state or ROWID metadata.
  * Invalidation covers the complete notification and suppresses its row-level events. Unmatched
- * tables in object-change notifications are ignored.</p>
+ * tables also invalidate the notification; an unexpected object-change table is logged as a warning.</p>
  *
  * <p>At the queue limit, waiting data is replaced with one invalidation callback. Further data
  * submissions are ignored until that callback starts; data arriving during its execution is
@@ -495,17 +495,17 @@ final class OracleChangeNotificationDispatcher implements DatabaseChangeListener
     /**
      * Dispatches either one invalidation or the complete set of available row-level changes. A row
      * from a dependent QRCN table cannot be reloaded as the listener entity, so it invalidates the
-     * complete notification and prevents partial row-level dispatch. Unmatched tables invalidate
-     * QRCN events but are ignored for Object Change Notification events.
+     * complete notification and prevents partial row-level dispatch. An unmatched Object Change
+     * Notification table also invalidates the notification and is logged as a warning.
      *
-     * @param tables                     the table changes supplied by Oracle Database
-     * @param invalidateOnUnmatchedTable whether an unmatched dependent table invalidates the query result
-     * @param registrationId             the registration that received the event
+     * @param tables                         the table changes supplied by Oracle Database
+     * @param queryChangeNotificationEnabled whether the registration uses QRCN
+     * @param registrationId                 the registration that received the event
      */
     private void dispatchTableChanges(TableChangeDescription[] tables,
-                                      boolean invalidateOnUnmatchedTable,
+                                      boolean queryChangeNotificationEnabled,
                                       long registrationId) {
-        if (requiresInvalidation(tables, invalidateOnUnmatchedTable)) {
+        if (requiresInvalidation(tables, queryChangeNotificationEnabled)) {
             dispatchInvalidation(registrationId, DCN_EVENT_INVALIDATION_REASON);
             return;
         }
@@ -515,23 +515,26 @@ final class OracleChangeNotificationDispatcher implements DatabaseChangeListener
     /**
      * Determines whether the complete event must be represented as an invalidation. Full-table
      * and DDL changes, missing row details, and rows without a usable ROWID cannot be represented as
-     * entity row changes. An unmatched table also requires invalidation for QRCN because it represents
-     * a dependent table whose rows cannot be loaded as the listener entity.
+     * entity row changes. Unmatched tables also require invalidation because their rows cannot be
+     * loaded as the listener entity. They are expected for dependent QRCN tables; an unmatched
+     * Object Change Notification table is logged as a warning.
      *
-     * @param tables                     the table changes supplied by Oracle Database
-     * @param invalidateOnUnmatchedTable whether an unmatched dependent table invalidates the query result
+     * @param tables                         the table changes supplied by Oracle Database
+     * @param queryChangeNotificationEnabled whether unmatched tables can be QRCN dependencies
      * @return {@code true} if row-level dispatch must be suppressed in favor of one invalidation
      */
-    private boolean requiresInvalidation(TableChangeDescription[] tables, boolean invalidateOnUnmatchedTable) {
+    private boolean requiresInvalidation(TableChangeDescription[] tables, boolean queryChangeNotificationEnabled) {
         if (tables.length == 0) {
             return true;
         }
         for (TableChangeDescription table : tables) {
             if (!listenerDefinition.tableIdentifier().matches(table.getTableName())) {
-                if (invalidateOnUnmatchedTable) {
-                    return true;
+                if (!queryChangeNotificationEnabled) {
+                    LOG.warn("Unexpected table [{}] in object change notification for mapped table [{}], datasource [{}], "
+                            + "and listener method [{}]; dispatching INVALIDATE",
+                        table.getTableName(), listenerDefinition.tableIdentifier().sqlName(), dataSourceName, methodDescription);
                 }
-                continue;
+                return true;
             }
             var tableOperations = table.getTableOperations();
             if (tableOperations == null
@@ -568,17 +571,14 @@ final class OracleChangeNotificationDispatcher implements DatabaseChangeListener
     }
 
     /**
-     * Dispatches row changes for tables matching the listener's entity table. The caller must
-     * first check that the complete notification can be represented as row-level changes.
+     * Dispatches row changes after the caller has checked that every table matches the listener's
+     * entity table and that the complete notification can be represented as row-level changes.
      * Rows and their operations are processed sequentially on the calling thread.
      *
      * @param tables the table changes supplied by Oracle Database
      */
     private void dispatchRows(TableChangeDescription[] tables) {
         for (TableChangeDescription table : tables) {
-            if (!listenerDefinition.tableIdentifier().matches(table.getTableName())) {
-                continue;
-            }
             for (RowChangeDescription row : table.getRowChangeDescription()) {
                 String rowId = row.getRowid().stringValue();
                 for (RowChangeDescription.RowOperation operation : row.getRowOperations()) {

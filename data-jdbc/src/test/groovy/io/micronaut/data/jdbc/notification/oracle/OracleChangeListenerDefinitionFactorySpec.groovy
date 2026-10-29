@@ -53,8 +53,8 @@ class OracleChangeListenerDefinitionFactorySpec extends Specification {
         then:
         definition.tableIdentifier().sqlName() == '"SALES"."ORDER.ITEMS"'
         definition.registrationQuery() == 'SELECT * FROM "SALES"."ORDER.ITEMS"'
-        definition.tableIdentifier().matches('"SALES"."ORDER.ITEMS"')
-        !definition.tableIdentifier().matches('"OTHER"."ORDER.ITEMS"')
+        definition.tableIdentifier().matches('SALES.ORDER.ITEMS')
+        !definition.tableIdentifier().matches('OTHER.ORDER.ITEMS')
         definition.registrationProperties().getProperty(OracleConnection.DCN_CLIENT_INIT_CONNECTION) == 'true'
         definition.registrationProperties().getProperty(OracleConnection.NTF_TIMEOUT) == '0'
     }

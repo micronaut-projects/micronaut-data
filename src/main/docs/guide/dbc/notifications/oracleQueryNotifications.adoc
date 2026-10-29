@@ -95,6 +95,8 @@ Handle `TERMINATED` explicitly in listener switches, separately from `INVALIDATE
 
 The default ann:data.jdbc.annotation.OracleChangeNotification[] configuration registers the entity's mapped table.
 Each affected row for which Oracle Database supplies a `ROWID` is delivered as an `INSERT`, `UPDATE`, or `DELETE` event.
+If a notification reports a table that does not match the entity mapping, the listener receives `INVALIDATE` and
+Micronaut Data logs a warning with the reported and mapped table names.
 
 Micronaut Data automatically requests row identifiers with `DCN_NOTIFY_ROWIDS`. Do not configure `DCN_NOTIFY_CHANGELAG`
 to a non-zero value: grouping changes with a lag prevents Oracle Database from supplying the row-level operation and
