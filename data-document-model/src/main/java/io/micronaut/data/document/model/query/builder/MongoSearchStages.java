@@ -61,10 +61,13 @@ final class MongoSearchStages {
      * The reciprocal rank fusion score of a {@code $rankFusion} hit.
      */
     static final Map<String, Object> FUSED_SCORE = Map.of(META, "score");
+    /**
+     * The most {@code numCandidates}, and so the largest {@code limit}, MongoDB accepts in a {@code $vectorSearch}.
+     */
+    static final int MAX_VECTOR_CANDIDATES = 10000;
     private static final String RANK_FUSION_STAGE = "$rankFusion";
     private static final String LIMIT = "limit";
     private static final int DEFAULT_VECTOR_CANDIDATES = 100;
-    private static final int MAX_VECTOR_CANDIDATES = 10000;
     private static final String HIGHLIGHT_START = "<em>";
     private static final String HIGHLIGHT_END = "</em>";
     private static final String HIGHLIGHT_SEPARATOR = " ... ";

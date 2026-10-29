@@ -172,6 +172,39 @@ interface NoteRepository extends CrudRepository<Note, Long> {
         getQuery(repository.getRequiredMethod("findByTextSearch", String)) == 'SELECT note_."id",note_."text" FROM "note" note_ WHERE (to_tsvector(\'german\',note_."text") @@ to_tsquery(\'german\',?))'
     }
 
+    void "a language that is not a configuration name is rejected at compile time"() {
+        when:
+        buildRepository('test.NoteRepository', """
+import io.micronaut.data.jdbc.annotation.JdbcRepository;
+import io.micronaut.data.model.query.builder.sql.Dialect;
+import io.micronaut.data.annotation.search.SearchField;
+import io.micronaut.data.annotation.search.Searchable;
+
+@MappedEntity
+@Searchable(language = "english') OR 1=1 --")
+class Note {
+    @Id
+    @GeneratedValue
+    private Long id;
+    @SearchField
+    private String text;
+    public Long getId() { return id; }
+    public void setId(Long id) { this.id = id; }
+    public String getText() { return text; }
+    public void setText(String text) { this.text = text; }
+}
+
+@JdbcRepository(dialect = Dialect.POSTGRES)
+interface NoteRepository extends CrudRepository<Note, Long> {
+    List<Note> findByTextSearch(String q);
+}
+""")
+
+        then:
+        def e = thrown(RuntimeException)
+        e.message.contains("A search language must be a text search configuration name")
+    }
+
     void "fuzzy search renders pg_trgm word similarity on PostgreSQL"() {
         given:
         def repository = articleRepository("""
@@ -421,10 +454,10 @@ interface AsyncArticleRepository extends AsyncSearchRepository<Article, Long> {
         expect:
         reactive.getRequiredMethod("search", io.micronaut.data.model.search.SearchQuery).stringValue(DataMethod, DataMethod.META_MEMBER_INTERCEPTOR).get() == "io.micronaut.data.runtime.intercept.criteria.reactive.SearchQueryReactiveInterceptor"
         async.getRequiredMethod("search", io.micronaut.data.model.search.SearchQuery).stringValue(DataMethod, DataMethod.META_MEMBER_INTERCEPTOR).get() == "io.micronaut.data.runtime.intercept.criteria.async.SearchQueryAsyncInterceptor"
-        reactive.getRequiredMethod("search", String).stringValue(DataMethod, DataMethod.META_MEMBER_INTERCEPTOR).get().contains("Reactive")
-        async.getRequiredMethod("search", String).stringValue(DataMethod, DataMethod.META_MEMBER_INTERCEPTOR).get().contains("Async")
-        reactive.getRequiredMethod("countHits", String).stringValue(DataMethod, DataMethod.META_MEMBER_INTERCEPTOR).get().contains("Reactive")
-        async.getRequiredMethod("countHits", String).stringValue(DataMethod, DataMethod.META_MEMBER_INTERCEPTOR).get().contains("Async")
+        reactive.getRequiredMethod("search", String).stringValue(DataMethod, DataMethod.META_MEMBER_INTERCEPTOR).get() == "io.micronaut.data.intercept.reactive.FindOneReactiveInterceptor"
+        async.getRequiredMethod("search", String).stringValue(DataMethod, DataMethod.META_MEMBER_INTERCEPTOR).get() == "io.micronaut.data.intercept.async.FindOneAsyncInterceptor"
+        reactive.getRequiredMethod("countHits", String).stringValue(DataMethod, DataMethod.META_MEMBER_INTERCEPTOR).get() == "io.micronaut.data.intercept.reactive.CountReactiveInterceptor"
+        async.getRequiredMethod("countHits", String).stringValue(DataMethod, DataMethod.META_MEMBER_INTERCEPTOR).get() == "io.micronaut.data.intercept.async.CountAsyncInterceptor"
     }
 
     void "a Score parameter restricts the relevance score"() {

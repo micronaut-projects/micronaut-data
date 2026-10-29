@@ -349,6 +349,16 @@ abstract class AbstractTextSearchSpec extends Specification {
         e.message.contains("is not a @SearchField")
     }
 
+    void "search with a SearchQuery rejects a boost of a property that is not a search field"() {
+        when:
+        bookSearchRepository.search(SearchQuery.builder("programming").boost("titel", 2d).build())
+
+        then:
+        IllegalArgumentException e = thrown()
+        e.message.contains("'titel'")
+        e.message.contains("is not a @SearchField")
+    }
+
     void "search with a SearchQuery rejects field scoping the store cannot honour"() {
         assumeTrue(!capabilities().contains(SearchCapability.FIELD_SCOPE))
 

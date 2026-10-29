@@ -156,6 +156,20 @@ abstract class AbstractDocumentSearchRepositoryOperations extends AbstractReposi
         return documentVersion(current, entity);
     }
 
+    /**
+     * The version to delete an entity at: its {@code @Version} property as read, so the store rejects
+     * the delete when the document has been updated since.
+     *
+     * @param current The entity
+     * @param entity The persistent entity
+     * @param <T> The entity type
+     * @return The version, or {@code null} for an entity without a version property
+     */
+    @Nullable
+    protected final <T> Long deleteVersion(T current, RuntimePersistentEntity<T> entity) {
+        return documentVersion(current, entity);
+    }
+
     @Nullable
     private <T> Long documentVersion(T current, RuntimePersistentEntity<T> entity) {
         if (!entity.hasVersion()) {
@@ -417,16 +431,36 @@ abstract class AbstractDocumentSearchRepositoryOperations extends AbstractReposi
      */
     private <T> void applyCursoredPageable(Map<String, Object> body, CursoredPageable pageable, RuntimePersistentEntity<T> entity) {
         List<Sort.Order> orders = cursorOrders(pageable, entity);
-        body.put("sort", sortEntries(orders, entity, pageable.isBackward()));
+        // the method's OrderBy comes first, then the pageable's sort and the id tiebreaker
+        List<Map<String, Object>> entries = new ArrayList<>();
+        if (body.get("sort") instanceof List<?> declared) {
+            for (Object entry : declared) {
+                entries.add(pageable.isBackward() ? reversed((Map<String, Object>) entry) : (Map<String, Object>) entry);
+            }
+        }
+        entries.addAll(sortEntries(orders, entity, pageable.isBackward()));
+        body.put("sort", entries);
         if (pageable.getSize() > 0) {
             body.put("size", pageable.getSize());
         }
+        int sortValues = entries.size();
         pageable.cursor().ifPresent(cursor -> {
-            if (cursor.size() != orders.size()) {
-                throw new DataAccessException("The cursor must hold one value per sort property, including the id tiebreaker; got " + cursor.size() + " for " + orders.size());
+            if (cursor.size() != sortValues) {
+                throw new DataAccessException("The cursor must hold one value per sort property, including the id tiebreaker; got " + cursor.size() + " for " + sortValues);
             }
             body.put("search_after", cursor.elements());
         });
+    }
+
+    /** A sort entry with its direction flipped, for a backward cursored page. */
+    private static Map<String, Object> reversed(Map<String, Object> entry) {
+        Map<String, Object> flipped = new LinkedHashMap<>();
+        entry.forEach((field, options) -> {
+            Map<String, Object> order = new LinkedHashMap<>((Map<String, Object>) options);
+            order.put("order", "asc".equals(order.get("order")) ? "desc" : "asc");
+            flipped.put(field, order);
+        });
+        return flipped;
     }
 
     /**

@@ -79,7 +79,7 @@ class TextSearchCriteriaSpec extends Specification {
         def result = build(Dialect.ORACLE, SearchJsonArticle, entity.annotationMetadata)
 
         then:
-        result.query.contains('CTX_DOC.POLICY_SNIPPET(\'MN_SEARCH_POLICY\',JSON_VALUE(search_json_article_.DATA,\'$.title\'),?,starttag => \'<em>\',endtag => \'</em>\') AS mn_hl_title')
+        result.query.contains('CTX_DOC.POLICY_SNIPPET(\'MN_SEARCH_POLICY\',JSON_VALUE(search_json_article_.DATA,\'$.title\' RETURNING CLOB),?,starttag => \'<em>\',endtag => \'</em>\') AS mn_hl_title')
     }
 
     void "a language override replaces the entity language of a PostgreSQL query and is rejected on Oracle"() {
