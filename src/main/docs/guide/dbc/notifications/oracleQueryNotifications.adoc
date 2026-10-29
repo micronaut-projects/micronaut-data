@@ -70,6 +70,11 @@ Micronaut Data reloads the row and maps the complete entity before the applicati
 The reloaded value is the current database state at reload time, not a historical snapshot of the commit that produced
 the notification. Another transaction can therefore change or delete the row before it is reloaded.
 
+Entities with ann:data.annotation.Where[] clauses are not supported by Oracle notification listeners and cause a
+compilation error. These clauses filter ROWID reloads without filtering the notification registration query, which can
+hide rows needed to reconcile cached state. For QRCN, use the `where` member of
+ann:data.jdbc.annotation.OracleChangeNotification[] to filter the registered result.
+
 For `DELETE`, the entity is empty because the row can no longer be loaded, but Oracle Database `ROWID` metadata is retained.
 
 Oracle Database can report that the registered data changed without usable row details. This includes an `ALL_ROWS` or
@@ -116,6 +121,11 @@ Unquoted identifiers follow Oracle Database's case-insensitive identifier rules;
 
 The `where` value is appended as Oracle SQL. Micronaut Data verifies at compilation time that `select` or `where` is
 used only when QRCN is enabled; Oracle Database determines whether the completed query is eligible for registration when the application starts.
+
+Use literal values for `select`, `where`, and registration property names and values. Configuration placeholders such as
+`${notification.filter}` are rejected at compilation time. The entity's mapped table and schema names
+must also use literal values; for example, `@MappedEntity(schema = "${app.schema}")` is not supported for
+Oracle notification listeners.
 
 QRCN queries may depend on other tables, including tables in another schema when the datasource user has the required privileges.
 If a notification reports a change only to a table identified as a dependent table, Micronaut Data cannot reload it as the listener’s entity type.

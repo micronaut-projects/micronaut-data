@@ -39,6 +39,13 @@ import java.lang.annotation.Target;
  * does not resolve the entity table's schema from the database. Set
  * {@link io.micronaut.data.annotation.MappedEntity#schema()} to distinguish same-named tables across schemas.</p>
  *
+ * <p>Entities with {@link io.micronaut.data.annotation.Where} clauses are rejected at compilation
+ * time because those clauses filter entity reloads without filtering the notification registration
+ * query. For Query Result Change Notification, use {@link #where()} to filter the registered result.</p>
+ *
+ * <p>Query fragments, registration property names and values, and mapped table and schema names
+ * must be literal values. Configuration placeholders are rejected at compilation time.</p>
+ *
  * <p>Registrations do not expire by default. A positive {@code NTF_TIMEOUT} property makes Oracle
  * Database expire the registration after the specified number of seconds; Micronaut Data does not
  * renew it. When Oracle Database reports a deregistration, that listener receives

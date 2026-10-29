@@ -41,37 +41,131 @@ class OracleChangeNotificationVisitorSpec extends AbstractTypeElementSpec {
         reloadQuery.endsWith(' WHERE (ROWID = ?)')
     }
 
-    void "test ROWID predicate composes with entity-level Where"() {
+    void "rejects entity-level Where (#description, QRCN=#queryNotifications)"() {
         when:
-        def beanDefinition = buildBeanDefinition('test.BookListener', listenerSource('''
+        buildBeanDefinition('test.BookListener', listenerSource("""
+    @ChangeListener
+    @OracleChangeNotification(properties = @OracleChangeNotification.Property(
+        name = "DCN_QUERY_CHANGE_NOTIFICATION", value = "$queryNotifications"))
+    void changed(ChangeEvent<Book> event) {
+    }
+""", entityAnnotations))
+
+        then:
+        def exception = thrown(RuntimeException)
+        exception.message.contains('does not support entity-level @Where clauses')
+
+        where:
+        description     | entityAnnotations                              | queryNotifications
+        'constant'      | '@Where("enabled = 1")'                         | false
+        'constant'      | '@Where("enabled = 1")'                         | true
+        'parameterized' | '@Where("enabled = :enabled")'                  | false
+        'placeholder'   | '@Where("enabled = ${app.enabled}")'            | false
+        'repeatable'    | '@Where("enabled = 1")\n@Where("id > 0")'        | false
+        'repeatable'    | '@Where("enabled = 1")\n@Where("id > 0")'        | true
+    }
+
+    void "rejects inherited entity-level Where"() {
+        given:
+        String source = listenerSource('''
     @ChangeListener
     @OracleChangeNotification
     void changed(ChangeEvent<Book> event) {
     }
-''', '@Where("enabled = 1")'))
-        def method = beanDefinition.getRequiredMethod('changed', ChangeEvent)
-        def reloadQuery = method.stringValue(OracleChangeListenerQuery).orElseThrow()
+''').replace('class Book {', 'class Book extends FilteredEntity {')
+            .replace('@Singleton\nclass BookListener', '''@Where("enabled = 1")
+class FilteredEntity {
+}
+
+@Singleton
+class BookListener''')
+
+        when:
+        buildBeanDefinition('test.BookListener', source)
 
         then:
-        reloadQuery.contains('enabled = 1')
-        reloadQuery.contains('ROWID = ?')
-        reloadQuery.contains(' AND ')
-        reloadQuery.findAll(/\bWHERE\b/).size() == 1
-        reloadQuery.count('?') == 1
+        def exception = thrown(RuntimeException)
+        exception.message.contains('does not support entity-level @Where clauses')
     }
 
-    void "test parameterized entity-level Where fails when reloading by ROWID"() {
+    void "rejects entity-level Where supplied through a stereotype"() {
+        given:
+        String source = listenerSource('''
+    @ChangeListener
+    @OracleChangeNotification
+    void changed(ChangeEvent<Book> event) {
+    }
+''', '@ActiveOnly').replace('@MappedEntity\n@ActiveOnly', '''@Where("enabled = 1")
+@java.lang.annotation.Retention(java.lang.annotation.RetentionPolicy.RUNTIME)
+@java.lang.annotation.Target(java.lang.annotation.ElementType.TYPE)
+@interface ActiveOnly {
+}
+
+@MappedEntity
+@ActiveOnly''')
+
+        when:
+        buildBeanDefinition('test.BookListener', source)
+
+        then:
+        def exception = thrown(RuntimeException)
+        exception.message.contains('does not support entity-level @Where clauses')
+    }
+
+    void "rejects configuration placeholders in notification settings (#setting)"() {
+        when:
+        buildBeanDefinition('test.BookListener', listenerSource("""
+    @ChangeListener
+    @OracleChangeNotification($setting)
+    void changed(ChangeEvent<Book> event) {
+    }
+"""))
+
+        then:
+        def exception = thrown(RuntimeException)
+        exception.message.contains('must not contain configuration placeholders')
+
+        where:
+        setting << [
+            'select = "${notification.select}", properties = @OracleChangeNotification.Property(name = "DCN_QUERY_CHANGE_NOTIFICATION", value = "true")',
+            'where = "${notification.filter}", properties = @OracleChangeNotification.Property(name = "DCN_QUERY_CHANGE_NOTIFICATION", value = "true")',
+            'where = "enabled = ${notification.enabled:1}", properties = @OracleChangeNotification.Property(name = "DCN_QUERY_CHANGE_NOTIFICATION", value = "true")',
+            'properties = @OracleChangeNotification.Property(name = "${notification.property}", value = "true")',
+            'properties = @OracleChangeNotification.Property(name = "NTF_TIMEOUT", value = "${notification.timeout}")',
+            'properties = @OracleChangeNotification.Property(name = "CUSTOM_PROPERTY", value = "${notification.value}")',
+            'properties = @OracleChangeNotification.Property(name = "DCN_QUERY_CHANGE_NOTIFICATION", value = "${notification.query:false}")'
+        ]
+    }
+
+    void "rejects configuration placeholders in mapped identifiers (#mapping)"() {
         when:
         buildBeanDefinition('test.BookListener', listenerSource('''
     @ChangeListener
     @OracleChangeNotification
     void changed(ChangeEvent<Book> event) {
     }
-''', '@Where("enabled = :enabled")'))
+''').replace('@MappedEntity\n', "@MappedEntity($mapping)\n"))
 
         then:
         def exception = thrown(RuntimeException)
-        exception.message.contains('parameterized entity @Where clauses are not supported')
+        exception.message.contains('requires literal mapped table and schema names')
+
+        where:
+        mapping << ['value = "${app.table}"', 'schema = "${app.schema}"', 'schema = "${app.schema:APP}"']
+    }
+
+    void "rejects configuration placeholders in mapped columns"() {
+        when:
+        buildBeanDefinition('test.BookListener', listenerSource('''
+    @ChangeListener
+    @OracleChangeNotification
+    void changed(ChangeEvent<Book> event) {
+    }
+''').replace('@MappedProperty("book_title")', '@MappedProperty("${app.title-column}")'))
+
+        then:
+        def exception = thrown(RuntimeException)
+        exception.message.contains('ROWID reload query must not contain configuration placeholders')
     }
 
     void "test valid Oracle query notification accepts mapped column select"() {

@@ -18,6 +18,7 @@ package io.micronaut.data.processor.visitors;
 import io.micronaut.core.annotation.AnnotationMetadata;
 import io.micronaut.core.annotation.AnnotationValue;
 import io.micronaut.data.annotation.MappedEntity;
+import io.micronaut.data.annotation.Where;
 import io.micronaut.data.intercept.annotation.OracleChangeListenerQuery;
 import io.micronaut.data.model.DataType;
 import io.micronaut.data.model.OracleChangeNotificationOptions;
@@ -94,6 +95,17 @@ public final class OracleChangeNotificationVisitor implements TypeElementVisitor
         ClassElement resolvedEntityType = context.getClassElement(entityType.getName()).orElse(entityType);
         Function<ClassElement, SourcePersistentEntity> entityResolver = new SourcePersistentEntityResolver(context, entityMap);
         SourcePersistentEntity persistentEntity = entityResolver.apply(resolvedEntityType);
+        if (!persistentEntity.getAnnotationMetadata().getAnnotationValuesByType(Where.class).isEmpty()) {
+            context.fail("@OracleChangeNotification does not support entity-level @Where clauses: "
+                + "they filter ROWID reloads without filtering the registration query", element);
+            return;
+        }
+        SqlQueryBuilder queryBuilder = new SqlQueryBuilder(Dialect.ORACLE);
+        if (queryBuilder.getTableName(persistentEntity).contains("${")) {
+            context.fail("@OracleChangeNotification requires literal mapped table and schema names; "
+                + "configuration placeholders are not supported", element);
+            return;
+        }
         if (!validateRegistration(element.getAnnotationMetadata(), context, element, persistentEntity)) {
             return;
         }
@@ -103,12 +115,16 @@ public final class OracleChangeNotificationVisitor implements TypeElementVisitor
         query.select(query.from(persistentEntity));
         query.where(criteriaBuilder.equal(
             criteriaBuilder.function("ROWID", String.class), criteriaBuilder.parameter(String.class, "rowId")));
-        QueryResult queryResult = Objects.requireNonNull(query.build(AnnotationMetadata.EMPTY_METADATA, new SqlQueryBuilder(Dialect.ORACLE)));
+        QueryResult queryResult = Objects.requireNonNull(query.build(AnnotationMetadata.EMPTY_METADATA, queryBuilder));
+        if (queryResult.getQuery().contains("${")) {
+            context.fail("@OracleChangeNotification ROWID reload query must not contain configuration placeholders; "
+                + "use literal entity mappings", element);
+            return;
+        }
         List<QueryParameterBinding> bindings = queryResult.getParameterBindings();
         // The runtime loader supplies only the notification ROWID; no other query parameters are available.
         if (bindings.size() != 1 || bindings.get(0).getDataType() != DataType.STRING) {
-            context.fail("@ChangeListener ROWID reload query requires exactly one ROWID parameter; "
-                + "parameterized entity @Where clauses are not supported", element);
+            context.fail("@ChangeListener ROWID reload query requires exactly one ROWID parameter", element);
             return;
         }
         element.annotate(OracleChangeListenerQuery.class, builder -> builder.value(queryResult.getQuery()));
@@ -133,6 +149,10 @@ public final class OracleChangeNotificationVisitor implements TypeElementVisitor
             return false;
         }
         String where = annotationMetadata.stringValue(ORACLE_CHANGE_NOTIFICATION, "where").orElse("").trim();
+        if (select.contains("${") || where.contains("${")) {
+            context.fail("@OracleChangeNotification select and where must not contain configuration placeholders", element);
+            return false;
+        }
         boolean queryChangeNotification = false;
         var properties = annotationMetadata.findAnnotation(ORACLE_CHANGE_NOTIFICATION)
             .map(annotation -> annotation.getAnnotations("properties"))
@@ -233,6 +253,10 @@ public final class OracleChangeNotificationVisitor implements TypeElementVisitor
                                                  MethodElement element) {
         String name = property.stringValue("name").orElse("");
         String value = property.stringValue("value").orElse("");
+        if (name.contains("${") || value.contains("${")) {
+            context.fail("@OracleChangeNotification property names and values must not contain configuration placeholders", element);
+            return true;
+        }
         String error = OracleChangeNotificationOptions.invalidOption(name, value);
         if (error != null) {
             context.fail("@OracleChangeNotification " + error, element);
