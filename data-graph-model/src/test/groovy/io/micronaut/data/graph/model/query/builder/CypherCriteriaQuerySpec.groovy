@@ -82,7 +82,9 @@ class CypherCriteriaQuerySpec extends Specification {
         'not related'          | { q, r -> q.where(cb.not(GraphCriteria.related(r, "movies"))) }                                                                            | 'MATCH (n:Person) WHERE NOT ((n)-[:ACTED_IN]->()) RETURN n'
         'related to'           | { q, r -> q.where(GraphCriteria.relatedTo(r, "movies", cb.literal("Matrix"))) }                                                            | 'MATCH (n:Person) WHERE (n)-[:ACTED_IN]->(:Movie {title: $p0}) RETURN n'
         'connected'            | { q, r -> q.where(GraphCriteria.connected(r, "movies", cb.literal("Matrix"), 3)) }                                                         | 'MATCH (n:Person) WHERE (n)-[:ACTED_IN*1..3]->(:Movie {title: $p0}) RETURN n'
-        'connected by any'     | { q, r -> q.where(GraphCriteria.connected(r, null, cb.literal(42L), 2)) }                                                                 | 'MATCH (n:Person) WHERE EXISTS { MATCH (n)-[*1..2]-(m0:Person) WHERE id(m0) = $p0 } RETURN n'
+        'connected by any'     | { q, r -> q.where(GraphCriteria.connected(r, Person, cb.literal(42L), 2)) }                                                               | 'MATCH (n:Person) WHERE EXISTS { MATCH (n)-[*1..2]-(m0:Person) WHERE id(m0) = $p0 } RETURN n'
+        'connected to entity'  | { q, r -> q.where(GraphCriteria.connected(r, Movie, cb.literal("Matrix"), 2)) }                                                          | 'MATCH (n:Person) WHERE (n)-[*1..2]-(:Movie {title: $p0}) RETURN n'
+        'connected by any once'| { q, r -> q.where(GraphCriteria.connected(r, Movie, cb.literal("Matrix"), 1)) }                                                          | 'MATCH (n:Person) WHERE (n)-[]-(:Movie {title: $p0}) RETURN n'
         'related and property' | { q, r -> q.where(cb.and(GraphCriteria.related(r, "movies"), cb.equal(r.get("name"), "Keanu"))) }                                        | 'MATCH (n:Person) WHERE ((n)-[:ACTED_IN]->() AND n.name = $p0) RETURN n'
         'dynamic property'     | { q, r -> q.where(cb.isTrue(GraphCriteria.dynamic(r, "goesInPatch", Boolean))) }                                                           | 'MATCH (n:Person) WHERE n.goesInPatch = true RETURN n'
         'dynamic comparison'   | { q, r -> q.where(cb.greaterThan(GraphCriteria.dynamic(r, "legs", Integer), 2)) }                                                          | 'MATCH (n:Person) WHERE n.legs > $p0 RETURN n'
@@ -264,6 +266,7 @@ class CypherCriteriaQuerySpec extends Specification {
         description  | definition                                                                         | fragment
         'related'    | { q, r -> q.where(GraphCriteria.related(r, "movies")) }                           | 'WHERE EXISTS((n)-[:ACTED_IN]->())'
         'related to' | { q, r -> q.where(GraphCriteria.relatedTo(r, "movies", cb.literal("Matrix"))) }  | 'WHERE EXISTS((n)-[:ACTED_IN]->(:Movie {title: $p0}))'
+        'any type'   | { q, r -> q.where(GraphCriteria.connected(r, Movie, cb.literal("Matrix"), 1)) }  | 'WHERE EXISTS((n)-[]-(:Movie {title: $p0}))'
     }
 
     void "test graph criteria Apache AGE cannot render are rejected: #description"() {
@@ -282,7 +285,7 @@ class CypherCriteriaQuerySpec extends Specification {
         where:
         description             | definition                                                                      | message
         'a chain'               | { q, r -> q.where(GraphCriteria.connected(r, "movies", cb.literal("Matrix"), 3)) } | 'cannot test for a chain of relationships'
-        'a database identifier' | { q, r -> q.where(GraphCriteria.connected(r, null, cb.literal(42L), 2)) }       | 'cannot match a related node by its database identifier'
+        'a database identifier' | { q, r -> q.where(GraphCriteria.connected(r, Person, cb.literal(42L), 2)) }     | 'cannot match a related node by its database identifier'
     }
 
     void "test graph criteria check their arguments"() {
@@ -297,11 +300,39 @@ class CypherCriteriaQuerySpec extends Specification {
         depth.message.contains("at least 1")
 
         when:
-        new RelatedPredicate<>(root, null, null, 1)
+        new RelatedPredicate<>(root, null, null, null, 1)
 
         then:
         def target = thrown(IllegalArgumentException)
         target.message.contains("needs a target node")
+
+        when: "relationships of any type do not say which entity the far node is"
+        new RelatedPredicate<>(root, null, null, cb.literal(42L), 2)
+
+        then:
+        def anyType = thrown(IllegalArgumentException)
+        anyType.message.contains("needs the entity of the node at the far end")
+
+        when:
+        new RelatedPredicate<>(root, "movies", Movie, cb.literal("Matrix"), 1)
+
+        then:
+        def both = thrown(IllegalArgumentException)
+        both.message.contains("gives the entity of the node at the far end")
+
+        when:
+        GraphCriteria.connected(root, (String) null, cb.literal(42L), 2)
+
+        then:
+        def noRelationship = thrown(IllegalArgumentException)
+        noRelationship.message.contains("connected(root, targetType, target, maxDepth)")
+
+        when:
+        GraphCriteria.connected(root, (Class) null, cb.literal(42L), 2)
+
+        then:
+        def noType = thrown(IllegalArgumentException)
+        noType.message.contains("need the entity of the node at the far end")
 
         when:
         GraphCriteria.related(Mock(Root), "movies")
@@ -325,7 +356,8 @@ class CypherCriteriaQuerySpec extends Specification {
         expression.message.contains("graph repositories")
 
         expect:
-        GraphCriteria.related(root, "movies").toString() == 'RelatedPredicate{relationship=movies, target=null, maxDepth=1}'
+        GraphCriteria.related(root, "movies").toString() == 'RelatedPredicate{relationship=movies, targetType=null, target=null, maxDepth=1}'
+        ((RelatedPredicate) GraphCriteria.connected(root, Movie, cb.literal("Matrix"), 2)).targetType == Movie
         GraphCriteria.dynamic(root, "legs", Integer).toString() == 'DynamicPropertyExpression{name=legs}'
         ((RelatedPredicate) GraphCriteria.related(root, "movies")).root == root
         ((DynamicPropertyExpression) GraphCriteria.dynamic(root, "legs", Integer)).root == root

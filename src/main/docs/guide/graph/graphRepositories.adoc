@@ -52,7 +52,7 @@ api:data.graph.model.criteria.GraphCriteria[] adds criteria that reach the graph
 snippet::example.MovieSpecifications[project-base="doc-examples/neo4j-example", source="main", tags="graphCriteria", languages="java,kotlin,groovy,python"]
 
 <1> Movies with at least one `ACTED_IN` relationship.
-<2> Movies within two relationships of the movie with the title, over relationships of any type. The identifier of the target node is passed through `literal`, so it is bound as a parameter. Passing `null` for the relationship follows any type and matches the far node by the identifier of the entity.
+<2> Movies within two relationships of the movie with the title, over relationships of any type. The identifier of the target node is passed through `literal`, so it is bound as a parameter. Relationships of any type can reach nodes of any entity, so passing the entity class instead of a relationship property names the entity of the far node: its label and identifier select it. Pass a relationship property name to follow only relationships of that property.
 
 snippet::example.MovieRepositorySpec[project-base="doc-examples/neo4j-example", source="test", tags="useGraphCriteria", languages="java,kotlin,groovy,python"]
 

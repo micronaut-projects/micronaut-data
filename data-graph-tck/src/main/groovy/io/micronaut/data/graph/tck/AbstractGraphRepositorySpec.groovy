@@ -684,7 +684,7 @@ abstract class AbstractGraphRepositorySpec extends Specification {
 
         expect: "movies within two hops of Speed over any relationship: those sharing an actor"
         movieSpecificationRepository.findAll({ root, cb ->
-            GraphCriteria.connected(root, null, cb.literal("Speed"), 2)
+            GraphCriteria.connected(root, Movie, cb.literal("Speed"), 2)
         } as PredicateSpecification<Movie>)*.title.sort() == ["The Matrix", "The Matrix Reloaded"]
     }
 

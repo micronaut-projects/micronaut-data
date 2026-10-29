@@ -53,7 +53,7 @@ public final class GraphCriteria {
      * @return The predicate
      */
     public static @NonNull Predicate related(@NonNull Root<?> root, @NonNull String relationship) {
-        return new RelatedPredicate<>(entityRoot(root), relationship, null, 1);
+        return new RelatedPredicate<>(entityRoot(root), requireRelationship(relationship), null, null, 1);
     }
 
     /**
@@ -65,7 +65,7 @@ public final class GraphCriteria {
      * @return The predicate
      */
     public static @NonNull Predicate relatedTo(@NonNull Root<?> root, @NonNull String relationship, @NonNull Expression<?> target) {
-        return new RelatedPredicate<>(entityRoot(root), relationship, target, 1);
+        return new RelatedPredicate<>(entityRoot(root), requireRelationship(relationship), null, target, 1);
     }
 
     /**
@@ -73,13 +73,33 @@ public final class GraphCriteria {
      * node to the node with the identifier.
      *
      * @param root         The root of the query
-     * @param relationship The name of the relationship property, or null to follow relationships of any type
-     * @param target       The identifier of the node at the far end
+     * @param relationship The name of the relationship property
+     * @param target       The identifier of the node at the far end, an entity of the relationship property
      * @param maxDepth     The largest number of relationships to follow
      * @return The predicate
+     * @see #connected(Root, Class, Expression, int)
      */
-    public static @NonNull Predicate connected(@NonNull Root<?> root, @Nullable String relationship, @NonNull Expression<?> target, int maxDepth) {
-        return new RelatedPredicate<>(entityRoot(root), relationship, target, maxDepth);
+    public static @NonNull Predicate connected(@NonNull Root<?> root, @NonNull String relationship, @NonNull Expression<?> target, int maxDepth) {
+        return new RelatedPredicate<>(entityRoot(root), requireRelationship(relationship), null, target, maxDepth);
+    }
+
+    /**
+     * Holds when a chain of relationships of any type and direction, no longer than the depth, joins
+     * the root node to the node of the entity with the identifier. Relationships of any type can lead
+     * to nodes of any entity, so the entity of the far node is given: its label and its identifier
+     * select the node, which may be of a different entity from the root.
+     *
+     * @param root       The root of the query
+     * @param targetType The entity of the node at the far end
+     * @param target     The identifier of the node at the far end
+     * @param maxDepth   The largest number of relationships to follow
+     * @return The predicate
+     */
+    public static @NonNull Predicate connected(@NonNull Root<?> root, @NonNull Class<?> targetType, @NonNull Expression<?> target, int maxDepth) {
+        if (targetType == null) {
+            throw new IllegalArgumentException("Relationships of any type need the entity of the node at the far end");
+        }
+        return new RelatedPredicate<>(entityRoot(root), null, targetType, target, maxDepth);
     }
 
     /**
@@ -94,6 +114,14 @@ public final class GraphCriteria {
      */
     public static <T> @NonNull Expression<T> dynamic(@NonNull Root<?> root, @NonNull String name, @NonNull Class<T> type) {
         return new DynamicPropertyExpression<>(entityRoot(root), name, type);
+    }
+
+    private static String requireRelationship(@Nullable String relationship) {
+        if (relationship == null) {
+            throw new IllegalArgumentException("The relationship property cannot be null: to follow relationships of any type, "
+                + "use connected(root, targetType, target, maxDepth) with the entity of the node at the far end");
+        }
+        return relationship;
     }
 
     private static <E> PersistentEntityRoot<E> entityRoot(Root<E> root) {

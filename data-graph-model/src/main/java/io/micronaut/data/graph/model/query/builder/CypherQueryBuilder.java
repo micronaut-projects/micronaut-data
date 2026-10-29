@@ -1451,7 +1451,7 @@ public class CypherQueryBuilder implements GraphQueryBuilder {
             PersistentEntity entity = state.entity;
             String type = "";
             Direction direction = Direction.UNDIRECTED;
-            PersistentEntity target = entity;
+            PersistentEntity target = null;
             String relationship = predicate.getRelationship();
             if (relationship != null) {
                 PersistentProperty property = entity.getPropertyByName(relationship);
@@ -1461,12 +1461,19 @@ public class CypherQueryBuilder implements GraphQueryBuilder {
                 type = ":" + GraphEntities.escapeName(GraphEntities.relationshipType(association));
                 direction = GraphEntities.direction(association);
                 target = GraphEntities.targetNodeEntity(association);
+            } else if (predicate.getTargetType() != null) {
+                // Relationships of any type: the far node is of the entity the criterion names, not necessarily the root's
+                Class<?> targetType = predicate.getTargetType();
+                target = entity.getName().equals(targetType.getName()) ? entity : PersistentEntity.of(targetType);
             }
             String hops = "[" + type + (predicate.getMaxDepth() > 1 ? "*1.." + predicate.getMaxDepth() : "") + "]";
             Expression<?> targetId = predicate.getTarget();
             if (targetId == null) {
                 out.append(existsPattern(relatedPattern(direction, hops, "()"), null));
                 return;
+            }
+            if (target == null) {
+                throw new IllegalArgumentException("A predicate on relationships of any type needs the entity of the node at the far end to match its identifier");
             }
             if (!target.hasIdentity()) {
                 throw new IllegalArgumentException("Entity [" + target.getName() + "] has no identifier to match a related node by");
