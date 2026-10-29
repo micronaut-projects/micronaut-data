@@ -83,12 +83,13 @@ public final class MongoCollectionsCreator extends AbstractMongoCollectionsCreat
                 }
 
                 @Override
-                public Set<String> listIndexNames(MongoDatabase database, String collection) {
-                    Set<String> names = new HashSet<>();
+                public boolean hasTextIndex(MongoDatabase database, String collection) {
                     for (org.bson.Document index : database.getCollection(collection).listIndexes()) {
-                        names.add(index.getString("name"));
+                        if (isTextIndex(index)) {
+                            return true;
+                        }
                     }
-                    return names;
+                    return false;
                 }
 
                 @Override

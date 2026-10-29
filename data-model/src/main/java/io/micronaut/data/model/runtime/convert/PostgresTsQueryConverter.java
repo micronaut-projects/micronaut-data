@@ -18,8 +18,10 @@ package io.micronaut.data.model.runtime.convert;
 import io.micronaut.core.annotation.Internal;
 import io.micronaut.core.convert.ConversionContext;
 import io.micronaut.data.model.search.MatchMode;
+import io.micronaut.data.model.search.SearchCapability;
 import io.micronaut.data.model.search.SearchQueryParser;
 import io.micronaut.data.model.search.SearchTerm;
+import io.micronaut.data.model.search.UnsupportedSearchFeatureException;
 import jakarta.inject.Singleton;
 import org.jspecify.annotations.Nullable;
 
@@ -31,14 +33,16 @@ import java.util.StringJoiner;
  * {@link MatchMode}, so the generated SQL can always use {@code to_tsquery(config, ?)}.
  *
  * <p>Lexemes are quoted, which makes any user input safe for {@code to_tsquery}; a quoted
- * multi-word lexeme becomes a phrase. Negated terms are joined with {@code & !}.</p>
+ * multi-word lexeme becomes a phrase. Negated terms are joined with {@code & !}. A group made only
+ * of negated terms is dropped, so a query such as {@code -spam} matches nothing.</p>
  *
  * @since 5.4.0
  */
 @Internal
 public abstract class PostgresTsQueryConverter implements TextSearchQueryConverter {
 
-    private static final String MATCH_NOTHING = "'mn_no_match_0'";
+    // a lexeme and its negation: false for every document, whatever it contains
+    private static final String MATCH_NOTHING = "'mn_no_match_0' & !'mn_no_match_0'";
 
     /**
      * @param mode The match mode
@@ -50,7 +54,7 @@ public abstract class PostgresTsQueryConverter implements TextSearchQueryConvert
             case ALL -> All.class.getName();
             case PHRASE -> Phrase.class.getName();
             case PREFIX -> Prefix.class.getName();
-            case FUZZY -> throw new IllegalArgumentException("PostgreSQL text search does not support fuzzy matching");
+            case FUZZY -> throw new UnsupportedSearchFeatureException(SearchCapability.FUZZY, "PostgreSQL text search");
         };
     }
 

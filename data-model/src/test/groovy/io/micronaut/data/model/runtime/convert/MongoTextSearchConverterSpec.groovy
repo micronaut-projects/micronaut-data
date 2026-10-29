@@ -30,7 +30,7 @@ class MongoTextSearchConverterSpec extends Specification {
         MongoTextSearchConverter.render("tea OR coffee", MatchMode.ALL)
 
         then:
-        thrown(IllegalArgumentException)
+        thrown(UnsupportedOperationException)
     }
 
     void "converters exist per supported mode"() {

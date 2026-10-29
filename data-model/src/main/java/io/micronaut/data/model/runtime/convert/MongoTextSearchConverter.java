@@ -79,7 +79,7 @@ public abstract class MongoTextSearchConverter implements TextSearchQueryConvert
         }
         List<List<SearchTerm>> groups = SearchQueryParser.parse(query);
         if (mode == MatchMode.ALL && groups.size() > 1) {
-            throw new IllegalArgumentException("MongoDB $text cannot combine OR with a SearchAll query");
+            throw new UnsupportedOperationException("MongoDB $text cannot combine OR with a SearchAll query");
         }
         StringJoiner joiner = new StringJoiner(" ");
         for (List<SearchTerm> group : groups) {

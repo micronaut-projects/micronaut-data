@@ -123,7 +123,8 @@ public class AbstractMongoCollectionsCreator<Dtbs> {
                     databaseOperations.createCollection(database, persistedName);
                 }
                 TextIndexDefinition textIndex = textIndexDefinition(entity, persistedName);
-                if (textIndex != null && !databaseOperations.listIndexNames(database, persistedName).contains(textIndex.name())) {
+                // a collection holds at most one text index, whatever its name, so any existing one is kept as it is
+                if (textIndex != null && !databaseOperations.hasTextIndex(database, persistedName)) {
                     if (LOG.isInfoEnabled()) {
                         LOG.info("Creating text index: {} on collection: {} in database: {}", textIndex.name(), persistedName, databaseOperations.getDatabaseName(database));
                     }
@@ -183,6 +184,15 @@ public class AbstractMongoCollectionsCreator<Dtbs> {
             .filter(n -> !n.isEmpty())
             .orElse(collection + "_text");
         return new TextIndexDefinition(name, weights, TextSearchSupport.resolveLanguage(entity), languageOverride);
+    }
+
+    /**
+     * @param index An index description from {@code listIndexes}
+     * @return True if it is a text index, whose key holds the {@code _fts} field
+     */
+    static boolean isTextIndex(Document index) {
+        Object key = index.get("key");
+        return key instanceof Document keyDocument && keyDocument.containsKey("_fts");
     }
 
     private static String persistedFieldName(PersistentProperty property) {
@@ -281,13 +291,13 @@ public class AbstractMongoCollectionsCreator<Dtbs> {
         void createCollection(Dtbs database, String collection);
 
         /**
-         * List the index names of a collection.
+         * Whether the collection already has a text index, under any name.
          *
          * @param database The database
          * @param collection The collection
-         * @return The index names
+         * @return True if a text index exists
          */
-        Set<String> listIndexNames(Dtbs database, String collection);
+        boolean hasTextIndex(Dtbs database, String collection);
 
         /**
          * Create the text index of a searchable entity.

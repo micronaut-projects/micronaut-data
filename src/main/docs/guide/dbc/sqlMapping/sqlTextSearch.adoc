@@ -8,11 +8,11 @@ Annotate the entity with ann:data.annotation.search.Searchable[] and the propert
 
 snippet::example.Book[project-base="doc-examples/jdbc-search-example", source="main", tags="entity"]
 
-<1> `language` selects the text search configuration used for stemming and stop words (`english` by default); PostgreSQL passes it to `to_tsvector` and `to_tsquery`.
+<1> `language` selects the text search configuration used for stemming and stop words (`english` by default); PostgreSQL passes it to `to_tsvector` and `to_tsquery`. The name is written into the SQL, so it must be a letter followed by letters, digits and underscores; any other value fails at compile time.
 <2> `weight` makes matches in this property count more in the relevance score; PostgreSQL maps `HIGH`, `MEDIUM`, `LOW` and `LOWEST` to the labels `A` to `D` of `setweight`.
 <3> A property without a declared weight is indexed without a label.
 
-With schema generation enabled, Micronaut Data creates a `GIN` expression index over the combined `tsvector` of the search fields, so the generated queries use the index. For a production schema, create the same index with your migration tool; the expression is printed in the generated DDL.
+With schema generation enabled, Micronaut Data creates a `GIN` expression index over the combined `tsvector` of the search fields (`CREATE INDEX IF NOT EXISTS`, so it can run against an existing database). Searches over every field, such as `search(String)` and `findBySearch(String)`, use that index. A derived method on one property, such as `findByTitleSearch(String)`, renders the `tsvector` of that property alone, which the combined index cannot serve; when an entity has several search fields, add an index for each property you search on its own, for example `CREATE INDEX idx_book_title_search ON book USING GIN (setweight(to_tsvector('english',title),'A'))`. The expression must match the generated query exactly, weight included. For a production schema, create the indexes with your migration tool; the expressions are printed in the generated DDL.
 
 == Searching
 
@@ -25,7 +25,7 @@ snippet::example.BookService[project-base="doc-examples/jdbc-search-example", so
 <3> The relevance score of the hit. On PostgreSQL it is the `ts_rank_cd` rank. Scores order the results and are not comparable between stores; `SearchResults.maxScore()` helps to normalise them.
 <4> `countHits(String)` counts the matches.
 
-The search string uses a portable grammar: words separated by whitespace match any term, `"quoted words"` match a phrase, a leading `-` excludes a term, and `OR` separates alternatives. `bake coffee -cake OR tea` matches rows containing `bake` or `coffee` but not `cake`, or rows containing `tea`. User input is always safe: Micronaut Data parses the string itself and converts it to the store's query syntax at bind time.
+The search string uses a portable grammar: words separated by whitespace match any term, `"quoted words"` match a phrase, a leading `-` excludes a term, and `OR` separates alternatives. `bake coffee -cake OR tea` matches rows containing `bake` or `coffee` but not `cake`, or rows containing `tea`. A negated term only narrows the terms beside it: an alternative made only of negated terms, such as `-cake`, matches nothing, and so does an empty search string. User input is always safe: Micronaut Data parses the string itself and converts it to the store's query syntax at bind time.
 
 == Derived search methods
 
