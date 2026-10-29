@@ -379,7 +379,7 @@ class OracleChangeNotificationSubscription {
     private void submitTermination(long registrationId) {
         cancelRecoveryRetryTask();
         synchronized (lifecycleLock) {
-            dispatcher.submitLifecycleEvent(registrationId, ChangeOperation.TERMINATED, "after DCN notifications stopped", () -> !closed);
+            dispatcher.enqueueLifecycleEvent(registrationId, ChangeOperation.TERMINATED, "after DCN notifications stopped", () -> !closed);
         }
     }
 
@@ -489,7 +489,7 @@ class OracleChangeNotificationSubscription {
         }
         if (published) {
             long replacementId = Objects.requireNonNull(replacement, "Published registration must have a replacement").getRegId();
-            enqueueDataNotification(replacementId, () -> dispatcher.submitLifecycleEvent(replacementId,
+            enqueueDataNotification(replacementId, () -> dispatcher.enqueueLifecycleEvent(replacementId,
                 ChangeOperation.INVALIDATE, "after DCN registration recovery", () -> acceptsDataNotification(replacementId)));
         } else if (recoveryFailure != null && !closed) {
             rescheduleRecoveryTask(retryCount, failedRegId, recoveryFailure);

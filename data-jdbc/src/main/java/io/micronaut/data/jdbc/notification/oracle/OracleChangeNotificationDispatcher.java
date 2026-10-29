@@ -38,63 +38,58 @@ import java.util.StringJoiner;
 import java.util.function.BooleanSupplier;
 
 /**
- * Dispatches Oracle database change events for one listener definition.
- *
- * <p>The subscription owns this dispatcher and reuses it when recovering its registration.
- * Each submitted callback retains its registration options snapshot even if recovery configures
- * different options for a replacement registration.</p>
+ * Processes Oracle database notifications and delivers change events for one listener definition.
+ * The owning subscription reuses this dispatcher across registration recovery. Each received
+ * notification captures the effective registration options used to process it.
  *
  * <h2>Data change events</h2>
  *
- * <p>Table and query change notifications must belong to the current or pending registration,
- * both when received and when queued processing begins. The subscription validates queue admission
- * under its lifecycle lock so an obsolete submission cannot replace newer queued work.
- * Inserts and updates reload current entity
- * state by ROWID. Deletes are dispatched without entity state because the deleted row can no
- * longer be reloaded.</p>
+ * <p>Ordinary table and query notifications must belong to a current or pending registration
+ * accepted by the subscription. Data is checked on receipt, during queue admission under the
+ * subscription's lifecycle lock, and again when processing starts. Insert and update events use
+ * {@link DeferredChangeEvent}; listener advice loads current entity state by ROWID before invoking
+ * the listener. Delete events contain ROWID metadata but no entity state.</p>
  *
- * <p>When an event cannot be represented completely using entity ROWIDs, the dispatcher invokes
- * the listener once with {@link ChangeOperation#INVALIDATE}, no entity state, and no ROWID metadata.
- * This includes full-table and DDL changes, missing row details, and Query Result Change Notifications
- * for dependent tables. Invalidation applies to the complete event and suppresses any row-level
- * changes reported by that same event.</p>
+ * <p>Full-table and DDL changes, missing row details, and query notifications for dependent tables
+ * require one {@link ChangeOperation#INVALIDATE} event without entity state or ROWID metadata.
+ * Invalidation covers the complete notification and suppresses its row-level events. Unmatched
+ * tables in object-change notifications are ignored.</p>
  *
- * <p>When the queue reaches its limit, waiting data callbacks are replaced with one invalidation.
- * Further data callbacks are covered by that refresh until it starts. Data received during the
- * refresh is queued normally. A one-shot notification clears its purged registration immediately
- * and replaces waiting work with its final data callback, after which the worker stops.</p>
+ * <p>At the queue limit, waiting data is replaced with one invalidation callback. Further data
+ * submissions are ignored until that callback starts; data arriving during its execution is
+ * queued normally. A one-shot notification instead clears its purged registration immediately
+ * and replaces waiting work with its final data callback. That callback bypasses the subsequent
+ * registration check because its registration has already been removed from tracking.</p>
  *
  * <h2>Lifecycle events</h2>
  *
- * <p>Registration and query deregistration callbacks are forwarded to the subscription. A
- * registration-level deregistration removes the already-closed registration from tracking.
- * A query-level deregistration unregisters the enclosing registration as well because each
- * framework registration contains exactly one listener query. The subscription requests a final
- * {@link ChangeOperation#TERMINATED} event when notifications have permanently stopped.</p>
+ * <p>Driver lifecycle callbacks run on the calling driver thread and delegate registration state
+ * changes to the subscription. Accepted recovery or deregistration discards waiting data.
+ * Query deregistration also asks the subscription to clean up the enclosing registration because
+ * each framework registration contains one listener query. Recovery and JDBC cleanup run on the
+ * shared blocking executor.</p>
  *
- * <p>A database-wide shutdown normally starts registration recovery; after a replacement is
- * activated, the listener receives an invalidation. When reliable notifications and a
- * client-initiated connection are enabled, the dispatcher leaves notification-connection retries
- * to the JDBC driver and relies on the registration failure callback to start framework recovery
- * if the driver's retries are exhausted. A shutdown affecting one RAC instance is logged only.</p>
+ * <p>A database-wide shutdown starts framework recovery unless reliable notifications and a
+ * client-initiated connection are enabled. In that case the JDBC driver handles connection
+ * retries, and its failure callback can request recovery through the subscription. A shutdown
+ * affecting one RAC instance is logged only; startup notifications are ignored.</p>
  *
- * <p>Driver lifecycle callbacks update subscription state on the driver thread without entering
- * the listener queue. Once the subscription accepts recovery or deregistration for its registration,
- * it discards waiting data. Recovery and query deregistration cleanup run on the shared blocking
- * executor. Application notifications still use the listener worker: recovery requests an
- * invalidation, while termination replaces waiting work with a final terminal callback.</p>
+ * <p>Application lifecycle events use the listener queue: successful recovery requests
+ * {@code INVALIDATE}, while permanent notification loss requests a final
+ * {@link ChangeOperation#TERMINATED} event. They replace waiting work and execute after any
+ * callback already running. They are distinct from the driver lifecycle callbacks above.</p>
  *
  * <h2>Execution and shutdown</h2>
  *
- * <p>The Oracle driver invokes this listener on its notification thread. To avoid blocking that
- * thread, the dispatcher submits notification processing, entity loading, and listener invocation
- * to a bounded queue. A dedicated worker processes callbacks sequentially for this listener;
- * different listeners can run concurrently. Listener invocation failures are logged and do not
- * prevent subsequent changes from being dispatched.</p>
+ * <p>The dedicated listener worker processes queued data, entity loading through listener advice,
+ * and listener invocation sequentially. Different listeners can run concurrently. Queued work
+ * is counted by the datasource task tracker only when execution starts; direct driver lifecycle
+ * handling is tracked while it runs. Exceptions are logged, while errors propagate to the calling
+ * driver thread or listener worker.</p>
  *
- * <p>Running tasks are tracked so graceful shutdown can wait for them to complete. Queued tasks
- * are discarded if shutdown starts before they run. The dedicated worker stops after subscription
- * closure or after delivering the final termination or one-shot notification.</p>
+ * <p>Application shutdown closes task admission and discards waiting callbacks without interrupting
+ * callbacks already running. The worker also stops after delivering a final termination or
+ * one-shot callback. No listener invocation or JDBC cleanup runs while the queue monitor is held.</p>
  */
 final class OracleChangeNotificationDispatcher implements DatabaseChangeListener {
     private static final Logger LOG = LoggerFactory.getLogger(OracleChangeNotificationDispatcher.class);
@@ -109,7 +104,7 @@ final class OracleChangeNotificationDispatcher implements DatabaseChangeListener
     private final OracleChangeNotificationSubscription subscription;
 
     /**
-     * Options reported by the driver and captured for callbacks after query association.
+     * Immutable options reported by the driver and captured when each callback is received.
      * Sonar rule S3077 is suppressed because the referenced record is immutable and contains only
      * booleans. Volatile safely publishes each complete snapshot to callback threads, which read
      * it once without modifying its state; there is no mutable object state requiring synchronization.
@@ -132,16 +127,26 @@ final class OracleChangeNotificationDispatcher implements DatabaseChangeListener
         this.subscription = subscription;
     }
 
-    /** Stops callback admission and releases the dedicated listener worker. */
+    /**
+     * Closes queue admission and discards waiting callbacks, including queued final delivery.
+     * A running callback is allowed to finish. Returns without waiting for the worker to exit.
+     */
     void close() {
         notificationQueue.stop();
     }
 
-    /** Discards data queued before an accepted registration lifecycle transition. */
+    /**
+     * Discards waiting callbacks, including queued reconciliation, without interrupting a
+     * running callback or changing the queue's admission state.
+     */
     void discardPending() {
         notificationQueue.discardPending();
     }
 
+    /**
+     * @return whether datasource shutdown or queue closure prevents new notification handling;
+     *         an accepted callback may still be running or awaiting final delivery
+     */
     private boolean isStopped() {
         return taskTracker.isShutdownStarted() || notificationQueue.isStopped();
     }
@@ -166,7 +171,10 @@ final class OracleChangeNotificationDispatcher implements DatabaseChangeListener
     }
 
     /**
-     * Processes driver lifecycle callbacks directly and queues data processing for the listener.
+     * Receives a driver callback using a snapshot of its effective registration options.
+     * Ignores callbacks before options are configured or after admission closes. Accepted data
+     * is queued for listener delivery; driver lifecycle callbacks are handled on the calling
+     * thread. A one-shot notification reports its purge before queuing final delivery.
      *
      * @param event the callback event supplied by the Oracle JDBC driver
      */
@@ -189,19 +197,29 @@ final class OracleChangeNotificationDispatcher implements DatabaseChangeListener
             if (configuredOptions.purgeOnNotificationEnabled()) {
                 subscription.handleRegistrationPurged(event.getRegId());
             }
-            submitDispatch(event, configuredOptions);
+            enqueueDataNotification(event, configuredOptions);
         } else {
-            dispatchSafely(event, configuredOptions);
+            processNotification(event, configuredOptions);
         }
     }
 
-    /** Checks whether a data notification belongs to neither the current nor pending registration. */
+    /**
+     * Checks data acceptance through the subscription. Driver lifecycle callbacks are not
+     * filtered here; their subscription handlers validate the reported registration.
+     *
+     * @param event the received notification
+     * @return whether this is a data notification the subscription no longer accepts
+     */
     private boolean isStaleDataNotification(DatabaseChangeEvent event) {
         return isDataNotification(event) && !subscription.acceptsDataNotification(event.getRegId());
     }
 
     /**
-     * Distinguishes data notifications from lifecycle callbacks, including query deregistration.
+     * Identifies object changes and query changes without query deregistration. A query
+     * notification containing deregistration is treated as a driver lifecycle callback.
+     *
+     * @param event the received notification
+     * @return whether the notification should use queued data processing
      */
     private boolean isDataNotification(DatabaseChangeEvent event) {
         DatabaseChangeEvent.EventType eventType = event.getEventType();
@@ -228,12 +246,13 @@ final class OracleChangeNotificationDispatcher implements DatabaseChangeListener
     }
 
     /**
-     * Routes lifecycle callbacks to their subscription handlers and data callbacks to row or query dispatch.
+     * Routes driver lifecycle callbacks to subscription handlers and data to table or query
+     * processing. Runs synchronously; callers place data processing on the listener worker.
      *
-     * @param event   the Oracle Database event
-     * @param options the effective registration options captured when the callback was received
+     * @param event the Oracle Database notification
+     * @param options the effective registration options captured on receipt
      */
-    private void dispatch(DatabaseChangeEvent event, RegistrationOptions options) {
+    private void routeNotification(DatabaseChangeEvent event, RegistrationOptions options) {
         long registrationId = event.getRegId();
         DatabaseChangeEvent.EventType eventType = event.getEventType();
         if (eventType == DatabaseChangeEvent.EventType.DEREG) {
@@ -273,12 +292,15 @@ final class OracleChangeNotificationDispatcher implements DatabaseChangeListener
     }
 
     /**
-     * Submits a callback without counting it as active until execution begins.
+     * Queues ordinary data through the subscription's admission check with an overflow
+     * invalidation callback. One-shot data instead uses final delivery: its purge has already
+     * been reported, so its registration is not checked again when the callback runs.
+     * Queued callbacks are counted as active only when execution starts.
      *
-     * @param event   the notification to dispatch
-     * @param options the configured options captured when the callback was received
+     * @param event the accepted data notification
+     * @param options the effective registration options captured on receipt
      */
-    private void submitDispatch(DatabaseChangeEvent event, RegistrationOptions options) {
+    private void enqueueDataNotification(DatabaseChangeEvent event, RegistrationOptions options) {
         if (isStopped()) {
             LOG.trace("Ignored DCN callback for datasource [{}], registration [{}], and listener method [{}] because graceful shutdown has started",
                 dataSourceName, event.getRegId(), methodDescription);
@@ -289,15 +311,15 @@ final class OracleChangeNotificationDispatcher implements DatabaseChangeListener
             if (options.purgeOnNotificationEnabled()) {
                 // Oracle has already purged this registration. Preserve its final notification even
                 // if the subsequent deregistration callback arrives before the worker can run it.
-                notificationQueue.enqueueFinal(() -> dispatchSafely(registrationId, () -> dispatch(event, options)));
+                notificationQueue.enqueueFinal(() -> runTracked(registrationId, () -> routeNotification(event, options)));
             } else {
-                Runnable reconcile = () -> dispatchSafely(registrationId, () -> {
+                Runnable reconcile = () -> runTracked(registrationId, () -> {
                     if (subscription.acceptsDataNotification(registrationId)) {
                         dispatchInvalidation(registrationId, "after the notification queue reached its limit");
                     }
                 });
                 subscription.enqueueDataNotification(registrationId,
-                    () -> notificationQueue.enqueue(() -> dispatchSafely(event, options), reconcile));
+                    () -> notificationQueue.enqueue(() -> processNotification(event, options), reconcile));
             }
         } catch (RuntimeException e) {
             LOG.warn("Unable to submit DCN event of type [{}] for datasource [{}], registration [{}], and listener method [{}]",
@@ -306,15 +328,15 @@ final class OracleChangeNotificationDispatcher implements DatabaseChangeListener
     }
 
     /**
-     * Accepts a task when it starts running, then always marks it complete. A queued task that
-     * starts after shutdown is discarded. Unexpected runtime exceptions are logged, while JVM
-     * errors propagate to the queue's worker.
+     * Rechecks data acceptance, traces the notification, and routes it within a tracked task.
+     * Driver lifecycle callbacks bypass the data check and are validated by subscription handlers.
+     * Ordinary data runs on the listener worker; driver lifecycle handling runs on the calling thread.
      *
-     * @param event   the database change event
-     * @param options the configured options captured when the callback was received
+     * @param event the database notification
+     * @param options the effective registration options captured on receipt
      */
-    private void dispatchSafely(DatabaseChangeEvent event, RegistrationOptions options) {
-        dispatchSafely(event.getRegId(), () -> {
+    private void processNotification(DatabaseChangeEvent event, RegistrationOptions options) {
+        runTracked(event.getRegId(), () -> {
             if (isStaleDataNotification(event)) {
                 return;
             }
@@ -325,18 +347,26 @@ final class OracleChangeNotificationDispatcher implements DatabaseChangeListener
                     event.getDatabaseName(), describeTransactionId(event),
                     describeTableChanges(event.getTableChangeDescription()));
             }
-            dispatch(event, options);
+            routeNotification(event, options);
         });
     }
 
-    private void dispatchSafely(long registrationId, Runnable dispatch) {
+    /**
+     * Reserves a running callback in the datasource task tracker and completes its accounting
+     * in a finally block. Skips the callback if the tracker has closed admission for shutdown.
+     * Unexpected runtime exceptions are logged; errors propagate to the caller.
+     *
+     * @param registrationId the registration associated with the callback
+     * @param task the callback to run
+     */
+    private void runTracked(long registrationId, Runnable task) {
         if (!taskTracker.acceptTask()) {
             LOG.trace("Discarded queued DCN callback for datasource [{}], registration [{}], and listener method [{}] because graceful shutdown has started",
                 dataSourceName, registrationId, methodDescription);
             return;
         }
         try {
-            dispatch.run();
+            task.run();
         } catch (RuntimeException e) {
             LOG.error("Unexpected error dispatching DCN callback for registration [{}], datasource [{}], and listener method [{}]",
                 registrationId, dataSourceName, methodDescription, e);
@@ -413,9 +443,10 @@ final class OracleChangeNotificationDispatcher implements DatabaseChangeListener
     }
 
     /**
-     * Reports query deregistration and unregisters the registration that owns the query.
+     * Logs query deregistration and asks the subscription to terminate the matching subscription
+     * and schedule cleanup of its enclosing registration. Performs no JDBC cleanup here.
      *
-     * @param queryId        the deregistered Oracle query identifier
+     * @param queryId the deregistered Oracle query identifier
      * @param registrationId the registration that owned the query
      */
     private void handleQueryDeregistration(long queryId, long registrationId) {
@@ -517,11 +548,12 @@ final class OracleChangeNotificationDispatcher implements DatabaseChangeListener
     }
 
     /**
-     * Dispatches row-level changes for the listener entity table. The complete Oracle event must be
-     * checked for invalidation before this method is called, so every dispatched row belongs to an
-     * event that can be represented completely using row-level changes.
+     * Creates and delivers one row event with ROWID metadata. Insert and update events defer
+     * entity loading to listener advice; delete events have no entity state. The listener is
+     * invoked on the calling thread.
      *
-     * @param tables the table changes supplied by Oracle Database
+     * @param operation the database operation reported for the row
+     * @param rowId the affected Oracle ROWID
      */
     private void dispatchRows(TableChangeDescription[] tables) {
         for (TableChangeDescription table : tables) {
@@ -544,25 +576,30 @@ final class OracleChangeNotificationDispatcher implements DatabaseChangeListener
     }
 
     /**
-     * Queues recovery reconciliation or final delivery. The caller must validate and enqueue
-     * recovery reconciliation under the subscription's lifecycle lock so stale requests cannot
-     * replace newer queued work. Eligibility is checked again when execution starts.
+     * Queues an application lifecycle event, distinct from an Oracle driver lifecycle callback.
+     * {@code INVALIDATE} replaces waiting work with reconciliation; {@code TERMINATED} replaces
+     * it with final delivery and closes queue admission. Both run on the listener worker.
+     *
+     * <p>The subscription must validate and enqueue under its lifecycle lock so stale requests
+     * cannot replace newer work. The supplied predicate is checked before enqueueing and again
+     * when execution starts, without holding a lock during listener invocation. Datasource
+     * shutdown suppresses callbacks that have not started.</p>
      *
      * @param registrationId the registration associated with the lifecycle event
-     * @param operation {@link ChangeOperation#INVALIDATE} for recovery or {@link ChangeOperation#TERMINATED}
-     *                  when notifications have permanently stopped
-     * @param reason the lifecycle event reason included in the trace message
-     * @param shouldDispatch whether the event is still relevant
+     * @param operation {@link ChangeOperation#INVALIDATE} after recovery or
+     *                  {@link ChangeOperation#TERMINATED} when notifications have permanently stopped
+     * @param reason the reason included in the trace message
+     * @param shouldDispatch whether the event may still be delivered
      */
-    void submitLifecycleEvent(long registrationId, ChangeOperation operation, String reason, BooleanSupplier shouldDispatch) {
+    void enqueueLifecycleEvent(long registrationId, ChangeOperation operation, String reason, BooleanSupplier shouldDispatch) {
         if (isStopped() || !shouldDispatch.getAsBoolean()) {
             return;
         }
-        Runnable delivery = () -> dispatchSafely(registrationId, () -> {
+        Runnable delivery = () -> runTracked(registrationId, () -> {
             if (shouldDispatch.getAsBoolean()) {
                 LOG.trace("Dispatching {} {} for datasource [{}], registration [{}], and listener method [{}]",
                     operation, reason, dataSourceName, registrationId, methodDescription);
-                dispatchListener(new DefaultChangeEvent<>(operation, null, null), null);
+                invokeListener(new DefaultChangeEvent<>(operation, null, null), null);
             }
         });
         try {
@@ -579,15 +616,16 @@ final class OracleChangeNotificationDispatcher implements DatabaseChangeListener
     }
 
     /**
-     * Dispatches one invalidation and logs why it was sent.
+     * Invokes the listener immediately with one {@code INVALIDATE} event, without entity state
+     * or ROWID metadata, and logs its reason. Does not enqueue a callback.
      *
-     * @param registrationId the registration that received or recovered from the event
+     * @param registrationId the registration associated with the notification or recovery
      * @param reason the invalidation reason included in the trace message
      */
     void dispatchInvalidation(long registrationId, String reason) {
         LOG.trace("Dispatching INVALIDATE {} for datasource [{}], registration [{}], and listener method [{}]",
             reason, dataSourceName, registrationId, methodDescription);
-        dispatchListener(new DefaultChangeEvent<>(ChangeOperation.INVALIDATE, null, null), null);
+        invokeListener(new DefaultChangeEvent<>(ChangeOperation.INVALIDATE, null, null), null);
     }
 
     /**
@@ -601,19 +639,21 @@ final class OracleChangeNotificationDispatcher implements DatabaseChangeListener
         ChangeEvent<?> event = operation == ChangeOperation.INSERT || operation == ChangeOperation.UPDATE
             ? new DeferredChangeEvent<>(operation, metadata, () -> listenerDefinition.entityLoader().reload(rowId))
             : new DefaultChangeEvent<>(operation, null, metadata);
-        dispatchListener(event, rowId);
+        invokeListener(event, rowId);
     }
 
     /**
-     * Invokes the listener and logs invocation failures so processing can continue with subsequent
-     * changes. JVM errors are not intercepted and propagate to the queue's worker.
+     * Resolves the listener bean and invokes its executable method with the change event.
+     * Exceptions from bean lookup, listener advice, or the listener itself are logged with the
+     * available row context so processing can continue. Errors propagate to the caller.
      *
      * @param event the change event passed to the listener
-     * @param rowId the affected Oracle ROWID, or {@code null} for an event without row-specific data
+     * @param rowId the affected Oracle ROWID, or {@code null} when no row-specific context is available
      */
-    private void dispatchListener(ChangeEvent<?> event, @Nullable String rowId) {
+    @SuppressWarnings({"unchecked", "rawtypes"})
+    private void invokeListener(ChangeEvent<?> event, @Nullable String rowId) {
         try {
-            invokeListener(event);
+            ((ExecutableMethod) listenerDefinition.method()).invoke(beanContext.getBean(listenerDefinition.beanDefinition()), event);
         } catch (Exception e) {
             if (rowId == null) {
                 LOG.error("Error handling DCN for listener method [{}], operation [{}], table [{}], ROWID unavailable",
@@ -623,16 +663,6 @@ final class OracleChangeNotificationDispatcher implements DatabaseChangeListener
                     methodDescription, event.operation(), listenerDefinition.tableIdentifier().sqlName(), rowId, e);
             }
         }
-    }
-
-    /**
-     * Resolves the listener bean and invokes its executable method with the change event.
-     *
-     * @param event the event delivered to the listener method
-     */
-    @SuppressWarnings({"unchecked", "rawtypes"})
-    private void invokeListener(ChangeEvent<?> event) {
-        ((ExecutableMethod) listenerDefinition.method()).invoke(beanContext.getBean(listenerDefinition.beanDefinition()), event);
     }
 
     /**
@@ -646,6 +676,13 @@ final class OracleChangeNotificationDispatcher implements DatabaseChangeListener
         return Boolean.parseBoolean(properties.getProperty(propertyName));
     }
 
+    /**
+     * Immutable dispatch options captured for each driver callback.
+     *
+     * @param purgeOnNotificationEnabled whether the registration is purged after a notification
+     * @param queryChangeNotificationEnabled whether query change notifications are enabled
+     * @param driverReconnectRetryEnabled whether reliable and client-initiated options are both enabled
+     */
     private record RegistrationOptions(boolean purgeOnNotificationEnabled,
                                        boolean queryChangeNotificationEnabled,
                                        boolean driverReconnectRetryEnabled) {

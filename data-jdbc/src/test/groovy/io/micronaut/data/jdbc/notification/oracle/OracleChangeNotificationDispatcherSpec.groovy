@@ -602,7 +602,7 @@ class OracleChangeNotificationDispatcherSpec extends Specification {
         def current = new AtomicBoolean(true)
 
         when:
-        dispatcher.submitLifecycleEvent(41L, ChangeOperation.INVALIDATE, 'after recovery', { current.get() })
+        dispatcher.enqueueLifecycleEvent(41L, ChangeOperation.INVALIDATE, 'after recovery', { current.get() })
         current.set(false)
         queued.remove(0).run()
 
