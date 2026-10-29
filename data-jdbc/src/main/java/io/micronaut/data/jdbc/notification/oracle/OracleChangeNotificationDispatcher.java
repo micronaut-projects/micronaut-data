@@ -145,7 +145,7 @@ final class OracleChangeNotificationDispatcher implements DatabaseChangeListener
 
     /**
      * @return whether datasource shutdown or queue closure prevents new notification handling;
-     *         an accepted callback may still be running or awaiting final delivery
+     * an accepted callback may still be running or awaiting final delivery
      */
     private boolean isStopped() {
         return taskTracker.isShutdownStarted() || notificationQueue.isStopped();
@@ -190,28 +190,11 @@ final class OracleChangeNotificationDispatcher implements DatabaseChangeListener
                 dataSourceName, methodDescription);
             return;
         }
-        if (isStaleDataNotification(event)) {
-            return;
-        }
         if (isDataNotification(event)) {
-            if (configuredOptions.purgeOnNotificationEnabled()) {
-                subscription.handleRegistrationPurged(event.getRegId());
-            }
             enqueueDataNotification(event, configuredOptions);
         } else {
             runTracked(event.getRegId(), () -> handleLifecycleNotification(event, configuredOptions));
         }
-    }
-
-    /**
-     * Checks data acceptance through the subscription. Driver lifecycle callbacks are not
-     * filtered here; their subscription handlers validate the reported registration.
-     *
-     * @param event the received notification
-     * @return whether this is a data notification the subscription no longer accepts
-     */
-    private boolean isStaleDataNotification(DatabaseChangeEvent event) {
-        return isDataNotification(event) && !subscription.acceptsDataNotification(event.getRegId());
     }
 
     /**
@@ -292,13 +275,14 @@ final class OracleChangeNotificationDispatcher implements DatabaseChangeListener
     }
 
     /**
+     * Checks subscription acceptance before queueing data or reporting a one-shot purge.
      * Queues ordinary data through the subscription's admission check with an overflow
      * invalidation callback and rechecks acceptance when the queued callback runs. One-shot data
-     * instead uses final delivery: its purge has already been reported, so its registration is
-     * not checked again when the callback runs.
+     * reports its purge before queuing final delivery, so its registration is not checked again
+     * when the callback runs.
      * Queued callbacks are counted as active only when execution starts.
      *
-     * @param event the accepted data notification
+     * @param event   the data notification
      * @param options the effective registration options captured on receipt
      */
     private void enqueueDataNotification(DatabaseChangeEvent event, RegistrationOptions options) {
@@ -308,10 +292,14 @@ final class OracleChangeNotificationDispatcher implements DatabaseChangeListener
             return;
         }
         long registrationId = event.getRegId();
+        if (!subscription.acceptsDataNotification(registrationId)) {
+            return;
+        }
         try {
             if (options.purgeOnNotificationEnabled()) {
                 // Oracle Database has already purged this registration. Preserve its final notification
                 // even if the subsequent deregistration callback arrives before the worker can run it.
+                subscription.handleRegistrationPurged(registrationId);
                 notificationQueue.enqueueFinal(() -> dispatchDataNotification(event, options));
             } else {
                 Runnable processData = () -> {
@@ -369,7 +357,7 @@ final class OracleChangeNotificationDispatcher implements DatabaseChangeListener
      * Unexpected runtime exceptions are logged; errors propagate to the caller.
      *
      * @param registrationId the registration associated with the callback
-     * @param task the callback to run
+     * @param task           the callback to run
      */
     private void runTracked(long registrationId, Runnable task) {
         if (!taskTracker.acceptTask()) {
@@ -398,9 +386,9 @@ final class OracleChangeNotificationDispatcher implements DatabaseChangeListener
      * shutdown suppresses callbacks that have not started.</p>
      *
      * @param registrationId the registration associated with the lifecycle event
-     * @param operation {@link ChangeOperation#INVALIDATE} after recovery or
-     *                  {@link ChangeOperation#TERMINATED} when notifications have permanently stopped
-     * @param reason the reason included in the trace message
+     * @param operation      {@link ChangeOperation#INVALIDATE} after recovery or
+     *                       {@link ChangeOperation#TERMINATED} when notifications have permanently stopped
+     * @param reason         the reason included in the trace message
      * @param shouldDispatch whether the event may still be delivered
      */
     void enqueueLifecycleEvent(long registrationId, ChangeOperation operation, String reason, BooleanSupplier shouldDispatch) {
@@ -611,7 +599,7 @@ final class OracleChangeNotificationDispatcher implements DatabaseChangeListener
      * or ROWID metadata, and logs its reason. Does not enqueue a callback.
      *
      * @param registrationId the registration associated with the notification or recovery
-     * @param reason the invalidation reason included in the trace message
+     * @param reason         the invalidation reason included in the trace message
      */
     void dispatchInvalidation(long registrationId, String reason) {
         LOG.trace("Dispatching INVALIDATE {} for datasource [{}], registration [{}], and listener method [{}]",
@@ -670,9 +658,9 @@ final class OracleChangeNotificationDispatcher implements DatabaseChangeListener
     /**
      * Immutable dispatch options captured for each driver callback.
      *
-     * @param purgeOnNotificationEnabled whether the registration is purged after a notification
+     * @param purgeOnNotificationEnabled     whether the registration is purged after a notification
      * @param queryChangeNotificationEnabled whether query change notifications are enabled
-     * @param driverReconnectRetryEnabled whether reliable and client-initiated options are both enabled
+     * @param driverReconnectRetryEnabled    whether reliable and client-initiated options are both enabled
      */
     private record RegistrationOptions(boolean purgeOnNotificationEnabled,
                                        boolean queryChangeNotificationEnabled,
