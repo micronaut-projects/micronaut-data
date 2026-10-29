@@ -27,6 +27,8 @@ import org.jspecify.annotations.Nullable;
 import org.opensearch.client.json.JsonData;
 import org.opensearch.client.json.JsonpMapper;
 import org.opensearch.client.opensearch.OpenSearchClient;
+import org.opensearch.client.opensearch._types.OpType;
+import org.opensearch.client.opensearch._types.OpenSearchException;
 import org.opensearch.client.opensearch._types.Refresh;
 import org.opensearch.client.opensearch._types.SortOptions;
 import org.opensearch.client.opensearch._types.mapping.TypeMapping;
@@ -55,6 +57,7 @@ import java.util.Map;
 public final class OpenSearchSearchTransport implements SearchTransport {
 
     private static final String QUERY = "query";
+    private static final int CONFLICT = 409;
 
     private final OpenSearchClient client;
     private final JsonpMapper mapper;
@@ -119,6 +122,20 @@ public final class OpenSearchSearchTransport implements SearchTransport {
     public String index(String index, @Nullable String id, Map<String, Object> source, DocumentSearchConfiguration.Refresh refresh) {
         try {
             return client.index(i -> i.index(index).id(id).document(source).refresh(refresh(refresh))).id();
+        } catch (IOException e) {
+            throw new DataAccessException("OpenSearch index failed: " + e.getMessage(), e);
+        }
+    }
+
+    @Override
+    public String create(String index, @Nullable String id, Map<String, Object> source, DocumentSearchConfiguration.Refresh refresh) {
+        try {
+            return client.index(i -> i.index(index).id(id).opType(OpType.Create).document(source).refresh(refresh(refresh))).id();
+        } catch (OpenSearchException e) {
+            if (e.status() == CONFLICT) {
+                throw new DataAccessException("A document with id " + id + " already exists in index " + index, e);
+            }
+            throw e;
         } catch (IOException e) {
             throw new DataAccessException("OpenSearch index failed: " + e.getMessage(), e);
         }

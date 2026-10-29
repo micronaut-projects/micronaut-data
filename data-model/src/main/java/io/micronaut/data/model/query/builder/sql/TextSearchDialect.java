@@ -191,7 +191,11 @@ public interface TextSearchDialect {
         return path.toString();
     }
 
-    private static String jsonKey(PersistentProperty property) {
+    /**
+     * @param property A property of a JSON-represented entity
+     * @return Its key in the JSON document, honouring {@code @SerdeConfig(property)} and {@code @JsonProperty}
+     */
+    static String jsonKey(PersistentProperty property) {
         return property.getAnnotationMetadata().stringValue("io.micronaut.serde.config.annotation.SerdeConfig", "property")
             .or(() -> property.getAnnotationMetadata().stringValue("com.fasterxml.jackson.annotation.JsonProperty"))
             .filter(name -> !name.isEmpty())

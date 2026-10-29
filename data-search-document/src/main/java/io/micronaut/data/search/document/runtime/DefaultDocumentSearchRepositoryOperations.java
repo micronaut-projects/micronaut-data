@@ -319,7 +319,8 @@ public final class DefaultDocumentSearchRepositoryOperations extends AbstractRep
                 throw new DataAccessException("Document search stores generate String ids only; assign the id of " + entity.getName() + " or use a String or UUID id");
             }
         }
-        String documentId = transport.index(indexName(entity), id == null ? null : idString(id), toDocument(current, entity), configuration.getRefresh());
+        // a create-only write, so saving an entity with the id of an existing document fails instead of replacing it
+        String documentId = transport.create(indexName(entity), id == null ? null : idString(id), toDocument(current, entity), configuration.getRefresh());
         if (id == null) {
             current = setId(identity, current, documentId);
         }
@@ -354,7 +355,9 @@ public final class DefaultDocumentSearchRepositoryOperations extends AbstractRep
             return false;
         }
         boolean deleted = transport.delete(indexName(entity), idString(id), configuration.getRefresh());
-        entityEventRegistry.postRemove((EntityEventContext<Object>) event);
+        if (deleted) {
+            entityEventRegistry.postRemove((EntityEventContext<Object>) event);
+        }
         return deleted;
     }
 
