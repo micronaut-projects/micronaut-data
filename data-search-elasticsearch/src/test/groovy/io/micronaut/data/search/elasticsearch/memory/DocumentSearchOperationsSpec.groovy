@@ -337,8 +337,7 @@ class DocumentSearchOperationsSpec extends Specification {
         then:
         mapping.contains('"cuisine":{"type":"keyword"}')
         mapping.contains('"name":{"type":"search_as_you_type","analyzer":"standard","fields":{"keyword":{')
-        mapping.contains('"instructions":{"type":"text","analyzer":"whitespace"')
-        !mapping.contains('"steps"')
+        mapping.contains('"steps":{"type":"text","analyzer":"whitespace"')
         mapping.contains('"ignore_above":8191')
         mapping.contains('"reference":{"type":"keyword"}')
     }
