@@ -62,6 +62,10 @@ class OracleGraphRepositorySpec extends AbstractGraphRepositorySpec {
         false
     }
 
+    /**
+     * Relationship finders query edges that {@link #saveMovie} and {@link #savePerson} write with SQL: the repositories
+     * do not write edges, and saving a node with a single relationship is still broken, see the pending feature below.
+     */
     @Override
     boolean supportsRelationshipFinders() {
         true

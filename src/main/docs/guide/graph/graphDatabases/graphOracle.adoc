@@ -35,6 +35,8 @@ snippet::example.BankGraphSpec[project-base="doc-examples/oracle-graph-example",
 
 Writes join the current connection and transaction of the data source, as graph queries do. Writes need the `micronaut-data-jdbc` module, which `micronaut-data-oracle-graph` depends on. Saving a node writes only its row: relationships are rows of their edge tables, which a ann:data.jdbc.annotation.JdbcRepository[] over an entity of the edge table writes.
 
+WARNING: Saving a node with a single relationship, such as a `Person` with a `@Relationship("MENTORED_BY") Person mentor` property, fails for now: the generated insert writes a `MENTORID` column that the vertex table does not have, because the relationship is stored in an edge table. Until this is fixed, write the rows of such nodes and of all edge tables with SQL, or with a ann:data.jdbc.annotation.JdbcRepository[] over entities that map those tables. Relationship finders query the edges written this way, but the repositories cannot create them.
+
 [[graphOracleSchema]]
 == Generating the schema
 
