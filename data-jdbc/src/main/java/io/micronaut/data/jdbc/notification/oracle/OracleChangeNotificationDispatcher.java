@@ -45,8 +45,9 @@ import java.util.function.BooleanSupplier;
  * <h2>Data change events</h2>
  *
  * <p>Ordinary table and query notifications must belong to a current or pending registration
- * accepted by the subscription. Data is checked on receipt, during queue admission under the
- * subscription's lifecycle lock, and again when processing starts. Insert and update events use
+ * accepted by the subscription. The data enqueue method checks acceptance before any purge or
+ * queue changes. Ordinary data is also checked during admission under the subscription's lifecycle
+ * lock and when its queued callback starts. Insert and update events use
  * {@link DeferredChangeEvent}; listener advice loads current entity state by ROWID before invoking
  * the listener. Delete events contain ROWID metadata but no entity state.</p>
  *
@@ -75,7 +76,7 @@ import java.util.function.BooleanSupplier;
  * affecting one RAC instance is logged only; startup notifications are ignored.</p>
  *
  * <p>Application lifecycle events use the listener queue: successful recovery requests
- * {@code INVALIDATE}, while permanent notification loss requests a final
+ * {@code INVALIDATE}, while deregistration or recovery that permanently fails requests a final
  * {@link ChangeOperation#TERMINATED} event. They replace waiting work and execute after any
  * callback already running. They are distinct from the driver lifecycle callbacks above.</p>
  *
@@ -84,8 +85,7 @@ import java.util.function.BooleanSupplier;
  * <p>The dedicated listener worker processes queued data, entity loading through listener advice,
  * and listener invocation sequentially. Different listeners can run concurrently. Queued work
  * is counted by the datasource task tracker only when execution starts; direct driver lifecycle
- * handling is tracked while it runs. Exceptions are logged, while errors propagate to the calling
- * driver thread or listener worker.</p>
+ * handling is tracked while it runs. Processing and listener invocation exceptions are logged.</p>
  *
  * <p>Application shutdown closes task admission and discards waiting callbacks without interrupting
  * callbacks already running. The worker also stops after delivering a final termination or
@@ -171,10 +171,11 @@ final class OracleChangeNotificationDispatcher implements DatabaseChangeListener
     }
 
     /**
-     * Receives a driver callback using a snapshot of its effective registration options.
-     * Ignores callbacks before options are configured or after admission closes. Accepted data
-     * is queued for listener delivery; driver lifecycle callbacks are handled on the calling
-     * thread. A one-shot notification reports its purge before queuing final delivery.
+     * Classifies a driver callback using a snapshot of its effective registration options.
+     * Ignores callbacks before options are configured or after admission closes. Data is passed
+     * to {@link #enqueueDataNotification(DatabaseChangeEvent, RegistrationOptions)} for acceptance
+     * checks and queueing. Driver lifecycle callbacks are handled on the calling thread within
+     * a tracked task.
      *
      * @param event the callback event supplied by the Oracle JDBC driver
      */
@@ -275,12 +276,11 @@ final class OracleChangeNotificationDispatcher implements DatabaseChangeListener
     }
 
     /**
-     * Checks subscription acceptance before queueing data or reporting a one-shot purge.
-     * Queues ordinary data through the subscription's admission check with an overflow
-     * invalidation callback and rechecks acceptance when the queued callback runs. One-shot data
-     * reports its purge before queuing final delivery, so its registration is not checked again
-     * when the callback runs.
-     * Queued callbacks are counted as active only when execution starts.
+     * Ignores data the subscription no longer accepts before changing the queue or reporting a purge.
+     * Ordinary data is validated and queued under the subscription's lifecycle lock with an overflow
+     * invalidation callback. Its queued callback rechecks acceptance before dispatching.
+     * One-shot data reports its purge before queueing final delivery and bypasses that later check.
+     * Queued callbacks are counted as active only when tracked processing starts.
      *
      * @param event   the data notification
      * @param options the effective registration options captured on receipt
@@ -325,9 +325,9 @@ final class OracleChangeNotificationDispatcher implements DatabaseChangeListener
     }
 
     /**
-     * Tracks, traces, and dispatches accepted data on the listener worker. Ordinary callbacks
-     * must recheck subscription acceptance before calling this method. One-shot callbacks call
-     * it directly after their registration has been purged.
+     * Tracks, traces, and dispatches a data notification as table or query changes on the listener
+     * worker. Does not check registration acceptance: ordinary queued callbacks check immediately
+     * before calling this method, while one-shot callbacks rely on the check made before purge.
      *
      * @param event   the database notification
      * @param options the effective registration options captured on receipt
@@ -354,7 +354,7 @@ final class OracleChangeNotificationDispatcher implements DatabaseChangeListener
     /**
      * Reserves a running callback in the datasource task tracker and completes its accounting
      * in a finally block. Skips the callback if the tracker has closed admission for shutdown.
-     * Unexpected runtime exceptions are logged; errors propagate to the caller.
+     * Unexpected runtime exceptions from the callback are logged.
      *
      * @param registrationId the registration associated with the callback
      * @param task           the callback to run
