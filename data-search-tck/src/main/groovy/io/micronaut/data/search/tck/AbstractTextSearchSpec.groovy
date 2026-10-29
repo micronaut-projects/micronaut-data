@@ -421,6 +421,13 @@ abstract class AbstractTextSearchSpec extends Specification {
         then:
         !operations.exists(type)
 
+        when: "dropping an index that is gone does nothing"
+        operations.drop(type)
+
+        then:
+        noExceptionThrown()
+        !operations.exists(type)
+
         when: "the index is created again and a new book indexed"
         operations.create(type)
         operations.sync(type)
@@ -431,6 +438,14 @@ abstract class AbstractTextSearchSpec extends Specification {
         then:
         operations.exists(type)
         bookSearchRepository.findByTitleSearch("rebuilt")*.title == ["The Rebuilt Index Guide"]
+
+        when: "an index that exists is created again or recreated; a document store's index holds its documents, so they go with it"
+        operations.create(type)
+        operations.recreate(type)
+        operations.sync(type)
+
+        then:
+        operations.exists(type)
     }
 
     void "a language override selects the stemming of the query"() {

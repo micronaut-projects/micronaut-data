@@ -666,7 +666,8 @@ public interface TextSearchDialect {
 
         @Override
         public String searchIndexExistsQuery() {
-            return "SELECT count(*) FROM pg_indexes WHERE indexname = ?";
+            // index names are unique per schema, so the lookup stays in the schema the indexes are created in
+            return "SELECT count(*) FROM pg_indexes WHERE schemaname = current_schema() AND indexname = ?";
         }
 
         @Override
