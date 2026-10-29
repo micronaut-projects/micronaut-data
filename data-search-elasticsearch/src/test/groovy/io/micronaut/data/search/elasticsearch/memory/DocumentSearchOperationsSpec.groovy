@@ -274,6 +274,12 @@ class DocumentSearchOperationsSpec extends Specification {
 
         then:
         transport.lastBody().contains('"sort":[{"title.keyword":{"order":"desc"}},{"pages":{"order":"asc"}},{"id":{"order":"asc"}}]')
+
+        when: "the pageable sorts on the OrderBy field too"
+        notes.findByPagesLessThanOrderByTitleDesc(500, CursoredPageable.from(10, Sort.of(Sort.Order.desc("title"))))
+
+        then:
+        transport.lastBody().contains('"sort":[{"title.keyword":{"order":"desc"}},{"id":{"order":"asc"}}]')
     }
 
     void "deletes remove documents by id and by query"() {
