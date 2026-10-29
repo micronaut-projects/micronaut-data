@@ -1498,17 +1498,27 @@ class OracleChangeNotificationSubscriptionSpec extends Specification {
         awaitNotificationStop(notifications)
     }
 
-    void "a delayed old data submission cannot replace recovery invalidation"() {
+    void "data admission is atomic with registration recovery"() {
         given:
         def fixture = registrarFixture([Mock(DatabaseChangeRegistration), Mock(DatabaseChangeRegistration)])
-        def notifications = new ChangeNotificationQueue('oracle-admission-race', 1)
         def workerStarted = new CountDownLatch(1)
         def releaseWorker = new CountDownLatch(1)
         def admissionReached = new CountDownLatch(1)
         def releaseProducer = new CountDownLatch(1)
+        def blockAdmission = new AtomicBoolean()
         def reconciled = new CountDownLatch(1)
         def failure = new AtomicReference<Throwable>()
         def delivered = new CopyOnWriteArrayList<ChangeOperation>()
+        def notifications = new ChangeNotificationQueue('oracle-admission-race', 1) {
+            @Override
+            void enqueue(Runnable command, Runnable reconcile) {
+                if (blockAdmission.compareAndSet(true, false)) {
+                    admissionReached.countDown()
+                    assert releaseProducer.await(5, TimeUnit.SECONDS)
+                }
+                super.enqueue(command, reconcile)
+            }
+        }
         OracleChangeNotificationSubscription subscription
         subscription = this.subscription(fixture.registrar, Mock(TaskScheduler), new OracleChangeNotificationTaskTracker(),
             { Runnable task -> task.run() } as Executor,
@@ -1521,34 +1531,43 @@ class OracleChangeNotificationSubscriptionSpec extends Specification {
         Runnable blocker = { workerStarted.countDown(); assert releaseWorker.await(5, TimeUnit.SECONDS) }
         notifications.enqueue(blocker, blocker)
         assert workerStarted.await(5, TimeUnit.SECONDS)
-        def reads = new AtomicInteger()
-        def oldEvent = Mock(DatabaseChangeEvent)
-        oldEvent.eventType >> DatabaseChangeEvent.EventType.OBJCHANGE
-        oldEvent.regId >> {
-            if (reads.incrementAndGet() == 2) {
-                // Receipt validation has passed; delay the submission until recovery replaces it.
-                admissionReached.countDown()
-                assert releaseProducer.await(5, TimeUnit.SECONDS)
-            }
-            1L
-        }
-        def producer = Thread.start {
+        blockAdmission.set(true)
+        def dataNotification = dataEvent(1L, DatabaseChangeEvent.EventType.OBJCHANGE)
+        Thread producer
+        Thread recovery
+
+        when:
+        producer = Thread.start {
             try {
-                fixture.registeredListeners[0].onDatabaseChangeNotification(oldEvent)
+                fixture.registeredListeners[0].onDatabaseChangeNotification(dataNotification)
             } catch (Throwable e) {
-                failure.set(e)
+                failure.compareAndSet(null, e)
             }
         }
         assert admissionReached.await(5, TimeUnit.SECONDS)
+        recovery = Thread.start {
+            try {
+                subscription.handleRegistrationUnavailable(1L, new SQLException('Connection failed'))
+            } catch (Throwable e) {
+                failure.compareAndSet(null, e)
+            }
+        }
+
+        then:
+        new PollingConditions(timeout: 5).eventually {
+            assert recovery.state == Thread.State.BLOCKED
+        }
+        fixture.registrationIndex.get() == 1
 
         when:
-        subscription.handleRegistrationUnavailable(1L, new SQLException('Connection failed'))
         releaseProducer.countDown()
         producer.join(5000)
+        recovery.join(5000)
         releaseWorker.countDown()
 
         then:
         !producer.alive
+        !recovery.alive
         failure.get() == null
         reconciled.await(5, TimeUnit.SECONDS)
         delivered == [ChangeOperation.INVALIDATE]
@@ -1557,7 +1576,8 @@ class OracleChangeNotificationSubscriptionSpec extends Specification {
         cleanup:
         releaseProducer.countDown()
         releaseWorker.countDown()
-        producer.join(5000)
+        producer?.join(5000)
+        recovery?.join(5000)
         subscription.stop()
         awaitNotificationStop(notifications)
     }
