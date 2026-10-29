@@ -235,6 +235,10 @@ public final class MongoQueryBuilder implements QueryBuilder {
             throw new UnsupportedOperationException("MongoDB $vectorSearch must be the first stage of the aggregation, so a vector predicate cannot be combined with joins.");
         }
         int limit = selectQueryDefinition.limit() > 0 ? selectQueryDefinition.limit() + Math.max(selectQueryDefinition.offset(), 0) : DEFAULT_VECTOR_LIMIT;
+        if (limit > MAX_VECTOR_CANDIDATES) {
+            // the limit cannot exceed numCandidates, which MongoDB caps at 10000
+            throw new UnsupportedOperationException("A MongoDB vector search returns at most " + MAX_VECTOR_CANDIDATES + " neighbours; the query asks for " + limit);
+        }
         Map<String, Object> vectorSearch = new LinkedHashMap<>(queryState.vectorSearch);
         vectorSearch.put("numCandidates", Math.min(MAX_VECTOR_CANDIDATES, Math.max(limit * 10, DEFAULT_VECTOR_LIMIT)));
         vectorSearch.put("limit", limit);

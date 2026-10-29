@@ -129,6 +129,17 @@ ${methods}
                 '[{$vectorSearch:{index:\'vector\',path:\'embedding\',queryVector:{$mn_qp:0},numCandidates:1000,limit:100}},{$addFields:{mn_score:' + distance + '}},{$match:{mn_score:{$lte:{$mn_qp:1}}}},')
     }
 
+    void "a vector query asking for more than 10000 neighbours is rejected at compile time"() {
+        when:
+        articleRepository("""
+    List<Article> findTop20000ByEmbeddingNear(io.micronaut.data.model.vector.Vector vector, Double maxDistance);
+""")
+
+        then:
+        def e = thrown(RuntimeException)
+        e.message.contains("A MongoDB vector search returns at most 10000 neighbours")
+    }
+
     void "a search predicate cannot be combined with OR"() {
         when:
         articleRepository("""
