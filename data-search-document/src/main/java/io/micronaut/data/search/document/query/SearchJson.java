@@ -50,6 +50,9 @@ public final class SearchJson {
             sb.append("null");
         } else if (value instanceof String s) {
             appendString(sb, s);
+        } else if (value instanceof Double d && !Double.isFinite(d) || value instanceof Float f && !Float.isFinite(f)) {
+            // JSON has no NaN or infinity
+            sb.append("null");
         } else if (value instanceof Number || value instanceof Boolean) {
             sb.append(value);
         } else if (value instanceof Map<?, ?> map) {

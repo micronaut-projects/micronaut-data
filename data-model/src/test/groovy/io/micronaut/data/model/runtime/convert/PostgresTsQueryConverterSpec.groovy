@@ -32,9 +32,9 @@ class PostgresTsQueryConverterSpec extends Specification {
         'foo\\'                        | MatchMode.ANY    | "'foo\\\\'"
         'C:\\dir'                      | MatchMode.ANY    | "'C:\\\\dir'"
         "fat & rat | !cat"             | MatchMode.ANY    | "'fat' | '&' | 'rat' | '|' | '!cat'"
-        ""                             | MatchMode.ANY    | "'mn_no_match_0'"
-        "-only"                        | MatchMode.ANY    | "'mn_no_match_0'"
-        null                           | MatchMode.PHRASE | "'mn_no_match_0'"
+        ""                             | MatchMode.ANY    | "'mn_no_match_0' & !'mn_no_match_0'"
+        "-only"                        | MatchMode.ANY    | "'mn_no_match_0' & !'mn_no_match_0'"
+        null                           | MatchMode.PHRASE | "'mn_no_match_0' & !'mn_no_match_0'"
     }
 
     void "converters are bound per mode"() {
