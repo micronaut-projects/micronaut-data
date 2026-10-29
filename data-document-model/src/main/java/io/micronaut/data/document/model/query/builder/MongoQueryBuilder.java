@@ -130,6 +130,7 @@ public final class MongoQueryBuilder implements QueryBuilder {
     private static final Map<String, Object> TEXT_SCORE = Map.of("$meta", "textScore");
     private static final String ADD_FIELDS = "$addFields";
     private static final String TEXT = "$text";
+    private static final String MATCH = "$match";
     private static final String NULL_RANK_FIELD_PREFIX = "__micronaut_nulls_";
     private static final String SORT_EXPRESSION_FIELD_PREFIX = "__micronaut_sort_";
     private static final String STR_LEN_CP = "$strLenCP";
@@ -169,11 +170,11 @@ public final class MongoQueryBuilder implements QueryBuilder {
             // MongoDB only accepts $text in the first stage, so it moves ahead of the join lookups
             Object text = removeTextMatch(predicateObj);
             if (text != null) {
-                pipeline.add(0, Map.of("$match", Map.of(TEXT, text)));
+                pipeline.add(0, Map.of(MATCH, Map.of(TEXT, text)));
             }
         }
         if (!predicateObj.isEmpty()) {
-            pipeline.add(Map.of("$match", predicateObj));
+            pipeline.add(Map.of(MATCH, predicateObj));
         }
         if (!addFieldsObj.isEmpty()) {
             pipeline.add(Map.of(ADD_FIELDS, addFieldsObj));
@@ -621,9 +622,9 @@ public final class MongoQueryBuilder implements QueryBuilder {
 
         Map<String, Object> match;
         if (matches.size() > 1) {
-            match = Map.of("$match", Map.of("$expr", Map.of("$and", matches)));
+            match = Map.of(MATCH, Map.of("$expr", Map.of("$and", matches)));
         } else {
-            match = Map.of("$match", Map.of("$expr", matches.iterator().next()));
+            match = Map.of(MATCH, Map.of("$expr", matches.iterator().next()));
         }
 
         return lookup(from, let, match, pipeline, as);
@@ -683,7 +684,7 @@ public final class MongoQueryBuilder implements QueryBuilder {
     }
 
     private boolean isMatchOnlyStage(List<Map<String, Object>> pipeline) {
-        return pipeline.size() == 1 && pipeline.iterator().next().containsKey("$match");
+        return pipeline.size() == 1 && pipeline.iterator().next().containsKey(MATCH);
     }
 
     private Map<String, Object> buildWhereClause(Predicate predicate, QueryState queryState) {
