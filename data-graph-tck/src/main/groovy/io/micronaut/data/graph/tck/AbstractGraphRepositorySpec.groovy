@@ -522,11 +522,39 @@ abstract class AbstractGraphRepositorySpec extends Specification {
 
         when: "one node of a batch was changed since it was read"
         def again = articleRepository.findAll().sort { it.slug }
+        again.each { it.title = it.title.toUpperCase() }
         again[1] = stale
         articleRepository.updateAll(again)
 
-        then:
+        then: "no node of the batch is updated"
         thrown(OptimisticLockException)
+        articleRepository.findAll().sort { it.slug }.collect { [it.title, it.version] } == [["a", 1L], ["b", 1L], ["c", 1L]]
+
+        when: "one node of a batch of new nodes has the identifier of an existing node"
+        articleRepository.saveAll([new Article("d", "D"), new Article("b", "Other"), new Article("e", "E")])
+
+        then: "no node of the batch is inserted and the existing node is kept"
+        thrown(EntityExistsException)
+        articleRepository.count() == 3
+        with(articleRepository.findById("b").get()) {
+            title == "b"
+            version == 1L
+        }
+    }
+
+    @Requires({ instance.supportsCypher() })
+    void "saveAll writes an instance passed twice once"() {
+        given:
+        def ada = new Person("Ada Lovelace", 1815)
+
+        when:
+        def saved = personRepository.saveAll([ada, new Person("Grace Hopper", 1906), ada])
+
+        then:
+        saved.size() == 3
+        saved[0].id != null
+        saved[0].id == saved[2].id
+        personRepository.count() == 2
     }
 
     private static PredicateSpecification<Movie> releasedAfter(int year) {

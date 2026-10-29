@@ -193,6 +193,19 @@ public interface GraphQueryBuilder extends QueryBuilder {
     }
 
     /**
+     * Builds the query that inserts a batch of nodes with assigned identifiers, bound like
+     * {@link #buildWriteNodesQuery(PersistentEntity, boolean, boolean)}, which writes nothing and returns no rows when a
+     * node has one of the identifiers.
+     *
+     * @param entity The entity
+     * @return The query
+     * @since 5.3.0
+     */
+    default String buildInsertNodesQuery(PersistentEntity entity) {
+        throw new UnsupportedOperationException("Batched node inserts are not supported by " + getClass().getSimpleName());
+    }
+
+    /**
      * Builds the query that links two nodes with the relationship of an association.
      *
      * @param association          The association
