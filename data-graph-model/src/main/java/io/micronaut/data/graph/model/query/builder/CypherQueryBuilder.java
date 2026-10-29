@@ -188,7 +188,6 @@ public class CypherQueryBuilder implements GraphQueryBuilder {
     private static final String WHERE = " WHERE ";
     private static final String CLOSE_AS_RESULT = ") AS result";
     private static final String AND = " AND ";
-    private static final String WHERE = " WHERE ";
     private static final String SET = " SET ";
     private static final String RETURN_COUNT_RESULT = " RETURN count(*) AS result";
     private static final String DETACH_DELETE = " DETACH DELETE ";
