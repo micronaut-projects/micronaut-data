@@ -553,10 +553,12 @@ class Doc {
 interface HybridRepository extends CrudRepository<Doc, Long> {
     SearchResults<Doc> searchByTitleSearchAndEmbeddingNear(String query, Vector vector);
     SearchResults<Doc> searchBySearchAndEmbeddingNear(String query, Vector vector, Pageable pageable);
+    List<Doc> searchByTitleSearchAndEmbeddingNear(String query, Vector vector, Double maxDistance);
 }
 """)
-        def titled = repository.getExecutableMethods().find { it.name == "searchByTitleSearchAndEmbeddingNear" }
+        def titled = repository.getExecutableMethods().find { it.name == "searchByTitleSearchAndEmbeddingNear" && it.argumentTypes.length == 2 }
         def all = repository.getExecutableMethods().find { it.name == "searchBySearchAndEmbeddingNear" }
+        def filtered = repository.getExecutableMethods().find { it.name == "searchByTitleSearchAndEmbeddingNear" && it.argumentTypes.length == 3 }
 
         expect:
         titled.stringValue(DataMethod, DataMethod.META_MEMBER_INTERCEPTOR).get() == "io.micronaut.data.runtime.intercept.criteria.SearchQueryInterceptor"
@@ -565,5 +567,9 @@ interface HybridRepository extends CrudRepository<Doc, Long> {
         titled.stringValue(HybridSearchMethod, "queryParameter").get() == "query"
         all.stringValues(HybridSearchMethod, "fields").length == 0
         all.stringValue(HybridSearchMethod, "vectorProperty").get() == "embedding"
+
+        and: "another shape keeps its meaning as a vector search filtered by the text match"
+        !filtered.hasAnnotation(HybridSearchMethod)
+        filtered.stringValue(DataMethod, DataMethod.META_MEMBER_INTERCEPTOR).get() != "io.micronaut.data.runtime.intercept.criteria.SearchQueryInterceptor"
     }
 }
