@@ -97,7 +97,7 @@ final class OpenSearchRequests {
     static BulkRequest bulkRequest(String index, List<SearchTransport.BulkDocument> documents, DocumentSearchConfiguration.Refresh refresh) {
         List<BulkOperation> operations = new ArrayList<>(documents.size());
         for (SearchTransport.BulkDocument document : documents) {
-            operations.add(BulkOperation.of(op -> op.index(i -> i.id(document.id()).document(document.source()))));
+            operations.add(BulkOperation.of(op -> op.create(c -> c.id(document.id()).document(document.source()))));
         }
         return BulkRequest.of(b -> b.index(index).operations(operations).refresh(refresh(refresh)));
     }

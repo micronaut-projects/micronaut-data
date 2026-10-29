@@ -35,7 +35,8 @@ public final class BulkResponses {
     }
 
     /**
-     * Collects the ids of the indexed documents, failing on the first item the store rejected.
+     * Collects the ids of the indexed documents, failing when the store rejected any item. A bulk
+     * request is not atomic: the error names every rejected item and how many others were written.
      *
      * @param store The store name, for the error message
      * @param items The response items, in request order
@@ -46,12 +47,18 @@ public final class BulkResponses {
      */
     public static <I> List<String> ids(String store, List<I> items, Function<I, @Nullable String> error, Function<I, String> id) {
         List<String> ids = new ArrayList<>(items.size());
-        for (I item : items) {
+        List<String> failures = new ArrayList<>();
+        for (int i = 0; i < items.size(); i++) {
+            I item = items.get(i);
             String reason = error.apply(item);
             if (reason != null) {
-                throw new DataAccessException(store + " bulk item failed: " + reason);
+                failures.add("item " + i + " (id " + id.apply(item) + "): " + reason);
             }
             ids.add(id.apply(item));
+        }
+        if (!failures.isEmpty()) {
+            throw new DataAccessException(store + " bulk request rejected " + failures.size() + " of " + items.size()
+                + " documents, the other " + (items.size() - failures.size()) + " were written: " + String.join("; ", failures));
         }
         return ids;
     }

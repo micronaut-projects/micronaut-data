@@ -18,6 +18,8 @@ package io.micronaut.data.search.elasticsearch.transport;
 import co.elastic.clients.elasticsearch.ElasticsearchClient;
 import co.elastic.clients.elasticsearch.core.BulkResponse;
 import co.elastic.clients.elasticsearch.core.BulkRequest;
+import co.elastic.clients.elasticsearch._types.ElasticsearchException;
+import co.elastic.clients.elasticsearch._types.OpType;
 import co.elastic.clients.elasticsearch._types.Refresh;
 import co.elastic.clients.elasticsearch.core.CountRequest;
 import co.elastic.clients.elasticsearch.core.DeleteByQueryRequest;
@@ -51,6 +53,8 @@ import java.util.Map;
     accessType = TypeHint.AccessType.ALL_PUBLIC_FIELDS)
 @Requires(beans = ElasticsearchClient.class)
 public final class ElasticsearchSearchTransport implements SearchTransport {
+
+    private static final int CONFLICT = 409;
 
     private final ElasticsearchClient client;
 
@@ -98,6 +102,20 @@ public final class ElasticsearchSearchTransport implements SearchTransport {
             throw new DataAccessException("Elasticsearch bulk failed: " + e.getMessage(), e);
         }
         return ElasticsearchAsyncSearchTransport.bulkIds(response);
+    }
+
+    @Override
+    public String create(String index, @Nullable String id, Map<String, Object> source, DocumentSearchConfiguration.Refresh refresh) {
+        try {
+            return client.index(i -> i.index(index).id(id).opType(OpType.Create).document(source).refresh(refresh(refresh))).id();
+        } catch (ElasticsearchException e) {
+            if (e.status() == CONFLICT) {
+                throw new DataAccessException("A document with id " + id + " already exists in index " + index, e);
+            }
+            throw e;
+        } catch (IOException e) {
+            throw new DataAccessException("Elasticsearch index failed: " + e.getMessage(), e);
+        }
     }
 
     @Override

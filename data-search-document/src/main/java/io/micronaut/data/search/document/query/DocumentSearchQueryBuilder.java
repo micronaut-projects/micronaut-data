@@ -41,6 +41,7 @@ import io.micronaut.data.model.query.BindingParameter;
 import io.micronaut.data.model.query.builder.QueryBuilder;
 import io.micronaut.data.model.query.builder.QueryParameterBinding;
 import io.micronaut.data.model.query.builder.QueryResult;
+import io.micronaut.data.model.query.builder.sql.TextSearchDialect;
 import io.micronaut.data.model.query.impl.AdvancedPredicateVisitor;
 import io.micronaut.data.model.search.MatchMode;
 import io.micronaut.data.model.search.TextSearchSupport;
@@ -212,13 +213,14 @@ public final class DocumentSearchQueryBuilder implements QueryBuilder {
     }
 
     /**
-     * The persisted field name of a property path.
+     * The persisted field name of a property path: the keys Serde writes, honouring
+     * {@code @SerdeConfig(property)} and {@code @JsonProperty}.
      *
      * @param propertyPath The property path
      * @return The field name
      */
     public static String fieldName(PersistentPropertyPath propertyPath) {
-        return propertyPath.getPath();
+        return TextSearchDialect.jsonKeyPath(propertyPath);
     }
 
     /**
@@ -398,7 +400,7 @@ public final class DocumentSearchQueryBuilder implements QueryBuilder {
             Map<String, Object> bounds = new LinkedHashMap<>();
             bounds.put("gte", value(from, propertyPath));
             bounds.put("lte", value(to, propertyPath));
-            result = Map.of(RANGE, Map.of(fieldName(propertyPath), bounds));
+            result = Map.of(RANGE, Map.of(keywordPath(propertyPath), bounds));
             if (negated) {
                 result = Map.of(BOOL, Map.of(MUST_NOT, result));
             }
@@ -502,7 +504,8 @@ public final class DocumentSearchQueryBuilder implements QueryBuilder {
 
         private Map<String, Object> range(Expression<?> leftExpression, String operator, Expression<?> rightExpression) {
             PersistentPropertyPath propertyPath = requireProperty(leftExpression).getPropertyPath();
-            return Map.of(RANGE, Map.of(fieldName(propertyPath), Map.of(operator, value(rightExpression, propertyPath))));
+            // the keyword sub-field of an analysed field, so a range compares whole values like equality and sort
+            return Map.of(RANGE, Map.of(keywordPath(propertyPath), Map.of(operator, value(rightExpression, propertyPath))));
         }
 
         private Map<String, Object> wildcard(PersistentPropertyPath propertyPath, Expression<?> expression, String hint) {

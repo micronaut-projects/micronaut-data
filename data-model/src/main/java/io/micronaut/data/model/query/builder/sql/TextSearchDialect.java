@@ -130,10 +130,25 @@ public interface TextSearchDialect {
         for (Expression<?> field : fields) {
             PersistentProperty property = asProperty(field);
             if (property != null) {
-                return TextSearchSupport.resolveLanguage(property.getOwner());
+                return requireLanguageName(TextSearchSupport.resolveLanguage(property.getOwner()));
             }
         }
         return DEFAULT_LANGUAGE;
+    }
+
+    /**
+     * Checks that a language is a plain text search configuration name, as it is rendered inside the
+     * statement rather than bound: a letter followed by letters, digits and underscores.
+     *
+     * @param language The language
+     * @return The language
+     * @throws IllegalArgumentException When the language holds any other character
+     */
+    static String requireLanguageName(String language) {
+        if (!language.matches("[A-Za-z][A-Za-z0-9_]*")) {
+            throw new IllegalArgumentException("A search language must be a text search configuration name of letters, digits and underscores: " + language);
+        }
+        return language;
     }
 
     /**
@@ -197,7 +212,11 @@ public interface TextSearchDialect {
         return path.toString();
     }
 
-    private static String jsonKey(PersistentProperty property) {
+    /**
+     * @param property A property of a JSON-represented entity
+     * @return Its key in the JSON document, honouring {@code @SerdeConfig(property)} and {@code @JsonProperty}
+     */
+    static String jsonKey(PersistentProperty property) {
         return property.getAnnotationMetadata().stringValue("io.micronaut.serde.config.annotation.SerdeConfig", "property")
             .or(() -> property.getAnnotationMetadata().stringValue("com.fasterxml.jackson.annotation.JsonProperty"))
             .filter(name -> !name.isEmpty())
@@ -356,7 +375,7 @@ public interface TextSearchDialect {
 
         @Override
         public List<String> buildSearchIndex(String indexName, String escapedTableName, List<SearchColumn> columns, String language) {
-            StringBuilder ddl = new StringBuilder("CREATE INDEX ").append(indexName).append(" ON ").append(escapedTableName).append(" USING GIN (");
+            StringBuilder ddl = new StringBuilder("CREATE INDEX IF NOT EXISTS ").append(indexName).append(" ON ").append(escapedTableName).append(" USING GIN (");
             List<SearchWeight> weights = columns.stream().map(SearchColumn::weight).toList();
             List<Consumer<StringBuilder>> renderers = columns.stream().map(c -> (Consumer<StringBuilder>) sb -> sb.append(c.column())).toList();
             appendVector(ddl, renderers, weights, language);
@@ -484,7 +503,7 @@ public interface TextSearchDialect {
         /**
          * Renders {@code CTX_DOC.POLICY_SNIPPET(policy, document, query, starttag, endtag)} over the field's
          * text, which needs the {@link #POLICY_NAME} policy created by schema generation but no index key.
-         * A JSON entity highlights {@code JSON_VALUE(column, '$.path')}.
+         * A JSON entity highlights {@code JSON_VALUE(column, '$.path' RETURNING CLOB)}.
          */
         @Override
         public void appendSearchHighlight(StringBuilder query,
@@ -500,7 +519,8 @@ public interface TextSearchDialect {
                 if (target.tableAlias() != null) {
                     query.append(target.tableAlias()).append('.');
                 }
-                query.append(target.jsonColumn()).append(",'$.").append(propertyPath.getPropertyPath().getPath()).append("')");
+                // RETURNING CLOB, as the default VARCHAR2(4000) is NULL for a longer value
+                query.append(target.jsonColumn()).append(",'$.").append(jsonKeyPath(propertyPath.getPropertyPath())).append("' RETURNING CLOB)");
             } else {
                 appendExpression.accept(field);
             }

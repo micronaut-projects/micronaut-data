@@ -16,6 +16,7 @@
 package io.micronaut.data.search.elasticsearch.transport;
 
 import co.elastic.clients.elasticsearch.ElasticsearchAsyncClient;
+import co.elastic.clients.elasticsearch._types.OpType;
 import co.elastic.clients.elasticsearch._types.Refresh;
 import co.elastic.clients.elasticsearch.core.BulkRequest;
 import co.elastic.clients.elasticsearch.core.BulkResponse;
@@ -93,13 +94,18 @@ public final class ElasticsearchAsyncSearchTransport implements AsyncSearchTrans
     static BulkRequest bulkRequest(String index, List<SearchTransport.BulkDocument> documents, DocumentSearchConfiguration.Refresh refresh) {
         List<BulkOperation> operations = new ArrayList<>(documents.size());
         for (SearchTransport.BulkDocument document : documents) {
-            operations.add(BulkOperation.of(op -> op.index(i -> i.id(document.id()).document(document.source()))));
+            operations.add(BulkOperation.of(op -> op.create(c -> c.id(document.id()).document(document.source()))));
         }
         return BulkRequest.of(b -> b.index(index).operations(operations).refresh(refresh(refresh)));
     }
 
     static List<String> bulkIds(BulkResponse response) {
         return BulkResponses.ids("Elasticsearch", response.items(), item -> item.error() == null ? null : item.error().reason(), BulkResponseItem::id);
+    }
+
+    @Override
+    public CompletionStage<String> create(String index, @Nullable String id, Map<String, Object> source, DocumentSearchConfiguration.Refresh refresh) {
+        return client.index(i -> i.index(index).id(id).opType(OpType.Create).document(source).refresh(refresh(refresh))).thenApply(response -> response.id());
     }
 
     @Override
