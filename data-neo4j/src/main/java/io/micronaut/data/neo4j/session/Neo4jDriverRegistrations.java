@@ -15,14 +15,18 @@
  */
 package io.micronaut.data.neo4j.session;
 
+import io.micronaut.context.BeanContext;
 import io.micronaut.context.annotation.Bean;
 import io.micronaut.context.annotation.EachBean;
 import io.micronaut.context.annotation.Factory;
 import io.micronaut.context.annotation.Primary;
 import io.micronaut.context.annotation.Requires;
+import io.micronaut.context.exceptions.ConfigurationException;
 import io.micronaut.core.annotation.Internal;
+import io.micronaut.inject.qualifiers.Qualifiers;
 import jakarta.inject.Named;
 import jakarta.inject.Singleton;
+import org.neo4j.driver.AuthToken;
 import org.neo4j.driver.AuthTokens;
 import org.neo4j.driver.Driver;
 import org.neo4j.driver.GraphDatabase;
@@ -38,20 +42,45 @@ import org.neo4j.driver.GraphDatabase;
 @Internal
 final class Neo4jDriverRegistrations {
 
+    private static final String DEFAULT = "default";
+
     @Singleton
-    @Named("default")
+    @Named(DEFAULT)
     @Primary
     @Requires(beans = Driver.class)
-    Neo4jDriverRegistration defaultDriver(Driver driver) {
-        return new Neo4jDriverRegistration("default", driver);
+    Neo4jDriverRegistration defaultDriver(Driver driver, BeanContext beanContext) {
+        // A configured driver named default would lose to this primary registration without ever being created
+        if (beanContext.containsBean(Neo4jDriverConfiguration.class, Qualifiers.byName(DEFAULT))) {
+            throw reservedName();
+        }
+        return new Neo4jDriverRegistration(DEFAULT, driver);
     }
 
     @EachBean(Neo4jDriverConfiguration.class)
     @Bean(preDestroy = "close")
     Neo4jDriverRegistration configuredDriver(Neo4jDriverConfiguration configuration) {
-        Driver driver = configuration.getUsername() == null
-            ? GraphDatabase.driver(configuration.getUri(), AuthTokens.none())
-            : GraphDatabase.driver(configuration.getUri(), AuthTokens.basic(configuration.getUsername(), configuration.getPassword()));
-        return new Neo4jDriverRegistration(configuration.getName(), driver);
+        String name = configuration.getName();
+        String prefix = "micronaut.data.neo4j.drivers." + name;
+        if (DEFAULT.equals(name)) {
+            throw reservedName();
+        }
+        String username = configuration.getUsername();
+        String password = configuration.getPassword();
+        AuthToken authToken;
+        if (username == null && password == null) {
+            authToken = AuthTokens.none();
+        } else if (username != null && password != null) {
+            authToken = AuthTokens.basic(username, password);
+        } else {
+            throw new ConfigurationException("Neo4j driver [" + name + "] needs both " + prefix + ".username and " + prefix + ".password, or neither for a server without authentication");
+        }
+        return new Neo4jDriverRegistration(name, GraphDatabase.driver(configuration.getUri(), authToken));
+    }
+
+    /**
+     * The default driver is the one of micronaut-neo4j, configured under neo4j.*, which also closes it.
+     */
+    private static ConfigurationException reservedName() {
+        return new ConfigurationException("The Neo4j driver name [" + DEFAULT + "] is reserved for the driver of micronaut-neo4j: configure it under neo4j.* or rename micronaut.data.neo4j.drivers." + DEFAULT);
     }
 }

@@ -524,10 +524,12 @@ public final class GraphPathMethodMatcher implements MethodMatcher {
 
     private static PersistentProperty resolveEndpointProperty(SourcePersistentEntity entity, String token) {
         String propertyName = NameUtils.decapitalize(token);
-        PersistentProperty property = entity.getPropertyByName(propertyName);
-        if (property == null && entity.hasIdentity() && entity.getIdentity().getName().equals(propertyName)) {
-            property = entity.getIdentity();
+        if (entity.hasIdentity() && entity.getIdentity().getName().equals(propertyName)) {
+            // Between<Id> matches by the identity, which the query builders render as the native id expression
+            // (elementId(s) or id(s)) when the database generates it, not as a stored property
+            return null;
         }
+        PersistentProperty property = entity.getPropertyByName(propertyName);
         if (property == null || property instanceof Association) {
             throw new MatchFailedException("Entity [" + entity.getSimpleName() + "] has no property named [" + propertyName + "] to match path endpoints by");
         }

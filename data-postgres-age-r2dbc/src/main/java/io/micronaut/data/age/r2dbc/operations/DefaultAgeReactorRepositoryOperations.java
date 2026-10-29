@@ -20,6 +20,7 @@ import io.micronaut.core.annotation.Internal;
 import io.micronaut.data.connection.ConnectionDefinition;
 import io.micronaut.data.connection.reactive.ReactorConnectionOperations;
 import io.micronaut.data.exceptions.DataAccessException;
+import io.micronaut.data.exceptions.OptimisticLockException;
 import io.micronaut.data.graph.model.query.builder.AgeStatements;
 import io.micronaut.data.graph.runtime.GraphRecord;
 import io.micronaut.data.graph.runtime.GraphResult;
@@ -69,7 +70,9 @@ import java.util.function.Function;
 final class DefaultAgeReactorRepositoryOperations extends AbstractReactiveGraphRepositoryOperations implements AgeReactorRepositoryOperations {
 
     /**
-     * The session setting that records that AGE is loaded on a connection and its catalog on the search path.
+     * The session setting that records that AGE is loaded on a connection and its catalog on the search path. Its
+     * value is the start time of the transaction that set it, which tells a setting the current transaction made,
+     * and may still roll back, from one an earlier transaction committed.
      */
     static final String PREPARED_SETTING = "micronaut.age.prepared";
 
@@ -83,6 +86,10 @@ final class DefaultAgeReactorRepositoryOperations extends AbstractReactiveGraphR
         + " WHERE current_setting('search_path') NOT LIKE '%ag_catalog%'";
     private static final String JDBC_PARAMETER = "$$, ?)";
     private static final String R2DBC_PARAMETER = "$$, $1)";
+    private static final String SAVEPOINT = "micronaut_age_create_graph";
+    private static final int ABSENT = 0;
+    private static final int CURRENT_TRANSACTION = 1;
+    private static final int COMMITTED = 2;
 
     private final ReactorConnectionOperations<Connection> connectionOperations;
     private final R2dbcReactorTransactionOperations transactionOperations;
@@ -96,9 +103,13 @@ final class DefaultAgeReactorRepositoryOperations extends AbstractReactiveGraphR
      */
     private final Set<Connection> preparedConnections = Collections.synchronizedSet(Collections.newSetFromMap(new WeakHashMap<>()));
     /**
-     * The connections of checkouts that loaded AGE inside a transaction, which may still roll the loading back.
+     * The creations of graphs outside any transaction that are under way, by graph, which concurrent first
+     * operations share.
      */
-    private final Set<Connection> preparedCheckouts = Collections.synchronizedSet(Collections.newSetFromMap(new WeakHashMap<>()));
+    private final Map<String, Mono<Void>> graphCreations = new ConcurrentHashMap<>();
+    /**
+     * The graphs known to exist for good: created outside a transaction, or seen committed.
+     */
     private final Set<String> readyGraphs = ConcurrentHashMap.newKeySet();
 
     DefaultAgeReactorRepositoryOperations(DefaultAgeR2dbcRepositoryOperations operations,
@@ -174,8 +185,8 @@ final class DefaultAgeReactorRepositoryOperations extends AbstractReactiveGraphR
      */
     private Mono<Void> prepare(Connection connection, String graph) {
         Mono<Void> prepare = loadAge(connection);
-        if (createGraph && !readyGraphs.contains(graph)) {
-            prepare = prepare.then(createGraph(graph));
+        if (createGraph) {
+            prepare = prepare.then(Mono.defer(() -> readyGraphs.contains(graph) ? Mono.<Void>empty() : ensureGraph(connection, graph)));
         }
         return prepare.onErrorMap(R2dbcException.class, e -> new DataAccessException("Error preparing Apache AGE graph [" + graph + "]: " + e.getMessage(), e));
     }
@@ -183,24 +194,25 @@ final class DefaultAgeReactorRepositoryOperations extends AbstractReactiveGraphR
     /**
      * Loads AGE on a connection and puts its catalog on the search path, unless the session has them already:
      * a pooled connection keeps both across checkouts, and records that it does in the session setting
-     * {@value #PREPARED_SETTING}, which a transaction that rolls back reverts along with the search path.
+     * {@value #PREPARED_SETTING}, which a transaction that rolls back reverts along with the search path. A
+     * connection is only remembered as prepared once the setting is committed, so that a connection that runs
+     * several transactions, one after the other, is prepared again after one that rolled the loading back.
      */
     private Mono<Void> loadAge(Connection connection) {
         return Mono.defer(() -> {
             Connection physical = physicalConnection(connection);
-            if (preparedConnections.contains(physical) || preparedCheckouts.contains(connection)) {
+            if (preparedConnections.contains(physical)) {
                 return searchPath(connection);
             }
             boolean autoCommit = connection.isAutoCommit();
-            return isPrepared(connection).flatMap(loaded -> {
-                Mono<Void> load = loaded ? searchPath(connection) : load(connection);
-                return load.then(Mono.fromRunnable(() -> {
-                    if (loaded || autoCommit) {
-                        // Committed: by an earlier checkout, or at once
+            return preparation(connection).flatMap(state -> switch (state) {
+                case COMMITTED -> Mono.<Void>fromRunnable(() -> preparedConnections.add(physical)).then(searchPath(connection));
+                // Set by this transaction, which may yet roll it back: checked again by the next operation
+                case CURRENT_TRANSACTION -> searchPath(connection);
+                default -> load(connection).then(Mono.<Void>fromRunnable(() -> {
+                    if (autoCommit) {
+                        // Committed at once
                         preparedConnections.add(physical);
-                    } else {
-                        // Set in a transaction that may yet roll it back: taken as read for this checkout only
-                        preparedCheckouts.add(connection);
                     }
                 }));
             });
@@ -223,14 +235,19 @@ final class DefaultAgeReactorRepositoryOperations extends AbstractReactiveGraphR
         }
         return load.then(execute(connection, "LOAD 'age'"))
             .then(execute(connection, SEARCH_PATH))
-            .then(execute(connection, "SELECT set_config('" + PREPARED_SETTING + "', 'true', false)"));
+            .then(execute(connection, "SELECT set_config('" + PREPARED_SETTING + "', transaction_timestamp()::text, false)"));
     }
 
-    private static Mono<Boolean> isPrepared(Connection connection) {
-        return Flux.from(connection.createStatement("SELECT current_setting('" + PREPARED_SETTING + "', true)").execute())
-            .flatMap(result -> result.map((row, metadata) -> "true".equals(row.get(0, String.class))))
-            .collectList()
-            .map(values -> !values.isEmpty() && values.get(0));
+    /**
+     * @return {@link #ABSENT} when AGE is not loaded on the session, {@link #CURRENT_TRANSACTION} when the current
+     * transaction loaded it, or {@link #COMMITTED} when an earlier transaction did
+     */
+    private static Mono<Integer> preparation(Connection connection) {
+        String setting = "coalesce(current_setting('" + PREPARED_SETTING + "', true), '')";
+        String sql = "SELECT CASE WHEN " + setting + " = '' THEN " + ABSENT
+            + " WHEN " + setting + " = transaction_timestamp()::text THEN " + CURRENT_TRANSACTION
+            + " ELSE " + COMMITTED + " END";
+        return first(connection, sql).defaultIfEmpty(ABSENT);
     }
 
     /**
@@ -248,14 +265,69 @@ final class DefaultAgeReactorRepositoryOperations extends AbstractReactiveGraphR
     }
 
     /**
-     * Creates the graph on a connection of its own, outside any transaction of the caller, so that the graph
-     * outlives a transaction that rolls back.
-     *
-     * @param graph The graph name, a validated identifier
+     * Creates the graph on the connection of the operation, so that no second connection is needed while the
+     * operation holds one. Outside a transaction the graph is created at once, by one creation that concurrent
+     * operations share. Inside a transaction it is created with the transaction, so that a rollback undoes it and
+     * the next operation creates it again.
      */
-    private Mono<Void> createGraph(String graph) {
-        return connectionOperations.withConnectionMono(ConnectionDefinition.REQUIRES_NEW, status -> createGraph(status.getConnection(), graph))
-            .doOnSuccess(ignored -> readyGraphs.add(graph));
+    private Mono<Void> ensureGraph(Connection connection, String graph) {
+        if (!connection.isAutoCommit()) {
+            return ensureGraphInTransaction(connection, graph);
+        }
+        return Mono.defer(() -> {
+            Mono<Void> creation = graphCreations.get(graph);
+            if (creation == null) {
+                Mono<Void> created = createGraph(connection, graph)
+                    .doOnSuccess(ignored -> readyGraphs.add(graph))
+                    // A failed creation is tried again by the next operation
+                    .doFinally(signal -> graphCreations.remove(graph))
+                    .cache();
+                Mono<Void> witness = graphCreations.putIfAbsent(graph, created);
+                creation = witness != null ? witness : created;
+            }
+            return creation;
+        });
+    }
+
+    private Mono<Void> ensureGraphInTransaction(Connection connection, String graph) {
+        return graphState(connection, graph).flatMap(state -> switch (state) {
+            case COMMITTED -> Mono.<Void>fromRunnable(() -> readyGraphs.add(graph));
+            case CURRENT_TRANSACTION -> Mono.<Void>empty();
+            // A savepoint keeps the transaction usable when another transaction creates the graph at the same time
+            default -> Mono.from(connection.createSavepoint(SAVEPOINT))
+                .then(Mono.defer(() -> {
+                    LOG.debug("Creating Apache AGE graph [{}]", graph);
+                    return execute(connection, "SELECT ag_catalog.create_graph('" + graph + "')");
+                }))
+                .then(Mono.from(connection.releaseSavepoint(SAVEPOINT)))
+                .onErrorResume(R2dbcException.class, e -> Mono.from(connection.rollbackTransactionToSavepoint(SAVEPOINT))
+                    .then(graphState(connection, graph))
+                    .flatMap(after -> {
+                        if (after == ABSENT) {
+                            return Mono.error(e);
+                        }
+                        LOG.debug("Apache AGE graph [{}] was created by another transaction: {}", graph, e.getMessage());
+                        return Mono.empty();
+                    }));
+        });
+    }
+
+    /**
+     * @return {@link #ABSENT} when the graph does not exist for the current transaction, {@link #CURRENT_TRANSACTION}
+     * when the current transaction created it, or {@link #COMMITTED} when it exists for good
+     */
+    private static Mono<Integer> graphState(Connection connection, String graph) {
+        // The catalog row of a graph the current transaction created carries its transaction id
+        return first(connection, "SELECT CASE WHEN xmin::text = (txid_current_if_assigned() % 4294967296)::text THEN " + CURRENT_TRANSACTION
+            + " ELSE " + COMMITTED + " END FROM ag_catalog.ag_graph WHERE name = '" + graph + "'").defaultIfEmpty(ABSENT);
+    }
+
+    private static Mono<Integer> first(Connection connection, String sql) {
+        // Every row is read, so that the statement completes before the next one runs on the connection
+        return Flux.from(connection.createStatement(sql).execute())
+            .concatMap(result -> result.map((row, metadata) -> row.get(0, Integer.class)))
+            .collectList()
+            .flatMap(values -> values.isEmpty() ? Mono.empty() : Mono.justOrEmpty(values.get(0)));
     }
 
     /**
@@ -272,6 +344,7 @@ final class DefaultAgeReactorRepositoryOperations extends AbstractReactiveGraphR
             if (exists) {
                 return Mono.empty();
             }
+            LOG.debug("Creating Apache AGE graph [{}]", graph);
             return execute(connection, "SELECT ag_catalog.create_graph('" + graph + "')")
                 .onErrorResume(R2dbcException.class, e -> graphExists(connection, graph).flatMap(found -> {
                     if (!found) {
@@ -338,7 +411,22 @@ final class DefaultAgeReactorRepositoryOperations extends AbstractReactiveGraphR
                         }
                         return new GraphRecord(columns, values);
                     }));
-            }).onErrorMap(R2dbcException.class, e -> new DataAccessException("Error executing Cypher query on Apache AGE [" + sql + "]: " + e.getMessage(), e));
+            }).onErrorMap(R2dbcException.class, e -> {
+                String message = "Error executing Cypher query on Apache AGE [" + sql + "]: " + e.getMessage();
+                return isConcurrentUpdate(e) ? new OptimisticLockException(message, e) : new DataAccessException(message, e);
+            });
+        }
+
+        /**
+         * Whether a statement failed because the vertex or edge it writes was updated or deleted by a transaction
+         * that committed while the statement waited for its lock, as the JDBC operations check.
+         *
+         * @param e The error
+         * @return Whether the error is a concurrent update
+         */
+        private static boolean isConcurrentUpdate(R2dbcException e) {
+            String message = e.getMessage();
+            return message != null && (message.contains("Entity failed to be updated") || message.contains("Entity could not be locked for updating"));
         }
 
         @Override

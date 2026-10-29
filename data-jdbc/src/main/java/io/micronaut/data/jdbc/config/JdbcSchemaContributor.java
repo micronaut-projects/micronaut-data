@@ -53,8 +53,9 @@ public interface JdbcSchemaContributor {
     List<String> buildCreateStatements(DataJdbcConfiguration configuration, List<PersistentEntity> entities);
 
     /**
-     * Builds the statements that drop the schema of the selected entities. Failures are ignored, as the objects may
-     * not exist yet.
+     * Builds the statements that drop the schema of the selected entities. The statements should succeed when the
+     * objects do not exist yet, for example with {@code IF EXISTS}, as a failure is logged as a warning and the
+     * generation carries on.
      *
      * @param configuration The configuration of the data source
      * @param entities      The entities this contributor selected
