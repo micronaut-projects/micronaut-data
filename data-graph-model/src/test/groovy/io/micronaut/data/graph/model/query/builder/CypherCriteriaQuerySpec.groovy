@@ -85,7 +85,9 @@ class CypherCriteriaQuerySpec extends Specification {
         'not related'          | { q, r -> q.where(cb.not(GraphCriteria.related(r, "movies"))) }                                                                            | 'MATCH (n:Person) WHERE NOT ((n)-[:ACTED_IN]->()) RETURN n'
         'related to'           | { q, r -> q.where(GraphCriteria.relatedTo(r, "movies", cb.literal("Matrix"))) }                                                            | 'MATCH (n:Person) WHERE (n)-[:ACTED_IN]->(:Movie {title: $p0}) RETURN n'
         'connected'            | { q, r -> q.where(GraphCriteria.connected(r, "movies", cb.literal("Matrix"), 3)) }                                                         | 'MATCH (n:Person) WHERE (n)-[:ACTED_IN*1..3]->(:Movie {title: $p0}) RETURN n'
-        'connected by any'     | { q, r -> q.where(GraphCriteria.connected(r, null, cb.literal(42L), 2)) }                                                                 | 'MATCH (n:Person) WHERE EXISTS { MATCH (n)-[*1..2]-(m0:Person) WHERE id(m0) = $p0 } RETURN n'
+        'connected by any'     | { q, r -> q.where(GraphCriteria.connected(r, Person, cb.literal(42L), 2)) }                                                               | 'MATCH (n:Person) WHERE EXISTS { MATCH (n)-[*1..2]-(m0:Person) WHERE id(m0) = $p0 } RETURN n'
+        'connected to entity'  | { q, r -> q.where(GraphCriteria.connected(r, Movie, cb.literal("Matrix"), 2)) }                                                          | 'MATCH (n:Person) WHERE (n)-[*1..2]-(:Movie {title: $p0}) RETURN n'
+        'connected by any once'| { q, r -> q.where(GraphCriteria.connected(r, Movie, cb.literal("Matrix"), 1)) }                                                          | 'MATCH (n:Person) WHERE (n)-[]-(:Movie {title: $p0}) RETURN n'
         'related and property' | { q, r -> q.where(cb.and(GraphCriteria.related(r, "movies"), cb.equal(r.get("name"), "Keanu"))) }                                        | 'MATCH (n:Person) WHERE ((n)-[:ACTED_IN]->() AND n.name = $p0) RETURN n'
         'dynamic property'     | { q, r -> q.where(cb.isTrue(GraphCriteria.dynamic(r, "goesInPatch", Boolean))) }                                                           | 'MATCH (n:Person) WHERE n.goesInPatch = true RETURN n'
         'dynamic comparison'   | { q, r -> q.where(cb.greaterThan(GraphCriteria.dynamic(r, "legs", Integer), 2)) }                                                          | 'MATCH (n:Person) WHERE n.legs > $p0 RETURN n'
@@ -247,16 +249,16 @@ class CypherCriteriaQuerySpec extends Specification {
         builder.buildInsert(AnnotationMetadata.EMPTY_METADATA, null) == null
     }
 
-    void "test versioned writes match the version the entity was read with"() {
+    void "test versioned writes lock the node and then match the version the entity was read with"() {
         given:
         def note = new TestEntityRegistry().getEntity(Note)
         def builder = new CypherQueryBuilder()
 
         expect:
         builder.buildUpdateVersionedNodeQuery(note, ["code", "text", "version"]) ==
-            'MATCH (n:Note) WHERE n.code = $id AND n.version = $version SET n.code = $v0, n.text = $v1, n.version = $v2 RETURN n.code AS id'
+            'MATCH (n:Note) WHERE n.code = $id SET n.__lock = true REMOVE n.__lock WITH n WHERE n.version = $version SET n.code = $v0, n.text = $v1, n.version = $v2 RETURN n.code AS id'
         builder.buildDeleteVersionedNodeQuery(note) ==
-            'MATCH (n:Note) WHERE n.code = $id AND n.version = $version DETACH DELETE n RETURN count(*) AS result'
+            'MATCH (n:Note) WHERE n.code = $id SET n.__lock = true REMOVE n.__lock WITH n WHERE n.version = $version DETACH DELETE n RETURN count(*) AS result'
         new AgeCypherQueryBuilder().buildDeleteVersionedNodeQuery(note).contains('n.version = $version')
 
         when:
@@ -264,6 +266,16 @@ class CypherCriteriaQuerySpec extends Specification {
 
         then:
         thrown(IllegalArgumentException)
+    }
+
+    void "test an insert with an assigned identifier creates the node only when none has the identifier"() {
+        given:
+        def note = new TestEntityRegistry().getEntity(Note)
+
+        expect:
+        new CypherQueryBuilder().buildInsertNodeQuery(note, ["text", "version"]) ==
+            'OPTIONAL MATCH (existing:Note) WHERE existing.code = $id WITH count(existing) AS found WHERE found = 0 CREATE (n:Note {code: $id}) SET n.text = $v0, n.version = $v1 RETURN n.code AS id'
+        new AgeCypherQueryBuilder().buildInsertNodeQuery(note, ["text", "version"]).contains('CREATE (n:Note {code: $id})')
     }
 
     void "test index statements"() {
@@ -304,7 +316,12 @@ class CypherCriteriaQuerySpec extends Specification {
         builder.buildWriteNodesQuery(registry.getEntity(Note), ['code', 'text'], true, false) ==
             'UNWIND $rows AS row MERGE (n:Note {code: row.id}) SET n += row.properties RETURN row.position AS position, n.code AS id'
         builder.buildWriteNodesQuery(registry.getEntity(Note), ['code', 'text'], true, true) ==
-            'UNWIND $rows AS row MATCH (n:Note) WHERE n.code = row.id AND n.version = row.version SET n += row.properties RETURN row.position AS position, n.code AS id'
+            'UNWIND $rows AS row MATCH (n:Note) WHERE n.code = row.id SET n.__lock = true REMOVE n.__lock' +
+            ' WITH collect(CASE WHEN n.version = row.version THEN {node: n, row: row} END) AS matched WHERE size(matched) = size($rows)' +
+            ' UNWIND matched AS current WITH current.node AS n, current.row AS row SET n += row.properties RETURN row.position AS position, n.code AS id'
+        builder.buildInsertNodesQuery(registry.getEntity(Note), ['text']) ==
+            'OPTIONAL MATCH (existing:Note) WHERE existing.code IN [row IN $rows | row.id] WITH count(existing) AS found WHERE found = 0' +
+            ' UNWIND $rows AS row CREATE (n:Note {code: row.id}) SET n += row.properties RETURN row.position AS position, n.code AS id'
     }
 
     private String select(Closure<?> definition) {
@@ -345,6 +362,7 @@ class CypherCriteriaQuerySpec extends Specification {
         description  | definition                                                                         | fragment
         'related'    | { q, r -> q.where(GraphCriteria.related(r, "movies")) }                           | 'WHERE EXISTS((n)-[:ACTED_IN]->())'
         'related to' | { q, r -> q.where(GraphCriteria.relatedTo(r, "movies", cb.literal("Matrix"))) }  | 'WHERE EXISTS((n)-[:ACTED_IN]->(:Movie {title: $p0}))'
+        'any type'   | { q, r -> q.where(GraphCriteria.connected(r, Movie, cb.literal("Matrix"), 1)) }  | 'WHERE EXISTS((n)-[]-(:Movie {title: $p0}))'
     }
 
     void "test graph criteria Apache AGE cannot render are rejected: #description"() {
@@ -363,7 +381,7 @@ class CypherCriteriaQuerySpec extends Specification {
         where:
         description             | definition                                                                      | message
         'a chain'               | { q, r -> q.where(GraphCriteria.connected(r, "movies", cb.literal("Matrix"), 3)) } | 'cannot test for a chain of relationships'
-        'a database identifier' | { q, r -> q.where(GraphCriteria.connected(r, null, cb.literal(42L), 2)) }       | 'cannot match a related node by its database identifier'
+        'a database identifier' | { q, r -> q.where(GraphCriteria.connected(r, Person, cb.literal(42L), 2)) }     | 'cannot match a related node by its database identifier'
     }
 
     void "test graph criteria check their arguments"() {
@@ -378,11 +396,39 @@ class CypherCriteriaQuerySpec extends Specification {
         depth.message.contains("at least 1")
 
         when:
-        new RelatedPredicate<>(root, null, null, 1)
+        new RelatedPredicate<>(root, null, null, null, 1)
 
         then:
         def target = thrown(IllegalArgumentException)
         target.message.contains("needs a target node")
+
+        when: "relationships of any type do not say which entity the far node is"
+        new RelatedPredicate<>(root, null, null, cb.literal(42L), 2)
+
+        then:
+        def anyType = thrown(IllegalArgumentException)
+        anyType.message.contains("needs the entity of the node at the far end")
+
+        when:
+        new RelatedPredicate<>(root, "movies", Movie, cb.literal("Matrix"), 1)
+
+        then:
+        def both = thrown(IllegalArgumentException)
+        both.message.contains("gives the entity of the node at the far end")
+
+        when:
+        GraphCriteria.connected(root, (String) null, cb.literal(42L), 2)
+
+        then:
+        def noRelationship = thrown(IllegalArgumentException)
+        noRelationship.message.contains("connected(root, targetType, target, maxDepth)")
+
+        when:
+        GraphCriteria.connected(root, (Class) null, cb.literal(42L), 2)
+
+        then:
+        def noType = thrown(IllegalArgumentException)
+        noType.message.contains("need the entity of the node at the far end")
 
         when:
         GraphCriteria.related(Mock(Root), "movies")
@@ -406,7 +452,8 @@ class CypherCriteriaQuerySpec extends Specification {
         expression.message.contains("graph repositories")
 
         expect:
-        GraphCriteria.related(root, "movies").toString() == 'RelatedPredicate{relationship=movies, target=null, maxDepth=1}'
+        GraphCriteria.related(root, "movies").toString() == 'RelatedPredicate{relationship=movies, targetType=null, target=null, maxDepth=1}'
+        ((RelatedPredicate) GraphCriteria.connected(root, Movie, cb.literal("Matrix"), 2)).targetType == Movie
         GraphCriteria.dynamic(root, "legs", Integer).toString() == 'DynamicPropertyExpression{name=legs}'
         ((RelatedPredicate) GraphCriteria.related(root, "movies")).root == root
         ((DynamicPropertyExpression) GraphCriteria.dynamic(root, "legs", Integer)).root == root

@@ -17,6 +17,7 @@ package io.micronaut.data.graph.runtime.age;
 
 import io.micronaut.context.annotation.ConfigurationProperties;
 import io.micronaut.core.annotation.NonNull;
+import io.micronaut.core.naming.NameUtils;
 
 import java.util.Map;
 
@@ -81,13 +82,25 @@ public class AgeConfiguration {
     }
 
     /**
-     * The graph of a data source: its entry in {@link #getGraphs()}, else {@link #getGraph()}.
+     * The graph of a data source: its entry in {@link #getGraphs()}, else {@link #getGraph()}. Names are compared in
+     * their hyphenated form, as configuration binds them, so the entry {@code reporting-db} is that of the data source
+     * {@code reportingDb}.
      *
      * @param dataSource The data source name
      * @return The graph name
      */
     public @NonNull String graphFor(@NonNull String dataSource) {
-        return graphs.getOrDefault(dataSource, graph);
+        String exact = graphs.get(dataSource);
+        if (exact != null) {
+            return exact;
+        }
+        String name = NameUtils.hyphenate(dataSource);
+        for (Map.Entry<String, String> entry : graphs.entrySet()) {
+            if (NameUtils.hyphenate(entry.getKey()).equals(name)) {
+                return entry.getValue();
+            }
+        }
+        return graph;
     }
 
     /**

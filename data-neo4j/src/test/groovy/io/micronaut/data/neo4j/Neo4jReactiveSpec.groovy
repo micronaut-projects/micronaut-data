@@ -1,5 +1,6 @@
 package io.micronaut.data.neo4j
 
+import io.micronaut.data.exceptions.EntityExistsException
 import io.micronaut.data.exceptions.OptimisticLockException
 import io.micronaut.data.graph.tck.entities.Article
 import io.micronaut.data.graph.tck.entities.Movie
@@ -344,12 +345,55 @@ class Neo4jReactiveSpec extends Specification implements TestPropertyProvider {
         updated*.version == [1L, 1L]
 
         when:
-        articleRepository.updateAll([articleRepository.findById("a").block(), stale]).collectList().block()
+        def current = articleRepository.findById("a").block()
+        current.title = "changed"
+        articleRepository.updateAll([current, stale]).collectList().block()
 
-        then:
+        then: "no node of the batch is updated"
         thrown(OptimisticLockException)
+        with(articleRepository.findById("a").block()) {
+            title == "a"
+            version == 1L
+        }
+
+        when: "one node of a batch of new nodes has the identifier of an existing node"
+        articleRepository.saveAll([new Article("c", "C"), new Article("b", "Other")]).collectList().block()
+
+        then: "no node of the batch is inserted"
+        thrown(EntityExistsException)
+        !articleRepository.findById("c").blockOptional().present
+        articleRepository.findById("b").block().title == "b"
 
         cleanup:
         tagRepository.deleteAll().block()
+    }
+
+    void "reactive saveAll writes an instance passed twice once"() {
+        given:
+        def graph = new Tag("graph")
+
+        when:
+        def saved = tagRepository.saveAll([graph, new Tag("nosql"), graph]).collectList().block()
+
+        then:
+        saved.size() == 3
+        saved[0].id != null
+        saved[0].id == saved[2].id
+        tagRepository.count().block() == 2
+
+        cleanup:
+        tagRepository.deleteAll().block()
+    }
+
+    void "a reactive insert of a versioned node with a taken identifier fails"() {
+        given:
+        articleRepository.save(new Article("graphs", "Graphs")).block()
+
+        when:
+        articleRepository.save(new Article("graphs", "Other")).block()
+
+        then:
+        thrown(EntityExistsException)
+        articleRepository.findById("graphs").block().title == "Graphs"
     }
 }

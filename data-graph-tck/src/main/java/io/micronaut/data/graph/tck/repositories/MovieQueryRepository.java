@@ -32,6 +32,9 @@ public interface MovieQueryRepository extends MovieRepository {
     @Join("directors.mentor")
     Optional<Movie> queryByTitle(String title);
 
+    @Query("MATCH (p:Person), (m:Movie) WHERE p.name = $name AND m.title = $title CREATE (p)-[:DIRECTED]->(m)")
+    void addDirector(String name, String title);
+
     @Query("MATCH (p:Person)-[:DIRECTED]->(m:Movie) WHERE m.title = $title RETURN m.title AS title, collect(p.name) AS directors")
     Optional<MovieDirectors> findDirectorNames(String title);
 

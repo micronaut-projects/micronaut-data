@@ -118,6 +118,11 @@ public class AgeCypherQueryBuilder extends CypherQueryBuilder {
     }
 
     @Override
+    public String buildInsertNodeQuery(PersistentEntity entity, List<String> propertyNames) {
+        return AgeStatements.wrap(super.buildInsertNodeQuery(entity, propertyNames));
+    }
+
+    @Override
     public String buildDeleteByIdQuery(PersistentEntity entity) {
         return AgeStatements.wrap(super.buildDeleteByIdQuery(entity));
     }
