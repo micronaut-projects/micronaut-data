@@ -15,6 +15,12 @@ public class TagService {
     }
 
     @Transactional
+    public void saveAndFail(String name) {
+        repository.save(new Tag(name));
+        throw new IllegalStateException("Rolled back");
+    }
+
+    @Transactional
     public Optional<String> renameAndFind(Long id, String name) {
         Optional<Tag> found = repository.findById(id);
         if (found.isEmpty()) {

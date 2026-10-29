@@ -39,7 +39,7 @@ snippet::example.ArchivedMovieRepository[project-base="doc-examples/neo4j-exampl
 
 <1> The repository runs on the `archive` driver. Repositories without a name use the `default` driver.
 
-`micronaut.data.neo4j.databases.<name>` selects the database of a configured driver. Transactions are started on a driver by the api:data.neo4j.transaction.Neo4jTransactionOperations[] bean of the same name.
+A configured driver sets both `username` and `password`, or neither for a server without authentication, and cannot be named `default`. `micronaut.data.neo4j.databases.<name>` selects the database of a configured driver. Beans injected without a name, such as the operations or the transactions of `@Transactional`, use the `default` driver. Transactions are started on a driver by the api:data.neo4j.transaction.Neo4jTransactionOperations[] bean of the same name.
 
 == Multi-tenancy
 

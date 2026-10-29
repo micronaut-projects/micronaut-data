@@ -259,25 +259,30 @@ final class DefaultOracleGraphRepositoryOperations extends AbstractGraphReposito
         throw new UnsupportedOperationException(DECLARE_METHOD);
     }
 
-    // Writes run as SQL on the vertex tables through Micronaut Data JDBC, in the same connection and transaction
+    // Writes run as SQL on the vertex tables through Micronaut Data JDBC, in the same connection and transaction.
+    // Schemaless properties go to a JSON column, so a key that names a declared column is rejected up front
 
     @Override
     public <T> T persist(InsertOperation<T> operation) {
+        checkDynamicAttributes(operation.getRootEntity(), List.of(operation.getEntity()));
         return jdbcOperations.persist(operation);
     }
 
     @Override
     public <T> Iterable<T> persistAll(InsertBatchOperation<T> operation) {
+        checkDynamicAttributes(operation.getRootEntity(), operation);
         return jdbcOperations.persistAll(operation);
     }
 
     @Override
     public <T> T update(UpdateOperation<T> operation) {
+        checkDynamicAttributes(operation.getRootEntity(), List.of(operation.getEntity()));
         return jdbcOperations.update(operation);
     }
 
     @Override
     public <T> Iterable<T> updateAll(UpdateBatchOperation<T> operation) {
+        checkDynamicAttributes(operation.getRootEntity(), operation);
         return jdbcOperations.updateAll(operation);
     }
 

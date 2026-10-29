@@ -1,5 +1,6 @@
 package io.micronaut.data.oracle.graph.r2dbc.wallet;
 
+import io.micronaut.core.annotation.Nullable;
 import io.micronaut.data.graph.annotation.PathLimit;
 import io.micronaut.data.oracle.graph.r2dbc.annotation.OracleGraphR2dbcRepository;
 import io.micronaut.data.repository.reactive.ReactorCrudRepository;
@@ -13,7 +14,7 @@ public interface WalletGraph extends ReactorCrudRepository<Wallet, Long> {
 
     Flux<Wallet> findByOwnerStartsWithOrderByOwner(String prefix);
 
-    Flux<Wallet> findByPaymentsAmountGreaterThan(BigDecimal amount);
+    Flux<Wallet> findByPaymentsAmountGreaterThan(@Nullable BigDecimal amount);
 
     Flux<Wallet> findByPaymentsToOwner(String owner);
 

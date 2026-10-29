@@ -198,8 +198,9 @@ public class R2dbcSchemaGenerator {
                 }
                 return execute(connection, sql)
                     .onErrorResume(throwable -> {
-                        if (DataSettings.QUERY_LOG.isTraceEnabled()) {
-                            DataSettings.QUERY_LOG.trace("Drop Unsuccessful: {}", throwable.getMessage());
+                        // Contributed DROP statements tolerate missing objects, so a failure, such as a foreign key from another table, is a warning
+                        if (LOG.isWarnEnabled()) {
+                            LOG.warn("DROP Statement Unsuccessful: {}, {}", throwable.getMessage(), sql);
                         }
                         return Mono.empty();
                     });
