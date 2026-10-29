@@ -319,20 +319,6 @@ abstract sealed class AbstractMongoRepositoryOperations<Dtb> extends AbstractRep
     }
 
     /**
-     * Attempts to convert a BSON document into an instance of the specified result type using introspection.
-     * <p>
-     * If the result type has been annotated with `@Introspection`, this method will attempt to use the provided
-     * `BeanIntrospection` to map the BSON document onto an instance of the result type.
-     * <p>
-     * If the mapping fails or if no `BeanIntrospection` is found for the result type, an empty `Optional` is returned.
-     *
-     * @param preparedQuery The preparedQuery
-     * @param result        The BSON document containing the data to be mapped
-     * @param resultType    The type of the object being mapped
-     * @param <R>           The type parameter representing the result type
-     * @return An `Optional` containing the mapped object, or an empty `Optional` if mapping failed or no `BeanIntrospection` was found
-     */
-    /**
      * Maps an aggregation document carrying the {@code mn_score} text score into a {@link SearchResult}.
      *
      * @param document The document, modified by removing the score field
@@ -353,6 +339,20 @@ abstract sealed class AbstractMongoRepositoryOperations<Dtb> extends AbstractRep
         return new SearchResult<>(entity, new Score(score));
     }
 
+    /**
+     * Attempts to convert a BSON document into an instance of the specified result type using introspection.
+     * <p>
+     * If the result type has been annotated with `@Introspection`, this method will attempt to use the provided
+     * `BeanIntrospection` to map the BSON document onto an instance of the result type.
+     * <p>
+     * If the mapping fails or if no `BeanIntrospection` is found for the result type, an empty `Optional` is returned.
+     *
+     * @param preparedQuery The preparedQuery
+     * @param result        The BSON document containing the data to be mapped
+     * @param resultType    The type of the object being mapped
+     * @param <R>           The type parameter representing the result type
+     * @return An `Optional` containing the mapped object, or an empty `Optional` if mapping failed or no `BeanIntrospection` was found
+     */
     protected <R> Optional<R> convertUsingIntrospected(PreparedQuery<?, ?> preparedQuery, BsonDocument result, Class<R> resultType) {
         Optional<BeanIntrospection<R>> introspection = BeanIntrospector.SHARED.findIntrospection(resultType);
         if (introspection.isPresent()) {
