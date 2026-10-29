@@ -60,7 +60,9 @@ public interface SearchTransport {
     String index(String index, @Nullable String id, Map<String, Object> source, DocumentSearchConfiguration.Refresh refresh);
 
     /**
-     * Indexes several documents in one request. The default sends one request per document.
+     * Indexes several new documents in one request, each a create-only write like
+     * {@link #create(String, String, Map, DocumentSearchConfiguration.Refresh)}. The default sends one
+     * request per document.
      *
      * @param index The index name
      * @param documents The documents, in order
@@ -70,7 +72,7 @@ public interface SearchTransport {
     default List<String> bulkIndex(String index, List<BulkDocument> documents, DocumentSearchConfiguration.Refresh refresh) {
         List<String> ids = new java.util.ArrayList<>(documents.size());
         for (BulkDocument document : documents) {
-            ids.add(index(index, document.id(), document.source(), refresh));
+            ids.add(create(index, document.id(), document.source(), refresh));
         }
         return ids;
     }

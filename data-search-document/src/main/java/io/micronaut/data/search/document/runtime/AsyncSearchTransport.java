@@ -65,7 +65,9 @@ public interface AsyncSearchTransport {
     CompletionStage<String> index(String index, @Nullable String id, Map<String, Object> source, DocumentSearchConfiguration.Refresh refresh);
 
     /**
-     * Indexes several documents in one request. The default sends one request per document, in sequence.
+     * Indexes several new documents in one request, each a create-only write like
+     * {@link #create(String, String, Map, DocumentSearchConfiguration.Refresh)}. The default sends one
+     * request per document, in sequence.
      *
      * @param index The index name
      * @param documents The documents, in order
@@ -75,7 +77,7 @@ public interface AsyncSearchTransport {
     default CompletionStage<List<String>> bulkIndex(String index, List<SearchTransport.BulkDocument> documents, DocumentSearchConfiguration.Refresh refresh) {
         CompletionStage<List<String>> ids = CompletableFuture.completedFuture(new ArrayList<>(documents.size()));
         for (SearchTransport.BulkDocument document : documents) {
-            ids = ids.thenCompose(list -> index(index, document.id(), document.source(), refresh).thenApply(id -> {
+            ids = ids.thenCompose(list -> create(index, document.id(), document.source(), refresh).thenApply(id -> {
                 list.add(id);
                 return list;
             }));
