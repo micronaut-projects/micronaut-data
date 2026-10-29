@@ -153,6 +153,17 @@ public final class OpenSearchSearchTransport implements SearchTransport {
     }
 
     @Override
+    public boolean delete(String index, String id, @Nullable Long version, DocumentSearchConfiguration.Refresh refresh) {
+        try {
+            return client.delete(d -> OpenSearchRequests.deleteRequest(d, index, id, version, refresh)).result().jsonValue().equals("deleted");
+        } catch (IOException e) {
+            throw new DataAccessException("OpenSearch delete failed: " + e.getMessage(), e);
+        } catch (RuntimeException e) {
+            throw OpenSearchRequests.conflictOrFailure(e, id);
+        }
+    }
+
+    @Override
     public long deleteByQuery(String index, String body, DocumentSearchConfiguration.Refresh refresh) {
         try {
             Query query = query(parse(body));

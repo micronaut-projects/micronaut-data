@@ -148,6 +148,23 @@ public interface SearchTransport {
     boolean delete(String index, String id, DocumentSearchConfiguration.Refresh refresh);
 
     /**
+     * Deletes a document only if the store holds it at the given external version or an earlier one.
+     *
+     * @param index The index
+     * @param id The id
+     * @param version The version the entity was read at, or {@code null} for an unconditional delete
+     * @param refresh The refresh policy
+     * @return Whether a document was deleted
+     * @throws io.micronaut.data.exceptions.OptimisticLockException When the stored document is newer
+     */
+    default boolean delete(String index, String id, @Nullable Long version, DocumentSearchConfiguration.Refresh refresh) {
+        if (version != null) {
+            throw new UnsupportedOperationException("Versioned deletes are not supported by " + getClass().getName());
+        }
+        return delete(index, id, refresh);
+    }
+
+    /**
      * Deletes the documents matching a query.
      *
      * @param index The index

@@ -356,7 +356,7 @@ public final class DefaultDocumentSearchRepositoryOperations extends AbstractDoc
         if (id == null) {
             return false;
         }
-        boolean deleted = transport.delete(indexName(entity), id, configuration.getRefresh());
+        boolean deleted = transport.delete(indexName(entity), id, deleteVersion(value, entity), configuration.getRefresh());
         if (deleted) {
             postRemove(value, entity);
         }

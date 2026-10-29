@@ -117,6 +117,17 @@ public final class OpenSearchAsyncSearchTransport implements AsyncSearchTranspor
     }
 
     @Override
+    public CompletionStage<Boolean> delete(String index, String id, @Nullable Long version, DocumentSearchConfiguration.Refresh refresh) {
+        return call(() -> client.delete(d -> OpenSearchRequests.deleteRequest(d, index, id, version, refresh)))
+            .handle((response, error) -> {
+                if (error != null) {
+                    throw OpenSearchRequests.conflictOrFailure(error, id);
+                }
+                return response.result().jsonValue().equals("deleted");
+            });
+    }
+
+    @Override
     public CompletionStage<Long> deleteByQuery(String index, String body, DocumentSearchConfiguration.Refresh refresh) {
         Query query = OpenSearchRequests.query(mapper, OpenSearchRequests.parse(mapper, body));
         return call(() -> client.deleteByQuery(d -> d.index(index).query(query).refresh(OpenSearchRequests.deleteByQueryRefresh(refresh))))

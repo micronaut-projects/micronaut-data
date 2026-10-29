@@ -24,6 +24,7 @@ import co.elastic.clients.elasticsearch._types.VersionType;
 import co.elastic.clients.elasticsearch.core.IndexRequest;
 import co.elastic.clients.elasticsearch.core.BulkRequest;
 import co.elastic.clients.elasticsearch.core.BulkResponse;
+import co.elastic.clients.elasticsearch.core.DeleteRequest;
 import co.elastic.clients.elasticsearch.core.SearchResponse;
 import co.elastic.clients.elasticsearch.core.bulk.BulkOperation;
 import co.elastic.clients.elasticsearch.core.bulk.BulkResponseItem;
@@ -184,6 +185,29 @@ public final class ElasticsearchAsyncSearchTransport implements AsyncSearchTrans
     @Override
     public CompletionStage<Boolean> delete(String index, String id, DocumentSearchConfiguration.Refresh refresh) {
         return client.delete(d -> d.index(index).id(id).refresh(refresh(refresh))).thenApply(response -> response.result().jsonValue().equals("deleted"));
+    }
+
+    @Override
+    public CompletionStage<Boolean> delete(String index, String id, @Nullable Long version, DocumentSearchConfiguration.Refresh refresh) {
+        return client.delete(d -> deleteRequest(d, index, id, version, refresh))
+            .handle((response, error) -> {
+                if (error != null) {
+                    throw conflictOrFailure(error, id);
+                }
+                return response.result().jsonValue().equals("deleted");
+            });
+    }
+
+    /**
+     * A delete checked against the version the entity was read at: {@code external_gte} accepts that
+     * version and rejects the delete when the stored document is newer.
+     */
+    static DeleteRequest.Builder deleteRequest(DeleteRequest.Builder builder, String index, String id, @Nullable Long version, DocumentSearchConfiguration.Refresh refresh) {
+        builder.index(index).id(id).refresh(refresh(refresh));
+        if (version != null) {
+            builder.version(version).versionType(VersionType.ExternalGte);
+        }
+        return builder;
     }
 
     @Override

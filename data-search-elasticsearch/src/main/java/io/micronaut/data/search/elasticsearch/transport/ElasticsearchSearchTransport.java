@@ -143,6 +143,17 @@ public final class ElasticsearchSearchTransport implements SearchTransport {
     }
 
     @Override
+    public boolean delete(String index, String id, @Nullable Long version, DocumentSearchConfiguration.Refresh refresh) {
+        try {
+            return client.delete(d -> ElasticsearchAsyncSearchTransport.deleteRequest(d, index, id, version, refresh)).result().jsonValue().equals("deleted");
+        } catch (IOException e) {
+            throw new DataAccessException("Elasticsearch delete failed: " + e.getMessage(), e);
+        } catch (RuntimeException e) {
+            throw ElasticsearchAsyncSearchTransport.conflictOrFailure(e, id);
+        }
+    }
+
+    @Override
     public long deleteByQuery(String index, String body, DocumentSearchConfiguration.Refresh refresh) {
         try {
             Long deleted = client.deleteByQuery(d -> d.index(index).withJson(new StringReader(body)).refresh(refresh != DocumentSearchConfiguration.Refresh.NONE)).deleted();

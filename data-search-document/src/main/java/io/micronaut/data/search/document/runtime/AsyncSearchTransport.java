@@ -151,6 +151,23 @@ public interface AsyncSearchTransport {
     CompletionStage<Boolean> delete(String index, String id, DocumentSearchConfiguration.Refresh refresh);
 
     /**
+     * Deletes a document with a version check, see
+     * {@link SearchTransport#delete(String, String, Long, DocumentSearchConfiguration.Refresh)}.
+     *
+     * @param index The index name
+     * @param id The document id
+     * @param version The version the entity was read at, or {@code null} for an unconditional delete
+     * @param refresh The refresh policy
+     * @return Whether a document was deleted
+     */
+    default CompletionStage<Boolean> delete(String index, String id, @Nullable Long version, DocumentSearchConfiguration.Refresh refresh) {
+        if (version != null) {
+            return CompletableFuture.failedStage(new UnsupportedOperationException("Versioned deletes are not supported by " + getClass().getName()));
+        }
+        return delete(index, id, refresh);
+    }
+
+    /**
      * Deletes the documents matching a query.
      *
      * @param index The index name

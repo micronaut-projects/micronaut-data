@@ -314,7 +314,8 @@ public final class DefaultDocumentSearchReactiveRepositoryOperations extends Abs
             if (id == null) {
                 return Mono.just(false);
             }
-            return call(() -> transport.delete(indexName(entity), id, configuration.getRefresh()))
+            Long version = deleteVersion(value, entity);
+            return call(() -> transport.delete(indexName(entity), id, version, configuration.getRefresh()))
                 .doOnNext(deleted -> {
                     if (deleted) {
                         postRemove(value, entity);

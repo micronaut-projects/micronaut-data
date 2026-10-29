@@ -32,6 +32,7 @@ import org.opensearch.client.opensearch._types.FieldValue;
 import org.opensearch.client.opensearch._types.OpenSearchException;
 import org.opensearch.client.opensearch._types.Refresh;
 import org.opensearch.client.opensearch._types.VersionType;
+import org.opensearch.client.opensearch.core.DeleteRequest;
 import org.opensearch.client.opensearch.core.IndexRequest;
 import org.opensearch.client.opensearch._types.SortOptions;
 import org.opensearch.client.opensearch._types.query_dsl.Query;
@@ -144,6 +145,18 @@ final class OpenSearchRequests {
     /**
      * Maps a version conflict (HTTP 409) to {@link OptimisticLockException}; other failures pass through.
      */
+    /**
+     * A delete checked against the version the entity was read at: {@code external_gte} accepts that
+     * version and rejects the delete when the stored document is newer.
+     */
+    static DeleteRequest.Builder deleteRequest(DeleteRequest.Builder builder, String index, String id, @Nullable Long version, DocumentSearchConfiguration.Refresh refresh) {
+        builder.index(index).id(id).refresh(refresh(refresh));
+        if (version != null) {
+            builder.version(version).versionType(VersionType.ExternalGte);
+        }
+        return builder;
+    }
+
     static RuntimeException conflictOrFailure(Throwable error, @Nullable String id) {
         Throwable cause = error instanceof CompletionException && error.getCause() != null ? error.getCause() : error;
         if (cause instanceof OpenSearchException openSearchException && openSearchException.status() == 409) {

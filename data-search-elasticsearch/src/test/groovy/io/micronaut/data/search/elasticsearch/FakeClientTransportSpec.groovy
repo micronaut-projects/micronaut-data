@@ -371,6 +371,33 @@ class FakeClientTransportSpec extends Specification {
         "async" | asyncAsBlocking
     }
 
+    void "a versioned delete accepts the version read and rejects a newer document (#name)"() {
+        given:
+        fake.respond("es/delete") { DeleteRequest request -> writeResponse(request.id(), "deleted", 4) }
+
+        expect:
+        transport.delete(INDEX, "k1", 3L, NONE)
+        with(fake.request(0) as DeleteRequest) {
+            id() == "k1"
+            version() == 3L
+            versionType() == VersionType.ExternalGte
+        }
+
+        when:
+        def conflict = FakeElasticsearchTransport.error("es/delete", 409, "version_conflict_engine_exception", "current version [5] is higher")
+        fake.fail("es/delete", conflict)
+        transport.delete(INDEX, "k1", 3L, NONE)
+
+        then:
+        OptimisticLockException e = thrown()
+        e.message == "Document k1 was modified concurrently: current version [5] is higher"
+
+        where:
+        name    | transport
+        "sync"  | sync
+        "async" | asyncAsBlocking
+    }
+
     void "deleteByQuery returns the deleted count and refreshes unless the policy is NONE (#name, #policy)"() {
         given:
         fake.respond("es/delete_by_query", '{"took":5,"timed_out":false,"total":3,"deleted":3,"batches":1,"version_conflicts":0,"noops":0,"retries":{"bulk":0,"search":0},"throttled_millis":0,"requests_per_second":-1.0,"throttled_until_millis":0,"failures":[]}')
@@ -748,6 +775,16 @@ class FakeClientTransportSpec extends Specification {
         @Override
         boolean delete(String index, String id, DocumentSearchConfiguration.Refresh refresh) {
             return await(delegate.delete(index, id, refresh))
+        }
+
+        @Override
+        boolean delete(String index, String id, @Nullable Long version, DocumentSearchConfiguration.Refresh refresh) {
+            return await(delegate.delete(index, id, version, refresh))
+        }
+
+        @Override
+        String create(String index, @Nullable String id, Map<String, Object> source, DocumentSearchConfiguration.Refresh refresh) {
+            return await(delegate.create(index, id, source, refresh))
         }
 
         @Override

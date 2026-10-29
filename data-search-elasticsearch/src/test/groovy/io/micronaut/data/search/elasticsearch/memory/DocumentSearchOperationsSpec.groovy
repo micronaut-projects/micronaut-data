@@ -265,6 +265,17 @@ class DocumentSearchOperationsSpec extends Specification {
         !transport.lastBody().contains('"search_after"')
     }
 
+    void "a cursored page keeps the method's OrderBy ahead of the pageable sort and the id tiebreaker"() {
+        given:
+        notes.saveAll([new Note("Coffee", "Roasting beans", 120), new Note("Bread", "Sourdough", 80)])
+
+        when:
+        notes.findByPagesLessThanOrderByTitleDesc(500, CursoredPageable.from(10, Sort.of(Sort.Order.asc("pages"))))
+
+        then:
+        transport.lastBody().contains('"sort":[{"title.keyword":{"order":"desc"}},{"pages":{"order":"asc"}},{"id":{"order":"asc"}}]')
+    }
+
     void "deletes remove documents by id and by query"() {
         given:
         def saved = notes.saveAll([new Note("Coffee", "Roasting beans", 120), new Note("Bread", "Sourdough", 80), new Note("Tea", "Green", 40)])
