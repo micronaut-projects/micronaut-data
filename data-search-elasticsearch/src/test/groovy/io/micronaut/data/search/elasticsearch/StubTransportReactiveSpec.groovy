@@ -70,14 +70,27 @@ class StubTransportReactiveSpec extends Specification {
         def executor = context.getBean(SearchQueryExecutor, Qualifiers.byName("stub"))
         def transport = context.getBean(SearchTransport, Qualifiers.byName("stub"))
 
-        when:
+        def saved = repository.saveAll([
+                new Book("Raw Query Basics", "Bodies as written", "Writer", 10),
+                new Book("Raw Query Advanced", "More bodies", "Writer", 20),
+        ]).collectList().block()
+
+        when: "the stub returns every document of the index, whatever the body"
         def results = executor.search(Book, '{"query": {"match_all": {}}}')
+        def searchBody = transport.bodies.last()
         def found = executor.find(Book, '{"query": {"match_all": {}}, "size": 1}')
+        def findBody = transport.bodies.last()
 
         then:
-        results.results().size() == found.size() || results.results().isEmpty()
-        transport.bodies.last().contains('"match_all":{}')
-        executor.count(Book, '{"query": {"match_all": {}}}') == repository.count().block()
+        results.results()*.entity()*.title as Set == ["Raw Query Basics", "Raw Query Advanced"] as Set
+        results.results().every { it.score().value() == 1d }
+        found*.title as Set == ["Raw Query Basics", "Raw Query Advanced"] as Set
+        searchBody.contains('"match_all":{}')
+        findBody.contains('"size":1')
+        executor.count(Book, '{"query": {"match_all": {}}}') == 2L
+
+        cleanup:
+        repository.deleteAll(saved).block()
     }
 
     void "the index is named after @Searchable(name) when set"() {
@@ -164,6 +177,9 @@ class StubTransportReactiveSpec extends Specification {
     }
 
     void "saveAll indexes in bulk through the async transport"() {
+        given:
+        def bulkCalls = context.getBean(StubSearchTransport).calls.count { it == "async:bulkIndex" }
+
         when:
         def saved = repository.saveAll([
                 new Book("Baking Bread", "Sourdough", "Dough", 220),
@@ -174,7 +190,7 @@ class StubTransportReactiveSpec extends Specification {
         saved.size() == 2
         saved.every { it.id != null }
         repository.count().block() == 2L
-        context.getBean(StubSearchTransport).calls.count { it == "async:bulkIndex" } == 1
+        context.getBean(StubSearchTransport).calls.count { it == "async:bulkIndex" } == bulkCalls + 1
 
         cleanup:
         repository.deleteAll().block()
