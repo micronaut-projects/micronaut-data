@@ -41,7 +41,6 @@ import io.micronaut.data.model.query.BindingParameter;
 import io.micronaut.data.model.query.builder.QueryBuilder;
 import io.micronaut.data.model.query.builder.QueryParameterBinding;
 import io.micronaut.data.model.query.builder.QueryResult;
-import io.micronaut.data.model.query.builder.sql.TextSearchDialect;
 import io.micronaut.data.model.query.builder.sql.VectorScoringDialectSupport;
 import io.micronaut.data.model.query.impl.AdvancedPredicateVisitor;
 import io.micronaut.data.model.search.MatchMode;
@@ -279,14 +278,13 @@ public final class DocumentSearchQueryBuilder implements QueryBuilder {
     }
 
     /**
-     * The persisted field name of a property path: the keys Serde writes, honouring
-     * {@code @SerdeConfig(property)} and {@code @JsonProperty}.
+     * The persisted field name of a property path.
      *
      * @param propertyPath The property path
      * @return The field name
      */
     public static String fieldName(PersistentPropertyPath propertyPath) {
-        return TextSearchDialect.jsonKeyPath(propertyPath);
+        return propertyPath.getPath();
     }
 
     /**
