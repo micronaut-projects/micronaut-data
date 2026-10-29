@@ -16,6 +16,10 @@ snippet::example.ArticleRepositorySpec[project-base="doc-examples/neo4j-example"
 <2> The first update matches version `0` and stores version `1`.
 <3> The second update still expects version `0`, so it fails.
 
+Saving a new versioned entity whose assigned identifier is already taken by a node fails with `EntityExistsException` rather than overwrite the node and reset its version. The check reads the node before creating it, so for inserts that race each other, keep the unique index on the identifier described below.
+
+The node is locked before its version is compared, so of two transactions that update or delete the node from the same version, the one that waits for the lock fails with `OptimisticLockException` once the other commits.
+
 Reactive repositories check the version the same way, failing their publisher with `OptimisticLockException`. Oracle property graph repositories write through Micronaut Data JDBC or R2DBC, which check the version of the row.
 
 == Indexes and unique constraints

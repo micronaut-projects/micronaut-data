@@ -389,7 +389,7 @@ public abstract class AbstractReactiveGraphRepositoryOperations implements React
         }
 
         private Mono<T> writeNode(T instance) {
-            AbstractGraphRepositoryOperations.NodeWrite write = operations.planNodeWrite(persistentEntity, instance, previousVersion);
+            AbstractGraphRepositoryOperations.NodeWrite write = operations.planNodeWrite(persistentEntity, instance, insert, previousVersion);
             return persister.run(write.query()).flatMap(result -> {
                 Object generatedId = operations.generatedId(persistentEntity, write, result.records());
                 RuntimePersistentProperty<T> identity = persistentEntity.getIdentity();

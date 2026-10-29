@@ -151,16 +151,16 @@ class CypherCriteriaQuerySpec extends Specification {
         builder.buildInsert(AnnotationMetadata.EMPTY_METADATA, null) == null
     }
 
-    void "test versioned writes match the version the entity was read with"() {
+    void "test versioned writes lock the node and then match the version the entity was read with"() {
         given:
         def note = new TestEntityRegistry().getEntity(Note)
         def builder = new CypherQueryBuilder()
 
         expect:
         builder.buildUpdateVersionedNodeQuery(note, ["code", "text", "version"]) ==
-            'MATCH (n:Note) WHERE n.code = $id AND n.version = $version SET n.code = $v0, n.text = $v1, n.version = $v2 RETURN n.code AS id'
+            'MATCH (n:Note) WHERE n.code = $id SET n.__lock = true REMOVE n.__lock WITH n WHERE n.version = $version SET n.code = $v0, n.text = $v1, n.version = $v2 RETURN n.code AS id'
         builder.buildDeleteVersionedNodeQuery(note) ==
-            'MATCH (n:Note) WHERE n.code = $id AND n.version = $version DETACH DELETE n RETURN count(*) AS result'
+            'MATCH (n:Note) WHERE n.code = $id SET n.__lock = true REMOVE n.__lock WITH n WHERE n.version = $version DETACH DELETE n RETURN count(*) AS result'
         new AgeCypherQueryBuilder().buildDeleteVersionedNodeQuery(note).contains('n.version = $version')
 
         when:
@@ -168,6 +168,16 @@ class CypherCriteriaQuerySpec extends Specification {
 
         then:
         thrown(IllegalArgumentException)
+    }
+
+    void "test an insert with an assigned identifier creates the node only when none has the identifier"() {
+        given:
+        def note = new TestEntityRegistry().getEntity(Note)
+
+        expect:
+        new CypherQueryBuilder().buildInsertNodeQuery(note, ["text", "version"]) ==
+            'OPTIONAL MATCH (existing:Note) WHERE existing.code = $id WITH count(existing) AS found WHERE found = 0 CREATE (n:Note {code: $id}) SET n.text = $v0, n.version = $v1 RETURN n.code AS id'
+        new AgeCypherQueryBuilder().buildInsertNodeQuery(note, ["text", "version"]).contains('CREATE (n:Note {code: $id})')
     }
 
     void "test index statements"() {

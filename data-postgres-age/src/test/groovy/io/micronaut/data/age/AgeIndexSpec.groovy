@@ -11,6 +11,7 @@ import jakarta.inject.Inject
 import spock.lang.Specification
 
 import javax.sql.DataSource
+import java.sql.Types
 
 @MicronautTest(transactional = false)
 @Property(name = "micronaut.data.age.create-indexes", value = "true")
@@ -62,4 +63,29 @@ class AgeIndexSpec extends Specification {
         accountRepository.count() == 1
     }
 
+    void "a lookup by an indexed property scans the index"() {
+        given:
+        accountRepository.save(new Account("ada@example.com", "UK", "London", "ada"))
+        accountRepository.save(new Account("grace@example.com", "US", "New York", "grace"))
+
+        when: "sequential scans are ruled out, so the plan scans the index when AGE's property access matches it"
+        String plan = DelegatingDataSource.unwrapDataSource(dataSource).connection.withCloseable { connection ->
+            connection.createStatement().withCloseable { statement ->
+                statement.execute("LOAD 'age'")
+                statement.execute('SET search_path = ag_catalog, "$user", public')
+                statement.execute("SET enable_seqscan = off")
+            }
+            def explain = connection.prepareStatement('EXPLAIN SELECT * FROM cypher(\'tck\', $$ MATCH (n:Account) WHERE n.handle = $handle RETURN n $$, ?) AS (n agtype)')
+            explain.setObject(1, '{"handle": "ada"}', Types.OTHER)
+            def resultSet = explain.executeQuery()
+            def lines = []
+            while (resultSet.next()) {
+                lines << resultSet.getString(1)
+            }
+            lines.join('\n')
+        }
+
+        then:
+        plan.contains('Account_handle_index')
+    }
 }

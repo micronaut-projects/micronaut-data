@@ -87,6 +87,20 @@ public interface GraphQueryBuilder extends QueryBuilder {
     String buildWriteNodeQuery(PersistentEntity entity, List<String> propertyNames, boolean idPresent);
 
     /**
+     * Builds the query that inserts a node with an assigned identifier, which writes nothing and returns no rows when
+     * a node with the identifier exists. The parameters are bound as in
+     * {@link #buildWriteNodeQuery(PersistentEntity, List, boolean)}.
+     *
+     * @param entity        The entity
+     * @param propertyNames The stored names of the properties to write
+     * @return The query
+     * @since 5.3.0
+     */
+    default String buildInsertNodeQuery(PersistentEntity entity, List<String> propertyNames) {
+        throw new UnsupportedOperationException("Node inserts are not supported by " + getClass().getSimpleName());
+    }
+
+    /**
      * Builds the query that deletes all nodes of an entity with their relationships, returning their count.
      *
      * @param entity The entity

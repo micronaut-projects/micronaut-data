@@ -23,6 +23,7 @@ import io.micronaut.core.annotation.Internal;
 import io.micronaut.data.connection.ConnectionDefinition;
 import io.micronaut.data.connection.ConnectionOperations;
 import io.micronaut.data.exceptions.DataAccessException;
+import io.micronaut.data.exceptions.OptimisticLockException;
 import io.micronaut.data.graph.model.query.builder.AgeCypherQueryBuilder;
 import io.micronaut.core.type.Argument;
 import io.micronaut.data.graph.model.query.builder.AgeStatements;
@@ -229,8 +230,25 @@ final class DefaultAgeRepositoryOperations extends AbstractGraphRepositoryOperat
                 return new GraphResult(records, -1);
             }
         } catch (SQLException e) {
-            throw new DataAccessException("Error executing Cypher query on Apache AGE [" + sql + "]: " + e.getMessage(), e);
+            String message = "Error executing Cypher query on Apache AGE [" + sql + "]: " + e.getMessage();
+            if (isConcurrentUpdate(e)) {
+                throw new OptimisticLockException(message, e);
+            }
+            throw new DataAccessException(message, e);
         }
+    }
+
+    /**
+     * Whether a statement failed because the vertex or edge it writes was updated or deleted by a transaction that
+     * committed while the statement waited for its lock. AGE fails the statement rather than re-evaluate it on the
+     * new row version, so the write is lost to neither transaction.
+     *
+     * @param e The error
+     * @return Whether the error is a concurrent update
+     */
+    private static boolean isConcurrentUpdate(SQLException e) {
+        String message = e.getMessage();
+        return message != null && (message.contains("Entity failed to be updated") || message.contains("Entity could not be locked for updating"));
     }
 
     /**
