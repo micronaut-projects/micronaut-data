@@ -23,6 +23,7 @@ import io.micronaut.core.annotation.Internal;
 import io.micronaut.data.connection.ConnectionDefinition;
 import io.micronaut.data.connection.ConnectionOperations;
 import io.micronaut.data.exceptions.DataAccessException;
+import io.micronaut.data.exceptions.OptimisticLockException;
 import io.micronaut.data.graph.model.query.builder.AgeCypherQueryBuilder;
 import io.micronaut.data.graph.model.query.builder.AgeStatements;
 import io.micronaut.json.JsonMapper;
@@ -167,9 +168,44 @@ final class DefaultAgeRepositoryOperations extends AbstractGraphRepositoryOperat
         return run(annotationMetadata, work);
     }
 
+    /**
+     * Runs work that writes in the current transaction, or else in a transaction of its own: a save writes its node,
+     * related nodes and relationships one statement at a time, and a batch one node at a time, so that without a
+     * transaction a failing statement would leave the statements before it committed.
+     */
     @Override
     protected <R> R write(AnnotationMetadata annotationMetadata, Function<GraphSession, R> work) {
-        return run(annotationMetadata, work);
+        return connectionOperations.findConnectionStatus()
+            .map(status -> work.apply(session(status.getConnection())))
+            .orElseGet(() -> connectionOperations.execute(
+                ConnectionDefinition.DEFAULT.withAnnotationMetadata(annotationMetadata),
+                status -> inTransaction(status.getConnection(), work)
+            ));
+    }
+
+    private <R> R inTransaction(Connection connection, Function<GraphSession, R> work) {
+        try {
+            if (!connection.getAutoCommit()) {
+                return work.apply(session(connection));
+            }
+            connection.setAutoCommit(false);
+            try {
+                R result = work.apply(session(connection));
+                connection.commit();
+                return result;
+            } catch (RuntimeException e) {
+                try {
+                    connection.rollback();
+                } catch (SQLException rollbackError) {
+                    e.addSuppressed(rollbackError);
+                }
+                throw e;
+            } finally {
+                connection.setAutoCommit(true);
+            }
+        } catch (SQLException e) {
+            throw new DataAccessException("Error running an Apache AGE write in a transaction: " + e.getMessage(), e);
+        }
     }
 
     private <R> R run(AnnotationMetadata annotationMetadata, Function<GraphSession, R> work) {
@@ -222,8 +258,25 @@ final class DefaultAgeRepositoryOperations extends AbstractGraphRepositoryOperat
                 return new GraphResult(records, -1);
             }
         } catch (SQLException e) {
-            throw new DataAccessException("Error executing Cypher query on Apache AGE [" + sql + "]: " + e.getMessage(), e);
+            String message = "Error executing Cypher query on Apache AGE [" + sql + "]: " + e.getMessage();
+            if (isConcurrentUpdate(e)) {
+                throw new OptimisticLockException(message, e);
+            }
+            throw new DataAccessException(message, e);
         }
+    }
+
+    /**
+     * Whether a statement failed because the vertex or edge it writes was updated or deleted by a transaction that
+     * committed while the statement waited for its lock. AGE fails the statement rather than re-evaluate it on the
+     * new row version, so the write is lost to neither transaction.
+     *
+     * @param e The error
+     * @return Whether the error is a concurrent update
+     */
+    private static boolean isConcurrentUpdate(SQLException e) {
+        String message = e.getMessage();
+        return message != null && (message.contains("Entity failed to be updated") || message.contains("Entity could not be locked for updating"));
     }
 
     @Override

@@ -20,6 +20,7 @@ import io.micronaut.core.annotation.Internal;
 import io.micronaut.data.connection.ConnectionDefinition;
 import io.micronaut.data.connection.reactive.ReactorConnectionOperations;
 import io.micronaut.data.exceptions.DataAccessException;
+import io.micronaut.data.exceptions.OptimisticLockException;
 import io.micronaut.data.graph.model.query.builder.AgeStatements;
 import io.micronaut.data.graph.runtime.GraphRecord;
 import io.micronaut.data.graph.runtime.GraphResult;
@@ -348,7 +349,22 @@ final class DefaultAgeReactorRepositoryOperations extends AbstractReactiveGraphR
                         }
                         return new GraphRecord(columns, values);
                     }));
-            }).onErrorMap(R2dbcException.class, e -> new DataAccessException("Error executing Cypher query on Apache AGE [" + sql + "]: " + e.getMessage(), e));
+            }).onErrorMap(R2dbcException.class, e -> {
+                String message = "Error executing Cypher query on Apache AGE [" + sql + "]: " + e.getMessage();
+                return isConcurrentUpdate(e) ? new OptimisticLockException(message, e) : new DataAccessException(message, e);
+            });
+        }
+
+        /**
+         * Whether a statement failed because the vertex or edge it writes was updated or deleted by a transaction
+         * that committed while the statement waited for its lock, as the JDBC operations check.
+         *
+         * @param e The error
+         * @return Whether the error is a concurrent update
+         */
+        private static boolean isConcurrentUpdate(R2dbcException e) {
+            String message = e.getMessage();
+            return message != null && (message.contains("Entity failed to be updated") || message.contains("Entity could not be locked for updating"));
         }
 
         @Override
