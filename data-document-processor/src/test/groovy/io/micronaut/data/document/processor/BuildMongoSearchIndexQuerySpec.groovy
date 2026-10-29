@@ -109,4 +109,18 @@ ${methods}
         def e = thrown(RuntimeException)
         e.message.contains("cannot be combined with OR")
     }
+
+    void "a delete or an update selected by a search predicate is rejected at compile time"() {
+        when:
+        articleRepository("""
+    ${method};
+""")
+
+        then:
+        def e = thrown(RuntimeException)
+        e.message.contains("A MongoDB Search predicate cannot select the documents of")
+
+        where:
+        method << ["long deleteByTitleSearch(String q)", "long updateByTitleSearch(String q, String author)"]
+    }
 }

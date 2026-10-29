@@ -49,7 +49,7 @@ When `micronaut.data.mongodb.create-collections` is enabled, Micronaut Data crea
 snippet::example.ArticleRepository[project-base="doc-examples/mongo-search-example", source="main", tags="repository"]
 
 <1> A property keyword searches only that property with `$search`, unlike `$text`.
-<2> `SearchPrefix` renders a `wildcard` operator over the analyzed field.
+<2> `SearchPrefix` renders a `wildcard` operator over the analyzed field. The wildcard matches the indexed tokens, which a language analyzer such as `lucene.english` has stemmed, so a prefix longer than the stem, such as `runni` for `running` (indexed as `run`), finds nothing. For search-as-you-type, index the field with `lucene.standard` through `@MongoSearchIndex(analyzer)`, or keep prefixes short.
 <3> `SearchFuzzy` renders a `text` operator with `fuzzy: { maxEdits: 1 }`.
 <4> A trailing api:data.model.vector.search.Score[] parameter keeps the hits whose `searchScore` is at least its value.
 <5> The other predicates follow the `$search` stage in a `$match`; a search predicate cannot be part of an `OR`.

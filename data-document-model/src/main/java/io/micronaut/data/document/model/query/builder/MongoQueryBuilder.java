@@ -218,6 +218,17 @@ public final class MongoQueryBuilder implements QueryBuilder {
     }
 
     /** Adds the {@code $search} stage of a search predicate, with its score and highlight metadata as fields. */
+    /**
+     * A MongoDB Search predicate is an aggregation stage, not part of the filter a delete or an update
+     * takes, so without this check it would select every document of the collection.
+     */
+    private static void rejectSearchSelection(QueryState queryState, String operation) {
+        if (queryState.searchOperator != null) {
+            throw new UnsupportedOperationException("A MongoDB Search predicate cannot select the documents of " + operation
+                + ": $search is an aggregation stage and a filter cannot hold it. Find the entities first and delete or update them by id.");
+        }
+    }
+
     private void appendSearchStages(QueryState queryState, List<Map<String, Object>> pipeline) {
         if (queryState.searchOperator == null) {
             return;
@@ -869,6 +880,7 @@ public final class MongoQueryBuilder implements QueryBuilder {
             predicateQuery = toJsonString(
                 buildWhereClause(predicate, queryState)
             );
+            rejectSearchSelection(queryState, "an update");
         } else {
             predicateQuery = "";
         }
@@ -975,6 +987,7 @@ public final class MongoQueryBuilder implements QueryBuilder {
             predicateQuery = toJsonString(
                 buildWhereClause(predicate, queryState)
             );
+            rejectSearchSelection(queryState, "a delete");
         }
 
         return QueryResult.of(
