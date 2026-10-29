@@ -522,7 +522,7 @@ public final class GraphPathMethodMatcher implements MethodMatcher {
         return new EndpointProperties(start, end);
     }
 
-    private static PersistentProperty resolveEndpointProperty(SourcePersistentEntity entity, String token) {
+    private static @Nullable PersistentProperty resolveEndpointProperty(SourcePersistentEntity entity, String token) {
         String propertyName = NameUtils.decapitalize(token);
         if (entity.hasIdentity() && entity.getIdentity().getName().equals(propertyName)) {
             // Between<Id> matches by the identity, which the query builders render as the native id expression
