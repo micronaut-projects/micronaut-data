@@ -249,7 +249,6 @@ public final class MongoQueryBuilder implements QueryBuilder {
         }
     }
 
-    /** Adds the {@code $search} stage of a search predicate, with its score and highlight metadata as fields. */
     /**
      * A MongoDB Search predicate is an aggregation stage, not part of the filter a delete or an update
      * takes, so without this check it would select every document of the collection.
@@ -261,6 +260,7 @@ public final class MongoQueryBuilder implements QueryBuilder {
         }
     }
 
+    /** Adds the {@code $search} stage of a search predicate, with its score and highlight metadata as fields. */
     private void appendSearchStages(QueryState queryState, List<Map<String, Object>> pipeline) {
         if (queryState.searchOperator == null) {
             return;
