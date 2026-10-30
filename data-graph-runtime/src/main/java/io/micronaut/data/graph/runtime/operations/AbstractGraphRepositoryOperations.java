@@ -797,11 +797,7 @@ public abstract class AbstractGraphRepositoryOperations extends AbstractReposito
         // Saving merges a node on its assigned identifier, but a new versioned entity must not overwrite the node and
         // its version
         boolean assignedInsert = insert && version != null && id != null && identity != null && !GraphEntities.isNativeId(identity);
-        String kind = versioned ? "writeVersioned:" : assignedInsert ? "insert:" : "write:";
-        String key = kind + entity.getName() + ":" + (id != null) + ":" + names;
-        String query = queryCache.computeIfAbsent(key, k -> versioned
-            ? queryBuilder.buildUpdateVersionedNodeQuery(entity, names)
-            : assignedInsert ? queryBuilder.buildInsertNodeQuery(entity, names) : queryBuilder.buildWriteNodeQuery(entity, names, id != null));
+        String query = nodeWriteQuery(entity, names, id != null, versioned, assignedInsert);
         Map<String, Object> parameters = new LinkedHashMap<>();
         int i = 0;
         for (Object value : properties.values()) {
@@ -814,6 +810,17 @@ public abstract class AbstractGraphRepositoryOperations extends AbstractReposito
             parameters.put(CypherQueryBuilder.VERSION_PARAMETER, mapper.writeValue(version, previousVersion));
         }
         return new NodeWrite(new GraphQuery(query, parameters), id, versioned ? previousVersion : null, assignedInsert);
+    }
+
+    private String nodeWriteQuery(RuntimePersistentEntity<?> entity, List<String> names, boolean idPresent, boolean versioned, boolean assignedInsert) {
+        String kind = versioned ? "writeVersioned:" : assignedInsert ? "insert:" : "write:";
+        String key = kind + entity.getName() + ":" + idPresent + ":" + names;
+        return queryCache.computeIfAbsent(key, k -> {
+            if (versioned) {
+                return queryBuilder.buildUpdateVersionedNodeQuery(entity, names);
+            }
+            return assignedInsert ? queryBuilder.buildInsertNodeQuery(entity, names) : queryBuilder.buildWriteNodeQuery(entity, names, idPresent);
+        });
     }
 
     /**
