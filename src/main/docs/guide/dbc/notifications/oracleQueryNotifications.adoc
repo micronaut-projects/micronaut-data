@@ -6,9 +6,6 @@ Oracle Database registration options through ann:data.jdbc.annotation.OracleChan
 When Oracle Database reports a change, the listener receives an api:data.notification.ChangeEvent[] containing
 the reported operation, optional current entity state, and optional provider-specific metadata.
 
-The listener annotation and event contracts are provided by `micronaut-data-model`.
-Oracle notification configuration and metadata are provided by `micronaut-data-jdbc`.
-
 == Prerequisites
 
 Query notifications require Micronaut Data JDBC and the Oracle JDBC driver:

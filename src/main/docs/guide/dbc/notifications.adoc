@@ -13,6 +13,5 @@ micronaut:
         enabled: false
 ----
 
-This setting disables automatic notification registration and startup datasource/provider validation for all JDBC
-datasources. Listener beans remain available, but receive no database notifications. Compile-time validation of listener
-methods still applies. When notifications are enabled, missing datasources or notification providers cause startup to fail.
+When disabled, change listener methods receive no database notifications from any JDBC datasource. This allows the
+application to run against databases that do not support notifications.
