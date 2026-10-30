@@ -16,9 +16,6 @@
 package io.micronaut.data.processor.visitors.finders;
 
 import io.micronaut.core.annotation.Internal;
-import io.micronaut.data.annotation.TypeRole;
-import io.micronaut.data.model.PersistentEntityUtils;
-import io.micronaut.data.processor.visitors.MatchFailedException;
 import io.micronaut.data.processor.visitors.MethodMatchContext;
 import io.micronaut.inject.visitor.VisitorContext;
 import org.jspecify.annotations.Nullable;
@@ -46,7 +43,6 @@ public abstract class AbstractMethodMatcher implements MethodMatcher {
     protected static final String FOR_UPDATE = "ForUpdate";
     protected static final String RETURNING = "Returning";
 
-    private static final Pattern PYTHON_QUERY_NAME = Pattern.compile("^([a-z]+)(_all)?(?:_by_(.+))?$");
     private static final Pattern PYTHON_QUERY_PREFIX = Pattern.compile("^([a-z][^A-Z_]*)_");
 
     private final MethodNameParser parser;
@@ -67,76 +63,18 @@ public abstract class AbstractMethodMatcher implements MethodMatcher {
                 if (parser.tryMatch(prefix.group(1)).isEmpty()) {
                     return null;
                 }
-                return match(matchContext, pythonQueryMatches(methodName, matchContext));
+                return match(matchContext, PythonMethodNameParser.parse(parser, methodName, matchContext));
             }
         }
         List<MethodNameParser.Match> matches = parser.tryMatch(methodName, unmatched -> {
             if (python && unmatched.contains("_by_")) {
-                throw unsupportedPythonQuery(methodName);
+                throw PythonMethodNameParser.unsupported(methodName);
             }
         });
         if (matches.isEmpty()) {
             return null;
         }
         return match(matchContext, matches);
-    }
-
-    private List<MethodNameParser.Match> pythonQueryMatches(String methodName, MethodMatchContext matchContext) {
-        Matcher matcher = PYTHON_QUERY_NAME.matcher(methodName);
-        if (!matcher.matches()) {
-            if (!methodName.contains("_by_")) {
-                return parser.tryMatch(methodName);
-            }
-            throw unsupportedPythonQuery(methodName);
-        }
-        String prefix = matcher.group(1) + (matcher.group(2) == null ? "" : ALL[0]);
-        String predicate = matcher.group(3);
-        if (predicate == null) {
-            return parser.tryMatch(prefix);
-        }
-        String restriction = "Equals";
-        // A literal property or association path takes precedence over the InList operator.
-        if (!isPropertyPath(matchContext, predicate)) {
-            if (!predicate.endsWith("_in_list")) {
-                throw unsupportedPythonQuery(methodName);
-            }
-            String property = predicate.substring(0, predicate.length() - "_in_list".length());
-            if (!isPropertyPath(matchContext, property)) {
-                throw unsupportedPythonQuery(methodName);
-            }
-            predicate = property;
-            restriction = "InList";
-        }
-        // Parse the structure without exposing a native property name to camelCase keyword parsing.
-        List<MethodNameParser.Match> matches = parser.tryMatch(prefix + BY + "property");
-        if (matches.stream().noneMatch(m -> m.id() == QueryMatchId.PREDICATE)) {
-            throw unsupportedPythonQuery(methodName);
-        }
-        String property = predicate;
-        matches.replaceAll(m -> m.id() == QueryMatchId.PREDICATE ? new MethodNameParser.Match(QueryMatchId.PREDICATE, property) : m);
-        matches.add(new MethodNameParser.Match(QueryMatchId.LITERAL_PROPERTY_RESTRICTION, restriction));
-        return matches;
-    }
-
-    private static MatchFailedException unsupportedPythonQuery(String methodName) {
-        return new MatchFailedException("Unsupported Python snake_case derived query '" + methodName
-            + "'. Supported grammar is <prefix>[_all][_by_<property>[_in_list]] with an existing property or association path; "
-            + "use the camelCase form for other operators.");
-    }
-
-    private static boolean isPropertyPath(MethodMatchContext matchContext, String predicate) {
-        if (!matchContext.hasRootEntity()) {
-            return false;
-        }
-        if (TypeRole.ID.equals(predicate) && (matchContext.getRootEntity().hasIdentity() || matchContext.getRootEntity().hasCompositeIdentity())) {
-            return true;
-        }
-        try {
-            return PersistentEntityUtils.getPersistentPropertyPath(matchContext.getRootEntity(), predicate).isPresent();
-        } catch (IllegalArgumentException _) {
-            // An unresolved association path may still end in the InList operator.
-            return false;
-        }
     }
 
     /**
