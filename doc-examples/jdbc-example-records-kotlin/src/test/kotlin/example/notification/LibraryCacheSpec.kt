@@ -144,7 +144,7 @@ class LibraryCacheSpec {
     }
 
     private fun <T> withContext(properties: Map<String, Any>, action: (ApplicationContext) -> T): T {
-        val context = ApplicationContext.run(properties)
+        val context = ApplicationContext.run(properties, "oracle-cqn")
         return try {
             action(context)
         } finally {

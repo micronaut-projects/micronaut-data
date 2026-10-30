@@ -14,7 +14,7 @@ from example.notification.LargeLibraryCache import LargeLibraryCache
 from example.notification.LibraryRepository import LibraryRepository
 
 
-@MicronautTest(transactional=False)
+@MicronautTest(transactional=False, environments=["oracle-cqn"])
 class LibraryCacheSpec:
 
     @Test
@@ -161,7 +161,7 @@ class LibraryCacheSpec:
         javaProperties = HashMap()
         for key, value in properties.items():
             javaProperties.put(key, value)
-        return ApplicationContext.run(javaProperties)
+        return ApplicationContext.run(javaProperties, "oracle-cqn")
 
     def waitUntil(self, condition: Callable[[], bool]):
         end = System.currentTimeMillis() + 10000

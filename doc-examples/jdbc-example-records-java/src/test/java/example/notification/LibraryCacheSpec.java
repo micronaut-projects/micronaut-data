@@ -27,7 +27,7 @@ class LibraryCacheSpec {
             "datasources.default.username", "system",
             "datasources.default.password", "test",
             "datasources.default.schema-generate", "NONE"
-        ))) {
+        ), "oracle-cqn")) {
             administratorContext.getBean(DefaultJdbcRepositoryOperations.class).execute(connection -> {
                 try (Statement statement = connection.createStatement()) {
                     statement.execute("GRANT CHANGE NOTIFICATION TO test");
@@ -41,7 +41,7 @@ class LibraryCacheSpec {
     void prepareData() {
         try (ApplicationContext context = ApplicationContext.run(Map.of(
             "datasources.default.schema-generate", "CREATE"
-        ))) {
+        ), "oracle-cqn")) {
             LibraryRepository repository = context.getBean(LibraryRepository.class);
             repository.save(new Library(null, "Library 1", "library1@example.com", 5_000, new Point(20.46513, 44.80401)));
             repository.save(new Library(null, "Library 2", "library2@example.com", 9_000, new Point(19.83355, 45.26714)));
@@ -54,7 +54,7 @@ class LibraryCacheSpec {
     void removeData() {
         try (ApplicationContext context = ApplicationContext.run(Map.of(
             "datasources.default.schema-generate", "NONE"
-        ))) {
+        ), "oracle-cqn")) {
             context.getBean(LibraryRepository.class).deleteAll();
         }
     }
@@ -64,7 +64,7 @@ class LibraryCacheSpec {
         try (ApplicationContext context = ApplicationContext.run(Map.of(
             "query-notification.object.enabled", "true",
             "datasources.default.schema-generate", "NONE"
-        ))) {
+        ), "oracle-cqn")) {
             LibraryRepository repository = context.getBean(LibraryRepository.class);
             LibraryCache libraryCache = context.getBean(LibraryCache.class);
 
@@ -129,7 +129,7 @@ class LibraryCacheSpec {
         try (ApplicationContext context = ApplicationContext.run(Map.of(
             "query-notification.query.enabled", "true",
             "datasources.default.schema-generate", "NONE"
-        ))) {
+        ), "oracle-cqn")) {
             LibraryRepository repository = context.getBean(LibraryRepository.class);
             LargeLibraryCache libraryCache = context.getBean(LargeLibraryCache.class);
 

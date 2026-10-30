@@ -146,7 +146,7 @@ class LibraryCacheSpec extends Specification {
     }
 
     private static <T> T withContext(Map<String, Object> properties, Closure<T> action) {
-        ApplicationContext context = ApplicationContext.run(properties)
+        ApplicationContext context = ApplicationContext.run(properties, 'oracle-cqn')
         try {
             action.call(context)
         } finally {
