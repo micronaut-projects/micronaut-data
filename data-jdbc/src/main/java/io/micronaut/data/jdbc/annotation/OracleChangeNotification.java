@@ -60,8 +60,10 @@ import java.lang.annotation.Target;
  * an invalidation event after recovery succeeds. Registrations are also unregistered during
  * application shutdown.</p>
  *
- * <p>Oracle JDBC client-initiated notification connections are enabled by default. Set the
- * {@code DCN_CLIENT_INIT_CONNECTION} registration property to {@code false} to use
+ * <p>Oracle change notifications require Oracle JDBC 23.26.3.0.0 or later. The driver version is
+ * checked during application startup before notification registration.
+ * Client-initiated notification connections are enabled by default and require Oracle Database 19c or later.
+ * Set the {@code DCN_CLIENT_INIT_CONNECTION} registration property to {@code false} to use
  * server-initiated notification connections instead.</p>
  *
  * @since 5.3.0

@@ -8,14 +8,17 @@ the reported operation, optional current entity state, and optional provider-spe
 
 == Prerequisites
 
-Query notifications require Micronaut Data JDBC and the Oracle JDBC driver:
+Query notifications require Micronaut Data JDBC and Oracle JDBC 23.26.3.0.0 or later:
 
 dependency:com.oracle.database.jdbc:ojdbc11[scope="implementation"]
 
 This makes `OracleConnection.DCN_*` and `OracleConnection.NTF_*` constants available when configuring annotation properties.
 
-Micronaut Data uses client-initiated notification connections by default. This mode requires both Oracle Database 19c
-or later and Oracle JDBC 19c or later. See https://docs.oracle.com/en/database/oracle/oracle-database/19/jjdbc/continuos-query-notification.html[Oracle's Continuous Query Notification documentation].
+Micronaut Data checks the JDBC driver version during application startup before creating notification registrations.
+An older or unrecognized driver version causes startup to fail with an error identifying the detected and required versions.
+
+Client-initiated notification connections are enabled by default and require Oracle Database 19c or later.
+See https://docs.oracle.com/en/database/oracle/oracle-database/19/jjdbc/continuos-query-notification.html[Oracle's Continuous Query Notification documentation].
 
 The datasource user must have Oracle Database's `CHANGE NOTIFICATION` privilege. A database administrator can grant it with:
 

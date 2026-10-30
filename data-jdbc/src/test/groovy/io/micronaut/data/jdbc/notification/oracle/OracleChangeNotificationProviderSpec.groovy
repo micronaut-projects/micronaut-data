@@ -18,6 +18,7 @@ package io.micronaut.data.jdbc.notification.oracle
 import io.micronaut.context.ApplicationContext
 import io.micronaut.context.BeanContext
 import io.micronaut.context.event.ShutdownEvent
+import io.micronaut.data.exceptions.DataAccessException
 import io.micronaut.data.jdbc.operations.JdbcRepositoryOperations
 import io.micronaut.inject.qualifiers.Qualifiers
 import io.micronaut.scheduling.TaskExecutors
@@ -25,6 +26,7 @@ import io.micronaut.scheduling.TaskScheduler
 import spock.lang.Specification
 
 import java.sql.Connection
+import java.sql.DatabaseMetaData
 import java.sql.SQLException
 import java.time.Duration
 import java.util.concurrent.Callable
@@ -38,17 +40,57 @@ import java.util.concurrent.atomic.AtomicInteger
 
 class OracleChangeNotificationProviderSpec extends Specification {
 
-    void "supports only Oracle JDBC connections (#oracleConnection)"() {
+    void "does not inspect driver metadata for non-Oracle connections"() {
         given:
         def provider = provider()
         def connection = Mock(Connection)
-        connection.isWrapperFor(oracle.jdbc.OracleConnection) >> oracleConnection
+        connection.isWrapperFor(oracle.jdbc.OracleConnection) >> false
+
+        when:
+        def supported = provider.supports(connection)
+
+        then:
+        !supported
+        0 * connection.getMetaData()
+    }
+
+    void "supports Oracle JDBC driver #driverVersion"() {
+        given:
+        def provider = provider()
+        def connection = Mock(Connection)
+        def metadata = Mock(DatabaseMetaData)
+        connection.isWrapperFor(oracle.jdbc.OracleConnection) >> true
+        connection.metaData >> metadata
+        metadata.driverVersion >> driverVersion
 
         expect:
-        provider.supports(connection) == oracleConnection
+        provider.supports(connection)
 
         where:
-        oracleConnection << [true, false]
+        driverVersion << ['23.26.3.0.0', '23.26.3.0.1', '23.26.10.0.0', '23.27.0.0.0', '24.1.0.0.0']
+    }
+
+    void "rejects unsupported Oracle JDBC driver #driverVersion before registration"() {
+        given:
+        def provider = provider()
+        def connection = Mock(Connection)
+        def metadata = Mock(DatabaseMetaData)
+        connection.isWrapperFor(oracle.jdbc.OracleConnection) >> true
+        connection.metaData >> metadata
+        metadata.driverVersion >> driverVersion
+
+        when:
+        provider.supports(connection)
+
+        then:
+        def failure = thrown(DataAccessException)
+        failure.message.contains('Oracle change notifications require Oracle JDBC 23.26.3.0.0 or later')
+        failure.message.contains("found driver version [$driverVersion]")
+        0 * connection.unwrap(_)
+        0 * connection.createStatement()
+
+        where:
+        driverVersion << ['19.3.0.0.0', '21.11.0.0.0', '23.9.0.25.07', '23.26.1.0.0', '23.26.2.0.0', '', 'unknown', null]
     }
 
     void "propagates connection capability check failures"() {

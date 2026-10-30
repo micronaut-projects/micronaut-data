@@ -22,6 +22,8 @@ import io.micronaut.context.event.ApplicationEventListener;
 import io.micronaut.context.event.ShutdownEvent;
 import io.micronaut.core.annotation.Order;
 import io.micronaut.core.order.Ordered;
+import io.micronaut.core.version.SemanticVersion;
+import io.micronaut.data.exceptions.DataAccessException;
 import io.micronaut.data.jdbc.notification.ChangeListenerMethod;
 import io.micronaut.data.jdbc.notification.ChangeNotificationProvider;
 import io.micronaut.data.jdbc.operations.JdbcRepositoryOperations;
@@ -72,6 +74,7 @@ import java.util.concurrent.atomic.AtomicBoolean;
 final class OracleChangeNotificationProvider implements ChangeNotificationProvider, GracefulShutdownCapable,
     ApplicationEventListener<ShutdownEvent> {
     private static final Logger LOG = LoggerFactory.getLogger(OracleChangeNotificationProvider.class);
+    private static final String MINIMUM_DRIVER_VERSION = "23.26.3.0.0";
 
     private final BeanContext beanContext;
     private final Executor blockingExecutor;
@@ -102,14 +105,30 @@ final class OracleChangeNotificationProvider implements ChangeNotificationProvid
 
     /**
      * Selects whether this provider can manage notifications on the supplied connection.
+     * Validates the driver version before registration can call newer Oracle notification APIs.
      *
      * @param connection a connection obtained from the datasource
      * @return {@code true} if the connection can be unwrapped to an Oracle connection
      * @throws SQLException if the connection cannot be inspected
+     * @throws DataAccessException if the Oracle JDBC driver version is unsupported or cannot be determined
      */
     @Override
     public boolean supports(Connection connection) throws SQLException {
-        return connection.isWrapperFor(OracleConnection.class);
+        if (!connection.isWrapperFor(OracleConnection.class)) {
+            return false;
+        }
+        String driverVersion = connection.getMetaData().getDriverVersion();
+        boolean supported;
+        try {
+            supported = SemanticVersion.isAtLeast(driverVersion, MINIMUM_DRIVER_VERSION);
+        } catch (IllegalArgumentException e) {
+            supported = false;
+        }
+        if (!supported) {
+            throw new DataAccessException("Oracle change notifications require Oracle JDBC " + MINIMUM_DRIVER_VERSION
+                + " or later, but found driver version [" + driverVersion + "]. Upgrade the Oracle JDBC driver.");
+        }
+        return true;
     }
 
     /**
