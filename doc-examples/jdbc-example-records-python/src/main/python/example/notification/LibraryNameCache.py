@@ -17,13 +17,13 @@ from example.notification.LibraryRepository import LibraryRepository
 
 @Singleton
 @Requires(property="query-notification.query.enabled")
-class LargeLibraryCache:
+class LibraryNameCache:
 
     repository: Annotated[LibraryRepository, Inject]
 
     def __init__(self, repository: LibraryRepository):
         self.repository = repository
-        self.libraries = AtomicReference(ConcurrentHashMap())
+        self.libraryNames = AtomicReference(ConcurrentHashMap())
         self.cacheEnabled = True
         self.lock = RLock()
 
@@ -31,18 +31,26 @@ class LargeLibraryCache:
     def initialize(self) -> None:
         self.refreshCache()
 
-    def find(self, name: str) -> Optional[Library]:
+    def find(self, id: int) -> Optional[str]:
         with self.lock:
-            currentLibraries = self.libraries.get().values() if self.cacheEnabled else self.repository.findByCapacityGreaterThanEquals(10000)
-            for library in currentLibraries:
+            if self.cacheEnabled:
+                return Optional.ofNullable(self.libraryNames.get().get(id))
+            library = self.repository.findById(id).orElse(None)
+            return Optional.of(library.name) if library is not None and library.capacity >= 10000 else Optional.empty()
+
+    def contains(self, name: str) -> bool:
+        with self.lock:
+            if self.cacheEnabled:
+                return self.libraryNames.get().containsValue(name)
+            for library in self.repository.findByCapacityGreaterThanEquals(10000):
                 if library.name == name:
-                    return Optional.of(library)
-            return Optional.empty()
+                    return True
+            return False
 
     # tag::query[]
     @ChangeListener
     @OracleChangeNotification(
-        select="name",
+        select="id, name",
         where="capacity >= 10000",
         properties=[
             OracleChangeNotification.Property(
@@ -59,20 +67,19 @@ class LargeLibraryCache:
                 library = event.entity().orElse(None)
                 if library is not None:
                     if library.capacity >= 10000:
-                        self.libraries.get().put(library.id, library)
+                        self.libraryNames.get().put(library.id, library.name)
                     else:
-                        self.libraries.get().remove(library.id)
+                        self.libraryNames.get().remove(library.id)
             elif event.operation() in (ChangeOperation.DELETE, ChangeOperation.INVALIDATE):
                 self.refreshCache()
             elif event.operation() == ChangeOperation.TERMINATED:
                 self.cacheEnabled = False
-                self.libraries.get().clear()
+                self.libraryNames.get().clear()
     # end::query[]
 
     def refreshCache(self) -> None:
         with self.lock:
-            currentLibraries = self.repository.findByCapacityGreaterThanEquals(10000)
             refreshed = ConcurrentHashMap()
-            for library in currentLibraries:
-                refreshed.put(library.id, library)
-            self.libraries.set(refreshed)
+            for library in self.repository.findByCapacityGreaterThanEquals(10000):
+                refreshed.put(library.id, library.name)
+            self.libraryNames.set(refreshed)

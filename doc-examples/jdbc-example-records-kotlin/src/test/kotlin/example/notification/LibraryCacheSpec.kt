@@ -82,44 +82,48 @@ class LibraryCacheSpec {
                 "datasources.default.schema-generate" to "NONE"
             )) { context ->
                 val repository = context.getBean(LibraryRepository::class.java)
-                val cache = context.getBean(LargeLibraryCache::class.java)
+                val cache = context.getBean(LibraryNameCache::class.java)
                 val events = context.getBean(ChangeEventRecorder::class.java)
-                assertTrue(cache.find("Library 1").isEmpty)
-                assertTrue(cache.find("Library 2").isEmpty)
-                val library3 = cache.find("Library 3").orElseThrow()
-                val library4 = cache.find("Library 4").orElseThrow()
-                assertEquals(10000, library3.capacity)
-                assertEquals(15000, library4.capacity)
+                assertFalse(cache.contains("Library 1"))
+                assertFalse(cache.contains("Library 2"))
+                assertTrue(cache.contains("Library 3"))
+                val library3 = repository.findAll().first { it.name == "Library 3" }
+                assertTrue(cache.contains("Library 4"))
+                val library4 = repository.findAll().first { it.name == "Library 4" }
                 val library1 = repository.findAll().first { it.name == "Library 1" }
 
                 val entered = Library(library1.id, library1.name, library1.email, 10000, library1.location)
                 repository.save(entered)
                 assertRowEvent(events, ChangeOperation.UPDATE, entered)
-                assertEquals(entered, cache.find(entered.name).orElseThrow())
+                assertTrue(cache.contains(entered.name))
+                assertEquals(entered.name, cache.find(entered.id!!).orElseThrow())
 
-                // The registered select contains only name; the event must reload every entity field.
+                // The event reloads the complete entity; the cache retains only its ID and name.
                 val updated = Library(library4.id, "Library 4 Updated", "updated@example.com", 16000, Point(20.91140, 44.81250))
                 repository.save(updated)
                 assertRowEvent(events, ChangeOperation.UPDATE, updated)
-                assertEquals(updated, cache.find(updated.name).orElseThrow())
+                assertTrue(cache.contains(updated.name))
+                assertFalse(cache.contains(library4.name))
+                assertEquals(updated.name, cache.find(updated.id!!).orElseThrow())
 
                 val inserted = repository.save(Library(null, "Library 5", "library5@example.com", 12000, Point(21.16560, 44.77220)))
                 assertRowEvent(events, ChangeOperation.INSERT, inserted)
-                assertEquals(inserted, cache.find(inserted.name).orElseThrow())
+                assertTrue(cache.contains(inserted.name))
 
                 val left = Library(library3.id, library3.name, library3.email, 9000, library3.location)
                 repository.save(left)
                 assertRowEvent(events, ChangeOperation.UPDATE, left)
-                assertTrue(cache.find(left.name).isEmpty)
+                assertFalse(cache.contains(left.name))
+                assertTrue(cache.find(left.id!!).isEmpty)
 
                 repository.deleteById(updated.id!!)
                 assertRowEvent(events, ChangeOperation.DELETE, null)
-                assertTrue(cache.find(updated.name).isEmpty)
+                assertFalse(cache.contains(updated.name))
 
                 truncateLibraries(context)
                 assertInvalidation(events)
-                assertTrue(cache.find(entered.name).isEmpty)
-                assertTrue(cache.find(inserted.name).isEmpty)
+                assertFalse(cache.contains(entered.name))
+                assertFalse(cache.contains(inserted.name))
             }
         } finally {
             removeData()
@@ -136,9 +140,10 @@ class LibraryCacheSpec {
                 "datasources.default.schema-generate" to "NONE"
             )) { context ->
                 val repository = context.getBean(LibraryRepository::class.java)
-                val cache = context.getBean(LargeLibraryCache::class.java)
+                val cache = context.getBean(LibraryNameCache::class.java)
                 val events = context.getBean(ChangeEventRecorder::class.java)
-                val included = cache.find("Library 3").orElseThrow()
+                assertTrue(cache.contains("Library 3"))
+                val included = repository.findAll().first { it.name == "Library 3" }
                 val control = Library(included.id, "Library 3 Included", included.email, included.capacity, included.location)
                 repository.save(control)
                 assertRowEvent(events, ChangeOperation.UPDATE, control)
@@ -146,11 +151,11 @@ class LibraryCacheSpec {
                 val excluded = repository.findAll().first { it.name == "Library 1" }
                 repository.save(Library(excluded.id, "Library 1 Still Excluded", excluded.email, 9999, excluded.location))
                 assertNull(events.poll(1, TimeUnit.SECONDS), "An update outside the registered query must not invoke the listener")
-                assertTrue(cache.find("Library 1 Still Excluded").isEmpty)
+                assertFalse(cache.contains("Library 1 Still Excluded"))
 
                 repository.save(Library(null, "Excluded Insert", "excluded@example.com", 9999, Point(20.0, 44.0)))
                 assertNull(events.poll(1, TimeUnit.SECONDS), "An insert outside the registered query must not invoke the listener")
-                assertTrue(cache.find("Excluded Insert").isEmpty)
+                assertFalse(cache.contains("Excluded Insert"))
             }
         } finally {
             removeData()

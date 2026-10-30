@@ -124,44 +124,48 @@ class LibraryCacheSpec {
             "datasources.default.schema-generate", "NONE"
         ), "oracle-cqn")) {
             LibraryRepository repository = context.getBean(LibraryRepository.class);
-            LargeLibraryCache cache = context.getBean(LargeLibraryCache.class);
+            LibraryNameCache cache = context.getBean(LibraryNameCache.class);
             ChangeEventRecorder events = context.getBean(ChangeEventRecorder.class);
-            assertTrue(cache.find("Library 1").isEmpty());
-            assertTrue(cache.find("Library 2").isEmpty());
-            Library library3 = cache.find("Library 3").orElseThrow();
-            Library library4 = cache.find("Library 4").orElseThrow();
-            assertEquals(10_000, library3.capacity());
-            assertEquals(15_000, library4.capacity());
+            assertFalse(cache.contains("Library 1"));
+            assertFalse(cache.contains("Library 2"));
+            assertTrue(cache.contains("Library 3"));
+            Library library3 = repository.findAll().stream().filter(library -> library.name().equals("Library 3")).findFirst().orElseThrow();
+            assertTrue(cache.contains("Library 4"));
+            Library library4 = repository.findAll().stream().filter(library -> library.name().equals("Library 4")).findFirst().orElseThrow();
             Library library1 = repository.findAll().stream().filter(library -> library.name().equals("Library 1")).findFirst().orElseThrow();
 
             Library entered = new Library(library1.id(), library1.name(), library1.email(), 10_000, library1.location());
             repository.save(entered);
             assertRowEvent(events, ChangeOperation.UPDATE, entered);
-            assertEquals(entered, cache.find(entered.name()).orElseThrow());
+            assertTrue(cache.contains(entered.name()));
+            assertEquals(entered.name(), cache.find(entered.id()).orElseThrow());
 
-            // The registered select contains only name; the event must reload every entity field.
+            // The event reloads the complete entity; the cache retains only its ID and name.
             Library updated = new Library(library4.id(), "Library 4 Updated", "updated@example.com", 16_000, new Point(20.91140, 44.81250));
             repository.save(updated);
             assertRowEvent(events, ChangeOperation.UPDATE, updated);
-            assertEquals(updated, cache.find(updated.name()).orElseThrow());
+            assertTrue(cache.contains(updated.name()));
+            assertFalse(cache.contains(library4.name()));
+            assertEquals(updated.name(), cache.find(updated.id()).orElseThrow());
 
             Library inserted = repository.save(new Library(null, "Library 5", "library5@example.com", 12_000, new Point(21.16560, 44.77220)));
             assertRowEvent(events, ChangeOperation.INSERT, inserted);
-            assertEquals(inserted, cache.find(inserted.name()).orElseThrow());
+            assertTrue(cache.contains(inserted.name()));
 
             Library left = new Library(library3.id(), library3.name(), library3.email(), 9_000, library3.location());
             repository.save(left);
             assertRowEvent(events, ChangeOperation.UPDATE, left);
-            assertTrue(cache.find(left.name()).isEmpty());
+            assertFalse(cache.contains(left.name()));
+            assertTrue(cache.find(left.id()).isEmpty());
 
             repository.deleteById(updated.id());
             assertRowEvent(events, ChangeOperation.DELETE, null);
-            assertTrue(cache.find(updated.name()).isEmpty());
+            assertFalse(cache.contains(updated.name()));
 
             truncateLibraries(context);
             assertInvalidation(events);
-            assertTrue(cache.find(entered.name()).isEmpty());
-            assertTrue(cache.find(inserted.name()).isEmpty());
+            assertFalse(cache.contains(entered.name()));
+            assertFalse(cache.contains(inserted.name()));
         }
     }
 
@@ -172,9 +176,10 @@ class LibraryCacheSpec {
             "datasources.default.schema-generate", "NONE"
         ), "oracle-cqn")) {
             LibraryRepository repository = context.getBean(LibraryRepository.class);
-            LargeLibraryCache cache = context.getBean(LargeLibraryCache.class);
+            LibraryNameCache cache = context.getBean(LibraryNameCache.class);
             ChangeEventRecorder events = context.getBean(ChangeEventRecorder.class);
-            Library included = cache.find("Library 3").orElseThrow();
+            assertTrue(cache.contains("Library 3"));
+            Library included = repository.findAll().stream().filter(library -> library.name().equals("Library 3")).findFirst().orElseThrow();
             Library control = new Library(included.id(), "Library 3 Included", included.email(), included.capacity(), included.location());
             repository.save(control);
             assertRowEvent(events, ChangeOperation.UPDATE, control);
@@ -182,11 +187,39 @@ class LibraryCacheSpec {
             Library excluded = repository.findAll().stream().filter(library -> library.name().equals("Library 1")).findFirst().orElseThrow();
             repository.save(new Library(excluded.id(), "Library 1 Still Excluded", excluded.email(), 9_999, excluded.location()));
             assertNull(events.poll(1, TimeUnit.SECONDS), "An update outside the registered query must not invoke the listener");
-            assertTrue(cache.find("Library 1 Still Excluded").isEmpty());
+            assertFalse(cache.contains("Library 1 Still Excluded"));
 
             repository.save(new Library(null, "Excluded Insert", "excluded@example.com", 9_999, new Point(20, 44)));
             assertNull(events.poll(1, TimeUnit.SECONDS), "An insert outside the registered query must not invoke the listener");
-            assertTrue(cache.find("Excluded Insert").isEmpty());
+            assertFalse(cache.contains("Excluded Insert"));
+        }
+    }
+
+    @Test
+    void testNameDirectoryIgnoresEmailOnlyUpdates() throws InterruptedException {
+        try (ApplicationContext context = ApplicationContext.run(Map.of(
+            "query-notification.query.enabled", "true",
+            "datasources.default.schema-generate", "NONE"
+        ), "oracle-cqn")) {
+            LibraryRepository repository = context.getBean(LibraryRepository.class);
+            LibraryNameCache cache = context.getBean(LibraryNameCache.class);
+            ChangeEventRecorder events = context.getBean(ChangeEventRecorder.class);
+            Library library = repository.findAll().stream().filter(row -> row.name().equals("Library 3")).findFirst().orElseThrow();
+            assertEquals(library.name(), cache.find(library.id()).orElseThrow());
+
+            context.getBean(DefaultJdbcRepositoryOperations.class).execute(connection -> {
+                try (var statement = connection.prepareStatement("UPDATE LIBRARY SET EMAIL = ? WHERE ID = ?")) {
+                    statement.setString(1, "updated@example.com");
+                    statement.setLong(2, library.id());
+                    assertEquals(1, statement.executeUpdate());
+                }
+                return true;
+            });
+
+            assertNull(events.poll(1, TimeUnit.SECONDS));
+            assertEquals("updated@example.com", repository.findById(library.id()).orElseThrow().email());
+            assertEquals(library.name(), cache.find(library.id()).orElseThrow());
+            assertTrue(cache.contains(library.name()));
         }
     }
 

@@ -10,7 +10,7 @@ import java.util.function.Supplier
 
 class LibraryCacheTerminationSpec extends Specification {
 
-    void "terminated cache uses database reads and ignores later callbacks (#name)"() {
+    void "terminated entity cache uses database reads and ignores later callbacks"() {
         given:
         def repository = Mock(LibraryRepository)
         def original = new Library(1L, 'Library', 'original@example.com', 15000, new Point(20, 44))
@@ -19,8 +19,7 @@ class LibraryCacheTerminationSpec extends Specification {
         def rows = [original]
         int reads = 0
         repository.findAll() >> { reads++; rows }
-        repository.findByCapacityGreaterThanEquals(10000) >> { reads++; rows }
-        def cache = factory.call(repository)
+        def cache = new LibraryCache(repository)
         cache.initialize()
         assert cache.find('Library').orElseThrow() == original
         assert reads == 1
@@ -50,9 +49,5 @@ class LibraryCacheTerminationSpec extends Specification {
         secondRead == latest
         reads == 3
 
-        where:
-        name     | factory
-        'object' | { LibraryRepository repo -> new LibraryCache(repo) }
-        'query'  | { LibraryRepository repo -> new LargeLibraryCache(repo) }
     }
 }

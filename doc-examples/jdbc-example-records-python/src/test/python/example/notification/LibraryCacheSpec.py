@@ -12,7 +12,7 @@ from org.junit.jupiter.api import Test
 from example.notification.Library import Library
 from example.notification.ChangeEventRecorder import ChangeEventRecorder
 from example.notification.LibraryCache import LibraryCache
-from example.notification.LargeLibraryCache import LargeLibraryCache
+from example.notification.LibraryNameCache import LibraryNameCache
 from example.notification.LibraryRepository import LibraryRepository
 
 
@@ -85,44 +85,48 @@ class LibraryCacheSpec:
             })
             try:
                 repository = context.getBean(LibraryRepository)
-                cache = context.getBean(LargeLibraryCache)
+                cache = context.getBean(LibraryNameCache)
                 events = context.getBean(ChangeEventRecorder)
-                assert not cache.find("Library 1").isPresent()
-                assert not cache.find("Library 2").isPresent()
-                library3 = cache.find("Library 3").orElse(None)
-                library4 = cache.find("Library 4").orElse(None)
-                assert library3.capacity == 10000
-                assert library4.capacity == 15000
+                assert not cache.contains("Library 1")
+                assert not cache.contains("Library 2")
+                assert cache.contains("Library 3")
+                library3 = next(library for library in repository.findAll() if library.name == "Library 3")
+                assert cache.contains("Library 4")
+                library4 = next(library for library in repository.findAll() if library.name == "Library 4")
                 library1 = next(library for library in repository.findAll() if library.name == "Library 1")
 
                 entered = Library(library1.id, library1.name, library1.email, 10000, library1.location)
                 repository.save(entered)
                 self.assertRowEvent(events, ChangeOperation.UPDATE, entered)
-                self.assertLibrary(cache.find(entered.name).orElse(None), entered)
+                assert cache.contains(entered.name)
+                assert cache.find(entered.id).orElse(None) == entered.name
 
-                # The registered select contains only name; the event must reload every entity field.
+                # The event reloads the complete entity; the cache retains only its ID and name.
                 updated = Library(library4.id, "Library 4 Updated", "updated@example.com", 16000, Point(20.91140, 44.81250))
                 repository.save(updated)
                 self.assertRowEvent(events, ChangeOperation.UPDATE, updated)
-                self.assertLibrary(cache.find(updated.name).orElse(None), updated)
+                assert cache.contains(updated.name)
+                assert not cache.contains(library4.name)
+                assert cache.find(updated.id).orElse(None) == updated.name
 
                 inserted = repository.save(Library(None, "Library 5", "library5@example.com", 12000, Point(21.16560, 44.77220)))
                 self.assertRowEvent(events, ChangeOperation.INSERT, inserted)
-                self.assertLibrary(cache.find(inserted.name).orElse(None), inserted)
+                assert cache.contains(inserted.name)
 
                 left = Library(library3.id, library3.name, library3.email, 9000, library3.location)
                 repository.save(left)
                 self.assertRowEvent(events, ChangeOperation.UPDATE, left)
-                assert not cache.find(left.name).isPresent()
+                assert not cache.contains(left.name)
+                assert not cache.find(left.id).isPresent()
 
                 repository.deleteById(updated.id)
                 self.assertRowEvent(events, ChangeOperation.DELETE, None)
-                assert not cache.find(updated.name).isPresent()
+                assert not cache.contains(updated.name)
 
                 self.truncateLibraries(context)
                 self.assertInvalidation(events)
-                assert not cache.find(entered.name).isPresent()
-                assert not cache.find(inserted.name).isPresent()
+                assert not cache.contains(entered.name)
+                assert not cache.contains(inserted.name)
             finally:
                 context.close()
         finally:
@@ -139,9 +143,10 @@ class LibraryCacheSpec:
             })
             try:
                 repository = context.getBean(LibraryRepository)
-                cache = context.getBean(LargeLibraryCache)
+                cache = context.getBean(LibraryNameCache)
                 events = context.getBean(ChangeEventRecorder)
-                included = cache.find("Library 3").orElse(None)
+                assert cache.contains("Library 3")
+                included = next(library for library in repository.findAll() if library.name == "Library 3")
                 control = Library(included.id, "Library 3 Included", included.email, included.capacity, included.location)
                 repository.save(control)
                 self.assertRowEvent(events, ChangeOperation.UPDATE, control)
@@ -149,11 +154,11 @@ class LibraryCacheSpec:
                 excluded = next(library for library in repository.findAll() if library.name == "Library 1")
                 repository.save(Library(excluded.id, "Library 1 Still Excluded", excluded.email, 9999, excluded.location))
                 assert events.poll(1, TimeUnit.SECONDS) is None, "An update outside the registered query must not invoke the listener"
-                assert not cache.find("Library 1 Still Excluded").isPresent()
+                assert not cache.contains("Library 1 Still Excluded")
 
                 repository.save(Library(None, "Excluded Insert", "excluded@example.com", 9999, Point(20, 44)))
                 assert events.poll(1, TimeUnit.SECONDS) is None, "An insert outside the registered query must not invoke the listener"
-                assert not cache.find("Excluded Insert").isPresent()
+                assert not cache.contains("Excluded Insert")
             finally:
                 context.close()
         finally:

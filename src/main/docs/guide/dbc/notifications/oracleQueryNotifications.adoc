@@ -138,9 +138,16 @@ Query Result Change Notification (QRCN) registers a query result instead of the 
 Enable it with the Oracle JDBC `DCN_QUERY_CHANGE_NOTIFICATION` registration property, then use `select` and `where`
 to describe the result:
 
-This example tracks only libraries with a capacity of at least 10,000.
+This example caches only the names of libraries with a capacity of at least 10,000.
 
-snippet::example.notification.LargeLibraryCache[project-base="doc-examples/jdbc-example-records", source="main", tags="query", indent="0", languages="java,groovy,kotlin,python"]
+snippet::example.notification.LibraryNameCache[project-base="doc-examples/jdbc-example-records", source="main", tags="query", indent="0", languages="java,groovy,kotlin,python"]
+
+`LibraryNameCache` stores names keyed by library ID, matching the registered `id, name` selection.
+For `INSERT` and `UPDATE`, it uses the reloaded entity's ID to update the name, or removes the entry if the library no longer matches
+the capacity filter. Renaming replaces the previous value, and different libraries can share the same name.
+`DELETE` events have no reloaded entity from which to obtain a library ID, so the cache refreshes the directory.
+`INVALIDATE` also triggers a refresh to reconcile the registered result.
+Changes to unselected fields, such as email, do not affect the cached names and do not require a notification.
 
 The `select` value controls the result registered with Oracle Database; it is not an entity projection.
 For an `INSERT` or `UPDATE`, Micronaut Data still reloads and maps the complete entity by `ROWID`.

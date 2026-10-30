@@ -107,44 +107,48 @@ class LibraryCacheSpec extends Specification {
             'datasources.default.schema-generate': 'NONE'
         ]) { ApplicationContext context ->
             def repository = context.getBean(LibraryRepository)
-            def cache = context.getBean(LargeLibraryCache)
+            def cache = context.getBean(LibraryNameCache)
             def events = context.getBean(ChangeEventRecorder)
-            assert cache.find('Library 1').isEmpty()
-            assert cache.find('Library 2').isEmpty()
-            def library3 = cache.find('Library 3').orElseThrow()
-            def library4 = cache.find('Library 4').orElseThrow()
-            assert library3.capacity() == 10000
-            assert library4.capacity() == 15000
+            assert !cache.contains('Library 1')
+            assert !cache.contains('Library 2')
+            assert cache.contains('Library 3')
+            def library3 = repository.findAll().find { it.name() == 'Library 3' }
+            assert cache.contains('Library 4')
+            def library4 = repository.findAll().find { it.name() == 'Library 4' }
             def library1 = repository.findAll().find { it.name() == 'Library 1' }
 
             def entered = new Library(library1.id(), library1.name(), library1.email(), 10000, library1.location())
             repository.save(entered)
             assertRowEvent(events, ChangeOperation.UPDATE, entered)
-            assert cache.find(entered.name()).orElseThrow() == entered
+            assert cache.contains(entered.name())
+            assert cache.find(entered.id()).orElseThrow() == entered.name()
 
-            // The registered select contains only name; the event must reload every entity field.
+            // The event reloads the complete entity; the cache retains only its ID and name.
             def updated = new Library(library4.id(), 'Library 4 Updated', 'updated@example.com', 16000, new Point(20.91140, 44.81250))
             repository.save(updated)
             assertRowEvent(events, ChangeOperation.UPDATE, updated)
-            assert cache.find(updated.name()).orElseThrow() == updated
+            assert cache.contains(updated.name())
+            assert !cache.contains(library4.name())
+            assert cache.find(updated.id()).orElseThrow() == updated.name()
 
             def inserted = repository.save(new Library(null, 'Library 5', 'library5@example.com', 12000, new Point(21.16560, 44.77220)))
             assertRowEvent(events, ChangeOperation.INSERT, inserted)
-            assert cache.find(inserted.name()).orElseThrow() == inserted
+            assert cache.contains(inserted.name())
 
             def left = new Library(library3.id(), library3.name(), library3.email(), 9000, library3.location())
             repository.save(left)
             assertRowEvent(events, ChangeOperation.UPDATE, left)
-            assert cache.find(left.name()).isEmpty()
+            assert !cache.contains(left.name())
+            assert cache.find(left.id()).isEmpty()
 
             repository.deleteById(updated.id())
             assertRowEvent(events, ChangeOperation.DELETE, null)
-            assert cache.find(updated.name()).isEmpty()
+            assert !cache.contains(updated.name())
 
             truncateLibraries(context)
             assertInvalidation(events)
-            assert cache.find(entered.name()).isEmpty()
-            assert cache.find(inserted.name()).isEmpty()
+            assert !cache.contains(entered.name())
+            assert !cache.contains(inserted.name())
         }
 
         then:
@@ -158,9 +162,10 @@ class LibraryCacheSpec extends Specification {
             'datasources.default.schema-generate': 'NONE'
         ]) { ApplicationContext context ->
             def repository = context.getBean(LibraryRepository)
-            def cache = context.getBean(LargeLibraryCache)
+            def cache = context.getBean(LibraryNameCache)
             def events = context.getBean(ChangeEventRecorder)
-            def included = cache.find('Library 3').orElseThrow()
+            assert cache.contains('Library 3')
+            def included = repository.findAll().find { it.name() == 'Library 3' }
             def control = new Library(included.id(), 'Library 3 Included', included.email(), included.capacity(), included.location())
             repository.save(control)
             assertRowEvent(events, ChangeOperation.UPDATE, control)
@@ -168,11 +173,11 @@ class LibraryCacheSpec extends Specification {
             def excluded = repository.findAll().find { it.name() == 'Library 1' }
             repository.save(new Library(excluded.id(), 'Library 1 Still Excluded', excluded.email(), 9999, excluded.location()))
             assert events.poll(1, TimeUnit.SECONDS) == null: 'An update outside the registered query must not invoke the listener'
-            assert cache.find('Library 1 Still Excluded').isEmpty()
+            assert !cache.contains('Library 1 Still Excluded')
 
             repository.save(new Library(null, 'Excluded Insert', 'excluded@example.com', 9999, new Point(20, 44)))
             assert events.poll(1, TimeUnit.SECONDS) == null: 'An insert outside the registered query must not invoke the listener'
-            assert cache.find('Excluded Insert').isEmpty()
+            assert !cache.contains('Excluded Insert')
         }
 
         then:

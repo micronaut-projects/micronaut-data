@@ -12,10 +12,10 @@ import java.util.concurrent.ConcurrentHashMap
 
 @Singleton
 @Requires(property = "query-notification.query.enabled")
-open class LargeLibraryCache(private val repository: LibraryRepository) {
+open class LibraryNameCache(private val repository: LibraryRepository) {
 
     @Volatile
-    private var libraries = ConcurrentHashMap<Long, Library>()
+    private var libraryNames = ConcurrentHashMap<Long, String>()
 
     @Volatile
     private var cacheEnabled = true
@@ -25,17 +25,21 @@ open class LargeLibraryCache(private val repository: LibraryRepository) {
         refreshCache()
     }
 
-    fun find(name: String): Optional<Library> {
-        val currentLibraries = if (cacheEnabled) libraries.values else repository.findByCapacityGreaterThanEquals(10000)
-        return currentLibraries.firstOrNull { library -> library.name == name }
-            ?.let { Optional.of(it) } ?: Optional.empty()
+    fun find(id: Long): Optional<String> {
+        return if (cacheEnabled) Optional.ofNullable(libraryNames[id])
+            else repository.findById(id).filter { library -> library.capacity >= 10000 }.map { library -> library.name }
+    }
+
+    fun contains(name: String): Boolean {
+        return if (cacheEnabled) libraryNames.containsValue(name)
+            else repository.findByCapacityGreaterThanEquals(10000).any { library -> library.name == name }
     }
 
     // tag::query[]
     @Synchronized
     @ChangeListener
     @OracleChangeNotification(
-        select = "name",
+        select = "id, name",
         where = "capacity >= 10000",
         properties = [
             OracleChangeNotification.Property(
@@ -51,15 +55,15 @@ open class LargeLibraryCache(private val repository: LibraryRepository) {
         when (event.operation()) {
             ChangeOperation.INSERT, ChangeOperation.UPDATE -> event.entity().ifPresent { library ->
                 if (library.capacity >= 10000) {
-                    libraries[library.id!!] = library
+                    libraryNames[library.id!!] = library.name
                 } else {
-                    libraries.remove(library.id!!)
+                    libraryNames.remove(library.id!!)
                 }
             }
             ChangeOperation.DELETE, ChangeOperation.INVALIDATE -> refreshCache()
             ChangeOperation.TERMINATED -> {
                 cacheEnabled = false
-                libraries.clear()
+                libraryNames.clear()
             }
         }
     }
@@ -67,9 +71,8 @@ open class LargeLibraryCache(private val repository: LibraryRepository) {
 
     @Synchronized
     private fun refreshCache() {
-        val currentLibraries = repository.findByCapacityGreaterThanEquals(10000)
-        val refreshed = ConcurrentHashMap<Long, Library>()
-        currentLibraries.forEach { library -> refreshed[library.id!!] = library }
-        libraries = refreshed
+        val refreshed = ConcurrentHashMap<Long, String>()
+        repository.findByCapacityGreaterThanEquals(10000).forEach { library -> refreshed[library.id!!] = library.name }
+        libraryNames = refreshed
     }
 }
