@@ -45,10 +45,10 @@ class LibraryCache {
     @ChangeListener
     @OracleChangeNotification
     synchronized void onLibraryChanged(ChangeEvent<Library> event) {
+        // end::listener[]
         if (!cacheEnabled) {
             return
         }
-        // end::listener[]
         event.metadata(OracleChangeEventMetadata).ifPresent { metadata ->
             LOG.debug("Changed library table: {}.{}, ROWID: {}",
                 metadata.schema().orElse("<unknown>"), metadata.table(), metadata.rowId())

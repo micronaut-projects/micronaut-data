@@ -42,10 +42,10 @@ open class LibraryCache(private val repository: LibraryRepository) {
     @ChangeListener
     @OracleChangeNotification
     open fun onLibraryChanged(event: ChangeEvent<Library>) {
+        // end::listener[]
         if (!cacheEnabled) {
             return
         }
-        // end::listener[]
         event.metadata(OracleChangeEventMetadata::class.java).ifPresent { metadata ->
             log.debug("Changed library table: {}.{}, ROWID: {}",
                 metadata.schema().orElse("<unknown>"), metadata.table(), metadata.rowId())

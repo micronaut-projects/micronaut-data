@@ -13,7 +13,9 @@ Oracle notification configuration and metadata are provided by `micronaut-data-j
 
 Query notifications require Micronaut Data JDBC and the Oracle JDBC driver:
 
-dependency:com.oracle.database.jdbc:ojdbc11[scope="runtimeOnly"]
+dependency:com.oracle.database.jdbc:ojdbc11[scope="implementation"]
+
+This makes `OracleConnection.DCN_*` and `OracleConnection.NTF_*` constants available when configuring annotation properties.
 
 The datasource user must have Oracle Database's `CHANGE NOTIFICATION` privilege. A database administrator can grant it with:
 
@@ -342,8 +344,8 @@ emits the notification.
 The ROWID reload runs before the listener's transaction starts. `@Transactional` applies to listener execution,
 not to the preceding entity load.
 
-ann:retry.annotation.Retryable[] and ann:retry.annotation.Recoverable[] can be applied to the listener method.
-ann:retry.annotation.Retryable[] can retry entity loading and, for listeners without `@Async`, listener execution:
+link:{micronautapi}retry/annotation/Retryable.html[@Retryable] and link:{micronautapi}retry/annotation/Recoverable.html[@Recoverable] can be applied to the listener method.
+link:{micronautapi}retry/annotation/Retryable.html[@Retryable] can retry entity loading and, for listeners without `@Async`, listener execution:
 
 * if loading an inserted or updated row fails, loading can be retried;
 * if loading succeeds but listener code fails, later attempts reuse the entity already loaded for that event; and
