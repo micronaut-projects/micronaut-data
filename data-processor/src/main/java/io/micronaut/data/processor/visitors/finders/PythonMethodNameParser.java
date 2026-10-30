@@ -163,7 +163,10 @@ final class PythonMethodNameParser {
         String token = keyword.getValue();
         boolean modifier = HEADER_MODIFIERS.contains(token) || AGGREGATES.contains(token)
             || token.equals(FIRST) || token.equals(TOP);
-        return CLAUSES.contains(token) || (modifier && spansClause(text));
+        // A property named exactly like a header modifier keeps `find_all` or `find_first_by_x` structural;
+        // `find__all` selects the property.
+        boolean bareModifier = (HEADER_MODIFIERS.contains(token) || token.equals(FIRST)) && text.equals(keyword.getKey());
+        return CLAUSES.contains(token) || bareModifier || (modifier && spansClause(text));
     }
 
     private boolean parseLimit() {
