@@ -583,11 +583,11 @@ final class OracleChangeNotificationDispatcher implements DatabaseChangeListener
                 String rowId = row.getRowid().stringValue();
                 for (RowChangeDescription.RowOperation operation : row.getRowOperations()) {
                     if (operation == RowChangeDescription.RowOperation.INSERT) {
-                        dispatchRow(ChangeOperation.INSERT, rowId);
+                        dispatchRow(ChangeOperation.INSERT, rowId, table.getTableName());
                     } else if (operation == RowChangeDescription.RowOperation.UPDATE) {
-                        dispatchRow(ChangeOperation.UPDATE, rowId);
+                        dispatchRow(ChangeOperation.UPDATE, rowId, table.getTableName());
                     } else if (operation == RowChangeDescription.RowOperation.DELETE) {
-                        dispatchRow(ChangeOperation.DELETE, rowId);
+                        dispatchRow(ChangeOperation.DELETE, rowId, table.getTableName());
                     }
                 }
             }
@@ -612,9 +612,10 @@ final class OracleChangeNotificationDispatcher implements DatabaseChangeListener
      *
      * @param operation the database operation reported for the row
      * @param rowId     the affected Oracle ROWID
+     * @param tableName the table name reported by Oracle Database
      */
-    private void dispatchRow(ChangeOperation operation, String rowId) {
-        OracleChangeEventMetadata metadata = new OracleChangeEventMetadata(rowId);
+    private void dispatchRow(ChangeOperation operation, String rowId, String tableName) {
+        OracleChangeEventMetadata metadata = DefaultOracleChangeEventMetadata.from(rowId, tableName);
         ChangeEvent<?> event = operation == ChangeOperation.INSERT || operation == ChangeOperation.UPDATE
             ? new DeferredChangeEvent<>(operation, metadata, () -> listenerDefinition.entityLoader().reload(rowId))
             : new DefaultChangeEvent<>(operation, null, metadata);

@@ -52,7 +52,8 @@ class LibraryCache {
         }
         // end::listener[]
         event.metadata(OracleChangeEventMetadata.class)
-            .ifPresent(metadata -> LOG.debug("Changed library ROWID: {}", metadata.rowId()));
+            .ifPresent(metadata -> LOG.debug("Changed library table: {}.{}, ROWID: {}",
+                metadata.schema().orElse("<unknown>"), metadata.table(), metadata.rowId()));
         switch (event.operation()) {
             case INSERT, UPDATE -> event.entity().ifPresent(library -> libraries.put(library.id(), library));
             case DELETE, INVALIDATE -> refreshCache();

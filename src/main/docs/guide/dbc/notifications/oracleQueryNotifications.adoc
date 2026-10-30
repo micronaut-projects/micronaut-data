@@ -62,7 +62,13 @@ api:data.notification.ChangeEvent[] provides:
 * `entity()` -- the current entity state, when it is available; and
 * `metadata(Class)` -- provider-specific metadata, when it is available.
 
-Oracle Database row events include api:data.jdbc.notification.oracle.OracleChangeEventMetadata[], which exposes the affected row's `ROWID`:
+Oracle Database row events include api:data.jdbc.notification.oracle.OracleChangeEventMetadata[], a read-only interface exposing:
+
+* `rowId()` -- the row-location hint reported by Oracle Database;
+* `schema()` -- the reported schema (table owner), or empty when the reported table name is unqualified; and
+* `table()` -- the reported unqualified table name.
+
+The provider supplies the metadata implementation. Table identifiers preserve their reported case and literal characters.
 
 snippet::example.notification.LibraryCache[project-base="doc-examples/jdbc-example-records", source="main", tags="events", indent="0", languages="java,groovy,kotlin,python"]
 
@@ -77,12 +83,26 @@ Micronaut Data reloads the row and maps the complete entity before the applicati
 The reloaded value is the current database state at reload time, not a historical snapshot of the commit that produced
 the notification. Another transaction can therefore change or delete the row before it is reloaded.
 
+[WARNING]
+====
+A `ROWID` is a location hint, not a stable entity identifier. Oracle can reuse it after a committed delete,
+and it can change during row movement, including partition-key updates, table shrinking, and Flashback Table.
+A deferred reload for an `INSERT` or `UPDATE` can therefore return a different row or no row.
+
+When identity matters, compare the reloaded entity's primary key with an independently known expected id.
+CQN metadata does not include the original primary key. If that comparison is unavailable, invalidate or
+reconcile the relevant application state instead of treating the event as proof that a particular entity changed.
+
+See Oracle's documentation on https://docs.oracle.com/en/database/oracle/oracle-database/21/sqlrf/ROWID-Pseudocolumn.html[ROWID reuse]
+and https://docs.oracle.com/en/database/oracle/oracle-database/21/cncpt/logical-storage-structures.html[row movement].
+====
+
 Entities with ann:data.annotation.Where[] clauses are not supported by Oracle notification listeners and cause a
 compilation error. These clauses filter ROWID reloads without filtering the notification registration query, which can
 hide rows needed to reconcile cached state. For QRCN, use the `where` member of
 ann:data.jdbc.annotation.OracleChangeNotification[] to filter the registered result.
 
-For `DELETE`, the entity is empty because the row can no longer be loaded, but Oracle Database `ROWID` metadata is retained.
+For `DELETE`, Micronaut Data does not reload the row. The entity is empty, and Oracle Database `ROWID` metadata is retained.
 
 Oracle Database can report that the registered data changed without usable row details. This includes an `ALL_ROWS` or
 full-table notification, an `ALTER` or `DROP` operation, a missing `ROWID`, and, for a query notification, a change to

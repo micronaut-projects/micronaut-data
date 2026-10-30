@@ -25,7 +25,9 @@ class DefaultChangeEventSpec extends Specification {
 
     void "provider metadata is exposed only through its requested type"() {
         given:
-        def metadata = new OracleChangeEventMetadata('AAABBB')
+        def metadata = Stub(OracleChangeEventMetadata) {
+            rowId() >> 'AAABBB'
+        }
         ChangeEvent<String> event = new DefaultChangeEvent<>(ChangeOperation.DELETE, null, metadata)
 
         expect:

@@ -50,7 +50,8 @@ class LibraryCache {
         }
         // end::listener[]
         event.metadata(OracleChangeEventMetadata).ifPresent { metadata ->
-            LOG.debug("Changed library ROWID: {}", metadata.rowId())
+            LOG.debug("Changed library table: {}.{}, ROWID: {}",
+                metadata.schema().orElse("<unknown>"), metadata.table(), metadata.rowId())
         }
         switch (event.operation()) {
             case ChangeOperation.INSERT:

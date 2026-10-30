@@ -18,12 +18,43 @@ package io.micronaut.data.jdbc.notification.oracle;
 import io.micronaut.core.annotation.Experimental;
 import io.micronaut.data.notification.ChangeEventMetadata;
 
+import java.util.Optional;
+
 /**
  * Oracle-specific metadata for a row-level Continuous Query Notification event.
  *
- * @param rowId The Oracle {@code ROWID} reported for the changed row.
+ * <p>Instances are supplied by the Oracle notification provider. The reported table identifiers
+ * preserve Oracle's spelling and case without SQL identifier quoting.</p>
+ *
+ * <p>A {@code ROWID} is a row-location hint, not a stable entity identifier. Oracle can reuse it
+ * after a committed delete or change it during row movement. A deferred reload can therefore
+ * return a different row or no row. When identity matters, compare the reloaded primary key with
+ * an independently known expected id, or reconcile the registered data. The notification does
+ * not provide the original primary key.</p>
+ *
  * @since 5.3.0
  */
 @Experimental
-public record OracleChangeEventMetadata(String rowId) implements ChangeEventMetadata {
+public interface OracleChangeEventMetadata extends ChangeEventMetadata {
+
+    /**
+     * Returns the row-location hint supplied by Oracle Database for this notification.
+     *
+     * @return The reported Oracle {@code ROWID}; it may be reused or changed before entity reload.
+     */
+    String rowId();
+
+    /**
+     * Returns the schema (table owner) reported by Oracle Database.
+     *
+     * @return The reported schema, or empty when the notification supplies an unqualified table name.
+     */
+    Optional<String> schema();
+
+    /**
+     * Returns the unqualified table name reported by Oracle Database.
+     *
+     * @return The reported table name, preserving its case and literal identifier characters.
+     */
+    String table();
 }
