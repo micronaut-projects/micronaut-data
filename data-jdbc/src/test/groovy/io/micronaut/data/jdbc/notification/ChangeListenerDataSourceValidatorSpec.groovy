@@ -191,6 +191,7 @@ class ChangeListenerDataSourceValidatorSpec extends Specification {
     @Requires(property = 'spec.name', value = 'ChangeListenerDataSourceValidatorSpec')
     static class TestListener {
         @ChangeListener(dataSource = 'inventory')
+        @TestChangeNotification
         void changed(ChangeEvent<Book> event) {
         }
     }

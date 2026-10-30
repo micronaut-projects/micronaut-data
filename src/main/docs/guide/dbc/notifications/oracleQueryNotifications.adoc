@@ -37,8 +37,12 @@ Micronaut Data validates the listener contract at compilation time. A method ann
 
 * be a non-private, non-static instance method;
 * return `void`;
-* declare exactly one `ChangeEvent<E>` parameter; and
-* use a concrete persistent entity type for `E`.
+* declare exactly one `ChangeEvent<E>` parameter;
+* use a concrete persistent entity type for `E`; and
+* declare a provider-specific notification annotation, such as ann:data.jdbc.annotation.OracleChangeNotification[].
+
+Listener methods inherited from separately compiled base classes are supported.
+If an inherited method has no generated `ROWID` reload query, Micronaut Data builds the query from the entity mapping at startup.
 
 The listener uses the `default` datasource unless another datasource is specified through the `dataSource` attribute
 of the ann:data.jdbc.annotation.ChangeListener[] annotation.

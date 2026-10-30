@@ -36,6 +36,10 @@ import java.lang.annotation.Target;
  * The available operation, entity state, metadata, ordering, and delivery guarantees depend on the
  * notification provider selected for the datasource.</p>
  *
+ * <p>A provider-specific notification annotation is required on the method, for example
+ * {@link OracleChangeNotification} for an Oracle datasource. Missing provider configuration is
+ * rejected during compilation.</p>
+ *
  * <p>This annotation can also be used as a meta-annotation to define a composed listener
  * annotation.</p>
  *

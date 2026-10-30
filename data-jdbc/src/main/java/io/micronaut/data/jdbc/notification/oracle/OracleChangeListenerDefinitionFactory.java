@@ -15,31 +15,37 @@
  */
 package io.micronaut.data.jdbc.notification.oracle;
 
+import io.micronaut.core.annotation.AnnotationMetadata;
 import io.micronaut.core.annotation.AnnotationValue;
 import io.micronaut.core.type.Argument;
+import io.micronaut.data.annotation.Where;
 import io.micronaut.data.intercept.annotation.OracleChangeListenerQuery;
 import io.micronaut.data.jdbc.annotation.OracleChangeNotification;
 import io.micronaut.data.jdbc.notification.ChangeListenerMethod;
 import io.micronaut.data.jdbc.operations.JdbcRepositoryOperations;
+import io.micronaut.data.model.DataType;
 import io.micronaut.data.model.query.builder.sql.Dialect;
 import io.micronaut.data.model.query.builder.sql.SqlQueryBuilder;
 import io.micronaut.data.model.runtime.RuntimePersistentEntity;
+import io.micronaut.data.runtime.criteria.RuntimeCriteriaBuilder;
 import io.micronaut.inject.ExecutableMethod;
 import oracle.jdbc.OracleConnection;
 
 import java.util.List;
+import java.util.Objects;
 import java.util.Properties;
 
 /**
  * Builds the Oracle-specific runtime definition for a discovered change listener.
  *
  * <p>The factory resolves the entity's mapped Oracle table, reads the compile-time generated
- * {@code ROWID} reload query, copies the annotation's registration properties, defaults to a
+ * {@code ROWID} reload query (or builds it for inherited methods without generated metadata),
+ * copies the annotation's registration properties, defaults to a
  * client-initiated connection, requests row identifiers, and defaults the registration timeout to
  * zero when no timeout is configured. It also builds the query associated with the registration.</p>
  *
  * <p>The annotation processor validates annotation-level listener settings at compile time.
- * Runtime checks here identify missing generated metadata before registration is attempted.</p>
+ * Inherited methods from separately compiled classes may not have generated query metadata.</p>
  */
 final class OracleChangeListenerDefinitionFactory {
     private final JdbcRepositoryOperations operations;
@@ -62,11 +68,12 @@ final class OracleChangeListenerDefinitionFactory {
         }
         Argument<?> entityArgument = listenerMethod.entityArgument();
         RuntimePersistentEntity<?> persistentEntity = operations.getEntity(entityArgument.getType());
+        SqlQueryBuilder queryBuilder = new SqlQueryBuilder(Dialect.ORACLE);
         OracleTableIdentifier tableIdentifier = OracleTableIdentifier.parse(
-            new SqlQueryBuilder(Dialect.ORACLE).getTableName(persistentEntity)
+            queryBuilder.getTableName(persistentEntity)
         );
         String reloadQuery = method.stringValue(OracleChangeListenerQuery.class)
-            .orElseThrow(() -> invalidChangeListener(method, "is missing its generated Oracle ROWID reload query"));
+            .orElseGet(() -> reloadQuery(method, persistentEntity, queryBuilder));
         Properties properties = registrationProperties(notification);
         return new OracleChangeListenerDefinition(
             listenerMethod.beanDefinition(),
@@ -76,6 +83,40 @@ final class OracleChangeListenerDefinitionFactory {
             new OracleChangeListenerEntityLoader<>(operations, entityArgument.getType(), reloadQuery),
             properties
         );
+    }
+
+    /**
+     * Builds the same mapped ROWID query as the visitor when an inherited listener was not visited.
+     * The loader can bind only one string ROWID, so filtered or parameterized entity mappings must
+     * be rejected here as well as during compilation.
+     *
+     * @param method the listener method used in diagnostics
+     * @param persistentEntity the entity mapping
+     * @param queryBuilder the Oracle query builder
+     * @return the ROWID reload query
+     */
+    private static String reloadQuery(ExecutableMethod<?, ?> method,
+                                      RuntimePersistentEntity<?> persistentEntity,
+                                      SqlQueryBuilder queryBuilder) {
+        if (!persistentEntity.getAnnotationMetadata().getAnnotationValuesByType(Where.class).isEmpty()) {
+            throw invalidChangeListener(method, "does not support entity-level @Where clauses: "
+                + "they filter ROWID reloads without filtering the registration query");
+        }
+        var criteriaBuilder = new RuntimeCriteriaBuilder();
+        var query = criteriaBuilder.createQuery();
+        query.select(query.from(persistentEntity));
+        query.where(criteriaBuilder.equal(
+            criteriaBuilder.function("ROWID", String.class), criteriaBuilder.parameter(String.class, "rowId")));
+        var result = Objects.requireNonNull(query.build(AnnotationMetadata.EMPTY_METADATA, queryBuilder));
+        if (result.getQuery().contains("${")) {
+            throw invalidChangeListener(method, "ROWID reload query must not contain configuration placeholders; "
+                + "use literal entity mappings");
+        }
+        var bindings = result.getParameterBindings();
+        if (bindings.size() != 1 || bindings.getFirst().getDataType() != DataType.STRING) {
+            throw invalidChangeListener(method, "ROWID reload query requires exactly one ROWID parameter");
+        }
+        return result.getQuery();
     }
 
     /**

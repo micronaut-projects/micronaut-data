@@ -109,6 +109,7 @@ class ChangeListenerRetryTest {
         private Book receivedBook;
 
         @ChangeListener
+        @TestChangeNotification
         @Retryable(attempts = "2", delay = "1ms")
         void onChange(ChangeEvent<Book> event) {
             invocations.incrementAndGet();

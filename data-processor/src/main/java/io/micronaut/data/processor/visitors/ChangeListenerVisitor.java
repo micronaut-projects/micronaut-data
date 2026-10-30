@@ -16,6 +16,7 @@
 package io.micronaut.data.processor.visitors;
 
 import io.micronaut.data.annotation.MappedEntity;
+import io.micronaut.data.intercept.annotation.ChangeListenerProvider;
 import io.micronaut.inject.ast.ClassElement;
 import io.micronaut.inject.ast.MethodElement;
 import io.micronaut.inject.ast.ParameterElement;
@@ -26,7 +27,8 @@ import io.micronaut.inject.visitor.VisitorContext;
  * Validates direct and composed database-neutral change-listener declarations at compile time.
  *
  * <p>This includes the method shape and the concrete persistent entity type declared by
- * {@code ChangeEvent<E>}. Provider-specific annotation settings are validated by the visitor for
+ * {@code ChangeEvent<E>}, and the presence of provider-specific notification configuration.
+ * Provider-specific annotation settings are validated by the visitor for
  * that provider.</p>
  */
 public final class ChangeListenerVisitor implements TypeElementVisitor<Object, Object> {
@@ -82,6 +84,10 @@ public final class ChangeListenerVisitor implements TypeElementVisitor<Object, O
         }
         if (!entityType.hasStereotype(MappedEntity.class)) {
             context.fail("@ChangeListener ChangeEvent type argument must be a persistent entity", element);
+            return;
+        }
+        if (!element.hasStereotype(ChangeListenerProvider.class)) {
+            context.fail("@ChangeListener requires a provider-specific notification annotation, such as @OracleChangeNotification", element);
         }
     }
 }

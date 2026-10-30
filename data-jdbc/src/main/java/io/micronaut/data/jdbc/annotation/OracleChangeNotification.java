@@ -16,6 +16,7 @@
 package io.micronaut.data.jdbc.annotation;
 
 import io.micronaut.core.annotation.Experimental;
+import io.micronaut.data.intercept.annotation.ChangeListenerProvider;
 
 import java.lang.annotation.Documented;
 import java.lang.annotation.ElementType;
@@ -28,7 +29,9 @@ import java.lang.annotation.Target;
  *
  * <p>For an Oracle datasource, every change-listener method must use this annotation, including
  * listeners that rely on its defaults. The annotation enables compile-time generation of a
- * {@code ROWID} reload query. Registrations always request row identifiers so inserts and updates
+ * {@code ROWID} reload query. For listener methods inherited from separately compiled base classes
+ * without generated query metadata, the query is built from the entity mapping at startup.
+ * Registrations always request row identifiers so inserts and updates
  * can be reloaded. Oracle Database may report a full-table invalidation when row-level details are not
  * available, or report a table identified as a dependent table for Query Result Change Notification.
  * Either condition is delivered as {@link io.micronaut.data.jdbc.notification.ChangeOperation#INVALIDATE}.</p>
@@ -64,6 +67,7 @@ import java.lang.annotation.Target;
  */
 @Documented
 @Experimental
+@ChangeListenerProvider
 @Retention(RetentionPolicy.RUNTIME)
 @Target(ElementType.METHOD)
 public @interface OracleChangeNotification {

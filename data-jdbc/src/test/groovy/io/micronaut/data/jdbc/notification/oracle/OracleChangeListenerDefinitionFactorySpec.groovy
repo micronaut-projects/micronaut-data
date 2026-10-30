@@ -20,11 +20,15 @@ import io.micronaut.core.convert.ConversionService
 import io.micronaut.core.type.Argument
 import io.micronaut.data.annotation.Id
 import io.micronaut.data.annotation.MappedEntity
+import io.micronaut.data.annotation.MappedProperty
+import io.micronaut.data.annotation.Where
 import io.micronaut.data.intercept.annotation.OracleChangeListenerQuery
 import io.micronaut.data.jdbc.annotation.OracleChangeNotification
 import io.micronaut.data.jdbc.notification.ChangeListenerMethod
 import io.micronaut.data.jdbc.operations.JdbcRepositoryOperations
+import io.micronaut.data.model.runtime.PreparedQuery
 import io.micronaut.data.model.runtime.RuntimePersistentEntity
+import io.micronaut.data.runtime.operations.internal.query.BindableParametersStoredQuery
 import io.micronaut.inject.BeanDefinition
 import io.micronaut.inject.ExecutableMethod
 import oracle.jdbc.OracleConnection
@@ -118,17 +122,48 @@ class OracleChangeListenerDefinitionFactorySpec extends Specification {
         exception.message.contains('requires @OracleChangeNotification for an Oracle datasource')
     }
 
-    void "requires the generated Oracle ROWID reload query"() {
+    void "builds the mapped ROWID reload query when an inherited method has no generated query"() {
         given:
         def operations = operations()
         def listenerMethod = listenerMethod(notification(), Optional.empty())
+        def binder = Mock(BindableParametersStoredQuery.Binder)
+        PreparedQuery preparedQuery
+        operations.findOne(_ as PreparedQuery) >> { PreparedQuery query ->
+            preparedQuery = query
+            null
+        }
+
+        when:
+        def definition = new OracleChangeListenerDefinitionFactory(operations).create(listenerMethod)
+        definition.entityLoader().reload('AAABBB')
+
+        then:
+        definition.registrationQuery() == 'SELECT * FROM "SALES"."ORDER.ITEMS"'
+        preparedQuery.query == 'SELECT book_."ID",book_."BOOK_TITLE" FROM "SALES"."ORDER.ITEMS" book_ WHERE (ROWID = ?)'
+
+        when:
+        preparedQuery.bindParameters(binder)
+
+        then:
+        1 * binder.bindOne(_, 'AAABBB')
+    }
+
+    void "rejects entity filters when building a missing reload query"() {
+        given:
+        def operations = Mock(JdbcRepositoryOperations)
+        operations.getEntity(FilteredBook) >> new RuntimePersistentEntity<>(FilteredBook)
+        def method = Mock(ExecutableMethod)
+        method.getAnnotation(OracleChangeNotification) >> notification()
+        method.stringValue(OracleChangeListenerQuery) >> Optional.empty()
+        def listenerMethod = new ChangeListenerMethod(Mock(BeanDefinition), method, Argument.of(FilteredBook))
 
         when:
         new OracleChangeListenerDefinitionFactory(operations).create(listenerMethod)
 
         then:
         def exception = thrown(IllegalStateException)
-        exception.message.contains('is missing its generated Oracle ROWID reload query')
+        exception.message.contains('does not support entity-level @Where clauses')
+        0 * operations.findOne(_)
     }
 
     private JdbcRepositoryOperations operations() {
@@ -165,8 +200,17 @@ class OracleChangeListenerDefinitionFactorySpec extends Specification {
         builder.build()
     }
 
-    @MappedEntity(value = "order.items", schema = "Sales")
+    @MappedEntity(value = "order.items", schema = "Sales", alias = "book_")
     private static class SchemaBook {
+        @Id
+        Long id
+        @MappedProperty('book_title')
+        String title
+    }
+
+    @MappedEntity
+    @Where('enabled = 1')
+    private static class FilteredBook {
         @Id
         Long id
     }
