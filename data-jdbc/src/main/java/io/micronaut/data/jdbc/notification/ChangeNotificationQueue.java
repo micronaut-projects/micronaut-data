@@ -173,7 +173,7 @@ public class ChangeNotificationQueue {
         return shutdown;
     }
 
-    private void addToQueue(Runnable command) {
+    private synchronized void addToQueue(Runnable command) {
         Objects.requireNonNull(command);
         if (!started) {
             Thread worker = new Thread(this::processNotifications, threadName);

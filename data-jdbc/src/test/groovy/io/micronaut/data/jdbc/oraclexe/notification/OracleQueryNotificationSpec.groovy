@@ -26,6 +26,7 @@ import spock.lang.Shared
 import spock.lang.Specification
 
 import java.sql.Connection
+import java.sql.ResultSet
 import java.util.concurrent.TimeUnit
 
 class OracleQueryNotificationSpec extends Specification implements OracleTestPropertyProvider {
@@ -139,14 +140,18 @@ class OracleQueryNotificationSpec extends Specification implements OracleTestPro
         context.getBean(DefaultJdbcRepositoryOperations).execute { connection ->
             connection.createStatement().withCloseable { statement ->
                 statement.executeQuery("SELECT DISTINCT regid FROM user_change_notification_regs").withCloseable { rows ->
-                    Set<Long> ids = []
-                    while (rows.next()) {
-                        ids.add(rows.getLong(1))
-                    }
-                    ids
+                    readRegistrationIds(rows)
                 }
             }
         }
+    }
+
+    private static Set<Long> readRegistrationIds(ResultSet rows) {
+        Set<Long> ids = []
+        while (rows.next()) {
+            ids.add(rows.getLong(1))
+        }
+        ids
     }
 
     void "change listener receives an entity after an Oracle row is inserted"() {

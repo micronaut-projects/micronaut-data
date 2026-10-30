@@ -194,6 +194,7 @@ class ChangeListenerDataSourceValidatorSpec extends Specification {
         @ChangeListener(dataSource = 'inventory')
         @TestChangeNotification
         void changed(ChangeEvent<Book> event) {
+            // No event handling is needed for listener discovery and datasource validation tests.
         }
     }
 

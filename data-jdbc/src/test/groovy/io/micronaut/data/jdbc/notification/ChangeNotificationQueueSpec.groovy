@@ -398,12 +398,7 @@ class ChangeNotificationQueueSpec extends Specification {
             def release = new CountDownLatch(1)
             def failure = new AtomicReference<Throwable>()
             def producer = Thread.start {
-                try {
-                    release.await()
-                    100.times { submit(queue, {}) }
-                } catch (Throwable e) {
-                    failure.set(e)
-                }
+                produceNotifications(queue, release, failure)
             }
             release.countDown()
             queue.stop().toCompletableFuture().get(5, TimeUnit.SECONDS)
@@ -411,6 +406,17 @@ class ChangeNotificationQueueSpec extends Specification {
             assert !producer.alive
             assert failure.get() == null
             assert queue.stop().toCompletableFuture().get(5, TimeUnit.SECONDS) == null
+        }
+    }
+
+    private static void produceNotifications(ChangeNotificationQueue queue,
+                                             CountDownLatch release,
+                                             AtomicReference<Throwable> failure) {
+        try {
+            release.await()
+            100.times { submit(queue, {}) }
+        } catch (Throwable e) {
+            failure.set(e)
         }
     }
 
