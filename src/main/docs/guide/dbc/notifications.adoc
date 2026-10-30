@@ -1,5 +1,5 @@
-Micronaut Data notification integrations let an application react to committed database changes and notification-subscription
-termination. The available capabilities depend on the database and JDBC driver.
+Micronaut Data notification integrations let an application react to committed database changes.
+The available capabilities depend on the database and JDBC driver.
 
 JDBC change listeners are enabled by default. To disable them, for example in tests using H2 or another database
 without a notification provider, set the following in the test environment's configuration:

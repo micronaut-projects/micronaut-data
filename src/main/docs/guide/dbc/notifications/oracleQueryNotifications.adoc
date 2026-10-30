@@ -17,6 +17,9 @@ dependency:com.oracle.database.jdbc:ojdbc11[scope="implementation"]
 
 This makes `OracleConnection.DCN_*` and `OracleConnection.NTF_*` constants available when configuring annotation properties.
 
+Micronaut Data uses client-initiated notification connections by default. This mode requires both Oracle Database 19c
+or later and Oracle JDBC 19c or later. See https://docs.oracle.com/en/database/oracle/oracle-database/19/jjdbc/continuos-query-notification.html[Oracle's Continuous Query Notification documentation].
+
 The datasource user must have Oracle Database's `CHANGE NOTIFICATION` privilege. A database administrator can grant it with:
 
 [source,sql]
@@ -158,7 +161,9 @@ Use literal values for `select`, `where`, and registration property names and va
 must also use literal values; for example, `@MappedEntity(schema = "${app.schema}")` is not supported for
 Oracle notification listeners.
 
-QRCN queries may depend on other tables, including tables in another schema when the datasource user has the required privileges.
+QRCN queries may depend on other tables, including tables in another schema.
+The datasource user must have `SELECT` privileges on every table referenced by the registered query, including dependent
+tables in `where` subqueries.
 If a notification reports a change only to a table identified as a dependent table, Micronaut Data cannot reload it as the listener’s entity type.
 The listener therefore receives an `INVALIDATE` event instead of a row-level event.
 
@@ -174,8 +179,13 @@ so notification matching compares both schema and table name.
 Use `OracleChangeNotification.Property` to pass Oracle JDBC registration properties by name and value,
 as shown by `DCN_QUERY_CHANGE_NOTIFICATION` in the preceding example. Micronaut Data sets
 `DCN_CLIENT_INIT_CONNECTION` to `true` by default, so the JDBC driver initiates its notification connection.
-Set it to `false` to use server-initiated notification connections. To enable a one-shot registration,
-add a property named `NTF_QOS_PURGE_ON_NTFN` with the value `true`.
+Set it to `false` to use server-initiated notification connections.
+
+For server-initiated mode, Oracle Database must be able to reach the JDBC driver's notification listener at
+`NTF_LOCAL_HOST:NTF_LOCAL_TCP_PORT`. Configure firewalls, NAT, and container networking or port mappings so the
+advertised host and port are reachable from the database server.
+
+To enable a one-shot registration, add a property named `NTF_QOS_PURGE_ON_NTFN` with the value `true`.
 
 `NTF_QOS_PURGE_ON_NTFN` makes each registration one-shot: Oracle Database removes it after its first data notification,
 and Micronaut Data stops receiving further notifications for that listener.
