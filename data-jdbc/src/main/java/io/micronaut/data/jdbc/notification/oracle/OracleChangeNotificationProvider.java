@@ -1,0 +1,247 @@
+/*
+ * Copyright 2017-2026 original authors
+ *
+ * Licensed under the Apache License, Version 2.0 (the "License");
+ * you may not use this file except in compliance with the License.
+ * You may obtain a copy of the License at
+ *
+ * https://www.apache.org/licenses/LICENSE-2.0
+ *
+ * Unless required by applicable law or agreed to in writing, software
+ * distributed under the License is distributed on an "AS IS" BASIS,
+ * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+ * See the License for the specific language governing permissions and
+ * limitations under the License.
+ */
+package io.micronaut.data.jdbc.notification.oracle;
+
+import io.micronaut.context.BeanContext;
+import io.micronaut.context.annotation.Requires;
+import io.micronaut.context.annotation.Value;
+import io.micronaut.context.event.ApplicationEventListener;
+import io.micronaut.context.event.ShutdownEvent;
+import io.micronaut.core.annotation.Order;
+import io.micronaut.core.order.Ordered;
+import io.micronaut.core.version.SemanticVersion;
+import io.micronaut.data.exceptions.DataAccessException;
+import io.micronaut.data.jdbc.notification.ChangeListenerMethod;
+import io.micronaut.data.jdbc.notification.ChangeNotificationProvider;
+import io.micronaut.data.jdbc.operations.JdbcRepositoryOperations;
+import io.micronaut.runtime.graceful.GracefulShutdownCapable;
+import io.micronaut.scheduling.TaskExecutors;
+import io.micronaut.scheduling.TaskScheduler;
+import jakarta.annotation.PreDestroy;
+import jakarta.inject.Named;
+import jakarta.inject.Singleton;
+import oracle.jdbc.OracleConnection;
+import org.jspecify.annotations.Nullable;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
+
+import java.sql.Connection;
+import java.sql.SQLException;
+import java.time.Duration;
+import java.util.List;
+import java.util.Map;
+import java.util.OptionalLong;
+import java.util.concurrent.CompletableFuture;
+import java.util.concurrent.CompletionStage;
+import java.util.concurrent.ConcurrentHashMap;
+import java.util.concurrent.ExecutionException;
+import java.util.concurrent.Executor;
+import java.util.concurrent.TimeUnit;
+import java.util.concurrent.TimeoutException;
+import java.util.concurrent.atomic.AtomicBoolean;
+
+/**
+ * Oracle implementation of the generic JDBC change-notification provider.
+ *
+ * <p>This singleton is available when the Oracle JDBC driver is present and is selected for
+ * connections that unwrap to {@link OracleConnection}. It converts discovered listener methods
+ * into Oracle listener definitions and maintains one {@link OracleChangeNotificationSubscriptionManager}
+ * for each participating datasource. Registration supplies the complete set of discovered listener
+ * methods once per datasource; later registration calls for that datasource are rejected.</p>
+ *
+ * <p>Each subscription manager owns the physical Oracle registrations and their lifecycle.
+ * A {@link ShutdownEvent} initiates cleanup for all datasource managers. Shutdown waits for
+ * registration cleanup, recovery, and notification callbacks that are already running, bounded by
+ * the configured grace period, before singleton destruction. {@link PreDestroy} provides the same
+ * bounded cleanup fallback if the provider is destroyed without a context shutdown event.</p>
+ */
+@Singleton
+@Requires(classes = OracleConnection.class)
+@Order(Ordered.HIGHEST_PRECEDENCE)
+final class OracleChangeNotificationProvider implements ChangeNotificationProvider, GracefulShutdownCapable,
+    ApplicationEventListener<ShutdownEvent> {
+    private static final Logger LOG = LoggerFactory.getLogger(OracleChangeNotificationProvider.class);
+    private static final String MINIMUM_DRIVER_VERSION = "23.26.3.0.0";
+
+    private final BeanContext beanContext;
+    private final Executor blockingExecutor;
+    private final TaskScheduler taskScheduler;
+    private final OracleNotificationConfiguration notificationConfiguration;
+    private final OracleRegistrationRecoveryConfiguration recoveryConfiguration;
+    private final boolean gracefulShutdownEnabled;
+    private final Duration shutdownGracePeriod;
+    private final AtomicBoolean shutdownHandled = new AtomicBoolean();
+    private final Map<String, OracleChangeNotificationSubscriptionManager> subscriptionManagers = new ConcurrentHashMap<>();
+    private @Nullable CompletableFuture<Void> shutdownStage;
+
+    OracleChangeNotificationProvider(BeanContext beanContext,
+                                     @Named(TaskExecutors.BLOCKING) Executor blockingExecutor,
+                                     @Named(TaskExecutors.SCHEDULED) TaskScheduler taskScheduler,
+                                     OracleNotificationConfiguration notificationConfiguration,
+                                     OracleRegistrationRecoveryConfiguration recoveryConfiguration,
+                                     @Value("${micronaut.lifecycle.graceful-shutdown.enabled:false}") boolean gracefulShutdownEnabled,
+                                     @Value("${micronaut.lifecycle.graceful-shutdown.grace-period:15s}") Duration shutdownGracePeriod) {
+        this.beanContext = beanContext;
+        this.blockingExecutor = blockingExecutor;
+        this.taskScheduler = taskScheduler;
+        this.notificationConfiguration = notificationConfiguration;
+        this.recoveryConfiguration = recoveryConfiguration;
+        this.gracefulShutdownEnabled = gracefulShutdownEnabled;
+        this.shutdownGracePeriod = shutdownGracePeriod;
+    }
+
+    /**
+     * Selects whether this provider can manage notifications on the supplied connection.
+     * Validates the driver version before registration can call newer Oracle notification APIs.
+     *
+     * @param connection a connection obtained from the datasource
+     * @return {@code true} if the connection can be unwrapped to an Oracle connection
+     * @throws SQLException if the connection cannot be inspected
+     * @throws DataAccessException if the Oracle JDBC driver version is unsupported or cannot be determined
+     */
+    @Override
+    public boolean supports(Connection connection) throws SQLException {
+        if (!connection.isWrapperFor(OracleConnection.class)) {
+            return false;
+        }
+        String driverVersion = connection.getMetaData().getDriverVersion();
+        boolean supported;
+        try {
+            supported = SemanticVersion.isAtLeast(driverVersion, MINIMUM_DRIVER_VERSION);
+        } catch (IllegalArgumentException e) {
+            supported = false;
+        }
+        if (!supported) {
+            throw new DataAccessException("Oracle change notifications require Oracle JDBC " + MINIMUM_DRIVER_VERSION
+                + " or later, but found driver version [" + driverVersion + "]. Upgrade the Oracle JDBC driver.");
+        }
+        return true;
+    }
+
+    /**
+     * Builds and starts the subscriptions discovered for one datasource.
+     *
+     * @param dataSourceName  the datasource these listeners selected
+     * @param operations      repository operations bound to that datasource
+     * @param listenerMethods the listener methods discovered for that datasource
+     */
+    @Override
+    public synchronized void register(String dataSourceName, JdbcRepositoryOperations operations, List<ChangeListenerMethod> listenerMethods) {
+        if (shutdownStage != null) {
+            throw new IllegalStateException("Cannot register DCN subscriptions for datasource [" + dataSourceName
+                + "] after provider shutdown has started");
+        }
+        OracleChangeListenerDefinitionFactory definitionFactory = new OracleChangeListenerDefinitionFactory(operations);
+        List<OracleChangeListenerDefinition> listenerDefinitions = listenerMethods.stream()
+            .map(definitionFactory::create)
+            .toList();
+        OracleChangeNotificationSubscriptionManager subscriptionManager = new OracleChangeNotificationSubscriptionManager(
+            dataSourceName, operations, beanContext, blockingExecutor, taskScheduler, listenerDefinitions, notificationConfiguration, recoveryConfiguration);
+        if (subscriptionManagers.putIfAbsent(dataSourceName, subscriptionManager) != null) {
+            throw new IllegalStateException("DCN subscriptions for datasource [" + dataSourceName
+                + "] have already been discovered; additional registrations are not supported");
+        }
+        LOG.trace("Starting registration of [{}] change listener methods for datasource [{}]",
+            listenerMethods.size(), dataSourceName);
+        subscriptionManager.start();
+    }
+
+    /**
+     * Stops all datasource managers and waits for registration cleanup, recovery, and notification callbacks that are already running.
+     *
+     * @return a stage completed when all managers have finished graceful shutdown
+     */
+    @Override
+    public CompletionStage<?> shutdownGracefully() {
+        return stopManagers();
+    }
+
+    /**
+     * Initiates registration cleanup before singleton destruction. When the framework's graceful
+     * shutdown listener is disabled, waits here while the datasources and executors are still available.
+     *
+     * @param event the context shutdown event
+     */
+    @Override
+    public void onApplicationEvent(ShutdownEvent event) {
+        if (shutdownHandled.compareAndSet(false, true)) {
+            CompletionStage<?> completion = stopManagers();
+            if (!gracefulShutdownEnabled) {
+                awaitShutdown(completion);
+            }
+        }
+    }
+
+    /**
+     * Stops each datasource manager once and returns the same stage to every shutdown caller.
+     * Synchronization also prevents a new manager from being added after shutdown starts.
+     */
+    private synchronized CompletionStage<?> stopManagers() {
+        CompletableFuture<Void> completion = shutdownStage;
+        if (completion == null) {
+            LOG.trace("Stopping DCN subscription managers");
+            completion = CompletableFuture.allOf(subscriptionManagers.values().stream()
+                .map(OracleChangeNotificationSubscriptionManager::stop)
+                .map(CompletionStage::toCompletableFuture)
+                .toArray(CompletableFuture[]::new));
+            shutdownStage = completion;
+        }
+        return completion;
+    }
+
+    /**
+     * Waits for cleanup if this bean is destroyed without a context shutdown event. A shutdown event
+     * already owns the wait, so bean destruction must not extend its deadline.
+     */
+    @PreDestroy
+    void close() {
+        if (shutdownHandled.compareAndSet(false, true)) {
+            awaitShutdown(stopManagers());
+        }
+    }
+
+    private void awaitShutdown(CompletionStage<?> completion) {
+        try {
+            completion.toCompletableFuture().get(shutdownGracePeriod.toMillis(), TimeUnit.MILLISECONDS);
+        } catch (InterruptedException e) {
+            Thread.currentThread().interrupt();
+            LOG.warn("Interrupted while waiting for DCN registration cleanup", e);
+        } catch (ExecutionException e) {
+            LOG.warn("Error during DCN registration cleanup", e);
+        } catch (TimeoutException e) {
+            LOG.warn("Timed out waiting for DCN registration cleanup after [{}]; registrations may remain in Oracle Database", shutdownGracePeriod);
+        }
+    }
+
+    /**
+     * Reports combined outstanding task counts while datasource managers are shutting down.
+     *
+     * @return the total active task count if shutdown has started, or empty otherwise
+     */
+    @Override
+    public OptionalLong reportActiveTasks() {
+        long activeTasks = 0;
+        boolean shutdownStarted = false;
+        for (OracleChangeNotificationSubscriptionManager subscriptionManager : subscriptionManagers.values()) {
+            OptionalLong listenerActiveTasks = subscriptionManager.reportActiveTasks();
+            if (listenerActiveTasks.isPresent()) {
+                shutdownStarted = true;
+                activeTasks += listenerActiveTasks.getAsLong();
+            }
+        }
+        return shutdownStarted ? OptionalLong.of(activeTasks) : OptionalLong.empty();
+    }
+}
