@@ -3,10 +3,16 @@ package example.notification
 import io.micronaut.context.ApplicationContext
 import io.micronaut.data.jdbc.operations.DefaultJdbcRepositoryOperations
 import io.micronaut.data.model.geo.Point
+import io.micronaut.data.jdbc.notification.oracle.OracleChangeEventMetadata
+import io.micronaut.data.notification.ChangeEvent
+import io.micronaut.data.notification.ChangeOperation
 import org.junit.jupiter.api.Assertions.assertEquals
 import org.junit.jupiter.api.Assertions.assertFalse
+import org.junit.jupiter.api.Assertions.assertNull
+import org.junit.jupiter.api.Assertions.assertTrue
 import org.junit.jupiter.api.Test
 import java.sql.Statement
+import java.util.concurrent.TimeUnit
 
 class LibraryCacheSpec {
 
@@ -20,44 +26,45 @@ class LibraryCacheSpec {
                 "datasources.default.schema-generate" to "NONE"
             )) { context ->
                 val repository = context.getBean(LibraryRepository::class.java)
-                val libraryCache = context.getBean(LibraryCache::class.java)
-
-                val library1 = libraryCache.find("Library 1").orElseThrow()
-                val library2 = libraryCache.find("Library 2").orElseThrow()
-                val library3 = libraryCache.find("Library 3").orElseThrow()
-                val library4 = libraryCache.find("Library 4").orElseThrow()
-
+                val cache = context.getBean(LibraryCache::class.java)
+                val events = context.getBean(ChangeEventRecorder::class.java)
+                val library1 = cache.find("Library 1").orElseThrow()
+                val library2 = cache.find("Library 2").orElseThrow()
+                val library3 = cache.find("Library 3").orElseThrow()
                 assertEquals("library1@example.com", library1.email)
                 assertEquals(9000, library2.capacity)
                 assertEquals(10000, library3.capacity)
-                assertEquals(Point(20.68960, 44.01650), library4.location)
+                assertEquals(Point(20.68960, 44.01650), cache.find("Library 4").orElseThrow().location)
 
-                repository.save(Library(library1.id, "Library 1 Updated", library1.email, library1.capacity, library1.location))
-                waitUntil { libraryCache.find("Library 1 Updated").isPresent }
-                assertEquals(library1.id, libraryCache.find("Library 1 Updated").orElseThrow().id)
+                val renamed = Library(library1.id, "Library 1 Updated", library1.email, library1.capacity, library1.location)
+                repository.save(renamed)
+                assertRowEvent(events, ChangeOperation.UPDATE, renamed)
+                assertEquals(renamed, cache.find(renamed.name).orElseThrow())
 
-                repository.save(Library(library2.id, library2.name, library2.email, 12000, library2.location))
-                waitUntil { libraryCache.find("Library 2").orElseThrow().capacity == 12000 }
-                assertEquals(library2.id, libraryCache.find("Library 2").orElseThrow().id)
+                val expanded = Library(library2.id, library2.name, library2.email, 12000, library2.location)
+                repository.save(expanded)
+                assertRowEvent(events, ChangeOperation.UPDATE, expanded)
+                assertEquals(expanded, cache.find(expanded.name).orElseThrow())
 
-                val updatedLocation = Point(20.91140, 44.81250)
-                repository.save(Library(library3.id, library3.name, library3.email, library3.capacity, updatedLocation))
-                waitUntil { libraryCache.find("Library 3").orElseThrow().location == updatedLocation }
-                assertEquals(library3.id, libraryCache.find("Library 3").orElseThrow().id)
+                val relocated = Library(library3.id, library3.name, library3.email, library3.capacity, Point(20.91140, 44.81250))
+                repository.save(relocated)
+                assertRowEvent(events, ChangeOperation.UPDATE, relocated)
+                assertEquals(relocated, cache.find(relocated.name).orElseThrow())
 
-                val library5 = repository.save(Library(null, "Library 5", "library5@example.com", 8000, Point(21.16560, 44.77220)))
-                waitUntil { libraryCache.find("Library 5").isPresent }
-                assertEquals(library5.id, libraryCache.find("Library 5").orElseThrow().id)
+                val inserted = repository.save(Library(null, "Library 5", "library5@example.com", 8000, Point(21.16560, 44.77220)))
+                val insert = assertRowEvent(events, ChangeOperation.INSERT, inserted)
+                assertEquals(inserted, cache.find(inserted.name).orElseThrow())
 
-                repository.deleteById(library5.id!!)
-                waitUntil { !libraryCache.find("Library 5").isPresent }
+                repository.deleteById(inserted.id!!)
+                val delete = assertRowEvent(events, ChangeOperation.DELETE, null)
+                assertEquals(insert.metadata(OracleChangeEventMetadata::class.java).orElseThrow().rowId(),
+                    delete.metadata(OracleChangeEventMetadata::class.java).orElseThrow().rowId())
+                assertTrue(cache.find(inserted.name).isEmpty)
 
                 truncateLibraries(context)
-                waitUntil {
-                    !libraryCache.find("Library 1 Updated").isPresent &&
-                        !libraryCache.find("Library 2").isPresent &&
-                        !libraryCache.find("Library 3").isPresent &&
-                        !libraryCache.find("Library 4").isPresent
+                assertInvalidation(events)
+                for (name in listOf(renamed.name, expanded.name, relocated.name, "Library 4")) {
+                    assertTrue(cache.find(name).isEmpty)
                 }
             }
         } finally {
@@ -75,32 +82,98 @@ class LibraryCacheSpec {
                 "datasources.default.schema-generate" to "NONE"
             )) { context ->
                 val repository = context.getBean(LibraryRepository::class.java)
-                val libraryCache = context.getBean(LargeLibraryCache::class.java)
-
-                assertFalse(libraryCache.find("Library 1").isPresent)
-                assertFalse(libraryCache.find("Library 2").isPresent)
-                val library3 = libraryCache.find("Library 3").orElseThrow()
-                val library4 = libraryCache.find("Library 4").orElseThrow()
+                val cache = context.getBean(LargeLibraryCache::class.java)
+                val events = context.getBean(ChangeEventRecorder::class.java)
+                assertTrue(cache.find("Library 1").isEmpty)
+                assertTrue(cache.find("Library 2").isEmpty)
+                val library3 = cache.find("Library 3").orElseThrow()
+                val library4 = cache.find("Library 4").orElseThrow()
                 assertEquals(10000, library3.capacity)
                 assertEquals(15000, library4.capacity)
-
                 val library1 = repository.findAll().first { it.name == "Library 1" }
-                repository.save(Library(library1.id, library1.name, library1.email, 10000, library1.location))
-                waitUntil { libraryCache.find(library1.name).isPresent }
-                assertEquals(library1.id, libraryCache.find(library1.name).orElseThrow().id)
 
-                repository.save(Library(library3.id, library3.name, library3.email, 9000, library3.location))
-                waitUntil { !libraryCache.find(library3.name).isPresent }
+                val entered = Library(library1.id, library1.name, library1.email, 10000, library1.location)
+                repository.save(entered)
+                assertRowEvent(events, ChangeOperation.UPDATE, entered)
+                assertEquals(entered, cache.find(entered.name).orElseThrow())
 
-                repository.deleteById(library4.id!!)
-                waitUntil { !libraryCache.find(library4.name).isPresent }
+                // The registered select contains only name; the event must reload every entity field.
+                val updated = Library(library4.id, "Library 4 Updated", "updated@example.com", 16000, Point(20.91140, 44.81250))
+                repository.save(updated)
+                assertRowEvent(events, ChangeOperation.UPDATE, updated)
+                assertEquals(updated, cache.find(updated.name).orElseThrow())
+
+                val inserted = repository.save(Library(null, "Library 5", "library5@example.com", 12000, Point(21.16560, 44.77220)))
+                assertRowEvent(events, ChangeOperation.INSERT, inserted)
+                assertEquals(inserted, cache.find(inserted.name).orElseThrow())
+
+                val left = Library(library3.id, library3.name, library3.email, 9000, library3.location)
+                repository.save(left)
+                assertRowEvent(events, ChangeOperation.UPDATE, left)
+                assertTrue(cache.find(left.name).isEmpty)
+
+                repository.deleteById(updated.id!!)
+                assertRowEvent(events, ChangeOperation.DELETE, null)
+                assertTrue(cache.find(updated.name).isEmpty)
 
                 truncateLibraries(context)
-                waitUntil { !libraryCache.find(library1.name).isPresent }
+                assertInvalidation(events)
+                assertTrue(cache.find(entered.name).isEmpty)
+                assertTrue(cache.find(inserted.name).isEmpty)
             }
         } finally {
             removeData()
         }
+    }
+
+    @Test
+    fun testQueryIgnoresChangesOutsideFilter() {
+        grantChangeNotificationPrivilege()
+        prepareData()
+        try {
+            withContext(mapOf(
+                "query-notification.query.enabled" to "true",
+                "datasources.default.schema-generate" to "NONE"
+            )) { context ->
+                val repository = context.getBean(LibraryRepository::class.java)
+                val cache = context.getBean(LargeLibraryCache::class.java)
+                val events = context.getBean(ChangeEventRecorder::class.java)
+                val included = cache.find("Library 3").orElseThrow()
+                val control = Library(included.id, "Library 3 Included", included.email, included.capacity, included.location)
+                repository.save(control)
+                assertRowEvent(events, ChangeOperation.UPDATE, control)
+
+                val excluded = repository.findAll().first { it.name == "Library 1" }
+                repository.save(Library(excluded.id, "Library 1 Still Excluded", excluded.email, 9999, excluded.location))
+                assertNull(events.poll(1, TimeUnit.SECONDS), "An update outside the registered query must not invoke the listener")
+                assertTrue(cache.find("Library 1 Still Excluded").isEmpty)
+
+                repository.save(Library(null, "Excluded Insert", "excluded@example.com", 9999, Point(20.0, 44.0)))
+                assertNull(events.poll(1, TimeUnit.SECONDS), "An insert outside the registered query must not invoke the listener")
+                assertTrue(cache.find("Excluded Insert").isEmpty)
+            }
+        } finally {
+            removeData()
+        }
+    }
+
+    private fun nextEvent(events: ChangeEventRecorder, operation: ChangeOperation): ChangeEvent<Library> {
+        val event = events.poll(10, TimeUnit.SECONDS) ?: throw AssertionError("Expected $operation notification")
+        assertEquals(operation, event.operation())
+        return event
+    }
+
+    private fun assertRowEvent(events: ChangeEventRecorder, operation: ChangeOperation, entity: Library?): ChangeEvent<Library> {
+        val event = nextEvent(events, operation)
+        assertEquals(entity, event.entity().orElse(null))
+        assertFalse(event.metadata(OracleChangeEventMetadata::class.java).orElseThrow().rowId().isBlank())
+        return event
+    }
+
+    private fun assertInvalidation(events: ChangeEventRecorder) {
+        val event = nextEvent(events, ChangeOperation.INVALIDATE)
+        assertTrue(event.entity().isEmpty)
+        assertTrue(event.metadata(OracleChangeEventMetadata::class.java).isEmpty)
     }
 
     private fun truncateLibraries(context: ApplicationContext) {
@@ -152,14 +225,4 @@ class LibraryCacheSpec {
         }
     }
 
-    private fun waitUntil(condition: () -> Boolean) {
-        val end = System.currentTimeMillis() + 10_000
-        while (System.currentTimeMillis() < end) {
-            Thread.sleep(50)
-            if (condition()) {
-                return
-            }
-        }
-        throw IllegalStateException("Condition was not fulfilled within 10 seconds")
-    }
 }

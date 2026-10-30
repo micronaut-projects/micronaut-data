@@ -3,6 +3,10 @@ package example.notification;
 import io.micronaut.context.ApplicationContext;
 import io.micronaut.data.jdbc.operations.DefaultJdbcRepositoryOperations;
 import io.micronaut.data.model.geo.Point;
+import io.micronaut.data.jdbc.notification.oracle.OracleChangeEventMetadata;
+import io.micronaut.data.notification.ChangeEvent;
+import io.micronaut.data.notification.ChangeOperation;
+import org.jspecify.annotations.Nullable;
 import org.junit.jupiter.api.AfterEach;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.BeforeAll;
@@ -11,10 +15,14 @@ import org.junit.jupiter.api.TestInstance;
 
 import java.sql.Statement;
 import java.util.Map;
-import java.util.concurrent.Callable;
+import java.util.Optional;
+import java.util.concurrent.TimeUnit;
 
 import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertFalse;
+import static org.junit.jupiter.api.Assertions.assertNotNull;
+import static org.junit.jupiter.api.Assertions.assertNull;
+import static org.junit.jupiter.api.Assertions.assertTrue;
 
 @TestInstance(TestInstance.Lifecycle.PER_CLASS)
 class LibraryCacheSpec {
@@ -60,111 +68,146 @@ class LibraryCacheSpec {
     }
 
     @Test
-    void testObjectChangeNotifications() {
+    void testObjectChangeNotifications() throws InterruptedException {
         try (ApplicationContext context = ApplicationContext.run(Map.of(
             "query-notification.object.enabled", "true",
             "datasources.default.schema-generate", "NONE"
         ), "oracle-cqn")) {
             LibraryRepository repository = context.getBean(LibraryRepository.class);
-            LibraryCache libraryCache = context.getBean(LibraryCache.class);
-
-            Library library1 = libraryCache.find("Library 1").orElseThrow();
-            Library library2 = libraryCache.find("Library 2").orElseThrow();
-            Library library3 = libraryCache.find("Library 3").orElseThrow();
-            Library library4 = libraryCache.find("Library 4").orElseThrow();
-
+            LibraryCache cache = context.getBean(LibraryCache.class);
+            ChangeEventRecorder events = context.getBean(ChangeEventRecorder.class);
+            Library library1 = cache.find("Library 1").orElseThrow();
+            Library library2 = cache.find("Library 2").orElseThrow();
+            Library library3 = cache.find("Library 3").orElseThrow();
             assertEquals("library1@example.com", library1.email());
             assertEquals(9_000, library2.capacity());
             assertEquals(10_000, library3.capacity());
-            assertEquals(new Point(20.68960, 44.01650), library4.location());
+            assertEquals(new Point(20.68960, 44.01650), cache.find("Library 4").orElseThrow().location());
 
-            // name updated
-            repository.save(new Library(library1.id(), "Library 1 Updated", library1.email(), library1.capacity(), library1.location()));
+            Library renamed = new Library(library1.id(), "Library 1 Updated", library1.email(), library1.capacity(), library1.location());
+            repository.save(renamed);
+            assertRowEvent(events, ChangeOperation.UPDATE, renamed);
+            assertEquals(renamed, cache.find(renamed.name()).orElseThrow());
 
-            waitUntil(() -> libraryCache.find("Library 1 Updated").isPresent());
+            Library expanded = new Library(library2.id(), library2.name(), library2.email(), 12_000, library2.location());
+            repository.save(expanded);
+            assertRowEvent(events, ChangeOperation.UPDATE, expanded);
+            assertEquals(expanded, cache.find(expanded.name()).orElseThrow());
 
-            Library cachedLibrary1 = libraryCache.find("Library 1 Updated").orElseThrow();
-            assertEquals(library1.id(), cachedLibrary1.id());
+            Library relocated = new Library(library3.id(), library3.name(), library3.email(), library3.capacity(), new Point(20.91140, 44.81250));
+            repository.save(relocated);
+            assertRowEvent(events, ChangeOperation.UPDATE, relocated);
+            assertEquals(relocated, cache.find(relocated.name()).orElseThrow());
 
-            // capacity updated
-            repository.save(new Library(library2.id(), library2.name(), library2.email(), 12_000, library2.location()));
+            Library inserted = repository.save(new Library(null, "Library 5", "library5@example.com", 8_000, new Point(21.16560, 44.77220)));
+            ChangeEvent<Library> insert = assertRowEvent(events, ChangeOperation.INSERT, inserted);
+            assertEquals(inserted, cache.find(inserted.name()).orElseThrow());
 
-            waitUntil(() -> libraryCache.find("Library 2").orElseThrow().capacity() == 12_000);
-
-            Library cachedLibrary2 = libraryCache.find("Library 2").orElseThrow();
-
-            assertEquals(library2.id(), cachedLibrary2.id());
-
-            // location updated
-            Point updatedLocation = new Point(20.91140, 44.81250);
-            repository.save(new Library(library3.id(), library3.name(), library3.email(), library3.capacity(), updatedLocation));
-
-            waitUntil(() -> libraryCache.find("Library 3").orElseThrow().location().equals(updatedLocation));
-
-            Library cachedLibrary3 = libraryCache.find("Library 3").orElseThrow();
-
-            assertEquals(library3.id(), cachedLibrary3.id());
-
-            // new library added to the cache
-            Library library5 = repository.save(new Library(null, "Library 5", "library5@example.com", 8_000, new Point(21.16560, 44.77220)));
-
-            waitUntil(() -> libraryCache.find("Library 5").isPresent());
-
-            Library cachedLibrary5 = libraryCache.find("Library 5").orElseThrow();
-            assertEquals(library5.id(), cachedLibrary5.id());
-
-            repository.deleteById(library5.id());
-            waitUntil(() -> libraryCache.find("Library 5").isEmpty());
+            repository.deleteById(inserted.id());
+            ChangeEvent<Library> delete = assertRowEvent(events, ChangeOperation.DELETE, null);
+            assertEquals(insert.metadata(OracleChangeEventMetadata.class).orElseThrow().rowId(),
+                delete.metadata(OracleChangeEventMetadata.class).orElseThrow().rowId());
+            assertTrue(cache.find(inserted.name()).isEmpty());
 
             truncateLibraries(context);
-            waitUntil(() -> libraryCache.find("Library 1 Updated").isEmpty()
-                && libraryCache.find("Library 2").isEmpty()
-                && libraryCache.find("Library 3").isEmpty()
-                && libraryCache.find("Library 4").isEmpty());
+            assertInvalidation(events);
+            for (String name : new String[]{renamed.name(), expanded.name(), relocated.name(), "Library 4"}) {
+                assertTrue(cache.find(name).isEmpty());
+            }
         }
     }
 
     @Test
-    void testQueryChangeNotifications() {
+    void testQueryChangeNotifications() throws InterruptedException {
         try (ApplicationContext context = ApplicationContext.run(Map.of(
             "query-notification.query.enabled", "true",
             "datasources.default.schema-generate", "NONE"
         ), "oracle-cqn")) {
             LibraryRepository repository = context.getBean(LibraryRepository.class);
-            LargeLibraryCache libraryCache = context.getBean(LargeLibraryCache.class);
-
-            assertFalse(libraryCache.find("Library 1").isPresent());
-            assertFalse(libraryCache.find("Library 2").isPresent());
-
-            Library library3 = libraryCache.find("Library 3").orElseThrow();
-            Library library4 = libraryCache.find("Library 4").orElseThrow();
-
+            LargeLibraryCache cache = context.getBean(LargeLibraryCache.class);
+            ChangeEventRecorder events = context.getBean(ChangeEventRecorder.class);
+            assertTrue(cache.find("Library 1").isEmpty());
+            assertTrue(cache.find("Library 2").isEmpty());
+            Library library3 = cache.find("Library 3").orElseThrow();
+            Library library4 = cache.find("Library 4").orElseThrow();
             assertEquals(10_000, library3.capacity());
             assertEquals(15_000, library4.capacity());
+            Library library1 = repository.findAll().stream().filter(library -> library.name().equals("Library 1")).findFirst().orElseThrow();
 
-            // when capacity is updated to reach 10,000, the library should be added to the cache
-            Library library1 = repository.findAll().stream()
-                .filter(library -> library.name().equals("Library 1"))
-                .findFirst()
-                .orElseThrow();
-            repository.save(new Library(library1.id(), library1.name(), library1.email(), 10_000, library1.location()));
+            Library entered = new Library(library1.id(), library1.name(), library1.email(), 10_000, library1.location());
+            repository.save(entered);
+            assertRowEvent(events, ChangeOperation.UPDATE, entered);
+            assertEquals(entered, cache.find(entered.name()).orElseThrow());
 
-            waitUntil(() -> libraryCache.find(library1.name()).isPresent());
+            // The registered select contains only name; the event must reload every entity field.
+            Library updated = new Library(library4.id(), "Library 4 Updated", "updated@example.com", 16_000, new Point(20.91140, 44.81250));
+            repository.save(updated);
+            assertRowEvent(events, ChangeOperation.UPDATE, updated);
+            assertEquals(updated, cache.find(updated.name()).orElseThrow());
 
-            Library cachedLibrary1 = libraryCache.find("Library 1").orElseThrow();
-            assertEquals(library1.id(), cachedLibrary1.id());
+            Library inserted = repository.save(new Library(null, "Library 5", "library5@example.com", 12_000, new Point(21.16560, 44.77220)));
+            assertRowEvent(events, ChangeOperation.INSERT, inserted);
+            assertEquals(inserted, cache.find(inserted.name()).orElseThrow());
 
-            // when capacity is updated below 10,000, the library should be removed from the cache
-            repository.save(new Library(library3.id(), library3.name(), library3.email(), 9_000, library3.location()));
+            Library left = new Library(library3.id(), library3.name(), library3.email(), 9_000, library3.location());
+            repository.save(left);
+            assertRowEvent(events, ChangeOperation.UPDATE, left);
+            assertTrue(cache.find(left.name()).isEmpty());
 
-            waitUntil(() -> libraryCache.find(library3.name()).isEmpty());
-
-            repository.deleteById(library4.id());
-            waitUntil(() -> libraryCache.find(library4.name()).isEmpty());
+            repository.deleteById(updated.id());
+            assertRowEvent(events, ChangeOperation.DELETE, null);
+            assertTrue(cache.find(updated.name()).isEmpty());
 
             truncateLibraries(context);
-            waitUntil(() -> libraryCache.find(library1.name()).isEmpty());
+            assertInvalidation(events);
+            assertTrue(cache.find(entered.name()).isEmpty());
+            assertTrue(cache.find(inserted.name()).isEmpty());
         }
+    }
+
+    @Test
+    void testQueryIgnoresChangesOutsideFilter() throws InterruptedException {
+        try (ApplicationContext context = ApplicationContext.run(Map.of(
+            "query-notification.query.enabled", "true",
+            "datasources.default.schema-generate", "NONE"
+        ), "oracle-cqn")) {
+            LibraryRepository repository = context.getBean(LibraryRepository.class);
+            LargeLibraryCache cache = context.getBean(LargeLibraryCache.class);
+            ChangeEventRecorder events = context.getBean(ChangeEventRecorder.class);
+            Library included = cache.find("Library 3").orElseThrow();
+            Library control = new Library(included.id(), "Library 3 Included", included.email(), included.capacity(), included.location());
+            repository.save(control);
+            assertRowEvent(events, ChangeOperation.UPDATE, control);
+
+            Library excluded = repository.findAll().stream().filter(library -> library.name().equals("Library 1")).findFirst().orElseThrow();
+            repository.save(new Library(excluded.id(), "Library 1 Still Excluded", excluded.email(), 9_999, excluded.location()));
+            assertNull(events.poll(1, TimeUnit.SECONDS), "An update outside the registered query must not invoke the listener");
+            assertTrue(cache.find("Library 1 Still Excluded").isEmpty());
+
+            repository.save(new Library(null, "Excluded Insert", "excluded@example.com", 9_999, new Point(20, 44)));
+            assertNull(events.poll(1, TimeUnit.SECONDS), "An insert outside the registered query must not invoke the listener");
+            assertTrue(cache.find("Excluded Insert").isEmpty());
+        }
+    }
+
+    private ChangeEvent<Library> nextEvent(ChangeEventRecorder events, ChangeOperation operation) throws InterruptedException {
+        ChangeEvent<Library> event = events.poll(10, TimeUnit.SECONDS);
+        assertNotNull(event, "Expected " + operation + " notification");
+        assertEquals(operation, event.operation());
+        return event;
+    }
+
+    private ChangeEvent<Library> assertRowEvent(ChangeEventRecorder events, ChangeOperation operation, @Nullable Library entity) throws InterruptedException {
+        ChangeEvent<Library> event = nextEvent(events, operation);
+        assertEquals(Optional.ofNullable(entity), event.entity());
+        assertFalse(event.metadata(OracleChangeEventMetadata.class).orElseThrow().rowId().isBlank());
+        return event;
+    }
+
+    private void assertInvalidation(ChangeEventRecorder events) throws InterruptedException {
+        ChangeEvent<Library> event = nextEvent(events, ChangeOperation.INVALIDATE);
+        assertTrue(event.entity().isEmpty());
+        assertTrue(event.metadata(OracleChangeEventMetadata.class).isEmpty());
     }
 
     private void truncateLibraries(ApplicationContext context) {
@@ -176,32 +219,4 @@ class LibraryCacheSpec {
         });
     }
 
-    // S2925 is suppressed because sleep bounds the polling frequency while waiting for an
-    // asynchronous notification; success depends on the condition, with an overall timeout.
-    @SuppressWarnings("java:S2925")
-    private void waitUntil(Callable<Boolean> conditionEvaluator) {
-        Exception lastException = null;
-
-        int timeoutSeconds = 10;
-        long sleepTimeMillis = 50;
-
-        long end  = System.currentTimeMillis() + timeoutSeconds * 1000L;
-        while (System.currentTimeMillis() < end) {
-            try {
-                Thread.sleep(sleepTimeMillis);
-            } catch (InterruptedException e) {
-                Thread.currentThread().interrupt();
-                throw new IllegalStateException("Interrupted while waiting for the condition", e);
-            }
-            try {
-                if (conditionEvaluator.call()) {
-                    return;
-                }
-            } catch (Exception e) {
-                lastException = e;
-            }
-        }
-        String errorMessage = "Condition was not fulfilled within " + timeoutSeconds + " seconds";
-        throw lastException == null ? new IllegalStateException(errorMessage) : new IllegalStateException(errorMessage, lastException);
-    }
 }
