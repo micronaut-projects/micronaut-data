@@ -70,7 +70,7 @@ Oracle Database row events include api:data.jdbc.notification.oracle.OracleChang
 * `schema()` -- the reported schema (table owner), or empty when the reported table name is unqualified; and
 * `table()` -- the reported unqualified table name.
 
-The provider supplies the metadata implementation. Table identifiers preserve their reported case and literal characters.
+`schema()` and `table()` return names as reported by Oracle Database, including capitalization and special characters.
 
 snippet::example.notification.LibraryCache[project-base="doc-examples/jdbc-example-records", source="main", tags="events", indent="0", languages="java,groovy,kotlin,python"]
 
