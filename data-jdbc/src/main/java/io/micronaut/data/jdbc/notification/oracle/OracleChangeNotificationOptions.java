@@ -50,14 +50,7 @@ final class OracleChangeNotificationOptions {
         if ("DCN_NOTIFY_CHANGELAG".equals(name) && !"0".equals(value.trim())) {
             return "requires " + name + " to be 0 so row-level operation and ROWID details are available";
         }
-        if ("NTF_GROUPING_CLASS".equals(name)) {
-            if (!"NTF_GROUPING_CLASS_NONE".equals(value)) {
-                return name + ": notification grouping is not supported";
-            }
-        } else if ("NTF_GROUPING_VALUE".equals(name)
-            || "NTF_GROUPING_TYPE".equals(name)
-            || "NTF_GROUPING_REPEAT_TIME".equals(name)
-            || "NTF_GROUPING_START_TIME".equals(name)) {
+        if (isUnsupportedGrouping(name, value)) {
             return name + ": notification grouping is not supported";
         }
         if ("DCN_PULL_NOTIFICATIONS".equals(name) && !"false".equalsIgnoreCase(value)) {
@@ -76,6 +69,14 @@ final class OracleChangeNotificationOptions {
             }
         }
         return null;
+    }
+
+    private static boolean isUnsupportedGrouping(String name, String value) {
+        return switch (name) {
+            case "NTF_GROUPING_CLASS" -> !"NTF_GROUPING_CLASS_NONE".equals(value);
+            case "NTF_GROUPING_VALUE", "NTF_GROUPING_TYPE", "NTF_GROUPING_REPEAT_TIME", "NTF_GROUPING_START_TIME" -> true;
+            default -> false;
+        };
     }
 
 }
