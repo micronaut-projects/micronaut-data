@@ -16,8 +16,8 @@
 package io.micronaut.data.jdbc.notification.oracle;
 
 import io.micronaut.context.BeanContext;
-import io.micronaut.data.jdbc.notification.ChangeOperation;
 import io.micronaut.data.jdbc.notification.ChangeNotificationQueue;
+import io.micronaut.data.notification.ChangeOperation;
 import io.micronaut.scheduling.TaskScheduler;
 import oracle.jdbc.dcn.DatabaseChangeEvent;
 import oracle.jdbc.dcn.DatabaseChangeRegistration;

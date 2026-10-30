@@ -1,10 +1,10 @@
 package example.notification
 
 import io.micronaut.context.annotation.Requires
-import io.micronaut.data.jdbc.annotation.ChangeListener
+import io.micronaut.data.annotation.ChangeListener
 import io.micronaut.data.jdbc.annotation.OracleChangeNotification
-import io.micronaut.data.jdbc.notification.ChangeEvent
-import io.micronaut.data.jdbc.notification.ChangeOperation
+import io.micronaut.data.notification.ChangeEvent
+import io.micronaut.data.notification.ChangeOperation
 import jakarta.annotation.PostConstruct
 import jakarta.inject.Singleton
 

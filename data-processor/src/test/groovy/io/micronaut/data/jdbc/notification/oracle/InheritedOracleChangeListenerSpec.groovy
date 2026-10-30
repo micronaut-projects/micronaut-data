@@ -19,9 +19,8 @@ import io.micronaut.annotation.processing.BeanDefinitionInjectProcessor
 import io.micronaut.annotation.processing.TypeElementVisitorProcessor
 import io.micronaut.core.convert.ConversionService
 import io.micronaut.core.type.Argument
-import io.micronaut.data.intercept.annotation.OracleChangeListenerQuery
 import io.micronaut.data.jdbc.annotation.OracleChangeNotification
-import io.micronaut.data.jdbc.notification.ChangeEvent
+import io.micronaut.data.notification.ChangeEvent
 import io.micronaut.data.jdbc.notification.ChangeListenerMethod
 import io.micronaut.data.jdbc.operations.JdbcRepositoryOperations
 import io.micronaut.data.model.runtime.PreparedQuery
@@ -54,8 +53,9 @@ public record Book(@Id Long id, @MappedProperty("book_title") String title) {
         compile('library.BaseBookListener', '''
 package library;
 
+import io.micronaut.data.annotation.ChangeListener;
 import io.micronaut.data.jdbc.annotation.*;
-import io.micronaut.data.jdbc.notification.ChangeEvent;
+import io.micronaut.data.notification.ChangeEvent;
 
 public abstract class BaseBookListener {
     @ChangeListener

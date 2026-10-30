@@ -19,7 +19,6 @@ import io.micronaut.core.annotation.AnnotationMetadata;
 import io.micronaut.core.annotation.AnnotationValue;
 import io.micronaut.core.type.Argument;
 import io.micronaut.data.annotation.Where;
-import io.micronaut.data.intercept.annotation.OracleChangeListenerQuery;
 import io.micronaut.data.jdbc.annotation.OracleChangeNotification;
 import io.micronaut.data.jdbc.notification.ChangeListenerMethod;
 import io.micronaut.data.jdbc.operations.JdbcRepositoryOperations;

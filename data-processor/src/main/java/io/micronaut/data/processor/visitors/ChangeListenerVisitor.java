@@ -15,8 +15,10 @@
  */
 package io.micronaut.data.processor.visitors;
 
+import io.micronaut.data.annotation.ChangeListener;
 import io.micronaut.data.annotation.MappedEntity;
 import io.micronaut.data.intercept.annotation.ChangeListenerProvider;
+import io.micronaut.data.notification.ChangeEvent;
 import io.micronaut.inject.ast.ClassElement;
 import io.micronaut.inject.ast.MethodElement;
 import io.micronaut.inject.ast.ParameterElement;
@@ -32,8 +34,7 @@ import io.micronaut.inject.visitor.VisitorContext;
  * that provider.</p>
  */
 public final class ChangeListenerVisitor implements TypeElementVisitor<Object, Object> {
-    static final String CHANGE_LISTENER = "io.micronaut.data.jdbc.annotation.ChangeListener";
-    static final String CHANGE_EVENT = "io.micronaut.data.jdbc.notification.ChangeEvent";
+    static final String CHANGE_EVENT = ChangeEvent.class.getName();
 
     @Override
     public int getOrder() {
@@ -54,7 +55,7 @@ public final class ChangeListenerVisitor implements TypeElementVisitor<Object, O
      */
     @Override
     public void visitMethod(MethodElement element, VisitorContext context) {
-        if (!element.hasStereotype(CHANGE_LISTENER)) {
+        if (!element.hasStereotype(ChangeListener.class)) {
             return;
         }
         if (element.isPrivate() || element.isStatic()) {

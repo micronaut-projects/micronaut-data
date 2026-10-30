@@ -16,7 +16,7 @@
 package io.micronaut.data.jdbc.notification.oracle;
 
 import io.micronaut.core.annotation.Experimental;
-import io.micronaut.data.jdbc.notification.ChangeEventMetadata;
+import io.micronaut.data.notification.ChangeEventMetadata;
 
 /**
  * Oracle-specific metadata for a row-level Continuous Query Notification event.

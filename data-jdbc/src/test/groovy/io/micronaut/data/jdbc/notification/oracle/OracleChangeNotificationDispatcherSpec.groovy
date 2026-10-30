@@ -20,9 +20,9 @@ import ch.qos.logback.classic.Logger
 import ch.qos.logback.classic.spi.ILoggingEvent
 import ch.qos.logback.core.read.ListAppender
 import io.micronaut.context.BeanContext
-import io.micronaut.data.jdbc.notification.ChangeEvent
+import io.micronaut.data.notification.ChangeEvent
 import io.micronaut.data.jdbc.notification.ChangeNotificationQueue
-import io.micronaut.data.jdbc.notification.ChangeOperation
+import io.micronaut.data.notification.ChangeOperation
 import io.micronaut.data.jdbc.notification.DefaultChangeEvent
 import io.micronaut.data.jdbc.notification.DeferredChangeEvent
 import io.micronaut.inject.BeanDefinition

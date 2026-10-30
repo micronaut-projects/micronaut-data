@@ -20,7 +20,7 @@ import io.micronaut.aop.InterceptorBean;
 import io.micronaut.aop.MethodInterceptor;
 import io.micronaut.aop.MethodInvocationContext;
 import io.micronaut.core.annotation.Internal;
-import io.micronaut.data.jdbc.annotation.ChangeListener;
+import io.micronaut.data.annotation.ChangeListener;
 import jakarta.inject.Singleton;
 import org.jspecify.annotations.Nullable;
 

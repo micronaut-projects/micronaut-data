@@ -16,6 +16,7 @@
 package io.micronaut.data.jdbc.annotation;
 
 import io.micronaut.core.annotation.Experimental;
+import io.micronaut.data.annotation.ChangeListener;
 import io.micronaut.data.intercept.annotation.ChangeListenerProvider;
 
 import java.lang.annotation.Documented;
@@ -34,7 +35,7 @@ import java.lang.annotation.Target;
  * Registrations always request row identifiers so inserts and updates
  * can be reloaded. Oracle Database may report a full-table invalidation when row-level details are not
  * available, or report a table identified as a dependent table for Query Result Change Notification.
- * Either condition is delivered as {@link io.micronaut.data.jdbc.notification.ChangeOperation#INVALIDATE}.</p>
+ * Either condition is delivered as {@link io.micronaut.data.notification.ChangeOperation#INVALIDATE}.</p>
  *
  * <p>Notification tables are matched against the entity's mapped table name and, when explicitly
  * configured, its schema. Without an explicit schema, a notification for a same-named table in
@@ -52,7 +53,7 @@ import java.lang.annotation.Target;
  * <p>Registrations do not expire by default. A positive {@code NTF_TIMEOUT} property makes Oracle
  * Database expire the registration after the specified number of seconds; Micronaut Data does not
  * renew it. When Oracle Database reports a deregistration, that listener receives
- * {@link io.micronaut.data.jdbc.notification.ChangeOperation#TERMINATED} and notifications stop.
+ * {@link io.micronaut.data.notification.ChangeOperation#TERMINATED} and notifications stop.
  * Exhausting recovery retries or failing to schedule another recovery attempt also reports termination.
  * If the JDBC driver reports a notification-connection failure or Oracle Database
  * reports a shutdown, Micronaut Data attempts to create a replacement registration and dispatches

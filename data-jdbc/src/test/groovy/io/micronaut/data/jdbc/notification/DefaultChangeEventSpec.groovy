@@ -16,6 +16,9 @@
 package io.micronaut.data.jdbc.notification
 
 import io.micronaut.data.jdbc.notification.oracle.OracleChangeEventMetadata
+import io.micronaut.data.notification.ChangeEvent
+import io.micronaut.data.notification.ChangeEventMetadata
+import io.micronaut.data.notification.ChangeOperation
 import spock.lang.Specification
 
 class DefaultChangeEventSpec extends Specification {

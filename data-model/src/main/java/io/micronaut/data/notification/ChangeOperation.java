@@ -13,7 +13,7 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package io.micronaut.data.jdbc.notification;
+package io.micronaut.data.notification;
 
 import io.micronaut.core.annotation.Experimental;
 

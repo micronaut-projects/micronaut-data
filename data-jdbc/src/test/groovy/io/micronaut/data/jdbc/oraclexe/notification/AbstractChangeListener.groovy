@@ -1,7 +1,7 @@
 package io.micronaut.data.jdbc.oraclexe.notification
 
-import io.micronaut.data.jdbc.notification.ChangeEvent
-import io.micronaut.data.jdbc.notification.ChangeOperation
+import io.micronaut.data.notification.ChangeEvent
+import io.micronaut.data.notification.ChangeOperation
 
 import java.util.concurrent.LinkedBlockingQueue
 import java.util.concurrent.TimeUnit

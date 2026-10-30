@@ -13,13 +13,14 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package io.micronaut.data.jdbc.annotation;
+package io.micronaut.data.annotation;
 
 import io.micronaut.aop.InterceptorBinding;
 import io.micronaut.aop.InterceptorKind;
 import io.micronaut.context.annotation.AliasFor;
 import io.micronaut.context.annotation.Executable;
 import io.micronaut.core.annotation.Experimental;
+import io.micronaut.data.notification.ChangeEvent;
 
 import java.lang.annotation.Documented;
 import java.lang.annotation.ElementType;
@@ -31,28 +32,16 @@ import java.lang.annotation.Target;
  * Marks a method that receives database change events for a persistent entity.
  *
  * <p>The method must be a non-private, non-static instance method, return {@code void}, and accept exactly one
- * {@link io.micronaut.data.jdbc.notification.ChangeEvent ChangeEvent}{@code <E>} argument, where
+ * {@link ChangeEvent}{@code <E>} argument, where
  * {@code E} is a {@code @MappedEntity}. These method requirements are validated during compilation.
  * The available operation, entity state, metadata, ordering, and delivery guarantees depend on the
  * notification provider selected for the datasource.</p>
  *
- * <p>A provider-specific notification annotation is required on the method, for example
- * {@link OracleChangeNotification} for an Oracle datasource. Missing provider configuration is
- * rejected during compilation.</p>
+ * <p>A provider-specific notification annotation is required on the method.
+ * Missing provider configuration is rejected during compilation.</p>
  *
  * <p>This annotation can also be used as a meta-annotation to define a composed listener
  * annotation.</p>
- *
- * <p>Set {@code micronaut.data.jdbc.notifications.enabled=false} to disable automatic registration
- * and startup datasource/provider validation for all JDBC listeners. Listener beans remain available.</p>
- *
- * <p>Provider-deferred entity loading occurs before the listener's transaction advice.
- * {@code @Transactional} applies to listener execution, not the preceding load. With {@code @Async},
- * loading occurs on the calling thread before listener execution is scheduled on the async executor.</p>
- *
- * <p>Retry advice can retry entity loading and synchronous listener failures. A successful load is
- * reused on subsequent retry attempts. Since listener methods return {@code void}, failures during
- * async listener execution cannot reach retry advice.</p>
  *
  * @since 5.3.0
  */

@@ -1,7 +1,7 @@
 from typing import Annotated
 from threading import RLock
 
-from micronaut.data.jdbc.notification import ChangeEvent, ChangeOperation
+from micronaut.data.notification import ChangeEvent, ChangeOperation
 from micronaut.data.jdbc.notification.oracle import OracleChangeEventMetadata
 from org.slf4j import LoggerFactory
 from jakarta.annotation import PostConstruct
@@ -10,7 +10,8 @@ from java.util import Optional
 from java.util.concurrent import ConcurrentHashMap
 from java.util.concurrent.atomic import AtomicReference
 from micronaut.context.annotation import Requires
-from micronaut.data.jdbc.annotation import ChangeListener, OracleChangeNotification
+from micronaut.data.annotation import ChangeListener
+from micronaut.data.jdbc.annotation import OracleChangeNotification
 
 from example.notification.Library import Library
 from example.notification.LibraryRepository import LibraryRepository

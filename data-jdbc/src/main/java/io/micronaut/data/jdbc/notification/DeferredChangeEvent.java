@@ -16,6 +16,9 @@
 package io.micronaut.data.jdbc.notification;
 
 import io.micronaut.core.annotation.Internal;
+import io.micronaut.data.notification.ChangeEvent;
+import io.micronaut.data.notification.ChangeEventMetadata;
+import io.micronaut.data.notification.ChangeOperation;
 import org.jspecify.annotations.Nullable;
 
 import java.util.Objects;

@@ -25,7 +25,8 @@ import io.micronaut.context.event.StartupEvent
 import io.micronaut.core.type.Argument
 import io.micronaut.data.annotation.Id
 import io.micronaut.data.annotation.MappedEntity
-import io.micronaut.data.jdbc.annotation.ChangeListener
+import io.micronaut.data.annotation.ChangeListener
+import io.micronaut.data.notification.ChangeEvent
 import io.micronaut.inject.BeanDefinition
 import io.micronaut.inject.ExecutableMethod
 import jakarta.inject.Singleton

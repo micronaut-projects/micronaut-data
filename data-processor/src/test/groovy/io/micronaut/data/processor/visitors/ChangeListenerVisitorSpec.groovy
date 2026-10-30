@@ -16,7 +16,7 @@
 package io.micronaut.data.processor.visitors
 
 import io.micronaut.annotation.processing.test.AbstractTypeElementSpec
-import io.micronaut.data.jdbc.notification.ChangeEvent
+import io.micronaut.data.notification.ChangeEvent
 import spock.lang.Unroll
 
 class ChangeListenerVisitorSpec extends AbstractTypeElementSpec {
@@ -129,8 +129,8 @@ class BookListener''')
         buildBeanDefinition('test.BookListener', '''
 package test;
 
-import io.micronaut.data.jdbc.annotation.ChangeListener;
-import io.micronaut.data.jdbc.notification.ChangeEvent;
+import io.micronaut.data.annotation.ChangeListener;
+import io.micronaut.data.notification.ChangeEvent;
 import jakarta.inject.Singleton;
 
 @Singleton
@@ -153,8 +153,8 @@ package test;
 import io.micronaut.data.annotation.Id;
 import io.micronaut.data.annotation.MappedEntity;
 import io.micronaut.data.annotation.MappedProperty;
-import io.micronaut.data.jdbc.annotation.ChangeListener;
-import io.micronaut.data.jdbc.notification.ChangeEvent;
+import io.micronaut.data.annotation.ChangeListener;
+import io.micronaut.data.notification.ChangeEvent;
 import jakarta.inject.Singleton;
 
 @MappedEntity

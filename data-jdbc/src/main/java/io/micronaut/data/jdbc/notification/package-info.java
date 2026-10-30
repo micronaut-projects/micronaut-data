@@ -14,7 +14,18 @@
  * limitations under the License.
  */
 /**
- * JDBC database change-notification APIs and internal runtime infrastructure.
+ * JDBC implementations of the database-neutral change-notification contracts.
+ *
+ * <p>Set {@code micronaut.data.jdbc.notifications.enabled=false} to disable automatic registration
+ * and startup datasource/provider validation for all JDBC listeners. Listener beans remain available.</p>
+ *
+ * <p>Deferred entity loading occurs before the listener's transaction advice.
+ * {@code @Transactional} applies to listener execution, not the preceding load. With {@code @Async},
+ * loading occurs on the calling thread before listener execution is scheduled on the async executor.</p>
+ *
+ * <p>Retry advice can retry entity loading and synchronous listener failures. A successful load is
+ * reused on subsequent retry attempts. Since listener methods return {@code void}, failures during
+ * async listener execution cannot reach retry advice.</p>
  */
 @NullMarked
 package io.micronaut.data.jdbc.notification;

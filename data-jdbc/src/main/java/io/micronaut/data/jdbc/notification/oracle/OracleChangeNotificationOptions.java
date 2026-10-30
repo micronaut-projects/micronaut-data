@@ -13,20 +13,19 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package io.micronaut.data.model;
+package io.micronaut.data.jdbc.notification.oracle;
 
 import io.micronaut.core.annotation.Internal;
 import org.jspecify.annotations.Nullable;
 
 /**
- * Shared Oracle change-notification option restrictions for compile-time and runtime validation.
+ * Oracle change-notification option restrictions for runtime registration validation.
  *
- * <p>Option names and values are plain strings so annotation processing does not require the
- * Oracle JDBC driver. Callers add diagnostics for the listener or datasource being validated.
- * Unknown options are left to the driver, and source-specific checks remain with the caller.</p>
+ * <p>Callers add diagnostics for the listener or datasource being validated.
+ * Unknown options are left to the driver.</p>
  */
 @Internal
-public final class OracleChangeNotificationOptions {
+final class OracleChangeNotificationOptions {
 
     private OracleChangeNotificationOptions() {
     }
@@ -38,7 +37,7 @@ public final class OracleChangeNotificationOptions {
      * @param value the configured option value
      * @return the validation error, or {@code null} when the option is allowed
      */
-    public static @Nullable String invalidOption(String name, String value) {
+    static @Nullable String invalidOption(String name, String value) {
         if (name.isBlank()) {
             return "has an Oracle property with a blank name";
         }

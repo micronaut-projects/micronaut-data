@@ -16,8 +16,8 @@
 package io.micronaut.data.processor.kotlin
 
 import io.micronaut.annotation.processing.test.AbstractKotlinCompilerSpec
-import io.micronaut.data.intercept.annotation.OracleChangeListenerQuery
-import io.micronaut.data.jdbc.notification.ChangeEvent
+import io.micronaut.data.jdbc.notification.oracle.OracleChangeListenerQuery
+import io.micronaut.data.notification.ChangeEvent
 import spock.lang.Unroll
 
 class KotlinChangeListenerVisitorSpec extends AbstractKotlinCompilerSpec {
@@ -61,7 +61,7 @@ package test
 
 import io.micronaut.data.annotation.*
 import io.micronaut.data.jdbc.annotation.*
-import io.micronaut.data.jdbc.notification.ChangeEvent
+import io.micronaut.data.notification.ChangeEvent
 import jakarta.inject.Singleton
 
 @MappedEntity

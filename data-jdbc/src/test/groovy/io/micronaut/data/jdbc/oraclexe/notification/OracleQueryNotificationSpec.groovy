@@ -18,7 +18,7 @@ package io.micronaut.data.jdbc.oraclexe.notification
 import io.micronaut.context.ApplicationContext
 import io.micronaut.data.jdbc.operations.DefaultJdbcRepositoryOperations
 import io.micronaut.data.jdbc.oraclexe.OracleTestPropertyProvider
-import io.micronaut.data.jdbc.notification.ChangeOperation
+import io.micronaut.data.notification.ChangeOperation
 import io.micronaut.data.jdbc.notification.oracle.OracleChangeEventMetadata
 import io.micronaut.transaction.SynchronousTransactionManager
 import spock.lang.AutoCleanup

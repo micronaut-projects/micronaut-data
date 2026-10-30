@@ -17,9 +17,9 @@ package io.micronaut.data.processor.visitors
 
 import io.micronaut.annotation.processing.test.AbstractTypeElementSpec
 import io.micronaut.context.annotation.Executable
-import io.micronaut.data.intercept.annotation.OracleChangeListenerQuery
-import io.micronaut.data.jdbc.annotation.ChangeListener
-import io.micronaut.data.jdbc.notification.ChangeEvent
+import io.micronaut.data.jdbc.notification.oracle.OracleChangeListenerQuery
+import io.micronaut.data.annotation.ChangeListener
+import io.micronaut.data.notification.ChangeEvent
 import spock.lang.Unroll
 
 class OracleChangeNotificationVisitorSpec extends AbstractTypeElementSpec {
@@ -480,9 +480,9 @@ import io.micronaut.data.annotation.Id;
 import io.micronaut.data.annotation.MappedEntity;
 import io.micronaut.data.annotation.MappedProperty;
 import io.micronaut.data.annotation.Where;
-import io.micronaut.data.jdbc.annotation.ChangeListener;
+import io.micronaut.data.annotation.ChangeListener;
 import io.micronaut.data.jdbc.annotation.OracleChangeNotification;
-import io.micronaut.data.jdbc.notification.ChangeEvent;
+import io.micronaut.data.notification.ChangeEvent;
 import jakarta.inject.Singleton;
 
 @MappedEntity

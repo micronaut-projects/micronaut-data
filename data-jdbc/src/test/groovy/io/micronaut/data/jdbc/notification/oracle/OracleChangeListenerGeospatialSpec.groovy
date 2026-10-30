@@ -21,7 +21,6 @@ import io.micronaut.core.type.Argument
 import io.micronaut.data.annotation.Id
 import io.micronaut.data.annotation.MappedEntity
 import io.micronaut.data.annotation.MappedProperty
-import io.micronaut.data.intercept.annotation.OracleChangeListenerQuery
 import io.micronaut.data.jdbc.annotation.OracleChangeNotification
 import io.micronaut.data.jdbc.notification.ChangeListenerMethod
 import io.micronaut.data.jdbc.operations.DefaultJdbcRepositoryOperations
