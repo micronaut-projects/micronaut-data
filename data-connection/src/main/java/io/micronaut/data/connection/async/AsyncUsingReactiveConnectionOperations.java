@@ -52,10 +52,8 @@ public final class AsyncUsingReactiveConnectionOperations<C> implements AsyncCon
 
     @Override
     public Optional<ConnectionStatus<C>> findConnectionStatus() {
-        return Optional.ofNullable(
-            reactorConnectionOperations.getConnectionStatus(
-                ReactorPropagation.addPropagatedContext(Context.empty(), PropagatedContext.getOrEmpty())
-            )
+        return reactorConnectionOperations.findConnectionStatus(
+            ReactorPropagation.addPropagatedContext(Context.empty(), PropagatedContext.getOrEmpty())
         );
     }
 
