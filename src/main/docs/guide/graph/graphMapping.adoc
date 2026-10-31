@@ -69,3 +69,9 @@ snippet::example.OperationsSpec[project-base="doc-examples/neo4j-example", tags=
 <1> The parameter is encoded as a map, so the query can read its entries.
 
 Values read from the database are converted to the types of properties by the conversion service of Micronaut Data. An attribute converter, set with the `converter` member of ann:data.annotation.MappedProperty[], converts a property both ways.
+
+== Reading with Micronaut Serialization
+
+Nodes and relationships are read with https://micronaut-projects.github.io/micronaut-serialization/latest/guide/[Micronaut Serialization]. ann:data.graph.annotation.Node[] and ann:data.graph.annotation.RelationshipProperties[] make a class `@Serdeable`, so no further annotation is needed. Records, and classes with a public no-argument constructor and setters, get a deserializer generated at compile time. Other classes, such as a class that sets some properties through its constructor and others through setters, and Kotlin classes, are read by the deserializer Micronaut Serialization builds at runtime.
+
+Saving does not use Micronaut Serialization: entities are written through their bean introspections.

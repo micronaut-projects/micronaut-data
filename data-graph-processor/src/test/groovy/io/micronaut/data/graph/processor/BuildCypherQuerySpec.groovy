@@ -242,6 +242,29 @@ interface PetRepository extends CrudRepository<Pet, String> {
         query.endsWith('d_relationships')
     }
 
+    void "test DTOs must be serdeable"() {
+        when:
+        buildRepository('test.DtoRepository', """
+$MOVIES
+
+@io.micronaut.core.annotation.Introspected
+class TitleOnly {
+    private String title;
+    public String getTitle() { return title; }
+    public void setTitle(String title) { this.title = title; }
+}
+
+@TestGraphRepository
+interface DtoRepository extends CrudRepository<Movie, String> {
+    List<TitleOnly> findByReleased(Integer released);
+}
+""")
+
+        then:
+        def e = thrown(RuntimeException)
+        e.message.contains('Graph repositories read DTOs with Micronaut Serialization: annotate [test.TitleOnly] with @Serdeable')
+    }
+
     void "test names that cannot be quoted are rejected"() {
         when:
         buildRepository('test.HostileRepository', """
