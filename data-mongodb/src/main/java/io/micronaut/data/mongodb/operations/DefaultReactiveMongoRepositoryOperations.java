@@ -66,6 +66,8 @@ import io.micronaut.data.runtime.operations.internal.AbstractReactiveEntityOpera
 import io.micronaut.data.runtime.operations.internal.OperationContext;
 import io.micronaut.data.runtime.operations.internal.ReactiveCascadeOperations;
 import io.micronaut.inject.qualifiers.Qualifiers;
+import io.micronaut.data.model.vector.search.SearchResults;
+import org.bson.codecs.Codec;
 import org.bson.BsonDocument;
 import org.bson.BsonDocumentWrapper;
 import org.bson.BsonValue;
@@ -433,6 +435,15 @@ public final class DefaultReactiveMongoRepositoryOperations extends AbstractMong
     private <T, R> Mono<R> findOneAggregated(ClientSession clientSession, MongoPreparedQuery<T, R> preparedQuery) {
         Class<R> resultType = preparedQuery.getResultType();
         Class<T> type = preparedQuery.getRootEntity();
+        if (resultType == SearchResults.class) {
+            MongoDatabase database = getDatabase(preparedQuery);
+            RuntimePersistentEntity<T> persistentEntity = preparedQuery.getPersistentEntity();
+            Codec<T> codec = getCollection(database, persistentEntity, type).getCodecRegistry().get(type);
+            return Flux.from(aggregate(clientSession, preparedQuery, BsonDocument.class))
+                .map(document -> toSearchResult(document, codec, preparedQuery.getAnnotationMetadata(), persistentEntity))
+                .collectList()
+                .map(results -> (R) SearchResults.of(results));
+        }
         if (!resultType.isAssignableFrom(type)) {
             MongoDatabase database = getDatabase(preparedQuery);
             return Mono.from(aggregate(clientSession, preparedQuery, BsonDocument.class).first())

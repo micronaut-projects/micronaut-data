@@ -13,12 +13,11 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package io.micronaut.data.model.query.builder.sql;
+package io.micronaut.data.model.query.builder;
 
 import io.micronaut.core.annotation.Internal;
 import io.micronaut.data.model.DataType;
 import io.micronaut.data.model.JsonDataType;
-import io.micronaut.data.model.query.builder.QueryParameterBinding;
 import org.jspecify.annotations.Nullable;
 
 /**
@@ -27,11 +26,14 @@ import org.jspecify.annotations.Nullable;
  * @since 5.4.0
  */
 @Internal
-abstract class DelegatingBuilderParameterBinding implements QueryParameterBinding {
+public abstract class DelegatingQueryParameterBinding implements QueryParameterBinding {
 
     private final QueryParameterBinding delegate;
 
-    DelegatingBuilderParameterBinding(QueryParameterBinding delegate) {
+    /**
+     * @param delegate The binding to delegate to
+     */
+    protected DelegatingQueryParameterBinding(QueryParameterBinding delegate) {
         this.delegate = delegate;
     }
 

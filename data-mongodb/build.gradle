@@ -45,6 +45,7 @@ dependencies {
     testImplementation mnMongo.mongo.reactive
     testImplementation projects.micronautDataDocumentProcessor
     testImplementation projects.micronautDataDocumentTck
+    testImplementation projects.micronautDataSearchTck
     testImplementation(mnSql.jakarta.persistence.api)
     testImplementation(mnRxjava3.micronaut.rxjava3)
     testImplementation mnReactor.micronaut.reactor

@@ -1,0 +1,9 @@
+micronaut:
+  data:
+    mongodb:
+      create-collections: true
+
+test-resources:
+  containers:
+    mongodb:
+      image-name: mongo:7.0
