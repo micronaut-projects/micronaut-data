@@ -23,6 +23,7 @@ import io.micronaut.core.annotation.Internal;
 import io.micronaut.data.connection.ConnectionDefinition;
 import io.micronaut.data.connection.ConnectionOperations;
 import io.micronaut.data.exceptions.DataAccessException;
+import io.micronaut.data.exceptions.OptimisticLockException;
 import io.micronaut.data.graph.model.query.builder.AgeCypherQueryBuilder;
 import io.micronaut.core.type.Argument;
 import io.micronaut.data.graph.model.query.builder.AgeStatements;
@@ -59,6 +60,7 @@ import java.time.Instant;
 import java.time.ZoneOffset;
 import java.time.temporal.Temporal;
 import java.time.temporal.TemporalAmount;
+import java.util.Collection;
 import java.util.ArrayList;
 import java.util.Base64;
 import java.util.Collections;
@@ -138,6 +140,36 @@ final class DefaultAgeRepositoryOperations extends AbstractGraphRepositoryOperat
             .register(byte[].class, (value, e) -> Base64.getEncoder().encodeToString(value));
     }
 
+    /**
+     * Creates the vertex label tables and indexes of entities in the graph.
+     *
+     * @param entityTypes The entity types
+     */
+    void createIndexes(Collection<Class<?>> entityTypes) {
+        List<String> statements = buildCreateIndexStatements(entityTypes);
+        if (statements.isEmpty()) {
+            return;
+        }
+        connectionOperations.execute(ConnectionDefinition.DEFAULT, status -> {
+            Connection connection = status.getConnection();
+            try {
+                prepare(connection);
+                try (Statement statement = connection.createStatement()) {
+                    for (String sql : statements) {
+                        String forGraph = AgeStatements.forGraph(sql, graph);
+                        if (LOG.isDebugEnabled()) {
+                            LOG.debug("Creating an Apache AGE index: {}", forGraph);
+                        }
+                        statement.execute(forGraph);
+                    }
+                }
+            } catch (SQLException e) {
+                throw new DataAccessException("Error creating the indexes of graph [" + graph + "]: " + e.getMessage(), e);
+            }
+            return null;
+        });
+    }
+
     @Override
     protected <R> R read(AnnotationMetadata annotationMetadata, Function<GraphSession, R> work) {
         return run(annotationMetadata, work);
@@ -198,8 +230,25 @@ final class DefaultAgeRepositoryOperations extends AbstractGraphRepositoryOperat
                 return new GraphResult(records, -1);
             }
         } catch (SQLException e) {
-            throw new DataAccessException("Error executing Cypher query on Apache AGE [" + sql + "]: " + e.getMessage(), e);
+            String message = "Error executing Cypher query on Apache AGE [" + sql + "]: " + e.getMessage();
+            if (isConcurrentUpdate(e)) {
+                throw new OptimisticLockException(message, e);
+            }
+            throw new DataAccessException(message, e);
         }
+    }
+
+    /**
+     * Whether a statement failed because the vertex or edge it writes was updated or deleted by a transaction that
+     * committed while the statement waited for its lock. AGE fails the statement rather than re-evaluate it on the
+     * new row version, so the write is lost to neither transaction.
+     *
+     * @param e The error
+     * @return Whether the error is a concurrent update
+     */
+    private static boolean isConcurrentUpdate(SQLException e) {
+        String message = e.getMessage();
+        return message != null && (message.contains("Entity failed to be updated") || message.contains("Entity could not be locked for updating"));
     }
 
     /**

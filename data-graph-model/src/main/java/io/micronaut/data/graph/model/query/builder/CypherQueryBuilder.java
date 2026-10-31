@@ -19,6 +19,7 @@ import io.micronaut.core.annotation.AnnotationMetadata;
 import io.micronaut.core.annotation.Introspected;
 import io.micronaut.data.graph.annotation.Direction;
 import io.micronaut.data.graph.model.GraphEntities;
+import io.micronaut.data.graph.model.GraphIndex;
 import io.micronaut.data.graph.model.query.PathQueryDefinition;
 import io.micronaut.data.model.Association;
 import io.micronaut.data.model.PersistentEntity;
@@ -155,6 +156,10 @@ public class CypherQueryBuilder implements GraphQueryBuilder {
      * The parameter holding the identifier of the target in a link query.
      */
     public static final String LINK_TO_PARAMETER = "to";
+    /**
+     * The parameter holding the version an entity was read with in versioned writes.
+     */
+    public static final String VERSION_PARAMETER = "version";
     private static final String WITH = " WITH ";
     private static final String WITH_DISTINCT = " WITH DISTINCT ";
     private static final String DISTINCT = "DISTINCT ";
@@ -166,8 +171,12 @@ public class CypherQueryBuilder implements GraphQueryBuilder {
     private static final String CLOSE_WHERE = ") WHERE ";
     private static final String CLOSE_AS_RESULT = ") AS result";
     private static final String AND = " AND ";
+    private static final String WHERE = " WHERE ";
     private static final String SET = " SET ";
     private static final String RETURN_COUNT_RESULT = " RETURN count(*) AS result";
+    private static final String DETACH_DELETE = " DETACH DELETE ";
+    private static final String EXISTING = "existing";
+    private static final String LOCK_PROPERTY = "__lock";
     private static final String LINK_FROM = "a";
     private static final String LINK_TO = "b";
 
@@ -307,7 +316,7 @@ public class CypherQueryBuilder implements GraphQueryBuilder {
         if (state.hasPatterns()) {
             query.append(WITH_DISTINCT).append(ROOT);
         }
-        query.append(" DETACH DELETE ").append(ROOT).append(" RETURN count(*)");
+        query.append(DETACH_DELETE).append(ROOT).append(" RETURN count(*)");
         return QueryResult.of(query.toString(), List.of(query.toString()), state.parameterBindings, state.additionalRequiredParameters);
     }
 
@@ -435,7 +444,89 @@ public class CypherQueryBuilder implements GraphQueryBuilder {
     @Override
     public String buildDeleteByIdQuery(PersistentEntity entity) {
         return MATCH_OPEN + ROOT + labelExpression(entity) + CLOSE_WHERE
-            + identityExpression(entity.getIdentity(), ROOT) + " = $" + ID_PARAMETER + " DETACH DELETE " + ROOT + RETURN_COUNT_RESULT;
+            + identityExpression(entity.getIdentity(), ROOT) + " = $" + ID_PARAMETER + DETACH_DELETE + ROOT + RETURN_COUNT_RESULT;
+    }
+
+    /**
+     * Builds {@code OPTIONAL MATCH} on the identifier, counting the existing nodes, followed by {@code CREATE} only when
+     * there are none: the query returns no rows when a node with the identifier exists. A uniqueness constraint on
+     * the identifier, see {@link GraphIndex}, also rejects a concurrent insert of the same identifier.
+     */
+    @Override
+    public String buildInsertNodeQuery(PersistentEntity entity, List<String> propertyNames) {
+        PersistentProperty identity = entity.hasIdentity() ? entity.getIdentity() : null;
+        if (identity == null || GraphEntities.isNativeId(identity)) {
+            return buildWriteNodeQuery(entity, propertyNames, false);
+        }
+        String labels = labelExpression(entity);
+        StringBuilder query = new StringBuilder("OPTIONAL MATCH (").append(EXISTING).append(labels).append(CLOSE_WHERE)
+            .append(identityExpression(identity, EXISTING)).append(" = $").append(ID_PARAMETER)
+            .append(WITH).append("count(").append(EXISTING).append(") AS found WHERE found = 0")
+            .append(" CREATE (").append(ROOT).append(labels).append(" {")
+            .append(GraphEntities.escapeName(GraphEntities.propertyName(identity))).append(": $").append(ID_PARAMETER).append("})");
+        appendSetProperties(query, ROOT, propertyNames);
+        return query.append(RETURN).append(identityExpression(identity, ROOT)).append(" AS ").append(ID_PARAMETER).toString();
+    }
+
+    @Override
+    public String buildUpdateVersionedNodeQuery(PersistentEntity entity, List<String> propertyNames) {
+        PersistentProperty identity = entity.getIdentity();
+        StringBuilder query = new StringBuilder(versionedMatch(entity));
+        appendSetProperties(query, ROOT, propertyNames);
+        return query.append(RETURN).append(identityExpression(identity, ROOT)).append(" AS ").append(ID_PARAMETER).toString();
+    }
+
+    @Override
+    public String buildDeleteVersionedNodeQuery(PersistentEntity entity) {
+        return versionedMatch(entity) + DETACH_DELETE + ROOT + RETURN_COUNT_RESULT;
+    }
+
+    /**
+     * Builds {@code CREATE CONSTRAINT ... IS UNIQUE} for unique indexes and {@code CREATE INDEX} for the others,
+     * each with {@code IF NOT EXISTS}.
+     *
+     * @param entity The entity
+     * @return The statements
+     */
+    @Override
+    public List<String> buildCreateIndexStatements(PersistentEntity entity) {
+        List<String> statements = new ArrayList<>();
+        for (GraphIndex index : GraphIndex.of(entity)) {
+            StringBuilder properties = new StringBuilder();
+            for (String property : index.properties()) {
+                if (!properties.isEmpty()) {
+                    properties.append(", ");
+                }
+                properties.append(ROOT).append('.').append(GraphEntities.escapeName(property));
+            }
+            String target = GraphEntities.escapeName(index.name()) + " IF NOT EXISTS FOR (" + ROOT + ":" + GraphEntities.escapeName(index.label()) + ")";
+            if (index.unique()) {
+                String required = index.properties().size() == 1 ? properties.toString() : "(" + properties + ")";
+                statements.add("CREATE CONSTRAINT " + target + " REQUIRE " + required + " IS UNIQUE");
+            } else {
+                statements.add("CREATE INDEX " + target + " ON (" + properties + ")");
+            }
+        }
+        return statements;
+    }
+
+    /**
+     * Matches the node of a versioned write. Setting and removing a lock property takes the write lock of the node,
+     * without leaving a property behind, before the version is compared: a write that committed while the lock was
+     * awaited is seen rather than overwritten. Neither setting the version to itself, whose value is read before the
+     * lock is taken, nor removing a property the node does not have, which Neo4j skips, takes the lock in time.
+     */
+    private String versionedMatch(PersistentEntity entity) {
+        PersistentProperty identity = entity.getIdentity();
+        PersistentProperty version = entity.hasVersion() ? entity.getVersion() : null;
+        if (identity == null || version == null) {
+            throw new IllegalArgumentException("Entity [" + entity.getName() + "] needs an identity and a @Version property for versioned writes");
+        }
+        String versionProperty = ROOT + "." + GraphEntities.escapeName(GraphEntities.propertyName(version));
+        return MATCH_OPEN + ROOT + labelExpression(entity) + CLOSE_WHERE
+            + identityExpression(identity, ROOT) + " = $" + ID_PARAMETER
+            + SET + ROOT + "." + LOCK_PROPERTY + " = true REMOVE " + ROOT + "." + LOCK_PROPERTY
+            + WITH + ROOT + WHERE + versionProperty + " = $" + VERSION_PARAMETER;
     }
 
     /**

@@ -346,6 +346,7 @@ public abstract class AbstractReactiveGraphRepositoryOperations implements React
     private final class NodeOperation<T> extends AbstractReactiveEntityOperations<OperationContext, T, RuntimeException> {
         private final Persister persister;
         private final T original;
+        private @Nullable Object previousVersion;
 
         NodeOperation(Persister persister, RuntimePersistentEntity<T> entity, T instance, boolean insert) {
             super(persister.context, noCascade, operations.getConversionService(), operations.entityEventListener(), entity, instance, insert);
@@ -365,7 +366,13 @@ public abstract class AbstractReactiveGraphRepositoryOperations implements React
 
         @Override
         protected void collectAutoPopulatedPreviousValues() {
-            // Graph writes set every property, so previous values are not needed
+            // Graph writes set every property, so only the version an update checks is needed
+            if (!insert) {
+                data = data.map(d -> {
+                    previousVersion = operations.currentVersion(persistentEntity, d.entity);
+                    return d;
+                });
+            }
         }
 
         @Override
@@ -382,7 +389,7 @@ public abstract class AbstractReactiveGraphRepositoryOperations implements React
         }
 
         private Mono<T> writeNode(T instance) {
-            AbstractGraphRepositoryOperations.NodeWrite write = operations.planNodeWrite(persistentEntity, instance);
+            AbstractGraphRepositoryOperations.NodeWrite write = operations.planNodeWrite(persistentEntity, instance, insert, previousVersion);
             return persister.run(write.query()).flatMap(result -> {
                 Object generatedId = operations.generatedId(persistentEntity, write, result.records());
                 RuntimePersistentProperty<T> identity = persistentEntity.getIdentity();
@@ -543,6 +550,8 @@ public abstract class AbstractReactiveGraphRepositoryOperations implements React
     private final class DeleteNodeOperation<T> extends AbstractReactiveEntityOperations<OperationContext, T, RuntimeException> {
         private final Persister persister;
 
+        private @Nullable Object previousVersion;
+
         DeleteNodeOperation(Persister persister, RuntimePersistentEntity<T> entity, T instance) {
             super(persister.context, noCascade, operations.getConversionService(), operations.entityEventListener(), entity, instance, false);
             this.persister = persister;
@@ -560,7 +569,10 @@ public abstract class AbstractReactiveGraphRepositoryOperations implements React
 
         @Override
         protected void collectAutoPopulatedPreviousValues() {
-            // Deletes match the node by its identifier only
+            data = data.map(d -> {
+                previousVersion = operations.currentVersion(persistentEntity, d.entity);
+                return d;
+            });
         }
 
         @Override
@@ -569,8 +581,9 @@ public abstract class AbstractReactiveGraphRepositoryOperations implements React
                 if (d.vetoed) {
                     return Mono.just(d);
                 }
-                return persister.run(operations.planDelete(persistentEntity, d.entity)).map(result -> {
+                return persister.run(operations.planDelete(persistentEntity, d.entity, previousVersion)).map(result -> {
                     d.rowsUpdated = AbstractGraphRepositoryOperations.updateCount(result).longValue();
+                    operations.checkVersionedDelete(persistentEntity, previousVersion, d.rowsUpdated);
                     return d;
                 });
             });

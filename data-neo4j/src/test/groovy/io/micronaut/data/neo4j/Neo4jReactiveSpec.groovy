@@ -1,11 +1,15 @@
 package io.micronaut.data.neo4j
 
+import io.micronaut.data.exceptions.EntityExistsException
+import io.micronaut.data.exceptions.OptimisticLockException
+import io.micronaut.data.graph.tck.entities.Article
 import io.micronaut.data.graph.tck.entities.Movie
 import io.micronaut.data.graph.tck.entities.Person
 import io.micronaut.data.graph.tck.entities.Role
 import io.micronaut.data.model.Pageable
 import io.micronaut.data.model.Sort
 import io.micronaut.data.neo4j.features.Pet
+import io.micronaut.data.neo4j.features.ReactiveArticleRepository
 import io.micronaut.data.neo4j.features.ReactiveMovieRepository
 import io.micronaut.data.neo4j.features.ReactiveMovieService
 import io.micronaut.data.neo4j.features.Player
@@ -31,6 +35,9 @@ class Neo4jReactiveSpec extends Specification implements TestPropertyProvider {
 
     @Inject
     ReactivePetRepository petRepository
+
+    @Inject
+    ReactiveArticleRepository articleRepository
 
     @Inject
     ReactiveTeamRepository teamRepository
@@ -259,5 +266,52 @@ class Neo4jReactiveSpec extends Specification implements TestPropertyProvider {
 
         then:
         movieRepository.count().block() == 0
+    }
+
+    void "reactive updates and deletes check the @Version property"() {
+        given:
+        articleRepository.save(new Article("graphs", "Graphs")).block()
+        def stale = articleRepository.findById("graphs").block()
+        def staleForDelete = articleRepository.findById("graphs").block()
+        def current = articleRepository.findById("graphs").block()
+        current.title = "Current"
+
+        when:
+        def updated = articleRepository.update(current).block()
+
+        then:
+        updated.version == 1L
+
+        when:
+        stale.title = "Stale"
+        articleRepository.update(stale).block()
+
+        then:
+        thrown(OptimisticLockException)
+
+        when:
+        articleRepository.delete(staleForDelete).block()
+
+        then:
+        thrown(OptimisticLockException)
+        articleRepository.findById("graphs").block().title == "Current"
+
+        when:
+        articleRepository.delete(articleRepository.findById("graphs").block()).block()
+
+        then:
+        !articleRepository.existsById("graphs").block()
+    }
+
+    void "a reactive insert of a versioned node with a taken identifier fails"() {
+        given:
+        articleRepository.save(new Article("graphs", "Graphs")).block()
+
+        when:
+        articleRepository.save(new Article("graphs", "Other")).block()
+
+        then:
+        thrown(EntityExistsException)
+        articleRepository.findById("graphs").block().title == "Graphs"
     }
 }
