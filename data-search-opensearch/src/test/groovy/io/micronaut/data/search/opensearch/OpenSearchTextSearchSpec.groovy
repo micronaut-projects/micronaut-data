@@ -21,6 +21,6 @@ class OpenSearchTextSearchSpec extends AbstractTextSearchSpec implements TestPro
 
     @Override
     Set<SearchCapability> capabilities() {
-        return EnumSet.of(SearchCapability.PHRASE, SearchCapability.PREFIX, SearchCapability.FUZZY, SearchCapability.FIELD_SCOPE, SearchCapability.BOOST)
+        return EnumSet.of(SearchCapability.PHRASE, SearchCapability.PREFIX, SearchCapability.FUZZY, SearchCapability.FIELD_SCOPE, SearchCapability.BOOST, SearchCapability.HIGHLIGHT)
     }
 }

@@ -68,7 +68,7 @@ public final class ElasticsearchSearchTransport implements SearchTransport {
             SearchResponse<Map> response = client.search(s -> s.index(index).withJson(new StringReader(body)), Map.class);
             List<SearchHit> hits = new ArrayList<>(response.hits().hits().size());
             for (Hit<Map> hit : response.hits().hits()) {
-                hits.add(new SearchHit(hit.id(), hit.score(), hit.source() == null ? Map.of() : (Map<String, Object>) hit.source()));
+                hits.add(new SearchHit(hit.id(), hit.score(), hit.source() == null ? Map.of() : (Map<String, Object>) hit.source(), hit.highlight()));
             }
             long total = response.hits().total() == null ? hits.size() : response.hits().total().value();
             return new SearchHits(hits, total, response.hits().maxScore());

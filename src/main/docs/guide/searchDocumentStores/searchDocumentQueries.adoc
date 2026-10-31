@@ -25,7 +25,7 @@ snippet::example.BookService[project-base="doc-examples/elasticsearch-search-exa
 
 The search string uses the portable grammar and is converted to Lucene `simple_query_string` syntax at bind time with `default_operator` set to `and`: `Search` joins the terms with `|` (`coffee | tea`), `SearchAll` with spaces, `"quoted phrases"` stay phrases, `-negated` terms always exclude (`(coffee | tea) -cake`), `OR` groups become `(a b) | (c)`, `SearchPrefix` renders `term*` with `analyze_wildcard` and `SearchFuzzy` `term~1`. Special characters in terms are escaped, so user input is matched literally.
 
-A api:data.model.search.SearchQuery[] passed to `search(SearchQuery)` builds the same `simple_query_string` request at runtime, as described in the <<sqlTextSearch, SQL full-text search section>>: its `fields` select the fields to search, with their declared weights as boosts, and its `mode` selects the operator and the prefix or fuzzy suffix.
+A api:data.model.search.SearchQuery[] passed to `search(SearchQuery)` builds the same `simple_query_string` request at runtime, as described in the <<sqlTextSearch, SQL full-text search section>>: its `fields` select the fields to search, with their declared weights as boosts, and its `mode` selects the operator and the prefix or fuzzy suffix, and its `highlight` properties are requested in the `highlight` clause and returned through `SearchResult.highlights()` with the default `<em>` tags.
 
 == Paging and sorting
 

@@ -35,6 +35,8 @@ import io.micronaut.data.model.jpa.criteria.impl.predicate.DisjunctionPredicate;
 import io.micronaut.data.model.jpa.criteria.impl.predicate.ExistsSubqueryPredicate;
 import io.micronaut.data.model.jpa.criteria.impl.predicate.LikePredicate;
 import io.micronaut.data.model.jpa.criteria.impl.predicate.NegatedPredicate;
+import io.micronaut.data.model.jpa.criteria.impl.selection.AliasedSelection;
+import io.micronaut.data.model.jpa.criteria.impl.selection.CompoundSelection;
 import io.micronaut.data.model.query.BindingParameter;
 import io.micronaut.data.model.query.builder.QueryBuilder;
 import io.micronaut.data.model.query.builder.QueryParameterBinding;
@@ -46,6 +48,7 @@ import io.micronaut.data.search.document.convert.SimpleQueryStringConverter;
 import jakarta.persistence.criteria.Expression;
 import jakarta.persistence.criteria.Order;
 import jakarta.persistence.criteria.Predicate;
+import jakarta.persistence.criteria.Selection;
 import org.jspecify.annotations.Nullable;
 
 import java.util.ArrayList;
@@ -113,6 +116,18 @@ public final class DocumentSearchQueryBuilder implements QueryBuilder {
         Bindings bindings = new Bindings();
         Map<String, Object> body = new LinkedHashMap<>();
         body.put(QUERY, buildQuery(definition.predicate(), entity, bindings));
+        Map<String, Object> highlightFields = new LinkedHashMap<>();
+        if (definition.selection() != null) {
+            collectHighlightFields(definition.selection(), highlightFields);
+        }
+        if (!highlightFields.isEmpty()) {
+            // One object per field, the ordered form every Elasticsearch client version accepts
+            List<Map<String, Object>> fields = new ArrayList<>(highlightFields.size());
+            for (Map.Entry<String, Object> field : highlightFields.entrySet()) {
+                fields.add(Map.of(field.getKey(), field.getValue()));
+            }
+            body.put("highlight", Map.of("fields", fields));
+        }
         List<Map<String, Object>> sort = new ArrayList<>();
         for (Order order : definition.order()) {
             sort.add(sortEntry(order));
@@ -149,6 +164,30 @@ public final class DocumentSearchQueryBuilder implements QueryBuilder {
     @Override
     public String buildLimitAndOffset(long limit, long offset) {
         return "";
+    }
+
+    /**
+     * Finds the {@link TextSearchSupport#HIGHLIGHT_FUNCTION} projections of a selection and registers their
+     * fields; the fragments come back in each hit's {@code highlight} with the default {@code &lt;em&gt;} tags.
+     */
+    private static void collectHighlightFields(Selection<?> selection, Map<String, Object> highlightFields) {
+        if (selection instanceof AliasedSelection<?> aliased) {
+            collectHighlightFields(aliased.getSelection(), highlightFields);
+            return;
+        }
+        if (selection instanceof CompoundSelection<?> compound) {
+            for (Selection<?> item : compound.getCompoundSelectionItems()) {
+                collectHighlightFields(item, highlightFields);
+            }
+            return;
+        }
+        if (selection instanceof FunctionExpression<?> function && TextSearchSupport.HIGHLIGHT_FUNCTION.equals(function.getName())) {
+            Expression<?> field = function.getExpressions().get(0);
+            if (!(field instanceof io.micronaut.data.model.jpa.criteria.PersistentPropertyPath<?> propertyPath)) {
+                throw new IllegalStateException("A highlighted field must be a property, got: " + field);
+            }
+            highlightFields.put(fieldName(propertyPath.getPropertyPath()), Map.of());
+        }
     }
 
     private Map<String, Object> buildQuery(@Nullable Predicate predicate, PersistentEntity entity, Bindings bindings) {

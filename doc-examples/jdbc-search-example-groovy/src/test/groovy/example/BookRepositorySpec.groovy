@@ -51,4 +51,13 @@ class BookRepositorySpec extends Specification {
         bookService.titlesContainingEveryWord("coffee beans").isEmpty()
         bookRepository.search(SearchQuery.of("coffee")).totalHits() == 2
     }
+
+    void "highlighting"() {
+        when:
+        def fragments = bookService.highlightedTitles("coffee")
+
+        then:
+        fragments.size() == 2
+        fragments.every { it.contains("<em>Coffee</em>") }
+    }
 }

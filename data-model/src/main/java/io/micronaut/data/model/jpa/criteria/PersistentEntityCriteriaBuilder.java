@@ -306,4 +306,15 @@ public interface PersistentEntityCriteriaBuilder extends CriteriaBuilder {
      * @since 5.4.0
      */
     Expression<Double> searchScore(List<Expression<?>> fields, Expression<String> query, MatchMode mode);
+
+    /**
+     * The fragment of a field with the matched terms wrapped in {@code &lt;em&gt;} tags, usable in a selection.
+     *
+     * @param field The field expression (a property)
+     * @param query The query string expression
+     * @param mode The match mode
+     * @return the highlight expression
+     * @since 5.4.0
+     */
+    Expression<String> searchHighlight(Expression<?> field, Expression<String> query, MatchMode mode);
 }
