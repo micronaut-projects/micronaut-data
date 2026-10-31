@@ -138,9 +138,9 @@ public class R2dbcSchemaGenerator {
                                 PersistentEntity[] entities,
                                 SqlQueryBuilder builder) {
         SchemaGenerate schemaGenerate = configuration.getSchemaGenerate();
-        List<String> createStatements = Arrays.asList(
+        List<String> createStatements = Arrays.stream(
             builder.buildCreateTableStatements(definitionProviders, entities, builder.getDialect())
-        );
+        ).map(sql -> builder.getDialect() == Dialect.ORACLE ? executeImmediateDualityView(sql) : sql).toList();
         Flux<Void> createTablesFlow = Flux.fromIterable(createStatements)
                 .concatMap(sql -> {
                     if (DataSettings.QUERY_LOG.isDebugEnabled()) {
@@ -215,6 +215,21 @@ public class R2dbcSchemaGenerator {
             case CREATE -> createTables;
             default -> Mono.empty();
         };
+    }
+
+    /**
+     * Oracle R2DBC prepares every statement, and the Oracle driver finds bind markers in duality views whose sub-views
+     * have generated fields with function calls (ORA-17041). The DDL is run as dynamic SQL instead, which the driver
+     * does not parse.
+     *
+     * @param sql The CREATE statement
+     * @return The statement to execute
+     */
+    private static String executeImmediateDualityView(String sql) {
+        if (!sql.startsWith("CREATE OR REPLACE JSON RELATIONAL DUALITY VIEW")) {
+            return sql;
+        }
+        return "BEGIN EXECUTE IMMEDIATE '" + sql.replace("'", "''") + "'; END;";
     }
 
     private Mono<Void> execute(Connection connection, String sql) {
