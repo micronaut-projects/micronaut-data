@@ -30,6 +30,7 @@ import org.opensearch.client.opensearch._types.query_dsl.Query;
 import org.opensearch.client.transport.OpenSearchTransport;
 
 import java.io.IOException;
+import java.util.List;
 import java.util.Map;
 import java.util.Optional;
 import java.util.concurrent.CompletableFuture;
@@ -72,6 +73,11 @@ public final class OpenSearchAsyncSearchTransport implements AsyncSearchTranspor
     @Override
     public CompletionStage<String> index(String index, @Nullable String id, Map<String, Object> source, DocumentSearchConfiguration.Refresh refresh) {
         return call(() -> client.index(i -> i.index(index).id(id).document(source).refresh(OpenSearchRequests.refresh(refresh)))).thenApply(response -> response.id());
+    }
+
+    @Override
+    public CompletionStage<List<String>> bulkIndex(String index, List<SearchTransport.BulkDocument> documents, DocumentSearchConfiguration.Refresh refresh) {
+        return call(() -> client.bulk(OpenSearchRequests.bulkRequest(index, documents, refresh))).thenApply(OpenSearchRequests::bulkIds);
     }
 
     @Override

@@ -19,6 +19,7 @@ import io.micronaut.aop.MethodInvocationContext;
 import io.micronaut.core.annotation.Internal;
 import io.micronaut.core.beans.BeanProperty;
 import io.micronaut.core.type.Argument;
+import io.micronaut.data.annotation.search.Searchable;
 import io.micronaut.data.event.EntityEventContext;
 import io.micronaut.data.exceptions.DataAccessException;
 import io.micronaut.data.model.Pageable;
@@ -79,9 +80,19 @@ abstract class AbstractDocumentSearchRepositoryOperations extends AbstractReposi
         this.configuration = configuration;
     }
 
+    /**
+     * The index of an entity: {@code @Searchable(name)} when set, else the persisted name, behind the
+     * configured prefix.
+     *
+     * @param entity The entity
+     * @return The index name
+     */
     protected final String indexName(RuntimePersistentEntity<?> entity) {
+        String name = entity.getAnnotationMetadata().stringValue(Searchable.class, "name")
+            .filter(n -> !n.isEmpty())
+            .orElseGet(entity::getPersistedName);
         String prefix = configuration.getIndexPrefix();
-        return SearchIndexNames.validate(prefix == null ? entity.getPersistedName() : prefix + entity.getPersistedName());
+        return SearchIndexNames.validate(prefix == null ? name : prefix + name);
     }
 
     // ---------- entity events around writes

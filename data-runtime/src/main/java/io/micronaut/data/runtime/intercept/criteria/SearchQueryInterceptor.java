@@ -42,7 +42,9 @@ import jakarta.persistence.criteria.Selection;
 import java.util.ArrayList;
 import java.util.Comparator;
 import java.util.LinkedHashMap;
+import java.util.LinkedHashSet;
 import java.util.List;
+import java.util.Set;
 import java.util.Map;
 import java.util.Objects;
 
@@ -96,10 +98,11 @@ public class SearchQueryInterceptor extends AbstractSpecificationInterceptor<Obj
         ParameterExpression<String> queryParameter = cb.parameter(String.class, null, searchQuery.getQuery());
         Expression<Double> score = cb.searchScore(fields, queryParameter, searchQuery.getMode());
         criteriaQuery.where(cb.textMatch(fields, queryParameter, searchQuery.getMode()));
-        List<Selection<?>> selections = new ArrayList<>(2 + searchQuery.getHighlightFields().size());
+        Set<String> highlightFields = resolveHighlightFields(root, searchQuery);
+        List<Selection<?>> selections = new ArrayList<>(2 + highlightFields.size());
         selections.add(root);
         selections.add(score.alias(TextSearchSupport.SCORE_ALIAS));
-        for (String field : searchQuery.getHighlightFields()) {
+        for (String field : highlightFields) {
             selections.add(cb.searchHighlight(root.get(requireSearchField(root, field)), queryParameter, searchQuery.getMode()).alias(TextSearchSupport.highlightAlias(field)));
         }
         criteriaQuery.multiselect(selections);
@@ -256,6 +259,22 @@ public class SearchQueryInterceptor extends AbstractSpecificationInterceptor<Obj
         } else {
             for (String field : searchQuery.getFields()) {
                 fields.add(root.get(requireSearchField(root, field)));
+            }
+        }
+        return fields;
+    }
+
+    /**
+     * The properties to highlight: the query's fields, plus every highlightable search field when the
+     * query asked for the declared ones.
+     */
+    private static Set<String> resolveHighlightFields(PersistentEntityRoot<Object> root, SearchQuery searchQuery) {
+        Set<String> fields = new LinkedHashSet<>(searchQuery.getHighlightFields());
+        if (searchQuery.isHighlightingDeclaredFields()) {
+            for (PersistentProperty property : TextSearchSupport.searchFields(root.getPersistentEntity())) {
+                if (TextSearchSupport.isHighlightable(property)) {
+                    fields.add(property.getName());
+                }
             }
         }
         return fields;

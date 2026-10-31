@@ -15,6 +15,7 @@
  */
 package io.micronaut.data.search.tck.repositories;
 
+import io.micronaut.data.model.vector.search.SearchResults;
 import io.micronaut.data.repository.CrudRepository;
 import io.micronaut.data.repository.SearchRepository;
 import io.micronaut.data.search.tck.entities.Article;
@@ -25,4 +26,6 @@ import java.util.UUID;
  * The repository a backend with text and vector search implements for the hybrid search TCK.
  */
 public interface ArticleHybridSearchRepository extends CrudRepository<Article, UUID>, SearchRepository<Article, UUID> {
+
+    SearchResults<Article> searchByTitleSearch(String query);
 }
