@@ -18,14 +18,25 @@ package io.micronaut.data.jdbc.mapper;
 import io.micronaut.core.annotation.Internal;
 import io.micronaut.core.beans.BeanIntrospection;
 import io.micronaut.core.beans.BeanProperty;
+import io.micronaut.core.convert.ConversionContext;
+import io.micronaut.core.convert.ConversionService;
 import io.micronaut.data.annotation.Embeddable;
 import io.micronaut.data.annotation.EmbeddedId;
 import io.micronaut.data.annotation.FlatEntity;
+import io.micronaut.core.type.Argument;
 import io.micronaut.data.model.DataType;
+import io.micronaut.data.model.JsonDataType;
 import io.micronaut.data.model.naming.NamingStrategy;
 import io.micronaut.data.model.runtime.RuntimePersistentEntity;
 import io.micronaut.data.model.runtime.RuntimePersistentProperty;
+import io.micronaut.data.model.runtime.convert.AttributeConverter;
+import io.micronaut.data.runtime.convert.DatabaseConversionContextFactory;
+import io.micronaut.data.runtime.mapper.ResultReader;
+import io.micronaut.data.runtime.mapper.sql.SqlJsonColumnReader;
+import org.jspecify.annotations.Nullable;
+
 import java.math.BigDecimal;
+import java.sql.ResultSet;
 import java.sql.Timestamp;
 import java.util.ArrayList;
 import java.util.Collections;
@@ -33,6 +44,7 @@ import java.util.LinkedHashSet;
 import java.util.List;
 import java.util.Set;
 import java.util.UUID;
+import java.util.concurrent.atomic.AtomicReference;
 
 /**
  * How {@link FlatEntityResultSetMapper} reads one entity type: the column of every mapped property, the typed
@@ -49,6 +61,12 @@ import java.util.UUID;
  * <p>Which entities are flat is decided by the annotation processor, which marks them with {@link FlatEntity}:
  * no associations or embedded values, no JSON columns, no attribute converters, no composite identity, and only
  * data types with a typed getter. Any other entity is mapped by the general mapper as before.</p>
+ *
+ * <p>When the annotation processor generated a {@link GeneratedRowMapper} for the entity, the plan holds it
+ * instead and {@link FlatEntityResultSetMapper} delegates the row read to it; the plan then only resolves the
+ * ordinals of the generated mapper's columns. A generated mapper covers what the flat mapper covers and also
+ * embedded values and single ended associations by their foreign key, and its values are those the flat mapper
+ * reads.</p>
  *
  * @param <R> The entity type
  * @since 5.3.0
@@ -78,6 +96,12 @@ public final class FlatEntityMappingPlan<R> {
     private static final byte SKIPPED = 0;
 
     private final RuntimePersistentEntity<R> entity;
+    @Nullable
+    private final GeneratedRowMapper<R> generatedMapper;
+    /**
+     * The per-column facts of the generated mapper's columns, resolved on the first context created.
+     */
+    private final AtomicReference<Columns> generatedColumns = new AtomicReference<>();
     private final BeanIntrospection<R> introspection;
     private final RuntimePersistentProperty<R>[] persistentProperties;
     private final BeanProperty<R, Object>[] properties;
@@ -101,8 +125,24 @@ public final class FlatEntityMappingPlan<R> {
      */
     private final boolean embeddable;
 
+    private FlatEntityMappingPlan(RuntimePersistentEntity<R> entity, GeneratedRowMapper<R> generatedMapper) {
+        this.entity = entity;
+        this.generatedMapper = generatedMapper;
+        this.introspection = entity.getIntrospection();
+        this.persistentProperties = new RuntimePersistentProperty[0];
+        this.properties = new BeanProperty[0];
+        this.columnNames = generatedMapper.columnNames();
+        this.kinds = new byte[0];
+        this.conversions = new boolean[0];
+        this.constructorArgumentIndexes = new int[0];
+        this.requiredConstructorArguments = new boolean[0];
+        this.constructorArgumentCount = 0;
+        this.embeddable = false;
+    }
+
     private FlatEntityMappingPlan(RuntimePersistentEntity<R> entity, List<Column<R>> columns, boolean[] requiredConstructorArguments) {
         this.entity = entity;
+        this.generatedMapper = null;
         this.introspection = entity.getIntrospection();
         int size = columns.size();
         this.persistentProperties = new RuntimePersistentProperty[size];
@@ -136,6 +176,26 @@ public final class FlatEntityMappingPlan<R> {
      * @throws IllegalArgumentException if the entity is not marked as flat
      */
     public static <R> FlatEntityMappingPlan<R> of(RuntimePersistentEntity<R> entity) {
+        return of(entity, true);
+    }
+
+    /**
+     * Resolves the plan of an entity: the one holding the mapper the annotation processor generated for it when
+     * there is one and {@code generated} allows it, else the columns of an entity marked with {@link FlatEntity}.
+     *
+     * @param entity    The entity
+     * @param generated Whether to use the mapper the annotation processor generated for the entity when there is one
+     * @param <R>       The entity type
+     * @return The plan
+     * @throws IllegalArgumentException if the entity has no generated mapper to use and is not marked as flat
+     */
+    public static <R> FlatEntityMappingPlan<R> of(RuntimePersistentEntity<R> entity, boolean generated) {
+        if (generated) {
+            GeneratedRowMapper<R> generatedMapper = GeneratedRowMappers.find(entity.getIntrospection().getBeanType());
+            if (generatedMapper != null) {
+                return new FlatEntityMappingPlan<>(entity, generatedMapper);
+            }
+        }
         if (!isFlat(entity)) {
             throw new IllegalArgumentException("Entity [" + entity.getName() + "] is not a flat entity");
         }
@@ -163,6 +223,15 @@ public final class FlatEntityMappingPlan<R> {
      */
     public static boolean isFlat(RuntimePersistentEntity<?> entity) {
         return entity.getAnnotationMetadata().hasAnnotation(FlatEntity.class);
+    }
+
+    /**
+     * @param entity The entity
+     * @return Whether a plan exists for the entity: the annotation processor generated a row mapper for it or
+     * marked it as flat
+     */
+    public static boolean supports(RuntimePersistentEntity<?> entity) {
+        return isFlat(entity) || GeneratedRowMappers.find(entity.getIntrospection().getBeanType()) != null;
     }
 
     /**
@@ -276,6 +345,64 @@ public final class FlatEntityMappingPlan<R> {
         return entity;
     }
 
+    /**
+     * @return The mapper the annotation processor generated for the entity, which reads the rows in place of the
+     * plan's columns, or {@code null} when the plan's columns are read one by one
+     */
+    @Nullable
+    public GeneratedRowMapper<R> getGeneratedMapper() {
+        return generatedMapper;
+    }
+
+    /**
+     * Creates what the generated mapper needs beyond the result set: the attribute converter of every column that
+     * has one, with the conversion context of its property, and the JSON type and argument of every JSON column,
+     * resolved once for the plan, as well as the JSON column reader of the query.
+     *
+     * @param conversionService        The conversion service
+     * @param conversionContextFactory The factory of the conversion contexts, or {@code null} for plain ones
+     * @param jsonColumnReader         The JSON column reader of the query, or {@code null} to read a JSON column as a string
+     * @param resultReader             The result reader the JSON column reader reads with, or {@code null} without one
+     * @return The context
+     * @throws IllegalStateException if the plan holds no generated mapper
+     */
+    public GeneratedRowMapperContext createContext(ConversionService conversionService,
+                                                   @Nullable DatabaseConversionContextFactory conversionContextFactory,
+                                                   @Nullable SqlJsonColumnReader<ResultSet> jsonColumnReader,
+                                                   @Nullable ResultReader<ResultSet, String> resultReader) {
+        if (generatedMapper == null) {
+            throw new IllegalStateException("The plan of [" + entity.getName() + "] has no generated mapper");
+        }
+        Columns columns = generatedColumns.get();
+        if (columns == null) {
+            columns = resolveColumns(generatedMapper, conversionContextFactory);
+            generatedColumns.set(columns);
+        }
+        return new GeneratedRowMapperContext(conversionService, columns, jsonColumnReader, resultReader);
+    }
+
+    @SuppressWarnings("unchecked")
+    private Columns resolveColumns(GeneratedRowMapper<R> mapper, @Nullable DatabaseConversionContextFactory conversionContextFactory) {
+        String[] paths = mapper.propertyPaths();
+        Columns columns = new Columns(mapper.columnNames(), paths.length);
+        for (int i = 0; i < paths.length; i++) {
+            RuntimePersistentProperty<?> property = (RuntimePersistentProperty<?>) entity.getPropertyByPath(paths[i]).orElse(null);
+            if (property == null) {
+                continue;
+            }
+            columns.arguments[i] = property.getArgument();
+            columns.jsonDataTypes[i] = property.getJsonDataType();
+            AttributeConverter<Object, Object> converter = property.getConverter();
+            if (converter != null) {
+                columns.converters[i] = converter;
+                columns.conversionContexts[i] = conversionContextFactory != null
+                    ? conversionContextFactory.forArgument(property.getArgument())
+                    : ConversionContext.of(property.getArgument());
+            }
+        }
+        return columns;
+    }
+
     BeanIntrospection<R> getIntrospection() {
         return introspection;
     }
@@ -334,5 +461,25 @@ public final class FlatEntityMappingPlan<R> {
                              byte kind,
                              boolean conversion,
                              int argumentIndex) {
+    }
+
+    /**
+     * The per-column facts a generated mapper's context reads, indexed like the mapper's columns.
+     */
+    @SuppressWarnings("unchecked")
+    static final class Columns {
+        final String[] names;
+        final AttributeConverter<Object, Object>[] converters;
+        final ConversionContext[] conversionContexts;
+        final JsonDataType[] jsonDataTypes;
+        final Argument<?>[] arguments;
+
+        Columns(String[] names, int size) {
+            this.names = names;
+            this.converters = new AttributeConverter[size];
+            this.conversionContexts = new ConversionContext[size];
+            this.jsonDataTypes = new JsonDataType[size];
+            this.arguments = new Argument[size];
+        }
     }
 }
