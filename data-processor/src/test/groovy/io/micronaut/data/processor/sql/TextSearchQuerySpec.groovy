@@ -422,4 +422,34 @@ interface PostRepository extends CrudRepository<Post, Long> {
         !getQuery(repository.getRequiredMethod("searchByBodySearch", String)).contains("mn_hl_")
         !getQuery(repository.getRequiredMethod("findBySearch", String)).contains("ts_headline")
     }
+
+    void "reactive and async search(SearchQuery) use the reactive and async interceptors"() {
+        given:
+        def reactive = buildRepository('test.ReactiveArticleRepository', """
+import io.micronaut.data.jdbc.annotation.JdbcRepository;
+import io.micronaut.data.model.query.builder.sql.Dialect;
+import io.micronaut.data.repository.reactive.ReactorSearchRepository;
+${ENTITY}
+@JdbcRepository(dialect = Dialect.POSTGRES)
+interface ReactiveArticleRepository extends ReactorSearchRepository<Article, Long> {
+}
+""")
+        def async = buildRepository('test.AsyncArticleRepository', """
+import io.micronaut.data.jdbc.annotation.JdbcRepository;
+import io.micronaut.data.model.query.builder.sql.Dialect;
+import io.micronaut.data.repository.async.AsyncSearchRepository;
+${ENTITY}
+@JdbcRepository(dialect = Dialect.POSTGRES)
+interface AsyncArticleRepository extends AsyncSearchRepository<Article, Long> {
+}
+""")
+
+        expect:
+        reactive.getRequiredMethod("search", io.micronaut.data.model.search.SearchQuery).stringValue(DataMethod, DataMethod.META_MEMBER_INTERCEPTOR).get() == "io.micronaut.data.runtime.intercept.criteria.reactive.SearchQueryReactiveInterceptor"
+        async.getRequiredMethod("search", io.micronaut.data.model.search.SearchQuery).stringValue(DataMethod, DataMethod.META_MEMBER_INTERCEPTOR).get() == "io.micronaut.data.runtime.intercept.criteria.async.SearchQueryAsyncInterceptor"
+        reactive.getRequiredMethod("search", String).stringValue(DataMethod, DataMethod.META_MEMBER_INTERCEPTOR).get().contains("Reactive")
+        async.getRequiredMethod("search", String).stringValue(DataMethod, DataMethod.META_MEMBER_INTERCEPTOR).get().contains("Async")
+        reactive.getRequiredMethod("countHits", String).stringValue(DataMethod, DataMethod.META_MEMBER_INTERCEPTOR).get().contains("Reactive")
+        async.getRequiredMethod("countHits", String).stringValue(DataMethod, DataMethod.META_MEMBER_INTERCEPTOR).get().contains("Async")
+    }
 }

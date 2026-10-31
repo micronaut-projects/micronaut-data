@@ -33,14 +33,14 @@ import io.micronaut.inject.processing.ProcessingException;
 import org.jspecify.annotations.Nullable;
 
 import java.util.List;
-import java.util.Objects;
 
 /**
  * Matches the {@link SearchRepository} methods {@code search(String)}, {@code search(String, Pageable)}
  * and {@code countHits(String)}, implementing them as if they were named {@code searchBySearch} and
  * {@code countBySearch}: a text match over every {@code @SearchField} property ordered by relevance.
  * {@code search(SearchQuery)} and {@code search(SearchQuery, Pageable)} build their query at runtime
- * through {@code SearchQueryInterceptor}.
+ * through {@code SearchQueryInterceptor}, or its reactive and async variants for a {@code Publisher},
+ * future or Kotlin coroutine return type.
  *
  * @since 5.4.0
  */
@@ -50,6 +50,8 @@ public final class SearchRepositoryMethodMatcher implements MethodMatcher {
     private static final String SEARCH = "search";
     private static final String COUNT_HITS = "countHits";
     private static final String SEARCH_QUERY_INTERCEPTOR = "io.micronaut.data.runtime.intercept.criteria.SearchQueryInterceptor";
+    private static final String SEARCH_QUERY_REACTIVE_INTERCEPTOR = "io.micronaut.data.runtime.intercept.criteria.reactive.SearchQueryReactiveInterceptor";
+    private static final String SEARCH_QUERY_ASYNC_INTERCEPTOR = "io.micronaut.data.runtime.intercept.criteria.async.SearchQueryAsyncInterceptor";
 
     @Override
     public int getOrder() {
@@ -80,6 +82,61 @@ public final class SearchRepositoryMethodMatcher implements MethodMatcher {
         if (searchQuery || !TypeUtils.isValidCountReturnType(matchContext)) {
             return null;
         }
+        return matchCountHits();
+    }
+
+    /**
+     * Matches {@code search(String)} as a derived query and {@code search(SearchQuery)} as a runtime query,
+     * for a plain, reactive, future or coroutine {@link SearchResults} return type.
+     */
+    @Nullable
+    private static MethodMatch matchSearch(MethodMatchContext matchContext, boolean searchQuery) {
+        ClassElement resultType = producedResultType(matchContext);
+        if (resultType == null || !resultType.getName().equals(SearchResults.class.getName())) {
+            throw new ProcessingException(matchContext.getMethodElement(), "A search(" + (searchQuery ? "SearchQuery" : "String")
+                + ") method must return SearchResults<" + matchContext.getRootEntity().getSimpleName()
+                + ">, optionally inside a reactive type, a CompletionStage or a suspend function, but returns " + matchContext.getReturnType().getName());
+        }
+        if (searchQuery) {
+            String interceptor = searchQueryInterceptor(matchContext);
+            return mc -> new MethodMatchInfo(
+                DataMethod.OperationType.QUERY,
+                resultType,
+                FindersUtils.getInterceptorElement(matchContext, interceptor)
+            );
+        }
+        return new QueryCriteriaMethodMatch(List.of(
+            new MethodNameParser.Match(QueryMatchId.PREFIX, SEARCH),
+            new MethodNameParser.Match(QueryMatchId.PREDICATE, TextSearchSupport.KEYWORD)
+        ));
+    }
+
+    /**
+     * @return The type the method produces: the coroutine result, the publisher or future element, or the return type
+     */
+    @Nullable
+    private static ClassElement producedResultType(MethodMatchContext matchContext) {
+        ClassElement returnType = matchContext.getReturnType();
+        if (matchContext.getMethodElement().isSuspend()) {
+            return TypeUtils.getKotlinCoroutineProducedType(matchContext.getMethodElement());
+        }
+        if (TypeUtils.isReactiveOrFuture(returnType)) {
+            return returnType.getFirstTypeArgument().orElse(returnType);
+        }
+        return returnType;
+    }
+
+    private static String searchQueryInterceptor(MethodMatchContext matchContext) {
+        if (FindersUtils.isFutureType(matchContext.getMethodElement(), matchContext.getReturnType())) {
+            return SEARCH_QUERY_ASYNC_INTERCEPTOR;
+        }
+        if (FindersUtils.isReactiveType(matchContext.getReturnType())) {
+            return SEARCH_QUERY_REACTIVE_INTERCEPTOR;
+        }
+        return SEARCH_QUERY_INTERCEPTOR;
+    }
+
+    private static MethodMatch matchCountHits() {
         return new QueryCriteriaMethodMatch(List.of(
             new MethodNameParser.Match(QueryMatchId.PREFIX, "count"),
             new MethodNameParser.Match(QueryMatchId.PREDICATE, TextSearchSupport.KEYWORD)
@@ -103,36 +160,4 @@ public final class SearchRepositoryMethodMatcher implements MethodMatcher {
         };
     }
 
-    /**
-     * Matches {@code search(String)} as a derived query and {@code search(SearchQuery)} as a runtime query
-     * for a {@link SearchResults} return type.
-     */
-    @Nullable
-    private static MethodMatch matchSearch(MethodMatchContext matchContext, boolean searchQuery) {
-        ClassElement declared = Objects.requireNonNull(matchContext.getReturnType(), "return type");
-        ClassElement returnType = declared;
-        if (TypeUtils.isReactiveOrFuture(returnType)) {
-            returnType = returnType.getFirstTypeArgument().orElse(returnType);
-        }
-        if (!returnType.getName().equals(SearchResults.class.getName())) {
-            throw new ProcessingException(matchContext.getMethodElement(), "A search(" + (searchQuery ? "SearchQuery" : "String")
-                + ") method must return SearchResults<" + matchContext.getRootEntity().getSimpleName()
-                + ">, optionally inside a reactive type or a CompletionStage, but returns " + declared.getName());
-        }
-        if (searchQuery) {
-            if (TypeUtils.isReactiveOrFuture(matchContext.getReturnType())) {
-                throw new ProcessingException(matchContext.getMethodElement(), "search(SearchQuery) only supports a blocking SearchResults return type");
-            }
-            ClassElement resultType = returnType;
-            return mc -> new MethodMatchInfo(
-                DataMethod.OperationType.QUERY,
-                resultType,
-                FindersUtils.getInterceptorElement(matchContext, SEARCH_QUERY_INTERCEPTOR)
-            );
-        }
-        return new QueryCriteriaMethodMatch(List.of(
-            new MethodNameParser.Match(QueryMatchId.PREFIX, SEARCH),
-            new MethodNameParser.Match(QueryMatchId.PREDICATE, TextSearchSupport.KEYWORD)
-        ));
-    }
 }
