@@ -18,9 +18,6 @@ package io.micronaut.data.document.processor.mapper;
 import io.micronaut.core.annotation.AnnotationValue;
 import io.micronaut.data.annotation.EmbeddedId;
 import io.micronaut.data.annotation.Id;
-import io.micronaut.data.document.serde.IdDeserializer;
-import io.micronaut.data.document.serde.IdPropertyNamingStrategy;
-import io.micronaut.data.document.serde.IdSerializer;
 import io.micronaut.inject.annotation.TypedAnnotationMapper;
 import io.micronaut.inject.visitor.VisitorContext;
 import io.micronaut.serde.config.annotation.SerdeConfig;
@@ -36,6 +33,8 @@ import java.util.List;
  */
 public class MappedEmbeddedIdMapper implements TypedAnnotationMapper<EmbeddedId> {
 
+    private static final String MONGO_ID = "_id";
+
     @Override
     public Class<EmbeddedId> annotationType() {
         return EmbeddedId.class;
@@ -43,11 +42,12 @@ public class MappedEmbeddedIdMapper implements TypedAnnotationMapper<EmbeddedId>
 
     @Override
     public List<AnnotationValue<?>> map(AnnotationValue<EmbeddedId> annotation, VisitorContext visitorContext) {
+        // The id is read under its MongoDB name through an alias, and the MongoDB entity codec renames it when
+        // writing. A custom serializer, deserializer or runtime naming strategy here would turn serde source
+        // generation off for the whole entity
         return Collections.singletonList(
                 AnnotationValue.builder(SerdeConfig.class)
-                        .member(SerdeConfig.SERIALIZER_CLASS, IdSerializer.class.getName())
-                        .member(SerdeConfig.DESERIALIZER_CLASS, IdDeserializer.class.getName())
-                        .member(SerdeConfig.RUNTIME_NAMING, IdPropertyNamingStrategy.class.getName())
+                        .member(SerdeConfig.ALIASES, MONGO_ID)
                         .build()
         );
     }
