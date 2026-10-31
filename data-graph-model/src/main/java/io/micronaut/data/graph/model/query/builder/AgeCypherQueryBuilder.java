@@ -181,6 +181,18 @@ public class AgeCypherQueryBuilder extends CypherQueryBuilder {
     }
 
     @Override
+    protected void appendDynamicRelationships(StringBuilder query, PersistentEntity entity, List<String> columns, List<String> carried) {
+        if (GraphEntities.findDynamicRelationships(entity) != null) {
+            throw new IllegalArgumentException("Dynamic relationships are not supported by Apache AGE, entity [" + entity.getName() + "] declares them");
+        }
+    }
+
+    @Override
+    public String buildDynamicLinkQuery(PersistentEntity owner, PersistentEntity target, String type) {
+        throw new UnsupportedOperationException("Dynamic relationships are not supported by Apache AGE");
+    }
+
+    @Override
     protected boolean supportsUnboundedPaths() {
         return false;
     }

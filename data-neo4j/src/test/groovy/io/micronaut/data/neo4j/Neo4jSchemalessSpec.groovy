@@ -2,6 +2,7 @@ package io.micronaut.data.neo4j
 
 import io.micronaut.data.neo4j.features.Pet
 import io.micronaut.data.neo4j.features.PetRepository
+import io.micronaut.data.neo4j.features.Tag
 import io.micronaut.data.neo4j.operations.Neo4jRepositoryOperations
 import io.micronaut.test.extensions.spock.annotation.MicronautTest
 import io.micronaut.test.support.TestPropertyProvider
@@ -111,6 +112,44 @@ class Neo4jSchemalessSpec extends Specification implements TestPropertyProvider 
 
         then:
         !petRepository.findById("Dino").get().attributes.containsKey("nickname")
+    }
+
+    void "dynamic relationships"() {
+        given:
+        def dino = new Pet("Dino")
+        def tag = new Tag("prehistoric")
+        dino.related = [PLAYS_WITH: [new Pet("Hoppy"), new Pet("Baby Puss")], TAGGED: [tag]]
+
+        when:
+        petRepository.save(dino)
+        def found = petRepository.findById("Dino").get()
+
+        then:
+        found.related.keySet() == ["PLAYS_WITH", "TAGGED"] as Set
+        found.related.PLAYS_WITH*.name.sort() == ["Baby Puss", "Hoppy"]
+        found.related.TAGGED.size() == 1
+        found.related.TAGGED[0] instanceof Tag
+        found.related.TAGGED[0].name == "prehistoric"
+        petRepository.findById("Hoppy").get().related.isEmpty()
+
+        when: "saving again does not duplicate relationships"
+        petRepository.update(found)
+
+        then:
+        petRepository.findById("Dino").get().related.PLAYS_WITH.size() == 2
+    }
+
+    void "a dynamic relationship type that cannot be quoted is rejected"() {
+        given:
+        def dino = new Pet("Dino")
+        dino.related = ["PLAYS_WITH`]->() WITH n DETACH DELETE n //": [new Pet("Hoppy")]]
+
+        when:
+        petRepository.save(dino)
+
+        then:
+        def e = thrown(io.micronaut.data.exceptions.DataAccessException)
+        e.message.contains("Relationship type [")
     }
 
     void "dynamic labels"() {
