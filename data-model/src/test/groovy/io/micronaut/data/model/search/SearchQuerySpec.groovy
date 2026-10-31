@@ -63,6 +63,17 @@ class SearchQuerySpec extends Specification {
         SearchQuery.builder("a").fields("x").build() != SearchQuery.builder("a").fields("y").build()
     }
 
+    void "candidates is bounded"() {
+        when:
+        SearchQuery.builder("q").candidates(value)
+
+        then:
+        thrown(IllegalArgumentException)
+
+        where:
+        value << [0, SearchQuery.MAX_CANDIDATES + 1]
+    }
+
     void "toString leaves the search string out"() {
         expect:
         SearchQuery.of("secret words").toString() == "SearchQuery{queryLength=12, fields=[], mode=ANY}"

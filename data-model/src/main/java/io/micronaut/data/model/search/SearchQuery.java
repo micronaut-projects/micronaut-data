@@ -16,6 +16,7 @@
 package io.micronaut.data.model.search;
 
 import io.micronaut.core.annotation.Experimental;
+import io.micronaut.data.model.vector.Vector;
 import org.jspecify.annotations.Nullable;
 
 import java.util.Collections;
@@ -36,6 +37,22 @@ import java.util.Set;
 @Experimental
 public final class SearchQuery {
 
+    /**
+     * The default number of hits each ranking of a hybrid search contributes.
+     */
+    public static final int DEFAULT_CANDIDATES = 100;
+
+    /**
+     * The default constant {@code k} of the reciprocal rank fusion, as in the original paper.
+     */
+    public static final int DEFAULT_RANK_CONSTANT = 60;
+
+    /**
+     * The largest {@link Builder#candidates(int)}: each ranking is fetched and fused in memory on the SQL
+     * stores and MongoDB, so the value bounds the rows a hybrid search loads.
+     */
+    public static final int MAX_CANDIDATES = 10_000;
+
     private final String query;
     private final Set<String> fields;
     private final MatchMode mode;
@@ -46,9 +63,23 @@ public final class SearchQuery {
     private final Double minScore;
     @Nullable
     private final String language;
+    @Nullable
+    private final String vectorProperty;
+    @Nullable
+    private final Vector vector;
+    private final double textWeight;
+    private final double vectorWeight;
+    private final int candidates;
+    private final int rankConstant;
 
     private SearchQuery(Builder builder) {
         this.query = builder.query;
+        this.vectorProperty = builder.vectorProperty;
+        this.vector = builder.vector;
+        this.textWeight = builder.textWeight;
+        this.vectorWeight = builder.vectorWeight;
+        this.candidates = builder.candidates;
+        this.rankConstant = builder.rankConstant;
         this.fields = Collections.unmodifiableSet(new LinkedHashSet<>(builder.fields));
         this.mode = builder.mode;
         this.fuzziness = builder.mode == MatchMode.FUZZY ? builder.fuzziness : 0;
@@ -143,6 +174,57 @@ public final class SearchQuery {
         return SearchQueryParser.terms(query);
     }
 
+    /**
+     * @return The vector property a hybrid search ranks by, or {@code null} for a text-only search
+     */
+    @Nullable
+    public String getVectorProperty() {
+        return vectorProperty;
+    }
+
+    /**
+     * @return The query vector of a hybrid search, or {@code null} for a text-only search
+     */
+    @Nullable
+    public Vector getVector() {
+        return vector;
+    }
+
+    /**
+     * @return Whether the query combines a text match with a vector similarity
+     */
+    public boolean isHybrid() {
+        return vector != null;
+    }
+
+    /**
+     * @return The weight of the text rank in a hybrid score
+     */
+    public double getTextWeight() {
+        return textWeight;
+    }
+
+    /**
+     * @return The weight of the vector rank in a hybrid score
+     */
+    public double getVectorWeight() {
+        return vectorWeight;
+    }
+
+    /**
+     * @return How many hits each ranking of a hybrid search contributes
+     */
+    public int getCandidates() {
+        return candidates;
+    }
+
+    /**
+     * @return The constant {@code k} of the reciprocal rank fusion {@code 1 / (k + rank)}
+     */
+    public int getRankConstant() {
+        return rankConstant;
+    }
+
     @Override
     public boolean equals(Object o) {
         if (!(o instanceof SearchQuery that)) {
@@ -155,12 +237,19 @@ public final class SearchQuery {
             && boosts.equals(that.boosts)
             && highlightFields.equals(that.highlightFields)
             && Objects.equals(minScore, that.minScore)
-            && Objects.equals(language, that.language);
+            && Objects.equals(language, that.language)
+            && Objects.equals(vectorProperty, that.vectorProperty)
+            && Objects.equals(vector, that.vector)
+            && textWeight == that.textWeight
+            && vectorWeight == that.vectorWeight
+            && candidates == that.candidates
+            && rankConstant == that.rankConstant;
     }
 
     @Override
     public int hashCode() {
-        return Objects.hash(query, fields, mode, fuzziness, boosts, highlightFields, minScore, language);
+        return Objects.hash(query, fields, mode, fuzziness, boosts, highlightFields, minScore, language,
+            vectorProperty, vector, textWeight, vectorWeight, candidates, rankConstant);
     }
 
     @Override
@@ -183,6 +272,14 @@ public final class SearchQuery {
         private Double minScore;
         @Nullable
         private String language;
+        @Nullable
+        private String vectorProperty;
+        @Nullable
+        private Vector vector;
+        private double textWeight = 1d;
+        private double vectorWeight = 1d;
+        private int candidates = DEFAULT_CANDIDATES;
+        private int rankConstant = DEFAULT_RANK_CONSTANT;
 
         private Builder(String query) {
             this.query = Objects.requireNonNull(query, "query must not be null");
@@ -262,6 +359,64 @@ public final class SearchQuery {
          */
         public Builder language(String language) {
             this.language = language;
+            return this;
+        }
+
+        /**
+         * Makes the search hybrid: the hits of the text match and the nearest neighbours of the given
+         * vector are merged with reciprocal rank fusion, so a row matching both ranks first.
+         *
+         * @param property The vector property of the entity
+         * @param vector The query vector
+         * @return This builder
+         */
+        public Builder vector(String property, Vector vector) {
+            this.vectorProperty = Objects.requireNonNull(property, "property must not be null");
+            this.vector = Objects.requireNonNull(vector, "vector must not be null");
+            return this;
+        }
+
+        /**
+         * @param textWeight The weight of the text rank in the hybrid score, {@code 1} by default
+         * @return This builder
+         */
+        public Builder textWeight(double textWeight) {
+            this.textWeight = textWeight;
+            return this;
+        }
+
+        /**
+         * @param vectorWeight The weight of the vector rank in the hybrid score, {@code 1} by default
+         * @return This builder
+         */
+        public Builder vectorWeight(double vectorWeight) {
+            this.vectorWeight = vectorWeight;
+            return this;
+        }
+
+        /**
+         * @param candidates How many hits each ranking of a hybrid search contributes before fusion,
+         * {@value #DEFAULT_CANDIDATES} by default and at most {@value #MAX_CANDIDATES}. It sizes the rows
+         * loaded per ranking, so it should not come from user input unchecked
+         * @return This builder
+         */
+        public Builder candidates(int candidates) {
+            if (candidates < 1 || candidates > MAX_CANDIDATES) {
+                throw new IllegalArgumentException("candidates must be between 1 and " + MAX_CANDIDATES + ", got " + candidates);
+            }
+            this.candidates = candidates;
+            return this;
+        }
+
+        /**
+         * @param rankConstant The constant {@code k} of the reciprocal rank fusion, {@value #DEFAULT_RANK_CONSTANT} by default
+         * @return This builder
+         */
+        public Builder rankConstant(int rankConstant) {
+            if (rankConstant < 0) {
+                throw new IllegalArgumentException("rankConstant must not be negative");
+            }
+            this.rankConstant = rankConstant;
             return this;
         }
 
