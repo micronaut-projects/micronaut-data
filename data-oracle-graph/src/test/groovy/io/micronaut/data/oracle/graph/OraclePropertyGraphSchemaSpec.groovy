@@ -93,12 +93,12 @@ class OraclePropertyGraphSchemaSpec extends Specification {
             'CREATE TABLE "TRANSFER" ("ID" NUMBER(19) NOT NULL,"AMOUNT" FLOAT(126) NOT NULL,"TOID" NUMBER(19) NOT NULL,"ACCOUNTID" NUMBER(19) NOT NULL, PRIMARY KEY("ID"))',
             // The relationship identifier is the key of the edge table, so two transfers can link the same accounts; the pair is indexed
             'CREATE INDEX "IDX_TRANSFER_ACCOUNTID_TOID" ON "TRANSFER" ("ACCOUNTID", "TOID")',
-            'CREATE PROPERTY GRAPH bank_graph VERTEX TABLES ("ACCOUNTS" KEY ("ID") LABEL Account PROPERTIES ("ID", "NAME", "OPENED")) EDGE TABLES ("TRANSFER" KEY ("ID") SOURCE KEY ("ACCOUNTID") REFERENCES "ACCOUNTS" ("ID") DESTINATION KEY ("TOID") REFERENCES "ACCOUNTS" ("ID") LABEL TRANSFERS PROPERTIES ("ID", "AMOUNT"))'
+            'CREATE OR REPLACE PROPERTY GRAPH bank_graph VERTEX TABLES ("ACCOUNTS" KEY ("ID") LABEL Account PROPERTIES ("ID", "NAME", "OPENED")) EDGE TABLES ("TRANSFER" KEY ("ID") SOURCE KEY ("ACCOUNTID") REFERENCES "ACCOUNTS" ("ID") DESTINATION KEY ("TOID") REFERENCES "ACCOUNTS" ("ID") LABEL TRANSFERS PROPERTIES ("ID", "AMOUNT"))'
         ]
         contributor.buildDropStatements(configuration, entities) == [
-            'DROP PROPERTY GRAPH bank_graph',
-            'DROP TABLE "TRANSFER"',
-            'DROP TABLE "ACCOUNTS"'
+            'DROP PROPERTY GRAPH IF EXISTS bank_graph',
+            'DROP TABLE IF EXISTS "TRANSFER"',
+            'DROP TABLE IF EXISTS "ACCOUNTS"'
         ]
     }
 
