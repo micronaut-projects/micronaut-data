@@ -1,9 +1,12 @@
 package io.micronaut.data.graph.tck
 
+import io.micronaut.data.graph.tck.entities.Colleague
+import io.micronaut.data.graph.tck.entities.Collaboration
 import io.micronaut.data.graph.tck.entities.Friend
 import io.micronaut.data.graph.tck.entities.Movie
 import io.micronaut.data.graph.tck.entities.Person
 import io.micronaut.data.graph.tck.entities.Role
+import io.micronaut.data.graph.tck.repositories.ColleagueRepository
 import io.micronaut.data.graph.tck.repositories.FriendRepository
 import io.micronaut.data.graph.tck.repositories.MovieRepository
 import io.micronaut.data.graph.tck.repositories.PersonRepository
@@ -22,6 +25,8 @@ abstract class AbstractGraphRepositorySpec extends Specification {
     abstract PersonRepository getPersonRepository()
 
     abstract FriendRepository getFriendRepository()
+
+    abstract ColleagueRepository getColleagueRepository()
 
     abstract TransactionOperations<?> getTransactionOperations()
 
@@ -306,6 +311,23 @@ abstract class AbstractGraphRepositorySpec extends Specification {
         actedIn*.from()*.name.sort() == ["Carrie-Anne Moss", "Keanu Reeves"]
         actedIn*.to()*.title == ["The Matrix", "The Matrix"]
         actedIn*.type() == ["ACTED_IN", "ACTED_IN"]
+    }
+
+    void "an undirected relationship saved from both ends is stored once"() {
+        given:
+        def ada = new Colleague("Ada")
+        def grace = new Colleague("Grace")
+        ada.colleagues = [new Collaboration("compiler", grace)]
+        colleagueRepository.save(ada)
+
+        when: "the relationship is saved again from its other end"
+        grace.colleagues = [new Collaboration("cobol", new Colleague("Ada"))]
+        colleagueRepository.save(grace)
+
+        then: "the relationship is matched in either direction, so its properties are updated rather than a second one created"
+        colleagueRepository.countCollaborations() == 1
+        colleagueRepository.findByColleaguesProject("cobol")*.name.sort() == ["Ada", "Grace"]
+        colleagueRepository.findByColleaguesProject("compiler").isEmpty()
     }
 
     void "find relationships between nodes"() {
