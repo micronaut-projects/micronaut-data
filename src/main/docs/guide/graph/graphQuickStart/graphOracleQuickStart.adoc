@@ -20,11 +20,11 @@ A property graph in Oracle Database is defined over tables. This graph has accou
 include::doc-examples/oracle-graph-example-java/src/test/sql/bank-graph.sql[tag=graph]
 ----
 
-Annotate a class with ann:data.graph.annotation.Node[] to map the vertices of a label:
+Annotate a class with ann:data.graph.annotation.Node[] to map the vertices of a label to their vertex table:
 
 snippet::example.Account[project-base="doc-examples/oracle-graph-example", source="main", tags="account", languages="java,kotlin,groovy,python"]
 
-<1> The class is mapped to the vertices labelled `Account`.
+<1> The class is mapped to the `accounts` vertex table, whose rows the graph labels `Account`.
 <2> The key of the vertex table is the identifier.
 <3> The `TRANSFERS` edges that leave the account.
 
@@ -37,8 +37,9 @@ Then define a repository annotated with ann:data.oracle.graph.annotation.OracleG
 snippet::example.BankGraph[project-base="doc-examples/oracle-graph-example", source="main", tags="repository", languages="java,kotlin,groovy,python"]
 
 <1> The repository queries the `bank_graph` property graph with SQL/PGQ.
-<2> A finder that traverses the `TRANSFERS` edges.
-<3> A path finder, which needs a maximum depth.
+<2> `CrudRepository` provides the usual create, read, update and delete operations, which write the vertex table with SQL.
+<3> A finder that traverses the `TRANSFERS` edges.
+<4> A path finder, which needs a maximum depth.
 
 The finders run as graph queries:
 
@@ -46,5 +47,12 @@ snippet::example.BankGraphSpec[project-base="doc-examples/oracle-graph-example",
 
 <1> The accounts that sent a transfer of more than 1000.
 <2> Whether a chain of transfers leads from account 1 to account 3.
+
+Saving an account inserts a row in its vertex table, which the graph then shows as a vertex:
+
+snippet::example.BankGraphSpec[project-base="doc-examples/oracle-graph-example", tags="save", indent="0", languages="java,kotlin,groovy,python"]
+
+<1> Insert the row of a new account.
+<2> Find it through the property graph.
 
 See <<graphOracle, Oracle Property Graphs>> for the query languages and what they support.

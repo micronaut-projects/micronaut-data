@@ -13,7 +13,7 @@ import java.util.List;
  * An account of the bank graph. The {@code opened} timestamp is a temporal property, read from a TIMESTAMP column
  * of the vertex table.
  */
-@Node("Account")
+@Node(value = "accounts", labels = "Account")
 public record Account(@Id Long id, String name, @Nullable LocalDateTime opened, @Relationship("TRANSFERS") List<Transfer> transfers) {
 
     @Creator

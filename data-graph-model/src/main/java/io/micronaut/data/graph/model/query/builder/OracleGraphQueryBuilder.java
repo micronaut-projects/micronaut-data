@@ -56,6 +56,8 @@ import io.micronaut.data.model.query.BindingParameter;
 import io.micronaut.data.model.query.JoinPath;
 import io.micronaut.data.model.query.builder.QueryParameterBinding;
 import io.micronaut.data.model.query.builder.QueryResult;
+import io.micronaut.data.model.query.builder.sql.Dialect;
+import io.micronaut.data.model.query.builder.sql.SqlQueryBuilder;
 import io.micronaut.data.model.query.impl.AdvancedPredicateVisitor;
 import jakarta.persistence.criteria.Expression;
 import jakarta.persistence.criteria.Order;
@@ -126,7 +128,13 @@ public class OracleGraphQueryBuilder implements GraphQueryBuilder {
     private static final String COUNT_AS = "COUNT(*) AS ";
     private static final String LOWER = "LOWER(";
     private static final String AND = " AND ";
-    private static final String READ_ONLY = "Oracle property graphs are read only views over tables: write to the tables with a JDBC repository";
+    private static final String READ_ONLY = "Oracle property graphs are views over tables: nodes are written to their vertex tables with SQL, "
+        + "and relationships to their edge tables with a JDBC repository";
+
+    /**
+     * Builds the SQL that writes the vertex tables of nodes, as Micronaut Data JDBC does.
+     */
+    private final SqlQueryBuilder sqlQueryBuilder = new SqlQueryBuilder(Dialect.ORACLE);
 
     private final String graph;
     private final PropertyGraph.QueryLanguage language;
@@ -158,17 +166,17 @@ public class OracleGraphQueryBuilder implements GraphQueryBuilder {
 
     @Override
     public @Nullable QueryResult buildInsert(AnnotationMetadata repositoryMetadata, InsertQueryDefinition definition) {
-        return null;
+        return sqlQueryBuilder.buildInsert(repositoryMetadata, definition);
     }
 
     @Override
     public QueryResult buildUpdate(AnnotationMetadata annotationMetadata, UpdateQueryDefinition definition) {
-        throw new UnsupportedOperationException(READ_ONLY);
+        return sqlQueryBuilder.buildUpdate(annotationMetadata, definition);
     }
 
     @Override
     public QueryResult buildDelete(AnnotationMetadata annotationMetadata, DeleteQueryDefinition definition) {
-        throw new UnsupportedOperationException(READ_ONLY);
+        return sqlQueryBuilder.buildDelete(annotationMetadata, definition);
     }
 
     @Override
