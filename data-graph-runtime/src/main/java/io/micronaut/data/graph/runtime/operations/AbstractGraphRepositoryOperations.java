@@ -30,6 +30,7 @@ import io.micronaut.data.graph.model.GraphRelationship;
 import io.micronaut.data.graph.model.query.PathLimitParameter;
 import io.micronaut.data.graph.model.query.PathQueryDefinition;
 import io.micronaut.data.graph.model.query.builder.CypherQueryBuilder;
+import io.micronaut.data.graph.model.query.builder.GraphQueryBuilder;
 import io.micronaut.data.graph.runtime.GraphEdge;
 import io.micronaut.data.graph.runtime.GraphEntityMapper;
 import io.micronaut.data.graph.runtime.GraphNode;
@@ -111,7 +112,7 @@ public abstract class AbstractGraphRepositoryOperations extends AbstractReposito
     AsyncCapableRepository,
     ReactiveCapableRepository,
     AutoCloseable {
-    protected final CypherQueryBuilder queryBuilder;
+    protected final GraphQueryBuilder queryBuilder;
 
     protected final GraphEntityMapper mapper;
 
@@ -147,7 +148,7 @@ public abstract class AbstractGraphRepositoryOperations extends AbstractReposito
      * @param executorService            The executor for asynchronous and reactive operations
      * @param encoderRegistrars          The registrars of the encoders of the application
      */
-    protected AbstractGraphRepositoryOperations(CypherQueryBuilder queryBuilder,
+    protected AbstractGraphRepositoryOperations(GraphQueryBuilder queryBuilder,
                                                 DateTimeProvider<Object> dateTimeProvider,
                                                 RuntimeEntityRegistry runtimeEntityRegistry,
                                                 DataConversionService conversionService,

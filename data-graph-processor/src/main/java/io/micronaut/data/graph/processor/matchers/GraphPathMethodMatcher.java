@@ -28,6 +28,7 @@ import io.micronaut.data.graph.model.GraphRelationship;
 import io.micronaut.data.graph.model.query.PathLimitParameter;
 import io.micronaut.data.graph.model.query.PathQueryDefinition;
 import io.micronaut.data.graph.model.query.builder.CypherQueryBuilder;
+import io.micronaut.data.graph.model.query.builder.GraphQueryBuilder;
 import io.micronaut.data.intercept.annotation.DataMethod;
 import io.micronaut.data.model.Association;
 import io.micronaut.data.model.PersistentProperty;
@@ -177,7 +178,7 @@ public final class GraphPathMethodMatcher implements MethodMatcher {
         PathQueryDefinition definition = new PathQueryDefinition(
             entity, kind, result, relationships, direction, maxDepth, limitParameterIndex >= 0, start, end
         );
-        CypherQueryBuilder queryBuilder = queryBuilder(matchContext);
+        GraphQueryBuilder queryBuilder = queryBuilder(matchContext);
 
         DataMethod.OperationType operationType = switch (result) {
             case COUNT -> DataMethod.OperationType.COUNT;
@@ -262,7 +263,7 @@ public final class GraphPathMethodMatcher implements MethodMatcher {
         return resultType != null ? resultType : matchContext.getReturnType();
     }
 
-    private static io.micronaut.data.model.query.builder.QueryResult buildPathQuery(CypherQueryBuilder queryBuilder, PathQueryDefinition definition) {
+    private static io.micronaut.data.model.query.builder.QueryResult buildPathQuery(GraphQueryBuilder queryBuilder, PathQueryDefinition definition) {
         try {
             return queryBuilder.buildPathQuery(definition);
         } catch (IllegalArgumentException e) {
@@ -270,15 +271,15 @@ public final class GraphPathMethodMatcher implements MethodMatcher {
         }
     }
 
-    private static CypherQueryBuilder queryBuilder(MethodMatchContext matchContext) {
+    private static GraphQueryBuilder queryBuilder(MethodMatchContext matchContext) {
         String builderType = matchContext.getRepositoryClass()
             .stringValue(RepositoryConfiguration.class, DataMethod.META_MEMBER_QUERY_BUILDER)
             .orElse(CypherQueryBuilder.class.getName());
         QueryBuilder queryBuilder = matchContext.getQueryBuilder();
-        if (queryBuilder instanceof CypherQueryBuilder cypherQueryBuilder) {
-            return cypherQueryBuilder;
+        if (queryBuilder instanceof GraphQueryBuilder graphQueryBuilder) {
+            return graphQueryBuilder;
         }
-        throw new MatchFailedException("Path finders need a Cypher query builder, the repository uses: " + builderType);
+        throw new MatchFailedException("Path finders need a graph query builder, the repository uses: " + builderType);
     }
 
     private static List<Association> resolveRelationships(SourcePersistentEntity entity, @Nullable String token) {

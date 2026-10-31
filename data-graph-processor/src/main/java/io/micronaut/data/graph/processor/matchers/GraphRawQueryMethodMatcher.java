@@ -23,7 +23,7 @@ import io.micronaut.data.annotation.ParameterExpression;
 import io.micronaut.data.annotation.Query;
 import io.micronaut.data.annotation.TypeRole;
 import io.micronaut.data.graph.annotation.GraphRepository;
-import io.micronaut.data.graph.model.query.builder.CypherQueryBuilder;
+import io.micronaut.data.graph.model.query.builder.GraphQueryBuilder;
 import io.micronaut.data.graph.model.query.builder.LiteralMasker;
 import io.micronaut.data.intercept.annotation.DataMethod;
 import io.micronaut.data.model.query.BindingParameter.BindingContext;
@@ -62,10 +62,14 @@ import java.util.regex.Pattern;
 @Internal
 public final class GraphRawQueryMethodMatcher implements MethodMatcher {
 
-    private static final Pattern PARAMETER_PATTERN = Pattern.compile("\\$([a-zA-Z_]\\w*)");
+    /**
+     * A parameter reference. A dollar inside a name, as in Oracle's {@code v$session}, is not one.
+     */
+    private static final Pattern PARAMETER_PATTERN = Pattern.compile("(?<![\\w$])\\$([a-zA-Z_]\\w*)");
     private static final Pattern WRITE_PATTERN = Pattern.compile("\\b(CREATE|MERGE|SET|REMOVE|INSERT|UPDATE)\\b");
     private static final Pattern DELETE_PATTERN = Pattern.compile("\\bDELETE\\b");
     private static final Pattern RETURN_PATTERN = Pattern.compile("\\bRETURN\\b");
+    private static final Pattern SELECT_PATTERN = Pattern.compile("^\\s*SELECT\\b");
     /**
      * Names that are not clauses: parameters, property accesses, labels and relationship types,
      * map keys and aliases. They are blanked before the clause keywords are looked for, so that a
@@ -82,17 +86,20 @@ public final class GraphRawQueryMethodMatcher implements MethodMatcher {
 
     @Override
     public @Nullable MethodMatch match(MethodMatchContext matchContext) {
-        if (!matchContext.getRepositoryClass().hasStereotype(GraphRepository.class)) {
+        if (!matchContext.getRepositoryClass().hasStereotype(GraphRepository.class)
+            || !(matchContext.getQueryBuilder() instanceof GraphQueryBuilder graphQueryBuilder)) {
             return null;
         }
         String query = matchContext.getMethodElement().stringValue(Query.class).orElse(null);
         if (query == null) {
             return null;
         }
-        return context -> buildMatchInfo(context, query);
+        // Languages without $name parameters, such as PGQL where :name is a label, receive positional ? parameters
+        boolean positional = !graphQueryBuilder.usesDollarParameters();
+        return context -> buildMatchInfo(context, query, positional);
     }
 
-    private MethodMatchInfo buildMatchInfo(MethodMatchContext matchContext, String query) {
+    private MethodMatchInfo buildMatchInfo(MethodMatchContext matchContext, String query, boolean positional) {
         ParameterElement[] parameters = matchContext.getParameters();
         ParameterElement entityParameter = null;
         ParameterElement entitiesParameter = null;
@@ -105,7 +112,8 @@ public final class GraphRawQueryMethodMatcher implements MethodMatcher {
         if (operationType == DataMethod.OperationType.QUERY) {
             entityParameter = null;
             entitiesParameter = null;
-        } else {
+        } else if (!positional) {
+            // SQL and PGQL statements report their row count through JDBC
             query = countingQuery(matchContext, query);
         }
 
@@ -131,9 +139,9 @@ public final class GraphRawQueryMethodMatcher implements MethodMatcher {
             entityParam = entitiesParameter;
             persistentEntity = matchContext.getEntity(entitiesParameter.getGenericType().getFirstTypeArgument().orElseThrow(IllegalStateException::new));
         }
-        QueryResult queryResult = buildQueryResult(matchContext, query, entityParam, persistentEntity);
+        QueryResult queryResult = buildQueryResult(matchContext, query, entityParam, persistentEntity, positional);
         String countQuery = matchContext.getAnnotationMetadata().stringValue(Query.class, "countQuery").orElse(null);
-        QueryResult countQueryResult = countQuery == null ? null : buildQueryResult(matchContext, countQuery, entityParam, persistentEntity);
+        QueryResult countQueryResult = countQuery == null ? null : buildQueryResult(matchContext, countQuery, entityParam, persistentEntity, positional);
         methodMatchInfo
             .isRawQuery(true)
             .encodeEntityParameters(persistentEntity != null)
@@ -149,7 +157,7 @@ public final class GraphRawQueryMethodMatcher implements MethodMatcher {
 
     private static DataMethod.OperationType findOperationType(MethodMatchContext matchContext, String query, boolean readOnly) {
         String upper = stripLiterals(query).toUpperCase(Locale.ENGLISH);
-        boolean returnsResults = RETURN_PATTERN.matcher(upper).find();
+        boolean returnsResults = RETURN_PATTERN.matcher(upper).find() || SELECT_PATTERN.matcher(upper).find();
         ClassElement returnType = TypeUtils.getMethodProducingItemType(matchContext.getMethodElement());
         boolean returnsCount = returnType == null || TypeUtils.isVoid(returnType) || TypeUtils.isNumber(returnType);
         boolean deletes = DELETE_PATTERN.matcher(upper).find();
@@ -190,17 +198,22 @@ public final class GraphRawQueryMethodMatcher implements MethodMatcher {
     private static QueryResult buildQueryResult(MethodMatchContext matchContext,
                                                 String query,
                                                 @Nullable ParameterElement entityParam,
-                                                @Nullable SourcePersistentEntity persistentEntity) {
+                                                @Nullable SourcePersistentEntity persistentEntity,
+                                                boolean positional) {
         List<ParameterElement> parameters = Arrays.asList(matchContext.getParameters());
         List<AnnotationValue<ParameterExpression>> parameterExpressions = matchContext.getMethodElement()
             .getAnnotationMetadata()
             .getAnnotationValuesByType(ParameterExpression.class);
         List<QueryParameterBinding> bindings = new ArrayList<>();
-        String scanned = maskLiterals(query);
+        String scanned = maskLiterals(query, positional);
         Matcher matcher = PARAMETER_PATTERN.matcher(scanned);
+        StringBuilder rewritten = new StringBuilder();
+        int lastEnd = 0;
         int index = 0;
         while (matcher.find()) {
             String name = matcher.group(1);
+            // Positional parameters are keyed by position, as a parameter may occur more than once
+            String key = positional ? "p" + index : name;
             bindings.add(RawQueryMethodMatcher.addBinding(
                 matchContext,
                 parameters,
@@ -208,13 +221,18 @@ public final class GraphRawQueryMethodMatcher implements MethodMatcher {
                 entityParam,
                 persistentEntity,
                 name,
-                BindingContext.create().index(index++).name(name)
+                BindingContext.create().index(index++).name(key)
             ));
+            rewritten.append(query, lastEnd, matcher.start()).append('?');
+            lastEnd = matcher.end();
         }
         String finalQuery = query;
-        if (matchContext.getQueryBuilder() instanceof CypherQueryBuilder cypherQueryBuilder) {
+        if (positional) {
+            finalQuery = rewritten.append(query.substring(lastEnd)).toString();
+        }
+        if (matchContext.getQueryBuilder() instanceof GraphQueryBuilder graphQueryBuilder) {
             try {
-                finalQuery = cypherQueryBuilder.finishQuery(query);
+                finalQuery = graphQueryBuilder.finishQuery(finalQuery);
             } catch (IllegalArgumentException e) {
                 throw new MatchFailedException(String.valueOf(e.getMessage()));
             }
@@ -229,7 +247,19 @@ public final class GraphRawQueryMethodMatcher implements MethodMatcher {
      * @return The masked query
      */
     static String maskLiterals(String query) {
-        return LiteralMasker.mask(query);
+        return maskLiterals(query, false);
+    }
+
+    /**
+     * Replaces the content of string literals and comments with spaces, keeping offsets.
+     *
+     * @param query The query
+     * @param sql   Whether the query is SQL or PGQL, where {@code --} opens a comment and a quote is
+     *              doubled rather than escaped with a backslash
+     * @return The masked query
+     */
+    static String maskLiterals(String query, boolean sql) {
+        return LiteralMasker.mask(query, sql);
     }
 
     private static String stripLiterals(String query) {
