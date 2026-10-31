@@ -1,0 +1,22 @@
+Graph repositories support the finder methods described in <<querying, Writing Queries>>: criteria such as `GreaterThan`, `In`, `Between`, `StartsWith`, `Contains` and `IgnoreCase`, ordering, paging, counts, existence checks, projections and DTOs.
+
+snippet::example.MovieRepository[project-base="doc-examples/neo4j-example", source="main", tags="finders", languages="java,kotlin,groovy,python"]
+
+The finders are compiled to Cypher. For example `findByReleasedGreaterThanOrderByReleased` becomes:
+
+[source,cypher]
+----
+MATCH (n:Movie) WHERE n.released > $p0 RETURN n ORDER BY n.released ASC
+----
+
+snippet::example.MovieRepositorySpec[project-base="doc-examples/neo4j-example", tags="find", indent="0", languages="java,kotlin,groovy,python"]
+
+Projections return single properties or DTOs:
+
+snippet::example.MovieRepository[project-base="doc-examples/neo4j-example", source="main", tags="projection", languages="java,kotlin,groovy,python"]
+
+snippet::example.MovieSummary[project-base="doc-examples/neo4j-example", source="main", tags="dto", languages="java,kotlin,groovy,python"]
+
+NOTE: `Like` is not supported, as Cypher has no `LIKE` operator. Use `StartsWith`, `EndsWith`, `Contains` or `Regex`.
+
+Repositories may return `Optional`, nullable types, lists, streams and pages, and Reactor, RxJava and Kotlin coroutine types. Reactive and coroutine methods run the blocking driver on an I/O executor.

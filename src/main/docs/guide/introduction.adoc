@@ -24,6 +24,9 @@ Micronaut Data provides a general API for translating a compile time Query model
 
 |<<azureCosmos, Azure Cosmos>>
 |Your data lives in Azure Cosmos DB.
+
+|<<graph, Graph databases>>
+|Your data is a graph of nodes and relationships, in Neo4j, Oracle Database property graphs or PostgreSQL with Apache AGE. Queries are computed as Cypher, PGQL or SQL/PGQ at compilation time, including finders that traverse relationships and find paths.
 |===
 
 All modules share the same repository programming model, described in <<shared, Shared Concepts>>. If you wish to understand more detail about how Micronaut Data works check out the <<howItWorks, How Micronaut Data Works>> section.
