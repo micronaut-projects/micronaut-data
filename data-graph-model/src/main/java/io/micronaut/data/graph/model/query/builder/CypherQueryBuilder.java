@@ -160,6 +160,18 @@ public class CypherQueryBuilder implements GraphQueryBuilder {
      * The parameter holding the version an entity was read with in versioned writes.
      */
     public static final String VERSION_PARAMETER = "version";
+    /**
+     * The parameter holding the rows of a batched node write.
+     */
+    public static final String ROWS_PARAMETER = "rows";
+    /**
+     * The key of the position of a node in the row of a batched write, and the column returning it.
+     */
+    public static final String ROW_POSITION = "position";
+    /**
+     * The key of the properties of a node in the row of a batched write.
+     */
+    public static final String ROW_PROPERTIES = "properties";
     private static final String WITH = " WITH ";
     private static final String WITH_DISTINCT = " WITH DISTINCT ";
     private static final String DISTINCT = "DISTINCT ";
@@ -177,6 +189,8 @@ public class CypherQueryBuilder implements GraphQueryBuilder {
     private static final String DETACH_DELETE = " DETACH DELETE ";
     private static final String EXISTING = "existing";
     private static final String LOCK_PROPERTY = "__lock";
+    private static final String ROW = "row";
+    private static final String UNWIND_ROWS = "UNWIND $" + ROWS_PARAMETER + " AS " + ROW + " ";
     private static final String LINK_FROM = "a";
     private static final String LINK_TO = "b";
 
@@ -508,6 +522,90 @@ public class CypherQueryBuilder implements GraphQueryBuilder {
             }
         }
         return statements;
+    }
+
+    @Override
+    public boolean supportsBatchNodeWrites() {
+        return true;
+    }
+
+    /**
+     * Builds an {@code UNWIND} over the rows that creates, matches or merges each node like
+     * {@link #buildWriteNodeQuery(PersistentEntity, List, boolean)} and sets its properties from the map of the row.
+     * A versioned write locks the nodes like {@link #buildUpdateVersionedNodeQuery(PersistentEntity, List)}, then
+     * collects them and writes them only when every row still has its version, so that it writes all nodes or none.
+     *
+     * @param entity    The entity
+     * @param idPresent Whether the nodes have identifiers
+     * @param versioned Whether the nodes are only updated while they still have the version they were read with
+     * @return The query
+     */
+    @Override
+    public String buildWriteNodesQuery(PersistentEntity entity, boolean idPresent, boolean versioned) {
+        PersistentProperty identity = entity.hasIdentity() ? entity.getIdentity() : null;
+        StringBuilder query = new StringBuilder(UNWIND_ROWS);
+        appendNodesClause(query, entity, identity, idPresent, versioned);
+        return appendSetRowProperties(query, identity);
+    }
+
+    /**
+     * Builds {@code OPTIONAL MATCH} on the identifiers of all rows, counting the existing nodes, followed by an
+     * {@code UNWIND} that creates the nodes only when there are none, like
+     * {@link #buildInsertNodeQuery(PersistentEntity, List)}: the query writes all nodes or none.
+     */
+    @Override
+    public String buildInsertNodesQuery(PersistentEntity entity) {
+        PersistentProperty identity = entity.hasIdentity() ? entity.getIdentity() : null;
+        if (identity == null || GraphEntities.isNativeId(identity)) {
+            return buildWriteNodesQuery(entity, false, false);
+        }
+        String labels = labelExpression(entity);
+        StringBuilder query = new StringBuilder("OPTIONAL MATCH (").append(EXISTING).append(labels).append(CLOSE_WHERE)
+            .append(identityExpression(identity, EXISTING)).append(" IN [").append(ROW).append(" IN $").append(ROWS_PARAMETER)
+            .append(" | ").append(ROW).append('.').append(ID_PARAMETER).append(']')
+            .append(WITH).append("count(").append(EXISTING).append(") AS found WHERE found = 0 ").append(UNWIND_ROWS)
+            .append("CREATE (").append(ROOT).append(labels).append(" {")
+            .append(GraphEntities.escapeName(GraphEntities.propertyName(identity))).append(": ").append(ROW).append('.').append(ID_PARAMETER).append("})");
+        return appendSetRowProperties(query, identity);
+    }
+
+    private String appendSetRowProperties(StringBuilder query, @Nullable PersistentProperty identity) {
+        String idColumn = identity == null ? "null" : identityExpression(identity, ROOT);
+        return query.append(SET).append(ROOT).append(" += ").append(ROW).append('.').append(ROW_PROPERTIES)
+            .append(RETURN).append(ROW).append('.').append(ROW_POSITION).append(" AS ").append(ROW_POSITION).append(", ")
+            .append(idColumn).append(" AS ").append(ID_PARAMETER).toString();
+    }
+
+    /**
+     * Appends the clause that creates, matches or merges the node of each row.
+     */
+    private void appendNodesClause(StringBuilder query, PersistentEntity entity, @Nullable PersistentProperty identity,
+                                   boolean idPresent, boolean versioned) {
+        String labels = labelExpression(entity);
+        String row = ROW;
+        if (identity == null || (GraphEntities.isNativeId(identity) && !idPresent)) {
+            query.append("CREATE (").append(ROOT).append(labels).append(')');
+        } else if (GraphEntities.isNativeId(identity) || versioned) {
+            query.append(MATCH_OPEN).append(ROOT).append(labels).append(CLOSE_WHERE)
+                .append(identityExpression(identity, ROOT)).append(" = ").append(row).append('.').append(ID_PARAMETER);
+            if (versioned) {
+                PersistentProperty version = entity.hasVersion() ? entity.getVersion() : null;
+                if (version == null) {
+                    throw new IllegalArgumentException("Entity [" + entity.getName() + "] has no @Version property");
+                }
+                String matched = "matched";
+                query.append(SET).append(ROOT).append('.').append(LOCK_PROPERTY).append(" = true REMOVE ").append(ROOT).append('.').append(LOCK_PROPERTY)
+                    .append(WITH).append("collect(CASE WHEN ").append(ROOT).append('.').append(GraphEntities.escapeName(GraphEntities.propertyName(version)))
+                    .append(" = ").append(row).append('.').append(VERSION_PARAMETER)
+                    .append(" THEN {node: ").append(ROOT).append(", row: ").append(row).append("} END) AS ").append(matched)
+                    .append(" WHERE size(").append(matched).append(") = size($").append(ROWS_PARAMETER).append(')')
+                    .append(" UNWIND ").append(matched).append(" AS current")
+                    .append(" WITH current.node AS ").append(ROOT).append(", current.row AS ").append(row);
+            }
+        } else {
+            query.append("MERGE (").append(ROOT).append(labels).append(" {")
+                .append(GraphEntities.escapeName(GraphEntities.propertyName(identity))).append(": ").append(row).append('.').append(ID_PARAMETER).append("})");
+        }
     }
 
     /**

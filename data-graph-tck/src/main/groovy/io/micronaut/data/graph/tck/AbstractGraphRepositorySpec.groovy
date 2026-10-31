@@ -13,9 +13,13 @@ import io.micronaut.data.graph.tck.repositories.ArticleRepository
 import io.micronaut.data.graph.tck.repositories.ColleagueRepository
 import io.micronaut.data.graph.tck.repositories.FriendRepository
 import io.micronaut.data.graph.tck.repositories.MovieRepository
+import io.micronaut.data.graph.tck.repositories.MovieSpecificationRepository
 import io.micronaut.data.graph.tck.repositories.PersonRepository
 import io.micronaut.data.model.Pageable
 import io.micronaut.data.model.Sort
+import io.micronaut.data.repository.jpa.criteria.DeleteSpecification
+import io.micronaut.data.repository.jpa.criteria.PredicateSpecification
+import io.micronaut.data.repository.jpa.criteria.UpdateSpecification
 import io.micronaut.transaction.TransactionOperations
 import spock.lang.Requires
 import spock.lang.Specification
@@ -47,6 +51,16 @@ abstract class AbstractGraphRepositorySpec extends Specification {
      * @return The repository
      */
     ArticleRepository getArticleRepository() {
+        null
+    }
+
+    /**
+     * The repository of movies queried with criteria specifications, or null if the implementation does not
+     * support them.
+     *
+     * @return The repository
+     */
+    MovieSpecificationRepository getMovieSpecificationRepository() {
         null
     }
 
@@ -485,6 +499,129 @@ abstract class AbstractGraphRepositorySpec extends Specification {
 
         then:
         !articleRepository.existsById("graphs")
+    }
+
+    @Requires({ instance.articleRepository != null })
+    void "saveAll and updateAll write many versioned nodes"() {
+        when:
+        def saved = articleRepository.saveAll([new Article("a", "A"), new Article("b", "B"), new Article("c", "C")])
+
+        then:
+        saved*.version == [0L, 0L, 0L]
+        articleRepository.count() == 3
+
+        when:
+        def loaded = articleRepository.findAll().sort { it.slug }
+        def stale = articleRepository.findById("b").get()
+        loaded.each { it.title = it.title.toLowerCase() }
+        def updated = articleRepository.updateAll(loaded)
+
+        then:
+        updated*.version == [1L, 1L, 1L]
+        articleRepository.findAll()*.title.sort() == ["a", "b", "c"]
+
+        when: "one node of a batch was changed since it was read"
+        def again = articleRepository.findAll().sort { it.slug }
+        again.each { it.title = it.title.toUpperCase() }
+        again[1] = stale
+        articleRepository.updateAll(again)
+
+        then: "no node of the batch is updated"
+        thrown(OptimisticLockException)
+        articleRepository.findAll().sort { it.slug }.collect { [it.title, it.version] } == [["a", 1L], ["b", 1L], ["c", 1L]]
+
+        when: "one node of a batch of new nodes has the identifier of an existing node"
+        articleRepository.saveAll([new Article("d", "D"), new Article("b", "Other"), new Article("e", "E")])
+
+        then: "no node of the batch is inserted and the existing node is kept"
+        thrown(EntityExistsException)
+        articleRepository.count() == 3
+        with(articleRepository.findById("b").get()) {
+            title == "b"
+            version == 1L
+        }
+    }
+
+    @Requires({ instance.supportsCypher() })
+    void "saveAll writes an instance passed twice once"() {
+        given:
+        def ada = new Person("Ada Lovelace", 1815)
+
+        when:
+        def saved = personRepository.saveAll([ada, new Person("Grace Hopper", 1906), ada])
+
+        then:
+        saved.size() == 3
+        saved[0].id != null
+        saved[0].id == saved[2].id
+        personRepository.count() == 2
+    }
+
+    private static PredicateSpecification<Movie> releasedAfter(int year) {
+        return { root, cb -> cb.greaterThan(root.get("released"), year) } as PredicateSpecification<Movie>
+    }
+
+    @Requires({ instance.movieSpecificationRepository != null })
+    void "find nodes with criteria specifications"() {
+        given:
+        saveMovies()
+        def specs = movieSpecificationRepository
+
+        expect:
+        specs.findAll(releasedAfter(1995))*.title.sort() == ["The Matrix", "The Matrix Reloaded"]
+        specs.findAll(releasedAfter(1995), Sort.of(Sort.Order.desc("released")))*.title == ["The Matrix Reloaded", "The Matrix"]
+        specs.findOne({ root, cb -> cb.equal(root.get("title"), "Speed") } as PredicateSpecification<Movie>).get().released == 1994
+        !specs.findOne({ root, cb -> cb.equal(root.get("title"), "Jaws") } as PredicateSpecification<Movie>).present
+        specs.count(releasedAfter(1995)) == 2
+        specs.count((PredicateSpecification<Movie>) null) == 3
+        specs.exists(releasedAfter(2000))
+        !specs.exists(releasedAfter(2010))
+        specs.findAll(PredicateSpecification.where(releasedAfter(1990))
+            .and({ root, cb -> cb.lessThan(root.get("released"), 2000) } as PredicateSpecification<Movie>))*.title.sort() == ["Speed", "The Matrix"]
+
+        when:
+        def page = specs.findAll(releasedAfter(1990), Pageable.from(0, 2, Sort.of(Sort.Order.asc("released"))))
+
+        then:
+        page.content*.title == ["Speed", "The Matrix"]
+        page.totalSize == 3
+    }
+
+    @Requires({ instance.movieSpecificationRepository != null && instance.supportsRelationshipWrites() })
+    void "criteria specifications follow relationships"() {
+        given:
+        saveMovies()
+
+        expect:
+        movieSpecificationRepository.findAll({ root, cb ->
+            cb.equal(root.join("directors").get("name"), "Lana Wachowski")
+        } as PredicateSpecification<Movie>)*.title.sort() == ["The Matrix", "The Matrix Reloaded"]
+    }
+
+    @Requires({ instance.movieSpecificationRepository != null })
+    void "update and delete nodes with criteria specifications"() {
+        given:
+        saveMovies()
+
+        when:
+        def updated = movieSpecificationRepository.updateAll({ root, query, cb ->
+            query.set("votes", 10L)
+            cb.greaterThan(root.get("released"), 1995)
+        } as UpdateSpecification<Movie>)
+
+        then:
+        updated == 2
+        movieRepository.findById("The Matrix").get().votes == 10L
+        movieRepository.findById("Speed").get().votes == null
+
+        when:
+        def deleted = movieSpecificationRepository.deleteAll({ root, query, cb ->
+            cb.lessThan(root.get("released"), 2000)
+        } as DeleteSpecification<Movie>)
+
+        then:
+        deleted == 2
+        movieRepository.findAll()*.title == ["The Matrix Reloaded"]
     }
 
     @Requires({ instance.articleRepository != null })

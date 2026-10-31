@@ -20,6 +20,9 @@ class MovieRepositorySpec : AbstractNeo4jTest() {
     @Inject
     lateinit var personRepository: PersonRepository
 
+    @Inject
+    lateinit var movieSpecificationRepository: MovieSpecificationRepository
+
     @BeforeEach
     fun setup() {
         // tag::save[]
@@ -93,5 +96,16 @@ class MovieRepositorySpec : AbstractNeo4jTest() {
         assertEquals(listOf("Speed", "The Matrix", "The Matrix Reloaded"), movieRepository.findTitleByReleasedGreaterThanOrderByTitle(1990))
         assertEquals(2, movieRepository.findByReleasedBetween(1990, 2000).size)
         assertEquals(listOf("Speed", "The Matrix", "The Matrix Reloaded"), movieRepository.findMoviesActedInBy("Keanu Reeves").map { it.title })
+    }
+
+    @Test
+    fun testSpecifications() {
+        // tag::useSpecifications[]
+        val recent = movieSpecificationRepository.findAll(MovieSpecifications.releasedAfter(1995)) // <1>
+        val byLana = movieSpecificationRepository.count(MovieSpecifications.directedBy("Lana Wachowski")) // <2>
+        // end::useSpecifications[]
+
+        assertEquals(listOf("The Matrix", "The Matrix Reloaded"), recent.map { it.title }.sorted())
+        assertEquals(2L, byLana)
     }
 }

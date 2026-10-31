@@ -175,9 +175,44 @@ final class DefaultAgeRepositoryOperations extends AbstractGraphRepositoryOperat
         return run(annotationMetadata, work);
     }
 
+    /**
+     * Runs work that writes in the current transaction, or else in a transaction of its own: a save writes its node,
+     * related nodes and relationships one statement at a time, and a batch one node at a time, so that without a
+     * transaction a failing statement would leave the statements before it committed.
+     */
     @Override
     protected <R> R write(AnnotationMetadata annotationMetadata, Function<GraphSession, R> work) {
-        return run(annotationMetadata, work);
+        return connectionOperations.findConnectionStatus()
+            .map(status -> work.apply(session(status.getConnection())))
+            .orElseGet(() -> connectionOperations.execute(
+                ConnectionDefinition.DEFAULT.withAnnotationMetadata(annotationMetadata),
+                status -> inTransaction(status.getConnection(), work)
+            ));
+    }
+
+    private <R> R inTransaction(Connection connection, Function<GraphSession, R> work) {
+        try {
+            if (!connection.getAutoCommit()) {
+                return work.apply(session(connection));
+            }
+            connection.setAutoCommit(false);
+            try {
+                R result = work.apply(session(connection));
+                connection.commit();
+                return result;
+            } catch (RuntimeException e) {
+                try {
+                    connection.rollback();
+                } catch (SQLException rollbackError) {
+                    e.addSuppressed(rollbackError);
+                }
+                throw e;
+            } finally {
+                connection.setAutoCommit(true);
+            }
+        } catch (SQLException e) {
+            throw new DataAccessException("Error running an Apache AGE write in a transaction: " + e.getMessage(), e);
+        }
     }
 
     private <R> R run(AnnotationMetadata annotationMetadata, Function<GraphSession, R> work) {

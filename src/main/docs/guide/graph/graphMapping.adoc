@@ -49,6 +49,8 @@ snippet::example.Role[project-base="doc-examples/neo4j-example", source="main", 
 
 Saving an entity writes its node, then saves the nodes it relates to and creates the relationships between them. A related node that has an identifier is updated rather than created again. Saving does not remove relationships missing from a collection: use an explicit query to delete relationships.
 
+On Neo4j, `saveAll` and `updateAll` write the nodes of one entity with a single `UNWIND` query per kind of write: nodes to create, nodes to update and nodes whose `@Version` is checked. Entity events still run for each entity, an instance passed more than once is written once, and the relationships of each node are written after all the nodes. When a versioned `updateAll` finds a node that was changed since it was read, its query updates none of the nodes and fails with `OptimisticLockException`; likewise a `saveAll` of new versioned entities inserts none of them when one of their identifiers is taken. Writes of other kinds and of relationships run as separate statements, so run the batch in a transaction for it to be rolled back as a whole. Apache AGE writes the nodes one at a time, in the current transaction or else in a transaction of its own.
+
 Relationships are not loaded unless a finder asks for them with ann:data.annotation.Join[], see <<graphTraversal, Querying Relationships>>. Collections of relationships that were not fetched are empty.
 
 == Encoding values

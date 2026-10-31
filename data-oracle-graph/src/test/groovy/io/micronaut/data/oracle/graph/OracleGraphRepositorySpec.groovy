@@ -5,6 +5,7 @@ import io.micronaut.data.graph.tck.AbstractGraphRepositorySpec
 import io.micronaut.data.graph.tck.repositories.ColleagueRepository
 import io.micronaut.data.graph.tck.repositories.FriendRepository
 import io.micronaut.data.oracle.graph.tck.OracleMovieRepository
+import io.micronaut.data.oracle.graph.tck.OracleMovieSpecificationRepository
 import io.micronaut.data.oracle.graph.tck.OraclePersonRepository
 import io.micronaut.test.extensions.spock.annotation.MicronautTest
 import io.micronaut.transaction.TransactionOperations
@@ -21,6 +22,9 @@ import java.sql.Connection
  */
 @MicronautTest(transactional = false)
 class OracleGraphRepositorySpec extends AbstractGraphRepositorySpec {
+
+    @Inject
+    OracleMovieSpecificationRepository movieSpecificationRepository
 
     @Inject
     OracleMovieRepository movieRepository
