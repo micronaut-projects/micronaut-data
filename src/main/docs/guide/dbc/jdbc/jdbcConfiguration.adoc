@@ -14,6 +14,8 @@ You can enable SQL logging by enabling trace logging for the `io.micronaut.data.
 <logger name="io.micronaut.data.query" level="trace" />
 ----
 
+With Oracle, the logger also writes the SQL ID of each statement at debug level, for example `Oracle SQL ID: 6973n8gn5dwvt`. Use it to find the statement in `V$SQL`, AWR or SQL Monitor reports.
+
 === Creating the Schema
 
 To create the database schema it is recommended you pair Micronaut Data with a SQL migration tool such as https://micronaut-projects.github.io/micronaut-flyway/latest/guide/index.html[Flyway] or https://micronaut-projects.github.io/micronaut-liquibase/latest/guide/index.html[Liquibase].
