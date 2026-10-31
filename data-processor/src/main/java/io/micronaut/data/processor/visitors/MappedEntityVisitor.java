@@ -22,6 +22,7 @@ import io.micronaut.core.util.StringUtils;
 import io.micronaut.data.annotation.EmbeddedNaming;
 import io.micronaut.data.annotation.Index;
 import io.micronaut.data.annotation.Indexes;
+import io.micronaut.data.annotation.InferredRelation;
 import io.micronaut.data.annotation.InstantiateWithDefaultConstructor;
 import io.micronaut.data.annotation.JsonSubView;
 import io.micronaut.data.annotation.JsonView;
@@ -276,6 +277,14 @@ public class MappedEntityVisitor implements TypeElementVisitor<MappedEntity, Obj
         PropertyElement propertyElement = spp.getPropertyElement();
 
         boolean isRelation = propertyElement.hasStereotype(Relation.class);
+        if (!isRelation && propertyElement.hasStereotype(InferredRelation.class)) {
+            ClassElement propertyType = propertyElement.getGenericType();
+            Relation.Kind inferredKind = propertyType.isArray() || propertyType.isAssignable(Iterable.class)
+                ? Relation.Kind.ONE_TO_MANY
+                : Relation.Kind.MANY_TO_ONE;
+            propertyElement = (PropertyElement) propertyElement.annotate(Relation.class, builder -> builder.value(inferredKind));
+            isRelation = true;
+        }
 
         DataType dataType = annotationMetadata.getValue(TypeDef.class, "type", DataType.class)
                 .orElse(null);
