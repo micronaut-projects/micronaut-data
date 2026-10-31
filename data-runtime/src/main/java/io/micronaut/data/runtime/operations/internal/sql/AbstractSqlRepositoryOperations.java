@@ -871,8 +871,8 @@ public abstract class AbstractSqlRepositoryOperations<RS, PS, Exc extends Except
         }
         if (isDtoProjection) {
             RuntimePersistentEntity<R> resultPersistentEntity = getEntity(preparedQuery.getResultType());
-            RuntimePersistentEntity<R> dtoPersistentEntity = resolveDtoPersistentEntity(
-                preparedQuery.getAnnotationMetadata(),
+            RuntimePersistentEntity<R> dtoPersistentEntity = getDtoPersistentEntity(
+                preparedQuery,
                 persistentEntity,
                 resultPersistentEntity
             );
@@ -985,6 +985,38 @@ public abstract class AbstractSqlRepositoryOperations<RS, PS, Exc extends Except
             return sqlPreparedQuery.getVectorScoringFunction();
         }
         return vectorScoringSupportResolver.resolve(preparedQuery.getDialect()).defaultScoringFunction();
+    }
+
+    /**
+     * Resolves the DTO entity of a query, reusing the one built earlier for the same stored query.
+     *
+     * @param query                  The query
+     * @param persistentEntity       The root entity of the query
+     * @param resultPersistentEntity The entity of the result type
+     * @param <E>                    The entity type
+     * @param <R>                    The result type
+     * @return The DTO entity
+     */
+    private <E, R> RuntimePersistentEntity<R> getDtoPersistentEntity(SqlStoredQuery<E, R> query,
+                                                                     RuntimePersistentEntity<E> persistentEntity,
+                                                                     RuntimePersistentEntity<R> resultPersistentEntity) {
+        AnnotationMetadata annotationMetadata = query.getAnnotationMetadata();
+        DefaultSqlStoredQuery<E, R> storedQuery = null;
+        if (query instanceof DefaultSqlStoredQuery<E, R> defaultSqlStoredQuery) {
+            storedQuery = defaultSqlStoredQuery;
+        } else if (query instanceof DefaultSqlPreparedQuery<E, R> preparedQuery
+            && preparedQuery.sqlStoredQuery instanceof DefaultSqlStoredQuery<E, R> defaultSqlStoredQuery) {
+            storedQuery = defaultSqlStoredQuery;
+        }
+        if (storedQuery == null) {
+            return resolveDtoPersistentEntity(annotationMetadata, persistentEntity, resultPersistentEntity);
+        }
+        RuntimePersistentEntity<R> dtoPersistentEntity = storedQuery.getDtoPersistentEntity(annotationMetadata, persistentEntity, resultPersistentEntity);
+        if (dtoPersistentEntity == null) {
+            dtoPersistentEntity = resolveDtoPersistentEntity(annotationMetadata, persistentEntity, resultPersistentEntity);
+            storedQuery.setDtoPersistentEntity(annotationMetadata, persistentEntity, resultPersistentEntity, dtoPersistentEntity);
+        }
+        return dtoPersistentEntity;
     }
 
     protected final <E, R> RuntimePersistentEntity<R> resolveDtoPersistentEntity(AnnotationMetadata annotationMetadata,

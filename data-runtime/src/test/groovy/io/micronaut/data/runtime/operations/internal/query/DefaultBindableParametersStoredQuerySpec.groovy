@@ -4,16 +4,24 @@ import io.micronaut.aop.MethodInvocationContext
 import io.micronaut.core.convert.ConversionService
 import io.micronaut.core.type.Argument
 import io.micronaut.data.model.DataType
+import io.micronaut.data.model.entities.Author
+import io.micronaut.data.model.entities.Book
 import io.micronaut.data.model.query.builder.sql.Dialect
 import io.micronaut.data.model.query.builder.sql.SqlQueryBuilder
 import io.micronaut.data.model.runtime.QueryResultInfo
+import io.micronaut.data.model.runtime.RuntimePersistentEntity
 import io.micronaut.data.model.runtime.RuntimePersistentProperty
 import io.micronaut.data.model.vector.search.ScoringFunction
 import io.micronaut.data.model.vector.search.Similarity
 import io.micronaut.data.model.runtime.QueryParameterBinding
 import io.micronaut.data.model.runtime.StoredQuery
+import io.micronaut.data.runtime.operations.internal.sql.DefaultSqlStoredQuery
 import io.micronaut.data.runtime.operations.internal.sql.SqlStoredQuery
 import spock.lang.Specification
+
+import java.util.concurrent.ConcurrentLinkedQueue
+import java.util.concurrent.CyclicBarrier
+import java.util.concurrent.Executors
 
 class DefaultBindableParametersStoredQuerySpec extends Specification {
 
@@ -246,6 +254,120 @@ class DefaultBindableParametersStoredQuerySpec extends Specification {
         e.message.contains("Only one ScoringFunction parameter")
     }
 
+    def "entity property bindings read the value of each entity bound"() {
+        given:
+        def title = new SimpleBinding(name: "title", propertyPath: ["title"] as String[])
+        def authorName = new SimpleBinding(name: "authorName", propertyPath: ["author", "name"] as String[])
+        def sq = new SimpleStoredQuery([title, authorName])
+        def q = new DefaultBindableParametersStoredQuery<Book, Object>(sq, new RuntimePersistentEntity<>(Book), ConversionService.SHARED)
+
+        when:
+        def first = new CapturingBinder()
+        q.bindParameters(first, null, new Book(title: "a", author: new Author(name: "x")), null)
+        def second = new CapturingBinder()
+        q.bindParameters(second, null, new Book(title: "b"), null)
+
+        then:
+        first.oneCalls*.value == ["a", "x"]
+        second.oneCalls*.value == ["b", null]
+    }
+
+    def "an unknown entity property fails on every bind"() {
+        given:
+        def binding = new SimpleBinding(name: "missing", propertyPath: ["missing"] as String[])
+        def q = new DefaultBindableParametersStoredQuery<Book, Object>(new SimpleStoredQuery([binding]), new RuntimePersistentEntity<>(Book), ConversionService.SHARED)
+
+        when:
+        q.bindParameters(new CapturingBinder(), null, new Book(), null)
+
+        then:
+        def e = thrown(IllegalStateException)
+        e.message == "Cannot find property: missing"
+
+        when:
+        q.bindParameters(new CapturingBinder(), null, new Book(), null)
+
+        then:
+        e = thrown(IllegalStateException)
+        e.message == "Cannot find property: missing"
+    }
+
+    /**
+     * The property paths of a stored query are resolved on its first bind, so every round uses a new stored query and
+     * starts all threads at once to make them race on that first bind. A test can't prove safe publication, the
+     * volatile field does that; it checks that racing threads always bind the values of their own entity.
+     */
+    def "a stored query shared between threads binds the values of each thread's entity"() {
+        given:
+        int threads = 8
+        int rounds = 200
+        int bindsPerRound = 20
+        def entity = new RuntimePersistentEntity<>(Book)
+        def executor = Executors.newFixedThreadPool(threads)
+        def start = new CyclicBarrier(threads)
+        def failures = new ConcurrentLinkedQueue<String>()
+
+        when:
+        (1..rounds).each { int round ->
+            def title = new SimpleBinding(name: "title", propertyPath: ["title"] as String[])
+            def authorName = new SimpleBinding(name: "authorName", propertyPath: ["author", "name"] as String[])
+            def q = new DefaultBindableParametersStoredQuery<Book, Object>(new SimpleStoredQuery([title, authorName]), entity, ConversionService.SHARED)
+            def futures = (1..threads).collect { int thread ->
+                executor.submit({
+                    start.await()
+                    (1..bindsPerRound).each { int i ->
+                        def expected = ["title $round-$thread-$i".toString(), "author $round-$thread-$i".toString()]
+                        try {
+                            def binder = new CapturingBinder()
+                            q.bindParameters(binder, null, new Book(title: expected[0], author: new Author(name: expected[1])), null)
+                            def actual = binder.oneCalls*.value
+                            if (actual != expected) {
+                                failures << "round $round, thread $thread, bind $i: expected $expected but was $actual".toString()
+                            }
+                        } catch (Throwable e) {
+                            failures << "round $round, thread $thread, bind $i: $e".toString()
+                        }
+                    }
+                } as Runnable)
+            }
+            futures*.get()
+        }
+
+        then:
+        failures.isEmpty()
+
+        cleanup:
+        executor.shutdown()
+    }
+
+    def "previous values are collected only for the bindings that need them"() {
+        given:
+        def q = new DefaultSqlStoredQuery<Book, Object>(new SimpleStoredQuery(bindings), new RuntimePersistentEntity<>(Book), new SqlQueryBuilder(), ConversionService.SHARED)
+
+        expect:
+        q.collectAutoPopulatedPreviousValues(new Book(title: title)) == expected
+
+        where:
+        bindings                                                                             | title | expected
+        []                                                                                   | "a"   | null
+        [new SimpleBinding(name: "pages", propertyPath: ["pages"] as String[])]              | "a"   | [:]
+        [new SimpleBinding(name: "t", propertyPath: ["title"] as String[], autoPopulated: true, requiresPreviousPopulatedValue: true)] | null | [:]
+    }
+
+    def "a previous value is keyed by its binding"() {
+        given:
+        def previous = new SimpleBinding(name: "previousTitle", propertyPath: ["title"] as String[], autoPopulated: true, requiresPreviousPopulatedValue: true)
+        def other = new SimpleBinding(name: "pages", propertyPath: ["pages"] as String[])
+        def q = new DefaultSqlStoredQuery<Book, Object>(new SimpleStoredQuery([other, previous]), new RuntimePersistentEntity<>(Book), new SqlQueryBuilder(), ConversionService.SHARED)
+
+        when:
+        def values = q.collectAutoPopulatedPreviousValues(new Book(title: "a", pages: 5))
+
+        then:
+        values.size() == 1
+        values.get(previous) == "a"
+    }
+
 
 
     // --- helpers ---
@@ -259,9 +381,21 @@ class DefaultBindableParametersStoredQuerySpec extends Specification {
         int parameterIndex = -1
         Class<?> parameterConverterClass
         boolean expression = false
+        String[] propertyPath
+        boolean autoPopulated
+        boolean requiresPreviousPopulatedValue
 
         @Override
         String getName() { return name }
+
+        @Override
+        String[] getPropertyPath() { return propertyPath }
+
+        @Override
+        boolean isAutoPopulated() { return autoPopulated }
+
+        @Override
+        boolean isRequiresPreviousPopulatedValue() { return requiresPreviousPopulatedValue }
 
         @Override
         Object getValue() { return value }
