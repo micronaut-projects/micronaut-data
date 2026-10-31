@@ -42,15 +42,53 @@ public final class DefaultConnectionStatus<C> implements ConnectionStatus<C> {
     private final ConnectionDefinition definition;
     private final boolean isNew;
     private final ConnectionOperations<C> connectionOperations;
+    @Nullable
+    private final SuppliedConnection suppliedConnection;
 
     @Nullable
     private List<ConnectionSynchronization> connectionSynchronizations;
 
     public DefaultConnectionStatus(C connection, ConnectionDefinition definition, boolean isNew, ConnectionOperations<C> connectionOperations) {
+        this(connection, definition, isNew, connectionOperations, null);
+    }
+
+    /**
+     * @param connection           The connection
+     * @param definition           The connection definition
+     * @param isNew                Whether the connection was opened for this status
+     * @param connectionOperations The connection operations
+     * @param suppliedConnection   The state of a connection the caller supplied, shared by every status of that
+     *                             connection, see
+     *                             {@link ConnectionOperations#executeWithConnection(Object, ConnectionDefinition, java.util.function.Function)}
+     * @since 5.3.0
+     */
+    public DefaultConnectionStatus(C connection,
+                                   ConnectionDefinition definition,
+                                   boolean isNew,
+                                   ConnectionOperations<C> connectionOperations,
+                                   @Nullable SuppliedConnection suppliedConnection) {
         this.connection = connection;
         this.definition = definition;
         this.isNew = isNew;
         this.connectionOperations = connectionOperations;
+        this.suppliedConnection = suppliedConnection;
+    }
+
+    /**
+     * @return Whether the caller supplied the connection, so transactions around it do not apply to it
+     * @since 5.3.0
+     */
+    public boolean isSupplied() {
+        return suppliedConnection != null;
+    }
+
+    /**
+     * @return The state of the connection the caller supplied, or {@code null} for a connection these operations opened
+     * @since 5.3.0
+     */
+    @Nullable
+    public SuppliedConnection getSuppliedConnection() {
+        return suppliedConnection;
     }
 
     public boolean isConnectionOf(ConnectionOperations<C> connectionOperations) {
@@ -127,4 +165,43 @@ public final class DefaultConnectionStatus<C> implements ConnectionStatus<C> {
         }
     }
 
+
+    /**
+     * The state of a connection supplied by the caller, whose owner may control its transaction.
+     *
+     * @since 5.3.0
+     */
+    public static final class SuppliedConnection {
+
+        private final boolean ownerControlsTransaction;
+        private volatile boolean rollbackOnly;
+
+        /**
+         * @param ownerControlsTransaction Whether the owner of the connection controls its transaction
+         */
+        public SuppliedConnection(boolean ownerControlsTransaction) {
+            this.ownerControlsTransaction = ownerControlsTransaction;
+        }
+
+        /**
+         * @return Whether the owner of the connection controls its transaction, which transactions join
+         */
+        public boolean isOwnerControlsTransaction() {
+            return ownerControlsTransaction;
+        }
+
+        /**
+         * Marks that work joined to the owner's transaction was rolled back, so the owner must roll back.
+         */
+        public void setRollbackOnly() {
+            rollbackOnly = true;
+        }
+
+        /**
+         * @return Whether work joined to the owner's transaction was rolled back
+         */
+        public boolean isRollbackOnly() {
+            return rollbackOnly;
+        }
+    }
 }

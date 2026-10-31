@@ -62,6 +62,18 @@ public final class HibernateConnectionConnectionOperations implements Connection
     }
 
     @Override
+    public <R> R executeWithConnection(Connection connection,
+                                       ConnectionDefinition definition,
+                                       boolean ownerControlsTransaction,
+                                       Function<ConnectionStatus<Connection>, R> callback) {
+        // Hibernate works on sessions: open one on the supplied connection, which closing the session leaves open
+        try (Session session = hibernateConnectionOperations.openSession(connection)) {
+            return hibernateConnectionOperations.executeWithConnection(session, definition, ownerControlsTransaction,
+                connectionStatus -> callback.apply(createConnectionStatus(connectionStatus)));
+        }
+    }
+
+    @Override
     public boolean managesConnection(ConnectionStatus<Connection> connectionStatus) {
         return false;
     }
@@ -71,7 +83,8 @@ public final class HibernateConnectionConnectionOperations implements Connection
             getConnection(connectionStatus.getConnection()),
             connectionStatus.getDefinition(),
             connectionStatus.isNew(),
-            this
+            this,
+            connectionStatus instanceof DefaultConnectionStatus<Session> sessionStatus ? sessionStatus.getSuppliedConnection() : null
         );
     }
 
