@@ -44,6 +44,10 @@ import io.micronaut.data.annotation.MappedProperty;
 import io.micronaut.data.annotation.MappedEntity;
 import io.micronaut.data.annotation.Repository;
 import io.micronaut.data.annotation.Srid;
+import io.micronaut.data.model.search.TextSearchSupport;
+import io.micronaut.data.annotation.search.Searchable;
+import io.micronaut.data.annotation.search.SearchWeight;
+import io.micronaut.data.annotation.search.SearchField;
 import io.micronaut.data.annotation.sql.JoinColumn;
 import io.micronaut.data.annotation.sql.JoinColumns;
 import io.micronaut.data.annotation.sql.SqlMembers;
@@ -509,6 +513,9 @@ public class SqlQueryBuilder extends AbstractSqlLikeQueryBuilder {
         for (SqlTableMapping table : tables) {
            addTableCreateStatements(createStatements, table, schema, escape);
         }
+        for (SqlTableMapping table : tables) {
+            createSearchIndexStatement(entity, table, schema, escape, createStatements);
+        }
 
         return createStatements.toArray(new String[0]);
     }
@@ -546,6 +553,7 @@ public class SqlQueryBuilder extends AbstractSqlLikeQueryBuilder {
         // Entity can generate indexes, sequences, join tables so need some longer map
         List<String> createStatements = new ArrayList<>(entities.length * 5);
         List<String> jsonViewCreateStatements = new ArrayList<>(entities.length);
+        List<String> searchIndexStatements = new ArrayList<>(2);
         for (PersistentEntity entity : entities) {
             String schema = SqlQueryBuilderUtils.getSchemaName(entity);
             boolean escape = shouldEscape(entity);
@@ -564,6 +572,8 @@ public class SqlQueryBuilder extends AbstractSqlLikeQueryBuilder {
             }
             for (SqlTableMapping table : tables) {
                 addTable(table, sqlTableMappingByTableName);
+                Boolean shouldEscapeDialect = shouldEscapeDialect(dialect);
+                createSearchIndexStatement(entity, table, schema, Objects.requireNonNullElseGet(shouldEscapeDialect, table::escape), searchIndexStatements);
             }
         }
 
@@ -572,6 +582,7 @@ public class SqlQueryBuilder extends AbstractSqlLikeQueryBuilder {
             boolean escape = Objects.requireNonNullElseGet(shouldEscapeDialect, table::escape);
             addTableCreateStatements(createStatements, table, table.schema(), escape);
         }
+        createStatements.addAll(searchIndexStatements);
 
         createStatements.addAll(jsonViewCreateStatements);
         return createStatements.toArray(new String[0]);
@@ -991,6 +1002,43 @@ public class SqlQueryBuilder extends AbstractSqlLikeQueryBuilder {
         }
         createAuxiliaryStatements(table, createStatements);
         createIndexStatements(table, tableName, escape, createStatements);
+    }
+
+    /**
+     * Adds the full-text search index of a {@link Searchable} entity, when the dialect backs search with an index.
+     */
+    private void createSearchIndexStatement(PersistentEntity entity, SqlTableMapping table, @Nullable String schema, boolean escape, List<String> createStatements) {
+        if (table.type() != SqlTableMapping.TableType.MAIN || !entity.getAnnotationMetadata().hasAnnotation(Searchable.class)) {
+            return;
+        }
+        String escapedTableName = getObjectName(schema, table.name(), escape, true);
+        TextSearchDialect textSearchDialect = TextSearchDialect.forDialect(dialect);
+        if (textSearchDialect == null) {
+            return;
+        }
+        List<PersistentProperty> fields = TextSearchSupport.searchFields(entity);
+        if (fields.isEmpty()) {
+            return;
+        }
+        NamingStrategy namingStrategy = getNamingStrategy(entity);
+        List<TextSearchDialect.SearchColumn> columns = new ArrayList<>(fields.size());
+        for (PersistentProperty field : fields) {
+            String column = namingStrategy.mappedName(Collections.emptyList(), field);
+            columns.add(new TextSearchDialect.SearchColumn(
+                escape ? quote(column) : column,
+                field.getAnnotationMetadata().enumValue(SearchField.class, SearchField.MEMBER_WEIGHT, SearchWeight.class).orElse(null)
+            ));
+        }
+        String language = TextSearchDialect.requireLanguageName(entity.getAnnotationMetadata().stringValue(Searchable.class, Searchable.MEMBER_LANGUAGE)
+            .filter(StringUtils::isNotEmpty)
+            .orElse(TextSearchDialect.DEFAULT_LANGUAGE));
+        String indexName = entity.getAnnotationMetadata().stringValue(Searchable.class, "name")
+            .filter(StringUtils::isNotEmpty)
+            .orElseGet(() -> "idx_" + prepareNames(table.name()) + "_search");
+        String ddl = textSearchDialect.buildSearchIndex(escape ? quote(indexName) : indexName, escapedTableName, columns, language);
+        if (ddl != null) {
+            addToCollectionIfNotContains(createStatements, ddl);
+        }
     }
 
     private String appendReservableAndCheckConstraints(String column, SqlColumnMapping tableColumn, boolean escape) {

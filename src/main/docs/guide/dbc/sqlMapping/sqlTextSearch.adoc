@@ -1,0 +1,64 @@
+Micronaut Data can run full-text searches through repositories: an entity declares which properties are searchable, and repository methods search them and return hits ordered by relevance. The API is the same for every supported store; this section describes the PostgreSQL implementation, which uses the built-in `tsvector` and `tsquery` types.
+
+NOTE: Full-text search is experimental. PostgreSQL is supported in this release; other stores follow.
+
+== Mapping searchable entities
+
+Annotate the entity with ann:data.annotation.search.Searchable[] and the properties to index with ann:data.annotation.search.SearchField[]:
+
+snippet::example.Book[project-base="doc-examples/jdbc-search-example", source="main", tags="entity"]
+
+<1> `language` selects the text search configuration used for stemming and stop words (`english` by default); PostgreSQL passes it to `to_tsvector` and `to_tsquery`. The name is written into the SQL, so it must be a letter followed by letters, digits and underscores; any other value fails at compile time.
+<2> `weight` makes matches in this property count more in the relevance score; PostgreSQL maps `HIGH`, `MEDIUM`, `LOW` and `LOWEST` to the labels `A` to `D` of `setweight`.
+<3> A property without a declared weight is indexed without a label.
+
+With schema generation enabled, Micronaut Data creates a `GIN` expression index over the combined `tsvector` of the search fields (`CREATE INDEX IF NOT EXISTS`, so it can run against an existing database). Searches over every field, such as `search(String)` and `findBySearch(String)`, use that index. A derived method on one property, such as `findByTitleSearch(String)`, renders the `tsvector` of that property alone, which the combined index cannot serve; when an entity has several search fields, add an index for each property you search on its own, for example `CREATE INDEX idx_book_title_search ON book USING GIN (setweight(to_tsvector('english',title),'A'))`. The expression must match the generated query exactly, weight included. For a production schema, create the indexes with your migration tool; the expressions are printed in the generated DDL.
+
+== Searching
+
+A repository that extends api:data.repository.SearchRepository[] searches every `@SearchField` property:
+
+snippet::example.BookService[project-base="doc-examples/jdbc-search-example", source="main", tags="search"]
+
+<1> `search(String)` returns api:data.model.vector.search.SearchResults[], ordered by relevance with the best match first. `search(String, Pageable)` returns one page and orders by the pageable's sort.
+<2> Each api:data.model.vector.search.SearchResult[] holds the entity.
+<3> The relevance score of the hit. On PostgreSQL it is the `ts_rank_cd` rank. Scores order the results and are not comparable between stores; `SearchResults.maxScore()` helps to normalise them.
+<4> `countHits(String)` counts the matches.
+
+The search string uses a portable grammar: words separated by whitespace match any term, `"quoted words"` match a phrase, a leading `-` excludes a term, and `OR` separates alternatives. `bake coffee -cake OR tea` matches rows containing `bake` or `coffee` but not `cake`, or rows containing `tea`. A negated term only narrows the terms beside it: an alternative made only of negated terms, such as `-cake`, matches nothing, and so does an empty search string. User input is always safe: Micronaut Data parses the string itself and converts it to the store's query syntax at bind time.
+
+== Derived search methods
+
+Search is also available as a keyword in repository method names, with or without a property:
+
+snippet::example.BookRepository[project-base="doc-examples/jdbc-search-example", source="main", tags="repository"]
+
+<1> api:data.repository.SearchRepository[] adds `search` and `countHits`.
+<2> `Search` after a property matches any term in that property; `findBySearch(String)` with no property matches every search field.
+<3> A method with the `search` prefix that returns `SearchResults` projects the score and orders by it, like a vector search. `SearchAll` requires every term.
+<4> `SearchPhrase` requires the terms to be adjacent and in order.
+<5> `SearchPrefix` matches every term as a prefix, for search-as-you-type.
+<6> Search keywords combine with any other predicate.
+
+|===
+|Keyword |Meaning |PostgreSQL query
+
+|`Search` |any term |`to_tsquery('a' \| 'b')`
+|`SearchAll` |every term |`to_tsquery('a' & 'b')`
+|`SearchPhrase` |adjacent terms, in order |`to_tsquery('a b')`
+|`SearchPrefix` |every term as a prefix |`to_tsquery('a:*' & 'b:*')`
+|`SearchFuzzy` |edit-distance match |not supported, fails at compile time
+|===
+
+Methods that return `List`, `Page` or a DTO filter by the search without projecting a score. A sort parameter or a `Pageable` replaces the relevance order.
+
+== Criteria API
+
+The criteria builder exposes the same predicate through `PersistentEntityCriteriaBuilder.textMatch(field, query, MatchMode)` and the score through `searchScore(fields, query, MatchMode)`, so a api:data.repository.jpa.criteria.PredicateSpecification[] can combine a text match with any other restriction.
+
+== PostgreSQL notes
+
+- Queries render `to_tsvector('<language>', <column>) @@ to_tsquery('<language>', ?)` and rank with `ts_rank_cd`; several fields are concatenated with `||`, wrapped in `coalesce` and `setweight` as declared.
+- The query parameter is converted to `tsquery` syntax by a parameter converter chosen for the keyword, so the SQL stays the same for every search string.
+- Fuzzy matching is not available. Highlighting, query-time boosts and the programmatic `SearchQuery` are not yet implemented for PostgreSQL.
+- Stemming follows the text search configuration named by `@Searchable(language)`; use `simple` to disable it.
