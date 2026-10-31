@@ -363,4 +363,20 @@ interface DocRepository extends CrudRepository<Doc, Long> {
         and: "a renamed property is searched under its serialized key"
         getQuery(repository.getRequiredMethod("searchByBodySearch", String)).contains('JSON_TEXTCONTAINS(doc_.DATA,\'$.summary\',?,1)')
     }
+
+    void "search(SearchQuery) is implemented by the runtime SearchQueryInterceptor"() {
+        given:
+        def repository = articleRepository("")
+
+        when:
+        def method = repository.getRequiredMethod("search", io.micronaut.data.model.search.SearchQuery)
+        def paged = repository.getRequiredMethod("search", io.micronaut.data.model.search.SearchQuery, io.micronaut.data.model.Pageable)
+
+        then:
+        method.stringValue(DataMethod, DataMethod.META_MEMBER_INTERCEPTOR).get() == "io.micronaut.data.runtime.intercept.criteria.SearchQueryInterceptor"
+        method.stringValue(DataMethod, DataMethod.META_MEMBER_RESULT_TYPE).get() == "io.micronaut.data.model.vector.search.SearchResults"
+        !method.hasAnnotation(io.micronaut.data.annotation.Query)
+        paged.stringValue(DataMethod, DataMethod.META_MEMBER_INTERCEPTOR).get() == "io.micronaut.data.runtime.intercept.criteria.SearchQueryInterceptor"
+        paged.stringValue(DataMethod, io.micronaut.data.annotation.TypeRole.PAGEABLE).isPresent()
+    }
 }

@@ -1,5 +1,6 @@
 package example
 
+import io.micronaut.data.model.search.SearchQuery
 import io.micronaut.test.extensions.junit5.annotation.MicronautTest
 import jakarta.inject.Inject
 import org.junit.jupiter.api.Assertions.assertEquals
@@ -44,5 +45,12 @@ class BookRepositoryTest {
         assertEquals(0, bookRepository.findByDescriptionSearchPhrase("beans coffee").size)
         assertEquals(2, bookRepository.findByTitleSearchPrefix("coff").size)
         assertEquals(1, bookRepository.findBySearchAndAuthor("coffee", "Bean").size)
+    }
+
+    @Test
+    fun programmaticSearchQuery() {
+        assertEquals(listOf("The Coffee Roaster"), bookService.titlesContainingEveryWord("coffee roaster"))
+        assertEquals(listOf<String>(), bookService.titlesContainingEveryWord("coffee beans"))
+        assertEquals(2, bookRepository.search(SearchQuery.of("coffee")).totalHits())
     }
 }

@@ -18,6 +18,7 @@ package io.micronaut.data.repository;
 import io.micronaut.core.annotation.Blocking;
 import io.micronaut.core.annotation.Experimental;
 import io.micronaut.data.model.Pageable;
+import io.micronaut.data.model.search.SearchQuery;
 import io.micronaut.data.model.vector.search.SearchResults;
 
 /**
@@ -51,6 +52,29 @@ public interface SearchRepository<E, ID> extends GenericRepository<E, ID> {
      * @return The matching entities with their relevance score
      */
     SearchResults<E> search(String query, Pageable pageable);
+
+    /**
+     * Runs a programmatic {@link SearchQuery}: its fields restrict the search to a subset of the
+     * {@code @SearchField} properties, its mode selects how the terms match and its minimum score drops
+     * weak hits.
+     *
+     * @param query The search query
+     * @return The matching entities with their relevance score, best match first
+     * @throws io.micronaut.data.model.search.UnsupportedSearchFeatureException if the query uses an option the
+     * store cannot honour
+     */
+    SearchResults<E> search(SearchQuery query);
+
+    /**
+     * Runs a programmatic {@link SearchQuery}, returning one page.
+     *
+     * @param query The search query
+     * @param pageable The page to return; a sort on the pageable replaces the relevance order
+     * @return The matching entities with their relevance score
+     * @throws io.micronaut.data.model.search.UnsupportedSearchFeatureException if the query uses an option the
+     * store cannot honour
+     */
+    SearchResults<E> search(SearchQuery query, Pageable pageable);
 
     /**
      * Counts the entities matching the given query.

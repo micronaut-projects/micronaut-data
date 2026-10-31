@@ -32,6 +32,8 @@ The search string is translated to MongoDB's `$search` syntax at bind time: any 
 
 The query sets `$language` to the entity's language, which is also the text index's `default_language`, so a document with its own language in the `language_override` field is still indexed with that language; only the search string is stemmed with the entity's.
 
+A api:data.model.search.SearchQuery[] passed to `search(SearchQuery)` runs the same `$text` aggregation at runtime, as described in the <<sqlTextSearch, SQL full-text search section>>; its `fields` are ignored because `$text` always searches the whole index, and the `PREFIX` and `FUZZY` modes fail when the method runs.
+
 == Limitations
 
 |===
