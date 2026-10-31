@@ -17,11 +17,13 @@ package io.micronaut.data.search.document.runtime;
 
 import io.micronaut.core.annotation.Internal;
 import io.micronaut.data.exceptions.DataAccessException;
+import io.micronaut.data.exceptions.OptimisticLockException;
 import org.jspecify.annotations.Nullable;
 
 import java.util.ArrayList;
 import java.util.List;
 import java.util.function.Function;
+import java.util.function.ToIntFunction;
 
 /**
  * Reads the outcome of a bulk request the same way for every client library.
@@ -41,14 +43,19 @@ public final class BulkResponses {
      * @param items The response items, in request order
      * @param error Reads an item's error reason, {@code null} when it succeeded
      * @param id Reads an item's document id
+     * @param status Reads an item's HTTP status; a 409 is a version conflict
      * @param <I> The item type of the client library
      * @return The ids, in request order
+     * @throws OptimisticLockException When an item's version did not match
      */
-    public static <I> List<String> ids(String store, List<I> items, Function<I, @Nullable String> error, Function<I, String> id) {
+    public static <I> List<String> ids(String store, List<I> items, Function<I, @Nullable String> error, Function<I, String> id, ToIntFunction<I> status) {
         List<String> ids = new ArrayList<>(items.size());
         for (I item : items) {
             String reason = error.apply(item);
             if (reason != null) {
+                if (status.applyAsInt(item) == 409) {
+                    throw new OptimisticLockException("Document " + id.apply(item) + " was modified concurrently: " + reason);
+                }
                 throw new DataAccessException(store + " bulk item failed: " + reason);
             }
             ids.add(id.apply(item));

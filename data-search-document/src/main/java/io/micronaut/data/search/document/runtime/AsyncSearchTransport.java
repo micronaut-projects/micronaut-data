@@ -65,6 +65,24 @@ public interface AsyncSearchTransport {
     CompletionStage<String> index(String index, @Nullable String id, Map<String, Object> source, DocumentSearchConfiguration.Refresh refresh);
 
     /**
+     * Indexes a document with an external version, see
+     * {@link SearchTransport#index(String, String, Map, Long, DocumentSearchConfiguration.Refresh)}.
+     *
+     * @param index The index name
+     * @param id The document id, or {@code null}
+     * @param source The document
+     * @param version The external version, or {@code null} for an unconditional write
+     * @param refresh The refresh policy
+     * @return The document id
+     */
+    default CompletionStage<String> index(String index, @Nullable String id, Map<String, Object> source, @Nullable Long version, DocumentSearchConfiguration.Refresh refresh) {
+        if (version != null) {
+            return CompletableFuture.failedStage(new UnsupportedOperationException("Versioned writes are not supported by " + getClass().getName()));
+        }
+        return index(index, id, source, refresh);
+    }
+
+    /**
      * Indexes several documents in one request. The default sends one request per document, in sequence.
      *
      * @param index The index name
@@ -75,7 +93,7 @@ public interface AsyncSearchTransport {
     default CompletionStage<List<String>> bulkIndex(String index, List<SearchTransport.BulkDocument> documents, DocumentSearchConfiguration.Refresh refresh) {
         CompletionStage<List<String>> ids = CompletableFuture.completedFuture(new ArrayList<>(documents.size()));
         for (SearchTransport.BulkDocument document : documents) {
-            ids = ids.thenCompose(list -> index(index, document.id(), document.source(), refresh).thenApply(id -> {
+            ids = ids.thenCompose(list -> index(index, document.id(), document.source(), document.version(), refresh).thenApply(id -> {
                 list.add(id);
                 return list;
             }));
@@ -91,6 +109,17 @@ public interface AsyncSearchTransport {
      * @return The document, empty when not found
      */
     CompletionStage<Optional<Map<String, Object>>> get(String index, String id);
+
+    /**
+     * Reads a document with its version.
+     *
+     * @param index The index name
+     * @param id The document id
+     * @return The hit, empty when not found
+     */
+    default CompletionStage<Optional<SearchTransport.SearchHit>> getHit(String index, String id) {
+        return get(index, id).thenApply(source -> source.map(map -> new SearchTransport.SearchHit(id, null, map)));
+    }
 
     /**
      * Deletes a document.

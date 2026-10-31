@@ -237,13 +237,18 @@ class DocumentSearchOperationsSpec extends Specification {
         e.message.contains("unknown property")
     }
 
-    void "cursored pages are not supported"() {
+    void "a first cursored page sorts with the id as tiebreaker and starts without search_after"() {
+        given:
+        notes.saveAll([new Note("Coffee", "Roasting beans", 120), new Note("Bread", "Sourdough", 80)])
+
         when:
-        notes.findByPagesLessThan(500, CursoredPageable.from(10, Sort.of(Sort.Order.asc("pages"))))
+        def results = notes.findByPagesLessThan(500, CursoredPageable.from(10, Sort.of(Sort.Order.asc("pages"))))
 
         then:
-        def e = thrown(DataAccessException)
-        e.message.contains("Cursored pagination")
+        results.size() == 2
+        transport.lastBody().contains('"sort":[{"pages":{"order":"asc"}}')
+        transport.lastBody().contains('"size":10')
+        !transport.lastBody().contains('"search_after"')
     }
 
     void "deletes remove documents by id and by query"() {
