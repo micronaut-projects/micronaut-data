@@ -38,6 +38,7 @@ import io.micronaut.data.model.query.builder.sql.Dialect;
 import io.micronaut.data.model.query.builder.sql.IdentifierNamingStrategy;
 import io.micronaut.data.model.query.builder.sql.SqlDialectOptions;
 import io.micronaut.data.model.query.builder.sql.SqlQueryBuilder;
+import jakarta.inject.Inject;
 import io.micronaut.data.model.query.builder.sql.SqlSchemaUtils;
 import io.micronaut.data.model.query.builder.sql.validation.SqlTableMappingValidator;
 import io.micronaut.data.model.runtime.convert.DefinitionProvider;
@@ -51,6 +52,7 @@ import io.micronaut.inject.qualifiers.Qualifiers;
 import io.micronaut.data.connection.jdbc.advice.DelegatingDataSource;
 
 import jakarta.annotation.PostConstruct;
+import org.jspecify.annotations.Nullable;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -61,8 +63,11 @@ import java.sql.DatabaseMetaData;
 import java.sql.PreparedStatement;
 import java.sql.ResultSet;
 import java.sql.SQLException;
+import java.util.ArrayList;
+import java.util.Arrays;
 import java.util.Collection;
 import java.util.Collections;
+import java.util.LinkedHashMap;
 import java.util.List;
 import java.util.Map;
 import java.util.Set;
@@ -84,6 +89,7 @@ public class SchemaGenerator {
     private final Map<Dialect, SqlTableMappingValidator> dialectSqlTableMappingValidatorMap;
     private final PropertyPlaceholderResolver propertyPlaceholderResolver;
     private final List<DefinitionProvider> definitionProviders;
+    private final List<JdbcSchemaContributor> schemaContributors;
 
     /**
      * Constructors a schema generator for the given configurations.
@@ -99,6 +105,28 @@ public class SchemaGenerator {
                            List<SqlTableMappingValidator> sqlTableMappingValidators,
                            Environment environment,
                            List<DefinitionProvider> definitionProviders) {
+        this(configurations, schemaHandler, sqlTableMappingValidators, environment, definitionProviders, List.of());
+    }
+
+    /**
+     * Constructors a schema generator for the given configurations.
+     *
+     * @param configurations              The configurations
+     * @param schemaHandler               The schema handler
+     * @param sqlTableMappingValidators   The list of {@link SqlTableMappingValidator} instances
+     * @param environment                 The environment
+     * @param definitionProviders         Providers of vendor-specific SQL definitions (columns and indexes) used during schema generation
+     * @param schemaContributors          Contributors that generate the schema of some entities, such as the tables and property graphs of graph entities
+     * @since 5.3.0
+     */
+    @Inject
+    public SchemaGenerator(List<DataJdbcConfiguration> configurations,
+                           JdbcSchemaHandler schemaHandler,
+                           List<SqlTableMappingValidator> sqlTableMappingValidators,
+                           Environment environment,
+                           List<DefinitionProvider> definitionProviders,
+                           List<JdbcSchemaContributor> schemaContributors) {
+        this.schemaContributors = schemaContributors == null ? Collections.emptyList() : schemaContributors;
         this.configurations = configurations == null ? Collections.emptyList() : configurations;
         this.schemaHandler = schemaHandler;
         this.propertyPlaceholderResolver = environment.getPlaceholderResolver();
@@ -130,68 +158,149 @@ public class SchemaGenerator {
                 }
                 continue;
             }
-            Dialect dialect = configuration.getDialect();
-            String name = configuration.getName();
-            List<String> packages = configuration.getPackages();
-
-            Collection<BeanIntrospection<Object>> introspections;
-            if (CollectionUtils.isNotEmpty(packages)) {
-                introspections = BeanIntrospector.SHARED.findIntrospections(MappedEntity.class, packages.toArray(new String[0]));
-            } else {
-                introspections = BeanIntrospector.SHARED.findIntrospections(MappedEntity.class);
+            PersistentEntity[] entities = findEntities(configuration, runtimeEntityRegistry);
+            Map<JdbcSchemaContributor, List<PersistentEntity>> contributions = selectContributions(configuration, entities);
+            if (!contributions.isEmpty()) {
+                List<PersistentEntity> remaining = new ArrayList<>(Arrays.asList(entities));
+                contributions.values().forEach(remaining::removeAll);
+                entities = remaining.toArray(PersistentEntity[]::new);
             }
-            PersistentEntity[] entities = introspections.stream()
-                // filter out inner / internal / abstract(MappedSuperClass) classes
-                .filter(i -> !i.getBeanType().getName().contains("$"))
-                .filter(i -> !Modifier.isAbstract(i.getBeanType().getModifiers()))
-                .filter(i -> !i.hasAnnotation(JsonSubView.class))
-                .sorted(Comparator.comparing(i -> i.hasAnnotation(JsonView.class)))
-                .map(beanIntrospection -> runtimeEntityRegistry.getEntity(beanIntrospection.getBeanType()))
-                .toArray(PersistentEntity[]::new);
-            if (ArrayUtils.isNotEmpty(entities)) {
-                DataSource dataSource = DelegatingDataSource.unwrapDataSource(beanLocator.getBean(DataSource.class, Qualifiers.byName(name)));
-                try {
-                    try (Connection connection = dataSource.getConnection()) {
-                        if (configuration.getSchemaGenerateNames() != null && !configuration.getSchemaGenerateNames().isEmpty()) {
-                            for (String schemaName : configuration.getSchemaGenerateNames()) {
-                                if (schemaGenerate != SchemaGenerate.VALIDATE) {
-                                    schemaHandler.createSchema(connection, dialect, schemaName);
-                                }
-                                schemaHandler.useSchema(connection, dialect, schemaName);
-                                if (schemaGenerate == SchemaGenerate.VALIDATE) {
-                                    validate(connection, configuration, entities, dialectSqlTableMappingValidatorMap, definitionProviders);
-                                } else {
-                                    generate(connection, configuration, propertyPlaceholderResolver, entities);
-                                }
-                            }
-                        } else {
-                            if (configuration.getSchemaGenerateName() != null) {
-                                if (schemaGenerate != SchemaGenerate.VALIDATE) {
-                                    schemaHandler.createSchema(connection, dialect, configuration.getSchemaGenerateName());
-                                }
-                                schemaHandler.useSchema(connection, dialect, configuration.getSchemaGenerateName());
-                            }
-                            if (schemaGenerate == SchemaGenerate.VALIDATE) {
-                                validate(connection, configuration, entities, dialectSqlTableMappingValidatorMap, definitionProviders);
-                            } else {
-                                generate(connection, configuration, propertyPlaceholderResolver, entities);
-                            }
-                        }
-                    } catch (SQLException e) {
-                        throw new DataAccessException("Unable to create database schema: " + e.getMessage(), e);
+            if (ArrayUtils.isNotEmpty(entities) || !contributions.isEmpty()) {
+                createOrValidateSchema(beanLocator, configuration, entities, contributions);
+            }
+        }
+    }
+
+    private static PersistentEntity[] findEntities(DataJdbcConfiguration configuration, RuntimeEntityRegistry runtimeEntityRegistry) {
+        List<String> packages = configuration.getPackages();
+        Collection<BeanIntrospection<Object>> introspections;
+        if (CollectionUtils.isNotEmpty(packages)) {
+            introspections = BeanIntrospector.SHARED.findIntrospections(MappedEntity.class, packages.toArray(new String[0]));
+        } else {
+            introspections = BeanIntrospector.SHARED.findIntrospections(MappedEntity.class);
+        }
+        return introspections.stream()
+            // filter out inner / internal / abstract(MappedSuperClass) classes
+            .filter(i -> !i.getBeanType().getName().contains("$"))
+            .filter(i -> !Modifier.isAbstract(i.getBeanType().getModifiers()))
+            .filter(i -> !i.hasAnnotation(JsonSubView.class))
+            .sorted(Comparator.comparing(i -> i.hasAnnotation(JsonView.class)))
+            .map(beanIntrospection -> runtimeEntityRegistry.getEntity(beanIntrospection.getBeanType()))
+            .toArray(PersistentEntity[]::new);
+    }
+
+    private void createOrValidateSchema(BeanLocator beanLocator,
+                                        DataJdbcConfiguration configuration,
+                                        PersistentEntity[] entities,
+                                        Map<JdbcSchemaContributor, List<PersistentEntity>> contributions) {
+        String name = configuration.getName();
+        try {
+            DataSource dataSource = DelegatingDataSource.unwrapDataSource(beanLocator.getBean(DataSource.class, Qualifiers.byName(name)));
+            try (Connection connection = dataSource.getConnection()) {
+                if (configuration.getSchemaGenerateNames() != null && !configuration.getSchemaGenerateNames().isEmpty()) {
+                    for (String schemaName : configuration.getSchemaGenerateNames()) {
+                        createOrValidateSchema(connection, configuration, schemaName, entities, contributions);
                     }
-                } catch (NoSuchBeanException e) {
-                    throw new ConfigurationException("No DataSource configured for setting [" + DataJdbcConfiguration.PREFIX + name + "]. Ensure the DataSource is configured correctly and try again.", e);
+                } else {
+                    createOrValidateSchema(connection, configuration, configuration.getSchemaGenerateName(), entities, contributions);
+                }
+            } catch (SQLException e) {
+                throw new DataAccessException("Unable to create database schema: " + e.getMessage(), e);
+            }
+        } catch (NoSuchBeanException e) {
+            throw new ConfigurationException("No DataSource configured for setting [" + DataJdbcConfiguration.PREFIX + name + "]. Ensure the DataSource is configured correctly and try again.", e);
+        }
+    }
+
+    private void createOrValidateSchema(Connection connection,
+                                        DataJdbcConfiguration configuration,
+                                        @Nullable String schemaName,
+                                        PersistentEntity[] entities,
+                                        Map<JdbcSchemaContributor, List<PersistentEntity>> contributions) throws SQLException {
+        SchemaGenerate schemaGenerate = configuration.getSchemaGenerate();
+        Dialect dialect = configuration.getDialect();
+        if (schemaName != null) {
+            if (schemaGenerate != SchemaGenerate.VALIDATE) {
+                schemaHandler.createSchema(connection, dialect, schemaName);
+            }
+            schemaHandler.useSchema(connection, dialect, schemaName);
+        }
+        if (schemaGenerate == SchemaGenerate.VALIDATE) {
+            validate(connection, configuration, entities, dialectSqlTableMappingValidatorMap, definitionProviders);
+        } else {
+            generate(connection, configuration, propertyPlaceholderResolver, entities, contributions);
+        }
+    }
+
+    private Map<JdbcSchemaContributor, List<PersistentEntity>> selectContributions(DataJdbcConfiguration configuration,
+                                                                                PersistentEntity[] entities) {
+        if (schemaContributors.isEmpty()) {
+            return Map.of();
+        }
+        Map<JdbcSchemaContributor, List<PersistentEntity>> contributions = new LinkedHashMap<>();
+        List<PersistentEntity> remaining = new ArrayList<>(Arrays.asList(entities));
+        for (JdbcSchemaContributor contributor : schemaContributors) {
+            List<PersistentEntity> selected = contributor.selectEntities(configuration, List.copyOf(remaining));
+            if (!selected.isEmpty()) {
+                contributions.put(contributor, selected);
+                remaining.removeAll(selected);
+            }
+        }
+        return contributions;
+    }
+
+    private void generate(Connection connection,
+                          DataJdbcConfiguration configuration,
+                          PropertyPlaceholderResolver propertyPlaceholderResolver,
+                          PersistentEntity[] entities,
+                          Map<JdbcSchemaContributor, List<PersistentEntity>> contributions) throws SQLException {
+        SchemaGenerate schemaGenerate = configuration.getSchemaGenerate();
+        if (schemaGenerate == SchemaGenerate.CREATE_DROP) {
+            // Contributed objects, such as property graphs, can depend on the tables, so they are dropped first
+            contributions.forEach((contributor, contributed) ->
+                executeContributed(connection, propertyPlaceholderResolver, contributor.buildDropStatements(configuration, contributed), "DROP"));
+        }
+        if (entities.length > 0) {
+            generateTables(connection, configuration, propertyPlaceholderResolver, entities);
+        }
+        if (schemaGenerate == SchemaGenerate.CREATE_DROP || schemaGenerate == SchemaGenerate.CREATE) {
+            contributions.forEach((contributor, contributed) ->
+                executeContributed(connection, propertyPlaceholderResolver, contributor.buildCreateStatements(configuration, contributed), "CREATE"));
+        }
+    }
+
+    /**
+     * Runs the statements of a schema contributor. A failed DROP is expected when the object does not exist yet, so
+     * it is traced, while a failed CREATE is logged as a warning.
+     */
+    private static void executeContributed(Connection connection,
+                                           PropertyPlaceholderResolver propertyPlaceholderResolver,
+                                           List<String> statements,
+                                           String kind) {
+        boolean drop = "DROP".equals(kind);
+        for (String statement : statements) {
+            String sql = resolveSql(propertyPlaceholderResolver, statement);
+            if (DataSettings.QUERY_LOG.isDebugEnabled()) {
+                DataSettings.QUERY_LOG.debug("Executing {} statement: \n{}", kind, sql);
+            }
+            try (PreparedStatement ps = connection.prepareStatement(sql)) {
+                ps.executeUpdate();
+            } catch (SQLException e) {
+                if (drop && DataSettings.QUERY_LOG.isTraceEnabled()) {
+                    DataSettings.QUERY_LOG.trace("Drop Unsuccessful: " + e.getMessage());
+                } else if (!drop && DataSettings.QUERY_LOG.isWarnEnabled()) {
+                    // A failed CREATE is a warning, as it is for the tables: with CREATE the objects may exist already
+                    DataSettings.QUERY_LOG.warn("CREATE Statement Unsuccessful: {}, {}", e.getMessage(), sql);
                 }
             }
         }
     }
 
     @SuppressWarnings("java:S3776")
-    private void generate(Connection connection,
-                          DataJdbcConfiguration configuration,
-                          PropertyPlaceholderResolver propertyPlaceholderResolver,
-                          PersistentEntity[] entities) throws SQLException {
+    private void generateTables(Connection connection,
+                                DataJdbcConfiguration configuration,
+                                PropertyPlaceholderResolver propertyPlaceholderResolver,
+                                PersistentEntity[] entities) throws SQLException {
         Dialect dialect = configuration.getDialect();
         SqlQueryBuilder builder = new SqlQueryBuilder(dialect, configuration.getDialectOptions().getVersion());
         // Oracle JDBC doesn't execute several statements in one string

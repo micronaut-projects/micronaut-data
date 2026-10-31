@@ -34,3 +34,39 @@ snippet::example.BankGraphSpec[project-base="doc-examples/oracle-graph-example",
 <2> Runs a SQL/PGQ query over the property graph, `SELECT * FROM GRAPH_TABLE (bank_graph MATCH (n IS Account) ...)`.
 
 Writes join the current connection and transaction of the data source, as graph queries do. Writes need the `micronaut-data-jdbc` module, which `micronaut-data-oracle-graph` depends on. Saving a node writes only its row: relationships are rows of their edge tables, which a ann:data.jdbc.annotation.JdbcRepository[] over an entity of the edge table writes.
+
+== Generating the schema
+
+When schema generation is enabled for the data source, the JDBC schema generator creates the tables of the graph entities and the property graphs over them, as it does for the tables of Micronaut Data JDBC entities:
+
+[configuration]
+----
+datasources:
+  default:
+    schema-generate: CREATE_DROP
+----
+
+The tables follow the mapping of the entities:
+
+* Each ann:data.graph.annotation.Node[] entity gets a vertex table named by its ann:data.graph.annotation.Node[] value, with columns for its properties but not for its relationships.
+* A relationship to a ann:data.graph.annotation.RelationshipProperties[] entity is stored in the table of that entity, which gets a column referencing the node that owns the relationship, named after the owner, such as `ACCOUNTID`. The ann:data.graph.annotation.TargetNode[] property is the column referencing the other end. The ann:data.graph.annotation.RelationshipId[] is the key of the edge table, so two relationships can link the same pair of nodes, such as a person playing two roles in one movie; the pair of columns is indexed.
+* A relationship to a node is stored in an edge table named after the owner's table and the relationship type, such as `MEMBERS_FOLLOWS`, with a column referencing the owner and a column named after the property referencing the target.
+
+Each graph named by an ann:data.oracle.graph.annotation.OracleGraphRepository[] of the data source is then created with `CREATE PROPERTY GRAPH`, over the vertex tables of the entities its repositories reach through their relationships and the edge tables between them. Incoming relationships are stored as edges from their target to their owner. For the `Account` and `Transfer` entities of the <<graphOracleQuickStart, quick start>>, the generator runs:
+
+[source,sql]
+----
+CREATE TABLE "ACCOUNTS" ("ID" NUMBER(19) NOT NULL,"NAME" VARCHAR(255) NOT NULL, PRIMARY KEY("ID"))
+CREATE TABLE "TRANSFER" ("ID" NUMBER(19) NOT NULL,"AMOUNT" FLOAT(126) NOT NULL,"TOID" NUMBER(19) NOT NULL,"ACCOUNTID" NUMBER(19) NOT NULL, PRIMARY KEY("ID"))
+CREATE INDEX "IDX_TRANSFER_ACCOUNTID_TOID" ON "TRANSFER" ("ACCOUNTID", "TOID")
+CREATE PROPERTY GRAPH bank_graph
+  VERTEX TABLES ("ACCOUNTS" KEY ("ID") LABEL Account PROPERTIES ("ID", "NAME"))
+  EDGE TABLES ("TRANSFER" KEY ("ID")
+    SOURCE KEY ("ACCOUNTID") REFERENCES "ACCOUNTS" ("ID")
+    DESTINATION KEY ("TOID") REFERENCES "ACCOUNTS" ("ID")
+    LABEL TRANSFERS PROPERTIES ("ID", "AMOUNT"))
+----
+
+`CREATE_DROP` drops the property graphs before the tables. Graph repositories save nodes only, so rows of edge tables are written with SQL or a ann:data.jdbc.annotation.JdbcRepository[] over an entity of the edge table, which also supplies the identifier of a relationship entity. `VALIDATE` does not check the tables of graph entities.
+
+NOTE: Schema generation is meant for development and testing. In production, create the tables and property graphs with a migration tool such as https://micronaut-projects.github.io/micronaut-flyway/latest/guide/index.html[Flyway] or https://micronaut-projects.github.io/micronaut-liquibase/latest/guide/index.html[Liquibase].
