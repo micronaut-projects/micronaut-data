@@ -17,7 +17,21 @@ class SearchResultsSpec extends Specification {
         results.results() == [result]
         results.iterator().toList() == [result]
         results.toString() == "SearchResults[results=[" +
-                "SearchResult[entity=book, score=Score[value=0.25], similarity=null]]]"
+                "SearchResult[entity=book, score=Score[value=0.25], similarity=null, highlights={}]]]"
+    }
+
+    void "search results expose total hits and max score"() {
+        given:
+        def low = new SearchResult<>("a", new Score(0.1d))
+        def high = new SearchResult<>("b", new Score(0.9d), [title: ["<b>b</b>"]])
+
+        expect:
+        SearchResults.of([low, high]).totalHits() == 2
+        SearchResults.of([low, high], 40).totalHits() == 40
+        SearchResults.of([low, high]).maxScore() == new Score(0.9d)
+        SearchResults.of([]).maxScore() == null
+        high.highlights() == [title: ["<b>b</b>"]]
+        low.highlights().isEmpty()
     }
 
     void "search results reject null input"() {
@@ -26,5 +40,15 @@ class SearchResultsSpec extends Specification {
 
         then:
         thrown(NullPointerException)
+    }
+
+    void "escaped highlights keep only the match markers as tags"() {
+        given:
+        def result = new SearchResult("e", new Score(1d), [title: ['<script>alert("x")</script> & <em>coffee</em>\'s']])
+
+        expect:
+        result.escapedHighlights() == [title: ['&lt;script&gt;alert(&quot;x&quot;)&lt;/script&gt; &amp; <em>coffee</em>&#39;s']]
+        result.highlights().title[0].startsWith('<script>')
+        new SearchResult("e", new Score(1d)).escapedHighlights().isEmpty()
     }
 }

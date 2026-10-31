@@ -397,6 +397,11 @@ public abstract class AbstractCriteriaMethodMatch implements MethodMatcher.Metho
             String restrictionName = optionalRestrictionName.get();
             String propertyName = extractPropertyName(expression, restrictionName);
             if (StringUtils.isEmpty(propertyName)) {
+                // A keyword without a property, such as `findBySearch(String)`, that is also a plain restriction
+                Restrictions.Restriction<Object> plainRestriction = Restrictions.findRestriction(restrictionName);
+                if (plainRestriction != null) {
+                    return getRestriction(root, cb, parameters, plainRestriction);
+                }
                 throw new MatchFailedException("Missing property name for restriction: " + restrictionName);
             }
             if (propertyName.endsWith(IGNORE_CASE)) {
