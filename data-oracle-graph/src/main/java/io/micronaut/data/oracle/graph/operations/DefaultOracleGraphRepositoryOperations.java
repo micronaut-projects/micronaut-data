@@ -29,6 +29,8 @@ import io.micronaut.data.graph.runtime.GraphSession;
 import io.micronaut.data.graph.runtime.GraphValueEncoderRegistrar;
 import io.micronaut.data.graph.runtime.serde.GraphSerde;
 import io.micronaut.data.graph.runtime.operations.AbstractGraphRepositoryOperations;
+import io.micronaut.data.graph.runtime.oracle.OracleGraphRows;
+import io.micronaut.data.graph.runtime.oracle.OracleGraphSql;
 import io.micronaut.data.jdbc.operations.JdbcRepositoryOperations;
 import io.micronaut.data.model.Limit;
 import io.micronaut.data.model.Page;
@@ -38,22 +40,15 @@ import io.micronaut.data.model.runtime.DeleteBatchOperation;
 import io.micronaut.data.model.runtime.DeleteOperation;
 import io.micronaut.data.model.runtime.InsertBatchOperation;
 import io.micronaut.data.model.runtime.InsertOperation;
-import io.micronaut.data.model.query.builder.sql.Dialect;
-import io.micronaut.data.model.query.builder.sql.SqlQueryBuilder;
 import io.micronaut.data.model.runtime.PagedQuery;
 import io.micronaut.data.model.runtime.PreparedQuery;
 import io.micronaut.data.model.runtime.StoredQuery;
 import io.micronaut.data.model.runtime.RuntimeEntityRegistry;
 import io.micronaut.data.model.runtime.RuntimePersistentEntity;
-import io.micronaut.data.model.runtime.RuntimePersistentProperty;
 import io.micronaut.data.model.runtime.UpdateBatchOperation;
 import io.micronaut.data.model.runtime.UpdateOperation;
 import io.micronaut.data.runtime.convert.DataConversionService;
 import io.micronaut.data.runtime.date.DateTimeProvider;
-import io.micronaut.data.runtime.operations.internal.sql.DefaultSqlPreparedQuery;
-import io.micronaut.data.runtime.operations.internal.sql.DefaultSqlStoredQuery;
-import io.micronaut.data.runtime.operations.internal.sql.SqlStoredQuery;
-import io.micronaut.data.runtime.query.internal.DelegateStoredQuery;
 import jakarta.inject.Named;
 import org.jspecify.annotations.Nullable;
 import org.slf4j.Logger;
@@ -68,7 +63,6 @@ import java.sql.SQLException;
 import java.sql.Types;
 import java.time.OffsetDateTime;
 import java.util.ArrayList;
-import java.util.Iterator;
 import java.util.List;
 import java.util.Map;
 import java.util.Optional;
@@ -100,7 +94,6 @@ final class DefaultOracleGraphRepositoryOperations extends AbstractGraphReposito
 
     private final ConnectionOperations<Connection> connectionOperations;
     private final JdbcRepositoryOperations jdbcOperations;
-    private final SqlQueryBuilder sqlQueryBuilder = new SqlQueryBuilder(Dialect.ORACLE);
 
     DefaultOracleGraphRepositoryOperations(@Parameter ConnectionOperations<Connection> connectionOperations,
                                            @Parameter JdbcRepositoryOperations jdbcOperations,
@@ -119,26 +112,14 @@ final class DefaultOracleGraphRepositoryOperations extends AbstractGraphReposito
 
     @Override
     public <E, R> StoredQuery<E, R> decorate(MethodInvocationContext<?, ?> context, StoredQuery<E, R> storedQuery) {
-        if (isSqlWrite(storedQuery)) {
-            // Writes are SQL over the vertex tables, compiled like those of a JDBC repository
-            return new DefaultSqlStoredQuery<>(storedQuery, getEntity(storedQuery.getRootEntity()), sqlQueryBuilder, getConversionService());
-        }
-        return super.decorate(context, storedQuery);
+        StoredQuery<E, R> write = OracleGraphSql.decorateWrite(storedQuery, getEntity(storedQuery.getRootEntity()), getConversionService());
+        return write != null ? write : super.decorate(context, storedQuery);
     }
 
     @Override
     public <E, R> PreparedQuery<E, R> decorate(PreparedQuery<E, R> preparedQuery) {
-        if (preparedQuery instanceof DelegateStoredQuery<?, ?> delegate && delegate.getStoredQueryDelegate() instanceof SqlStoredQuery<?, ?> sqlStoredQuery) {
-            return new DefaultSqlPreparedQuery<>(preparedQuery, (SqlStoredQuery<E, R>) sqlStoredQuery);
-        }
-        return super.decorate(preparedQuery);
-    }
-
-    private static boolean isSqlWrite(StoredQuery<?, ?> storedQuery) {
-        return switch (storedQuery.getOperationType()) {
-            case INSERT, UPDATE, DELETE, INSERT_RETURNING, UPDATE_RETURNING, DELETE_RETURNING -> true;
-            default -> false;
-        };
+        PreparedQuery<E, R> write = OracleGraphSql.decorateWrite(preparedQuery);
+        return write != null ? write : super.decorate(preparedQuery);
     }
 
     @Override
@@ -222,54 +203,7 @@ final class DefaultOracleGraphRepositoryOperations extends AbstractGraphReposito
 
     @Override
     protected void appendSortAndLimit(StringBuilder query, RuntimePersistentEntity<?> entity, Sort sort, Limit limit) {
-        boolean sqlPgq = query.indexOf("GRAPH_TABLE (") >= 0;
-        if (sort != null && sort.isSorted() && query.indexOf(" ORDER BY ") < 0) {
-            appendOrderBy(query, entity, sort, sqlPgq);
-        }
-        if (limit != null && limit.isLimited() && query.indexOf(" LIMIT ") < 0 && query.indexOf(" FETCH ") < 0) {
-            appendLimit(query, limit, sqlPgq);
-        }
-    }
-
-    private static void appendOrderBy(StringBuilder query, RuntimePersistentEntity<?> entity, Sort sort, boolean sqlPgq) {
-        query.append(" ORDER BY ");
-        Iterator<Sort.Order> iterator = sort.getOrderBy().iterator();
-        while (iterator.hasNext()) {
-            Sort.Order order = iterator.next();
-            RuntimePersistentProperty<?> property = sortProperty(entity, order.getProperty());
-            String expression = sqlPgq
-                ? "\"n" + OracleGraphQueryBuilder.SEPARATOR + property.getPersistedName() + "\""
-                : "n." + property.getPersistedName();
-            if (order.isIgnoreCase()) {
-                expression = "LOWER(" + expression + ")";
-            }
-            query.append(expression).append(order.isAscending() ? " ASC" : " DESC");
-            if (iterator.hasNext()) {
-                query.append(", ");
-            }
-        }
-    }
-
-    private static RuntimePersistentProperty<?> sortProperty(RuntimePersistentEntity<?> entity, String name) {
-        RuntimePersistentProperty<?> property = entity.getPropertyByName(name);
-        if (property == null && entity.hasIdentity() && entity.getIdentity().getName().equals(name)) {
-            property = entity.getIdentity();
-        }
-        if (property == null) {
-            throw new IllegalArgumentException("Cannot sort on non-existent property: " + name);
-        }
-        return property;
-    }
-
-    private static void appendLimit(StringBuilder query, Limit limit, boolean sqlPgq) {
-        long offset = limit.offset();
-        int max = limit.maxResults();
-        if (offset > 0) {
-            query.append(" OFFSET ").append(offset).append(sqlPgq ? " ROWS" : "");
-        }
-        if (max > 0) {
-            query.append(sqlPgq ? " FETCH NEXT " + max + " ROWS ONLY" : " LIMIT " + max);
-        }
+        OracleGraphSql.appendSortAndLimit(query, entity, sort, limit);
     }
 
     @Override
