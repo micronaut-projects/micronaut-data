@@ -20,8 +20,6 @@ import co.elastic.clients.elasticsearch._types.Refresh;
 import co.elastic.clients.elasticsearch.core.CountRequest;
 import co.elastic.clients.elasticsearch.core.DeleteByQueryRequest;
 import co.elastic.clients.elasticsearch.core.SearchRequest;
-import co.elastic.clients.elasticsearch.core.SearchResponse;
-import co.elastic.clients.elasticsearch.core.search.Hit;
 import co.elastic.clients.elasticsearch.indices.CreateIndexRequest;
 import io.micronaut.context.annotation.Requires;
 import io.micronaut.core.annotation.Internal;
@@ -35,8 +33,6 @@ import org.jspecify.annotations.Nullable;
 
 import java.io.IOException;
 import java.io.StringReader;
-import java.util.ArrayList;
-import java.util.List;
 import java.util.Map;
 
 /**
@@ -65,13 +61,7 @@ public final class ElasticsearchSearchTransport implements SearchTransport {
     @Override
     public SearchHits search(String index, String body) {
         try {
-            SearchResponse<Map> response = client.search(s -> s.index(index).withJson(new StringReader(body)), Map.class);
-            List<SearchHit> hits = new ArrayList<>(response.hits().hits().size());
-            for (Hit<Map> hit : response.hits().hits()) {
-                hits.add(new SearchHit(hit.id(), hit.score(), hit.source() == null ? Map.of() : (Map<String, Object>) hit.source(), hit.highlight()));
-            }
-            long total = response.hits().total() == null ? hits.size() : response.hits().total().value();
-            return new SearchHits(hits, total, response.hits().maxScore());
+            return ElasticsearchAsyncSearchTransport.toHits(client.search(s -> s.index(index).withJson(new StringReader(body)), Map.class));
         } catch (IOException e) {
             throw new DataAccessException("Elasticsearch search failed: " + e.getMessage(), e);
         }
@@ -144,10 +134,6 @@ public final class ElasticsearchSearchTransport implements SearchTransport {
     }
 
     private static Refresh refresh(DocumentSearchConfiguration.Refresh refresh) {
-        return switch (refresh) {
-            case NONE -> Refresh.False;
-            case WAIT_FOR -> Refresh.WaitFor;
-            case TRUE -> Refresh.True;
-        };
+        return ElasticsearchAsyncSearchTransport.refresh(refresh);
     }
 }

@@ -16,16 +16,11 @@
 package io.micronaut.data.search.document.runtime;
 
 import io.micronaut.aop.MethodInvocationContext;
+import io.micronaut.context.BeanContext;
 import io.micronaut.context.annotation.EachBean;
 import io.micronaut.context.annotation.Parameter;
 import io.micronaut.core.annotation.Internal;
-import io.micronaut.core.beans.BeanProperty;
-import io.micronaut.core.type.Argument;
-import io.micronaut.data.event.EntityEventContext;
-import io.micronaut.data.exceptions.DataAccessException;
 import io.micronaut.data.model.Page;
-import io.micronaut.data.model.Pageable;
-import io.micronaut.data.model.Sort;
 import io.micronaut.data.model.runtime.AttributeConverterRegistry;
 import io.micronaut.data.model.runtime.DeleteBatchOperation;
 import io.micronaut.data.model.runtime.DeleteOperation;
@@ -35,54 +30,55 @@ import io.micronaut.data.model.runtime.PagedQuery;
 import io.micronaut.data.model.runtime.PreparedQuery;
 import io.micronaut.data.model.runtime.RuntimeEntityRegistry;
 import io.micronaut.data.model.runtime.RuntimePersistentEntity;
-import io.micronaut.data.model.runtime.RuntimePersistentProperty;
 import io.micronaut.data.model.runtime.StoredQuery;
 import io.micronaut.data.model.runtime.UpdateBatchOperation;
 import io.micronaut.data.model.runtime.UpdateOperation;
-import io.micronaut.data.model.vector.search.Score;
-import io.micronaut.data.model.vector.search.SearchResult;
 import io.micronaut.data.model.vector.search.SearchResults;
+import io.micronaut.data.operations.async.AsyncCapableRepository;
+import io.micronaut.data.operations.async.AsyncRepositoryOperations;
+import io.micronaut.data.operations.reactive.ReactiveCapableRepository;
+import io.micronaut.data.operations.reactive.ReactiveRepositoryOperations;
 import io.micronaut.data.runtime.convert.DataConversionService;
 import io.micronaut.data.runtime.date.DateTimeProvider;
-import io.micronaut.data.runtime.event.DefaultEntityEventContext;
-import io.micronaut.data.runtime.operations.internal.AbstractRepositoryOperations;
-import io.micronaut.data.runtime.operations.internal.query.BindableParametersStoredQuery;
-import io.micronaut.data.runtime.operations.internal.query.DefaultBindableParametersStoredQuery;
+import io.micronaut.data.runtime.operations.ExecutorAsyncOperations;
+import io.micronaut.data.runtime.operations.ExecutorReactiveOperations;
+import io.micronaut.data.runtime.operations.ReactorToAsyncOperationsAdaptor;
+import io.micronaut.data.runtime.operations.internal.ExecutorServiceResolver;
 import io.micronaut.data.runtime.query.MethodContextAwareStoredQueryDecorator;
-import io.micronaut.data.runtime.query.internal.DefaultPreparedQuery;
 import io.micronaut.data.search.document.conf.DocumentSearchConfiguration;
-import io.micronaut.data.search.document.query.DocumentSearchQueryBuilder;
 import io.micronaut.data.search.document.query.SearchJson;
+import io.micronaut.inject.qualifiers.Qualifiers;
 import io.micronaut.json.JsonMapper;
+import jakarta.inject.Named;
 import org.jspecify.annotations.Nullable;
 
-import java.io.IOException;
 import java.util.ArrayList;
-import java.util.LinkedHashMap;
 import java.util.List;
 import java.util.Map;
-import java.util.Objects;
 import java.util.Optional;
-import java.util.UUID;
+import java.util.concurrent.ExecutorService;
+import java.util.concurrent.atomic.AtomicReference;
 import java.util.stream.Stream;
 
 /**
  * Repository operations over a {@link SearchTransport}. Entities are converted to and from documents
- * with the Micronaut {@link JsonMapper}, so Serde annotations control the document shape.
+ * with the Micronaut {@link JsonMapper}, so Serde annotations control the document shape. Reactive
+ * and async repositories use the {@link AsyncSearchTransport} of the same name when the store
+ * provides one, and run this blocking transport on the IO executor otherwise.
  *
  * @since 5.4.0
  */
 @Internal
 @EachBean(SearchTransport.class)
-public final class DefaultDocumentSearchRepositoryOperations extends AbstractRepositoryOperations
-    implements DocumentSearchRepositoryOperations, MethodContextAwareStoredQueryDecorator {
+public final class DefaultDocumentSearchRepositoryOperations extends AbstractDocumentSearchRepositoryOperations
+    implements DocumentSearchRepositoryOperations, MethodContextAwareStoredQueryDecorator, ReactiveCapableRepository, AsyncCapableRepository {
 
-    private static final String QUERY = "query";
-    private static final Argument<Map<String, Object>> DOCUMENT = Argument.mapOf(String.class, Object.class);
-
+    private final String name;
     private final SearchTransport transport;
-    private final JsonMapper jsonMapper;
-    private final DocumentSearchConfiguration configuration;
+    private final BeanContext beanContext;
+    private final ExecutorServiceResolver executorServiceResolver;
+    private final AtomicReference<ReactiveRepositoryOperations> reactiveOperations = new AtomicReference<>();
+    private final AtomicReference<AsyncRepositoryOperations> asyncOperations = new AtomicReference<>();
 
     /**
      * @param name The transport bean name
@@ -93,6 +89,8 @@ public final class DefaultDocumentSearchRepositoryOperations extends AbstractRep
      * @param runtimeEntityRegistry The entity registry
      * @param conversionService The conversion service
      * @param attributeConverterRegistry The attribute converter registry
+     * @param beanContext The bean context, to find the async transport of the same name
+     * @param executorService The IO executor for the blocking fallback of reactive repositories
      */
     DefaultDocumentSearchRepositoryOperations(@Parameter @Nullable String name,
                                               @Parameter SearchTransport transport,
@@ -101,11 +99,14 @@ public final class DefaultDocumentSearchRepositoryOperations extends AbstractRep
                                               DateTimeProvider<Object> dateTimeProvider,
                                               RuntimeEntityRegistry runtimeEntityRegistry,
                                               DataConversionService conversionService,
-                                              AttributeConverterRegistry attributeConverterRegistry) {
-        super(dateTimeProvider, runtimeEntityRegistry, conversionService, attributeConverterRegistry);
+                                              AttributeConverterRegistry attributeConverterRegistry,
+                                              BeanContext beanContext,
+                                              @Named("io") @Nullable ExecutorService executorService) {
+        super(jsonMapper, configuration, dateTimeProvider, runtimeEntityRegistry, conversionService, attributeConverterRegistry);
+        this.name = name == null ? "default" : name;
         this.transport = transport;
-        this.jsonMapper = jsonMapper;
-        this.configuration = configuration;
+        this.beanContext = beanContext;
+        this.executorServiceResolver = new ExecutorServiceResolver(executorService);
     }
 
     @Override
@@ -118,15 +119,37 @@ public final class DefaultDocumentSearchRepositoryOperations extends AbstractRep
         return indexName(runtimeEntityRegistry.getEntity(entityType));
     }
 
-    private String indexName(RuntimePersistentEntity<?> entity) {
-        String prefix = configuration.getIndexPrefix();
-        return SearchIndexNames.validate(prefix == null ? entity.getPersistedName() : prefix + entity.getPersistedName());
-    }
-
     @Override
     public <E, R> StoredQuery<E, R> decorate(MethodInvocationContext<?, ?> context, StoredQuery<E, R> storedQuery) {
         RuntimePersistentEntity<E> entity = runtimeEntityRegistry.getEntity(storedQuery.getRootEntity());
         return new DocumentStoredQuery<>(storedQuery, entity, conversionService, jsonMapper);
+    }
+
+    // ---------- reactive and async
+
+    @Override
+    public ReactiveRepositoryOperations reactive() {
+        // created on first use: the reactive bean of the same name is looked up after this bean exists
+        return reactiveOperations.updateAndGet(current -> current != null ? current : createReactive());
+    }
+
+    private ReactiveRepositoryOperations createReactive() {
+        Optional<DefaultDocumentSearchReactiveRepositoryOperations> nonBlocking =
+            beanContext.findBean(DefaultDocumentSearchReactiveRepositoryOperations.class, Qualifiers.byName(name));
+        return nonBlocking.isPresent()
+            ? nonBlocking.get()
+            : new ExecutorReactiveOperations(this, executorServiceResolver.get(), conversionService);
+    }
+
+    @Override
+    public AsyncRepositoryOperations async() {
+        return asyncOperations.updateAndGet(current -> current != null ? current : createAsync());
+    }
+
+    private AsyncRepositoryOperations createAsync() {
+        return reactive() instanceof DefaultDocumentSearchReactiveRepositoryOperations reactor
+            ? new ReactorToAsyncOperationsAdaptor(reactor, executorServiceResolver.get())
+            : new ExecutorAsyncOperations(this, executorServiceResolver.get());
     }
 
     // ---------- reads
@@ -145,12 +168,7 @@ public final class DefaultDocumentSearchRepositoryOperations extends AbstractRep
             applyPageable(body, preparedQuery.getPageable(), entity);
             // totalHits is exact, not capped at the result window
             body.put("track_total_hits", true);
-            SearchTransport.SearchHits hits = transport.search(indexName(entity), SearchJson.write(body));
-            List<SearchResult<T>> results = new ArrayList<>(hits.hits().size());
-            for (SearchTransport.SearchHit hit : hits.hits()) {
-                results.add(new SearchResult<>(toEntity(hit, entity, preparedQuery), new Score(hit.score() == null ? 0d : hit.score()), hit.highlights()));
-            }
-            return (R) SearchResults.of(results, hits.total());
+            return (R) toSearchResults(transport.search(indexName(entity), SearchJson.write(body)), entity, preparedQuery);
         }
         // a single result still honours a Sort parameter, which decides which hit comes first
         applyPageable(body, preparedQuery.getPageable(), entity);
@@ -206,22 +224,9 @@ public final class DefaultDocumentSearchRepositoryOperations extends AbstractRep
     @Override
     public <R> Page<R> findPage(PagedQuery<R> query) {
         RuntimePersistentEntity<R> entity = runtimeEntityRegistry.getEntity(query.getRootEntity());
-        Map<String, Object> body;
-        PreparedQuery<R, R> preparedQuery = null;
-        if (query instanceof PreparedQuery<?, ?> pq) {
-            preparedQuery = (PreparedQuery<R, R>) pq;
-            body = body(preparedQuery, storedQuery(preparedQuery));
-        } else {
-            body = matchAll();
-        }
-        applyPageable(body, query.getPageable(), entity);
-        body.put("track_total_hits", true);
-        SearchTransport.SearchHits hits = transport.search(indexName(entity), SearchJson.write(body));
-        List<R> content = new ArrayList<>(hits.hits().size());
-        for (SearchTransport.SearchHit hit : hits.hits()) {
-            content.add(toEntity(hit, entity, preparedQuery));
-        }
-        return Page.of(content, query.getPageable(), hits.total());
+        PreparedQuery<R, R> preparedQuery = query instanceof PreparedQuery<?, ?> pq ? (PreparedQuery<R, R>) pq : null;
+        SearchTransport.SearchHits hits = transport.search(indexName(entity), SearchJson.write(pagedBody(query, entity)));
+        return Page.of(toEntities(hits, entity, preparedQuery), query.getPageable(), hits.total());
     }
 
     // ---------- writes
@@ -264,10 +269,7 @@ public final class DefaultDocumentSearchRepositoryOperations extends AbstractRep
     }
 
     private <T> Optional<Number> deleteByQuery(PreparedQuery<T, Number> preparedQuery) {
-        DocumentStoredQuery<T, Number> storedQuery = storedQuery(preparedQuery);
-        if (storedQuery.getOperationType() != StoredQuery.OperationType.DELETE) {
-            throw new DataAccessException("Update queries are not supported by document search stores");
-        }
+        DocumentStoredQuery<T, Number> storedQuery = deleteStoredQuery(preparedQuery);
         long deleted = transport.deleteByQuery(indexName(storedQuery.getPersistentEntity()), queryOnly(body(preparedQuery, storedQuery)), configuration.getRefresh());
         return Optional.of(deleted);
     }
@@ -304,232 +306,34 @@ public final class DefaultDocumentSearchRepositoryOperations extends AbstractRep
     // ---------- helpers
 
     private <T> T persistOne(T value, RuntimePersistentEntity<T> entity) {
-        EntityEventContext<T> event = new DefaultEntityEventContext<>(entity, value);
-        if (!entityEventRegistry.prePersist((EntityEventContext<Object>) event)) {
+        T current = prePersist(value, entity);
+        if (current == null) {
             return value;
         }
-        T current = event.getEntity();
-        RuntimePersistentProperty<T> identity = requireIdentity(entity);
-        Object id = identity.getProperty().get(current);
-        if (id == null) {
-            if (identity.getType() == UUID.class) {
-                id = UUID.randomUUID();
-                current = setId(identity, current, id);
-            } else if (identity.getType() != String.class) {
-                throw new DataAccessException("Document search stores generate String ids only; assign the id of " + entity.getName() + " or use a String or UUID id");
-            }
-        }
-        String documentId = transport.index(indexName(entity), id == null ? null : idString(id), toDocument(current, entity), configuration.getRefresh());
-        if (id == null) {
-            current = setId(identity, current, documentId);
-        }
-        EntityEventContext<T> post = new DefaultEntityEventContext<>(entity, current);
-        entityEventRegistry.postPersist((EntityEventContext<Object>) post);
-        return post.getEntity();
+        String documentId = transport.index(indexName(entity), documentId(current, entity), toDocument(current, entity), configuration.getRefresh());
+        return postPersist(current, entity, documentId);
     }
 
     private <T> T updateOne(T value, RuntimePersistentEntity<T> entity) {
-        EntityEventContext<T> event = new DefaultEntityEventContext<>(entity, value);
-        if (!entityEventRegistry.preUpdate((EntityEventContext<Object>) event)) {
+        T current = preUpdate(value, entity);
+        if (current == null) {
             return value;
         }
-        T current = event.getEntity();
-        Object id = requireIdentity(entity).getProperty().get(current);
-        if (id == null) {
-            throw new DataAccessException("Cannot update an entity of " + entity.getName() + " without an id");
-        }
-        transport.index(indexName(entity), idString(id), toDocument(current, entity), configuration.getRefresh());
-        EntityEventContext<T> post = new DefaultEntityEventContext<>(entity, current);
-        entityEventRegistry.postUpdate((EntityEventContext<Object>) post);
-        return post.getEntity();
+        transport.index(indexName(entity), documentId(current, entity), toDocument(current, entity), configuration.getRefresh());
+        return postUpdate(current, entity);
     }
 
     private <T> boolean deleteOne(T value, RuntimePersistentEntity<T> entity) {
-        EntityEventContext<T> event = new DefaultEntityEventContext<>(entity, value);
-        if (!entityEventRegistry.preRemove((EntityEventContext<Object>) event)) {
-            return false;
-        }
-        Object id = requireIdentity(entity).getProperty().get(event.getEntity());
+        String id = preRemove(value, entity);
         if (id == null) {
             return false;
         }
-        boolean deleted = transport.delete(indexName(entity), idString(id), configuration.getRefresh());
-        entityEventRegistry.postRemove((EntityEventContext<Object>) event);
+        boolean deleted = transport.delete(indexName(entity), id, configuration.getRefresh());
+        postRemove(value, entity);
         return deleted;
     }
 
     private <T, R> List<R> search(Map<String, Object> body, RuntimePersistentEntity<T> entity, @Nullable PreparedQuery<T, R> preparedQuery) {
-        SearchTransport.SearchHits hits = transport.search(indexName(entity), SearchJson.write(body));
-        List<R> results = new ArrayList<>(hits.hits().size());
-        for (SearchTransport.SearchHit hit : hits.hits()) {
-            results.add(toEntity(hit, entity, preparedQuery));
-        }
-        return results;
-    }
-
-    private <T, R> R toEntity(SearchTransport.SearchHit hit, RuntimePersistentEntity<T> entity, @Nullable PreparedQuery<T, ?> preparedQuery) {
-        Map<String, Object> source = new LinkedHashMap<>(hit.source());
-        RuntimePersistentProperty<T> identity = requireIdentity(entity);
-        source.putIfAbsent(identity.getName(), hit.id());
-        T value = fromDocument(source, entity);
-        if (preparedQuery != null) {
-            Class<?> resultType = preparedQuery.getResultType();
-            if (resultType != SearchResults.class && !resultType.isAssignableFrom(entity.getIntrospection().getBeanType())) {
-                try {
-                    return (R) Objects.requireNonNull(jsonMapper.readValue(jsonMapper.writeValueAsBytes(source), Argument.of(resultType)));
-                } catch (IOException e) {
-                    throw new DataAccessException("Cannot map search hit to " + resultType.getName() + ": " + e.getMessage(), e);
-                }
-            }
-            value = triggerPostLoad(value, entity, preparedQuery.getAnnotationMetadata());
-        } else {
-            value = triggerPostLoad(value, entity, io.micronaut.core.annotation.AnnotationMetadata.EMPTY_METADATA);
-        }
-        return (R) value;
-    }
-
-    private <T> Map<String, Object> toDocument(T value, RuntimePersistentEntity<T> entity) {
-        try {
-            return Objects.requireNonNull(jsonMapper.readValue(jsonMapper.writeValueAsBytes(value), DOCUMENT));
-        } catch (IOException e) {
-            throw new DataAccessException("Cannot serialize entity " + entity.getName() + ": " + e.getMessage(), e);
-        }
-    }
-
-    private <T> T fromDocument(Map<String, Object> source, RuntimePersistentEntity<T> entity) {
-        try {
-            return Objects.requireNonNull(jsonMapper.readValue(jsonMapper.writeValueAsBytes(source), Argument.of(entity.getIntrospection().getBeanType())));
-        } catch (IOException e) {
-            throw new DataAccessException("Cannot deserialize entity " + entity.getName() + ": " + e.getMessage(), e);
-        }
-    }
-
-    private <T> RuntimePersistentProperty<T> requireIdentity(RuntimePersistentEntity<T> entity) {
-        RuntimePersistentProperty<T> identity = entity.getIdentity();
-        if (identity == null) {
-            throw new DataAccessException("Entity " + entity.getName() + " has no @Id, which document search stores require");
-        }
-        return identity;
-    }
-
-    private <T> T setId(RuntimePersistentProperty<T> identity, T entity, Object id) {
-        BeanProperty<T, Object> property = identity.getProperty();
-        Object converted = property.getType().isInstance(id) ? id : conversionService.convertRequired(id, property.getType());
-        if (property.isReadOnly()) {
-            return property.withValue(entity, converted);
-        }
-        property.set(entity, converted);
-        return entity;
-    }
-
-    private String idString(Object id) {
-        return conversionService.convertRequired(id, String.class);
-    }
-
-    private <T, R> DocumentStoredQuery<T, R> storedQuery(PreparedQuery<T, R> preparedQuery) {
-        StoredQuery<T, R> storedQuery = preparedQuery instanceof DefaultPreparedQuery<T, R> defaultPreparedQuery
-            ? defaultPreparedQuery.getStoredQueryDelegate()
-            : null;
-        if (storedQuery instanceof DocumentStoredQuery<T, R> documentStoredQuery) {
-            return documentStoredQuery;
-        }
-        throw new IllegalStateException("Expected a document search query, got: " + preparedQuery);
-    }
-
-    private <T, R> Map<String, Object> body(PreparedQuery<T, R> preparedQuery, DocumentStoredQuery<T, R> storedQuery) {
-        MethodInvocationContext<?, ?> context = preparedQuery instanceof DefaultPreparedQuery<?, ?> defaultPreparedQuery ? defaultPreparedQuery.getContext() : null;
-        return storedQuery.bodyFor(context, null, new ValueBinder(storedQuery));
-    }
-
-    private static Map<String, Object> matchAll() {
-        Map<String, Object> body = new LinkedHashMap<>();
-        body.put(QUERY, Map.of("match_all", Map.of()));
-        return body;
-    }
-
-    private static String queryOnly(Map<String, Object> body) {
-        return SearchJson.write(Map.of(QUERY, body.getOrDefault(QUERY, Map.of("match_all", Map.of()))));
-    }
-
-    private <T> void applyPageable(Map<String, Object> body, Pageable pageable, RuntimePersistentEntity<T> entity) {
-        if (pageable.getMode() != Pageable.Mode.OFFSET) {
-            throw new DataAccessException("Cursored pagination is not supported by document search stores yet");
-        }
-        if (!pageable.isUnpaged()) {
-            body.put("from", pageable.getOffset());
-            body.put("size", pageable.getSize());
-        }
-        Sort sort = pageable.getSort();
-        if (sort.isSorted()) {
-            List<Map<String, Object>> entries = new ArrayList<>();
-            for (Sort.Order order : sort.getOrderBy()) {
-                entries.add(Map.of(sortField(order, entity), Map.of("order", order.isAscending() ? "asc" : "desc")));
-            }
-            body.put("sort", entries);
-        }
-    }
-
-    private static <T> String sortField(Sort.Order order, RuntimePersistentEntity<T> entity) {
-        if (DocumentSearchQueryBuilder.SCORE_FIELD.equals(order.getProperty())) {
-            return DocumentSearchQueryBuilder.SCORE_FIELD;
-        }
-        io.micronaut.data.model.PersistentPropertyPath path = entity.getPropertyPath(order.getProperty());
-        if (path == null) {
-            throw new DataAccessException("Cannot sort on unknown property: " + order.getProperty());
-        }
-        return DocumentSearchQueryBuilder.keywordPath(path);
-    }
-
-    /**
-     * Converts bound values with the attribute converters and the conversion service.
-     */
-    private final class ValueBinder implements BindableParametersStoredQuery.Binder {
-
-        ValueBinder(DefaultBindableParametersStoredQuery<?, ?> storedQuery) {
-            // the stored query collects the values; this binder only converts them
-        }
-
-        @Override
-        public Object autoPopulateRuntimeProperty(RuntimePersistentProperty<?> persistentProperty, @Nullable Object previousValue) {
-            return runtimeEntityRegistry.autoPopulateRuntimeProperty(persistentProperty, previousValue);
-        }
-
-        @Override
-        @Nullable
-        public Object convert(@Nullable Object value, @Nullable RuntimePersistentProperty<?> property) {
-            if (property != null && property.getConverter() != null) {
-                return ((io.micronaut.data.model.runtime.convert.AttributeConverter<Object, Object>) property.getConverter()).convertToPersistedValue(value, createTypeConversionContext(property, property.getArgument()));
-            }
-            return value;
-        }
-
-        @Override
-        @Nullable
-        public Object convert(@Nullable Class<?> converterClass, @Nullable Object value, @Nullable Argument<?> argument) {
-            if (converterClass == null) {
-                return value;
-            }
-            return attributeConverterRegistry.getConverter(converterClass).convertToPersistedValue(value, createTypeConversionContext(null, argument));
-        }
-
-        private io.micronaut.core.convert.ConversionContext createTypeConversionContext(@Nullable RuntimePersistentProperty<?> property, @Nullable Argument<?> argument) {
-            if (argument != null) {
-                return io.micronaut.core.convert.ConversionContext.of(argument);
-            }
-            if (property != null) {
-                return io.micronaut.core.convert.ConversionContext.of(property.getArgument());
-            }
-            return io.micronaut.core.convert.ConversionContext.DEFAULT;
-        }
-
-        @Override
-        public void bindOne(io.micronaut.data.model.runtime.QueryParameterBinding binding, @Nullable Object value) {
-            // values are collected by the stored query
-        }
-
-        @Override
-        public void bindMany(io.micronaut.data.model.runtime.QueryParameterBinding binding, java.util.Collection<Object> values) {
-            // values are collected by the stored query
-        }
+        return toEntities(transport.search(indexName(entity), SearchJson.write(body)), entity, preparedQuery);
     }
 }
