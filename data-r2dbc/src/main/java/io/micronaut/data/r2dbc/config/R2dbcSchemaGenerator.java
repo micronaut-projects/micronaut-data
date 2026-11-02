@@ -58,6 +58,7 @@ import java.util.stream.Collectors;
 @Internal
 public class R2dbcSchemaGenerator {
     private static final Logger LOG = LoggerFactory.getLogger(R2dbcSchemaGenerator.class);
+    private static final int DDL_LITERAL_LENGTH = 4000;
     private final List<DataR2dbcConfiguration> configurations;
     private final R2dbcSchemaHandler schemaHandler;
     private final List<DefinitionProvider> definitionProviders;
@@ -219,17 +220,32 @@ public class R2dbcSchemaGenerator {
 
     /**
      * Oracle R2DBC prepares every statement, and the Oracle driver finds bind markers in duality views whose sub-views
-     * have generated fields with function calls (ORA-17041). The DDL is run as dynamic SQL instead, which the driver
-     * does not parse.
+     * have generated fields with function calls (ORA-17041). The DDL is passed to {@code EXECUTE IMMEDIATE} in string
+     * literals instead, and the driver doesn't look for bind markers inside string literals. A PL/SQL string literal is
+     * limited to 32,767 bytes, so the DDL is appended to a {@code CLOB} in literals of at most
+     * {@value #DDL_LITERAL_LENGTH} characters: up to 3 bytes each in AL32UTF8, twice that with every quote doubled.
      *
      * @param sql The CREATE statement
      * @return The statement to execute
      */
-    private static String executeImmediateDualityView(String sql) {
+    static String executeImmediateDualityView(String sql) {
         if (!sql.startsWith("CREATE OR REPLACE JSON RELATIONAL DUALITY VIEW")) {
             return sql;
         }
-        return "BEGIN EXECUTE IMMEDIATE '" + sql.replace("'", "''") + "'; END;";
+        StringBuilder block = new StringBuilder("DECLARE ddl CLOB; BEGIN");
+        int start = 0;
+        while (start < sql.length()) {
+            int end = Math.min(start + DDL_LITERAL_LENGTH, sql.length());
+            if (end < sql.length() && Character.isHighSurrogate(sql.charAt(end - 1))) {
+                end--;
+            }
+            // Quotes are doubled after splitting, so that a doubled quote is never split
+            block.append(start == 0 ? " ddl := '" : " ddl := ddl || '")
+                .append(sql.substring(start, end).replace("'", "''"))
+                .append("';");
+            start = end;
+        }
+        return block.append(" EXECUTE IMMEDIATE ddl; END;").toString();
     }
 
     private Mono<Void> execute(Connection connection, String sql) {

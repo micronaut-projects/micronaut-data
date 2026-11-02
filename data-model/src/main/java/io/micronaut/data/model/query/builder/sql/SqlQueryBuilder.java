@@ -741,17 +741,7 @@ public class SqlQueryBuilder extends AbstractSqlLikeQueryBuilder {
                 .append(alias)
                 .append(DOT)
                 .append(entityPersistedPropertyName);
-            boolean updatable = annotationMetadata.booleanValue(JsonViewField.class, "updatable").orElse(true);
-            boolean etagCheck = annotationMetadata.booleanValue(JsonViewField.class, "etagCheck").orElse(true);
-            if (!updatable || !etagCheck) {
-                sb.append(WITH_CLAUSE.stripTrailing());
-                if (!updatable) {
-                    sb.append(" NOUPDATE");
-                }
-                if (!etagCheck) {
-                    sb.append(" NOCHECK");
-                }
-            }
+            appendJsonViewFieldAnnotations(sb, annotationMetadata);
         } else {
             if (isFlexColumn(column)) {
                 sb.append(alias)
@@ -760,6 +750,24 @@ public class SqlQueryBuilder extends AbstractSqlLikeQueryBuilder {
                     .append(AS_CLAUSE)
                     .append(FLEX_COLUMN);
             }
+        }
+    }
+
+    /**
+     * Appends the {@code WITH NOUPDATE} and {@code NOCHECK} annotations of a {@link JsonViewField}.
+     */
+    private static void appendJsonViewFieldAnnotations(StringBuilder sb, AnnotationMetadata annotationMetadata) {
+        boolean updatable = annotationMetadata.booleanValue(JsonViewField.class, "updatable").orElse(true);
+        boolean etagCheck = annotationMetadata.booleanValue(JsonViewField.class, "etagCheck").orElse(true);
+        if (updatable && etagCheck) {
+            return;
+        }
+        sb.append(WITH_CLAUSE.stripTrailing());
+        if (!updatable) {
+            sb.append(" NOUPDATE");
+        }
+        if (!etagCheck) {
+            sb.append(" NOCHECK");
         }
     }
 

@@ -32,7 +32,7 @@ class OracleJdbcJsonViewOptionsSpec extends Specification {
 
         then:
         sql[0] == "CREATE OR REPLACE JSON RELATIONAL DUALITY VIEW product_view AS SELECT JSON {" +
-                "'_id': pr.id, 'name': pr.name, 'region': pr.region, 'sku': pr.sku WITH NOUPDATE, " +
+                "'_id': pr.id, 'name': pr.name, 'region': pr.region, 'sku': pr.sku WITH NOUPDATE NOCHECK, " +
                 "'total': GENERATED USING PATH '\$.price * \$.quantity', 'label': GENERATED USING (UPPER(pr.name)), " +
                 "'supplier': (SELECT JSON {'supplierId': su.id, 'name': su.name, " +
                 "'domain': GENERATED USING (SUBSTR(su.contact_email, INSTR(su.contact_email, '@') + 1)), " +

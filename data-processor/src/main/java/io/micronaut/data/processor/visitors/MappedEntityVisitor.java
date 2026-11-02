@@ -387,12 +387,22 @@ public class MappedEntityVisitor implements TypeElementVisitor<MappedEntity, Obj
                 for (SourcePersistentProperty property : entity.getPersistentProperties()) {
                     validateJsonViewProperty(property, entityType);
                 }
-                String[] hidden = entity.hasAnnotation(JsonView.class) ? entity.stringValues(JsonView.class, "hidden") : entity.stringValues(JsonSubView.class, "hidden");
-                for (String hiddenPropertyName : hidden) {
-                    if (entityType.findField(hiddenPropertyName).isEmpty()) {
-                        throw new ProcessingException(entity.getClassElement(), "Json View hidden field " + hiddenPropertyName + " doesn't exist in the defined entity class " + entityType.getSimpleName());
-                    }
-                }
+                validateJsonViewHiddenFields(entity, entityType);
+            }
+        }
+    }
+
+    /**
+     * Validates that the hidden fields of a JSON view are properties of the defined entity.
+     *
+     * @param entity The JSON view
+     * @param entityType The type of the defined entity
+     */
+    private void validateJsonViewHiddenFields(SourcePersistentEntity entity, ClassElement entityType) {
+        String[] hidden = entity.hasAnnotation(JsonView.class) ? entity.stringValues(JsonView.class, "hidden") : entity.stringValues(JsonSubView.class, "hidden");
+        for (String hiddenPropertyName : hidden) {
+            if (entityType.findField(hiddenPropertyName).isEmpty()) {
+                throw new ProcessingException(entity.getClassElement(), "Json View hidden field " + hiddenPropertyName + " doesn't exist in the defined entity class " + entityType.getSimpleName());
             }
         }
     }

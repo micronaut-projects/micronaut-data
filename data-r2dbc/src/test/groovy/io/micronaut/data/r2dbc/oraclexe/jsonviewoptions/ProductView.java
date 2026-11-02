@@ -16,7 +16,7 @@ public record ProductView(
     Long id,
     String name,
     String region,
-    @JsonViewField(updatable = false)
+    @JsonViewField(updatable = false, etagCheck = false)
     String sku,
     @Nullable
     @JsonViewGenerated(path = "$.price * $.quantity")
