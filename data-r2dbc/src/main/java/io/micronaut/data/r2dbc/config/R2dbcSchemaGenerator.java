@@ -114,36 +114,23 @@ public class R2dbcSchemaGenerator {
                         Dialect dialect = configuration.getDialect();
                         List<String> schemaNames = configuration.getSchemaGenerateNames();
                         if (schemaNames != null && !schemaNames.isEmpty()) {
-                            // The connection is returned to the pool: it is switched back to its schema after the generation
-                            return Mono.from(schemaHandler.readSchemaSetting(connection, dialect))
-                                .map(Optional::of)
-                                .defaultIfEmpty(Optional.empty())
-                                .flatMap(previousSchemaSetting -> {
-                                    Mono<Void> result = Mono.empty();
-                                    for (String schemaName : schemaNames) {
-                                        result = result.then(Mono.from(schemaHandler.createSchema(connection, dialect, schemaName)))
-                                            .then(Mono.from(schemaHandler.useSchema(connection, dialect, schemaName)))
-                                            .then(generate(connection, configuration, entities, builder));
-                                    }
-                                    return result.then(previousSchemaSetting
-                                        .map(setting -> Mono.from(schemaHandler.restoreSchemaSetting(connection, dialect, setting)))
-                                        .orElse(Mono.empty()));
-                                })
-                                .then(Mono.from(connection.close()));
+                            return restoringSchemaSetting(connection, dialect, Mono.defer(() -> {
+                                Mono<Void> result = Mono.empty();
+                                for (String schemaName : schemaNames) {
+                                    result = result.then(Mono.from(schemaHandler.createSchema(connection, dialect, schemaName)))
+                                        .then(Mono.from(schemaHandler.useSchema(connection, dialect, schemaName)))
+                                        .then(generate(connection, configuration, entities, builder));
+                                }
+                                return result;
+                            })).then(Mono.from(connection.close()));
                         }
                         String schemaGenerateName = configuration.getSchemaGenerateName();
                         if (schemaGenerateName != null) {
-                            // The connection is returned to the pool: it is switched back to its schema after the generation
-                            return Mono.from(schemaHandler.readSchemaSetting(connection, dialect))
-                                .map(Optional::of)
-                                .defaultIfEmpty(Optional.empty())
-                                .flatMap(previousSchemaSetting -> Mono.from(schemaHandler.createSchema(connection, dialect, schemaGenerateName))
+                            return restoringSchemaSetting(connection, dialect, Mono.defer(() ->
+                                Mono.from(schemaHandler.createSchema(connection, dialect, schemaGenerateName))
                                     .then(Mono.from(schemaHandler.useSchema(connection, dialect, schemaGenerateName)))
                                     .then(generate(connection, configuration, entities, builder))
-                                    .then(previousSchemaSetting
-                                        .map(setting -> Mono.from(schemaHandler.restoreSchemaSetting(connection, dialect, setting)))
-                                        .orElse(Mono.empty())))
-                                .then(Mono.from(connection.close()));
+                            )).then(Mono.from(connection.close()));
                         }
                         return generate(connection, configuration, entities, builder)
                             .then(Mono.from(connection.close()));
@@ -235,6 +222,34 @@ public class R2dbcSchemaGenerator {
             case CREATE -> createTables;
             default -> Mono.empty();
         };
+    }
+
+    /**
+     * Runs a generation that switches the connection to the generated schemas, and switches the connection back to
+     * the schema it used before, also when the generation fails: the connection may go back to a pool.
+     *
+     * @param connection The connection
+     * @param dialect    The dialect
+     * @param generation The generation
+     * @return The publisher
+     */
+    private Mono<Void> restoringSchemaSetting(Connection connection, Dialect dialect, Mono<Void> generation) {
+        Mono<Optional<String>> previousSchemaSetting = Mono.defer(() -> Mono.from(schemaHandler.readSchemaSetting(connection, dialect)))
+            .map(Optional::of)
+            .defaultIfEmpty(Optional.empty());
+        return Mono.usingWhen(
+            previousSchemaSetting,
+            setting -> generation,
+            setting -> restoreSchemaSetting(connection, dialect, setting),
+            (setting, error) -> restoreSchemaSetting(connection, dialect, setting),
+            setting -> restoreSchemaSetting(connection, dialect, setting)
+        );
+    }
+
+    private Mono<Void> restoreSchemaSetting(Connection connection, Dialect dialect, Optional<String> setting) {
+        return setting
+            .map(value -> Mono.from(schemaHandler.restoreSchemaSetting(connection, dialect, value)))
+            .orElse(Mono.empty());
     }
 
     private Mono<Void> execute(Connection connection, String sql) {

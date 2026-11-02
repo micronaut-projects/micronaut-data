@@ -1,5 +1,6 @@
 package io.micronaut.data.r2dbc.operations
 
+import io.micronaut.data.runtime.multitenancy.internal.SchemaNameUtils
 import io.micronaut.data.model.query.builder.sql.Dialect
 import io.r2dbc.spi.Connection
 import io.r2dbc.spi.ConnectionFactories
@@ -84,7 +85,7 @@ class DefaultR2dbcSchemaHandlerSpec extends Specification {
         Dialect.MYSQL  | 'CREATE SCHEMA `tenant-a`;'
         Dialect.POSTGRES | 'CREATE SCHEMA "tenant-a";'
         Dialect.SQL_SERVER | 'CREATE SCHEMA [tenant-a];'
-        Dialect.ORACLE | 'CREATE DATABASE "TENANT-A";'
+        Dialect.ORACLE | SchemaNameUtils.oracleCreateSchemaStatement('tenant-a')
     }
 
     void "H2 does not execute an injected schema payload"() {
