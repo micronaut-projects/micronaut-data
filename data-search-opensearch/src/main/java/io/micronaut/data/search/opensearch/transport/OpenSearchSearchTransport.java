@@ -48,7 +48,6 @@ import java.util.Map;
 @Requires(beans = OpenSearchClient.class)
 public final class OpenSearchSearchTransport implements SearchTransport {
 
-    private static final int CONFLICT = 409;
 
     private final OpenSearchClient client;
     private final JsonpMapper mapper;
@@ -123,10 +122,7 @@ public final class OpenSearchSearchTransport implements SearchTransport {
         try {
             return client.index(i -> i.index(index).id(id).opType(OpType.Create).document(source).refresh(refresh(refresh))).id();
         } catch (OpenSearchException e) {
-            if (e.status() == CONFLICT) {
-                throw new DataAccessException("A document with id " + id + " already exists in index " + index, e);
-            }
-            throw e;
+            throw SearchTransport.createFailure(index, id, e.status(), e);
         } catch (IOException e) {
             throw new DataAccessException("OpenSearch index failed: " + e.getMessage(), e);
         }
