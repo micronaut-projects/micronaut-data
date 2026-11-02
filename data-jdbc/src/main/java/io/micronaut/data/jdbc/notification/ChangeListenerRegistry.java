@@ -18,7 +18,7 @@ package io.micronaut.data.jdbc.notification;
 import io.micronaut.context.processor.ExecutableMethodProcessor;
 import io.micronaut.core.annotation.Internal;
 import io.micronaut.core.type.Argument;
-import io.micronaut.data.jdbc.annotation.ChangeListener;
+import io.micronaut.data.annotation.ChangeListener;
 import io.micronaut.inject.BeanDefinition;
 import io.micronaut.inject.ExecutableMethod;
 import jakarta.inject.Singleton;

@@ -63,6 +63,8 @@ final class OracleChangeNotificationRegistrar {
 
     /**
      * Creates and associates a database registration for a subscription.
+     * If setup fails, attempts cleanup on the same connection. Failed cleanup is retained by
+     * the subscription for retry, and its exception is suppressed on the setup failure.
      *
      * @param subscription the subscription notified if the driver's notification connection fails
      * @param dispatcher   the listener for database change events, reused across registration recovery
@@ -84,6 +86,7 @@ final class OracleChangeNotificationRegistrar {
                 effectiveOptions.putAll(registration.getRegistrationOptions());
                 OracleChangeNotificationOptionsValidator.validateEffectiveOptions(effectiveOptions, definition, dataSourceName);
                 dispatcher.configureRegistrationOptions(effectiveOptions);
+                subscription.setPendingRegistrationId(registration.getRegId());
                 registration.addFailureListener(failure -> subscription.handleRegistrationUnavailable(registration.getRegId(), failure));
                 try (Statement statement = connection.createStatement()) {
                     statement.unwrap(OracleStatement.class).setDatabaseChangeRegistration(registration);
@@ -95,9 +98,11 @@ final class OracleChangeNotificationRegistrar {
                 }
                 return registration;
             } catch (SQLException | RuntimeException e) {
+                subscription.setPendingRegistrationId(null);
                 try {
                     oracleConnection.unregisterDatabaseChangeNotification(registration);
                 } catch (SQLException | RuntimeException cleanupException) {
+                    subscription.retainOrphanedRegistration(registration);
                     e.addSuppressed(cleanupException);
                 }
                 throw e;

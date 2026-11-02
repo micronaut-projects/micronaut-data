@@ -13,18 +13,19 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package io.micronaut.data.jdbc.notification;
+package io.micronaut.data.notification;
 
 import io.micronaut.core.annotation.Experimental;
 
 import java.util.Optional;
 
 /**
- * A database change notification for a persistent entity type.
+ * A database change or subscription lifecycle notification for a persistent entity type.
  *
  * <p>Entity state is optional. A provider may load it after the change has committed, so it is
  * not necessarily a snapshot of the row at the time of the change. An event that does not identify
- * one row, such as an invalidation, has no single entity associated with it.</p>
+ * one row, such as an invalidation or subscription termination, has no single entity associated
+ * with it.</p>
  *
  * @param <E> The persistent entity type.
  * @since 5.3.0

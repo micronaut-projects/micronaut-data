@@ -13,26 +13,25 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package io.micronaut.data.jdbc.notification;
+package io.micronaut.data.jdbc.notification.oracle;
 
-import io.micronaut.core.annotation.Experimental;
+import io.micronaut.core.annotation.Internal;
+
+import java.lang.annotation.ElementType;
+import java.lang.annotation.Retention;
+import java.lang.annotation.RetentionPolicy;
+import java.lang.annotation.Target;
 
 /**
- * The operation reported by a database change notification provider.
- *
- * @since 5.3.0
+ * Internal, compile-time generated Oracle ROWID reload query for a change listener.
  */
-@Experimental
-public enum ChangeOperation {
-    /** A row was inserted. */
-    INSERT,
-    /** A row was updated. */
-    UPDATE,
-    /** A row was deleted. */
-    DELETE,
+@Internal
+@Retention(RetentionPolicy.RUNTIME)
+@Target(ElementType.METHOD)
+public @interface OracleChangeListenerQuery {
+
     /**
-     * The provider cannot identify one affected row, or the listener should refresh or reconcile its
-     * view of the registered data. Applications determine how to respond to this event.
+     * @return The generated SQL query.
      */
-    INVALIDATE
+    String value();
 }

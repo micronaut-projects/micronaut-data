@@ -19,8 +19,10 @@ import io.micronaut.context.ApplicationContext;
 import io.micronaut.context.annotation.Requires;
 import io.micronaut.data.annotation.Id;
 import io.micronaut.data.annotation.MappedEntity;
-import io.micronaut.data.jdbc.annotation.ChangeListener;
+import io.micronaut.data.annotation.ChangeListener;
 import io.micronaut.data.jdbc.operations.JdbcRepositoryOperations;
+import io.micronaut.data.notification.ChangeEvent;
+import io.micronaut.data.notification.ChangeOperation;
 import io.micronaut.retry.annotation.Retryable;
 import jakarta.inject.Singleton;
 import org.junit.jupiter.api.Test;
@@ -109,6 +111,7 @@ class ChangeListenerRetryTest {
         private Book receivedBook;
 
         @ChangeListener
+        @TestChangeNotification
         @Retryable(attempts = "2", delay = "1ms")
         void onChange(ChangeEvent<Book> event) {
             invocations.incrementAndGet();

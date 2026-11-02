@@ -47,7 +47,7 @@ import java.util.concurrent.atomic.AtomicBoolean;
  * <p>During shutdown, the manager stops accepting callbacks, cancels scheduled recovery retries,
  * closes each subscription, and submits registration cleanup to the blocking executor. Shutdown
  * waits for cleanup, registration work, and notification callbacks already running. Callbacks still
- * queued on the executor are not included in that wait.</p>
+ * queued for their listener are not included in that wait.</p>
  */
 final class OracleChangeNotificationSubscriptionManager {
     private static final Logger LOG = LoggerFactory.getLogger(OracleChangeNotificationSubscriptionManager.class);
@@ -65,13 +65,15 @@ final class OracleChangeNotificationSubscriptionManager {
                                                 Executor blockingExecutor,
                                                 TaskScheduler taskScheduler,
                                                 List<OracleChangeListenerDefinition> listenerDefinitions,
+                                                OracleNotificationConfiguration notificationConfiguration,
                                                 OracleRegistrationRecoveryConfiguration recoveryConfiguration) {
         this.dataSourceName = dataSourceName;
         this.blockingExecutor = blockingExecutor;
         OracleChangeNotificationRegistrar registrar = new OracleChangeNotificationRegistrar(dataSourceName, operations);
         this.subscriptions = listenerDefinitions.stream()
             .map(definition -> new OracleChangeNotificationSubscription(
-                dataSourceName, definition, registrar, beanContext, blockingExecutor, taskScheduler, taskTracker, recoveryConfiguration))
+                dataSourceName, definition, registrar, beanContext, blockingExecutor, notificationConfiguration,
+                taskScheduler, taskTracker, recoveryConfiguration))
             .toList();
     }
 

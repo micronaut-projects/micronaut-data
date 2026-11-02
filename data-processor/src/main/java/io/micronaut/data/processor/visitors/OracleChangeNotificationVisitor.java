@@ -17,10 +17,10 @@ package io.micronaut.data.processor.visitors;
 
 import io.micronaut.core.annotation.AnnotationMetadata;
 import io.micronaut.core.annotation.AnnotationValue;
+import io.micronaut.data.annotation.ChangeListener;
 import io.micronaut.data.annotation.MappedEntity;
-import io.micronaut.data.intercept.annotation.OracleChangeListenerQuery;
+import io.micronaut.data.annotation.Where;
 import io.micronaut.data.model.DataType;
-import io.micronaut.data.model.OracleChangeNotificationOptions;
 import io.micronaut.data.model.PersistentEntity;
 import io.micronaut.data.model.PersistentEntityUtils;
 import io.micronaut.data.model.query.builder.QueryParameterBinding;
@@ -34,6 +34,7 @@ import io.micronaut.inject.ast.ClassElement;
 import io.micronaut.inject.ast.MethodElement;
 import io.micronaut.inject.visitor.TypeElementVisitor;
 import io.micronaut.inject.visitor.VisitorContext;
+import org.jspecify.annotations.Nullable;
 
 import java.util.HashMap;
 import java.util.HashSet;
@@ -50,7 +51,7 @@ import java.util.function.Function;
  * <p>The visitor verifies that the method is also a {@code @ChangeListener}, validates
  * Oracle registration settings and query-change-notification select columns against the
  * entity's physical mapping using Oracle Database identifier rules, and generates
- * an internal {@link OracleChangeListenerQuery} annotation containing the query used to
+ * an internal {@code OracleChangeListenerQuery} annotation containing the query used to
  * reload the mapped entity by its reported Oracle {@code ROWID}.</p>
  *
  * <p>This visitor performs compile-time processing only. It does not open a datasource
@@ -58,6 +59,7 @@ import java.util.function.Function;
  */
 public final class OracleChangeNotificationVisitor implements TypeElementVisitor<Object, Object> {
     private static final String ORACLE_CHANGE_NOTIFICATION = "io.micronaut.data.jdbc.annotation.OracleChangeNotification";
+    private static final String ORACLE_CHANGE_LISTENER_QUERY = "io.micronaut.data.jdbc.notification.oracle.OracleChangeListenerQuery";
     private static final String QUERY_CHANGE_NOTIFICATION = "DCN_QUERY_CHANGE_NOTIFICATION";
 
     private final Map<String, SourcePersistentEntity> entityMap = new HashMap<>();
@@ -83,7 +85,7 @@ public final class OracleChangeNotificationVisitor implements TypeElementVisitor
         if (!element.hasStereotype(ORACLE_CHANGE_NOTIFICATION)) {
             return;
         }
-        if (!element.hasStereotype(ChangeListenerVisitor.CHANGE_LISTENER)) {
+        if (!element.hasStereotype(ChangeListener.class)) {
             context.fail("@OracleChangeNotification requires @ChangeListener", element);
             return;
         }
@@ -94,6 +96,17 @@ public final class OracleChangeNotificationVisitor implements TypeElementVisitor
         ClassElement resolvedEntityType = context.getClassElement(entityType.getName()).orElse(entityType);
         Function<ClassElement, SourcePersistentEntity> entityResolver = new SourcePersistentEntityResolver(context, entityMap);
         SourcePersistentEntity persistentEntity = entityResolver.apply(resolvedEntityType);
+        if (!persistentEntity.getAnnotationMetadata().getAnnotationValuesByType(Where.class).isEmpty()) {
+            context.fail("@OracleChangeNotification does not support entity-level @Where clauses: "
+                + "they filter ROWID reloads without filtering the registration query", element);
+            return;
+        }
+        SqlQueryBuilder queryBuilder = new SqlQueryBuilder(Dialect.ORACLE);
+        if (queryBuilder.getTableName(persistentEntity).contains("${")) {
+            context.fail("@OracleChangeNotification requires literal mapped table and schema names; "
+                + "configuration placeholders are not supported", element);
+            return;
+        }
         if (!validateRegistration(element.getAnnotationMetadata(), context, element, persistentEntity)) {
             return;
         }
@@ -103,15 +116,19 @@ public final class OracleChangeNotificationVisitor implements TypeElementVisitor
         query.select(query.from(persistentEntity));
         query.where(criteriaBuilder.equal(
             criteriaBuilder.function("ROWID", String.class), criteriaBuilder.parameter(String.class, "rowId")));
-        QueryResult queryResult = Objects.requireNonNull(query.build(AnnotationMetadata.EMPTY_METADATA, new SqlQueryBuilder(Dialect.ORACLE)));
+        QueryResult queryResult = Objects.requireNonNull(query.build(AnnotationMetadata.EMPTY_METADATA, queryBuilder));
+        if (queryResult.getQuery().contains("${")) {
+            context.fail("@OracleChangeNotification ROWID reload query must not contain configuration placeholders; "
+                + "use literal entity mappings", element);
+            return;
+        }
         List<QueryParameterBinding> bindings = queryResult.getParameterBindings();
         // The runtime loader supplies only the notification ROWID; no other query parameters are available.
         if (bindings.size() != 1 || bindings.get(0).getDataType() != DataType.STRING) {
-            context.fail("@ChangeListener ROWID reload query requires exactly one ROWID parameter; "
-                + "parameterized entity @Where clauses are not supported", element);
+            context.fail("@ChangeListener ROWID reload query requires exactly one ROWID parameter", element);
             return;
         }
-        element.annotate(OracleChangeListenerQuery.class, builder -> builder.value(queryResult.getQuery()));
+        element.annotate(ORACLE_CHANGE_LISTENER_QUERY, builder -> builder.value(queryResult.getQuery()));
     }
 
     /**
@@ -133,6 +150,10 @@ public final class OracleChangeNotificationVisitor implements TypeElementVisitor
             return false;
         }
         String where = annotationMetadata.stringValue(ORACLE_CHANGE_NOTIFICATION, "where").orElse("").trim();
+        if (select.contains("${") || where.contains("${")) {
+            context.fail("@OracleChangeNotification select and where must not contain configuration placeholders", element);
+            return false;
+        }
         boolean queryChangeNotification = false;
         var properties = annotationMetadata.findAnnotation(ORACLE_CHANGE_NOTIFICATION)
             .map(annotation -> annotation.getAnnotations("properties"))
@@ -233,12 +254,64 @@ public final class OracleChangeNotificationVisitor implements TypeElementVisitor
                                                  MethodElement element) {
         String name = property.stringValue("name").orElse("");
         String value = property.stringValue("value").orElse("");
-        String error = OracleChangeNotificationOptions.invalidOption(name, value);
+        if (name.contains("${") || value.contains("${")) {
+            context.fail("@OracleChangeNotification property names and values must not contain configuration placeholders", element);
+            return true;
+        }
+        String error = invalidOption(name, value);
         if (error != null) {
             context.fail("@OracleChangeNotification " + error, element);
             return true;
         }
         return false;
+    }
+
+    /**
+     * Checks Oracle options during compilation without a dependency on the JDBC runtime provider.
+     *
+     * @param name the option name
+     * @param value the configured value
+     * @return the option error, or {@code null} when the option is supported
+     */
+    private static @Nullable String invalidOption(String name, String value) {
+        if (name.isBlank()) {
+            return "has an Oracle property with a blank name";
+        }
+        if ("DCN_CLIENT_INIT_REGID".equals(name)) {
+            return name + ": reusing an existing reliable DCN registration is not supported";
+        }
+        if ("DCN_NOTIFY_ROWIDS".equals(name) && !"true".equalsIgnoreCase(value)) {
+            return "requires " + name + " to be true so row-level operation and ROWID details are available";
+        }
+        if ("DCN_NOTIFY_CHANGELAG".equals(name) && !"0".equals(value.trim())) {
+            return "requires " + name + " to be 0 so row-level operation and ROWID details are available";
+        }
+        if ("NTF_GROUPING_CLASS".equals(name)) {
+            if (!"NTF_GROUPING_CLASS_NONE".equals(value)) {
+                return name + ": notification grouping is not supported";
+            }
+        } else if ("NTF_GROUPING_VALUE".equals(name)
+            || "NTF_GROUPING_TYPE".equals(name)
+            || "NTF_GROUPING_REPEAT_TIME".equals(name)
+            || "NTF_GROUPING_START_TIME".equals(name)) {
+            return name + ": notification grouping is not supported";
+        }
+        if ("DCN_PULL_NOTIFICATIONS".equals(name) && !"false".equalsIgnoreCase(value)) {
+            return name + " [" + value + "] is not supported because AQ pull delivery does not invoke the listener callback";
+        }
+        if ("DCN_PULL_QUEUE_NAME".equals(name)) {
+            return name + " is not supported because AQ pull delivery does not invoke the listener callback";
+        }
+        if ("NTF_TIMEOUT".equals(name)) {
+            try {
+                if (Integer.parseInt(value) < 0) {
+                    return name + " must be a non-negative integer number of seconds";
+                }
+            } catch (NumberFormatException _) {
+                return name + " must be a non-negative integer number of seconds";
+            }
+        }
+        return null;
     }
 
 }

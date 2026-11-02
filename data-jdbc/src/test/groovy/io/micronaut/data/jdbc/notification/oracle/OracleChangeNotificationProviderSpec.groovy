@@ -18,6 +18,7 @@ package io.micronaut.data.jdbc.notification.oracle
 import io.micronaut.context.ApplicationContext
 import io.micronaut.context.BeanContext
 import io.micronaut.context.event.ShutdownEvent
+import io.micronaut.data.exceptions.DataAccessException
 import io.micronaut.data.jdbc.operations.JdbcRepositoryOperations
 import io.micronaut.inject.qualifiers.Qualifiers
 import io.micronaut.scheduling.TaskExecutors
@@ -25,22 +26,71 @@ import io.micronaut.scheduling.TaskScheduler
 import spock.lang.Specification
 
 import java.sql.Connection
+import java.sql.DatabaseMetaData
 import java.sql.SQLException
+import java.time.Duration
+import java.util.concurrent.Callable
+import java.util.concurrent.CompletableFuture
+import java.util.concurrent.CountDownLatch
 import java.util.concurrent.Executor
+import java.util.concurrent.Executors
+import java.util.concurrent.TimeUnit
+import java.util.concurrent.TimeoutException
+import java.util.concurrent.atomic.AtomicInteger
 
 class OracleChangeNotificationProviderSpec extends Specification {
 
-    void "supports only Oracle JDBC connections (#oracleConnection)"() {
+    void "does not inspect driver metadata for non-Oracle connections"() {
         given:
         def provider = provider()
         def connection = Mock(Connection)
-        connection.isWrapperFor(oracle.jdbc.OracleConnection) >> oracleConnection
+        connection.isWrapperFor(oracle.jdbc.OracleConnection) >> false
+
+        when:
+        def supported = provider.supports(connection)
+
+        then:
+        !supported
+        0 * connection.getMetaData()
+    }
+
+    void "supports Oracle JDBC driver #driverVersion"() {
+        given:
+        def provider = provider()
+        def connection = Mock(Connection)
+        def metadata = Mock(DatabaseMetaData)
+        connection.isWrapperFor(oracle.jdbc.OracleConnection) >> true
+        connection.metaData >> metadata
+        metadata.driverVersion >> driverVersion
 
         expect:
-        provider.supports(connection) == oracleConnection
+        provider.supports(connection)
 
         where:
-        oracleConnection << [true, false]
+        driverVersion << ['23.26.3.0.0', '23.26.3.0.1', '23.26.10.0.0', '23.27.0.0.0', '24.1.0.0.0']
+    }
+
+    void "rejects unsupported Oracle JDBC driver #driverVersion before registration"() {
+        given:
+        def provider = provider()
+        def connection = Mock(Connection)
+        def metadata = Mock(DatabaseMetaData)
+        connection.isWrapperFor(oracle.jdbc.OracleConnection) >> true
+        connection.metaData >> metadata
+        metadata.driverVersion >> driverVersion
+
+        when:
+        provider.supports(connection)
+
+        then:
+        def failure = thrown(DataAccessException)
+        failure.message.contains('Oracle change notifications require Oracle JDBC 23.26.3.0.0 or later')
+        failure.message.contains("found driver version [$driverVersion]")
+        0 * connection.unwrap(_)
+        0 * connection.createStatement()
+
+        where:
+        driverVersion << ['19.3.0.0.0', '21.11.0.0.0', '23.9.0.25.07', '23.26.1.0.0', '23.26.2.0.0', '', 'unknown', null]
     }
 
     void "propagates connection capability check failures"() {
@@ -150,7 +200,129 @@ class OracleChangeNotificationProviderSpec extends Specification {
         exception.message.contains('after provider shutdown has started')
     }
 
-    private OracleChangeNotificationProvider provider() {
-        new OracleChangeNotificationProvider(Mock(BeanContext), Mock(Executor), Mock(TaskScheduler), new OracleRegistrationRecoveryConfiguration())
+    void "waits for pending cleanup in #hook"() {
+        given:
+        def provider = provider(gracefulShutdownEnabled)
+        def cleanup = new CompletableFuture<Void>()
+        provider.@shutdownStage = cleanup
+        def executor = Executors.newSingleThreadExecutor()
+        def started = new CountDownLatch(1)
+
+        when:
+        def shutdown = executor.submit {
+            started.countDown()
+            if (hook == 'shutdown event') {
+                provider.onApplicationEvent(new ShutdownEvent(Mock(BeanContext)))
+            } else {
+                provider.close()
+            }
+        }
+        assert started.await(5, TimeUnit.SECONDS)
+        shutdown.get(100, TimeUnit.MILLISECONDS)
+
+        then:
+        thrown(TimeoutException)
+
+        when:
+        cleanup.complete(null)
+        shutdown.get(5, TimeUnit.SECONDS)
+
+        then:
+        noExceptionThrown()
+
+        cleanup:
+        cleanup.complete(null)
+        executor.shutdownNow()
+
+        where:
+        hook               | gracefulShutdownEnabled
+        'shutdown event'   | false
+        'bean destruction' | false
+        'bean destruction' | true
+    }
+
+    void "leaves the wait to graceful shutdown without extending it during bean destruction"() {
+        given:
+        def provider = provider(true)
+        def cleanup = new CompletableFuture<Void>()
+        provider.@shutdownStage = cleanup
+        def executor = Executors.newSingleThreadExecutor()
+
+        when:
+        executor.submit {
+            provider.onApplicationEvent(new ShutdownEvent(Mock(BeanContext)))
+            provider.close()
+        }.get(1, TimeUnit.SECONDS)
+
+        then:
+        !cleanup.done
+
+        cleanup:
+        cleanup.complete(null)
+        executor.shutdownNow()
+    }
+
+    void "bounds cleanup wait and does not wait again during bean destruction"() {
+        given:
+        def provider = provider(false, Duration.ofMillis(20))
+        def waits = new AtomicInteger()
+        def cleanup = new CompletableFuture<Void>() {
+            @Override
+            Void get(long timeout, TimeUnit unit) {
+                waits.incrementAndGet()
+                super.get(timeout, unit)
+            }
+        }
+        provider.@shutdownStage = cleanup
+        def executor = Executors.newSingleThreadExecutor()
+
+        when:
+        executor.submit {
+            provider.onApplicationEvent(new ShutdownEvent(Mock(BeanContext)))
+        }.get(5, TimeUnit.SECONDS)
+
+        then:
+        !cleanup.done
+        !cleanup.cancelled
+
+        when:
+        provider.close()
+        provider.onApplicationEvent(new ShutdownEvent(Mock(BeanContext)))
+
+        then:
+        waits.get() == 1
+
+        cleanup:
+        cleanup.complete(null)
+        executor.shutdownNow()
+    }
+
+    void "preserves interruption while waiting for cleanup"() {
+        given:
+        def provider = provider()
+        def cleanup = new CompletableFuture<Void>()
+        provider.@shutdownStage = cleanup
+        def executor = Executors.newSingleThreadExecutor()
+
+        when:
+        def interrupted = executor.submit({
+            Thread.currentThread().interrupt()
+            provider.onApplicationEvent(new ShutdownEvent(Mock(BeanContext)))
+            Thread.interrupted()
+        } as Callable<Boolean>).get(5, TimeUnit.SECONDS)
+
+        then:
+        interrupted
+        !cleanup.done
+
+        cleanup:
+        cleanup.complete(null)
+        executor.shutdownNow()
+    }
+
+    private OracleChangeNotificationProvider provider(boolean gracefulShutdownEnabled = false,
+                                                       Duration gracePeriod = Duration.ofSeconds(15)) {
+        new OracleChangeNotificationProvider(Mock(BeanContext), Mock(Executor), Mock(TaskScheduler),
+            new OracleNotificationConfiguration(), new OracleRegistrationRecoveryConfiguration(), gracefulShutdownEnabled, gracePeriod)
     }
 }

@@ -16,6 +16,8 @@
 package io.micronaut.data.jdbc.annotation;
 
 import io.micronaut.core.annotation.Experimental;
+import io.micronaut.data.annotation.ChangeListener;
+import io.micronaut.data.intercept.annotation.ChangeListenerProvider;
 
 import java.lang.annotation.Documented;
 import java.lang.annotation.ElementType;
@@ -28,10 +30,12 @@ import java.lang.annotation.Target;
  *
  * <p>For an Oracle datasource, every change-listener method must use this annotation, including
  * listeners that rely on its defaults. The annotation enables compile-time generation of a
- * {@code ROWID} reload query. Registrations always request row identifiers so inserts and updates
+ * {@code ROWID} reload query. For listener methods inherited from separately compiled base classes
+ * without generated query metadata, the query is built from the entity mapping at startup.
+ * Registrations always request row identifiers so inserts and updates
  * can be reloaded. Oracle Database may report a full-table invalidation when row-level details are not
  * available, or report a table identified as a dependent table for Query Result Change Notification.
- * Either condition is delivered as {@link io.micronaut.data.jdbc.notification.ChangeOperation#INVALIDATE}.</p>
+ * Either condition is delivered as {@link io.micronaut.data.notification.ChangeOperation#INVALIDATE}.</p>
  *
  * <p>Notification tables are matched against the entity's mapped table name and, when explicitly
  * configured, its schema. Without an explicit schema, a notification for a same-named table in
@@ -39,22 +43,34 @@ import java.lang.annotation.Target;
  * does not resolve the entity table's schema from the database. Set
  * {@link io.micronaut.data.annotation.MappedEntity#schema()} to distinguish same-named tables across schemas.</p>
  *
+ * <p>Entities with {@link io.micronaut.data.annotation.Where} clauses are rejected at compilation
+ * time because those clauses filter entity reloads without filtering the notification registration
+ * query. For Query Result Change Notification, use {@link #where()} to filter the registered result.</p>
+ *
+ * <p>Query fragments, registration property names and values, and mapped table and schema names
+ * must be literal values. Configuration placeholders are rejected at compilation time.</p>
+ *
  * <p>Registrations do not expire by default. A positive {@code NTF_TIMEOUT} property makes Oracle
  * Database expire the registration after the specified number of seconds; Micronaut Data does not
- * renew it. When Oracle Database reports a deregistration, that listener becomes
- * unavailable. If the JDBC driver reports a notification-connection failure or Oracle Database
+ * renew it. When Oracle Database reports a deregistration, that listener receives
+ * {@link io.micronaut.data.notification.ChangeOperation#TERMINATED} and notifications stop.
+ * Exhausting recovery retries or failing to schedule another recovery attempt also reports termination.
+ * If the JDBC driver reports a notification-connection failure or Oracle Database
  * reports a shutdown, Micronaut Data attempts to create a replacement registration and dispatches
  * an invalidation event after recovery succeeds. Registrations are also unregistered during
  * application shutdown.</p>
  *
- * <p>Oracle JDBC client-initiated notification connections are enabled by default. Set the
- * {@code DCN_CLIENT_INIT_CONNECTION} registration property to {@code false} to use
+ * <p>Oracle change notifications require Oracle JDBC 23.26.3.0.0 or later. The driver version is
+ * checked during application startup before notification registration.
+ * Client-initiated notification connections are enabled by default and require Oracle Database 19c or later.
+ * Set the {@code DCN_CLIENT_INIT_CONNECTION} registration property to {@code false} to use
  * server-initiated notification connections instead.</p>
  *
  * @since 5.3.0
  */
 @Documented
 @Experimental
+@ChangeListenerProvider
 @Retention(RetentionPolicy.RUNTIME)
 @Target(ElementType.METHOD)
 public @interface OracleChangeNotification {

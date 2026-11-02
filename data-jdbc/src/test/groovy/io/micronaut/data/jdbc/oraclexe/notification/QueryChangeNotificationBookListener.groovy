@@ -1,9 +1,9 @@
 package io.micronaut.data.jdbc.oraclexe.notification
 
 import io.micronaut.context.annotation.Requires
-import io.micronaut.data.jdbc.annotation.ChangeListener
+import io.micronaut.data.annotation.ChangeListener
 import io.micronaut.data.jdbc.annotation.OracleChangeNotification
-import io.micronaut.data.jdbc.notification.ChangeEvent
+import io.micronaut.data.notification.ChangeEvent
 import jakarta.inject.Singleton
 import oracle.jdbc.OracleConnection
 

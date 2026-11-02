@@ -31,13 +31,15 @@ import org.jspecify.annotations.Nullable;
 import java.util.List;
 
 /**
- * Reloads a changed entity by its Oracle {@code ROWID}.
+ * Loads the current entity state using the {@code ROWID} from an Oracle notification.
  *
- * <p>Oracle notifications identify changed rows by ROWID rather than supplying entity state. The
- * loader caches one immutable stored-query template containing the entity metadata and ROWID
- * binding descriptor. Each reload creates a short-lived prepared query that supplies only the
- * notification-specific ROWID, allowing the template to be safely shared by concurrent dispatch
- * tasks.</p>
+ * <p>The query reads the row that matches the {@code ROWID} when the reload runs, or returns
+ * {@code null} if no row matches. See {@link OracleChangeEventMetadata} for the limitations of
+ * using a {@code ROWID} to identify a changed entity.</p>
+ *
+ * <p>The loader shares one immutable stored-query template across reloads. Each reload creates
+ * a prepared query with its own {@code ROWID} value, allowing concurrent reloads without sharing
+ * parameter values.</p>
  *
  * @param <E> The entity type.
  */

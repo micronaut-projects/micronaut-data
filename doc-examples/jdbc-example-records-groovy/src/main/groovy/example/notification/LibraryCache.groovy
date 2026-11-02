@@ -1,10 +1,10 @@
 package example.notification
 
 import io.micronaut.context.annotation.Requires
-import io.micronaut.data.jdbc.annotation.ChangeListener
+import io.micronaut.data.annotation.ChangeListener
 import io.micronaut.data.jdbc.annotation.OracleChangeNotification
-import io.micronaut.data.jdbc.notification.ChangeEvent
-import io.micronaut.data.jdbc.notification.ChangeOperation
+import io.micronaut.data.notification.ChangeEvent
+import io.micronaut.data.notification.ChangeOperation
 import io.micronaut.data.jdbc.notification.oracle.OracleChangeEventMetadata
 import jakarta.annotation.PostConstruct
 import jakarta.inject.Singleton
@@ -22,6 +22,7 @@ class LibraryCache {
 
     private final LibraryRepository repository
     private volatile Map<Long, Library> libraries = new ConcurrentHashMap<>()
+    private volatile boolean cacheEnabled = true
 
     LibraryCache(LibraryRepository repository) {
         this.repository = repository
@@ -33,7 +34,8 @@ class LibraryCache {
     }
 
     Optional<Library> find(String name) {
-        libraries.values().stream()
+        def currentLibraries = cacheEnabled ? libraries.values() : repository.findAll()
+        currentLibraries.stream()
             .filter { library -> library.name() == name }
             .findFirst()
     }
@@ -44,8 +46,12 @@ class LibraryCache {
     @OracleChangeNotification
     synchronized void onLibraryChanged(ChangeEvent<Library> event) {
         // end::listener[]
+        if (!cacheEnabled) {
+            return
+        }
         event.metadata(OracleChangeEventMetadata).ifPresent { metadata ->
-            LOG.debug("Changed library ROWID: {}", metadata.rowId())
+            LOG.debug("Changed library table: {}.{}, ROWID: {}",
+                metadata.schema().orElse("<unknown>"), metadata.table(), metadata.rowId())
         }
         switch (event.operation()) {
             case ChangeOperation.INSERT:
@@ -55,6 +61,10 @@ class LibraryCache {
             case ChangeOperation.DELETE:
             case ChangeOperation.INVALIDATE:
                 refreshCache()
+                break
+            case ChangeOperation.TERMINATED:
+                cacheEnabled = false
+                libraries.clear()
                 break
         }
         // tag::listener[]

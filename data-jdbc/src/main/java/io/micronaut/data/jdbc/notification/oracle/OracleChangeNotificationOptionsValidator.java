@@ -15,7 +15,6 @@
  */
 package io.micronaut.data.jdbc.notification.oracle;
 
-import io.micronaut.data.model.OracleChangeNotificationOptions;
 import oracle.jdbc.OracleConnection;
 
 import java.util.Properties;

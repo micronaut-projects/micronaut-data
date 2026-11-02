@@ -18,7 +18,7 @@ package io.micronaut.data.jdbc.oraclexe.notification
 import io.micronaut.context.ApplicationContext
 import io.micronaut.data.jdbc.operations.DefaultJdbcRepositoryOperations
 import io.micronaut.data.jdbc.oraclexe.OracleTestPropertyProvider
-import io.micronaut.data.jdbc.notification.ChangeOperation
+import io.micronaut.data.notification.ChangeOperation
 import io.micronaut.data.jdbc.notification.oracle.OracleChangeEventMetadata
 import io.micronaut.transaction.SynchronousTransactionManager
 import spock.lang.AutoCleanup
@@ -26,6 +26,7 @@ import spock.lang.Shared
 import spock.lang.Specification
 
 import java.sql.Connection
+import java.sql.ResultSet
 import java.util.concurrent.TimeUnit
 
 class OracleQueryNotificationSpec extends Specification implements OracleTestPropertyProvider {
@@ -58,6 +59,9 @@ class OracleQueryNotificationSpec extends Specification implements OracleTestPro
     @Shared
     SynchronousTransactionManager<Connection> transactionManager
 
+    @Shared
+    String schema
+
     @Override
     List<String> packages() {
         return Arrays.asList(getClass().package.name)
@@ -74,6 +78,7 @@ class OracleQueryNotificationSpec extends Specification implements OracleTestPro
         queryChangeListener = context.getBean(QueryChangeNotificationBookListener)
         catalogProductListener = context.getBean(CatalogProductListener)
         transactionManager = context.getBean(SynchronousTransactionManager)
+        schema = context.getBean(DefaultJdbcRepositoryOperations).execute { connection -> connection.schema }
     }
 
     void cleanup() {
@@ -104,6 +109,51 @@ class OracleQueryNotificationSpec extends Specification implements OracleTestPro
         }
     }
 
+    void "context close unregisters its listeners with graceful shutdown #enabled"() {
+        given:
+        // Use the original context as an independent observer whose pool survives the tested close.
+        def before = registrationIds()
+        def closingContext = ApplicationContext.run(properties + [
+            "query-notification.enabled": "true",
+            "datasources.default.schema-generate": "NONE",
+            "micronaut.lifecycle.graceful-shutdown.enabled": enabled
+        ])
+        def owned = registrationIds() - before
+        assert !owned.empty
+
+        when:
+        closingContext.close()
+
+        then:
+        def remaining = registrationIds()
+        remaining.intersect(owned).empty
+        remaining.containsAll(before)
+
+        cleanup:
+        closingContext?.close()
+
+        where:
+        enabled << [false, true]
+    }
+
+    private Set<Long> registrationIds() {
+        context.getBean(DefaultJdbcRepositoryOperations).execute { connection ->
+            connection.createStatement().withCloseable { statement ->
+                statement.executeQuery("SELECT DISTINCT regid FROM user_change_notification_regs").withCloseable { rows ->
+                    readRegistrationIds(rows)
+                }
+            }
+        }
+    }
+
+    private static Set<Long> readRegistrationIds(ResultSet rows) {
+        Set<Long> ids = []
+        while (rows.next()) {
+            ids.add(rows.getLong(1))
+        }
+        ids
+    }
+
     void "change listener receives an entity after an Oracle row is inserted"() {
         when:
         def saved = objectChangeRepository.save(new ObjectChangeNotificationBook(title: "Continuous Query Notification"))
@@ -116,6 +166,8 @@ class OracleQueryNotificationSpec extends Specification implements OracleTestPro
         entity.id == saved.id
         entity.title == "Continuous Query Notification"
         notification.metadata(OracleChangeEventMetadata).orElseThrow().rowId()
+        notification.metadata(OracleChangeEventMetadata).orElseThrow().table() == 'OBJECT_CHANGE_NOTIFICATION_BOOK'
+        notification.metadata(OracleChangeEventMetadata).orElseThrow().schema().orElseThrow() == schema
     }
 
     void "change listener receives every entity affected by a bulk update"() {
@@ -171,6 +223,8 @@ class OracleQueryNotificationSpec extends Specification implements OracleTestPro
         notification.operation() == ChangeOperation.DELETE
         notification.entity().isEmpty()
         notification.metadata(OracleChangeEventMetadata).orElseThrow().rowId()
+        notification.metadata(OracleChangeEventMetadata).orElseThrow().table() == 'OBJECT_CHANGE_NOTIFICATION_BOOK'
+        notification.metadata(OracleChangeEventMetadata).orElseThrow().schema().orElseThrow() == schema
     }
 
     void "change listener receives a committed change only after its transaction commits"() {
@@ -242,6 +296,8 @@ class OracleQueryNotificationSpec extends Specification implements OracleTestPro
         entity.id == saved.id
         entity.title == "Query Change Notification"
         notification.metadata(OracleChangeEventMetadata).orElseThrow().rowId()
+        notification.metadata(OracleChangeEventMetadata).orElseThrow().table() == 'QUERY_CHANGE_NOTIFICATION_BOOK'
+        notification.metadata(OracleChangeEventMetadata).orElseThrow().schema().orElseThrow() == schema
     }
 
     void "query change listener ignores a row outside the registered query"() {

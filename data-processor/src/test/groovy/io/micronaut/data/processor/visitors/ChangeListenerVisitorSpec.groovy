@@ -16,21 +16,68 @@
 package io.micronaut.data.processor.visitors
 
 import io.micronaut.annotation.processing.test.AbstractTypeElementSpec
-import io.micronaut.data.jdbc.notification.ChangeEvent
+import io.micronaut.data.notification.ChangeEvent
 import spock.lang.Unroll
 
 class ChangeListenerVisitorSpec extends AbstractTypeElementSpec {
 
-    void "test valid database-neutral listener compiles without Oracle configuration"() {
+    void "test listener without provider configuration fails compilation"() {
         when:
-        def beanDefinition = buildBeanDefinition('test.BookListener', listenerSource('''
+        buildBeanDefinition('test.BookListener', listenerSource('''
     @ChangeListener
     void changed(ChangeEvent<Book> event) {
     }
 '''))
 
         then:
+        def exception = thrown(RuntimeException)
+        exception.message.contains('@ChangeListener requires a provider-specific notification annotation')
+    }
+
+    void "test provider configuration is detected through its marker stereotype"() {
+        given:
+        String source = listenerSource('''
+    @ChangeListener
+    @OtherNotification
+    void changed(ChangeEvent<Book> event) {
+    }
+''').replace('@Singleton\nclass BookListener', '''@io.micronaut.data.intercept.annotation.ChangeListenerProvider
+@java.lang.annotation.Retention(java.lang.annotation.RetentionPolicy.RUNTIME)
+@java.lang.annotation.Target(java.lang.annotation.ElementType.METHOD)
+@interface OtherNotification {
+}
+
+@Singleton
+class BookListener''')
+
+        when:
+        def beanDefinition = buildBeanDefinition('test.BookListener', source)
+
+        then:
         beanDefinition.getRequiredMethod('changed', ChangeEvent.class) != null
+    }
+
+    void "test composed listener without provider configuration fails compilation"() {
+        given:
+        String source = listenerSource('''
+    @BookChanges
+    void changed(ChangeEvent<Book> event) {
+    }
+''').replace('@Singleton\nclass BookListener', '''@ChangeListener
+@java.lang.annotation.Retention(java.lang.annotation.RetentionPolicy.RUNTIME)
+@java.lang.annotation.Target(java.lang.annotation.ElementType.METHOD)
+@interface BookChanges {
+}
+
+@Singleton
+class BookListener''')
+
+        when:
+        buildBeanDefinition('test.BookListener', source)
+
+        then:
+        def exception = thrown(RuntimeException)
+        exception.message.contains('@ChangeListener requires a provider-specific notification annotation')
     }
 
     void "test composed ChangeListener receives compile-time signature validation"() {
@@ -82,8 +129,8 @@ class BookListener''')
         buildBeanDefinition('test.BookListener', '''
 package test;
 
-import io.micronaut.data.jdbc.annotation.ChangeListener;
-import io.micronaut.data.jdbc.notification.ChangeEvent;
+import io.micronaut.data.annotation.ChangeListener;
+import io.micronaut.data.notification.ChangeEvent;
 import jakarta.inject.Singleton;
 
 @Singleton
@@ -106,8 +153,8 @@ package test;
 import io.micronaut.data.annotation.Id;
 import io.micronaut.data.annotation.MappedEntity;
 import io.micronaut.data.annotation.MappedProperty;
-import io.micronaut.data.jdbc.annotation.ChangeListener;
-import io.micronaut.data.jdbc.notification.ChangeEvent;
+import io.micronaut.data.annotation.ChangeListener;
+import io.micronaut.data.notification.ChangeEvent;
 import jakarta.inject.Singleton;
 
 @MappedEntity

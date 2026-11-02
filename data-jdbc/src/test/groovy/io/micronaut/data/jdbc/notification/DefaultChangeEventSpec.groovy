@@ -16,13 +16,18 @@
 package io.micronaut.data.jdbc.notification
 
 import io.micronaut.data.jdbc.notification.oracle.OracleChangeEventMetadata
+import io.micronaut.data.notification.ChangeEvent
+import io.micronaut.data.notification.ChangeEventMetadata
+import io.micronaut.data.notification.ChangeOperation
 import spock.lang.Specification
 
 class DefaultChangeEventSpec extends Specification {
 
     void "provider metadata is exposed only through its requested type"() {
         given:
-        def metadata = new OracleChangeEventMetadata('AAABBB')
+        def metadata = Stub(OracleChangeEventMetadata) {
+            rowId() >> 'AAABBB'
+        }
         ChangeEvent<String> event = new DefaultChangeEvent<>(ChangeOperation.DELETE, null, metadata)
 
         expect:

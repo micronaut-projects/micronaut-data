@@ -1,9 +1,9 @@
 package example.notification;
 
 import io.micronaut.context.annotation.Requires;
-import io.micronaut.data.jdbc.annotation.ChangeListener;
+import io.micronaut.data.annotation.ChangeListener;
 import io.micronaut.data.jdbc.annotation.OracleChangeNotification;
-import io.micronaut.data.jdbc.notification.ChangeEvent;
+import io.micronaut.data.notification.ChangeEvent;
 import io.micronaut.data.jdbc.notification.oracle.OracleChangeEventMetadata;
 import jakarta.annotation.PostConstruct;
 import jakarta.inject.Singleton;
@@ -23,6 +23,7 @@ class LibraryCache {
 
     private final LibraryRepository repository;
     private volatile Map<Long, Library> libraries = new ConcurrentHashMap<>();
+    private volatile boolean cacheEnabled = true;
 
     LibraryCache(LibraryRepository repository) {
         this.repository = repository;
@@ -34,7 +35,8 @@ class LibraryCache {
     }
 
     public Optional<Library> find(String name) {
-        return libraries.values()
+        var currentLibraries = cacheEnabled ? libraries.values() : repository.findAll();
+        return currentLibraries
             .stream()
             .filter(library -> library.name().equals(name))
             .findFirst();
@@ -46,11 +48,19 @@ class LibraryCache {
     @OracleChangeNotification
     synchronized void onLibraryChanged(ChangeEvent<Library> event) {
         // end::listener[]
+        if (!cacheEnabled) {
+            return;
+        }
         event.metadata(OracleChangeEventMetadata.class)
-            .ifPresent(metadata -> LOG.debug("Changed library ROWID: {}", metadata.rowId()));
+            .ifPresent(metadata -> LOG.debug("Changed library table: {}.{}, ROWID: {}",
+                metadata.schema().orElse("<unknown>"), metadata.table(), metadata.rowId()));
         switch (event.operation()) {
             case INSERT, UPDATE -> event.entity().ifPresent(library -> libraries.put(library.id(), library));
             case DELETE, INVALIDATE -> refreshCache();
+            case TERMINATED -> {
+                cacheEnabled = false;
+                libraries.clear();
+            }
         }
         // tag::listener[]
     }

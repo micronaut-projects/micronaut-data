@@ -39,6 +39,7 @@ import java.util.List;
 @Context
 @EachBean(DataSource.class)
 @Requires(beans = ChangeNotificationProvider.class)
+@Requires(property = "micronaut.data.jdbc.notifications.enabled", value = "true", defaultValue = "true")
 final class ChangeListenerRegistrationHandler implements ApplicationEventListener<StartupEvent> {
 
     private final String dataSourceName;
