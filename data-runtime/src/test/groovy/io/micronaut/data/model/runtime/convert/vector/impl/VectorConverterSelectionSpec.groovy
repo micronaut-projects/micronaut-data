@@ -4,6 +4,7 @@ import io.micronaut.core.type.Argument
 import io.micronaut.data.model.runtime.convert.DatabaseType
 import io.micronaut.data.model.runtime.convert.DatabaseTypeConversionContext
 import io.micronaut.data.model.runtime.convert.vector.VectorTypeConverter
+import io.micronaut.data.model.vector.BinaryVector
 import io.micronaut.data.model.vector.FloatVector
 import io.micronaut.data.model.vector.SparseFloatVector
 import io.micronaut.data.model.vector.Vector
@@ -103,6 +104,69 @@ class VectorConverterSelectionSpec extends Specification {
 
         then:
         persisted == "pg-dense:[1.0, 2.0]"
+    }
+
+    def "selects the binary converter over a generic converter registered first"() {
+        given:
+        def conv = new DefaultBinaryVectorAttributeConverter([new PostgresDenseConverter(), new PostgresBinaryConverter()])
+        def ctx = Stub(DatabaseTypeConversionContext) {
+            getDatabaseType() >> DatabaseType.POSTGRES
+        }
+        def reader = Mock(ResultReader<Object, Object>)
+        def vector = BinaryVector.of(true, false, true, false, false, false, false, false)
+
+        when:
+        def persisted = conv.convertToPersistedValue(vector, ctx)
+        def read = conv.convertToEntityValue(persisted, ctx)
+        conv.readFromResultSet(ctx, reader, new Object(), "embedding")
+
+        then:
+        persisted == new PostgresBits(vector.data())
+        read == vector
+        1 * reader.getRequiredValue(_, "embedding", PostgresBits) >> null
+        0 * reader.getRequiredValue(_, _, String)
+    }
+
+    /**
+     * Stands in for pgvector's PGbit.
+     */
+    private static record PostgresBits(byte[] data) {
+        @Override
+        boolean equals(Object o) {
+            return o instanceof PostgresBits other && Arrays.equals(data, other.data)
+        }
+
+        @Override
+        int hashCode() {
+            return Arrays.hashCode(data)
+        }
+    }
+
+    private static final class PostgresBinaryConverter implements VectorTypeConverter<PostgresBits> {
+        @Override
+        PostgresBits convert(Vector vector) {
+            return new PostgresBits(((BinaryVector) vector).data())
+        }
+
+        @Override
+        Vector convert(PostgresBits object, Class<Vector> targetType) {
+            return new BinaryVector(object.data())
+        }
+
+        @Override
+        Set<Class<? extends Vector>> supportedVectorTypes() {
+            return [BinaryVector] as Set
+        }
+
+        @Override
+        DatabaseType databaseType() {
+            return DatabaseType.POSTGRES
+        }
+
+        @Override
+        Class<PostgresBits> getPersistedType() {
+            return PostgresBits
+        }
     }
 
     private static class OracleFloatConverter implements VectorTypeConverter<Object> {

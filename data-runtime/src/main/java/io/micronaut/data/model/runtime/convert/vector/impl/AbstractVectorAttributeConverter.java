@@ -154,7 +154,7 @@ abstract sealed class AbstractVectorAttributeConverter<X extends Vector, Y> impl
             return null;
         }
         boolean sparseValue = entityValue instanceof SparseVector;
-        return selectConverter(converters, converter -> supportsVectorType(converter, entityValue.getClass()), sparseValue);
+        return selectConverter(converters, converter -> true, entityValue.getClass(), sparseValue);
     }
 
     private @Nullable VectorTypeConverter<?> selectReadConverter(DatabaseType databaseType, Object persistedValue, Class<? extends Vector> targetType) {
@@ -163,8 +163,7 @@ abstract sealed class AbstractVectorAttributeConverter<X extends Vector, Y> impl
             return null;
         }
         boolean sparseTarget = SparseVector.class.isAssignableFrom(targetType);
-        return selectConverter(converters, converter ->
-            converter.getPersistedType().isInstance(persistedValue) && supportsVectorType(converter, targetType), sparseTarget);
+        return selectConverter(converters, converter -> converter.getPersistedType().isInstance(persistedValue), targetType, sparseTarget);
     }
 
     private @Nullable VectorTypeConverter<?> selectResultSetReadConverter(DatabaseType databaseType, Class<? extends Vector> targetType) {
@@ -173,33 +172,46 @@ abstract sealed class AbstractVectorAttributeConverter<X extends Vector, Y> impl
             return null;
         }
         boolean sparseTarget = SparseVector.class.isAssignableFrom(targetType);
-        return selectConverter(converters, converter -> supportsVectorType(converter, targetType), sparseTarget);
+        return selectConverter(converters, converter -> true, targetType, sparseTarget);
     }
 
+    /**
+     * Selects the converter that supports the vector type, preferring one whose sparse support matches, then the one
+     * with the most specific supported type, whatever the order of the beans: for example, the binary converter
+     * over a generic converter of {@link Vector}.
+     */
     private static @Nullable VectorTypeConverter<?> selectConverter(List<VectorTypeConverter<?>> converters,
                                                                     Predicate<VectorTypeConverter<?>> candidate,
+                                                                    Class<?> vectorType,
                                                                     boolean sparse) {
-        VectorTypeConverter<?> fallback = null;
+        VectorTypeConverter<?> selected = null;
+        Class<?> selectedType = null;
+        boolean selectedSparse = false;
         for (VectorTypeConverter<?> converter : converters) {
-            if (candidate.test(converter)) {
-                if (fallback == null) {
-                    fallback = converter;
-                }
-                if (converter.isSparseSupported() == sparse) {
-                    return converter;
-                }
+            Class<?> supportedType = mostSpecificSupportedType(converter, vectorType);
+            if (supportedType == null || !candidate.test(converter)) {
+                continue;
+            }
+            boolean sparseMatches = converter.isSparseSupported() == sparse;
+            if (selectedType == null
+                || sparseMatches && !selectedSparse
+                || sparseMatches == selectedSparse && supportedType != selectedType && selectedType.isAssignableFrom(supportedType)) {
+                selected = converter;
+                selectedType = supportedType;
+                selectedSparse = sparseMatches;
             }
         }
-        return fallback;
+        return selected;
     }
 
-    private static boolean supportsVectorType(VectorTypeConverter<?> converter, Class<? extends Vector> vectorType) {
+    private static @Nullable Class<?> mostSpecificSupportedType(VectorTypeConverter<?> converter, Class<?> vectorType) {
+        Class<?> mostSpecific = null;
         for (Class<? extends Vector> supportedType : converter.supportedVectorTypes()) {
-            if (supportedType.isAssignableFrom(vectorType)) {
-                return true;
+            if (supportedType.isAssignableFrom(vectorType) && (mostSpecific == null || mostSpecific.isAssignableFrom(supportedType))) {
+                mostSpecific = supportedType;
             }
         }
-        return false;
+        return mostSpecific;
     }
 
     abstract String getOracleType();
