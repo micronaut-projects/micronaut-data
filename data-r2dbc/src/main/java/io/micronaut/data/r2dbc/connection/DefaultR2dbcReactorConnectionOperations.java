@@ -169,27 +169,34 @@ public final class DefaultR2dbcReactorConnectionOperations extends AbstractReact
     private Mono<Void> restoreSchemaBeforeClose(ConnectionStatus<Connection> status) {
         return Mono.deferContextual(contextView -> {
             ReactiveConnectionStatus<Connection> owner = findConnectionOwner(status, contextView);
-            if (owner == null || !schemaRestoringConnections.add(owner)) {
+            if (owner == null || schemaRestoringConnections.contains(owner)) {
                 // Not opened in a connection scope, or already restored when the connection is closed
                 return Mono.empty();
             }
             Connection connection = status.getConnection();
             Dialect dialect = configuration.getDialect();
-            return Mono.from(schemaHandler.readSchemaSetting(connection, dialect))
+            // The connection is marked when the restore is registered, not before the setting is read: a read that fails
+            // or is cancelled leaves the next tenant operation of the scope to read it. An operation registers the restore
+            // before it switches the connection to the schema of the tenant, so a setting read after the switch is never registered
+            return Mono.defer(() -> Mono.from(schemaHandler.readSchemaSetting(connection, dialect)))
                 .map(Optional::of)
                 .defaultIfEmpty(Optional.empty())
-                .doOnError(e -> schemaRestoringConnections.remove(owner))
-                .doOnNext(previousSchemaSetting -> owner.registerReactiveSynchronization(new ReactiveConnectionSynchronization() {
-                    @Override
-                    public Publisher<Void> onClose() {
-                        return Mono.defer(() -> {
-                            schemaRestoringConnections.remove(owner);
-                            return previousSchemaSetting
-                                .map(setting -> Mono.from(schemaHandler.restoreSchemaSetting(connection, dialect, setting)))
-                                .orElse(Mono.empty());
-                        });
+                .doOnNext(previousSchemaSetting -> {
+                    if (!schemaRestoringConnections.add(owner)) {
+                        return;
                     }
-                }))
+                    owner.registerReactiveSynchronization(new ReactiveConnectionSynchronization() {
+                        @Override
+                        public Publisher<Void> onClose() {
+                            return Mono.defer(() -> {
+                                schemaRestoringConnections.remove(owner);
+                                return previousSchemaSetting
+                                    .map(setting -> Mono.from(schemaHandler.restoreSchemaSetting(connection, dialect, setting)))
+                                    .orElse(Mono.empty());
+                            });
+                        }
+                    });
+                })
                 .then();
         });
     }
