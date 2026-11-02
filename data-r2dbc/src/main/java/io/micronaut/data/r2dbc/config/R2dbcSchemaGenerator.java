@@ -164,6 +164,8 @@ public class R2dbcSchemaGenerator {
                                 SchemaContributions contributions) {
         // Contributed objects over the tables, such as property graphs, are dropped before the tables, and objects the
         // tables use, such as domains, after them, so that both can be created again
+        // The tables are dropped one by one even with batch generation, ignoring the failures: in a batch, a table that
+        // doesn't exist yet would prevent the next tables from being dropped, and the creation would keep their old data
         Mono<Void> dropTables = entities.length > 0 && configuration.getSchemaGenerate() == SchemaGenerate.CREATE_DROP
             ? dropTablesOneByOne(connection, entities, builder)
             : Mono.empty();
@@ -256,8 +258,6 @@ public class R2dbcSchemaGenerator {
     private Mono<Void> createTablesInBatch(Connection connection,
                                            List<String> createStatements,
                                            Mono<Void> createTablesOneByOne) {
-        // The tables are dropped one by one before, ignoring the failures: in a batch, a table that doesn't exist yet
-        // would prevent the next tables from being dropped, and the creation would keep their old data
         return Mono.defer(() -> {
             // The same statements as without batch generation, which don't repeat a schema or a join table
             // shared by several entities. They are executed together: each one needs to be terminated

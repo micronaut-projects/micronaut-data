@@ -1,4 +1,4 @@
-package io.micronaut.data.r2dbc.h2.contributor.restart
+package io.micronaut.data.r2dbc.contributor.restart
 
 import io.micronaut.context.ApplicationContext
 import io.micronaut.context.annotation.Property
@@ -52,7 +52,7 @@ class H2R2dbcSchemaContributorRestartSpec extends Specification {
             'r2dbc.datasources.default.password'       : '',
             'r2dbc.datasources.default.dialect'        : 'h2',
             'r2dbc.datasources.default.schema-generate': 'CREATE_DROP',
-            'r2dbc.datasources.default.packages'       : 'io.micronaut.data.r2dbc.h2.contributor.restart'
+            'r2dbc.datasources.default.packages'       : 'io.micronaut.data.r2dbc.contributor.restart'
         ])
     }
 

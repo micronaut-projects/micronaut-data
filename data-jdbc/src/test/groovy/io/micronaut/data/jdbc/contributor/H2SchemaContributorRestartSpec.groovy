@@ -1,4 +1,4 @@
-package io.micronaut.data.jdbc.h2.contributor
+package io.micronaut.data.jdbc.contributor
 
 import io.micronaut.context.ApplicationContext
 import io.micronaut.context.annotation.Property
@@ -69,7 +69,7 @@ class H2SchemaContributorRestartSpec extends Specification {
             'datasources.default.password'       : '',
             'datasources.default.dialect'        : 'H2',
             'datasources.default.schema-generate': 'CREATE_DROP',
-            'datasources.default.packages'       : 'io.micronaut.data.jdbc.h2.contributor'
+            'datasources.default.packages'       : 'io.micronaut.data.jdbc.contributor'
         ])
     }
 
