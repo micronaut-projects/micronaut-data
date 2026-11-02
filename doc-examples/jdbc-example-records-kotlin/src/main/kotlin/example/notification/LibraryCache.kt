@@ -39,9 +39,13 @@ open class LibraryCache(private val repository: LibraryRepository) {
     // tag::listener[]
     // tag::events[]
     @Synchronized
+    // tag::listener-signature[]
     @ChangeListener
+    // end::listener-signature[]
     @OracleChangeNotification
+    // tag::listener-signature[]
     open fun onLibraryChanged(event: ChangeEvent<Library>) {
+        // end::listener-signature[]
         // end::listener[]
         if (!cacheEnabled) {
             return
@@ -60,7 +64,9 @@ open class LibraryCache(private val repository: LibraryRepository) {
             }
         }
         // tag::listener[]
+    // tag::listener-signature[]
     }
+    // end::listener-signature[]
     // end::events[]
     // end::listener[]
 

@@ -245,16 +245,14 @@ class OracleChangeNotificationLifecycleSpec extends Specification {
     }
 
     private Set<Long> registrationIds(String username = 'test') {
-        DriverManager.getConnection(jdbcUrl, username, 'test').withCloseable { connection ->
-            connection.createStatement().withCloseable { statement ->
-                statement.executeQuery('SELECT DISTINCT REGID FROM USER_CHANGE_NOTIFICATION_REGS').withCloseable { rows ->
-                    Set<Long> ids = []
-                    while (rows.next()) {
-                        ids.add(rows.getLong(1))
-                    }
-                    ids
-                }
+        try (def connection = DriverManager.getConnection(jdbcUrl, username, 'test');
+             def statement = connection.createStatement();
+             def rows = statement.executeQuery('SELECT DISTINCT REGID FROM USER_CHANGE_NOTIFICATION_REGS')) {
+            Set<Long> ids = []
+            while (rows.next()) {
+                ids.add(rows.getLong(1))
             }
+            return ids
         }
     }
 

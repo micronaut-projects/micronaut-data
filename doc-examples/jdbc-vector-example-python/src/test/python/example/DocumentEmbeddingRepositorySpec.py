@@ -40,3 +40,7 @@ class DocumentEmbeddingRepositorySpec:
 
         scored = self.repository.searchByEmbeddingNear(vec, Score(2.0), ScoringFunction.COSINE)
         assert not scored.results().isEmpty()
+
+        approximate = self.repository.searchTop5ByEmbeddingNear(vec, 2.0)
+        assert approximate.results().size() == 3
+        assert approximate.results()[0].entity().id == saved.id

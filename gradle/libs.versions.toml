@@ -60,6 +60,7 @@ antlr = "4.13.2"
 jackson-override = "2.22.3"
 micrometer-override = "1.17.1"
 commons-lang3 = "3.21.0"
+guava = "33.7.2-jre"
 
 [libraries]
 micronaut-core = { module = 'io.micronaut:micronaut-core-bom', version.ref = 'micronaut' }
@@ -135,6 +136,7 @@ groovy-yaml = { module = "org.apache.groovy:groovy-yaml", version.ref = "groovy_
 h2gis = { module = "org.orbisgis:h2gis", version.ref = "h2gis"}
 
 commons-lang3 = { module = "org.apache.commons:commons-lang3", version.ref = "commons-lang3" }
+guava = { module = "com.google.guava:guava", version.ref = "guava" }
 
 # Benchmark
 
