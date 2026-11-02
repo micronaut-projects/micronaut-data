@@ -580,5 +580,9 @@ The graceful shutdown timeout limits how long the application waits; it does not
 listener code or database operations already in progress.
 
 Connection cleanup is best effort: database unavailability or the shutdown timeout can prevent it from completing.
-Cleanup is also attempted when the application context is closed without graceful shutdown.
+When graceful shutdown is disabled, closing the application context still waits for reception, connection cleanup,
+and running callbacks before datasources and executors are destroyed. This wait uses
+`micronaut.lifecycle.graceful-shutdown.grace-period` (15 seconds by default). If the deadline expires, context
+destruction continues without interrupting the remaining work. Bean destruction does not start a second wait
+after the shutdown event.
 Notification functions and triggers remain installed after shutdown, whether created by migrations or schema generation.

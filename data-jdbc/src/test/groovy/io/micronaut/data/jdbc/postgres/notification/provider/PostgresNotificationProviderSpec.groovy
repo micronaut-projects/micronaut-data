@@ -41,6 +41,7 @@ import javax.sql.DataSource
 import java.sql.Connection
 import java.util.concurrent.CompletableFuture
 import java.util.concurrent.CountDownLatch
+import java.util.concurrent.Executors
 import java.util.concurrent.LinkedBlockingQueue
 import java.util.concurrent.TimeUnit
 import java.util.concurrent.TimeoutException
@@ -374,9 +375,9 @@ class PostgresNotificationProviderSpec extends Specification implements Postgres
         events.find { it.operation() == ChangeOperation.INSERT }.entity().isEmpty()
     }
 
-    void "shutdown lifecycle starts cleanup asynchronously and waits for running callbacks"() {
+    void "graceful shutdown starts cleanup asynchronously and waits for running callbacks"() {
         given:
-        start()
+        start(['micronaut.lifecycle.graceful-shutdown.enabled': true])
         listener.entered = new CountDownLatch(1)
         listener.release = new CountDownLatch(1)
         execute('TRUNCATE "ProviderBook"')
@@ -415,6 +416,69 @@ class PostgresNotificationProviderSpec extends Specification implements Postgres
 
         then:
         listener.events.poll(300, TimeUnit.MILLISECONDS) == null
+    }
+
+    @Unroll
+    void "context close waits for notification cleanup before destroying dependencies with graceful shutdown #enabled"() {
+        given:
+        def applicationName = "notification-context-shutdown-$enabled"
+        start([
+            'micronaut.lifecycle.graceful-shutdown.enabled': enabled,
+            'micronaut.lifecycle.graceful-shutdown.grace-period': '5s',
+            'datasources.default.db-properties.ApplicationName': applicationName
+        ])
+        def dataSource = DelegatingDataSource.unwrapDataSource(application.getBean(DataSource))
+        def provider = application.getBeansOfType(ChangeNotificationProvider)
+                .find { it.class.simpleName == 'PostgresChangeNotificationProvider' }
+        int receiverPid
+        try (def statement = writer.prepareStatement('SELECT pid FROM pg_stat_activity WHERE application_name = ? AND query = ?')) {
+            statement.setString(1, applicationName)
+            statement.setString(2, 'LISTEN "provider_changes"')
+            try (def rows = statement.executeQuery()) {
+                assert rows.next()
+                receiverPid = rows.getInt(1)
+                assert !rows.next()
+            }
+        }
+        listener.entered = new CountDownLatch(1)
+        listener.release = new CountDownLatch(1)
+        execute('TRUNCATE "ProviderBook"')
+        assert listener.entered.await(10, TimeUnit.SECONDS)
+        def executor = Executors.newSingleThreadExecutor()
+
+        when:
+        def closed = executor.submit { application.close() }
+        new PollingConditions(timeout: 5).eventually {
+            assert provider.reportActiveTasks().present
+        }
+        closed.get(100, TimeUnit.MILLISECONDS)
+
+        then:
+        thrown(TimeoutException)
+
+        when:
+        try (def connection = dataSource.connection;
+             def statement = connection.createStatement();
+             def rows = statement.executeQuery('SELECT 1')) {
+            assert rows.next() && rows.getInt(1) == 1
+        }
+        listener.release.countDown()
+        closed.get(10, TimeUnit.SECONDS)
+
+        then:
+        provider.shutdownGracefully().toCompletableFuture().done
+        provider.reportActiveTasks().orElseThrow() == 0
+        next().operation() == ChangeOperation.INVALIDATE
+        new PollingConditions(timeout: 5).eventually {
+            assert !connectionExists(receiverPid)
+        }
+
+        cleanup:
+        listener?.release?.countDown()
+        executor?.shutdownNow()
+
+        where:
+        enabled << [false, true]
     }
 
     void "startup trusts migrations for primary keys and notification triggers"() {
@@ -484,6 +548,15 @@ class PostgresNotificationProviderSpec extends Specification implements Postgres
         event.metadata(PostgresChangeEventMetadata).orElseThrow().schema() == 'notification_provider_other'
         event.entity().orElseThrow().title == 'local'
         listener.events.poll(300, TimeUnit.MILLISECONDS) == null
+    }
+
+    private boolean connectionExists(int pid) {
+        try (def statement = writer.prepareStatement('SELECT 1 FROM pg_stat_activity WHERE pid = ?')) {
+            statement.setInt(1, pid)
+            try (def rows = statement.executeQuery()) {
+                return rows.next()
+            }
+        }
     }
 
     private ChangeEvent<NotificationBook> next() {

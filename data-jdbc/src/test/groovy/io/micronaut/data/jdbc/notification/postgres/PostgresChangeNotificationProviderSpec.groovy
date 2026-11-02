@@ -17,13 +17,22 @@ package io.micronaut.data.jdbc.notification.postgres
 
 import io.micronaut.context.BeanContext
 import io.micronaut.context.BeanProvider
+import io.micronaut.context.event.ShutdownEvent
 import io.micronaut.context.exceptions.ConfigurationException
 import io.micronaut.data.jdbc.operations.JdbcRepositoryOperations
 import io.micronaut.json.JsonMapper
 import io.micronaut.scheduling.TaskScheduler
 import spock.lang.Specification
 
+import java.time.Duration
+import java.util.concurrent.Callable
+import java.util.concurrent.CompletableFuture
+import java.util.concurrent.CountDownLatch
 import java.util.concurrent.Executor
+import java.util.concurrent.Executors
+import java.util.concurrent.TimeUnit
+import java.util.concurrent.TimeoutException
+import java.util.concurrent.atomic.AtomicInteger
 
 class PostgresChangeNotificationProviderSpec extends Specification {
 
@@ -33,7 +42,8 @@ class PostgresChangeNotificationProviderSpec extends Specification {
         def connectionFactory = Mock(PostgresNotificationConnectionFactory)
         def operations = Mock(JdbcRepositoryOperations)
         def provider = new PostgresChangeNotificationProvider(Stub(BeanContext), mapperProvider,
-            Stub(Executor), Stub(TaskScheduler), new PostgresNotificationConfiguration(), connectionFactory)
+            Stub(Executor), Stub(TaskScheduler), new PostgresNotificationConfiguration(), connectionFactory,
+            false, Duration.ofSeconds(15))
 
         when:
         provider.register('inventory', operations, [])
@@ -46,5 +56,163 @@ class PostgresChangeNotificationProviderSpec extends Specification {
         0 * mapperProvider.get()
         0 * connectionFactory._
         0 * operations._
+    }
+
+    void "waits for pending cleanup in #hook with graceful shutdown #enabled"() {
+        given:
+        def provider = provider(enabled)
+        def waiting = new CountDownLatch(1)
+        def completion = new CompletableFuture<Void>() {
+            @Override
+            Void get(long timeout, TimeUnit unit) {
+                waiting.countDown()
+                super.get(timeout, unit)
+            }
+        }
+        provider.@shutdown = completion
+        def executor = Executors.newSingleThreadExecutor()
+
+        when:
+        def shutdown = executor.submit {
+            if (hook == 'shutdown event') {
+                provider.onApplicationEvent(new ShutdownEvent(Stub(BeanContext)))
+            } else {
+                provider.close()
+            }
+        }
+        assert waiting.await(5, TimeUnit.SECONDS)
+        shutdown.get(100, TimeUnit.MILLISECONDS)
+
+        then:
+        thrown(TimeoutException)
+
+        when:
+        completion.complete(null)
+        shutdown.get(5, TimeUnit.SECONDS)
+
+        then:
+        provider.shutdownGracefully().is(completion)
+
+        cleanup:
+        completion.complete(null)
+        executor.shutdownNow()
+
+        where:
+        hook               | enabled
+        'shutdown event'   | false
+        'bean destruction' | false
+        'bean destruction' | true
+    }
+
+    void "leaves the wait to graceful shutdown without extending it during bean destruction"() {
+        given:
+        def provider = provider(true)
+        def completion = new CompletableFuture<Void>()
+        provider.@shutdown = completion
+        def executor = Executors.newSingleThreadExecutor()
+
+        when:
+        executor.submit {
+            provider.onApplicationEvent(new ShutdownEvent(Stub(BeanContext)))
+            provider.close()
+        }.get(1, TimeUnit.SECONDS)
+
+        then:
+        !completion.done
+        provider.shutdownGracefully().is(completion)
+
+        cleanup:
+        completion.complete(null)
+        executor.shutdownNow()
+    }
+
+    void "bounds cleanup wait and handles lifecycle callbacks only once starting with #hook"() {
+        given:
+        def provider = provider(false, Duration.ofMillis(20))
+        def waits = new AtomicInteger()
+        def completion = new CompletableFuture<Void>() {
+            @Override
+            Void get(long timeout, TimeUnit unit) {
+                waits.incrementAndGet()
+                super.get(timeout, unit)
+            }
+        }
+        provider.@shutdown = completion
+        def executor = Executors.newSingleThreadExecutor()
+
+        when:
+        executor.submit {
+            if (hook == 'shutdown event') {
+                provider.onApplicationEvent(new ShutdownEvent(Stub(BeanContext)))
+            } else {
+                provider.close()
+            }
+        }.get(5, TimeUnit.SECONDS)
+
+        then:
+        !completion.done
+        !completion.cancelled
+
+        when:
+        provider.close()
+        provider.onApplicationEvent(new ShutdownEvent(Stub(BeanContext)))
+        provider.close()
+
+        then:
+        waits.get() == 1
+        provider.shutdownGracefully().is(completion)
+
+        cleanup:
+        completion.complete(null)
+        executor.shutdownNow()
+
+        where:
+        hook << ['shutdown event', 'bean destruction']
+    }
+
+    void "preserves interruption while waiting for cleanup"() {
+        given:
+        def provider = provider()
+        def completion = new CompletableFuture<Void>()
+        provider.@shutdown = completion
+        def executor = Executors.newSingleThreadExecutor()
+
+        when:
+        def interrupted = executor.submit({
+            Thread.currentThread().interrupt()
+            provider.onApplicationEvent(new ShutdownEvent(Stub(BeanContext)))
+            Thread.interrupted()
+        } as Callable<Boolean>).get(5, TimeUnit.SECONDS)
+
+        then:
+        interrupted
+        !completion.done
+        !completion.cancelled
+
+        cleanup:
+        completion.complete(null)
+        executor.shutdownNow()
+    }
+
+    void "cleanup failure does not escape the shutdown callbacks"() {
+        given:
+        def provider = provider()
+        def completion = CompletableFuture.<Void>failedFuture(new IllegalStateException('Cleanup failed'))
+        provider.@shutdown = completion
+
+        when:
+        provider.onApplicationEvent(new ShutdownEvent(Stub(BeanContext)))
+        provider.close()
+
+        then:
+        completion.completedExceptionally
+        provider.shutdownGracefully().is(completion)
+    }
+
+    private PostgresChangeNotificationProvider provider(boolean gracefulShutdownEnabled = false,
+                                                        Duration gracePeriod = Duration.ofSeconds(15)) {
+        new PostgresChangeNotificationProvider(Stub(BeanContext), Stub(BeanProvider<JsonMapper>),
+            Stub(Executor), Stub(TaskScheduler), new PostgresNotificationConfiguration(),
+            Stub(PostgresNotificationConnectionFactory), gracefulShutdownEnabled, gracePeriod)
     }
 }

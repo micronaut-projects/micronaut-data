@@ -18,9 +18,12 @@ package io.micronaut.data.jdbc.notification.postgres;
 import io.micronaut.context.BeanContext;
 import io.micronaut.context.BeanProvider;
 import io.micronaut.context.annotation.Requires;
+import io.micronaut.context.annotation.Value;
 import io.micronaut.context.event.ApplicationEventListener;
 import io.micronaut.context.event.ShutdownEvent;
 import io.micronaut.context.exceptions.ConfigurationException;
+import io.micronaut.core.annotation.Order;
+import io.micronaut.core.order.Ordered;
 import io.micronaut.data.jdbc.notification.ChangeListenerMethod;
 import io.micronaut.data.jdbc.notification.ChangeNotificationProvider;
 import io.micronaut.data.jdbc.operations.JdbcRepositoryOperations;
@@ -35,15 +38,21 @@ import org.jspecify.annotations.Nullable;
 import org.postgresql.PGConnection;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
+
 import java.sql.Connection;
 import java.sql.SQLException;
+import java.time.Duration;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 import java.util.OptionalLong;
 import java.util.concurrent.CompletableFuture;
 import java.util.concurrent.CompletionStage;
+import java.util.concurrent.ExecutionException;
 import java.util.concurrent.Executor;
+import java.util.concurrent.TimeUnit;
+import java.util.concurrent.TimeoutException;
+import java.util.concurrent.atomic.AtomicBoolean;
 
 /**
  * PostgreSQL implementation of the generic JDBC change-notification provider.
@@ -54,14 +63,14 @@ import java.util.concurrent.Executor;
  * methods once per datasource; later registration calls for that datasource are rejected.</p>
  *
  * <p>Each subscription owns a dedicated, non-pooled LISTEN connection, notification reception, reconnection,
- * and listener dispatch. A {@link ShutdownEvent} initiates cleanup for all datasource subscriptions,
- * and graceful shutdown waits for reception to stop, the connection to be released, and callbacks
- * already running to finish.
- * {@link PreDestroy} provides a best-effort cleanup fallback if the provider is destroyed without a
- * context shutdown event.</p>
+ * and listener dispatch. A {@link ShutdownEvent} initiates cleanup for all datasource subscriptions.
+ * Shutdown waits for reception to stop, the connection to be released, and callbacks already running
+ * to finish, bounded by the configured grace period, before singleton destruction. {@link PreDestroy}
+ * provides the same bounded cleanup fallback if the provider is destroyed without a context shutdown event.</p>
  */
 @Singleton
 @Requires(classes = PGConnection.class)
+@Order(Ordered.HIGHEST_PRECEDENCE)
 final class PostgresChangeNotificationProvider implements ChangeNotificationProvider, GracefulShutdownCapable,
     ApplicationEventListener<ShutdownEvent> {
     private static final Logger LOG = LoggerFactory.getLogger(PostgresChangeNotificationProvider.class);
@@ -72,6 +81,9 @@ final class PostgresChangeNotificationProvider implements ChangeNotificationProv
     private final TaskScheduler taskScheduler;
     private final PostgresNotificationConfiguration configuration;
     private final PostgresNotificationConnectionFactory connectionFactory;
+    private final boolean gracefulShutdownEnabled;
+    private final Duration shutdownGracePeriod;
+    private final AtomicBoolean shutdownHandled = new AtomicBoolean();
     private final Map<String, PostgresNotificationSubscription> subscriptions = new HashMap<>();
     private @Nullable CompletableFuture<Void> shutdown;
 
@@ -79,13 +91,17 @@ final class PostgresChangeNotificationProvider implements ChangeNotificationProv
                                        @Named(TaskExecutors.BLOCKING) Executor executor,
                                        @Named(TaskExecutors.SCHEDULED) TaskScheduler taskScheduler,
                                        PostgresNotificationConfiguration configuration,
-                                       PostgresNotificationConnectionFactory connectionFactory) {
+                                       PostgresNotificationConnectionFactory connectionFactory,
+                                       @Value("${micronaut.lifecycle.graceful-shutdown.enabled:false}") boolean gracefulShutdownEnabled,
+                                       @Value("${micronaut.lifecycle.graceful-shutdown.grace-period:15s}") Duration shutdownGracePeriod) {
         this.beanContext = beanContext;
         this.jsonMapperProvider = jsonMapperProvider;
         this.executor = executor;
         this.taskScheduler = taskScheduler;
         this.configuration = configuration;
         this.connectionFactory = connectionFactory;
+        this.gracefulShutdownEnabled = gracefulShutdownEnabled;
+        this.shutdownGracePeriod = shutdownGracePeriod;
     }
 
     /**
@@ -137,13 +153,19 @@ final class PostgresChangeNotificationProvider implements ChangeNotificationProv
     }
 
     /**
-     * Initiates subscription cleanup when the application context begins shutting down.
+     * Initiates subscription cleanup before singleton destruction. When the framework's graceful
+     * shutdown listener is disabled, waits here while the datasources and executors are still available.
      *
      * @param event the context shutdown event
      */
     @Override
     public void onApplicationEvent(ShutdownEvent event) {
-        stopSubscriptions();
+        if (shutdownHandled.compareAndSet(false, true)) {
+            CompletionStage<?> completion = stopSubscriptions();
+            if (!gracefulShutdownEnabled) {
+                awaitShutdown(completion);
+            }
+        }
     }
 
     /**
@@ -160,14 +182,29 @@ final class PostgresChangeNotificationProvider implements ChangeNotificationProv
         return shutdown;
     }
 
-
-
     /**
-     * Starts best-effort subscription cleanup if this bean is destroyed without a context shutdown event.
+     * Waits for cleanup if this bean is destroyed without a context shutdown event. A shutdown event
+     * already owns the wait, so bean destruction must not extend its deadline.
      */
     @PreDestroy
     void close() {
-        stopSubscriptions();
+        if (shutdownHandled.compareAndSet(false, true)) {
+            awaitShutdown(stopSubscriptions());
+        }
+    }
+
+    private void awaitShutdown(CompletionStage<?> completion) {
+        try {
+            completion.toCompletableFuture().get(shutdownGracePeriod.toMillis(), TimeUnit.MILLISECONDS);
+        } catch (InterruptedException e) {
+            Thread.currentThread().interrupt();
+            LOG.warn("Interrupted while waiting for PostgreSQL notification cleanup", e);
+        } catch (ExecutionException e) {
+            LOG.warn("Error during PostgreSQL notification cleanup", e);
+        } catch (TimeoutException e) {
+            LOG.warn("Timed out waiting for PostgreSQL notification cleanup after [{}]; listening connections or callbacks may remain active",
+                shutdownGracePeriod);
+        }
     }
 
     /**
