@@ -55,8 +55,6 @@ import java.util.Map;
 @Requires(beans = ElasticsearchClient.class)
 public final class ElasticsearchSearchTransport implements SearchTransport {
 
-    private static final int CONFLICT = 409;
-
     private final ElasticsearchClient client;
 
     /**
@@ -104,10 +102,7 @@ public final class ElasticsearchSearchTransport implements SearchTransport {
         try {
             return client.index(i -> i.index(index).id(id).opType(OpType.Create).document(source).refresh(refresh(refresh))).id();
         } catch (ElasticsearchException e) {
-            if (e.status() == CONFLICT) {
-                throw new DataAccessException("A document with id " + id + " already exists in index " + index, e);
-            }
-            throw e;
+            throw SearchTransport.createFailure(index, id, e.status(), e);
         } catch (IOException e) {
             throw new DataAccessException("Elasticsearch index failed: " + e.getMessage(), e);
         }
