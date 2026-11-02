@@ -974,6 +974,10 @@ is issues.</div>
 <dd>&nbsp;</dd>
 <dt><a href="io/micronaut/data/model/query/builder/sql/AbstractSqlLikeQueryBuilder.ExpressionAppender.html#appendFunction(java.lang.String,java.util.List)" class="member-name-link">appendFunction(String, List)</a> - Method in class io.micronaut.data.model.query.builder.sql.<a href="io/micronaut/data/model/query/builder/sql/AbstractSqlLikeQueryBuilder.ExpressionAppender.html" title="class in io.micronaut.data.model.query.builder.sql">AbstractSqlLikeQueryBuilder.ExpressionAppender</a></dt>
 <dd>&nbsp;</dd>
+<dt><a href="io/micronaut/data/model/query/builder/sql/AbstractSqlLikeQueryBuilder.html#appendLimitAndOffset(io.micronaut.data.model.query.builder.sql.Dialect,long,long,int,java.lang.StringBuilder)" class="member-name-link">appendLimitAndOffset(Dialect, long, long, int, StringBuilder)</a> - Method in class io.micronaut.data.model.query.builder.sql.<a href="io/micronaut/data/model/query/builder/sql/AbstractSqlLikeQueryBuilder.html" title="class in io.micronaut.data.model.query.builder.sql">AbstractSqlLikeQueryBuilder</a></dt>
+<dd>
+<div class="block">Append limit and offset, optionally as an approximate row limit for vector search.</div>
+</dd>
 <dt><a href="io/micronaut/data/model/query/builder/jpa/JpaQueryBuilder.html#appendLimitAndOffset(io.micronaut.data.model.query.builder.sql.Dialect,long,long,java.lang.StringBuilder)" class="member-name-link">appendLimitAndOffset(Dialect, long, long, StringBuilder)</a> - Method in class io.micronaut.data.model.query.builder.jpa.<a href="io/micronaut/data/model/query/builder/jpa/JpaQueryBuilder.html" title="class in io.micronaut.data.model.query.builder.jpa">JpaQueryBuilder</a></dt>
 <dd>&nbsp;</dd>
 <dt><a href="io/micronaut/data/model/query/builder/sql/AbstractSqlLikeQueryBuilder.html#appendLimitAndOffset(io.micronaut.data.model.query.builder.sql.Dialect,long,long,java.lang.StringBuilder)" class="member-name-link">appendLimitAndOffset(Dialect, long, long, StringBuilder)</a> - Method in class io.micronaut.data.model.query.builder.sql.<a href="io/micronaut/data/model/query/builder/sql/AbstractSqlLikeQueryBuilder.html" title="class in io.micronaut.data.model.query.builder.sql">AbstractSqlLikeQueryBuilder</a></dt>
@@ -1090,6 +1094,11 @@ is issues.</div>
 <dd>
 <div class="block">Apply TX isolation level.</div>
 </dd>
+<dt><a href="io/micronaut/data/annotation/ApproximateSearch.html" class="type-name-link" title="annotation interface in io.micronaut.data.annotation">ApproximateSearch</a> - Annotation Interface in <a href="io/micronaut/data/annotation/package-summary.html">io.micronaut.data.annotation</a></dt>
+<dd>
+<div class="block">Marks a vector search method as approximate, so the database may answer the top-K query from a
+vector index instead of comparing every row.</div>
+</dd>
 <dt><a href="io/micronaut/data/jakarta/tck/ArchiveCompilationException.html" class="type-name-link" title="class in io.micronaut.data.jakarta.tck">ArchiveCompilationException</a> - Exception Class in <a href="io/micronaut/data/jakarta/tck/package-summary.html">io.micronaut.data.jakarta.tck</a></dt>
 <dd>
 <div class="block">The exception indicates compilation error.</div>
@@ -1116,6 +1125,13 @@ is issues.</div>
 <dd>
 <div class="block">Returns the value of the <a href="./io/micronaut/data/model/jd/SpecificationConstraint.html#param-argument"><code>argument</code></a> record component.</div>
 </dd>
+<dt><a href="io/micronaut/data/runtime/convert/ArgumentDatabaseTypeConversionContext.html" class="type-name-link" title="class in io.micronaut.data.runtime.convert">ArgumentDatabaseTypeConversionContext</a> - Class in <a href="io/micronaut/data/runtime/convert/package-summary.html">io.micronaut.data.runtime.convert</a></dt>
+<dd>
+<div class="block">Lightweight conversion context carrying only argument metadata, the database type and the driver API, for
+<a href="io/micronaut/data/runtime/convert/DatabaseConversionContextFactory.html" title="interface in io.micronaut.data.runtime.convert"><code>DatabaseConversionContextFactory</code></a> implementations that need no live connection.</div>
+</dd>
+<dt><a href="io/micronaut/data/runtime/convert/ArgumentDatabaseTypeConversionContext.html#%3Cinit%3E(io.micronaut.data.model.runtime.convert.DatabaseType,io.micronaut.data.model.runtime.convert.DataAccessType,io.micronaut.core.type.Argument)" class="member-name-link">ArgumentDatabaseTypeConversionContext(DatabaseType, DataAccessType, Argument)</a> - Constructor for class io.micronaut.data.runtime.convert.<a href="io/micronaut/data/runtime/convert/ArgumentDatabaseTypeConversionContext.html" title="class in io.micronaut.data.runtime.convert">ArgumentDatabaseTypeConversionContext</a></dt>
+<dd>&nbsp;</dd>
 <dt><a href="io/micronaut/data/jdbc/operations/DefaultJdbcRepositoryOperations.ArgumentJdbcCC.html#%3Cinit%3E(java.sql.Connection,io.micronaut.data.model.runtime.convert.DatabaseType,io.micronaut.core.type.Argument)" class="member-name-link">ArgumentJdbcCC(Connection, DatabaseType, Argument)</a> - Constructor for class io.micronaut.data.jdbc.operations.<a href="io/micronaut/data/jdbc/operations/DefaultJdbcRepositoryOperations.ArgumentJdbcCC.html" title="class in io.micronaut.data.jdbc.operations">DefaultJdbcRepositoryOperations.ArgumentJdbcCC</a></dt>
 <dd>&nbsp;</dd>
 <dt><a href="io/micronaut/data/runtime/http/PageableRequestArgumentBinder.html#argumentType()" class="member-name-link">argumentType()</a> - Method in class io.micronaut.data.runtime.http.<a href="io/micronaut/data/runtime/http/PageableRequestArgumentBinder.html" title="class in io.micronaut.data.runtime.http">PageableRequestArgumentBinder</a></dt>
@@ -2381,6 +2397,10 @@ and the release of the connection to this transaction.</div>
 </dd>
 <dt><a href="io/micronaut/data/model/query/builder/sql/AbstractSqlLikeQueryBuilder.html#buildLimitAndOffset(long,long)" class="member-name-link">buildLimitAndOffset(long, long)</a> - Method in class io.micronaut.data.model.query.builder.sql.<a href="io/micronaut/data/model/query/builder/sql/AbstractSqlLikeQueryBuilder.html" title="class in io.micronaut.data.model.query.builder.sql">AbstractSqlLikeQueryBuilder</a></dt>
 <dd>&nbsp;</dd>
+<dt><a href="io/micronaut/data/model/query/builder/sql/SqlQueryBuilder.html#buildLimitAndOffset(long,long,io.micronaut.core.annotation.AnnotationMetadata)" class="member-name-link">buildLimitAndOffset(long, long, AnnotationMetadata)</a> - Method in class io.micronaut.data.model.query.builder.sql.<a href="io/micronaut/data/model/query/builder/sql/SqlQueryBuilder.html" title="class in io.micronaut.data.model.query.builder.sql">SqlQueryBuilder</a></dt>
+<dd>
+<div class="block">Builds the limit and offset clause of a query, honouring <a href="io/micronaut/data/annotation/ApproximateSearch.html" title="annotation interface in io.micronaut.data.annotation"><code>ApproximateSearch</code></a> on the method.</div>
+</dd>
 <dt><a href="io/micronaut/data/processor/visitors/finders/AbstractCriteriaMethodMatch.html#buildMatchInfo(io.micronaut.data.processor.visitors.MethodMatchContext)" class="member-name-link">buildMatchInfo(MethodMatchContext)</a> - Method in class io.micronaut.data.processor.visitors.finders.<a href="io/micronaut/data/processor/visitors/finders/AbstractCriteriaMethodMatch.html" title="class in io.micronaut.data.processor.visitors.finders">AbstractCriteriaMethodMatch</a></dt>
 <dd>&nbsp;</dd>
 <dt><a href="io/micronaut/data/processor/visitors/finders/MethodCandidate.html#buildMatchInfo(io.micronaut.data.processor.visitors.MethodMatchContext)" class="member-name-link">buildMatchInfo(MethodMatchContext)</a> - Method in interface io.micronaut.data.processor.visitors.finders.<a href="io/micronaut/data/processor/visitors/finders/MethodCandidate.html" title="interface in io.micronaut.data.processor.visitors.finders">MethodCandidate</a></dt>
@@ -5132,6 +5152,14 @@ Hibernate propagate the exceptions of their drivers. This class will be removed 
 <dd>
 <div class="deprecation-block"><span class="deprecated-label">Deprecated.</span></div>
 <div class="block">Default constructor.</div>
+</dd>
+<dt><a href="io/micronaut/data/model/runtime/convert/vector/VectorTypeConverter.html#dataAccessType()" class="member-name-link">dataAccessType()</a> - Method in interface io.micronaut.data.model.runtime.convert.vector.<a href="io/micronaut/data/model/runtime/convert/vector/VectorTypeConverter.html" title="interface in io.micronaut.data.model.runtime.convert.vector">VectorTypeConverter</a></dt>
+<dd>
+<div class="block">The driver API this converter produces values for.</div>
+</dd>
+<dt><a href="io/micronaut/data/model/runtime/convert/DataAccessType.html" class="type-name-link" title="enum class in io.micronaut.data.model.runtime.convert">DataAccessType</a> - Enum Class in <a href="io/micronaut/data/model/runtime/convert/package-summary.html">io.micronaut.data.model.runtime.convert</a></dt>
+<dd>
+<div class="block">The driver API a SQL operation or converter is bound to.</div>
 </dd>
 <dt><a href="io/micronaut/data/annotation/DataAnnotationUtils.html" class="type-name-link" title="class in io.micronaut.data.annotation">DataAnnotationUtils</a> - Class in <a href="io/micronaut/data/annotation/package-summary.html">io.micronaut.data.annotation</a></dt>
 <dd>
@@ -12640,6 +12668,8 @@ if any.</div>
 <dd>&nbsp;</dd>
 <dt><a href="io/micronaut/data/model/runtime/RuntimePersistentProperty.html#getArgument()" class="member-name-link">getArgument()</a> - Method in class io.micronaut.data.model.runtime.<a href="io/micronaut/data/model/runtime/RuntimePersistentProperty.html" title="class in io.micronaut.data.model.runtime">RuntimePersistentProperty</a></dt>
 <dd>&nbsp;</dd>
+<dt><a href="io/micronaut/data/runtime/convert/ArgumentDatabaseTypeConversionContext.html#getArgument()" class="member-name-link">getArgument()</a> - Method in class io.micronaut.data.runtime.convert.<a href="io/micronaut/data/runtime/convert/ArgumentDatabaseTypeConversionContext.html" title="class in io.micronaut.data.runtime.convert">ArgumentDatabaseTypeConversionContext</a></dt>
+<dd>&nbsp;</dd>
 <dt><a href="io/micronaut/data/runtime/convert/RuntimePersistentPropertyConversionContext.html#getArgument()" class="member-name-link">getArgument()</a> - Method in interface io.micronaut.data.runtime.convert.<a href="io/micronaut/data/runtime/convert/RuntimePersistentPropertyConversionContext.html" title="interface in io.micronaut.data.runtime.convert">RuntimePersistentPropertyConversionContext</a></dt>
 <dd>&nbsp;</dd>
 <dt><a href="io/micronaut/data/model/runtime/PreparedQuery.html#getArguments()" class="member-name-link">getArguments()</a> - Method in interface io.micronaut.data.model.runtime.<a href="io/micronaut/data/model/runtime/PreparedQuery.html" title="interface in io.micronaut.data.model.runtime">PreparedQuery</a></dt>
@@ -13269,6 +13299,19 @@ or <a href="io/micronaut/data/repository/jpa/criteria/QuerySpecification.html" t
 <dd>&nbsp;</dd>
 <dt><a href="io/micronaut/data/tck/entities/SaleItem.html#getData()" class="member-name-link">getData()</a> - Method in class io.micronaut.data.tck.entities.<a href="io/micronaut/data/tck/entities/SaleItem.html" title="class in io.micronaut.data.tck.entities">SaleItem</a></dt>
 <dd>&nbsp;</dd>
+<dt><a href="io/micronaut/data/jdbc/convert/JdbcConversionContext.html#getDataAccessType()" class="member-name-link">getDataAccessType()</a> - Method in interface io.micronaut.data.jdbc.convert.<a href="io/micronaut/data/jdbc/convert/JdbcConversionContext.html" title="interface in io.micronaut.data.jdbc.convert">JdbcConversionContext</a></dt>
+<dd>&nbsp;</dd>
+<dt><a href="io/micronaut/data/model/runtime/convert/DatabaseTypeConversionContext.html#getDataAccessType()" class="member-name-link">getDataAccessType()</a> - Method in interface io.micronaut.data.model.runtime.convert.<a href="io/micronaut/data/model/runtime/convert/DatabaseTypeConversionContext.html" title="interface in io.micronaut.data.model.runtime.convert">DatabaseTypeConversionContext</a></dt>
+<dd>
+<div class="block">Returns the driver API of the current operation, used to pick converters that produce
+driver-specific values.</div>
+</dd>
+<dt><a href="io/micronaut/data/r2dbc/convert/R2dbcConversionContext.html#getDataAccessType()" class="member-name-link">getDataAccessType()</a> - Method in interface io.micronaut.data.r2dbc.convert.<a href="io/micronaut/data/r2dbc/convert/R2dbcConversionContext.html" title="interface in io.micronaut.data.r2dbc.convert">R2dbcConversionContext</a></dt>
+<dd>&nbsp;</dd>
+<dt><a href="io/micronaut/data/runtime/convert/ArgumentDatabaseTypeConversionContext.html#getDataAccessType()" class="member-name-link">getDataAccessType()</a> - Method in class io.micronaut.data.runtime.convert.<a href="io/micronaut/data/runtime/convert/ArgumentDatabaseTypeConversionContext.html" title="class in io.micronaut.data.runtime.convert">ArgumentDatabaseTypeConversionContext</a></dt>
+<dd>&nbsp;</dd>
+<dt><a href="io/micronaut/data/runtime/convert/DatabaseConversionContextFactory.html#getDataAccessType()" class="member-name-link">getDataAccessType()</a> - Method in interface io.micronaut.data.runtime.convert.<a href="io/micronaut/data/runtime/convert/DatabaseConversionContextFactory.html" title="interface in io.micronaut.data.runtime.convert">DatabaseConversionContextFactory</a></dt>
+<dd>&nbsp;</dd>
 <dt><a href="io/micronaut/data/mongodb/operations/DefaultReactiveMongoRepositoryOperations.html#getDatabase(io.micronaut.data.model.PersistentEntity,java.lang.Class)" class="member-name-link">getDatabase(PersistentEntity, Class)</a> - Method in class io.micronaut.data.mongodb.operations.<a href="io/micronaut/data/mongodb/operations/DefaultReactiveMongoRepositoryOperations.html" title="class in io.micronaut.data.mongodb.operations">DefaultReactiveMongoRepositoryOperations</a></dt>
 <dd>&nbsp;</dd>
 <dt><a href="io/micronaut/data/cosmos/config/CosmosDatabaseConfiguration.html#getDatabaseName()" class="member-name-link">getDatabaseName()</a> - Method in class io.micronaut.data.cosmos.config.<a href="io/micronaut/data/cosmos/config/CosmosDatabaseConfiguration.html" title="class in io.micronaut.data.cosmos.config">CosmosDatabaseConfiguration</a></dt>
@@ -13279,6 +13322,8 @@ or <a href="io/micronaut/data/repository/jpa/criteria/QuerySpecification.html" t
 <dd>
 <div class="block">Returns the <a href="io/micronaut/data/model/runtime/convert/DatabaseType.html" title="enum class in io.micronaut.data.model.runtime.convert"><code>DatabaseType</code></a> for the current operation.</div>
 </dd>
+<dt><a href="io/micronaut/data/runtime/convert/ArgumentDatabaseTypeConversionContext.html#getDatabaseType()" class="member-name-link">getDatabaseType()</a> - Method in class io.micronaut.data.runtime.convert.<a href="io/micronaut/data/runtime/convert/ArgumentDatabaseTypeConversionContext.html" title="class in io.micronaut.data.runtime.convert">ArgumentDatabaseTypeConversionContext</a></dt>
+<dd>&nbsp;</dd>
 <dt><a href="io/micronaut/data/tck/entities/Sale.html#getDataList()" class="member-name-link">getDataList()</a> - Method in class io.micronaut.data.tck.entities.<a href="io/micronaut/data/tck/entities/Sale.html" title="class in io.micronaut.data.tck.entities">Sale</a></dt>
 <dd>&nbsp;</dd>
 <dt><a href="io/micronaut/data/jdbc/operations/DefaultJdbcRepositoryOperations.html#getDataSource()" class="member-name-link">getDataSource()</a> - Method in class io.micronaut.data.jdbc.operations.<a href="io/micronaut/data/jdbc/operations/DefaultJdbcRepositoryOperations.html" title="class in io.micronaut.data.jdbc.operations">DefaultJdbcRepositoryOperations</a></dt>
@@ -17030,6 +17075,8 @@ the specified propagation behavior.</div>
 <dd>
 <div class="block">Return the type for the given class element, wrapping primitives types if necessary.</div>
 </dd>
+<dt><a href="io/micronaut/data/runtime/convert/ArgumentDatabaseTypeConversionContext.html#getTypeParameters()" class="member-name-link">getTypeParameters()</a> - Method in class io.micronaut.data.runtime.convert.<a href="io/micronaut/data/runtime/convert/ArgumentDatabaseTypeConversionContext.html" title="class in io.micronaut.data.runtime.convert">ArgumentDatabaseTypeConversionContext</a></dt>
+<dd>&nbsp;</dd>
 <dt><a href="io/micronaut/data/runtime/support/AbstractConversionContext.html#getTypeParameters()" class="member-name-link">getTypeParameters()</a> - Method in class io.micronaut.data.runtime.support.<a href="io/micronaut/data/runtime/support/AbstractConversionContext.html" title="class in io.micronaut.data.runtime.support">AbstractConversionContext</a></dt>
 <dd>&nbsp;</dd>
 <dt><a href="io/micronaut/data/runtime/support/AbstractConversionContext.html#getTypeVariable(java.lang.String)" class="member-name-link">getTypeVariable(String)</a> - Method in class io.micronaut.data.runtime.support.<a href="io/micronaut/data/runtime/support/AbstractConversionContext.html" title="class in io.micronaut.data.runtime.support">AbstractConversionContext</a></dt>
@@ -21176,6 +21223,10 @@ is switched to read-only with <a href="https://docs.oracle.com/en/java/javase/25
 <dd>
 <div class="block">Java util Set class name.</div>
 </dd>
+<dt><a href="io/micronaut/data/model/runtime/convert/DataAccessType.html#JDBC" class="member-name-link">JDBC</a> - Enum constant in enum class io.micronaut.data.model.runtime.convert.<a href="io/micronaut/data/model/runtime/convert/DataAccessType.html" title="enum class in io.micronaut.data.model.runtime.convert">DataAccessType</a></dt>
+<dd>
+<div class="block">Micronaut Data JDBC.</div>
+</dd>
 <dt><a href="io/micronaut/data/runtime/operations/internal/sql/SqlBatchSupport.JdbcBatchMetadata.html#%3Cinit%3E(java.lang.String,java.lang.String,java.lang.String,java.lang.Boolean,java.lang.Boolean)" class="member-name-link">JdbcBatchMetadata(String, String, String, Boolean, Boolean)</a> - Constructor for record class io.micronaut.data.runtime.operations.internal.sql.<a href="io/micronaut/data/runtime/operations/internal/sql/SqlBatchSupport.JdbcBatchMetadata.html" title="class in io.micronaut.data.runtime.operations.internal.sql">SqlBatchSupport.JdbcBatchMetadata</a></dt>
 <dd>
 <div class="block">Creates an instance of a <code>JdbcBatchMetadata</code> record class.</div>
@@ -25098,7 +25149,7 @@ when sorting by this attribute.</div>
 <dd>&nbsp;</dd>
 <dt><a href="io/micronaut/data/model/query/builder/sql/Dialect.html#ORACLE" class="member-name-link">ORACLE</a> - Enum constant in enum class io.micronaut.data.model.query.builder.sql.<a href="io/micronaut/data/model/query/builder/sql/Dialect.html" title="enum class in io.micronaut.data.model.query.builder.sql">Dialect</a></dt>
 <dd>
-<div class="block">Oracle 12c or above.</div>
+<div class="block">Oracle 19c or above.</div>
 </dd>
 <dt><a href="io/micronaut/data/model/runtime/convert/DatabaseType.html#ORACLE" class="member-name-link">ORACLE</a> - Enum constant in enum class io.micronaut.data.model.runtime.convert.<a href="io/micronaut/data/model/runtime/convert/DatabaseType.html" title="enum class in io.micronaut.data.model.runtime.convert">DatabaseType</a></dt>
 <dd>
@@ -25107,6 +25158,10 @@ when sorting by this attribute.</div>
 <dt><a href="io/micronaut/data/model/query/builder/sql/SqlDialectOptions.html#ORACLE_23_1_0_VERSION" class="member-name-link">ORACLE_23_1_0_VERSION</a> - Static variable in record class io.micronaut.data.model.query.builder.sql.<a href="io/micronaut/data/model/query/builder/sql/SqlDialectOptions.html" title="class in io.micronaut.data.model.query.builder.sql">SqlDialectOptions</a></dt>
 <dd>
 <div class="block">Oracle version that enables native SQL boolean generation.</div>
+</dd>
+<dt><a href="io/micronaut/data/model/query/builder/sql/SqlDialectOptions.html#ORACLE_23_9_0_VERSION" class="member-name-link">ORACLE_23_9_0_VERSION</a> - Static variable in record class io.micronaut.data.model.query.builder.sql.<a href="io/micronaut/data/model/query/builder/sql/SqlDialectOptions.html" title="class in io.micronaut.data.model.query.builder.sql">SqlDialectOptions</a></dt>
+<dd>
+<div class="block">Oracle version that adds the <code>UUID()</code> SQL function.</div>
 </dd>
 <dt><a href="io/micronaut/data/connection/jdbc/DataSourceConstants.html#ORACLE_DIALECT" class="member-name-link">ORACLE_DIALECT</a> - Static variable in class io.micronaut.data.connection.jdbc.<a href="io/micronaut/data/connection/jdbc/DataSourceConstants.html" title="class in io.micronaut.data.connection.jdbc">DataSourceConstants</a></dt>
 <dd>
@@ -25119,6 +25174,19 @@ when sorting by this attribute.</div>
 <dt><a href="io/micronaut/transaction/annotation/OracleTransactional.html#ORACLE_SESSIONLESS_MODE" class="member-name-link">ORACLE_SESSIONLESS_MODE</a> - Static variable in annotation interface io.micronaut.transaction.annotation.<a href="io/micronaut/transaction/annotation/OracleTransactional.html" title="annotation interface in io.micronaut.transaction.annotation">OracleTransactional</a></dt>
 <dd>
 <div class="block">Transaction definition property used to store Oracle sessionless transaction mode.</div>
+</dd>
+<dt><a href="io/micronaut/data/model/query/builder/sql/SqlSchemaNames.html#oracleCreateSchemaStatement(java.lang.String)" class="member-name-link">oracleCreateSchemaStatement(String)</a> - Static method in class io.micronaut.data.model.query.builder.sql.<a href="io/micronaut/data/model/query/builder/sql/SqlSchemaNames.html" title="class in io.micronaut.data.model.query.builder.sql">SqlSchemaNames</a></dt>
+<dd>
+<div class="block">Builds the Oracle statement that creates a schema.</div>
+</dd>
+<dt><a href="io/micronaut/data/runtime/multitenancy/internal/SchemaNameUtils.html#oracleCreateSchemaStatement(java.lang.String)" class="member-name-link">oracleCreateSchemaStatement(String)</a> - Static method in class io.micronaut.data.runtime.multitenancy.internal.<a href="io/micronaut/data/runtime/multitenancy/internal/SchemaNameUtils.html" title="class in io.micronaut.data.runtime.multitenancy.internal">SchemaNameUtils</a></dt>
+<dd>
+<div class="block">Builds the Oracle statement that creates a schema.</div>
+</dd>
+<dt><a href="io/micronaut/data/model/query/builder/sql/SqlSchemaNames.html#oracleCreateSchemaStatement(java.lang.String,boolean)" class="member-name-link">oracleCreateSchemaStatement(String, boolean)</a> - Static method in class io.micronaut.data.model.query.builder.sql.<a href="io/micronaut/data/model/query/builder/sql/SqlSchemaNames.html" title="class in io.micronaut.data.model.query.builder.sql">SqlSchemaNames</a></dt>
+<dd>
+<div class="block">Builds the Oracle statement that creates a schema from an identifier that is already rendered, such as one
+that contains property placeholders resolved later.</div>
 </dd>
 <dt><a href="io/micronaut/data/runtime/operations/internal/sql/OracleReturningMetadata.html" class="type-name-link" title="class in io.micronaut.data.runtime.operations.internal.sql">OracleReturningMetadata</a> - Record Class in <a href="io/micronaut/data/runtime/operations/internal/sql/package-summary.html">io.micronaut.data.runtime.operations.internal.sql</a></dt>
 <dd>
@@ -27540,6 +27608,10 @@ this interface is used as a marker to decide on the primary operations to lookup
 </dl>
 <h2 class="title" id="I:R">R</h2>
 <dl class="index">
+<dt><a href="io/micronaut/data/model/runtime/convert/DataAccessType.html#R2DBC" class="member-name-link">R2DBC</a> - Enum constant in enum class io.micronaut.data.model.runtime.convert.<a href="io/micronaut/data/model/runtime/convert/DataAccessType.html" title="enum class in io.micronaut.data.model.runtime.convert">DataAccessType</a></dt>
+<dd>
+<div class="block">Micronaut Data R2DBC.</div>
+</dd>
 <dt><a href="io/micronaut/data/r2dbc/connection/R2dbcConnectionState.html" class="type-name-link" title="class in io.micronaut.data.r2dbc.connection">R2dbcConnectionState</a> - Record Class in <a href="io/micronaut/data/r2dbc/connection/package-summary.html">io.micronaut.data.r2dbc.connection</a></dt>
 <dd>
 <div class="block">The state of a connection when it was opened, restored before the connection is closed (returned to the pool).</div>
@@ -28477,6 +28549,10 @@ which is the case for an optional embedded projection none of whose columns is s
 <dt><a href="io/micronaut/data/jpa/repository/intercept/RemoveInterceptor.html" class="type-name-link" title="class in io.micronaut.data.jpa.repository.intercept">RemoveInterceptor&lt;T&gt;</a> - Class in <a href="io/micronaut/data/jpa/repository/intercept/package-summary.html">io.micronaut.data.jpa.repository.intercept</a></dt>
 <dd>
 <div class="block">Interceptor for <code>jakarta.data.repository.stateful.Remove</code> methods.</div>
+</dd>
+<dt><a href="io/micronaut/data/model/query/builder/sql/SqlSchemaNames.html#render(io.micronaut.data.model.query.builder.sql.Dialect,java.lang.String)" class="member-name-link">render(Dialect, String)</a> - Static method in class io.micronaut.data.model.query.builder.sql.<a href="io/micronaut/data/model/query/builder/sql/SqlSchemaNames.html" title="class in io.micronaut.data.model.query.builder.sql">SqlSchemaNames</a></dt>
+<dd>
+<div class="block">Renders a schema name as a dialect-compatible SQL identifier.</div>
 </dd>
 <dt><a href="io/micronaut/data/runtime/multitenancy/internal/SchemaNameUtils.html#render(io.micronaut.data.model.query.builder.sql.Dialect,java.lang.String)" class="member-name-link">render(Dialect, String)</a> - Static method in class io.micronaut.data.runtime.multitenancy.internal.<a href="io/micronaut/data/runtime/multitenancy/internal/SchemaNameUtils.html" title="class in io.micronaut.data.runtime.multitenancy.internal">SchemaNameUtils</a></dt>
 <dd>
@@ -32868,6 +32944,10 @@ and materialize an instance using column naming conventions mapped by the entity
 <dd>
 <div class="block">The pushing mapper helper interface.</div>
 </dd>
+<dt><a href="io/micronaut/data/model/query/builder/sql/SqlSchemaNames.html" class="type-name-link" title="class in io.micronaut.data.model.query.builder.sql">SqlSchemaNames</a> - Class in <a href="io/micronaut/data/model/query/builder/sql/package-summary.html">io.micronaut.data.model.query.builder.sql</a></dt>
+<dd>
+<div class="block">Renders schema names as SQL identifiers, and builds the Oracle statement that creates a schema.</div>
+</dd>
 <dt><a href="io/micronaut/data/model/query/builder/sql/SqlSchemaUtils.html" class="type-name-link" title="class in io.micronaut.data.model.query.builder.sql">SqlSchemaUtils</a> - Class in <a href="io/micronaut/data/model/query/builder/sql/package-summary.html">io.micronaut.data.model.query.builder.sql</a></dt>
 <dd>
 <div class="block">Utility class providing methods for working with SQL schema definitions.</div>
@@ -33244,6 +33324,11 @@ and materialize an instance using column naming conventions mapped by the entity
 <dd>
 <div class="block">Determines whether the given JDBC connection supports the requested capability.</div>
 </dd>
+<dt><a href="io/micronaut/data/model/runtime/convert/vector/VectorTypeConverter.html#supports(io.micronaut.data.model.runtime.convert.vector.VectorTypeConverter,io.micronaut.data.model.runtime.convert.DataAccessType)" class="member-name-link">supports(VectorTypeConverter, DataAccessType)</a> - Static method in interface io.micronaut.data.model.runtime.convert.vector.<a href="io/micronaut/data/model/runtime/convert/vector/VectorTypeConverter.html" title="interface in io.micronaut.data.model.runtime.convert.vector">VectorTypeConverter</a></dt>
+<dd>
+<div class="block">Whether a converter can be used by operations of the given driver API: when either API is unknown, or both
+are the same.</div>
+</dd>
 <dt><a href="io/micronaut/data/runtime/event/EntityEventRegistry.html#supports(io.micronaut.data.model.runtime.RuntimePersistentEntity,java.lang.Class)" class="member-name-link">supports(RuntimePersistentEntity, Class)</a> - Method in class io.micronaut.data.runtime.event.<a href="io/micronaut/data/runtime/event/EntityEventRegistry.html" title="class in io.micronaut.data.runtime.event">EntityEventRegistry</a></dt>
 <dd>&nbsp;</dd>
 <dt><a href="io/micronaut/data/runtime/event/listeners/AnnotatedMethodInvokingEntityEventListener.html#supports(io.micronaut.data.model.runtime.RuntimePersistentEntity,java.lang.Class)" class="member-name-link">supports(RuntimePersistentEntity, Class)</a> - Method in class io.micronaut.data.runtime.event.listeners.<a href="io/micronaut/data/runtime/event/listeners/AnnotatedMethodInvokingEntityEventListener.html" title="class in io.micronaut.data.runtime.event.listeners">AnnotatedMethodInvokingEntityEventListener</a></dt>
@@ -33453,6 +33538,11 @@ it.</div>
 <dd>&nbsp;</dd>
 <dt><a href="io/micronaut/data/processor/visitors/finders/MethodNameParser.Builder.html#takeRest(io.micronaut.data.processor.visitors.finders.MethodNameParser.MatchId)" class="member-name-link">takeRest(MethodNameParser.MatchId)</a> - Method in class io.micronaut.data.processor.visitors.finders.<a href="io/micronaut/data/processor/visitors/finders/MethodNameParser.Builder.html" title="class in io.micronaut.data.processor.visitors.finders">MethodNameParser.Builder</a></dt>
 <dd>&nbsp;</dd>
+<dt><a href="io/micronaut/data/annotation/ApproximateSearch.html#targetAccuracy()" class="member-name-link">targetAccuracy()</a> - Element in annotation interface io.micronaut.data.annotation.<a href="io/micronaut/data/annotation/ApproximateSearch.html" title="annotation interface in io.micronaut.data.annotation">ApproximateSearch</a></dt>
+<dd>
+<div class="block">The target accuracy, as a percentage from 1 to 100, or <code>0</code> to use the accuracy of the
+vector index.</div>
+</dd>
 <dt><a href="io/micronaut/data/tck/entities/Task.html" class="type-name-link" title="class in io.micronaut.data.tck.entities">Task</a> - Class in <a href="io/micronaut/data/tck/entities/package-summary.html">io.micronaut.data.tck.entities</a></dt>
 <dd>&nbsp;</dd>
 <dt><a href="io/micronaut/data/tck/entities/Task.html#%3Cinit%3E(java.lang.String)" class="member-name-link">Task(String)</a> - Constructor for class io.micronaut.data.tck.entities.<a href="io/micronaut/data/tck/entities/Task.html" title="class in io.micronaut.data.tck.entities">Task</a></dt>
@@ -36781,6 +36871,10 @@ followed by the second, and so forth.</div>
 <dd>
 <div class="block">Returns the enum constant of this class with the specified name.</div>
 </dd>
+<dt><a href="io/micronaut/data/model/runtime/convert/DataAccessType.html#valueOf(java.lang.String)" class="member-name-link">valueOf(String)</a> - Static method in enum class io.micronaut.data.model.runtime.convert.<a href="io/micronaut/data/model/runtime/convert/DataAccessType.html" title="enum class in io.micronaut.data.model.runtime.convert">DataAccessType</a></dt>
+<dd>
+<div class="block">Returns the enum constant of this class with the specified name.</div>
+</dd>
 <dt><a href="io/micronaut/data/model/runtime/convert/DatabaseType.html#valueOf(java.lang.String)" class="member-name-link">valueOf(String)</a> - Static method in enum class io.micronaut.data.model.runtime.convert.<a href="io/micronaut/data/model/runtime/convert/DatabaseType.html" title="enum class in io.micronaut.data.model.runtime.convert">DatabaseType</a></dt>
 <dd>
 <div class="block">Returns the enum constant of this class with the specified name.</div>
@@ -37055,6 +37149,11 @@ the order they are declared.</div>
 the order they are declared.</div>
 </dd>
 <dt><a href="io/micronaut/data/model/query/builder/sql/IdentifierNamingStrategy.html#values()" class="member-name-link">values()</a> - Static method in enum class io.micronaut.data.model.query.builder.sql.<a href="io/micronaut/data/model/query/builder/sql/IdentifierNamingStrategy.html" title="enum class in io.micronaut.data.model.query.builder.sql">IdentifierNamingStrategy</a></dt>
+<dd>
+<div class="block">Returns an array containing the constants of this enum class, in
+the order they are declared.</div>
+</dd>
+<dt><a href="io/micronaut/data/model/runtime/convert/DataAccessType.html#values()" class="member-name-link">values()</a> - Static method in enum class io.micronaut.data.model.runtime.convert.<a href="io/micronaut/data/model/runtime/convert/DataAccessType.html" title="enum class in io.micronaut.data.model.runtime.convert">DataAccessType</a></dt>
 <dd>
 <div class="block">Returns an array containing the constants of this enum class, in
 the order they are declared.</div>

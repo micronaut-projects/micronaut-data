@@ -9843,6 +9843,28 @@ You can use property <code>schema-generate-names</code> to specify multiple sche
 <div class="paragraph">
 <p>The <code>schema-generate-names</code> property is optional. If it is omitted, schema generation uses the datasource&#8217;s default schema. Configure it when schema generation should create and initialize the mapped tables in each named tenant schema, for example, in tests or demos. For production applications, use a database migration tool to create the tenant schemas and their tables.</p>
 </div>
+<div class="admonitionblock note">
+<table>
+<tr>
+<td class="icon">
+<i class="fa icon-note" title="Note"></i>
+</td>
+<td class="content">
+On Oracle, a schema is a database user. Schema generation creates each name in <code>schema-generate-names</code> as a user with <code>NO AUTHENTICATION</code> and unlimited quota on the database default tablespace, and reuses a user that already exists. A role with the same name is an error. The datasource user needs <code>CREATE USER</code>, plus the <code>ANY</code> privileges to create and use tables, indexes and sequences in the other schemas. Without <code>CREATE ANY INDEX</code>, for example, a table with a primary key fails with <code>ORA-41900</code>. These are the privileges Micronaut Data&#8217;s own tests grant:
+</td>
+</tr>
+</table>
+</div>
+<div class="listingblock">
+<div class="content">
+<pre class="highlightjs highlight"><code class="language-sql hljs" data-lang="sql">GRANT CREATE USER, CREATE ANY TABLE, ALTER ANY TABLE, DROP ANY TABLE, CREATE ANY INDEX,
+      CREATE ANY SEQUENCE, DROP ANY SEQUENCE, SELECT ANY SEQUENCE, SELECT ANY TABLE, INSERT ANY TABLE,
+      UPDATE ANY TABLE, DELETE ANY TABLE, LOCK ANY TABLE TO app_user;</code></pre>
+</div>
+</div>
+<div class="paragraph">
+<p>On Oracle, a schema name that starts with <code>_</code> or is a reserved word, such as <code>order</code> or <code>user</code>, is quoted in upper case, the form Oracle uses for unquoted names.</p>
+</div>
 <div class="paragraph">
 <p>Tenant values resolved in <code>SCHEMA</code> mode are logical schema names. Pass the name without database-specific quoting, such as <code>tenant-a</code>; do not pass values already wrapped in <code>"&#8230;&#8203;"</code>, backticks, or square brackets. Micronaut Data applies the appropriate identifier quoting for the configured dialect when switching or creating schemas. A tenant resolver only selects the schema name: applications must still ensure that it returns only schemas the current caller is allowed to access.</p>
 </div>
@@ -10888,7 +10910,7 @@ types are not matching then the application will report an error and stop.</p>
 </tr>
 <tr>
 <td class="tableblock halign-left valign-top"><p class="tableblock"><a href="../api/io/micronaut/data/model/query/builder/sql/Dialect.html#ORACLE">ORACLE</a></p></td>
-<td class="tableblock halign-left valign-top"><p class="tableblock">Oracle 12c or above</p></td>
+<td class="tableblock halign-left valign-top"><p class="tableblock">Oracle 19c or above. Generated SQL targets 19c by default; to use 23ai and later features such as the native <code>BOOLEAN</code> type, set the dialect version as described in <a href="#sqlOracleBoolean">Oracle BOOLEAN</a></p></td>
 </tr>
 <tr>
 <td class="tableblock halign-left valign-top"><p class="tableblock"><a href="../api/io/micronaut/data/model/query/builder/sql/Dialect.html#SQLITE">SQLITE</a></p></td>
@@ -12013,7 +12035,7 @@ datasources {
 </tr>
 <tr>
 <td class="tableblock halign-left valign-top"><p class="tableblock"><a href="../api/io/micronaut/data/model/query/builder/sql/Dialect.html#ORACLE">ORACLE</a></p></td>
-<td class="tableblock halign-left valign-top"><p class="tableblock">Oracle 12c or above</p></td>
+<td class="tableblock halign-left valign-top"><p class="tableblock">Oracle 19c or above. Generated SQL targets 19c by default; to use 23ai and later features such as the native <code>BOOLEAN</code> type, set the dialect version as described in <a href="#sqlOracleBoolean">Oracle BOOLEAN</a></p></td>
 </tr>
 </tbody>
 </table>
@@ -16560,7 +16582,7 @@ Using <code>@Version</code> is not supported in Json Duality View mapped classes
 <div class="ulist">
 <ul>
 <li>
-<p>During schema creation, json view mapped entities are skipped, and it is expected for users to create them manually or via migration scripts.</p>
+<p>Schema generation creates a duality view with <code>CREATE OR REPLACE JSON RELATIONAL DUALITY VIEW</code> after the tables it reads. Classes annotated with <code>@JsonSubView</code> are part of their parent view and get no DDL of their own. For production databases, create the views with a migration tool.</p>
 </li>
 </ul>
 </div>
@@ -16605,6 +16627,7 @@ If both processor-context configuration and the JVM system property are availabl
 It tells Micronaut Data which SQL features it may use when building repository queries, criteria queries, SQL literals, bind mappings, and schema generation statements.
 It is not runtime database version detection and it is not a general datasource capability check.
 Use numeric major[.minor[.patch]] notation, such as <code>23.1</code> or <code>23.1.0</code>. Major-only values such as <code>23</code> are treated as <code>23.0.0</code> and do not enable features that require <code>23.1</code>.
+Oracle&#8217;s full five-part version, such as <code>23.26.2.0.0</code> from <code>v$instance.version_full</code>, is not supported and is treated as no version, which disables every version-dependent feature: use <code>23.26</code> instead.
 Micronaut Data compares semantic version values, so a later configured version such as <code>23.4</code> also satisfies SQL features that require <code>23.1</code>.</p>
 </div>
 <div class="paragraph">
@@ -16889,6 +16912,19 @@ version = 23.1</code></pre>
 </div>
 </div>
 </div>
+<div class="paragraph">
+<p>The target version also changes the DDL that schema generation creates for Oracle:</p>
+</div>
+<div class="ulist">
+<ul>
+<li>
+<p>From <code>23.1</code>, <code>CREATE TABLE</code>, <code>CREATE INDEX</code> and <code>CREATE SEQUENCE</code> statements use <code>IF NOT EXISTS</code>, and <code>DROP TABLE</code> and <code>DROP VIEW</code> statements use <code>IF EXISTS</code>. Creating a schema that already exists no longer logs a failure for each object, and an existing object is kept as it is, even if its definition differs from the entity.</p>
+</li>
+<li>
+<p>From <code>23.9</code>, a generated UUID identifier defaults to <code>RAW_TO_UUID(UUID())</code>, which the database formats as a UUID string, rather than to <code>SYS_GUID()</code>, which a <code>VARCHAR</code> column stores as 32 hex digits without dashes. A column with a custom definition, such as <code>RAW(16)</code>, keeps <code>SYS_GUID()</code>. Oracle AI Database 26ai releases, such as <code>23.26</code>, satisfy both versions.</p>
+</li>
+</ul>
+</div>
 <div class="admonitionblock important">
 <table>
 <tr>
@@ -17118,7 +17154,8 @@ class DocumentEmbedding {
 For sparse columns (<code>@VectorStorage(shape = VectorShape.SPARSE)</code>), Micronaut Data emits sparse operator classes (<code>sparsevec_*_ops</code>) and requires <code>HNSW</code>.</p>
 </li>
 <li>
-<p>Oracle: creates <code>CREATE VECTOR INDEX</code> with <code>ORGANIZATION NEIGHBOR PARTITIONS</code> (<code>IVF</code>) or <code>GRAPH</code> (<code>HNSW</code>), plus distance and target accuracy settings.</p>
+<p>Oracle: creates <code>CREATE VECTOR INDEX</code> with <code>ORGANIZATION NEIGHBOR PARTITIONS</code> (<code>IVF</code>) or <code>ORGANIZATION INMEMORY NEIGHBOR GRAPH</code> (<code>HNSW</code>), plus distance and target accuracy settings.
+An <code>HNSW</code> index is held in the vector memory pool, which is empty unless the database sets <code>vector_memory_size</code>; without it, creating the index fails with <code>ORA-51962</code>. Schema generation logs that failure as a warning and continues without the index, so set <code>vector_memory_size</code> (for example <code>ALTER SYSTEM SET vector_memory_size = 512M SCOPE = SPFILE</code> and a restart), or use <code>IVF</code>.</p>
 </li>
 <li>
 <p>MySQL: <code>@VectorIndex</code> is not supported and schema generation fails fast instead of creating a plain non-vector index.</p>
@@ -17137,6 +17174,7 @@ For sparse columns (<code>@VectorStorage(shape = VectorShape.SPARSE)</code>), Mi
 <div class="content">
 <pre class="highlightjs highlight"><code class="language-java hljs" data-lang="java">package example;
 
+import io.micronaut.data.annotation.ApproximateSearch;
 import io.micronaut.data.annotation.Repository;
 import io.micronaut.data.jdbc.annotation.JdbcRepository;
 import io.micronaut.data.model.query.builder.sql.Dialect;
@@ -17161,12 +17199,17 @@ interface DocumentEmbeddingRepository extends CrudRepository&lt;DocumentEmbeddin
     SearchResults&lt;DocumentEmbedding&gt; searchByEmbeddingNear(Vector vector,
                                                            Score maxDistance,
                                                            ScoringFunction function);
+
+    // tag::approximate[]
+    @ApproximateSearch(targetAccuracy = 90)
+    SearchResults&lt;DocumentEmbedding&gt; searchTop5ByEmbeddingNear(Vector vector, Double maxDistance);
+    // end::approximate[]
 }</code></pre>
 </div>
 </div>
 <div class="listingblock multi-language-sample">
 <div class="content">
-<pre class="highlightjs highlight"><code class="language-python hljs" data-lang="python">from micronaut.data.annotation import Repository
+<pre class="highlightjs highlight"><code class="language-python hljs" data-lang="python">from micronaut.data.annotation import ApproximateSearch, Repository
 from micronaut.data.jdbc.annotation import JdbcRepository
 from micronaut.data.model.query.builder.sql import Dialect
 from micronaut.data.model.vector import Vector
@@ -17185,13 +17228,19 @@ class DocumentEmbeddingRepository(CrudRepository[DocumentEmbedding, int]):
 
     def findTop2ByEmbeddingNear(self, vec: Vector, maxDistance: float) -&gt; list[DocumentEmbedding]: ...
 
-    def searchByEmbeddingNear(self, vector: Vector, maxDistance: Score, function: ScoringFunction) -&gt; SearchResults[DocumentEmbedding]: ...</code></pre>
+    def searchByEmbeddingNear(self, vector: Vector, maxDistance: Score, function: ScoringFunction) -&gt; SearchResults[DocumentEmbedding]: ...
+
+    # tag::approximate[]
+    @ApproximateSearch(targetAccuracy=90)
+    def searchTop5ByEmbeddingNear(self, vector: Vector, maxDistance: float) -&gt; SearchResults[DocumentEmbedding]: ...
+    # end::approximate[]</code></pre>
 </div>
 </div>
 <div class="listingblock multi-language-sample">
 <div class="content">
 <pre class="highlightjs highlight"><code class="language-kotlin hljs" data-lang="kotlin">package example
 
+import io.micronaut.data.annotation.ApproximateSearch
 import io.micronaut.data.annotation.Repository
 import io.micronaut.data.jdbc.annotation.JdbcRepository
 import io.micronaut.data.model.query.builder.sql.Dialect
@@ -17213,6 +17262,11 @@ interface DocumentEmbeddingRepository : CrudRepository&lt;DocumentEmbedding, Lon
     fun searchByEmbeddingNear(vector: Vector,
                               maxDistance: Score,
                               function: ScoringFunction): SearchResults&lt;DocumentEmbedding&gt;
+
+    // tag::approximate[]
+    @ApproximateSearch(targetAccuracy = 90)
+    fun searchTop5ByEmbeddingNear(vector: Vector, maxDistance: Double): SearchResults&lt;DocumentEmbedding&gt;
+    // end::approximate[]
 }</code></pre>
 </div>
 </div>
@@ -17220,6 +17274,7 @@ interface DocumentEmbeddingRepository : CrudRepository&lt;DocumentEmbedding, Lon
 <div class="content">
 <pre class="highlightjs highlight"><code class="language-groovy hljs" data-lang="groovy">package example
 
+import io.micronaut.data.annotation.ApproximateSearch
 import io.micronaut.data.annotation.Repository
 import io.micronaut.data.jdbc.annotation.JdbcRepository
 import io.micronaut.data.model.query.builder.sql.Dialect
@@ -17241,6 +17296,11 @@ interface DocumentEmbeddingRepository extends CrudRepository&lt;DocumentEmbeddin
     SearchResults&lt;DocumentEmbedding&gt; searchByEmbeddingNear(Vector vector,
                                                            Score maxDistance,
                                                            ScoringFunction function)
+
+    // tag::approximate[]
+    @ApproximateSearch(targetAccuracy = 90)
+    SearchResults&lt;DocumentEmbedding&gt; searchTop5ByEmbeddingNear(Vector vector, Double maxDistance)
+    // end::approximate[]
 }</code></pre>
 </div>
 </div>
@@ -17360,6 +17420,7 @@ If no rows match, Micronaut Data returns an empty <code>SearchResults</code> (no
 <div class="content">
 <pre class="highlightjs highlight"><code class="language-java hljs" data-lang="java">package example;
 
+import io.micronaut.data.annotation.ApproximateSearch;
 import io.micronaut.data.annotation.Repository;
 import io.micronaut.data.jdbc.annotation.JdbcRepository;
 import io.micronaut.data.model.query.builder.sql.Dialect;
@@ -17384,12 +17445,17 @@ interface DocumentEmbeddingRepository extends CrudRepository&lt;DocumentEmbeddin
     SearchResults&lt;DocumentEmbedding&gt; searchByEmbeddingNear(Vector vector,
                                                            Score maxDistance,
                                                            ScoringFunction function);
+
+    // tag::approximate[]
+    @ApproximateSearch(targetAccuracy = 90)
+    SearchResults&lt;DocumentEmbedding&gt; searchTop5ByEmbeddingNear(Vector vector, Double maxDistance);
+    // end::approximate[]
 }</code></pre>
 </div>
 </div>
 <div class="listingblock multi-language-sample">
 <div class="content">
-<pre class="highlightjs highlight"><code class="language-python hljs" data-lang="python">from micronaut.data.annotation import Repository
+<pre class="highlightjs highlight"><code class="language-python hljs" data-lang="python">from micronaut.data.annotation import ApproximateSearch, Repository
 from micronaut.data.jdbc.annotation import JdbcRepository
 from micronaut.data.model.query.builder.sql import Dialect
 from micronaut.data.model.vector import Vector
@@ -17408,13 +17474,19 @@ class DocumentEmbeddingRepository(CrudRepository[DocumentEmbedding, int]):
 
     def findTop2ByEmbeddingNear(self, vec: Vector, maxDistance: float) -&gt; list[DocumentEmbedding]: ...
 
-    def searchByEmbeddingNear(self, vector: Vector, maxDistance: Score, function: ScoringFunction) -&gt; SearchResults[DocumentEmbedding]: ...</code></pre>
+    def searchByEmbeddingNear(self, vector: Vector, maxDistance: Score, function: ScoringFunction) -&gt; SearchResults[DocumentEmbedding]: ...
+
+    # tag::approximate[]
+    @ApproximateSearch(targetAccuracy=90)
+    def searchTop5ByEmbeddingNear(self, vector: Vector, maxDistance: float) -&gt; SearchResults[DocumentEmbedding]: ...
+    # end::approximate[]</code></pre>
 </div>
 </div>
 <div class="listingblock multi-language-sample">
 <div class="content">
 <pre class="highlightjs highlight"><code class="language-kotlin hljs" data-lang="kotlin">package example
 
+import io.micronaut.data.annotation.ApproximateSearch
 import io.micronaut.data.annotation.Repository
 import io.micronaut.data.jdbc.annotation.JdbcRepository
 import io.micronaut.data.model.query.builder.sql.Dialect
@@ -17436,6 +17508,11 @@ interface DocumentEmbeddingRepository : CrudRepository&lt;DocumentEmbedding, Lon
     fun searchByEmbeddingNear(vector: Vector,
                               maxDistance: Score,
                               function: ScoringFunction): SearchResults&lt;DocumentEmbedding&gt;
+
+    // tag::approximate[]
+    @ApproximateSearch(targetAccuracy = 90)
+    fun searchTop5ByEmbeddingNear(vector: Vector, maxDistance: Double): SearchResults&lt;DocumentEmbedding&gt;
+    // end::approximate[]
 }</code></pre>
 </div>
 </div>
@@ -17443,6 +17520,7 @@ interface DocumentEmbeddingRepository : CrudRepository&lt;DocumentEmbedding, Lon
 <div class="content">
 <pre class="highlightjs highlight"><code class="language-groovy hljs" data-lang="groovy">package example
 
+import io.micronaut.data.annotation.ApproximateSearch
 import io.micronaut.data.annotation.Repository
 import io.micronaut.data.jdbc.annotation.JdbcRepository
 import io.micronaut.data.model.query.builder.sql.Dialect
@@ -17464,6 +17542,11 @@ interface DocumentEmbeddingRepository extends CrudRepository&lt;DocumentEmbeddin
     SearchResults&lt;DocumentEmbedding&gt; searchByEmbeddingNear(Vector vector,
                                                            Score maxDistance,
                                                            ScoringFunction function)
+
+    // tag::approximate[]
+    @ApproximateSearch(targetAccuracy = 90)
+    SearchResults&lt;DocumentEmbedding&gt; searchTop5ByEmbeddingNear(Vector vector, Double maxDistance)
+    // end::approximate[]
 }</code></pre>
 </div>
 </div>
@@ -17817,15 +17900,45 @@ runtime = [
 </div>
 </div>
 <div class="paragraph">
-<p>Oracle approximate row-limiting syntax for vector search can use <code>FETCH FIRST APPROX</code> / <code>APPROXIMATE</code> when supported by the database version and query shape:</p>
+<p>By default a vector search compares the query vector with every row. To let Oracle answer the top-K query from a vector index (see <code>@VectorIndex</code>), annotate the search method with <a href="../api/io/micronaut/data/annotation/ApproximateSearch.html">ApproximateSearch</a>:</p>
+</div>
+<div class="listingblock multi-language-sample">
+<div class="content">
+<pre class="highlightjs highlight"><code class="language-java hljs" data-lang="java">    @ApproximateSearch(targetAccuracy = 90)
+    SearchResults&lt;DocumentEmbedding&gt; searchTop5ByEmbeddingNear(Vector vector, Double maxDistance);</code></pre>
+</div>
+</div>
+<div class="listingblock multi-language-sample">
+<div class="content">
+<pre class="highlightjs highlight"><code class="language-python hljs" data-lang="python">    @ApproximateSearch(targetAccuracy=90)
+    def searchTop5ByEmbeddingNear(self, vector: Vector, maxDistance: float) -&gt; SearchResults[DocumentEmbedding]: ...</code></pre>
+</div>
+</div>
+<div class="listingblock multi-language-sample">
+<div class="content">
+<pre class="highlightjs highlight"><code class="language-kotlin hljs" data-lang="kotlin">    @ApproximateSearch(targetAccuracy = 90)
+    fun searchTop5ByEmbeddingNear(vector: Vector, maxDistance: Double): SearchResults&lt;DocumentEmbedding&gt;</code></pre>
+</div>
+</div>
+<div class="listingblock multi-language-sample">
+<div class="content">
+<pre class="highlightjs highlight"><code class="language-groovy hljs" data-lang="groovy">    @ApproximateSearch(targetAccuracy = 90)
+    SearchResults&lt;DocumentEmbedding&gt; searchTop5ByEmbeddingNear(Vector vector, Double maxDistance)</code></pre>
+</div>
+</div>
+<div class="paragraph">
+<p>The row limit, from the method name as here or from a <code>Limit</code> or <code>Pageable</code> argument, is then rendered as an approximate row limit:</p>
 </div>
 <div class="listingblock">
 <div class="content">
-<pre class="highlightjs highlight"><code class="language-sql hljs" data-lang="sql">SELECT *
+<pre class="highlightjs highlight"><code class="language-sql hljs" data-lang="sql">SELECT ...
 FROM document_embedding d
-ORDER BY VECTOR_DISTANCE(d.embedding, :vec, COSINE)
-FETCH FIRST APPROX 2 ROWS ONLY;</code></pre>
+ORDER BY VECTOR_DISTANCE(d.embedding, ?, COSINE)
+FETCH APPROX FIRST 5 ROWS ONLY WITH TARGET ACCURACY 90</code></pre>
 </div>
+</div>
+<div class="paragraph">
+<p><code>targetAccuracy</code> is a percentage from 1 to 100; the default <code>0</code> uses the accuracy of the index. A query with an offset keeps the exact row limit. Other dialects ignore the annotation; PostgreSQL, for example, uses a pgvector index for an ordered, limited query without extra syntax.</p>
 </div>
 </div>
 </div>
