@@ -318,7 +318,7 @@ mappings and restrictions on additional query parameters also apply to this runt
 Micronaut Data subscribes to each distinct channel during application startup. Listener methods using the same
 datasource share a listening connection, whether they use the same channel or different channels.
 Subscriptions normally remain active for the application's lifetime, and Micronaut Data attempts to remove them
-during graceful shutdown.
+during application shutdown.
 
 == Handling Change Events
 
