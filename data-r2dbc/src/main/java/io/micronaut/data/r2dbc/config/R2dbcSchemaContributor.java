@@ -15,6 +15,7 @@
  */
 package io.micronaut.data.r2dbc.config;
 
+import io.micronaut.core.annotation.Experimental;
 import io.micronaut.data.runtime.schema.SchemaContributor;
 
 /**
@@ -25,5 +26,6 @@ import io.micronaut.data.runtime.schema.SchemaContributor;
  * @author graemerocher
  * @since 5.3.0
  */
+@Experimental
 public interface R2dbcSchemaContributor extends SchemaContributor {
 }

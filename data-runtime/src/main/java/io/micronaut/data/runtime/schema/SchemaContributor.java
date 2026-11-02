@@ -15,6 +15,7 @@
  */
 package io.micronaut.data.runtime.schema;
 
+import io.micronaut.core.annotation.Experimental;
 import io.micronaut.core.order.Ordered;
 import io.micronaut.data.model.PersistentEntity;
 
@@ -34,18 +35,26 @@ import java.util.List;
  * <ol>
  *     <li>asks each contributor which entities it generates, and leaves those out of the tables it creates, drops and
  *     validates;</li>
- *     <li>with {@code CREATE_DROP}, runs the {@link #buildDropStatements drop statements} of every contributor;</li>
+ *     <li>with {@code CREATE_DROP}, runs the {@link #buildDropStatements drop statements} of the contributors, which
+ *     drop objects over the tables, such as views and property graphs; then drops its own tables; then runs the
+ *     {@link #buildBeforeTablesDropStatements before-tables drop statements}, which drop objects the tables use, such
+ *     as domains. Both drop phases run the contributors in reverse order, since a later contributor's objects can
+ *     depend on an earlier one's;</li>
  *     <li>with {@code CREATE} or {@code CREATE_DROP}, runs the {@link #buildBeforeTablesStatements before-tables
- *     statements}, then generates the tables of the other entities, then runs the {@link #buildCreateStatements
- *     create statements}.</li>
+ *     statements}, then creates the tables of the other entities, then runs the {@link #buildCreateStatements
+ *     create statements}, running the contributors in order.</li>
  * </ol>
  *
- * <p>Statements may contain property placeholders, which JDBC schema generation resolves. A failed drop statement is
- * ignored, and a failed create statement is logged, as for the tables of the generator.</p>
+ * <p>Statements may contain property placeholders, which JDBC schema generation resolves. A failed statement is
+ * logged as a warning and the generation carries on, as for the tables of the generator, so drop statements should
+ * succeed when the objects do not exist yet, for example with {@code IF EXISTS}.</p>
+ *
+ * <p>This SPI is experimental in 5.3.0, so its methods and {@link SchemaContext} may still change.</p>
  *
  * @author graemerocher
  * @since 5.3.0
  */
+@Experimental
 public interface SchemaContributor extends Ordered {
 
     /**
@@ -84,15 +93,30 @@ public interface SchemaContributor extends Ordered {
     }
 
     /**
-     * Builds the statements that drop the contributed objects with {@code CREATE_DROP}, run before the tables of the
-     * schema generator are dropped. The statements should succeed when the objects do not exist yet, for example with
-     * {@code IF EXISTS}, as a failure is logged as a warning and the generation carries on.
+     * Builds the statements that drop the objects of the {@link #buildCreateStatements create statements} with
+     * {@code CREATE_DROP}, such as views over the tables, run before the tables of the schema generator are dropped.
+     * The statements should succeed when the objects do not exist yet, for example with {@code IF EXISTS}, as a failure
+     * is logged as a warning and the generation carries on.
      *
      * @param context  The schema generation of the data source
      * @param entities The entities this contributor selected
      * @return The statements, run in order
      */
     default List<String> buildDropStatements(SchemaContext context, List<PersistentEntity> entities) {
+        return List.of();
+    }
+
+    /**
+     * Builds the statements that drop the objects of the {@link #buildBeforeTablesStatements before-tables statements}
+     * with {@code CREATE_DROP}, such as the domains the tables use, run after the tables of the schema generator are
+     * dropped and before the before-tables statements, so that those objects can be created again. The statements
+     * should succeed when the objects do not exist yet, for example with {@code IF EXISTS}.
+     *
+     * @param context  The schema generation of the data source
+     * @param entities The entities this contributor selected
+     * @return The statements, run in order
+     */
+    default List<String> buildBeforeTablesDropStatements(SchemaContext context, List<PersistentEntity> entities) {
         return List.of();
     }
 }

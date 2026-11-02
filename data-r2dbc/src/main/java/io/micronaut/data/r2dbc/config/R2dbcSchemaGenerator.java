@@ -162,8 +162,23 @@ public class R2dbcSchemaGenerator {
                                 PersistentEntity[] entities,
                                 SqlQueryBuilder builder,
                                 SchemaContributions contributions) {
-        // Contributed objects, such as property graphs, can depend on the tables, so they are dropped first
-        Flux<Void> dropContributions = Flux.fromIterable(contributions.dropStatements())
+        // Contributed objects over the tables, such as property graphs, are dropped before the tables, and objects the
+        // tables use, such as domains, after them, so that both can be created again
+        Mono<Void> dropTables = entities.length > 0 && configuration.getSchemaGenerate() == SchemaGenerate.CREATE_DROP
+            ? dropTablesOneByOne(connection, entities, builder)
+            : Mono.empty();
+        Mono<Void> createTables = entities.length > 0 ? createTables(connection, configuration, entities, builder) : Mono.empty();
+        return executeDropStatements(connection, contributions.dropStatements())
+            .then(dropTables)
+            .thenMany(executeDropStatements(connection, contributions.beforeTablesDropStatements()))
+            .thenMany(executeCreateStatements(connection, contributions.beforeTablesStatements()))
+            .then(createTables)
+            .thenMany(executeCreateStatements(connection, contributions.createStatements()))
+            .then();
+    }
+
+    private Flux<Void> executeDropStatements(Connection connection, List<String> statements) {
+        return Flux.fromIterable(statements)
             .concatMap(sql -> {
                 if (DataSettings.QUERY_LOG.isDebugEnabled()) {
                     DataSettings.QUERY_LOG.debug("Executing DROP statement: \n{}", sql);
@@ -177,12 +192,6 @@ public class R2dbcSchemaGenerator {
                         return Mono.empty();
                     });
             });
-        Mono<Void> tables = entities.length > 0 ? generateTables(connection, configuration, entities, builder) : Mono.empty();
-        return dropContributions
-            .thenMany(executeCreateStatements(connection, contributions.beforeTablesStatements()))
-            .then(tables)
-            .thenMany(executeCreateStatements(connection, contributions.createStatements()))
-            .then();
     }
 
     private Flux<Void> executeCreateStatements(Connection connection, List<String> statements) {
@@ -201,11 +210,10 @@ public class R2dbcSchemaGenerator {
             });
     }
 
-    private Mono<Void> generateTables(Connection connection,
-                                      DataR2dbcConfiguration configuration,
-                                      PersistentEntity[] entities,
-                                      SqlQueryBuilder builder) {
-        SchemaGenerate schemaGenerate = configuration.getSchemaGenerate();
+    private Mono<Void> createTables(Connection connection,
+                                    DataR2dbcConfiguration configuration,
+                                    PersistentEntity[] entities,
+                                    SqlQueryBuilder builder) {
         List<String> createStatements = Arrays.asList(
             builder.buildCreateTableStatements(definitionProviders, entities, builder.getDialect())
         );
@@ -224,15 +232,9 @@ public class R2dbcSchemaGenerator {
                 });
         // Oracle R2DBC doesn't execute several statements in one string
         if (configuration.getDialect().allowBatch() && configuration.getDialect() != Dialect.ORACLE && configuration.isBatchGenerate()) {
-            return generateBatch(connection, schemaGenerate, entities, builder, createStatements, createTablesFlow.then());
+            return createTablesInBatch(connection, createStatements, createTablesFlow.then());
         }
-        return switch (schemaGenerate) {
-            case CREATE_DROP -> dropTablesOneByOne(connection, entities, builder)
-                    .thenMany(createTablesFlow)
-                    .then();
-            default -> createTablesFlow
-                    .then();
-        };
+        return createTablesFlow.then();
     }
 
     private Mono<Void> dropTablesOneByOne(Connection connection,
@@ -251,13 +253,12 @@ public class R2dbcSchemaGenerator {
                 .then();
     }
 
-    private Mono<Void> generateBatch(Connection connection,
-                                     SchemaGenerate schemaGenerate,
-                                     PersistentEntity[] entities,
-                                     SqlQueryBuilder builder,
-                                     List<String> createStatements,
-                                     Mono<Void> createTablesOneByOne) {
-        Mono<Void> createTables = Mono.defer(() -> {
+    private Mono<Void> createTablesInBatch(Connection connection,
+                                           List<String> createStatements,
+                                           Mono<Void> createTablesOneByOne) {
+        // The tables are dropped one by one before, ignoring the failures: in a batch, a table that doesn't exist yet
+        // would prevent the next tables from being dropped, and the creation would keep their old data
+        return Mono.defer(() -> {
             // The same statements as without batch generation, which don't repeat a schema or a join table
             // shared by several entities. They are executed together: each one needs to be terminated
             String sql = createStatements.stream()
@@ -275,14 +276,6 @@ public class R2dbcSchemaGenerator {
             }
             return createTablesOneByOne;
         });
-        return switch (schemaGenerate) {
-            // The tables are dropped one by one, ignoring the failures: in a batch, a table that doesn't exist yet
-            // would prevent the next tables from being dropped, and the creation would keep their old data
-            case CREATE_DROP -> dropTablesOneByOne(connection, entities, builder)
-                .then(createTables);
-            case CREATE -> createTables;
-            default -> Mono.empty();
-        };
     }
 
     private Mono<Void> execute(Connection connection, String sql) {

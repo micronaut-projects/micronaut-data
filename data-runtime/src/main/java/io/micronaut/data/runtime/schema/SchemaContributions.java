@@ -28,15 +28,17 @@ import java.util.List;
  * The contributions of the {@link SchemaContributor} beans to the schema generation of one data source.
  *
  * @param tableEntities          The entities whose tables the schema generator generates
- * @param dropStatements         The drop statements, run first with {@code CREATE_DROP}
- * @param beforeTablesStatements The statements run before the tables are created
- * @param createStatements       The statements run after the tables are created
+ * @param dropStatements             The drop statements, run with {@code CREATE_DROP} before the tables are dropped
+ * @param beforeTablesDropStatements The drop statements run with {@code CREATE_DROP} after the tables are dropped
+ * @param beforeTablesStatements     The statements run before the tables are created
+ * @param createStatements           The statements run after the tables are created
  * @author graemerocher
  * @since 5.3.0
  */
 @Internal
 public record SchemaContributions(PersistentEntity[] tableEntities,
                                   List<String> dropStatements,
+                                  List<String> beforeTablesDropStatements,
                                   List<String> beforeTablesStatements,
                                   List<String> createStatements) {
 
@@ -50,6 +52,7 @@ public record SchemaContributions(PersistentEntity[] tableEntities,
     public static SchemaContributions of(Collection<? extends SchemaContributor> contributors, SchemaContext context) {
         List<PersistentEntity> remaining = new ArrayList<>(context.entities());
         List<String> drop = new ArrayList<>();
+        List<String> beforeTablesDrop = new ArrayList<>();
         List<String> beforeTables = new ArrayList<>();
         List<String> create = new ArrayList<>();
         boolean generates = context.schemaGenerate() == SchemaGenerate.CREATE || context.schemaGenerate() == SchemaGenerate.CREATE_DROP;
@@ -60,37 +63,46 @@ public record SchemaContributions(PersistentEntity[] tableEntities,
                 continue;
             }
             if (context.schemaGenerate() == SchemaGenerate.CREATE_DROP) {
-                drop.addAll(contributor.buildDropStatements(context, selected));
+                // in reverse contributor order, since a later contributor's objects can depend on an earlier one's,
+                // keeping the order of each contributor's own statements
+                drop.addAll(0, contributor.buildDropStatements(context, selected));
+                beforeTablesDrop.addAll(0, contributor.buildBeforeTablesDropStatements(context, selected));
             }
             beforeTables.addAll(contributor.buildBeforeTablesStatements(context, selected));
             create.addAll(contributor.buildCreateStatements(context, selected));
         }
-        return new SchemaContributions(remaining.toArray(PersistentEntity[]::new), List.copyOf(drop), List.copyOf(beforeTables), List.copyOf(create));
+        return new SchemaContributions(remaining.toArray(PersistentEntity[]::new), List.copyOf(drop), List.copyOf(beforeTablesDrop),
+            List.copyOf(beforeTables), List.copyOf(create));
     }
 
     /**
      * @return Whether there are no tables to generate and no contributed statements
      */
     public boolean isEmpty() {
-        return tableEntities.length == 0 && dropStatements.isEmpty() && beforeTablesStatements.isEmpty() && createStatements.isEmpty();
+        return tableEntities.length == 0 && dropStatements.isEmpty() && beforeTablesDropStatements.isEmpty()
+            && beforeTablesStatements.isEmpty() && createStatements.isEmpty();
     }
 
     @Override
     public boolean equals(Object o) {
-        return o instanceof SchemaContributions(PersistentEntity[] otherTables, List<String> otherDrop, List<String> otherBeforeTables, List<String> otherCreate)
+        return o instanceof SchemaContributions(PersistentEntity[] otherTables, List<String> otherDrop, List<String> otherBeforeTablesDrop,
+                                                List<String> otherBeforeTables, List<String> otherCreate)
             && Arrays.equals(tableEntities, otherTables)
             && dropStatements.equals(otherDrop)
+            && beforeTablesDropStatements.equals(otherBeforeTablesDrop)
             && beforeTablesStatements.equals(otherBeforeTables)
             && createStatements.equals(otherCreate);
     }
 
     @Override
     public int hashCode() {
-        return 31 * Arrays.hashCode(tableEntities) + dropStatements.hashCode() + beforeTablesStatements.hashCode() * 7 + createStatements.hashCode() * 17;
+        return 31 * Arrays.hashCode(tableEntities) + dropStatements.hashCode() + beforeTablesDropStatements.hashCode() * 3
+            + beforeTablesStatements.hashCode() * 7 + createStatements.hashCode() * 17;
     }
 
     @Override
     public String toString() {
-        return "SchemaContributions{tables=" + tableEntities.length + ", drop=" + dropStatements + ", beforeTables=" + beforeTablesStatements + ", create=" + createStatements + "}";
+        return "SchemaContributions{tables=" + tableEntities.length + ", drop=" + dropStatements + ", beforeTablesDrop=" + beforeTablesDropStatements
+            + ", beforeTables=" + beforeTablesStatements + ", create=" + createStatements + "}";
     }
 }

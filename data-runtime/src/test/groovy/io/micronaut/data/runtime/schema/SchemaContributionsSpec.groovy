@@ -78,28 +78,66 @@ class SchemaContributionsSpec extends Specification {
         context.entities() == [book]
     }
 
+    void "drops run in reverse contributor order, keeping each contributor's own order"() {
+        given:
+        def tables = new SchemaContributor() {
+            @Override
+            List<String> buildBeforeTablesDropStatements(SchemaContext context, List<PersistentEntity> entities) {
+                return ['DROP DOMAIN d']
+            }
+
+            @Override
+            List<String> buildDropStatements(SchemaContext context, List<PersistentEntity> entities) {
+                return ['DROP TABLE t2', 'DROP TABLE t1']
+            }
+        }
+        def views = new SchemaContributor() {
+            @Override
+            List<String> buildBeforeTablesDropStatements(SchemaContext context, List<PersistentEntity> entities) {
+                return ['DROP DOMAIN e']
+            }
+
+            @Override
+            List<String> buildDropStatements(SchemaContext context, List<PersistentEntity> entities) {
+                return ['DROP VIEW v']
+            }
+        }
+
+        when:
+        def contributions = SchemaContributions.of([tables, views], context(SchemaGenerate.CREATE_DROP))
+
+        then: "the view over the earlier contributor's table is dropped first"
+        contributions.dropStatements() == ['DROP VIEW v', 'DROP TABLE t2', 'DROP TABLE t1']
+        contributions.beforeTablesDropStatements() == ['DROP DOMAIN e', 'DROP DOMAIN d']
+
+        and: "without CREATE_DROP nothing is dropped"
+        SchemaContributions.of([tables, views], context(SchemaGenerate.CREATE)).beforeTablesDropStatements().isEmpty()
+    }
+
     void "contributions are equal when their tables and statements are"() {
         given:
-        def contributions = new SchemaContributions([book] as PersistentEntity[], ['DROP'], ['BEFORE'], ['CREATE'])
-        def same = new SchemaContributions([book] as PersistentEntity[], ['DROP'], ['BEFORE'], ['CREATE'])
+        def contributions = new SchemaContributions([book] as PersistentEntity[], ['DROP'], ['UNDO'], ['BEFORE'], ['CREATE'])
+        def same = new SchemaContributions([book] as PersistentEntity[], ['DROP'], ['UNDO'], ['BEFORE'], ['CREATE'])
 
         expect:
         contributions == same
         contributions.hashCode() == same.hashCode()
-        contributions != new SchemaContributions([author] as PersistentEntity[], ['DROP'], ['BEFORE'], ['CREATE'])
-        contributions != new SchemaContributions([book] as PersistentEntity[], [], ['BEFORE'], ['CREATE'])
-        contributions != new SchemaContributions([book] as PersistentEntity[], ['DROP'], [], ['CREATE'])
-        contributions != new SchemaContributions([book] as PersistentEntity[], ['DROP'], ['BEFORE'], [])
+        contributions != new SchemaContributions([author] as PersistentEntity[], ['DROP'], ['UNDO'], ['BEFORE'], ['CREATE'])
+        contributions != new SchemaContributions([book] as PersistentEntity[], [], ['UNDO'], ['BEFORE'], ['CREATE'])
+        contributions != new SchemaContributions([book] as PersistentEntity[], ['DROP'], [], ['BEFORE'], ['CREATE'])
+        contributions != new SchemaContributions([book] as PersistentEntity[], ['DROP'], ['UNDO'], [], ['CREATE'])
+        contributions != new SchemaContributions([book] as PersistentEntity[], ['DROP'], ['UNDO'], ['BEFORE'], [])
         !contributions.equals('CREATE')
-        contributions.toString() == 'SchemaContributions{tables=1, drop=[DROP], beforeTables=[BEFORE], create=[CREATE]}'
+        contributions.toString() == 'SchemaContributions{tables=1, drop=[DROP], beforeTablesDrop=[UNDO], beforeTables=[BEFORE], create=[CREATE]}'
     }
 
     void "contributions without tables or statements are empty"() {
         expect:
-        new SchemaContributions(new PersistentEntity[0], [], [], []).isEmpty()
-        !new SchemaContributions(new PersistentEntity[0], ['DROP'], [], []).isEmpty()
-        !new SchemaContributions(new PersistentEntity[0], [], ['BEFORE'], []).isEmpty()
-        !new SchemaContributions(new PersistentEntity[0], [], [], ['CREATE']).isEmpty()
+        new SchemaContributions(new PersistentEntity[0], [], [], [], []).isEmpty()
+        !new SchemaContributions(new PersistentEntity[0], ['DROP'], [], [], []).isEmpty()
+        !new SchemaContributions(new PersistentEntity[0], [], ['UNDO'], [], []).isEmpty()
+        !new SchemaContributions(new PersistentEntity[0], [], [], ['BEFORE'], []).isEmpty()
+        !new SchemaContributions(new PersistentEntity[0], [], [], [], ['CREATE']).isEmpty()
     }
 
     private SchemaContext context(SchemaGenerate schemaGenerate) {

@@ -15,6 +15,7 @@
  */
 package io.micronaut.data.runtime.schema;
 
+import io.micronaut.core.annotation.Experimental;
 import io.micronaut.data.model.PersistentEntity;
 import io.micronaut.data.model.query.builder.sql.Dialect;
 import io.micronaut.data.runtime.config.SchemaGenerate;
@@ -35,6 +36,7 @@ import java.util.Objects;
  * @author graemerocher
  * @since 5.3.0
  */
+@Experimental
 public record SchemaContext(String dataSourceName,
                             Dialect dialect,
                             @Nullable String dialectVersion,
