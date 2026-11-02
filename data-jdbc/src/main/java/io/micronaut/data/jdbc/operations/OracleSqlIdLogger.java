@@ -33,7 +33,8 @@ import java.sql.Statement;
 @Internal
 final class OracleSqlIdLogger {
 
-    private static final boolean ORACLE_JDBC_PRESENT = ClassUtils.isPresent("oracle.jdbc.OracleStatement", OracleSqlIdLogger.class.getClassLoader());
+    // false once a driver older than 23, without OracleStatement.getSqlId(), is found
+    static volatile boolean sqlIdSupported = ClassUtils.isPresent("oracle.jdbc.OracleStatement", OracleSqlIdLogger.class.getClassLoader());
 
     private OracleSqlIdLogger() {
     }
@@ -56,19 +57,22 @@ final class OracleSqlIdLogger {
      * Resolves the SQL ID of an Oracle statement.
      *
      * @param statement The statement
-     * @return The SQL ID, or {@code null} if the statement is not an Oracle statement
+     * @return The SQL ID, or {@code null} if the statement is not an Oracle statement or the Oracle JDBC driver is
+     * older than 23
      */
     static @Nullable String sqlId(Statement statement) {
-        if (!ORACLE_JDBC_PRESENT) {
+        if (!sqlIdSupported) {
             return null;
         }
         try {
             if (statement.isWrapperFor(OracleStatement.class)) {
                 return statement.unwrap(OracleStatement.class).getSqlId();
             }
+        } catch (LinkageError _) {
+            // ojdbc older than 23 has no OracleStatement.getSqlId(): a NoSuchMethodError, which isn't tried again
+            sqlIdSupported = false;
         } catch (SQLException | RuntimeException _) {
             // the SQL ID is diagnostic only, so a driver that cannot provide it is ignored
-            return null;
         }
         return null;
     }

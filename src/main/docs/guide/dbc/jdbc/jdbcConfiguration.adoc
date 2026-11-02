@@ -14,7 +14,7 @@ You can enable SQL logging by enabling trace logging for the `io.micronaut.data.
 <logger name="io.micronaut.data.query" level="trace" />
 ----
 
-With Oracle, the logger also writes the SQL ID of each statement at debug level, for example `Oracle SQL ID: 6973n8gn5dwvt`. Use it to find the statement in `V$SQL`, AWR or SQL Monitor reports.
+With Oracle, the logger also writes the SQL ID of each statement that Micronaut Data JDBC prepares, including `RETURNING` statements, upserts and `@Procedure` calls, at debug level, for example `Oracle SQL ID: 6973n8gn5dwvt`. Use it to find the statement in `V$SQL`, AWR or SQL Monitor reports. The SQL ID needs the Oracle JDBC driver 23 or later; with an older driver, it isn't logged.
 
 === Creating the Schema
 
