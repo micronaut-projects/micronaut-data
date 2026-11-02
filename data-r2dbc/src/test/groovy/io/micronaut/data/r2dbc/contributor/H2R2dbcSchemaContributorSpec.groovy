@@ -1,4 +1,4 @@
-package io.micronaut.data.r2dbc.h2.contributor
+package io.micronaut.data.r2dbc.contributor
 
 import io.micronaut.context.ApplicationContext
 import io.micronaut.context.annotation.Requires
