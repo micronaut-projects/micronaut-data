@@ -301,7 +301,7 @@ public class SchemaGenerator {
             for (String statement : statements) {
                 String sql = resolveSql(propertyPlaceholderResolver, statement);
                 if (DataSettings.QUERY_LOG.isDebugEnabled()) {
-                    DataSettings.QUERY_LOG.debug(message + ": \n{}", sql);
+                    DataSettings.QUERY_LOG.debug("{}: \n{}", message, sql);
                 }
                 try (PreparedStatement ps = connection.prepareStatement(sql)) {
                     ps.executeUpdate();
