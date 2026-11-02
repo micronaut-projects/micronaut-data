@@ -189,6 +189,8 @@ public class CypherQueryBuilder implements GraphQueryBuilder {
     private static final String NOT_OPEN = "NOT (";
     private static final String CLOSE_AS_RESULT = ") AS result";
     private static final String SET = " SET ";
+    private static final String CREATE_OPEN = "CREATE (";
+    private static final String COUNT_OPEN = "count(";
     private static final String RETURN_COUNT_RESULT = " RETURN count(*) AS result";
     private static final String DETACH_DELETE = " DETACH DELETE ";
     private static final String EXISTING = "existing";
@@ -372,7 +374,7 @@ public class CypherQueryBuilder implements GraphQueryBuilder {
         StringBuilder query = new StringBuilder();
         boolean nativeId = identity != null && GraphEntities.isNativeId(identity);
         if (identity == null || (nativeId && !idPresent)) {
-            query.append("CREATE (").append(ROOT).append(labels).append(')');
+            query.append(CREATE_OPEN).append(ROOT).append(labels).append(')');
         } else if (nativeId) {
             query.append(MATCH_OPEN).append(ROOT).append(labels).append(CLOSE_WHERE)
                 .append(identityExpression(identity, ROOT)).append(" = $").append(ID_PARAMETER);
@@ -450,7 +452,7 @@ public class CypherQueryBuilder implements GraphQueryBuilder {
         String labels = labelExpression(entity);
         StringBuilder query = new StringBuilder("OPTIONAL MATCH (").append(EXISTING).append(labels).append(CLOSE_WHERE)
             .append(identityExpression(identity, EXISTING)).append(" = $").append(ID_PARAMETER)
-            .append(WITH).append("count(").append(EXISTING).append(") AS found WHERE found = 0")
+            .append(WITH).append(COUNT_OPEN).append(EXISTING).append(") AS found WHERE found = 0")
             .append(" CREATE (").append(ROOT).append(labels).append(" {")
             .append(GraphEntities.escapeName(GraphEntities.propertyName(identity))).append(": $").append(ID_PARAMETER).append("})");
         appendSetProperties(query, ROOT, propertyNames);
@@ -539,8 +541,8 @@ public class CypherQueryBuilder implements GraphQueryBuilder {
         StringBuilder query = new StringBuilder("OPTIONAL MATCH (").append(EXISTING).append(labels).append(CLOSE_WHERE)
             .append(identityExpression(identity, EXISTING)).append(" IN [").append(ROW).append(" IN $").append(ROWS_PARAMETER)
             .append(" | ").append(ROW).append('.').append(ID_PARAMETER).append(']')
-            .append(WITH).append("count(").append(EXISTING).append(") AS found WHERE found = 0 ").append(UNWIND_ROWS)
-            .append("CREATE (").append(ROOT).append(labels).append(" {")
+            .append(WITH).append(COUNT_OPEN).append(EXISTING).append(") AS found WHERE found = 0 ").append(UNWIND_ROWS)
+            .append(CREATE_OPEN).append(ROOT).append(labels).append(" {")
             .append(GraphEntities.escapeName(GraphEntities.propertyName(identity))).append(": ").append(ROW).append('.').append(ID_PARAMETER).append("})");
         return appendSetRowProperties(query, identity, propertyNames);
     }
@@ -560,7 +562,7 @@ public class CypherQueryBuilder implements GraphQueryBuilder {
         String labels = labelExpression(entity);
         String row = ROW;
         if (identity == null || (GraphEntities.isNativeId(identity) && !idPresent)) {
-            query.append("CREATE (").append(ROOT).append(labels).append(')');
+            query.append(CREATE_OPEN).append(ROOT).append(labels).append(')');
         } else if (GraphEntities.isNativeId(identity) || versioned) {
             query.append(MATCH_OPEN).append(ROOT).append(labels).append(CLOSE_WHERE)
                 .append(identityExpression(identity, ROOT)).append(" = ").append(row).append('.').append(ID_PARAMETER);
@@ -1425,7 +1427,7 @@ public class CypherQueryBuilder implements GraphQueryBuilder {
                 case LOWER -> appendFunction("toLower", expression);
                 case LENGTH -> appendFunction("size", expression);
                 case COUNT -> {
-                    out.append("count(");
+                    out.append(COUNT_OPEN);
                     if (expression instanceof PersistentEntityRoot<?> && state.hasPatterns()) {
                         out.append(DISTINCT);
                     }
