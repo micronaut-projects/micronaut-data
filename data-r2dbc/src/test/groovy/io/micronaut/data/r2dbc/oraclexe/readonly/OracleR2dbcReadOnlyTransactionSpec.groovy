@@ -5,7 +5,6 @@ import io.micronaut.data.r2dbc.oraclexe.OracleXETestPropertyProvider
 import io.micronaut.data.r2dbc.transaction.R2dbcReactorTransactionOperations
 import io.micronaut.transaction.TransactionDefinition
 import io.micronaut.transaction.support.DefaultTransactionDefinition
-import io.r2dbc.spi.Connection
 import io.r2dbc.spi.Result
 import reactor.core.publisher.Flux
 import reactor.core.publisher.Mono
