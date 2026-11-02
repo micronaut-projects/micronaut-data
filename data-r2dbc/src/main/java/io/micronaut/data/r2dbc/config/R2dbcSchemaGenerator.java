@@ -136,11 +136,19 @@ public class R2dbcSchemaGenerator {
         }
     }
 
-    private static @Nullable String detectVersion(Connection connection, String dataSourceName) {
-        String version = SqlDialectOptionsConfiguration.parseMajorMinor(connection.getMetadata().getDatabaseVersion());
+    static @Nullable String detectVersion(Connection connection, String dataSourceName) {
+        String versionText;
+        try {
+            versionText = connection.getMetadata().getDatabaseVersion();
+        } catch (RuntimeException e) {
+            // Oracle R2DBC rethrows a SQLException of the JDBC metadata as an R2dbcException
+            LOG.warn("Unable to detect the database version of datasource [{}]: schema generation uses no target version", dataSourceName, e);
+            return null;
+        }
+        String version = SqlDialectOptionsConfiguration.parseMajorMinor(versionText);
         if (version == null) {
             LOG.warn("Unable to detect the database version of datasource [{}] from [{}]: schema generation uses no target version",
-                dataSourceName, connection.getMetadata().getDatabaseVersion());
+                dataSourceName, versionText);
         } else if (LOG.isInfoEnabled()) {
             LOG.info("Schema generation for datasource [{}] targets the detected database version {}", dataSourceName, version);
         }
