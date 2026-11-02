@@ -1767,9 +1767,9 @@ public abstract class AbstractGraphRepositoryOperations extends AbstractReposito
             if (batch.idPresent() || identity == null || !GraphEntities.isNativeId(identity)) {
                 return;
             }
-            for (GraphRecord record : records) {
-                Data d = nodes.get(((Number) Objects.requireNonNull(record.get(CypherQueryBuilder.ROW_POSITION))).intValue());
-                d.entity = updateEntityId((BeanProperty<T, Object>) identity.getProperty(), d.entity, batchGeneratedId(persistentEntity, record));
+            for (GraphRecord graphRecord : records) {
+                Data d = nodes.get(((Number) Objects.requireNonNull(graphRecord.get(CypherQueryBuilder.ROW_POSITION))).intValue());
+                d.entity = updateEntityId(identity.getProperty(), d.entity, batchGeneratedId(persistentEntity, graphRecord));
             }
         }
     }

@@ -229,20 +229,7 @@ final class DefaultAgeRepositoryOperations extends AbstractGraphRepositoryOperat
                 return work.apply(session(connection, graph));
             }
             connection.setAutoCommit(false);
-            try {
-                R result = work.apply(session(connection, graph));
-                connection.commit();
-                return result;
-            } catch (RuntimeException e) {
-                try {
-                    connection.rollback();
-                } catch (SQLException rollbackError) {
-                    e.addSuppressed(rollbackError);
-                }
-                throw e;
-            } finally {
-                connection.setAutoCommit(true);
-            }
+            return commitOrRollback(connection, graph, work);
         } catch (SQLException e) {
             throw new DataAccessException("Error running an Apache AGE write in a transaction: " + e.getMessage(), e);
         }
@@ -253,6 +240,27 @@ final class DefaultAgeRepositoryOperations extends AbstractGraphRepositoryOperat
         // Joins the current transaction, or begins one so that the statements of the write commit or roll back together
         String graph = currentGraph();
         return transactionOperations.executeWrite(status -> work.apply(session(status.getConnection(), graph)));
+    }
+
+    private <R> R commitOrRollback(Connection connection, String graph, Function<GraphSession, R> work) throws SQLException {
+        try {
+            R result = work.apply(session(connection, graph));
+            connection.commit();
+            return result;
+        } catch (RuntimeException e) {
+            rollback(connection, e);
+            throw e;
+        } finally {
+            connection.setAutoCommit(true);
+        }
+    }
+
+    private static void rollback(Connection connection, RuntimeException cause) {
+        try {
+            connection.rollback();
+        } catch (SQLException rollbackError) {
+            cause.addSuppressed(rollbackError);
+        }
     }
 
     private <R> R run(AnnotationMetadata annotationMetadata, Function<GraphSession, R> work) {
