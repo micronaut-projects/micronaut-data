@@ -76,6 +76,23 @@ public interface SearchTransport {
     }
 
     /**
+     * The failure of a create-only write: a {@link io.micronaut.data.exceptions.DataAccessException} when the
+     * store reports a conflict (HTTP 409), the store's own exception otherwise.
+     *
+     * @param index The index
+     * @param id The document id
+     * @param status The HTTP status the store answered with
+     * @param failure The store's exception
+     * @return The exception to throw
+     */
+    static RuntimeException createFailure(String index, @Nullable String id, int status, RuntimeException failure) {
+        if (status == 409) {
+            return new io.micronaut.data.exceptions.DataAccessException("A document with id " + id + " already exists in index " + index, failure);
+        }
+        return failure;
+    }
+
+    /**
      * Gets a document by id.
      *
      * @param index The index
