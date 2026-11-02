@@ -16,6 +16,8 @@
 package io.micronaut.data.jdbc.annotation;
 
 import io.micronaut.core.annotation.Experimental;
+import io.micronaut.data.annotation.ChangeListener;
+import io.micronaut.data.intercept.annotation.ChangeListenerProvider;
 
 import java.lang.annotation.Documented;
 import java.lang.annotation.ElementType;
@@ -55,6 +57,7 @@ import java.lang.annotation.Target;
  */
 @Documented
 @Experimental
+@ChangeListenerProvider
 @Retention(RetentionPolicy.RUNTIME)
 @Target(ElementType.METHOD)
 public @interface PostgresChangeNotification {

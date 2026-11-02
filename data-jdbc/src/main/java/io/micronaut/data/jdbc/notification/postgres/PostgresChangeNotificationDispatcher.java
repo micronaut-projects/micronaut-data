@@ -15,9 +15,9 @@
  */
 package io.micronaut.data.jdbc.notification.postgres;
 
-import io.micronaut.data.jdbc.notification.ChangeEvent;
-import io.micronaut.data.jdbc.notification.ChangeOperation;
 import io.micronaut.data.jdbc.notification.DefaultChangeEvent;
+import io.micronaut.data.notification.ChangeEvent;
+import io.micronaut.data.notification.ChangeOperation;
 import io.micronaut.scheduling.TaskScheduler;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;

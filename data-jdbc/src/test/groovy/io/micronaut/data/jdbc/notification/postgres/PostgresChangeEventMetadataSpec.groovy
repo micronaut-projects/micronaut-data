@@ -15,9 +15,9 @@
  */
 package io.micronaut.data.jdbc.notification.postgres
 
-import io.micronaut.data.jdbc.notification.ChangeOperation
 import io.micronaut.data.jdbc.notification.DefaultChangeEvent
 import io.micronaut.data.jdbc.notification.oracle.OracleChangeEventMetadata
+import io.micronaut.data.notification.ChangeOperation
 import spock.lang.Specification
 
 class PostgresChangeEventMetadataSpec extends Specification {

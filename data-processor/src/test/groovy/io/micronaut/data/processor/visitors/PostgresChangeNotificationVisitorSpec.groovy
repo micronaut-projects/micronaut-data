@@ -17,7 +17,7 @@ package io.micronaut.data.processor.visitors
 
 import io.micronaut.annotation.processing.test.AbstractTypeElementSpec
 import io.micronaut.data.intercept.annotation.PostgresChangeListenerQuery
-import io.micronaut.data.jdbc.notification.ChangeEvent
+import io.micronaut.data.notification.ChangeEvent
 import spock.lang.Unroll
 
 class PostgresChangeNotificationVisitorSpec extends AbstractTypeElementSpec {
@@ -203,9 +203,9 @@ class BookIdConverter implements io.micronaut.data.model.runtime.convert.Attribu
 package test;
 import io.micronaut.data.annotation.Id;
 import io.micronaut.data.annotation.MappedEntity;
-import io.micronaut.data.jdbc.annotation.ChangeListener;
+import io.micronaut.data.annotation.ChangeListener;
 import io.micronaut.data.jdbc.annotation.PostgresChangeNotification;
-import io.micronaut.data.jdbc.notification.ChangeEvent;
+import io.micronaut.data.notification.ChangeEvent;
 import jakarta.inject.Singleton;
 @MappedEntity
 class Book {

@@ -1,9 +1,9 @@
 Micronaut Data JDBC supports PostgreSQL table change notifications so applications can react
 when committed database changes affect a mapped entity table.
 
-Micronaut Data exposes a database-neutral listener contract through ann:data.jdbc.annotation.ChangeListener[] and
+Micronaut Data exposes a database-neutral listener contract through ann:data.annotation.ChangeListener[] and
 PostgreSQL notification settings through ann:data.jdbc.annotation.PostgresChangeNotification[].
-When a table trigger publishes a notification, the listener receives an api:data.jdbc.notification.ChangeEvent[]
+When a table trigger publishes a notification, the listener receives an api:data.notification.ChangeEvent[]
 containing the reported operation, optional current entity state, and optional provider-specific metadata.
 
 == Prerequisites
@@ -302,7 +302,7 @@ The following listener receives change events for the mapped `public.book` table
 
 snippet::example.BookCatalog[project-base="doc-examples/jdbc-postgres-notifications", source="main", tags="listener", languages="java,groovy,kotlin,python"]
 
-Every PostgreSQL listener must declare both ann:data.jdbc.annotation.ChangeListener[] and
+Every PostgreSQL listener must declare both ann:data.annotation.ChangeListener[] and
 ann:data.jdbc.annotation.PostgresChangeNotification[]. The required `channel` attribute names the exact channel
 used by the table triggers. Supply the case-sensitive channel name without SQL identifier quotes, using at most
 63 UTF-8 bytes. Blank names and names containing NUL characters are rejected during compilation.

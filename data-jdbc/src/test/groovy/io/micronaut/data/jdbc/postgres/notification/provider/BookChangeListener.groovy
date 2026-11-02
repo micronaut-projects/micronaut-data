@@ -16,15 +16,16 @@
 package io.micronaut.data.jdbc.postgres.notification.provider
 
 import io.micronaut.context.annotation.Requires
-import io.micronaut.data.jdbc.annotation.ChangeListener
+import io.micronaut.data.annotation.ChangeListener
 import io.micronaut.data.jdbc.annotation.PostgresChangeNotification
-import io.micronaut.data.jdbc.notification.ChangeEvent
+import io.micronaut.data.notification.ChangeEvent
 import io.micronaut.retry.annotation.Retryable
 import jakarta.inject.Singleton
-import java.util.concurrent.CountDownLatch
-import java.util.concurrent.TimeUnit
+
 import java.util.concurrent.BlockingQueue
+import java.util.concurrent.CountDownLatch
 import java.util.concurrent.LinkedBlockingQueue
+import java.util.concurrent.TimeUnit
 import java.util.concurrent.atomic.AtomicInteger
 
 @Singleton

@@ -16,11 +16,11 @@
 package io.micronaut.data.jdbc.postgres.notification.placeholder
 
 import io.micronaut.context.annotation.Requires
+import io.micronaut.data.annotation.ChangeListener
 import io.micronaut.data.annotation.Id
 import io.micronaut.data.annotation.MappedEntity
-import io.micronaut.data.jdbc.annotation.ChangeListener
 import io.micronaut.data.jdbc.annotation.PostgresChangeNotification
-import io.micronaut.data.jdbc.notification.ChangeEvent
+import io.micronaut.data.notification.ChangeEvent
 import jakarta.inject.Singleton
 
 import java.util.concurrent.LinkedBlockingQueue

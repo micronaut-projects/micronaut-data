@@ -1,17 +1,16 @@
-from threading import RLock
-
+from example.Book import Book
+from example.BookRepository import BookRepository
 from jakarta.inject import Singleton
 from java.util import Optional
 from micronaut.context.event import StartupEvent
 from micronaut.core.annotation import Order
 from micronaut.core.order import Ordered
-from micronaut.data.jdbc.annotation import ChangeListener, PostgresChangeNotification
-from micronaut.data.jdbc.notification import ChangeEvent, ChangeOperation
+from micronaut.data.annotation import ChangeListener
+from micronaut.data.jdbc.annotation import PostgresChangeNotification
 from micronaut.data.jdbc.notification.postgres import PostgresChangeEventMetadata
+from micronaut.data.notification import ChangeEvent, ChangeOperation
 from micronaut.runtime.event.annotation import EventListener
-
-from example.Book import Book
-from example.BookRepository import BookRepository
+from threading import RLock
 
 
 # tag::listener[]

@@ -17,11 +17,11 @@ package io.micronaut.data.jdbc.notification.postgres;
 
 import io.micronaut.context.BeanContext;
 import io.micronaut.context.env.Environment;
-import io.micronaut.data.jdbc.notification.ChangeEvent;
 import io.micronaut.data.jdbc.notification.ChangeListenerMethod;
 import io.micronaut.data.jdbc.notification.DefaultChangeEvent;
 import io.micronaut.data.jdbc.notification.DeferredChangeEvent;
 import io.micronaut.data.jdbc.operations.JdbcRepositoryOperations;
+import io.micronaut.data.notification.ChangeEvent;
 import io.micronaut.inject.ExecutableMethod;
 import io.micronaut.json.JsonMapper;
 import io.micronaut.scheduling.TaskScheduler;
@@ -40,9 +40,9 @@ import java.util.List;
 import java.util.Map;
 import java.util.concurrent.CompletableFuture;
 import java.util.concurrent.Executor;
-import java.util.concurrent.TimeUnit;
 import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Executors;
+import java.util.concurrent.TimeUnit;
 import java.util.stream.Collectors;
 
 /**
@@ -393,6 +393,7 @@ final class PostgresNotificationSubscription {
                 () -> listener.loader().reload(metadata.newKeys()));
             case DELETE, INVALIDATE ->
                 new DefaultChangeEvent<>(payload.operation(), null, metadata);
+            case TERMINATED -> throw new IllegalArgumentException("PostgreSQL notification payloads do not support TERMINATED");
         };
         dispatcher.submitDispatch(event);
     }

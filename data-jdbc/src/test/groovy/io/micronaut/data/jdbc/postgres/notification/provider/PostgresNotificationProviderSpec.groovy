@@ -18,31 +18,32 @@ package io.micronaut.data.jdbc.postgres.notification.provider
 import io.micronaut.context.ApplicationContext
 import io.micronaut.context.annotation.Requires
 import io.micronaut.context.event.ShutdownEvent
+import io.micronaut.data.annotation.ChangeListener
 import io.micronaut.data.annotation.Embeddable
 import io.micronaut.data.annotation.EmbeddedId
 import io.micronaut.data.annotation.Id
 import io.micronaut.data.annotation.MappedEntity
 import io.micronaut.data.annotation.MappedProperty
 import io.micronaut.data.connection.jdbc.advice.DelegatingDataSource
-import io.micronaut.data.jdbc.annotation.ChangeListener
 import io.micronaut.data.jdbc.annotation.PostgresChangeNotification
 import io.micronaut.data.jdbc.notification.ChangeNotificationProvider
-import io.micronaut.data.jdbc.notification.ChangeEvent
-import io.micronaut.data.jdbc.notification.ChangeOperation
 import io.micronaut.data.jdbc.notification.postgres.PostgresChangeEventMetadata
 import io.micronaut.data.jdbc.postgres.PostgresTestPropertyProvider
+import io.micronaut.data.notification.ChangeEvent
+import io.micronaut.data.notification.ChangeOperation
 import io.micronaut.data.runtime.config.SchemaGenerate
+import jakarta.inject.Singleton
 import spock.lang.Specification
 import spock.lang.Unroll
 import spock.util.concurrent.PollingConditions
-import jakarta.inject.Singleton
+
 import javax.sql.DataSource
 import java.sql.Connection
 import java.util.concurrent.CompletableFuture
-import java.util.concurrent.TimeoutException
-import java.util.concurrent.TimeUnit
 import java.util.concurrent.CountDownLatch
 import java.util.concurrent.LinkedBlockingQueue
+import java.util.concurrent.TimeUnit
+import java.util.concurrent.TimeoutException
 
 class PostgresNotificationProviderSpec extends Specification implements PostgresTestPropertyProvider {
     private static final String TENANT = 'b3d93d9a-1b6c-40ae-a761-f15d6010ad67'

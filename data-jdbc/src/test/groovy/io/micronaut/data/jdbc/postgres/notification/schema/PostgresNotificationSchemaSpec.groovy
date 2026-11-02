@@ -17,30 +17,30 @@ package io.micronaut.data.jdbc.postgres.notification.schema
 
 import io.micronaut.context.ApplicationContext
 import io.micronaut.context.annotation.Requires
+import io.micronaut.data.annotation.ChangeListener
 import io.micronaut.data.annotation.Id
 import io.micronaut.data.annotation.MappedEntity
 import io.micronaut.data.annotation.MappedProperty
 import io.micronaut.data.connection.jdbc.advice.DelegatingDataSource
-import io.micronaut.data.jdbc.annotation.ChangeListener
 import io.micronaut.data.jdbc.annotation.PostgresChangeNotification
 import io.micronaut.data.jdbc.config.DataJdbcConfiguration
-import io.micronaut.data.jdbc.notification.postgres.PostgresNotificationSchemaGenerator
-import io.micronaut.data.model.runtime.RuntimeEntityRegistry
-import io.micronaut.data.model.PersistentEntity
-import io.micronaut.data.jdbc.notification.ChangeEvent
-import io.micronaut.data.jdbc.notification.ChangeOperation
 import io.micronaut.data.jdbc.notification.postgres.PostgresChangeEventMetadata
+import io.micronaut.data.jdbc.notification.postgres.PostgresNotificationSchemaGenerator
 import io.micronaut.data.jdbc.postgres.PostgresTestPropertyProvider
-import io.micronaut.data.jdbc.postgres.notification.placeholder.PlaceholderBookListener
 import io.micronaut.data.jdbc.postgres.notification.generated.UnqualifiedGeneratedBookListener
+import io.micronaut.data.jdbc.postgres.notification.placeholder.PlaceholderBookListener
+import io.micronaut.data.model.PersistentEntity
+import io.micronaut.data.model.runtime.RuntimeEntityRegistry
+import io.micronaut.data.notification.ChangeEvent
+import io.micronaut.data.notification.ChangeOperation
 import io.micronaut.data.runtime.config.SchemaGenerate
 import jakarta.inject.Singleton
 import spock.lang.Specification
 import spock.lang.Unroll
 
 import javax.sql.DataSource
-import java.sql.SQLException
 import java.sql.Connection
+import java.sql.SQLException
 import java.util.concurrent.LinkedBlockingQueue
 import java.util.concurrent.TimeUnit
 

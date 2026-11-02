@@ -17,6 +17,7 @@ package io.micronaut.data.processor.visitors;
 
 import io.micronaut.core.annotation.AnnotationMetadata;
 import io.micronaut.core.annotation.Internal;
+import io.micronaut.data.annotation.ChangeListener;
 import io.micronaut.data.annotation.MappedEntity;
 import io.micronaut.data.annotation.MappedProperty;
 import io.micronaut.data.annotation.Relation;
@@ -77,7 +78,7 @@ public final class PostgresChangeNotificationVisitor implements TypeElementVisit
         if (!element.hasStereotype(ANNOTATION)) {
             return;
         }
-        if (!element.hasStereotype(ChangeListenerVisitor.CHANGE_LISTENER)) {
+        if (!element.hasStereotype(ChangeListener.class)) {
             context.fail("@PostgresChangeNotification requires @ChangeListener", element);
             return;
         }

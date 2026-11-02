@@ -16,7 +16,7 @@
 package io.micronaut.data.jdbc.notification.postgres;
 
 import io.micronaut.core.type.Argument;
-import io.micronaut.data.jdbc.notification.ChangeOperation;
+import io.micronaut.data.notification.ChangeOperation;
 import io.micronaut.json.JsonMapper;
 import org.jspecify.annotations.Nullable;
 import java.io.IOException;
@@ -45,6 +45,7 @@ record PostgresNotificationPayload(ChangeOperation operation, PostgresChangeEven
             case UPDATE -> !oldKeys.isEmpty() && oldKeys.keySet().equals(newKeys.keySet());
             case DELETE -> !oldKeys.isEmpty() && newKeys.isEmpty();
             case INVALIDATE -> oldKeys.isEmpty() && newKeys.isEmpty();
+            case TERMINATED -> throw new IllegalArgumentException("PostgreSQL notification payloads do not support TERMINATED");
         };
         if (!valid) {
             throw new IllegalArgumentException("Invalid PostgreSQL notification keys for " + operation);

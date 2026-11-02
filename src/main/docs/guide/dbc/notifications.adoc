@@ -1,5 +1,5 @@
 Micronaut Data JDBC lets an application react to committed database changes through
-ann:data.jdbc.annotation.ChangeListener[]. Oracle and PostgreSQL share the listener contract described below;
+ann:data.annotation.ChangeListener[]. Oracle and PostgreSQL share the listener contract described below;
 the available notification capabilities and database setup differ.
 
 See <<oracleQueryNotifications, Oracle Change Notifications>> or
@@ -11,7 +11,7 @@ See <<oracleQueryNotifications, Oracle Change Notifications>> or
 The listener must be a Micronaut bean and must be proxyable; in particular,
 do not declare the listener class or listener method `final`.
 Micronaut Data validates the listener contract at compilation time. A method annotated with
-ann:data.jdbc.annotation.ChangeListener[] must:
+ann:data.annotation.ChangeListener[] must:
 
 * be a non-private, non-static instance method;
 * return `void`;
@@ -31,9 +31,9 @@ attribute, for example `@ChangeListener(dataSource = "library")`.
 [[notificationChangeEvents]]
 == Handling Change Events
 
-api:data.jdbc.notification.ChangeEvent[] provides:
+api:data.notification.ChangeEvent[] provides:
 
-* `operation()` -- the api:data.jdbc.notification.ChangeOperation[] reported for the event;
+* `operation()` -- the api:data.notification.ChangeOperation[] reported for the event;
 * `entity()` -- the current entity state, when it is available; and
 * `metadata(Class)` -- provider-specific metadata, when it is available.
 

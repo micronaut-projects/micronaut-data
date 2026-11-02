@@ -3,14 +3,14 @@ package example
 import io.micronaut.context.event.StartupEvent
 import io.micronaut.core.annotation.Order
 import io.micronaut.core.order.Ordered
-import io.micronaut.data.jdbc.annotation.ChangeListener
+import io.micronaut.data.annotation.ChangeListener
 import io.micronaut.data.jdbc.annotation.PostgresChangeNotification
-import io.micronaut.data.jdbc.notification.ChangeEvent
-import io.micronaut.data.jdbc.notification.ChangeOperation
 import io.micronaut.data.jdbc.notification.postgres.PostgresChangeEventMetadata
+import io.micronaut.data.notification.ChangeEvent
+import io.micronaut.data.notification.ChangeOperation
 import io.micronaut.runtime.event.annotation.EventListener
 import jakarta.inject.Singleton
-import java.util.Optional
+import java.util.*
 
 // tag::listener[]
 @Singleton
@@ -50,6 +50,7 @@ open class BookCatalog(private val repository: BookRepository) {
                 books.remove(metadata.oldKeys().getValue("id").toLong())
             }
             ChangeOperation.INVALIDATE -> refresh()
+            ChangeOperation.TERMINATED -> return
         }
         // tag::listener-signature[]
         // tag::listener[]

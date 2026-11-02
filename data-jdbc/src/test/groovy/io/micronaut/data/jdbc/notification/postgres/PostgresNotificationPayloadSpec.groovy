@@ -15,7 +15,7 @@
  */
 package io.micronaut.data.jdbc.notification.postgres
 
-import io.micronaut.data.jdbc.notification.ChangeOperation
+import io.micronaut.data.notification.ChangeOperation
 import io.micronaut.json.JsonMapper
 import spock.lang.Specification
 import spock.lang.Unroll
@@ -48,7 +48,8 @@ class PostgresNotificationPayloadSpec extends Specification {
                 [version: 2], [version: '1'], [operation: 'BOGUS'], [schema: ''], [table: null],
                 [oldKeys: [id: '1']], [newKeys: [:]], [newKeys: [id: 1]], [newKeys: [id: null]],
                 [newKeys: []], [newKeys: ['': '1']], [operation: 'DELETE'],
-                [operation: 'UPDATE', oldKeys: [different: '1']], [operation: 'INVALIDATE']
+                [operation: 'UPDATE', oldKeys: [different: '1']], [operation: 'INVALIDATE'],
+                [operation: 'TERMINATED', oldKeys: [:], newKeys: [:]]
         ]
     }
 
