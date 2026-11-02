@@ -1414,13 +1414,13 @@ public abstract class AbstractGraphRepositoryOperations extends AbstractReposito
             if (batch.idPresent() || identity == null || !GraphEntities.isNativeId(identity)) {
                 return;
             }
-            for (GraphRecord record : records) {
-                Data d = nodes.get(((Number) Objects.requireNonNull(record.get(CypherQueryBuilder.ROW_POSITION))).intValue());
-                Object generatedId = mapper.readValue(identity, record.get(CypherQueryBuilder.ID_PARAMETER));
+            for (GraphRecord graphRecord : records) {
+                Data d = nodes.get(((Number) Objects.requireNonNull(graphRecord.get(CypherQueryBuilder.ROW_POSITION))).intValue());
+                Object generatedId = mapper.readValue(identity, graphRecord.get(CypherQueryBuilder.ID_PARAMETER));
                 if (generatedId == null) {
                     throw new DataAccessException("The database returned no identifier for a new node of [" + persistentEntity.getSimpleName() + "]");
                 }
-                d.entity = updateEntityId((BeanProperty<T, Object>) identity.getProperty(), d.entity, generatedId);
+                d.entity = updateEntityId(identity.getProperty(), d.entity, generatedId);
             }
         }
     }
