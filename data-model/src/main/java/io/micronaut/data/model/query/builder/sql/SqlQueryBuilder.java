@@ -503,7 +503,7 @@ public class SqlQueryBuilder extends AbstractSqlLikeQueryBuilder {
         String schema = SqlQueryBuilderUtils.getSchemaName(entity);
 
         if (StringUtils.isNotEmpty(schema)) {
-            createStatements.add("CREATE SCHEMA " + (escape ? quote(schema, true) : schema) + ";");
+            createStatements.add(createSchemaStatement(schema, escape, true));
         }
 
         for (SqlTableMapping table : tables) {
@@ -559,8 +559,7 @@ public class SqlQueryBuilder extends AbstractSqlLikeQueryBuilder {
             }
             List<SqlTableMapping> tables = SqlSchemaUtils.getSqlTableMappings(definitionProviders, entity, dialect);
             if (StringUtils.isNotEmpty(schema)) {
-                String createSchemaStatement = "CREATE SCHEMA " + (escape ? quote(schema) : schema) + ";";
-                addToCollectionIfNotContains(createStatements, createSchemaStatement);
+                addToCollectionIfNotContains(createStatements, createSchemaStatement(schema, escape, false));
             }
             for (SqlTableMapping table : tables) {
                 addTable(table, sqlTableMappingByTableName);
@@ -2180,6 +2179,15 @@ public class SqlQueryBuilder extends AbstractSqlLikeQueryBuilder {
         associations.addAll(left);
         associations.addAll(right);
         return associations;
+    }
+
+    private String createSchemaStatement(String schema, boolean escape, boolean supportsDynamicValues) {
+        if (getDialect() == Dialect.ORACLE) {
+            // An Oracle schema is a user: CREATE SCHEMA does not create one. The identifier is rendered like the
+            // schema of the table statements, keeping property placeholders as written
+            return SqlSchemaNames.oracleCreateSchemaStatement(escape ? quote(schema, true) : schema, escape);
+        }
+        return "CREATE SCHEMA " + (escape ? quote(schema, supportsDynamicValues) : schema) + ";";
     }
 
     @Override

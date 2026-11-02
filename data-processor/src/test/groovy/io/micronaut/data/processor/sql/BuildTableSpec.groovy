@@ -19,6 +19,7 @@ import io.micronaut.data.model.PersistentEntity
 import io.micronaut.data.model.query.builder.sql.Dialect
 import io.micronaut.data.model.query.builder.sql.SqlDialectOptions
 import io.micronaut.data.model.query.builder.sql.SqlQueryBuilder
+import io.micronaut.data.model.query.builder.sql.SqlSchemaNames
 import io.micronaut.data.processor.visitors.AbstractDataSpec
 import io.micronaut.data.tck.entities.Restaurant
 import io.micronaut.data.tck.jdbc.entities.Employee
@@ -1461,6 +1462,38 @@ class Teacher {
         sql[1] == 'CREATE TABLE `students`.`m2m_student_course_association` (`st_id` BIGINT NOT NULL,`cs_id` BIGINT NOT NULL, PRIMARY KEY(`st_id`,`cs_id`));'
         sql[2] == 'CREATE TABLE `students`.`m2m_student_teacher_association` (`st_id` BIGINT NOT NULL,`te_id` BIGINT NOT NULL, PRIMARY KEY(`st_id`,`te_id`));'
         sql[3] == 'CREATE TABLE `students`.`m2m_student` (`id` BIGINT PRIMARY KEY AUTO_INCREMENT,`name` VARCHAR(255) NOT NULL);'
+
+        when: 'an Oracle schema is a user'
+        sql = new SqlQueryBuilder(Dialect.ORACLE).buildCreateTableStatements(entity)
+
+        then:
+        sql[0] == SqlSchemaNames.oracleCreateSchemaStatement('students')
+        sql[0].contains("'CREATE USER \"STUDENTS\" NO AUTHENTICATION")
+        !sql.any { it.startsWith('CREATE SCHEMA') }
+    }
+
+    void "test Oracle schema creation keeps a property placeholder as the table statements do"() {
+        given:
+        def entity = buildJpaEntity('test.Book', '''
+import io.micronaut.data.annotation.Id;
+import io.micronaut.data.annotation.MappedEntity;
+
+@MappedEntity(value = "ph_book", schema = "${prverify.schema}")
+class Book {
+    @Id
+    private Long id;
+    public Long getId() { return id; }
+    public void setId(Long id) { this.id = id; }
+}
+''')
+
+        when:
+        def sql = new SqlQueryBuilder(Dialect.ORACLE).buildCreateTableStatements([], [entity] as PersistentEntity[], Dialect.ORACLE)
+
+        then:
+        sql[0].contains('\'CREATE USER "${prverify.schema}" NO AUTHENTICATION')
+        sql[0].contains("WHERE username = '\${prverify.schema}';")
+        sql.any { it.startsWith('CREATE TABLE "${prverify.schema}"."PH_BOOK"') }
     }
 
     @Unroll

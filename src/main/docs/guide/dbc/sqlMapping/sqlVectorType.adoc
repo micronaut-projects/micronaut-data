@@ -41,7 +41,8 @@ Dialect notes:
 
 - PostgreSQL (pgvector): creates `ivfflat` or `hnsw` indexes. The operator class is derived from distance (`COSINE` -> `vector_cosine_ops`, `DOT` -> `vector_ip_ops`, `L1`/`L2` -> `vector_l1_ops`/`vector_l2_ops`).
   For sparse columns (`@VectorStorage(shape = VectorShape.SPARSE)`), Micronaut Data emits sparse operator classes (`sparsevec_*_ops`) and requires `HNSW`.
-- Oracle: creates `CREATE VECTOR INDEX` with `ORGANIZATION NEIGHBOR PARTITIONS` (`IVF`) or `GRAPH` (`HNSW`), plus distance and target accuracy settings.
+- Oracle: creates `CREATE VECTOR INDEX` with `ORGANIZATION NEIGHBOR PARTITIONS` (`IVF`) or `ORGANIZATION INMEMORY NEIGHBOR GRAPH` (`HNSW`), plus distance and target accuracy settings.
+  An `HNSW` index is held in the vector memory pool, which is empty unless the database sets `vector_memory_size`; without it, creating the index fails with `ORA-51962`. Schema generation logs that failure as a warning and continues without the index, so set `vector_memory_size` (for example `ALTER SYSTEM SET vector_memory_size = 512M SCOPE = SPFILE` and a restart), or use `IVF`.
 - MySQL: `@VectorIndex` is not supported and schema generation fails fast instead of creating a plain non-vector index.
 
 == Repository usage
