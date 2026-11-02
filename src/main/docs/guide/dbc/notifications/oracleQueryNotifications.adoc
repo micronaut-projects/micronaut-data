@@ -68,7 +68,8 @@ This cache updates individual entities for `INSERT` and `UPDATE`. For `DELETE`, 
 so the example reloads the cache instead of trying to interpret the Oracle Database `ROWID` as an entity ID.
 It also reloads the complete cache for `INVALIDATE`. For `TERMINATED`, the handler clears the cache and sets
 `cacheEnabled` to `false`, causing later callbacks to be ignored. The example's `find` method bypasses the disabled
-cache and reads directly from the repository.
+cache and reads directly from the repository. The application's other read paths should also honor this flag
+and bypass the cache when it is disabled.
 
 NOTE: Each listener serializes entity loading and callback execution on its worker. Synchronize cache access
 with other application threads; different listeners may run concurrently.

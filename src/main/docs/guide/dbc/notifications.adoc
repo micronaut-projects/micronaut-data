@@ -68,7 +68,7 @@ the cache and read directly from the database. This provider lifecycle event has
 Handle `TERMINATED` explicitly, separately from `INVALIDATE`, and keep notification-backed caches disabled after
 handling it. The database-specific sections describe when termination occurs.
 
-Event metadata is optional; check whether it is present before accessing it. The Oracle and PostgreSQL sections describe
+Event metadata is optional; check whether it is present before accessing it. The database-specific sections describe
 the available metadata and the conditions that produce invalidations.
 
 [[notificationEntityLoading]]
@@ -85,7 +85,7 @@ identifies the deleted row.
 For `INVALIDATE`, `entity()` is empty because the event does not describe an individual row. Refresh the affected
 application state, for example by reloading a cache or rerunning a query.
 
-The Oracle and PostgreSQL sections describe the available row identifiers and how Micronaut Data uses them
+The database-specific sections describe the available row identifiers and how Micronaut Data uses them
 to reload entities for `INSERT` and `UPDATE` events.
 
 [[notificationDeliveryAndConcurrency]]
@@ -116,8 +116,8 @@ one `INVALIDATE` callback. A callback already running finishes first. Further da
 that pending refresh until it starts. Notifications arriving during the refresh are queued normally and can cause
 another invalidation if the queue reaches its limit again.
 
-Explicit invalidations, including reconciliation after recovery, also replace waiting work. This prevents older
-queued row changes from being delivered after the refresh. Reconciliation does not replay discarded row notifications.
+Reconciliation after recovery also replaces waiting work. This prevents older queued row changes from being
+delivered after that refresh. Reconciliation does not replay discarded row notifications.
 The database-specific sections describe queue capacities and how notifications are grouped.
 
 Your listener should handle `INVALIDATE` by refreshing the affected application state, even if it normally processes
@@ -143,7 +143,7 @@ listener execution:
 Because a callback can run more than once, listener work should be idempotent. A recovery method can handle a failure
 after all retry attempts are exhausted, but recovery does not replay the database notification or restore the
 transaction that caused it. Database connection and registration recovery are configured separately in the
-Oracle and PostgreSQL sections.
+database-specific sections.
 
 With `@Async`, entity loading still runs on the listener worker before listener execution is scheduled on the async
 executor. Loading failures can be retried. Failures during async listener execution cannot reach retry or recovery advice
