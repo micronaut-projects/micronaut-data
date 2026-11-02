@@ -44,9 +44,13 @@ class LibraryCache {
 
     // tag::listener[]
     // tag::events[]
+    // tag::listener-signature[]
     @ChangeListener
+    // end::listener-signature[]
     @OracleChangeNotification
+    // tag::listener-signature[]
     synchronized void onLibraryChanged(ChangeEvent<Library> event) {
+        // end::listener-signature[]
         // end::listener[]
         if (!cacheEnabled) {
             return;
@@ -63,7 +67,9 @@ class LibraryCache {
             }
         }
         // tag::listener[]
+    // tag::listener-signature[]
     }
+    // end::listener-signature[]
     // end::listener[]
     // end::events[]
 

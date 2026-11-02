@@ -46,10 +46,14 @@ class LibraryCache:
 
     # tag::listener[]
     # tag::events[]
+    # tag::listener-signature[]
     @ChangeListener
+    # end::listener-signature[]
     @OracleChangeNotification
+    # tag::listener-signature[]
     def onLibraryChanged(self, event: ChangeEvent[Library]) -> None:
         pass
+        # end::listener-signature[]
         # end::listener[]
         metadata = event.metadata(OracleChangeEventMetadata).orElse(None)
         if metadata is not None:
