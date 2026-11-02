@@ -24,8 +24,10 @@ import io.micronaut.data.annotation.EmbeddedId
 import io.micronaut.data.annotation.Id
 import io.micronaut.data.annotation.MappedEntity
 import io.micronaut.data.annotation.MappedProperty
+import io.micronaut.data.annotation.Where
 import io.micronaut.data.connection.jdbc.advice.DelegatingDataSource
 import io.micronaut.data.jdbc.annotation.PostgresChangeNotification
+import io.micronaut.data.jdbc.notification.ChangeListenerRegistry
 import io.micronaut.data.jdbc.notification.ChangeNotificationProvider
 import io.micronaut.data.jdbc.notification.postgres.PostgresChangeEventMetadata
 import io.micronaut.data.jdbc.postgres.PostgresTestPropertyProvider
@@ -41,6 +43,7 @@ import spock.util.concurrent.PollingConditions
 import javax.sql.DataSource
 import java.sql.Connection
 import java.util.concurrent.CompletableFuture
+import java.util.concurrent.ConcurrentHashMap
 import java.util.concurrent.CountDownLatch
 import java.util.concurrent.Executors
 import java.util.concurrent.LinkedBlockingQueue
@@ -90,6 +93,48 @@ class PostgresNotificationProviderSpec extends Specification implements Postgres
                 'micronaut.data.jdbc.notifications.postgres.retry-delay' : '100ms'
         ] + additionalSettings)
         listener = application.getBean(BookChangeListener)
+    }
+
+    @Unroll
+    void "global notification switch controls PostgreSQL reception with enabled=#enabled"() {
+        given:
+        def applicationName = "postgres-notifications-enabled-$enabled"
+        start([
+            'micronaut.data.jdbc.notifications.enabled': enabled,
+            'datasources.default.db-properties.ApplicationName': applicationName
+        ])
+
+        expect:
+        application.running
+        listener != null
+        application.getBean(ChangeListenerRegistry).getListeners('default').size() == 1
+        application.getActiveBeanRegistrations(ChangeNotificationProvider).empty == !enabled
+        listeningConnectionCount(applicationName) == (enabled ? 1 : 0)
+
+        when: 'ordinary JDBC access remains available regardless of the notification switch'
+        execute("INSERT INTO \"ProviderBook\" VALUES ('$TENANT', 1, 'committed row')")
+        String title
+        try (def connection = DelegatingDataSource.unwrapDataSource(application.getBean(DataSource)).connection;
+             def statement = connection.createStatement();
+             def rows = statement.executeQuery('SELECT title FROM notification_provider_test."ProviderBook" WHERE "BookId" = 1')) {
+            assert rows.next()
+            title = rows.getString(1)
+        }
+        def event = listener.events.poll(enabled ? 10000 : 300, TimeUnit.MILLISECONDS)
+
+        then:
+        title == 'committed row'
+        (event != null) == enabled
+        listener.attempts.get() == (enabled ? 1 : 0)
+        listeningConnectionCount(applicationName) == (enabled ? 1 : 0)
+        if (enabled) {
+            assert event.operation() == ChangeOperation.INSERT
+            assert event.entity().orElseThrow().title == 'committed row'
+            assert event.metadata(PostgresChangeEventMetadata).orElseThrow().newKeys() == [tenant: TENANT, BookId: '1']
+        }
+
+        where:
+        enabled << [false, true]
     }
 
     void "startup emits no invalidation or events for existing rows"() {
@@ -191,6 +236,88 @@ class PostgresNotificationProviderSpec extends Specification implements Postgres
         deleted.metadata(PostgresChangeEventMetadata).orElseThrow().oldKeys() == [tenant: otherTenant.toString(), BookId: '42']
         deleted.metadata(PostgresChangeEventMetadata).orElseThrow().newKeys() == [:]
         embedded.events.poll(300, TimeUnit.MILLISECONDS) == null
+    }
+
+    void "static entity filters preserve keys when rows enter and leave the cached result"() {
+        given:
+        start(['spec.filtered-listener': 'true'])
+        def filtered = application.getBean(FilteredBookChangeListener)
+        def keys = [tenant: TENANT, BookId: '41']
+        def retainedKeys = [tenant: TENANT, BookId: '42']
+        execute("INSERT INTO \"ProviderBook\" VALUES ('$TENANT', 42, 'visible retained')")
+        assert filtered.events.poll(10, TimeUnit.SECONDS).entity().orElseThrow().title == 'visible retained'
+        assert next().entity().orElseThrow().title == 'visible retained'
+
+        when: 'a trigger reports an inserted row that does not match the reload filter'
+        execute("INSERT INTO \"ProviderBook\" VALUES ('$TENANT', 41, 'hidden')")
+        def inserted = filtered.events.poll(10, TimeUnit.SECONDS)
+
+        then:
+        inserted != null
+        inserted.operation() == ChangeOperation.INSERT
+        inserted.entity().empty
+        inserted.metadata(PostgresChangeEventMetadata).orElseThrow().oldKeys() == [:]
+        inserted.metadata(PostgresChangeEventMetadata).orElseThrow().newKeys() == keys
+        next().entity().orElseThrow().title == 'hidden'
+        filtered.books.keySet() == [retainedKeys] as Set
+
+        when: 'the row enters the filtered result'
+        execute('UPDATE "ProviderBook" SET title = \'visible first\' WHERE "BookId" = 41')
+        def entered = filtered.events.poll(10, TimeUnit.SECONDS)
+
+        then:
+        entered != null
+        entered.operation() == ChangeOperation.UPDATE
+        entered.entity().orElseThrow().title == 'visible first'
+        entered.metadata(PostgresChangeEventMetadata).orElseThrow().oldKeys() == keys
+        entered.metadata(PostgresChangeEventMetadata).orElseThrow().newKeys() == keys
+        next().entity().orElseThrow().title == 'visible first'
+        filtered.books.keySet() == [retainedKeys, keys] as Set
+        filtered.books[keys].title == 'visible first'
+
+        when: 'the row leaves the filter without being deleted or changing its primary key'
+        execute('UPDATE "ProviderBook" SET title = \'hidden again\' WHERE "BookId" = 41')
+        def left = filtered.events.poll(10, TimeUnit.SECONDS)
+
+        then:
+        left != null
+        left.operation() == ChangeOperation.UPDATE
+        left.entity().empty
+        left.metadata(PostgresChangeEventMetadata).orElseThrow().oldKeys() == keys
+        left.metadata(PostgresChangeEventMetadata).orElseThrow().newKeys() == keys
+        next().entity().orElseThrow().title == 'hidden again'
+        filtered.books.keySet() == [retainedKeys] as Set
+        filtered.books[retainedKeys].title == 'visible retained'
+
+        when: 'the same row re-enters the filter under a new primary key'
+        execute('UPDATE "ProviderBook" SET "BookId" = 43, title = \'visible returned\' WHERE "BookId" = 41')
+        def reentered = filtered.events.poll(10, TimeUnit.SECONDS)
+        def movedKeys = [tenant: TENANT, BookId: '43']
+
+        then:
+        reentered != null
+        reentered.operation() == ChangeOperation.UPDATE
+        reentered.entity().orElseThrow().id == 43L
+        reentered.entity().orElseThrow().title == 'visible returned'
+        reentered.metadata(PostgresChangeEventMetadata).orElseThrow().oldKeys() == keys
+        reentered.metadata(PostgresChangeEventMetadata).orElseThrow().newKeys() == movedKeys
+        next().entity().orElseThrow().id == 43L
+        filtered.books.keySet() == [retainedKeys, movedKeys] as Set
+        filtered.books[movedKeys].title == 'visible returned'
+
+        when: 'a matching row is deleted'
+        execute('DELETE FROM "ProviderBook" WHERE "BookId" = 43')
+        def deleted = filtered.events.poll(10, TimeUnit.SECONDS)
+
+        then:
+        deleted != null
+        deleted.operation() == ChangeOperation.DELETE
+        deleted.entity().empty
+        deleted.metadata(PostgresChangeEventMetadata).orElseThrow().oldKeys() == movedKeys
+        deleted.metadata(PostgresChangeEventMetadata).orElseThrow().newKeys() == [:]
+        next().operation() == ChangeOperation.DELETE
+        filtered.books.keySet() == [retainedKeys] as Set
+        filtered.events.poll(300, TimeUnit.MILLISECONDS) == null
     }
 
     void "bulk changes load every affected entity"() {
@@ -642,6 +769,17 @@ class PostgresNotificationProviderSpec extends Specification implements Postgres
         }
     }
 
+    private int listeningConnectionCount(String applicationName) {
+        try (def statement = writer.prepareStatement('SELECT count(*) FROM pg_stat_activity WHERE application_name = ? AND query = ?')) {
+            statement.setString(1, applicationName)
+            statement.setString(2, 'LISTEN "provider_changes"')
+            try (def rows = statement.executeQuery()) {
+                assert rows.next()
+                return rows.getInt(1)
+            }
+        }
+    }
+
     private ChangeEvent<NotificationBook> next() {
         def event = listener.events.poll(10, TimeUnit.SECONDS)
         assert event != null
@@ -714,6 +852,34 @@ class EmbeddedBookChangeListener {
     @ChangeListener
     @PostgresChangeNotification(channel = 'provider_changes')
     void changed(ChangeEvent<EmbeddedNotificationBook> event) {
+        events.add(event)
+    }
+}
+
+@MappedEntity(value = 'ProviderBook', schema = 'notification_provider_test')
+@Where("title LIKE 'visible%'")
+class FilteredNotificationBook {
+    @Id
+    UUID tenant
+    @Id
+    @MappedProperty('BookId')
+    Long id
+    String title
+}
+
+@Singleton
+@Requires(property = 'spec.name', value = 'PostgresNotificationProviderSpec')
+@Requires(property = 'spec.filtered-listener', value = 'true')
+class FilteredBookChangeListener {
+    final Map<Map<String, String>, FilteredNotificationBook> books = new ConcurrentHashMap<>()
+    final LinkedBlockingQueue<ChangeEvent<FilteredNotificationBook>> events = new LinkedBlockingQueue<>()
+
+    @ChangeListener
+    @PostgresChangeNotification(channel = 'provider_changes')
+    void changed(ChangeEvent<FilteredNotificationBook> event) {
+        def metadata = event.metadata(PostgresChangeEventMetadata).orElseThrow()
+        books.remove(metadata.oldKeys())
+        event.entity().ifPresent { books.put(metadata.newKeys(), it) }
         events.add(event)
     }
 }

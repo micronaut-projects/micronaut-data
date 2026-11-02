@@ -18,7 +18,6 @@ package io.micronaut.data.processor.visitors;
 import io.micronaut.core.annotation.Internal;
 import io.micronaut.data.annotation.ChangeListener;
 import io.micronaut.data.annotation.MappedEntity;
-import io.micronaut.data.intercept.annotation.PostgresChangeListenerQuery;
 import io.micronaut.data.model.query.builder.sql.postgres.PostgresNotificationQuery;
 import io.micronaut.data.processor.model.criteria.impl.SourcePersistentEntityCriteriaBuilderImpl;
 import io.micronaut.inject.ast.MethodElement;
@@ -33,7 +32,7 @@ import java.util.HashMap;
  *
  * <p>The visitor verifies that the method is also a {@code @ChangeListener}, validates the
  * notification channel and supported primary-key mappings, and generates an internal
- * {@link PostgresChangeListenerQuery} annotation containing the entity reload query and the
+ * {@code PostgresChangeListenerQuery} annotation containing the entity reload query and the
  * mapped key columns and property paths in query binding order.</p>
  *
  * <p>This visitor performs compile-time processing only. It does not open a datasource
@@ -42,6 +41,7 @@ import java.util.HashMap;
 @Internal
 public final class PostgresChangeNotificationVisitor implements TypeElementVisitor<Object, Object> {
     private static final String ANNOTATION = "io.micronaut.data.jdbc.annotation.PostgresChangeNotification";
+    private static final String POSTGRES_CHANGE_LISTENER_QUERY = "io.micronaut.data.jdbc.notification.postgres.PostgresChangeListenerQuery";
 
     @Override
     public int getOrder() {
@@ -79,7 +79,7 @@ public final class PostgresChangeNotificationVisitor implements TypeElementVisit
         var entity = resolver.apply(context.getClassElement(entityType.getName()).orElse(entityType));
         try {
             var reload = PostgresNotificationQuery.build(entity, new SourcePersistentEntityCriteriaBuilderImpl(resolver));
-            element.annotate(PostgresChangeListenerQuery.class, annotation -> annotation.value(reload.query())
+            element.annotate(POSTGRES_CHANGE_LISTENER_QUERY, annotation -> annotation.value(reload.query())
                 .member("columns", reload.keys().stream().map(PostgresNotificationQuery.Key::column).toArray(String[]::new))
                 .member("paths", reload.keys().stream().map(key -> key.path().getPath()).toArray(String[]::new)));
         } catch (IllegalArgumentException e) {

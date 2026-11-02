@@ -18,7 +18,6 @@ package io.micronaut.data.jdbc.notification.postgres;
 import io.micronaut.context.env.Environment;
 import io.micronaut.core.annotation.AnnotationValue;
 import io.micronaut.data.annotation.MappedEntity;
-import io.micronaut.data.intercept.annotation.PostgresChangeListenerQuery;
 import io.micronaut.data.jdbc.annotation.PostgresChangeNotification;
 import io.micronaut.data.jdbc.notification.ChangeListenerMethod;
 import io.micronaut.data.jdbc.operations.JdbcRepositoryOperations;

@@ -19,7 +19,6 @@ import io.micronaut.context.annotation.Requires;
 import io.micronaut.context.env.Environment;
 import io.micronaut.core.annotation.Internal;
 import io.micronaut.data.annotation.MappedEntity;
-import io.micronaut.data.intercept.annotation.PostgresChangeListenerQuery;
 import io.micronaut.data.jdbc.annotation.PostgresChangeNotification;
 import io.micronaut.data.jdbc.config.DataJdbcConfiguration;
 import io.micronaut.data.jdbc.notification.ChangeListenerMethod;

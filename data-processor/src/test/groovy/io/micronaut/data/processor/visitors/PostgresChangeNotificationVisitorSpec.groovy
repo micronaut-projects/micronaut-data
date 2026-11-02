@@ -16,7 +16,7 @@
 package io.micronaut.data.processor.visitors
 
 import io.micronaut.annotation.processing.test.AbstractTypeElementSpec
-import io.micronaut.data.intercept.annotation.PostgresChangeListenerQuery
+import io.micronaut.data.jdbc.notification.postgres.PostgresChangeListenerQuery
 import io.micronaut.data.notification.ChangeEvent
 import spock.lang.Unroll
 

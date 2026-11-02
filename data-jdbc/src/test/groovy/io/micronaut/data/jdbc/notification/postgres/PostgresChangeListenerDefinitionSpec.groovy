@@ -27,7 +27,6 @@ import io.micronaut.data.annotation.MappedProperty
 import io.micronaut.data.annotation.Relation
 import io.micronaut.data.annotation.Where
 import io.micronaut.data.annotation.MappedEntity
-import io.micronaut.data.intercept.annotation.PostgresChangeListenerQuery
 import io.micronaut.data.jdbc.annotation.PostgresChangeNotification
 import io.micronaut.data.jdbc.notification.ChangeListenerMethod
 import io.micronaut.data.jdbc.notification.ChangeListenerRegistry

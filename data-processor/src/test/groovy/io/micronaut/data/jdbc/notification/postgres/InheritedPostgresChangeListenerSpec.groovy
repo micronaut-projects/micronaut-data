@@ -22,7 +22,6 @@ import io.micronaut.context.ApplicationContext
 import io.micronaut.data.runtime.operations.internal.query.BindableParametersStoredQuery
 import io.micronaut.core.type.Argument
 import io.micronaut.data.jdbc.annotation.PostgresChangeNotification
-import io.micronaut.data.intercept.annotation.PostgresChangeListenerQuery
 import io.micronaut.data.notification.ChangeEvent
 import io.micronaut.data.jdbc.notification.ChangeListenerMethod
 import io.micronaut.data.jdbc.operations.JdbcRepositoryOperations
