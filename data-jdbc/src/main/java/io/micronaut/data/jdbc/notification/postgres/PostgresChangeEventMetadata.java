@@ -19,10 +19,11 @@ import io.micronaut.core.annotation.Experimental;
 import io.micronaut.data.notification.ChangeEventMetadata;
 
 import java.util.Map;
-import java.util.Objects;
 
 /**
  * PostgreSQL notification metadata identifying the affected table and row keys.
+ *
+ * <p>Instances are supplied by the PostgreSQL notification provider.</p>
  *
  * <p>Keys use exact database column names, including case, rather than Java property names.
  * Values are the textual representation of PostgreSQL JSON scalar values, without surrounding
@@ -30,34 +31,43 @@ import java.util.Objects;
  * and support composite keys. Inserts have no old keys, deletes have no new keys, and updates
  * retain both, including when a primary key changes. Table invalidations have neither.</p>
  *
- * @param channel The notification channel.
- * @param schema  The exact database schema name.
- * @param table   The exact database table name.
- * @param oldKeys The old primary-key values, or an empty map when unavailable.
- * @param newKeys The new primary-key values, or an empty map when unavailable.
  * @since 5.3.0
  */
 @Experimental
-public record PostgresChangeEventMetadata(String channel,
-                                          String schema,
-                                          String table,
-                                          Map<String, String> oldKeys,
-                                          Map<String, String> newKeys) implements ChangeEventMetadata {
+public interface PostgresChangeEventMetadata extends ChangeEventMetadata {
 
     /**
-     * Creates metadata with defensive copies of the primary-key maps.
+     * Returns the channel on which the notification was published.
      *
-     * @param channel The notification channel.
-     * @param schema  The database schema name.
-     * @param table   The database table name.
-     * @param oldKeys The old primary-key values.
-     * @param newKeys The new primary-key values.
+     * @return The exact notification channel name.
      */
-    public PostgresChangeEventMetadata {
-        Objects.requireNonNull(channel, "channel");
-        Objects.requireNonNull(schema, "schema");
-        Objects.requireNonNull(table, "table");
-        oldKeys = Map.copyOf(oldKeys);
-        newKeys = Map.copyOf(newKeys);
-    }
+    String channel();
+
+    /**
+     * Returns the schema reported by PostgreSQL.
+     *
+     * @return The database schema name, preserving its spelling and case.
+     */
+    String schema();
+
+    /**
+     * Returns the unqualified table name reported by PostgreSQL.
+     *
+     * @return The database table name, preserving its spelling and case.
+     */
+    String table();
+
+    /**
+     * Returns the primary-key values before the change.
+     *
+     * @return Immutable values indexed by database column name; empty for inserts and table invalidations.
+     */
+    Map<String, String> oldKeys();
+
+    /**
+     * Returns the primary-key values after the change.
+     *
+     * @return Immutable values indexed by database column name; empty for deletes and table invalidations.
+     */
+    Map<String, String> newKeys();
 }

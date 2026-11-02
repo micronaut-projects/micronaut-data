@@ -17,6 +17,7 @@ package io.micronaut.data.jdbc.notification.postgres
 
 import io.micronaut.data.jdbc.notification.DefaultChangeEvent
 import io.micronaut.data.jdbc.notification.oracle.OracleChangeEventMetadata
+import io.micronaut.data.notification.ChangeEventMetadata
 import io.micronaut.data.notification.ChangeOperation
 import spock.lang.Specification
 
@@ -26,7 +27,7 @@ class PostgresChangeEventMetadataSpec extends Specification {
         given:
         def oldKeys = [tenant: 'a', id: '9007199254740993']
         def newKeys = [tenant: 'b', id: '9007199254740994']
-        def metadata = new PostgresChangeEventMetadata('books', 'public', 'Book', oldKeys, newKeys)
+        PostgresChangeEventMetadata metadata = new DefaultPostgresChangeEventMetadata('books', 'public', 'Book', oldKeys, newKeys)
 
         when:
         oldKeys.clear()
@@ -51,7 +52,7 @@ class PostgresChangeEventMetadataSpec extends Specification {
 
     void "delete key remains available through generic event metadata without an entity"() {
         given:
-        def metadata = new PostgresChangeEventMetadata('books', 'public', 'book', [id: '42'], [:])
+        PostgresChangeEventMetadata metadata = new DefaultPostgresChangeEventMetadata('books', 'public', 'book', [id: '42'], [:])
         def event = new DefaultChangeEvent<>(ChangeOperation.DELETE, null, metadata)
 
         expect:
@@ -59,5 +60,27 @@ class PostgresChangeEventMetadataSpec extends Specification {
         event.metadata(PostgresChangeEventMetadata).orElseThrow().oldKeys() == [id: '42']
         event.metadata(OracleChangeEventMetadata).isEmpty()
         metadata.newKeys().isEmpty()
+    }
+
+    void "custom implementations are available through PostgreSQL and common metadata interfaces"() {
+        given:
+        def metadata = Stub(PostgresChangeEventMetadata) {
+            channel() >> 'books'
+            schema() >> 'public'
+            table() >> 'book'
+            oldKeys() >> Map.of('id', '41')
+            newKeys() >> Map.of('id', '42')
+        }
+        def event = new DefaultChangeEvent<>(ChangeOperation.UPDATE, null, metadata)
+
+        expect:
+        event.metadata(PostgresChangeEventMetadata).orElseThrow().is(metadata)
+        event.metadata(ChangeEventMetadata).orElseThrow().is(metadata)
+        metadata.channel() == 'books'
+        metadata.schema() == 'public'
+        metadata.table() == 'book'
+        metadata.oldKeys() == [id: '41']
+        metadata.newKeys() == [id: '42']
+        event.metadata(OracleChangeEventMetadata).empty
     }
 }

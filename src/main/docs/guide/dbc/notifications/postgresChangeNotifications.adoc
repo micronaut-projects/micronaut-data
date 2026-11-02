@@ -324,8 +324,9 @@ during application shutdown.
 
 See <<notificationChangeEvents, Handling Change Events>> for the common event API and invalidation handling.
 
-api:data.jdbc.notification.postgres.PostgresChangeEventMetadata[] exposes the channel, schema, table,
-and immutable `oldKeys` and `newKeys` maps. A deleted row can be identified from its old keys without reloading it.
+api:data.jdbc.notification.postgres.PostgresChangeEventMetadata[] is a read-only interface exposing the channel, schema,
+table, and immutable `oldKeys` and `newKeys` maps. Metadata instances are supplied by the notification provider.
+A deleted row can be identified from its old keys without reloading it.
 The example uses this metadata to update individual cache entries:
 
 snippet::example.BookCatalog[project-base="doc-examples/jdbc-postgres-notifications", source="main", tags="events", indent="0", languages="java,groovy,kotlin,python"]

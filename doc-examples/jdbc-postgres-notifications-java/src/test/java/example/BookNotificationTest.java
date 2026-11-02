@@ -174,7 +174,11 @@ class BookNotificationTest {
         assertNotNull(event, "Expected " + operation + " notification");
         assertEquals(operation, event.operation());
         assertEquals(Optional.ofNullable(entity), event.entity());
-        assertEquals(new PostgresChangeEventMetadata("book_changes", "public", "book", oldKeys, newKeys),
-            event.metadata(PostgresChangeEventMetadata.class).orElseThrow());
+        PostgresChangeEventMetadata metadata = event.metadata(PostgresChangeEventMetadata.class).orElseThrow();
+        assertEquals("book_changes", metadata.channel());
+        assertEquals("public", metadata.schema());
+        assertEquals("book", metadata.table());
+        assertEquals(oldKeys, metadata.oldKeys());
+        assertEquals(newKeys, metadata.newKeys());
     }
 }

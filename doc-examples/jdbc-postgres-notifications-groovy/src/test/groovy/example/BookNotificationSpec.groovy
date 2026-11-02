@@ -132,7 +132,11 @@ class BookNotificationSpec extends Specification {
         assert event != null: "Expected $operation notification"
         assert event.operation() == operation
         assert event.entity().orElse(null) == entity
-        assert event.metadata(PostgresChangeEventMetadata).orElseThrow() ==
-            new PostgresChangeEventMetadata('book_changes', 'public', 'book', oldKeys, newKeys)
+        def metadata = event.metadata(PostgresChangeEventMetadata).orElseThrow()
+        assert metadata.channel() == 'book_changes'
+        assert metadata.schema() == 'public'
+        assert metadata.table() == 'book'
+        assert metadata.oldKeys() == oldKeys
+        assert metadata.newKeys() == newKeys
     }
 }

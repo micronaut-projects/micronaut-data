@@ -50,7 +50,7 @@ record PostgresNotificationPayload(ChangeOperation operation, PostgresChangeEven
         if (!valid) {
             throw new IllegalArgumentException("Invalid PostgreSQL notification keys for " + operation);
         }
-        return new PostgresNotificationPayload(operation, new PostgresChangeEventMetadata(channel,
+        return new PostgresNotificationPayload(operation, new DefaultPostgresChangeEventMetadata(channel,
             string(object.get("schema")), string(object.get("table")), oldKeys, newKeys));
     }
 

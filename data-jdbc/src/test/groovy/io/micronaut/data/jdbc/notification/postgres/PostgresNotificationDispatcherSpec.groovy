@@ -252,7 +252,7 @@ class PostgresNotificationDispatcherSpec extends Specification {
         def entered = new CountDownLatch(1)
         def release = new CountDownLatch(1)
         def events = new LinkedBlockingQueue<ChangeEvent<?>>()
-        def metadata = new PostgresChangeEventMetadata('books', 'public', 'book', [:], [:])
+        def metadata = new DefaultPostgresChangeEventMetadata('books', 'public', 'book', [:], [:])
         def explicit = new DefaultChangeEvent(ChangeOperation.INVALIDATE, null, metadata)
         def dispatcher = createDispatcher({ event ->
             if (event.operation() == ChangeOperation.INSERT) {

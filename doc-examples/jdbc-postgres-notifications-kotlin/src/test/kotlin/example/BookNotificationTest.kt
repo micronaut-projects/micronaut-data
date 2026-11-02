@@ -121,8 +121,12 @@ class BookNotificationTest {
         val event = events.poll(10, TimeUnit.SECONDS) ?: throw AssertionError("Expected $operation notification")
         assertEquals(operation, event.operation())
         assertEquals(entity, event.entity().orElse(null))
-        assertEquals(PostgresChangeEventMetadata("book_changes", "public", "book", oldKeys, newKeys),
-            event.metadata(PostgresChangeEventMetadata::class.java).orElseThrow())
+        val metadata = event.metadata(PostgresChangeEventMetadata::class.java).orElseThrow()
+        assertEquals("book_changes", metadata.channel())
+        assertEquals("public", metadata.schema())
+        assertEquals("book", metadata.table())
+        assertEquals(oldKeys, metadata.oldKeys())
+        assertEquals(newKeys, metadata.newKeys())
     }
 
     private class CatalogRepository(delegate: BookRepository) : BookRepository by delegate {
