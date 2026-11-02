@@ -92,12 +92,11 @@ class DefaultR2dbcReactorTransactionOperationsSpec extends Specification {
         noExceptionThrown()
     }
 
-    void "a read-only transaction begins with only the read-only attribute on #product"() {
+    void "a read-only transaction begins with only the read-only attribute"() {
         given:
         def transactionOperations = new DefaultR2dbcReactorTransactionOperations("default", null, [])
         def connectionStatus = Mock(ReactiveConnectionStatus<Connection>)
         def connection = Mock(Connection)
-        def metadata = Mock(ConnectionMetadata)
         def definition = new DefaultTransactionDefinition()
         definition.setReadOnly(true)
         io.r2dbc.spi.TransactionDefinition begun = null
@@ -107,8 +106,6 @@ class DefaultR2dbcReactorTransactionOperationsSpec extends Specification {
 
         then:
         1 * connectionStatus.getConnection() >> connection
-        1 * connection.getMetadata() >> metadata
-        1 * metadata.getDatabaseProductName() >> product
         1 * connection.beginTransaction(_ as io.r2dbc.spi.TransactionDefinition) >> { args ->
             begun = (io.r2dbc.spi.TransactionDefinition) args[0]
             Mono.empty()
@@ -116,32 +113,21 @@ class DefaultR2dbcReactorTransactionOperationsSpec extends Specification {
         0 * connection.beginTransaction()
         begun.getAttribute(io.r2dbc.spi.TransactionDefinition.READ_ONLY) == Boolean.TRUE
         begun.getAttribute(io.r2dbc.spi.TransactionDefinition.ISOLATION_LEVEL) == null
-
-        where:
-        product << ["Oracle", "PostgreSQL"]
     }
 
-    void "a read-only transaction begins as an ordinary transaction on #product"() {
+    void "a read-write transaction begins without a definition"() {
         given:
         def transactionOperations = new DefaultR2dbcReactorTransactionOperations("default", null, [])
         def connectionStatus = Mock(ReactiveConnectionStatus<Connection>)
         def connection = Mock(Connection)
-        def metadata = Mock(ConnectionMetadata)
-        def definition = new DefaultTransactionDefinition()
-        definition.setReadOnly(true)
 
         when:
-        Mono.from(transactionOperations.beginTransaction(connectionStatus, definition)).block()
+        Mono.from(transactionOperations.beginTransaction(connectionStatus, new DefaultTransactionDefinition())).block()
 
         then:
         1 * connectionStatus.getConnection() >> connection
-        1 * connection.getMetadata() >> metadata
-        1 * metadata.getDatabaseProductName() >> product
         1 * connection.beginTransaction() >> Mono.empty()
         0 * connection.beginTransaction(_ as io.r2dbc.spi.TransactionDefinition)
-
-        where:
-        product << ["H2", null]
     }
 
     void "recognizes priority rollback only from an Oracle R2DBC connection"() {

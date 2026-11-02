@@ -43,7 +43,6 @@ import java.util.ArrayList;
 import java.util.Collections;
 import java.util.IdentityHashMap;
 import java.util.List;
-import java.util.Locale;
 import java.util.Set;
 
 /**
@@ -120,28 +119,19 @@ final class DefaultR2dbcReactorTransactionOperations extends AbstractReactorTran
         return result;
     }
 
+    /**
+     * Begins a read-only transaction with the read-only attribute: Oracle R2DBC runs {@code SET TRANSACTION READ ONLY},
+     * R2DBC PostgreSQL {@code BEGIN READ ONLY} and r2dbc-mysql and r2dbc-mariadb {@code START TRANSACTION READ ONLY}.
+     * Drivers without read-only transactions, such as r2dbc-mssql and r2dbc-h2, ignore the attribute.
+     */
     private Publisher<Void> begin(Connection connection, TransactionDefinition definition) {
-        if (definition.isReadOnly().orElse(false) && supportsReadOnlyTransactions(connection)) {
+        if (definition.isReadOnly().orElse(false)) {
             if (LOG.isDebugEnabled()) {
                 LOG.debug("Beginning a read-only transaction: {} for dataSource: {}", definition.getName(), dataSourceName);
             }
             return connection.beginTransaction(READ_ONLY_TRANSACTION);
         }
         return connection.beginTransaction();
-    }
-
-    /**
-     * Whether the driver begins read-only transactions: Oracle R2DBC runs {@code SET TRANSACTION READ ONLY} and
-     * R2DBC PostgreSQL {@code BEGIN READ ONLY}. Other drivers may reject the attribute, so they begin an ordinary
-     * transaction, as before.
-     */
-    private static boolean supportsReadOnlyTransactions(Connection connection) {
-        String productName = connection.getMetadata().getDatabaseProductName();
-        if (productName == null) {
-            return false;
-        }
-        String name = productName.toLowerCase(Locale.ROOT);
-        return name.contains("oracle") || name.contains("postgres");
     }
 
     @Override

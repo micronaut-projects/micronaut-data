@@ -103,7 +103,7 @@ The effect of the read-only flag depends on the driver:
 |With the driver's default `readOnlyMode=transaction`, the flag only takes effect in transactions, where writes fail. `readOnlyMode=always` also applies it to auto-commit connections.
 
 |Oracle
-|A hint to the driver; writes are not rejected.
+|A hint to the driver; writes are not rejected. To reject them, call `setEnforceReadOnly(true)` on api:transaction.jdbc.DataSourceTransactionManager[], which runs `SET TRANSACTION READ ONLY` at the start of read-only transactions.
 
 |SQL Server
 |Ignored by the driver; `isReadOnly()` always returns `false`.
@@ -138,7 +138,9 @@ True Cache can return slightly stale data, so keep reads that must see the lates
 
 ==== R2DBC
 
-Micronaut Data R2DBC begins read-only transactions (`@Transactional(readOnly = true)` and `executeRead`) as read-only transactions with Oracle R2DBC (`SET TRANSACTION READ ONLY`) and R2DBC PostgreSQL (`BEGIN READ ONLY`), so writes in them fail. With other drivers, read-only transactions begin as ordinary transactions. R2DBC connections outside a transaction are not marked read-only, and Oracle True Cache routing requires JDBC.
+Micronaut Data R2DBC begins read-only transactions (`@Transactional(readOnly = true)` and `executeRead`) with the R2DBC read-only attribute. Oracle R2DBC (`SET TRANSACTION READ ONLY`), R2DBC PostgreSQL (`BEGIN READ ONLY`) and the MySQL and MariaDB drivers (`START TRANSACTION READ ONLY`) then reject writes in them, including writes in a read-write transaction that joins an outer read-only one and `SELECT ... FOR UPDATE`. The SQL Server and H2 drivers ignore the attribute.
+
+On Oracle this is stricter than JDBC: a JDBC read-only transaction commits writes unless `enforceReadOnly` is set, while an R2DBC one rejects them with `ORA-01456`. R2DBC connections outside a transaction are not marked read-only, and Oracle True Cache routing requires JDBC.
 
 === Tracing calls from Java to Oracle Database sessions
 
