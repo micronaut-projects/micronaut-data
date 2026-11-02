@@ -133,7 +133,8 @@ final class DefaultR2dbcReactorTransactionOperations extends AbstractReactorTran
         if (LOG.isDebugEnabled()) {
             LOG.debug("Committing transaction for R2DBC connection: {} and configuration {}.", connectionStatus.getConnection(), dataSourceName);
         }
-        return completeTransaction(connectionStatus, Mono.from(connectionStatus.getConnection().commitTransaction()), true);
+        // Deferred: a driver that throws instead of returning a failed publisher still completes the transaction
+        return completeTransaction(connectionStatus, Mono.defer(() -> Mono.from(connectionStatus.getConnection().commitTransaction())), true);
     }
 
     @Override
@@ -141,7 +142,8 @@ final class DefaultR2dbcReactorTransactionOperations extends AbstractReactorTran
         if (LOG.isDebugEnabled()) {
             LOG.debug("Rolling back transaction for R2DBC connection: {} and configuration {}.", connectionStatus.getConnection(), dataSourceName);
         }
-        return completeTransaction(connectionStatus, Mono.from(connectionStatus.getConnection().rollbackTransaction()), false);
+        // Deferred: a driver that throws instead of returning a failed publisher still completes the transaction
+        return completeTransaction(connectionStatus, Mono.defer(() -> Mono.from(connectionStatus.getConnection().rollbackTransaction())), false);
     }
 
     /**
