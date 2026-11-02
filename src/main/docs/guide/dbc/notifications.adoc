@@ -70,11 +70,13 @@ to reload entities for `INSERT` and `UPDATE` events.
 [[notificationDeliveryAndConcurrency]]
 == Delivery and Concurrency
 
-Entity loading and listener methods run on Micronaut's blocking executor. Multiple calls to the same listener
-can run concurrently, and their execution and completion order are not guaranteed. Protect shared state, such
-as an application cache, against concurrent access and updates arriving in a different order. This includes
-processing individual row changes while an `INVALIDATE` callback refreshes the same state.
-The database-specific sections describe any additional ordering rules and work limits.
+Each listener has a dedicated worker and a bounded queue. Entity loading and listener invocation execute
+sequentially in the order notifications enter that queue. Different listeners can execute concurrently, so protect
+state shared between listeners or with other application threads. Queue order does not establish a global order
+across database connections or listeners.
+
+These guarantees require synchronous listener execution. `@Async` schedules the listener body on another executor;
+the listener worker orders entity loading and submission, but does not wait for async work to finish.
 
 Change notifications are delivered only after the database transaction commits. If the transaction is rolled back,
 its changes do not produce notifications. Listener execution is separate from the transaction that made the changes.
@@ -88,20 +90,17 @@ Oracle's `NTF_QOS_RELIABLE` option can queue notifications during connection int
 <<oracleQueryNotifications, Oracle Change Notifications>>. This database feature does not let applications request
 replay of previously processed notifications.
 
-Micronaut's blocking executor configuration affects how many listener calls can run concurrently and whether
-additional calls can be scheduled. While the application is listening for database changes, individual change
-events can be missed if the executor cannot schedule a listener call. Micronaut Data combines these missed events
-into one pending `INVALIDATE` event so the listener can reload the current database state. Micronaut Data does
-not deliver the individual change events that were missed.
+When a listener queue reaches its limit, waiting data notifications and the new submission are replaced with
+one `INVALIDATE` callback. A callback already running finishes first. Further data notifications are covered by
+that pending refresh until it starts. Notifications arriving during the refresh are queued normally and can cause
+another invalidation if the queue reaches its limit again.
 
-Micronaut Data keeps trying to schedule the invalidation callback until the executor accepts it or the application
-begins shutting down. If further events are missed after the listener starts processing the invalidation,
-Micronaut Data will schedule another `INVALIDATE` event.
+Explicit invalidations, including reconciliation after recovery, also replace waiting work. This prevents older
+queued row changes from being delivered after the refresh. Reconciliation does not replay discarded row notifications.
+The database-specific sections describe queue capacities and how notifications are grouped.
 
 Your listener should handle `INVALIDATE` by refreshing the affected application state, even if it normally processes
-individual row changes. This allows it to recover when individual change events are missed. If Micronaut Data cannot
-schedule another attempt to deliver the invalidation, it logs an error and cannot guarantee that the listener will
-receive it.
+individual row changes. Application shutdown discards waiting callbacks and allows running work to finish.
 
 [[notificationTransactionsAndRetries]]
 == Transactions, Retry, and Recovery

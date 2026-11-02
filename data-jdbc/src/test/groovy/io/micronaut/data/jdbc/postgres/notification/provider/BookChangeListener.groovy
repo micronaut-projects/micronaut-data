@@ -41,7 +41,7 @@ class BookChangeListener {
     @PostgresChangeNotification(channel = 'provider_changes')
     @Retryable(attempts = '2', delay = '10ms')
     void changed(ChangeEvent<NotificationBook> event) {
-        assert !Thread.currentThread().name.startsWith('postgres-notifications-')
+        assert Thread.currentThread().name.startsWith('postgres-notification-listener-')
         attempts.incrementAndGet()
         if (failures.getAndUpdate { Math.max(0, it - 1) } > 0) {
             throw new IllegalStateException('Retry this notification')

@@ -15,6 +15,7 @@
  */
 package io.micronaut.data.jdbc.notification.postgres
 
+import io.micronaut.context.ApplicationContext
 import spock.lang.Specification
 import spock.lang.Unroll
 import java.time.Duration
@@ -27,7 +28,7 @@ class PostgresNotificationConfigurationSpec extends Specification {
         then:
         !config.schemaGenerate
         config.schemaGenerateMode == PostgresNotificationConfiguration.SchemaGenerationMode.ROW
-        config.maxOutstandingTasks == 1000
+        config.queueCapacity == 1000
         config.pollTimeout == Duration.ofSeconds(1)
         config.validationInterval == Duration.ofSeconds(30)
         config.validationTimeout == Duration.ofSeconds(5)
@@ -56,6 +57,22 @@ class PostgresNotificationConfigurationSpec extends Specification {
         Integer.MAX_VALUE | Integer.MAX_VALUE
     }
 
+    void "queue capacity binds from configuration with value #capacity"() {
+        given:
+        def context = ApplicationContext.run([
+            'micronaut.data.jdbc.notifications.postgres.queue-capacity': capacity
+        ])
+
+        expect:
+        context.getBean(PostgresNotificationConfiguration).queueCapacity == capacity
+
+        cleanup:
+        context.close()
+
+        where:
+        capacity << [1, 17, 2048]
+    }
+
     @Unroll
     void "invalid #property value #value is rejected"() {
         when:
@@ -75,8 +92,8 @@ class PostgresNotificationConfigurationSpec extends Specification {
         'validationTimeout'    | Duration.ofMillis(Integer.MAX_VALUE + 1L)
         'retryDelay'           | Duration.ofMillis(-1)
         'maxRetryDelay'        | Duration.ZERO
-        'maxOutstandingTasks'  | 0
-        'maxOutstandingTasks'  | -1
+        'queueCapacity'  | 0
+        'queueCapacity'  | -1
         'maxRetries'           | -2
         'retryDelayMultiplier' | 0
         'retryDelayMultiplier' | -1

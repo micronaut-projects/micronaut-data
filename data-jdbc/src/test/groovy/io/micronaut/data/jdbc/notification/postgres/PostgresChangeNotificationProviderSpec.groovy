@@ -21,14 +21,12 @@ import io.micronaut.context.event.ShutdownEvent
 import io.micronaut.context.exceptions.ConfigurationException
 import io.micronaut.data.jdbc.operations.JdbcRepositoryOperations
 import io.micronaut.json.JsonMapper
-import io.micronaut.scheduling.TaskScheduler
 import spock.lang.Specification
 
 import java.time.Duration
 import java.util.concurrent.Callable
 import java.util.concurrent.CompletableFuture
 import java.util.concurrent.CountDownLatch
-import java.util.concurrent.Executor
 import java.util.concurrent.Executors
 import java.util.concurrent.TimeUnit
 import java.util.concurrent.TimeoutException
@@ -42,7 +40,7 @@ class PostgresChangeNotificationProviderSpec extends Specification {
         def connectionFactory = Mock(PostgresNotificationConnectionFactory)
         def operations = Mock(JdbcRepositoryOperations)
         def provider = new PostgresChangeNotificationProvider(Stub(BeanContext), mapperProvider,
-            Stub(Executor), Stub(TaskScheduler), new PostgresNotificationConfiguration(), connectionFactory,
+            new PostgresNotificationConfiguration(), connectionFactory,
             false, Duration.ofSeconds(15))
 
         when:
@@ -212,7 +210,7 @@ class PostgresChangeNotificationProviderSpec extends Specification {
     private PostgresChangeNotificationProvider provider(boolean gracefulShutdownEnabled = false,
                                                         Duration gracePeriod = Duration.ofSeconds(15)) {
         new PostgresChangeNotificationProvider(Stub(BeanContext), Stub(BeanProvider<JsonMapper>),
-            Stub(Executor), Stub(TaskScheduler), new PostgresNotificationConfiguration(),
+            new PostgresNotificationConfiguration(),
             Stub(PostgresNotificationConnectionFactory), gracefulShutdownEnabled, gracePeriod)
     }
 }

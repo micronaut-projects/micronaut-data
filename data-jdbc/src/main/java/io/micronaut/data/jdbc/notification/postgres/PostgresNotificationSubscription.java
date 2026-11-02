@@ -24,7 +24,6 @@ import io.micronaut.data.jdbc.operations.JdbcRepositoryOperations;
 import io.micronaut.data.notification.ChangeEvent;
 import io.micronaut.inject.ExecutableMethod;
 import io.micronaut.json.JsonMapper;
-import io.micronaut.scheduling.TaskScheduler;
 import org.jspecify.annotations.Nullable;
 import org.postgresql.PGConnection;
 import org.postgresql.PGNotification;
@@ -39,7 +38,6 @@ import java.util.LinkedHashMap;
 import java.util.List;
 import java.util.Map;
 import java.util.concurrent.CompletableFuture;
-import java.util.concurrent.Executor;
 import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Executors;
 import java.util.concurrent.TimeUnit;
@@ -55,7 +53,7 @@ import java.util.stream.Collectors;
  * submit invalidation events.</p>
  *
  * <p>Notifications are routed by channel, schema, and table. The subscription owns one dispatcher
- * per listener to submit callbacks to the supplied executor. Entity loading uses repository
+ * per listener to process callbacks sequentially on its own worker. Entity loading uses repository
  * connections independently of the listening connection.</p>
  *
  * <p>Stopping the subscription closes callback admission and signals the receive loop to exit.
@@ -87,8 +85,6 @@ final class PostgresNotificationSubscription {
                                      List<ChangeListenerMethod> methods,
                                      BeanContext context,
                                      JsonMapper mapper,
-                                     Executor executor,
-                                     TaskScheduler taskScheduler,
                                      PostgresNotificationConfiguration configuration,
                                      PostgresNotificationConnectionFactory connectionFactory) {
         this.name = name;
@@ -102,12 +98,10 @@ final class PostgresNotificationSubscription {
         for (ChangeListenerMethod method : methods) {
             PostgresChangeListenerDefinition definition = definitionFactory.create(method);
             PostgresChangeNotificationDispatcher dispatcher = new PostgresChangeNotificationDispatcher(
-                executor,
-                taskScheduler,
                 event -> invoke(context, method, event),
                 name,
                 method.method().getDescription(true),
-                configuration.getMaxOutstandingTasks());
+                configuration.getQueueCapacity());
             dispatchers.put(definition, dispatcher);
         }
         listenersByChannel = dispatchers.entrySet().stream().collect(Collectors.groupingBy(

@@ -15,276 +15,317 @@
  */
 package io.micronaut.data.jdbc.notification.postgres
 
-import io.micronaut.data.notification.ChangeOperation
 import io.micronaut.data.jdbc.notification.DefaultChangeEvent
-import io.micronaut.scheduling.TaskScheduler
+import io.micronaut.data.jdbc.notification.DeferredChangeEvent
+import io.micronaut.data.notification.ChangeEvent
+import io.micronaut.data.notification.ChangeOperation
 import spock.lang.Specification
+import spock.util.concurrent.PollingConditions
 
-import java.time.Duration
-import java.util.concurrent.ScheduledFuture
+import java.util.concurrent.CompletableFuture
+import java.util.concurrent.CopyOnWriteArrayList
 import java.util.concurrent.CountDownLatch
-import java.util.concurrent.Executor
-import java.util.concurrent.Executors
-import java.util.concurrent.RejectedExecutionException
+import java.util.concurrent.LinkedBlockingQueue
 import java.util.concurrent.TimeUnit
+import java.util.concurrent.atomic.AtomicInteger
+import java.util.function.Consumer
 
 class PostgresNotificationDispatcherSpec extends Specification {
-    void "each notification is submitted separately and can execute in a different order"() {
+    void "entity loading and callbacks execute sequentially in submission order"() {
         given:
-        def tasks = []
-        def events = []
-        def dispatcher = new PostgresChangeNotificationDispatcher({ tasks.add(it) } as Executor, Stub(TaskScheduler), { events.add(it.operation()) }, 'default', 'test', 1000)
-
-        when:
-        dispatcher.submitDispatch(new DefaultChangeEvent(ChangeOperation.INSERT, null, null))
-        dispatcher.submitDispatch(new DefaultChangeEvent(ChangeOperation.UPDATE, null, null))
-
-        then:
-        tasks.size() == 2
-        dispatcher.pendingTasks() == 0
-
-        when:
-        tasks[1].run()
-        tasks[0].run()
-
-        then:
-        events == [ChangeOperation.UPDATE, ChangeOperation.INSERT]
-        dispatcher.stop().done
-    }
-
-    void "shutdown discards submitted callbacks that have not started"() {
-        given:
-        def tasks = []
-        def events = []
-        def dispatcher = new PostgresChangeNotificationDispatcher({ tasks.add(it) } as Executor, Stub(TaskScheduler), { events.add(it) }, 'default', 'test', 1000)
-        dispatcher.invalidate()
-        dispatcher.invalidate()
-
-        when:
-        def stopped = dispatcher.stop()
-        dispatcher.invalidate()
-        tasks.each { it.run() }
-
-        then:
-        stopped.done
-        dispatcher.stop().is(stopped)
-        tasks.size() == 2
-        events.empty
-        dispatcher.pendingTasks() == 0
-    }
-
-    void "callbacks for one listener overlap and shutdown waits for all running callbacks"() {
-        given:
-        def executor = Executors.newFixedThreadPool(2)
-        def entered = new CountDownLatch(2)
+        def loading = new CountDownLatch(1)
         def release = new CountDownLatch(1)
-        def dispatcher = new PostgresChangeNotificationDispatcher(executor, Stub(TaskScheduler), {
-            entered.countDown()
-            assert release.await(10, TimeUnit.SECONDS)
-        }, 'default', 'test', 1000)
+        def loads = new AtomicInteger()
+        def events = new LinkedBlockingQueue<String>()
+        def threads = new CopyOnWriteArrayList<Thread>()
+        def dispatcher = createDispatcher({ event ->
+            threads.add(Thread.currentThread())
+            event.materialize()
+            events.add(event.entity().orElseThrow())
+        })
+        def first = new DeferredChangeEvent(ChangeOperation.UPDATE, null, {
+            loads.incrementAndGet()
+            loading.countDown()
+            assert release.await(5, TimeUnit.SECONDS)
+            'older'
+        })
+        def second = new DeferredChangeEvent(ChangeOperation.UPDATE, null, {
+            loads.incrementAndGet()
+            'newer'
+        })
 
         when:
-        dispatcher.invalidate()
-        dispatcher.invalidate()
+        dispatcher.submitDispatch(first)
+        assert loading.await(5, TimeUnit.SECONDS)
+        dispatcher.submitDispatch(second)
 
         then:
-        entered.await(10, TimeUnit.SECONDS)
-        dispatcher.pendingTasks() == 2
-
-        when:
-        def stopped = dispatcher.stop()
-
-        then:
-        !stopped.done
+        loads.get() == 1
+        dispatcher.pendingTasks() == 1
+        events.empty
 
         when:
         release.countDown()
-        stopped.get(10, TimeUnit.SECONDS)
 
         then:
+        events.poll(5, TimeUnit.SECONDS) == 'older'
+        events.poll(5, TimeUnit.SECONDS) == 'newer'
+        loads.get() == 2
+        threads.size() == 2
+        threads[0].is(threads[1])
+        threads[0].daemon
+        threads[0].name.startsWith('postgres-notification-listener-default-')
+
+        cleanup:
+        release.countDown()
+        dispatcher.stop().get(5, TimeUnit.SECONDS)
+    }
+
+    void "shutdown discards queued data and invalidation and waits for the running callback"() {
+        given:
+        def entered = new CountDownLatch(1)
+        def release = new CountDownLatch(1)
+        def events = new CopyOnWriteArrayList<ChangeOperation>()
+        def dispatcher = createDispatcher({ event ->
+            entered.countDown()
+            assert release.await(5, TimeUnit.SECONDS)
+            events.add(event.operation())
+        })
+        dispatcher.submitDispatch(row(ChangeOperation.INSERT))
+        assert entered.await(5, TimeUnit.SECONDS)
+        dispatcher.submitDispatch(row(ChangeOperation.UPDATE))
+        dispatcher.invalidate()
+
+        when:
+        def stopped = dispatcher.stop()
+        dispatcher.submitDispatch(row(ChangeOperation.DELETE))
+        dispatcher.invalidate()
+
+        then:
+        !stopped.done
+        dispatcher.pendingTasks() == 1
+        dispatcher.stop().is(stopped)
+
+        when:
+        release.countDown()
+        stopped.get(5, TimeUnit.SECONDS)
+
+        then:
+        events == [ChangeOperation.INSERT]
         dispatcher.pendingTasks() == 0
 
         cleanup:
         release.countDown()
-        executor.shutdownNow()
+        dispatcher.stop().get(5, TimeUnit.SECONDS)
     }
 
     void "a callback failure does not stop later callbacks or leak active tasks"() {
         given:
-        def tasks = []
-        int called = 0
-        def dispatcher = new PostgresChangeNotificationDispatcher({ tasks.add(it) } as Executor, Stub(TaskScheduler), {
-            if (++called == 1) { throw new IllegalStateException('callback failure') }
-        }, 'default', 'test', 1000)
-        dispatcher.invalidate()
-        dispatcher.invalidate()
-
-        when:
-        tasks.each { it.run() }
-
-        then:
-        called == 2
-        dispatcher.pendingTasks() == 0
-        dispatcher.stop().done
-    }
-
-    void "rejected notifications coalesce into an invalidation retried until execution starts"() {
-        given:
-        def tasks = []
-        def retries = []
-        def events = []
-        boolean reject = true
-        def scheduler = Stub(TaskScheduler) {
-            schedule(_ as Duration, _ as Runnable) >> { Duration delay, Runnable retry ->
-                retries.add(retry)
-                Stub(ScheduledFuture)
+        def events = new LinkedBlockingQueue<ChangeOperation>()
+        def dispatcher = createDispatcher({ event ->
+            if (event.operation() == ChangeOperation.INSERT) {
+                throw new IllegalStateException('callback failure')
             }
+            events.add(event.operation())
+        })
+
+        when:
+        dispatcher.submitDispatch(row(ChangeOperation.INSERT))
+        dispatcher.submitDispatch(row(ChangeOperation.UPDATE))
+
+        then:
+        events.poll(5, TimeUnit.SECONDS) == ChangeOperation.UPDATE
+        new PollingConditions(timeout: 5).eventually {
+            assert dispatcher.pendingTasks() == 0
         }
-        def dispatcher = new PostgresChangeNotificationDispatcher({
-            if (reject) { throw new RejectedExecutionException() }
-            tasks.add(it)
-        } as Executor, scheduler, { events.add(it.operation()) }, 'default', 'test', 1000)
+
+        cleanup:
+        dispatcher.stop().get(5, TimeUnit.SECONDS)
+    }
+
+    void "overflow replaces waiting data and losses during refresh request another invalidation"() {
+        given:
+        def entered = new CountDownLatch(1)
+        def release = new CountDownLatch(1)
+        def refreshing = new CountDownLatch(1)
+        def releaseRefresh = new CountDownLatch(1)
+        def refreshes = new AtomicInteger()
+        def events = new LinkedBlockingQueue<ChangeEvent<?>>()
+        def dispatcher = createDispatcher({ event ->
+            if (event.operation() == ChangeOperation.INSERT) {
+                entered.countDown()
+                assert release.await(5, TimeUnit.SECONDS)
+            } else if (refreshes.incrementAndGet() == 1) {
+                refreshing.countDown()
+                assert releaseRefresh.await(5, TimeUnit.SECONDS)
+            }
+            events.add(event)
+        }, 2)
+        dispatcher.submitDispatch(row(ChangeOperation.INSERT))
+        assert entered.await(5, TimeUnit.SECONDS)
 
         when:
-        dispatcher.submitDispatch(new DefaultChangeEvent(ChangeOperation.INSERT, null, null))
-        dispatcher.submitDispatch(new DefaultChangeEvent(ChangeOperation.UPDATE, null, null))
+        dispatcher.submitDispatch(row(ChangeOperation.UPDATE))
+        dispatcher.submitDispatch(row(ChangeOperation.DELETE))
+        100.times { dispatcher.submitDispatch(row(ChangeOperation.UPDATE)) }
+        release.countDown()
 
         then:
-        retries.size() == 1
-        dispatcher.pendingTasks() == 0
+        refreshing.await(5, TimeUnit.SECONDS)
+        events.poll(5, TimeUnit.SECONDS).operation() == ChangeOperation.INSERT
+        dispatcher.pendingTasks() == 1
+        events.empty
 
-        when: 'the retry is also rejected'
-        retries.remove(0).run()
+        when:
+        dispatcher.submitDispatch(row(ChangeOperation.UPDATE))
+        dispatcher.submitDispatch(row(ChangeOperation.DELETE))
+        releaseRefresh.countDown()
+        def invalidations = (1..2).collect { events.poll(5, TimeUnit.SECONDS) }
 
         then:
-        retries.size() == 1
-        tasks.empty
+        invalidations.every { it != null && it.operation() == ChangeOperation.INVALIDATE }
+        invalidations.every { it.entity().empty && it.metadata(PostgresChangeEventMetadata).empty }
+        refreshes.get() == 2
+        events.empty
 
-        when: 'the invalidation is accepted but has not started'
-        reject = false
-        retries.remove(0).run()
-        reject = true
+        cleanup:
+        release.countDown()
+        releaseRefresh.countDown()
+        dispatcher.stop().get(5, TimeUnit.SECONDS)
+    }
+
+    void "invalidation replaces queued data and retains explicit metadata with recovery #recovery"() {
+        given:
+        def entered = new CountDownLatch(1)
+        def release = new CountDownLatch(1)
+        def events = new LinkedBlockingQueue<ChangeEvent<?>>()
+        def metadata = new PostgresChangeEventMetadata('books', 'public', 'book', [:], [:])
+        def explicit = new DefaultChangeEvent(ChangeOperation.INVALIDATE, null, metadata)
+        def dispatcher = createDispatcher({ event ->
+            if (event.operation() == ChangeOperation.INSERT) {
+                entered.countDown()
+                assert release.await(5, TimeUnit.SECONDS)
+            }
+            events.add(event)
+        })
+        dispatcher.submitDispatch(row(ChangeOperation.INSERT))
+        assert entered.await(5, TimeUnit.SECONDS)
+        dispatcher.submitDispatch(row(ChangeOperation.UPDATE))
+
+        when:
+        dispatcher.submitDispatch(explicit)
+        if (recovery) {
+            dispatcher.invalidate()
+        }
+        dispatcher.submitDispatch(row(ChangeOperation.DELETE))
+        release.countDown()
+        def first = events.poll(5, TimeUnit.SECONDS)
+        def invalidation = events.poll(5, TimeUnit.SECONDS)
+
+        then:
+        first.operation() == ChangeOperation.INSERT
+        invalidation.operation() == ChangeOperation.INVALIDATE
+        invalidation.metadata(PostgresChangeEventMetadata) == (recovery ? Optional.empty() : Optional.of(metadata))
+        events.empty
+
+        cleanup:
+        release.countDown()
+        dispatcher.stop().get(5, TimeUnit.SECONDS)
+
+        where:
+        recovery << [false, true]
+    }
+
+    void "different listeners have independent workers and queue limits"() {
+        given:
+        def entered = new CountDownLatch(1)
+        def release = new CountDownLatch(1)
+        def firstEvents = new CopyOnWriteArrayList<ChangeOperation>()
+        def secondEvents = new LinkedBlockingQueue<ChangeOperation>()
+        def first = createDispatcher({ event ->
+            entered.countDown()
+            assert release.await(5, TimeUnit.SECONDS)
+            firstEvents.add(event.operation())
+        }, 2)
+        def second = createDispatcher({ event -> secondEvents.add(event.operation()) }, 2)
+        first.submitDispatch(row(ChangeOperation.INSERT))
+        assert entered.await(5, TimeUnit.SECONDS)
+
+        when:
+        first.submitDispatch(row(ChangeOperation.UPDATE))
+        first.submitDispatch(row(ChangeOperation.DELETE))
+        second.submitDispatch(row(ChangeOperation.UPDATE))
+
+        then:
+        secondEvents.poll(5, TimeUnit.SECONDS) == ChangeOperation.UPDATE
+        first.pendingTasks() == 1
+        firstEvents.empty
+
+        when:
+        def stopped = first.stop()
+        release.countDown()
+        stopped.get(5, TimeUnit.SECONDS)
+
+        then:
+        firstEvents == [ChangeOperation.INSERT]
+        first.pendingTasks() == 0
+
+        cleanup:
+        release.countDown()
+        first.stop().get(5, TimeUnit.SECONDS)
+        second.stop().get(5, TimeUnit.SECONDS)
+    }
+
+    void "an unused dispatcher stops immediately and ignores later submissions"() {
+        given:
+        def calls = new AtomicInteger()
+        def dispatcher = createDispatcher({ calls.incrementAndGet() })
+
+        when:
+        def stopped = dispatcher.stop()
+        dispatcher.submitDispatch(row(ChangeOperation.INSERT))
         dispatcher.invalidate()
 
         then:
-        tasks.size() == 1
-        retries.empty
-
-        when:
-        tasks.remove(0).run()
-        dispatcher.invalidate()
-
-        then: 'loss after the refresh starts requires another invalidation'
-        events == [ChangeOperation.INVALIDATE]
-        retries.size() == 1
-        dispatcher.stop().done
-
-        when: 'shutdown prevents a scheduled retry from submitting work'
-        reject = false
-        retries.remove(0).run()
-
-        then:
-        tasks.empty
+        stopped.done
+        dispatcher.stop().is(stopped)
         dispatcher.pendingTasks() == 0
+        calls.get() == 0
     }
 
-    void "outstanding work is bounded and excess notifications share a pending invalidation"() {
+    void "fatal callback errors stop the worker and release task accounting"() {
         given:
-        def tasks = []
-        def events = []
-        def dispatcher = new PostgresChangeNotificationDispatcher({ tasks.add(it) } as Executor,
-            Stub(TaskScheduler), { events.add(it.operation()) }, 'default', 'bounded', 2)
-
-        when:
-        dispatcher.submitDispatch(new DefaultChangeEvent(ChangeOperation.INSERT, null, null))
-        dispatcher.submitDispatch(new DefaultChangeEvent(ChangeOperation.UPDATE, null, null))
-        1000.times { dispatcher.submitDispatch(new DefaultChangeEvent(ChangeOperation.DELETE, null, null)) }
-
-        then:
-        tasks.size() == 2
-
-        when: 'a completion makes room for the pending refresh'
-        tasks.remove(0).run()
-        1000.times { dispatcher.invalidate() }
-
-        then:
-        tasks.size() == 2 // One original task and one invalidation, with no extra tasks for the burst.
-
-        when:
-        tasks.remove(0).run()
-        tasks.remove(0).run()
-
-        then:
-        tasks.empty
-        events == [ChangeOperation.INSERT, ChangeOperation.UPDATE, ChangeOperation.INVALIDATE]
-        dispatcher.stop().done
-    }
-
-    void "running callbacks use capacity and losses during invalidation request another refresh"() {
-        given:
-        def tasks = []
-        def events = []
-        PostgresChangeNotificationDispatcher dispatcher
-        dispatcher = new PostgresChangeNotificationDispatcher({ tasks.add(it) } as Executor,
-            Stub(TaskScheduler), {
-                events.add(it.operation())
-                if (events.size() <= 2) {
-                    10.times { dispatcher.submitDispatch(new DefaultChangeEvent(ChangeOperation.UPDATE, null, null)) }
-                    assert tasks.empty // The running callback holds the only slot.
-                }
-            }, 'default', 'bounded', 1)
-
-        when:
-        dispatcher.submitDispatch(new DefaultChangeEvent(ChangeOperation.INSERT, null, null))
-        tasks.remove(0).run()
-        tasks.remove(0).run()
-        tasks.remove(0).run()
-
-        then:
-        tasks.empty
-        events == [ChangeOperation.INSERT, ChangeOperation.INVALIDATE, ChangeOperation.INVALIDATE]
-        dispatcher.stop().done
-    }
-
-    void "limits are independent per listener and shutdown discards pending overload invalidation"() {
-        given:
-        def tasks = []
-        def events = []
-        def executor = { tasks.add(it) } as Executor
-        def first = new PostgresChangeNotificationDispatcher(executor, Stub(TaskScheduler),
-            { events.add('first') }, 'default', 'first', 1)
-        def second = new PostgresChangeNotificationDispatcher(executor, Stub(TaskScheduler),
-            { events.add('second') }, 'default', 'second', 1)
-
-        when:
-        first.invalidate()
-        first.invalidate()
-        second.invalidate()
-        first.stop()
-        tasks.remove(0).run()
-        tasks.remove(0).run()
-
-        then:
-        tasks.empty
-        events == ['second']
-        first.stop().done
-        second.stop().done
-    }
-
-    void "fatal callback errors propagate and release task accounting"() {
-        given:
-        def tasks = []
-        def dispatcher = new PostgresChangeNotificationDispatcher({ tasks.add(it) } as Executor, Stub(TaskScheduler), {
+        def uncaught = new CompletableFuture<Throwable>()
+        def calls = new AtomicInteger()
+        def dispatcher = createDispatcher({ event ->
+            calls.incrementAndGet()
+            Thread.currentThread().uncaughtExceptionHandler = { Thread thread, Throwable uncaughtFailure ->
+                uncaught.complete(uncaughtFailure)
+            } as Thread.UncaughtExceptionHandler
             throw new AssertionError('fatal')
-        }, 'default', 'test', 1000)
-        dispatcher.invalidate()
+        })
 
         when:
-        tasks[0].run()
+        dispatcher.submitDispatch(row(ChangeOperation.INSERT))
+        def failure = uncaught.get(5, TimeUnit.SECONDS)
+        dispatcher.submitDispatch(row(ChangeOperation.UPDATE))
+        dispatcher.stop().get(5, TimeUnit.SECONDS)
 
         then:
-        thrown(AssertionError)
+        failure instanceof AssertionError
+        failure.message == 'fatal'
         dispatcher.pendingTasks() == 0
-        dispatcher.stop().done
+        calls.get() == 1
+
+        cleanup:
+        dispatcher.stop().get(5, TimeUnit.SECONDS)
+    }
+
+    private static ChangeEvent<?> row(ChangeOperation operation) {
+        new DefaultChangeEvent<>(operation, null, null)
+    }
+
+    private static PostgresChangeNotificationDispatcher createDispatcher(Closure listener, int capacity = 10) {
+        new PostgresChangeNotificationDispatcher(listener as Consumer, 'default', 'test', capacity)
     }
 }

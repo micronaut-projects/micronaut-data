@@ -19,7 +19,6 @@ import io.micronaut.context.BeanContext
 import io.micronaut.context.env.Environment
 import io.micronaut.data.jdbc.operations.JdbcRepositoryOperations
 import io.micronaut.json.JsonMapper
-import io.micronaut.scheduling.TaskScheduler
 import org.postgresql.PGConnection
 import org.postgresql.ds.PGSimpleDataSource
 import spock.lang.Specification
@@ -357,7 +356,7 @@ class PostgresNotificationSubscriptionSpec extends Specification {
             getBean(Environment) >> Stub(Environment)
         }
         new PostgresNotificationSubscription('test', Stub(JdbcRepositoryOperations), [], context,
-            Stub(JsonMapper), { Runnable task -> task.run() } as Executor, Stub(TaskScheduler), configuration, factory)
+            Stub(JsonMapper), configuration, factory)
     }
 
 }

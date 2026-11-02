@@ -48,10 +48,10 @@ import java.lang.annotation.Target;
  * the event contains no entity.</p>
  *
  * <p>PostgreSQL notifications use one dedicated, non-pooled connection per participating datasource, shared by
- * all listener methods using that datasource. Callbacks run on the blocking executor and may
- * execute concurrently for the same listener, without guaranteed execution or completion order.
- * After each successful reconnection, an {@code INVALIDATE} event is submitted so listeners can
- * reload data that may have changed while disconnected.</p>
+ * all listener methods using that datasource. Each listener has a dedicated worker and bounded queue
+ * for sequential entity loading and callback execution. Different listeners can run concurrently.
+ * After each successful reconnection, an {@code INVALIDATE} event replaces waiting callbacks so
+ * listeners can reload data that may have changed while disconnected.</p>
  *
  * @since 5.3.0
  */

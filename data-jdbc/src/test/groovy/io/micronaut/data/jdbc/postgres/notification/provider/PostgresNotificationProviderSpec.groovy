@@ -192,7 +192,7 @@ class PostgresNotificationProviderSpec extends Specification implements Postgres
         embedded.events.poll(300, TimeUnit.MILLISECONDS) == null
     }
 
-    void "bulk changes load every affected entity without requiring callback order"() {
+    void "bulk changes load every affected entity"() {
         given:
         start()
 
@@ -224,65 +224,97 @@ class PostgresNotificationProviderSpec extends Specification implements Postgres
     }
 
     @Unroll
-    void "overload collapses into invalidation and row delivery resumes with work limit #limit"() {
+    void "queue overflow replaces waiting data and row delivery resumes with capacity #capacity"() {
         given:
         start([
-            'micronaut.data.jdbc.notifications.postgres.max-outstanding-tasks': limit,
+            'micronaut.data.jdbc.notifications.postgres.queue-capacity': capacity,
             'spec.overload-probe': true
         ])
-        listener.entered = new CountDownLatch(limit)
+        listener.entered = new CountDownLatch(1)
         listener.release = new CountDownLatch(1)
         def probe = application.getBean(OverloadNotificationProbe)
-        (1..limit).each { id ->
-            execute("INSERT INTO \"ProviderBook\" VALUES ('$TENANT', $id, 'initial')")
-        }
+        execute("INSERT INTO \"ProviderBook\" VALUES ('$TENANT', 1, 'initial')")
         assert listener.entered.await(10, TimeUnit.SECONDS)
 
-        when: 'the listener holds every slot while a committed bulk insert arrives'
+        when: 'one callback is running while a committed bulk insert fills the waiting queue'
         execute("""INSERT INTO "ProviderBook"
             SELECT '$TENANT'::uuid, id, 'burst' FROM generate_series(100, 109) AS id""")
-        // PostgreSQL preserves notification order. Receiving this probe means the preceding row
-        // notifications have passed through the receiver, even though their listener is blocked.
-        execute("""SELECT pg_notify('provider_probe', '{"version":1,"schema":"notification_provider_test",
-            "table":"ProviderBook","operation":"INVALIDATE","oldKeys":{},"newKeys":{}}')""")
+        // This other listener confirms the receiver has processed the burst without waiting for our callback.
+        notifyProbe()
 
         then:
         probe.events.poll(10, TimeUnit.SECONDS) != null
-        listener.attempts.get() == limit
-        listener.events.isEmpty()
+        listener.attempts.get() == 1
+        listener.events.empty
 
-        when: 'completion alone must dispatch the pending invalidation, without another database event'
+        when:
         listener.release.countDown()
-        def delivered = (1..(limit + 1)).collect { next() }
-        then:
-        def initial = delivered.findAll { it.operation() == ChangeOperation.INSERT }
-        initial.size() == limit
-        initial.collect { it.metadata(PostgresChangeEventMetadata).orElseThrow().newKeys().BookId }.toSet() ==
-            (1..limit).collect { it.toString() }.toSet()
-        def invalidations = delivered.findAll { it.operation() == ChangeOperation.INVALIDATE }
-        invalidations.size() == 1
-        invalidations.first().entity().isEmpty()
-        invalidations.first().metadata(PostgresChangeEventMetadata).isEmpty()
-        listener.attempts.get() == limit + 1
-        listener.events.isEmpty()
-
-        when: 'the listener catches up and a later change is delivered individually'
-        new PollingConditions(timeout: 10).eventually {
-            // The invalidation is recorded just before its callback returns. A write racing with
-            // that return may still collapse at limit one; keep checking observable row delivery.
-            execute('UPDATE "ProviderBook" SET title = \'resumed\' WHERE "BookId" = 1')
-            def resumed = next()
-            assert resumed.operation() == ChangeOperation.UPDATE
-            assert resumed.metadata(PostgresChangeEventMetadata).orElseThrow().newKeys() == [tenant: TENANT, BookId: '1']
-            assert resumed.entity().orElseThrow().title == 'resumed'
-        }
+        def initial = next()
+        def invalidation = next()
 
         then:
-        listener.attempts.get() >= limit + 2
+        initial.operation() == ChangeOperation.INSERT
+        initial.metadata(PostgresChangeEventMetadata).orElseThrow().newKeys().BookId == '1'
+        invalidation.operation() == ChangeOperation.INVALIDATE
+        invalidation.entity().empty
+        invalidation.metadata(PostgresChangeEventMetadata).empty
+        listener.attempts.get() == 2
+        listener.events.empty
+
+        when: 'a notification arriving during or after reconciliation is queued normally'
+        execute('UPDATE "ProviderBook" SET title = \'resumed\' WHERE "BookId" = 1')
+        def resumed = next()
+
+        then:
+        resumed.operation() == ChangeOperation.UPDATE
+        resumed.entity().orElseThrow().title == 'resumed'
         listener.events.poll(300, TimeUnit.MILLISECONDS) == null
 
         where:
-        limit << [1, 2]
+        capacity << [2, 3]
+    }
+
+    void "recovery invalidation replaces queued row changes after the running callback finishes"() {
+        given:
+        start(['spec.overload-probe': true])
+        listener.entered = new CountDownLatch(1)
+        listener.release = new CountDownLatch(1)
+        def probe = application.getBean(OverloadNotificationProbe)
+        execute("INSERT INTO \"ProviderBook\" VALUES ('$TENANT', 1, 'older')")
+        assert listener.entered.await(10, TimeUnit.SECONDS)
+        execute('UPDATE "ProviderBook" SET title = \'newer\' WHERE "BookId" = 1')
+        notifyProbe()
+        assert probe.events.poll(10, TimeUnit.SECONDS) != null
+        assert listener.attempts.get() == 1
+
+        when:
+        terminateListeningConnection()
+        def recovered = probe.events.poll(10, TimeUnit.SECONDS)
+
+        then:
+        recovered != null
+        recovered.operation() == ChangeOperation.INVALIDATE
+        recovered.metadata(PostgresChangeEventMetadata).empty
+
+        when: 'a probe received after reconnect confirms every listener has been invalidated'
+        notifyProbe()
+
+        then:
+        probe.events.poll(10, TimeUnit.SECONDS).metadata(PostgresChangeEventMetadata).present
+        listener.attempts.get() == 1
+        listener.events.empty
+
+        when:
+        listener.release.countDown()
+        def first = next()
+        def invalidation = next()
+
+        then:
+        first.operation() == ChangeOperation.INSERT
+        first.entity().orElseThrow().title == 'older'
+        invalidation.operation() == ChangeOperation.INVALIDATE
+        invalidation.metadata(PostgresChangeEventMetadata).empty
+        listener.events.poll(300, TimeUnit.MILLISECONDS) == null
     }
 
     void "listener retry stays inside AOP and truncate invalidates"() {
@@ -304,12 +336,7 @@ class PostgresNotificationProviderSpec extends Specification implements Postgres
         start()
 
         when:
-        try (def statement = writer.prepareStatement("SELECT pg_terminate_backend(pid) FROM pg_stat_activity WHERE datname = current_database() AND query = ? AND pid <> pg_backend_pid()")) {
-            statement.setString(1, 'LISTEN "provider_changes"')
-            try (def rows = statement.executeQuery()) {
-                assert rows.next() && rows.getBoolean(1)
-            }
-        }
+        terminateListeningConnection()
 
         then:
         next().operation() == ChangeOperation.INVALIDATE
@@ -548,6 +575,20 @@ class PostgresNotificationProviderSpec extends Specification implements Postgres
         event.metadata(PostgresChangeEventMetadata).orElseThrow().schema() == 'notification_provider_other'
         event.entity().orElseThrow().title == 'local'
         listener.events.poll(300, TimeUnit.MILLISECONDS) == null
+    }
+
+    private void notifyProbe() {
+        execute("""SELECT pg_notify('provider_probe', '{"version":1,"schema":"notification_provider_test",
+            "table":"ProviderBook","operation":"INVALIDATE","oldKeys":{},"newKeys":{}}')""")
+    }
+
+    private void terminateListeningConnection() {
+        try (def statement = writer.prepareStatement("SELECT pg_terminate_backend(pid) FROM pg_stat_activity WHERE datname = current_database() AND query = ? AND pid <> pg_backend_pid()")) {
+            statement.setString(1, 'LISTEN "provider_changes"')
+            try (def rows = statement.executeQuery()) {
+                assert rows.next() && rows.getBoolean(1)
+            }
+        }
     }
 
     private boolean connectionExists(int pid) {

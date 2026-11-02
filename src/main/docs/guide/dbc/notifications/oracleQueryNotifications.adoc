@@ -54,10 +54,8 @@ This cache updates individual entities for `INSERT` and `UPDATE`. For `DELETE`, 
 so the example reloads the cache instead of trying to interpret the Oracle Database `ROWID` as an entity ID.
 It also reloads the complete cache for `INVALIDATE`.
 
-NOTE: Synchronizing a listener protects its cache updates but does not preserve database change order.
-Entity loading happens before the listener acquires its lock, so an older loaded value can overwrite a newer
-cached value. These cache examples require a reconciliation strategy if stale entries are unacceptable,
-such as periodic refreshes or checking the database when serving reads that require current data.
+NOTE: Each listener serializes entity loading and callback execution on its worker. Synchronize cache access
+with other application threads; different listeners may run concurrently.
 
 For `INSERT` and `UPDATE`, Oracle Database supplies a `ROWID`, which Micronaut Data uses to reload the entity.
 See <<notificationEntityLoading, Entity Loading>> for current-state semantics and cases where `entity()` is empty.
@@ -223,10 +221,12 @@ notification connection unless the JDBC driver reports the failure.
 == Delivery and Concurrency
 
 See <<notificationDeliveryAndConcurrency, Delivery and Concurrency>> for shared threading requirements,
-delivery limitations, and handling of executor rejections.
+delivery limitations, queue order, and overflow reconciliation.
 
-Changes to individual rows within one Oracle Database notification are delivered sequentially.
-Separate notifications may invoke the same listener concurrently, with no ordering guarantee between them.
+Each listener has a dedicated worker and bounded queue. Notifications execute sequentially in queue order,
+including entity loading and individual row changes within one Oracle notification. Configure
+`micronaut.data.jdbc.notifications.oracle.queue-capacity` to set the limit for waiting notifications;
+it defaults to `1000` and excludes the running callback.
 
 A single transaction, such as a bulk update, can produce one Oracle Database notification containing several row descriptions.
 The application receives one listener invocation for each affected row unless the notification requires an `INVALIDATE` event.
