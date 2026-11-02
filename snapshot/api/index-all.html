@@ -1034,6 +1034,12 @@ is issues.</div>
 <dd>&nbsp;</dd>
 <dt><a href="com/example/Application.html#%3Cinit%3E()" class="member-name-link">Application()</a> - Constructor for class com.example.<a href="com/example/Application.html" title="class in com.example">Application</a></dt>
 <dd>&nbsp;</dd>
+<dt><a href="io/micronaut/transaction/support/AbstractPropagatedStatusTransactionOperations.html#appliesToCurrentConnection(T)" class="member-name-link">appliesToCurrentConnection(T)</a> - Method in class io.micronaut.transaction.support.<a href="io/micronaut/transaction/support/AbstractPropagatedStatusTransactionOperations.html" title="class in io.micronaut.transaction.support">AbstractPropagatedStatusTransactionOperations</a></dt>
+<dd>
+<div class="block">Whether a propagated transaction applies to the current connection, so that new transactional work joins it.</div>
+</dd>
+<dt><a href="io/micronaut/transaction/support/AbstractTransactionOperations.html#appliesToCurrentConnection(T)" class="member-name-link">appliesToCurrentConnection(T)</a> - Method in class io.micronaut.transaction.support.<a href="io/micronaut/transaction/support/AbstractTransactionOperations.html" title="class in io.micronaut.transaction.support">AbstractTransactionOperations</a></dt>
+<dd>&nbsp;</dd>
 <dt><a href="io/micronaut/data/processor/visitors/finders/criteria/DeleteCriteriaMethodMatch.html#apply(io.micronaut.data.processor.visitors.MethodMatchContext,io.micronaut.data.model.jpa.criteria.PersistentEntityRoot,io.micronaut.data.model.jpa.criteria.PersistentEntityCriteriaDelete,io.micronaut.data.processor.model.criteria.SourcePersistentEntityCriteriaBuilder)" class="member-name-link">apply(MethodMatchContext, PersistentEntityRoot, PersistentEntityCriteriaDelete, SourcePersistentEntityCriteriaBuilder)</a> - Method in class io.micronaut.data.processor.visitors.finders.criteria.<a href="io/micronaut/data/processor/visitors/finders/criteria/DeleteCriteriaMethodMatch.html" title="class in io.micronaut.data.processor.visitors.finders.criteria">DeleteCriteriaMethodMatch</a></dt>
 <dd>
 <div class="block">Apply query match.</div>
@@ -4752,6 +4758,16 @@ as a RxJava Single or a Reactor Mono.</div>
 <dd>
 <div class="block">Initializes or validates the schema for the configuration.</div>
 </dd>
+<dt><a href="io/micronaut/transaction/support/AbstractTransactionOperations.html#createOwnerTransactionStatus(io.micronaut.data.connection.ConnectionStatus,io.micronaut.transaction.TransactionDefinition,io.micronaut.data.connection.support.DefaultConnectionStatus.SuppliedConnection)" class="member-name-link">createOwnerTransactionStatus(ConnectionStatus, TransactionDefinition, DefaultConnectionStatus.SuppliedConnection)</a> - Method in class io.micronaut.transaction.support.<a href="io/micronaut/transaction/support/AbstractTransactionOperations.html" title="class in io.micronaut.transaction.support">AbstractTransactionOperations</a></dt>
+<dd>
+<div class="block">Creates the status of work joined to the transaction that the owner of a supplied connection controls.</div>
+</dd>
+<dt><a href="io/micronaut/transaction/support/AbstractDefaultTransactionOperations.html#createOwnerTransactionStatus(io.micronaut.data.connection.ConnectionStatus,io.micronaut.transaction.TransactionDefinition,io.micronaut.data.connection.support.DefaultConnectionStatus.SuppliedConnection)" class="member-name-link">createOwnerTransactionStatus(ConnectionStatus, TransactionDefinition, DefaultConnectionStatus.SuppliedConnection)</a> - Method in class io.micronaut.transaction.support.<a href="io/micronaut/transaction/support/AbstractDefaultTransactionOperations.html" title="class in io.micronaut.transaction.support">AbstractDefaultTransactionOperations</a></dt>
+<dd>&nbsp;</dd>
+<dt><a href="io/micronaut/transaction/jdbc/DataSourceTransactionManager.html#createOwnerTransactionStatus(io.micronaut.data.connection.ConnectionStatus,io.micronaut.transaction.TransactionDefinition,io.micronaut.data.connection.support.DefaultConnectionStatus.SuppliedConnection)" class="member-name-link">createOwnerTransactionStatus(ConnectionStatus, TransactionDefinition, DefaultConnectionStatus.SuppliedConnection)</a> - Method in class io.micronaut.transaction.jdbc.<a href="io/micronaut/transaction/jdbc/DataSourceTransactionManager.html" title="class in io.micronaut.transaction.jdbc">DataSourceTransactionManager</a></dt>
+<dd>&nbsp;</dd>
+<dt><a href="io/micronaut/transaction/hibernate/HibernateTransactionManager.html#createOwnerTransactionStatus(io.micronaut.data.connection.ConnectionStatus,io.micronaut.transaction.TransactionDefinition,io.micronaut.data.connection.support.DefaultConnectionStatus.SuppliedConnection)" class="member-name-link">createOwnerTransactionStatus(ConnectionStatus, TransactionDefinition, DefaultConnectionStatus.SuppliedConnection)</a> - Method in class io.micronaut.transaction.hibernate.<a href="io/micronaut/transaction/hibernate/HibernateTransactionManager.html" title="class in io.micronaut.transaction.hibernate">HibernateTransactionManager</a></dt>
+<dd>&nbsp;</dd>
 <dt><a href="io/micronaut/data/document/model/query/builder/CosmosSqlQueryBuilder.html#createPredicateVisitor(io.micronaut.core.annotation.AnnotationMetadata,io.micronaut.data.model.query.builder.sql.AbstractSqlLikeQueryBuilder.QueryState)" class="member-name-link">createPredicateVisitor(AnnotationMetadata, AbstractSqlLikeQueryBuilder.QueryState)</a> - Method in class io.micronaut.data.document.model.query.builder.<a href="io/micronaut/data/document/model/query/builder/CosmosSqlQueryBuilder.html" title="class in io.micronaut.data.document.model.query.builder">CosmosSqlQueryBuilder</a></dt>
 <dd>&nbsp;</dd>
 <dt><a href="io/micronaut/data/model/query/builder/sql/AbstractSqlLikeQueryBuilder.html#createPredicateVisitor(io.micronaut.core.annotation.AnnotationMetadata,io.micronaut.data.model.query.builder.sql.AbstractSqlLikeQueryBuilder.QueryState)" class="member-name-link">createPredicateVisitor(AnnotationMetadata, AbstractSqlLikeQueryBuilder.QueryState)</a> - Method in class io.micronaut.data.model.query.builder.sql.<a href="io/micronaut/data/model/query/builder/sql/AbstractSqlLikeQueryBuilder.html" title="class in io.micronaut.data.model.query.builder.sql">AbstractSqlLikeQueryBuilder</a></dt>
@@ -5559,6 +5575,12 @@ implementing <a href="io/micronaut/data/intercept/FindPageInterceptor.html" titl
 </dd>
 <dt><a href="io/micronaut/data/connection/support/DefaultConnectionStatus.html#%3Cinit%3E(C,io.micronaut.data.connection.ConnectionDefinition,boolean,io.micronaut.data.connection.ConnectionOperations)" class="member-name-link">DefaultConnectionStatus(C, ConnectionDefinition, boolean, ConnectionOperations)</a> - Constructor for class io.micronaut.data.connection.support.<a href="io/micronaut/data/connection/support/DefaultConnectionStatus.html" title="class in io.micronaut.data.connection.support">DefaultConnectionStatus</a></dt>
 <dd>&nbsp;</dd>
+<dt><a href="io/micronaut/data/connection/support/DefaultConnectionStatus.html#%3Cinit%3E(C,io.micronaut.data.connection.ConnectionDefinition,boolean,io.micronaut.data.connection.ConnectionOperations,io.micronaut.data.connection.support.DefaultConnectionStatus.SuppliedConnection)" class="member-name-link">DefaultConnectionStatus(C, ConnectionDefinition, boolean, ConnectionOperations, DefaultConnectionStatus.SuppliedConnection)</a> - Constructor for class io.micronaut.data.connection.support.<a href="io/micronaut/data/connection/support/DefaultConnectionStatus.html" title="class in io.micronaut.data.connection.support">DefaultConnectionStatus</a></dt>
+<dd>&nbsp;</dd>
+<dt><a href="io/micronaut/data/connection/support/DefaultConnectionStatus.SuppliedConnection.html" class="type-name-link" title="class in io.micronaut.data.connection.support">DefaultConnectionStatus.SuppliedConnection</a> - Class in <a href="io/micronaut/data/connection/support/package-summary.html">io.micronaut.data.connection.support</a></dt>
+<dd>
+<div class="block">The state of a connection supplied by the caller, whose owner may control its transaction.</div>
+</dd>
 <dt><a href="io/micronaut/data/runtime/intercept/async/DefaultCountAsyncInterceptor.html" class="type-name-link" title="class in io.micronaut.data.runtime.intercept.async">DefaultCountAsyncInterceptor&lt;T&gt;</a> - Class in <a href="io/micronaut/data/runtime/intercept/async/package-summary.html">io.micronaut.data.runtime.intercept.async</a></dt>
 <dd>
 <div class="block">Default implementation of <a href="io/micronaut/data/intercept/async/CountAsyncInterceptor.html" title="interface in io.micronaut.data.intercept.async"><code>CountAsyncInterceptor</code></a>.</div>
@@ -9278,6 +9300,19 @@ in the computation of an entity <a href="io/micronaut/data/annotation/sql/Genera
 <dd>
 <div class="block">Executes an update for the given query and parameter values.</div>
 </dd>
+<dt><a href="io/micronaut/data/connection/ConnectionOperations.html#executeWithConnection(C,io.micronaut.data.connection.ConnectionDefinition,boolean,java.util.function.Function)" class="member-name-link">executeWithConnection(C, ConnectionDefinition, boolean, Function)</a> - Method in interface io.micronaut.data.connection.<a href="io/micronaut/data/connection/ConnectionOperations.html" title="interface in io.micronaut.data.connection">ConnectionOperations</a></dt>
+<dd>
+<div class="block">Executes the callback with a connection supplied by the caller as the current connection.</div>
+</dd>
+<dt><a href="io/micronaut/data/connection/support/AbstractConnectionOperations.html#executeWithConnection(C,io.micronaut.data.connection.ConnectionDefinition,boolean,java.util.function.Function)" class="member-name-link">executeWithConnection(C, ConnectionDefinition, boolean, Function)</a> - Method in class io.micronaut.data.connection.support.<a href="io/micronaut/data/connection/support/AbstractConnectionOperations.html" title="class in io.micronaut.data.connection.support">AbstractConnectionOperations</a></dt>
+<dd>&nbsp;</dd>
+<dt><a href="io/micronaut/data/connection/ConnectionOperations.html#executeWithConnection(C,io.micronaut.data.connection.ConnectionDefinition,java.util.function.Function)" class="member-name-link">executeWithConnection(C, ConnectionDefinition, Function)</a> - Method in interface io.micronaut.data.connection.<a href="io/micronaut/data/connection/ConnectionOperations.html" title="interface in io.micronaut.data.connection">ConnectionOperations</a></dt>
+<dd>
+<div class="block">Executes the callback with a connection supplied by the caller as the current connection, with transactions
+started inside the callback controlled by Micronaut Data.</div>
+</dd>
+<dt><a href="io/micronaut/data/hibernate/connection/HibernateConnectionConnectionOperations.html#executeWithConnection(java.sql.Connection,io.micronaut.data.connection.ConnectionDefinition,boolean,java.util.function.Function)" class="member-name-link">executeWithConnection(Connection, ConnectionDefinition, boolean, Function)</a> - Method in class io.micronaut.data.hibernate.connection.<a href="io/micronaut/data/hibernate/connection/HibernateConnectionConnectionOperations.html" title="class in io.micronaut.data.hibernate.connection">HibernateConnectionConnectionOperations</a></dt>
+<dd>&nbsp;</dd>
 <dt><a href="io/micronaut/data/spring/tx/AbstractSpringTransactionOperations.html#executeWrite(io.micronaut.transaction.TransactionCallback)" class="member-name-link">executeWrite(TransactionCallback)</a> - Method in class io.micronaut.data.spring.tx.<a href="io/micronaut/data/spring/tx/AbstractSpringTransactionOperations.html" title="class in io.micronaut.data.spring.tx">AbstractSpringTransactionOperations</a></dt>
 <dd>&nbsp;</dd>
 <dt><a href="io/micronaut/transaction/TransactionOperations.html#executeWrite(io.micronaut.transaction.TransactionCallback)" class="member-name-link">executeWrite(TransactionCallback)</a> - Method in interface io.micronaut.transaction.<a href="io/micronaut/transaction/TransactionOperations.html" title="interface in io.micronaut.transaction">TransactionOperations</a></dt>
@@ -16710,6 +16745,8 @@ i.e.</div>
 <dd>&nbsp;</dd>
 <dt><a href="io/micronaut/data/document/tck/repositories/PersonRepository.html#getSumAgeByNameRegex(java.lang.String)" class="member-name-link">getSumAgeByNameRegex(String)</a> - Method in interface io.micronaut.data.document.tck.repositories.<a href="io/micronaut/data/document/tck/repositories/PersonRepository.html" title="interface in io.micronaut.data.document.tck.repositories">PersonRepository</a></dt>
 <dd>&nbsp;</dd>
+<dt><a href="io/micronaut/data/connection/support/DefaultConnectionStatus.html#getSuppliedConnection()" class="member-name-link">getSuppliedConnection()</a> - Method in class io.micronaut.data.connection.support.<a href="io/micronaut/data/connection/support/DefaultConnectionStatus.html" title="class in io.micronaut.data.connection.support">DefaultConnectionStatus</a></dt>
+<dd>&nbsp;</dd>
 <dt><a href="io/micronaut/data/processor/jpa/metamodel/visitor/JpaMetamodelProcessorVisitor.html#getSupportedAnnotationNames()" class="member-name-link">getSupportedAnnotationNames()</a> - Method in class io.micronaut.data.processor.jpa.metamodel.visitor.<a href="io/micronaut/data/processor/jpa/metamodel/visitor/JpaMetamodelProcessorVisitor.html" title="class in io.micronaut.data.processor.jpa.metamodel.visitor">JpaMetamodelProcessorVisitor</a></dt>
 <dd>
 <div class="block">Supported Jakarta annotation names.</div>
@@ -20475,6 +20512,8 @@ current transaction.</div>
 <div class="block">Determines whether an error represents an Oracle priority rollback for the
 current reactive transaction.</div>
 </dd>
+<dt><a href="io/micronaut/data/connection/support/DefaultConnectionStatus.SuppliedConnection.html#isOwnerControlsTransaction()" class="member-name-link">isOwnerControlsTransaction()</a> - Method in class io.micronaut.data.connection.support.<a href="io/micronaut/data/connection/support/DefaultConnectionStatus.SuppliedConnection.html" title="class in io.micronaut.data.connection.support">DefaultConnectionStatus.SuppliedConnection</a></dt>
+<dd>&nbsp;</dd>
 <dt><a href="io/micronaut/data/model/PersistentEntity.html#isOwningEntity(io.micronaut.data.model.PersistentEntity)" class="member-name-link">isOwningEntity(PersistentEntity)</a> - Method in interface io.micronaut.data.model.<a href="io/micronaut/data/model/PersistentEntity.html" title="interface in io.micronaut.data.model">PersistentEntity</a></dt>
 <dd>
 <div class="block">Returns whether the specified entity asserts ownership over this
@@ -20625,6 +20664,8 @@ is switched to read-only with <a href="https://docs.oracle.com/en/java/javase/25
 <dd>
 <div class="deprecation-block"><span class="deprecated-label">Deprecated.</span></div>
 &nbsp;</dd>
+<dt><a href="io/micronaut/data/connection/support/DefaultConnectionStatus.SuppliedConnection.html#isRollbackOnly()" class="member-name-link">isRollbackOnly()</a> - Method in class io.micronaut.data.connection.support.<a href="io/micronaut/data/connection/support/DefaultConnectionStatus.SuppliedConnection.html" title="class in io.micronaut.data.connection.support">DefaultConnectionStatus.SuppliedConnection</a></dt>
+<dd>&nbsp;</dd>
 <dt><a href="io/micronaut/transaction/impl/AbstractInternalTransaction.html#isRollbackOnly()" class="member-name-link">isRollbackOnly()</a> - Method in class io.micronaut.transaction.impl.<a href="io/micronaut/transaction/impl/AbstractInternalTransaction.html" title="class in io.micronaut.transaction.impl">AbstractInternalTransaction</a></dt>
 <dd>&nbsp;</dd>
 <dt><a href="io/micronaut/transaction/support/AbstractReactorTransactionOperations.DefaultReactiveTransactionStatus.html#isRollbackOnly()" class="member-name-link">isRollbackOnly()</a> - Method in class io.micronaut.transaction.support.<a href="io/micronaut/transaction/support/AbstractReactorTransactionOperations.DefaultReactiveTransactionStatus.html" title="class in io.micronaut.transaction.support">AbstractReactorTransactionOperations.DefaultReactiveTransactionStatus</a></dt>
@@ -20668,6 +20709,8 @@ is switched to read-only with <a href="https://docs.oracle.com/en/java/javase/25
 <dd>
 <div class="block">Whether this converter is designed for sparse vectors.</div>
 </dd>
+<dt><a href="io/micronaut/data/connection/support/DefaultConnectionStatus.html#isSupplied()" class="member-name-link">isSupplied()</a> - Method in class io.micronaut.data.connection.support.<a href="io/micronaut/data/connection/support/DefaultConnectionStatus.html" title="class in io.micronaut.data.connection.support">DefaultConnectionStatus</a></dt>
+<dd>&nbsp;</dd>
 <dt><a href="io/micronaut/data/runtime/operations/internal/ReactiveCascadeOperations.ReactiveCascadeOperationsHelper.html#isSupportsBatchDelete(Ctx,io.micronaut.data.model.runtime.RuntimePersistentEntity)" class="member-name-link">isSupportsBatchDelete(Ctx, RuntimePersistentEntity)</a> - Method in interface io.micronaut.data.runtime.operations.internal.<a href="io/micronaut/data/runtime/operations/internal/ReactiveCascadeOperations.ReactiveCascadeOperationsHelper.html" title="interface in io.micronaut.data.runtime.operations.internal">ReactiveCascadeOperations.ReactiveCascadeOperationsHelper</a></dt>
 <dd>
 <div class="block">Is supports batch delete.</div>
@@ -25346,6 +25389,10 @@ and is mapped to a Java object that can be accessed via the methods
 <dd>&nbsp;</dd>
 <dt><a href="io/micronaut/data/tck/entities/EmbeddedOwner_.html#ownerName" class="member-name-link">ownerName</a> - Static variable in class io.micronaut.data.tck.entities.<a href="io/micronaut/data/tck/entities/EmbeddedOwner_.html" title="class in io.micronaut.data.tck.entities">EmbeddedOwner_</a></dt>
 <dd>&nbsp;</dd>
+<dt><a href="io/micronaut/transaction/impl/DefaultTransactionStatus.html#ownerTx(io.micronaut.data.connection.ConnectionStatus,io.micronaut.transaction.TransactionDefinition,io.micronaut.data.connection.support.DefaultConnectionStatus.SuppliedConnection,io.micronaut.transaction.TransactionOperations)" class="member-name-link">ownerTx(ConnectionStatus, TransactionDefinition, DefaultConnectionStatus.SuppliedConnection, TransactionOperations)</a> - Static method in class io.micronaut.transaction.impl.<a href="io/micronaut/transaction/impl/DefaultTransactionStatus.html" title="class in io.micronaut.transaction.impl">DefaultTransactionStatus</a></dt>
+<dd>
+<div class="block">Creates a status for work joined to the transaction that the owner of a supplied connection controls.</div>
+</dd>
 </dl>
 <h2 class="title" id="I:P">P</h2>
 <dl class="index">
@@ -31422,6 +31469,10 @@ as rollback-only.</div>
 <div class="block">Set whether <code>doRollback</code> should be performed on failure of the
 <code>doCommit</code> call.</div>
 </dd>
+<dt><a href="io/micronaut/data/connection/support/DefaultConnectionStatus.SuppliedConnection.html#setRollbackOnly()" class="member-name-link">setRollbackOnly()</a> - Method in class io.micronaut.data.connection.support.<a href="io/micronaut/data/connection/support/DefaultConnectionStatus.SuppliedConnection.html" title="class in io.micronaut.data.connection.support">DefaultConnectionStatus.SuppliedConnection</a></dt>
+<dd>
+<div class="block">Marks that work joined to the owner's transaction was rolled back, so the owner must roll back.</div>
+</dd>
 <dt><a href="io/micronaut/transaction/impl/AbstractInternalTransaction.html#setRollbackOnly()" class="member-name-link">setRollbackOnly()</a> - Method in class io.micronaut.transaction.impl.<a href="io/micronaut/transaction/impl/AbstractInternalTransaction.html" title="class in io.micronaut.transaction.impl">AbstractInternalTransaction</a></dt>
 <dd>&nbsp;</dd>
 <dt><a href="io/micronaut/transaction/support/AbstractReactorTransactionOperations.DefaultReactiveTransactionStatus.html#setRollbackOnly()" class="member-name-link">setRollbackOnly()</a> - Method in class io.micronaut.transaction.support.<a href="io/micronaut/transaction/support/AbstractReactorTransactionOperations.DefaultReactiveTransactionStatus.html" title="class in io.micronaut.transaction.support">AbstractReactorTransactionOperations.DefaultReactiveTransactionStatus</a></dt>
@@ -33156,6 +33207,8 @@ and materialize an instance using column naming conventions mapped by the entity
 <dt><a href="io/micronaut/data/model/jpa/criteria/impl/AbstractCriteriaBuilder.html#sumAsDouble(jakarta.persistence.criteria.Expression)" class="member-name-link">sumAsDouble(Expression)</a> - Method in class io.micronaut.data.model.jpa.criteria.impl.<a href="io/micronaut/data/model/jpa/criteria/impl/AbstractCriteriaBuilder.html" title="class in io.micronaut.data.model.jpa.criteria.impl">AbstractCriteriaBuilder</a></dt>
 <dd>&nbsp;</dd>
 <dt><a href="io/micronaut/data/model/jpa/criteria/impl/AbstractCriteriaBuilder.html#sumAsLong(jakarta.persistence.criteria.Expression)" class="member-name-link">sumAsLong(Expression)</a> - Method in class io.micronaut.data.model.jpa.criteria.impl.<a href="io/micronaut/data/model/jpa/criteria/impl/AbstractCriteriaBuilder.html" title="class in io.micronaut.data.model.jpa.criteria.impl">AbstractCriteriaBuilder</a></dt>
+<dd>&nbsp;</dd>
+<dt><a href="io/micronaut/data/connection/support/DefaultConnectionStatus.SuppliedConnection.html#%3Cinit%3E(boolean)" class="member-name-link">SuppliedConnection(boolean)</a> - Constructor for class io.micronaut.data.connection.support.<a href="io/micronaut/data/connection/support/DefaultConnectionStatus.SuppliedConnection.html" title="class in io.micronaut.data.connection.support">DefaultConnectionStatus.SuppliedConnection</a></dt>
 <dd>&nbsp;</dd>
 <dt><a href="io/micronaut/data/processor/jpa/metamodel/JpaMetamodelProcessor.html#SUPPORTED_ANNOTATIONS" class="member-name-link">SUPPORTED_ANNOTATIONS</a> - Static variable in class io.micronaut.data.processor.jpa.metamodel.<a href="io/micronaut/data/processor/jpa/metamodel/JpaMetamodelProcessor.html" title="class in io.micronaut.data.processor.jpa.metamodel">JpaMetamodelProcessor</a></dt>
 <dd>

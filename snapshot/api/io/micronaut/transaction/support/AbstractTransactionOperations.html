@@ -76,6 +76,8 @@ loadScripts(document, 'script');</script>
 <li><a href="#createNoTxTransactionStatus(io.micronaut.data.connection.ConnectionStatus,io.micronaut.transaction.TransactionDefinition)" tabindex="0">createNoTxTransactionStatus(ConnectionStatus, TransactionDefinition)</a></li>
 <li><a href="#createNewTransactionStatus(io.micronaut.data.connection.ConnectionStatus,io.micronaut.transaction.TransactionDefinition)" tabindex="0">createNewTransactionStatus(ConnectionStatus, TransactionDefinition)</a></li>
 <li><a href="#createExistingTransactionStatus(io.micronaut.transaction.TransactionDefinition,T)" tabindex="0">createExistingTransactionStatus(TransactionDefinition, T)</a></li>
+<li><a href="#createOwnerTransactionStatus(io.micronaut.data.connection.ConnectionStatus,io.micronaut.transaction.TransactionDefinition,io.micronaut.data.connection.support.DefaultConnectionStatus.SuppliedConnection)" tabindex="0">createOwnerTransactionStatus(ConnectionStatus, TransactionDefinition, DefaultConnectionStatus.SuppliedConnection)</a></li>
+<li><a href="#appliesToCurrentConnection(T)" tabindex="0">appliesToCurrentConnection(T)</a></li>
 <li><a href="#hasConnection()" tabindex="0">hasConnection()</a></li>
 <li><a href="#doExecute(io.micronaut.transaction.TransactionDefinition,io.micronaut.transaction.TransactionCallback)" tabindex="0">doExecute(TransactionDefinition, TransactionCallback)</a></li>
 <li><a href="#getTransaction(io.micronaut.transaction.TransactionDefinition)" tabindex="0">getTransaction(TransactionDefinition)</a></li>
@@ -184,28 +186,40 @@ Partially based on https://github.com/spring-projects/spring-framework/blob/main
 <div class="table-header col-first">Modifier and Type</div>
 <div class="table-header col-second">Method</div>
 <div class="table-header col-last">Description</div>
-<div class="col-first even-row-color method-summary-table method-summary-table-tab2 method-summary-table-tab4"><code>void</code></div>
-<div class="col-second even-row-color method-summary-table method-summary-table-tab2 method-summary-table-tab4"><code><a href="#commit(io.micronaut.transaction.TransactionStatus)" class="member-name-link">commit</a><wbr>(<a href="../TransactionStatus.html" title="interface in io.micronaut.transaction">TransactionStatus</a>&lt;<a href="#type-param-C" title="type parameter in AbstractTransactionOperations">C</a>&gt;&nbsp;status)</code></div>
+<div class="col-first even-row-color method-summary-table method-summary-table-tab2 method-summary-table-tab4"><code>protected boolean</code></div>
+<div class="col-second even-row-color method-summary-table method-summary-table-tab2 method-summary-table-tab4"><code><a href="#appliesToCurrentConnection(T)" class="member-name-link">appliesToCurrentConnection</a><wbr>(<a href="#type-param-T" title="type parameter in AbstractTransactionOperations">T</a>&nbsp;transactionStatus)</code></div>
 <div class="col-last even-row-color method-summary-table method-summary-table-tab2 method-summary-table-tab4">
+<div class="block">Whether a propagated transaction applies to the current connection, so that new transactional work joins it.</div>
+</div>
+<div class="col-first odd-row-color method-summary-table method-summary-table-tab2 method-summary-table-tab4"><code>void</code></div>
+<div class="col-second odd-row-color method-summary-table method-summary-table-tab2 method-summary-table-tab4"><code><a href="#commit(io.micronaut.transaction.TransactionStatus)" class="member-name-link">commit</a><wbr>(<a href="../TransactionStatus.html" title="interface in io.micronaut.transaction">TransactionStatus</a>&lt;<a href="#type-param-C" title="type parameter in AbstractTransactionOperations">C</a>&gt;&nbsp;status)</code></div>
+<div class="col-last odd-row-color method-summary-table method-summary-table-tab2 method-summary-table-tab4">
 <div class="block">Commit the given transaction, with regard to its status.</div>
 </div>
-<div class="col-first odd-row-color method-summary-table method-summary-table-tab2 method-summary-table-tab3"><code>protected abstract <a href="#type-param-T" title="type parameter in AbstractTransactionOperations">T</a></code></div>
-<div class="col-second odd-row-color method-summary-table method-summary-table-tab2 method-summary-table-tab3"><code><a href="#createExistingTransactionStatus(io.micronaut.transaction.TransactionDefinition,T)" class="member-name-link">createExistingTransactionStatus</a><wbr>(@NonNull <a href="../TransactionDefinition.html" title="interface in io.micronaut.transaction">TransactionDefinition</a>&nbsp;definition,
+<div class="col-first even-row-color method-summary-table method-summary-table-tab2 method-summary-table-tab3"><code>protected abstract <a href="#type-param-T" title="type parameter in AbstractTransactionOperations">T</a></code></div>
+<div class="col-second even-row-color method-summary-table method-summary-table-tab2 method-summary-table-tab3"><code><a href="#createExistingTransactionStatus(io.micronaut.transaction.TransactionDefinition,T)" class="member-name-link">createExistingTransactionStatus</a><wbr>(@NonNull <a href="../TransactionDefinition.html" title="interface in io.micronaut.transaction">TransactionDefinition</a>&nbsp;definition,
  @NonNull <a href="#type-param-T" title="type parameter in AbstractTransactionOperations">T</a>&nbsp;existingTransaction)</code></div>
-<div class="col-last odd-row-color method-summary-table method-summary-table-tab2 method-summary-table-tab3">
+<div class="col-last even-row-color method-summary-table method-summary-table-tab2 method-summary-table-tab3">
 <div class="block">Create transaction status with existing transaction.</div>
 </div>
-<div class="col-first even-row-color method-summary-table method-summary-table-tab2 method-summary-table-tab3"><code>protected abstract <a href="#type-param-T" title="type parameter in AbstractTransactionOperations">T</a></code></div>
-<div class="col-second even-row-color method-summary-table method-summary-table-tab2 method-summary-table-tab3"><code><a href="#createNewTransactionStatus(io.micronaut.data.connection.ConnectionStatus,io.micronaut.transaction.TransactionDefinition)" class="member-name-link">createNewTransactionStatus</a><wbr>(@NonNull <a href="../../data/connection/ConnectionStatus.html" title="interface in io.micronaut.data.connection">ConnectionStatus</a>&lt;<a href="#type-param-C" title="type parameter in AbstractTransactionOperations">C</a>&gt;&nbsp;connectionStatus,
- @NonNull <a href="../TransactionDefinition.html" title="interface in io.micronaut.transaction">TransactionDefinition</a>&nbsp;definition)</code></div>
-<div class="col-last even-row-color method-summary-table method-summary-table-tab2 method-summary-table-tab3">
-<div class="block">Create transaction status with new transaction.</div>
-</div>
 <div class="col-first odd-row-color method-summary-table method-summary-table-tab2 method-summary-table-tab3"><code>protected abstract <a href="#type-param-T" title="type parameter in AbstractTransactionOperations">T</a></code></div>
-<div class="col-second odd-row-color method-summary-table method-summary-table-tab2 method-summary-table-tab3"><code><a href="#createNoTxTransactionStatus(io.micronaut.data.connection.ConnectionStatus,io.micronaut.transaction.TransactionDefinition)" class="member-name-link">createNoTxTransactionStatus</a><wbr>(@NonNull <a href="../../data/connection/ConnectionStatus.html" title="interface in io.micronaut.data.connection">ConnectionStatus</a>&lt;<a href="#type-param-C" title="type parameter in AbstractTransactionOperations">C</a>&gt;&nbsp;connectionStatus,
+<div class="col-second odd-row-color method-summary-table method-summary-table-tab2 method-summary-table-tab3"><code><a href="#createNewTransactionStatus(io.micronaut.data.connection.ConnectionStatus,io.micronaut.transaction.TransactionDefinition)" class="member-name-link">createNewTransactionStatus</a><wbr>(@NonNull <a href="../../data/connection/ConnectionStatus.html" title="interface in io.micronaut.data.connection">ConnectionStatus</a>&lt;<a href="#type-param-C" title="type parameter in AbstractTransactionOperations">C</a>&gt;&nbsp;connectionStatus,
  @NonNull <a href="../TransactionDefinition.html" title="interface in io.micronaut.transaction">TransactionDefinition</a>&nbsp;definition)</code></div>
 <div class="col-last odd-row-color method-summary-table method-summary-table-tab2 method-summary-table-tab3">
+<div class="block">Create transaction status with new transaction.</div>
+</div>
+<div class="col-first even-row-color method-summary-table method-summary-table-tab2 method-summary-table-tab3"><code>protected abstract <a href="#type-param-T" title="type parameter in AbstractTransactionOperations">T</a></code></div>
+<div class="col-second even-row-color method-summary-table method-summary-table-tab2 method-summary-table-tab3"><code><a href="#createNoTxTransactionStatus(io.micronaut.data.connection.ConnectionStatus,io.micronaut.transaction.TransactionDefinition)" class="member-name-link">createNoTxTransactionStatus</a><wbr>(@NonNull <a href="../../data/connection/ConnectionStatus.html" title="interface in io.micronaut.data.connection">ConnectionStatus</a>&lt;<a href="#type-param-C" title="type parameter in AbstractTransactionOperations">C</a>&gt;&nbsp;connectionStatus,
+ @NonNull <a href="../TransactionDefinition.html" title="interface in io.micronaut.transaction">TransactionDefinition</a>&nbsp;definition)</code></div>
+<div class="col-last even-row-color method-summary-table method-summary-table-tab2 method-summary-table-tab3">
 <div class="block">Create transaction status without open transaction.</div>
+</div>
+<div class="col-first odd-row-color method-summary-table method-summary-table-tab2 method-summary-table-tab4"><code>protected <a href="#type-param-T" title="type parameter in AbstractTransactionOperations">T</a></code></div>
+<div class="col-second odd-row-color method-summary-table method-summary-table-tab2 method-summary-table-tab4"><code><a href="#createOwnerTransactionStatus(io.micronaut.data.connection.ConnectionStatus,io.micronaut.transaction.TransactionDefinition,io.micronaut.data.connection.support.DefaultConnectionStatus.SuppliedConnection)" class="member-name-link">createOwnerTransactionStatus</a><wbr>(@NonNull <a href="../../data/connection/ConnectionStatus.html" title="interface in io.micronaut.data.connection">ConnectionStatus</a>&lt;<a href="#type-param-C" title="type parameter in AbstractTransactionOperations">C</a>&gt;&nbsp;connectionStatus,
+ @NonNull <a href="../TransactionDefinition.html" title="interface in io.micronaut.transaction">TransactionDefinition</a>&nbsp;definition,
+ <a href="../../data/connection/support/DefaultConnectionStatus.SuppliedConnection.html" title="class in io.micronaut.data.connection.support">DefaultConnectionStatus.SuppliedConnection</a>&nbsp;suppliedConnection)</code></div>
+<div class="col-last odd-row-color method-summary-table method-summary-table-tab2 method-summary-table-tab4">
+<div class="block">Creates the status of work joined to the transaction that the owner of a supplied connection controls.</div>
 </div>
 <div class="col-first even-row-color method-summary-table method-summary-table-tab2 method-summary-table-tab4"><code>protected <a href="https://docs.oracle.com/en/java/javase/25/docs/api/java.base/java/util/Optional.html" title="class or interface in java.util" class="external-link">Optional</a><wbr>&lt;<a href="https://docs.oracle.com/en/java/javase/25/docs/api/java.base/java/time/Duration.html" title="class or interface in java.time" class="external-link">Duration</a>&gt;</code></div>
 <div class="col-second even-row-color method-summary-table method-summary-table-tab2 method-summary-table-tab4"><code><a href="#determineTimeout(io.micronaut.transaction.TransactionDefinition)" class="member-name-link">determineTimeout</a><wbr>(<a href="../TransactionDefinition.html" title="interface in io.micronaut.transaction">TransactionDefinition</a>&nbsp;definition)</code></div>
@@ -452,6 +466,47 @@ managed by this <a href="../TransactionOperations.html" title="interface in io.m
 <dd><code>existingTransaction</code> - The existing transaction</dd>
 <dt>Returns:</dt>
 <dd>new transaction status</dd>
+</dl>
+</div>
+</section>
+</li>
+<li>
+<section class="detail" id="createOwnerTransactionStatus(io.micronaut.data.connection.ConnectionStatus,io.micronaut.transaction.TransactionDefinition,io.micronaut.data.connection.support.DefaultConnectionStatus.SuppliedConnection)">
+<h3>createOwnerTransactionStatus</h3>
+<div class="horizontal-scroll">
+<div class="member-signature"><span class="modifiers">protected</span>&nbsp;<span class="return-type"><a href="#type-param-T" title="type parameter in AbstractTransactionOperations">T</a></span>&nbsp;<span class="element-name">createOwnerTransactionStatus</span><wbr><span class="parameters">(@NonNull <a href="../../data/connection/ConnectionStatus.html" title="interface in io.micronaut.data.connection">ConnectionStatus</a>&lt;<a href="#type-param-C" title="type parameter in AbstractTransactionOperations">C</a>&gt;&nbsp;connectionStatus,
+ @NonNull <a href="../TransactionDefinition.html" title="interface in io.micronaut.transaction">TransactionDefinition</a>&nbsp;definition,
+ <a href="../../data/connection/support/DefaultConnectionStatus.SuppliedConnection.html" title="class in io.micronaut.data.connection.support">DefaultConnectionStatus.SuppliedConnection</a>&nbsp;suppliedConnection)</span></div>
+<div class="block">Creates the status of work joined to the transaction that the owner of a supplied connection controls.
+Called for connections supplied with <code>ownerControlsTransaction</code> set, see
+<a href="../../data/connection/ConnectionOperations.html#executeWithConnection(C,io.micronaut.data.connection.ConnectionDefinition,boolean,java.util.function.Function)"><code>ConnectionOperations.executeWithConnection(Object, ConnectionDefinition, boolean, java.util.function.Function)</code></a>.</div>
+<dl class="notes">
+<dt>Parameters:</dt>
+<dd><code>connectionStatus</code> - The status of the supplied connection</dd>
+<dd><code>definition</code> - The transaction definition</dd>
+<dd><code>suppliedConnection</code> - The state of the supplied connection, which receives the rollback</dd>
+<dt>Returns:</dt>
+<dd>The status</dd>
+<dt>Since:</dt>
+<dd>5.3.0</dd>
+</dl>
+</div>
+</section>
+</li>
+<li>
+<section class="detail" id="appliesToCurrentConnection(T)">
+<h3 id="appliesToCurrentConnection(io.micronaut.transaction.impl.InternalTransaction)">appliesToCurrentConnection</h3>
+<div class="horizontal-scroll">
+<div class="member-signature"><span class="modifiers">protected</span>&nbsp;<span class="return-type">boolean</span>&nbsp;<span class="element-name">appliesToCurrentConnection</span><wbr><span class="parameters">(<a href="#type-param-T" title="type parameter in AbstractTransactionOperations">T</a>&nbsp;transactionStatus)</span></div>
+<div class="block"><span class="description-from-type-label">Description copied from class:&nbsp;<code><a href="AbstractPropagatedStatusTransactionOperations.html#appliesToCurrentConnection(T)">AbstractPropagatedStatusTransactionOperations</a></code></span></div>
+<div class="block">Whether a propagated transaction applies to the current connection, so that new transactional work joins it.</div>
+<dl class="notes">
+<dt>Overrides:</dt>
+<dd><code><a href="AbstractPropagatedStatusTransactionOperations.html#appliesToCurrentConnection(T)">appliesToCurrentConnection</a></code>&nbsp;in class&nbsp;<code><a href="AbstractPropagatedStatusTransactionOperations.html" title="class in io.micronaut.transaction.support">AbstractPropagatedStatusTransactionOperations</a>&lt;<a href="#type-param-T" title="type parameter in AbstractTransactionOperations">T</a> extends <a href="../impl/InternalTransaction.html" title="interface in io.micronaut.transaction.impl">InternalTransaction</a>&lt;<a href="#type-param-C" title="type parameter in AbstractTransactionOperations">C</a>&gt;, <a href="#type-param-C" title="type parameter in AbstractTransactionOperations">C</a>&gt;</code></dd>
+<dt>Parameters:</dt>
+<dd><code>transactionStatus</code> - A propagated transaction managed by these operations</dd>
+<dt>Returns:</dt>
+<dd><code>true</code> by default</dd>
 </dl>
 </div>
 </section>

@@ -66,6 +66,7 @@ loadScripts(document, 'script');</script>
 <li><a href="#newTx(io.micronaut.data.connection.ConnectionStatus,io.micronaut.transaction.TransactionDefinition,io.micronaut.transaction.TransactionOperations)" tabindex="0">newTx(ConnectionStatus, TransactionDefinition, TransactionOperations)</a></li>
 <li><a href="#noTx(io.micronaut.data.connection.ConnectionStatus,io.micronaut.transaction.TransactionDefinition,io.micronaut.transaction.TransactionOperations)" tabindex="0">noTx(ConnectionStatus, TransactionDefinition, TransactionOperations)</a></li>
 <li><a href="#existingTx(io.micronaut.data.connection.ConnectionStatus,io.micronaut.transaction.TransactionDefinition,io.micronaut.transaction.impl.DefaultTransactionStatus,io.micronaut.transaction.TransactionOperations)" tabindex="0">existingTx(ConnectionStatus, TransactionDefinition, DefaultTransactionStatus, TransactionOperations)</a></li>
+<li><a href="#ownerTx(io.micronaut.data.connection.ConnectionStatus,io.micronaut.transaction.TransactionDefinition,io.micronaut.data.connection.support.DefaultConnectionStatus.SuppliedConnection,io.micronaut.transaction.TransactionOperations)" tabindex="0">ownerTx(ConnectionStatus, TransactionDefinition, DefaultConnectionStatus.SuppliedConnection, TransactionOperations)</a></li>
 <li><a href="#isTransactionOf(io.micronaut.transaction.TransactionOperations)" tabindex="0">isTransactionOf(TransactionOperations)</a></li>
 <li><a href="#isNestedTransaction()" tabindex="0">isNestedTransaction()</a></li>
 <li><a href="#setTransaction(java.lang.Object)" tabindex="0">setTransaction(Object)</a></li>
@@ -186,19 +187,27 @@ implements <a href="InternalTransaction.html" title="interface in io.micronaut.t
  <a href="../TransactionDefinition.html" title="interface in io.micronaut.transaction">TransactionDefinition</a>&nbsp;definition,
  <a href="../TransactionOperations.html" title="interface in io.micronaut.transaction">TransactionOperations</a>&lt;C&gt;&nbsp;transactionOperations)</code></div>
 <div class="col-last odd-row-color method-summary-table method-summary-table-tab1 method-summary-table-tab4">&nbsp;</div>
-<div class="col-first even-row-color method-summary-table method-summary-table-tab2 method-summary-table-tab4"><code>void</code></div>
-<div class="col-second even-row-color method-summary-table method-summary-table-tab2 method-summary-table-tab4"><code><a href="#setSavepoint(java.lang.Object)" class="member-name-link">setSavepoint</a><wbr>(@NonNull <a href="https://docs.oracle.com/en/java/javase/25/docs/api/java.base/java/lang/Object.html" title="class or interface in java.lang" class="external-link">Object</a>&nbsp;savepoint)</code></div>
-<div class="col-last even-row-color method-summary-table method-summary-table-tab2 method-summary-table-tab4">
-<div class="block">Sets the savepoint for nested the transaction.</div>
+<div class="col-first even-row-color method-summary-table method-summary-table-tab1 method-summary-table-tab4"><code>static &lt;C&gt;&nbsp;<a href="DefaultTransactionStatus.html" title="class in io.micronaut.transaction.impl">DefaultTransactionStatus</a><wbr>&lt;C&gt;</code></div>
+<div class="col-second even-row-color method-summary-table method-summary-table-tab1 method-summary-table-tab4"><code><a href="#ownerTx(io.micronaut.data.connection.ConnectionStatus,io.micronaut.transaction.TransactionDefinition,io.micronaut.data.connection.support.DefaultConnectionStatus.SuppliedConnection,io.micronaut.transaction.TransactionOperations)" class="member-name-link">ownerTx</a><wbr>(<a href="../../data/connection/ConnectionStatus.html" title="interface in io.micronaut.data.connection">ConnectionStatus</a>&lt;C&gt;&nbsp;connectionStatus,
+ <a href="../TransactionDefinition.html" title="interface in io.micronaut.transaction">TransactionDefinition</a>&nbsp;definition,
+ <a href="../../data/connection/support/DefaultConnectionStatus.SuppliedConnection.html" title="class in io.micronaut.data.connection.support">DefaultConnectionStatus.SuppliedConnection</a>&nbsp;suppliedConnection,
+ <a href="../TransactionOperations.html" title="interface in io.micronaut.transaction">TransactionOperations</a>&lt;C&gt;&nbsp;transactionOperations)</code></div>
+<div class="col-last even-row-color method-summary-table method-summary-table-tab1 method-summary-table-tab4">
+<div class="block">Creates a status for work joined to the transaction that the owner of a supplied connection controls.</div>
 </div>
 <div class="col-first odd-row-color method-summary-table method-summary-table-tab2 method-summary-table-tab4"><code>void</code></div>
-<div class="col-second odd-row-color method-summary-table method-summary-table-tab2 method-summary-table-tab4"><code><a href="#setTransaction(java.lang.Object)" class="member-name-link">setTransaction</a><wbr>(<a href="https://docs.oracle.com/en/java/javase/25/docs/api/java.base/java/lang/Object.html" title="class or interface in java.lang" class="external-link">Object</a>&nbsp;transaction)</code></div>
+<div class="col-second odd-row-color method-summary-table method-summary-table-tab2 method-summary-table-tab4"><code><a href="#setSavepoint(java.lang.Object)" class="member-name-link">setSavepoint</a><wbr>(@NonNull <a href="https://docs.oracle.com/en/java/javase/25/docs/api/java.base/java/lang/Object.html" title="class or interface in java.lang" class="external-link">Object</a>&nbsp;savepoint)</code></div>
 <div class="col-last odd-row-color method-summary-table method-summary-table-tab2 method-summary-table-tab4">
+<div class="block">Sets the savepoint for nested the transaction.</div>
+</div>
+<div class="col-first even-row-color method-summary-table method-summary-table-tab2 method-summary-table-tab4"><code>void</code></div>
+<div class="col-second even-row-color method-summary-table method-summary-table-tab2 method-summary-table-tab4"><code><a href="#setTransaction(java.lang.Object)" class="member-name-link">setTransaction</a><wbr>(<a href="https://docs.oracle.com/en/java/javase/25/docs/api/java.base/java/lang/Object.html" title="class or interface in java.lang" class="external-link">Object</a>&nbsp;transaction)</code></div>
+<div class="col-last even-row-color method-summary-table method-summary-table-tab2 method-summary-table-tab4">
 <div class="block">Sets the transaction representation object.</div>
 </div>
-<div class="col-first even-row-color method-summary-table method-summary-table-tab2 method-summary-table-tab4"><code><a href="https://docs.oracle.com/en/java/javase/25/docs/api/java.base/java/lang/String.html" title="class or interface in java.lang" class="external-link">String</a></code></div>
-<div class="col-second even-row-color method-summary-table method-summary-table-tab2 method-summary-table-tab4"><code><a href="#toString()" class="member-name-link">toString</a>()</code></div>
-<div class="col-last even-row-color method-summary-table method-summary-table-tab2 method-summary-table-tab4">&nbsp;</div>
+<div class="col-first odd-row-color method-summary-table method-summary-table-tab2 method-summary-table-tab4"><code><a href="https://docs.oracle.com/en/java/javase/25/docs/api/java.base/java/lang/String.html" title="class or interface in java.lang" class="external-link">String</a></code></div>
+<div class="col-second odd-row-color method-summary-table method-summary-table-tab2 method-summary-table-tab4"><code><a href="#toString()" class="member-name-link">toString</a>()</code></div>
+<div class="col-last odd-row-color method-summary-table method-summary-table-tab2 method-summary-table-tab4">&nbsp;</div>
 </div>
 </div>
 </div>
@@ -272,6 +281,32 @@ implements <a href="InternalTransaction.html" title="interface in io.micronaut.t
  <a href="../TransactionDefinition.html" title="interface in io.micronaut.transaction">TransactionDefinition</a>&nbsp;definition,
  <a href="DefaultTransactionStatus.html" title="class in io.micronaut.transaction.impl">DefaultTransactionStatus</a>&lt;C&gt;&nbsp;existingTransaction,
  <a href="../TransactionOperations.html" title="interface in io.micronaut.transaction">TransactionOperations</a>&lt;C&gt;&nbsp;transactionOperations)</span></div>
+</div>
+</section>
+</li>
+<li>
+<section class="detail" id="ownerTx(io.micronaut.data.connection.ConnectionStatus,io.micronaut.transaction.TransactionDefinition,io.micronaut.data.connection.support.DefaultConnectionStatus.SuppliedConnection,io.micronaut.transaction.TransactionOperations)">
+<h3>ownerTx</h3>
+<div class="horizontal-scroll">
+<div class="member-signature"><span class="modifiers">public static</span>&nbsp;<span class="type-parameters">&lt;C&gt;</span>&nbsp;<span class="return-type"><a href="DefaultTransactionStatus.html" title="class in io.micronaut.transaction.impl">DefaultTransactionStatus</a>&lt;C&gt;</span>&nbsp;<span class="element-name">ownerTx</span><wbr><span class="parameters">(<a href="../../data/connection/ConnectionStatus.html" title="interface in io.micronaut.data.connection">ConnectionStatus</a>&lt;C&gt;&nbsp;connectionStatus,
+ <a href="../TransactionDefinition.html" title="interface in io.micronaut.transaction">TransactionDefinition</a>&nbsp;definition,
+ <a href="../../data/connection/support/DefaultConnectionStatus.SuppliedConnection.html" title="class in io.micronaut.data.connection.support">DefaultConnectionStatus.SuppliedConnection</a>&nbsp;suppliedConnection,
+ <a href="../TransactionOperations.html" title="interface in io.micronaut.transaction">TransactionOperations</a>&lt;C&gt;&nbsp;transactionOperations)</span></div>
+<div class="block">Creates a status for work joined to the transaction that the owner of a supplied connection controls. It
+neither begins, commits nor rolls back the connection's transaction: a rollback is passed on to the owner.</div>
+<dl class="notes">
+<dt>Type Parameters:</dt>
+<dd><span id="ownerTx(io.micronaut.data.connection.ConnectionStatus,io.micronaut.transaction.TransactionDefinition,io.micronaut.data.connection.support.DefaultConnectionStatus.SuppliedConnection,io.micronaut.transaction.TransactionOperations)-type-param-C"><code>C</code> - The connection type</span></dd>
+<dt>Parameters:</dt>
+<dd><code>connectionStatus</code> - The status of the supplied connection</dd>
+<dd><code>definition</code> - The transaction definition</dd>
+<dd><code>suppliedConnection</code> - The state of the supplied connection</dd>
+<dd><code>transactionOperations</code> - The transaction operations</dd>
+<dt>Returns:</dt>
+<dd>The status</dd>
+<dt>Since:</dt>
+<dd>5.3.0</dd>
+</dl>
 </div>
 </section>
 </li>
