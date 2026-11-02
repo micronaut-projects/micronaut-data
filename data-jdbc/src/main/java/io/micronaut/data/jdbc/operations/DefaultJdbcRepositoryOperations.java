@@ -427,6 +427,9 @@ public final class DefaultJdbcRepositoryOperations extends AbstractSqlRepository
         boolean returning = isReturningOperation(preparedQuery);
         if (preparedQuery.getDialect() == Dialect.ORACLE && returning) {
             preparedQuery.prepare(null);
+            if (QUERY_LOG.isDebugEnabled()) {
+                QUERY_LOG.debug("Executing Query: {}", preparedQuery.getQuery());
+            }
             try (CallableStatement cs = logSqlId(connection.prepareCall(preparedQuery.getQuery()))) {
                 JdbcParameterBinder parameterBinder = new JdbcParameterBinder(connection, cs, preparedQuery);
                 preparedQuery.bindParameters(parameterBinder);
@@ -755,6 +758,9 @@ public final class DefaultJdbcRepositoryOperations extends AbstractSqlRepository
     }
 
     private <R> List<R> callProcedure(Connection connection, SqlPreparedQuery<?, R> preparedQuery) throws SQLException {
+        if (QUERY_LOG.isDebugEnabled()) {
+            QUERY_LOG.debug("Executing Query: {}", preparedQuery.getQuery());
+        }
         try (CallableStatement callableStatement = logSqlId(connection.prepareCall(preparedQuery.getQuery()))) {
             preparedQuery.bindParameters(new JdbcParameterBinder(connection, callableStatement, preparedQuery));
             if (!preparedQuery.getResultArgument().isVoid()) {
