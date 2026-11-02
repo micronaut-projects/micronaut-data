@@ -53,6 +53,11 @@ import java.lang.annotation.Target;
  * After each successful reconnection, an {@code INVALIDATE} event replaces waiting callbacks so
  * listeners can reload data that may have changed while disconnected.</p>
  *
+ * <p>If the configured recovery retry limit is exhausted, each affected listener receives
+ * {@link io.micronaut.data.notification.ChangeOperation#TERMINATED} after any running callback
+ * finishes. Waiting notifications are discarded. Applications should stop using notification-backed
+ * caches and fall back to database reads or another consistency mechanism.</p>
+ *
  * @since 5.3.0
  */
 @Documented

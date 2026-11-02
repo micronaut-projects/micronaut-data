@@ -4,6 +4,8 @@ import io.micronaut.test.extensions.junit5.annotation.MicronautTest;
 import io.micronaut.http.client.HttpClient;
 import io.micronaut.http.client.annotation.Client;
 import io.micronaut.data.connection.jdbc.advice.DelegatingDataSource;
+import io.micronaut.data.jdbc.notification.DefaultChangeEvent;
+import io.micronaut.data.notification.ChangeOperation;
 import jakarta.inject.Inject;
 import org.junit.jupiter.api.Test;
 
@@ -20,6 +22,7 @@ import static org.junit.jupiter.api.Assertions.assertTrue;
 class BookNotificationTest {
     @Inject DataSource dataSource;
     @Inject BookCatalog catalog;
+    @Inject BookRepository repository;
     @Inject @Client("/") HttpClient client;
 
     @Test
@@ -37,6 +40,31 @@ class BookNotificationTest {
             await(() -> catalog.find(3L).isEmpty());
             statement.execute("TRUNCATE public.book");
             await(() -> catalog.find(1L).isEmpty());
+        }
+    }
+
+    @Test
+    void terminatedCatalogReadsFromTheDatabaseAndIgnoresLaterCallbacks() throws Exception {
+        BookCatalog isolated = new BookCatalog(repository);
+        try (Connection connection = DelegatingDataSource.unwrapDataSource(dataSource).getConnection();
+             Statement statement = connection.createStatement()) {
+            try {
+                statement.executeUpdate("INSERT INTO public.book VALUES (99, 'Database value')");
+                isolated.changed(new DefaultChangeEvent<>(ChangeOperation.INSERT, new Book(99L, "Cached value"), null));
+                assertEquals("Cached value", isolated.find(99L).orElseThrow().title());
+
+                isolated.changed(new DefaultChangeEvent<>(ChangeOperation.TERMINATED, null, null));
+                isolated.changed(new DefaultChangeEvent<>(ChangeOperation.INSERT, new Book(99L, "Late callback"), null));
+                isolated.changed(new DefaultChangeEvent<>(ChangeOperation.INVALIDATE, null, null));
+                assertEquals("Database value", isolated.find(99L).orElseThrow().title());
+
+                statement.executeUpdate("UPDATE public.book SET title = 'Changed after termination' WHERE id = 99");
+                assertEquals("Changed after termination", isolated.find(99L).orElseThrow().title());
+                statement.executeUpdate("DELETE FROM public.book WHERE id = 99");
+                assertTrue(isolated.find(99L).isEmpty());
+            } finally {
+                statement.executeUpdate("DELETE FROM public.book WHERE id = 99");
+            }
         }
     }
 

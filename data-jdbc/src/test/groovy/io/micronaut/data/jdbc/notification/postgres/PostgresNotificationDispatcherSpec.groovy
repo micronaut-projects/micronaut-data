@@ -81,7 +81,7 @@ class PostgresNotificationDispatcherSpec extends Specification {
         dispatcher.stop().get(5, TimeUnit.SECONDS)
     }
 
-    void "shutdown discards queued data and invalidation and waits for the running callback"() {
+    void "shutdown discards queued data and final delivery #termination and waits for the running callback"() {
         given:
         def entered = new CountDownLatch(1)
         def release = new CountDownLatch(1)
@@ -94,7 +94,11 @@ class PostgresNotificationDispatcherSpec extends Specification {
         dispatcher.submitDispatch(row(ChangeOperation.INSERT))
         assert entered.await(5, TimeUnit.SECONDS)
         dispatcher.submitDispatch(row(ChangeOperation.UPDATE))
-        dispatcher.invalidate()
+        if (termination) {
+            dispatcher.terminate()
+        } else {
+            dispatcher.invalidate()
+        }
 
         when:
         def stopped = dispatcher.stop()
@@ -113,6 +117,55 @@ class PostgresNotificationDispatcherSpec extends Specification {
         then:
         events == [ChangeOperation.INSERT]
         dispatcher.pendingTasks() == 0
+
+        cleanup:
+        release.countDown()
+        dispatcher.stop().get(5, TimeUnit.SECONDS)
+
+        where:
+        termination << [false, true]
+    }
+
+    void "termination replaces waiting work and runs once after the active callback"() {
+        given:
+        def entered = new CountDownLatch(1)
+        def release = new CountDownLatch(1)
+        def events = new LinkedBlockingQueue<ChangeEvent<?>>()
+        def dispatcher = createDispatcher({ event ->
+            if (event.operation() == ChangeOperation.INSERT) {
+                entered.countDown()
+                assert release.await(5, TimeUnit.SECONDS)
+            }
+            events.add(event)
+        })
+        dispatcher.submitDispatch(row(ChangeOperation.INSERT))
+        assert entered.await(5, TimeUnit.SECONDS)
+        dispatcher.submitDispatch(row(ChangeOperation.UPDATE))
+        dispatcher.invalidate()
+
+        when:
+        dispatcher.terminate()
+        dispatcher.terminate()
+        dispatcher.submitDispatch(row(ChangeOperation.DELETE))
+        dispatcher.invalidate()
+
+        then:
+        dispatcher.pendingTasks() == 1
+        events.empty
+
+        when:
+        release.countDown()
+        def first = events.poll(5, TimeUnit.SECONDS)
+        def terminated = events.poll(5, TimeUnit.SECONDS)
+        dispatcher.stop().get(5, TimeUnit.SECONDS)
+
+        then:
+        first.operation() == ChangeOperation.INSERT
+        terminated.operation() == ChangeOperation.TERMINATED
+        terminated.entity().empty
+        terminated.metadata(PostgresChangeEventMetadata).empty
+        dispatcher.pendingTasks() == 0
+        events.empty
 
         cleanup:
         release.countDown()

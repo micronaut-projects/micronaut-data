@@ -325,6 +325,11 @@ The example uses this metadata to update individual cache entries:
 
 snippet::example.BookCatalog[project-base="doc-examples/jdbc-postgres-notifications", source="main", tags="events", indent="0", languages="java,groovy,kotlin,python"]
 
+If recovery exhausts its configured retry limit, each listener receives a final `TERMINATED` event.
+It replaces waiting notifications and runs after any callback already in progress. The event has no entity
+or PostgreSQL metadata. The example clears and disables its cache, ignores later callbacks, and reads directly
+from the repository when `find` is called.
+
 The listener worker serializes entity loading and callback execution. Synchronize shared cache access with
 other application threads; different listeners may run concurrently.
 
@@ -400,6 +405,8 @@ Schema, table, and key names retain their database spelling. Payloads contain ke
 |===
 
 Updates retain both keys even when their values are identical. Truncation sends `INVALIDATE`.
+`TERMINATED` is a provider lifecycle event and is rejected in trigger payloads. Such a payload causes
+invalidation for listeners on its channel; it does not terminate the subscription.
 If the serialized payload reaches 8,000 bytes in the database encoding, the function emits `INVALIDATE` with the
 schema and table identity and empty key objects, keeping the notification below PostgreSQL's default payload limit.
 Micronaut Data validates the payload version and table/key mapping before loading an entity.
@@ -500,9 +507,12 @@ for `retry-delay` (default `1s`). Subsequent delays are multiplied by `retry-del
 All delays, including the initial delay, are capped at `max-retry-delay` (default `60s`).
 The multiplier must be an integer of at least `1`; `1` uses a fixed delay.
 A successful reconnection resets the retry count and delay. These settings do not retry failed application startup
-or listener callbacks. If a finite retry limit is exhausted, the provider logs an error and stops receiving
-notifications for that datasource until the application restarts. The default delay sequence is `1s`, `2s`,
-`4s`, `8s`, `16s`, `32s`, then `60s` for subsequent attempts.
+or listener callbacks. If a finite retry limit is exhausted, the provider logs an error, stops receiving
+notifications for that datasource, and queues a final `TERMINATED` event for every affected listener method.
+Waiting notifications, including invalidations, are discarded; a callback already running finishes before
+termination is delivered. No further recovery attempts occur until the application restarts. Listeners should
+disable notification-backed caches and fall back to database reads or another consistency mechanism.
+The default delay sequence is `1s`, `2s`, `4s`, `8s`, `16s`, `32s`, then `60s` for subsequent attempts.
 
 == Delivery and Concurrency
 
@@ -573,7 +583,8 @@ PostgreSQL callback failure logs include the datasource, listener method, and op
 
 When the application stops, Micronaut Data stops accepting listener calls, removes channel subscriptions,
 and closes the listening connection. Listener calls already running may finish; calls still waiting for execution
-are discarded. With Micronaut graceful shutdown enabled, the application waits for connection cleanup and running
+are discarded, including any pending `TERMINATED` callback. Normal shutdown does not produce `TERMINATED` events.
+With Micronaut graceful shutdown enabled, the application waits for connection cleanup and running
 listener calls, up to the configured graceful shutdown timeout.
 
 If the database is unavailable during shutdown, closing notification connections may take longer.

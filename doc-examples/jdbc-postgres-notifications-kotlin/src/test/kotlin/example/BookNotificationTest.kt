@@ -1,6 +1,8 @@
 package example
 
 import io.micronaut.data.connection.jdbc.advice.DelegatingDataSource
+import io.micronaut.data.jdbc.notification.DefaultChangeEvent
+import io.micronaut.data.notification.ChangeOperation
 import io.micronaut.http.client.HttpClient
 import io.micronaut.http.client.annotation.Client
 import io.micronaut.test.extensions.junit5.annotation.MicronautTest
@@ -15,6 +17,7 @@ import javax.sql.DataSource
 class BookNotificationTest {
     @Inject lateinit var dataSource: DataSource
     @Inject lateinit var catalog: BookCatalog
+    @Inject lateinit var repository: BookRepository
     @Inject @field:Client("/") lateinit var client: HttpClient
 
     @Test
@@ -32,6 +35,32 @@ class BookNotificationTest {
                 await { catalog.find(3L).isEmpty }
                 statement.execute("TRUNCATE public.book")
                 await { catalog.find(1L).isEmpty }
+            }
+        }
+    }
+
+    @Test
+    fun terminatedCatalogReadsFromTheDatabaseAndIgnoresLaterCallbacks() {
+        val isolated = BookCatalog(repository)
+        DelegatingDataSource.unwrapDataSource(dataSource).connection.use { connection ->
+            connection.createStatement().use { statement ->
+                try {
+                    statement.executeUpdate("INSERT INTO public.book VALUES (99, 'Database value')")
+                    isolated.changed(DefaultChangeEvent(ChangeOperation.INSERT, Book(99, "Cached value"), null))
+                    assertEquals("Cached value", isolated.find(99).orElseThrow().title)
+
+                    isolated.changed(DefaultChangeEvent(ChangeOperation.TERMINATED, null, null))
+                    isolated.changed(DefaultChangeEvent(ChangeOperation.INSERT, Book(99, "Late callback"), null))
+                    isolated.changed(DefaultChangeEvent(ChangeOperation.INVALIDATE, null, null))
+                    assertEquals("Database value", isolated.find(99).orElseThrow().title)
+
+                    statement.executeUpdate("UPDATE public.book SET title = 'Changed after termination' WHERE id = 99")
+                    assertEquals("Changed after termination", isolated.find(99).orElseThrow().title)
+                    statement.executeUpdate("DELETE FROM public.book WHERE id = 99")
+                    assertTrue(isolated.find(99).isEmpty)
+                } finally {
+                    statement.executeUpdate("DELETE FROM public.book WHERE id = 99")
+                }
             }
         }
     }

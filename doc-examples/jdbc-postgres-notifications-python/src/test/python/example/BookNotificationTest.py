@@ -4,6 +4,8 @@ from jakarta.inject import Inject
 from javax.sql import DataSource
 from java.lang import System, Thread
 from micronaut.data.connection.jdbc.advice import DelegatingDataSource
+from micronaut.data.jdbc.notification import DefaultChangeEvent
+from micronaut.data.notification import ChangeOperation
 from micronaut.http.client import HttpClient
 from micronaut.http.client.annotation import Client
 from micronaut.test.extensions.junit5.annotation import MicronautTest
@@ -11,12 +13,14 @@ from org.junit.jupiter.api import Test
 
 from example.Book import Book
 from example.BookCatalog import BookCatalog
+from example.BookRepository import BookRepository
 
 
 @MicronautTest(transactional=False)
 class BookNotificationTest:
     dataSource: Annotated[DataSource, Inject]
     catalog: Annotated[BookCatalog, Inject]
+    repository: Annotated[BookRepository, Inject]
     client: Annotated[HttpClient, Inject, Client("/")]
 
     @Test
@@ -37,6 +41,32 @@ class BookNotificationTest:
                 statement.execute("TRUNCATE public.book")
                 self.awaitChange(lambda: self.catalog.find(1).isEmpty())
             finally:
+                statement.close()
+        finally:
+            connection.close()
+
+    @Test
+    def testTerminatedCatalogReadsFromTheDatabaseAndIgnoresLaterCallbacks(self):
+        isolated = BookCatalog(self.repository)
+        connection = DelegatingDataSource.unwrapDataSource(self.dataSource).getConnection()
+        try:
+            statement = connection.createStatement()
+            try:
+                statement.executeUpdate("INSERT INTO public.book VALUES (99, 'Database value')")
+                isolated.changed(DefaultChangeEvent(ChangeOperation.INSERT, Book(99, "Cached value"), None))
+                assert isolated.find(99).orElseThrow().title == "Cached value"
+
+                isolated.changed(DefaultChangeEvent(ChangeOperation.TERMINATED, None, None))
+                isolated.changed(DefaultChangeEvent(ChangeOperation.INSERT, Book(99, "Late callback"), None))
+                isolated.changed(DefaultChangeEvent(ChangeOperation.INVALIDATE, None, None))
+                assert isolated.find(99).orElseThrow().title == "Database value"
+
+                statement.executeUpdate("UPDATE public.book SET title = 'Changed after termination' WHERE id = 99")
+                assert isolated.find(99).orElseThrow().title == "Changed after termination"
+                statement.executeUpdate("DELETE FROM public.book WHERE id = 99")
+                assert isolated.find(99).isEmpty()
+            finally:
+                statement.executeUpdate("DELETE FROM public.book WHERE id = 99")
                 statement.close()
         finally:
             connection.close()

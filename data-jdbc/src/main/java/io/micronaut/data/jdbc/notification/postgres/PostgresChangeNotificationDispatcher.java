@@ -32,6 +32,10 @@ import java.util.function.Consumer;
  * replaces waiting data with one invalidation. Explicit invalidations, including recovery
  * reconciliation, also replace waiting work and run after the callback already in progress.</p>
  *
+ * <p>Termination replaces waiting work with a final {@code TERMINATED} callback and closes queue
+ * admission. Its delivery has no entity or table metadata. Application shutdown discards it if
+ * it has not started.</p>
+ *
  * <p>Shutdown closes admission and discards waiting callbacks without interrupting running work.
  * Completion includes worker termination. Callback exceptions are logged and processing continues;
  * errors propagate to the worker after active-task accounting is released.</p>
@@ -62,6 +66,18 @@ final class PostgresChangeNotificationDispatcher {
     /** Replaces waiting notifications with reconciliation, including after reconnection. */
     void invalidate() {
         notificationQueue.enqueueInvalidation(() -> dispatchSafely(invalidation()));
+    }
+
+    /** Replaces waiting work with final delivery and releases the worker after it completes. */
+    void terminate() {
+        try {
+            notificationQueue.enqueueFinal(() -> dispatchSafely(
+                new DefaultChangeEvent<>(ChangeOperation.TERMINATED, null, null)));
+        } catch (RuntimeException e) {
+            LOG.error("Unable to queue PostgreSQL notification termination for datasource [{}] and listener method [{}]",
+                dataSourceName, description, e);
+            notificationQueue.stop();
+        }
     }
 
     /** Queues data processing or replaces waiting work with an explicit invalidation. */

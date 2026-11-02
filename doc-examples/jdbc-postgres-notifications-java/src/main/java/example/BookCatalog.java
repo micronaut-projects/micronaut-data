@@ -20,6 +20,7 @@ class BookCatalog {
     // end::listener[]
     private final BookRepository repository;
     private final Map<Long, Book> books = new HashMap<>();
+    private boolean cacheEnabled = true;
 
     BookCatalog(BookRepository repository) {
         this.repository = repository;
@@ -42,6 +43,9 @@ class BookCatalog {
         // Handle the change.
         // end::listener[]
     // end::listener-signature[]
+        if (!cacheEnabled) {
+            return;
+        }
         switch (event.operation()) {
             case INSERT -> event.entity().ifPresent(book -> books.put(book.id(), book));
             case UPDATE -> {
@@ -55,6 +59,10 @@ class BookCatalog {
                 books.remove(Long.valueOf(metadata.oldKeys().get("id")));
             }
             case INVALIDATE -> refresh();
+            case TERMINATED -> {
+                cacheEnabled = false;
+                books.clear();
+            }
         }
         // tag::listener-signature[]
         // tag::listener[]
@@ -65,10 +73,13 @@ class BookCatalog {
     // end::events[]
 
     synchronized Optional<Book> find(Long id) {
-        return Optional.ofNullable(books.get(id));
+        return cacheEnabled ? Optional.ofNullable(books.get(id)) : repository.findById(id);
     }
 
     private void refresh() {
+        if (!cacheEnabled) {
+            return;
+        }
         books.clear();
         repository.findAll().forEach(book -> books.put(book.id(), book));
     }

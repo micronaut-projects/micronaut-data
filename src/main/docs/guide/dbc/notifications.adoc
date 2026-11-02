@@ -41,11 +41,16 @@ The possible `ChangeOperation` values are:
 
 * `INSERT` -- a row was inserted;
 * `UPDATE` -- a row was updated;
-* `DELETE` -- a row was deleted; and
-* `INVALIDATE` -- application state may need refreshing without individual row details.
+* `DELETE` -- a row was deleted;
+* `INVALIDATE` -- application state may need refreshing without individual row details; and
+* `TERMINATED` -- notifications have permanently stopped for the listener.
 
 An `INVALIDATE` event indicates that application state may be outdated without identifying individual changed rows.
 Refresh the affected state, for example by reloading a cache or rerunning a query.
+
+On `TERMINATED`, stop relying on notifications to maintain application state. For example, clear and disable
+the cache and read directly from the database. This provider lifecycle event has no entity or table metadata.
+The database-specific sections describe when termination occurs.
 
 Event metadata is optional; check whether it is present before accessing it. The Oracle and PostgreSQL sections describe
 the available metadata and the conditions that produce invalidations.

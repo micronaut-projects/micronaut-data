@@ -32,6 +32,7 @@ import io.micronaut.data.jdbc.postgres.PostgresTestPropertyProvider
 import io.micronaut.data.notification.ChangeEvent
 import io.micronaut.data.notification.ChangeOperation
 import io.micronaut.data.runtime.config.SchemaGenerate
+import io.micronaut.jdbc.BasicJdbcConfiguration
 import jakarta.inject.Singleton
 import spock.lang.Specification
 import spock.lang.Unroll
@@ -349,6 +350,46 @@ class PostgresNotificationProviderSpec extends Specification implements Postgres
     }
 
     @Unroll
+    void "exhausted recovery delivers final termination to every listener after #maxRetries retries"() {
+        given:
+        start([
+            'spec.unqualified-listener': true,
+            'micronaut.data.jdbc.notifications.postgres.max-retries': maxRetries
+        ])
+        def other = application.getBean(UnqualifiedBookChangeListener)
+        def configuration = application.getBean(BasicJdbcConfiguration)
+        def originalPassword = configuration.password
+        configuration.password = 'invalid_notification_password'
+
+        when:
+        terminateListeningConnection()
+        def terminated = next()
+        def otherTerminated = other.events.poll(10, TimeUnit.SECONDS)
+
+        then:
+        [terminated, otherTerminated].every {
+            it != null && it.operation() == ChangeOperation.TERMINATED && it.entity().empty &&
+                it.metadata(PostgresChangeEventMetadata).empty
+        }
+
+        when: 'restoring credentials cannot restart a permanently stopped subscription'
+        configuration.password = originalPassword
+        execute("INSERT INTO \"ProviderBook\" VALUES ('$TENANT', 2, 'after termination')")
+
+        then:
+        listener.events.poll(500, TimeUnit.MILLISECONDS) == null
+        other.events.poll(500, TimeUnit.MILLISECONDS) == null
+
+        cleanup:
+        if (configuration != null) {
+            configuration.password = originalPassword
+        }
+
+        where:
+        maxRetries << [0, 2]
+    }
+
+    @Unroll
     void "unusable payload invalidates without terminating reception: #description"() {
         given:
         start()
@@ -374,6 +415,7 @@ class PostgresNotificationProviderSpec extends Specification implements Postgres
         'invalid JSON'        | 'invalid JSON'
         'unsupported version' | '{"version":2}'
         'wrong key names'     | '{"version":1,"schema":"notification_provider_test","table":"ProviderBook","operation":"INSERT","oldKeys":{},"newKeys":{"unexpected":"1"}}'
+        'termination payload' | '{"version":1,"schema":"notification_provider_test","table":"ProviderBook","operation":"TERMINATED","oldKeys":{},"newKeys":{}}'
     }
 
     void "rollback sends no event and entity loading tolerates a row deleted before reload"() {

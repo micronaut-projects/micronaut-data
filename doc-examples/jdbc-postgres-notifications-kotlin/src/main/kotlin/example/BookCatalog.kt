@@ -17,6 +17,7 @@ import java.util.*
 open class BookCatalog(private val repository: BookRepository) {
     // end::listener[]
     private val books = HashMap<Long, Book>()
+    private var cacheEnabled = true
 
     @EventListener
     @Order(Ordered.LOWEST_PRECEDENCE)
@@ -37,6 +38,9 @@ open class BookCatalog(private val repository: BookRepository) {
         // Handle the change.
         // end::listener[]
     // end::listener-signature[]
+        if (!cacheEnabled) {
+            return
+        }
         when (event.operation()) {
             ChangeOperation.INSERT -> event.entity().ifPresent { book -> books[book.id] = book }
             ChangeOperation.UPDATE -> {
@@ -50,7 +54,10 @@ open class BookCatalog(private val repository: BookRepository) {
                 books.remove(metadata.oldKeys().getValue("id").toLong())
             }
             ChangeOperation.INVALIDATE -> refresh()
-            ChangeOperation.TERMINATED -> return
+            ChangeOperation.TERMINATED -> {
+                cacheEnabled = false
+                books.clear()
+            }
         }
         // tag::listener-signature[]
         // tag::listener[]
@@ -61,9 +68,12 @@ open class BookCatalog(private val repository: BookRepository) {
     // end::events[]
 
     @Synchronized
-    fun find(id: Long): Optional<Book> = Optional.ofNullable(books[id])
+    fun find(id: Long): Optional<Book> = if (cacheEnabled) Optional.ofNullable(books[id]) else repository.findById(id)
 
     private fun refresh() {
+        if (!cacheEnabled) {
+            return
+        }
         books.clear()
         repository.findAll().forEach { book -> books[book.id] = book }
     }

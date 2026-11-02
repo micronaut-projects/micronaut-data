@@ -176,7 +176,7 @@ final class PostgresNotificationSubscription {
 
     /**
      * Receives and routes notifications until stopped, reconnecting after failures with the configured backoff.
-     * Stops reception if the configured recovery retry limit is exhausted.
+     * Stops reception and queues final termination for every listener if the recovery retry limit is exhausted.
      * Submits invalidation events after reconnection and before reception resumes.
      * Releases the connection and completes the reception stage when the loop exits.
      * Unexpected receiver failures complete that stage exceptionally and propagate to the executor.
@@ -265,6 +265,7 @@ final class PostgresNotificationSubscription {
                     if (retryCount >= configuration.getMaxRetries()) {
                         LOG.error("PostgreSQL notification recovery exhausted [{}] retries for datasource [{}]; notifications remain unavailable",
                             configuration.getMaxRetries(), name, e);
+                        dispatchers.values().forEach(PostgresChangeNotificationDispatcher::terminate);
                         break;
                     }
                     retryCount++;

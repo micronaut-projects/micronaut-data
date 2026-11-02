@@ -20,6 +20,7 @@ class BookCatalog:
     def __init__(self, repository: BookRepository):
         self.repository = repository
         self.books = {}
+        self.cacheEnabled = True
         self.lock = RLock()
 
     @EventListener
@@ -40,6 +41,8 @@ class BookCatalog:
         # end::listener[]
     # end::listener-signature[]
         with self.lock:
+            if not self.cacheEnabled:
+                return
             operation = event.operation()
             if operation == ChangeOperation.INSERT:
                 book = event.entity().orElse(None)
@@ -57,14 +60,19 @@ class BookCatalog:
                 self.books.pop(int(metadata.oldKeys().get("id")), None)
             elif operation == ChangeOperation.INVALIDATE:
                 self.refresh()
+            elif operation == ChangeOperation.TERMINATED:
+                self.cacheEnabled = False
+                self.books.clear()
 
     # end::events[]
 
     def find(self, id: int) -> Optional[Book]:
         with self.lock:
-            return Optional.ofNullable(self.books.get(id))
+            return Optional.ofNullable(self.books.get(id)) if self.cacheEnabled else self.repository.findById(id)
 
     def refresh(self) -> None:
+        if not self.cacheEnabled:
+            return
         self.books.clear()
         for book in self.repository.findAll():
             self.books[book.id] = book
