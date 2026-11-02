@@ -27,6 +27,7 @@ import io.micronaut.data.model.query.builder.QueryParameterBinding;
 import io.micronaut.data.model.query.builder.QueryResult;
 import io.micronaut.data.model.query.builder.sql.Dialect;
 import io.micronaut.data.model.query.builder.sql.SqlQueryBuilder;
+import io.micronaut.data.notification.oracle.OracleChangeNotificationOptions;
 import io.micronaut.data.processor.model.SourcePersistentEntity;
 import io.micronaut.data.processor.model.criteria.SourcePersistentEntityCriteriaQuery;
 import io.micronaut.data.processor.model.criteria.impl.SourcePersistentEntityCriteriaBuilderImpl;
@@ -34,7 +35,6 @@ import io.micronaut.inject.ast.ClassElement;
 import io.micronaut.inject.ast.MethodElement;
 import io.micronaut.inject.visitor.TypeElementVisitor;
 import io.micronaut.inject.visitor.VisitorContext;
-import org.jspecify.annotations.Nullable;
 
 import java.util.HashMap;
 import java.util.HashSet;
@@ -258,61 +258,12 @@ public final class OracleChangeNotificationVisitor implements TypeElementVisitor
             context.fail("@OracleChangeNotification property names and values must not contain configuration placeholders", element);
             return true;
         }
-        String error = invalidOption(name, value);
+        String error = OracleChangeNotificationOptions.invalidOption(name, value);
         if (error != null) {
             context.fail("@OracleChangeNotification " + error, element);
             return true;
         }
         return false;
-    }
-
-    /**
-     * Checks Oracle options during compilation without a dependency on the JDBC runtime provider.
-     *
-     * @param name the option name
-     * @param value the configured value
-     * @return the option error, or {@code null} when the option is supported
-     */
-    private static @Nullable String invalidOption(String name, String value) {
-        if (name.isBlank()) {
-            return "has an Oracle property with a blank name";
-        }
-        if ("DCN_CLIENT_INIT_REGID".equals(name)) {
-            return name + ": reusing an existing reliable DCN registration is not supported";
-        }
-        if ("DCN_NOTIFY_ROWIDS".equals(name) && !"true".equalsIgnoreCase(value)) {
-            return "requires " + name + " to be true so row-level operation and ROWID details are available";
-        }
-        if ("DCN_NOTIFY_CHANGELAG".equals(name) && !"0".equals(value.trim())) {
-            return "requires " + name + " to be 0 so row-level operation and ROWID details are available";
-        }
-        if (isUnsupportedGrouping(name, value)) {
-            return name + ": notification grouping is not supported";
-        }
-        if ("DCN_PULL_NOTIFICATIONS".equals(name) && !"false".equalsIgnoreCase(value)) {
-            return name + " [" + value + "] is not supported because AQ pull delivery does not invoke the listener callback";
-        }
-        if ("DCN_PULL_QUEUE_NAME".equals(name)) {
-            return name + " is not supported because AQ pull delivery does not invoke the listener callback";
-        }
-        if ("NTF_TIMEOUT".equals(name)) {
-            try {
-                if (Integer.parseInt(value) < 0) {
-                    return name + " must be a non-negative integer number of seconds";
-                }
-            } catch (NumberFormatException _) {
-                return name + " must be a non-negative integer number of seconds";
-            }
-        }
-        return null;
-    }
-
-    private static boolean isUnsupportedGrouping(String name, String value) {
-        return switch (name) {
-            case "NTF_GROUPING_CLASS" -> !"NTF_GROUPING_CLASS_NONE".equals(value);
-            case "NTF_GROUPING_VALUE", "NTF_GROUPING_TYPE", "NTF_GROUPING_REPEAT_TIME", "NTF_GROUPING_START_TIME" -> true;
-            default -> false;
-        };
     }
 
 }
