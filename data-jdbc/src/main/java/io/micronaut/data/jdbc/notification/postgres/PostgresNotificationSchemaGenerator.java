@@ -26,6 +26,7 @@ import io.micronaut.data.jdbc.notification.ChangeListenerMethod;
 import io.micronaut.data.jdbc.notification.ChangeListenerRegistry;
 import io.micronaut.data.model.PersistentEntity;
 import io.micronaut.data.model.query.builder.sql.Dialect;
+import io.micronaut.data.model.query.builder.sql.postgres.PostgresNotificationQuery;
 import io.micronaut.data.runtime.config.SchemaGenerate;
 import io.micronaut.inject.ExecutableMethod;
 import jakarta.inject.Singleton;
@@ -57,7 +58,8 @@ import java.util.stream.Collectors;
  * invalidation on truncation, or table invalidations for insert, update, delete, and truncate statements.
  * The corresponding bundled SQL resource supplies the function definition.</p>
  *
- * <p>The shared listener registry supplies channels and generated key mappings without instantiating
+ * <p>The shared listener registry supplies channels and generated key mappings. For inherited listeners
+ * without generated metadata, key columns are derived from the entity mapping. Neither path instantiates
  * listeners or repository operations during schema generation. Listeners for the same schema, table,
  * and channel share generated triggers. Installation errors fail application startup.</p>
  */
@@ -200,7 +202,7 @@ public final class PostgresNotificationSchemaGenerator {
      * @param entities the entity mappings included in this schema-generation pass
      * @return distinct subscriptions and their mapped primary-key column names
      * @throws SQLException if the default schema cannot be resolved
-     * @throws IllegalStateException if generated key mappings are missing or conflicting
+     * @throws IllegalStateException if key mappings are invalid, unsupported, or conflicting
      */
     private Map<Subscription, List<String>> subscriptions(Connection connection, String datasource, PersistentEntity[] entities) throws SQLException {
         Map<String, PersistentEntity> mappings = Arrays.stream(entities)
@@ -226,7 +228,14 @@ public final class PostgresNotificationSchemaGenerator {
                 throw new SQLException("Cannot determine the schema for PostgreSQL notification table " + entity.getPersistedName());
             }
             String channel = method.stringValue(PostgresChangeNotification.class, "channel").orElseThrow();
-            List<String> columns = List.of(method.stringValues(PostgresChangeListenerQuery.class, "columns"));
+            var queryMetadata = method.getAnnotation(PostgresChangeListenerQuery.class);
+            List<String> columns;
+            try {
+                columns = queryMetadata == null ? PostgresNotificationQuery.keyColumns(entity)
+                    : List.of(queryMetadata.stringValues("columns"));
+            } catch (IllegalArgumentException e) {
+                throw new IllegalStateException("@ChangeListener method [" + method.getDescription(true) + "] " + e.getMessage(), e);
+            }
             if (columns.isEmpty()) {
                 throw new IllegalStateException("Missing generated PostgreSQL notification keys for " + method.getDescription(true));
             }

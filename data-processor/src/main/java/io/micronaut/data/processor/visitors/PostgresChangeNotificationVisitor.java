@@ -15,32 +15,18 @@
  */
 package io.micronaut.data.processor.visitors;
 
-import io.micronaut.core.annotation.AnnotationMetadata;
 import io.micronaut.core.annotation.Internal;
 import io.micronaut.data.annotation.ChangeListener;
 import io.micronaut.data.annotation.MappedEntity;
-import io.micronaut.data.annotation.MappedProperty;
-import io.micronaut.data.annotation.Relation;
 import io.micronaut.data.intercept.annotation.PostgresChangeListenerQuery;
-import io.micronaut.data.model.Embedded;
-import io.micronaut.data.model.PersistentEntityUtils;
-import io.micronaut.data.model.PersistentPropertyPath;
-import io.micronaut.data.model.query.builder.sql.Dialect;
-import io.micronaut.data.model.query.builder.sql.SqlQueryBuilder;
-import io.micronaut.data.model.query.builder.sql.postgres.PostgresIdentifiers;
-import io.micronaut.data.processor.model.SourcePersistentEntity;
+import io.micronaut.data.model.query.builder.sql.postgres.PostgresNotificationQuery;
 import io.micronaut.data.processor.model.criteria.impl.SourcePersistentEntityCriteriaBuilderImpl;
 import io.micronaut.inject.ast.MethodElement;
 import io.micronaut.inject.visitor.TypeElementVisitor;
 import io.micronaut.inject.visitor.VisitorContext;
-import jakarta.persistence.criteria.Path;
-import jakarta.persistence.criteria.Predicate;
 
 import java.nio.charset.StandardCharsets;
-import java.util.ArrayList;
 import java.util.HashMap;
-import java.util.List;
-import java.util.Objects;
 
 /**
  * Processes {@code @PostgresChangeNotification} methods during compilation.
@@ -91,13 +77,14 @@ public final class PostgresChangeNotificationVisitor implements TypeElementVisit
         }
         var resolver = new SourcePersistentEntityResolver(context, new HashMap<>());
         var entity = resolver.apply(context.getClassElement(entityType.getName()).orElse(entityType));
-        List<PersistentPropertyPath> keys = new ArrayList<>();
-        entity.getIdentityProperties().forEach(id -> PersistentEntityUtils.traversePersistentProperties(id,
-            (associations, property) -> keys.add(new PersistentPropertyPath(associations, property))));
-        if (!validatePrimaryKeys(keys, element, context)) {
-            return;
+        try {
+            var reload = PostgresNotificationQuery.build(entity, new SourcePersistentEntityCriteriaBuilderImpl(resolver));
+            element.annotate(PostgresChangeListenerQuery.class, annotation -> annotation.value(reload.query())
+                .member("columns", reload.keys().stream().map(PostgresNotificationQuery.Key::column).toArray(String[]::new))
+                .member("paths", reload.keys().stream().map(key -> key.path().getPath()).toArray(String[]::new)));
+        } catch (IllegalArgumentException e) {
+            context.fail("@PostgresChangeNotification " + e.getMessage(), element);
         }
-        generateReloadQuery(entity, keys, resolver, element, context);
     }
 
     /**
@@ -115,79 +102,5 @@ public final class PostgresChangeNotificationVisitor implements TypeElementVisit
             return false;
         }
         return true;
-    }
-
-    /**
-     * Rejects primary-key mappings that require association traversal or a custom attribute converter.
-     *
-     * @param keys the flattened primary-key property paths
-     * @param element the annotated listener method
-     * @param context the compilation visitor context used to report errors
-     * @return {@code true} if the key mappings are supported
-     */
-    private static boolean validatePrimaryKeys(List<PersistentPropertyPath> keys, MethodElement element, VisitorContext context) {
-        if (keys.isEmpty()) {
-            context.fail("@PostgresChangeNotification requires a mapped primary key", element);
-            return false;
-        }
-        for (var key : keys) {
-            if (key.getAssociations().stream().anyMatch(a -> !(a instanceof Embedded))
-                || key.getProperty().getAnnotationMetadata().hasStereotype(Relation.class)
-                || key.getProperty().getAnnotationMetadata().stringValue(MappedProperty.class, "converter").isPresent()) {
-                context.fail("@PostgresChangeNotification does not support association or converted primary keys", element);
-                return false;
-            }
-        }
-        return true;
-    }
-
-    /**
-     * Generates a bound reload query and key metadata ordered to match its parameters.
-     *
-     * @param entity the entity mapping used to build the reload query
-     * @param keys the validated primary-key property paths
-     * @param resolver the resolver used by the criteria builder for entity mappings
-     * @param element the listener method receiving the generated metadata
-     * @param context the compilation visitor context used to report errors
-     */
-    private static void generateReloadQuery(SourcePersistentEntity entity, List<PersistentPropertyPath> keys,
-                                            SourcePersistentEntityResolver resolver, MethodElement element, VisitorContext context) {
-        var builder = new SourcePersistentEntityCriteriaBuilderImpl(resolver);
-        var query = builder.createQuery();
-        var root = query.from(entity);
-        query.select(root);
-        List<Predicate> predicates = new ArrayList<>();
-        for (int i = 0; i < keys.size(); i++) {
-            Path<?> path = root;
-            for (var property : keys.get(i).getPropertyPath()) {
-                path = path.get(property.getName());
-            }
-            predicates.add(builder.equal(path, builder.parameter(Object.class, "key" + i)));
-        }
-        query.where(predicates.toArray(Predicate[]::new));
-        var result = Objects.requireNonNull(query.build(AnnotationMetadata.EMPTY_METADATA, new SqlQueryBuilder(Dialect.POSTGRES)));
-        var bindings = result.getParameterBindings();
-        if (bindings.size() != keys.size()) {
-            context.fail("@PostgresChangeNotification cannot reload entities with additional query parameters; "
-                + "parameterized entity @Where clauses are not supported", element);
-            return;
-        }
-        String[] columns = new String[keys.size()];
-        String[] paths = new String[keys.size()];
-        for (int i = 0; i < bindings.size(); i++) {
-            String[] propertyPath = bindings.get(i).getPropertyPath();
-            String path = propertyPath == null ? "" : String.join(".", propertyPath);
-            var key = keys.stream().filter(candidate -> candidate.getPath().equals(path)).findFirst().orElse(null);
-            if (key == null) {
-                context.fail("@PostgresChangeNotification requires only primary-key reload parameters", element);
-                return;
-            }
-            String column = entity.getNamingStrategy().mappedName(key.getAssociations(), key.getProperty());
-            columns[i] = PostgresIdentifiers.normalize(column,
-                entity.getAnnotationMetadata().booleanValue(MappedEntity.class, "escape").orElse(true));
-            paths[i] = key.getPath();
-        }
-        element.annotate(PostgresChangeListenerQuery.class, annotation -> annotation.value(result.getQuery())
-            .member("columns", columns).member("paths", paths));
     }
 }

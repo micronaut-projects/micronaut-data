@@ -119,6 +119,8 @@ class BookListener''')
         'zero arguments'     | '@ChangeListener void changed() {}'                                      | 'must declare exactly one ChangeEvent argument'
         'raw event'          | '@ChangeListener void changed(ChangeEvent event) {}'                     | 'must declare one concrete entity type'
         'wildcard event'     | '@ChangeListener void changed(ChangeEvent<?> event) {}'                  | 'must declare one concrete entity type'
+        'unresolved type'    | '@ChangeListener <T> void changed(ChangeEvent<T> event) {}'               | 'must declare one concrete entity type'
+        'bounded type'       | '@ChangeListener <T extends Book> void changed(ChangeEvent<T> event) {}'  | 'must declare one concrete entity type'
         'non-entity event'   | '@ChangeListener void changed(ChangeEvent<String> event) {}'             | 'type argument must be a persistent entity'
         'multiple arguments' | '@ChangeListener void changed(ChangeEvent<Book> event, int id) {}'       | 'must declare exactly one ChangeEvent argument'
         'non-void method'    | '@ChangeListener Book changed(ChangeEvent<Book> event) { return null; }' | 'method must return void'

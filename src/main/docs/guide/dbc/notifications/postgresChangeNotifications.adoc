@@ -310,6 +310,11 @@ used by the table triggers. Supply the case-sensitive channel name without SQL i
 Follow the shared <<notificationListenerRequirements, listener requirements>>, including the method signature
 and datasource selection.
 
+Listener methods inherited from separately compiled base classes are supported. If a method has no generated
+reload-query metadata, Micronaut Data builds its primary-key reload query from the entity mapping at startup.
+Automatic notification schema generation derives the same key columns for its triggers. The supported key
+mappings and restrictions on additional query parameters also apply to this runtime fallback.
+
 Micronaut Data subscribes to each distinct channel during application startup. Listener methods using the same
 datasource share a listening connection, whether they use the same channel or different channels.
 Subscriptions normally remain active for the application's lifetime, and Micronaut Data attempts to remove them

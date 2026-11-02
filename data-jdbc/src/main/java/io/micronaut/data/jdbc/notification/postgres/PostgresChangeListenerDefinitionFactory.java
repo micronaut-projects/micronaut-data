@@ -23,8 +23,10 @@ import io.micronaut.data.jdbc.annotation.PostgresChangeNotification;
 import io.micronaut.data.jdbc.notification.ChangeListenerMethod;
 import io.micronaut.data.jdbc.operations.JdbcRepositoryOperations;
 import io.micronaut.data.model.PersistentPropertyPath;
+import io.micronaut.data.model.query.builder.sql.postgres.PostgresNotificationQuery;
 import io.micronaut.data.model.runtime.RuntimePersistentEntity;
 import io.micronaut.data.model.runtime.RuntimePersistentProperty;
+import io.micronaut.data.runtime.criteria.RuntimeCriteriaBuilder;
 import io.micronaut.inject.ExecutableMethod;
 
 import java.util.ArrayList;
@@ -36,12 +38,13 @@ import java.util.Set;
  * Builds the PostgreSQL runtime definition for a discovered change listener.
  *
  * <p>The factory reads the generated reload query and ordered key mappings, resolves their
- * Java and JDBC types, and creates the entity loader. Table and schema names are read from entity
+ * Java and JDBC types, and creates the entity loader. For inherited methods without generated metadata,
+ * it builds the mapped primary-key reload query at runtime. Table and schema names are read from entity
  * metadata. Property placeholders are resolved before normalization for a UTF-8 database with
  * PostgreSQL's default identifier length limit.</p>
  *
  * <p>The annotation processor validates listener settings during compilation. Runtime checks
- * here identify missing or invalid generated metadata before subscription setup.</p>
+ * here identify invalid generated metadata or unsupported fallback mappings before subscription setup.</p>
  */
 final class PostgresChangeListenerDefinitionFactory {
     private final JdbcRepositoryOperations operations;
@@ -78,19 +81,20 @@ final class PostgresChangeListenerDefinitionFactory {
     }
 
     /**
-     * Validates the generated query and key mappings and builds the entity loader with ordered, typed bindings.
+     * Resolves the generated or fallback query and builds the entity loader with ordered, typed key bindings.
      *
-     * @param method the listener method supplying the generated reload metadata
+     * @param method the listener method whose generated metadata is used when available
      * @param entity the entity mapping used to resolve primary-key property types
      * @return the entity loader
      */
     private PostgresChangeListenerEntityLoader<?> createEntityLoader(ExecutableMethod<?, ?> method, RuntimePersistentEntity<?> entity) {
         AnnotationValue<PostgresChangeListenerQuery> metadata = method.getAnnotation(PostgresChangeListenerQuery.class);
         if (metadata == null) {
-            throw invalidChangeListener(method, "is missing its generated PostgreSQL primary-key reload query");
+            return fallbackEntityLoader(method, entity);
         }
         String query = metadata.stringValue().filter(value -> !value.isBlank())
             .orElseThrow(() -> invalidChangeListener(method, "has a missing or blank generated PostgreSQL reload query"));
+        query = environment.getPlaceholderResolver().resolveRequiredPlaceholders(query);
         String[] names = metadata.stringValues("columns");
         String[] paths = metadata.stringValues("paths");
         if (names.length == 0 || names.length != paths.length) {
@@ -111,6 +115,22 @@ final class PostgresChangeListenerDefinitionFactory {
             bindings.add(new PostgresChangeListenerEntityLoader.KeyBinding(names[i], property.getType(), property.getDataType()));
         }
         return new PostgresChangeListenerEntityLoader<>(operations, entityType, query, bindings);
+    }
+
+    /** Builds the missing reload query through the same primary-key query support used by the visitor. */
+    private PostgresChangeListenerEntityLoader<?> fallbackEntityLoader(ExecutableMethod<?, ?> method, RuntimePersistentEntity<?> entity) {
+        PostgresNotificationQuery reload;
+        try {
+            reload = PostgresNotificationQuery.build(entity, new RuntimeCriteriaBuilder());
+        } catch (IllegalArgumentException e) {
+            throw invalidChangeListener(method, "has an unsupported PostgreSQL reload mapping: " + e.getMessage());
+        }
+        var bindings = reload.keys().stream().map(key -> {
+            var property = (RuntimePersistentProperty<?>) key.path().getProperty();
+            return new PostgresChangeListenerEntityLoader.KeyBinding(key.column(), property.getType(), property.getDataType());
+        }).toList();
+        String query = environment.getPlaceholderResolver().resolveRequiredPlaceholders(reload.query());
+        return new PostgresChangeListenerEntityLoader<>(operations, entity.getIntrospection().getBeanType(), query, bindings);
     }
 
     private static IllegalStateException invalidChangeListener(ExecutableMethod<?, ?> method, String message) {
