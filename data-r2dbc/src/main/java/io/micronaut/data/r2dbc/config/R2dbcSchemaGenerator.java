@@ -139,15 +139,17 @@ public class R2dbcSchemaGenerator {
                                 PersistentEntity[] entities,
                                 SqlQueryBuilder builder) {
         SchemaGenerate schemaGenerate = configuration.getSchemaGenerate();
-        List<String> createStatements = Arrays.stream(
+        List<String> createStatements = Arrays.asList(
             builder.buildCreateTableStatements(definitionProviders, entities, builder.getDialect())
-        ).map(sql -> builder.getDialect() == Dialect.ORACLE ? executeImmediateDualityView(sql) : sql).toList();
+        );
         Flux<Void> createTablesFlow = Flux.fromIterable(createStatements)
                 .concatMap(sql -> {
                     if (DataSettings.QUERY_LOG.isDebugEnabled()) {
                         DataSettings.QUERY_LOG.debug("Creating Table: \n{}", sql);
                     }
-                    return execute(connection, sql)
+                    // Only the executed statement is wrapped, so the logs show the DDL as it is
+                    String statement = builder.getDialect() == Dialect.ORACLE ? executeImmediateDualityView(sql) : sql;
+                    return execute(connection, statement)
                             .onErrorResume((throwable -> {
                                 if (LOG.isWarnEnabled()) {
                                     LOG.warn("Unable to create table :{}, {}", throwable.getMessage(), sql);
