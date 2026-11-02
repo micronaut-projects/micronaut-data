@@ -16,17 +16,30 @@
 package io.micronaut.data.r2dbc.oraclexe
 
 import io.micronaut.context.ApplicationContext
+import io.micronaut.context.annotation.Requires
+import io.micronaut.context.event.BeanCreatedEvent
+import io.micronaut.context.event.BeanCreatedEventListener
 import io.micronaut.data.connection.ConnectionDefinition
 import io.micronaut.data.r2dbc.connection.DefaultR2dbcReactorConnectionOperations
 import io.micronaut.transaction.TransactionDefinition
 import io.micronaut.transaction.annotation.OracleTransactional
 import io.micronaut.transaction.reactive.ReactiveTransactionOperations
 import io.r2dbc.spi.Connection
+import io.r2dbc.spi.ConnectionFactories
+import io.r2dbc.spi.ConnectionFactory
+import io.r2dbc.spi.ConnectionFactoryOptions
+import jakarta.inject.Singleton
 import reactor.core.publisher.Flux
 import reactor.core.publisher.Mono
 import spock.lang.AutoCleanup
 import spock.lang.Shared
 import spock.lang.Specification
+
+import java.lang.reflect.InvocationHandler
+import java.lang.reflect.InvocationTargetException
+import java.lang.reflect.Method
+import java.lang.reflect.Proxy
+import java.util.concurrent.CopyOnWriteArrayList
 
 /**
  * The pool has a single connection, so every operation runs in the same database session.
@@ -104,6 +117,51 @@ class OracleTransactionPriorityRestoreSpec extends Specification implements Orac
             withConnection { connection -> currentPriority(connection) } == "MEDIUM"
     }
 
+    void "the priority is reset to HIGH when the session isn't allowed to read it"() {
+        given: "a user that can only connect"
+            String url = context.getProperty("r2dbc.datasources.default.url", String).get()
+            String password = context.getProperty("r2dbc.datasources.default.password", String).get()
+            def adminOptions = ConnectionFactoryOptions.parse(url).mutate()
+                    .option(ConnectionFactoryOptions.USER, "system")
+                    .option(ConnectionFactoryOptions.PASSWORD, password)
+                    .build()
+            Mono.usingWhen(Mono.from(ConnectionFactories.get(adminOptions).create()), (Connection admin) ->
+                    execute(admin, "BEGIN EXECUTE IMMEDIATE 'DROP USER priority_restricted CASCADE'; EXCEPTION WHEN OTHERS THEN NULL; END;")
+                            .then(execute(admin, "CREATE USER priority_restricted IDENTIFIED BY restricted"))
+                            .then(execute(admin, "GRANT CREATE SESSION TO priority_restricted")),
+                    (Connection admin) -> admin.close()).block()
+            def restrictedContext = ApplicationContext.run(properties + [
+                    'oracle-priority-restore-spec'             : true,
+                    'r2dbc.datasources.default.username'       : 'priority_restricted',
+                    'r2dbc.datasources.default.password'       : 'restricted',
+                    'r2dbc.datasources.default.schema-generate': 'NONE'
+            ])
+            def restrictedTransactions = restrictedContext.getBean(ReactiveTransactionOperations)
+            def restrictedConnections = restrictedContext.getBean(DefaultR2dbcReactorConnectionOperations)
+            def restrictedRecorder = restrictedContext.getBean(PriorityStatementRecorder)
+            restrictedConnections.withConnectionMono(ConnectionDefinition.DEFAULT, status -> setPriority(status.connection, "MEDIUM")).block()
+            restrictedRecorder.statements.clear()
+
+        when:
+            Flux.from(restrictedTransactions.withTransaction(priority(OracleTransactional.Priority.LOW)) { status -> Mono.just(1) }).blockLast()
+
+        then: "the transaction runs, and the session is reset to the default priority"
+            priorityStatements(restrictedRecorder).size() == 2
+            priorityStatements(restrictedRecorder)[1] == 'ALTER SESSION SET "txn_priority"="HIGH"'
+
+        cleanup:
+            restrictedContext?.close()
+    }
+
+    // The statements that set the priority, not the reads of this spec, which name the parameter in single quotes
+    private static List<String> priorityStatements(PriorityStatementRecorder recorder) {
+        return recorder.statements.findAll { it.contains('"txn_priority"') }
+    }
+
+    private static Mono<Void> execute(Connection connection, String sql) {
+        return Mono.defer(() -> Flux.from(connection.createStatement(sql).execute()).flatMap(result -> result.getRowsUpdated()).then())
+    }
+
     private <T> T withConnection(Closure<Mono<T>> work) {
         return connectionOperations.withConnectionMono(ConnectionDefinition.DEFAULT, status -> work.call(status.connection)).block()
     }
@@ -127,5 +185,46 @@ class OracleTransactionPriorityRestoreSpec extends Specification implements Orac
         return Flux.from(connection.createStatement("ALTER SESSION SET \"txn_priority\"=\"$priority\"").execute())
                 .flatMap(result -> result.getRowsUpdated())
                 .reduce(0L, (a, b) -> a + b)
+    }
+}
+
+/**
+ * Records the SQL of every statement created by the R2DBC connections.
+ */
+@Requires(property = "oracle-priority-restore-spec")
+@Singleton
+class PriorityStatementRecorder implements BeanCreatedEventListener<ConnectionFactory> {
+
+    final List<String> statements = new CopyOnWriteArrayList<>()
+
+    @Override
+    ConnectionFactory onCreated(BeanCreatedEvent<ConnectionFactory> event) {
+        return proxy(ConnectionFactory, event.bean) { Method method, Object[] args, Object result ->
+            if (method.name == "create") {
+                return Mono.from(result).map { Connection connection -> recordStatements(connection) }
+            }
+            return result
+        }
+    }
+
+    private Connection recordStatements(Connection connection) {
+        return proxy(Connection, connection) { Method method, Object[] args, Object result ->
+            if (method.name == "createStatement") {
+                statements.add(args[0] as String)
+            }
+            return result
+        }
+    }
+
+    private static <T> T proxy(Class<T> type, T delegate, Closure<Object> handler) {
+        return (T) Proxy.newProxyInstance(PriorityStatementRecorder.classLoader, [type] as Class[], { Object proxy, Method method, Object[] args ->
+            Object result
+            try {
+                result = method.invoke(delegate, args)
+            } catch (InvocationTargetException e) {
+                throw e.cause
+            }
+            return handler.call(method, args, result)
+        } as InvocationHandler)
     }
 }
