@@ -215,22 +215,30 @@ final class DefaultAgeRepositoryOperations extends AbstractGraphRepositoryOperat
                 return work.apply(session(connection, graph));
             }
             connection.setAutoCommit(false);
-            try {
-                R result = work.apply(session(connection, graph));
-                connection.commit();
-                return result;
-            } catch (RuntimeException e) {
-                try {
-                    connection.rollback();
-                } catch (SQLException rollbackError) {
-                    e.addSuppressed(rollbackError);
-                }
-                throw e;
-            } finally {
-                connection.setAutoCommit(true);
-            }
+            return commitOrRollback(connection, graph, work);
         } catch (SQLException e) {
             throw new DataAccessException("Error running an Apache AGE write in a transaction: " + e.getMessage(), e);
+        }
+    }
+
+    private <R> R commitOrRollback(Connection connection, String graph, Function<GraphSession, R> work) throws SQLException {
+        try {
+            R result = work.apply(session(connection, graph));
+            connection.commit();
+            return result;
+        } catch (RuntimeException e) {
+            rollback(connection, e);
+            throw e;
+        } finally {
+            connection.setAutoCommit(true);
+        }
+    }
+
+    private static void rollback(Connection connection, RuntimeException cause) {
+        try {
+            connection.rollback();
+        } catch (SQLException rollbackError) {
+            cause.addSuppressed(rollbackError);
         }
     }
 
