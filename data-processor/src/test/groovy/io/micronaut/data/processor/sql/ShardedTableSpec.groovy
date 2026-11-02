@@ -39,6 +39,23 @@ record Customer(@Id String id, String name) {}
         sql == ['CREATE SHARDED TABLE "CUSTOMER" ("ID" VARCHAR(255) NOT NULL,"NAME" VARCHAR(255) NOT NULL, PRIMARY KEY("ID")) PARTITION BY CONSISTENT HASH ("ID") PARTITIONS AUTO TABLESPACE SET TS_CUSTOMERS'] as String[]
     }
 
+    void "test a sharded table gets IF NOT EXISTS on Oracle 23ai"() {
+        given:
+        def entity = buildEntity('test.Customer', '''
+import io.micronaut.data.annotation.Sharded;
+
+@Sharded(tablespaceSet = "TS_CUSTOMERS")
+@MappedEntity
+record Customer(@Id String id, String name) {}
+''')
+
+        when:
+        def sql = new SqlQueryBuilder(Dialect.ORACLE, "23.26").buildCreateTableStatements(entity)
+
+        then:
+        sql == ['CREATE SHARDED TABLE IF NOT EXISTS "CUSTOMER" ("ID" VARCHAR(255) NOT NULL,"NAME" VARCHAR(255) NOT NULL, PRIMARY KEY("ID")) PARTITION BY CONSISTENT HASH ("ID") PARTITIONS AUTO TABLESPACE SET TS_CUSTOMERS'] as String[]
+    }
+
     void "test the sharding key of a composite primary key"() {
         given:
         def entity = buildEntity('test.Order', '''
