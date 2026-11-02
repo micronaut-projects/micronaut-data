@@ -17,10 +17,12 @@ package io.micronaut.data.hibernate.exists
 
 import io.micronaut.context.annotation.Property
 import io.micronaut.data.hibernate.H2DBProperties
+import io.micronaut.data.operations.CriteriaRepositoryOperations
 import io.micronaut.data.repository.jpa.criteria.QuerySpecification
 import io.micronaut.test.extensions.spock.annotation.MicronautTest
 import jakarta.inject.Inject
 import jakarta.persistence.criteria.JoinType
+import org.hibernate.SessionFactory
 import spock.lang.Shared
 import spock.lang.Specification
 
@@ -32,6 +34,14 @@ class HibernateExistsSpecificationSpec extends Specification {
     @Inject
     @Shared
     ExistsAuthorRepository repository
+
+    @Inject
+    @Shared
+    CriteriaRepositoryOperations operations
+
+    @Inject
+    @Shared
+    SessionFactory sessionFactory
 
     def setupSpec() {
         repository.save(new ExistsAuthor("Stephen").addBook("The Stand").addBook("It").addBook("Carrie"))
@@ -110,5 +120,32 @@ class HibernateExistsSpecificationSpec extends Specification {
     void "no predicate"() {
         expect:
             repository.exists({ root, query, cb -> null } as QuerySpecification<ExistsAuthor>)
+    }
+
+    void "an explicit selection of the root entity also uses the existence query"() {
+        given:
+            def cb = sessionFactory.criteriaBuilder
+            def query = cb.createQuery(ExistsAuthor)
+            def root = query.from(ExistsAuthor)
+            root.fetch("books", JoinType.LEFT)
+            query.select(root).where(cb.equal(root.get("name"), "Stephen"))
+
+        expect:
+            operations.exists(query)
+            RecordingStatementInspector.STATEMENTS.size() == 1
+            RecordingStatementInspector.STATEMENTS[0].toLowerCase(Locale.ENGLISH).contains("exists(")
+    }
+
+    void "a query selecting an aggregate is run as it is"() {
+        given: "a count without grouping returns one row even when no row matches"
+            def cb = sessionFactory.criteriaBuilder
+            def query = cb.createQuery(Long)
+            def root = query.from(ExistsAuthor)
+            query.select(cb.count(root)).where(cb.equal(root.get("name"), "Nobody"))
+
+        expect:
+            operations.exists(query)
+            RecordingStatementInspector.STATEMENTS.size() == 1
+            !RecordingStatementInspector.STATEMENTS[0].toLowerCase(Locale.ENGLISH).contains("exists(")
     }
 }

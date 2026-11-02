@@ -20,11 +20,14 @@ import ch.qos.logback.classic.Logger
 import ch.qos.logback.classic.spi.ILoggingEvent
 import ch.qos.logback.core.read.ListAppender
 import io.micronaut.data.hibernate.reactive.PostgresHibernateReactiveProperties
+import io.micronaut.data.operations.reactive.ReactiveCriteriaRepositoryOperations
 import io.micronaut.data.repository.jpa.criteria.QuerySpecification
 import io.micronaut.test.extensions.spock.annotation.MicronautTest
 import jakarta.inject.Inject
 import jakarta.persistence.criteria.JoinType
+import org.hibernate.SessionFactory
 import org.slf4j.LoggerFactory
+import reactor.core.publisher.Mono
 import spock.lang.Shared
 import spock.lang.Specification
 
@@ -34,6 +37,14 @@ class HibernateReactiveExistsSpec extends Specification implements PostgresHiber
     @Inject
     @Shared
     ExistsAuthorRepository repository
+
+    @Inject
+    @Shared
+    ReactiveCriteriaRepositoryOperations operations
+
+    @Inject
+    @Shared
+    SessionFactory sessionFactory
 
     @Shared
     Logger sqlLogger = (Logger) LoggerFactory.getLogger("org.hibernate.SQL")
@@ -108,6 +119,33 @@ class HibernateReactiveExistsSpec extends Specification implements PostgresHiber
             statements()[0].contains("fetch first") || statements()[0].contains("limit")
         and:
             !repository.existsByName("Nobody").block()
+    }
+
+    void "an explicit selection of the root entity also uses the existence query"() {
+        given:
+            def cb = sessionFactory.criteriaBuilder
+            def query = cb.createQuery(ExistsAuthor)
+            def root = query.from(ExistsAuthor)
+            root.fetch("books", JoinType.LEFT)
+            query.select(root).where(cb.equal(root.get("name"), "Stephen"))
+
+        expect:
+            Mono.from(operations.exists(query)).block()
+            statements().size() == 1
+            statements()[0].contains("exists(")
+    }
+
+    void "a query selecting an aggregate is run as it is"() {
+        given: "a count without grouping returns one row even when no row matches"
+            def cb = sessionFactory.criteriaBuilder
+            def query = cb.createQuery(Long)
+            def root = query.from(ExistsAuthor)
+            query.select(cb.count(root)).where(cb.equal(root.get("name"), "Nobody"))
+
+        expect:
+            Mono.from(operations.exists(query)).block()
+            statements().size() == 1
+            !statements()[0].contains("exists(")
     }
 
     private List<String> statements() {

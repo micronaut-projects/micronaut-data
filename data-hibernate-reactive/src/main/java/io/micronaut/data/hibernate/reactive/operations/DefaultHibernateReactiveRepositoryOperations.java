@@ -494,7 +494,7 @@ final class DefaultHibernateReactiveRepositoryOperations extends AbstractHiberna
 
     @Override
     public Publisher<Boolean> exists(CriteriaQuery<?> query) {
-        if (query instanceof JpaCriteriaQuery<?> criteriaQuery) {
+        if (query instanceof JpaCriteriaQuery<?> criteriaQuery && selectsRootEntity(criteriaQuery)) {
             // Selects whether a row exists, without reading the entities and their fetched associations
             JpaCriteriaQuery<Boolean> existsQuery = criteriaQuery.createExistsQuery();
             return withSession(session -> helper.monoFromCompletionStage(() -> session.createQuery(existsQuery).getSingleResult().thenApply(Boolean.TRUE::equals)));

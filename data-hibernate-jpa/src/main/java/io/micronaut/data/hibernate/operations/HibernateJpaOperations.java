@@ -768,7 +768,7 @@ final class HibernateJpaOperations extends AbstractHibernateOperations<Session, 
     @Override
     public boolean exists(CriteriaQuery<?> query) {
         return executeRead(session -> {
-            if (query instanceof JpaCriteriaQuery<?> criteriaQuery) {
+            if (query instanceof JpaCriteriaQuery<?> criteriaQuery && selectsRootEntity(criteriaQuery)) {
                 // Selects whether a row exists, without reading the entities and their fetched associations
                 return Boolean.TRUE.equals(session.createQuery(criteriaQuery.createExistsQuery()).getSingleResult());
             }
