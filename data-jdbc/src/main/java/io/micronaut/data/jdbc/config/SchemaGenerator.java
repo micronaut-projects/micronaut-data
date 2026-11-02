@@ -282,37 +282,34 @@ public class SchemaGenerator {
                                    PersistentEntity[] entities) {
         SqlQueryBuilder builder = new SqlQueryBuilder(configuration.getDialect(), configuration.getDialectOptions().getVersion());
         if (isBatch(configuration)) {
-            try {
-                String sql = resolveSql(propertyPlaceholderResolver, builder.buildBatchDropTableStatement(entities));
+            dropQuietly(connection, propertyPlaceholderResolver, "Dropping Tables", builder.buildBatchDropTableStatement(entities));
+            return;
+        }
+        for (PersistentEntity entity : entities) {
+            dropQuietly(connection, propertyPlaceholderResolver, "Dropping Table", builder.buildDropTableStatements(entity));
+        }
+    }
+
+    /**
+     * Runs drop statements in order, stopping at the first that fails, which is traced: the tables may not exist yet.
+     */
+    private static void dropQuietly(Connection connection,
+                                    PropertyPlaceholderResolver propertyPlaceholderResolver,
+                                    String message,
+                                    String... statements) {
+        try {
+            for (String statement : statements) {
+                String sql = resolveSql(propertyPlaceholderResolver, statement);
                 if (DataSettings.QUERY_LOG.isDebugEnabled()) {
-                    DataSettings.QUERY_LOG.debug("Dropping Tables: \n{}", sql);
+                    DataSettings.QUERY_LOG.debug(message + ": \n{}", sql);
                 }
                 try (PreparedStatement ps = connection.prepareStatement(sql)) {
                     ps.executeUpdate();
                 }
-            } catch (SQLException e) {
-                if (DataSettings.QUERY_LOG.isTraceEnabled()) {
-                    DataSettings.QUERY_LOG.trace("Drop Unsuccessful: " + e.getMessage());
-                }
             }
-            return;
-        }
-        for (PersistentEntity entity : entities) {
-            try {
-                String[] statements = builder.buildDropTableStatements(entity);
-                for (String sql : statements) {
-                    sql = resolveSql(propertyPlaceholderResolver, sql);
-                    if (DataSettings.QUERY_LOG.isDebugEnabled()) {
-                        DataSettings.QUERY_LOG.debug("Dropping Table: \n{}", sql);
-                    }
-                    try (PreparedStatement ps = connection.prepareStatement(sql)) {
-                        ps.executeUpdate();
-                    }
-                }
-            } catch (SQLException e) {
-                if (DataSettings.QUERY_LOG.isTraceEnabled()) {
-                    DataSettings.QUERY_LOG.trace("Drop Unsuccessful: " + e.getMessage());
-                }
+        } catch (SQLException e) {
+            if (DataSettings.QUERY_LOG.isTraceEnabled()) {
+                DataSettings.QUERY_LOG.trace("Drop Unsuccessful: " + e.getMessage());
             }
         }
     }
