@@ -68,11 +68,11 @@ final class OracleVectorSqlIndexDefinitionProvider implements SqlIndexDefinition
             throw new IllegalArgumentException("Vector index metadata is required for Oracle vector index definition");
         }
         boolean hnsw = meta.vectorIndexType() == VectorIndexType.HNSW;
-        String organization = hnsw ? "ORGANIZATION NEIGHBOR GRAPH" : "ORGANIZATION NEIGHBOR PARTITIONS";
+        String organization = hnsw ? "ORGANIZATION INMEMORY NEIGHBOR GRAPH" : "ORGANIZATION NEIGHBOR PARTITIONS";
         String distance = switch (meta.distanceType()) {
             case COSINE -> "COSINE";
             case DOT -> "DOT";
-            case L2_EUCLIDEAN_SQUARED -> "EUCLIDEAN SQUARED";
+            case L2_EUCLIDEAN_SQUARED -> "EUCLIDEAN_SQUARED";
             case L2_EUCLIDEAN -> "EUCLIDEAN";
             case L1_MANHATTAN -> "MANHATTAN";
             default -> throw new IllegalArgumentException("Distance type " + meta.distanceType() + " is not supported for Oracle vector indexes");
