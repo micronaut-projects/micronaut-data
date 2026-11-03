@@ -15,9 +15,12 @@
  */
 package io.micronaut.data.model.runtime.convert.vector;
 
+import io.micronaut.data.model.runtime.convert.DataAccessType;
 import io.micronaut.data.model.runtime.convert.DatabaseType;
 import io.micronaut.data.model.vector.SparseVector;
 import io.micronaut.data.model.vector.Vector;
+
+import org.jspecify.annotations.Nullable;
 
 import java.util.Set;
 
@@ -89,6 +92,31 @@ public interface VectorTypeConverter<T> {
      * @return the persisted driver type class
      */
     Class<T> getPersistedType();
+
+    /**
+     * The driver API this converter produces values for. Converters for the same database but
+     * different APIs can coexist; each module's operations only use converters for their own API.
+     *
+     * @return the data access type, or {@code null} if the converter applies to any API
+     * @since 5.3.0
+     */
+    default @Nullable DataAccessType dataAccessType() {
+        return null;
+    }
+
+    /**
+     * Whether a converter can be used by operations of the given driver API: when either API is unknown, or both
+     * are the same. A static method, so that the rule holds for stubbed converters too.
+     *
+     * @param converter the converter
+     * @param dataAccessType the driver API of the operations, or {@code null} if unknown
+     * @return {@code true} if the converter can be used
+     * @since 5.3.0
+     */
+    static boolean supports(VectorTypeConverter<?> converter, @Nullable DataAccessType dataAccessType) {
+        DataAccessType own = converter.dataAccessType();
+        return dataAccessType == null || own == null || own == dataAccessType;
+    }
 
     /**
      * Whether this converter is designed for sparse vectors.
