@@ -66,7 +66,7 @@ public enum Dialect {
      */
     SQL_SERVER(false, false, ALL_TYPES, false, false, false, false, true),
     /**
-     * Oracle 12c or above.
+     * Oracle 19c or above.
      */
     ORACLE(true, true, ALL_TYPES, true, true, true, true, true),
     /**

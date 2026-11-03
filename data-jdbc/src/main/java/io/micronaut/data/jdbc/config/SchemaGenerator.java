@@ -58,6 +58,7 @@ import org.slf4j.LoggerFactory;
 
 import javax.sql.DataSource;
 import java.lang.reflect.Modifier;
+import java.sql.CallableStatement;
 import java.sql.Connection;
 import java.sql.DatabaseMetaData;
 import java.sql.PreparedStatement;
@@ -83,6 +84,8 @@ public class SchemaGenerator {
     private static final String MATCH_ALL = "%";
 
     private static final Logger LOG = LoggerFactory.getLogger(SchemaGenerator.class);
+    private static final String RESTORE_ORACLE_SCHEMA =
+        "BEGIN EXECUTE IMMEDIATE 'ALTER SESSION SET CURRENT_SCHEMA = ' || DBMS_ASSERT.ENQUOTE_NAME(?, FALSE); END;";
 
     private final List<DataJdbcConfiguration> configurations;
     private final JdbcSchemaHandler schemaHandler;
@@ -197,12 +200,20 @@ public class SchemaGenerator {
         try {
             DataSource dataSource = DelegatingDataSource.unwrapDataSource(beanLocator.getBean(DataSource.class, Qualifiers.byName(name)));
             try (Connection connection = dataSource.getConnection()) {
-                if (configuration.getSchemaGenerateNames() != null && !configuration.getSchemaGenerateNames().isEmpty()) {
-                    for (String schemaName : configuration.getSchemaGenerateNames()) {
-                        createOrValidateSchema(connection, configuration, schemaName, entities, contributions);
+                // An Oracle session keeps its current schema when the connection returns to the pool
+                String originalOracleSchema = configuration.getDialect() == Dialect.ORACLE ? connection.getSchema() : null;
+                try {
+                    if (configuration.getSchemaGenerateNames() != null && !configuration.getSchemaGenerateNames().isEmpty()) {
+                        for (String schemaName : configuration.getSchemaGenerateNames()) {
+                            createOrValidateSchema(connection, configuration, schemaName, entities, contributions);
+                        }
+                    } else {
+                        createOrValidateSchema(connection, configuration, configuration.getSchemaGenerateName(), entities, contributions);
                     }
-                } else {
-                    createOrValidateSchema(connection, configuration, configuration.getSchemaGenerateName(), entities, contributions);
+                } finally {
+                    if (originalOracleSchema != null) {
+                        restoreOracleSchema(connection, originalOracleSchema);
+                    }
                 }
             } catch (SQLException e) {
                 throw new DataAccessException("Unable to create database schema: " + e.getMessage(), e);
@@ -293,6 +304,14 @@ public class SchemaGenerator {
                     DataSettings.QUERY_LOG.warn("CREATE Statement Unsuccessful: {}, {}", e.getMessage(), sql);
                 }
             }
+        }
+    }
+
+    private static void restoreOracleSchema(Connection connection, String schema) throws SQLException {
+        // The exact name reported by the driver, bound and quoted by the database so that its case is kept
+        try (CallableStatement statement = connection.prepareCall(RESTORE_ORACLE_SCHEMA)) {
+            statement.setString(1, schema);
+            statement.execute();
         }
     }
 
