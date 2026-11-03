@@ -285,12 +285,13 @@ class PostgresNotificationSubscriptionSpec extends Specification {
         subscription?.stop()
 
         where:
-        scenario                          | receiverFailure                  | cleanupFailure                            | expectedFailure
-        'runtime cleanup failure'         | null                             | new IllegalStateException('cleanup')      | null
-        'fatal receive failure'           | new AssertionError('receiver')   | null                                      | receiverFailure
-        'fatal receive and cleanup error' | new AssertionError('receiver')   | new IllegalStateException('cleanup')      | receiverFailure
-        'two fatal failures'              | new AssertionError('receiver')   | new AssertionError('cleanup')             | receiverFailure
-        'fatal cleanup failure'           | null                             | new AssertionError('cleanup')             | cleanupFailure
+        scenario                          | receiverFailure                      | cleanupFailure                       | expectedFailure
+        'runtime cleanup failure'         | null                                 | new IllegalStateException('cleanup') | null
+        'runtime receive failure'         | new IllegalStateException('receiver') | null                                 | receiverFailure
+        'fatal receive failure'           | new AssertionError('receiver')       | null                                 | receiverFailure
+        'fatal receive and cleanup error' | new AssertionError('receiver')       | new IllegalStateException('cleanup') | receiverFailure
+        'two fatal failures'              | new AssertionError('receiver')       | new AssertionError('cleanup')        | receiverFailure
+        'fatal cleanup failure'           | null                                 | new AssertionError('cleanup')        | cleanupFailure
     }
 
     @Unroll

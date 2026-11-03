@@ -517,9 +517,19 @@ class PostgresNotificationProviderSpec extends Specification implements Postgres
     }
 
     @Unroll
-    void "unusable payload invalidates without terminating reception: #description"() {
+    void "unusable payload invalidates only its channel and preserves reception: #description"() {
         given:
-        start()
+        def applicationName = 'notification-invalid-payload'
+        String url = writer.metaData.URL
+        start([
+            'spec.unqualified-listener': true,
+            'spec.overload-probe': true,
+            'datasources.default.url': url + (url.contains('?') ? '&' : '?') + 'currentSchema=notification_provider_test',
+            'datasources.default.db-properties.ApplicationName': applicationName
+        ])
+        def other = application.getBean(UnqualifiedBookChangeListener)
+        def probe = application.getBean(OverloadNotificationProbe)
+        int receiverPid = listeningConnectionPid(applicationName)
 
         when:
         try (def statement = writer.prepareStatement('SELECT pg_notify(?, ?)')) {
@@ -530,16 +540,23 @@ class PostgresNotificationProviderSpec extends Specification implements Postgres
 
         then:
         next().operation() == ChangeOperation.INVALIDATE
+        other.events.poll(10, TimeUnit.SECONDS)?.operation() == ChangeOperation.INVALIDATE
+        connectionExists(receiverPid)
 
         when:
+        notifyProbe()
         execute("INSERT INTO \"ProviderBook\" VALUES ('$TENANT', 3, 'healthy')")
 
         then:
+        probe.events.poll(10, TimeUnit.SECONDS)?.metadata(PostgresChangeEventMetadata)?.present
         next().entity().orElseThrow().title == 'healthy'
+        other.events.poll(10, TimeUnit.SECONDS)?.entity()?.orElseThrow()?.title == 'healthy'
+        connectionExists(receiverPid)
 
         where:
         description           | payload
         'invalid JSON'        | 'invalid JSON'
+        'deeply nested JSON'  | '{"a":' + '[' * 501 + ']' * 501 + '}'
         'unsupported version' | '{"version":2}'
         'wrong key names'     | '{"version":1,"schema":"notification_provider_test","table":"ProviderBook","operation":"INSERT","oldKeys":{},"newKeys":{"unexpected":"1"}}'
         'termination payload' | '{"version":1,"schema":"notification_provider_test","table":"ProviderBook","operation":"TERMINATED","oldKeys":{},"newKeys":{}}'
@@ -752,8 +769,8 @@ class PostgresNotificationProviderSpec extends Specification implements Postgres
     }
 
     private void terminateListeningConnection() {
-        try (def statement = writer.prepareStatement("SELECT pg_terminate_backend(pid) FROM pg_stat_activity WHERE datname = current_database() AND query = ? AND pid <> pg_backend_pid()")) {
-            statement.setString(1, 'LISTEN "provider_changes"')
+        try (def statement = writer.prepareStatement("SELECT pg_terminate_backend(pid) FROM pg_stat_activity WHERE datname = current_database() AND query LIKE ? AND pid <> pg_backend_pid()")) {
+            statement.setString(1, 'LISTEN %')
             try (def rows = statement.executeQuery()) {
                 assert rows.next() && rows.getBoolean(1)
             }
@@ -765,6 +782,18 @@ class PostgresNotificationProviderSpec extends Specification implements Postgres
             statement.setInt(1, pid)
             try (def rows = statement.executeQuery()) {
                 return rows.next()
+            }
+        }
+    }
+
+    private int listeningConnectionPid(String applicationName) {
+        try (def statement = writer.prepareStatement("SELECT pid FROM pg_stat_activity WHERE application_name = ? AND query LIKE 'LISTEN %'")) {
+            statement.setString(1, applicationName)
+            try (def rows = statement.executeQuery()) {
+                assert rows.next()
+                int pid = rows.getInt(1)
+                assert !rows.next()
+                return pid
             }
         }
     }

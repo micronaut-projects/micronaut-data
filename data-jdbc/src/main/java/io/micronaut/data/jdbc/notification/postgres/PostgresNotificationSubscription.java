@@ -229,7 +229,7 @@ final class PostgresNotificationSubscription {
     }
 
     /**
-     * Polls the active connection and retries connection failures until stopped or retries are exhausted.
+     * Polls the active connection and retries SQL failures until stopped or retries are exhausted.
      * A successful reconnection resets the retry count and delay before invalidating listeners.
      *
      * @throws InterruptedException if interrupted while waiting to reconnect
@@ -256,7 +256,7 @@ final class PostgresNotificationSubscription {
                 }
                 validateConnection(active);
                 receiveNotifications(active);
-            } catch (Exception e) {
+            } catch (SQLException e) {
                 closeConnection(true);
                 if (!running) {
                     break;
@@ -348,7 +348,7 @@ final class PostgresNotificationSubscription {
         PostgresNotificationPayload payload;
         try {
             payload = PostgresNotificationPayload.decode(mapper, notification.getName(), notification.getParameter());
-        } catch (IOException | IllegalArgumentException e) {
+        } catch (IOException | RuntimeException e) {
             LOG.warn("Invalid PostgreSQL notification on channel [{}] for datasource [{}]; submitting invalidation",
                 notification.getName(), name, e);
             targets.forEach(entry -> entry.getValue().invalidate());
