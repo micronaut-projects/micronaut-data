@@ -25,9 +25,11 @@ import org.jspecify.annotations.Nullable;
 import io.micronaut.core.annotation.TypeHint;
 import io.micronaut.data.connection.ConnectionOperations;
 import io.micronaut.data.connection.ConnectionSynchronization;
+import io.micronaut.data.connection.ConnectionStatus;
 import io.micronaut.data.connection.SynchronousConnectionManager;
 import io.micronaut.data.connection.exceptions.ConnectionException;
 import io.micronaut.data.connection.jdbc.advice.DelegatingDataSource;
+import io.micronaut.data.connection.support.DefaultConnectionStatus;
 import io.micronaut.data.connection.support.JdbcConnectionUtils;
 import io.micronaut.transaction.TransactionDefinition;
 import io.micronaut.transaction.exceptions.CannotCreateTransactionException;
@@ -126,6 +128,22 @@ public final class DataSourceTransactionManager extends AbstractDefaultTransacti
                                         @Parameter ConnectionOperations<Connection> connectionOperations,
                                         @Parameter @Nullable SynchronousConnectionManager<Connection> synchronousConnectionManager) {
         this(dataSource, connectionOperations, synchronousConnectionManager, Collections.emptyList());
+    }
+
+    @Override
+    protected DefaultTransactionStatus<Connection> createOwnerTransactionStatus(ConnectionStatus<Connection> connectionStatus,
+                                                                                TransactionDefinition definition,
+                                                                                DefaultConnectionStatus.SuppliedConnection suppliedConnection) {
+        // Not rejected, since an XA driver may report auto-commit on inside a global transaction
+        try {
+            if (connectionStatus.getConnection().getAutoCommit() && logger.isWarnEnabled()) {
+                logger.warn("Joining the owner's transaction of a supplied connection that is in auto-commit mode:"
+                    + " each statement commits as it runs, and the owner cannot roll it back");
+            }
+        } catch (SQLException e) {
+            logger.debug("Could not read the auto-commit mode of the supplied connection", e);
+        }
+        return super.createOwnerTransactionStatus(connectionStatus, definition, suppliedConnection);
     }
 
     @Override
