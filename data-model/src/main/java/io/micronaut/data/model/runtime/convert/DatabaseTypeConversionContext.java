@@ -16,6 +16,7 @@
 package io.micronaut.data.model.runtime.convert;
 
 import org.jspecify.annotations.NonNull;
+import org.jspecify.annotations.Nullable;
 import io.micronaut.core.convert.ConversionContext;
 
 /**
@@ -39,5 +40,16 @@ public interface DatabaseTypeConversionContext extends ConversionContext {
      */
     @NonNull
     DatabaseType getDatabaseType();
+
+    /**
+     * Returns the driver API of the current operation, used to pick converters that produce
+     * driver-specific values.
+     *
+     * @return the data access type, or {@code null} if unknown
+     * @since 5.3.0
+     */
+    default @Nullable DataAccessType getDataAccessType() {
+        return null;
+    }
 
 }
