@@ -13,7 +13,7 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package io.micronaut.data.jdbc.postgres.notification.generated
+package io.micronaut.data.jdbc.notification.postgres.integration.generated
 
 import io.micronaut.context.annotation.Requires
 import io.micronaut.data.annotation.ChangeListener

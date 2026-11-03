@@ -13,7 +13,7 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package io.micronaut.data.jdbc.postgres.notification.schema
+package io.micronaut.data.jdbc.notification.postgres.integration.schema
 
 import io.micronaut.context.ApplicationContext
 import io.micronaut.context.annotation.Requires
@@ -27,8 +27,8 @@ import io.micronaut.data.jdbc.config.DataJdbcConfiguration
 import io.micronaut.data.jdbc.notification.postgres.PostgresChangeEventMetadata
 import io.micronaut.data.jdbc.notification.postgres.PostgresNotificationSchemaGenerator
 import io.micronaut.data.jdbc.postgres.PostgresTestPropertyProvider
-import io.micronaut.data.jdbc.postgres.notification.generated.UnqualifiedGeneratedBookListener
-import io.micronaut.data.jdbc.postgres.notification.placeholder.PlaceholderBookListener
+import io.micronaut.data.jdbc.notification.postgres.integration.generated.UnqualifiedGeneratedBookListener
+import io.micronaut.data.jdbc.notification.postgres.integration.placeholder.PlaceholderBookListener
 import io.micronaut.data.model.PersistentEntity
 import io.micronaut.data.model.runtime.RuntimeEntityRegistry
 import io.micronaut.data.notification.ChangeEvent
@@ -77,7 +77,7 @@ class PostgresNotificationSchemaSpec extends Specification implements PostgresTe
     private void start(String mode, boolean enabled, boolean batch = false, String notificationMode = 'ROW') {
         Map configuration = settings + [
             'spec.name': 'PostgresNotificationSchemaSpec',
-            'datasources.default.packages': ['io.micronaut.data.jdbc.postgres.notification.schema'],
+            'datasources.default.packages': ['io.micronaut.data.jdbc.notification.postgres.integration.schema'],
             'datasources.default.schema-generate': mode,
             'datasources.default.batch-generate': batch,
             'micronaut.data.jdbc.notifications.postgres.schema-generate': enabled,
@@ -266,7 +266,7 @@ class PostgresNotificationSchemaSpec extends Specification implements PostgresTe
             'spec.name': 'PostgresNotificationPlaceholderTest',
             'notification.test.schema': 'notification_schema_test',
             'notification.test.table': 'ConfiguredBooks',
-            'datasources.default.packages': ['io.micronaut.data.jdbc.postgres.notification.placeholder'],
+            'datasources.default.packages': ['io.micronaut.data.jdbc.notification.postgres.integration.placeholder'],
             'datasources.default.schema-generate': 'CREATE',
             'micronaut.data.jdbc.notifications.postgres.schema-generate': true,
             'micronaut.data.jdbc.notifications.postgres.poll-timeout': '100ms'
@@ -322,7 +322,7 @@ class PostgresNotificationSchemaSpec extends Specification implements PostgresTe
             'spec.inventory.enabled': true,
             'datasources.inventory.schema-generate': 'CREATE',
             'datasources.inventory.batch-generate': false,
-            'datasources.inventory.packages': ['io.micronaut.data.jdbc.postgres.notification.schema'],
+            'datasources.inventory.packages': ['io.micronaut.data.jdbc.notification.postgres.integration.schema'],
             'datasources.inventory.url': writer.metaData.URL,
             'datasources.inventory.username': bootstrap.environment.getRequiredProperty('datasources.default.username', String),
             'datasources.inventory.password': bootstrap.environment.getRequiredProperty('datasources.default.password', String),
@@ -471,7 +471,7 @@ class PostgresNotificationSchemaSpec extends Specification implements PostgresTe
             'spec.unqualified.enabled': true,
             // The shared initializer uses public until schema generation creates the selected schema.
             'datasources.default.url': url + (url.contains('?') ? '&' : '?') + 'currentSchema=notification_unqualified_test,public',
-            'datasources.default.packages': ['io.micronaut.data.jdbc.postgres.notification.generated'],
+            'datasources.default.packages': ['io.micronaut.data.jdbc.notification.postgres.integration.generated'],
             'datasources.default.schema-generate': 'CREATE',
             'datasources.default.schema-generate-name': 'notification_unqualified_test',
             'micronaut.data.jdbc.notifications.postgres.schema-generate': true,
