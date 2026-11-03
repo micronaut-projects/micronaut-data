@@ -118,6 +118,32 @@ public abstract class AbstractConnectionOperations<C> implements ConnectionOpera
         }
     }
 
+    @Override
+    public final <R> R executeWithConnection(@NonNull C connection,
+                                             @NonNull ConnectionDefinition definition,
+                                             boolean ownerControlsTransaction,
+                                             @NonNull Function<ConnectionStatus<C>, R> callback) {
+        // Not new: complete() runs the synchronizations but never closes a connection the caller owns
+        DefaultConnectionStatus.SuppliedConnection suppliedConnection = new DefaultConnectionStatus.SuppliedConnection(ownerControlsTransaction);
+        DefaultConnectionStatus<C> connectionStatus = new DefaultConnectionStatus<>(connection, definition, false, this, suppliedConnection);
+        try {
+            if (logger.isDebugEnabled()) {
+                logger.debug("Executing with a supplied connection: [{}]", connectionStatus);
+            }
+            for (ConnectionCustomizer<C> connectionCustomizer : connectionCustomizers) {
+                callback = connectionCustomizer.intercept(callback);
+            }
+            Function<ConnectionStatus<C>, R> finalCallback = callback;
+            R result = connectionStatus.propagate(() -> finalCallback.apply(connectionStatus));
+            if (suppliedConnection.isRollbackOnly()) {
+                throw new ConnectionException("Transactional work on the supplied connection was rolled back, so its owner must roll back its transaction");
+            }
+            return result;
+        } finally {
+            complete(connectionStatus);
+        }
+    }
+
     @NonNull
     @Override
     public DefaultConnectionStatus<C> getConnection(@NonNull ConnectionDefinition definition) {
@@ -180,7 +206,8 @@ public abstract class AbstractConnectionOperations<C> implements ConnectionOpera
             existingStatus.getConnection(),
             existingStatus.getDefinition(),
             false,
-            this);
+            this,
+            existingStatus instanceof DefaultConnectionStatus<C> defaultStatus ? defaultStatus.getSuppliedConnection() : null);
     }
 
 }
