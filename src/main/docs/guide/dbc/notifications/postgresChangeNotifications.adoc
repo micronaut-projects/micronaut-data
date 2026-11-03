@@ -6,6 +6,9 @@ PostgreSQL notification settings through ann:data.jdbc.annotation.PostgresChange
 When a table trigger publishes a notification, the listener receives an api:data.notification.ChangeEvent[]
 containing the reported operation, optional current entity state, and optional provider-specific metadata.
 
+Notification payloads are unauthenticated hints. Re-read database state before making authoritative decisions
+from an event, especially a reported deletion. See <<postgresNotificationTrustModel, Notification Trust and Database Access>>.
+
 == Prerequisites
 
 Notifications require Micronaut Data JDBC, the PostgreSQL JDBC driver, and a Micronaut `JsonMapper` implementation,
@@ -326,8 +329,9 @@ See <<notificationChangeEvents, Handling Change Events>> for the common event AP
 
 api:data.jdbc.notification.postgres.PostgresChangeEventMetadata[] is a read-only interface exposing the channel, schema,
 table, and immutable `oldKeys` and `newKeys` maps. Metadata instances are supplied by the notification provider.
-A deleted row can be identified from its old keys without reloading it.
-The example uses this metadata to update individual cache entries:
+For `DELETE`, the old keys identify the row reported by the payload; Micronaut Data does not verify that it was deleted.
+The following cache example assumes all clients connected to the database are trusted to publish notifications.
+See <<postgresNotificationTrustModel, Notification Trust and Database Access>> before acting on event metadata:
 
 snippet::example.BookCatalog[project-base="doc-examples/jdbc-postgres-notifications", source="main", tags="events", indent="0", languages="java,groovy,kotlin,python"]
 
@@ -342,7 +346,8 @@ other application threads; different listeners may run concurrently.
 For `INSERT` and `UPDATE`, Micronaut Data uses the new primary key to reload the entity.
 See <<notificationEntityLoading, Entity Loading>> for current-state semantics and cases where `entity()` is empty.
 For `UPDATE`, use the old keys to remove a cached entry if the primary key changed, then store the reloaded entity,
-when present, under its new key. For `DELETE`, the old keys identify the removed row.
+when present, under its new key. For `DELETE`, use the reported old keys to re-read current state before treating
+the row as deleted; another session can forge the notification, and the row may still exist or have been recreated.
 
 `TRUNCATE` produces `INVALIDATE`. An invalid payload causes `INVALIDATE` for all listeners on its channel;
 unexpected key-column names cause `INVALIDATE` for the affected listener. A payload too large for a row notification
@@ -568,9 +573,34 @@ PostgreSQL can combine notifications with the same channel and payload within a 
 updates to the same row with unchanged keys may produce one update notification. Missed notifications cannot be
 replayed after the application loses its notification connection.
 
-Notifications are visible to all users in the database. Include only appropriate identifiers in payloads;
-channels do not provide access control. Errors in trigger execution or PostgreSQL's notification queue can cause
-the transaction modifying the table to fail.
+[[postgresNotificationTrustModel]]
+.Notification Trust and Database Access
+PostgreSQL notification payloads are unauthenticated hints. Any role that can connect to the database can send
+`NOTIFY` or call `pg_notify` on a channel, even without permission to modify the reported table. Channel names
+provide no access control. Payload version, schema, table, and key validation check format and routing;
+they do not authenticate the sender or establish that the reported change occurred.
+
+A well-formed forged `DELETE` is delivered without checking whether the row still exists. Re-read current state
+through your repository, using the application's normal authorization and consistency rules, before removing
+authoritative state, propagating a deletion downstream, or taking another irreversible action. Do not use the
+operation or key metadata alone as proof of a deletion or as authorization for a change.
+
+Notifications are also visible to all users in the database. Include only appropriate identifiers in payloads;
+do not include secrets or assume that a channel name protects confidentiality.
+
+Restrict database `CONNECT` privileges to trusted roles, especially on shared databases, and restrict allowed
+clients and roles through `pg_hba.conf`. PostgreSQL grants `CONNECT` to `PUBLIC` by default, so review that grant
+as well as explicit role grants. A reporting role with read-only table access can still publish notifications;
+a separate channel or schema does not isolate untrusted publishers. See PostgreSQL's
+link:https://www.postgresql.org/docs/current/ddl-priv.html[database privilege documentation].
+
+Repeated malformed payloads can cause refreshes for every listener on their channel. Forged insert or update
+payloads with unconvertible keys can also cause repeated entity-loading errors and error logs. The listener
+queue keeps at most one invalidation waiting, but another can be queued while a refresh is running. This bounds
+waiting work; it does not rate-limit incoming notifications, refresh frequency, or logging. Consider coalescing
+or debouncing expensive refresh requests in the application while ensuring a later refresh still reconciles changes.
+
+Errors in trigger execution or PostgreSQL's notification queue can cause the transaction modifying the table to fail.
 
 See the PostgreSQL link:https://www.postgresql.org/docs/current/sql-notify.html[`NOTIFY` documentation]
 for transaction, payload, and delivery behavior.

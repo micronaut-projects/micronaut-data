@@ -47,6 +47,12 @@ import java.lang.annotation.Target;
  * which may include changes made after the notification was sent. If the row no longer exists,
  * the event contains no entity.</p>
  *
+ * <p>Payloads are unauthenticated hints: any role that can connect to the database can publish on a channel
+ * without permission to modify the reported table. Matching the channel, table, and keys does not verify the sender
+ * or the reported change. Deletes are delivered without checking whether the row still exists. Re-read current
+ * database state before taking irreversible action on delete metadata, and restrict database {@code CONNECT}
+ * privileges to trusted roles. Queue limits bound waiting work but do not rate-limit notifications or refreshes.</p>
+ *
  * <p>PostgreSQL notifications use one dedicated, non-pooled connection per participating datasource, shared by
  * all listener methods using that datasource. Each listener has a dedicated worker and bounded queue
  * for sequential entity loading and callback execution. Different listeners can run concurrently.
