@@ -89,7 +89,7 @@ class OracleXEGeoSpec extends AbstractGeoSpec implements OracleXETestPropertyPro
     Map<String, String> getDataSourceProperties(String dataSourceName) {
         return OracleXETestPropertyProvider.super.getDataSourceProperties(dataSourceName) + [
                 "test-resources.containers.oracle.image-name": "gvenzl/oracle-free",
-                "test-resources.containers.oracle.image-tag" : "latest"
+                "test-resources.containers.oracle.image-tag" : "23.26.3-faststart"
         ]
     }
 
