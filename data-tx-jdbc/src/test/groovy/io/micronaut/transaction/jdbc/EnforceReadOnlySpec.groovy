@@ -23,6 +23,8 @@ class EnforceReadOnlySpec extends Specification {
     DataSourceTransactionManager transactionManager = new DataSourceTransactionManager(Mock(DataSource), connectionOperations, null)
 
     def setup() {
+        // no connection is current, as with the real connection operations outside a connection scope
+        connectionOperations.findConnectionStatus() >> Optional.empty()
         connection.getAutoCommit() >> true
         connectionOperations.execute(_, _) >> { ConnectionDefinition definition, Function callback ->
             callback.apply(new DefaultConnectionStatus<>(connection, definition, true, connectionOperations))
