@@ -41,7 +41,7 @@ final class DefaultJdbcSchemaHandler implements JdbcSchemaHandler {
         try {
             String schemaName = SchemaNameUtils.render(dialect, name);
             if (dialect == Dialect.ORACLE) {
-                executeQuery(connection, "CREATE DATABASE " + schemaName + ";");
+                executeQuery(connection, SchemaNameUtils.oracleCreateSchemaStatement(name));
             } else {
                 executeQuery(connection, "CREATE SCHEMA " + schemaName + ";");
             }
