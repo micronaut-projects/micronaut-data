@@ -19,6 +19,7 @@ import io.micronaut.data.model.PersistentEntity
 import io.micronaut.data.model.query.builder.sql.Dialect
 import io.micronaut.data.model.query.builder.sql.SqlDialectOptions
 import io.micronaut.data.model.query.builder.sql.SqlQueryBuilder
+import io.micronaut.data.model.query.builder.sql.SqlSchemaNames
 import io.micronaut.data.processor.visitors.AbstractDataSpec
 import io.micronaut.data.tck.entities.Restaurant
 import io.micronaut.data.tck.jdbc.entities.Employee
@@ -878,10 +879,95 @@ class Test {
         version                                 | statement
         null                                          | 'CREATE TABLE "TEST" ("ID" NUMBER(19) NOT NULL PRIMARY KEY,"ACTIVE" NUMBER(1) NOT NULL)' + System.lineSeparator() +
                                                         'CREATE SEQUENCE "TEST_SEQ" MINVALUE 1 START WITH 1 CACHE 100 NOCYCLE'
-        SqlDialectOptions.ORACLE_23_1_0_VERSION | 'CREATE TABLE "TEST" ("ID" NUMBER(19) NOT NULL PRIMARY KEY,"ACTIVE" BOOLEAN NOT NULL)' + System.lineSeparator() +
-                                                        'CREATE SEQUENCE "TEST_SEQ" MINVALUE 1 START WITH 1 CACHE 100 NOCYCLE'
-        "23.4"                                | 'CREATE TABLE "TEST" ("ID" NUMBER(19) NOT NULL PRIMARY KEY,"ACTIVE" BOOLEAN NOT NULL)' + System.lineSeparator() +
-                                                        'CREATE SEQUENCE "TEST_SEQ" MINVALUE 1 START WITH 1 CACHE 100 NOCYCLE'
+        SqlDialectOptions.ORACLE_23_1_0_VERSION | 'CREATE TABLE IF NOT EXISTS "TEST" ("ID" NUMBER(19) NOT NULL PRIMARY KEY,"ACTIVE" BOOLEAN NOT NULL)' + System.lineSeparator() +
+                                                        'CREATE SEQUENCE IF NOT EXISTS "TEST_SEQ" MINVALUE 1 START WITH 1 CACHE 100 NOCYCLE'
+        "23.4"                                | 'CREATE TABLE IF NOT EXISTS "TEST" ("ID" NUMBER(19) NOT NULL PRIMARY KEY,"ACTIVE" BOOLEAN NOT NULL)' + System.lineSeparator() +
+                                                        'CREATE SEQUENCE IF NOT EXISTS "TEST_SEQ" MINVALUE 1 START WITH 1 CACHE 100 NOCYCLE'
+    }
+
+    void "test Oracle 23ai generates IF NOT EXISTS and IF EXISTS for version #version"() {
+        given:
+        def entity = buildJpaEntity('test.Test', '''
+import io.micronaut.data.annotation.Index;
+import io.micronaut.data.annotation.Indexes;
+import java.util.List;
+
+@Entity
+@Indexes({@Index(columns = "name"), @Index(name = "test_code_idx", columns = "code", unique = true)})
+class Test {
+
+    @javax.persistence.Id
+    @GeneratedValue
+    private Long id;
+
+    private String name;
+
+    private String code;
+
+    @ManyToMany
+    private List<Tag> tags;
+
+    public Long getId() { return id; }
+    public void setId(Long id) { this.id = id; }
+    public String getName() { return name; }
+    public void setName(String name) { this.name = name; }
+    public String getCode() { return code; }
+    public void setCode(String code) { this.code = code; }
+    public List<Tag> getTags() { return tags; }
+    public void setTags(List<Tag> tags) { this.tags = tags; }
+}
+
+@Entity
+class Tag {
+    @javax.persistence.Id
+    private Long id;
+    public Long getId() { return id; }
+    public void setId(Long id) { this.id = id; }
+}
+''')
+        SqlQueryBuilder builder = new SqlQueryBuilder(Dialect.ORACLE, version)
+
+        when:
+        def create = builder.buildCreateTableStatements(entity)
+        def drop = builder.buildDropTableStatements(entity)
+
+        then:
+        create.findAll { it.startsWith('CREATE ') }.every { it.contains(' IF NOT EXISTS ') == ifExists }
+        create.any { it.startsWith("CREATE TABLE ${clause}\"TEST\" (") }
+        create.contains("CREATE SEQUENCE ${clause}\"TEST_SEQ\" MINVALUE 1 START WITH 1 CACHE 100 NOCYCLE".toString())
+        create.contains("CREATE INDEX ${clause}\"IDX_TEST_NAME\" ON \"TEST\" (\"NAME\")".toString())
+        create.contains("CREATE UNIQUE INDEX ${clause}\"TEST_CODE_IDX\" ON \"TEST\" (\"CODE\")".toString())
+        drop.toList() == ["DROP TABLE ${dropClause}\"TEST_TAG\";".toString(), "DROP TABLE ${dropClause}\"TEST\"".toString()]
+
+        where:
+        version  | ifExists
+        null     | false
+        '21'     | false
+        '23.1'   | true
+        '23.26'  | true
+        clause = ifExists ? 'IF NOT EXISTS ' : ''
+        dropClause = ifExists ? 'IF EXISTS ' : ''
+    }
+
+    void "test Oracle IF NOT EXISTS is not generated for other dialects"() {
+        given:
+        def entity = buildJpaEntity('test.Test', '''
+@Entity
+class Test {
+    @javax.persistence.Id
+    @GeneratedValue
+    private Long id;
+    public Long getId() { return id; }
+    public void setId(Long id) { this.id = id; }
+}
+''')
+
+        expect:
+        !new SqlQueryBuilder(dialect, '23.26').buildBatchCreateTableStatement(List.of(), entity).contains('IF NOT EXISTS')
+        !new SqlQueryBuilder(dialect, '23.26').buildDropTableStatements(entity).any { it.contains('IF EXISTS') }
+
+        where:
+        dialect << [Dialect.H2, Dialect.POSTGRES, Dialect.MYSQL, Dialect.SQL_SERVER]
     }
 
     void "test custom column definition"() {
@@ -1461,6 +1547,38 @@ class Teacher {
         sql[1] == 'CREATE TABLE `students`.`m2m_student_course_association` (`st_id` BIGINT NOT NULL,`cs_id` BIGINT NOT NULL, PRIMARY KEY(`st_id`,`cs_id`));'
         sql[2] == 'CREATE TABLE `students`.`m2m_student_teacher_association` (`st_id` BIGINT NOT NULL,`te_id` BIGINT NOT NULL, PRIMARY KEY(`st_id`,`te_id`));'
         sql[3] == 'CREATE TABLE `students`.`m2m_student` (`id` BIGINT PRIMARY KEY AUTO_INCREMENT,`name` VARCHAR(255) NOT NULL);'
+
+        when: 'an Oracle schema is a user'
+        sql = new SqlQueryBuilder(Dialect.ORACLE).buildCreateTableStatements(entity)
+
+        then:
+        sql[0] == SqlSchemaNames.oracleCreateSchemaStatement('students')
+        sql[0].contains("'CREATE USER \"STUDENTS\" NO AUTHENTICATION")
+        !sql.any { it.startsWith('CREATE SCHEMA') }
+    }
+
+    void "test Oracle schema creation keeps a property placeholder as the table statements do"() {
+        given:
+        def entity = buildJpaEntity('test.Book', '''
+import io.micronaut.data.annotation.Id;
+import io.micronaut.data.annotation.MappedEntity;
+
+@MappedEntity(value = "ph_book", schema = "${prverify.schema}")
+class Book {
+    @Id
+    private Long id;
+    public Long getId() { return id; }
+    public void setId(Long id) { this.id = id; }
+}
+''')
+
+        when:
+        def sql = new SqlQueryBuilder(Dialect.ORACLE).buildCreateTableStatements([], [entity] as PersistentEntity[], Dialect.ORACLE)
+
+        then:
+        sql[0].contains('\'CREATE USER "${prverify.schema}" NO AUTHENTICATION')
+        sql[0].contains("WHERE username = '\${prverify.schema}';")
+        sql.any { it.startsWith('CREATE TABLE "${prverify.schema}"."PH_BOOK"') }
     }
 
     @Unroll
