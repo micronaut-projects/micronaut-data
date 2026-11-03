@@ -979,10 +979,14 @@ public final class SqlResultEntityTypeMapper<RS, R> implements SqlTypeMapper<RS,
             BeanIntrospection<K> associatedIntrospection = ctx.persistentEntity.getIntrospection();
             Argument<?>[] constructorArgs = associatedIntrospection.getConstructorArguments();
             if (constructorArgs.length == 0) {
-                K associated = associatedIntrospection.instantiate();
                 if (resolvedId == null) {
                     resolvedId = readEntityId(rs, ctx);
                 }
+                // instantiate only if id value is resolved: a null foreign key references no entity
+                if (resolvedId == null) {
+                    return null;
+                }
+                K associated = associatedIntrospection.instantiate();
                 BeanWrapper.getWrapper(associated).setProperty(identity.getName(), resolvedId);
                 return associated;
             }
