@@ -15,74 +15,143 @@
  */
 package io.micronaut.data.jdbc.notification.postgres
 
+import io.micronaut.context.ApplicationContext
 import io.micronaut.context.BeanContext
 import io.micronaut.context.env.Environment
 import io.micronaut.context.exceptions.ConfigurationException
+import io.micronaut.jdbc.BasicJdbcConfiguration
+import org.postgresql.Driver
 import org.postgresql.PGProperty
-import org.postgresql.ds.PGSimpleDataSource
 import spock.lang.Specification
+
+import javax.net.SocketFactory
+import java.sql.SQLException
+import java.util.concurrent.atomic.AtomicReference
 
 class PostgresNotificationConnectionFactorySpec extends Specification {
 
     void "dedicated connections have finite timeout defaults"() {
         when:
-        def source = createSource()
+        def source = driverProperties()
 
         then:
-        source.tcpKeepAlive
-        source.connectTimeout == 10
-        source.loginTimeout == 30
-        source.socketTimeout == 30
+        source.tcpKeepAlive == 'true'
+        source.connectTimeout == '10'
+        source.loginTimeout == '30'
+        source.socketTimeout == '30'
     }
 
     void "unlimited timeout settings use notification defaults even in the URL"() {
         when:
-        def source = createSource('connectTimeout=0&loginTimeout=0&socketTimeout=0',
+        def source = driverProperties('connectTimeout=0&loginTimeout=0&socketTimeout=0',
             [connectTimeout: 5, loginTimeout: 6, socketTimeout: 7])
 
         then:
-        source.tcpKeepAlive
-        source.connectTimeout == 10
-        source.loginTimeout == 30
-        source.socketTimeout == 30
+        source.tcpKeepAlive == 'true'
+        source.connectTimeout == '10'
+        source.loginTimeout == '30'
+        source.socketTimeout == '30'
     }
 
     void "preserves positive datasource timeouts"() {
         when:
-        def source = createSource('', [connectTimeout: 5, loginTimeout: 6, socketTimeout: 7])
+        def source = driverProperties('', [connectTimeout: 5, loginTimeout: 6, socketTimeout: 7])
 
         then:
-        source.connectTimeout == 5
-        source.loginTimeout == 6
-        source.socketTimeout == 7
+        source.connectTimeout == '5'
+        source.loginTimeout == '6'
+        source.socketTimeout == '7'
     }
 
     void "URL timeouts override datasource properties"() {
         when:
-        def source = createSource('connectTimeout=8&loginTimeout=9&socketTimeout=11',
+        def source = driverProperties('connectTimeout=8&loginTimeout=9&socketTimeout=11',
             [connectTimeout: 5, loginTimeout: 6, socketTimeout: 7])
 
         then:
-        source.connectTimeout == 8
-        source.loginTimeout == 9
-        source.socketTimeout == 11
+        source.connectTimeout == '8'
+        source.loginTimeout == '9'
+        source.socketTimeout == '11'
     }
 
     void "preserves explicit keepalive settings and URL precedence"() {
         expect:
-        !createSource('', [tcpKeepAlive: false]).tcpKeepAlive
-        !createSource('tcpKeepAlive=false', [tcpKeepAlive: true]).tcpKeepAlive
-        createSource('tcpKeepAlive=true', [tcpKeepAlive: false]).tcpKeepAlive
+        driverProperties('', [tcpKeepAlive: false]).tcpKeepAlive == 'false'
+        driverProperties('tcpKeepAlive=false', [tcpKeepAlive: true]).tcpKeepAlive == 'false'
+        driverProperties('tcpKeepAlive=true', [tcpKeepAlive: false]).tcpKeepAlive == 'true'
     }
 
     void "preserves fractional login timeout supported by the driver"() {
         expect:
-        createSource('loginTimeout=0.5').getProperty(PGProperty.LOGIN_TIMEOUT) == '0.5'
+        PGProperty.LOGIN_TIMEOUT.get(driverProperties('loginTimeout=0.5')) == '0.5'
+    }
+
+    void "passes custom socket-factory properties from the URL and configuration to the driver"() {
+        when:
+        def properties = driverProperties('cloudSqlInstance=p%3Ar%3Ai&enableIamAuth=true',
+            [cloudSqlInstance: 'overridden', customSocketArgument: 'endpoint=value'])
+
+        then:
+        properties.cloudSqlInstance == 'p:r:i'
+        properties.enableIamAuth == 'true'
+        properties.customSocketArgument == 'endpoint=value'
+        properties.socketFactory == CapturingNotificationSocketFactory.name
+    }
+
+    void "preserves URL parameter overrides for host port and database"() {
+        when:
+        def properties = driverProperties('PGHOST=custom-host&PGPORT=6543&PGDBNAME=custom-db')
+
+        then:
+        properties.getProperty('PGHOST') == 'custom-host'
+        properties.getProperty('PGPORT') == '6543'
+        properties.getProperty('PGDBNAME') == 'custom-db'
+    }
+
+    void "custom factory replaces the default and reads current programmatic properties"() {
+        given:
+        def properties = new Properties()
+        properties.setProperty('sslmode', 'verify-full')
+        properties.setProperty('customSocketArgument', 'configured')
+        properties.setProperty('socketFactory', CapturingNotificationSocketFactory.name)
+        PostgresNotificationConnectionFactory custom = { String name ->
+            assert name == 'test'
+            new Driver().connect('jdbc:postgresql://localhost/test', properties)
+        }
+        def context = ApplicationContext.builder()
+            .enableDefaultPropertySources(false)
+            .singletons(custom)
+            .start()
+        CapturingNotificationSocketFactory.properties.set(null)
+
+        when:
+        context.getBean(PostgresNotificationConnectionFactory).openConnection('test')
+
+        then:
+        thrown(SQLException)
+        CapturingNotificationSocketFactory.properties.get().sslmode == 'verify-full'
+        CapturingNotificationSocketFactory.properties.get().customSocketArgument == 'configured'
+        context.getBeansOfType(PostgresNotificationConnectionFactory).size() == 1
+        !context.containsBean(DefaultPostgresNotificationConnectionFactory)
+        !properties.containsKey('socketTimeout')
+
+        when:
+        properties.setProperty('customSocketArgument', 'refreshed')
+        CapturingNotificationSocketFactory.properties.set(null)
+        context.getBean(PostgresNotificationConnectionFactory).openConnection('test')
+
+        then:
+        thrown(SQLException)
+        CapturingNotificationSocketFactory.properties.get().sslmode == 'verify-full'
+        CapturingNotificationSocketFactory.properties.get().customSocketArgument == 'refreshed'
+
+        cleanup:
+        context?.close()
     }
 
     void "rejects invalid timeout before opening a connection: #property=#value"() {
         when:
-        createSource("$property=$value")
+        driverProperties("$property=$value")
 
         then:
         def failure = thrown(ConfigurationException)
@@ -113,7 +182,7 @@ class PostgresNotificationConnectionFactorySpec extends Specification {
             getProperty('datasources.test.url', String) >> Optional.of(url)
             getProperty(_, _) >> Optional.empty()
         }
-        def factory = new PostgresNotificationConnectionFactory(context, environment)
+        def factory = new DefaultPostgresNotificationConnectionFactory(context, environment)
 
         when:
         factory.openConnection('test')
@@ -146,7 +215,7 @@ class PostgresNotificationConnectionFactorySpec extends Specification {
         }
 
         when:
-        new PostgresNotificationConnectionFactory(context, environment).openConnection('test')
+        new DefaultPostgresNotificationConnectionFactory(context, environment).openConnection('test')
 
         then:
         def failure = thrown(ConfigurationException)
@@ -155,17 +224,41 @@ class PostgresNotificationConnectionFactorySpec extends Specification {
         failure.message.contains('jdbc:postgresql:')
     }
 
-    private PGSimpleDataSource createSource(String query = '', Map<String, Object> properties = [:]) {
+    private Properties driverProperties(String query = '', Map<String, Object> properties = [:],
+                                        BasicJdbcConfiguration configuration = null) {
+        CapturingNotificationSocketFactory.properties.set(null)
         def context = Stub(BeanContext) {
+            findBean(BasicJdbcConfiguration, _) >> Optional.ofNullable(configuration)
             findBean(_, _) >> Optional.empty()
         }
         def environment = Stub(Environment) {
             getProperty('datasources.test.url', String) >> Optional.of('jdbc:postgresql://localhost/test?' + query)
             getProperty(_, _) >> Optional.empty()
-            getProperties('datasources.test.data-source-properties', _) >> properties
+            getProperties('datasources.test.data-source-properties', _) >>
+                ([socketFactory: CapturingNotificationSocketFactory.name] + properties)
             getProperties(_, _) >> [:]
         }
-        def factory = new PostgresNotificationConnectionFactory(context, environment)
-        factory.createDataSource('test')
+        def factory = new DefaultPostgresNotificationConnectionFactory(context, environment)
+        try {
+            factory.openConnection('test')
+            assert false: 'The capturing socket factory must stop connection setup'
+        } catch (SQLException ignored) {
+            // The socket factory captures the final driver properties before any network access.
+        }
+        def captured = CapturingNotificationSocketFactory.properties.get()
+        assert captured != null
+        captured
+    }
+}
+
+class CapturingNotificationSocketFactory extends SocketFactory {
+    static final AtomicReference<Properties> properties = new AtomicReference<>()
+
+    @Delegate
+    private final SocketFactory delegate = SocketFactory.default
+
+    CapturingNotificationSocketFactory(Properties values) {
+        properties.set(values)
+        throw new IllegalStateException('Connection properties captured')
     }
 }

@@ -28,6 +28,7 @@ import io.micronaut.data.annotation.MappedEntity
 import io.micronaut.data.connection.jdbc.advice.DelegatingDataSource
 import io.micronaut.data.jdbc.annotation.PostgresChangeNotification
 import io.micronaut.data.jdbc.notification.ChangeNotificationProvider
+import io.micronaut.data.jdbc.notification.postgres.PostgresNotificationConnectionFactory
 import io.micronaut.data.jdbc.postgres.PostgresTestPropertyProvider
 import io.micronaut.data.notification.ChangeEvent
 import io.micronaut.data.notification.ChangeOperation
@@ -45,6 +46,7 @@ import javax.sql.DataSource
 import java.sql.Connection
 import java.sql.DriverManager
 import java.util.concurrent.LinkedBlockingQueue
+import java.util.concurrent.CopyOnWriteArrayList
 import java.util.concurrent.TimeUnit
 
 class PostgresNotificationPoolSpec extends Specification implements PostgresTestPropertyProvider {
@@ -101,11 +103,12 @@ class PostgresNotificationPoolSpec extends Specification implements PostgresTest
     }
 
     @Unroll
-    void "#pool remains available while dedicated connections share channels and reconnect independently"() {
+    void "#pool remains available while dedicated connections reconnect with custom factory #customFactory"() {
         given:
         Map configuration = settings + getDataSourceProperties('secondary') + [
             'spec.name': 'PostgresNotificationPoolSpec',
             'spec.pool.type': pool,
+            'spec.pool.custom-connections': customFactory,
             'datasources.default.enabled': false,
             'datasources.secondary.enabled': false,
             'datasources.default.url': settings['spec.pool.url'],
@@ -136,6 +139,9 @@ class PostgresNotificationPoolSpec extends Specification implements PostgresTest
         listener.secondary.isEmpty()
         listener.otherChannel.isEmpty()
         assertSingleListeningConnection()
+        if (customFactory) {
+            assert application.getBean(PostgresNotificationConnectionFactory).requests.toSet() == ['default', 'secondary'].toSet()
+        }
 
         when: 'both methods sharing a channel receive changes from the default datasource'
         execute(writer, "INSERT INTO notification_book VALUES (1, 'primary')")
@@ -179,6 +185,10 @@ class PostgresNotificationPoolSpec extends Specification implements PostgresTest
         next(listener.otherChannel).operation() == ChangeOperation.INVALIDATE
         assertSingleListeningConnection()
         listener.secondary.poll(200, TimeUnit.MILLISECONDS) == null
+        if (customFactory) {
+            assert application.getBean(PostgresNotificationConnectionFactory).requests.count('default') == 2
+            assert application.getBean(PostgresNotificationConnectionFactory).requests.count('secondary') == 1
+        }
 
         when:
         execute(writer, "INSERT INTO notification_book VALUES (2, 'reconnected')")
@@ -211,7 +221,11 @@ class PostgresNotificationPoolSpec extends Specification implements PostgresTest
         assertReusable(secondary)
 
         where:
-        pool << ['tomcat', 'hikari']
+        pool     | customFactory
+        'tomcat' | false
+        'hikari' | false
+        'tomcat' | true
+        'hikari' | true
     }
 
     private void notifyOtherChannel(long id) {
@@ -270,6 +284,31 @@ class PostgresNotificationPoolSpec extends Specification implements PostgresTest
         try (def statement = connection.createStatement()) {
             statement.execute(sql)
         }
+    }
+}
+
+@Singleton
+@Requires(property = 'spec.name', value = 'PostgresNotificationPoolSpec')
+@Requires(property = 'spec.pool.custom-connections', value = 'true')
+class CustomNotificationConnectionFactory implements PostgresNotificationConnectionFactory {
+    private final Environment environment
+    final List<String> requests = new CopyOnWriteArrayList<>()
+
+    CustomNotificationConnectionFactory(Environment environment) {
+        this.environment = environment
+    }
+
+    @Override
+    Connection openConnection(String name) {
+        requests.add(name)
+        String urlProperty = name == 'default' ? 'url' : 'secondary-url'
+        Properties properties = [
+            user: environment.getRequiredProperty('spec.pool.username', String),
+            password: environment.getRequiredProperty('spec.pool.password', String),
+            ApplicationName: 'notification-pool-' + name,
+            connectTimeout: '10', loginTimeout: '30', socketTimeout: '30'
+        ] as Properties
+        DriverManager.getConnection(environment.getRequiredProperty('spec.pool.' + urlProperty, String), properties)
     }
 }
 

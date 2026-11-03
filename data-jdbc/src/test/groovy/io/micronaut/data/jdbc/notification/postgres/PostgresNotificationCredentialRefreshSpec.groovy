@@ -43,7 +43,7 @@ class PostgresNotificationCredentialRefreshSpec extends Specification implements
         def context = Stub(BeanContext) {
             findBean(BasicJdbcConfiguration, _) >> Optional.of(configuration)
         }
-        def factory = new PostgresNotificationConnectionFactory(context, application.environment)
+        def factory = new DefaultPostgresNotificationConnectionFactory(context, application.environment)
         try (def statement = admin.createStatement()) {
             statement.execute("CREATE ROLE $role LOGIN PASSWORD 'initial_password'")
         }
