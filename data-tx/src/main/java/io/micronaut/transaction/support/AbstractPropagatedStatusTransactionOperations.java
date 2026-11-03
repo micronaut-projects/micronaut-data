@@ -71,8 +71,20 @@ public abstract class AbstractPropagatedStatusTransactionOperations<T extends Tr
         return PropagatedContext.getOrEmpty()
             .findAll(TransactionStatus.class)
             .filter(this::managesTransaction)
-            .findFirst()
-            .map(status -> (T) status);
+            .map(status -> (T) status)
+            .filter(this::appliesToCurrentConnection)
+            .findFirst();
+    }
+
+    /**
+     * Whether a propagated transaction applies to the current connection, so that new transactional work joins it.
+     *
+     * @param transactionStatus A propagated transaction managed by these operations
+     * @return {@code true} by default
+     * @since 5.3.0
+     */
+    protected boolean appliesToCurrentConnection(T transactionStatus) {
+        return true;
     }
 
     @Override

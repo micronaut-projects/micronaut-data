@@ -42,7 +42,7 @@ micronaut {
         enabled = true
         inferClasspath = false
         additionalModules.add(KnownModules.JDBC_POSTGRESQL)
-        additionalModules.add(KnownModules.JDBC_ORACLE_XE)
+        additionalModules.add(KnownModules.JDBC_ORACLE_FREE)
         clientTimeout = 300
         version = libs.versions.micronaut.testresources.get()
     }
