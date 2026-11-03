@@ -44,6 +44,32 @@ jobs:
 
       - uses: actions/checkout@v7
 
+      # The runner image ships a ~/.gradle folder, so setup-gradle would skip restoring its cache and
+      # every job would download all dependencies from Maven Central, which rate-limits the runners
+      # (HTTP 429). Only the first setup-gradle step in a job takes effect, so this one runs before
+      # Pre-Build Steps, whose own setup-gradle step then does nothing. setup-gradle runs `java` to
+      # find the user home, so Java is set up first.
+      - name: Set up Java for the Gradle cache restore
+        uses: actions/setup-java@v4.2.0
+        with:
+          distribution: 'oracle'
+          java-version: '25'
+
+      - name: Restore the Gradle cache over the runner's ~/.gradle
+        uses: gradle/actions/setup-gradle@v6
+        with:
+          cache-overwrite-existing: true
+          # Restore only: the entries saved by the other "build" jobs on 5.3.x hold most of what this
+          # job needs, and saving more entries here would push those out of the repository's cache.
+          cache-read-only: true
+
+      # The restored cache also holds the local build cache of those other jobs, which ran the JVM
+      # tests against other databases. Gradle would reuse their test results here instead of running
+      # the tests against the Test Pilot database, so drop it and keep only the dependencies.
+      - name: Drop the restored local build cache
+        shell: bash
+        run: rm -rf "$GRADLE_USER_HOME/caches/build-cache-1"
+
       - name: Pre-Build Steps
         uses: micronaut-projects/github-actions/graalvm/pre-build@master
         id: pre-build
