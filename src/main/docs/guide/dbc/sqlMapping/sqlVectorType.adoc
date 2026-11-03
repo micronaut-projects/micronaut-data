@@ -41,7 +41,8 @@ Dialect notes:
 
 - PostgreSQL (pgvector): creates `ivfflat` or `hnsw` indexes. The operator class is derived from distance (`COSINE` -> `vector_cosine_ops`, `DOT` -> `vector_ip_ops`, `L1`/`L2` -> `vector_l1_ops`/`vector_l2_ops`).
   For sparse columns (`@VectorStorage(shape = VectorShape.SPARSE)`), Micronaut Data emits sparse operator classes (`sparsevec_*_ops`) and requires `HNSW`.
-- Oracle: creates `CREATE VECTOR INDEX` with `ORGANIZATION NEIGHBOR PARTITIONS` (`IVF`) or `GRAPH` (`HNSW`), plus distance and target accuracy settings.
+- Oracle: creates `CREATE VECTOR INDEX` with `ORGANIZATION NEIGHBOR PARTITIONS` (`IVF`) or `ORGANIZATION INMEMORY NEIGHBOR GRAPH` (`HNSW`), plus distance and target accuracy settings.
+  An `HNSW` index is held in the vector memory pool, which is empty unless the database sets `vector_memory_size`; without it, creating the index fails with `ORA-51962`. Schema generation logs that failure as a warning and continues without the index, so set `vector_memory_size` (for example `ALTER SYSTEM SET vector_memory_size = 512M SCOPE = SPFILE` and a restart), or use `IVF`.
 - MySQL: `@VectorIndex` is not supported and schema generation fails fast instead of creating a plain non-vector index.
 
 == Repository usage
@@ -208,15 +209,21 @@ CREATE TABLE document_embedding (
 );
 ----
 
-Oracle approximate row-limiting syntax for vector search can use `FETCH FIRST APPROX` / `APPROXIMATE` when supported by the database version and query shape:
+By default a vector search compares the query vector with every row. To let Oracle answer the top-K query from a vector index (see `@VectorIndex`), annotate the search method with api:data.annotation.ApproximateSearch[]:
+
+snippet::example.DocumentEmbeddingRepository[project-base="doc-examples/jdbc-vector-example", source="main", tags="approximate"]
+
+The row limit, from the method name as here or from a `Limit` or `Pageable` argument, is then rendered as an approximate row limit:
 
 [source,sql]
 ----
-SELECT *
+SELECT ...
 FROM document_embedding d
-ORDER BY VECTOR_DISTANCE(d.embedding, :vec, COSINE)
-FETCH FIRST APPROX 2 ROWS ONLY;
+ORDER BY VECTOR_DISTANCE(d.embedding, ?, COSINE)
+FETCH APPROX FIRST 5 ROWS ONLY WITH TARGET ACCURACY 90
 ----
+
+`targetAccuracy` is a percentage from 1 to 100; the default `0` uses the accuracy of the index. A query with an offset keeps the exact row limit. Other dialects ignore the annotation; PostgreSQL, for example, uses a pgvector index for an ordered, limited query without extra syntax.
 
 == MySQL HeatWave (VECTOR)
 

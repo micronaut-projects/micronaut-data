@@ -19,6 +19,7 @@ import io.micronaut.core.annotation.Internal;
 import io.micronaut.data.connection.ConnectionOperations;
 import io.micronaut.data.connection.ConnectionStatus;
 import io.micronaut.data.connection.SynchronousConnectionManager;
+import io.micronaut.data.connection.support.DefaultConnectionStatus;
 import io.micronaut.transaction.TransactionDefinition;
 import io.micronaut.transaction.impl.DefaultTransactionStatus;
 import org.jspecify.annotations.Nullable;
@@ -47,6 +48,13 @@ public abstract class AbstractDefaultTransactionOperations<C> extends AbstractTr
     @Override
     protected DefaultTransactionStatus<C> createExistingTransactionStatus(TransactionDefinition definition, DefaultTransactionStatus<C> existingTransaction) {
         return DefaultTransactionStatus.existingTx(existingTransaction.getConnectionStatus(), definition, existingTransaction, this);
+    }
+
+    @Override
+    protected DefaultTransactionStatus<C> createOwnerTransactionStatus(ConnectionStatus<C> connectionStatus,
+                                                                       TransactionDefinition definition,
+                                                                       DefaultConnectionStatus.SuppliedConnection suppliedConnection) {
+        return DefaultTransactionStatus.ownerTx(connectionStatus, definition, suppliedConnection, this);
     }
 
     @Override
