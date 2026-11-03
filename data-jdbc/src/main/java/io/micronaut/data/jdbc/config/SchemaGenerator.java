@@ -56,6 +56,7 @@ import org.slf4j.LoggerFactory;
 
 import javax.sql.DataSource;
 import java.lang.reflect.Modifier;
+import java.sql.CallableStatement;
 import java.sql.Connection;
 import java.sql.DatabaseMetaData;
 import java.sql.PreparedStatement;
@@ -78,6 +79,8 @@ public class SchemaGenerator {
     private static final String MATCH_ALL = "%";
 
     private static final Logger LOG = LoggerFactory.getLogger(SchemaGenerator.class);
+    private static final String RESTORE_ORACLE_SCHEMA =
+        "BEGIN EXECUTE IMMEDIATE 'ALTER SESSION SET CURRENT_SCHEMA = ' || DBMS_ASSERT.ENQUOTE_NAME(?, FALSE); END;";
 
     private final List<DataJdbcConfiguration> configurations;
     private final JdbcSchemaHandler schemaHandler;
@@ -152,29 +155,37 @@ public class SchemaGenerator {
                 DataSource dataSource = DelegatingDataSource.unwrapDataSource(beanLocator.getBean(DataSource.class, Qualifiers.byName(name)));
                 try {
                     try (Connection connection = dataSource.getConnection()) {
-                        if (configuration.getSchemaGenerateNames() != null && !configuration.getSchemaGenerateNames().isEmpty()) {
-                            for (String schemaName : configuration.getSchemaGenerateNames()) {
-                                if (schemaGenerate != SchemaGenerate.VALIDATE) {
-                                    schemaHandler.createSchema(connection, dialect, schemaName);
+                        // An Oracle session keeps its current schema when the connection returns to the pool
+                        String originalOracleSchema = dialect == Dialect.ORACLE ? connection.getSchema() : null;
+                        try {
+                            if (configuration.getSchemaGenerateNames() != null && !configuration.getSchemaGenerateNames().isEmpty()) {
+                                for (String schemaName : configuration.getSchemaGenerateNames()) {
+                                    if (schemaGenerate != SchemaGenerate.VALIDATE) {
+                                        schemaHandler.createSchema(connection, dialect, schemaName);
+                                    }
+                                    schemaHandler.useSchema(connection, dialect, schemaName);
+                                    if (schemaGenerate == SchemaGenerate.VALIDATE) {
+                                        validate(connection, configuration, entities, dialectSqlTableMappingValidatorMap, definitionProviders);
+                                    } else {
+                                        generate(connection, configuration, propertyPlaceholderResolver, entities);
+                                    }
                                 }
-                                schemaHandler.useSchema(connection, dialect, schemaName);
+                            } else {
+                                if (configuration.getSchemaGenerateName() != null) {
+                                    if (schemaGenerate != SchemaGenerate.VALIDATE) {
+                                        schemaHandler.createSchema(connection, dialect, configuration.getSchemaGenerateName());
+                                    }
+                                    schemaHandler.useSchema(connection, dialect, configuration.getSchemaGenerateName());
+                                }
                                 if (schemaGenerate == SchemaGenerate.VALIDATE) {
                                     validate(connection, configuration, entities, dialectSqlTableMappingValidatorMap, definitionProviders);
                                 } else {
                                     generate(connection, configuration, propertyPlaceholderResolver, entities);
                                 }
                             }
-                        } else {
-                            if (configuration.getSchemaGenerateName() != null) {
-                                if (schemaGenerate != SchemaGenerate.VALIDATE) {
-                                    schemaHandler.createSchema(connection, dialect, configuration.getSchemaGenerateName());
-                                }
-                                schemaHandler.useSchema(connection, dialect, configuration.getSchemaGenerateName());
-                            }
-                            if (schemaGenerate == SchemaGenerate.VALIDATE) {
-                                validate(connection, configuration, entities, dialectSqlTableMappingValidatorMap, definitionProviders);
-                            } else {
-                                generate(connection, configuration, propertyPlaceholderResolver, entities);
+                        } finally {
+                            if (originalOracleSchema != null) {
+                                restoreOracleSchema(connection, originalOracleSchema);
                             }
                         }
                     } catch (SQLException e) {
@@ -184,6 +195,14 @@ public class SchemaGenerator {
                     throw new ConfigurationException("No DataSource configured for setting [" + DataJdbcConfiguration.PREFIX + name + "]. Ensure the DataSource is configured correctly and try again.", e);
                 }
             }
+        }
+    }
+
+    private static void restoreOracleSchema(Connection connection, String schema) throws SQLException {
+        // The exact name reported by the driver, bound and quoted by the database so that its case is kept
+        try (CallableStatement statement = connection.prepareCall(RESTORE_ORACLE_SCHEMA)) {
+            statement.setString(1, schema);
+            statement.execute();
         }
     }
 
