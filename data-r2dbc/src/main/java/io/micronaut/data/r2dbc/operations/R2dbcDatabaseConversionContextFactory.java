@@ -18,14 +18,13 @@ package io.micronaut.data.r2dbc.operations;
 import io.micronaut.context.annotation.EachBean;
 import io.micronaut.context.annotation.Parameter;
 import io.micronaut.core.annotation.Internal;
-import io.micronaut.core.convert.ArgumentConversionContext;
-import io.micronaut.core.convert.ConversionContext;
 import io.micronaut.core.type.Argument;
+import io.micronaut.data.model.runtime.convert.DataAccessType;
 import io.micronaut.data.model.runtime.convert.DatabaseType;
 import io.micronaut.data.model.runtime.convert.DatabaseTypeConversionContext;
 import io.micronaut.data.r2dbc.config.DataR2dbcConfiguration;
+import io.micronaut.data.runtime.convert.ArgumentDatabaseTypeConversionContext;
 import io.micronaut.data.runtime.convert.DatabaseConversionContextFactory;
-import io.micronaut.data.runtime.support.AbstractConversionContext;
 import io.r2dbc.spi.ConnectionFactory;
 
 /**
@@ -51,43 +50,11 @@ final class R2dbcDatabaseConversionContextFactory implements DatabaseConversionC
      */
     @Override
     public DatabaseTypeConversionContext forArgument(Argument<?> argument) {
-        return new ArgumentDatabaseTypeContext(databaseType, argument);
+        return new ArgumentDatabaseTypeConversionContext(databaseType, getDataAccessType(), argument);
     }
 
-    /**
-     * Lightweight conversion context carrying only argument metadata and database type.
-     */
-    private static final class ArgumentDatabaseTypeContext extends AbstractConversionContext
-        implements DatabaseTypeConversionContext, ArgumentConversionContext<Object> {
-
-        private final DatabaseType databaseType;
-        private final Argument<Object> argument;
-
-        /**
-         * @param databaseType database type
-         * @param argument argument metadata
-         */
-        @SuppressWarnings("unchecked")
-        private ArgumentDatabaseTypeContext(DatabaseType databaseType, Argument<?> argument) {
-            super(ConversionContext.of(argument));
-            this.databaseType = databaseType;
-            this.argument = (Argument<Object>) argument;
-        }
-
-        /**
-         * @return resolved database type
-         */
-        @Override
-        public DatabaseType getDatabaseType() {
-            return databaseType;
-        }
-
-        /**
-         * @return conversion argument metadata
-         */
-        @Override
-        public Argument<Object> getArgument() {
-            return argument;
-        }
+    @Override
+    public DataAccessType getDataAccessType() {
+        return DataAccessType.R2DBC;
     }
 }
