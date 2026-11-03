@@ -98,6 +98,10 @@ final class DefaultAgeRepositoryOperations extends AbstractGraphRepositoryOperat
     private static final int ABSENT = 0;
     private static final int CURRENT_TRANSACTION = 1;
     private static final int COMMITTED = 2;
+    private static final String PREPARED_VALUE = "coalesce(current_setting('" + PREPARED_SETTING + "', true), '')";
+    private static final String PREPARATION_QUERY = "SELECT CASE WHEN " + PREPARED_VALUE + " = '' THEN " + ABSENT
+        + " WHEN " + PREPARED_VALUE + " = transaction_timestamp()::text THEN " + CURRENT_TRANSACTION
+        + " ELSE " + COMMITTED + " END";
 
     private final ConnectionOperations<Connection> connectionOperations;
     private final TransactionOperations<Connection> transactionOperations;
@@ -408,10 +412,7 @@ final class DefaultAgeRepositoryOperations extends AbstractGraphRepositoryOperat
      * transaction loaded it, or {@link #COMMITTED} when an earlier transaction did
      */
     private static int preparation(Statement statement) throws SQLException {
-        String setting = "coalesce(current_setting('" + PREPARED_SETTING + "', true), '')";
-        try (ResultSet resultSet = statement.executeQuery("SELECT CASE WHEN " + setting + " = '' THEN " + ABSENT
-            + " WHEN " + setting + " = transaction_timestamp()::text THEN " + CURRENT_TRANSACTION
-            + " ELSE " + COMMITTED + " END")) {
+        try (ResultSet resultSet = statement.executeQuery(PREPARATION_QUERY)) {
             return resultSet.next() ? resultSet.getInt(1) : ABSENT;
         }
     }
