@@ -317,6 +317,153 @@ interface VectorDocRepository extends CrudRepository<VectorDoc, Long> {
             "MYSQL"    | " LIMIT 2"       | "DISTANCE("
     }
 
+    void "test #dialect approximate vector top search"() {
+        given:
+            def repository = buildRepository('test.ApproxVectorDocRepository', """
+import io.micronaut.data.annotation.ApproximateSearch;
+import io.micronaut.data.jdbc.annotation.JdbcRepository;
+import io.micronaut.data.model.query.builder.sql.Dialect;
+import io.micronaut.data.model.vector.FloatVector;
+import io.micronaut.data.model.vector.Vector;
+import io.micronaut.data.model.vector.search.SearchResults;
+import jakarta.persistence.Column;
+
+@MappedEntity
+class ApproxVectorDoc {
+    @Id
+    @GeneratedValue
+    private Long id;
+
+    @Column(length = 3)
+    private FloatVector embedding;
+
+    public Long getId() {
+        return id;
+    }
+
+    public void setId(Long id) {
+        this.id = id;
+    }
+
+    public FloatVector getEmbedding() {
+        return embedding;
+    }
+
+    public void setEmbedding(FloatVector embedding) {
+        this.embedding = embedding;
+    }
+}
+
+@JdbcRepository(dialect = Dialect.${dialect})
+interface ApproxVectorDocRepository extends CrudRepository<ApproxVectorDoc, Long> {
+    @ApproximateSearch
+    SearchResults<ApproxVectorDoc> searchTop2ByEmbeddingNear(Vector vector, Double maxDistance);
+
+    @ApproximateSearch(targetAccuracy = 90)
+    SearchResults<ApproxVectorDoc> searchTop3ByEmbeddingWithin(Vector vector, Double minDistance, Double maxDistance);
+}
+"""
+            )
+
+        when:
+            String query = getQuery(repository.getRequiredMethod(
+                    "searchTop2ByEmbeddingNear",
+                    Class.forName("io.micronaut.data.model.vector.Vector"),
+                    Double
+            ))
+            String accuracyQuery = getQuery(repository.getRequiredMethod(
+                    "searchTop3ByEmbeddingWithin",
+                    Class.forName("io.micronaut.data.model.vector.Vector"),
+                    Double,
+                    Double
+            ))
+
+        then:
+            query.endsWith(limitClause)
+            accuracyQuery.endsWith(accuracyLimitClause)
+
+        where:
+            dialect    | limitClause                         | accuracyLimitClause
+            "ORACLE"   | "FETCH APPROX FIRST 2 ROWS ONLY"    | "FETCH APPROX FIRST 3 ROWS ONLY WITH TARGET ACCURACY 90"
+            "POSTGRES" | " LIMIT 2"                          | " LIMIT 3"
+    }
+
+    void "test approximate vector search through a composed annotation"() {
+        given:
+            def repository = buildRepository('test.FastVectorDocRepository', """
+import io.micronaut.data.annotation.ApproximateSearch;
+import io.micronaut.data.jdbc.annotation.JdbcRepository;
+import io.micronaut.data.model.Pageable;
+import io.micronaut.data.model.query.builder.sql.Dialect;
+import io.micronaut.data.model.vector.FloatVector;
+import io.micronaut.data.model.vector.Vector;
+import io.micronaut.data.model.vector.search.SearchResults;
+import jakarta.persistence.Column;
+import java.lang.annotation.ElementType;
+import java.lang.annotation.Retention;
+import java.lang.annotation.RetentionPolicy;
+import java.lang.annotation.Target;
+import java.util.List;
+
+@Retention(RetentionPolicy.RUNTIME)
+@Target(ElementType.METHOD)
+@ApproximateSearch(targetAccuracy = 90)
+@interface FastSearch {
+}
+
+@MappedEntity
+class FastVectorDoc {
+    @Id
+    @GeneratedValue
+    private Long id;
+
+    @Column(length = 3)
+    private FloatVector embedding;
+
+    public Long getId() {
+        return id;
+    }
+
+    public void setId(Long id) {
+        this.id = id;
+    }
+
+    public FloatVector getEmbedding() {
+        return embedding;
+    }
+
+    public void setEmbedding(FloatVector embedding) {
+        this.embedding = embedding;
+    }
+}
+
+@JdbcRepository(dialect = Dialect.ORACLE)
+interface FastVectorDocRepository extends CrudRepository<FastVectorDoc, Long> {
+    @FastSearch
+    SearchResults<FastVectorDoc> searchTop3ByEmbeddingNear(Vector vector, Double maxDistance);
+
+    @FastSearch
+    List<FastVectorDoc> findAll(Pageable pageable);
+}
+"""
+            )
+            def topMethod = repository.getRequiredMethod("searchTop3ByEmbeddingNear", Class.forName("io.micronaut.data.model.vector.Vector"), Double)
+            def pagedMethod = repository.getRequiredMethod("findAll", Class.forName("io.micronaut.data.model.Pageable"))
+
+        expect: "the SQL of a method with a static limit"
+            getQuery(topMethod).endsWith("FETCH APPROX FIRST 3 ROWS ONLY WITH TARGET ACCURACY 90")
+
+        and: "the limit of a pageable method, added at runtime"
+            new SqlQueryBuilder(Dialect.ORACLE).buildLimitAndOffset(5, 0, pagedMethod.annotationMetadata)
+                .endsWith("FETCH APPROX FIRST 5 ROWS ONLY WITH TARGET ACCURACY 90")
+            new SqlQueryBuilder(Dialect.ORACLE).buildLimitAndOffset(5, 10, pagedMethod.annotationMetadata)
+                .endsWith("OFFSET 10 ROWS FETCH NEXT 5 ROWS ONLY")
+
+        and: "other dialects ignore the annotation"
+            new SqlQueryBuilder(Dialect.POSTGRES).buildLimitAndOffset(5, 0, pagedMethod.annotationMetadata) == " LIMIT 5"
+            new SqlQueryBuilder(Dialect.POSTGRES).buildLimitAndOffset(5, 10, pagedMethod.annotationMetadata) == " LIMIT 5 OFFSET 10"
+    }
+
     void "test vector search score projection uses vector parameter for matching predicate"() {
         given:
             def repository = buildRepository('test.VectorDocRepository', """
