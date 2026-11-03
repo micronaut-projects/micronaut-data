@@ -98,6 +98,10 @@ final class DefaultAgeRepositoryOperations extends AbstractGraphRepositoryOperat
     private static final int ABSENT = 0;
     private static final int CURRENT_TRANSACTION = 1;
     private static final int COMMITTED = 2;
+    private static final String PREPARED_VALUE = "coalesce(current_setting('" + PREPARED_SETTING + "', true), '')";
+    private static final String PREPARATION_QUERY = "SELECT CASE WHEN " + PREPARED_VALUE + " = '' THEN " + ABSENT
+        + " WHEN " + PREPARED_VALUE + " = transaction_timestamp()::text THEN " + CURRENT_TRANSACTION
+        + " ELSE " + COMMITTED + " END";
 
     private final ConnectionOperations<Connection> connectionOperations;
     private final TransactionOperations<Connection> transactionOperations;
@@ -229,20 +233,7 @@ final class DefaultAgeRepositoryOperations extends AbstractGraphRepositoryOperat
                 return work.apply(session(connection, graph));
             }
             connection.setAutoCommit(false);
-            try {
-                R result = work.apply(session(connection, graph));
-                connection.commit();
-                return result;
-            } catch (RuntimeException e) {
-                try {
-                    connection.rollback();
-                } catch (SQLException rollbackError) {
-                    e.addSuppressed(rollbackError);
-                }
-                throw e;
-            } finally {
-                connection.setAutoCommit(true);
-            }
+            return commitOrRollback(connection, graph, work);
         } catch (SQLException e) {
             throw new DataAccessException("Error running an Apache AGE write in a transaction: " + e.getMessage(), e);
         }
@@ -253,6 +244,27 @@ final class DefaultAgeRepositoryOperations extends AbstractGraphRepositoryOperat
         // Joins the current transaction, or begins one so that the statements of the write commit or roll back together
         String graph = currentGraph();
         return transactionOperations.executeWrite(status -> work.apply(session(status.getConnection(), graph)));
+    }
+
+    private <R> R commitOrRollback(Connection connection, String graph, Function<GraphSession, R> work) throws SQLException {
+        try {
+            R result = work.apply(session(connection, graph));
+            connection.commit();
+            return result;
+        } catch (RuntimeException e) {
+            rollback(connection, e);
+            throw e;
+        } finally {
+            connection.setAutoCommit(true);
+        }
+    }
+
+    private static void rollback(Connection connection, RuntimeException cause) {
+        try {
+            connection.rollback();
+        } catch (SQLException rollbackError) {
+            cause.addSuppressed(rollbackError);
+        }
     }
 
     private <R> R run(AnnotationMetadata annotationMetadata, Function<GraphSession, R> work) {
@@ -400,10 +412,7 @@ final class DefaultAgeRepositoryOperations extends AbstractGraphRepositoryOperat
      * transaction loaded it, or {@link #COMMITTED} when an earlier transaction did
      */
     private static int preparation(Statement statement) throws SQLException {
-        String setting = "coalesce(current_setting('" + PREPARED_SETTING + "', true), '')";
-        try (ResultSet resultSet = statement.executeQuery("SELECT CASE WHEN " + setting + " = '' THEN " + ABSENT
-            + " WHEN " + setting + " = transaction_timestamp()::text THEN " + CURRENT_TRANSACTION
-            + " ELSE " + COMMITTED + " END")) {
+        try (ResultSet resultSet = statement.executeQuery(PREPARATION_QUERY)) {
             return resultSet.next() ? resultSet.getInt(1) : ABSENT;
         }
     }
