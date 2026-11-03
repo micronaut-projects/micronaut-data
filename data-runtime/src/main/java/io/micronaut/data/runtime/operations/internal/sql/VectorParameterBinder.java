@@ -17,6 +17,7 @@ package io.micronaut.data.runtime.operations.internal.sql;
 
 import io.micronaut.core.annotation.Internal;
 import io.micronaut.data.model.DataType;
+import io.micronaut.data.model.runtime.convert.DataAccessType;
 import io.micronaut.data.model.runtime.convert.DatabaseType;
 import io.micronaut.data.model.runtime.convert.vector.VectorTypeConverter;
 import io.micronaut.data.model.query.builder.sql.Dialect;
@@ -60,6 +61,24 @@ sealed interface VectorParameterBinder permits VectorParameterBinder.DefaultVect
      */
     static VectorParameterBinder create(Collection<VectorTypeConverter<?>> vectorTypeConverters) {
         return new DefaultVectorParameterBinder(vectorTypeConverters);
+    }
+
+    /**
+     * Creates the default vector binder using the discovered vector type converters for one driver API.
+     * Converters declaring another {@link DataAccessType} are ignored.
+     *
+     * @param vectorTypeConverters available vector type converters
+     * @param dataAccessType the driver API of the operations, or {@code null} to use all converters
+     * @return vector parameter binder
+     * @since 5.3.0
+     */
+    static VectorParameterBinder create(Collection<VectorTypeConverter<?>> vectorTypeConverters, @Nullable DataAccessType dataAccessType) {
+        if (dataAccessType == null) {
+            return create(vectorTypeConverters);
+        }
+        return new DefaultVectorParameterBinder(vectorTypeConverters.stream()
+            .filter(converter -> VectorTypeConverter.supports(converter, dataAccessType))
+            .toList());
     }
 
     /**
@@ -136,6 +155,9 @@ sealed interface VectorParameterBinder permits VectorParameterBinder.DefaultVect
 
         private static boolean isConflicting(VectorTypeConverter<?> existing, VectorTypeConverter<?> candidate) {
             if (existing.isSparseSupported() != candidate.isSparseSupported()) {
+                return false;
+            }
+            if (!VectorTypeConverter.supports(existing, candidate.dataAccessType())) {
                 return false;
             }
             if (!existing.getPersistedType().equals(candidate.getPersistedType())) {
