@@ -15,12 +15,12 @@
  */
 package io.micronaut.data.jdbc.notification.postgres
 
+import io.micronaut.data.exceptions.DataAccessException
 import io.micronaut.data.jdbc.notification.DefaultChangeEvent
 import io.micronaut.data.jdbc.notification.DeferredChangeEvent
 import io.micronaut.data.notification.ChangeEvent
 import io.micronaut.data.notification.ChangeOperation
 import spock.lang.Specification
-import spock.util.concurrent.PollingConditions
 
 import java.util.concurrent.CompletableFuture
 import java.util.concurrent.CopyOnWriteArrayList
@@ -172,28 +172,180 @@ class PostgresNotificationDispatcherSpec extends Specification {
         dispatcher.stop().get(5, TimeUnit.SECONDS)
     }
 
-    void "a callback failure does not stop later callbacks or leak active tasks"() {
+    void "a failed #operation callback reconciles queued data with pending invalidation #pendingInvalidation"() {
         given:
-        def events = new LinkedBlockingQueue<ChangeOperation>()
+        def entered = new CountDownLatch(1)
+        def release = new CountDownLatch(1)
+        def events = new LinkedBlockingQueue<ChangeEvent<?>>()
+        def failed = row(operation)
         def dispatcher = createDispatcher({ event ->
-            if (event.operation() == ChangeOperation.INSERT) {
+            if (event.is(failed)) {
+                entered.countDown()
+                assert release.await(5, TimeUnit.SECONDS)
                 throw new IllegalStateException('callback failure')
             }
-            events.add(event.operation())
+            events.add(event)
+        })
+        dispatcher.submitDispatch(failed)
+        assert entered.await(5, TimeUnit.SECONDS)
+        dispatcher.submitDispatch(row(ChangeOperation.UPDATE))
+        if (pendingInvalidation) {
+            def metadata = new DefaultPostgresChangeEventMetadata('books', 'public', 'book', [:], [:])
+            dispatcher.submitDispatch(new DefaultChangeEvent(ChangeOperation.INVALIDATE, null, metadata))
+        }
+        dispatcher.submitDispatch(row(ChangeOperation.DELETE))
+
+        when:
+        release.countDown()
+        def invalidation = events.poll(5, TimeUnit.SECONDS)
+
+        then:
+        invalidation != null
+        invalidation.operation() == ChangeOperation.INVALIDATE
+        invalidation.entity().empty
+        invalidation.metadata(PostgresChangeEventMetadata).empty
+
+        when:
+        dispatcher.submitDispatch(row(ChangeOperation.UPDATE))
+
+        then:
+        events.poll(5, TimeUnit.SECONDS).operation() == ChangeOperation.UPDATE
+
+        when:
+        dispatcher.terminate()
+
+        then:
+        events.poll(5, TimeUnit.SECONDS).operation() == ChangeOperation.TERMINATED
+        dispatcher.stop().get(5, TimeUnit.SECONDS) == null
+        dispatcher.pendingTasks() == 0
+        events.empty
+
+        cleanup:
+        release.countDown()
+        dispatcher.stop().get(5, TimeUnit.SECONDS)
+
+        where:
+        [operation, pendingInvalidation] << [
+            [ChangeOperation.INSERT, ChangeOperation.UPDATE, ChangeOperation.DELETE],
+            [false, true]
+        ].combinations()
+    }
+
+    void "a failed #operation reload requests reconciliation"() {
+        given:
+        def loads = new AtomicInteger()
+        def events = new LinkedBlockingQueue<ChangeEvent<?>>()
+        def dispatcher = createDispatcher({ event ->
+            if (event instanceof DeferredChangeEvent) {
+                event.materialize()
+            }
+            events.add(event)
+        })
+        def failed = new DeferredChangeEvent(operation, null, {
+            loads.incrementAndGet()
+            throw new DataAccessException('reload failure')
         })
 
         when:
-        dispatcher.submitDispatch(row(ChangeOperation.INSERT))
+        dispatcher.submitDispatch(failed)
+        def invalidation = events.poll(5, TimeUnit.SECONDS)
+
+        then:
+        invalidation != null
+        invalidation.operation() == ChangeOperation.INVALIDATE
+        invalidation.entity().empty
+        invalidation.metadata(PostgresChangeEventMetadata).empty
+        loads.get() == 1
+
+        when:
+        dispatcher.terminate()
+
+        then:
+        events.poll(5, TimeUnit.SECONDS).operation() == ChangeOperation.TERMINATED
+        dispatcher.stop().get(5, TimeUnit.SECONDS) == null
+        dispatcher.pendingTasks() == 0
+        events.empty
+
+        cleanup:
+        dispatcher.stop().get(5, TimeUnit.SECONDS)
+
+        where:
+        operation << [ChangeOperation.INSERT, ChangeOperation.UPDATE]
+    }
+
+    void "a failed invalidation is not automatically retried and later data still runs"() {
+        given:
+        def events = new LinkedBlockingQueue<ChangeOperation>()
+        def dispatcher = createDispatcher({ event ->
+            events.add(event.operation())
+            if (event.operation() == ChangeOperation.INVALIDATE) {
+                throw new IllegalStateException('refresh failure')
+            }
+        })
+
+        when:
+        dispatcher.invalidate()
+
+        then:
+        events.poll(5, TimeUnit.SECONDS) == ChangeOperation.INVALIDATE
+
+        when:
         dispatcher.submitDispatch(row(ChangeOperation.UPDATE))
 
         then:
         events.poll(5, TimeUnit.SECONDS) == ChangeOperation.UPDATE
-        new PollingConditions(timeout: 5).eventually {
-            assert dispatcher.pendingTasks() == 0
-        }
+
+        when:
+        dispatcher.terminate()
+
+        then:
+        events.poll(5, TimeUnit.SECONDS) == ChangeOperation.TERMINATED
+        dispatcher.stop().get(5, TimeUnit.SECONDS) == null
+        dispatcher.pendingTasks() == 0
+        events.empty
 
         cleanup:
         dispatcher.stop().get(5, TimeUnit.SECONDS)
+    }
+
+    void "a failed row callback respects termination #termination while running"() {
+        given:
+        def entered = new CountDownLatch(1)
+        def release = new CountDownLatch(1)
+        def events = new LinkedBlockingQueue<ChangeOperation>()
+        def dispatcher = createDispatcher({ event ->
+            if (event.operation() == ChangeOperation.INSERT) {
+                entered.countDown()
+                assert release.await(5, TimeUnit.SECONDS)
+                throw new IllegalStateException('callback failure')
+            }
+            events.add(event.operation())
+        })
+        dispatcher.submitDispatch(row(ChangeOperation.INSERT))
+        assert entered.await(5, TimeUnit.SECONDS)
+
+        when:
+        if (termination) {
+            dispatcher.terminate()
+        } else {
+            dispatcher.stop()
+        }
+        release.countDown()
+
+        then:
+        if (termination) {
+            assert events.poll(5, TimeUnit.SECONDS) == ChangeOperation.TERMINATED
+        }
+        dispatcher.stop().get(5, TimeUnit.SECONDS) == null
+        dispatcher.pendingTasks() == 0
+        events.empty
+
+        cleanup:
+        release.countDown()
+        dispatcher.stop().get(5, TimeUnit.SECONDS)
+
+        where:
+        termination << [false, true]
     }
 
     void "overflow replaces waiting data and losses during refresh request another invalidation"() {

@@ -37,8 +37,10 @@ import java.util.function.Consumer;
  * it has not started.</p>
  *
  * <p>Shutdown closes admission and discards waiting callbacks without interrupting running work.
- * Completion includes worker termination. Callback exceptions are logged and processing continues;
- * errors propagate to the worker after active-task accounting is released.</p>
+ * Completion includes worker termination. Callback exceptions are logged; failed row deliveries
+ * also replace waiting work with one invalidation. Failed invalidation or termination callbacks
+ * do not schedule another invalidation. Errors propagate to the worker after active-task accounting
+ * is released.</p>
  */
 final class PostgresChangeNotificationDispatcher {
     private static final Logger LOG = LoggerFactory.getLogger(PostgresChangeNotificationDispatcher.class);
@@ -106,6 +108,11 @@ final class PostgresChangeNotificationDispatcher {
         } catch (Exception e) {
             LOG.error("PostgreSQL notification operation [{}] failed for datasource [{}] and listener method [{}]",
                 event.operation(), dataSourceName, description, e);
+            if (event.operation() == ChangeOperation.INSERT
+                || event.operation() == ChangeOperation.UPDATE
+                || event.operation() == ChangeOperation.DELETE) {
+                invalidate();
+            }
         } finally {
             synchronized (this) {
                 activeTasks--;
