@@ -431,14 +431,6 @@ class H2RepositorySpec extends AbstractRepositorySpec implements H2TestPropertyP
         then: "The result is correct"
         books.size() == 3
 
-        // TODO The repository has no root entity.
-        //  Declare the root entity, for example by extending GenericRepository<E, ID>.
-        // when: "Count books"
-        // def count = headlessBookRepository.countBooks()
-
-        // then: "The result is correct"
-        // count == 6
-
         then:
         cleanupData()
     }

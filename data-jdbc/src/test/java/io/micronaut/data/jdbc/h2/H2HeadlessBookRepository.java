@@ -26,8 +26,4 @@ import java.util.List;
 public abstract class H2HeadlessBookRepository {
     @Query(value = "select * from book where title like :title", nativeQuery = true)
     abstract List<Book> findByPattern(String title);
-
-    // The repository has no root entity. Declare the root entity, for example by extending GenericRepository<E, ID>.
-    // @Query(value = "select count(*) from book", nativeQuery = true)
-    // abstract Integer countBooks();
 }
