@@ -68,8 +68,8 @@ class MultipleDataSourceSpec extends Specification {
         otherRepositoryService.repo.save(new Person(name: "Joe"))
 
         then:
-        personRepository.count() == 1
-        otherPersonRepository.count() == 1
+        personRepository.findAll().collect { it.name } == ["Fred"]
+        otherPersonRepository.findAll().collect { it.name } == ["Joe"]
     }
 
     @Singleton
