@@ -15,6 +15,7 @@
  */
 package io.micronaut.data.jdbc.convert;
 
+import io.micronaut.data.model.runtime.convert.DataAccessType;
 import io.micronaut.data.model.runtime.convert.DatabaseTypeConversionContext;
 import org.jspecify.annotations.NonNull;
 
@@ -34,4 +35,13 @@ public interface JdbcConversionContext extends DatabaseTypeConversionContext {
      * @return the current connection
      */
     @NonNull Connection getConnection();
+
+    /**
+     * @return {@link DataAccessType#JDBC}, so that vector converters for another driver API are not used
+     * @since 5.3.0
+     */
+    @Override
+    default DataAccessType getDataAccessType() {
+        return DataAccessType.JDBC;
+    }
 }
