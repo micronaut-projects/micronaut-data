@@ -42,8 +42,9 @@ import java.util.Set;
  * metadata. Property placeholders are resolved before normalization for a UTF-8 database with
  * PostgreSQL's default identifier length limit.</p>
  *
- * <p>The annotation processor validates listener settings during compilation. Runtime checks
- * here identify invalid generated metadata or unsupported fallback mappings before subscription setup.</p>
+ * <p>The annotation processor validates literal listener settings during compilation. Runtime checks
+ * here validate resolved channels and identify invalid generated metadata or unsupported fallback mappings
+ * before subscription setup.</p>
  */
 final class PostgresChangeListenerDefinitionFactory {
     private final JdbcRepositoryOperations operations;
@@ -66,8 +67,7 @@ final class PostgresChangeListenerDefinitionFactory {
         if (notification == null) {
             throw invalidChangeListener(method, "requires @PostgresChangeNotification for a PostgreSQL datasource");
         }
-        String channel = notification.stringValue("channel")
-            .orElseThrow(() -> invalidChangeListener(method, "requires a PostgreSQL notification channel"));
+        String channel = PostgresNotificationIdentifiers.resolveChannel(notification, environment);
         RuntimePersistentEntity<?> entity = operations.getEntity(listenerMethod.entityArgument().getType());
         PostgresChangeListenerEntityLoader<?> loader = createEntityLoader(method, entity);
         String schema = entity.getAnnotationMetadata().stringValue(MappedEntity.class, "schema")

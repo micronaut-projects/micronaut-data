@@ -53,6 +53,18 @@ class PostgresChangeNotificationVisitorSpec extends AbstractTypeElementSpec {
         'NUL'       | 'book\\000changes'
     }
 
+    void "channel placeholders are retained for runtime resolution: #channel"() {
+        when:
+        def definition = buildBeanDefinition('test.BookListener', source(channel))
+
+        then:
+        definition.getRequiredMethod('changed', ChangeEvent).stringValue(
+            'io.micronaut.data.jdbc.annotation.PostgresChangeNotification', 'channel').orElseThrow() == channel
+
+        where:
+        channel << ['${app.channel}', 'books-${app.channel}', '${' + 'notification.' * 6 + 'channel}']
+    }
+
     void "Postgres annotation requires the generic listener contract"() {
         when:
         buildBeanDefinition('test.BookListener', source('books').replace('@ChangeListener', ''))

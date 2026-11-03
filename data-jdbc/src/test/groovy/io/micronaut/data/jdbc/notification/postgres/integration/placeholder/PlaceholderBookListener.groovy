@@ -37,6 +37,6 @@ class PlaceholderBookListener {
     final LinkedBlockingQueue<ChangeEvent<PlaceholderBook>> events = new LinkedBlockingQueue<>()
 
     @ChangeListener
-    @PostgresChangeNotification(channel = 'placeholder_changes')
+    @PostgresChangeNotification(channel = '${notification.test.channel}')
     void changed(ChangeEvent<PlaceholderBook> event) { events.add(event) }
 }

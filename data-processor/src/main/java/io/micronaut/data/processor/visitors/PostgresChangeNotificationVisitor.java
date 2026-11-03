@@ -88,7 +88,8 @@ public final class PostgresChangeNotificationVisitor implements TypeElementVisit
     }
 
     /**
-     * Validates the channel name without changing its spelling or case.
+     * Validates literal channel names without changing their spelling or case.
+     * Placeholder expressions are resolved and validated at runtime.
      *
      * @param element the annotated listener method
      * @param context the compilation visitor context used to report errors
@@ -96,6 +97,9 @@ public final class PostgresChangeNotificationVisitor implements TypeElementVisit
      */
     private static boolean validateChannel(MethodElement element, VisitorContext context) {
         String channel = element.stringValue(ANNOTATION, "channel").orElse("");
+        if (channel.contains("${")) {
+            return true;
+        }
         if (channel.isBlank() || channel.indexOf('\0') >= 0 || channel.getBytes(StandardCharsets.UTF_8).length > 63) {
             context.fail("@PostgresChangeNotification channel must be non-blank, contain no NUL characters, "
                 + "and occupy at most 63 UTF-8 bytes", element);

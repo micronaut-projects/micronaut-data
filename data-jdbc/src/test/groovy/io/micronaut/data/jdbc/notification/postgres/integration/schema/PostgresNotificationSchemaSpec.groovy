@@ -260,12 +260,14 @@ class PostgresNotificationSchemaSpec extends Specification implements PostgresTe
         true
     }
 
-    void "mapping placeholders support generated triggers and entity delivery"() {
+    @Unroll
+    void "mapping and channel placeholders support generated triggers and entity delivery for #channel"() {
         when:
         application = ApplicationContext.run(settings + [
             'spec.name': 'PostgresNotificationPlaceholderTest',
             'notification.test.schema': 'notification_schema_test',
             'notification.test.table': 'ConfiguredBooks',
+            'notification.test.channel': channel,
             'datasources.default.packages': ['io.micronaut.data.jdbc.notification.postgres.integration.placeholder'],
             'datasources.default.schema-generate': 'CREATE',
             'micronaut.data.jdbc.notifications.postgres.schema-generate': true,
@@ -281,6 +283,10 @@ class PostgresNotificationSchemaSpec extends Specification implements PostgresTe
         event != null
         event.entity().orElseThrow().title == 'resolved'
         event.metadata(PostgresChangeEventMetadata).orElseThrow().table() == 'ConfiguredBooks'
+        event.metadata(PostgresChangeEventMetadata).orElseThrow().channel() == channel
+
+        where:
+        channel << ['Configured Changes', 'a' * 63, 'é' * 31 + 'a']
     }
 
     void "notification schema generation is disabled by default"() {

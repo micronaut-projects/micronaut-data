@@ -114,6 +114,7 @@ public final class PostgresNotificationSchemaGenerator {
      * @param configuration the datasource configuration
      * @param entities the entities included in this schema-generation pass
      * @throws SQLException if schema resolution or SQL execution fails
+     * @throws IllegalArgumentException if a resolved notification channel is invalid
      * @throws IllegalStateException if listener key mappings are missing or conflicting, or the SQL resource cannot be read
      */
     public void generate(Connection connection, DataJdbcConfiguration configuration, PersistentEntity[] entities) throws SQLException {
@@ -209,7 +210,8 @@ public final class PostgresNotificationSchemaGenerator {
         Map<Subscription, List<String>> subscriptions = new LinkedHashMap<>();
         for (ChangeListenerMethod listener : registry.getListeners(datasource)) {
             ExecutableMethod<?, ?> method = listener.method();
-            if (!method.hasStereotype(PostgresChangeNotification.class)) {
+            var notification = method.getAnnotation(PostgresChangeNotification.class);
+            if (notification == null) {
                 continue;
             }
             Class<?> entityType = listener.entityArgument().getType();
@@ -217,6 +219,7 @@ public final class PostgresNotificationSchemaGenerator {
             if (entity == null) {
                 continue;
             }
+            String channel = PostgresNotificationIdentifiers.resolveChannel(notification, environment);
             boolean quoted = entity.getAnnotationMetadata().booleanValue(MappedEntity.class, "escape").orElse(true);
             String schema = entity.getAnnotationMetadata().stringValue(MappedEntity.class, "schema")
                 .filter(value -> !value.isEmpty()).map(value -> normalize(value, quoted)).orElse(null);
@@ -226,7 +229,6 @@ public final class PostgresNotificationSchemaGenerator {
             if (schema == null || schema.isEmpty()) {
                 throw new SQLException("Cannot determine the schema for PostgreSQL notification table " + entity.getPersistedName());
             }
-            String channel = method.stringValue(PostgresChangeNotification.class, "channel").orElseThrow();
             var queryMetadata = method.getAnnotation(PostgresChangeListenerQuery.class);
             List<String> columns;
             try {

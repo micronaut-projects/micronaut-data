@@ -77,6 +77,10 @@ public @interface PostgresChangeNotification {
      * The exact, case-sensitive channel passed to PostgreSQL's {@code pg_notify} function.
      * Supply the channel name without surrounding SQL identifier quotes. The name must not be blank
      * or contain a NUL character, and its UTF-8 encoding must be at most 63 bytes long.
+     * Property placeholders such as {@code ${app.channel}} are supported. Literal names are validated
+     * during compilation; resolved names are validated during startup before subscribing or installing
+     * notification triggers. Missing properties and invalid resolved names fail startup. The resolved
+     * name is used unchanged and must match the channel used by migration-managed triggers.
      *
      * @return The notification channel.
      */

@@ -308,7 +308,13 @@ snippet::example.BookCatalog[project-base="doc-examples/jdbc-postgres-notificati
 Every PostgreSQL listener must declare both ann:data.annotation.ChangeListener[] and
 ann:data.jdbc.annotation.PostgresChangeNotification[]. The required `channel` attribute names the exact channel
 used by the table triggers. Supply the case-sensitive channel name without SQL identifier quotes, using at most
-63 UTF-8 bytes. Blank names and names containing NUL characters are rejected during compilation.
+63 UTF-8 bytes. Literal names are checked during compilation and must not be blank or contain NUL characters.
+
+Property placeholders such as `@PostgresChangeNotification(channel = "${app.channel}")` are supported.
+The resolved channel is checked during startup, before `LISTEN` or notification function and trigger installation.
+Missing properties and resolved names that are blank, contain NUL characters, or exceed 63 UTF-8 bytes fail startup.
+The resolved spelling and case are preserved; channel names are not truncated. Migration-managed triggers must
+publish to the same resolved channel.
 
 Follow the shared <<notificationListenerRequirements, listener requirements>>, including the method signature
 and datasource selection.
