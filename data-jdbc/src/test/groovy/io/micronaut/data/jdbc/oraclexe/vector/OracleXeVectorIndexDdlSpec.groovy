@@ -37,6 +37,19 @@ class OracleXeVectorIndexDdlSpec extends Specification {
         Vector embedding
     }
 
+    @MappedEntity("document_embedding_hnsw")
+    static class DocumentEmbeddingHnswEntity {
+        Long id
+
+        @VectorStorage(length = 3)
+        @VectorIndex(
+            vectorIndexType = VectorIndexType.HNSW,
+            distanceType = VectorIndexType.DistanceType.L2_EUCLIDEAN_SQUARED,
+            accuracy = 95
+        )
+        Vector embedding
+    }
+
     @MappedEntity("document_embedding_default")
     static class DocumentEmbeddingDefaultEntity {
         Long id
@@ -73,6 +86,23 @@ class OracleXeVectorIndexDdlSpec extends Specification {
             s.contains("DISTANCE COSINE") &&
             s.contains("WITH TARGET ACCURACY 90")
         }
+    }
+
+    def "generates an in-memory Oracle HNSW VECTOR index"() {
+        given:
+        def builder = new SqlQueryBuilder(Dialect.ORACLE)
+        def entity = new RuntimePersistentEntity<>(DocumentEmbeddingHnswEntity.class)
+
+        when:
+        ApplicationContext ctx = ApplicationContext.run()
+        List<DefinitionProvider> providers = new ArrayList<>(ctx.getBeansOfType(SqlColumnDefinitionProvider))
+        providers.addAll(ctx.getBeansOfType(SqlIndexDefinitionProvider))
+        String[] statements = builder.buildCreateTableStatements(entity, providers)
+        ctx.close()
+
+        then:
+        def index = statements.find { it.contains("CREATE VECTOR INDEX") }
+        index.contains("ORGANIZATION INMEMORY NEIGHBOR GRAPH DISTANCE EUCLIDEAN_SQUARED WITH TARGET ACCURACY 95")
     }
 
     def "generates Oracle VECTOR(*, FLOAT64) when length annotation is absent"() {
