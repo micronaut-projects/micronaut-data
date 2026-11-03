@@ -211,6 +211,48 @@ class Test {
     }
 
     @Unroll
+    void "test Oracle UUID default for version #version and definition #definition"() {
+        given:
+        String mapping = definition ? "@MappedProperty(definition = \"$definition\")" : ""
+        ClassElement element = buildClassElement("""
+package test;
+import java.util.UUID;
+import io.micronaut.data.annotation.*;
+
+@MappedEntity
+class Test {
+    @Id
+    @GeneratedValue
+    $mapping
+    private UUID id;
+
+    public UUID getId() {
+        return id;
+    }
+
+    public void setId(UUID id) {
+        this.id = id;
+    }
+}
+
+""")
+        SqlQueryBuilder builder = new SqlQueryBuilder(Dialect.ORACLE, version)
+        def entity = new SourcePersistentEntity(element, {})
+        def sql = builder.buildCreateTableStatements(entity)
+
+        expect:
+        sql[0].contains(column)
+
+        where:
+        version | definition | column
+        null    | null       | '"ID" VARCHAR(36) DEFAULT SYS_GUID() NOT NULL'
+        '23.4'  | null       | '"ID" VARCHAR(36) DEFAULT SYS_GUID() NOT NULL'
+        '23.9'  | null       | '"ID" VARCHAR(36) DEFAULT RAW_TO_UUID(UUID()) NOT NULL'
+        '23.26' | null       | '"ID" VARCHAR(36) DEFAULT RAW_TO_UUID(UUID()) NOT NULL'
+        '23.26' | 'RAW(16)'  | '"ID" RAW(16) DEFAULT SYS_GUID() NOT NULL'
+    }
+
+    @Unroll
     void "test build insert for UUID and dialect - #dialect"() {
         given:
         BeanDefinition beanDefinition = buildRepository('test.MyInterface', """
