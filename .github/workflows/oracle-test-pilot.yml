@@ -63,13 +63,6 @@ jobs:
           # job needs, and saving more entries here would push those out of the repository's cache.
           cache-read-only: true
 
-      # The restored cache also holds the local build cache of those other jobs, which ran the JVM
-      # tests against other databases. Gradle would reuse their test results here instead of running
-      # the tests against the Test Pilot database, so drop it and keep only the dependencies.
-      - name: Drop the restored local build cache
-        shell: bash
-        run: rm -rf "$GRADLE_USER_HOME/caches/build-cache-1"
-
       - name: Pre-Build Steps
         uses: micronaut-projects/github-actions/graalvm/pre-build@master
         id: pre-build
