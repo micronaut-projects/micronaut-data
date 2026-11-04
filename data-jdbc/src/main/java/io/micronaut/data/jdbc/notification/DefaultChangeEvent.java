@@ -28,37 +28,28 @@ import java.util.Optional;
  * Default change-event implementation used by providers when entity state is already available or
  * intentionally unavailable.
  *
+ * @param operation The operation reported by the notification provider.
+ * @param entityValue The reloaded entity, or {@code null} when no entity state is available.
+ * @param metadata Provider-specific event metadata, or {@code null} when none is available.
  * @param <E> The persistent entity type.
  */
 @Internal
-public final class DefaultChangeEvent<E> implements ChangeEvent<E> {
-    private final ChangeOperation operation;
-    private final @Nullable E entity;
-    private final @Nullable ChangeEventMetadata metadata;
+public record DefaultChangeEvent<E>(ChangeOperation operation,
+                                    @Nullable E entityValue,
+                                    @Nullable ChangeEventMetadata metadata) implements ChangeEvent<E> {
 
     /**
      * Creates a change event.
      *
-     * @param operation The operation reported by the notification provider.
-     * @param entity The reloaded entity, or {@code null} when no entity state is available.
-     * @param metadata Provider-specific event metadata, or {@code null} when none is available.
+     * @throws NullPointerException if the operation is {@code null}
      */
-    public DefaultChangeEvent(ChangeOperation operation,
-                              @Nullable E entity,
-                              @Nullable ChangeEventMetadata metadata) {
-        this.operation = Objects.requireNonNull(operation, "operation");
-        this.entity = entity;
-        this.metadata = metadata;
-    }
-
-    @Override
-    public ChangeOperation operation() {
-        return operation;
+    public DefaultChangeEvent {
+        Objects.requireNonNull(operation, "operation");
     }
 
     @Override
     public Optional<E> entity() {
-        return Optional.ofNullable(entity);
+        return Optional.ofNullable(entityValue);
     }
 
     @Override

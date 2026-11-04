@@ -25,6 +25,8 @@ import io.micronaut.inject.ast.ParameterElement;
 import io.micronaut.inject.visitor.TypeElementVisitor;
 import io.micronaut.inject.visitor.VisitorContext;
 
+import java.util.Set;
+
 /**
  * Validates direct and composed database-neutral change-listener declarations at compile time.
  *
@@ -33,8 +35,13 @@ import io.micronaut.inject.visitor.VisitorContext;
  * Provider-specific annotation settings are validated by the visitor for
  * that provider.</p>
  */
-public final class ChangeListenerVisitor implements TypeElementVisitor<Object, Object> {
+public final class ChangeListenerVisitor implements TypeElementVisitor<Object, ChangeListener> {
     static final String CHANGE_EVENT = ChangeEvent.class.getName();
+
+    @Override
+    public Set<String> getSupportedAnnotationNames() {
+        return Set.of(ChangeListener.class.getName());
+    }
 
     @Override
     public int getOrder() {

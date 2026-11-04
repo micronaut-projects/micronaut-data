@@ -22,6 +22,7 @@ import io.micronaut.context.annotation.Parameter;
 import io.micronaut.context.annotation.Requires;
 import io.micronaut.context.event.ApplicationEventListener;
 import io.micronaut.context.event.StartupEvent;
+import io.micronaut.core.util.StringUtils;
 import io.micronaut.data.jdbc.operations.JdbcRepositoryOperations;
 
 import javax.sql.DataSource;
@@ -39,8 +40,10 @@ import java.util.List;
 @Context
 @EachBean(DataSource.class)
 @Requires(beans = ChangeNotificationProvider.class)
-@Requires(property = "micronaut.data.jdbc.notifications.enabled", value = "true", defaultValue = "true")
+@Requires(property = ChangeListenerRegistrationHandler.ENABLED_PROPERTY,
+    value = StringUtils.TRUE, defaultValue = StringUtils.TRUE)
 final class ChangeListenerRegistrationHandler implements ApplicationEventListener<StartupEvent> {
+    static final String ENABLED_PROPERTY = "micronaut.data.jdbc.notifications.enabled";
 
     private final String dataSourceName;
     private final JdbcRepositoryOperations operations;

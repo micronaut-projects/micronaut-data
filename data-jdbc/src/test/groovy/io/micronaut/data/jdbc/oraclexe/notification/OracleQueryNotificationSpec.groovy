@@ -167,7 +167,7 @@ class OracleQueryNotificationSpec extends Specification implements OracleTestPro
         entity.title == "Continuous Query Notification"
         notification.metadata(OracleChangeEventMetadata).orElseThrow().rowId()
         notification.metadata(OracleChangeEventMetadata).orElseThrow().table() == 'OBJECT_CHANGE_NOTIFICATION_BOOK'
-        notification.metadata(OracleChangeEventMetadata).orElseThrow().schema().orElseThrow() == schema
+        notification.metadata(OracleChangeEventMetadata).orElseThrow().schema() == schema
     }
 
     void "change listener receives every entity affected by a bulk update"() {
@@ -224,7 +224,7 @@ class OracleQueryNotificationSpec extends Specification implements OracleTestPro
         notification.entity().isEmpty()
         notification.metadata(OracleChangeEventMetadata).orElseThrow().rowId()
         notification.metadata(OracleChangeEventMetadata).orElseThrow().table() == 'OBJECT_CHANGE_NOTIFICATION_BOOK'
-        notification.metadata(OracleChangeEventMetadata).orElseThrow().schema().orElseThrow() == schema
+        notification.metadata(OracleChangeEventMetadata).orElseThrow().schema() == schema
     }
 
     void "change listener receives a committed change only after its transaction commits"() {
@@ -297,7 +297,7 @@ class OracleQueryNotificationSpec extends Specification implements OracleTestPro
         entity.title == "Query Change Notification"
         notification.metadata(OracleChangeEventMetadata).orElseThrow().rowId()
         notification.metadata(OracleChangeEventMetadata).orElseThrow().table() == 'QUERY_CHANGE_NOTIFICATION_BOOK'
-        notification.metadata(OracleChangeEventMetadata).orElseThrow().schema().orElseThrow() == schema
+        notification.metadata(OracleChangeEventMetadata).orElseThrow().schema() == schema
     }
 
     void "query change listener ignores a row outside the registered query"() {

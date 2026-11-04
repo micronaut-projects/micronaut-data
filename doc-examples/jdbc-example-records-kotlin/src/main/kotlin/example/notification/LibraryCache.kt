@@ -52,7 +52,7 @@ open class LibraryCache(private val repository: LibraryRepository) {
         }
         event.metadata(OracleChangeEventMetadata::class.java).ifPresent { metadata ->
             log.debug("Changed library table: {}.{}, ROWID: {}",
-                metadata.schema().orElse("<unknown>"), metadata.table(), metadata.rowId())
+                metadata.schema() ?: "<unknown>", metadata.table(), metadata.rowId())
         }
         when (event.operation()) {
             ChangeOperation.INSERT, ChangeOperation.UPDATE ->

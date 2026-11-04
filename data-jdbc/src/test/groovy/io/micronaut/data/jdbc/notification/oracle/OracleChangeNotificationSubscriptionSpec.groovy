@@ -16,6 +16,7 @@
 package io.micronaut.data.jdbc.notification.oracle
 
 import io.micronaut.context.BeanContext
+import io.micronaut.data.jdbc.notification.ChangeListenerExceptionHandler
 import io.micronaut.data.exceptions.DataAccessException
 import io.micronaut.data.notification.ChangeEvent
 import io.micronaut.data.jdbc.notification.ChangeNotificationQueue
@@ -24,6 +25,7 @@ import io.micronaut.data.jdbc.runtime.ConnectionCallback
 import io.micronaut.data.jdbc.runtime.JdbcOperations
 import io.micronaut.inject.BeanDefinition
 import io.micronaut.inject.ExecutableMethod
+import io.micronaut.inject.ExecutionHandle
 import io.micronaut.scheduling.TaskScheduler
 import oracle.jdbc.OracleConnection
 import oracle.jdbc.OracleStatement
@@ -1961,7 +1963,7 @@ class OracleChangeNotificationSubscriptionSpec extends Specification {
             Mock(BeanDefinition), method, OracleTableIdentifier.parse('BOOK'),
             'SELECT * FROM BOOK', null, new Properties())
         def beanContext = Mock(BeanContext)
-        beanContext.getBean(_ as BeanDefinition) >> new Object()
+        beanContext.createExecutionHandle(definition.beanDefinition(), method) >> ExecutionHandle.of(new Object(), method)
         def stopped = new AtomicBoolean()
         def notifications = notificationQueue ?: Stub(ChangeNotificationQueue) {
             enqueue(_ as Runnable, _ as Runnable) >> { Runnable task, Runnable refresh -> executor.execute(task) }
@@ -1970,7 +1972,8 @@ class OracleChangeNotificationSubscriptionSpec extends Specification {
             stop() >> { stopped.set(true); CompletableFuture.completedStage(null) }
             isStopped() >> { stopped.get() }
         }
-        new OracleChangeNotificationSubscription('inventory', definition, registrar, beanContext, executor, notifications, scheduler, tracker, recoveryConfiguration)
+        new OracleChangeNotificationSubscription('inventory', definition, registrar, beanContext, executor, notifications, scheduler, tracker, recoveryConfiguration,
+            Stub(ChangeListenerExceptionHandler))
     }
 
     private static Object findChangeEvent(Object value) {

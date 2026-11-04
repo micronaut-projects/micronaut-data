@@ -15,13 +15,16 @@
  */
 package io.micronaut.data.jdbc.notification.oracle;
 
-import io.micronaut.context.BeanContext;
+import io.micronaut.context.ExecutionHandleLocator;
 import io.micronaut.data.notification.ChangeEvent;
 import io.micronaut.data.notification.ChangeOperation;
 import io.micronaut.data.jdbc.notification.ChangeNotificationQueue;
 import io.micronaut.data.jdbc.notification.DefaultChangeEvent;
 import io.micronaut.data.jdbc.notification.DeferredChangeEvent;
+import io.micronaut.data.jdbc.notification.ChangeListenerException;
+import io.micronaut.data.jdbc.notification.ChangeListenerExceptionHandler;
 import io.micronaut.inject.ExecutableMethod;
+import io.micronaut.inject.ExecutionHandle;
 import oracle.jdbc.OracleConnection;
 import oracle.jdbc.dcn.DatabaseChangeEvent;
 import oracle.jdbc.dcn.DatabaseChangeListener;
@@ -85,7 +88,8 @@ import java.util.function.BooleanSupplier;
  * <p>The dedicated listener worker processes queued data, entity loading through listener advice,
  * and listener invocation sequentially. Different listeners can run concurrently. Queued work
  * is counted by the datasource task tracker only when execution starts; direct driver lifecycle
- * handling is tracked while it runs. Processing and listener invocation exceptions are logged.</p>
+ * handling is tracked while it runs. Listener failures are passed to {@link ChangeListenerExceptionHandler};
+ * other processing errors are logged.</p>
  *
  * <p>Application shutdown closes task admission and discards waiting callbacks without interrupting
  * callbacks already running. The worker also stops after delivering a final termination or
@@ -98,7 +102,8 @@ final class OracleChangeNotificationDispatcher implements DatabaseChangeListener
     private final String dataSourceName;
     private final OracleChangeListenerDefinition listenerDefinition;
     private final String methodDescription;
-    private final BeanContext beanContext;
+    private final ExecutionHandle<?, ?> listenerExecutionHandle;
+    private final ChangeListenerExceptionHandler exceptionHandler;
     private final ChangeNotificationQueue notificationQueue;
     private final OracleChangeNotificationTaskTracker taskTracker;
     private final OracleChangeNotificationSubscription subscription;
@@ -112,16 +117,20 @@ final class OracleChangeNotificationDispatcher implements DatabaseChangeListener
     @SuppressWarnings("java:S3077")
     private volatile @Nullable RegistrationOptions registrationOptions;
 
+    @SuppressWarnings("unchecked")
     OracleChangeNotificationDispatcher(String dataSourceName,
                                        OracleChangeListenerDefinition listenerDefinition,
-                                       BeanContext beanContext,
+                                       ExecutionHandleLocator executionHandleLocator,
                                        ChangeNotificationQueue notificationQueue,
                                        OracleChangeNotificationTaskTracker taskTracker,
-                                       OracleChangeNotificationSubscription subscription) {
+                                       OracleChangeNotificationSubscription subscription,
+                                       ChangeListenerExceptionHandler exceptionHandler) {
         this.dataSourceName = dataSourceName;
         this.listenerDefinition = listenerDefinition;
         this.methodDescription = listenerDefinition.method().getDescription(true);
-        this.beanContext = beanContext;
+        this.listenerExecutionHandle = executionHandleLocator.createExecutionHandle(
+            listenerDefinition.beanDefinition(), (ExecutableMethod<Object, ?>) listenerDefinition.method());
+        this.exceptionHandler = exceptionHandler;
         this.notificationQueue = notificationQueue;
         this.taskTracker = taskTracker;
         this.subscription = subscription;
@@ -623,24 +632,30 @@ final class OracleChangeNotificationDispatcher implements DatabaseChangeListener
     }
 
     /**
-     * Resolves the listener bean and invokes its executable method with the change event.
-     * Exceptions from bean lookup, listener advice, or the listener itself are logged with the
-     * available row context so processing can continue.
+     * Invokes the listener through its cached execution handle, which resolves the bean lazily
+     * and reuses it across notifications and registration recovery.
+     * Exceptions from bean lookup, listener advice, or the listener itself are passed to the
+     * configured handler with the event and available row context so processing can continue.
      *
      * @param event the change event passed to the listener
      * @param rowId the affected Oracle ROWID, or {@code null} when no row-specific context is available
      */
-    @SuppressWarnings({"unchecked", "rawtypes"})
     private void invokeListener(ChangeEvent<?> event, @Nullable String rowId) {
         try {
-            ((ExecutableMethod) listenerDefinition.method()).invoke(beanContext.getBean(listenerDefinition.beanDefinition()), event);
+            listenerExecutionHandle.invoke(event);
         } catch (Exception e) {
-            if (rowId == null) {
-                LOG.error("Error handling DCN for listener method [{}], operation [{}], table [{}], ROWID unavailable",
-                    methodDescription, event.operation(), listenerDefinition.tableIdentifier().sqlName(), e);
-            } else {
-                LOG.error("Error handling DCN for listener method [{}], operation [{}], table [{}], ROWID [{}]",
-                    methodDescription, event.operation(), listenerDefinition.tableIdentifier().sqlName(), rowId, e);
+            String message = "Error handling DCN for datasource [" + dataSourceName + "], listener method ["
+                + methodDescription + "], operation [" + event.operation() + "], table ["
+                + listenerDefinition.tableIdentifier().sqlName() + "], "
+                + (rowId == null ? "ROWID unavailable" : "ROWID [" + rowId + "]");
+            ChangeListenerException failure = new ChangeListenerException(message, dataSourceName,
+                listenerDefinition.method(), event, e);
+            try {
+                exceptionHandler.handle(failure);
+            } catch (RuntimeException handlerFailure) {
+                LOG.error("Error in change listener exception handler for datasource [{}] and listener method [{}]",
+                    dataSourceName, methodDescription, handlerFailure);
+                LOG.error(message, e);
             }
         }
     }

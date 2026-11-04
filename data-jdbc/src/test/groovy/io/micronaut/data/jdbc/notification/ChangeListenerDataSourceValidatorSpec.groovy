@@ -22,6 +22,7 @@ import io.micronaut.context.annotation.Factory
 import io.micronaut.context.annotation.Replaces
 import io.micronaut.context.annotation.Requires
 import io.micronaut.context.event.StartupEvent
+import io.micronaut.context.exceptions.ConfigurationException
 import io.micronaut.core.type.Argument
 import io.micronaut.data.annotation.Id
 import io.micronaut.data.annotation.MappedEntity
@@ -141,7 +142,7 @@ class ChangeListenerDataSourceValidatorSpec extends Specification {
         validator.onApplicationEvent(Mock(StartupEvent))
 
         then:
-        def failure = thrown(IllegalStateException)
+        def failure = thrown(ConfigurationException)
         failure.message.contains('datasource [inventory] but no matching DataSource bean is configured')
         0 * resolver._
     }
@@ -160,7 +161,7 @@ class ChangeListenerDataSourceValidatorSpec extends Specification {
 
         then:
         1 * resolver.get() >> new ChangeNotificationProviderResolver([])
-        def failure = thrown(IllegalStateException)
+        def failure = thrown(ConfigurationException)
         failure.message.contains('no change notification provider is available')
     }
 

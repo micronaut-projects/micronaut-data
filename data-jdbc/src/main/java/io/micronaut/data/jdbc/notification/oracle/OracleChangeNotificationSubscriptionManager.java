@@ -18,6 +18,7 @@ package io.micronaut.data.jdbc.notification.oracle;
 import io.micronaut.context.BeanContext;
 import io.micronaut.data.exceptions.DataAccessException;
 import io.micronaut.data.jdbc.runtime.JdbcOperations;
+import io.micronaut.data.jdbc.notification.ChangeListenerExceptionHandler;
 import io.micronaut.scheduling.TaskScheduler;
 import org.jspecify.annotations.Nullable;
 import org.slf4j.Logger;
@@ -66,14 +67,15 @@ final class OracleChangeNotificationSubscriptionManager {
                                                 TaskScheduler taskScheduler,
                                                 List<OracleChangeListenerDefinition> listenerDefinitions,
                                                 OracleNotificationConfiguration notificationConfiguration,
-                                                OracleRegistrationRecoveryConfiguration recoveryConfiguration) {
+                                                OracleRegistrationRecoveryConfiguration recoveryConfiguration,
+                                                ChangeListenerExceptionHandler exceptionHandler) {
         this.dataSourceName = dataSourceName;
         this.blockingExecutor = blockingExecutor;
         OracleChangeNotificationRegistrar registrar = new OracleChangeNotificationRegistrar(dataSourceName, operations);
         this.subscriptions = listenerDefinitions.stream()
             .map(definition -> new OracleChangeNotificationSubscription(
                 dataSourceName, definition, registrar, beanContext, blockingExecutor, notificationConfiguration,
-                taskScheduler, taskTracker, recoveryConfiguration))
+                taskScheduler, taskTracker, recoveryConfiguration, exceptionHandler))
             .toList();
     }
 

@@ -20,6 +20,11 @@ import ch.qos.logback.classic.Logger
 import ch.qos.logback.classic.spi.ILoggingEvent
 import ch.qos.logback.core.read.ListAppender
 import io.micronaut.context.BeanContext
+import io.micronaut.data.jdbc.notification.ChangeListenerException
+import io.micronaut.data.jdbc.notification.ChangeListenerExceptionHandler
+import io.micronaut.context.ApplicationContext
+import io.micronaut.context.ExecutionHandleLocator
+import io.micronaut.context.RuntimeBeanDefinition
 import io.micronaut.data.notification.ChangeEvent
 import io.micronaut.data.jdbc.notification.ChangeNotificationQueue
 import io.micronaut.data.notification.ChangeOperation
@@ -27,6 +32,7 @@ import io.micronaut.data.jdbc.notification.DefaultChangeEvent
 import io.micronaut.data.jdbc.notification.DeferredChangeEvent
 import io.micronaut.inject.BeanDefinition
 import io.micronaut.inject.ExecutableMethod
+import io.micronaut.inject.ExecutionHandle
 import oracle.jdbc.dcn.DatabaseChangeEvent
 import oracle.jdbc.dcn.QueryChangeDescription
 import oracle.jdbc.dcn.RowChangeDescription
@@ -35,6 +41,7 @@ import oracle.jdbc.OracleConnection
 import oracle.sql.ROWID
 import org.slf4j.LoggerFactory
 import spock.lang.Specification
+import spock.mock.MockMakers
 
 import java.util.concurrent.CountDownLatch
 import java.util.concurrent.Executor
@@ -44,8 +51,49 @@ import java.util.concurrent.atomic.AtomicBoolean
 import java.util.concurrent.atomic.AtomicInteger
 import java.util.function.BiConsumer
 import java.util.function.LongConsumer
+import java.util.function.Supplier
 
 class OracleChangeNotificationDispatcherSpec extends Specification {
+
+    void "reuses a lazily resolved listener execution handle across notifications"() {
+        given:
+        def beanContext = ApplicationContext.run()
+        def executionHandleLocator = Mock(ExecutionHandleLocator)
+        def bean = new Object()
+        def creations = new AtomicInteger()
+        def beanDefinition = RuntimeBeanDefinition.builder(Object, {
+            creations.incrementAndGet()
+            bean
+        } as Supplier).singleton(false).build()
+        beanContext.registerBeanDefinition(beanDefinition)
+        def method = Mock(ExecutableMethod)
+        method.getDescription(true) >> 'void onChange(ChangeEvent<Book>)'
+
+        when:
+        def dispatcher = new OracleChangeNotificationDispatcher('inventory',
+            definition(beanDefinition, method, new Properties()), executionHandleLocator,
+            Mock(ChangeNotificationQueue), new OracleChangeNotificationTaskTracker(), Stub(mockMaker: MockMakers.mockito, OracleChangeNotificationSubscription),
+            Stub(ChangeListenerExceptionHandler))
+
+        then:
+        1 * executionHandleLocator.createExecutionHandle(beanDefinition, method) >> {
+            beanContext.createExecutionHandle(beanDefinition, method)
+        }
+        creations.get() == 0
+        0 * method.invoke(_, _)
+
+        when:
+        dispatcher.dispatchInvalidation(41L, 'first notification')
+        dispatcher.dispatchInvalidation(42L, 'after registration recovery')
+
+        then:
+        2 * method.invoke(bean, { Object[] arguments -> isInvalidation(arguments) })
+        0 * executionHandleLocator.createExecutionHandle(_, _)
+        creations.get() == 1
+
+        cleanup:
+        beanContext.close()
+    }
 
     void "routes lifecycle callbacks to their handlers (#eventType)"() {
         given:
@@ -148,7 +196,8 @@ class OracleChangeNotificationDispatcherSpec extends Specification {
         def event = Mock(DatabaseChangeEvent)
         def dispatcher = new OracleChangeNotificationDispatcher(
                 'inventory', definition(null, Mock(ExecutableMethod), new Properties()), Mock(BeanContext),
-                notificationQueue(executor), new OracleChangeNotificationTaskTracker(), Stub(OracleChangeNotificationSubscription))
+                notificationQueue(executor), new OracleChangeNotificationTaskTracker(), Stub(mockMaker: MockMakers.mockito, OracleChangeNotificationSubscription),
+            Stub(ChangeListenerExceptionHandler))
 
         when:
         dispatcher.onDatabaseChangeNotification(event)
@@ -533,7 +582,7 @@ class OracleChangeNotificationDispatcherSpec extends Specification {
             def metadata = change.metadata(OracleChangeEventMetadata).orElseThrow()
             change.operation() == ChangeOperation.DELETE &&
                     metadata.rowId() == 'AAEH7kAAEAAABv3AAA' &&
-                    metadata.schema().orElse(null) == expectedSchema &&
+                    metadata.schema() == expectedSchema &&
                     metadata.table() == expectedTable
         })
 
@@ -627,7 +676,7 @@ class OracleChangeNotificationDispatcherSpec extends Specification {
         then:
         operations == [ChangeOperation.INSERT, ChangeOperation.UPDATE, ChangeOperation.DELETE]
         metadataRowIds == ["AAEH7kAAEAAABv3AAA"] * 3
-        schemas == [Optional.empty()] * 3
+        schemas == [null] * 3
         tables == ['BOOK'] * 3
     }
 
@@ -675,7 +724,7 @@ class OracleChangeNotificationDispatcherSpec extends Specification {
         changeOperation << [ChangeOperation.INSERT, ChangeOperation.UPDATE, ChangeOperation.DELETE]
     }
 
-    void "continues dispatching rows after a listener invocation failure"() {
+    void "reports listener failures and continues dispatching rows (handler throws=#handlerThrows)"() {
         given:
         def beanDefinition = Mock(BeanDefinition)
         def bean = new Object()
@@ -701,15 +750,17 @@ class OracleChangeNotificationDispatcherSpec extends Specification {
         event.getEventType() >> DatabaseChangeEvent.EventType.OBJCHANGE
         event.getTableChangeDescription() >> ([table] as TableChangeDescription[])
         def invokedRowIds = []
+        def listenerFailure = new IllegalStateException('listener failure')
+        def exceptionHandler = Mock(ChangeListenerExceptionHandler)
         method.invoke(bean, _) >> { Object[] arguments ->
             String rowId = eventArgument(arguments).metadata(OracleChangeEventMetadata).get().rowId()
             invokedRowIds << rowId
             if (invokedRowIds.size() == 1) {
-                throw new IllegalStateException("listener failure")
+                throw listenerFailure
             }
             null
         }
-        def dispatcher = dispatcher(definition(beanDefinition, method, new Properties()), beanContext)
+        def dispatcher = dispatcher(definition(beanDefinition, method, new Properties()), beanContext, exceptionHandler)
 
         when:
         dispatcher.onDatabaseChangeNotification(event)
@@ -717,6 +768,44 @@ class OracleChangeNotificationDispatcherSpec extends Specification {
         then:
         noExceptionThrown()
         invokedRowIds == ["AAEH7kAAEAAABv3AAA", "AAEH7kAAEAAABv3AAB"]
+        1 * exceptionHandler.handle({ ChangeListenerException failure ->
+            failure.cause.is(listenerFailure) &&
+                failure.dataSourceName == 'inventory' &&
+                failure.listenerMethod.is(method) &&
+                failure.event.operation() == ChangeOperation.DELETE &&
+                failure.event.metadata(OracleChangeEventMetadata).orElseThrow().rowId() == 'AAEH7kAAEAAABv3AAA' &&
+                failure.message.contains('table [BOOK]') && failure.message.contains('ROWID [AAEH7kAAEAAABv3AAA]')
+        }) >> {
+            if (handlerThrows) {
+                throw new IllegalStateException('exception handler failure')
+            }
+        }
+
+        where:
+        handlerThrows << [false, true]
+    }
+
+    void "reports #operation listener failures without row metadata"() {
+        given:
+        def method = Mock(ExecutableMethod)
+        method.getDescription(true) >> 'void onChange(ChangeEvent<Book>)'
+        def listenerFailure = new IllegalStateException('listener failure')
+        method.invoke(_, _) >> { throw listenerFailure }
+        def exceptionHandler = Mock(ChangeListenerExceptionHandler)
+        def dispatcher = dispatcher(definition(null, method, new Properties()), Mock(BeanContext), exceptionHandler)
+
+        when:
+        dispatcher.enqueueLifecycleEvent(41L, operation, 'test', { true })
+
+        then:
+        1 * exceptionHandler.handle({ ChangeListenerException failure ->
+            failure.cause.is(listenerFailure) && failure.listenerMethod.is(method) &&
+                failure.event.operation() == operation && failure.event.metadata(OracleChangeEventMetadata).isEmpty() &&
+                failure.message.contains('ROWID unavailable')
+        })
+
+        where:
+        operation << [ChangeOperation.INVALIDATE, ChangeOperation.TERMINATED]
     }
 
     void "driver lifecycle handling bypasses the listener queue"() {
@@ -1092,12 +1181,20 @@ class OracleChangeNotificationDispatcherSpec extends Specification {
 
     private OracleChangeNotificationDispatcher dispatcher(OracleChangeListenerDefinition definition,
                                                           BeanContext beanContext) {
+        return dispatcher(definition, beanContext, Stub(ChangeListenerExceptionHandler))
+    }
+
+    private OracleChangeNotificationDispatcher dispatcher(OracleChangeListenerDefinition definition,
+                                                          BeanContext beanContext,
+                                                          ChangeListenerExceptionHandler exceptionHandler) {
         LongConsumer registrationPurgedHandler = { long ignored -> } as LongConsumer
         BiConsumer<Long, DatabaseChangeEvent.AdditionalEventType> deregistrationHandler =
                 { Long ignored, DatabaseChangeEvent.AdditionalEventType ignoredType -> } as BiConsumer
         LongConsumer queryDeregistrationHandler = { long ignored -> } as LongConsumer
         return dispatcher(definition, beanContext,
-                registrationPurgedHandler, deregistrationHandler, queryDeregistrationHandler)
+                registrationPurgedHandler, deregistrationHandler, queryDeregistrationHandler,
+                { long ignored -> } as LongConsumer, { Runnable task -> task.run() } as Executor,
+                new OracleChangeNotificationTaskTracker(), exceptionHandler)
     }
 
     private OracleChangeNotificationDispatcher dispatcher(OracleChangeListenerDefinition definition,
@@ -1131,8 +1228,9 @@ class OracleChangeNotificationDispatcherSpec extends Specification {
                                                           LongConsumer queryDeregistrationHandler,
                                                           LongConsumer databaseShutdownHandler,
                                                           Object executor,
-                                                          OracleChangeNotificationTaskTracker taskTracker) {
-        def subscription = Stub(OracleChangeNotificationSubscription) {
+                                                          OracleChangeNotificationTaskTracker taskTracker,
+                                                          ChangeListenerExceptionHandler exceptionHandler = null) {
+        def subscription = Stub(mockMaker: MockMakers.mockito, OracleChangeNotificationSubscription) {
             handleRegistrationPurged(_) >> { long id -> registrationPurgedHandler.accept(id) }
             handleRegistrationDeregistered(_, _) >> { long id, DatabaseChangeEvent.AdditionalEventType reason ->
                 deregistrationHandler.accept(id, reason)
@@ -1142,8 +1240,13 @@ class OracleChangeNotificationDispatcherSpec extends Specification {
             acceptsDataNotification(_) >> true
             enqueueDataNotification(_, _) >> { long id, Runnable enqueue -> enqueue.run() }
         }
+        beanContext.createExecutionHandle(definition.beanDefinition(), definition.method()) >> {
+            def beanDefinition = definition.beanDefinition()
+            ExecutionHandle.of(beanDefinition == null ? null : beanContext.getBean(beanDefinition), definition.method())
+        }
+        def handler = exceptionHandler ?: Stub(ChangeListenerExceptionHandler)
         def dispatcher = new OracleChangeNotificationDispatcher(
-                "inventory", definition, beanContext, notificationQueue(executor), taskTracker, subscription)
+                "inventory", definition, beanContext, notificationQueue(executor), taskTracker, subscription, handler)
         dispatcher.configureRegistrationOptions(definition.registrationProperties())
         return dispatcher
     }

@@ -57,7 +57,7 @@ See <<notificationChangeEvents, Handling Change Events>> for the common event AP
 Oracle Database row events include api:data.jdbc.notification.oracle.OracleChangeEventMetadata[], a read-only interface exposing:
 
 * `rowId()` -- the row-location hint reported by Oracle Database;
-* `schema()` -- the reported schema (table owner), or empty when the reported table name is unqualified; and
+* `schema()` -- the reported schema (table owner), or `null` when the reported table name is unqualified; and
 * `table()` -- the reported unqualified table name.
 
 `schema()` and `table()` return names as reported by Oracle Database, including capitalization and special characters.

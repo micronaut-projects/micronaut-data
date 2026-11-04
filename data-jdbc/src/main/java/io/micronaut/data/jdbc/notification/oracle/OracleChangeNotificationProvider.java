@@ -25,6 +25,7 @@ import io.micronaut.core.order.Ordered;
 import io.micronaut.core.version.SemanticVersion;
 import io.micronaut.data.exceptions.DataAccessException;
 import io.micronaut.data.jdbc.notification.ChangeListenerMethod;
+import io.micronaut.data.jdbc.notification.ChangeListenerExceptionHandler;
 import io.micronaut.data.jdbc.notification.ChangeNotificationProvider;
 import io.micronaut.data.jdbc.operations.JdbcRepositoryOperations;
 import io.micronaut.runtime.graceful.GracefulShutdownCapable;
@@ -77,6 +78,7 @@ final class OracleChangeNotificationProvider implements ChangeNotificationProvid
     private static final String MINIMUM_DRIVER_VERSION = "23.26.3.0.0";
 
     private final BeanContext beanContext;
+    private final ChangeListenerExceptionHandler exceptionHandler;
     private final Executor blockingExecutor;
     private final TaskScheduler taskScheduler;
     private final OracleNotificationConfiguration notificationConfiguration;
@@ -93,8 +95,10 @@ final class OracleChangeNotificationProvider implements ChangeNotificationProvid
                                      OracleNotificationConfiguration notificationConfiguration,
                                      OracleRegistrationRecoveryConfiguration recoveryConfiguration,
                                      @Value("${micronaut.lifecycle.graceful-shutdown.enabled:false}") boolean gracefulShutdownEnabled,
-                                     @Value("${micronaut.lifecycle.graceful-shutdown.grace-period:15s}") Duration shutdownGracePeriod) {
+                                     @Value("${micronaut.lifecycle.graceful-shutdown.grace-period:15s}") Duration shutdownGracePeriod,
+                                     ChangeListenerExceptionHandler exceptionHandler) {
         this.beanContext = beanContext;
+        this.exceptionHandler = exceptionHandler;
         this.blockingExecutor = blockingExecutor;
         this.taskScheduler = taskScheduler;
         this.notificationConfiguration = notificationConfiguration;
@@ -149,7 +153,8 @@ final class OracleChangeNotificationProvider implements ChangeNotificationProvid
             .map(definitionFactory::create)
             .toList();
         OracleChangeNotificationSubscriptionManager subscriptionManager = new OracleChangeNotificationSubscriptionManager(
-            dataSourceName, operations, beanContext, blockingExecutor, taskScheduler, listenerDefinitions, notificationConfiguration, recoveryConfiguration);
+            dataSourceName, operations, beanContext, blockingExecutor, taskScheduler, listenerDefinitions, notificationConfiguration, recoveryConfiguration,
+            exceptionHandler);
         if (subscriptionManagers.putIfAbsent(dataSourceName, subscriptionManager) != null) {
             throw new IllegalStateException("DCN subscriptions for datasource [" + dataSourceName
                 + "] have already been discovered; additional registrations are not supported");

@@ -15,6 +15,7 @@
  */
 package io.micronaut.data.jdbc.notification.oracle;
 
+import io.micronaut.core.util.StringUtils;
 import io.micronaut.data.jdbc.operations.JdbcRepositoryOperations;
 import io.micronaut.data.model.DataType;
 import io.micronaut.data.model.query.builder.sql.Dialect;
@@ -44,7 +45,6 @@ import java.util.List;
  * @param <E> The entity type.
  */
 final class OracleChangeListenerEntityLoader<E> {
-    private static final String[] EMPTY_EXPANDABLE_QUERY_PARTS = new String[0];
     private static final QueryParameterBinding ROW_ID_BINDING = new RowIdQueryParameterBinding();
 
     private final JdbcRepositoryOperations operations;
@@ -62,7 +62,7 @@ final class OracleChangeListenerEntityLoader<E> {
         this.operations = operations;
         Class<E> resolvedEntityType = (Class<E>) entityType;
         RuntimePersistentEntity<E> entity = operations.getEntity(resolvedEntityType);
-        StoredQuery<E, E> storedQuery = new BasicStoredQuery<>(query, EMPTY_EXPANDABLE_QUERY_PARTS,
+        StoredQuery<E, E> storedQuery = new BasicStoredQuery<>(query, StringUtils.EMPTY_STRING_ARRAY,
             List.of(ROW_ID_BINDING), resolvedEntityType, resolvedEntityType, StoredQuery.OperationType.QUERY);
         SqlQueryBuilder queryBuilder = new SqlQueryBuilder(Dialect.ORACLE);
         this.sqlStoredQuery = new DefaultSqlStoredQuery<>(storedQuery, entity, queryBuilder,

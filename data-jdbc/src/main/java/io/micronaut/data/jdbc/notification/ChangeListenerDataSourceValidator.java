@@ -21,8 +21,10 @@ import io.micronaut.context.annotation.Context;
 import io.micronaut.context.annotation.Requires;
 import io.micronaut.context.event.ApplicationEventListener;
 import io.micronaut.context.event.StartupEvent;
+import io.micronaut.context.exceptions.ConfigurationException;
 import io.micronaut.core.annotation.Order;
 import io.micronaut.core.order.Ordered;
+import io.micronaut.core.util.StringUtils;
 import io.micronaut.inject.qualifiers.Qualifiers;
 
 import javax.sql.DataSource;
@@ -36,7 +38,8 @@ import java.util.Map;
  */
 @Context
 @Order(Ordered.HIGHEST_PRECEDENCE)
-@Requires(property = "micronaut.data.jdbc.notifications.enabled", value = "true", defaultValue = "true")
+@Requires(property = ChangeListenerRegistrationHandler.ENABLED_PROPERTY,
+    value = StringUtils.TRUE, defaultValue = StringUtils.TRUE)
 final class ChangeListenerDataSourceValidator implements ApplicationEventListener<StartupEvent> {
 
     private final BeanContext beanContext;
@@ -51,9 +54,10 @@ final class ChangeListenerDataSourceValidator implements ApplicationEventListene
     }
 
     /**
-     * Fails startup if any listener references a datasource without a matching bean.
+     * Validates listener datasource and notification-provider configuration before registration.
      *
      * @param event the application startup event
+     * @throws ConfigurationException if a listener's datasource or a notification provider is missing
      */
     @Override
     public void onApplicationEvent(StartupEvent event) {
@@ -64,13 +68,13 @@ final class ChangeListenerDataSourceValidator implements ApplicationEventListene
         for (Map.Entry<String, List<ChangeListenerMethod>> entry : listeners.entrySet()) {
             if (!beanContext.containsBean(DataSource.class, Qualifiers.byName(entry.getKey()))) {
                 ChangeListenerMethod listener = entry.getValue().get(0);
-                throw new IllegalStateException("@ChangeListener method [" + listener.method().getDescription(true)
+                throw new ConfigurationException("@ChangeListener method [" + listener.method().getDescription(true)
                     + "] selects datasource [" + entry.getKey() + "] but no matching DataSource bean is configured");
             }
         }
         if (!providerResolver.get().hasProviders()) {
             ChangeListenerMethod listener = listeners.values().iterator().next().get(0);
-            throw new IllegalStateException("@ChangeListener method [" + listener.method().getDescription(true)
+            throw new ConfigurationException("@ChangeListener method [" + listener.method().getDescription(true)
                 + "] cannot be registered because no change notification provider is available");
         }
     }

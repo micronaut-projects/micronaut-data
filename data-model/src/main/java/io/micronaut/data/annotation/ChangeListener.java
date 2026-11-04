@@ -19,6 +19,7 @@ import io.micronaut.aop.InterceptorBinding;
 import io.micronaut.aop.InterceptorKind;
 import io.micronaut.context.annotation.AliasFor;
 import io.micronaut.context.annotation.Executable;
+import io.micronaut.core.annotation.AnnotationMetadata;
 import io.micronaut.core.annotation.Experimental;
 import io.micronaut.data.notification.ChangeEvent;
 
@@ -68,7 +69,7 @@ public @interface ChangeListener {
      * @return The datasource name that supplies database change notifications; defaults to
      * {@code default}.
      */
-    @AliasFor(member = "value")
+    @AliasFor(member = AnnotationMetadata.VALUE_MEMBER)
     String dataSource() default "default";
 
 }

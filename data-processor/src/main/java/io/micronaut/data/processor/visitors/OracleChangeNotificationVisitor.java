@@ -65,6 +65,16 @@ public final class OracleChangeNotificationVisitor implements TypeElementVisitor
     private final Map<String, SourcePersistentEntity> entityMap = new HashMap<>();
 
     @Override
+    public Set<String> getSupportedAnnotationNames() {
+        return Set.of(ORACLE_CHANGE_NOTIFICATION);
+    }
+
+    @Override
+    public String getElementType() {
+        return ORACLE_CHANGE_NOTIFICATION;
+    }
+
+    @Override
     public int getOrder() {
         return MappedEntityVisitor.POSITION + 2;
     }
