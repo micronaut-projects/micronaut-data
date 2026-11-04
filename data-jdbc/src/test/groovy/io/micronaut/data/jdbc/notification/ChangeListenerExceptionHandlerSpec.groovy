@@ -27,6 +27,27 @@ import spock.lang.Specification
 
 class ChangeListenerExceptionHandlerSpec extends Specification {
 
+    void "serialization retains diagnostic details without live listener context"() {
+        given:
+        def original = new IllegalStateException('listener failure')
+        def failure = new ChangeListenerException('Failed listener for datasource [inventory]', 'inventory',
+            Mock(ExecutableMethod), new DefaultChangeEvent<>(ChangeOperation.INVALIDATE, null, null), original)
+        def bytes = new ByteArrayOutputStream()
+
+        when:
+        new ObjectOutputStream(bytes).withCloseable { it.writeObject(failure) }
+        def restored = new ObjectInputStream(new ByteArrayInputStream(bytes.toByteArray())).withCloseable {
+            (ChangeListenerException) it.readObject()
+        }
+
+        then:
+        restored.message == failure.message
+        restored.dataSourceName == 'inventory'
+        restored.cause.message == original.message
+        restored.listenerMethod == null
+        restored.event == null
+    }
+
     void "the default handler logs the failure message and original cause"() {
         given:
         def context = ApplicationContext.run()

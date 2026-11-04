@@ -24,8 +24,8 @@ import io.micronaut.core.annotation.Order;
 import io.micronaut.core.order.Ordered;
 import io.micronaut.core.version.SemanticVersion;
 import io.micronaut.data.exceptions.DataAccessException;
-import io.micronaut.data.jdbc.notification.ChangeListenerMethod;
 import io.micronaut.data.jdbc.notification.ChangeListenerExceptionHandler;
+import io.micronaut.data.jdbc.notification.ChangeListenerMethod;
 import io.micronaut.data.jdbc.notification.ChangeNotificationProvider;
 import io.micronaut.data.jdbc.operations.JdbcRepositoryOperations;
 import io.micronaut.runtime.graceful.GracefulShutdownCapable;
@@ -82,7 +82,6 @@ final class OracleChangeNotificationProvider implements ChangeNotificationProvid
     private final Executor blockingExecutor;
     private final TaskScheduler taskScheduler;
     private final OracleNotificationConfiguration notificationConfiguration;
-    private final OracleRegistrationRecoveryConfiguration recoveryConfiguration;
     private final boolean gracefulShutdownEnabled;
     private final Duration shutdownGracePeriod;
     private final AtomicBoolean shutdownHandled = new AtomicBoolean();
@@ -93,7 +92,6 @@ final class OracleChangeNotificationProvider implements ChangeNotificationProvid
                                      @Named(TaskExecutors.BLOCKING) Executor blockingExecutor,
                                      @Named(TaskExecutors.SCHEDULED) TaskScheduler taskScheduler,
                                      OracleNotificationConfiguration notificationConfiguration,
-                                     OracleRegistrationRecoveryConfiguration recoveryConfiguration,
                                      @Value("${micronaut.lifecycle.graceful-shutdown.enabled:false}") boolean gracefulShutdownEnabled,
                                      @Value("${micronaut.lifecycle.graceful-shutdown.grace-period:15s}") Duration shutdownGracePeriod,
                                      ChangeListenerExceptionHandler exceptionHandler) {
@@ -102,7 +100,6 @@ final class OracleChangeNotificationProvider implements ChangeNotificationProvid
         this.blockingExecutor = blockingExecutor;
         this.taskScheduler = taskScheduler;
         this.notificationConfiguration = notificationConfiguration;
-        this.recoveryConfiguration = recoveryConfiguration;
         this.gracefulShutdownEnabled = gracefulShutdownEnabled;
         this.shutdownGracePeriod = shutdownGracePeriod;
     }
@@ -153,7 +150,7 @@ final class OracleChangeNotificationProvider implements ChangeNotificationProvid
             .map(definitionFactory::create)
             .toList();
         OracleChangeNotificationSubscriptionManager subscriptionManager = new OracleChangeNotificationSubscriptionManager(
-            dataSourceName, operations, beanContext, blockingExecutor, taskScheduler, listenerDefinitions, notificationConfiguration, recoveryConfiguration,
+            dataSourceName, operations, beanContext, blockingExecutor, taskScheduler, listenerDefinitions, notificationConfiguration,
             exceptionHandler);
         if (subscriptionManagers.putIfAbsent(dataSourceName, subscriptionManager) != null) {
             throw new IllegalStateException("DCN subscriptions for datasource [" + dataSourceName

@@ -16,8 +16,9 @@
 package io.micronaut.data.jdbc.notification.oracle;
 
 import io.micronaut.context.BeanContext;
-import io.micronaut.data.jdbc.notification.ChangeNotificationQueue;
 import io.micronaut.data.jdbc.notification.ChangeListenerExceptionHandler;
+import io.micronaut.data.jdbc.notification.ChangeNotificationQueue;
+import io.micronaut.data.jdbc.notification.oracle.OracleNotificationConfiguration.RegistrationRecoveryConfiguration;
 import io.micronaut.data.notification.ChangeOperation;
 import io.micronaut.scheduling.TaskScheduler;
 import oracle.jdbc.dcn.DatabaseChangeEvent;
@@ -112,12 +113,11 @@ final class OracleChangeNotificationSubscription {
                                          OracleNotificationConfiguration notificationConfiguration,
                                          TaskScheduler taskScheduler,
                                          OracleChangeNotificationTaskTracker taskTracker,
-                                         OracleRegistrationRecoveryConfiguration recoveryConfiguration,
                                          ChangeListenerExceptionHandler exceptionHandler) {
         this(dataSourceName, definition, registrar, beanContext, blockingExecutor,
             new ChangeNotificationQueue("oracle-notifications-" + dataSourceName + "-" + definition.method().getDescription(true),
                 notificationConfiguration.getQueueCapacity()),
-            taskScheduler, taskTracker, recoveryConfiguration, exceptionHandler);
+            taskScheduler, taskTracker, notificationConfiguration.getRegistrationRecovery(), exceptionHandler);
     }
 
     OracleChangeNotificationSubscription(String dataSourceName,
@@ -128,7 +128,7 @@ final class OracleChangeNotificationSubscription {
                                          ChangeNotificationQueue notificationQueue,
                                          TaskScheduler taskScheduler,
                                          OracleChangeNotificationTaskTracker taskTracker,
-                                         OracleRegistrationRecoveryConfiguration recoveryConfiguration,
+                                         RegistrationRecoveryConfiguration recoveryConfiguration,
                                          ChangeListenerExceptionHandler exceptionHandler) {
         this.dataSourceName = dataSourceName;
         this.definition = definition;

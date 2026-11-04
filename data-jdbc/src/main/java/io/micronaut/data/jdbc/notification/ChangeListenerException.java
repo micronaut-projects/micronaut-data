@@ -18,20 +18,25 @@ package io.micronaut.data.jdbc.notification;
 import io.micronaut.core.annotation.Experimental;
 import io.micronaut.data.notification.ChangeEvent;
 import io.micronaut.inject.ExecutableMethod;
+import org.jspecify.annotations.Nullable;
 
 /**
  * An unhandled failure while resolving a change listener, loading its entity, or invoking it.
  *
  * <p>The cause is the original failure after configured retry and recovery advice completes.
- * The event retains any available provider metadata; entity state may be unavailable when loading fails.</p>
+ * The event retains any available provider metadata; entity state may be unavailable when loading fails.
+ * The listener method and event are available while handling the failure, but are not retained if this
+ * exception is serialized and deserialized.</p>
  *
  * @since 5.3.0
  */
 @Experimental
 public final class ChangeListenerException extends RuntimeException {
+    private static final long serialVersionUID = 1L;
+
     private final String dataSourceName;
-    private final ExecutableMethod<?, ?> listenerMethod;
-    private final ChangeEvent<?> event;
+    private final transient ExecutableMethod<?, ?> listenerMethod;
+    private final transient ChangeEvent<?> event;
 
     /**
      * Creates a failure with the listener and event context.
@@ -61,16 +66,21 @@ public final class ChangeListenerException extends RuntimeException {
     }
 
     /**
-     * @return The executable listener method
+     * @param <T> The listener bean type
+     * @param <R> The listener return type
+     * @return The executable listener method, or {@code null} after deserialization
      */
-    public ExecutableMethod<?, ?> getListenerMethod() {
-        return listenerMethod;
+    @SuppressWarnings("unchecked")
+    public <T, R> @Nullable ExecutableMethod<T, R> getListenerMethod() {
+        return (ExecutableMethod<T, R>) listenerMethod;
     }
 
     /**
-     * @return The event whose delivery failed
+     * @param <E> The listener entity type
+     * @return The event whose delivery failed, or {@code null} after deserialization
      */
-    public ChangeEvent<?> getEvent() {
-        return event;
+    @SuppressWarnings("unchecked")
+    public <E> @Nullable ChangeEvent<E> getEvent() {
+        return (ChangeEvent<E>) event;
     }
 }
