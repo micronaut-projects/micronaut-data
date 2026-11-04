@@ -1176,6 +1176,15 @@ public class SqlQueryBuilder extends AbstractSqlLikeQueryBuilder {
         return indexBuilder.toString();
     }
 
+    private static String shardedSequenceClauses(SqlSequenceMapping sequence) {
+        // A sharded sequence can use every digit of MAXVALUE, and the default of 28 digits doesn't fit the column of a Java number
+        return switch (sequence.dataType()) {
+            case LONG -> " MAXVALUE 999999999999999999 SHARD";
+            case INTEGER -> " MAXVALUE 999999999 SHARD";
+            default -> " SHARD";
+        };
+    }
+
     private String createSequenceStmt(SqlTableMapping table, SqlSequenceMapping sequence, boolean escape) {
         String sequenceName = getObjectName(table.schema(), resolveSequenceName(table, sequence), escape, true);
         final boolean isSqlServer = dialect == Dialect.SQL_SERVER;
@@ -1187,6 +1196,10 @@ public class SqlQueryBuilder extends AbstractSqlLikeQueryBuilder {
         createSequenceStmt += " MINVALUE 1 START WITH 1";
         if (dialect == Dialect.ORACLE) {
             createSequenceStmt += " CACHE 100 NOCYCLE";
+            SqlTableDistribution distribution = table.distribution();
+            if (distribution != null && distribution.type() == SqlTableDistribution.Type.SHARDED) {
+                createSequenceStmt += shardedSequenceClauses(sequence);
+            }
         } else {
             if (isSqlServer) {
                 createSequenceStmt += " INCREMENT BY 1";
