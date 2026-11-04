@@ -16979,6 +16979,9 @@ Mixed Oracle schemas where some boolean columns use native <code>BOOLEAN</code> 
 <li>
 <p><code>ByteVector</code>: <code>byte[]</code> backed values.</p>
 </li>
+<li>
+<p><code>BinaryVector</code>: one bit per dimension, packed eight per byte (Oracle only, see <a href="#binaryVectors">Binary vectors</a>).</p>
+</li>
 </ul>
 </div>
 <div class="paragraph">
@@ -17562,7 +17565,7 @@ interface DocumentEmbeddingRepository extends CrudRepository&lt;DocumentEmbeddin
 <p>PostgreSQL: <code>COSINE</code>, <code>L2_EUCLIDEAN</code>, <code>DOT</code></p>
 </li>
 <li>
-<p>Oracle: <code>COSINE</code>, <code>L2_EUCLIDEAN</code>, <code>L2_EUCLIDEAN_SQUARED</code>, <code>DOT</code>, <code>L1_MANHATTAN</code></p>
+<p>Oracle: <code>COSINE</code>, <code>L2_EUCLIDEAN</code>, <code>L2_EUCLIDEAN_SQUARED</code>, <code>DOT</code>, <code>L1_MANHATTAN</code>, and <code>HAMMING</code> and <code>JACCARD</code> for binary vectors</p>
 </li>
 <li>
 <p>MySQL: <code>COSINE</code>, <code>L2_EUCLIDEAN</code>, <code>DOT</code></p>
@@ -17571,6 +17574,271 @@ interface DocumentEmbeddingRepository extends CrudRepository&lt;DocumentEmbeddin
 </div>
 <div class="paragraph">
 <p>If an unsupported function is requested for the active dialect, Micronaut Data fails fast with an <code>IllegalArgumentException</code>.</p>
+</div>
+</div>
+</div>
+<div class="sect1">
+<h2 id="binaryVectors">Binary vectors (Oracle)</h2>
+<div class="sectionbody">
+<div class="paragraph">
+<p>Oracle stores binary vectors in <code>VECTOR(n, BINARY)</code> columns, where each dimension is a single bit. Map them with <code>BinaryVector</code>. Set the number of dimensions, in bits, with <code>@VectorStorage(length = N)</code>. Oracle requires it to be a multiple of 8.</p>
+</div>
+<div class="paragraph">
+<p>Binary vectors are compared with Hamming distance (<code>HAMMING</code>) or Jaccard distance (<code>JACCARD</code>), and <code>@VectorIndex</code> accepts both as its <code>distanceType</code>:</p>
+</div>
+<div class="listingblock multi-language-sample">
+<div class="content">
+<pre class="highlightjs highlight"><code class="language-java hljs" data-lang="java">package example;
+
+import io.micronaut.data.annotation.GeneratedValue;
+import io.micronaut.data.annotation.Id;
+import io.micronaut.data.annotation.MappedEntity;
+import io.micronaut.data.annotation.VectorIndex;
+import io.micronaut.data.annotation.VectorIndexType;
+import io.micronaut.data.annotation.VectorStorage;
+import io.micronaut.data.model.vector.BinaryVector;
+
+@MappedEntity("image_fingerprint")
+public record ImageFingerprint(
+    @Id
+    @GeneratedValue
+    Long id,
+
+    String name,
+
+    @VectorStorage(length = 16) // VECTOR(16, BINARY): 16 bits
+    @VectorIndex(vectorIndexType = VectorIndexType.IVF, distanceType = VectorIndexType.DistanceType.HAMMING)
+    BinaryVector hash) {
+}</code></pre>
+</div>
+</div>
+<div class="listingblock multi-language-sample">
+<div class="content">
+<pre class="highlightjs highlight"><code class="language-python hljs" data-lang="python">from dataclasses import dataclass
+from typing import Annotated
+
+from micronaut.data.annotation import GeneratedValue, Id, MappedEntity, VectorIndex, VectorStorage
+from micronaut.data.model.vector import BinaryVector
+
+
+@MappedEntity("image_fingerprint")
+@dataclass(frozen=True)
+class ImageFingerprint:
+    id: Annotated[int | None, Id, GeneratedValue]
+    name: str
+    # VECTOR(16, BINARY): 16 bits
+    hash: Annotated[BinaryVector, VectorStorage(length=16), VectorIndex(vectorIndexType="IVF", distanceType="HAMMING")]</code></pre>
+</div>
+</div>
+<div class="listingblock multi-language-sample">
+<div class="content">
+<pre class="highlightjs highlight"><code class="language-kotlin hljs" data-lang="kotlin">package example
+
+import io.micronaut.data.annotation.GeneratedValue
+import io.micronaut.data.annotation.Id
+import io.micronaut.data.annotation.MappedEntity
+import io.micronaut.data.annotation.VectorIndex
+import io.micronaut.data.annotation.VectorIndexType
+import io.micronaut.data.annotation.VectorStorage
+import io.micronaut.data.model.vector.BinaryVector
+
+@MappedEntity("image_fingerprint")
+data class ImageFingerprint(
+    @field:Id
+    @field:GeneratedValue
+    val id: Long? = null,
+
+    val name: String,
+
+    @field:VectorStorage(length = 16) // VECTOR(16, BINARY): 16 bits
+    @field:VectorIndex(vectorIndexType = VectorIndexType.IVF, distanceType = VectorIndexType.DistanceType.HAMMING)
+    val hash: BinaryVector
+)</code></pre>
+</div>
+</div>
+<div class="listingblock multi-language-sample">
+<div class="content">
+<pre class="highlightjs highlight"><code class="language-groovy hljs" data-lang="groovy">package example
+
+import io.micronaut.data.annotation.GeneratedValue
+import io.micronaut.data.annotation.Id
+import io.micronaut.data.annotation.MappedEntity
+import io.micronaut.data.annotation.VectorIndex
+import io.micronaut.data.annotation.VectorIndexType
+import io.micronaut.data.annotation.VectorStorage
+import io.micronaut.data.model.vector.BinaryVector
+
+@MappedEntity("image_fingerprint")
+class ImageFingerprint {
+
+    @Id
+    @GeneratedValue
+    Long id
+
+    String name
+
+    @VectorStorage(length = 16) // VECTOR(16, BINARY): 16 bits
+    @VectorIndex(vectorIndexType = VectorIndexType.IVF, distanceType = VectorIndexType.DistanceType.HAMMING)
+    BinaryVector hash
+}</code></pre>
+</div>
+</div>
+<div class="paragraph">
+<p><code>BinaryVector</code> holds the bits packed eight per byte, most significant bit first, which is the layout Oracle uses. Create one from packed bytes, or from one <code>boolean</code> per bit with <code>BinaryVector.of</code>:</p>
+</div>
+<div class="listingblock multi-language-sample">
+<div class="content">
+<pre class="highlightjs highlight"><code class="language-java hljs" data-lang="java">        BinaryVector sunset = new BinaryVector(new byte[] {(byte) 0xFF, 0x00}); // bits packed 8 per byte
+        BinaryVector sunsetCropped = BinaryVector.of(
+            true, true, true, true, true, true, true, true,
+            false, false, false, false, false, false, false, true);</code></pre>
+</div>
+</div>
+<div class="listingblock multi-language-sample">
+<div class="content">
+<pre class="highlightjs highlight"><code class="language-python hljs" data-lang="python">        sunset = BinaryVector.of(*[True] * 8, *[False] * 8)  # one bool per bit
+        sunset_cropped = BinaryVector.of(*[True] * 8, *[False] * 7, True)</code></pre>
+</div>
+</div>
+<div class="listingblock multi-language-sample">
+<div class="content">
+<pre class="highlightjs highlight"><code class="language-kotlin hljs" data-lang="kotlin">        val sunset = BinaryVector(byteArrayOf(0xFF.toByte(), 0x00)) // bits packed 8 per byte
+        val sunsetCropped = BinaryVector.of(
+            true, true, true, true, true, true, true, true,
+            false, false, false, false, false, false, false, true)</code></pre>
+</div>
+</div>
+<div class="listingblock multi-language-sample">
+<div class="content">
+<pre class="highlightjs highlight"><code class="language-groovy hljs" data-lang="groovy">        BinaryVector sunset = new BinaryVector([(byte) 0xFF, 0x00] as byte[]) // bits packed 8 per byte
+        BinaryVector sunsetCropped = BinaryVector.of(
+            true, true, true, true, true, true, true, true,
+            false, false, false, false, false, false, false, true)</code></pre>
+</div>
+</div>
+<div class="paragraph">
+<p>Derived search methods on a binary vector property use <code>HAMMING</code> by default, because Oracle compares binary vectors with <code>HAMMING</code> and <code>JACCARD</code> only. A <code>ScoringFunction</code> parameter selects <code>JACCARD</code>:</p>
+</div>
+<div class="listingblock multi-language-sample">
+<div class="content">
+<pre class="highlightjs highlight"><code class="language-java hljs" data-lang="java">package example;
+
+import io.micronaut.data.annotation.Repository;
+import io.micronaut.data.jdbc.annotation.JdbcRepository;
+import io.micronaut.data.model.query.builder.sql.Dialect;
+import io.micronaut.data.model.vector.BinaryVector;
+import io.micronaut.data.model.vector.search.ScoringFunction;
+import io.micronaut.data.model.vector.search.SearchResults;
+import io.micronaut.data.repository.CrudRepository;
+
+@JdbcRepository(dialect = Dialect.ORACLE)
+@Repository
+interface ImageFingerprintRepository extends CrudRepository&lt;ImageFingerprint, Long&gt; {
+
+    // Binary vectors are compared with HAMMING distance by default
+    SearchResults&lt;ImageFingerprint&gt; searchTop3ByHashNear(BinaryVector hash, Double maxDistance);
+
+    // Pass ScoringFunction.JACCARD to compare them with Jaccard distance instead
+    SearchResults&lt;ImageFingerprint&gt; searchTop2ByHashNear(BinaryVector hash, Double maxDistance, ScoringFunction function);
+}</code></pre>
+</div>
+</div>
+<div class="listingblock multi-language-sample">
+<div class="content">
+<pre class="highlightjs highlight"><code class="language-python hljs" data-lang="python">from micronaut.data.annotation import Repository
+from micronaut.data.jdbc.annotation import JdbcRepository
+from micronaut.data.model.query.builder.sql import Dialect
+from micronaut.data.model.vector import BinaryVector
+from micronaut.data.model.vector.search import ScoringFunction, SearchResults
+from micronaut.data.repository import CrudRepository
+
+from example.ImageFingerprint import ImageFingerprint
+
+
+@JdbcRepository(dialect=Dialect.ORACLE)
+@Repository
+class ImageFingerprintRepository(CrudRepository[ImageFingerprint, int]):
+
+    # Binary vectors are compared with HAMMING distance by default
+    def searchTop3ByHashNear(self, hash: BinaryVector, maxDistance: float) -&gt; SearchResults[ImageFingerprint]: ...
+
+    # Pass ScoringFunction.JACCARD to compare them with Jaccard distance instead
+    def searchTop2ByHashNear(self, hash: BinaryVector, maxDistance: float, function: ScoringFunction) -&gt; SearchResults[ImageFingerprint]: ...</code></pre>
+</div>
+</div>
+<div class="listingblock multi-language-sample">
+<div class="content">
+<pre class="highlightjs highlight"><code class="language-kotlin hljs" data-lang="kotlin">package example
+
+import io.micronaut.data.annotation.Repository
+import io.micronaut.data.jdbc.annotation.JdbcRepository
+import io.micronaut.data.model.query.builder.sql.Dialect
+import io.micronaut.data.model.vector.BinaryVector
+import io.micronaut.data.model.vector.search.ScoringFunction
+import io.micronaut.data.model.vector.search.SearchResults
+import io.micronaut.data.repository.CrudRepository
+
+@JdbcRepository(dialect = Dialect.ORACLE)
+@Repository
+interface ImageFingerprintRepository : CrudRepository&lt;ImageFingerprint, Long&gt; {
+
+    // Binary vectors are compared with HAMMING distance by default
+    fun searchTop3ByHashNear(hash: BinaryVector, maxDistance: Double): SearchResults&lt;ImageFingerprint&gt;
+
+    // Pass ScoringFunction.JACCARD to compare them with Jaccard distance instead
+    fun searchTop2ByHashNear(hash: BinaryVector, maxDistance: Double, function: ScoringFunction): SearchResults&lt;ImageFingerprint&gt;
+}</code></pre>
+</div>
+</div>
+<div class="listingblock multi-language-sample">
+<div class="content">
+<pre class="highlightjs highlight"><code class="language-groovy hljs" data-lang="groovy">package example
+
+import io.micronaut.data.annotation.Repository
+import io.micronaut.data.jdbc.annotation.JdbcRepository
+import io.micronaut.data.model.query.builder.sql.Dialect
+import io.micronaut.data.model.vector.BinaryVector
+import io.micronaut.data.model.vector.search.ScoringFunction
+import io.micronaut.data.model.vector.search.SearchResults
+import io.micronaut.data.repository.CrudRepository
+
+@JdbcRepository(dialect = Dialect.ORACLE)
+@Repository
+interface ImageFingerprintRepository extends CrudRepository&lt;ImageFingerprint, Long&gt; {
+
+    // Binary vectors are compared with HAMMING distance by default
+    SearchResults&lt;ImageFingerprint&gt; searchTop3ByHashNear(BinaryVector hash, Double maxDistance)
+
+    // Pass ScoringFunction.JACCARD to compare them with Jaccard distance instead
+    SearchResults&lt;ImageFingerprint&gt; searchTop2ByHashNear(BinaryVector hash, Double maxDistance, ScoringFunction function)
+}</code></pre>
+</div>
+</div>
+<div class="listingblock multi-language-sample">
+<div class="content">
+<pre class="highlightjs highlight"><code class="language-java hljs" data-lang="java">        List&lt;SearchResult&lt;ImageFingerprint&gt;&gt; similar = repository.searchTop3ByHashNear(sunset, 4d).results();</code></pre>
+</div>
+</div>
+<div class="listingblock multi-language-sample">
+<div class="content">
+<pre class="highlightjs highlight"><code class="language-python hljs" data-lang="python">        similar = self.repository.searchTop3ByHashNear(sunset, 4.0).results()</code></pre>
+</div>
+</div>
+<div class="listingblock multi-language-sample">
+<div class="content">
+<pre class="highlightjs highlight"><code class="language-kotlin hljs" data-lang="kotlin">        val similar = repository.searchTop3ByHashNear(sunset, 4.0).results()</code></pre>
+</div>
+</div>
+<div class="listingblock multi-language-sample">
+<div class="content">
+<pre class="highlightjs highlight"><code class="language-groovy hljs" data-lang="groovy">        def similar = repository.searchTop3ByHashNear(sunset, 4d).results()</code></pre>
+</div>
+</div>
+<div class="paragraph">
+<p>The Hamming score is the number of bits that differ, and its <code>Similarity</code> is the same value. The Jaccard score runs from <code>0</code> (the same set bits) to <code>1</code> (no set bits in common), and its <code>Similarity</code> is one minus the score.</p>
+</div>
+<div class="paragraph">
+<p>The array conversions of the <code>Vector</code> API return one element per dimension, <code>0</code> or <code>1</code>. <code>BinaryVector.data()</code> returns the packed bytes. Oracle JDBC and Oracle R2DBC both support binary vectors. Other databases get the same <code>VARCHAR(255)</code> fallback column as vectors on databases without vector support.</p>
 </div>
 </div>
 </div>
@@ -17764,7 +18032,8 @@ class SparseDocumentEmbedding {
 <p>The Oracle <code>&lt;TYPE&gt;</code> is inferred from the vector subtype:
 - <code>DoubleVector</code> &#8594; <code>FLOAT64</code>
 - <code>FloatVector</code>  &#8594; <code>FLOAT32</code>
-- <code>ByteVector</code>   &#8594; <code>INT8</code></p>
+- <code>ByteVector</code>   &#8594; <code>INT8</code>
+- <code>BinaryVector</code> &#8594; <code>BINARY</code></p>
 </div>
 <div class="paragraph">
 <p>For sparse columns declared as generic <code>Vector</code> (<code>@VectorStorage(shape = VectorShape.SPARSE)</code>), Oracle defaults to <code>FLOAT32</code>.</p>
@@ -17870,6 +18139,9 @@ runtime = [
 </li>
 <li>
 <p><code>ByteVector</code>   &#8594; <code>INT8</code></p>
+</li>
+<li>
+<p><code>BinaryVector</code> &#8594; <code>BINARY</code></p>
 </li>
 <li>
 <p>Use <code>@VectorStorage(length = N)</code> (or <code>@Column(length = N)</code>) to set the dimension; when omitted, <code>*</code> is used.</p>

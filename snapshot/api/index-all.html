@@ -1835,6 +1835,18 @@ entity has a generated identity.</div>
 </dd>
 <dt><a href="io/micronaut/data/model/jpa/criteria/impl/predicate/BinaryPredicate.html#%3Cinit%3E(jakarta.persistence.criteria.Expression,jakarta.persistence.criteria.Expression,io.micronaut.data.model.jpa.criteria.impl.predicate.PredicateBinaryOp)" class="member-name-link">BinaryPredicate(Expression, Expression, PredicateBinaryOp)</a> - Constructor for class io.micronaut.data.model.jpa.criteria.impl.predicate.<a href="io/micronaut/data/model/jpa/criteria/impl/predicate/BinaryPredicate.html" title="class in io.micronaut.data.model.jpa.criteria.impl.predicate">BinaryPredicate</a></dt>
 <dd>&nbsp;</dd>
+<dt><a href="io/micronaut/data/model/vector/BinaryVector.html" class="type-name-link" title="class in io.micronaut.data.model.vector">BinaryVector</a> - Record Class in <a href="io/micronaut/data/model/vector/package-summary.html">io.micronaut.data.model.vector</a></dt>
+<dd>
+<div class="block">Bit-packed immutable vector, mapped to Oracle <code>VECTOR(n, BINARY)</code> columns.</div>
+</dd>
+<dt><a href="io/micronaut/data/model/vector/BinaryVector.html#%3Cinit%3E(byte%5B%5D)" class="member-name-link">BinaryVector(byte[])</a> - Constructor for record class io.micronaut.data.model.vector.<a href="io/micronaut/data/model/vector/BinaryVector.html" title="class in io.micronaut.data.model.vector">BinaryVector</a></dt>
+<dd>
+<div class="block">Creates a binary vector from packed bits.</div>
+</dd>
+<dt><a href="io/micronaut/data/model/runtime/convert/vector/BinaryVectorAttributeConverter.html" class="type-name-link" title="interface in io.micronaut.data.model.runtime.convert.vector">BinaryVectorAttributeConverter&lt;X&gt;</a> - Interface in <a href="io/micronaut/data/model/runtime/convert/vector/package-summary.html">io.micronaut.data.model.runtime.convert.vector</a></dt>
+<dd>
+<div class="block">The attribute converter is used for converting mapped entity value to the persisted value and back.</div>
+</dd>
 <dt><a href="io/micronaut/data/runtime/http/PageableRequestArgumentBinder.html#bind(io.micronaut.core.convert.ArgumentConversionContext,io.micronaut.http.HttpRequest)" class="member-name-link">bind(ArgumentConversionContext, HttpRequest)</a> - Method in class io.micronaut.data.runtime.http.<a href="io/micronaut/data/runtime/http/PageableRequestArgumentBinder.html" title="class in io.micronaut.data.runtime.http">PageableRequestArgumentBinder</a></dt>
 <dd>&nbsp;</dd>
 <dt><a href="io/micronaut/data/spring/runtime/http/SpringPageableRequestArgumentBinder.html#bind(io.micronaut.core.convert.ArgumentConversionContext,io.micronaut.http.HttpRequest)" class="member-name-link">bind(ArgumentConversionContext, HttpRequest)</a> - Method in class io.micronaut.data.spring.runtime.http.<a href="io/micronaut/data/spring/runtime/http/SpringPageableRequestArgumentBinder.html" title="class in io.micronaut.data.spring.runtime.http">SpringPageableRequestArgumentBinder</a></dt>
@@ -5103,6 +5115,10 @@ pagination operations with cursors.</div>
 <dd>&nbsp;</dd>
 <dt><a href="io/micronaut/data/tck/entities/SaleItem_.html#data" class="member-name-link">data</a> - Static variable in class io.micronaut.data.tck.entities.<a href="io/micronaut/data/tck/entities/SaleItem_.html" title="class in io.micronaut.data.tck.entities">SaleItem_</a></dt>
 <dd>&nbsp;</dd>
+<dt><a href="io/micronaut/data/model/vector/BinaryVector.html#data()" class="member-name-link">data()</a> - Method in record class io.micronaut.data.model.vector.<a href="io/micronaut/data/model/vector/BinaryVector.html" title="class in io.micronaut.data.model.vector">BinaryVector</a></dt>
+<dd>
+<div class="block">Returns the value of the <a href="./io/micronaut/data/model/vector/BinaryVector.html#param-data"><code>data</code></a> record component.</div>
+</dd>
 <dt><a href="io/micronaut/data/model/vector/ByteVector.html#data()" class="member-name-link">data()</a> - Method in record class io.micronaut.data.model.vector.<a href="io/micronaut/data/model/vector/ByteVector.html" title="class in io.micronaut.data.model.vector">ByteVector</a></dt>
 <dd>
 <div class="block">Returns the value of the <a href="./io/micronaut/data/model/vector/ByteVector.html#param-data"><code>data</code></a> record component.</div>
@@ -6237,9 +6253,19 @@ implementing <a href="io/micronaut/data/intercept/FindPageInterceptor.html" titl
 </dd>
 <dt><a href="io/micronaut/data/model/query/builder/sql/VectorScoringDialectSupport.html#defaultScoringFunction()" class="member-name-link">defaultScoringFunction()</a> - Method in interface io.micronaut.data.model.query.builder.sql.<a href="io/micronaut/data/model/query/builder/sql/VectorScoringDialectSupport.html" title="interface in io.micronaut.data.model.query.builder.sql">VectorScoringDialectSupport</a></dt>
 <dd>&nbsp;</dd>
+<dt><a href="io/micronaut/data/model/query/builder/sql/VectorScoringDialectSupport.html#defaultScoringFunction(java.lang.String)" class="member-name-link">defaultScoringFunction(String)</a> - Method in interface io.micronaut.data.model.query.builder.sql.<a href="io/micronaut/data/model/query/builder/sql/VectorScoringDialectSupport.html" title="interface in io.micronaut.data.model.query.builder.sql">VectorScoringDialectSupport</a></dt>
+<dd>
+<div class="block">Returns the default scoring function for a query: <a href="io/micronaut/data/model/vector/search/ScoringFunction.html#HAMMING"><code>ScoringFunction.HAMMING</code></a> when the query
+compares Oracle binary vectors, otherwise <a href="io/micronaut/data/model/query/builder/sql/VectorScoringDialectSupport.html#defaultScoringFunction()"><code>VectorScoringDialectSupport.defaultScoringFunction()</code></a>.</div>
+</dd>
 <dt><a href="io/micronaut/data/model/query/builder/sql/VectorScoringDialectSupport.html#defaultScoringFunctionForDialect(io.micronaut.data.model.query.builder.sql.Dialect)" class="member-name-link">defaultScoringFunctionForDialect(Dialect)</a> - Static method in interface io.micronaut.data.model.query.builder.sql.<a href="io/micronaut/data/model/query/builder/sql/VectorScoringDialectSupport.html" title="interface in io.micronaut.data.model.query.builder.sql">VectorScoringDialectSupport</a></dt>
 <dd>
 <div class="block">Resolves the default scoring function for a SQL dialect.</div>
+</dd>
+<dt><a href="io/micronaut/data/model/query/builder/sql/VectorScoringDialectSupport.html#defaultScoringFunctionForQuery(io.micronaut.data.model.query.builder.sql.Dialect,java.lang.String)" class="member-name-link">defaultScoringFunctionForQuery(Dialect, String)</a> - Static method in interface io.micronaut.data.model.query.builder.sql.<a href="io/micronaut/data/model/query/builder/sql/VectorScoringDialectSupport.html" title="interface in io.micronaut.data.model.query.builder.sql">VectorScoringDialectSupport</a></dt>
+<dd>
+<div class="block">Resolves the default scoring function for a query: <a href="io/micronaut/data/model/vector/search/ScoringFunction.html#HAMMING"><code>ScoringFunction.HAMMING</code></a> when the query
+compares Oracle binary vectors, otherwise the dialect default.</div>
 </dd>
 <dt><a href="io/micronaut/data/runtime/operations/internal/sql/DefaultSqlPreparedQuery.html" class="type-name-link" title="class in io.micronaut.data.runtime.operations.internal.sql">DefaultSqlPreparedQuery&lt;E,<wbr>R&gt;</a> - Class in <a href="io/micronaut/data/runtime/operations/internal/sql/package-summary.html">io.micronaut.data.runtime.operations.internal.sql</a></dt>
 <dd>
@@ -7186,6 +7212,8 @@ when sorting by this attribute.</div>
 <dt><a href="io/micronaut/data/model/jpa/criteria/impl/AbstractCriteriaBuilder.html#diff(N,jakarta.persistence.criteria.Expression)" class="member-name-link">diff(N, Expression)</a> - Method in class io.micronaut.data.model.jpa.criteria.impl.<a href="io/micronaut/data/model/jpa/criteria/impl/AbstractCriteriaBuilder.html" title="class in io.micronaut.data.model.jpa.criteria.impl">AbstractCriteriaBuilder</a></dt>
 <dd>&nbsp;</dd>
 <dt><a href="io/micronaut/data/model/jpa/criteria/impl/expression/BinaryExpressionType.html#DIFF" class="member-name-link">DIFF</a> - Enum constant in enum class io.micronaut.data.model.jpa.criteria.impl.expression.<a href="io/micronaut/data/model/jpa/criteria/impl/expression/BinaryExpressionType.html" title="enum class in io.micronaut.data.model.jpa.criteria.impl.expression">BinaryExpressionType</a></dt>
+<dd>&nbsp;</dd>
+<dt><a href="io/micronaut/data/model/vector/BinaryVector.html#dimensions()" class="member-name-link">dimensions()</a> - Method in record class io.micronaut.data.model.vector.<a href="io/micronaut/data/model/vector/BinaryVector.html" title="class in io.micronaut.data.model.vector">BinaryVector</a></dt>
 <dd>&nbsp;</dd>
 <dt><a href="io/micronaut/transaction/impl/AbstractInternalTransaction.html#discardConnectionSynchronizations()" class="member-name-link">discardConnectionSynchronizations()</a> - Method in class io.micronaut.transaction.impl.<a href="io/micronaut/transaction/impl/AbstractInternalTransaction.html" title="class in io.micronaut.transaction.impl">AbstractInternalTransaction</a></dt>
 <dd>&nbsp;</dd>
@@ -8811,6 +8839,10 @@ together with the entity in the same query, overriding the fetch type declared o
 </dd>
 <dt><a href="io/micronaut/data/model/Sort.Order.html#equals(java.lang.Object)" class="member-name-link">equals(Object)</a> - Method in class io.micronaut.data.model.<a href="io/micronaut/data/model/Sort.Order.html" title="class in io.micronaut.data.model">Sort.Order</a></dt>
 <dd>&nbsp;</dd>
+<dt><a href="io/micronaut/data/model/vector/BinaryVector.html#equals(java.lang.Object)" class="member-name-link">equals(Object)</a> - Method in record class io.micronaut.data.model.vector.<a href="io/micronaut/data/model/vector/BinaryVector.html" title="class in io.micronaut.data.model.vector">BinaryVector</a></dt>
+<dd>
+<div class="block">Indicates whether some other object is "equal to" this one.</div>
+</dd>
 <dt><a href="io/micronaut/data/model/vector/ByteVector.html#equals(java.lang.Object)" class="member-name-link">equals(Object)</a> - Method in record class io.micronaut.data.model.vector.<a href="io/micronaut/data/model/vector/ByteVector.html" title="class in io.micronaut.data.model.vector">ByteVector</a></dt>
 <dd>
 <div class="block">Indicates whether some other object is "equal to" this one.</div>
@@ -12464,6 +12496,10 @@ as a RxJava Single or a Reactor Mono.</div>
 <dt><a href="io/micronaut/data/model/Pageable.Cursor.html#get(int)" class="member-name-link">get(int)</a> - Method in interface io.micronaut.data.model.<a href="io/micronaut/data/model/Pageable.Cursor.html" title="interface in io.micronaut.data.model">Pageable.Cursor</a></dt>
 <dd>
 <div class="block">Returns the currentCursor element at the specified position.</div>
+</dd>
+<dt><a href="io/micronaut/data/model/vector/BinaryVector.html#get(int)" class="member-name-link">get(int)</a> - Method in record class io.micronaut.data.model.vector.<a href="io/micronaut/data/model/vector/BinaryVector.html" title="class in io.micronaut.data.model.vector">BinaryVector</a></dt>
+<dd>
+<div class="block">Returns the bit at the given dimension.</div>
 </dd>
 <dt><a href="io/micronaut/data/model/runtime/BeanPropertyWithAnnotationMetadata.html#get(B)" class="member-name-link">get(B)</a> - Method in class io.micronaut.data.model.runtime.<a href="io/micronaut/data/model/runtime/BeanPropertyWithAnnotationMetadata.html" title="class in io.micronaut.data.model.runtime">BeanPropertyWithAnnotationMetadata</a></dt>
 <dd>&nbsp;</dd>
@@ -17029,6 +17065,10 @@ the specified propagation behavior.</div>
 <dd>
 <div class="block">Returns the integer representation of the database type.</div>
 </dd>
+<dt><a href="io/micronaut/data/model/vector/BinaryVector.html#getType()" class="member-name-link">getType()</a> - Method in record class io.micronaut.data.model.vector.<a href="io/micronaut/data/model/vector/BinaryVector.html" title="class in io.micronaut.data.model.vector">BinaryVector</a></dt>
+<dd>
+<div class="block">Returns <code>byte</code>: the type of the packed backing array.</div>
+</dd>
 <dt><a href="io/micronaut/data/model/vector/ByteVector.html#getType()" class="member-name-link">getType()</a> - Method in record class io.micronaut.data.model.vector.<a href="io/micronaut/data/model/vector/ByteVector.html" title="class in io.micronaut.data.model.vector">ByteVector</a></dt>
 <dd>
 <div class="block">Return the primitive number type the vector is backed by.</div>
@@ -17393,6 +17433,14 @@ without dialect-specific quoting applied.</div>
 <dd>
 <div class="block">H2 database engine.</div>
 </dd>
+<dt><a href="io/micronaut/data/annotation/VectorIndexType.DistanceType.html#HAMMING" class="member-name-link">HAMMING</a> - Enum constant in enum class io.micronaut.data.annotation.<a href="io/micronaut/data/annotation/VectorIndexType.DistanceType.html" title="enum class in io.micronaut.data.annotation">VectorIndexType.DistanceType</a></dt>
+<dd>
+<div class="block">Hamming distance metric, for binary vectors.</div>
+</dd>
+<dt><a href="io/micronaut/data/model/vector/search/ScoringFunction.html#HAMMING" class="member-name-link">HAMMING</a> - Enum constant in enum class io.micronaut.data.model.vector.search.<a href="io/micronaut/data/model/vector/search/ScoringFunction.html" title="enum class in io.micronaut.data.model.vector.search">ScoringFunction</a></dt>
+<dd>
+<div class="block">Hamming distance: the number of dimensions that differ.</div>
+</dd>
 <dt><a href="io/micronaut/data/model/runtime/RuntimePersistentEntity.html#hasAutoPopulatedProperties()" class="member-name-link">hasAutoPopulatedProperties()</a> - Method in class io.micronaut.data.model.runtime.<a href="io/micronaut/data/model/runtime/RuntimePersistentEntity.html" title="class in io.micronaut.data.model.runtime">RuntimePersistentEntity</a></dt>
 <dd>&nbsp;</dd>
 <dt><a href="io/micronaut/transaction/recovery/RecoverableTransactionContext.html#hasCapturedToken(io.micronaut.transaction.TransactionStatus)" class="member-name-link">hasCapturedToken(TransactionStatus)</a> - Method in class io.micronaut.transaction.recovery.<a href="io/micronaut/transaction/recovery/RecoverableTransactionContext.html" title="class in io.micronaut.transaction.recovery">RecoverableTransactionContext</a></dt>
@@ -17559,6 +17607,10 @@ without dialect-specific quoting applied.</div>
 </dd>
 <dt><a href="io/micronaut/data/model/Sort.Order.html#hashCode()" class="member-name-link">hashCode()</a> - Method in class io.micronaut.data.model.<a href="io/micronaut/data/model/Sort.Order.html" title="class in io.micronaut.data.model">Sort.Order</a></dt>
 <dd>&nbsp;</dd>
+<dt><a href="io/micronaut/data/model/vector/BinaryVector.html#hashCode()" class="member-name-link">hashCode()</a> - Method in record class io.micronaut.data.model.vector.<a href="io/micronaut/data/model/vector/BinaryVector.html" title="class in io.micronaut.data.model.vector">BinaryVector</a></dt>
+<dd>
+<div class="block">Returns a hash code value for this object.</div>
+</dd>
 <dt><a href="io/micronaut/data/model/vector/ByteVector.html#hashCode()" class="member-name-link">hashCode()</a> - Method in record class io.micronaut.data.model.vector.<a href="io/micronaut/data/model/vector/ByteVector.html" title="class in io.micronaut.data.model.vector">ByteVector</a></dt>
 <dd>
 <div class="block">Returns a hash code value for this object.</div>
@@ -20960,6 +21012,14 @@ is switched to read-only with <a href="https://docs.oracle.com/en/java/javase/25
 <dt><a href="io/micronaut/data/processor/visitors/MetamodelTypes.html#J_UTIL_UUID" class="member-name-link">J_UTIL_UUID</a> - Static variable in class io.micronaut.data.processor.visitors.<a href="io/micronaut/data/processor/visitors/MetamodelTypes.html" title="class in io.micronaut.data.processor.visitors">MetamodelTypes</a></dt>
 <dd>
 <div class="block"><a href="https://docs.oracle.com/en/java/javase/25/docs/api/java.base/java/util/UUID.html" title="class or interface in java.util" class="external-link"><code>UUID</code></a> type name.</div>
+</dd>
+<dt><a href="io/micronaut/data/annotation/VectorIndexType.DistanceType.html#JACCARD" class="member-name-link">JACCARD</a> - Enum constant in enum class io.micronaut.data.annotation.<a href="io/micronaut/data/annotation/VectorIndexType.DistanceType.html" title="enum class in io.micronaut.data.annotation">VectorIndexType.DistanceType</a></dt>
+<dd>
+<div class="block">Jaccard distance metric, for binary vectors.</div>
+</dd>
+<dt><a href="io/micronaut/data/model/vector/search/ScoringFunction.html#JACCARD" class="member-name-link">JACCARD</a> - Enum constant in enum class io.micronaut.data.model.vector.search.<a href="io/micronaut/data/model/vector/search/ScoringFunction.html" title="enum class in io.micronaut.data.model.vector.search">ScoringFunction</a></dt>
+<dd>
+<div class="block">Jaccard distance: one minus the share of set bits that both vectors set.</div>
 </dd>
 <dt><a href="io/micronaut/data/processor/jpa/metamodel/JpaMetamodelProcessor.html#JAKARTA_ANNOTATION_GENERATED" class="member-name-link">JAKARTA_ANNOTATION_GENERATED</a> - Static variable in class io.micronaut.data.processor.jpa.metamodel.<a href="io/micronaut/data/processor/jpa/metamodel/JpaMetamodelProcessor.html" title="class in io.micronaut.data.processor.jpa.metamodel">JpaMetamodelProcessor</a></dt>
 <dd>
@@ -24735,6 +24795,10 @@ when sorting by this attribute.</div>
 <dd>
 <div class="block">The object type.</div>
 </dd>
+<dt><a href="io/micronaut/data/model/vector/BinaryVector.html#of(boolean...)" class="member-name-link">of(boolean...)</a> - Static method in record class io.micronaut.data.model.vector.<a href="io/micronaut/data/model/vector/BinaryVector.html" title="class in io.micronaut.data.model.vector">BinaryVector</a></dt>
+<dd>
+<div class="block">Creates a binary vector with one dimension per bit.</div>
+</dd>
 <dt><a href="io/micronaut/data/model/vector/Vector.html#of(byte...)" class="member-name-link">of(byte...)</a> - Static method in interface io.micronaut.data.model.vector.<a href="io/micronaut/data/model/vector/Vector.html" title="interface in io.micronaut.data.model.vector">Vector</a></dt>
 <dd>
 <div class="block">Create a vector from byte values (defensive copy).</div>
@@ -25235,7 +25299,17 @@ blocking a transaction with a higher priority.</div>
 <dt><a href="io/micronaut/transaction/exceptions/OracleTransactionPriorityException.html#%3Cinit%3E(java.lang.String,java.lang.Throwable)" class="member-name-link">OracleTransactionPriorityException(String, Throwable)</a> - Constructor for exception class io.micronaut.transaction.exceptions.<a href="io/micronaut/transaction/exceptions/OracleTransactionPriorityException.html" title="class in io.micronaut.transaction.exceptions">OracleTransactionPriorityException</a></dt>
 <dd>&nbsp;</dd>
 <dt><a href="io/micronaut/data/model/runtime/convert/vector/impl/AbstractOracleTypeConvertersFactory.OracleVectorFactory.html#%3Cinit%3E(io.micronaut.data.model.runtime.convert.vector.impl.AbstractOracleTypeConvertersFactory.OracleArrayFactory,io.micronaut.data.model.runtime.convert.vector.impl.AbstractOracleTypeConvertersFactory.OracleArrayFactory,io.micronaut.data.model.runtime.convert.vector.impl.AbstractOracleTypeConvertersFactory.OracleArrayFactory,io.micronaut.data.model.runtime.convert.vector.impl.AbstractOracleTypeConvertersFactory.OracleSparseArrayFactory,io.micronaut.data.model.runtime.convert.vector.impl.AbstractOracleTypeConvertersFactory.OracleSparseArrayFactory,io.micronaut.data.model.runtime.convert.vector.impl.AbstractOracleTypeConvertersFactory.OracleSparseArrayFactory)" class="member-name-link">OracleVectorFactory(AbstractOracleTypeConvertersFactory.OracleArrayFactory, AbstractOracleTypeConvertersFactory.OracleArrayFactory, AbstractOracleTypeConvertersFactory.OracleArrayFactory, AbstractOracleTypeConvertersFactory.OracleSparseArrayFactory, AbstractOracleTypeConvertersFactory.OracleSparseArrayFactory, AbstractOracleTypeConvertersFactory.OracleSparseArrayFactory)</a> - Constructor for class io.micronaut.data.model.runtime.convert.vector.impl.<a href="io/micronaut/data/model/runtime/convert/vector/impl/AbstractOracleTypeConvertersFactory.OracleVectorFactory.html" title="class in io.micronaut.data.model.runtime.convert.vector.impl">AbstractOracleTypeConvertersFactory.OracleVectorFactory</a></dt>
+<dd>
+<div class="deprecation-block"><span class="deprecated-label">Deprecated, for removal: This API element is subject to removal in a future version.</span>
+<div class="deprecation-comment">Use <a href="io/micronaut/data/model/runtime/convert/vector/impl/AbstractOracleTypeConvertersFactory.OracleVectorFactory.html#%3Cinit%3E(io.micronaut.data.model.runtime.convert.vector.impl.AbstractOracleTypeConvertersFactory.OracleArrayFactory,io.micronaut.data.model.runtime.convert.vector.impl.AbstractOracleTypeConvertersFactory.OracleArrayFactory,io.micronaut.data.model.runtime.convert.vector.impl.AbstractOracleTypeConvertersFactory.OracleArrayFactory,io.micronaut.data.model.runtime.convert.vector.impl.AbstractOracleTypeConvertersFactory.OracleSparseArrayFactory,io.micronaut.data.model.runtime.convert.vector.impl.AbstractOracleTypeConvertersFactory.OracleSparseArrayFactory,io.micronaut.data.model.runtime.convert.vector.impl.AbstractOracleTypeConvertersFactory.OracleSparseArrayFactory,io.micronaut.data.model.runtime.convert.vector.impl.AbstractOracleTypeConvertersFactory.OracleArrayFactory)"><code>OracleVectorFactory(OracleArrayFactory, OracleArrayFactory, OracleArrayFactory, OracleSparseArrayFactory, OracleSparseArrayFactory, OracleSparseArrayFactory, OracleArrayFactory)</code></a>, which also creates binary vectors</div>
+</div>
+</dd>
+<dt><a href="io/micronaut/data/model/runtime/convert/vector/impl/AbstractOracleTypeConvertersFactory.OracleVectorFactory.html#%3Cinit%3E(io.micronaut.data.model.runtime.convert.vector.impl.AbstractOracleTypeConvertersFactory.OracleArrayFactory,io.micronaut.data.model.runtime.convert.vector.impl.AbstractOracleTypeConvertersFactory.OracleArrayFactory,io.micronaut.data.model.runtime.convert.vector.impl.AbstractOracleTypeConvertersFactory.OracleArrayFactory,io.micronaut.data.model.runtime.convert.vector.impl.AbstractOracleTypeConvertersFactory.OracleSparseArrayFactory,io.micronaut.data.model.runtime.convert.vector.impl.AbstractOracleTypeConvertersFactory.OracleSparseArrayFactory,io.micronaut.data.model.runtime.convert.vector.impl.AbstractOracleTypeConvertersFactory.OracleSparseArrayFactory,io.micronaut.data.model.runtime.convert.vector.impl.AbstractOracleTypeConvertersFactory.OracleArrayFactory)" class="member-name-link">OracleVectorFactory(AbstractOracleTypeConvertersFactory.OracleArrayFactory, AbstractOracleTypeConvertersFactory.OracleArrayFactory, AbstractOracleTypeConvertersFactory.OracleArrayFactory, AbstractOracleTypeConvertersFactory.OracleSparseArrayFactory, AbstractOracleTypeConvertersFactory.OracleSparseArrayFactory, AbstractOracleTypeConvertersFactory.OracleSparseArrayFactory, AbstractOracleTypeConvertersFactory.OracleArrayFactory)</a> - Constructor for class io.micronaut.data.model.runtime.convert.vector.impl.<a href="io/micronaut/data/model/runtime/convert/vector/impl/AbstractOracleTypeConvertersFactory.OracleVectorFactory.html" title="class in io.micronaut.data.model.runtime.convert.vector.impl">AbstractOracleTypeConvertersFactory.OracleVectorFactory</a></dt>
 <dd>&nbsp;</dd>
+<dt><a href="io/micronaut/data/model/runtime/convert/vector/impl/AbstractOracleTypeConvertersFactory.html#oracleVectorToBinaryVectorConverter(java.util.function.Function)" class="member-name-link">oracleVectorToBinaryVectorConverter(Function)</a> - Static method in class io.micronaut.data.model.runtime.convert.vector.impl.<a href="io/micronaut/data/model/runtime/convert/vector/impl/AbstractOracleTypeConvertersFactory.html" title="class in io.micronaut.data.model.runtime.convert.vector.impl">AbstractOracleTypeConvertersFactory</a></dt>
+<dd>
+<div class="block">Creates a converter from an Oracle <code>BINARY</code> vector to a <a href="io/micronaut/data/model/vector/BinaryVector.html" title="class in io.micronaut.data.model.vector"><code>BinaryVector</code></a>.</div>
+</dd>
 <dt><a href="io/micronaut/data/model/runtime/convert/vector/impl/AbstractOracleTypeConvertersFactory.html#oracleVectorToByteVectorConverter(java.util.function.Function)" class="member-name-link">oracleVectorToByteVectorConverter(Function)</a> - Static method in class io.micronaut.data.model.runtime.convert.vector.impl.<a href="io/micronaut/data/model/runtime/convert/vector/impl/AbstractOracleTypeConvertersFactory.html" title="class in io.micronaut.data.model.runtime.convert.vector.impl">AbstractOracleTypeConvertersFactory</a></dt>
 <dd>
 <div class="block">Creates a converter from Oracle VECTOR to <a href="io/micronaut/data/model/vector/ByteVector.html" title="class in io.micronaut.data.model.vector"><code>ByteVector</code></a>.</div>
@@ -34102,6 +34176,8 @@ or none if timeouts are not supported.</div>
 <dd>
 <div class="block">Not supported yet.</div>
 </dd>
+<dt><a href="io/micronaut/data/model/vector/BinaryVector.html#toBooleanArray()" class="member-name-link">toBooleanArray()</a> - Method in record class io.micronaut.data.model.vector.<a href="io/micronaut/data/model/vector/BinaryVector.html" title="class in io.micronaut.data.model.vector">BinaryVector</a></dt>
+<dd>&nbsp;</dd>
 <dt><a href="io/micronaut/data/mongodb/operations/MongoUtils.html#toBsonValue(java.lang.Object,org.bson.codecs.configuration.CodecRegistry)" class="member-name-link">toBsonValue(Object, CodecRegistry)</a> - Static method in class io.micronaut.data.mongodb.operations.<a href="io/micronaut/data/mongodb/operations/MongoUtils.html" title="class in io.micronaut.data.mongodb.operations">MongoUtils</a></dt>
 <dd>&nbsp;</dd>
 <dt><a href="io/micronaut/data/model/runtime/convert/vector/impl/AbstractOracleTypeConvertersFactory.html#toByte(double%5B%5D)" class="member-name-link">toByte(double[])</a> - Static method in class io.micronaut.data.model.runtime.convert.vector.impl.<a href="io/micronaut/data/model/runtime/convert/vector/impl/AbstractOracleTypeConvertersFactory.html" title="class in io.micronaut.data.model.runtime.convert.vector.impl">AbstractOracleTypeConvertersFactory</a></dt>
@@ -34113,6 +34189,8 @@ or none if timeouts are not supported.</div>
 <div class="block">Converts float array to byte array.</div>
 </dd>
 <dt><a href="io/micronaut/data/model/runtime/convert/vector/impl/AbstractOracleTypeConvertersFactory.OracleVectorAdapter.html#toByteArray()" class="member-name-link">toByteArray()</a> - Method in interface io.micronaut.data.model.runtime.convert.vector.impl.<a href="io/micronaut/data/model/runtime/convert/vector/impl/AbstractOracleTypeConvertersFactory.OracleVectorAdapter.html" title="interface in io.micronaut.data.model.runtime.convert.vector.impl">AbstractOracleTypeConvertersFactory.OracleVectorAdapter</a></dt>
+<dd>&nbsp;</dd>
+<dt><a href="io/micronaut/data/model/vector/BinaryVector.html#toByteArray()" class="member-name-link">toByteArray()</a> - Method in record class io.micronaut.data.model.vector.<a href="io/micronaut/data/model/vector/BinaryVector.html" title="class in io.micronaut.data.model.vector">BinaryVector</a></dt>
 <dd>&nbsp;</dd>
 <dt><a href="io/micronaut/data/model/vector/ByteVector.html#toByteArray()" class="member-name-link">toByteArray()</a> - Method in record class io.micronaut.data.model.vector.<a href="io/micronaut/data/model/vector/ByteVector.html" title="class in io.micronaut.data.model.vector">ByteVector</a></dt>
 <dd>
@@ -34168,6 +34246,8 @@ or none if timeouts are not supported.</div>
 </dd>
 <dt><a href="io/micronaut/data/model/runtime/convert/vector/impl/AbstractOracleTypeConvertersFactory.OracleVectorAdapter.html#toDoubleArray()" class="member-name-link">toDoubleArray()</a> - Method in interface io.micronaut.data.model.runtime.convert.vector.impl.<a href="io/micronaut/data/model/runtime/convert/vector/impl/AbstractOracleTypeConvertersFactory.OracleVectorAdapter.html" title="interface in io.micronaut.data.model.runtime.convert.vector.impl">AbstractOracleTypeConvertersFactory.OracleVectorAdapter</a></dt>
 <dd>&nbsp;</dd>
+<dt><a href="io/micronaut/data/model/vector/BinaryVector.html#toDoubleArray()" class="member-name-link">toDoubleArray()</a> - Method in record class io.micronaut.data.model.vector.<a href="io/micronaut/data/model/vector/BinaryVector.html" title="class in io.micronaut.data.model.vector">BinaryVector</a></dt>
+<dd>&nbsp;</dd>
 <dt><a href="io/micronaut/data/model/vector/ByteVector.html#toDoubleArray()" class="member-name-link">toDoubleArray()</a> - Method in record class io.micronaut.data.model.vector.<a href="io/micronaut/data/model/vector/ByteVector.html" title="class in io.micronaut.data.model.vector">ByteVector</a></dt>
 <dd>
 <div class="block">Convert this vector to a new double array copy.</div>
@@ -34213,6 +34293,8 @@ or none if timeouts are not supported.</div>
 <div class="block">Not supported yet.</div>
 </dd>
 <dt><a href="io/micronaut/data/model/runtime/convert/vector/impl/AbstractOracleTypeConvertersFactory.OracleVectorAdapter.html#toFloatArray()" class="member-name-link">toFloatArray()</a> - Method in interface io.micronaut.data.model.runtime.convert.vector.impl.<a href="io/micronaut/data/model/runtime/convert/vector/impl/AbstractOracleTypeConvertersFactory.OracleVectorAdapter.html" title="interface in io.micronaut.data.model.runtime.convert.vector.impl">AbstractOracleTypeConvertersFactory.OracleVectorAdapter</a></dt>
+<dd>&nbsp;</dd>
+<dt><a href="io/micronaut/data/model/vector/BinaryVector.html#toFloatArray()" class="member-name-link">toFloatArray()</a> - Method in record class io.micronaut.data.model.vector.<a href="io/micronaut/data/model/vector/BinaryVector.html" title="class in io.micronaut.data.model.vector">BinaryVector</a></dt>
 <dd>&nbsp;</dd>
 <dt><a href="io/micronaut/data/model/vector/ByteVector.html#toFloatArray()" class="member-name-link">toFloatArray()</a> - Method in record class io.micronaut.data.model.vector.<a href="io/micronaut/data/model/vector/ByteVector.html" title="class in io.micronaut.data.model.vector">ByteVector</a></dt>
 <dd>
@@ -34468,6 +34550,10 @@ or none if timeouts are not supported.</div>
 </dd>
 <dt><a href="io/micronaut/data/model/Sort.Order.html#toString()" class="member-name-link">toString()</a> - Method in class io.micronaut.data.model.<a href="io/micronaut/data/model/Sort.Order.html" title="class in io.micronaut.data.model">Sort.Order</a></dt>
 <dd>&nbsp;</dd>
+<dt><a href="io/micronaut/data/model/vector/BinaryVector.html#toString()" class="member-name-link">toString()</a> - Method in record class io.micronaut.data.model.vector.<a href="io/micronaut/data/model/vector/BinaryVector.html" title="class in io.micronaut.data.model.vector">BinaryVector</a></dt>
+<dd>
+<div class="block">Returns a string representation of this record class.</div>
+</dd>
 <dt><a href="io/micronaut/data/model/vector/ByteVector.html#toString()" class="member-name-link">toString()</a> - Method in record class io.micronaut.data.model.vector.<a href="io/micronaut/data/model/vector/ByteVector.html" title="class in io.micronaut.data.model.vector">ByteVector</a></dt>
 <dd>
 <div class="block">Returns a string representation of this record class.</div>
