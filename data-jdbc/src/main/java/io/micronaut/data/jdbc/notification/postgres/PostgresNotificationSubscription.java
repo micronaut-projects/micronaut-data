@@ -17,6 +17,7 @@ package io.micronaut.data.jdbc.notification.postgres;
 
 import io.micronaut.context.BeanContext;
 import io.micronaut.context.env.Environment;
+import io.micronaut.data.jdbc.notification.ChangeListenerExceptionHandler;
 import io.micronaut.data.jdbc.notification.ChangeListenerMethod;
 import io.micronaut.data.jdbc.notification.DefaultChangeEvent;
 import io.micronaut.data.jdbc.notification.DeferredChangeEvent;
@@ -89,7 +90,8 @@ final class PostgresNotificationSubscription {
                                      BeanContext context,
                                      JsonMapper mapper,
                                      PostgresNotificationConfiguration configuration,
-                                     PostgresNotificationConnectionFactory connectionFactory) {
+                                     PostgresNotificationConnectionFactory connectionFactory,
+                                     ChangeListenerExceptionHandler exceptionHandler) {
         this.name = name;
         this.mapper = mapper;
         this.configuration = configuration;
@@ -105,8 +107,9 @@ final class PostgresNotificationSubscription {
             PostgresChangeNotificationDispatcher dispatcher = new PostgresChangeNotificationDispatcher(
                 executionHandle::invoke,
                 name,
-                method.method().getDescription(true),
-                configuration.getQueueCapacity());
+                method.method(),
+                configuration.getQueueCapacity(),
+                exceptionHandler);
             dispatchers.put(definition, dispatcher);
         }
         listenersByChannel = dispatchers.entrySet().stream().collect(Collectors.groupingBy(

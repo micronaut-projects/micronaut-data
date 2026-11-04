@@ -19,6 +19,7 @@ import io.micronaut.context.BeanContext
 import io.micronaut.context.BeanProvider
 import io.micronaut.context.event.ShutdownEvent
 import io.micronaut.context.exceptions.ConfigurationException
+import io.micronaut.data.jdbc.notification.ChangeListenerExceptionHandler
 import io.micronaut.data.jdbc.operations.JdbcRepositoryOperations
 import io.micronaut.json.JsonMapper
 import spock.lang.Specification
@@ -41,7 +42,7 @@ class PostgresChangeNotificationProviderSpec extends Specification {
         def operations = Mock(JdbcRepositoryOperations)
         def provider = new PostgresChangeNotificationProvider(Stub(BeanContext), mapperProvider,
             new PostgresNotificationConfiguration(), connectionFactory,
-            false, Duration.ofSeconds(15))
+            false, Duration.ofSeconds(15), Stub(ChangeListenerExceptionHandler))
 
         when:
         provider.register('inventory', operations, [])
@@ -211,6 +212,7 @@ class PostgresChangeNotificationProviderSpec extends Specification {
                                                         Duration gracePeriod = Duration.ofSeconds(15)) {
         new PostgresChangeNotificationProvider(Stub(BeanContext), Stub(BeanProvider<JsonMapper>),
             new PostgresNotificationConfiguration(),
-            Stub(PostgresNotificationConnectionFactory), gracefulShutdownEnabled, gracePeriod)
+            Stub(PostgresNotificationConnectionFactory), gracefulShutdownEnabled, gracePeriod,
+            Stub(ChangeListenerExceptionHandler))
     }
 }

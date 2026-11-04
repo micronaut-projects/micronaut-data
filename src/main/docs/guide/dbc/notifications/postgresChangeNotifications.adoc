@@ -629,13 +629,17 @@ An initial connection or channel-subscription failure fails application startup.
 apply only after a listening connection fails; they do not retry initial startup.
 
 See <<notificationCallbackFailures, Handling Listener Failures>> for handling of entity-loading and listener errors.
-PostgreSQL callback failure logs include the datasource, listener method, and operation.
+PostgreSQL callback failures are passed to api:data.jdbc.notification.ChangeListenerExceptionHandler[].
+The default handler logs the datasource, listener method, operation, and available channel, schema, table,
+and old and new primary-key values. An application handler receives the failed event and the original cause.
 
 If loading or delivering an `INSERT`, `UPDATE`, or `DELETE` still fails after configured retry and recovery,
 the listener's waiting work is replaced with one `INVALIDATE`. This event has no table metadata and asks the
 listener to reconcile all state it maintains. It also replaces any invalidation already waiting in the queue.
-Failures while handling `INVALIDATE` or `TERMINATED` are logged without scheduling another invalidation,
-preventing an automatic refresh loop. This applies to entity loading and synchronous listener execution;
+Failures while handling `INVALIDATE` or `TERMINATED` are also passed to the handler without scheduling another
+invalidation, preventing an automatic refresh loop. If a custom handler throws a runtime exception, both
+failures are logged and reconciliation and later callbacks can still proceed.
+This applies to entity loading and synchronous listener execution;
 failures in an `@Async` listener body occur after delivery has returned.
 
 When the application stops, Micronaut Data stops accepting listener calls, removes channel subscriptions,

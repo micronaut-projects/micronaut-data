@@ -25,6 +25,7 @@ import io.micronaut.core.type.Argument
 import io.micronaut.data.annotation.Id
 import io.micronaut.data.annotation.MappedEntity
 import io.micronaut.data.jdbc.annotation.PostgresChangeNotification
+import io.micronaut.data.jdbc.notification.ChangeListenerExceptionHandler
 import io.micronaut.data.jdbc.notification.ChangeListenerMethod
 import io.micronaut.data.jdbc.operations.JdbcRepositoryOperations
 import io.micronaut.data.model.runtime.RuntimePersistentEntity
@@ -117,7 +118,7 @@ class PostgresNotificationSubscriptionSpec extends Specification {
 
         when:
         def subscription = new PostgresNotificationSubscription('test', operations, listeners, context,
-            mapper, configuration, factory)
+            mapper, configuration, factory, Stub(ChangeListenerExceptionHandler))
 
         then:
         creations.get() == 0
@@ -492,7 +493,7 @@ class PostgresNotificationSubscriptionSpec extends Specification {
             getBean(Environment) >> Stub(Environment)
         }
         new PostgresNotificationSubscription('test', Stub(JdbcRepositoryOperations), [], context,
-            Stub(JsonMapper), configuration, factory)
+            Stub(JsonMapper), configuration, factory, Stub(ChangeListenerExceptionHandler))
     }
 
 }

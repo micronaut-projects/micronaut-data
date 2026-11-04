@@ -26,7 +26,10 @@ import io.micronaut.data.annotation.MappedEntity
 import io.micronaut.data.annotation.MappedProperty
 import io.micronaut.data.annotation.Where
 import io.micronaut.data.connection.jdbc.advice.DelegatingDataSource
+import io.micronaut.data.exceptions.DataAccessException
 import io.micronaut.data.jdbc.annotation.PostgresChangeNotification
+import io.micronaut.data.jdbc.notification.ChangeListenerException
+import io.micronaut.data.jdbc.notification.ChangeListenerExceptionHandler
 import io.micronaut.data.jdbc.notification.ChangeListenerRegistry
 import io.micronaut.data.jdbc.notification.ChangeNotificationProvider
 import io.micronaut.data.jdbc.notification.postgres.PostgresChangeEventMetadata
@@ -459,6 +462,67 @@ class PostgresNotificationProviderSpec extends Specification implements Postgres
         listener.attempts.get() == attempts + 2
     }
 
+    void "unhandled listener failures reach the application handler after retries"() {
+        given:
+        start(['spec.exception-handler': true])
+        def handler = application.getBean(RecordingNotificationExceptionHandler)
+        listener.failures.set(3)
+
+        when:
+        execute("INSERT INTO \"ProviderBook\" VALUES ('$TENANT', 1, 'failed delivery')")
+        def failure = handler.failures.poll(10, TimeUnit.SECONDS)
+
+        then:
+        failure != null
+        failure.cause instanceof IllegalStateException
+        failure.cause.message == 'Retry this notification'
+        failure.dataSourceName == 'default'
+        failure.listenerMethod.methodName == 'changed'
+        failure.event.operation() == ChangeOperation.INSERT
+        failure.event.entity().orElseThrow().title == 'failed delivery'
+        failure.event.metadata(PostgresChangeEventMetadata).orElseThrow().newKeys() == [tenant: TENANT, BookId: '1']
+        handler.threadName.startsWith('postgres-notification-listener-')
+        next().operation() == ChangeOperation.INVALIDATE
+        listener.attempts.get() == 4
+        handler.failures.empty
+
+        when:
+        execute("INSERT INTO \"ProviderBook\" VALUES ('$TENANT', 2, 'later delivery')")
+
+        then:
+        next().entity().orElseThrow().title == 'later delivery'
+        handler.failures.empty
+    }
+
+    void "entity loading failures reach the application handler with row metadata"() {
+        given:
+        start(['spec.exception-handler': true])
+        def handler = application.getBean(RecordingNotificationExceptionHandler)
+        execute('ALTER TABLE "ProviderBook" RENAME COLUMN title TO renamed_title')
+
+        when:
+        execute("INSERT INTO \"ProviderBook\" VALUES ('$TENANT', 1, 'unavailable entity')")
+        def failure = handler.failures.poll(10, TimeUnit.SECONDS)
+
+        then:
+        failure != null
+        failure.cause instanceof DataAccessException
+        failure.event.operation() == ChangeOperation.INSERT
+        failure.event.entity().empty
+        failure.event.metadata(PostgresChangeEventMetadata).orElseThrow().newKeys() == [tenant: TENANT, BookId: '1']
+        next().operation() == ChangeOperation.INVALIDATE
+        listener.attempts.get() == 1
+        handler.failures.empty
+
+        when:
+        execute('ALTER TABLE "ProviderBook" RENAME COLUMN renamed_title TO title')
+        execute('UPDATE "ProviderBook" SET title = \'recovered entity\'')
+
+        then:
+        next().entity().orElseThrow().title == 'recovered entity'
+        handler.failures.empty
+    }
+
     void "terminated listening session reconnects and reconciles before new changes"() {
         given:
         start()
@@ -819,6 +883,20 @@ class PostgresNotificationProviderSpec extends Specification implements Postgres
         try (def statement = writer.createStatement()) {
             statement.execute(sql)
         }
+    }
+}
+
+@Singleton
+@Requires(property = 'spec.name', value = 'PostgresNotificationProviderSpec')
+@Requires(property = 'spec.exception-handler', value = 'true')
+class RecordingNotificationExceptionHandler implements ChangeListenerExceptionHandler {
+    final LinkedBlockingQueue<ChangeListenerException> failures = new LinkedBlockingQueue<>()
+    volatile String threadName
+
+    @Override
+    void handle(ChangeListenerException failure) {
+        threadName = Thread.currentThread().name
+        failures.add(failure)
     }
 }
 

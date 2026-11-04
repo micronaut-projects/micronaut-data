@@ -15,10 +15,13 @@
  */
 package io.micronaut.data.jdbc.notification.postgres;
 
+import io.micronaut.data.jdbc.notification.ChangeListenerException;
+import io.micronaut.data.jdbc.notification.ChangeListenerExceptionHandler;
 import io.micronaut.data.jdbc.notification.ChangeNotificationQueue;
 import io.micronaut.data.jdbc.notification.DefaultChangeEvent;
 import io.micronaut.data.notification.ChangeEvent;
 import io.micronaut.data.notification.ChangeOperation;
+import io.micronaut.inject.ExecutableMethod;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -37,10 +40,10 @@ import java.util.function.Consumer;
  * it has not started.</p>
  *
  * <p>Shutdown closes admission and discards waiting callbacks without interrupting running work.
- * Completion includes worker termination. Callback exceptions are logged; failed row deliveries
- * also replace waiting work with one invalidation. Failed invalidation or termination callbacks
- * do not schedule another invalidation. Errors propagate to the worker after active-task accounting
- * is released.</p>
+ * Completion includes worker termination. Callback exceptions are passed to
+ * {@link ChangeListenerExceptionHandler}; failed row deliveries also replace waiting work with one
+ * invalidation. Failed invalidation or termination callbacks do not schedule another invalidation.
+ * Errors propagate to the worker after active-task accounting is released.</p>
  */
 final class PostgresChangeNotificationDispatcher {
     private static final Logger LOG = LoggerFactory.getLogger(PostgresChangeNotificationDispatcher.class);
@@ -50,16 +53,21 @@ final class PostgresChangeNotificationDispatcher {
     private final Consumer<ChangeEvent<?>> listener;
     private final String dataSourceName;
     private final String description;
+    private final ExecutableMethod<?, ?> listenerMethod;
+    private final ChangeListenerExceptionHandler exceptionHandler;
 
     // Admission to running work and task counts share this monitor; listener code runs outside it.
     private boolean closing;
     private long activeTasks;
 
     PostgresChangeNotificationDispatcher(Consumer<ChangeEvent<?>> listener, String dataSourceName,
-                                         String description, int queueCapacity) {
+                                         ExecutableMethod<?, ?> listenerMethod, int queueCapacity,
+                                         ChangeListenerExceptionHandler exceptionHandler) {
         this.listener = listener;
         this.dataSourceName = dataSourceName;
-        this.description = description;
+        this.listenerMethod = listenerMethod;
+        this.description = listenerMethod.getDescription(true);
+        this.exceptionHandler = exceptionHandler;
         notificationQueue = new ChangeNotificationQueue(
             "postgres-notification-listener-" + dataSourceName + "-" + description, queueCapacity);
         completion = notificationQueue.completion().toCompletableFuture();
@@ -106,8 +114,7 @@ final class PostgresChangeNotificationDispatcher {
             logEvent(event);
             listener.accept(event);
         } catch (Exception e) {
-            LOG.error("PostgreSQL notification operation [{}] failed for datasource [{}] and listener method [{}]",
-                event.operation(), dataSourceName, description, e);
+            handleFailure(event, e);
             if (event.operation() == ChangeOperation.INSERT
                 || event.operation() == ChangeOperation.UPDATE
                 || event.operation() == ChangeOperation.DELETE) {
@@ -117,6 +124,30 @@ final class PostgresChangeNotificationDispatcher {
             synchronized (this) {
                 activeTasks--;
             }
+        }
+    }
+
+    /**
+     * Reports a failed callback after listener advice completes, retaining the event and available row context.
+     * A failing application handler must not prevent reconciliation or later callbacks.
+     *
+     * @param event the event whose delivery failed
+     * @param cause the original listener resolution, loading, or invocation failure
+     */
+    private void handleFailure(ChangeEvent<?> event, Exception cause) {
+        PostgresChangeEventMetadata metadata = event.metadata(PostgresChangeEventMetadata.class).orElse(null);
+        String message = "PostgreSQL notification operation [" + event.operation() + "] failed for datasource ["
+            + dataSourceName + "] and listener method [" + description + "], "
+            + (metadata == null ? "table metadata unavailable"
+                : "channel [" + metadata.channel() + "], schema [" + metadata.schema() + "], table ["
+                    + metadata.table() + "], old keys [" + metadata.oldKeys() + "], new keys [" + metadata.newKeys() + "]");
+        ChangeListenerException failure = new ChangeListenerException(message, dataSourceName, listenerMethod, event, cause);
+        try {
+            exceptionHandler.handle(failure);
+        } catch (RuntimeException handlerFailure) {
+            LOG.error("Error in change listener exception handler for datasource [{}] and listener method [{}]",
+                dataSourceName, description, handlerFailure);
+            LOG.error(message, cause);
         }
     }
 

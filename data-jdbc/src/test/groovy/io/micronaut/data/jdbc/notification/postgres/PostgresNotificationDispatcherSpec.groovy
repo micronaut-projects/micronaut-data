@@ -15,11 +15,19 @@
  */
 package io.micronaut.data.jdbc.notification.postgres
 
+import ch.qos.logback.classic.Level
+import ch.qos.logback.classic.Logger
+import ch.qos.logback.classic.spi.ILoggingEvent
+import ch.qos.logback.core.read.ListAppender
 import io.micronaut.data.exceptions.DataAccessException
+import io.micronaut.data.jdbc.notification.ChangeListenerException
+import io.micronaut.data.jdbc.notification.ChangeListenerExceptionHandler
 import io.micronaut.data.jdbc.notification.DefaultChangeEvent
 import io.micronaut.data.jdbc.notification.DeferredChangeEvent
 import io.micronaut.data.notification.ChangeEvent
 import io.micronaut.data.notification.ChangeOperation
+import io.micronaut.inject.ExecutableMethod
+import org.slf4j.LoggerFactory
 import spock.lang.Specification
 
 import java.util.concurrent.CompletableFuture
@@ -172,38 +180,74 @@ class PostgresNotificationDispatcherSpec extends Specification {
         dispatcher.stop().get(5, TimeUnit.SECONDS)
     }
 
-    void "a failed #operation callback reconciles queued data with pending invalidation #pendingInvalidation"() {
+    void "a failed #operation callback reports context and reconciles with pending invalidation #pendingInvalidation and handler throws #handlerThrows"() {
         given:
         def entered = new CountDownLatch(1)
         def release = new CountDownLatch(1)
         def events = new LinkedBlockingQueue<ChangeEvent<?>>()
-        def failed = row(operation)
+        def failures = new LinkedBlockingQueue<ChangeListenerException>()
+        def method = Stub(ExecutableMethod) {
+            getDescription(true) >> 'void changed(ChangeEvent<Book>)'
+        }
+        def metadata = new DefaultPostgresChangeEventMetadata('books', 'sales', 'book',
+            operation == ChangeOperation.INSERT ? [:] : [id: '41'],
+            operation == ChangeOperation.DELETE ? [:] : [id: '42'])
+        def failed = new DefaultChangeEvent(operation, null, metadata)
+        def listenerFailure = new IllegalStateException('callback failure')
+        def handlerFailure = new IllegalStateException('handler failure')
+        def handler = Stub(ChangeListenerExceptionHandler) {
+            handle(_ as ChangeListenerException) >> { ChangeListenerException reportedFailure ->
+                failures.add(reportedFailure)
+                if (handlerThrows) {
+                    throw handlerFailure
+                }
+            }
+        }
+        def logger = (Logger) LoggerFactory.getLogger(PostgresChangeNotificationDispatcher)
+        def previousLevel = logger.level
+        logger.level = Level.ERROR
+        def appender = new ListAppender<ILoggingEvent>()
+        appender.start()
+        logger.addAppender(appender)
         def dispatcher = createDispatcher({ event ->
             if (event.is(failed)) {
                 entered.countDown()
                 assert release.await(5, TimeUnit.SECONDS)
-                throw new IllegalStateException('callback failure')
+                throw listenerFailure
             }
             events.add(event)
-        })
+        }, 10, handler, method)
         dispatcher.submitDispatch(failed)
         assert entered.await(5, TimeUnit.SECONDS)
         dispatcher.submitDispatch(row(ChangeOperation.UPDATE))
         if (pendingInvalidation) {
-            def metadata = new DefaultPostgresChangeEventMetadata('books', 'public', 'book', [:], [:])
-            dispatcher.submitDispatch(new DefaultChangeEvent(ChangeOperation.INVALIDATE, null, metadata))
+            def pendingMetadata = new DefaultPostgresChangeEventMetadata('books', 'public', 'book', [:], [:])
+            dispatcher.submitDispatch(new DefaultChangeEvent(ChangeOperation.INVALIDATE, null, pendingMetadata))
         }
         dispatcher.submitDispatch(row(ChangeOperation.DELETE))
 
         when:
         release.countDown()
+        def failure = failures.poll(5, TimeUnit.SECONDS)
         def invalidation = events.poll(5, TimeUnit.SECONDS)
 
         then:
+        failure != null
+        failure.cause.is(listenerFailure)
+        failure.dataSourceName == 'default'
+        failure.listenerMethod.is(method)
+        failure.event.is(failed)
+        failure.event.metadata(PostgresChangeEventMetadata).orElseThrow().is(metadata)
+        failure.message.contains('void changed(ChangeEvent<Book>)')
+        failure.message.contains("operation [$operation]")
+        failure.message.contains('datasource [default]')
+        failure.message.contains('channel [books], schema [sales], table [book]')
+        failure.message.contains("old keys [${String.valueOf(metadata.oldKeys())}], new keys [${String.valueOf(metadata.newKeys())}]")
         invalidation != null
         invalidation.operation() == ChangeOperation.INVALIDATE
         invalidation.entity().empty
         invalidation.metadata(PostgresChangeEventMetadata).empty
+        appender.list.collect { it.throwableProxy.throwable } == (handlerThrows ? [handlerFailure, listenerFailure] : [])
 
         when:
         dispatcher.submitDispatch(row(ChangeOperation.UPDATE))
@@ -223,10 +267,14 @@ class PostgresNotificationDispatcherSpec extends Specification {
         cleanup:
         release.countDown()
         dispatcher.stop().get(5, TimeUnit.SECONDS)
+        logger.detachAppender(appender)
+        logger.level = previousLevel
+        appender.stop()
 
         where:
-        [operation, pendingInvalidation] << [
+        [operation, pendingInvalidation, handlerThrows] << [
             [ChangeOperation.INSERT, ChangeOperation.UPDATE, ChangeOperation.DELETE],
+            [false, true],
             [false, true]
         ].combinations()
     }
@@ -235,22 +283,34 @@ class PostgresNotificationDispatcherSpec extends Specification {
         given:
         def loads = new AtomicInteger()
         def events = new LinkedBlockingQueue<ChangeEvent<?>>()
+        def failures = new LinkedBlockingQueue<ChangeListenerException>()
+        def handler = Stub(ChangeListenerExceptionHandler) {
+            handle(_ as ChangeListenerException) >> { ChangeListenerException reportedFailure -> failures.add(reportedFailure) }
+        }
         def dispatcher = createDispatcher({ event ->
             if (event instanceof DeferredChangeEvent) {
                 event.materialize()
             }
             events.add(event)
-        })
-        def failed = new DeferredChangeEvent(operation, null, {
+        }, 10, handler)
+        def metadata = new DefaultPostgresChangeEventMetadata('books', 'sales', 'book', [:], [id: '42'])
+        def loadingFailure = new DataAccessException('reload failure')
+        def failed = new DeferredChangeEvent(operation, metadata, {
             loads.incrementAndGet()
-            throw new DataAccessException('reload failure')
+            throw loadingFailure
         })
 
         when:
         dispatcher.submitDispatch(failed)
+        def failure = failures.poll(5, TimeUnit.SECONDS)
         def invalidation = events.poll(5, TimeUnit.SECONDS)
 
         then:
+        failure != null
+        failure.cause.is(loadingFailure)
+        failure.event.is(failed)
+        failure.event.entity().empty
+        failure.event.metadata(PostgresChangeEventMetadata).orElseThrow().is(metadata)
         invalidation != null
         invalidation.operation() == ChangeOperation.INVALIDATE
         invalidation.entity().empty
@@ -271,6 +331,61 @@ class PostgresNotificationDispatcherSpec extends Specification {
 
         where:
         operation << [ChangeOperation.INSERT, ChangeOperation.UPDATE]
+    }
+
+    void "reports a failed #operation callback without table metadata when handler throws #handlerThrows"() {
+        given:
+        def failures = new LinkedBlockingQueue<ChangeListenerException>()
+        def events = new LinkedBlockingQueue<ChangeOperation>()
+        def listenerFailure = new IllegalStateException('lifecycle callback failure')
+        def handler = Stub(ChangeListenerExceptionHandler) {
+            handle(_ as ChangeListenerException) >> { ChangeListenerException reportedFailure ->
+                failures.add(reportedFailure)
+                if (handlerThrows) {
+                    throw new IllegalStateException('handler failure')
+                }
+            }
+        }
+        def dispatcher = createDispatcher({ event ->
+            if (event.operation() == operation) {
+                throw listenerFailure
+            }
+            events.add(event.operation())
+        }, 10, handler)
+
+        when:
+        if (operation == ChangeOperation.TERMINATED) {
+            dispatcher.terminate()
+        } else {
+            dispatcher.invalidate()
+        }
+        def failure = failures.poll(5, TimeUnit.SECONDS)
+
+        then:
+        failure != null
+        failure.cause.is(listenerFailure)
+        failure.event.operation() == operation
+        failure.event.entity().empty
+        failure.event.metadata(PostgresChangeEventMetadata).empty
+        failure.message.contains('table metadata unavailable')
+
+        when:
+        dispatcher.submitDispatch(row(ChangeOperation.DELETE))
+
+        then:
+        if (operation == ChangeOperation.INVALIDATE) {
+            assert events.poll(5, TimeUnit.SECONDS) == ChangeOperation.DELETE
+        }
+        dispatcher.stop().get(5, TimeUnit.SECONDS) == null
+        dispatcher.pendingTasks() == 0
+        failures.empty
+        events.empty
+
+        cleanup:
+        dispatcher.stop().get(5, TimeUnit.SECONDS)
+
+        where:
+        [operation, handlerThrows] << [[ChangeOperation.INVALIDATE, ChangeOperation.TERMINATED], [false, true]].combinations()
     }
 
     void "a failed invalidation is not automatically retried and later data still runs"() {
@@ -530,7 +645,13 @@ class PostgresNotificationDispatcherSpec extends Specification {
         new DefaultChangeEvent<>(operation, null, null)
     }
 
-    private static PostgresChangeNotificationDispatcher createDispatcher(Closure listener, int capacity = 10) {
-        new PostgresChangeNotificationDispatcher(listener as Consumer, 'default', 'test', capacity)
+    private PostgresChangeNotificationDispatcher createDispatcher(Closure listener, int capacity = 10,
+                                                                 ChangeListenerExceptionHandler handler = null,
+                                                                 ExecutableMethod method = null) {
+        def listenerMethod = method ?: Stub(ExecutableMethod) {
+            getDescription(true) >> 'test'
+        }
+        new PostgresChangeNotificationDispatcher(listener as Consumer, 'default', listenerMethod, capacity,
+            handler ?: Stub(ChangeListenerExceptionHandler))
     }
 }

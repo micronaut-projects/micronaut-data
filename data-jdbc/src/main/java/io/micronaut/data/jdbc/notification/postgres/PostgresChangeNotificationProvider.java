@@ -24,6 +24,7 @@ import io.micronaut.context.event.ShutdownEvent;
 import io.micronaut.context.exceptions.ConfigurationException;
 import io.micronaut.core.annotation.Order;
 import io.micronaut.core.order.Ordered;
+import io.micronaut.data.jdbc.notification.ChangeListenerExceptionHandler;
 import io.micronaut.data.jdbc.notification.ChangeListenerMethod;
 import io.micronaut.data.jdbc.notification.ChangeNotificationProvider;
 import io.micronaut.data.jdbc.operations.JdbcRepositoryOperations;
@@ -75,6 +76,7 @@ final class PostgresChangeNotificationProvider implements ChangeNotificationProv
     private final BeanProvider<JsonMapper> jsonMapperProvider;
     private final PostgresNotificationConfiguration configuration;
     private final PostgresNotificationConnectionFactory connectionFactory;
+    private final ChangeListenerExceptionHandler exceptionHandler;
     private final boolean gracefulShutdownEnabled;
     private final Duration shutdownGracePeriod;
     private final AtomicBoolean shutdownHandled = new AtomicBoolean();
@@ -85,11 +87,13 @@ final class PostgresChangeNotificationProvider implements ChangeNotificationProv
                                        PostgresNotificationConfiguration configuration,
                                        PostgresNotificationConnectionFactory connectionFactory,
                                        @Value("${micronaut.lifecycle.graceful-shutdown.enabled:false}") boolean gracefulShutdownEnabled,
-                                       @Value("${micronaut.lifecycle.graceful-shutdown.grace-period:15s}") Duration shutdownGracePeriod) {
+                                       @Value("${micronaut.lifecycle.graceful-shutdown.grace-period:15s}") Duration shutdownGracePeriod,
+                                       ChangeListenerExceptionHandler exceptionHandler) {
         this.beanContext = beanContext;
         this.jsonMapperProvider = jsonMapperProvider;
         this.configuration = configuration;
         this.connectionFactory = connectionFactory;
+        this.exceptionHandler = exceptionHandler;
         this.gracefulShutdownEnabled = gracefulShutdownEnabled;
         this.shutdownGracePeriod = shutdownGracePeriod;
     }
@@ -125,7 +129,7 @@ final class PostgresChangeNotificationProvider implements ChangeNotificationProv
                 + "Add io.micronaut.serde:micronaut-serde-jackson or provide another JsonMapper implementation.");
         }
         var subscription = new PostgresNotificationSubscription(name, operations, listeners, beanContext,
-            jsonMapperProvider.get(), configuration, connectionFactory);
+            jsonMapperProvider.get(), configuration, connectionFactory, exceptionHandler);
         LOG.trace("Starting registration of [{}] change listener methods for datasource [{}]", listeners.size(), name);
         subscription.start();
         subscriptions.put(name, subscription);
