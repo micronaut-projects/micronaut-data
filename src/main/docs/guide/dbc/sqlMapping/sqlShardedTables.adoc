@@ -43,7 +43,7 @@ The build or the schema generation fails if a mapping cannot work on a sharded d
 * A unique index must contain the sharding key
 * A sharded or duplicated entity cannot have an association that needs a join table
 
-A generated primary key column outside the sharding key, such as an order number of a table sharded by customer, uses a sharded sequence (`CREATE SEQUENCE ... SHARD`), so that its values stay unique when a chunk moves to another shard. For `Long` and `Integer` properties, its `MAXVALUE` is limited to 18 and 9 digits, so that the values fit the column. A sequence you create with the `definition` member of `@GeneratedValue` is used as written.
+A generated primary key column outside the sharding key, such as an order number of a table sharded by customer, uses a sharded sequence (`CREATE SEQUENCE ... SHARD`), so that its values stay unique when a chunk moves to another shard. For `Long` and `Integer` properties, its `MAXVALUE` is limited to 18 and 9 digits, so that the values fit the column. The shard offset is part of those digits and `NEXTVAL` fails once a value needs more, so an `Integer` id only has between about 100,000 and a million values per shard, depending on the Oracle release. Use `Long` for generated ids of sharded tables. A sequence you create with the `definition` member of `@GeneratedValue` is used as written.
 
 A duplicated table can have an identity column, but rows can then only be inserted through the shard catalog, because Oracle rejects inserts from a shard (`ORA-05156`).
 
