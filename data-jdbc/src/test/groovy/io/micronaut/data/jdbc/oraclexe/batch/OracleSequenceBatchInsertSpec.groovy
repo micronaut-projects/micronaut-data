@@ -21,6 +21,7 @@ import java.lang.reflect.InvocationHandler
 import java.lang.reflect.InvocationTargetException
 import java.lang.reflect.Method
 import java.lang.reflect.Proxy
+import java.sql.CallableStatement
 import java.sql.Connection
 import java.sql.PreparedStatement
 import java.util.concurrent.CopyOnWriteArrayList
@@ -108,6 +109,11 @@ class OracleSequenceBatchInsertSpec extends Specification implements OracleTestP
 
         private Connection recordingConnection(Connection connection) {
             return proxy(Connection, connection) { Method method, Object result ->
+                if (result instanceof CallableStatement) {
+                    // A proxy of PreparedStatement can't be used as a CallableStatement, which the schema generator
+                    // uses on Oracle; callable statements aren't recorded, so return them as they are
+                    return result
+                }
                 result instanceof PreparedStatement ? recordingStatement((PreparedStatement) result) : result
             }
         }
