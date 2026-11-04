@@ -20,6 +20,10 @@ dependencies {
     // the SQL schema of an entity is built with the Jackson annotations on the classpath
     testRuntimeOnly(mn.jackson.databind)
 
+    // core defines its development access filter whenever micronaut-http is present, and that filter needs the router;
+    // an application with micronaut-http and no router fails to resolve beans in development mode. Remove once core
+    // also requires the router for the filter
+    testRuntimeOnly(mn.micronaut.router)
     testImplementation(mnTest.junit.jupiter.api)
     testImplementation(mnTest.junit.jupiter.params)
     testRuntimeOnly(mnTest.junit.jupiter.engine)

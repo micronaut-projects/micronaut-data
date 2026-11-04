@@ -79,7 +79,6 @@ final class DevelopmentSchemaReloader {
         }
     }
 
-
     private void onClassChange(ClassChangeEvent change) {
         boolean restart = change.strategy() == ReloadStrategy.RESTART;
         if (!restart && change.retiredLoaders().isEmpty()) {
