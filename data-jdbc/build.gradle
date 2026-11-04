@@ -65,6 +65,7 @@ dependencies {
     testRuntimeOnly mnSql.postgresql
     testRuntimeOnly mnSql.mssql.jdbc
     testRuntimeOnly mn.snakeyaml
+    testRuntimeOnly mnTest.mockito.core
     testRuntimeOnly libs.h2gis
 
     testResourcesService mnSql.mariadb.java.client

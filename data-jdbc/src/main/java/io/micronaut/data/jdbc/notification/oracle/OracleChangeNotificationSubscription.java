@@ -49,7 +49,7 @@ import java.util.function.Consumer;
  * become stale while notifications were unavailable.</p>
  */
 @SuppressWarnings("ReferenceEquality")
-class OracleChangeNotificationSubscription {
+final class OracleChangeNotificationSubscription {
     private static final Logger LOG = LoggerFactory.getLogger(OracleChangeNotificationSubscription.class);
 
     private final String dataSourceName;

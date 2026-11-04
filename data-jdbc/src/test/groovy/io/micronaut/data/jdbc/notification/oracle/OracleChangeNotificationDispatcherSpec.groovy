@@ -41,6 +41,7 @@ import oracle.jdbc.OracleConnection
 import oracle.sql.ROWID
 import org.slf4j.LoggerFactory
 import spock.lang.Specification
+import spock.mock.MockMakers
 
 import java.util.concurrent.CountDownLatch
 import java.util.concurrent.Executor
@@ -71,7 +72,7 @@ class OracleChangeNotificationDispatcherSpec extends Specification {
         when:
         def dispatcher = new OracleChangeNotificationDispatcher('inventory',
             definition(beanDefinition, method, new Properties()), executionHandleLocator,
-            Mock(ChangeNotificationQueue), new OracleChangeNotificationTaskTracker(), Stub(OracleChangeNotificationSubscription),
+            Mock(ChangeNotificationQueue), new OracleChangeNotificationTaskTracker(), Stub(mockMaker: MockMakers.mockito, OracleChangeNotificationSubscription),
             Stub(ChangeListenerExceptionHandler))
 
         then:
@@ -195,7 +196,7 @@ class OracleChangeNotificationDispatcherSpec extends Specification {
         def event = Mock(DatabaseChangeEvent)
         def dispatcher = new OracleChangeNotificationDispatcher(
                 'inventory', definition(null, Mock(ExecutableMethod), new Properties()), Mock(BeanContext),
-                notificationQueue(executor), new OracleChangeNotificationTaskTracker(), Stub(OracleChangeNotificationSubscription),
+                notificationQueue(executor), new OracleChangeNotificationTaskTracker(), Stub(mockMaker: MockMakers.mockito, OracleChangeNotificationSubscription),
             Stub(ChangeListenerExceptionHandler))
 
         when:
@@ -1229,7 +1230,7 @@ class OracleChangeNotificationDispatcherSpec extends Specification {
                                                           Object executor,
                                                           OracleChangeNotificationTaskTracker taskTracker,
                                                           ChangeListenerExceptionHandler exceptionHandler = null) {
-        def subscription = Stub(OracleChangeNotificationSubscription) {
+        def subscription = Stub(mockMaker: MockMakers.mockito, OracleChangeNotificationSubscription) {
             handleRegistrationPurged(_) >> { long id -> registrationPurgedHandler.accept(id) }
             handleRegistrationDeregistered(_, _) >> { long id, DatabaseChangeEvent.AdditionalEventType reason ->
                 deregistrationHandler.accept(id, reason)
