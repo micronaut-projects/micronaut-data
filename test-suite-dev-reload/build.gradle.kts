@@ -10,6 +10,10 @@ dependencies {
     testImplementation(mn.micronaut.inject.java)
     testImplementation(projects.micronautDataProcessor)
 
+    // core defines its development access filter whenever micronaut-http is present, and that filter needs the router;
+    // an application with micronaut-http and no router fails to resolve beans in development mode. Remove once core
+    // also requires the router for the filter
+    testRuntimeOnly(mn.micronaut.router)
     testRuntimeOnly(mnSql.micronaut.jdbc.hikari)
     testRuntimeOnly(mnSql.h2)
 
