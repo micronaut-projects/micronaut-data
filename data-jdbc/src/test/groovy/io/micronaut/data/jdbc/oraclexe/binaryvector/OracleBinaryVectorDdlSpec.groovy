@@ -83,7 +83,7 @@ class OracleBinaryVectorDdlSpec extends Specification {
         statements.any { it.contains("CREATE VECTOR INDEX") && it.contains("DISTANCE JACCARD") }
     }
 
-    void "falls back to VARCHAR(255) on databases other than Oracle, like other vector types"() {
+    void "falls back to VARCHAR(255) on databases without a binary vector type, like other vector types"() {
         when:
         String createTable = createStatements(dialect, PlainDoc).find { it.startsWith("CREATE TABLE") }
 
@@ -92,7 +92,16 @@ class OracleBinaryVectorDdlSpec extends Specification {
         !createTable.contains("BINARY")
 
         where:
-        dialect << [Dialect.POSTGRES, Dialect.MYSQL, Dialect.H2]
+        dialect << [Dialect.MYSQL, Dialect.H2]
+    }
+
+    void "generates a pgvector bit column on PostgreSQL"() {
+        when:
+        String createTable = createStatements(Dialect.POSTGRES, PlainDoc).find { it.startsWith("CREATE TABLE") }
+
+        then:
+        createTable.contains('"embedding" bit(64)')
+        !createTable.contains("VARCHAR(255)")
     }
 
     private String[] createStatements(Dialect dialect, Class<?> entityType) {
