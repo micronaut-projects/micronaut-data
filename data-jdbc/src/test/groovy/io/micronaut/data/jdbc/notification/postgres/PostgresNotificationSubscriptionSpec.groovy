@@ -15,11 +15,25 @@
  */
 package io.micronaut.data.jdbc.notification.postgres
 
+import io.micronaut.context.ApplicationContext
 import io.micronaut.context.BeanContext
+import io.micronaut.context.RuntimeBeanDefinition
 import io.micronaut.context.env.Environment
+import io.micronaut.core.annotation.AnnotationValue
+import io.micronaut.core.convert.ConversionService
+import io.micronaut.core.type.Argument
+import io.micronaut.data.annotation.Id
+import io.micronaut.data.annotation.MappedEntity
+import io.micronaut.data.jdbc.annotation.PostgresChangeNotification
+import io.micronaut.data.jdbc.notification.ChangeListenerMethod
 import io.micronaut.data.jdbc.operations.JdbcRepositoryOperations
+import io.micronaut.data.model.runtime.RuntimePersistentEntity
+import io.micronaut.data.notification.ChangeEvent
+import io.micronaut.data.notification.ChangeOperation
+import io.micronaut.inject.ExecutableMethod
 import io.micronaut.json.JsonMapper
 import org.postgresql.PGConnection
+import org.postgresql.PGNotification
 import org.postgresql.ds.PGSimpleDataSource
 import spock.lang.Specification
 import spock.lang.Unroll
@@ -32,12 +46,127 @@ import java.util.concurrent.CompletableFuture
 import java.util.concurrent.CountDownLatch
 import java.util.concurrent.ExecutionException
 import java.util.concurrent.Executor
+import java.util.concurrent.LinkedBlockingQueue
 import java.util.concurrent.TimeUnit
 import java.time.Duration
 import java.util.concurrent.atomic.AtomicInteger
 import java.util.concurrent.atomic.AtomicReference
+import java.util.function.Supplier
 
 class PostgresNotificationSubscriptionSpec extends Specification {
+
+    void "lazily resolves each listener once across notifications and reconnection"() {
+        given:
+        def context = ApplicationContext.run()
+        def creations = new AtomicInteger()
+        def beanDefinition = RuntimeBeanDefinition.builder(Object, {
+            creations.incrementAndGet()
+            new Object()
+        } as Supplier).singleton(false).build()
+        context.registerBeanDefinition(beanDefinition)
+        def deliveries = [new LinkedBlockingQueue(), new LinkedBlockingQueue()]
+        def listeners = deliveries.withIndex().collect { queue, index ->
+            def method = Mock(ExecutableMethod) {
+                getDescription(true) >> "void changed${index}(ChangeEvent<ExecutionHandleBook>)"
+                getAnnotation(PostgresChangeNotification) >> AnnotationValue.builder(PostgresChangeNotification)
+                    .member('channel', 'books').build()
+                invoke(_, _) >> { List arguments ->
+                    ChangeEvent<?> event = arguments.flatten().find { it instanceof ChangeEvent }
+                    queue.add([arguments[0], event.operation()])
+                    null
+                }
+            }
+            new ChangeListenerMethod(beanDefinition, method, Argument.of(ExecutionHandleBook))
+        }
+        def operations = Stub(JdbcRepositoryOperations) {
+            getEntity(ExecutionHandleBook) >> new RuntimePersistentEntity<>(ExecutionHandleBook)
+            getConversionService() >> ConversionService.SHARED
+        }
+        def incoming = new LinkedBlockingQueue()
+        def postgres = Stub(PGConnection) {
+            escapeIdentifier('books') >> '"books"'
+            getNotifications(_ as int) >> { int timeout ->
+                def next = incoming.poll(timeout, TimeUnit.MILLISECONDS)
+                if (next instanceof SQLException) {
+                    throw next
+                }
+                next == null ? null : [next] as PGNotification[]
+            }
+        }
+        def original = Stub(Connection) {
+            unwrap(PGConnection) >> postgres
+            createStatement() >> Stub(Statement)
+        }
+        def replacement = Stub(Connection) {
+            unwrap(PGConnection) >> postgres
+            createStatement() >> Stub(Statement)
+        }
+        def opens = new AtomicInteger()
+        def factory = Stub(PostgresNotificationConnectionFactory) {
+            openConnection('test') >> { opens.incrementAndGet() == 1 ? original : replacement }
+        }
+        def mapper = JsonMapper.createDefault()
+        def payload = mapper.writeValueAsString([version: 1, operation: 'DELETE', schema: 'public',
+            table: 'execution_handle_book', oldKeys: [id: '42'], newKeys: [:]])
+        def notification = Stub(PGNotification) {
+            getName() >> 'books'
+            getParameter() >> payload
+        }
+        def configuration = new PostgresNotificationConfiguration(
+            pollTimeout: Duration.ofMillis(10), retryDelay: Duration.ofMillis(1))
+
+        when:
+        def subscription = new PostgresNotificationSubscription('test', operations, listeners, context,
+            mapper, configuration, factory)
+
+        then:
+        creations.get() == 0
+
+        when:
+        subscription.start()
+
+        then:
+        creations.get() == 0
+
+        when:
+        incoming.add(notification)
+        def first = deliveries.collect { it.poll(10, TimeUnit.SECONDS) }
+
+        then:
+        first.every { it != null && it[1] == ChangeOperation.DELETE }
+        !first[0][0].is(first[1][0])
+        creations.get() == 2
+
+        when:
+        incoming.add(notification)
+        def second = deliveries.collect { it.poll(10, TimeUnit.SECONDS) }
+
+        then:
+        second == first
+        creations.get() == 2
+
+        when:
+        incoming.add(new SQLException('Connection lost'))
+        def recovered = deliveries.collect { it.poll(10, TimeUnit.SECONDS) }
+
+        then:
+        recovered == first.collect { [it[0], ChangeOperation.INVALIDATE] }
+        opens.get() == 2
+        creations.get() == 2
+
+        when:
+        incoming.add(notification)
+        def afterRecovery = deliveries.collect { it.poll(10, TimeUnit.SECONDS) }
+
+        then:
+        afterRecovery == first
+        creations.get() == 2
+
+        cleanup:
+        subscription?.stop()?.get(10, TimeUnit.SECONDS)
+        context?.close()
+    }
+
     @Unroll
     void "startup preserves the setup failure after #scenario"() {
         given:
@@ -346,6 +475,12 @@ class PostgresNotificationSubscriptionSpec extends Specification {
         'healthy connection' | true  | null                               | 1
         'invalid connection' | false | null                               | 2
         'validation error'   | false | new SQLException('Network failure') | 2
+    }
+
+    @MappedEntity('execution_handle_book')
+    private static class ExecutionHandleBook {
+        @Id
+        Long id
     }
 
     private PostgresNotificationSubscription newSubscription(PGSimpleDataSource source,

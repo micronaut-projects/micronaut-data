@@ -23,6 +23,7 @@ import io.micronaut.data.jdbc.notification.DeferredChangeEvent;
 import io.micronaut.data.jdbc.operations.JdbcRepositoryOperations;
 import io.micronaut.data.notification.ChangeEvent;
 import io.micronaut.inject.ExecutableMethod;
+import io.micronaut.inject.ExecutionHandle;
 import io.micronaut.json.JsonMapper;
 import org.jspecify.annotations.Nullable;
 import org.postgresql.PGConnection;
@@ -53,8 +54,9 @@ import java.util.stream.Collectors;
  * submit invalidation events.</p>
  *
  * <p>Notifications are routed by channel, schema, and table. The subscription owns one dispatcher
- * per listener to process callbacks sequentially on its own worker. Entity loading uses repository
- * connections independently of the listening connection.</p>
+ * per listener to process callbacks sequentially on its own worker. Each dispatcher reuses a lazily
+ * resolved listener execution handle across notifications and reconnections. Entity loading uses
+ * repository connections independently of the listening connection.</p>
  *
  * <p>Stopping the subscription closes callback admission and signals the receive loop to exit.
  * Shutdown completes after the receiver exits, the listening connection is released, and running
@@ -80,6 +82,7 @@ final class PostgresNotificationSubscription {
     private volatile boolean running = true;
     private volatile @Nullable Connection connection;
 
+    @SuppressWarnings("unchecked")
     PostgresNotificationSubscription(String name,
                                      JdbcRepositoryOperations operations,
                                      List<ChangeListenerMethod> methods,
@@ -97,8 +100,10 @@ final class PostgresNotificationSubscription {
         PostgresChangeListenerDefinitionFactory definitionFactory = new PostgresChangeListenerDefinitionFactory(operations, context.getBean(Environment.class));
         for (ChangeListenerMethod method : methods) {
             PostgresChangeListenerDefinition definition = definitionFactory.create(method);
+            ExecutionHandle<?, ?> executionHandle = context.createExecutionHandle(
+                method.beanDefinition(), (ExecutableMethod<Object, ?>) method.method());
             PostgresChangeNotificationDispatcher dispatcher = new PostgresChangeNotificationDispatcher(
-                event -> invoke(context, method, event),
+                executionHandle::invoke,
                 name,
                 method.method().getDescription(true),
                 configuration.getQueueCapacity());
@@ -523,11 +528,6 @@ final class PostgresNotificationSubscription {
         } catch (SQLException | RuntimeException abortFailure) {
             cleanupFailure.addSuppressed(abortFailure);
         }
-    }
-
-    @SuppressWarnings({"rawtypes", "unchecked"})
-    private static void invoke(BeanContext context, ChangeListenerMethod method, ChangeEvent<?> event) {
-        ((ExecutableMethod) method.method()).invoke(context.getBean(method.beanDefinition()), event);
     }
 
 }
