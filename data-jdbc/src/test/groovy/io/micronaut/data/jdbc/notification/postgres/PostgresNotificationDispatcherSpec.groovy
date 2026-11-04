@@ -19,14 +19,18 @@ import ch.qos.logback.classic.Level
 import ch.qos.logback.classic.Logger
 import ch.qos.logback.classic.spi.ILoggingEvent
 import ch.qos.logback.core.read.ListAppender
+import io.micronaut.context.ExecutionHandleLocator
 import io.micronaut.data.exceptions.DataAccessException
 import io.micronaut.data.jdbc.notification.ChangeListenerException
 import io.micronaut.data.jdbc.notification.ChangeListenerExceptionHandler
+import io.micronaut.data.jdbc.notification.ChangeNotificationQueue
 import io.micronaut.data.jdbc.notification.DefaultChangeEvent
 import io.micronaut.data.jdbc.notification.DeferredChangeEvent
 import io.micronaut.data.notification.ChangeEvent
 import io.micronaut.data.notification.ChangeOperation
+import io.micronaut.inject.BeanDefinition
 import io.micronaut.inject.ExecutableMethod
+import io.micronaut.inject.MethodExecutionHandle
 import org.slf4j.LoggerFactory
 import spock.lang.Specification
 
@@ -36,7 +40,6 @@ import java.util.concurrent.CountDownLatch
 import java.util.concurrent.LinkedBlockingQueue
 import java.util.concurrent.TimeUnit
 import java.util.concurrent.atomic.AtomicInteger
-import java.util.function.Consumer
 
 class PostgresNotificationDispatcherSpec extends Specification {
     void "entity loading and callbacks execute sequentially in submission order"() {
@@ -651,7 +654,19 @@ class PostgresNotificationDispatcherSpec extends Specification {
         def listenerMethod = method ?: Stub(ExecutableMethod) {
             getDescription(true) >> 'test'
         }
-        new PostgresChangeNotificationDispatcher(listener as Consumer, 'default', listenerMethod, capacity,
+        def definition = new PostgresChangeListenerDefinition(Stub(BeanDefinition), listenerMethod,
+            'books', null, 'book', null)
+        def executionHandle = Stub(MethodExecutionHandle) {
+            invoke(_) >> { List arguments ->
+                ChangeEvent<?> event = arguments.flatten().find { it instanceof ChangeEvent }
+                listener.call(event)
+            }
+        }
+        def executionHandleLocator = Stub(ExecutionHandleLocator) {
+            createExecutionHandle(definition.beanDefinition(), listenerMethod) >> executionHandle
+        }
+        def queue = new ChangeNotificationQueue('postgres-notification-listener-default-' + listenerMethod.getDescription(true), capacity)
+        new PostgresChangeNotificationDispatcher('default', definition, executionHandleLocator, queue,
             handler ?: Stub(ChangeListenerExceptionHandler))
     }
 }

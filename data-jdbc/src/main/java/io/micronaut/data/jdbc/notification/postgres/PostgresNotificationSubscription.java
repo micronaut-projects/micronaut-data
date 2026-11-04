@@ -19,12 +19,11 @@ import io.micronaut.context.BeanContext;
 import io.micronaut.context.env.Environment;
 import io.micronaut.data.jdbc.notification.ChangeListenerExceptionHandler;
 import io.micronaut.data.jdbc.notification.ChangeListenerMethod;
+import io.micronaut.data.jdbc.notification.ChangeNotificationQueue;
 import io.micronaut.data.jdbc.notification.DefaultChangeEvent;
 import io.micronaut.data.jdbc.notification.DeferredChangeEvent;
 import io.micronaut.data.jdbc.operations.JdbcRepositoryOperations;
 import io.micronaut.data.notification.ChangeEvent;
-import io.micronaut.inject.ExecutableMethod;
-import io.micronaut.inject.ExecutionHandle;
 import io.micronaut.json.JsonMapper;
 import org.jspecify.annotations.Nullable;
 import org.postgresql.PGConnection;
@@ -83,7 +82,6 @@ final class PostgresNotificationSubscription {
     private volatile boolean running = true;
     private volatile @Nullable Connection connection;
 
-    @SuppressWarnings("unchecked")
     PostgresNotificationSubscription(String name,
                                      JdbcRepositoryOperations operations,
                                      List<ChangeListenerMethod> methods,
@@ -102,13 +100,14 @@ final class PostgresNotificationSubscription {
         PostgresChangeListenerDefinitionFactory definitionFactory = new PostgresChangeListenerDefinitionFactory(operations, context.getBean(Environment.class));
         for (ChangeListenerMethod method : methods) {
             PostgresChangeListenerDefinition definition = definitionFactory.create(method);
-            ExecutionHandle<?, ?> executionHandle = context.createExecutionHandle(
-                method.beanDefinition(), (ExecutableMethod<Object, ?>) method.method());
+            ChangeNotificationQueue notificationQueue = new ChangeNotificationQueue(
+                "postgres-notification-listener-" + name + "-" + definition.method().getDescription(true),
+                configuration.getQueueCapacity());
             PostgresChangeNotificationDispatcher dispatcher = new PostgresChangeNotificationDispatcher(
-                executionHandle::invoke,
                 name,
-                method.method(),
-                configuration.getQueueCapacity(),
+                definition,
+                context,
+                notificationQueue,
                 exceptionHandler);
             dispatchers.put(definition, dispatcher);
         }

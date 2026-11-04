@@ -15,6 +15,7 @@
  */
 package io.micronaut.data.jdbc.notification.postgres;
 
+import io.micronaut.context.ExecutionHandleLocator;
 import io.micronaut.data.jdbc.notification.ChangeListenerException;
 import io.micronaut.data.jdbc.notification.ChangeListenerExceptionHandler;
 import io.micronaut.data.jdbc.notification.ChangeNotificationQueue;
@@ -22,11 +23,11 @@ import io.micronaut.data.jdbc.notification.DefaultChangeEvent;
 import io.micronaut.data.notification.ChangeEvent;
 import io.micronaut.data.notification.ChangeOperation;
 import io.micronaut.inject.ExecutableMethod;
+import io.micronaut.inject.ExecutionHandle;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 import java.util.concurrent.CompletableFuture;
-import java.util.function.Consumer;
 
 /**
  * Delivers one listener's notifications sequentially on a dedicated worker.
@@ -34,6 +35,9 @@ import java.util.function.Consumer;
  * <p>Entity loading and listener invocation share the same bounded queue. Reaching its limit
  * replaces waiting data with one invalidation. Explicit invalidations, including recovery
  * reconciliation, also replace waiting work and run after the callback already in progress.</p>
+ *
+ * <p>The dispatcher creates one execution handle from its listener definition. The handle resolves
+ * the bean lazily and reuses it across notifications and reconnections.</p>
  *
  * <p>Termination replaces waiting work with a final {@code TERMINATED} callback and closes queue
  * admission. Its delivery has no entity or table metadata. Application shutdown discards it if
@@ -50,26 +54,29 @@ final class PostgresChangeNotificationDispatcher {
 
     private final ChangeNotificationQueue notificationQueue;
     private final CompletableFuture<Void> completion;
-    private final Consumer<ChangeEvent<?>> listener;
+    private final PostgresChangeListenerDefinition listenerDefinition;
+    private final ExecutionHandle<?, ?> listenerExecutionHandle;
     private final String dataSourceName;
-    private final String description;
-    private final ExecutableMethod<?, ?> listenerMethod;
+    private final String methodDescription;
     private final ChangeListenerExceptionHandler exceptionHandler;
 
     // Admission to running work and task counts share this monitor; listener code runs outside it.
     private boolean closing;
     private long activeTasks;
 
-    PostgresChangeNotificationDispatcher(Consumer<ChangeEvent<?>> listener, String dataSourceName,
-                                         ExecutableMethod<?, ?> listenerMethod, int queueCapacity,
+    @SuppressWarnings("unchecked")
+    PostgresChangeNotificationDispatcher(String dataSourceName,
+                                         PostgresChangeListenerDefinition listenerDefinition,
+                                         ExecutionHandleLocator executionHandleLocator,
+                                         ChangeNotificationQueue notificationQueue,
                                          ChangeListenerExceptionHandler exceptionHandler) {
-        this.listener = listener;
         this.dataSourceName = dataSourceName;
-        this.listenerMethod = listenerMethod;
-        this.description = listenerMethod.getDescription(true);
+        this.listenerDefinition = listenerDefinition;
+        this.methodDescription = listenerDefinition.method().getDescription(true);
+        this.listenerExecutionHandle = executionHandleLocator.createExecutionHandle(
+            listenerDefinition.beanDefinition(), (ExecutableMethod<Object, ?>) listenerDefinition.method());
         this.exceptionHandler = exceptionHandler;
-        notificationQueue = new ChangeNotificationQueue(
-            "postgres-notification-listener-" + dataSourceName + "-" + description, queueCapacity);
+        this.notificationQueue = notificationQueue;
         completion = notificationQueue.completion().toCompletableFuture();
     }
 
@@ -85,7 +92,7 @@ final class PostgresChangeNotificationDispatcher {
                 new DefaultChangeEvent<>(ChangeOperation.TERMINATED, null, null)));
         } catch (RuntimeException e) {
             LOG.error("Unable to queue PostgreSQL notification termination for datasource [{}] and listener method [{}]",
-                dataSourceName, description, e);
+                dataSourceName, methodDescription, e);
             notificationQueue.stop();
         }
     }
@@ -112,7 +119,7 @@ final class PostgresChangeNotificationDispatcher {
         }
         try {
             logEvent(event);
-            listener.accept(event);
+            listenerExecutionHandle.invoke(event);
         } catch (Exception e) {
             handleFailure(event, e);
             if (event.operation() == ChangeOperation.INSERT
@@ -137,16 +144,16 @@ final class PostgresChangeNotificationDispatcher {
     private void handleFailure(ChangeEvent<?> event, Exception cause) {
         PostgresChangeEventMetadata metadata = event.metadata(PostgresChangeEventMetadata.class).orElse(null);
         String message = "PostgreSQL notification operation [" + event.operation() + "] failed for datasource ["
-            + dataSourceName + "] and listener method [" + description + "], "
+            + dataSourceName + "] and listener method [" + methodDescription + "], "
             + (metadata == null ? "table metadata unavailable"
                 : "channel [" + metadata.channel() + "], schema [" + metadata.schema() + "], table ["
                     + metadata.table() + "], old keys [" + metadata.oldKeys() + "], new keys [" + metadata.newKeys() + "]");
-        ChangeListenerException failure = new ChangeListenerException(message, dataSourceName, listenerMethod, event, cause);
+        ChangeListenerException failure = new ChangeListenerException(message, dataSourceName, listenerDefinition.method(), event, cause);
         try {
             exceptionHandler.handle(failure);
         } catch (RuntimeException handlerFailure) {
             LOG.error("Error in change listener exception handler for datasource [{}] and listener method [{}]",
-                dataSourceName, description, handlerFailure);
+                dataSourceName, methodDescription, handlerFailure);
             LOG.error(message, cause);
         }
     }
@@ -156,11 +163,11 @@ final class PostgresChangeNotificationDispatcher {
             PostgresChangeEventMetadata metadata = event.metadata(PostgresChangeEventMetadata.class).orElse(null);
             if (metadata == null) {
                 LOG.trace("Accepted PostgreSQL notification operation [{}] for datasource [{}] and listener method [{}] without table metadata",
-                    event.operation(), dataSourceName, description);
+                    event.operation(), dataSourceName, methodDescription);
             } else {
                 LOG.trace("Accepted PostgreSQL notification operation [{}] for datasource [{}], listener method [{}], "
                         + "channel [{}], schema [{}], table [{}], old keys [{}], and new keys [{}]",
-                    event.operation(), dataSourceName, description, metadata.channel(), metadata.schema(), metadata.table(),
+                    event.operation(), dataSourceName, methodDescription, metadata.channel(), metadata.schema(), metadata.table(),
                     metadata.oldKeys(), metadata.newKeys());
             }
         }

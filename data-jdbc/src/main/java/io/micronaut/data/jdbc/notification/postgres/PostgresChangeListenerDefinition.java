@@ -16,28 +16,35 @@
 package io.micronaut.data.jdbc.notification.postgres;
 
 import io.micronaut.core.annotation.Internal;
+import io.micronaut.inject.BeanDefinition;
+import io.micronaut.inject.ExecutableMethod;
 import org.jspecify.annotations.Nullable;
 
 /**
  * Runtime definition for one {@code @ChangeListener} method.
  *
- * <p>The table identity comes from the entity mapping. When the mapping specifies a schema,
+ * <p>The definition retains the owning bean and executable listener method alongside the table
+ * mapping and entity loader. The table identity comes from the entity mapping. When it specifies a schema,
  * both schema and table must match. Otherwise, only the table name is compared.</p>
  *
- * @param channel the notification channel
- * @param schema the optional mapped schema name, normalized for PostgreSQL identifier matching
- * @param table the mapped table name, normalized for PostgreSQL identifier matching
- * @param loader the loader for current entity state
+ * @param beanDefinition the bean definition that owns the listener method
+ * @param method         the executable listener method
+ * @param channel        the notification channel
+ * @param schema         the optional mapped schema name, normalized for PostgreSQL identifier matching
+ * @param table          the mapped table name, normalized for PostgreSQL identifier matching
+ * @param loader         the loader for current entity state
  */
 @Internal
-record PostgresChangeListenerDefinition(String channel, @Nullable String schema, String table,
+record PostgresChangeListenerDefinition(BeanDefinition<?> beanDefinition,
+                                        ExecutableMethod<?, ?> method,
+                                        String channel, @Nullable String schema, String table,
                                         PostgresChangeListenerEntityLoader<?> loader) {
 
     /**
      * Matches the reported table and, when explicitly mapped, its schema.
      *
      * @param changedSchema the schema reported by the trigger
-     * @param changedTable the table reported by the trigger
+     * @param changedTable  the table reported by the trigger
      * @return {@code true} if the notification matches this mapping
      */
     boolean matches(String changedSchema, String changedTable) {

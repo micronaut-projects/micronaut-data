@@ -82,6 +82,8 @@ class PostgresChangeListenerDefinitionSpec extends Specification {
         def definition = new PostgresChangeListenerDefinitionFactory(operations, context.environment).create(listener)
 
         then:
+        definition.beanDefinition().is(listener.beanDefinition())
+        definition.method().is(method)
         definition.schema() == schema
         definition.table() == table
         definition.matches(changedSchema, changedTable) == matches

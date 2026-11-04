@@ -59,7 +59,7 @@ final class PostgresChangeListenerDefinitionFactory {
      * Creates the table mapping and entity loader for one discovered listener method.
      *
      * @param listenerMethod the validated listener method and entity type
-     * @return the listener definition
+     * @return the listener identity, table mapping, and entity loader
      */
     PostgresChangeListenerDefinition create(ChangeListenerMethod listenerMethod) {
         ExecutableMethod<?, ?> method = listenerMethod.method();
@@ -76,7 +76,7 @@ final class PostgresChangeListenerDefinitionFactory {
         boolean quoted = entity.getAnnotationMetadata().booleanValue(MappedEntity.class, "escape").orElse(true);
         schema = schema == null ? null : PostgresNotificationIdentifiers.resolve(schema, quoted, environment);
         table = PostgresNotificationIdentifiers.resolve(table, quoted, environment);
-        return new PostgresChangeListenerDefinition(channel, schema, table, loader);
+        return new PostgresChangeListenerDefinition(listenerMethod.beanDefinition(), method, channel, schema, table, loader);
     }
 
     /**
