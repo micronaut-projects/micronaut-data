@@ -199,7 +199,7 @@ include 'test-suite-data-jdbc-sqlite'
 include 'test-suite-dev-reload'
 // The development mode test suites of R2DBC and MongoDB run against versions of Micronaut R2DBC (7.3.0-SNAPSHOT,
 // micronaut-projects/micronaut-r2dbc#1066) and Micronaut MongoDB (6.3.0, micronaut-projects/micronaut-mongodb#1011)
-// that are not released yet, published to Maven local: pass -PdevReloadSuites to include them. Include them always once
+// that are not released yet: pass -PdevReloadSuites to include them. Include them always once
 // the platform moves to those releases.
 if (providers.gradleProperty('devReloadSuites').present) {
     include 'test-suite-dev-reload-r2dbc'
