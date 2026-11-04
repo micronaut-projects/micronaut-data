@@ -363,7 +363,7 @@ public class DefaultBindableParametersStoredQuery<E, R> implements BindableParam
         if (!(storedQuery instanceof SqlStoredQuery<?, ?> sqlStoredQuery)) {
             return null;
         }
-        return VectorScoringDialectSupport.defaultScoringFunctionForDialect(sqlStoredQuery.getDialect());
+        return VectorScoringDialectSupport.defaultScoringFunctionForQuery(sqlStoredQuery.getDialect(), sqlStoredQuery.getQuery());
     }
 
     private Object resolveParameterValue(QueryParameterBinding queryParameterBinding, Object[] parameterArray) {

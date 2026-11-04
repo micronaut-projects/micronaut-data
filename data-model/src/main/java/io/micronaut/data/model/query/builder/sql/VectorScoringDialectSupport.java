@@ -64,6 +64,40 @@ public interface VectorScoringDialectSupport {
     }
 
     /**
+     * Returns the default scoring function for a query: {@link ScoringFunction#HAMMING} when the query
+     * compares Oracle binary vectors, otherwise {@link #defaultScoringFunction()}.
+     *
+     * @param query The query SQL
+     * @return The default scoring function for the query, or {@code null} if not applicable
+     * @since 5.3.0
+     */
+    default @Nullable ScoringFunction defaultScoringFunction(String query) {
+        return defaultScoringFunctionForQuery(dialect(), query, defaultScoringFunction());
+    }
+
+    /**
+     * Resolves the default scoring function for a query: {@link ScoringFunction#HAMMING} when the query
+     * compares Oracle binary vectors, otherwise the dialect default.
+     *
+     * @param dialect The SQL dialect
+     * @param query The query SQL
+     * @return The default scoring function for the query, or {@code null} if none applies
+     * @since 5.3.0
+     */
+    static @Nullable ScoringFunction defaultScoringFunctionForQuery(Dialect dialect, @Nullable String query) {
+        return defaultScoringFunctionForQuery(dialect, query, defaultScoringFunctionForDialect(dialect));
+    }
+
+    private static @Nullable ScoringFunction defaultScoringFunctionForQuery(Dialect dialect,
+                                                                           @Nullable String query,
+                                                                           @Nullable ScoringFunction dialectDefault) {
+        if (dialect == Dialect.ORACLE && query != null && query.contains(VectorSimilarityDialect.ORACLE_HAMMING_DISTANCE_SUFFIX)) {
+            return ScoringFunction.HAMMING;
+        }
+        return dialectDefault;
+    }
+
+    /**
      * Adapts a derived vector-search query for the selected scoring function.
      *
      * @param query The original query SQL

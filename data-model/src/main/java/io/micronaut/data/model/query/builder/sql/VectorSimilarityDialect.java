@@ -19,6 +19,7 @@ import io.micronaut.data.model.PersistentProperty;
 import io.micronaut.data.model.PersistentPropertyPath;
 import io.micronaut.data.annotation.VectorShape;
 import io.micronaut.data.annotation.VectorStorage;
+import io.micronaut.data.model.vector.BinaryVector;
 import io.micronaut.data.model.vector.ByteVector;
 import io.micronaut.data.model.vector.DoubleVector;
 import io.micronaut.data.model.vector.FloatVector;
@@ -42,6 +43,7 @@ interface VectorSimilarityDialect {
     String ORACLE_FLOAT32 = "FLOAT32";
     String ORACLE_FLOAT64 = "FLOAT64";
     String ORACLE_INT8 = "INT8";
+    String ORACLE_BINARY = "BINARY";
     String ORACLE_SPARSE = "SPARSE";
 
     String MYSQL_DISTANCE_PREFIX = "DISTANCE(";
@@ -51,6 +53,7 @@ interface VectorSimilarityDialect {
     String ORACLE_VECTOR_DISTANCE_PREFIX = "VECTOR_DISTANCE(";
     String ORACLE_TO_VECTOR = "TO_VECTOR(";
     String ORACLE_COSINE_DISTANCE_SUFFIX = ",COSINE)";
+    String ORACLE_HAMMING_DISTANCE_SUFFIX = ",HAMMING)";
 
     /**
      * Appends a dialect-specific vector score expression.
@@ -98,6 +101,9 @@ interface VectorSimilarityDialect {
         }
         if (property.isAssignable(ByteVector.class)) {
             return new OracleVectorConfig(dimensions, ORACLE_INT8, sparse);
+        }
+        if (property.isAssignable(BinaryVector.class)) {
+            return new OracleVectorConfig(dimensions, ORACLE_BINARY, sparse);
         }
         return null;
     }
@@ -188,7 +194,9 @@ interface VectorSimilarityDialect {
                 }
                 query.append(')');
             }
-            query.append(ORACLE_COSINE_DISTANCE_SUFFIX);
+            // Oracle compares BINARY vectors with HAMMING or JACCARD only
+            boolean binary = config != null && ORACLE_BINARY.equals(config.format());
+            query.append(binary ? ORACLE_HAMMING_DISTANCE_SUFFIX : ORACLE_COSINE_DISTANCE_SUFFIX);
         }
     }
 }
