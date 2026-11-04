@@ -427,7 +427,10 @@ public final class DefaultJdbcRepositoryOperations extends AbstractSqlRepository
         boolean returning = isReturningOperation(preparedQuery);
         if (preparedQuery.getDialect() == Dialect.ORACLE && returning) {
             preparedQuery.prepare(null);
-            try (CallableStatement cs = connection.prepareCall(preparedQuery.getQuery())) {
+            if (QUERY_LOG.isDebugEnabled()) {
+                QUERY_LOG.debug("Executing Query: {}", preparedQuery.getQuery());
+            }
+            try (CallableStatement cs = logSqlId(connection.prepareCall(preparedQuery.getQuery()))) {
                 JdbcParameterBinder parameterBinder = new JdbcParameterBinder(connection, cs, preparedQuery);
                 preparedQuery.bindParameters(parameterBinder);
                 OracleReturningSupport.OutParameterContext outCtx = OracleReturningSupport.registerOutParameters(
@@ -652,6 +655,19 @@ public final class DefaultJdbcRepositoryOperations extends AbstractSqlRepository
         return failure;
     }
 
+    @Override
+    protected <T, R> PreparedStatement prepareStatement(StatementSupplier<PreparedStatement> statementFunction,
+                                                        @NonNull PreparedQuery<T, R> preparedQuery,
+                                                        boolean isUpdate,
+                                                        boolean isSingleResult) throws SQLException {
+        return logSqlId(super.prepareStatement(statementFunction, preparedQuery, isUpdate, isSingleResult));
+    }
+
+    static <S extends Statement> S logSqlId(S statement) {
+        OracleSqlIdLogger.log(statement);
+        return statement;
+    }
+
     /**
      * Closes the result set, the statement and, if owned, the connection. Each one is closed even if closing
      * an earlier one fails.
@@ -742,7 +758,10 @@ public final class DefaultJdbcRepositoryOperations extends AbstractSqlRepository
     }
 
     private <R> List<R> callProcedure(Connection connection, SqlPreparedQuery<?, R> preparedQuery) throws SQLException {
-        try (CallableStatement callableStatement = connection.prepareCall(preparedQuery.getQuery())) {
+        if (QUERY_LOG.isDebugEnabled()) {
+            QUERY_LOG.debug("Executing Query: {}", preparedQuery.getQuery());
+        }
+        try (CallableStatement callableStatement = logSqlId(connection.prepareCall(preparedQuery.getQuery()))) {
             preparedQuery.bindParameters(new JdbcParameterBinder(connection, callableStatement, preparedQuery));
             if (!preparedQuery.getResultArgument().isVoid()) {
                 DataType resultDataType = preparedQuery.getResultDataType();
@@ -1072,7 +1091,7 @@ public final class DefaultJdbcRepositoryOperations extends AbstractSqlRepository
         try {
             R result = null;
             try {
-                PreparedStatement ps = connectionCtx.connection.prepareStatement(sql);
+                PreparedStatement ps = logSqlId(connectionCtx.connection.prepareStatement(sql));
                 try {
                     result = callback.call(ps);
                     return result;
@@ -1615,17 +1634,17 @@ public final class DefaultJdbcRepositoryOperations extends AbstractSqlRepository
                     if (isJsonEntityGeneratedId(storedQuery, persistentEntity)) {
                         // This is being closed in try with resources from where it is being called
                         @SuppressWarnings({"java:S2095"})
-                        CallableStatement callableStatement = connection.prepareCall(this.storedQuery.getQuery());
+                        CallableStatement callableStatement = logSqlId(connection.prepareCall(this.storedQuery.getQuery()));
                         // Auto generated id by the database will be only numeric in this case
                         callableStatement.registerOutParameter(storedQuery.getQueryBindings().size() + 1, Types.NUMERIC);
                         return callableStatement;
                     }
-                    return connection.prepareStatement(this.storedQuery.getQuery(), new String[]{persistentEntity.getIdentity().getPersistedName()});
+                    return logSqlId(connection.prepareStatement(this.storedQuery.getQuery(), new String[]{persistentEntity.getIdentity().getPersistedName()}));
                 } else {
-                    return connection.prepareStatement(this.storedQuery.getQuery(), readGeneratedId ? Statement.RETURN_GENERATED_KEYS : Statement.NO_GENERATED_KEYS);
+                    return logSqlId(connection.prepareStatement(this.storedQuery.getQuery(), readGeneratedId ? Statement.RETURN_GENERATED_KEYS : Statement.NO_GENERATED_KEYS));
                 }
             } else {
-                return connection.prepareStatement(this.storedQuery.getQuery());
+                return logSqlId(connection.prepareStatement(this.storedQuery.getQuery()));
             }
         }
 
@@ -1693,7 +1712,7 @@ public final class DefaultJdbcRepositoryOperations extends AbstractSqlRepository
             // For Oracle, RETURNING is expressed via PL/SQL block with INTO placeholders.
             // Use CallableStatement and OUT parameter to capture the generated id and out field parameters.
             if (ctx.dialect == Dialect.ORACLE) {
-                try (CallableStatement cs = ctx.connection.prepareCall(storedQuery.getQuery())) {
+                try (CallableStatement cs = logSqlId(ctx.connection.prepareCall(storedQuery.getQuery()))) {
                     JdbcParameterBinder parameterBinder = new JdbcParameterBinder(ctx.connection, cs, storedQuery);
                     storedQuery.bindParameters(parameterBinder,
                         ctx.invocationContext, entity, previousValues);
@@ -1724,7 +1743,7 @@ public final class DefaultJdbcRepositoryOperations extends AbstractSqlRepository
                 }
             }
             // Default path (e.g. Postgres) uses PreparedStatement and maps a result set
-            try (PreparedStatement ps = ctx.connection.prepareStatement(storedQuery.getQuery())) {
+            try (PreparedStatement ps = logSqlId(ctx.connection.prepareStatement(storedQuery.getQuery()))) {
                 storedQuery.bindParameters(new JdbcParameterBinder(ctx.connection, ps, storedQuery), ctx.invocationContext, entity, previousValues);
                 List<T> result = (List<T>) findAll(storedQuery, ps);
                 if (result.isEmpty()) {
@@ -1815,17 +1834,17 @@ public final class DefaultJdbcRepositoryOperations extends AbstractSqlRepository
                     if (isJsonEntityGeneratedId(storedQuery, persistentEntity)) {
                         // This is being closed in try with resources from where it is being called
                         @SuppressWarnings({"java:S2095"})
-                        CallableStatement callableStatement = connection.prepareCall(this.storedQuery.getQuery());
+                        CallableStatement callableStatement = logSqlId(connection.prepareCall(this.storedQuery.getQuery()));
                         // expected auto generated value in insert will be numeric
                         callableStatement.registerOutParameter(storedQuery.getQueryBindings().size() + 1, Types.NUMERIC);
                         return callableStatement;
                     }
-                    return connection.prepareStatement(storedQuery.getQuery(), new String[]{persistentEntity.getIdentity().getPersistedName()});
+                    return logSqlId(connection.prepareStatement(storedQuery.getQuery(), new String[]{persistentEntity.getIdentity().getPersistedName()}));
                 } else {
-                    return connection.prepareStatement(storedQuery.getQuery(), readGeneratedId ? Statement.RETURN_GENERATED_KEYS : Statement.NO_GENERATED_KEYS);
+                    return logSqlId(connection.prepareStatement(storedQuery.getQuery(), readGeneratedId ? Statement.RETURN_GENERATED_KEYS : Statement.NO_GENERATED_KEYS));
                 }
             } else {
-                return connection.prepareStatement(storedQuery.getQuery());
+                return logSqlId(connection.prepareStatement(storedQuery.getQuery()));
             }
         }
 
