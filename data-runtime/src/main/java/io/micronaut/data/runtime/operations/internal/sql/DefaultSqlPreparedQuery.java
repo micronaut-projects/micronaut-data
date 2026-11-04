@@ -242,7 +242,7 @@ public class DefaultSqlPreparedQuery<E, R> extends DefaultBindableParametersPrep
                         limit = getParameterInRole(TypeRole.LIMIT, Limit.class).orElse(limit);
                     }
                     if (limit.isLimited()) {
-                        q.append(queryBuilder.buildLimitAndOffset(limit.maxResults(), limit.offset()));
+                        q.append(queryBuilder.buildLimitAndOffset(limit.maxResults(), limit.offset(), sqlStoredQuery.getAnnotationMetadata()));
                     }
                 } else if (TypeRole.LIMIT.equals(parameter.getRole())) {
                     Sort sort = storedQuery.getSort();
@@ -252,7 +252,7 @@ public class DefaultSqlPreparedQuery<E, R> extends DefaultBindableParametersPrep
                     Limit limit = getLimitParameter(parameter);
                     if (limit.isLimited()) {
                         // Limit defined by the method name
-                        q.append(queryBuilder.buildLimitAndOffset(limit.maxResults(), limit.offset()));
+                        q.append(queryBuilder.buildLimitAndOffset(limit.maxResults(), limit.offset(), sqlStoredQuery.getAnnotationMetadata()));
                     }
                 }
                 q.append(sqlStoredQuery.getExpandableQueryParts()[queryParamIndex++]);
@@ -404,7 +404,7 @@ public class DefaultSqlPreparedQuery<E, R> extends DefaultBindableParametersPrep
                                              String tableAlias) {
         SqlQueryBuilder queryBuilder = sqlStoredQuery.getQueryBuilder();
         appendSort(sort, query, queryBuilder, tableAlias);
-        query.append(queryBuilder.buildLimitAndOffset(limit.maxResults(), limit.offset()));
+        query.append(queryBuilder.buildLimitAndOffset(limit.maxResults(), limit.offset(), sqlStoredQuery.getAnnotationMetadata()));
     }
 
     private void appendSort(Sort sort, StringBuilder added, SqlQueryBuilder queryBuilder, @Nullable String tableAlias) {

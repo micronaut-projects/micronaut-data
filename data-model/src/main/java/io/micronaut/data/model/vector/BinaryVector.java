@@ -95,7 +95,7 @@ public record BinaryVector(byte[] data) implements Vector {
      */
     public boolean get(int index) {
         Objects.checkIndex(index, dimensions());
-        return (data[index / Byte.SIZE] & (0x80 >>> (index % Byte.SIZE))) != 0;
+        return ((data[index / Byte.SIZE] & 0xff) & (0x80 >>> (index % Byte.SIZE))) != 0;
     }
 
     /**
