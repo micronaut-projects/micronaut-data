@@ -82,6 +82,7 @@ import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.Collection;
 import java.util.Collections;
+import java.util.Comparator;
 import java.util.EnumMap;
 import java.util.Iterator;
 import java.util.List;
@@ -568,7 +569,11 @@ public class SqlQueryBuilder extends AbstractSqlLikeQueryBuilder {
             }
         }
 
-        for (SqlTableMapping table : sqlTableMappingByTableName.values()) {
+        // A child table of a sharded table family needs its root table to exist
+        List<SqlTableMapping> orderedTables = sqlTableMappingByTableName.values().stream()
+            .sorted(Comparator.comparing(table -> table.distribution() != null && table.distribution().parent() != null))
+            .toList();
+        for (SqlTableMapping table : orderedTables) {
             Boolean shouldEscapeDialect = shouldEscapeDialect(dialect);
             boolean escape = Objects.requireNonNullElseGet(shouldEscapeDialect, table::escape);
             addTableCreateStatements(createStatements, table, table.schema(), escape);
@@ -1010,7 +1015,7 @@ public class SqlQueryBuilder extends AbstractSqlLikeQueryBuilder {
 
     private void appendDistributionClauses(StringBuilder builder, SqlTableDistribution distribution, boolean escape) {
         if (distribution.type() == SqlTableDistribution.Type.SHARDED) {
-            SqlTableMapping parent = distribution.parent();
+            SqlTableDistribution.ParentTable parent = distribution.parent();
             if (parent != null) {
                 builder.append(" PARENT ").append(getObjectName(parent.schema(), parent.name(), parent.escape(), true));
             }
@@ -1137,6 +1142,11 @@ public class SqlQueryBuilder extends AbstractSqlLikeQueryBuilder {
             indexBuilder.append(")");
             if (indexMapping.spatial()) {
                 indexBuilder.append(" INDEXTYPE IS MDSYS.SPATIAL_INDEX");
+            }
+            SqlTableDistribution distribution = tableMapping.distribution();
+            if (distribution != null && distribution.type() == SqlTableDistribution.Type.SHARDED) {
+                // Oracle rejects global indexes on sharded tables
+                indexBuilder.append(" LOCAL");
             }
         } else if (dialect == Dialect.SQL_SERVER) {
             indexBuilder.append(")");

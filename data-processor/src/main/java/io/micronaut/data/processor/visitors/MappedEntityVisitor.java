@@ -33,9 +33,11 @@ import io.micronaut.data.annotation.Sharded;
 import io.micronaut.data.annotation.TypeDef;
 import io.micronaut.data.annotation.sql.JoinColumn;
 import io.micronaut.data.annotation.sql.JoinColumns;
+import io.micronaut.data.exceptions.MappingException;
 import io.micronaut.data.model.Association;
 import io.micronaut.data.model.DataType;
 import io.micronaut.data.model.PersistentProperty;
+import io.micronaut.data.model.query.builder.sql.SqlSchemaUtils;
 import io.micronaut.data.model.runtime.convert.AttributeConverter;
 import io.micronaut.data.processor.model.SourcePersistentEntity;
 import io.micronaut.data.processor.model.SourcePersistentProperty;
@@ -176,26 +178,19 @@ public class MappedEntityVisitor implements TypeElementVisitor<MappedEntity, Obj
     }
 
     private void validateDistribution(SourcePersistentEntity entity, VisitorContext context) {
-        boolean sharded = entity.hasAnnotation(Sharded.class);
-        if (sharded && entity.hasAnnotation(Duplicated.class)) {
-            throw new ProcessingException(entity.getClassElement(), "Entity " + entity.getSimpleName() + " cannot be both @Sharded and @Duplicated");
-        }
-        if (!sharded) {
+        if (!entity.hasAnnotation(Sharded.class) && !entity.hasAnnotation(Duplicated.class)) {
             return;
         }
-        for (String key : entity.stringValues(Sharded.class, "key")) {
-            if (entity.getPropertyPath(key) == null) {
-                throw new ProcessingException(entity.getClassElement(), "The sharding key property " + key + " doesn't exist in the entity " + entity.getSimpleName());
-            }
-        }
-        entity.stringValue(Sharded.class, "parent")
-            .filter(parent -> !"void".equals(parent))
+        SourcePersistentEntity parent = entity.stringValue(Sharded.class, "parent")
+            .filter(parentName -> !"void".equals(parentName))
             .flatMap(context::getClassElement)
-            .ifPresent(parent -> {
-                if (!parent.hasAnnotation(Sharded.class)) {
-                    throw new ProcessingException(entity.getClassElement(), "The parent " + parent.getSimpleName() + " of the sharded entity " + entity.getSimpleName() + " must be @Sharded");
-                }
-            });
+            .map(entityResolver)
+            .orElse(null);
+        try {
+            SqlSchemaUtils.validateTableDistribution(entity, parent);
+        } catch (MappingException e) {
+            throw new ProcessingException(entity.getClassElement(), e.getMessage());
+        }
     }
 
     /**

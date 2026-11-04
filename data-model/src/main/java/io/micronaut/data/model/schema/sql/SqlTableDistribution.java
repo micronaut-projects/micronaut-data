@@ -33,8 +33,18 @@ import java.util.List;
 @Internal
 public record SqlTableDistribution(Type type,
                                    List<String> keyColumns,
-                                   @Nullable SqlTableMapping parent,
+                                   @Nullable ParentTable parent,
                                    @Nullable String tablespace) {
+
+    /**
+     * The root table of a table family.
+     *
+     * @param schema The schema name, not required
+     * @param name The table name
+     * @param escape An indicator telling whether the table name requires escaping
+     */
+    public record ParentTable(@Nullable String schema, String name, boolean escape) {
+    }
 
     /**
      * The distribution type.

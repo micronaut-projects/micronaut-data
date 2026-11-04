@@ -3,8 +3,10 @@ package example;
 import io.micronaut.data.model.PersistentEntity;
 import io.micronaut.data.model.query.builder.sql.Dialect;
 import io.micronaut.data.model.query.builder.sql.SqlQueryBuilder;
+import io.micronaut.data.model.query.builder.sql.SqlSchemaUtils;
 import org.junit.jupiter.api.Test;
 
+import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertTrue;
 
 class ShardedTablesSpec {
@@ -21,6 +23,20 @@ class ShardedTablesSpec {
         assertTrue(child.startsWith("CREATE SHARDED TABLE \"SUBSCRIPTION\" ("), child);
         assertTrue(child.contains("PRIMARY KEY(\"SUBSCRIBER_ID\",\"SUBSCRIPTION_NO\")"), child);
         assertTrue(child.endsWith(") PARENT \"SUBSCRIBER\" PARTITION BY CONSISTENT HASH (\"SUBSCRIBER_ID\") PARTITIONS AUTO TABLESPACE SET TS_SUBSCRIBERS"), child);
+    }
+
+    @Test
+    void testRootTableIsCreatedBeforeItsChildTable() {
+        String[] sql = builder.buildCreateTableStatements(PersistentEntity.of(Subscription.class), PersistentEntity.of(Subscriber.class));
+        assertTrue(sql[0].startsWith("CREATE SHARDED TABLE \"SUBSCRIBER\" ("), sql[0]);
+        assertTrue(sql[1].startsWith("CREATE SHARDED TABLE \"SUBSCRIPTION\" ("), sql[1]);
+    }
+
+    @Test
+    void testChildTableIsDroppedBeforeItsRootTable() {
+        PersistentEntity[] entities = SqlSchemaUtils.orderForDrop(new PersistentEntity[]{PersistentEntity.of(Subscriber.class), PersistentEntity.of(Subscription.class)});
+        assertEquals(Subscription.class.getName(), entities[0].getName());
+        assertEquals(Subscriber.class.getName(), entities[1].getName());
     }
 
     @Test

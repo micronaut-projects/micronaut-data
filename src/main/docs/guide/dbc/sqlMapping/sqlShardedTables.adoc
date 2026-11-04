@@ -4,7 +4,7 @@ Annotate the root table of a table family with ann:data.annotation.Sharded[]:
 
 snippet::example.Subscriber[project-base="doc-examples/jdbc-example", source="main", tags="root"]
 
-<1> `tablespaceSet` names the tablespace set that stores the partitions. Set it unless the shard catalog has a default tablespace set
+<1> `tablespaceSet` names the tablespace set that stores the partitions. It is required, since Oracle has no default tablespace set for sharded tables
 <2> The sharding key defaults to the primary key. Oracle requires the sharding key to be part of the primary key, so the `key` member, which lists the properties of the key, is only needed when the primary key has more columns
 
 A child table names the root table of its family with `parent`, so that its rows are stored in the shard of the parent rows with the same sharding key:
@@ -31,6 +31,18 @@ CREATE SHARDED TABLE "SUBSCRIPTION" ("SUBSCRIBER_ID" VARCHAR(255) NOT NULL, "SUB
 CREATE DUPLICATED TABLE "PLAN" ("CODE" VARCHAR(255) NOT NULL, "NAME" VARCHAR(255) NOT NULL, PRIMARY KEY("CODE")) TABLESPACE PLANS_TSP
 ----
 
-The statements must run on the shard catalog, in a session with shard DDL enabled (`ALTER SESSION ENABLE SHARD DDL`), which then creates the tables on the shards. A child table is related to its parent by equi-partitioning (`PARENT`) rather than by a foreign key, since Micronaut Data does not generate foreign keys. Other dialects ignore both annotations and generate plain tables, so that tests can run on H2 or Oracle Free, which cannot host sharded tables. Micronaut Data validates that the sharding key is part of the primary key and that the parent is a sharded root table, but it does not detect whether the database is sharded.
+The statements must run on the shard catalog, in a session with shard DDL enabled (`ALTER SESSION ENABLE SHARD DDL`), which then creates the tables on the shards. A child table is related to its parent by equi-partitioning (`PARENT`) rather than by a foreign key, since Micronaut Data does not generate foreign keys. Other dialects ignore both annotations and generate plain tables, so that tests can run on H2 or Oracle Free, which cannot host sharded tables. Micronaut Data does not detect whether the database is sharded. Root tables are created before their child tables, and child tables are dropped first.
+
+Indexes of a sharded table are generated as local indexes (`CREATE INDEX ... LOCAL`), since Oracle rejects global indexes on sharded tables.
+
+The build or the schema generation fails if a mapping cannot work on a sharded database:
+
+* The sharding key must be part of the primary key, and the parent must be a sharded root table
+* The primary key of a sharded table cannot use an identity column, which Oracle does not allow
+* The sharding key cannot use `@GeneratedValue`. The application needs the key to connect to the shard before the insert, so it must assign the value itself
+* A unique index must contain the sharding key
+* A sharded or duplicated entity cannot have an association that needs a join table
+
+A duplicated table can have an identity column, but rows can then only be inserted through the shard catalog, because Oracle rejects inserts from a shard (`ORA-05156`).
 
 To route the connections of an application to the shard of a sharding key, see the sharding module of https://micronaut-projects.github.io/micronaut-oracledb/latest/guide/[Micronaut Oracle Database].

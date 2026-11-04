@@ -26,7 +26,10 @@ import java.lang.annotation.Target;
  * Distributed Database by consistent hash of its sharding key ({@code CREATE SHARDED TABLE ... PARTITION BY CONSISTENT
  * HASH ... PARTITIONS AUTO}).
  *
- * <p>The sharding key must be part of the primary key. A table with a {@link #parent()} belongs to the table family of
+ * <p>The sharding key must be part of the primary key and be assigned by the application, which needs it to connect
+ * to the shard before the insert, so the key cannot use {@link GeneratedValue}. Oracle does not allow identity columns
+ * in sharded tables, and an entity with a join table cannot be sharded. Indexes are generated as local indexes, and a
+ * unique index must contain the sharding key. A table with a {@link #parent()} belongs to the table family of
  * the parent and is stored in the same shard as the parent rows with the same sharding key ({@code PARENT}). Other
  * dialects generate a plain table.</p>
  *
@@ -50,8 +53,8 @@ public @interface Sharded {
     Class<?> parent() default void.class;
 
     /**
-     * @return The tablespace set that stores the partitions ({@code TABLESPACE SET}), required unless the shard catalog
-     * has a default tablespace set
+     * @return The tablespace set that stores the partitions ({@code TABLESPACE SET}). Oracle has no default tablespace
+     * set for sharded tables
      */
-    String tablespaceSet() default "";
+    String tablespaceSet();
 }

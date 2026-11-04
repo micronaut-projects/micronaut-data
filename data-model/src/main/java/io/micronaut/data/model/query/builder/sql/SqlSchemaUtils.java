@@ -75,6 +75,7 @@ import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.Collection;
 import java.util.Collections;
+import java.util.Comparator;
 import java.util.LinkedHashMap;
 import java.util.LinkedHashSet;
 import java.util.List;
@@ -268,7 +269,7 @@ public final class SqlSchemaUtils {
         List<SqlIndexMapping> indexes = getSqlIndexMappings(entity, dialect, sqlIndexDefinitionProviders);
         validateReservableColumns(entity, primaryKeyColumns, columns, indexes);
 
-        SqlTableDistribution distribution = getTableDistribution(definitionProviders, entity, primaryKeyColumns, dialect);
+        SqlTableDistribution distribution = getTableDistribution(entity, indexes);
 
         SqlTableMapping table = new SqlTableMapping(schema, tableName, escape, SqlTableMapping.TableType.MAIN, primaryKeyColumns, columns, sequences,
             indexes, auxiliaryStatements, distribution);
@@ -276,40 +277,95 @@ public final class SqlSchemaUtils {
         return tables;
     }
 
-    private static @Nullable SqlTableDistribution getTableDistribution(List<DefinitionProvider> definitionProviders,
-                                                                      PersistentEntity entity,
-                                                                      List<SqlColumnMapping> primaryKeyColumns,
-                                                                      Dialect dialect) {
+    /**
+     * Validates the {@link Sharded} and {@link Duplicated} annotations of an entity.
+     *
+     * @param entity The entity
+     * @param parent The entity named by {@link Sharded#parent()}, if any
+     * @throws MappingException if the annotations cannot generate a valid table
+     * @since 5.3
+     */
+    public static void validateTableDistribution(PersistentEntity entity, @Nullable PersistentEntity parent) {
         AnnotationMetadata annotationMetadata = entity.getAnnotationMetadata();
         boolean sharded = annotationMetadata.hasAnnotation(Sharded.class);
         boolean duplicated = annotationMetadata.hasAnnotation(Duplicated.class);
         if (sharded && duplicated) {
             throw new MappingException("Entity [" + entity.getName() + "] cannot be both @Sharded and @Duplicated");
         }
-        if (duplicated) {
-            return new SqlTableDistribution(SqlTableDistribution.Type.DUPLICATED, List.of(), null,
-                annotationMetadata.stringValue(Duplicated.class, "tablespace").orElse(null));
+        if (!sharded && !duplicated) {
+            return;
+        }
+        Collection<Association> joinTableAssociations = SqlQueryBuilderUtils.getJoinTableAssociations(entity);
+        if (!joinTableAssociations.isEmpty()) {
+            throw new MappingException("The association [" + joinTableAssociations.iterator().next().getName() + "] of entity [" + entity.getName()
+                + "] needs a join table, which is not supported for @Sharded and @Duplicated entities");
         }
         if (!sharded) {
-            return null;
+            return;
         }
-        SqlTableMapping parent = null;
-        Optional<Class> parentType = annotationMetadata.classValue(Sharded.class, "parent").filter(type -> type != void.class);
-        if (parentType.isPresent()) {
-            PersistentEntity parentEntity = PersistentEntity.of(parentType.get());
-            if (!parentEntity.getAnnotationMetadata().hasAnnotation(Sharded.class)) {
-                throw new MappingException("The parent [" + parentEntity.getName() + "] of sharded entity [" + entity.getName() + "] must be @Sharded");
+        if (annotationMetadata.stringValue(Sharded.class, "tablespaceSet").filter(StringUtils::isNotEmpty).isEmpty()) {
+            throw new MappingException("Sharded entity [" + entity.getName() + "] must name a tablespace set, since Oracle has no default for sharded tables");
+        }
+        if (parent != null) {
+            if (!parent.getAnnotationMetadata().hasAnnotation(Sharded.class)) {
+                throw new MappingException("The parent [" + parent.getName() + "] of sharded entity [" + entity.getName() + "] must be @Sharded");
             }
-            if (parentEntity.getAnnotationMetadata().classValue(Sharded.class, "parent").filter(type -> type != void.class).isPresent()) {
-                throw new MappingException("The parent [" + parentEntity.getName() + "] of sharded entity [" + entity.getName()
+            if (hasShardingParent(parent)) {
+                throw new MappingException("The parent [" + parent.getName() + "] of sharded entity [" + entity.getName()
                     + "] must be the root table of the table family, without a parent");
             }
-            List<SqlTableMapping> parentTables = getSqlTableMappings(definitionProviders, parentEntity, dialect);
-            parent = parentTables.get(parentTables.size() - 1);
         }
+        List<String> keyColumns = getShardingKeyColumns(entity, parent);
+        if (keyColumns.isEmpty()) {
+            throw new MappingException("Sharded entity [" + entity.getName() + "] must have a primary key or a sharding key");
+        }
+        Set<String> primaryKeyColumns = getIdentityColumnNames(entity).stream().map(column -> column.toUpperCase(Locale.ROOT)).collect(Collectors.toSet());
+        for (String keyColumn : keyColumns) {
+            if (!primaryKeyColumns.contains(keyColumn.toUpperCase(Locale.ROOT))) {
+                throw new MappingException("The sharding key column [" + keyColumn + "] of entity [" + entity.getName()
+                    + "] must be part of its primary key");
+            }
+        }
+        validateGeneratedShardingKey(entity, keyColumns);
+    }
+
+    /**
+     * Orders entities for dropping their tables, with the child tables of a table family before its root tables.
+     *
+     * @param entities The entities
+     * @return The entities in the order to drop their tables
+     * @since 5.3
+     */
+    public static PersistentEntity[] orderForDrop(PersistentEntity[] entities) {
+        return Arrays.stream(entities)
+            .sorted(Comparator.comparing(entity -> !hasShardingParent(entity)))
+            .toArray(PersistentEntity[]::new);
+    }
+
+    private static void validateGeneratedShardingKey(PersistentEntity entity, List<String> keyColumns) {
+        NamingStrategy namingStrategy = entity.getNamingStrategy();
+        for (PersistentProperty identity : entity.getIdentityProperties()) {
+            PersistentEntityUtils.traversePersistentProperties(Collections.emptyList(), identity, (associations, property) -> {
+                if (!property.isGenerated()) {
+                    return;
+                }
+                if (property.getAnnotationMetadata().enumValue(GeneratedValue.class, GeneratedValue.Type.class).orElse(null) == GeneratedValue.Type.IDENTITY) {
+                    throw new MappingException("The property [" + property.getName() + "] of sharded entity [" + entity.getName()
+                        + "] cannot use an identity column, which Oracle does not allow in a sharded table");
+                }
+                String column = namingStrategy.mappedName(associations, property);
+                if (keyColumns.stream().anyMatch(column::equalsIgnoreCase)) {
+                    throw new MappingException("The sharding key column [" + column + "] of entity [" + entity.getName()
+                        + "] cannot be generated by the database, since the application needs the key to connect to the shard before the insert");
+                }
+            });
+        }
+    }
+
+    private static List<String> getShardingKeyColumns(PersistentEntity entity, @Nullable PersistentEntity parent) {
         List<String> keyColumns = new ArrayList<>();
         NamingStrategy namingStrategy = entity.getNamingStrategy();
-        for (String key : annotationMetadata.stringValues(Sharded.class, "key")) {
+        for (String key : entity.getAnnotationMetadata().stringValues(Sharded.class, "key")) {
             PersistentPropertyPath path = entity.getPropertyPath(key);
             if (path == null) {
                 throw new MappingException("The sharding key property [" + key + "] does not exist in entity [" + entity.getName() + "]");
@@ -317,25 +373,56 @@ public final class SqlSchemaUtils {
             PersistentEntityUtils.traversePersistentProperties(path, (associations, property) ->
                 keyColumns.add(namingStrategy.mappedName(associations, property)));
         }
-        if (keyColumns.isEmpty()) {
-            if (parent != null && parent.distribution() != null) {
-                keyColumns.addAll(parent.distribution().keyColumns());
-            } else {
-                primaryKeyColumns.forEach(column -> keyColumns.add(column.getName()));
+        if (!keyColumns.isEmpty()) {
+            return keyColumns;
+        }
+        return parent != null ? getShardingKeyColumns(parent, null) : getIdentityColumnNames(entity);
+    }
+
+    private static List<String> getIdentityColumnNames(PersistentEntity entity) {
+        List<String> columns = new ArrayList<>();
+        NamingStrategy namingStrategy = entity.getNamingStrategy();
+        for (PersistentProperty identity : entity.getIdentityProperties()) {
+            PersistentEntityUtils.traversePersistentProperties(Collections.emptyList(), identity, (associations, property) ->
+                columns.add(namingStrategy.mappedName(associations, property)));
+        }
+        return columns;
+    }
+
+    private static boolean hasShardingParent(PersistentEntity entity) {
+        return entity.getAnnotationMetadata().stringValue(Sharded.class, "parent").filter(parent -> !"void".equals(parent)).isPresent();
+    }
+
+    private static @Nullable SqlTableDistribution getTableDistribution(PersistentEntity entity, List<SqlIndexMapping> indexes) {
+        AnnotationMetadata annotationMetadata = entity.getAnnotationMetadata();
+        PersistentEntity parent = hasShardingParent(entity)
+            ? annotationMetadata.classValue(Sharded.class, "parent").map(PersistentEntity::of).orElse(null)
+            : null;
+        validateTableDistribution(entity, parent);
+        if (annotationMetadata.hasAnnotation(Duplicated.class)) {
+            return new SqlTableDistribution(SqlTableDistribution.Type.DUPLICATED, List.of(), null,
+                annotationMetadata.stringValue(Duplicated.class, "tablespace").orElse(null));
+        }
+        if (!annotationMetadata.hasAnnotation(Sharded.class)) {
+            return null;
+        }
+        List<String> keyColumns = getShardingKeyColumns(entity, parent);
+        for (SqlIndexMapping index : indexes) {
+            if (index.unique() && !containsColumns(index.columns(), keyColumns)) {
+                throw new MappingException("The unique index on " + Arrays.toString(index.columns()) + " of sharded entity [" + entity.getName()
+                    + "] must contain the sharding key columns " + keyColumns);
             }
         }
-        if (keyColumns.isEmpty()) {
-            throw new MappingException("Sharded entity [" + entity.getName() + "] must have a primary key or a sharding key");
-        }
-        Set<String> primaryKeyNames = primaryKeyColumns.stream().map(column -> column.getName().toUpperCase(Locale.ROOT)).collect(Collectors.toSet());
-        for (String keyColumn : keyColumns) {
-            if (!primaryKeyNames.contains(keyColumn.toUpperCase(Locale.ROOT))) {
-                throw new MappingException("The sharding key column [" + keyColumn + "] of entity [" + entity.getName()
-                    + "] must be part of its primary key");
-            }
-        }
-        return new SqlTableDistribution(SqlTableDistribution.Type.SHARDED, keyColumns, parent,
+        SqlTableDistribution.ParentTable parentTable = parent == null ? null : new SqlTableDistribution.ParentTable(
+            SqlQueryBuilderUtils.getSchemaName(parent),
+            parent.getPersistedName(),
+            parent.getAnnotationMetadata().booleanValue(MappedEntity.class, "escape").orElse(true));
+        return new SqlTableDistribution(SqlTableDistribution.Type.SHARDED, keyColumns, parentTable,
             annotationMetadata.stringValue(Sharded.class, "tablespaceSet").orElse(null));
+    }
+
+    private static boolean containsColumns(String[] columns, List<String> expected) {
+        return expected.stream().allMatch(column -> Arrays.stream(columns).anyMatch(column::equalsIgnoreCase));
     }
 
     /**
@@ -853,7 +940,10 @@ public final class SqlSchemaUtils {
                                             Dialect dialect,
                                             List<SqlIndexDefinitionProvider> sqlIndexDefinitionProviders) {
         Map<String, PersistentPropertyPath> propertyMap = new LinkedHashMap<>();
-        for (PersistentProperty property : entity.getPersistentProperties()) {
+        // A unique index of a sharded table has to contain the sharding key, which is part of the primary key
+        List<PersistentProperty> indexableProperties = new ArrayList<>(entity.getIdentityProperties());
+        indexableProperties.addAll(entity.getPersistentProperties());
+        for (PersistentProperty property : indexableProperties) {
             if (property instanceof Association association && association.isForeignKey()) {
                 continue;
             }
