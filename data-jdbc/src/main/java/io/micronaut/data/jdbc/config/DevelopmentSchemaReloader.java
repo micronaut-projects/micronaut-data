@@ -16,32 +16,24 @@
 package io.micronaut.data.jdbc.config;
 
 import io.micronaut.context.BeanContext;
-import io.micronaut.context.BeanRegistration;
 import io.micronaut.context.WatchableBeanContext;
 import io.micronaut.context.annotation.Context;
 import io.micronaut.context.env.DevelopmentActive;
 import io.micronaut.context.reload.ClassChangeEvent;
 import io.micronaut.context.reload.ReloadStrategy;
+import io.micronaut.context.watch.ClassChangeWatcher;
 import io.micronaut.core.annotation.Internal;
-import io.micronaut.core.beans.BeanIntrospection;
-import io.micronaut.core.beans.BeanIntrospector;
-import io.micronaut.core.util.CollectionUtils;
-import io.micronaut.data.annotation.JsonSubView;
-import io.micronaut.data.annotation.MappedEntity;
+import io.micronaut.core.order.Ordered;
 import io.micronaut.data.model.query.builder.sql.SqlQueryBuilder;
-import io.micronaut.data.model.runtime.RuntimePersistentEntity;
 import io.micronaut.data.model.runtime.convert.DefinitionProvider;
+import io.micronaut.data.runtime.config.DevelopmentSchemaChanges;
 import io.micronaut.data.runtime.config.SchemaGenerate;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
-import java.lang.reflect.Modifier;
 import java.util.ArrayList;
-import java.util.Arrays;
-import java.util.Collection;
-import java.util.LinkedHashMap;
 import java.util.List;
-import java.util.Map;
+
 
 /**
  * Keeps the schema that {@link SchemaGenerator} generates in step with the entities in development mode, as far as
@@ -83,7 +75,7 @@ final class DevelopmentSchemaReloader {
     DevelopmentSchemaReloader(BeanContext beanContext) {
         this.beanContext = beanContext;
         if (beanContext instanceof WatchableBeanContext watchable) {
-            watchable.classChanges().watch(this::onClassChange);
+            watchable.classChanges().watch(new SchemaWatcher());
         }
     }
 
@@ -102,7 +94,7 @@ final class DevelopmentSchemaReloader {
             warnChangedTables(configurations, beanContext.getClassLoader(), change.newLoader());
         }
         if (!restart) {
-            regenerate();
+            DevelopmentSchemaChanges.regenerate(beanContext, SchemaGenerator.class);
         }
     }
 
@@ -114,117 +106,35 @@ final class DevelopmentSchemaReloader {
      * @param oldLoader The loader of the running generation
      * @param newLoader The loader of the new generation
      */
-    @SuppressWarnings("ReferenceEquality") // a generation is its loader
     private void warnChangedTables(List<DataJdbcConfiguration> configurations, ClassLoader oldLoader, ClassLoader newLoader) {
-        if (oldLoader == newLoader) {
-            return;
-        }
-        BeanIntrospector previousIntrospector = BeanIntrospector.forClassLoader(oldLoader);
-        BeanIntrospector currentIntrospector = BeanIntrospector.forClassLoader(newLoader);
-        Map<String, BeanIntrospection<Object>> before = entities(previousIntrospector);
-        Map<String, BeanIntrospection<Object>> after = entities(currentIntrospector);
         List<DefinitionProvider> definitionProviders = new ArrayList<>(beanContext.getBeansOfType(DefinitionProvider.class));
         for (DataJdbcConfiguration configuration : configurations) {
             SqlQueryBuilder builder = new SqlQueryBuilder(configuration.getDialect(), configuration.getDialectOptions().getVersion());
-            for (Map.Entry<String, BeanIntrospection<Object>> entry : before.entrySet()) {
-                BeanIntrospection<Object> current = after.get(entry.getKey());
-                // a removed entity keeps its table, as the schema generation of an application that starts does
-                if (current == null || !inPackages(configuration, entry.getKey())) {
-                    continue;
-                }
-                try {
-                    RuntimePersistentEntity<Object> previousEntity = new GenerationEntity<>(entry.getValue(), previousIntrospector);
-                    if (!Arrays.equals(builder.buildCreateTableStatements(previousEntity, definitionProviders),
-                        builder.buildCreateTableStatements(new GenerationEntity<>(current, currentIntrospector), definitionProviders))) {
-                        LOG.warn("""
-                            The table [{}] of entity {} changed, but data source [{}] generates its schema in CREATE mode, \
-                            which only creates missing tables: a database that outlives the application keeps the previous table. \
-                            To have the schema follow entity changes in development, set datasources.{}.schema-generate=CREATE_DROP \
-                            in application-dev.properties (this drops and recreates the tables, and their rows, on each restart), \
-                            or drop the table yourself.""",
-                            previousEntity.getPersistedName(), entry.getKey(), configuration.getName(), configuration.getName());
-                    }
-                } catch (RuntimeException | LinkageError e) {
-                    LOG.debug("Cannot compare the table of entity {}", entry.getKey(), e);
-                }
+            for (DevelopmentSchemaChanges.ChangedTable changed : DevelopmentSchemaChanges.changedTables(oldLoader, newLoader, configuration.getPackages(), builder, definitionProviders)) {
+                LOG.warn("""
+                    The table [{}] of entity {} changed, but data source [{}] generates its schema in CREATE mode, \
+                    which only creates missing tables: a database that outlives the application keeps the previous table. \
+                    To have the schema follow entity changes in development, set datasources.{}.schema-generate=CREATE_DROP \
+                    in application-dev.properties (this drops and recreates the tables, and their rows, on each restart), \
+                    or drop the table yourself.""",
+                    changed.table(), changed.entity(), configuration.getName(), configuration.getName());
             }
         }
     }
 
-    private static boolean inPackages(DataJdbcConfiguration configuration, String className) {
-        List<String> packages = configuration.getPackages();
-        if (CollectionUtils.isEmpty(packages)) {
-            return true;
-        }
-        for (String packageName : packages) {
-            if (className.startsWith(packageName + '.')) {
-                return true;
-            }
-        }
-        return false;
-    }
-
     /**
-     * The entities a generation has that the schema generation creates a table for, by class name.
-     *
-     * @param introspector The introspector of the generation
-     * @return The introspections of the entities
+     * Follows the class changes after the data beans are recreated, so that the schema is generated from the entity
+     * registry of the new generation.
      */
-    private static Map<String, BeanIntrospection<Object>> entities(BeanIntrospector introspector) {
-        Map<String, BeanIntrospection<Object>> entities = new LinkedHashMap<>();
-        Collection<BeanIntrospection<Object>> introspections = introspector.findIntrospections(MappedEntity.class);
-        for (BeanIntrospection<Object> introspection : introspections) {
-            Class<Object> type = introspection.getBeanType();
-            // as the schema generator selects them: no inner or abstract classes, and no JSON sub-views
-            if (type.getName().contains("$") || Modifier.isAbstract(type.getModifiers()) || introspection.hasAnnotation(JsonSubView.class)) {
-                continue;
-            }
-            entities.put(type.getName(), introspection);
-        }
-        return entities;
-    }
-
-    /**
-     * Generates the schema again, by recreating the schema generator, or by creating it when a bean it depends on
-     * was recreated before it, which destroyed it with its dependents.
-     */
-    private void regenerate() {
-        if (!(beanContext instanceof WatchableBeanContext context)) {
-            return;
-        }
-        List<Object> generators = new ArrayList<>();
-        for (BeanRegistration<SchemaGenerator> registration : beanContext.getActiveBeanRegistrations(SchemaGenerator.class)) {
-            generators.add(registration.bean());
-        }
-        if (generators.isEmpty()) {
-            beanContext.getBean(SchemaGenerator.class);
-            return;
-        }
-        for (Object generator : generators) {
-            // false in a context that does not track bean dependencies: the schema is kept as it is
-            context.recreate(generator);
-        }
-    }
-
-    /**
-     * An entity of one generation, whose associated entities are read with the introspector of that generation
-     * only. The shared introspector would remember a retired generation's introspections for as long as memory
-     * allows, after the runtime forgot them as it retired the generation, and keep its classes reachable.
-     *
-     * @param <T> The entity type
-     */
-    private static final class GenerationEntity<T> extends RuntimePersistentEntity<T> {
-
-        private final BeanIntrospector introspector;
-
-        GenerationEntity(BeanIntrospection<T> introspection, BeanIntrospector introspector) {
-            super(introspection);
-            this.introspector = introspector;
+    private final class SchemaWatcher implements ClassChangeWatcher, Ordered {
+        @Override
+        public void onChange(ClassChangeEvent change) {
+            onClassChange(change);
         }
 
         @Override
-        protected RuntimePersistentEntity<T> getEntity(Class<T> type) {
-            return new GenerationEntity<>(introspector.getIntrospection(type), introspector);
+        public int getOrder() {
+            return Ordered.LOWEST_PRECEDENCE;
         }
     }
 }

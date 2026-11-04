@@ -36,6 +36,7 @@ import java.util.List;
 import java.util.Map;
 import java.util.Objects;
 import java.util.concurrent.ConcurrentHashMap;
+import java.util.function.Predicate;
 
 /**
  * Model holding cosmos entity fields like container name, partition key, version field.
@@ -108,6 +109,17 @@ public final class CosmosEntity {
     @NonNull
     public static CosmosEntity get(@NonNull RuntimePersistentEntity<?> runtimePersistentEntity) {
         return Objects.requireNonNull(COSMOS_ENTITY_BY_PERSISTENT_ENTITY.get(runtimePersistentEntity));
+    }
+
+    /**
+     * Forgets the Cosmos entities of the persistent entities the predicate selects. Called in development mode only,
+     * by {@code DevelopmentCosmosReloader}, so that the entities of a retired generation of the application, and with
+     * them its classes, are not kept reachable by this map. Not on the path of an operation.
+     *
+     * @param stale Selects the persistent entities to forget
+     */
+    static void forget(Predicate<? super RuntimePersistentEntity<?>> stale) {
+        COSMOS_ENTITY_BY_PERSISTENT_ENTITY.keySet().removeIf(stale);
     }
 
     private static CosmosEntity createCosmosEntity(RuntimePersistentEntity<?> runtimePersistentEntity, CosmosDatabaseConfiguration. @Nullable CosmosContainerSettings cosmosContainerSettings) {
