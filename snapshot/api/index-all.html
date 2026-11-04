@@ -3957,6 +3957,12 @@ including Oracle OUT parameters.</div>
 <dd>
 <div class="block">A <em>qualifier</em> name value for the connection manager.</div>
 </dd>
+<dt><a href="io/micronaut/data/connection/support/ConnectionCustomizer.html#connectionOpened(io.micronaut.data.connection.ConnectionStatus)" class="member-name-link">connectionOpened(ConnectionStatus)</a> - Method in interface io.micronaut.data.connection.support.<a href="io/micronaut/data/connection/support/ConnectionCustomizer.html" title="interface in io.micronaut.data.connection.support">ConnectionCustomizer</a></dt>
+<dd>
+<div class="block">Called when a new connection is opened, before it is used, both for a connection operation and for the
+connection of a transaction, which the transaction manager opens without going through
+<a href="io/micronaut/data/connection/support/ConnectionCustomizer.html#intercept(java.util.function.Function)"><code>ConnectionCustomizer.intercept(Function)</code></a>.</div>
+</dd>
 <dt><a href="io/micronaut/data/tck/services/TxBookService.html#connectionOperations" class="member-name-link">connectionOperations</a> - Variable in class io.micronaut.data.tck.services.<a href="io/micronaut/data/tck/services/TxBookService.html" title="class in io.micronaut.data.tck.services">TxBookService</a></dt>
 <dd>&nbsp;</dd>
 <dt><a href="io/micronaut/transaction/support/AbstractTransactionOperations.html#connectionOperations" class="member-name-link">connectionOperations</a> - Variable in class io.micronaut.transaction.support.<a href="io/micronaut/transaction/support/AbstractTransactionOperations.html" title="class in io.micronaut.transaction.support">AbstractTransactionOperations</a></dt>
@@ -7581,6 +7587,10 @@ before the connection state is restored.</div>
 <dd>&nbsp;</dd>
 <dt><a href="io/micronaut/data/mongodb/conf/MongoDataConfiguration.html#DRIVER_TYPE_SYNC" class="member-name-link">DRIVER_TYPE_SYNC</a> - Static variable in class io.micronaut.data.mongodb.conf.<a href="io/micronaut/data/mongodb/conf/MongoDataConfiguration.html" title="class in io.micronaut.data.mongodb.conf">MongoDataConfiguration</a></dt>
 <dd>&nbsp;</dd>
+<dt><a href="io/micronaut/data/runtime/operations/internal/sql/SqlBatchSupport.JdbcBatchMetadata.html#driverMajorVersion()" class="member-name-link">driverMajorVersion()</a> - Method in record class io.micronaut.data.runtime.operations.internal.sql.<a href="io/micronaut/data/runtime/operations/internal/sql/SqlBatchSupport.JdbcBatchMetadata.html" title="class in io.micronaut.data.runtime.operations.internal.sql">SqlBatchSupport.JdbcBatchMetadata</a></dt>
+<dd>
+<div class="block">Returns the value of the <a href="./io/micronaut/data/runtime/operations/internal/sql/SqlBatchSupport.JdbcBatchMetadata.html#param-driverMajorVersion"><code>driverMajorVersion</code></a> record component.</div>
+</dd>
 <dt><a href="io/micronaut/data/runtime/operations/internal/sql/SqlBatchSupport.JdbcBatchMetadata.html#driverName()" class="member-name-link">driverName()</a> - Method in record class io.micronaut.data.runtime.operations.internal.sql.<a href="io/micronaut/data/runtime/operations/internal/sql/SqlBatchSupport.JdbcBatchMetadata.html" title="class in io.micronaut.data.runtime.operations.internal.sql">SqlBatchSupport.JdbcBatchMetadata</a></dt>
 <dd>
 <div class="block">Returns the value of the <a href="./io/micronaut/data/runtime/operations/internal/sql/SqlBatchSupport.JdbcBatchMetadata.html#param-driverName"><code>driverName</code></a> record component.</div>
@@ -20591,6 +20601,8 @@ transaction in the first place.</div>
 <dd>&nbsp;</dd>
 <dt><a href="io/micronaut/data/runtime/query/internal/DelegateStoredQuery.html#isOptionalEmbeddedProjection()" class="member-name-link">isOptionalEmbeddedProjection()</a> - Method in interface io.micronaut.data.runtime.query.internal.<a href="io/micronaut/data/runtime/query/internal/DelegateStoredQuery.html" title="interface in io.micronaut.data.runtime.query.internal">DelegateStoredQuery</a></dt>
 <dd>&nbsp;</dd>
+<dt><a href="io/micronaut/data/runtime/operations/internal/sql/SqlBatchSupport.JdbcBatchMetadata.html#isOracleDriverReturningBatchGeneratedKeys()" class="member-name-link">isOracleDriverReturningBatchGeneratedKeys()</a> - Method in record class io.micronaut.data.runtime.operations.internal.sql.<a href="io/micronaut/data/runtime/operations/internal/sql/SqlBatchSupport.JdbcBatchMetadata.html" title="class in io.micronaut.data.runtime.operations.internal.sql">SqlBatchSupport.JdbcBatchMetadata</a></dt>
+<dd>&nbsp;</dd>
 <dt><a href="io/micronaut/transaction/support/TransactionUtil.html#isOraclePriorityRollback(int,java.lang.String)" class="member-name-link">isOraclePriorityRollback(int, String)</a> - Static method in class io.micronaut.transaction.support.<a href="io/micronaut/transaction/support/TransactionUtil.html" title="class in io.micronaut.transaction.support">TransactionUtil</a></dt>
 <dd>
 <div class="block">Tests an error code and message for an Oracle priority rollback error.</div>
@@ -21288,6 +21300,10 @@ is switched to read-only with <a href="https://docs.oracle.com/en/java/javase/25
 <div class="block">Micronaut Data JDBC.</div>
 </dd>
 <dt><a href="io/micronaut/data/runtime/operations/internal/sql/SqlBatchSupport.JdbcBatchMetadata.html#%3Cinit%3E(java.lang.String,java.lang.String,java.lang.String,java.lang.Boolean,java.lang.Boolean)" class="member-name-link">JdbcBatchMetadata(String, String, String, Boolean, Boolean)</a> - Constructor for record class io.micronaut.data.runtime.operations.internal.sql.<a href="io/micronaut/data/runtime/operations/internal/sql/SqlBatchSupport.JdbcBatchMetadata.html" title="class in io.micronaut.data.runtime.operations.internal.sql">SqlBatchSupport.JdbcBatchMetadata</a></dt>
+<dd>
+<div class="block">Creates the metadata without the driver version.</div>
+</dd>
+<dt><a href="io/micronaut/data/runtime/operations/internal/sql/SqlBatchSupport.JdbcBatchMetadata.html#%3Cinit%3E(java.lang.String,java.lang.String,java.lang.String,java.lang.Boolean,java.lang.Boolean,java.lang.Integer)" class="member-name-link">JdbcBatchMetadata(String, String, String, Boolean, Boolean, Integer)</a> - Constructor for record class io.micronaut.data.runtime.operations.internal.sql.<a href="io/micronaut/data/runtime/operations/internal/sql/SqlBatchSupport.JdbcBatchMetadata.html" title="class in io.micronaut.data.runtime.operations.internal.sql">SqlBatchSupport.JdbcBatchMetadata</a></dt>
 <dd>
 <div class="block">Creates an instance of a <code>JdbcBatchMetadata</code> record class.</div>
 </dd>
@@ -26665,6 +26681,8 @@ of position parameters.</div>
 <dd>
 <div class="block">Prepares a query for the given context.</div>
 </dd>
+<dt><a href="io/micronaut/data/jdbc/operations/DefaultJdbcRepositoryOperations.html#prepareStatement(io.micronaut.data.runtime.operations.internal.sql.AbstractSqlRepositoryOperations.StatementSupplier,io.micronaut.data.model.runtime.PreparedQuery,boolean,boolean)" class="member-name-link">prepareStatement(AbstractSqlRepositoryOperations.StatementSupplier, PreparedQuery, boolean, boolean)</a> - Method in class io.micronaut.data.jdbc.operations.<a href="io/micronaut/data/jdbc/operations/DefaultJdbcRepositoryOperations.html" title="class in io.micronaut.data.jdbc.operations">DefaultJdbcRepositoryOperations</a></dt>
+<dd>&nbsp;</dd>
 <dt><a href="io/micronaut/data/runtime/operations/internal/sql/AbstractSqlRepositoryOperations.html#prepareStatement(io.micronaut.data.runtime.operations.internal.sql.AbstractSqlRepositoryOperations.StatementSupplier,io.micronaut.data.model.runtime.PreparedQuery,boolean,boolean)" class="member-name-link">prepareStatement(AbstractSqlRepositoryOperations.StatementSupplier, PreparedQuery, boolean, boolean)</a> - Method in class io.micronaut.data.runtime.operations.internal.sql.<a href="io/micronaut/data/runtime/operations/internal/sql/AbstractSqlRepositoryOperations.html" title="class in io.micronaut.data.runtime.operations.internal.sql">AbstractSqlRepositoryOperations</a></dt>
 <dd>
 <div class="block">Prepare a statement for execution.</div>

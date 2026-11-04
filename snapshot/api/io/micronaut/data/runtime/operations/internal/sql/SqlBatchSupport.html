@@ -222,7 +222,8 @@ themselves describe all batched generated-key behavior.</p></div>
 
 <p>Only the MySQL dialect can resolve to <a href="SqlBatchSupport.JdbcBatchInsertMode.html#BATCH_WITHOUT_GENERATED_KEYS"><code>SqlBatchSupport.JdbcBatchInsertMode.BATCH_WITHOUT_GENERATED_KEYS</code></a>.
 Every other dialect keeps its previous behavior of reading generated keys back whenever the
-entity has a generated identity.</p></div>
+entity has a generated identity. The Oracle dialect batches entities with a generated identity,
+such as a sequence, when the Oracle JDBC driver returns the generated keys of a batch.</p></div>
 <dl class="notes">
 <dt>Parameters:</dt>
 <dd><code>persistentEntity</code> - The persistent entity</dd>

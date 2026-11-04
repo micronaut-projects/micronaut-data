@@ -10732,6 +10732,9 @@ void update(@Id Long id, String title);</code></pre>
 <pre class="highlightjs highlight"><code class="language-xml hljs" data-lang="xml">&lt;logger name="io.micronaut.data.query" level="trace" /&gt;</code></pre>
 </div>
 </div>
+<div class="paragraph">
+<p>With Oracle, the logger also writes the SQL ID of each statement that Micronaut Data JDBC prepares, including <code>RETURNING</code> statements, upserts and <code>@Procedure</code> calls, at debug level, for example <code>Oracle SQL ID: 6973n8gn5dwvt</code>. Use it to find the statement in <code>V$SQL</code>, AWR or SQL Monitor reports. The SQL ID needs the Oracle JDBC driver 23 or later; with an older driver, it isn&#8217;t logged.</p>
+</div>
 </div>
 <div class="sect2">
 <h3 id="_creating_the_schema">Creating the Schema</h3>
@@ -11035,7 +11038,7 @@ read-only-connection-per-operation = true</code></pre>
 </tr>
 <tr>
 <td class="tableblock halign-left valign-top"><p class="tableblock">Oracle</p></td>
-<td class="tableblock halign-left valign-top"><p class="tableblock">A hint to the driver; writes are not rejected.</p></td>
+<td class="tableblock halign-left valign-top"><p class="tableblock">A hint to the driver; writes are not rejected. To reject them, call <code>setEnforceReadOnly(true)</code> on <a href="../api/io/micronaut/transaction/jdbc/DataSourceTransactionManager.html">DataSourceTransactionManager</a>, which runs <code>SET TRANSACTION READ ONLY</code> at the start of read-only transactions.</p></td>
 </tr>
 <tr>
 <td class="tableblock halign-left valign-top"><p class="tableblock">SQL Server</p></td>
@@ -11050,8 +11053,125 @@ read-only-connection-per-operation = true</code></pre>
 <div class="paragraph">
 <p>Read-only connections are also used by some drivers and proxies (for example, the AWS Advanced JDBC Wrapper) and routing data sources to send queries to read replicas. Use explicit read-only transactions or <code>read-only-connection-per-operation</code> to keep that routing for non-transactional reads.</p>
 </div>
+<div class="sect3">
+<h4 id="_oracle_true_cache">Oracle True Cache</h4>
 <div class="paragraph">
-<p>This applies to Micronaut Data JDBC. Micronaut Data R2DBC does not set a read-only flag on its connections.</p>
+<p><a href="https://docs.oracle.com/en/database/oracle/oracle-database/26/odbtc/">Oracle True Cache</a> is a read-only, in-memory cache of a primary database. With the <code>oracle.jdbc.useTrueCacheDriverConnection</code> connection property, the Oracle JDBC driver sends the work of a read-only connection to the True Cache and the rest to the primary database. Micronaut Data marks a connection read-only only when you ask for it, so True Cache serves:</p>
+</div>
+<div class="ulist">
+<ul>
+<li>
+<p>read-only transactions: <code>@Transactional(readOnly = true)</code>, <code>@ReadOnly</code> or <code>executeRead</code> on <a href="../api/io/micronaut/transaction/TransactionOperations.html">TransactionOperations</a></p>
+</li>
+<li>
+<p>read-only connection scopes: <code>@Connectable(readOnly = true)</code> or <code>executeRead</code> on <a href="../api/io/micronaut/data/connection/ConnectionOperations.html">ConnectionOperations</a></p>
+</li>
+<li>
+<p>every read outside a transaction, when <code>read-only-connection-per-operation</code> is enabled</p>
+</li>
+</ul>
+</div>
+<div class="openblock">
+<div class="content">
+<div class="listingblock multi-language-sample">
+<div class="content">
+<pre class="highlightjs highlight"><code class="language-properties hljs" data-lang="properties">datasources.default.url=jdbc:oracle:thin:@primary-host:1521/sales
+datasources.default.read-only-connection-per-operation=true
+datasources.default.data-source-properties.oracle.jdbc.useTrueCacheDriverConnection=true</code></pre>
+</div>
+</div>
+<div class="listingblock multi-language-sample">
+<div class="content">
+<pre class="highlightjs highlight"><code class="language-yaml hljs" data-lang="yaml">datasources:
+  default:
+    url: jdbc:oracle:thin:@primary-host:1521/sales
+    read-only-connection-per-operation: true
+    data-source-properties:
+      oracle.jdbc.useTrueCacheDriverConnection: true</code></pre>
+</div>
+</div>
+<div class="listingblock multi-language-sample">
+<div class="content">
+<pre class="highlightjs highlight"><code class="language-toml hljs" data-lang="toml">[datasources.default]
+url = "jdbc:oracle:thin:@primary-host:1521/sales"
+read-only-connection-per-operation = true
+
+[datasources.default.data-source-properties]
+"oracle.jdbc.useTrueCacheDriverConnection" = true</code></pre>
+</div>
+</div>
+<div class="listingblock multi-language-sample">
+<div class="content">
+<pre class="highlightjs highlight"><code class="language-groovy-config hljs" data-lang="groovy-config">datasources {
+  'default' {
+    url = "jdbc:oracle:thin:@primary-host:1521/sales"
+    readOnlyConnectionPerOperation = true
+    dataSourceProperties {
+      oracle.jdbc.useTrueCacheDriverConnection = true
+    }
+  }
+}</code></pre>
+</div>
+</div>
+<div class="listingblock multi-language-sample">
+<div class="content">
+<pre class="highlightjs highlight"><code class="language-hocon hljs" data-lang="hocon">{
+  datasources {
+    default {
+      url = "jdbc:oracle:thin:@primary-host:1521/sales"
+      read-only-connection-per-operation = true
+      data-source-properties {
+        "oracle.jdbc.useTrueCacheDriverConnection" = true
+      }
+    }
+  }
+}</code></pre>
+</div>
+</div>
+<div class="listingblock multi-language-sample">
+<div class="content">
+<pre class="highlightjs highlight"><code class="language-json-config hljs" data-lang="json-config">{
+  "datasources": {
+    "default": {
+      "url": "jdbc:oracle:thin:@primary-host:1521/sales",
+      "read-only-connection-per-operation": true,
+      "data-source-properties": {
+        "oracle.jdbc.useTrueCacheDriverConnection": true
+      }
+    }
+  }
+}</code></pre>
+</div>
+</div>
+</div>
+</div>
+<div class="paragraph">
+<p><code>data-source-properties</code> passes the property with Hikari; with other pools, use their connection properties, for example <code>connection-properties: oracle.jdbc.useTrueCacheDriverConnection=true</code> with Tomcat JDBC. The driver uses Oracle UCP for True Cache connections, so <code>com.oracle.database.jdbc:ucp11</code> (or <code>ucp17</code>) must be on the classpath whatever the connection pool. The database service must have a True Cache: otherwise every connection fails with <code>ORA-18720: True Cache service is not configured on the database</code>.</p>
+</div>
+<div class="paragraph">
+<p>True Cache can return slightly stale data, so keep reads that must see the latest writes in read-write transactions.</p>
+</div>
+</div>
+<div class="sect3">
+<h4 id="_r2dbc">R2DBC</h4>
+<div class="paragraph">
+<p>Micronaut Data R2DBC begins read-only transactions (<code>@Transactional(readOnly = true)</code> and <code>executeRead</code>) with the R2DBC read-only attribute. Oracle R2DBC (<code>SET TRANSACTION READ ONLY</code>), R2DBC PostgreSQL (<code>BEGIN READ ONLY</code>) and the MySQL and MariaDB drivers (<code>START TRANSACTION READ ONLY</code>) then reject writes in them, including writes in a read-write transaction that joins an outer read-only one and <code>SELECT &#8230;&#8203; FOR UPDATE</code>. The SQL Server and H2 drivers ignore the attribute.</p>
+</div>
+<div class="paragraph">
+<p>On Oracle this is stricter than JDBC: a JDBC read-only transaction commits writes unless <code>enforceReadOnly</code> is set, while an R2DBC one rejects them with <code>ORA-01456</code>. R2DBC connections outside a transaction are not marked read-only, and Oracle True Cache routing requires JDBC.</p>
+</div>
+</div>
+</div>
+<div class="sect2">
+<h3 id="_batch_inserts_with_generated_identifiers">Batch inserts with generated identifiers</h3>
+<div class="paragraph">
+<p><code>saveAll</code> and <code>insertAll</code> insert their entities with one JDBC batch when the dialect and driver can return the generated identifier of every row. Otherwise, each entity is inserted with its own statement.</p>
+</div>
+<div class="paragraph">
+<p>With Oracle, entities with a generated identifier, such as the default <code>@GeneratedValue</code> sequence or an <code>IDENTITY</code> column, are inserted with one batch when the Oracle JDBC driver is version 23 or later, which returns the generated keys of a batch, also when connected to an older database server. With an older driver, each entity is inserted with its own statement. Entities with an assigned identifier are always batched.</p>
+</div>
+<div class="paragraph">
+<p>Inserts through a JSON relational duality view (<code>@JsonView</code>) are still done one entity at a time: they run as a PL/SQL block with OUT parameters, which the Oracle JDBC driver can&#8217;t batch.</p>
 </div>
 </div>
 <div class="sect2">
@@ -11110,6 +11230,68 @@ See the guide for <a href="https://guides.micronaut.io/latest/micronaut-data-jdb
 </td>
 </tr>
 </table>
+</div>
+</div>
+<div class="sect2">
+<h3 id="_request_boundaries">Request boundaries</h3>
+<div class="paragraph">
+<p>Set <code>datasources.&lt;datasource-name&gt;.request-boundaries=true</code> to mark a request boundary around each connection that Micronaut Data opens, with the JDBC <code>Connection.beginRequest()</code> and <code>Connection.endRequest()</code> methods. This covers connections opened for connection operations and for transactions (<code>@Transactional</code> or <code>TransactionOperations</code>). The request begins when the connection is opened, before Micronaut Data applies its read-only or transaction settings. It ends before the connection is closed, after the transaction has committed or rolled back and those settings have been restored. A connection reused by a nested operation or a repository call stays in the request of the scope that opened it.</p>
+</div>
+<div class="openblock">
+<div class="content">
+<div class="listingblock multi-language-sample">
+<div class="content">
+<pre class="highlightjs highlight"><code class="language-properties hljs" data-lang="properties">datasources.default.request-boundaries=true</code></pre>
+</div>
+</div>
+<div class="listingblock multi-language-sample">
+<div class="content">
+<pre class="highlightjs highlight"><code class="language-yaml hljs" data-lang="yaml">datasources:
+  default:
+    request-boundaries: true</code></pre>
+</div>
+</div>
+<div class="listingblock multi-language-sample">
+<div class="content">
+<pre class="highlightjs highlight"><code class="language-toml hljs" data-lang="toml">[datasources.default]
+request-boundaries = true</code></pre>
+</div>
+</div>
+<div class="listingblock multi-language-sample">
+<div class="content">
+<pre class="highlightjs highlight"><code class="language-groovy-config hljs" data-lang="groovy-config">datasources {
+  'default' {
+    requestBoundaries = true
+  }
+}</code></pre>
+</div>
+</div>
+<div class="listingblock multi-language-sample">
+<div class="content">
+<pre class="highlightjs highlight"><code class="language-hocon hljs" data-lang="hocon">{
+  datasources {
+    default {
+      request-boundaries = true
+    }
+  }
+}</code></pre>
+</div>
+</div>
+<div class="listingblock multi-language-sample">
+<div class="content">
+<pre class="highlightjs highlight"><code class="language-json-config hljs" data-lang="json-config">{
+  "datasources": {
+    "default": {
+      "request-boundaries": true
+    }
+  }
+}</code></pre>
+</div>
+</div>
+</div>
+</div>
+<div class="paragraph">
+<p>Request boundaries tell the driver where a unit of work starts and ends. Oracle uses them for Transparent Application Continuity, to reset the session state when a request ends (<code>RESET_STATE</code>), and to release a Database Resident Connection Pooling (DRCP) server between requests. For a DRCP-enabled Oracle connection, Micronaut Data also releases the pooled server after each request with <code>detachServerConnection</code>, even when ending the request fails. DRCP needs this with connection pools other than Oracle UCP. A released connection attaches to a server again on its next round trip. The Oracle JDBC driver can also attach and release the server in <code>beginRequest()</code> and <code>endRequest()</code> itself; see its <code>oracle.jdbc.DRCPMultiplexingInRequestAPIs</code> connection property. Oracle UCP marks request boundaries itself, and nested boundaries are ignored, so the setting is harmless with UCP.</p>
 </div>
 </div>
 
@@ -27275,6 +27457,25 @@ runtime = [
 </div>
 <div class="paragraph">
 <p>A read-only transaction that opens its own session now uses the Hibernate <code>MANUAL</code> flush mode, so the session is not flushed on commit. Previously the JPA mapping of <code>MANUAL</code> applied the <code>COMMIT</code> flush mode.</p>
+</div>
+</div>
+<div class="sect2">
+<h3 id="_r2dbc_read_only_transactions_reject_writes">R2DBC read-only transactions reject writes</h3>
+<div class="paragraph">
+<p>Micronaut Data R2DBC now begins read-only transactions, for example <code>@Transactional(readOnly = true)</code> or <code>executeRead</code>, with the R2DBC read-only attribute. On Oracle, PostgreSQL, MySQL and MariaDB, the database rejects writes in them. Previously they began as ordinary transactions and writes succeeded. This includes:</p>
+</div>
+<div class="ulist">
+<ul>
+<li>
+<p>A read-write transaction that joins an outer read-only one, for example a <code>@Transactional</code> method called from a <code>@Transactional(readOnly = true)</code> one.</p>
+</li>
+<li>
+<p><code>SELECT &#8230;&#8203; FOR UPDATE</code> in a read-only transaction.</p>
+</li>
+</ul>
+</div>
+<div class="paragraph">
+<p>Run writes in a read-write transaction, or use <code>Propagation.REQUIRES_NEW</code> for a write called from a read-only transaction. The SQL Server and H2 drivers ignore the attribute, so nothing changes there. See <a href="#jdbcConfiguration">JDBC Configuration</a>.</p>
 </div>
 </div>
 <div class="sect2">
