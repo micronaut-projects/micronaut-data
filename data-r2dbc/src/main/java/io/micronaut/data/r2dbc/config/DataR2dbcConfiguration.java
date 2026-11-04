@@ -189,6 +189,10 @@ public class DataR2dbcConfiguration implements Named {
     }
 
     /**
+     * The schema the tables are generated in. Only the generation uses it: the connection is switched back to its
+     * schema afterwards, so the repositories use the generated tables only when the entities name the schema
+     * ({@code @MappedEntity(schema = ...)}) or the connection factory uses it as its default schema.
+     *
      * @param schemaGenerateName The schema name that should be used for generating
      */
     public void setSchemaGenerateName(@Nullable String schemaGenerateName) {

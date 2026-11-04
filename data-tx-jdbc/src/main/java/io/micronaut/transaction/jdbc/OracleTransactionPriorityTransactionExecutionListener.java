@@ -23,16 +23,20 @@ import io.micronaut.transaction.TransactionDefinition;
 import io.micronaut.transaction.annotation.OracleTransactional;
 import io.micronaut.transaction.exceptions.CannotCreateTransactionException;
 import io.micronaut.transaction.exceptions.TransactionSystemException;
+import io.micronaut.transaction.support.OracleTransactionPriorityStatements;
 import io.micronaut.transaction.support.TransactionExecutionListener;
 import io.micronaut.transaction.support.TransactionUtil;
 import jakarta.inject.Singleton;
 import oracle.jdbc.OracleConnection;
+import org.jspecify.annotations.Nullable;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
+import java.sql.CallableStatement;
 import java.sql.Connection;
 import java.sql.SQLException;
 import java.sql.Statement;
+import java.sql.Types;
 import java.util.Locale;
 
 /**
@@ -61,12 +65,14 @@ final class OracleTransactionPriorityTransactionExecutionListener implements Tra
             if (ORACLE_PRODUCT_NAME_UPPER.equals(productName)) {
                 OracleTransactional.Priority priority = TransactionUtil.getOraclePriority(definition);
                 if (priority != null) {
-                    boolean applied = applyOracleTxnPriority(connection, priority);
-                    if (applied) {
+                    PriorityChange change = applyOracleTxnPriority(connection, priority);
+                    if (change.applied()) {
+                        // Registered for the transaction: it is reset when the transaction completes,
+                        // also when the connection is used by an outer scope
                         connectionStatus.registerSynchronization(new ConnectionSynchronization() {
                             @Override
                             public void executionComplete() {
-                                resetOracleTxnPriority(connection);
+                                resetOracleTxnPriority(connection, change.previous());
                             }
                         });
                     }
@@ -77,36 +83,43 @@ final class OracleTransactionPriorityTransactionExecutionListener implements Tra
         }
     }
 
-    private static boolean applyOracleTxnPriority(Connection connection, OracleTransactional.Priority level) throws SQLException {
-        String sql = "ALTER SESSION SET \"txn_priority\"=\"" + level.name() + "\"";
-        return executeOracleTxnPriorityStatement(connection, sql, "Setting", level.name());
-    }
-
-    private static void resetOracleTxnPriority(Connection connection) {
-        String sql = "ALTER SESSION SET \"txn_priority\"=\"HIGH\"";
-        try {
-            executeOracleTxnPriorityStatement(connection, sql, "Resetting", "HIGH");
+    /**
+     * Sets the priority and reads the previous one in one round trip. Reading the priority of the session needs
+     * the privilege to read {@code V$PARAMETER}: without it the previous priority isn't known, and the session is
+     * reset to {@code HIGH}, the default priority. The query is dynamic, so that a missing privilege fails when it
+     * runs, inside the exception handler, not when the block is compiled.
+     */
+    private static PriorityChange applyOracleTxnPriority(Connection connection, OracleTransactional.Priority level) throws SQLException {
+        if (LOG.isDebugEnabled()) {
+            LOG.debug("Setting Oracle txn_priority to {}", level);
+        }
+        try (CallableStatement statement = connection.prepareCall(OracleTransactionPriorityStatements.SET_PRIORITY_READING_PREVIOUS)) {
+            statement.setString(1, level.name());
+            statement.registerOutParameter(2, Types.VARCHAR);
+            statement.execute();
+            return new PriorityChange(true, OracleTransactionPriorityStatements.parsePriority(statement.getString(2)));
         } catch (SQLException e) {
-            throw new TransactionSystemException("Could not reset Oracle transaction priority", e);
+            if (isOracleTxnPriorityUnsupported(e)) {
+                LOG.debug("Setting Oracle txn_priority failed with ORA-02248; continuing without priority support", e);
+                return new PriorityChange(false, null);
+            }
+            throw e;
         }
     }
 
-    private static boolean executeOracleTxnPriorityStatement(Connection connection,
-                                                            String sql,
-                                                            String action,
-                                                            String level) throws SQLException {
+    private static void resetOracleTxnPriority(Connection connection, OracleTransactional.@Nullable Priority previous) {
+        OracleTransactional.Priority level = previous == null ? OracleTransactional.Priority.HIGH : previous;
+        if (LOG.isDebugEnabled()) {
+            LOG.debug("Resetting Oracle txn_priority to {}", level);
+        }
         try (Statement stmt = connection.createStatement()) {
-            if (LOG.isDebugEnabled()) {
-                LOG.debug("{} Oracle txn_priority to {}", action, level);
-            }
-            stmt.executeUpdate(sql);
-            return true;
+            stmt.executeUpdate(OracleTransactionPriorityStatements.setPriority(level));
         } catch (SQLException e) {
             if (isOracleTxnPriorityUnsupported(e)) {
-                LOG.debug("{} Oracle txn_priority failed with ORA-02248; continuing without priority support", action, e);
-                return false;
+                LOG.debug("Resetting Oracle txn_priority failed with ORA-02248; continuing without priority support", e);
+                return;
             }
-            throw e;
+            throw new TransactionSystemException("Could not reset Oracle transaction priority", e);
         }
     }
 
@@ -130,5 +143,12 @@ final class OracleTransactionPriorityTransactionExecutionListener implements Tra
             cause = cause.getCause();
         }
         return false;
+    }
+
+    /**
+     * @param applied  Whether the priority was set
+     * @param previous The priority of the session before, or {@code null} if it couldn't be read
+     */
+    private record PriorityChange(boolean applied, OracleTransactional.@Nullable Priority previous) {
     }
 }

@@ -19,6 +19,7 @@ import io.micronaut.core.annotation.Experimental;
 import io.micronaut.data.model.query.builder.sql.Dialect;
 import io.r2dbc.spi.Connection;
 import org.reactivestreams.Publisher;
+import reactor.core.publisher.Mono;
 
 /**
  * The schema handler for R2DBC.
@@ -50,5 +51,35 @@ public interface R2dbcSchemaHandler {
      * @return The publisher
      */
     Publisher<Void> useSchema(Connection connection, Dialect dialect, String name);
+
+    /**
+     * Reads the setting that determines the schema the connection uses: the current schema (H2, Oracle),
+     * the search path (PostgreSQL) or the current database (MySQL, SQL Server).
+     * It is read before the schema of a tenant is used, and restored with
+     * {@link #restoreSchemaSetting(Connection, Dialect, String)} before the connection is closed (returned to the pool).
+     *
+     * @param connection The R2DBC connection
+     * @param dialect    The dialect
+     *
+     * @return The schema setting, or an empty publisher if it can't be read; the setting is then not restored
+     * @since 5.3.0
+     */
+    default Publisher<String> readSchemaSetting(Connection connection, Dialect dialect) {
+        return Mono.empty();
+    }
+
+    /**
+     * Restores a schema setting read with {@link #readSchemaSetting(Connection, Dialect)}.
+     *
+     * @param connection The R2DBC connection
+     * @param dialect    The dialect
+     * @param setting    The schema setting
+     *
+     * @return The publisher
+     * @since 5.3.0
+     */
+    default Publisher<Void> restoreSchemaSetting(Connection connection, Dialect dialect, String setting) {
+        return useSchema(connection, dialect, setting);
+    }
 
 }

@@ -15,6 +15,12 @@ To restore the previous behaviour, set `datasources.<name>.read-only-connection-
 
 A transaction started inside an existing connection scope, for example within a `@Connectable` method or `ConnectionOperations#executeWrite`, now restores the JDBC read-only flag, isolation level and auto-commit when the transaction completes. Previously the connection kept the transaction's settings, for example read-only with auto-commit disabled, until the connection scope completed.
 
+=== Schema generation switches the connection back to its schema
+
+With `schema-generate-name` or `schema-generate-names`, JDBC and R2DBC schema generation now switches the connection back to the schema it used before, once the tables are generated. Previously the connection stayed in the generated schema (the last one, with `schema-generate-names`) when it was returned to the pool, so the repository operations that later got this connection from the pool used the generated tables, and the operations on other connections didn't.
+
+The repositories now use the generated tables only when the entities name the schema, with `@MappedEntity(schema = ...)`, or when the data source uses it as its default schema. With schema multi-tenancy, the schema of the tenant is still used for each operation.
+
 === Hibernate read-only transactions inside an existing session scope
 
 A Hibernate session opened by an outer scope, for example a `@Connectable` method, is now treated like a pre-bound session for transactions started inside it, consistent with Spring:

@@ -61,6 +61,7 @@ import jakarta.persistence.criteria.FetchParent;
 import jakarta.persistence.criteria.Order;
 import jakarta.persistence.criteria.Path;
 import jakarta.persistence.criteria.Root;
+import jakarta.persistence.criteria.Selection;
 import org.hibernate.graph.AttributeNode;
 import org.hibernate.graph.Graph;
 import org.hibernate.graph.RootGraph;
@@ -339,6 +340,23 @@ public abstract class AbstractHibernateOperations<S, Q, P extends Q> implements 
                 attributeJoin.clearFetched();
             }
         }
+    }
+
+    /**
+     * Whether the criteria query selects its root entity. Only then does Hibernate's existence query, which replaces
+     * the selection with a constant, give the same answer as running the query: a query that selects an aggregate
+     * without grouping returns a row even when no row matches.
+     *
+     * @param query The criteria query
+     * @return true if the query selects its root entity
+     */
+    protected static boolean selectsRootEntity(CriteriaQuery<?> query) {
+        Selection<?> selection = query.getSelection();
+        if (selection == null || selection instanceof Root<?>) {
+            return true;
+        }
+        // Without a select call, Hibernate returns its empty select clause and the query selects its root entity
+        return selection.isCompoundSelection() && selection.getCompoundSelectionItems().isEmpty();
     }
 
     /**

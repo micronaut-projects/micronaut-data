@@ -46,6 +46,7 @@ import java.util.Arrays;
 import java.util.Collection;
 import java.util.Comparator;
 import java.util.List;
+import java.util.Optional;
 import java.util.stream.Collectors;
 
 /**
@@ -111,21 +112,27 @@ public class R2dbcSchemaGenerator {
                     SqlQueryBuilder builder = new SqlQueryBuilder(configuration.getDialect(), configuration.getDialectOptions().getVersion());
                     Mono.from(configuration.getConnectionFactory().create()).flatMap(connection -> {
                         Dialect dialect = configuration.getDialect();
-                        if (configuration.getSchemaGenerateNames() != null && !configuration.getSchemaGenerateNames().isEmpty()) {
-                            Mono<Void> result = Mono.empty();
-                            for (String schemaName : configuration.getSchemaGenerateNames()) {
-                                result = result.then(Mono.from(schemaHandler.createSchema(connection, dialect, schemaName)))
-                                    .then(Mono.from(schemaHandler.useSchema(connection, dialect, schemaName)))
-                                    .then(generate(connection, configuration, entities, builder));
-                            }
-                            return restoringOracleSchema(connection, dialect, result).then(Mono.from(connection.close()));
+                        List<String> schemaNames = configuration.getSchemaGenerateNames();
+                        if (schemaNames != null && !schemaNames.isEmpty()) {
+                            return restoringSchemaSetting(connection, dialect, Mono.defer(() -> {
+                                Mono<Void> result = Mono.empty();
+                                for (String schemaName : schemaNames) {
+                                    result = result.then(Mono.from(schemaHandler.createSchema(connection, dialect, schemaName)))
+                                        .then(Mono.from(schemaHandler.useSchema(connection, dialect, schemaName)))
+                                        .then(generate(connection, configuration, entities, builder));
+                                }
+                                return result;
+                            })).then(Mono.from(connection.close()));
                         }
-                        Mono<Void> result = Mono.empty();
-                        if (configuration.getSchemaGenerateName() != null) {
-                            result = Mono.from(schemaHandler.createSchema(connection, dialect, configuration.getSchemaGenerateName()))
-                                .then(Mono.from(schemaHandler.useSchema(connection, dialect, configuration.getSchemaGenerateName())));
+                        String schemaGenerateName = configuration.getSchemaGenerateName();
+                        if (schemaGenerateName != null) {
+                            return restoringSchemaSetting(connection, dialect, Mono.defer(() ->
+                                Mono.from(schemaHandler.createSchema(connection, dialect, schemaGenerateName))
+                                    .then(Mono.from(schemaHandler.useSchema(connection, dialect, schemaGenerateName)))
+                                    .then(generate(connection, configuration, entities, builder))
+                            )).then(Mono.from(connection.close()));
                         }
-                        return restoringOracleSchema(connection, dialect, result.then(generate(connection, configuration, entities, builder)))
+                        return generate(connection, configuration, entities, builder)
                             .then(Mono.from(connection.close()));
                     }).block();
                 }
@@ -218,33 +225,31 @@ public class R2dbcSchemaGenerator {
     }
 
     /**
-     * Generation switches the session schema on Oracle, and the connection may go back to a pool, so the
-     * schema in use before the generation is restored afterwards.
+     * Runs a generation that switches the connection to the generated schemas, and switches the connection back to
+     * the schema it used before, also when the generation fails: the connection may go back to a pool.
+     *
+     * @param connection The connection
+     * @param dialect    The dialect
+     * @param generation The generation
+     * @return The publisher
      */
-    private Mono<Void> restoringOracleSchema(Connection connection, Dialect dialect, Mono<Void> generation) {
-        if (dialect != Dialect.ORACLE) {
-            return generation;
-        }
-        Mono<String> currentSchema = Flux.from(connection.createStatement("SELECT SYS_CONTEXT('USERENV', 'CURRENT_SCHEMA') FROM DUAL").execute())
-            .flatMap(result -> result.map((row, metadata) -> row.get(0, String.class)))
-            .next();
+    private Mono<Void> restoringSchemaSetting(Connection connection, Dialect dialect, Mono<Void> generation) {
+        Mono<Optional<String>> previousSchemaSetting = Mono.defer(() -> Mono.from(schemaHandler.readSchemaSetting(connection, dialect)))
+            .map(Optional::of)
+            .defaultIfEmpty(Optional.empty());
         return Mono.usingWhen(
-            currentSchema,
-            schema -> generation,
-            schema -> restoreOracleSchema(connection, schema),
-            (schema, error) -> restoreOracleSchema(connection, schema),
-            schema -> restoreOracleSchema(connection, schema)
+            previousSchemaSetting,
+            setting -> generation,
+            setting -> restoreSchemaSetting(connection, dialect, setting),
+            (setting, error) -> restoreSchemaSetting(connection, dialect, setting),
+            setting -> restoreSchemaSetting(connection, dialect, setting)
         );
     }
 
-    private Mono<Void> restoreOracleSchema(Connection connection, String schema) {
-        // The exact name reported by the database, bound and quoted by the database so that its case is kept
-        return Flux.from(connection.createStatement(
-                "BEGIN EXECUTE IMMEDIATE 'ALTER SESSION SET CURRENT_SCHEMA = ' || DBMS_ASSERT.ENQUOTE_NAME(?, FALSE); END;")
-                .bind(0, schema)
-                .execute())
-            .flatMap(result -> Flux.from(result.getRowsUpdated()))
-            .then();
+    private Mono<Void> restoreSchemaSetting(Connection connection, Dialect dialect, Optional<String> setting) {
+        return setting
+            .map(value -> Mono.from(schemaHandler.restoreSchemaSetting(connection, dialect, value)))
+            .orElse(Mono.empty());
     }
 
     private Mono<Void> execute(Connection connection, String sql) {

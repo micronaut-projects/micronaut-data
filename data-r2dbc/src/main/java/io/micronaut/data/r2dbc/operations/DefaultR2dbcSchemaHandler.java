@@ -27,6 +27,8 @@ import org.reactivestreams.Publisher;
 import reactor.core.publisher.Flux;
 import reactor.core.publisher.Mono;
 
+import java.util.Optional;
+
 /**
  * The default implementation of {@link R2dbcSchemaHandler}.
  *
@@ -72,6 +74,52 @@ final class DefaultR2dbcSchemaHandler implements R2dbcSchemaHandler {
             case H2 -> executeQuery(connection, "SET SCHEMA " + schemaName + ";");
             default -> Mono.error(new DataAccessException("Unsupported 'useSchema' for dialect:" + dialect));
         };
+    }
+
+    @Override
+    public Publisher<String> readSchemaSetting(Connection connection, Dialect dialect) {
+        String query = switch (dialect) {
+            case H2 -> "SELECT SCHEMA()";
+            // The whole search path: the schema of a tenant replaces it
+            case POSTGRES -> "SELECT current_setting('search_path')";
+            case MYSQL -> "SELECT DATABASE()";
+            case SQL_SERVER -> "SELECT DB_NAME()";
+            case ORACLE -> "SELECT SYS_CONTEXT('USERENV', 'CURRENT_SCHEMA') FROM DUAL";
+            default -> null;
+        };
+        if (query == null) {
+            return Mono.empty();
+        }
+        if (DataSettings.QUERY_LOG.isTraceEnabled()) {
+            DataSettings.QUERY_LOG.trace("Executing Query: {}", query);
+        }
+        return Flux.from(connection.createStatement(query).execute())
+            .flatMap(result -> result.map((row, metadata) -> Optional.ofNullable(row.get(0, String.class))))
+            // Consumes the whole result before the connection is used again
+            .collectList()
+            .flatMap(values -> values.isEmpty() ? Mono.empty() : Mono.justOrEmpty(values.get(0)));
+    }
+
+    @Override
+    public Publisher<Void> restoreSchemaSetting(Connection connection, Dialect dialect, String setting) {
+        try {
+            return switch (dialect) {
+                case H2 -> executeQuery(connection, "SET SCHEMA " + SchemaNameUtils.quote(dialect, setting));
+                case POSTGRES -> {
+                    if (DataSettings.QUERY_LOG.isTraceEnabled()) {
+                        DataSettings.QUERY_LOG.trace("Restoring the connection search path to: {}", setting);
+                    }
+                    yield Flux.from(connection.createStatement("SELECT set_config('search_path', $1, false)").bind(0, setting).execute())
+                        .flatMap(result -> result.map((row, metadata) -> 1))
+                        .then();
+                }
+                case MYSQL, SQL_SERVER -> executeQuery(connection, "USE " + SchemaNameUtils.quote(dialect, setting));
+                case ORACLE -> executeQuery(connection, "ALTER SESSION SET CURRENT_SCHEMA=" + SchemaNameUtils.quote(dialect, setting));
+                default -> useSchema(connection, dialect, setting);
+            };
+        } catch (IllegalArgumentException e) {
+            return Mono.error(new DataAccessException("Invalid schema name: " + e.getMessage(), e));
+        }
     }
 
     private static Publisher<Void> executeQuery(Connection connection, String query) {

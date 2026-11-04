@@ -17,6 +17,7 @@ package io.micronaut.data.jdbc.operations;
 
 import io.micronaut.core.annotation.Experimental;
 import io.micronaut.data.model.query.builder.sql.Dialect;
+import org.jspecify.annotations.Nullable;
 
 import java.sql.Connection;
 
@@ -46,5 +47,32 @@ public interface JdbcSchemaHandler {
      * @param name The schema name
      */
     void useSchema(Connection connection, Dialect dialect, String name);
+
+    /**
+     * Reads the setting that determines the schema the connection uses: the current schema (H2, Oracle),
+     * the search path (PostgreSQL) or the current database (MySQL, SQL Server).
+     * It is read before the schema of a tenant is used, and restored with
+     * {@link #restoreSchemaSetting(Connection, Dialect, String)} before the connection is closed (returned to the pool).
+     *
+     * @param connection The JDBC connection
+     * @param dialect The dialect
+     * @return The schema setting, or {@code null} if it can't be read; the setting is then not restored
+     * @since 5.3.0
+     */
+    default @Nullable String readSchemaSetting(Connection connection, Dialect dialect) {
+        return null;
+    }
+
+    /**
+     * Restores a schema setting read with {@link #readSchemaSetting(Connection, Dialect)}.
+     *
+     * @param connection The JDBC connection
+     * @param dialect The dialect
+     * @param setting The schema setting
+     * @since 5.3.0
+     */
+    default void restoreSchemaSetting(Connection connection, Dialect dialect, String setting) {
+        useSchema(connection, dialect, setting);
+    }
 
 }

@@ -380,10 +380,6 @@ final class DefaultR2dbcRepositoryOperations extends AbstractSqlRepositoryOperat
         return assocEntitiesOp.getEntities().then();
     }
 
-    private Mono<Number> sum(Stream<Mono<Number>> stream) {
-        return stream.reduce((m1, m2) -> m1.zipWith(m2).map(t -> t.getT1().longValue() + t.getT2().longValue())).orElse(Mono.empty());
-    }
-
     private <T> Flux<T> concatMono(Stream<Mono<T>> stream) {
         return Flux.concat(stream.toList());
     }
@@ -441,14 +437,28 @@ final class DefaultR2dbcRepositoryOperations extends AbstractSqlRepositoryOperat
             theHandler = connection -> {
                 String schemaName = schemaTenantResolver.resolveTenantSchemaName();
                 if (schemaName != null) {
-                    return Mono.fromDirect(schemaHandler.useSchema(connection, configuration.getDialect(), schemaName))
-                        .thenReturn(connection)
-                        .flatMapMany(handler::apply);
+                    Dialect dialect = configuration.getDialect();
+                    // The connection is returned to the pool: it is switched back to its schema before it is closed
+                    return Flux.usingWhen(
+                        Mono.from(schemaHandler.readSchemaSetting(connection, dialect)).map(Optional::of).defaultIfEmpty(Optional.empty()),
+                        previousSetting -> Mono.fromDirect(schemaHandler.useSchema(connection, dialect, schemaName))
+                            .thenReturn(connection)
+                            .flatMapMany(handler::apply),
+                        previousSetting -> restoreSchemaSetting(connection, dialect, previousSetting),
+                        (previousSetting, throwable) -> restoreSchemaSetting(connection, dialect, previousSetting),
+                        previousSetting -> restoreSchemaSetting(connection, dialect, previousSetting)
+                    );
                 }
                 return handler.apply(connection);
             };
         }
         return theHandler;
+    }
+
+    private Mono<Void> restoreSchemaSetting(Connection connection, Dialect dialect, Optional<String> previousSetting) {
+        return previousSetting
+            .map(setting -> Mono.from(schemaHandler.restoreSchemaSetting(connection, dialect, setting)))
+            .orElse(Mono.empty());
     }
 
     @NonNull
@@ -1147,19 +1157,10 @@ final class DefaultR2dbcRepositoryOperations extends AbstractSqlRepositoryOperat
                 final SqlStoredQuery<T, ?> storedQuery = getSqlStoredQuery(operation.getStoredQuery());
                 RuntimePersistentEntity<T> persistentEntity = storedQuery.getPersistentEntity();
                 final R2dbcOperationContext ctx = createContext(operation, connection, storedQuery);
-                if (isSupportsBatchDelete(persistentEntity, storedQuery.getDialect())) {
-                    R2dbcEntitiesOperations<T> op = new R2dbcEntitiesOperations<>(ctx, persistentEntity, operation, storedQuery);
-                    op.delete();
-                    return op.getRowsUpdated();
-                }
-                return sum(
-                    operation.split().stream()
-                        .map(deleteOp -> {
-                            R2dbcEntityOperations<T> op = new R2dbcEntityOperations<>(ctx, persistentEntity, deleteOp.getEntity(), storedQuery);
-                            op.delete();
-                            return op.getRowsUpdated();
-                        })
-                );
+                // Batch deletes are supported by every dialect (isSupportsBatchDelete)
+                R2dbcEntitiesOperations<T> op = new R2dbcEntitiesOperations<>(ctx, persistentEntity, operation, storedQuery);
+                op.delete();
+                return op.getRowsUpdated();
             });
         }
 
