@@ -17,6 +17,7 @@ package io.micronaut.data.jdbc.notification.oracle
 
 import io.micronaut.context.ApplicationContext
 import io.micronaut.context.exceptions.BeanInstantiationException
+import io.micronaut.data.jdbc.notification.oracle.OracleNotificationConfiguration.RegistrationRecoveryConfiguration
 import spock.lang.Specification
 
 import java.time.Duration
@@ -28,14 +29,15 @@ class OracleRegistrationRecoveryConfigurationSpec extends Specification {
         def context = ApplicationContext.builder().enableDefaultPropertySources(false).properties(properties).start()
 
         when:
-        def configuration = context.getBean(OracleRegistrationRecoveryConfiguration)
+        def configuration = context.getBean(RegistrationRecoveryConfiguration)
 
         then:
         configuration.maxRetries == retries
         configuration.retryDelay == delay
         configuration.retryDelayMultiplier == multiplier
         configuration.maxRetryDelay == maximumDelay
-        context.getBean(OracleRegistrationRecoveryConfiguration).is(configuration)
+        context.getBean(RegistrationRecoveryConfiguration).is(configuration)
+        context.getBean(OracleNotificationConfiguration).registrationRecovery.is(configuration)
 
         cleanup:
         context.close()
@@ -43,11 +45,11 @@ class OracleRegistrationRecoveryConfigurationSpec extends Specification {
         where:
         properties                                                                                                   | retries | delay                   | multiplier | maximumDelay
         [:]                                                                                                          | -1      | Duration.ofSeconds(1)   | 2          | Duration.ofSeconds(60)
-        [(OracleRegistrationRecoveryConfiguration.PREFIX + '.max-retries'): 0]                                        | 0       | Duration.ofSeconds(1)   | 2          | Duration.ofSeconds(60)
-        [(OracleRegistrationRecoveryConfiguration.PREFIX + '.max-retries'): 5,
-         (OracleRegistrationRecoveryConfiguration.PREFIX + '.retry-delay'): '500ms',
-         (OracleRegistrationRecoveryConfiguration.PREFIX + '.retry-delay-multiplier'): 3,
-         (OracleRegistrationRecoveryConfiguration.PREFIX + '.max-retry-delay'): '30s']                                 | 5       | Duration.ofMillis(500)  | 3          | Duration.ofSeconds(30)
+        [(OracleNotificationConfiguration.PREFIX + '.' + RegistrationRecoveryConfiguration.PREFIX + '.max-retries'): 0]                                        | 0       | Duration.ofSeconds(1)   | 2          | Duration.ofSeconds(60)
+        [(OracleNotificationConfiguration.PREFIX + '.' + RegistrationRecoveryConfiguration.PREFIX + '.max-retries'): 5,
+         (OracleNotificationConfiguration.PREFIX + '.' + RegistrationRecoveryConfiguration.PREFIX + '.retry-delay'): '500ms',
+         (OracleNotificationConfiguration.PREFIX + '.' + RegistrationRecoveryConfiguration.PREFIX + '.retry-delay-multiplier'): 3,
+         (OracleNotificationConfiguration.PREFIX + '.' + RegistrationRecoveryConfiguration.PREFIX + '.max-retry-delay'): '30s']                                 | 5       | Duration.ofMillis(500)  | 3          | Duration.ofSeconds(30)
     }
 
     void "rejects invalid recovery setting #property=#value"() {
@@ -55,11 +57,11 @@ class OracleRegistrationRecoveryConfigurationSpec extends Specification {
         // Avoid resolving shutdown listeners that depend on the invalid configuration during cleanup.
         def context = ApplicationContext.builder().enableDefaultPropertySources(false)
             .eventsEnabled(false)
-            .properties([(OracleRegistrationRecoveryConfiguration.PREFIX + '.' + property): value]).build()
+            .properties([(OracleNotificationConfiguration.PREFIX + '.' + RegistrationRecoveryConfiguration.PREFIX + '.' + property): value]).build()
 
         when:
         context.start()
-        context.getBean(OracleRegistrationRecoveryConfiguration)
+        context.getBean(RegistrationRecoveryConfiguration)
 
         then:
         def failure = thrown(BeanInstantiationException)

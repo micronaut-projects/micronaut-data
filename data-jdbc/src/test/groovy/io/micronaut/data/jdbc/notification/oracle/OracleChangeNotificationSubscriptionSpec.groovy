@@ -16,13 +16,14 @@
 package io.micronaut.data.jdbc.notification.oracle
 
 import io.micronaut.context.BeanContext
-import io.micronaut.data.jdbc.notification.ChangeListenerExceptionHandler
 import io.micronaut.data.exceptions.DataAccessException
-import io.micronaut.data.notification.ChangeEvent
+import io.micronaut.data.jdbc.notification.ChangeListenerExceptionHandler
 import io.micronaut.data.jdbc.notification.ChangeNotificationQueue
-import io.micronaut.data.notification.ChangeOperation
+import io.micronaut.data.jdbc.notification.oracle.OracleNotificationConfiguration.RegistrationRecoveryConfiguration
 import io.micronaut.data.jdbc.runtime.ConnectionCallback
 import io.micronaut.data.jdbc.runtime.JdbcOperations
+import io.micronaut.data.notification.ChangeEvent
+import io.micronaut.data.notification.ChangeOperation
 import io.micronaut.inject.BeanDefinition
 import io.micronaut.inject.ExecutableMethod
 import io.micronaut.inject.ExecutionHandle
@@ -37,20 +38,20 @@ import oracle.jdbc.dcn.QueryChangeDescription
 import oracle.jdbc.dcn.TableChangeDescription
 import spock.lang.Specification
 import spock.util.concurrent.PollingConditions
-import java.util.concurrent.CopyOnWriteArrayList
 
 import java.sql.Connection
 import java.sql.ResultSet
 import java.sql.SQLException
 import java.sql.Statement
 import java.time.Duration
+import java.util.concurrent.CompletableFuture
+import java.util.concurrent.CopyOnWriteArrayList
 import java.util.concurrent.CountDownLatch
 import java.util.concurrent.Executor
-import java.util.concurrent.CompletableFuture
-import java.util.concurrent.atomic.AtomicBoolean
 import java.util.concurrent.RejectedExecutionException
 import java.util.concurrent.ScheduledFuture
 import java.util.concurrent.TimeUnit
+import java.util.concurrent.atomic.AtomicBoolean
 import java.util.concurrent.atomic.AtomicInteger
 import java.util.concurrent.atomic.AtomicReference
 
@@ -514,7 +515,7 @@ class OracleChangeNotificationSubscriptionSpec extends Specification {
             }
         })
         List<Runnable> scheduled = []
-        def configuration = new OracleRegistrationRecoveryConfiguration()
+        def configuration = new RegistrationRecoveryConfiguration()
         configuration.setMaxRetries(0)
         def subscription = subscription(fixture.registrar, scheduler(scheduled), new OracleChangeNotificationTaskTracker(),
             { Runnable task -> task.run() } as Executor, { ChangeEvent<?> ignored -> }, configuration)
@@ -787,7 +788,7 @@ class OracleChangeNotificationSubscriptionSpec extends Specification {
         List<Runnable> scheduled = []
         def subscription = subscription(fixture.registrar, scheduler(scheduled), new OracleChangeNotificationTaskTracker(),
             { Runnable command -> command.run() } as Executor, { ChangeEvent<?> ignored -> },
-            new OracleRegistrationRecoveryConfiguration(maxRetries: 0))
+            new RegistrationRecoveryConfiguration(maxRetries: 0))
 
         when:
         subscription.start()
@@ -877,7 +878,7 @@ class OracleChangeNotificationSubscriptionSpec extends Specification {
         List<Runnable> scheduledTasks = []
         List<Duration> scheduledDelays = []
         def delivered = []
-        def configuration = new OracleRegistrationRecoveryConfiguration(maxRetries: maxRetries, retryDelay: initialDelay,
+        def configuration = new RegistrationRecoveryConfiguration(maxRetries: maxRetries, retryDelay: initialDelay,
             retryDelayMultiplier: multiplier, maxRetryDelay: maximumDelay)
         def scheduler = Mock(TaskScheduler)
         def subscription = subscription(fixture.registrar, scheduler, new OracleChangeNotificationTaskTracker(),
@@ -999,7 +1000,7 @@ class OracleChangeNotificationSubscriptionSpec extends Specification {
                 }
                 task.run()
             } as Executor, { ChangeEvent<?> event -> delivered.add(event) },
-            new OracleRegistrationRecoveryConfiguration(maxRetries: maxRetries))
+            new RegistrationRecoveryConfiguration(maxRetries: maxRetries))
         subscription.start()
 
         when:
@@ -1044,7 +1045,7 @@ class OracleChangeNotificationSubscriptionSpec extends Specification {
                 }
                 task.run()
             } as Executor, { ChangeEvent<?> event -> delivered.add(event.operation()) },
-            new OracleRegistrationRecoveryConfiguration(maxRetries: 1))
+            new RegistrationRecoveryConfiguration(maxRetries: 1))
         subscription.start()
 
         when:
@@ -1455,7 +1456,7 @@ class OracleChangeNotificationSubscriptionSpec extends Specification {
                 threads.add(Thread.currentThread())
                 first.countDown()
                 recovered.countDown()
-            }, new OracleRegistrationRecoveryConfiguration(), notifications)
+            }, new RegistrationRecoveryConfiguration(), notifications)
         subscription.start()
 
         when:
@@ -1500,7 +1501,7 @@ class OracleChangeNotificationSubscriptionSpec extends Specification {
                     started.countDown()
                     assert release.await(5, TimeUnit.SECONDS)
                 }
-            }, new OracleRegistrationRecoveryConfiguration(), notifications)
+            }, new RegistrationRecoveryConfiguration(), notifications)
         subscription.start()
         def event = dataEvent(1L, DatabaseChangeEvent.EventType.OBJCHANGE)
         fixture.registeredListeners[0].onDatabaseChangeNotification(event)
@@ -1560,7 +1561,7 @@ class OracleChangeNotificationSubscriptionSpec extends Specification {
             { ChangeEvent<?> event ->
                 delivered.add(event.operation())
                 reconciled.countDown()
-            }, new OracleRegistrationRecoveryConfiguration(), notifications)
+            }, new RegistrationRecoveryConfiguration(), notifications)
         subscription.start()
         Runnable blocker = { workerStarted.countDown(); assert releaseWorker.await(5, TimeUnit.SECONDS) }
         notifications.enqueue(blocker, blocker)
@@ -1645,7 +1646,7 @@ class OracleChangeNotificationSubscriptionSpec extends Specification {
                 assert !Thread.holdsLock(subscription.lifecycleLock)
                 delivered.add(event.operation())
                 reconciled.countDown()
-            }, new OracleRegistrationRecoveryConfiguration(), notifications)
+            }, new RegistrationRecoveryConfiguration(), notifications)
         subscription.start()
         Runnable blocker = { workerStarted.countDown(); assert releaseWorker.await(5, TimeUnit.SECONDS) }
         notifications.enqueue(blocker, blocker)
@@ -1715,7 +1716,7 @@ class OracleChangeNotificationSubscriptionSpec extends Specification {
                 started.countDown()
                 assert release.await(5, TimeUnit.SECONDS)
                 delivered.countDown()
-            }, new OracleRegistrationRecoveryConfiguration(), notifications)
+            }, new RegistrationRecoveryConfiguration(), notifications)
         subscription.start()
         def listener = fixture.registeredListeners[0]
         listener.onDatabaseChangeNotification(dataEvent(1L, DatabaseChangeEvent.EventType.OBJCHANGE))
@@ -1755,7 +1756,7 @@ class OracleChangeNotificationSubscriptionSpec extends Specification {
                 started.countDown()
                 assert release.await(5, TimeUnit.SECONDS)
                 reconciled.countDown()
-            }, new OracleRegistrationRecoveryConfiguration(), notifications)
+            }, new RegistrationRecoveryConfiguration(), notifications)
         subscription.start()
         def event = dataEvent(1L, DatabaseChangeEvent.EventType.OBJCHANGE)
         def ignoredEvent = Mock(DatabaseChangeEvent)
@@ -1793,7 +1794,7 @@ class OracleChangeNotificationSubscriptionSpec extends Specification {
         def delivered = new CopyOnWriteArrayList<ChangeOperation>()
         def subscription = subscription(fixture.registrar, Mock(TaskScheduler), new OracleChangeNotificationTaskTracker(),
             { Runnable task -> task.run() } as Executor, { ChangeEvent<?> event -> delivered.add(event.operation()) },
-            new OracleRegistrationRecoveryConfiguration(), notifications)
+            new RegistrationRecoveryConfiguration(), notifications)
         subscription.start()
         def listener = fixture.registeredListeners[0]
         def options = new Properties()
@@ -1826,7 +1827,7 @@ class OracleChangeNotificationSubscriptionSpec extends Specification {
         def delivered = new CopyOnWriteArrayList<ChangeOperation>()
         def subscription = subscription(fixture.registrar, Mock(TaskScheduler), new OracleChangeNotificationTaskTracker(),
             { Runnable task -> task.run() } as Executor, { ChangeEvent<?> event -> delivered.add(event.operation()) },
-            new OracleRegistrationRecoveryConfiguration(), notifications)
+            new RegistrationRecoveryConfiguration(), notifications)
         subscription.start()
         def options = new Properties()
         options.setProperty(OracleConnection.NTF_QOS_PURGE_ON_NTFN, 'true')
@@ -1948,7 +1949,7 @@ class OracleChangeNotificationSubscriptionSpec extends Specification {
                                                               OracleChangeNotificationTaskTracker tracker = new OracleChangeNotificationTaskTracker(),
                                                               Executor executor = { Runnable command -> command.run() } as Executor,
                                                               Closure<?> listenerInvocation = { ChangeEvent<?> ignored -> },
-                                                              OracleRegistrationRecoveryConfiguration recoveryConfiguration = new OracleRegistrationRecoveryConfiguration(),
+                                                              RegistrationRecoveryConfiguration recoveryConfiguration = new RegistrationRecoveryConfiguration(),
                                                               ChangeNotificationQueue notificationQueue = null) {
         def method = Mock(ExecutableMethod)
         method.getDescription(true) >> 'void onChange(ChangeEvent<Book>)'

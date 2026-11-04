@@ -15,18 +15,19 @@
  */
 package io.micronaut.data.jdbc.notification.oracle
 
+import io.micronaut.data.jdbc.notification.oracle.OracleNotificationConfiguration.RegistrationRecoveryConfiguration
 import io.micronaut.context.BeanContext
+import io.micronaut.data.exceptions.DataAccessException
 import io.micronaut.data.jdbc.notification.ChangeListenerExceptionHandler
 import io.micronaut.data.jdbc.notification.ChangeNotificationQueue
-import io.micronaut.data.exceptions.DataAccessException
 import io.micronaut.data.jdbc.runtime.ConnectionCallback
 import io.micronaut.data.jdbc.runtime.JdbcOperations
 import io.micronaut.inject.ExecutableMethod
 import io.micronaut.scheduling.TaskScheduler
 import oracle.jdbc.NotificationRegistration
 import oracle.jdbc.OracleConnection
-import oracle.jdbc.dcn.DatabaseChangeRegistration
 import oracle.jdbc.dcn.DatabaseChangeListener
+import oracle.jdbc.dcn.DatabaseChangeRegistration
 import spock.lang.Specification
 
 import java.sql.Connection
@@ -162,7 +163,7 @@ class OracleChangeNotificationRegistrarSpec extends Specification {
         def registrar = registrar(operations)
         def subscription = new OracleChangeNotificationSubscription('default', definition, registrar,
                 Mock(BeanContext), Mock(Executor), Mock(ChangeNotificationQueue), Mock(TaskScheduler), new OracleChangeNotificationTaskTracker(),
-                new OracleRegistrationRecoveryConfiguration(), Stub(ChangeListenerExceptionHandler))
+                new RegistrationRecoveryConfiguration(), Stub(ChangeListenerExceptionHandler))
         connection.unwrap(OracleConnection) >> oracleConnection
         oracleConnection.properties >> connectionProperties
         operations.execute(_ as ConnectionCallback) >> { ConnectionCallback<?> callback -> callback.call(connection) }
@@ -195,7 +196,7 @@ class OracleChangeNotificationRegistrarSpec extends Specification {
         def registrar = registrar(operations)
         def subscription = new OracleChangeNotificationSubscription('default', definition, registrar,
                 Mock(BeanContext), Mock(Executor), Mock(ChangeNotificationQueue), Mock(TaskScheduler), new OracleChangeNotificationTaskTracker(),
-                new OracleRegistrationRecoveryConfiguration(), Stub(ChangeListenerExceptionHandler))
+                new RegistrationRecoveryConfiguration(), Stub(ChangeListenerExceptionHandler))
         connection.unwrap(OracleConnection) >> oracleConnection
         oracleConnection.properties >> new Properties()
         registration.getRegId() >> 22L
