@@ -24,6 +24,15 @@ A Hibernate session opened by an outer scope, for example a `@Connectable` metho
 
 A read-only transaction that opens its own session now uses the Hibernate `MANUAL` flush mode, so the session is not flushed on commit. Previously the JPA mapping of `MANUAL` applied the `COMMIT` flush mode.
 
+=== R2DBC read-only transactions reject writes
+
+Micronaut Data R2DBC now begins read-only transactions, for example `@Transactional(readOnly = true)` or `executeRead`, with the R2DBC read-only attribute. On Oracle, PostgreSQL, MySQL and MariaDB, the database rejects writes in them. Previously they began as ordinary transactions and writes succeeded. This includes:
+
+* A read-write transaction that joins an outer read-only one, for example a `@Transactional` method called from a `@Transactional(readOnly = true)` one.
+* `SELECT ... FOR UPDATE` in a read-only transaction.
+
+Run writes in a read-write transaction, or use `Propagation.REQUIRES_NEW` for a write called from a read-only transaction. The SQL Server and H2 drivers ignore the attribute, so nothing changes there. See <<jdbcConfiguration, JDBC Configuration>>.
+
 === `null` entity arguments are rejected with `IllegalArgumentException`
 
 Passing `null` as the entity or the entities to a repository method, for example `save(null)`, `update(null)`, `delete(null)` or `saveAll(null)`, now fails immediately with an `IllegalArgumentException`, consistent with a `null` ID. Previously, these methods failed with an `IllegalStateException` (for example `Cannot find parameter with role: entity`) from inside the interceptor. Asynchronous and reactive repositories report the exception through the returned `CompletionStage` or `Publisher`.
