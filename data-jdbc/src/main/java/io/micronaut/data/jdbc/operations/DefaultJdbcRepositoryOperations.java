@@ -1331,7 +1331,9 @@ public final class DefaultJdbcRepositoryOperations extends AbstractSqlRepository
                                                        RuntimePersistentEntity<?> persistentEntity,
                                                        SqlStoredQuery<?, ?> storedQuery,
                                                        boolean requiresGeneratedKeys) {
-        if (storedQuery.getOperationType() == StoredQuery.OperationType.INSERT_RETURNING) {
+        if (storedQuery.getOperationType() == StoredQuery.OperationType.INSERT_RETURNING
+            // The generated id of a JSON view insert is an out parameter, which a batch cannot return
+            || storedQuery.getDialect() == Dialect.ORACLE && isJsonEntityGeneratedId(storedQuery, persistentEntity)) {
             return JdbcBatchInsertMode.FALLBACK;
         }
         return resolveBatchInsertMode(ctx, persistentEntity, requiresGeneratedKeys);
@@ -1341,10 +1343,11 @@ public final class DefaultJdbcRepositoryOperations extends AbstractSqlRepository
                                                        RuntimePersistentEntity<?> persistentEntity,
                                                        boolean requiresGeneratedKeys) {
         // JDBC metadata is only needed for MySQL, where Micronaut Data distinguishes MySQL from MariaDB
-        // and accounts for generated-key batch behavior
-        JdbcBatchMetadata metadata = ctx.dialect == Dialect.MYSQL && persistentEntity.hasIdentity()
-            ? getJdbcBatchMetadata(ctx)
-            : JdbcBatchMetadata.UNKNOWN;
+        // and accounts for generated-key batch behavior, and for Oracle generated identities, which batch
+        // only with a driver that returns the generated keys of a batch
+        boolean needsMetadata = ctx.dialect == Dialect.MYSQL && persistentEntity.hasIdentity()
+            || ctx.dialect == Dialect.ORACLE && persistentEntity.hasIdentity() && persistentEntity.getIdentity().isGenerated();
+        JdbcBatchMetadata metadata = needsMetadata ? getJdbcBatchMetadata(ctx) : JdbcBatchMetadata.UNKNOWN;
         return SqlBatchSupport.resolveJdbcBatchInsertMode(persistentEntity, ctx.dialect, metadata, requiresGeneratedKeys);
     }
 
@@ -1372,7 +1375,8 @@ public final class DefaultJdbcRepositoryOperations extends AbstractSqlRepository
                 metaData.getDatabaseProductVersion(),
                 metaData.getDriverName(),
                 metaData.supportsBatchUpdates(),
-                metaData.supportsGetGeneratedKeys()
+                metaData.supportsGetGeneratedKeys(),
+                metaData.getDriverMajorVersion()
             );
         } catch (SQLException e) {
             LOG.debug("Unable to read JDBC batch metadata; using unknown batch capabilities", e);
