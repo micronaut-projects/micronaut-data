@@ -26,6 +26,7 @@ import io.micronaut.inject.visitor.VisitorContext;
 
 import java.nio.charset.StandardCharsets;
 import java.util.HashMap;
+import java.util.Set;
 
 /**
  * Processes {@code @PostgresChangeNotification} methods during compilation.
@@ -42,6 +43,16 @@ import java.util.HashMap;
 public final class PostgresChangeNotificationVisitor implements TypeElementVisitor<Object, Object> {
     private static final String ANNOTATION = "io.micronaut.data.jdbc.annotation.PostgresChangeNotification";
     private static final String POSTGRES_CHANGE_LISTENER_QUERY = "io.micronaut.data.jdbc.notification.postgres.PostgresChangeListenerQuery";
+
+    @Override
+    public Set<String> getSupportedAnnotationNames() {
+        return Set.of(ANNOTATION);
+    }
+
+    @Override
+    public String getElementType() {
+        return ANNOTATION;
+    }
 
     @Override
     public int getOrder() {
