@@ -15,7 +15,6 @@
  */
 package io.micronaut.data.jdbc.notification
 
-import io.micronaut.data.jdbc.notification.oracle.OracleChangeEventMetadata
 import io.micronaut.data.notification.ChangeEvent
 import io.micronaut.data.notification.ChangeEventMetadata
 import io.micronaut.data.notification.ChangeOperation
@@ -25,15 +24,16 @@ class DefaultChangeEventSpec extends Specification {
 
     void "provider metadata is exposed only through its requested type"() {
         given:
-        def metadata = Stub(OracleChangeEventMetadata) {
-            rowId() >> 'AAABBB'
-        }
+        def metadata = new ProviderMetadata()
         ChangeEvent<String> event = new DefaultChangeEvent<>(ChangeOperation.DELETE, null, metadata)
 
         expect:
         event.entity().isEmpty()
-        event.metadata(OracleChangeEventMetadata).orElseThrow().is(metadata)
+        event.metadata(ProviderMetadata).orElseThrow().is(metadata)
         event.metadata(UnrelatedMetadata).isEmpty()
+    }
+
+    private static final class ProviderMetadata implements ChangeEventMetadata {
     }
 
     private static final class UnrelatedMetadata implements ChangeEventMetadata {

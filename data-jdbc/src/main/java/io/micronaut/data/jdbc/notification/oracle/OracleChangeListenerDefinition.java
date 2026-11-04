@@ -15,6 +15,7 @@
  */
 package io.micronaut.data.jdbc.notification.oracle;
 
+import io.micronaut.core.annotation.Internal;
 import io.micronaut.inject.BeanDefinition;
 import io.micronaut.inject.ExecutableMethod;
 
@@ -37,6 +38,7 @@ import java.util.Properties;
  * @param registrationProperties The registration properties, including the framework-required
  *                               {@code ROWID} notification setting and the non-expiring timeout.
  */
+@Internal
 record OracleChangeListenerDefinition(BeanDefinition<?> beanDefinition,
                                       ExecutableMethod<?, ?> method,
                                       OracleTableIdentifier tableIdentifier,

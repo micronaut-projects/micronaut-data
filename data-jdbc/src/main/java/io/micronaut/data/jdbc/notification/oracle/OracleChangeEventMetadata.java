@@ -34,7 +34,8 @@ import org.jspecify.annotations.Nullable;
  * @since 5.3.0
  */
 @Experimental
-public interface OracleChangeEventMetadata extends ChangeEventMetadata {
+public sealed interface OracleChangeEventMetadata extends ChangeEventMetadata
+    permits DefaultOracleChangeEventMetadata {
 
     /**
      * Returns the row-location hint supplied by Oracle Database for this notification.
