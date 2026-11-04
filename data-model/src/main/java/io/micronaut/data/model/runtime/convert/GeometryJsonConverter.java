@@ -44,20 +44,30 @@ import java.util.List;
  * all Micronaut Data geometry implementations, including nested {@link GeometryCollection}
  * values.
  *
+ * <p>When a {@link DatabaseTypeConversionContext} identifies SQL Server, both conversion
+ * directions delegate to {@link GeometryWktConverter}. SQL Server does not provide built-in
+ * GeoJSON conversion for spatial values, so this fallback matches the generated spatial SQL.
+ * Other database types and contexts without database information use GeoJSON.
+ *
  * @since 5.0
  */
 @Singleton
 public final class GeometryJsonConverter implements AttributeConverter<Geometry, String> {
 
     private final JsonMapper jsonMapper;
+    private final GeometryWktConverter wktConverter;
 
-    GeometryJsonConverter(JsonMapper jsonMapper, @Nullable OracleJsonMapper oracleJsonMapper) {
+    GeometryJsonConverter(JsonMapper jsonMapper, @Nullable OracleJsonMapper oracleJsonMapper, GeometryWktConverter wktConverter) {
         this.jsonMapper = oracleJsonMapper == null ? jsonMapper : oracleJsonMapper.getJsonMapper();
+        this.wktConverter = wktConverter;
     }
 
     @Override
     @Nullable
     public String convertToPersistedValue(@Nullable Geometry entityValue, ConversionContext context) {
+        if (isSqlServer(context)) {
+            return wktConverter.convertToPersistedValue(entityValue, context);
+        }
         if (entityValue == null) {
             return null;
         }
@@ -72,6 +82,9 @@ public final class GeometryJsonConverter implements AttributeConverter<Geometry,
     @Override
     @Nullable
     public Geometry convertToEntityValue(@Nullable String persistedValue, ConversionContext context) {
+        if (isSqlServer(context)) {
+            return wktConverter.convertToEntityValue(persistedValue, context);
+        }
         if (StringUtils.isEmpty(persistedValue)) {
             return null;
         }
@@ -82,6 +95,11 @@ public final class GeometryJsonConverter implements AttributeConverter<Geometry,
             throw new SerializationException("Failed to deserialize json [" + persistedValue + "]", e);
         }
         return geoJson == null ? null : getGeometry(geoJson);
+    }
+
+    private static boolean isSqlServer(ConversionContext context) {
+        return context instanceof DatabaseTypeConversionContext databaseContext
+            && databaseContext.getDatabaseType() == DatabaseType.SQL_SERVER;
     }
 
     private GeoJson getGeoJson(Geometry geometry) {

@@ -105,6 +105,7 @@ public abstract class AbstractSyncEntityOperations<Ctx extends OperationContext,
     protected void triggerPost(Consumer<EntityEventContext<Object>> fn) {
         final DefaultEntityEventContext<T> event = new DefaultEntityEventContext<>(persistentEntity, entity);
         fn.accept((EntityEventContext<Object>) event);
+        entity = event.getEntity();
     }
 
     @Override

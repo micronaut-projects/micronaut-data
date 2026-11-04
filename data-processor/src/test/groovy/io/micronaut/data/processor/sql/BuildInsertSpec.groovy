@@ -211,6 +211,48 @@ class Test {
     }
 
     @Unroll
+    void "test Oracle UUID default for version #version and definition #definition"() {
+        given:
+        String mapping = definition ? "@MappedProperty(definition = \"$definition\")" : ""
+        ClassElement element = buildClassElement("""
+package test;
+import java.util.UUID;
+import io.micronaut.data.annotation.*;
+
+@MappedEntity
+class Test {
+    @Id
+    @GeneratedValue
+    $mapping
+    private UUID id;
+
+    public UUID getId() {
+        return id;
+    }
+
+    public void setId(UUID id) {
+        this.id = id;
+    }
+}
+
+""")
+        SqlQueryBuilder builder = new SqlQueryBuilder(Dialect.ORACLE, version)
+        def entity = new SourcePersistentEntity(element, {})
+        def sql = builder.buildCreateTableStatements(entity)
+
+        expect:
+        sql[0].contains(column)
+
+        where:
+        version | definition | column
+        null    | null       | '"ID" VARCHAR(36) DEFAULT SYS_GUID() NOT NULL'
+        '23.4'  | null       | '"ID" VARCHAR(36) DEFAULT SYS_GUID() NOT NULL'
+        '23.9'  | null       | '"ID" VARCHAR(36) DEFAULT RAW_TO_UUID(UUID()) NOT NULL'
+        '23.26' | null       | '"ID" VARCHAR(36) DEFAULT RAW_TO_UUID(UUID()) NOT NULL'
+        '23.26' | 'RAW(16)'  | '"ID" RAW(16) DEFAULT SYS_GUID() NOT NULL'
+    }
+
+    @Unroll
     void "test build insert for UUID and dialect - #dialect"() {
         given:
         BeanDefinition beanDefinition = buildRepository('test.MyInterface', """
@@ -796,6 +838,64 @@ class Writer {
         getParameterPropertyPaths(saveMethod) == ["title", "author.code"] as String[]
         getQuery(updateMethod) == 'UPDATE `article` SET `title`=?,`writer_key`=? WHERE (`id` = ?)'
         getParameterPropertyPaths(updateMethod) == ["title", "author.code", "id"] as String[]
+    }
+
+    void "upsert uses referenced property for many-to-one join column conflict"() {
+        given:
+        def repository = buildRepository('test.ArticleRepository', """
+import io.micronaut.data.annotation.*;
+import io.micronaut.data.jdbc.annotation.JdbcRepository;
+import io.micronaut.data.model.query.builder.sql.Dialect;
+import io.micronaut.data.repository.CrudRepository;
+import jakarta.persistence.JoinColumn;
+import jakarta.persistence.ManyToOne;
+
+@JdbcRepository(dialect = Dialect.H2)
+@io.micronaut.context.annotation.Executable
+interface ArticleRepository extends CrudRepository<Article, Long> {
+    @Upsert(conflictsOn = "author")
+    Article upsert(Article article);
+}
+
+@MappedEntity("article")
+class Article {
+    @Id
+    @GeneratedValue
+    private Long id;
+    private String title;
+    @ManyToOne
+    @JoinColumn(name = "writer_key", referencedColumnName = "writer_code")
+    private Writer author;
+
+    public Long getId() { return id; }
+    public void setId(Long id) { this.id = id; }
+    public String getTitle() { return title; }
+    public void setTitle(String title) { this.title = title; }
+    public Writer getAuthor() { return author; }
+    public void setAuthor(Writer author) { this.author = author; }
+}
+
+@MappedEntity("writer")
+class Writer {
+    @Id
+    @GeneratedValue
+    private Long id;
+    @MappedProperty("writer_code")
+    private Long code;
+
+    public Long getId() { return id; }
+    public void setId(Long id) { this.id = id; }
+    public Long getCode() { return code; }
+    public void setCode(Long code) { this.code = code; }
+}
+""")
+
+        when:
+        def upsertMethod = repository.findPossibleMethods("upsert").findFirst().get()
+
+        then:
+        getQuery(upsertMethod).contains('ON (target.`writer_key`=source.c1)')
+        getParameterPropertyPaths(upsertMethod) == ["title", "author.code"] as String[]
     }
 
     void "test build custom SQL insert"() {
@@ -1456,6 +1556,115 @@ class Test {
         then:
         def ex = thrown(RuntimeException)
         ex.message.contains("Upsert method name must be 'upsert' or 'upsertAll'; use @Upsert for custom method names: ByName")
+    }
+
+    @Unroll
+    void "test upsert rejects collection conflict property - #conflictsOn"() {
+        when:
+        buildRepository('test.MyInterface', """
+import io.micronaut.data.annotation.*;
+import io.micronaut.data.jdbc.annotation.JdbcRepository;
+import io.micronaut.data.model.query.builder.sql.Dialect;
+import io.micronaut.data.repository.GenericRepository;
+import java.util.List;
+
+@JdbcRepository(dialect = Dialect.H2)
+@io.micronaut.context.annotation.Executable
+interface MyInterface extends GenericRepository<Clinic, Long> {
+    @Upsert(conflictsOn = ${conflictsOn})
+    Clinic upsert(Clinic clinic);
+}
+
+@MappedEntity
+class Clinic {
+    @Id
+    @GeneratedValue
+    private Long id;
+    private String name;
+    @Relation(value = Relation.Kind.ONE_TO_MANY, mappedBy = "clinic")
+    private List<Offering> offerings;
+
+    public Long getId() { return id; }
+    public void setId(Long id) { this.id = id; }
+    public String getName() { return name; }
+    public void setName(String name) { this.name = name; }
+    public List<Offering> getOfferings() { return offerings; }
+    public void setOfferings(List<Offering> offerings) { this.offerings = offerings; }
+}
+
+@MappedEntity
+class Offering {
+    @Id
+    private Long id;
+    @Relation(Relation.Kind.MANY_TO_ONE)
+    private Clinic clinic;
+
+    public Long getId() { return id; }
+    public void setId(Long id) { this.id = id; }
+    public Clinic getClinic() { return clinic; }
+    public void setClinic(Clinic clinic) { this.clinic = clinic; }
+}
+""")
+
+        then:
+        def ex = thrown(RuntimeException)
+        ex.message.contains("Cannot implement explicit upsert query: conflict property does not map to a column: offerings")
+
+        where:
+        conflictsOn << ['"offerings"', '{"name", "offerings"}']
+    }
+
+    void "test upsert expands embedded conflict property into its columns"() {
+        given:
+        BeanDefinition beanDefinition = buildRepository('test.MyInterface', """
+import io.micronaut.data.annotation.*;
+import io.micronaut.data.jdbc.annotation.JdbcRepository;
+import io.micronaut.data.model.query.builder.sql.Dialect;
+import io.micronaut.data.repository.GenericRepository;
+import jakarta.persistence.Embedded;
+
+@JdbcRepository(dialect = Dialect.H2)
+@io.micronaut.context.annotation.Executable
+interface MyInterface extends GenericRepository<Test, Long> {
+    @Upsert(conflictsOn = "key")
+    Test upsert(Test test);
+}
+
+@Embeddable
+class Key {
+    private String region;
+    private String code;
+
+    public String getRegion() { return region; }
+    public void setRegion(String region) { this.region = region; }
+    public String getCode() { return code; }
+    public void setCode(String code) { this.code = code; }
+}
+
+@MappedEntity
+class Test {
+    @Id
+    @GeneratedValue
+    private Long id;
+    @Embedded
+    private Key key;
+    private String name;
+
+    public Long getId() { return id; }
+    public void setId(Long id) { this.id = id; }
+    public Key getKey() { return key; }
+    public void setKey(Key key) { this.key = key; }
+    public String getName() { return name; }
+    public void setName(String name) { this.name = name; }
+}
+""")
+
+        when:
+        def upsertMethod = beanDefinition.findPossibleMethods("upsert").findFirst().get()
+
+        then:
+        getQuery(upsertMethod).contains('ON (target.`region`=source.c0 AND target.`code`=source.c1)')
+        getParameterPropertyPaths(upsertMethod) == ["key.region", "key.code", "name"] as String[]
     }
 
     @Unroll

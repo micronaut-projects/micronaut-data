@@ -367,10 +367,10 @@ public final class MongoQueryBuilder implements QueryBuilder {
                 rootPath.add(path);
                 currentEntityPath.add(path);
                 String thisPath = currentEntityPath.toString();
-                if (currentLookup.subLookups.containsKey(thisPath)) {
-                    // TODO: inspect this check. Why do we check 'thisPath' but get 'path'
-                    currentLookup = currentLookup.subLookups.get(path);
-                    Objects.requireNonNull(currentLookup);
+                LookupsStage subLookup = currentLookup.subLookups.get(thisPath);
+                if (subLookup != null) {
+                    // The path from the current entity can span several segments, for example through an embedded property
+                    currentLookup = subLookup;
                     currentEntityPath = new StringJoiner(".");
                     continue;
                 }
@@ -894,8 +894,13 @@ public final class MongoQueryBuilder implements QueryBuilder {
         } else if (obj instanceof Number) {
             sb.append(obj);
         } else {
-            sb.append('\'').append(obj.toString().replace("'", "\\'")).append('\'');
+            appendString(sb, obj.toString());
         }
+    }
+
+    private static void appendString(StringBuilder sb, String value) {
+        // The string is single-quoted, a backslash starts an escape sequence in the JSON parsed by MongoDB
+        sb.append('\'').append(value.replace("\\", "\\\\").replace("'", "\\'")).append('\'');
     }
 
     private boolean shouldEscapeKey(String s) {
@@ -1070,6 +1075,11 @@ public final class MongoQueryBuilder implements QueryBuilder {
         }
 
         private void appendOperatorExpression(Expression<?> leftExpression, String op, Expression<?> value) {
+            if (leftExpression instanceof LiteralExpression<?> leftLiteral && value instanceof LiteralExpression<?> rightLiteral) {
+                // A comparison of two constants, for example the 1 = 2 that an empty disjunction is normalized to
+                query.put("$expr", Map.of(op, asList(leftLiteral.getValue(), rightLiteral.getValue())));
+                return;
+            }
             if (leftExpression instanceof BinaryExpression<?> binaryExpression) {
                 PersistentPropertyPath propertyPath;
                 Expression<?> otherExpression;

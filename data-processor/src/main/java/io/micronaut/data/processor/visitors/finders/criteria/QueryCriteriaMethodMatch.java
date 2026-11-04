@@ -100,7 +100,9 @@ import java.util.stream.Collectors;
 @Experimental
 public class QueryCriteriaMethodMatch extends AbstractCriteriaMethodMatch {
 
-    private static final Pattern LOGICAL_OPERATOR_PATTERN = Pattern.compile("And|Or");
+    // The operators are only matched between two words to avoid splitting property names like "origin" or "android"
+    private static final Pattern LOGICAL_OPERATOR_PATTERN = Pattern.compile("(?<=\\w)(?:And|Or)(?=\\p{Upper})");
+    private static final Pattern AND_OPERATOR_PATTERN = Pattern.compile("(?<=\\w)And(?=\\p{Upper})");
 
     /**
      * Default constructor.
@@ -819,12 +821,11 @@ public class QueryCriteriaMethodMatch extends AbstractCriteriaMethodMatch {
         return countQuery.build(annotationMetadata, matchContext.getQueryBuilder());
     }
 
-    @SuppressWarnings("StringSplitter")
     private void applyOrderBy(String orderBy,
                               PersistentEntityRoot<?> root,
                               PersistentEntityQuery<?> query,
                               PersistentEntityCriteriaBuilder cb) {
-        String[] orderDefItems = orderBy.split("And");
+        String[] orderDefItems = AND_OPERATOR_PATTERN.split(orderBy);
         List<Order> orders = new ArrayList<>(orderDefItems.length);
         for (String orderDef : orderDefItems) {
             String prop = NameUtils.decapitalize(orderDef);

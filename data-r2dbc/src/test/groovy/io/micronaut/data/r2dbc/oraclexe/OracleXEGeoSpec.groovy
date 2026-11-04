@@ -8,6 +8,7 @@ import io.micronaut.data.model.geo.Point
 import io.micronaut.data.model.geo.Polygon
 import io.micronaut.data.tck.repositories.DeliveryDriverJsonRepository
 import io.micronaut.data.tck.repositories.DeliveryDriverWktRepository
+import io.micronaut.data.tck.repositories.DistrictRepository
 import io.micronaut.data.tck.repositories.GeometryEntityJsonRepository
 import io.micronaut.data.tck.repositories.GeometryEntityWktRepository
 import io.micronaut.data.tck.repositories.HotelJsonRepository
@@ -17,7 +18,6 @@ import io.micronaut.data.tck.tests.AbstractGeoSpec
 import io.micronaut.test.extensions.junit5.annotation.TestResourcesScope
 import io.micronaut.test.support.TestPropertyProviderFactory
 
-import java.time.Duration
 
 @TestResourcesScope("r2dbc-oracle-geo")
 class OracleXEGeoSpec extends AbstractGeoSpec implements OracleXETestPropertyProvider {
@@ -64,6 +64,12 @@ class OracleXEGeoSpec extends AbstractGeoSpec implements OracleXETestPropertyPro
         return context.getBean(OracleXEDeliveryDriverWktRepository)
     }
 
+    @Memoized
+    @Override
+    DistrictRepository getDistrictRepository() {
+        return context.getBean(OracleXEDistrictRepository)
+    }
+
     @Override
     List<String> packages() {
         return Arrays.asList("io.micronaut.data.tck.jdbc.entities.geo")
@@ -81,18 +87,10 @@ class OracleXEGeoSpec extends AbstractGeoSpec implements OracleXETestPropertyPro
 
     @Override
     Map<String, String> getDataSourceProperties(String dataSourceName) {
-        def prefix = 'r2dbc.datasources.' + dataSourceName
-        return [
-                (prefix + '.db-type')                        : dbType(),
-                (prefix + '.schema-generate')                : schemaGenerate().name(),
-                (prefix + '.dialect')                        : dialect().name(),
-                (prefix + '.packages')                       : packages(),
-                (prefix + '.connectTimeout')                 : Duration.ofMinutes(1).toString(),
-                (prefix + '.statementTimeout')               : Duration.ofMinutes(1).toString(),
-                (prefix + '.lockTimeout')                    : Duration.ofMinutes(1).toString(),
+        return OracleXETestPropertyProvider.super.getDataSourceProperties(dataSourceName) + [
                 "test-resources.containers.oracle.image-name": "gvenzl/oracle-free",
-                "test-resources.containers.oracle.image-tag" : "latest"
-        ] as Map<String, String>
+                "test-resources.containers.oracle.image-tag" : "23.26.3-faststart"
+        ]
     }
 
     @Override

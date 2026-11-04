@@ -65,6 +65,13 @@ class BookingServiceTest {
 
         // tag::propagation[]
         transactionPropagationOperations.withPropagation(suspendedSeat.transactionId(), () -> {
+            bookingService.confirmPayment(suspendedSeat.seatId());
+            assertEquals(suspendedSeat.transactionId(), transactionPropagationOperations.currentTransactionId().orElseThrow());
+            return null;
+        });
+        assertTrue(seatRepository.findAll().isEmpty());
+
+        transactionPropagationOperations.withPropagation(suspendedSeat.transactionId(), () -> {
             bookingService.ticketSeat(suspendedSeat.seatId());
             return null;
         });

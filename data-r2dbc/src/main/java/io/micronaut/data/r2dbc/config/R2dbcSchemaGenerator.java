@@ -46,6 +46,7 @@ import java.util.Arrays;
 import java.util.Collection;
 import java.util.Comparator;
 import java.util.List;
+import java.util.stream.Collectors;
 
 /**
  * Schema generation for R2DBC.
@@ -115,16 +116,16 @@ public class R2dbcSchemaGenerator {
                             for (String schemaName : configuration.getSchemaGenerateNames()) {
                                 result = result.then(Mono.from(schemaHandler.createSchema(connection, dialect, schemaName)))
                                     .then(Mono.from(schemaHandler.useSchema(connection, dialect, schemaName)))
-                                    .then(generate(connection, schemaGenerate, entities, builder));
+                                    .then(generate(connection, configuration, entities, builder));
                             }
-                            return result.then(Mono.from(connection.close()));
+                            return restoringOracleSchema(connection, dialect, result).then(Mono.from(connection.close()));
                         }
                         Mono<Void> result = Mono.empty();
                         if (configuration.getSchemaGenerateName() != null) {
                             result = Mono.from(schemaHandler.createSchema(connection, dialect, configuration.getSchemaGenerateName()))
                                 .then(Mono.from(schemaHandler.useSchema(connection, dialect, configuration.getSchemaGenerateName())));
                         }
-                        return result.then(generate(connection, schemaGenerate, entities, builder))
+                        return restoringOracleSchema(connection, dialect, result.then(generate(connection, configuration, entities, builder)))
                             .then(Mono.from(connection.close()));
                     }).block();
                 }
@@ -133,9 +134,10 @@ public class R2dbcSchemaGenerator {
     }
 
     private Mono<Void> generate(Connection connection,
-                                SchemaGenerate schemaGenerate,
+                                DataR2dbcConfiguration configuration,
                                 PersistentEntity[] entities,
                                 SqlQueryBuilder builder) {
+        SchemaGenerate schemaGenerate = configuration.getSchemaGenerate();
         List<String> createStatements = Arrays.asList(
             builder.buildCreateTableStatements(definitionProviders, entities, builder.getDialect())
         );
@@ -144,7 +146,6 @@ public class R2dbcSchemaGenerator {
                     if (DataSettings.QUERY_LOG.isDebugEnabled()) {
                         DataSettings.QUERY_LOG.debug("Creating Table: \n{}", sql);
                     }
-                    LOG.warn("Create table :{}", sql);
                     return execute(connection, sql)
                             .onErrorResume((throwable -> {
                                 if (LOG.isWarnEnabled()) {
@@ -153,24 +154,97 @@ public class R2dbcSchemaGenerator {
                                 return Mono.empty();
                             }));
                 });
+        // Oracle R2DBC doesn't execute several statements in one string
+        if (configuration.getDialect().allowBatch() && configuration.getDialect() != Dialect.ORACLE && configuration.isBatchGenerate()) {
+            return generateBatch(connection, schemaGenerate, entities, builder, createStatements, createTablesFlow.then());
+        }
         return switch (schemaGenerate) {
-            case CREATE_DROP -> {
-                List<String> dropStatements = Arrays.stream(entities).flatMap(entity -> Arrays.stream(builder.buildDropTableStatements(entity)))
-                        .toList();
-                yield Flux.fromIterable(dropStatements)
-                        .concatMap(sql -> {
-                            if (DataSettings.QUERY_LOG.isDebugEnabled()) {
-                                DataSettings.QUERY_LOG.debug("Dropping Table: \n{}", sql);
-                            }
-                            return execute(connection, sql)
-                                    .onErrorResume((throwable -> Mono.empty()));
-                        })
-                        .thenMany(createTablesFlow)
-                        .then();
-            }
+            case CREATE_DROP -> dropTablesOneByOne(connection, entities, builder)
+                    .thenMany(createTablesFlow)
+                    .then();
             default -> createTablesFlow
                     .then();
         };
+    }
+
+    private Mono<Void> dropTablesOneByOne(Connection connection,
+                                          PersistentEntity[] entities,
+                                          SqlQueryBuilder builder) {
+        List<String> dropStatements = Arrays.stream(entities).flatMap(entity -> Arrays.stream(builder.buildDropTableStatements(entity)))
+                .toList();
+        return Flux.fromIterable(dropStatements)
+                .concatMap(sql -> {
+                    if (DataSettings.QUERY_LOG.isDebugEnabled()) {
+                        DataSettings.QUERY_LOG.debug("Dropping Table: \n{}", sql);
+                    }
+                    return execute(connection, sql)
+                            .onErrorResume(throwable -> Mono.empty());
+                })
+                .then();
+    }
+
+    private Mono<Void> generateBatch(Connection connection,
+                                     SchemaGenerate schemaGenerate,
+                                     PersistentEntity[] entities,
+                                     SqlQueryBuilder builder,
+                                     List<String> createStatements,
+                                     Mono<Void> createTablesOneByOne) {
+        Mono<Void> createTables = Mono.defer(() -> {
+            // The same statements as without batch generation, which don't repeat a schema or a join table
+            // shared by several entities. They are executed together: each one needs to be terminated
+            String sql = createStatements.stream()
+                .map(statement -> statement.endsWith(";") ? statement : statement + ";")
+                .collect(Collectors.joining(System.lineSeparator()));
+            if (DataSettings.QUERY_LOG.isDebugEnabled()) {
+                DataSettings.QUERY_LOG.debug("Creating Tables: \n{}", sql);
+            }
+            return execute(connection, sql);
+        }).onErrorResume(throwable -> {
+            // For example a schema or a table that already exists: like without batch generation,
+            // create the tables one by one, ignoring the statements that fail
+            if (DataSettings.QUERY_LOG.isDebugEnabled()) {
+                DataSettings.QUERY_LOG.debug("Batch create unsuccessful, creating the tables one by one: {}", throwable.getMessage());
+            }
+            return createTablesOneByOne;
+        });
+        return switch (schemaGenerate) {
+            // The tables are dropped one by one, ignoring the failures: in a batch, a table that doesn't exist yet
+            // would prevent the next tables from being dropped, and the creation would keep their old data
+            case CREATE_DROP -> dropTablesOneByOne(connection, entities, builder)
+                .then(createTables);
+            case CREATE -> createTables;
+            default -> Mono.empty();
+        };
+    }
+
+    /**
+     * Generation switches the session schema on Oracle, and the connection may go back to a pool, so the
+     * schema in use before the generation is restored afterwards.
+     */
+    private Mono<Void> restoringOracleSchema(Connection connection, Dialect dialect, Mono<Void> generation) {
+        if (dialect != Dialect.ORACLE) {
+            return generation;
+        }
+        Mono<String> currentSchema = Flux.from(connection.createStatement("SELECT SYS_CONTEXT('USERENV', 'CURRENT_SCHEMA') FROM DUAL").execute())
+            .flatMap(result -> result.map((row, metadata) -> row.get(0, String.class)))
+            .next();
+        return Mono.usingWhen(
+            currentSchema,
+            schema -> generation,
+            schema -> restoreOracleSchema(connection, schema),
+            (schema, error) -> restoreOracleSchema(connection, schema),
+            schema -> restoreOracleSchema(connection, schema)
+        );
+    }
+
+    private Mono<Void> restoreOracleSchema(Connection connection, String schema) {
+        // The exact name reported by the database, bound and quoted by the database so that its case is kept
+        return Flux.from(connection.createStatement(
+                "BEGIN EXECUTE IMMEDIATE 'ALTER SESSION SET CURRENT_SCHEMA = ' || DBMS_ASSERT.ENQUOTE_NAME(?, FALSE); END;")
+                .bind(0, schema)
+                .execute())
+            .flatMap(result -> Flux.from(result.getRowsUpdated()))
+            .then();
     }
 
     private Mono<Void> execute(Connection connection, String sql) {

@@ -42,6 +42,17 @@ trait TestResourcesDatabaseTestPropertyProvider implements TestPropertyProvider 
         }
     }
 
+    String poolProtocol() {
+        switch (dialect()) {
+            case Dialect.H2:
+                return "h2:mem"
+            case Dialect.SQL_SERVER:
+                return "sqlserver"
+            default:
+                return dbType()
+        }
+    }
+
     @Override
     Map<String, String> getProperties() {
         def props = getDataSourceProperties("default")
@@ -76,22 +87,17 @@ trait TestResourcesDatabaseTestPropertyProvider implements TestPropertyProvider 
             // but that's the only thing which works
             options += ['test-resources.containers.mssql.accept-license': true]
         }
-// TODO
-//        if (usePool()) {
-//            String poolProtocol
-//            switch (dialect) {
-//                case Dialect.SQL_SERVER:
-//                    poolProtocol = "sqlserver"
-//                    break
-//                default:
-//                    poolProtocol = dialect.name().toLowerCase()
-//            }
-//            map += [
-//                    "r2dbc.datasources.default.options.protocol": poolProtocol,
-//                    "r2dbc.datasources.default.options.driver"  : 'pool',
-//            ]
-//        }
-//        map += options
+        if (usePool()) {
+            options += [
+                    (prefix + '.options.driver')                    : 'pool',
+                    (prefix + '.options.protocol')                  : poolProtocol(),
+                    // micronaut-r2dbc doesn't dispose the pool when the context is closed,
+                    // keep the pools of the finished specs from exhausting the database connections
+                    (prefix + '.options.initialSize')               : '1',
+                    (prefix + '.options.maxIdleTime')               : 'PT5S',
+                    (prefix + '.options.backgroundEvictionInterval'): 'PT5S',
+            ]
+        }
         return options
     }
 

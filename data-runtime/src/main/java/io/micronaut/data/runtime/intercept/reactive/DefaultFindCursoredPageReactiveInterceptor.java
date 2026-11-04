@@ -18,10 +18,15 @@ package io.micronaut.data.runtime.intercept.reactive;
 import io.micronaut.aop.MethodInvocationContext;
 import io.micronaut.core.annotation.Internal;
 import org.jspecify.annotations.NonNull;
+import io.micronaut.data.annotation.Query;
 import io.micronaut.data.intercept.RepositoryMethodKey;
 import io.micronaut.data.intercept.reactive.FindCursoredReactivePageInterceptor;
+import io.micronaut.data.model.CursoredPage;
+import io.micronaut.data.model.Page;
+import io.micronaut.data.model.runtime.PreparedQuery;
 import io.micronaut.data.operations.RepositoryOperations;
 import org.reactivestreams.Publisher;
+import reactor.core.publisher.Mono;
 
 /**
  * Default implementation of {@link FindCursoredReactivePageInterceptor} delegating to {@code findPage}.
@@ -44,6 +49,30 @@ public final class DefaultFindCursoredPageReactiveInterceptor extends AbstractPu
 
     @Override
     protected Publisher<?> interceptPublisher(RepositoryMethodKey methodKey, MethodInvocationContext<Object, Object> context) {
+        if (context.hasAnnotation(Query.class)) {
+            PreparedQuery<?, ?> preparedQuery = prepareQuery(methodKey, context);
+            return Mono.from(reactiveOperations.findPage(preparedQuery)).flatMap(page -> {
+                if (!page.hasTotalSize() && preparedQuery.getPageable().requestTotal()) {
+                    PreparedQuery<?, Number> countQuery = prepareCountQuery(methodKey, context);
+                    return Mono.from(reactiveOperations.findOne(countQuery)).<Page<?>>map(n -> {
+                        if (page instanceof CursoredPage<?> cursoredPage) {
+                            return CursoredPage.of(
+                                cursoredPage.getContent(),
+                                cursoredPage.getPageable(),
+                                cursoredPage.getCursors(),
+                                n.longValue()
+                            );
+                        }
+                        return Page.of(
+                            page.getContent(),
+                            page.getPageable(),
+                            n.longValue()
+                        );
+                    });
+                }
+                return Mono.<Page<?>>just(page);
+            });
+        }
         return reactiveOperations.findPage(getPagedQuery(context));
     }
 }

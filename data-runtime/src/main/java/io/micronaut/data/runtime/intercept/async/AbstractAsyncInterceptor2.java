@@ -19,6 +19,7 @@ import io.micronaut.aop.MethodInvocationContext;
 import io.micronaut.core.annotation.Internal;
 import org.jspecify.annotations.NonNull;
 import io.micronaut.core.type.Argument;
+import io.micronaut.core.type.ReturnType;
 import io.micronaut.data.exceptions.DataAccessException;
 import io.micronaut.data.operations.RepositoryOperations;
 import io.micronaut.data.operations.async.AsyncCapableRepository;
@@ -60,11 +61,14 @@ abstract sealed class AbstractAsyncInterceptor2<T, R> extends AbstractQueryInter
         return findReturnType(context, Argument.OBJECT_ARGUMENT);
     }
 
+    // Sonar java:S1872 -- Kotlin coroutines are an optional dependency, so the Flow class cannot be referenced
+    @SuppressWarnings("java:S1872")
     protected final Argument<?> findReturnType(MethodInvocationContext<?, ?> context, Argument<?> defaultArg) {
-        if (context.isSuspend()) {
-            return context.getReturnType().asArgument();
+        ReturnType<?> returnType = context.getReturnType();
+        if (context.isSuspend() && !returnType.getType().getName().equals("kotlinx.coroutines.flow.Flow")) {
+            return returnType.asArgument();
         }
-        return context.getReturnType().asArgument().getFirstTypeVariable().orElse(defaultArg);
+        return returnType.asArgument().getFirstTypeVariable().orElse(defaultArg);
     }
 
 }

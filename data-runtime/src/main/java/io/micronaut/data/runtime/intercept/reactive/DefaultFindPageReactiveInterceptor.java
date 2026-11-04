@@ -17,6 +17,7 @@ package io.micronaut.data.runtime.intercept.reactive;
 
 import io.micronaut.aop.MethodInvocationContext;
 import org.jspecify.annotations.NonNull;
+import org.jspecify.annotations.Nullable;
 import io.micronaut.data.annotation.Query;
 import io.micronaut.data.intercept.RepositoryMethodKey;
 import io.micronaut.data.intercept.reactive.FindPageReactiveInterceptor;
@@ -54,35 +55,39 @@ public class DefaultFindPageReactiveInterceptor extends AbstractPublisherInterce
     public Publisher<?> interceptPublisher(RepositoryMethodKey methodKey, MethodInvocationContext<Object, Object> context) {
         if (context.hasAnnotation(Query.class)) {
             PreparedQuery<?, ?> preparedQuery = prepareQuery(methodKey, context);
+            if (!preparedQuery.getPageable().requestTotal()) {
+                return Flux.<Object>from(reactiveOperations.findAll(preparedQuery))
+                    .collectList()
+                    .map(list -> createPage(preparedQuery, list, null));
+            }
             PreparedQuery<?, Number> countQuery = prepareCountQuery(methodKey, context);
 
             return Flux.from(reactiveOperations.findOne(countQuery))
                 .flatMap(total -> {
                     Flux<Object> resultList = Flux.from(reactiveOperations.findAll(preparedQuery));
-                    return resultList.collectList().map(list -> {
-                            Pageable pageable = preparedQuery.getPageable();
-                            Page page;
-                            if (pageable.getMode() == Pageable.Mode.OFFSET) {
-                                page = Page.of(list, pageable, total.longValue());
-                            } else if (preparedQuery instanceof DefaultSqlPreparedQuery<?, ?> sqlPreparedQuery) {
-                                List<Pageable.Cursor> cursors;
-                                if (preparedQuery.getResultDataType() == DataType.ENTITY) {
-                                    cursors = sqlPreparedQuery.createCursors(list, pageable);
-                                } else if (sqlPreparedQuery.isDtoProjection()) {
-                                    RuntimePersistentEntity<Object> runtimePersistentEntity = (RuntimePersistentEntity<Object>) operations.getEntity(sqlPreparedQuery.getResultType());
-                                    cursors = sqlPreparedQuery.createCursors(list, pageable, runtimePersistentEntity);
-                                } else {
-                                    throw new IllegalStateException("CursoredPage cannot produce projection result");
-                                }
-                                page = CursoredPage.of(list, pageable, cursors, total.longValue());
-                            } else {
-                                throw new UnsupportedOperationException("Only offset pageable mode is supported by this query implementation");
-                            }
-                            return page;
-                        }
-                    );
+                    return resultList.collectList().map(list -> createPage(preparedQuery, list, total.longValue()));
                 });
         }
         return reactiveOperations.findPage(getPagedQuery(context));
+    }
+
+    private Page<Object> createPage(PreparedQuery<?, ?> preparedQuery, List<Object> list, @Nullable Long total) {
+        Pageable pageable = preparedQuery.getPageable();
+        if (pageable.getMode() == Pageable.Mode.OFFSET) {
+            return Page.of(list, pageable, total);
+        }
+        if (preparedQuery instanceof DefaultSqlPreparedQuery<?, ?> sqlPreparedQuery) {
+            List<Pageable.Cursor> cursors;
+            if (preparedQuery.getResultDataType() == DataType.ENTITY) {
+                cursors = sqlPreparedQuery.createCursors(list, pageable);
+            } else if (sqlPreparedQuery.isDtoProjection()) {
+                RuntimePersistentEntity<Object> runtimePersistentEntity = (RuntimePersistentEntity<Object>) operations.getEntity(sqlPreparedQuery.getResultType());
+                cursors = sqlPreparedQuery.createCursors(list, pageable, runtimePersistentEntity);
+            } else {
+                throw new IllegalStateException("CursoredPage cannot produce projection result");
+            }
+            return CursoredPage.of(list, pageable, cursors, total);
+        }
+        throw new UnsupportedOperationException("Only offset pageable mode is supported by this query implementation");
     }
 }

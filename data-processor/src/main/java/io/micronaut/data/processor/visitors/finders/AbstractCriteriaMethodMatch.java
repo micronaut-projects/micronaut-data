@@ -102,7 +102,9 @@ public abstract class AbstractCriteriaMethodMatch implements MethodMatcher.Metho
     static {
         OPERATOR_PATTERNS = new TreeMap<>();
         for (String operator : OPERATORS) {
-            OPERATOR_PATTERNS.put(operator, Pattern.compile("(\\w+)(" + operator + ")(\\p{Upper})(\\w+)"));
+            // Only match the operator between two words: preceded by a character and followed by an uppercase letter.
+            // This avoids splitting on the operator text inside a property name (e.g. "origin", "android")
+            OPERATOR_PATTERNS.put(operator, Pattern.compile("(?<=\\w)" + operator + "(?=\\p{Upper})"));
         }
         PROPERTY_RESTRICTIONS = Restrictions.PROPERTY_RESTRICTIONS_MAP.keySet()
             .stream()
@@ -347,7 +349,7 @@ public abstract class AbstractCriteriaMethodMatch implements MethodMatcher.Metho
                     containsOperator = true;
                     String operatorInUse = operatorPatternEntry.getKey();
 
-                    String[] queryParameters = querySequence.split(operatorInUse);
+                    String[] queryParameters = operatorPatternEntry.getValue().split(querySequence);
                     List<Predicate> opPredicates = new ArrayList<>();
                     Pattern orPattern = OPERATOR_PATTERNS.get(OPERATOR_OR);
                     Objects.requireNonNull(orPattern);
@@ -399,7 +401,7 @@ public abstract class AbstractCriteriaMethodMatch implements MethodMatcher.Metho
             }
             if (propertyName.endsWith(IGNORE_CASE)) {
                 restrictionName += IGNORE_CASE;
-                propertyName = propertyName.substring(IGNORE_CASE.length());
+                propertyName = extractPropertyName(propertyName, IGNORE_CASE);
             }
             Restrictions.PropertyRestriction<Object> restriction = Restrictions.findPropertyRestriction(restrictionName);
             if (restriction == null) {
@@ -583,7 +585,7 @@ public abstract class AbstractCriteriaMethodMatch implements MethodMatcher.Metho
             return;
         }
         SourcePersistentProperty property = (SourcePersistentProperty) propertyPath.getProperty();
-        throw new IllegalArgumentException("Parameter [" + genericType.getType().getName() + " " + parameter.getName() + "] is not compatible with property [" + property.getType().getName() + " " + property.getName() + "] of entity: " + property.getOwner().getName());
+        throw new MatchFailedException("Parameter [" + genericType.getType().getName() + " " + parameter.getName() + "] is not compatible with property [" + property.getType().getName() + " " + property.getName() + "] of entity: " + property.getOwner().getName());
     }
 
     private boolean isValidType(String restrictionName, int parameterIndex, ClassElement genericType, SourcePersistentProperty property) {
@@ -742,7 +744,8 @@ public abstract class AbstractCriteriaMethodMatch implements MethodMatcher.Metho
             return Collections.emptyList();
         }
         List<Selection<?>> selectionList = new ArrayList<>();
-        for (String projection : projectionPart.split("And")) {
+        Pattern andPattern = Objects.requireNonNull(OPERATOR_PATTERNS.get(OPERATOR_AND));
+        for (String projection : andPattern.split(projectionPart)) {
             io.micronaut.data.model.jpa.criteria.PersistentPropertyPath<?> propertyPath = findProperty(root, projection);
             if (propertyPath != null) {
                 selectionList.add(propertyPath);

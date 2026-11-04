@@ -58,10 +58,6 @@ public class FindPageReactiveSpecificationInterceptor extends AbstractReactiveSp
 
     @Override
     public Object intercept(RepositoryMethodKey methodKey, MethodInvocationContext<Object, Object> context) {
-        if (context.getParameterValues().length != 2) {
-            throw new IllegalStateException("Expected exactly 2 arguments to method");
-        }
-
         Publisher<?> result;
 
         Pageable pageable = getPageable(context);

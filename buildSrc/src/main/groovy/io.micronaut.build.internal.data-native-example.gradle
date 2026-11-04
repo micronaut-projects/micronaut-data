@@ -31,6 +31,14 @@ tasks.named("test", Test) {
     }
 }
 
+tasks.matching { it.name == "nativeTest" }.configureEach {
+    if (System.getenv("TESTPILOT_USERNAME") != null) {
+        // the native test binary runs the same example.oracle tests, which need the same
+        // environment, otherwise every @Requires(env = "oracle") test is skipped
+        getEnvironment().put("MICRONAUT_ENVIRONMENTS", "oracle")
+    }
+}
+
 processResources {
     outputs.upToDateWhen { false }
     doLast {

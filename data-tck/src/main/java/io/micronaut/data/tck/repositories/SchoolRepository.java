@@ -18,5 +18,9 @@ package io.micronaut.data.tck.repositories;
 import io.micronaut.data.repository.CrudRepository;
 import io.micronaut.data.tck.jdbc.entities.geo.School;
 
+import java.util.List;
+
 public interface SchoolRepository extends CrudRepository<School, Long> {
+
+    List<School> findByDistrictId(Long districtId);
 }

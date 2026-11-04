@@ -18,7 +18,6 @@ package io.micronaut.data.r2dbc.mapper;
 import io.micronaut.data.runtime.mapper.ResultReader;
 import io.r2dbc.spi.Blob;
 import org.jspecify.annotations.Nullable;
-import reactor.core.publisher.Mono;
 
 import java.nio.ByteBuffer;
 
@@ -38,14 +37,10 @@ final class R2dbcBytesReader {
             return bytes;
         }
         if (value instanceof ByteBuffer byteBuffer) {
-            return byteBuffer.array();
+            return R2dbcLobReader.toBytes(byteBuffer);
         }
         if (value instanceof Blob blob) {
-            ByteBuffer byteBuffer = Mono.from(blob.stream()).block();
-            if (byteBuffer == null) {
-                return new byte[0];
-            }
-            return byteBuffer.array();
+            return R2dbcLobReader.readBlob(blob).block();
         }
         return reader.convertRequired(value, byte[].class);
     }

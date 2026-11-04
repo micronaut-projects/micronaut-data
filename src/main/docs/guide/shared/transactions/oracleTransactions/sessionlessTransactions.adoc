@@ -3,20 +3,25 @@ request. Micronaut Data supports this for Oracle JDBC with the ann:transaction.a
 attribute:
 
 * api:transaction.annotation.OracleTransactional.Sessionless#SUSPEND[]
+* api:transaction.annotation.OracleTransactional.Sessionless#RESUME_AND_SUSPEND[]
 * api:transaction.annotation.OracleTransactional.Sessionless#REQUIRES_SUSPENDED[]
 
-The feature is intended for top-level workflow boundaries. Do not use `SUSPEND` or `REQUIRES_SUSPENDED` inside another
+The feature is intended for top-level workflow boundaries. Do not use `SUSPEND`, `RESUME_AND_SUSPEND`, or `REQUIRES_SUSPENDED` inside another
 active transaction. If a parent transaction is already active, Micronaut rejects the sessionless transaction definition
 instead of allowing it to participate in the existing transaction.
 The sessionless modes require the default `REQUIRED` propagation and cannot be combined with other propagation values.
-They also cannot be combined with `@OracleTransactional.Recoverable`. `SUSPEND` detaches the transaction instead of
-committing it, so there is no ambiguous commit outcome to resolve. Replaying `REQUIRES_SUSPENDED` could attempt to resume
-a transaction whose completion state is already uncertain. Micronaut rejects either combination before transactional work begins.
+
+Sessionless transaction modes cannot be combined with `@OracleTransactional.Recoverable`. Recovery resolves the outcome
+of the method's JDBC commit with Transaction Guard and, when a retry is allowed, replays the whole method.
+`SUSPEND` and `RESUME_AND_SUSPEND` suspend instead of committing, so there is no commit outcome to resolve.
+A stage also covers only part of the transaction: replaying it cannot restore work from earlier stages, and if the previous
+suspension reached the database, a replay could apply the stage's changes twice. Micronaut rejects this annotation
+combination before executing the transactional method.
 
 Oracle sessionless transaction support is available only when Oracle JDBC classes are present.
-For `SUSPEND` and `REQUIRES_SUSPENDED`, the underlying JDBC connection must unwrap to an `oracle.jdbc.OracleConnection`.
+For all sessionless modes, the underlying JDBC connection must unwrap to an `oracle.jdbc.OracleConnection`.
 
-The following service starts a sessionless transaction, suspends it, and later resumes it:
+The following service starts a sessionless transaction, resumes and suspends it during payment confirmation, and finally resumes it to issue a ticket:
 
 snippet::example.BookingService[project-base="doc-examples/jdbc-sessionless-transaction-booking", source="main", indent="0"]
 
@@ -28,10 +33,36 @@ Oracle sessionless transaction handler:
 * starts an Oracle sessionless transaction with `OracleConnection.startTransaction(...)`
 * stores the returned Oracle global transaction identifier, or GTRID, in the propagation state
 * registers work at the resource commit boundary
-* runs all transaction synchronization callbacks before suspending the Oracle transaction and skipping the JDBC commit
+* runs the `beforeCommit` and `beforeCompletion` synchronization callbacks
+* suspends the Oracle Database transaction and skips the JDBC commit
+* runs the `afterCommit` and `afterCompletion` synchronization callbacks after suspension
 
 If the method declares `@OracleTransactional(timeout = ...)`, that timeout is passed to Oracle when the sessionless transaction is started.
 If no timeout is declared, the Oracle driver and database defaults apply.
+
+For a method annotated with `@OracleTransactional(sessionless = RESUME_AND_SUSPEND)`, the Oracle sessionless transaction handler:
+
+* reads the GTRID from the active propagation state
+* resumes the Oracle sessionless transaction with `OracleConnection.resumeTransaction(...)`
+* suspends it at the resource commit boundary instead of committing
+* retains the same GTRID after successful suspension for the next stage
+
+Repeat `RESUME_AND_SUSPEND` for as many sequential stages as the workflow needs, then use `REQUIRES_SUSPENDED`
+to finish it. A rollback-triggering exception or rollback-only status in any stage rolls back the entire transaction,
+including changes made in earlier stages, and clears the propagated id.
+
+After a `SUSPEND` or `RESUME_AND_SUSPEND` method completes successfully, Micronaut invokes transaction synchronization
+completion callbacks with `Status.COMMITTED`, even though Oracle Database has only suspended the transaction.
+The database changes remain uncommitted until a later `REQUIRES_SUSPENDED` method commits them.
+For both modes, `afterCommit` and `afterCompletion` run after suspension, so database work in these callbacks does not
+participate in the suspended transaction. This also applies to ann:transaction.annotation.TransactionalEventListener[]:
+`AFTER_COMMIT` and `AFTER_COMPLETION` listeners for events published in that stage run at the end of the stage, before
+the work is committed, and a later stage can still roll that work back.
+
+Use each transaction id sequentially. Suspending releases the connection while uncommitted work and its locks remain in
+Oracle Database. The suspended-transaction timeout is established by the initial `SUSPEND` stage; intermediate stages do not
+change it or pass the annotation timeout as an Oracle Database resume wait timeout. Resume each stage before the suspended
+transaction expires. An expired or completed transaction id cannot be reused.
 
 For a method annotated with `@OracleTransactional(sessionless = REQUIRES_SUSPENDED)`, the Oracle sessionless transaction handler:
 
@@ -53,8 +84,9 @@ transaction id itself.
 snippet::example.BookingServiceTest[project-base="doc-examples/jdbc-sessionless-transaction-booking", source="test", tags="propagation", indent="0"]
 
 The first `withPropagation` call creates an empty propagation state. After the `SUSPEND` method returns,
-`currentTransactionId()` exposes the encoded transaction id from that state. The second `withPropagation(transactionId, ...)`
-call creates a state that already contains the id, so the `REQUIRES_SUSPENDED` method can resume and complete the transaction.
+`currentTransactionId()` exposes the encoded transaction id from that state. Each subsequent `withPropagation(transactionId, ...)`
+call imports that same id. The `RESUME_AND_SUSPEND` method performs intermediate work and leaves the id available;
+the final `REQUIRES_SUSPENDED` method resumes and completes the transaction, clearing the id.
 
 The programmatic propagation scope is lexical. Code invoked in the same scope sees the same transaction id.
 A nested `withPropagation(...)` call creates a scoped override and restores the previous state after the supplier returns.

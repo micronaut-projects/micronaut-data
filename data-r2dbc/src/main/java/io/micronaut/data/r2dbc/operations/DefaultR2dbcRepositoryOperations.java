@@ -77,6 +77,7 @@ import io.micronaut.data.operations.DeleteReturningRepositoryOperations;
 import io.micronaut.data.operations.reactive.BlockingExecutorReactorRepositoryOperations;
 import io.micronaut.data.r2dbc.annotation.R2dbcRepository;
 import io.micronaut.data.r2dbc.config.DataR2dbcConfiguration;
+import io.micronaut.data.r2dbc.connection.R2dbcConnectionState;
 import io.micronaut.data.r2dbc.convert.R2dbcConversionContext;
 import io.micronaut.data.r2dbc.exceptions.R2dbcExceptionUtils;
 import io.micronaut.data.r2dbc.mapper.ColumnIndexR2dbcResultReader;
@@ -420,12 +421,16 @@ final class DefaultR2dbcRepositoryOperations extends AbstractSqlRepositoryOperat
         if (LOG.isDebugEnabled()) {
             LOG.debug("Creating a new Connection for DataSource: " + dataSourceName);
         }
-        return Flux.usingWhen(connectionFactory.create(), tenantAwareHandler(handler), (connection -> {
-            if (LOG.isDebugEnabled()) {
-                LOG.debug("Closing Connection for DataSource: " + dataSourceName);
-            }
-            return connection.close();
-        }));
+        return Flux.usingWhen(
+            Mono.<Connection>from(connectionFactory.create()).map(connection -> new StatefulConnection(connection, R2dbcConnectionState.capture(connection))),
+            statefulConnection -> tenantAwareHandler(handler).apply(statefulConnection.connection()),
+            statefulConnection -> {
+                if (LOG.isDebugEnabled()) {
+                    LOG.debug("Closing Connection for DataSource: " + dataSourceName);
+                }
+                return statefulConnection.state().restore(statefulConnection.connection(), LOG)
+                    .then(Mono.from(statefulConnection.connection().close()));
+            });
     }
 
     private <K> Function<Connection, Publisher<? extends K>> tenantAwareHandler(Function<Connection, Publisher<? extends K>> handler) {
@@ -509,6 +514,16 @@ final class DefaultR2dbcRepositoryOperations extends AbstractSqlRepositoryOperat
     private static <T> Flux<T> executeAndMapEachRow(Statement statement, Function<Row, T> mapper) {
         return Flux.from(statement.execute())
             .flatMap(result -> Flux.from(result.map((row, rowMetadata) -> mapper.apply(row))));
+    }
+
+    /**
+     * Like {@link #executeAndMapEachRow(Statement, Function)}, but reads the rows of each {@link Result} only after
+     * the rows of the previous one, so the rows keep the order of the bindings of a batched statement even when the
+     * rows of an earlier result arrive later.
+     */
+    private static <T> Flux<T> executeAndMapEachRowInResultOrder(Statement statement, Function<Row, T> mapper) {
+        return Flux.from(statement.execute())
+            .concatMap(result -> Flux.from(result.map((row, rowMetadata) -> mapper.apply(row))));
     }
 
     private static <T> Flux<T> executeAndMapEachReadable(Statement statement, Function<Readable, T> mapper) {
@@ -1620,9 +1635,13 @@ final class DefaultR2dbcRepositoryOperations extends AbstractSqlRepositoryOperat
                         } else {
                             idMapper = row -> columnIndexResultSetReader.readDynamic(row, 0, persistentEntity.getIdentity().getDataType());
                         }
-                        Mono<List<Object>> ids = executeAndMapEachRow(statement, idMapper).collectList();
+                        Mono<List<Object>> ids = executeAndMapEachRowInResultOrder(statement, idMapper).collectList();
 
                         return ids.flatMap(idList -> {
+                            // The ids are matched to the entities by position, which a surplus id makes unreliable
+                            if (idList.size() > notVetoedEntities.size()) {
+                                throw new DataAccessException("Expected " + notVetoedEntities.size() + " generated IDs, one for each inserted entity, but the database returned " + idList.size());
+                            }
                             Iterator<Object> iterator = idList.iterator();
                             ListIterator<Data> resultIterator = notVetoedEntities.listIterator();
                             RuntimePersistentProperty<T> identity = persistentEntity.getIdentity();
@@ -1775,5 +1794,14 @@ final class DefaultR2dbcRepositoryOperations extends AbstractSqlRepositoryOperat
         public DatabaseType getDatabaseType() {
             return databaseType;
         }
+    }
+
+    /**
+     * The connection with its state when it was opened.
+     *
+     * @param connection The connection
+     * @param state      The state to restore before the connection is closed
+     */
+    private record StatefulConnection(Connection connection, R2dbcConnectionState state) {
     }
 }

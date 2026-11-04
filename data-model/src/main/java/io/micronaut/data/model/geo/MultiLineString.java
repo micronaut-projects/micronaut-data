@@ -20,6 +20,8 @@ import io.micronaut.data.annotation.TypeDef;
 import io.micronaut.data.model.DataType;
 import io.micronaut.data.model.runtime.convert.GeometryJsonConverter;
 
+import java.util.ArrayList;
+import java.util.Collections;
 import java.util.List;
 import java.util.Objects;
 
@@ -29,6 +31,8 @@ import java.util.Objects;
  * <p>This type follows the GeoJSON MultiLineString model and exposes helper methods for
  * converting to and from nested coordinate arrays.
  *
+ * <p>The component list is copied during construction and exposed as an unmodifiable list.
+ *
  * @param lineStrings the line strings contained in this geometry
  * @since 5.0
  */
@@ -36,6 +40,9 @@ import java.util.Objects;
 public record MultiLineString(List<LineString> lineStrings) implements Geometry {
 
     public MultiLineString {
+        if (lineStrings != null) {
+            lineStrings = Collections.unmodifiableList(new ArrayList<>(lineStrings));
+        }
         if (CollectionUtils.isEmpty(lineStrings)) {
             throw new IllegalArgumentException("MultiLineString requires at least one LineString");
         }

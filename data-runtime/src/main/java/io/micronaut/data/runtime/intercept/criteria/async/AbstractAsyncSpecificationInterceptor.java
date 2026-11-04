@@ -21,8 +21,10 @@ import io.micronaut.core.util.ArgumentUtils;
 import org.jspecify.annotations.NonNull;
 import org.jspecify.annotations.Nullable;
 import io.micronaut.core.type.Argument;
+import io.micronaut.core.type.ReturnType;
 import io.micronaut.data.exceptions.DataAccessException;
 import io.micronaut.data.intercept.RepositoryMethodKey;
+import io.micronaut.data.model.Limit;
 import io.micronaut.data.model.Pageable;
 import io.micronaut.data.model.query.builder.QueryBuilder;
 import io.micronaut.data.operations.RepositoryOperations;
@@ -104,10 +106,11 @@ public abstract class AbstractAsyncSpecificationInterceptor<T, R> extends Abstra
     @NonNull
     protected final CompletionStage<Iterable<Object>> findAllAsync(RepositoryMethodKey methodKey, MethodInvocationContext<T, R> context) {
         CriteriaQuery<Object> criteriaQuery = buildQuery(methodKey, context);
-        Pageable pageable = applyPaginationAndSort(getPageable(context), criteriaQuery, true);
+        Pageable pageable = applyPaginationAndSort(getPageable(context), criteriaQuery, false);
         if (asyncCriteriaOperations != null) {
-            if (pageable != null && !pageable.isUnpaged()) {
-                return asyncCriteriaOperations.findAll(criteriaQuery, (int) pageable.getOffset(), pageable.getSize()).thenApply(m -> m);
+            Limit limit = resolveLimit(context, pageable);
+            if (limit.isLimited()) {
+                return asyncCriteriaOperations.findAll(criteriaQuery, (int) limit.offset(), limit.maxResults()).thenApply(m -> m);
             }
             return asyncCriteriaOperations.findAll(criteriaQuery).thenApply(m -> m);
         }
@@ -119,11 +122,14 @@ public abstract class AbstractAsyncSpecificationInterceptor<T, R> extends Abstra
         return findReturnType(context, Argument.OBJECT_ARGUMENT);
     }
 
+    // Sonar java:S1872 -- Kotlin coroutines are an optional dependency, so the Flow class cannot be referenced
+    @SuppressWarnings("java:S1872")
     protected final Argument<?> findReturnType(MethodInvocationContext<?, ?> context, Argument<?> defaultArg) {
-        if (context.isSuspend()) {
-            return context.getReturnType().asArgument();
+        ReturnType<?> returnType = context.getReturnType();
+        if (context.isSuspend() && !returnType.getType().getName().equals("kotlinx.coroutines.flow.Flow")) {
+            return returnType.asArgument();
         }
-        return context.getReturnType().asArgument().getFirstTypeVariable().orElse(defaultArg);
+        return returnType.asArgument().getFirstTypeVariable().orElse(defaultArg);
     }
 
     /**
@@ -137,7 +143,7 @@ public abstract class AbstractAsyncSpecificationInterceptor<T, R> extends Abstra
     protected Number convertNumberToReturnType(MethodInvocationContext<?, ?> context, Number number) {
         Argument<?> firstTypeVar = findReturnType(context, Argument.LONG);
         Class<?> type = firstTypeVar.getType();
-        if (type == Object.class || type == Void.class) {
+        if (type == Object.class || type == Void.class || type == void.class) {
             return null;
         }
         if (number == null) {
