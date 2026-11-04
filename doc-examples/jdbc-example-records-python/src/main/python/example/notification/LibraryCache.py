@@ -57,8 +57,9 @@ class LibraryCache:
         # end::listener[]
         metadata = event.metadata(OracleChangeEventMetadata).orElse(None)
         if metadata is not None:
+            schema = metadata.schema()
             self.log.debug("Changed library table: {}.{}, ROWID: {}",
-                metadata.schema().orElse("<unknown>"), metadata.table(), metadata.rowId())
+                schema if schema is not None else "<unknown>", metadata.table(), metadata.rowId())
         with self.lock:
             if not self.cacheEnabled:
                 return

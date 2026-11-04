@@ -16,19 +16,18 @@
 package io.micronaut.data.jdbc.notification.oracle;
 
 import io.micronaut.core.annotation.Internal;
-
-import java.util.Optional;
+import org.jspecify.annotations.Nullable;
 
 /**
  * Immutable metadata captured from an Oracle row notification.
  *
  * @param rowId  The reported ROWID
- * @param schema The optional reported schema
+ * @param schema The reported schema, or {@code null} for an unqualified table name
  * @param table  The reported unqualified table name
  */
 @Internal
 record DefaultOracleChangeEventMetadata(String rowId,
-                                        Optional<String> schema,
+                                        @Nullable String schema,
                                         String table) implements OracleChangeEventMetadata {
 
     /**
@@ -41,8 +40,7 @@ record DefaultOracleChangeEventMetadata(String rowId,
      */
     static DefaultOracleChangeEventMetadata from(String rowId, String reportedTableName) {
         int separator = reportedTableName.indexOf('.');
-        Optional<String> schema = separator < 0
-            ? Optional.empty() : Optional.of(reportedTableName.substring(0, separator));
+        String schema = separator < 0 ? null : reportedTableName.substring(0, separator);
         return new DefaultOracleChangeEventMetadata(rowId, schema, reportedTableName.substring(separator + 1));
     }
 }

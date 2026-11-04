@@ -11,6 +11,7 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 import java.util.Map;
+import java.util.Objects;
 import java.util.Optional;
 import java.util.concurrent.ConcurrentHashMap;
 
@@ -57,7 +58,7 @@ class LibraryCache {
         }
         event.metadata(OracleChangeEventMetadata.class)
             .ifPresent(metadata -> LOG.debug("Changed library table: {}.{}, ROWID: {}",
-                metadata.schema().orElse("<unknown>"), metadata.table(), metadata.rowId()));
+                Objects.requireNonNullElse(metadata.schema(), "<unknown>"), metadata.table(), metadata.rowId()));
         switch (event.operation()) {
             case INSERT, UPDATE -> event.entity().ifPresent(library -> libraries.put(library.id(), library));
             case DELETE, INVALIDATE -> refreshCache();

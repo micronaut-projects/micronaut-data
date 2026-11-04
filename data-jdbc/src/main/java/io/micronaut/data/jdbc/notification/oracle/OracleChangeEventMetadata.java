@@ -17,8 +17,7 @@ package io.micronaut.data.jdbc.notification.oracle;
 
 import io.micronaut.core.annotation.Experimental;
 import io.micronaut.data.notification.ChangeEventMetadata;
-
-import java.util.Optional;
+import org.jspecify.annotations.Nullable;
 
 /**
  * Oracle-specific metadata for a row-level Continuous Query Notification event.
@@ -47,9 +46,10 @@ public interface OracleChangeEventMetadata extends ChangeEventMetadata {
     /**
      * Returns the schema (table owner) reported by Oracle Database.
      *
-     * @return The reported schema, or empty when the notification supplies an unqualified table name.
+     * @return The reported schema, or {@code null} when the notification supplies an unqualified table name.
      */
-    Optional<String> schema();
+    @Nullable
+    String schema();
 
     /**
      * Returns the unqualified table name reported by Oracle Database.

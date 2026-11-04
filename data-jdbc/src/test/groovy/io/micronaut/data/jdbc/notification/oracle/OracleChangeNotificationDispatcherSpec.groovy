@@ -533,7 +533,7 @@ class OracleChangeNotificationDispatcherSpec extends Specification {
             def metadata = change.metadata(OracleChangeEventMetadata).orElseThrow()
             change.operation() == ChangeOperation.DELETE &&
                     metadata.rowId() == 'AAEH7kAAEAAABv3AAA' &&
-                    metadata.schema().orElse(null) == expectedSchema &&
+                    metadata.schema() == expectedSchema &&
                     metadata.table() == expectedTable
         })
 
@@ -627,7 +627,7 @@ class OracleChangeNotificationDispatcherSpec extends Specification {
         then:
         operations == [ChangeOperation.INSERT, ChangeOperation.UPDATE, ChangeOperation.DELETE]
         metadataRowIds == ["AAEH7kAAEAAABv3AAA"] * 3
-        schemas == [Optional.empty()] * 3
+        schemas == [null] * 3
         tables == ['BOOK'] * 3
     }
 
