@@ -17,6 +17,7 @@ package io.micronaut.data.jdbc.notification.oracle;
 
 import io.micronaut.context.BeanContext;
 import io.micronaut.data.jdbc.notification.ChangeNotificationQueue;
+import io.micronaut.data.jdbc.notification.ChangeListenerExceptionHandler;
 import io.micronaut.data.notification.ChangeOperation;
 import io.micronaut.scheduling.TaskScheduler;
 import oracle.jdbc.dcn.DatabaseChangeEvent;
@@ -111,11 +112,12 @@ class OracleChangeNotificationSubscription {
                                          OracleNotificationConfiguration notificationConfiguration,
                                          TaskScheduler taskScheduler,
                                          OracleChangeNotificationTaskTracker taskTracker,
-                                         OracleRegistrationRecoveryConfiguration recoveryConfiguration) {
+                                         OracleRegistrationRecoveryConfiguration recoveryConfiguration,
+                                         ChangeListenerExceptionHandler exceptionHandler) {
         this(dataSourceName, definition, registrar, beanContext, blockingExecutor,
             new ChangeNotificationQueue("oracle-notifications-" + dataSourceName + "-" + definition.method().getDescription(true),
                 notificationConfiguration.getQueueCapacity()),
-            taskScheduler, taskTracker, recoveryConfiguration);
+            taskScheduler, taskTracker, recoveryConfiguration, exceptionHandler);
     }
 
     OracleChangeNotificationSubscription(String dataSourceName,
@@ -126,7 +128,8 @@ class OracleChangeNotificationSubscription {
                                          ChangeNotificationQueue notificationQueue,
                                          TaskScheduler taskScheduler,
                                          OracleChangeNotificationTaskTracker taskTracker,
-                                         OracleRegistrationRecoveryConfiguration recoveryConfiguration) {
+                                         OracleRegistrationRecoveryConfiguration recoveryConfiguration,
+                                         ChangeListenerExceptionHandler exceptionHandler) {
         this.dataSourceName = dataSourceName;
         this.definition = definition;
         this.methodDescription = definition.method().getDescription(true);
@@ -139,7 +142,7 @@ class OracleChangeNotificationSubscription {
         this.retryDelayMultiplier = recoveryConfiguration.getRetryDelayMultiplier();
         this.maxRetryDelay = recoveryConfiguration.getMaxRetryDelay();
         this.dispatcher = new OracleChangeNotificationDispatcher(
-            dataSourceName, definition, beanContext, notificationQueue, taskTracker, this);
+            dataSourceName, definition, beanContext, notificationQueue, taskTracker, this, exceptionHandler);
     }
 
     OracleChangeListenerDefinition getDefinition() {

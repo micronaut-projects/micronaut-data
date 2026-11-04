@@ -16,6 +16,7 @@
 package io.micronaut.data.jdbc.notification.oracle
 
 import io.micronaut.context.BeanContext
+import io.micronaut.data.jdbc.notification.ChangeListenerExceptionHandler
 import io.micronaut.data.exceptions.DataAccessException
 import io.micronaut.data.notification.ChangeEvent
 import io.micronaut.data.jdbc.notification.ChangeNotificationQueue
@@ -1971,7 +1972,8 @@ class OracleChangeNotificationSubscriptionSpec extends Specification {
             stop() >> { stopped.set(true); CompletableFuture.completedStage(null) }
             isStopped() >> { stopped.get() }
         }
-        new OracleChangeNotificationSubscription('inventory', definition, registrar, beanContext, executor, notifications, scheduler, tracker, recoveryConfiguration)
+        new OracleChangeNotificationSubscription('inventory', definition, registrar, beanContext, executor, notifications, scheduler, tracker, recoveryConfiguration,
+            Stub(ChangeListenerExceptionHandler))
     }
 
     private static Object findChangeEvent(Object value) {

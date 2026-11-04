@@ -156,9 +156,19 @@ retries, ordered completion, and subscription shutdown tracking are required.
 
 If entity loading or synchronous listener execution fails, the retry and recovery behavior described in
 <<notificationTransactionsAndRetries, Transactions, Retry, and Recovery>> applies when configured. If neither is
-configured, or the failure remains unhandled after retry and recovery, Micronaut Data logs the failure
-asynchronously with the listener method, operation, and available database-specific details.
-The failure is not returned to the database.
+configured, or the failure remains unhandled after retry and recovery, Micronaut Data passes it to
+api:data.jdbc.notification.ChangeListenerExceptionHandler[]. The default handler logs the listener method,
+datasource, operation, and available database-specific details.
+
+Register a `@Singleton` bean implementing `ChangeListenerExceptionHandler` to replace the default handler.
+Its `handle(ChangeListenerException)` method receives the original cause through `getCause()`, the datasource
+through `getDataSourceName()`, the executable listener method through `getListenerMethod()`, and the failed
+event through `getEvent()`. The event retains any available provider metadata, including row identifiers.
+Entity state can be unavailable when loading fails.
+
+The handler runs on the listener worker and can be invoked concurrently for different listeners.
+If a custom handler throws a runtime exception, Micronaut Data logs both failures and continues processing.
+Failures during an `@Async` listener body are handled by its async executor, as described above.
 
 The original database change remains committed even if entity loading or the listener fails. The notification
 is not automatically redelivered, and subsequent notifications continue to be processed.

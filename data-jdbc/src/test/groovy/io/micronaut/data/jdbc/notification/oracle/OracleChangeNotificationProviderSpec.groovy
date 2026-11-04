@@ -17,6 +17,7 @@ package io.micronaut.data.jdbc.notification.oracle
 
 import io.micronaut.context.ApplicationContext
 import io.micronaut.context.BeanContext
+import io.micronaut.data.jdbc.notification.ChangeListenerExceptionHandler
 import io.micronaut.context.event.ShutdownEvent
 import io.micronaut.data.exceptions.DataAccessException
 import io.micronaut.data.jdbc.operations.JdbcRepositoryOperations
@@ -323,6 +324,7 @@ class OracleChangeNotificationProviderSpec extends Specification {
     private OracleChangeNotificationProvider provider(boolean gracefulShutdownEnabled = false,
                                                        Duration gracePeriod = Duration.ofSeconds(15)) {
         new OracleChangeNotificationProvider(Mock(BeanContext), Mock(Executor), Mock(TaskScheduler),
-            new OracleNotificationConfiguration(), new OracleRegistrationRecoveryConfiguration(), gracefulShutdownEnabled, gracePeriod)
+            new OracleNotificationConfiguration(), new OracleRegistrationRecoveryConfiguration(), gracefulShutdownEnabled, gracePeriod,
+            Stub(ChangeListenerExceptionHandler))
     }
 }
