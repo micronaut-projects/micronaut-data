@@ -177,6 +177,29 @@ class VectorConverterSelectionSpec extends Specification {
         0 * reader.getRequiredValue(_, _, String)
     }
 
+    def "a generic vector property holding a binary vector keeps the generic converter, registered #order"() {
+        given:
+        def conv = new DefaultVectorAttributeConverter(converters)
+        def ctx = Stub(DatabaseTypeConversionContext) {
+            getDatabaseType() >> DatabaseType.POSTGRES
+        }
+        def reader = Mock(ResultReader<Object, Object>)
+
+        when:
+        def persisted = conv.convertToPersistedValue(BinaryVector.of(true, false, true, false, false, false, false, false), ctx)
+        conv.readFromResultSet(ctx, reader, new Object(), "embedding")
+
+        then: "the value is written and read as the numeric vector that the property is mapped to"
+        persisted == "pg-dense:[1.0, 0.0, 1.0, 0.0, 0.0, 0.0, 0.0, 0.0]"
+        1 * reader.getRequiredValue(_, "embedding", String) >> null
+        0 * reader.getRequiredValue(_, _, PostgresBits)
+
+        where:
+        order         | converters
+        "binary first" | [new PostgresBinaryConverter(), new PostgresDenseConverter()]
+        "binary last"  | [new PostgresDenseConverter(), new PostgresBinaryConverter()]
+    }
+
     /**
      * Stands in for pgvector's PGbit.
      */

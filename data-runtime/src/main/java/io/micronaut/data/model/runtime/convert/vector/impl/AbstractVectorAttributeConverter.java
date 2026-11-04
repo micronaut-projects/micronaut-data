@@ -170,7 +170,10 @@ abstract sealed class AbstractVectorAttributeConverter<X extends Vector, Y> impl
             return null;
         }
         boolean sparseValue = entityValue instanceof SparseVector;
-        return selectConverter(converters, converter -> VectorTypeConverter.supports(converter, dataAccessType), entityValue.getClass(), sparseValue);
+        // rank by the declared type, so that a generic Vector property keeps its storage whatever vector it holds,
+        // and only require that the converter accepts the value
+        return selectConverter(converters, converter -> VectorTypeConverter.supports(converter, dataAccessType)
+            && mostSpecificSupportedType(converter, entityValue.getClass()) != null, type, sparseValue);
     }
 
     private @Nullable VectorTypeConverter<?> selectReadConverter(DatabaseType databaseType, @Nullable DataAccessType dataAccessType, Object persistedValue, Class<? extends Vector> targetType) {
@@ -211,8 +214,8 @@ abstract sealed class AbstractVectorAttributeConverter<X extends Vector, Y> impl
             }
             boolean sparseMatches = converter.isSparseSupported() == sparse;
             if (selectedType == null
-                || sparseMatches && !selectedSparse
-                || sparseMatches == selectedSparse && supportedType != selectedType && selectedType.isAssignableFrom(supportedType)) {
+                || (sparseMatches && !selectedSparse)
+                || (sparseMatches == selectedSparse && supportedType != selectedType && selectedType.isAssignableFrom(supportedType))) {
                 selected = converter;
                 selectedType = supportedType;
                 selectedSparse = sparseMatches;

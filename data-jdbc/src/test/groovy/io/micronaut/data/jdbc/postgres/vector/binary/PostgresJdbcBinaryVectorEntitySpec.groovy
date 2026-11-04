@@ -13,6 +13,7 @@ import io.micronaut.data.jdbc.annotation.JdbcRepository
 import io.micronaut.data.jdbc.postgres.vector.PostgresVectorTestPropertyProvider
 import io.micronaut.data.model.query.builder.sql.Dialect
 import io.micronaut.data.model.vector.BinaryVector
+import io.micronaut.data.model.vector.Vector
 import io.micronaut.data.model.vector.search.ScoringFunction
 import io.micronaut.data.model.vector.search.SearchResults
 import io.micronaut.data.repository.CrudRepository
@@ -103,6 +104,19 @@ class PostgresJdbcBinaryVectorEntitySpec extends Specification implements Postgr
         nullableRepository.findById(empty.id).orElseThrow().embedding == null
         nullableRepository.findById(filled.id).orElseThrow().embedding == A
     }
+
+    void "a generic vector property keeps its numeric vector column when it holds a binary vector"() {
+        given:
+        PgGenericVectorDocRepository genericRepository = context.getBean(PgGenericVectorDocRepository)
+
+        when:
+        PgGenericVectorDoc saved = genericRepository.save(new PgGenericVectorDoc(embedding: BinaryVector.of(true, false, true, false, false, false, false, true)))
+
+        then: "the bits are stored as the 0/1 values of a numeric vector"
+        genericRepository.findEmbeddingColumnType() == "USER-DEFINED"
+        genericRepository.findEmbeddingUdtName() == "vector"
+        genericRepository.findById(saved.id).orElseThrow().embedding.toFloatArray() == [1f, 0f, 1f, 0f, 0f, 0f, 0f, 1f] as float[]
+    }
 }
 
 @MappedEntity("pg_binary_doc")
@@ -145,4 +159,24 @@ class PgNullableBinaryDoc {
 
 @JdbcRepository(dialect = Dialect.POSTGRES)
 interface PgNullableBinaryDocRepository extends CrudRepository<PgNullableBinaryDoc, Long> {
+}
+
+@MappedEntity("pg_generic_vector_doc")
+class PgGenericVectorDoc {
+    @Id
+    @GeneratedValue
+    Long id
+
+    @VectorStorage(length = 8)
+    Vector embedding
+}
+
+@JdbcRepository(dialect = Dialect.POSTGRES)
+interface PgGenericVectorDocRepository extends CrudRepository<PgGenericVectorDoc, Long> {
+
+    @Query(value = "SELECT data_type FROM information_schema.columns WHERE table_name = 'pg_generic_vector_doc' AND column_name = 'embedding'", nativeQuery = true)
+    String findEmbeddingColumnType()
+
+    @Query(value = "SELECT udt_name FROM information_schema.columns WHERE table_name = 'pg_generic_vector_doc' AND column_name = 'embedding'", nativeQuery = true)
+    String findEmbeddingUdtName()
 }
