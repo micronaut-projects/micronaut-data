@@ -2184,6 +2184,13 @@ abstract class AbstractRepositorySpec extends Specification {
         cleanupMeals()
     }
 
+    /**
+     * @return Whether the datetime values are mapped correctly after the JVM default time zone changes
+     */
+    boolean supportsJvmDefaultTimeZoneChange() {
+        return true
+    }
+
     boolean testLockingForUpdate() {
         return true
     }
@@ -3598,6 +3605,7 @@ abstract class AbstractRepositorySpec extends Specification {
             ilikeNames.toSet() == ["Fr_dB1", "Fr_dB2"].toSet()
     }
 
+    @IgnoreIf({ !instance.supportsJvmDefaultTimeZoneChange() })
     void "test data with datetime fields and custom time zone"() {
         given:
         def defaultTimeZone = TimeZone.getDefault()

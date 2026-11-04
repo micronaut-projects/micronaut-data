@@ -2,11 +2,11 @@ Micronaut Data uses two key features of https://micronaut.io[Micronaut]: The htt
 
 Micronaut Data defines a api:data.processor.visitors.RepositoryTypeElementVisitor[] that at compilation time visits all interfaces in the source tree that are annotated with the ann:data.annotation.Repository[] annotation.
 
-The `RepositoryTypeElementVisitor` uses service loader to load all available api:data.processor.visitors.finders.MethodCandidate[] implementations and iterate over them.
+The `RepositoryTypeElementVisitor` uses service loader to load all available api:data.processor.visitors.finders.MethodMatcher[] implementations, sorts them by their order and iterates over them.
 
-TIP: You can add additional method candidates by creating a library that depends on `micronaut-data-processor` and defining the `META-INF/services` definition for the method candidate. The new library should be added to your annotation processor path.
+TIP: You can add additional method matchers by creating a library that depends on `micronaut-data-processor` and defining the `META-INF/services` definition for the method matcher. The new library should be added to your annotation processor path.
 
-The `MethodCandidate` interface features a `isMethodMatch` method which allows matching a https://docs.micronaut.io/latest/api/io/micronaut/inject/ast/MethodElement.html[MethodElement]. Once a `MethodElement` has been matched the `buildMatchInfo` method of the `MethodCandidate` is invoked which returns an instance of api:data.processor.visitors.finders.MethodMatchInfo[].
+The `MethodMatcher` interface features a `match` method which allows matching a https://docs.micronaut.io/latest/api/io/micronaut/inject/ast/MethodElement.html[MethodElement]. When a matcher returns a `MethodMatch`, its `buildMatchInfo` method is invoked, which returns an instance of api:data.processor.visitors.finders.MethodMatchInfo[]. The first matcher that produces a `MethodMatchInfo` is used to implement the method.
 
 The `MethodMatchInfo` specifies the runtime api:data.intercept.DataInterceptor[] to execute, which typically differs based on the return type and behaviour required, and the query to execute. To build the query, the method matcher translates the method name and parameters into a Jakarta Persistence Criteria query (api:data.model.jpa.criteria.PersistentEntityCriteriaQuery[]), which is the query model shared by all Micronaut Data implementations.
 

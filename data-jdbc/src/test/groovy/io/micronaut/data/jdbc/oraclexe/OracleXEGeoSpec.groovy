@@ -8,6 +8,7 @@ import io.micronaut.data.model.geo.Point
 import io.micronaut.data.model.geo.Polygon
 import io.micronaut.data.tck.repositories.DeliveryDriverJsonRepository
 import io.micronaut.data.tck.repositories.DeliveryDriverWktRepository
+import io.micronaut.data.tck.repositories.DistrictRepository
 import io.micronaut.data.tck.repositories.GeometryEntityJsonRepository
 import io.micronaut.data.tck.repositories.GeometryEntityWktRepository
 import io.micronaut.data.tck.repositories.HotelJsonRepository
@@ -62,6 +63,12 @@ class OracleXEGeoSpec extends AbstractGeoSpec implements OracleTestPropertyProvi
         return context.getBean(OracleXEDeliveryDriverWktRepository)
     }
 
+    @Memoized
+    @Override
+    DistrictRepository getDistrictRepository() {
+        return context.getBean(OracleXEDistrictRepository)
+    }
+
     @Override
     List<String> packages() {
         return Arrays.asList("io.micronaut.data.tck.jdbc.entities.geo")
@@ -87,7 +94,7 @@ class OracleXEGeoSpec extends AbstractGeoSpec implements OracleTestPropertyProvi
                 (prefix + '.packages')                       : packages(),
                 (prefix + '.enabled')                        : dataSourceEnabled(dataSourceName),
                 "test-resources.containers.oracle.image-name": "gvenzl/oracle-free",
-                "test-resources.containers.oracle.image-tag" : "latest"
+                "test-resources.containers.oracle.image-tag" : "23.26.3-faststart"
         ] as Map<String, String>
     }
 

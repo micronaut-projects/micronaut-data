@@ -29,6 +29,7 @@ import io.micronaut.transaction.support.TransactionUtil;
 import io.r2dbc.spi.Connection;
 import io.r2dbc.spi.ConnectionFactory;
 import io.r2dbc.spi.IsolationLevel;
+import io.r2dbc.spi.Option;
 import io.r2dbc.spi.R2dbcException;
 import jakarta.inject.Inject;
 import org.jspecify.annotations.Nullable;
@@ -56,6 +57,16 @@ import java.util.Set;
 final class DefaultR2dbcReactorTransactionOperations extends AbstractReactorTransactionOperations<Connection> implements R2dbcReactorTransactionOperations {
 
     private static final Logger LOG = LoggerFactory.getLogger(DefaultR2dbcReactorTransactionOperations.class);
+    /**
+     * Only read-only: Oracle R2DBC rejects a definition with both an isolation level and read-only, and the
+     * isolation level is set on the connection before the transaction begins.
+     */
+    private static final io.r2dbc.spi.TransactionDefinition READ_ONLY_TRANSACTION = new io.r2dbc.spi.TransactionDefinition() {
+        @Override
+        public <T> @Nullable T getAttribute(Option<T> option) {
+            return io.r2dbc.spi.TransactionDefinition.READ_ONLY.equals(option) ? option.cast(Boolean.TRUE) : null;
+        }
+    };
     private final String dataSourceName;
     private final List<ReactiveTransactionExecutionListener<Connection>> transactionExecutionListeners;
 
@@ -86,7 +97,7 @@ final class DefaultR2dbcReactorTransactionOperations extends AbstractReactorTran
             if (LOG.isDebugEnabled()) {
                 LOG.debug("Setting statement timeout ({}) for transaction: {} for dataSource: {}", timeout, definition.getName(), dataSourceName);
             }
-            result = result.thenMany(connection.setStatementTimeout(timeout));
+            result = result.thenMany(Flux.defer(() -> connection.setStatementTimeout(timeout)));
         }
         if (definition.getIsolationLevel().isPresent()) {
             IsolationLevel isolationLevel = getIsolationLevel(definition);
@@ -94,17 +105,33 @@ final class DefaultR2dbcReactorTransactionOperations extends AbstractReactorTran
                 LOG.debug("Setting Isolation Level ({}) for transaction: {} for dataSource: {}", isolationLevel, definition.getName(), dataSourceName);
             }
             if (isolationLevel != null) {
-                result = result.thenMany(connection.setTransactionIsolationLevel(isolationLevel));
+                result = result.thenMany(Flux.defer(() -> connection.setTransactionIsolationLevel(isolationLevel)));
             }
         }
         for (ReactiveTransactionExecutionListener<Connection> transactionExecutionListener : transactionExecutionListeners) {
-            result = result.thenMany(transactionExecutionListener.beforeBegin(connectionStatus, definition));
+            result = result.thenMany(Flux.defer(() -> transactionExecutionListener.beforeBegin(connectionStatus, definition)));
         }
-        result = result.thenMany(connection.beginTransaction());
+        // Deferred: some drivers (e.g. Oracle R2DBC) read the isolation level when beginTransaction is called
+        result = result.thenMany(Flux.defer(() -> begin(connection, definition)));
         for (ReactiveTransactionExecutionListener<Connection> transactionExecutionListener : transactionExecutionListeners) {
-            result = result.thenMany(transactionExecutionListener.afterBegin(connectionStatus, definition));
+            result = result.thenMany(Flux.defer(() -> transactionExecutionListener.afterBegin(connectionStatus, definition)));
         }
         return result;
+    }
+
+    /**
+     * Begins a read-only transaction with the read-only attribute: Oracle R2DBC runs {@code SET TRANSACTION READ ONLY},
+     * R2DBC PostgreSQL {@code BEGIN READ ONLY} and r2dbc-mysql and r2dbc-mariadb {@code START TRANSACTION READ ONLY}.
+     * Drivers without read-only transactions, such as r2dbc-mssql and r2dbc-h2, ignore the attribute.
+     */
+    private Publisher<Void> begin(Connection connection, TransactionDefinition definition) {
+        if (definition.isReadOnly().orElse(false)) {
+            if (LOG.isDebugEnabled()) {
+                LOG.debug("Beginning a read-only transaction: {} for dataSource: {}", definition.getName(), dataSourceName);
+            }
+            return connection.beginTransaction(READ_ONLY_TRANSACTION);
+        }
+        return connection.beginTransaction();
     }
 
     @Override

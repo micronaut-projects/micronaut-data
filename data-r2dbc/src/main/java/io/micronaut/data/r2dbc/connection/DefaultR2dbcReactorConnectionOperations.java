@@ -21,6 +21,8 @@ import io.micronaut.core.annotation.Internal;
 import org.jspecify.annotations.Nullable;
 import io.micronaut.data.connection.ConnectionDefinition;
 import io.micronaut.data.connection.ConnectionStatus;
+import io.micronaut.data.connection.reactive.ReactiveConnectionStatus;
+import io.micronaut.data.connection.reactive.ReactiveConnectionSynchronization;
 import io.micronaut.data.connection.support.AbstractReactorConnectionOperations;
 import io.micronaut.data.r2dbc.config.DataR2dbcConfiguration;
 import io.micronaut.data.r2dbc.operations.R2dbcSchemaHandler;
@@ -97,6 +99,7 @@ public final class DefaultR2dbcReactorConnectionOperations extends AbstractReact
         } else {
             finalHandler = handler;
         }
+        // Delegates to withConnectionFlux, which restores the connection state
         return super.withConnection(definition, finalHandler);
     }
 
@@ -115,7 +118,7 @@ public final class DefaultR2dbcReactorConnectionOperations extends AbstractReact
         } else {
             finalHandler = handler;
         }
-        return super.withConnectionFlux(definition, finalHandler);
+        return super.withConnectionFlux(definition, restoringState(finalHandler));
     }
 
     @Override
@@ -133,6 +136,30 @@ public final class DefaultR2dbcReactorConnectionOperations extends AbstractReact
         } else {
             finalHandler = handler;
         }
-        return super.withConnectionMono(definition, finalHandler);
+        return super.withConnectionMono(definition, restoringState(finalHandler));
+    }
+
+    /**
+     * Captures the state of a new connection and restores it before the connection is closed (returned to the pool).
+     *
+     * @param handler The handler
+     * @param <R>     The result type
+     * @return The handler
+     */
+    private <R> Function<ConnectionStatus<Connection>, R> restoringState(Function<ConnectionStatus<Connection>, R> handler) {
+        return status -> {
+            if (status.isNew() && status instanceof ReactiveConnectionStatus<Connection> reactiveStatus) {
+                Connection connection = status.getConnection();
+                R2dbcConnectionState initialState = R2dbcConnectionState.capture(connection);
+                // Registered first: executed last, after the other synchronizations
+                reactiveStatus.registerReactiveSynchronization(new ReactiveConnectionSynchronization() {
+                    @Override
+                    public Publisher<Void> onClose() {
+                        return initialState.restore(connection, LOG);
+                    }
+                });
+            }
+            return handler.apply(status);
+        };
     }
 }

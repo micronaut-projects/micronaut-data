@@ -33,7 +33,7 @@ public class CosmosEmulatorConfigurer implements ApplicationContextConfigurer {
 
     private static final Duration STARTUP_TIMEOUT = Duration.ofMinutes(3);
 
-    private static final CosmosDBEmulatorContainer EMULATOR = new CosmosDBEmulatorContainer(DockerImageName.parse("mcr.microsoft.com/cosmosdb/linux/azure-cosmos-emulator:vnext-preview")
+    private static final CosmosDBEmulatorContainer EMULATOR = new CosmosDBEmulatorContainer(DockerImageName.parse("mcr.microsoft.com/cosmosdb/linux/azure-cosmos-emulator:vnext-EN20260907")
         .asCompatibleSubstituteFor("mcr.microsoft.com/cosmosdb/linux/azure-cosmos-emulator"))
         .waitingFor(Wait.forLogMessage(".*PostgreSQL=OK, Gateway=OK, Explorer=OK.*", 1).withStartupTimeout(STARTUP_TIMEOUT))
         .withCommand("--protocol", "https");

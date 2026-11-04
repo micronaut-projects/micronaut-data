@@ -185,7 +185,7 @@ public abstract class AbstractSqlRepositoryOperations<RS, PS, Exc extends Except
             .orElseThrow(() -> new IllegalStateException("Missing VectorScoringSupportResolver bean"));
         @SuppressWarnings({"unchecked", "rawtypes"})
         Collection<VectorTypeConverter<?>> vectorTypeConverters = (Collection) beanContext.getBeansOfType(VectorTypeConverter.class);
-        this.vectorParameterBinder = VectorParameterBinder.create(vectorTypeConverters);
+        this.vectorParameterBinder = VectorParameterBinder.create(vectorTypeConverters, conversionContextFactory.getDataAccessType());
         Collection<BeanDefinition<Object>> beanDefinitions = beanContext
             .getBeanDefinitions(Object.class, Qualifiers.byStereotype(Repository.class));
         for (BeanDefinition<Object> beanDefinition : beanDefinitions) {
@@ -984,7 +984,7 @@ public abstract class AbstractSqlRepositoryOperations<RS, PS, Exc extends Except
         if (preparedQuery instanceof DefaultSqlPreparedQuery<?, ?> sqlPreparedQuery) {
             return sqlPreparedQuery.getVectorScoringFunction();
         }
-        return vectorScoringSupportResolver.resolve(preparedQuery.getDialect()).defaultScoringFunction();
+        return vectorScoringSupportResolver.resolve(preparedQuery.getDialect()).defaultScoringFunction(preparedQuery.getQuery());
     }
 
     protected final <E, R> RuntimePersistentEntity<R> resolveDtoPersistentEntity(AnnotationMetadata annotationMetadata,

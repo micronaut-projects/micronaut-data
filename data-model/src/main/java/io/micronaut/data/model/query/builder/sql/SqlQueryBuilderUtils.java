@@ -60,6 +60,11 @@ final class SqlQueryBuilderUtils {
     static final String ANN_JOIN_TABLE = "io.micronaut.data.annotation.sql.JoinTable";
     static final String ANN_JOIN_COLUMNS = "io.micronaut.data.annotation.sql.JoinColumns";
     static final String SEQ_SUFFIX = "_seq";
+    /**
+     * Keep WKT coordinates in x/y order on MySQL 8.0.1 and later. MariaDB ignores
+     * MySQL executable comments in this version range and already uses x/y order.
+     */
+    static final String MYSQL_WKT_AXIS_ORDER = " /*!80001 , 'axis-order=long-lat' */";
     private static final String PREFIX = "${";
     private static final String SUFFIX = "}";
 

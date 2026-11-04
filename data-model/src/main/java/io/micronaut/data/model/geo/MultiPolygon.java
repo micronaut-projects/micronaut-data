@@ -20,6 +20,8 @@ import io.micronaut.data.annotation.TypeDef;
 import io.micronaut.data.model.DataType;
 import io.micronaut.data.model.runtime.convert.GeometryJsonConverter;
 
+import java.util.ArrayList;
+import java.util.Collections;
 import java.util.List;
 import java.util.Objects;
 
@@ -29,6 +31,8 @@ import java.util.Objects;
  * <p>This type follows the GeoJSON MultiPolygon model and can be converted to nested
  * polygon coordinate structures for serialization.
  *
+ * <p>The component list is copied during construction and exposed as an unmodifiable list.
+ *
  * @param polygons the polygons contained in this geometry
  * @since 5.0
  */
@@ -36,6 +40,9 @@ import java.util.Objects;
 public record MultiPolygon(List<Polygon> polygons) implements Geometry {
 
     public MultiPolygon {
+        if (polygons != null) {
+            polygons = Collections.unmodifiableList(new ArrayList<>(polygons));
+        }
         if (CollectionUtils.isEmpty(polygons)) {
             throw new IllegalArgumentException("MultiPolygon requires at least one Polygon");
         }

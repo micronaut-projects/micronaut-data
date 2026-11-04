@@ -148,6 +148,26 @@ public final class SqlResultEntityTypeMapper<RS, R> implements SqlTypeMapper<RS,
     }
 
     /**
+     * Constructor with a prefix that applies the properties' attribute converters.
+     *
+     * @param prefix                   The prefix to start from.
+     * @param entity                   The entity
+     * @param resultReader             The result reader
+     * @param jsonColumnReader         The json column reader
+     * @param conversionService        The conversion service
+     * @param conversionContextFactory The conversion context factory
+     * @since 5.3.0
+     */
+    public SqlResultEntityTypeMapper(
+            @Nullable String prefix,
+            RuntimePersistentEntity<R> entity,
+            ResultReader<RS, String> resultReader,
+            @Nullable SqlJsonColumnReader<RS> jsonColumnReader, DataConversionService conversionService,
+            @Nullable DatabaseConversionContextFactory conversionContextFactory) {
+        this(entity, resultReader, Collections.emptySet(), prefix, jsonColumnReader, conversionService, null, conversionContextFactory, false);
+    }
+
+    /**
      * Constructor used to customize the join paths.
      *
      * @param entity            The entity

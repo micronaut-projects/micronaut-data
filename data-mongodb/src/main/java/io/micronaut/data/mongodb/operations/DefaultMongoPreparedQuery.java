@@ -225,23 +225,27 @@ final class DefaultMongoPreparedQuery<E, R> extends DefaultBindableParametersPre
             removeTrailingPaginationStages(pipeline);
         }
         if (sort.isSorted()) {
+            int existingSortIndex = -1;
             BsonDocument existingSortBson = null;
-            for (Bson p : pipeline) {
-                BsonDocument sortBsonDocument = p.toBsonDocument();
+            for (int i = 0; i < pipeline.size(); i++) {
+                BsonDocument sortBsonDocument = pipeline.get(i).toBsonDocument();
                 if (sortBsonDocument != null) {
                     BsonValue bsonValue = sortBsonDocument.get(SORT_STAGE);
                     if (bsonValue != null) {
                         existingSortBson = bsonValue.asDocument();
-                        if (existingSortBson != null) {
-                            break;
-                        }
+                        existingSortIndex = i;
+                        break;
                     }
                 }
             }
             BsonDocument nullRankFields = getNullRankFields(sort);
             Bson sortBson = getSort(sort);
             if (existingSortBson != null) {
-                existingSortBson.putAll(sortBson.toBsonDocument());
+                // The stage belongs to the stored query's cached pipeline or to the caller, so merge into a
+                // copy and replace the stage in this invocation's pipeline only
+                BsonDocument mergedSortBson = existingSortBson.clone();
+                mergedSortBson.putAll(sortBson.toBsonDocument());
+                pipeline.set(existingSortIndex, new BsonDocument(SORT_STAGE, mergedSortBson));
             } else {
                 BsonDocument sortStage = new BsonDocument().append(SORT_STAGE, sortBson.toBsonDocument());
                 addStageToPipelineBefore(pipeline, sortStage, LIMIT_STAGE, SKIP_STAGE);

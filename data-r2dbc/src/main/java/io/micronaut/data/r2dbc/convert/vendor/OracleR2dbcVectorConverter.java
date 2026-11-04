@@ -19,6 +19,7 @@ import io.micronaut.context.annotation.Requires;
 import io.micronaut.core.annotation.Internal;
 import io.micronaut.core.convert.ConversionService;
 import io.micronaut.data.model.runtime.convert.DatabaseType;
+import io.micronaut.data.model.vector.BinaryVector;
 import io.micronaut.data.model.vector.ByteVector;
 import io.micronaut.data.model.vector.DoubleVector;
 import io.micronaut.data.model.vector.FloatVector;
@@ -54,6 +55,7 @@ final class OracleR2dbcVectorConverter extends AbstractR2dbcVectorConverter<VECT
             DoubleVector.class,
             FloatVector.class,
             ByteVector.class,
+            BinaryVector.class,
             SparseDoubleVector.class,
             SparseFloatVector.class,
             SparseByteVector.class

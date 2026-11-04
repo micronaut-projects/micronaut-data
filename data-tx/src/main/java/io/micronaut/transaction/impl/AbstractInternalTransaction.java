@@ -26,6 +26,7 @@ import org.jspecify.annotations.Nullable;
 
 import java.util.ArrayList;
 import java.util.List;
+import java.util.concurrent.CopyOnWriteArrayList;
 
 /**
  * The abstract internal transaction.
@@ -223,7 +224,8 @@ public abstract class AbstractInternalTransaction<C> implements InternalTransact
     @Override
     public void registerInvocationSynchronization(@NonNull TransactionSynchronization synchronization) {
         if (synchronizations == null) {
-            synchronizations = new ArrayList<>(5);
+            // Copy-on-write: synchronizations may register other synchronizations while being triggered
+            synchronizations = new CopyOnWriteArrayList<>();
         }
         synchronizations.add(synchronization);
         OrderUtil.sort(synchronizations);

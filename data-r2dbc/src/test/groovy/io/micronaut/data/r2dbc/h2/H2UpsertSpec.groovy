@@ -24,6 +24,16 @@ import io.micronaut.data.tck.repositories.upsert.CustomerProfileRepository
 import io.micronaut.data.tck.repositories.upsert.CustomerProfileUuidRepository
 import io.micronaut.data.tck.repositories.upsert.AutoPopulatedUpsertRepository
 import io.micronaut.data.tck.repositories.upsert.ProductReviewRepository
+import io.micronaut.data.r2dbc.h2.upsert.H2ClinicRepository
+import io.micronaut.data.r2dbc.h2.upsert.H2ClinicServiceOfferingRepository
+import io.micronaut.data.r2dbc.h2.upsert.H2CompositeClinicRepository
+import io.micronaut.data.r2dbc.h2.upsert.H2CompositeClinicOfferingRepository
+import io.micronaut.data.r2dbc.h2.upsert.H2EmbeddedConflictEntityRepository
+import io.micronaut.data.tck.repositories.upsert.ClinicRepository
+import io.micronaut.data.tck.repositories.upsert.ClinicServiceOfferingRepository
+import io.micronaut.data.tck.repositories.upsert.CompositeClinicRepository
+import io.micronaut.data.tck.repositories.upsert.CompositeClinicOfferingRepository
+import io.micronaut.data.tck.repositories.upsert.EmbeddedConflictEntityRepository
 import io.micronaut.data.tck.repositories.upsert.WarehouseInventoryRepository
 import io.micronaut.data.tck.tests.AbstractUpsertSpec
 
@@ -32,6 +42,31 @@ class H2UpsertSpec extends AbstractUpsertSpec implements H2TestPropertyProvider 
     @Override
     ProductReviewRepository getProductReviewRepository() {
         return context.getBean(H2ProductReviewRepository)
+    }
+
+    @Override
+    ClinicRepository getClinicRepository() {
+        return context.getBean(H2ClinicRepository)
+    }
+
+    @Override
+    ClinicServiceOfferingRepository getClinicServiceOfferingRepository() {
+        return context.getBean(H2ClinicServiceOfferingRepository)
+    }
+
+    @Override
+    CompositeClinicRepository getCompositeClinicRepository() {
+        return context.getBean(H2CompositeClinicRepository)
+    }
+
+    @Override
+    CompositeClinicOfferingRepository getCompositeClinicOfferingRepository() {
+        return context.getBean(H2CompositeClinicOfferingRepository)
+    }
+
+    @Override
+    EmbeddedConflictEntityRepository getEmbeddedConflictEntityRepository() {
+        return context.getBean(H2EmbeddedConflictEntityRepository)
     }
 
     @Override

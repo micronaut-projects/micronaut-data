@@ -35,6 +35,7 @@ import io.micronaut.core.util.ArgumentUtils;
 import io.micronaut.core.util.CollectionUtils;
 import io.micronaut.core.util.StringUtils;
 import io.micronaut.data.annotation.EntityRepresentation;
+import io.micronaut.data.annotation.ApproximateSearch;
 import io.micronaut.data.annotation.GeneratedValue;
 import io.micronaut.data.annotation.Join;
 import io.micronaut.data.annotation.Relation;
@@ -372,6 +373,8 @@ public class SqlQueryBuilder extends AbstractSqlLikeQueryBuilder {
     @Experimental
     public String buildBatchDropTableStatement(PersistentEntity... entities) {
         return Arrays.stream(entities).flatMap(entity -> Stream.of(buildDropTableStatements(entity)))
+            // The statements are executed together: each one needs to be terminated
+            .map(sql -> sql.endsWith(";") ? sql : sql + ";")
             .collect(Collectors.joining("\n"));
     }
 
@@ -386,13 +389,13 @@ public class SqlQueryBuilder extends AbstractSqlLikeQueryBuilder {
     public String[] buildDropTableStatements(PersistentEntity entity) {
         List<String> dropStatements = new ArrayList<>();
         if (entity.getAnnotationMetadata().hasAnnotation(JsonView.class)) {
-            String sql = "DROP VIEW " + getTableName(entity);
+            String sql = "DROP VIEW " + ifExists() + getTableName(entity);
             dropStatements.add(sql);
             return dropStatements.toArray(new String[0]);
         }
         String tableName = getTableName(entity);
         boolean escape = shouldEscape(entity);
-        String sql = "DROP TABLE " + tableName;
+        String sql = "DROP TABLE " + ifExists() + tableName;
         Collection<Association> foreignKeyAssociations = SqlQueryBuilderUtils.getJoinTableAssociations(entity);
         for (Association association : foreignKeyAssociations) {
             AnnotationMetadata associationMetadata = association.getAnnotationMetadata();
@@ -401,7 +404,7 @@ public class SqlQueryBuilder extends AbstractSqlLikeQueryBuilder {
                 .stringValue(SqlQueryBuilderUtils.ANN_JOIN_TABLE, "name")
                 .orElseGet(() ->
                     getMappedName(namingStrategy, association));
-            dropStatements.add("DROP TABLE " + (escape ? quote(joinTableName, true) : joinTableName) + ";");
+            dropStatements.add("DROP TABLE " + ifExists() + (escape ? quote(joinTableName, true) : joinTableName) + ";");
         }
 
         dropStatements.add(sql);
@@ -501,7 +504,7 @@ public class SqlQueryBuilder extends AbstractSqlLikeQueryBuilder {
         String schema = SqlQueryBuilderUtils.getSchemaName(entity);
 
         if (StringUtils.isNotEmpty(schema)) {
-            createStatements.add("CREATE SCHEMA " + (escape ? quote(schema, true) : schema) + ";");
+            createStatements.add(createSchemaStatement(schema, escape, true));
         }
 
         for (SqlTableMapping table : tables) {
@@ -557,8 +560,7 @@ public class SqlQueryBuilder extends AbstractSqlLikeQueryBuilder {
             }
             List<SqlTableMapping> tables = SqlSchemaUtils.getSqlTableMappings(definitionProviders, entity, dialect);
             if (StringUtils.isNotEmpty(schema)) {
-                String createSchemaStatement = "CREATE SCHEMA " + (escape ? quote(schema) : schema) + ";";
-                addToCollectionIfNotContains(createStatements, createSchemaStatement);
+                addToCollectionIfNotContains(createStatements, createSchemaStatement(schema, escape, false));
             }
             for (SqlTableMapping table : tables) {
                 addTable(table, sqlTableMappingByTableName);
@@ -973,7 +975,7 @@ public class SqlQueryBuilder extends AbstractSqlLikeQueryBuilder {
         }
 
         String tableName = getObjectName(schema, table.name(), escape, true);
-        StringBuilder builder = new StringBuilder("CREATE TABLE ").append(tableName).append(" (");
+        StringBuilder builder = new StringBuilder("CREATE TABLE ").append(ifNotExists()).append(tableName).append(" (");
         builder.append(String.join(",", columns));
         if (generatePkAfterColumns) {
             builder.append(", PRIMARY KEY(").append(String.join(",", primaryColumnsName)).append(')');
@@ -1092,7 +1094,7 @@ public class SqlQueryBuilder extends AbstractSqlLikeQueryBuilder {
         } else if (indexMapping.spatial() && (dialect == Dialect.MYSQL || dialect == Dialect.SQL_SERVER || dialect == Dialect.H2)) {
             indexBuilder.append("SPATIAL ");
         }
-        indexBuilder.append("INDEX ");
+        indexBuilder.append("INDEX ").append(ifNotExists());
         String indexColumnNames = escape ? String.join(", ", Arrays.stream(indexMapping.columns()).map(this::quote).toList()) : columnNames;
         indexBuilder.append(indexName).append(" ON ").append(escapedTableName);
         if (indexMapping.spatial() && dialect == Dialect.POSTGRES) {
@@ -1117,9 +1119,9 @@ public class SqlQueryBuilder extends AbstractSqlLikeQueryBuilder {
                     String definition = optSqlColumnMapping.get().getDefinition();
                     if (definition != null && definition.toLowerCase().contains("geometry")) {
                         Integer srid = indexMapping.srid();
-                        if (Objects.equals(SqlSchemaUtils.SRID_WGS_84, srid) || Objects.equals(SqlSchemaUtils.SRID_ETRS_89, srid)) {
+                        if (Objects.equals(Srid.WGS_84, srid) || Objects.equals(Srid.ETRS_89, srid)) {
                             indexBuilder.append(" USING GEOMETRY_GRID WITH (BOUNDING_BOX = (-180, -90, 180,  90))");
-                        } else if (Objects.equals(SqlSchemaUtils.SRID_WEB_MERCATOR, srid)) {
+                        } else if (Objects.equals(Srid.WEB_MERCATOR, srid)) {
                             indexBuilder.append(" USING GEOMETRY_GRID WITH (BOUNDING_BOX = (-20037508.3427892, -20037508.3427892, 20037508.3427892,  20037508.3427892))");
                         }
                     }
@@ -1135,7 +1137,7 @@ public class SqlQueryBuilder extends AbstractSqlLikeQueryBuilder {
     private String createSequenceStmt(SqlTableMapping table, SqlSequenceMapping sequence, boolean escape) {
         String sequenceName = getObjectName(table.schema(), resolveSequenceName(table, sequence), escape, true);
         final boolean isSqlServer = dialect == Dialect.SQL_SERVER;
-        String createSequenceStmt = "CREATE SEQUENCE " + sequenceName;
+        String createSequenceStmt = "CREATE SEQUENCE " + ifNotExists() + sequenceName;
         if (isSqlServer) {
             createSequenceStmt += " AS BIGINT";
         }
@@ -1149,6 +1151,46 @@ public class SqlQueryBuilder extends AbstractSqlLikeQueryBuilder {
             }
         }
         return createSequenceStmt;
+    }
+
+    /**
+     * Oracle 23ai accepts {@code IF NOT EXISTS} in {@code CREATE} statements, so generating a schema that already
+     * exists does not fail.
+     *
+     * @return The clause, followed by a space, or an empty string
+     */
+    private String ifNotExists() {
+        return supportsIfExists() ? "IF NOT EXISTS " : "";
+    }
+
+    /**
+     * Oracle 23ai accepts {@code IF EXISTS} in {@code DROP} statements.
+     *
+     * @return The clause, followed by a space, or an empty string
+     */
+    private String ifExists() {
+        return supportsIfExists() ? "IF EXISTS " : "";
+    }
+
+    private boolean supportsIfExists() {
+        return dialect == Dialect.ORACLE && dialectOptions.isVersionAtLeast(SqlDialectOptions.ORACLE_23_1_0_VERSION);
+    }
+
+    /**
+     * {@code SYS_GUID()} returns 16 bytes, which a {@code VARCHAR} column stores as 32 hex digits that are not a UUID
+     * string. From 23.9, {@code UUID()} generates a version 4 UUID, and {@code RAW_TO_UUID} formats it with dashes.
+     * A custom column definition, such as {@code RAW(16)}, keeps {@code SYS_GUID()}: Oracle cannot store the
+     * formatted string in a binary column (ORA-01465).
+     *
+     * @param columnMapping The column
+     * @return The default value expression
+     */
+    private String oracleUuidDefault(SqlColumnMapping columnMapping) {
+        if (StringUtils.isEmpty(columnMapping.getDefinition())
+            && dialectOptions.isVersionAtLeast(SqlDialectOptions.ORACLE_23_9_0_VERSION)) {
+            return "RAW_TO_UUID(UUID())";
+        }
+        return "SYS_GUID()";
     }
 
     private String makeTransformedColumnList(String columnList) {
@@ -1231,7 +1273,7 @@ public class SqlQueryBuilder extends AbstractSqlLikeQueryBuilder {
                 // for Oracle, we use sequences so just add NOT NULL
                 // then alter the table for sequences
                 if (type == UUID) {
-                    column += " DEFAULT SYS_GUID() NOT NULL";
+                    column += " DEFAULT " + oracleUuidDefault(columnMapping) + " NOT NULL";
                 } else if (type == IDENTITY) {
                     if (isPk) {
                         column += " GENERATED BY DEFAULT ON NULL AS IDENTITY (MINVALUE 1 START WITH 1 CACHE 100 NOCYCLE)";
@@ -1791,7 +1833,7 @@ public class SqlQueryBuilder extends AbstractSqlLikeQueryBuilder {
         if (optSrid.isPresent()) {
             sb.append(", ");
             if (isWkt) {
-                sb.append(optSrid.getAsInt());
+                sb.append(optSrid.getAsInt()).append(SqlQueryBuilderUtils.MYSQL_WKT_AXIS_ORDER);
             } else {
                 sb.append("1, ").append(optSrid.getAsInt());
             }
@@ -1815,10 +1857,10 @@ public class SqlQueryBuilder extends AbstractSqlLikeQueryBuilder {
         int defaultSrid;
         if (SqlQueryBuilderUtils.isGeography(annotationMetadata)) {
             geoDataType = "geography";
-            defaultSrid = 4326;
+            defaultSrid = Srid.WGS_84;
         } else {
             geoDataType = "geometry";
-            defaultSrid = 3857;
+            defaultSrid = Srid.WEB_MERCATOR;
         }
 
         sb.append(geoDataType).append("::STGeomFromText(");
@@ -2180,6 +2222,15 @@ public class SqlQueryBuilder extends AbstractSqlLikeQueryBuilder {
         return associations;
     }
 
+    private String createSchemaStatement(String schema, boolean escape, boolean supportsDynamicValues) {
+        if (getDialect() == Dialect.ORACLE) {
+            // An Oracle schema is a user: CREATE SCHEMA does not create one. The identifier is rendered like the
+            // schema of the table statements, keeping property placeholders as written
+            return SqlSchemaNames.oracleCreateSchemaStatement(escape ? quote(schema, true) : schema, escape);
+        }
+        return "CREATE SCHEMA " + (escape ? quote(schema, supportsDynamicValues) : schema) + ";";
+    }
+
     @Override
     protected String quote(String persistedName, boolean supportsDynamicValues) {
         return switch (dialect) {
@@ -2267,6 +2318,39 @@ public class SqlQueryBuilder extends AbstractSqlLikeQueryBuilder {
         return DEFAULT_POSITIONAL_PARAMETER_MARKER;
     }
 
+    /**
+     * Builds the limit and offset clause of a query, honouring {@link ApproximateSearch} on the method.
+     *
+     * @param limit              The limit
+     * @param offset             The offset
+     * @param annotationMetadata The annotation metadata of the repository method
+     * @return The clause
+     * @since 5.3.0
+     */
+    public String buildLimitAndOffset(long limit, long offset, AnnotationMetadata annotationMetadata) {
+        // other dialects ignore @ApproximateSearch, so they and exact Oracle limits keep going through the overload
+        // that builders such as the Cosmos one override
+        int approximateAccuracy = getDialect() == Dialect.ORACLE ? approximateAccuracy(annotationMetadata) : -1;
+        if (approximateAccuracy < 0) {
+            return buildLimitAndOffset(limit, offset);
+        }
+        StringBuilder builder = new StringBuilder();
+        appendLimitAndOffset(getDialect(), limit, offset, approximateAccuracy, builder);
+        return builder.toString();
+    }
+
+    private static int approximateAccuracy(AnnotationMetadata annotationMetadata) {
+        // also as the stereotype of a composed annotation
+        if (!annotationMetadata.hasStereotype(ApproximateSearch.class)) {
+            return -1;
+        }
+        int accuracy = annotationMetadata.intValue(ApproximateSearch.class, "targetAccuracy").orElse(0);
+        if (accuracy < 0 || accuracy > 100) {
+            throw new IllegalArgumentException("@ApproximateSearch targetAccuracy must be between 0 and 100, but was " + accuracy);
+        }
+        return accuracy;
+    }
+
     @Override
     protected void appendLimitAndOrder(AnnotationMetadata annotationMetadata,
                                        SelectQueryDefinition definition,
@@ -2277,7 +2361,12 @@ public class SqlQueryBuilder extends AbstractSqlLikeQueryBuilder {
             appendOrder(annotationMetadata, definition, queryState);
         }
         if (appendLimit) {
-            appendLimitAndOffset(getDialect(), definition.limit(), definition.offset(), queryState.getQuery());
+            int approximateAccuracy = approximateAccuracy(annotationMetadata);
+            if (approximateAccuracy < 0) {
+                appendLimitAndOffset(getDialect(), definition.limit(), definition.offset(), queryState.getQuery());
+            } else {
+                appendLimitAndOffset(getDialect(), definition.limit(), definition.offset(), approximateAccuracy, queryState.getQuery());
+            }
         }
         Map<Integer, String> parametersInRole = definition.parametersInRole();
        if (parameterInRoleModifiesOrder(parametersInRole) || parameterInRoleModifiesLimit(parametersInRole)) {
@@ -2466,21 +2555,21 @@ public class SqlQueryBuilder extends AbstractSqlLikeQueryBuilder {
                     } else {
                         columnName = asPath(propertyAssociations, prop);
                     }
+
+                    if (StringUtils.isEmpty(columnAlias)) {
+                        columnAlias = joinPathAlias + columnName;
+                    }
+                    String qualifiedColumn = joinAlias + DOT + (queryState.shouldEscape() ? quote(columnName) : columnName);
                     if (transformed != null) {
-                        query.append(transformed).append(AS_CLAUSE);
+                        query.append(transformed);
+                    } else if (isJsonOrWktGeometry(prop)) {
+                        query.append(getGeometryFunction(qualifiedColumn, prop));
                     } else {
-                        query
-                            .append(joinAlias)
-                            .append(DOT)
-                            .append(queryState.shouldEscape() ? quote(columnName) : columnName)
-                            .append(AS_CLAUSE);
+                        query.append(qualifiedColumn);
                     }
-                    if (StringUtils.isNotEmpty(columnAlias)) {
-                        query.append(columnAlias);
-                    } else {
-                        query.append(joinPathAlias).append(columnName);
-                    }
-                    query.append(COMMA);
+                    query.append(AS_CLAUSE)
+                            .append(columnAlias)
+                            .append(COMMA);
                 });
                 query.setLength(query.length() - 1);
             }
@@ -2629,7 +2718,7 @@ public class SqlQueryBuilder extends AbstractSqlLikeQueryBuilder {
             int[] propertiesCount = new int[1];
 
             PersistentEntityUtils.traversePersistentProperties(propertyPath.getAssociations(), propertyPath.getProperty(), traverseEmbedded(), (associations, property) -> {
-                appendProperty(query, associations, property, namingStrategy, tableAlias, escape);
+                appendProperty(query, associations, property, namingStrategy, tableAlias, escape, null, StringUtils.isNotEmpty(columnAlias));
                 unescapedColumns.add(getMappedName(namingStrategy, associations, property));
                 resultColumnTypes.add(property.getDataType());
                 needsTrimming[0] = true;

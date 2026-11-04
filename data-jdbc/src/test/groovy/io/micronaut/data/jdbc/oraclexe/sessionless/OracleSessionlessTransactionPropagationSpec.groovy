@@ -26,11 +26,16 @@ import io.micronaut.data.jdbc.oraclexe.OracleTestPropertyProvider
 import io.micronaut.data.model.query.builder.sql.Dialect
 import io.micronaut.data.repository.CrudRepository
 import io.micronaut.test.extensions.spock.annotation.MicronautTest
+import io.micronaut.transaction.exceptions.TransactionSystemException
+import io.micronaut.transaction.TransactionOperations
+import io.micronaut.transaction.support.DefaultTransactionDefinition
 import io.micronaut.transaction.annotation.OracleTransactional
 import io.micronaut.transaction.jdbc.oracle.OracleSessionlessTransactionPropagationOperations
 import jakarta.inject.Inject
 import jakarta.inject.Singleton
 import spock.lang.Specification
+
+import java.sql.Connection
 
 @Property(name = "spec.name", value = OracleSessionlessTransactionPropagationSpec.SPEC_NAME)
 @MicronautTest(transactional = false)
@@ -46,6 +51,9 @@ class OracleSessionlessTransactionPropagationSpec extends Specification implemen
 
     @Inject
     OracleSessionlessTransactionPropagationOperations transactionPropagationOperations
+
+    @Inject
+    TransactionOperations<Connection> transactionOperations
 
     @Override
     List<String> packages() {
@@ -121,6 +129,151 @@ class OracleSessionlessTransactionPropagationSpec extends Specification implemen
         expenseReportRepository.findById(reportIds[1]).orElseThrow().status == "APPROVED"
     }
 
+    void "empty initial stage can suspend and resume for later database work"() {
+        given:
+        String transactionId = transactionPropagationOperations.withPropagation({
+            expenseReportService.emptyInitialStage()
+            transactionPropagationOperations.currentTransactionId().orElseThrow()
+        })
+        assert !transactionOperations.hasConnection()
+        def definition = new DefaultTransactionDefinition()
+        definition.putProperty(OracleTransactional.ORACLE_SESSIONLESS_MODE, OracleTransactional.Sessionless.RESUME_AND_SUSPEND)
+
+        when:
+        Long reportId = transactionPropagationOperations.withPropagation(transactionId, {
+            transactionOperations.execute(definition, { status ->
+                expenseReportRepository.save(new ExpenseReport(
+                    employeeId: "employee-empty-start",
+                    category: "travel",
+                    expenseAmount: 120.00,
+                    status: "SUBMITTED"
+                )).id
+            })
+        })
+
+        then:
+        !transactionOperations.hasConnection()
+        expenseReportRepository.findById(reportId).isEmpty()
+
+        when:
+        transactionPropagationOperations.withPropagation(transactionId, {
+            expenseReportService.approveReport(reportId)
+            assert transactionPropagationOperations.currentTransactionId().isEmpty()
+            null
+        })
+
+        then:
+        expenseReportRepository.findById(reportId).orElseThrow().status == "APPROVED"
+    }
+
+    void "same transaction survives multiple resumed stages including an empty stage"() {
+        given:
+        SubmittedExpenseReport report = suspendReport("employee-stages", "travel", 120.00)
+
+        when:
+        ["REVIEWED", "VALIDATED"].each { nextStatus ->
+            transactionPropagationOperations.withPropagation(report.transactionId(), {
+                expenseReportService.reviewReport(report.id(), nextStatus)
+                assert transactionPropagationOperations.currentTransactionId().orElseThrow() == report.transactionId()
+                null
+            })
+            assert !transactionOperations.hasConnection()
+            assert expenseReportRepository.findById(report.id()).isEmpty()
+        }
+        transactionPropagationOperations.withPropagation(report.transactionId(), {
+            expenseReportService.emptyStage()
+            assert transactionPropagationOperations.currentTransactionId().orElseThrow() == report.transactionId()
+            null
+        })
+
+        then:
+        expenseReportRepository.findById(report.id()).isEmpty()
+
+        when:
+        transactionPropagationOperations.withPropagation(report.transactionId(), {
+            expenseReportService.approveReport(report.id())
+            assert transactionPropagationOperations.currentTransactionId().isEmpty()
+            null
+        })
+
+        then:
+        expenseReportRepository.findById(report.id()).orElseThrow().status == "APPROVED"
+    }
+
+    void "failure in an intermediate stage rolls back all earlier work"() {
+        given:
+        SubmittedExpenseReport report = suspendReport("employee-stage-failure", "travel", 120.00)
+        transactionPropagationOperations.withPropagation(report.transactionId(), {
+            expenseReportService.reviewReport(report.id(), "REVIEWED")
+            null
+        })
+
+        when:
+        transactionPropagationOperations.withPropagation(report.transactionId(), {
+            try {
+                expenseReportService.failReview(report.id())
+            } finally {
+                assert transactionPropagationOperations.currentTransactionId().isEmpty()
+            }
+            null
+        })
+
+        then:
+        thrown(ExpenseRejectedException)
+        expenseReportRepository.findById(report.id()).isEmpty()
+
+        when:
+        transactionPropagationOperations.withPropagation(report.transactionId(), {
+            expenseReportService.approveReport(report.id())
+            null
+        })
+
+        then:
+        thrown(RuntimeException)
+    }
+
+    void "programmatic intermediate stage marked rollback only rolls back previous stages"() {
+        given:
+        SubmittedExpenseReport report = suspendReport("employee-rollback-only", "travel", 120.00)
+        def definition = new DefaultTransactionDefinition()
+        definition.putProperty(OracleTransactional.ORACLE_SESSIONLESS_MODE, OracleTransactional.Sessionless.RESUME_AND_SUSPEND)
+
+        when:
+        transactionPropagationOperations.withPropagation(report.transactionId(), {
+            expenseReportService.reviewReport(report.id(), "REVIEWED")
+            transactionOperations.execute(definition, { status ->
+                assert expenseReportRepository.findById(report.id()).orElseThrow().status == "REVIEWED"
+                status.setRollbackOnly()
+                null
+            })
+            assert transactionPropagationOperations.currentTransactionId().isEmpty()
+            null
+        })
+
+        then:
+        !transactionOperations.hasConnection()
+        expenseReportRepository.findById(report.id()).isEmpty()
+    }
+
+    void "completed transaction cannot be resumed even by an empty stage"() {
+        given:
+        SubmittedExpenseReport report = suspendReport("employee-completed", "travel", 120.00)
+        transactionPropagationOperations.withPropagation(report.transactionId(), {
+            expenseReportService.approveReport(report.id())
+            null
+        })
+
+        when:
+        transactionPropagationOperations.withPropagation(report.transactionId(), {
+            expenseReportService.emptyStage()
+            null
+        })
+
+        then:
+        thrown(TransactionSystemException)
+        expenseReportRepository.findById(report.id()).orElseThrow().status == "APPROVED"
+    }
+
     private SubmittedExpenseReport suspendReport(String employeeId, String category, BigDecimal amount) {
         Objects.requireNonNull(transactionPropagationOperations.withPropagation({
             Long reportId = expenseReportService.submitReport(employeeId, category, amount)
@@ -167,6 +320,28 @@ class ExpenseReportService {
             status: "SUBMITTED"
         ))
         report.id
+    }
+
+    @OracleTransactional(sessionless = OracleTransactional.Sessionless.RESUME_AND_SUSPEND)
+    void reviewReport(Long id, String nextStatus) {
+        ExpenseReport report = expenseReportRepository.findById(id).orElseThrow()
+        assert report.status in ["SUBMITTED", "REVIEWED"]
+        expenseReportRepository.updateStatus(id, nextStatus)
+    }
+
+    @OracleTransactional(sessionless = OracleTransactional.Sessionless.SUSPEND, timeout = 3600)
+    void emptyInitialStage() {
+    }
+
+    @OracleTransactional(sessionless = OracleTransactional.Sessionless.RESUME_AND_SUSPEND)
+    void emptyStage() {
+    }
+
+    @OracleTransactional(sessionless = OracleTransactional.Sessionless.RESUME_AND_SUSPEND)
+    void failReview(Long id) {
+        assert expenseReportRepository.findById(id).orElseThrow().status == "REVIEWED"
+        expenseReportRepository.updateStatus(id, "REJECTED")
+        throw new ExpenseRejectedException("Review failed")
     }
 
     @OracleTransactional(sessionless = OracleTransactional.Sessionless.REQUIRES_SUSPENDED)

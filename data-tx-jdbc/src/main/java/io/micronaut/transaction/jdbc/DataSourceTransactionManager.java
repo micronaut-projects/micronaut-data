@@ -25,9 +25,11 @@ import org.jspecify.annotations.Nullable;
 import io.micronaut.core.annotation.TypeHint;
 import io.micronaut.data.connection.ConnectionOperations;
 import io.micronaut.data.connection.ConnectionSynchronization;
+import io.micronaut.data.connection.ConnectionStatus;
 import io.micronaut.data.connection.SynchronousConnectionManager;
 import io.micronaut.data.connection.exceptions.ConnectionException;
 import io.micronaut.data.connection.jdbc.advice.DelegatingDataSource;
+import io.micronaut.data.connection.support.DefaultConnectionStatus;
 import io.micronaut.data.connection.support.JdbcConnectionUtils;
 import io.micronaut.transaction.TransactionDefinition;
 import io.micronaut.transaction.exceptions.CannotCreateTransactionException;
@@ -129,6 +131,22 @@ public final class DataSourceTransactionManager extends AbstractDefaultTransacti
     }
 
     @Override
+    protected DefaultTransactionStatus<Connection> createOwnerTransactionStatus(ConnectionStatus<Connection> connectionStatus,
+                                                                                TransactionDefinition definition,
+                                                                                DefaultConnectionStatus.SuppliedConnection suppliedConnection) {
+        // Not rejected, since an XA driver may report auto-commit on inside a global transaction
+        try {
+            if (connectionStatus.getConnection().getAutoCommit() && logger.isWarnEnabled()) {
+                logger.warn("Joining the owner's transaction of a supplied connection that is in auto-commit mode:"
+                    + " each statement commits as it runs, and the owner cannot roll it back");
+            }
+        } catch (SQLException e) {
+            logger.debug("Could not read the auto-commit mode of the supplied connection", e);
+        }
+        return super.createOwnerTransactionStatus(connectionStatus, definition, suppliedConnection);
+    }
+
+    @Override
     protected boolean supportsSessionlessTransactions(TransactionDefinition definition) {
         return sessionlessTransactionHandler != null && sessionlessTransactionHandler.supports(definition);
     }
@@ -156,6 +174,9 @@ public final class DataSourceTransactionManager extends AbstractDefaultTransacti
      * <p>Note that older Oracle JDBC drivers (9i, 10g) used to enforce this read-only
      * mode even for {@code Connection.setReadOnly(true}. However, with recent drivers,
      * this strong enforcement needs to be applied explicitly, e.g. through this flag.
+     * <p>The statement isn't executed for Oracle sessionless transactions: on Oracle,
+     * "SET TRANSACTION READ ONLY" starts a local transaction, which would prevent
+     * the sessionless transaction from being started or resumed.
      *
      * @param enforceReadOnly True if read-only should be enforced
      * @see #prepareTransactionalConnection
@@ -215,8 +236,11 @@ public final class DataSourceTransactionManager extends AbstractDefaultTransacti
             .ifPresent(isolation -> JdbcConnectionUtils.applyTransactionIsolation(logger, connection, isolation.getCode(), onComplete));
         JdbcConnectionUtils.applyAutoCommit(logger, connection, false, onComplete);
 
-        //        prepareTransactionalConnection(connection, definition);
-
+        try {
+            prepareTransactionalConnection(connection, definition);
+        } catch (SQLException e) {
+            throw new CannotCreateTransactionException("Could not prepare JDBC Connection for the transaction", e);
+        }
         for (TransactionExecutionListener<Connection> transactionExecutionListener : transactionExecutionListeners) {
             transactionExecutionListener.afterBegin(status.getConnectionStatus(), definition);
         }
@@ -349,7 +373,8 @@ public final class DataSourceTransactionManager extends AbstractDefaultTransacti
      * Prepare the transactional {@code Connection} right after transaction begin.
      * <p>The default implementation executes a "SET TRANSACTION READ ONLY" statement
      * if the {@link #setEnforceReadOnly "enforceReadOnly"} flag is set to {@code true}
-     * and the transaction definition indicates a read-only transaction.
+     * and the transaction definition indicates a read-only transaction
+     * that isn't an Oracle sessionless transaction.
      * <p>The "SET TRANSACTION READ ONLY" is understood by Oracle, MySQL and Postgres
      * and may work with other databases as well. If you'd like to adapt this treatment,
      * override this method accordingly.
@@ -363,7 +388,10 @@ public final class DataSourceTransactionManager extends AbstractDefaultTransacti
     protected void prepareTransactionalConnection(Connection con, TransactionDefinition definition)
             throws SQLException {
 
-        if (isEnforceReadOnly() && definition.isReadOnly().orElse(false)) {
+        // On Oracle, "SET TRANSACTION READ ONLY" starts a local transaction, which would prevent
+        // the sessionless transaction from being started or resumed on the connection
+        if (isEnforceReadOnly() && definition.isReadOnly().orElse(false)
+            && TransactionUtil.getOracleSessionlessMode(definition) == null) {
             try (Statement stmt = con.createStatement()) {
                 stmt.executeUpdate("SET TRANSACTION READ ONLY");
             }

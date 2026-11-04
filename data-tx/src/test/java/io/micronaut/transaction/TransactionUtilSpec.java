@@ -19,6 +19,7 @@ import io.micronaut.context.ApplicationContext;
 import io.micronaut.inject.BeanDefinition;
 import io.micronaut.inject.ExecutableMethod;
 import io.micronaut.transaction.annotation.OracleTransactional;
+import io.micronaut.transaction.annotation.ReadOnly;
 import io.micronaut.transaction.annotation.Transactional;
 import io.micronaut.transaction.exceptions.CannotCreateTransactionException;
 import io.micronaut.transaction.exceptions.TransactionUsageException;
@@ -30,6 +31,7 @@ import org.junit.jupiter.api.Test;
 
 import java.sql.SQLException;
 import java.time.Duration;
+import java.util.Locale;
 
 public class TransactionUtilSpec {
 
@@ -61,6 +63,32 @@ public class TransactionUtilSpec {
             Assertions.assertFalse(defaultDefinition.getProperties().containsKey(OracleTransactional.ORACLE_PRIORITY));
             Assertions.assertFalse(defaultDefinition.getProperties().containsKey(OracleTransactional.ORACLE_SESSIONLESS_MODE));
         }
+    }
+
+    @Test
+    void testDefaultTimeoutOfTheAnnotation() {
+        try (ApplicationContext applicationContext = ApplicationContext.run()) {
+            BeanDefinition<AnnotatedService> beanDefinition = applicationContext.getBeanDefinition(AnnotatedService.class);
+
+            for (String methodName : new String[] {"methodWithDefaultTimeout", "readOnlyMethodWithDefaultTimeout", "methodWithoutPriority"}) {
+                ExecutableMethod<AnnotatedService, Object> method = beanDefinition.getRequiredMethod(methodName);
+                TransactionDefinition definition = TransactionUtil.getTransactionDefinition("test", method);
+                Assertions.assertTrue(definition.getTimeout().isEmpty(), methodName);
+            }
+        }
+    }
+
+    @Test
+    void testSetDefaultTimeout() {
+        DefaultTransactionDefinition definition = new DefaultTransactionDefinition();
+        definition.setTimeout(Duration.ofSeconds(10));
+        Assertions.assertEquals(Duration.ofSeconds(10), definition.getTimeout().orElseThrow());
+
+        definition.setTimeout(TransactionDefinition.TIMEOUT_DEFAULT);
+        Assertions.assertTrue(definition.getTimeout().isEmpty());
+
+        Duration negativeTimeout = Duration.ofSeconds(-1);
+        Assertions.assertThrows(IllegalArgumentException.class, () -> definition.setTimeout(negativeTimeout));
     }
 
     @Test
@@ -134,13 +162,14 @@ public class TransactionUtilSpec {
 
     @Test
     void testOracleSessionlessModeParsing() {
-        DefaultTransactionDefinition definition = new DefaultTransactionDefinition();
-        definition.putProperty(OracleTransactional.ORACLE_SESSIONLESS_MODE, " requires_suspended ");
-
-        Assertions.assertEquals(
-            OracleTransactional.Sessionless.REQUIRES_SUSPENDED,
-            TransactionUtil.getOracleSessionlessMode(definition)
-        );
+        for (OracleTransactional.Sessionless mode : OracleTransactional.Sessionless.values()) {
+            if (mode == OracleTransactional.Sessionless.NONE) {
+                continue;
+            }
+            DefaultTransactionDefinition definition = new DefaultTransactionDefinition();
+            definition.putProperty(OracleTransactional.ORACLE_SESSIONLESS_MODE, " " + mode.name().toLowerCase(Locale.ROOT) + " ");
+            Assertions.assertEquals(mode, TransactionUtil.getOracleSessionlessMode(definition));
+        }
     }
 
     @Test
@@ -182,6 +211,16 @@ public class TransactionUtilSpec {
         @Transactional
         void methodWithoutPriority() {
             // Does nothing, just to test TransactionUtil without OracleTransactional
+        }
+
+        @Transactional(timeout = -1)
+        void methodWithDefaultTimeout() {
+            // Does nothing, just to test TransactionUtil with the default timeout
+        }
+
+        @ReadOnly(timeout = -1)
+        void readOnlyMethodWithDefaultTimeout() {
+            // Does nothing, just to test TransactionUtil with the default timeout
         }
     }
 }

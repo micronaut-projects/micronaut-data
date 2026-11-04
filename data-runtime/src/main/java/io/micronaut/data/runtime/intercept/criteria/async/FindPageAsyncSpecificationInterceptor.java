@@ -19,14 +19,18 @@ import io.micronaut.aop.MethodInvocationContext;
 import io.micronaut.core.annotation.Internal;
 import io.micronaut.core.util.CollectionUtils;
 import io.micronaut.data.intercept.RepositoryMethodKey;
+import io.micronaut.data.model.CursoredPage;
 import io.micronaut.data.model.Page;
 import io.micronaut.data.model.Pageable;
+import io.micronaut.data.model.runtime.PreparedQuery;
 import io.micronaut.data.operations.RepositoryOperations;
 import io.micronaut.data.runtime.operations.AsyncPageIdCriteriaRepositoryOperations;
+import io.micronaut.data.runtime.operations.internal.sql.DefaultSqlPreparedQuery;
 import jakarta.persistence.Tuple;
 import jakarta.persistence.criteria.CriteriaQuery;
 import jakarta.persistence.criteria.Predicate;
 import jakarta.persistence.criteria.Root;
+import org.jspecify.annotations.Nullable;
 
 import java.util.ArrayList;
 import java.util.List;
@@ -53,14 +57,6 @@ public class FindPageAsyncSpecificationInterceptor extends AbstractAsyncSpecific
 
     @Override
     public Object intercept(RepositoryMethodKey methodKey, MethodInvocationContext<Object, Object> context) {
-        if (context.getExecutableMethod().isSuspend()) {
-            if (context.getParameterValues().length != 3) {
-                throw new IllegalStateException("Expected exactly 2 arguments to method");
-            }
-        } else if (context.getParameterValues().length != 2) {
-            throw new IllegalStateException("Expected exactly 2 arguments to method");
-        }
-
         Pageable pageable = getPageable(context);
         if (pageable.isUnpaged()) {
             return findAllAsync(methodKey, context).thenApply(iterable -> {
@@ -96,13 +92,25 @@ public class FindPageAsyncSpecificationInterceptor extends AbstractAsyncSpecific
                 if (pageable.requestTotal()) {
                     return getAsyncCriteriaRepositoryOperations(methodKey, context, null)
                         .findOne(buildCountQuery(methodKey, context)).<Number>thenApply(n -> n)
-                        .thenApply(count -> Page.of(CollectionUtils.iterableToList(iterable), pageable, count.longValue()));
+                        .thenApply(count -> getPage(CollectionUtils.iterableToList(iterable), pageable, count.longValue(), context));
                 } else {
-                    return CompletableFuture.completedFuture(Page.of(CollectionUtils.iterableToList(iterable), pageable, null));
+                    return CompletableFuture.completedFuture(getPage(CollectionUtils.iterableToList(iterable), pageable, null, context));
                 }
             }
         );
 
+    }
+
+    private Page<?> getPage(List<Object> list, Pageable pageable, @Nullable Long count, MethodInvocationContext<Object, Object> context) {
+        if (pageable.getMode() == Pageable.Mode.OFFSET) {
+            return Page.of(list, pageable, count);
+        }
+        PreparedQuery<?, ?> preparedQuery = (PreparedQuery<?, ?>) context.getAttribute(PREPARED_QUERY_KEY).orElse(null);
+        if (preparedQuery instanceof DefaultSqlPreparedQuery<?, ?> sqlPreparedQuery) {
+            List<Pageable.Cursor> cursors = sqlPreparedQuery.createCursors(list, pageable);
+            return CursoredPage.of(list, pageable, cursors, count);
+        }
+        throw new UnsupportedOperationException("Only offset pageable mode is supported by this query implementation");
     }
 
     private <T> CompletionStage<List<T>> findAllAsync(RepositoryMethodKey methodKey,

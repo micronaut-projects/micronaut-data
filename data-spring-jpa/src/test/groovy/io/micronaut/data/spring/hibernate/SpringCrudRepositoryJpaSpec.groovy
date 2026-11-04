@@ -20,7 +20,10 @@ import io.micronaut.data.spring.hibernate.spring.SpringCrudRepository
 import io.micronaut.data.tck.entities.Person
 import io.micronaut.test.extensions.spock.annotation.MicronautTest
 import jakarta.inject.Inject
+import org.springframework.data.domain.Page
 import org.springframework.data.domain.PageRequest
+import org.springframework.data.domain.Pageable
+import org.springframework.data.domain.Slice
 import org.springframework.data.domain.Sort
 import spock.lang.Shared
 import spock.lang.Specification
@@ -72,6 +75,91 @@ class SpringCrudRepositoryJpaSpec extends Specification implements H2Properties 
         !crudRepository.queryAll(PageRequest.of(0, 1)).isEmpty()
         crudRepository.list(PageRequest.of(1, 10)).isEmpty()
         crudRepository.list(PageRequest.of(0, 1)).size() == 1
+    }
+
+    void "test Spring Data slice"() {
+        when:"the first slice is requested"
+        def slice = crudRepository.findByAgeGreaterThan(30, PageRequest.of(0, 2, Sort.by("age")))
+
+        then:"a Spring Data slice is returned"
+        slice instanceof Slice
+        slice.content*.name == ["James", "Fred"]
+        slice.number == 0
+        slice.size == 2
+        slice.numberOfElements == 2
+        slice.hasContent()
+        slice.first
+        slice.hasNext()
+        !slice.hasPrevious()
+        slice.sort.getOrderFor("age").ascending
+        slice.pageable.pageNumber == 0
+        slice.pageable.pageSize == 2
+
+        when:"the next slice is requested"
+        slice = crudRepository.findByAgeGreaterThan(30, slice.nextPageable())
+
+        then:"the next slice is returned"
+        slice.content*.name == ["Bob", "Jeff"]
+        slice.number == 1
+        slice.hasPrevious()
+        slice.previousPageable().pageNumber == 0
+        slice.map { it.name }.content == ["Bob", "Jeff"]
+
+        when:"the slice after the last element is requested"
+        slice = crudRepository.findByAgeGreaterThan(30, slice.nextPageable())
+
+        then:"the slice is empty"
+        !slice.hasContent()
+        !slice.hasNext()
+        slice.last
+
+        and:"a Spring Data page is still returned for a page"
+        crudRepository.queryAll(PageRequest.of(0, 2)) instanceof Page
+    }
+
+    void "test unpaged Spring Data slice"() {
+        when:"a sorted slice is requested without paging"
+        def slice = crudRepository.findByAgeGreaterThan(30, Pageable.unpaged(Sort.by("age")))
+
+        then:"the slice is unpaged and holds all the elements"
+        slice.content*.name == ["James", "Fred", "Bob", "Jeff"]
+        slice.number == 0
+        slice.size == 4
+        slice.numberOfElements == 4
+        slice.pageable.unpaged
+        slice.pageable.sort.getOrderFor("age").ascending
+        slice.first
+        slice.last
+        !slice.hasNext()
+        !slice.hasPrevious()
+        slice.nextPageable().unpaged
+        slice.previousPageable().unpaged
+        slice.nextOrLastPageable().unpaged
+        slice.previousOrFirstPageable().unpaged
+        slice.map { it.name }.size == 4
+    }
+
+    void "test unpaged Spring Data page"() {
+        when:"a page is requested without paging"
+        def page = crudRepository.queryAll(Pageable.unpaged())
+
+        then:"the page is unpaged and holds all the elements"
+        page.content*.name.sort() == ["Bob", "Frank", "Fred", "James", "Jeff"]
+        page.number == 0
+        page.size == 5
+        page.numberOfElements == 5
+        page.totalElements == 5
+        page.totalPages == 1
+        page.pageable.unpaged
+        page.first
+        page.last
+        !page.hasNext()
+        !page.hasPrevious()
+        page.nextPageable().unpaged
+        page.previousPageable().unpaged
+        page.nextOrLastPageable().unpaged
+        page.previousOrFirstPageable().unpaged
+        page.map { it.name }.totalPages == 1
     }
 
     void "test JPA specification count"() {

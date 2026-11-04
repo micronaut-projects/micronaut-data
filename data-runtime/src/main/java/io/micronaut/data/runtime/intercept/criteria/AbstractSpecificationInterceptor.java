@@ -197,27 +197,7 @@ public abstract class AbstractSpecificationInterceptor<T, R> extends AbstractQue
                                 boolean pageIdsQuery) {
         pageable = applyPaginationAndSort(pageable, criteriaQuery, false);
         if (criteriaRepositoryOperations != null) {
-            Limit limit = Limit.UNLIMITED;
-            if (pageable != null) {
-                limit = pageable.getLimit();
-                if (pageable.getMode() != Mode.OFFSET) {
-                    throw new UnsupportedOperationException("Pageable mode " + pageable.getMode() + " is not supported by hibernate operations");
-                }
-            }
-            if (!limit.isLimited()) {
-                limit = getParameterInRole(context, TypeRole.LIMIT, Limit.class).orElse(limit);
-            }
-            if (!limit.isLimited()) {
-                int offset = getOffset(context);
-                int maxResults = getLimit(context);
-                limit = Limit.of(maxResults, offset);
-            }
-            if (!limit.isLimited()) {
-                AnnotationValue<First> annotation = context.getAnnotationMetadata().getAnnotation(First.class);
-                if (annotation != null) {
-                    limit = Limit.of(annotation.intValue().orElse(1), 0);
-                }
-            }
+            Limit limit = resolveLimit(context, pageable);
             if (limit.isLimited()) {
                 if (pageIdsQuery && criteriaRepositoryOperations instanceof PageIdCriteriaRepositoryOperations pageIdOperations) {
                     return pageIdOperations.findPageIds(criteriaQuery, (int) limit.offset(), limit.maxResults());
@@ -227,6 +207,39 @@ public abstract class AbstractSpecificationInterceptor<T, R> extends AbstractQue
             return criteriaRepositoryOperations.findAll(criteriaQuery);
         }
         return getCriteriaRepositoryOperations(methodKey, context, pageable).findAll(criteriaQuery);
+    }
+
+    /**
+     * Resolves the limit of a find-all query executed by criteria repository operations, that don't support
+     * a pageable: the pageable, the {@link Limit} parameter, the method's offset and limit and {@link First}.
+     *
+     * @param context  The invocation context
+     * @param pageable The pageable with the sort removed
+     * @return The limit
+     */
+    protected final Limit resolveLimit(MethodInvocationContext<?, ?> context, @Nullable Pageable pageable) {
+        Limit limit = Limit.UNLIMITED;
+        if (pageable != null) {
+            limit = pageable.getLimit();
+            if (pageable.getMode() != Mode.OFFSET) {
+                throw new UnsupportedOperationException("Pageable mode " + pageable.getMode() + " is not supported by hibernate operations");
+            }
+        }
+        if (!limit.isLimited()) {
+            limit = getParameterInRole(context, TypeRole.LIMIT, Limit.class).orElse(limit);
+        }
+        if (!limit.isLimited()) {
+            int offset = getOffset(context);
+            int maxResults = getLimit(context);
+            limit = Limit.of(maxResults, offset);
+        }
+        if (!limit.isLimited()) {
+            AnnotationValue<First> annotation = context.getAnnotationMetadata().getAnnotation(First.class);
+            if (annotation != null) {
+                limit = Limit.of(annotation.intValue().orElse(1), 0);
+            }
+        }
+        return limit;
     }
 
     protected final Set<JoinPath> getMethodJoinPaths(RepositoryMethodKey methodKey, MethodInvocationContext<?, ?> context) {

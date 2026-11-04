@@ -20,7 +20,7 @@ class GeogEntityWkt {
     @GeneratedValue
     private Long id;
 
-    @Srid(3857)
+    @Srid(Srid.WEB_MERCATOR)
     @Index(columns = "location")
     @MappedProperty(value = "location", converter = GeometryWktConverter.class, definition = "GEOGRAPHY NOT NULL")
     private Point point;
@@ -29,7 +29,7 @@ class GeogEntityWkt {
     @MappedProperty(converter = GeometryWktConverter.class, definition = "GEOGRAPHY NOT NULL")
     private MultiPoint multiPoint;
 
-    @Srid(3857)
+    @Srid(Srid.WEB_MERCATOR)
     @MappedProperty(converter = GeometryWktConverter.class, definition = "GEOGRAPHY NOT NULL")
     private LineString lineString;
 

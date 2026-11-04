@@ -8,6 +8,7 @@ import io.micronaut.data.model.geo.Point
 import io.micronaut.data.model.geo.Polygon
 import io.micronaut.data.tck.repositories.DeliveryDriverJsonRepository
 import io.micronaut.data.tck.repositories.DeliveryDriverWktRepository
+import io.micronaut.data.tck.repositories.DistrictRepository
 import io.micronaut.data.tck.repositories.GeometryEntityJsonRepository
 import io.micronaut.data.tck.repositories.GeometryEntityWktRepository
 import io.micronaut.data.tck.repositories.HotelJsonRepository
@@ -60,6 +61,12 @@ class H2GeoSpec extends AbstractGeoSpec implements H2TestPropertyProvider {
     @Override
     DeliveryDriverWktRepository getDeliveryDriverWktRepository() {
         return context.getBean(H2DeliveryDriverWktRepository)
+    }
+
+    @Memoized
+    @Override
+    DistrictRepository getDistrictRepository() {
+        return context.getBean(H2DistrictRepository)
     }
 
     @Override

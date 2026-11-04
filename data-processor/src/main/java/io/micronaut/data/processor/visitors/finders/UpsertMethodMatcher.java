@@ -156,11 +156,19 @@ public final class UpsertMethodMatcher extends AbstractMethodMatcher {
                 return "conflict property does not exist: " + conflictProperty;
             }
             List<PersistentProperty> generatedProperties = new ArrayList<>();
+            boolean[] hasBindableColumn = {false};
             PersistentEntityUtils.traversePersistentProperties(propertyPath, (associations, property) -> {
-                if (property.isGenerated()) {
+                hasBindableColumn[0] = true;
+                // A referenced generated identity is a bindable foreign key; the root generated value is not.
+                // Keep this aligned with SqlQueryBuilderUtils.isGeneratedProperty for runtime upsert binding.
+                if (property.isGenerated() && (associations.isEmpty()
+                    || !associations.getLast().getAssociatedEntity().getIdentityProperties().contains(property))) {
                     generatedProperties.add(property);
                 }
             });
+            if (!hasBindableColumn[0]) {
+                return "conflict property does not map to a column: " + conflictProperty;
+            }
             if (!generatedProperties.isEmpty()) {
                 return "generated conflict properties are not supported";
             }

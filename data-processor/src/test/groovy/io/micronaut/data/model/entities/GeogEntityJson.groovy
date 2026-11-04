@@ -19,7 +19,7 @@ class GeogEntityJson {
     @GeneratedValue
     private Long id;
 
-    @Srid(3857)
+    @Srid(Srid.WEB_MERCATOR)
     @Index(columns = "location")
     @MappedProperty(value = "location", definition = "GEOGRAPHY NOT NULL")
     private Point point;
@@ -28,7 +28,7 @@ class GeogEntityJson {
     @MappedProperty(definition = "GEOGRAPHY NOT NULL")
     private MultiPoint multiPoint;
 
-    @Srid(3857)
+    @Srid(Srid.WEB_MERCATOR)
     @MappedProperty(definition = "GEOGRAPHY NOT NULL")
     private LineString lineString;
 

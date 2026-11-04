@@ -31,7 +31,8 @@ import java.util.function.Supplier;
  * <p>This implementation creates a lexical {@link PropagatedContext} scope that contains a single
  * {@link OracleSessionlessTransactionState}. The transaction manager uses that state to publish the
  * GTRID produced by {@link OracleTransactional.Sessionless#SUSPEND} and to
- * consume the GTRID required by {@link OracleTransactional.Sessionless#REQUIRES_SUSPENDED}.
+ * retain it across {@link OracleTransactional.Sessionless#RESUME_AND_SUSPEND} stages and consume it
+ * when {@link OracleTransactional.Sessionless#REQUIRES_SUSPENDED} completes the transaction.
  * Encoded transaction identifiers are converted through {@link OracleSessionlessTransactionIdCodec}, so
  * applications can replace the codec without changing propagation mechanics.</p>
  */
