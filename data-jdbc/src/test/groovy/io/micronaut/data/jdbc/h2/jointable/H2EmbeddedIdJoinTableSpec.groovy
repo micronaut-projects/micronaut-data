@@ -19,6 +19,7 @@ import jakarta.inject.Inject
 import spock.lang.Specification
 
 import java.sql.Connection
+import java.sql.ResultSet
 
 @MicronautTest(transactional = false)
 class H2EmbeddedIdJoinTableSpec extends Specification implements H2TestPropertyProvider {
@@ -83,17 +84,19 @@ class H2EmbeddedIdJoinTableSpec extends Specification implements H2TestPropertyP
 
     private List<List<Object>> joinTableRows(String sql) {
         return connectionOperations.executeRead { status ->
-            def rows = []
             status.connection.prepareStatement(sql).withCloseable { statement ->
-                statement.executeQuery().withCloseable { rs ->
-                    int count = rs.metaData.columnCount
-                    while (rs.next()) {
-                        rows << (1..count).collect { rs.getObject(it) }
-                    }
-                }
+                statement.executeQuery().withCloseable { rs -> readRows(rs) }
             }
-            return rows
         }
+    }
+
+    private static List<List<Object>> readRows(ResultSet rs) {
+        List<List<Object>> rows = []
+        int count = rs.metaData.columnCount
+        while (rs.next()) {
+            rows << (1..count).collect { rs.getObject(it) }
+        }
+        return rows
     }
 }
 

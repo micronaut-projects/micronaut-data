@@ -16,6 +16,7 @@ import io.micronaut.data.repository.reactive.ReactorCrudRepository
 import io.micronaut.test.extensions.spock.annotation.MicronautTest
 import io.r2dbc.spi.Connection
 import io.r2dbc.spi.ConnectionFactory
+import io.r2dbc.spi.Row
 import jakarta.inject.Inject
 import reactor.core.publisher.Flux
 import reactor.core.publisher.Mono
@@ -86,9 +87,13 @@ class H2EmbeddedIdJoinTableSpec extends Specification implements H2TestPropertyP
         return Flux.usingWhen(
                 Mono.from(connectionFactory.create()),
                 (Connection connection) -> Flux.from(connection.createStatement(sql).execute())
-                        .flatMap(result -> result.map((row, metadata) -> (0..<columnCount).collect { row.get(it) })),
+                        .flatMap(result -> result.map((row, metadata) -> rowValues(row, columnCount))),
                 (Connection connection) -> connection.close()
         ).collectList().block()
+    }
+
+    private static List<Object> rowValues(Row row, int columnCount) {
+        return (0..<columnCount).collect { row.get(it) }
     }
 }
 
