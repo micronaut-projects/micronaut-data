@@ -20,6 +20,9 @@ import ch.qos.logback.classic.Logger
 import ch.qos.logback.classic.spi.ILoggingEvent
 import ch.qos.logback.core.read.ListAppender
 import io.micronaut.context.BeanContext
+import io.micronaut.context.ApplicationContext
+import io.micronaut.context.ExecutionHandleLocator
+import io.micronaut.context.RuntimeBeanDefinition
 import io.micronaut.data.notification.ChangeEvent
 import io.micronaut.data.jdbc.notification.ChangeNotificationQueue
 import io.micronaut.data.notification.ChangeOperation
@@ -27,6 +30,7 @@ import io.micronaut.data.jdbc.notification.DefaultChangeEvent
 import io.micronaut.data.jdbc.notification.DeferredChangeEvent
 import io.micronaut.inject.BeanDefinition
 import io.micronaut.inject.ExecutableMethod
+import io.micronaut.inject.ExecutionHandle
 import oracle.jdbc.dcn.DatabaseChangeEvent
 import oracle.jdbc.dcn.QueryChangeDescription
 import oracle.jdbc.dcn.RowChangeDescription
@@ -44,8 +48,48 @@ import java.util.concurrent.atomic.AtomicBoolean
 import java.util.concurrent.atomic.AtomicInteger
 import java.util.function.BiConsumer
 import java.util.function.LongConsumer
+import java.util.function.Supplier
 
 class OracleChangeNotificationDispatcherSpec extends Specification {
+
+    void "reuses a lazily resolved listener execution handle across notifications"() {
+        given:
+        def beanContext = ApplicationContext.run()
+        def executionHandleLocator = Mock(ExecutionHandleLocator)
+        def bean = new Object()
+        def creations = new AtomicInteger()
+        def beanDefinition = RuntimeBeanDefinition.builder(Object, {
+            creations.incrementAndGet()
+            bean
+        } as Supplier).singleton(false).build()
+        beanContext.registerBeanDefinition(beanDefinition)
+        def method = Mock(ExecutableMethod)
+        method.getDescription(true) >> 'void onChange(ChangeEvent<Book>)'
+
+        when:
+        def dispatcher = new OracleChangeNotificationDispatcher('inventory',
+            definition(beanDefinition, method, new Properties()), executionHandleLocator,
+            Mock(ChangeNotificationQueue), new OracleChangeNotificationTaskTracker(), Stub(OracleChangeNotificationSubscription))
+
+        then:
+        1 * executionHandleLocator.createExecutionHandle(beanDefinition, method) >> {
+            beanContext.createExecutionHandle(beanDefinition, method)
+        }
+        creations.get() == 0
+        0 * method.invoke(_, _)
+
+        when:
+        dispatcher.dispatchInvalidation(41L, 'first notification')
+        dispatcher.dispatchInvalidation(42L, 'after registration recovery')
+
+        then:
+        2 * method.invoke(bean, { Object[] arguments -> isInvalidation(arguments) })
+        0 * executionHandleLocator.createExecutionHandle(_, _)
+        creations.get() == 1
+
+        cleanup:
+        beanContext.close()
+    }
 
     void "routes lifecycle callbacks to their handlers (#eventType)"() {
         given:
@@ -1141,6 +1185,10 @@ class OracleChangeNotificationDispatcherSpec extends Specification {
             handleRegistrationUnavailable(_, null) >> { long id, Throwable ignored -> databaseShutdownHandler.accept(id) }
             acceptsDataNotification(_) >> true
             enqueueDataNotification(_, _) >> { long id, Runnable enqueue -> enqueue.run() }
+        }
+        beanContext.createExecutionHandle(definition.beanDefinition(), definition.method()) >> {
+            def beanDefinition = definition.beanDefinition()
+            ExecutionHandle.of(beanDefinition == null ? null : beanContext.getBean(beanDefinition), definition.method())
         }
         def dispatcher = new OracleChangeNotificationDispatcher(
                 "inventory", definition, beanContext, notificationQueue(executor), taskTracker, subscription)

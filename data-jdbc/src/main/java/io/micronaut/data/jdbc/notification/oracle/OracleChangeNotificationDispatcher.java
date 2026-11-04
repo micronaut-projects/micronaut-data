@@ -15,13 +15,14 @@
  */
 package io.micronaut.data.jdbc.notification.oracle;
 
-import io.micronaut.context.BeanContext;
+import io.micronaut.context.ExecutionHandleLocator;
 import io.micronaut.data.notification.ChangeEvent;
 import io.micronaut.data.notification.ChangeOperation;
 import io.micronaut.data.jdbc.notification.ChangeNotificationQueue;
 import io.micronaut.data.jdbc.notification.DefaultChangeEvent;
 import io.micronaut.data.jdbc.notification.DeferredChangeEvent;
 import io.micronaut.inject.ExecutableMethod;
+import io.micronaut.inject.ExecutionHandle;
 import oracle.jdbc.OracleConnection;
 import oracle.jdbc.dcn.DatabaseChangeEvent;
 import oracle.jdbc.dcn.DatabaseChangeListener;
@@ -98,7 +99,7 @@ final class OracleChangeNotificationDispatcher implements DatabaseChangeListener
     private final String dataSourceName;
     private final OracleChangeListenerDefinition listenerDefinition;
     private final String methodDescription;
-    private final BeanContext beanContext;
+    private final ExecutionHandle<?, ?> listenerExecutionHandle;
     private final ChangeNotificationQueue notificationQueue;
     private final OracleChangeNotificationTaskTracker taskTracker;
     private final OracleChangeNotificationSubscription subscription;
@@ -112,16 +113,18 @@ final class OracleChangeNotificationDispatcher implements DatabaseChangeListener
     @SuppressWarnings("java:S3077")
     private volatile @Nullable RegistrationOptions registrationOptions;
 
+    @SuppressWarnings("unchecked")
     OracleChangeNotificationDispatcher(String dataSourceName,
                                        OracleChangeListenerDefinition listenerDefinition,
-                                       BeanContext beanContext,
+                                       ExecutionHandleLocator executionHandleLocator,
                                        ChangeNotificationQueue notificationQueue,
                                        OracleChangeNotificationTaskTracker taskTracker,
                                        OracleChangeNotificationSubscription subscription) {
         this.dataSourceName = dataSourceName;
         this.listenerDefinition = listenerDefinition;
         this.methodDescription = listenerDefinition.method().getDescription(true);
-        this.beanContext = beanContext;
+        this.listenerExecutionHandle = executionHandleLocator.createExecutionHandle(
+            listenerDefinition.beanDefinition(), (ExecutableMethod<Object, ?>) listenerDefinition.method());
         this.notificationQueue = notificationQueue;
         this.taskTracker = taskTracker;
         this.subscription = subscription;
@@ -623,17 +626,17 @@ final class OracleChangeNotificationDispatcher implements DatabaseChangeListener
     }
 
     /**
-     * Resolves the listener bean and invokes its executable method with the change event.
+     * Invokes the listener through its cached execution handle, which resolves the bean lazily
+     * and reuses it across notifications and registration recovery.
      * Exceptions from bean lookup, listener advice, or the listener itself are logged with the
      * available row context so processing can continue.
      *
      * @param event the change event passed to the listener
      * @param rowId the affected Oracle ROWID, or {@code null} when no row-specific context is available
      */
-    @SuppressWarnings({"unchecked", "rawtypes"})
     private void invokeListener(ChangeEvent<?> event, @Nullable String rowId) {
         try {
-            ((ExecutableMethod) listenerDefinition.method()).invoke(beanContext.getBean(listenerDefinition.beanDefinition()), event);
+            listenerExecutionHandle.invoke(event);
         } catch (Exception e) {
             if (rowId == null) {
                 LOG.error("Error handling DCN for listener method [{}], operation [{}], table [{}], ROWID unavailable",
