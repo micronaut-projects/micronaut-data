@@ -41,41 +41,28 @@ public final class OracleChangeNotificationOptions {
         if (name.isBlank()) {
             return "has an Oracle property with a blank name";
         }
-        if ("DCN_CLIENT_INIT_REGID".equals(name)) {
-            return name + ": reusing an existing reliable DCN registration is not supported";
-        }
-        if ("DCN_NOTIFY_ROWIDS".equals(name) && !"true".equalsIgnoreCase(value)) {
-            return "requires " + name + " to be true so row-level operation and ROWID details are available";
-        }
-        if ("DCN_NOTIFY_CHANGELAG".equals(name) && !"0".equals(value.trim())) {
-            return "requires " + name + " to be 0 so row-level operation and ROWID details are available";
-        }
-        if (isUnsupportedGrouping(name, value)) {
-            return name + ": notification grouping is not supported";
-        }
-        if ("DCN_PULL_NOTIFICATIONS".equals(name) && !"false".equalsIgnoreCase(value)) {
-            return name + " [" + value + "] is not supported because AQ pull delivery does not invoke the listener callback";
-        }
-        if ("DCN_PULL_QUEUE_NAME".equals(name)) {
-            return name + " is not supported because AQ pull delivery does not invoke the listener callback";
-        }
-        if ("NTF_TIMEOUT".equals(name)) {
-            try {
-                if (Integer.parseInt(value) < 0) {
-                    return name + " must be a non-negative integer number of seconds";
-                }
-            } catch (NumberFormatException _) {
-                return name + " must be a non-negative integer number of seconds";
-            }
-        }
-        return null;
-    }
-
-    private static boolean isUnsupportedGrouping(String name, String value) {
         return switch (name) {
-            case "NTF_GROUPING_CLASS" -> !"NTF_GROUPING_CLASS_NONE".equals(value);
-            case "NTF_GROUPING_VALUE", "NTF_GROUPING_TYPE", "NTF_GROUPING_REPEAT_TIME", "NTF_GROUPING_START_TIME" -> true;
-            default -> false;
+            case "DCN_CLIENT_INIT_REGID" -> name + ": reusing an existing reliable DCN registration is not supported";
+            case "DCN_NOTIFY_ROWIDS" -> "true".equalsIgnoreCase(value) ? null
+                : "requires " + name + " to be true so row-level operation and ROWID details are available";
+            case "DCN_NOTIFY_CHANGELAG" -> "0".equals(value.trim()) ? null
+                : "requires " + name + " to be 0 so row-level operation and ROWID details are available";
+            case "NTF_GROUPING_CLASS" -> "NTF_GROUPING_CLASS_NONE".equals(value) ? null
+                : name + ": notification grouping is not supported";
+            case "NTF_GROUPING_VALUE", "NTF_GROUPING_TYPE", "NTF_GROUPING_REPEAT_TIME", "NTF_GROUPING_START_TIME" ->
+                name + ": notification grouping is not supported";
+            case "DCN_PULL_NOTIFICATIONS" -> "false".equalsIgnoreCase(value) ? null
+                : name + " [" + value + "] is not supported because AQ pull delivery does not invoke the listener callback";
+            case "DCN_PULL_QUEUE_NAME" ->
+                name + " is not supported because AQ pull delivery does not invoke the listener callback";
+            case "NTF_TIMEOUT" -> {
+                try {
+                    yield Integer.parseInt(value) < 0 ? name + " must be a non-negative integer number of seconds" : null;
+                } catch (NumberFormatException _) {
+                    yield name + " must be a non-negative integer number of seconds";
+                }
+            }
+            default -> null;
         };
     }
 
