@@ -101,7 +101,7 @@ public class DefaultSqlPreparedQuery<E, R> extends DefaultBindableParametersPrep
         this.sqlStoredQuery = sqlStoredQuery;
         this.query = sqlStoredQuery.getQuery();
         this.vectorScoringSupport = resolveVectorScoringSupport(sqlStoredQuery.getDialect(), vectorScoringSupportResolver);
-        this.vectorScoringFunction = vectorScoringSupport.defaultScoringFunction();
+        this.vectorScoringFunction = vectorScoringSupport.defaultScoringFunction(this.query);
         applyAndValidateVectorScoringFunction();
         bindPageableOrSort = getQueryBindings().stream().anyMatch(p -> TypeRole.PAGEABLE.equals(p.getRole()) || TypeRole.SORT.equals(p.getRole()));
     }
@@ -116,7 +116,7 @@ public class DefaultSqlPreparedQuery<E, R> extends DefaultBindableParametersPrep
         this.sqlStoredQuery = sqlStoredQuery;
         this.query = sqlStoredQuery.getQuery();
         this.vectorScoringSupport = resolveVectorScoringSupport(sqlStoredQuery.getDialect(), vectorScoringSupportResolver);
-        this.vectorScoringFunction = vectorScoringSupport.defaultScoringFunction();
+        this.vectorScoringFunction = vectorScoringSupport.defaultScoringFunction(this.query);
         bindPageableOrSort = getQueryBindings().stream().anyMatch(p -> TypeRole.PAGEABLE.equals(p.getRole()) || TypeRole.SORT.equals(p.getRole()));
     }
 

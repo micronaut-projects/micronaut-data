@@ -14,6 +14,8 @@ dependencies {
     implementation mnSql.micronaut.jdbc
     implementation mn.micronaut.aop
     implementation mn.micronaut.runtime
+    // DRCP attach and detach around request boundaries, when the Oracle driver is present
+    compileOnly mnSql.ojdbc11
 
     testAnnotationProcessor mn.micronaut.inject.java
 
@@ -21,6 +23,7 @@ dependencies {
     testImplementation projects.micronautDataTck
 
     testImplementation mnReactor.micronaut.reactor
+    testImplementation mnSql.ojdbc11
 
     testImplementation(mnTestResources.testcontainers.postgres)
 

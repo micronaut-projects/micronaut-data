@@ -92,6 +92,44 @@ class DefaultR2dbcReactorTransactionOperationsSpec extends Specification {
         noExceptionThrown()
     }
 
+    void "a read-only transaction begins with only the read-only attribute"() {
+        given:
+        def transactionOperations = new DefaultR2dbcReactorTransactionOperations("default", null, [])
+        def connectionStatus = Mock(ReactiveConnectionStatus<Connection>)
+        def connection = Mock(Connection)
+        def definition = new DefaultTransactionDefinition()
+        definition.setReadOnly(true)
+        io.r2dbc.spi.TransactionDefinition begun = null
+
+        when:
+        Mono.from(transactionOperations.beginTransaction(connectionStatus, definition)).block()
+
+        then:
+        1 * connectionStatus.getConnection() >> connection
+        1 * connection.beginTransaction(_ as io.r2dbc.spi.TransactionDefinition) >> { args ->
+            begun = (io.r2dbc.spi.TransactionDefinition) args[0]
+            Mono.empty()
+        }
+        0 * connection.beginTransaction()
+        begun.getAttribute(io.r2dbc.spi.TransactionDefinition.READ_ONLY) == Boolean.TRUE
+        begun.getAttribute(io.r2dbc.spi.TransactionDefinition.ISOLATION_LEVEL) == null
+    }
+
+    void "a read-write transaction begins without a definition"() {
+        given:
+        def transactionOperations = new DefaultR2dbcReactorTransactionOperations("default", null, [])
+        def connectionStatus = Mock(ReactiveConnectionStatus<Connection>)
+        def connection = Mock(Connection)
+
+        when:
+        Mono.from(transactionOperations.beginTransaction(connectionStatus, new DefaultTransactionDefinition())).block()
+
+        then:
+        1 * connectionStatus.getConnection() >> connection
+        1 * connection.beginTransaction() >> Mono.empty()
+        0 * connection.beginTransaction(_ as io.r2dbc.spi.TransactionDefinition)
+    }
+
     void "recognizes priority rollback only from an Oracle R2DBC connection"() {
         given:
         def connection = Mock(Connection)
