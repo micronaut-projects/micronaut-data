@@ -63,6 +63,7 @@ class MappedCodec<T> implements Codec<T> {
     private final Serializer.EncoderContext encoderContext;
     private final List<String> manyAssociationProperties;
     // Created on first encode, not while the registry is still building codecs
+    @SuppressWarnings("java:S3077") // the codec is stateless
     @Nullable
     private volatile BsonDocumentCodec documentCodec;
 

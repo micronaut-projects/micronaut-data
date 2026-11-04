@@ -76,6 +76,7 @@ public class DefaultBindableParametersStoredQuery<E, R> implements BindableParam
      * {@link PersistentPropertyPath} or a {@link PathResolution}. The stored query is shared between threads, the
      * volatile field publishes the completed array.
      */
+    @SuppressWarnings("java:S3077") // the array is filled before it is published and never changed after
     private volatile Object @Nullable [] bindingPropertyPaths;
 
     /**
@@ -155,12 +156,13 @@ public class DefaultBindableParametersStoredQuery<E, R> implements BindableParam
         try {
             PersistentPropertyPath pp = persistentEntity.getPropertyPath(propertyPath);
             return pp == null ? PathResolution.NOT_FOUND : pp;
-        } catch (RuntimeException e) {
+        } catch (RuntimeException _) {
             // Keep failing at bind time, as before
             return PathResolution.UNRESOLVED;
         }
     }
 
+    @SuppressWarnings("java:S3776") // the binding rules of the public bindParameter, unchanged
     private void bindParameter(Binder binder,
                                @Nullable InvocationContext<?, ?> invocationContext,
                                @Nullable E entity,
@@ -441,20 +443,16 @@ public class DefaultBindableParametersStoredQuery<E, R> implements BindableParam
     private RuntimePersistentProperty<Object> findPersistentProperty(QueryParameterBinding queryParameterBinding,
                                                                      RuntimePersistentEntity<E> persistentEntity,
                                                                      Object resolvedPropertyPath) {
-        PersistentPropertyPath pp;
-        if (resolvedPropertyPath instanceof PersistentPropertyPath resolved) {
-            pp = resolved;
-        } else if (resolvedPropertyPath == PathResolution.NOT_FOUND) {
+        PersistentPropertyPath pp = switch (resolvedPropertyPath) {
+            case PersistentPropertyPath resolved -> resolved;
+            case PathResolution.NOT_FOUND -> null;
+            default -> {
+                String[] propertyPath = queryParameterBinding.getPropertyPath();
+                yield propertyPath == null ? null : persistentEntity.getPropertyPath(propertyPath);
+            }
+        };
+        if (pp == null) {
             return null;
-        } else {
-            String[] propertyPath = queryParameterBinding.getPropertyPath();
-            if (propertyPath == null) {
-                return null;
-            }
-            pp = persistentEntity.getPropertyPath(propertyPath);
-            if (pp == null) {
-                return null;
-            }
         }
         RuntimePersistentProperty<Object> property = (RuntimePersistentProperty<Object>) pp.getProperty();
         DataType bindingDataType = queryParameterBinding.getDataType();

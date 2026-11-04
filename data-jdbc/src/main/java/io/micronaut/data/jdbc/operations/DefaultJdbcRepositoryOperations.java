@@ -187,6 +187,7 @@ public final class DefaultJdbcRepositoryOperations extends AbstractSqlRepository
     private final AtomicReference<JdbcBatchMetadata> cachedJdbcBatchMetadata = new AtomicReference<>();
     private final Set<DialectTargetVersion> checkedTargetVersions = ConcurrentHashMap.newKeySet();
     // The last SQL target version normalized for a statement, a datasource normally has one
+    @SuppressWarnings("java:S3077") // NormalizedTargetVersion is an immutable record
     @Nullable
     private volatile NormalizedTargetVersion lastTargetVersion;
     // This @EachBean(DataSource.class) instance caches the successfully resolved version per datasource.

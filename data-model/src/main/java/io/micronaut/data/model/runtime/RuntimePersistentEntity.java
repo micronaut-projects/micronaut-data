@@ -76,6 +76,7 @@ public class RuntimePersistentEntity<T> extends AbstractPersistentEntity {
     @Nullable
     private EnumSet<Relation.Cascade> cascadedTypes;
     // Entities are shared between threads, the volatile field publishes the unmodifiable list
+    @SuppressWarnings("java:S3077") // an unmodifiable list
     @Nullable
     private volatile Collection<RuntimeAssociation<T>> associations;
 

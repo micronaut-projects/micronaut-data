@@ -63,8 +63,10 @@ final class DataDecoderContext implements Deserializer.DecoderContext {
     private final Deserializer.DecoderContext parent;
     private final CodecRegistry codecRegistry;
     // The decoders are stateless and created on first use, not while the registry is still building codecs
+    @SuppressWarnings("java:S3077")
     @Nullable
     private volatile CodecBsonDecoder<BsonDocument> documentDecoder;
+    @SuppressWarnings("java:S3077")
     @Nullable
     private volatile CodecBsonDecoder<BsonValue> valueDecoder;
 

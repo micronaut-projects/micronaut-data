@@ -316,16 +316,9 @@ class DefaultBindableParametersStoredQuerySpec extends Specification {
                 executor.submit({
                     start.await()
                     (1..bindsPerRound).each { int i ->
-                        def expected = ["title $round-$thread-$i".toString(), "author $round-$thread-$i".toString()]
-                        try {
-                            def binder = new CapturingBinder()
-                            q.bindParameters(binder, null, new Book(title: expected[0], author: new Author(name: expected[1])), null)
-                            def actual = binder.oneCalls*.value
-                            if (actual != expected) {
-                                failures << "round $round, thread $thread, bind $i: expected $expected but was $actual".toString()
-                            }
-                        } catch (Throwable e) {
-                            failures << "round $round, thread $thread, bind $i: $e".toString()
+                        String failure = bindFailure(q, "$round-$thread-$i")
+                        if (failure != null) {
+                            failures << "round $round, thread $thread, bind $i: $failure".toString()
                         }
                     }
                 } as Runnable)
@@ -338,6 +331,23 @@ class DefaultBindableParametersStoredQuerySpec extends Specification {
 
         cleanup:
         executor.shutdown()
+    }
+
+    /**
+     * Binds a book whose title and author name end with the given suffix.
+     *
+     * @return null if the binder got the title and the author name, otherwise what went wrong
+     */
+    private static String bindFailure(DefaultBindableParametersStoredQuery<Book, Object> q, String suffix) {
+        def expected = ["title $suffix".toString(), "author $suffix".toString()]
+        try {
+            def binder = new CapturingBinder()
+            q.bindParameters(binder, null, new Book(title: expected[0], author: new Author(name: expected[1])), null)
+            def actual = binder.oneCalls*.value
+            return actual == expected ? null : "expected $expected but was $actual".toString()
+        } catch (Throwable e) {
+            return e.toString()
+        }
     }
 
     def "previous values are collected only for the bindings that need them"() {

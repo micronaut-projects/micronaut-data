@@ -57,6 +57,7 @@ public class DefaultSqlStoredQuery<E, R> extends DefaultBindableParametersStored
      * The DTO entity built for this query, with the inputs it was built from. The stored query is shared between
      * threads, the volatile field publishes the immutable holder.
      */
+    @SuppressWarnings("java:S3077") // DtoEntity is an immutable record
     @Nullable
     private volatile DtoEntity dtoEntity;
 
