@@ -15,6 +15,7 @@
  */
 package io.micronaut.data.jdbc.notification.postgres;
 
+import io.micronaut.core.annotation.Internal;
 import org.jspecify.annotations.Nullable;
 
 /**
@@ -28,6 +29,7 @@ import org.jspecify.annotations.Nullable;
  * @param table the mapped table name, normalized for PostgreSQL identifier matching
  * @param loader the loader for current entity state
  */
+@Internal
 record PostgresChangeListenerDefinition(String channel, @Nullable String schema, String table,
                                         PostgresChangeListenerEntityLoader<?> loader) {
 

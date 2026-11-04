@@ -15,6 +15,7 @@
  */
 package io.micronaut.data.jdbc.notification.postgres;
 
+import io.micronaut.core.util.StringUtils;
 import io.micronaut.data.jdbc.operations.JdbcRepositoryOperations;
 import io.micronaut.data.model.DataType;
 import io.micronaut.data.model.query.builder.sql.Dialect;
@@ -43,8 +44,6 @@ import java.util.Set;
  * @param <E> The entity type.
  */
 final class PostgresChangeListenerEntityLoader<E> {
-    private static final String[] EMPTY_EXPANDABLE_QUERY_PARTS = new String[0];
-
     private final JdbcRepositoryOperations operations;
     private final DefaultSqlStoredQuery<E, E> sqlStoredQuery;
     private final List<KeyBinding> bindings;
@@ -66,7 +65,7 @@ final class PostgresChangeListenerEntityLoader<E> {
         columns = Set.copyOf(this.bindings.stream().map(KeyBinding::column).toList());
         Class<E> resolvedEntityType = (Class<E>) entityType;
         RuntimePersistentEntity<E> entity = operations.getEntity(resolvedEntityType);
-        StoredQuery<E, E> storedQuery = new BasicStoredQuery<>(query, EMPTY_EXPANDABLE_QUERY_PARTS,
+        StoredQuery<E, E> storedQuery = new BasicStoredQuery<>(query, StringUtils.EMPTY_STRING_ARRAY,
             List.copyOf(this.bindings), resolvedEntityType, resolvedEntityType, StoredQuery.OperationType.QUERY);
         SqlQueryBuilder queryBuilder = new SqlQueryBuilder(Dialect.POSTGRES);
         sqlStoredQuery = new DefaultSqlStoredQuery<>(storedQuery, entity, queryBuilder, operations.getConversionService());
