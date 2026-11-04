@@ -34,7 +34,8 @@ import java.util.Map;
  * @since 5.3.0
  */
 @Experimental
-public interface PostgresChangeEventMetadata extends ChangeEventMetadata {
+public sealed interface PostgresChangeEventMetadata extends ChangeEventMetadata
+    permits DefaultPostgresChangeEventMetadata {
 
     /**
      * Returns the channel on which the notification was published.

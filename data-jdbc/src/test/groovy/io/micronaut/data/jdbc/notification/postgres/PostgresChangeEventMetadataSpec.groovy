@@ -62,15 +62,9 @@ class PostgresChangeEventMetadataSpec extends Specification {
         metadata.newKeys().isEmpty()
     }
 
-    void "custom implementations are available through PostgreSQL and common metadata interfaces"() {
+    void "provider metadata is available through PostgreSQL and common metadata interfaces"() {
         given:
-        def metadata = Stub(PostgresChangeEventMetadata) {
-            channel() >> 'books'
-            schema() >> 'public'
-            table() >> 'book'
-            oldKeys() >> Map.of('id', '41')
-            newKeys() >> Map.of('id', '42')
-        }
+        def metadata = new DefaultPostgresChangeEventMetadata('books', 'public', 'book', [id: '41'], [id: '42'])
         def event = new DefaultChangeEvent<>(ChangeOperation.UPDATE, null, metadata)
 
         expect:
