@@ -31,8 +31,11 @@ import java.util.Objects;
  * @since 5.3.0
  */
 @Experimental
-@ConfigurationProperties("micronaut.data.jdbc.notifications.postgres")
+@ConfigurationProperties(PostgresNotificationConfiguration.PREFIX)
 public final class PostgresNotificationConfiguration {
+
+    public static final String PREFIX = "micronaut.data.jdbc.notifications.postgres";
+
     private boolean schemaGenerate;
     private SchemaGenerationMode schemaGenerateMode = SchemaGenerationMode.ROW;
     private int queueCapacity = 1000;

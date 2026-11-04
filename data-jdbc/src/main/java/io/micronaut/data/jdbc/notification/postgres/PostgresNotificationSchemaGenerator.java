@@ -18,6 +18,7 @@ package io.micronaut.data.jdbc.notification.postgres;
 import io.micronaut.context.annotation.Requires;
 import io.micronaut.context.env.Environment;
 import io.micronaut.core.annotation.Internal;
+import io.micronaut.core.util.StringUtils;
 import io.micronaut.data.annotation.MappedEntity;
 import io.micronaut.data.jdbc.annotation.PostgresChangeNotification;
 import io.micronaut.data.jdbc.config.DataJdbcConfiguration;
@@ -64,8 +65,10 @@ import java.util.stream.Collectors;
  */
 @Internal
 @Singleton
-@Requires(property = "micronaut.data.jdbc.notifications.postgres.schema-generate", value = "true")
+@Requires(property = PostgresNotificationSchemaGenerator.SCHEMA_GENERATE_PROPERTY, value = StringUtils.TRUE)
 public final class PostgresNotificationSchemaGenerator {
+
+    static final String SCHEMA_GENERATE_PROPERTY = PostgresNotificationConfiguration.PREFIX + ".schema-generate";
 
     private static final String SQL_RESOURCE_DIRECTORY = "/io/micronaut/data/jdbc/notification/postgres/sql/";
     private static final String CHANGE_FUNCTION_RESOURCE = SQL_RESOURCE_DIRECTORY + "create-notification-function.sql";
