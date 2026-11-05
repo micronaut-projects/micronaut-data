@@ -72,6 +72,16 @@ final class PostgresVectorSqlIndexDefinitionProvider implements SqlIndexDefiniti
             throw new IllegalArgumentException("PostgreSQL sparse vectors support HNSW indexes only");
         }
 
+        validateDistanceType(meta);
+
+        String usingMethod = hnsw ? "hnsw" : "ivfflat";
+        String operatorClass = operatorClass(meta.distanceType(), sparse, hnsw);
+
+        return "CREATE INDEX " + indexName + " ON " + escapedTableName
+            + " USING " + usingMethod + " (" + renderedColumn + " " + operatorClass + ");";
+    }
+
+    private static void validateDistanceType(VectorIndexMetadata meta) {
         // pgvector defines the bit operator classes for bit columns only, and the others for numeric columns only
         VectorIndexType.DistanceType distanceType = meta.distanceType();
         boolean binaryDistance = distanceType == VectorIndexType.DistanceType.HAMMING || distanceType == VectorIndexType.DistanceType.JACCARD;
@@ -81,15 +91,14 @@ final class PostgresVectorSqlIndexDefinitionProvider implements SqlIndexDefiniti
         if (!binaryDistance && meta.binary()) {
             throw new IllegalArgumentException("PostgreSQL doesn't support distance type " + distanceType + " on binary vectors. Use HAMMING or JACCARD.");
         }
+    }
 
-        String usingMethod = hnsw ? "hnsw" : "ivfflat";
-
-        String operatorClass = switch (distanceType) {
+    private static String operatorClass(VectorIndexType.DistanceType distanceType, boolean sparse, boolean hnsw) {
+        return switch (distanceType) {
             case COSINE -> sparse ? "sparsevec_cosine_ops" : "vector_cosine_ops";
             case DOT -> sparse ? "sparsevec_ip_ops" : "vector_ip_ops";
             case L1_MANHATTAN -> sparse ? "sparsevec_l1_ops" : "vector_l1_ops";
-            case L2_EUCLIDEAN_SQUARED -> sparse ? "sparsevec_l2_ops" : "vector_l2_ops";
-            case L2_EUCLIDEAN -> sparse ? "sparsevec_l2_ops" : "vector_l2_ops";
+            case L2_EUCLIDEAN_SQUARED, L2_EUCLIDEAN -> sparse ? "sparsevec_l2_ops" : "vector_l2_ops";
             case HAMMING -> "bit_hamming_ops";
             case JACCARD -> {
                 if (!hnsw) {
@@ -99,8 +108,5 @@ final class PostgresVectorSqlIndexDefinitionProvider implements SqlIndexDefiniti
             }
             default -> throw new IllegalArgumentException("Distance type " + distanceType + " is not supported for PostgreSQL vector indexes");
         };
-
-        return "CREATE INDEX " + indexName + " ON " + escapedTableName
-            + " USING " + usingMethod + " (" + renderedColumn + " " + operatorClass + ");";
     }
 }
