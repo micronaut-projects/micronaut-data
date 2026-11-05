@@ -19,6 +19,8 @@ import io.micronaut.core.annotation.Internal;
 import io.micronaut.core.naming.NameUtils;
 import io.micronaut.data.annotation.Query;
 import io.micronaut.data.annotation.RepositoryConfiguration;
+import io.micronaut.data.annotation.TenantId;
+import io.micronaut.data.annotation.WithoutTenantId;
 import io.micronaut.data.graph.annotation.Direction;
 import io.micronaut.data.graph.annotation.GraphRepository;
 import io.micronaut.data.graph.annotation.PathLimit;
@@ -30,6 +32,7 @@ import io.micronaut.data.graph.model.query.PathQueryDefinition;
 import io.micronaut.data.graph.model.query.builder.CypherQueryBuilder;
 import io.micronaut.data.intercept.annotation.DataMethod;
 import io.micronaut.data.model.Association;
+import io.micronaut.data.model.Page;
 import io.micronaut.data.model.PersistentProperty;
 import io.micronaut.data.model.PersistentPropertyPath;
 import io.micronaut.data.model.query.BindingParameter;
@@ -113,6 +116,9 @@ public final class GraphPathMethodMatcher implements MethodMatcher {
         }
         Matcher count = COUNT_PATTERN.matcher(name);
         if (count.matches()) {
+            if (isPropertyProjection(matchContext, count.group(1), count.group(2))) {
+                return null;
+            }
             rejectOrdering(name, count);
             PathQueryDefinition.Kind kind = count.group(1).equals("Paths") ? PathQueryDefinition.Kind.ALL : PathQueryDefinition.Kind.RELATIONSHIPS;
             return context -> buildMatchInfo(context, kind, PathQueryDefinition.Result.COUNT, count.group(2));
@@ -122,20 +128,45 @@ public final class GraphPathMethodMatcher implements MethodMatcher {
 
     /**
      * Whether the method is an ordinary finder on a property of the entity that happens to be named like a path
-     * query, for example {@code findPathByName} on an entity with a {@code path} property. Such a method does not
-     * return paths or relationships and is left to the finder matchers.
+     * query, for example {@code findPathByName} on an entity with a {@code path} property, or
+     * {@code findAllPathsByName} on one with a {@code paths} property. Such a method does not return paths or
+     * relationships and is left to the finder matchers.
      *
      * @param matchContext The match context
      * @param token        The path token of the method name, for example {@code Path}
      * @return Whether the finder matchers should match the method instead
      */
     private static boolean isPropertyFinder(MethodMatchContext matchContext, String token) {
-        String propertyName = Objects.requireNonNullElse(NameUtils.decapitalize(token), token);
-        if (matchContext.getRootEntity().getPropertyByName(propertyName) == null) {
+        if (!hasProperty(matchContext, token)) {
             return false;
         }
         ClassElement returnType = matchContext.getReturnType();
         return !refersTo(returnType, GraphPath.class) && !refersTo(returnType, GraphRelationship.class);
+    }
+
+    /**
+     * Whether a count method reads a property of the entity rather than paths or relationships, for example
+     * {@code countRelationshipsByName} on an entity with a {@code relationships} property. The return type cannot
+     * tell these apart, so the suffix does: it names a relationship on a path query.
+     *
+     * @param matchContext  The match context
+     * @param token         The path token of the method name
+     * @param relationships The suffix of the method name, or null
+     * @return Whether the finder matchers should match the method instead
+     */
+    private static boolean isPropertyProjection(MethodMatchContext matchContext, String token, @Nullable String relationships) {
+        if (relationships == null || !hasProperty(matchContext, token)) {
+            return false;
+        }
+        String first = relationships.split("Or(?=[A-Z])")[0];
+        PersistentProperty property = matchContext.getRootEntity().getPropertyByName(Objects.requireNonNullElse(NameUtils.decapitalize(first), first));
+        return !(property instanceof Association association) || !GraphEntities.isRelationship(association);
+    }
+
+    private static boolean hasProperty(MethodMatchContext matchContext, String token) {
+        // A leading All belongs to the finder rather than the property: findAllPathsByName reads the property paths
+        String property = token.startsWith("All") ? token.substring("All".length()) : token;
+        return matchContext.getRootEntity().getPropertyByName(Objects.requireNonNullElse(NameUtils.decapitalize(property), property)) != null;
     }
 
     private static boolean refersTo(ClassElement type, Class<?> expected) {
@@ -163,11 +194,12 @@ public final class GraphPathMethodMatcher implements MethodMatcher {
                                            PathQueryDefinition.Result result,
                                            @Nullable String relationshipsToken) {
         SourcePersistentEntity entity = matchContext.getRootEntity();
+        rejectTenantRestriction(matchContext, entity);
         List<Association> relationships = resolveRelationships(entity, relationshipsToken);
         Direction direction = resolveDirection(relationships);
 
         ParameterElement[] allParameters = matchContext.getParameters();
-        int maxDepth = matchContext.getMethodElement().intValue(PathLimit.class).orElse(-1);
+        int maxDepth = methodPathLimit(matchContext, kind);
         Endpoints parameters = endpoints(matchContext, kind, maxDepth);
         List<ParameterElement> endpoints = parameters.endpoints();
         int limitParameterIndex = parameters.limitParameterIndex();
@@ -193,7 +225,7 @@ public final class GraphPathMethodMatcher implements MethodMatcher {
 
         MethodMatchInfo methodMatchInfo = new MethodMatchInfo(operationType, resultType, entry.interceptor());
         methodMatchInfo.queryResult(queryBuilder.buildPathQuery(definition));
-        if (result == PathQueryDefinition.Result.ELEMENTS && matchContext.getReturnType().isAssignable("io.micronaut.data.model.Page")) {
+        if (result == PathQueryDefinition.Result.ELEMENTS && returnsPage(matchContext.getReturnType())) {
             // A page of relationships also needs their count
             PathQueryDefinition countDefinition = new PathQueryDefinition(
                 entity, kind, PathQueryDefinition.Result.COUNT, relationships, direction, maxDepth, limitParameterIndex >= 0, start, end
@@ -205,6 +237,41 @@ public final class GraphPathMethodMatcher implements MethodMatcher {
             matchContext.getMethodElement().annotate(PathLimitParameter.class, builder -> builder.value(index));
         }
         return methodMatchInfo;
+    }
+
+    /**
+     * A path may cross nodes of any tenant, which a condition on its endpoints would not prevent, so tenant-mapped
+     * entities need the query declared with {@code @Query} or the method opted out with {@code @WithoutTenantId}.
+     *
+     * @param matchContext The match context
+     * @param entity       The entity
+     */
+    private static void rejectTenantRestriction(MethodMatchContext matchContext, SourcePersistentEntity entity) {
+        boolean tenantMapped = entity.getPersistentProperties().stream()
+            .anyMatch(property -> property.getAnnotationMetadata().hasStereotype(TenantId.class));
+        if (tenantMapped && !matchContext.getMethodElement().hasAnnotation(WithoutTenantId.class)) {
+            throw new MatchFailedException("Path and relationship finders do not support the @TenantId of entity ["
+                + entity.getSimpleName() + "]: declare the query with @Query, or annotate the method with @WithoutTenantId");
+        }
+    }
+
+    private static int methodPathLimit(MethodMatchContext matchContext, PathQueryDefinition.Kind kind) {
+        if (!matchContext.getMethodElement().hasAnnotation(PathLimit.class)) {
+            return -1;
+        }
+        if (kind == PathQueryDefinition.Kind.RELATIONSHIPS) {
+            throw new MatchFailedException("@PathLimit does not apply to relationship finders, which match a single relationship");
+        }
+        int maxDepth = matchContext.getMethodElement().intValue(PathLimit.class).orElse(-1);
+        if (maxDepth < 1) {
+            throw new MatchFailedException("@PathLimit on a method needs a value of at least 1, found: " + maxDepth);
+        }
+        return maxDepth;
+    }
+
+    private static boolean returnsPage(ClassElement returnType) {
+        ClassElement type = TypeUtils.isReactiveOrFuture(returnType) ? returnType.getFirstTypeArgument().orElse(returnType) : returnType;
+        return type.isAssignable(Page.class);
     }
 
     /**
@@ -222,6 +289,8 @@ public final class GraphPathMethodMatcher implements MethodMatcher {
         for (ParameterElement parameter : matchContext.getParametersNotInRole()) {
             if (!parameter.hasAnnotation(PathLimit.class)) {
                 endpoints.add(parameter);
+            } else if (kind == PathQueryDefinition.Kind.RELATIONSHIPS) {
+                throw new MatchFailedException("@PathLimit does not apply to relationship finders, which match a single relationship");
             } else if (TypeUtils.isNumber(parameter.getType())) {
                 limitParameterIndex = allParameters.indexOf(parameter);
             } else {
