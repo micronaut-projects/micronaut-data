@@ -40,6 +40,7 @@ import org.slf4j.LoggerFactory;
 import java.sql.Connection;
 import java.sql.SQLException;
 import java.time.Duration;
+import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
@@ -81,6 +82,7 @@ final class PostgresChangeNotificationProvider implements ChangeNotificationProv
     private final Duration shutdownGracePeriod;
     private final AtomicBoolean shutdownHandled = new AtomicBoolean();
     private final Map<String, PostgresNotificationSubscription> subscriptions = new HashMap<>();
+    private final Map<String, CompletableFuture<Void>> startingSubscriptions = new HashMap<>();
     private @Nullable CompletableFuture<Void> shutdown;
 
     PostgresChangeNotificationProvider(BeanContext beanContext, BeanProvider<JsonMapper> jsonMapperProvider,
@@ -119,20 +121,50 @@ final class PostgresChangeNotificationProvider implements ChangeNotificationProv
      * @throws ConfigurationException if no JSON mapper implementation is available
      */
     @Override
-    public synchronized void register(String name, JdbcRepositoryOperations operations, List<ChangeListenerMethod> listeners) {
-        if (shutdown != null || subscriptions.containsKey(name)) {
-            throw new IllegalStateException("PostgreSQL notifications already registered or shutting down for " + name);
+    public void register(String name, JdbcRepositoryOperations operations, List<ChangeListenerMethod> listeners) {
+        CompletableFuture<Void> starting = new CompletableFuture<>();
+        synchronized (this) {
+            if (shutdown != null || subscriptions.containsKey(name) || startingSubscriptions.containsKey(name)) {
+                throw new IllegalStateException("PostgreSQL notifications already registered or shutting down for " + name);
+            }
+            startingSubscriptions.put(name, starting);
         }
-        if (!jsonMapperProvider.isPresent()) {
-            throw new ConfigurationException("PostgreSQL notifications for datasource [" + name
-                + "] require a JsonMapper implementation to decode notification payloads. "
-                + "Add io.micronaut.serde:micronaut-serde-jackson or provide another JsonMapper implementation.");
+        try {
+            if (!jsonMapperProvider.isPresent()) {
+                throw new ConfigurationException("PostgreSQL notifications for datasource [" + name
+                    + "] require a JsonMapper implementation to decode notification payloads. "
+                    + "Add io.micronaut.serde:micronaut-serde-jackson or provide another JsonMapper implementation.");
+            }
+            var subscription = new PostgresNotificationSubscription(name, operations, listeners, beanContext,
+                jsonMapperProvider.get(), configuration, connectionFactory, exceptionHandler);
+            LOG.trace("Starting registration of [{}] change listener methods for datasource [{}]", listeners.size(), name);
+            boolean started = false;
+            try {
+                if (!subscription.start(() -> publishSubscription(name, subscription))) {
+                    throw new IllegalStateException("PostgreSQL notifications are shutting down for " + name);
+                }
+                started = true;
+            } finally {
+                if (!started) {
+                    synchronized (this) {
+                        subscriptions.remove(name, subscription);
+                    }
+                }
+            }
+        } finally {
+            synchronized (this) {
+                startingSubscriptions.remove(name, starting);
+            }
+            starting.complete(null);
         }
-        var subscription = new PostgresNotificationSubscription(name, operations, listeners, beanContext,
-            jsonMapperProvider.get(), configuration, connectionFactory, exceptionHandler);
-        LOG.trace("Starting registration of [{}] change listener methods for datasource [{}]", listeners.size(), name);
-        subscription.start();
+    }
+
+    private synchronized boolean publishSubscription(String name, PostgresNotificationSubscription subscription) {
+        if (shutdown != null) {
+            return false;
+        }
         subscriptions.put(name, subscription);
+        return true;
     }
 
     /**
@@ -169,9 +201,10 @@ final class PostgresChangeNotificationProvider implements ChangeNotificationProv
     private synchronized CompletionStage<?> stopSubscriptions() {
         if (shutdown == null) {
             LOG.trace("Stopping PostgreSQL notification subscriptions");
-            shutdown = CompletableFuture.allOf(subscriptions.values().stream()
-                .map(PostgresNotificationSubscription::stop)
-                .toArray(CompletableFuture[]::new));
+            var pending = new ArrayList<CompletableFuture<Void>>();
+            subscriptions.values().stream().map(PostgresNotificationSubscription::stop).forEach(pending::add);
+            pending.addAll(startingSubscriptions.values());
+            shutdown = CompletableFuture.allOf(pending.toArray(CompletableFuture[]::new));
         }
         return shutdown;
     }
@@ -208,7 +241,10 @@ final class PostgresChangeNotificationProvider implements ChangeNotificationProv
      */
     @Override
     public synchronized OptionalLong reportActiveTasks() {
-        return shutdown == null ? OptionalLong.empty()
-            : OptionalLong.of(subscriptions.values().stream().mapToLong(PostgresNotificationSubscription::pendingTasks).sum());
+        if (shutdown == null) {
+            return OptionalLong.empty();
+        }
+        long starting = startingSubscriptions.keySet().stream().filter(name -> !subscriptions.containsKey(name)).count();
+        return OptionalLong.of(starting + subscriptions.values().stream().mapToLong(PostgresNotificationSubscription::pendingTasks).sum());
     }
 }

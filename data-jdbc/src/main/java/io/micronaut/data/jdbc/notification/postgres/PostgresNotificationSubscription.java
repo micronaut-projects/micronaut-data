@@ -42,6 +42,7 @@ import java.util.concurrent.CompletableFuture;
 import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Executors;
 import java.util.concurrent.TimeUnit;
+import java.util.function.BooleanSupplier;
 import java.util.stream.Collectors;
 
 /**
@@ -127,19 +128,39 @@ final class PostgresNotificationSubscription {
      * @throws IllegalStateException if the subscription cannot be started
      */
     void start() {
+        start(() -> true);
+    }
+
+    /**
+     * Opens the connection before claiming permission to start reception.
+     * A rejected claim releases the connection without starting the receiver.
+     *
+     * @param claimReception claims the subscription for reception after LISTEN succeeds
+     * @return whether reception was started
+     */
+    boolean start(BooleanSupplier claimReception) {
         try {
             connection = connect();
+            if (!claimReception.getAsBoolean()) {
+                cleanupUnstarted();
+                return false;
+            }
             receiver.execute(this::receive);
             LOG.trace("Started PostgreSQL notification subscription with [{}] listener methods for datasource [{}]",
                 dispatchers.size(), name);
+            return true;
         } catch (Exception e) {
-            running = false;
-            closeConnection(false);
-            receiver.shutdown();
-            received.complete(null);
-            dispatchers.values().forEach(PostgresChangeNotificationDispatcher::stop);
+            cleanupUnstarted();
             throw new IllegalStateException("Cannot start PostgreSQL notifications for datasource [" + name + "]", e);
         }
+    }
+
+    private void cleanupUnstarted() {
+        running = false;
+        closeConnection(false);
+        receiver.shutdown();
+        received.complete(null);
+        dispatchers.values().forEach(PostgresChangeNotificationDispatcher::stop);
     }
 
     /**

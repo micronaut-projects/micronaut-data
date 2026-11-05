@@ -17,17 +17,23 @@ package io.micronaut.data.jdbc.notification.postgres
 
 import io.micronaut.context.BeanContext
 import io.micronaut.context.BeanProvider
+import io.micronaut.context.env.Environment
 import io.micronaut.context.event.ShutdownEvent
 import io.micronaut.context.exceptions.ConfigurationException
 import io.micronaut.data.jdbc.notification.ChangeListenerExceptionHandler
 import io.micronaut.data.jdbc.operations.JdbcRepositoryOperations
 import io.micronaut.json.JsonMapper
+import org.postgresql.PGConnection
 import spock.lang.Specification
 
+import java.sql.Connection
+import java.sql.SQLException
+import java.sql.Statement
 import java.time.Duration
 import java.util.concurrent.Callable
 import java.util.concurrent.CompletableFuture
 import java.util.concurrent.CountDownLatch
+import java.util.concurrent.ExecutionException
 import java.util.concurrent.Executors
 import java.util.concurrent.TimeUnit
 import java.util.concurrent.TimeoutException
@@ -55,6 +61,146 @@ class PostgresChangeNotificationProviderSpec extends Specification {
         0 * mapperProvider.get()
         0 * connectionFactory._
         0 * operations._
+    }
+
+    void "shutdown remains responsive while a datasource connection is opening"() {
+        given:
+        def opening = new CountDownLatch(1)
+        def allowOpen = new CountDownLatch(1)
+        def closing = new CountDownLatch(1)
+        def allowClose = new CountDownLatch(1)
+        def slowPolls = new AtomicInteger()
+        def slowCloses = new AtomicInteger()
+        def fastCloses = new AtomicInteger()
+        def slowPostgres = Stub(PGConnection) {
+            getNotifications(_ as int) >> { slowPolls.incrementAndGet(); null }
+        }
+        def fastPostgres = Stub(PGConnection) {
+            getNotifications(_ as int) >> { Thread.sleep(5); null }
+        }
+        def slowConnection = Stub(Connection) {
+            unwrap(PGConnection) >> slowPostgres
+            createStatement() >> Stub(Statement)
+            close() >> {
+                closing.countDown()
+                assert allowClose.await(10, TimeUnit.SECONDS)
+                slowCloses.incrementAndGet()
+            }
+        }
+        def fastConnection = Stub(Connection) {
+            unwrap(PGConnection) >> fastPostgres
+            createStatement() >> Stub(Statement)
+            close() >> { fastCloses.incrementAndGet() }
+        }
+        def factory = Stub(PostgresNotificationConnectionFactory) {
+            openConnection('slow') >> {
+                opening.countDown()
+                assert allowOpen.await(10, TimeUnit.SECONDS)
+                slowConnection
+            }
+            openConnection('fast') >> fastConnection
+        }
+        def context = Stub(BeanContext) {
+            getBean(Environment) >> Stub(Environment)
+        }
+        def mapperProvider = Stub(BeanProvider<JsonMapper>) {
+            isPresent() >> true
+            get() >> Stub(JsonMapper)
+        }
+        def provider = new PostgresChangeNotificationProvider(context, mapperProvider,
+            new PostgresNotificationConfiguration(pollTimeout: Duration.ofMillis(10)), factory,
+            false, Duration.ofSeconds(15), Stub(ChangeListenerExceptionHandler))
+        def operations = Stub(JdbcRepositoryOperations)
+        def executor = Executors.newFixedThreadPool(3)
+        CompletableFuture<?> shutdown = null
+
+        when:
+        def registration = executor.submit({ provider.register('slow', operations, []); null } as Callable)
+        assert opening.await(10, TimeUnit.SECONDS)
+        def duplicate = executor.submit({ provider.register('slow', operations, []); null } as Callable)
+        Throwable duplicateFailure = null
+        try {
+            duplicate.get(2, TimeUnit.SECONDS)
+        } catch (ExecutionException e) {
+            duplicateFailure = e.cause
+        }
+        executor.submit({ provider.register('fast', operations, []); null } as Callable).get(5, TimeUnit.SECONDS)
+        shutdown = executor.submit({ provider.shutdownGracefully().toCompletableFuture() } as Callable<CompletableFuture<?>>)
+            .get(2, TimeUnit.SECONDS)
+        assert !shutdown.done
+        assert executor.submit({ provider.reportActiveTasks() } as Callable).get(2, TimeUnit.SECONDS).asLong >= 1
+        allowOpen.countDown()
+        assert closing.await(10, TimeUnit.SECONDS)
+        assert !shutdown.done
+        assert executor.submit({ provider.reportActiveTasks() } as Callable).get(2, TimeUnit.SECONDS).asLong >= 1
+        allowClose.countDown()
+        Throwable registrationFailure = null
+        try {
+            registration.get(10, TimeUnit.SECONDS)
+        } catch (ExecutionException e) {
+            registrationFailure = e.cause
+        }
+        shutdown.get(10, TimeUnit.SECONDS)
+
+        then:
+        duplicateFailure instanceof IllegalStateException
+        registrationFailure instanceof IllegalStateException
+        slowPolls.get() == 0
+        slowCloses.get() == 1
+        fastCloses.get() == 1
+        provider.reportActiveTasks().asLong == 0
+
+        cleanup:
+        allowOpen.countDown()
+        allowClose.countDown()
+        shutdown?.get(10, TimeUnit.SECONDS)
+        executor.shutdownNow()
+    }
+
+    void "failed startup permits a later registration for the same datasource"() {
+        given:
+        def attempts = new AtomicInteger()
+        def postgres = Stub(PGConnection) {
+            getNotifications(_ as int) >> { Thread.sleep(5); null }
+        }
+        def connection = Stub(Connection) {
+            unwrap(PGConnection) >> postgres
+            createStatement() >> Stub(Statement)
+        }
+        def factory = Stub(PostgresNotificationConnectionFactory) {
+            openConnection('inventory') >> {
+                if (attempts.incrementAndGet() == 1) {
+                    throw new SQLException('Connection unavailable')
+                }
+                connection
+            }
+        }
+        def context = Stub(BeanContext) {
+            getBean(Environment) >> Stub(Environment)
+        }
+        def mapperProvider = Stub(BeanProvider<JsonMapper>) {
+            isPresent() >> true
+            get() >> Stub(JsonMapper)
+        }
+        def provider = new PostgresChangeNotificationProvider(context, mapperProvider,
+            new PostgresNotificationConfiguration(pollTimeout: Duration.ofMillis(10)), factory,
+            false, Duration.ofSeconds(15), Stub(ChangeListenerExceptionHandler))
+        def operations = Stub(JdbcRepositoryOperations)
+
+        when:
+        provider.register('inventory', operations, [])
+
+        then:
+        thrown(IllegalStateException)
+
+        when:
+        provider.register('inventory', operations, [])
+
+        then:
+        attempts.get() == 2
+
+        cleanup:
+        provider.shutdownGracefully().toCompletableFuture().get(10, TimeUnit.SECONDS)
     }
 
     void "waits for pending cleanup in #hook with graceful shutdown #enabled"() {
