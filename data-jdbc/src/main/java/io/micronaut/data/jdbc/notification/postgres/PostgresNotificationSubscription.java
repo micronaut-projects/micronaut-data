@@ -255,12 +255,7 @@ final class PostgresNotificationSubscription {
                     reconnecting = false;
                     retryCount = 0;
                     delay = initialDelay;
-                    // LISTEN has committed before listeners can refresh state missed while disconnected.
-                    if (running) {
-                        LOG.debug("Reconnected PostgreSQL notifications for datasource [{}]; submitting invalidation for [{}] listener methods",
-                            name, dispatchers.size());
-                        dispatchers.values().forEach(PostgresChangeNotificationDispatcher::invalidate);
-                    }
+                    invalidateAfterReconnection();
                 }
                 validateConnection(active);
                 receiveNotifications(active);
@@ -269,19 +264,26 @@ final class PostgresNotificationSubscription {
                 if (!running) {
                     break;
                 }
-                if (reconnecting && configuration.getConnectionRecovery().getMaxRetries() >= 0) {
-                    if (retryCount >= configuration.getConnectionRecovery().getMaxRetries()) {
-                        LOG.error("PostgreSQL notification recovery exhausted [{}] retries for datasource [{}]; notifications remain unavailable",
-                            configuration.getConnectionRecovery().getMaxRetries(), name, e);
-                        dispatchers.values().forEach(PostgresChangeNotificationDispatcher::terminate);
-                        break;
-                    }
-                    retryCount++;
+                if (reconnecting && configuration.getConnectionRecovery().getMaxRetries() >= 0
+                    && retryCount++ >= configuration.getConnectionRecovery().getMaxRetries()) {
+                    LOG.error("PostgreSQL notification recovery exhausted [{}] retries for datasource [{}]; notifications remain unavailable",
+                        configuration.getConnectionRecovery().getMaxRetries(), name, e);
+                    dispatchers.values().forEach(PostgresChangeNotificationDispatcher::terminate);
+                    break;
                 }
                 LOG.warn("PostgreSQL notification connection for datasource [{}] failed; reconnecting in {} ms", name, delay, e);
                 awaitReconnect(delay);
                 delay = Math.min(delay * configuration.getConnectionRecovery().getRetryDelayMultiplier(), configuration.getConnectionRecovery().getMaxRetryDelay().toMillis());
             }
+        }
+    }
+
+    /** Submits invalidations only while running, after LISTEN has committed. */
+    private void invalidateAfterReconnection() {
+        if (running) {
+            LOG.debug("Reconnected PostgreSQL notifications for datasource [{}]; submitting invalidation for [{}] listener methods",
+                name, dispatchers.size());
+            dispatchers.values().forEach(PostgresChangeNotificationDispatcher::invalidate);
         }
     }
 

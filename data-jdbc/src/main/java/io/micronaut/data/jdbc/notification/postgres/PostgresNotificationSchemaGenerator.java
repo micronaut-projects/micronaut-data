@@ -226,25 +226,8 @@ public final class PostgresNotificationSchemaGenerator {
             }
             String channel = PostgresNotificationIdentifiers.resolveChannel(notification, environment);
             boolean quoted = entity.getAnnotationMetadata().booleanValue(MappedEntity.class, "escape").orElse(true);
-            String schema = entity.getAnnotationMetadata().stringValue(MappedEntity.class, "schema")
-                .filter(value -> !value.isEmpty()).map(value -> normalize(value, quoted)).orElse(null);
-            if (schema == null) {
-                schema = connection.getSchema();
-            }
-            if (schema == null || schema.isEmpty()) {
-                throw new SQLException("Cannot determine the schema for PostgreSQL notification table " + entity.getPersistedName());
-            }
-            var queryMetadata = method.getAnnotation(PostgresChangeListenerQuery.class);
-            List<String> columns;
-            try {
-                columns = queryMetadata == null ? PostgresNotificationQuery.keyColumns(entity)
-                    : List.of(queryMetadata.stringValues("columns"));
-            } catch (IllegalArgumentException e) {
-                throw new IllegalStateException("@ChangeListener method [" + method.getDescription(true) + "] " + e.getMessage(), e);
-            }
-            if (columns.isEmpty()) {
-                throw new IllegalStateException("Missing generated PostgreSQL notification keys for " + method.getDescription(true));
-            }
+            String schema = resolveSchema(connection, entity, quoted);
+            List<String> columns = keyColumns(method, entity);
             Subscription subscription = new Subscription(schema, normalize(entity.getPersistedName(), quoted), channel);
             List<String> previous = subscriptions.putIfAbsent(subscription, columns);
             if (previous != null && !Set.copyOf(previous).equals(Set.copyOf(columns))) {
@@ -252,6 +235,33 @@ public final class PostgresNotificationSchemaGenerator {
             }
         }
         return subscriptions;
+    }
+
+    private String resolveSchema(Connection connection, PersistentEntity entity, boolean quoted) throws SQLException {
+        String schema = entity.getAnnotationMetadata().stringValue(MappedEntity.class, "schema")
+            .filter(value -> !value.isEmpty()).map(value -> normalize(value, quoted)).orElse(null);
+        if (schema == null) {
+            schema = connection.getSchema();
+        }
+        if (schema == null || schema.isEmpty()) {
+            throw new SQLException("Cannot determine the schema for PostgreSQL notification table " + entity.getPersistedName());
+        }
+        return schema;
+    }
+
+    private static List<String> keyColumns(ExecutableMethod<?, ?> method, PersistentEntity entity) {
+        var queryMetadata = method.getAnnotation(PostgresChangeListenerQuery.class);
+        List<String> columns;
+        try {
+            columns = queryMetadata == null ? PostgresNotificationQuery.keyColumns(entity)
+                : List.of(queryMetadata.stringValues("columns"));
+        } catch (IllegalArgumentException e) {
+            throw new IllegalStateException("@ChangeListener method [" + method.getDescription(true) + "] " + e.getMessage(), e);
+        }
+        if (columns.isEmpty()) {
+            throw new IllegalStateException("Missing generated PostgreSQL notification keys for " + method.getDescription(true));
+        }
+        return columns;
     }
 
     private String normalize(String identifier, boolean quoted) {

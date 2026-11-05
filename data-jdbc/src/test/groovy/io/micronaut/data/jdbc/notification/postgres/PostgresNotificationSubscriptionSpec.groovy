@@ -67,17 +67,7 @@ class PostgresNotificationSubscriptionSpec extends Specification {
         context.registerBeanDefinition(beanDefinition)
         def deliveries = [new LinkedBlockingQueue(), new LinkedBlockingQueue()]
         def listeners = deliveries.withIndex().collect { queue, index ->
-            def method = Mock(ExecutableMethod) {
-                getDescription(true) >> "void changed${index}(ChangeEvent<ExecutionHandleBook>)"
-                getAnnotation(PostgresChangeNotification) >> AnnotationValue.builder(PostgresChangeNotification)
-                    .member('channel', 'books').build()
-                invoke(_, _) >> { List arguments ->
-                    ChangeEvent<?> event = arguments.flatten().find { it instanceof ChangeEvent }
-                    queue.add([arguments[0], event.operation()])
-                    null
-                }
-            }
-            new ChangeListenerMethod(beanDefinition, method, Argument.of(ExecutionHandleBook))
+            executionHandleListener(beanDefinition, queue, index)
         }
         def operations = Stub(JdbcRepositoryOperations) {
             getEntity(ExecutionHandleBook) >> new RuntimePersistentEntity<>(ExecutionHandleBook)
@@ -477,6 +467,20 @@ class PostgresNotificationSubscriptionSpec extends Specification {
         'healthy connection' | true  | null                               | 1
         'invalid connection' | false | null                               | 2
         'validation error'   | false | new SQLException('Network failure') | 2
+    }
+
+    private ChangeListenerMethod executionHandleListener(def beanDefinition, def queue, int index) {
+        def method = Mock(ExecutableMethod) {
+            getDescription(true) >> "void changed${index}(ChangeEvent<ExecutionHandleBook>)"
+            getAnnotation(PostgresChangeNotification) >> AnnotationValue.builder(PostgresChangeNotification)
+                .member('channel', 'books').build()
+            invoke(_, _) >> { List arguments ->
+                ChangeEvent<?> event = arguments.flatten().find { it instanceof ChangeEvent }
+                queue.add([arguments[0], event.operation()])
+                null
+            }
+        }
+        new ChangeListenerMethod(beanDefinition, method, Argument.of(ExecutionHandleBook))
     }
 
     @MappedEntity('execution_handle_book')
