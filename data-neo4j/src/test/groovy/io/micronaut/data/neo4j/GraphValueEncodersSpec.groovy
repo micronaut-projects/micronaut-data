@@ -1,5 +1,6 @@
 package io.micronaut.data.neo4j
 
+import io.micronaut.data.exceptions.DataAccessException
 import io.micronaut.data.graph.runtime.GraphValueEncoders
 import io.micronaut.data.neo4j.features.Money
 import io.micronaut.data.neo4j.operations.Neo4jRepositoryOperations
@@ -44,6 +45,16 @@ class GraphValueEncodersSpec extends Specification implements TestPropertyProvid
             [1, "RED", ["00000000-0000-0000-0000-000000000001"]]
         encoders.encode([a: [Colour.RED] as Set]) == [a: ["RED"]]
         encoders.encode(new StringBuilder("sb")) == "sb"
+    }
+
+    void "a value without an encoder is rejected"() {
+        when:
+        GraphValueEncoders.defaults().encode(new Object())
+
+        then:
+        def e = thrown(DataAccessException)
+        e.message.contains("No graph value encoder for type [java.lang.Object]")
+        e.message.contains("GraphValueEncoderRegistrar")
     }
 
     void "a database replaces the default encoders"() {
