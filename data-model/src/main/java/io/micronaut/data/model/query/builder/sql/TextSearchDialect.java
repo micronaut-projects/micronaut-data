@@ -705,7 +705,7 @@ public interface TextSearchDialect {
             if (mode == MatchMode.NATIVE) {
                 // the caller's CONTAINS query runs against every field as it is; its own NOT excludes
                 query.append('(');
-                appendAnyField(query, fields, 1, queryExpression, target, appendExpression,
+                appendAnyField(query, fields, base, queryExpression, target, appendExpression,
                     appendParameter.apply(OracleTextQueryConverter.converterFor(mode, OracleTextQueryConverter.Part.FULL)));
                 query.append(')');
                 return;
