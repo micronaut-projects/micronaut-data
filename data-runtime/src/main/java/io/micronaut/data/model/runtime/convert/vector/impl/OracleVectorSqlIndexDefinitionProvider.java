@@ -58,6 +58,18 @@ final class OracleVectorSqlIndexDefinitionProvider implements SqlIndexDefinition
                                      Function<String, String> quoter,
                                      SqlIndexMapping mapping,
                                      Dialect dialect) {
+        return getIndexDefinition(indexName, escapedTableName, columns, escape, quoter, mapping, dialect, false);
+    }
+
+    @Override
+    public String getIndexDefinition(String indexName,
+                                     String escapedTableName,
+                                     String[] columns,
+                                     boolean escape,
+                                     Function<String, String> quoter,
+                                     SqlIndexMapping mapping,
+                                     Dialect dialect,
+                                     boolean ifNotExists) {
         String columnNames = String.join(", ", columns);
         String indexColumnNames = escape
             ? String.join(", ", Arrays.stream(columns).map(quoter).toList())
@@ -81,6 +93,7 @@ final class OracleVectorSqlIndexDefinitionProvider implements SqlIndexDefinition
         };
         StringBuilder vec = new StringBuilder();
         vec.append("CREATE VECTOR INDEX ")
+           .append(ifNotExists ? "IF NOT EXISTS " : "")
            .append(indexName)
            .append(" ON ")
            .append(escapedTableName)
