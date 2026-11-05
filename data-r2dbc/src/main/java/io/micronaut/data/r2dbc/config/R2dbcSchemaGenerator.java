@@ -20,7 +20,6 @@ import io.micronaut.context.annotation.Context;
 import io.micronaut.core.annotation.Internal;
 import io.micronaut.core.beans.BeanIntrospection;
 import io.micronaut.core.beans.BeanIntrospector;
-import io.micronaut.core.util.ArrayUtils;
 import io.micronaut.core.util.CollectionUtils;
 import io.micronaut.data.annotation.JsonSubView;
 import io.micronaut.data.annotation.JsonView;
@@ -33,6 +32,8 @@ import io.micronaut.data.model.runtime.RuntimeEntityRegistry;
 import io.micronaut.data.r2dbc.operations.R2dbcSchemaHandler;
 import io.micronaut.data.runtime.config.DataSettings;
 import io.micronaut.data.runtime.config.SchemaGenerate;
+import io.micronaut.data.runtime.schema.SchemaContext;
+import io.micronaut.data.runtime.schema.SchemaContributions;
 import io.r2dbc.spi.Connection;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -43,13 +44,10 @@ import jakarta.annotation.PostConstruct;
 import jakarta.inject.Inject;
 
 import java.lang.reflect.Modifier;
-import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.Collection;
 import java.util.Comparator;
-import java.util.LinkedHashMap;
 import java.util.List;
-import java.util.Map;
 import java.util.stream.Collectors;
 
 /**
@@ -130,14 +128,10 @@ public class R2dbcSchemaGenerator {
                         .filter(i -> !i.hasAnnotation(JsonSubView.class))
                         .sorted(Comparator.comparing(i -> i.hasAnnotation(JsonView.class)))
                         .map(e -> runtimeEntityRegistry.getEntity(e.getBeanType())).toArray(PersistentEntity[]::new);
-                Map<R2dbcSchemaContributor, List<PersistentEntity>> contributions = selectContributions(configuration, entities);
+                SchemaContributions contributions = SchemaContributions.of(schemaContributors,
+                    new SchemaContext(configuration.getName(), configuration.getDialect(), configuration.getDialectOptions().getVersion(), schemaGenerate, Arrays.asList(entities)));
+                PersistentEntity[] tableEntities = contributions.tableEntities();
                 if (!contributions.isEmpty()) {
-                    List<PersistentEntity> remaining = new ArrayList<>(Arrays.asList(entities));
-                    contributions.values().forEach(remaining::removeAll);
-                    entities = remaining.toArray(PersistentEntity[]::new);
-                }
-                PersistentEntity[] tableEntities = entities;
-                if (ArrayUtils.isNotEmpty(entities) || !contributions.isEmpty()) {
                     SqlQueryBuilder builder = new SqlQueryBuilder(configuration.getDialect(), configuration.getDialectOptions().getVersion());
                     Mono.from(configuration.getConnectionFactory().create()).flatMap(connection -> {
                         Dialect dialect = configuration.getDialect();
@@ -163,35 +157,30 @@ public class R2dbcSchemaGenerator {
         }
     }
 
-    private Map<R2dbcSchemaContributor, List<PersistentEntity>> selectContributions(DataR2dbcConfiguration configuration,
-                                                                                  PersistentEntity[] entities) {
-        if (schemaContributors.isEmpty()) {
-            return Map.of();
-        }
-        Map<R2dbcSchemaContributor, List<PersistentEntity>> contributions = new LinkedHashMap<>();
-        List<PersistentEntity> remaining = new ArrayList<>(Arrays.asList(entities));
-        for (R2dbcSchemaContributor contributor : schemaContributors) {
-            List<PersistentEntity> selected = contributor.selectEntities(configuration, List.copyOf(remaining));
-            if (!selected.isEmpty()) {
-                contributions.put(contributor, selected);
-                remaining.removeAll(selected);
-            }
-        }
-        return contributions;
-    }
-
     private Mono<Void> generate(Connection connection,
                                 DataR2dbcConfiguration configuration,
                                 PersistentEntity[] entities,
                                 SqlQueryBuilder builder,
-                                Map<R2dbcSchemaContributor, List<PersistentEntity>> contributions) {
-        if (contributions.isEmpty()) {
-            return generateTables(connection, configuration, entities, builder);
-        }
-        SchemaGenerate schemaGenerate = configuration.getSchemaGenerate();
-        // Contributed objects, such as property graphs, can depend on the tables, so they are dropped first
-        Flux<Void> dropContributions = Flux.fromIterable(contributions.entrySet())
-            .concatMap(contribution -> Flux.fromIterable(contribution.getKey().buildDropStatements(configuration, contribution.getValue())))
+                                SchemaContributions contributions) {
+        // Contributed objects over the tables, such as property graphs, are dropped before the tables, and objects the
+        // tables use, such as domains, after them, so that both can be created again
+        // The tables are dropped one by one even with batch generation, ignoring the failures: in a batch, a table that
+        // doesn't exist yet would prevent the next tables from being dropped, and the creation would keep their old data
+        Mono<Void> dropTables = entities.length > 0 && configuration.getSchemaGenerate() == SchemaGenerate.CREATE_DROP
+            ? dropTablesOneByOne(connection, entities, builder)
+            : Mono.empty();
+        Mono<Void> createTables = entities.length > 0 ? createTables(connection, configuration, entities, builder) : Mono.empty();
+        return executeDropStatements(connection, contributions.dropStatements())
+            .then(dropTables)
+            .thenMany(executeDropStatements(connection, contributions.beforeTablesDropStatements()))
+            .thenMany(executeCreateStatements(connection, contributions.beforeTablesStatements()))
+            .then(createTables)
+            .thenMany(executeCreateStatements(connection, contributions.createStatements()))
+            .then();
+    }
+
+    private Flux<Void> executeDropStatements(Connection connection, List<String> statements) {
+        return Flux.fromIterable(statements)
             .concatMap(sql -> {
                 if (DataSettings.QUERY_LOG.isDebugEnabled()) {
                     DataSettings.QUERY_LOG.debug("Executing DROP statement: \n{}", sql);
@@ -205,8 +194,10 @@ public class R2dbcSchemaGenerator {
                         return Mono.empty();
                     });
             });
-        Flux<Void> createContributions = Flux.fromIterable(contributions.entrySet())
-            .concatMap(contribution -> Flux.fromIterable(contribution.getKey().buildCreateStatements(configuration, contribution.getValue())))
+    }
+
+    private Flux<Void> executeCreateStatements(Connection connection, List<String> statements) {
+        return Flux.fromIterable(statements)
             .concatMap(sql -> {
                 if (DataSettings.QUERY_LOG.isDebugEnabled()) {
                     DataSettings.QUERY_LOG.debug("Executing CREATE statement: \n{}", sql);
@@ -219,19 +210,12 @@ public class R2dbcSchemaGenerator {
                         return Mono.empty();
                     });
             });
-        Mono<Void> tables = entities.length > 0 ? generateTables(connection, configuration, entities, builder) : Mono.empty();
-        return switch (schemaGenerate) {
-            case CREATE_DROP -> dropContributions.then(tables).thenMany(createContributions).then();
-            case CREATE -> tables.thenMany(createContributions).then();
-            default -> tables;
-        };
     }
 
-    private Mono<Void> generateTables(Connection connection,
-                                      DataR2dbcConfiguration configuration,
-                                      PersistentEntity[] entities,
-                                      SqlQueryBuilder builder) {
-        SchemaGenerate schemaGenerate = configuration.getSchemaGenerate();
+    private Mono<Void> createTables(Connection connection,
+                                    DataR2dbcConfiguration configuration,
+                                    PersistentEntity[] entities,
+                                    SqlQueryBuilder builder) {
         List<String> createStatements = Arrays.asList(
             builder.buildCreateTableStatements(definitionProviders, entities, builder.getDialect())
         );
@@ -250,15 +234,9 @@ public class R2dbcSchemaGenerator {
                 });
         // Oracle R2DBC doesn't execute several statements in one string
         if (configuration.getDialect().allowBatch() && configuration.getDialect() != Dialect.ORACLE && configuration.isBatchGenerate()) {
-            return generateBatch(connection, schemaGenerate, entities, builder, createStatements, createTablesFlow.then());
+            return createTablesInBatch(connection, createStatements, createTablesFlow.then());
         }
-        return switch (schemaGenerate) {
-            case CREATE_DROP -> dropTablesOneByOne(connection, entities, builder)
-                    .thenMany(createTablesFlow)
-                    .then();
-            default -> createTablesFlow
-                    .then();
-        };
+        return createTablesFlow.then();
     }
 
     private Mono<Void> dropTablesOneByOne(Connection connection,
@@ -277,13 +255,10 @@ public class R2dbcSchemaGenerator {
                 .then();
     }
 
-    private Mono<Void> generateBatch(Connection connection,
-                                     SchemaGenerate schemaGenerate,
-                                     PersistentEntity[] entities,
-                                     SqlQueryBuilder builder,
-                                     List<String> createStatements,
-                                     Mono<Void> createTablesOneByOne) {
-        Mono<Void> createTables = Mono.defer(() -> {
+    private Mono<Void> createTablesInBatch(Connection connection,
+                                           List<String> createStatements,
+                                           Mono<Void> createTablesOneByOne) {
+        return Mono.defer(() -> {
             // The same statements as without batch generation, which don't repeat a schema or a join table
             // shared by several entities. They are executed together: each one needs to be terminated
             String sql = createStatements.stream()
@@ -301,14 +276,6 @@ public class R2dbcSchemaGenerator {
             }
             return createTablesOneByOne;
         });
-        return switch (schemaGenerate) {
-            // The tables are dropped one by one, ignoring the failures: in a batch, a table that doesn't exist yet
-            // would prevent the next tables from being dropped, and the creation would keep their old data
-            case CREATE_DROP -> dropTablesOneByOne(connection, entities, builder)
-                .then(createTables);
-            case CREATE -> createTables;
-            default -> Mono.empty();
-        };
     }
 
     private Mono<Void> execute(Connection connection, String sql) {
