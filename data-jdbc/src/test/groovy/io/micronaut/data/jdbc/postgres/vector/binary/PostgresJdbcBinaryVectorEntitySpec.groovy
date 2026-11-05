@@ -117,6 +117,43 @@ class PostgresJdbcBinaryVectorEntitySpec extends Specification implements Postgr
         genericRepository.findEmbeddingUdtName() == "vector"
         genericRepository.findById(saved.id).orElseThrow().embedding.toFloatArray() == [1f, 0f, 1f, 0f, 0f, 0f, 0f, 1f] as float[]
     }
+
+    void "a generic vector property is searched with a binary vector through its numeric column"() {
+        given:
+        PgGenericVectorDocRepository genericRepository = context.getBean(PgGenericVectorDocRepository)
+        genericRepository.deleteAll()
+        BinaryVector vector = BinaryVector.of(true, false, true, false, false, false, false, true)
+        PgGenericVectorDoc same = genericRepository.save(new PgGenericVectorDoc(embedding: vector))
+        genericRepository.save(new PgGenericVectorDoc(embedding: BinaryVector.of(false, true, false, true, true, true, true, false)))
+
+        when:
+        SearchResults<PgGenericVectorDoc> results = genericRepository.searchTop2ByEmbeddingNear(vector, 0.5d)
+
+        then: "the other vector has no bits in common, so its cosine distance is above the limit"
+        results.results()*.entity()*.id == [same.id]
+        Math.abs(results.results()[0].score().value()) < 1e-6d
+    }
+
+    void "a binary scoring function is rejected for a numeric vector column"() {
+        given:
+        PgGenericVectorDocRepository genericRepository = context.getBean(PgGenericVectorDocRepository)
+
+        when:
+        genericRepository.searchTop2ByEmbeddingNear(A, 1d, ScoringFunction.JACCARD)
+
+        then:
+        def e = thrown(IllegalArgumentException)
+        e.message.contains("only supported for binary vectors")
+    }
+
+    void "a numeric scoring function is rejected for a binary vector column"() {
+        when:
+        repository.searchTop2ByEmbeddingNear(A, 1d, ScoringFunction.COSINE)
+
+        then:
+        def e = thrown(IllegalArgumentException)
+        e.message.contains("not supported for binary vectors")
+    }
 }
 
 @MappedEntity("pg_binary_doc")
@@ -179,4 +216,8 @@ interface PgGenericVectorDocRepository extends CrudRepository<PgGenericVectorDoc
 
     @Query(value = "SELECT udt_name FROM information_schema.columns WHERE table_name = 'pg_generic_vector_doc' AND column_name = 'embedding'", nativeQuery = true)
     String findEmbeddingUdtName()
+
+    SearchResults<PgGenericVectorDoc> searchTop2ByEmbeddingNear(Vector vector, Double maxDistance)
+
+    SearchResults<PgGenericVectorDoc> searchTop2ByEmbeddingNear(Vector vector, Double maxDistance, ScoringFunction function)
 }

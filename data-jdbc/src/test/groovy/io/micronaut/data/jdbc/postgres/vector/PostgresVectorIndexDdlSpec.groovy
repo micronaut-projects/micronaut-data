@@ -157,6 +157,54 @@ class PostgresVectorIndexDdlSpec extends Specification {
         BinaryVector embedding
     }
 
+    @MappedEntity("numeric_embedding_hamming")
+    static class NumericHammingEntity {
+        Long id
+
+        @VectorStorage(length = 16)
+        @VectorIndex(vectorIndexType = VectorIndexType.HNSW, distanceType = VectorIndexType.DistanceType.HAMMING)
+        Vector embedding
+    }
+
+    @MappedEntity("numeric_embedding_jaccard")
+    static class NumericJaccardEntity {
+        Long id
+
+        @VectorStorage(length = 16)
+        @VectorIndex(vectorIndexType = VectorIndexType.HNSW, distanceType = VectorIndexType.DistanceType.JACCARD)
+        Vector embedding
+    }
+
+    @MappedEntity("binary_embedding_cosine")
+    static class BinaryCosineEntity {
+        Long id
+
+        @VectorStorage(length = 16)
+        @VectorIndex(vectorIndexType = VectorIndexType.HNSW, distanceType = VectorIndexType.DistanceType.COSINE)
+        BinaryVector embedding
+    }
+
+    def "a binary distance is rejected on a numeric vector column"() {
+        when:
+        statementsFor(entity)
+
+        then:
+        def e = thrown(IllegalArgumentException)
+        e.message.contains("on binary vectors only")
+
+        where:
+        entity << [NumericHammingEntity, NumericJaccardEntity]
+    }
+
+    def "a numeric distance is rejected on a binary vector column"() {
+        when:
+        statementsFor(BinaryCosineEntity)
+
+        then:
+        def e = thrown(IllegalArgumentException)
+        e.message.contains("doesn't support distance type COSINE on binary vectors")
+    }
+
     def "binary vectors use bit columns and the bit operator classes"() {
         when:
         String[] statements = statementsFor(type)

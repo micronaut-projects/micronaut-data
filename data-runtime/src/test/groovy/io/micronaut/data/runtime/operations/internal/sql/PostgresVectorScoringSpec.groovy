@@ -31,4 +31,28 @@ class PostgresVectorScoringSpec extends Specification {
         'e <~> ? <= ?'   | ScoringFunction.HAMMING      | 'e <~> ? <= ?'
         'e <=> ? <= ?'   | ScoringFunction.L2_EUCLIDEAN | 'e <-> ? <= ?'
     }
+
+    void "a binary scoring function is rejected for a numeric vector query"() {
+        when:
+        postgres.adaptQueryForScoringFunction('e <=> ? <= ?', selected)
+
+        then:
+        def e = thrown(IllegalArgumentException)
+        e.message.contains("only supported for binary vectors")
+
+        where:
+        selected << [ScoringFunction.HAMMING, ScoringFunction.JACCARD]
+    }
+
+    void "a numeric scoring function is rejected for a binary vector query"() {
+        when:
+        postgres.adaptQueryForScoringFunction('e <~> ? <= ?', selected)
+
+        then:
+        def e = thrown(IllegalArgumentException)
+        e.message.contains("not supported for binary vectors")
+
+        where:
+        selected << [ScoringFunction.COSINE, ScoringFunction.L2_EUCLIDEAN, ScoringFunction.DOT]
+    }
 }

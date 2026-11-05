@@ -201,6 +201,7 @@ If the dialect does not support vectors, Micronaut Data emits `VARCHAR(255)` for
 - Use `@VectorStorage(length = N)` (or `@Column(length = N)`) to define the dimension in schema generation
 - Sparse index DDL uses `HNSW` with `sparsevec_*_ops` operator classes; sparse + `IVF` is rejected.
 - `BinaryVector` columns use `bit(N)` and the `bit_hamming_ops` or `bit_jaccard_ops` operator classes (JDBC only).
+- `HAMMING` and `JACCARD` apply to `BinaryVector` columns only, and the other functions to numeric columns only. Any other combination in a `ScoringFunction` parameter or a `@VectorIndex` fails with an `IllegalArgumentException`.
 - PostgreSQL JDBC supports dense and sparse conversion paths.
 - Postgres R2DBC currently supports dense `vector` only; sparse-like payloads are rejected with an explicit unsupported error because the current R2DBC path uses the dense vector codec from the PostgreSQL R2DBC driver.
 

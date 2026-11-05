@@ -823,7 +823,7 @@ public final class SqlSchemaUtils {
                 int accuracy = vi.intValue("accuracy").orElse(90);
                 boolean sparse = VectorShape.isSparse(prop.getAnnotationMetadata());
                 String columnName = namingStrategy.mappedName(associations, prop);
-                VectorIndexMetadata meta = new VectorIndexMetadata(indexType, distanceType, accuracy, sparse);
+                VectorIndexMetadata meta = new VectorIndexMetadata(indexType, distanceType, accuracy, sparse, prop.isAssignable(BinaryVector.class));
                 SqlIndexDefinitionProvider provider = null;
                 io.micronaut.core.type.Argument<?> arg;
                 if (prop instanceof io.micronaut.data.model.runtime.RuntimePersistentProperty<?> rpp) {
