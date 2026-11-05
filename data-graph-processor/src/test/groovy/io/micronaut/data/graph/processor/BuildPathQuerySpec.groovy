@@ -347,6 +347,37 @@ interface TenantRepository extends io.micronaut.data.repository.GenericRepositor
         getQuery(repository.executableMethods.find { it.methodName == 'countRelationships' }) == 'MATCH (s:Member)-[r]->(e:Member) RETURN count(r) AS result'
     }
 
+    @Unroll
+    void "test a database-assigned identifier cannot be primitive: #type"() {
+        when:
+        buildRepository('test.CounterRepository', """
+import io.micronaut.data.graph.model.*;
+
+@Node
+class Counter {
+    @Id
+    @GeneratedValue
+    private $type id;
+
+    public $type getId() { return id; }
+    public void setId($type id) { this.id = id; }
+}
+
+@TestGraphRepository
+interface CounterRepository extends io.micronaut.data.repository.GenericRepository<Counter, Long> {
+}
+""")
+
+        then:
+        def e = thrown(RuntimeException)
+        e.message.contains("A database-assigned identifier cannot be primitive, use $wrapper")
+
+        where:
+        type   | wrapper
+        'long' | 'Long'
+        'int'  | 'Integer'
+    }
+
     void "test ordering a path finder is rejected with a clear message"() {
         when:
         buildRepository('test.OrderedRepository', """

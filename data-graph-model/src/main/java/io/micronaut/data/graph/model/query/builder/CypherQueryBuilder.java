@@ -451,15 +451,103 @@ public class CypherQueryBuilder implements QueryBuilder {
                                  PersistentEntity target,
                                  List<String> propertyNames,
                                  @Nullable PersistentProperty relationshipIdentity) {
-        StringBuilder query = new StringBuilder(MATCH_OPEN)
+        StringBuilder query = linkEndpoints(owner, target).append(" MERGE ")
+            .append(directed("(" + LINK_FROM + ")", linkRelationship(association), "(" + LINK_TO + ")", GraphEntities.direction(association)));
+        return appendLinkResult(query, propertyNames, relationshipIdentity);
+    }
+
+    /**
+     * Builds the query that creates a new relationship entity between two nodes, which may already be connected by
+     * another one. The parameters are those of {@link #buildLinkQuery(Association, PersistentEntity, PersistentEntity, List, PersistentProperty)}.
+     *
+     * @param association          The association
+     * @param owner                The entity that declares the association
+     * @param target               The node entity at the far end
+     * @param propertyNames        The stored names of the relationship properties to write
+     * @param relationshipIdentity The identity of the relationship entity
+     * @return The query
+     */
+    public String buildCreateLinkQuery(Association association,
+                                       PersistentEntity owner,
+                                       PersistentEntity target,
+                                       List<String> propertyNames,
+                                       PersistentProperty relationshipIdentity) {
+        // Unlike MERGE, CREATE needs a direction
+        Direction direction = GraphEntities.direction(association);
+        StringBuilder query = linkEndpoints(owner, target).append(" CREATE ")
+            .append(directed("(" + LINK_FROM + ")", linkRelationship(association), "(" + LINK_TO + ")", direction == Direction.UNDIRECTED ? Direction.OUTGOING : direction));
+        return appendLinkResult(query, propertyNames, relationshipIdentity);
+    }
+
+    /**
+     * Builds the query that updates a saved relationship entity, matched by its identifier in the parameter
+     * {@code $id}. It returns no row if the relationship no longer connects the two nodes.
+     *
+     * @param association          The association
+     * @param owner                The entity that declares the association
+     * @param target               The node entity at the far end
+     * @param propertyNames        The stored names of the relationship properties to write
+     * @param relationshipIdentity The identity of the relationship entity
+     * @return The query
+     */
+    public String buildUpdateLinkQuery(Association association,
+                                       PersistentEntity owner,
+                                       PersistentEntity target,
+                                       List<String> propertyNames,
+                                       PersistentProperty relationshipIdentity) {
+        StringBuilder query = linkPattern(association, owner, target, " = $")
+            .append(AND)
+            .append(identityExpression(relationshipIdentity, PATH_RELATIONSHIP)).append(" = $").append(ID_PARAMETER);
+        return appendLinkResult(query, propertyNames, relationshipIdentity);
+    }
+
+    /**
+     * Builds the query that removes the relationships of a single-valued association to any node but the given one.
+     *
+     * @param association The association
+     * @param owner       The entity that declares the association
+     * @param target      The node entity at the far end
+     * @return The query
+     */
+    public String buildUnlinkOthersQuery(Association association, PersistentEntity owner, PersistentEntity target) {
+        return linkPattern(association, owner, target, " <> $")
+            + " DELETE " + PATH_RELATIONSHIP + " RETURN count(*) AS result";
+    }
+
+    /**
+     * Renders the expression that sorts by the identifier of the root node, which a database-assigned identifier
+     * does not hold as a property.
+     *
+     * @param identity The identity property
+     * @return The expression
+     */
+    public String rootIdentityExpression(PersistentProperty identity) {
+        return identityExpression(identity, ROOT);
+    }
+
+    private StringBuilder linkEndpoints(PersistentEntity owner, PersistentEntity target) {
+        return new StringBuilder(MATCH_OPEN)
             .append(LINK_FROM).append(GraphEntities.labelExpression(owner)).append("), (")
             .append(LINK_TO).append(GraphEntities.labelExpression(target)).append(CLOSE_WHERE)
             .append(identityExpression(owner.getIdentity(), LINK_FROM)).append(" = $").append(LINK_FROM_PARAMETER)
             .append(AND)
-            .append(identityExpression(target.getIdentity(), LINK_TO)).append(" = $").append(LINK_TO_PARAMETER)
-            .append(" MERGE ");
-        String rel = "[" + PATH_RELATIONSHIP + ":" + GraphEntities.escapeName(GraphEntities.relationshipType(association)) + "]";
-        query.append(directed("(" + LINK_FROM + ")", rel, "(" + LINK_TO + ")", GraphEntities.direction(association)));
+            .append(identityExpression(target.getIdentity(), LINK_TO)).append(" = $").append(LINK_TO_PARAMETER);
+    }
+
+    private StringBuilder linkPattern(Association association, PersistentEntity owner, PersistentEntity target, String targetComparison) {
+        String relationship = directed("(" + LINK_FROM + GraphEntities.labelExpression(owner) + ")", linkRelationship(association),
+            "(" + LINK_TO + GraphEntities.labelExpression(target) + ")", GraphEntities.direction(association));
+        return new StringBuilder("MATCH ").append(relationship).append(" WHERE ")
+            .append(identityExpression(owner.getIdentity(), LINK_FROM)).append(" = $").append(LINK_FROM_PARAMETER)
+            .append(AND)
+            .append(identityExpression(target.getIdentity(), LINK_TO)).append(targetComparison).append(LINK_TO_PARAMETER);
+    }
+
+    private static String linkRelationship(Association association) {
+        return "[" + PATH_RELATIONSHIP + ":" + GraphEntities.escapeName(GraphEntities.relationshipType(association)) + "]";
+    }
+
+    private String appendLinkResult(StringBuilder query, List<String> propertyNames, @Nullable PersistentProperty relationshipIdentity) {
         appendSetProperties(query, PATH_RELATIONSHIP, propertyNames);
         query.append(RETURN);
         if (relationshipIdentity != null) {
