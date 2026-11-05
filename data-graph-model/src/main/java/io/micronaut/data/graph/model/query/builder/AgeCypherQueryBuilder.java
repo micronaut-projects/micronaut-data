@@ -154,6 +154,23 @@ public class AgeCypherQueryBuilder extends CypherQueryBuilder {
         return AgeStatements.wrap(query.append(id).toString());
     }
 
+    @Override
+    public String buildCreateLinkQuery(Association association, PersistentEntity owner, PersistentEntity target,
+                                       List<String> propertyNames, PersistentProperty relationshipIdentity) {
+        return AgeStatements.wrap(super.buildCreateLinkQuery(association, owner, target, propertyNames, relationshipIdentity));
+    }
+
+    @Override
+    public String buildUpdateLinkQuery(Association association, PersistentEntity owner, PersistentEntity target,
+                                       List<String> propertyNames, PersistentProperty relationshipIdentity) {
+        return AgeStatements.wrap(super.buildUpdateLinkQuery(association, owner, target, propertyNames, relationshipIdentity));
+    }
+
+    @Override
+    public String buildUnlinkOthersQuery(Association association, PersistentEntity owner, PersistentEntity target) {
+        return AgeStatements.wrap(super.buildUnlinkOthersQuery(association, owner, target));
+    }
+
     private static QueryResult wrap(QueryResult result) {
         return new WrappedQueryResult(AgeStatements.wrap(result.getQuery()), result);
     }
@@ -161,6 +178,11 @@ public class AgeCypherQueryBuilder extends CypherQueryBuilder {
     @Override
     protected String identityExpression(PersistentProperty identity, String variable) {
         if (GraphEntities.isNativeId(identity)) {
+            if (String.class.getName().equals(identity.getTypeName())) {
+                // id() is a number on AGE, which a String parameter never equals
+                throw new IllegalArgumentException("Apache AGE assigns numeric identifiers, the database-assigned identifier of ["
+                    + identity.getOwner().getName() + "] must be a Long, not a String");
+            }
             return "id(" + variable + ")";
         }
         return super.identityExpression(identity, variable);
