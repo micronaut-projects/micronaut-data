@@ -122,13 +122,8 @@ final class PostgresChangeNotificationProvider implements ChangeNotificationProv
      */
     @Override
     public void register(String name, JdbcRepositoryOperations operations, List<ChangeListenerMethod> listeners) {
-        CompletableFuture<Void> starting = new CompletableFuture<>();
-        synchronized (this) {
-            if (shutdown != null || subscriptions.containsKey(name) || startingSubscriptions.containsKey(name)) {
-                throw new IllegalStateException("PostgreSQL notifications already registered or shutting down for " + name);
-            }
-            startingSubscriptions.put(name, starting);
-        }
+        CompletableFuture<Void> starting = beginRegistration(name);
+        boolean started = false;
         try {
             if (!jsonMapperProvider.isPresent()) {
                 throw new ConfigurationException("PostgreSQL notifications for datasource [" + name
@@ -138,25 +133,29 @@ final class PostgresChangeNotificationProvider implements ChangeNotificationProv
             var subscription = new PostgresNotificationSubscription(name, operations, listeners, beanContext,
                 jsonMapperProvider.get(), configuration, connectionFactory, exceptionHandler);
             LOG.trace("Starting registration of [{}] change listener methods for datasource [{}]", listeners.size(), name);
-            boolean started = false;
-            try {
-                if (!subscription.start(() -> publishSubscription(name, subscription))) {
-                    throw new IllegalStateException("PostgreSQL notifications are shutting down for " + name);
-                }
-                started = true;
-            } finally {
-                if (!started) {
-                    synchronized (this) {
-                        subscriptions.remove(name, subscription);
-                    }
-                }
+            started = subscription.start(() -> publishSubscription(name, subscription));
+            if (!started) {
+                throw new IllegalStateException("PostgreSQL notifications are shutting down for " + name);
             }
         } finally {
             synchronized (this) {
+                if (!started) {
+                    subscriptions.remove(name);
+                }
                 startingSubscriptions.remove(name, starting);
             }
             starting.complete(null);
         }
+    }
+
+    /** Reserves the datasource until registration and its cleanup finish. */
+    private synchronized CompletableFuture<Void> beginRegistration(String name) {
+        if (shutdown != null || subscriptions.containsKey(name) || startingSubscriptions.containsKey(name)) {
+            throw new IllegalStateException("PostgreSQL notifications already registered or shutting down for " + name);
+        }
+        CompletableFuture<Void> starting = new CompletableFuture<>();
+        startingSubscriptions.put(name, starting);
+        return starting;
     }
 
     private synchronized boolean publishSubscription(String name, PostgresNotificationSubscription subscription) {
