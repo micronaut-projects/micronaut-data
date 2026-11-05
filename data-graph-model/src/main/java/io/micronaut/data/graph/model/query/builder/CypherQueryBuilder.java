@@ -17,6 +17,7 @@ package io.micronaut.data.graph.model.query.builder;
 
 import io.micronaut.core.annotation.AnnotationMetadata;
 import io.micronaut.core.annotation.Introspected;
+import io.micronaut.data.annotation.Join;
 import io.micronaut.data.graph.annotation.Direction;
 import io.micronaut.data.graph.model.GraphEntities;
 import io.micronaut.data.graph.model.query.PathQueryDefinition;
@@ -160,6 +161,9 @@ public class CypherQueryBuilder implements QueryBuilder {
         } else {
             selectionRenderer.entity = true;
         }
+        requireInnerJoins(state, !selectionRenderer.entity);
+        // A pattern added only to sort by must not remove the nodes that do not have the relationship
+        state.sealRequiredPatterns();
         List<OrderItem> orders = renderOrders(definition.order(), state);
 
         StringBuilder query = new StringBuilder();
@@ -185,7 +189,9 @@ public class CypherQueryBuilder implements QueryBuilder {
         }
         List<String> joinColumns = selectionRenderer.entity ? appendFetchJoins(query, state, carried) : List.of();
         query.append(RETURN);
-        if (distinct) {
+        // The rows of an entity query already hold one root node each
+        if (distinct && !selectionRenderer.entity) {
+            requireProjectedOrders(selectionRenderer, orders);
             query.append(DISTINCT);
         }
         if (selectionRenderer.entity) {
@@ -195,6 +201,21 @@ public class CypherQueryBuilder implements QueryBuilder {
             }
         } else {
             query.append(selectionRenderer.out);
+        }
+    }
+
+    /**
+     * {@code RETURN DISTINCT} can only sort by what it returns.
+     *
+     * @param selectionRenderer The selection
+     * @param orders            The orders of the query
+     */
+    private static void requireProjectedOrders(SelectionRenderer selectionRenderer, List<OrderItem> orders) {
+        String projection = selectionRenderer.out.toString();
+        for (OrderItem order : orders) {
+            if (order.alias != null || !java.util.regex.Pattern.compile(java.util.regex.Pattern.quote(order.expression) + "(\\W|$)").matcher(projection).find()) {
+                throw new IllegalArgumentException("A distinct graph query can only be ordered by a returned value, found: " + order.expression);
+            }
         }
     }
 
@@ -229,8 +250,10 @@ public class CypherQueryBuilder implements QueryBuilder {
 
     @Override
     public QueryResult buildUpdate(AnnotationMetadata annotationMetadata, UpdateQueryDefinition definition) {
+        rejectReturning(definition.returningSelection());
         QueryState state = new QueryState(definition.persistentEntity(), definition.getJoinPaths());
         String where = renderWhere(definition.predicate(), state);
+        requireInnerJoins(state, true);
         StringBuilder sets = new StringBuilder();
         Iterator<Map.Entry<String, Object>> iterator = definition.propertiesToUpdate().entrySet().iterator();
         while (iterator.hasNext()) {
@@ -265,8 +288,10 @@ public class CypherQueryBuilder implements QueryBuilder {
 
     @Override
     public QueryResult buildDelete(AnnotationMetadata annotationMetadata, DeleteQueryDefinition definition) {
+        rejectReturning(definition.returningSelection());
         QueryState state = new QueryState(definition.persistentEntity(), definition.getJoinPaths());
         String where = renderWhere(definition.predicate(), state);
+        requireInnerJoins(state, true);
         StringBuilder query = new StringBuilder();
         appendMatch(query, state, where);
         if (state.hasPatterns()) {
@@ -274,6 +299,37 @@ public class CypherQueryBuilder implements QueryBuilder {
         }
         query.append(" DETACH DELETE ").append(ROOT).append(" RETURN count(*)");
         return QueryResult.of(query.toString(), List.of(query.toString()), state.parameterBindings, state.additionalRequiredParameters);
+    }
+
+    private static void rejectReturning(@Nullable Selection<?> returningSelection) {
+        if (returningSelection != null) {
+            throw new IllegalArgumentException("Returning updates and deletes are not supported by graph repositories");
+        }
+    }
+
+    /**
+     * An inner join keeps only the nodes that have the relationship, and needs a pattern of its own if no criterion adds one.
+     * Fetch joins add theirs when an entity is returned, other selections have to add it here.
+     *
+     * @param state        The state
+     * @param includeFetch Whether inner fetch joins need a pattern too
+     */
+    private static void requireInnerJoins(QueryState state, boolean includeFetch) {
+        for (JoinPath joinPath : state.joinPaths) {
+            switch (joinPath.getJoinType()) {
+                case RIGHT, RIGHT_FETCH, OUTER, OUTER_FETCH ->
+                    throw new IllegalArgumentException("Graph repositories only support LEFT and INNER joins, found: " + joinPath.getJoinType() + " on " + joinPath.getPath());
+                case INNER -> state.resolveVariable(List.of(joinPath.getAssociationPath()));
+                case INNER_FETCH -> {
+                    if (includeFetch) {
+                        state.resolveVariable(List.of(joinPath.getAssociationPath()));
+                    }
+                }
+                default -> {
+                    // Optional
+                }
+            }
+        }
     }
 
     /**
@@ -469,11 +525,16 @@ public class CypherQueryBuilder implements QueryBuilder {
 
     private void appendMatch(StringBuilder query, QueryState state, @Nullable String where) {
         query.append("MATCH (").append(ROOT).append(GraphEntities.labelExpression(state.entity)).append(')');
-        for (Pattern pattern : state.patterns.values()) {
+        List<Pattern> patterns = List.copyOf(state.patterns.values());
+        int required = Math.min(state.requiredPatterns, patterns.size());
+        for (Pattern pattern : patterns.subList(0, required)) {
             query.append(", ").append(pattern.text);
         }
         if (where != null && !where.isEmpty()) {
             query.append(" WHERE ").append(where);
+        }
+        for (Pattern pattern : patterns.subList(required, patterns.size())) {
+            query.append(" OPTIONAL MATCH ").append(pattern.text);
         }
     }
 
@@ -503,7 +564,7 @@ public class CypherQueryBuilder implements QueryBuilder {
             String nodeVariable = "j" + index;
             PersistentEntity target = GraphEntities.targetNodeEntity(association);
             String nodePattern = "(" + nodeVariable + GraphEntities.labelExpression(target) + ")";
-            query.append(" OPTIONAL MATCH ");
+            query.append(joinPath.getJoinType() == Join.Type.INNER_FETCH ? " MATCH " : " OPTIONAL MATCH ");
             String collect;
             if (relationshipEntity) {
                 String relVariable = "r" + index;
@@ -550,6 +611,7 @@ public class CypherQueryBuilder implements QueryBuilder {
         for (Order order : orders) {
             StringBuilder expression = new StringBuilder();
             ExpressionRenderer renderer = new ExpressionRenderer(state, expression);
+            state.associationResolved = false;
             boolean ignoreCase = order instanceof DefaultOrder<?> defaultOrder && defaultOrder.isIgnoreCase();
             Nulls nulls = order instanceof DefaultOrder<?> defaultOrder ? defaultOrder.getNullPrecedence() : Nulls.NONE;
             if (ignoreCase) {
@@ -559,9 +621,7 @@ public class CypherQueryBuilder implements QueryBuilder {
             } else {
                 renderer.appendExpression(order.getExpression(), null);
             }
-            boolean onAssociation = order.getExpression() instanceof io.micronaut.data.model.jpa.criteria.PersistentPropertyPath<?> propertyPath
-                && !propertyPath.getPropertyPath().getAssociations().isEmpty();
-            items.add(new OrderItem(expression.toString(), order.isAscending(), nulls, onAssociation));
+            items.add(new OrderItem(expression.toString(), order.isAscending(), nulls, state.associationResolved));
         }
         return items;
     }
@@ -630,6 +690,8 @@ public class CypherQueryBuilder implements QueryBuilder {
         private final Map<String, Pattern> patterns = new LinkedHashMap<>();
         private final List<QueryParameterBinding> parameterBindings = new ArrayList<>();
         private final Map<String, String> additionalRequiredParameters = new LinkedHashMap<>();
+        private int requiredPatterns = Integer.MAX_VALUE;
+        private boolean associationResolved;
         private int position;
 
         private QueryState(PersistentEntity entity, Collection<JoinPath> joinPaths) {
@@ -639,6 +701,10 @@ public class CypherQueryBuilder implements QueryBuilder {
 
         private boolean hasPatterns() {
             return !patterns.isEmpty();
+        }
+
+        private void sealRequiredPatterns() {
+            requiredPatterns = patterns.size();
         }
 
         private int pushParameter(BindingParameter bindingParameter, BindingParameter.BindingContext bindingContext) {
@@ -666,6 +732,7 @@ public class CypherQueryBuilder implements QueryBuilder {
          */
         private String resolveVariable(List<Association> associations) {
             String variable = ROOT;
+            associationResolved |= !associations.isEmpty();
             Pattern relationshipEntityPattern = null;
             StringBuilder path = new StringBuilder();
             for (Association association : associations) {
@@ -717,9 +784,14 @@ public class CypherQueryBuilder implements QueryBuilder {
             if (property instanceof Association association && !association.isEmbedded()) {
                 // A criterion on an association itself compares its identifier
                 PersistentEntity target = GraphEntities.targetNodeEntity(association);
-                io.micronaut.data.model.PersistentPropertyPath idPath = io.micronaut.data.model.PersistentPropertyPath.of(
-                    concat(propertyPath.getAssociations(), association), target.getIdentity());
-                return resolve(idPath);
+                List<Association> associations = concat(propertyPath.getAssociations(), association);
+                Association targetNode = GraphEntities.isRelationshipEntity(association.getAssociatedEntity())
+                    ? GraphEntities.findTargetNode(association.getAssociatedEntity())
+                    : null;
+                if (targetNode != null) {
+                    associations = concat(associations, targetNode);
+                }
+                return resolve(io.micronaut.data.model.PersistentPropertyPath.of(associations, target.getIdentity()));
             }
             return variable + "." + GraphEntities.escapeName(GraphEntities.propertyName(property));
         }
@@ -1115,12 +1187,22 @@ public class CypherQueryBuilder implements QueryBuilder {
 
         @Override
         public void visitIsNull(Expression<?> expression) {
+            String pattern = relationshipExistsPattern(expression);
+            if (pattern != null) {
+                out.append("NOT ").append(pattern);
+                return;
+            }
             appendExpression(expression, null);
             out.append(" IS NULL");
         }
 
         @Override
         public void visitIsNotNull(Expression<?> expression) {
+            String pattern = relationshipExistsPattern(expression);
+            if (pattern != null) {
+                out.append(pattern);
+                return;
+            }
             appendExpression(expression, null);
             out.append(" IS NOT NULL");
         }
@@ -1162,7 +1244,7 @@ public class CypherQueryBuilder implements QueryBuilder {
         }
 
         /**
-         * An emptiness check on a relationship asks whether the node has any such relationship,
+         * A null or emptiness check on a relationship asks whether the node has any such relationship,
          * which is a pattern predicate rather than a property check.
          *
          * @param expression The expression
