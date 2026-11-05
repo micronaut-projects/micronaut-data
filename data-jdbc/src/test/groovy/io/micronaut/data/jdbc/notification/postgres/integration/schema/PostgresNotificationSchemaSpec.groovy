@@ -107,7 +107,7 @@ class PostgresNotificationSchemaSpec extends Specification implements PostgresTe
         next(listeners.first).entity().orElseThrow().title == 'inserted'
         next(listeners.second).entity().orElseThrow().title == 'inserted'
         def inserted = next(listeners.other)
-        inserted.metadata(PostgresChangeEventMetadata).orElseThrow().channel() == "other'changes\\quoted"
+        inserted.metadata(PostgresChangeEventMetadata).orElseThrow().channel() == "other'changes\\\"; SELECT 1; --"
         inserted.metadata(PostgresChangeEventMetadata).orElseThrow().newKeys() == [tenant: TENANT, 'BookId': '1']
 
         when:
@@ -547,7 +547,7 @@ class GeneratedBookListeners {
     void second(ChangeEvent<GeneratedBook> event) { second.add(event) }
 
     @ChangeListener
-    @PostgresChangeNotification(channel = "other'changes\\quoted")
+    @PostgresChangeNotification(channel = "other'changes\\\"; SELECT 1; --")
     void other(ChangeEvent<GeneratedBook> event) { other.add(event) }
 }
 

@@ -171,6 +171,7 @@ final class PostgresNotificationSubscription {
      * @param connection the listening connection
      * @throws SQLException if a channel subscription fails
      */
+    @SuppressWarnings("java:S2077") // LISTEN requires an identifier, which JDBC cannot bind; escapeIdentifier quotes it safely.
     private void listen(Connection connection) throws SQLException {
         PGConnection postgresConnection = connection.unwrap(PGConnection.class);
         for (String channel : listenersByChannel.keySet()) {
