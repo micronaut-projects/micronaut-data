@@ -198,14 +198,14 @@ public final class GraphEntityMapper {
 
     /**
      * The value of a constructor argument the node has no value for: the default of a primitive, an empty collection
-     * for relationships that were not fetched, otherwise null.
+     * for relationships that were not fetched and for schemaless holders, otherwise null.
      */
-    private static @Nullable Object emptyValue(Argument<?> argument) {
+    private static @Nullable Object emptyValue(RuntimePersistentEntity<?> entity, Argument<?> argument) {
         Class<?> type = argument.getType();
         if (argument.isPrimitive()) {
             return Array.get(Array.newInstance(type, 1), 0);
         }
-        if (type == Object.class) {
+        if (type == Object.class || !defaultsToEmpty(entity, argument)) {
             return null;
         }
         if (type.isAssignableFrom(ArrayList.class)) {
@@ -218,6 +218,15 @@ public final class GraphEntityMapper {
             return new LinkedHashMap<>();
         }
         return null;
+    }
+
+    private static boolean defaultsToEmpty(RuntimePersistentEntity<?> entity, Argument<?> argument) {
+        RuntimePersistentProperty<?> property = entity.getPropertyByName(argument.getName());
+        if (property instanceof RuntimeAssociation<?> association && GraphEntities.isRelationship(association)) {
+            return true;
+        }
+        return argument.getAnnotationMetadata().hasAnnotation(DynamicAttributes.class)
+            || argument.getAnnotationMetadata().hasAnnotation(io.micronaut.data.graph.annotation.Labels.class);
     }
 
     private Schemaless schemaless(RuntimePersistentEntity<?> entity) {
@@ -574,7 +583,7 @@ public final class GraphEntityMapper {
             for (int i = 0; i < constructorArguments.length; i++) {
                 Argument<Object> argument = constructorArguments[i];
                 consumed.add(argument.getName());
-                arguments[i] = constructorArgument(argument, values.get(argument.getName()));
+                arguments[i] = constructorArgument(entity, argument, values.get(argument.getName()));
             }
             instance = introspection.instantiate(false, arguments);
         }
@@ -587,9 +596,9 @@ public final class GraphEntityMapper {
         return instance;
     }
 
-    private @Nullable Object constructorArgument(Argument<Object> argument, @Nullable Object value) {
+    private @Nullable Object constructorArgument(RuntimePersistentEntity<?> entity, Argument<Object> argument, @Nullable Object value) {
         if (value == null) {
-            return emptyValue(argument);
+            return emptyValue(entity, argument);
         }
         return argument.getType().isInstance(value) ? value : convert(value, argument);
     }

@@ -25,8 +25,11 @@ import java.lang.annotation.Target;
 /**
  * Marks a collection of strings that holds the labels of a node beyond those its entity declares.
  *
- * <p>Saving adds each label to the node, and reading collects every label the entity does not declare.
- * Supported by Neo4j. Apache AGE nodes have a single label.</p>
+ * <p>Saving adds each label to the node, and reading collects every label the entity does not declare. Saving only
+ * adds: a label taken out of the collection stays on the node and comes back on the next read. Remove it with an
+ * explicit query.</p>
+ *
+ * <p>Supported by Neo4j. Apache AGE nodes have a single label, so an entity with this property fails the build.</p>
  *
  * @author graemerocher
  * @since 5.3.0
