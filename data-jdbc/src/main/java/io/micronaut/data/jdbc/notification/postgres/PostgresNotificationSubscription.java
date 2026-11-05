@@ -171,7 +171,8 @@ final class PostgresNotificationSubscription {
      * @param connection the listening connection
      * @throws SQLException if a channel subscription fails
      */
-    @SuppressWarnings("java:S2077") // LISTEN requires an identifier, which JDBC cannot bind; escapeIdentifier quotes it safely.
+    @SuppressWarnings("java:S2077")
+    // LISTEN requires an identifier, which JDBC cannot bind; escapeIdentifier quotes it safely.
     private void listen(Connection connection) throws SQLException {
         PGConnection postgresConnection = connection.unwrap(PGConnection.class);
         for (String channel : listenersByChannel.keySet()) {
@@ -238,39 +239,42 @@ final class PostgresNotificationSubscription {
 
     /**
      * Polls the active connection and retries SQL failures until stopped or retries are exhausted.
-     * A successful reconnection resets the retry count and delay before invalidating listeners.
+     * A reconnected session remains in recovery until its first successful scheduled validation.
+     * Listeners are invalidated immediately after reconnecting, before validation or polling.
      *
      * @throws InterruptedException if interrupted while waiting to reconnect
      */
     private void receiveLoop() throws InterruptedException {
         long delay = initialDelay;
         int retryCount = 0;
+        boolean recovering = false;
         while (running) {
-            boolean reconnecting = connection == null;
             try {
                 Connection active = connection;
                 if (active == null) {
                     active = connect();
                     connection = active;
-                    reconnecting = false;
-                    retryCount = 0;
-                    delay = initialDelay;
                     invalidateAfterReconnection();
                 }
-                validateConnection(active);
+                if (validateConnection(active) && recovering) {
+                    recovering = false;
+                    retryCount = 0;
+                    delay = initialDelay;
+                }
                 receiveNotifications(active);
             } catch (SQLException e) {
                 closeConnection(true);
                 if (!running) {
                     break;
                 }
-                if (reconnecting && configuration.getConnectionRecovery().getMaxRetries() >= 0
+                if (recovering && configuration.getConnectionRecovery().getMaxRetries() >= 0
                     && retryCount++ >= configuration.getConnectionRecovery().getMaxRetries()) {
                     LOG.error("PostgreSQL notification recovery exhausted [{}] retries for datasource [{}]; notifications remain unavailable",
                         configuration.getConnectionRecovery().getMaxRetries(), name, e);
                     dispatchers.values().forEach(PostgresChangeNotificationDispatcher::terminate);
                     break;
                 }
+                recovering = true;
                 LOG.warn("PostgreSQL notification connection for datasource [{}] failed; reconnecting in {} ms", name, delay, e);
                 awaitReconnect(delay);
                 delay = Math.min(delay * configuration.getConnectionRecovery().getRetryDelayMultiplier(), configuration.getConnectionRecovery().getMaxRetryDelay().toMillis());
@@ -278,7 +282,9 @@ final class PostgresNotificationSubscription {
         }
     }
 
-    /** Submits invalidations only while running, after LISTEN has committed. */
+    /**
+     * Submits invalidations only while running, after LISTEN has committed.
+     */
     private void invalidateAfterReconnection() {
         if (running) {
             LOG.debug("Reconnected PostgreSQL notifications for datasource [{}]; submitting invalidation for [{}] listener methods",
@@ -291,14 +297,20 @@ final class PostgresNotificationSubscription {
      * Checks the connection with a round trip on the receive thread. Empty notification polls
      * cannot distinguish an idle connection from a silently broken one. Validation failures
      * enter the same recovery path as polling failures.
+     *
+     * @param active the listening connection
+     * @return whether a scheduled connection check succeeded
+     * @throws SQLException if the connection check fails
      */
-    private void validateConnection(Connection active) throws SQLException {
+    private boolean validateConnection(Connection active) throws SQLException {
         if (running && System.nanoTime() - lastValidation >= validationIntervalNanos) {
             if (!active.isValid(validationTimeoutSeconds)) {
                 throw new SQLException("PostgreSQL notification connection validation failed for datasource [" + name + "]");
             }
             lastValidation = System.nanoTime();
+            return true;
         }
+        return false;
     }
 
     /**
@@ -373,9 +385,9 @@ final class PostgresNotificationSubscription {
      * Validates the table identity and key columns before submitting an event to one listener.
      * Entity loading for inserts and updates is deferred to callback execution.
      *
-     * @param listener the listener definition
+     * @param listener   the listener definition
      * @param dispatcher the listener dispatcher
-     * @param payload the decoded notification
+     * @param payload    the decoded notification
      */
     private void dispatch(PostgresChangeListenerDefinition listener,
                           PostgresChangeNotificationDispatcher dispatcher,
@@ -398,7 +410,8 @@ final class PostgresNotificationSubscription {
                 () -> listener.loader().reload(metadata.newKeys()));
             case DELETE, INVALIDATE ->
                 new DefaultChangeEvent<>(payload.operation(), null, metadata);
-            case TERMINATED -> throw new IllegalArgumentException("PostgreSQL notification payloads do not support TERMINATED");
+            case TERMINATED ->
+                throw new IllegalArgumentException("PostgreSQL notification payloads do not support TERMINATED");
         };
         dispatcher.submitDispatch(event);
     }

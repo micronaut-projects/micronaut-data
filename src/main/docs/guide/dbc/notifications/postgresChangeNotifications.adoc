@@ -517,7 +517,7 @@ Waiting for notifications does not itself send queries to PostgreSQL.
 
 `validation-interval` defaults to thirty seconds and controls periodic connection checks using a lightweight
 database round trip. These checks detect silent network failures that would otherwise look like an idle connection.
-A failed check starts reconnection attempts, with an `INVALIDATE` event scheduled after recovery.
+A failed check starts reconnection attempts. Once reconnected, an `INVALIDATE` event is queued for each listener.
 
 `validation-timeout` limits how long a connection check waits. It defaults to five seconds and is rounded up
 to whole seconds for JDBC validation.
@@ -536,8 +536,9 @@ The first recovery attempt waits
 for `retry-delay` (default `1s`). Subsequent delays are multiplied by `retry-delay-multiplier` (default `2`).
 All delays, including the initial delay, are capped at `max-retry-delay` (default `60s`).
 The multiplier must be an integer of at least `1`; `1` uses a fixed delay.
-A successful reconnection resets the retry count and delay. These settings do not retry failed application startup
-or listener callbacks. If a finite retry limit is exhausted, the provider logs an error, stops receiving
+A reconnected session must pass its next connection check to reset the retry count and delay.
+If it fails before that check, it counts as a failed recovery attempt. These settings do not retry failed application
+startup or listener callbacks. If a finite retry limit is exhausted, the provider logs an error, stops receiving
 notifications for that datasource, and queues a final `TERMINATED` event for every affected listener method.
 Waiting notifications, including invalidations, are discarded; a callback already running finishes before
 termination is delivered. No further recovery attempts occur until the application restarts. Listeners should

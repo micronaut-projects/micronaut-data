@@ -541,6 +541,28 @@ class PostgresNotificationProviderSpec extends Specification implements Postgres
     }
 
     @Unroll
+    void "short-lived listening sessions terminate recovery after #maxRetries retries"() {
+        given:
+        start([
+                'micronaut.data.jdbc.notifications.postgres.connection-recovery.max-retries': maxRetries
+        ])
+
+        when:
+        terminateListeningConnection()
+        (0..maxRetries).each {
+            assert next().operation() == ChangeOperation.INVALIDATE
+            terminateListeningConnection()
+        }
+
+        then:
+        next().operation() == ChangeOperation.TERMINATED
+        listener.events.poll(300, TimeUnit.MILLISECONDS) == null
+
+        where:
+        maxRetries << [0, 2]
+    }
+
+    @Unroll
     void "exhausted recovery delivers final termination to every listener after #maxRetries retries"() {
         given:
         start([

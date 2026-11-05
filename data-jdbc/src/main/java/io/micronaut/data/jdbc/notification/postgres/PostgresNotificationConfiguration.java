@@ -237,7 +237,8 @@ public final class PostgresNotificationConfiguration {
 
         /**
          * Sets the number of retries after the initial recovery attempt. Zero allows only that initial attempt.
-         * A successful reconnection resets the retry count for the next connection failure.
+         * A reconnected session resets the retry count and delay after a successful connection check.
+         * If it fails before that check, it counts as a failed recovery attempt.
          *
          * @param maxRetries the non-negative maximum number of retries, or {@code -1} for unlimited retries
          * @throws IllegalArgumentException if the value is less than {@code -1}

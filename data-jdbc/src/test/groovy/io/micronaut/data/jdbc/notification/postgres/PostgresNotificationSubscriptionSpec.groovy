@@ -15,6 +15,9 @@
  */
 package io.micronaut.data.jdbc.notification.postgres
 
+import ch.qos.logback.classic.Logger
+import ch.qos.logback.classic.spi.ILoggingEvent
+import ch.qos.logback.core.read.ListAppender
 import io.micronaut.context.ApplicationContext
 import io.micronaut.context.BeanContext
 import io.micronaut.context.RuntimeBeanDefinition
@@ -36,6 +39,7 @@ import io.micronaut.json.JsonMapper
 import org.postgresql.PGConnection
 import org.postgresql.PGNotification
 import org.postgresql.ds.PGSimpleDataSource
+import org.slf4j.LoggerFactory
 import spock.lang.Specification
 import spock.lang.Unroll
 import spock.util.concurrent.PollingConditions
@@ -294,6 +298,210 @@ class PostgresNotificationSubscriptionSpec extends Specification {
 
         where:
         maxRetries << [0, 2]
+    }
+
+    @Unroll
+    void "short-lived reconnected sessions exhaust recovery after #maxRetries retries"() {
+        given:
+        def logger = LoggerFactory.getLogger(PostgresNotificationSubscription) as Logger
+        def appender = new ListAppender<ILoggingEvent>()
+        appender.start()
+        logger.addAppender(appender)
+        def context = ApplicationContext.run()
+        def beanDefinition = RuntimeBeanDefinition.builder(Object, { new Object() } as Supplier).build()
+        context.registerBeanDefinition(beanDefinition)
+        def deliveries = new LinkedBlockingQueue()
+        def listener = executionHandleListener(beanDefinition, deliveries, 0)
+        def operations = Stub(JdbcRepositoryOperations) {
+            getEntity(ExecutionHandleBook) >> new RuntimePersistentEntity<>(ExecutionHandleBook)
+            getConversionService() >> ConversionService.SHARED
+        }
+        def incoming = new LinkedBlockingQueue()
+        def postgres = Stub(PGConnection) {
+            escapeIdentifier('books') >> '"books"'
+            getNotifications(_ as int) >> { int timeout ->
+                def next = incoming.poll(timeout, TimeUnit.MILLISECONDS)
+                if (next instanceof SQLException) {
+                    throw next
+                }
+                if (next instanceof CountDownLatch) {
+                    next.countDown()
+                }
+                null
+            }
+        }
+        def validations = new AtomicInteger()
+        def connection = Stub(Connection) {
+            unwrap(PGConnection) >> postgres
+            createStatement() >> Stub(Statement)
+            isValid(_ as int) >> { validations.incrementAndGet(); true }
+        }
+        def opens = new AtomicInteger()
+        def factory = Stub(PostgresNotificationConnectionFactory) {
+            openConnection('flapping') >> { opens.incrementAndGet(); connection }
+        }
+        def configuration = new PostgresNotificationConfiguration(
+            pollTimeout: Duration.ofMillis(10), validationInterval: Duration.ofMinutes(1))
+        configuration.connectionRecovery.maxRetries = maxRetries
+        configuration.connectionRecovery.retryDelay = Duration.ofMillis(1)
+        configuration.connectionRecovery.maxRetryDelay = Duration.ofMillis(4)
+        def subscription = new PostgresNotificationSubscription('flapping', operations, [listener], context,
+            Stub(JsonMapper), configuration, factory, Stub(ChangeListenerExceptionHandler))
+
+        when:
+        subscription.start()
+        incoming.add(new SQLException('Initial connection lost'))
+        (0..maxRetries).each {
+            def invalidation = deliveries.poll(10, TimeUnit.SECONDS)
+            assert invalidation != null && invalidation[1] == ChangeOperation.INVALIDATE
+            def emptyPoll = new CountDownLatch(1)
+            incoming.add(emptyPoll)
+            assert emptyPoll.await(10, TimeUnit.SECONDS)
+            incoming.add(new SQLException('Reconnected session lost'))
+        }
+        def termination = deliveries.poll(10, TimeUnit.SECONDS)
+        subscription.@received.get(10, TimeUnit.SECONDS)
+
+        then:
+        termination != null && termination[1] == ChangeOperation.TERMINATED
+        opens.get() == maxRetries + 2
+        validations.get() == 0
+        appender.list.findAll {
+            it.message.contains('reconnecting in') && it.argumentArray[0] == 'flapping'
+        }.collect { it.argumentArray[1] } == [1L, 2L, 4L].take(maxRetries + 1)
+
+        cleanup:
+        subscription?.stop()?.get(10, TimeUnit.SECONDS)
+        context?.close()
+        logger.detachAppender(appender)
+        appender.stop()
+
+        where:
+        maxRetries << [0, 2]
+    }
+
+    void "successful validation resets the retry limit and delay for a later failure"() {
+        given:
+        def logger = LoggerFactory.getLogger(PostgresNotificationSubscription) as Logger
+        def appender = new ListAppender<ILoggingEvent>()
+        appender.start()
+        logger.addAppender(appender)
+        def validated = new CountDownLatch(1)
+        def finalConnectionOpened = new CountDownLatch(1)
+        def incoming = new LinkedBlockingQueue()
+        def initialPostgres = Stub(PGConnection) {
+            getNotifications(_ as int) >> { throw new SQLException('Initial connection lost') }
+        }
+        def recoveredPostgres = Stub(PGConnection) {
+            getNotifications(_ as int) >> { int timeout ->
+                def next = incoming.poll(timeout, TimeUnit.MILLISECONDS)
+                if (next instanceof SQLException) {
+                    throw next
+                }
+                null
+            }
+        }
+        def initial = Stub(Connection) {
+            unwrap(PGConnection) >> initialPostgres
+            isValid(_ as int) >> true
+        }
+        def recovered = Stub(Connection) {
+            unwrap(PGConnection) >> recoveredPostgres
+            isValid(_ as int) >> { validated.countDown(); true }
+        }
+        def opens = new AtomicInteger()
+        def source = Stub(PGSimpleDataSource) {
+            getConnection() >> {
+                switch (opens.incrementAndGet()) {
+                    case 1: return initial
+                    case 2:
+                    case 4: throw new SQLException('Recovery connection failed')
+                    case 3: return recovered
+                    default:
+                        finalConnectionOpened.countDown()
+                        return recovered
+                }
+            }
+        }
+        def configuration = new PostgresNotificationConfiguration(
+            pollTimeout: Duration.ofMillis(10), validationInterval: Duration.ofMillis(1))
+        configuration.connectionRecovery.maxRetries = 1
+        configuration.connectionRecovery.retryDelay = Duration.ofMillis(1)
+        def subscription = newSubscription(source, configuration)
+
+        when:
+        subscription.start()
+        assert validated.await(10, TimeUnit.SECONDS)
+        incoming.add(new SQLException('Validated connection lost'))
+        assert finalConnectionOpened.await(10, TimeUnit.SECONDS)
+        subscription.stop().get(10, TimeUnit.SECONDS)
+
+        then:
+        opens.get() == 5
+        appender.list.findAll {
+            it.message.contains('reconnecting in') && it.argumentArray[0] == 'test'
+        }.collect { it.argumentArray[1] } == [1L, 2L, 1L, 2L]
+
+        cleanup:
+        subscription?.stop()?.get(10, TimeUnit.SECONDS)
+        logger.detachAppender(appender)
+        appender.stop()
+    }
+
+    @Unroll
+    void "recovery counts a failed scheduled validation: #scenario"() {
+        given:
+        def initialPostgres = Stub(PGConnection) {
+            getNotifications(_ as int) >> { throw new SQLException('Initial connection lost') }
+        }
+        def recoveredPostgres = Stub(PGConnection) {
+            getNotifications(_ as int) >> { Thread.sleep(5); null }
+        }
+        def initial = Stub(Connection) {
+            unwrap(PGConnection) >> initialPostgres
+            isValid(_ as int) >> true
+        }
+        def validations = new AtomicInteger()
+        def recovered = Stub(Connection) {
+            unwrap(PGConnection) >> recoveredPostgres
+            isValid(_ as int) >> {
+                validations.incrementAndGet()
+                if (validationFailure != null) {
+                    throw validationFailure
+                }
+                false
+            }
+        }
+        def opens = new AtomicInteger()
+        def source = Stub(PGSimpleDataSource) {
+            getConnection() >> {
+                switch (opens.incrementAndGet()) {
+                    case 1: return initial
+                    case 2: return recovered
+                    default: throw new SQLException('Unexpected extra recovery attempt')
+                }
+            }
+        }
+        def configuration = new PostgresNotificationConfiguration(validationInterval: Duration.ofMillis(1))
+        configuration.connectionRecovery.maxRetries = 0
+        configuration.connectionRecovery.retryDelay = Duration.ofMillis(1)
+        def subscription = newSubscription(source, configuration)
+
+        when:
+        subscription.start()
+        subscription.@received.get(10, TimeUnit.SECONDS)
+
+        then:
+        opens.get() == 2
+        validations.get() == 1
+
+        cleanup:
+        subscription?.stop()?.get(10, TimeUnit.SECONDS)
+
+        where:
+        scenario                 | validationFailure
+        'invalid connection'     | null
+        'validation throws SQL'  | new SQLException('Validation failed')
     }
 
     void "shutdown wakes a long recovery delay without another connection attempt"() {
