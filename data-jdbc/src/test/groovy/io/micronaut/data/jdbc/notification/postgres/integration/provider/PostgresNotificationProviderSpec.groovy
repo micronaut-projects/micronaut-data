@@ -91,9 +91,9 @@ class PostgresNotificationProviderSpec extends Specification implements Postgres
 
     private void start(Map additionalSettings = [:]) {
         application = ApplicationContext.run(settings + [
-                'spec.name'                                              : 'PostgresNotificationProviderSpec',
-                'micronaut.data.jdbc.notifications.postgres.poll-timeout': '100ms',
-                'micronaut.data.jdbc.notifications.postgres.retry-delay' : '100ms'
+                'spec.name'                                                                 : 'PostgresNotificationProviderSpec',
+                'micronaut.data.jdbc.notifications.postgres.poll-timeout'                   : '100ms',
+                'micronaut.data.jdbc.notifications.postgres.connection-recovery.retry-delay': '100ms'
         ] + additionalSettings)
         listener = application.getBean(BookChangeListener)
     }
@@ -103,8 +103,8 @@ class PostgresNotificationProviderSpec extends Specification implements Postgres
         given:
         def applicationName = "postgres-notifications-enabled-$enabled"
         start([
-            'micronaut.data.jdbc.notifications.enabled': enabled,
-            'datasources.default.db-properties.ApplicationName': applicationName
+                'micronaut.data.jdbc.notifications.enabled'        : enabled,
+                'datasources.default.db-properties.ApplicationName': applicationName
         ])
 
         expect:
@@ -358,8 +358,8 @@ class PostgresNotificationProviderSpec extends Specification implements Postgres
     void "queue overflow replaces waiting data and row delivery resumes with capacity #capacity"() {
         given:
         start([
-            'micronaut.data.jdbc.notifications.postgres.queue-capacity': capacity,
-            'spec.overload-probe': true
+                'micronaut.data.jdbc.notifications.postgres.queue-capacity': capacity,
+                'spec.overload-probe'                                      : true
         ])
         listener.entered = new CountDownLatch(1)
         listener.release = new CountDownLatch(1)
@@ -544,8 +544,8 @@ class PostgresNotificationProviderSpec extends Specification implements Postgres
     void "exhausted recovery delivers final termination to every listener after #maxRetries retries"() {
         given:
         start([
-            'spec.unqualified-listener': true,
-            'micronaut.data.jdbc.notifications.postgres.max-retries': maxRetries
+                'spec.unqualified-listener'                                                 : true,
+                'micronaut.data.jdbc.notifications.postgres.connection-recovery.max-retries': maxRetries
         ])
         def other = application.getBean(UnqualifiedBookChangeListener)
         def configuration = application.getBean(BasicJdbcConfiguration)
@@ -560,7 +560,7 @@ class PostgresNotificationProviderSpec extends Specification implements Postgres
         then:
         [terminated, otherTerminated].every {
             it != null && it.operation() == ChangeOperation.TERMINATED && it.entity().empty &&
-                it.metadata(PostgresChangeEventMetadata).empty
+                    it.metadata(PostgresChangeEventMetadata).empty
         }
 
         when: 'restoring credentials cannot restart a permanently stopped subscription'
@@ -586,10 +586,10 @@ class PostgresNotificationProviderSpec extends Specification implements Postgres
         def applicationName = 'notification-invalid-payload'
         String url = writer.metaData.URL
         start([
-            'spec.unqualified-listener': true,
-            'spec.overload-probe': true,
-            'datasources.default.url': url + (url.contains('?') ? '&' : '?') + 'currentSchema=notification_provider_test',
-            'datasources.default.db-properties.ApplicationName': applicationName
+                'spec.unqualified-listener'                        : true,
+                'spec.overload-probe'                              : true,
+                'datasources.default.url'                          : url + (url.contains('?') ? '&' : '?') + 'currentSchema=notification_provider_test',
+                'datasources.default.db-properties.ApplicationName': applicationName
         ])
         def other = application.getBean(UnqualifiedBookChangeListener)
         def probe = application.getBean(OverloadNotificationProbe)
@@ -700,9 +700,9 @@ class PostgresNotificationProviderSpec extends Specification implements Postgres
         given:
         def applicationName = "notification-context-shutdown-$enabled"
         start([
-            'micronaut.lifecycle.graceful-shutdown.enabled': enabled,
-            'micronaut.lifecycle.graceful-shutdown.grace-period': '5s',
-            'datasources.default.db-properties.ApplicationName': applicationName
+                'micronaut.lifecycle.graceful-shutdown.enabled'     : enabled,
+                'micronaut.lifecycle.graceful-shutdown.grace-period': '5s',
+                'datasources.default.db-properties.ApplicationName' : applicationName
         ])
         def dataSource = DelegatingDataSource.unwrapDataSource(application.getBean(DataSource))
         def provider = application.getBeansOfType(ChangeNotificationProvider)

@@ -32,10 +32,89 @@ class PostgresNotificationConfigurationSpec extends Specification {
         config.pollTimeout == Duration.ofSeconds(1)
         config.validationInterval == Duration.ofSeconds(30)
         config.validationTimeout == Duration.ofSeconds(5)
-        config.maxRetries == -1
-        config.retryDelayMultiplier == 2
-        config.retryDelay == Duration.ofSeconds(1)
-        config.maxRetryDelay == Duration.ofSeconds(60)
+        config.connectionRecovery.maxRetries == -1
+        config.connectionRecovery.retryDelayMultiplier == 2
+        config.connectionRecovery.retryDelay == Duration.ofSeconds(1)
+        config.connectionRecovery.maxRetryDelay == Duration.ofSeconds(60)
+    }
+
+    void "PostgreSQL beans are available when driver present is #driverPresent"() {
+        given:
+        boolean driverVisible = driverPresent
+        def classLoader = new ClassLoader(getClass().classLoader) {
+            @Override
+            protected Class<?> loadClass(String name, boolean resolve) throws ClassNotFoundException {
+                if (!driverVisible && name.startsWith('org.postgresql.')) {
+                    throw new ClassNotFoundException(name)
+                }
+                if (name.startsWith('io.micronaut.data.jdbc.notification.postgres.')) {
+                    synchronized (getClassLoadingLock(name)) {
+                        def loaded = findLoadedClass(name)
+                        if (loaded == null) {
+                            def resource = name.replace('.', '/') + '.class'
+                            def bytes = parent.getResourceAsStream(resource)?.bytes
+                            if (bytes == null) {
+                                throw new ClassNotFoundException(name)
+                            }
+                            loaded = defineClass(name, bytes, 0, bytes.length)
+                        }
+                        if (resolve) {
+                            resolveClass(loaded)
+                        }
+                        return loaded
+                    }
+                }
+                return super.loadClass(name, resolve)
+            }
+        }
+        def context = ApplicationContext.builder().classLoader(classLoader)
+                .enableDefaultPropertySources(false)
+                .properties(['micronaut.data.jdbc.notifications.postgres.schema-generate': true]).start()
+
+        expect:
+        context.containsBean(classLoader.loadClass(PostgresNotificationConfiguration.name)) == driverPresent
+        context.containsBean(classLoader.loadClass(PostgresNotificationConfiguration.ConnectionRecoveryConfiguration.name)) == driverPresent
+        context.containsBean(classLoader.loadClass(PostgresNotificationSchemaGenerator.name)) == driverPresent
+
+        cleanup:
+        context?.close()
+
+        where:
+        driverPresent << [false, true]
+    }
+
+    void "schema generator is available when the driver is present and schema generation is enabled"() {
+        given:
+        def context = ApplicationContext.run(['micronaut.data.jdbc.notifications.postgres.schema-generate': true])
+
+        expect:
+        context.containsBean(PostgresNotificationConfiguration)
+        context.containsBean(PostgresNotificationConfiguration.ConnectionRecoveryConfiguration)
+        context.containsBean(PostgresNotificationSchemaGenerator)
+
+        cleanup:
+        context.close()
+    }
+
+    void "connection recovery binds as the same nested bean used by notification configuration"() {
+        given:
+        def context = ApplicationContext.run([
+                'micronaut.data.jdbc.notifications.postgres.connection-recovery.max-retries'           : 3,
+                'micronaut.data.jdbc.notifications.postgres.connection-recovery.retry-delay'           : '500ms',
+                'micronaut.data.jdbc.notifications.postgres.connection-recovery.retry-delay-multiplier': 4,
+                'micronaut.data.jdbc.notifications.postgres.connection-recovery.max-retry-delay'       : '20s'
+        ])
+
+        expect:
+        def recovery = context.getBean(PostgresNotificationConfiguration.ConnectionRecoveryConfiguration)
+        context.getBean(PostgresNotificationConfiguration).connectionRecovery.is(recovery)
+        recovery.maxRetries == 3
+        recovery.retryDelay == Duration.ofMillis(500)
+        recovery.retryDelayMultiplier == 4
+        recovery.maxRetryDelay == Duration.ofSeconds(20)
+
+        cleanup:
+        context.close()
     }
 
     void "recovery limit and multiplier accept supported boundary values"() {
@@ -43,12 +122,12 @@ class PostgresNotificationConfigurationSpec extends Specification {
         def config = new PostgresNotificationConfiguration()
 
         when:
-        config.maxRetries = retries
-        config.retryDelayMultiplier = multiplier
+        config.connectionRecovery.maxRetries = retries
+        config.connectionRecovery.retryDelayMultiplier = multiplier
 
         then:
-        config.maxRetries == retries
-        config.retryDelayMultiplier == multiplier
+        config.connectionRecovery.maxRetries == retries
+        config.connectionRecovery.retryDelayMultiplier == multiplier
 
         where:
         retries           | multiplier
@@ -60,7 +139,7 @@ class PostgresNotificationConfigurationSpec extends Specification {
     void "queue capacity binds from configuration with value #capacity"() {
         given:
         def context = ApplicationContext.run([
-            'micronaut.data.jdbc.notifications.postgres.queue-capacity': capacity
+                'micronaut.data.jdbc.notifications.postgres.queue-capacity': capacity
         ])
 
         expect:
@@ -77,7 +156,8 @@ class PostgresNotificationConfigurationSpec extends Specification {
     void "invalid #property value #value is rejected"() {
         when:
         def config = new PostgresNotificationConfiguration()
-        config."$property" = value
+        def target = property in ['retryDelay', 'maxRetryDelay', 'maxRetries', 'retryDelayMultiplier'] ? config.connectionRecovery : config
+        target."$property" = value
 
         then:
         thrown(IllegalArgumentException)
@@ -92,8 +172,8 @@ class PostgresNotificationConfigurationSpec extends Specification {
         'validationTimeout'    | Duration.ofMillis(Integer.MAX_VALUE + 1L)
         'retryDelay'           | Duration.ofMillis(-1)
         'maxRetryDelay'        | Duration.ZERO
-        'queueCapacity'  | 0
-        'queueCapacity'  | -1
+        'queueCapacity'        | 0
+        'queueCapacity'        | -1
         'maxRetries'           | -2
         'retryDelayMultiplier' | 0
         'retryDelayMultiplier' | -1

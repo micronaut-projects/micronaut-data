@@ -497,10 +497,11 @@ micronaut:
           poll-timeout: 1s
           validation-interval: 30s
           validation-timeout: 5s
-          max-retries: -1
-          retry-delay: 1s
-          retry-delay-multiplier: 2
-          max-retry-delay: 60s
+          connection-recovery:
+            max-retries: -1
+            retry-delay: 1s
+            retry-delay-multiplier: 2
+            max-retry-delay: 60s
 ----
 
 `poll-timeout`, `validation-interval`, `validation-timeout`, `retry-delay`, and `max-retry-delay` accept duration
@@ -526,6 +527,8 @@ Graceful shutdown may also wait for a connection check already in progress.
 TCP keepalive is enabled on notification connections unless explicitly configured through the datasource's
 `tcpKeepAlive` driver property. Its timing depends on operating-system settings; periodic connection checks
 provide detection independently of those settings.
+
+Recovery settings use the `micronaut.data.jdbc.notifications.postgres.connection-recovery` prefix.
 
 `max-retries` defaults to `-1`, which retries recovery until it succeeds or the application shuts down.
 Non-negative values count retries after the initial recovery attempt; `0` allows only that initial attempt.

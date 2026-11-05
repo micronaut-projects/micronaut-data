@@ -95,7 +95,7 @@ final class PostgresNotificationSubscription {
         this.configuration = configuration;
         validationIntervalNanos = configuration.getValidationInterval().toNanos();
         validationTimeoutSeconds = (int) ((configuration.getValidationTimeout().toMillis() + 999) / 1000);
-        initialDelay = Math.min(configuration.getRetryDelay().toMillis(), configuration.getMaxRetryDelay().toMillis());
+        initialDelay = Math.min(configuration.getConnectionRecovery().getRetryDelay().toMillis(), configuration.getConnectionRecovery().getMaxRetryDelay().toMillis());
         this.connectionFactory = connectionFactory;
         PostgresChangeListenerDefinitionFactory definitionFactory = new PostgresChangeListenerDefinitionFactory(operations, context.getBean(Environment.class));
         for (ChangeListenerMethod method : methods) {
@@ -268,10 +268,10 @@ final class PostgresNotificationSubscription {
                 if (!running) {
                     break;
                 }
-                if (reconnecting && configuration.getMaxRetries() >= 0) {
-                    if (retryCount >= configuration.getMaxRetries()) {
+                if (reconnecting && configuration.getConnectionRecovery().getMaxRetries() >= 0) {
+                    if (retryCount >= configuration.getConnectionRecovery().getMaxRetries()) {
                         LOG.error("PostgreSQL notification recovery exhausted [{}] retries for datasource [{}]; notifications remain unavailable",
-                            configuration.getMaxRetries(), name, e);
+                            configuration.getConnectionRecovery().getMaxRetries(), name, e);
                         dispatchers.values().forEach(PostgresChangeNotificationDispatcher::terminate);
                         break;
                     }
@@ -279,7 +279,7 @@ final class PostgresNotificationSubscription {
                 }
                 LOG.warn("PostgreSQL notification connection for datasource [{}] failed; reconnecting in {} ms", name, delay, e);
                 awaitReconnect(delay);
-                delay = Math.min(delay * configuration.getRetryDelayMultiplier(), configuration.getMaxRetryDelay().toMillis());
+                delay = Math.min(delay * configuration.getConnectionRecovery().getRetryDelayMultiplier(), configuration.getConnectionRecovery().getMaxRetryDelay().toMillis());
             }
         }
     }

@@ -16,7 +16,10 @@
 package io.micronaut.data.jdbc.notification.postgres;
 
 import io.micronaut.context.annotation.ConfigurationProperties;
+import io.micronaut.context.annotation.Requires;
 import io.micronaut.core.annotation.Experimental;
+import jakarta.inject.Inject;
+import org.postgresql.PGConnection;
 
 import java.time.Duration;
 import java.util.Objects;
@@ -31,6 +34,7 @@ import java.util.Objects;
  * @since 5.3.0
  */
 @Experimental
+@Requires(classes = PGConnection.class)
 @ConfigurationProperties(PostgresNotificationConfiguration.PREFIX)
 public final class PostgresNotificationConfiguration {
 
@@ -42,10 +46,29 @@ public final class PostgresNotificationConfiguration {
     private Duration pollTimeout = Duration.ofSeconds(1);
     private Duration validationInterval = Duration.ofSeconds(30);
     private Duration validationTimeout = Duration.ofSeconds(5);
-    private int maxRetries = -1;
-    private int retryDelayMultiplier = 2;
-    private Duration retryDelay = Duration.ofSeconds(1);
-    private Duration maxRetryDelay = Duration.ofSeconds(60);
+    private final ConnectionRecoveryConfiguration connectionRecovery;
+
+    /**
+     * Creates configuration with default connection recovery settings.
+     */
+    public PostgresNotificationConfiguration() {
+        this(new ConnectionRecoveryConfiguration());
+    }
+
+    /**
+     * @param connectionRecovery the connection recovery settings
+     */
+    @Inject
+    public PostgresNotificationConfiguration(ConnectionRecoveryConfiguration connectionRecovery) {
+        this.connectionRecovery = connectionRecovery;
+    }
+
+    /**
+     * @return the connection recovery settings
+     */
+    public ConnectionRecoveryConfiguration getConnectionRecovery() {
+        return connectionRecovery;
+    }
 
     /**
      * Returns the limit for waiting notifications per listener. Defaults to 1,000.
@@ -177,89 +200,116 @@ public final class PostgresNotificationConfiguration {
         this.validationTimeout = positive(validationTimeout, "ValidationTimeout");
     }
 
-    /**
-     * Returns the number of retries after the initial recovery attempt. Defaults to unlimited.
-     *
-     * @return the maximum number of retries, or {@code -1} for unlimited retries
-     */
-    public int getMaxRetries() {
-        return maxRetries;
-    }
-
-    /**
-     * Sets the number of retries after the initial recovery attempt. Zero allows only that initial attempt.
-     * A successful reconnection resets the retry count for the next connection failure.
-     *
-     * @param maxRetries the non-negative maximum number of retries, or {@code -1} for unlimited retries
-     * @throws IllegalArgumentException if the value is less than {@code -1}
-     */
-    public void setMaxRetries(int maxRetries) {
-        if (maxRetries < -1) {
-            throw new IllegalArgumentException("max-retries must be greater than or equal to -1");
+    private static Duration positive(Duration value, String name) {
+        Objects.requireNonNull(value, name);
+        if (value.toMillis() < 1 || value.toMillis() > Integer.MAX_VALUE) {
+            throw new IllegalArgumentException(name + " must be between 1 and " + Integer.MAX_VALUE + " milliseconds");
         }
-        this.maxRetries = maxRetries;
+        return value;
     }
 
     /**
-     * Returns the multiplier applied to the delay after each failed recovery attempt. Defaults to two.
-     *
-     * @return the retry delay multiplier
+     * Settings for reconnecting failed PostgreSQL notification connections.
+     * These settings do not apply to initial startup failures or listener callbacks.
      */
-    public int getRetryDelayMultiplier() {
-        return retryDelayMultiplier;
-    }
+    @Experimental
+    @Requires(classes = PGConnection.class)
+    @ConfigurationProperties(ConnectionRecoveryConfiguration.PREFIX)
+    public static final class ConnectionRecoveryConfiguration {
+        /**
+         * Configuration prefix for connection recovery.
+         */
+        public static final String PREFIX = "connection-recovery";
 
-    /**
-     * Sets the multiplier applied to the delay after each failed recovery attempt. One uses a fixed delay.
-     * Delays are capped at {@link #getMaxRetryDelay()}.
-     *
-     * @param retryDelayMultiplier the integer multiplier, at least one
-     * @throws IllegalArgumentException if the multiplier is less than one
-     */
-    public void setRetryDelayMultiplier(int retryDelayMultiplier) {
-        if (retryDelayMultiplier < 1) {
-            throw new IllegalArgumentException("retry-delay-multiplier must be greater than or equal to one");
+        private int maxRetries = -1;
+        private int retryDelayMultiplier = 2;
+        private Duration retryDelay = Duration.ofSeconds(1);
+        private Duration maxRetryDelay = Duration.ofSeconds(60);
+
+        /**
+         * Returns the number of retries after the initial recovery attempt. Defaults to unlimited.
+         *
+         * @return the maximum number of retries, or {@code -1} for unlimited retries
+         */
+        public int getMaxRetries() {
+            return maxRetries;
         }
-        this.retryDelayMultiplier = retryDelayMultiplier;
-    }
 
-    /**
-     * Returns the delay before the first recovery attempt. Defaults to one second.
-     * The effective delay is capped by {@link #getMaxRetryDelay()}.
-     *
-     * @return the initial recovery delay
-     */
-    public Duration getRetryDelay() {
-        return retryDelay;
-    }
+        /**
+         * Sets the number of retries after the initial recovery attempt. Zero allows only that initial attempt.
+         * A successful reconnection resets the retry count for the next connection failure.
+         *
+         * @param maxRetries the non-negative maximum number of retries, or {@code -1} for unlimited retries
+         * @throws IllegalArgumentException if the value is less than {@code -1}
+         */
+        public void setMaxRetries(int maxRetries) {
+            if (maxRetries < -1) {
+                throw new IllegalArgumentException("max-retries must be greater than or equal to -1");
+            }
+            this.maxRetries = maxRetries;
+        }
 
-    /**
-     * Sets the initial recovery delay. Durations are used at millisecond precision.
-     *
-     * @param retryDelay a duration whose millisecond value is between one and {@link Integer#MAX_VALUE}
-     * @throws IllegalArgumentException if the millisecond value is outside the supported range
-     */
-    public void setRetryDelay(Duration retryDelay) {
-        this.retryDelay = positive(retryDelay, "RetryDelay");
-    }
+        /**
+         * Returns the multiplier applied to the delay after each failed recovery attempt. Defaults to two.
+         *
+         * @return the retry delay multiplier
+         */
+        public int getRetryDelayMultiplier() {
+            return retryDelayMultiplier;
+        }
 
-    /**
-     * Returns the upper bound for recovery delays, including the initial delay. Defaults to sixty seconds.
-     *
-     * @return the maximum recovery delay
-     */
-    public Duration getMaxRetryDelay() {
-        return maxRetryDelay;
-    }
+        /**
+         * Sets the multiplier applied to the delay after each failed recovery attempt. One uses a fixed delay.
+         * Delays are capped at {@link #getMaxRetryDelay()}.
+         *
+         * @param retryDelayMultiplier the integer multiplier, at least one
+         * @throws IllegalArgumentException if the multiplier is less than one
+         */
+        public void setRetryDelayMultiplier(int retryDelayMultiplier) {
+            if (retryDelayMultiplier < 1) {
+                throw new IllegalArgumentException("retry-delay-multiplier must be greater than or equal to one");
+            }
+            this.retryDelayMultiplier = retryDelayMultiplier;
+        }
 
-    /**
-     * Sets the maximum recovery delay. Durations are used at millisecond precision.
-     *
-     * @param maxRetryDelay a duration whose millisecond value is between one and {@link Integer#MAX_VALUE}
-     * @throws IllegalArgumentException if the millisecond value is outside the supported range
-     */
-    public void setMaxRetryDelay(Duration maxRetryDelay) {
-        this.maxRetryDelay = positive(maxRetryDelay, "MaxRetryDelay");
+        /**
+         * Returns the delay before the first recovery attempt. Defaults to one second.
+         * The effective delay is capped by {@link #getMaxRetryDelay()}.
+         *
+         * @return the initial recovery delay
+         */
+        public Duration getRetryDelay() {
+            return retryDelay;
+        }
+
+        /**
+         * Sets the initial recovery delay. Durations are used at millisecond precision.
+         *
+         * @param retryDelay a duration whose millisecond value is between one and {@link Integer#MAX_VALUE}
+         * @throws IllegalArgumentException if the millisecond value is outside the supported range
+         */
+        public void setRetryDelay(Duration retryDelay) {
+            this.retryDelay = positive(retryDelay, "RetryDelay");
+        }
+
+        /**
+         * Returns the upper bound for recovery delays, including the initial delay. Defaults to sixty seconds.
+         *
+         * @return the maximum recovery delay
+         */
+        public Duration getMaxRetryDelay() {
+            return maxRetryDelay;
+        }
+
+        /**
+         * Sets the maximum recovery delay. Durations are used at millisecond precision.
+         *
+         * @param maxRetryDelay a duration whose millisecond value is between one and {@link Integer#MAX_VALUE}
+         * @throws IllegalArgumentException if the millisecond value is outside the supported range
+         */
+        public void setMaxRetryDelay(Duration maxRetryDelay) {
+            this.maxRetryDelay = positive(maxRetryDelay, "MaxRetryDelay");
+        }
     }
 
     /**
@@ -277,11 +327,5 @@ public final class PostgresNotificationConfiguration {
         STATEMENT
     }
 
-    private static Duration positive(Duration value, String name) {
-        Objects.requireNonNull(value, name);
-        if (value.toMillis() < 1 || value.toMillis() > Integer.MAX_VALUE) {
-            throw new IllegalArgumentException(name + " must be between 1 and " + Integer.MAX_VALUE + " milliseconds");
-        }
-        return value;
-    }
+
 }

@@ -31,6 +31,7 @@ import io.micronaut.data.runtime.config.SchemaGenerate;
 import io.micronaut.inject.ExecutableMethod;
 import jakarta.inject.Singleton;
 import org.jspecify.annotations.Nullable;
+import org.postgresql.PGConnection;
 
 import java.io.IOException;
 import java.io.InputStream;
@@ -65,6 +66,7 @@ import java.util.stream.Collectors;
  */
 @Internal
 @Singleton
+@Requires(classes = PGConnection.class)
 @Requires(property = PostgresNotificationSchemaGenerator.SCHEMA_GENERATE_PROPERTY, value = StringUtils.TRUE)
 public final class PostgresNotificationSchemaGenerator {
 

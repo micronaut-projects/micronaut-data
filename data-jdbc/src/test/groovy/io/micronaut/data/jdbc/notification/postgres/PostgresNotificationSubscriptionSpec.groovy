@@ -114,7 +114,8 @@ class PostgresNotificationSubscriptionSpec extends Specification {
             getParameter() >> payload
         }
         def configuration = new PostgresNotificationConfiguration(
-            pollTimeout: Duration.ofMillis(10), retryDelay: Duration.ofMillis(1))
+            pollTimeout: Duration.ofMillis(10))
+        configuration.connectionRecovery.retryDelay = Duration.ofMillis(1)
 
         when:
         def subscription = new PostgresNotificationSubscription('test', operations, listeners, context,
@@ -280,9 +281,9 @@ class PostgresNotificationSubscriptionSpec extends Specification {
             }
         }
         def configuration = new PostgresNotificationConfiguration()
-        configuration.maxRetries = maxRetries
-        configuration.retryDelay = Duration.ofMillis(1)
-        configuration.maxRetryDelay = Duration.ofMillis(2)
+        configuration.connectionRecovery.maxRetries = maxRetries
+        configuration.connectionRecovery.retryDelay = Duration.ofMillis(1)
+        configuration.connectionRecovery.maxRetryDelay = Duration.ofMillis(2)
         def subscription = newSubscription(source, configuration)
 
         when:
@@ -322,7 +323,7 @@ class PostgresNotificationSubscriptionSpec extends Specification {
         }
         def source = Mock(PGSimpleDataSource)
         def configuration = new PostgresNotificationConfiguration()
-        configuration.retryDelay = Duration.ofMinutes(1)
+        configuration.connectionRecovery.retryDelay = Duration.ofMinutes(1)
         def subscription = newSubscription(source, configuration)
 
         when:
@@ -455,8 +456,8 @@ class PostgresNotificationSubscriptionSpec extends Specification {
             getConnection() >> { opens.incrementAndGet() == 1 ? original : replacement }
         }
         def configuration = new PostgresNotificationConfiguration(
-            validationInterval: Duration.ofMillis(1), validationTimeout: Duration.ofMillis(1),
-            retryDelay: Duration.ofMillis(1))
+            validationInterval: Duration.ofMillis(1), validationTimeout: Duration.ofMillis(1))
+        configuration.connectionRecovery.retryDelay = Duration.ofMillis(1)
         def subscription = newSubscription(source, configuration)
 
         when:

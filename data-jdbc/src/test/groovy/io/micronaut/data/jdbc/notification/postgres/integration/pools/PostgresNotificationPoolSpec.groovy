@@ -71,10 +71,10 @@ class PostgresNotificationPoolSpec extends Specification implements PostgresTest
         String password = bootstrap.environment.getRequiredProperty('datasources.default.password', String)
         secondaryWriter = DriverManager.getConnection(url, username, password)
         settings += [
-            'spec.pool.url': writer.metaData.URL,
-            'spec.pool.secondary-url': url,
-            'spec.pool.username': username,
-            'spec.pool.password': password
+                'spec.pool.url'          : writer.metaData.URL,
+                'spec.pool.secondary-url': url,
+                'spec.pool.username'     : username,
+                'spec.pool.password'     : password
         ]
         for (Connection connection : [writer, secondaryWriter]) {
             execute(connection, 'CREATE SCHEMA notification_pool_test')
@@ -106,21 +106,21 @@ class PostgresNotificationPoolSpec extends Specification implements PostgresTest
     void "#pool remains available while dedicated connections reconnect with custom factory #customFactory"() {
         given:
         Map configuration = settings + getDataSourceProperties('secondary') + [
-            'spec.name': 'PostgresNotificationPoolSpec',
-            'spec.pool.type': pool,
-            'spec.pool.custom-connections': customFactory,
-            'datasources.default.enabled': false,
-            'datasources.secondary.enabled': false,
-            'datasources.default.url': settings['spec.pool.url'],
-            'datasources.secondary.url': settings['spec.pool.secondary-url'],
-            'datasources.default.username': settings['spec.pool.username'],
-            'datasources.default.password': settings['spec.pool.password'],
-            'datasources.secondary.username': settings['spec.pool.username'],
-            'datasources.secondary.password': settings['spec.pool.password'],
-            'datasources.default.data-source-properties.ApplicationName': 'notification-pool-default',
-            'datasources.secondary.data-source-properties.ApplicationName': 'notification-pool-secondary',
-            'micronaut.data.jdbc.notifications.postgres.poll-timeout': '100ms',
-            'micronaut.data.jdbc.notifications.postgres.retry-delay': '100ms'
+                'spec.name'                                                                 : 'PostgresNotificationPoolSpec',
+                'spec.pool.type'                                                            : pool,
+                'spec.pool.custom-connections'                                              : customFactory,
+                'datasources.default.enabled'                                               : false,
+                'datasources.secondary.enabled'                                             : false,
+                'datasources.default.url'                                                   : settings['spec.pool.url'],
+                'datasources.secondary.url'                                                 : settings['spec.pool.secondary-url'],
+                'datasources.default.username'                                              : settings['spec.pool.username'],
+                'datasources.default.password'                                              : settings['spec.pool.password'],
+                'datasources.secondary.username'                                            : settings['spec.pool.username'],
+                'datasources.secondary.password'                                            : settings['spec.pool.password'],
+                'datasources.default.data-source-properties.ApplicationName'                : 'notification-pool-default',
+                'datasources.secondary.data-source-properties.ApplicationName'              : 'notification-pool-secondary',
+                'micronaut.data.jdbc.notifications.postgres.poll-timeout'                   : '100ms',
+                'micronaut.data.jdbc.notifications.postgres.connection-recovery.retry-delay': '100ms'
         ]
         application = ApplicationContext.run(configuration)
         def listener = application.getBean(PoolBookListeners)
@@ -303,10 +303,10 @@ class CustomNotificationConnectionFactory implements PostgresNotificationConnect
         requests.add(name)
         String urlProperty = name == 'default' ? 'url' : 'secondary-url'
         Properties properties = [
-            user: environment.getRequiredProperty('spec.pool.username', String),
-            password: environment.getRequiredProperty('spec.pool.password', String),
-            ApplicationName: 'notification-pool-' + name,
-            connectTimeout: '10', loginTimeout: '30', socketTimeout: '30'
+                user           : environment.getRequiredProperty('spec.pool.username', String),
+                password       : environment.getRequiredProperty('spec.pool.password', String),
+                ApplicationName: 'notification-pool-' + name,
+                connectTimeout : '10', loginTimeout: '30', socketTimeout: '30'
         ] as Properties
         DriverManager.getConnection(environment.getRequiredProperty('spec.pool.' + urlProperty, String), properties)
     }
@@ -314,7 +314,8 @@ class CustomNotificationConnectionFactory implements PostgresNotificationConnect
 
 @MappedEntity(value = 'notification_book', schema = 'notification_pool_test')
 class PoolBook {
-    @Id Long id
+    @Id
+    Long id
     String title
 }
 
