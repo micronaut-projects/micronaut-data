@@ -20,6 +20,7 @@ import io.micronaut.aop.InterceptedMethod;
 import io.micronaut.aop.InterceptorBean;
 import io.micronaut.aop.MethodInterceptor;
 import io.micronaut.aop.MethodInvocationContext;
+import io.micronaut.core.annotation.AnnotationMetadata;
 import io.micronaut.core.annotation.AnnotationValue;
 import io.micronaut.core.annotation.Internal;
 import org.jspecify.annotations.NonNull;
@@ -95,26 +96,16 @@ public final class ConnectableInterceptor implements MethodInterceptor<Object, O
         InterceptedMethod interceptedMethod = InterceptedMethod.of(context, conversionService);
         try {
             ExecutableMethod<Object, Object> executableMethod = context.getExecutableMethod();
-            final ConnectionInvocation connectionInvocation = connectionInvocationMap
-                .computeIfAbsent(new TenantExecutableMethod(tenantDataSourceName, executableMethod), ignore -> {
-                    final String dataSource = tenantDataSourceName == null ? executableMethod.stringValue(Connectable.class).orElse(null) : tenantDataSourceName;
-                    final ConnectionDefinition connectionDefinition = getConnectionDefinition(executableMethod);
-
-                    switch (interceptedMethod.resultType()) {
-                        case PUBLISHER -> {
-                            ReactiveStreamsConnectionOperations<?> operations = connectionOperationsRegistry.provideReactive(ReactiveStreamsConnectionOperations.class, dataSource);
-                            return new ConnectionInvocation(null, operations, null, connectionDefinition);
-                        }
-                        case COMPLETION_STAGE -> {
-                            AsyncConnectionOperations<?> operations = connectionOperationsRegistry.provideAsync(AsyncConnectionOperations.class, dataSource);
-                            return new ConnectionInvocation(null, null, operations, connectionDefinition);
-                        }
-                        default -> {
-                            ConnectionOperations<?> operations = connectionOperationsRegistry.provideSynchronous(ConnectionOperations.class, dataSource);
-                            return new ConnectionInvocation(operations, null, null, connectionDefinition);
-                        }
-                    }
-                });
+            // Executable methods of different beans are equal when they inherit the same method, yet each bean can
+            // declare its own connection manager and definition: key by the target type, and only reuse an invocation
+            // created from the same annotation metadata
+            TenantExecutableMethod key = new TenantExecutableMethod(tenantDataSourceName, context.getTarget().getClass(), executableMethod);
+            AnnotationMetadata annotationMetadata = executableMethod.getAnnotationMetadata();
+            ConnectionInvocation connectionInvocation = connectionInvocationMap.get(key);
+            if (connectionInvocation == null || connectionInvocation.annotationMetadata != annotationMetadata) {
+                connectionInvocation = createConnectionInvocation(tenantDataSourceName, executableMethod, annotationMetadata, interceptedMethod);
+                connectionInvocationMap.put(key, connectionInvocation);
+            }
 
             final ConnectionDefinition definition = connectionInvocation.definition;
             switch (interceptedMethod.resultType()) {
@@ -150,6 +141,38 @@ public final class ConnectableInterceptor implements MethodInterceptor<Object, O
         }
     }
 
+    private ConnectionInvocation createConnectionInvocation(@Nullable String tenantDataSourceName,
+                                                            ExecutableMethod<Object, Object> executableMethod,
+                                                            AnnotationMetadata annotationMetadata,
+                                                            InterceptedMethod interceptedMethod) {
+        final String dataSource = tenantDataSourceName == null ? executableMethod.stringValue(Connectable.class).orElse(null) : tenantDataSourceName;
+        final ConnectionDefinition connectionDefinition = getConnectionDefinition(executableMethod);
+
+        return switch (interceptedMethod.resultType()) {
+            case PUBLISHER -> new ConnectionInvocation(
+                null,
+                connectionOperationsRegistry.provideReactive(ReactiveStreamsConnectionOperations.class, dataSource),
+                null,
+                connectionDefinition,
+                annotationMetadata
+            );
+            case COMPLETION_STAGE -> new ConnectionInvocation(
+                null,
+                null,
+                connectionOperationsRegistry.provideAsync(AsyncConnectionOperations.class, dataSource),
+                connectionDefinition,
+                annotationMetadata
+            );
+            default -> new ConnectionInvocation(
+                connectionOperationsRegistry.provideSynchronous(ConnectionOperations.class, dataSource),
+                null,
+                null,
+                connectionDefinition,
+                annotationMetadata
+            );
+        };
+    }
+
     @NonNull
     public static ConnectionDefinition getConnectionDefinition(ExecutableMethod<Object, Object> executableMethod) {
         AnnotationValue<Connectable> annotation = executableMethod.getAnnotation(Connectable.class);
@@ -173,24 +196,28 @@ public final class ConnectableInterceptor implements MethodInterceptor<Object, O
      * @param reactiveStreamsConnectionOperations The reactive connection operations
      * @param asyncConnectionOperations           The async connection operations
      * @param definition                          The connection definition
+     * @param annotationMetadata                  The annotation metadata the invocation was created from
      */
     private record ConnectionInvocation(
         @Nullable ConnectionOperations<?> connectionOperations,
         @Nullable ReactorConnectionOperations<?> reactorConnectionOperations,
         @Nullable ReactiveStreamsConnectionOperations<?> reactiveStreamsConnectionOperations,
         @Nullable AsyncConnectionOperations<?> asyncConnectionOperations,
-        ConnectionDefinition definition) {
+        ConnectionDefinition definition,
+        AnnotationMetadata annotationMetadata) {
 
         ConnectionInvocation(
             @Nullable ConnectionOperations<?> connectionOperations,
             @Nullable ReactiveStreamsConnectionOperations<?> reactiveStreamsConnectionOperations,
-            @Nullable AsyncConnectionOperations<?> asyncConnectionOperations, ConnectionDefinition definition) {
+            @Nullable AsyncConnectionOperations<?> asyncConnectionOperations, ConnectionDefinition definition,
+            AnnotationMetadata annotationMetadata) {
 
             this(connectionOperations,
                 reactiveStreamsConnectionOperations instanceof ReactorConnectionOperations<?> reactorReactiveConnectionOperations ? reactorReactiveConnectionOperations : null,
                 reactiveStreamsConnectionOperations,
                 asyncConnectionOperations,
-                definition);
+                definition,
+                annotationMetadata);
         }
     }
 
@@ -198,9 +225,10 @@ public final class ConnectableInterceptor implements MethodInterceptor<Object, O
      * The tenant executable method.
      *
      * @param dataSource The datasource name
+     * @param targetType The type of the intercepted target
      * @param method     The method
      */
-    private record TenantExecutableMethod(@Nullable String dataSource, ExecutableMethod<?, ?> method) {
+    private record TenantExecutableMethod(@Nullable String dataSource, Class<?> targetType, ExecutableMethod<?, ?> method) {
     }
 
 }
