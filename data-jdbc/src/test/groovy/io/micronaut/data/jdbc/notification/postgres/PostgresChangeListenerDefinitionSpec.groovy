@@ -50,6 +50,7 @@ import spock.lang.Specification
 import spock.lang.Unroll
 
 import java.sql.Connection
+import java.sql.ResultSet
 import java.sql.Statement
 
 class PostgresChangeListenerDefinitionSpec extends Specification {
@@ -182,6 +183,10 @@ class PostgresChangeListenerDefinitionSpec extends Specification {
         registry.process(listener.beanDefinition(), method)
         def statements = []
         def statement = Stub(Statement) {
+            executeQuery(_ as String) >> Stub(ResultSet) {
+                next() >> true
+                getInt(1) >> 0
+            }
             execute(_ as String) >> { String command -> statements.add(command); true }
         }
         def connection = Stub(Connection) {

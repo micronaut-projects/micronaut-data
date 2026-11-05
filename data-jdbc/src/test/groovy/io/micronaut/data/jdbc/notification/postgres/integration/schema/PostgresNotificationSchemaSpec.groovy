@@ -455,6 +455,83 @@ class PostgresNotificationSchemaSpec extends Specification implements PostgresTe
         count('SELECT count(*) FROM notification_schema_test."ÄBook"') == 0
     }
 
+    @Unroll
+    void "installation times out behind a reader with auto-commit #autoCommit"() {
+        given:
+        start('CREATE', true)
+        execute('ALTER FUNCTION notification_schema_test.micronaut_data_notify_change() SET search_path = pg_catalog, public')
+        String originalFunction = functionDefinition()
+        def blocker = DelegatingDataSource.unwrapDataSource(bootstrap.getBean(DataSource)).connection
+        blocker.autoCommit = false
+        try (def statement = blocker.createStatement();
+             def rows = statement.executeQuery('SELECT * FROM notification_schema_test."ÄBook"')) {
+            rows.next()
+        }
+        execute("SET lock_timeout = '0'")
+        execute("SET statement_timeout = '15s'") // Bounds the test if the installation lock limit regresses.
+        writer.autoCommit = autoCommit
+        if (!autoCommit) {
+            execute("""INSERT INTO notification_schema_test."ÄBook" VALUES ('$TENANT', 1, 'caller work')""")
+        }
+
+        when:
+        generateNotifications()
+
+        then:
+        def failure = thrown(SQLException)
+        failure.SQLState == '55P03'
+        writer.autoCommit == autoCommit
+        countTriggers() == 4
+        functionDefinition() == originalFunction
+        count("SELECT setting::integer FROM pg_catalog.pg_settings WHERE name = 'lock_timeout'") == 0
+        if (!autoCommit) {
+            assert count('SELECT count(*) FROM notification_schema_test."ÄBook"') == 1
+        }
+
+        cleanup:
+        blocker?.rollback()
+        blocker?.close()
+        if (!writer.autoCommit) {
+            writer.rollback()
+            writer.autoCommit = true
+        }
+        execute("SET statement_timeout = '0'")
+        execute("SET lock_timeout = '0'")
+
+        where:
+        autoCommit << [true, false]
+    }
+
+    @Unroll
+    void "installation preserves lock timeout #timeout with auto-commit #autoCommit"() {
+        given:
+        start('CREATE', true)
+        execute("SET lock_timeout = '${timeout}ms'")
+        writer.autoCommit = autoCommit
+
+        when:
+        generateNotifications()
+
+        then:
+        writer.autoCommit == autoCommit
+        count("SELECT setting::integer FROM pg_catalog.pg_settings WHERE name = 'lock_timeout'") == timeout
+        countTriggers() == 4
+
+        cleanup:
+        if (!writer.autoCommit) {
+            writer.rollback()
+            writer.autoCommit = true
+        }
+        execute("SET lock_timeout = '0'")
+
+        where:
+        autoCommit | timeout
+        true       | 0
+        false      | 0
+        false      | 250
+        false      | 30000
+    }
+
     private void generateNotifications() {
         def entity = application.getBean(RuntimeEntityRegistry).getEntity(GeneratedBook)
         application.getBean(PostgresNotificationSchemaGenerator).generate(writer,

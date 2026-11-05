@@ -38,6 +38,7 @@ import io.micronaut.inject.ExecutableMethod
 import spock.lang.Specification
 
 import java.sql.Connection
+import java.sql.ResultSet
 import java.sql.Statement
 
 class PostgresNotificationChannelSpec extends Specification {
@@ -62,6 +63,10 @@ class PostgresNotificationChannelSpec extends Specification {
         def listener = listener('${app.channel}')
         def statements = []
         connection.createStatement() >> Stub(Statement) {
+            executeQuery(_ as String) >> Stub(ResultSet) {
+                next() >> true
+                getInt(1) >> 0
+            }
             execute(_ as String) >> { String sql -> statements.add(sql); true }
         }
         PostgresChangeListenerDefinition definition

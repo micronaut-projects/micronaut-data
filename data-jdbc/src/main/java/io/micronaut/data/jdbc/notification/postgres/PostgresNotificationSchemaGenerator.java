@@ -78,6 +78,7 @@ public final class PostgresNotificationSchemaGenerator {
 
     private static final String CHANGE_FUNCTION_NAME = "micronaut_data_notify_change";
     private static final String INVALIDATION_FUNCTION_NAME = "micronaut_data_notify_invalidation";
+    private static final int INSTALL_LOCK_TIMEOUT_MILLIS = 5000;
 
     private final ChangeListenerRegistry registry;
     private final Environment environment;
@@ -137,10 +138,19 @@ public final class PostgresNotificationSchemaGenerator {
         }
         Savepoint savepoint = autoCommit ? null : connection.setSavepoint();
         try {
+            int previousLockTimeout = lockTimeout(connection);
+            boolean limitLockWait = previousLockTimeout == 0 || previousLockTimeout > INSTALL_LOCK_TIMEOUT_MILLIS;
+            if (limitLockWait) {
+                execute(connection, "SET LOCAL lock_timeout = '" + INSTALL_LOCK_TIMEOUT_MILLIS + "ms'");
+            }
             install(connection, subscriptions);
             if (savepoint == null) {
                 connection.commit();
             } else {
+                if (limitLockWait) {
+                    // Releasing a savepoint does not restore transaction-local settings.
+                    execute(connection, "SET LOCAL lock_timeout = '" + previousLockTimeout + "ms'");
+                }
                 connection.releaseSavepoint(savepoint);
             }
         } catch (SQLException | RuntimeException | Error failure) {
@@ -149,6 +159,16 @@ public final class PostgresNotificationSchemaGenerator {
         }
         if (autoCommit) {
             connection.setAutoCommit(true);
+        }
+    }
+
+    private static int lockTimeout(Connection connection) throws SQLException {
+        try (Statement statement = connection.createStatement();
+             var rows = statement.executeQuery("SELECT setting::integer FROM pg_catalog.pg_settings WHERE name = 'lock_timeout'")) {
+            if (!rows.next()) {
+                throw new SQLException("Cannot determine PostgreSQL lock_timeout for notification installation");
+            }
+            return rows.getInt(1);
         }
     }
 
@@ -178,8 +198,7 @@ public final class PostgresNotificationSchemaGenerator {
             Subscription subscription = entry.getKey();
             String qualifiedFunction = quote(subscription.schema()) + "." + quote(functionName);
             if (installedSchemas.add(subscription.schema())) {
-                execute(connection, function.replace("CREATE OR REPLACE FUNCTION " + functionName + "()",
-                    "CREATE OR REPLACE FUNCTION " + qualifiedFunction + "()"));
+                execute(connection, qualifyFunction(function, functionName, qualifiedFunction));
             }
             String table = quote(subscription.schema()) + "." + quote(subscription.table());
             String name = triggerName(subscription);
@@ -196,6 +215,14 @@ public final class PostgresNotificationSchemaGenerator {
                 createTrigger(connection, table, name + "_truncate", "TRUNCATE", "STATEMENT", qualifiedFunction, arguments);
             }
         }
+    }
+
+    static String qualifyFunction(String function, String functionName, String qualifiedFunction) {
+        String declaration = "CREATE OR REPLACE FUNCTION " + functionName + "()";
+        if (!function.contains(declaration)) {
+            throw new IllegalStateException("Cannot qualify PostgreSQL notification function: missing declaration [" + declaration + "]");
+        }
+        return function.replace(declaration, "CREATE OR REPLACE FUNCTION " + qualifiedFunction + "()");
     }
 
     /**
