@@ -14,9 +14,8 @@
  * limitations under the License.
  */
 /**
- * Internal Oracle notification validation shared by annotation processing and JDBC providers.
+ * JDBC connection support.
+ *
+ * @since 5.3.0
  */
-@NullMarked
-package io.micronaut.data.notification.oracle;
-
-import org.jspecify.annotations.NullMarked;
+package io.micronaut.data.connection.jdbc.support;

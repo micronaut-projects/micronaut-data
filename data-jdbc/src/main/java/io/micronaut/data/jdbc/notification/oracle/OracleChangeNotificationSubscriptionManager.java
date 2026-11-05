@@ -83,23 +83,27 @@ final class OracleChangeNotificationSubscriptionManager {
      * is propagated.
      */
     void start() {
-        if (taskTracker.isShutdownStarted() || !started.compareAndSet(false, true)) {
+        if (!started.compareAndSet(false, true) || !taskTracker.acceptTask()) {
             return;
         }
-        LOG.trace("Starting [{}] DCN subscriptions for datasource [{}]", subscriptions.size(), dataSourceName);
         boolean startupCompleted = false;
         try {
+            LOG.trace("Starting [{}] DCN subscriptions for datasource [{}]", subscriptions.size(), dataSourceName);
             for (OracleChangeNotificationSubscription subscription : subscriptions) {
                 startSubscription(subscription);
             }
             LOG.trace("Started [{}] DCN subscriptions for datasource [{}]", subscriptions.size(), dataSourceName);
             startupCompleted = true;
         } finally {
-            if (!startupCompleted) {
-                taskTracker.shutdownGracefully();
-                for (int i = subscriptions.size() - 1; i >= 0; i--) {
-                    subscriptions.get(i).stop();
+            try {
+                if (!startupCompleted) {
+                    taskTracker.shutdownGracefully();
+                    for (int i = subscriptions.size() - 1; i >= 0; i--) {
+                        subscriptions.get(i).stop();
+                    }
                 }
+            } finally {
+                taskTracker.completeTask();
             }
         }
     }

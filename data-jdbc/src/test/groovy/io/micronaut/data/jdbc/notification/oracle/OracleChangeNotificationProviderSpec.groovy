@@ -25,6 +25,23 @@ import io.micronaut.inject.qualifiers.Qualifiers
 import io.micronaut.scheduling.TaskExecutors
 import io.micronaut.scheduling.TaskScheduler
 import spock.lang.Specification
+import io.micronaut.core.annotation.AnnotationValue
+import io.micronaut.core.type.Argument
+import io.micronaut.data.annotation.Id
+import io.micronaut.data.annotation.MappedEntity
+import io.micronaut.data.jdbc.annotation.OracleChangeNotification
+import io.micronaut.data.jdbc.notification.ChangeListenerMethod
+import io.micronaut.data.jdbc.runtime.ConnectionCallback
+import io.micronaut.data.model.runtime.RuntimePersistentEntity
+import io.micronaut.inject.BeanDefinition
+import io.micronaut.inject.ExecutableMethod
+import io.micronaut.inject.ExecutionHandle
+import oracle.jdbc.OracleConnection
+import oracle.jdbc.OracleStatement
+import oracle.jdbc.dcn.DatabaseChangeListener
+import oracle.jdbc.dcn.DatabaseChangeRegistration
+import java.sql.Statement
+import java.sql.ResultSet
 
 import java.sql.Connection
 import java.sql.DatabaseMetaData
@@ -319,6 +336,77 @@ class OracleChangeNotificationProviderSpec extends Specification {
         cleanup:
         cleanup.complete(null)
         executor.shutdownNow()
+    }
+
+    void "shutdown is responsive while initial JDBC registration is blocked"() {
+        given:
+        def entered = new CountDownLatch(1)
+        def release = new CountDownLatch(1)
+        def unregistered = new AtomicInteger()
+        def method = Stub(ExecutableMethod) {
+            getDescription(true) >> 'void changed(ChangeEvent<Book>)'
+            getAnnotation(OracleChangeNotification) >> AnnotationValue.builder(OracleChangeNotification).build()
+            stringValue(OracleChangeListenerQuery) >> Optional.of('SELECT * FROM BOOK WHERE ROWID = ?')
+        }
+        def listener = new ChangeListenerMethod(Stub(BeanDefinition), method, Argument.of(StartupBook))
+        def registration = Stub(DatabaseChangeRegistration) {
+            getRegId() >> 7L
+            getRegistrationOptions() >> new Properties()
+        }
+        def oracleConnection = Stub(OracleConnection) {
+            getProperties() >> new Properties()
+            registerDatabaseChangeNotification(_ as Properties, _ as DatabaseChangeListener) >> {
+                entered.countDown()
+                assert release.await(10, TimeUnit.SECONDS)
+                registration
+            }
+            unregisterDatabaseChangeNotification(registration) >> { unregistered.incrementAndGet() }
+        }
+        def statement = Stub(Statement) {
+            unwrap(OracleStatement) >> Stub(OracleStatement)
+            executeQuery(_ as String) >> Stub(ResultSet)
+        }
+        def connection = Stub(Connection) {
+            unwrap(OracleConnection) >> oracleConnection
+            createStatement() >> statement
+        }
+        def operations = Stub(JdbcRepositoryOperations) {
+            getEntity(StartupBook) >> new RuntimePersistentEntity<>(StartupBook)
+            execute(_ as ConnectionCallback) >> { ConnectionCallback callback -> callback.call(connection) }
+        }
+        def context = Stub(BeanContext) {
+            createExecutionHandle(_, _ as ExecutableMethod) >> { BeanDefinition ignored, ExecutableMethod m -> ExecutionHandle.of(new Object(), m) }
+        }
+        def cleanupExecutor = Executors.newSingleThreadExecutor()
+        def caller = Executors.newFixedThreadPool(2)
+        def provider = new OracleChangeNotificationProvider(context, cleanupExecutor, Stub(TaskScheduler),
+            new OracleNotificationConfiguration(), true, Duration.ofSeconds(15), Stub(ChangeListenerExceptionHandler))
+
+        when:
+        def startup = caller.submit({ provider.register('inventory', operations, [listener]); null } as Callable)
+        assert entered.await(10, TimeUnit.SECONDS)
+        def shutdown = caller.submit({ provider.shutdownGracefully().toCompletableFuture() } as Callable<CompletableFuture<?>>).get(2, TimeUnit.SECONDS)
+        assert !shutdown.done
+        assert provider.reportActiveTasks().orElseThrow() >= 1
+        release.countDown()
+        startup.get(10, TimeUnit.SECONDS)
+        shutdown.get(10, TimeUnit.SECONDS)
+
+        then:
+        unregistered.get() == 1
+        provider.reportActiveTasks().orElseThrow() == 0
+
+        cleanup:
+        release.countDown()
+        provider.shutdownGracefully().toCompletableFuture().get(10, TimeUnit.SECONDS)
+        caller.shutdownNow()
+        cleanupExecutor.shutdownNow()
+    }
+
+    @MappedEntity('BOOK')
+    private static class StartupBook {
+        @Id
+        Long id
     }
 
     private OracleChangeNotificationProvider provider(boolean gracefulShutdownEnabled = false,

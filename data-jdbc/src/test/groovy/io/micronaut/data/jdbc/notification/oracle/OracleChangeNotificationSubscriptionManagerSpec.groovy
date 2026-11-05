@@ -399,7 +399,8 @@ class OracleChangeNotificationSubscriptionManagerSpec extends Specification {
         exception.cause.cause.message == "Invalid registration query"
         1 * oracleConnection.unregisterDatabaseChangeNotification(secondRegistration)
         1 * oracleConnection.unregisterDatabaseChangeNotification(firstRegistration) >> {
-            assert manager.reportActiveTasks().isPresent()
+            assert manager.reportActiveTasks().orElseThrow() == 2
+            assert !manager.@taskTracker.shutdownGracefully().toCompletableFuture().isDone()
             assert queued.empty
         }
         manager.reportActiveTasks().getAsLong() == 1

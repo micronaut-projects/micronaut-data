@@ -71,8 +71,22 @@ class AbstractOracleTypeConvertersFactorySpec extends Specification {
                 AbstractOracleTypeConvertersFactory.OracleVectorKind.BINARY,
                 b: [1 as byte, 2 as byte] as byte[]
             )
-        )
-                .toByteArray() as List == [1 as byte, 2 as byte]
+        ) == new io.micronaut.data.model.vector.BinaryVector([1 as byte, 2 as byte] as byte[])
+    }
+
+    def "converts only BINARY Oracle vectors to BinaryVector"() {
+        given:
+        def converter = AbstractOracleTypeConvertersFactory.oracleVectorToBinaryVectorConverter({ Adapter a -> a })
+
+        expect:
+        converter.convert(new Adapter(AbstractOracleTypeConvertersFactory.OracleVectorKind.BINARY, b: [(byte) 0xA5] as byte[]), null, null).get()
+                .toBooleanArray() as List == [true, false, true, false, false, true, false, true]
+
+        when:
+        converter.convert(new Adapter(AbstractOracleTypeConvertersFactory.OracleVectorKind.INT8, b: [1 as byte] as byte[]), null, null)
+
+        then:
+        thrown(io.micronaut.data.exceptions.DataAccessException)
     }
 
     def "vectorToX helpers convert between kinds"() {

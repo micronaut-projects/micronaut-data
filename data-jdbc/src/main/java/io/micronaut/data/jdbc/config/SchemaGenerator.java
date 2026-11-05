@@ -52,6 +52,7 @@ import io.micronaut.inject.qualifiers.Qualifiers;
 import io.micronaut.data.connection.jdbc.advice.DelegatingDataSource;
 
 import jakarta.annotation.PostConstruct;
+import org.jspecify.annotations.Nullable;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -157,6 +158,7 @@ public class SchemaGenerator {
                 DataSource dataSource = DelegatingDataSource.unwrapDataSource(beanLocator.getBean(DataSource.class, Qualifiers.byName(name)));
                 try {
                     try (Connection connection = dataSource.getConnection()) {
+                        String dialectVersion = configuration.getDialectOptions().resolveVersion(() -> detectVersion(connection, name));
                         // An Oracle session keeps its current schema when the connection returns to the pool
                         String originalOracleSchema = dialect == Dialect.ORACLE ? connection.getSchema() : null;
                         try {
@@ -167,9 +169,9 @@ public class SchemaGenerator {
                                     }
                                     schemaHandler.useSchema(connection, dialect, schemaName);
                                     if (schemaGenerate == SchemaGenerate.VALIDATE) {
-                                        validate(connection, configuration, entities, dialectSqlTableMappingValidatorMap, definitionProviders);
+                                        validate(connection, configuration, dialectVersion, entities, dialectSqlTableMappingValidatorMap, definitionProviders);
                                     } else {
-                                        generate(connection, configuration, propertyPlaceholderResolver, entities);
+                                        generate(connection, configuration, dialectVersion, propertyPlaceholderResolver, entities);
                                         generateNotifications(beanLocator, connection, configuration, entities);
                                     }
                                 }
@@ -181,9 +183,9 @@ public class SchemaGenerator {
                                     schemaHandler.useSchema(connection, dialect, configuration.getSchemaGenerateName());
                                 }
                                 if (schemaGenerate == SchemaGenerate.VALIDATE) {
-                                    validate(connection, configuration, entities, dialectSqlTableMappingValidatorMap, definitionProviders);
+                                    validate(connection, configuration, dialectVersion, entities, dialectSqlTableMappingValidatorMap, definitionProviders);
                                 } else {
-                                    generate(connection, configuration, propertyPlaceholderResolver, entities);
+                                    generate(connection, configuration, dialectVersion, propertyPlaceholderResolver, entities);
                                     generateNotifications(beanLocator, connection, configuration, entities);
                                 }
                             }
@@ -199,6 +201,20 @@ public class SchemaGenerator {
                     throw new ConfigurationException("No DataSource configured for setting [" + DataJdbcConfiguration.PREFIX + name + "]. Ensure the DataSource is configured correctly and try again.", e);
                 }
             }
+        }
+    }
+
+    private static @Nullable String detectVersion(Connection connection, String dataSourceName) {
+        try {
+            DatabaseMetaData metadata = connection.getMetaData();
+            String version = metadata.getDatabaseMajorVersion() + "." + metadata.getDatabaseMinorVersion();
+            if (LOG.isInfoEnabled()) {
+                LOG.info("Schema generation for datasource [{}] targets the detected database version {}", dataSourceName, version);
+            }
+            return version;
+        } catch (SQLException e) {
+            LOG.warn("Unable to detect the database version of datasource [{}]: schema generation uses no target version", dataSourceName, e);
+            return null;
         }
     }
 
@@ -226,10 +242,11 @@ public class SchemaGenerator {
     @SuppressWarnings("java:S3776")
     private void generate(Connection connection,
                           DataJdbcConfiguration configuration,
+                          @Nullable String dialectVersion,
                           PropertyPlaceholderResolver propertyPlaceholderResolver,
                           PersistentEntity[] entities) throws SQLException {
         Dialect dialect = configuration.getDialect();
-        SqlQueryBuilder builder = new SqlQueryBuilder(dialect, configuration.getDialectOptions().getVersion());
+        SqlQueryBuilder builder = new SqlQueryBuilder(dialect, dialectVersion);
         // Oracle JDBC doesn't execute several statements in one string
         if (dialect.allowBatch() && dialect != Dialect.ORACLE && configuration.isBatchGenerate()) {
             switch (configuration.getSchemaGenerate()) {
@@ -307,11 +324,12 @@ public class SchemaGenerator {
     @SuppressWarnings("java:S3776")
     private static void validate(Connection connection,
                                  DataJdbcConfiguration configuration,
+                                 @Nullable String dialectVersion,
                                  PersistentEntity[] entities,
                                  Map<Dialect, SqlTableMappingValidator> dialectSqlTableMappingValidatorMap,
                                  List<DefinitionProvider> definitionProviders) throws SQLException {
         Dialect dialect = configuration.getDialect();
-        SqlDialectOptions dialectOptions = SqlDialectOptions.of(dialect, configuration.getDialectOptions().getVersion());
+        SqlDialectOptions dialectOptions = SqlDialectOptions.of(dialect, dialectVersion);
         SqlTableMappingValidator sqlTableMappingValidator = dialectSqlTableMappingValidatorMap.get(dialect);
         if (sqlTableMappingValidator == null) {
             throw new IllegalStateException("There is no supported SqlTableMappingValidator for dialect " + dialect);
