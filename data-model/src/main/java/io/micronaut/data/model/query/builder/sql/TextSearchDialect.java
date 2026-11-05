@@ -795,7 +795,8 @@ public interface TextSearchDialect {
         }
 
         private static String createPolicyStatement() {
-            return "BEGIN CTX_DDL.CREATE_POLICY('" + POLICY_NAME + "'); EXCEPTION WHEN OTHERS THEN IF SQLCODE != -20000 THEN RAISE; END IF; END;";
+            // ORA-20000 carries every Oracle Text error; only DRG-10507 says the policy exists already
+            return "BEGIN CTX_DDL.CREATE_POLICY('" + POLICY_NAME + "'); EXCEPTION WHEN OTHERS THEN IF SQLCODE != -20000 OR INSTR(SQLERRM, 'DRG-10507') = 0 THEN RAISE; END IF; END;";
         }
 
         /**
