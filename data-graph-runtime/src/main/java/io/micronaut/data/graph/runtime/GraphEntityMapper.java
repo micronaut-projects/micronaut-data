@@ -104,7 +104,7 @@ public final class GraphEntityMapper {
         Map<String, Object> values = new HashMap<>();
         RuntimePersistentProperty<T> identity = entity.getIdentity();
         if (identity != null) {
-            Object id = GraphEntities.isNativeId(identity) ? nativeId(identity, node.id()) : node.properties().get(identity.getPersistedName());
+            Object id = GraphEntities.isNativeId(identity) ? nativeId(identity, node.id(), node.numericId()) : node.properties().get(identity.getPersistedName());
             values.put(identity.getName(), readValue(identity, id));
         }
         readProperties(entity, node, row, values);
@@ -257,7 +257,7 @@ public final class GraphEntityMapper {
         Map<String, Object> values = new HashMap<>();
         RuntimePersistentProperty<T> identity = entity.getIdentity();
         if (identity != null) {
-            Object id = GraphEntities.isNativeId(identity) ? nativeId(identity, edge.id()) : edge.properties().get(identity.getPersistedName());
+            Object id = GraphEntities.isNativeId(identity) ? nativeId(identity, edge.id(), edge.numericId()) : edge.properties().get(identity.getPersistedName());
             values.put(identity.getName(), readValue(identity, id));
         }
         for (RuntimePersistentProperty<T> property : entity.getPersistentProperties()) {
@@ -459,21 +459,15 @@ public final class GraphEntityMapper {
     }
 
     /**
-     * Adapts an identifier assigned by the database to a numeric identity. Element identifiers of the form
-     * {@code 4:<database>:<id>} end with the numeric identifier.
+     * Picks the identifier assigned by the database that matches the type of the identity.
      *
-     * @param identity The identity property
-     * @param id       The identifier
+     * @param identity  The identity property
+     * @param id        The identifier
+     * @param numericId The numeric identifier, if the database has one besides {@code id}
      * @return The identifier to convert
      */
-    private static @Nullable Object nativeId(RuntimePersistentProperty<?> identity, @Nullable Object id) {
-        if (id instanceof String s && !CharSequence.class.isAssignableFrom(identity.getType())) {
-            int separator = s.lastIndexOf(':');
-            if (separator >= 0) {
-                return s.substring(separator + 1);
-            }
-        }
-        return id;
+    private static @Nullable Object nativeId(RuntimePersistentProperty<?> identity, @Nullable Object id, @Nullable Long numericId) {
+        return numericId != null && !CharSequence.class.isAssignableFrom(identity.getType()) ? numericId : id;
     }
 
     /**
@@ -484,11 +478,36 @@ public final class GraphEntityMapper {
      * @return The encoded value
      */
     public @Nullable Object writeValue(RuntimePersistentProperty<?> property, @Nullable Object value) {
+        return encode(persistedValue(property, value));
+    }
+
+    /**
+     * Applies the converter of a property to a value, without encoding it for the database.
+     *
+     * @param property The property
+     * @param value    The value
+     * @return The persisted value
+     */
+    public @Nullable Object persistedValue(RuntimePersistentProperty<?> property, @Nullable Object value) {
         AttributeConverter<Object, Object> converter = property.getConverter();
-        if (converter != null) {
-            value = converter.convertToPersistedValue(value, ConversionContext.of(property.getArgument()));
+        return converter == null ? value : converter.convertToPersistedValue(value, ConversionContext.of(property.getArgument()));
+    }
+
+    /**
+     * Reads the identifier of an entity, without encoding it for the database.
+     *
+     * @param entity   The entity
+     * @param instance The instance
+     * @param <T>      The entity type
+     * @return The identifier, or null if not set
+     */
+    public <T> @Nullable Object persistedIdentity(RuntimePersistentEntity<T> entity, T instance) {
+        RuntimePersistentProperty<T> identity = entity.getIdentity();
+        if (identity == null) {
+            return null;
         }
-        return encode(value);
+        Object id = identity.getProperty().get(instance);
+        return id == null || GraphEntities.isNativeId(identity) ? id : persistedValue(identity, id);
     }
 
     /**

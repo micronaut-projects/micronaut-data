@@ -68,19 +68,14 @@ import io.micronaut.data.graph.model.*;
 $MOVIES
 
 @TestOracleRepository
-@PropertyGraph("people")
+@PropertyGraph(value = "people", language = PropertyGraph.QueryLanguage.SQL_PGQ)
 interface PathRepository extends GenericRepository<Person, String> {
-    @PathLimit(5)
-    Optional<GraphPath<Person>> findShortestPathByMentor(String from, String to);
-    @PathLimit(5)
-    List<GraphPath<Person>> findAllShortestPathsByMentor(String from, String to);
     @PathLimit(5)
     boolean existsPathByMentor(String from, String to);
     @PathLimit(5)
     long countPaths(String from, String to);
     @PathLimit(5)
     long countPathsByMentor(String from, String to, @PathLimit int depth);
-    Optional<GraphPath<Person>> findShortestPath(String from, String to, @PathLimit int depth);
     List<GraphRelationship<Person, Person>> findRelationshipsByMentor(String from, String to);
 }
 """)
@@ -218,33 +213,57 @@ interface NoIdRepository extends GenericRepository<Anonymous, String> {
         e.message.contains("doesn't have an identity") || e.message.contains('has no identifier')
     }
 
-    void "test PGQL path finders"() {
-        given:
-        def person = 's.id AS "%1$s__ID_", s.id AS "%1$s__id", \'Person\' AS "%1$s__LABEL_", s.name AS "%1$s__name", s.born AS "%1$s__born"'
-        def v1 = 'v1.id AS "v1__ID_", v1.id AS "v1__id", \'Person\' AS "v1__LABEL_", v1.name AS "v1__name", v1.born AS "v1__born"'
-        def v2 = 'v2.id AS "v2__ID_", v2.id AS "v2__id", \'Person\' AS "v2__LABEL_", v2.name AS "v2__name", v2.born AS "v2__born"'
-        def steps = "MATCHNUM(v1) AS \"p__M_\", ELEMENT_NUMBER(x) AS \"p__I_\", $v1, $v2, 'FOLLOWS' AS \"x__TYPE_\""
-
+    void "test SQL/PGQ path finders"() {
         expect: "the shortest kinds exclude the empty path from a node to itself, as the Cypher builder does"
-        getQuery(findMethod(paths, 'findShortestPathByMentor')) ==
-            "SELECT $steps FROM MATCH ANY SHORTEST (s:Person) -[x:FOLLOWS]->{1,5} (t:Person) ON people ONE ROW PER STEP (v1, x, v2) WHERE s.id = ? AND t.id = ? AND s.id <> t.id ORDER BY MATCHNUM(v1), ELEMENT_NUMBER(x)"
-        getQuery(findMethod(paths, 'findAllShortestPathsByMentor')).contains("FROM MATCH ALL SHORTEST (s:Person) -[x:FOLLOWS]->{1,5} (t:Person) ON people")
         getQuery(findMethod(paths, 'existsPathByMentor')) ==
-            'SELECT 1 AS "result" FROM MATCH ANY (s:Person) -[:FOLLOWS]->{1,5} (t:Person) ON people WHERE s.id = ? AND t.id = ? AND s.id <> t.id LIMIT 1'
+            'SELECT 1 AS "result" FROM GRAPH_TABLE (people MATCH (s IS Person) -[IS FOLLOWS]->{1,5} (t IS Person) WHERE s.id = ? AND t.id = ? AND s.id <> t.id COLUMNS (s.id AS "c0")) FETCH NEXT 1 ROWS ONLY'
 
         and: "all paths from a node to itself are its cycles"
         getQuery(findMethod(paths, 'countPaths')) ==
-            'SELECT COUNT(*) AS "result" FROM MATCH ALL (s:Person) -[]-{1,5} (t:Person) ON people WHERE s.id = ? AND t.id = ?'
+            'SELECT COUNT(*) AS "result" FROM GRAPH_TABLE (people MATCH (s IS Person) -[]-{1,5} (t IS Person) WHERE s.id = ? AND t.id = ? COLUMNS (s.id AS "c0"))'
 
         and: "a @PathLimit argument is rendered by the runtime in place of the token, over the depth of the annotation"
         getQuery(findMethod(paths, 'countPathsByMentor')) ==
-            'SELECT COUNT(*) AS "result" FROM MATCH ALL (s:Person) -[:FOLLOWS]->{1,$__pathLimit} (t:Person) ON people WHERE s.id = ? AND t.id = ?'
+            'SELECT COUNT(*) AS "result" FROM GRAPH_TABLE (people MATCH (s IS Person) -[IS FOLLOWS]->{1,$__pathLimit} (t IS Person) WHERE s.id = ? AND t.id = ? COLUMNS (s.id AS "c0"))'
+    }
 
-        and: "a path over any relationship type reads the type of each step from the label of its edge"
-        getQuery(findMethod(paths, 'findShortestPath')) ==
-            "SELECT ${steps.replace("'FOLLOWS' AS", 'LABEL(x) AS')} FROM MATCH ANY SHORTEST (s:Person) -[x]-{1,\$__pathLimit} (t:Person) ON people ONE ROW PER STEP (v1, x, v2) WHERE s.id = ? AND t.id = ? AND s.id <> t.id ORDER BY MATCHNUM(v1), ELEMENT_NUMBER(x)"
-        getQuery(findMethod(paths, 'findRelationshipsByMentor')) ==
-            "SELECT ${String.format(person, 's')}, ${String.format(person, 's').replace('s.', 't.').replace('"s__', '"t__')}, 'FOLLOWS' AS \"r__TYPE_\" FROM MATCH (s:Person) -[r:FOLLOWS]-> (t:Person) ON people WHERE s.id = ? AND t.id = ?"
+    void "test relationship finders bind the source and destination of the edge"() {
+        when:
+        def repository = buildRepository('test.FollowerRepository', """
+import io.micronaut.data.graph.model.*;
+
+@Node
+class Follower {
+    @Id
+    private String id;
+    @Relationship(type = "FOLLOWS", direction = Direction.INCOMING)
+    private List<Follower> followers = new ArrayList<>();
+    @Relationship(type = "KNOWS", direction = Direction.UNDIRECTED)
+    private List<Follower> known = new ArrayList<>();
+
+    public String getId() { return id; }
+    public void setId(String id) { this.id = id; }
+    public List<Follower> getFollowers() { return followers; }
+    public void setFollowers(List<Follower> followers) { this.followers = followers; }
+    public List<Follower> getKnown() { return known; }
+    public void setKnown(List<Follower> known) { this.known = known; }
+}
+
+@TestOracleRepository
+@PropertyGraph("people")
+interface FollowerRepository extends GenericRepository<Follower, String> {
+    List<GraphRelationship<Follower, Follower>> findRelationshipsByFollowers(String from, String to);
+    List<GraphRelationship<Follower, Follower>> findRelationshipsByKnown(String from, String to);
+}
+""")
+
+        then: "s stays the source of an incoming edge, bound to the far end"
+        getQuery(findMethod(repository, 'findRelationshipsByFollowers')).endsWith(
+            "FROM MATCH (t:Follower) <-[r:FOLLOWS]- (s:Follower) ON people WHERE t.id = ? AND s.id = ?")
+
+        and: "an undirected edge with both ends known is matched either way"
+        getQuery(findMethod(repository, 'findRelationshipsByKnown')).endsWith(
+            "FROM MATCH (s:Follower) -[r:KNOWS]- (t:Follower) ON people WHERE s.id = ? AND t.id = ?")
     }
 
     @Unroll
@@ -269,9 +288,13 @@ interface UnsupportedRepository extends GenericRepository<Movie, String> {
         where:
         description            | language                                              | method                                                              | message
         'writes'               | ''                                                    | 'void deleteByTitle(String title);'                                 | 'read only views over tables'
+        'PGQL paths'           | ''                                                    | '@PathLimit(3) Optional<GraphPath<Movie>> findShortestPath(String from, String to);' | 'PGQL path queries cannot bind parameters'
+        'PGQL path counts'     | ''                                                    | '@PathLimit(3) long countPaths(String from, String to);'            | 'PGQL path queries cannot bind parameters'
+        'PGQL all shortest'    | ''                                                    | '@PathLimit(3) List<GraphPath<Movie>> findAllShortestPaths(String from, String to);' | 'ALL SHORTEST is not supported by PGQL'
+        'IsEmpty on a relationship' | ''                                               | 'List<Movie> findByDirectorsIsEmpty();'                             | 'Expected a string expression'
         'LIKE in PGQL'         | ''                                                    | 'List<Movie> findByTitleStartsWith(String prefix);'                 | 'PGQL has no LIKE'
         'fetch joins'          | ''                                                    | '@Join("directors") List<Movie> findByReleased(Integer released);' | 'not supported for Oracle property graphs'
-        'paths in SQL/PGQ'     | ', language = PropertyGraph.QueryLanguage.SQL_PGQ'    | '@PathLimit(3) Optional<GraphPath<Movie>> findShortestPath(String from, String to);' | 'use @PropertyGraph(language = PGQL)'
+        'paths in SQL/PGQ'     | ', language = PropertyGraph.QueryLanguage.SQL_PGQ'    | '@PathLimit(3) Optional<GraphPath<Movie>> findShortestPath(String from, String to);' | 'Returning paths is not supported by the SQL/PGQ dialect'
         'unbounded paths'      | ''                                                    | 'Optional<GraphPath<Movie>> findShortestPath(String from, String to);' | 'need a maximum depth'
     }
 

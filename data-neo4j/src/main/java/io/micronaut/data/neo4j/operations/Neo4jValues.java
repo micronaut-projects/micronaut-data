@@ -92,14 +92,17 @@ final class Neo4jValues {
         return value;
     }
 
+    // Numeric identifiers are matched with id(n), and the driver's id() is the same value
+    @SuppressWarnings("deprecation")
     private static GraphNode node(Node node) {
         List<String> labels = new ArrayList<>();
         node.labels().forEach(labels::add);
-        return new GraphNode(node.elementId(), labels, node.asMap());
+        return new GraphNode(node.elementId(), labels, node.asMap(), node.id());
     }
 
+    @SuppressWarnings("deprecation")
     private static GraphEdge relationship(Relationship relationship) {
         return new GraphEdge(relationship.elementId(), relationship.type(), relationship.startNodeElementId(),
-            relationship.endNodeElementId(), relationship.asMap());
+            relationship.endNodeElementId(), relationship.asMap(), relationship.id());
     }
 }

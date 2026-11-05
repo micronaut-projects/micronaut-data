@@ -162,6 +162,28 @@ interface UnboundedRepository extends CrudRepository<Friend, String> {
         e.message.contains('needs a maximum depth for path queries')
     }
 
+    void "test database assigned identifiers are numbers"() {
+        when:
+        buildRepository('test.TicketRepository', """
+@Node
+class Ticket {
+    @Id
+    @GeneratedValue
+    private String id;
+    public String getId() { return id; }
+    public void setId(String id) { this.id = id; }
+}
+
+@TestAgeRepository
+interface TicketRepository extends CrudRepository<Ticket, String> {
+}
+""")
+
+        then:
+        def e = thrown(RuntimeException)
+        e.message.contains('Apache AGE assigns numeric identifiers')
+    }
+
     void "test nodes have a single label"() {
         when:
         buildRepository('test.LabelsRepository', """
