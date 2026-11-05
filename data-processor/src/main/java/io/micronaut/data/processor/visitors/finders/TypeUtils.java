@@ -29,6 +29,7 @@ import io.micronaut.data.model.DataType;
 import io.micronaut.data.model.Slice;
 import io.micronaut.data.processor.visitors.MatchContext;
 import io.micronaut.inject.ast.ClassElement;
+import io.micronaut.inject.ast.GenericPlaceholderElement;
 import io.micronaut.inject.ast.MethodElement;
 import io.micronaut.inject.ast.ParameterElement;
 import org.reactivestreams.Publisher;
@@ -47,6 +48,7 @@ import java.time.chrono.ChronoLocalDate;
 import java.time.temporal.Temporal;
 import java.util.Date;
 import java.util.HashMap;
+import java.util.List;
 import java.util.Locale;
 import java.util.Map;
 import java.util.Objects;
@@ -65,6 +67,8 @@ import java.util.stream.Stream;
  */
 @Internal
 public class TypeUtils {
+
+    private static final int MAX_PLACEHOLDER_RESOLUTION_DEPTH = 10;
 
     private static final Map<String, DataType> RESOLVED_DATA_TYPES = new HashMap<>(50);
 
@@ -135,7 +139,45 @@ public class TypeUtils {
         if (type == null) {
             return false;
         }
-        return !type.isArray() && type.hasStereotype(MappedEntity.class);
+        return !type.isArray() && resolveTypeBound(type).hasStereotype(MappedEntity.class);
+    }
+
+    /**
+     * Resolves the actual type represented by the given type.
+     *
+     * <p>A method-level type variable, such as the {@code S} of
+     * {@code <S extends T> S save(S entity)}, is represented by a
+     * {@link GenericPlaceholderElement}. Some language element models expose the placeholder
+     * itself rather than the type it stands for, in which case annotations such as
+     * {@link MappedEntity} are not visible on it. This resolves such a placeholder to the type it
+     * is bound to so that the annotations of the bound can be inspected.</p>
+     *
+     * @param type The type
+     * @return The resolved type, or the given type if it is not a placeholder
+     * @since 5.2.0
+     */
+    @NonNull
+    public static ClassElement resolveTypeBound(@NonNull ClassElement type) {
+        ClassElement resolved = type;
+        // A bound may itself be a placeholder, resolve iteratively with a guard against cycles
+        for (int i = 0; i < MAX_PLACEHOLDER_RESOLUTION_DEPTH; i++) {
+            if (!(resolved instanceof GenericPlaceholderElement placeholder)) {
+                return resolved;
+            }
+            ClassElement next = placeholder.getResolved().orElse(null);
+            if (next == null) {
+                List<? extends ClassElement> bounds = placeholder.getBounds();
+                if (bounds.size() != 1) {
+                    return resolved;
+                }
+                next = bounds.get(0);
+            }
+            if (next == null || next.equals(resolved)) {
+                return resolved;
+            }
+            resolved = next;
+        }
+        return resolved;
     }
 
     /**
@@ -152,11 +194,15 @@ public class TypeUtils {
         if (type == null) {
             return false;
         }
-        if (type.isArray() || !type.hasStereotype(MappedEntity.class)) {
+        if (type.isArray()) {
+            return false;
+        }
+        ClassElement resolvedType = resolveTypeBound(type);
+        if (!resolvedType.hasStereotype(MappedEntity.class)) {
             return false;
         }
         // Ensure the entity matches the expected type
-        return type.equals(entityType) || type.isAssignable(entityType);
+        return resolvedType.equals(entityType) || resolvedType.isAssignable(entityType);
     }
 
     /**
@@ -207,7 +253,7 @@ public class TypeUtils {
         if (type == null) {
             return false;
         }
-        return type.hasStereotype(Introspected.class);
+        return resolveTypeBound(type).hasStereotype(Introspected.class);
     }
 
     /**
