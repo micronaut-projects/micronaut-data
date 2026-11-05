@@ -1006,42 +1006,47 @@ public abstract class AbstractGraphRepositoryOperations extends AbstractReposito
             RuntimePersistentEntity<Object> associated = (RuntimePersistentEntity<Object>) association.getAssociatedEntity();
             Object fromId = mapper.writeIdentity(persistentEntity, entity);
             if (GraphEntities.isRelationshipEntity(associated)) {
-                RuntimeAssociation<Object> targetAssociation = (RuntimeAssociation<Object>) targetNode(associated);
-                BeanProperty<Object, Object> targetProperty = targetAssociation.getProperty();
-                Object target = targetProperty.get(item);
-                if (target == null) {
-                    throw new DataAccessException("Relationship [" + associated.getSimpleName() + "] has no @TargetNode value");
-                }
-                RuntimePersistentEntity<Object> targetEntity = (RuntimePersistentEntity<Object>) targetAssociation.getAssociatedEntity();
-                Object savedTarget = persister.save(targetEntity, target, persister.isNew(targetEntity, target));
-                if (savedTarget != target) {
-                    item = withProperty(targetProperty, item, savedTarget);
-                }
-                Map<String, Object> properties = mapper.writeProperties(associated, item);
-                RuntimePersistentProperty<Object> relationshipIdentity = associated.getIdentity();
-                Object toId = mapper.writeIdentity(targetEntity, savedTarget);
-                unlinkOthers(association, targetEntity, fromId, toId);
-                boolean nativeId = relationshipIdentity != null && GraphEntities.isNativeId(relationshipIdentity);
-                Object savedId = nativeId ? mapper.writeIdentity(associated, item) : null;
-                Object relationshipId = savedId == null ? null : runLink(association, targetEntity, toId, fromId, properties, relationshipIdentity, LinkMode.UPDATE, savedId);
-                if (relationshipId == null) {
-                    // A relationship that was not saved, or that no longer connects these nodes, is a new one. An
-                    // undirected one is matched in either direction, so saving it from its other end finds it
-                    boolean create = nativeId && GraphEntities.direction(association) != Direction.UNDIRECTED;
-                    relationshipId = runLink(association, targetEntity, toId, fromId, properties, relationshipIdentity, create ? LinkMode.CREATE : LinkMode.MERGE, null);
-                }
-                if (nativeId && relationshipId != null) {
-                    BeanProperty<Object, Object> idProperty = relationshipIdentity.getProperty();
-                    Object id = mapper.readValue(relationshipIdentity, relationshipId);
-                    item = withProperty(idProperty, item, id);
-                }
-                return item;
+                return linkRelationshipEntity(association, associated, item, fromId);
             }
             Object savedTarget = persister.save(associated, item, persister.isNew(associated, item));
             Object toId = mapper.writeIdentity(associated, savedTarget);
             unlinkOthers(association, associated, fromId, toId);
             runLink(association, associated, toId, fromId, Map.of(), null, LinkMode.MERGE, null);
             return savedTarget;
+        }
+
+        private Object linkRelationshipEntity(RuntimeAssociation<T> association, RuntimePersistentEntity<Object> associated, Object relationship, @Nullable Object fromId) {
+            Object item = relationship;
+            RuntimeAssociation<Object> targetAssociation = (RuntimeAssociation<Object>) targetNode(associated);
+            BeanProperty<Object, Object> targetProperty = targetAssociation.getProperty();
+            Object target = targetProperty.get(item);
+            if (target == null) {
+                throw new DataAccessException("Relationship [" + associated.getSimpleName() + "] has no @TargetNode value");
+            }
+            RuntimePersistentEntity<Object> targetEntity = (RuntimePersistentEntity<Object>) targetAssociation.getAssociatedEntity();
+            Object savedTarget = persister.save(targetEntity, target, persister.isNew(targetEntity, target));
+            if (savedTarget != target) {
+                item = withProperty(targetProperty, item, savedTarget);
+            }
+            Map<String, Object> properties = mapper.writeProperties(associated, item);
+            RuntimePersistentProperty<Object> relationshipIdentity = associated.getIdentity();
+            Object toId = mapper.writeIdentity(targetEntity, savedTarget);
+            unlinkOthers(association, targetEntity, fromId, toId);
+            boolean nativeId = relationshipIdentity != null && GraphEntities.isNativeId(relationshipIdentity);
+            Object savedId = nativeId ? mapper.writeIdentity(associated, item) : null;
+            Object relationshipId = savedId == null ? null : runLink(association, targetEntity, toId, fromId, properties, relationshipIdentity, LinkMode.UPDATE, savedId);
+            if (relationshipId == null) {
+                // A relationship that was not saved, or that no longer connects these nodes, is a new one. An
+                // undirected one is matched in either direction, so saving it from its other end finds it
+                boolean create = nativeId && GraphEntities.direction(association) != Direction.UNDIRECTED;
+                relationshipId = runLink(association, targetEntity, toId, fromId, properties, relationshipIdentity, create ? LinkMode.CREATE : LinkMode.MERGE, null);
+            }
+            if (nativeId && relationshipId != null) {
+                BeanProperty<Object, Object> idProperty = relationshipIdentity.getProperty();
+                Object id = mapper.readValue(relationshipIdentity, relationshipId);
+                item = withProperty(idProperty, item, id);
+            }
+            return item;
         }
 
         /**
