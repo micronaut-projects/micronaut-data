@@ -30,11 +30,11 @@ class BookCatalog:
             self.refresh()
 
     # tag::listener[]
-    # tag::events[]
     # tag::listener-signature[]
     @ChangeListener
     # end::listener-signature[]
-    @PostgresChangeNotification(channel="book_changes")
+    @PostgresChangeNotification(channel="book_changes") # <1>
+    # tag::events[]
     # tag::listener-signature[]
     def changed(self, event: ChangeEvent[Book]) -> None:
         # Handle the change.
@@ -58,10 +58,10 @@ class BookCatalog:
             elif operation == ChangeOperation.DELETE:
                 metadata = event.metadata(PostgresChangeEventMetadata).orElseThrow()
                 self.books.pop(int(metadata.oldKeys().get("id")), None)
-            elif operation == ChangeOperation.INVALIDATE:
+            elif operation == ChangeOperation.INVALIDATE: # <1>
                 self.refresh()
             elif operation == ChangeOperation.TERMINATED:
-                self.cacheEnabled = False
+                self.cacheEnabled = False # <2>
                 self.books.clear()
 
     # end::events[]

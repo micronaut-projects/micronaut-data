@@ -33,11 +33,11 @@ class BookCatalog {
     }
 
     // tag::listener[]
-    // tag::events[]
     // tag::listener-signature[]
     @ChangeListener
     // end::listener-signature[]
-    @PostgresChangeNotification(channel = "book_changes")
+    @PostgresChangeNotification(channel = "book_changes") // <1>
+    // tag::events[]
     // tag::listener-signature[]
     synchronized void changed(ChangeEvent<Book> event) {
         // Handle the change.
@@ -58,9 +58,9 @@ class BookCatalog {
                 PostgresChangeEventMetadata metadata = event.metadata(PostgresChangeEventMetadata.class).orElseThrow();
                 books.remove(Long.valueOf(metadata.oldKeys().get("id")));
             }
-            case INVALIDATE -> refresh();
+            case INVALIDATE -> refresh(); // <1>
             case TERMINATED -> {
-                cacheEnabled = false;
+                cacheEnabled = false; // <2>
                 books.clear();
             }
         }

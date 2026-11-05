@@ -30,11 +30,11 @@ class BookCatalog {
     }
 
     // tag::listener[]
-    // tag::events[]
     // tag::listener-signature[]
     @ChangeListener
     // end::listener-signature[]
-    @PostgresChangeNotification(channel = "book_changes")
+    @PostgresChangeNotification(channel = "book_changes") // <1>
+    // tag::events[]
     // tag::listener-signature[]
     synchronized void changed(ChangeEvent<Book> event) {
         // Handle the change.
@@ -57,11 +57,11 @@ class BookCatalog {
                 def metadata = event.metadata(PostgresChangeEventMetadata).orElseThrow()
                 books.remove(Long.valueOf(metadata.oldKeys().get("id")))
                 break
-            case ChangeOperation.INVALIDATE:
+            case ChangeOperation.INVALIDATE: // <1>
                 refresh()
                 break
             case ChangeOperation.TERMINATED:
-                cacheEnabled = false
+                cacheEnabled = false // <2>
                 books.clear()
                 break
         }

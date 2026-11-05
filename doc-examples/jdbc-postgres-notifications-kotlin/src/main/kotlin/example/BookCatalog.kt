@@ -27,11 +27,11 @@ open class BookCatalog(private val repository: BookRepository) {
     }
 
     // tag::listener[]
-    // tag::events[]
     // tag::listener-signature[]
     @ChangeListener
     // end::listener-signature[]
-    @PostgresChangeNotification(channel = "book_changes")
+    @PostgresChangeNotification(channel = "book_changes") // <1>
+    // tag::events[]
     @Synchronized
     // tag::listener-signature[]
     open fun changed(event: ChangeEvent<Book>) {
@@ -53,9 +53,9 @@ open class BookCatalog(private val repository: BookRepository) {
                 val metadata = event.metadata(PostgresChangeEventMetadata::class.java).orElseThrow()
                 books.remove(metadata.oldKeys().getValue("id").toLong())
             }
-            ChangeOperation.INVALIDATE -> refresh()
+            ChangeOperation.INVALIDATE -> refresh() // <1>
             ChangeOperation.TERMINATED -> {
-                cacheEnabled = false
+                cacheEnabled = false // <2>
                 books.clear()
             }
         }

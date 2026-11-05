@@ -188,10 +188,12 @@ For migration-managed row notifications, create the table and its triggers after
 include::doc-examples/jdbc-postgres-notifications-java/src/main/resources/db/changelog/create-books.sql[tag=migration]
 ----
 
-The first argument is the channel. Subsequent arguments are the exact mapped primary-key column names.
+<1> The row trigger publishes a notification for each inserted, updated, or deleted row.
+<2> The first function argument is the channel. It must match the listener's configured channel exactly.
+<3> Subsequent arguments are the exact mapped primary-key column names, including their case, rather than Java properties.
 Supply every component for composite keys, for example `'book_changes', 'tenant_id', 'book_id'`.
-These names refer to database columns, including their case, rather than Java properties.
 The migration must supply the actual primary key: the function validates column values, but does not inspect primary-key constraints.
+<4> A separate statement trigger handles `TRUNCATE`, which produces a table-level `INVALIDATE` event.
 
 Keys must be non-null values represented by PostgreSQL JSON strings, numbers, or booleans.
 Missing columns, duplicate column arguments, null keys, and structured JSON keys cause the modifying statement to fail explicitly.
@@ -233,10 +235,13 @@ After installing the function, replace the `book_changes` and `book_truncate` tr
 include::doc-examples/jdbc-postgres-notifications-java/src/main/resources/db/changelog/book-statement-notifications.sql[tag=statement-triggers]
 ----
 
-The function takes exactly one argument: the notification channel. It requires an `AFTER STATEMENT` trigger.
-Replace the trigger names if your existing triggers have different names; leaving a row trigger installed
-would continue to generate row notifications. Keep notification schema generation disabled when migrations
-manage these triggers. For development and tests, `schema-generate-mode: STATEMENT` installs the function and
+<1> Remove the row and truncate triggers before installing their replacement. Use your existing trigger names;
+leaving a row trigger installed would continue to generate row notifications.
+<2> The `AFTER STATEMENT` trigger sends one table-level invalidation per statement. The function takes exactly
+one argument: the notification channel.
+
+Keep notification schema generation disabled when migrations manage these triggers.
+For development and tests, `schema-generate-mode: STATEMENT` installs the function and
 triggers automatically when notification schema generation is enabled.
 
 The existing listener annotation and `INVALIDATE` handling work without changes. These events contain schema
@@ -253,10 +258,13 @@ The following listener receives change events for the mapped `public.book` table
 
 snippet::example.BookCatalog[project-base="doc-examples/jdbc-postgres-notifications", source="main", tags="listener", languages="java,groovy,kotlin,python"]
 
-Every PostgreSQL listener must declare both ann:data.annotation.ChangeListener[] and
-ann:data.jdbc.annotation.PostgresChangeNotification[]. The required `channel` attribute names the exact channel
-used by the table triggers. Supply the case-sensitive channel name without SQL identifier quotes, using at most
+<1> Declare both ann:data.annotation.ChangeListener[] and ann:data.jdbc.annotation.PostgresChangeNotification[].
+The required `channel` attribute names the exact channel used by the table triggers.
+
+Supply the case-sensitive channel name without SQL identifier quotes, using at most
 63 UTF-8 bytes. Literal names are checked during compilation and must not be blank or contain NUL characters.
+
+The `ChangeEvent<Book>` parameter provides the operation, optional current entity, and optional metadata.
 
 Property placeholders such as `@PostgresChangeNotification(channel = "${app.channel}")` are supported.
 The resolved channel is checked during startup, before `LISTEN` or notification function and trigger installation.
@@ -291,11 +299,14 @@ See <<postgresNotificationTrustModel, Notification Trust and Database Access>> b
 
 snippet::example.BookCatalog[project-base="doc-examples/jdbc-postgres-notifications", source="main", tags="events", indent="0", languages="java,groovy,kotlin,python"]
 
+<1> On `INVALIDATE`, refresh the cache from the repository to reconcile changes that individual row events cannot describe.
+<2> On `TERMINATED`, disable and clear the cache. The example ignores later callbacks and reads directly from the
+repository when `find` is called.
+
 If recovery exhausts its configured retry limit or the subscription stops unexpectedly, Micronaut Data attempts to
 send a final `TERMINATED` event to each listener.
 It replaces waiting notifications and runs after any callback already in progress. The event has no entity
-or PostgreSQL metadata. The example clears and disables its cache, ignores later callbacks, and reads directly
-from the repository when `find` is called.
+or PostgreSQL metadata.
 
 The listener worker serializes entity loading and callback execution. Synchronize shared cache access with
 other application threads; different listeners may run concurrently.
