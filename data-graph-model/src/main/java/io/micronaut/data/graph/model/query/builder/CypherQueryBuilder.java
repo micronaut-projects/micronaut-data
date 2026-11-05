@@ -477,6 +477,7 @@ public class CypherQueryBuilder implements GraphQueryBuilder {
      * @param relationshipIdentity The identity of the relationship entity
      * @return The query
      */
+    @Override
     public String buildCreateLinkQuery(Association association,
                                        PersistentEntity owner,
                                        PersistentEntity target,
@@ -500,6 +501,7 @@ public class CypherQueryBuilder implements GraphQueryBuilder {
      * @param relationshipIdentity The identity of the relationship entity
      * @return The query
      */
+    @Override
     public String buildUpdateLinkQuery(Association association,
                                        PersistentEntity owner,
                                        PersistentEntity target,
@@ -519,6 +521,7 @@ public class CypherQueryBuilder implements GraphQueryBuilder {
      * @param target      The node entity at the far end
      * @return The query
      */
+    @Override
     public String buildUnlinkOthersQuery(Association association, PersistentEntity owner, PersistentEntity target) {
         return linkPattern(association, owner, target, " <> $")
             + " DELETE " + PATH_RELATIONSHIP + " RETURN count(*) AS result";
@@ -531,6 +534,7 @@ public class CypherQueryBuilder implements GraphQueryBuilder {
      * @param identity The identity property
      * @return The expression
      */
+    @Override
     public String rootIdentityExpression(PersistentProperty identity) {
         return identityExpression(identity, ROOT);
     }

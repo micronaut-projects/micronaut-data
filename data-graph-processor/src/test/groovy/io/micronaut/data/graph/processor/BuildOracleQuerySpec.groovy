@@ -247,6 +247,45 @@ interface NoIdRepository extends GenericRepository<Anonymous, String> {
             "SELECT ${String.format(person, 's')}, ${String.format(person, 's').replace('s.', 't.').replace('"s__', '"t__')}, 'FOLLOWS' AS \"r__TYPE_\" FROM MATCH (s:Person) -[r:FOLLOWS]-> (t:Person) ON people WHERE s.id = ? AND t.id = ?"
     }
 
+    void "test relationship finders bind the source and destination of the edge"() {
+        when:
+        def repository = buildRepository('test.FollowerRepository', """
+import io.micronaut.data.graph.model.*;
+
+@Node
+class Follower {
+    @Id
+    private String id;
+    @Relationship(type = "FOLLOWS", direction = Direction.INCOMING)
+    private List<Follower> followers = new ArrayList<>();
+    @Relationship(type = "KNOWS", direction = Direction.UNDIRECTED)
+    private List<Follower> known = new ArrayList<>();
+
+    public String getId() { return id; }
+    public void setId(String id) { this.id = id; }
+    public List<Follower> getFollowers() { return followers; }
+    public void setFollowers(List<Follower> followers) { this.followers = followers; }
+    public List<Follower> getKnown() { return known; }
+    public void setKnown(List<Follower> known) { this.known = known; }
+}
+
+@TestOracleRepository
+@PropertyGraph("people")
+interface FollowerRepository extends GenericRepository<Follower, String> {
+    List<GraphRelationship<Follower, Follower>> findRelationshipsByFollowers(String from, String to);
+    List<GraphRelationship<Follower, Follower>> findRelationshipsByKnown(String from, String to);
+}
+""")
+
+        then: "s stays the source of an incoming edge, bound to the far end"
+        getQuery(findMethod(repository, 'findRelationshipsByFollowers')).endsWith(
+            "FROM MATCH (t:Follower) <-[r:FOLLOWS]- (s:Follower) ON people WHERE t.id = ? AND s.id = ?")
+
+        and: "an undirected edge with both ends known is matched either way"
+        getQuery(findMethod(repository, 'findRelationshipsByKnown')).endsWith(
+            "FROM MATCH (s:Follower) -[r:KNOWS]- (t:Follower) ON people WHERE s.id = ? AND t.id = ?")
+    }
+
     @Unroll
     void "test unsupported #description"() {
         when:
@@ -269,6 +308,7 @@ interface UnsupportedRepository extends GenericRepository<Movie, String> {
         where:
         description            | language                                              | method                                                              | message
         'writes'               | ''                                                    | 'void deleteByTitle(String title);'                                 | 'read only views over tables'
+        'IsEmpty on a relationship' | ''                                               | 'List<Movie> findByDirectorsIsEmpty();'                             | 'Expected a string expression'
         'LIKE in PGQL'         | ''                                                    | 'List<Movie> findByTitleStartsWith(String prefix);'                 | 'PGQL has no LIKE'
         'fetch joins'          | ''                                                    | '@Join("directors") List<Movie> findByReleased(Integer released);' | 'not supported for Oracle property graphs'
         'paths in SQL/PGQ'     | ', language = PropertyGraph.QueryLanguage.SQL_PGQ'    | '@PathLimit(3) Optional<GraphPath<Movie>> findShortestPath(String from, String to);' | 'use @PropertyGraph(language = PGQL)'
