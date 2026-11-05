@@ -4,6 +4,8 @@ import io.micronaut.context.annotation.Property
 import io.micronaut.data.connection.jdbc.advice.DelegatingDataSource
 import io.micronaut.data.jdbc.config.DataJdbcConfiguration
 import io.micronaut.data.jdbc.config.JdbcSchemaContributor
+import io.micronaut.data.runtime.config.SchemaGenerate
+import io.micronaut.data.runtime.schema.SchemaContext
 import io.micronaut.data.model.runtime.RuntimeEntityRegistry
 import io.micronaut.data.oracle.graph.bank.Account
 import io.micronaut.data.oracle.graph.bank.Transfer
@@ -85,17 +87,18 @@ class OraclePropertyGraphSchemaSpec extends Specification {
     void "the statements generated for the bank graph"() {
         given:
         def entities = [entityRegistry.getEntity(Account), entityRegistry.getEntity(Transfer)]
-        def contributor = contributors.find { !it.selectEntities(configuration, entities).isEmpty() }
+        def context = new SchemaContext(configuration.name, configuration.dialect, configuration.dialectOptions.version, SchemaGenerate.CREATE_DROP, entities)
+        def contributor = contributors.find { !it.selectEntities(context, entities).isEmpty() }
 
         expect:
-        contributor.buildCreateStatements(configuration, entities) == [
+        contributor.buildCreateStatements(context, entities) == [
             'CREATE TABLE "ACCOUNTS" ("ID" NUMBER(19) NOT NULL,"NAME" VARCHAR(255) NOT NULL,"OPENED" TIMESTAMP, PRIMARY KEY("ID"))',
             'CREATE TABLE "TRANSFER" ("ID" NUMBER(19) NOT NULL,"AMOUNT" FLOAT(126) NOT NULL,"TOID" NUMBER(19) NOT NULL,"ACCOUNTID" NUMBER(19) NOT NULL, PRIMARY KEY("ID"))',
             // The relationship identifier is the key of the edge table, so two transfers can link the same accounts; the pair is indexed
             'CREATE INDEX "IDX_TRANSFER_ACCOUNTID_TOID" ON "TRANSFER" ("ACCOUNTID", "TOID")',
             'CREATE OR REPLACE PROPERTY GRAPH bank_graph VERTEX TABLES ("ACCOUNTS" KEY ("ID") LABEL Account PROPERTIES ("ID", "NAME", "OPENED")) EDGE TABLES ("TRANSFER" KEY ("ID") SOURCE KEY ("ACCOUNTID") REFERENCES "ACCOUNTS" ("ID") DESTINATION KEY ("TOID") REFERENCES "ACCOUNTS" ("ID") LABEL TRANSFERS PROPERTIES ("ID", "AMOUNT"))'
         ]
-        contributor.buildDropStatements(configuration, entities) == [
+        contributor.buildDropStatements(context, entities) == [
             'DROP PROPERTY GRAPH IF EXISTS bank_graph',
             'DROP TABLE IF EXISTS "TRANSFER"',
             'DROP TABLE IF EXISTS "ACCOUNTS"'
