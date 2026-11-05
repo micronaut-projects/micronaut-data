@@ -49,6 +49,10 @@ public @interface PropertyGraph {
     enum QueryLanguage {
         /**
          * PGQL, run through the PGQL JDBC driver.
+         *
+         * <p>Path finders are compiled but have not been run against the driver. They bind their endpoints as
+         * parameters, and Oracle documents that a PGQL path query with bind variables fails on a property graph in
+         * the database, and that {@code ALL SHORTEST} is not supported there.</p>
          */
         PGQL,
         /**
