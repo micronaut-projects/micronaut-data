@@ -270,8 +270,11 @@ public final class GraphPathMethodMatcher implements MethodMatcher {
     }
 
     private static boolean returnsPage(ClassElement returnType) {
-        ClassElement type = TypeUtils.isReactiveOrFuture(returnType) ? returnType.getFirstTypeArgument().orElse(returnType) : returnType;
-        return type.isAssignable(Page.class);
+        if (returnType.isAssignable(Page.class)) {
+            return true;
+        }
+        return TypeUtils.isReactiveOrFuture(returnType)
+            && returnType.getFirstTypeArgument().map(argument -> argument.isAssignable(Page.class)).orElse(false);
     }
 
     /**

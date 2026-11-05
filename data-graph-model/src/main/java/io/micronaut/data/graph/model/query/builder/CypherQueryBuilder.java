@@ -156,7 +156,9 @@ public class CypherQueryBuilder implements QueryBuilder {
     private static final String CLOSE_AS = ") AS ";
     private static final String RETURN = " RETURN ";
     private static final String MATCH_OPEN = "MATCH (";
+    private static final String WHERE = " WHERE ";
     private static final String CLOSE_WHERE = ") WHERE ";
+    private static final String RETURN_COUNT = " RETURN count(*) AS result";
     private static final String CLOSE_AS_RESULT = ") AS result";
     private static final String AND = " AND ";
     private static final String LINK_FROM = "a";
@@ -430,7 +432,7 @@ public class CypherQueryBuilder implements QueryBuilder {
      * @return The query
      */
     public String buildDeleteAllQuery(PersistentEntity entity) {
-        return MATCH_OPEN + ROOT + labelExpression(entity) + ") DETACH DELETE " + ROOT + " RETURN count(*) AS result";
+        return MATCH_OPEN + ROOT + labelExpression(entity) + ") DETACH DELETE " + ROOT + RETURN_COUNT;
     }
 
     /**
@@ -453,7 +455,7 @@ public class CypherQueryBuilder implements QueryBuilder {
      */
     public String buildDeleteByIdQuery(PersistentEntity entity) {
         return MATCH_OPEN + ROOT + labelExpression(entity) + CLOSE_WHERE
-            + identityExpression(entity.getIdentity(), ROOT) + " = $" + ID_PARAMETER + " DETACH DELETE " + ROOT + " RETURN count(*) AS result";
+            + identityExpression(entity.getIdentity(), ROOT) + " = $" + ID_PARAMETER + " DETACH DELETE " + ROOT + RETURN_COUNT;
     }
 
     /**
@@ -533,7 +535,7 @@ public class CypherQueryBuilder implements QueryBuilder {
      */
     public String buildUnlinkOthersQuery(Association association, PersistentEntity owner, PersistentEntity target) {
         return linkPattern(association, owner, target, " <> $")
-            + " DELETE " + PATH_RELATIONSHIP + " RETURN count(*) AS result";
+            + " DELETE " + PATH_RELATIONSHIP + RETURN_COUNT;
     }
 
     /**
@@ -559,7 +561,7 @@ public class CypherQueryBuilder implements QueryBuilder {
     private StringBuilder linkPattern(Association association, PersistentEntity owner, PersistentEntity target, String targetComparison) {
         String relationship = directed("(" + LINK_FROM + labelExpression(owner) + ")", linkRelationship(association),
             "(" + LINK_TO + labelExpression(target) + ")", GraphEntities.direction(association));
-        return new StringBuilder("MATCH ").append(relationship).append(" WHERE ")
+        return new StringBuilder("MATCH ").append(relationship).append(WHERE)
             .append(identityExpression(owner.getIdentity(), LINK_FROM)).append(" = $").append(LINK_FROM_PARAMETER)
             .append(AND)
             .append(identityExpression(target.getIdentity(), LINK_TO)).append(targetComparison).append(LINK_TO_PARAMETER);
@@ -737,7 +739,7 @@ public class CypherQueryBuilder implements QueryBuilder {
 
     private static void appendWhere(StringBuilder query, List<String> conditions) {
         if (!conditions.isEmpty()) {
-            query.append(" WHERE ").append(String.join(AND, conditions));
+            query.append(WHERE).append(String.join(AND, conditions));
         }
     }
 
@@ -832,7 +834,7 @@ public class CypherQueryBuilder implements QueryBuilder {
             query.append(", ").append(pattern.text);
         }
         if (where != null && !where.isEmpty()) {
-            query.append(" WHERE ").append(where);
+            query.append(WHERE).append(where);
         }
         for (Pattern pattern : patterns.subList(required, patterns.size())) {
             query.append(" OPTIONAL MATCH ").append(pattern.text);
