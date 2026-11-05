@@ -140,21 +140,24 @@ final class OracleChangeNotificationProvider implements ChangeNotificationProvid
      * @param listenerMethods the listener methods discovered for that datasource
      */
     @Override
-    public synchronized void register(String dataSourceName, JdbcRepositoryOperations operations, List<ChangeListenerMethod> listenerMethods) {
-        if (shutdownStage != null) {
-            throw new IllegalStateException("Cannot register DCN subscriptions for datasource [" + dataSourceName
-                + "] after provider shutdown has started");
-        }
-        OracleChangeListenerDefinitionFactory definitionFactory = new OracleChangeListenerDefinitionFactory(operations);
-        List<OracleChangeListenerDefinition> listenerDefinitions = listenerMethods.stream()
-            .map(definitionFactory::create)
-            .toList();
-        OracleChangeNotificationSubscriptionManager subscriptionManager = new OracleChangeNotificationSubscriptionManager(
-            dataSourceName, operations, beanContext, blockingExecutor, taskScheduler, listenerDefinitions, notificationConfiguration,
-            exceptionHandler);
-        if (subscriptionManagers.putIfAbsent(dataSourceName, subscriptionManager) != null) {
-            throw new IllegalStateException("DCN subscriptions for datasource [" + dataSourceName
-                + "] have already been discovered; additional registrations are not supported");
+    public void register(String dataSourceName, JdbcRepositoryOperations operations, List<ChangeListenerMethod> listenerMethods) {
+        OracleChangeNotificationSubscriptionManager subscriptionManager;
+        synchronized (this) {
+            if (shutdownStage != null) {
+                throw new IllegalStateException("Cannot register DCN subscriptions for datasource [" + dataSourceName
+                    + "] after provider shutdown has started");
+            }
+            OracleChangeListenerDefinitionFactory definitionFactory = new OracleChangeListenerDefinitionFactory(operations);
+            List<OracleChangeListenerDefinition> listenerDefinitions = listenerMethods.stream()
+                .map(definitionFactory::create)
+                .toList();
+            subscriptionManager = new OracleChangeNotificationSubscriptionManager(
+                dataSourceName, operations, beanContext, blockingExecutor, taskScheduler, listenerDefinitions, notificationConfiguration,
+                exceptionHandler);
+            if (subscriptionManagers.putIfAbsent(dataSourceName, subscriptionManager) != null) {
+                throw new IllegalStateException("DCN subscriptions for datasource [" + dataSourceName
+                    + "] have already been discovered; additional registrations are not supported");
+            }
         }
         LOG.trace("Starting registration of [{}] change listener methods for datasource [{}]",
             listenerMethods.size(), dataSourceName);
