@@ -315,12 +315,7 @@ class DefaultBindableParametersStoredQuerySpec extends Specification {
             def futures = (1..threads).collect { int thread ->
                 executor.submit({
                     start.await()
-                    (1..bindsPerRound).each { int i ->
-                        String failure = bindFailure(q, "$round-$thread-$i")
-                        if (failure != null) {
-                            failures << "round $round, thread $thread, bind $i: $failure".toString()
-                        }
-                    }
+                    bindRepeatedly(q, "round $round, thread $thread", bindsPerRound, failures)
                 } as Runnable)
             }
             futures*.get()
@@ -331,6 +326,20 @@ class DefaultBindableParametersStoredQuerySpec extends Specification {
 
         cleanup:
         executor.shutdown()
+    }
+
+    /**
+     * Binds the given number of books, each with its own title and author name, and adds what went wrong to the
+     * failures.
+     */
+    private static void bindRepeatedly(DefaultBindableParametersStoredQuery<Book, Object> q, String caller, int binds,
+                                       Collection<String> failures) {
+        (1..binds).each { int i ->
+            String failure = bindFailure(q, "$caller, bind $i")
+            if (failure != null) {
+                failures << "$caller, bind $i: $failure".toString()
+            }
+        }
     }
 
     /**
