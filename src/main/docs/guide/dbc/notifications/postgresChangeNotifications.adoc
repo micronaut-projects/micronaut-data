@@ -148,7 +148,7 @@ For migration-managed schemas, leave `micronaut.data.jdbc.notifications.postgres
 
 [source,xml]
 ----
-include::doc-examples/jdbc-postgres-notifications-java/src/main/resources/db/changelog/db.changelog-master.xml[tags=notification-function]
+include::doc-examples/jdbc-postgres-notifications-java/src/main/resources/db/changelog/db.changelog-master.xml[tag=notification-function]
 ----
 
 `relativeToChangelogFile="false"` resolves the SQL resource from the classpath rather than relative to the
@@ -162,72 +162,30 @@ following <<postgresNotificationTableTriggers, Creating Table Triggers>>.
 ==== Using Flyway
 
 For migration-managed schemas, leave `micronaut.data.jdbc.notifications.postgres.schema-generate` disabled
-(the default). For Java migrations, make Flyway's API available at compile time:
+(the default). Copy the bundled `create-notification-function.sql` resource into a versioned SQL migration,
+such as `src/main/resources/db/migration/V1__install_notification_function.sql`. Select the target schema
+with `SET LOCAL search_path TO public` before the function definition, replacing `public` if needed.
+Keep the migration transactional so the schema selection applies to the function installation.
 
-dependency:org.flywaydb:flyway-core[]
-
-To load the bundled resource without copying it, add a Java migration under a package scanned by Flyway,
-such as `src/main/java/db/migration/V1__InstallNotificationFunction.java`:
-
-[source,java]
-----
-package db.migration;
-
-import org.flywaydb.core.api.migration.BaseJavaMigration;
-import org.flywaydb.core.api.migration.Context;
-
-import java.io.InputStream;
-import java.nio.charset.StandardCharsets;
-import java.sql.Statement;
-
-public class V1__InstallNotificationFunction extends BaseJavaMigration {
-    @Override
-    public void migrate(Context context) throws Exception {
-        String resource = "/io/micronaut/data/jdbc/notification/postgres/sql/create-notification-function.sql";
-        try (InputStream input = getClass().getResourceAsStream(resource)) {
-            if (input == null) {
-                throw new IllegalStateException("Missing SQL resource: " + resource);
-            }
-            String sql = new String(input.readAllBytes(), StandardCharsets.UTF_8);
-            try (Statement statement = context.getConnection().createStatement()) {
-                statement.execute("SET LOCAL search_path TO public");
-                statement.execute(sql);
-            }
-        }
-    }
-}
-----
-
-Use an available migration version in place of `V1`. Keep this migration transactional so `SET LOCAL` applies
-to the function installation, and replace `public` if you use another schema. The `micronaut-data-jdbc` dependency
-must be on the migration runtime classpath. Create the table and triggers in subsequent migrations,
-following <<postgresNotificationTableTriggers, Creating Table Triggers>>.
-
-A versioned Java migration runs once. If a dependency upgrade changes the bundled function and you need to
-reinstall it, add a new migration that executes the resource again.
-See the link:https://documentation.red-gate.com/flyway/flyway-concepts/migrations/java-based-migrations[Flyway Java migration documentation]
+Alternatively, a transactional Java migration can read the bundled resource from the classpath and execute it
+using Flyway's migration connection after selecting the target schema. The `micronaut-data-jdbc` dependency
+must be on the migration runtime classpath. See the
+link:https://documentation.red-gate.com/flyway/flyway-concepts/migrations/java-based-migrations[Flyway Java migration documentation]
 for discovery and naming conventions.
 
-If you prefer SQL migrations, copy the resource contents into a versioned file such as
-`src/main/resources/db/migration/V1__install_notification_function.sql`. Select the target schema before the
-function definition, for example with `SET LOCAL search_path TO public`. Add a new migration when you need to
-update the installed function.
+Create the table and triggers in subsequent migrations, following
+<<postgresNotificationTableTriggers, Creating Table Triggers>>. Versioned migrations run once; add a new migration
+when a dependency upgrade changes the bundled function and you need to reinstall it.
 
 [[postgresNotificationTableTriggers]]
 ==== Creating Table Triggers
 
-For migration-managed row notifications, create these triggers after installing `micronaut_data_notify_change()`
-and creating the table. For example, to observe an existing `public.book` table with the function installed in `public`:
+For migration-managed row notifications, create the table and its triggers after installing
+`micronaut_data_notify_change()`. This example creates `public.book` and attaches row and truncate triggers:
 
 [source,sql]
 ----
-CREATE TRIGGER book_changes
-AFTER INSERT OR UPDATE OR DELETE ON public.book
-FOR EACH ROW EXECUTE FUNCTION public.micronaut_data_notify_change('book_changes', 'id');
-
-CREATE TRIGGER book_truncate
-AFTER TRUNCATE ON public.book
-FOR EACH STATEMENT EXECUTE FUNCTION public.micronaut_data_notify_change('book_changes', 'id');
+include::doc-examples/jdbc-postgres-notifications-java/src/main/resources/db/changelog/create-books.sql[tag=migration]
 ----
 
 The first argument is the channel. Subsequent arguments are the exact mapped primary-key column names.
@@ -262,27 +220,17 @@ It creates `micronaut_data_notify_invalidation()` in the migration's current sch
 
 [source,xml]
 ----
-<changeSet id="postgres-invalidation-function" author="application" dbms="postgresql" runOnChange="true">
-    <sql>SET LOCAL search_path TO public</sql>
-    <sqlFile path="io/micronaut/data/jdbc/notification/postgres/sql/create-invalidation-function.sql"
-             relativeToChangelogFile="false" splitStatements="false"/>
-</changeSet>
+include::doc-examples/jdbc-postgres-notifications-java/src/main/resources/db/changelog/db.changelog-statement.xml[tag=invalidation-function]
 ----
 
-For Flyway, use the Java migration shown above with its resource path changed to
-`/io/micronaut/data/jdbc/notification/postgres/sql/create-invalidation-function.sql`, or copy that resource into
-an application SQL migration. Use a new migration version when changing an existing installation.
+For Flyway, install `create-invalidation-function.sql` instead of the row-notification resource using the
+migration approach described above. Use a new migration version when changing an existing installation.
 
 After installing the function, replace the `book_changes` and `book_truncate` triggers shown above:
 
 [source,sql]
 ----
-DROP TRIGGER IF EXISTS book_changes ON public.book;
-DROP TRIGGER IF EXISTS book_truncate ON public.book;
-
-CREATE TRIGGER book_changes
-AFTER INSERT OR UPDATE OR DELETE OR TRUNCATE ON public.book
-FOR EACH STATEMENT EXECUTE FUNCTION public.micronaut_data_notify_invalidation('book_changes');
+include::doc-examples/jdbc-postgres-notifications-java/src/main/resources/db/changelog/book-statement-notifications.sql[tag=statement-triggers]
 ----
 
 The function takes exactly one argument: the notification channel. It requires an `AFTER STATEMENT` trigger.

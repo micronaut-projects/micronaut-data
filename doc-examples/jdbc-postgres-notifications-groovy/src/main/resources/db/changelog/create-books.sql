@@ -9,5 +9,6 @@ CREATE TRIGGER book_truncate
 AFTER TRUNCATE ON public.book
 FOR EACH STATEMENT EXECUTE FUNCTION public.micronaut_data_notify_change('book_changes', 'id');
 
-INSERT INTO public.book VALUES (1, 'Present before startup');
 -- end::migration[]
+
+INSERT INTO public.book VALUES (1, 'Present before startup');

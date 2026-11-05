@@ -29,5 +29,6 @@ dependencies {
     runtimeOnly mnSql.micronaut.jdbc.hikari
     runtimeOnly mnLiquibase.micronaut.liquibase
     runtimeOnly mnLogging.logback.classic
+    testImplementation mnTestResources.micronaut.test.resources.extensions.junit.platform
     testImplementation mn.micronaut.http.client
 }
