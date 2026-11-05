@@ -55,8 +55,8 @@ Each node of the outer relationship is collected with the nodes of its own relat
 MATCH (n:Movie) WHERE n.released = $p0
 OPTIONAL MATCH (n)<-[:DIRECTED]-(j0:Person)
 OPTIONAL MATCH (j0)-[:FOLLOWS]->(j0_0n:Person)
-WITH n, j0, collect(j0_0n) AS j0_0
-WITH n, collect(CASE WHEN j0 IS NULL THEN NULL ELSE {node: j0, follows: j0_0} END) AS j_directors
+WITH n, j0, collect(DISTINCT j0_0n) AS j0_0
+WITH n, collect(DISTINCT CASE WHEN j0 IS NULL THEN NULL ELSE {node: j0, follows: j0_0} END) AS j_directors
 RETURN n, j_directors
 ----
 
