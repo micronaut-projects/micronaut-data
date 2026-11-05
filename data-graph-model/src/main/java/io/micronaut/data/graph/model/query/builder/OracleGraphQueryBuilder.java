@@ -322,13 +322,16 @@ public class OracleGraphQueryBuilder implements GraphQueryBuilder {
             return buildRelationshipsQuery(definition, entity, types);
         }
         requireMaxDepth(definition);
+        if (!sqlPgq()) {
+            requireSupportedPgqlPath(definition);
+        }
         // A @PathLimit argument wins over @PathLimit(n) on the method, as it does for Cypher: the runtime renders it
         // in place of the token, capped by micronaut.data.graph.max-path-depth
         String quantifier = "{1," + (definition.maxDepthBound() ? PathQueryDefinition.PATH_LIMIT_TOKEN : String.valueOf(definition.maxDepth())) + "}";
         Query query = new Query(entity);
         boolean elements = definition.result() == PathQueryDefinition.Result.ELEMENTS;
         if (elements && sqlPgq()) {
-            throw new IllegalArgumentException("Returning paths is not supported by the SQL/PGQ dialect, use @PropertyGraph(language = PGQL)");
+            throw new IllegalArgumentException("Returning paths is not supported by the SQL/PGQ dialect: it checks for paths and counts them");
         }
         String edgeVariable = elements ? EDGE : "";
         String pattern = directed(node(START, entity), edge(edgeVariable, types, "") + quantifier, node(END, entity), definition.direction());
@@ -422,6 +425,19 @@ public class OracleGraphQueryBuilder implements GraphQueryBuilder {
     private static void requireMaxDepth(PathQueryDefinition definition) {
         if (!definition.maxDepthBound() && definition.maxDepth() <= 0) {
             throw new IllegalArgumentException("Oracle property graph path queries need a maximum depth: annotate the method with @PathLimit(n), or add an int parameter annotated with @PathLimit");
+        }
+    }
+
+    /**
+     * Oracle documents that PGQL on a property graph in the database has no {@code ALL SHORTEST} search, and that a
+     * path query with bind variables fails with "Use of bind variables for path queries is not supported".
+     */
+    private static void requireSupportedPgqlPath(PathQueryDefinition definition) {
+        if (definition.kind() == PathQueryDefinition.Kind.ALL_SHORTEST) {
+            throw new IllegalArgumentException("ALL SHORTEST is not supported by PGQL on Oracle property graphs");
+        }
+        if (definition.start() != null || definition.end() != null) {
+            throw new IllegalArgumentException("PGQL path queries cannot bind parameters on Oracle property graphs: use @PropertyGraph(language = SQL_PGQ) to check for paths and count them");
         }
     }
 
