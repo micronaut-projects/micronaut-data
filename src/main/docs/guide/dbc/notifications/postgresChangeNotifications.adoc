@@ -343,7 +343,8 @@ See <<postgresNotificationTrustModel, Notification Trust and Database Access>> b
 
 snippet::example.BookCatalog[project-base="doc-examples/jdbc-postgres-notifications", source="main", tags="events", indent="0", languages="java,groovy,kotlin,python"]
 
-If recovery exhausts its configured retry limit, each listener receives a final `TERMINATED` event.
+If recovery exhausts its configured retry limit or the subscription stops unexpectedly, Micronaut Data attempts to
+send a final `TERMINATED` event to each listener.
 It replaces waiting notifications and runs after any callback already in progress. The event has no entity
 or PostgreSQL metadata. The example clears and disables its cache, ignores later callbacks, and reads directly
 from the repository when `find` is called.

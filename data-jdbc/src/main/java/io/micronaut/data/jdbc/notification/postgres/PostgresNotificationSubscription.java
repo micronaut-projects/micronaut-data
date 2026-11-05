@@ -187,8 +187,10 @@ final class PostgresNotificationSubscription {
      * Receives and routes notifications until stopped, reconnecting after failures with the configured backoff.
      * Stops reception and queues final termination for every listener if the recovery retry limit is exhausted.
      * Submits invalidation events after reconnection and before reception resumes.
+     * Unexpected receiver failures also queue final termination when shutdown has not started.
      * Releases the connection and completes the reception stage when the loop exits.
-     * Unexpected receiver failures complete that stage exceptionally and propagate to the executor.
+     * Unexpected receiver failures complete that stage exceptionally; runtime exceptions and errors also
+     * propagate to the executor.
      */
     private void receive() {
         Throwable failure = null;
@@ -196,12 +198,48 @@ final class PostgresNotificationSubscription {
             receiveLoop();
         } catch (InterruptedException e) {
             Thread.currentThread().interrupt();
+            if (markReceiverFailed()) {
+                failure = e;
+                notifyListenersOfTermination(e);
+                LOG.error("PostgreSQL notification receiver for datasource [{}] terminated unexpectedly", name, e);
+            }
         } catch (RuntimeException | Error e) {
             failure = e;
+            if (markReceiverFailed()) {
+                notifyListenersOfTermination(e);
+            }
             LOG.error("PostgreSQL notification receiver for datasource [{}] terminated unexpectedly", name, e);
             throw e;
         } finally {
             finishReception(failure);
+        }
+    }
+
+    /** Claims an unexpected receiver exit unless shutdown already stopped the subscription. */
+    private boolean markReceiverFailed() {
+        synchronized (recoveryMonitor) {
+            if (!running) {
+                return false;
+            }
+            running = false;
+            return true;
+        }
+    }
+
+    /** Attempts final termination delivery to each listener. */
+    @SuppressWarnings("FutureReturnValueIgnored") // Cleanup is asynchronous; shutdown awaits it separately.
+    private void notifyListenersOfTermination(Throwable failure) {
+        for (PostgresChangeNotificationDispatcher dispatcher : dispatchers.values()) {
+            try {
+                dispatcher.terminate();
+            } catch (RuntimeException deliveryFailure) {
+                suppressAdditionalFailure(failure, deliveryFailure);
+                try {
+                    dispatcher.stop();
+                } catch (RuntimeException cleanupFailure) {
+                    suppressAdditionalFailure(failure, cleanupFailure);
+                }
+            }
         }
     }
 
@@ -220,9 +258,7 @@ final class PostgresNotificationSubscription {
                 failure = cleanupFailure;
                 throw cleanupFailure;
             }
-            if (failure != cleanupFailure) {
-                failure.addSuppressed(cleanupFailure);
-            }
+            suppressAdditionalFailure(failure, cleanupFailure);
         } finally {
             try {
                 receiver.shutdown();
@@ -234,6 +270,13 @@ final class PostgresNotificationSubscription {
                 }
                 LOG.trace("PostgreSQL notification receiver stopped for datasource [{}]", name);
             }
+        }
+    }
+
+    @SuppressWarnings("ReferenceEquality") // Throwable rejects self-suppression, so identity is required.
+    private static void suppressAdditionalFailure(Throwable failure, Throwable additionalFailure) {
+        if (failure != additionalFailure) {
+            failure.addSuppressed(additionalFailure);
         }
     }
 
@@ -424,12 +467,14 @@ final class PostgresNotificationSubscription {
      * @return a future completed when reception, connection cleanup, and listener dispatch have finished
      */
     CompletableFuture<Void> stop() {
-        if (running) {
-            LOG.trace("Stopping PostgreSQL notification subscription for datasource [{}]", name);
-        }
-        running = false;
+        boolean wasRunning;
         synchronized (recoveryMonitor) {
+            wasRunning = running;
+            running = false;
             recoveryMonitor.notifyAll();
+        }
+        if (wasRunning) {
+            LOG.trace("Stopping PostgreSQL notification subscription for datasource [{}]", name);
         }
         CompletableFuture<Void> callbacks = CompletableFuture.allOf(dispatchers.values().stream()
             .map(PostgresChangeNotificationDispatcher::stop).toArray(CompletableFuture[]::new));

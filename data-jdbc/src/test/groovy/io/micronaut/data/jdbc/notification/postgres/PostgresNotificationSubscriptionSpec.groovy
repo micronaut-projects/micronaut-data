@@ -542,6 +542,227 @@ class PostgresNotificationSubscriptionSpec extends Specification {
     }
 
     @Unroll
+    void "unexpected receiver #scenario terminates listeners and preserves the failure"() {
+        given:
+        def logger = LoggerFactory.getLogger(PostgresNotificationSubscription) as Logger
+        def appender = new ListAppender<ILoggingEvent>()
+        appender.start()
+        logger.addAppender(appender)
+        def entered = new CountDownLatch(1)
+        def release = new CountDownLatch(1)
+        def uncaught = new CompletableFuture<Throwable>()
+        def postgres = Stub(PGConnection) {
+            escapeIdentifier('books') >> '"books"'
+            getNotifications(_ as int) >> {
+                Thread.currentThread().uncaughtExceptionHandler = { Thread thread, Throwable failure ->
+                    uncaught.complete(failure)
+                } as Thread.UncaughtExceptionHandler
+                entered.countDown()
+                assert release.await(10, TimeUnit.SECONDS)
+                throw receiverFailure
+            }
+        }
+        def connection = Stub(Connection) {
+            unwrap(PGConnection) >> postgres
+            createStatement() >> Stub(Statement)
+        }
+        def source = Stub(PGSimpleDataSource) {
+            getConnection() >> connection
+        }
+        def context = ApplicationContext.run()
+        def deliveries = [new LinkedBlockingQueue(), new LinkedBlockingQueue()]
+        def subscription = newListeningSubscription(source, context, deliveries)
+
+        when:
+        subscription.start()
+        assert entered.await(10, TimeUnit.SECONDS)
+        release.countDown()
+        def events = deliveries.collect { it.poll(10, TimeUnit.SECONDS) }
+        Throwable reported = null
+        try {
+            subscription.@received.get(10, TimeUnit.SECONDS)
+        } catch (ExecutionException e) {
+            reported = e.cause
+        }
+        def uncaughtFailure = uncaught.get(10, TimeUnit.SECONDS)
+        def completions = subscription.@dispatchers.values().collect { it.@completion } as CompletableFuture[]
+        CompletableFuture.allOf(completions).get(10, TimeUnit.SECONDS)
+
+        then:
+        reported.is(receiverFailure)
+        uncaughtFailure.is(receiverFailure)
+        !subscription.@running
+        events.every { it != null && it.operation() == ChangeOperation.TERMINATED && it.entity().empty &&
+            it.metadata(PostgresChangeEventMetadata).empty }
+        deliveries.every { it.empty }
+        appender.list.any {
+            it.message.contains('terminated unexpectedly') && it.argumentArray[0] == 'test' &&
+                it.throwableProxy.message == receiverFailure.message
+        }
+
+        cleanup:
+        release.countDown()
+        subscription?.stop()?.handle { value, failure -> null }?.get(10, TimeUnit.SECONDS)
+        context?.close()
+        logger.detachAppender(appender)
+        appender.stop()
+
+        where:
+        scenario          | receiverFailure
+        'runtime failure' | new IllegalStateException('receiver')
+        'error'           | new AssertionError('receiver')
+    }
+
+    void "unexpected recovery interruption terminates listeners and preserves the interruption"() {
+        given:
+        def logger = LoggerFactory.getLogger(PostgresNotificationSubscription) as Logger
+        def appender = new ListAppender<ILoggingEvent>()
+        appender.start()
+        logger.addAppender(appender)
+        def failed = new CountDownLatch(1)
+        def receiverThread = new AtomicReference<Thread>()
+        def postgres = Stub(PGConnection) {
+            escapeIdentifier('books') >> '"books"'
+            getNotifications(_ as int) >> {
+                receiverThread.set(Thread.currentThread())
+                failed.countDown()
+                throw new SQLException('Connection lost')
+            }
+        }
+        def connection = Stub(Connection) {
+            unwrap(PGConnection) >> postgres
+            createStatement() >> Stub(Statement)
+        }
+        def source = Stub(PGSimpleDataSource) {
+            getConnection() >> connection
+        }
+        def configuration = new PostgresNotificationConfiguration()
+        configuration.connectionRecovery.retryDelay = Duration.ofMinutes(1)
+        def context = ApplicationContext.run()
+        def deliveries = [new LinkedBlockingQueue(), new LinkedBlockingQueue()]
+        def subscription = newListeningSubscription(source, context, deliveries, configuration)
+        def completion = subscription.@received.handle { value, failure ->
+            [failure, Thread.currentThread().isInterrupted()]
+        }
+
+        when:
+        subscription.start()
+        assert failed.await(10, TimeUnit.SECONDS)
+        new PollingConditions(timeout: 10).eventually {
+            assert receiverThread.get().state == Thread.State.TIMED_WAITING
+        }
+        receiverThread.get().interrupt()
+        def events = deliveries.collect { it.poll(10, TimeUnit.SECONDS) }
+        def result = completion.get(10, TimeUnit.SECONDS)
+        def completions = subscription.@dispatchers.values().collect { it.@completion } as CompletableFuture[]
+        CompletableFuture.allOf(completions).get(10, TimeUnit.SECONDS)
+
+        then:
+        result[0] instanceof InterruptedException
+        result[1]
+        !subscription.@running
+        events.every { it != null && it.operation() == ChangeOperation.TERMINATED }
+        deliveries.every { it.empty }
+        appender.list.any {
+            it.message.contains('terminated unexpectedly') && it.argumentArray[0] == 'test' &&
+                it.throwableProxy.className == InterruptedException.name
+        }
+
+        cleanup:
+        subscription?.stop()?.handle { value, failure -> null }?.get(10, TimeUnit.SECONDS)
+        context?.close()
+        logger.detachAppender(appender)
+        appender.stop()
+    }
+
+    void "normal shutdown sends no termination"() {
+        given:
+        def entered = new CountDownLatch(1)
+        def release = new CountDownLatch(1)
+        def postgres = Stub(PGConnection) {
+            escapeIdentifier('books') >> '"books"'
+            getNotifications(_ as int) >> {
+                entered.countDown()
+                assert release.await(10, TimeUnit.SECONDS)
+                null
+            }
+        }
+        def connection = Stub(Connection) {
+            unwrap(PGConnection) >> postgres
+            createStatement() >> Stub(Statement)
+        }
+        def source = Stub(PGSimpleDataSource) {
+            getConnection() >> connection
+        }
+        def context = ApplicationContext.run()
+        def deliveries = [new LinkedBlockingQueue(), new LinkedBlockingQueue()]
+        def subscription = newListeningSubscription(source, context, deliveries)
+
+        when:
+        subscription.start()
+        assert entered.await(10, TimeUnit.SECONDS)
+        def stopped = subscription.stop()
+        release.countDown()
+        stopped.get(10, TimeUnit.SECONDS)
+
+        then:
+        deliveries.every { it.empty }
+        !subscription.@received.isCompletedExceptionally()
+
+        cleanup:
+        release.countDown()
+        subscription?.stop()?.get(10, TimeUnit.SECONDS)
+        context?.close()
+    }
+
+    void "shutdown suppresses termination for a concurrently interrupted recovery"() {
+        given:
+        def failed = new CountDownLatch(1)
+        def receiverThread = new AtomicReference<Thread>()
+        def postgres = Stub(PGConnection) {
+            escapeIdentifier('books') >> '"books"'
+            getNotifications(_ as int) >> {
+                receiverThread.set(Thread.currentThread())
+                failed.countDown()
+                throw new SQLException('Connection lost')
+            }
+        }
+        def connection = Stub(Connection) {
+            unwrap(PGConnection) >> postgres
+            createStatement() >> Stub(Statement)
+        }
+        def source = Stub(PGSimpleDataSource) {
+            getConnection() >> connection
+        }
+        def configuration = new PostgresNotificationConfiguration()
+        configuration.connectionRecovery.retryDelay = Duration.ofMinutes(1)
+        def context = ApplicationContext.run()
+        def deliveries = [new LinkedBlockingQueue(), new LinkedBlockingQueue()]
+        def subscription = newListeningSubscription(source, context, deliveries, configuration)
+
+        when:
+        subscription.start()
+        assert failed.await(10, TimeUnit.SECONDS)
+        new PollingConditions(timeout: 10).eventually {
+            assert receiverThread.get().state == Thread.State.TIMED_WAITING
+        }
+        CompletableFuture<Void> stopped
+        synchronized (subscription.@recoveryMonitor) {
+            receiverThread.get().interrupt()
+            stopped = subscription.stop()
+        }
+        stopped.get(10, TimeUnit.SECONDS)
+
+        then:
+        deliveries.every { it.empty }
+        !subscription.@received.isCompletedExceptionally()
+
+        cleanup:
+        subscription?.stop()?.get(10, TimeUnit.SECONDS)
+        context?.close()
+    }
+
+    @Unroll
     void "receiver termination completes shutdown after #scenario"() {
         given:
         def entered = new CountDownLatch(1)
@@ -677,14 +898,14 @@ class PostgresNotificationSubscriptionSpec extends Specification {
         'validation error'   | false | new SQLException('Network failure') | 2
     }
 
-    private ChangeListenerMethod executionHandleListener(def beanDefinition, def queue, int index) {
+    private ChangeListenerMethod executionHandleListener(def beanDefinition, def queue, int index, boolean recordEvent = false) {
         def method = Mock(ExecutableMethod) {
             getDescription(true) >> "void changed${index}(ChangeEvent<ExecutionHandleBook>)"
             getAnnotation(PostgresChangeNotification) >> AnnotationValue.builder(PostgresChangeNotification)
                 .member('channel', 'books').build()
             invoke(_, _) >> { List arguments ->
                 ChangeEvent<?> event = arguments.flatten().find { it instanceof ChangeEvent }
-                queue.add([arguments[0], event.operation()])
+                queue.add(recordEvent ? event : [arguments[0], event.operation()])
                 null
             }
         }
@@ -695,6 +916,26 @@ class PostgresNotificationSubscriptionSpec extends Specification {
     private static class ExecutionHandleBook {
         @Id
         Long id
+    }
+
+    private PostgresNotificationSubscription newListeningSubscription(PGSimpleDataSource source,
+                                                                     ApplicationContext context,
+                                                                     List<LinkedBlockingQueue> deliveries,
+                                                                     PostgresNotificationConfiguration configuration = new PostgresNotificationConfiguration()) {
+        def beanDefinition = RuntimeBeanDefinition.builder(Object, { new Object() } as Supplier).singleton(false).build()
+        context.registerBeanDefinition(beanDefinition)
+        def listeners = deliveries.withIndex().collect { queue, index ->
+            executionHandleListener(beanDefinition, queue, index, true)
+        }
+        def operations = Stub(JdbcRepositoryOperations) {
+            getEntity(ExecutionHandleBook) >> new RuntimePersistentEntity<>(ExecutionHandleBook)
+            getConversionService() >> ConversionService.SHARED
+        }
+        def factory = Stub(PostgresNotificationConnectionFactory) {
+            openConnection('test') >> { source.connection }
+        }
+        new PostgresNotificationSubscription('test', operations, listeners, context,
+            Stub(JsonMapper), configuration, factory, Stub(ChangeListenerExceptionHandler))
     }
 
     private PostgresNotificationSubscription newSubscription(PGSimpleDataSource source,
