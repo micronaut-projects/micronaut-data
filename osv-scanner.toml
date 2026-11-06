@@ -1,0 +1,4 @@
+# CVE-2026-102554: CompactHashMap/CompactHashSet/MapMakerInternalMap Java deserialization allocates unbounded memory.
+[[IgnoredVulns]]
+id = "GHSA-xxph-c9ww-hj94"
+reason = "Guava comes in only through the Jakarta Data TCK support module (jakarta.data-tck -> ShrinkWrap Maven resolver), which runs the Jakarta Data TCK in tests and is not used by applications. The issue needs the application to deserialize untrusted data with Java serialization (ObjectInputStream), which Micronaut Data never does."
