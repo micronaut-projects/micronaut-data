@@ -70,6 +70,7 @@ final class OpenSearchRequests {
     private static final java.util.Set<String> REQUEST_KEYS = java.util.Set.of("query", "sort", "from", "size", "track_total_hits", "highlight", "version", "min_score", "search_after");
 
     private static final String QUERY = "query";
+    private static final String FILTER = "filter";
 
     private OpenSearchRequests() {
     }
@@ -304,8 +305,8 @@ final class OpenSearchRequests {
         } else {
             clause.put("k", knn.get("k"));
         }
-        if (knn.get("filter") != null) {
-            clause.put("filter", translateKnn(knn.get("filter")));
+        if (knn.get(FILTER) != null) {
+            clause.put(FILTER, translateKnn(knn.get(FILTER)));
         }
         return clause;
     }
