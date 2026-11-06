@@ -43,8 +43,7 @@ It selects Oracle-specific notification settings and enables Micronaut Data to r
 Follow the shared <<notificationListenerRequirements, listener requirements>>, including the method signature
 and datasource selection.
 
-Listener methods inherited from separately compiled base classes are supported. If an inherited method has no generated
-`ROWID` reload query, Micronaut Data builds the query from the entity mapping at startup.
+Listener methods inherited from separately compiled base classes are supported.
 
 Micronaut Data creates an Oracle Database registration for each listener method during application startup.
 The registration normally remains active for the application’s lifetime, and Micronaut Data attempts to unregister
@@ -276,7 +275,7 @@ micronaut:
 
 `max-retries` defaults to `-1` for unlimited retries. A non-negative value limits retries after the initial recovery
 attempt; set it to `0` to make only the initial attempt.
-Waiting for the blocking executor to accept recovery work does not count toward `max-retries`.
+The retry limit counts recovery attempts, not time spent waiting for an attempt to start.
 
 `retry-delay` sets the first retry delay. `retry-delay-multiplier` must be an integer of at least
 `1`; set it to `1` for a fixed delay. `max-retry-delay` caps every retry delay, including the first.
@@ -300,12 +299,8 @@ is unavailable. Micronaut Data cannot detect a silently lost notification connec
 See <<notificationDeliveryAndConcurrency, Delivery and Concurrency>> for shared threading requirements,
 delivery limitations, queue order, and overflow reconciliation.
 
-Oracle JDBC data callbacks add notifications to the listener queue; the worker performs entity loading and invokes
-the listener. Driver lifecycle callbacks update subscription state directly. An accepted recovery or deregistration
-discards waiting data notifications. Registration recovery and query deregistration cleanup use the configured blocking
-executor, keeping JDBC cleanup and application listener work off the driver's notification thread.
-The listener worker starts when needed, remains available across registration recovery, and stops when the subscription
-closes or finishes delivering its final termination or one-shot notification.
+Recovery or deregistration discards waiting data notifications. Registration recovery and query deregistration cleanup
+use the configured blocking executor.
 
 By default, each listener queue has a limit of `1000` waiting notifications, excluding the callback currently running.
 Configure `micronaut.data.jdbc.notifications.oracle.queue-capacity` to change this limit globally for all Oracle
@@ -356,8 +351,8 @@ operations. Registration cleanup is best effort: database unavailability or shut
 completing. When graceful shutdown is disabled, closing the application context still waits for cleanup before
 datasources and executors are destroyed. This wait uses `micronaut.lifecycle.graceful-shutdown.grace-period`
 (15 seconds by default), including running callbacks and recovery. If the deadline expires, context destruction
-continues and registrations may remain in Oracle Database. Bean destruction does not start a second wait after
-the shutdown event.
+continues and registrations may remain in Oracle Database. Cleanup, recovery, and running callbacks share this timeout;
+there is no second wait after the shutdown event.
 
 An abrupt process or host failure cannot run that cleanup. Oracle Database automatically cleans up ordinary
 (non-reliable) registrations after their owning client has permanently disconnected. Registrations become eligible

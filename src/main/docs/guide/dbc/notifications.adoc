@@ -149,7 +149,7 @@ transaction that caused it. Database connection and registration recovery are co
 database-specific sections.
 
 With `@Async`, entity loading still runs on the listener worker before listener execution is scheduled on the async
-executor. Loading failures can be retried. Failures during async listener execution cannot reach retry or recovery advice
+executor. Loading failures can be retried. Failures during async listener execution cannot reach retry or recovery handling
 because the listener invocation has already returned. The subscription's queue ordering and shutdown tracking cover loading and
 submission, not completion of the async listener work. Use the dedicated listener worker without `@Async` when listener
 retries, ordered completion, and subscription shutdown tracking are required.
