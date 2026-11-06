@@ -51,6 +51,9 @@ public final class SqlBatchSupport {
 
     private static final String MARIADB_PRODUCT_NAME = "MARIADB";
     private static final String MYSQL_PRODUCT_NAME = "MYSQL";
+    private static final String ORACLE_PRODUCT_NAME = "ORACLE";
+    // Oracle JDBC 23 returns the generated keys of every row of a batch, verified with 23.4 and 23.26
+    private static final int ORACLE_BATCH_GENERATED_KEYS_DRIVER_VERSION = 23;
 
     private SqlBatchSupport() {
     }
@@ -95,7 +98,8 @@ public final class SqlBatchSupport {
      *
      * <p>Only the MySQL dialect can resolve to {@link JdbcBatchInsertMode#BATCH_WITHOUT_GENERATED_KEYS}.
      * Every other dialect keeps its previous behavior of reading generated keys back whenever the
-     * entity has a generated identity.</p>
+     * entity has a generated identity. The Oracle dialect batches entities with a generated identity,
+     * such as a sequence, when the Oracle JDBC driver returns the generated keys of a batch.</p>
      *
      * @param persistentEntity The persistent entity
      * @param dialect The SQL dialect
@@ -115,6 +119,10 @@ public final class SqlBatchSupport {
             if (mode != null) {
                 return mode;
             }
+        }
+        if (dialect == Dialect.ORACLE && persistentEntity.hasIdentity() && persistentEntity.getIdentity().isGenerated()
+            && metadata.isOracleDriverReturningBatchGeneratedKeys()) {
+            return JdbcBatchInsertMode.BATCH;
         }
         return isSupportsBatchInsert(persistentEntity, dialect) ? JdbcBatchInsertMode.BATCH : JdbcBatchInsertMode.FALLBACK;
     }
@@ -278,18 +286,48 @@ public final class SqlBatchSupport {
      * @param driverName The JDBC driver name
      * @param supportsBatchUpdates Whether the driver reports batch-update support
      * @param supportsGetGeneratedKeys Whether the driver reports generated-key support
+     * @param driverMajorVersion The major version of the JDBC driver (since 5.3.0)
      * @since 5.2.0
      */
     public record JdbcBatchMetadata(@Nullable String databaseProductName,
                                     @Nullable String databaseProductVersion,
                                     @Nullable String driverName,
                                     @Nullable Boolean supportsBatchUpdates,
-                                    @Nullable Boolean supportsGetGeneratedKeys) {
+                                    @Nullable Boolean supportsGetGeneratedKeys,
+                                    @Nullable Integer driverMajorVersion) {
 
         /**
          * The metadata used when the JDBC metadata could not be read.
          */
-        public static final JdbcBatchMetadata UNKNOWN = new JdbcBatchMetadata(null, null, null, null, null);
+        public static final JdbcBatchMetadata UNKNOWN = new JdbcBatchMetadata(null, null, null, null, null, null);
+
+        /**
+         * Creates the metadata without the driver version.
+         *
+         * @param databaseProductName The database product name
+         * @param databaseProductVersion The database product version
+         * @param driverName The JDBC driver name
+         * @param supportsBatchUpdates Whether the driver reports batch-update support
+         * @param supportsGetGeneratedKeys Whether the driver reports generated-key support
+         */
+        public JdbcBatchMetadata(@Nullable String databaseProductName,
+                                 @Nullable String databaseProductVersion,
+                                 @Nullable String driverName,
+                                 @Nullable Boolean supportsBatchUpdates,
+                                 @Nullable Boolean supportsGetGeneratedKeys) {
+            this(databaseProductName, databaseProductVersion, driverName, supportsBatchUpdates, supportsGetGeneratedKeys, null);
+        }
+
+        /**
+         * @return {@code true} if the connection uses an Oracle JDBC driver that returns the generated keys of
+         * every row of a batch
+         * @since 5.3.0
+         */
+        public boolean isOracleDriverReturningBatchGeneratedKeys() {
+            return containsIgnoreCase(driverName, ORACLE_PRODUCT_NAME)
+                && driverMajorVersion != null
+                && driverMajorVersion >= ORACLE_BATCH_GENERATED_KEYS_DRIVER_VERSION;
+        }
 
         /**
          * @return {@code true} if the connection is known to target a MariaDB server
