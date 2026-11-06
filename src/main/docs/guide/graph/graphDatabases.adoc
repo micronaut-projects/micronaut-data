@@ -7,7 +7,7 @@ Entities and repository methods are portable between the databases. Each databas
 |Finders, projections and paging |Yes |Yes |Yes
 |Criteria on relationships |Yes |Yes |Yes
 |Fetch joins with `@Join` |Yes |No |Yes
-|Saving, updating and deleting |Yes |No, write the tables |Yes
+|Saving, updating and deleting |Yes |Nodes, through their vertex tables |Yes
 |Shortest paths |Yes |PGQL |With a maximum depth
 |Path existence and counts |Yes |With a maximum depth |With a maximum depth
 |Multiple and dynamic labels |Yes |No |No

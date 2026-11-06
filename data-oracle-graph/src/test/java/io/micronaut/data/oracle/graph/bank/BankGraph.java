@@ -20,6 +20,12 @@ public interface BankGraph extends GenericRepository<Account, Long> {
 
     Optional<Account> findById(Long id);
 
+    Account save(Account account);
+
+    Account update(Account account);
+
+    void deleteById(Long id);
+
     List<Account> findByNameStartsWithOrderByName(String prefix);
 
     Page<Account> findByNameStartsWith(String prefix, Pageable pageable);
