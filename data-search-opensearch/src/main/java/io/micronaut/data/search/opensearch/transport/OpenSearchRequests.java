@@ -67,6 +67,7 @@ final class OpenSearchRequests {
     static final Map<String, Object> KNN_SETTINGS = Map.of("index.knn", true);
 
     private static final String QUERY = "query";
+    private static final String FILTER = "filter";
 
     private OpenSearchRequests() {
     }
@@ -295,8 +296,8 @@ final class OpenSearchRequests {
         } else {
             clause.put("k", knn.get("k"));
         }
-        if (knn.get("filter") != null) {
-            clause.put("filter", translateKnn(knn.get("filter")));
+        if (knn.get(FILTER) != null) {
+            clause.put(FILTER, translateKnn(knn.get(FILTER)));
         }
         return clause;
     }
