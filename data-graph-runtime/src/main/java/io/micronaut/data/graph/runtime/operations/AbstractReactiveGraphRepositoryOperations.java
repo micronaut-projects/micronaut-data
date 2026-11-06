@@ -416,7 +416,7 @@ public abstract class AbstractReactiveGraphRepositoryOperations implements React
                 T written = generatedId != null && identity != null
                     ? updateEntityId((BeanProperty<T, Object>) identity.getProperty(), instance, generatedId)
                     : instance;
-                AbstractGraphRepositoryOperations.GraphQuery addLabels = operations.planAddLabels(persistentEntity, write, written);
+                AbstractGraphRepositoryOperations.GraphQuery addLabels = operations.planAddLabels(persistentEntity, write.addLabels(), written);
                 Mono<T> labelled = addLabels == null ? Mono.just(written) : persister.run(addLabels).thenReturn(written);
                 return labelled
                     .doOnNext(labelledInstance -> persister.written(original, labelledInstance))
