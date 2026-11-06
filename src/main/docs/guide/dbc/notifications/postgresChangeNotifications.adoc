@@ -307,16 +307,16 @@ See <<postgresNotificationTrustModel, Notification Trust and Database Access>> b
 snippet::example.BookCatalog[project-base="doc-examples/jdbc-postgres-notifications", source="main", tags="events", indent="0", languages="java,groovy,kotlin,python"]
 
 <1> On `INVALIDATE`, refresh the cache from the repository to reconcile changes that individual row events cannot describe.
-<2> On `TERMINATED`, disable and clear the cache. The example ignores later callbacks and reads directly from the
+<2> On `TERMINATED`, disable and clear the cache. The example ignores later events and reads directly from the
 repository when `find` is called.
 
 If recovery exhausts its configured retry limit or the subscription stops unexpectedly, Micronaut Data attempts to
 send a final `TERMINATED` event to each listener.
-It replaces waiting notifications and runs after any callback already in progress. The event has no entity
+It replaces waiting notifications and runs after any event already being processed. The event has no entity
 or PostgreSQL metadata.
 
-The listener worker serializes entity loading and callback execution. Synchronize shared cache access with
-other application threads; different listeners may run concurrently.
+Each listener processes its events one at a time. Different listeners and other application threads can run
+concurrently, so protect shared cache access.
 
 For `INSERT` and `UPDATE`, Micronaut Data uses the new primary key to reload the entity.
 See <<notificationEntityLoading, Entity Loading>> for current-state semantics and cases where `entity()` is empty.
@@ -339,8 +339,8 @@ to refresh changes they may have missed.
 With the bundled row-trigger function, each affected row produces an `INSERT`, `UPDATE`, or `DELETE` notification.
 A bulk operation can therefore produce multiple listener calls, subject to PostgreSQL's coalescing of identical
 notifications described below. Large changes can put pressure on PostgreSQL's notification queue and
-on application callback processing. Use the statement-trigger option above to reduce database notification
-volume, and the listener work limit below to bound queued and running callbacks.
+on application listener processing. Use the statement-trigger option above to reduce database notification
+volume, and the listener work limit below to bound queued notifications.
 
 Notifications are matched by channel and mapped table name. Each matching listener method receives its own event,
 including when multiple methods share the same channel. If the entity mapping specifies a schema,
@@ -479,7 +479,7 @@ JDBC notification-polling method.
 `poll-timeout` defaults to one second and controls how long each call waits for notifications.
 Increasing it can delay graceful shutdown when no notifications arrive, because stopping the service
 does not interrupt a call already waiting for notifications. The listening connection is closed after
-that call returns. Graceful shutdown waits for the connection to close and any running listener callbacks to finish.
+that call returns. Graceful shutdown waits for the connection to close and any listener work in progress to finish.
 Waiting for notifications does not itself send queries to PostgreSQL.
 
 `validation-interval` defaults to thirty seconds and controls periodic connection checks using a lightweight
@@ -505,9 +505,9 @@ All delays, including the initial delay, are capped at `max-retry-delay` (defaul
 The multiplier must be an integer of at least `1`; `1` uses a fixed delay.
 A reconnected session must pass its next connection check to reset the retry count and delay.
 If it fails before that check, it counts as a failed recovery attempt. These settings do not retry failed application
-startup or listener callbacks. If a finite retry limit is exhausted, the provider logs an error, stops receiving
+startup or listener failures. If a finite retry limit is exhausted, the provider logs an error, stops receiving
 notifications for that datasource, and queues a final `TERMINATED` event for every affected listener method.
-Waiting notifications, including invalidations, are discarded; a callback already running finishes before
+Waiting notifications, including invalidations, are discarded; any event being processed finishes before
 termination is delivered. No further recovery attempts occur until the application restarts. Listeners should
 disable notification-backed caches and fall back to database reads or another consistency mechanism.
 The default delay sequence is `1s`, `2s`, `4s`, `8s`, `16s`, `32s`, then `60s` for subsequent attempts.
@@ -517,8 +517,8 @@ The default delay sequence is `1s`, `2s`, `4s`, `8s`, `16s`, `32s`, then `60s` f
 See <<notificationDeliveryAndConcurrency, Delivery and Concurrency>> for shared threading requirements,
 delivery limitations, queue order, and overflow reconciliation.
 
-Each listener has a dedicated worker for sequential entity loading and callback execution. Configure the limit
-for waiting notifications, excluding the callback currently running:
+Each listener loads entities and processes events one at a time. Configure the limit for waiting notifications,
+excluding the event currently being processed:
 
 [configuration]
 ----
@@ -535,8 +535,8 @@ method across all PostgreSQL datasources. Reaching the limit replaces waiting da
 one `INVALIDATE` event. Further data is covered by that pending refresh until processing begins. A capacity of `1`
 therefore reconciles every data notification instead of delivering individual row events.
 
-After reconnection, the recovery `INVALIDATE` replaces waiting notifications and runs after any callback already
-in progress. Explicit invalidations, such as `TRUNCATE`, use the same replacement behavior and retain their table metadata.
+After reconnection, the recovery `INVALIDATE` replaces waiting notifications and runs after any event already
+being processed. Explicit invalidations, such as `TRUNCATE`, use the same replacement behavior and retain their table metadata.
 Notifications arriving during reconciliation can be queued normally and can trigger another invalidation if the
 limit is reached again.
 
@@ -602,7 +602,7 @@ An initial connection or channel-subscription failure fails application startup.
 apply only after a listening connection fails; they do not retry initial startup.
 
 See <<notificationCallbackFailures, Handling Listener Failures>> for handling of entity-loading and listener errors.
-PostgreSQL callback failures are passed to api:data.jdbc.notification.ChangeListenerExceptionHandler[].
+PostgreSQL entity-loading and listener failures are passed to api:data.jdbc.notification.ChangeListenerExceptionHandler[].
 The default handler logs the datasource, listener method, operation, and available channel, schema, table,
 and old and new primary-key values. An application handler receives the failed event and the original cause.
 
@@ -611,13 +611,13 @@ the listener's waiting work is replaced with one `INVALIDATE`. This event has no
 listener to reconcile all state it maintains. It also replaces any invalidation already waiting in the queue.
 Failures while handling `INVALIDATE` or `TERMINATED` are also passed to the handler without scheduling another
 invalidation, preventing an automatic refresh loop. If a custom handler throws a runtime exception, both
-failures are logged and reconciliation and later callbacks can still proceed.
+failures are logged and reconciliation and later listener invocations can still proceed.
 This applies to entity loading and synchronous listener execution;
 failures in an `@Async` listener body occur after delivery has returned.
 
 When the application stops, Micronaut Data stops accepting listener calls, removes channel subscriptions,
 and closes the listening connection. Listener calls already running may finish; calls still waiting for execution
-are discarded, including any pending `TERMINATED` callback. Normal shutdown does not produce `TERMINATED` events.
+are discarded, including any pending `TERMINATED` event. Normal shutdown does not produce `TERMINATED` events.
 With Micronaut graceful shutdown enabled, the application waits for connection cleanup and running
 listener calls, up to the configured graceful shutdown timeout.
 
@@ -628,7 +628,7 @@ listener code or database operations already in progress.
 
 Connection cleanup is best effort: database unavailability or the shutdown timeout can prevent it from completing.
 When graceful shutdown is disabled, closing the application context still waits for reception, connection cleanup,
-and running callbacks before datasources and executors are destroyed. This wait uses
+and listener work in progress before datasources and executors are destroyed. This wait uses
 `micronaut.lifecycle.graceful-shutdown.grace-period` (15 seconds by default). If the deadline expires, context
 destruction continues without interrupting the remaining work. Bean destruction does not start a second wait
 after the shutdown event.
