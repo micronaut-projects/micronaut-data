@@ -15,6 +15,12 @@ class MongoTextSearchSpec extends AbstractTextSearchSpec implements MongoTestPro
     }
 
     @Override
+    String noStemmingLanguage() {
+        // the text index's language_override reads the @Language property
+        return "none"
+    }
+
+    @Override
     boolean supportsCursoredPaging() {
         // MongoDB repositories page by offset only
         return false

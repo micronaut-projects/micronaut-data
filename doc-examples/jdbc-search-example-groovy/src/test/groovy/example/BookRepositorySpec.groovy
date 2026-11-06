@@ -1,6 +1,7 @@
 package example
 
 import io.micronaut.data.model.search.SearchQuery
+import io.micronaut.data.model.vector.search.Score
 import io.micronaut.data.model.vector.Vector
 import io.micronaut.test.extensions.spock.annotation.MicronautTest
 import jakarta.inject.Inject
@@ -44,6 +45,8 @@ class BookRepositorySpec extends Specification {
         bookRepository.findByDescriptionSearchPhrase("beans coffee").isEmpty()
         bookRepository.findByTitleSearchPrefix("coff").size() == 2
         bookRepository.findBySearchAndAuthor("coffee", "Bean").size() == 1
+        bookRepository.searchByTitleSearch("coffee", new Score(0)).totalHits() == 2
+        bookRepository.searchByTitleSearch("coffee", new Score(100)).totalHits() == 0
     }
 
     void "programmatic search query"() {
