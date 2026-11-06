@@ -1,19 +1,17 @@
 package io.micronaut.data.graph.tck.repositories;
 
 import io.micronaut.data.annotation.Id;
-import io.micronaut.data.annotation.Join;
-import io.micronaut.data.annotation.Query;
-import io.micronaut.data.graph.model.GraphRelationship;
 import io.micronaut.data.graph.tck.entities.Movie;
 import io.micronaut.data.graph.tck.entities.MovieSummary;
-import io.micronaut.data.graph.tck.entities.Person;
 import io.micronaut.data.model.Page;
 import io.micronaut.data.model.Pageable;
 import io.micronaut.data.repository.CrudRepository;
 
 import java.util.List;
-import java.util.Optional;
 
+/**
+ * Repository methods every graph database supports. {@link MovieQueryRepository} adds fetch joins and Cypher queries.
+ */
 public interface MovieRepository extends CrudRepository<Movie, String> {
 
     List<Movie> findByReleasedGreaterThanOrderByReleased(int year);
@@ -28,10 +26,6 @@ public interface MovieRepository extends CrudRepository<Movie, String> {
 
     List<Movie> findByRolesPersonName(String name);
 
-    @Join("roles")
-    @Join("directors")
-    Optional<Movie> findByTitle(String title);
-
     List<String> findTitleByReleasedGreaterThanOrderByTitle(int released);
 
     Integer findMaxReleased();
@@ -43,13 +37,4 @@ public interface MovieRepository extends CrudRepository<Movie, String> {
     long deleteByReleasedLessThan(Integer released);
 
     Page<Movie> findByReleasedGreaterThan(int released, Pageable pageable);
-
-    @Query("MATCH (m:Movie) WHERE m.title CONTAINS $title RETURN m")
-    List<Movie> search(String title);
-
-    @Query("MATCH (m:Movie {title: $title}) SET m.votes = coalesce(m.votes, 0) + 1")
-    void vote(String title);
-
-    @Query("MATCH (p:Person)-[r:ACTED_IN]->(m:Movie) WHERE m.title = $title RETURN r, p AS f, m AS t")
-    List<GraphRelationship<Person, Movie>> findActedIn(String title);
 }
