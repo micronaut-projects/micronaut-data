@@ -334,6 +334,44 @@ class DefaultJdbcRepositoryOperationsSpec extends Specification {
             metadataAttempts == 2
     }
 
+    void "statements alternating between target versions are checked and executed"() {
+        given:
+            Connection connection = Mock()
+            ConnectionStatus<Connection> connectionStatus = Mock()
+            ConnectionOperations<Connection> connectionOperations = Mock()
+            DatabaseMetaData databaseMetaData = Mock()
+            PreparedStatement statement = Mock()
+            DefaultJdbcRepositoryOperations operations = newOperations(null, connectionOperations)
+            SqlPreparedQuery<Object, Number> query21 = Mock()
+            SqlPreparedQuery<Object, Number> query23 = Mock()
+            int metadataCalls = 0
+            [query21, query23].each { q ->
+                q.dialect >> Dialect.ORACLE
+                q.annotationMetadata >> io.micronaut.core.annotation.AnnotationMetadata.EMPTY_METADATA
+                q.query >> "UPDATE test SET active = 1"
+                q.optimisticLock >> false
+            }
+            query21.dialectVersion >> "21"
+            query23.dialectVersion >> "23.4"
+            connectionOperations.execute(_, _) >> { _, callback -> callback.apply(connectionStatus) }
+            connectionStatus.connection >> connection
+            connection.prepareStatement("UPDATE test SET active = 1") >> statement
+            connection.getMetaData() >> {
+                metadataCalls++
+                databaseMetaData
+            }
+            databaseMetaData.databaseMajorVersion >> 23
+            databaseMetaData.databaseMinorVersion >> 4
+            statement.executeUpdate() >> 0
+
+        when: "the first statement of each target checks it, the server version is read once for the datasource"
+            def results = [query21, query23, query21, query23, query21].collect { operations.executeUpdate(it) }
+
+        then:
+            results.every { it == Optional.of(0) }
+            metadataCalls == 1
+    }
+
     private DefaultJdbcRepositoryOperations newOperations(ExecutorService executorService) {
         newOperations(executorService, Mock(ConnectionOperations<Connection>))
     }

@@ -18,7 +18,11 @@ package example;
 import io.micronaut.data.mongodb.annotation.MongoRepository;
 import io.micronaut.data.repository.CrudRepository;
 
+import java.util.List;
+
 @MongoRepository
 public interface BookRepository extends CrudRepository<Book, String> {
     Book findByTitle(String title);
+
+    List<Book> findByPagesBetween(int min, int max);
 }
