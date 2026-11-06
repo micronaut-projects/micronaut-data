@@ -1,12 +1,44 @@
 package io.micronaut.data.jdbc.oraclexe.search
 
 import groovy.transform.Memoized
+import io.micronaut.data.connection.jdbc.advice.DelegatingDataSource
 import io.micronaut.data.jdbc.oraclexe.Oracle23TestPropertyProvider
+import io.micronaut.data.model.query.builder.sql.Dialect
+import io.micronaut.data.model.query.builder.sql.SqlQueryBuilder
+import io.micronaut.data.model.runtime.RuntimePersistentEntity
 import io.micronaut.data.model.search.SearchCapability
 import io.micronaut.data.search.tck.AbstractTextSearchSpec
+import io.micronaut.data.search.tck.entities.Book
 import io.micronaut.data.search.tck.repositories.BookSearchRepository
 
+import javax.sql.DataSource
+import java.sql.SQLException
+
 class OracleTextSearchSpec extends AbstractTextSearchSpec implements Oracle23TestPropertyProvider {
+
+    void "creating the highlight policy again is ignored and another Oracle Text failure is raised"() {
+        given:
+        def statement = new SqlQueryBuilder(Dialect.ORACLE).buildCreateTableStatements(new RuntimePersistentEntity<>(Book)).last()
+
+        when: "schema generation has created the policy already"
+        execute(statement)
+
+        then:
+        noExceptionThrown()
+
+        when: "Oracle Text rejects the statement for another reason, under the same ORA-20000"
+        execute(statement.replace('MN_SEARCH_POLICY', 'not a valid name'))
+
+        then:
+        def e = thrown(SQLException)
+        e.message.contains('DRG-10550')
+    }
+
+    private void execute(String sql) {
+        DelegatingDataSource.unwrapDataSource(context.getBean(DataSource)).connection.withCloseable { connection ->
+            connection.createStatement().withCloseable { it.execute(sql) }
+        }
+    }
 
     @Memoized
     @Override
@@ -21,7 +53,7 @@ class OracleTextSearchSpec extends AbstractTextSearchSpec implements Oracle23Tes
 
     @Override
     Set<SearchCapability> capabilities() {
-        return EnumSet.of(SearchCapability.PHRASE, SearchCapability.PREFIX, SearchCapability.FUZZY, SearchCapability.FIELD_SCOPE)
+        return EnumSet.of(SearchCapability.PHRASE, SearchCapability.PREFIX, SearchCapability.FUZZY, SearchCapability.FIELD_SCOPE, SearchCapability.HIGHLIGHT)
     }
 
     @Override

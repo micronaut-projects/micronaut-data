@@ -53,4 +53,11 @@ class BookRepositoryTest {
         assertEquals(listOf<String>(), bookService.titlesContainingEveryWord("coffee beans"))
         assertEquals(2, bookRepository.search(SearchQuery.of("coffee")).totalHits())
     }
+
+    @Test
+    fun highlighting() {
+        val fragments = bookService.highlightedTitles("coffee")
+        assertEquals(2, fragments.size)
+        assertTrue(fragments.all { it.contains("<em>Coffee</em>") })
+    }
 }

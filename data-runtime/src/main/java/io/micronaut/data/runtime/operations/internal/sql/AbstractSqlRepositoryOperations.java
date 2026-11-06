@@ -73,6 +73,7 @@ import io.micronaut.data.runtime.mapper.sql.SqlJsonColumnReader;
 import io.micronaut.data.runtime.mapper.sql.SqlJsonValueMapper;
 import io.micronaut.data.runtime.mapper.sql.SqlResultEntityTypeMapper;
 import io.micronaut.data.runtime.mapper.sql.SqlTypeMapper;
+import io.micronaut.data.model.search.TextSearchSupport;
 import io.micronaut.data.model.vector.search.SearchResults;
 import io.micronaut.data.runtime.mapper.sql.SearchResultsMapper;
 import io.micronaut.data.runtime.operations.internal.AbstractRepositoryOperations;
@@ -938,7 +939,8 @@ public abstract class AbstractSqlRepositoryOperations<RS, PS, Exc extends Except
             entityMapper,
             columnNameResultSetReader,
             "mn_score",
-            resolveVectorScoringFunction(preparedQuery)
+            resolveVectorScoringFunction(preparedQuery),
+            TextSearchSupport.highlightedProperties(preparedQuery.getQuery())
         );
     }
 
