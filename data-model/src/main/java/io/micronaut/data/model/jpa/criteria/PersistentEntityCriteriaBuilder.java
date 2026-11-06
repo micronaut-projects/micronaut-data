@@ -16,12 +16,15 @@
 package io.micronaut.data.model.jpa.criteria;
 
 import io.micronaut.core.annotation.Experimental;
+import io.micronaut.data.model.search.MatchMode;
 import jakarta.persistence.Tuple;
 import jakarta.persistence.criteria.CriteriaBuilder;
 import jakarta.persistence.criteria.Expression;
 import jakarta.persistence.criteria.Nulls;
 import jakarta.persistence.criteria.Order;
 import jakarta.persistence.criteria.Predicate;
+
+import java.util.List;
 
 /**
  * The persistent entity criteria builder.
@@ -270,4 +273,37 @@ public interface PersistentEntityCriteriaBuilder extends CriteriaBuilder {
      * @since 3.9.0
      */
     Predicate arrayContains(Expression<?> x, Expression<?> y);
+
+    /**
+     * Full-text match of the query against a field.
+     *
+     * @param field The field expression (property)
+     * @param query The query string expression
+     * @param mode The match mode
+     * @return a new predicate
+     * @since 5.4.0
+     */
+    Predicate textMatch(Expression<?> field, Expression<String> query, MatchMode mode);
+
+    /**
+     * Full-text match of the query against several fields.
+     *
+     * @param fields The field expressions (properties)
+     * @param query The query string expression
+     * @param mode The match mode
+     * @return a new predicate
+     * @since 5.4.0
+     */
+    Predicate textMatch(List<Expression<?>> fields, Expression<String> query, MatchMode mode);
+
+    /**
+     * The relevance score of a full-text match, usable in a selection or an order.
+     *
+     * @param fields The field expressions (properties)
+     * @param query The query string expression
+     * @param mode The match mode
+     * @return the score expression
+     * @since 5.4.0
+     */
+    Expression<Double> searchScore(List<Expression<?>> fields, Expression<String> query, MatchMode mode);
 }

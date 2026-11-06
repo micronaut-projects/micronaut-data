@@ -47,6 +47,8 @@ import io.micronaut.data.model.query.builder.sql.AbstractSqlLikeQueryBuilder;
 import io.micronaut.data.model.query.builder.sql.Dialect;
 import io.micronaut.data.model.query.builder.sql.SqlQueryBuilder;
 import io.micronaut.data.model.query.builder.sql.VectorScoringDialectSupport;
+import io.micronaut.data.model.search.MatchMode;
+import io.micronaut.data.model.search.TextSearchSupport;
 import io.micronaut.data.model.vector.Vector;
 import io.micronaut.data.model.vector.search.SearchResults;
 import io.micronaut.data.processor.model.SourcePersistentEntity;
@@ -685,14 +687,20 @@ public class QueryCriteriaMethodMatch extends AbstractCriteriaMethodMatch {
         }
         List<MethodNameParser.Match> predicateMatches = matches.stream().filter(m -> m.id() == QueryMatchId.PREDICATE).toList();
         if (predicateMatches.isEmpty()) {
-            throw new MatchFailedException("SearchResults query must include a Near, Within, or Between predicate");
+            throw new MatchFailedException("SearchResults query must include a Near, Within, Between or Search predicate");
         }
+        Root<?> root = query.getRoots().iterator().next();
         VectorPredicate vectorPredicate = resolveVectorPredicate(predicateMatches);
         if (vectorPredicate == null) {
-            throw new MatchFailedException("Unable to resolve vector property for SearchResults query");
+            TextPredicate textPredicate = resolveTextPredicate(predicateMatches);
+            if (textPredicate == null) {
+                throw new MatchFailedException("Unable to resolve a vector or text search property for SearchResults query");
+            }
+            Expression<Double> scoreExpr = textScoreExpression(matchContext, cb, (PersistentEntityRoot<Object>) root, textPredicate);
+            query.multiselect(root, scoreExpr.alias(TextSearchSupport.SCORE_ALIAS));
+            return;
         }
 
-        Root<?> root = query.getRoots().iterator().next();
         ParameterElement vectorElement = resolveVectorPredicateParameter(matchContext, vectorPredicate);
         String vectorPropertyName = vectorPredicate.propertyName();
         io.micronaut.data.model.jpa.criteria.PersistentPropertyPath<Object> vectorPropertyExpression = findProperty((PersistentEntityRoot<Object>) root, vectorPropertyName);
@@ -721,6 +729,10 @@ public class QueryCriteriaMethodMatch extends AbstractCriteriaMethodMatch {
         }
         VectorPredicate vectorPredicate = resolveVectorPredicate(predicateMatches);
         if (vectorPredicate == null) {
+            TextPredicate textPredicate = resolveTextPredicate(predicateMatches);
+            if (textPredicate != null && unwrapReactiveReturnType(matchContext.getReturnType()).getName().equals(SearchResults.class.getName())) {
+                query.orderBy(cb.desc(textScoreExpression(matchContext, cb, root, textPredicate)));
+            }
             return;
         }
         String vectorPropertyName = vectorPredicate.propertyName();
@@ -737,6 +749,50 @@ public class QueryCriteriaMethodMatch extends AbstractCriteriaMethodMatch {
         ParameterExpression<Vector> vectorParameter = scb.parameter(vectorElement, propertyPath);
         Expression<Double> scoreExpr = cb.function(VectorScoringDialectSupport.SCORE_FUNCTION, Double.class, vectorPropertyExpression, vectorParameter);
         query.orderBy(cb.asc(scoreExpr));
+    }
+
+    /**
+     * Builds the relevance score expression of the text predicate, binding the same query parameter the
+     * predicate uses so the SQL renders one {@code to_tsquery(?)} per occurrence.
+     */
+    private Expression<Double> textScoreExpression(MethodMatchContext matchContext,
+                                                   PersistentEntityCriteriaBuilder cb,
+                                                   PersistentEntityRoot<Object> root,
+                                                   TextPredicate textPredicate) {
+        List<ParameterElement> parameters = matchContext.getParametersNotInRole();
+        if (textPredicate.parameterIndex() >= parameters.size()) {
+            throw new ProcessingException(matchContext.getMethodElement(), "Text search predicate requires a String parameter");
+        }
+        ParameterElement queryElement = parameters.get(textPredicate.parameterIndex());
+        List<Expression<?>> fields;
+        if (textPredicate.propertyName().isEmpty()) {
+            fields = Restrictions.Search.searchFields(root);
+        } else {
+            io.micronaut.data.model.jpa.criteria.PersistentPropertyPath<Object> property = findProperty(root, textPredicate.propertyName());
+            if (property == null) {
+                throw new MatchFailedException("Unable to resolve search property path for SearchResults query: " + textPredicate.propertyName());
+            }
+            fields = List.of(property);
+        }
+        SourcePersistentEntityCriteriaBuilder scb = (SourcePersistentEntityCriteriaBuilder) cb;
+        ParameterExpression<String> queryParameter = scb.parameter(queryElement, null);
+        return cb.searchScore(fields, queryParameter, textPredicate.mode());
+    }
+
+    @SuppressWarnings("StringSplitter")
+    private @Nullable TextPredicate resolveTextPredicate(List<MethodNameParser.Match> predicateMatches) {
+        String predicate = predicateMatches.getFirst().part();
+        int parameterIndex = 0;
+        for (String part : LOGICAL_OPERATOR_PATTERN.split(predicate)) {
+            TextSearchSupport.SearchKeyword keyword = TextSearchSupport.parseKeyword(part);
+            if (keyword != null) {
+                // the property name is empty, never null, for a keyword without a property
+                String propertyName = Objects.requireNonNull(NameUtils.decapitalize(keyword.propertyName()));
+                return new TextPredicate(propertyName, keyword.mode(), parameterIndex);
+            }
+            parameterIndex += requiredParameters(part);
+        }
+        return null;
     }
 
     private ParameterElement resolveVectorPredicateParameter(MethodMatchContext matchContext, VectorPredicate vectorPredicate) {
@@ -909,6 +965,9 @@ public class QueryCriteriaMethodMatch extends AbstractCriteriaMethodMatch {
     }
 
     private record VectorPredicate(String propertyName, int parameterIndex) {
+    }
+
+    private record TextPredicate(String propertyName, MatchMode mode, int parameterIndex) {
     }
 
 }

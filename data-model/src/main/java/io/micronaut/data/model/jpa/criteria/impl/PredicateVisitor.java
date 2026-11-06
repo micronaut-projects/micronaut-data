@@ -21,6 +21,7 @@ import io.micronaut.data.model.jpa.criteria.impl.predicate.DisjunctionPredicate;
 import io.micronaut.data.model.jpa.criteria.impl.predicate.ExistsSubqueryPredicate;
 import io.micronaut.data.model.jpa.criteria.impl.predicate.LikePredicate;
 import io.micronaut.data.model.jpa.criteria.impl.predicate.NearPredicate;
+import io.micronaut.data.model.jpa.criteria.impl.predicate.TextMatchPredicate;
 import io.micronaut.data.model.jpa.criteria.impl.predicate.NegatedPredicate;
 import io.micronaut.data.model.jpa.criteria.impl.predicate.BetweenPredicate;
 import io.micronaut.data.model.jpa.criteria.impl.predicate.BinaryPredicate;
@@ -84,6 +85,14 @@ public interface PredicateVisitor {
      * @param nearPredicate The near predicate
      */
     void visit(NearPredicate nearPredicate);
+
+    /**
+     * Visit {@link TextMatchPredicate}.
+     *
+     * @param textMatchPredicate The text match predicate
+     * @since 5.4.0
+     */
+    void visit(TextMatchPredicate textMatchPredicate);
 
     /**
      * Visit {@link BinaryPredicate}.

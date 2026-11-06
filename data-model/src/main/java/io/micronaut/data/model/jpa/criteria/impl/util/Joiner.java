@@ -46,6 +46,7 @@ import io.micronaut.data.model.jpa.criteria.impl.predicate.ExistsSubqueryPredica
 import io.micronaut.data.model.jpa.criteria.impl.predicate.InPredicate;
 import io.micronaut.data.model.jpa.criteria.impl.predicate.LikePredicate;
 import io.micronaut.data.model.jpa.criteria.impl.predicate.NearPredicate;
+import io.micronaut.data.model.jpa.criteria.impl.predicate.TextMatchPredicate;
 import io.micronaut.data.model.jpa.criteria.impl.predicate.NegatedPredicate;
 import io.micronaut.data.model.jpa.criteria.impl.predicate.UnaryPredicate;
 import io.micronaut.data.model.jpa.criteria.impl.selection.AliasedSelection;
@@ -280,6 +281,12 @@ public class Joiner implements SelectionVisitor, PredicateVisitor {
         visitPredicateExpression(nearPredicate.getValue());
         visitPredicateExpression(nearPredicate.getGeometry());
         visitPredicateExpression(nearPredicate.getDistance());
+    }
+
+    @Override
+    public void visit(TextMatchPredicate textMatchPredicate) {
+        textMatchPredicate.getFields().forEach(this::visitPredicateExpression);
+        visitPredicateExpression(textMatchPredicate.getQuery());
     }
 
     @Override
