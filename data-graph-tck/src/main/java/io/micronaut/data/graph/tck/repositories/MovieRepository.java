@@ -37,4 +37,8 @@ public interface MovieRepository extends CrudRepository<Movie, String> {
     long deleteByReleasedLessThan(Integer released);
 
     Page<Movie> findByReleasedGreaterThan(int released, Pageable pageable);
+
+    boolean existsRelationshipByDirectorsBetweenTitleAndName(String title, String name);
+
+    long countRelationshipsByDirectors();
 }

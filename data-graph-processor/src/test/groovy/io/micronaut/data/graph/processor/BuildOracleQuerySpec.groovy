@@ -21,6 +21,9 @@ class BuildOracleQuerySpec extends AbstractGraphDataSpec {
     @Shared
     BeanDefinition<?> paths
 
+    @Shared
+    BeanDefinition<?> moviePaths
+
     void setupSpec() {
         pgql = buildRepository('test.PgqlRepository', """
 $MOVIES
@@ -111,6 +114,22 @@ interface PathRepository extends GenericRepository<Person, String> {
     @PathLimit(5)
     long countPathsByMentor(String from, String to, @PathLimit int depth);
     List<GraphRelationship<Person, Person>> findRelationshipsByMentor(String from, String to);
+    @PathLimit(5)
+    boolean existsPathByMentor(String from, String to, @PathDirection Direction direction);
+}
+""")
+        moviePaths = buildRepository('test.MoviePathRepository', """
+import io.micronaut.data.graph.model.*;
+
+$MOVIES
+
+@TestOracleRepository
+@PropertyGraph(value = "movies", language = PropertyGraph.QueryLanguage.PGQL)
+interface MoviePathRepository extends GenericRepository<Movie, String> {
+    long countRelationshipsByDirectors();
+    boolean existsRelationshipByDirectorsBetweenTitleAndName(String title, String name);
+    List<GraphRelationship<Person, Movie>> findRelationshipsByDirectors(String title, String director);
+    long countRelationshipsByDirectors(@PathDirection Direction direction);
 }
 """)
         pgqlPeople = buildRepository('test.PgqlPersonRepository', """
@@ -386,7 +405,7 @@ interface NoIdRepository extends GenericRepository<Anonymous, String> {
 
     void "test SQL/PGQ path finders"() {
         expect: "the shortest kinds exclude the empty path from a node to itself, as the Cypher builder does"
-        getQuery(findMethod(paths, 'existsPathByMentor')) ==
+        getQuery(findMethod(paths, 'existsPathByMentor', 2)) ==
             'SELECT 1 AS "result" FROM GRAPH_TABLE (people MATCH (s IS Person) -[IS FOLLOWS]->{1,5} (t IS Person) WHERE s.id = ? AND t.id = ? AND s.id <> t.id COLUMNS (s.id AS "c0")) FETCH NEXT 1 ROWS ONLY'
 
         and: "all paths from a node to itself are its cycles"
@@ -437,6 +456,28 @@ interface FollowerRepository extends GenericRepository<Follower, String> {
             "FROM MATCH (s:Follower) -[r:KNOWS]- (t:Follower) ON people WHERE s.id = ? AND t.id = ?")
     }
 
+    void "test path finders with a direction argument"() {
+        expect:
+        getQuery(findMethod(paths, 'existsPathByMentor', 3)) ==
+            'SELECT 1 AS "result" FROM GRAPH_TABLE (people MATCH (s IS Person) $__pathLeft[IS FOLLOWS]$__pathRight{1,5} (t IS Person) WHERE s.id = ? AND t.id = ? AND s.id <> t.id COLUMNS (s.id AS "c0")) FETCH NEXT 1 ROWS ONLY'
+        getQuery(findMethod(moviePaths, 'countRelationshipsByDirectors', 1)) ==
+            'SELECT COUNT(*) AS "result" FROM MATCH (s:Movie) $__pathLeft[r:DIRECTED]$__pathRight (t:Person) ON movies'
+    }
+
+    void "test PGQL relationship finders between movies and people"() {
+        given:
+        def movie = 's.title AS "s__ID_", s.title AS "s__title", \'Movie\' AS "s__LABEL_", s.tagline AS "s__tagline", s.released AS "s__released"'
+        def person = 't.id AS "t__ID_", t.id AS "t__id", \'Person\' AS "t__LABEL_", t.name AS "t__name", t.born AS "t__born"'
+
+        expect:
+        getQuery(findMethod(moviePaths, 'countRelationshipsByDirectors', 0)) ==
+            'SELECT COUNT(*) AS "result" FROM MATCH (s:Movie) <-[r:DIRECTED]- (t:Person) ON movies'
+        getQuery(findMethod(moviePaths, 'existsRelationshipByDirectorsBetweenTitleAndName')) ==
+            'SELECT 1 AS "result" FROM MATCH (s:Movie) <-[r:DIRECTED]- (t:Person) ON movies WHERE s.title = ? AND t.name = ? LIMIT 1'
+        getQuery(findMethod(moviePaths, 'findRelationshipsByDirectors')) ==
+            "SELECT ${person.replace('t.', 's.').replace('"t__', '"s__')}, ${movie.replace('s.', 't.').replace('"s__', '"t__')}, 'DIRECTED' AS \"r__TYPE_\" FROM MATCH (t:Movie) <-[r:DIRECTED]- (s:Person) ON movies WHERE t.title = ? AND s.id = ?"
+    }
+
     @Unroll
     void "test unsupported #description"() {
         when:
@@ -466,6 +507,8 @@ interface UnsupportedRepository extends GenericRepository<Movie, String> {
         'fetch joins'          | ''                                                    | '@Join("directors") List<Movie> findByReleased(Integer released);' | 'not supported for Oracle property graphs'
         'paths in SQL/PGQ'     | ', language = PropertyGraph.QueryLanguage.SQL_PGQ'    | '@PathLimit(3) Optional<GraphPath<Movie>> findShortestPath(String from, String to);' | 'Returning paths is not supported by the SQL/PGQ dialect'
         'unbounded paths'      | ''                                                    | 'Optional<GraphPath<Movie>> findShortestPath(String from, String to);' | 'need a maximum depth'
+        'relationship entities' | ''                                                   | 'List<Role> findRelationshipsByRoles(String title, String person);'  | 'return GraphRelationship, not the relationship entity'
+        'paths to another entity' | ', language = PropertyGraph.QueryLanguage.PGQL'    | '@PathLimit(3) boolean existsPathToPerson(String title, String person);' | 'the end node cannot be a'
         'array contains'       | ''                                                    | 'List<Movie> findByRolesRolesArrayContains(String role);'          | 'ArrayContains is not supported'
     }
 

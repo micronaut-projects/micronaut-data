@@ -87,6 +87,40 @@ class MovieRepositorySpec:
         assert followed.name == "Lana Wachowski"
 
     @Test
+    def testPathsToPeople(self):
+        keanu = self.personRepository.findByName("Keanu Reeves")
+        lana = self.personRepository.findByName("Lana Wachowski")
+
+        # tag::crossType[]
+        directed = self.movieRepository.findRelationshipsByDirectors("The Matrix", lana.id)[0]
+        director = getattr(directed, "from")().name  # <1>
+
+        path = self.movieRepository.findShortestPathToPersonBetweenTitleAndName("Speed", "Carrie-Anne Moss")
+        end = path.end()  # <2>
+        # end::crossType[]
+
+        assert director == "Lana Wachowski"
+        assert directed.to().title == "The Matrix"
+        assert path.length() == 3
+        assert isinstance(end, Person)
+        assert end.name == "Carrie-Anne Moss"
+        assert isinstance(path.start(), Movie)
+        assert self.movieRepository.findAllPathsToPerson("The Matrix", keanu.id)[0].length() == 1
+
+    @Test
+    def testRelationshipEntities(self):
+        keanu = self.personRepository.findByName("Keanu Reeves")
+
+        # tag::relationshipEntities[]
+        role = self.movieRepository.findRelationshipsByRoles("The Matrix", keanu.id)[0]
+        characters = role.roles  # <1>
+        actor = role.person  # <2>
+        # end::relationshipEntities[]
+
+        assert list(characters) == ["Neo"]
+        assert actor.name == "Keanu Reeves"
+
+    @Test
     def testSpecifications(self):
         # tag::useSpecifications[]
         recent = self.movieSpecificationRepository.findAll(released_after(1995))  # <1>
