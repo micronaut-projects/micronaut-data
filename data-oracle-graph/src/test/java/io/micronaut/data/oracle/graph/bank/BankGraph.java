@@ -32,6 +32,10 @@ public interface BankGraph extends GenericRepository<Account, Long> {
 
     List<Account> findByIdGreaterThan(Long id, Sort sort);
 
+    List<Account> findByIdGreaterThanOrderByName(Long id, Sort sort);
+
+    List<String> findNameByIdGreaterThan(Long id, Sort sort);
+
     Page<Account> findByIdGreaterThan(Long id, Pageable pageable);
 
     List<Account> findByTransfersAmountGreaterThan(BigDecimal amount);
@@ -57,6 +61,9 @@ public interface BankGraph extends GenericRepository<Account, Long> {
     List<Account> findByOpenedGreaterThan(LocalDateTime opened);
 
     List<GraphRelationship<Account, Account>> findRelationshipsByTransfers(Long from, Long to);
+
+    @Query(value = "UPDATE accounts SET name = $name WHERE id = $id", readOnly = false)
+    int renameAccount(Long id, String name);
 
     @Query("SELECT * FROM GRAPH_TABLE (bank_graph MATCH (a IS Account) -[t IS TRANSFERS]-> (b IS Account) WHERE t.amount > $amount COLUMNS (a.name AS \"source\", b.name AS \"target\", t.amount AS \"amount\")) ORDER BY \"amount\"")
     List<TransferView> largeTransfers(BigDecimal amount);
