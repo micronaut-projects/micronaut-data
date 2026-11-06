@@ -2,8 +2,10 @@ package io.micronaut.data.oracle.graph
 
 import io.micronaut.context.annotation.Property
 import io.micronaut.data.exceptions.DataAccessException
+import io.micronaut.data.graph.model.criteria.GraphCriteria
 import io.micronaut.data.oracle.graph.schemaless.Gadget
 import io.micronaut.data.oracle.graph.schemaless.GadgetGraph
+import io.micronaut.data.repository.jpa.criteria.PredicateSpecification
 import io.micronaut.test.extensions.spock.annotation.MicronautTest
 import jakarta.inject.Inject
 import spock.lang.Specification
@@ -53,6 +55,25 @@ class OracleSchemalessSpec extends Specification {
         updated.dynamicAttributes() == [cameras: [12L, 48L], waterproof: true, storage: 256L]
     }
 
+    void "criteria read schemaless properties as values of their type"() {
+        given:
+        def phone = new Gadget("Phone", 500)
+        phone.set("storage", 100)
+        phone.set("waterproof", true)
+        phone.set("maker.name", "Acme")
+        def watch = new Gadget("Watch", 200)
+        watch.set("storage", 20)
+        watch.set("waterproof", false)
+        gadgetGraph.saveAll([phone, watch])
+
+        expect: "numbers compare as numbers, where as strings \"100\" sorts before \"30\""
+        gadgetGraph.findAll(where { root, cb -> cb.greaterThan(GraphCriteria.dynamic(root, "storage", Integer), 30) })*.name == ["Phone"]
+        gadgetGraph.findAll(where { root, cb -> cb.isTrue(GraphCriteria.dynamic(root, "waterproof", Boolean)) })*.name == ["Phone"]
+
+        and: "a name holding a dot is one key rather than a nested path"
+        gadgetGraph.findAll(where { root, cb -> cb.equal(GraphCriteria.dynamic(root, "maker.name", String), "Acme") })*.name == ["Phone"]
+    }
+
     void "a schemaless property named like a column is rejected when saved"() {
         given:
         def phone = new Gadget("Phone", 500)
@@ -65,5 +86,9 @@ class OracleSchemalessSpec extends Specification {
         def e = thrown(DataAccessException)
         e.message == "Dynamic attribute [price] of [Gadget] has the name of a declared property"
         gadgetGraph.count() == 0
+    }
+
+    private static PredicateSpecification<Gadget> where(Closure<?> predicate) {
+        return predicate as PredicateSpecification<Gadget>
     }
 }
