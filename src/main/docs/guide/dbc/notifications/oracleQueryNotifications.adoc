@@ -86,8 +86,8 @@ When identity matters, compare the reloaded entity's primary key with an indepen
 CQN metadata does not include the original primary key. If that comparison is unavailable, invalidate or
 reconcile the relevant application state instead of treating the event as proof that a particular entity changed.
 
-See Oracle's documentation on https://docs.oracle.com/en/database/oracle/oracle-database/21/sqlrf/ROWID-Pseudocolumn.html[ROWID reuse]
-and https://docs.oracle.com/en/database/oracle/oracle-database/21/cncpt/logical-storage-structures.html[row movement].
+See Oracle's documentation on https://docs.oracle.com/en/database/oracle/oracle-database/26/sqlrf/ROWID-Pseudocolumn.html[ROWID reuse]
+and https://docs.oracle.com/en/database/oracle/oracle-database/26/cncpt/logical-storage-structures.html[row movement].
 ====
 
 Entities with ann:data.annotation.Where[] clauses are not supported by Oracle notification listeners and cause a
@@ -131,7 +131,7 @@ Oracle Database, not an entity projection: Micronaut Data still reloads the comp
 <2> Restrict the registered result with an Oracle SQL predicate. Here, only libraries with a capacity of at least 10,000 match.
 <3> Enable QRCN with `DCN_QUERY_CHANGE_NOTIFICATION=true`. The `select` and `where` settings require this property.
 
-`LibraryNameCache` stores names keyed by library ID, matching the registered `id, name` selection.
+The example stores names keyed by library ID, matching the registered `id, name` selection.
 For `INSERT` and `UPDATE`, it uses the reloaded entity's ID to update the name, or removes the entry if the library no longer matches
 the capacity filter. Renaming replaces the previous value, and different libraries can share the same name.
 `DELETE` events have no reloaded entity from which to obtain a library ID, so the cache refreshes the directory.
@@ -227,10 +227,11 @@ Oracle JDBC options intended for AQ or JMS registrations are outside the CQN pro
 
 == Registration Lifetime and Recovery
 
-Micronaut Data does not periodically replace registrations. With the default `NTF_TIMEOUT=0`, each registration remains
-active until shutdown, Oracle Database deregisters it, or the JDBC driver reports that its notification connection
-has failed. A positive `NTF_TIMEOUT` expires the registration after the configured number of seconds, even if
-the application is still running. A one-shot registration configured with `NTF_QOS_PURGE_ON_NTFN` closes after
+By default, `NTF_TIMEOUT=0`, so the registration has no configured expiration time. It normally remains active until
+application shutdown or until Oracle Database deregisters it.
+
+Set `NTF_TIMEOUT` to a positive number to have Oracle Database expire the registration after that many seconds,
+even if the application is still running. A one-shot registration configured with `NTF_QOS_PURGE_ON_NTFN` ends after
 its first data notification.
 
 If Oracle Database deregisters a registration or a registered QRCN query, the affected listener stops receiving notifications.
