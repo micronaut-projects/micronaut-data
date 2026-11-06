@@ -1,5 +1,6 @@
 package example;
 
+import io.micronaut.data.model.search.SearchQuery;
 import io.micronaut.data.model.vector.search.SearchResults;
 import io.micronaut.test.extensions.junit5.annotation.MicronautTest;
 import jakarta.inject.Inject;
@@ -48,5 +49,12 @@ class BookRepositorySpec {
         assertEquals(0, bookRepository.findByDescriptionSearchPhrase("beans coffee").size());
         assertEquals(2, bookRepository.findByTitleSearchPrefix("coff").size());
         assertEquals(1, bookRepository.findBySearchAndAuthor("coffee", "Bean").size());
+    }
+
+    @Test
+    void programmaticSearchQuery() {
+        assertEquals(List.of("The Coffee Roaster"), bookService.titlesContainingEveryWord("coffee roaster"));
+        assertEquals(List.of(), bookService.titlesContainingEveryWord("coffee beans"));
+        assertEquals(2, bookRepository.search(SearchQuery.of("coffee")).totalHits());
     }
 }
