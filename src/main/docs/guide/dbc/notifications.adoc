@@ -37,8 +37,12 @@ The following excerpt shows the common annotation and method signature; the meth
 
 snippet::example.BookCatalog[project-base="doc-examples/jdbc-postgres-notifications", source="main", tags="listener-signature", languages="java,groovy,kotlin,python"]
 
-A complete listener also requires ann:data.jdbc.annotation.OracleChangeNotification[] or
-ann:data.jdbc.annotation.PostgresChangeNotification[]. The database-specific sections show complete examples.
+<1> Annotate the method with ann:data.annotation.ChangeListener[]. Its `ChangeEvent<Library>` parameter identifies
+`Library` as the persistent entity and provides the operation, optional current entity, and optional provider metadata.
+
+A complete listener also requires a provider-specific notification annotation, such as
+ann:data.jdbc.annotation.OracleChangeNotification[] or ann:data.jdbc.annotation.PostgresChangeNotification[]. Missing provider configuration is rejected at compilation time.
+The database-specific sections show complete examples.
 
 The listener uses the `default` datasource unless another datasource is specified through the `dataSource`
 attribute, for example `@ChangeListener(dataSource = "library")`.
@@ -146,8 +150,8 @@ transaction that caused it. Database connection and registration recovery are co
 database-specific sections.
 
 With `@Async`, entity loading still runs on the listener worker before listener execution is scheduled on the async
-executor. Loading failures can be retried. Failures during async listener execution cannot reach retry or recovery advice
-because the `void` call has already returned. The subscription's queue ordering and shutdown tracking cover loading and
+executor. Loading failures can be retried. Failures during async listener execution cannot reach retry or recovery handling
+because the listener invocation has already returned. The subscription's queue ordering and shutdown tracking cover loading and
 submission, not completion of the async listener work. Use the dedicated listener worker without `@Async` when listener
 retries, ordered completion, and subscription shutdown tracking are required.
 

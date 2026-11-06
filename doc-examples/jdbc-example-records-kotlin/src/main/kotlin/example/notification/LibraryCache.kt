@@ -37,12 +37,11 @@ open class LibraryCache(private val repository: LibraryRepository) {
     }
 
     // tag::listener[]
-    // tag::events[]
-    @Synchronized
     // tag::listener-signature[]
-    @ChangeListener
+    @ChangeListener // <1>
     // end::listener-signature[]
-    @OracleChangeNotification
+    @OracleChangeNotification // <2>
+    // tag::events[]
     // tag::listener-signature[]
     open fun onLibraryChanged(event: ChangeEvent<Library>) {
         // end::listener-signature[]
@@ -50,16 +49,16 @@ open class LibraryCache(private val repository: LibraryRepository) {
         if (!cacheEnabled) {
             return
         }
-        event.metadata(OracleChangeEventMetadata::class.java).ifPresent { metadata ->
+        event.metadata(OracleChangeEventMetadata::class.java).ifPresent { metadata -> // <1>
             log.debug("Changed library table: {}.{}, ROWID: {}",
                 metadata.schema() ?: "<unknown>", metadata.table(), metadata.rowId())
         }
         when (event.operation()) {
             ChangeOperation.INSERT, ChangeOperation.UPDATE ->
-                event.entity().ifPresent { library -> libraries[library.id!!] = library }
-            ChangeOperation.DELETE, ChangeOperation.INVALIDATE -> refreshCache()
+                event.entity().ifPresent { library -> libraries[library.id!!] = library } // <2>
+            ChangeOperation.DELETE, ChangeOperation.INVALIDATE -> refreshCache() // <3>
             ChangeOperation.TERMINATED -> {
-                cacheEnabled = false
+                cacheEnabled = false // <4>
                 libraries.clear()
             }
         }
@@ -70,7 +69,6 @@ open class LibraryCache(private val repository: LibraryRepository) {
     // end::events[]
     // end::listener[]
 
-    @Synchronized
     private fun refreshCache() {
         val currentLibraries = repository.findAll()
         val refreshed = ConcurrentHashMap<Long, Library>()

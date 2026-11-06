@@ -41,14 +41,14 @@ class LibraryNameCache {
     // tag::query[]
     @ChangeListener
     @OracleChangeNotification(
-        select = "id, name",
-        where = "capacity >= 10000",
+        select = "id, name", // <1>
+        where = "capacity >= 10000", // <2>
         properties = @OracleChangeNotification.Property(
             name = "DCN_QUERY_CHANGE_NOTIFICATION",
-            value = "true"
+            value = "true" // <3>
         )
     )
-    synchronized void onLibraryChanged(ChangeEvent<Library> event) {
+    void onLibraryChanged(ChangeEvent<Library> event) {
         if (!cacheEnabled) {
             return;
         }
@@ -69,7 +69,7 @@ class LibraryNameCache {
     }
     // end::query[]
 
-    private synchronized void refreshCache() {
+    private void refreshCache() {
         Map<Long, String> refreshed = new ConcurrentHashMap<>();
         repository.findByCapacityGreaterThanEquals(10000).forEach(library -> refreshed.put(library.id(), library.name()));
         libraryNames = refreshed;

@@ -36,15 +36,14 @@ open class LibraryNameCache(private val repository: LibraryRepository) {
     }
 
     // tag::query[]
-    @Synchronized
     @ChangeListener
     @OracleChangeNotification(
-        select = "id, name",
-        where = "capacity >= 10000",
+        select = "id, name", // <1>
+        where = "capacity >= 10000", // <2>
         properties = [
             OracleChangeNotification.Property(
                 name = "DCN_QUERY_CHANGE_NOTIFICATION",
-                value = "true"
+                value = "true" // <3>
             )
         ]
     )
@@ -69,7 +68,6 @@ open class LibraryNameCache(private val repository: LibraryRepository) {
     }
     // end::query[]
 
-    @Synchronized
     private fun refreshCache() {
         val refreshed = ConcurrentHashMap<Long, String>()
         repository.findByCapacityGreaterThanEquals(10000).forEach { library -> refreshed[library.id!!] = library.name }

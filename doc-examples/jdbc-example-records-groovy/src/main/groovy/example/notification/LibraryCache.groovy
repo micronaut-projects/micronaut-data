@@ -41,33 +41,33 @@ class LibraryCache {
     }
 
     // tag::listener[]
+    // tag::listener-signature[]
+    @ChangeListener // <1>
+    // end::listener-signature[]
+    @OracleChangeNotification // <2>
     // tag::events[]
     // tag::listener-signature[]
-    @ChangeListener
-    // end::listener-signature[]
-    @OracleChangeNotification
-    // tag::listener-signature[]
-    synchronized void onLibraryChanged(ChangeEvent<Library> event) {
+    void onLibraryChanged(ChangeEvent<Library> event) {
         // end::listener-signature[]
         // end::listener[]
         if (!cacheEnabled) {
             return
         }
-        event.metadata(OracleChangeEventMetadata).ifPresent { metadata ->
+        event.metadata(OracleChangeEventMetadata).ifPresent { metadata -> // <1>
             LOG.debug("Changed library table: {}.{}, ROWID: {}",
                 metadata.schema() ?: "<unknown>", metadata.table(), metadata.rowId())
         }
         switch (event.operation()) {
             case ChangeOperation.INSERT:
             case ChangeOperation.UPDATE:
-                event.entity().ifPresent { library -> libraries.put(library.id(), library) }
+                event.entity().ifPresent { library -> libraries.put(library.id(), library) } // <2>
                 break
             case ChangeOperation.DELETE:
-            case ChangeOperation.INVALIDATE:
+            case ChangeOperation.INVALIDATE: // <3>
                 refreshCache()
                 break
             case ChangeOperation.TERMINATED:
-                cacheEnabled = false
+                cacheEnabled = false // <4>
                 libraries.clear()
                 break
         }
@@ -78,7 +78,7 @@ class LibraryCache {
     // end::listener[]
     // end::events[]
 
-    private synchronized void refreshCache() {
+    private void refreshCache() {
         def currentLibraries = repository.findAll()
         Map<Long, Library> refreshed = new ConcurrentHashMap<>()
         currentLibraries.forEach { library -> refreshed.put(library.id(), library) }
