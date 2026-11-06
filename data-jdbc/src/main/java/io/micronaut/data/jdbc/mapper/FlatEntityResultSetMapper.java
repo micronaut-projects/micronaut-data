@@ -24,11 +24,15 @@ import io.micronaut.core.type.Argument;
 import io.micronaut.data.exceptions.DataAccessException;
 import io.micronaut.data.model.runtime.RuntimePersistentEntity;
 import io.micronaut.data.model.runtime.RuntimePersistentProperty;
+import io.micronaut.data.runtime.convert.DatabaseConversionContextFactory;
+import io.micronaut.data.runtime.mapper.ResultReader;
+import io.micronaut.data.runtime.mapper.sql.SqlJsonColumnReader;
 import io.micronaut.data.runtime.mapper.sql.SqlTypeMapper;
 import org.jspecify.annotations.Nullable;
 
 import java.sql.ResultSet;
 import java.sql.SQLException;
+import java.util.Objects;
 import java.util.UUID;
 import java.util.function.BiFunction;
 import java.util.function.Supplier;
@@ -60,6 +64,9 @@ import static io.micronaut.data.jdbc.mapper.FlatEntityMappingPlan.UUID_VALUE;
  * registered for it. What is saved is the per-column dispatch, boxing and mapping context of the general mapper,
  * and the conversion of every property whose type is what its getter returns.</p>
  *
+ * <p>When the plan holds a {@link GeneratedRowMapper}, the row is read by that generated class instead, with the
+ * ordinals resolved here the same way; the values are the same.</p>
+ *
  * <p>The column ordinals are resolved once from the first row, so an instance belongs to one query execution and
  * is not thread safe, like the general mapper. The plan that decides what to read is shared between executions,
  * see {@link FlatEntityMappingPlan}.</p>
@@ -71,6 +78,10 @@ import static io.micronaut.data.jdbc.mapper.FlatEntityMappingPlan.UUID_VALUE;
 public final class FlatEntityResultSetMapper<R> implements SqlTypeMapper<ResultSet, R> {
 
     private final FlatEntityMappingPlan<R> plan;
+    @Nullable
+    private final GeneratedRowMapper<R> generatedMapper;
+    @Nullable
+    private final GeneratedRowMapperContext generatedContext;
     private final BeanIntrospection<R> introspection;
     private final BeanProperty<R, Object>[] properties;
     private final RuntimePersistentProperty<R>[] persistentProperties;
@@ -103,7 +114,46 @@ public final class FlatEntityResultSetMapper<R> implements SqlTypeMapper<ResultS
                                      ConversionService conversionService,
                                      @Nullable BiFunction<RuntimePersistentEntity<Object>, Object, Object> loadListener,
                                      Supplier<SqlTypeMapper<ResultSet, R>> generalMapper) {
+        this(plan, conversionService, loadListener, generalMapper, null);
+    }
+
+    /**
+     * @param plan                     The plan
+     * @param conversionService        The conversion service, for the values a getter doesn't return in the property type
+     * @param loadListener             The listener invoked with every mapped entity, for the post load events
+     * @param generalMapper            Supplies the general mapper for the operations this mapper does not perform
+     * @param conversionContextFactory The factory of the conversion contexts the attribute converters of a generated
+     *                                 mapper's columns receive, or {@code null} for plain ones
+     */
+    public FlatEntityResultSetMapper(FlatEntityMappingPlan<R> plan,
+                                     ConversionService conversionService,
+                                     @Nullable BiFunction<RuntimePersistentEntity<Object>, Object, Object> loadListener,
+                                     Supplier<SqlTypeMapper<ResultSet, R>> generalMapper,
+                                     @Nullable DatabaseConversionContextFactory conversionContextFactory) {
+        this(plan, conversionService, loadListener, generalMapper, conversionContextFactory, null, null);
+    }
+
+    /**
+     * @param plan                     The plan
+     * @param conversionService        The conversion service, for the values a getter doesn't return in the property type
+     * @param loadListener             The listener invoked with every mapped entity, for the post load events
+     * @param generalMapper            Supplies the general mapper for the operations this mapper does not perform
+     * @param conversionContextFactory The factory of the conversion contexts the attribute converters of a generated
+     *                                 mapper's columns receive, or {@code null} for plain ones
+     * @param jsonColumnReader         The JSON column reader of the query for the JSON columns of a generated mapper, or
+     *                                 {@code null} to read them as strings
+     * @param resultReader             The result reader the JSON column reader reads with
+     */
+    public FlatEntityResultSetMapper(FlatEntityMappingPlan<R> plan,
+                                     ConversionService conversionService,
+                                     @Nullable BiFunction<RuntimePersistentEntity<Object>, Object, Object> loadListener,
+                                     Supplier<SqlTypeMapper<ResultSet, R>> generalMapper,
+                                     @Nullable DatabaseConversionContextFactory conversionContextFactory,
+                                     @Nullable SqlJsonColumnReader<ResultSet> jsonColumnReader,
+                                     @Nullable ResultReader<ResultSet, String> resultReader) {
         this.plan = plan;
+        this.generatedMapper = plan.getGeneratedMapper();
+        this.generatedContext = generatedMapper == null ? null : plan.createContext(conversionService, conversionContextFactory, jsonColumnReader, resultReader);
         this.introspection = plan.getIntrospection();
         this.properties = plan.getProperties();
         this.persistentProperties = plan.getPersistentProperties();
@@ -157,6 +207,31 @@ public final class FlatEntityResultSetMapper<R> implements SqlTypeMapper<ResultS
         if (rs != resolvedResultSet) {
             resolveOrdinals(rs);
         }
+        R entity = generatedMapper != null ? readGenerated(rs, generatedMapper) : readFlat(rs);
+        if (entity == null) {
+            return null;
+        }
+        if (loadListener != null) {
+            entity = (R) loadListener.apply((RuntimePersistentEntity<Object>) plan.getEntity(), entity);
+        }
+        return entity;
+    }
+
+    @SuppressWarnings("unchecked")
+    private R readGenerated(ResultSet rs, GeneratedRowMapper<R> mapper) {
+        try {
+            return (R) mapper.map(rs, ordinals, Objects.requireNonNull(generatedContext));
+        } catch (SQLException e) {
+            throw new DataAccessException("Error reading entity [" + plan.getEntity().getName() + "] from result set: " + e.getMessage(), e);
+        }
+    }
+
+    /**
+     * Reads the entity column by column: instantiated, then every property that is not a constructor argument set
+     * when its column is not NULL.
+     */
+    @Nullable
+    private R readFlat(ResultSet rs) {
         R entity;
         try {
             entity = constructorArgumentCount == 0 ? introspection.instantiate() : instantiate(rs);
@@ -174,9 +249,6 @@ public final class FlatEntityResultSetMapper<R> implements SqlTypeMapper<ResultS
             if (value != null) {
                 properties[i].set(entity, value);
             }
-        }
-        if (loadListener != null) {
-            entity = (R) loadListener.apply((RuntimePersistentEntity<Object>) plan.getEntity(), entity);
         }
         return entity;
     }
