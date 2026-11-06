@@ -2,12 +2,14 @@ package io.micronaut.data.neo4j.features;
 
 import io.micronaut.data.annotation.Id;
 import io.micronaut.data.graph.annotation.DynamicAttributes;
+import io.micronaut.data.graph.annotation.DynamicRelationships;
 import io.micronaut.data.graph.annotation.Labels;
 import io.micronaut.data.graph.annotation.Node;
 import io.micronaut.data.graph.model.DynamicAttributeHolder;
 
 import java.util.HashMap;
 import java.util.LinkedHashSet;
+import java.util.List;
 import java.util.Map;
 import java.util.Set;
 
@@ -18,6 +20,8 @@ public class Pet implements DynamicAttributeHolder {
     private String species;
     @DynamicAttributes
     private Map<String, Object> attributes = new HashMap<>();
+    @DynamicRelationships
+    private Map<String, List<Object>> related = new HashMap<>();
     @Labels
     private Set<String> labels = new LinkedHashSet<>();
 
@@ -43,6 +47,14 @@ public class Pet implements DynamicAttributeHolder {
 
     public void setAttributes(Map<String, Object> attributes) {
         this.attributes = attributes;
+    }
+
+    public Map<String, List<Object>> getRelated() {
+        return related;
+    }
+
+    public void setRelated(Map<String, List<Object>> related) {
+        this.related = related;
     }
 
     public Set<String> getLabels() {

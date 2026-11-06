@@ -20,6 +20,8 @@ dependencies {
 
     implementation projects.micronautDataNeo4j
     implementation mnKotlin.micronaut.kotlin.runtime
+    implementation(mn.kotlinx.coroutines.core)
+    implementation(mn.kotlinx.coroutines.reactive)
     implementation(mnSql.jakarta.persistence.api)
 
     runtimeOnly mnLogging.logback.classic

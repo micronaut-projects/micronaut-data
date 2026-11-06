@@ -16,6 +16,7 @@
 package io.micronaut.data.neo4j.operations;
 
 import io.micronaut.data.graph.runtime.operations.GraphRepositoryOperations;
+import io.micronaut.data.operations.reactive.ReactiveCapableRepository;
 
 /**
  * Repository operations for Neo4j.
@@ -23,5 +24,11 @@ import io.micronaut.data.graph.runtime.operations.GraphRepositoryOperations;
  * @author graemerocher
  * @since 5.3.0
  */
-public interface Neo4jRepositoryOperations extends GraphRepositoryOperations {
+public interface Neo4jRepositoryOperations extends GraphRepositoryOperations, ReactiveCapableRepository {
+
+    /**
+     * @return The reactive operations, which run on the driver's reactive sessions
+     */
+    @Override
+    Neo4jReactorRepositoryOperations reactive();
 }

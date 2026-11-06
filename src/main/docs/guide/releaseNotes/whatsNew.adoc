@@ -1,5 +1,5 @@
 === Micronaut Data 5.3
-- <<graph, Graph database>> repositories for Neo4j, PostgreSQL with Apache AGE and Oracle property graphs, with queries compiled to Cypher, PGQL or SQL/PGQ, <<graphPaths, path finders>> such as `findShortestPath`, relationships with properties and <<graphSchemaless, schemaless data>>
+- <<graph, Graph database>> repositories for Neo4j, PostgreSQL with Apache AGE and Oracle property graphs, with queries compiled to Cypher, PGQL or SQL/PGQ, <<graphPaths, path finders>> such as `findShortestPath`, relationships with properties, <<graphSchemaless, schemaless data>> including dynamic relationships, and <<graphReactive, reactive repositories>> that run on the reactive Neo4j driver
 - A `null` entity argument to a repository method is <<breaks, rejected with `IllegalArgumentException`>>, like a `null` ID
 - The unused `DataAccessResourceFailureException` and `TransactionManagerConfiguration` are deprecated for removal
 
