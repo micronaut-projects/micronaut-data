@@ -22,5 +22,6 @@ interface BookRepository extends CrudRepository<Book, Long>, SearchRepository<Bo
     List<Book> findBySearchAndAuthor(String query, String author) // <6>
 
     SearchResults<Book> searchByTitleSearch(String query, Score minScore) // <7>
+    List<Book> findByTitleSearchFuzzy(String query) // <8>
 }
 // end::repository[]

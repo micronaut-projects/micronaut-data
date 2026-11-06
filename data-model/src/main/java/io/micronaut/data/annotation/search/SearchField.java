@@ -62,6 +62,11 @@ public @interface SearchField {
     String MEMBER_HIGHLIGHTABLE = "highlightable";
 
     /**
+     * The fuzzy member.
+     */
+    String MEMBER_FUZZY = "fuzzy";
+
+    /**
      * Optional name of the field in the search index. Defaults to the persisted property name.
      *
      * @return The field name
@@ -101,4 +106,14 @@ public @interface SearchField {
      * @return True if highlightable
      */
     boolean highlightable() default false;
+
+    /**
+     * Whether the field is indexed for fuzzy matching where that needs an index of its own: on
+     * PostgreSQL schema generation adds a {@code pg_trgm} GIN index over the column, which the
+     * {@code SearchFuzzy} keyword and {@code SearchQuery.fuzzy} use. Fuzzy queries run without the index too.
+     *
+     * @return True to index the field for fuzzy matching
+     * @since 5.4.0
+     */
+    boolean fuzzy() default false;
 }

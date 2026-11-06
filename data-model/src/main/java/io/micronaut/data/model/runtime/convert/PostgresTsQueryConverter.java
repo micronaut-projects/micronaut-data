@@ -18,10 +18,8 @@ package io.micronaut.data.model.runtime.convert;
 import io.micronaut.core.annotation.Internal;
 import io.micronaut.core.convert.ConversionContext;
 import io.micronaut.data.model.search.MatchMode;
-import io.micronaut.data.model.search.SearchCapability;
 import io.micronaut.data.model.search.SearchQueryParser;
 import io.micronaut.data.model.search.SearchTerm;
-import io.micronaut.data.model.search.UnsupportedSearchFeatureException;
 import jakarta.inject.Singleton;
 import org.jspecify.annotations.Nullable;
 
@@ -54,8 +52,39 @@ public abstract class PostgresTsQueryConverter implements TextSearchQueryConvert
             case ALL -> All.class.getName();
             case PHRASE -> Phrase.class.getName();
             case PREFIX -> Prefix.class.getName();
-            case FUZZY -> throw new UnsupportedSearchFeatureException(SearchCapability.FUZZY, "PostgreSQL text search");
+            case FUZZY -> FuzzyPositive.class.getName();
         };
+    }
+
+    /**
+     * @param negated Whether the converter renders the negated terms
+     * @return The class name of the converter rendering the terms of a fuzzy match as the
+     * space-separated list {@code unnest(string_to_array(?, ' '))} splits
+     */
+    public static String fuzzyConverterFor(boolean negated) {
+        return negated ? FuzzyNegated.class.getName() : FuzzyPositive.class.getName();
+    }
+
+    /**
+     * Renders the terms of a fuzzy match as a space-separated list for {@code pg_trgm} word similarity;
+     * phrases contribute their words and {@code OR} groups are flattened, as every term matches on its own.
+     *
+     * @param query The search string
+     * @param negated Whether to render the negated terms instead of the positive ones
+     * @return The terms, empty when there are none
+     */
+    public static String renderFuzzy(@Nullable String query, boolean negated) {
+        StringJoiner terms = new StringJoiner(" ");
+        for (SearchTerm term : SearchQueryParser.terms(query)) {
+            if (term.negated() == negated) {
+                for (String word : term.text().trim().split("\\s+")) {
+                    if (!word.isEmpty()) {
+                        terms.add(word);
+                    }
+                }
+            }
+        }
+        return terms.toString();
     }
 
     /**
@@ -128,6 +157,41 @@ public abstract class PostgresTsQueryConverter implements TextSearchQueryConvert
      * @return The match mode this converter renders
      */
     protected abstract MatchMode mode();
+
+    /**
+     * {@link MatchMode#ANY} converter.
+     */
+    /**
+     * The positive terms of a fuzzy match.
+     */
+    @Singleton
+    public static final class FuzzyPositive extends PostgresTsQueryConverter {
+        @Override
+        protected MatchMode mode() {
+            return MatchMode.FUZZY;
+        }
+
+        @Override
+        public String convertToPersistedValue(@Nullable String entityValue, ConversionContext context) {
+            return renderFuzzy(entityValue, false);
+        }
+    }
+
+    /**
+     * The negated terms of a fuzzy match.
+     */
+    @Singleton
+    public static final class FuzzyNegated extends PostgresTsQueryConverter {
+        @Override
+        protected MatchMode mode() {
+            return MatchMode.FUZZY;
+        }
+
+        @Override
+        public String convertToPersistedValue(@Nullable String entityValue, ConversionContext context) {
+            return renderFuzzy(entityValue, true);
+        }
+    }
 
     /**
      * {@link MatchMode#ANY} converter.
