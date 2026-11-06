@@ -56,12 +56,7 @@ trait MongoAtlasLocal implements TestPropertyProvider {
             ]
             while (true) {
                 Set stored = coll.find().projection(new Document("_id", 1)).collect { it.get("_id") } as Set
-                Set indexed
-                try {
-                    indexed = coll.aggregate(pipeline).collect { it.get("_id") } as Set
-                } catch (Exception e) {
-                    indexed = null
-                }
+                Set indexed = indexedIds(coll, pipeline)
                 if (indexed == stored) {
                     return
                 }
@@ -70,6 +65,17 @@ trait MongoAtlasLocal implements TestPropertyProvider {
                 }
                 Thread.sleep(250)
             }
+        }
+    }
+
+    /**
+     * The ids the search index returns, or {@code null} while the index is still being built.
+     */
+    private Set indexedIds(coll, List<Document> pipeline) {
+        try {
+            return coll.aggregate(pipeline).collect { it.get("_id") } as Set
+        } catch (Exception e) {
+            return null
         }
     }
 }
