@@ -24,6 +24,9 @@ class AgeStatementsSpec extends Specification {
         'MATCH (n) RETURN n.limit AS limit, n.order AS order, n.skip, $skip AS s ORDER BY n.order' | '("limit" ag_catalog.agtype, "order" ag_catalog.agtype, "n.skip" ag_catalog.agtype, "s" ag_catalog.agtype)'
         'MATCH (n) // RETURN x AS y\nRETURN n'                                                     | '("n" ag_catalog.agtype)'
         'MATCH (n) /* RETURN x AS y */ RETURN n'                                                   | '("n" ag_catalog.agtype)'
+        'RETURN 1 AS value /* note */'                                                             | '("value" ag_catalog.agtype)'
+        'RETURN /* note */ DISTINCT n.a AS a, // first\n n.b /* second */'                         | '("a" ag_catalog.agtype, "n.b" ag_catalog.agtype)'
+        "RETURN 'a AS b'"                                                                          | '("\'a AS b\'" ag_catalog.agtype)'
     }
 
     void "wrap a query in a cypher() call for the graph token"() {
@@ -33,6 +36,7 @@ class AgeStatementsSpec extends Specification {
         AgeStatements.wrap('MATCH (n) DETACH DELETE n') ==
             'SELECT * FROM ag_catalog.cypher(\'$__graph\', $$ MATCH (n) DETACH DELETE n $$) AS ("result" ag_catalog.agtype)'
         AgeStatements.forGraph(AgeStatements.wrap('MATCH (n) RETURN n'), 'movies').startsWith('SELECT * FROM ag_catalog.cypher(\'movies\', $$ MATCH')
+        AgeStatements.forGraph(AgeStatements.wrap("RETURN '\$__graph' AS name"), 'movies').contains("\$\$ RETURN '\$__graph' AS name \$\$")
     }
 
     void "take the parameter map only when the query refers to parameters"() {
@@ -43,6 +47,7 @@ class AgeStatementsSpec extends Specification {
         !AgeStatements.takesParameters(AgeStatements.wrap('MATCH p = (a)-[*1..$__pathLimit]->(b) RETURN p'))
         !AgeStatements.takesParameters(AgeStatements.wrap('MATCH (n) // $title\nRETURN n'))
         !AgeStatements.takesParameters(AgeStatements.wrap('MATCH (n) /* $title */ RETURN n'))
+        AgeStatements.takesParameters(AgeStatements.wrap('MATCH (n) WHERE n.id = $__id RETURN n'))
     }
 
     void "find the Cypher query inside a statement"() {
