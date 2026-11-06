@@ -60,6 +60,24 @@ public interface SearchTransport {
     String index(String index, @Nullable String id, Map<String, Object> source, DocumentSearchConfiguration.Refresh refresh);
 
     /**
+     * Indexes several new documents in one request, each a create-only write like
+     * {@link #create(String, String, Map, DocumentSearchConfiguration.Refresh)}. The default sends one
+     * request per document.
+     *
+     * @param index The index name
+     * @param documents The documents, in order
+     * @param refresh The refresh policy
+     * @return The document ids, in the same order
+     */
+    default List<String> bulkIndex(String index, List<BulkDocument> documents, DocumentSearchConfiguration.Refresh refresh) {
+        List<String> ids = new java.util.ArrayList<>(documents.size());
+        for (BulkDocument document : documents) {
+            ids.add(create(index, document.id(), document.source(), refresh));
+        }
+        return ids;
+    }
+
+    /**
      * Indexes a new document, failing when a document with the same id exists. The default replaces
      * like {@link #index(String, String, Map, DocumentSearchConfiguration.Refresh)}; the store
      * transports override it with a create-only write.
@@ -144,6 +162,15 @@ public interface SearchTransport {
      * @param source The document
      * @param highlights The highlighted fragments by field, empty when none were requested
      */
+    /**
+     * A document of a bulk request.
+     *
+     * @param id The document id, or {@code null} to let the store assign one
+     * @param source The document
+     */
+    record BulkDocument(@Nullable String id, Map<String, Object> source) {
+    }
+
     record SearchHit(String id, @Nullable Double score, Map<String, Object> source, Map<String, List<String>> highlights) {
 
         public SearchHit {

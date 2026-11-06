@@ -83,6 +83,16 @@ class DocumentSearchOperationsSpec extends Specification {
         transport.indexes["test_notes"].size() == 1
     }
 
+    void "equal entities in one batch each get their own generated id"() {
+        when:
+        def saved = tags.saveAll([new Tag(null, "beverages"), new Tag(null, "beverages"), new Tag(null, "beverages")])
+
+        then:
+        saved*.id().every { it != null }
+        saved*.id().toSet().size() == 3
+        transport.indexes["test_tags"].size() == 3
+    }
+
     void "saving an entity with the id of an existing document fails instead of replacing it"() {
         given:
         def note = new Note("Tea", "Green tea", 40)
