@@ -60,5 +60,17 @@ public enum VectorIndexType {
          * Euclidean (L2) distance metric.
          */
         L2_EUCLIDEAN,
+        /**
+         * Hamming distance metric, for binary vectors.
+         *
+         * @since 5.3.0
+         */
+        HAMMING,
+        /**
+         * Jaccard distance metric, for binary vectors.
+         *
+         * @since 5.3.0
+         */
+        JACCARD,
     }
 }

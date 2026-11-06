@@ -14,6 +14,8 @@ You can enable SQL logging by enabling trace logging for the `io.micronaut.data.
 <logger name="io.micronaut.data.query" level="trace" />
 ----
 
+With Oracle, the logger also writes the SQL ID of each statement that Micronaut Data JDBC prepares, including `RETURNING` statements, upserts and `@Procedure` calls, at debug level, for example `Oracle SQL ID: 6973n8gn5dwvt`. Use it to find the statement in `V$SQL`, AWR or SQL Monitor reports. The SQL ID needs the Oracle JDBC driver 23 or later; with an older driver, it isn't logged.
+
 === Creating the Schema
 
 To create the database schema it is recommended you pair Micronaut Data with a SQL migration tool such as https://micronaut-projects.github.io/micronaut-flyway/latest/guide/index.html[Flyway] or https://micronaut-projects.github.io/micronaut-liquibase/latest/guide/index.html[Liquibase].
@@ -117,7 +119,7 @@ The effect of the read-only flag depends on the driver:
 |With the driver's default `readOnlyMode=transaction`, the flag only takes effect in transactions, where writes fail. `readOnlyMode=always` also applies it to auto-commit connections.
 
 |Oracle
-|A hint to the driver; writes are not rejected.
+|A hint to the driver; writes are not rejected. To reject them, call `setEnforceReadOnly(true)` on api:transaction.jdbc.DataSourceTransactionManager[], which runs `SET TRANSACTION READ ONLY` at the start of read-only transactions.
 
 |SQL Server
 |Ignored by the driver; `isReadOnly()` always returns `false`.
@@ -128,7 +130,41 @@ The effect of the read-only flag depends on the driver:
 
 Read-only connections are also used by some drivers and proxies (for example, the AWS Advanced JDBC Wrapper) and routing data sources to send queries to read replicas. Use explicit read-only transactions or `read-only-connection-per-operation` to keep that routing for non-transactional reads.
 
-This applies to Micronaut Data JDBC. Micronaut Data R2DBC does not set a read-only flag on its connections.
+==== Oracle True Cache
+
+https://docs.oracle.com/en/database/oracle/oracle-database/26/odbtc/[Oracle True Cache] is a read-only, in-memory cache of a primary database. With the `oracle.jdbc.useTrueCacheDriverConnection` connection property, the Oracle JDBC driver sends the work of a read-only connection to the True Cache and the rest to the primary database. Micronaut Data marks a connection read-only only when you ask for it, so True Cache serves:
+
+- read-only transactions: `@Transactional(readOnly = true)`, `@ReadOnly` or `executeRead` on api:transaction.TransactionOperations[]
+- read-only connection scopes: `@Connectable(readOnly = true)` or `executeRead` on api:data.connection.ConnectionOperations[]
+- every read outside a transaction, when `read-only-connection-per-operation` is enabled
+
+[configuration]
+----
+datasources:
+  default:
+    url: jdbc:oracle:thin:@primary-host:1521/sales
+    read-only-connection-per-operation: true
+    data-source-properties:
+      oracle.jdbc.useTrueCacheDriverConnection: true
+----
+
+`data-source-properties` passes the property with Hikari; with other pools, use their connection properties, for example `connection-properties: oracle.jdbc.useTrueCacheDriverConnection=true` with Tomcat JDBC. The driver uses Oracle UCP for True Cache connections, so `com.oracle.database.jdbc:ucp11` (or `ucp17`) must be on the classpath whatever the connection pool. The database service must have a True Cache: otherwise every connection fails with `ORA-18720: True Cache service is not configured on the database`.
+
+True Cache can return slightly stale data, so keep reads that must see the latest writes in read-write transactions.
+
+==== R2DBC
+
+Micronaut Data R2DBC begins read-only transactions (`@Transactional(readOnly = true)` and `executeRead`) with the R2DBC read-only attribute. Oracle R2DBC (`SET TRANSACTION READ ONLY`), R2DBC PostgreSQL (`BEGIN READ ONLY`) and the MySQL and MariaDB drivers (`START TRANSACTION READ ONLY`) then reject writes in them, including writes in a read-write transaction that joins an outer read-only one and `SELECT ... FOR UPDATE`. The SQL Server and H2 drivers ignore the attribute.
+
+On Oracle this is stricter than JDBC: a JDBC read-only transaction commits writes unless `enforceReadOnly` is set, while an R2DBC one rejects them with `ORA-01456`. R2DBC connections outside a transaction are not marked read-only, and Oracle True Cache routing requires JDBC.
+
+=== Batch inserts with generated identifiers
+
+`saveAll` and `insertAll` insert their entities with one JDBC batch when the dialect and driver can return the generated identifier of every row. Otherwise, each entity is inserted with its own statement.
+
+With Oracle, entities with a generated identifier, such as the default `@GeneratedValue` sequence or an `IDENTITY` column, are inserted with one batch when the Oracle JDBC driver is version 23 or later, which returns the generated keys of a batch, also when connected to an older database server. With an older driver, each entity is inserted with its own statement. Entities with an assigned identifier are always batched.
+
+Inserts through a JSON relational duality view (`@JsonView`) are still done one entity at a time: they run as a PL/SQL block with OUT parameters, which the Oracle JDBC driver can't batch.
 
 === Tracing calls from Java to Oracle Database sessions
 
@@ -163,3 +199,16 @@ You can control the values of `ACTION`, `MODULE`, `CLIENTID` and `CLIENT_INFO` w
 
 TIP: See the guide for https://guides.micronaut.io/latest/micronaut-data-jdbc-repository.html[Access a Database with Micronaut Data JDBC] to learn more.
 
+
+=== Request boundaries
+
+Set `datasources.<datasource-name>.request-boundaries=true` to mark a request boundary around each connection that Micronaut Data opens, with the JDBC `Connection.beginRequest()` and `Connection.endRequest()` methods. This covers connections opened for connection operations and for transactions (`@Transactional` or `TransactionOperations`). The request begins when the connection is opened, before Micronaut Data applies its read-only or transaction settings. It ends before the connection is closed, after the transaction has committed or rolled back and those settings have been restored. A connection reused by a nested operation or a repository call stays in the request of the scope that opened it.
+
+[configuration]
+----
+datasources:
+  default:
+    request-boundaries: true
+----
+
+Request boundaries tell the driver where a unit of work starts and ends. Oracle uses them for Transparent Application Continuity, to reset the session state when a request ends (`RESET_STATE`), and to release a Database Resident Connection Pooling (DRCP) server between requests. For a DRCP-enabled Oracle connection, Micronaut Data also releases the pooled server after each request with `detachServerConnection`, even when ending the request fails. DRCP needs this with connection pools other than Oracle UCP. A released connection attaches to a server again on its next round trip. The Oracle JDBC driver can also attach and release the server in `beginRequest()` and `endRequest()` itself; see its `oracle.jdbc.DRCPMultiplexingInRequestAPIs` connection property. Oracle UCP marks request boundaries itself, and nested boundaries are ignored, so the setting is harmless with UCP.
