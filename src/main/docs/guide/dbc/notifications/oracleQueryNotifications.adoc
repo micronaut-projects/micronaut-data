@@ -17,11 +17,8 @@ This makes `OracleConnection.DCN_*` and `OracleConnection.NTF_*` constants avail
 Micronaut Data checks the JDBC driver version during application startup before creating notification registrations.
 An older or unrecognized driver version causes startup to fail with an error identifying the detected and required versions.
 
-The default client-initiated notification connection requires Oracle Database 19c or later.
-For an older database with CQN support, set the `DCN_CLIENT_INIT_CONNECTION` registration property to `false`
-and configure server-initiated delivery. The database server must be able to reach the application's notification
-listener address and port. See the registration properties below and the
-link:https://docs.oracle.com/en/database/oracle/oracle-database/26/jjdbc/continuos-query-notification.html[Oracle CQN documentation].
+Client-initiated notification connections are enabled by default and require Oracle Database 19c or later.
+See https://docs.oracle.com/en/database/oracle/oracle-database/19/jjdbc/continuos-query-notification.html[Oracle's Continuous Query Notification documentation].
 
 The datasource user must have Oracle Database's `CHANGE NOTIFICATION` privilege. A database administrator can grant it with:
 
