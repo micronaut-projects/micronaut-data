@@ -139,6 +139,15 @@ public class JdbcQueryStatement implements QueryStatement<PreparedStatement, Int
                         statement.setNull(index, Types.OTHER, "uuid");
                         return this;
                     }
+                    case OBJECT -> {
+                        if (jdbcConfiguration.getDialect() == Dialect.ORACLE) {
+                            // Oracle rejects Types.OTHER (ORA-17004), for example for a null VECTOR column
+                            statement.setNull(index, Types.NULL);
+                        } else {
+                            statement.setNull(index, Types.OTHER);
+                        }
+                        return this;
+                    }
                     default -> {
                         int sqlType = findSqlType(dataType, jdbcConfiguration.getDialect());
                         if (sqlType != -1) {
