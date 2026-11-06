@@ -16,15 +16,20 @@
 package io.micronaut.data.graph.runtime.operations;
 
 import io.micronaut.core.beans.BeanProperty;
+import io.micronaut.data.annotation.Relation;
 import io.micronaut.data.exceptions.DataAccessException;
+import io.micronaut.data.graph.annotation.TargetNode;
 import io.micronaut.data.graph.model.GraphEntities;
+import io.micronaut.data.graph.model.query.builder.CypherQueryBuilder;
 import io.micronaut.data.graph.runtime.GraphEntityMapper;
+import io.micronaut.data.graph.runtime.GraphRecord;
 import io.micronaut.data.model.runtime.RuntimeAssociation;
 import io.micronaut.data.model.runtime.RuntimePersistentEntity;
 import io.micronaut.data.model.runtime.RuntimePersistentProperty;
 import org.jspecify.annotations.Nullable;
 
 import java.util.ArrayList;
+import java.util.LinkedHashMap;
 import java.util.List;
 import java.util.Map;
 
@@ -49,7 +54,7 @@ record RelationshipTarget(RuntimePersistentEntity<Object> associated,
         if (!GraphEntities.isRelationshipEntity(associated)) {
             return new RelationshipTarget(associated, null, associated, null);
         }
-        RuntimeAssociation<Object> targetAssociation = AbstractGraphRepositoryOperations.targetNode(associated);
+        RuntimeAssociation<Object> targetAssociation = targetNode(associated);
         RuntimePersistentEntity<Object> entity = (RuntimePersistentEntity<Object>) targetAssociation.getAssociatedEntity();
         return new RelationshipTarget(associated, targetAssociation, entity, associated.getIdentity());
     }
@@ -96,6 +101,10 @@ record RelationshipTarget(RuntimePersistentEntity<Object> associated,
 
     boolean isRelationshipEntity() {
         return targetAssociation != null;
+    }
+
+    boolean nativeIdentity() {
+        return identity != null && GraphEntities.isNativeId(identity);
     }
 
     /**
@@ -151,15 +160,15 @@ record RelationshipTarget(RuntimePersistentEntity<Object> associated,
      * @param savedTargets The saved target nodes, in the order of the items
      * @return The rows
      */
-    List<AbstractGraphRepositoryOperations.LinkRow> linkRows(RuntimeAssociation<?> association,
+    List<LinkRow> linkRows(RuntimeAssociation<?> association,
                                                              GraphEntityMapper mapper,
                                                              @Nullable Object fromId,
                                                              List<Object> written,
                                                              List<Object> savedTargets) {
-        List<AbstractGraphRepositoryOperations.LinkRow> rows = new ArrayList<>(written.size());
+        List<LinkRow> rows = new ArrayList<>(written.size());
         for (int i = 0; i < written.size(); i++) {
             Map<String, Object> properties = isRelationshipEntity() ? mapper.writeProperties(associated, written.get(i)) : Map.of();
-            rows.add(AbstractGraphRepositoryOperations.linkRow(association, i, fromId, mapper.writeIdentity(entity, savedTargets.get(i)), properties));
+            rows.add(linkRow(association, i, fromId, mapper.writeIdentity(entity, savedTargets.get(i)), properties));
         }
         return rows;
     }
@@ -182,5 +191,142 @@ record RelationshipTarget(RuntimePersistentEntity<Object> associated,
                 written.set(i, AbstractGraphRepositoryOperations.withProperty(idProperty, written.get(i), mapper.readValue(identity, relationshipId)));
             }
         }
+    }
+
+    /**
+     * Plans the row of a relationship in a batched link write.
+     *
+     * @param association The association
+     * @param position    The position of the relationship in the batch
+     * @param fromId      The identifier of the owner
+     * @param toId        The identifier of the target
+     * @param properties  The relationship properties
+     * @return The row
+     */
+    static LinkRow linkRow(RuntimeAssociation<?> association, int position, @Nullable Object fromId, @Nullable Object toId, Map<String, Object> properties) {
+        if (fromId == null || toId == null) {
+            throw new DataAccessException("Cannot link [" + association.getName() + "] without the identifiers of both nodes");
+        }
+        return new LinkRow(position, fromId, toId, properties);
+    }
+
+    /**
+     * Reads the identifiers of the relationships a batched link write merged, by the position of their rows.
+     *
+     * @param association The association
+     * @param records     The rows the write returned
+     * @param expected    The number of relationships in the batch
+     * @return The identifiers by position; a position whose relationship has no identifier maps to null
+     */
+    static Map<Integer, @Nullable Object> linkedRelationshipIds(RuntimeAssociation<?> association, List<GraphRecord> records, int expected) {
+        Map<Integer, @Nullable Object> ids = new LinkedHashMap<>();
+        for (GraphRecord record : records) {
+            Object position = record.get(CypherQueryBuilder.ROW_POSITION);
+            if (position instanceof Number number) {
+                ids.putIfAbsent(number.intValue(), record.get(CypherQueryBuilder.ID_PARAMETER));
+            }
+        }
+        if (ids.size() != expected) {
+            throw new DataAccessException("Could not link [" + association.getName() + "]: expected to write " + expected
+                + " relationships but wrote " + ids.size() + ", one of the nodes does not exist");
+        }
+        return ids;
+    }
+
+    /**
+     * Groups the rows of the links of an association by the properties they write, as every row of a batched
+     * write sets the same properties.
+     *
+     * @param rows The rows
+     * @return The rows by property names
+     */
+    static Map<List<String>, List<LinkRow>> groupLinkRows(List<LinkRow> rows) {
+        Map<List<String>, List<LinkRow>> groups = new LinkedHashMap<>();
+        for (LinkRow row : rows) {
+            groups.computeIfAbsent(List.copyOf(row.properties().keySet()), k -> new ArrayList<>()).add(row);
+        }
+        return groups;
+    }
+
+    /**
+     * Whether saving the owner of an association creates a related node that has no identifier yet.
+     *
+     * @param association The association
+     * @return True if new related nodes are created
+     */
+    static boolean cascadesPersist(RuntimeAssociation<?> association) {
+        Relation.Cascade cascade = GraphEntities.cascade(association);
+        return cascade == Relation.Cascade.ALL || cascade == Relation.Cascade.PERSIST;
+    }
+
+    /**
+     * Whether saving the owner of an association updates a related node that has an identifier.
+     *
+     * @param association The association
+     * @return True if existing related nodes are updated
+     */
+    static boolean cascadesUpdate(RuntimeAssociation<?> association) {
+        Relation.Cascade cascade = GraphEntities.cascade(association);
+        return cascade == Relation.Cascade.ALL || cascade == Relation.Cascade.UPDATE;
+    }
+
+    /**
+     * The error for a related node that cannot be linked because it has no identifier and the association
+     * does not create related nodes.
+     *
+     * @param association The association
+     * @param owner       The owning entity
+     * @param target      The target entity
+     * @return The exception
+     */
+    static DataAccessException targetNotPersisted(RuntimeAssociation<?> association, RuntimePersistentEntity<?> owner, RuntimePersistentEntity<?> target) {
+        return new DataAccessException("Cannot link [" + association.getName() + "] of [" + owner.getSimpleName() + "] to a [" + target.getSimpleName()
+            + "] without an identifier: the relationship cascades " + GraphEntities.cascade(association) + ", so the related node must be saved first");
+    }
+
+    /**
+     * Reads the identifier of the relationship a link query wrote.
+     *
+     * @param association The association
+     * @param mode        How the relationship was written
+     * @param records     The rows the link returned
+     * @return The identifier, or null, which for an update means no such relationship connects the nodes
+     */
+    static @Nullable Object linkedRelationshipId(RuntimeAssociation<?> association, LinkMode mode, List<GraphRecord> records) {
+        if (records.isEmpty()) {
+            if (mode == LinkMode.UPDATE) {
+                return null;
+            }
+            throw new DataAccessException("Could not link [" + association.getName() + "]: one of the nodes does not exist");
+        }
+        return records.get(0).get(CypherQueryBuilder.ID_PARAMETER);
+    }
+
+    static RuntimeAssociation<Object> targetNode(RuntimePersistentEntity<?> relationshipEntity) {
+        for (RuntimePersistentProperty<?> property : relationshipEntity.getPersistentProperties()) {
+            if (property instanceof RuntimeAssociation<?> association && property.getAnnotationMetadata().hasStereotype(TargetNode.class)) {
+                return (RuntimeAssociation<Object>) association;
+            }
+        }
+        throw new DataAccessException("Relationship entity [" + relationshipEntity.getName() + "] has no @TargetNode property");
+    }
+
+    /**
+     * The row of a relationship in a batched link write.
+     *
+     * @param position   The position of the relationship in the batch
+     * @param fromId     The encoded identifier of the owner
+     * @param toId       The encoded identifier of the target
+     * @param properties The encoded relationship properties by stored name
+     */
+    record LinkRow(int position, Object fromId, Object toId, Map<String, Object> properties) {
+    }
+
+    /**
+     * How a relationship is written. Relationship entities with a database-assigned identifier can be told apart, so
+     * two of them may connect the same nodes. Any other relationship is identified by its nodes and type.
+     */
+    enum LinkMode {
+        MERGE, CREATE, UPDATE
     }
 }

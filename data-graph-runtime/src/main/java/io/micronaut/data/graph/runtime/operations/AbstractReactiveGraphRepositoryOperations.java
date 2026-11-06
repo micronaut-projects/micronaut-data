@@ -18,6 +18,7 @@ package io.micronaut.data.graph.runtime.operations;
 import io.micronaut.core.annotation.AnnotationMetadata;
 import io.micronaut.core.beans.BeanProperty;
 import io.micronaut.data.annotation.Relation;
+import io.micronaut.data.graph.annotation.Direction;
 import io.micronaut.data.graph.model.GraphEntities;
 import io.micronaut.data.graph.runtime.GraphEntityMapper;
 import io.micronaut.data.graph.runtime.GraphRecord;
@@ -421,7 +422,9 @@ public abstract class AbstractReactiveGraphRepositoryOperations implements React
          * @return The saved instances, in the order of the targets
          */
         <E> Mono<List<E>> saveTargets(RuntimeAssociation<?> association, RuntimePersistentEntity<?> owner, RuntimePersistentEntity<E> entity, List<E> targets) {
-            return Mono.defer(() -> {
+            return Flux.fromIterable(targets).concatMap(target -> RelationshipTarget.cascadesPersist(association)
+                ? isNew(entity, target)
+                : Mono.just(operations.newWithoutLookup(entity, target))).collectList().flatMap(news -> {
                 List<E> results = new ArrayList<>(Collections.nCopies(targets.size(), (E) null));
                 Map<E, List<Integer>> toInsert = new IdentityHashMap<>();
                 Map<E, List<Integer>> toUpdate = new IdentityHashMap<>();
@@ -430,12 +433,12 @@ public abstract class AbstractReactiveGraphRepositoryOperations implements React
                     Object existing = saved.get(target);
                     if (existing != null) {
                         results.set(i, (E) existing);
-                    } else if (operations.isNew(entity, target)) {
-                        if (!AbstractGraphRepositoryOperations.cascadesPersist(association)) {
-                            return Mono.error(AbstractGraphRepositoryOperations.targetNotPersisted(association, owner, entity));
+                    } else if (news.get(i)) {
+                        if (!RelationshipTarget.cascadesPersist(association)) {
+                            return Mono.error(RelationshipTarget.targetNotPersisted(association, owner, entity));
                         }
                         toInsert.computeIfAbsent(target, k -> new ArrayList<>()).add(i);
-                    } else if (AbstractGraphRepositoryOperations.cascadesUpdate(association)) {
+                    } else if (RelationshipTarget.cascadesUpdate(association)) {
                         toUpdate.computeIfAbsent(target, k -> new ArrayList<>()).add(i);
                     } else {
                         results.set(i, target);
@@ -473,6 +476,27 @@ public abstract class AbstractReactiveGraphRepositoryOperations implements React
         Mono<GraphResult> run(AbstractGraphRepositoryOperations.GraphQuery query) {
             return session.run(query.query(), query.parameters());
         }
+
+        /**
+         * Saves a related node, as an insert when it is written for the first time. An identifier the application
+         * assigned says nothing, as a new node has one too, so the database is asked.
+         *
+         * @param entity   The entity
+         * @param instance The related node
+         * @param <T>      The entity type
+         * @return The saved node
+         */
+        <T> Mono<T> saveRelated(RuntimePersistentEntity<T> entity, T instance) {
+            return isNew(entity, instance).flatMap(insert -> save(entity, instance, insert));
+        }
+
+        private <T> Mono<Boolean> isNew(RuntimePersistentEntity<T> entity, T instance) {
+            AbstractGraphRepositoryOperations.GraphQuery lookup = saved.containsKey(instance) ? null : operations.planFindExisting(entity, instance);
+            if (lookup == null) {
+                return Mono.just(operations.newWithoutLookup(entity, instance));
+            }
+            return run(lookup).map(result -> result.records().isEmpty());
+        }
     }
 
     /**
@@ -484,6 +508,7 @@ public abstract class AbstractReactiveGraphRepositoryOperations implements React
         private final Persister persister;
         private final T original;
         private @Nullable Object previousVersion;
+        private boolean created;
 
         NodeOperation(Persister persister, RuntimePersistentEntity<T> entity, T instance, boolean insert) {
             super(persister.context, noCascade, operations.getConversionService(), operations.entityEventListener(), entity, instance, insert);
@@ -530,11 +555,12 @@ public abstract class AbstractReactiveGraphRepositoryOperations implements React
             return persister.run(write.query()).flatMap(result -> {
                 Object generatedId = operations.generatedId(persistentEntity, write, result.records());
                 RuntimePersistentProperty<T> identity = persistentEntity.getIdentity();
+                created = generatedId != null;
                 T written = generatedId != null && identity != null
                     ? updateEntityId((BeanProperty<T, Object>) identity.getProperty(), instance, generatedId)
                     : instance;
                 persister.written(original, written);
-                return new RelationshipWriter<>(persister, persistentEntity).write(written);
+                return new RelationshipWriter<>(persister, persistentEntity, write.addLabels(), created).write(written);
             });
         }
 
@@ -546,6 +572,7 @@ public abstract class AbstractReactiveGraphRepositoryOperations implements React
      * @param <T> The entity type
      */
     private final class NodesOperation<T> extends AbstractReactiveEntitiesOperations<OperationContext, T, RuntimeException> {
+        private final Set<Data> created = Collections.newSetFromMap(new IdentityHashMap<>());
         private final Persister persister;
         private final Map<Object, Object> previousVersions = new IdentityHashMap<>();
 
@@ -586,11 +613,14 @@ public abstract class AbstractReactiveGraphRepositoryOperations implements React
                 // The instances the save was called with: a node write may replace an immutable instance
                 Map<Data, T> originals = new IdentityHashMap<>();
                 Map<AbstractGraphRepositoryOperations.NodeBatch, List<Data>> batches = new LinkedHashMap<>();
+                Map<Data, @Nullable String> addLabels = new IdentityHashMap<>();
                 for (Data d : list) {
                     if (!d.vetoed) {
                         persister.saved.put(d.entity, d.entity);
                         originals.put(d, d.entity);
                         pending.add(d);
+                        // Checked ahead of the writes, so that a label that cannot be stored leaves the nodes as they were
+                        addLabels.put(d, operations.addLabelsQuery(persistentEntity, d.entity));
                         batches.computeIfAbsent(operations.planNodeBatch(persistentEntity, d.entity, insert, previousVersions.get(d)), k -> new ArrayList<>()).add(d);
                     }
                 }
@@ -606,7 +636,7 @@ public abstract class AbstractReactiveGraphRepositoryOperations implements React
                     .then(Flux.fromIterable(pending)
                         .concatMap(d -> {
                             T original = Objects.requireNonNull(originals.get(d));
-                            return new RelationshipWriter<>(persister, persistentEntity).write(d.entity).map(written -> {
+                            return new RelationshipWriter<>(persister, persistentEntity, addLabels.get(d), created.contains(d)).write(d.entity).map(written -> {
                                 d.entity = written;
                                 persister.saved.put(original, written);
                                 persister.saved.put(written, written);
@@ -641,6 +671,7 @@ public abstract class AbstractReactiveGraphRepositoryOperations implements React
                 for (GraphRecord record : records) {
                     Data d = nodes.get(((Number) Objects.requireNonNull(record.get(CypherQueryBuilder.ROW_POSITION))).intValue());
                     d.entity = updateEntityId((BeanProperty<T, Object>) identity.getProperty(), d.entity, operations.batchGeneratedId(persistentEntity, record));
+                    created.add(d);
                 }
             }).then();
         }
@@ -654,15 +685,19 @@ public abstract class AbstractReactiveGraphRepositoryOperations implements React
     private final class RelationshipWriter<T> {
         private final Persister persister;
         private final RuntimePersistentEntity<T> persistentEntity;
+        private final @Nullable String addLabels;
+        private final boolean created;
 
-        RelationshipWriter(Persister persister, RuntimePersistentEntity<T> persistentEntity) {
+        RelationshipWriter(Persister persister, RuntimePersistentEntity<T> persistentEntity, @Nullable String addLabels, boolean created) {
             this.persister = persister;
             this.persistentEntity = persistentEntity;
+            this.addLabels = addLabels;
+            this.created = created;
         }
 
         Mono<T> write(T instance) {
-            AbstractGraphRepositoryOperations.GraphQuery addLabels = operations.planAddLabels(persistentEntity, instance);
-            Mono<T> labelled = addLabels == null ? Mono.just(instance) : persister.run(addLabels).thenReturn(instance);
+            AbstractGraphRepositoryOperations.GraphQuery labels = operations.planAddLabels(persistentEntity, addLabels, instance);
+            Mono<T> labelled = labels == null ? Mono.just(instance) : persister.run(labels).thenReturn(instance);
             return labelled.flatMap(this::writeRelationships).flatMap(this::writeDynamicRelationships);
         }
 
@@ -705,8 +740,12 @@ public abstract class AbstractReactiveGraphRepositoryOperations implements React
                                                List<Object> items,
                                                List<Object> savedTargets) {
             List<Object> written = target.written(items, savedTargets);
-            List<AbstractGraphRepositoryOperations.LinkRow> rows = target.linkRows(association, mapper, fromId, written, savedTargets);
-            return runLinks(association, target.entity(), rows, target.identity()).map(relationshipIds -> {
+            List<RelationshipTarget.LinkRow> rows = target.linkRows(association, mapper, fromId, written, savedTargets);
+            Mono<Map<Integer, Object>> links = target.nativeIdentity()
+                ? runIdentifiedLinks(association, target, rows, written)
+                : runLinks(association, target.entity(), rows, target.identity());
+            // A single-valued association has one row
+            return unlinkOthers(association, target.entity(), fromId, rows.get(0).toId()).then(links).map(relationshipIds -> {
                 target.applyRelationshipIds(mapper, written, relationshipIds);
                 return written;
             });
@@ -720,29 +759,65 @@ public abstract class AbstractReactiveGraphRepositoryOperations implements React
          */
         private Mono<Map<Integer, Object>> runLinks(RuntimeAssociation<T> association,
                                                     RuntimePersistentEntity<?> target,
-                                                    List<AbstractGraphRepositoryOperations.LinkRow> rows,
+                                                    List<RelationshipTarget.LinkRow> rows,
                                                     @Nullable RuntimePersistentProperty<?> relationshipIdentity) {
             Map<Integer, Object> ids = new LinkedHashMap<>();
-            return Flux.fromIterable(AbstractGraphRepositoryOperations.groupLinkRows(rows).entrySet())
+            return Flux.fromIterable(RelationshipTarget.groupLinkRows(rows).entrySet())
                 .concatMap(group -> {
-                    List<AbstractGraphRepositoryOperations.LinkRow> batch = group.getValue();
+                    List<RelationshipTarget.LinkRow> batch = group.getValue();
                     if (batch.size() > 1 && operations.queryBuilder.supportsBatchedLinks()) {
                         AbstractGraphRepositoryOperations.GraphQuery query = operations.planLinks(association, persistentEntity, target, batch, group.getKey(), relationshipIdentity);
                         return persister.run(query).doOnNext(result ->
-                            ids.putAll(AbstractGraphRepositoryOperations.linkedRelationshipIds(association, result.records(), batch.size())));
+                            ids.putAll(RelationshipTarget.linkedRelationshipIds(association, result.records(), batch.size())));
                     }
-                    return Flux.fromIterable(batch).concatMap(row -> {
-                        AbstractGraphRepositoryOperations.GraphQuery query = operations.planLink(association, persistentEntity, target,
-                            row.fromId(), row.toId(), row.properties(), relationshipIdentity);
-                        return persister.run(query).doOnNext(result -> {
-                            Object id = AbstractGraphRepositoryOperations.linkedRelationshipId(association, result.records());
-                            if (id != null) {
-                                ids.put(row.position(), id);
-                            }
-                        });
-                    });
+                    return Flux.fromIterable(batch).concatMap(row ->
+                        runLink(association, target, row.fromId(), row.toId(), row.properties(), relationshipIdentity, RelationshipTarget.LinkMode.MERGE, null)
+                            .doOnNext(id -> ids.put(row.position(), id)));
                 })
                 .then(Mono.fromSupplier(() -> ids));
+        }
+
+        /**
+         * Writes relationship entities with a database-assigned identifier one at a time, as several of them may
+         * connect the same nodes. One that was not saved, or that no longer connects these nodes, is a new one. An
+         * undirected one is matched in either direction, so saving it from its other end finds it.
+         *
+         * @return The identifiers of the relationships by the position of their rows
+         */
+        private Mono<Map<Integer, Object>> runIdentifiedLinks(RuntimeAssociation<T> association,
+                                                              RelationshipTarget target,
+                                                              List<RelationshipTarget.LinkRow> rows,
+                                                              List<Object> written) {
+            RelationshipTarget.LinkMode mode = GraphEntities.direction(association) == Direction.UNDIRECTED
+                ? RelationshipTarget.LinkMode.MERGE
+                : RelationshipTarget.LinkMode.CREATE;
+            Map<Integer, Object> ids = new LinkedHashMap<>();
+            return Flux.fromIterable(rows).concatMap(row -> {
+                Object savedId = mapper.writeIdentity(target.associated(), written.get(row.position()));
+                Mono<Object> updated = savedId == null
+                    ? Mono.empty()
+                    : runLink(association, target.entity(), row.fromId(), row.toId(), row.properties(), target.identity(), RelationshipTarget.LinkMode.UPDATE, savedId);
+                return updated
+                    .switchIfEmpty(Mono.defer(() -> runLink(association, target.entity(), row.fromId(), row.toId(), row.properties(), target.identity(), mode, null)))
+                    .doOnNext(id -> ids.put(row.position(), id));
+            }).then(Mono.fromSupplier(() -> ids));
+        }
+
+        private Mono<Void> unlinkOthers(RuntimeAssociation<T> association, RuntimePersistentEntity<?> target, @Nullable Object fromId, @Nullable Object toId) {
+            AbstractGraphRepositoryOperations.GraphQuery query = operations.planUnlinkOthers(association, persistentEntity, target, fromId, toId, created);
+            return query == null ? Mono.empty() : persister.run(query).then();
+        }
+
+        private Mono<Object> runLink(RuntimeAssociation<T> association,
+                                     RuntimePersistentEntity<?> target,
+                                     @Nullable Object fromId,
+                                     @Nullable Object toId,
+                                     Map<String, Object> properties,
+                                     @Nullable RuntimePersistentProperty<?> relationshipIdentity,
+                                     RelationshipTarget.LinkMode mode,
+                                     @Nullable Object relationshipId) {
+            AbstractGraphRepositoryOperations.GraphQuery query = operations.planLink(association, persistentEntity, target, fromId, toId, properties, relationshipIdentity, mode, relationshipId);
+            return persister.run(query).flatMap(result -> Mono.justOrEmpty(RelationshipTarget.linkedRelationshipId(association, mode, result.records())));
         }
 
         private Mono<T> writeDynamicRelationships(T instance) {
@@ -773,7 +848,7 @@ public abstract class AbstractReactiveGraphRepositoryOperations implements React
 
         private Mono<Object> linkDynamic(String type, @Nullable Object fromId, Object target) {
             RuntimePersistentEntity<Object> targetEntity = (RuntimePersistentEntity<Object>) operations.getEntity(target.getClass());
-            return persister.save(targetEntity, target, operations.isNew(targetEntity, target)).flatMap(savedTarget -> {
+            return persister.saveRelated(targetEntity, target).flatMap(savedTarget -> {
                 AbstractGraphRepositoryOperations.GraphQuery query = operations.planDynamicLink(persistentEntity, targetEntity, type, fromId,
                     mapper.writeIdentity(targetEntity, savedTarget));
                 return persister.run(query).thenReturn(savedTarget);

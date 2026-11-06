@@ -164,6 +164,26 @@ class OracleGraphSpec extends Specification {
         relationships[0].type() == "TRANSFERS"
         relationships[0].from().name() == "Alice"
         relationships[0].to().name() == "Bob"
+        relationships[0].id() == 1
+        relationships[0].properties().amount == 500
+    }
+
+    void "run a query with named parameters"() {
+        when:
+        def values = operations.executeQuery(
+            "SELECT \"id\", \"amount\" FROM GRAPH_TABLE (bank_graph MATCH (a IS Account) -[t IS TRANSFERS]-> (b IS Account) WHERE a.id = \$to AND b.id = \$from COLUMNS (t.id AS \"id\", t.amount AS \"amount\"))",
+            [from: 2L, to: 1L])
+
+        then: "they bind by name, whatever the order of the map"
+        values.size() == 1
+        values[0].get("id") == 1
+        values[0].get("amount") == 500
+    }
+
+    void "a statement reports its row count"() {
+        expect:
+        bankGraph.renameAccount(4L, "Dave") == 1
+        bankGraph.renameAccount(99L, "Nobody") == 0
     }
 
     void "explicit SQL/PGQ queries"() {
@@ -190,6 +210,20 @@ class OracleGraphSpec extends Specification {
         then:
         def e = thrown(Exception)
         e.message.contains("Cannot sort on non-existent property: balance")
+
+        when: "the query already orders its rows"
+        bankGraph.findByIdGreaterThanOrderByName(0L, Sort.of(Sort.Order.desc("id")))
+
+        then:
+        def ordered = thrown(Exception)
+        ordered.message.contains("declares ORDER BY itself")
+
+        when: "a projection does not return the column"
+        bankGraph.findNameByIdGreaterThan(0L, Sort.of(Sort.Order.desc("opened")))
+
+        then:
+        def projected = thrown(Exception)
+        projected.message.contains("does not return")
     }
 
     void "operations without a query method are rejected"() {

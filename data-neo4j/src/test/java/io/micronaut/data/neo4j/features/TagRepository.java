@@ -1,6 +1,7 @@
 package io.micronaut.data.neo4j.features;
 
 import io.micronaut.data.annotation.Query;
+import io.micronaut.data.model.Page;
 import io.micronaut.data.model.Pageable;
 import io.micronaut.data.model.Sort;
 import io.micronaut.data.neo4j.annotation.Neo4jRepository;
@@ -24,6 +25,8 @@ public interface TagRepository extends CrudRepository<Tag, Long> {
 
     @Query("MATCH (n:Tag) RETURN n LIMIT 1")
     List<Tag> firstTag(Pageable pageable);
+
+    Page<Tag> findAll(Pageable pageable);
 
     @Query("MATCH (t:Tag) WITH t ORDER BY t.name LIMIT 2 RETURN t")
     List<Tag> findFirstTwo(Pageable pageable);

@@ -15,6 +15,8 @@
  */
 package io.micronaut.data.graph.runtime;
 
+import org.jspecify.annotations.Nullable;
+
 import java.util.List;
 import java.util.Map;
 
@@ -24,8 +26,20 @@ import java.util.Map;
  * @param id         The identifier the database assigned to the node
  * @param labels     The labels
  * @param properties The properties
+ * @param numericId  The numeric identifier of the node, if the database has one besides {@code id}
  * @author graemerocher
  * @since 5.3.0
  */
-public record GraphNode(Object id, List<String> labels, Map<String, Object> properties) {
+public record GraphNode(Object id, List<String> labels, Map<String, Object> properties, @Nullable Long numericId) {
+
+    /**
+     * A node whose identifier is the only one the database has.
+     *
+     * @param id         The identifier the database assigned to the node
+     * @param labels     The labels
+     * @param properties The properties
+     */
+    public GraphNode(Object id, List<String> labels, Map<String, Object> properties) {
+        this(id, labels, properties, null);
+    }
 }

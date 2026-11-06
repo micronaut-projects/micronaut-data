@@ -35,10 +35,10 @@ import java.util.List;
 public interface GraphQueryBuilder extends QueryBuilder {
 
     /**
-     * Whether explicit queries write parameters as {@code $name}, as in Cypher. Otherwise they are written
-     * as {@code :name} and bound by position.
+     * Whether explicit queries are sent with their {@code $name} parameters and bound by name, as in Cypher.
+     * Otherwise a {@code $name} parameter is rewritten to {@code ?} and bound by position.
      *
-     * @return True for {@code $name} parameters
+     * @return True to bind parameters by name
      */
     default boolean usesDollarParameters() {
         return true;
@@ -291,4 +291,57 @@ public interface GraphQueryBuilder extends QueryBuilder {
     default String buildAddLabelsQuery(PersistentEntity entity, List<String> labels) {
         throw new UnsupportedOperationException("Dynamic labels are not supported by this database");
     }
+
+    /**
+     * Builds the query that creates a new relationship entity between two nodes, which may already be connected by
+     * another one.
+     *
+     * @param association          The association
+     * @param owner                The entity that declares the association
+     * @param target               The node entity at the far end
+     * @param propertyNames        The stored names of the relationship properties to write
+     * @param relationshipIdentity The identity of the relationship entity
+     * @return The query
+     */
+    String buildCreateLinkQuery(Association association,
+                                PersistentEntity owner,
+                                PersistentEntity target,
+                                List<String> propertyNames,
+                                PersistentProperty relationshipIdentity);
+
+    /**
+     * Builds the query that updates a saved relationship entity, matched by its identifier in the parameter
+     * {@code id}. It returns no row if the relationship no longer connects the two nodes.
+     *
+     * @param association          The association
+     * @param owner                The entity that declares the association
+     * @param target               The node entity at the far end
+     * @param propertyNames        The stored names of the relationship properties to write
+     * @param relationshipIdentity The identity of the relationship entity
+     * @return The query
+     */
+    String buildUpdateLinkQuery(Association association,
+                                PersistentEntity owner,
+                                PersistentEntity target,
+                                List<String> propertyNames,
+                                PersistentProperty relationshipIdentity);
+
+    /**
+     * Builds the query that removes the relationships of a single-valued association to any node but the given one.
+     *
+     * @param association The association
+     * @param owner       The entity that declares the association
+     * @param target      The node entity at the far end
+     * @return The query
+     */
+    String buildUnlinkOthersQuery(Association association, PersistentEntity owner, PersistentEntity target);
+
+    /**
+     * Renders the expression that sorts by the identifier of the root node, which a database-assigned identifier
+     * does not hold as a property.
+     *
+     * @param identity The identity property
+     * @return The expression
+     */
+    String rootIdentityExpression(PersistentProperty identity);
 }
