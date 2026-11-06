@@ -24,7 +24,10 @@ import io.micronaut.context.annotation.Context;
 import io.micronaut.core.annotation.Internal;
 import io.micronaut.core.beans.BeanIntrospection;
 import io.micronaut.core.beans.BeanIntrospector;
+import com.mongodb.MongoCommandException;
 import com.mongodb.client.model.IndexOptions;
+import io.micronaut.core.annotation.AnnotationMetadata;
+import io.micronaut.data.mongodb.annotation.MongoSearchIndex;
 import com.mongodb.client.model.Indexes;
 import io.micronaut.data.annotation.search.Language;
 import io.micronaut.data.annotation.search.SearchField;
@@ -36,6 +39,7 @@ import org.bson.Document;
 import org.bson.conversions.Bson;
 import org.jspecify.annotations.Nullable;
 import java.util.LinkedHashMap;
+import java.util.Locale;
 import java.util.Map;
 import io.micronaut.data.annotation.MappedEntity;
 import io.micronaut.data.annotation.Relation;
@@ -67,6 +71,15 @@ import java.util.function.Function;
 @Internal
 public class AbstractMongoCollectionsCreator<Dtbs> {
     private static final Logger LOG = LoggerFactory.getLogger(AbstractMongoCollectionsCreator.class);
+    // CommandNotFound, CommandNotSupported, SearchNotEnabled and "only allowed on MongoDB Atlas": a deployment
+    // without MongoDB Search
+    private static final Set<Integer> SEARCH_UNAVAILABLE_CODES = Set.of(59, 115, 31082, 6047401);
+    // the languages MongoDB Search has a lucene.<language> analyzer for
+    private static final Set<String> LANGUAGE_ANALYZERS = Set.of("arabic", "armenian", "basque", "bengali", "brazilian", "bulgarian",
+        "catalan", "chinese", "cjk", "czech", "danish", "dutch", "english", "finnish", "french", "galician", "german", "greek", "hindi",
+        "hungarian", "indonesian", "irish", "italian", "japanese", "korean", "kuromoji", "latvian", "lithuanian", "morfologik", "nori",
+        "norwegian", "persian", "polish", "portuguese", "romanian", "russian", "smartcn", "sorani", "spanish", "swedish", "thai",
+        "turkish", "ukrainian");
 
     /**
      * Get MongoDB database factory.
@@ -122,13 +135,18 @@ public class AbstractMongoCollectionsCreator<Dtbs> {
                     }
                     databaseOperations.createCollection(database, persistedName);
                 }
-                TextIndexDefinition textIndex = textIndexDefinition(entity, persistedName);
-                // a collection holds at most one text index, whatever its name, so any existing one is kept as it is
-                if (textIndex != null && !databaseOperations.hasTextIndex(database, persistedName)) {
-                    if (LOG.isInfoEnabled()) {
-                        LOG.info("Creating text index: {} on collection: {} in database: {}", textIndex.name(), persistedName, databaseOperations.getDatabaseName(database));
+                SearchIndexDefinition searchIndex = searchIndexDefinition(entity);
+                if (searchIndex != null) {
+                    createSearchIndex(databaseOperations, database, persistedName, searchIndex);
+                } else {
+                    TextIndexDefinition textIndex = textIndexDefinition(entity, persistedName);
+                    // a collection holds at most one text index, whatever its name, so any existing one is kept as it is
+                    if (textIndex != null && !databaseOperations.hasTextIndex(database, persistedName)) {
+                        if (LOG.isInfoEnabled()) {
+                            LOG.info("Creating text index: {} on collection: {} in database: {}", textIndex.name(), persistedName, databaseOperations.getDatabaseName(database));
+                        }
+                        databaseOperations.createTextIndex(database, persistedName, textIndex);
                     }
-                    databaseOperations.createTextIndex(database, persistedName, textIndex);
                 }
                 for (PersistentProperty persistentProperty : entity.getPersistentProperties()) {
                     if (persistentProperty instanceof Association association) {
@@ -150,6 +168,72 @@ public class AbstractMongoCollectionsCreator<Dtbs> {
             }
         }
 
+    }
+
+    private void createSearchIndex(DatabaseOperations<Dtbs> databaseOperations, Dtbs database, String collection, SearchIndexDefinition searchIndex) {
+        try {
+            if (databaseOperations.listSearchIndexNames(database, collection).contains(searchIndex.name())) {
+                return;
+            }
+            if (LOG.isInfoEnabled()) {
+                LOG.info("Creating search index: {} on collection: {} in database: {}", searchIndex.name(), collection, databaseOperations.getDatabaseName(database));
+            }
+            databaseOperations.createSearchIndex(database, collection, searchIndex);
+        } catch (MongoCommandException e) {
+            if (!SEARCH_UNAVAILABLE_CODES.contains(e.getErrorCode())) {
+                // an invalid definition, such as an unknown analyzer, must not leave the application without its index
+                throw e;
+            }
+            // Search indexes exist on Atlas and the Atlas local deployment only
+            LOG.warn("Cannot create search index: {} on collection: {}; MongoDB Search is not available on this deployment: {}", searchIndex.name(), collection, e.getErrorMessage());
+        }
+    }
+
+    /**
+     * Describes the search index of a {@link Searchable} entity annotated with {@code @MongoSearchIndex}.
+     *
+     * @param entity The entity
+     * @return The definition, or {@code null} when the entity has no search index
+     */
+    @Nullable
+    static SearchIndexDefinition searchIndexDefinition(PersistentEntity entity) {
+        AnnotationMetadata annotationMetadata = entity.getAnnotationMetadata();
+        if (!annotationMetadata.hasAnnotation(MongoSearchIndex.class)) {
+            return null;
+        }
+        List<PersistentProperty> fields = TextSearchSupport.searchFields(entity);
+        if (fields.isEmpty()) {
+            return null;
+        }
+        String analyzer = annotationMetadata.stringValue(MongoSearchIndex.class, MongoSearchIndex.MEMBER_ANALYZER)
+            .filter(a -> !a.isEmpty())
+            .orElseGet(() -> analyzerFor(TextSearchSupport.resolveLanguage(entity)));
+        String name = annotationMetadata.stringValue(MongoSearchIndex.class, MongoSearchIndex.MEMBER_NAME)
+            .filter(n -> !n.isEmpty())
+            .orElse("default");
+        boolean dynamic = annotationMetadata.booleanValue(MongoSearchIndex.class, MongoSearchIndex.MEMBER_DYNAMIC).orElse(false);
+        return new SearchIndexDefinition(name, analyzer, dynamic, fields.stream().map(AbstractMongoCollectionsCreator::persistedFieldName).toList());
+    }
+
+    /**
+     * Maps a {@link Searchable#language()} to the Lucene language analyzer of MongoDB Search.
+     *
+     * @param language The language
+     * @return The analyzer name
+     */
+    static String analyzerFor(String language) {
+        String lower = language.toLowerCase(Locale.ROOT);
+        return switch (lower) {
+            case "none", "standard" -> "lucene.standard";
+            case "simple" -> "lucene.simple";
+            default -> {
+                if (!LANGUAGE_ANALYZERS.contains(lower)) {
+                    throw new IllegalStateException("MongoDB Search has no analyzer for language '" + language
+                        + "'; set @MongoSearchIndex(analyzer) to one of its analyzers");
+                }
+                yield "lucene." + lower;
+            }
+        };
     }
 
     /**
@@ -197,6 +281,32 @@ public class AbstractMongoCollectionsCreator<Dtbs> {
 
     private static String persistedFieldName(PersistentProperty property) {
         return property.getAnnotationMetadata().stringValue(SerdeConfig.class, SerdeConfig.PROPERTY).orElseGet(property::getName);
+    }
+
+    /**
+     * A MongoDB Search index over the search fields of an entity.
+     *
+     * @param name The index name
+     * @param analyzer The analyzer of the string fields
+     * @param dynamic Whether the remaining fields are mapped dynamically
+     * @param fields The indexed field names
+     */
+    public record SearchIndexDefinition(String name,
+                                        String analyzer,
+                                        boolean dynamic,
+                                        List<String> fields) {
+
+        /**
+         * @return The index definition
+         */
+        public Bson definition() {
+            Document fieldMappings = new Document();
+            for (String field : fields) {
+                fieldMappings.append(field, new Document("type", "string").append("analyzer", analyzer));
+            }
+            return new Document("analyzer", analyzer)
+                .append("mappings", new Document("dynamic", dynamic).append("fields", fieldMappings));
+        }
     }
 
     /**
@@ -307,6 +417,24 @@ public class AbstractMongoCollectionsCreator<Dtbs> {
          * @param definition The index definition
          */
         void createTextIndex(Dtbs database, String collection, TextIndexDefinition definition);
+
+        /**
+         * List the search index names of a collection.
+         *
+         * @param database The database
+         * @param collection The collection
+         * @return The search index names
+         */
+        Set<String> listSearchIndexNames(Dtbs database, String collection);
+
+        /**
+         * Create the search index of a searchable entity.
+         *
+         * @param database The database
+         * @param collection The collection
+         * @param definition The index definition
+         */
+        void createSearchIndex(Dtbs database, String collection, SearchIndexDefinition definition);
     }
 
 }
