@@ -12,7 +12,11 @@ Entities and repository methods are portable between the databases. Each databas
 |Path existence and counts |Yes |With a maximum depth |With a maximum depth
 |Multiple and dynamic labels |Yes |No |No
 |Schemaless properties |Yes |In a JSON column |Yes
+|Dynamic relationships |Yes |No |No
+|Relationship finders |Yes |With a single relationship type |Yes
+|Join paths through several relationships |Yes |No |Yes
+|Explicit queries |Cypher |SQL/PGQ or PGQL, with positional parameters |The AGE subset of Cypher, see <<graphAge>>
 |Transactions |Yes |Yes |Yes
 |===
 
-Unsupported methods fail at build time with a message naming the limitation.
+Unsupported methods fail at build time with a message naming the limitation. Path depths given as arguments are capped by `micronaut.data.graph.max-path-depth` on every database, see <<graphPaths>>.
