@@ -117,14 +117,17 @@ final class Neo4jValues {
         return Duration.ofSeconds(duration.seconds(), duration.nanoseconds());
     }
 
+    // Numeric identifiers are matched with id(n), and the driver's id() is the same value
+    @SuppressWarnings("deprecation")
     private static GraphNode node(Node node) {
         List<String> labels = new ArrayList<>();
         node.labels().forEach(labels::add);
-        return new GraphNode(node.elementId(), labels, node.asMap(Neo4jValues::decode));
+        return new GraphNode(node.elementId(), labels, node.asMap(Neo4jValues::decode), node.id());
     }
 
+    @SuppressWarnings("deprecation")
     private static GraphEdge relationship(Relationship relationship) {
         return new GraphEdge(relationship.elementId(), relationship.type(), relationship.startNodeElementId(),
-            relationship.endNodeElementId(), relationship.asMap(Neo4jValues::decode));
+            relationship.endNodeElementId(), relationship.asMap(Neo4jValues::decode), relationship.id());
     }
 }
