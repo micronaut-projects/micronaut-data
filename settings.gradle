@@ -34,6 +34,7 @@ micronautBuild {
     importMicronautCatalog("micronaut-validation")
     importMicronautCatalog("micronaut-mongo")
     importMicronautCatalog("micronaut-flyway")
+    importMicronautCatalog("micronaut-liquibase")
     importMicronautCatalog("micronaut-coherence")
 }
 
@@ -106,6 +107,11 @@ include 'doc-examples:jdbc-example-records-groovy'
 include 'doc-examples:jdbc-example-records-python'
 
 include 'doc-examples:jdbc-sqlite'
+
+include 'doc-examples:jdbc-postgres-notifications-java'
+include 'doc-examples:jdbc-postgres-notifications-groovy'
+include 'doc-examples:jdbc-postgres-notifications-kotlin'
+include 'doc-examples:jdbc-postgres-notifications-python'
 
 include 'doc-examples:jdbc-geospatial-java'
 include 'doc-examples:jdbc-geospatial-kotlin'
