@@ -1,6 +1,6 @@
 Micronaut Data can run full-text searches through repositories: an entity declares which properties are searchable, and repository methods search them and return hits ordered by relevance. The API is the same for every supported store; this section describes the PostgreSQL implementation, which uses the built-in `tsvector` and `tsquery` types.
 
-NOTE: Full-text search is experimental. PostgreSQL is supported in this release; other stores follow.
+NOTE: Full-text search is experimental. PostgreSQL and Oracle are supported for JDBC and R2DBC, and MongoDB has its own <<mongoTextSearch, section>>.
 
 == Mapping searchable entities
 
@@ -50,6 +50,8 @@ snippet::example.BookRepository[project-base="doc-examples/jdbc-search-example",
 |`SearchFuzzy` |edit-distance match |not supported, fails at compile time
 |===
 
+On Oracle the same keywords render `CONTAINS` queries: `{a} | {b}`, `{a} & {b}`, `{a b}`, `a% & b%` and `fuzzy(a,60,100)` respectively, so `SearchFuzzy` is available there.
+
 Methods that return `List`, `Page` or a DTO filter by the search without projecting a score. A sort parameter or a `Pageable` replaces the relevance order.
 
 == Criteria API
@@ -62,3 +64,12 @@ The criteria builder exposes the same predicate through `PersistentEntityCriteri
 - The query parameter is converted to `tsquery` syntax by a parameter converter chosen for the keyword, so the SQL stays the same for every search string.
 - Fuzzy matching is not available. Highlighting, query-time boosts and the programmatic `SearchQuery` are not yet implemented for PostgreSQL.
 - Stemming follows the text search configuration named by `@Searchable(language)`; use `simple` to disable it.
+
+== Oracle notes
+
+- Each search field gets its own Oracle Text `CONTEXT` index, created by schema generation as `CREATE INDEX idx_<table>_search_<column> ON <table> (<column>) INDEXTYPE IS CTXSYS.CONTEXT PARAMETERS ('SYNC (ON COMMIT)')`. The index is synchronised on commit, so rows are searchable as soon as the transaction that wrote them commits.
+- A single-field search renders `CONTAINS(<column>, ?, 1) > 0` and ranks with `SCORE(1)`. A search over every search field matches any field with the positive terms and then excludes rows where any field matches a negated term; the score is the sum of the per-field scores multiplied by their numeric weights (`HIGH` 10, `MEDIUM` 5, `LOW` 2, `LOWEST` 1).
+- `SearchAll` requires every term within one field. Terms are escaped in braces, so reserved words such as `and` or `or` are matched literally.
+- The default lexer matches words literally; there is no stemming unless the index is created with a lexer that enables it.
+- Entities stored as a JSON column (`@EntityRepresentation(columnType = JSON)`) are searched with `JSON_TEXTCONTAINS(<column>, '$.<property>', ?, n)`, which needs a JSON search index created by your migration tool and Oracle Database 23ai or later for `SCORE` support.
+- Highlighting is not available yet.
