@@ -25,9 +25,11 @@ import org.jspecify.annotations.Nullable;
 import io.micronaut.core.annotation.Vetoed;
 import io.micronaut.data.annotation.Repository;
 import io.micronaut.data.annotation.Transient;
+import io.micronaut.data.graph.annotation.Node;
 import io.micronaut.data.jdbc.annotation.JdbcRepository;
 import io.micronaut.data.model.query.builder.sql.Dialect;
 import io.micronaut.data.mongodb.annotation.MongoRepository;
+import io.micronaut.data.neo4j.annotation.Neo4jRepository;
 import io.micronaut.inject.ast.ClassElement;
 import io.micronaut.inject.ast.FieldElement;
 import io.micronaut.inject.ast.MethodElement;
@@ -48,6 +50,7 @@ public final class TestClassVisitor implements TypeElementVisitor<Object, Object
 
     private final boolean isJdbcImplementation;
     private final boolean isMongoDBImplementation;
+    private final boolean isNeo4jImplementation;
 
     private boolean introspected;
 
@@ -73,6 +76,7 @@ public final class TestClassVisitor implements TypeElementVisitor<Object, Object
         Object implementation = prop.getOrDefault("implementation", "");
         isJdbcImplementation = implementation.equals("jdbc");
         isMongoDBImplementation = implementation.equals("mongodb");
+        isNeo4jImplementation = implementation.equals("neo4j");
     }
 
     @Override
@@ -99,6 +103,15 @@ public final class TestClassVisitor implements TypeElementVisitor<Object, Object
         if (element.hasStereotype(Repository.class) && isMongoDBImplementation) {
             element.annotate(MongoRepository.class);
         }
+        if (isNeo4jImplementation) {
+            if (element.hasStereotype(Repository.class)) {
+                element.annotate(Neo4jRepository.class);
+            }
+            if (element.hasStereotype(Entity.class)) {
+                // The graph processor maps nodes, not JPA entities: give every TCK entity a label
+                element.annotate(Node.class);
+            }
+        }
         if (element.getName().startsWith("ee.jakarta.tck.data") && !element.isEnum()) {
             annotateTckClass(element);
         }
@@ -113,7 +126,7 @@ public final class TestClassVisitor implements TypeElementVisitor<Object, Object
         }
         element.annotate(Executable.class);
         element.annotate(Prototype.class);
-        if (isMongoDBImplementation) {
+        if (isMongoDBImplementation || isNeo4jImplementation) {
             // The field access forced above names a field such as isOdd after the field, while serde source
             // generation names it after its isOdd() getter. Keep the runtime serdes, which follow the introspection
             element.annotate(SerdeableGenerated.class, builder -> builder.member("skip", true));
@@ -135,7 +148,7 @@ public final class TestClassVisitor implements TypeElementVisitor<Object, Object
 
     @Override
     public void visitField(FieldElement element, VisitorContext context) {
-        if (isJdbcImplementation || isMongoDBImplementation) {
+        if (isJdbcImplementation || isMongoDBImplementation || isNeo4jImplementation) {
             if (element.getOwningType().hasStereotype(Entity.class)) {
                 element.annotate(Nullable.class);
             }
