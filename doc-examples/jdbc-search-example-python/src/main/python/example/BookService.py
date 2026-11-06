@@ -1,6 +1,7 @@
 from jakarta.inject import Singleton
 from micronaut.data.model import Pageable
 from micronaut.data.model.search import MatchMode, SearchQuery
+from micronaut.data.model.vector import Vector
 
 from example.BookRepository import BookRepository
 
@@ -19,6 +20,18 @@ class BookService:
             score = hit.score().value()  # <3>
         hits = self.repository.countHits(query)  # <4>
         # end::search[]
+        return [hit.entity().title for hit in results]
+
+    def hybrid_titles(self, query: str, embedding: Vector) -> list[str]:
+        # tag::hybrid[]
+        search_query = (SearchQuery.builder(query)
+                        .vector("embedding", embedding)  # <1>
+                        .textWeight(1.0).vectorWeight(1.0).candidates(50)  # <2>
+                        .build())
+        results = self.repository.search(search_query)
+        for hit in results:
+            fused_score = hit.score().value()  # <3>
+        # end::hybrid[]
         return [hit.entity().title for hit in results]
 
     def highlighted_titles(self, query: str) -> list[str]:

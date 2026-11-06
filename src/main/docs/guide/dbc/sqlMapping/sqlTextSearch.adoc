@@ -79,6 +79,18 @@ snippet::example.BookService[project-base="doc-examples/jdbc-search-example", so
 
 The tags are the same on every store, so a client can render them without knowing the backend. A fragment is document text with the tags inserted and is not HTML-escaped, so it carries any markup stored in the document; before putting fragments into an HTML page, use `SearchResult.escapedHighlights()`, which escapes the text and keeps only the `<em>` and `</em>` tags. PostgreSQL renders `ts_headline`, Oracle `CTX_DOC.POLICY_SNIPPET`, and the document stores the `highlight` request clause. MongoDB `$text` cannot highlight and throws api:data.model.search.UnsupportedSearchFeatureException[]. The criteria API exposes the same projection as `PersistentEntityCriteriaBuilder.searchHighlight(field, query, MatchMode)`.
 
+== Hybrid search
+
+A hybrid search combines the text match with a vector similarity, so a row that is close to a query embedding ranks high even when it shares no words with the query, and a row matching both ranks first. On a store with vector search, pass the vector property and the query vector to the `SearchQuery`:
+
+snippet::example.BookService[project-base="doc-examples/jdbc-search-example", source="main", tags="hybrid"]
+
+<1> The entity's vector property and the query embedding.
+<2> Optional weights of the two rankings, `1` by default; `candidates` sets how many hits each ranking contributes, `100` by default.
+<3> The score of a hit is its reciprocal rank fusion value: `textWeight / (60 + text rank) + vectorWeight / (60 + vector rank)`, with `rankConstant` replacing `60`.
+
+Micronaut Data runs the text query and the nearest-neighbour query, each limited to `candidates` hits, and fuses the two rankings in memory, so hybrid search is available on every store that supports both text and vector search (PostgreSQL with pgvector and Oracle Database 23ai), including with a `Pageable`, which cuts the page from the fused ranking. A sort on the pageable is rejected because the fused score defines the order; `highlight` applies to the text hits; `minScore` compares the fused score. A store without vector search throws api:data.model.search.UnsupportedSearchFeatureException[].
+
 == Criteria API
 
 The criteria builder exposes the same predicate through `PersistentEntityCriteriaBuilder.textMatch(field, query, MatchMode)` and the score through `searchScore(fields, query, MatchMode)`, so a api:data.repository.jpa.criteria.PredicateSpecification[] can combine a text match with any other restriction.
