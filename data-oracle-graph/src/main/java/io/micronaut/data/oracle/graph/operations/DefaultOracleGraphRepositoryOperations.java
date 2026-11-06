@@ -23,6 +23,7 @@ import io.micronaut.core.annotation.Internal;
 import io.micronaut.data.connection.ConnectionDefinition;
 import io.micronaut.data.connection.ConnectionOperations;
 import io.micronaut.data.exceptions.DataAccessException;
+import io.micronaut.data.graph.model.query.builder.LiteralMasker;
 import io.micronaut.data.graph.model.query.builder.OracleGraphQueryBuilder;
 import io.micronaut.data.graph.runtime.GraphResult;
 import io.micronaut.data.graph.runtime.GraphSession;
@@ -69,10 +70,12 @@ import java.time.OffsetDateTime;
 import java.util.ArrayList;
 import java.util.Iterator;
 import java.util.List;
+import java.util.Locale;
 import java.util.Map;
 import java.util.Optional;
 import java.util.concurrent.ExecutorService;
 import java.util.function.Function;
+import java.util.regex.Pattern;
 import java.util.stream.Stream;
 
 /**
@@ -96,6 +99,10 @@ final class DefaultOracleGraphRepositoryOperations extends AbstractGraphReposito
      * {@code oracle.jdbc.OracleTypes.TIMESTAMPLTZ}, the type of a TIMESTAMP WITH LOCAL TIME ZONE column.
      */
     private static final int ORACLE_TIMESTAMP_WITH_LOCAL_TIME_ZONE = -102;
+    private static final Pattern GRAPH_TABLE = Pattern.compile("\\bGRAPH_TABLE\\s*\\(");
+    private static final Pattern ROOT_VARIABLE = Pattern.compile("\\(\\s*N\\s*[:)]");
+    private static final Pattern ORDER_BY = Pattern.compile("(?<![.\\w])ORDER\\s+BY\\b");
+    private static final Pattern LIMIT_CLAUSE = Pattern.compile("(?<![.\\w])(LIMIT|OFFSET|FETCH\\s+(NEXT|FIRST))\\b");
 
     private final ConnectionOperations<Connection> connectionOperations;
     private final JdbcRepositoryOperations jdbcOperations;
@@ -163,7 +170,7 @@ final class DefaultOracleGraphRepositoryOperations extends AbstractGraphReposito
     }
 
     private static GraphResult run(Connection connection, String query, Map<String, Object> parameters) {
-        OracleGraphRows.Expanded expanded = OracleGraphRows.expand(query, new ArrayList<>(parameters.values()));
+        OracleGraphRows.Expanded expanded = OracleGraphRows.expand(query, parameters);
         if (LOG.isTraceEnabled()) {
             // Parameter values may hold personal data, so they are logged at TRACE only
             LOG.trace("Executing Oracle graph query: {} with parameters {}", expanded.query(), expanded.parameters());
@@ -181,7 +188,10 @@ final class DefaultOracleGraphRepositoryOperations extends AbstractGraphReposito
                     statement.setObject(i + 1, value);
                 }
             }
-            try (ResultSet resultSet = statement.executeQuery()) {
+            if (!statement.execute()) {
+                return new GraphResult(List.of(), statement.getUpdateCount());
+            }
+            try (ResultSet resultSet = statement.getResultSet()) {
                 ResultSetMetaData metaData = resultSet.getMetaData();
                 int count = metaData.getColumnCount();
                 List<String> columns = new ArrayList<>(count);
@@ -220,17 +230,31 @@ final class DefaultOracleGraphRepositoryOperations extends AbstractGraphReposito
 
     @Override
     protected void appendSortAndLimit(StringBuilder query, RuntimePersistentEntity<?> entity, Sort sort, Limit limit) {
-        boolean sqlPgq = query.indexOf("GRAPH_TABLE (") >= 0;
-        if (sort != null && sort.isSorted() && query.indexOf(" ORDER BY ") < 0) {
+        String masked = LiteralMasker.mask(query.toString(), true).toUpperCase(Locale.ENGLISH);
+        boolean sqlPgq = GRAPH_TABLE.matcher(masked).find();
+        if (sort != null && sort.isSorted()) {
+            if (ORDER_BY.matcher(masked).find()) {
+                throw new DataAccessException("Cannot apply the sort " + sort.getOrderBy() + " to the query [" + query + "]: it declares ORDER BY itself");
+            }
+            if (!sqlPgq && !ROOT_VARIABLE.matcher(masked).find()) {
+                throw new DataAccessException("Cannot apply the sort " + sort.getOrderBy() + " to the query [" + query + "]: sort an explicit query with its own ORDER BY clause");
+            }
             appendOrderBy(query, entity, sort, sqlPgq);
         }
-        if (limit != null && limit.isLimited() && query.indexOf(" LIMIT ") < 0 && query.indexOf(" FETCH ") < 0) {
+        if (limit != null && limit.isLimited()) {
+            if (LIMIT_CLAUSE.matcher(masked).find()) {
+                throw new DataAccessException("Cannot page the query [" + query + "]: it declares a limit itself");
+            }
+            if (query.indexOf(OracleGraphQueryBuilder.PATH_MATCH_COLUMN) >= 0) {
+                // Each row is a step of a path, so a limit could cut a path short
+                throw new DataAccessException("Cannot page the query [" + query + "]: its rows are the steps of paths");
+            }
             appendLimit(query, limit, sqlPgq);
         }
     }
 
     private static void appendOrderBy(StringBuilder query, RuntimePersistentEntity<?> entity, Sort sort, boolean sqlPgq) {
-        query.append(" ORDER BY ");
+        StringBuilder orderBy = new StringBuilder(" ORDER BY ");
         Iterator<Sort.Order> iterator = sort.getOrderBy().iterator();
         while (iterator.hasNext()) {
             Sort.Order order = iterator.next();
@@ -238,14 +262,19 @@ final class DefaultOracleGraphRepositoryOperations extends AbstractGraphReposito
             String expression = sqlPgq
                 ? "\"n" + OracleGraphQueryBuilder.SEPARATOR + property.getPersistedName() + "\""
                 : "n." + property.getPersistedName();
+            if (sqlPgq && query.indexOf(expression) < 0) {
+                // A projection only exposes the columns it selects
+                throw new DataAccessException("Cannot apply the sort " + sort.getOrderBy() + " to the query [" + query + "]: it does not return " + expression);
+            }
             if (order.isIgnoreCase()) {
                 expression = "LOWER(" + expression + ")";
             }
-            query.append(expression).append(order.isAscending() ? " ASC" : " DESC");
+            orderBy.append(expression).append(order.isAscending() ? " ASC" : " DESC");
             if (iterator.hasNext()) {
-                query.append(", ");
+                orderBy.append(", ");
             }
         }
+        query.append(orderBy);
     }
 
     private static RuntimePersistentProperty<?> sortProperty(RuntimePersistentEntity<?> entity, String name) {
