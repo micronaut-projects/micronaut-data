@@ -365,18 +365,15 @@ public class DefaultSqlPreparedQuery<E, R> extends DefaultBindableParametersPrep
         if (pageable.isUnpaged() && !pageable.isSorted() || bindPageableOrSort) {
             return;
         }
-        StringBuilder builder = new StringBuilder();
-        appendPageable(builder, pageable, limit, sort, null, storedQuery.getQueryBindings().size() + 1);
-
+        // A trailing FOR UPDATE stays at the end. The SQL Server lock hint follows the table name instead, so
+        // the paging is appended after it
         int forUpdateIndex = this.query.lastIndexOf(SqlQueryBuilder.STANDARD_FOR_UPDATE_CLAUSE);
-        if (forUpdateIndex == -1) {
-            forUpdateIndex = this.query.lastIndexOf(SqlQueryBuilder.SQL_SERVER_FOR_UPDATE_CLAUSE);
-        }
+        StringBuilder builder = new StringBuilder(forUpdateIndex > -1 ? this.query.substring(0, forUpdateIndex) : this.query);
+        appendPageable(builder, pageable, limit, sort, null, storedQuery.getQueryBindings().size() + 1);
         if (forUpdateIndex > -1) {
-            this.query = this.query.substring(0, forUpdateIndex) + builder + this.query.substring(forUpdateIndex);
-        } else {
-            this.query += builder;
+            builder.append(this.query, forUpdateIndex, this.query.length());
         }
+        this.query = builder.toString();
     }
 
     private void appendPageable(StringBuilder query,
@@ -389,7 +386,10 @@ public class DefaultSqlPreparedQuery<E, R> extends DefaultBindableParametersPrep
         SqlQueryBuilder queryBuilder = sqlStoredQuery.getQueryBuilder();
         if (pageable instanceof CursoredPageable cursored) {
             cursored = enhancePageable(cursored, getPersistentEntity());
-            query.append(buildCursorPagination(cursored, paramIndex, tableAlias));
+            String condition = buildCursorCondition(cursored, paramIndex, tableAlias);
+            if (condition != null) {
+                appendCursorCondition(query, condition, isRawQuery());
+            }
             appendSort(cursored.getSort(), query, queryBuilder, tableAlias);
             query.append(queryBuilder.buildLimitAndOffset(cursored.getSize(), 0)); // Append limit
         } else {
@@ -428,11 +428,34 @@ public class DefaultSqlPreparedQuery<E, R> extends DefaultBindableParametersPrep
         if (!sort.isSorted()) {
             return sort;
         }
-        return Sort.of(sort.getOrderBy().stream().map(Order::reverse).toList());
+        // The reversed order also moves the nulls to the other end, so that a backward page is the exact
+        // reverse of the forward order
+        return Sort.of(sort.getOrderBy().stream()
+            .map(order -> new Order(order.getProperty(), order.isAscending() ? Sort.Order.Direction.DESC : Sort.Order.Direction.ASC,
+                order.isIgnoreCase(), reverse(order.getNullOrdering())))
+            .toList());
     }
 
-    @NonNull
-    private String buildCursorPagination(@NonNull CursoredPageable cursoredPageable, int paramIndex, @Nullable String tableAlias) {
+    private static Order.NullOrdering reverse(Order.NullOrdering nullOrdering) {
+        return switch (nullOrdering) {
+            case FIRST -> Order.NullOrdering.LAST;
+            case LAST -> Order.NullOrdering.FIRST;
+            case NONE -> Order.NullOrdering.NONE;
+        };
+    }
+
+    /**
+     * Builds the cursor condition for the next page. The order keys are compared the same way the {@code ORDER BY}
+     * sorts them: case-insensitive keys with {@code LOWER}, and keys with an explicit null ordering with the nulls at
+     * the requested end.
+     *
+     * @param cursoredPageable The pageable with the cursor
+     * @param paramIndex The index of the first cursor parameter
+     * @param tableAlias The table alias
+     * @return The condition, or null on the first page, which has no cursor
+     */
+    @Nullable
+    private String buildCursorCondition(@NonNull CursoredPageable cursoredPageable, int paramIndex, @Nullable String tableAlias) {
         RuntimePersistentEntity<Object> persistentEntity = (RuntimePersistentEntity<Object>) getPersistentEntity();
         List<Order> orders = cursoredPageable.getSort().getOrderBy();
         List<String> cursorPropertyNames = new ArrayList<>(orders.size());
@@ -445,7 +468,7 @@ public class DefaultSqlPreparedQuery<E, R> extends DefaultBindableParametersPrep
         List<PersistentPropertyPath> cursorPersistentPropertyPaths = getCursorProperties(cursoredPageable, persistentEntity);
         Optional<Cursor> optionalCursor = cursoredPageable.cursor();
         if (optionalCursor.isEmpty()) {
-            return "";
+            return null;
         }
         Cursor cursor = optionalCursor.get();
         if (orders.size() != cursor.size()) {
@@ -456,44 +479,108 @@ public class DefaultSqlPreparedQuery<E, R> extends DefaultBindableParametersPrep
         }
 
         List<QueryParameterBinding> cursorBindings = new ArrayList<>(orders.size());
-        cursorQueryBindings = new ArrayList<>(orders.size() * (orders.size() + 1) / 2);
         for (int i = 0; i < orders.size(); ++i) {
             cursorBindings.add(new CursoredQueryParameterBinder(
                 "cursor_" + i, cursorPersistentPropertyPaths.get(i).getProperty().getDataType(), cursor.get(i)
             ));
         }
+        List<QueryParameterBinding> queryBindings = new ArrayList<>(orders.size() * (orders.size() + 1) / 2);
+        cursorQueryBindings = queryBindings;
+        CursorParameters parameters = new CursorParameters(getQueryBuilder().positionalParameterFormat(), paramIndex, queryBindings);
 
-        StringBuilder builder = new StringBuilder(" ");
-        if (query.contains("WHERE")) {
-            int i = query.indexOf("WHERE") + "WHERE".length();
-            query = query.substring(0, i) + "(" + query.substring(i) + ")";
-            builder.append(" AND (");
-        } else {
-            builder.append("WHERE (");
-        }
-        String positionalParameter = getQueryBuilder().positionalParameterFormat();
+        List<String> disjuncts = new ArrayList<>(orders.size());
         for (int i = 0; i < orders.size(); ++i) {
-            builder.append("(");
-            for (int j = 0; j <= i; ++j) {
-                builder.append(cursorPropertyNames.get(j));
-                if (orders.get(i).isAscending()) {
-                    builder.append(i == j ? " > " : " = ");
-                } else {
-                    builder.append(i == j ? " < " : " = ");
-                }
-                cursorQueryBindings.add(cursorBindings.get(j));
-                builder.append(String.format(positionalParameter, paramIndex++));
-                if (i != j) {
-                    builder.append(" AND ");
-                }
-            }
-            builder.append(")");
-            if (i < orders.size() - 1) {
-                builder.append(" OR ");
+            String disjunct = cursorDisjunct(i, orders, cursorPropertyNames, cursor, cursorBindings, parameters);
+            if (disjunct != null) {
+                disjuncts.add(disjunct);
             }
         }
-        builder.append(")");
-        return builder.toString();
+        return disjuncts.isEmpty() ? "1 = 0" : String.join(" OR ", disjuncts);
+    }
+
+    /**
+     * Builds disjunct {@code i} of the cursor condition: the keys before {@code i} equal the cursor and key {@code i}
+     * comes after it.
+     *
+     * @param i The index of the key that comes after the cursor
+     * @param orders The order keys
+     * @param columns The column of each key
+     * @param cursor The cursor
+     * @param cursorBindings The binding of each cursor value
+     * @param parameters The cursor parameters
+     * @return The disjunct, or null if no row can come after the cursor in key {@code i}
+     */
+    @Nullable
+    private static String cursorDisjunct(int i, List<Order> orders, List<String> columns, Cursor cursor,
+                                         List<QueryParameterBinding> cursorBindings, CursorParameters parameters) {
+        Order order = orders.get(i);
+        boolean nullValue = isExplicitlyOrderedNull(order, cursor.get(i));
+        if (nullValue && order.getNullOrdering() == Order.NullOrdering.LAST) {
+            // Nothing comes after a null that is ordered last, so the remaining rows differ in a later key
+            return null;
+        }
+        StringBuilder disjunct = new StringBuilder("(");
+        for (int j = 0; j < i; ++j) {
+            disjunct.append(cursorKeyEquals(orders.get(j), columns.get(j), cursor.get(j), cursorBindings.get(j), parameters))
+                .append(" AND ");
+        }
+        String column = columns.get(i);
+        if (nullValue) {
+            // A null that is ordered first: every non-null value comes after it
+            disjunct.append(column).append(" IS NOT NULL");
+        } else {
+            String comparison = cursorColumn(order, column) + (order.isAscending() ? " > " : " < ")
+                + parameters.bind(order, cursorBindings.get(i));
+            if (order.getNullOrdering() == Order.NullOrdering.LAST) {
+                disjunct.append("(").append(comparison).append(" OR ").append(column).append(" IS NULL)");
+            } else {
+                disjunct.append(comparison);
+            }
+        }
+        return disjunct.append(")").toString();
+    }
+
+    private static String cursorKeyEquals(Order order, String column, @Nullable Object value,
+                                          QueryParameterBinding binding, CursorParameters parameters) {
+        if (isExplicitlyOrderedNull(order, value)) {
+            return column + " IS NULL";
+        }
+        return cursorColumn(order, column) + " = " + parameters.bind(order, binding);
+    }
+
+    private static boolean isExplicitlyOrderedNull(Order order, @Nullable Object value) {
+        return value == null && order.getNullOrdering() != Order.NullOrdering.NONE;
+    }
+
+    /**
+     * Adds the cursor condition to the query built so far, which ends before a trailing {@code FOR UPDATE}. The query
+     * is not parsed; as before, an upper-case {@code WHERE} in it means the query has a condition:
+     * <ul>
+     *     <li>a query built by the query builder writes its condition in parentheses right before the paging, so the
+     *     cursor condition is joined with {@code AND};</li>
+     *     <li>in a query written by the user, the condition after the first {@code WHERE} is wrapped in parentheses
+     *     first, so that an {@code OR} in it keeps its meaning.</li>
+     * </ul>
+     * Otherwise a {@code WHERE} is added.
+     *
+     * @param query The query built so far
+     * @param condition The cursor condition
+     * @param rawQuery Whether the query was written by the user
+     */
+    static void appendCursorCondition(StringBuilder query, String condition, boolean rawQuery) {
+        int where = query.indexOf("WHERE");
+        if (where == -1) {
+            query.append(" WHERE (").append(condition).append(')');
+            return;
+        }
+        if (rawQuery) {
+            query.insert(where + "WHERE".length(), " (").append(')');
+        }
+        query.append(" AND (").append(condition).append(')');
+    }
+
+    private static String cursorColumn(Order order, String column) {
+        return order.isIgnoreCase() ? "LOWER(" + column + ")" : column;
     }
 
     private List<PersistentPropertyPath> getCursorProperties(CursoredPageable cursoredPageable, RuntimePersistentEntity<Object> persistentEntity) {
@@ -660,6 +747,23 @@ public class DefaultSqlPreparedQuery<E, R> extends DefaultBindableParametersPrep
         @Override
         public Object getValue() {
             return value;
+        }
+    }
+
+    /**
+     * The parameters of the cursor condition. They are numbered in the order they are added to the condition, and the
+     * binding of each one is recorded in that order.
+     *
+     * @param format The positional parameter format
+     * @param firstIndex The index of the first cursor parameter
+     * @param bindings The bindings of the parameters added so far
+     */
+    private record CursorParameters(String format, int firstIndex, List<QueryParameterBinding> bindings) {
+
+        String bind(Order order, QueryParameterBinding binding) {
+            String parameter = String.format(format, firstIndex + bindings.size());
+            bindings.add(binding);
+            return order.isIgnoreCase() ? "LOWER(" + parameter + ")" : parameter;
         }
     }
 }
