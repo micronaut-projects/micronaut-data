@@ -1,0 +1,12 @@
+# The CQN examples use Spatial, which is absent from the default slim image.
+test-resources:
+  containers:
+    oracle:
+      image-name: gvenzl/oracle-free
+      image-tag: 23.26.3-full
+
+# Keep the CQN container separate from the shared default-datasource container.
+micronaut:
+  test:
+    resources:
+      scope: oracle-cqn
