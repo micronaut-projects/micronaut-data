@@ -33,6 +33,7 @@ import io.micronaut.inject.ast.FieldElement;
 import io.micronaut.inject.ast.MethodElement;
 import io.micronaut.inject.visitor.TypeElementVisitor;
 import io.micronaut.inject.visitor.VisitorContext;
+import io.micronaut.serde.annotation.SerdeableGenerated;
 import jakarta.persistence.ElementCollection;
 import jakarta.persistence.Entity;
 
@@ -99,23 +100,32 @@ public final class TestClassVisitor implements TypeElementVisitor<Object, Object
             element.annotate(MongoRepository.class);
         }
         if (element.getName().startsWith("ee.jakarta.tck.data") && !element.isEnum()) {
-            if (element.hasStereotype(Introspected.class)) {
-                element.annotate(Introspected.class, builder -> {
-                    builder.member("accessKind", new Introspected.AccessKind[]{Introspected.AccessKind.FIELD, Introspected.AccessKind.METHOD});
-                    builder.member("visibility", Introspected.Visibility.ANY);
-                });
-            }
-            element.annotate(Executable.class);
-            element.annotate(Prototype.class);
+            annotateTckClass(element);
+        }
+    }
 
-            element.getMethods().forEach(ce -> {
-                if (ce.isStatic() || !ce.isAccessible()) {
-                    ce.annotate(Vetoed.class);
-                } else {
-                    ce.annotate(Executable.class);
-                }
+    private void annotateTckClass(ClassElement element) {
+        if (element.hasStereotype(Introspected.class)) {
+            element.annotate(Introspected.class, builder -> {
+                builder.member("accessKind", new Introspected.AccessKind[]{Introspected.AccessKind.FIELD, Introspected.AccessKind.METHOD});
+                builder.member("visibility", Introspected.Visibility.ANY);
             });
         }
+        element.annotate(Executable.class);
+        element.annotate(Prototype.class);
+        if (isMongoDBImplementation) {
+            // The field access forced above names a field such as isOdd after the field, while serde source
+            // generation names it after its isOdd() getter. Keep the runtime serdes, which follow the introspection
+            element.annotate(SerdeableGenerated.class, builder -> builder.member("skip", true));
+        }
+
+        element.getMethods().forEach(ce -> {
+            if (ce.isStatic() || !ce.isAccessible()) {
+                ce.annotate(Vetoed.class);
+            } else {
+                ce.annotate(Executable.class);
+            }
+        });
     }
 
     @Override

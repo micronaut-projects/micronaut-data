@@ -20,13 +20,17 @@ import io.micronaut.core.beans.BeanIntrospection;
 import io.micronaut.core.type.Argument;
 import io.micronaut.serde.Deserializer;
 import io.micronaut.serde.SerdeRegistry;
+import io.micronaut.serde.config.DeserializationConfiguration;
+import io.micronaut.serde.config.SerdeConfiguration;
 import io.micronaut.serde.config.naming.PropertyNamingStrategy;
 import io.micronaut.serde.exceptions.SerdeException;
 import io.micronaut.serde.reference.AbstractPropertyReferenceManager;
 import io.micronaut.serde.reference.PropertyReference;
 import org.jspecify.annotations.NonNull;
+import org.jspecify.annotations.Nullable;
 
 import java.util.Collection;
+import java.util.Optional;
 
 /**
  * Default implementation of {@link Deserializer.DecoderContext}.
@@ -35,9 +39,34 @@ import java.util.Collection;
 @Internal
 class DefaultDecoderContext extends AbstractPropertyReferenceManager implements Deserializer.DecoderContext {
     private final SerdeRegistry registry;
+    private final @Nullable SerdeConfiguration serdeConfiguration;
+    private final @Nullable DeserializationConfiguration deserializationConfiguration;
 
     DefaultDecoderContext(SerdeRegistry registry) {
+        this(registry, null, null);
+    }
+
+    /**
+     * @param registry                     The registry
+     * @param serdeConfiguration           The serde configuration
+     * @param deserializationConfiguration The deserialization configuration, read by generated deserializers
+     */
+    DefaultDecoderContext(SerdeRegistry registry,
+                          @Nullable SerdeConfiguration serdeConfiguration,
+                          @Nullable DeserializationConfiguration deserializationConfiguration) {
         this.registry = registry;
+        this.serdeConfiguration = serdeConfiguration;
+        this.deserializationConfiguration = deserializationConfiguration;
+    }
+
+    @Override
+    public Optional<SerdeConfiguration> getSerdeConfiguration() {
+        return Optional.ofNullable(serdeConfiguration);
+    }
+
+    @Override
+    public Optional<DeserializationConfiguration> getDeserializationConfiguration() {
+        return Optional.ofNullable(deserializationConfiguration);
     }
 
     @Override

@@ -30,6 +30,7 @@ import io.micronaut.data.mongodb.conf.MongoDataConfiguration;
 import io.micronaut.serde.Encoder;
 import io.micronaut.serde.Serializer;
 import io.micronaut.serde.bson.custom.CodecBsonDecoder;
+import io.micronaut.serde.config.SerializationConfiguration;
 import io.micronaut.serde.config.naming.PropertyNamingStrategy;
 import io.micronaut.serde.exceptions.SerdeException;
 import io.micronaut.serde.reference.PropertyReference;
@@ -41,6 +42,7 @@ import org.jspecify.annotations.NonNull;
 import org.jspecify.annotations.Nullable;
 
 import java.io.IOException;
+import java.util.Optional;
 
 /**
  * The Micronaut Data's Serde's {@link Serializer.EncoderContext}.
@@ -79,6 +81,11 @@ final class DataEncoderContext implements Serializer.EncoderContext {
     @Override
     public ConversionService getConversionService() {
         return parent.getConversionService();
+    }
+
+    @Override
+    public Optional<SerializationConfiguration> getSerializationConfiguration() {
+        return parent.getSerializationConfiguration();
     }
 
     @Override

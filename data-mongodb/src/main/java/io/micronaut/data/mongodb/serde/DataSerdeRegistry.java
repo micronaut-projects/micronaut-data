@@ -36,6 +36,9 @@ import io.micronaut.serde.Deserializer;
 import io.micronaut.serde.Encoder;
 import io.micronaut.serde.SerdeRegistry;
 import io.micronaut.serde.Serializer;
+import io.micronaut.serde.config.DeserializationConfiguration;
+import io.micronaut.serde.config.SerdeConfiguration;
+import io.micronaut.serde.config.SerializationConfiguration;
 import io.micronaut.serde.config.naming.PropertyNamingStrategy;
 import io.micronaut.serde.exceptions.SerdeException;
 import io.micronaut.serde.support.DefaultSerdeRegistry;
@@ -64,6 +67,9 @@ final class DataSerdeRegistry implements SerdeRegistry {
     private final AttributeConverterRegistry attributeConverterRegistry;
 
     private final MongoDataConfiguration mongoDataConfiguration;
+    private final SerdeConfiguration serdeConfiguration;
+    private final SerializationConfiguration serializationConfiguration;
+    private final DeserializationConfiguration deserializationConfiguration;
 
     /**
      * Default constructor.
@@ -72,15 +78,24 @@ final class DataSerdeRegistry implements SerdeRegistry {
      * @param runtimeEntityRegistry        The runtimeEntityRegistry
      * @param attributeConverterRegistry   The attributeConverterRegistry
      * @param mongoDataConfiguration       The Mongo configuration
+     * @param serdeConfiguration           The serde configuration
+     * @param serializationConfiguration   The serialization configuration
+     * @param deserializationConfiguration The deserialization configuration
      */
     public DataSerdeRegistry(BeanContext beanContext,
                              RuntimeEntityRegistry runtimeEntityRegistry,
                              AttributeConverterRegistry attributeConverterRegistry,
-                             MongoDataConfiguration mongoDataConfiguration) {
+                             MongoDataConfiguration mongoDataConfiguration,
+                             SerdeConfiguration serdeConfiguration,
+                             SerializationConfiguration serializationConfiguration,
+                             DeserializationConfiguration deserializationConfiguration) {
         this.defaultSerdeRegistry = beanContext.createBean(DefaultSerdeRegistry.class);
         this.runtimeEntityRegistry = runtimeEntityRegistry;
         this.attributeConverterRegistry = attributeConverterRegistry;
         this.mongoDataConfiguration = mongoDataConfiguration;
+        this.serdeConfiguration = serdeConfiguration;
+        this.serializationConfiguration = serializationConfiguration;
+        this.deserializationConfiguration = deserializationConfiguration;
     }
 
     public Serializer.EncoderContext newEncoderContext(Class<?> view,
@@ -96,7 +111,7 @@ final class DataSerdeRegistry implements SerdeRegistry {
     @Override
     public Serializer.EncoderContext newEncoderContext(@Nullable Class<?> view) {
         if (view != null) {
-            return new DefaultEncoderContext(this) {
+            return new DefaultEncoderContext(this, serializationConfiguration) {
                 @Override
                 public boolean hasView(Class<?>... views) {
                     for (Class<?> candidate : views) {
@@ -108,13 +123,13 @@ final class DataSerdeRegistry implements SerdeRegistry {
                 }
             };
         }
-        return new DefaultEncoderContext(this);
+        return new DefaultEncoderContext(this, serializationConfiguration);
     }
 
     @Override
     public Deserializer.DecoderContext newDecoderContext(@Nullable Class<?> view) {
         if (view != null) {
-            return new DefaultDecoderContext(this) {
+            return new DefaultDecoderContext(this, serdeConfiguration, deserializationConfiguration) {
                 @Override
                 public boolean hasView(Class<?>... views) {
                     for (Class<?> candidate : views) {
@@ -126,7 +141,7 @@ final class DataSerdeRegistry implements SerdeRegistry {
                 }
             };
         }
-        return new DefaultDecoderContext(this);
+        return new DefaultDecoderContext(this, serdeConfiguration, deserializationConfiguration);
     }
 
     @Override
