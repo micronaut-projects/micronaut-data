@@ -35,6 +35,7 @@ import io.micronaut.data.model.runtime.RuntimeEntityRegistry;
 import io.micronaut.data.neo4j.session.Neo4jDriverRegistration;
 import io.micronaut.data.neo4j.session.Neo4jConnection;
 import io.micronaut.data.neo4j.session.Neo4jConnectionOperations;
+import io.micronaut.data.neo4j.transaction.Neo4jTransactionOperations;
 import io.micronaut.data.runtime.convert.DataConversionService;
 import io.micronaut.data.runtime.date.DateTimeProvider;
 import jakarta.inject.Named;
@@ -55,7 +56,8 @@ import java.util.function.Function;
 
 /**
  * Repository operations backed by the Neo4j Java driver. Queries run in the transaction of the current connection,
- * or as auto-commit queries in a session opened for the operation.
+ * or as auto-commit queries in a session opened for the operation. Writes of entities, which run several statements,
+ * run in a transaction of their own when none is active.
  *
  * @author graemerocher
  * @since 5.3.0
@@ -67,11 +69,13 @@ final class DefaultNeo4jRepositoryOperations extends AbstractGraphRepositoryOper
     private static final Logger LOG = LoggerFactory.getLogger(DefaultNeo4jRepositoryOperations.class);
 
     private final Neo4jConnectionOperations connectionOperations;
+    private final Neo4jTransactionOperations transactionOperations;
     private final BeanLocator beanLocator;
     private final String driverName;
 
     DefaultNeo4jRepositoryOperations(@Parameter Neo4jDriverRegistration registration,
                                      @Parameter Neo4jConnectionOperations connectionOperations,
+                                     @Parameter Neo4jTransactionOperations transactionOperations,
                                      BeanLocator beanLocator,
                                      DateTimeProvider<Object> dateTimeProvider,
                                      RuntimeEntityRegistry runtimeEntityRegistry,
@@ -82,6 +86,7 @@ final class DefaultNeo4jRepositoryOperations extends AbstractGraphRepositoryOper
                                      GraphSerde graphSerde) {
         super(new CypherQueryBuilder(), dateTimeProvider, runtimeEntityRegistry, conversionService, attributeConverterRegistry, executorService, encoderRegistrars, graphSerde);
         this.connectionOperations = connectionOperations;
+        this.transactionOperations = transactionOperations;
         this.beanLocator = beanLocator;
         this.driverName = registration.name();
     }
@@ -118,6 +123,12 @@ final class DefaultNeo4jRepositoryOperations extends AbstractGraphRepositoryOper
     @Override
     protected <R> R write(AnnotationMetadata annotationMetadata, Function<GraphSession, R> work) {
         return run(annotationMetadata, work);
+    }
+
+    @Override
+    protected <R> R writeInTransaction(AnnotationMetadata annotationMetadata, Function<GraphSession, R> work) {
+        // Joins the current transaction, or begins one so that the statements of the write commit or roll back together
+        return transactionOperations.executeWrite(status -> work.apply(session(status.getConnection())));
     }
 
     private <R> R run(AnnotationMetadata annotationMetadata, Function<GraphSession, R> work) {

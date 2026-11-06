@@ -13,6 +13,7 @@ from example.Person import Person
 class PersonRepository(CrudRepository[Person, UUID]):
 
     def findByName(self, name: str) -> Person | None: ...
+    def findByKnowsName(self, name: str) -> list[Person]: ...
 
     # tag::paths[]
     def findShortestPath(self, start: Person, end: Person) -> GraphPath[Person] | None: ...  # <1>

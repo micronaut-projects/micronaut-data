@@ -50,6 +50,16 @@ class PersonRepositorySpec:
         assert path.end().name == "Joe"
 
     @Test
+    def testCascade(self):
+        # tag::cascade[]
+        keanu = self.personRepository.save(Person("Keanu Reeves", 1964))  # <1>
+        carrie = Person("Carrie-Anne Moss", 1967, knows=[keanu])  # <2>
+        self.personRepository.save(carrie)
+        # end::cascade[]
+        assert [p.name for p in self.personRepository.findByKnowsName("Keanu Reeves")] == ["Carrie-Anne Moss"]
+        assert self.personRepository.findByName("Keanu Reeves").born == 1964
+
+    @Test
     def testPathOptions(self):
         joe = self.personRepository.save(Person("Joe", 1973))
         self.personRepository.save(Person("Fred", 1970, [Person("Barney", 1971, [joe]), Person("Wilma", 1972, [joe])]))

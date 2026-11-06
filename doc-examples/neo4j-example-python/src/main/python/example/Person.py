@@ -18,5 +18,8 @@ class Person:
     # tag::labels[]
     labels: Annotated[list[str], Labels] = field(default_factory=list)  # <1>
     # end::labels[]
+    # tag::cascade[]
+    knows: Annotated["list[Person]", Relationship("KNOWS", cascade="NONE")] = field(default_factory=list)  # <1>
+    # end::cascade[]
 # tag::person[]
 # end::person[]

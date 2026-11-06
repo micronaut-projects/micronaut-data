@@ -74,6 +74,17 @@ class PersonRepositorySpec : AbstractNeo4jTest() {
     }
 
     @Test
+    fun testCascade() {
+        // tag::cascade[]
+        val keanu = personRepository.save(Person(name = "Keanu Reeves", born = 1964)) // <1>
+        val carrie = Person(name = "Carrie-Anne Moss", born = 1967, knows = listOf(keanu)) // <2>
+        personRepository.save(carrie)
+        // end::cascade[]
+        assertEquals(listOf("Carrie-Anne Moss"), personRepository.findByKnowsName("Keanu Reeves").map { it.name })
+        assertEquals(1964, personRepository.findByName("Keanu Reeves")!!.born)
+    }
+
+    @Test
     fun testPathOptions() {
         assertEquals("Joe", personRepository.findShortestPathByFollowsBetweenName("Fred", "Joe", 3)!!.end().name)
         assertTrue(personRepository.existsPathByFollowsBetweenName("Joe", "Fred"))

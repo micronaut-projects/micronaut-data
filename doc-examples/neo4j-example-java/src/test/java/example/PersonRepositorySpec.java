@@ -89,6 +89,18 @@ class PersonRepositorySpec extends AbstractNeo4jTest {
     }
 
     @Test
+    void testCascade() {
+        // tag::cascade[]
+        Person keanu = personRepository.save(new Person("Keanu Reeves", 1964)); // <1>
+        Person carrie = new Person("Carrie-Anne Moss", 1967);
+        carrie.setKnows(List.of(keanu)); // <2>
+        personRepository.save(carrie);
+        // end::cascade[]
+        assertEquals(List.of("Carrie-Anne Moss"), personRepository.findByKnowsName("Keanu Reeves").stream().map(Person::getName).toList());
+        assertEquals(1964, personRepository.findByName("Keanu Reeves").orElseThrow().getBorn());
+    }
+
+    @Test
     void testPathOptions() {
         assertEquals("Joe", personRepository.findShortestPathByFollowsBetweenName("Fred", "Joe", 3).orElseThrow().end().getName());
         assertTrue(personRepository.existsPathByFollowsBetweenName("Joe", "Fred"));

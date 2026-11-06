@@ -44,6 +44,8 @@ import io.micronaut.data.model.runtime.AttributeConverterRegistry;
 import io.micronaut.data.model.runtime.RuntimeEntityRegistry;
 import io.micronaut.data.runtime.convert.DataConversionService;
 import io.micronaut.data.runtime.date.DateTimeProvider;
+import io.micronaut.transaction.TransactionOperations;
+import jakarta.inject.Inject;
 import jakarta.inject.Named;
 import org.jspecify.annotations.Nullable;
 import org.slf4j.Logger;
@@ -73,6 +75,7 @@ import java.util.function.Function;
 /**
  * Repository operations for a graph in PostgreSQL with Apache AGE. Each Cypher query runs through the
  * {@code cypher()} function on the JDBC connection of the current transaction, or on a connection opened for the operation.
+ * Writes of entities, which run several statements, run in a transaction of their own when none is active.
  *
  * <p>The graph of an operation is that of the current tenant when there is an {@link AgeGraphTenantResolver}, else
  * the graph configured for the data source. Graphs are created on first use, once per name.</p>
@@ -101,8 +104,9 @@ final class DefaultAgeRepositoryOperations extends AbstractGraphRepositoryOperat
         + " ELSE " + COMMITTED + " END";
 
     private final ConnectionOperations<Connection> connectionOperations;
+    private final TransactionOperations<Connection> transactionOperations;
     private final String defaultGraph;
-    private final @Nullable AgeGraphTenantResolver tenantResolver;
+    private @Nullable AgeGraphTenantResolver tenantResolver;
     private final boolean createExtension;
     private final boolean createGraph;
     private final JsonMapper jsonMapper;
@@ -121,6 +125,7 @@ final class DefaultAgeRepositoryOperations extends AbstractGraphRepositoryOperat
     private final List<String> indexStatements = new CopyOnWriteArrayList<>();
 
     DefaultAgeRepositoryOperations(@Parameter ConnectionOperations<Connection> connectionOperations,
+                                   @Parameter TransactionOperations<Connection> transactionOperations,
                                    @Parameter String dataSourceName,
                                    AgeConfiguration configuration,
                                    JsonMapper jsonMapper,
@@ -130,12 +135,11 @@ final class DefaultAgeRepositoryOperations extends AbstractGraphRepositoryOperat
                                    AttributeConverterRegistry attributeConverterRegistry,
                                    @Named("io") @Nullable ExecutorService executorService,
                                    List<GraphValueEncoderRegistrar> encoderRegistrars,
-                                   GraphSerde graphSerde,
-                                   @Nullable AgeGraphTenantResolver tenantResolver) {
+                                   GraphSerde graphSerde) {
         super(new AgeCypherQueryBuilder(), dateTimeProvider, runtimeEntityRegistry, conversionService, attributeConverterRegistry, executorService, encoderRegistrars, graphSerde);
         this.connectionOperations = connectionOperations;
+        this.transactionOperations = transactionOperations;
         this.defaultGraph = AgeStatements.validateGraphName(configuration.graphFor(dataSourceName));
-        this.tenantResolver = tenantResolver;
         this.createExtension = configuration.isCreateExtension();
         this.createGraph = configuration.isCreateGraph();
         this.jsonMapper = jsonMapper;
@@ -144,6 +148,16 @@ final class DefaultAgeRepositoryOperations extends AbstractGraphRepositoryOperat
     /**
      * The graph of the current tenant, or the configured graph when there is no tenant.
      */
+    /**
+     * The resolver of the tenant graph, when multi-tenancy is enabled.
+     *
+     * @param tenantResolver The resolver
+     */
+    @Inject
+    void setTenantResolver(@Nullable AgeGraphTenantResolver tenantResolver) {
+        this.tenantResolver = tenantResolver;
+    }
+
     private String currentGraph() {
         String tenantGraph = tenantResolver == null ? null : tenantResolver.resolveTenantGraph();
         return tenantGraph == null ? defaultGraph : AgeStatements.validateGraphName(tenantGraph);
@@ -223,6 +237,13 @@ final class DefaultAgeRepositoryOperations extends AbstractGraphRepositoryOperat
         } catch (SQLException e) {
             throw new DataAccessException("Error running an Apache AGE write in a transaction: " + e.getMessage(), e);
         }
+    }
+
+    @Override
+    protected <R> R writeInTransaction(AnnotationMetadata annotationMetadata, Function<GraphSession, R> work) {
+        // Joins the current transaction, or begins one so that the statements of the write commit or roll back together
+        String graph = currentGraph();
+        return transactionOperations.executeWrite(status -> work.apply(session(status.getConnection(), graph)));
     }
 
     private <R> R commitOrRollback(Connection connection, String graph, Function<GraphSession, R> work) throws SQLException {

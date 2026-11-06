@@ -94,6 +94,17 @@ class Neo4jSchemalessSpec extends Specification implements TestPropertyProvider 
 
         and: "the node was not written"
         !petRepository.findById("Tom").present
+
+        when: "a related node fails after the node and the related node were written"
+        def dino = new Pet("Dino")
+        def hoppy = new Pet("Hoppy")
+        hoppy.labels = ["Hopper`) DETACH DELETE (n"] as Set
+        dino.related = [PLAYS_WITH: [hoppy]]
+        petRepository.save(dino)
+
+        then:
+        thrown(io.micronaut.data.exceptions.DataAccessException)
+        petRepository.count() == 0
     }
 
     void "taking a label out of the collection leaves it on the node"() {

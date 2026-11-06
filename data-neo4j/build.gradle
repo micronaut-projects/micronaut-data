@@ -29,7 +29,7 @@ dependencies {
         exclude group: "ch.qos.logback"
     }
 
-    testRuntimeOnly mnLogging.logback.classic
+    testImplementation mnLogging.logback.classic
 
     testCompileOnly mn.micronaut.inject.groovy
 }
