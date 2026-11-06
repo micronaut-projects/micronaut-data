@@ -21,6 +21,7 @@ import io.micronaut.context.annotation.Requires;
 import io.micronaut.core.annotation.Internal;
 import io.micronaut.data.exceptions.DataAccessException;
 import io.micronaut.data.model.runtime.convert.vector.impl.AbstractOracleTypeConvertersFactory;
+import io.micronaut.data.model.vector.BinaryVector;
 import io.micronaut.data.model.vector.ByteVector;
 import io.micronaut.data.model.vector.DoubleVector;
 import io.micronaut.data.model.vector.FloatVector;
@@ -53,7 +54,8 @@ final class OracleTypeConvertersFactory extends AbstractOracleTypeConvertersFact
         VECTOR::ofInt8Values,
         (length, indices, values) -> VECTOR.ofFloat32Values(VECTOR.SparseFloatArray.of(length, indices, values)),
         (length, indices, values) -> VECTOR.ofInt8Values(VECTOR.SparseByteArray.of(length, indices, values)),
-        (length, indices, values) -> VECTOR.ofFloat64Values(VECTOR.SparseDoubleArray.of(length, indices, values))
+        (length, indices, values) -> VECTOR.ofFloat64Values(VECTOR.SparseDoubleArray.of(length, indices, values)),
+        VECTOR::ofBinaryValues
     );
 
     @Prototype
@@ -100,6 +102,12 @@ final class OracleTypeConvertersFactory extends AbstractOracleTypeConvertersFact
     @Requires(classes = VECTOR.class)
     DataTypeConverter<VECTOR, SparseByteVector> fromOracleVectorToSparseByteVector() {
         return oracleVectorToSparseByteVectorConverter(OracleVectorAdapterImpl::new);
+    }
+
+    @Prototype
+    @Requires(classes = VECTOR.class)
+    DataTypeConverter<VECTOR, BinaryVector> fromOracleVectorToBinaryVector() {
+        return oracleVectorToBinaryVectorConverter(OracleVectorAdapterImpl::new);
     }
 
     // Adapter over oracle.sql.VECTOR to reuse shared helpers from AbstractOracleTypeConvertersFactory

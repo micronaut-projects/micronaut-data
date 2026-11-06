@@ -41,5 +41,19 @@ public enum ScoringFunction {
     L2_EUCLIDEAN,
 
     /** Squared L2/Euclidean distance score function. */
-    L2_EUCLIDEAN_SQUARED;
+    L2_EUCLIDEAN_SQUARED,
+
+    /**
+     * Hamming distance: the number of dimensions that differ. For {@link io.micronaut.data.model.vector.BinaryVector} values.
+     *
+     * @since 5.3.0
+     */
+    HAMMING,
+
+    /**
+     * Jaccard distance: one minus the share of set bits that both vectors set. For {@link io.micronaut.data.model.vector.BinaryVector} values.
+     *
+     * @since 5.3.0
+     */
+    JACCARD;
 }
