@@ -279,7 +279,12 @@ public class MappedEntityVisitor implements TypeElementVisitor<MappedEntity, Obj
         boolean isRelation = propertyElement.hasStereotype(Relation.class);
         if (!isRelation && propertyElement.hasStereotype(InferredRelation.class)) {
             ClassElement propertyType = propertyElement.getGenericType();
-            Relation.Kind inferredKind = propertyType.isArray() || propertyType.isAssignable(Iterable.class)
+            if (propertyType.isArray()) {
+                // The target of an association is read from the type argument of a collection
+                context.fail("A relationship cannot be an array, use a collection instead: " + propertyElement.getName(), propertyElement);
+                return;
+            }
+            Relation.Kind inferredKind = propertyType.isAssignable(Iterable.class)
                 ? Relation.Kind.ONE_TO_MANY
                 : Relation.Kind.MANY_TO_ONE;
             propertyElement = (PropertyElement) propertyElement.annotate(Relation.class, builder -> builder.value(inferredKind));

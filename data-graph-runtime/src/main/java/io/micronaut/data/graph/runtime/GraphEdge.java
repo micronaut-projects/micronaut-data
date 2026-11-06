@@ -15,6 +15,8 @@
  */
 package io.micronaut.data.graph.runtime;
 
+import org.jspecify.annotations.Nullable;
+
 import java.util.Map;
 
 /**
@@ -25,8 +27,22 @@ import java.util.Map;
  * @param startId    The identifier of the start node
  * @param endId      The identifier of the end node
  * @param properties The properties
+ * @param numericId  The numeric identifier of the relationship, if the database has one besides {@code id}
  * @author graemerocher
  * @since 5.3.0
  */
-public record GraphEdge(Object id, String type, Object startId, Object endId, Map<String, Object> properties) {
+public record GraphEdge(Object id, String type, Object startId, Object endId, Map<String, Object> properties, @Nullable Long numericId) {
+
+    /**
+     * A relationship whose identifier is the only one the database has.
+     *
+     * @param id         The identifier the database assigned to the relationship
+     * @param type       The relationship type
+     * @param startId    The identifier of the start node
+     * @param endId      The identifier of the end node
+     * @param properties The properties
+     */
+    public GraphEdge(Object id, String type, Object startId, Object endId, Map<String, Object> properties) {
+        this(id, type, startId, endId, properties, null);
+    }
 }
