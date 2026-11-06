@@ -68,6 +68,11 @@ interface MovieRepository extends CrudRepository<Movie, String> {
     int names(String merge);
     @Query("MATCH (m:Movie {title: \$title}) SET m.set = \$title RETURN count(m)")
     int setSet(String title);
+    @Query("MATCH (m:Movie {title: \$title}) SET m.votes = 1; // counted")
+    int voteTerminated(String title);
+    @Query("MATCH (m:Movie {title: \$title}) CALL { WITH m RETURN 1 AS one } SET m.votes = 1")
+    int voteSubquery(String title);
+    List<Movie> findByRoles(Role role);
 }
 """)
         personRepository = buildRepository('test.PersonRepository', """
@@ -80,6 +85,12 @@ interface PersonRepository extends CrudRepository<Person, String> {
     Optional<Person> findByName(String name);
     @Join("mentor")
     List<Person> findByBornGreaterThan(Integer born);
+    List<Person> findByMentorIsNull();
+    List<Person> findByMentorIsNotNull();
+    @Join(value = "mentor", type = Join.Type.INNER)
+    List<Person> findByBornLessThan(Integer born);
+    @Join(value = "mentor", type = Join.Type.INNER_FETCH)
+    List<Person> findByBorn(Integer born);
 }
 """)
     }
@@ -107,8 +118,9 @@ interface PersonRepository extends CrudRepository<Person, String> {
         'findByDirectorsNameOrderByDirectorsBorn'  | 1     | 'MATCH (n:Movie), (n)<-[:DIRECTED]-(a0:Person:Actor) WHERE a0.name = $p0 WITH n, min(a0.born) AS o0 RETURN n ORDER BY o0 ASC'
         'findByDirectorsIsEmpty'                   | 0     | 'MATCH (n:Movie) WHERE NOT (n)<-[:DIRECTED]-() RETURN n'
         'findByRolesIsNotEmpty'                    | 0     | 'MATCH (n:Movie) WHERE (n)<-[:ACTED_IN]-() RETURN n'
-        'findByReleasedOrderByDirectorsNameDesc'   | 1     | 'MATCH (n:Movie), (n)<-[:DIRECTED]-(a0:Person:Actor) WHERE n.released = $p0 WITH n, max(a0.name) AS o0 OPTIONAL MATCH (n)<-[:DIRECTED]-(j0:Person:Actor) WITH n, o0, collect(j0) AS j_directors RETURN n, j_directors ORDER BY o0 DESC'
+        'findByReleasedOrderByDirectorsNameDesc'   | 1     | 'MATCH (n:Movie) WHERE n.released = $p0 OPTIONAL MATCH (n)<-[:DIRECTED]-(a0:Person:Actor) WITH n, max(a0.name) AS o0 OPTIONAL MATCH (n)<-[:DIRECTED]-(j0:Person:Actor) WITH n, o0, collect(j0) AS j_directors RETURN n, j_directors ORDER BY o0 DESC'
         'findByRolesPersonName'                    | 1     | 'MATCH (n:Movie), (n)<-[ar0:ACTED_IN]-(a0:Person:Actor) WHERE a0.name = $p0 WITH DISTINCT n RETURN n'
+        'findByRoles'                              | 1     | 'MATCH (n:Movie), (n)<-[ar0:ACTED_IN]-(a0:Person:Actor) WHERE elementId(a0) = $p0 WITH DISTINCT n RETURN n'
         'findByRolesRolesArrayContains'            | 1     | 'MATCH (n:Movie), (n)<-[ar0:ACTED_IN]-(a0:Person:Actor) WHERE $p0 IN ar0.roles WITH DISTINCT n RETURN n'
         'findByReleased'                           | 1     | 'MATCH (n:Movie) WHERE n.released = $p0 OPTIONAL MATCH (n)<-[:DIRECTED]-(j0:Person:Actor) WITH n, collect(j0) AS j_directors RETURN n, j_directors'
         'findByTitle'                              | 1     | 'MATCH (n:Movie) WHERE n.title = $p0 OPTIONAL MATCH (n)<-[r0:ACTED_IN]-(j0:Person:Actor) WITH n, collect(CASE WHEN r0 IS NULL THEN NULL ELSE {rel: r0, node: j0} END) AS j_roles OPTIONAL MATCH (n)<-[:DIRECTED]-(j1:Person:Actor) WITH n, j_roles, collect(j1) AS j_directors RETURN n, j_roles, j_directors'
@@ -122,6 +134,49 @@ interface PersonRepository extends CrudRepository<Person, String> {
         'findById'                                 | 1     | 'MATCH (n:Movie) WHERE n.title = $p0 RETURN n'
         'deleteById'                               | 1     | 'MATCH (n:Movie) WHERE n.title = $p0 DETACH DELETE n RETURN count(*)'
         'findAll'                                  | 0     | 'MATCH (n:Movie) RETURN n'
+    }
+
+    void "test a relationship entity has no dynamic attributes"() {
+        when:
+        buildRepository('test.StageRepository', """
+@RelationshipProperties
+class Billing {
+    @RelationshipId
+    @GeneratedValue
+    private Long id;
+    @TargetNode
+    private Stage stage;
+    @DynamicAttributes
+    private Map<String, Object> attributes = new HashMap<>();
+    public Long getId() { return id; }
+    public void setId(Long id) { this.id = id; }
+    public Stage getStage() { return stage; }
+    public void setStage(Stage stage) { this.stage = stage; }
+    public Map<String, Object> getAttributes() { return attributes; }
+    public void setAttributes(Map<String, Object> attributes) { this.attributes = attributes; }
+}
+
+@Node
+class Stage {
+    @Id
+    private String name;
+    @Relationship("BILLED")
+    private List<Billing> billings = new ArrayList<>();
+    public String getName() { return name; }
+    public void setName(String name) { this.name = name; }
+    public List<Billing> getBillings() { return billings; }
+    public void setBillings(List<Billing> billings) { this.billings = billings; }
+}
+
+@TestGraphRepository
+interface StageRepository extends GenericRepository<Stage, String> {
+    Optional<Stage> findByName(String name);
+}
+""")
+
+        then:
+        def e = thrown(RuntimeException)
+        e.message.contains('@DynamicAttributes is not supported on a relationship entity')
     }
 
     void "test the count query of a pageable finder"() {
@@ -159,6 +214,8 @@ interface PersonRepository extends CrudRepository<Person, String> {
         'countIn' | DataMethod.OperationType.QUERY    | 'MATCH (m:Movie) WHERE m.released IN $set RETURN count(m)'
         'names'   | DataMethod.OperationType.QUERY    | 'MATCH (m:Movie:Set {merge: $merge}) WHERE m.create IS NULL RETURN count(m) AS delete'
         'setSet'  | DataMethod.OperationType.UPDATE   | 'MATCH (m:Movie {title: $title}) SET m.set = $title RETURN count(m)'
+        'voteTerminated' | DataMethod.OperationType.UPDATE | 'MATCH (m:Movie {title: $title}) SET m.votes = 1 RETURN count(*); // counted'
+        'voteSubquery'   | DataMethod.OperationType.UPDATE | 'MATCH (m:Movie {title: $title}) CALL { WITH m RETURN 1 AS one } SET m.votes = 1 RETURN count(*)'
     }
 
     void "test parameters inside string literals are ignored"() {
@@ -178,6 +235,67 @@ interface PersonRepository extends CrudRepository<Person, String> {
         'findByName'           | 'MATCH (n:Person:Actor) WHERE n.name = $p0 RETURN n'
         'findById'             | 'MATCH (n:Person:Actor) WHERE elementId(n) = $p0 RETURN n'
         'findByBornGreaterThan'| 'MATCH (n:Person:Actor) WHERE n.born > $p0 OPTIONAL MATCH (n)-[:FOLLOWS]->(j0:Person:Actor) WITH n, collect(j0) AS j_mentor RETURN n, j_mentor'
+        'findByBornLessThan'   | 'MATCH (n:Person:Actor), (n)-[:FOLLOWS]->(a0:Person:Actor) WHERE n.born < $p0 WITH DISTINCT n RETURN n'
+        'findByBorn'           | 'MATCH (n:Person:Actor) WHERE n.born = $p0 MATCH (n)-[:FOLLOWS]->(j0:Person:Actor) WITH n, collect(j0) AS j_mentor RETURN n, j_mentor'
+    }
+
+    @Unroll
+    void "test relationship null check for #method"() {
+        expect:
+        getQuery(findMethod(personRepository, method, 0)) == query
+
+        where:
+        method                  | query
+        'findByMentorIsNull'    | 'MATCH (n:Person:Actor) WHERE NOT (n)-[:FOLLOWS]->() RETURN n'
+        'findByMentorIsNotNull' | 'MATCH (n:Person:Actor) WHERE (n)-[:FOLLOWS]->() RETURN n'
+    }
+
+    @Unroll
+    void "test #description is rejected"() {
+        when:
+        buildRepository('test.RejectedRepository', """
+$MOVIES
+
+@TestGraphRepository
+interface RejectedRepository extends CrudRepository<Movie, String> {
+    $method
+}
+""")
+
+        then:
+        def e = thrown(RuntimeException)
+        e.message.contains(message)
+
+        where:
+        description        | method                                                                             | message
+        'delete returning' | 'Movie deleteByTitleReturning(String title);'                                      | 'Returning updates and deletes are not supported'
+        'update returning' | 'Movie updateByTitleReturning(String title, Integer released);'                    | 'Returning updates and deletes are not supported'
+        'right join'       | '@Join(value = "directors", type = Join.Type.RIGHT) List<Movie> findByReleased(Integer r);' | 'only support LEFT and INNER joins'
+    }
+
+    void "test array relationships are rejected"() {
+        when:
+        buildRepository('test.ArrayRepository', """
+@Node
+class Crew {
+    @Id
+    private String name;
+    @Relationship(type = "KNOWS")
+    private Crew[] friends;
+    public String getName() { return name; }
+    public void setName(String name) { this.name = name; }
+    public Crew[] getFriends() { return friends; }
+    public void setFriends(Crew[] friends) { this.friends = friends; }
+}
+
+@TestGraphRepository
+interface ArrayRepository extends CrudRepository<Crew, String> {
+}
+""")
+
+        then:
+        def e = thrown(RuntimeException)
+        e.message.contains('A relationship cannot be an array')
     }
 
     void "test relationship kinds are inferred from the property type"() {

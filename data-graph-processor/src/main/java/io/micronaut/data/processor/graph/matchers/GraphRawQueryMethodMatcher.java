@@ -157,7 +157,7 @@ public final class GraphRawQueryMethodMatcher implements MethodMatcher {
 
     private static DataMethod.OperationType findOperationType(MethodMatchContext matchContext, String query, boolean readOnly) {
         String upper = stripLiterals(query).toUpperCase(Locale.ENGLISH);
-        boolean returnsResults = RETURN_PATTERN.matcher(upper).find() || SELECT_PATTERN.matcher(upper).find();
+        boolean returnsResults = hasTopLevelReturn(query) || SELECT_PATTERN.matcher(upper).find();
         ClassElement returnType = TypeUtils.getMethodProducingItemType(matchContext.getMethodElement());
         boolean returnsCount = returnType == null || TypeUtils.isVoid(returnType) || TypeUtils.isNumber(returnType);
         boolean deletes = DELETE_PATTERN.matcher(upper).find();
@@ -188,11 +188,39 @@ public final class GraphRawQueryMethodMatcher implements MethodMatcher {
         if (returnType == null || !TypeUtils.isNumber(returnType)) {
             return query;
         }
-        String upper = stripLiterals(query).toUpperCase(Locale.ENGLISH);
-        if (RETURN_PATTERN.matcher(upper).find()) {
+        if (hasTopLevelReturn(query)) {
             return query;
         }
-        return query + " RETURN count(*)";
+        // Trailing comments and the statement terminator stay after the added clause
+        String masked = maskLiterals(query);
+        int end = masked.length();
+        while (end > 0 && (Character.isWhitespace(masked.charAt(end - 1)) || masked.charAt(end - 1) == ';')) {
+            end--;
+        }
+        return query.substring(0, end) + " RETURN count(*)" + query.substring(end);
+    }
+
+    /**
+     * A {@code RETURN} inside braces belongs to a {@code CALL} subquery and does not return results from the query.
+     *
+     * @param query The query
+     * @return Whether the query itself returns results
+     */
+    private static boolean hasTopLevelReturn(String query) {
+        String masked = maskLiterals(query);
+        StringBuilder topLevel = new StringBuilder(masked.length());
+        int depth = 0;
+        for (int i = 0; i < masked.length(); i++) {
+            char c = masked.charAt(i);
+            if (c == '{') {
+                depth++;
+            } else if (c == '}') {
+                depth = Math.max(0, depth - 1);
+            }
+            topLevel.append(depth > 0 ? ' ' : c);
+        }
+        String names = NAME_PATTERN.matcher(topLevel).replaceAll(" ");
+        return RETURN_PATTERN.matcher(MAP_KEY_PATTERN.matcher(names).replaceAll(" ").toUpperCase(Locale.ENGLISH)).find();
     }
 
     private static QueryResult buildQueryResult(MethodMatchContext matchContext,
