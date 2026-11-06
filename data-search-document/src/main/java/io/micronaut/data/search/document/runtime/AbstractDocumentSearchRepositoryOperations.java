@@ -69,6 +69,9 @@ import java.util.UUID;
 abstract class AbstractDocumentSearchRepositoryOperations extends AbstractRepositoryOperations {
 
     protected static final String QUERY = "query";
+    private static final String ORDER = "order";
+    private static final String ASC = "asc";
+    private static final String DESC = "desc";
     private static final Argument<Map<String, Object>> DOCUMENT = Argument.mapOf(String.class, Object.class);
 
     protected final JsonMapper jsonMapper;
@@ -515,7 +518,7 @@ abstract class AbstractDocumentSearchRepositoryOperations extends AbstractReposi
         Map<String, Object> flipped = new LinkedHashMap<>();
         entry.forEach((field, options) -> {
             Map<String, Object> order = new LinkedHashMap<>((Map<String, Object>) options);
-            order.put("order", "asc".equals(order.get("order")) ? "desc" : "asc");
+            order.put(ORDER, ASC.equals(order.get(ORDER)) ? DESC : ASC);
             flipped.put(field, order);
         });
         return flipped;
