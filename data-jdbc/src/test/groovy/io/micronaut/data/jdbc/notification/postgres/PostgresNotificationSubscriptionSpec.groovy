@@ -15,8 +15,10 @@
  */
 package io.micronaut.data.jdbc.notification.postgres
 
+import ch.qos.logback.classic.Level
 import ch.qos.logback.classic.Logger
 import ch.qos.logback.classic.spi.ILoggingEvent
+import ch.qos.logback.core.Appender
 import ch.qos.logback.core.read.ListAppender
 import io.micronaut.context.ApplicationContext
 import io.micronaut.context.BeanContext
@@ -59,6 +61,51 @@ import java.util.concurrent.atomic.AtomicReference
 import java.util.function.Supplier
 
 class PostgresNotificationSubscriptionSpec extends Specification {
+
+    void "startup logging failure releases the connection before reception starts"() {
+        given:
+        def logger = LoggerFactory.getLogger(PostgresNotificationSubscription) as Logger
+        def previousLevel = logger.level
+        def polled = new CountDownLatch(1)
+        def loggingFailure = new IllegalStateException('startup log failed')
+        def appender = Stub(Appender) {
+            doAppend(_ as ILoggingEvent) >> { ILoggingEvent event ->
+                if (event.message.startsWith('Starting PostgreSQL notification subscription')) {
+                    polled.await(200, TimeUnit.MILLISECONDS)
+                    throw loggingFailure
+                }
+            }
+        }
+        logger.level = Level.TRACE
+        logger.addAppender(appender)
+        def postgres = Stub(PGConnection) {
+            getNotifications(_ as int) >> { polled.countDown(); null }
+        }
+        def connection = Mock(Connection)
+        def source = Stub(PGSimpleDataSource) {
+            getConnection() >> connection
+        }
+        def subscription = newSubscription(source)
+
+        when:
+        subscription.start()
+
+        then:
+        def failure = thrown(IllegalStateException)
+        failure.cause.is(loggingFailure)
+        1 * connection.setAutoCommit(true)
+        1 * connection.unwrap(PGConnection) >> postgres
+        1 * connection.isClosed() >> true
+        1 * connection.close()
+        polled.count == 1
+        subscription.stop().get(10, TimeUnit.SECONDS) == null
+        subscription.@receiver.awaitTermination(10, TimeUnit.SECONDS)
+
+        cleanup:
+        logger.detachAppender(appender)
+        logger.level = previousLevel
+        subscription?.stop()?.get(10, TimeUnit.SECONDS)
+    }
 
     void "lazily resolves each listener once across notifications and reconnection"() {
         given:

@@ -81,6 +81,9 @@ final class PostgresNotificationSubscription {
     private final Object recoveryMonitor = new Object();
 
     private volatile boolean running = true;
+    // Startup owns the connection until receiver submission; the receiver then owns it through cleanup.
+    // Shutdown only signals the receiver and never uses the connection.
+    @SuppressWarnings("java:S3077")
     private volatile @Nullable Connection connection;
 
     PostgresNotificationSubscription(String name,
@@ -145,9 +148,9 @@ final class PostgresNotificationSubscription {
                 cleanupUnstarted();
                 return false;
             }
-            receiver.execute(this::receive);
-            LOG.trace("Started PostgreSQL notification subscription with [{}] listener methods for datasource [{}]",
+            LOG.trace("Starting PostgreSQL notification subscription with [{}] listener methods for datasource [{}]",
                 dispatchers.size(), name);
+            receiver.execute(this::receive);
             return true;
         } catch (Exception e) {
             cleanupUnstarted();

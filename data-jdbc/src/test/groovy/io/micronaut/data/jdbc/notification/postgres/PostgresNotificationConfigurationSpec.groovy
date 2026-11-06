@@ -47,24 +47,24 @@ class PostgresNotificationConfigurationSpec extends Specification {
                 if (!driverVisible && name.startsWith('org.postgresql.')) {
                     throw new ClassNotFoundException(name)
                 }
-                if (name.startsWith('io.micronaut.data.jdbc.notification.postgres.')) {
-                    synchronized (getClassLoadingLock(name)) {
-                        def loaded = findLoadedClass(name)
-                        if (loaded == null) {
-                            def resource = name.replace('.', '/') + '.class'
-                            def bytes = parent.getResourceAsStream(resource)?.bytes
-                            if (bytes == null) {
-                                throw new ClassNotFoundException(name)
-                            }
-                            loaded = defineClass(name, bytes, 0, bytes.length)
-                        }
-                        if (resolve) {
-                            resolveClass(loaded)
-                        }
-                        return loaded
-                    }
+                if (!name.startsWith('io.micronaut.data.jdbc.notification.postgres.')) {
+                    return super.loadClass(name, resolve)
                 }
-                return super.loadClass(name, resolve)
+                synchronized (getClassLoadingLock(name)) {
+                    def loaded = findLoadedClass(name)
+                    if (loaded == null) {
+                        def resource = name.replace('.', '/') + '.class'
+                        def bytes = parent.getResourceAsStream(resource)?.bytes
+                        if (bytes == null) {
+                            throw new ClassNotFoundException(name)
+                        }
+                        loaded = defineClass(name, bytes, 0, bytes.length)
+                    }
+                    if (resolve) {
+                        resolveClass(loaded)
+                    }
+                    return loaded
+                }
             }
         }
         def context = ApplicationContext.builder().classLoader(classLoader)
