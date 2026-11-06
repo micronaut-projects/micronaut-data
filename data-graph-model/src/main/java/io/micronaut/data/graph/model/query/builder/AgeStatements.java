@@ -16,6 +16,7 @@
 package io.micronaut.data.graph.model.query.builder;
 
 import io.micronaut.core.annotation.Internal;
+import io.micronaut.data.graph.model.query.PathQueryDefinition;
 
 import java.util.ArrayList;
 import java.util.List;
@@ -112,14 +113,16 @@ public final class AgeStatements {
     }
 
     /**
-     * Replaces the graph token of a statement.
+     * Replaces the graph token of a statement, which is the first argument of {@code cypher()}. The Cypher query is
+     * left as it is.
      *
      * @param statement A statement built by {@link #wrap(String)}
      * @param graph     The graph name
      * @return The statement to run
      */
     public static String forGraph(String statement, String graph) {
-        return statement.replace(GRAPH_TOKEN, graph);
+        int cypher = statement.indexOf(CYPHER_START);
+        return cypher < 0 ? statement : statement.substring(0, cypher).replace(GRAPH_TOKEN, graph) + statement.substring(cypher);
     }
 
     /**
@@ -139,8 +142,8 @@ public final class AgeStatements {
     private static boolean hasParameters(String cypher) {
         Matcher matcher = PARAMETER.matcher(mask(cypher));
         while (matcher.find()) {
-            // Tokens such as the path limit are replaced before the statement runs
-            if (!matcher.group(1).startsWith("__")) {
+            // The path limit is replaced before the statement runs
+            if (!PathQueryDefinition.PATH_LIMIT_TOKEN.equals(matcher.group())) {
                 return true;
             }
         }
@@ -169,25 +172,35 @@ public final class AgeStatements {
                 end = index;
             }
         }
-        String items = cypher.substring(start, end).trim();
+        String items = withoutOuterComments(cypher.substring(start, end));
         if (items.toUpperCase(Locale.ENGLISH).startsWith("DISTINCT ")) {
-            items = items.substring("DISTINCT ".length()).trim();
+            items = withoutOuterComments(items.substring("DISTINCT ".length()));
         }
         if (items.equals("*")) {
             throw new IllegalArgumentException("RETURN * is not supported with Apache AGE, name the returned columns");
         }
         List<String> columns = new ArrayList<>();
         for (String item : splitTopLevel(items, mask(items))) {
-            String trimmed = item.trim();
-            Matcher matcher = ALIAS.matcher(trimmed);
+            String trimmed = withoutOuterComments(item);
+            Matcher matcher = ALIAS.matcher(mask(trimmed));
             if (matcher.matches()) {
-                String alias = matcher.group(2);
+                String alias = trimmed.substring(matcher.start(2), matcher.end(2));
                 columns.add(alias.startsWith("`") ? alias.substring(1, alias.length() - 1) : alias);
             } else {
                 columns.add(trimmed);
             }
         }
         return columns;
+    }
+
+    /**
+     * Removes the whitespace and comments around some text, which the mask has replaced by spaces.
+     */
+    private static String withoutOuterComments(String text) {
+        String masked = mask(text);
+        int length = masked.stripTrailing().length();
+        int start = length - masked.substring(0, length).stripLeading().length();
+        return text.substring(start, length);
     }
 
     private static List<String> splitTopLevel(String items, String masked) {
