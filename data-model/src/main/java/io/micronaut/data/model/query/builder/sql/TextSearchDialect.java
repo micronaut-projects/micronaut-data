@@ -513,6 +513,7 @@ public interface TextSearchDialect {
             + "(cfg text) RETURNS regconfig AS 'SELECT cfg::regconfig' LANGUAGE sql IMMUTABLE SET search_path = pg_catalog, pg_temp;";
         // PostgreSQL can skip an index that exists, so schema generation can run against an existing database
         private static final String CREATE_INDEX_IF_NOT_EXISTS = "CREATE INDEX IF NOT EXISTS ";
+        private static final String POSTGRESQL_TEXT_SEARCH = "PostgreSQL text search";
 
         @Override
         public void appendTextMatch(StringBuilder query,
@@ -523,7 +524,7 @@ public interface TextSearchDialect {
                                     Target target,
                                     Consumer<Expression<?>> appendExpression,
                                     Function<String, Consumer<Expression<?>>> appendParameter) {
-            rejectBoosts(options, "PostgreSQL text search");
+            rejectBoosts(options, POSTGRESQL_TEXT_SEARCH);
             if (mode == MatchMode.FUZZY) {
                 rejectFuzziness(options, "PostgreSQL pg_trgm");
                 appendFuzzyMatch(query, fields, queryExpression, appendExpression, appendParameter);
@@ -622,7 +623,7 @@ public interface TextSearchDialect {
                                       Target target,
                                       Consumer<Expression<?>> appendExpression,
                                       Function<String, Consumer<Expression<?>>> appendParameter) {
-            rejectBoosts(options, "PostgreSQL text search");
+            rejectBoosts(options, POSTGRESQL_TEXT_SEARCH);
             if (mode == MatchMode.FUZZY) {
                 rejectFuzziness(options, "PostgreSQL pg_trgm");
                 appendFuzzyScore(query, fields, queryExpression, appendExpression, appendParameter);
