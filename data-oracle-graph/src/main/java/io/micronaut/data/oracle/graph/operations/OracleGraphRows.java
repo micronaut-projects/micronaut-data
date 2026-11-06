@@ -16,6 +16,7 @@
 package io.micronaut.data.oracle.graph.operations;
 
 import io.micronaut.core.annotation.Internal;
+import io.micronaut.data.graph.model.query.builder.LiteralMasker;
 import io.micronaut.data.graph.model.query.builder.OracleGraphQueryBuilder;
 import io.micronaut.data.graph.runtime.GraphEdge;
 import io.micronaut.data.graph.runtime.GraphNode;
@@ -25,9 +26,11 @@ import org.jspecify.annotations.Nullable;
 
 import java.util.ArrayList;
 import java.util.Collection;
+import java.util.Iterator;
 import java.util.LinkedHashMap;
 import java.util.List;
 import java.util.Map;
+import java.util.regex.Pattern;
 
 /**
  * Turns the rows of Oracle property graph queries into graph records, rebuilding nodes, relationships and paths
@@ -40,42 +43,67 @@ import java.util.Map;
 final class OracleGraphRows {
 
     private static final String SEPARATOR = OracleGraphQueryBuilder.SEPARATOR;
+    private static final Pattern NOT_IN = Pattern.compile("(?i)\\bNOT\\s+IN\\s*\\(\\s*$");
 
     private OracleGraphRows() {
     }
 
     /**
-     * Expands each {@code ?} whose parameter is a collection into one {@code ?} per element.
+     * Binds the parameters of a query by position. A {@code ?} takes the next value in order and a {@code $name}
+     * takes the value of that name, which is how queries passed to the repository operations write parameters. A
+     * parameter that is a collection is expanded into one {@code ?} per element.
      *
      * @param query      The query
-     * @param parameters The parameters in order
+     * @param parameters The parameters
      * @return The query and the flattened parameters
      */
-    static Expanded expand(String query, List<@Nullable Object> parameters) {
+    static Expanded expand(String query, Map<String, @Nullable Object> parameters) {
+        String masked = LiteralMasker.mask(query, true);
         StringBuilder sb = new StringBuilder(query.length());
         List<Object> flattened = new ArrayList<>(parameters.size());
-        int index = 0;
-        char quote = 0;
-        for (int i = 0; i < query.length(); i++) {
-            char c = query.charAt(i);
-            if (quote != 0 || c == '\'' || c == '"') {
-                // Inside a literal, or opening or closing one
-                if (quote == 0) {
-                    quote = c;
-                } else if (c == quote) {
-                    quote = 0;
-                }
-                sb.append(c);
-            } else if (c == '?') {
-                if (index >= parameters.size()) {
+        Iterator<@Nullable Object> values = parameters.values().iterator();
+        int i = 0;
+        while (i < query.length()) {
+            char c = masked.charAt(i);
+            int nameEnd = c == '$' ? parameterNameEnd(masked, i) : -1;
+            if (c == '?') {
+                if (!values.hasNext()) {
                     throw new IllegalStateException("The query has more parameters than values: " + query);
                 }
-                appendParameter(sb, flattened, parameters.get(index++));
+                appendParameter(sb, flattened, values.next());
+                i++;
+            } else if (nameEnd > 0) {
+                String name = masked.substring(i + 1, nameEnd);
+                if (!parameters.containsKey(name)) {
+                    throw new IllegalStateException("The query has the parameter $" + name + " without a value: " + query);
+                }
+                appendParameter(sb, flattened, parameters.get(name));
+                i = nameEnd;
             } else {
-                sb.append(c);
+                sb.append(query.charAt(i));
+                i++;
             }
         }
         return new Expanded(sb.toString(), flattened);
+    }
+
+    /**
+     * @return The offset after the name of the parameter opening at the given offset, or -1 if the dollar is part of a
+     *         name such as {@code v$session}
+     */
+    private static int parameterNameEnd(String query, int dollar) {
+        if (dollar > 0 && isNameCharacter(query.charAt(dollar - 1))) {
+            return -1;
+        }
+        int end = dollar + 1;
+        while (end < query.length() && isNameCharacter(query.charAt(end))) {
+            end++;
+        }
+        return end > dollar + 1 && !Character.isDigit(query.charAt(dollar + 1)) ? end : -1;
+    }
+
+    private static boolean isNameCharacter(char c) {
+        return Character.isLetterOrDigit(c) || c == '_' || c == '$';
     }
 
     private static void appendParameter(StringBuilder sb, List<Object> flattened, @Nullable Object value) {
@@ -83,6 +111,10 @@ final class OracleGraphRows {
             sb.append('?');
             flattened.add(value);
         } else if (collection.isEmpty()) {
+            if (NOT_IN.matcher(sb).find()) {
+                // NOT IN (NULL) is never true, where a NOT IN of nothing should match every row
+                throw new IllegalArgumentException("An empty collection cannot be bound to NOT IN on Oracle property graphs: " + sb);
+            }
             sb.append("NULL");
         } else {
             for (int j = 0; j < collection.size(); j++) {
@@ -117,7 +149,8 @@ final class OracleGraphRows {
         Map<String, GraphNode> nodes = new LinkedHashMap<>();
         for (Map.Entry<String, Map<String, @Nullable Object>> group : groups.entrySet()) {
             Map<String, @Nullable Object> fields = group.getValue();
-            if (fields.containsKey(OracleGraphQueryBuilder.ID_COLUMN) || fields.containsKey(OracleGraphQueryBuilder.LABEL_COLUMN)) {
+            if (!fields.containsKey(OracleGraphQueryBuilder.TYPE_COLUMN)
+                && (fields.containsKey(OracleGraphQueryBuilder.ID_COLUMN) || fields.containsKey(OracleGraphQueryBuilder.LABEL_COLUMN))) {
                 nodes.put(group.getKey(), node(fields, rowIndex));
             }
         }
@@ -139,8 +172,12 @@ final class OracleGraphRows {
                 GraphNode from = nodes.get("s");
                 GraphNode to = nodes.get("t");
                 keys.add(prefix);
-                values.add(new GraphEdge(rowIndex, String.valueOf(fields.get(OracleGraphQueryBuilder.TYPE_COLUMN)),
-                    from == null ? rowIndex : from.id(), to == null ? rowIndex : to.id(), Map.of()));
+                Object id = fields.get(OracleGraphQueryBuilder.ID_COLUMN);
+                Map<String, Object> properties = new LinkedHashMap<>(fields);
+                properties.remove(OracleGraphQueryBuilder.ID_COLUMN);
+                properties.remove(OracleGraphQueryBuilder.TYPE_COLUMN);
+                values.add(new GraphEdge(id == null ? rowIndex : id, String.valueOf(fields.get(OracleGraphQueryBuilder.TYPE_COLUMN)),
+                    from == null ? rowIndex : from.id(), to == null ? rowIndex : to.id(), properties));
             }
         }
         return new GraphRecord(keys, values);
