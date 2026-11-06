@@ -268,18 +268,18 @@ micronaut:
       notifications:
         oracle:
           registration-recovery:
-            max-retries: -1
-            retry-delay: 1s
-            retry-delay-multiplier: 2
-            max-retry-delay: 60s
+            max-retries: -1 # <1>
+            retry-delay: 1s # <2>
+            retry-delay-multiplier: 2 # <3>
+            max-retry-delay: 60s # <4>
 ----
 
-`max-retries` defaults to `-1` for unlimited retries. A non-negative value limits retries after the initial recovery
-attempt; set it to `0` to make only the initial attempt.
-The retry limit counts recovery attempts, not time spent waiting for an attempt to start.
+<1> The maximum number of retries after the initial recovery attempt. The default, `-1`, allows unlimited retries;
+set it to `0` to make only the initial attempt. Waiting for an attempt to start does not count toward this limit.
+<2> The delay before the first retry. The default is `1s`.
+<3> The multiplier applied to each subsequent delay. It must be an integer of at least `1`; set it to `1` for a fixed delay.
+<4> The maximum retry delay, including the first delay. The default is `60s`.
 
-`retry-delay` sets the first retry delay. `retry-delay-multiplier` must be an integer of at least
-`1`; set it to `1` for a fixed delay. `max-retry-delay` caps every retry delay, including the first.
 Both delays must be positive and accept duration values such as `500ms`, `10s`, or `1m`.
 The default retry delays are `1s`, `2s`, `4s`, `8s`, `16s`, `32s`, then `60s` for every subsequent retry.
 These settings control creating a replacement registration, not listener-method retries through `@Retryable`
