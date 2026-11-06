@@ -2,6 +2,7 @@ package io.micronaut.data.search.elasticsearch
 
 import groovy.transform.Memoized
 import io.micronaut.data.search.tck.AbstractReactiveTextSearchSpec
+import io.micronaut.data.search.tck.repositories.AsyncBookSearchRepository
 import io.micronaut.data.search.tck.repositories.ReactorBookSearchRepository
 import io.micronaut.test.support.TestPropertyProvider
 
@@ -16,5 +17,11 @@ class ElasticsearchReactiveTextSearchSpec extends AbstractReactiveTextSearchSpec
     @Override
     ReactorBookSearchRepository getBookSearchRepository() {
         return context.getBean(ElasticsearchReactorBookSearchRepository)
+    }
+
+    @Memoized
+    @Override
+    AsyncBookSearchRepository getAsyncBookSearchRepository() {
+        return context.getBean(ElasticsearchAsyncBookSearchRepository)
     }
 }

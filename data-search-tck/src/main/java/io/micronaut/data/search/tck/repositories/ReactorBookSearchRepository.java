@@ -17,6 +17,7 @@ package io.micronaut.data.search.tck.repositories;
 
 import io.micronaut.data.model.vector.search.SearchResults;
 import io.micronaut.data.repository.reactive.ReactorCrudRepository;
+import io.micronaut.data.repository.reactive.ReactorSearchRepository;
 import io.micronaut.data.search.tck.entities.Book;
 import reactor.core.publisher.Flux;
 import reactor.core.publisher.Mono;
@@ -26,7 +27,7 @@ import java.util.UUID;
 /**
  * The reactive repository a non-blocking full-text search backend implements for the shared TCK.
  */
-public interface ReactorBookSearchRepository extends ReactorCrudRepository<Book, UUID> {
+public interface ReactorBookSearchRepository extends ReactorCrudRepository<Book, UUID>, ReactorSearchRepository<Book, UUID> {
 
     Mono<SearchResults<Book>> searchBySearch(String query);
 
