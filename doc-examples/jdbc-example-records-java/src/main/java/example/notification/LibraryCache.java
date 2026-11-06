@@ -44,11 +44,11 @@ class LibraryCache {
     }
 
     // tag::listener[]
-    // tag::events[]
     // tag::listener-signature[]
-    @ChangeListener
+    @ChangeListener // <1>
     // end::listener-signature[]
-    @OracleChangeNotification
+    @OracleChangeNotification // <2>
+    // tag::events[]
     // tag::listener-signature[]
     synchronized void onLibraryChanged(ChangeEvent<Library> event) {
         // end::listener-signature[]
@@ -56,14 +56,14 @@ class LibraryCache {
         if (!cacheEnabled) {
             return;
         }
-        event.metadata(OracleChangeEventMetadata.class)
+        event.metadata(OracleChangeEventMetadata.class) // <1>
             .ifPresent(metadata -> LOG.debug("Changed library table: {}.{}, ROWID: {}",
                 Objects.requireNonNullElse(metadata.schema(), "<unknown>"), metadata.table(), metadata.rowId()));
         switch (event.operation()) {
-            case INSERT, UPDATE -> event.entity().ifPresent(library -> libraries.put(library.id(), library));
-            case DELETE, INVALIDATE -> refreshCache();
+            case INSERT, UPDATE -> event.entity().ifPresent(library -> libraries.put(library.id(), library)); // <2>
+            case DELETE, INVALIDATE -> refreshCache(); // <3>
             case TERMINATED -> {
-                cacheEnabled = false;
+                cacheEnabled = false; // <4>
                 libraries.clear();
             }
         }

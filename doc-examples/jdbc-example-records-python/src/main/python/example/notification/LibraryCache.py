@@ -45,17 +45,17 @@ class LibraryCache:
             return Optional.empty()
 
     # tag::listener[]
-    # tag::events[]
     # tag::listener-signature[]
-    @ChangeListener
+    @ChangeListener # <1>
     # end::listener-signature[]
-    @OracleChangeNotification
+    @OracleChangeNotification # <2>
+    # tag::events[]
     # tag::listener-signature[]
     def onLibraryChanged(self, event: ChangeEvent[Library]) -> None:
         pass
         # end::listener-signature[]
         # end::listener[]
-        metadata = event.metadata(OracleChangeEventMetadata).orElse(None)
+        metadata = event.metadata(OracleChangeEventMetadata).orElse(None) # <1>
         if metadata is not None:
             schema = metadata.schema()
             self.log.debug("Changed library table: {}.{}, ROWID: {}",
@@ -64,13 +64,13 @@ class LibraryCache:
             if not self.cacheEnabled:
                 return
             if event.operation() in (ChangeOperation.INSERT, ChangeOperation.UPDATE):
-                library = event.entity().orElse(None)
+                library = event.entity().orElse(None) # <2>
                 if library is not None:
                     self.libraries.get().put(library.id, library)
-            elif event.operation() in (ChangeOperation.DELETE, ChangeOperation.INVALIDATE):
+            elif event.operation() in (ChangeOperation.DELETE, ChangeOperation.INVALIDATE): # <3>
                 self.refreshCache()
             elif event.operation() == ChangeOperation.TERMINATED:
-                self.cacheEnabled = False
+                self.cacheEnabled = False # <4>
                 self.libraries.get().clear()
     # end::events[]
 

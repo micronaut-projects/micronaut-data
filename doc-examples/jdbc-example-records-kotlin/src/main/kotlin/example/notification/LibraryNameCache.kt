@@ -39,12 +39,12 @@ open class LibraryNameCache(private val repository: LibraryRepository) {
     @Synchronized
     @ChangeListener
     @OracleChangeNotification(
-        select = "id, name",
-        where = "capacity >= 10000",
+        select = "id, name", // <1>
+        where = "capacity >= 10000", // <2>
         properties = [
             OracleChangeNotification.Property(
                 name = "DCN_QUERY_CHANGE_NOTIFICATION",
-                value = "true"
+                value = "true" // <3>
             )
         ]
     )

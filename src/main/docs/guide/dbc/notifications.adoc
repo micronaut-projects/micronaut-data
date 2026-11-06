@@ -36,6 +36,9 @@ The following excerpt shows the common annotation and method signature; the meth
 
 snippet::example.notification.LibraryCache[project-base="doc-examples/jdbc-example-records", source="main", tags="listener-signature", languages="java,groovy,kotlin,python"]
 
+<1> Annotate the method with ann:data.annotation.ChangeListener[]. Its `ChangeEvent<Library>` parameter identifies
+`Library` as the persistent entity and provides the operation, optional current entity, and optional provider metadata.
+
 A complete listener also requires a provider-specific notification annotation, such as
 ann:data.jdbc.annotation.OracleChangeNotification[]. Missing provider configuration is rejected at compilation time.
 The database-specific sections show complete examples.
