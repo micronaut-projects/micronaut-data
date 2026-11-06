@@ -35,7 +35,7 @@ ann:data.annotation.ChangeListener[] must:
 
 The following excerpt shows the common annotation and method signature; the method body is omitted:
 
-snippet::example.BookCatalog[project-base="doc-examples/jdbc-postgres-notifications", source="main", tags="listener-signature", languages="java,groovy,kotlin,python"]
+snippet::example.notification.LibraryCache[project-base="doc-examples/jdbc-example-records", source="main", tags="listener-signature", languages="java,groovy,kotlin,python"]
 
 <1> Annotate the method with ann:data.annotation.ChangeListener[]. Its `ChangeEvent<Library>` parameter identifies
 `Library` as the persistent entity and provides the operation, optional current entity, and optional provider metadata.
