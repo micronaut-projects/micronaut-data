@@ -9,14 +9,13 @@
     <changeSet id="postgres-notification-function"
                author="application"
                dbms="postgresql"
-               runOnChange="true">
+               runOnChange="true"> <!--1-->
 
-        <sql>SET LOCAL search_path TO public</sql>
+        <sql>SET LOCAL search_path TO public</sql> <!--2-->
 
         <sqlFile
             path="io/micronaut/data/jdbc/notification/postgres/sql/create-notification-function.sql"
-            relativeToChangelogFile="false"
-            splitStatements="false"/>
+            relativeToChangelogFile="false" splitStatements="false"/> <!--3--> <!--4-->
     </changeSet>
     <!-- end::notification-function[] -->
 

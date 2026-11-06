@@ -157,11 +157,14 @@ For migration-managed schemas, leave `micronaut.data.jdbc.notifications.postgres
 include::doc-examples/jdbc-postgres-notifications-java/src/main/resources/db/changelog/db.changelog-master.xml[tag=notification-function]
 ----
 
-`relativeToChangelogFile="false"` resolves the SQL resource from the classpath rather than relative to the
-application changelog. `splitStatements="false"` preserves the function definition's internal semicolons.
-The changeset runs in a transaction by default, so `SET LOCAL` selects `public` only for that transaction.
-`runOnChange="true"` reapplies the function when its bundled SQL changes, including after a dependency upgrade.
-Replace `public` with your target schema if needed. Create the table and its triggers in subsequent changesets,
+<1> `runOnChange="true"` reruns the changeset when Liquibase detects a change to the bundled SQL, such as after a
+dependency upgrade. The function definition is updated using `CREATE OR REPLACE FUNCTION`.
+<2> `SET LOCAL` selects `public` for the changeset's transaction. Replace `public` with your target schema if needed.
+<3> `relativeToChangelogFile="false"` resolves the SQL resource from the classpath rather than relative to the
+application changelog.
+<4> `splitStatements="false"` preserves the function definition's internal semicolons.
+
+Create the table and its triggers in subsequent changesets,
 following <<postgresNotificationTableTriggers, Creating Table Triggers>>.
 
 [[postgresNotificationFlyway]]
