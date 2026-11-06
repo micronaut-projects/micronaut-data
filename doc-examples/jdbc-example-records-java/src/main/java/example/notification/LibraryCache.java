@@ -50,7 +50,7 @@ class LibraryCache {
     @OracleChangeNotification // <2>
     // tag::events[]
     // tag::listener-signature[]
-    synchronized void onLibraryChanged(ChangeEvent<Library> event) {
+    void onLibraryChanged(ChangeEvent<Library> event) {
         // end::listener-signature[]
         // end::listener[]
         if (!cacheEnabled) {
@@ -74,7 +74,7 @@ class LibraryCache {
     // end::listener[]
     // end::events[]
 
-    private synchronized void refreshCache() {
+    private void refreshCache() {
         var currentLibraries = repository.findAll();
         Map<Long, Library> refreshed = new ConcurrentHashMap<>();
         currentLibraries.forEach(library -> refreshed.put(library.id(), library));

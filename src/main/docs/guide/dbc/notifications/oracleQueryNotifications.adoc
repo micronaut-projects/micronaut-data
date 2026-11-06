@@ -12,8 +12,6 @@ Query notifications require Micronaut Data JDBC and Oracle JDBC 23.26.3.0.0 or l
 
 dependency:com.oracle.database.jdbc:ojdbc11[scope="implementation"]
 
-This makes `OracleConnection.DCN_*` and `OracleConnection.NTF_*` constants available when configuring annotation properties.
-
 Micronaut Data checks the JDBC driver version during application startup before creating notification registrations.
 An older or unrecognized driver version causes startup to fail with an error identifying the detected and required versions.
 
@@ -37,8 +35,9 @@ The following listener uses Object Change Notification to observe the complete m
 snippet::example.notification.LibraryCache[project-base="doc-examples/jdbc-example-records", source="main", tags="listener", languages="java,groovy,kotlin,python"]
 
 <1> Declare ann:data.annotation.ChangeListener[] on a listener method accepting a `ChangeEvent<Library>`.
-<2> Also declare ann:data.jdbc.annotation.OracleChangeNotification[], even when using only its defaults.
-It selects Oracle-specific notification settings and enables Micronaut Data to reload changed entities using their `ROWID`.
+<2> Also annotate the method with ann:data.jdbc.annotation.OracleChangeNotification[] to register it for Oracle change
+notifications. The annotation is required even when you use its default settings. For `INSERT` and `UPDATE` events,
+Micronaut Data uses the reported `ROWID` to load the current entity.
 
 Follow the shared <<notificationListenerRequirements, listener requirements>>, including the method signature
 and datasource selection.
@@ -67,13 +66,11 @@ snippet::example.notification.LibraryCache[project-base="doc-examples/jdbc-examp
 <2> For `INSERT` and `UPDATE`, update the cache with the current entity when it is available.
 <3> Refresh the complete cache for `DELETE` and `INVALIDATE`. A delete event has no entity ID;
 do not interpret the Oracle Database `ROWID` as an entity ID.
-<4> For `TERMINATED`, disable and clear the cache. Later callbacks are ignored, and the example's `find` method
-reads directly from the repository.
+<4> For `TERMINATED`, disable and clear the cache. Later callbacks are ignored.
 
-The application's other read paths should also honor `cacheEnabled` and bypass the cache when it is disabled.
+After the cache is disabled, read directly from the database instead.
 
-NOTE: Each listener serializes entity loading and callback execution on its worker. Synchronize cache access
-with other application threads; different listeners may run concurrently.
+NOTE: Synchronize cache access when it is shared with other application threads or listeners.
 
 For `INSERT` and `UPDATE`, Oracle Database supplies a `ROWID`, which Micronaut Data uses to reload the entity.
 See <<notificationEntityLoading, Entity Loading>> for current-state semantics and cases where `entity()` is empty.

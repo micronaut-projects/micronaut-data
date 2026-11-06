@@ -37,7 +37,6 @@ open class LibraryCache(private val repository: LibraryRepository) {
     }
 
     // tag::listener[]
-    @Synchronized
     // tag::listener-signature[]
     @ChangeListener // <1>
     // end::listener-signature[]
@@ -70,7 +69,6 @@ open class LibraryCache(private val repository: LibraryRepository) {
     // end::events[]
     // end::listener[]
 
-    @Synchronized
     private fun refreshCache() {
         val currentLibraries = repository.findAll()
         val refreshed = ConcurrentHashMap<Long, Library>()

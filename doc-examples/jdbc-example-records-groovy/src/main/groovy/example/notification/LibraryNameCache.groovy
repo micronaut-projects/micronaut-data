@@ -47,7 +47,7 @@ class LibraryNameCache {
             value = "true" // <3>
         )
     )
-    synchronized void onLibraryChanged(ChangeEvent<Library> event) {
+    void onLibraryChanged(ChangeEvent<Library> event) {
         if (!cacheEnabled) {
             return
         }
@@ -74,7 +74,7 @@ class LibraryNameCache {
     }
     // end::query[]
 
-    private synchronized void refreshCache() {
+    private void refreshCache() {
         Map<Long, String> refreshed = new ConcurrentHashMap<>()
         repository.findByCapacityGreaterThanEquals(10000).forEach { library -> refreshed.put(library.id(), library.name()) }
         libraryNames = refreshed

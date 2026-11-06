@@ -36,7 +36,6 @@ open class LibraryNameCache(private val repository: LibraryRepository) {
     }
 
     // tag::query[]
-    @Synchronized
     @ChangeListener
     @OracleChangeNotification(
         select = "id, name", // <1>
@@ -69,7 +68,6 @@ open class LibraryNameCache(private val repository: LibraryRepository) {
     }
     // end::query[]
 
-    @Synchronized
     private fun refreshCache() {
         val refreshed = ConcurrentHashMap<Long, String>()
         repository.findByCapacityGreaterThanEquals(10000).forEach { library -> refreshed[library.id!!] = library.name }
