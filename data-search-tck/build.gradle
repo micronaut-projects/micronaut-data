@@ -1,0 +1,18 @@
+plugins {
+    id "io.micronaut.build.internal.data-tck"
+    id "io.micronaut.build.internal.data-tck-module"
+}
+
+dependencies {
+    annotationProcessor mn.micronaut.inject.java
+    annotationProcessor projects.micronautDataProcessor
+
+    api projects.micronautDataModel
+    api projects.micronautDataRuntime
+    api mnTest.micronaut.test.spock
+    api mnTest.micronaut.test.core
+    api(mnSql.jakarta.persistence.api)
+    api(libs.jupiter.api)
+
+    compileOnly mn.micronaut.inject.groovy
+}
