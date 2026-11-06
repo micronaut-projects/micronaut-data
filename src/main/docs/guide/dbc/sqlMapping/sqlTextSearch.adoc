@@ -94,7 +94,7 @@ snippet::example.BookService[project-base="doc-examples/jdbc-search-example", so
 <2> Optional weights of the two rankings, `1` by default; `candidates` sets how many hits each ranking contributes, `100` by default.
 <3> The score of a hit is its reciprocal rank fusion value: `textWeight / (60 + text rank) + vectorWeight / (60 + vector rank)`, with `rankConstant` replacing `60`.
 
-Micronaut Data runs the text query and the nearest-neighbour query, each limited to `candidates` hits, and fuses the two rankings in memory, so hybrid search is available on every store that supports both text and vector search (PostgreSQL with pgvector and Oracle Database 23ai), including with a `Pageable`, which cuts the page from the fused ranking. A sort on the pageable is rejected because the fused score defines the order; `highlight` applies to the text hits; `minScore` compares the fused score. A store without vector search throws api:data.model.search.UnsupportedSearchFeatureException[].
+Micronaut Data runs the text query and the nearest-neighbour query, each limited to `candidates` hits, and fuses the two rankings in memory, so hybrid search is available on every store that supports both text and vector search (PostgreSQL with pgvector, Oracle Database 23ai, Elasticsearch and OpenSearch), including with a `Pageable`, which cuts the page from the fused ranking. A sort on the pageable is rejected because the fused score defines the order; `highlight` applies to the text hits; `minScore` compares the fused score. A store without vector search throws api:data.model.search.UnsupportedSearchFeatureException[].
 
 == Reactive and async search
 
@@ -141,7 +141,7 @@ The portable API is the same on every store; the table lists which optional capa
 |Index-time weights (`@SearchField(weight)`) |yes |yes |yes |yes
 |Query-time boosts (`SearchQuery.boost`) |no |no |no |no, planned
 |Highlighting |yes |yes |no |yes
-|Vector search and hybrid search |yes, pgvector |yes, 23ai |no |no, planned
+|Vector search and hybrid search |yes, pgvector |yes, 23ai |no |yes, `knn`
 |Reactive and async repositories |yes |yes |yes |yes
 |Minimum score (`Score` parameter) |yes |yes |no |yes
 |Per-row language (`@Language`) |yes |no |yes |no

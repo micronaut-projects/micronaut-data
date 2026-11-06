@@ -41,6 +41,7 @@ import io.micronaut.data.model.query.BindingParameter;
 import io.micronaut.data.model.query.builder.QueryBuilder;
 import io.micronaut.data.model.query.builder.QueryParameterBinding;
 import io.micronaut.data.model.query.builder.QueryResult;
+import io.micronaut.data.model.query.builder.sql.VectorScoringDialectSupport;
 import io.micronaut.data.model.query.impl.AdvancedPredicateVisitor;
 import io.micronaut.data.model.search.MatchMode;
 import io.micronaut.data.model.search.TextSearchSupport;
@@ -56,6 +57,7 @@ import java.util.Collection;
 import java.util.LinkedHashMap;
 import java.util.List;
 import java.util.Map;
+import java.util.Objects;
 
 /**
  * Builds the JSON request body of an Elasticsearch or OpenSearch search from the criteria tree.
@@ -92,6 +94,14 @@ public final class DocumentSearchQueryBuilder implements QueryBuilder {
      */
     public static final String SCORE_FIELD = "_score";
 
+    /**
+     * The wildcard hint turning a bound cosine distance into the store's similarity threshold.
+     */
+    public static final String COSINE_SIMILARITY_HINT = "cosine_similarity";
+
+    private static final int DEFAULT_K = 10;
+    private static final int DEFAULT_NUM_CANDIDATES = 100;
+
     private static final String KEYWORD_SUFFIX = ".keyword";
     private static final String QUERY = "query";
     private static final Map<String, Object> MATCH_ALL = Map.of("match_all", Map.of());
@@ -101,6 +111,7 @@ public final class DocumentSearchQueryBuilder implements QueryBuilder {
     private static final String SHOULD = "should";
     private static final String TERM = "term";
     private static final String VALUE = "value";
+    private static final String FIELD = "field";
     private static final String RANGE = "range";
     private static final String ORDER = "order";
 
@@ -116,23 +127,12 @@ public final class DocumentSearchQueryBuilder implements QueryBuilder {
         PersistentEntity entity = definition.persistentEntity();
         Bindings bindings = new Bindings();
         Map<String, Object> body = new LinkedHashMap<>();
-        DocumentPredicateVisitor visitor = new DocumentPredicateVisitor(entity, bindings);
-        body.put(QUERY, definition.predicate() == null ? MATCH_ALL : visitor.build(definition.predicate()));
+        DocumentPredicateVisitor visitor = new DocumentPredicateVisitor(entity, bindings, definition.limit());
+        body.put(QUERY, queryOf(definition, visitor));
         if (visitor.minScore != null) {
             body.put("min_score", visitor.minScore);
         }
-        Map<String, Object> highlightFields = new LinkedHashMap<>();
-        if (definition.selection() != null) {
-            collectHighlightFields(definition.selection(), highlightFields);
-        }
-        if (!highlightFields.isEmpty()) {
-            // One object per field, the ordered form every Elasticsearch client version accepts
-            List<Map<String, Object>> fields = new ArrayList<>(highlightFields.size());
-            for (Map.Entry<String, Object> field : highlightFields.entrySet()) {
-                fields.add(Map.of(field.getKey(), field.getValue()));
-            }
-            body.put("highlight", Map.of("fields", fields));
-        }
+        addHighlight(definition, body);
         List<Map<String, Object>> sort = new ArrayList<>();
         for (Order order : definition.order()) {
             sort.add(sortEntry(order));
@@ -195,11 +195,66 @@ public final class DocumentSearchQueryBuilder implements QueryBuilder {
         }
     }
 
+    /** The predicate's query, or a nearest-neighbour {@code knn} when only a vector ordering asks for one. */
+    private static Map<String, Object> queryOf(SelectQueryDefinition definition, DocumentPredicateVisitor visitor) {
+        Map<String, Object> query = definition.predicate() == null ? MATCH_ALL : visitor.build(definition.predicate());
+        if (!visitor.knnFields.isEmpty()) {
+            return query;
+        }
+        // a vector ordering without a vector restriction is a nearest-neighbour search among the documents the
+        // predicate selects
+        for (Order order : definition.order()) {
+            if (order.getExpression() instanceof FunctionExpression<?> function && VectorScoringDialectSupport.SCORE_FUNCTION.equals(function.getName())) {
+                return withFilter(visitor.knn(function, null), MATCH_ALL.equals(query) ? List.of() : List.of(query));
+            }
+        }
+        return query;
+    }
+
+    /**
+     * Puts restrictions into the {@code filter} of a {@code knn} query, so the nearest neighbours are searched
+     * among the documents they select rather than the top {@code k} being filtered afterwards.
+     */
+    private static Map<String, Object> withFilter(Map<String, Object> knnQuery, List<Map<String, Object>> filters) {
+        if (filters.isEmpty()) {
+            return knnQuery;
+        }
+        Map<String, Object> knn = new LinkedHashMap<>((Map<String, Object>) knnQuery.get("knn"));
+        knn.put("filter", filters.size() == 1 ? filters.get(0) : Map.of(BOOL, Map.of(MUST, filters)));
+        return Map.of("knn", knn);
+    }
+
+    private static boolean isKnn(Map<String, Object> query) {
+        return query.size() == 1 && query.get("knn") instanceof Map<?, ?>;
+    }
+
+    private static void addHighlight(SelectQueryDefinition definition, Map<String, Object> body) {
+        Map<String, Object> highlightFields = new LinkedHashMap<>();
+        if (definition.selection() != null) {
+            collectHighlightFields(definition.selection(), highlightFields);
+        }
+        if (highlightFields.isEmpty()) {
+            return;
+        }
+        // One object per field, the ordered form every Elasticsearch client version accepts
+        List<Map<String, Object>> fields = new ArrayList<>(highlightFields.size());
+        for (Map.Entry<String, Object> field : highlightFields.entrySet()) {
+            fields.add(Map.of(field.getKey(), field.getValue()));
+        }
+        body.put("highlight", Map.of("fields", fields));
+    }
+
     private Map<String, Object> buildQuery(@Nullable Predicate predicate, PersistentEntity entity, Bindings bindings) {
         if (predicate == null) {
             return MATCH_ALL;
         }
-        return new DocumentPredicateVisitor(entity, bindings).build(predicate);
+        DocumentPredicateVisitor visitor = new DocumentPredicateVisitor(entity, bindings, -1);
+        Map<String, Object> query = visitor.build(predicate);
+        if (!visitor.knnFields.isEmpty()) {
+            // a knn query returns the k nearest neighbours only, so it cannot select every matching document
+            throw new UnsupportedOperationException("A vector search cannot select the documents of a delete or an update in a document search store");
+        }
+        return query;
     }
 
     private Map<String, Object> sortEntry(Order order) {
@@ -209,6 +264,9 @@ public final class DocumentSearchQueryBuilder implements QueryBuilder {
             field = keywordPath(propertyPath.getPropertyPath());
         } else if (expression instanceof FunctionExpression<?> function && TextSearchSupport.SCORE_FUNCTION.equals(function.getName())) {
             field = SCORE_FIELD;
+        } else if (expression instanceof FunctionExpression<?> function && VectorScoringDialectSupport.SCORE_FUNCTION.equals(function.getName())) {
+            // the nearest neighbours score highest, whatever the direction the distance ordering asked for
+            return Map.of(SCORE_FIELD, Map.of(ORDER, "desc"));
         } else {
             throw new UnsupportedOperationException("Ordering by expression " + expression + " is not supported by document search stores");
         }
@@ -278,15 +336,47 @@ public final class DocumentSearchQueryBuilder implements QueryBuilder {
 
         private final PersistentEntity entity;
         private final Bindings bindings;
+        private final int limit;
+        private final List<String> knnFields = new ArrayList<>();
         private Map<String, Object> result = Map.of();
         @Nullable
         private Object minScore;
         // the number of OR and NOT predicates around the one being visited, where a score restriction cannot apply
         private int scoreForbiddenDepth;
 
-        DocumentPredicateVisitor(PersistentEntity entity, Bindings bindings) {
+        DocumentPredicateVisitor(PersistentEntity entity, Bindings bindings, int limit) {
             this.entity = entity;
             this.bindings = bindings;
+            this.limit = limit;
+        }
+
+        /**
+         * The {@code knn} query of a {@code mn_vector_score(field, vector)} function, in the Elasticsearch
+         * shape; the OpenSearch transport translates it. {@code k} follows the requested size and the
+         * optional maximum cosine distance becomes the store's similarity threshold.
+         */
+        Map<String, Object> knn(FunctionExpression<?> function, @Nullable Expression<?> maxDistance) {
+            PersistentPropertyPath propertyPath = requireProperty(function.getExpressions().get(0)).getPropertyPath();
+            Expression<?> vector = function.getExpressions().get(1);
+            Map<String, Object> knn = new LinkedHashMap<>();
+            knn.put(FIELD, fieldName(propertyPath));
+            knn.put("query_vector", value(vector, propertyPath));
+            int k = limit > 0 ? limit : DEFAULT_K;
+            knn.put("k", k);
+            knn.put("num_candidates", Math.max(k * 10, DEFAULT_NUM_CANDIDATES));
+            if (maxDistance != null) {
+                knn.put("similarity", distanceToSimilarity(maxDistance));
+            }
+            knnFields.add(fieldName(propertyPath));
+            return Map.of("knn", knn);
+        }
+
+        private Object distanceToSimilarity(Expression<?> maxDistance) {
+            if (maxDistance instanceof BindingParameter parameter) {
+                return bindings.placeholder(parameter, null, COSINE_SIMILARITY_HINT);
+            }
+            Object literal = Objects.requireNonNull(literal(maxDistance), "The maximum distance must be a parameter or a literal");
+            return literal instanceof Number number ? 1d - number.doubleValue() : literal;
         }
 
         Map<String, Object> build(Predicate predicate) {
@@ -325,7 +415,13 @@ public final class DocumentSearchQueryBuilder implements QueryBuilder {
                     must.add(rendered);
                 }
             }
-            if (must.isEmpty()) {
+            List<Map<String, Object>> knn = must.stream().filter(DocumentSearchQueryBuilder::isKnn).toList();
+            if (knn.size() == 1 && must.size() > 1 && minScore == null) {
+                // the other conditions select the documents the nearest neighbours are searched among
+                List<Map<String, Object>> filters = new ArrayList<>(must);
+                filters.remove(knn.get(0));
+                result = withFilter(knn.get(0), filters);
+            } else if (must.isEmpty()) {
                 result = MATCH_ALL;
             } else {
                 result = must.size() == 1 ? must.get(0) : Map.of(BOOL, Map.of(MUST, must));
@@ -426,6 +522,10 @@ public final class DocumentSearchQueryBuilder implements QueryBuilder {
 
         @Override
         public void visitLessThanOrEquals(Expression<?> leftExpression, Expression<?> rightExpression) {
+            if (leftExpression instanceof FunctionExpression<?> function && VectorScoringDialectSupport.SCORE_FUNCTION.equals(function.getName())) {
+                result = knn(function, rightExpression);
+                return;
+            }
             result = range(leftExpression, "lte", rightExpression);
         }
 
@@ -474,7 +574,7 @@ public final class DocumentSearchQueryBuilder implements QueryBuilder {
 
         @Override
         public void visitIsNotNull(Expression<?> expression) {
-            result = Map.of("exists", Map.of("field", fieldName(requireProperty(expression).getPropertyPath())));
+            result = Map.of("exists", Map.of(FIELD, fieldName(requireProperty(expression).getPropertyPath())));
         }
 
         @Override
@@ -487,7 +587,7 @@ public final class DocumentSearchQueryBuilder implements QueryBuilder {
         public void visitIsEmpty(Expression<?> expression) {
             PersistentPropertyPath propertyPath = requireProperty(expression).getPropertyPath();
             result = Map.of(BOOL, Map.of(SHOULD, List.of(
-                Map.of(BOOL, Map.of(MUST_NOT, Map.of("exists", Map.of("field", fieldName(propertyPath))))),
+                Map.of(BOOL, Map.of(MUST_NOT, Map.of("exists", Map.of(FIELD, fieldName(propertyPath))))),
                 Map.of(TERM, Map.of(keywordPath(propertyPath), ""))
             ), "minimum_should_match", 1));
         }

@@ -45,6 +45,8 @@ class Article {
     private String author;
     private int pages;
     private boolean published;
+    @jakarta.persistence.Column(length = 3)
+    private io.micronaut.data.model.vector.FloatVector embedding;
 
     public String getId() { return id; }
     public void setId(String id) { this.id = id; }
@@ -60,6 +62,8 @@ class Article {
     public void setPages(int pages) { this.pages = pages; }
     public boolean isPublished() { return published; }
     public void setPublished(boolean published) { this.published = published; }
+    public io.micronaut.data.model.vector.FloatVector getEmbedding() { return embedding; }
+    public void setEmbedding(io.micronaut.data.model.vector.FloatVector embedding) { this.embedding = embedding; }
 }
 
 @ElasticsearchRepository
@@ -204,5 +208,41 @@ ${methods}
         SimpleQueryStringConverter.render("coffe", io.micronaut.data.model.search.MatchMode.FUZZY) == "coffe~1"
         SimpleQueryStringConverter.render("fat rats", io.micronaut.data.model.search.MatchMode.PHRASE) == '"fat rats"'
         SimpleQueryStringConverter.render("a+b (c)", io.micronaut.data.model.search.MatchMode.ANY) == 'a\\+b | \\(c\\)'
+    }
+
+    void "a vector Near predicate renders a knn query with the distance as a similarity threshold"() {
+        given:
+        def repository = articleRepository("""
+    SearchResults<Article> searchByEmbeddingNear(io.micronaut.data.model.vector.Vector vector, io.micronaut.data.model.vector.search.Score maxDistance);
+    List<Article> findTop5ByEmbeddingNear(io.micronaut.data.model.vector.Vector vector, Double maxDistance);
+""")
+
+        expect:
+        query(repository.getRequiredMethod("searchByEmbeddingNear", io.micronaut.data.model.vector.Vector, io.micronaut.data.model.vector.search.Score)) ==
+            '{"query":{"knn":{"field":"embedding","query_vector":{"$mn_qp":0},"k":10,"num_candidates":100,"similarity":{"$mn_qp":1,"$mn_wildcard":"cosine_similarity"}}},"sort":[{"_score":{"order":"desc"}}]}'
+        query(repository.getRequiredMethod("findTop5ByEmbeddingNear", io.micronaut.data.model.vector.Vector, Double)) ==
+            '{"query":{"knn":{"field":"embedding","query_vector":{"$mn_qp":0},"k":5,"num_candidates":100,"similarity":{"$mn_qp":1,"$mn_wildcard":"cosine_similarity"}}},"sort":[{"_score":{"order":"desc"}}],"size":5}'
+    }
+
+    void "the other conditions of a vector search become the filter of the knn query"() {
+        given:
+        def repository = articleRepository("""
+    List<Article> findTop5ByCategoryAndEmbeddingNear(String category, io.micronaut.data.model.vector.Vector vector, Double maxDistance);
+""")
+
+        expect:
+        query(repository.getRequiredMethod("findTop5ByCategoryAndEmbeddingNear", String, io.micronaut.data.model.vector.Vector, Double)) ==
+            '{"query":{"knn":{"field":"embedding","query_vector":{"$mn_qp":1},"k":5,"num_candidates":100,"similarity":{"$mn_qp":2,"$mn_wildcard":"cosine_similarity"},"filter":{"term":{"category":{"$mn_qp":0}}}}},"sort":[{"_score":{"order":"desc"}}],"size":5}'
+    }
+
+    void "a delete by a vector predicate is rejected at compile time"() {
+        when:
+        articleRepository("""
+    long deleteByEmbeddingNear(io.micronaut.data.model.vector.Vector vector, Double maxDistance);
+""")
+
+        then:
+        def e = thrown(RuntimeException)
+        e.message.contains("A vector search cannot select the documents of a delete or an update")
     }
 }
