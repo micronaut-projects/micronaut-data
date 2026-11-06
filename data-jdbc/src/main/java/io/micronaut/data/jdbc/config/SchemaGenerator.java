@@ -24,7 +24,6 @@ import io.micronaut.context.exceptions.NoSuchBeanException;
 import io.micronaut.core.annotation.Internal;
 import io.micronaut.core.beans.BeanIntrospection;
 import io.micronaut.core.beans.BeanIntrospector;
-import io.micronaut.core.util.ArrayUtils;
 import io.micronaut.core.util.CollectionUtils;
 import io.micronaut.core.util.StringUtils;
 import io.micronaut.data.annotation.JsonSubView;
@@ -48,6 +47,8 @@ import io.micronaut.data.model.schema.sql.metadata.SqlColumnMetadata;
 import io.micronaut.data.model.schema.sql.metadata.SqlTableMetadata;
 import io.micronaut.data.runtime.config.DataSettings;
 import io.micronaut.data.runtime.config.SchemaGenerate;
+import io.micronaut.data.runtime.schema.SchemaContext;
+import io.micronaut.data.runtime.schema.SchemaContributions;
 import io.micronaut.inject.qualifiers.Qualifiers;
 import io.micronaut.data.connection.jdbc.advice.DelegatingDataSource;
 
@@ -64,11 +65,9 @@ import java.sql.DatabaseMetaData;
 import java.sql.PreparedStatement;
 import java.sql.ResultSet;
 import java.sql.SQLException;
-import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.Collection;
 import java.util.Collections;
-import java.util.LinkedHashMap;
 import java.util.List;
 import java.util.Map;
 import java.util.Set;
@@ -162,14 +161,10 @@ public class SchemaGenerator {
                 continue;
             }
             PersistentEntity[] entities = findEntities(configuration, runtimeEntityRegistry);
-            Map<JdbcSchemaContributor, List<PersistentEntity>> contributions = selectContributions(configuration, entities);
+            SchemaContributions contributions = SchemaContributions.of(schemaContributors, new SchemaContext(configuration.getName(),
+                configuration.getDialect(), configuration.getDialectOptions().getVersion(), schemaGenerate, Arrays.asList(entities)));
             if (!contributions.isEmpty()) {
-                List<PersistentEntity> remaining = new ArrayList<>(Arrays.asList(entities));
-                contributions.values().forEach(remaining::removeAll);
-                entities = remaining.toArray(PersistentEntity[]::new);
-            }
-            if (ArrayUtils.isNotEmpty(entities) || !contributions.isEmpty()) {
-                createOrValidateSchema(beanLocator, configuration, entities, contributions);
+                createOrValidateSchema(beanLocator, configuration, contributions.tableEntities(), contributions);
             }
         }
     }
@@ -195,7 +190,7 @@ public class SchemaGenerator {
     private void createOrValidateSchema(BeanLocator beanLocator,
                                         DataJdbcConfiguration configuration,
                                         PersistentEntity[] entities,
-                                        Map<JdbcSchemaContributor, List<PersistentEntity>> contributions) {
+                                        SchemaContributions contributions) {
         String name = configuration.getName();
         try {
             DataSource dataSource = DelegatingDataSource.unwrapDataSource(beanLocator.getBean(DataSource.class, Qualifiers.byName(name)));
@@ -229,7 +224,7 @@ public class SchemaGenerator {
                                         @Nullable String dialectVersion,
                                         @Nullable String schemaName,
                                         PersistentEntity[] entities,
-                                        Map<JdbcSchemaContributor, List<PersistentEntity>> contributions) throws SQLException {
+                                        SchemaContributions contributions) throws SQLException {
         SchemaGenerate schemaGenerate = configuration.getSchemaGenerate();
         Dialect dialect = configuration.getDialect();
         if (schemaName != null) {
@@ -245,53 +240,34 @@ public class SchemaGenerator {
         }
     }
 
-    private Map<JdbcSchemaContributor, List<PersistentEntity>> selectContributions(DataJdbcConfiguration configuration,
-                                                                                PersistentEntity[] entities) {
-        if (schemaContributors.isEmpty()) {
-            return Map.of();
-        }
-        Map<JdbcSchemaContributor, List<PersistentEntity>> contributions = new LinkedHashMap<>();
-        List<PersistentEntity> remaining = new ArrayList<>(Arrays.asList(entities));
-        for (JdbcSchemaContributor contributor : schemaContributors) {
-            List<PersistentEntity> selected = contributor.selectEntities(configuration, List.copyOf(remaining));
-            if (!selected.isEmpty()) {
-                contributions.put(contributor, selected);
-                remaining.removeAll(selected);
-            }
-        }
-        return contributions;
-    }
-
     private void generate(Connection connection,
                           DataJdbcConfiguration configuration,
                           @Nullable String dialectVersion,
                           PropertyPlaceholderResolver propertyPlaceholderResolver,
                           PersistentEntity[] entities,
-                          Map<JdbcSchemaContributor, List<PersistentEntity>> contributions) throws SQLException {
-        SchemaGenerate schemaGenerate = configuration.getSchemaGenerate();
-        if (schemaGenerate == SchemaGenerate.CREATE_DROP) {
-            // Contributed objects, such as property graphs, can depend on the tables, so they are dropped first
-            contributions.forEach((contributor, contributed) ->
-                executeContributed(connection, propertyPlaceholderResolver, contributor.buildDropStatements(configuration, contributed), "DROP"));
+                          SchemaContributions contributions) throws SQLException {
+        // Contributed objects over the tables, such as property graphs, are dropped before the tables, and objects the
+        // tables use, such as domains, after them, so that both can be created again
+        executeContributed(connection, propertyPlaceholderResolver, contributions.dropStatements(), "DROP");
+        if (entities.length > 0 && configuration.getSchemaGenerate() == SchemaGenerate.CREATE_DROP) {
+            dropTables(connection, configuration, dialectVersion, propertyPlaceholderResolver, entities);
         }
+        executeContributed(connection, propertyPlaceholderResolver, contributions.beforeTablesDropStatements(), "DROP");
+        executeContributed(connection, propertyPlaceholderResolver, contributions.beforeTablesStatements(), "CREATE");
         if (entities.length > 0) {
-            generateTables(connection, configuration, dialectVersion, propertyPlaceholderResolver, entities);
+            createTables(connection, configuration, dialectVersion, propertyPlaceholderResolver, entities);
         }
-        if (schemaGenerate == SchemaGenerate.CREATE_DROP || schemaGenerate == SchemaGenerate.CREATE) {
-            contributions.forEach((contributor, contributed) ->
-                executeContributed(connection, propertyPlaceholderResolver, contributor.buildCreateStatements(configuration, contributed), "CREATE"));
-        }
+        executeContributed(connection, propertyPlaceholderResolver, contributions.createStatements(), "CREATE");
     }
 
     /**
-     * Runs the statements of a schema contributor. A failed DROP is expected when the object does not exist yet, so
-     * it is traced, while a failed CREATE is logged as a warning.
+     * Runs the statements of a schema contributor. Contributed DROP statements tolerate missing objects,
+     * so a failed DROP, such as one blocked by a foreign key from another table, is logged as a warning like a failed CREATE.
      */
     private static void executeContributed(Connection connection,
                                            PropertyPlaceholderResolver propertyPlaceholderResolver,
                                            List<String> statements,
                                            String kind) {
-        boolean drop = "DROP".equals(kind);
         for (String statement : statements) {
             String sql = resolveSql(propertyPlaceholderResolver, statement);
             if (DataSettings.QUERY_LOG.isDebugEnabled()) {
@@ -300,11 +276,9 @@ public class SchemaGenerator {
             try (PreparedStatement ps = connection.prepareStatement(sql)) {
                 ps.executeUpdate();
             } catch (SQLException e) {
-                if (drop && DataSettings.QUERY_LOG.isTraceEnabled()) {
-                    DataSettings.QUERY_LOG.trace("Drop Unsuccessful: " + e.getMessage());
-                } else if (!drop && DataSettings.QUERY_LOG.isWarnEnabled()) {
-                    // A failed CREATE is a warning, as it is for the tables: with CREATE the objects may exist already
-                    DataSettings.QUERY_LOG.warn("CREATE Statement Unsuccessful: {}, {}", e.getMessage(), sql);
+                if (DataSettings.QUERY_LOG.isWarnEnabled()) {
+                    // As for the tables, a failure is a warning and the generation carries on
+                    DataSettings.QUERY_LOG.warn("{} Statement Unsuccessful: {}, {}", kind, e.getMessage(), sql);
                 }
             }
         }
@@ -332,84 +306,82 @@ public class SchemaGenerator {
         }
     }
 
-    @SuppressWarnings("java:S3776")
-    private void generateTables(Connection connection,
-                                DataJdbcConfiguration configuration,
-                                @Nullable String dialectVersion,
-                                PropertyPlaceholderResolver propertyPlaceholderResolver,
-                                PersistentEntity[] entities) throws SQLException {
+    private static boolean isBatch(DataJdbcConfiguration configuration) {
+        Dialect dialect = configuration.getDialect();
+        // Oracle JDBC doesn't execute several statements in one string
+        return dialect.allowBatch() && dialect != Dialect.ORACLE && configuration.isBatchGenerate();
+    }
+
+    private static void dropTables(Connection connection,
+                                   DataJdbcConfiguration configuration,
+                                   @Nullable String dialectVersion,
+                                   PropertyPlaceholderResolver propertyPlaceholderResolver,
+                                   PersistentEntity[] entities) {
+        SqlQueryBuilder builder = new SqlQueryBuilder(configuration.getDialect(), dialectVersion);
+        if (isBatch(configuration)) {
+            dropQuietly(connection, propertyPlaceholderResolver, "Dropping Tables", builder.buildBatchDropTableStatement(entities));
+            return;
+        }
+        for (PersistentEntity entity : entities) {
+            dropQuietly(connection, propertyPlaceholderResolver, "Dropping Table", builder.buildDropTableStatements(entity));
+        }
+    }
+
+    /**
+     * Runs drop statements in order, stopping at the first that fails, which is traced: the tables may not exist yet.
+     */
+    private static void dropQuietly(Connection connection,
+                                    PropertyPlaceholderResolver propertyPlaceholderResolver,
+                                    String message,
+                                    String... statements) {
+        try {
+            for (String statement : statements) {
+                String sql = resolveSql(propertyPlaceholderResolver, statement);
+                if (DataSettings.QUERY_LOG.isDebugEnabled()) {
+                    DataSettings.QUERY_LOG.debug("{}: \n{}", message, sql);
+                }
+                try (PreparedStatement ps = connection.prepareStatement(sql)) {
+                    ps.executeUpdate();
+                }
+            }
+        } catch (SQLException e) {
+            if (DataSettings.QUERY_LOG.isTraceEnabled()) {
+                DataSettings.QUERY_LOG.trace("Drop Unsuccessful: " + e.getMessage());
+            }
+        }
+    }
+
+    private void createTables(Connection connection,
+                              DataJdbcConfiguration configuration,
+                              @Nullable String dialectVersion,
+                              PropertyPlaceholderResolver propertyPlaceholderResolver,
+                              PersistentEntity[] entities) throws SQLException {
         Dialect dialect = configuration.getDialect();
         SqlQueryBuilder builder = new SqlQueryBuilder(dialect, dialectVersion);
-        // Oracle JDBC doesn't execute several statements in one string
-        if (dialect.allowBatch() && dialect != Dialect.ORACLE && configuration.isBatchGenerate()) {
-            switch (configuration.getSchemaGenerate()) {
-                case CREATE_DROP:
-                    try {
-                        String sql = resolveSql(propertyPlaceholderResolver, builder.buildBatchDropTableStatement(entities));
-                        if (DataSettings.QUERY_LOG.isDebugEnabled()) {
-                            DataSettings.QUERY_LOG.debug("Dropping Tables: \n{}", sql);
-                        }
-                        try (PreparedStatement ps = connection.prepareStatement(sql)) {
-                            ps.executeUpdate();
-                        }
-                    } catch (SQLException e) {
-                        if (DataSettings.QUERY_LOG.isTraceEnabled()) {
-                            DataSettings.QUERY_LOG.trace("Drop Unsuccessful: " + e.getMessage());
-                        }
-                    }
-                case CREATE:
-                    String sql = resolveSql(propertyPlaceholderResolver, builder.buildBatchCreateTableStatement(definitionProviders, entities));
-                    if (DataSettings.QUERY_LOG.isDebugEnabled()) {
-                        DataSettings.QUERY_LOG.debug("Creating Tables: \n{}", sql);
-                    }
-                    try (PreparedStatement ps = connection.prepareStatement(sql)) {
-                        ps.executeUpdate();
-                    }
-                    break;
-                default:
-                    // do nothing
+        if (isBatch(configuration)) {
+            String sql = resolveSql(propertyPlaceholderResolver, builder.buildBatchCreateTableStatement(definitionProviders, entities));
+            if (DataSettings.QUERY_LOG.isDebugEnabled()) {
+                DataSettings.QUERY_LOG.debug("Creating Tables: \n{}", sql);
             }
-        } else {
-            switch (configuration.getSchemaGenerate()) {
-                case CREATE_DROP:
-                    for (PersistentEntity entity : entities) {
-                        try {
-                            String[] statements = builder.buildDropTableStatements(entity);
-                            for (String sql : statements) {
-                                sql = resolveSql(propertyPlaceholderResolver, sql);
-                                if (DataSettings.QUERY_LOG.isDebugEnabled()) {
-                                    DataSettings.QUERY_LOG.debug("Dropping Table: \n{}", sql);
-                                }
-                                try (PreparedStatement ps = connection.prepareStatement(sql)) {
-                                    ps.executeUpdate();
-                                }
-                            }
-                        } catch (SQLException e) {
-                            if (DataSettings.QUERY_LOG.isTraceEnabled()) {
-                                DataSettings.QUERY_LOG.trace("Drop Unsuccessful: " + e.getMessage());
-                            }
-                        }
-                    }
-                case CREATE:
-                    String[] sql = builder.buildCreateTableStatements(definitionProviders, entities, dialect);
-                    for (String stmt : sql) {
-                        stmt = resolveSql(propertyPlaceholderResolver, stmt);
-                        if (DataSettings.QUERY_LOG.isDebugEnabled()) {
-                            DataSettings.QUERY_LOG.debug("Executing CREATE statement: \n{}", stmt);
-                        }
-                        try {
-                            try (PreparedStatement ps = connection.prepareStatement(stmt)) {
-                                ps.executeUpdate();
-                            }
-                        } catch (SQLException e) {
-                            if (DataSettings.QUERY_LOG.isWarnEnabled()) {
-                                DataSettings.QUERY_LOG.warn("CREATE Statement Unsuccessful: " + e.getMessage());
-                            }
-                        }
-                    }
-                    break;
-                default:
-                    // do nothing
+            try (PreparedStatement ps = connection.prepareStatement(sql)) {
+                ps.executeUpdate();
+            }
+            return;
+        }
+        String[] sql = builder.buildCreateTableStatements(definitionProviders, entities, dialect);
+        for (String stmt : sql) {
+            stmt = resolveSql(propertyPlaceholderResolver, stmt);
+            if (DataSettings.QUERY_LOG.isDebugEnabled()) {
+                DataSettings.QUERY_LOG.debug("Executing CREATE statement: \n{}", stmt);
+            }
+            try {
+                try (PreparedStatement ps = connection.prepareStatement(stmt)) {
+                    ps.executeUpdate();
+                }
+            } catch (SQLException e) {
+                if (DataSettings.QUERY_LOG.isWarnEnabled()) {
+                    DataSettings.QUERY_LOG.warn("CREATE Statement Unsuccessful: " + e.getMessage());
+                }
             }
         }
     }
