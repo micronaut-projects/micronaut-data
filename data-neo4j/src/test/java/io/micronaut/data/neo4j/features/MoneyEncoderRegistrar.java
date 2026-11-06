@@ -15,5 +15,7 @@ public class MoneyEncoderRegistrar implements GraphValueEncoderRegistrar {
             "amount", e.encode(money.amount()),
             "currency", money.currency()
         ));
+        // Not idempotent, so a value encoded twice is seen by the specs
+        encoders.register(Short.class, (value, e) -> (short) (value + 1));
     }
 }
