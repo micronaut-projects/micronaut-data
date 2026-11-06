@@ -15,7 +15,7 @@ import java.time.Duration
  */
 trait MongoAtlasLocal implements TestPropertyProvider {
 
-    static final String IMAGE = "mongodb/mongodb-atlas-local:7.0"
+    static final String IMAGE = "mongodb/mongodb-atlas-local:8.2"
     static final String DATABASE = "atlas_search_test"
     private static MongoDBAtlasLocalContainer container
 

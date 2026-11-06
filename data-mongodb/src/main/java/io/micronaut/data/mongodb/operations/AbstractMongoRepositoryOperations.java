@@ -15,6 +15,7 @@
  */
 package io.micronaut.data.mongodb.operations;
 
+import com.mongodb.MongoCommandException;
 import com.mongodb.bulk.BulkWriteResult;
 import com.mongodb.client.model.Collation;
 import com.mongodb.client.model.DeleteOptions;
@@ -33,10 +34,12 @@ import io.micronaut.core.util.SupplierUtil;
 import io.micronaut.data.annotation.Embeddable;
 import io.micronaut.data.annotation.Id;
 import io.micronaut.data.annotation.Projection;
+import io.micronaut.data.document.mongo.MongoAnnotations;
 import io.micronaut.data.intercept.annotation.DataMethod;
 import io.micronaut.data.model.DataType;
 import io.micronaut.data.model.Embedded;
 import io.micronaut.data.model.PersistentEntity;
+import io.micronaut.data.model.PersistentProperty;
 import io.micronaut.data.model.runtime.AttributeConverterRegistry;
 import io.micronaut.data.model.runtime.PreparedQuery;
 import io.micronaut.data.model.runtime.RuntimeEntityRegistry;
@@ -50,11 +53,13 @@ import io.micronaut.data.operations.HintsCapableRepository;
 import io.micronaut.data.runtime.config.DataSettings;
 import io.micronaut.data.runtime.convert.DataConversionService;
 import io.micronaut.data.runtime.date.DateTimeProvider;
+import io.micronaut.data.runtime.intercept.criteria.NativeHybridSearch;
 import io.micronaut.data.runtime.mapper.BeanIntrospectionMapper;
 import io.micronaut.data.runtime.operations.internal.AbstractRepositoryOperations;
 import io.micronaut.data.runtime.query.MethodContextAwareStoredQueryDecorator;
 import io.micronaut.data.runtime.query.PreparedQueryDecorator;
 import io.micronaut.data.runtime.query.internal.QueryResultStoredQuery;
+import io.micronaut.data.model.search.SearchQuery;
 import io.micronaut.data.model.search.TextSearchSupport;
 import io.micronaut.data.model.vector.search.Score;
 import io.micronaut.data.model.vector.search.SearchResult;
@@ -88,16 +93,19 @@ import java.util.function.Supplier;
  */
 @Internal
 abstract sealed class AbstractMongoRepositoryOperations<Dtb> extends AbstractRepositoryOperations
-    implements HintsCapableRepository, PreparedQueryDecorator, MethodContextAwareStoredQueryDecorator
+    implements HintsCapableRepository, PreparedQueryDecorator, MethodContextAwareStoredQueryDecorator, NativeHybridSearch
     permits DefaultMongoRepositoryOperations, DefaultReactiveMongoRepositoryOperations {
 
     protected static final BsonDocument EMPTY = new BsonDocument();
     protected static final Logger QUERY_LOG = DataSettings.QUERY_LOG;
 
     private static final Logger LOG = LoggerFactory.getLogger(AbstractMongoRepositoryOperations.class);
+    // the "Unrecognized pipeline stage name" error of a server without $rankFusion
+    private static final int UNRECOGNIZED_STAGE = 40324;
 
     protected final MongoCollectionNameProvider collectionNameProvider;
     protected final MongoDatabaseNameProvider databaseNameProvider;
+    private volatile boolean rankFusionUnavailable;
 
     /**
      * Default constructor.
@@ -118,6 +126,51 @@ abstract sealed class AbstractMongoRepositoryOperations<Dtb> extends AbstractRep
         super(dateTimeProvider, runtimeEntityRegistry, conversionService, attributeConverterRegistry);
         this.collectionNameProvider = collectionNameProvider;
         this.databaseNameProvider = databaseNameProvider;
+    }
+
+    /**
+     * MongoDB fuses a hybrid search with {@code $rankFusion} when the entity has a {@code @MongoSearchIndex},
+     * the query keeps the rank constant the stage fixes at 60 and asks for no highlights, which the stage
+     * does not carry.
+     */
+    @Override
+    public boolean supportsNativeHybridSearch(SearchQuery searchQuery, RuntimePersistentEntity<?> persistentEntity) {
+        if (rankFusionUnavailable
+            || !persistentEntity.getAnnotationMetadata().hasAnnotation(MongoAnnotations.SEARCH_INDEX)
+            || searchQuery.getRankConstant() != SearchQuery.DEFAULT_RANK_CONSTANT
+            || !searchQuery.getHighlightFields().isEmpty()) {
+            return false;
+        }
+        if (searchQuery.isHighlightingDeclaredFields()) {
+            for (PersistentProperty property : TextSearchSupport.searchFields(persistentEntity)) {
+                if (TextSearchSupport.isHighlightable(property)) {
+                    return false;
+                }
+            }
+        }
+        return true;
+    }
+
+    /**
+     * A server before MongoDB 8.1 rejects {@code $rankFusion} as an unknown stage: the hybrid searches are then
+     * fused in memory, as they are on any other store.
+     */
+    @Override
+    public boolean nativeHybridSearchUnavailable(Throwable failure) {
+        if (isUnknownRankFusion(failure)) {
+            rankFusionUnavailable = true;
+            return true;
+        }
+        return false;
+    }
+
+    /**
+     * @param failure A failure of a {@code $rankFusion} aggregation
+     * @return Whether the server does not know the stage
+     */
+    static boolean isUnknownRankFusion(Throwable failure) {
+        return failure instanceof MongoCommandException commandException
+            && (commandException.getErrorCode() == UNRECOGNIZED_STAGE || String.valueOf(commandException.getErrorMessage()).contains("$rankFusion"));
     }
 
     protected final ReplaceOptions getReplaceOptions(AnnotationMetadata annotationMetadata) {

@@ -65,6 +65,21 @@ public class SearchQueryReactiveInterceptor extends AbstractReactiveSpecificatio
             return findOne(methodKey, context, SearchQuerySupport.textQuery(cb, rootEntity, searchQuery, pageable), pageable)
                 .map(found -> SearchQuerySupport.applyMinScore(found, searchQuery));
         }
+        Mono<SearchResults<Object>> inMemory = Mono.defer(() -> fuseInMemory(methodKey, context, searchQuery, pageable));
+        if (SearchQuerySupport.fusesNatively(operations, searchQuery, operations.getEntity(rootEntity))) {
+            return findOne(methodKey, context, SearchQuerySupport.hybridQuery(cb, rootEntity, searchQuery, pageable), Pageable.UNPAGED)
+                .map(fused -> SearchQuerySupport.pageHybrid(fused, searchQuery, pageable))
+                .onErrorResume(e -> SearchQuerySupport.nativeFusionUnavailable(operations, e), e -> inMemory);
+        }
+        return inMemory;
+    }
+
+    private Mono<SearchResults<Object>> fuseInMemory(RepositoryMethodKey methodKey,
+                                                     MethodInvocationContext<Object, Object> context,
+                                                     SearchQuery searchQuery,
+                                                     Pageable pageable) {
+        AbstractCriteriaBuilder cb = (AbstractCriteriaBuilder) criteriaBuilder;
+        Class<Object> rootEntity = getRequiredRootEntity(context);
         Pageable window = SearchQuerySupport.hybridWindow(searchQuery, pageable);
         RuntimePersistentEntity<Object> persistentEntity = operations.getEntity(rootEntity);
         Mono<SearchResults<Object>> text = findOne(methodKey, context, SearchQuerySupport.textQuery(cb, rootEntity, searchQuery, window), window);

@@ -69,8 +69,25 @@ public class SearchQueryAsyncInterceptor extends AbstractAsyncSpecificationInter
             return findOne(methodKey, context, SearchQuerySupport.textQuery(cb, rootEntity, searchQuery, pageable), pageable)
                 .thenApply(found -> SearchQuerySupport.applyMinScore(found, searchQuery));
         }
-        Pageable window = SearchQuerySupport.hybridWindow(searchQuery, pageable);
         RuntimePersistentEntity<Object> persistentEntity = operations.getEntity(rootEntity);
+        if (SearchQuerySupport.fusesNatively(operations, searchQuery, persistentEntity)) {
+            return findOne(methodKey, context, SearchQuerySupport.hybridQuery(cb, rootEntity, searchQuery, pageable), Pageable.UNPAGED)
+                .thenApply(fused -> SearchQuerySupport.pageHybrid(fused, searchQuery, pageable))
+                .exceptionallyCompose(e -> SearchQuerySupport.nativeFusionUnavailable(operations, e)
+                    ? fuseInMemory(methodKey, context, searchQuery, pageable, persistentEntity)
+                    : CompletableFuture.failedFuture(e));
+        }
+        return fuseInMemory(methodKey, context, searchQuery, pageable, persistentEntity);
+    }
+
+    private CompletableFuture<SearchResults<Object>> fuseInMemory(RepositoryMethodKey methodKey,
+                                                                  MethodInvocationContext<Object, Object> context,
+                                                                  SearchQuery searchQuery,
+                                                                  Pageable pageable,
+                                                                  RuntimePersistentEntity<Object> persistentEntity) {
+        AbstractCriteriaBuilder cb = (AbstractCriteriaBuilder) criteriaBuilder;
+        Class<Object> rootEntity = getRequiredRootEntity(context);
+        Pageable window = SearchQuerySupport.hybridWindow(searchQuery, pageable);
         CompletableFuture<SearchResults<Object>> text = findOne(methodKey, context, SearchQuerySupport.textQuery(cb, rootEntity, searchQuery, window), window);
         // one ranking after the other: in a transaction both share one connection, which cannot run two statements at once
         return text.thenCompose(t -> vectorSearch(methodKey, context, searchQuery, window)

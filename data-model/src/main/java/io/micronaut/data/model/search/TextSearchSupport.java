@@ -61,6 +61,15 @@ public final class TextSearchSupport {
     public static final String SCORE_ALIAS = "mn_score";
 
     /**
+     * Synthetic function name used in the criteria tree for the fused score of a hybrid search a store
+     * computes natively. The arguments are the {@link #SCORE_FUNCTION} expression, the vector score
+     * expression, and literals holding the text weight, the vector weight and the candidates of each ranking.
+     *
+     * @since 5.4.0
+     */
+    public static final String HYBRID_SCORE_FUNCTION = "mn_hybrid_score";
+
+    /**
      * The default language when an entity declares no {@code @Searchable(language)}.
      */
     public static final String DEFAULT_LANGUAGE = "english";
