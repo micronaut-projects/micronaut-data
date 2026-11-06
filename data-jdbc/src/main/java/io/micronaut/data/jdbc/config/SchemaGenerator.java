@@ -200,15 +200,16 @@ public class SchemaGenerator {
         try {
             DataSource dataSource = DelegatingDataSource.unwrapDataSource(beanLocator.getBean(DataSource.class, Qualifiers.byName(name)));
             try (Connection connection = dataSource.getConnection()) {
+                String dialectVersion = configuration.getDialectOptions().resolveVersion(() -> detectVersion(connection, name));
                 // An Oracle session keeps its current schema when the connection returns to the pool
                 String originalOracleSchema = configuration.getDialect() == Dialect.ORACLE ? connection.getSchema() : null;
                 try {
                     if (configuration.getSchemaGenerateNames() != null && !configuration.getSchemaGenerateNames().isEmpty()) {
                         for (String schemaName : configuration.getSchemaGenerateNames()) {
-                            createOrValidateSchema(connection, configuration, schemaName, entities, contributions);
+                            createOrValidateSchema(connection, configuration, dialectVersion, schemaName, entities, contributions);
                         }
                     } else {
-                        createOrValidateSchema(connection, configuration, configuration.getSchemaGenerateName(), entities, contributions);
+                        createOrValidateSchema(connection, configuration, dialectVersion, configuration.getSchemaGenerateName(), entities, contributions);
                     }
                 } finally {
                     if (originalOracleSchema != null) {
@@ -225,6 +226,7 @@ public class SchemaGenerator {
 
     private void createOrValidateSchema(Connection connection,
                                         DataJdbcConfiguration configuration,
+                                        @Nullable String dialectVersion,
                                         @Nullable String schemaName,
                                         PersistentEntity[] entities,
                                         Map<JdbcSchemaContributor, List<PersistentEntity>> contributions) throws SQLException {
@@ -237,9 +239,9 @@ public class SchemaGenerator {
             schemaHandler.useSchema(connection, dialect, schemaName);
         }
         if (schemaGenerate == SchemaGenerate.VALIDATE) {
-            validate(connection, configuration, entities, dialectSqlTableMappingValidatorMap, definitionProviders);
+            validate(connection, configuration, dialectVersion, entities, dialectSqlTableMappingValidatorMap, definitionProviders);
         } else {
-            generate(connection, configuration, propertyPlaceholderResolver, entities, contributions);
+            generate(connection, configuration, dialectVersion, propertyPlaceholderResolver, entities, contributions);
         }
     }
 
@@ -262,6 +264,7 @@ public class SchemaGenerator {
 
     private void generate(Connection connection,
                           DataJdbcConfiguration configuration,
+                          @Nullable String dialectVersion,
                           PropertyPlaceholderResolver propertyPlaceholderResolver,
                           PersistentEntity[] entities,
                           Map<JdbcSchemaContributor, List<PersistentEntity>> contributions) throws SQLException {
@@ -272,7 +275,7 @@ public class SchemaGenerator {
                 executeContributed(connection, propertyPlaceholderResolver, contributor.buildDropStatements(configuration, contributed), "DROP"));
         }
         if (entities.length > 0) {
-            generateTables(connection, configuration, propertyPlaceholderResolver, entities);
+            generateTables(connection, configuration, dialectVersion, propertyPlaceholderResolver, entities);
         }
         if (schemaGenerate == SchemaGenerate.CREATE_DROP || schemaGenerate == SchemaGenerate.CREATE) {
             contributions.forEach((contributor, contributed) ->
@@ -307,6 +310,20 @@ public class SchemaGenerator {
         }
     }
 
+    private static @Nullable String detectVersion(Connection connection, String dataSourceName) {
+        try {
+            DatabaseMetaData metadata = connection.getMetaData();
+            String version = metadata.getDatabaseMajorVersion() + "." + metadata.getDatabaseMinorVersion();
+            if (LOG.isInfoEnabled()) {
+                LOG.info("Schema generation for datasource [{}] targets the detected database version {}", dataSourceName, version);
+            }
+            return version;
+        } catch (SQLException e) {
+            LOG.warn("Unable to detect the database version of datasource [{}]: schema generation uses no target version", dataSourceName, e);
+            return null;
+        }
+    }
+
     private static void restoreOracleSchema(Connection connection, String schema) throws SQLException {
         // The exact name reported by the driver, bound and quoted by the database so that its case is kept
         try (CallableStatement statement = connection.prepareCall(RESTORE_ORACLE_SCHEMA)) {
@@ -318,10 +335,11 @@ public class SchemaGenerator {
     @SuppressWarnings("java:S3776")
     private void generateTables(Connection connection,
                                 DataJdbcConfiguration configuration,
+                                @Nullable String dialectVersion,
                                 PropertyPlaceholderResolver propertyPlaceholderResolver,
                                 PersistentEntity[] entities) throws SQLException {
         Dialect dialect = configuration.getDialect();
-        SqlQueryBuilder builder = new SqlQueryBuilder(dialect, configuration.getDialectOptions().getVersion());
+        SqlQueryBuilder builder = new SqlQueryBuilder(dialect, dialectVersion);
         // Oracle JDBC doesn't execute several statements in one string
         if (dialect.allowBatch() && dialect != Dialect.ORACLE && configuration.isBatchGenerate()) {
             switch (configuration.getSchemaGenerate()) {
@@ -399,11 +417,12 @@ public class SchemaGenerator {
     @SuppressWarnings("java:S3776")
     private static void validate(Connection connection,
                                  DataJdbcConfiguration configuration,
+                                 @Nullable String dialectVersion,
                                  PersistentEntity[] entities,
                                  Map<Dialect, SqlTableMappingValidator> dialectSqlTableMappingValidatorMap,
                                  List<DefinitionProvider> definitionProviders) throws SQLException {
         Dialect dialect = configuration.getDialect();
-        SqlDialectOptions dialectOptions = SqlDialectOptions.of(dialect, configuration.getDialectOptions().getVersion());
+        SqlDialectOptions dialectOptions = SqlDialectOptions.of(dialect, dialectVersion);
         SqlTableMappingValidator sqlTableMappingValidator = dialectSqlTableMappingValidatorMap.get(dialect);
         if (sqlTableMappingValidator == null) {
             throw new IllegalStateException("There is no supported SqlTableMappingValidator for dialect " + dialect);
