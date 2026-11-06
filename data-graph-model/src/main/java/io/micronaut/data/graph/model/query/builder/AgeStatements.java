@@ -122,7 +122,8 @@ public final class AgeStatements {
      */
     public static String forGraph(String statement, String graph) {
         int cypher = statement.indexOf(CYPHER_START);
-        return cypher < 0 ? statement : statement.substring(0, cypher).replace(GRAPH_TOKEN, graph) + statement.substring(cypher);
+        // A statement without Cypher, such as one that creates an index, is written by the query builder
+        return cypher < 0 ? statement.replace(GRAPH_TOKEN, graph) : statement.substring(0, cypher).replace(GRAPH_TOKEN, graph) + statement.substring(cypher);
     }
 
     /**
