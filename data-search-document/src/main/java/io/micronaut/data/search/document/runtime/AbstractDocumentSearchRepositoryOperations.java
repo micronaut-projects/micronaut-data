@@ -22,6 +22,9 @@ import io.micronaut.core.type.Argument;
 import io.micronaut.data.annotation.search.Searchable;
 import io.micronaut.data.event.EntityEventContext;
 import io.micronaut.data.exceptions.DataAccessException;
+import io.micronaut.data.model.CursoredPage;
+import io.micronaut.data.model.CursoredPageable;
+import io.micronaut.data.model.Page;
 import io.micronaut.data.model.Pageable;
 import io.micronaut.data.model.Sort;
 import io.micronaut.data.model.runtime.AttributeConverterRegistry;
@@ -64,6 +67,9 @@ import java.util.UUID;
 abstract class AbstractDocumentSearchRepositoryOperations extends AbstractRepositoryOperations {
 
     protected static final String QUERY = "query";
+    private static final String ORDER = "order";
+    private static final String ASC = "asc";
+    private static final String DESC = "desc";
     private static final Argument<Map<String, Object>> DOCUMENT = Argument.mapOf(String.class, Object.class);
 
     protected final JsonMapper jsonMapper;
@@ -128,6 +134,66 @@ abstract class AbstractDocumentSearchRepositoryOperations extends AbstractReposi
     protected final <T> String documentId(T current, RuntimePersistentEntity<T> entity) {
         Object id = requireIdentity(entity).getProperty().get(current);
         return id == null ? null : idString(id);
+    }
+
+    /**
+     * The external version to index a new entity with: its {@code @Version} property, which the
+     * version-generating entity listener has set to {@code 0} in the pre-persist event.
+     *
+     * @return The version, or {@code null} for an entity without a version property
+     */
+    @Nullable
+    protected final <T> Long persistVersion(T current, RuntimePersistentEntity<T> entity) {
+        return documentVersion(current, entity);
+    }
+
+    /**
+     * The external version to index an updated entity with: its {@code @Version} property, which the
+     * version-generating entity listener has incremented in the pre-update event, so the store rejects
+     * the write when another writer got there first.
+     *
+     * @return The version, or {@code null} for an entity without a version property
+     */
+    @Nullable
+    protected final <T> Long updateVersion(T current, RuntimePersistentEntity<T> entity) {
+        return documentVersion(current, entity);
+    }
+
+    /**
+     * The version to delete an entity at: its {@code @Version} property as read, so the store rejects
+     * the delete when the document has been updated since.
+     *
+     * @param current The entity
+     * @param entity The persistent entity
+     * @param <T> The entity type
+     * @return The version, or {@code null} for an entity without a version property
+     */
+    @Nullable
+    protected final <T> Long deleteVersion(T current, RuntimePersistentEntity<T> entity) {
+        return documentVersion(current, entity);
+    }
+
+    @Nullable
+    private <T> Long documentVersion(T current, RuntimePersistentEntity<T> entity) {
+        if (!entity.hasVersion()) {
+            return null;
+        }
+        Object value = entity.getVersion().getProperty().get(current);
+        return value == null ? null : conversionService.convertRequired(value, Long.class);
+    }
+
+    /**
+     * Writes a search body, requesting the document versions when the entity has a {@code @Version}.
+     *
+     * @param body The body
+     * @param entity The entity
+     * @return The JSON body
+     */
+    protected final String searchJson(Map<String, Object> body, RuntimePersistentEntity<?> entity) {
+        if (entity.hasVersion()) {
+            body.put("version", true);
+        }
+        return SearchJson.write(body);
     }
 
     /**
@@ -208,6 +274,10 @@ abstract class AbstractDocumentSearchRepositoryOperations extends AbstractReposi
         Map<String, Object> source = new LinkedHashMap<>(hit.source());
         RuntimePersistentProperty<T> identity = requireIdentity(entity);
         source.putIfAbsent(identity.getName(), hit.id());
+        if (entity.hasVersion() && hit.version() != null) {
+            // the store's version wins over the copy serialized in the source
+            source.put(entity.getVersion().getName(), hit.version());
+        }
         T value = fromDocument(source, entity);
         if (preparedQuery != null) {
             Class<?> resultType = preparedQuery.getResultType();
@@ -308,8 +378,9 @@ abstract class AbstractDocumentSearchRepositoryOperations extends AbstractReposi
     }
 
     protected final <T> void applyPageable(Map<String, Object> body, Pageable pageable, RuntimePersistentEntity<T> entity) {
-        if (pageable.getMode() != Pageable.Mode.OFFSET) {
-            throw new DataAccessException("Cursored pagination is not supported by document search stores yet");
+        if (pageable instanceof CursoredPageable cursored) {
+            applyCursoredPageable(body, cursored, entity);
+            return;
         }
         if (!pageable.isUnpaged()) {
             body.put("from", pageable.getOffset());
@@ -317,11 +388,7 @@ abstract class AbstractDocumentSearchRepositoryOperations extends AbstractReposi
         }
         Sort sort = pageable.getSort();
         if (sort.isSorted()) {
-            List<Map<String, Object>> entries = new ArrayList<>();
-            for (Sort.Order order : sort.getOrderBy()) {
-                entries.add(Map.of(sortField(order, entity), Map.of("order", order.isAscending() ? "asc" : "desc")));
-            }
-            body.put("sort", entries);
+            body.put("sort", sortEntries(sort.getOrderBy(), entity, false));
         }
     }
 
@@ -335,6 +402,94 @@ abstract class AbstractDocumentSearchRepositoryOperations extends AbstractReposi
             throw new DataAccessException("Cannot sort on unknown property: " + order.getProperty());
         }
         return DocumentSearchQueryBuilder.keywordPath(path);
+    }
+
+    /**
+     * Cursored pagination with {@code search_after}: the requested sort plus the entity id as a
+     * tiebreaker, reversed for a backward page, and the cursor as the {@code search_after} values.
+     */
+    private <T> void applyCursoredPageable(Map<String, Object> body, CursoredPageable pageable, RuntimePersistentEntity<T> entity) {
+        List<Sort.Order> orders = cursorOrders(pageable, entity);
+        // the method's OrderBy comes first, then the pageable's sort and the id tiebreaker
+        List<Map<String, Object>> entries = new ArrayList<>();
+        if (body.get("sort") instanceof List<?> declared) {
+            for (Object entry : declared) {
+                entries.add(pageable.isBackward() ? reversed((Map<String, Object>) entry) : (Map<String, Object>) entry);
+            }
+        }
+        for (Map<String, Object> entry : sortEntries(orders, entity, pageable.isBackward())) {
+            // a field the OrderBy already sorts on is one sort value, not two
+            if (entries.stream().noneMatch(declared -> declared.keySet().equals(entry.keySet()))) {
+                entries.add(entry);
+            }
+        }
+        body.put("sort", entries);
+        if (pageable.getSize() > 0) {
+            body.put("size", pageable.getSize());
+        }
+        int sortValues = entries.size();
+        pageable.cursor().ifPresent(cursor -> {
+            if (cursor.size() != sortValues) {
+                throw new DataAccessException("The cursor must hold one value per sort property, including the id tiebreaker; got " + cursor.size() + " for " + sortValues);
+            }
+            body.put("search_after", cursor.elements());
+        });
+    }
+
+    /** A sort entry with its direction flipped, for a backward cursored page. */
+    private static Map<String, Object> reversed(Map<String, Object> entry) {
+        Map<String, Object> flipped = new LinkedHashMap<>();
+        entry.forEach((field, options) -> {
+            Map<String, Object> order = new LinkedHashMap<>((Map<String, Object>) options);
+            order.put(ORDER, ASC.equals(order.get(ORDER)) ? DESC : ASC);
+            flipped.put(field, order);
+        });
+        return flipped;
+    }
+
+    /**
+     * The sort of a cursored page: the pageable's orders with the entity id appended as a tiebreaker.
+     */
+    protected final <T> List<Sort.Order> cursorOrders(CursoredPageable pageable, RuntimePersistentEntity<T> entity) {
+        List<Sort.Order> orders = new ArrayList<>(pageable.getSort().getOrderBy());
+        String idName = requireIdentity(entity).getName();
+        if (orders.stream().noneMatch(order -> order.getProperty().equals(idName))) {
+            orders.add(Sort.Order.asc(idName));
+        }
+        return orders;
+    }
+
+    private <T> List<Map<String, Object>> sortEntries(List<Sort.Order> orders, RuntimePersistentEntity<T> entity, boolean reversed) {
+        List<Map<String, Object>> entries = new ArrayList<>();
+        for (Sort.Order order : orders) {
+            boolean ascending = order.isAscending() != reversed;
+            entries.add(Map.of(sortField(order, entity), Map.of(ORDER, ascending ? ASC : DESC)));
+        }
+        return entries;
+    }
+
+    /**
+     * Builds the page of a paged query from the hits: a {@link CursoredPage} with one cursor per hit
+     * for a {@link CursoredPageable}, a plain {@link Page} otherwise.
+     */
+    protected final <R> Page<R> toPage(SearchTransport.SearchHits hits,
+                                       io.micronaut.data.model.runtime.PagedQuery<R> query,
+                                       RuntimePersistentEntity<R> entity,
+                                       @Nullable PreparedQuery<R, R> preparedQuery) {
+        List<R> content = toEntities(hits, entity, preparedQuery);
+        if (!(query.getPageable() instanceof CursoredPageable cursored)) {
+            return Page.of(content, query.getPageable(), hits.total());
+        }
+        List<Pageable.Cursor> cursors = new ArrayList<>(hits.hits().size());
+        for (SearchTransport.SearchHit hit : hits.hits()) {
+            cursors.add(Pageable.Cursor.of(hit.sort()));
+        }
+        if (cursored.isBackward()) {
+            content = new ArrayList<>(content);
+            java.util.Collections.reverse(content);
+            java.util.Collections.reverse(cursors);
+        }
+        return CursoredPage.of(content, cursored, cursors, cursored.requestTotal() ? hits.total() : null);
     }
 
     /**

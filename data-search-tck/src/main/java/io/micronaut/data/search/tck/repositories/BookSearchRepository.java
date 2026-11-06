@@ -15,6 +15,8 @@
  */
 package io.micronaut.data.search.tck.repositories;
 
+import io.micronaut.data.model.CursoredPage;
+import io.micronaut.data.model.CursoredPageable;
 import io.micronaut.data.model.Pageable;
 import io.micronaut.data.model.vector.search.SearchResults;
 import io.micronaut.data.repository.CrudRepository;
@@ -44,4 +46,6 @@ public interface BookSearchRepository extends CrudRepository<Book, UUID>, Search
     List<Book> findByTitleSearchAndPagesGreaterThan(String query, int pages);
 
     SearchResults<Book> searchBySearch(String query, Pageable pageable);
+
+    CursoredPage<Book> findAll(CursoredPageable pageable);
 }

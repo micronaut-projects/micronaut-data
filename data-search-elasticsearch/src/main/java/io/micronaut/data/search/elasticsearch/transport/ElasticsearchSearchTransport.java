@@ -82,11 +82,13 @@ public final class ElasticsearchSearchTransport implements SearchTransport {
     }
 
     @Override
-    public String index(String index, @Nullable String id, Map<String, Object> source, DocumentSearchConfiguration.Refresh refresh) {
+    public String index(String index, @Nullable String id, Map<String, Object> source, @Nullable Long version, DocumentSearchConfiguration.Refresh refresh) {
         try {
-            return client.index(i -> i.index(index).id(id).document(source).refresh(refresh(refresh))).id();
+            return client.index(i -> ElasticsearchAsyncSearchTransport.indexRequest(i, index, id, source, version, refresh)).id();
         } catch (IOException e) {
             throw new DataAccessException("Elasticsearch index failed: " + e.getMessage(), e);
+        } catch (RuntimeException e) {
+            throw ElasticsearchAsyncSearchTransport.conflictOrFailure(e, id);
         }
     }
 
@@ -98,6 +100,8 @@ public final class ElasticsearchSearchTransport implements SearchTransport {
             response = client.bulk(request);
         } catch (IOException e) {
             throw new DataAccessException("Elasticsearch bulk failed: " + e.getMessage(), e);
+        } catch (RuntimeException e) {
+            throw ElasticsearchAsyncSearchTransport.conflictOrFailure(e, null);
         }
         return ElasticsearchAsyncSearchTransport.bulkIds(response);
     }
@@ -134,6 +138,17 @@ public final class ElasticsearchSearchTransport implements SearchTransport {
     }
 
     @Override
+    public boolean delete(String index, String id, @Nullable Long version, DocumentSearchConfiguration.Refresh refresh) {
+        try {
+            return client.delete(d -> ElasticsearchAsyncSearchTransport.deleteRequest(d, index, id, version, refresh)).result().jsonValue().equals("deleted");
+        } catch (IOException e) {
+            throw new DataAccessException("Elasticsearch delete failed: " + e.getMessage(), e);
+        } catch (RuntimeException e) {
+            throw ElasticsearchAsyncSearchTransport.conflictOrFailure(e, id);
+        }
+    }
+
+    @Override
     public long deleteByQuery(String index, String body, DocumentSearchConfiguration.Refresh refresh) {
         try {
             Long deleted = client.deleteByQuery(d -> d.index(index).withJson(new StringReader(body)).refresh(refresh != DocumentSearchConfiguration.Refresh.NONE)).deleted();
@@ -164,4 +179,21 @@ public final class ElasticsearchSearchTransport implements SearchTransport {
     private static Refresh refresh(DocumentSearchConfiguration.Refresh refresh) {
         return ElasticsearchAsyncSearchTransport.refresh(refresh);
     }
+
+    @Override
+    public String index(String index, @Nullable String id, Map<String, Object> source, DocumentSearchConfiguration.Refresh refresh) {
+        return index(index, id, source, null, refresh);
+    }
+
+    @Override
+    @Nullable
+    public SearchHit getHit(String index, String id) {
+        try {
+            var response = client.get(g -> g.index(index).id(id), Map.class);
+            return response.found() ? new SearchHit(id, null, (Map<String, Object>) response.source(), Map.of(), response.version(), List.of()) : null;
+        } catch (IOException e) {
+            throw new DataAccessException("Elasticsearch get failed: " + e.getMessage(), e);
+        }
+    }
+
 }

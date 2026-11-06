@@ -29,7 +29,15 @@ A api:data.model.search.SearchQuery[] passed to `search(SearchQuery)` builds the
 
 == Paging and sorting
 
-`Pageable` and `Sort` parameters set `from`, `size` and `sort`; a `Page` is built with `track_total_hits` so its total is exact. Sorting on an analysed search field sorts on its `keyword` sub-field. Cursored pagination is not supported yet.
+`Pageable` and `Sort` parameters set `from`, `size` and `sort`; a `Page` is built with `track_total_hits` so its total is exact. Sorting on an analysed search field sorts on its `keyword` sub-field.
+
+A `CursoredPageable` pages with `search_after`: the request sorts by the pageable's sort with the entity id appended as a tiebreaker, and each hit's sort values become its cursor, so `CursoredPage.nextPageable()` and `previousPageable()` continue the scan without `from`, which the stores cap at 10,000 documents. A backward page reverses the sort and restores the order of the results.
+
+== Optimistic locking and transactions
+
+A `@Version` property maps to the document version. Micronaut Data writes with external versioning: a new entity is indexed at version `0`, an update increments the property and indexes with that version, and the store rejects the write with api:data.exceptions.OptimisticLockException[] when it already holds the document at that version or a later one. Reads take the version from the hit, so the property always reflects the stored document.
+
+Elasticsearch and OpenSearch have no transactions. A repository method annotated with `@Transactional` fails at its first call with a configuration error naming the missing `TransactionOperations`; writes are visible according to the `refresh` policy and cannot be rolled back.
 
 == Reactive and async repositories
 
@@ -46,4 +54,5 @@ Elasticsearch and OpenSearch run reactive and async repositories on their async 
 == Limitations
 
 - Joins, `@Where`, update queries (`updateBy...`) and subqueries are not supported; update entities with `update(...)`.
+- `@Transactional` is not supported; see above.
 - Highlighting, aggregations and the raw query DSL are not exposed yet.

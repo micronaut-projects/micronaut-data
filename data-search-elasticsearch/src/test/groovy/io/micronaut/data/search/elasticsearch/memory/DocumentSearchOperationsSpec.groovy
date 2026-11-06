@@ -251,13 +251,35 @@ class DocumentSearchOperationsSpec extends Specification {
         e.message.contains("unknown property")
     }
 
-    void "cursored pages are not supported"() {
+    void "a first cursored page sorts with the id as tiebreaker and starts without search_after"() {
+        given:
+        notes.saveAll([new Note("Coffee", "Roasting beans", 120), new Note("Bread", "Sourdough", 80)])
+
         when:
-        notes.findByPagesLessThan(500, CursoredPageable.from(10, Sort.of(Sort.Order.asc("pages"))))
+        def results = notes.findByPagesLessThan(500, CursoredPageable.from(10, Sort.of(Sort.Order.asc("pages"))))
 
         then:
-        def e = thrown(DataAccessException)
-        e.message.contains("Cursored pagination")
+        results.size() == 2
+        transport.lastBody().contains('"sort":[{"pages":{"order":"asc"}}')
+        transport.lastBody().contains('"size":10')
+        !transport.lastBody().contains('"search_after"')
+    }
+
+    void "a cursored page keeps the method's OrderBy ahead of the pageable sort and the id tiebreaker"() {
+        given:
+        notes.saveAll([new Note("Coffee", "Roasting beans", 120), new Note("Bread", "Sourdough", 80)])
+
+        when:
+        notes.findByPagesLessThanOrderByTitleDesc(500, CursoredPageable.from(10, Sort.of(Sort.Order.asc("pages"))))
+
+        then:
+        transport.lastBody().contains('"sort":[{"title.keyword":{"order":"desc"}},{"pages":{"order":"asc"}},{"id":{"order":"asc"}}]')
+
+        when: "the pageable sorts on the OrderBy field too"
+        notes.findByPagesLessThanOrderByTitleDesc(500, CursoredPageable.from(10, Sort.of(Sort.Order.desc("title"))))
+
+        then:
+        transport.lastBody().contains('"sort":[{"title.keyword":{"order":"desc"}},{"id":{"order":"asc"}}]')
     }
 
     void "deletes remove documents by id and by query"() {

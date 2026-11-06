@@ -81,10 +81,28 @@ public final class OpenSearchSearchTransport implements SearchTransport {
 
     @Override
     public String index(String index, @Nullable String id, Map<String, Object> source, DocumentSearchConfiguration.Refresh refresh) {
+        return index(index, id, source, null, refresh);
+    }
+
+    @Override
+    public String index(String index, @Nullable String id, Map<String, Object> source, @Nullable Long version, DocumentSearchConfiguration.Refresh refresh) {
         try {
-            return client.index(i -> i.index(index).id(id).document(source).refresh(refresh(refresh))).id();
+            return client.index(i -> OpenSearchRequests.indexRequest(i, index, id, source, version, refresh)).id();
         } catch (IOException e) {
             throw new DataAccessException("OpenSearch index failed: " + e.getMessage(), e);
+        } catch (RuntimeException e) {
+            throw OpenSearchRequests.conflictOrFailure(e, id);
+        }
+    }
+
+    @Override
+    @Nullable
+    public SearchHit getHit(String index, String id) {
+        try {
+            var response = client.get(g -> g.index(index).id(id), Map.class);
+            return response.found() ? new SearchHit(id, null, (Map<String, Object>) response.source(), Map.of(), response.version(), List.of()) : null;
+        } catch (IOException e) {
+            throw new DataAccessException("OpenSearch get failed: " + e.getMessage(), e);
         }
     }
 
@@ -94,6 +112,8 @@ public final class OpenSearchSearchTransport implements SearchTransport {
             return OpenSearchRequests.bulkIds(client.bulk(OpenSearchRequests.bulkRequest(index, documents, refresh)));
         } catch (IOException e) {
             throw new DataAccessException("OpenSearch bulk failed: " + e.getMessage(), e);
+        } catch (RuntimeException e) {
+            throw OpenSearchRequests.conflictOrFailure(e, null);
         }
     }
 
@@ -125,6 +145,17 @@ public final class OpenSearchSearchTransport implements SearchTransport {
             return client.delete(d -> d.index(index).id(id).refresh(refresh(refresh))).result().jsonValue().equals("deleted");
         } catch (IOException e) {
             throw new DataAccessException("OpenSearch delete failed: " + e.getMessage(), e);
+        }
+    }
+
+    @Override
+    public boolean delete(String index, String id, @Nullable Long version, DocumentSearchConfiguration.Refresh refresh) {
+        try {
+            return client.delete(d -> OpenSearchRequests.deleteRequest(d, index, id, version, refresh)).result().jsonValue().equals("deleted");
+        } catch (IOException e) {
+            throw new DataAccessException("OpenSearch delete failed: " + e.getMessage(), e);
+        } catch (RuntimeException e) {
+            throw OpenSearchRequests.conflictOrFailure(e, id);
         }
     }
 

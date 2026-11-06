@@ -47,6 +47,8 @@ public interface NoteRepository extends PageableRepository<Note, String>, Search
 
     List<Note> findByPagesLessThan(int pages, Pageable pageable);
 
+    List<Note> findByPagesLessThanOrderByTitleDesc(int pages, Pageable pageable);
+
     Stream<Note> findByBody(String body);
 
     SearchResults<Note> searchByTitleSearch(String query);
