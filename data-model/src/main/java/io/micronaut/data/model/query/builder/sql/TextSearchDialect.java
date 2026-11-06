@@ -382,6 +382,8 @@ public interface TextSearchDialect {
     enum PostgresTextSearchDialect implements TextSearchDialect {
         INSTANCE;
 
+        private static final String POSTGRESQL_TEXT_SEARCH = "PostgreSQL text search";
+
         @Override
         public void appendTextMatch(StringBuilder query,
                                     List<Expression<?>> fields,
@@ -392,9 +394,9 @@ public interface TextSearchDialect {
                                     Consumer<Expression<?>> appendExpression,
                                     Function<String, Consumer<Expression<?>>> appendParameter) {
             if (mode == MatchMode.FUZZY) {
-                throw new UnsupportedSearchFeatureException(SearchCapability.FUZZY, "PostgreSQL text search");
+                throw new UnsupportedSearchFeatureException(SearchCapability.FUZZY, POSTGRESQL_TEXT_SEARCH);
             }
-            rejectBoosts(options, "PostgreSQL text search");
+            rejectBoosts(options, POSTGRESQL_TEXT_SEARCH);
             String language = resolveLanguage(fields);
             appendVector(query, fields, language, target.languageColumn(), appendExpression);
             query.append(" @@ ");
@@ -411,9 +413,9 @@ public interface TextSearchDialect {
                                       Consumer<Expression<?>> appendExpression,
                                       Function<String, Consumer<Expression<?>>> appendParameter) {
             if (mode == MatchMode.FUZZY) {
-                throw new UnsupportedSearchFeatureException(SearchCapability.FUZZY, "PostgreSQL text search");
+                throw new UnsupportedSearchFeatureException(SearchCapability.FUZZY, POSTGRESQL_TEXT_SEARCH);
             }
-            rejectBoosts(options, "PostgreSQL text search");
+            rejectBoosts(options, POSTGRESQL_TEXT_SEARCH);
             String language = resolveLanguage(fields);
             query.append("ts_rank_cd(");
             appendVector(query, fields, language, target.languageColumn(), appendExpression);
@@ -431,7 +433,7 @@ public interface TextSearchDialect {
                                           Consumer<Expression<?>> appendExpression,
                                           Function<String, Consumer<Expression<?>>> appendParameter) {
             if (mode == MatchMode.FUZZY) {
-                throw new UnsupportedSearchFeatureException(SearchCapability.FUZZY, "PostgreSQL text search");
+                throw new UnsupportedSearchFeatureException(SearchCapability.FUZZY, POSTGRESQL_TEXT_SEARCH);
             }
             String language = resolveLanguage(List.of(field));
             query.append("ts_headline('").append(language).append("',");
