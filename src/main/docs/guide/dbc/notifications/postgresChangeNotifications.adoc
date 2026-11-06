@@ -88,10 +88,17 @@ The two `schema-generate` settings have different purposes:
 ===== Choose a Notification Mode
 
 Micronaut Data creates the notification functions and triggers for tables used by your listeners.
-`schema-generate-mode` defaults to `ROW`: listeners receive individual insert, update, and delete events
-with primary keys, and an `INVALIDATE` event when a table is truncated.
+The `schema-generate-mode` setting supports two modes:
 
-To generate statement-level invalidations instead, configure:
+* `ROW` is the default. Listeners receive individual insert, update, and delete events with primary keys,
+  and an `INVALIDATE` event when a table is truncated.
+* `STATEMENT` sends a table-level `INVALIDATE` for each insert, update, delete, or truncate statement,
+  including statements that affect no rows. These events have no row keys or entity, so listeners must refresh
+  their state from the database. Choose this mode for tables frequently changed by bulk statements.
+
+Notifications are delivered after commit, and PostgreSQL can combine identical notifications within the same transaction.
+
+To select `STATEMENT`, configure:
 
 [configuration]
 ----
@@ -103,12 +110,6 @@ micronaut:
           schema-generate: true
           schema-generate-mode: STATEMENT
 ----
-
-With `STATEMENT`, Micronaut Data automatically installs `micronaut_data_notify_invalidation()` and statement triggers.
-Each insert, update, delete, or truncate statement generates a table-level `INVALIDATE` instead of individual row events,
-including statements that affect no rows. Notifications are delivered after commit, and PostgreSQL can combine
-identical notifications within the same transaction. These events have no row keys or entity, so your listener must
-refresh its state from the database. Choose this mode for tables frequently changed by bulk statements.
 
 The selected mode applies to all listener tables included in schema generation.
 
@@ -128,12 +129,13 @@ in `schema-generate-names` when configured. If neither setting is configured, th
 Restarting with unchanged listener settings does not add duplicate notification triggers. Switching between
 `ROW` and `STATEMENT` updates the generated triggers to use the selected mode, including with `CREATE`.
 
-When a table is retained, removing a listener, renaming its channel, or disabling notification schema generation
-does not remove its previously installed triggers. Remove obsolete triggers through a migration after confirming
-that no other application or running instance still needs them. If `CREATE_DROP` drops and recreates the table,
-the old triggers are removed with it; notification schema generation installs only the triggers required by the
-current listener settings when enabled. Notification functions, including those from a previously selected mode,
-remain installed until you remove them.
+Removing a listener, renaming its channel, or disabling notification schema generation does not remove previously
+installed triggers from retained tables. Remove obsolete triggers through a migration after confirming that no
+other application or running instance needs them.
+
+When `CREATE_DROP` drops and recreates a table, its old triggers are removed. If notification schema generation
+is enabled, Micronaut Data installs the triggers required by the current listener settings. Notification functions,
+including those from a previously selected mode, remain installed until you remove them.
 
 ===== Failures and Shared Databases
 
