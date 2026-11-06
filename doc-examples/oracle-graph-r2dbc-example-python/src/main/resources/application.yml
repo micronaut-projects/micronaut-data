@@ -1,0 +1,14 @@
+micronaut:
+  application:
+    name: oracle-graph-r2dbc-example
+# tag::config[]
+r2dbc:
+  datasources:
+    default:
+      db-type: oracle
+      dialect: ORACLE
+# end::config[]
+test-resources:
+  containers:
+    oracle:
+      init-script-path: bank-graph.sql

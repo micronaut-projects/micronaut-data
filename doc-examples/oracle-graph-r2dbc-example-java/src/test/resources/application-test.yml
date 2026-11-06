@@ -1,0 +1,3 @@
+datasources:
+  default:
+    db-type: oracle
