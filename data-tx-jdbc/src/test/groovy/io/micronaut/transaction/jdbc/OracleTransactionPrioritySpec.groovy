@@ -2,6 +2,7 @@ package io.micronaut.transaction.jdbc
 
 import io.micronaut.data.connection.ConnectionDefinition
 import io.micronaut.data.connection.DefaultConnectionDefinition
+import io.micronaut.data.connection.jdbc.operations.DefaultDataSourceConnectionOperations
 import io.micronaut.data.connection.support.DefaultConnectionStatus
 import io.micronaut.transaction.TransactionDefinition
 import io.micronaut.transaction.annotation.OracleTransactional
@@ -153,6 +154,45 @@ class OracleTransactionPrioritySpec extends Specification {
         def e = thrown(TransactionSystemException)
         e.cause instanceof SQLException
         e.cause.errorCode == 1031
+    }
+
+    def "priority of a transaction on a reused connection is reset when the outer connection scope completes"() {
+        given:
+        def events = []
+        def connection = Mock(Connection)
+        def meta = Mock(DatabaseMetaData)
+        def stmt = Mock(Statement)
+        connection.getMetaData() >> meta
+        meta.getDatabaseProductName() >> 'Oracle'
+        connection.getAutoCommit() >> true
+        connection.isReadOnly() >> false
+        connection.createStatement() >> stmt
+        stmt.executeUpdate(_) >> { String sql -> events << sql; 0 }
+        connection.commit() >> { events << 'commit' }
+        def dataSource = Stub(DataSource) {
+            getConnection() >> connection
+        }
+        def connectionOperations = new DefaultDataSourceConnectionOperations(dataSource)
+        def txManager = new DataSourceTransactionManager(dataSource, connectionOperations, connectionOperations, oracleListeners())
+
+        when:
+        connectionOperations.execute(ConnectionDefinition.DEFAULT, { outer ->
+            txManager.execute(createWithPriority(OracleTransactional.Priority.LOW), { tx -> events << 'work' })
+            events << 'transaction completed'
+        })
+
+        then: "this records the current behaviour"
+        // The reset is registered on the connection, not on the transaction: when the transaction runs on a connection
+        // opened by an outer scope, the priority is only reset when that scope completes, so the work that runs in the
+        // outer scope after the transaction still has the priority of the transaction. Ideally, the priority would be
+        // reset when the transaction completes, as the other connection state changed by the transaction is.
+        events == [
+            'ALTER SESSION SET "txn_priority"="LOW"',
+            'work',
+            'commit',
+            'transaction completed',
+            'ALTER SESSION SET "txn_priority"="HIGH"'
+        ]
     }
 
     def "no priority applied for non-Oracle databases"() {

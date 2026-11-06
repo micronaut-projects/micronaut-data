@@ -22,6 +22,8 @@ import io.micronaut.core.order.Ordered;
 import io.micronaut.data.connection.ConnectionDefinition;
 import io.micronaut.data.connection.ConnectionSynchronization;
 import org.reactivestreams.Publisher;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 import reactor.core.publisher.Flux;
 import reactor.core.publisher.Mono;
 import reactor.core.scheduler.Scheduler;
@@ -30,7 +32,6 @@ import reactor.core.scheduler.Schedulers;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.ListIterator;
-import java.util.Optional;
 import java.util.concurrent.Executor;
 import java.util.function.Function;
 import java.util.function.Supplier;
@@ -45,6 +46,7 @@ import java.util.function.Supplier;
 @Internal
 public final class DefaultReactiveConnectionStatus<C> implements ReactiveConnectionStatus<C> {
 
+    private static final Logger LOG = LoggerFactory.getLogger(DefaultReactiveConnectionStatus.class);
     private static final Mono<Void> EMPTY = Mono.empty();
 
     private final C connection;
@@ -167,113 +169,121 @@ public final class DefaultReactiveConnectionStatus<C> implements ReactiveConnect
         OrderUtil.sort(connectionSynchronizations);
     }
 
-    private Publisher<Void> forEachSynchronizations(Function<ReactiveConnectionSynchronization, Publisher<Void>> consumer) {
-        if (connectionSynchronizations == null) {
-            return Mono.empty();
-        }
-        Mono<Void> chain = Mono.empty();
-        List<Throwable> exceptions = new ArrayList<>(connectionSynchronizations.size());
-        ListIterator<ReactiveConnectionSynchronization> listIterator = connectionSynchronizations.listIterator(connectionSynchronizations.size());
-        while (listIterator.hasPrevious()) {
-            try {
-                Publisher<Void> next = consumer.apply(listIterator.previous());
-                Mono<Void> wrapped = next == EMPTY ? Mono.empty() : Mono.from(next).onErrorResume(e -> {
-                    exceptions.add(e);
-                    return Mono.empty();
-                });
-                chain = chain.then(wrapped);
-            } catch (Exception e) {
-                exceptions.add(e);
-            }
-        }
-        if (!exceptions.isEmpty()) {
-            if (exceptions.size() == 1) {
-                return chain.then(Mono.error(exceptions.get(0)));
-            }
-            IllegalStateException e = new IllegalStateException("Error executing connection synchronizations", exceptions.get(0));
-            for (int i = 1; i < exceptions.size(); i++) {
-                e.addSuppressed(exceptions.get(i));
-            }
-            return chain.then(Mono.error(e));
-        }
-        return chain;
-    }
-
+    /**
+     * Completes the connection after the work completed. A failure of a callback or of the close is signalled
+     * once every callback has run and the connection has been closed.
+     *
+     * @param closeConnection The close of the connection
+     * @return The publisher of the completion
+     */
     public Publisher<Void> onComplete(Supplier<Publisher<Void>> closeConnection) {
-        return finallyBlock(onComplete(), null, throwable -> finallyComplete(throwable, closeConnection));
+        return Mono.defer(() -> {
+            List<Throwable> failures = new ArrayList<>(1);
+            return release(ReactiveConnectionSynchronization::onComplete, closeConnection, failures)
+                .then(Mono.<Void>defer(() -> failures.isEmpty() ? EMPTY : Mono.error(combine(failures))));
+        });
     }
 
-    public Publisher<Void> onError(Throwable outterThrowable, Supplier<Publisher<Void>> closeConnection) {
-        return finallyBlock(onError(outterThrowable), outterThrowable, throwable -> finallyComplete(throwable, closeConnection));
-    }
-
-    public Publisher<Void> onCancel(Supplier<Publisher<Void>> closeConnection) {
-        return finallyBlock(onCancel(), null, throwable -> finallyComplete(throwable, closeConnection));
-    }
-
-    private Mono<Void> finallyComplete(@Nullable Throwable outterThrowable, Supplier<Publisher<Void>> closeConnection) {
-        return finallyBlock(beforeClosed(), outterThrowable, throwable -> finallyBeforeClosed(throwable, closeConnection));
-    }
-
-    private Mono<Void> finallyBeforeClosed(@Nullable Throwable outterThrowable, Supplier<Publisher<Void>> closeConnection) {
-        return finallyBlock(closeConnection.get(), outterThrowable, this::finallyClose);
-    }
-
-    private Mono<Void> finallyClose(@Nullable Throwable outterThrowable) {
-        Mono<Void> next;
-        if (isNew) {
-            next = Mono.from(afterClosed());
-        } else {
-            next = Mono.empty();
-        }
-        if (outterThrowable != null) {
-            next = next.then(Mono.error(outterThrowable));
-        }
-        return next;
-    }
-
-    private static Mono<Void> finallyBlock(Publisher<Void> resource, @Nullable Throwable outterThrowable, Function<@Nullable Throwable, Mono<Void>> doFinally) {
-        return Mono.from(resource)
-            .map(ignore -> Optional.<Throwable>empty())
-            .onErrorResume(throwable -> Mono.just(Optional.of(throwable)))
-            .switchIfEmpty(Mono.just(Optional.empty()))
-            .flatMap(optionalThrowable -> {
-                Throwable throwable = optionalThrowable.orElse(null);
-                if (throwable != null) {
-                    if (outterThrowable != null) {
-                        throwable.addSuppressed(outterThrowable);
+    /**
+     * Completes the connection after the work failed. The failure of the work stays the primary failure:
+     * a failure of a callback or of the close is added to it as suppressed.
+     *
+     * @param workFailure     The failure of the work, signalled by the caller once the completion is done
+     * @param closeConnection The close of the connection
+     * @return The publisher of the completion
+     */
+    public Publisher<Void> onError(Throwable workFailure, Supplier<Publisher<Void>> closeConnection) {
+        return Mono.defer(() -> {
+            List<Throwable> failures = new ArrayList<>(1);
+            return release(synchronization -> synchronization.onError(workFailure), closeConnection, failures)
+                .then(Mono.<Void>fromRunnable(() -> {
+                    for (Throwable failure : failures) {
+                        if (failure != workFailure) {
+                            workFailure.addSuppressed(failure);
+                        }
                     }
-                    return doFinally.apply(throwable).then(Mono.error(throwable));
-                } else {
-                    return doFinally.apply(null);
-                }
-            });
+                }));
+        });
     }
 
-    private Publisher<Void> onComplete() {
-        return forEachSynchronizations(ReactiveConnectionSynchronization::onComplete);
+    /**
+     * Completes the connection after the work was cancelled. There is no subscriber left to signal
+     * a failure of a callback or of the close to, so it is logged.
+     *
+     * @param closeConnection The close of the connection
+     * @return The publisher of the completion
+     */
+    public Publisher<Void> onCancel(Supplier<Publisher<Void>> closeConnection) {
+        return Mono.defer(() -> {
+            List<Throwable> failures = new ArrayList<>(1);
+            return release(ReactiveConnectionSynchronization::onCancel, closeConnection, failures)
+                .then(Mono.<Void>fromRunnable(() -> {
+                    if (!failures.isEmpty()) {
+                        LOG.warn("Failed to complete the connection of a cancelled operation", combine(failures));
+                    }
+                }));
+        });
     }
 
-    private Publisher<Void> onError(Throwable throwable) {
-        return forEachSynchronizations(reactiveConnectionSynchronization -> reactiveConnectionSynchronization.onError(throwable));
-    }
-
-    private Publisher<Void> onCancel() {
-        return forEachSynchronizations(ReactiveConnectionSynchronization::onCancel);
-    }
-
-    private Publisher<Void> beforeClosed() {
+    /**
+     * Runs the completion callbacks and closes the connection. A failing step doesn't prevent the following ones:
+     * its failure is collected.
+     */
+    private Mono<Void> release(Function<ReactiveConnectionSynchronization, Publisher<Void>> completion,
+                               Supplier<Publisher<Void>> closeConnection,
+                               List<Throwable> failures) {
+        Mono<Void> release = forEachSynchronizations(completion, failures);
         if (isNew) {
-            return forEachSynchronizations(ReactiveConnectionSynchronization::onClose);
+            release = release.then(forEachSynchronizations(ReactiveConnectionSynchronization::onClose, failures));
         }
-        return Mono.empty();
+        release = release.then(collectFailure(closeConnection, failures));
+        if (isNew) {
+            release = release.then(forEachSynchronizations(ReactiveConnectionSynchronization::afterClose, failures));
+        }
+        return release;
     }
 
-    private Publisher<Void> afterClosed() {
-        if (isNew) {
-            return forEachSynchronizations(ReactiveConnectionSynchronization::afterClose);
+    /**
+     * Runs a callback of the synchronizations one after another, in the reverse order.
+     */
+    private Mono<Void> forEachSynchronizations(Function<ReactiveConnectionSynchronization, Publisher<Void>> callback,
+                                               List<Throwable> failures) {
+        return Mono.defer(() -> {
+            if (connectionSynchronizations == null) {
+                return EMPTY;
+            }
+            // A callback can register another synchronization
+            List<ReactiveConnectionSynchronization> synchronizations = new ArrayList<>(connectionSynchronizations);
+            Mono<Void> chain = EMPTY;
+            ListIterator<ReactiveConnectionSynchronization> listIterator = synchronizations.listIterator(synchronizations.size());
+            while (listIterator.hasPrevious()) {
+                ReactiveConnectionSynchronization synchronization = listIterator.previous();
+                chain = chain.then(collectFailure(() -> callback.apply(synchronization), failures));
+            }
+            return chain;
+        });
+    }
+
+    /**
+     * Runs a step when it is subscribed, after the previous step has finished. A failure of the step,
+     * whether it is thrown when the publisher is created or signalled by the publisher, is collected.
+     */
+    private static Mono<Void> collectFailure(Supplier<Publisher<Void>> step, List<Throwable> failures) {
+        return Mono.defer(() -> Mono.from(step.get())).onErrorResume(failure -> {
+            failures.add(failure);
+            return EMPTY;
+        });
+    }
+
+    private static Throwable combine(List<Throwable> failures) {
+        if (failures.size() == 1) {
+            return failures.get(0);
         }
-        return Mono.empty();
+        IllegalStateException e = new IllegalStateException("Error executing connection synchronizations", failures.get(0));
+        for (int i = 1; i < failures.size(); i++) {
+            e.addSuppressed(failures.get(i));
+        }
+        return e;
     }
 
     /**
@@ -290,6 +300,17 @@ public final class DefaultReactiveConnectionStatus<C> implements ReactiveConnect
                 synchronization.executionComplete();
                 return Mono.empty();
             });
+        }
+
+        @Override
+        public Publisher<Void> onError(Throwable throwable) {
+            // The same as for a synchronous connection, the completion is always invoked
+            return onComplete();
+        }
+
+        @Override
+        public Publisher<Void> onCancel() {
+            return onComplete();
         }
 
         @Override

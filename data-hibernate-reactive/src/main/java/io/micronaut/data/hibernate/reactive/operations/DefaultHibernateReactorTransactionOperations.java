@@ -81,7 +81,10 @@ final class DefaultHibernateReactorTransactionOperations extends AbstractReactor
         return helper.withTransactionFlux(txStatus.getConnection(), sessionScheduler(txStatus), transaction -> {
             ReactiveTransactionStatus<Stage.Session> reactiveTransactionStatus = createTxStatus(txStatus, transaction);
             return executeCallbackFlux(reactiveTransactionStatus, handler);
-        }).doOnEach(ignore -> markCompleted(txStatus));
+        }).doOnEach(ignore -> markCompleted(txStatus))
+            // The results are emitted once the transaction has completed: fail before the first one,
+            // because a subscriber can cancel after it
+            .switchOnFirst((first, results) -> first.isOnError() || !isFailedByJoinedScope(txStatus) ? results : Flux.error(unexpectedRollback()));
     }
 
     @Override
@@ -94,7 +97,28 @@ final class DefaultHibernateReactorTransactionOperations extends AbstractReactor
         return helper.withTransactionMono(txStatus.getConnection(), sessionScheduler(txStatus), transaction -> {
             ReactiveTransactionStatus<Stage.Session> reactiveTransactionStatus = createTxStatus(txStatus, transaction);
             return executeCallbackMono(reactiveTransactionStatus, handler);
-        }).doOnEach(ignore -> markCompleted(txStatus));
+        }).doOnEach(ignore -> markCompleted(txStatus))
+            .flatMap(result -> this.<R>failIfJoinedScopeFailed(txStatus).thenReturn(result))
+            .switchIfEmpty(failIfJoinedScopeFailed(txStatus));
+    }
+
+    /**
+     * Hibernate Reactive rolls back a transaction marked for rollback without an error. Same as the other transaction
+     * managers, a transaction that was marked because a scope that joined it failed can't complete normally: the scopes
+     * that completed normally expect a commit.
+     */
+    private <R> Mono<R> failIfJoinedScopeFailed(DefaultReactiveTransactionStatus<Stage.Session> txStatus) {
+        return Mono.defer(() -> isFailedByJoinedScope(txStatus) ? Mono.error(unexpectedRollback()) : Mono.empty());
+    }
+
+    @Override
+    protected void markFailedByJoinedScope(ReactiveTransactionStatus<Stage.Session> existing) {
+        if (existing instanceof HibernateReactiveTransactionStatus status) {
+            status.transaction.markForRollback();
+            setFailedByJoinedScope(status.txStatus);
+        } else {
+            super.markFailedByJoinedScope(existing);
+        }
     }
 
     @Nullable

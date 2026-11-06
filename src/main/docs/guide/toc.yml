@@ -41,6 +41,7 @@ shared:
   transactions:
     title: Transactions
     programmaticTransactions: Programmatic Transactions
+    reactiveTransactions: Reactive Transactions
     transactionalEvents: Transactional Events
     oracleTransactions:
       title: Oracle Transactions

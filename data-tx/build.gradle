@@ -32,6 +32,7 @@ dependencies {
     testImplementation mn.jackson.databind
     testImplementation mnSql.micronaut.jdbc
     testImplementation mnReactor.micronaut.reactor
+    testImplementation mnLogging.logback.classic
     testImplementation mnTest.micronaut.test.junit5
     testImplementation(mn.kotlinx.coroutines.reactor)
     testImplementation "javax.transaction:javax.transaction-api:1.3"

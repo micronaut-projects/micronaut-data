@@ -15,6 +15,7 @@ import io.micronaut.data.tck.tests.AbstractTransactionSpec
 import io.micronaut.transaction.TransactionDefinition
 import io.micronaut.transaction.TransactionOperations
 import io.micronaut.transaction.jdbc.DataSourceTransactionManager
+import io.micronaut.transaction.support.DefaultTransactionDefinition
 import io.micronaut.transaction.support.TransactionExecutionListener
 import io.micronaut.transaction.support.TransactionSynchronization
 
@@ -196,6 +197,30 @@ abstract class AbstractJdbcTransactionSpec extends AbstractTransactionSpec {
             state[0][1] == reportsReadOnlyFlag()
             state[1] == true
             state[2] == false
+    }
+
+    void "a write in a transaction started inside a read-only connection scope is not made read-only"() {
+        given:
+            def connectionOperations = context.getBean(DefaultDataSourceConnectionOperations)
+            def transactionManager = context.getBean(DataSourceTransactionManager)
+            def bookRepository = context.getBean(getBookRepositoryClass())
+            // The definition of a method annotated with @Transactional
+            def readWrite = new DefaultTransactionDefinition()
+            readWrite.setReadOnly(false)
+            recordReadOnly = true
+        when: "the repository reuses the connection of the transaction, opened by a read-only connection scope"
+            // A read-only connection without a transaction, as a method annotated with @Connectable(readOnly = true).
+            // The transaction started inside it switches the connection to read-write until the transaction ends.
+            connectionOperations.executeRead { status ->
+                transactionManager.execute(readWrite) { txStatus ->
+                    bookRepository.save(new Book(title: "Written", totalPages: 10))
+                }
+            }
+        then:
+            readOnlyDuringOperation == [reportsReadOnlyFlag(), false]
+            bookRepository.findAll()*.title == ["Written"]
+        and:
+            !anyUsedConnectionReadOnly()
     }
 
     void "transaction on an existing connection restores the connection state when an after completion synchronization fails"() {
