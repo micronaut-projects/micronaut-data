@@ -169,7 +169,7 @@ final class DefaultOracleGraphReactorRepositoryOperations extends AbstractReacti
         @Override
         public Flux<GraphRecord> stream(String query, Map<String, Object> parameters) {
             return Flux.defer(() -> {
-                OracleGraphRows.Expanded expanded = OracleGraphRows.expand(query, new ArrayList<>(parameters.values()));
+                OracleGraphRows.Expanded expanded = OracleGraphRows.expand(query, parameters);
                 return execute(expanded)
                     // The expanded query is the one that ran: collection parameters were spread over several bind variables
                     .onErrorMap(R2dbcException.class, e -> new DataAccessException("Error executing Oracle graph query [" + expanded.query() + "]: " + e.getMessage(), e));

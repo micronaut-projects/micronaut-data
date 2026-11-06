@@ -167,7 +167,7 @@ public final class GraphSerde {
         Map<String, @Nullable Object> view = new HashMap<>(node.properties());
         RuntimePersistentProperty<?> identity = entity.getIdentity();
         if (identity != null && GraphEntities.isNativeId(identity)) {
-            view.put(identity.getPersistedName(), GraphEntityMapper.nativeId(identity, node.id()));
+            view.put(identity.getPersistedName(), GraphEntityMapper.nativeId(identity, node.id(), node.numericId()));
         }
         if (row != null) {
             for (RuntimePersistentProperty<?> property : entity.getPersistentProperties()) {
@@ -217,7 +217,7 @@ public final class GraphSerde {
         Map<String, @Nullable Object> view = new HashMap<>(edge.properties());
         RuntimePersistentProperty<?> identity = entity.getIdentity();
         if (identity != null && GraphEntities.isNativeId(identity)) {
-            view.put(identity.getPersistedName(), GraphEntityMapper.nativeId(identity, edge.id()));
+            view.put(identity.getPersistedName(), GraphEntityMapper.nativeId(identity, edge.id(), edge.numericId()));
         }
         if (target != null) {
             for (RuntimePersistentProperty<?> property : entity.getPersistentProperties()) {
