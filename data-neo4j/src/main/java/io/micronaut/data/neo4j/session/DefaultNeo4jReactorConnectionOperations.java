@@ -15,15 +15,12 @@
  */
 package io.micronaut.data.neo4j.session;
 
-import io.micronaut.context.annotation.Requires;
-import io.micronaut.context.annotation.Value;
+import io.micronaut.context.annotation.Parameter;
+import io.micronaut.context.annotation.EachBean;
 import io.micronaut.core.annotation.Internal;
 import io.micronaut.data.connection.ConnectionDefinition;
 import io.micronaut.data.connection.support.AbstractReactorConnectionOperations;
-import jakarta.inject.Singleton;
-import org.jspecify.annotations.Nullable;
 import org.neo4j.driver.Driver;
-import org.neo4j.driver.SessionConfig;
 import org.neo4j.driver.reactivestreams.ReactiveSession;
 import org.reactivestreams.Publisher;
 import org.slf4j.Logger;
@@ -36,8 +33,7 @@ import reactor.core.publisher.Mono;
  * @author graemerocher
  * @since 5.3.0
  */
-@Singleton
-@Requires(beans = Driver.class)
+@EachBean(Neo4jDriverRegistration.class)
 @Internal
 final class DefaultNeo4jReactorConnectionOperations extends AbstractReactorConnectionOperations<Neo4jReactiveConnection>
     implements Neo4jReactorConnectionOperations {
@@ -45,12 +41,11 @@ final class DefaultNeo4jReactorConnectionOperations extends AbstractReactorConne
     private static final Logger LOG = LoggerFactory.getLogger(DefaultNeo4jReactorConnectionOperations.class);
 
     private final Driver driver;
-    private final @Nullable String database;
+    private final Neo4jSessionConfigurer sessions;
 
-    DefaultNeo4jReactorConnectionOperations(Driver driver,
-                                            @Value("${micronaut.data.neo4j.database:}") @Nullable String database) {
-        this.driver = driver;
-        this.database = database == null || database.isBlank() ? null : database;
+    DefaultNeo4jReactorConnectionOperations(@Parameter Neo4jDriverRegistration registration, @Parameter Neo4jSessionConfigurer sessions) {
+        this.driver = registration.driver();
+        this.sessions = sessions;
     }
 
     @Override
@@ -59,11 +54,7 @@ final class DefaultNeo4jReactorConnectionOperations extends AbstractReactorConne
             if (LOG.isDebugEnabled()) {
                 LOG.debug("Opening reactive Neo4j session for definition: {}", definition);
             }
-            SessionConfig.Builder builder = SessionConfig.builder();
-            if (database != null) {
-                builder.withDatabase(database);
-            }
-            return new Neo4jReactiveConnection(driver.session(ReactiveSession.class, builder.build()));
+            return new Neo4jReactiveConnection(driver.session(ReactiveSession.class, sessions.sessionConfig()));
         });
     }
 

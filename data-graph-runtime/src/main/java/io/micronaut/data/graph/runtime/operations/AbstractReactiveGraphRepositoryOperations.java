@@ -40,6 +40,7 @@ import io.micronaut.data.model.runtime.RuntimePersistentProperty;
 import io.micronaut.data.model.runtime.UpdateBatchOperation;
 import io.micronaut.data.model.runtime.UpdateOperation;
 import io.micronaut.data.runtime.convert.DataConversionService;
+import io.micronaut.data.runtime.operations.internal.AbstractReactiveEntitiesOperations;
 import io.micronaut.data.runtime.operations.internal.AbstractReactiveEntityOperations;
 import io.micronaut.data.runtime.operations.internal.OperationContext;
 import io.micronaut.data.runtime.operations.internal.ReactiveCascadeOperations;
@@ -48,10 +49,13 @@ import reactor.core.publisher.Flux;
 import reactor.core.publisher.Mono;
 
 import java.util.ArrayList;
+import java.util.Collections;
 import java.util.IdentityHashMap;
 import java.util.LinkedHashMap;
 import java.util.List;
+import java.util.Objects;
 import java.util.Map;
+import java.util.Set;
 import java.util.function.Function;
 import java.util.function.Predicate;
 
@@ -81,6 +85,21 @@ public abstract class AbstractReactiveGraphRepositoryOperations implements React
         this.operations = operations;
         this.mapper = operations.mapper;
         this.noCascade = new ReactiveCascadeOperations<>(operations.getConversionService(), new RelationshipsWrittenByNode());
+    }
+
+    /**
+     * Checks that no schemaless property of the instances has the name of a declared property, for writes that
+     * store the schemaless properties in a column of their own, which reads would hide behind the declared column.
+     *
+     * @param type      The entity type
+     * @param instances The instances to write
+     * @param <T>       The entity type
+     */
+    protected final <T> void checkDynamicAttributes(Class<T> type, Iterable<T> instances) {
+        RuntimePersistentEntity<T> entity = mapper.getEntity(type);
+        for (T instance : instances) {
+            mapper.checkDynamicAttributes(entity, instance);
+        }
     }
 
     /**
@@ -239,8 +258,7 @@ public abstract class AbstractReactiveGraphRepositoryOperations implements React
     public <T> Flux<T> persistAll(InsertBatchOperation<T> operation) {
         return withSessionFlux(operation.getAnnotationMetadata(), session -> {
             Persister persister = new Persister(session, operation.getAnnotationMetadata(), operation.getRepositoryType());
-            RuntimePersistentEntity<T> entity = operations.getEntity(operation.getRootEntity());
-            return Flux.fromIterable(operation).concatMap(instance -> persister.save(entity, instance, true));
+            return persister.saveAll(operations.getEntity(operation.getRootEntity()), operation, true);
         });
     }
 
@@ -254,8 +272,7 @@ public abstract class AbstractReactiveGraphRepositoryOperations implements React
     public <T> Flux<T> updateAll(UpdateBatchOperation<T> operation) {
         return withSessionFlux(operation.getAnnotationMetadata(), session -> {
             Persister persister = new Persister(session, operation.getAnnotationMetadata(), operation.getRepositoryType());
-            RuntimePersistentEntity<T> entity = operations.getEntity(operation.getRootEntity());
-            return Flux.fromIterable(operation).concatMap(instance -> persister.save(entity, instance, false));
+            return persister.saveAll(operations.getEntity(operation.getRootEntity()), operation, false);
         });
     }
 
@@ -285,9 +302,9 @@ public abstract class AbstractReactiveGraphRepositoryOperations implements React
      * Writes entities and their relationships one query after another within one session.
      */
     private final class Persister {
+        final Map<Object, Object> saved = new IdentityHashMap<>();
         private final ReactiveGraphSession session;
         private final OperationContext context;
-        private final Map<Object, Object> saved = new IdentityHashMap<>();
 
         private Persister(ReactiveGraphSession session, AnnotationMetadata annotationMetadata, Class<?> repositoryType) {
             this.session = session;
@@ -310,6 +327,41 @@ public abstract class AbstractReactiveGraphRepositoryOperations implements React
                 return operation.getEntity()
                     .defaultIfEmpty(instance)
                     .doOnNext(result -> saved.put(instance, result));
+            });
+        }
+
+        <T> Flux<T> saveAll(RuntimePersistentEntity<T> entity, Iterable<T> instances, boolean insert) {
+            List<T> list = new ArrayList<>();
+            instances.forEach(list::add);
+            // An instance passed twice is written once, as save() does for an instance it meets again
+            Set<T> seen = Collections.newSetFromMap(new IdentityHashMap<>());
+            List<T> distinct = new ArrayList<>(list.size());
+            for (T instance : list) {
+                if (seen.add(instance)) {
+                    distinct.add(instance);
+                }
+            }
+            if (distinct.size() < 2 || !operations.queryBuilder.supportsBatchNodeWrites()) {
+                return Flux.fromIterable(list).concatMap(instance -> save(entity, instance, insert));
+            }
+            return Flux.defer(() -> {
+                NodesOperation<T> operation = new NodesOperation<>(this, entity, distinct, insert);
+                if (insert) {
+                    operation.persist();
+                } else {
+                    operation.update();
+                }
+                return operation.getEntities().collectList().flatMapMany(written -> {
+                    Map<T, T> results = new IdentityHashMap<>();
+                    for (int i = 0; i < distinct.size(); i++) {
+                        results.put(distinct.get(i), written.get(i));
+                    }
+                    List<T> ordered = new ArrayList<>(list.size());
+                    for (T instance : list) {
+                        ordered.add(results.get(instance));
+                    }
+                    return Flux.fromIterable(ordered);
+                });
             });
         }
 
@@ -416,13 +468,146 @@ public abstract class AbstractReactiveGraphRepositoryOperations implements React
                 T written = generatedId != null && identity != null
                     ? updateEntityId((BeanProperty<T, Object>) identity.getProperty(), instance, generatedId)
                     : instance;
-                AbstractGraphRepositoryOperations.GraphQuery addLabels = operations.planAddLabels(persistentEntity, write.addLabels(), written);
-                Mono<T> labelled = addLabels == null ? Mono.just(written) : persister.run(addLabels).thenReturn(written);
-                return labelled
-                    .doOnNext(labelledInstance -> persister.written(original, labelledInstance))
-                    .flatMap(this::writeRelationships)
-                    .flatMap(this::writeDynamicRelationships);
+                persister.written(original, written);
+                return new RelationshipWriter<>(persister, persistentEntity, write.addLabels(), created).write(written);
             });
+        }
+
+    }
+
+    /**
+     * Writes nodes of one entity with one query per kind of write, then the labels and relationships of each node.
+     *
+     * @param <T> The entity type
+     */
+    private final class NodesOperation<T> extends AbstractReactiveEntitiesOperations<OperationContext, T, RuntimeException> {
+        private final Set<Data> created = Collections.newSetFromMap(new IdentityHashMap<>());
+        private final Persister persister;
+        private final Map<Object, Object> previousVersions = new IdentityHashMap<>();
+
+        NodesOperation(Persister persister, RuntimePersistentEntity<T> entity, Iterable<T> instances, boolean insert) {
+            super(persister.context, noCascade, operations.getConversionService(), operations.entityEventListener(), entity, instances, insert);
+            this.persister = persister;
+        }
+
+        @Override
+        protected void cascadePre(Relation.Cascade cascadeType) {
+            // Relationships are written after the nodes, see execute()
+        }
+
+        @Override
+        protected void cascadePost(Relation.Cascade cascadeType) {
+            // Relationships are written after the nodes, see execute()
+        }
+
+        @Override
+        protected void collectAutoPopulatedPreviousValues() {
+            if (!insert) {
+                entities = entities.map(list -> {
+                    for (Data d : list) {
+                        Object version = operations.currentVersion(persistentEntity, d.entity);
+                        if (version != null) {
+                            previousVersions.put(d, version);
+                        }
+                    }
+                    return list;
+                });
+            }
+        }
+
+        @Override
+        protected void execute() {
+            entities = entities.flatMap(list -> {
+                List<Data> pending = new ArrayList<>();
+                // The instances the save was called with: a node write may replace an immutable instance
+                Map<Data, T> originals = new IdentityHashMap<>();
+                Map<AbstractGraphRepositoryOperations.NodeBatch, List<Data>> batches = new LinkedHashMap<>();
+                Map<Data, @Nullable String> addLabels = new IdentityHashMap<>();
+                for (Data d : list) {
+                    if (!d.vetoed) {
+                        persister.saved.put(d.entity, d.entity);
+                        originals.put(d, d.entity);
+                        pending.add(d);
+                        // Checked ahead of the writes, so that a label that cannot be stored leaves the nodes as they were
+                        addLabels.put(d, operations.addLabelsQuery(persistentEntity, d.entity));
+                        batches.computeIfAbsent(operations.planNodeBatch(persistentEntity, d.entity, insert, previousVersions.get(d)), k -> new ArrayList<>()).add(d);
+                    }
+                }
+                return Flux.fromIterable(batches.entrySet())
+                    .concatMap(batch -> writeNodes(batch.getKey(), batch.getValue()))
+                    .then(Mono.fromRunnable(() -> {
+                        // A node whose relationships are linked first may point to a node later in the batch, which
+                        // must be found with the identifier it was just given: an immutable instance was replaced
+                        for (Data d : pending) {
+                            persister.written(Objects.requireNonNull(originals.get(d)), d.entity);
+                        }
+                    }))
+                    .then(Flux.fromIterable(pending)
+                        .concatMap(d -> {
+                            T original = Objects.requireNonNull(originals.get(d));
+                            return new RelationshipWriter<>(persister, persistentEntity, addLabels.get(d), created.contains(d)).write(d.entity).map(written -> {
+                                d.entity = written;
+                                persister.saved.put(original, written);
+                                persister.saved.put(written, written);
+                                return d;
+                            });
+                        })
+                        .then(Mono.just(list)));
+            });
+        }
+
+        private Mono<Void> writeNodes(AbstractGraphRepositoryOperations.NodeBatch batch, List<Data> nodes) {
+            if (!batch.batched()) {
+                return Flux.fromIterable(nodes).concatMap(d -> {
+                    AbstractGraphRepositoryOperations.NodeWrite write = operations.planNodeWrite(persistentEntity, d.entity, insert, previousVersions.get(d));
+                    return persister.run(write.query()).doOnNext(result -> operations.generatedId(persistentEntity, write, result.records()));
+                }).then();
+            }
+            List<Map<String, @Nullable Object>> rows = new ArrayList<>(nodes.size());
+            for (int i = 0; i < nodes.size(); i++) {
+                Data d = nodes.get(i);
+                rows.add(operations.nodeRow(persistentEntity, d.entity, i, batch.versioned() ? previousVersions.get(d) : null));
+            }
+            AbstractGraphRepositoryOperations.GraphQuery query = new AbstractGraphRepositoryOperations.GraphQuery(
+                operations.batchQuery(persistentEntity, batch), Map.of(CypherQueryBuilder.ROWS_PARAMETER, rows));
+            return persister.run(query).doOnNext(result -> {
+                List<GraphRecord> records = result.records();
+                operations.checkBatchWritten(persistentEntity, batch, rows, records.size());
+                RuntimePersistentProperty<T> identity = persistentEntity.getIdentity();
+                if (batch.idPresent() || identity == null || !GraphEntities.isNativeId(identity)) {
+                    return;
+                }
+                for (GraphRecord record : records) {
+                    Data d = nodes.get(((Number) Objects.requireNonNull(record.get(CypherQueryBuilder.ROW_POSITION))).intValue());
+                    d.entity = updateEntityId((BeanProperty<T, Object>) identity.getProperty(), d.entity, operations.batchGeneratedId(persistentEntity, record));
+                    created.add(d);
+                }
+            }).then();
+        }
+    }
+
+    /**
+     * Adds the dynamic labels of a written node and links its relationships, saving the related nodes.
+     *
+     * @param <T> The entity type
+     */
+    private final class RelationshipWriter<T> {
+        private final Persister persister;
+        private final RuntimePersistentEntity<T> persistentEntity;
+        private final @Nullable String addLabels;
+        private final boolean created;
+
+        RelationshipWriter(Persister persister, RuntimePersistentEntity<T> persistentEntity, @Nullable String addLabels, boolean created) {
+            this.persister = persister;
+            this.persistentEntity = persistentEntity;
+            this.addLabels = addLabels;
+            this.created = created;
+        }
+
+        Mono<T> write(T instance) {
+            AbstractGraphRepositoryOperations.GraphQuery labels = operations.planAddLabels(persistentEntity, addLabels, instance);
+            Mono<T> labelled = labels == null ? Mono.just(instance) : persister.run(labels).thenReturn(instance);
+            return labelled.flatMap(this::writeRelationships).flatMap(this::writeDynamicRelationships);
         }
 
         private Mono<T> writeRelationships(T instance) {
@@ -460,7 +645,7 @@ public abstract class AbstractReactiveGraphRepositoryOperations implements React
                     if (sameItems(items, written)) {
                         return instance;
                     }
-                    Object newValue = many ? conversionService.convertRequired(written, beanProperty.asArgument()) : written.get(0);
+                    Object newValue = many ? operations.getConversionService().convertRequired(written, beanProperty.asArgument()) : written.get(0);
                     return AbstractGraphRepositoryOperations.withProperty(beanProperty, instance, newValue);
                 });
         }

@@ -16,6 +16,7 @@ import io.micronaut.data.neo4j.features.Player
 import io.micronaut.data.neo4j.features.ReactiveMovieSpecificationRepository
 import io.micronaut.data.repository.jpa.criteria.PredicateSpecification
 import io.micronaut.data.neo4j.features.ReactivePetRepository
+import io.micronaut.data.neo4j.features.ReactiveTagRepository
 import io.micronaut.data.neo4j.features.ReactiveTeamRepository
 import io.micronaut.data.neo4j.features.Tag
 import io.micronaut.data.neo4j.features.Team
@@ -40,6 +41,9 @@ class Neo4jReactiveSpec extends Specification implements TestPropertyProvider {
 
     @Inject
     ReactiveArticleRepository articleRepository
+
+    @Inject
+    ReactiveTagRepository tagRepository
 
     @Inject
     ReactiveMovieSpecificationRepository movieSpecificationRepository
@@ -321,6 +325,64 @@ class Neo4jReactiveSpec extends Specification implements TestPropertyProvider {
         movieSpecificationRepository.count(after1995).block() == 1
         movieSpecificationRepository.exists(after1995).block()
         movieSpecificationRepository.findOne(after1995).block().title == "The Matrix"
+    }
+
+    void "reactive saveAll and updateAll write nodes in batches"() {
+        when:
+        def tags = tagRepository.saveAll([new Tag("graph"), new Tag("nosql"), new Tag("cypher")]).collectList().block()
+
+        then: "each instance gets the identifier of its own node"
+        tags*.id.unique().size() == 3
+        tags.collect { tagRepository.findById(it.id).block().name } == ["graph", "nosql", "cypher"]
+
+        when:
+        def articles = articleRepository.saveAll([new Article("a", "A"), new Article("b", "B")]).collectList().block()
+        def stale = articleRepository.findById("b").block()
+        articles.each { it.title = it.title.toLowerCase() }
+        def updated = articleRepository.updateAll(articles).collectList().block()
+
+        then:
+        updated*.version == [1L, 1L]
+
+        when:
+        def current = articleRepository.findById("a").block()
+        current.title = "changed"
+        articleRepository.updateAll([current, stale]).collectList().block()
+
+        then: "no node of the batch is updated"
+        thrown(OptimisticLockException)
+        with(articleRepository.findById("a").block()) {
+            title == "a"
+            version == 1L
+        }
+
+        when: "one node of a batch of new nodes has the identifier of an existing node"
+        articleRepository.saveAll([new Article("c", "C"), new Article("b", "Other")]).collectList().block()
+
+        then: "no node of the batch is inserted"
+        thrown(EntityExistsException)
+        !articleRepository.findById("c").blockOptional().present
+        articleRepository.findById("b").block().title == "b"
+
+        cleanup:
+        tagRepository.deleteAll().block()
+    }
+
+    void "reactive saveAll writes an instance passed twice once"() {
+        given:
+        def graph = new Tag("graph")
+
+        when:
+        def saved = tagRepository.saveAll([graph, new Tag("nosql"), graph]).collectList().block()
+
+        then:
+        saved.size() == 3
+        saved[0].id != null
+        saved[0].id == saved[2].id
+        tagRepository.count().block() == 2
+
+        cleanup:
+        tagRepository.deleteAll().block()
     }
 
     void "a reactive insert of a versioned node with a taken identifier fails"() {

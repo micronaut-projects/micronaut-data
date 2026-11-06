@@ -4,6 +4,7 @@ import io.micronaut.data.annotation.AutoPopulated;
 import io.micronaut.data.annotation.Id;
 import io.micronaut.data.graph.annotation.Node;
 import io.micronaut.data.graph.annotation.Relationship;
+import org.jspecify.annotations.Nullable;
 
 import java.util.UUID;
 
@@ -13,6 +14,7 @@ public class Person {
     @AutoPopulated
     private UUID id;
     private final String name;
+    @Nullable
     private final Integer born;
     @Relationship("MENTORED_BY")
     private Person mentor;

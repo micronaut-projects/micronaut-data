@@ -1,5 +1,7 @@
 package example;
 
+import io.micronaut.data.graph.annotation.Direction;
+import io.micronaut.data.graph.annotation.PathDirection;
 import io.micronaut.data.graph.annotation.PathLimit;
 import io.micronaut.data.graph.model.GraphPath;
 import io.micronaut.data.graph.model.GraphRelationship;
@@ -25,6 +27,14 @@ public interface PersonRepository extends CrudRepository<Person, UUID> {
 
     boolean existsPathByFollows(Person from, Person to); // <4>
     // end::paths[]
+
+    // tag::pathOptions[]
+    Optional<GraphPath<Person>> findShortestPathByFollowsBetweenName(String from, String to, @PathLimit int maxDepth); // <1>
+
+    @PathLimit(4)
+    @PathDirection(Direction.UNDIRECTED) // <2>
+    boolean existsPathByFollowsBetweenName(String from, String to);
+    // end::pathOptions[]
 
     // tag::relationships[]
     List<GraphRelationship<Person, Person>> findRelationships(Person from, Person to);

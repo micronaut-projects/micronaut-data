@@ -45,6 +45,15 @@ snippet::example.PersonRepositorySpec[project-base="doc-examples/neo4j-example",
 
 <1> Each api:data.graph.model.PathSegment[] holds a relationship and the nodes at its ends, in path order.
 
+== Endpoints and direction
+
+A suffix `Between<Property>` matches the endpoints by a property rather than by identifier, and ann:data.graph.annotation.PathDirection[] overrides the direction of the relationships:
+
+snippet::example.PersonRepository[project-base="doc-examples/neo4j-example", source="main", tags="pathOptions", languages="java,kotlin,groovy,python"]
+
+<1> The shortest path from the person with the first name to the person with the second.
+<2> Whether the two people are connected by `FOLLOWS` relationships in either direction.
+
 == Querying relationships
 
 Relationship finders return the relationships between two nodes, or between any nodes of the entity, as api:data.graph.model.GraphRelationship[] values with the type, properties and both nodes:

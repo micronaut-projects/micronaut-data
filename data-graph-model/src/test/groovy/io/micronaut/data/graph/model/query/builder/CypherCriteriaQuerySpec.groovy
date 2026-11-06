@@ -218,18 +218,20 @@ class CypherCriteriaQuerySpec extends Specification {
 
         expect:
         builder.supportsBatchNodeWrites()
-        !new AgeCypherQueryBuilder().supportsBatchNodeWrites()
-        builder.buildWriteNodesQuery(registry.getEntity(Person), false, false) ==
+        new AgeCypherQueryBuilder().supportsBatchNodeWrites()
+        new AgeCypherQueryBuilder().buildWriteNodesQuery(registry.getEntity(Note), ['code', 'text'], true, false)
+            .contains('MERGE (n:Note {code: row.id}) SET n.code = row.properties.code, n.text = row.properties.text RETURN')
+        builder.buildWriteNodesQuery(registry.getEntity(Person), ['name'], false, false) ==
             'UNWIND $rows AS row CREATE (n:Person) SET n += row.properties RETURN row.position AS position, id(n) AS id'
-        builder.buildWriteNodesQuery(registry.getEntity(Person), true, false) ==
+        builder.buildWriteNodesQuery(registry.getEntity(Person), ['name'], true, false) ==
             'UNWIND $rows AS row MATCH (n:Person) WHERE id(n) = row.id SET n += row.properties RETURN row.position AS position, id(n) AS id'
-        builder.buildWriteNodesQuery(registry.getEntity(Note), true, false) ==
+        builder.buildWriteNodesQuery(registry.getEntity(Note), ['code', 'text'], true, false) ==
             'UNWIND $rows AS row MERGE (n:Note {code: row.id}) SET n += row.properties RETURN row.position AS position, n.code AS id'
-        builder.buildWriteNodesQuery(registry.getEntity(Note), true, true) ==
+        builder.buildWriteNodesQuery(registry.getEntity(Note), ['code', 'text'], true, true) ==
             'UNWIND $rows AS row MATCH (n:Note) WHERE n.code = row.id SET n.__lock = true REMOVE n.__lock' +
             ' WITH collect(CASE WHEN n.version = row.version THEN {node: n, row: row} END) AS matched WHERE size(matched) = size($rows)' +
             ' UNWIND matched AS current WITH current.node AS n, current.row AS row SET n += row.properties RETURN row.position AS position, n.code AS id'
-        builder.buildInsertNodesQuery(registry.getEntity(Note)) ==
+        builder.buildInsertNodesQuery(registry.getEntity(Note), ['text']) ==
             'OPTIONAL MATCH (existing:Note) WHERE existing.code IN [row IN $rows | row.id] WITH count(existing) AS found WHERE found = 0' +
             ' UNWIND $rows AS row CREATE (n:Note {code: row.id}) SET n += row.properties RETURN row.position AS position, n.code AS id'
     }

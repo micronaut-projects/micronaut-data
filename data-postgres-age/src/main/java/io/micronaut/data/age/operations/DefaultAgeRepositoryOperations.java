@@ -25,7 +25,6 @@ import io.micronaut.data.connection.ConnectionOperations;
 import io.micronaut.data.exceptions.DataAccessException;
 import io.micronaut.data.exceptions.OptimisticLockException;
 import io.micronaut.data.graph.model.query.builder.AgeCypherQueryBuilder;
-import io.micronaut.core.type.Argument;
 import io.micronaut.data.graph.model.query.builder.AgeStatements;
 import io.micronaut.json.JsonMapper;
 import io.micronaut.data.model.Limit;
@@ -37,6 +36,8 @@ import io.micronaut.data.graph.runtime.GraphSession;
 import io.micronaut.data.graph.runtime.GraphValueEncoderRegistrar;
 import io.micronaut.data.graph.runtime.serde.GraphSerde;
 import io.micronaut.data.graph.runtime.GraphValueEncoders;
+import io.micronaut.data.graph.runtime.age.AgeParameters;
+import io.micronaut.data.graph.runtime.age.Agtype;
 import io.micronaut.data.graph.runtime.operations.AbstractGraphRepositoryOperations;
 import io.micronaut.data.model.runtime.AttributeConverterRegistry;
 import io.micronaut.data.model.runtime.RuntimeEntityRegistry;
@@ -48,23 +49,17 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 import javax.sql.DataSource;
-import java.io.IOException;
 import java.sql.Connection;
 import java.sql.PreparedStatement;
 import java.sql.ResultSet;
 import java.sql.ResultSetMetaData;
 import java.sql.SQLException;
+import java.sql.Savepoint;
 import java.sql.Statement;
 import java.sql.Types;
-import java.time.Instant;
-import java.time.ZoneOffset;
-import java.time.temporal.Temporal;
-import java.time.temporal.TemporalAmount;
 import java.util.Collection;
 import java.util.ArrayList;
-import java.util.Base64;
 import java.util.Collections;
-import java.util.Date;
 import java.util.List;
 import java.util.Map;
 import java.util.Set;
@@ -84,15 +79,22 @@ import java.util.function.Function;
 final class DefaultAgeRepositoryOperations extends AbstractGraphRepositoryOperations implements AgeRepositoryOperations {
 
     /**
-     * The session setting that records that AGE is loaded on a connection and its catalog on the search path.
+     * The session setting that records that AGE is loaded on a connection and its catalog on the search path. Its
+     * value is the start time of the transaction that set it, which tells a setting the current transaction made,
+     * and may still roll back, from one an earlier transaction committed.
      */
     static final String PREPARED_SETTING = "micronaut.age.prepared";
 
     private static final Logger LOG = LoggerFactory.getLogger(DefaultAgeRepositoryOperations.class);
-    private static final Argument<Map<String, Object>> PARAMETERS = Argument.mapOf(String.class, Object.class);
+    private static final int ABSENT = 0;
+    private static final int CURRENT_TRANSACTION = 1;
+    private static final int COMMITTED = 2;
+    private static final String PREPARED_VALUE = "coalesce(current_setting('" + PREPARED_SETTING + "', true), '')";
+    private static final String PREPARATION_QUERY = "SELECT CASE WHEN " + PREPARED_VALUE + " = '' THEN " + ABSENT
+        + " WHEN " + PREPARED_VALUE + " = transaction_timestamp()::text THEN " + CURRENT_TRANSACTION
+        + " ELSE " + COMMITTED + " END";
 
     private final ConnectionOperations<Connection> connectionOperations;
-    private final DataSource dataSource;
     private final String graph;
     private final boolean createExtension;
     private final boolean createGraph;
@@ -102,13 +104,15 @@ final class DefaultAgeRepositoryOperations extends AbstractGraphRepositoryOperat
      */
     private final Set<Connection> preparedConnections = Collections.synchronizedSet(Collections.newSetFromMap(new WeakHashMap<>()));
     /**
-     * The connections of checkouts that loaded AGE inside a transaction, which may still roll the loading back.
+     * Serializes the creations of the graph outside a transaction, so that concurrent first operations create it once.
      */
-    private final Set<Connection> preparedCheckouts = Collections.synchronizedSet(Collections.newSetFromMap(new WeakHashMap<>()));
+    private final Object graphLock = new Object();
+    /**
+     * Whether the graph is known to exist for good: it was created outside a transaction, or seen committed.
+     */
     private volatile boolean graphReady;
 
     DefaultAgeRepositoryOperations(@Parameter ConnectionOperations<Connection> connectionOperations,
-                                   @Parameter DataSource dataSource,
                                    JsonMapper jsonMapper,
                                    @Value("${micronaut.data.age.graph:graph}") String graph,
                                    @Value("${micronaut.data.age.create-extension:false}") boolean createExtension,
@@ -122,7 +126,6 @@ final class DefaultAgeRepositoryOperations extends AbstractGraphRepositoryOperat
                                    GraphSerde graphSerde) {
         super(new AgeCypherQueryBuilder(), dateTimeProvider, runtimeEntityRegistry, conversionService, attributeConverterRegistry, executorService, encoderRegistrars, graphSerde);
         this.connectionOperations = connectionOperations;
-        this.dataSource = dataSource;
         this.graph = AgeStatements.validateGraphName(graph);
         this.createExtension = createExtension;
         this.createGraph = createGraph;
@@ -131,13 +134,7 @@ final class DefaultAgeRepositoryOperations extends AbstractGraphRepositoryOperat
 
     @Override
     protected void registerEncoders(GraphValueEncoders encoders) {
-        // agtype has no temporal or binary types: temporal values are ISO-8601 strings and bytes Base64 strings
-        encoders.register(Temporal.class, (value, e) -> value.toString())
-            .register(TemporalAmount.class, (value, e) -> value.toString())
-            .register(Instant.class, (value, e) -> value.toString())
-            .register(java.sql.Date.class, (value, e) -> value.toLocalDate().toString())
-            .register(Date.class, (value, e) -> value.toInstant().atOffset(ZoneOffset.UTC).toString())
-            .register(byte[].class, (value, e) -> Base64.getEncoder().encodeToString(value));
+        AgeParameters.registerEncoders(encoders);
     }
 
     /**
@@ -252,7 +249,7 @@ final class DefaultAgeRepositoryOperations extends AbstractGraphRepositoryOperat
             }
             try (PreparedStatement preparedStatement = connection.prepareStatement(sql)) {
                 if (AgeStatements.takesParameters(statement)) {
-                    preparedStatement.setObject(1, writeParameters(jsonMapper, parameters), Types.OTHER);
+                    preparedStatement.setObject(1, AgeParameters.write(jsonMapper, parameters), Types.OTHER);
                 }
                 List<GraphRecord> records = new ArrayList<>();
                 try (ResultSet resultSet = preparedStatement.executeQuery()) {
@@ -294,22 +291,6 @@ final class DefaultAgeRepositoryOperations extends AbstractGraphRepositoryOperat
         return message != null && (message.contains("Entity failed to be updated") || message.contains("Entity could not be locked for updating"));
     }
 
-    /**
-     * Writes the parameter map of a statement as JSON, which AGE reads as an agtype map. The values are already
-     * encoded: strings, numbers, booleans, lists and maps.
-     *
-     * @param jsonMapper The JSON mapper of Micronaut Serialization
-     * @param parameters The parameters
-     * @return The JSON text
-     */
-    static String writeParameters(JsonMapper jsonMapper, Map<String, Object> parameters) {
-        try {
-            return jsonMapper.writeValueAsString(PARAMETERS, parameters);
-        } catch (IOException e) {
-            throw new DataAccessException("Cannot write the parameters of an Apache AGE query as JSON: " + e.getMessage(), e);
-        }
-    }
-
     @Override
     protected void appendSortAndLimit(StringBuilder query, RuntimePersistentEntity<?> entity, Sort sort, Limit limit) {
         // Sorting and limits requested at runtime belong to the Cypher query inside the statement
@@ -332,23 +313,20 @@ final class DefaultAgeRepositoryOperations extends AbstractGraphRepositoryOperat
      */
     private void prepare(Connection connection) throws SQLException {
         Connection physical = physicalConnection(connection);
-        if (!preparedConnections.contains(physical) && !preparedCheckouts.contains(connection)) {
+        if (!preparedConnections.contains(physical)) {
             loadAge(connection, physical);
         }
         if (createGraph && !graphReady) {
-            synchronized (this) {
-                if (!graphReady) {
-                    createGraph();
-                    graphReady = true;
-                }
-            }
+            ensureGraph(connection);
         }
     }
 
     /**
      * Loads AGE on a connection and puts its catalog on the search path, unless the session has them already:
      * a pooled connection keeps both across checkouts, and records that it does in the session setting
-     * {@value #PREPARED_SETTING}, which a transaction that rolls back reverts along with the search path.
+     * {@value #PREPARED_SETTING}, which a transaction that rolls back reverts along with the search path. A
+     * connection is only remembered as prepared once the setting is committed, so that a connection that runs
+     * several transactions, one after the other, is prepared again after one that rolled the loading back.
      *
      * @param connection The connection of the operation
      * @param physical   The connection it wraps
@@ -356,8 +334,10 @@ final class DefaultAgeRepositoryOperations extends AbstractGraphRepositoryOperat
     private void loadAge(Connection connection, Connection physical) throws SQLException {
         boolean autoCommit = connection.getAutoCommit();
         try (Statement statement = connection.createStatement()) {
-            boolean loaded = isPrepared(statement);
-            if (!loaded) {
+            int state = preparation(statement);
+            if (state == COMMITTED) {
+                preparedConnections.add(physical);
+            } else if (state == ABSENT) {
                 LOG.debug("Loading Apache AGE on a connection");
                 if (createExtension) {
                     statement.execute("CREATE EXTENSION IF NOT EXISTS age");
@@ -367,21 +347,23 @@ final class DefaultAgeRepositoryOperations extends AbstractGraphRepositoryOperat
                 // DDL run on the same pooled connection later still lands in the first schema of the path
                 statement.execute("SELECT set_config('search_path', current_setting('search_path') || ', ag_catalog', false)"
                     + " WHERE current_setting('search_path') NOT LIKE '%ag_catalog%'");
-                statement.execute("SELECT set_config('" + PREPARED_SETTING + "', 'true', false)");
+                statement.execute("SELECT set_config('" + PREPARED_SETTING + "', transaction_timestamp()::text, false)");
+                if (autoCommit) {
+                    // Committed at once
+                    preparedConnections.add(physical);
+                }
             }
-            if (loaded || autoCommit) {
-                // Committed: by an earlier checkout, or at once
-                preparedConnections.add(physical);
-            } else {
-                // Set in a transaction that may yet roll it back: taken as read for this checkout only
-                preparedCheckouts.add(connection);
-            }
+            // Otherwise set by this transaction, which may yet roll it back: checked again by the next operation
         }
     }
 
-    private static boolean isPrepared(Statement statement) throws SQLException {
-        try (ResultSet resultSet = statement.executeQuery("SELECT current_setting('" + PREPARED_SETTING + "', true)")) {
-            return resultSet.next() && "true".equals(resultSet.getString(1));
+    /**
+     * @return {@link #ABSENT} when AGE is not loaded on the session, {@link #CURRENT_TRANSACTION} when the current
+     * transaction loaded it, or {@link #COMMITTED} when an earlier transaction did
+     */
+    private static int preparation(Statement statement) throws SQLException {
+        try (ResultSet resultSet = statement.executeQuery(PREPARATION_QUERY)) {
+            return resultSet.next() ? resultSet.getInt(1) : ABSENT;
         }
     }
 
@@ -406,17 +388,60 @@ final class DefaultAgeRepositoryOperations extends AbstractGraphRepositoryOperat
     }
 
     /**
-     * Creates the graph on a connection of its own that commits at once, so that the graph outlives a
-     * transaction of the caller that rolls back.
+     * Creates the graph on the connection of the operation, so that no second connection is needed while the
+     * operation holds one. Outside a transaction the graph is created at once, by one thread at a time. Inside a
+     * transaction it is created with the transaction, so that a rollback undoes it and the next operation creates it
+     * again; this takes no lock, as the transaction may hold on to the catalog rows of the graph until it ends.
      */
-    private void createGraph() throws SQLException {
-        try (Connection connection = dataSource.getConnection()) {
-            boolean autoCommit = connection.getAutoCommit();
-            connection.setAutoCommit(true);
-            try {
+    private void ensureGraph(Connection connection) throws SQLException {
+        if (!connection.getAutoCommit()) {
+            ensureGraphInTransaction(connection);
+            return;
+        }
+        synchronized (graphLock) {
+            if (!graphReady) {
                 createGraph(connection, graph);
-            } finally {
-                connection.setAutoCommit(autoCommit);
+                graphReady = true;
+            }
+        }
+    }
+
+    private void ensureGraphInTransaction(Connection connection) throws SQLException {
+        int state = graphState(connection, graph);
+        if (state == COMMITTED) {
+            graphReady = true;
+            return;
+        }
+        if (state == CURRENT_TRANSACTION) {
+            return;
+        }
+        // A savepoint keeps the transaction usable when another transaction creates the graph at the same time
+        Savepoint savepoint = connection.setSavepoint();
+        try (PreparedStatement create = connection.prepareStatement("SELECT ag_catalog.create_graph(?)")) {
+            LOG.debug("Creating Apache AGE graph [{}]", graph);
+            create.setString(1, graph);
+            create.execute();
+            connection.releaseSavepoint(savepoint);
+        } catch (SQLException e) {
+            connection.rollback(savepoint);
+            if (graphState(connection, graph) == ABSENT) {
+                throw e;
+            }
+            LOG.debug("Apache AGE graph [{}] was created by another transaction: {}", graph, e.getMessage());
+        }
+    }
+
+    /**
+     * @return {@link #ABSENT} when the graph does not exist for the current transaction, {@link #CURRENT_TRANSACTION}
+     * when the current transaction created it, or {@link #COMMITTED} when it exists for good
+     */
+    private static int graphState(Connection connection, String graph) throws SQLException {
+        // The catalog row of a graph the current transaction created carries its transaction id
+        try (PreparedStatement statement = connection.prepareStatement("SELECT CASE WHEN xmin::text = (txid_current_if_assigned() % 4294967296)::text THEN "
+            + CURRENT_TRANSACTION + " ELSE " + COMMITTED + " END FROM ag_catalog.ag_graph WHERE name = ?")) {
+            statement.setString(1, graph);
+            try (ResultSet resultSet = statement.executeQuery()) {
+                return resultSet.next() ? resultSet.getInt(1) : ABSENT;
             }
         }
     }
@@ -434,6 +459,7 @@ final class DefaultAgeRepositoryOperations extends AbstractGraphRepositoryOperat
         if (graphExists(connection, graph)) {
             return;
         }
+        LOG.debug("Creating Apache AGE graph [{}]", graph);
         try (PreparedStatement create = connection.prepareStatement("SELECT ag_catalog.create_graph(?)")) {
             create.setString(1, graph);
             create.execute();

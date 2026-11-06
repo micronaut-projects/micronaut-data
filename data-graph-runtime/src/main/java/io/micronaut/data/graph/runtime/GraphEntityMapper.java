@@ -391,12 +391,42 @@ public final class GraphEntityMapper {
                 // Stored as a node property, a key that names the identifier, a declared property or a
                 // relationship would be dropped or read back into the declared property
                 if (schemaless.declared().contains(key) || values.containsKey(key)) {
-                    throw new DataAccessException("Dynamic attribute [" + key + "] of [" + entity.getSimpleName() + "] has the name of a declared property");
+                    throw declaredName(entity, key);
                 }
                 // The key becomes a property name in the query text, so it must be one that can be quoted
                 values.put(requireName(key, "Dynamic attribute", entity), encode(value));
             });
         }
+    }
+
+    /**
+     * Checks that no schemaless property of an instance has the name of a declared property, for databases that
+     * store the schemaless properties apart from the declared ones, such as in a JSON column: read back, the
+     * declared property would hide the schemaless one.
+     *
+     * @param entity   The entity
+     * @param instance The instance
+     * @param <T>      The entity type
+     * @throws DataAccessException if a schemaless property has the name of a declared property
+     */
+    public <T> void checkDynamicAttributes(RuntimePersistentEntity<T> entity, T instance) {
+        Schemaless schemaless = schemaless(entity);
+        BeanProperty<Object, Object> attributesProperty = schemaless.attributes();
+        if (attributesProperty != null && attributesProperty.get(instance) instanceof Map<?, ?> attributes) {
+            for (Object name : attributes.keySet()) {
+                String key = String.valueOf(name);
+                // By stored name, or by property name when the columns are named by a naming strategy
+                RuntimePersistentProperty<T> property = entity.getPropertyByName(key);
+                boolean identity = entity.getIdentity() != null && entity.getIdentity().getName().equals(key);
+                if (schemaless.declared().contains(key) || identity || (property != null && !isSchemalessHolder(property))) {
+                    throw declaredName(entity, key);
+                }
+            }
+        }
+    }
+
+    private static DataAccessException declaredName(RuntimePersistentEntity<?> entity, String key) {
+        return new DataAccessException("Dynamic attribute [" + key + "] of [" + entity.getSimpleName() + "] has the name of a declared property");
     }
 
     /**

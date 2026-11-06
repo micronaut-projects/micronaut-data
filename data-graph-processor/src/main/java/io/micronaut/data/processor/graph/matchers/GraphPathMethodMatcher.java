@@ -23,6 +23,7 @@ import io.micronaut.data.annotation.TenantId;
 import io.micronaut.data.annotation.WithoutTenantId;
 import io.micronaut.data.graph.annotation.Direction;
 import io.micronaut.data.graph.annotation.GraphRepository;
+import io.micronaut.data.graph.annotation.PathDirection;
 import io.micronaut.data.graph.annotation.PathLimit;
 import io.micronaut.data.graph.model.GraphEntities;
 import io.micronaut.data.graph.model.GraphPath;
@@ -73,7 +74,9 @@ import java.util.regex.Pattern;
  *
  * <p>A suffix {@code By<Relationship>} restricts the traversal to the relationship type of a property of the
  * entity, for example {@code findShortestPathByFriends}. Several properties are joined with {@code Or}.
- * The endpoints are the first two parameters, either entities or identifiers.</p>
+ * The endpoints are the first two parameters, either entities or identifiers. A suffix {@code Between<Property>}
+ * matches the endpoints by another property, for example {@code findShortestPathByFriendsBetweenName(String from, String to)}.
+ * {@link PathDirection} on the method overrides the direction of the relationships.</p>
  *
  * @author graemerocher
  * @since 5.3.0
@@ -83,7 +86,7 @@ public final class GraphPathMethodMatcher implements MethodMatcher {
 
     private static final String PREFIXES = "(?:find|get|query|search|read|retrieve|list)";
     // The relationship token stops at OrderBy, which path finders do not support and report
-    private static final String SUFFIX = "(?:By([A-Z]\\w*?))?(?<order>OrderBy\\w*)?$";
+    private static final String SUFFIX = "(?:By([A-Z]\\w*?))?(?:Between([A-Z]\\w*))?(?<order>OrderBy\\w*)?$";
     private static final Pattern FIND_PATTERN = Pattern.compile("^" + PREFIXES + "(ShortestPath|AllShortestPaths|AllPaths|Paths|Path|Relationships|Relationship)" + SUFFIX);
     private static final Pattern EXISTS_PATTERN = Pattern.compile("^(?:exists|has)(Path|Relationship)" + SUFFIX);
     private static final Pattern COUNT_PATTERN = Pattern.compile("^count(Paths|Relationships)" + SUFFIX);
@@ -107,13 +110,13 @@ public final class GraphPathMethodMatcher implements MethodMatcher {
                 return null;
             }
             rejectOrdering(name, matcher);
-            return context -> buildMatchInfo(context, kindOf(matcher.group(1)), PathQueryDefinition.Result.ELEMENTS, matcher.group(2));
+            return context -> buildMatchInfo(context, kindOf(matcher.group(1)), PathQueryDefinition.Result.ELEMENTS, matcher.group(2), matcher.group(3));
         }
         Matcher exists = EXISTS_PATTERN.matcher(name);
         if (exists.matches()) {
             rejectOrdering(name, exists);
             PathQueryDefinition.Kind kind = exists.group(1).equals("Path") ? PathQueryDefinition.Kind.SHORTEST : PathQueryDefinition.Kind.RELATIONSHIPS;
-            return context -> buildMatchInfo(context, kind, PathQueryDefinition.Result.EXISTS, exists.group(2));
+            return context -> buildMatchInfo(context, kind, PathQueryDefinition.Result.EXISTS, exists.group(2), exists.group(3));
         }
         Matcher count = COUNT_PATTERN.matcher(name);
         if (count.matches()) {
@@ -122,7 +125,7 @@ public final class GraphPathMethodMatcher implements MethodMatcher {
             }
             rejectOrdering(name, count);
             PathQueryDefinition.Kind kind = count.group(1).equals("Paths") ? PathQueryDefinition.Kind.ALL : PathQueryDefinition.Kind.RELATIONSHIPS;
-            return context -> buildMatchInfo(context, kind, PathQueryDefinition.Result.COUNT, count.group(2));
+            return context -> buildMatchInfo(context, kind, PathQueryDefinition.Result.COUNT, count.group(2), count.group(3));
         }
         return null;
     }
@@ -193,11 +196,14 @@ public final class GraphPathMethodMatcher implements MethodMatcher {
     private MethodMatchInfo buildMatchInfo(MethodMatchContext matchContext,
                                            PathQueryDefinition.Kind kind,
                                            PathQueryDefinition.Result result,
-                                           @Nullable String relationshipsToken) {
+                                           @Nullable String relationshipsToken,
+                                           @Nullable String endpointToken) {
         SourcePersistentEntity entity = matchContext.getRootEntity();
         rejectTenantRestriction(matchContext, entity);
         List<Association> relationships = resolveRelationships(entity, relationshipsToken);
-        Direction direction = resolveDirection(relationships);
+        Direction direction = matchContext.getMethodElement().enumValue(PathDirection.class, Direction.class)
+            .orElseGet(() -> resolveDirection(relationships));
+        PersistentProperty endpointProperty = resolveEndpointProperty(entity, endpointToken);
 
         ParameterElement[] allParameters = matchContext.getParameters();
         int maxDepth = methodPathLimit(matchContext, kind);
@@ -205,10 +211,10 @@ public final class GraphPathMethodMatcher implements MethodMatcher {
         List<ParameterElement> endpoints = parameters.endpoints();
         int limitParameterIndex = parameters.limitParameterIndex();
 
-        BindingParameter start = endpoints.isEmpty() ? null : endpointParameter(matchContext, entity, allParameters, endpoints.get(0));
-        BindingParameter end = endpoints.isEmpty() ? null : endpointParameter(matchContext, entity, allParameters, endpoints.get(1));
+        BindingParameter start = endpoints.isEmpty() ? null : endpointParameter(matchContext, entity, endpointProperty, allParameters, endpoints.get(0));
+        BindingParameter end = endpoints.isEmpty() ? null : endpointParameter(matchContext, entity, endpointProperty, allParameters, endpoints.get(1));
         PathQueryDefinition definition = new PathQueryDefinition(
-            entity, kind, result, relationships, direction, maxDepth, limitParameterIndex >= 0, start, end
+            entity, kind, result, relationships, direction, maxDepth, limitParameterIndex >= 0, start, end, endpointProperty
         );
         GraphQueryBuilder queryBuilder = queryBuilder(matchContext);
 
@@ -229,7 +235,7 @@ public final class GraphPathMethodMatcher implements MethodMatcher {
         if (result == PathQueryDefinition.Result.ELEMENTS && returnsPage(matchContext.getReturnType())) {
             // A page of relationships also needs their count
             PathQueryDefinition countDefinition = new PathQueryDefinition(
-                entity, kind, PathQueryDefinition.Result.COUNT, relationships, direction, maxDepth, limitParameterIndex >= 0, start, end
+                entity, kind, PathQueryDefinition.Result.COUNT, relationships, direction, maxDepth, limitParameterIndex >= 0, start, end, endpointProperty
             );
             methodMatchInfo.countQueryResult(buildPathQuery(queryBuilder, countDefinition));
         }
@@ -383,20 +389,39 @@ public final class GraphPathMethodMatcher implements MethodMatcher {
         return direction;
     }
 
+    private static @Nullable PersistentProperty resolveEndpointProperty(SourcePersistentEntity entity, @Nullable String token) {
+        if (token == null) {
+            return null;
+        }
+        String propertyName = NameUtils.decapitalize(token);
+        if (entity.hasIdentity() && entity.getIdentity().getName().equals(propertyName)) {
+            // Between<Id> matches by the identity, which the query builders render as the native id expression
+            // (elementId(s) or id(s)) when the database generates it, not as a stored property
+            return null;
+        }
+        PersistentProperty property = entity.getPropertyByName(propertyName);
+        if (property == null || property instanceof Association) {
+            throw new MatchFailedException("Entity [" + entity.getSimpleName() + "] has no property named [" + propertyName + "] to match path endpoints by");
+        }
+        return property;
+    }
+
     private static BindingParameter endpointParameter(MethodMatchContext matchContext,
                                                       SourcePersistentEntity entity,
+                                                      @Nullable PersistentProperty endpointProperty,
                                                       ParameterElement[] allParameters,
                                                       ParameterElement parameter) {
-        if (!entity.hasIdentity()) {
+        if (endpointProperty == null && !entity.hasIdentity()) {
             throw new MatchFailedException("Entity [" + entity.getSimpleName() + "] needs an @Id to find paths between its nodes");
         }
-        PersistentProperty identity = entity.getIdentity();
+        PersistentProperty identity = endpointProperty != null ? endpointProperty : entity.getIdentity();
         PersistentPropertyPath idPath = PersistentPropertyPath.of(List.of(), identity);
         ClassElement type = parameter.getGenericType();
         boolean isEntity = type.getName().equals(entity.getName()) || type.isAssignable(entity.getName());
         ClassElement identityType = ((SourcePersistentProperty) identity).getType();
         if (!isEntity && !type.isAssignable(identityType) && !TypeUtils.areTypesCompatible(type, identityType)) {
-            throw new MatchFailedException("Endpoint parameter [" + parameter.getName() + "] must be a " + entity.getSimpleName() + " or its identifier type " + identity.getTypeName());
+            String expected = endpointProperty != null ? "the type " + identity.getTypeName() + " of property [" + identity.getName() + "]" : "its identifier type " + identity.getTypeName();
+            throw new MatchFailedException("Endpoint parameter [" + parameter.getName() + "] must be a " + entity.getSimpleName() + " or " + expected);
         }
         SourceParameterExpressionImpl expression = new SourceParameterExpressionImpl(
             Utils.getConfiguredDataTypes(matchContext.getRepositoryClass()),

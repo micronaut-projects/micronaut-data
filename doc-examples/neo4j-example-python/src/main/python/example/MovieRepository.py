@@ -34,6 +34,12 @@ class MovieRepository(CrudRepository[Movie, str]):  # <2>
     def findByTitle(self, title: str) -> Movie | None: ...
     # end::join[]
 
+    # tag::nestedJoin[]
+    @Join("directors")
+    @Join("directors.follows")  # <1>
+    def findByReleased(self, year: int) -> list[Movie]: ...
+    # end::nestedJoin[]
+
     # tag::projection[]
     def findTitleByReleasedGreaterThanOrderByTitle(self, year: int) -> list[str]: ...
 

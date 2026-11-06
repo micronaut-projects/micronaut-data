@@ -5,13 +5,29 @@ plugins {
 dependencies {
     annotationProcessor projects.micronautDataGraphProcessor
     implementation projects.micronautDataGraphRuntime
+    implementation projects.micronautDataNeo4j
+    // An in-process Neo4j server, as in the Spring Data Neo4j benchmark
+    implementation(libs.neo4j.harness) {
+        exclude group: "org.slf4j"
+        exclude group: "ch.qos.logback"
+    }
 
     jmh projects.micronautDataGraphRuntime
+    jmh projects.micronautDataNeo4j
+    jmh(libs.neo4j.harness) {
+        exclude group: "org.slf4j"
+        exclude group: "ch.qos.logback"
+    }
     jmh mn.micronaut.runtime
 }
 
+tasks.withType(Test).configureEach {
+    maxHeapSize = "2g"
+    jvmArgs "--add-opens=java.base/java.nio=ALL-UNNAMED", "--add-opens=java.base/java.lang=ALL-UNNAMED", "--enable-native-access=ALL-UNNAMED"
+}
+
 jmh {
-    includes = ['GraphMapping']
+    includes = ['GraphMapping|SimpleQuery']
     fork = 1
     warmupIterations = 3
     warmup = '1s'
@@ -19,4 +35,5 @@ jmh {
     timeOnIteration = '1s'
     benchmarkMode = ['thrpt']
     timeUnit = 's'
+    jvmArgsAppend = ["--add-opens=java.base/java.nio=ALL-UNNAMED", "--add-opens=java.base/java.lang=ALL-UNNAMED", "--enable-native-access=ALL-UNNAMED"]
 }

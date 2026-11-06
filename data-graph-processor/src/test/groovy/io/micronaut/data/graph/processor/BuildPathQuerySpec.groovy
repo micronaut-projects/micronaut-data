@@ -202,6 +202,64 @@ interface WaypointRepository extends CrudRepository<Waypoint, String> {
         getQuery(repository.executableMethods.find { it.methodName == 'findByPath' }) == 'MATCH (n:Waypoint) WHERE n.path = $p0 RETURN n'
     }
 
+    void "test Between<Id> matches the endpoints by the generated identifier"() {
+        given:
+        def repository = buildRepository('test.StationRepository', """
+import io.micronaut.data.graph.model.*;
+
+@Node
+class Station {
+    @Id
+    @GeneratedValue
+    private String id;
+    private String name;
+    @Relationship("LINKS")
+    private List<Station> links = new ArrayList<>();
+
+    public String getId() { return id; }
+    public void setId(String id) { this.id = id; }
+    public String getName() { return name; }
+    public void setName(String name) { this.name = name; }
+    public List<Station> getLinks() { return links; }
+    public void setLinks(List<Station> links) { this.links = links; }
+}
+
+@TestGraphRepository
+interface StationRepository extends CrudRepository<Station, String> {
+    Optional<GraphPath<Station>> findShortestPathByLinksBetweenId(String from, String to);
+}
+""")
+        def stops = buildRepository('test.StopRepository', """
+import io.micronaut.data.graph.model.*;
+
+@Node
+class Stop {
+    @Id
+    @GeneratedValue
+    private Long id;
+    @Relationship("NEXT")
+    private Stop next;
+
+    public Long getId() { return id; }
+    public void setId(Long id) { this.id = id; }
+    public Stop getNext() { return next; }
+    public void setNext(Stop next) { this.next = next; }
+}
+
+@TestGraphRepository
+interface StopRepository extends CrudRepository<Stop, Long> {
+    @PathLimit(3)
+    boolean existsPathByNextBetweenId(Long from, Long to);
+}
+""")
+
+        expect:
+        getQuery(repository.executableMethods.find { it.methodName == 'findShortestPathByLinksBetweenId' }) ==
+            'MATCH (s:Station), (e:Station) WHERE elementId(s) = $p0 AND elementId(e) = $p1 AND s <> e MATCH p = shortestPath((s)-[:LINKS*]->(e)) RETURN p'
+        getQuery(stops.executableMethods.find { it.methodName == 'existsPathByNextBetweenId' }) ==
+            'MATCH (s:Stop), (e:Stop) WHERE id(s) = $p0 AND id(e) = $p1 AND s <> e MATCH p = shortestPath((s)-[:NEXT*1..3]->(e)) RETURN true AS result LIMIT 1'
+    }
+
     void "test a page of relationships has a count query when wrapped in a future or publisher"() {
         given:
         def repository = buildRepository('test.AsyncPageRepository', """

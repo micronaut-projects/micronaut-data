@@ -15,6 +15,8 @@ import io.micronaut.data.neo4j.features.Reading
 import io.micronaut.data.neo4j.features.ReadingRepository
 import io.micronaut.data.neo4j.features.ReactiveMovieRepository
 import io.micronaut.data.neo4j.features.Player
+import io.micronaut.data.neo4j.features.Station
+import io.micronaut.data.neo4j.features.StationRepository
 import io.micronaut.data.neo4j.features.Tag
 import io.micronaut.data.neo4j.features.Member
 import io.micronaut.data.neo4j.features.MemberRepository
@@ -41,6 +43,9 @@ class Neo4jFeaturesSpec extends Specification implements TestPropertyProvider {
 
     @Inject
     TeamRepository teamRepository
+
+    @Inject
+    StationRepository stationRepository
 
     @Inject
     MemberRepository memberRepository
@@ -141,6 +146,18 @@ class Neo4jFeaturesSpec extends Specification implements TestPropertyProvider {
         saved.collectMany { it.players() }*.id().every { it != null }
         operations.executeQuery("MATCH (p:Player)-[:PLAYS_FOR]->(t:Team) RETURN count(t)", [:], Long) == [2L]
         teamRepository.count() == 2
+    }
+
+    void "path finders match endpoints by a database generated identifier"() {
+        given:
+        def saved = stationRepository.save(new Station(null, "A", [new Station(null, "B", [new Station(null, "C", [])])]))
+        def a = saved.id()
+        def c = saved.links()[0].links()[0].id()
+
+        expect:
+        stationRepository.existsPathByLinksBetweenId(a, c)
+        !stationRepository.existsPathByLinksBetweenId(c, a)
+        stationRepository.findShortestPathByLinksBetweenId(a, c).get().nodes()*.name() == ["A", "B", "C"]
     }
 
     void "reactive repositories"() {

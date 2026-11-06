@@ -8,10 +8,10 @@ Entities and repository methods are portable between the databases. Each databas
 |Criteria on relationships |Yes |Yes |Yes
 |Fetch joins with `@Join` |Yes |No |Yes
 |Saving, updating and deleting |Yes |Nodes, through their vertex tables |Yes
-|Shortest paths |Yes |PGQL |With a maximum depth
+|Shortest paths |Yes |With PGQL and the PGQL JDBC driver |With a maximum depth
 |Path existence and counts |Yes |With a maximum depth |With a maximum depth
 |Multiple and dynamic labels |Yes |No |No
-|Schemaless properties |Yes |No |Yes
+|Schemaless properties |Yes |In a JSON column |Yes
 |Transactions |Yes |Yes |Yes
 |===
 

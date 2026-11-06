@@ -193,20 +193,46 @@ public final class GraphSerde {
         boolean relationshipEntity = GraphEntities.isRelationshipEntity(associated);
         List<Object> views = new ArrayList<>(items.size());
         for (Object item : items) {
-            if (item == null) {
-                continue;
-            }
-            if (relationshipEntity && item instanceof Map<?, ?> pair
-                && pair.get(CypherQueryBuilder.REL_KEY) instanceof GraphEdge edge) {
-                views.add(edgeView(associated, edge, pair.get(CypherQueryBuilder.NODE_KEY) instanceof GraphNode target ? target : null));
-            } else if (item instanceof GraphNode node) {
-                views.add(nodeView(associated, node, null));
+            Object view = fetchedItem(associated, relationshipEntity, item);
+            if (view != null) {
+                views.add(view);
             }
         }
         if (association.getKind().isSingleEnded()) {
             return views.isEmpty() ? null : views.get(0);
         }
         return views;
+    }
+
+    /**
+     * The object view of one fetched value: a relationship with its target node, a node with its own fetched
+     * relationships, or a node.
+     */
+    private @Nullable Object fetchedItem(RuntimePersistentEntity<?> associated, boolean relationshipEntity, @Nullable Object item) {
+        if (relationshipEntity && item instanceof Map<?, ?> pair && pair.get(CypherQueryBuilder.REL_KEY) instanceof GraphEdge edge) {
+            return edgeView(associated, edge, pair.get(CypherQueryBuilder.NODE_KEY) instanceof GraphNode target ? target : null);
+        }
+        if (item instanceof Map<?, ?> tree && tree.get(CypherQueryBuilder.NODE_KEY) instanceof GraphNode node) {
+            return nestedView(associated, node, tree);
+        }
+        if (item instanceof GraphNode node) {
+            return nodeView(associated, node, null);
+        }
+        return null;
+    }
+
+    /**
+     * The object view of a node fetched with the relationships of its own: the nodes of each nested relationship are
+     * held by the map under the name of the relationship.
+     */
+    private Map<String, @Nullable Object> nestedView(RuntimePersistentEntity<?> entity, GraphNode node, Map<?, ?> tree) {
+        Map<String, @Nullable Object> view = nodeView(entity, node, null);
+        for (RuntimePersistentProperty<?> property : entity.getPersistentProperties()) {
+            if (property instanceof RuntimeAssociation<?> association && tree.containsKey(association.getName())) {
+                view.put(association.getName(), fetched(association, tree.get(association.getName())));
+            }
+        }
+        return view;
     }
 
     /**
