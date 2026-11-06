@@ -8,6 +8,8 @@ import io.micronaut.data.graph.tck.repositories.FriendRepository;
 import io.micronaut.data.model.Page;
 import io.micronaut.data.model.Pageable;
 
+import java.util.List;
+
 @AgeRepository
 public interface AgeFriendRepository extends FriendRepository {
 
@@ -16,4 +18,6 @@ public interface AgeFriendRepository extends FriendRepository {
 
     @PathLimit(5)
     Page<GraphPath<Friend>> findAllShortestPathsByFriends(String from, String to, Pageable pageable);
+
+    List<GraphPath<Friend>> findAllShortestPathsByFriends(String from, String to, @PathLimit int maxDepth);
 }

@@ -146,7 +146,7 @@ final class DefaultOracleGraphRepositoryOperations extends AbstractGraphReposito
     }
 
     private static GraphResult run(Connection connection, String query, Map<String, Object> parameters) {
-        OracleGraphRows.Expanded expanded = OracleGraphRows.expand(query, new ArrayList<>(parameters.values()));
+        OracleGraphRows.Expanded expanded = OracleGraphRows.expand(query, parameters);
         if (LOG.isTraceEnabled()) {
             // Parameter values may hold personal data, so they are logged at TRACE only
             LOG.trace("Executing Oracle graph query: {} with parameters {}", expanded.query(), expanded.parameters());
@@ -164,7 +164,10 @@ final class DefaultOracleGraphRepositoryOperations extends AbstractGraphReposito
                     statement.setObject(i + 1, value);
                 }
             }
-            try (ResultSet resultSet = statement.executeQuery()) {
+            if (!statement.execute()) {
+                return new GraphResult(List.of(), statement.getUpdateCount());
+            }
+            try (ResultSet resultSet = statement.getResultSet()) {
                 ResultSetMetaData metaData = resultSet.getMetaData();
                 int count = metaData.getColumnCount();
                 List<String> columns = new ArrayList<>(count);

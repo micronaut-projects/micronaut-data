@@ -10,18 +10,69 @@ class OracleGraphRowsSpec extends Specification {
 
     void "expand collection parameters"() {
         when:
-        def expanded = OracleGraphRows.expand("SELECT * FROM t WHERE a IN (?) AND b = ? AND c = '?'", [[1, 2, 3], "x"])
+        def expanded = OracleGraphRows.expand("SELECT * FROM t WHERE a IN (?) AND b = ? AND c = '?'", [p0: [1, 2, 3], p1: "x"])
 
         then:
         expanded.query() == "SELECT * FROM t WHERE a IN (?, ?, ?) AND b = ? AND c = '?'"
         expanded.parameters() == [1, 2, 3, "x"]
 
         when:
-        expanded = OracleGraphRows.expand("SELECT * FROM t WHERE a IN (?)", [[]])
+        expanded = OracleGraphRows.expand("SELECT * FROM t WHERE a IN (?)", [p0: []])
 
         then:
         expanded.query() == "SELECT * FROM t WHERE a IN (NULL)"
         expanded.parameters() == []
+    }
+
+    void "bind named parameters by occurrence"() {
+        when:
+        def expanded = OracleGraphRows.expand("SELECT * FROM v\$t WHERE b = \$b AND a IN (\$a) AND c = \$b AND d = '\$d'", [a: [1, 2], b: "x"])
+
+        then:
+        expanded.query() == "SELECT * FROM v\$t WHERE b = ? AND a IN (?, ?) AND c = ? AND d = '\$d'"
+        expanded.parameters() == ["x", 1, 2, "x"]
+
+        when:
+        OracleGraphRows.expand("SELECT * FROM t WHERE a = \$missing", [a: 1])
+
+        then:
+        thrown(IllegalStateException)
+    }
+
+    void "placeholders in comments are not parameters"() {
+        when:
+        def expanded = OracleGraphRows.expand("SELECT * FROM t /* why? */ WHERE a = \$a -- \$b why?\n AND b = 1", [a: 1])
+
+        then:
+        expanded.query() == "SELECT * FROM t /* why? */ WHERE a = ? -- \$b why?\n AND b = 1"
+        expanded.parameters() == [1]
+    }
+
+    void "an empty collection cannot be bound to NOT IN"() {
+        when:
+        OracleGraphRows.expand("SELECT * FROM t WHERE a NOT IN (?)", [p0: []])
+
+        then:
+        def e = thrown(IllegalArgumentException)
+        e.message.contains("NOT IN")
+    }
+
+    void "decode a relationship entity with its identifier and properties"() {
+        when:
+        def records = OracleGraphRows.decode(
+            ["s__ID_", "s__LABEL_", "t__ID_", "t__LABEL_", "r__ID_", "r__amount", "r__TYPE_"],
+            [[1, "Account", 2, "Account", 7, 500, "TRANSFERS"]]
+        )
+
+        then:
+        records[0].keys() == ["f", "t", "r"]
+        with((GraphEdge) records[0].get("r")) {
+            id() == 7
+            type() == "TRANSFERS"
+            startId() == 1
+            endId() == 2
+            properties() == [amount: 500]
+        }
     }
 
     void "decode nodes from aliased columns"() {

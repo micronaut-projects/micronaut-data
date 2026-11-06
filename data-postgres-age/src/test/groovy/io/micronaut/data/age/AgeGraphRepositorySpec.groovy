@@ -92,5 +92,11 @@ class AgeGraphRepositorySpec extends AbstractGraphRepositorySpec {
         then:
         allShortest.content.size() == 1
         allShortest.totalSize == 2
+
+        when: "the query matches its path twice, so it has the limit twice"
+        def bounded = friendRepository.findAllShortestPathsByFriends("Fred", "Joe", 5)
+
+        then:
+        bounded.size() == 2
     }
 }
