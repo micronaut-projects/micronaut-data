@@ -31,6 +31,7 @@ import io.micronaut.data.model.jpa.criteria.impl.predicate.LikePredicate;
 import io.micronaut.data.model.jpa.criteria.impl.predicate.NearPredicate;
 import io.micronaut.data.model.jpa.criteria.impl.predicate.TextMatchPredicate;
 import io.micronaut.data.model.search.MatchMode;
+import io.micronaut.data.model.search.TextMatchOptions;
 import io.micronaut.data.model.search.TextSearchSupport;
 import io.micronaut.data.model.jpa.criteria.impl.predicate.NegatedPredicate;
 import io.micronaut.data.model.jpa.criteria.impl.predicate.BetweenPredicate;
@@ -1374,11 +1375,25 @@ public abstract class AbstractCriteriaBuilder implements PersistentEntityCriteri
     }
 
     @Override
+    public Predicate textMatch(List<Expression<?>> fields, Expression<String> query, MatchMode mode, TextMatchOptions options) {
+        return new TextMatchPredicate(fields, query, mode, options);
+    }
+
+    @Override
     public Expression<Double> searchScore(List<Expression<?>> fields, Expression<String> query, MatchMode mode) {
-        List<Expression<?>> args = new ArrayList<>(fields.size() + 2);
+        return searchScore(fields, query, mode, TextMatchOptions.NONE);
+    }
+
+    @Override
+    public Expression<Double> searchScore(List<Expression<?>> fields, Expression<String> query, MatchMode mode, TextMatchOptions options) {
+        List<Expression<?>> args = new ArrayList<>(fields.size() + 3);
         args.addAll(fields);
         args.add(query);
         args.add(new LiteralExpression<>(mode.name()));
+        if (!options.isDefault()) {
+            // a trailing literal the query builders read back with TextSearchSupport.scoreArguments
+            args.add(new LiteralExpression<>(options));
+        }
         return new FunctionExpression<>(TextSearchSupport.SCORE_FUNCTION, args, Double.class);
     }
 

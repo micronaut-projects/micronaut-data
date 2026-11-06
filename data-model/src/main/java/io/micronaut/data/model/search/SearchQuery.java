@@ -336,12 +336,16 @@ public final class SearchQuery {
         /**
          * Boosts matches in the given property.
          *
-         * @param field The property name
-         * @param boost The boost factor
+         * @param field The property name, one of the entity's search fields
+         * @param boost The boost factor, a finite number above 0
          * @return This builder
+         * @throws IllegalArgumentException When the boost is not a finite number above 0
          */
         public Builder boost(String field, double boost) {
-            boosts.put(field, boost);
+            if (!Double.isFinite(boost) || boost <= 0) {
+                throw new IllegalArgumentException("The boost of " + field + " must be a finite number above 0, got " + boost);
+            }
+            boosts.put(Objects.requireNonNull(field, "field must not be null"), boost);
             return this;
         }
 

@@ -65,5 +65,9 @@ public enum SearchCapability {
     /**
      * A minimum relevance score as a restriction, the {@code Score} parameter of a derived search method.
      */
-    MIN_SCORE
+    MIN_SCORE,
+    /**
+     * The maximum edit distance of a fuzzy match ({@code SearchQuery.fuzzy(maxEdits)}) is honoured.
+     */
+    FUZZINESS
 }

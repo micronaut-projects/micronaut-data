@@ -18,6 +18,7 @@ package io.micronaut.data.model.jpa.criteria.impl.predicate;
 import io.micronaut.core.annotation.Internal;
 import io.micronaut.data.model.jpa.criteria.impl.PredicateVisitor;
 import io.micronaut.data.model.search.MatchMode;
+import io.micronaut.data.model.search.TextMatchOptions;
 import jakarta.persistence.criteria.Expression;
 
 import java.util.List;
@@ -33,6 +34,7 @@ public final class TextMatchPredicate extends AbstractPredicate {
     private final List<Expression<?>> fields;
     private final Expression<String> query;
     private final MatchMode mode;
+    private final TextMatchOptions options;
 
     /**
      * @param fields The field expressions, usually property paths
@@ -40,12 +42,34 @@ public final class TextMatchPredicate extends AbstractPredicate {
      * @param mode The match mode
      */
     public TextMatchPredicate(List<Expression<?>> fields, Expression<String> query, MatchMode mode) {
+        this(fields, query, mode, TextMatchOptions.NONE);
+    }
+
+    /**
+     * Default constructor.
+     *
+     * @param fields The fields to match
+     * @param query The query expression
+     * @param mode The match mode
+     * @param options The boosts and fuzziness
+     * @since 5.4.0
+     */
+    public TextMatchPredicate(List<Expression<?>> fields, Expression<String> query, MatchMode mode, TextMatchOptions options) {
         if (fields.isEmpty()) {
             throw new IllegalArgumentException("A text match requires at least one field");
         }
         this.fields = List.copyOf(fields);
         this.query = query;
         this.mode = mode;
+        this.options = options;
+    }
+
+    /**
+     * @return The boosts and fuzziness
+     * @since 5.4.0
+     */
+    public TextMatchOptions getOptions() {
+        return options;
     }
 
     /**
@@ -76,6 +100,6 @@ public final class TextMatchPredicate extends AbstractPredicate {
 
     @Override
     public String toString() {
-        return "TextMatchPredicate{fields=" + fields + ", query=" + query + ", mode=" + mode + '}';
+        return "TextMatchPredicate{fields=" + fields + ", query=" + query + ", mode=" + mode + ", options=" + options + '}';
     }
 }

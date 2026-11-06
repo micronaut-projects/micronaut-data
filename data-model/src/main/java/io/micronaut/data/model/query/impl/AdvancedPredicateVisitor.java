@@ -25,6 +25,7 @@ import io.micronaut.data.model.jpa.criteria.impl.predicate.InPredicate;
 import io.micronaut.data.model.jpa.criteria.impl.predicate.NearPredicate;
 import io.micronaut.data.model.jpa.criteria.impl.predicate.TextMatchPredicate;
 import io.micronaut.data.model.search.MatchMode;
+import io.micronaut.data.model.search.TextMatchOptions;
 import io.micronaut.data.model.jpa.criteria.impl.predicate.UnaryPredicate;
 import io.micronaut.data.model.jpa.criteria.impl.predicate.PredicateBinaryOp;
 import jakarta.persistence.criteria.Expression;
@@ -76,7 +77,7 @@ public interface AdvancedPredicateVisitor<P> extends PredicateVisitor {
 
     @Override
     default void visit(TextMatchPredicate textMatchPredicate) {
-        visitTextMatch(textMatchPredicate.getFields(), textMatchPredicate.getQuery(), textMatchPredicate.getMode());
+        visitTextMatch(textMatchPredicate.getFields(), textMatchPredicate.getQuery(), textMatchPredicate.getMode(), textMatchPredicate.getOptions());
     }
 
     @Override
@@ -150,6 +151,22 @@ public interface AdvancedPredicateVisitor<P> extends PredicateVisitor {
      */
     default void visitTextMatch(List<Expression<?>> fields, Expression<String> query, MatchMode mode) {
         throw new UnsupportedOperationException("Full-text search is not supported by this implementation.");
+    }
+
+    /**
+     * Visit a full-text match with its boosts and fuzziness; delegates to the match without options by default.
+     *
+     * @param fields The field expressions
+     * @param query The query expression
+     * @param mode The match mode
+     * @param options The boosts and fuzziness
+     * @since 5.4.0
+     */
+    default void visitTextMatch(List<Expression<?>> fields, Expression<String> query, MatchMode mode, TextMatchOptions options) {
+        if (!options.isDefault()) {
+            throw new UnsupportedOperationException("Full-text search options are not supported by this implementation.");
+        }
+        visitTextMatch(fields, query, mode);
     }
 
     void visitStartsWith(Expression<?> leftExpression, Expression<?> rightExpression, boolean ignoreCase);

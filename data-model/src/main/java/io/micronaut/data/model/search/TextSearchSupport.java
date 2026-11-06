@@ -22,6 +22,8 @@ import io.micronaut.data.annotation.search.Searchable;
 import io.micronaut.data.model.query.builder.DelegatingQueryParameterBinding;
 import io.micronaut.data.model.query.builder.QueryParameterBinding;
 import io.micronaut.data.model.PersistentEntity;
+import jakarta.persistence.criteria.Expression;
+import io.micronaut.data.model.jpa.criteria.impl.expression.LiteralExpression;
 import io.micronaut.data.model.PersistentProperty;
 import org.jspecify.annotations.Nullable;
 
@@ -170,6 +172,34 @@ public final class TextSearchSupport {
         return property.getAnnotationMetadata().booleanValue(SearchField.class, SearchField.MEMBER_HIGHLIGHTABLE).orElse(false);
     }
 
+    /**
+     * Reads the arguments of the synthetic {@link #SCORE_FUNCTION}: the field expressions, the query
+     * parameter, a literal holding the {@link MatchMode} name and, when set, a literal holding the
+     * {@link TextMatchOptions}.
+     *
+     * @param expressions The function arguments
+     * @return The arguments
+     * @since 5.4.0
+     */
+    public static ScoreArguments scoreArguments(List<? extends Expression<?>> expressions) {
+        int end = expressions.size();
+        TextMatchOptions options = TextMatchOptions.NONE;
+        if (end > 0 && expressions.get(end - 1) instanceof LiteralExpression<?> literal && literal.getValue() instanceof TextMatchOptions textMatchOptions) {
+            options = textMatchOptions;
+            end--;
+        }
+        if (end < 3) {
+            throw new IllegalStateException("Search score expects fields, a query and a match mode");
+        }
+        Expression<?> modeExpression = expressions.get(end - 1);
+        MatchMode mode = modeExpression instanceof LiteralExpression<?> literal && literal.getValue() != null
+            ? MatchMode.valueOf(literal.getValue().toString())
+            : MatchMode.ANY;
+        @SuppressWarnings("unchecked")
+        Expression<String> query = (Expression<String>) expressions.get(end - 2);
+        return new ScoreArguments(List.copyOf(expressions.subList(0, end - 2)), query, mode, options);
+    }
+
     public static String resolveLanguage(PersistentEntity entity) {
         return entity.getAnnotationMetadata().stringValue(Searchable.class, Searchable.MEMBER_LANGUAGE)
             .filter(l -> !l.isEmpty())
@@ -215,5 +245,17 @@ public final class TextSearchSupport {
      * @param mode The match mode of the keyword
      */
     public record SearchKeyword(String propertyName, MatchMode mode) {
+    }
+
+    /**
+     * The arguments of the synthetic {@link #SCORE_FUNCTION}.
+     *
+     * @param fields The field expressions
+     * @param query The query expression
+     * @param mode The match mode
+     * @param options The boosts and fuzziness
+     * @since 5.4.0
+     */
+    public record ScoreArguments(List<Expression<?>> fields, Expression<String> query, MatchMode mode, TextMatchOptions options) {
     }
 }

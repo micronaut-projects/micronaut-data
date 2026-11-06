@@ -69,7 +69,14 @@ snippet::example.BookService[project-base="doc-examples/jdbc-search-example", so
 <4> `search(SearchQuery)` returns the hits ordered by relevance.
 <5> `search(SearchQuery, Pageable)` returns one page; a sort on the pageable replaces the relevance order. Its `totalHits()` is the number of hits on the page, as the SQL stores and MongoDB do not count the matches while searching; use `countHits` for the total. Elasticsearch and OpenSearch report the real total.
 
-`minScore` restricts the hits to those whose score reaches the threshold, as a predicate the store evaluates (`ts_rank_cd(...) >= ?`, `SCORE(n) >= ?`, `min_score`), so pages are full and `totalHits` counts only the hits above it; MongoDB `$text` cannot restrict on its score and throws api:data.model.search.UnsupportedSearchFeatureException[]. On a hybrid search the threshold compares the fused score instead. A query is compiled at runtime through the same criteria API as a derived method, so a store that lacks the requested mode throws api:data.model.search.UnsupportedSearchFeatureException[] when the method runs rather than at compile time. Query-time boosts and a language override are not supported by `search(SearchQuery)` yet and throw the same exception.
+`minScore` restricts the hits to those whose score reaches the threshold, as a predicate the store evaluates (`ts_rank_cd(...) >= ?`, `SCORE(n) >= ?`, `min_score`), so pages are full and `totalHits` counts only the hits above it; MongoDB `$text` cannot restrict on its score and throws api:data.model.search.UnsupportedSearchFeatureException[]. On a hybrid search the threshold compares the fused score instead. A query is compiled at runtime through the same criteria API as a derived method, so a store that lacks the requested mode throws api:data.model.search.UnsupportedSearchFeatureException[] when the method runs rather than at compile time.
+
+`boost(field, factor)` weighs the matches of a property at query time, replacing its `@SearchField(weight)`: Oracle multiplies the field's `SCORE(n)`, Elasticsearch and OpenSearch boost the field (`title^2`) and MongoDB Search sets the operator's `score.boost`; PostgreSQL and MongoDB `$text` throw `UnsupportedSearchFeatureException`. `fuzzy(maxEdits)` selects the `FUZZY` mode with the edit distance: Elasticsearch, OpenSearch and MongoDB Search honour one or two edits (`term~2`, `fuzzy.maxEdits`), Oracle's `fuzzy` operator has a fixed similarity and rejects more than one edit. The criteria API carries both as api:data.model.search.TextMatchOptions[] on `textMatch` and `searchScore`. A language override is not supported by `search(SearchQuery)` and throws the same exception.
+
+snippet::example.BookService[project-base="doc-examples/elasticsearch-search-example", source="main", tags="options"]
+
+<1> A boost of the title above the description, whatever their index weights.
+<2> Fuzzy matching with up to two edits per term.
 
 == Highlighting
 
@@ -112,7 +119,7 @@ The criteria builder exposes the same predicate through `PersistentEntityCriteri
 
 - Queries render `to_tsvector('<language>', <column>) @@ to_tsquery('<language>', ?)` and rank with `ts_rank_cd`; several fields are concatenated with `||`, wrapped in `coalesce` and `setweight` as declared.
 - The query parameter is converted to `tsquery` syntax by a parameter converter chosen for the keyword, so the SQL stays the same for every search string.
-- Fuzzy matching is not available. Query-time boosts are not yet implemented for PostgreSQL.
+- Fuzzy matching and query-time boosts are not available.
 - Highlights render `ts_headline('<language>', <column>, to_tsquery('<language>', ?), 'StartSel=<em>,StopSel=</em>')`, which returns a fragment of the column with the default `ts_headline` length limits.
 - Stemming follows the text search configuration named by `@Searchable(language)`; use `simple` to disable it.
 
@@ -139,7 +146,8 @@ The portable API is the same on every store; the table lists which optional capa
 |Field scope (`findByTitleSearch` searches only `title`) |yes |yes |no, the whole text index |yes |yes
 |`SearchAll` over several fields matches terms spread across them |yes |no, every term in one field |yes |yes |yes
 |Index-time weights (`@SearchField(weight)`) |yes |yes |yes |yes, as boosts |yes
-|Query-time boosts (`SearchQuery.boost`) |no |no |no |no |no, planned
+|Query-time boosts (`SearchQuery.boost`) |no |yes |no |yes |yes
+|Edit distance (`SearchQuery.fuzzy(n)`) |no |no, one edit |no |yes, up to 2 |yes, up to 2
 |Highlighting |yes |yes |no |yes |yes
 |Vector search and hybrid search |yes, pgvector |yes, 23ai |no |yes, `$vectorSearch` |yes, `knn`
 |Reactive and async repositories |yes |yes |yes |yes |yes

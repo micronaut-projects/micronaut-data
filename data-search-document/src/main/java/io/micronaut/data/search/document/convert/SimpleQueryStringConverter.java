@@ -39,6 +39,10 @@ import java.util.StringJoiner;
 @Internal
 public abstract class SimpleQueryStringConverter implements TextSearchQueryConverter {
 
+    /**
+     * The most edits Lucene fuzzy matching allows.
+     */
+    public static final int MAX_FUZZINESS = 2;
     private static final String SPECIALS = "+|-\"*()~\\";
 
     private final MatchMode mode;
@@ -55,6 +59,18 @@ public abstract class SimpleQueryStringConverter implements TextSearchQueryConve
      * @return The class name of the converter for the mode
      */
     public static String converterFor(MatchMode mode) {
+        return converterFor(mode, 0);
+    }
+
+    /**
+     * @param mode The match mode
+     * @param fuzziness The maximum edit distance of a fuzzy match, {@code 0} for the default of one edit
+     * @return The class name of the converter for the mode
+     */
+    public static String converterFor(MatchMode mode, int fuzziness) {
+        if (mode == MatchMode.FUZZY && fuzziness >= MAX_FUZZINESS) {
+            return Fuzzy2.class.getName();
+        }
         return switch (mode) {
             case ANY -> Any.class.getName();
             case ALL -> All.class.getName();
@@ -72,6 +88,18 @@ public abstract class SimpleQueryStringConverter implements TextSearchQueryConve
      * @return The {@code simple_query_string} query
      */
     public static String render(@Nullable String query, MatchMode mode) {
+        return render(query, mode, 1);
+    }
+
+    /**
+     * Renders a search string for the mode.
+     *
+     * @param query The search string
+     * @param mode The match mode
+     * @param fuzziness The maximum edit distance of a fuzzy match
+     * @return The {@code simple_query_string} query
+     */
+    public static String render(@Nullable String query, MatchMode mode, int fuzziness) {
         if (query == null) {
             return "";
         }
@@ -85,7 +113,7 @@ public abstract class SimpleQueryStringConverter implements TextSearchQueryConve
         boolean anyTerm = mode == MatchMode.ANY || mode == MatchMode.FUZZY;
         StringJoiner disjunction = new StringJoiner(" | ");
         for (List<SearchTerm> group : groups) {
-            String terms = renderGroup(group, mode, anyTerm);
+            String terms = renderGroup(group, mode, anyTerm, fuzziness);
             if (terms != null) {
                 disjunction.add(groups.size() > 1 ? "(" + terms + ")" : terms);
             }
@@ -95,11 +123,11 @@ public abstract class SimpleQueryStringConverter implements TextSearchQueryConve
 
     /** One group: the positive terms joined for the mode, then the negated terms excluded. */
     @Nullable
-    private static String renderGroup(List<SearchTerm> group, MatchMode mode, boolean anyTerm) {
+    private static String renderGroup(List<SearchTerm> group, MatchMode mode, boolean anyTerm, int fuzziness) {
         List<String> positive = new ArrayList<>(group.size());
         List<String> negative = new ArrayList<>();
         for (SearchTerm term : group) {
-            (term.negated() ? negative : positive).add(renderTerm(term, mode));
+            (term.negated() ? negative : positive).add(renderTerm(term, mode, fuzziness));
         }
         if (positive.isEmpty() && negative.isEmpty()) {
             return null;
@@ -114,7 +142,7 @@ public abstract class SimpleQueryStringConverter implements TextSearchQueryConve
         return terms;
     }
 
-    private static String renderTerm(SearchTerm term, MatchMode mode) {
+    private static String renderTerm(SearchTerm term, MatchMode mode, int fuzziness) {
         if (term.phrase()) {
             return "\"" + escape(term.text()) + "\"";
         }
@@ -123,7 +151,7 @@ public abstract class SimpleQueryStringConverter implements TextSearchQueryConve
             return rendered + "*";
         }
         if (mode == MatchMode.FUZZY) {
-            return rendered + "~1";
+            return rendered + "~" + fuzziness;
         }
         return rendered;
     }
@@ -143,13 +171,20 @@ public abstract class SimpleQueryStringConverter implements TextSearchQueryConve
     @Override
     @Nullable
     public String convertToPersistedValue(@Nullable String entityValue, ConversionContext context) {
-        return render(entityValue, mode);
+        return render(entityValue, mode, fuzziness());
     }
 
     @Override
     @Nullable
     public String convertToEntityValue(@Nullable String persistedValue, ConversionContext context) {
         return persistedValue;
+    }
+
+    /**
+     * @return The maximum edit distance this converter renders for a fuzzy match
+     */
+    protected int fuzziness() {
+        return 1;
     }
 
     /**
@@ -199,6 +234,21 @@ public abstract class SimpleQueryStringConverter implements TextSearchQueryConve
     public static final class Fuzzy extends SimpleQueryStringConverter {
         Fuzzy() {
             super(MatchMode.FUZZY);
+        }
+    }
+
+    /**
+     * Fuzzy converter with two edits, the most Lucene allows.
+     */
+    @Singleton
+    public static final class Fuzzy2 extends SimpleQueryStringConverter {
+        Fuzzy2() {
+            super(MatchMode.FUZZY);
+        }
+
+        @Override
+        protected int fuzziness() {
+            return MAX_FUZZINESS;
         }
     }
 }

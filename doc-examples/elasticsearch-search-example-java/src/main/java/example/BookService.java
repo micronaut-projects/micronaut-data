@@ -1,5 +1,6 @@
 package example;
 
+import io.micronaut.data.model.search.SearchQuery;
 import io.micronaut.data.model.vector.search.SearchResult;
 import io.micronaut.data.model.vector.search.SearchResults;
 import jakarta.inject.Singleton;
@@ -24,6 +25,17 @@ public class BookService {
         }
         long hits = bookRepository.countHits(query); // <4>
         // end::search[]
+        return results.results().stream().map(hit -> hit.entity().title()).toList();
+    }
+
+    public List<String> titlesLike(String query) {
+        // tag::options[]
+        SearchQuery boosted = SearchQuery.builder(query)
+            .boost("title", 5) // <1>
+            .fuzzy(2) // <2>
+            .build();
+        SearchResults<Book> results = bookRepository.search(boosted);
+        // end::options[]
         return results.results().stream().map(hit -> hit.entity().title()).toList();
     }
 }
