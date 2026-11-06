@@ -1,0 +1,49 @@
+import io.micronaut.testresources.buildtools.KnownModules
+
+plugins {
+    id "io.micronaut.build.internal.data-module"
+    id 'io.micronaut.test-resources'
+}
+
+micronaut {
+    version libs.versions.micronaut.platform.get()
+    testResources {
+        clientTimeout = 300
+        version = libs.versions.micronaut.testresources.get()
+        additionalModules.add(KnownModules.JDBC_POSTGRESQL)
+    }
+}
+
+dependencies {
+    annotationProcessor mn.micronaut.inject.java
+    annotationProcessor mn.micronaut.graal
+
+    api projects.micronautDataGraphRuntime
+    api projects.micronautDataConnectionJdbc
+    api projects.micronautDataTxJdbc
+    implementation mnSql.micronaut.jdbc
+    implementation mnSerde.micronaut.serde.jackson
+
+    compileOnly(mnSql.jakarta.persistence.api)
+
+    testAnnotationProcessor projects.micronautDataGraphProcessor
+    testAnnotationProcessor mn.micronaut.inject.java
+
+    testImplementation projects.micronautDataGraphProcessor
+    testImplementation projects.micronautDataGraphTck
+    testImplementation mnTest.micronaut.test.spock
+    testImplementation(mnSql.jakarta.persistence.api)
+
+    testImplementation mnSql.micronaut.jdbc.hikari
+    testRuntimeOnly mnSql.postgresql
+    testResourcesService mnSql.postgresql
+    testImplementation mnLogging.logback.classic
+
+    testCompileOnly mn.micronaut.inject.groovy
+}
+
+micronautBuild {
+    binaryCompatibility {
+        enabledAfter("5.3.0")
+    }
+}

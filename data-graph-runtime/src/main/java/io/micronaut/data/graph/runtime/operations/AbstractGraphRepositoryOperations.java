@@ -24,6 +24,7 @@ import io.micronaut.core.convert.ConversionContext;
 import io.micronaut.core.type.Argument;
 import io.micronaut.data.exceptions.DataAccessException;
 import io.micronaut.data.exceptions.NonUniqueResultException;
+import io.micronaut.data.graph.annotation.Direction;
 import io.micronaut.data.graph.annotation.TargetNode;
 import io.micronaut.data.graph.model.GraphEntities;
 import io.micronaut.data.graph.model.GraphPath;
@@ -382,7 +383,8 @@ public abstract class AbstractGraphRepositoryOperations extends AbstractReposito
     @Override
     public List<GraphRecord> executeQuery(String query, Map<String, Object> parameters) {
         Map<String, Object> encoded = encodeParameters(parameters);
-        return write(AnnotationMetadata.EMPTY_METADATA, session -> session.run(query, encoded).records());
+        String statement = finishedQuery(query);
+        return write(AnnotationMetadata.EMPTY_METADATA, session -> session.run(statement, encoded).records());
     }
 
     @Override
@@ -430,7 +432,11 @@ public abstract class AbstractGraphRepositoryOperations extends AbstractReposito
                 throw new IllegalArgumentException("The @PathLimit argument " + depth + " is larger than "
                     + GraphOperationsConfiguration.PREFIX + ".max-path-depth (" + maxPathDepth + ")");
             }
-            query.replace(tokenPosition, tokenPosition + PathQueryDefinition.PATH_LIMIT_TOKEN.length(), String.valueOf(depth));
+            // A query that matches its path twice has the token twice
+            while (tokenPosition >= 0) {
+                query.replace(tokenPosition, tokenPosition + PathQueryDefinition.PATH_LIMIT_TOKEN.length(), String.valueOf(depth));
+                tokenPosition = query.indexOf(PathQueryDefinition.PATH_LIMIT_TOKEN, tokenPosition);
+            }
         }
         if (applyLimits && !preparedQuery.isCount()) {
             RuntimePersistentEntity<?> entity = getEntity(preparedQuery.getRootEntity());
@@ -439,7 +445,17 @@ public abstract class AbstractGraphRepositoryOperations extends AbstractReposito
         return new GraphQuery(query.toString(), parameters);
     }
 
-    private void appendSortAndLimit(StringBuilder query, RuntimePersistentEntity<?> entity, Sort sort, Limit limit) {
+    /**
+     * Appends the ordering and limits requested by method arguments to a query. A query that cannot
+     * take them, because it is an explicit query or already sorts or limits itself, is rejected
+     * rather than silently returned unsorted or unpaged.
+     *
+     * @param query  The query
+     * @param entity The root entity
+     * @param sort   The sort
+     * @param limit  The limit
+     */
+    protected void appendSortAndLimit(StringBuilder query, RuntimePersistentEntity<?> entity, Sort sort, Limit limit) {
         if (sort != null && sort.isSorted()) {
             boolean rootQuery = query.indexOf("MATCH (" + CypherQueryBuilder.ROOT) == 0;
             if (!rootQuery || query.indexOf(" ORDER BY ") >= 0) {
@@ -686,8 +702,7 @@ public abstract class AbstractGraphRepositoryOperations extends AbstractReposito
     public <T> Optional<Number> deleteAll(DeleteBatchOperation<T> operation) {
         RuntimePersistentEntity<T> entity = getEntity(operation.getRootEntity());
         if (operation.all()) {
-            String query = "MATCH (" + CypherQueryBuilder.ROOT + GraphEntities.labelExpression(entity) + ") DETACH DELETE "
-                + CypherQueryBuilder.ROOT + " RETURN count(*) AS result";
+            String query = deleteAllQuery(entity);
             return Optional.of(write(operation.getAnnotationMetadata(), session -> updateCount(session.run(query, Map.of()))));
         }
         return Optional.of(write(operation.getAnnotationMetadata(), session -> {
@@ -715,6 +730,22 @@ public abstract class AbstractGraphRepositoryOperations extends AbstractReposito
             }
         }
         throw new DataAccessException("Relationship entity [" + relationshipEntity.getName() + "] has no @TargetNode property");
+    }
+
+    /**
+     * @param entity The root entity
+     * @return The query that deletes all nodes of the entity, returning their count
+     */
+    final String deleteAllQuery(RuntimePersistentEntity<?> entity) {
+        return queryCache.computeIfAbsent("deleteAll:" + entity.getName(), k -> queryBuilder.buildDeleteAllQuery(entity));
+    }
+
+    /**
+     * @param query A query in the database's query language, passed to the operations at runtime
+     * @return The statement that runs it
+     */
+    final String finishedQuery(String query) {
+        return queryCache.computeIfAbsent("query:" + query, k -> queryBuilder.finishQuery(query));
     }
 
     /**
@@ -994,8 +1025,10 @@ public abstract class AbstractGraphRepositoryOperations extends AbstractReposito
             Object savedId = nativeId ? mapper.writeIdentity(associated, item) : null;
             Object relationshipId = savedId == null ? null : runLink(association, targetEntity, toId, fromId, properties, relationshipIdentity, LinkMode.UPDATE, savedId);
             if (relationshipId == null) {
-                // A relationship that was not saved, or that no longer connects these nodes, is a new one
-                relationshipId = runLink(association, targetEntity, toId, fromId, properties, relationshipIdentity, nativeId ? LinkMode.CREATE : LinkMode.MERGE, null);
+                // A relationship that was not saved, or that no longer connects these nodes, is a new one. An
+                // undirected one is matched in either direction, so saving it from its other end finds it
+                boolean create = nativeId && GraphEntities.direction(association) != Direction.UNDIRECTED;
+                relationshipId = runLink(association, targetEntity, toId, fromId, properties, relationshipIdentity, create ? LinkMode.CREATE : LinkMode.MERGE, null);
             }
             if (nativeId && relationshipId != null) {
                 BeanProperty<Object, Object> idProperty = relationshipIdentity.getProperty();
