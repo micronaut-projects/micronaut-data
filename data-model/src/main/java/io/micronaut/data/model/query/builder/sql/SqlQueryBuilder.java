@@ -1083,7 +1083,8 @@ public class SqlQueryBuilder extends AbstractSqlLikeQueryBuilder {
                 escape,
                 this::quote,
                 indexMapping,
-                dialect
+                dialect,
+                supportsIfExists()
             );
         }
 
