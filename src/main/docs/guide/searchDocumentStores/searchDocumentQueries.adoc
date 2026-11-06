@@ -1,0 +1,36 @@
+Derived finders, the criteria API and the search keywords all compile to one JSON request body per method, with the method parameters bound at runtime. The body is stored on the method's `@Query` annotation, so it can be inspected at compile time.
+
+|===
+|Repository predicate |Query DSL
+
+|`findByAuthor(String)` |`term` on the field, or on `<field>.keyword` for an analysed search field
+|`findByTitleIgnoreCase(String)` |`term` with `case_insensitive`
+|`GreaterThan`, `LessThan`, `Between` |`range`
+|`In` |`terms` (`ids` for the identity)
+|`StartsWith`, `EndsWith`, `Contains`, `Like` |`wildcard` on the keyword field, pattern built at bind time
+|`IsNull`, `IsNotNull`, `IsEmpty` |`exists`, negated inside `bool.must_not`
+|`And`, `Or`, `Not` |`bool.must`, `bool.should` with `minimum_should_match: 1`, `bool.must_not`
+|`Search`, `SearchAll`, `SearchPhrase`, `SearchPrefix`, `SearchFuzzy` |`simple_query_string` over the fields with their boosts
+|`OrderBy...`, `Pageable`, `Sort` |`sort` on the keyword field, `from` and `size`
+|===
+
+== Full-text search
+
+snippet::example.BookService[project-base="doc-examples/elasticsearch-search-example", source="main", tags="search"]
+
+<1> `search(String)` searches every `@SearchField`, boosted by weight, and returns hits ordered by `_score`.
+<2> Each hit holds the entity.
+<3> The `_score` of the hit.
+<4> `countHits` runs the same query through the count API.
+
+The search string uses the portable grammar and is converted to Lucene `simple_query_string` syntax at bind time with `default_operator` set to `and`: `Search` joins the terms with `|` (`coffee | tea`), `SearchAll` with spaces, `"quoted phrases"` stay phrases, `-negated` terms always exclude (`(coffee | tea) -cake`), `OR` groups become `(a b) | (c)`, `SearchPrefix` renders `term*` with `analyze_wildcard` and `SearchFuzzy` `term~1`. Special characters in terms are escaped, so user input is matched literally.
+
+== Paging and sorting
+
+`Pageable` and `Sort` parameters set `from`, `size` and `sort`; a `Page` is built with `track_total_hits` so its total is exact. Sorting on an analysed search field sorts on its `keyword` sub-field. Cursored pagination is not supported yet.
+
+== Limitations
+
+- Joins, `@Where`, update queries (`updateBy...`) and subqueries are not supported; update entities with `update(...)`.
+- Highlighting, aggregations and the raw query DSL are not exposed yet.
+- Writes are synchronous; reactive and async repositories are not supported yet.

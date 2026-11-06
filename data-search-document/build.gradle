@@ -1,0 +1,22 @@
+plugins {
+    id "io.micronaut.build.internal.data-module"
+}
+
+dependencies {
+    annotationProcessor mn.micronaut.inject.java
+
+    api projects.micronautDataModel
+    api projects.micronautDataRuntime
+    api mn.micronaut.json.core
+    compileOnly(mnSql.jakarta.persistence.api)
+
+    testImplementation mn.micronaut.inject.groovy
+    testImplementation mnSerde.micronaut.serde.jackson
+}
+
+micronautBuild {
+    // New in 5.3.0, so there is no previous release to compare against yet
+    binaryCompatibility {
+        enabledAfter("5.3.0")
+    }
+}
