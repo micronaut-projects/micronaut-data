@@ -104,7 +104,7 @@ public final class GraphEntityMapper {
         Map<String, Object> values = new HashMap<>();
         RuntimePersistentProperty<T> identity = entity.getIdentity();
         if (identity != null) {
-            Object id = GraphEntities.isNativeId(identity) ? nativeId(identity, node.id()) : node.properties().get(identity.getPersistedName());
+            Object id = GraphEntities.isNativeId(identity) ? nativeId(identity, node.id(), node.numericId()) : node.properties().get(identity.getPersistedName());
             values.put(identity.getName(), readValue(identity, id));
         }
         readProperties(entity, node, row, values);
@@ -198,14 +198,14 @@ public final class GraphEntityMapper {
 
     /**
      * The value of a constructor argument the node has no value for: the default of a primitive, an empty collection
-     * for relationships that were not fetched, otherwise null.
+     * for relationships that were not fetched and for schemaless holders, otherwise null.
      */
-    private static @Nullable Object emptyValue(Argument<?> argument) {
+    private static @Nullable Object emptyValue(RuntimePersistentEntity<?> entity, Argument<?> argument) {
         Class<?> type = argument.getType();
         if (argument.isPrimitive()) {
             return Array.get(Array.newInstance(type, 1), 0);
         }
-        if (type == Object.class) {
+        if (type == Object.class || !defaultsToEmpty(entity, argument)) {
             return null;
         }
         if (type.isAssignableFrom(ArrayList.class)) {
@@ -218,6 +218,15 @@ public final class GraphEntityMapper {
             return new LinkedHashMap<>();
         }
         return null;
+    }
+
+    private static boolean defaultsToEmpty(RuntimePersistentEntity<?> entity, Argument<?> argument) {
+        RuntimePersistentProperty<?> property = entity.getPropertyByName(argument.getName());
+        if (property instanceof RuntimeAssociation<?> association && GraphEntities.isRelationship(association)) {
+            return true;
+        }
+        return argument.getAnnotationMetadata().hasAnnotation(DynamicAttributes.class)
+            || argument.getAnnotationMetadata().hasAnnotation(io.micronaut.data.graph.annotation.Labels.class);
     }
 
     private Schemaless schemaless(RuntimePersistentEntity<?> entity) {
@@ -257,7 +266,7 @@ public final class GraphEntityMapper {
         Map<String, Object> values = new HashMap<>();
         RuntimePersistentProperty<T> identity = entity.getIdentity();
         if (identity != null) {
-            Object id = GraphEntities.isNativeId(identity) ? nativeId(identity, edge.id()) : edge.properties().get(identity.getPersistedName());
+            Object id = GraphEntities.isNativeId(identity) ? nativeId(identity, edge.id(), edge.numericId()) : edge.properties().get(identity.getPersistedName());
             values.put(identity.getName(), readValue(identity, id));
         }
         for (RuntimePersistentProperty<T> property : entity.getPersistentProperties()) {
@@ -459,21 +468,15 @@ public final class GraphEntityMapper {
     }
 
     /**
-     * Adapts an identifier assigned by the database to a numeric identity. Element identifiers of the form
-     * {@code 4:<database>:<id>} end with the numeric identifier.
+     * Picks the identifier assigned by the database that matches the type of the identity.
      *
-     * @param identity The identity property
-     * @param id       The identifier
+     * @param identity  The identity property
+     * @param id        The identifier
+     * @param numericId The numeric identifier, if the database has one besides {@code id}
      * @return The identifier to convert
      */
-    private static @Nullable Object nativeId(RuntimePersistentProperty<?> identity, @Nullable Object id) {
-        if (id instanceof String s && !CharSequence.class.isAssignableFrom(identity.getType())) {
-            int separator = s.lastIndexOf(':');
-            if (separator >= 0) {
-                return s.substring(separator + 1);
-            }
-        }
-        return id;
+    private static @Nullable Object nativeId(RuntimePersistentProperty<?> identity, @Nullable Object id, @Nullable Long numericId) {
+        return numericId != null && !CharSequence.class.isAssignableFrom(identity.getType()) ? numericId : id;
     }
 
     /**
@@ -484,11 +487,36 @@ public final class GraphEntityMapper {
      * @return The encoded value
      */
     public @Nullable Object writeValue(RuntimePersistentProperty<?> property, @Nullable Object value) {
+        return encode(persistedValue(property, value));
+    }
+
+    /**
+     * Applies the converter of a property to a value, without encoding it for the database.
+     *
+     * @param property The property
+     * @param value    The value
+     * @return The persisted value
+     */
+    public @Nullable Object persistedValue(RuntimePersistentProperty<?> property, @Nullable Object value) {
         AttributeConverter<Object, Object> converter = property.getConverter();
-        if (converter != null) {
-            value = converter.convertToPersistedValue(value, ConversionContext.of(property.getArgument()));
+        return converter == null ? value : converter.convertToPersistedValue(value, ConversionContext.of(property.getArgument()));
+    }
+
+    /**
+     * Reads the identifier of an entity, without encoding it for the database.
+     *
+     * @param entity   The entity
+     * @param instance The instance
+     * @param <T>      The entity type
+     * @return The identifier, or null if not set
+     */
+    public <T> @Nullable Object persistedIdentity(RuntimePersistentEntity<T> entity, T instance) {
+        RuntimePersistentProperty<T> identity = entity.getIdentity();
+        if (identity == null) {
+            return null;
         }
-        return encode(value);
+        Object id = identity.getProperty().get(instance);
+        return id == null || GraphEntities.isNativeId(identity) ? id : persistedValue(identity, id);
     }
 
     /**
@@ -555,7 +583,7 @@ public final class GraphEntityMapper {
             for (int i = 0; i < constructorArguments.length; i++) {
                 Argument<Object> argument = constructorArguments[i];
                 consumed.add(argument.getName());
-                arguments[i] = constructorArgument(argument, values.get(argument.getName()));
+                arguments[i] = constructorArgument(entity, argument, values.get(argument.getName()));
             }
             instance = introspection.instantiate(false, arguments);
         }
@@ -568,9 +596,9 @@ public final class GraphEntityMapper {
         return instance;
     }
 
-    private @Nullable Object constructorArgument(Argument<Object> argument, @Nullable Object value) {
+    private @Nullable Object constructorArgument(RuntimePersistentEntity<?> entity, Argument<Object> argument, @Nullable Object value) {
         if (value == null) {
-            return emptyValue(argument);
+            return emptyValue(entity, argument);
         }
         return argument.getType().isInstance(value) ? value : convert(value, argument);
     }

@@ -18,6 +18,7 @@ package io.micronaut.data.graph.model.query.builder;
 import io.micronaut.core.annotation.AnnotationMetadata;
 import io.micronaut.core.annotation.Introspected;
 import io.micronaut.data.graph.annotation.Direction;
+import io.micronaut.data.graph.annotation.Labels;
 import io.micronaut.data.graph.model.GraphEntities;
 import io.micronaut.data.graph.model.query.PathQueryDefinition;
 import io.micronaut.data.model.Association;
@@ -154,6 +155,23 @@ public class AgeCypherQueryBuilder extends CypherQueryBuilder {
         return AgeStatements.wrap(query.append(id).toString());
     }
 
+    @Override
+    public String buildCreateLinkQuery(Association association, PersistentEntity owner, PersistentEntity target,
+                                       List<String> propertyNames, PersistentProperty relationshipIdentity) {
+        return AgeStatements.wrap(super.buildCreateLinkQuery(association, owner, target, propertyNames, relationshipIdentity));
+    }
+
+    @Override
+    public String buildUpdateLinkQuery(Association association, PersistentEntity owner, PersistentEntity target,
+                                       List<String> propertyNames, PersistentProperty relationshipIdentity) {
+        return AgeStatements.wrap(super.buildUpdateLinkQuery(association, owner, target, propertyNames, relationshipIdentity));
+    }
+
+    @Override
+    public String buildUnlinkOthersQuery(Association association, PersistentEntity owner, PersistentEntity target) {
+        return AgeStatements.wrap(super.buildUnlinkOthersQuery(association, owner, target));
+    }
+
     private static QueryResult wrap(QueryResult result) {
         return new WrappedQueryResult(AgeStatements.wrap(result.getQuery()), result);
     }
@@ -161,6 +179,11 @@ public class AgeCypherQueryBuilder extends CypherQueryBuilder {
     @Override
     protected String identityExpression(PersistentProperty identity, String variable) {
         if (GraphEntities.isNativeId(identity)) {
+            if (String.class.getName().equals(identity.getTypeName())) {
+                // id() is a number on AGE, which a String parameter never equals
+                throw new IllegalArgumentException("Apache AGE assigns numeric identifiers, the database-assigned identifier of ["
+                    + identity.getOwner().getName() + "] must be a Long, not a String");
+            }
             return "id(" + variable + ")";
         }
         return super.identityExpression(identity, variable);
@@ -171,6 +194,11 @@ public class AgeCypherQueryBuilder extends CypherQueryBuilder {
         List<String> labels = GraphEntities.labels(entity);
         if (labels.size() > 1) {
             throw new IllegalArgumentException("Apache AGE nodes have a single label, entity [" + entity.getName() + "] declares " + labels);
+        }
+        for (PersistentProperty property : entity.getPersistentProperties()) {
+            if (property.getAnnotationMetadata().hasAnnotation(Labels.class)) {
+                throw new IllegalArgumentException("Apache AGE nodes have a single label, entity [" + entity.getName() + "] cannot hold more in @Labels [" + property.getName() + "]");
+            }
         }
         return ":" + GraphEntities.escapeName(labels.get(0));
     }
