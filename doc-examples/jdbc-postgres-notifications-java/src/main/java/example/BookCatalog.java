@@ -10,7 +10,7 @@ import io.micronaut.data.notification.ChangeEvent;
 import io.micronaut.runtime.event.annotation.EventListener;
 import jakarta.inject.Singleton;
 
-import java.util.HashMap;
+import java.util.concurrent.ConcurrentHashMap;
 import java.util.Map;
 import java.util.Optional;
 
@@ -19,8 +19,8 @@ import java.util.Optional;
 class BookCatalog {
     // end::listener[]
     private final BookRepository repository;
-    private final Map<Long, Book> books = new HashMap<>();
-    private boolean cacheEnabled = true;
+    private volatile Map<Long, Book> books = new ConcurrentHashMap<>();
+    private volatile boolean cacheEnabled = true;
 
     BookCatalog(BookRepository repository) {
         this.repository = repository;
@@ -28,7 +28,7 @@ class BookCatalog {
 
     @EventListener
     @Order(Ordered.LOWEST_PRECEDENCE)
-    synchronized void loadInitialState(StartupEvent event) {
+    void loadInitialState(StartupEvent event) {
         refresh();
     }
 
@@ -39,7 +39,7 @@ class BookCatalog {
     @PostgresChangeNotification(channel = "book_changes") // <1>
     // tag::events[]
     // tag::listener-signature[]
-    synchronized void changed(ChangeEvent<Book> event) {
+    void changed(ChangeEvent<Book> event) {
         // Handle the change.
         // end::listener[]
     // end::listener-signature[]
@@ -72,7 +72,7 @@ class BookCatalog {
 
     // end::events[]
 
-    synchronized Optional<Book> find(Long id) {
+    Optional<Book> find(Long id) {
         return cacheEnabled ? Optional.ofNullable(books.get(id)) : repository.findById(id);
     }
 
@@ -80,8 +80,9 @@ class BookCatalog {
         if (!cacheEnabled) {
             return;
         }
-        books.clear();
-        repository.findAll().forEach(book -> books.put(book.id(), book));
+        Map<Long, Book> refreshed = new ConcurrentHashMap<>();
+        repository.findAll().forEach(book -> refreshed.put(book.id(), book));
+        books = refreshed;
     }
     // tag::listener[]
 }

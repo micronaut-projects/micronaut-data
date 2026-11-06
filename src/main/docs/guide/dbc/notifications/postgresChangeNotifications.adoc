@@ -298,10 +298,8 @@ during application shutdown.
 
 See <<notificationChangeEvents, Handling Change Events>> for the common event API and invalidation handling.
 
-api:data.jdbc.notification.postgres.PostgresChangeEventMetadata[] is a sealed, read-only interface exposing the channel, schema,
-table, and immutable `oldKeys` and `newKeys` maps. Metadata instances are supplied by the notification provider.
-The interface permits only the framework implementation. Applications with custom implementations must use
-provider-supplied metadata instead.
+api:data.jdbc.notification.postgres.PostgresChangeEventMetadata[] provides the channel, schema, table, and the
+`oldKeys` and `newKeys` maps of primary-key column values.
 For `DELETE`, the old keys identify the row reported by the payload; Micronaut Data does not verify that it was deleted.
 The following cache example assumes all clients connected to the database are trusted to publish notifications.
 See <<postgresNotificationTrustModel, Notification Trust and Database Access>> before acting on event metadata:

@@ -11,17 +11,20 @@ import io.micronaut.data.notification.ChangeOperation
 import io.micronaut.runtime.event.annotation.EventListener
 import jakarta.inject.Singleton
 import java.util.*
+import java.util.concurrent.ConcurrentHashMap
 
 // tag::listener[]
 @Singleton
 open class BookCatalog(private val repository: BookRepository) {
     // end::listener[]
-    private val books = HashMap<Long, Book>()
+    @Volatile
+    private var books: MutableMap<Long, Book> = ConcurrentHashMap()
+
+    @Volatile
     private var cacheEnabled = true
 
     @EventListener
     @Order(Ordered.LOWEST_PRECEDENCE)
-    @Synchronized
     open fun loadInitialState(event: StartupEvent) {
         refresh()
     }
@@ -32,7 +35,6 @@ open class BookCatalog(private val repository: BookRepository) {
     // end::listener-signature[]
     @PostgresChangeNotification(channel = "book_changes") // <1>
     // tag::events[]
-    @Synchronized
     // tag::listener-signature[]
     open fun changed(event: ChangeEvent<Book>) {
         // Handle the change.
@@ -67,15 +69,15 @@ open class BookCatalog(private val repository: BookRepository) {
 
     // end::events[]
 
-    @Synchronized
     fun find(id: Long): Optional<Book> = if (cacheEnabled) Optional.ofNullable(books[id]) else repository.findById(id)
 
     private fun refresh() {
         if (!cacheEnabled) {
             return
         }
-        books.clear()
-        repository.findAll().forEach { book -> books[book.id] = book }
+        val refreshed = ConcurrentHashMap<Long, Book>()
+        repository.findAll().forEach { book -> refreshed[book.id] = book }
+        books = refreshed
     }
     // tag::listener[]
 }
