@@ -24,6 +24,7 @@ import io.micronaut.core.annotation.Creator;
 import io.micronaut.core.annotation.Experimental;
 import io.micronaut.core.annotation.Internal;
 import io.micronaut.core.annotation.NonNull;
+import io.micronaut.data.annotation.DataAnnotationUtils;
 import io.micronaut.data.annotation.EmbeddedId;
 import io.micronaut.data.annotation.Relation.Kind;
 import io.micronaut.data.model.runtime.RuntimePersistentProperty;
@@ -503,6 +504,10 @@ public class SqlQueryBuilder extends AbstractSqlLikeQueryBuilder {
             addJsonViewCreateStatement(createStatements, entity);
             return createStatements.toArray(new String[0]);
         }
+        if (isSearchableJsonEntity(entity)) {
+            addJsonEntityCreateStatements(createStatements, createStatements, entity);
+            return createStatements.toArray(new String[0]);
+        }
         List<SqlTableMapping> tables = SqlSchemaUtils.getSqlTableMappings(definitionProviders, entity, getDialect());
         assert CollectionUtils.isNotEmpty(tables);
         boolean escape = shouldEscape(entity);
@@ -560,6 +565,10 @@ public class SqlQueryBuilder extends AbstractSqlLikeQueryBuilder {
             String schema = SqlQueryBuilderUtils.getSchemaName(entity);
             boolean escape = shouldEscape(entity);
             if (addJsonViewCreateStatements(entity, dialect, jsonViewCreateStatements)) {
+                continue;
+            }
+            if (isSearchableJsonEntity(entity)) {
+                addJsonEntityCreateStatements(createStatements, searchIndexStatements, entity);
                 continue;
             }
             List<SqlTableMapping> tables = SqlSchemaUtils.getSqlTableMappings(definitionProviders, entity, dialect);
@@ -1032,6 +1041,42 @@ public class SqlQueryBuilder extends AbstractSqlLikeQueryBuilder {
         }
         createAuxiliaryStatements(table, createStatements);
         createIndexStatements(table, tableName, escape, createStatements);
+    }
+
+    /**
+     * Whether the entity is a {@link Searchable} entity stored as one JSON column on Oracle, the one case the
+     * JSON table and its search index are generated for; every other entity keeps the relational DDL.
+     */
+    private boolean isSearchableJsonEntity(PersistentEntity entity) {
+        return dialect == Dialect.ORACLE
+            && entity.getAnnotationMetadata().hasAnnotation(Searchable.class)
+            && DataAnnotationUtils.hasJsonEntityRepresentationAnnotation(entity.getAnnotationMetadata());
+    }
+
+    /**
+     * Adds the table of an entity stored as one JSON column ({@code @EntityRepresentation(columnType = JSON)}),
+     * and the JSON search index when the entity is {@link Searchable}.
+     */
+    private void addJsonEntityCreateStatements(List<String> createStatements, List<String> searchIndexStatements, PersistentEntity entity) {
+        if (!dialect.supportsJsonEntity()) {
+            LOG.error("JSON entity representation is not supported for dialect " + dialect);
+            return;
+        }
+        boolean escape = shouldEscape(entity);
+        String tableName = getTableName(entity);
+        String jsonColumn = Objects.requireNonNull(getJsonEntityColumn(entity.getAnnotationMetadata()), "JSON entity column");
+        String escapedJsonColumn = escape ? quote(jsonColumn) : jsonColumn;
+        createStatements.add("CREATE TABLE " + tableName + " (" + escapedJsonColumn + " JSON NOT NULL);");
+        TextSearchDialect textSearchDialect = TextSearchDialect.forDialect(dialect);
+        if (textSearchDialect == null || !entity.getAnnotationMetadata().hasAnnotation(Searchable.class) || TextSearchSupport.searchFields(entity).isEmpty()) {
+            return;
+        }
+        String indexName = entity.getAnnotationMetadata().stringValue(Searchable.class, "name")
+            .filter(StringUtils::isNotEmpty)
+            .orElseGet(() -> "idx_" + prepareNames(getUnescapedTableName(entity)) + "_search");
+        for (String ddl : textSearchDialect.buildJsonSearchIndex(escape ? quote(indexName) : indexName, tableName, escapedJsonColumn)) {
+            addToCollectionIfNotContains(searchIndexStatements, ddl);
+        }
     }
 
     /**

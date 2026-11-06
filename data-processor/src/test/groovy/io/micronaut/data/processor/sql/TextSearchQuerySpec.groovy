@@ -326,7 +326,7 @@ interface PlainRepository extends CrudRepository<Plain, Long>, SearchRepository<
         getQuery(countHits) == 'SELECT COUNT(*) FROM "ARTICLE" article_ WHERE (((CONTAINS(article_."TITLE",?,1) > 0 OR CONTAINS(article_."BODY",?,2) > 0) AND NOT (CONTAINS(article_."TITLE",?,3) > 0 OR CONTAINS(article_."BODY",?,4) > 0)))'
     }
 
-    void "Oracle JSON entities use JSON_TEXTCONTAINS"() {
+    void "Oracle JSON entities use CONTAINS with INPATH on the JSON search index"() {
         given:
         def repository = buildRepository('test.DocRepository', """
 import io.micronaut.data.jdbc.annotation.JdbcRepository;
@@ -363,11 +363,11 @@ interface DocRepository extends CrudRepository<Doc, Long> {
 """)
 
         expect:
-        getQuery(repository.getRequiredMethod("searchByTitleSearch", String)).contains('WHERE (JSON_TEXTCONTAINS(doc_.DATA,\'$.title\',?,1))')
+        getQuery(repository.getRequiredMethod("searchByTitleSearch", String)).contains('WHERE (CONTAINS(doc_.DATA,\'(\' || ? || \') INPATH (/title)\',1) > 0)')
         getQuery(repository.getRequiredMethod("searchByTitleSearch", String)).contains("SCORE(1) AS mn_score")
 
         and: "a renamed property is searched under its serialized key"
-        getQuery(repository.getRequiredMethod("searchByBodySearch", String)).contains('JSON_TEXTCONTAINS(doc_.DATA,\'$.summary\',?,1)')
+        getQuery(repository.getRequiredMethod("searchByBodySearch", String)).contains('INPATH (/summary)')
     }
 
     void "search(SearchQuery) is implemented by the runtime SearchQueryInterceptor"() {
