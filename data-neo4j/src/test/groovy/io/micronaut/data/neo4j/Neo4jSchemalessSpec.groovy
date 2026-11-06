@@ -92,8 +92,8 @@ class Neo4jSchemalessSpec extends Specification implements TestPropertyProvider 
         def labelError = thrown(io.micronaut.data.exceptions.DataAccessException)
         labelError.message.contains("Label [")
 
-        and: "the node written before its labels were rejected is rolled back"
-        petRepository.count() == 0
+        and: "the node was not written"
+        !petRepository.findById("Tom").present
 
         when: "a related node fails after the node and the related node were written"
         def dino = new Pet("Dino")
@@ -105,6 +105,21 @@ class Neo4jSchemalessSpec extends Specification implements TestPropertyProvider 
         then:
         thrown(io.micronaut.data.exceptions.DataAccessException)
         petRepository.count() == 0
+    }
+
+    void "taking a label out of the collection leaves it on the node"() {
+        given:
+        def cat = new Pet("Tom")
+        cat.labels = ["Cat"] as Set
+        petRepository.save(cat)
+
+        when:
+        def found = petRepository.findById("Tom").get()
+        found.labels = [] as Set
+        petRepository.update(found)
+
+        then:
+        petRepository.findById("Tom").get().labels == ["Cat"] as Set
     }
 
     void "query schemaless properties with criteria"() {

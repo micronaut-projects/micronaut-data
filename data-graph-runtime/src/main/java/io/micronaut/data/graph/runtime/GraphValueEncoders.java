@@ -15,6 +15,7 @@
  */
 package io.micronaut.data.graph.runtime;
 
+import io.micronaut.data.exceptions.DataAccessException;
 import org.jspecify.annotations.Nullable;
 
 import java.lang.reflect.Array;
@@ -41,7 +42,7 @@ import java.util.concurrent.ConcurrentHashMap;
 
 /**
  * The encoders of the values a graph database accepts, by type. The encoder of a value is the one registered for its
- * class, or else for its nearest superclass or interface. Values without an encoder are written as their string form.
+ * class, or else for its nearest superclass or interface. A value without an encoder cannot be written.
  *
  * @author graemerocher
  * @since 5.3.0
@@ -70,7 +71,7 @@ public final class GraphValueEncoders {
             Short.class, Byte.class, byte[].class, Temporal.class, TemporalAmount.class)) {
             encoders.register(type, AS_IS);
         }
-        for (Class<?> type : List.of(Character.class, UUID.class, URI.class, URL.class, BigDecimal.class,
+        for (Class<?> type : List.of(CharSequence.class, Character.class, UUID.class, URI.class, URL.class, BigDecimal.class,
             BigInteger.class, Locale.class, Currency.class)) {
             encoders.register(type, AS_STRING);
         }
@@ -153,6 +154,7 @@ public final class GraphValueEncoders {
                 interfaces.addAll(List.of(candidate.getInterfaces()));
             }
         }
-        return AS_STRING;
+        throw new DataAccessException("No graph value encoder for type [" + type.getName() + "]: register one with a "
+            + GraphValueEncoderRegistrar.class.getSimpleName() + ", or give the property an attribute converter");
     }
 }

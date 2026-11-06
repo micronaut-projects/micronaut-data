@@ -87,11 +87,11 @@ class Neo4jOperationsSpec extends Specification implements TestPropertyProvider 
         def saved = movieRepository.saveAll(movies)
         def statements = appender.list*.formattedMessage.findAll { it.startsWith("Executing Cypher") }
 
-        then: "one query writes the movies, then one writes the people and one the roles of each movie"
-        statements.size() == 1 + 3 + 3
+        then: "one query writes the movies and one the people of each movie, and each role has its own identifier"
+        statements.size() == 1 + 3 + 6
         statements.count { it.contains('UNWIND $rows AS row MERGE (n:Movie') } == 1
         statements.count { it.contains('UNWIND $rows AS row MERGE (n:Person') } == 3
-        statements.count { it.contains('UNWIND $rows AS row MATCH (a:Movie), (b:Person)') && it.contains('MERGE (a)<-[r:ACTED_IN]-(b) SET r += row.properties') } == 3
+        statements.count { it.contains('CREATE (a)<-[r:ACTED_IN]-(b)') } == 6
 
         and:
         saved*.roles*.id.flatten().every { it != null }

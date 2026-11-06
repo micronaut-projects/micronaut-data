@@ -58,7 +58,8 @@ class CypherCriteriaQuerySpec extends Specification {
 
         where:
         description            | definition                                                                                                                                  | query
-        'distinct join'        | { q, r -> q.select(r).distinct(true).where(cb.equal(r.join("movies").get("title"), "Matrix")) }                                            | 'MATCH (n:Person), (n)-[:ACTED_IN]->(a0:Movie) WHERE a0.title = $p0 WITH DISTINCT n RETURN DISTINCT n'
+        'distinct join'        | { q, r -> q.select(r).distinct(true).where(cb.equal(r.join("movies").get("title"), "Matrix")) }                                            | 'MATCH (n:Person), (n)-[:ACTED_IN]->(a0:Movie) WHERE a0.title = $p0 WITH DISTINCT n RETURN n'
+        'nested sort'          | { q, r -> q.select(r).orderBy(cb.asc(cb.lower(r.join("movies").get("title")))) }                                                           | 'MATCH (n:Person) OPTIONAL MATCH (n)-[:ACTED_IN]->(a0:Movie) WITH n, min(toLower(a0.title)) AS o0 RETURN n ORDER BY o0 ASC'
         'distinct projection'  | { q, r -> q.select(r.get("name")).distinct(true) }                                                                                         | 'MATCH (n:Person) RETURN DISTINCT n.name AS name'
         'projection with join' | { q, r -> q.select(r.get("name")).where(cb.equal(r.join("movies").get("title"), "Matrix")) }                                               | 'MATCH (n:Person), (n)-[:ACTED_IN]->(a0:Movie) WHERE a0.title = $p0 WITH DISTINCT n RETURN n.name AS name'
         'joined projection'    | { q, r -> q.select(r.join("movies").get("title")) }                                                                                        | 'MATCH (n:Person), (n)-[:ACTED_IN]->(a0:Movie) RETURN a0.title AS movies_title'
@@ -114,6 +115,15 @@ class CypherCriteriaQuerySpec extends Specification {
             'MATCH (n:Person), (n)-[:ACTED_IN]->(a0:Movie) WHERE a0.title = $p0 WITH DISTINCT n SET n.name = $p1 RETURN count(*)'
         delete { d, r -> d.where(cb.equal(r.join("movies").get("title"), "Matrix")) } ==
             'MATCH (n:Person), (n)-[:ACTED_IN]->(a0:Movie) WHERE a0.title = $p0 WITH DISTINCT n DETACH DELETE n RETURN count(*)'
+    }
+
+    void "test a distinct projection cannot sort by a value it does not return"() {
+        when:
+        select { q, r -> q.select(r.get("name")).distinct(true).orderBy(cb.asc(r.get("age"))) }
+
+        then:
+        def e = thrown(IllegalArgumentException)
+        e.message.contains('can only be ordered by a returned value')
     }
 
     void "test updating a missing property fails"() {

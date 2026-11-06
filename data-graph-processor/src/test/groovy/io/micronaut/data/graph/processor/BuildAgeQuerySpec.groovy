@@ -44,9 +44,23 @@ class Account {
 '''
 
     /**
-     * The movie entities of the Cypher specs with the single label Apache AGE allows a node.
+     * The movie entities of the Cypher specs with the single label Apache AGE allows a node, and the numeric
+     * identifier it assigns.
      */
-    static final String AGE_MOVIES = MOVIES.replace('@Node(labels = {"Person", "Actor"})', '@Node')
+    static final String AGE_MOVIES = MOVIES
+        .replace('@Node(labels = {"Person", "Actor"})', '@Node')
+        .replace('''    @GeneratedValue
+    private String id;
+    private String name;
+    private Integer born;''', '''    @GeneratedValue
+    private Long id;
+    private String name;
+    private Integer born;''')
+        .replace('''    public String getId() { return id; }
+    public void setId(String id) { this.id = id; }
+    public String getName() { return name; }''', '''    public Long getId() { return id; }
+    public void setId(Long id) { this.id = id; }
+    public String getName() { return name; }''')
 
     @Shared
     BeanDefinition<?> friends
@@ -117,7 +131,7 @@ interface MovieRepository extends CrudRepository<Movie, String> {
 $AGE_MOVIES
 
 @TestAgeRepository
-interface PersonRepository extends CrudRepository<Person, String> {
+interface PersonRepository extends CrudRepository<Person, Long> {
     List<Person> findByMentorName(String name);
     List<Person> findByMentor(Person mentor);
     Optional<Person> findByName(String name);
@@ -195,7 +209,7 @@ interface AccountRepository extends CrudRepository<Account, Long> {
         'findByDirectorsNameOrderByDirectorsBorn'  | 1     | 'SELECT * FROM ag_catalog.cypher(\'$__graph\', $$ MATCH (n:Movie), (n)<-[:DIRECTED]-(a0:Person) WHERE a0.name = $p0 WITH n, min(a0.born) AS o0 RETURN n ORDER BY o0 ASC $$, ?) AS ("n" ag_catalog.agtype)'
         'findByDirectorsIsEmpty'                   | 0     | 'SELECT * FROM ag_catalog.cypher(\'$__graph\', $$ MATCH (n:Movie) WHERE NOT (n)<-[:DIRECTED]-() RETURN n $$) AS ("n" ag_catalog.agtype)'
         'findByRolesIsNotEmpty'                    | 0     | 'SELECT * FROM ag_catalog.cypher(\'$__graph\', $$ MATCH (n:Movie) WHERE (n)<-[:ACTED_IN]-() RETURN n $$) AS ("n" ag_catalog.agtype)'
-        'findByReleasedOrderByDirectorsNameDesc'   | 1     | 'SELECT * FROM ag_catalog.cypher(\'$__graph\', $$ MATCH (n:Movie), (n)<-[:DIRECTED]-(a0:Person) WHERE n.released = $p0 WITH n, max(a0.name) AS o0 OPTIONAL MATCH (n)<-[:DIRECTED]-(j0:Person) WITH n, o0, collect(j0) AS j_directors RETURN n, j_directors ORDER BY o0 DESC $$, ?) AS ("n" ag_catalog.agtype, "j_directors" ag_catalog.agtype)'
+        'findByReleasedOrderByDirectorsNameDesc'   | 1     | 'SELECT * FROM ag_catalog.cypher(\'$__graph\', $$ MATCH (n:Movie) WHERE n.released = $p0 OPTIONAL MATCH (n)<-[:DIRECTED]-(a0:Person) WITH n, max(a0.name) AS o0 OPTIONAL MATCH (n)<-[:DIRECTED]-(j0:Person) WITH n, o0, collect(j0) AS j_directors RETURN n, j_directors ORDER BY o0 DESC $$, ?) AS ("n" ag_catalog.agtype, "j_directors" ag_catalog.agtype)'
         'findByRolesPersonName'                    | 1     | 'SELECT * FROM ag_catalog.cypher(\'$__graph\', $$ MATCH (n:Movie), (n)<-[ar0:ACTED_IN]-(a0:Person) WHERE a0.name = $p0 WITH DISTINCT n RETURN n $$, ?) AS ("n" ag_catalog.agtype)'
         'findByRolesRolesArrayContains'            | 1     | 'SELECT * FROM ag_catalog.cypher(\'$__graph\', $$ MATCH (n:Movie), (n)<-[ar0:ACTED_IN]-(a0:Person) WHERE $p0 IN ar0.roles WITH DISTINCT n RETURN n $$, ?) AS ("n" ag_catalog.agtype)'
         'findByReleased'                           | 1     | 'SELECT * FROM ag_catalog.cypher(\'$__graph\', $$ MATCH (n:Movie) WHERE n.released = $p0 OPTIONAL MATCH (n)<-[:DIRECTED]-(j0:Person) WITH n, collect(j0) AS j_directors RETURN n, j_directors $$, ?) AS ("n" ag_catalog.agtype, "j_directors" ag_catalog.agtype)'
@@ -334,6 +348,56 @@ interface UnboundedRepository extends CrudRepository<Friend, String> {
         then:
         def e = thrown(RuntimeException)
         e.message.contains('needs a maximum depth for path queries')
+    }
+
+    void "test database assigned identifiers are numbers"() {
+        when:
+        buildRepository('test.TicketRepository', """
+@Node
+class Ticket {
+    @Id
+    @GeneratedValue
+    private String id;
+    public String getId() { return id; }
+    public void setId(String id) { this.id = id; }
+}
+
+@TestAgeRepository
+interface TicketRepository extends CrudRepository<Ticket, String> {
+}
+""")
+
+        then:
+        def e = thrown(RuntimeException)
+        e.message.contains('Apache AGE assigns numeric identifiers')
+    }
+
+    void "test #description fail the build"() {
+        when:
+        buildRepository('test.PartRepository', """
+@Node
+class Part {
+    @Id
+    private String name;
+    $property
+    public String getName() { return name; }
+    public void setName(String name) { this.name = name; }
+    public Set<String> getExtras() { return extras; }
+    public void setExtras(Set<String> extras) { this.extras = extras; }
+}
+
+@TestAgeRepository
+interface PartRepository extends CrudRepository<Part, String> {
+}
+""")
+
+        then:
+        def e = thrown(RuntimeException)
+        e.message.contains(message)
+
+        where:
+        description    | property                                                                                    | message
+        'extra labels' | '@io.micronaut.data.graph.annotation.Labels private Set<String> extras = new HashSet<>();' | 'cannot hold more in @Labels [extras]'
     }
 
     void "test nodes have a single label"() {
