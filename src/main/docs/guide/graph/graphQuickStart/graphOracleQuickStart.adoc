@@ -1,0 +1,50 @@
+To use Micronaut Data with property graphs in Oracle Database 23ai, add the Oracle graph module to your build, along with the <<graphQuickStart, graph annotation processor>>, a connection pool and the Oracle JDBC driver:
+
+dependency:io.micronaut.data:micronaut-data-oracle-graph[]
+
+dependency:io.micronaut.sql:micronaut-jdbc-hikari[scope="runtimeOnly"]
+
+dependency:com.oracle.database.jdbc:ojdbc11[scope="runtimeOnly"]
+
+Repositories run on a JDBC data source. With https://micronaut-projects.github.io/micronaut-test-resources/latest/guide/[Micronaut Test Resources] an Oracle Database container is started for tests and development automatically:
+
+[configuration]
+----
+include::doc-examples/oracle-graph-example-java/src/main/resources/application.yml[tag=config]
+----
+
+A property graph in Oracle Database is defined over tables. This graph has accounts as its vertices and transfers between them as its edges:
+
+[source,sql]
+----
+include::doc-examples/oracle-graph-example-java/src/test/sql/bank-graph.sql[tag=graph]
+----
+
+Annotate a class with ann:data.graph.annotation.Node[] to map the vertices of a label:
+
+snippet::example.Account[project-base="doc-examples/oracle-graph-example", source="main", tags="account", languages="java,kotlin,groovy,python"]
+
+<1> The class is mapped to the vertices labelled `Account`.
+<2> The key of the vertex table is the identifier.
+<3> The `TRANSFERS` edges that leave the account.
+
+The edges carry an amount, so they are mapped by a class annotated with ann:data.graph.annotation.RelationshipProperties[]:
+
+snippet::example.Transfer[project-base="doc-examples/oracle-graph-example", source="main", tags="transfer", languages="java,kotlin,groovy,python"]
+
+Then define a repository annotated with ann:data.oracle.graph.annotation.OracleGraphRepository[]:
+
+snippet::example.BankGraph[project-base="doc-examples/oracle-graph-example", source="main", tags="repository", languages="java,kotlin,groovy,python"]
+
+<1> The repository queries the `bank_graph` property graph with SQL/PGQ.
+<2> A finder that traverses the `TRANSFERS` edges.
+<3> A path finder, which needs a maximum depth.
+
+The finders run as graph queries:
+
+snippet::example.BankGraphSpec[project-base="doc-examples/oracle-graph-example", tags="find", indent="0", languages="java,kotlin,groovy,python"]
+
+<1> The accounts that sent a transfer of more than 1000.
+<2> Whether a chain of transfers leads from account 1 to account 3.
+
+See <<graphOracle, Oracle Property Graphs>> for the query languages and what they support.
