@@ -10,6 +10,9 @@ dependencies {
     api projects.micronautDataGraphModel
     api projects.micronautDataConnection
     api mn.reactor
+    api projects.micronautDataSerde
+    api mnSerde.micronaut.serde.api
+    implementation mnSerde.micronaut.serde.support
 
     compileOnly(mnSql.jakarta.persistence.api)
 

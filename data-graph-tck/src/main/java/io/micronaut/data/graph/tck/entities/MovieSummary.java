@@ -1,7 +1,7 @@
 package io.micronaut.data.graph.tck.entities;
 
-import io.micronaut.core.annotation.Introspected;
+import io.micronaut.serde.annotation.Serdeable;
 
-@Introspected
+@Serdeable
 public record MovieSummary(String title, Integer released) {
 }

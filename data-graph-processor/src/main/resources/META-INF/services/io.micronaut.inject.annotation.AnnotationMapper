@@ -1,0 +1,2 @@
+io.micronaut.data.processor.graph.mappers.NodeSerdeMapper
+io.micronaut.data.processor.graph.mappers.RelationshipPropertiesSerdeMapper

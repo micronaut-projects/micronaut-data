@@ -12,6 +12,7 @@ import io.micronaut.data.graph.processor.visitors.GraphIdentityVisitor
 import io.micronaut.data.processor.visitors.MappedEntityVisitor
 import io.micronaut.data.processor.visitors.RepositoryTypeElementVisitor
 import io.micronaut.inject.BeanDefinition
+import io.micronaut.data.processor.graph.visitors.GraphDtoVisitor
 import io.micronaut.inject.beans.visitor.IntrospectedTypeElementVisitor
 import io.micronaut.inject.visitor.TypeElementVisitor
 import io.micronaut.inject.writer.BeanDefinitionVisitor
@@ -82,7 +83,7 @@ class Role {
     public void setPerson(Person person) { this.person = person; }
 }
 
-@io.micronaut.core.annotation.Introspected
+@io.micronaut.serde.annotation.Serdeable
 class MovieSummary {
     private String title;
     private Integer released;
@@ -148,7 +149,7 @@ $source
     static class GraphTypeElementVisitorProcessor extends TypeElementVisitorProcessor {
         @Override
         protected Collection<TypeElementVisitor> findTypeElementVisitors() {
-            return [new IntrospectedTypeElementVisitor(), new RepositoryTypeElementVisitor(), new MappedEntityVisitor(), new GraphIdentityVisitor()]
+            return [new IntrospectedTypeElementVisitor(), new RepositoryTypeElementVisitor(), new MappedEntityVisitor(), new GraphDtoVisitor(), new GraphIdentityVisitor()]
         }
     }
 }
