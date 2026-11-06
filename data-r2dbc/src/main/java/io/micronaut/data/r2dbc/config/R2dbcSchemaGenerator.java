@@ -28,6 +28,7 @@ import io.micronaut.data.annotation.MappedEntity;
 import io.micronaut.data.model.PersistentEntity;
 import io.micronaut.data.model.query.builder.sql.Dialect;
 import io.micronaut.data.model.query.builder.sql.SqlQueryBuilder;
+import io.micronaut.data.model.query.builder.sql.SqlSchemaUtils;
 import io.micronaut.data.model.runtime.convert.DefinitionProvider;
 import io.micronaut.data.model.runtime.RuntimeEntityRegistry;
 import io.micronaut.data.r2dbc.operations.R2dbcSchemaHandler;
@@ -192,7 +193,7 @@ public class R2dbcSchemaGenerator {
     private Mono<Void> dropTablesOneByOne(Connection connection,
                                           PersistentEntity[] entities,
                                           SqlQueryBuilder builder) {
-        List<String> dropStatements = Arrays.stream(entities).flatMap(entity -> Arrays.stream(builder.buildDropTableStatements(entity)))
+        List<String> dropStatements = Arrays.stream(SqlSchemaUtils.orderForDrop(entities)).flatMap(entity -> Arrays.stream(builder.buildDropTableStatements(entity)))
                 .toList();
         return Flux.fromIterable(dropStatements)
                 .concatMap(sql -> {

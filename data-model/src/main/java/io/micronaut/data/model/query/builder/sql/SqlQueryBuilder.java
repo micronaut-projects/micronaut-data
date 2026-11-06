@@ -69,6 +69,7 @@ import io.micronaut.data.model.runtime.convert.SqlIndexDefinitionProvider;
 import io.micronaut.data.model.schema.sql.SqlColumnMapping;
 import io.micronaut.data.model.schema.sql.SqlIndexMapping;
 import io.micronaut.data.model.schema.sql.SqlSequenceMapping;
+import io.micronaut.data.model.schema.sql.SqlTableDistribution;
 import io.micronaut.data.model.schema.sql.SqlTableMapping;
 import jakarta.persistence.criteria.Order;
 import jakarta.persistence.criteria.Predicate;
@@ -81,6 +82,7 @@ import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.Collection;
 import java.util.Collections;
+import java.util.Comparator;
 import java.util.EnumMap;
 import java.util.Iterator;
 import java.util.List;
@@ -567,7 +569,11 @@ public class SqlQueryBuilder extends AbstractSqlLikeQueryBuilder {
             }
         }
 
-        for (SqlTableMapping table : sqlTableMappingByTableName.values()) {
+        // A child table of a sharded table family needs its root table to exist
+        List<SqlTableMapping> orderedTables = sqlTableMappingByTableName.values().stream()
+            .sorted(Comparator.comparing(table -> table.distribution() != null && table.distribution().parent() != null))
+            .toList();
+        for (SqlTableMapping table : orderedTables) {
             Boolean shouldEscapeDialect = shouldEscapeDialect(dialect);
             boolean escape = Objects.requireNonNullElseGet(shouldEscapeDialect, table::escape);
             addTableCreateStatements(createStatements, table, table.schema(), escape);
@@ -975,13 +981,17 @@ public class SqlQueryBuilder extends AbstractSqlLikeQueryBuilder {
         }
 
         String tableName = getObjectName(schema, table.name(), escape, true);
-        StringBuilder builder = new StringBuilder("CREATE TABLE ").append(ifNotExists()).append(tableName).append(" (");
+        SqlTableDistribution distribution = dialect == Dialect.ORACLE ? table.distribution() : null;
+        StringBuilder builder = new StringBuilder(createTableKeywords(distribution)).append(ifNotExists()).append(tableName).append(" (");
         builder.append(String.join(",", columns));
         if (generatePkAfterColumns) {
             builder.append(", PRIMARY KEY(").append(String.join(",", primaryColumnsName)).append(')');
         }
         if (dialect == Dialect.ORACLE) {
             builder.append(")");
+            if (distribution != null) {
+                appendDistributionClauses(builder, distribution, escape);
+            }
         } else {
             builder.append(");");
         }
@@ -991,6 +1001,33 @@ public class SqlQueryBuilder extends AbstractSqlLikeQueryBuilder {
         }
         createAuxiliaryStatements(table, createStatements);
         createIndexStatements(table, tableName, escape, createStatements);
+    }
+
+    private static String createTableKeywords(@Nullable SqlTableDistribution distribution) {
+        if (distribution == null) {
+            return "CREATE TABLE ";
+        }
+        return switch (distribution.type()) {
+            case SHARDED -> "CREATE SHARDED TABLE ";
+            case DUPLICATED -> "CREATE DUPLICATED TABLE ";
+        };
+    }
+
+    private void appendDistributionClauses(StringBuilder builder, SqlTableDistribution distribution, boolean escape) {
+        if (distribution.type() == SqlTableDistribution.Type.SHARDED) {
+            SqlTableDistribution.ParentTable parent = distribution.parent();
+            if (parent != null) {
+                builder.append(" PARENT ").append(getObjectName(parent.schema(), parent.name(), parent.escape(), true));
+            }
+            builder.append(" PARTITION BY CONSISTENT HASH (")
+                .append(distribution.keyColumns().stream().map(column -> escape ? quote(column) : column).collect(Collectors.joining(",")))
+                .append(") PARTITIONS AUTO");
+            if (StringUtils.isNotEmpty(distribution.tablespace())) {
+                builder.append(" TABLESPACE SET ").append(distribution.tablespace());
+            }
+        } else if (StringUtils.isNotEmpty(distribution.tablespace())) {
+            builder.append(" TABLESPACE ").append(distribution.tablespace());
+        }
     }
 
     private String appendReservableAndCheckConstraints(String column, SqlColumnMapping tableColumn, boolean escape) {
@@ -1107,6 +1144,11 @@ public class SqlQueryBuilder extends AbstractSqlLikeQueryBuilder {
             if (indexMapping.spatial()) {
                 indexBuilder.append(" INDEXTYPE IS MDSYS.SPATIAL_INDEX");
             }
+            SqlTableDistribution distribution = tableMapping.distribution();
+            if (distribution != null && distribution.type() == SqlTableDistribution.Type.SHARDED) {
+                // Oracle rejects global indexes on sharded tables
+                indexBuilder.append(" LOCAL");
+            }
         } else if (dialect == Dialect.SQL_SERVER) {
             indexBuilder.append(")");
             if (indexMapping.spatial()) {
@@ -1135,6 +1177,15 @@ public class SqlQueryBuilder extends AbstractSqlLikeQueryBuilder {
         return indexBuilder.toString();
     }
 
+    private static String shardedSequenceClauses(SqlSequenceMapping sequence) {
+        // A sharded sequence can use every digit of MAXVALUE, and the default of 28 digits doesn't fit the column of a Java number
+        return switch (sequence.dataType()) {
+            case LONG -> " MAXVALUE 999999999999999999 SHARD";
+            case INTEGER -> " MAXVALUE 999999999 SHARD";
+            default -> " SHARD";
+        };
+    }
+
     private String createSequenceStmt(SqlTableMapping table, SqlSequenceMapping sequence, boolean escape) {
         String sequenceName = getObjectName(table.schema(), resolveSequenceName(table, sequence), escape, true);
         final boolean isSqlServer = dialect == Dialect.SQL_SERVER;
@@ -1146,6 +1197,10 @@ public class SqlQueryBuilder extends AbstractSqlLikeQueryBuilder {
         createSequenceStmt += " MINVALUE 1 START WITH 1";
         if (dialect == Dialect.ORACLE) {
             createSequenceStmt += " CACHE 100 NOCYCLE";
+            SqlTableDistribution distribution = table.distribution();
+            if (distribution != null && distribution.type() == SqlTableDistribution.Type.SHARDED) {
+                createSequenceStmt += shardedSequenceClauses(sequence);
+            }
         } else {
             if (isSqlServer) {
                 createSequenceStmt += " INCREMENT BY 1";
