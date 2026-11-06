@@ -1,8 +1,18 @@
 package io.micronaut.data.neo4j
 
 import io.micronaut.data.exceptions.DataAccessException
+import io.micronaut.data.exceptions.NonUniqueResultException
 import io.micronaut.data.graph.tck.entities.Movie
+import io.micronaut.data.graph.tck.entities.Person
+import io.micronaut.data.graph.tck.entities.Role
 import io.micronaut.data.model.Pageable
+import io.micronaut.data.model.Sort
+import io.micronaut.data.neo4j.features.Employee
+import io.micronaut.data.neo4j.features.EmployeeRepository
+import io.micronaut.data.neo4j.features.Note
+import io.micronaut.data.neo4j.features.NoteRepository
+import io.micronaut.data.neo4j.features.Reading
+import io.micronaut.data.neo4j.features.ReadingRepository
 import io.micronaut.data.neo4j.features.ReactiveMovieRepository
 import io.micronaut.data.neo4j.features.Player
 import io.micronaut.data.neo4j.features.Station
@@ -16,6 +26,7 @@ import io.micronaut.data.neo4j.features.TeamRepository
 import io.micronaut.data.neo4j.features.Topic
 import io.micronaut.data.neo4j.features.TopicRepository
 import io.micronaut.data.neo4j.operations.Neo4jRepositoryOperations
+import io.micronaut.data.neo4j.tck.Neo4jMovieRepository
 import io.micronaut.test.extensions.spock.annotation.MicronautTest
 import io.micronaut.test.support.TestPropertyProvider
 import jakarta.inject.Inject
@@ -38,6 +49,18 @@ class Neo4jFeaturesSpec extends Specification implements TestPropertyProvider {
 
     @Inject
     MemberRepository memberRepository
+
+    @Inject
+    EmployeeRepository employeeRepository
+
+    @Inject
+    Neo4jMovieRepository movieRepository
+
+    @Inject
+    ReadingRepository readingRepository
+
+    @Inject
+    NoteRepository noteRepository
 
     @Inject
     ReactiveMovieRepository reactiveMovieRepository
@@ -194,6 +217,129 @@ class Neo4jFeaturesSpec extends Specification implements TestPropertyProvider {
         tags*.id.every { it != null }
         tags*.id.unique().size() == 3
         tags.collect { tagRepository.findById(it.id).get().name } == ["graph", "nosql", "cypher"]
+    }
+
+    void "numeric identifiers are those the queries match on"() {
+        when:
+        def tag = tagRepository.save(new Tag("graph"))
+
+        then:
+        operations.executeQuery("MATCH (t:Tag) RETURN id(t)", [:], Long) == [tag.id]
+        tagRepository.findByName("graph").get().id == tag.id
+    }
+
+    void "sort by a database generated identifier"() {
+        given:
+        def saved = ["c", "a", "b"].collect { tagRepository.save(new Tag(it)) }
+
+        expect:
+        tagRepository.findAll(Pageable.from(0, 2, Sort.of(Sort.Order.desc("id"))))*.id == saved*.id.sort().reverse().take(2)
+    }
+
+    void "a single result query rejects several rows"() {
+        given:
+        ["same", "same"].each { tagRepository.save(new Tag(it)) }
+
+        when:
+        tagRepository.findByName("same")
+
+        then:
+        thrown(NonUniqueResultException)
+    }
+
+    void "relationship entities between the same nodes stay separate, and saving one again updates it"() {
+        given:
+        def keanu = new Person("Keanu", 1964)
+        def movie = new Movie("The Matrix", "Sci-fi", 1999)
+        movie.roles = [new Role(["Neo"], keanu), new Role(["Thomas"], keanu)]
+
+        when:
+        def saved = movieRepository.save(movie)
+
+        then:
+        saved.roles*.id.toSet().size() == 2
+        roleNames() == [["Neo"], ["Thomas"]]
+
+        when:
+        saved.roles[0].roles[0] = "The One"
+        movieRepository.update(saved)
+
+        then:
+        roleNames() == [["The One"], ["Thomas"]]
+    }
+
+    private List<Object> roleNames() {
+        return operations.executeQuery("MATCH (:Person)-[r:ACTED_IN]->(:Movie) RETURN r.roles ORDER BY r.roles", [:], List)
+    }
+
+    void "changing a single valued relationship replaces the old one"() {
+        given:
+        def ada = new Employee("Ada")
+        ada.manager = new Employee("Bob")
+        employeeRepository.save(ada)
+
+        when:
+        ada.manager = new Employee("Carol")
+        employeeRepository.save(ada)
+
+        then:
+        employeeRepository.findByName("Ada").get().manager.name == "Carol"
+        operations.executeQuery("MATCH (:Employee {name: 'Ada'})-[:REPORTS_TO]->(m) RETURN m.name", [:], String) == ["Carol"]
+    }
+
+    void "a null single valued relationship keeps the one stored, as it may not have been fetched"() {
+        given:
+        def ada = new Employee("Ada")
+        ada.manager = new Employee("Bob")
+        employeeRepository.save(ada)
+
+        when:
+        employeeRepository.update(employeeRepository.findById("Ada").get())
+
+        then:
+        employeeRepository.findByName("Ada").get().manager.name == "Bob"
+    }
+
+    void "a new related node with an assigned identifier goes through the persist lifecycle"() {
+        given:
+        def ada = new Employee("Ada")
+        ada.manager = new Employee("Bob")
+
+        when:
+        employeeRepository.save(ada)
+
+        then:
+        ada.manager.created != null
+
+        when: "a saved one is linked again"
+        def created = employeeRepository.findById("Bob").get().created
+        ada.manager = employeeRepository.findById("Bob").get()
+        employeeRepository.update(ada)
+
+        then:
+        employeeRepository.findById("Bob").get().created == created
+    }
+
+    void "a collection property absent from the node stays null"() {
+        when:
+        noteRepository.save(new Note("a", null))
+
+        then:
+        noteRepository.findById("a").get().tags() == null
+
+        when:
+        noteRepository.save(new Note("b", ["x"]))
+
+        then:
+        noteRepository.findById("b").get().tags() == ["x"]
+    }
+
+    void "bound parameters are encoded once"() {
+        given:
+        readingRepository.save(new Reading("a", 1 as Short))
+
+        expect: "the encoder that adds one was applied to the value stored and the argument the same number of times"
+        readingRepository.findByLevel(1 as Short)*.name == ["a"]
     }
 
     void "page an explicit query that limits a WITH clause, not one that limits its RETURN"() {

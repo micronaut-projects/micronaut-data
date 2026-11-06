@@ -33,6 +33,21 @@ class Friend {
 }
 '''
 
+    static final String TENANT_MEMBER = '''
+@Node
+class Member {
+    @Id
+    private String name;
+    @io.micronaut.data.annotation.TenantId
+    private String tenant;
+
+    public String getName() { return name; }
+    public void setName(String name) { this.name = name; }
+    public String getTenant() { return tenant; }
+    public void setTenant(String tenant) { this.tenant = tenant; }
+}
+'''
+
     @Shared
     BeanDefinition<?> repository
 
@@ -243,6 +258,182 @@ interface StopRepository extends CrudRepository<Stop, Long> {
             'MATCH (s:Station), (e:Station) WHERE elementId(s) = $p0 AND elementId(e) = $p1 AND s <> e MATCH p = shortestPath((s)-[:LINKS*]->(e)) RETURN p'
         getQuery(stops.executableMethods.find { it.methodName == 'existsPathByNextBetweenId' }) ==
             'MATCH (s:Stop), (e:Stop) WHERE id(s) = $p0 AND id(e) = $p1 AND s <> e MATCH p = shortestPath((s)-[:NEXT*1..3]->(e)) RETURN true AS result LIMIT 1'
+    }
+
+    void "test a page of relationships has a count query when wrapped in a future or publisher"() {
+        given:
+        def repository = buildRepository('test.AsyncPageRepository', """
+import io.micronaut.data.graph.model.*;
+import java.util.concurrent.CompletionStage;
+import reactor.core.publisher.Mono;
+
+$FRIENDS
+
+@TestGraphRepository
+interface AsyncPageRepository extends CrudRepository<Friend, String> {
+    CompletionStage<Page<GraphRelationship<Friend, Friend>>> findRelationships(Pageable pageable);
+    Mono<Page<GraphRelationship<Friend, Friend>>> findRelationshipsByFriends(Pageable pageable);
+}
+""")
+
+        expect:
+        repository.executableMethods.find { it.methodName == method }.annotationMetadata.stringValue(Query, 'countQuery').get() == countQuery
+
+        where:
+        method                       | countQuery
+        'findRelationships'          | 'MATCH (s:Friend)-[r]->(e:Friend) RETURN count(r) AS result'
+        'findRelationshipsByFriends' | 'MATCH (s:Friend)-[r:FRIENDS]->(e:Friend) RETURN count(r) AS result'
+    }
+
+    void "test the All prefix and count forms on a property are left to the ordinary finders"() {
+        given:
+        def repository = buildRepository('test.RouteRepository', """
+import io.micronaut.data.graph.model.*;
+
+@Node
+class Route {
+    @Id
+    private String name;
+    private String paths;
+    private String path;
+    private String relationships;
+    @Relationship("NEXT")
+    private List<Route> next = new ArrayList<>();
+
+    public String getName() { return name; }
+    public void setName(String name) { this.name = name; }
+    public String getPaths() { return paths; }
+    public void setPaths(String paths) { this.paths = paths; }
+    public String getPath() { return path; }
+    public void setPath(String path) { this.path = path; }
+    public String getRelationships() { return relationships; }
+    public void setRelationships(String relationships) { this.relationships = relationships; }
+    public List<Route> getNext() { return next; }
+    public void setNext(List<Route> next) { this.next = next; }
+}
+
+@TestGraphRepository
+interface RouteRepository extends CrudRepository<Route, String> {
+    List<String> findAllPathsByName(String name);
+    long countRelationshipsByName(String name);
+    long countRelationshipsByNext(String from, String to);
+    boolean existsPathByNext(String from, String to);
+}
+""")
+
+        expect:
+        getQuery(repository.executableMethods.find { it.methodName == method }).contains(fragment)
+
+        where:
+        method                     | fragment
+        'findAllPathsByName'       | 'WHERE n.name = $p0 RETURN n.paths AS paths'
+        'countRelationshipsByName' | 'WHERE n.name = $p0'
+        'countRelationshipsByNext' | '[r:NEXT]'
+        'existsPathByNext'         | 'shortestPath'
+    }
+
+    @Unroll
+    void "test invalid path limit is rejected: #declaration"() {
+        when:
+        buildRepository('test.LimitRepository', """
+import io.micronaut.data.graph.annotation.PathLimit;
+import io.micronaut.data.graph.model.*;
+
+$FRIENDS
+
+@TestGraphRepository
+interface LimitRepository extends CrudRepository<Friend, String> {
+    $declaration
+}
+""")
+
+        then:
+        def e = thrown(RuntimeException)
+        e.message.contains(message)
+
+        where:
+        declaration                                                                                  | message
+        '@PathLimit(0) Optional<GraphPath<Friend>> findShortestPath(String from, String to);'         | 'needs a value of at least 1, found: 0'
+        '@PathLimit(-2) boolean existsPath(String from, String to);'                                  | 'needs a value of at least 1, found: -2'
+        '@PathLimit Optional<GraphPath<Friend>> findShortestPath(String from, String to);'            | 'needs a value of at least 1, found: -1'
+        '@PathLimit(2) List<GraphRelationship<Friend, Friend>> findRelationships();'                  | '@PathLimit does not apply to relationship finders'
+        'List<GraphRelationship<Friend, Friend>> findRelationships(String a, String b, @PathLimit int limit);' | '@PathLimit does not apply to relationship finders'
+    }
+
+    @Unroll
+    void "test path finders reject a tenant-mapped entity: #method"() {
+        when:
+        buildRepository('test.TenantRepository', """
+import io.micronaut.data.graph.model.*;
+
+$TENANT_MEMBER
+
+@TestGraphRepository
+interface TenantRepository extends io.micronaut.data.repository.GenericRepository<Member, String> {
+    $declaration
+}
+""")
+
+        then:
+        def e = thrown(RuntimeException)
+        e.message.contains('Path and relationship finders do not support the @TenantId of entity [Member]')
+
+        where:
+        method              | declaration
+        'findRelationships' | 'List<GraphRelationship<Member, Member>> findRelationships();'
+        'countRelationships'| 'long countRelationships();'
+        'hasRelationship'   | 'boolean hasRelationship();'
+        'findShortestPath'  | 'Optional<GraphPath<Member>> findShortestPath(String from, String to);'
+    }
+
+    void "test a tenant-mapped entity can opt out of the tenant with WithoutTenantId"() {
+        given:
+        def repository = buildRepository('test.TenantRepository', """
+import io.micronaut.data.annotation.WithoutTenantId;
+import io.micronaut.data.graph.model.*;
+
+$TENANT_MEMBER
+
+@TestGraphRepository
+interface TenantRepository extends io.micronaut.data.repository.GenericRepository<Member, String> {
+    @WithoutTenantId
+    long countRelationships();
+}
+""")
+
+        expect:
+        getQuery(repository.executableMethods.find { it.methodName == 'countRelationships' }) == 'MATCH (s:Member)-[r]->(e:Member) RETURN count(r) AS result'
+    }
+
+    @Unroll
+    void "test a database-assigned identifier cannot be primitive: #type"() {
+        when:
+        buildRepository('test.CounterRepository', """
+import io.micronaut.data.graph.model.*;
+
+@Node
+class Counter {
+    @Id
+    @GeneratedValue
+    private $type id;
+
+    public $type getId() { return id; }
+    public void setId($type id) { this.id = id; }
+}
+
+@TestGraphRepository
+interface CounterRepository extends io.micronaut.data.repository.GenericRepository<Counter, Long> {
+}
+""")
+
+        then:
+        def e = thrown(RuntimeException)
+        e.message.contains("A database-assigned identifier cannot be primitive, use $wrapper")
+
+        where:
+        type   | wrapper
+        'long' | 'Long'
+        'int'  | 'Integer'
     }
 
     void "test ordering a path finder is rejected with a clear message"() {

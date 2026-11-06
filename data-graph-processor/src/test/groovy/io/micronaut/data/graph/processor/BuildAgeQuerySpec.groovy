@@ -331,6 +331,56 @@ interface UnboundedRepository extends CrudRepository<Friend, String> {
         e.message.contains('needs a maximum depth for path queries')
     }
 
+    void "test database assigned identifiers are numbers"() {
+        when:
+        buildRepository('test.TicketRepository', """
+@Node
+class Ticket {
+    @Id
+    @GeneratedValue
+    private String id;
+    public String getId() { return id; }
+    public void setId(String id) { this.id = id; }
+}
+
+@TestAgeRepository
+interface TicketRepository extends CrudRepository<Ticket, String> {
+}
+""")
+
+        then:
+        def e = thrown(RuntimeException)
+        e.message.contains('Apache AGE assigns numeric identifiers')
+    }
+
+    void "test #description fail the build"() {
+        when:
+        buildRepository('test.PartRepository', """
+@Node
+class Part {
+    @Id
+    private String name;
+    $property
+    public String getName() { return name; }
+    public void setName(String name) { this.name = name; }
+    public Set<String> getExtras() { return extras; }
+    public void setExtras(Set<String> extras) { this.extras = extras; }
+}
+
+@TestAgeRepository
+interface PartRepository extends CrudRepository<Part, String> {
+}
+""")
+
+        then:
+        def e = thrown(RuntimeException)
+        e.message.contains(message)
+
+        where:
+        description    | property                                                                                    | message
+        'extra labels' | '@io.micronaut.data.graph.annotation.Labels private Set<String> extras = new HashSet<>();' | 'cannot hold more in @Labels [extras]'
+    }
+
     void "test nodes have a single label"() {
         when:
         buildRepository('test.LabelsRepository', """
