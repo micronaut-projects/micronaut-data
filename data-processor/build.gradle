@@ -31,6 +31,7 @@ dependencies {
 	testImplementation mn.micronaut.inject.groovy
     testImplementation mn.micronaut.inject.groovy.test
 	testImplementation mn.micronaut.inject.java.test
+    testImplementation mn.micronaut.inject.python.test
 	testImplementation(libs.managed.javax.persistence.api)
 	testImplementation(mnSql.jakarta.transaction.api)
 	testImplementation libs.spring.data.jpa

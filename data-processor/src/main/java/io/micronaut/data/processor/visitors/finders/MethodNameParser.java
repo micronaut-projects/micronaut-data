@@ -22,6 +22,7 @@ import org.jspecify.annotations.Nullable;
 import java.util.ArrayList;
 import java.util.Iterator;
 import java.util.List;
+import java.util.function.Consumer;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 
@@ -45,6 +46,10 @@ public final class MethodNameParser {
     }
 
     public List<Match> tryMatch(String input) {
+        return tryMatch(input, _ -> { });
+    }
+
+    public List<Match> tryMatch(String input, Consumer<String> onUnmatched) {
         List<Match> matches = new ArrayList<>();
         Iterator<MatchStep> iterator = matchSteps.iterator();
         MatchChain matchChain = new MatchChain() {
@@ -62,6 +67,8 @@ public final class MethodNameParser {
             private void next(String input) {
                 if (iterator.hasNext() && !input.isEmpty()) {
                     iterator.next().match(input, this);
+                } else {
+                    onUnmatched.accept(input);
                 }
             }
         };
