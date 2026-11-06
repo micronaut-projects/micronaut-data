@@ -984,7 +984,7 @@ public abstract class AbstractSqlRepositoryOperations<RS, PS, Exc extends Except
         if (preparedQuery instanceof DefaultSqlPreparedQuery<?, ?> sqlPreparedQuery) {
             return sqlPreparedQuery.getVectorScoringFunction();
         }
-        return vectorScoringSupportResolver.resolve(preparedQuery.getDialect()).defaultScoringFunction();
+        return vectorScoringSupportResolver.resolve(preparedQuery.getDialect()).defaultScoringFunction(preparedQuery.getQuery());
     }
 
     protected final <E, R> RuntimePersistentEntity<R> resolveDtoPersistentEntity(AnnotationMetadata annotationMetadata,

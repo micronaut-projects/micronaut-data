@@ -93,7 +93,9 @@ final class VectorScoringDialectSupports {
                 ScoringFunction.L2_EUCLIDEAN,
                 ScoringFunction.L2_EUCLIDEAN_SQUARED,
                 ScoringFunction.DOT,
-                ScoringFunction.L1_MANHATTAN
+                ScoringFunction.L1_MANHATTAN,
+                ScoringFunction.HAMMING,
+                ScoringFunction.JACCARD
             );
         }
 
@@ -110,9 +112,13 @@ final class VectorScoringDialectSupports {
                 case L2_EUCLIDEAN_SQUARED -> "EUCLIDEAN_SQUARED";
                 case DOT -> "DOT";
                 case L1_MANHATTAN -> "MANHATTAN";
+                case HAMMING -> "HAMMING";
+                case JACCARD -> "JACCARD";
                 default -> throw new IllegalArgumentException("Scoring function " + selected + " is not supported for Oracle");
             };
-            return query.replace(",COSINE)", "," + metric + ")");
+            // derived queries default to COSINE, or to HAMMING for binary vectors
+            return query.replace(",COSINE)", "," + metric + ")")
+                .replace(",HAMMING)", "," + metric + ")");
         }
     }
 
