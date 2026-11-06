@@ -1,0 +1,29 @@
+import io.micronaut.testresources.buildtools.KnownModules
+
+plugins {
+    id "io.micronaut.build.internal.data-native-example"
+}
+
+application {
+    mainClass = "example.Application"
+}
+
+micronaut {
+    version libs.versions.micronaut.platform.get()
+    runtime "netty"
+    testRuntime "junit5"
+    testResources {
+        enabled = true
+        inferClasspath = false
+        additionalModules.add(KnownModules.MONGODB)
+        clientTimeout = 300
+        version = libs.versions.micronaut.testresources.get()
+    }
+}
+
+dependencies {
+    annotationProcessor projects.micronautDataDocumentProcessor
+    implementation projects.micronautDataMongodb
+    implementation mnMongo.mongo.driver
+    runtimeOnly mnLogging.logback.classic
+}

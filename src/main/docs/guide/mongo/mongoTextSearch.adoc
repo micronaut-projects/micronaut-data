@@ -1,0 +1,47 @@
+Micronaut Data MongoDB supports the full-text search API described in the <<sqlTextSearch, SQL section>> on top of MongoDB's `$text` operator and text indexes. The repository API is the same; this section lists what MongoDB adds and what it cannot do.
+
+NOTE: Full-text search is experimental. The `$text` operator is available on every MongoDB deployment; MongoDB Search (`$search`) is not used yet.
+
+== Mapping
+
+Annotate the entity with ann:data.annotation.search.Searchable[] and the indexed properties with ann:data.annotation.search.SearchField[]:
+
+snippet::example.Book[project-base="doc-examples/mongo-search-example", source="main", tags="entity"]
+
+<1> `language` becomes the text index's `default_language` and the `$language` of every query.
+<2> `weight` becomes the index weight of the field (`HIGH` is 10, `MEDIUM` 5, `LOW` 2, `LOWEST` 1).
+<3> A property without a declared weight gets weight 1.
+
+A property annotated with ann:data.annotation.search.Language[] becomes the index's `language_override`, so each document can carry its own language.
+
+When `micronaut.data.mongodb.create-collections` is enabled, Micronaut Data creates the text index together with the collection, named `<collection>_text` unless `@Searchable(name)` says otherwise. A collection can have only one text index, so all search fields of an entity go into it.
+
+== Searching
+
+snippet::example.BookRepository[project-base="doc-examples/mongo-search-example", source="main", tags="repository"]
+
+<1> api:data.repository.SearchRepository[] adds `search` and `countHits`.
+<2> `$text` always searches the whole text index, so a property keyword such as `findByTitleSearch` matches any search field of the entity, not only the title.
+<3> A `search` method returning `SearchResults` adds the `textScore` as the score and sorts by it in an aggregation.
+<4> `SearchPhrase` quotes the whole string, which MongoDB matches as a phrase.
+<5> Search keywords combine with other predicates in the same `$match`.
+
+snippet::example.BookService[project-base="doc-examples/mongo-search-example", source="main", tags="search"]
+
+The search string is translated to MongoDB's `$search` syntax at bind time: any term matches by default, quoted phrases are required, `-` excludes a term, and `OR` groups are flattened because MongoDB already matches any term. `SearchAll` quotes every term, which makes MongoDB require all of them; it cannot be combined with `OR`, and a search string that does so fails with an `UnsupportedOperationException` that the application can turn into a client error. Because MongoDB requires every quoted phrase, a phrase in an any-term search is required too: `coffee "french press"` matches only documents containing the phrase.
+
+The query sets `$language` to the entity's language, which is also the text index's `default_language`, so a document with its own language in the `language_override` field is still indexed with that language; only the search string is stemmed with the entity's.
+
+== Limitations
+
+|===
+|Feature |MongoDB `$text`
+
+|Field scoping (`findByTitleSearch` matching only `title`) |not supported, every search field is searched
+|`SearchPrefix` and `SearchFuzzy` |not supported, rejected at compile time
+|Highlighting and query-time boosts |not supported
+|`$text` under `OR` or `NOT` |rejected at compile time, as MongoDB only allows `$text` as a top-level condition
+|`$text` with joins |the `$text` match is moved ahead of the join lookups, as MongoDB requires it in the first stage
+|===
+
+A `Pageable` or `Sort` parameter replaces the relevance order, as on SQL stores.

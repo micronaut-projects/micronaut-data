@@ -20,6 +20,8 @@ import io.micronaut.data.model.Pageable
 import io.micronaut.data.model.Sort
 import io.micronaut.data.model.search.SearchCapability
 import io.micronaut.data.search.tck.entities.Book
+import io.micronaut.data.search.tck.repositories.BookPhraseSearchRepository
+import io.micronaut.data.search.tck.repositories.BookPrefixSearchRepository
 import io.micronaut.data.search.tck.repositories.BookSearchRepository
 import spock.lang.AutoCleanup
 import spock.lang.Shared
@@ -44,7 +46,7 @@ abstract class AbstractTextSearchSpec extends Specification {
      * @return The capabilities the backend supports beyond term matching and score ordering
      */
     Set<SearchCapability> capabilities() {
-        return EnumSet.of(SearchCapability.PHRASE, SearchCapability.PREFIX)
+        return EnumSet.of(SearchCapability.PHRASE, SearchCapability.PREFIX, SearchCapability.FIELD_SCOPE)
     }
 
     /**
@@ -135,6 +137,12 @@ abstract class AbstractTextSearchSpec extends Specification {
     void "derived finder with the Search keyword matches one property"() {
         expect:
         bookSearchRepository.findByTitleSearch("programming")*.title as Set == ["The Rust Programming Language", "Programming Kotlin"] as Set
+    }
+
+    void "a property keyword searches only that property"() {
+        assumeTrue(capabilities().contains(SearchCapability.FIELD_SCOPE))
+
+        expect:
         // 'systems' only appears in the description
         bookSearchRepository.findByTitleSearch("systems").isEmpty()
     }
@@ -154,21 +162,23 @@ abstract class AbstractTextSearchSpec extends Specification {
 
     void "SearchPhrase requires adjacent terms in order"() {
         assumeTrue(capabilities().contains(SearchCapability.PHRASE))
+        def repository = (BookPhraseSearchRepository) bookSearchRepository
 
         expect:
-        bookSearchRepository.searchByDescriptionSearchPhrase("coffee beans").results()*.entity()*.title == ["Cooking with Coffee"]
-        bookSearchRepository.searchByDescriptionSearchPhrase("beans coffee").results().isEmpty()
-        bookSearchRepository.searchByDescriptionSearchPhrase("systems programming").results()*.entity()*.title == ["The Rust Programming Language"]
+        repository.searchByDescriptionSearchPhrase("coffee beans").results()*.entity()*.title == ["Cooking with Coffee"]
+        repository.searchByDescriptionSearchPhrase("beans coffee").results().isEmpty()
+        repository.searchByDescriptionSearchPhrase("systems programming").results()*.entity()*.title == ["The Rust Programming Language"]
     }
 
     void "SearchPrefix matches the start of words"() {
         assumeTrue(capabilities().contains(SearchCapability.PREFIX))
+        def repository = (BookPrefixSearchRepository) bookSearchRepository
 
         expect:
-        bookSearchRepository.findByTitleSearchPrefix("prog")*.title as Set == ["The Rust Programming Language", "Programming Kotlin"] as Set
-        bookSearchRepository.findByTitleSearchPrefix("kot")*.title == ["Programming Kotlin"]
-        bookSearchRepository.findByTitleSearchPrefix("programming kot")*.title == ["Programming Kotlin"]
-        bookSearchRepository.findByTitleSearchPrefix("xyz").isEmpty()
+        repository.findByTitleSearchPrefix("prog")*.title as Set == ["The Rust Programming Language", "Programming Kotlin"] as Set
+        repository.findByTitleSearchPrefix("kot")*.title == ["Programming Kotlin"]
+        repository.findByTitleSearchPrefix("programming kot")*.title == ["Programming Kotlin"]
+        repository.findByTitleSearchPrefix("xyz").isEmpty()
     }
 
     void "search predicates combine with ordinary predicates"() {

@@ -82,6 +82,18 @@ public final class MongoReactiveCollectionsCreator extends AbstractMongoCollecti
                 public void createCollection(MongoDatabase database, String collection) {
                     Mono.from(database.createCollection(collection)).block();
                 }
+
+                @Override
+                public boolean hasTextIndex(MongoDatabase database, String collection) {
+                    return Boolean.TRUE.equals(Flux.from(database.getCollection(collection).listIndexes())
+                        .any(AbstractMongoCollectionsCreator::isTextIndex)
+                        .block());
+                }
+
+                @Override
+                public void createTextIndex(MongoDatabase database, String collection, TextIndexDefinition definition) {
+                    Mono.from(database.getCollection(collection).createIndex(definition.keys(), definition.options())).block();
+                }
             };
         }, mongoCollectionNameProvider);
     }

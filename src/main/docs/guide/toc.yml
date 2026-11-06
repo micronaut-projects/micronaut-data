@@ -133,6 +133,7 @@ mongo:
   mongoAttributeConverter: Using Attribute Converter
   mongoCriteriaSpecifications: Repositories with Criteria API
   mongoOptimisticLocking: Optimistic locking
+  mongoTextSearch: Full-Text Search
 azureCosmos:
   title: Micronaut Data Azure Cosmos
   azureCosmosQuickStart: Quick Start

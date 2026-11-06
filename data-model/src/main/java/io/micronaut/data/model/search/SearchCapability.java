@@ -42,6 +42,11 @@ public enum SearchCapability {
      */
     BOOST,
     /**
+     * Restricting a search to the named properties. MongoDB {@code $text} always searches every
+     * indexed field, so a property keyword such as {@code findByTitleSearch} matches any search field there.
+     */
+    FIELD_SCOPE,
+    /**
      * Highlighted fragments in the results.
      */
     HIGHLIGHT,
