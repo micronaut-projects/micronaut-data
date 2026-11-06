@@ -20,6 +20,7 @@ import io.micronaut.core.annotation.AnnotationMetadata;
 import io.micronaut.core.annotation.AnnotationValue;
 import io.micronaut.core.util.StringUtils;
 import io.micronaut.data.annotation.EmbeddedNaming;
+import io.micronaut.data.annotation.FlatEntity;
 import io.micronaut.data.annotation.Index;
 import io.micronaut.data.annotation.Indexes;
 import io.micronaut.data.annotation.InstantiateWithDefaultConstructor;
@@ -56,6 +57,7 @@ import java.util.List;
 import java.util.Map;
 import java.util.Objects;
 import java.util.Optional;
+import java.util.Set;
 import java.util.function.Function;
 import java.util.stream.Collectors;
 
@@ -83,6 +85,7 @@ public class MappedEntityVisitor implements TypeElementVisitor<MappedEntity, Obj
     private static final String JSON_VIEW_ID = "_id";
     private static final String PROPERTY = "property";
     private static final String EMBEDDED_NAMING_STRATEGY = "micronaut.data.embedded.naming.strategy";
+    private static final String CONVERTER = "converter";
     private static final String LEGACY = "LEGACY";
 
     private final Map<String, SourcePersistentEntity> entityMap = new HashMap<>(50);
@@ -170,6 +173,113 @@ public class MappedEntityVisitor implements TypeElementVisitor<MappedEntity, Obj
         if (entity.hasAnnotation(JSON_VIEW_ANNOTATION) || entity.hasAnnotation(JSON_SUB_VIEW_ANNOTATION)) {
             validateJsonView(entity, context);
         }
+        if (isFlat(element, entity)) {
+            element.annotate(FlatEntity.class);
+        }
+    }
+
+    /**
+     * Whether every column of the entity maps onto a property the driver returns with a typed getter, so that the
+     * SQL runtimes can read it by ordinal without resolving the mapping per column; see {@link FlatEntity}. Decided
+     * after the mapping defaults are computed, since those fix the data type of every property.
+     *
+     * @param element The entity
+     * @param entity  The source persistent entity
+     * @return Whether the entity is flat
+     */
+    private static boolean isFlat(ClassElement element, SourcePersistentEntity entity) {
+        if (entity.hasCompositeIdentity()) {
+            // Read as a map of its values
+            return false;
+        }
+        List<SourcePersistentProperty> candidates = new ArrayList<>();
+        if (entity.hasIdentity()) {
+            candidates.add(entity.getIdentity());
+        }
+        if (entity.hasVersion()) {
+            candidates.add(entity.getVersion());
+        }
+        candidates.addAll(entity.getPersistentProperties());
+        Set<String> constructorArguments = constructorArguments(element, candidates);
+        if (constructorArguments == null) {
+            return false;
+        }
+        for (SourcePersistentProperty property : candidates) {
+            if (!isFlatProperty(entity, property, constructorArguments.contains(property.getName()))) {
+                return false;
+            }
+        }
+        return true;
+    }
+
+    /**
+     * The names of the constructor arguments the bean introspection instantiates the entity with.
+     *
+     * @return The names, or {@code null} when the lookup is postponed to a later round, in which case the entity
+     * keeps the general mapper rather than postponing the element, which would leave the repositories of this
+     * round half processed
+     */
+    @Nullable
+    private static Set<String> constructorArguments(ClassElement element, List<SourcePersistentProperty> candidates) {
+        if (element.hasAnnotation(InstantiateWithDefaultConstructor.class)) {
+            return Set.of();
+        }
+        if (element.isRecord()) {
+            // The canonical constructor takes every component, without inspecting the record's methods: a static
+            // method whose signature names a type generated later in this compilation would postpone the element
+            return candidates.stream().map(SourcePersistentProperty::getName).collect(Collectors.toSet());
+        }
+        try {
+            return element.getPrimaryConstructor()
+                .map(constructor -> Arrays.stream(constructor.getParameters()).map(ParameterElement::getName).collect(Collectors.toSet()))
+                .orElse(Set.of());
+        } catch (RuntimeException e) {
+            if (isPostponement(e)) {
+                return null;
+            }
+            throw e;
+        }
+    }
+
+    /**
+     * Whether a property is read by a typed getter, or is one neither mapper sets.
+     *
+     * @param entity              The entity
+     * @param property            The property
+     * @param constructorArgument Whether the property is a constructor argument
+     * @return Whether the property keeps the entity flat
+     */
+    private static boolean isFlatProperty(SourcePersistentEntity entity, SourcePersistentProperty property, boolean constructorArgument) {
+        // The converter is read from the element, where computeMappingDefaults records the one it resolved
+        // from @TypeDef or the configured data converters; the source property cached the member before that
+        String converter = property.getPropertyElement().stringValue(MappedProperty.class, CONVERTER).orElse(null);
+        if (property instanceof Association || (converter != null && !converter.equals(Object.class.getName()))) {
+            return false;
+        }
+        if (!constructorArgument && property.getPropertyElement().isReadOnly()) {
+            // The general mapper sets the identity and the version through a copy of the entity; neither mapper
+            // sets any other such property
+            return !isIdentityOrVersion(entity, property);
+        }
+        DataType dataType = property.getAnnotationMetadata().enumValue(MappedProperty.class, "type", DataType.class)
+            .orElseGet(property::getDataType);
+        return hasTypedGetter(dataType);
+    }
+
+    private static boolean isIdentityOrVersion(SourcePersistentEntity entity, SourcePersistentProperty property) {
+        return (entity.hasIdentity() && property == entity.getIdentity()) || (entity.hasVersion() && property == entity.getVersion());
+    }
+
+    /**
+     * @return Whether the data type is read with a typed {@code java.sql.ResultSet} getter rather than
+     * {@code getObject}, the set the flat entity mapper of the JDBC runtime reads
+     */
+    private static boolean hasTypedGetter(DataType dataType) {
+        return switch (dataType) {
+            case STRING, LONG, INTEGER, SHORT, BYTE, DOUBLE, FLOAT, BOOLEAN, BIGDECIMAL, BYTE_ARRAY,
+                 TIMESTAMP, DATE, TIME, UUID, CHARACTER -> true;
+            default -> false;
+        };
     }
 
     /**
@@ -248,7 +358,11 @@ public class MappedEntityVisitor implements TypeElementVisitor<MappedEntity, Obj
         }
     }
 
-    private static boolean isPostponement(RuntimeException e) {
+    /**
+     * @param e The exception a lookup threw
+     * @return Whether it postpones the element to a later round
+     */
+    static boolean isPostponement(RuntimeException e) {
         // the Java processor's PostponeToNextRoundException is not on this module's classpath
         return e instanceof ElementPostponedToNextRoundException || e.getClass().getSimpleName().equals("PostponeToNextRoundException");
     }
@@ -279,8 +393,8 @@ public class MappedEntityVisitor implements TypeElementVisitor<MappedEntity, Obj
 
         DataType dataType = annotationMetadata.getValue(TypeDef.class, "type", DataType.class)
                 .orElse(null);
-        String converter = annotationMetadata.stringValue(MappedProperty.class, "converter")
-                .orElseGet(() -> annotationMetadata.stringValue(TypeDef.class, "converter").orElse(null));
+        String converter = annotationMetadata.stringValue(MappedProperty.class, CONVERTER)
+                .orElseGet(() -> annotationMetadata.stringValue(TypeDef.class, CONVERTER).orElse(null));
         if (Objects.equals(converter, Object.class.getName())) {
             converter = null;
         }
@@ -341,7 +455,7 @@ public class MappedEntityVisitor implements TypeElementVisitor<MappedEntity, Obj
         }
         if (converter != null) {
             String finalConverter = converter;
-            propertyElement.annotate(MappedProperty.class, builder -> builder.member("converter", new AnnotationClassValue<>(finalConverter)));
+            propertyElement.annotate(MappedProperty.class, builder -> builder.member(CONVERTER, new AnnotationClassValue<>(finalConverter)));
         }
         if (isRelation) {
             useJoinColumnNameIfSet(annotationMetadata, propertyElement);
