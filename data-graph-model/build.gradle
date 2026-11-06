@@ -1,0 +1,23 @@
+plugins {
+    id "io.micronaut.build.internal.data-module"
+}
+
+dependencies {
+    annotationProcessor mn.micronaut.inject.java
+    annotationProcessor mn.micronaut.graal
+    api mn.micronaut.inject
+    api projects.micronautDataModel
+
+    compileOnly(mnSql.jakarta.persistence.api)
+
+    testAnnotationProcessor mn.micronaut.inject.java
+    testAnnotationProcessor projects.micronautDataProcessor
+    testImplementation projects.micronautDataRuntime
+    testImplementation(mnSql.jakarta.persistence.api)
+}
+
+micronautBuild {
+    binaryCompatibility {
+        enabledAfter("5.3.0")
+    }
+}
