@@ -1702,7 +1702,7 @@ public class CypherQueryBuilder implements GraphQueryBuilder {
                 Class<?> targetType = predicate.getTargetType();
                 target = entity.getName().equals(targetType.getName()) ? entity : PersistentEntity.of(targetType);
             }
-            String hops = "[" + type + (predicate.getMaxDepth() > 1 ? "*1.." + predicate.getMaxDepth() : "") + "]";
+            String hops = "[" + type + (predicate.getMaxDepth() > 1 ? "*1.." + PathQueryDefinition.CRITERIA_DEPTH_TOKEN + predicate.getMaxDepth() : "") + "]";
             Expression<?> targetId = predicate.getTarget();
             if (targetId == null) {
                 // The far node is of the entity the relationship leads to, as in a join on the same property

@@ -720,6 +720,15 @@ abstract class AbstractGraphRepositorySpec extends Specification {
         movieSpecificationRepository.findAll({ root, cb ->
             GraphCriteria.connected(root, Movie, cb.literal("Speed"), 2)
         } as PredicateSpecification<Movie>)*.title.sort() == ["The Matrix", "The Matrix Reloaded"]
+
+        when: "a depth above micronaut.data.graph.max-path-depth is asked for"
+        movieSpecificationRepository.findAll({ root, cb ->
+            GraphCriteria.connected(root, Movie, cb.literal("Speed"), 11)
+        } as PredicateSpecification<Movie>)
+
+        then:
+        def e = thrown(IllegalArgumentException)
+        e.message.contains("max-path-depth")
     }
 
     @Requires({ instance.movieSpecificationRepository != null })
