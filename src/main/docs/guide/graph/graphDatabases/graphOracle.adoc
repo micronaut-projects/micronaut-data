@@ -104,7 +104,7 @@ snippet::example.BankGraphSpec[project-base="doc-examples/oracle-graph-r2dbc-exa
 <2> Then stream the accounts that sent a transfer of more than 1000.
 <3> Block only to read the result in the test.
 
-Graph queries and node writes run in the same reactive connection, and join the transaction of a reactive `@Transactional` method. Blocking methods are not supported. Micronaut Data JDBC and R2DBC cannot be used together with Oracle in one application, so an application uses one of the two modules.
+Graph queries and node writes run in the same reactive connection, and join the transaction of a reactive `@Transactional` method. As with any R2DBC repository, a transaction whose subscription is cancelled commits what it wrote so far. Blocking methods are not supported. Micronaut Data JDBC and R2DBC cannot be used together with Oracle in one application, so an application uses one of the two modules.
 
 [[graphOracleR2dbcSchema]]
 === Generating the schema with R2DBC
