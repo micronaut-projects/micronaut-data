@@ -495,6 +495,31 @@ interface BranchRepository extends CrudRepository<Film, String> {
         getQuery(findMethod(repository, 'findByTitle', 1)) == 'MATCH (n:Film) WHERE n.title = $p0 OPTIONAL MATCH (n)<-[:DIRECTED]-(j0:Director) OPTIONAL MATCH (j0)-[:WON]->(j0_0n:Award) WITH n, j0, collect(DISTINCT j0_0n) AS j0_0 OPTIONAL MATCH (j0)-[:FOLLOWS]->(j0_1n:Director) WITH n, j0, j0_0, collect(DISTINCT j0_1n) AS j0_1 WITH n, collect(DISTINCT CASE WHEN j0 IS NULL THEN NULL ELSE {node: j0, awards: j0_0, mentor: j0_1} END) AS j_directors RETURN n, j_directors'
     }
 
+    @Unroll
+    void "test nested joins keep the join type for #description"() {
+        when:
+        def repository = buildRepository('test.' + name + 'Repository', """
+$MOVIES
+
+@TestGraphRepository
+interface ${name}Repository extends CrudRepository<Movie, String> {
+    $joins
+    List<Movie> findAll();
+}
+""")
+
+        then:
+        getQuery(findMethod(repository, 'findAll', 0)).startsWith(prefix + ' WITH n, collect(DISTINCT CASE WHEN j0 IS NULL')
+
+        where:
+        description          | name          | joins                                                                                                 | prefix
+        'inner at each step' | 'InnerInner'  | '@Join(value = "directors", type = Join.Type.INNER_FETCH) @Join(value = "directors.mentor", type = Join.Type.INNER_FETCH)' | 'MATCH (n:Movie) MATCH (n)<-[:DIRECTED]-(j0:Person:Actor) MATCH (j0)-[:FOLLOWS]->(j0_0n:Person:Actor) WITH n, j0, collect(DISTINCT j0_0n) AS j0_0'
+        'an inner parent'    | 'InnerLeft'   | '@Join("directors.mentor") @Join(value = "directors", type = Join.Type.INNER_FETCH)'                  | 'MATCH (n:Movie) MATCH (n)<-[:DIRECTED]-(j0:Person:Actor) OPTIONAL MATCH (j0)-[:FOLLOWS]->(j0_0n:Person:Actor) WITH n, j0, collect(DISTINCT j0_0n) AS j0_0'
+        'an inner child'     | 'LeftInner'   | '@Join("directors") @Join(value = "directors.mentor", type = Join.Type.INNER_FETCH)'                  | 'MATCH (n:Movie) MATCH (n)<-[:DIRECTED]-(j0:Person:Actor) MATCH (j0)-[:FOLLOWS]->(j0_0n:Person:Actor) WITH n, j0, collect(DISTINCT j0_0n) AS j0_0'
+        'only an inner path' | 'InnerPath'   | '@Join(value = "directors.mentor", type = Join.Type.INNER_FETCH)'                                     | 'MATCH (n:Movie) MATCH (n)<-[:DIRECTED]-(j0:Person:Actor) MATCH (j0)-[:FOLLOWS]->(j0_0n:Person:Actor) WITH n, j0, collect(DISTINCT j0_0n) AS j0_0'
+        'left joins'         | 'LeftLeft'    | '@Join("directors") @Join("directors.mentor")'                                                        | 'MATCH (n:Movie) OPTIONAL MATCH (n)<-[:DIRECTED]-(j0:Person:Actor) OPTIONAL MATCH (j0)-[:FOLLOWS]->(j0_0n:Person:Actor) WITH n, j0, collect(DISTINCT j0_0n) AS j0_0'
+    }
+
     private static ExecutableMethod<?, ?> findMethod(BeanDefinition<?> definition, String name, int arity) {
         def method = definition.executableMethods.find { it.methodName == name && it.argumentTypes.length == arity }
         assert method != null: "No method $name with $arity arguments"

@@ -1,5 +1,6 @@
 package io.micronaut.data.graph.tck
 
+import io.micronaut.data.annotation.Join
 import io.micronaut.data.exceptions.EntityExistsException
 import io.micronaut.data.exceptions.OptimisticLockException
 import io.micronaut.data.graph.tck.entities.Article
@@ -776,6 +777,58 @@ abstract class AbstractGraphRepositorySpec extends Specification {
         then: "the director is fetched once"
         found.directors*.name.sort() == ["Agnieszka Holland", "Second Unit"]
         found.directors.find { it.name == "Agnieszka Holland" }.mentor.name == "Andrzej Wajda"
+    }
+
+    @Requires({ instance.supportsRelationshipWrites() && instance.supportsRelationshipReads() && instance.supportsExplicitQueries() })
+    void "nested inner fetch joins exclude the nodes without the relationship"() {
+        given:
+        def director = new Person("Agnieszka Holland", 1948)
+        director.mentor = new Person("Andrzej Wajda", 1926)
+        def mentored = new Movie("Europa Europa", "A boy survives the war", 1990)
+        mentored.directors = [director, new Person("Second Unit", 1960)]
+        def unmentored = new Movie("Speed", "Get ready for rush hour", 1994)
+        unmentored.directors = [new Person("Jan de Bont", 1943)]
+        movieRepository.save(mentored)
+        movieRepository.save(unmentored)
+        movieRepository.save(new Movie("Sans Director", "Nobody directed this", 1995))
+        def queries = (MovieQueryRepository) movieRepository
+
+        when: "both joins are inner"
+        def found = queries.queryByReleasedGreaterThan(1900)
+
+        then:
+        found*.title == ["Europa Europa"]
+        found[0].directors*.name == ["Agnieszka Holland"]
+        found[0].directors[0].mentor.name == "Andrzej Wajda"
+
+        when: "only the first join is inner"
+        found = queries.listByReleasedGreaterThan(1900)
+
+        then:
+        found*.title.sort() == ["Europa Europa", "Speed"]
+        found.find { it.title == "Europa Europa" }.directors*.name.sort() == ["Agnieszka Holland", "Second Unit"]
+        found.find { it.title == "Speed" }.directors[0].mentor == null
+    }
+
+    @Requires({ instance.movieSpecificationRepository != null && instance.supportsRelationshipWrites() && instance.supportsRelationshipReads() && instance.supportsExplicitQueries() })
+    void "nested inner fetch joins of a criteria specification exclude the nodes without the relationship"() {
+        given:
+        def director = new Person("Agnieszka Holland", 1948)
+        director.mentor = new Person("Andrzej Wajda", 1926)
+        def mentored = new Movie("Europa Europa", "A boy survives the war", 1990)
+        mentored.directors = [director]
+        movieRepository.save(mentored)
+        movieRepository.save(new Movie("Sans Director", "Nobody directed this", 1995))
+
+        when:
+        def found = movieSpecificationRepository.findAll({ root, cb ->
+            root.join("directors", Join.Type.INNER_FETCH).join("mentor", Join.Type.INNER_FETCH)
+            cb.greaterThan(root.get("released"), 1900)
+        } as PredicateSpecification<Movie>)
+
+        then:
+        found*.title == ["Europa Europa"]
+        found[0].directors[0].mentor.name == "Andrzej Wajda"
     }
 
     @Requires({ instance.articleRepository != null })
