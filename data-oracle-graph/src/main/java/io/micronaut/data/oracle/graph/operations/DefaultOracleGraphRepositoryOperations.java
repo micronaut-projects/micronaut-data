@@ -37,6 +37,8 @@ import io.micronaut.data.model.Sort;
 import io.micronaut.data.model.runtime.AttributeConverterRegistry;
 import io.micronaut.data.model.runtime.DeleteBatchOperation;
 import io.micronaut.data.model.runtime.DeleteOperation;
+import io.micronaut.data.model.runtime.DeleteReturningBatchOperation;
+import io.micronaut.data.model.runtime.DeleteReturningOperation;
 import io.micronaut.data.model.runtime.InsertBatchOperation;
 import io.micronaut.data.model.runtime.InsertOperation;
 import io.micronaut.data.model.query.builder.sql.Dialect;
@@ -49,6 +51,7 @@ import io.micronaut.data.model.runtime.RuntimePersistentEntity;
 import io.micronaut.data.model.runtime.RuntimePersistentProperty;
 import io.micronaut.data.model.runtime.UpdateBatchOperation;
 import io.micronaut.data.model.runtime.UpdateOperation;
+import io.micronaut.data.operations.DeleteReturningRepositoryOperations;
 import io.micronaut.data.runtime.convert.DataConversionService;
 import io.micronaut.data.runtime.date.DateTimeProvider;
 import io.micronaut.data.runtime.operations.internal.sql.DefaultSqlPreparedQuery;
@@ -88,7 +91,7 @@ import java.util.stream.Stream;
  */
 @EachBean(DataSource.class)
 @Internal
-final class DefaultOracleGraphRepositoryOperations extends AbstractGraphRepositoryOperations implements OracleGraphRepositoryOperations {
+final class DefaultOracleGraphRepositoryOperations extends AbstractGraphRepositoryOperations implements OracleGraphRepositoryOperations, DeleteReturningRepositoryOperations {
 
     private static final Logger LOG = LoggerFactory.getLogger(DefaultOracleGraphRepositoryOperations.class);
     private static final String DECLARE_METHOD = "Declare a query method on the Oracle graph repository instead";
@@ -334,22 +337,63 @@ final class DefaultOracleGraphRepositoryOperations extends AbstractGraphReposito
 
     @Override
     public <T> T persist(InsertOperation<T> operation) {
+        OracleGraphQueryBuilder.checkVertexWrite(getEntity(operation.getRootEntity()), operation.getEntity());
         return jdbcOperations.persist(operation);
     }
 
     @Override
     public <T> Iterable<T> persistAll(InsertBatchOperation<T> operation) {
+        checkVertexWrites(operation.getRootEntity(), operation);
         return jdbcOperations.persistAll(operation);
     }
 
     @Override
     public <T> T update(UpdateOperation<T> operation) {
+        OracleGraphQueryBuilder.checkVertexWrite(getEntity(operation.getRootEntity()), operation.getEntity());
         return jdbcOperations.update(operation);
     }
 
     @Override
     public <T> Iterable<T> updateAll(UpdateBatchOperation<T> operation) {
+        checkVertexWrites(operation.getRootEntity(), operation);
         return jdbcOperations.updateAll(operation);
+    }
+
+    private void checkVertexWrites(Class<?> rootEntity, Iterable<?> nodes) {
+        RuntimePersistentEntity<?> entity = getEntity(rootEntity);
+        for (Object node : nodes) {
+            OracleGraphQueryBuilder.checkVertexWrite(entity, node);
+        }
+    }
+
+    /**
+     * Runs the methods that return what they write, as RETURNING ... INTO needs the out parameters JDBC registers.
+     */
+    @Override
+    public <R> List<R> execute(PreparedQuery<?, R> preparedQuery) {
+        if (!isSqlWrite(preparedQuery)) {
+            return super.execute(preparedQuery);
+        }
+        if (preparedQuery.getOperationType() != StoredQuery.OperationType.DELETE_RETURNING) {
+            for (Object parameter : preparedQuery.getParameterArray()) {
+                if (preparedQuery.getRootEntity().isInstance(parameter)) {
+                    OracleGraphQueryBuilder.checkVertexWrite(getEntity(preparedQuery.getRootEntity()), parameter);
+                } else if (parameter instanceof Iterable<?> nodes) {
+                    checkVertexWrites(preparedQuery.getRootEntity(), nodes);
+                }
+            }
+        }
+        return jdbcOperations.execute(preparedQuery);
+    }
+
+    @Override
+    public <E, R> R deleteReturning(DeleteReturningOperation<E, R> operation) {
+        return ((DeleteReturningRepositoryOperations) jdbcOperations).deleteReturning(operation);
+    }
+
+    @Override
+    public <E, R> List<R> deleteAllReturning(DeleteReturningBatchOperation<E, R> operation) {
+        return ((DeleteReturningRepositoryOperations) jdbcOperations).deleteAllReturning(operation);
     }
 
     @Override
