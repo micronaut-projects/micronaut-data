@@ -85,6 +85,10 @@ class CypherCriteriaQuerySpec extends Specification {
         'boolean property'     | { q, r -> q.where(cb.and(r.get("active"), cb.equal(r.get("name"), "a"))) }                                                                 | 'MATCH (n:Person) WHERE (n.active = true AND n.name = $p0) RETURN n'
         'id equals'            | { q, r -> q.where(cb.equal(r.id(), 1L)) }                                                                                                  | 'MATCH (n:Person) WHERE id(n) = $p0 RETURN n'
         'association equals'   | { q, r -> q.where(cb.equal(r.get("movies"), "Matrix")) }                                                                                   | 'MATCH (n:Person), (n)-[:ACTED_IN]->(a0:Movie) WHERE a0.title = $p0 WITH DISTINCT n RETURN n'
+        'inner join projection' | { q, r -> r.join("movies", Join.Type.INNER); q.select(r.get("name")) }                                                                      | 'MATCH (n:Person), (n)-[:ACTED_IN]->(a0:Movie) WITH DISTINCT n RETURN n.name AS name'
+        'inner join count'     | { q, r -> r.join("movies", Join.Type.INNER); q.select(cb.count(r)) }                                                                        | 'MATCH (n:Person), (n)-[:ACTED_IN]->(a0:Movie) WITH DISTINCT n RETURN count(n) AS result'
+        'inner join sum'       | { q, r -> r.join("movies", Join.Type.INNER); q.select(cb.sum(r.get("age"))) }                                                               | 'MATCH (n:Person), (n)-[:ACTED_IN]->(a0:Movie) WITH DISTINCT n RETURN sum(n.age) AS result'
+        'left join count'      | { q, r -> r.join("movies", Join.Type.LEFT); q.select(cb.count(r)) }                                                                         | 'MATCH (n:Person) RETURN count(n) AS result'
         'fetch join'           | { q, r -> r.join("movies", Join.Type.FETCH); q.select(r) }                                                                                 | 'MATCH (n:Person) OPTIONAL MATCH (n)-[:ACTED_IN]->(j0:Movie) WITH n, collect(j0) AS j_movies RETURN n, j_movies'
     }
 

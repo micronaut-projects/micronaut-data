@@ -27,10 +27,13 @@ dependencies {
     testAnnotationProcessor mn.micronaut.inject.java
 
     testImplementation projects.micronautDataGraphProcessor
+    testImplementation projects.micronautDataOracleGraph
     testImplementation mnTest.micronaut.test.spock
     testImplementation(mnSql.jakarta.persistence.api)
 
     testRuntimeOnly mnR2dbc.r2dbc.oracle
+    testRuntimeOnly mnSql.micronaut.jdbc.hikari
+    testRuntimeOnly mnSql.ojdbc11
     testRuntimeOnly mnLogging.logback.classic
 
     testCompileOnly mn.micronaut.inject.groovy

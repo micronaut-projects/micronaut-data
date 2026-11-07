@@ -244,6 +244,12 @@ public class AgeCypherQueryBuilder extends CypherQueryBuilder {
         return AgeStatements.wrap(super.buildUnlinkOthersQuery(association, owner, target));
     }
 
+    @Override
+    public String buildUnlinkOtherRelationshipsQuery(Association association, PersistentEntity owner, PersistentEntity target,
+                                                     @Nullable PersistentProperty relationshipIdentity) {
+        return AgeStatements.wrap(super.buildUnlinkOtherRelationshipsQuery(association, owner, target, relationshipIdentity));
+    }
+
     private static QueryResult wrap(QueryResult result) {
         return new WrappedQueryResult(AgeStatements.wrap(result.getQuery()), result);
     }

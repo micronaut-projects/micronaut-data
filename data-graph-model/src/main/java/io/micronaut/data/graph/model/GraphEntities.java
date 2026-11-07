@@ -120,6 +120,17 @@ public final class GraphEntities {
     }
 
     /**
+     * Whether the property is a relationship to a single node. The SQL query builder takes such an association for a
+     * foreign key column, while a property graph over tables stores it in an edge table.
+     *
+     * @param property The property
+     * @return True if it is a single relationship
+     */
+    public static boolean isSingleRelationship(PersistentProperty property) {
+        return property instanceof Association association && isRelationship(association) && association.getKind().isSingleEnded();
+    }
+
+    /**
      * Finds the property holding the relationships of undeclared types, annotated with
      * {@link io.micronaut.data.graph.annotation.DynamicRelationships}.
      *
