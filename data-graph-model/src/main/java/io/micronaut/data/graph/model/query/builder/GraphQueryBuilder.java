@@ -199,6 +199,21 @@ public interface GraphQueryBuilder extends QueryBuilder {
     String buildUnlinkOthersQuery(Association association, PersistentEntity owner, PersistentEntity target);
 
     /**
+     * Builds the query that removes the relationships of a single-valued relationship entity, all but the one with the
+     * given identity to the given node.
+     *
+     * @param association          The association
+     * @param owner                The entity that declares the association
+     * @param target               The node entity at the far end
+     * @param relationshipIdentity The identity of the relationship to keep, or null to keep none
+     * @return The query
+     */
+    String buildUnlinkOtherRelationshipsQuery(Association association,
+                                              PersistentEntity owner,
+                                              PersistentEntity target,
+                                              @Nullable PersistentProperty relationshipIdentity);
+
+    /**
      * Renders the expression that sorts by the identifier of the root node, which a database-assigned identifier
      * does not hold as a property.
      *

@@ -53,14 +53,14 @@ Relationships are not loaded unless a finder asks for them with ann:data.annotat
 
 == Encoding values
 
-Property and parameter values are encoded into values the database accepts by the encoder registered for their type in api:data.graph.runtime.GraphValueEncoders[], or for their nearest supertype. Strings, booleans, numbers and temporal values are written as they are, enums by name, collections and maps element by element, and other values as their string form. Each database replaces encoders for types it stores differently: Apache AGE writes temporal values as ISO-8601 strings, for example.
+Property and parameter values are encoded into values the database accepts by the encoder registered for their type in api:data.graph.runtime.GraphValueEncoders[], or for their nearest supertype. Strings, booleans, temporal values and the `long`, `int`, `short`, `byte`, `double` and `float` number types are written as they are, enums by name, and collections and maps element by element. `BigDecimal`, `BigInteger`, `UUID`, `URI`, `URL`, `Locale` and `Currency` values are written as strings, so a range finder on a `BigDecimal` or `BigInteger` property compares strings rather than numbers: use a `Long` or `Double` property where the order matters. A value of a type with no encoder fails with a `DataAccessException` naming the type. Each database replaces encoders for types it stores differently: Apache AGE writes temporal values as ISO-8601 strings, for example.
 
 A bean of type api:data.graph.runtime.GraphValueEncoderRegistrar[] adds encoders for application types, or replaces those of the database:
 
 snippet::example.MoneyEncoderRegistrar[project-base="doc-examples/neo4j-example", source="main", tags="registrar", languages="java,kotlin,groovy,python"]
 
 <1> `Money` values are written as maps.
-<2> The encoders passed to the encoder encode the values it contains.
+<2> The encoders passed to the encoder encode the values it contains, here the `BigDecimal` amount as a string.
 
 Values of the type are then encoded wherever they are written, in properties and in query parameters:
 
