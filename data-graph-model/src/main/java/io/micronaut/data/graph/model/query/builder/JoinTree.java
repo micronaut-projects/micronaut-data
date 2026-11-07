@@ -31,6 +31,7 @@ import java.util.Map;
 final class JoinTree {
     final Association association;
     final Map<String, JoinTree> children = new LinkedHashMap<>();
+    boolean inner;
 
     JoinTree(Association association) {
         this.association = association;

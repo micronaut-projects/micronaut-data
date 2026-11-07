@@ -6,6 +6,7 @@ import io.micronaut.data.graph.model.GraphRelationship;
 import io.micronaut.data.graph.tck.entities.Movie;
 import io.micronaut.data.graph.tck.entities.MovieDirectors;
 import io.micronaut.data.graph.tck.entities.Person;
+import io.micronaut.data.graph.tck.entities.Role;
 
 import java.util.List;
 import java.util.Optional;
@@ -14,6 +15,10 @@ import java.util.Optional;
  * Fetch joins and Cypher queries, for the databases that run Cypher.
  */
 public interface MovieQueryRepository extends MovieRepository {
+
+    List<Movie> findByRoles(Role role);
+
+    List<Movie> findByRolesPerson(Person person);
 
     @Join("roles")
     @Join("directors")
@@ -31,6 +36,15 @@ public interface MovieQueryRepository extends MovieRepository {
     @Join("directors")
     @Join("directors.mentor")
     Optional<Movie> queryByTitle(String title);
+
+    @Join(value = "directors", type = Join.Type.INNER_FETCH)
+    @Join(value = "directors.mentor", type = Join.Type.INNER_FETCH)
+    List<Movie> queryByReleasedGreaterThan(int released);
+
+    // The inner join comes last: a later @Join through directors would replace the join type of directors
+    @Join("directors.mentor")
+    @Join(value = "directors", type = Join.Type.INNER_FETCH)
+    List<Movie> listByReleasedGreaterThan(int released);
 
     @Query("MATCH (p:Person), (m:Movie) WHERE p.name = $name AND m.title = $title CREATE (p)-[:DIRECTED]->(m)")
     void addDirector(String name, String title);

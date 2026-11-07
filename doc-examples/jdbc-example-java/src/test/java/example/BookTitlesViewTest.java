@@ -1,5 +1,8 @@
 package example;
 
+import io.micronaut.data.model.query.builder.sql.Dialect;
+import io.micronaut.data.runtime.config.SchemaGenerate;
+import io.micronaut.data.runtime.schema.SchemaContext;
 import io.micronaut.test.extensions.junit5.annotation.MicronautTest;
 import io.micronaut.transaction.TransactionOperations;
 import jakarta.inject.Inject;
@@ -22,6 +25,9 @@ class BookTitlesViewTest {
     @Inject
     TransactionOperations<Connection> transactionOperations;
 
+    @Inject
+    BookTitlesViewContributor contributor;
+
     @Test
     void theContributedViewIsCreatedOverTheBookTable() {
         bookRepository.save(new Book("The Left Hand of Darkness", 300));
@@ -38,5 +44,13 @@ class BookTitlesViewTest {
         });
 
         assertTrue(titles.contains("The Left Hand of Darkness"));
+    }
+
+    @Test
+    void theContributorDoesNotApplyToADataSourceWithoutTheBookEntity() {
+        SchemaContext other = new SchemaContext("other", Dialect.H2, null, SchemaGenerate.CREATE_DROP, List.of());
+
+        assertTrue(contributor.buildCreateStatements(other, List.of()).isEmpty());
+        assertTrue(contributor.buildDropStatements(other, List.of()).isEmpty());
     }
 }

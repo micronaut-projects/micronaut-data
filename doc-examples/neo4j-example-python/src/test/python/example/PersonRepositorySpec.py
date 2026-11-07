@@ -61,6 +61,8 @@ class PersonRepositorySpec:
 
     @Test
     def testPathOptions(self):
+        # A Python instance reached through two related nodes is converted once for each: the saved instance,
+        # which carries the generated identifier, stands for the one node
         joe = self.personRepository.save(Person("Joe", 1973))
         self.personRepository.save(Person("Fred", 1970, [Person("Barney", 1971, [joe]), Person("Wilma", 1972, [joe])]))
 

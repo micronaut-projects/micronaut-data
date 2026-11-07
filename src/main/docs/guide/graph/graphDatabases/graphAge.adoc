@@ -57,7 +57,13 @@ micronaut:
         acme: acme_movies
 ----
 
-With this configuration a request of the tenant `acme` runs on the graph `acme_movies`, and one of the tenant `globex` on `tenant_globex`. A tenant graph that does not exist is created on first use under the same `create-graph` setting as the configured graph, with the indexes of the entities when `create-indexes` is enabled. A graph name must be a plain identifier, as it is written into the `cypher()` call: a tenant id that is not one is rejected before any statement runs, so a tenant resolver may pass the id through, but applications must still ensure it names only graphs the caller may access.
+With this configuration a request of the tenant `acme` runs on the graph `acme_movies`, and one of the tenant `globex` on `tenant_globex`. Keys of `tenant-graphs` are compared with tenant ids in their hyphenated form, as configuration binds them, so the key `tenantA` is also that of the tenant `tenant-a`.
+
+WARNING: Tenant graphs are not created by default, and an operation of a tenant whose graph does not exist fails. Create them when you provision a tenant. `micronaut.data.age.create-tenant-graphs: true` creates them on first use, but each one is a schema of the database with its own tables, so only enable it when tenant ids are trusted. With a tenant id taken from a request, such as with the HTTP header resolver above, any client could otherwise create schemas at will by sending arbitrary ids.
+
+The indexes of the entities are created on the first use of a tenant graph in each process when `create-indexes` is enabled, whether or not the graph existed already, and the operations of the tenant fail until they can be, for example when existing data breaks a unique index.
+
+A graph name must be a plain identifier, as it is written into the `cypher()` call. A tenant whose graph name is not one is rejected before any statement runs, and so is a tenant whose graph name is that of the configured graph, is mapped in `tenant-graphs` to another tenant, or is a reserved schema of the database: `public`, `ag_catalog`, `information_schema` or a name starting with `pg_`. A tenant resolver may pass the id through, but applications must still ensure it names only graphs the caller may access.
 
 The tenant comes from the api:data.runtime.multitenancy.TenantResolver[] of Micronaut Data, which reads the `TenantResolver` of https://micronaut-projects.github.io/micronaut-multitenancy/latest/guide/[Micronaut Multitenancy] when it is on the classpath. To name the graph another way, for example from a lookup of the tenant, declare a bean of api:data.graph.runtime.age.AgeGraphTenantResolver[], whose `resolveTenantGraph()` returns the graph name or `null` for the configured graph.
 
@@ -92,6 +98,6 @@ snippet::example.MovieRepositorySpec[project-base="doc-examples/age-r2dbc-exampl
 <2> Then stream the movies directed by Lana Wachowski.
 <3> Block only to read the result in the test.
 
-Queries and writes run in the same reactive connection, and join the transaction of a reactive `@Transactional` method. AGE is loaded, and its catalog put on the search path, on the connection before each operation, since pooled connections may not have been prepared. Blocking methods are not supported, and indexes declared on entities are created by the JDBC module only.
+Queries and writes run in the same reactive connection, and join the transaction of a reactive `@Transactional` method. As with any R2DBC repository, a transaction whose subscription is cancelled commits what it wrote so far. AGE is loaded, and its catalog put on the search path, on the connection before each operation, since pooled connections may not have been prepared. Blocking methods are not supported, and indexes declared on entities are created by the JDBC module only.
 
-Graphs per tenant work as on JDBC. The tenant is resolved when an operation is subscribed to, on the subscribing thread, through the same blocking `TenantResolver`: a resolver that reads the HTTP request finds it in the propagated context of the request, as the resolvers of Micronaut Multitenancy do.
+Graphs per tenant work as on JDBC. The tenant is resolved when an operation is subscribed to, through the same blocking `TenantResolver`, within the context propagated through the Reactor context: a resolver that reads the HTTP request finds it there, as the resolvers of Micronaut Multitenancy do, also when the operation is subscribed to from an asynchronous callback.

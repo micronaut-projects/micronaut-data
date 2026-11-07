@@ -85,8 +85,8 @@ import java.util.regex.Pattern;
 public final class GraphPathMethodMatcher implements MethodMatcher {
 
     private static final String PREFIXES = "(?:find|get|query|search|read|retrieve|list)";
-    // The relationship token stops at OrderBy, which path finders do not support and report
-    private static final String SUFFIX = "(?:By([A-Z]\\w*?))?(?:Between([A-Z]\\w*))?(?<order>OrderBy\\w*)?$";
+    // The relationship and endpoint tokens stop at OrderBy, which path finders do not support and report
+    private static final String SUFFIX = "(?:By([A-Z]\\w*?))?(?:Between([A-Z]\\w*?))?(?<order>OrderBy\\w*)?$";
     private static final Pattern FIND_PATTERN = Pattern.compile("^" + PREFIXES + "(ShortestPath|AllShortestPaths|AllPaths|Paths|Path|Relationships|Relationship)" + SUFFIX);
     private static final Pattern EXISTS_PATTERN = Pattern.compile("^(?:exists|has)(Path|Relationship)" + SUFFIX);
     private static final Pattern COUNT_PATTERN = Pattern.compile("^count(Paths|Relationships)" + SUFFIX);

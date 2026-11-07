@@ -29,9 +29,11 @@ import io.micronaut.data.model.runtime.RuntimePersistentProperty;
 import org.jspecify.annotations.Nullable;
 
 import java.util.ArrayList;
+import java.util.HashSet;
 import java.util.LinkedHashMap;
 import java.util.List;
 import java.util.Map;
+import java.util.Set;
 
 /**
  * The target side of a relationship association: the entity of the target node and, when the association holds
@@ -56,7 +58,7 @@ record RelationshipTarget(RuntimePersistentEntity<Object> associated,
         }
         RuntimeAssociation<Object> targetAssociation = targetNode(associated);
         RuntimePersistentEntity<Object> entity = (RuntimePersistentEntity<Object>) targetAssociation.getAssociatedEntity();
-        return new RelationshipTarget(associated, targetAssociation, entity, associated.getIdentity());
+        return new RelationshipTarget(associated, targetAssociation, entity, associated.hasIdentity() ? associated.getIdentity() : null);
     }
 
     /**
@@ -101,10 +103,6 @@ record RelationshipTarget(RuntimePersistentEntity<Object> associated,
 
     boolean isRelationshipEntity() {
         return targetAssociation != null;
-    }
-
-    boolean nativeIdentity() {
-        return identity != null && GraphEntities.isNativeId(identity);
     }
 
     /**
@@ -174,23 +172,18 @@ record RelationshipTarget(RuntimePersistentEntity<Object> associated,
     }
 
     /**
-     * Sets the identifiers the database generated for the relationships on the written relationship entities.
+     * Sets the identifier the database generated for a relationship on its written relationship entity.
      *
-     * @param mapper          The mapper that decodes the identifiers
-     * @param written         The written items, replaced in place
-     * @param relationshipIds The identifiers of the relationships by the position of their rows
+     * @param mapper         The mapper that decodes the identifier
+     * @param item           The written relationship entity
+     * @param relationshipId The identifier of the relationship, or null
+     * @return The relationship entity with its identifier
      */
-    void applyRelationshipIds(GraphEntityMapper mapper, List<Object> written, Map<Integer, Object> relationshipIds) {
-        if (identity == null || !GraphEntities.isNativeId(identity)) {
-            return;
+    Object withRelationshipId(GraphEntityMapper mapper, Object item, @Nullable Object relationshipId) {
+        if (identity == null || relationshipId == null || !GraphEntities.isNativeId(identity)) {
+            return item;
         }
-        BeanProperty<Object, Object> idProperty = identity.getProperty();
-        for (int i = 0; i < written.size(); i++) {
-            Object relationshipId = relationshipIds.get(i);
-            if (relationshipId != null) {
-                written.set(i, AbstractGraphRepositoryOperations.withProperty(idProperty, written.get(i), mapper.readValue(identity, relationshipId)));
-            }
-        }
+        return AbstractGraphRepositoryOperations.withProperty(identity.getProperty(), item, mapper.readValue(identity, relationshipId));
     }
 
     /**
@@ -211,26 +204,23 @@ record RelationshipTarget(RuntimePersistentEntity<Object> associated,
     }
 
     /**
-     * Reads the identifiers of the relationships a batched link write merged, by the position of their rows.
+     * Checks that a batched link write merged the relationship of every row.
      *
      * @param association The association
      * @param records     The rows the write returned
      * @param expected    The number of relationships in the batch
-     * @return The identifiers by position; a position whose relationship has no identifier maps to null
      */
-    static Map<Integer, @Nullable Object> linkedRelationshipIds(RuntimeAssociation<?> association, List<GraphRecord> records, int expected) {
-        Map<Integer, @Nullable Object> ids = new LinkedHashMap<>();
+    static void checkLinked(RuntimeAssociation<?> association, List<GraphRecord> records, int expected) {
+        Set<Integer> positions = new HashSet<>();
         for (GraphRecord record : records) {
-            Object position = record.get(CypherQueryBuilder.ROW_POSITION);
-            if (position instanceof Number number) {
-                ids.putIfAbsent(number.intValue(), record.get(CypherQueryBuilder.ID_PARAMETER));
+            if (record.get(CypherQueryBuilder.ROW_POSITION) instanceof Number number) {
+                positions.add(number.intValue());
             }
         }
-        if (ids.size() != expected) {
+        if (positions.size() != expected) {
             throw new DataAccessException("Could not link [" + association.getName() + "]: expected to write " + expected
-                + " relationships but wrote " + ids.size() + ", one of the nodes does not exist");
+                + " relationships but wrote " + positions.size() + ", one of the nodes does not exist");
         }
-        return ids;
     }
 
     /**
@@ -323,8 +313,8 @@ record RelationshipTarget(RuntimePersistentEntity<Object> associated,
     }
 
     /**
-     * How a relationship is written. Relationship entities with a database-assigned identifier can be told apart, so
-     * two of them may connect the same nodes. Any other relationship is identified by its nodes and type.
+     * How a relationship is written. Relationship entities with an identifier can be told apart, so two of them may
+     * connect the same nodes. Any other relationship is identified by its nodes and type.
      */
     enum LinkMode {
         MERGE, CREATE, UPDATE
