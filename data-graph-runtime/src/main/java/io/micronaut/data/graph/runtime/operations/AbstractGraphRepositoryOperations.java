@@ -933,6 +933,25 @@ public abstract class AbstractGraphRepositoryOperations extends AbstractReposito
     }
 
     /**
+     * Relationship entities are not persisted on their own, so nothing else populates an identifier that is not
+     * assigned by the database.
+     *
+     * @param associated   The relationship entity
+     * @param identity     Its identity
+     * @param relationship The relationship
+     * @return The relationship with its identifier
+     */
+    final Object populateRelationshipId(RuntimePersistentEntity<Object> associated, RuntimePersistentProperty<Object> identity, Object relationship) {
+        DefaultEntityEventContext<Object> event = new DefaultEntityEventContext<>(associated, relationship);
+        entityEventRegistry.prePersist(event);
+        Object item = event.getEntity();
+        if (mapper.writeIdentity(associated, item) == null) {
+            throw new DataAccessException("Relationship [" + associated.getSimpleName() + "] needs its identifier [" + identity.getName() + "] assigned before it is saved");
+        }
+        return item;
+    }
+
+    /**
      * Plans the query that removes the other relationships of a single-valued association to relationship entities.
      * A relationship entity with an identifier can be replaced by another one to the same node, so all that may stay
      * is the relationship to the given node with the given identifier. Nothing stays of a relationship that has no
@@ -1350,20 +1369,6 @@ public abstract class AbstractGraphRepositoryOperations extends AbstractReposito
                 BeanProperty<Object, Object> idProperty = relationshipIdentity.getProperty();
                 Object id = mapper.readValue(relationshipIdentity, relationshipId);
                 item = withProperty(idProperty, item, id);
-            }
-            return item;
-        }
-
-        /**
-         * Relationship entities are not persisted on their own, so nothing else populates an identifier that is not
-         * assigned by the database.
-         */
-        private Object populateRelationshipId(RuntimePersistentEntity<Object> associated, RuntimePersistentProperty<Object> identity, Object relationship) {
-            DefaultEntityEventContext<Object> event = new DefaultEntityEventContext<>(associated, relationship);
-            entityEventRegistry.prePersist(event);
-            Object item = event.getEntity();
-            if (mapper.writeIdentity(associated, item) == null) {
-                throw new DataAccessException("Relationship [" + associated.getSimpleName() + "] needs its identifier [" + identity.getName() + "] assigned before it is saved");
             }
             return item;
         }

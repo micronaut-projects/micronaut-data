@@ -1,27 +1,47 @@
 package io.micronaut.data.neo4j
 
+import io.micronaut.core.annotation.AnnotationMetadata
+import io.micronaut.data.connection.ConnectionDefinition
+import io.micronaut.data.exceptions.DataAccessException
+import io.micronaut.data.exceptions.NonUniqueResultException
+import io.micronaut.data.graph.tck.entities.Collaboration
+import io.micronaut.data.graph.tck.entities.Colleague
 import io.micronaut.data.graph.tck.entities.Movie
 import io.micronaut.data.graph.tck.entities.Person
 import io.micronaut.data.graph.tck.entities.Role
 import io.micronaut.data.model.Pageable
 import io.micronaut.data.model.Sort
+import io.micronaut.data.model.runtime.PagedQuery
+import io.micronaut.data.neo4j.features.Assignment
+import io.micronaut.data.neo4j.features.Audit
+import io.micronaut.data.neo4j.features.Engineer
 import io.micronaut.data.neo4j.features.Pet
+import io.micronaut.data.neo4j.features.Project
+import io.micronaut.data.neo4j.features.ReactiveColleagueRepository
+import io.micronaut.data.neo4j.features.ReactiveEngineerRepository
 import io.micronaut.data.neo4j.features.ReactiveMovieRepository
 import io.micronaut.data.neo4j.features.ReactiveMovieService
 import io.micronaut.data.neo4j.features.Player
 import io.micronaut.data.neo4j.features.ReactivePetRepository
 import io.micronaut.data.neo4j.features.ReactiveTeamRepository
+import io.micronaut.data.neo4j.features.Review
 import io.micronaut.data.neo4j.features.Tag
 import io.micronaut.data.neo4j.features.Team
 import io.micronaut.data.neo4j.operations.Neo4jReactorRepositoryOperations
 import io.micronaut.data.neo4j.operations.Neo4jRepositoryOperations
+import io.micronaut.data.neo4j.session.Neo4jReactorConnectionOperations
 import io.micronaut.data.neo4j.transaction.Neo4jReactorTransactionOperations
 import io.micronaut.test.extensions.spock.annotation.MicronautTest
 import io.micronaut.test.support.TestPropertyProvider
 import io.micronaut.transaction.TransactionDefinition
+import io.micronaut.transaction.reactive.ReactiveTransactionStatus
 import jakarta.inject.Inject
+import reactor.core.publisher.Flux
 import reactor.core.publisher.Mono
 import spock.lang.Specification
+import spock.util.concurrent.PollingConditions
+
+import java.util.concurrent.atomic.AtomicReference
 
 @MicronautTest(transactional = false)
 class Neo4jReactiveSpec extends Specification implements TestPropertyProvider {
@@ -36,6 +56,12 @@ class Neo4jReactiveSpec extends Specification implements TestPropertyProvider {
     ReactiveTeamRepository teamRepository
 
     @Inject
+    ReactiveEngineerRepository engineerRepository
+
+    @Inject
+    ReactiveColleagueRepository colleagueRepository
+
+    @Inject
     ReactiveMovieService movieService
 
     @Inject
@@ -46,6 +72,9 @@ class Neo4jReactiveSpec extends Specification implements TestPropertyProvider {
 
     @Inject
     Neo4jReactorTransactionOperations transactionOperations
+
+    @Inject
+    Neo4jReactorConnectionOperations connectionOperations
 
     @Override
     Map<String, String> getProperties() {
@@ -157,6 +186,181 @@ class Neo4jReactiveSpec extends Specification implements TestPropertyProvider {
         found.get('legs') == 4L
         found.related.PLAYS_WITH*.name == ["Hoppy"]
         found.related.TAGGED[0] instanceof Tag
+    }
+
+    void "replacing a single valued relationship entity reactively leaves one relationship"() {
+        given:
+        def project = new Project("Apollo")
+        def ada = new Engineer("Ada")
+        ada.assignment = new Assignment(null, "developer", project)
+        ada = engineerRepository.save(ada).block()
+        def saved = ada.assignment
+
+        when: "the relationship is saved again"
+        ada.assignment = new Assignment(saved.id(), "senior developer", project)
+        ada = engineerRepository.update(ada).block()
+
+        then:
+        ada.assignment.id() == saved.id()
+        assignmentTitles() == ["senior developer"]
+
+        when: "it is replaced by one that was not saved"
+        ada.assignment = new Assignment(null, "lead", project)
+        ada = engineerRepository.update(ada).block()
+
+        then:
+        ada.assignment.id() != saved.id()
+        assignmentTitles() == ["lead"]
+
+        when: "it moves to another node"
+        ada.assignment = new Assignment(ada.assignment.id(), "architect", new Project("Gemini"))
+        engineerRepository.update(ada).block()
+
+        then:
+        assignmentTitles() == ["architect"]
+        operations.executeQuery("MATCH (:Engineer)-[:ASSIGNED_TO]->(p:Project) RETURN p.name", [:], String) == ["Gemini"]
+    }
+
+    private List<String> assignmentTitles() {
+        return operations.executeQuery("MATCH (:Engineer {name: 'Ada'})-[r:ASSIGNED_TO]->(:Project) RETURN r.title", [:], String)
+    }
+
+    void "replacing a single valued relationship entity with an assigned identifier reactively leaves one relationship"() {
+        given:
+        def project = new Project("Apollo")
+        def ada = new Engineer("Ada")
+        ada.lastReview = new Review("r1", "good", project)
+        engineerRepository.save(ada).block()
+
+        when:
+        ada.lastReview = new Review("r2", "better", project)
+        engineerRepository.update(ada).block()
+
+        then:
+        relationshipValues("LAST_REVIEWED") == [["r2", "better"]]
+
+        when: "the same relationship is saved again"
+        ada.lastReview = new Review("r2", "best", project)
+        engineerRepository.update(ada).block()
+
+        then:
+        relationshipValues("LAST_REVIEWED") == [["r2", "best"]]
+    }
+
+    void "relationship entities with assigned identifiers between the same nodes stay separate reactively"() {
+        given:
+        def project = new Project("Apollo")
+        def ada = new Engineer("Ada")
+        ada.reviews = [new Review("r1", "good", project), new Review("r2", "bad", project)]
+
+        when:
+        engineerRepository.save(ada).block()
+
+        then:
+        relationshipValues("REVIEWED") == [["r1", "good"], ["r2", "bad"]]
+
+        when: "they are saved again"
+        ada.reviews = [new Review("r1", "great", project), new Review("r2", "bad", project)]
+        engineerRepository.update(ada).block()
+
+        then:
+        relationshipValues("REVIEWED") == [["r1", "great"], ["r2", "bad"]]
+    }
+
+    private List<Object> relationshipValues(String type) {
+        return operations.executeQuery("MATCH (:Engineer)-[r:" + type + "]->(:Project) RETURN [r.id, r.verdict] ORDER BY r.id", [:], List)
+    }
+
+    void "relationship entities with generated UUIDs between the same nodes stay separate reactively"() {
+        given:
+        def project = new Project("Apollo")
+        def ada = new Engineer("Ada")
+        ada.audits = [new Audit(null, "first", project), new Audit(null, "second", project)]
+
+        when:
+        ada = engineerRepository.save(ada).block()
+
+        then:
+        ada.audits*.id().every { it != null }
+        ada.audits*.id().toSet().size() == 2
+        def stored = operations.executeQuery("MATCH (:Engineer)-[r:AUDITED]->(:Project) RETURN r.id", [:], String)
+        stored.toSet() == ada.audits*.id()*.toString().toSet()
+        stored.size() == 2
+    }
+
+    void "a relationship entity with an assigned identifier needs one reactively"() {
+        given:
+        def ada = new Engineer("Ada")
+        ada.reviews = [new Review(null, "good", new Project("Apollo"))]
+
+        when:
+        engineerRepository.save(ada).block()
+
+        then:
+        def e = thrown(DataAccessException)
+        e.message.contains("Review")
+        e.message.contains("assigned")
+    }
+
+    void "new undirected relationships between the same nodes stay separate reactively"() {
+        given:
+        def ada = new Colleague("Ada")
+        def grace = new Colleague("Grace")
+        ada.colleagues = [new Collaboration("compiler", grace), new Collaboration("cobol", grace)]
+
+        when:
+        def saved = colleagueRepository.save(ada).block().colleagues
+
+        then:
+        saved*.id.every { it != null }
+        saved*.id.toSet().size() == 2
+        collaborations() == 2
+
+        when: "another one that was not saved is added from the other end"
+        grace.colleagues = [new Collaboration("flow-matic", new Colleague("Ada"))]
+        colleagueRepository.save(grace).block()
+
+        then:
+        collaborations() == 3
+
+        when: "one that was saved is saved again from the other end"
+        def again = new Collaboration("cobol 60", new Colleague("Ada"))
+        again.id = saved[1].id
+        grace.colleagues = [again]
+        def resaved = colleagueRepository.save(grace).block().colleagues[0]
+
+        then:
+        resaved.id == saved[1].id
+        collaborations() == 3
+    }
+
+    private long collaborations() {
+        return count("MATCH (:Colleague)-[r:WORKS_WITH]->(:Colleague) RETURN count(r)")
+    }
+
+    void "replacing a single valued undirected relationship entity reactively leaves one relationship"() {
+        given:
+        def ada = new Colleague("Ada")
+        ada.mentor = new Collaboration("first", new Colleague("Grace"))
+        ada = colleagueRepository.save(ada).block()
+
+        when: "it is replaced by one that was not saved"
+        ada.mentor = new Collaboration("second", new Colleague("Grace"))
+        ada = colleagueRepository.update(ada).block()
+
+        then:
+        mentorships() == ["second"]
+
+        when: "it moves to another node"
+        ada.mentor = new Collaboration("third", new Colleague("Hopper"))
+        colleagueRepository.update(ada).block()
+
+        then:
+        mentorships() == ["third"]
+    }
+
+    private List<String> mentorships() {
+        return operations.executeQuery("MATCH (:Colleague)-[r:MENTORS]->(:Colleague) RETURN r.project", [:], String)
     }
 
     void "stream the results of explicit Cypher"() {

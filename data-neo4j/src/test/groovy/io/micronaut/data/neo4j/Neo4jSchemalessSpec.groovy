@@ -1,5 +1,9 @@
 package io.micronaut.data.neo4j
 
+import io.micronaut.core.annotation.AnnotationMetadata
+import io.micronaut.data.model.Pageable
+import io.micronaut.data.model.Sort
+import io.micronaut.data.model.runtime.PagedQuery
 import io.micronaut.data.neo4j.features.Pet
 import io.micronaut.data.neo4j.features.PetRepository
 import io.micronaut.data.neo4j.features.Tag
