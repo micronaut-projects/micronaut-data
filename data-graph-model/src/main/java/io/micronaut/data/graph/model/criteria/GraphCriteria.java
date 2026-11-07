@@ -75,7 +75,7 @@ public final class GraphCriteria {
      * @param root         The root of the query
      * @param relationship The name of the relationship property
      * @param target       The identifier of the node at the far end, an entity of the relationship property
-     * @param maxDepth     The largest number of relationships to follow
+     * @param maxDepth     The largest number of relationships to follow, at most {@code micronaut.data.graph.max-path-depth}
      * @return The predicate
      * @see #connected(Root, Class, Expression, int)
      */
@@ -92,13 +92,10 @@ public final class GraphCriteria {
      * @param root       The root of the query
      * @param targetType The entity of the node at the far end
      * @param target     The identifier of the node at the far end
-     * @param maxDepth   The largest number of relationships to follow
+     * @param maxDepth   The largest number of relationships to follow, at most {@code micronaut.data.graph.max-path-depth}
      * @return The predicate
      */
     public static @NonNull Predicate connected(@NonNull Root<?> root, @NonNull Class<?> targetType, @NonNull Expression<?> target, int maxDepth) {
-        if (targetType == null) {
-            throw new IllegalArgumentException("Relationships of any type need the entity of the node at the far end");
-        }
         return new RelatedPredicate<>(entityRoot(root), null, targetType, target, maxDepth);
     }
 

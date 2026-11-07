@@ -23,8 +23,9 @@ import org.jspecify.annotations.Nullable;
 
 /**
  * Translates a {@code LIKE} pattern into the regular expression Cypher matches with {@code =~}: {@code %} matches
- * any sequence of characters, {@code _} any single character, and everything else is matched literally. Patterns
- * bound as method arguments are converted at bind time with the standard escape character {@code \}.
+ * any sequence of characters, {@code _} any single character, and everything else is matched literally. The escape
+ * character is {@code \} unless the predicate declares another. Patterns bound as method arguments are converted at
+ * bind time.
  *
  * @author graemerocher
  * @since 5.3.0
@@ -34,7 +35,7 @@ import org.jspecify.annotations.Nullable;
 public final class LikePatternConverter implements AttributeConverter<String, String> {
 
     /**
-     * The escape character of a {@code LIKE} pattern bound as a method argument.
+     * The escape character of a {@code LIKE} pattern that does not declare one.
      */
     public static final char DEFAULT_ESCAPE = '\\';
 

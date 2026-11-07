@@ -131,7 +131,8 @@ public class AgeCypherQueryBuilder extends CypherQueryBuilder {
     /**
      * Builds the SQL that creates the vertex label table of each indexed label when it does not exist yet, then a
      * PostgreSQL expression index on the indexed properties of the table, unique for unique indexes. The statements
-     * reference the graph with {@link AgeStatements#GRAPH_TOKEN}.
+     * reference the graph with {@link AgeStatements#GRAPH_TOKEN}. Another instance that starts at the same time can
+     * create a label or index after the check for it, so a failure is tolerated when the label or index exists afterwards.
      *
      * @param entity The entity
      * @return The statements
@@ -145,10 +146,13 @@ public class AgeCypherQueryBuilder extends CypherQueryBuilder {
         String label = indexes.get(0).label();
         String labelLiteral = sqlLiteral(label);
         List<String> statements = new ArrayList<>();
-        statements.add("DO $do$ BEGIN IF NOT EXISTS (SELECT 1 FROM ag_catalog.ag_label l JOIN ag_catalog.ag_graph g ON l.graph = g.graphid"
-            + " WHERE g.name = '" + AgeStatements.GRAPH_TOKEN + "' AND l.name = " + labelLiteral + ")"
-            + " THEN PERFORM ag_catalog.create_vlabel('" + AgeStatements.GRAPH_TOKEN + "', " + labelLiteral + "); END IF; END $do$");
+        String labelExists = "SELECT 1 FROM ag_catalog.ag_label l JOIN ag_catalog.ag_graph g ON l.graph = g.graphid"
+            + " WHERE g.name = '" + AgeStatements.GRAPH_TOKEN + "' AND l.name = " + labelLiteral;
+        statements.add("DO $do$ BEGIN IF NOT EXISTS (" + labelExists + ") THEN "
+            + unlessCreatedMeanwhile("PERFORM ag_catalog.create_vlabel('" + AgeStatements.GRAPH_TOKEN + "', " + labelLiteral + ")", labelExists)
+            + " END IF; END $do$");
         for (GraphIndex index : indexes) {
+            String indexExists = "SELECT 1 FROM pg_catalog.pg_indexes WHERE schemaname = '" + AgeStatements.GRAPH_TOKEN + "' AND indexname = " + sqlLiteral(index.name());
             StringBuilder sql = new StringBuilder("CREATE ");
             if (index.unique()) {
                 sql.append("UNIQUE ");
@@ -162,9 +166,13 @@ public class AgeCypherQueryBuilder extends CypherQueryBuilder {
                 String key = "\"" + index.properties().get(i).replace("\\", "\\\\").replace("\"", "\\\"") + "\"";
                 sql.append("ag_catalog.agtype_access_operator(properties, ").append(sqlLiteral(key)).append("::agtype)");
             }
-            statements.add(sql.append(')').toString());
+            statements.add("DO $do$ BEGIN " + unlessCreatedMeanwhile(sql.append(')').toString(), indexExists) + " END $do$");
         }
         return statements;
+    }
+
+    private static String unlessCreatedMeanwhile(String statement, String exists) {
+        return "BEGIN " + statement + "; EXCEPTION WHEN OTHERS THEN IF NOT EXISTS (" + exists + ") THEN RAISE; END IF; END;";
     }
 
     private static String sqlLiteral(String value) {
@@ -181,6 +189,12 @@ public class AgeCypherQueryBuilder extends CypherQueryBuilder {
      *
      * @return False
      */
+    @Override
+    protected String caseInsensitiveLikeFlags() {
+        // PostgreSQL rejects the u flag. AGE compares with the C collation, so only ASCII letters match either case
+        return "(?si)";
+    }
+
     @Override
     public boolean supportsBatchedMerge() {
         return false;
@@ -266,6 +280,12 @@ public class AgeCypherQueryBuilder extends CypherQueryBuilder {
     @Override
     public String buildUnlinkOthersQuery(Association association, PersistentEntity owner, PersistentEntity target) {
         return AgeStatements.wrap(super.buildUnlinkOthersQuery(association, owner, target));
+    }
+
+    @Override
+    public String buildUnlinkOtherRelationshipsQuery(Association association, PersistentEntity owner, PersistentEntity target,
+                                                     @Nullable PersistentProperty relationshipIdentity) {
+        return AgeStatements.wrap(super.buildUnlinkOtherRelationshipsQuery(association, owner, target, relationshipIdentity));
     }
 
     private static QueryResult wrap(QueryResult result) {

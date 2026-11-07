@@ -13,7 +13,6 @@ import io.micronaut.data.oracle.graph.tck.OraclePersonRepository
 import io.micronaut.test.extensions.spock.annotation.MicronautTest
 import io.micronaut.transaction.TransactionOperations
 import jakarta.inject.Inject
-import spock.lang.PendingFeature
 
 import javax.sql.DataSource
 import java.sql.Connection
@@ -63,8 +62,8 @@ class OracleGraphRepositorySpec extends AbstractGraphRepositorySpec {
     }
 
     /**
-     * Relationship finders query edges that {@link #saveMovie} and {@link #savePerson} write with SQL: the repositories
-     * do not write edges, and saving a node with a single relationship is still broken, see the pending feature below.
+     * Relationship finders query edges that {@link #saveMovie} and {@link #savePerson} write with SQL, as the
+     * repositories do not write edges.
      */
     @Override
     boolean supportsRelationshipFinders() {
@@ -83,6 +82,11 @@ class OracleGraphRepositorySpec extends AbstractGraphRepositorySpec {
 
     @Override
     boolean supportsExplicitQueries() {
+        false
+    }
+
+    @Override
+    boolean supportsRepeatedInstancesInBatches() {
         false
     }
 
@@ -123,7 +127,6 @@ class OracleGraphRepositorySpec extends AbstractGraphRepositorySpec {
         personRepository.deleteAll()
     }
 
-    @PendingFeature(reason = "The insert of a node with a single relationship writes the MENTORID column that the generated vertex table does not have: the relationship is an edge table")
     void "save a node with a single relationship to its vertex table"() {
         when:
         def saved = personRepository.save(new Person("Trinity", 1967))
@@ -133,14 +136,16 @@ class OracleGraphRepositorySpec extends AbstractGraphRepositorySpec {
     }
 
     /**
-     * The same person appears in several movies of the fixtures: the row is written once. The row is written with
-     * SQL until the repository insert of a node with a single relationship matches the generated vertex table.
+     * The same person appears in several movies of the fixtures: the row is written once. A save with the mentor set
+     * fails, so it is saved with the mentor cleared, and {@link #savePerson} writes the edge with SQL.
      */
     private Person savePersonOnce(Person person) {
         personRepository.findByName(person.name).orElseGet {
-            person.id = UUID.randomUUID()
-            sql('INSERT INTO "PERSON" ("ID", "NAME", "BORN") VALUES (?, ?, ?)', person.id.toString(), person.name, person.born)
-            person
+            def mentor = person.mentor
+            person.mentor = null
+            def saved = personRepository.save(person)
+            person.mentor = mentor
+            saved
         }
     }
 

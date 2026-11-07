@@ -25,11 +25,9 @@ import io.micronaut.core.type.Argument;
 import io.micronaut.data.annotation.Projection;
 import io.micronaut.data.event.EntityEventListener;
 import io.micronaut.data.exceptions.DataAccessException;
-import io.micronaut.data.exceptions.NonUniqueResultException;
 import io.micronaut.data.exceptions.EntityExistsException;
 import io.micronaut.data.exceptions.NonUniqueResultException;
 import io.micronaut.data.exceptions.OptimisticLockException;
-import io.micronaut.data.graph.annotation.Direction;
 import io.micronaut.data.graph.annotation.TargetNode;
 import io.micronaut.data.graph.model.GraphEntities;
 import io.micronaut.data.graph.model.GraphPath;
@@ -38,6 +36,7 @@ import io.micronaut.data.graph.model.query.PathLimitParameter;
 import io.micronaut.data.graph.model.query.PathQueryDefinition;
 import io.micronaut.data.graph.model.query.builder.CypherQueryBuilder;
 import io.micronaut.data.graph.model.query.builder.GraphQueryBuilder;
+import io.micronaut.data.graph.model.query.builder.LiteralMasker;
 import io.micronaut.data.graph.runtime.GraphEdge;
 import io.micronaut.data.graph.runtime.GraphEntityMapper;
 import io.micronaut.data.graph.runtime.GraphNode;
@@ -48,9 +47,12 @@ import io.micronaut.data.graph.runtime.GraphSession;
 import io.micronaut.data.graph.runtime.GraphValueEncoderRegistrar;
 import io.micronaut.data.graph.runtime.GraphValueEncoders;
 import io.micronaut.data.graph.runtime.serde.GraphSerde;
+import io.micronaut.data.model.Association;
 import io.micronaut.data.model.Limit;
 import io.micronaut.data.model.Page;
 import io.micronaut.data.model.Pageable;
+import io.micronaut.data.model.PersistentEntity;
+import io.micronaut.data.model.PersistentProperty;
 import io.micronaut.data.model.Sort;
 import io.micronaut.data.model.runtime.QueryParameterBinding;
 import io.micronaut.data.model.runtime.AttributeConverterRegistry;
@@ -74,6 +76,7 @@ import io.micronaut.data.operations.reactive.ReactiveCapableRepository;
 import io.micronaut.data.operations.reactive.ReactiveRepositoryOperations;
 import io.micronaut.data.runtime.convert.DataConversionService;
 import io.micronaut.data.runtime.date.DateTimeProvider;
+import io.micronaut.data.runtime.event.DefaultEntityEventContext;
 import io.micronaut.data.runtime.operations.ExecutorAsyncOperations;
 import io.micronaut.data.runtime.operations.ExecutorReactiveOperations;
 import io.micronaut.data.runtime.operations.internal.AbstractRepositoryOperations;
@@ -97,6 +100,7 @@ import jakarta.inject.Inject;
 import java.util.ArrayList;
 import java.util.Collection;
 import java.util.Collections;
+import java.util.HashSet;
 import java.util.IdentityHashMap;
 import java.util.Iterator;
 import java.util.LinkedHashMap;
@@ -108,6 +112,8 @@ import java.util.Set;
 import java.util.concurrent.Executor;
 import java.util.concurrent.ExecutorService;
 import java.util.function.Function;
+import java.util.regex.Matcher;
+import java.util.regex.Pattern;
 import java.util.stream.Stream;
 
 /**
@@ -124,6 +130,12 @@ public abstract class AbstractGraphRepositoryOperations extends AbstractReposito
     AsyncCapableRepository,
     ReactiveCapableRepository,
     AutoCloseable {
+    private static final Pattern RETURN_CLAUSE = clause("RETURN");
+    private static final Pattern ORDER_BY_CLAUSE = clause("ORDER\\s+BY");
+    private static final Pattern SKIP_CLAUSE = clause("SKIP");
+    private static final Pattern LIMIT_CLAUSE = clause("LIMIT");
+    private static final Pattern CRITERIA_DEPTH = Pattern.compile(Pattern.quote(PathQueryDefinition.CRITERIA_DEPTH_TOKEN) + "(\\d+)");
+
     protected final GraphQueryBuilder queryBuilder;
 
     protected final GraphEntityMapper mapper;
@@ -319,6 +331,7 @@ public abstract class AbstractGraphRepositoryOperations extends AbstractReposito
     @Override
     public <T> Iterable<T> findAll(PagedQuery<T> query) {
         RuntimePersistentEntity<T> entity = getEntity(query.getRootEntity());
+        checkOffsetPageable(query.getPageable());
         StringBuilder cypher = new StringBuilder(queryBuilder.buildFindAllQuery(entity));
         appendSortAndLimit(cypher, entity, query.getSort(), query.getQueryLimit());
         return read(query.getAnnotationMetadata(), session -> session.run(cypher.toString(), Map.of()).records()
@@ -444,7 +457,7 @@ public abstract class AbstractGraphRepositoryOperations extends AbstractReposito
         if (preparedQuery instanceof BindableParametersPreparedQuery<?, ?> bindable) {
             bindable.bindParameters(new MapBinder(parameters));
         }
-        StringBuilder query = new StringBuilder(preparedQuery.getQuery());
+        StringBuilder query = new StringBuilder(checkCriteriaDepths(preparedQuery.getQuery()));
         int limitIndex = preparedQuery.getAnnotationMetadata().intValue(PathLimitParameter.class).orElse(-1);
         int tokenPosition = query.indexOf(PathQueryDefinition.PATH_LIMIT_TOKEN);
         if (tokenPosition >= 0) {
@@ -468,10 +481,61 @@ public abstract class AbstractGraphRepositoryOperations extends AbstractReposito
             }
         }
         if (applyLimits && !preparedQuery.isCount()) {
+            checkOffsetPageable(preparedQuery.getPageable());
             RuntimePersistentEntity<?> entity = getEntity(preparedQuery.getRootEntity());
-            appendSortAndLimit(query, entity, preparedQuery.getSort(), preparedQuery.getQueryLimit());
+            appendSortAndLimit(query, entity, preparedQuery.getSort(), unrenderedLimit(preparedQuery, query));
         }
         return new GraphQuery(query.toString(), parameters);
+    }
+
+    private String checkCriteriaDepths(String query) {
+        if (!query.contains(PathQueryDefinition.CRITERIA_DEPTH_TOKEN)) {
+            return query;
+        }
+        return CRITERIA_DEPTH.matcher(query).replaceAll(match -> {
+            // A criterion takes its depth at runtime, possibly from a request, so it is capped like a @PathLimit argument
+            int depth = Integer.parseInt(match.group(1));
+            if (depth > maxPathDepth) {
+                throw new IllegalArgumentException("The depth " + depth + " of a graph criterion is larger than "
+                    + GraphOperationsConfiguration.PREFIX + ".max-path-depth (" + maxPathDepth + ")");
+            }
+            return match.group(1);
+        });
+    }
+
+    /**
+     * The limit left to append. The criteria runtime renders the {@code Limit} argument of a method into the query it
+     * builds and still reports it on the prepared query.
+     */
+    private Limit unrenderedLimit(PreparedQuery<?, ?> preparedQuery, StringBuilder query) {
+        Limit limit = preparedQuery.getQueryLimit();
+        if (limit.isLimited() && !preparedQuery.isRawQuery()
+            && LiteralMasker.mask(query.toString()).contains(limitClause(query, limit))) {
+            return Limit.UNLIMITED;
+        }
+        return limit;
+    }
+
+    /**
+     * The text of a limit in a query.
+     *
+     * @param query The query
+     * @param limit The limit
+     * @return The text the criteria runtime renders for the limit
+     */
+    protected String limitClause(StringBuilder query, Limit limit) {
+        return queryBuilder.buildLimitAndOffset(limit.maxResults(), limit.offset());
+    }
+
+    /**
+     * Rejects a cursored pageable: without keyset pagination an offset page would hand out cursors that do not work.
+     *
+     * @param pageable The pageable
+     */
+    static void checkOffsetPageable(Pageable pageable) {
+        if (pageable.getMode() != Pageable.Mode.OFFSET) {
+            throw new UnsupportedOperationException("Graph repositories do not support cursored pagination: return a Page and pass an offset Pageable instead of a CursoredPage or CursoredPageable");
+        }
     }
 
     /**
@@ -489,10 +553,10 @@ public abstract class AbstractGraphRepositoryOperations extends AbstractReposito
             appendSort(query, entity, sort);
         }
         if (limit != null && limit.isLimited()) {
+            String masked = maskedWithoutTrailingComment(query);
             // A WITH clause may limit what it carries, as the shortest of the paths up to a depth; the final RETURN may not
-            int lastReturn = query.lastIndexOf(" RETURN ");
-            String returnClause = lastReturn < 0 ? query.toString() : query.substring(lastReturn);
-            if (returnClause.contains(" LIMIT ") || returnClause.contains(" SKIP ")) {
+            int returnIndex = lastClause(masked, RETURN_CLAUSE, -1);
+            if (lastClause(masked, LIMIT_CLAUSE, returnIndex) >= 0 || lastClause(masked, SKIP_CLAUSE, returnIndex) >= 0) {
                 throw new DataAccessException("Cannot page the query [" + query + "]: it declares SKIP or LIMIT itself");
             }
             query.append(queryBuilder.buildLimitAndOffset(limit.maxResults(), limit.offset()));
@@ -505,27 +569,50 @@ public abstract class AbstractGraphRepositoryOperations extends AbstractReposito
             throw new DataAccessException("Cannot apply the sort " + sort.getOrderBy() + " to the query [" + query + "]: it does not match the root node as " + CypherQueryBuilder.ROOT);
         }
         // The ordering the query declares takes precedence, and SKIP and LIMIT stay last
-        int returnIndex = query.lastIndexOf(" RETURN ");
-        int tailIndex = clauseIndex(query, " SKIP ", returnIndex);
-        int limitIndex = clauseIndex(query, " LIMIT ", returnIndex);
+        String masked = maskedWithoutTrailingComment(query);
+        int returnIndex = lastClause(masked, RETURN_CLAUSE, -1);
+        int tailIndex = lastClause(masked, SKIP_CLAUSE, returnIndex);
+        int limitIndex = lastClause(masked, LIMIT_CLAUSE, returnIndex);
         if (tailIndex < 0 || (limitIndex >= 0 && limitIndex < tailIndex)) {
             tailIndex = limitIndex;
         }
-        String tail = tailIndex < 0 ? "" : query.substring(tailIndex);
+        String tail = tailIndex < 0 ? "" : " " + query.substring(tailIndex);
         if (tailIndex >= 0) {
-            query.setLength(tailIndex);
+            query.setLength(query.substring(0, tailIndex).stripTrailing().length());
         }
-        query.append(clauseIndex(query, " ORDER BY ", returnIndex) >= 0 ? ", " : " ORDER BY ");
+        query.append(lastClause(masked, ORDER_BY_CLAUSE, returnIndex) >= 0 ? ", " : " ORDER BY ");
         appendOrderItems(query, entity, sort);
         query.append(tail);
     }
 
     /**
-     * @return The index of a clause that follows the {@code RETURN} clause, or -1
+     * @return A clause keyword in any case, which a property, parameter or alias of the same name is not
      */
-    private static int clauseIndex(StringBuilder query, String clause, int returnIndex) {
-        int index = query.lastIndexOf(clause);
-        return index > returnIndex ? index : -1;
+    private static Pattern clause(String keyword) {
+        return Pattern.compile("(?<![.$\\w])(?<!\\bAS\\s{1,8})" + keyword + "(?!\\w)", Pattern.CASE_INSENSITIVE);
+    }
+
+    /**
+     * Drops a comment that ends the query, which would swallow anything appended to it.
+     *
+     * @return The query with its literals and comments masked, to look for clauses in
+     */
+    private static String maskedWithoutTrailingComment(StringBuilder query) {
+        String masked = LiteralMasker.mask(query.toString()).stripTrailing();
+        query.setLength(masked.length());
+        return masked;
+    }
+
+    /**
+     * @return The index of the last occurrence of a clause after the given index, or -1
+     */
+    private static int lastClause(String masked, Pattern clause, int after) {
+        Matcher matcher = clause.matcher(masked);
+        int index = -1;
+        while (matcher.find()) {
+            index = matcher.start();
+        }
+        return index > after ? index : -1;
     }
 
     private void appendOrderItems(StringBuilder query, RuntimePersistentEntity<?> entity, Sort sort) {
@@ -563,12 +650,12 @@ public abstract class AbstractGraphRepositoryOperations extends AbstractReposito
         Object first = record.size() == 0 ? null : record.get(0);
         Argument<R> resultArgument = preparedQuery.getResultArgument();
         Class<R> resultType = preparedQuery.getResultType();
+        if (resultType == Object[].class) {
+            // Object[] rows are the values of the columns, in column order
+            return (R) record.values().toArray();
+        }
         if (preparedQuery.isDtoProjection()) {
             Map<String, Object> values = record.size() == 1 && first instanceof GraphNode node ? node.properties() : record.asMap();
-            if (resultType == Object[].class) {
-                // Object[] rows are the values of the columns, in column order
-                return (R) values.values().toArray();
-            }
             return readDto(projected(values, resultType, preparedQuery.getAnnotationMetadata()), resultType);
         }
         Class<?> nodeType = nodeType(resultArgument, preparedQuery.getRootEntity());
@@ -694,7 +781,7 @@ public abstract class AbstractGraphRepositoryOperations extends AbstractReposito
 
     /**
      * Adds the columns a DTO selects under another name with {@link Projection} under the names of its properties.
-     * The projection is declared on the property, or on the method for the properties in order that declare none.
+     * The projection is declared on the properties or, in order, on the method: the processor rejects a method and DTO that both declare it.
      *
      * @param values             The columns of the row
      * @param type               The DTO type
@@ -908,18 +995,34 @@ public abstract class AbstractGraphRepositoryOperations extends AbstractReposito
     }
 
     /**
-     * Builds the statements that create the indexes and unique constraints of entities when they do not exist yet.
+     * Builds the statements that create the indexes and unique constraints of entities, and of the node entities their
+     * relationships reach, when they do not exist yet.
      *
      * @param entityTypes The entity types
      * @return The statements
      * @since 5.3.0
      */
     protected final List<String> buildCreateIndexStatements(Collection<Class<?>> entityTypes) {
-        List<String> statements = new ArrayList<>();
+        Map<String, PersistentEntity> entities = new LinkedHashMap<>();
         for (Class<?> entityType : entityTypes) {
-            statements.addAll(queryBuilder.buildCreateIndexStatements(getEntity(entityType)));
+            collectReachableNodes(getEntity(entityType), entities);
+        }
+        List<String> statements = new ArrayList<>();
+        for (PersistentEntity entity : entities.values()) {
+            statements.addAll(queryBuilder.buildCreateIndexStatements(entity));
         }
         return statements;
+    }
+
+    private void collectReachableNodes(PersistentEntity entity, Map<String, PersistentEntity> entities) {
+        if (entities.putIfAbsent(entity.getName(), entity) != null) {
+            return;
+        }
+        for (PersistentProperty property : entity.getPersistentProperties()) {
+            if (property instanceof Association association && GraphEntities.isRelationship(association)) {
+                collectReachableNodes(GraphEntities.targetNodeEntity(association), entities);
+            }
+        }
     }
 
     /**
@@ -1202,6 +1305,60 @@ public abstract class AbstractGraphRepositoryOperations extends AbstractReposito
     }
 
     /**
+     * Relationship entities are not persisted on their own, so nothing else populates an identifier that is not
+     * assigned by the database.
+     *
+     * @param associated   The relationship entity
+     * @param identity     Its identity
+     * @param relationship The relationship
+     * @return The relationship with its identifier
+     */
+    final Object populateRelationshipId(RuntimePersistentEntity<Object> associated, RuntimePersistentProperty<Object> identity, Object relationship) {
+        DefaultEntityEventContext<Object> event = new DefaultEntityEventContext<>(associated, relationship);
+        entityEventRegistry.prePersist(event);
+        Object item = event.getEntity();
+        if (mapper.writeIdentity(associated, item) == null) {
+            throw new DataAccessException("Relationship [" + associated.getSimpleName() + "] needs its identifier [" + identity.getName() + "] assigned before it is saved");
+        }
+        return item;
+    }
+
+    /**
+     * Plans the query that removes the other relationships of a single-valued association to relationship entities.
+     * A relationship entity with an identifier can be replaced by another one to the same node, so all that may stay
+     * is the relationship to the given node with the given identifier. Nothing stays of a relationship that has no
+     * identifier yet.
+     *
+     * @param association          The association
+     * @param owner                The owning entity
+     * @param target               The target entity
+     * @param relationshipIdentity The identity of the relationship entity
+     * @param fromId               The identifier of the owner
+     * @param toId                 The identifier of the target
+     * @param relationshipId       The identifier of the relationship to keep, or null to keep none
+     * @param created              Whether the owner was only just created, so that nothing can be linked to it yet
+     * @return The query, or null when there is nothing to remove
+     */
+    final @Nullable GraphQuery planUnlinkOtherRelationships(RuntimeAssociation<?> association,
+                                                            RuntimePersistentEntity<?> owner,
+                                                            RuntimePersistentEntity<?> target,
+                                                            RuntimePersistentProperty<?> relationshipIdentity,
+                                                            @Nullable Object fromId,
+                                                            @Nullable Object toId,
+                                                            @Nullable Object relationshipId,
+                                                            boolean created) {
+        if (created || !association.getKind().isSingleEnded() || fromId == null || toId == null) {
+            return null;
+        }
+        String key = "unlinkRelationships:" + owner.getName() + ":" + association.getName() + ":" + (relationshipId != null);
+        String query = queryCache.computeIfAbsent(key, k -> queryBuilder.buildUnlinkOtherRelationshipsQuery(association, owner, target, relationshipId != null ? relationshipIdentity : null));
+        Map<String, Object> parameters = relationshipId == null
+            ? Map.of(CypherQueryBuilder.LINK_FROM_PARAMETER, fromId)
+            : Map.of(CypherQueryBuilder.LINK_FROM_PARAMETER, fromId, CypherQueryBuilder.LINK_TO_PARAMETER, toId, CypherQueryBuilder.ID_PARAMETER, relationshipId);
+        return new GraphQuery(query, parameters);
+    }
+
+    /**
      * Plans the query that looks up a related node with an identifier the application assigned, which says nothing
      * about whether the node exists, as a new node has one too.
      *
@@ -1291,6 +1448,26 @@ public abstract class AbstractGraphRepositoryOperations extends AbstractReposito
         }
         String query = queryCache.computeIfAbsent("delete:" + entity.getName(), k -> queryBuilder.buildDeleteByIdQuery(entity));
         return new GraphQuery(query, Map.of(CypherQueryBuilder.ID_PARAMETER, id));
+    }
+
+    /**
+     * Whether two instances are the same node. Their conflict is not seen by batched queries, as an insert only
+     * looks for nodes that already exist and a version check passes for both, so they are saved one at a time.
+     *
+     * @param entity    The entity
+     * @param instances The distinct instances
+     * @param <T>       The entity type
+     * @return Whether an identifier is repeated
+     */
+    final <T> boolean repeatsIdentifier(RuntimePersistentEntity<T> entity, List<T> instances) {
+        Set<Object> identifiers = new HashSet<>();
+        for (T instance : instances) {
+            Object id = mapper.writeIdentity(entity, instance);
+            if (id != null && !identifiers.add(id)) {
+                return true;
+            }
+        }
+        return false;
     }
 
     /**
@@ -1394,6 +1571,8 @@ public abstract class AbstractGraphRepositoryOperations extends AbstractReposito
      */
     private final class Persister {
         final Map<Object, Object> saved = new IdentityHashMap<>();
+        // The nodes of a batch that are written but not yet linked, by the instance the save was called with
+        final Map<Object, Runnable> unlinked = new IdentityHashMap<>();
         private final GraphSession session;
         private final OperationContext context;
 
@@ -1403,6 +1582,7 @@ public abstract class AbstractGraphRepositoryOperations extends AbstractReposito
         }
 
         <T> T save(RuntimePersistentEntity<T> entity, T instance, boolean insert) {
+            link(instance);
             Object existing = saved.get(instance);
             if (existing != null) {
                 return (T) existing;
@@ -1430,12 +1610,17 @@ public abstract class AbstractGraphRepositoryOperations extends AbstractReposito
                     distinct.add(instance);
                 }
             }
-            if (distinct.size() < 2 || !queryBuilder.supportsBatchNodeWrites()) {
+            if (distinct.size() < 2 || !queryBuilder.supportsBatchNodeWrites() || repeatsIdentifier(entity, distinct)) {
                 List<T> results = new ArrayList<>(list.size());
                 for (T instance : list) {
                     results.add(save(entity, instance, insert));
                 }
                 return results;
+            }
+            // Recorded ahead of the entity events, which may replace an immutable instance that another node of the
+            // batch relates to
+            for (T instance : distinct) {
+                saved.put(instance, instance);
             }
             NodesOperation<T> operation = new NodesOperation<>(this, entity, distinct, insert);
             if (insert) {
@@ -1453,6 +1638,19 @@ public abstract class AbstractGraphRepositoryOperations extends AbstractReposito
                 ordered.add(results.get(instance));
             }
             return ordered;
+        }
+
+        /**
+         * Links the relationships of a node of a batch that is not yet linked, so that a node relating to it is
+         * given the complete instance, as it is when it saves the related node itself.
+         *
+         * @param instance The instance the save was called with
+         */
+        void link(Object instance) {
+            Runnable link = unlinked.remove(instance);
+            if (link != null) {
+                link.run();
+            }
         }
 
         /**
@@ -1497,8 +1695,8 @@ public abstract class AbstractGraphRepositoryOperations extends AbstractReposito
     }
 
     /**
-     * How a relationship is written. Relationship entities with a database-assigned identifier can be told apart, so
-     * two of them may connect the same nodes. Any other relationship is identified by its nodes and type.
+     * How a relationship is written. Relationship entities with an identifier can be told apart, so two of them may
+     * connect the same nodes. Any other relationship is identified by its nodes and type.
      */
     enum LinkMode {
         MERGE, CREATE, UPDATE
@@ -1567,10 +1765,15 @@ public abstract class AbstractGraphRepositoryOperations extends AbstractReposito
         private final Persister persister;
         private final Map<Data, Object> previousVersions = new IdentityHashMap<>();
         private final Set<Data> created = Collections.newSetFromMap(new IdentityHashMap<>());
+        // The instances the save was called with: the entity events and a node write may replace an immutable instance
+        private final Map<Data, T> originals = new IdentityHashMap<>();
 
         NodesOperation(Persister persister, RuntimePersistentEntity<T> entity, Iterable<T> instances, boolean insert) {
             super(persister.context, AbstractGraphRepositoryOperations.this.noCascade, AbstractGraphRepositoryOperations.this.conversionService, entityEventRegistry, entity, instances, insert);
             this.persister = persister;
+            for (Data d : entities) {
+                originals.put(d, d.entity);
+            }
         }
 
         @Override
@@ -1607,12 +1810,8 @@ public abstract class AbstractGraphRepositoryOperations extends AbstractReposito
         @Override
         protected void execute() {
             List<Data> pending = new ArrayList<>();
-            // The instances the save was called with: a node write may replace an immutable instance
-            Map<Data, T> originals = new IdentityHashMap<>();
             for (Data d : entities) {
                 if (!d.vetoed) {
-                    persister.saved.put(d.entity, d.entity);
-                    originals.put(d, d.entity);
                     pending.add(d);
                 }
             }
@@ -1628,13 +1827,16 @@ public abstract class AbstractGraphRepositoryOperations extends AbstractReposito
             // A node whose relationships are linked first may point to a node later in the batch, which must be
             // found with the identifier it was just given: an immutable instance was replaced by the write
             for (Data d : pending) {
-                persister.written(Objects.requireNonNull(originals.get(d)), d.entity);
+                T original = Objects.requireNonNull(originals.get(d));
+                persister.written(original, d.entity);
+                persister.unlinked.put(original, () -> {
+                    d.entity = new RelationshipWriter<>(persister, persistentEntity, original, d.entity, addLabels.get(d), created.contains(d)).write();
+                    persister.saved.put(original, d.entity);
+                    persister.saved.put(d.entity, d.entity);
+                });
             }
             for (Data d : pending) {
-                T original = Objects.requireNonNull(originals.get(d));
-                d.entity = new RelationshipWriter<>(persister, persistentEntity, original, d.entity, addLabels.get(d), created.contains(d)).write();
-                persister.saved.put(original, d.entity);
-                persister.saved.put(d.entity, d.entity);
+                persister.link(Objects.requireNonNull(originals.get(d)));
             }
         }
 
@@ -1750,6 +1952,11 @@ public abstract class AbstractGraphRepositoryOperations extends AbstractReposito
                     if (target == null) {
                         continue;
                     }
+                    if (target instanceof Map<?, ?>) {
+                        // A node of a label no entity maps reads as its properties, and it is already linked
+                        savedTargets.add(target);
+                        continue;
+                    }
                     RuntimePersistentEntity<Object> targetEntity = (RuntimePersistentEntity<Object>) AbstractGraphRepositoryOperations.this.getEntity(target.getClass());
                     Object savedTarget = persister.save(targetEntity, target, persister.isNew(targetEntity, target));
                     changed |= savedTarget != target;
@@ -1789,20 +1996,26 @@ public abstract class AbstractGraphRepositoryOperations extends AbstractReposito
             if (savedTarget != target) {
                 item = withProperty(targetProperty, item, savedTarget);
             }
-            Map<String, Object> properties = mapper.writeProperties(associated, item);
-            RuntimePersistentProperty<Object> relationshipIdentity = associated.getIdentity();
-            Object toId = mapper.writeIdentity(targetEntity, savedTarget);
-            unlinkOthers(association, targetEntity, fromId, toId);
+            RuntimePersistentProperty<Object> relationshipIdentity = associated.hasIdentity() ? associated.getIdentity() : null;
             boolean nativeId = relationshipIdentity != null && GraphEntities.isNativeId(relationshipIdentity);
-            Object savedId = nativeId ? mapper.writeIdentity(associated, item) : null;
+            if (relationshipIdentity != null && !nativeId && mapper.writeIdentity(associated, item) == null) {
+                item = populateRelationshipId(associated, relationshipIdentity, item);
+            }
+            Map<String, Object> properties = mapper.writeProperties(associated, item);
+            Object toId = mapper.writeIdentity(targetEntity, savedTarget);
+            Object savedId = mapper.writeIdentity(associated, item);
+            if (relationshipIdentity == null) {
+                unlinkOthers(association, targetEntity, fromId, toId);
+            } else {
+                unlinkOtherRelationships(association, targetEntity, relationshipIdentity, fromId, toId, savedId);
+            }
             Object relationshipId = savedId == null ? null : runLink(association, targetEntity, toId, fromId, properties, relationshipIdentity, LinkMode.UPDATE, savedId);
             if (relationshipId == null) {
-                // A relationship that was not saved, or that no longer connects these nodes, is a new one. An
-                // undirected one is matched in either direction, so saving it from its other end finds it
-                boolean create = nativeId && GraphEntities.direction(association) != Direction.UNDIRECTED;
-                relationshipId = runLink(association, targetEntity, toId, fromId, properties, relationshipIdentity, create ? LinkMode.CREATE : LinkMode.MERGE, null);
+                // A relationship that was not saved, or that no longer connects these nodes, is a new one. Saving one
+                // that was saved finds it by its identifier from either end, even if it is undirected
+                relationshipId = runLink(association, targetEntity, toId, fromId, properties, relationshipIdentity, relationshipIdentity != null ? LinkMode.CREATE : LinkMode.MERGE, null);
             }
-            if (nativeId && relationshipId != null) {
+            if (relationshipIdentity != null && nativeId && relationshipId != null) {
                 BeanProperty<Object, Object> idProperty = relationshipIdentity.getProperty();
                 Object id = mapper.readValue(relationshipIdentity, relationshipId);
                 item = withProperty(idProperty, item, id);
@@ -1819,6 +2032,18 @@ public abstract class AbstractGraphRepositoryOperations extends AbstractReposito
             GraphQuery query = planUnlinkOthers(association, persistentEntity, target, fromId, toId, created);
             if (query != null) {
                 persister.run(query).records();
+            }
+        }
+
+        private void unlinkOtherRelationships(RuntimeAssociation<T> association,
+                                              RuntimePersistentEntity<?> target,
+                                              RuntimePersistentProperty<?> relationshipIdentity,
+                                              @Nullable Object fromId,
+                                              @Nullable Object toId,
+                                              @Nullable Object relationshipId) {
+            GraphQuery query = planUnlinkOtherRelationships(association, persistentEntity, target, relationshipIdentity, fromId, toId, relationshipId, created);
+            if (query != null) {
+                persister.run(query);
             }
         }
 

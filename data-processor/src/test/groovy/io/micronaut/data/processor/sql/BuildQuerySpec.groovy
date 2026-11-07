@@ -2461,6 +2461,8 @@ interface UserGroupMembershipRepository extends GenericRepository<UserGroupMembe
     List<UserGroupMembership> findAllByUser_AddressZipCode(String zipCode);
 
     List<UserGroupMembership> findAllByUserAddress_ZipCode(String zipCode);
+
+    List<UserGroupMembership> findAllByUserGroup_AreaIdIn(List<Long> areaIds);
 }
 """
         )
@@ -2472,6 +2474,7 @@ interface UserGroupMembershipRepository extends GenericRepository<UserGroupMembe
         def queryByUserLogin = getQuery(repository.getRequiredMethod("findAllByUserLogin", String))
         def queryByUserAddressZipCode = getQuery(repository.getRequiredMethod("findAllByUser_AddressZipCode", String))
         def queryByUserAddressZipCode2 = getQuery(repository.getRequiredMethod("findAllByUserAddress_ZipCode", String))
+        def queryByAreaIdIn = getQuery(repository.getRequiredMethod("findAllByUserGroup_AreaIdIn", List))
         then:
         queryByUserLoginAndAreaId != ''
         queryByUserLogin == 'SELECT ugm_.`id`,ugm_.`user_group_id`,ugm_.`user_id`,ugm_.`user_address_id` FROM `ugm` ugm_ INNER JOIN `u` ugm_user_ ON ugm_.`user_id`=ugm_user_.`id` WHERE (ugm_user_.`login` = ?)'
@@ -2479,6 +2482,111 @@ interface UserGroupMembershipRepository extends GenericRepository<UserGroupMembe
         queryByUserAddressZipCode == 'SELECT ugm_.`id`,ugm_.`user_group_id`,ugm_.`user_id`,ugm_.`user_address_id` FROM `ugm` ugm_ INNER JOIN `u` ugm_user_ ON ugm_.`user_id`=ugm_user_.`id` WHERE (ugm_user_.`address_zip_code` = ?)'
         // Queries by userAddress.zipCode
         queryByUserAddressZipCode2 == 'SELECT ugm_.`id`,ugm_.`user_group_id`,ugm_.`user_id`,ugm_.`user_address_id` FROM `ugm` ugm_ INNER JOIN `ua` ugm_user_address_ ON ugm_.`user_address_id`=ugm_user_address_.`id` WHERE (ugm_user_address_.`zip_code` = ?)'
+        queryByAreaIdIn.endsWith('WHERE (ugm_user_group_.`area_id` IN (?))')
+    }
+
+    void "test repo method with underscore path and restriction #method"() {
+        given:
+        def repository = buildRepository('test.BookRepository', """
+
+import io.micronaut.data.jdbc.annotation.JdbcRepository;
+import io.micronaut.data.model.query.builder.sql.Dialect;
+import io.micronaut.data.tck.entities.Book;
+
+@JdbcRepository(dialect = Dialect.MYSQL)
+interface BookRepository extends GenericRepository<Book, Long> {
+    List<Book> findByAuthor_NameLike(String name);
+    List<Book> findByAuthor_NameIlike(String name);
+    List<Book> findByAuthor_NameIn(List<String> names);
+    List<Book> findByAuthor_NameIsNull();
+    List<Book> findByAuthor_NameStartsWithIgnoreCase(String name);
+    List<Book> findByTitleAndAuthor_NameNotEqual(String title, String name);
+    List<Book> findByAuthor_NameIgnoreCase(String name);
+}
+"""
+        )
+
+        expect:
+        getQuery(repository.findPossibleMethods(method).findFirst().get()).endsWith(condition)
+
+        where:
+        method                                  | condition
+        'findByAuthor_NameLike'                 | 'WHERE (book_author_.`name` LIKE ?)'
+        'findByAuthor_NameIlike'                | 'WHERE (LOWER(book_author_.`name`) LIKE LOWER(?))'
+        'findByAuthor_NameIn'                   | 'WHERE (book_author_.`name` IN (?))'
+        'findByAuthor_NameIsNull'               | 'WHERE (book_author_.`name` IS NULL)'
+        'findByAuthor_NameStartsWithIgnoreCase' | "WHERE (LOWER(book_author_.`name`) LIKE CONCAT(LOWER(?),'%'))"
+        'findByTitleAndAuthor_NameNotEqual'     | 'WHERE (book_.`title` = ? AND book_author_.`name` != ?)'
+        'findByAuthor_NameIgnoreCase'           | 'WHERE (LOWER(book_author_.`name`) = LOWER(?))'
+    }
+
+    void "test repo method with underscore path, restriction and a property named like the restriction"() {
+        given:
+        def repository = buildRepository('test.TicketRepository', """
+
+import io.micronaut.data.annotation.Relation;
+import io.micronaut.data.jdbc.annotation.JdbcRepository;
+import io.micronaut.data.model.query.builder.sql.Dialect;
+
+@JdbcRepository(dialect = Dialect.MYSQL)
+interface TicketRepository extends GenericRepository<Ticket, Long> {
+    List<Ticket> findByVenue_BuiltIn(String builtIn);
+    List<Ticket> findByVenue_BuiltInIn(List<String> builtIns);
+    List<Ticket> findByVenue_AreaIdIn(List<Long> areaIds);
+}
+
+@MappedEntity
+class Ticket {
+    @Id
+    private Long id;
+    @Relation(Relation.Kind.MANY_TO_ONE)
+    private Venue venue;
+    public Long getId() { return id; }
+    public void setId(Long id) { this.id = id; }
+    public Venue getVenue() { return venue; }
+    public void setVenue(Venue venue) { this.venue = venue; }
+}
+
+@MappedEntity
+class Venue {
+    @Id
+    private Long id;
+    private String builtIn;
+    private Long areaId;
+    public Long getId() { return id; }
+    public void setId(Long id) { this.id = id; }
+    public String getBuiltIn() { return builtIn; }
+    public void setBuiltIn(String builtIn) { this.builtIn = builtIn; }
+    public Long getAreaId() { return areaId; }
+    public void setAreaId(Long areaId) { this.areaId = areaId; }
+}
+"""
+        )
+
+        expect: "the whole token is a path only when it resolves"
+        getQuery(repository.findPossibleMethods('findByVenue_BuiltIn').findFirst().get()).endsWith('WHERE (ticket_venue_.`built_in` = ?)')
+        getQuery(repository.findPossibleMethods('findByVenue_BuiltInIn').findFirst().get()).endsWith('WHERE (ticket_venue_.`built_in` IN (?))')
+        getQuery(repository.findPossibleMethods('findByVenue_AreaIdIn').findFirst().get()).endsWith('WHERE (ticket_venue_.`area_id` IN (?))')
+    }
+
+    void "test repo method with underscore path, restriction and no matching property"() {
+        when:
+        buildRepository('test.BookRepository', """
+
+import io.micronaut.data.jdbc.annotation.JdbcRepository;
+import io.micronaut.data.model.query.builder.sql.Dialect;
+import io.micronaut.data.tck.entities.Book;
+
+@JdbcRepository(dialect = Dialect.MYSQL)
+interface BookRepository extends GenericRepository<Book, Long> {
+    List<Book> findByAuthor_UnknownLike(String name);
+}
+"""
+        )
+
+        then:
+        def e = thrown(RuntimeException)
+        e.message.contains("Unknown")
     }
 
     void "test repo method with underscore and not matching property"() {

@@ -47,6 +47,50 @@ class Movie {
         'findByTagsIsNotEmpty'       | 'java.util.List<Movie> findByTagsIsNotEmpty();'                             | 'SELECT movie_."id",movie_."title",movie_."tags" FROM "movie" movie_ WHERE ((movie_."tags" IS NOT NULL AND cardinality(movie_."tags") > 0))'
     }
 
+    void "test #method on a collection that is not stored as an array is rejected"() {
+        when:
+        buildRepository('test.MovieRepository', """
+import io.micronaut.data.jdbc.annotation.JdbcRepository;
+import io.micronaut.data.model.query.builder.sql.Dialect;
+import io.micronaut.data.annotation.TypeDef;
+import io.micronaut.data.model.DataType;
+
+@JdbcRepository(dialect = Dialect.POSTGRES)
+interface MovieRepository extends CrudRepository<Movie, Long> {
+    java.util.List<Movie> $method();
+}
+
+@MappedEntity
+class Movie {
+    @Id
+    @GeneratedValue
+    private Long id;
+    @TypeDef(type = DataType.JSON)
+    private java.util.List<String> tags;
+    @TypeDef(type = DataType.JSON)
+    private java.util.Map<String, String> ratings;
+    public Long getId() { return id; }
+    public void setId(Long id) { this.id = id; }
+    public java.util.List<String> getTags() { return tags; }
+    public void setTags(java.util.List<String> tags) { this.tags = tags; }
+    public java.util.Map<String, String> getRatings() { return ratings; }
+    public void setRatings(java.util.Map<String, String> ratings) { this.ratings = ratings; }
+}
+""")
+
+        then:
+        def e = thrown(RuntimeException)
+        e.message.contains("IsEmpty and IsNotEmpty on a collection are only supported for PostgreSQL arrays")
+        e.message.contains("[$property]")
+        e.message.contains("JSON")
+
+        where:
+        method                  | property
+        'findByTagsIsEmpty'     | 'tags'
+        'findByTagsIsNotEmpty'  | 'tags'
+        'findByRatingsIsEmpty'  | 'ratings'
+    }
+
     void "test IgnoreCase with In is rejected with a clear message"() {
         when:
         buildRepository('test.MovieRepository', """

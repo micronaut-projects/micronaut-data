@@ -77,6 +77,12 @@ final class DefaultAgeReactorRepositoryOperations extends AbstractReactiveGraphR
      */
     static final String PREPARED_SETTING = "micronaut.age.prepared";
 
+    /**
+     * The prefix of the setting, local to the transaction, that says the transaction created a graph. The catalog
+     * row cannot tell: it carries the identifier of the savepoint's subtransaction, not of the transaction.
+     */
+    static final String CREATED_SETTING_PREFIX = "micronaut.age_created_";
+
     private static final Logger LOG = LoggerFactory.getLogger(DefaultAgeReactorRepositoryOperations.class);
     /**
      * Puts the AGE catalog last on the search path, unless it is on it: the agtype operators Cypher writes use
@@ -287,7 +293,8 @@ final class DefaultAgeReactorRepositoryOperations extends AbstractReactiveGraphR
                     LOG.debug("Creating Apache AGE graph [{}]", graph);
                     return execute(connection, "SELECT ag_catalog.create_graph('" + graph + "')");
                 }))
-                .then(Mono.from(connection.releaseSavepoint(SAVEPOINT)))
+                .then(Mono.defer(() -> execute(connection, "SELECT set_config('" + CREATED_SETTING_PREFIX + graph + "', 'true', true)")))
+                .then(Mono.defer(() -> Mono.from(connection.releaseSavepoint(SAVEPOINT))))
                 .onErrorResume(R2dbcException.class, e -> Mono.from(connection.rollbackTransactionToSavepoint(SAVEPOINT))
                     .then(graphState(connection, graph))
                     .flatMap(after -> {
@@ -322,8 +329,7 @@ final class DefaultAgeReactorRepositoryOperations extends AbstractReactiveGraphR
      * when the current transaction created it, or {@link #COMMITTED} when it exists for good
      */
     private static Mono<Integer> graphState(Connection connection, String graph) {
-        // The catalog row of a graph the current transaction created carries its transaction id
-        return first(connection, "SELECT CASE WHEN xmin::text = (txid_current_if_assigned() % 4294967296)::text THEN " + CURRENT_TRANSACTION
+        return first(connection, "SELECT CASE WHEN current_setting('" + CREATED_SETTING_PREFIX + graph + "', true) = 'true' THEN " + CURRENT_TRANSACTION
             + " ELSE " + COMMITTED + " END FROM ag_catalog.ag_graph WHERE name = '" + graph + "'").defaultIfEmpty(ABSENT);
     }
 
