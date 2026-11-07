@@ -208,6 +208,44 @@ class Neo4jReactiveSpec extends Specification implements TestPropertyProvider {
         operations.executeQuery("MATCH (:Pet {name: 'Dino'})-[:OWNS]->(u:Unmapped) RETURN u.name", [:], String) == ["bone"]
     }
 
+    void "reactive find all with a paged query collects dynamic relationships"() {
+        given:
+        def dino = new Pet("Dino")
+        dino.related = [PLAYS_WITH: [new Pet("Hoppy")]]
+        petRepository.save(dino).block()
+
+        when:
+        def pets = reactiveOperations.findAll(pagedPets()).collectList().block()
+
+        then:
+        pets*.name == ["Dino", "Hoppy"]
+        pets[0].related.PLAYS_WITH*.name == ["Hoppy"]
+    }
+
+    private static PagedQuery<Pet> pagedPets() {
+        return new PagedQuery<Pet>() {
+            @Override
+            Class<Pet> getRootEntity() {
+                return Pet
+            }
+
+            @Override
+            Pageable getPageable() {
+                return Pageable.from(0, 10, Sort.of(Sort.Order.asc("name")))
+            }
+
+            @Override
+            String getName() {
+                return "findAll"
+            }
+
+            @Override
+            AnnotationMetadata getAnnotationMetadata() {
+                return AnnotationMetadata.EMPTY_METADATA
+            }
+        }
+    }
+
     void "finding one reactively fails when there are several rows"() {
         given:
         movieRepository.saveAll([

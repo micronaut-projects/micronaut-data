@@ -193,6 +193,44 @@ class Neo4jSchemalessSpec extends Specification implements TestPropertyProvider 
         thrown(RuntimeException)
     }
 
+    void "find all with a paged query collects dynamic relationships"() {
+        given:
+        def dino = new Pet("Dino")
+        dino.related = [PLAYS_WITH: [new Pet("Hoppy")]]
+        petRepository.save(dino)
+
+        when:
+        def pets = operations.findAll(pagedPets()).toList()
+
+        then:
+        pets*.name == ["Dino", "Hoppy"]
+        pets[0].related.PLAYS_WITH*.name == ["Hoppy"]
+    }
+
+    private static PagedQuery<Pet> pagedPets() {
+        return new PagedQuery<Pet>() {
+            @Override
+            Class<Pet> getRootEntity() {
+                return Pet
+            }
+
+            @Override
+            Pageable getPageable() {
+                return Pageable.from(0, 10, Sort.of(Sort.Order.asc("name")))
+            }
+
+            @Override
+            String getName() {
+                return "findAll"
+            }
+
+            @Override
+            AnnotationMetadata getAnnotationMetadata() {
+                return AnnotationMetadata.EMPTY_METADATA
+            }
+        }
+    }
+
     void "a dynamic relationship type that cannot be quoted is rejected"() {
         given:
         def dino = new Pet("Dino")

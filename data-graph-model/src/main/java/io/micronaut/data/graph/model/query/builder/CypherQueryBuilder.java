@@ -415,7 +415,14 @@ public class CypherQueryBuilder implements GraphQueryBuilder {
      */
     @Override
     public String buildFindAllQuery(PersistentEntity entity) {
-        return MATCH_OPEN + ROOT + labelExpression(entity) + ") RETURN " + ROOT;
+        StringBuilder query = new StringBuilder(MATCH_OPEN + ROOT + labelExpression(entity) + ")");
+        List<String> columns = new ArrayList<>();
+        appendDynamicRelationships(query, entity, columns, List.of());
+        query.append(RETURN).append(ROOT);
+        for (String column : columns) {
+            query.append(", ").append(column);
+        }
+        return query.toString();
     }
 
     /**
