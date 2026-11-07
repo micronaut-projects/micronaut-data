@@ -163,7 +163,7 @@ class CypherCriteriaQuerySpec extends Specification {
         result = build(query)
 
         then: "the regular expression is part of the query"
-        result.query == "MATCH (n:Person) WHERE n.name =~ '(?si)^50%.\$' RETURN n"
+        result.query == "MATCH (n:Person) WHERE n.name =~ '(?siu)^50%.\$' RETURN n"
         result.parameterBindings.empty
 
         when: "the escape character is a string literal"
@@ -174,6 +174,34 @@ class CypherCriteriaQuerySpec extends Specification {
 
         then:
         result.query == "MATCH (n:Person) WHERE n.name =~ '(?s)^a%b\$' RETURN n"
+
+        when: "a build time literal declares no escape character"
+        query = cb.createQuery(Person)
+        root = query.from(Person)
+        query.where(new LikePredicate(root.get("name"), new LiteralExpression<>("50\\%_"), null, false, false))
+        result = build(query)
+
+        then: "it is the same one as for a method argument"
+        result.query == "MATCH (n:Person) WHERE n.name =~ '(?s)^50%.\$' RETURN n"
+
+        when: "a runtime literal declares no escape character"
+        query = cb.createQuery(Person)
+        root = query.from(Person)
+        query.where(cb.like(root.get("name"), "50\\%_"))
+        result = build(query)
+
+        then:
+        result.parameterBindings[0].value == '^50%.$'
+
+        when: "the escape character is not a literal"
+        query = cb.createQuery(Person)
+        root = query.from(Person)
+        query.where(cb.like(root.get("name"), cb.parameter(String), cb.parameter(Character)))
+        build(query)
+
+        then:
+        def nonLiteral = thrown(UnsupportedOperationException)
+        nonLiteral.message.contains("must be a literal")
 
         when: "a method argument is combined with another escape character"
         query = cb.createQuery(Person)
@@ -217,6 +245,32 @@ class CypherCriteriaQuerySpec extends Specification {
         binding.tableAlias == null
         binding.value == null
         binding.converterClassName == LikePatternConverter.name
+    }
+
+    void "test AGE matches a case-insensitive LIKE without the flag PostgreSQL rejects"() {
+        given:
+        def query = cb.createQuery(Person)
+        PersistentEntityRoot root = query.from(Person)
+        query.where(new LikePredicate(root.get("name"), new LiteralExpression<>("a%"), null, false, true))
+
+        expect:
+        ((PersistentEntityCriteriaQueryBuilder) query).build(AnnotationMetadata.EMPTY_METADATA, new AgeCypherQueryBuilder()).query.contains("(?si)^a.*")
+    }
+
+    void "test the function names of Jakarta Data expressions are translated to Cypher"() {
+        when:
+        def query = cb.createQuery(Person)
+        PersistentEntityRoot root = query.from(Person)
+        query.where(cb.equal(cb.function("LENGTH", Integer, root.get("name")), 2))
+        def length = build(query)
+        query = cb.createQuery(Person)
+        root = query.from(Person)
+        query.where(cb.equal(cb.function("CONCAT", String, root.get("name"), cb.literal("x")), "ax"))
+        def concat = build(query)
+
+        then:
+        length.query == 'MATCH (n:Person) WHERE size(n.name) = $p0 RETURN n'
+        concat.query == 'MATCH (n:Person) WHERE (n.name + $p0) = $p1 RETURN n'
     }
 
     void "test subqueries are rejected"() {

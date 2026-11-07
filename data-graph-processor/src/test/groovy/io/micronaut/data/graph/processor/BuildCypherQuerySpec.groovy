@@ -389,6 +389,57 @@ interface DtoRepository extends CrudRepository<Movie, String> {
         e.message.contains('Graph repositories read DTOs with Micronaut Serialization: annotate [test.TitleOnly] with @Serdeable')
     }
 
+    void "test @Projection on both the method and the DTO is rejected"() {
+        when:
+        buildRepository('test.MixedRepository', """
+$MOVIES
+
+@io.micronaut.serde.annotation.Serdeable
+record TitleAndYear(String label, @io.micronaut.data.annotation.Projection("released") Integer year) {
+}
+
+@TestGraphRepository
+interface MixedRepository extends CrudRepository<Movie, String> {
+    @Query("MATCH (n:Movie) RETURN n.title AS title, n.released AS released")
+    @io.micronaut.data.annotation.Projection("title")
+    List<TitleAndYear> mixed();
+}
+""")
+
+        then:
+        def e = thrown(RuntimeException)
+        e.message.contains('Declare @Projection either on the method or on the properties of [test.TitleAndYear], not both')
+    }
+
+    void "test @Projection on the method alone or the DTO alone compiles"() {
+        when:
+        def repository = buildRepository('test.ProjectionRepository', """
+$MOVIES
+
+@io.micronaut.serde.annotation.Serdeable
+record ByMethod(String label) {
+}
+
+@io.micronaut.serde.annotation.Serdeable
+record ByProperty(@io.micronaut.data.annotation.Projection("title") String label) {
+}
+
+@TestGraphRepository
+interface ProjectionRepository extends CrudRepository<Movie, String> {
+    @Query("MATCH (n:Movie) RETURN n.title AS title")
+    @io.micronaut.data.annotation.Projection("title")
+    List<ByMethod> byMethod();
+
+    @Query("MATCH (n:Movie) RETURN n.title AS title")
+    List<ByProperty> byProperty();
+}
+""")
+
+        then:
+        findMethod(repository, 'byMethod', 0) != null
+        findMethod(repository, 'byProperty', 0) != null
+    }
+
     void "test Object[] rows are read without a deserializer"() {
         when:
         def repository = buildRepository('test.RowsRepository', """

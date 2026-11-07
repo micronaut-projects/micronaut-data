@@ -368,6 +368,15 @@ class Neo4jReactiveSpec extends Specification implements TestPropertyProvider {
         tagRepository.deleteAll().block()
     }
 
+    void "a reactive cursored page is rejected instead of being answered with offset paging"() {
+        when:
+        tagRepository.findByNameStartsWith("a", Pageable.from(0, 1)).block()
+
+        then:
+        def e = thrown(UnsupportedOperationException)
+        e.message.contains("do not support cursored pagination")
+    }
+
     void "reactive saveAll writes an instance passed twice once"() {
         given:
         def graph = new Tag("graph")

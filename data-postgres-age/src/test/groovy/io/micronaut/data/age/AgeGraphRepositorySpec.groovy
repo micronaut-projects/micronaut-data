@@ -9,6 +9,7 @@ import io.micronaut.data.age.tck.AgeMovieRepository
 import io.micronaut.data.age.tck.AgePersonRepository
 import io.micronaut.data.graph.tck.AbstractGraphRepositorySpec
 import io.micronaut.data.graph.tck.entities.Friend
+import io.micronaut.data.graph.tck.entities.Person
 import io.micronaut.data.model.Pageable
 import io.micronaut.test.extensions.spock.annotation.MicronautTest
 import io.micronaut.transaction.TransactionOperations
@@ -55,6 +56,14 @@ class AgeGraphRepositorySpec extends AbstractGraphRepositorySpec {
     @Override
     void cleanupGraph() {
         operations.executeQuery("MATCH (n) DETACH DELETE n", [:])
+    }
+
+    void "a case-insensitive LIKE runs without the flag PostgreSQL rejects, and folds ASCII only"() {
+        given:
+        ["Eric", "Éric"].each { personRepository.save(new Person(it, 1970)) }
+
+        expect:
+        personRepository.findByNameIlike("e%")*.name == ["Eric"]
     }
 
     void "a page of a shortest path counts the shortest path, not every path up to the depth"() {

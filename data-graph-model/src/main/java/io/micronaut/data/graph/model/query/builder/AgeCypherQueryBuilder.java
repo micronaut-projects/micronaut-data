@@ -182,6 +182,12 @@ public class AgeCypherQueryBuilder extends CypherQueryBuilder {
      * @return False
      */
     @Override
+    protected String caseInsensitiveLikeFlags() {
+        // PostgreSQL rejects the u flag. AGE compares with the C collation, so only ASCII letters match either case
+        return "(?si)";
+    }
+
+    @Override
     public boolean supportsBatchedMerge() {
         return false;
     }

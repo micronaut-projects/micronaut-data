@@ -911,6 +911,16 @@ public class CypherQueryBuilder implements GraphQueryBuilder {
     }
 
     /**
+     * The flags of a case-insensitive {@code LIKE}, which is matched as a regular expression.
+     *
+     * @return The embedded flags
+     */
+    protected String caseInsensitiveLikeFlags() {
+        // u: a Java regular expression otherwise folds the case of ASCII only
+        return "(?siu)";
+    }
+
+    /**
      * Whether the database can search paths of any length.
      *
      * @return True if path queries may omit a maximum depth
@@ -1618,12 +1628,30 @@ public class CypherQueryBuilder implements GraphQueryBuilder {
 
         @Override
         public void visit(FunctionExpression<?> functionExpression) {
-            out.append(functionExpression.getName()).append('(');
+            // The standard names Jakarta Data expressions use: Cypher concatenates with + and has length() for paths
+            String name = functionExpression.getName();
+            if (name.equals("CONCAT")) {
+                appendConcat(functionExpression.getExpressions());
+                return;
+            }
+            out.append(name.equals("LENGTH") ? "size" : name).append('(');
             Iterator<Expression<?>> iterator = functionExpression.getExpressions().iterator();
             while (iterator.hasNext()) {
                 appendExpression(iterator.next(), boundProperty);
                 if (iterator.hasNext()) {
                     out.append(", ");
+                }
+            }
+            out.append(')');
+        }
+
+        private void appendConcat(List<Expression<?>> expressions) {
+            out.append('(');
+            Iterator<Expression<?>> iterator = expressions.iterator();
+            while (iterator.hasNext()) {
+                appendExpression(iterator.next(), boundProperty);
+                if (iterator.hasNext()) {
+                    out.append(" + ");
                 }
             }
             out.append(')');
@@ -2019,7 +2047,7 @@ public class CypherQueryBuilder implements GraphQueryBuilder {
             Expression<String> expression = likePredicate.getExpression();
             io.micronaut.data.model.PersistentPropertyPath bound = findPropertyPath(expression);
             Character escape = likeEscape(likePredicate.getEscapeChar());
-            String flags = likePredicate.isCaseInsensitive() ? "(?si)" : "(?s)";
+            String flags = likePredicate.isCaseInsensitive() ? caseInsensitiveLikeFlags() : "(?s)";
             if (likePredicate.isNegated()) {
                 out.append(NOT_OPEN);
             }
@@ -2042,18 +2070,25 @@ public class CypherQueryBuilder implements GraphQueryBuilder {
             }
         }
 
-        private QueryParameterBinding likeBinding(QueryParameterBinding binding, @Nullable Character escape) {
+        private QueryParameterBinding likeBinding(QueryParameterBinding binding, char escape) {
             if (binding.getValue() instanceof String pattern) {
                 // A runtime literal: the pattern is known, so bind the regular expression in its place
                 return new LikeParameterBinding(binding, LikePatternConverter.toRegex(pattern, escape), null);
             }
-            if (escape != null && escape != LikePatternConverter.DEFAULT_ESCAPE) {
+            if (escape != LikePatternConverter.DEFAULT_ESCAPE) {
                 throw new UnsupportedOperationException("A LIKE pattern bound as a method argument uses the escape character '\\', not '" + escape + "'");
             }
             return new LikeParameterBinding(binding, null, LikePatternConverter.class.getName());
         }
 
-        private @Nullable Character likeEscape(@Nullable Expression<Character> escapeChar) {
+        /**
+         * The escape character is the one declared by the predicate, and {@code \\} otherwise, wherever the pattern
+         * comes from.
+         */
+        private char likeEscape(@Nullable Expression<Character> escapeChar) {
+            if (escapeChar == null) {
+                return LikePatternConverter.DEFAULT_ESCAPE;
+            }
             Object value = null;
             if (escapeChar instanceof LiteralExpression<?> literal) {
                 value = literal.getValue();
@@ -2067,7 +2102,7 @@ public class CypherQueryBuilder implements GraphQueryBuilder {
             if (value instanceof String s && !s.isEmpty()) {
                 return s.charAt(0);
             }
-            return null;
+            throw new UnsupportedOperationException("The escape character of a LIKE pattern must be a literal: the pattern is translated to a regular expression before the query runs");
         }
 
         @Override

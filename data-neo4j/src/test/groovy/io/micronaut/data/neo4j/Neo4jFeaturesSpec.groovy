@@ -2,9 +2,11 @@ package io.micronaut.data.neo4j
 
 import io.micronaut.data.exceptions.DataAccessException
 import io.micronaut.data.exceptions.NonUniqueResultException
+import io.micronaut.data.graph.runtime.GraphNode
 import io.micronaut.data.graph.tck.entities.Movie
 import io.micronaut.data.graph.tck.entities.Person
 import io.micronaut.data.graph.tck.entities.Role
+import io.micronaut.data.model.CursoredPageable
 import io.micronaut.data.model.Pageable
 import io.micronaut.data.model.Sort
 import io.micronaut.data.neo4j.features.Employee
@@ -122,6 +124,75 @@ class Neo4jFeaturesSpec extends Specification implements TestPropertyProvider {
         then:
         def paged = thrown(DataAccessException)
         paged.message.contains("declares SKIP or LIMIT itself")
+    }
+
+    void "a dynamic sort or page finds the clauses of an explicit query outside literals and comments and in any case"() {
+        given:
+        ["c", "a", "b"].each { tagRepository.save(new Tag(it)) }
+        def byName = Sort.of(Sort.Order.asc("name"))
+
+        expect: "the order goes after the query, not inside the literal"
+        tagRepository.withLimitInLiteral(byName)*.name == ["a", "b", "c"]
+
+        and: "the order goes before a lowercase limit"
+        tagRepository.lowerCaseLimit(byName)*.name == ["a", "b"]
+
+        and: "a comment that ends the query does not swallow the order"
+        tagRepository.withTrailingComment(byName)*.name == ["a", "b", "c"]
+
+        when: "a lowercase limit is still the limit of the query"
+        tagRepository.lowerCaseLimitPaged(Pageable.from(0, 1))
+
+        then:
+        def e = thrown(DataAccessException)
+        e.message.contains("declares SKIP or LIMIT itself")
+    }
+
+    void "a cursored page is rejected instead of being answered with offset paging"() {
+        given:
+        tagRepository.save(new Tag("a"))
+
+        when:
+        tagRepository.findByNameStartsWith("a", Pageable.from(0, 1))
+
+        then:
+        def e = thrown(UnsupportedOperationException)
+        e.message.contains("do not support cursored pagination")
+
+        when: "a cursored pageable reaches a method that returns a page"
+        tagRepository.findAll(CursoredPageable.from(1, Sort.of(Sort.Order.asc("name"))))
+
+        then:
+        e = thrown(UnsupportedOperationException)
+        e.message.contains("do not support cursored pagination")
+    }
+
+    void "a case-insensitive LIKE folds the case of non-ASCII letters"() {
+        given:
+        ["Éclair", "Eclair"].each { tagRepository.save(new Tag(it)) }
+
+        expect:
+        tagRepository.findByNameIlike("é%")*.name == ["Éclair"]
+    }
+
+    void "an Object[] row holds the columns of the query, not a node or its properties"() {
+        given:
+        tagRepository.save(new Tag("a"))
+
+        when:
+        def rows = tagRepository.tagRows()
+
+        then:
+        rows.size() == 1
+        rows[0].length == 1
+        rows[0][0] instanceof GraphNode
+
+        when: "the query returns several columns"
+        def columns = tagRepository.tagColumns()
+
+        then:
+        columns.size() == 1
+        columns[0] as List == ["a", 1L]
     }
 
     void "a query with more than one result is not a single result"() {
