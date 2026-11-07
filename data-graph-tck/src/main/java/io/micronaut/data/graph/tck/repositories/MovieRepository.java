@@ -7,6 +7,7 @@ import io.micronaut.data.graph.model.GraphRelationship;
 import io.micronaut.data.graph.tck.entities.Movie;
 import io.micronaut.data.graph.tck.entities.MovieSummary;
 import io.micronaut.data.graph.tck.entities.Person;
+import io.micronaut.data.graph.tck.entities.Role;
 import io.micronaut.data.model.Page;
 import io.micronaut.data.model.Pageable;
 import io.micronaut.data.repository.CrudRepository;
@@ -27,6 +28,10 @@ public interface MovieRepository extends CrudRepository<Movie, String> {
     List<Movie> findByDirectorsName(String name);
 
     List<Movie> findByRolesPersonName(String name);
+
+    List<Movie> findByRoles(Role role);
+
+    List<Movie> findByRolesPerson(Person person);
 
     @Join("roles")
     @Join("directors")

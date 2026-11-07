@@ -33,6 +33,20 @@ interface PgqlRepository extends GenericRepository<Movie, String> {
     boolean existsByTitle(String title);
     List<Movie> findByDirectorsName(String name);
     List<Movie> findByRolesPersonName(String name);
+    List<Movie> findByRolesIsNotNull();
+    List<Movie> findByRoles(Role role);
+    List<Movie> findByRolesPerson(Person person);
+    List<Movie> findByDirectorsIsNotNull();
+    @Join(value = "directors", type = Join.Type.INNER)
+    List<Movie> findByTitle(String title);
+    @Join(value = "directors", type = Join.Type.INNER)
+    long countByTitle(String title);
+    @Join(value = "directors", type = Join.Type.INNER)
+    List<String> findTitleByReleased(Integer released);
+    @Join(value = "directors", type = Join.Type.INNER)
+    Page<Movie> findByReleasedGreaterThanEquals(Integer released, Pageable pageable);
+    @Join(value = "directors", type = Join.Type.LEFT)
+    Page<Movie> findByReleasedLessThanEquals(Integer released, Pageable pageable);
     List<String> findTitleByReleasedGreaterThan(int released);
     Integer findMaxReleased();
     List<MovieSummary> findByReleasedLessThan(Integer released);
@@ -55,6 +69,15 @@ interface SqlRepository extends GenericRepository<Movie, String> {
     boolean existsByTitle(String title);
     List<Movie> findByDirectorsName(String name);
     List<Movie> findByRolesRolesIsNotNull();
+    List<Movie> findByRolesIsNotNull();
+    List<Movie> findByRoles(Role role);
+    List<Movie> findByRolesPerson(Person person);
+    @Join(value = "directors", type = Join.Type.INNER)
+    List<Movie> findByTitle(String title);
+    @Join(value = "directors", type = Join.Type.INNER)
+    long countByTitle(String title);
+    @Join(value = "directors", type = Join.Type.INNER)
+    List<String> findTitleByReleased(Integer released);
     List<String> findTitleByReleasedGreaterThan(int released);
     Integer findMaxReleased();
     List<MovieSummary> findByReleasedLessThan(Integer released);
@@ -95,6 +118,13 @@ interface PathRepository extends GenericRepository<Person, String> {
         'existsByTitle'                            | 'SELECT TRUE AS "result" FROM MATCH (n:Movie) ON movies WHERE (n.title = ?) LIMIT 1'
         'findByDirectorsName'                      | "SELECT DISTINCT $COLUMNS FROM MATCH (n:Movie) ON movies, MATCH (n) <-[:DIRECTED]- (a0:Person) ON movies WHERE (a0.name = ?)"
         'findByRolesPersonName'                    | "SELECT DISTINCT $COLUMNS FROM MATCH (n:Movie) ON movies, MATCH (n) <-[ar0:ACTED_IN]- (a0:Person) ON movies WHERE (a0.name = ?)"
+        'findByRolesIsNotNull'                     | "SELECT DISTINCT $COLUMNS FROM MATCH (n:Movie) ON movies, MATCH (n) <-[ar0:ACTED_IN]- (a0:Person) ON movies WHERE (ar0.id IS NOT NULL)"
+        'findByRoles'                              | "SELECT DISTINCT $COLUMNS FROM MATCH (n:Movie) ON movies, MATCH (n) <-[ar0:ACTED_IN]- (a0:Person) ON movies WHERE (ar0.id = ?)"
+        'findByRolesPerson'                        | "SELECT DISTINCT $COLUMNS FROM MATCH (n:Movie) ON movies, MATCH (n) <-[ar0:ACTED_IN]- (a0:Person) ON movies WHERE (a0.id = ?)"
+        'findByDirectorsIsNotNull'                 | "SELECT DISTINCT $COLUMNS FROM MATCH (n:Movie) ON movies, MATCH (n) <-[:DIRECTED]- (a0:Person) ON movies WHERE (a0.id IS NOT NULL)"
+        'findByTitle'                              | "SELECT DISTINCT $COLUMNS FROM MATCH (n:Movie) ON movies, MATCH (n) <-[:DIRECTED]- (a0:Person) ON movies WHERE (n.title = ?)"
+        'countByTitle'                             | 'SELECT COUNT(DISTINCT n.title) AS "result" FROM MATCH (n:Movie) ON movies, MATCH (n) <-[:DIRECTED]- (a0:Person) ON movies WHERE (n.title = ?)'
+        'findTitleByReleased'                      | 'SELECT n.title AS "title" FROM MATCH (n:Movie) ON movies, MATCH (n) <-[:DIRECTED]- (a0:Person) ON movies WHERE (n.released = ?)'
         'findTitleByReleasedGreaterThan'           | 'SELECT n.title AS "title" FROM MATCH (n:Movie) ON movies WHERE (n.released > ?)'
         'findMaxReleased'                          | 'SELECT MAX(n.released) AS "result" FROM MATCH (n:Movie) ON movies'
         'findByReleasedLessThan'                   | 'SELECT n.title AS "title", n.released AS "released" FROM MATCH (n:Movie) ON movies WHERE (n.released < ?)'
@@ -116,9 +146,72 @@ interface PathRepository extends GenericRepository<Person, String> {
         'existsByTitle'                            | 'SELECT TRUE AS "result" FROM GRAPH_TABLE (movies MATCH (n IS Movie) WHERE (n.title = ?) COLUMNS (n.title AS "c0")) FETCH NEXT 1 ROWS ONLY'
         'findByDirectorsName'                      | "SELECT DISTINCT * FROM GRAPH_TABLE (movies MATCH (n IS Movie), (n) <-[IS DIRECTED]- (a0 IS Person) WHERE (a0.name = ?) COLUMNS ($COLUMNS))"
         'findByRolesRolesIsNotNull'                | "SELECT DISTINCT * FROM GRAPH_TABLE (movies MATCH (n IS Movie), (n) <-[ar0 IS ACTED_IN]- (a0 IS Person) WHERE (ar0.roles IS NOT NULL) COLUMNS ($COLUMNS))"
+        'findByRolesIsNotNull'                     | "SELECT DISTINCT * FROM GRAPH_TABLE (movies MATCH (n IS Movie), (n) <-[ar0 IS ACTED_IN]- (a0 IS Person) WHERE (ar0.id IS NOT NULL) COLUMNS ($COLUMNS))"
+        'findByRoles'                              | "SELECT DISTINCT * FROM GRAPH_TABLE (movies MATCH (n IS Movie), (n) <-[ar0 IS ACTED_IN]- (a0 IS Person) WHERE (ar0.id = ?) COLUMNS ($COLUMNS))"
+        'findByRolesPerson'                        | "SELECT DISTINCT * FROM GRAPH_TABLE (movies MATCH (n IS Movie), (n) <-[ar0 IS ACTED_IN]- (a0 IS Person) WHERE (a0.id = ?) COLUMNS ($COLUMNS))"
+        'findByTitle'                              | "SELECT DISTINCT * FROM GRAPH_TABLE (movies MATCH (n IS Movie), (n) <-[IS DIRECTED]- (a0 IS Person) WHERE (n.title = ?) COLUMNS ($COLUMNS))"
+        'countByTitle'                             | 'SELECT COUNT(DISTINCT "c0") AS "result" FROM GRAPH_TABLE (movies MATCH (n IS Movie), (n) <-[IS DIRECTED]- (a0 IS Person) WHERE (n.title = ?) COLUMNS (n.title AS "c0"))'
+        'findTitleByReleased'                      | 'SELECT "c0" AS "title" FROM GRAPH_TABLE (movies MATCH (n IS Movie), (n) <-[IS DIRECTED]- (a0 IS Person) WHERE (n.released = ?) COLUMNS (n.title AS "c0"))'
         'findTitleByReleasedGreaterThan'           | 'SELECT "c0" AS "title" FROM GRAPH_TABLE (movies MATCH (n IS Movie) WHERE (n.released > ?) COLUMNS (n.title AS "c0"))'
         'findMaxReleased'                          | 'SELECT MAX("c0") AS "result" FROM GRAPH_TABLE (movies MATCH (n IS Movie) COLUMNS (n.released AS "c0"))'
         'findByReleasedLessThan'                   | 'SELECT "c0" AS "title", "c1" AS "released" FROM GRAPH_TABLE (movies MATCH (n IS Movie) WHERE (n.released < ?) COLUMNS (n.title AS "c0", n.released AS "c1"))'
+    }
+
+    @Unroll
+    void "test the page and its total of #method agree on the join"() {
+        given:
+        def m = findMethod(pgql, method)
+
+        expect:
+        getQuery(m) == query
+        m.annotationMetadata.stringValue(Query, 'countQuery').get() == countQuery
+
+        where:
+        method                            | query                                                                                                                       | countQuery
+        'findByReleasedGreaterThanEquals' | "SELECT DISTINCT $COLUMNS FROM MATCH (n:Movie) ON movies, MATCH (n) <-[:DIRECTED]- (a0:Person) ON movies WHERE (n.released >= ?)" | 'SELECT COUNT(DISTINCT n.title) AS "result" FROM MATCH (n:Movie) ON movies, MATCH (n) <-[:DIRECTED]- (a0:Person) ON movies WHERE (n.released >= ?)'
+        'findByReleasedLessThanEquals'    | "SELECT $COLUMNS FROM MATCH (n:Movie) ON movies WHERE (n.released <= ?)"                                                    | 'SELECT COUNT(DISTINCT n.title) AS "result" FROM MATCH (n:Movie) ON movies WHERE (n.released <= ?)'
+    }
+
+    void "test a relationship entity criterion binds the identifier of what it compares"() {
+        expect:
+        getParameterProperties(findMethod(pgql, 'findByRoles')) == ['roles']
+        getParameterProperties(findMethod(pgql, 'findByRolesPerson')) == ['roles.person']
+    }
+
+    void "test a criterion on a relationship entity without an id compares the target node"() {
+        given:
+        def repository = buildRepository('test.CastRepository', """
+$MOVIES
+
+@RelationshipProperties
+class Cameo {
+    @TargetNode
+    private Person person;
+    public Person getPerson() { return person; }
+    public void setPerson(Person person) { this.person = person; }
+}
+
+@Node
+class Cast {
+    @Id
+    private String id;
+    @Relationship(type = "APPEARS_IN", direction = Direction.INCOMING)
+    private List<Cameo> cameos = new ArrayList<>();
+    public String getId() { return id; }
+    public void setId(String id) { this.id = id; }
+    public List<Cameo> getCameos() { return cameos; }
+    public void setCameos(List<Cameo> cameos) { this.cameos = cameos; }
+}
+
+@TestOracleRepository
+@PropertyGraph("movies")
+interface CastRepository extends GenericRepository<Cast, String> {
+    List<Cast> findByCameosIsNotNull();
+}
+""")
+
+        expect:
+        getQuery(findMethod(repository, 'findByCameosIsNotNull')).endsWith('MATCH (n) <-[ar0:APPEARS_IN]- (a0:Person) ON movies WHERE (a0.id IS NOT NULL)')
     }
 
     void "test explicit queries take positional parameters"() {
@@ -264,6 +357,10 @@ interface FollowerRepository extends GenericRepository<Follower, String> {
         and: "an undirected edge with both ends known is matched either way"
         getQuery(findMethod(repository, 'findRelationshipsByKnown')).endsWith(
             "FROM MATCH (s:Follower) -[r:KNOWS]- (t:Follower) ON people WHERE s.id = ? AND t.id = ?")
+
+        and: "the rows say which end of an undirected edge is its source"
+        getQuery(findMethod(repository, 'findRelationshipsByKnown')).contains('CASE WHEN s IS SOURCE OF r THEN 1 ELSE 0 END AS "r__FORWARD_"')
+        !getQuery(findMethod(repository, 'findRelationshipsByFollowers')).contains('r__FORWARD_')
     }
 
     @Unroll
@@ -292,6 +389,12 @@ interface UnsupportedRepository extends GenericRepository<Movie, String> {
         'PGQL path counts'     | ''                                                    | '@PathLimit(3) long countPaths(String from, String to);'            | 'PGQL path queries cannot bind parameters'
         'PGQL all shortest'    | ''                                                    | '@PathLimit(3) List<GraphPath<Movie>> findAllShortestPaths(String from, String to);' | 'ALL SHORTEST is not supported by PGQL'
         'IsEmpty on a relationship' | ''                                               | 'List<Movie> findByDirectorsIsEmpty();'                             | 'Expected a string expression'
+        'IsEmpty on a relationship identifier' | ''                                    | 'List<Movie> findByDirectorsIdIsEmpty();'                           | 'Testing that a relationship is absent is not supported for Oracle property graphs'
+        'IsNull on a relationship' | ''                                                | 'List<Movie> findByDirectorsIsNull();'                              | 'Testing that a relationship is absent is not supported for Oracle property graphs'
+        'IsNull on a relationship entity' | ', language = PropertyGraph.QueryLanguage.SQL_PGQ' | 'List<Movie> findByRolesIsNull();'                       | 'Testing that a relationship is absent is not supported for Oracle property graphs'
+        'IsNull on a nested to-one relationship' | ''                                  | 'List<Movie> findByDirectorsMentorIsNull();'                        | 'Testing that a relationship is absent is not supported for Oracle property graphs'
+        'sort on a relationship' | ''                                                  | 'List<Movie> findByReleasedOrderByDirectorsBorn(Integer released);' | 'Sorting on a relationship is not supported for Oracle property graphs'
+        'sort on a bound relationship' | ', language = PropertyGraph.QueryLanguage.SQL_PGQ' | 'List<Movie> findByDirectorsNameOrderByDirectorsBorn(String name);' | 'Sorting on a relationship is not supported for Oracle property graphs'
         'LIKE in PGQL'         | ''                                                    | 'List<Movie> findByTitleStartsWith(String prefix);'                 | 'PGQL has no LIKE'
         'fetch joins'          | ''                                                    | '@Join("directors") List<Movie> findByReleased(Integer released);' | 'not supported for Oracle property graphs'
         'paths in SQL/PGQ'     | ', language = PropertyGraph.QueryLanguage.SQL_PGQ'    | '@PathLimit(3) Optional<GraphPath<Movie>> findShortestPath(String from, String to);' | 'Returning paths is not supported by the SQL/PGQ dialect'
@@ -327,6 +430,24 @@ interface PetRepository extends GenericRepository<Pet, String> {
         then:
         def e = thrown(RuntimeException)
         e.message.contains('Schemaless properties and dynamic labels are not supported by Oracle property graphs')
+    }
+
+    void "test IsNull on a to-one relationship is rejected"() {
+        when:
+        buildRepository('test.MentorRepository', """
+$MOVIES
+
+@TestOracleRepository
+@PropertyGraph("people")
+interface MentorRepository extends GenericRepository<Person, String> {
+    List<Person> findByMentorIsNull();
+}
+""")
+
+        then:
+        def e = thrown(RuntimeException)
+        e.message.contains('Testing that a relationship is absent is not supported for Oracle property graphs')
+        e.message.contains('NOT EXISTS outside GRAPH_TABLE')
     }
 
     private static ExecutableMethod<?, ?> findMethod(BeanDefinition<?> definition, String name) {

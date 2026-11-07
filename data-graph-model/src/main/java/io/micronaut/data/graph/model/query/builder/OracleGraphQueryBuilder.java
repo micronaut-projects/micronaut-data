@@ -17,6 +17,7 @@ package io.micronaut.data.graph.model.query.builder;
 
 import io.micronaut.core.annotation.AnnotationMetadata;
 import io.micronaut.core.annotation.Introspected;
+import io.micronaut.data.annotation.Join;
 import io.micronaut.data.graph.annotation.Direction;
 import io.micronaut.data.graph.annotation.DynamicAttributes;
 import io.micronaut.data.graph.annotation.Labels;
@@ -30,6 +31,7 @@ import io.micronaut.data.model.PersistentProperty;
 import io.micronaut.data.model.jpa.criteria.IExpression;
 import io.micronaut.data.model.jpa.criteria.IPredicate;
 import io.micronaut.data.model.jpa.criteria.ISelection;
+import io.micronaut.data.model.jpa.criteria.PersistentAssociationPath;
 import io.micronaut.data.model.jpa.criteria.PersistentEntityRoot;
 import io.micronaut.data.model.jpa.criteria.PersistentEntitySubquery;
 import io.micronaut.data.model.jpa.criteria.impl.DefaultOrder;
@@ -100,6 +102,10 @@ public class OracleGraphQueryBuilder implements GraphQueryBuilder {
      * The suffix of the column holding the type of a relationship.
      */
     public static final String TYPE_COLUMN = "TYPE_";
+    /**
+     * The suffix of the column saying whether an undirected relationship was matched starting from its source, holding 1 or 0.
+     */
+    public static final String FORWARD_COLUMN = "FORWARD_";
     /**
      * The column holding the number of the match of a path step.
      */
@@ -209,6 +215,12 @@ public class OracleGraphQueryBuilder implements GraphQueryBuilder {
     }
 
     @Override
+    public String buildUnlinkOtherRelationshipsQuery(Association association, PersistentEntity owner, PersistentEntity target,
+                                                     @Nullable PersistentProperty relationshipIdentity) {
+        throw new UnsupportedOperationException(READ_ONLY);
+    }
+
+    @Override
     public String rootIdentityExpression(PersistentProperty identity) {
         return property(ROOT, identity);
     }
@@ -267,6 +279,15 @@ public class OracleGraphQueryBuilder implements GraphQueryBuilder {
         }
         Query query = new Query(entity);
         appendPredicate(query, definition.predicate());
+        for (JoinPath joinPath : definition.getJoinPaths()) {
+            if (joinPath.getJoinType() == Join.Type.INNER) {
+                // An inner join keeps only the nodes that have the relationship, and needs a pattern if no criterion added one
+                query.resolveVariable(List.of(joinPath.getAssociationPath()));
+            }
+        }
+        if (definition.root() instanceof PersistentEntityRoot<?> root) {
+            requireDeclaredInnerJoins(query, root.getPersistentJoins());
+        }
         Selection<?> selection = definition.selection();
         SelectionRenderer selectionRenderer = new SelectionRenderer(query);
         if (selection instanceof ISelection<?> iSelection) {
@@ -286,6 +307,19 @@ public class OracleGraphQueryBuilder implements GraphQueryBuilder {
             text += buildLimitAndOffset(1, 0);
         }
         return QueryResult.of(text, List.of(text), query.bindings, Map.of());
+    }
+
+    /**
+     * The join paths report an inner join outside the selection as a default join, so counts and scalar projections
+     * check the declared joins, which keeps them in line with the query for the entity.
+     */
+    private static void requireDeclaredInnerJoins(Query query, Collection<? extends PersistentAssociationPath<?, ?>> joins) {
+        for (PersistentAssociationPath<?, ?> join : joins) {
+            if (join.getAssociationJoinType() == Join.Type.INNER) {
+                query.resolveVariable(join.asPath());
+            }
+            requireDeclaredInnerJoins(query, join.getPersistentJoins());
+        }
     }
 
     private void appendPredicate(Query query, @Nullable Predicate predicate) {
@@ -308,12 +342,29 @@ public class OracleGraphQueryBuilder implements GraphQueryBuilder {
                 orderBy.append(", ");
             }
             StringBuilder expression = new StringBuilder();
-            new ExpressionRenderer(query, expression).appendExpression(order.getExpression());
+            new ExpressionRenderer(query, expression) {
+                @Override
+                public void visit(io.micronaut.data.model.jpa.criteria.PersistentPropertyPath<?> persistentPropertyPath) {
+                    requireNodeSort(persistentPropertyPath.getPropertyPath());
+                    super.visit(persistentPropertyPath);
+                }
+            }.appendExpression(order.getExpression());
             String ref = query.ref(expression.toString());
             boolean ignoreCase = order instanceof DefaultOrder<?> defaultOrder && defaultOrder.isIgnoreCase();
             orderBy.append(ignoreCase ? LOWER + ref + ")" : ref).append(order.isAscending() ? " ASC" : " DESC");
         }
         query.orderBy = orderBy.toString();
+    }
+
+    /**
+     * Every pattern of a query is required, as neither dialect has {@code OPTIONAL MATCH}, so sorting on a relationship
+     * would drop the nodes without it.
+     */
+    private static void requireNodeSort(io.micronaut.data.model.PersistentPropertyPath path) {
+        boolean association = path.getProperty() instanceof Association target && !target.isEmbedded();
+        if (association || !path.getAssociations().isEmpty()) {
+            throw new UnsupportedOperationException("Sorting on a relationship is not supported for Oracle property graphs, which have no OPTIONAL MATCH, so nodes without the relationship would be dropped: " + path.getPath());
+        }
     }
 
     @Override
@@ -408,6 +459,10 @@ public class OracleGraphQueryBuilder implements GraphQueryBuilder {
                     query.edgeColumns("r", associated);
                 }
                 query.column(literal(GraphEntities.relationshipType(definition.relationships().get(0))), "r" + SEPARATOR + TYPE_COLUMN);
+                if (direction == Direction.UNDIRECTED) {
+                    // s is the first argument here, which may be either end of the edge
+                    query.column("CASE WHEN " + START + " IS SOURCE OF r THEN 1 ELSE 0 END", "r" + SEPARATOR + FORWARD_COLUMN);
+                }
             }
         }
         if (query.select.isEmpty() || definition.result() != PathQueryDefinition.Result.ELEMENTS) {
@@ -730,10 +785,37 @@ public class OracleGraphQueryBuilder implements GraphQueryBuilder {
          * Resolves a property path to a graph expression, adding relationship patterns for associations.
          */
         String resolve(io.micronaut.data.model.PersistentPropertyPath propertyPath) {
+            String variable = resolveVariable(propertyPath.getAssociations());
+            PersistentProperty property = propertyPath.getProperty();
+            if (property instanceof Association association && !association.isEmbedded()) {
+                // A criterion on an association itself compares the identifier of the associated entity, as the Cypher
+                // builder does. For a relationship entity that is the edge, whose target node is compared through the
+                // @TargetNode association, which is also what an entity without an identifier compares.
+                PersistentEntity associated = association.getAssociatedEntity();
+                List<Association> associations = new ArrayList<>(propertyPath.getAssociations());
+                associations.add(association);
+                if (associated.hasIdentity()) {
+                    return resolve(io.micronaut.data.model.PersistentPropertyPath.of(associations, associated.getIdentity()));
+                }
+                Association targetNode = GraphEntities.findTargetNode(associated);
+                if (targetNode != null) {
+                    associations.add(targetNode);
+                }
+                return resolve(io.micronaut.data.model.PersistentPropertyPath.of(associations, identity(GraphEntities.targetNodeEntity(association))));
+            }
+            return property(variable, property);
+        }
+
+        /**
+         * Adds the relationship patterns of a path of associations.
+         *
+         * @return The variable at the end of the path
+         */
+        String resolveVariable(List<Association> associations) {
             String variable = ROOT;
             String relationshipEntityNode = null;
             StringBuilder path = new StringBuilder();
-            for (Association association : propertyPath.getAssociations()) {
+            for (Association association : associations) {
                 if (!path.isEmpty()) {
                     path.append('.');
                 }
@@ -755,14 +837,7 @@ public class OracleGraphQueryBuilder implements GraphQueryBuilder {
                     variable = match[1];
                 }
             }
-            PersistentProperty property = propertyPath.getProperty();
-            if (property instanceof Association association && !association.isEmbedded()) {
-                PersistentEntity target = GraphEntities.targetNodeEntity(association);
-                List<Association> associations = new ArrayList<>(propertyPath.getAssociations());
-                associations.add(association);
-                return resolve(io.micronaut.data.model.PersistentPropertyPath.of(associations, identity(target)));
-            }
-            return property(variable, property);
+            return variable;
         }
 
         private String[] newPattern(Association association, String from) {
@@ -928,6 +1003,7 @@ public class OracleGraphQueryBuilder implements GraphQueryBuilder {
      * Renders predicates.
      */
     private final class PredicateRenderer extends ExpressionRenderer implements AdvancedPredicateVisitor<io.micronaut.data.model.PersistentPropertyPath> {
+        private boolean negated;
 
         PredicateRenderer(Query query, StringBuilder out) {
             super(query, out);
@@ -975,7 +1051,9 @@ public class OracleGraphQueryBuilder implements GraphQueryBuilder {
         @Override
         public void visit(NegatedPredicate negate) {
             out.append("NOT (");
+            negated = !negated;
             visitBoolean(negate.getNegated());
+            negated = !negated;
             out.append(')');
         }
 
@@ -1119,14 +1197,34 @@ public class OracleGraphQueryBuilder implements GraphQueryBuilder {
             out.append(')');
         }
 
+        /**
+         * A relationship is matched by a required pattern, so its identifier is never null and a test for its absence
+         * could never match. An existence test is not possible either, as GRAPH_TABLE does not allow subqueries.
+         */
+        private void rejectAbsentRelationship(Expression<?> expression, boolean absent) {
+            io.micronaut.data.model.PersistentPropertyPath path = propertyPathOf(expression);
+            if (!absent || path == null) {
+                return;
+            }
+            PersistentProperty property = path.getProperty();
+            boolean association = property instanceof Association target && !target.isEmbedded();
+            PersistentProperty ownerIdentity = property.getOwner().getIdentity();
+            boolean identifier = !path.getAssociations().isEmpty() && ownerIdentity != null && ownerIdentity.getName().equals(property.getName());
+            if (association || identifier) {
+                throw new UnsupportedOperationException("Testing that a relationship is absent is not supported for Oracle property graphs, as a subquery is not allowed in GRAPH_TABLE: write a query with NOT EXISTS outside GRAPH_TABLE using @Query instead: " + path.getPath());
+            }
+        }
+
         @Override
         public void visitIsNull(Expression<?> expression) {
+            rejectAbsentRelationship(expression, !negated);
             appendExpression(expression);
             out.append(" IS NULL");
         }
 
         @Override
         public void visitIsNotNull(Expression<?> expression) {
+            rejectAbsentRelationship(expression, negated);
             appendExpression(expression);
             out.append(" IS NOT NULL");
         }
@@ -1145,12 +1243,14 @@ public class OracleGraphQueryBuilder implements GraphQueryBuilder {
 
         @Override
         public void visitIsEmpty(Expression<?> expression) {
+            rejectAbsentRelationship(expression, !negated);
             appendExpression(expression);
             out.append(" IS NULL");
         }
 
         @Override
         public void visitIsNotEmpty(Expression<?> expression) {
+            rejectAbsentRelationship(expression, negated);
             appendExpression(expression);
             out.append(" IS NOT NULL");
         }
