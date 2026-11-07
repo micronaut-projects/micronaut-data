@@ -31,7 +31,7 @@ Save, update and delete methods, including those of api:data.repository.CrudRepo
 snippet::example.BankGraphSpec[project-base="doc-examples/oracle-graph-example", tags="save", indent="0", languages="java,kotlin,groovy,python"]
 
 <1> Runs `INSERT INTO "ACCOUNTS" ("NAME","ID") VALUES (?,?)`.
-<2> Runs a SQL/PGQ query over the property graph, `SELECT * FROM GRAPH_TABLE (bank_graph MATCH (n IS Account) ...)`.
+<2> Runs a SQL/PGQ `GRAPH_TABLE` query over the property graph.
 
 Writes join the current connection and transaction of the data source, as graph queries do. Writes need the `micronaut-data-jdbc` module, which `micronaut-data-oracle-graph` depends on. Saving a node writes only its row: relationships are rows of their edge tables, which a ann:data.jdbc.annotation.JdbcRepository[] over an entity of the edge table writes.
 

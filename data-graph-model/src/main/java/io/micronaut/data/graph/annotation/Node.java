@@ -44,7 +44,11 @@ import java.lang.annotation.Target;
 public @interface Node {
 
     /**
-     * @return The primary label of the node. Defaults to the simple name of the class.
+     * The name the node is stored under: the primary label of the node on Neo4j and Apache AGE, and the name of its
+     * vertex table on Oracle property graphs. There, {@link #labels()} sets a label that differs from the table name,
+     * as the label the graph definition gives the table.
+     *
+     * @return The primary label of the node, or its vertex table on Oracle. Defaults to the simple name of the class.
      */
     @AliasFor(annotation = MappedEntity.class, member = "value")
     String value() default "";
