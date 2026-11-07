@@ -63,7 +63,9 @@ public @interface Searchable {
     /**
      * The default language used for stemming and stop words. Each backend maps the language
      * to its own configuration (a PostgreSQL text search configuration, a MongoDB
-     * {@code default_language}, an Elasticsearch analyzer). Defaults to {@code english}.
+     * {@code default_language}, an Elasticsearch analyzer). Defaults to {@code english}. The SQL
+     * stores render the name inside their DDL and queries, so it must be a plain configuration name
+     * of letters, digits and underscores.
      *
      * @return The language
      */

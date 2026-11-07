@@ -97,6 +97,8 @@ public final class TextSearchSupport {
      */
     public static final String HIGHLIGHT_END_TAG = "</em>";
 
+    private static final java.util.regex.Pattern LANGUAGE_NAME = java.util.regex.Pattern.compile("[A-Za-z][A-Za-z0-9_]*");
+
     private static final Pattern HIGHLIGHT_ALIAS = Pattern.compile("\\b" + HIGHLIGHT_ALIAS_PREFIX + "([A-Za-z0-9_]+)");
 
     private static final List<MatchMode> KEYWORDS_LONGEST_FIRST = Arrays.stream(MatchMode.values())
@@ -210,9 +212,24 @@ public final class TextSearchSupport {
     }
 
     public static String resolveLanguage(PersistentEntity entity) {
-        return entity.getAnnotationMetadata().stringValue(Searchable.class, Searchable.MEMBER_LANGUAGE)
+        return requireLanguageName(entity.getAnnotationMetadata().stringValue(Searchable.class, Searchable.MEMBER_LANGUAGE)
             .filter(l -> !l.isEmpty())
-            .orElse(DEFAULT_LANGUAGE);
+            .orElse(DEFAULT_LANGUAGE));
+    }
+
+    /**
+     * Checks that a language is a plain configuration name, as the SQL dialects render it inside the
+     * statement rather than binding it: letters, digits and underscores only.
+     *
+     * @param language The language from {@code @Searchable(language)} or {@code SearchQuery.language}
+     * @return The language
+     * @throws IllegalArgumentException When the language holds any other character
+     */
+    public static String requireLanguageName(String language) {
+        if (!LANGUAGE_NAME.matcher(language).matches()) {
+            throw new IllegalArgumentException("A search language must be a text search configuration name of letters, digits and underscores");
+        }
+        return language;
     }
 
     /**

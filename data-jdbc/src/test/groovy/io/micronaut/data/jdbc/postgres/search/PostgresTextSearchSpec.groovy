@@ -17,7 +17,7 @@ class PostgresTextSearchSpec extends AbstractTextSearchSpec implements PostgresT
     @Override
     Set<SearchCapability> capabilities() {
         // pg_trgm adds fuzzy matching, with a fixed similarity threshold rather than an edit distance
-        return EnumSet.of(SearchCapability.PHRASE, SearchCapability.PREFIX, SearchCapability.FUZZY, SearchCapability.FIELD_SCOPE,
+        return EnumSet.of(SearchCapability.LANGUAGE_OVERRIDE, SearchCapability.PHRASE, SearchCapability.PREFIX, SearchCapability.FUZZY, SearchCapability.FIELD_SCOPE,
                 SearchCapability.HIGHLIGHT, SearchCapability.VECTOR, SearchCapability.MIN_SCORE)
     }
 

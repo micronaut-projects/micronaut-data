@@ -352,4 +352,21 @@ public interface PersistentEntityCriteriaBuilder extends CriteriaBuilder {
      * @since 5.4.0
      */
     Expression<String> searchHighlight(Expression<?> field, Expression<String> query, MatchMode mode);
+
+    /**
+     * The highlighted fragment of a field, analysed with the options' language override when set.
+     *
+     * @param field The field expression (a property)
+     * @param query The query string expression
+     * @param mode The match mode
+     * @param options The match options
+     * @return the highlight expression
+     * @since 5.4.0
+     */
+    default Expression<String> searchHighlight(Expression<?> field, Expression<String> query, MatchMode mode, TextMatchOptions options) {
+        if (!options.isDefault()) {
+            throw new UnsupportedOperationException("Full-text search options are not supported by this criteria builder.");
+        }
+        return searchHighlight(field, query, mode);
+    }
 }
