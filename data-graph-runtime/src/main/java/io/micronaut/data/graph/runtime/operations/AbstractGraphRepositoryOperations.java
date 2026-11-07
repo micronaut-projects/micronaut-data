@@ -1761,6 +1761,7 @@ public abstract class AbstractGraphRepositoryOperations extends AbstractReposito
         }
 
         private <E> void saveGroup(RuntimePersistentEntity<E> entity, Map<E, List<Integer>> group, boolean insert, List<E> results) {
+            RelationshipTarget.resolveSaved(group, saved, results);
             if (group.isEmpty()) {
                 return;
             }

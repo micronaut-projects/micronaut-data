@@ -484,6 +484,7 @@ public abstract class AbstractReactiveGraphRepositoryOperations implements React
 
         private <E> Mono<Void> saveGroup(RuntimePersistentEntity<E> entity, Map<E, List<Integer>> group, boolean insert, List<E> results) {
             return Mono.defer(() -> {
+                RelationshipTarget.resolveSaved(group, saved, results);
                 if (group.isEmpty()) {
                     return Mono.empty();
                 }

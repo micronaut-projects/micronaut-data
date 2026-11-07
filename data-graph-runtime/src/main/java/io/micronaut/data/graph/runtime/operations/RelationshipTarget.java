@@ -297,6 +297,30 @@ record RelationshipTarget(RuntimePersistentEntity<Object> associated,
         return records.get(0).get(CypherQueryBuilder.ID_PARAMETER);
     }
 
+    /**
+     * Resolves the targets of a group of nodes to save that a save before the group wrote through the relationships
+     * of another node: the saved instance stands for them. An immutable versioned node would otherwise be written
+     * again with the version it had before.
+     *
+     * @param group   The positions of the targets to save, by target; those that were written are removed
+     * @param saved   The saved instances by the instances the saves were called with
+     * @param results The saved instances by position
+     * @param <E>     The target type
+     */
+    static <E> void resolveSaved(Map<E, List<Integer>> group, Map<Object, Object> saved, List<E> results) {
+        List<E> written = new ArrayList<>();
+        group.forEach((target, positions) -> {
+            Object existing = saved.get(target);
+            if (existing != null) {
+                written.add(target);
+                for (int position : positions) {
+                    results.set(position, (E) existing);
+                }
+            }
+        });
+        written.forEach(group::remove);
+    }
+
     static RuntimeAssociation<Object> targetNode(RuntimePersistentEntity<?> relationshipEntity) {
         for (RuntimePersistentProperty<?> property : relationshipEntity.getPersistentProperties()) {
             if (property instanceof RuntimeAssociation<?> association && property.getAnnotationMetadata().hasStereotype(TargetNode.class)) {
