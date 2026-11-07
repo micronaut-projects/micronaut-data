@@ -201,6 +201,28 @@ abstract class AbstractGraphRepositorySpec extends Specification {
     }
 
     @Requires({ instance.supportsRelationshipWrites() && instance.supportsCypher() })
+    void "find by a relationship entity compares the relationship, and by its target node compares the node"() {
+        given:
+        def keanu = new Person("Keanu Reeves", 1964)
+        def carrie = new Person("Carrie-Anne Moss", 1967)
+        def matrix = new Movie("The Matrix", "Welcome to the Real World", 1999)
+        matrix.roles = [new Role(["Neo"], keanu), new Role(["Trinity"], carrie)]
+        def speed = new Movie("Speed", "Get ready for rush hour", 1994)
+        speed.roles = [new Role(["Jack Traven"], keanu)]
+        matrix = movieRepository.save(matrix)
+        speed = movieRepository.save(speed)
+
+        expect: "only the movie that holds the role, not every movie of the same person"
+        speed.roles[0].id != null
+        movieRepository.findByRoles(speed.roles[0])*.title == ["Speed"]
+        movieRepository.findByRoles(matrix.roles[0])*.title == ["The Matrix"]
+
+        and:
+        movieRepository.findByRolesPerson(keanu)*.title.sort() == ["Speed", "The Matrix"]
+        movieRepository.findByRolesPerson(carrie)*.title == ["The Matrix"]
+    }
+
+    @Requires({ instance.supportsRelationshipWrites() && instance.supportsCypher() })
     void "fetch relationships and relationship properties with joins"() {
         given:
         saveMovies()
@@ -409,16 +431,86 @@ abstract class AbstractGraphRepositorySpec extends Specification {
         def ada = new Colleague("Ada")
         def grace = new Colleague("Grace")
         ada.colleagues = [new Collaboration("compiler", grace)]
-        colleagueRepository.save(ada)
+        def saved = colleagueRepository.save(ada).colleagues[0]
 
         when: "the relationship is saved again from its other end"
-        grace.colleagues = [new Collaboration("cobol", new Colleague("Ada"))]
-        colleagueRepository.save(grace)
+        def again = new Collaboration("cobol", new Colleague("Ada"))
+        again.id = saved.id
+        grace.colleagues = [again]
+        def resaved = colleagueRepository.save(grace).colleagues[0]
 
         then: "the relationship is matched in either direction, so its properties are updated rather than a second one created"
+        resaved.id == saved.id
         colleagueRepository.countCollaborations() == 1
         colleagueRepository.findByColleaguesProject("cobol")*.name.sort() == ["Ada", "Grace"]
         colleagueRepository.findByColleaguesProject("compiler").isEmpty()
+    }
+
+    @Requires({ instance.supportsRelationshipWrites() && instance.supportsCypher() })
+    void "new undirected relationships between the same nodes stay separate"() {
+        given:
+        def ada = new Colleague("Ada")
+        def grace = new Colleague("Grace")
+        ada.colleagues = [new Collaboration("compiler", grace), new Collaboration("cobol", grace)]
+
+        when:
+        def saved = colleagueRepository.save(ada).colleagues
+
+        then:
+        saved*.id.every { it != null }
+        saved*.id.toSet().size() == 2
+        colleagueRepository.countCollaborations() == 2
+        colleagueRepository.findByColleaguesProject("compiler")*.name.sort() == ["Ada", "Grace"]
+        colleagueRepository.findByColleaguesProject("cobol")*.name.sort() == ["Ada", "Grace"]
+
+        when: "another one that was not saved is added from the other end"
+        grace.colleagues = [new Collaboration("flow-matic", new Colleague("Ada"))]
+        colleagueRepository.save(grace)
+
+        then:
+        colleagueRepository.countCollaborations() == 3
+    }
+
+    @Requires({ instance.supportsRelationshipWrites() && instance.supportsCypher() })
+    void "replacing a single valued relationship entity leaves one relationship"() {
+        given:
+        def ada = new Colleague("Ada")
+        ada.mentor = new Collaboration("first", new Colleague("Grace"))
+        ada = colleagueRepository.save(ada)
+        def saved = ada.mentor
+
+        when: "it is saved again"
+        def again = new Collaboration("second", new Colleague("Grace"))
+        again.id = saved.id
+        ada.mentor = again
+        ada = colleagueRepository.update(ada)
+
+        then:
+        ada.mentor.id == saved.id
+        colleagueRepository.findMentorships() == ["second"]
+
+        when: "it is replaced by one that was not saved"
+        ada.mentor = new Collaboration("third", new Colleague("Grace"))
+        ada = colleagueRepository.update(ada)
+
+        then:
+        ada.mentor.id != saved.id
+        colleagueRepository.findMentorships() == ["third"]
+
+        when: "it moves to another node"
+        ada.mentor = new Collaboration("fourth", new Colleague("Hopper"))
+        colleagueRepository.update(ada)
+
+        then:
+        colleagueRepository.findMentorships() == ["fourth"]
+
+        when: "one that was not saved is saved from the other end"
+        def hopper = new Colleague("Hopper")
+        hopper.mentor = new Collaboration("fifth", new Colleague("Ada"))
+        colleagueRepository.update(hopper)
+
+        then:
+        colleagueRepository.findMentorships() == ["fifth"]
     }
 
     @Requires({ instance.supportsRelationshipWrites() && instance.supportsCypher() })
@@ -581,6 +673,36 @@ abstract class AbstractGraphRepositorySpec extends Specification {
         saved[0].id != null
         saved[0].id == saved[2].id
         personRepository.count() == 2
+    }
+
+    @Requires({ instance.supportsRelationshipWrites() && instance.supportsCypher() })
+    void "saveAll and updateAll write relationship entities by their identifiers"() {
+        given:
+        def ada = new Colleague("Ada")
+        def grace = new Colleague("Grace")
+        ada.colleagues = [new Collaboration("compiler", grace), new Collaboration("cobol", grace)]
+
+        when: "two new relationships link the same nodes"
+        def saved = colleagueRepository.saveAll([ada, new Colleague("Lin")]).toList()
+        def ids = saved[0].colleagues*.id
+
+        then:
+        ids.every { it != null }
+        ids.toSet().size() == 2
+        colleagueRepository.countCollaborations() == 2
+
+        when: "one of them is written again with its identifier, and a new one is added"
+        def again = new Collaboration("cobol-60", grace)
+        again.id = ids[1]
+        saved[0].colleagues = [saved[0].colleagues[0], again, new Collaboration("flow-matic", grace)]
+        def updated = colleagueRepository.updateAll(saved).toList()
+
+        then: "the saved one is updated and the other is created"
+        updated[0].colleagues[1].id == ids[1]
+        colleagueRepository.countCollaborations() == 3
+        colleagueRepository.findByColleaguesProject("cobol").isEmpty()
+        colleagueRepository.findByColleaguesProject("cobol-60")*.name.sort() == ["Ada", "Grace"]
+        colleagueRepository.findByColleaguesProject("flow-matic")*.name.sort() == ["Ada", "Grace"]
     }
 
     @Requires({ instance.stepRepository != null })

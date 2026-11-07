@@ -1,5 +1,8 @@
 package example
 
+import io.micronaut.data.model.query.builder.sql.Dialect
+import io.micronaut.data.runtime.config.SchemaGenerate
+import io.micronaut.data.runtime.schema.SchemaContext
 import io.micronaut.test.extensions.spock.annotation.MicronautTest
 import io.micronaut.transaction.TransactionOperations
 import jakarta.inject.Inject
@@ -18,6 +21,9 @@ class BookTitlesViewSpec extends Specification {
     @Inject
     TransactionOperations<Connection> transactionOperations
 
+    @Inject
+    BookTitlesViewContributor contributor
+
     void "the contributed view is created over the book table"() {
         when:
         bookRepository.save(new Book("The Left Hand of Darkness", 300))
@@ -25,6 +31,15 @@ class BookTitlesViewSpec extends Specification {
 
         then:
         titles.contains("The Left Hand of Darkness")
+    }
+
+    void "the contributor does not apply to a data source without the book entity"() {
+        given:
+        SchemaContext other = new SchemaContext("other", Dialect.H2, null, SchemaGenerate.CREATE_DROP, [])
+
+        expect:
+        contributor.buildCreateStatements(other, []).isEmpty()
+        contributor.buildDropStatements(other, []).isEmpty()
     }
 
     private static List<String> selectTitles(Connection connection) {

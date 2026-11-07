@@ -118,6 +118,7 @@ final class DefaultAgeRepositoryOperations extends AbstractGraphRepositoryOperat
      */
     private volatile boolean graphReady;
 
+    @SuppressWarnings("ParameterNumber")
     DefaultAgeRepositoryOperations(@Parameter ConnectionOperations<Connection> connectionOperations,
                                    JsonMapper jsonMapper,
                                    @Value("${micronaut.data.age.graph:graph}") String graph,

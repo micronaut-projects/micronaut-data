@@ -17,6 +17,8 @@ package io.micronaut.data.r2dbc.config;
 
 import io.micronaut.context.BeanLocator;
 import io.micronaut.context.annotation.Context;
+import io.micronaut.context.env.Environment;
+import io.micronaut.context.env.PropertyPlaceholderResolver;
 import io.micronaut.core.annotation.Internal;
 import io.micronaut.core.beans.BeanIntrospection;
 import io.micronaut.core.beans.BeanIntrospector;
@@ -108,6 +110,7 @@ public class R2dbcSchemaGenerator {
     @PostConstruct
     protected void createSchema(BeanLocator beanLocator) {
         RuntimeEntityRegistry runtimeEntityRegistry = beanLocator.getBean(RuntimeEntityRegistry.class);
+        PropertyPlaceholderResolver placeholderResolver = beanLocator.getBean(Environment.class).getPlaceholderResolver();
         for (DataR2dbcConfiguration configuration : configurations) {
 
             SchemaGenerate schemaGenerate = configuration.getSchemaGenerate();
@@ -130,8 +133,8 @@ public class R2dbcSchemaGenerator {
                         .filter(i -> !i.hasAnnotation(JsonSubView.class))
                         .sorted(Comparator.comparing(i -> i.hasAnnotation(JsonView.class)))
                         .map(e -> runtimeEntityRegistry.getEntity(e.getBeanType())).toArray(PersistentEntity[]::new);
-                SchemaContributions contributions = SchemaContributions.of(schemaContributors,
-                    new SchemaContext(configuration.getName(), configuration.getDialect(), configuration.getDialectOptions().getVersion(), schemaGenerate, Arrays.asList(entities)));
+                SchemaContributions contributions = resolvePlaceholders(placeholderResolver, SchemaContributions.of(schemaContributors,
+                    new SchemaContext(configuration.getName(), configuration.getDialect(), configuration.getDialectOptions().getVersion(), schemaGenerate, Arrays.asList(entities))));
                 PersistentEntity[] tableEntities = contributions.tableEntities();
                 if (!contributions.isEmpty()) {
                     Mono.from(configuration.getConnectionFactory().create()).flatMap(connection -> {
@@ -158,6 +161,24 @@ public class R2dbcSchemaGenerator {
                 }
             }
         }
+    }
+
+    /**
+     * Resolves the placeholders of the contributed statements like JDBC schema generation, before a connection is
+     * opened, so that a missing property fails the generation without a connection to close.
+     */
+    private static SchemaContributions resolvePlaceholders(PropertyPlaceholderResolver placeholderResolver, SchemaContributions contributions) {
+        return new SchemaContributions(contributions.tableEntities(),
+            resolvePlaceholders(placeholderResolver, contributions.dropStatements()),
+            resolvePlaceholders(placeholderResolver, contributions.beforeTablesDropStatements()),
+            resolvePlaceholders(placeholderResolver, contributions.beforeTablesStatements()),
+            resolvePlaceholders(placeholderResolver, contributions.createStatements()));
+    }
+
+    private static List<String> resolvePlaceholders(PropertyPlaceholderResolver placeholderResolver, List<String> statements) {
+        return statements.stream()
+            .map(sql -> sql.contains(placeholderResolver.getPrefix()) ? placeholderResolver.resolveRequiredPlaceholders(sql) : sql)
+            .toList();
     }
 
     static @Nullable String detectVersion(Connection connection, String dataSourceName) {
