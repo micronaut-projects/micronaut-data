@@ -24,9 +24,9 @@ snippet::example.MovieRepository[project-base="doc-examples/neo4j-example", sour
 
 <1> The roles, with the people who played them, and the directors are loaded with the movie.
 
-Without a join a relationship property is left as the entity declares it: `null` for a single node and empty for a collection. Nothing is loaded lazily, and there are no proxies, so a finder that needs related nodes names its joins. A join is always optional: a movie without directors is still returned, with an empty collection, whether or not the property is annotated with `@Nullable`.
+Without a join a relationship property is left as the entity declares it: `null` for a single node and empty for a collection. Nothing is loaded lazily, and there are no proxies, so a finder that needs related nodes names its joins. A join is optional by default: a movie without directors is still returned, with an empty collection, whether or not the property is annotated with `@Nullable`. A join of type `INNER_FETCH` is required instead, and excludes the movies without the relationship.
 
-Each join adds an `OPTIONAL MATCH` whose results are collected, so the query returns one row per movie:
+Each join adds an `OPTIONAL MATCH`, or a `MATCH` for `INNER_FETCH`, whose results are collected, so the query returns one row per movie:
 
 [source,cypher]
 ----
@@ -47,6 +47,8 @@ A join path through several relationships also loads the relationships of the re
 snippet::example.MovieRepository[project-base="doc-examples/neo4j-example", source="main", tags="nestedJoin", languages="java,kotlin,groovy,python"]
 
 <1> The directors are loaded with the people they follow.
+
+The type of the last `@Join` through a path applies to its parents, so `@Join(value = "directors", type = Join.Type.INNER_FETCH)` must follow `@Join("directors.follows")` to keep `directors` required.
 
 Each node of the outer relationship is collected with the nodes of its own relationships, so the query still returns one row per movie:
 
