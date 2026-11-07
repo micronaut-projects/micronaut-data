@@ -9,6 +9,8 @@ import io.micronaut.data.oracle.graph.bank.Account
 import io.micronaut.data.oracle.graph.bank.BankGraph
 import io.micronaut.data.oracle.graph.bank.Customer
 import io.micronaut.data.oracle.graph.bank.CustomerGraph
+import io.micronaut.data.oracle.graph.bank.PeerGraph
+import io.micronaut.data.oracle.graph.bank.Transfer
 import io.micronaut.data.oracle.graph.operations.OracleGraphRepositoryOperations
 import io.micronaut.test.extensions.spock.annotation.MicronautTest
 import jakarta.inject.Inject
@@ -31,6 +33,9 @@ class OracleGraphSpec extends Specification {
 
     @Inject
     CustomerGraph customerGraph
+
+    @Inject
+    PeerGraph peerGraph
 
     @Inject
     OracleGraphRepositoryOperations operations
@@ -248,6 +253,24 @@ class OracleGraphSpec extends Specification {
         expect:
         bankGraph.findByTransfersAmountGreaterThan(1000)*.name() == ["Bob"]
         bankGraph.findByTransfersToName("Carol")*.name().sort() == ["Alice", "Bob"]
+
+        and: "a relationship entity compares the edge, and its target compares the node"
+        def carol = new Account(3L, "Carol", [])
+        bankGraph.findByTransfers(new Transfer(2L, 1500, carol))*.name() == ["Bob"]
+        bankGraph.findByTransfersTo(carol)*.name().sort() == ["Alice", "Bob"]
+    }
+
+    void "an inner join applies to a count, a page total and a projection as it does to the entities"() {
+        expect: "Carol is the only account without an outgoing transfer"
+        bankGraph.countByNameContains("") == 3
+        bankGraph.findNameByNameContains("").toSet() == ["Alice", "Bob", "Dave"].toSet()
+
+        when:
+        def page = bankGraph.findByNameContains("", Pageable.from(0, 2, Sort.of(Sort.Order.asc("name"))))
+
+        then:
+        page.content*.name() == ["Alice", "Bob"]
+        page.totalSize == 3
     }
 
     void "check and count paths"() {
@@ -295,6 +318,42 @@ class OracleGraphSpec extends Specification {
         relationships[0].to().name() == "Bob"
         relationships[0].id() == 1
         relationships[0].properties().amount == 500
+    }
+
+    void "a relationship with a null property leaves it out"() {
+        given:
+        execute("INSERT INTO transfers VALUES (5, 2, 1, NULL)")
+
+        when:
+        def relationships = bankGraph.findRelationshipsByTransfers(2L, 1L)
+
+        then:
+        relationships.size() == 1
+        relationships[0].id() == 5
+        !relationships[0].properties().containsKey("amount")
+
+        cleanup:
+        execute("DELETE FROM transfers WHERE id = 5")
+    }
+
+    void "an undirected relationship keeps its stored direction whichever way it is matched"() {
+        when:
+        def relationships = peerGraph.findRelationshipsByPeers(first, second)
+
+        then:
+        relationships.size() == 1
+        relationships[0].from().name() == "Alice"
+        relationships[0].to().name() == "Bob"
+
+        where:
+        first | second
+        1L    | 2L
+        2L    | 1L
+    }
+
+    void "the relationship queries the builder rejects still work as explicit queries"() {
+        expect: "NOT EXISTS is allowed outside GRAPH_TABLE, where a query with @Query can use it"
+        bankGraph.findWithoutTransfers()*.name() == ["Carol"]
     }
 
     void "run a query with named parameters"() {
@@ -353,6 +412,12 @@ class OracleGraphSpec extends Specification {
         then:
         def projected = thrown(Exception)
         projected.message.contains("does not return")
+    }
+
+    private void execute(String sql) {
+        DelegatingDataSource.unwrapDataSource(dataSource).connection.withCloseable { connection ->
+            connection.createStatement().withCloseable { statement -> statement.execute(sql) }
+        }
     }
 
     void "operations without a query method are rejected"() {
