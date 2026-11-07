@@ -1,6 +1,7 @@
 package io.micronaut.data.oracle.graph.r2dbc.wallet;
 
 import io.micronaut.core.annotation.Nullable;
+import io.micronaut.data.annotation.Id;
 import io.micronaut.data.graph.annotation.PathLimit;
 import io.micronaut.data.oracle.graph.r2dbc.annotation.OracleGraphR2dbcRepository;
 import io.micronaut.data.repository.reactive.ReactorCrudRepository;
@@ -8,6 +9,7 @@ import reactor.core.publisher.Flux;
 import reactor.core.publisher.Mono;
 
 import java.math.BigDecimal;
+import java.util.List;
 
 @OracleGraphR2dbcRepository(graph = "wallet_graph")
 public interface WalletGraph extends ReactorCrudRepository<Wallet, Long> {
@@ -22,4 +24,18 @@ public interface WalletGraph extends ReactorCrudRepository<Wallet, Long> {
     Mono<Boolean> existsPathByPayments(Long from, Long to);
 
     java.util.concurrent.CompletableFuture<Long> countByOwnerStartsWith(String prefix);
+
+    Mono<Wallet> insertReturning(Wallet wallet);
+
+    Mono<Wallet> updateReturning(Wallet wallet);
+
+    Mono<String> updateReturningOwner(Wallet wallet);
+
+    Mono<String> updateReturningOwner(@Id Long id, String owner);
+
+    Mono<Wallet> deleteReturning(Wallet wallet);
+
+    Mono<String> deleteReturningOwner(Wallet wallet);
+
+    Flux<Wallet> deleteReturning(List<Wallet> wallets);
 }

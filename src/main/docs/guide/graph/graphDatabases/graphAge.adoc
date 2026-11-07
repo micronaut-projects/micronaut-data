@@ -65,4 +65,4 @@ snippet::example.MovieRepositorySpec[project-base="doc-examples/age-r2dbc-exampl
 <2> Then stream the movies directed by Lana Wachowski.
 <3> Block only to read the result in the test.
 
-Queries and writes run in the same reactive connection, and join the transaction of a reactive `@Transactional` method. AGE is loaded, and its catalog put on the search path, on the connection before each operation, since pooled connections may not have been prepared. Blocking methods are not supported, and indexes declared on entities are created by the JDBC module only.
+Queries and writes run in the same reactive connection, and join the transaction of a reactive `@Transactional` method. As with any R2DBC repository, a transaction whose subscription is cancelled commits what it wrote so far. AGE is loaded, and its catalog put on the search path, on the connection before each operation, since pooled connections may not have been prepared. Blocking methods are not supported, and indexes declared on entities are created by the JDBC module only.

@@ -28,6 +28,7 @@ import io.micronaut.data.model.PersistentProperty;
 import io.micronaut.data.model.jpa.criteria.IExpression;
 import io.micronaut.data.model.jpa.criteria.IPredicate;
 import io.micronaut.data.model.jpa.criteria.ISelection;
+import io.micronaut.data.model.jpa.criteria.PersistentAssociationPath;
 import io.micronaut.data.model.jpa.criteria.PersistentEntityRoot;
 import io.micronaut.data.model.jpa.criteria.PersistentEntitySubquery;
 import io.micronaut.data.model.jpa.criteria.impl.DefaultOrder;
@@ -114,6 +115,10 @@ public class CypherQueryBuilder implements GraphQueryBuilder {
      */
     public static final String NODE_KEY = "node";
     /**
+     * The key of the nested relationships, by property name, in a node collected with the relationships of its own.
+     */
+    public static final String NESTED_KEY = "nested";
+    /**
      * The parameter name prefix.
      */
     public static final String PARAMETER_PREFIX = "p";
@@ -174,6 +179,7 @@ public class CypherQueryBuilder implements GraphQueryBuilder {
      */
     public static final String ROW_PROPERTIES = "properties";
     private static final String WITH = " WITH ";
+    private static final String OPTIONAL_MATCH = " OPTIONAL MATCH ";
     private static final String WITH_DISTINCT = " WITH DISTINCT ";
     private static final String DISTINCT = "DISTINCT ";
     private static final String TO_LOWER = "toLower(";
@@ -191,7 +197,7 @@ public class CypherQueryBuilder implements GraphQueryBuilder {
     private static final String COUNT_OPEN = "count(";
     private static final String DETACH_DELETE = " DETACH DELETE ";
     private static final String EXISTING = "existing";
-    private static final String LOCK_PROPERTY = "__lock";
+    private static final String LOCK_PROPERTY = GraphEntities.LOCK_PROPERTY;
     private static final String ROW = "row";
     private static final String UNWIND_ROWS = "UNWIND $" + ROWS_PARAMETER + " AS " + ROW + " ";
     private static final String LINK_FROM = "a";
@@ -218,6 +224,9 @@ public class CypherQueryBuilder implements GraphQueryBuilder {
             selectionRenderer.entity = true;
         }
         requireInnerJoins(state, !selectionRenderer.entity);
+        if (definition.root() instanceof PersistentEntityRoot<?> root) {
+            requireDeclaredInnerJoins(state, root.getPersistentJoins());
+        }
         // A pattern added only to sort by must not remove the nodes that do not have the relationship
         state.sealRequiredPatterns();
         List<OrderItem> orders = renderOrders(definition.order(), state);
@@ -393,6 +402,22 @@ public class CypherQueryBuilder implements GraphQueryBuilder {
     }
 
     /**
+     * The join paths report an inner join outside the selection as a default join, which is fine for SQL where
+     * a default join is an inner one but optional here, so counts and scalar projections check the declared joins.
+     *
+     * @param state The state
+     * @param joins The declared joins
+     */
+    private static void requireDeclaredInnerJoins(QueryState state, Collection<? extends PersistentAssociationPath<?, ?>> joins) {
+        for (PersistentAssociationPath<?, ?> join : joins) {
+            if (join.getAssociationJoinType() == Join.Type.INNER) {
+                state.resolveVariable(join.asPath());
+            }
+            requireDeclaredInnerJoins(state, join.getPersistentJoins());
+        }
+    }
+
+    /**
      * Builds the query that finds a node by its identifier, bound to the parameter {@code $id}.
      *
      * @param entity The entity
@@ -419,7 +444,14 @@ public class CypherQueryBuilder implements GraphQueryBuilder {
      */
     @Override
     public String buildFindAllQuery(PersistentEntity entity) {
-        return MATCH_OPEN + ROOT + labelExpression(entity) + ") RETURN " + ROOT;
+        StringBuilder query = new StringBuilder(MATCH_OPEN + ROOT + labelExpression(entity) + ")");
+        List<String> columns = new ArrayList<>();
+        appendDynamicRelationships(query, entity, columns, List.of());
+        query.append(RETURN).append(ROOT);
+        for (String column : columns) {
+            query.append(", ").append(column);
+        }
+        return query.toString();
     }
 
     /**
@@ -782,6 +814,34 @@ public class CypherQueryBuilder implements GraphQueryBuilder {
     }
 
     /**
+     * Builds the query that removes the relationships of a single-valued association to relationship entities, except
+     * the one to the node in {@code $to} with the identifier in {@code $id}. Without an identity the query binds only
+     * {@code $from} and removes them all.
+     *
+     * @param association          The association
+     * @param owner                The entity that declares the association
+     * @param target               The node entity at the far end
+     * @param relationshipIdentity The identity of the relationship to keep, or null to keep none
+     * @return The query
+     * @since 5.3.0
+     */
+    @Override
+    public String buildUnlinkOtherRelationshipsQuery(Association association,
+                                                     PersistentEntity owner,
+                                                     PersistentEntity target,
+                                                     @Nullable PersistentProperty relationshipIdentity) {
+        StringBuilder query = linkFrom(association, owner, target);
+        if (relationshipIdentity != null) {
+            query.append(" AND (")
+                .append(identityExpression(target.getIdentity(), LINK_TO)).append(" <> $").append(LINK_TO_PARAMETER)
+                .append(" OR ")
+                .append(identityExpression(relationshipIdentity, PATH_RELATIONSHIP)).append(" <> $").append(ID_PARAMETER)
+                .append(')');
+        }
+        return query.append(" DELETE ").append(PATH_RELATIONSHIP).append(RETURN_COUNT).toString();
+    }
+
+    /**
      * Renders the expression that sorts by the identifier of the root node, which a database-assigned identifier
      * does not hold as a property.
      *
@@ -803,12 +863,16 @@ public class CypherQueryBuilder implements GraphQueryBuilder {
     }
 
     private StringBuilder linkPattern(Association association, PersistentEntity owner, PersistentEntity target, String targetComparison) {
+        return linkFrom(association, owner, target)
+            .append(AND)
+            .append(identityExpression(target.getIdentity(), LINK_TO)).append(targetComparison).append(LINK_TO_PARAMETER);
+    }
+
+    private StringBuilder linkFrom(Association association, PersistentEntity owner, PersistentEntity target) {
         String relationship = directed("(" + LINK_FROM + labelExpression(owner) + ")", linkRelationship(association),
             "(" + LINK_TO + labelExpression(target) + ")", GraphEntities.direction(association));
         return new StringBuilder("MATCH ").append(relationship).append(WHERE)
-            .append(identityExpression(owner.getIdentity(), LINK_FROM)).append(" = $").append(LINK_FROM_PARAMETER)
-            .append(AND)
-            .append(identityExpression(target.getIdentity(), LINK_TO)).append(targetComparison).append(LINK_TO_PARAMETER);
+            .append(identityExpression(owner.getIdentity(), LINK_FROM)).append(" = $").append(LINK_FROM_PARAMETER);
     }
 
     private static String linkRelationship(Association association) {
@@ -1085,7 +1149,7 @@ public class CypherQueryBuilder implements GraphQueryBuilder {
             query.append(WHERE).append(where);
         }
         for (Pattern pattern : patterns.subList(required, patterns.size())) {
-            query.append(" OPTIONAL MATCH ").append(pattern.text);
+            query.append(OPTIONAL_MATCH).append(pattern.text);
         }
     }
 
@@ -1187,7 +1251,7 @@ public class CypherQueryBuilder implements GraphQueryBuilder {
             throw new IllegalArgumentException("Graph repositories can only join relationships with properties at the start of a join path, found: " + association.getName());
         }
         PersistentEntity target = GraphEntities.targetNodeEntity(association);
-        query.append(tree.inner ? " MATCH " : " OPTIONAL MATCH ")
+        query.append(tree.inner ? " MATCH " : OPTIONAL_MATCH)
             .append(GraphEntities.relationshipPattern(association, from, null, "(" + variable + labelExpression(target) + ")"));
         // The collects are DISTINCT: a node reached through parallel relationships, or the rows a sibling branch
         // multiplied, would otherwise be collected more than once
@@ -1196,16 +1260,16 @@ public class CypherQueryBuilder implements GraphQueryBuilder {
         }
         List<String> scope = new ArrayList<>(carried);
         scope.add(variable);
-        StringBuilder map = new StringBuilder("{").append(NODE_KEY).append(": ").append(variable);
+        StringBuilder map = new StringBuilder("{").append(NODE_KEY).append(": ").append(variable).append(", ").append(NESTED_KEY).append(": {");
         int index = 0;
         for (JoinTree child : tree.children.values()) {
             String childColumn = variable + "_" + index++;
             String childCollect = appendJoinTree(query, variable, child, scope, childColumn + "n");
             query.append(WITH).append(String.join(", ", scope)).append(", ").append(childCollect).append(" AS ").append(childColumn);
             scope.add(childColumn);
-            map.append(", ").append(GraphEntities.escapeName(child.association.getName())).append(": ").append(childColumn);
+            map.append(index == 1 ? "" : ", ").append(GraphEntities.escapeName(child.association.getName())).append(": ").append(childColumn);
         }
-        return "collect(DISTINCT CASE WHEN " + variable + " IS NULL THEN NULL ELSE " + map.append('}') + " END)";
+        return "collect(DISTINCT CASE WHEN " + variable + " IS NULL THEN NULL ELSE " + map.append("}}") + " END)";
     }
 
     private void appendFetchJoin(StringBuilder query, JoinPath joinPath, List<String> columns, List<String> carried) {
@@ -1224,7 +1288,7 @@ public class CypherQueryBuilder implements GraphQueryBuilder {
             String nodeVariable = "j" + index;
             PersistentEntity target = GraphEntities.targetNodeEntity(association);
             String nodePattern = "(" + nodeVariable + labelExpression(target) + ")";
-            query.append(joinPath.getJoinType() == Join.Type.INNER_FETCH ? " MATCH " : " OPTIONAL MATCH ");
+            query.append(joinPath.getJoinType() == Join.Type.INNER_FETCH ? " MATCH " : OPTIONAL_MATCH);
             String collect;
             if (relationshipEntity) {
                 String relVariable = "r" + index;
@@ -1442,16 +1506,19 @@ public class CypherQueryBuilder implements GraphQueryBuilder {
                 return identityExpression(property, variable);
             }
             if (property instanceof Association association && !association.isEmbedded()) {
-                // A criterion on an association itself compares its identifier
-                PersistentEntity target = GraphEntities.targetNodeEntity(association);
+                // A criterion on an association itself compares the identifier of the associated entity, as that is
+                // what the argument binds to. For a relationship entity that is the relationship, its target node is
+                // compared through the @TargetNode association.
+                PersistentEntity associated = association.getAssociatedEntity();
                 List<Association> associations = concat(propertyPath.getAssociations(), association);
-                Association targetNode = GraphEntities.isRelationshipEntity(association.getAssociatedEntity())
-                    ? GraphEntities.findTargetNode(association.getAssociatedEntity())
-                    : null;
+                if (associated.hasIdentity()) {
+                    return resolve(io.micronaut.data.model.PersistentPropertyPath.of(associations, associated.getIdentity()));
+                }
+                Association targetNode = GraphEntities.findTargetNode(associated);
                 if (targetNode != null) {
                     associations = concat(associations, targetNode);
                 }
-                return resolve(io.micronaut.data.model.PersistentPropertyPath.of(associations, target.getIdentity()));
+                return resolve(io.micronaut.data.model.PersistentPropertyPath.of(associations, GraphEntities.targetNodeEntity(association).getIdentity()));
             }
             return variable + "." + GraphEntities.escapeName(GraphEntities.propertyName(property));
         }

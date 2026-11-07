@@ -45,8 +45,8 @@ import java.util.List;
  *     create statements}, running the contributors in order.</li>
  * </ol>
  *
- * <p>Statements may contain property placeholders, which JDBC schema generation resolves. A failed statement is
- * logged as a warning and the generation carries on, as for the tables of the generator, so drop statements should
+ * <p>Statements may contain property placeholders, which JDBC and R2DBC schema generation resolve, and a missing
+ * property fails the generation. A failed statement is logged as a warning and the generation carries on, as for the tables of the generator, so drop statements should
  * succeed when the objects do not exist yet, for example with {@code IF EXISTS}.</p>
  *
  * <p>This SPI is experimental in 5.3.0, so its methods and {@link SchemaContext} may still change.</p>
