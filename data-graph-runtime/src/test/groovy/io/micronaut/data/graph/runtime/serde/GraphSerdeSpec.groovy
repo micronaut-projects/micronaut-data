@@ -17,6 +17,7 @@ class GraphSerdeSpec extends Specification {
     Deserializer.DecoderContext registryContext = Mock()
     SerdeRegistry registry = Mock {
         newDecoderContext(_) >> registryContext
+        cloneWithConfiguration(null, null, null) >> { delegate.mockObject.instance }
     }
     DataConversionService conversionService = Mock {
         convert(_, _ as Argument) >> Optional.empty()

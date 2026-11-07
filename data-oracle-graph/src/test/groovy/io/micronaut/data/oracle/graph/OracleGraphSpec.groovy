@@ -1,16 +1,22 @@
 package io.micronaut.data.oracle.graph
 
 import io.micronaut.data.connection.jdbc.advice.DelegatingDataSource
+import io.micronaut.data.exceptions.DataAccessException
 import io.micronaut.data.model.Pageable
 import io.micronaut.data.model.runtime.PagedQuery
 import io.micronaut.data.model.Sort
 import io.micronaut.data.oracle.graph.bank.Account
 import io.micronaut.data.oracle.graph.bank.BankGraph
+import io.micronaut.data.oracle.graph.bank.Customer
+import io.micronaut.data.oracle.graph.bank.CustomerGraph
+import io.micronaut.data.oracle.graph.bank.PeerGraph
+import io.micronaut.data.oracle.graph.bank.Transfer
 import io.micronaut.data.oracle.graph.operations.OracleGraphRepositoryOperations
 import io.micronaut.test.extensions.spock.annotation.MicronautTest
 import jakarta.inject.Inject
 import spock.lang.Shared
 import spock.lang.Specification
+import spock.lang.Unroll
 
 import javax.sql.DataSource
 import java.time.LocalDateTime
@@ -24,6 +30,12 @@ class OracleGraphSpec extends Specification {
 
     @Inject
     BankGraph bankGraph
+
+    @Inject
+    CustomerGraph customerGraph
+
+    @Inject
+    PeerGraph peerGraph
 
     @Inject
     OracleGraphRepositoryOperations operations
@@ -40,7 +52,18 @@ class OracleGraphSpec extends Specification {
         }
         DelegatingDataSource.unwrapDataSource(dataSource).connection.withCloseable { connection ->
             connection.createStatement().withCloseable { statement ->
-                ["DROP PROPERTY GRAPH IF EXISTS bank_graph",
+                ["DROP PROPERTY GRAPH IF EXISTS customer_graph",
+                 "DROP TABLE IF EXISTS referrals",
+                 "DROP TABLE IF EXISTS customers",
+                 "CREATE TABLE customers (id NUMBER PRIMARY KEY, name VARCHAR2(100))",
+                 "CREATE TABLE referrals (id NUMBER PRIMARY KEY, customer NUMBER REFERENCES customers (id), referrer NUMBER REFERENCES customers (id))",
+                 """CREATE PROPERTY GRAPH customer_graph
+                    VERTEX TABLES (customers KEY (id) LABEL Customer PROPERTIES (id, name))
+                    EDGE TABLES (referrals KEY (id)
+                        SOURCE KEY (customer) REFERENCES customers (id)
+                        DESTINATION KEY (referrer) REFERENCES customers (id)
+                        LABEL REFERRED_BY PROPERTIES (id))""",
+                 "DROP PROPERTY GRAPH IF EXISTS bank_graph",
                  "DROP TABLE IF EXISTS transfers",
                  "DROP TABLE IF EXISTS accounts",
                  "CREATE TABLE accounts (id NUMBER PRIMARY KEY, name VARCHAR2(100), opened TIMESTAMP)",
@@ -86,6 +109,122 @@ class OracleGraphSpec extends Specification {
         bankGraph.findById(5L).empty
     }
 
+    void "write a node with a single relationship to its vertex table"() {
+        when: "the relationship has no column in the vertex table"
+        customerGraph.save(new Customer(1L, "Ann", null))
+
+        then:
+        customerGraph.findById(1L).get().name() == "Ann"
+        customerGraph.findById(1L).get().referrer() == null
+
+        when:
+        customerGraph.update(new Customer(1L, "Ann Lee", null))
+
+        then:
+        customerGraph.findById(1L).get().name() == "Ann Lee"
+
+        when:
+        customerGraph.saveAll([new Customer(2L, "Ben", null), new Customer(3L, "Cat", null)])
+        customerGraph.updateAll([new Customer(2L, "Ben Ng", null), new Customer(3L, "Cat Ng", null)])
+
+        then:
+        customerGraph.findById(2L).get().name() == "Ben Ng"
+        customerGraph.findById(3L).get().name() == "Cat Ng"
+
+        when: "an edge written to the edge table is found by a finder"
+        sql("INSERT INTO referrals VALUES (1, 2, 1)")
+
+        then:
+        customerGraph.findByReferrerName("Ann Lee")*.name() == ["Ben Ng"]
+
+        cleanup:
+        sql("DELETE FROM referrals")
+        sql("DELETE FROM customers")
+    }
+
+    @Unroll
+    void "a write of a node with a single relationship set fails rather than losing the edge: #description"() {
+        given:
+        def ann = new Customer(1L, "Ann", null)
+        customerGraph.save(ann)
+
+        when:
+        write.call(customerGraph, new Customer(2L, "Ben", ann))
+
+        then:
+        def e = thrown(DataAccessException)
+        e.message.contains("relationship [referrer]")
+        e.message.contains("edge table")
+
+        and: "no row was written"
+        customerGraph.count() == 1
+        customerGraph.findById(1L).get().name() == "Ann"
+
+        cleanup:
+        sql("DELETE FROM customers")
+
+        where:
+        description           | write
+        "save"                | { graph, customer -> graph.save(customer) }
+        "saveAll"             | { graph, customer -> graph.saveAll([new Customer(3L, "Cat", null), customer]) }
+        "update"              | { graph, customer -> graph.update(new Customer(1L, "Changed", customer)) }
+        "updateAll"           | { graph, customer -> graph.updateAll([new Customer(1L, "Changed", customer)]) }
+        "updateReturningName" | { graph, customer -> graph.updateReturningName(new Customer(1L, "Changed", customer)) }
+    }
+
+    void "write with returning methods runs as SQL on the vertex table"() {
+        when:
+        def inserted = bankGraph.insertReturning(new Account(5L, "Erin", []))
+
+        then:
+        inserted.id() == 5L
+        inserted.name() == "Erin"
+        bankGraph.findById(5L).get().name() == "Erin"
+
+        when:
+        def updated = bankGraph.updateReturning(new Account(5L, "Erin Smith", []))
+
+        then:
+        updated.name() == "Erin Smith"
+        bankGraph.findById(5L).get().name() == "Erin Smith"
+
+        when:
+        def deleted = bankGraph.deleteReturning(new Account(5L, "Erin Smith", []))
+
+        then:
+        deleted.name() == "Erin Smith"
+        bankGraph.findById(5L).empty
+
+        when:
+        bankGraph.save(new Account(5L, "Erin", []))
+        def deletedAll = bankGraph.deleteReturning([new Account(5L, "Erin", [])])
+
+        then:
+        deletedAll*.name() == ["Erin"]
+        bankGraph.findById(5L).empty
+    }
+
+    void "a node with a single relationship returns its properties from a write"() {
+        given:
+        customerGraph.save(new Customer(1L, "Ann", null))
+
+        expect:
+        customerGraph.updateReturningName(new Customer(1L, "Ann Lee", null)) == "Ann Lee"
+        customerGraph.updateReturningName(1L, "Ann Ng") == "Ann Ng"
+        customerGraph.findById(1L).get().name() == "Ann Ng"
+        customerGraph.deleteReturningName(new Customer(1L, "Ann Ng", null)) == "Ann Ng"
+        customerGraph.count() == 0
+
+        cleanup:
+        sql("DELETE FROM customers")
+    }
+
+    private void sql(String statement) {
+        DelegatingDataSource.unwrapDataSource(dataSource).connection.withCloseable { connection ->
+            connection.createStatement().withCloseable { it.execute(statement) }
+        }
+    }
+
     void "find nodes by their properties"() {
         expect:
         bankGraph.findById(1L).get().name() == "Alice"
@@ -114,6 +253,24 @@ class OracleGraphSpec extends Specification {
         expect:
         bankGraph.findByTransfersAmountGreaterThan(1000)*.name() == ["Bob"]
         bankGraph.findByTransfersToName("Carol")*.name().sort() == ["Alice", "Bob"]
+
+        and: "a relationship entity compares the edge, and its target compares the node"
+        def carol = new Account(3L, "Carol", [])
+        bankGraph.findByTransfers(new Transfer(2L, 1500, carol))*.name() == ["Bob"]
+        bankGraph.findByTransfersTo(carol)*.name().sort() == ["Alice", "Bob"]
+    }
+
+    void "an inner join applies to a count, a page total and a projection as it does to the entities"() {
+        expect: "Carol is the only account without an outgoing transfer"
+        bankGraph.countByNameContains("") == 3
+        bankGraph.findNameByNameContains("").toSet() == ["Alice", "Bob", "Dave"].toSet()
+
+        when:
+        def page = bankGraph.findByNameContains("", Pageable.from(0, 2, Sort.of(Sort.Order.asc("name"))))
+
+        then:
+        page.content*.name() == ["Alice", "Bob"]
+        page.totalSize == 3
     }
 
     void "check and count paths"() {
@@ -161,6 +318,42 @@ class OracleGraphSpec extends Specification {
         relationships[0].to().name() == "Bob"
         relationships[0].id() == 1
         relationships[0].properties().amount == 500
+    }
+
+    void "a relationship with a null property leaves it out"() {
+        given:
+        execute("INSERT INTO transfers VALUES (5, 2, 1, NULL)")
+
+        when:
+        def relationships = bankGraph.findRelationshipsByTransfers(2L, 1L)
+
+        then:
+        relationships.size() == 1
+        relationships[0].id() == 5
+        !relationships[0].properties().containsKey("amount")
+
+        cleanup:
+        execute("DELETE FROM transfers WHERE id = 5")
+    }
+
+    void "an undirected relationship keeps its stored direction whichever way it is matched"() {
+        when:
+        def relationships = peerGraph.findRelationshipsByPeers(first, second)
+
+        then:
+        relationships.size() == 1
+        relationships[0].from().name() == "Alice"
+        relationships[0].to().name() == "Bob"
+
+        where:
+        first | second
+        1L    | 2L
+        2L    | 1L
+    }
+
+    void "the relationship queries the builder rejects still work as explicit queries"() {
+        expect: "NOT EXISTS is allowed outside GRAPH_TABLE, where a query with @Query can use it"
+        bankGraph.findWithoutTransfers()*.name() == ["Carol"]
     }
 
     void "run a query with named parameters"() {
@@ -219,6 +412,12 @@ class OracleGraphSpec extends Specification {
         then:
         def projected = thrown(Exception)
         projected.message.contains("does not return")
+    }
+
+    private void execute(String sql) {
+        DelegatingDataSource.unwrapDataSource(dataSource).connection.withCloseable { connection ->
+            connection.createStatement().withCloseable { statement -> statement.execute(sql) }
+        }
     }
 
     void "operations without a query method are rejected"() {

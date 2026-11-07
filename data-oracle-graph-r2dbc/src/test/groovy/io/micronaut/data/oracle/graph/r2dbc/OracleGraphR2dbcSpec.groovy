@@ -1,7 +1,10 @@
 package io.micronaut.data.oracle.graph.r2dbc
 
+import io.micronaut.data.exceptions.DataAccessException
 import io.micronaut.data.graph.annotation.GraphRepository
 import io.micronaut.data.oracle.graph.r2dbc.annotation.OracleGraphR2dbcRepository
+import io.micronaut.data.oracle.graph.r2dbc.wallet.Vault
+import io.micronaut.data.oracle.graph.r2dbc.wallet.VaultGraph
 import io.micronaut.data.oracle.graph.r2dbc.wallet.Wallet
 import io.micronaut.data.oracle.graph.r2dbc.wallet.WalletGraph
 import io.micronaut.data.oracle.graph.r2dbc.wallet.WalletService
@@ -12,6 +15,7 @@ import jakarta.inject.Inject
 import reactor.core.publisher.Flux
 import spock.lang.Shared
 import spock.lang.Specification
+import spock.lang.Unroll
 
 import java.sql.Timestamp
 import java.time.LocalDateTime
@@ -24,6 +28,9 @@ class OracleGraphR2dbcSpec extends Specification {
 
     @Inject
     WalletGraph walletGraph
+
+    @Inject
+    VaultGraph vaultGraph
 
     @Inject
     WalletService walletService
@@ -46,10 +53,15 @@ class OracleGraphR2dbcSpec extends Specification {
                    EDGE TABLES (payments KEY (id)
                        SOURCE KEY (src) REFERENCES wallets (id)
                        DESTINATION KEY (dst) REFERENCES wallets (id)
-                       LABEL PAID PROPERTIES (id, amount))""")
+                       LABEL PAID PROPERTIES (id, amount))""",
+                "DROP PROPERTY GRAPH IF EXISTS vault_graph",
+                "DROP TABLE IF EXISTS vaults",
+                "CREATE TABLE vaults (id NUMBER PRIMARY KEY, name VARCHAR2(100))",
+                "CREATE PROPERTY GRAPH vault_graph VERTEX TABLES (vaults KEY (id) LABEL Vault PROPERTIES (id, name))")
             created = true
         }
-        sql("DELETE FROM payments", "DELETE FROM wallets",
+        sql("DELETE FROM vaults", "INSERT INTO vaults VALUES (1, 'Main')",
+            "DELETE FROM payments", "DELETE FROM wallets",
             "INSERT INTO wallets VALUES (1, 'Alice', TIMESTAMP '2024-01-15 09:30:00', TIMESTAMP '2024-02-01 12:00:00')",
             "INSERT INTO wallets VALUES (2, 'Bob', NULL, NULL)",
             "INSERT INTO wallets VALUES (3, 'Carol', NULL, NULL)",
@@ -162,6 +174,38 @@ class OracleGraphR2dbcSpec extends Specification {
         batch*.owner() == ["Heidi", "Ivan"]
         walletGraph.findById(8L).block() == null
         walletGraph.findById(9L).block() == null
+    }
+
+    @Unroll
+    void "a reactive write of a node with a single relationship set fails rather than losing the edge: #description"() {
+        given:
+        def main = new Vault(1L, "Main", null)
+
+        when: "nothing runs until it is subscribed to"
+        def publisher = write.call(vaultGraph, new Vault(2L, "Spare", main))
+
+        then:
+        notThrown(DataAccessException)
+
+        when:
+        Flux.from(publisher).blockLast()
+
+        then:
+        def e = thrown(DataAccessException)
+        e.message.contains("relationship [backup]")
+        e.message.contains("edge table")
+
+        and: "no row was written"
+        vaultGraph.count().block() == 1
+        vaultGraph.findById(1L).block().name() == "Main"
+
+        where:
+        description           | write
+        "save"                | { graph, vault -> graph.save(vault) }
+        "saveAll"             | { graph, vault -> graph.saveAll([new Vault(3L, "Cold", null), vault]) }
+        "update"              | { graph, vault -> graph.update(new Vault(1L, "Changed", vault)) }
+        "updateAll"           | { graph, vault -> graph.updateAll([new Vault(1L, "Changed", vault)]) }
+        "updateReturningName" | { graph, vault -> graph.updateReturningName(new Vault(1L, "Changed", vault)) }
     }
 
     void "the stereotype fails the build on blocking methods"() {

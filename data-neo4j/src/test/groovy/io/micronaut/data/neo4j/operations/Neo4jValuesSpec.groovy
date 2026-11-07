@@ -1,6 +1,5 @@
 package io.micronaut.data.neo4j.operations
 
-import io.micronaut.data.exceptions.DataAccessException
 import org.neo4j.driver.Values
 import spock.lang.Specification
 import spock.lang.Unroll
@@ -31,14 +30,12 @@ class Neo4jValuesSpec extends Specification {
     }
 
     @Unroll
-    void "a duration with #description is rejected"() {
-        when:
-        Neo4jValues.decode(Values.isoDuration(months, days, seconds, nanos))
+    void "a duration with #description stays a driver value"() {
+        given:
+        def value = Values.isoDuration(months, days, seconds, nanos)
 
-        then:
-        def e = thrown(DataAccessException)
-        e.message.startsWith('Cannot read the Neo4j duration [')
-        e.message.contains('both a calendar part (months or days) and a time part')
+        expect:
+        Neo4jValues.decode(value) == value.asIsoDuration()
 
         where:
         description          | months | days | seconds | nanos

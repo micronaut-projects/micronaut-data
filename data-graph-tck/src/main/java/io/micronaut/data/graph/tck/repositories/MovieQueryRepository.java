@@ -5,6 +5,7 @@ import io.micronaut.data.annotation.Query;
 import io.micronaut.data.graph.model.GraphRelationship;
 import io.micronaut.data.graph.tck.entities.Movie;
 import io.micronaut.data.graph.tck.entities.Person;
+import io.micronaut.data.graph.tck.entities.Role;
 
 import java.util.List;
 import java.util.Optional;
@@ -13,6 +14,10 @@ import java.util.Optional;
  * Fetch joins and Cypher queries, for the databases that run Cypher.
  */
 public interface MovieQueryRepository extends MovieRepository {
+
+    List<Movie> findByRoles(Role role);
+
+    List<Movie> findByRolesPerson(Person person);
 
     @Join("roles")
     @Join("directors")
