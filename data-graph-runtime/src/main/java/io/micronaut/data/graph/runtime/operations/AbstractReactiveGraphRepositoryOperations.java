@@ -490,6 +490,14 @@ public abstract class AbstractReactiveGraphRepositoryOperations implements React
             this.persister = persister;
         }
 
+        /**
+         * One result per instance, as the blocking operation returns: a vetoed instance is returned as it is.
+         */
+        @Override
+        public Flux<T> getEntities() {
+            return entities.flatMapIterable(list -> list).map(d -> d.entity);
+        }
+
         @Override
         protected void cascadePre(Relation.Cascade cascadeType) {
             // Relationships are written after the nodes, see execute()

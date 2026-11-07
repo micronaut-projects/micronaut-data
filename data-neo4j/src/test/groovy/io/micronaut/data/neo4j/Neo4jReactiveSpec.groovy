@@ -8,8 +8,10 @@ import io.micronaut.data.graph.tck.entities.Person
 import io.micronaut.data.graph.tck.entities.Role
 import io.micronaut.data.model.Pageable
 import io.micronaut.data.model.Sort
+import io.micronaut.data.neo4j.features.Draft
 import io.micronaut.data.neo4j.features.Pet
 import io.micronaut.data.neo4j.features.ReactiveArticleRepository
+import io.micronaut.data.neo4j.features.ReactiveDraftRepository
 import io.micronaut.data.neo4j.features.ReactiveMovieRepository
 import io.micronaut.data.neo4j.features.ReactiveMovieService
 import io.micronaut.data.neo4j.features.Player
@@ -44,6 +46,9 @@ class Neo4jReactiveSpec extends Specification implements TestPropertyProvider {
 
     @Inject
     ReactiveTagRepository tagRepository
+
+    @Inject
+    ReactiveDraftRepository draftRepository
 
     @Inject
     ReactiveMovieSpecificationRepository movieSpecificationRepository
@@ -383,6 +388,33 @@ class Neo4jReactiveSpec extends Specification implements TestPropertyProvider {
 
         cleanup:
         tagRepository.deleteAll().block()
+    }
+
+    void "reactive saveAll and updateAll keep one result per input when a listener vetoes an entity"() {
+        when:
+        def saved = draftRepository.saveAll([new Draft("a"), new Draft("veto"), new Draft("b")]).collectList().block()
+
+        then: "the vetoed entity stays as it was and the others are mapped to their inputs"
+        saved*.name == ["a", "veto", "b"]
+        saved[0].id != null
+        saved[1].id == null
+        saved[2].id != null
+        draftRepository.count().block() == 2
+
+        when:
+        saved[0].name = "a2"
+        saved[2].name = "veto"
+        def updated = draftRepository.updateAll([saved[0], saved[2]]).collectList().block()
+
+        then:
+        updated*.name == ["a2", "veto"]
+        updated[0].id == saved[0].id
+        updated[1].id == saved[2].id
+        draftRepository.findById(saved[0].id).block().name == "a2"
+        draftRepository.findById(saved[2].id).block().name == "b"
+
+        cleanup:
+        draftRepository.deleteAll().block()
     }
 
     void "a reactive insert of a versioned node with a taken identifier fails"() {
