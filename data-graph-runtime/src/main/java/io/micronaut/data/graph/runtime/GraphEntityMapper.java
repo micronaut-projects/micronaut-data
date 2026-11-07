@@ -241,7 +241,7 @@ public final class GraphEntityMapper {
                 }
             }
             Set<String> declared = new HashSet<>();
-            if (entity.getIdentity() != null) {
+            if (entity.hasIdentity()) {
                 declared.add(entity.getIdentity().getPersistedName());
             }
             for (RuntimePersistentProperty<?> property : entity.getPersistentProperties()) {
