@@ -372,6 +372,9 @@ public class CypherQueryBuilder implements QueryBuilder {
                 state.resolveVariable(join.asPath());
             }
             requireDeclaredInnerJoins(state, join.getPersistentJoins());
+        }
+    }
+
     /**
      * Builds the query that finds a node by its identifier, bound to the parameter {@code $id}.
      *
