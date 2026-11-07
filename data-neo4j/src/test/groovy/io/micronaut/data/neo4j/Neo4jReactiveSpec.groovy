@@ -9,6 +9,7 @@ import io.micronaut.data.exceptions.OptimisticLockException
 import io.micronaut.data.graph.tck.entities.Article
 import io.micronaut.data.graph.tck.entities.Collaboration
 import io.micronaut.data.graph.tck.entities.Colleague
+import io.micronaut.data.graph.tck.entities.Mentorship
 import io.micronaut.data.graph.tck.entities.Movie
 import io.micronaut.data.graph.tck.entities.Person
 import io.micronaut.data.graph.tck.entities.Role
@@ -480,18 +481,18 @@ class Neo4jReactiveSpec extends Specification implements TestPropertyProvider {
     void "replacing a single valued undirected relationship entity reactively leaves one relationship"() {
         given:
         def ada = new Colleague("Ada")
-        ada.mentor = new Collaboration("first", new Colleague("Grace"))
+        ada.mentor = new Mentorship("first", new Colleague("Grace"))
         ada = colleagueRepository.save(ada).block()
 
         when: "it is replaced by one that was not saved"
-        ada.mentor = new Collaboration("second", new Colleague("Grace"))
+        ada.mentor = new Mentorship("second", new Colleague("Grace"))
         ada = colleagueRepository.update(ada).block()
 
         then:
         mentorships() == ["second"]
 
         when: "it moves to another node"
-        ada.mentor = new Collaboration("third", new Colleague("Hopper"))
+        ada.mentor = new Mentorship("third", new Colleague("Hopper"))
         colleagueRepository.update(ada).block()
 
         then:

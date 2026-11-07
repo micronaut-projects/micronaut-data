@@ -4,6 +4,7 @@ import io.micronaut.data.exceptions.EntityExistsException
 import io.micronaut.data.exceptions.OptimisticLockException
 import io.micronaut.data.graph.tck.entities.Article
 import io.micronaut.data.graph.tck.entities.Colleague
+import io.micronaut.data.graph.tck.entities.Mentorship
 import io.micronaut.data.graph.tck.entities.Collaboration
 import io.micronaut.data.graph.tck.entities.Friend
 import io.micronaut.data.graph.tck.entities.Milestone
@@ -475,12 +476,12 @@ abstract class AbstractGraphRepositorySpec extends Specification {
     void "replacing a single valued relationship entity leaves one relationship"() {
         given:
         def ada = new Colleague("Ada")
-        ada.mentor = new Collaboration("first", new Colleague("Grace"))
+        ada.mentor = new Mentorship("first", new Colleague("Grace"))
         ada = colleagueRepository.save(ada)
         def saved = ada.mentor
 
         when: "it is saved again"
-        def again = new Collaboration("second", new Colleague("Grace"))
+        def again = new Mentorship("second", new Colleague("Grace"))
         again.id = saved.id
         ada.mentor = again
         ada = colleagueRepository.update(ada)
@@ -490,7 +491,7 @@ abstract class AbstractGraphRepositorySpec extends Specification {
         colleagueRepository.findMentorships() == ["second"]
 
         when: "it is replaced by one that was not saved"
-        ada.mentor = new Collaboration("third", new Colleague("Grace"))
+        ada.mentor = new Mentorship("third", new Colleague("Grace"))
         ada = colleagueRepository.update(ada)
 
         then:
@@ -498,7 +499,7 @@ abstract class AbstractGraphRepositorySpec extends Specification {
         colleagueRepository.findMentorships() == ["third"]
 
         when: "it moves to another node"
-        ada.mentor = new Collaboration("fourth", new Colleague("Hopper"))
+        ada.mentor = new Mentorship("fourth", new Colleague("Hopper"))
         colleagueRepository.update(ada)
 
         then:
@@ -506,7 +507,7 @@ abstract class AbstractGraphRepositorySpec extends Specification {
 
         when: "one that was not saved is saved from the other end"
         def hopper = new Colleague("Hopper")
-        hopper.mentor = new Collaboration("fifth", new Colleague("Ada"))
+        hopper.mentor = new Mentorship("fifth", new Colleague("Ada"))
         colleagueRepository.update(hopper)
 
         then:
