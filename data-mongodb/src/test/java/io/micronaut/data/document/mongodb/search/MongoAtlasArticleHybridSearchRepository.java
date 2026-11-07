@@ -1,5 +1,6 @@
 package io.micronaut.data.document.mongodb.search;
 
+import io.micronaut.data.model.Pageable;
 import io.micronaut.data.model.vector.Vector;
 import io.micronaut.data.model.vector.search.Score;
 import io.micronaut.data.model.vector.search.SearchResults;
@@ -18,6 +19,10 @@ import java.util.UUID;
 public interface MongoAtlasArticleHybridSearchRepository extends CrudRepository<AtlasArticle, UUID>, SearchRepository<AtlasArticle, UUID> {
 
     SearchResults<AtlasArticle> searchByTitleSearch(String query);
+
+    SearchResults<AtlasArticle> searchByTitleSearchAndEmbeddingNear(String query, Vector vector);
+
+    SearchResults<AtlasArticle> searchBySearchAndEmbeddingNear(String query, Vector vector, Pageable pageable);
 
     SearchResults<AtlasArticle> searchByEmbeddingNear(Vector vector, Score maxDistance);
 
