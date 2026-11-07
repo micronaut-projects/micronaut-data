@@ -1,5 +1,7 @@
 package io.micronaut.data.oracle.graph.r2dbc
 
+import io.micronaut.data.graph.annotation.GraphRepository
+import io.micronaut.data.oracle.graph.r2dbc.annotation.OracleGraphR2dbcRepository
 import io.micronaut.data.oracle.graph.r2dbc.wallet.Wallet
 import io.micronaut.data.oracle.graph.r2dbc.wallet.WalletGraph
 import io.micronaut.data.oracle.graph.r2dbc.wallet.WalletService
@@ -104,6 +106,11 @@ class OracleGraphR2dbcSpec extends Specification {
 
         then:
         walletGraph.findById(4L).block() == null
+    }
+
+    void "the stereotype fails the build on blocking methods"() {
+        expect:
+        OracleGraphR2dbcRepository.getAnnotation(GraphRepository).nonBlocking()
     }
 
     void "graph queries and writes share reactive transactions"() {
