@@ -94,6 +94,7 @@ import jakarta.inject.Inject;
 import java.util.ArrayList;
 import java.util.Collection;
 import java.util.Collections;
+import java.util.HashSet;
 import java.util.IdentityHashMap;
 import java.util.Iterator;
 import java.util.LinkedHashMap;
@@ -1268,6 +1269,8 @@ public abstract class AbstractGraphRepositoryOperations extends AbstractReposito
      */
     private final class Persister {
         final Map<Object, Object> saved = new IdentityHashMap<>();
+        // The nodes of a batch that are written but not yet linked, by the instance the save was called with
+        final Map<Object, Runnable> unlinked = new IdentityHashMap<>();
         private final GraphSession session;
         private final OperationContext context;
 
@@ -1277,6 +1280,7 @@ public abstract class AbstractGraphRepositoryOperations extends AbstractReposito
         }
 
         <T> T save(RuntimePersistentEntity<T> entity, T instance, boolean insert) {
+            link(instance);
             Object existing = saved.get(instance);
             if (existing != null) {
                 return (T) existing;
@@ -1304,12 +1308,17 @@ public abstract class AbstractGraphRepositoryOperations extends AbstractReposito
                     distinct.add(instance);
                 }
             }
-            if (distinct.size() < 2 || !queryBuilder.supportsBatchNodeWrites()) {
+            if (distinct.size() < 2 || !queryBuilder.supportsBatchNodeWrites() || repeatsIdentifier(entity, distinct)) {
                 List<T> results = new ArrayList<>(list.size());
                 for (T instance : list) {
                     results.add(save(entity, instance, insert));
                 }
                 return results;
+            }
+            // Recorded ahead of the entity events, which may replace an immutable instance that another node of the
+            // batch relates to
+            for (T instance : distinct) {
+                saved.put(instance, instance);
             }
             NodesOperation<T> operation = new NodesOperation<>(this, entity, distinct, insert);
             if (insert) {
@@ -1327,6 +1336,39 @@ public abstract class AbstractGraphRepositoryOperations extends AbstractReposito
                 ordered.add(results.get(instance));
             }
             return ordered;
+        }
+
+        /**
+         * Whether two instances are the same node. Their conflict is not seen by batched queries, as an insert only
+         * looks for nodes that already exist and a version check passes for both, so they are saved one at a time.
+         *
+         * @param entity    The entity
+         * @param instances The distinct instances
+         * @param <T>       The entity type
+         * @return Whether an identifier is repeated
+         */
+        private <T> boolean repeatsIdentifier(RuntimePersistentEntity<T> entity, List<T> instances) {
+            Set<Object> identifiers = new HashSet<>();
+            for (T instance : instances) {
+                Object id = mapper.writeIdentity(entity, instance);
+                if (id != null && !identifiers.add(id)) {
+                    return true;
+                }
+            }
+            return false;
+        }
+
+        /**
+         * Links the relationships of a node of a batch that is not yet linked, so that a node relating to it is
+         * given the complete instance, as it is when it saves the related node itself.
+         *
+         * @param instance The instance the save was called with
+         */
+        void link(Object instance) {
+            Runnable link = unlinked.remove(instance);
+            if (link != null) {
+                link.run();
+            }
         }
 
         /**
@@ -1441,10 +1483,15 @@ public abstract class AbstractGraphRepositoryOperations extends AbstractReposito
         private final Persister persister;
         private final Map<Data, Object> previousVersions = new IdentityHashMap<>();
         private final Set<Data> created = Collections.newSetFromMap(new IdentityHashMap<>());
+        // The instances the save was called with: the entity events and a node write may replace an immutable instance
+        private final Map<Data, T> originals = new IdentityHashMap<>();
 
         NodesOperation(Persister persister, RuntimePersistentEntity<T> entity, Iterable<T> instances, boolean insert) {
             super(persister.context, AbstractGraphRepositoryOperations.this.noCascade, AbstractGraphRepositoryOperations.this.conversionService, entityEventRegistry, entity, instances, insert);
             this.persister = persister;
+            for (Data d : entities) {
+                originals.put(d, d.entity);
+            }
         }
 
         @Override
@@ -1481,12 +1528,8 @@ public abstract class AbstractGraphRepositoryOperations extends AbstractReposito
         @Override
         protected void execute() {
             List<Data> pending = new ArrayList<>();
-            // The instances the save was called with: a node write may replace an immutable instance
-            Map<Data, T> originals = new IdentityHashMap<>();
             for (Data d : entities) {
                 if (!d.vetoed) {
-                    persister.saved.put(d.entity, d.entity);
-                    originals.put(d, d.entity);
                     pending.add(d);
                 }
             }
@@ -1502,13 +1545,16 @@ public abstract class AbstractGraphRepositoryOperations extends AbstractReposito
             // A node whose relationships are linked first may point to a node later in the batch, which must be
             // found with the identifier it was just given: an immutable instance was replaced by the write
             for (Data d : pending) {
-                persister.written(Objects.requireNonNull(originals.get(d)), d.entity);
+                T original = Objects.requireNonNull(originals.get(d));
+                persister.written(original, d.entity);
+                persister.unlinked.put(original, () -> {
+                    d.entity = new RelationshipWriter<>(persister, persistentEntity, original, d.entity, addLabels.get(d), created.contains(d)).write();
+                    persister.saved.put(original, d.entity);
+                    persister.saved.put(d.entity, d.entity);
+                });
             }
             for (Data d : pending) {
-                T original = Objects.requireNonNull(originals.get(d));
-                d.entity = new RelationshipWriter<>(persister, persistentEntity, original, d.entity, addLabels.get(d), created.contains(d)).write();
-                persister.saved.put(original, d.entity);
-                persister.saved.put(d.entity, d.entity);
+                persister.link(Objects.requireNonNull(originals.get(d)));
             }
         }
 

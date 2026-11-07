@@ -6,6 +6,7 @@ import io.micronaut.data.graph.tck.entities.Article
 import io.micronaut.data.graph.tck.entities.Movie
 import io.micronaut.data.graph.tck.entities.Person
 import io.micronaut.data.graph.tck.entities.Role
+import io.micronaut.data.graph.tck.entities.Step
 import io.micronaut.data.model.Pageable
 import io.micronaut.data.model.Sort
 import io.micronaut.data.neo4j.features.Pet
@@ -16,6 +17,7 @@ import io.micronaut.data.neo4j.features.Player
 import io.micronaut.data.neo4j.features.ReactiveMovieSpecificationRepository
 import io.micronaut.data.repository.jpa.criteria.PredicateSpecification
 import io.micronaut.data.neo4j.features.ReactivePetRepository
+import io.micronaut.data.neo4j.features.ReactiveStepRepository
 import io.micronaut.data.neo4j.features.ReactiveTeamRepository
 import io.micronaut.data.neo4j.features.Tag
 import io.micronaut.data.neo4j.features.Team
@@ -46,6 +48,9 @@ class Neo4jReactiveSpec extends Specification implements TestPropertyProvider {
 
     @Inject
     ReactiveTeamRepository teamRepository
+
+    @Inject
+    ReactiveStepRepository stepRepository
 
     @Inject
     ReactiveMovieService movieService
@@ -321,6 +326,39 @@ class Neo4jReactiveSpec extends Specification implements TestPropertyProvider {
         movieSpecificationRepository.count(after1995).block() == 1
         movieSpecificationRepository.exists(after1995).block()
         movieSpecificationRepository.findOne(after1995).block().title == "The Matrix"
+    }
+
+    void "a reactive saveAll links records to the nodes of the batch"() {
+        given:
+        def last = new Step(null, "last", null)
+        def middle = new Step(null, "middle", last)
+        def first = new Step(null, "first", middle)
+
+        when:
+        def saved = stepRepository.saveAll([first, middle, last]).collectList().block()
+
+        then:
+        stepRepository.count().block() == 3
+        saved[0].next().id() == saved[1].id()
+        saved[0].next().next().id() == saved[2].id()
+    }
+
+    void "a reactive saveAll that repeats an identifier conflicts"() {
+        when:
+        articleRepository.saveAll([new Article("a", "First"), new Article("a", "Second")]).collectList().block()
+
+        then:
+        thrown(EntityExistsException)
+
+        when:
+        articleRepository.deleteAll().block()
+        articleRepository.save(new Article("a", "A")).block()
+        def copy = articleRepository.findById("a").block()
+        def other = articleRepository.findById("a").block()
+        articleRepository.updateAll([copy, other]).collectList().block()
+
+        then:
+        thrown(OptimisticLockException)
     }
 
     void "a reactive insert of a versioned node with a taken identifier fails"() {
