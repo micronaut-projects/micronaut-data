@@ -18,19 +18,21 @@ snippet::example.ArticleRepositorySpec[project-base="doc-examples/neo4j-example"
 
 Saving a new versioned entity whose assigned identifier is already taken by a node fails with `EntityExistsException` rather than overwrite the node and reset its version. The check reads the node before creating it, so for inserts that race each other, keep the unique index on the identifier described below.
 
-The node is locked before its version is compared, so of two transactions that update or delete the node from the same version, the one that waits for the lock fails with `OptimisticLockException` once the other commits.
+The node is locked before its version is compared, so of two transactions that update or delete the node from the same version, the one that waits for the lock fails with `OptimisticLockException` once the other commits. The lock sets and removes a property named `__lock`, so this name is reserved: a node property mapped to it fails compilation, and a schemaless property with this name fails the save.
 
 Reactive repositories check the version the same way, failing their publisher with `OptimisticLockException`. Oracle property graph repositories write through Micronaut Data JDBC or R2DBC, which check the version of the row.
 
 == Indexes and unique constraints
 
-Each node entity of a repository gets:
+Each node entity of a repository, and each node entity it reaches through declared relationships, gets:
 
 * A unique index on its identifier, unless the database generates it.
 * An index for each ann:data.annotation.Index[] on the class, over the properties named by `columns`, unique when `unique` is `true`.
 * An index for each ann:data.annotation.Index[] on a property.
 
-The index is named by `name`, or after the label and the properties, such as `Article_author_index` or `Article_slug_unique`.
+The index is named by `name`, or after the label and the properties, such as `Article_author_index` or `Article_slug_unique`. A generated name longer than the 63 bytes of a PostgreSQL identifier is cut short and given a hash of the label and properties, so that two long names stay different.
+
+A node saved only through a dynamic relationship is not known at build time, so give its type a repository for it to be indexed.
 
 For Neo4j and Apache AGE, the indexes are created at startup when enabled, and left in place when they exist:
 
@@ -45,7 +47,7 @@ micronaut:
 ----
 
 * Neo4j gets a uniqueness constraint for each unique index and a range index for the others.
-* Apache AGE gets a PostgreSQL expression index on the properties of the vertex label table, unique for unique indexes. The label table is created first when no node has the label yet.
+* Apache AGE gets a PostgreSQL expression index on the properties of the vertex label table, unique for unique indexes. The label table is created first when no node has the label yet. Instances that start at the same time can create them together.
 
 Saving a node that breaks a unique index fails with a `DataAccessException`.
 

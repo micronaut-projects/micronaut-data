@@ -75,6 +75,39 @@ class OracleGraphRowsSpec extends Specification {
         }
     }
 
+    void "a relationship leaves out its null properties"() {
+        when:
+        def records = OracleGraphRows.decode(
+            ["s__ID_", "s__LABEL_", "t__ID_", "t__LABEL_", "r__ID_", "r__amount", "r__note", "r__TYPE_"],
+            [[1, "Account", 2, "Account", 7, null, "x", "TRANSFERS"]]
+        )
+
+        then:
+        ((GraphEdge) records[0].get("r")).properties() == [note: "x"]
+    }
+
+    void "an undirected relationship is read with its stored direction"() {
+        when:
+        def records = OracleGraphRows.decode(
+            ["s__ID_", "s__LABEL_", "s__name", "t__ID_", "t__LABEL_", "t__name", "r__TYPE_", "r__FORWARD_"],
+            [[2, "Account", "Bob", 1, "Account", "Alice", "TRANSFERS", 0],
+             [1, "Account", "Alice", 2, "Account", "Bob", "TRANSFERS", 1]]
+        )
+
+        then: "matched from the destination, the ends swap"
+        ((GraphNode) records[0].get("f")).properties().name == "Alice"
+        ((GraphNode) records[0].get("t")).properties().name == "Bob"
+        with((GraphEdge) records[0].get("r")) {
+            startId() == 1
+            endId() == 2
+            properties() == [:]
+        }
+
+        and: "matched from the source, they stay"
+        ((GraphNode) records[1].get("f")).properties().name == "Alice"
+        ((GraphEdge) records[1].get("r")).startId() == 1
+    }
+
     void "decode nodes from aliased columns"() {
         when:
         def records = OracleGraphRows.decode(

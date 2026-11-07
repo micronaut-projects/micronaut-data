@@ -30,8 +30,8 @@ import org.bson.types.ObjectId;
  * Writes the identity of an entity document as {@code _id}.
  *
  * <p>The serde of an entity writes the identity under its property name, so that the same serde can be source
- * generated and used outside MongoDB. This writer renames that top-level field to {@code _id} and, for a generated
- * {@link String} identity, writes a valid hex value as an {@link ObjectId}.</p>
+ * generated and used outside MongoDB. This writer renames that top-level field of the document to {@code _id} and,
+ * for a generated identity holding a {@link String}, writes a valid hex value as an {@link ObjectId}.</p>
  *
  * @author Graeme Rocher
  * @since 5.3.0

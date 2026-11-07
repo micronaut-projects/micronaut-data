@@ -36,6 +36,10 @@ class Neo4jIndexSpec extends Specification implements TestPropertyProvider {
         constraints.find { it.name == 'Account_email_unique' }?.get('properties') == ['email']
         constraints.find { it.name == 'Movie_title_unique' }?.get('labelsOrTypes') == ['Movie']
 
+        and: "a node reached through a relationship is indexed without a repository of its own"
+        constraints.find { it.name == 'Volume_code_unique' }?.get('properties') == ['code']
+        constraints.find { it.name == 'Volume_isbn_unique' }?.get('properties') == ['isbn']
+
         and: "the other indexes are property indexes"
         indexes.find { it.name == 'account_location' }?.get('properties') == ['country', 'city']
         indexes.find { it.name == 'Account_handle_index' }?.get('properties') == ['handle']
