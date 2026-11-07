@@ -66,10 +66,9 @@ final class OpenSearchRequests {
      */
     static final Map<String, Object> KNN_SETTINGS = Map.of("index.knn", true);
 
-    /** The keys of a request body the transport forwards; every other key is rejected rather than dropped. */
-    private static final java.util.Set<String> REQUEST_KEYS = java.util.Set.of("query", "sort", "from", "size", "track_total_hits", "highlight", "version", "min_score", "search_after");
-
     private static final String QUERY = "query";
+    /** The keys of a request body the transport forwards; every other key is rejected rather than dropped. */
+    private static final java.util.Set<String> REQUEST_KEYS = java.util.Set.of(QUERY, "sort", "from", "size", "track_total_hits", "highlight", "version", "min_score", "search_after");
     private static final String FILTER = "filter";
 
     private OpenSearchRequests() {
