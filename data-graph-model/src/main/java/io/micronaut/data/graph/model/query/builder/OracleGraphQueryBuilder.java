@@ -520,40 +520,20 @@ public class OracleGraphQueryBuilder implements GraphQueryBuilder {
     }
 
     private QueryResult buildRelationshipsQuery(PathQueryDefinition definition, PersistentEntity entity, String types) {
-        if (definition.relationships().size() != 1) {
-            throw new IllegalArgumentException("Relationship finders on Oracle property graphs need exactly one relationship type, for example findRelationshipsByFriends");
-        }
-        if (definition.relationshipEntity()) {
-            throw new IllegalArgumentException("Relationship finders on Oracle property graphs return GraphRelationship, not the relationship entity ["
-                + definition.relationships().get(0).getAssociatedEntity().getName() + "]");
-        }
-        // An undirected relationship is matched in either direction once both of its ends are known
-        boolean bothEnds = definition.start() != null && definition.end() != null;
-        Direction direction = definition.direction() == Direction.UNDIRECTED && !bothEnds ? Direction.OUTGOING : definition.direction();
-        PersistentEntity endEntity = definition.endNodeEntity();
-        // The rows read the source and destination of the edge from s and t, so an incoming edge binds them the other way
-        boolean incoming = direction == Direction.INCOMING && definition.result() == PathQueryDefinition.Result.ELEMENTS;
+        requireSupportedRelationships(definition);
+        Direction direction = relationshipDirection(definition);
+        // The rows read the source and destination of the edge from s and t, so an incoming edge binds them the other
+        // way; the direction argument is not known here, so a bound direction asks the edge instead
+        boolean incoming = direction == Direction.INCOMING && !definition.directionBound() && definition.result() == PathQueryDefinition.Result.ELEMENTS;
         String startVariable = incoming ? END : START;
         String endVariable = incoming ? START : END;
         Query query = new Query(entity);
-        query.pattern = pathPattern(definition, direction, node(startVariable, entity), edge("r", types, ""), node(endVariable, endEntity));
+        query.pattern = pathPattern(definition, direction, node(startVariable, entity), edge("r", types, ""), node(endVariable, definition.endNodeEntity()));
         endpoints(query, definition, startVariable, endVariable);
         switch (definition.result()) {
             case COUNT -> query.select.add(COUNT_AS + alias(RESULT));
             case EXISTS -> query.select.add("1 AS " + alias(RESULT));
-            default -> {
-                query.entityColumns(START, incoming ? endEntity : entity);
-                query.entityColumns(END, incoming ? entity : endEntity);
-                PersistentEntity associated = definition.relationships().get(0).getAssociatedEntity();
-                if (associated != null && GraphEntities.isRelationshipEntity(associated)) {
-                    query.edgeColumns("r", associated);
-                }
-                query.column(literal(GraphEntities.relationshipType(definition.relationships().get(0))), "r" + SEPARATOR + TYPE_COLUMN);
-                if (direction == Direction.UNDIRECTED) {
-                    // s is the first argument here, which may be either end of the edge
-                    query.column("CASE WHEN " + START + " IS SOURCE OF r THEN 1 ELSE 0 END", "r" + SEPARATOR + FORWARD_COLUMN);
-                }
-            }
+            default -> appendRelationshipColumns(query, definition, direction, incoming);
         }
         if (query.select.isEmpty() || definition.result() != PathQueryDefinition.Result.ELEMENTS) {
             query.ref(property(START, identity(entity)));
@@ -563,6 +543,44 @@ public class OracleGraphQueryBuilder implements GraphQueryBuilder {
             text += buildLimitAndOffset(1, 0);
         }
         return QueryResult.of(text, List.of(text), query.bindings, Map.of());
+    }
+
+    private static void requireSupportedRelationships(PathQueryDefinition definition) {
+        if (definition.relationships().size() != 1) {
+            throw new IllegalArgumentException("Relationship finders on Oracle property graphs need exactly one relationship type, for example findRelationshipsByFriends");
+        }
+        if (definition.relationshipEntity()) {
+            throw new IllegalArgumentException("Relationship finders on Oracle property graphs return GraphRelationship, not the relationship entity ["
+                + definition.relationships().get(0).getAssociatedEntity().getName() + "]");
+        }
+    }
+
+    /**
+     * An undirected relationship is matched in either direction once both of its ends are known, or between nodes of
+     * different entities, where the labels already keep a relationship from matching twice.
+     */
+    private static Direction relationshipDirection(PathQueryDefinition definition) {
+        boolean bothEnds = definition.start() != null && definition.end() != null;
+        if (definition.direction() == Direction.UNDIRECTED && !bothEnds && !definition.hasDifferentEndEntity()) {
+            return Direction.OUTGOING;
+        }
+        return definition.direction();
+    }
+
+    private void appendRelationshipColumns(Query query, PathQueryDefinition definition, Direction direction, boolean incoming) {
+        PersistentEntity entity = definition.entity();
+        PersistentEntity endEntity = definition.endNodeEntity();
+        query.entityColumns(START, incoming ? endEntity : entity);
+        query.entityColumns(END, incoming ? entity : endEntity);
+        PersistentEntity associated = definition.relationships().get(0).getAssociatedEntity();
+        if (associated != null && GraphEntities.isRelationshipEntity(associated)) {
+            query.edgeColumns("r", associated);
+        }
+        query.column(literal(GraphEntities.relationshipType(definition.relationships().get(0))), "r" + SEPARATOR + TYPE_COLUMN);
+        if (direction == Direction.UNDIRECTED || definition.directionBound()) {
+            // s is the first argument here, which may be either end of the edge
+            query.column("CASE WHEN " + START + " IS SOURCE OF r THEN 1 ELSE 0 END", "r" + SEPARATOR + FORWARD_COLUMN);
+        }
     }
 
     /**

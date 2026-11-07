@@ -977,8 +977,7 @@ public class CypherQueryBuilder implements GraphQueryBuilder {
             conditions.add(endpointCondition(state, definition.endpointMatchProperty(), definition.endpointProperty() == null, PATH_START, definition.start()));
         }
         if (definition.end() != null) {
-            boolean identity = definition.endEndpointProperty() == null && definition.endpointProperty() == null;
-            conditions.add(endpointCondition(state, definition.endEndpointMatchProperty(), identity, PATH_END, definition.end()));
+            conditions.add(endpointCondition(state, definition.endEndpointMatchProperty(), definition.endMatchedByIdentity(), PATH_END, definition.end()));
         }
         String types = CypherFragments.relationshipTypes(definition.relationships());
         StringBuilder query = new StringBuilder("MATCH ");
@@ -992,8 +991,9 @@ public class CypherQueryBuilder implements GraphQueryBuilder {
 
     private void appendRelationshipQuery(StringBuilder query, PathQueryDefinition definition, String label, String endLabel, String types, List<String> conditions) {
         Direction direction = definition.direction();
-        if (direction == Direction.UNDIRECTED && (definition.start() == null || definition.end() == null)) {
-            // Without both endpoints an undirected pattern returns each relationship twice; the runtime does the same for a bound direction
+        if (direction == Direction.UNDIRECTED && (definition.start() == null || definition.end() == null) && !definition.hasDifferentEndEntity()) {
+            // Without both endpoints an undirected pattern between nodes of one entity returns each relationship twice;
+            // the runtime does the same for a bound direction
             direction = Direction.OUTGOING;
         }
         query.append(pathPattern(definition, direction, "(" + PATH_START + label + ")", "[" + PATH_RELATIONSHIP + types + "]", "(" + PATH_END + endLabel + ")"));
@@ -1015,7 +1015,8 @@ public class CypherQueryBuilder implements GraphQueryBuilder {
     }
 
     private void appendPathQuery(StringBuilder query, PathQueryDefinition definition, String label, String endLabel, String types, List<String> conditions) {
-        if (definition.start() != null && definition.end() != null && definition.kind() != PathQueryDefinition.Kind.ALL && !definition.hasDifferentEndEntity()) {
+        if (definition.start() != null && definition.end() != null && definition.kind() != PathQueryDefinition.Kind.ALL) {
+            // shortestPath fails on the same node at both ends, which nodes of different entities can be when they share a label
             conditions.add(PATH_START + " <> " + PATH_END);
         }
         query.append('(').append(PATH_START).append(label).append("), (").append(PATH_END).append(endLabel).append(')');

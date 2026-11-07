@@ -38,7 +38,8 @@ import java.util.List;
  * @param end           The value matching the end node, or null for any node
  * @param endpointProperty The property the start node is matched by, or null for the identity
  * @param endEntity     The node entity at the end, or null for {@code entity}
- * @param endEndpointProperty The property the end node is matched by, or null for {@code endpointProperty}
+ * @param endEndpointProperty The property the end node is matched by, which is the identity of the end entity when
+ * it is matched by identity while the start node is matched by a property, or null for {@code endpointProperty}
  * @param directionBound Whether the direction is a method argument rather than {@code direction}
  * @param relationshipEntity Whether a relationship query returns the relationship entity rather than the relationship
  * @author graemerocher
@@ -152,6 +153,16 @@ public record PathQueryDefinition(PersistentEntity entity,
             return endpointProperty;
         }
         return endNodeEntity().getIdentity();
+    }
+
+    /**
+     * @return Whether the end node is matched by its identity, which a query builder may render as a native id
+     * expression, rather than by a stored property
+     */
+    public boolean endMatchedByIdentity() {
+        PersistentProperty property = endEndpointMatchProperty();
+        PersistentProperty identity = endNodeEntity().getIdentity();
+        return property != null && identity != null && property.getName().equals(identity.getName());
     }
 
     /**

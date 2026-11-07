@@ -37,6 +37,18 @@ class ApplyDirectionSpec extends Specification {
         index << [1, -1]
     }
 
+    void "a null @PathDirection argument is a data access failure"() {
+        given:
+        def query = new StringBuilder("MATCH (a)" + PathQueryDefinition.PATH_LEFT_TOKEN + "[r]" + PathQueryDefinition.PATH_RIGHT_TOKEN + "(b)")
+
+        when:
+        AbstractGraphRepositoryOperations.applyDirection(preparedQuery(1, ["x", null] as Object[]), query)
+
+        then:
+        def e = thrown(DataAccessException)
+        e.message == "The @PathDirection argument must be a Direction, was: null"
+    }
+
     private PreparedQuery<?, ?> preparedQuery(int index, Object[] arguments) {
         def metadata = Stub(AnnotationMetadata) {
             getAnnotation(PathDirectionParameter) >> AnnotationValue.builder(PathDirectionParameter).value(index).build()

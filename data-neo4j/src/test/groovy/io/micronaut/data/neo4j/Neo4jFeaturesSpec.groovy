@@ -41,6 +41,8 @@ import io.micronaut.data.neo4j.features.StationRepository
 import io.micronaut.data.neo4j.features.Tag
 import io.micronaut.data.neo4j.features.Member
 import io.micronaut.data.neo4j.features.MemberRepository
+import io.micronaut.data.neo4j.features.Officer
+import io.micronaut.data.neo4j.features.OfficerRepository
 import io.micronaut.data.neo4j.features.TagRepository
 import io.micronaut.data.neo4j.features.Team
 import io.micronaut.data.neo4j.features.TeamRepository
@@ -74,6 +76,9 @@ class Neo4jFeaturesSpec extends Specification implements TestPropertyProvider {
 
     @Inject
     MemberRepository memberRepository
+
+    @Inject
+    OfficerRepository officerRepository
 
     @Inject
     ChapterRepository chapterRepository
@@ -371,6 +376,24 @@ class Neo4jFeaturesSpec extends Specification implements TestPropertyProvider {
         saved[0].mentor().id() == saved[1].id()
         memberRepository.count() == 2
         operations.executeQuery("MATCH (:Member {name: 'Ada'})-[:MENTORED_BY]->(m:Member {name: 'Grace'}) RETURN count(m)", [:], Long) == [1L]
+    }
+
+    void "a path finder matches the end node by its native identifier while the start node is matched by a property"() {
+        given:
+        def saved = memberRepository.saveAll([new Member(null, "Ada", new Member(null, "Grace", null))])
+        def mentor = saved[0].mentor()
+
+        expect:
+        memberRepository.existsPathByMentorBetweenNameAndId("Ada", mentor.id())
+        !memberRepository.existsPathByMentorBetweenNameAndId("Grace", saved[0].id())
+    }
+
+    void "a shortest path between entities that label the same node finds nothing from a node to itself"() {
+        given:
+        def officer = officerRepository.save(new Officer(null, "Cleo"))
+
+        expect:
+        memberRepository.findShortestPath(new Member(officer.id(), "Cleo", null), officer).isEmpty()
     }
 
     void "a record that the entity events replace is not created again when another record of the batch links to it"() {

@@ -135,6 +135,7 @@ interface PathRepository extends GenericRepository<Person, String> {
     List<GraphRelationship<Person, Person>> findRelationshipsByMentor(String from, String to);
     @PathLimit(5)
     boolean existsPathByMentor(String from, String to, @PathDirection Direction direction);
+    List<GraphRelationship<Person, Person>> findRelationshipsByMentor(String from, String to, @PathDirection Direction direction);
 }
 """)
         moviePaths = buildRepository('test.MoviePathRepository', """
@@ -149,6 +150,10 @@ interface MoviePathRepository extends GenericRepository<Movie, String> {
     boolean existsRelationshipByDirectorsBetweenTitleAndName(String title, String name);
     List<GraphRelationship<Person, Movie>> findRelationshipsByDirectors(String title, String director);
     long countRelationshipsByDirectors(@PathDirection Direction direction);
+    List<GraphRelationship<Person, Movie>> findRelationshipsByDirectors(String title, String director, @PathDirection Direction direction);
+    @PathDirection(Direction.UNDIRECTED)
+    boolean existsRelationshipByDirectors();
+    boolean existsRelationshipByDirectorsBetweenReleasedAndId(int released, String director);
 }
 """)
         pgqlPeople = buildRepository('test.PgqlPersonRepository', """
@@ -624,8 +629,21 @@ interface FollowerRepository extends GenericRepository<Follower, String> {
             'SELECT COUNT(*) AS "result" FROM MATCH (s:Movie) <-[r:DIRECTED]- (t:Person) ON movies'
         getQuery(findMethod(moviePaths, 'existsRelationshipByDirectorsBetweenTitleAndName')) ==
             'SELECT 1 AS "result" FROM MATCH (s:Movie) <-[r:DIRECTED]- (t:Person) ON movies WHERE s.title = ? AND t.name = ? LIMIT 1'
-        getQuery(findMethod(moviePaths, 'findRelationshipsByDirectors')) ==
+        getQuery(findMethod(moviePaths, 'findRelationshipsByDirectors', 2)) ==
             "SELECT ${person.replace('t.', 's.').replace('"t__', '"s__')}, ${movie.replace('s.', 't.').replace('"s__', '"t__')}, 'DIRECTED' AS \"r__TYPE_\" FROM MATCH (t:Movie) <-[r:DIRECTED]- (s:Person) ON movies WHERE t.title = ? AND s.id = ?"
+
+        and: "a direction argument leaves s at the first argument, and the rows ask the edge for its source"
+        getQuery(findMethod(moviePaths, 'findRelationshipsByDirectors', 3)) ==
+            "SELECT $movie, $person, 'DIRECTED' AS \"r__TYPE_\", CASE WHEN s IS SOURCE OF r THEN 1 ELSE 0 END AS \"r__FORWARD_\" FROM MATCH (s:Movie) \$__pathLeft[r:DIRECTED]\$__pathRight (t:Person) ON movies WHERE s.title = ? AND t.id = ?"
+        getQuery(findMethod(paths, 'findRelationshipsByMentor', 3)).contains('CASE WHEN s IS SOURCE OF r THEN 1 ELSE 0 END AS "r__FORWARD_"')
+
+        and: "an undirected finder between different entities without endpoints stays undirected"
+        getQuery(findMethod(moviePaths, 'existsRelationshipByDirectors', 0)) ==
+            'SELECT 1 AS "result" FROM MATCH (s:Movie) -[r:DIRECTED]- (t:Person) ON movies LIMIT 1'
+
+        and: "the end node is matched by its own identity"
+        getQuery(findMethod(moviePaths, 'existsRelationshipByDirectorsBetweenReleasedAndId', 2)) ==
+            'SELECT 1 AS "result" FROM MATCH (s:Movie) <-[r:DIRECTED]- (t:Person) ON movies WHERE s.released = ? AND t.id = ? LIMIT 1'
     }
 
     @Unroll

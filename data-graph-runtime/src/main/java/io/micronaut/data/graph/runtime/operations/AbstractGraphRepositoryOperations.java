@@ -137,6 +137,15 @@ public abstract class AbstractGraphRepositoryOperations extends AbstractReposito
     private static final Pattern SKIP_CLAUSE = clause("SKIP");
     private static final Pattern LIMIT_CLAUSE = clause("LIMIT");
     private static final Pattern CRITERIA_DEPTH = Pattern.compile(Pattern.quote(PathQueryDefinition.CRITERIA_DEPTH_TOKEN) + "(\\d+)");
+    // Asked for every row of a relationship finder
+    private static final ClassValue<Boolean> RELATIONSHIP_ENTITY = new ClassValue<>() {
+        @Override
+        protected Boolean computeValue(Class<?> type) {
+            return BeanIntrospector.SHARED.findIntrospection(type)
+                .map(introspection -> introspection.hasStereotype(io.micronaut.data.graph.annotation.RelationshipProperties.class))
+                .orElse(false);
+        }
+    };
 
     protected final GraphQueryBuilder queryBuilder;
 
@@ -580,7 +589,7 @@ public abstract class AbstractGraphRepositoryOperations extends AbstractReposito
         }
         Object argument = parameters[index];
         if (!(argument instanceof Direction direction)) {
-            throw new IllegalArgumentException("The @PathDirection argument must be a Direction, was: " + argument);
+            throw new DataAccessException("The @PathDirection argument must be a Direction, was: " + argument);
         }
         if (direction == Direction.UNDIRECTED && parameter.booleanValue("outgoingIfUndirected").orElse(false)) {
             direction = Direction.OUTGOING;
@@ -812,9 +821,7 @@ public abstract class AbstractGraphRepositoryOperations extends AbstractReposito
     }
 
     private static boolean isRelationshipEntity(Class<?> type) {
-        return BeanIntrospector.SHARED.findIntrospection(type)
-            .map(introspection -> introspection.hasStereotype(io.micronaut.data.graph.annotation.RelationshipProperties.class))
-            .orElse(false);
+        return RELATIONSHIP_ENTITY.get(type);
     }
 
     /**

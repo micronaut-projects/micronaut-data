@@ -1210,6 +1210,64 @@ abstract class AbstractGraphRepositorySpec extends Specification {
         !movieRepository.existsRelationshipByDirectorsBetweenTitleAndName("Speed", "Lana Wachowski")
     }
 
+    @Requires({ instance.supportsRelationshipFinders() })
+    void "finders match the end node by its identity while the start node is matched by a property"() {
+        given:
+        saveMovies()
+        def lana = personRepository.findByName("Lana Wachowski").get()
+        def keanu = personRepository.findByName("Keanu Reeves").get()
+        def grace = new Person("Grace Hopper", 1906)
+        def ada = new Person("Ada Lovelace", 1815)
+        ada.mentor = grace
+        savePerson(ada)
+
+        expect:
+        movieRepository.existsRelationshipByDirectorsBetweenReleasedAndId(1999, lana.id)
+        !movieRepository.existsRelationshipByDirectorsBetweenReleasedAndId(1999, keanu.id)
+        !movieRepository.existsRelationshipByDirectorsBetweenReleasedAndId(1994, lana.id)
+        personRepository.existsPathByMentorBetweenNameAndId("Ada Lovelace", personRepository.findByName("Grace Hopper").get().id)
+        !personRepository.existsPathByMentorBetweenNameAndId("Ada Lovelace", lana.id)
+    }
+
+    @Requires({ instance.supportsRelationshipFinders() })
+    void "a direction argument leaves the ends of a relationship where the relationship has them"() {
+        given:
+        saveMovies()
+        def grace = new Person("Grace Hopper", 1906)
+        def ada = new Person("Ada Lovelace", 1815)
+        ada.mentor = grace
+        savePerson(ada)
+
+        when: "DIRECTED points from the person to the movie"
+        def directed = [Direction.INCOMING, Direction.UNDIRECTED].collect {
+            movieRepository.findRelationshipsByDirectorsBetweenTitleAndName("The Matrix", "Lana Wachowski", it)
+        }
+
+        then:
+        directed*.size() == [1, 1]
+        directed*.first()*.from()*.name == ["Lana Wachowski", "Lana Wachowski"]
+        directed*.first()*.to()*.title == ["The Matrix", "The Matrix"]
+        movieRepository.findRelationshipsByDirectorsBetweenTitleAndName("The Matrix", "Lana Wachowski", Direction.OUTGOING).isEmpty()
+
+        when: "MENTORED_BY points from the mentee to the mentor, whichever end is named first"
+        def mentored = [
+            personRepository.findRelationshipsByMentorBetweenName("Ada Lovelace", "Grace Hopper", Direction.OUTGOING),
+            personRepository.findRelationshipsByMentorBetweenName("Grace Hopper", "Ada Lovelace", Direction.INCOMING),
+            personRepository.findRelationshipsByMentorBetweenName("Grace Hopper", "Ada Lovelace", Direction.UNDIRECTED)
+        ]
+
+        then:
+        mentored*.size() == [1, 1, 1]
+        mentored*.first()*.from()*.name == ["Ada Lovelace", "Ada Lovelace", "Ada Lovelace"]
+        mentored*.first()*.to()*.name == ["Grace Hopper", "Grace Hopper", "Grace Hopper"]
+        personRepository.findRelationshipsByMentorBetweenName("Grace Hopper", "Ada Lovelace", Direction.OUTGOING).isEmpty()
+
+        and: "an undirected argument between different entities finds the relationships either way"
+        movieRepository.countRelationshipsByDirectors(Direction.UNDIRECTED) == 2
+        movieRepository.countRelationshipsByDirectors(Direction.INCOMING) == 2
+        movieRepository.countRelationshipsByDirectors(Direction.OUTGOING) == 0
+    }
+
     @Requires({ instance.supportsRelationshipWrites() && instance.supportsPaths() })
     void "path and relationship finders take the direction as an argument"() {
         given:

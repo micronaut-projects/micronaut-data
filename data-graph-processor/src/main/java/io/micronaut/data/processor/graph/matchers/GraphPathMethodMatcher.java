@@ -15,6 +15,8 @@
  */
 package io.micronaut.data.processor.graph.matchers;
 
+import io.micronaut.core.annotation.AnnotationMetadata;
+import io.micronaut.core.annotation.AnnotationValue;
 import io.micronaut.core.annotation.Internal;
 import io.micronaut.core.naming.NameUtils;
 import io.micronaut.data.annotation.Query;
@@ -87,9 +89,9 @@ import java.util.regex.Pattern;
  * and {@code Between<Start>And<End>} matches each endpoint by its own property.</p>
  *
  * <p>The end node is of the repository entity unless the name says {@code To<Entity>}, the end parameter is
- * another entity, the result is a {@code GraphRelationship<F, T>} of another entity, or the relationships named
- * after {@code By} all point at another entity: {@code findAllPathsToMovie}, {@code findShortestPath(Person from, Movie to)},
- * {@code findRelationshipsByRoles}.</p>
+ * another entity, or, for a relationship finder, the result is a {@code GraphRelationship<F, T>} of another entity or
+ * the relationships named after {@code By} all point at another entity: {@code findAllPathsToMovie},
+ * {@code findShortestPath(Person from, Movie to)}, {@code findRelationshipsByRoles}.</p>
  *
  * <p>{@link PathDirection} on the method overrides the direction of the relationships, and on a parameter of type
  * {@link Direction} leaves the direction to the caller.</p>
@@ -239,7 +241,10 @@ public final class GraphPathMethodMatcher implements MethodMatcher {
         List<Association> relationships = relationshipEntity
             ? resolveRelationshipEntityAssociations(matchContext, entity, tokens.relationships(), resultType)
             : resolveRelationships(entity, tokens.relationships());
-        SourcePersistentEntity endEntity = resolveEndEntity(matchContext, entity, tokens.end(), relationships, endpoints, resultType);
+        SourcePersistentEntity endEntity = resolveEndEntity(matchContext, entity, kind, tokens.end(), relationships, endpoints, resultType);
+        rejectTenantRestriction(matchContext, endEntity);
+        rejectTraversedTenantRestriction(matchContext, relationships);
+        rejectBareDirection(matchContext);
         Direction direction = matchContext.getMethodElement().enumValue(PathDirection.class, Direction.class)
             .orElseGet(() -> resolveDirection(relationships));
         EndpointProperties endpointProperties = resolveEndpointProperties(entity, endEntity, tokens.endpoints());
@@ -265,8 +270,8 @@ public final class GraphPathMethodMatcher implements MethodMatcher {
         }
         if (parameters.directionParameterIndex() >= 0) {
             int index = parameters.directionParameterIndex();
-            // Without both endpoints an undirected relationship pattern returns each relationship twice
-            boolean outgoingIfUndirected = kind == PathQueryDefinition.Kind.RELATIONSHIPS && endpoints.isEmpty();
+            // Without both endpoints an undirected relationship pattern between nodes of one entity returns each relationship twice
+            boolean outgoingIfUndirected = kind == PathQueryDefinition.Kind.RELATIONSHIPS && endpoints.isEmpty() && !definition.hasDifferentEndEntity();
             matchContext.getMethodElement().annotate(PathDirectionParameter.class, builder -> builder.value(index).member("outgoingIfUndirected", outgoingIfUndirected));
         }
         return methodMatchInfo;
@@ -285,6 +290,29 @@ public final class GraphPathMethodMatcher implements MethodMatcher {
         if (tenantMapped && !matchContext.getMethodElement().hasAnnotation(WithoutTenantId.class)) {
             throw new MatchFailedException("Path and relationship finders do not support the @TenantId of entity ["
                 + entity.getSimpleName() + "]: declare the query with @Query, or annotate the method with @WithoutTenantId");
+        }
+    }
+
+    /**
+     * The nodes at the far end of the relationships named after {@code By} are returned or crossed, whichever entity the
+     * end node of the finder is, so they need the same check.
+     */
+    private static void rejectTraversedTenantRestriction(MethodMatchContext matchContext, List<Association> relationships) {
+        for (Association association : relationships) {
+            if (GraphEntities.targetNodeEntity(association) instanceof SourcePersistentEntity target) {
+                rejectTenantRestriction(matchContext, target);
+            }
+        }
+    }
+
+    /**
+     * On a method the annotation exists to name a direction: without one its default would quietly override the
+     * direction of the relationships.
+     */
+    private static void rejectBareDirection(MethodMatchContext matchContext) {
+        AnnotationValue<PathDirection> annotation = matchContext.getMethodElement().getAnnotation(PathDirection.class);
+        if (annotation != null && !annotation.contains(AnnotationMetadata.VALUE_MEMBER)) {
+            throw new MatchFailedException("@PathDirection on a method needs a direction, for example @PathDirection(Direction.UNDIRECTED)");
         }
     }
 
@@ -334,9 +362,7 @@ public final class GraphPathMethodMatcher implements MethodMatcher {
                 }
                 limitParameterIndex = allParameters.indexOf(parameter);
             } else if (parameter.hasAnnotation(PathDirection.class)) {
-                if (!parameter.getType().getName().equals(Direction.class.getName())) {
-                    throw new MatchFailedException("@PathDirection parameter [" + parameter.getName() + "] must be a " + Direction.class.getName());
-                }
+                checkDirectionParameter(parameter, directionParameterIndex);
                 directionParameterIndex = allParameters.indexOf(parameter);
             } else {
                 endpoints.add(parameter);
@@ -344,6 +370,15 @@ public final class GraphPathMethodMatcher implements MethodMatcher {
         }
         validateEndpoints(kind, maxDepth, endpoints.size(), limitParameterIndex);
         return new Endpoints(endpoints, limitParameterIndex, directionParameterIndex);
+    }
+
+    private static void checkDirectionParameter(ParameterElement parameter, int directionParameterIndex) {
+        if (!parameter.getType().getName().equals(Direction.class.getName())) {
+            throw new MatchFailedException("@PathDirection parameter [" + parameter.getName() + "] must be a " + Direction.class.getName());
+        }
+        if (directionParameterIndex >= 0) {
+            throw new MatchFailedException("A path or relationship finder takes one @PathDirection parameter, found another: [" + parameter.getName() + "]");
+        }
     }
 
     /**
@@ -465,10 +500,12 @@ public final class GraphPathMethodMatcher implements MethodMatcher {
     /**
      * The entity of the end node: the one named by {@code To<Entity>}, the type of the end parameter, the node type of
      * a {@code GraphRelationship<F, T>} result that is not the repository entity, the common target of the traversed
-     * relationships, or the repository entity.
+     * relationships of a relationship finder, or the repository entity. A path finder keeps the repository entity, as
+     * a path over relationships to another entity can come back: a co-actor path crosses movies between two people.
      */
     private static SourcePersistentEntity resolveEndEntity(MethodMatchContext matchContext,
                                                            SourcePersistentEntity entity,
+                                                           PathQueryDefinition.Kind kind,
                                                            @Nullable String token,
                                                            List<Association> relationships,
                                                            List<ParameterElement> endpoints,
@@ -478,7 +515,7 @@ public final class GraphPathMethodMatcher implements MethodMatcher {
         if (endEntity == null && resultType.isAssignable(GraphRelationship.class)) {
             endEntity = relationshipNodeEntity(matchContext, entity, resultType);
         }
-        if (endEntity == null) {
+        if (endEntity == null && kind == PathQueryDefinition.Kind.RELATIONSHIPS) {
             endEntity = commonTarget(relationships);
         }
         if (endEntity == null) {
@@ -592,7 +629,8 @@ public final class GraphPathMethodMatcher implements MethodMatcher {
         }
         PersistentProperty start = resolveEndpointProperty(entity, parts[0]);
         PersistentProperty end = resolveEndpointProperty(endEntity, parts[parts.length - 1]);
-        return new EndpointProperties(start, end);
+        // Between<Property>And<Id> names the identity of the end node, as no property here means the one of the start node
+        return new EndpointProperties(start, start != null && end == null ? endEntity.getIdentity() : end);
     }
 
     private static @Nullable PersistentProperty resolveEndpointProperty(SourcePersistentEntity entity, String token) {

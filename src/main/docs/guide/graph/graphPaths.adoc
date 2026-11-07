@@ -68,7 +68,7 @@ The direction is rendered into the query rather than bound as a parameter, so ea
 
 == Paths to other entities
 
-A path or relationship finder starts at a node of the repository entity and ends at a node of the same entity, unless the finder says otherwise. The end node is another entity when the name says `To<Entity>`, when the end parameter is an entity of another type, when a `GraphRelationship<F, T>` result names another entity at either end, or when the relationship properties after `By` all point at another entity:
+A path or relationship finder starts at a node of the repository entity and ends at a node of the same entity, unless the finder says otherwise. The end node is another entity when the name says `To<Entity>`, or when the end parameter is an entity of another type. The end node of a relationship finder is also another entity when a `GraphRelationship<F, T>` result names one at either end, or when the relationship properties after `By` all point at another entity. A path finder only traverses those properties, so it still ends at the repository entity without `To<Entity>`:
 
 snippet::example.MovieRepository[project-base="doc-examples/neo4j-example", source="main", tags="crossType", languages="java,kotlin,groovy,python"]
 
