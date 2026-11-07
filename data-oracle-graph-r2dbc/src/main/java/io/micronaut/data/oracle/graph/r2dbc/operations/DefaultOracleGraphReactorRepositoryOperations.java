@@ -29,13 +29,18 @@ import io.micronaut.data.graph.runtime.oracle.OracleGraphRows;
 import io.micronaut.data.model.Page;
 import io.micronaut.data.model.runtime.DeleteBatchOperation;
 import io.micronaut.data.model.runtime.DeleteOperation;
+import io.micronaut.data.model.runtime.DeleteReturningBatchOperation;
+import io.micronaut.data.model.runtime.DeleteReturningOperation;
 import io.micronaut.data.model.runtime.InsertBatchOperation;
 import io.micronaut.data.model.runtime.InsertOperation;
 import io.micronaut.data.model.runtime.PagedQuery;
 import io.micronaut.data.model.runtime.PreparedQuery;
+import io.micronaut.data.model.runtime.RuntimePersistentEntity;
+import io.micronaut.data.model.runtime.StoredQuery;
 import io.micronaut.data.model.runtime.UpdateBatchOperation;
 import io.micronaut.data.model.runtime.UpdateOperation;
 import io.micronaut.data.operations.reactive.ReactorReactiveRepositoryOperations;
+import io.micronaut.data.runtime.operations.internal.sql.SqlPreparedQuery;
 import io.r2dbc.spi.ColumnMetadata;
 import io.r2dbc.spi.Connection;
 import io.r2dbc.spi.R2dbcException;
@@ -121,22 +126,41 @@ final class DefaultOracleGraphReactorRepositoryOperations extends AbstractReacti
 
     @Override
     public <T> Mono<T> persist(InsertOperation<T> operation) {
-        return r2dbcOperations.persist(operation);
+        return Mono.defer(() -> {
+            OracleGraphQueryBuilder.checkVertexWrite(operations.getEntity(operation.getRootEntity()), operation.getEntity());
+            return r2dbcOperations.persist(operation);
+        });
     }
 
     @Override
     public <T> Flux<T> persistAll(InsertBatchOperation<T> operation) {
-        return r2dbcOperations.persistAll(operation);
+        return Flux.defer(() -> {
+            checkVertexWrites(operation.getRootEntity(), operation);
+            return r2dbcOperations.persistAll(operation);
+        });
     }
 
     @Override
     public <T> Mono<T> update(UpdateOperation<T> operation) {
-        return r2dbcOperations.update(operation);
+        return Mono.defer(() -> {
+            OracleGraphQueryBuilder.checkVertexWrite(operations.getEntity(operation.getRootEntity()), operation.getEntity());
+            return r2dbcOperations.update(operation);
+        });
     }
 
     @Override
     public <T> Flux<T> updateAll(UpdateBatchOperation<T> operation) {
-        return r2dbcOperations.updateAll(operation);
+        return Flux.defer(() -> {
+            checkVertexWrites(operation.getRootEntity(), operation);
+            return r2dbcOperations.updateAll(operation);
+        });
+    }
+
+    private void checkVertexWrites(Class<?> rootEntity, Iterable<?> nodes) {
+        RuntimePersistentEntity<?> entity = operations.getEntity(rootEntity);
+        for (Object node : nodes) {
+            OracleGraphQueryBuilder.checkVertexWrite(entity, node);
+        }
     }
 
     @Override
@@ -157,6 +181,36 @@ final class DefaultOracleGraphReactorRepositoryOperations extends AbstractReacti
     @Override
     public Mono<Number> executeDelete(PreparedQuery<?, Number> preparedQuery) {
         return r2dbcOperations.executeDelete(preparedQuery);
+    }
+
+    @Override
+    public <R> Flux<R> execute(PreparedQuery<?, R> preparedQuery) {
+        // The returning writes, which OracleGraphSql prepared as SQL: a graph query takes the graph session
+        if (!(preparedQuery instanceof SqlPreparedQuery<?, ?>)) {
+            return super.execute(preparedQuery);
+        }
+        return Flux.defer(() -> {
+            if (preparedQuery.getOperationType() != StoredQuery.OperationType.DELETE_RETURNING) {
+                for (Object parameter : preparedQuery.getParameterArray()) {
+                    if (preparedQuery.getRootEntity().isInstance(parameter)) {
+                        OracleGraphQueryBuilder.checkVertexWrite(operations.getEntity(preparedQuery.getRootEntity()), parameter);
+                    } else if (parameter instanceof Iterable<?> nodes) {
+                        checkVertexWrites(preparedQuery.getRootEntity(), nodes);
+                    }
+                }
+            }
+            return r2dbcOperations.execute(preparedQuery);
+        });
+    }
+
+    @Override
+    public <E, R> Mono<R> deleteReturning(DeleteReturningOperation<E, R> operation) {
+        return Mono.from(r2dbcOperations.deleteReturning(operation));
+    }
+
+    @Override
+    public <E, R> Flux<R> deleteAllReturning(DeleteReturningBatchOperation<E, R> operation) {
+        return Flux.from(r2dbcOperations.deleteAllReturning(operation));
     }
 
     /**

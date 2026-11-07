@@ -2,7 +2,7 @@ Nodes in a graph rarely share a fixed schema. A ann:data.graph.annotation.Dynami
 
 snippet::example.Pet[project-base="doc-examples/neo4j-example", source="main", tags="pet", languages="java,kotlin,groovy,python"]
 
-<1> api:data.graph.model.DynamicAttributeHolder[] adds map-like access to the schemaless properties.
+<1> In Java, Kotlin and Groovy, api:data.graph.model.DynamicAttributeHolder[] adds map-like access to the schemaless properties. Python uses the dictionary directly.
 <2> The map receives the properties the class does not declare when a node is read, and its entries are written when the entity is saved.
 <3> The holder reads and writes through this map.
 
@@ -35,7 +35,7 @@ Values must be types the database stores: strings, numbers, booleans, temporal v
 
 == Dynamic labels
 
-A collection of strings annotated with ann:data.graph.annotation.Labels[] holds the labels of a node beyond those its entity declares. Saving adds them to the node and reading collects them. Dynamic labels are supported by Neo4j.
+A collection of strings annotated with ann:data.graph.annotation.Labels[] holds the labels of a node beyond those its entity declares. Saving adds them to the node and reading collects them. Saving only adds: a label taken out of the collection stays on the node and comes back on the next read, so remove it with an explicit query. Dynamic labels are supported by Neo4j.
 
 snippet::example.Person[project-base="doc-examples/neo4j-example", source="main", tags="labels", languages="java,kotlin,groovy,python"]
 
@@ -62,6 +62,6 @@ snippet::example.PetRepositorySpec[project-base="doc-examples/neo4j-example", ta
 <2> Saving the entity saves the target node and the relationship.
 <3> Reading the entity reads its relationships back by type.
 
-Only the owning node writes and reads the map. Removing an entry does not delete the relationship from the database. Use an explicit query to delete it. Dynamic relationships are supported by Neo4j. Apache AGE and Oracle property graphs reject them at build time.
+Only the owning node writes and reads the map. A target node whose label no entity maps is read as a map of its properties, and saving the entity leaves its relationship as it is. Removing an entry does not delete the relationship from the database. Use an explicit query to delete it. Dynamic relationships are supported by Neo4j. Apache AGE and Oracle property graphs reject them at build time.
 
 The read has no limit. Every read of the entity, by any finder, collects all of its undeclared relationships and their target nodes, so a node with many of them is costly to read, and paging bounds the entities only. Keep the map for nodes with few undeclared relationships. Declare a relationship whose size grows with ann:data.graph.annotation.Relationship[], so that it is loaded only by the finders that join it.

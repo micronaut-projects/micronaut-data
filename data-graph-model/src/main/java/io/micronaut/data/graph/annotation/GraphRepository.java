@@ -33,4 +33,10 @@ import java.lang.annotation.Target;
 @Target(ElementType.ANNOTATION_TYPE)
 @Documented
 public @interface GraphRepository {
+
+    /**
+     * @return Whether the stereotype runs on non-blocking operations only, so that the build fails on a method that
+     * does not return a reactive or asynchronous type
+     */
+    boolean nonBlocking() default false;
 }

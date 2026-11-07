@@ -44,6 +44,7 @@ import java.lang.annotation.Annotation;
 import java.util.ArrayDeque;
 import java.util.ArrayList;
 import java.util.Collection;
+import java.util.Comparator;
 import java.util.Deque;
 import java.util.HashSet;
 import java.util.LinkedHashMap;
@@ -64,7 +65,9 @@ import java.util.stream.Collectors;
  *     <li>Each relationship to a {@link io.micronaut.data.graph.annotation.RelationshipProperties} entity gets the
  *     table of that entity as its edge table, with a column referencing the node that owns the relationship.</li>
  *     <li>Each relationship to a node gets an edge table named after the table of its owner and the relationship
- *     type, with columns referencing the owner and the target.</li>
+ *     type, with columns referencing the owner and the target. The name also has the table of the target when the
+ *     owner has the same type towards several nodes.</li>
+ *     <li>The two sides of one relationship, declared on both nodes with opposite directions, share one edge table.</li>
  *     <li>Each graph named by a graph repository of the data source is created with {@code CREATE OR REPLACE PROPERTY GRAPH}, so a restart with {@code CREATE} picks up changed entities,
  *     over the vertex and edge tables reachable from the entities of its repositories.</li>
  * </ul>
@@ -148,10 +151,10 @@ public final class OraclePropertyGraphSchema {
             statements.add("DROP PROPERTY GRAPH IF EXISTS " + identifier(graph));
         }
         for (Edge edge : schema.edges) {
-            statements.add("DROP TABLE IF EXISTS " + quote(edge.table.name()));
+            statements.add("DROP TABLE IF EXISTS " + tableName(edge.table));
         }
         for (Vertex vertex : schema.vertices.values()) {
-            statements.add("DROP TABLE IF EXISTS " + quote(vertex.table.name()));
+            statements.add("DROP TABLE IF EXISTS " + tableName(vertex.table));
         }
         return statements;
     }
@@ -168,15 +171,20 @@ public final class OraclePropertyGraphSchema {
             }
         }
         Map<String, PersistentEntity> edgeOwners = new LinkedHashMap<>();
+        List<Edge> edges = new ArrayList<>();
         for (PersistentEntity entity : entities) {
             if (isNode(entity)) {
-                addEdges(schema, entity, edgeOwners);
+                addEdges(edges, entity, edgeOwners);
             }
         }
+        // Of the two sides of a relationship the table of the first is kept: a relationship entity holds properties
+        // the other side has no column for, and otherwise the table is named after the node the edge leaves
+        edges.sort(Comparator.comparing((Edge edge) -> !edge.relationshipEntity).thenComparing(Edge::incoming));
+        edges.forEach(schema::add);
         return schema;
     }
 
-    private static void addEdges(Schema schema, PersistentEntity node, Map<String, PersistentEntity> edgeOwners) {
+    private static void addEdges(List<Edge> edges, PersistentEntity node, Map<String, PersistentEntity> edgeOwners) {
         for (PersistentProperty property : node.getPersistentProperties()) {
             if (!(property instanceof Association association) || !GraphEntities.isRelationship(association)) {
                 continue;
@@ -188,9 +196,9 @@ public final class OraclePropertyGraphSchema {
                     throw new IllegalStateException("Relationship entity [" + associated.getName() + "] is used by the nodes ["
                         + owner.getName() + "] and [" + node.getName() + "]: an edge table references the vertex table of a single node, so each node needs its own relationship entity");
                 }
-                schema.add(relationshipEntityEdge(node, association));
+                edges.add(relationshipEntityEdge(node, association));
             } else {
-                schema.add(nodeEdge(node, association));
+                edges.add(nodeEdge(node, association));
             }
         }
     }
@@ -243,13 +251,17 @@ public final class OraclePropertyGraphSchema {
         return edge(owner, association, targetNode.getAssociatedEntity(),
             withColumns(table, table.name(), table.primaryKeyColumns(), columns, indexes),
             new EdgeKeys(table.primaryKeyColumns().stream().map(SqlColumnMapping::getName).toList(), ownerColumn, targetColumn),
-            properties);
+            properties, true);
     }
 
     private static Edge nodeEdge(PersistentEntity owner, Association association) {
         PersistentEntity target = association.getAssociatedEntity();
         NamingStrategy namingStrategy = owner.getNamingStrategy();
-        String tableName = mainTable(owner).name() + "_" + GraphEntities.relationshipType(association);
+        SqlTableMapping ownerTable = mainTable(owner);
+        String tableName = ownerTable.name() + "_" + GraphEntities.relationshipType(association);
+        if (hasOtherNodeTarget(owner, association)) {
+            tableName += "_" + mainTable(target).name();
+        }
         String ownerColumn = referenceColumnName(owner, NameUtils.decapitalize(owner.getSimpleName()));
         String targetColumn = namingStrategy.mappedName(association.getName() + "Id");
         if (targetColumn.equals(ownerColumn)) {
@@ -259,8 +271,22 @@ public final class OraclePropertyGraphSchema {
             identityColumn(owner).asReference(ownerColumn),
             identityColumn(target).asReference(targetColumn)
         );
-        SqlTableMapping table = new SqlTableMapping(null, tableName, true, SqlTableMapping.TableType.MAIN, keys, List.of());
-        return edge(owner, association, target, table, new EdgeKeys(List.of(ownerColumn, targetColumn), ownerColumn, targetColumn), List.of());
+        SqlTableMapping table = new SqlTableMapping(ownerTable.schema(), tableName, true, SqlTableMapping.TableType.MAIN, keys, List.of());
+        return edge(owner, association, target, table, new EdgeKeys(List.of(ownerColumn, targetColumn), ownerColumn, targetColumn), List.of(), false);
+    }
+
+    private static boolean hasOtherNodeTarget(PersistentEntity owner, Association association) {
+        String type = GraphEntities.relationshipType(association);
+        String target = association.getAssociatedEntity().getName();
+        for (PersistentProperty property : owner.getPersistentProperties()) {
+            if (property instanceof Association other && GraphEntities.isRelationship(other)
+                && !GraphEntities.isRelationshipEntity(other.getAssociatedEntity())
+                && GraphEntities.relationshipType(other).equals(type)
+                && !other.getAssociatedEntity().getName().equals(target)) {
+                return true;
+            }
+        }
+        return false;
     }
 
     private static Edge edge(PersistentEntity owner,
@@ -268,7 +294,8 @@ public final class OraclePropertyGraphSchema {
                              PersistentEntity target,
                              SqlTableMapping table,
                              EdgeKeys keys,
-                             List<String> properties) {
+                             List<String> properties,
+                             boolean relationshipEntity) {
         // A relationship pointing at its owner is stored as an edge from the target to the owner
         boolean incoming = GraphEntities.direction(association) == Direction.INCOMING;
         return new Edge(
@@ -279,7 +306,10 @@ public final class OraclePropertyGraphSchema {
             incoming ? owner : target,
             incoming ? keys.ownerColumn() : keys.targetColumn(),
             GraphEntities.relationshipType(association),
-            properties
+            properties,
+            owner.getName() + "." + association.getName(),
+            relationshipEntity,
+            incoming
         );
     }
 
@@ -373,7 +403,8 @@ public final class OraclePropertyGraphSchema {
 
     private static String createPropertyGraph(String name, Set<PersistentEntity> vertices, Schema schema) {
         Set<String> names = vertices.stream().map(PersistentEntity::getName).collect(Collectors.toSet());
-        Function<PersistentEntity, String> tableOf = entity -> quote(schema.vertex(entity).table.name());
+        // An edge references the alias of a vertex table, which is the table name without its schema
+        Function<PersistentEntity, String> aliasOf = entity -> quote(schema.vertex(entity).table.name());
         Function<PersistentEntity, String> keyOf = entity -> quote(identityColumn(entity).getName());
         StringBuilder sql = new StringBuilder("CREATE OR REPLACE PROPERTY GRAPH ").append(identifier(name)).append(" VERTEX TABLES (");
         List<String> vertexTables = new ArrayList<>();
@@ -382,7 +413,7 @@ public final class OraclePropertyGraphSchema {
             List<String> properties = new ArrayList<>();
             table.primaryKeyColumns().forEach(column -> properties.add(column.getName()));
             table.columns().forEach(column -> properties.add(column.getName()));
-            StringBuilder vertex = new StringBuilder(quote(table.name()))
+            StringBuilder vertex = new StringBuilder(tableName(table))
                 .append(" KEY (").append(keyOf.apply(entity)).append(')');
             for (String label : GraphEntities.labels(entity)) {
                 vertex.append(" LABEL ").append(identifier(label)).append(' ').append(properties(properties));
@@ -395,10 +426,10 @@ public final class OraclePropertyGraphSchema {
             if (!names.contains(edge.source.getName()) || !names.contains(edge.destination.getName())) {
                 continue;
             }
-            edgeTables.add(quote(edge.table.name())
+            edgeTables.add(tableName(edge.table)
                 + " KEY (" + edge.keyColumns.stream().map(OraclePropertyGraphSchema::quote).collect(Collectors.joining(", ")) + ")"
-                + " SOURCE KEY (" + quote(edge.sourceColumn) + ") REFERENCES " + tableOf.apply(edge.source) + " (" + keyOf.apply(edge.source) + ")"
-                + " DESTINATION KEY (" + quote(edge.destinationColumn) + ") REFERENCES " + tableOf.apply(edge.destination) + " (" + keyOf.apply(edge.destination) + ")"
+                + " SOURCE KEY (" + quote(edge.sourceColumn) + ") REFERENCES " + aliasOf.apply(edge.source) + " (" + keyOf.apply(edge.source) + ")"
+                + " DESTINATION KEY (" + quote(edge.destinationColumn) + ") REFERENCES " + aliasOf.apply(edge.destination) + " (" + keyOf.apply(edge.destination) + ")"
                 + " LABEL " + identifier(edge.label) + " " + properties(edge.properties));
         }
         if (!edgeTables.isEmpty()) {
@@ -411,7 +442,26 @@ public final class OraclePropertyGraphSchema {
         if (columns.isEmpty()) {
             return "NO PROPERTIES";
         }
-        return "PROPERTIES (" + columns.stream().map(OraclePropertyGraphSchema::quote).collect(Collectors.joining(", ")) + ")";
+        return "PROPERTIES (" + columns.stream().map(OraclePropertyGraphSchema::property).collect(Collectors.joining(", ")) + ")";
+    }
+
+    /**
+     * Renders a column as a graph property. Graph queries write plain property names unquoted, which Oracle folds to
+     * the upper case of the column, and quote any other name as it is mapped, so that name is exposed under an alias.
+     */
+    private static String property(String column) {
+        if (GraphEntities.isPlainIdentifier(column)) {
+            return quote(column);
+        }
+        return quote(column) + " AS \"" + column.replace("\"", "\"\"") + '"';
+    }
+
+    /**
+     * Renders the name of a table with its schema, as the SQL query builder does when it creates the table.
+     */
+    private static String tableName(SqlTableMapping table) {
+        String schema = table.schema();
+        return schema == null || schema.isEmpty() ? quote(table.name()) : quote(schema) + "." + quote(table.name());
     }
 
     /**
@@ -443,10 +493,27 @@ public final class OraclePropertyGraphSchema {
         }
 
         private void add(Edge edge) {
-            // Two relationships of a node can share a relationship entity, and so its table
-            if (edges.stream().noneMatch(existing -> existing.table.name().equals(edge.table.name()))) {
-                edges.add(edge);
+            for (Edge existing : edges) {
+                boolean sameEnds = existing.label.equals(edge.label)
+                    && existing.source.getName().equals(edge.source.getName())
+                    && existing.destination.getName().equals(edge.destination.getName());
+                if (tableName(existing.table).equals(tableName(edge.table))) {
+                    // Nothing in a row says which of the two relationships it belongs to
+                    if (!sameEnds) {
+                        throw new IllegalStateException("Relationships [" + existing.declaredBy + "] and [" + edge.declaredBy + "] both map to the edge table "
+                            + tableName(edge.table) + ", which can only hold one relationship type between one pair of nodes: use a relationship entity for each of them");
+                    }
+                    return;
+                }
+                if (sameEnds) {
+                    if (existing.relationshipEntity && edge.relationshipEntity) {
+                        throw new IllegalStateException("Relationships [" + existing.declaredBy + "] and [" + edge.declaredBy + "] are the two sides of one relationship with the edge tables "
+                            + tableName(existing.table) + " and " + tableName(edge.table) + ": declare the relationship entity on one side only");
+                    }
+                    return;
+                }
             }
+            edges.add(edge);
         }
     }
 
@@ -463,6 +530,9 @@ public final class OraclePropertyGraphSchema {
                         PersistentEntity destination,
                         String destinationColumn,
                         String label,
-                        List<String> properties) {
+                        List<String> properties,
+                        String declaredBy,
+                        boolean relationshipEntity,
+                        boolean incoming) {
     }
 }
