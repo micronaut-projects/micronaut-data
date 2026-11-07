@@ -7,6 +7,7 @@ import io.micronaut.data.model.Sort
 import io.micronaut.data.oracle.graph.bank.Account
 import io.micronaut.data.oracle.graph.bank.BankGraph
 import io.micronaut.data.oracle.graph.bank.PeerGraph
+import io.micronaut.data.oracle.graph.bank.Transfer
 import io.micronaut.data.oracle.graph.operations.OracleGraphRepositoryOperations
 import io.micronaut.test.extensions.spock.annotation.MicronautTest
 import jakarta.inject.Inject
@@ -98,6 +99,11 @@ class OracleGraphSpec extends Specification {
         expect:
         bankGraph.findByTransfersAmountGreaterThan(1000)*.name() == ["Bob"]
         bankGraph.findByTransfersToName("Carol")*.name().sort() == ["Alice", "Bob"]
+
+        and: "a relationship entity compares the edge, and its target compares the node"
+        def carol = new Account(3L, "Carol", [])
+        bankGraph.findByTransfers(new Transfer(2L, 1500, carol))*.name() == ["Bob"]
+        bankGraph.findByTransfersTo(carol)*.name().sort() == ["Alice", "Bob"]
     }
 
     void "an inner join applies to a count, a page total and a projection as it does to the entities"() {

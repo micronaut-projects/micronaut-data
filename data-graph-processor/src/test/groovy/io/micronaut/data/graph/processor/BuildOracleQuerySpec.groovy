@@ -34,6 +34,8 @@ interface PgqlRepository extends GenericRepository<Movie, String> {
     List<Movie> findByDirectorsName(String name);
     List<Movie> findByRolesPersonName(String name);
     List<Movie> findByRolesIsNotNull();
+    List<Movie> findByRoles(Role role);
+    List<Movie> findByRolesPerson(Person person);
     List<Movie> findByDirectorsIsNotNull();
     @Join(value = "directors", type = Join.Type.INNER)
     List<Movie> findByTitle(String title);
@@ -68,6 +70,8 @@ interface SqlRepository extends GenericRepository<Movie, String> {
     List<Movie> findByDirectorsName(String name);
     List<Movie> findByRolesRolesIsNotNull();
     List<Movie> findByRolesIsNotNull();
+    List<Movie> findByRoles(Role role);
+    List<Movie> findByRolesPerson(Person person);
     @Join(value = "directors", type = Join.Type.INNER)
     List<Movie> findByTitle(String title);
     @Join(value = "directors", type = Join.Type.INNER)
@@ -114,7 +118,9 @@ interface PathRepository extends GenericRepository<Person, String> {
         'existsByTitle'                            | 'SELECT TRUE AS "result" FROM MATCH (n:Movie) ON movies WHERE (n.title = ?) LIMIT 1'
         'findByDirectorsName'                      | "SELECT DISTINCT $COLUMNS FROM MATCH (n:Movie) ON movies, MATCH (n) <-[:DIRECTED]- (a0:Person) ON movies WHERE (a0.name = ?)"
         'findByRolesPersonName'                    | "SELECT DISTINCT $COLUMNS FROM MATCH (n:Movie) ON movies, MATCH (n) <-[ar0:ACTED_IN]- (a0:Person) ON movies WHERE (a0.name = ?)"
-        'findByRolesIsNotNull'                     | "SELECT DISTINCT $COLUMNS FROM MATCH (n:Movie) ON movies, MATCH (n) <-[ar0:ACTED_IN]- (a0:Person) ON movies WHERE (a0.id IS NOT NULL)"
+        'findByRolesIsNotNull'                     | "SELECT DISTINCT $COLUMNS FROM MATCH (n:Movie) ON movies, MATCH (n) <-[ar0:ACTED_IN]- (a0:Person) ON movies WHERE (ar0.id IS NOT NULL)"
+        'findByRoles'                              | "SELECT DISTINCT $COLUMNS FROM MATCH (n:Movie) ON movies, MATCH (n) <-[ar0:ACTED_IN]- (a0:Person) ON movies WHERE (ar0.id = ?)"
+        'findByRolesPerson'                        | "SELECT DISTINCT $COLUMNS FROM MATCH (n:Movie) ON movies, MATCH (n) <-[ar0:ACTED_IN]- (a0:Person) ON movies WHERE (a0.id = ?)"
         'findByDirectorsIsNotNull'                 | "SELECT DISTINCT $COLUMNS FROM MATCH (n:Movie) ON movies, MATCH (n) <-[:DIRECTED]- (a0:Person) ON movies WHERE (a0.id IS NOT NULL)"
         'findByTitle'                              | "SELECT DISTINCT $COLUMNS FROM MATCH (n:Movie) ON movies, MATCH (n) <-[:DIRECTED]- (a0:Person) ON movies WHERE (n.title = ?)"
         'countByTitle'                             | 'SELECT COUNT(DISTINCT n.title) AS "result" FROM MATCH (n:Movie) ON movies, MATCH (n) <-[:DIRECTED]- (a0:Person) ON movies WHERE (n.title = ?)'
@@ -140,7 +146,9 @@ interface PathRepository extends GenericRepository<Person, String> {
         'existsByTitle'                            | 'SELECT TRUE AS "result" FROM GRAPH_TABLE (movies MATCH (n IS Movie) WHERE (n.title = ?) COLUMNS (n.title AS "c0")) FETCH NEXT 1 ROWS ONLY'
         'findByDirectorsName'                      | "SELECT DISTINCT * FROM GRAPH_TABLE (movies MATCH (n IS Movie), (n) <-[IS DIRECTED]- (a0 IS Person) WHERE (a0.name = ?) COLUMNS ($COLUMNS))"
         'findByRolesRolesIsNotNull'                | "SELECT DISTINCT * FROM GRAPH_TABLE (movies MATCH (n IS Movie), (n) <-[ar0 IS ACTED_IN]- (a0 IS Person) WHERE (ar0.roles IS NOT NULL) COLUMNS ($COLUMNS))"
-        'findByRolesIsNotNull'                     | "SELECT DISTINCT * FROM GRAPH_TABLE (movies MATCH (n IS Movie), (n) <-[ar0 IS ACTED_IN]- (a0 IS Person) WHERE (a0.id IS NOT NULL) COLUMNS ($COLUMNS))"
+        'findByRolesIsNotNull'                     | "SELECT DISTINCT * FROM GRAPH_TABLE (movies MATCH (n IS Movie), (n) <-[ar0 IS ACTED_IN]- (a0 IS Person) WHERE (ar0.id IS NOT NULL) COLUMNS ($COLUMNS))"
+        'findByRoles'                              | "SELECT DISTINCT * FROM GRAPH_TABLE (movies MATCH (n IS Movie), (n) <-[ar0 IS ACTED_IN]- (a0 IS Person) WHERE (ar0.id = ?) COLUMNS ($COLUMNS))"
+        'findByRolesPerson'                        | "SELECT DISTINCT * FROM GRAPH_TABLE (movies MATCH (n IS Movie), (n) <-[ar0 IS ACTED_IN]- (a0 IS Person) WHERE (a0.id = ?) COLUMNS ($COLUMNS))"
         'findByTitle'                              | "SELECT DISTINCT * FROM GRAPH_TABLE (movies MATCH (n IS Movie), (n) <-[IS DIRECTED]- (a0 IS Person) WHERE (n.title = ?) COLUMNS ($COLUMNS))"
         'countByTitle'                             | 'SELECT COUNT(DISTINCT "c0") AS "result" FROM GRAPH_TABLE (movies MATCH (n IS Movie), (n) <-[IS DIRECTED]- (a0 IS Person) WHERE (n.title = ?) COLUMNS (n.title AS "c0"))'
         'findTitleByReleased'                      | 'SELECT "c0" AS "title" FROM GRAPH_TABLE (movies MATCH (n IS Movie), (n) <-[IS DIRECTED]- (a0 IS Person) WHERE (n.released = ?) COLUMNS (n.title AS "c0"))'
@@ -162,6 +170,48 @@ interface PathRepository extends GenericRepository<Person, String> {
         method                            | query                                                                                                                       | countQuery
         'findByReleasedGreaterThanEquals' | "SELECT DISTINCT $COLUMNS FROM MATCH (n:Movie) ON movies, MATCH (n) <-[:DIRECTED]- (a0:Person) ON movies WHERE (n.released >= ?)" | 'SELECT COUNT(DISTINCT n.title) AS "result" FROM MATCH (n:Movie) ON movies, MATCH (n) <-[:DIRECTED]- (a0:Person) ON movies WHERE (n.released >= ?)'
         'findByReleasedLessThanEquals'    | "SELECT $COLUMNS FROM MATCH (n:Movie) ON movies WHERE (n.released <= ?)"                                                    | 'SELECT COUNT(DISTINCT n.title) AS "result" FROM MATCH (n:Movie) ON movies WHERE (n.released <= ?)'
+    }
+
+    void "test a relationship entity criterion binds the identifier of what it compares"() {
+        expect:
+        getParameterProperties(findMethod(pgql, 'findByRoles')) == ['roles']
+        getParameterProperties(findMethod(pgql, 'findByRolesPerson')) == ['roles.person']
+    }
+
+    void "test a criterion on a relationship entity without an id compares the target node"() {
+        given:
+        def repository = buildRepository('test.CastRepository', """
+$MOVIES
+
+@RelationshipProperties
+class Cameo {
+    @TargetNode
+    private Person person;
+    public Person getPerson() { return person; }
+    public void setPerson(Person person) { this.person = person; }
+}
+
+@Node
+class Cast {
+    @Id
+    private String id;
+    @Relationship(type = "APPEARS_IN", direction = Direction.INCOMING)
+    private List<Cameo> cameos = new ArrayList<>();
+    public String getId() { return id; }
+    public void setId(String id) { this.id = id; }
+    public List<Cameo> getCameos() { return cameos; }
+    public void setCameos(List<Cameo> cameos) { this.cameos = cameos; }
+}
+
+@TestOracleRepository
+@PropertyGraph("movies")
+interface CastRepository extends GenericRepository<Cast, String> {
+    List<Cast> findByCameosIsNotNull();
+}
+""")
+
+        expect:
+        getQuery(findMethod(repository, 'findByCameosIsNotNull')).endsWith('MATCH (n) <-[ar0:APPEARS_IN]- (a0:Person) ON movies WHERE (a0.id IS NOT NULL)')
     }
 
     void "test explicit queries take positional parameters"() {

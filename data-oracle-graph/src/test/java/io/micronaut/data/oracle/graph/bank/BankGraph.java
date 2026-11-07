@@ -37,6 +37,10 @@ public interface BankGraph extends GenericRepository<Account, Long> {
 
     List<Account> findByTransfersToName(String name);
 
+    List<Account> findByTransfers(Transfer transfer);
+
+    List<Account> findByTransfersTo(Account to);
+
     long countByNameIsNotNull();
 
     @Join(value = "transfers", type = Join.Type.INNER)

@@ -213,6 +213,12 @@ public class OracleGraphQueryBuilder implements GraphQueryBuilder {
     }
 
     @Override
+    public String buildUnlinkOtherRelationshipsQuery(Association association, PersistentEntity owner, PersistentEntity target,
+                                                     @Nullable PersistentProperty relationshipIdentity) {
+        throw new UnsupportedOperationException(READ_ONLY);
+    }
+
+    @Override
     public String rootIdentityExpression(PersistentProperty identity) {
         return property(ROOT, identity);
     }
@@ -774,17 +780,20 @@ public class OracleGraphQueryBuilder implements GraphQueryBuilder {
             String variable = resolveVariable(propertyPath.getAssociations());
             PersistentProperty property = propertyPath.getProperty();
             if (property instanceof Association association && !association.isEmbedded()) {
-                PersistentEntity target = GraphEntities.targetNodeEntity(association);
+                // A criterion on an association itself compares the identifier of the associated entity, as the Cypher
+                // builder does. For a relationship entity that is the edge, whose target node is compared through the
+                // @TargetNode association, which is also what an entity without an identifier compares.
+                PersistentEntity associated = association.getAssociatedEntity();
                 List<Association> associations = new ArrayList<>(propertyPath.getAssociations());
                 associations.add(association);
-                Association targetNode = GraphEntities.isRelationshipEntity(association.getAssociatedEntity())
-                    ? GraphEntities.findTargetNode(association.getAssociatedEntity())
-                    : null;
+                if (associated.hasIdentity()) {
+                    return resolve(io.micronaut.data.model.PersistentPropertyPath.of(associations, associated.getIdentity()));
+                }
+                Association targetNode = GraphEntities.findTargetNode(associated);
                 if (targetNode != null) {
-                    // The identifier belongs to the node at the far end, not to the edge
                     associations.add(targetNode);
                 }
-                return resolve(io.micronaut.data.model.PersistentPropertyPath.of(associations, identity(target)));
+                return resolve(io.micronaut.data.model.PersistentPropertyPath.of(associations, identity(GraphEntities.targetNodeEntity(association))));
             }
             return property(variable, property);
         }
