@@ -19,6 +19,7 @@ import io.micronaut.core.annotation.AnnotationMetadata;
 import io.micronaut.core.beans.BeanProperty;
 import io.micronaut.data.annotation.Relation;
 import io.micronaut.data.exceptions.DataAccessException;
+import io.micronaut.data.exceptions.NonUniqueResultException;
 import io.micronaut.data.graph.model.GraphEntities;
 import io.micronaut.data.graph.runtime.GraphEntityMapper;
 import io.micronaut.data.graph.runtime.GraphRecord;
@@ -127,8 +128,17 @@ public abstract class AbstractReactiveGraphRepositoryOperations implements React
         return withSessionMono(preparedQuery.getAnnotationMetadata(), session -> {
             AbstractGraphRepositoryOperations.GraphQuery query = operations.prepare(preparedQuery, true);
             return session.stream(query.query(), query.parameters())
-                .next()
-                .mapNotNull(row -> operations.mapRecord(preparedQuery, row));
+                .take(2)
+                .collectList()
+                .flatMap(records -> {
+                    if (records.isEmpty()) {
+                        return Mono.empty();
+                    }
+                    if (records.size() > 1 && !preparedQuery.getQueryLimit().isLimited()) {
+                        return Mono.error(new NonUniqueResultException());
+                    }
+                    return Mono.justOrEmpty(operations.mapRecord(preparedQuery, records.get(0)));
+                });
         });
     }
 

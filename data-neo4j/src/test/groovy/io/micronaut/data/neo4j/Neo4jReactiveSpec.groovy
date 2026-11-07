@@ -188,6 +188,25 @@ class Neo4jReactiveSpec extends Specification implements TestPropertyProvider {
         found.related.TAGGED[0] instanceof Tag
     }
 
+    void "finding one reactively fails when there are several rows"() {
+        given:
+        movieRepository.saveAll([
+            new Movie("Speed", "Get ready for rush hour", 1994),
+            new Movie("Forrest Gump", "Life is like a box of chocolates", 1994)
+        ]).collectList().block()
+
+        when:
+        movieRepository.findByReleased(1994).block()
+
+        then:
+        thrown(NonUniqueResultException)
+
+        expect: "a limit, one row or none is not ambiguous"
+        movieRepository.findFirstByReleased(1994).block().released == 1994
+        movieRepository.findByTitle("Speed").block().released == 1994
+        movieRepository.findByReleased(1950).blockOptional().empty
+    }
+
     void "replacing a single valued relationship entity reactively leaves one relationship"() {
         given:
         def project = new Project("Apollo")
