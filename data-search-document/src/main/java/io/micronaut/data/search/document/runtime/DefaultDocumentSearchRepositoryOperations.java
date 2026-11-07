@@ -20,6 +20,8 @@ import io.micronaut.context.BeanContext;
 import io.micronaut.context.annotation.EachBean;
 import io.micronaut.context.annotation.Parameter;
 import io.micronaut.core.annotation.Internal;
+import io.micronaut.core.type.Argument;
+import io.micronaut.data.exceptions.DataAccessException;
 import io.micronaut.data.model.Page;
 import io.micronaut.data.model.runtime.AttributeConverterRegistry;
 import io.micronaut.data.model.runtime.DeleteBatchOperation;
@@ -50,6 +52,8 @@ import io.micronaut.data.search.document.query.SearchJson;
 import io.micronaut.inject.qualifiers.Qualifiers;
 import io.micronaut.json.JsonMapper;
 import jakarta.inject.Named;
+import java.io.IOException;
+import java.util.Objects;
 import org.jspecify.annotations.Nullable;
 
 import java.util.ArrayList;
@@ -71,7 +75,7 @@ import java.util.stream.Stream;
 @Internal
 @EachBean(SearchTransport.class)
 public final class DefaultDocumentSearchRepositoryOperations extends AbstractDocumentSearchRepositoryOperations
-    implements DocumentSearchRepositoryOperations, MethodContextAwareStoredQueryDecorator, ReactiveCapableRepository, AsyncCapableRepository {
+    implements DocumentSearchRepositoryOperations, SearchQueryExecutor, MethodContextAwareStoredQueryDecorator, ReactiveCapableRepository, AsyncCapableRepository {
 
     private final String name;
     private final SearchTransport transport;
@@ -150,6 +154,34 @@ public final class DefaultDocumentSearchRepositoryOperations extends AbstractDoc
         return reactive() instanceof DefaultDocumentSearchReactiveRepositoryOperations reactor
             ? new ReactorToAsyncOperationsAdaptor(reactor, executorServiceResolver.get())
             : new ExecutorAsyncOperations(this, executorServiceResolver.get());
+    }
+
+    // ---------- raw bodies
+
+    @Override
+    public <T> SearchResults<T> search(Class<T> entityType, String body) {
+        RuntimePersistentEntity<T> entity = runtimeEntityRegistry.getEntity(entityType);
+        return toSearchResults(transport.search(indexName(entity), searchJson(parseBody(body), entity)), entity, null);
+    }
+
+    @Override
+    public <T> List<T> find(Class<T> entityType, String body) {
+        RuntimePersistentEntity<T> entity = runtimeEntityRegistry.getEntity(entityType);
+        return search(parseBody(body), entity, null);
+    }
+
+    @Override
+    public long count(Class<?> entityType, String body) {
+        RuntimePersistentEntity<?> entity = runtimeEntityRegistry.getEntity(entityType);
+        return transport.count(indexName(entity), queryOnly(parseBody(body)));
+    }
+
+    private Map<String, Object> parseBody(String body) {
+        try {
+            return Objects.requireNonNull(jsonMapper.readValue(body, Argument.mapOf(String.class, Object.class)), "body");
+        } catch (IOException e) {
+            throw new DataAccessException("Cannot parse the search request body: " + e.getMessage(), e);
+        }
     }
 
     // ---------- reads

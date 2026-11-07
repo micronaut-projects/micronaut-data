@@ -81,7 +81,53 @@ public final class DocumentStoredQuery<E, R> extends DefaultBindableParametersSt
     public Map<String, Object> bodyFor(@Nullable InvocationContext<?, ?> invocationContext, @Nullable E entity, Binder binder) {
         CollectingBinder collecting = new CollectingBinder(binder);
         bindParameters(collecting, invocationContext, entity, null);
-        return (Map<String, Object>) Objects.requireNonNull(replace(body, collecting.values));
+        Map<String, Object> named = Map.of();
+        if (isRawQuery()) {
+            // a @Query body in the store's own DSL names its parameters as ":name" string values
+            named = new LinkedHashMap<>();
+            List<QueryParameterBinding> bindings = getQueryBindings();
+            for (int i = 0; i < bindings.size() && i < collecting.values.size(); i++) {
+                String name = parameterName(bindings.get(i), invocationContext);
+                if (name != null) {
+                    named.put(":" + name, collecting.values.get(i));
+                }
+            }
+        }
+        return (Map<String, Object>) Objects.requireNonNull(replace(body, collecting.values, named));
+    }
+
+    @Nullable
+    private static String parameterName(QueryParameterBinding binding, @Nullable InvocationContext<?, ?> invocationContext) {
+        if (binding.getName() != null) {
+            return binding.getName();
+        }
+        int index = binding.getParameterIndex();
+        if (invocationContext != null && index >= 0 && index < invocationContext.getArguments().length) {
+            return invocationContext.getArguments()[index].getName();
+        }
+        return null;
+    }
+
+    @Nullable
+    private Object replace(@Nullable Object node, List<Object> values, Map<String, Object> named) {
+        if (node instanceof String string && named.containsKey(string)) {
+            return normalize(named.get(string));
+        }
+        if (node instanceof Map<?, ?> map && !map.containsKey(DocumentSearchQueryBuilder.QUERY_PARAMETER_PLACEHOLDER)) {
+            Map<String, Object> copy = new LinkedHashMap<>();
+            for (Map.Entry<?, ?> entry : map.entrySet()) {
+                copy.put(String.valueOf(entry.getKey()), replace(entry.getValue(), values, named));
+            }
+            return copy;
+        }
+        if (node instanceof Collection<?> collection && !named.isEmpty()) {
+            List<Object> copy = new ArrayList<>(collection.size());
+            for (Object item : collection) {
+                copy.add(replace(item, values, named));
+            }
+            return copy;
+        }
+        return replace(node, values);
     }
 
     @Nullable
