@@ -136,13 +136,6 @@ public final class OracleGraphRows {
     }
 
     /**
-     * Decodes the rows of a query.
-     *
-     * @param columns The column names
-     * @param rows    The rows
-     * @return The records
-     */
-    /**
      * Whether a column holds the schemaless properties of a node, which drivers read as JSON text.
      *
      * @param column The column label
@@ -152,6 +145,13 @@ public final class OracleGraphRows {
         return column.endsWith(SEPARATOR + OracleGraphQueryBuilder.DYNAMIC_ATTRIBUTES_COLUMN);
     }
 
+    /**
+     * Decodes the rows of a query.
+     *
+     * @param columns The column names
+     * @param rows    The rows
+     * @return The records
+     */
     public static List<GraphRecord> decode(List<String> columns, List<List<@Nullable Object>> rows) {
         if (columns.contains(OracleGraphQueryBuilder.PATH_MATCH_COLUMN)) {
             return decodePaths(columns, rows);
