@@ -15,6 +15,7 @@ import io.micronaut.data.neo4j.features.Critic
 import io.micronaut.data.neo4j.features.CriticRepository
 import io.micronaut.data.neo4j.features.Event
 import io.micronaut.data.neo4j.features.EventRepository
+import io.micronaut.data.neo4j.features.KennelRepository
 import io.micronaut.data.neo4j.features.Tag
 import io.micronaut.data.neo4j.features.Topic
 import io.micronaut.data.neo4j.features.TopicRepository
@@ -65,6 +66,9 @@ class Neo4jSerdeSpec extends Specification implements TestPropertyProvider {
 
     @Inject
     CriticRepository criticRepository
+
+    @Inject
+    KennelRepository kennelRepository
 
     @Inject
     GraphSerde serde
@@ -218,5 +222,18 @@ class Neo4jSerdeSpec extends Specification implements TestPropertyProvider {
         then:
         operations.executeQuery('MATCH (c:Critic) RETURN c.reviewCount AS reviews', [:])[0].get("reviews") == 12L
         criticRepository.findById("Pauline Kael").get() == critic
+    }
+
+    void "a node fetched through a relationship keeps its schemaless data"() {
+        given:
+        operations.executeQuery('CREATE (:Kennel {name: "North"})-[:HOUSES]->(:Pet:Rescued {name: "Rex", colour: "brown"})', [:])
+
+        when:
+        def kennel = kennelRepository.findByName("North").get()
+
+        then:
+        kennel.pets()*.name == ["Rex"]
+        kennel.pets()[0].attributes == [colour: "brown"]
+        kennel.pets()[0].labels == ["Rescued"] as Set
     }
 }

@@ -107,25 +107,31 @@ public final class GraphEntityMapper {
      * @return The entity instance
      */
     public <T> T readNode(RuntimePersistentEntity<T> entity, GraphNode node, @Nullable GraphRecord row) {
-        Schemaless schemaless = schemaless(entity);
-        BeanProperty<Object, Object> relationshipsProperty = schemaless.relationships();
-        if (!schemaless.present() && relationshipsProperty == null) {
-            return serde.readNode(entity, node, row);
-        }
-        // Schemaless data lives outside the declared properties of the node: it is read here and added to what the
-        // deserializer sees under the names of its holder properties
-        Map<String, @Nullable Object> extras = new LinkedHashMap<>();
-        if (schemaless.attributes() != null) {
-            extras.put(schemaless.attributes().getName(), undeclaredProperties(schemaless, node));
-        }
-        if (schemaless.labels() != null) {
-            extras.put(schemaless.labels().getName(), extraLabels(entity, node));
-        }
+        BeanProperty<Object, Object> relationshipsProperty = schemaless(entity).relationships();
         if (relationshipsProperty != null && row != null && row.has(CypherQueryBuilder.DYNAMIC_RELATIONSHIPS_COLUMN)) {
             // The targets are read here, by their labels, and reach the deserializer as entities
-            extras.put(relationshipsProperty.getName(), dynamicRelationships(row));
+            return serde.readNode(entity, node, row, Map.of(relationshipsProperty.getName(), dynamicRelationships(row)), this::readSchemaless);
         }
-        return serde.readNode(entity, node, row, extras);
+        return serde.readNode(entity, node, row, Map.of(), this::readSchemaless);
+    }
+
+    /**
+     * Schemaless data lives outside the declared properties of a node: it is read here and added to what the
+     * deserializer sees under the names of its holder properties.
+     */
+    private Map<String, @Nullable Object> readSchemaless(RuntimePersistentEntity<?> entity, GraphNode node) {
+        Schemaless schemaless = schemaless(entity);
+        if (!schemaless.present()) {
+            return Map.of();
+        }
+        Map<String, @Nullable Object> values = new LinkedHashMap<>();
+        if (schemaless.attributes() != null) {
+            values.put(schemaless.attributes().getName(), undeclaredProperties(schemaless, node));
+        }
+        if (schemaless.labels() != null) {
+            values.put(schemaless.labels().getName(), extraLabels(entity, node));
+        }
+        return values;
     }
 
     private static Map<String, Object> undeclaredProperties(Schemaless schemaless, GraphNode node) {
@@ -254,7 +260,7 @@ public final class GraphEntityMapper {
      * @return The entity instance
      */
     public <T> T readRelationshipEntity(RuntimePersistentEntity<T> entity, GraphEdge edge, @Nullable GraphNode target) {
-        return serde.readEdge(entity, edge, target);
+        return serde.readEdge(entity, edge, target, this::readSchemaless);
     }
 
     /**
