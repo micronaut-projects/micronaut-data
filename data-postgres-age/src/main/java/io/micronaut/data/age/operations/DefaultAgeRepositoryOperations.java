@@ -93,16 +93,16 @@ final class DefaultAgeRepositoryOperations extends AbstractGraphRepositoryOperat
      */
     static final String PREPARED_SETTING = "micronaut.age.prepared";
     /**
-     * The prefix of the session settings that record that the indexes of a tenant graph were created on a connection
-     * inside a transaction. Their values work as that of {@link #PREPARED_SETTING} does.
-     */
-    private static final String INDEXED_SETTING = "micronaut.age.indexed.g";
-
-    /**
      * The prefix of the setting, local to the transaction, that says the transaction created a graph. The catalog
      * row cannot tell: it carries the identifier of the savepoint's subtransaction, not of the transaction.
      */
     static final String CREATED_SETTING_PREFIX = "micronaut.age_created_";
+
+    /**
+     * The prefix of the session settings that record that the indexes of a tenant graph were created on a connection
+     * inside a transaction. Their values work as that of {@link #PREPARED_SETTING} does.
+     */
+    private static final String INDEXED_SETTING = "micronaut.age.indexed.g";
 
     private static final Logger LOG = LoggerFactory.getLogger(DefaultAgeRepositoryOperations.class);
     private static final int ABSENT = 0;
