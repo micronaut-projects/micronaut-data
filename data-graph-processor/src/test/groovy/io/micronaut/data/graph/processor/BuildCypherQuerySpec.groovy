@@ -438,7 +438,7 @@ interface DeepRepository extends CrudRepository<Movie, String> {
 """)
 
         then:
-        getQuery(findMethod(repository, 'findByReleased', 1)) == 'MATCH (n:Movie) WHERE n.released = $p0 OPTIONAL MATCH (n)<-[:DIRECTED]-(j0:Person:Actor) OPTIONAL MATCH (j0)-[:FOLLOWS]->(j0_0n:Person:Actor) WITH n, j0, collect(DISTINCT j0_0n) AS j0_0 WITH n, collect(DISTINCT CASE WHEN j0 IS NULL THEN NULL ELSE {node: j0, mentor: j0_0} END) AS j_directors RETURN n, j_directors'
+        getQuery(findMethod(repository, 'findByReleased', 1)) == 'MATCH (n:Movie) WHERE n.released = $p0 OPTIONAL MATCH (n)<-[:DIRECTED]-(j0:Person:Actor) OPTIONAL MATCH (j0)-[:FOLLOWS]->(j0_0n:Person:Actor) WITH n, j0, collect(DISTINCT j0_0n) AS j0_0 WITH n, collect(DISTINCT CASE WHEN j0 IS NULL THEN NULL ELSE {node: j0, nested: {mentor: j0_0}} END) AS j_directors RETURN n, j_directors'
     }
 
     void "test nested joins that share a relationship fetch every branch"() {
@@ -492,7 +492,7 @@ interface BranchRepository extends CrudRepository<Film, String> {
 """)
 
         then:
-        getQuery(findMethod(repository, 'findByTitle', 1)) == 'MATCH (n:Film) WHERE n.title = $p0 OPTIONAL MATCH (n)<-[:DIRECTED]-(j0:Director) OPTIONAL MATCH (j0)-[:WON]->(j0_0n:Award) WITH n, j0, collect(DISTINCT j0_0n) AS j0_0 OPTIONAL MATCH (j0)-[:FOLLOWS]->(j0_1n:Director) WITH n, j0, j0_0, collect(DISTINCT j0_1n) AS j0_1 WITH n, collect(DISTINCT CASE WHEN j0 IS NULL THEN NULL ELSE {node: j0, awards: j0_0, mentor: j0_1} END) AS j_directors RETURN n, j_directors'
+        getQuery(findMethod(repository, 'findByTitle', 1)) == 'MATCH (n:Film) WHERE n.title = $p0 OPTIONAL MATCH (n)<-[:DIRECTED]-(j0:Director) OPTIONAL MATCH (j0)-[:WON]->(j0_0n:Award) WITH n, j0, collect(DISTINCT j0_0n) AS j0_0 OPTIONAL MATCH (j0)-[:FOLLOWS]->(j0_1n:Director) WITH n, j0, j0_0, collect(DISTINCT j0_1n) AS j0_1 WITH n, collect(DISTINCT CASE WHEN j0 IS NULL THEN NULL ELSE {node: j0, nested: {awards: j0_0, mentor: j0_1}} END) AS j_directors RETURN n, j_directors'
     }
 
     private static ExecutableMethod<?, ?> findMethod(BeanDefinition<?> definition, String name, int arity) {

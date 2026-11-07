@@ -223,13 +223,15 @@ public final class GraphSerde {
 
     /**
      * The object view of a node fetched with the relationships of its own: the nodes of each nested relationship are
-     * held by the map under the name of the relationship.
+     * held by a map of their own, under the name of the relationship.
      */
     private Map<String, @Nullable Object> nestedView(RuntimePersistentEntity<?> entity, GraphNode node, Map<?, ?> tree) {
         Map<String, @Nullable Object> view = nodeView(entity, node, null);
-        for (RuntimePersistentProperty<?> property : entity.getPersistentProperties()) {
-            if (property instanceof RuntimeAssociation<?> association && tree.containsKey(association.getName())) {
-                view.put(association.getName(), fetched(association, tree.get(association.getName())));
+        if (tree.get(CypherQueryBuilder.NESTED_KEY) instanceof Map<?, ?> nested) {
+            for (RuntimePersistentProperty<?> property : entity.getPersistentProperties()) {
+                if (property instanceof RuntimeAssociation<?> association && nested.containsKey(association.getName())) {
+                    view.put(association.getName(), fetched(association, nested.get(association.getName())));
+                }
             }
         }
         return view;

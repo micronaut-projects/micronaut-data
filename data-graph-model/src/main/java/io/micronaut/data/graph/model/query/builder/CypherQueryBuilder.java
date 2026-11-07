@@ -114,6 +114,10 @@ public class CypherQueryBuilder implements GraphQueryBuilder {
      */
     public static final String NODE_KEY = "node";
     /**
+     * The key of the nested relationships, by property name, in a node collected with the relationships of its own.
+     */
+    public static final String NESTED_KEY = "nested";
+    /**
      * The parameter name prefix.
      */
     public static final String PARAMETER_PREFIX = "p";
@@ -174,6 +178,7 @@ public class CypherQueryBuilder implements GraphQueryBuilder {
      */
     public static final String ROW_PROPERTIES = "properties";
     private static final String WITH = " WITH ";
+    private static final String OPTIONAL_MATCH = " OPTIONAL MATCH ";
     private static final String WITH_DISTINCT = " WITH DISTINCT ";
     private static final String DISTINCT = "DISTINCT ";
     private static final String TO_LOWER = "toLower(";
@@ -1085,7 +1090,7 @@ public class CypherQueryBuilder implements GraphQueryBuilder {
             query.append(WHERE).append(where);
         }
         for (Pattern pattern : patterns.subList(required, patterns.size())) {
-            query.append(" OPTIONAL MATCH ").append(pattern.text);
+            query.append(OPTIONAL_MATCH).append(pattern.text);
         }
     }
 
@@ -1181,7 +1186,7 @@ public class CypherQueryBuilder implements GraphQueryBuilder {
             throw new IllegalArgumentException("Graph repositories can only join relationships with properties at the start of a join path, found: " + association.getName());
         }
         PersistentEntity target = GraphEntities.targetNodeEntity(association);
-        query.append(" OPTIONAL MATCH ")
+        query.append(OPTIONAL_MATCH)
             .append(GraphEntities.relationshipPattern(association, from, null, "(" + variable + labelExpression(target) + ")"));
         // The collects are DISTINCT: a node reached through parallel relationships, or the rows a sibling branch
         // multiplied, would otherwise be collected more than once
@@ -1190,16 +1195,16 @@ public class CypherQueryBuilder implements GraphQueryBuilder {
         }
         List<String> scope = new ArrayList<>(carried);
         scope.add(variable);
-        StringBuilder map = new StringBuilder("{").append(NODE_KEY).append(": ").append(variable);
+        StringBuilder map = new StringBuilder("{").append(NODE_KEY).append(": ").append(variable).append(", ").append(NESTED_KEY).append(": {");
         int index = 0;
         for (JoinTree child : tree.children.values()) {
             String childColumn = variable + "_" + index++;
             String childCollect = appendJoinTree(query, variable, child, scope, childColumn + "n");
             query.append(WITH).append(String.join(", ", scope)).append(", ").append(childCollect).append(" AS ").append(childColumn);
             scope.add(childColumn);
-            map.append(", ").append(GraphEntities.escapeName(child.association.getName())).append(": ").append(childColumn);
+            map.append(index == 1 ? "" : ", ").append(GraphEntities.escapeName(child.association.getName())).append(": ").append(childColumn);
         }
-        return "collect(DISTINCT CASE WHEN " + variable + " IS NULL THEN NULL ELSE " + map.append('}') + " END)";
+        return "collect(DISTINCT CASE WHEN " + variable + " IS NULL THEN NULL ELSE " + map.append("}}") + " END)";
     }
 
     private void appendFetchJoin(StringBuilder query, JoinPath joinPath, List<String> columns, List<String> carried) {
@@ -1218,7 +1223,7 @@ public class CypherQueryBuilder implements GraphQueryBuilder {
             String nodeVariable = "j" + index;
             PersistentEntity target = GraphEntities.targetNodeEntity(association);
             String nodePattern = "(" + nodeVariable + labelExpression(target) + ")";
-            query.append(joinPath.getJoinType() == Join.Type.INNER_FETCH ? " MATCH " : " OPTIONAL MATCH ");
+            query.append(joinPath.getJoinType() == Join.Type.INNER_FETCH ? " MATCH " : OPTIONAL_MATCH);
             String collect;
             if (relationshipEntity) {
                 String relVariable = "r" + index;

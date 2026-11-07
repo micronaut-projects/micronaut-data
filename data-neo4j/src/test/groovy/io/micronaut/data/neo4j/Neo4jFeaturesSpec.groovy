@@ -9,6 +9,8 @@ import io.micronaut.data.model.Pageable
 import io.micronaut.data.model.Sort
 import io.micronaut.data.neo4j.features.Employee
 import io.micronaut.data.neo4j.features.EmployeeRepository
+import io.micronaut.data.neo4j.features.Junction
+import io.micronaut.data.neo4j.features.JunctionRepository
 import io.micronaut.data.neo4j.features.Note
 import io.micronaut.data.neo4j.features.NoteRepository
 import io.micronaut.data.neo4j.features.Reading
@@ -37,6 +39,9 @@ class Neo4jFeaturesSpec extends Specification implements TestPropertyProvider {
 
     @Inject
     TagRepository tagRepository
+
+    @Inject
+    JunctionRepository junctionRepository
 
     @Inject
     TopicRepository topicRepository
@@ -91,6 +96,21 @@ class Neo4jFeaturesSpec extends Specification implements TestPropertyProvider {
 
         then:
         tagRepository.count() == 0
+    }
+
+    void "a nested join reads a relationship named node"() {
+        given:
+        junctionRepository.save(new Junction("a", [new Junction("b", null, [new Junction("c", null, null)])], null))
+
+        when:
+        def found = junctionRepository.findByName("a").get()
+
+        then:
+        found.links()*.name() == ["b"]
+        found.links()[0].node()*.name() == ["c"]
+
+        cleanup:
+        junctionRepository.deleteAll()
     }
 
     void "database generated element identifiers on immutable records"() {
