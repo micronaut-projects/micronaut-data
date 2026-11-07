@@ -12,4 +12,7 @@ public interface ColleagueRepository extends CrudRepository<Colleague, String> {
 
     @Query("MATCH (a:Colleague)-[r:WORKS_WITH]->(b:Colleague) RETURN count(r)")
     long countCollaborations();
+
+    @Query("MATCH (a:Colleague)-[r:MENTORS]->(b:Colleague) RETURN r.project")
+    List<String> findMentorships();
 }
