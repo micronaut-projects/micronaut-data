@@ -2,6 +2,7 @@ package io.micronaut.data.neo4j
 
 import io.micronaut.context.ApplicationContext
 import io.micronaut.data.annotation.Query
+import io.micronaut.data.exceptions.DataAccessException
 import io.micronaut.data.graph.runtime.GraphNode
 import io.micronaut.data.graph.runtime.serde.GraphSerde
 import io.micronaut.serde.SerdeRegistry
@@ -16,6 +17,9 @@ import io.micronaut.data.neo4j.features.CriticRepository
 import io.micronaut.data.neo4j.features.Event
 import io.micronaut.data.neo4j.features.EventRepository
 import io.micronaut.data.neo4j.features.KennelRepository
+import io.micronaut.data.neo4j.features.PetRepository
+import io.micronaut.data.neo4j.features.Reading
+import io.micronaut.data.neo4j.features.ReadingRepository
 import io.micronaut.data.neo4j.features.Tag
 import io.micronaut.data.neo4j.features.Topic
 import io.micronaut.data.neo4j.features.TopicRepository
@@ -25,6 +29,7 @@ import io.micronaut.data.neo4j.tck.Neo4jMovieRepository
 import io.micronaut.test.extensions.spock.annotation.MicronautTest
 import io.micronaut.test.support.TestPropertyProvider
 import jakarta.inject.Inject
+import org.neo4j.driver.types.IsoDuration
 import spock.lang.Specification
 
 import java.time.Duration
@@ -69,6 +74,12 @@ class Neo4jSerdeSpec extends Specification implements TestPropertyProvider {
 
     @Inject
     KennelRepository kennelRepository
+
+    @Inject
+    PetRepository petRepository
+
+    @Inject
+    ReadingRepository readingRepository
 
     @Inject
     GraphSerde serde
@@ -253,5 +264,38 @@ class Neo4jSerdeSpec extends Specification implements TestPropertyProvider {
 
         then:
         kennel.pets() == []
+    }
+
+    void "a mixed duration on a node only fails a read of it into a Duration"() {
+        given:
+        operations.executeQuery('CREATE (:Reading {name: "unmapped", level: 1, taken: duration("P1DT2H")})', [:])
+        operations.executeQuery('CREATE (:Event {name: "mapped", length: duration("P1DT2H")})', [:])
+        operations.executeQuery('CREATE (:Pet {name: "Rex", age: duration("P1DT2H")})', [:])
+
+        expect: "a property the entity does not declare is ignored"
+        readingRepository.findById("unmapped").get() == new Reading("unmapped", (short) 1)
+
+        and: "a raw query and a schemaless property get the driver value"
+        operations.executeQuery('RETURN duration("P1DT2H") AS d', [:])[0].get("d") instanceof IsoDuration
+        petRepository.findById("Rex").get().attributes.age instanceof IsoDuration
+
+        when: "it is read into a property that cannot represent it"
+        eventRepository.findById("mapped")
+
+        then:
+        def e = thrown(DataAccessException)
+        e.message.contains('Cannot read the Neo4j duration [')
+        e.message.contains('both a calendar part (months or days) and a time part')
+    }
+
+    void "a schemaless mixed duration saved back keeps its value"() {
+        given:
+        operations.executeQuery('CREATE (:Pet {name: "Tom", age: duration("P1DT2H")})', [:])
+
+        when:
+        petRepository.update(petRepository.findById("Tom").get())
+
+        then:
+        operations.executeQuery('MATCH (p:Pet {name: "Tom"}) RETURN toString(p.age) AS age', [:])[0].get("age") == 'P1DT2H'
     }
 }
