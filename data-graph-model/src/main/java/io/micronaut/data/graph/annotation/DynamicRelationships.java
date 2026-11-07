@@ -29,7 +29,7 @@ import java.lang.annotation.Target;
  * Reading collects every outgoing relationship whose type no {@link Relationship} property declares, mapping each node
  * to the entity of its label. Saving does not remove relationships missing from the map.</p>
  *
- * <p>Supported by Neo4j and Apache AGE.</p>
+ * <p>Supported by Neo4j.</p>
  *
  * @author graemerocher
  * @since 5.3.0
