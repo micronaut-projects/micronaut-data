@@ -121,7 +121,7 @@ final class DefaultAgeRepositoryOperations extends AbstractGraphRepositoryOperat
         + " WHERE current_setting('search_path') NOT LIKE '%ag_catalog%'";
 
     private final ConnectionOperations<Connection> connectionOperations;
-    private final TransactionOperations<Connection> transactionOperations;
+    private final @Nullable TransactionOperations<Connection> transactionOperations;
     private final String defaultGraph;
     private @Nullable AgeGraphTenantResolver tenantResolver;
     private final boolean createExtension;
@@ -144,7 +144,7 @@ final class DefaultAgeRepositoryOperations extends AbstractGraphRepositoryOperat
 
     @SuppressWarnings("ParameterNumber")
     DefaultAgeRepositoryOperations(@Parameter ConnectionOperations<Connection> connectionOperations,
-                                   @Parameter TransactionOperations<Connection> transactionOperations,
+                                   @Parameter @Nullable TransactionOperations<Connection> transactionOperations,
                                    @Parameter String dataSourceName,
                                    AgeConfiguration configuration,
                                    JsonMapper jsonMapper,
@@ -264,6 +264,11 @@ final class DefaultAgeRepositoryOperations extends AbstractGraphRepositoryOperat
 
     @Override
     protected <R> R writeInTransaction(AnnotationMetadata annotationMetadata, Function<GraphSession, R> work) {
+        if (transactionOperations == null) {
+            // Transactions of the data source are managed elsewhere, such as by JPA: write() joins the connection of
+            // the current one, or else commits or rolls back on a connection of its own
+            return write(annotationMetadata, work);
+        }
         // Joins the current transaction, or begins one so that the statements of the write commit or roll back together
         String graph = currentGraph();
         return transactionOperations.execute(GraphWriteTransaction.of(annotationMetadata), status -> work.apply(session(status.getConnection(), graph)));
