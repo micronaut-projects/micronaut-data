@@ -24,7 +24,6 @@ import io.micronaut.core.convert.ConversionContext;
 import io.micronaut.core.type.Argument;
 import io.micronaut.data.exceptions.DataAccessException;
 import io.micronaut.data.exceptions.NonUniqueResultException;
-import io.micronaut.data.graph.annotation.Direction;
 import io.micronaut.data.graph.annotation.TargetNode;
 import io.micronaut.data.graph.model.GraphEntities;
 import io.micronaut.data.graph.model.GraphPath;
@@ -1033,10 +1032,9 @@ public abstract class AbstractGraphRepositoryOperations extends AbstractReposito
             }
             Object relationshipId = savedId == null ? null : runLink(association, targetEntity, toId, fromId, properties, relationshipIdentity, LinkMode.UPDATE, savedId);
             if (relationshipId == null) {
-                // A relationship that was not saved, or that no longer connects these nodes, is a new one. An
-                // undirected one is matched in either direction, so saving it from its other end finds it
-                boolean create = relationshipIdentity != null && GraphEntities.direction(association) != Direction.UNDIRECTED;
-                relationshipId = runLink(association, targetEntity, toId, fromId, properties, relationshipIdentity, create ? LinkMode.CREATE : LinkMode.MERGE, null);
+                // A relationship that was not saved, or that no longer connects these nodes, is a new one. Saving one
+                // that was saved finds it by its identifier from either end, even if it is undirected
+                relationshipId = runLink(association, targetEntity, toId, fromId, properties, relationshipIdentity, relationshipIdentity != null ? LinkMode.CREATE : LinkMode.MERGE, null);
             }
             if (nativeId && relationshipId != null) {
                 BeanProperty<Object, Object> idProperty = relationshipIdentity.getProperty();

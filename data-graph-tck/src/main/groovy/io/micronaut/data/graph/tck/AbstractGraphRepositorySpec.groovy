@@ -339,16 +339,84 @@ abstract class AbstractGraphRepositorySpec extends Specification {
         def ada = new Colleague("Ada")
         def grace = new Colleague("Grace")
         ada.colleagues = [new Collaboration("compiler", grace)]
-        colleagueRepository.save(ada)
+        def saved = colleagueRepository.save(ada).colleagues[0]
 
         when: "the relationship is saved again from its other end"
-        grace.colleagues = [new Collaboration("cobol", new Colleague("Ada"))]
-        colleagueRepository.save(grace)
+        def again = new Collaboration("cobol", new Colleague("Ada"))
+        again.id = saved.id
+        grace.colleagues = [again]
+        def resaved = colleagueRepository.save(grace).colleagues[0]
 
         then: "the relationship is matched in either direction, so its properties are updated rather than a second one created"
+        resaved.id == saved.id
         colleagueRepository.countCollaborations() == 1
         colleagueRepository.findByColleaguesProject("cobol")*.name.sort() == ["Ada", "Grace"]
         colleagueRepository.findByColleaguesProject("compiler").isEmpty()
+    }
+
+    void "new undirected relationships between the same nodes stay separate"() {
+        given:
+        def ada = new Colleague("Ada")
+        def grace = new Colleague("Grace")
+        ada.colleagues = [new Collaboration("compiler", grace), new Collaboration("cobol", grace)]
+
+        when:
+        def saved = colleagueRepository.save(ada).colleagues
+
+        then:
+        saved*.id.every { it != null }
+        saved*.id.toSet().size() == 2
+        colleagueRepository.countCollaborations() == 2
+        colleagueRepository.findByColleaguesProject("compiler")*.name.sort() == ["Ada", "Grace"]
+        colleagueRepository.findByColleaguesProject("cobol")*.name.sort() == ["Ada", "Grace"]
+
+        when: "another one that was not saved is added from the other end"
+        grace.colleagues = [new Collaboration("flow-matic", new Colleague("Ada"))]
+        colleagueRepository.save(grace)
+
+        then:
+        colleagueRepository.countCollaborations() == 3
+    }
+
+    void "replacing a single valued relationship entity leaves one relationship"() {
+        given:
+        def ada = new Colleague("Ada")
+        ada.mentor = new Collaboration("first", new Colleague("Grace"))
+        ada = colleagueRepository.save(ada)
+        def saved = ada.mentor
+
+        when: "it is saved again"
+        def again = new Collaboration("second", new Colleague("Grace"))
+        again.id = saved.id
+        ada.mentor = again
+        ada = colleagueRepository.update(ada)
+
+        then:
+        ada.mentor.id == saved.id
+        colleagueRepository.findMentorships() == ["second"]
+
+        when: "it is replaced by one that was not saved"
+        ada.mentor = new Collaboration("third", new Colleague("Grace"))
+        ada = colleagueRepository.update(ada)
+
+        then:
+        ada.mentor.id != saved.id
+        colleagueRepository.findMentorships() == ["third"]
+
+        when: "it moves to another node"
+        ada.mentor = new Collaboration("fourth", new Colleague("Hopper"))
+        colleagueRepository.update(ada)
+
+        then:
+        colleagueRepository.findMentorships() == ["fourth"]
+
+        when: "one that was not saved is saved from the other end"
+        def hopper = new Colleague("Hopper")
+        hopper.mentor = new Collaboration("fifth", new Colleague("Ada"))
+        colleagueRepository.update(hopper)
+
+        then:
+        colleagueRepository.findMentorships() == ["fifth"]
     }
 
     void "find relationships between nodes"() {
