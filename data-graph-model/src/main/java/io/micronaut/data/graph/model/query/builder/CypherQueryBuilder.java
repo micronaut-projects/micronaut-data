@@ -27,6 +27,7 @@ import io.micronaut.data.model.PersistentProperty;
 import io.micronaut.data.model.jpa.criteria.IExpression;
 import io.micronaut.data.model.jpa.criteria.IPredicate;
 import io.micronaut.data.model.jpa.criteria.ISelection;
+import io.micronaut.data.model.jpa.criteria.PersistentAssociationPath;
 import io.micronaut.data.model.jpa.criteria.PersistentEntityRoot;
 import io.micronaut.data.model.jpa.criteria.PersistentEntitySubquery;
 import io.micronaut.data.model.jpa.criteria.impl.DefaultOrder;
@@ -185,6 +186,9 @@ public class CypherQueryBuilder implements QueryBuilder {
             selectionRenderer.entity = true;
         }
         requireInnerJoins(state, !selectionRenderer.entity);
+        if (definition.root() instanceof PersistentEntityRoot<?> root) {
+            requireDeclaredInnerJoins(state, root.getPersistentJoins());
+        }
         // A pattern added only to sort by must not remove the nodes that do not have the relationship
         state.sealRequiredPatterns();
         List<OrderItem> orders = renderOrders(definition.order(), state);
@@ -355,6 +359,19 @@ public class CypherQueryBuilder implements QueryBuilder {
         }
     }
 
+    /**
+     * The join paths report an inner join outside the selection as a default join, which is fine for SQL where
+     * a default join is an inner one but optional here, so counts and scalar projections check the declared joins.
+     *
+     * @param state The state
+     * @param joins The declared joins
+     */
+    private static void requireDeclaredInnerJoins(QueryState state, Collection<? extends PersistentAssociationPath<?, ?>> joins) {
+        for (PersistentAssociationPath<?, ?> join : joins) {
+            if (join.getAssociationJoinType() == Join.Type.INNER) {
+                state.resolveVariable(join.asPath());
+            }
+            requireDeclaredInnerJoins(state, join.getPersistentJoins());
     /**
      * Builds the query that finds a node by its identifier, bound to the parameter {@code $id}.
      *
@@ -1062,16 +1079,19 @@ public class CypherQueryBuilder implements QueryBuilder {
                 return identityExpression(property, variable);
             }
             if (property instanceof Association association && !association.isEmbedded()) {
-                // A criterion on an association itself compares its identifier
-                PersistentEntity target = GraphEntities.targetNodeEntity(association);
+                // A criterion on an association itself compares the identifier of the associated entity, as that is
+                // what the argument binds to. For a relationship entity that is the relationship, its target node is
+                // compared through the @TargetNode association.
+                PersistentEntity associated = association.getAssociatedEntity();
                 List<Association> associations = concat(propertyPath.getAssociations(), association);
-                Association targetNode = GraphEntities.isRelationshipEntity(association.getAssociatedEntity())
-                    ? GraphEntities.findTargetNode(association.getAssociatedEntity())
-                    : null;
+                if (associated.hasIdentity()) {
+                    return resolve(io.micronaut.data.model.PersistentPropertyPath.of(associations, associated.getIdentity()));
+                }
+                Association targetNode = GraphEntities.findTargetNode(associated);
                 if (targetNode != null) {
                     associations = concat(associations, targetNode);
                 }
-                return resolve(io.micronaut.data.model.PersistentPropertyPath.of(associations, target.getIdentity()));
+                return resolve(io.micronaut.data.model.PersistentPropertyPath.of(associations, GraphEntities.targetNodeEntity(association).getIdentity()));
             }
             return variable + "." + GraphEntities.escapeName(GraphEntities.propertyName(property));
         }

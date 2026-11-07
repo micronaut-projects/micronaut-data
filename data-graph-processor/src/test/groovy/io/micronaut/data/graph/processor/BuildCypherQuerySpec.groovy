@@ -71,6 +71,9 @@ interface MovieRepository extends CrudRepository<Movie, String> {
     @Query("MATCH (m:Movie {title: \$title}) CALL { WITH m RETURN 1 AS one } SET m.votes = 1")
     int voteSubquery(String title);
     List<Movie> findByRoles(Role role);
+    List<Movie> findByRolesPerson(Person person);
+    @Join(value = "directors", type = Join.Type.INNER)
+    Page<Movie> findByDescriptionContains(String description, Pageable pageable);
 }
 """)
         personRepository = buildRepository('test.PersonRepository', """
@@ -89,6 +92,16 @@ interface PersonRepository extends CrudRepository<Person, String> {
     List<Person> findByBornLessThan(Integer born);
     @Join(value = "mentor", type = Join.Type.INNER_FETCH)
     List<Person> findByBorn(Integer born);
+    @Join(value = "mentor", type = Join.Type.INNER)
+    Page<Person> findByBornGreaterThanEquals(Integer born, Pageable pageable);
+    @Join(value = "mentor", type = Join.Type.INNER_FETCH)
+    Page<Person> findByBornLessThanEquals(Integer born, Pageable pageable);
+    @Join(value = "mentor", type = Join.Type.LEFT)
+    Page<Person> findByNameStartsWith(String name, Pageable pageable);
+    @Join(value = "mentor", type = Join.Type.INNER)
+    List<String> findNameByBornIn(List<Integer> born);
+    @Join(value = "mentor", type = Join.Type.INNER)
+    long countByBornGreaterThan(Integer born);
 }
 """)
     }
@@ -116,7 +129,8 @@ interface PersonRepository extends CrudRepository<Person, String> {
         'findByDirectorsNameOrderByDirectorsBorn'  | 1     | 'MATCH (n:Movie), (n)<-[:DIRECTED]-(a0:Person:Actor) WHERE a0.name = $p0 WITH n, min(a0.born) AS o0 RETURN n ORDER BY o0 ASC'
         'findByReleasedOrderByDirectorsNameDesc'   | 1     | 'MATCH (n:Movie) WHERE n.released = $p0 OPTIONAL MATCH (n)<-[:DIRECTED]-(a0:Person:Actor) WITH n, max(a0.name) AS o0 OPTIONAL MATCH (n)<-[:DIRECTED]-(j0:Person:Actor) WITH n, o0, collect(j0) AS j_directors RETURN n, j_directors ORDER BY o0 DESC'
         'findByRolesPersonName'                    | 1     | 'MATCH (n:Movie), (n)<-[ar0:ACTED_IN]-(a0:Person:Actor) WHERE a0.name = $p0 WITH DISTINCT n RETURN n'
-        'findByRoles'                              | 1     | 'MATCH (n:Movie), (n)<-[ar0:ACTED_IN]-(a0:Person:Actor) WHERE elementId(a0) = $p0 WITH DISTINCT n RETURN n'
+        'findByRoles'                              | 1     | 'MATCH (n:Movie), (n)<-[ar0:ACTED_IN]-(a0:Person:Actor) WHERE elementId(ar0) = $p0 WITH DISTINCT n RETURN n'
+        'findByRolesPerson'                        | 1     | 'MATCH (n:Movie), (n)<-[ar0:ACTED_IN]-(a0:Person:Actor) WHERE elementId(a0) = $p0 WITH DISTINCT n RETURN n'
         'findByRolesRolesArrayContains'            | 1     | 'MATCH (n:Movie), (n)<-[ar0:ACTED_IN]-(a0:Person:Actor) WHERE $p0 IN ar0.roles WITH DISTINCT n RETURN n'
         'findByReleased'                           | 1     | 'MATCH (n:Movie) WHERE n.released = $p0 OPTIONAL MATCH (n)<-[:DIRECTED]-(j0:Person:Actor) WITH n, collect(j0) AS j_directors RETURN n, j_directors'
         'findByTitle'                              | 1     | 'MATCH (n:Movie) WHERE n.title = $p0 OPTIONAL MATCH (n)<-[r0:ACTED_IN]-(j0:Person:Actor) WITH n, collect(CASE WHEN r0 IS NULL THEN NULL ELSE {rel: r0, node: j0} END) AS j_roles OPTIONAL MATCH (n)<-[:DIRECTED]-(j1:Person:Actor) WITH n, j_roles, collect(j1) AS j_directors RETURN n, j_roles, j_directors'
@@ -141,6 +155,78 @@ interface PersonRepository extends CrudRepository<Person, String> {
         expect:
         getQuery(method) == 'MATCH (n:Movie) WHERE n.released > $p0 RETURN n'
         method.annotationMetadata.stringValue(Query, 'countQuery').get() == 'MATCH (n:Movie) WHERE n.released > $p0 RETURN count(n) AS result'
+    }
+
+    @Unroll
+    void "test the page and its total of #method agree on the join"() {
+        given:
+        ExecutableMethod<?, ?> m = findMethod(personRepository, method, 2)
+
+        expect:
+        getQuery(m) == query
+        m.annotationMetadata.stringValue(Query, 'countQuery').get() == countQuery
+
+        where:
+        method                        | query                                                                                                                                  | countQuery
+        'findByBornGreaterThanEquals' | 'MATCH (n:Person:Actor), (n)-[:FOLLOWS]->(a0:Person:Actor) WHERE n.born >= $p0 WITH DISTINCT n RETURN n'                               | 'MATCH (n:Person:Actor), (n)-[:FOLLOWS]->(a0:Person:Actor) WHERE n.born >= $p0 WITH DISTINCT n RETURN count(DISTINCT n) AS result'
+        'findByBornLessThanEquals'    | 'MATCH (n:Person:Actor) WHERE n.born <= $p0 MATCH (n)-[:FOLLOWS]->(j0:Person:Actor) WITH n, collect(j0) AS j_mentor RETURN n, j_mentor' | 'MATCH (n:Person:Actor), (n)-[:FOLLOWS]->(a0:Person:Actor) WHERE n.born <= $p0 WITH DISTINCT n RETURN count(DISTINCT n) AS result'
+        'findByNameStartsWith'        | 'MATCH (n:Person:Actor) WHERE n.name STARTS WITH $p0 RETURN n'                                                                         | 'MATCH (n:Person:Actor) WHERE n.name STARTS WITH $p0 RETURN count(DISTINCT n) AS result'
+    }
+
+    void "test the page of a to-many inner join and its total agree on the join"() {
+        given:
+        ExecutableMethod<?, ?> m = findMethod(movieRepository, 'findByDescriptionContains', 2)
+
+        expect:
+        getQuery(m) == 'MATCH (n:Movie), (n)<-[:DIRECTED]-(a0:Person:Actor) WHERE n.tagline CONTAINS $p0 WITH DISTINCT n RETURN n'
+        m.annotationMetadata.stringValue(Query, 'countQuery').get() == 'MATCH (n:Movie), (n)<-[:DIRECTED]-(a0:Person:Actor) WHERE n.tagline CONTAINS $p0 WITH DISTINCT n RETURN count(DISTINCT n) AS result'
+    }
+
+    void "test a scalar result keeps an inner join"() {
+        expect:
+        getQuery(findMethod(personRepository, 'findNameByBornIn', 1)) == 'MATCH (n:Person:Actor), (n)-[:FOLLOWS]->(a0:Person:Actor) WHERE n.born IN $p0 WITH DISTINCT n RETURN n.name AS name'
+        getQuery(findMethod(personRepository, 'countByBornGreaterThan', 1)) == 'MATCH (n:Person:Actor), (n)-[:FOLLOWS]->(a0:Person:Actor) WHERE n.born > $p0 WITH DISTINCT n RETURN count(DISTINCT n) AS result'
+    }
+
+    void "test a relationship entity criterion binds the identifier of what it compares"() {
+        expect:
+        getParameterProperties(findMethod(movieRepository, 'findByRoles', 1)) == ['roles']
+        getParameterProperties(findMethod(movieRepository, 'findByRolesPerson', 1)) == ['roles.person']
+    }
+
+    void "test a criterion on a relationship entity without an id compares the target node"() {
+        given:
+        def repository = buildRepository('test.CastRepository', """
+$MOVIES
+
+@RelationshipProperties
+class Cameo {
+    @TargetNode
+    private Person person;
+    public Person getPerson() { return person; }
+    public void setPerson(Person person) { this.person = person; }
+}
+
+@Node
+class Show {
+    @Id
+    private String title;
+    @Relationship(type = "APPEARED_IN", direction = Direction.INCOMING)
+    private List<Cameo> cameos = new ArrayList<>();
+    public String getTitle() { return title; }
+    public void setTitle(String title) { this.title = title; }
+    public List<Cameo> getCameos() { return cameos; }
+    public void setCameos(List<Cameo> cameos) { this.cameos = cameos; }
+}
+
+@TestGraphRepository
+interface CastRepository extends CrudRepository<Show, String> {
+    List<Show> findByCameos(Cameo cameo);
+}
+""")
+
+        expect:
+        getQuery(findMethod(repository, 'findByCameos', 1)) == 'MATCH (n:Show), (n)<-[ar0:APPEARED_IN]-(a0:Person:Actor) WHERE elementId(a0) = $p0 WITH DISTINCT n RETURN n'
     }
 
     void "test parameters are bound by name"() {
