@@ -100,6 +100,19 @@ class OracleGraphSpec extends Specification {
         bankGraph.findByTransfersToName("Carol")*.name().sort() == ["Alice", "Bob"]
     }
 
+    void "an inner join applies to a count, a page total and a projection as it does to the entities"() {
+        expect: "Carol is the only account without an outgoing transfer"
+        bankGraph.countByNameContains("") == 3
+        bankGraph.findNameByNameContains("").toSet() == ["Alice", "Bob", "Dave"].toSet()
+
+        when:
+        def page = bankGraph.findByNameContains("", Pageable.from(0, 2, Sort.of(Sort.Order.asc("name"))))
+
+        then:
+        page.content*.name() == ["Alice", "Bob"]
+        page.totalSize == 3
+    }
+
     void "check and count paths"() {
         expect:
         bankGraph.existsPathByTransfers(1L, 3L)

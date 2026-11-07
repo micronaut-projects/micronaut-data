@@ -29,6 +29,7 @@ import io.micronaut.data.model.PersistentProperty;
 import io.micronaut.data.model.jpa.criteria.IExpression;
 import io.micronaut.data.model.jpa.criteria.IPredicate;
 import io.micronaut.data.model.jpa.criteria.ISelection;
+import io.micronaut.data.model.jpa.criteria.PersistentAssociationPath;
 import io.micronaut.data.model.jpa.criteria.PersistentEntityRoot;
 import io.micronaut.data.model.jpa.criteria.PersistentEntitySubquery;
 import io.micronaut.data.model.jpa.criteria.impl.DefaultOrder;
@@ -276,6 +277,9 @@ public class OracleGraphQueryBuilder implements GraphQueryBuilder {
                 query.resolveVariable(List.of(joinPath.getAssociationPath()));
             }
         }
+        if (definition.root() instanceof PersistentEntityRoot<?> root) {
+            requireDeclaredInnerJoins(query, root.getPersistentJoins());
+        }
         Selection<?> selection = definition.selection();
         SelectionRenderer selectionRenderer = new SelectionRenderer(query);
         if (selection instanceof ISelection<?> iSelection) {
@@ -295,6 +299,19 @@ public class OracleGraphQueryBuilder implements GraphQueryBuilder {
             text += buildLimitAndOffset(1, 0);
         }
         return QueryResult.of(text, List.of(text), query.bindings, Map.of());
+    }
+
+    /**
+     * The join paths report an inner join outside the selection as a default join, so counts and scalar projections
+     * check the declared joins, which keeps them in line with the query for the entity.
+     */
+    private static void requireDeclaredInnerJoins(Query query, Collection<? extends PersistentAssociationPath<?, ?>> joins) {
+        for (PersistentAssociationPath<?, ?> join : joins) {
+            if (join.getAssociationJoinType() == Join.Type.INNER) {
+                query.resolveVariable(join.asPath());
+            }
+            requireDeclaredInnerJoins(query, join.getPersistentJoins());
+        }
     }
 
     private void appendPredicate(Query query, @Nullable Predicate predicate) {

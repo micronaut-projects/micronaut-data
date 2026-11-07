@@ -37,6 +37,14 @@ interface PgqlRepository extends GenericRepository<Movie, String> {
     List<Movie> findByDirectorsIsNotNull();
     @Join(value = "directors", type = Join.Type.INNER)
     List<Movie> findByTitle(String title);
+    @Join(value = "directors", type = Join.Type.INNER)
+    long countByTitle(String title);
+    @Join(value = "directors", type = Join.Type.INNER)
+    List<String> findTitleByReleased(Integer released);
+    @Join(value = "directors", type = Join.Type.INNER)
+    Page<Movie> findByReleasedGreaterThanEquals(Integer released, Pageable pageable);
+    @Join(value = "directors", type = Join.Type.LEFT)
+    Page<Movie> findByReleasedLessThanEquals(Integer released, Pageable pageable);
     List<String> findTitleByReleasedGreaterThan(int released);
     Integer findMaxReleased();
     List<MovieSummary> findByReleasedLessThan(Integer released);
@@ -62,6 +70,10 @@ interface SqlRepository extends GenericRepository<Movie, String> {
     List<Movie> findByRolesIsNotNull();
     @Join(value = "directors", type = Join.Type.INNER)
     List<Movie> findByTitle(String title);
+    @Join(value = "directors", type = Join.Type.INNER)
+    long countByTitle(String title);
+    @Join(value = "directors", type = Join.Type.INNER)
+    List<String> findTitleByReleased(Integer released);
     List<String> findTitleByReleasedGreaterThan(int released);
     Integer findMaxReleased();
     List<MovieSummary> findByReleasedLessThan(Integer released);
@@ -105,6 +117,8 @@ interface PathRepository extends GenericRepository<Person, String> {
         'findByRolesIsNotNull'                     | "SELECT DISTINCT $COLUMNS FROM MATCH (n:Movie) ON movies, MATCH (n) <-[ar0:ACTED_IN]- (a0:Person) ON movies WHERE (a0.id IS NOT NULL)"
         'findByDirectorsIsNotNull'                 | "SELECT DISTINCT $COLUMNS FROM MATCH (n:Movie) ON movies, MATCH (n) <-[:DIRECTED]- (a0:Person) ON movies WHERE (a0.id IS NOT NULL)"
         'findByTitle'                              | "SELECT DISTINCT $COLUMNS FROM MATCH (n:Movie) ON movies, MATCH (n) <-[:DIRECTED]- (a0:Person) ON movies WHERE (n.title = ?)"
+        'countByTitle'                             | 'SELECT COUNT(DISTINCT n.title) AS "result" FROM MATCH (n:Movie) ON movies, MATCH (n) <-[:DIRECTED]- (a0:Person) ON movies WHERE (n.title = ?)'
+        'findTitleByReleased'                      | 'SELECT n.title AS "title" FROM MATCH (n:Movie) ON movies, MATCH (n) <-[:DIRECTED]- (a0:Person) ON movies WHERE (n.released = ?)'
         'findTitleByReleasedGreaterThan'           | 'SELECT n.title AS "title" FROM MATCH (n:Movie) ON movies WHERE (n.released > ?)'
         'findMaxReleased'                          | 'SELECT MAX(n.released) AS "result" FROM MATCH (n:Movie) ON movies'
         'findByReleasedLessThan'                   | 'SELECT n.title AS "title", n.released AS "released" FROM MATCH (n:Movie) ON movies WHERE (n.released < ?)'
@@ -128,9 +142,26 @@ interface PathRepository extends GenericRepository<Person, String> {
         'findByRolesRolesIsNotNull'                | "SELECT DISTINCT * FROM GRAPH_TABLE (movies MATCH (n IS Movie), (n) <-[ar0 IS ACTED_IN]- (a0 IS Person) WHERE (ar0.roles IS NOT NULL) COLUMNS ($COLUMNS))"
         'findByRolesIsNotNull'                     | "SELECT DISTINCT * FROM GRAPH_TABLE (movies MATCH (n IS Movie), (n) <-[ar0 IS ACTED_IN]- (a0 IS Person) WHERE (a0.id IS NOT NULL) COLUMNS ($COLUMNS))"
         'findByTitle'                              | "SELECT DISTINCT * FROM GRAPH_TABLE (movies MATCH (n IS Movie), (n) <-[IS DIRECTED]- (a0 IS Person) WHERE (n.title = ?) COLUMNS ($COLUMNS))"
+        'countByTitle'                             | 'SELECT COUNT(DISTINCT "c0") AS "result" FROM GRAPH_TABLE (movies MATCH (n IS Movie), (n) <-[IS DIRECTED]- (a0 IS Person) WHERE (n.title = ?) COLUMNS (n.title AS "c0"))'
+        'findTitleByReleased'                      | 'SELECT "c0" AS "title" FROM GRAPH_TABLE (movies MATCH (n IS Movie), (n) <-[IS DIRECTED]- (a0 IS Person) WHERE (n.released = ?) COLUMNS (n.title AS "c0"))'
         'findTitleByReleasedGreaterThan'           | 'SELECT "c0" AS "title" FROM GRAPH_TABLE (movies MATCH (n IS Movie) WHERE (n.released > ?) COLUMNS (n.title AS "c0"))'
         'findMaxReleased'                          | 'SELECT MAX("c0") AS "result" FROM GRAPH_TABLE (movies MATCH (n IS Movie) COLUMNS (n.released AS "c0"))'
         'findByReleasedLessThan'                   | 'SELECT "c0" AS "title", "c1" AS "released" FROM GRAPH_TABLE (movies MATCH (n IS Movie) WHERE (n.released < ?) COLUMNS (n.title AS "c0", n.released AS "c1"))'
+    }
+
+    @Unroll
+    void "test the page and its total of #method agree on the join"() {
+        given:
+        def m = findMethod(pgql, method)
+
+        expect:
+        getQuery(m) == query
+        m.annotationMetadata.stringValue(Query, 'countQuery').get() == countQuery
+
+        where:
+        method                            | query                                                                                                                       | countQuery
+        'findByReleasedGreaterThanEquals' | "SELECT DISTINCT $COLUMNS FROM MATCH (n:Movie) ON movies, MATCH (n) <-[:DIRECTED]- (a0:Person) ON movies WHERE (n.released >= ?)" | 'SELECT COUNT(DISTINCT n.title) AS "result" FROM MATCH (n:Movie) ON movies, MATCH (n) <-[:DIRECTED]- (a0:Person) ON movies WHERE (n.released >= ?)'
+        'findByReleasedLessThanEquals'    | "SELECT $COLUMNS FROM MATCH (n:Movie) ON movies WHERE (n.released <= ?)"                                                    | 'SELECT COUNT(DISTINCT n.title) AS "result" FROM MATCH (n:Movie) ON movies WHERE (n.released <= ?)'
     }
 
     void "test explicit queries take positional parameters"() {

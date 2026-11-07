@@ -1,5 +1,6 @@
 package io.micronaut.data.oracle.graph.bank;
 
+import io.micronaut.data.annotation.Join;
 import io.micronaut.data.annotation.Query;
 import io.micronaut.data.graph.annotation.PathLimit;
 import io.micronaut.data.model.Page;
@@ -37,6 +38,15 @@ public interface BankGraph extends GenericRepository<Account, Long> {
     List<Account> findByTransfersToName(String name);
 
     long countByNameIsNotNull();
+
+    @Join(value = "transfers", type = Join.Type.INNER)
+    long countByNameContains(String part);
+
+    @Join(value = "transfers", type = Join.Type.INNER)
+    Page<Account> findByNameContains(String part, Pageable pageable);
+
+    @Join(value = "transfers", type = Join.Type.INNER)
+    List<String> findNameByNameContains(String part);
 
     List<String> findNameByIdIn(List<Long> ids);
 
