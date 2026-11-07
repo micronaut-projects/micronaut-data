@@ -30,6 +30,7 @@ import java.util.Iterator;
 import java.util.LinkedHashMap;
 import java.util.List;
 import java.util.Map;
+import java.util.Objects;
 import java.util.regex.Pattern;
 
 /**
@@ -154,6 +155,14 @@ final class OracleGraphRows {
                 nodes.put(group.getKey(), node(fields, rowIndex));
             }
         }
+        for (Map<String, @Nullable Object> fields : groups.values()) {
+            if (fields.get(OracleGraphQueryBuilder.FORWARD_COLUMN) instanceof Number forward && forward.intValue() == 0) {
+                // An undirected edge matched from its destination: s and t stand for the source and destination below
+                GraphNode start = nodes.get("s");
+                nodes.put("s", nodes.get("t"));
+                nodes.put("t", start);
+            }
+        }
         for (Map.Entry<String, Map<String, @Nullable Object>> group : groups.entrySet()) {
             String prefix = group.getKey();
             Map<String, @Nullable Object> fields = group.getValue();
@@ -176,6 +185,9 @@ final class OracleGraphRows {
                 Map<String, Object> properties = new LinkedHashMap<>(fields);
                 properties.remove(OracleGraphQueryBuilder.ID_COLUMN);
                 properties.remove(OracleGraphQueryBuilder.TYPE_COLUMN);
+                properties.remove(OracleGraphQueryBuilder.FORWARD_COLUMN);
+                // A relationship has no null properties in Cypher, and GraphRelationship does not accept them
+                properties.values().removeIf(Objects::isNull);
                 values.add(new GraphEdge(id == null ? rowIndex : id, String.valueOf(fields.get(OracleGraphQueryBuilder.TYPE_COLUMN)),
                     from == null ? rowIndex : from.id(), to == null ? rowIndex : to.id(), properties));
             }

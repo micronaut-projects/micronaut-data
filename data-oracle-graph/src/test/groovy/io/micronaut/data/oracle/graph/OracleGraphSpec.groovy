@@ -6,6 +6,7 @@ import io.micronaut.data.model.runtime.PagedQuery
 import io.micronaut.data.model.Sort
 import io.micronaut.data.oracle.graph.bank.Account
 import io.micronaut.data.oracle.graph.bank.BankGraph
+import io.micronaut.data.oracle.graph.bank.PeerGraph
 import io.micronaut.data.oracle.graph.operations.OracleGraphRepositoryOperations
 import io.micronaut.test.extensions.spock.annotation.MicronautTest
 import jakarta.inject.Inject
@@ -24,6 +25,9 @@ class OracleGraphSpec extends Specification {
 
     @Inject
     BankGraph bankGraph
+
+    @Inject
+    PeerGraph peerGraph
 
     @Inject
     OracleGraphRepositoryOperations operations
@@ -143,6 +147,42 @@ class OracleGraphSpec extends Specification {
         relationships[0].properties().amount == 500
     }
 
+    void "a relationship with a null property leaves it out"() {
+        given:
+        execute("INSERT INTO transfers VALUES (5, 2, 1, NULL)")
+
+        when:
+        def relationships = bankGraph.findRelationshipsByTransfers(2L, 1L)
+
+        then:
+        relationships.size() == 1
+        relationships[0].id() == 5
+        !relationships[0].properties().containsKey("amount")
+
+        cleanup:
+        execute("DELETE FROM transfers WHERE id = 5")
+    }
+
+    void "an undirected relationship keeps its stored direction whichever way it is matched"() {
+        when:
+        def relationships = peerGraph.findRelationshipsByPeers(first, second)
+
+        then:
+        relationships.size() == 1
+        relationships[0].from().name() == "Alice"
+        relationships[0].to().name() == "Bob"
+
+        where:
+        first | second
+        1L    | 2L
+        2L    | 1L
+    }
+
+    void "the relationship queries the builder rejects still work as explicit queries"() {
+        expect: "NOT EXISTS is allowed outside GRAPH_TABLE, where a query with @Query can use it"
+        bankGraph.findWithoutTransfers()*.name() == ["Carol"]
+    }
+
     void "run a query with named parameters"() {
         when:
         def values = operations.executeQuery(
@@ -199,6 +239,12 @@ class OracleGraphSpec extends Specification {
         then:
         def projected = thrown(Exception)
         projected.message.contains("does not return")
+    }
+
+    private void execute(String sql) {
+        DelegatingDataSource.unwrapDataSource(dataSource).connection.withCloseable { connection ->
+            connection.createStatement().withCloseable { statement -> statement.execute(sql) }
+        }
     }
 
     void "operations without a query method are rejected"() {

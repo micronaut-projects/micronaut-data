@@ -61,4 +61,7 @@ public interface BankGraph extends GenericRepository<Account, Long> {
 
     @Query("SELECT * FROM GRAPH_TABLE (bank_graph MATCH (a IS Account) -[t IS TRANSFERS]-> (b IS Account) WHERE t.amount > $amount COLUMNS (a.name AS \"source\", b.name AS \"target\", t.amount AS \"amount\")) ORDER BY \"amount\"")
     List<TransferView> largeTransfers(BigDecimal amount);
+
+    @Query("SELECT * FROM GRAPH_TABLE (bank_graph MATCH (n IS Account) COLUMNS (n.id AS \"n__ID_\", n.id AS \"n__id\", 'Account' AS \"n__LABEL_\", n.name AS \"n__name\", n.opened AS \"n__opened\")) g WHERE NOT EXISTS (SELECT 1 FROM GRAPH_TABLE (bank_graph MATCH (a IS Account) -[IS TRANSFERS]-> (b IS Account) COLUMNS (a.id AS \"k\")) e WHERE e.\"k\" = g.\"n__ID_\")")
+    List<Account> findWithoutTransfers();
 }
