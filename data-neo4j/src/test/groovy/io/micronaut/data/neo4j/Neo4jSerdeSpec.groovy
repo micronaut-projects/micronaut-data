@@ -236,4 +236,22 @@ class Neo4jSerdeSpec extends Specification implements TestPropertyProvider {
         kennel.pets()[0].attributes == [colour: "brown"]
         kennel.pets()[0].labels == ["Rescued"] as Set
     }
+
+    void "a relationship collection of a record that was not fetched is empty"() {
+        given:
+        operations.executeQuery('CREATE (:Kennel {name: "South"})', [:])
+
+        when:
+        def kennel = kennelRepository.findById("South").get()
+
+        then:
+        kennel.name() == "South"
+        kennel.pets() == []
+
+        when: "fetched, with nothing to fetch"
+        kennel = kennelRepository.findByName("South").get()
+
+        then:
+        kennel.pets() == []
+    }
 }

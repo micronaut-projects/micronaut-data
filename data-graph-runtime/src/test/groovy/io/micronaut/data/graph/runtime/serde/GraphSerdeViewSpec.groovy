@@ -7,6 +7,7 @@ import io.micronaut.data.graph.runtime.GraphEdge
 import io.micronaut.data.graph.runtime.GraphEntityMapper
 import io.micronaut.data.graph.runtime.GraphNode
 import io.micronaut.data.graph.runtime.GraphRecord
+import io.micronaut.data.graph.runtime.entities.Crate
 import io.micronaut.data.graph.runtime.entities.Item
 import io.micronaut.data.graph.runtime.entities.Placement
 import io.micronaut.data.graph.runtime.entities.Shelf
@@ -63,6 +64,37 @@ class GraphSerdeViewSpec extends Specification {
 
         then:
         placement == new Placement(4, new Item('vase', [colour: 'blue'], ['Fragile']))
+    }
+
+    void "a relationship collection of a constructor that was not fetched is empty"() {
+        when:
+        Shelf shelf = serde.readNode(entities.getEntity(Shelf), node('Shelf', [name: 'top']), null)
+
+        then:
+        shelf.items() == []
+        shelf.placements() == []
+        shelf.tags() == [] as Set
+        shelf.neighbour() == null
+    }
+
+    void "a relationship collection a row holds as null is empty"() {
+        given:
+        def row = new GraphRecord(['j_items'], [null])
+
+        when:
+        Shelf shelf = serde.readNode(entities.getEntity(Shelf), node('Shelf', [name: 'top']), row)
+
+        then:
+        shelf.items() == []
+    }
+
+    void "a relationship collection of a setter that was not fetched keeps the value the class initializes"() {
+        when:
+        Crate crate = serde.readNode(entities.getEntity(Crate), node('Crate', [name: 'big']), null)
+
+        then:
+        crate.name == 'big'
+        crate.items == null
     }
 
     private static GraphNode node(String label, Map<String, Object> properties) {

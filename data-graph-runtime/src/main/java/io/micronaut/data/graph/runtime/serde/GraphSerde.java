@@ -19,6 +19,7 @@ import io.micronaut.core.annotation.Internal;
 import io.micronaut.core.convert.ConversionService;
 import io.micronaut.core.type.Argument;
 import io.micronaut.data.exceptions.DataAccessException;
+import io.micronaut.data.graph.annotation.DynamicRelationships;
 import io.micronaut.data.graph.annotation.TargetNode;
 import io.micronaut.data.graph.model.GraphEntities;
 import io.micronaut.data.graph.model.query.builder.CypherQueryBuilder;
@@ -175,6 +176,8 @@ public final class GraphSerde {
                 }
             }
         }
+        // Replaces a null too: a relationship the row holds as null was fetched and has no targets
+        entityNames.empty().forEach(view::putIfAbsent);
         return view;
     }
 
@@ -271,8 +274,10 @@ public final class GraphSerde {
      *
      * @param stored The properties held on a node or an edge, with their names there and for serde
      * @param serde  The names serde expects, by property name
+     * @param empty  The values of constructor arguments holding relationships, for when they are not fetched: a class
+     *               initializes the other properties, and a constructor argument would otherwise be null
      */
-    private record Names(List<Stored> stored, Map<String, String> serde) {
+    private record Names(List<Stored> stored, Map<String, String> serde, Map<String, Object> empty) {
 
         static Names of(RuntimePersistentEntity<?> entity) {
             List<Stored> stored = new ArrayList<>();
@@ -287,7 +292,15 @@ public final class GraphSerde {
             for (RuntimePersistentProperty<?> property : entity.getPersistentProperties()) {
                 add(property, !(property instanceof RuntimeAssociation<?>) && !GraphEntities.isSchemalessHolder(property), stored, serde);
             }
-            return new Names(stored, serde);
+            Map<String, Object> empty = new HashMap<>();
+            for (RuntimePersistentProperty<?> property : entity.getPersistentProperties()) {
+                boolean relationships = property instanceof RuntimeAssociation<?> association && !association.getKind().isSingleEnded()
+                    || property.getAnnotationMetadata().hasAnnotation(DynamicRelationships.class);
+                if (relationships && property.isConstructorArgument()) {
+                    empty.put(serde.get(property.getName()), Map.class.isAssignableFrom(property.getType()) ? Map.of() : List.of());
+                }
+            }
+            return new Names(stored, serde, empty);
         }
 
         private static void add(RuntimePersistentProperty<?> property, boolean isStored, List<Stored> stored, Map<String, String> serde) {
