@@ -273,7 +273,7 @@ public final class GraphEntityMapper {
                 }
             }
             Set<String> declared = new HashSet<>();
-            if (entity.getIdentity() != null) {
+            if (entity.hasIdentity()) {
                 declared.add(entity.getIdentity().getPersistedName());
             }
             for (RuntimePersistentProperty<?> property : entity.getPersistentProperties()) {
@@ -296,7 +296,7 @@ public final class GraphEntityMapper {
      */
     public <T> T readRelationshipEntity(RuntimePersistentEntity<T> entity, GraphEdge edge, @Nullable GraphNode target) {
         Map<String, Object> values = new HashMap<>();
-        RuntimePersistentProperty<T> identity = entity.getIdentity();
+        RuntimePersistentProperty<T> identity = entity.hasIdentity() ? entity.getIdentity() : null;
         if (identity != null) {
             Object id = GraphEntities.isNativeId(identity) ? nativeId(identity, edge.id(), edge.numericId()) : edge.properties().get(identity.getPersistedName());
             values.put(identity.getName(), readValue(identity, id));
@@ -430,7 +430,7 @@ public final class GraphEntityMapper {
      */
     public <T> Map<String, Object> writeProperties(RuntimePersistentEntity<T> entity, T instance) {
         Map<String, Object> values = new LinkedHashMap<>();
-        RuntimePersistentProperty<T> identity = entity.getIdentity();
+        RuntimePersistentProperty<T> identity = entity.hasIdentity() ? entity.getIdentity() : null;
         if (identity != null && !GraphEntities.isNativeId(identity)) {
             values.put(identity.getPersistedName(), writeValue(identity, identity.getProperty().get(instance)));
         }
@@ -485,7 +485,7 @@ public final class GraphEntityMapper {
      * @return The encoded identifier, or null if not set
      */
     public <T> @Nullable Object writeIdentity(RuntimePersistentEntity<T> entity, T instance) {
-        RuntimePersistentProperty<T> identity = entity.getIdentity();
+        RuntimePersistentProperty<T> identity = entity.hasIdentity() ? entity.getIdentity() : null;
         if (identity == null) {
             return null;
         }
@@ -543,7 +543,7 @@ public final class GraphEntityMapper {
      * @return The identifier, or null if not set
      */
     public <T> @Nullable Object persistedIdentity(RuntimePersistentEntity<T> entity, T instance) {
-        RuntimePersistentProperty<T> identity = entity.getIdentity();
+        RuntimePersistentProperty<T> identity = entity.hasIdentity() ? entity.getIdentity() : null;
         if (identity == null) {
             return null;
         }
