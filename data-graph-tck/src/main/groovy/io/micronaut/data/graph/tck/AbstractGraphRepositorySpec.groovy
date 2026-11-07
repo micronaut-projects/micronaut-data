@@ -651,6 +651,45 @@ abstract class AbstractGraphRepositorySpec extends Specification {
     }
 
     @Requires({ instance.supportsRelationshipWrites() && instance.supportsExplicitQueries() })
+    void "a relationship list that holds a node twice links it once"() {
+        given:
+        def grace = new Person("Grace Hopper", 1906)
+        def lin = new Person("Lin Clark", null)
+        def ada = new Person("Ada Lovelace", 1815)
+        ada.acquaintances = [grace, lin, grace]
+
+        when:
+        def saved = personRepository.save(ada)
+
+        then:
+        personRepository.countAcquaintances() == 2
+        saved.acquaintances[0].id == saved.acquaintances[2].id
+
+        when: "it is saved again"
+        personRepository.update(saved)
+
+        then:
+        personRepository.countAcquaintances() == 2
+    }
+
+    @Requires({ instance.supportsRelationshipWrites() && instance.supportsExplicitQueries() })
+    void "a relationship entity instance held twice is one relationship"() {
+        given:
+        def ada = new Colleague("Ada")
+        def collaboration = new Collaboration("compiler", new Colleague("Grace"))
+        ada.colleagues = [collaboration, collaboration]
+
+        when:
+        def saved = colleagueRepository.save(ada).colleagues
+
+        then:
+        colleagueRepository.countCollaborations() == 1
+        saved[0].id != null
+        saved*.id.toSet().size() == 1
+        collaboration.id == saved[0].id
+    }
+
+    @Requires({ instance.supportsRelationshipWrites() && instance.supportsExplicitQueries() })
     void "replacing a single valued relationship entity leaves one relationship"() {
         given:
         def ada = new Colleague("Ada")

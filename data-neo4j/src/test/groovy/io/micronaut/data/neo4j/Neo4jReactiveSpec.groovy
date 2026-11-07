@@ -19,12 +19,18 @@ import io.micronaut.data.model.Sort
 import io.micronaut.data.model.runtime.PagedQuery
 import io.micronaut.data.neo4j.features.Assignment
 import io.micronaut.data.neo4j.features.Audit
+import io.micronaut.data.neo4j.features.Binder
 import io.micronaut.data.neo4j.features.Draft
 import io.micronaut.data.neo4j.features.Engineer
 import io.micronaut.data.neo4j.features.Ensemble
 import io.micronaut.data.neo4j.features.Pet
 import io.micronaut.data.neo4j.features.Project
 import io.micronaut.data.neo4j.features.ReactiveArticleRepository
+import io.micronaut.data.neo4j.features.ReactiveBinderRepository
+import io.micronaut.data.neo4j.features.ReactiveRecruitRepository
+import io.micronaut.data.neo4j.features.ReactiveSquadRepository
+import io.micronaut.data.neo4j.features.Recruit
+import io.micronaut.data.neo4j.features.Squad
 import io.micronaut.data.neo4j.features.ReactiveColleagueRepository
 import io.micronaut.data.neo4j.features.ReactiveDraftRepository
 import io.micronaut.data.neo4j.features.ReactiveEngineerRepository
@@ -78,6 +84,15 @@ class Neo4jReactiveSpec extends Specification implements TestPropertyProvider {
 
     @Inject
     ReactiveDraftRepository draftRepository
+
+    @Inject
+    ReactiveBinderRepository binderRepository
+
+    @Inject
+    ReactiveRecruitRepository recruitRepository
+
+    @Inject
+    ReactiveSquadRepository squadRepository
 
     @Inject
     ReactiveMovieSpecificationRepository movieSpecificationRepository
@@ -913,5 +928,71 @@ class Neo4jReactiveSpec extends Specification implements TestPropertyProvider {
         then:
         thrown(EntityExistsException)
         articleRepository.findById("graphs").block().title == "Graphs"
+    }
+
+    void "a reactive cascade keeps one result per target when a listener vetoes one"() {
+        given:
+        def kept = draftRepository.save(new Draft("kept")).block()
+        def vetoed = draftRepository.save(new Draft("first")).block()
+        vetoed.name = "veto"
+
+        when:
+        def saved = binderRepository.save(new Binder(null, "Binder", [kept, vetoed])).block()
+
+        then:
+        saved.drafts()*.id == [kept.id, vetoed.id]
+        draftRepository.findById(vetoed.id).block().name == "first"
+        operations.executeQuery("MATCH (:Binder)-[r:FILED]->(:Draft) RETURN count(r) AS c", [:])*.asMap()*.get('c') == [2L]
+    }
+
+    void "a related node that a new node of the list updates is not updated again reactively"() {
+        given:
+        def bob = recruitRepository.save(new Recruit(null, null, "Bob", [])).block()
+        def cid = recruitRepository.save(new Recruit(null, null, "Cid", [])).block()
+        def ann = new Recruit(null, null, "Ann", [bob])
+
+        when:
+        def saved = squadRepository.save(new Squad(null, "Alpha", [ann, bob, cid])).block()
+
+        then: "Ann updates Bob through her relationship, and the update of the list does not write him again"
+        saved.recruits()*.name() == ["Ann", "Bob", "Cid"]
+        saved.recruits()*.version() == [0L, 1L, 1L]
+        operations.executeQuery("MATCH (:Squad)-[r:HAS]->(:Recruit) RETURN count(r) AS c", [:])*.asMap()*.get('c') == [3L]
+    }
+
+    void "a relationship entity instance held twice is one relationship reactively"() {
+        given:
+        def ada = new Colleague("Ada")
+        def collaboration = new Collaboration("compiler", new Colleague("Grace"))
+        ada.colleagues = [collaboration, collaboration]
+
+        when:
+        def saved = colleagueRepository.save(ada).block().colleagues
+
+        then:
+        operations.executeQuery("MATCH (:Colleague)-[r:WORKS_WITH]->(:Colleague) RETURN count(r) AS c", [:])*.asMap()*.get('c') == [1L]
+        saved[0].id != null
+        saved*.id.toSet().size() == 1
+        collaboration.id == saved[0].id
+    }
+
+    void "an immutable relationship entity instance held twice is one relationship reactively"() {
+        given:
+        def assignment = new Assignment(null, "lead", new Project("Compiler"))
+        def audit = new Audit(null, "clean", new Project("Linker"))
+        def engineer = new Engineer("Ada")
+        engineer.assignments = [assignment, assignment]
+        engineer.audits = [audit, audit]
+
+        when:
+        def saved = engineerRepository.save(engineer).block()
+
+        then:
+        operations.executeQuery("MATCH (:Engineer)-[r:STAFFED]->(:Project) RETURN count(r) AS c", [:])*.asMap()*.get('c') == [1L]
+        operations.executeQuery("MATCH (:Engineer)-[r:AUDITED]->(:Project) RETURN count(r) AS c", [:])*.asMap()*.get('c') == [1L]
+        saved.assignments[0].id() != null
+        saved.assignments*.id().toSet().size() == 1
+        saved.audits[0].id() != null
+        saved.audits*.id().toSet().size() == 1
     }
 }

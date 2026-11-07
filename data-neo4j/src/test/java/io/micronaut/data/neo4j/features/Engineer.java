@@ -18,6 +18,8 @@ public class Engineer {
     private List<Review> reviews;
     @Relationship("AUDITED")
     private List<Audit> audits;
+    @Relationship("STAFFED")
+    private List<Assignment> assignments;
 
     public Engineer(String name) {
         this.name = name;
@@ -49,6 +51,14 @@ public class Engineer {
 
     public void setReviews(List<Review> reviews) {
         this.reviews = reviews;
+    }
+
+    public List<Assignment> getAssignments() {
+        return assignments;
+    }
+
+    public void setAssignments(List<Assignment> assignments) {
+        this.assignments = assignments;
     }
 
     public List<Audit> getAudits() {

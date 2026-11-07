@@ -151,6 +151,20 @@ class AgeR2dbcSpec extends Specification {
         count("MATCH (p:Person) RETURN count(p)") == 3
     }
 
+    void "a relationship list that holds a node twice links it once reactively"() {
+        given:
+        def grace = new Person("Grace Hopper", 1906)
+        def lin = new Person("Lin Clark", null)
+        def ada = new Person("Ada Lovelace", 1815)
+        ada.acquaintances = [grace, lin, grace]
+
+        when:
+        personRepository.save(ada).block()
+
+        then:
+        count("MATCH (:Person)-[r:KNOWS]->(:Person) RETURN count(r)") == 2
+    }
+
     void "commit and roll back reactive transactions"() {
         when:
         transactionOperations.withTransaction(status -> movieRepository.save(new Movie("Speed", null, 1994))).blockLast()
