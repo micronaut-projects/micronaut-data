@@ -188,6 +188,31 @@ class AgeTenantSpec extends Specification {
         e.message.contains("Account_email_unique")
     }
 
+    void "a tenant graph created in a transaction that rolls back is created again by the next operation"() {
+        given:
+        recreateGraph("tenant_undone")
+        dropGraph("tenant_undone")
+        StaticTenantResolver.tenant = "undone"
+
+        when: "a later operation of the transaction sees the graph created under a savepoint"
+        transactionOperations.executeWrite { status ->
+            accountRepository.findAll()
+            accountRepository.findAll()
+            status.setRollbackOnly()
+            null
+        }
+
+        then: "the rollback undid the graph"
+        !graphs().contains("tenant_undone")
+
+        when:
+        accountRepository.findAll()
+
+        then:
+        graphs().contains("tenant_undone")
+        indexes("tenant_undone").containsKey("Account_email_unique")
+    }
+
     void "a graph whose indexes cannot be created is not ready until they can"() {
         given: "data that breaks a unique index"
         recreateGraph("tenant_broken")
@@ -239,6 +264,12 @@ class AgeTenantSpec extends Specification {
         DelegatingDataSource.unwrapDataSource(dataSource).connection.withCloseable { connection ->
             connection.prepareStatement("SELECT ag_catalog.drop_graph(name, true) FROM ag_catalog.ag_graph WHERE name = '$graph'").execute()
             connection.prepareStatement("SELECT ag_catalog.create_graph('$graph')").execute()
+        }
+    }
+
+    private void dropGraph(String graph) {
+        DelegatingDataSource.unwrapDataSource(dataSource).connection.withCloseable { connection ->
+            connection.prepareStatement("SELECT ag_catalog.drop_graph('$graph', true)").execute()
         }
     }
 

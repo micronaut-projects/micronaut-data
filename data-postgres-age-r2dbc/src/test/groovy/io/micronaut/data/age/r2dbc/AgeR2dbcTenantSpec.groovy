@@ -5,6 +5,8 @@ import io.micronaut.core.async.propagation.ReactorPropagation
 import io.micronaut.core.propagation.PropagatedContext
 import io.micronaut.data.graph.tck.entities.Movie
 import io.micronaut.test.extensions.spock.annotation.MicronautTest
+import io.micronaut.transaction.reactive.ReactorReactiveTransactionOperations
+import io.r2dbc.spi.Connection
 import io.r2dbc.spi.ConnectionFactory
 import jakarta.inject.Inject
 import reactor.core.publisher.Flux
@@ -30,6 +32,9 @@ class AgeR2dbcTenantSpec extends Specification {
 
     @Inject
     ConnectionFactory connectionFactory
+
+    @Inject
+    ReactorReactiveTransactionOperations<Connection> transactionOperations
 
     void setup() {
         for (tenant in ["acme", "globex", null]) {
@@ -137,6 +142,35 @@ class AgeR2dbcTenantSpec extends Specification {
 
         then:
         !noRequest
+    }
+
+    void "a tenant graph created in a transaction that rolls back is created again by the next operation"() {
+        given:
+        if (graphs().contains("reactive_undone")) {
+            Flux.usingWhen(
+                connectionFactory.create(),
+                connection -> Flux.from(connection.createStatement("SELECT ag_catalog.drop_graph('reactive_undone', true)").execute())
+                    .concatMap(result -> result.rowsUpdated),
+                connection -> connection.close()
+            ).blockLast()
+        }
+        StaticTenantResolver.tenant = "undone"
+
+        when: "a later operation of the transaction sees the graph created under a savepoint"
+        transactionOperations.withTransactionMono { status ->
+            movieRepository.findAll().collectList()
+                .then(movieRepository.findAll().collectList())
+                .then(Mono.fromRunnable { status.setRollbackOnly() })
+        }.block()
+
+        then: "the rollback undid the graph"
+        !graphs().contains("reactive_undone")
+
+        when:
+        movieRepository.findAll().collectList().block()
+
+        then:
+        graphs().contains("reactive_undone")
     }
 
     private Set<String> graphs() {
