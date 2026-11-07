@@ -1400,6 +1400,26 @@ public abstract class AbstractGraphRepositoryOperations extends AbstractReposito
     }
 
     /**
+     * Whether two instances are the same node. Their conflict is not seen by batched queries, as an insert only
+     * looks for nodes that already exist and a version check passes for both, so they are saved one at a time.
+     *
+     * @param entity    The entity
+     * @param instances The distinct instances
+     * @param <T>       The entity type
+     * @return Whether an identifier is repeated
+     */
+    final <T> boolean repeatsIdentifier(RuntimePersistentEntity<T> entity, List<T> instances) {
+        Set<Object> identifiers = new HashSet<>();
+        for (T instance : instances) {
+            Object id = mapper.writeIdentity(entity, instance);
+            if (id != null && !identifiers.add(id)) {
+                return true;
+            }
+        }
+        return false;
+    }
+
+    /**
      * Writes entities and their relationships within one session.
      */
     private final class Persister {
@@ -1471,26 +1491,6 @@ public abstract class AbstractGraphRepositoryOperations extends AbstractReposito
                 ordered.add(results.get(instance));
             }
             return ordered;
-        }
-
-        /**
-         * Whether two instances are the same node. Their conflict is not seen by batched queries, as an insert only
-         * looks for nodes that already exist and a version check passes for both, so they are saved one at a time.
-         *
-         * @param entity    The entity
-         * @param instances The distinct instances
-         * @param <T>       The entity type
-         * @return Whether an identifier is repeated
-         */
-        private <T> boolean repeatsIdentifier(RuntimePersistentEntity<T> entity, List<T> instances) {
-            Set<Object> identifiers = new HashSet<>();
-            for (T instance : instances) {
-                Object id = mapper.writeIdentity(entity, instance);
-                if (id != null && !identifiers.add(id)) {
-                    return true;
-                }
-            }
-            return false;
         }
 
         /**
