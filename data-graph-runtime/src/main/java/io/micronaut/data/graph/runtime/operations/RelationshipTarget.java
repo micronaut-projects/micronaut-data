@@ -226,17 +226,21 @@ record RelationshipTarget(RuntimePersistentEntity<Object> associated,
 
     /**
      * Groups the rows of the links of an association by the properties they write, as every row of a batched
-     * write sets the same properties.
+     * write sets the same properties. The rows of one pair of nodes are one relationship, which a database that
+     * checks for it per row would otherwise create for each, and the last row wins as it does when they are written
+     * one at a time.
      *
      * @param rows The rows
      * @return The rows by property names
      */
     static Map<List<String>, List<LinkRow>> groupLinkRows(List<LinkRow> rows) {
-        Map<List<String>, List<LinkRow>> groups = new LinkedHashMap<>();
+        Map<List<String>, Map<List<Object>, LinkRow>> groups = new LinkedHashMap<>();
         for (LinkRow row : rows) {
-            groups.computeIfAbsent(List.copyOf(row.properties().keySet()), k -> new ArrayList<>()).add(row);
+            groups.computeIfAbsent(List.copyOf(row.properties().keySet()), k -> new LinkedHashMap<>()).put(List.of(row.fromId(), row.toId()), row);
         }
-        return groups;
+        Map<List<String>, List<LinkRow>> distinct = new LinkedHashMap<>();
+        groups.forEach((names, group) -> distinct.put(names, new ArrayList<>(group.values())));
+        return distinct;
     }
 
     /**
