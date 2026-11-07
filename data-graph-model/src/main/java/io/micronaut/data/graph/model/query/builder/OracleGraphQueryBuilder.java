@@ -85,8 +85,8 @@ import java.util.Optional;
  * The graph and the language are set with {@link PropertyGraph} on the repository.
  *
  * <p>Every returned column is aliased {@code "<variable>__<property>"} so that the runtime can rebuild the nodes,
- * with {@code ID_} and {@code LABEL_} holding the identifier and label of a node. Property graphs over tables are
- * read only: write to the tables with a JDBC repository.</p>
+ * with {@code ID_} and {@code LABEL_} holding the identifier and label of a node. Writes are SQL on the vertex
+ * tables, and relationships are written to their edge tables with a JDBC repository.</p>
  *
  * @author graemerocher
  * @since 5.3.0
