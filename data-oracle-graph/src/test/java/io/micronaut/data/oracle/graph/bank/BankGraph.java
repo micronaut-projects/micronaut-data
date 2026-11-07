@@ -24,6 +24,14 @@ public interface BankGraph extends GenericRepository<Account, Long> {
 
     Account update(Account account);
 
+    Account insertReturning(Account account);
+
+    Account updateReturning(Account account);
+
+    Account deleteReturning(Account account);
+
+    List<Account> deleteReturning(Iterable<Account> accounts);
+
     void deleteById(Long id);
 
     List<Account> findByNameStartsWithOrderByName(String prefix);

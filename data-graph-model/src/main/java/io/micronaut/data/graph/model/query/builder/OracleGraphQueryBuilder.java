@@ -17,6 +17,7 @@ package io.micronaut.data.graph.model.query.builder;
 
 import io.micronaut.core.annotation.AnnotationMetadata;
 import io.micronaut.core.annotation.Introspected;
+import io.micronaut.data.exceptions.DataAccessException;
 import io.micronaut.data.graph.annotation.Direction;
 import io.micronaut.data.graph.annotation.DynamicAttributes;
 import io.micronaut.data.graph.annotation.DynamicRelationships;
@@ -54,11 +55,14 @@ import io.micronaut.data.model.jpa.criteria.impl.selection.AliasedSelection;
 import io.micronaut.data.model.jpa.criteria.impl.selection.CompoundSelection;
 import io.micronaut.data.model.query.BindingParameter;
 import io.micronaut.data.model.query.JoinPath;
+import io.micronaut.data.model.query.builder.GeneratedEntityUpdateQueryDefinition;
 import io.micronaut.data.model.query.builder.QueryParameterBinding;
 import io.micronaut.data.model.query.builder.QueryResult;
 import io.micronaut.data.model.query.builder.sql.Dialect;
 import io.micronaut.data.model.query.builder.sql.SqlQueryBuilder;
 import io.micronaut.data.model.query.impl.AdvancedPredicateVisitor;
+import io.micronaut.data.model.runtime.RuntimePersistentEntity;
+import io.micronaut.data.model.runtime.RuntimePersistentProperty;
 import jakarta.persistence.criteria.Expression;
 import jakarta.persistence.criteria.Order;
 import jakarta.persistence.criteria.Predicate;
@@ -71,6 +75,7 @@ import java.util.Iterator;
 import java.util.LinkedHashMap;
 import java.util.List;
 import java.util.Map;
+import java.util.Optional;
 
 /**
  * Builds queries for Oracle property graphs, which are defined over tables with {@code CREATE PROPERTY GRAPH}.
@@ -166,17 +171,69 @@ public class OracleGraphQueryBuilder implements GraphQueryBuilder {
 
     @Override
     public @Nullable QueryResult buildInsert(AnnotationMetadata repositoryMetadata, InsertQueryDefinition definition) {
-        return sqlQueryBuilder.buildInsert(repositoryMetadata, definition);
+        PersistentEntity entity = definition.persistentEntity();
+        if (definition.returning()) {
+            checkReturnsEntity(entity);
+        }
+        return sqlQueryBuilder.buildInsert(repositoryMetadata, new VertexInsert(OracleVertexTableEntity.of(entity), definition.returning()));
     }
 
     @Override
     public QueryResult buildUpdate(AnnotationMetadata annotationMetadata, UpdateQueryDefinition definition) {
-        return sqlQueryBuilder.buildUpdate(annotationMetadata, definition);
+        PersistentEntity entity = definition.persistentEntity();
+        if (definition.returningSelection() instanceof PersistentEntityRoot<?>) {
+            checkReturnsEntity(entity);
+        }
+        boolean generated = definition instanceof GeneratedEntityUpdateQueryDefinition generatedUpdate && generatedUpdate.isGeneratedEntityUpdate();
+        Map<String, Object> columns = new LinkedHashMap<>();
+        definition.propertiesToUpdate().forEach((path, value) -> {
+            int dot = path.indexOf('.');
+            String name = dot == -1 ? path : path.substring(0, dot);
+            PersistentProperty property = entity.getPropertyByName(name);
+            if (property == null || !GraphEntities.isSingleRelationship(property)) {
+                columns.put(path, value);
+            } else if (!generated) {
+                throw new IllegalArgumentException("Cannot update the relationship [" + name + "] of [" + entity.getName() + "]: " + READ_ONLY);
+            }
+        });
+        return sqlQueryBuilder.buildUpdate(annotationMetadata, new VertexUpdate(definition, OracleVertexTableEntity.of(entity), columns, generated));
     }
 
     @Override
     public QueryResult buildDelete(AnnotationMetadata annotationMetadata, DeleteQueryDefinition definition) {
-        return sqlQueryBuilder.buildDelete(annotationMetadata, definition);
+        PersistentEntity entity = definition.persistentEntity();
+        if (definition.returningSelection() instanceof PersistentEntityRoot<?>) {
+            checkReturnsEntity(entity);
+        }
+        return sqlQueryBuilder.buildDelete(annotationMetadata, new VertexDelete(definition, OracleVertexTableEntity.of(entity)));
+    }
+
+    /**
+     * The result mapper of SQL writes reads a single relationship from a foreign key column, which a vertex table does not have.
+     */
+    private static void checkReturnsEntity(PersistentEntity entity) {
+        if (OracleVertexTableEntity.of(entity) != entity) {
+            throw new IllegalArgumentException("Cannot return the entity [" + entity.getName() + "] from a write: "
+                + "its single relationship has no column in the vertex table. Return a property instead");
+        }
+    }
+
+    /**
+     * Fails a write of the row of a node with a single relationship set: the write would lose the relationship, which
+     * is a row of an edge table. A relationship read from the graph is never set, as queries return node columns only.
+     *
+     * @param entity The entity
+     * @param instance The node
+     * @param <T> The type of the entity
+     */
+    @SuppressWarnings("unchecked")
+    public static <T> void checkVertexWrite(RuntimePersistentEntity<T> entity, Object instance) {
+        for (RuntimePersistentProperty<T> property : entity.getPersistentProperties()) {
+            if (GraphEntities.isSingleRelationship(property) && property.getProperty().get((T) instance) != null) {
+                throw new DataAccessException("Cannot write [" + entity.getName() + "] with its relationship [" + property.getName() + "] set, it would be lost: "
+                    + "write the relationship to its edge table with a JDBC repository and clear the property");
+            }
+        }
     }
 
     @Override
@@ -1292,6 +1349,77 @@ public class OracleGraphQueryBuilder implements GraphQueryBuilder {
         @Override
         public void visit(CurrentTemporalExpression<?> currentTemporalExpression) {
             throw new UnsupportedOperationException("Selecting the current time is not supported for Oracle property graphs");
+        }
+    }
+    private record VertexInsert(PersistentEntity persistentEntity, boolean returning) implements InsertQueryDefinition {
+    }
+
+    private record VertexUpdate(UpdateQueryDefinition definition,
+                                PersistentEntity persistentEntity,
+                                Map<String, Object> propertiesToUpdate,
+                                boolean isGeneratedEntityUpdate) implements GeneratedEntityUpdateQueryDefinition {
+
+        @Override
+        public @Nullable Selection<?> returningSelection() {
+            return definition.returningSelection();
+        }
+
+        @Override
+        public @Nullable Predicate predicate() {
+            return definition.predicate();
+        }
+
+        @Override
+        public Collection<JoinPath> getJoinPaths() {
+            return definition.getJoinPaths();
+        }
+
+        @Override
+        public Optional<JoinPath> getJoinPath(String path) {
+            return definition.getJoinPath(path);
+        }
+
+        @Override
+        public int limit() {
+            return definition.limit();
+        }
+
+        @Override
+        public int offset() {
+            return definition.offset();
+        }
+    }
+
+    private record VertexDelete(DeleteQueryDefinition definition, PersistentEntity persistentEntity) implements DeleteQueryDefinition {
+
+        @Override
+        public @Nullable Selection<?> returningSelection() {
+            return definition.returningSelection();
+        }
+
+        @Override
+        public @Nullable Predicate predicate() {
+            return definition.predicate();
+        }
+
+        @Override
+        public Collection<JoinPath> getJoinPaths() {
+            return definition.getJoinPaths();
+        }
+
+        @Override
+        public Optional<JoinPath> getJoinPath(String path) {
+            return definition.getJoinPath(path);
+        }
+
+        @Override
+        public int limit() {
+            return definition.limit();
+        }
+
+        @Override
+        public int offset() {
+            return definition.offset();
         }
     }
 }

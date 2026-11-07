@@ -155,6 +155,67 @@ interface AccountRepository extends CrudRepository<Account, Long> {
         queries['findById[Long]'].contains('GRAPH_TABLE (bank_graph MATCH (n IS Account) WHERE (n.id = ?)')
     }
 
+    static final String SINGLE_RELATIONSHIP = '''
+@Node(value = "accounts", labels = "Account")
+class Account {
+    @Id
+    private Long id;
+    private String name;
+    @Relationship("REFERRED_BY")
+    private Account referrer;
+    public Long getId() { return id; }
+    public void setId(Long id) { this.id = id; }
+    public String getName() { return name; }
+    public void setName(String name) { this.name = name; }
+    public Account getReferrer() { return referrer; }
+    public void setReferrer(Account referrer) { this.referrer = referrer; }
+}
+'''
+
+    void "test writes leave a single relationship out of the vertex table"() {
+        when:
+        def repository = buildRepository('test.AccountRepository', SINGLE_RELATIONSHIP + '''
+@TestOracleRepository
+@PropertyGraph(value = "bank_graph", language = PropertyGraph.QueryLanguage.SQL_PGQ)
+interface AccountRepository extends CrudRepository<Account, Long> {
+    String updateReturningName(Account account);
+    String deleteReturningName(Account account);
+}
+''')
+        def queries = repository.executableMethods.collectEntries { m ->
+            [(m.methodName + m.argumentTypes*.simpleName): m.annotationMetadata.stringValue(Query).orElse(null)]
+        }
+
+        then:
+        queries['save[Account]'] == 'INSERT INTO "ACCOUNTS" ("NAME","ID") VALUES (?,?)'
+        queries['update[Account]'] == 'UPDATE "ACCOUNTS" SET "NAME"=? WHERE ("ID" = ?)'
+        queries['updateReturningName[Account]'] == 'BEGIN UPDATE "ACCOUNTS" SET "NAME"=? WHERE ("ID" = ?) RETURNING "NAME" INTO ?; END;'
+        queries['deleteReturningName[Account]'] == 'BEGIN DELETE  FROM "ACCOUNTS"  WHERE ("ID" = ?) RETURNING "NAME" INTO ?; END;'
+    }
+
+    @Unroll
+    void "test #method is rejected"() {
+        when:
+        buildRepository('test.AccountRepository', SINGLE_RELATIONSHIP + """
+@TestOracleRepository
+@PropertyGraph(value = "bank_graph", language = PropertyGraph.QueryLanguage.SQL_PGQ)
+interface AccountRepository extends GenericRepository<Account, Long> {
+    $method;
+}
+""")
+
+        then:
+        def e = thrown(RuntimeException)
+        e.message.contains(message)
+
+        where:
+        method                                    | message
+        'void update(@Id Long id, Account referrer)' | 'Cannot update the relationship [referrer]'
+        'Account insertReturning(Account account)'   | 'Cannot return the entity [test.Account] from a write'
+        'Account updateReturning(Account account)'   | 'Cannot return the entity [test.Account] from a write'
+        'Account deleteReturning(Account account)'   | 'Cannot return the entity [test.Account] from a write'
+    }
+
     void "test explicit queries take positional parameters"() {
         given:
         def method = findMethod(pgql, 'titles')
