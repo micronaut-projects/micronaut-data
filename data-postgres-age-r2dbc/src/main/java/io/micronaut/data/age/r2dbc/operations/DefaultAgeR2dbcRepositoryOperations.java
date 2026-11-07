@@ -82,7 +82,7 @@ final class DefaultAgeR2dbcRepositoryOperations extends AbstractGraphRepositoryO
             attributeConverterRegistry, null, encoderRegistrars, graphSerde);
         this.reactiveOperations = new DefaultAgeReactorRepositoryOperations(this, connectionOperations, transactionOperations, jsonMapper,
             AgeStatements.validateGraphName(configuration.graphFor(dataSourceName)), tenantResolver,
-            configuration.isCreateExtension(), configuration.isCreateGraph());
+            configuration.isCreateExtension(), configuration.isCreateGraph(), configuration.isCreateTenantGraphs());
     }
 
     @Override

@@ -1,5 +1,6 @@
 package io.micronaut.data.oracle.graph.bank;
 
+import io.micronaut.data.annotation.Join;
 import io.micronaut.data.annotation.Query;
 import io.micronaut.data.graph.annotation.PathLimit;
 import io.micronaut.data.model.Page;
@@ -24,6 +25,14 @@ public interface BankGraph extends GenericRepository<Account, Long> {
 
     Account update(Account account);
 
+    Account insertReturning(Account account);
+
+    Account updateReturning(Account account);
+
+    Account deleteReturning(Account account);
+
+    List<Account> deleteReturning(Iterable<Account> accounts);
+
     void deleteById(Long id);
 
     List<Account> findByNameStartsWithOrderByName(String prefix);
@@ -42,7 +51,20 @@ public interface BankGraph extends GenericRepository<Account, Long> {
 
     List<Account> findByTransfersToName(String name);
 
+    List<Account> findByTransfers(Transfer transfer);
+
+    List<Account> findByTransfersTo(Account to);
+
     long countByNameIsNotNull();
+
+    @Join(value = "transfers", type = Join.Type.INNER)
+    long countByNameContains(String part);
+
+    @Join(value = "transfers", type = Join.Type.INNER)
+    Page<Account> findByNameContains(String part, Pageable pageable);
+
+    @Join(value = "transfers", type = Join.Type.INNER)
+    List<String> findNameByNameContains(String part);
 
     List<String> findNameByIdIn(List<Long> ids);
 
@@ -67,4 +89,7 @@ public interface BankGraph extends GenericRepository<Account, Long> {
 
     @Query("SELECT * FROM GRAPH_TABLE (bank_graph MATCH (a IS Account) -[t IS TRANSFERS]-> (b IS Account) WHERE t.amount > $amount COLUMNS (a.name AS \"source\", b.name AS \"target\", t.amount AS \"amount\")) ORDER BY \"amount\"")
     List<TransferView> largeTransfers(BigDecimal amount);
+
+    @Query("SELECT * FROM GRAPH_TABLE (bank_graph MATCH (n IS Account) COLUMNS (n.id AS \"n__ID_\", n.id AS \"n__id\", 'Account' AS \"n__LABEL_\", n.name AS \"n__name\", n.opened AS \"n__opened\")) g WHERE NOT EXISTS (SELECT 1 FROM GRAPH_TABLE (bank_graph MATCH (a IS Account) -[IS TRANSFERS]-> (b IS Account) COLUMNS (a.id AS \"k\")) e WHERE e.\"k\" = g.\"n__ID_\")")
+    List<Account> findWithoutTransfers();
 }

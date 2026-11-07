@@ -5,6 +5,7 @@ import io.micronaut.data.exceptions.DataAccessException
 import io.micronaut.data.graph.model.criteria.GraphCriteria
 import io.micronaut.data.oracle.graph.schemaless.Gadget
 import io.micronaut.data.oracle.graph.schemaless.GadgetGraph
+import io.micronaut.data.repository.jpa.criteria.CriteriaQueryBuilder
 import io.micronaut.data.repository.jpa.criteria.PredicateSpecification
 import io.micronaut.test.extensions.spock.annotation.MicronautTest
 import jakarta.inject.Inject
@@ -72,6 +73,20 @@ class OracleSchemalessSpec extends Specification {
 
         and: "a name holding a dot is one key rather than a nested path"
         gadgetGraph.findAll(where { root, cb -> cb.equal(GraphCriteria.dynamic(root, "maker.name", String), "Acme") })*.name == ["Phone"]
+    }
+
+    void "criteria select a schemaless property"() {
+        given:
+        def phone = new Gadget("Phone", 500)
+        phone.set("storage", 100)
+        gadgetGraph.save(phone)
+
+        expect:
+        gadgetGraph.findOne({ cb ->
+            def query = cb.createQuery(Integer)
+            query.select(GraphCriteria.dynamic(query.from(Gadget), "storage", Integer))
+            query
+        } as CriteriaQueryBuilder<Integer>) == 100
     }
 
     void "a schemaless property named like a column is rejected when saved"() {

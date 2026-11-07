@@ -1,34 +1,71 @@
 package io.micronaut.data.neo4j
 
+import io.micronaut.core.annotation.AnnotationMetadata
+import io.micronaut.data.connection.ConnectionDefinition
+import io.micronaut.data.exceptions.DataAccessException
 import io.micronaut.data.exceptions.EntityExistsException
+import io.micronaut.data.exceptions.NonUniqueResultException
 import io.micronaut.data.exceptions.OptimisticLockException
 import io.micronaut.data.graph.tck.entities.Article
+import io.micronaut.data.graph.tck.entities.Collaboration
+import io.micronaut.data.graph.tck.entities.Colleague
+import io.micronaut.data.graph.tck.entities.Mentorship
 import io.micronaut.data.graph.tck.entities.Movie
 import io.micronaut.data.graph.tck.entities.Person
 import io.micronaut.data.graph.tck.entities.Role
+import io.micronaut.data.graph.tck.entities.Step
 import io.micronaut.data.model.Pageable
 import io.micronaut.data.model.Sort
+import io.micronaut.data.model.runtime.PagedQuery
+import io.micronaut.data.neo4j.features.Assignment
+import io.micronaut.data.neo4j.features.Audit
+import io.micronaut.data.neo4j.features.Binder
+import io.micronaut.data.neo4j.features.Draft
+import io.micronaut.data.neo4j.features.Engineer
+import io.micronaut.data.neo4j.features.Ensemble
 import io.micronaut.data.neo4j.features.Pet
+import io.micronaut.data.neo4j.features.Project
 import io.micronaut.data.neo4j.features.ReactiveArticleRepository
+import io.micronaut.data.neo4j.features.ReactiveBinderRepository
+import io.micronaut.data.neo4j.features.ReactiveRecruitRepository
+import io.micronaut.data.neo4j.features.ReactiveSquadRepository
+import io.micronaut.data.neo4j.features.Recruit
+import io.micronaut.data.neo4j.features.Squad
+import io.micronaut.data.neo4j.features.ReactiveColleagueRepository
+import io.micronaut.data.neo4j.features.ReactiveDraftRepository
+import io.micronaut.data.neo4j.features.ReactiveEngineerRepository
+import io.micronaut.data.neo4j.features.ReactiveEnsembleRepository
 import io.micronaut.data.neo4j.features.ReactiveMovieRepository
 import io.micronaut.data.neo4j.features.ReactiveMovieService
 import io.micronaut.data.neo4j.features.Player
 import io.micronaut.data.neo4j.features.ReactiveMovieSpecificationRepository
 import io.micronaut.data.repository.jpa.criteria.PredicateSpecification
 import io.micronaut.data.neo4j.features.ReactivePetRepository
+import io.micronaut.data.neo4j.features.ReactiveShelfRepository
+import io.micronaut.data.neo4j.features.ReactiveStepRepository
 import io.micronaut.data.neo4j.features.ReactiveTagRepository
 import io.micronaut.data.neo4j.features.ReactiveTeamRepository
+import io.micronaut.data.neo4j.features.Review
+import io.micronaut.data.neo4j.features.Seat
+import io.micronaut.data.neo4j.features.Shelf
 import io.micronaut.data.neo4j.features.Tag
 import io.micronaut.data.neo4j.features.Team
+import io.micronaut.data.neo4j.features.Volume
 import io.micronaut.data.neo4j.operations.Neo4jReactorRepositoryOperations
 import io.micronaut.data.neo4j.operations.Neo4jRepositoryOperations
+import io.micronaut.data.neo4j.session.Neo4jReactorConnectionOperations
 import io.micronaut.data.neo4j.transaction.Neo4jReactorTransactionOperations
 import io.micronaut.test.extensions.spock.annotation.MicronautTest
 import io.micronaut.test.support.TestPropertyProvider
 import io.micronaut.transaction.TransactionDefinition
+import io.micronaut.transaction.reactive.ReactiveTransactionStatus
 import jakarta.inject.Inject
+import reactor.core.publisher.Flux
 import reactor.core.publisher.Mono
 import spock.lang.Specification
+import spock.util.concurrent.PollingConditions
+
+import java.util.concurrent.atomic.AtomicReference
 
 @MicronautTest(transactional = false)
 class Neo4jReactiveSpec extends Specification implements TestPropertyProvider {
@@ -46,10 +83,37 @@ class Neo4jReactiveSpec extends Specification implements TestPropertyProvider {
     ReactiveTagRepository tagRepository
 
     @Inject
+    ReactiveDraftRepository draftRepository
+
+    @Inject
+    ReactiveBinderRepository binderRepository
+
+    @Inject
+    ReactiveRecruitRepository recruitRepository
+
+    @Inject
+    ReactiveSquadRepository squadRepository
+
+    @Inject
     ReactiveMovieSpecificationRepository movieSpecificationRepository
 
     @Inject
     ReactiveTeamRepository teamRepository
+
+    @Inject
+    ReactiveStepRepository stepRepository
+
+    @Inject
+    ReactiveShelfRepository shelfRepository
+
+    @Inject
+    ReactiveEngineerRepository engineerRepository
+
+    @Inject
+    ReactiveEnsembleRepository ensembleRepository
+
+    @Inject
+    ReactiveColleagueRepository colleagueRepository
 
     @Inject
     ReactiveMovieService movieService
@@ -62,6 +126,9 @@ class Neo4jReactiveSpec extends Specification implements TestPropertyProvider {
 
     @Inject
     Neo4jReactorTransactionOperations transactionOperations
+
+    @Inject
+    Neo4jReactorConnectionOperations connectionOperations
 
     @Override
     Map<String, String> getProperties() {
@@ -219,6 +286,282 @@ class Neo4jReactiveSpec extends Specification implements TestPropertyProvider {
         found.related.TAGGED[0] instanceof Tag
     }
 
+    void "a dynamic relationship to a node of an unmapped label survives load, modify and save reactively"() {
+        given:
+        operations.executeQuery("CREATE (:Pet {name: 'Dino'})-[:OWNS]->(:Unmapped {name: 'bone'})", [:])
+
+        when:
+        def dino = petRepository.findById("Dino").block()
+
+        then:
+        dino.related.OWNS == [[name: "bone"]]
+
+        when:
+        dino.set('legs', 4)
+        def saved = petRepository.update(dino).block()
+
+        then:
+        saved.related.OWNS == [[name: "bone"]]
+        petRepository.findById("Dino").block().get('legs') == 4L
+        operations.executeQuery("MATCH (:Pet {name: 'Dino'})-[:OWNS]->(u:Unmapped) RETURN u.name", [:], String) == ["bone"]
+    }
+
+    void "reactive find all with a paged query collects dynamic relationships"() {
+        given:
+        def dino = new Pet("Dino")
+        dino.related = [PLAYS_WITH: [new Pet("Hoppy")]]
+        petRepository.save(dino).block()
+
+        when:
+        def pets = reactiveOperations.findAll(pagedPets()).collectList().block()
+
+        then:
+        pets*.name == ["Dino", "Hoppy"]
+        pets[0].related.PLAYS_WITH*.name == ["Hoppy"]
+    }
+
+    private static PagedQuery<Pet> pagedPets() {
+        return new PagedQuery<Pet>() {
+            @Override
+            Class<Pet> getRootEntity() {
+                return Pet
+            }
+
+            @Override
+            Pageable getPageable() {
+                return Pageable.from(0, 10, Sort.of(Sort.Order.asc("name")))
+            }
+
+            @Override
+            String getName() {
+                return "findAll"
+            }
+
+            @Override
+            AnnotationMetadata getAnnotationMetadata() {
+                return AnnotationMetadata.EMPTY_METADATA
+            }
+        }
+    }
+
+    void "finding one reactively fails when there are several rows"() {
+        given:
+        movieRepository.saveAll([
+            new Movie("Speed", "Get ready for rush hour", 1994),
+            new Movie("Forrest Gump", "Life is like a box of chocolates", 1994)
+        ]).collectList().block()
+
+        when:
+        movieRepository.findByReleased(1994).block()
+
+        then:
+        thrown(NonUniqueResultException)
+
+        expect: "a limit, one row or none is not ambiguous"
+        movieRepository.findFirstByReleased(1994).block().released == 1994
+        movieRepository.findByTitle("Speed").block().released == 1994
+        movieRepository.findByReleased(1950).blockOptional().empty
+    }
+
+    void "a relationship entity without an identifier is written, read and written again reactively"() {
+        given:
+        def ensemble = new Ensemble("Quartet", [new Seat(1, new Project("first violin"))])
+
+        when:
+        def saved = ensembleRepository.save(ensemble).block()
+
+        then:
+        saved.seats() == [new Seat(1, new Project("first violin"))]
+        operations.executeQuery('MATCH (:Ensemble {name: "Quartet"})-[s:SEATS]->(:Project {name: "first violin"}) RETURN s.chair', [:], Long) == [1L]
+
+        when:
+        def found = ensembleRepository.findByName("Quartet").block()
+
+        then:
+        found.seats() == [new Seat(1, new Project("first violin"))]
+
+        when: "the same two nodes are the same relationship, as there is no identifier to tell them apart"
+        ensembleRepository.update(new Ensemble("Quartet", [new Seat(2, new Project("first violin"))])).block()
+
+        then:
+        operations.executeQuery('MATCH (:Ensemble {name: "Quartet"})-[s:SEATS]->(:Project) RETURN s.chair', [:], Long) == [2L]
+    }
+
+    void "replacing a single valued relationship entity reactively leaves one relationship"() {
+        given:
+        def project = new Project("Apollo")
+        def ada = new Engineer("Ada")
+        ada.assignment = new Assignment(null, "developer", project)
+        ada = engineerRepository.save(ada).block()
+        def saved = ada.assignment
+
+        when: "the relationship is saved again"
+        ada.assignment = new Assignment(saved.id(), "senior developer", project)
+        ada = engineerRepository.update(ada).block()
+
+        then:
+        ada.assignment.id() == saved.id()
+        assignmentTitles() == ["senior developer"]
+
+        when: "it is replaced by one that was not saved"
+        ada.assignment = new Assignment(null, "lead", project)
+        ada = engineerRepository.update(ada).block()
+
+        then:
+        ada.assignment.id() != saved.id()
+        assignmentTitles() == ["lead"]
+
+        when: "it moves to another node"
+        ada.assignment = new Assignment(ada.assignment.id(), "architect", new Project("Gemini"))
+        engineerRepository.update(ada).block()
+
+        then:
+        assignmentTitles() == ["architect"]
+        operations.executeQuery("MATCH (:Engineer)-[:ASSIGNED_TO]->(p:Project) RETURN p.name", [:], String) == ["Gemini"]
+    }
+
+    private List<String> assignmentTitles() {
+        return operations.executeQuery("MATCH (:Engineer {name: 'Ada'})-[r:ASSIGNED_TO]->(:Project) RETURN r.title", [:], String)
+    }
+
+    void "replacing a single valued relationship entity with an assigned identifier reactively leaves one relationship"() {
+        given:
+        def project = new Project("Apollo")
+        def ada = new Engineer("Ada")
+        ada.lastReview = new Review("r1", "good", project)
+        engineerRepository.save(ada).block()
+
+        when:
+        ada.lastReview = new Review("r2", "better", project)
+        engineerRepository.update(ada).block()
+
+        then:
+        relationshipValues("LAST_REVIEWED") == [["r2", "better"]]
+
+        when: "the same relationship is saved again"
+        ada.lastReview = new Review("r2", "best", project)
+        engineerRepository.update(ada).block()
+
+        then:
+        relationshipValues("LAST_REVIEWED") == [["r2", "best"]]
+    }
+
+    void "relationship entities with assigned identifiers between the same nodes stay separate reactively"() {
+        given:
+        def project = new Project("Apollo")
+        def ada = new Engineer("Ada")
+        ada.reviews = [new Review("r1", "good", project), new Review("r2", "bad", project)]
+
+        when:
+        engineerRepository.save(ada).block()
+
+        then:
+        relationshipValues("REVIEWED") == [["r1", "good"], ["r2", "bad"]]
+
+        when: "they are saved again"
+        ada.reviews = [new Review("r1", "great", project), new Review("r2", "bad", project)]
+        engineerRepository.update(ada).block()
+
+        then:
+        relationshipValues("REVIEWED") == [["r1", "great"], ["r2", "bad"]]
+    }
+
+    private List<Object> relationshipValues(String type) {
+        return operations.executeQuery("MATCH (:Engineer)-[r:" + type + "]->(:Project) RETURN [r.id, r.verdict] ORDER BY r.id", [:], List)
+    }
+
+    void "relationship entities with generated UUIDs between the same nodes stay separate reactively"() {
+        given:
+        def project = new Project("Apollo")
+        def ada = new Engineer("Ada")
+        ada.audits = [new Audit(null, "first", project), new Audit(null, "second", project)]
+
+        when:
+        ada = engineerRepository.save(ada).block()
+
+        then:
+        ada.audits*.id().every { it != null }
+        ada.audits*.id().toSet().size() == 2
+        def stored = operations.executeQuery("MATCH (:Engineer)-[r:AUDITED]->(:Project) RETURN r.id", [:], String)
+        stored.toSet() == ada.audits*.id()*.toString().toSet()
+        stored.size() == 2
+    }
+
+    void "a relationship entity with an assigned identifier needs one reactively"() {
+        given:
+        def ada = new Engineer("Ada")
+        ada.reviews = [new Review(null, "good", new Project("Apollo"))]
+
+        when:
+        engineerRepository.save(ada).block()
+
+        then:
+        def e = thrown(DataAccessException)
+        e.message.contains("Review")
+        e.message.contains("assigned")
+    }
+
+    void "new undirected relationships between the same nodes stay separate reactively"() {
+        given:
+        def ada = new Colleague("Ada")
+        def grace = new Colleague("Grace")
+        ada.colleagues = [new Collaboration("compiler", grace), new Collaboration("cobol", grace)]
+
+        when:
+        def saved = colleagueRepository.save(ada).block().colleagues
+
+        then:
+        saved*.id.every { it != null }
+        saved*.id.toSet().size() == 2
+        collaborations() == 2
+
+        when: "another one that was not saved is added from the other end"
+        grace.colleagues = [new Collaboration("flow-matic", new Colleague("Ada"))]
+        colleagueRepository.save(grace).block()
+
+        then:
+        collaborations() == 3
+
+        when: "one that was saved is saved again from the other end"
+        def again = new Collaboration("cobol 60", new Colleague("Ada"))
+        again.id = saved[1].id
+        grace.colleagues = [again]
+        def resaved = colleagueRepository.save(grace).block().colleagues[0]
+
+        then:
+        resaved.id == saved[1].id
+        collaborations() == 3
+    }
+
+    private long collaborations() {
+        return count("MATCH (:Colleague)-[r:WORKS_WITH]->(:Colleague) RETURN count(r)")
+    }
+
+    void "replacing a single valued undirected relationship entity reactively leaves one relationship"() {
+        given:
+        def ada = new Colleague("Ada")
+        ada.mentor = new Mentorship("first", new Colleague("Grace"))
+        ada = colleagueRepository.save(ada).block()
+
+        when: "it is replaced by one that was not saved"
+        ada.mentor = new Mentorship("second", new Colleague("Grace"))
+        ada = colleagueRepository.update(ada).block()
+
+        then:
+        mentorships() == ["second"]
+
+        when: "it moves to another node"
+        ada.mentor = new Mentorship("third", new Colleague("Hopper"))
+        colleagueRepository.update(ada).block()
+
+        then:
+        mentorships() == ["third"]
+    }
+
+    private List<String> mentorships() {
+        return operations.executeQuery("MATCH (:Colleague)-[r:MENTORS]->(:Colleague) RETURN r.project", [:], String)
+    }
+
     void "stream the results of explicit Cypher"() {
         given:
         movieRepository.saveAll([
@@ -258,6 +601,71 @@ class Neo4jReactiveSpec extends Specification implements TestPropertyProvider {
         then:
         thrown(IllegalStateException)
         movieRepository.count().block() == 0
+    }
+
+    void "cancelling a reactive transaction rolls it back"() {
+        given:
+        def transaction = new AtomicReference<ReactiveTransactionStatus>()
+
+        when: "the subscriber cancels after a write"
+        def first = transactionOperations.withTransaction(TransactionDefinition.DEFAULT, status -> {
+            transaction.set(status)
+            return movieRepository.save(new Movie("Speed", "Get ready for rush hour", 1994))
+                .flux()
+                .concatWith(Flux.never())
+        }).take(1).blockLast()
+
+        then:
+        first.title == "Speed"
+        new PollingConditions(timeout: 10).eventually {
+            assert transaction.get().isCompleted()
+        }
+        movieRepository.count().block() == 0
+    }
+
+    void "cancelling a reactive transaction while a query streams rolls it back"() {
+        given:
+        def transaction = new AtomicReference<ReactiveTransactionStatus>()
+
+        when:
+        def first = transactionOperations.withTransaction(TransactionDefinition.DEFAULT, status -> {
+            transaction.set(status)
+            return movieRepository.save(new Movie("Speed", "Get ready for rush hour", 1994))
+                .thenMany(reactiveOperations.executeQuery("UNWIND range(1, 100000) AS i RETURN i", [:], Long))
+        }).take(1).blockLast()
+
+        then:
+        first == 1L
+        new PollingConditions(timeout: 10).eventually {
+            assert transaction.get().isCompleted()
+        }
+        movieRepository.count().block() == 0
+    }
+
+    void "a query after a commit on the same connection runs outside the transaction"() {
+        when:
+        def count = connectionOperations.withConnectionMono(ConnectionDefinition.DEFAULT, connection ->
+            transactionOperations.withTransaction(TransactionDefinition.DEFAULT, status ->
+                movieRepository.save(new Movie("Speed", "Get ready for rush hour", 1994))
+            ).then(movieRepository.count())
+        ).block()
+
+        then:
+        count == 1
+    }
+
+    void "a query after a rollback on the same connection runs outside the transaction"() {
+        when:
+        def count = connectionOperations.withConnectionMono(ConnectionDefinition.DEFAULT, connection ->
+            transactionOperations.withTransaction(TransactionDefinition.DEFAULT, status ->
+                movieRepository.save(new Movie("Speed", "Get ready for rush hour", 1994))
+                    .then(Mono.error(new IllegalStateException("Rolled back")))
+            ).then(movieRepository.count())
+                .onErrorResume(IllegalStateException, e -> movieRepository.count())
+        ).block()
+
+        then:
+        count == 0
     }
 
     void "transactional reactive methods"() {
@@ -412,6 +820,15 @@ class Neo4jReactiveSpec extends Specification implements TestPropertyProvider {
         tagRepository.deleteAll().block()
     }
 
+    void "a reactive cursored page is rejected instead of being answered with offset paging"() {
+        when:
+        tagRepository.findByNameStartsWith("a", Pageable.from(0, 1)).block()
+
+        then:
+        def e = thrown(UnsupportedOperationException)
+        e.message.contains("do not support cursored pagination")
+    }
+
     void "reactive saveAll writes an instance passed twice once"() {
         given:
         def graph = new Tag("graph")
@@ -429,6 +846,78 @@ class Neo4jReactiveSpec extends Specification implements TestPropertyProvider {
         tagRepository.deleteAll().block()
     }
 
+    void "reactive saveAll and updateAll keep one result per input when a listener vetoes an entity"() {
+        when:
+        def saved = draftRepository.saveAll([new Draft("a"), new Draft("veto"), new Draft("b")]).collectList().block()
+
+        then: "the vetoed entity stays as it was and the others are mapped to their inputs"
+        saved*.name == ["a", "veto", "b"]
+        saved[0].id != null
+        saved[1].id == null
+        saved[2].id != null
+        draftRepository.count().block() == 2
+
+        when:
+        saved[0].name = "a2"
+        saved[2].name = "veto"
+        def updated = draftRepository.updateAll([saved[0], saved[2]]).collectList().block()
+
+        then:
+        updated*.name == ["a2", "veto"]
+        updated[0].id == saved[0].id
+        updated[1].id == saved[2].id
+        draftRepository.findById(saved[0].id).block().name == "a2"
+        draftRepository.findById(saved[2].id).block().name == "b"
+
+        cleanup:
+        draftRepository.deleteAll().block()
+    }
+
+    void "a reactive saveAll links records to the nodes of the batch"() {
+        given:
+        def last = new Step(null, "last", null)
+        def middle = new Step(null, "middle", last)
+        def first = new Step(null, "first", middle)
+
+        when:
+        def saved = stepRepository.saveAll([first, middle, last]).collectList().block()
+
+        then:
+        stepRepository.count().block() == 3
+        saved[0].next().id() == saved[1].id()
+        saved[0].next().next().id() == saved[2].id()
+    }
+
+    void "a reactive saveAll that repeats an identifier conflicts"() {
+        when:
+        articleRepository.saveAll([new Article("a", "First"), new Article("a", "Second")]).collectList().block()
+
+        then:
+        thrown(EntityExistsException)
+
+        when:
+        articleRepository.deleteAll().block()
+        articleRepository.save(new Article("a", "A")).block()
+        def copy = articleRepository.findById("a").block()
+        def other = articleRepository.findById("a").block()
+        articleRepository.updateAll([copy, other]).collectList().block()
+
+        then:
+        thrown(OptimisticLockException)
+    }
+
+    void "a new versioned related node with an assigned identifier is inserted reactively"() {
+        given:
+        def volume = new Volume("v1", "978-1")
+
+        when:
+        shelfRepository.save(new Shelf(null, "Graphs", [volume])).block()
+
+        then:
+        volume.version == 0L
+        operations.executeQuery("MATCH (v:Volume) RETURN v.version AS version", [:])*.asMap()*.get('version') == [0L]
+    }
+
     void "a reactive insert of a versioned node with a taken identifier fails"() {
         given:
         articleRepository.save(new Article("graphs", "Graphs")).block()
@@ -439,5 +928,71 @@ class Neo4jReactiveSpec extends Specification implements TestPropertyProvider {
         then:
         thrown(EntityExistsException)
         articleRepository.findById("graphs").block().title == "Graphs"
+    }
+
+    void "a reactive cascade keeps one result per target when a listener vetoes one"() {
+        given:
+        def kept = draftRepository.save(new Draft("kept")).block()
+        def vetoed = draftRepository.save(new Draft("first")).block()
+        vetoed.name = "veto"
+
+        when:
+        def saved = binderRepository.save(new Binder(null, "Binder", [kept, vetoed])).block()
+
+        then:
+        saved.drafts()*.id == [kept.id, vetoed.id]
+        draftRepository.findById(vetoed.id).block().name == "first"
+        operations.executeQuery("MATCH (:Binder)-[r:FILED]->(:Draft) RETURN count(r) AS c", [:])*.asMap()*.get('c') == [2L]
+    }
+
+    void "a related node that a new node of the list updates is not updated again reactively"() {
+        given:
+        def bob = recruitRepository.save(new Recruit(null, null, "Bob", [])).block()
+        def cid = recruitRepository.save(new Recruit(null, null, "Cid", [])).block()
+        def ann = new Recruit(null, null, "Ann", [bob])
+
+        when:
+        def saved = squadRepository.save(new Squad(null, "Alpha", [ann, bob, cid])).block()
+
+        then: "Ann updates Bob through her relationship, and the update of the list does not write him again"
+        saved.recruits()*.name() == ["Ann", "Bob", "Cid"]
+        saved.recruits()*.version() == [0L, 1L, 1L]
+        operations.executeQuery("MATCH (:Squad)-[r:HAS]->(:Recruit) RETURN count(r) AS c", [:])*.asMap()*.get('c') == [3L]
+    }
+
+    void "a relationship entity instance held twice is one relationship reactively"() {
+        given:
+        def ada = new Colleague("Ada")
+        def collaboration = new Collaboration("compiler", new Colleague("Grace"))
+        ada.colleagues = [collaboration, collaboration]
+
+        when:
+        def saved = colleagueRepository.save(ada).block().colleagues
+
+        then:
+        operations.executeQuery("MATCH (:Colleague)-[r:WORKS_WITH]->(:Colleague) RETURN count(r) AS c", [:])*.asMap()*.get('c') == [1L]
+        saved[0].id != null
+        saved*.id.toSet().size() == 1
+        collaboration.id == saved[0].id
+    }
+
+    void "an immutable relationship entity instance held twice is one relationship reactively"() {
+        given:
+        def assignment = new Assignment(null, "lead", new Project("Compiler"))
+        def audit = new Audit(null, "clean", new Project("Linker"))
+        def engineer = new Engineer("Ada")
+        engineer.assignments = [assignment, assignment]
+        engineer.audits = [audit, audit]
+
+        when:
+        def saved = engineerRepository.save(engineer).block()
+
+        then:
+        operations.executeQuery("MATCH (:Engineer)-[r:STAFFED]->(:Project) RETURN count(r) AS c", [:])*.asMap()*.get('c') == [1L]
+        operations.executeQuery("MATCH (:Engineer)-[r:AUDITED]->(:Project) RETURN count(r) AS c", [:])*.asMap()*.get('c') == [1L]
+        saved.assignments[0].id() != null
+        saved.assignments*.id().toSet().size() == 1
+        saved.audits[0].id() != null
+        saved.audits*.id().toSet().size() == 1
     }
 }

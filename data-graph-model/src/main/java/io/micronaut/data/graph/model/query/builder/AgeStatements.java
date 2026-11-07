@@ -21,6 +21,7 @@ import io.micronaut.data.graph.model.query.PathQueryDefinition;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Locale;
+import java.util.Set;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 
@@ -50,6 +51,7 @@ public final class AgeStatements {
     private static final Pattern ALIAS = Pattern.compile("(?is)^(.*\\S)\\s+AS\\s+(`[^`]+`|[A-Za-z_][A-Za-z0-9_]*)$");
     private static final Pattern PARAMETER = Pattern.compile("\\$([A-Za-z_][A-Za-z0-9_]*)");
     private static final Pattern GRAPH_NAME = Pattern.compile("[A-Za-z_][A-Za-z0-9_]*");
+    private static final Set<String> RESERVED_SCHEMAS = Set.of("public", "ag_catalog", "information_schema");
     private static final String DOLLAR_QUOTE = "$$";
     private static final String RESULT_COLUMN = "result";
 
@@ -136,6 +138,28 @@ public final class AgeStatements {
     public static String validateGraphName(String graph) {
         if (!GRAPH_NAME.matcher(graph).matches()) {
             throw new IllegalArgumentException("Invalid Apache AGE graph name: " + graph);
+        }
+        return graph;
+    }
+
+    /**
+     * Checks the graph of a tenant can be written into a statement and is that tenant's own: a tenant cannot share the
+     * configured graph, or a schema of the database that is not a graph.
+     *
+     * @param graph        The graph name
+     * @param defaultGraph The configured graph, used when there is no tenant
+     * @return The graph name
+     * @throws IllegalArgumentException if the name is not a valid identifier, or is reserved
+     * @since 5.3.0
+     */
+    public static String validateTenantGraphName(String graph, String defaultGraph) {
+        validateGraphName(graph);
+        String lowerCase = graph.toLowerCase(Locale.ROOT);
+        if (RESERVED_SCHEMAS.contains(lowerCase) || lowerCase.startsWith("pg_")) {
+            throw new IllegalArgumentException("Apache AGE graph name [" + graph + "] of a tenant is a reserved schema of the database");
+        }
+        if (graph.equals(defaultGraph)) {
+            throw new IllegalArgumentException("Apache AGE graph name [" + graph + "] of a tenant is that of the configured graph");
         }
         return graph;
     }

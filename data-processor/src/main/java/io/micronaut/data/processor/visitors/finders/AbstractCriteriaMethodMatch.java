@@ -458,11 +458,19 @@ public abstract class AbstractCriteriaMethodMatch implements MethodMatcher.Metho
 
     /**
      * Whether a token of a method name, such as {@code BuiltIn}, names a property or a property path of the entity.
+     * An underscore path, such as {@code Author_NameLike}, whose tail does not resolve names neither: the token may
+     * still end with a restriction.
      */
     private static boolean isProperty(PersistentEntity entity, String token) {
         String propertyName = NameUtils.decapitalize(token);
-        return entity.getPropertyByName(propertyName) != null
-            || PersistentEntityUtils.getPersistentPropertyPath(entity, propertyName).isPresent();
+        if (entity.getPropertyByName(propertyName) != null) {
+            return true;
+        }
+        try {
+            return PersistentEntityUtils.getPersistentPropertyPath(entity, propertyName).isPresent();
+        } catch (IllegalArgumentException e) {
+            return false;
+        }
     }
 
     private static String extractPropertyName(String queryParameter, String clause) {

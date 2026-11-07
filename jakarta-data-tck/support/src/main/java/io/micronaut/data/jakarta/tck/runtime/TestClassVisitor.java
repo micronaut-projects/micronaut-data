@@ -23,6 +23,7 @@ import io.micronaut.core.annotation.Introspected;
 import org.jspecify.annotations.NullUnmarked;
 import org.jspecify.annotations.Nullable;
 import io.micronaut.core.annotation.Vetoed;
+import io.micronaut.data.annotation.Query;
 import io.micronaut.data.annotation.Repository;
 import io.micronaut.data.annotation.Transient;
 import io.micronaut.data.graph.annotation.Node;
@@ -36,6 +37,8 @@ import io.micronaut.inject.ast.MethodElement;
 import io.micronaut.inject.visitor.TypeElementVisitor;
 import io.micronaut.inject.visitor.VisitorContext;
 import io.micronaut.serde.annotation.SerdeableGenerated;
+import jakarta.data.repository.Find;
+import jakarta.data.repository.OrderBy;
 import jakarta.persistence.ElementCollection;
 import jakarta.persistence.Entity;
 
@@ -53,6 +56,13 @@ public final class TestClassVisitor implements TypeElementVisitor<Object, Object
     private final boolean isNeo4jImplementation;
 
     private boolean introspected;
+
+    private static final String COUNTRY = "ee.jakarta.tck.data.framework.read.only.Country";
+    private static final String COUNTRIES = "ee.jakarta.tck.data.framework.read.only.Countries";
+    private static final String COUNTRY_CAPITAL = "capital";
+    // A query no test runs: FilterExtension disables the tests that call these methods
+    private static final String NO_CAPITAL_QUERY = "MATCH (n:Country) WHERE false RETURN n";
+    private static final Set<String> FIND_BY_CAPITAL = Set.of("withCapitalBiggerThan", "withCapitalNamed");
 
     private static final Set<String> INTROSPECTED = Set.of(
         "ee.jakarta.tck.data.framework.read.only.CardinalNumber",
@@ -144,6 +154,12 @@ public final class TestClassVisitor implements TypeElementVisitor<Object, Object
     @Override
     public void visitMethod(MethodElement element, VisitorContext context) {
         element.removeAnnotation(Assertion.class);
+        if (isNeo4jImplementation && FIND_BY_CAPITAL.contains(element.getName()) && element.getOwningType().getName().equals(COUNTRIES)) {
+            // Property graphs have no embedded objects, so these finders have no capital.name to compile against
+            element.removeAnnotation(Find.class);
+            element.removeAnnotation(OrderBy.class);
+            element.annotate(Query.class, builder -> builder.value(NO_CAPITAL_QUERY));
+        }
     }
 
     @Override
@@ -155,6 +171,11 @@ public final class TestClassVisitor implements TypeElementVisitor<Object, Object
             if (element.hasStereotype(ElementCollection.class)) {
                 element.annotate(Transient.class);
             }
+        }
+        if (isNeo4jImplementation && element.getName().equals(COUNTRY_CAPITAL) && element.getOwningType().getName().equals(COUNTRY)) {
+            // Property graphs have no embedded objects and the Cypher builder rejects @Embedded. Without the embedded
+            // City the Countries repository compiles, so only the tests that read a capital are disabled
+            element.annotate(Transient.class);
         }
         if (isMongoDBImplementation && element.getType().getName().equals("char")) {
             MongoUtils.bson(element);

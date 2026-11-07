@@ -9,10 +9,14 @@ import io.micronaut.data.annotation.Query
 import io.micronaut.data.intercept.annotation.DataMethod
 import io.micronaut.data.intercept.annotation.DataMethodQueryParameter
 import io.micronaut.data.graph.processor.visitors.GraphIdentityVisitor
+import io.micronaut.data.graph.processor.visitors.GraphRelationshipVisitor
 import io.micronaut.data.processor.visitors.MappedEntityVisitor
 import io.micronaut.data.processor.visitors.RepositoryTypeElementVisitor
 import io.micronaut.inject.BeanDefinition
+import io.micronaut.data.processor.graph.visitors.GraphConverterSerdeVisitor
 import io.micronaut.data.processor.graph.visitors.GraphDtoVisitor
+import io.micronaut.data.processor.graph.visitors.GraphNonBlockingVisitor
+import io.micronaut.data.processor.graph.visitors.GraphProjectionVisitor
 import io.micronaut.inject.beans.visitor.IntrospectedTypeElementVisitor
 import io.micronaut.inject.visitor.TypeElementVisitor
 import io.micronaut.inject.writer.BeanDefinitionVisitor
@@ -106,6 +110,7 @@ import io.micronaut.data.graph.annotation.*;
 import io.micronaut.data.graph.processor.TestGraphRepository;
 import io.micronaut.data.graph.processor.TestAgeRepository;
 import io.micronaut.data.graph.processor.TestOracleRepository;
+import io.micronaut.data.graph.processor.TestNonBlockingRepository;
 import java.util.*;
 
 $source
@@ -149,7 +154,7 @@ $source
     static class GraphTypeElementVisitorProcessor extends TypeElementVisitorProcessor {
         @Override
         protected Collection<TypeElementVisitor> findTypeElementVisitors() {
-            return [new IntrospectedTypeElementVisitor(), new RepositoryTypeElementVisitor(), new MappedEntityVisitor(), new GraphDtoVisitor(), new GraphIdentityVisitor()]
+            return [new IntrospectedTypeElementVisitor(), new RepositoryTypeElementVisitor(), new MappedEntityVisitor(), new GraphDtoVisitor(), new GraphNonBlockingVisitor(), new GraphProjectionVisitor(), new GraphIdentityVisitor(), new GraphRelationshipVisitor(), new GraphConverterSerdeVisitor()]
         }
     }
 }

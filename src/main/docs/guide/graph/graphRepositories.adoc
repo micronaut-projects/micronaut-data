@@ -59,4 +59,4 @@ snippet::example.MovieRepositorySpec[project-base="doc-examples/neo4j-example", 
 <1> The three movies of the sample have a cast.
 <2> `The Matrix` and `The Matrix Reloaded` share an actor with `Speed`.
 
-The predicates render as patterns in the `WHERE` clause, so a node is matched once however many relationships satisfy them, and they combine with the other criteria through `and`, `or` and `not`. Apache AGE cannot test a chain of relationships in a criterion, and Oracle property graphs support only `dynamic`.
+The predicates render as patterns in the `WHERE` clause, so a node is matched once however many relationships satisfy them, and they combine with the other criteria through `and`, `or` and `not`. A `connected` depth above `micronaut.data.graph.max-path-depth` is rejected with an `IllegalArgumentException` before the query runs, as a path depth passed as an argument is, see <<graphPaths>>. Apache AGE cannot test a chain of relationships in a criterion, and Oracle property graphs support only `dynamic`.

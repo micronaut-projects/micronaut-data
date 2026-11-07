@@ -2,19 +2,40 @@ package io.micronaut.data.neo4j
 
 import io.micronaut.data.exceptions.DataAccessException
 import io.micronaut.data.exceptions.NonUniqueResultException
+import io.micronaut.data.graph.runtime.GraphNode
 import io.micronaut.data.graph.tck.entities.Movie
 import io.micronaut.data.graph.tck.entities.Person
 import io.micronaut.data.graph.tck.entities.Role
+import io.micronaut.data.model.CursoredPageable
 import io.micronaut.data.model.Pageable
 import io.micronaut.data.model.Sort
+import io.micronaut.data.neo4j.features.Assignment
+import io.micronaut.data.neo4j.features.Audit
+import io.micronaut.data.neo4j.features.Chapter
+import io.micronaut.data.neo4j.features.ChapterRepository
 import io.micronaut.data.neo4j.features.Employee
 import io.micronaut.data.neo4j.features.EmployeeRepository
+import io.micronaut.data.neo4j.features.Engineer
+import io.micronaut.data.neo4j.features.Ensemble
+import io.micronaut.data.neo4j.features.EnsembleRepository
+import io.micronaut.data.neo4j.features.EngineerRepository
+import io.micronaut.data.neo4j.features.Junction
+import io.micronaut.data.neo4j.features.JunctionRepository
 import io.micronaut.data.neo4j.features.Note
 import io.micronaut.data.neo4j.features.NoteRepository
+import io.micronaut.data.neo4j.features.Project
 import io.micronaut.data.neo4j.features.Reading
 import io.micronaut.data.neo4j.features.ReadingRepository
 import io.micronaut.data.neo4j.features.ReactiveMovieRepository
 import io.micronaut.data.neo4j.features.Player
+import io.micronaut.data.neo4j.features.Review
+import io.micronaut.data.neo4j.features.Seat
+import io.micronaut.data.neo4j.features.Recruit
+import io.micronaut.data.neo4j.features.RecruitRepository
+import io.micronaut.data.neo4j.features.Shelf
+import io.micronaut.data.neo4j.features.ShelfRepository
+import io.micronaut.data.neo4j.features.Squad
+import io.micronaut.data.neo4j.features.SquadRepository
 import io.micronaut.data.neo4j.features.Station
 import io.micronaut.data.neo4j.features.StationRepository
 import io.micronaut.data.neo4j.features.Tag
@@ -25,6 +46,7 @@ import io.micronaut.data.neo4j.features.Team
 import io.micronaut.data.neo4j.features.TeamRepository
 import io.micronaut.data.neo4j.features.Topic
 import io.micronaut.data.neo4j.features.TopicRepository
+import io.micronaut.data.neo4j.features.Volume
 import io.micronaut.data.neo4j.operations.Neo4jRepositoryOperations
 import io.micronaut.data.neo4j.tck.Neo4jMovieRepository
 import io.micronaut.test.extensions.spock.annotation.MicronautTest
@@ -39,6 +61,9 @@ class Neo4jFeaturesSpec extends Specification implements TestPropertyProvider {
     TagRepository tagRepository
 
     @Inject
+    JunctionRepository junctionRepository
+
+    @Inject
     TopicRepository topicRepository
 
     @Inject
@@ -51,7 +76,25 @@ class Neo4jFeaturesSpec extends Specification implements TestPropertyProvider {
     MemberRepository memberRepository
 
     @Inject
+    ChapterRepository chapterRepository
+
+    @Inject
     EmployeeRepository employeeRepository
+
+    @Inject
+    ShelfRepository shelfRepository
+
+    @Inject
+    RecruitRepository recruitRepository
+
+    @Inject
+    SquadRepository squadRepository
+
+    @Inject
+    EngineerRepository engineerRepository
+
+    @Inject
+    EnsembleRepository ensembleRepository
 
     @Inject
     Neo4jMovieRepository movieRepository
@@ -124,6 +167,75 @@ class Neo4jFeaturesSpec extends Specification implements TestPropertyProvider {
         paged.message.contains("declares SKIP or LIMIT itself")
     }
 
+    void "a dynamic sort or page finds the clauses of an explicit query outside literals and comments and in any case"() {
+        given:
+        ["c", "a", "b"].each { tagRepository.save(new Tag(it)) }
+        def byName = Sort.of(Sort.Order.asc("name"))
+
+        expect: "the order goes after the query, not inside the literal"
+        tagRepository.withLimitInLiteral(byName)*.name == ["a", "b", "c"]
+
+        and: "the order goes before a lowercase limit"
+        tagRepository.lowerCaseLimit(byName)*.name == ["a", "b"]
+
+        and: "a comment that ends the query does not swallow the order"
+        tagRepository.withTrailingComment(byName)*.name == ["a", "b", "c"]
+
+        when: "a lowercase limit is still the limit of the query"
+        tagRepository.lowerCaseLimitPaged(Pageable.from(0, 1))
+
+        then:
+        def e = thrown(DataAccessException)
+        e.message.contains("declares SKIP or LIMIT itself")
+    }
+
+    void "a cursored page is rejected instead of being answered with offset paging"() {
+        given:
+        tagRepository.save(new Tag("a"))
+
+        when:
+        tagRepository.findByNameStartsWith("a", Pageable.from(0, 1))
+
+        then:
+        def e = thrown(UnsupportedOperationException)
+        e.message.contains("do not support cursored pagination")
+
+        when: "a cursored pageable reaches a method that returns a page"
+        tagRepository.findAll(CursoredPageable.from(1, Sort.of(Sort.Order.asc("name"))))
+
+        then:
+        e = thrown(UnsupportedOperationException)
+        e.message.contains("do not support cursored pagination")
+    }
+
+    void "a case-insensitive LIKE folds the case of non-ASCII letters"() {
+        given:
+        ["Éclair", "Eclair"].each { tagRepository.save(new Tag(it)) }
+
+        expect:
+        tagRepository.findByNameIlike("é%")*.name == ["Éclair"]
+    }
+
+    void "an Object[] row holds the columns of the query, not a node or its properties"() {
+        given:
+        tagRepository.save(new Tag("a"))
+
+        when:
+        def rows = tagRepository.tagRows()
+
+        then:
+        rows.size() == 1
+        rows[0].length == 1
+        rows[0][0] instanceof GraphNode
+
+        when: "the query returns several columns"
+        def columns = tagRepository.tagColumns()
+
+        then:
+        columns.size() == 1
+        columns[0] as List == ["a", 1L]
+    }
+
     void "a query with more than one result is not a single result"() {
         given:
         tagRepository.save(new Tag("dup"))
@@ -142,6 +254,21 @@ class Neo4jFeaturesSpec extends Specification implements TestPropertyProvider {
 
         expect:
         tagRepository.findAllByNameStartsWith("gr")*.label == ["graph"]
+    }
+
+    void "a nested join reads a relationship named node"() {
+        given:
+        junctionRepository.save(new Junction("a", [new Junction("b", null, [new Junction("c", null, null)])], null))
+
+        when:
+        def found = junctionRepository.findByName("a").get()
+
+        then:
+        found.links()*.name() == ["b"]
+        found.links()[0].node()*.name() == ["c"]
+
+        cleanup:
+        junctionRepository.deleteAll()
     }
 
     void "database generated element identifiers on immutable records"() {
@@ -246,6 +373,60 @@ class Neo4jFeaturesSpec extends Specification implements TestPropertyProvider {
         operations.executeQuery("MATCH (:Member {name: 'Ada'})-[:MENTORED_BY]->(m:Member {name: 'Grace'}) RETURN count(m)", [:], Long) == [1L]
     }
 
+    void "a record that the entity events replace is not created again when another record of the batch links to it"() {
+        given:
+        def last = new Chapter(null, "last", null, null)
+        def middle = new Chapter(null, "middle", null, last)
+        def first = new Chapter(null, "first", null, middle)
+
+        when:
+        def saved = chapterRepository.saveAll([first, middle, last])
+
+        then:
+        chapterRepository.count() == 3
+        saved*.version() == [0L, 0L, 0L]
+        saved[0].next().id() == saved[1].id()
+        saved[0].next().next().id() == saved[2].id()
+        operations.executeQuery("MATCH (:Chapter {name: 'first'})-[:NEXT]->(:Chapter {name: 'middle'})-[:NEXT]->(c:Chapter {name: 'last'}) RETURN count(c)", [:], Long) == [1L]
+
+        when: "the results are saved again"
+        def updated = chapterRepository.updateAll(saved)
+
+        then:
+        chapterRepository.count() == 3
+        updated*.version() == [1L, 1L, 1L]
+        updated[0].next().next().version() == 1L
+    }
+
+    void "records in a batch return complete references to records with database generated identifiers"() {
+        given:
+        def last = new Member(null, "Ada", null)
+        def middle = new Member(null, "Grace", last)
+        def first = new Member(null, "Katherine", middle)
+
+        when:
+        def saved = memberRepository.saveAll([first, middle, last])
+
+        then:
+        memberRepository.count() == 3
+        saved[0].mentor().id() == saved[1].id()
+        saved[0].mentor().mentor().id() == saved[2].id()
+        saved[1].mentor().id() == saved[2].id()
+    }
+
+    void "records in a batch that link to each other keep the identifiers they were given"() {
+        given:
+        def team = new Team(null, "Wanderers", [])
+        team.players() << new Player(null, "Ada", team)
+
+        when:
+        def saved = teamRepository.saveAll([team, new Team(null, "Rovers", [])])
+
+        then:
+        teamRepository.count() == 2
+        saved[0].players()[0].team().id() == saved[0].id()
+    }
+
     void "saveAll writes an instance passed twice once"() {
         given:
         def tag = new Tag("graph")
@@ -323,6 +504,29 @@ class Neo4jFeaturesSpec extends Specification implements TestPropertyProvider {
         return operations.executeQuery("MATCH (:Person)-[r:ACTED_IN]->(:Movie) RETURN r.roles ORDER BY r.roles", [:], List)
     }
 
+    void "a relationship entity without an identifier is written, read and written again"() {
+        given:
+        def ensemble = new Ensemble("Quartet", [new Seat(1, new Project("first violin"))])
+
+        when:
+        ensembleRepository.save(ensemble)
+
+        then:
+        operations.executeQuery('MATCH (:Ensemble {name: "Quartet"})-[s:SEATS]->(:Project {name: "first violin"}) RETURN s.chair', [:], Long) == [1L]
+
+        when:
+        def found = ensembleRepository.findByName("Quartet").get()
+
+        then:
+        found.seats() == [new Seat(1, new Project("first violin"))]
+
+        when: "the same two nodes are the same relationship, as there is no identifier to tell them apart"
+        ensembleRepository.update(new Ensemble("Quartet", [new Seat(2, new Project("first violin"))]))
+
+        then:
+        operations.executeQuery('MATCH (:Ensemble {name: "Quartet"})-[s:SEATS]->(:Project) RETURN s.chair', [:], Long) == [2L]
+    }
+
     void "changing a single valued relationship replaces the old one"() {
         given:
         def ada = new Employee("Ada")
@@ -336,6 +540,124 @@ class Neo4jFeaturesSpec extends Specification implements TestPropertyProvider {
         then:
         employeeRepository.findByName("Ada").get().manager.name == "Carol"
         operations.executeQuery("MATCH (:Employee {name: 'Ada'})-[:REPORTS_TO]->(m) RETURN m.name", [:], String) == ["Carol"]
+    }
+
+    void "replacing a single valued relationship entity with a new one to the same node leaves one relationship"() {
+        given:
+        def project = new Project("Apollo")
+        def ada = new Engineer("Ada")
+        ada.assignment = new Assignment(null, "developer", project)
+        ada = engineerRepository.save(ada)
+        def saved = ada.assignment
+
+        when: "the relationship is saved again"
+        ada.assignment = new Assignment(saved.id(), "senior developer", project)
+        ada = engineerRepository.update(ada)
+
+        then:
+        ada.assignment.id() == saved.id()
+        assignmentTitles() == ["senior developer"]
+
+        when: "it is replaced by one that was not saved"
+        ada.assignment = new Assignment(null, "lead", project)
+        ada = engineerRepository.update(ada)
+
+        then:
+        ada.assignment.id() != saved.id()
+        assignmentTitles() == ["lead"]
+
+        when: "it moves to another node"
+        ada.assignment = new Assignment(ada.assignment.id(), "architect", new Project("Gemini"))
+        engineerRepository.update(ada)
+
+        then:
+        assignmentTitles() == ["architect"]
+        operations.executeQuery("MATCH (:Engineer)-[:ASSIGNED_TO]->(p:Project) RETURN p.name", [:], String) == ["Gemini"]
+    }
+
+    private List<String> assignmentTitles() {
+        return operations.executeQuery("MATCH (:Engineer {name: 'Ada'})-[r:ASSIGNED_TO]->(:Project) RETURN r.title", [:], String)
+    }
+
+    void "replacing a single valued relationship entity with an assigned identifier leaves one relationship"() {
+        given:
+        def project = new Project("Apollo")
+        def ada = new Engineer("Ada")
+        ada.lastReview = new Review("r1", "good", project)
+        engineerRepository.save(ada)
+
+        when:
+        ada.lastReview = new Review("r2", "better", project)
+        engineerRepository.update(ada)
+
+        then:
+        lastReviews() == [["r2", "better"]]
+
+        when: "the same relationship is saved again"
+        ada.lastReview = new Review("r2", "best", project)
+        engineerRepository.update(ada)
+
+        then:
+        lastReviews() == [["r2", "best"]]
+    }
+
+    private List<Object> lastReviews() {
+        return operations.executeQuery("MATCH (:Engineer)-[r:LAST_REVIEWED]->(:Project) RETURN [r.id, r.verdict]", [:], List)
+    }
+
+    void "relationship entities with assigned identifiers between the same nodes stay separate"() {
+        given:
+        def project = new Project("Apollo")
+        def ada = new Engineer("Ada")
+        ada.reviews = [new Review("r1", "good", project), new Review("r2", "bad", project)]
+
+        when:
+        engineerRepository.save(ada)
+
+        then:
+        reviews() == [["r1", "good"], ["r2", "bad"]]
+
+        when: "they are saved again"
+        ada.reviews = [new Review("r1", "great", project), new Review("r2", "bad", project)]
+        engineerRepository.update(ada)
+
+        then:
+        reviews() == [["r1", "great"], ["r2", "bad"]]
+    }
+
+    private List<Object> reviews() {
+        return operations.executeQuery("MATCH (:Engineer)-[r:REVIEWED]->(:Project) RETURN [r.id, r.verdict] ORDER BY r.id", [:], List)
+    }
+
+    void "relationship entities with generated UUIDs between the same nodes stay separate"() {
+        given:
+        def project = new Project("Apollo")
+        def ada = new Engineer("Ada")
+        ada.audits = [new Audit(null, "first", project), new Audit(null, "second", project)]
+
+        when:
+        ada = engineerRepository.save(ada)
+
+        then:
+        ada.audits*.id().every { it != null }
+        ada.audits*.id().toSet().size() == 2
+        def stored = operations.executeQuery("MATCH (:Engineer)-[r:AUDITED]->(:Project) RETURN r.id", [:], String)
+        stored.toSet() == ada.audits*.id()*.toString().toSet()
+        stored.size() == 2
+    }
+
+    void "a relationship entity with an assigned identifier needs one"() {
+        given:
+        def ada = new Engineer("Ada")
+        ada.reviews = [new Review(null, "good", new Project("Apollo"))]
+
+        when:
+        engineerRepository.save(ada)
+
+        then:
+        def e = thrown(DataAccessException)
+        e.message.contains("Review")
+        e.message.contains("assigned")
     }
 
     void "a null single valued relationship keeps the one stored, as it may not have been fetched"() {
@@ -369,6 +691,18 @@ class Neo4jFeaturesSpec extends Specification implements TestPropertyProvider {
 
         then:
         employeeRepository.findById("Bob").get().created == created
+    }
+
+    void "a new versioned related node with an assigned identifier is inserted"() {
+        given:
+        def volume = new Volume("v1", "978-1")
+
+        when:
+        shelfRepository.save(new Shelf(null, "Graphs", [volume]))
+
+        then:
+        volume.version == 0L
+        operations.executeQuery("MATCH (v:Volume) RETURN v.version AS version", [:])*.asMap()*.get('version') == [0L]
     }
 
     void "a collection property absent from the node stays null"() {
@@ -408,5 +742,40 @@ class Neo4jFeaturesSpec extends Specification implements TestPropertyProvider {
         then:
         def e = thrown(DataAccessException)
         e.message.contains("declares SKIP or LIMIT itself")
+    }
+
+    void "a related node that a new node of the list updates is not updated again"() {
+        given:
+        def bob = recruitRepository.save(new Recruit(null, null, "Bob", []))
+        def cid = recruitRepository.save(new Recruit(null, null, "Cid", []))
+        def ann = new Recruit(null, null, "Ann", [bob])
+
+        when:
+        def saved = squadRepository.save(new Squad(null, "Alpha", [ann, bob, cid]))
+
+        then: "Ann updates Bob through her relationship, and the update of the list does not write him again"
+        saved.recruits()*.name() == ["Ann", "Bob", "Cid"]
+        saved.recruits()*.version() == [0L, 1L, 1L]
+        operations.executeQuery("MATCH (:Squad)-[r:HAS]->(:Recruit) RETURN count(r) AS c", [:])*.asMap()*.get('c') == [3L]
+    }
+
+    void "an immutable relationship entity instance held twice is one relationship"() {
+        given:
+        def assignment = new Assignment(null, "lead", new Project("Compiler"))
+        def audit = new Audit(null, "clean", new Project("Linker"))
+        def engineer = new Engineer("Ada")
+        engineer.assignments = [assignment, assignment]
+        engineer.audits = [audit, audit]
+
+        when:
+        def saved = engineerRepository.save(engineer)
+
+        then:
+        operations.executeQuery("MATCH (:Engineer)-[r:STAFFED]->(:Project) RETURN count(r) AS c", [:])*.asMap()*.get('c') == [1L]
+        operations.executeQuery("MATCH (:Engineer)-[r:AUDITED]->(:Project) RETURN count(r) AS c", [:])*.asMap()*.get('c') == [1L]
+        saved.assignments[0].id() != null
+        saved.assignments*.id().toSet().size() == 1
+        saved.audits[0].id() != null
+        saved.audits*.id().toSet().size() == 1
     }
 }

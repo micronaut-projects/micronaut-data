@@ -23,7 +23,8 @@ import org.jspecify.annotations.Nullable;
  * <p>A bean of this type is created when the multi-tenancy mode is {@code SCHEMA}, since a graph is a schema of the
  * database: it names the graph after the tenant through {@link AgeConfiguration#tenantGraph(String)}. Declare a bean
  * of this type to resolve the graph another way. Operations fall back to the configured graph of their data source
- * when the resolver returns {@code null}.</p>
+ * when the resolver returns {@code null}, and reject a name equal to the configured graph or to a reserved schema of
+ * the database.</p>
  *
  * @author graemerocher
  * @since 5.3.0

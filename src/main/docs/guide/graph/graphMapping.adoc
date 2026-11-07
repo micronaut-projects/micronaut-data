@@ -51,7 +51,7 @@ Saving an entity writes its node, then saves the nodes it relates to and merges 
 
 Each `save`, `update`, `saveAll`, `updateAll` and `delete` joins the active transaction, or runs in a transaction of its own when none is active, so the statements of a cascading save either all apply or none: a save whose related node cannot be written leaves no node behind, and a versioned `updateAll` that finds a node changed since it was read writes nothing.
 
-On Neo4j and Apache AGE, `saveAll` and `updateAll` write the nodes of one entity with a single `UNWIND` query per kind of write: nodes to create, nodes to update and nodes whose `@Version` is checked. The nodes a relationship property relates an entity to are written the same way, and its relationships are merged with one `UNWIND` query per set of relationship properties: saving a movie with ten roles runs one query for the people and one for the `ACTED_IN` relationships. Reactive repositories batch their writes the same way. Entity events still run for each entity, an instance passed more than once is written once, and the relationships of each node are written after all the nodes. When a versioned `updateAll` finds a node that was changed since it was read, its query updates none of the nodes and fails with `OptimisticLockException`; likewise a `saveAll` of new versioned entities inserts none of them when one of their identifiers is taken. Apache AGE writes nodes with assigned identifiers one at a time, as it only merges the first node of an `UNWIND`.
+On Neo4j and Apache AGE, `saveAll` and `updateAll` write the nodes of one entity with a single `UNWIND` query per kind of write: nodes to create, nodes to update and nodes whose `@Version` is checked. The nodes a relationship property relates an entity to are written the same way, and its relationships are merged with one `UNWIND` query per set of relationship properties: saving a person who follows ten people runs one query for the people and one for the `FOLLOWS` relationships. A relationship entity with an identifier is written on its own instead, as two of them may connect the same nodes: it is updated by its identifier, or created when no relationship has it. Reactive repositories batch their writes the same way. Entity events still run for each entity, an instance passed more than once is written once, and the relationships of each node are written after all the nodes. A batch with two instances that have the same identifier is written one instance at a time, so that they conflict as two saves do. When a versioned `updateAll` finds a node that was changed since it was read, its query updates none of the nodes and fails with `OptimisticLockException`; likewise a `saveAll` of new versioned entities inserts none of them when one of their identifiers is taken. Apache AGE writes nodes with assigned identifiers one at a time, as it only merges the first node of an `UNWIND`.
 
 [[graphCascade]]
 === Cascading to related nodes
@@ -76,14 +76,14 @@ Relationships are not loaded unless a finder asks for them with ann:data.annotat
 
 == Encoding values
 
-Property and parameter values are encoded into values the database accepts by the encoder registered for their type in api:data.graph.runtime.GraphValueEncoders[], or for their nearest supertype. Strings, booleans, numbers and temporal values are written as they are, enums by name, collections and maps element by element, and other values as their string form. Each database replaces encoders for types it stores differently: Apache AGE writes temporal values as ISO-8601 strings, for example.
+Property and parameter values are encoded into values the database accepts by the encoder registered for their type in api:data.graph.runtime.GraphValueEncoders[], or for their nearest supertype. Strings, booleans, temporal values and the `long`, `int`, `short`, `byte`, `double` and `float` number types are written as they are, enums by name, and collections and maps element by element. `BigDecimal`, `BigInteger`, `UUID`, `URI`, `URL`, `Locale` and `Currency` values are written as strings, so a range finder on a `BigDecimal` or `BigInteger` property compares strings rather than numbers: use a `Long` or `Double` property where the order matters. A value of a type with no encoder fails with a `DataAccessException` naming the type. Each database replaces encoders for types it stores differently: Apache AGE writes temporal values as ISO-8601 strings, for example.
 
 A bean of type api:data.graph.runtime.GraphValueEncoderRegistrar[] adds encoders for application types, or replaces those of the database:
 
 snippet::example.MoneyEncoderRegistrar[project-base="doc-examples/neo4j-example", source="main", tags="registrar", languages="java,kotlin,groovy,python"]
 
 <1> `Money` values are written as maps.
-<2> The encoders passed to the encoder encode the values it contains.
+<2> The encoders passed to the encoder encode the values it contains, here the `BigDecimal` amount as a string.
 
 Values of the type are then encoded wherever they are written, in properties and in query parameters:
 
@@ -98,3 +98,5 @@ Values read from the database are converted to the types of properties by the co
 Nodes and relationships are read with https://micronaut-projects.github.io/micronaut-serialization/latest/guide/[Micronaut Serialization]. ann:data.graph.annotation.Node[] and ann:data.graph.annotation.RelationshipProperties[] make a class `@Serdeable`, so no further annotation is needed. Records, and classes with a public no-argument constructor and setters, get a deserializer generated at compile time. Other classes, such as a class that sets some properties through its constructor and others through setters, and Kotlin classes, are read by the deserializer Micronaut Serialization builds at runtime.
 
 Saving does not use Micronaut Serialization: entities are written through their bean introspections.
+
+The mapping of an entity to the database does not affect its JSON: a property renamed with `@MappedProperty` or by a naming strategy keeps its Java name in JSON, and a `@Transient` property is part of it. Other `@MappedEntity` classes in the application are not made `@Serdeable` by the graph annotation processor.

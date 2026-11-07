@@ -1,5 +1,9 @@
 package io.micronaut.data.neo4j
 
+import io.micronaut.core.annotation.AnnotationMetadata
+import io.micronaut.data.model.Pageable
+import io.micronaut.data.model.Sort
+import io.micronaut.data.model.runtime.PagedQuery
 import io.micronaut.data.neo4j.features.Pet
 import io.micronaut.data.graph.model.criteria.GraphCriteria
 import io.micronaut.data.neo4j.features.PetRepository
@@ -68,6 +72,21 @@ class Neo4jSchemalessSpec extends Specification implements TestPropertyProvider 
 
         where:
         name << ['name', 'species']
+    }
+
+    void "a schemaless property cannot take the name that locks a versioned node"() {
+        given:
+        def pet = new Pet("Dino")
+        pet.set("__lock", "x")
+
+        when:
+        petRepository.save(pet)
+
+        then:
+        def e = thrown(io.micronaut.data.exceptions.DataAccessException)
+        e.message.contains("Dynamic attribute [__lock]")
+        e.message.contains("reserved")
+        petRepository.count() == 0
     }
 
     void "a schemaless property or label that cannot be quoted is rejected"() {
@@ -197,6 +216,76 @@ class Neo4jSchemalessSpec extends Specification implements TestPropertyProvider 
 
         then:
         petRepository.findById("Dino").get().related.PLAYS_WITH.size() == 2
+    }
+
+    void "a dynamic relationship to a node of an unmapped label survives load, modify and save"() {
+        given:
+        operations.executeQuery("CREATE (:Pet {name: 'Dino'})-[:OWNS]->(:Unmapped {name: 'bone'})", [:])
+
+        when:
+        def dino = petRepository.findById("Dino").get()
+
+        then:
+        dino.related.OWNS == [[name: "bone"]]
+
+        when:
+        dino.set('legs', 4)
+        def saved = petRepository.update(dino)
+
+        then:
+        saved.related.OWNS == [[name: "bone"]]
+        petRepository.findById("Dino").get().get('legs') == 4L
+        operations.executeQuery("MATCH (:Pet {name: 'Dino'})-[:OWNS]->(u:Unmapped) RETURN u.name", [:], String) == ["bone"]
+    }
+
+    void "a dynamic relationship to something that is not a node is rejected"() {
+        given:
+        def dino = new Pet("Dino")
+        dino.related = [OWNS: ["bone"]]
+
+        when:
+        petRepository.save(dino)
+
+        then:
+        thrown(RuntimeException)
+    }
+
+    void "find all with a paged query collects dynamic relationships"() {
+        given:
+        def dino = new Pet("Dino")
+        dino.related = [PLAYS_WITH: [new Pet("Hoppy")]]
+        petRepository.save(dino)
+
+        when:
+        def pets = operations.findAll(pagedPets()).toList()
+
+        then:
+        pets*.name == ["Dino", "Hoppy"]
+        pets[0].related.PLAYS_WITH*.name == ["Hoppy"]
+    }
+
+    private static PagedQuery<Pet> pagedPets() {
+        return new PagedQuery<Pet>() {
+            @Override
+            Class<Pet> getRootEntity() {
+                return Pet
+            }
+
+            @Override
+            Pageable getPageable() {
+                return Pageable.from(0, 10, Sort.of(Sort.Order.asc("name")))
+            }
+
+            @Override
+            String getName() {
+                return "findAll"
+            }
+
+            @Override
+            AnnotationMetadata getAnnotationMetadata() {
+                return AnnotationMetadata.EMPTY_METADATA
+            }
+        }
     }
 
     void "a dynamic relationship type that cannot be quoted is rejected"() {

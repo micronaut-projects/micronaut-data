@@ -29,9 +29,12 @@ import io.micronaut.data.model.runtime.RuntimePersistentProperty;
 import org.jspecify.annotations.Nullable;
 
 import java.util.ArrayList;
+import java.util.HashSet;
+import java.util.IdentityHashMap;
 import java.util.LinkedHashMap;
 import java.util.List;
 import java.util.Map;
+import java.util.Set;
 
 /**
  * The target side of a relationship association: the entity of the target node and, when the association holds
@@ -56,7 +59,7 @@ record RelationshipTarget(RuntimePersistentEntity<Object> associated,
         }
         RuntimeAssociation<Object> targetAssociation = targetNode(associated);
         RuntimePersistentEntity<Object> entity = (RuntimePersistentEntity<Object>) targetAssociation.getAssociatedEntity();
-        return new RelationshipTarget(associated, targetAssociation, entity, associated.getIdentity());
+        return new RelationshipTarget(associated, targetAssociation, entity, associated.hasIdentity() ? associated.getIdentity() : null);
     }
 
     /**
@@ -103,10 +106,6 @@ record RelationshipTarget(RuntimePersistentEntity<Object> associated,
         return targetAssociation != null;
     }
 
-    boolean nativeIdentity() {
-        return identity != null && GraphEntities.isNativeId(identity);
-    }
-
     /**
      * The nodes the items relate the owner to: the items themselves, or the target nodes of relationship entities.
      *
@@ -130,7 +129,7 @@ record RelationshipTarget(RuntimePersistentEntity<Object> associated,
 
     /**
      * The items after their target nodes were saved: a node is its saved instance, a relationship entity keeps its
-     * instance with the saved target node set.
+     * instance with the saved target node set. An instance held twice is one written instance.
      *
      * @param items        The related instances
      * @param savedTargets The saved target nodes, in the order of the items
@@ -142,10 +141,10 @@ record RelationshipTarget(RuntimePersistentEntity<Object> associated,
         }
         BeanProperty<Object, Object> property = targetAssociation.getProperty();
         List<Object> written = new ArrayList<>(items.size());
+        Map<Object, Object> byItem = new IdentityHashMap<>();
         for (int i = 0; i < items.size(); i++) {
-            Object item = items.get(i);
             Object savedTarget = savedTargets.get(i);
-            written.add(savedTarget == property.get(item) ? item : AbstractGraphRepositoryOperations.withProperty(property, item, savedTarget));
+            written.add(byItem.computeIfAbsent(items.get(i), item -> savedTarget == property.get(item) ? item : AbstractGraphRepositoryOperations.withProperty(property, item, savedTarget)));
         }
         return written;
     }
@@ -174,23 +173,18 @@ record RelationshipTarget(RuntimePersistentEntity<Object> associated,
     }
 
     /**
-     * Sets the identifiers the database generated for the relationships on the written relationship entities.
+     * Sets the identifier the database generated for a relationship on its written relationship entity.
      *
-     * @param mapper          The mapper that decodes the identifiers
-     * @param written         The written items, replaced in place
-     * @param relationshipIds The identifiers of the relationships by the position of their rows
+     * @param mapper         The mapper that decodes the identifier
+     * @param item           The written relationship entity
+     * @param relationshipId The identifier of the relationship, or null
+     * @return The relationship entity with its identifier
      */
-    void applyRelationshipIds(GraphEntityMapper mapper, List<Object> written, Map<Integer, Object> relationshipIds) {
-        if (identity == null || !GraphEntities.isNativeId(identity)) {
-            return;
+    Object withRelationshipId(GraphEntityMapper mapper, Object item, @Nullable Object relationshipId) {
+        if (identity == null || relationshipId == null || !GraphEntities.isNativeId(identity)) {
+            return item;
         }
-        BeanProperty<Object, Object> idProperty = identity.getProperty();
-        for (int i = 0; i < written.size(); i++) {
-            Object relationshipId = relationshipIds.get(i);
-            if (relationshipId != null) {
-                written.set(i, AbstractGraphRepositoryOperations.withProperty(idProperty, written.get(i), mapper.readValue(identity, relationshipId)));
-            }
-        }
+        return AbstractGraphRepositoryOperations.withProperty(identity.getProperty(), item, mapper.readValue(identity, relationshipId));
     }
 
     /**
@@ -211,41 +205,42 @@ record RelationshipTarget(RuntimePersistentEntity<Object> associated,
     }
 
     /**
-     * Reads the identifiers of the relationships a batched link write merged, by the position of their rows.
+     * Checks that a batched link write merged the relationship of every row.
      *
      * @param association The association
      * @param records     The rows the write returned
      * @param expected    The number of relationships in the batch
-     * @return The identifiers by position; a position whose relationship has no identifier maps to null
      */
-    static Map<Integer, @Nullable Object> linkedRelationshipIds(RuntimeAssociation<?> association, List<GraphRecord> records, int expected) {
-        Map<Integer, @Nullable Object> ids = new LinkedHashMap<>();
+    static void checkLinked(RuntimeAssociation<?> association, List<GraphRecord> records, int expected) {
+        Set<Integer> positions = new HashSet<>();
         for (GraphRecord record : records) {
-            Object position = record.get(CypherQueryBuilder.ROW_POSITION);
-            if (position instanceof Number number) {
-                ids.putIfAbsent(number.intValue(), record.get(CypherQueryBuilder.ID_PARAMETER));
+            if (record.get(CypherQueryBuilder.ROW_POSITION) instanceof Number number) {
+                positions.add(number.intValue());
             }
         }
-        if (ids.size() != expected) {
+        if (positions.size() != expected) {
             throw new DataAccessException("Could not link [" + association.getName() + "]: expected to write " + expected
-                + " relationships but wrote " + ids.size() + ", one of the nodes does not exist");
+                + " relationships but wrote " + positions.size() + ", one of the nodes does not exist");
         }
-        return ids;
     }
 
     /**
      * Groups the rows of the links of an association by the properties they write, as every row of a batched
-     * write sets the same properties.
+     * write sets the same properties. The rows of one pair of nodes are one relationship, which a database that
+     * checks for it per row would otherwise create for each, and the last row wins as it does when they are written
+     * one at a time.
      *
      * @param rows The rows
      * @return The rows by property names
      */
     static Map<List<String>, List<LinkRow>> groupLinkRows(List<LinkRow> rows) {
-        Map<List<String>, List<LinkRow>> groups = new LinkedHashMap<>();
+        Map<List<String>, Map<List<Object>, LinkRow>> groups = new LinkedHashMap<>();
         for (LinkRow row : rows) {
-            groups.computeIfAbsent(List.copyOf(row.properties().keySet()), k -> new ArrayList<>()).add(row);
+            groups.computeIfAbsent(List.copyOf(row.properties().keySet()), k -> new LinkedHashMap<>()).put(List.of(row.fromId(), row.toId()), row);
         }
-        return groups;
+        Map<List<String>, List<LinkRow>> distinct = new LinkedHashMap<>();
+        groups.forEach((names, group) -> distinct.put(names, new ArrayList<>(group.values())));
+        return distinct;
     }
 
     /**
@@ -302,6 +297,30 @@ record RelationshipTarget(RuntimePersistentEntity<Object> associated,
         return records.get(0).get(CypherQueryBuilder.ID_PARAMETER);
     }
 
+    /**
+     * Resolves the targets of a group of nodes to save that a save before the group wrote through the relationships
+     * of another node: the saved instance stands for them. An immutable versioned node would otherwise be written
+     * again with the version it had before.
+     *
+     * @param group   The positions of the targets to save, by target; those that were written are removed
+     * @param saved   The saved instances by the instances the saves were called with
+     * @param results The saved instances by position
+     * @param <E>     The target type
+     */
+    static <E> void resolveSaved(Map<E, List<Integer>> group, Map<Object, Object> saved, List<E> results) {
+        List<E> written = new ArrayList<>();
+        group.forEach((target, positions) -> {
+            Object existing = saved.get(target);
+            if (existing != null) {
+                written.add(target);
+                for (int position : positions) {
+                    results.set(position, (E) existing);
+                }
+            }
+        });
+        written.forEach(group::remove);
+    }
+
     static RuntimeAssociation<Object> targetNode(RuntimePersistentEntity<?> relationshipEntity) {
         for (RuntimePersistentProperty<?> property : relationshipEntity.getPersistentProperties()) {
             if (property instanceof RuntimeAssociation<?> association && property.getAnnotationMetadata().hasStereotype(TargetNode.class)) {
@@ -323,8 +342,8 @@ record RelationshipTarget(RuntimePersistentEntity<Object> associated,
     }
 
     /**
-     * How a relationship is written. Relationship entities with a database-assigned identifier can be told apart, so
-     * two of them may connect the same nodes. Any other relationship is identified by its nodes and type.
+     * How a relationship is written. Relationship entities with an identifier can be told apart, so two of them may
+     * connect the same nodes. Any other relationship is identified by its nodes and type.
      */
     enum LinkMode {
         MERGE, CREATE, UPDATE

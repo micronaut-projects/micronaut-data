@@ -515,6 +515,75 @@ interface TenantRepository extends io.micronaut.data.repository.GenericRepositor
     }
 
     @Unroll
+    void "test a single-valued relationship must own its relationship type: #description"() {
+        when:
+        buildRepository('test.FriendRepository', friendSource(relationships))
+
+        then:
+        def e = thrown(RuntimeException)
+        e.message.contains("The single-valued relationship [$single] must own its relationship type: saving it would remove the [KNOWS] relationships of [$other]")
+
+        where:
+        description                  | single       | other     | relationships
+        'a collection'               | 'bestFriend' | 'friends' | '@Relationship("KNOWS") Friend bestFriend; @Relationship("KNOWS") List<Friend> friends;'
+        'relationship entities'      | 'bestFriend' | 'known'   | '@Relationship("KNOWS") Friend bestFriend; @Relationship("KNOWS") List<Known> known;'
+        'another single value'       | 'bestFriend' | 'partner' | '@Relationship("KNOWS") Friend bestFriend; @Relationship("KNOWS") Friend partner;'
+        'an undirected relationship' | 'bestFriend' | 'friends' | '@Relationship(type = "KNOWS", direction = Direction.UNDIRECTED) Friend bestFriend; @Relationship("KNOWS") List<Friend> friends;'
+    }
+
+    @Unroll
+    void "test relationships of one type that a single-valued relationship cannot remove: #description"() {
+        when:
+        def repository = buildRepository('test.FriendRepository', friendSource(relationships))
+
+        then:
+        repository != null
+
+        where:
+        description            | relationships
+        'the other direction'  | '@Relationship("KNOWS") Friend bestFriend; @Relationship(type = "KNOWS", direction = Direction.INCOMING) List<Friend> friends;'
+        'another target'       | '@Relationship("KNOWS") Friend bestFriend; @Relationship("KNOWS") List<Other> others;'
+        'another type'         | '@Relationship("KNOWS") Friend bestFriend; @Relationship("LIKES") List<Friend> friends;'
+        'only collections'     | '@Relationship("KNOWS") List<Friend> colleagues; @Relationship("KNOWS") List<Friend> friends;'
+    }
+
+    private static String friendSource(String relationships) {
+        return """
+@Node
+@io.micronaut.core.annotation.Introspected(accessKind = io.micronaut.core.annotation.Introspected.AccessKind.FIELD)
+class Friend {
+    @Id
+    public String name;
+    $relationships
+}
+
+@Node
+class Other {
+    @Id
+    private String name;
+    public String getName() { return name; }
+    public void setName(String name) { this.name = name; }
+}
+
+@RelationshipProperties
+class Known {
+    @RelationshipId
+    private Long id;
+    @TargetNode
+    private Friend friend;
+    public Long getId() { return id; }
+    public void setId(Long id) { this.id = id; }
+    public Friend getFriend() { return friend; }
+    public void setFriend(Friend friend) { this.friend = friend; }
+}
+
+@TestGraphRepository
+interface FriendRepository extends io.micronaut.data.repository.GenericRepository<Friend, String> {
+}
+"""
+    }
+
+    @Unroll
     void "test a database-assigned identifier cannot be primitive: #type"() {
         when:
         buildRepository('test.CounterRepository', """
@@ -562,6 +631,28 @@ interface OrderedRepository extends CrudRepository<Friend, String> {
         def e = thrown(RuntimeException)
         e.message.contains('Path and relationship finders cannot be ordered, found [findRelationshipsByFriendsOrderByName]')
         !e.message.contains('has no @Relationship property')
+    }
+
+    void "test ordering a path finder with bound endpoints is rejected with a clear message"() {
+        when:
+        buildRepository('test.OrderedRepository', """
+import io.micronaut.data.graph.model.*;
+
+$FRIENDS
+
+@TestGraphRepository
+interface OrderedRepository extends CrudRepository<Friend, String> {
+    GraphPath<Friend> $method(String from, String to);
+}
+""")
+
+        then:
+        def e = thrown(RuntimeException)
+        e.message.contains("Path and relationship finders cannot be ordered, found [$method]")
+        !e.message.contains('no property named')
+
+        where:
+        method << ['findPathBetweenNameOrderByName', 'findPathByFriendsBetweenNameOrderByName']
     }
 
     void "test path finders must return paths"() {

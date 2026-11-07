@@ -19,6 +19,10 @@ import java.util.UUID;
  */
 public interface MovieQueryRepository extends MovieRepository {
 
+    List<Movie> findByRoles(Role role);
+
+    List<Movie> findByRolesPerson(Person person);
+
     @Join("roles")
     @Join("directors")
     Optional<Movie> findByTitle(String title);
@@ -35,6 +39,15 @@ public interface MovieQueryRepository extends MovieRepository {
     @Join("directors")
     @Join("directors.mentor")
     Optional<Movie> queryByTitle(String title);
+
+    @Join(value = "directors", type = Join.Type.INNER_FETCH)
+    @Join(value = "directors.mentor", type = Join.Type.INNER_FETCH)
+    List<Movie> queryByReleasedGreaterThan(int released);
+
+    // The inner join comes last: a later @Join through directors would replace the join type of directors
+    @Join("directors.mentor")
+    @Join(value = "directors", type = Join.Type.INNER_FETCH)
+    List<Movie> listByReleasedGreaterThan(int released);
 
     @Query("MATCH (p:Person), (m:Movie) WHERE p.name = $name AND m.title = $title CREATE (p)-[:DIRECTED]->(m)")
     void addDirector(String name, String title);
