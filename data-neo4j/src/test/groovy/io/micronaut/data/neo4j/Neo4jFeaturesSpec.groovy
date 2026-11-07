@@ -7,6 +7,8 @@ import io.micronaut.data.graph.tck.entities.Person
 import io.micronaut.data.graph.tck.entities.Role
 import io.micronaut.data.model.Pageable
 import io.micronaut.data.model.Sort
+import io.micronaut.data.neo4j.features.Chapter
+import io.micronaut.data.neo4j.features.ChapterRepository
 import io.micronaut.data.neo4j.features.Employee
 import io.micronaut.data.neo4j.features.EmployeeRepository
 import io.micronaut.data.neo4j.features.Junction
@@ -54,6 +56,9 @@ class Neo4jFeaturesSpec extends Specification implements TestPropertyProvider {
 
     @Inject
     MemberRepository memberRepository
+
+    @Inject
+    ChapterRepository chapterRepository
 
     @Inject
     EmployeeRepository employeeRepository
@@ -213,6 +218,60 @@ class Neo4jFeaturesSpec extends Specification implements TestPropertyProvider {
         saved[0].mentor().id() == saved[1].id()
         memberRepository.count() == 2
         operations.executeQuery("MATCH (:Member {name: 'Ada'})-[:MENTORED_BY]->(m:Member {name: 'Grace'}) RETURN count(m)", [:], Long) == [1L]
+    }
+
+    void "a record that the entity events replace is not created again when another record of the batch links to it"() {
+        given:
+        def last = new Chapter(null, "last", null, null)
+        def middle = new Chapter(null, "middle", null, last)
+        def first = new Chapter(null, "first", null, middle)
+
+        when:
+        def saved = chapterRepository.saveAll([first, middle, last])
+
+        then:
+        chapterRepository.count() == 3
+        saved*.version() == [0L, 0L, 0L]
+        saved[0].next().id() == saved[1].id()
+        saved[0].next().next().id() == saved[2].id()
+        operations.executeQuery("MATCH (:Chapter {name: 'first'})-[:NEXT]->(:Chapter {name: 'middle'})-[:NEXT]->(c:Chapter {name: 'last'}) RETURN count(c)", [:], Long) == [1L]
+
+        when: "the results are saved again"
+        def updated = chapterRepository.updateAll(saved)
+
+        then:
+        chapterRepository.count() == 3
+        updated*.version() == [1L, 1L, 1L]
+        updated[0].next().next().version() == 1L
+    }
+
+    void "records in a batch return complete references to records with database generated identifiers"() {
+        given:
+        def last = new Member(null, "Ada", null)
+        def middle = new Member(null, "Grace", last)
+        def first = new Member(null, "Katherine", middle)
+
+        when:
+        def saved = memberRepository.saveAll([first, middle, last])
+
+        then:
+        memberRepository.count() == 3
+        saved[0].mentor().id() == saved[1].id()
+        saved[0].mentor().mentor().id() == saved[2].id()
+        saved[1].mentor().id() == saved[2].id()
+    }
+
+    void "records in a batch that link to each other keep the identifiers they were given"() {
+        given:
+        def team = new Team(null, "Wanderers", [])
+        team.players() << new Player(null, "Ada", team)
+
+        when:
+        def saved = teamRepository.saveAll([team, new Team(null, "Rovers", [])])
+
+        then:
+        teamRepository.count() == 2
+        saved[0].players()[0].team().id() == saved[0].id()
     }
 
     void "saveAll writes an instance passed twice once"() {

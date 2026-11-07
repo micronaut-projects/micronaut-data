@@ -3,6 +3,8 @@ package io.micronaut.data.age
 import io.micronaut.data.age.operations.AgeRepositoryOperations
 import io.micronaut.data.age.tck.AgeMovieSpecificationRepository
 import io.micronaut.data.age.tck.AgeArticleRepository
+import io.micronaut.data.age.tck.AgeMilestoneRepository
+import io.micronaut.data.age.tck.AgeStepRepository
 import io.micronaut.data.age.tck.AgeColleagueRepository
 import io.micronaut.data.age.tck.AgeFriendRepository
 import io.micronaut.data.age.tck.AgeMovieRepository
@@ -27,6 +29,12 @@ class AgeGraphRepositorySpec extends AbstractGraphRepositorySpec {
 
     @Inject
     AgeArticleRepository articleRepository
+
+    @Inject
+    AgeStepRepository stepRepository
+
+    @Inject
+    AgeMilestoneRepository milestoneRepository
 
     @Inject
     AgeMovieRepository movieRepository
