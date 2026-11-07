@@ -59,11 +59,11 @@ import java.util.function.Function;
  */
 @Internal
 public final class GraphEntityMapper {
+
     private static final int MAX_CACHED_LABEL_SETS = 1024;
+
     private final RuntimeEntityRegistry entityRegistry;
-
     private final ConversionService conversionService;
-
     private final Function<Object, Object> encoder;
     private final Map<List<String>, Optional<Class<?>>> entitiesByLabels = new ConcurrentHashMap<>();
 
