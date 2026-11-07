@@ -51,6 +51,9 @@ import java.util.Objects;
 public final class DocumentStoredQuery<E, R> extends DefaultBindableParametersStoredQuery<E, R> {
 
     private final Map<String, Object> body;
+    private static final String LIKE_WITH_ESCAPE = "like:";
+    private static final String IGNORE_CASE = "_ignore_case";
+
     private final boolean countProjection;
 
     /**
@@ -174,7 +177,7 @@ public final class DocumentStoredQuery<E, R> extends DefaultBindableParametersSt
             // the escape character of a LIKE bound at runtime travels as a parameter of its own
             Object escape = values.get(escapeIndex.intValue());
             if (escape != null && !escape.toString().isEmpty()) {
-                kind = "like:" + escape.toString().charAt(0) + (kind.contains("_ignore_case") ? "_ignore_case" : "");
+                kind = LIKE_WITH_ESCAPE + escape.toString().charAt(0) + (kind.contains(IGNORE_CASE) ? IGNORE_CASE : "");
             }
         }
         return wildcard(value, kind);
@@ -219,10 +222,10 @@ public final class DocumentStoredQuery<E, R> extends DefaultBindableParametersSt
     }
 
     private static Object wildcard(@Nullable Object value, String hint) {
-        String kind = hint.replace("_ignore_case", "");
+        String kind = hint.replace(IGNORE_CASE, "");
         if (kind.startsWith("like")) {
             // like, or like:<escape character>
-            Character escape = kind.length() > "like:".length() ? kind.charAt("like:".length()) : null;
+            Character escape = kind.length() > LIKE_WITH_ESCAPE.length() ? kind.charAt(LIKE_WITH_ESCAPE.length()) : null;
             return likeToWildcard(value == null ? "" : value.toString(), escape);
         }
         String text = value == null ? "" : escapeWildcard(value.toString());
