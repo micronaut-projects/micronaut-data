@@ -49,6 +49,8 @@ public class FilterExtension implements ExecutionCondition {
             "testPartialQuerySelectAndOrderBy",
             "testQueryWithNot",
             "testQueryWithNull",
+            "testQueryWithParenthesis",
+            "testLiteralTrue",
             "testQueryWithSelectReturnsOptionalOfRecord",
             "testQueryWithSelectReturnsPageOfRecord",
             "testQueryWithoutSelectReturnsArrayOfRecord",

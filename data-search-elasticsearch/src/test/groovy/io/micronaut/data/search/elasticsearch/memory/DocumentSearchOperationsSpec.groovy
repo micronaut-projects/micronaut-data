@@ -6,6 +6,7 @@ import io.micronaut.data.exceptions.DataAccessException
 import io.micronaut.data.model.CursoredPageable
 import io.micronaut.data.model.Pageable
 import io.micronaut.data.model.Sort
+import io.micronaut.data.repository.jpa.criteria.PredicateSpecification
 import io.micronaut.data.runtime.query.internal.DefaultPagedQuery
 import io.micronaut.data.search.document.conf.DocumentSearchConfiguration
 import io.micronaut.data.search.document.query.SearchJson
@@ -36,6 +37,9 @@ class DocumentSearchOperationsSpec extends Specification {
     CounterRepository counters
 
     @Inject
+    FlagRepository flags
+
+    @Inject
     DocumentSearchRepositoryOperations operations
 
     @Inject
@@ -54,6 +58,33 @@ class DocumentSearchOperationsSpec extends Specification {
         operations.getIndexName(Note) == "test_notes"
         operations.transport.is(transport)
         transport.createdIndexes.containsKey("test_notes")
+    }
+
+    void "documents carry the persistent property names, so an isX boolean matches its mapping and its queries"() {
+        when:
+        Flag saved = flags.save(new Flag(label: "pinned", active: true))
+        Map<String, Object> document = transport.indexes["test_flags"][saved.id]
+
+        then:
+        document.keySet() == ["label", "isActive"] as Set
+        document.isActive == true
+        flags.findById(saved.id).get().isActive()
+        flags.findById(saved.id).get().label == "pinned"
+
+        when:
+        flags.findByIsActiveTrue()
+
+        then:
+        transport.lastBody().contains('"isActive"')
+        !transport.lastBody().contains('"active"')
+    }
+
+    void "the escape character of a LIKE bound at runtime is applied to the wildcard pattern"() {
+        when:
+        flags.findAll({ root, criteriaBuilder -> criteriaBuilder.like(root.get("label"), "Port%--_%", '-' as char) } as PredicateSpecification)
+
+        then:
+        transport.lastBody().contains('"wildcard":{"label":{"value":"Port*-?*"}}')
     }
 
     void "saving generates String ids and the entities read back by id"() {

@@ -23,7 +23,9 @@ public final class ElasticsearchConfigurer implements ApplicationContextConfigur
         builder.properties(Map.of(
             "elasticsearch.http-hosts", "http://" + ELASTICSEARCH.getHttpHostAddress(),
             // each deployment starts from empty indexes
-            "micronaut.data.search.schema-generate", "CREATE_DROP"
+            "micronaut.data.search.schema-generate", "CREATE_DROP",
+            // Jakarta Data expects NonUniqueResultException from a single-result query that matches several entities
+            "micronaut.data.search.unique-result-on-find-one", "true"
         ));
     }
 }

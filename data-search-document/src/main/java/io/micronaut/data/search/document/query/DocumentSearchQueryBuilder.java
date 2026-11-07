@@ -93,6 +93,12 @@ public final class DocumentSearchQueryBuilder implements QueryBuilder {
     public static final String WILDCARD_HINT = "$mn_wildcard";
 
     /**
+     * The key carrying the escape character of a LIKE pattern bound at runtime: a placeholder of the
+     * parameter holding it, which the runtime reads before it turns the pattern into a wildcard.
+     */
+    public static final String ESCAPE_HINT = "$mn_escape";
+
+    /**
      * The field name Elasticsearch and OpenSearch use for the document id.
      */
     public static final String ID_FIELD = "_id";
@@ -502,10 +508,14 @@ public final class DocumentSearchQueryBuilder implements QueryBuilder {
             if (likePredicate.isCaseInsensitive()) {
                 hint.append("_ignore_case");
             }
+            BindingParameter boundEscape = null;
             if (likePredicate.getEscapeChar() instanceof LiteralExpression<?> escape && escape.getValue() instanceof Character c) {
                 hint.append(':').append(c);
+            } else if (likePredicate.getEscapeChar() instanceof BindingParameter parameter) {
+                // a runtime criteria binds its literals as parameters, so the escape character arrives with the pattern
+                boundEscape = parameter;
             }
-            result = wildcard(propertyPath, likePredicate.getPattern(), hint.toString());
+            result = wildcard(propertyPath, likePredicate.getPattern(), hint.toString(), boundEscape);
             if (likePredicate.isNegated()) {
                 result = Map.of(BOOL, Map.of(MUST_NOT, result));
             }
@@ -743,11 +753,21 @@ public final class DocumentSearchQueryBuilder implements QueryBuilder {
         }
 
         private Map<String, Object> wildcard(PersistentPropertyPath propertyPath, Expression<?> expression, String hint) {
-            Object value;
+            return wildcard(propertyPath, expression, hint, null);
+        }
+
+        private Map<String, Object> wildcard(PersistentPropertyPath propertyPath, Expression<?> expression, String hint, @Nullable BindingParameter boundEscape) {
+            Map<String, Object> value;
             if (expression instanceof BindingParameter parameter) {
                 value = bindings.placeholder(parameter, propertyPath, hint);
             } else {
-                value = Map.of(QUERY_PARAMETER_PLACEHOLDER, -1, WILDCARD_HINT, hint, VALUE, requireValue(literal(expression), expression));
+                value = new LinkedHashMap<>();
+                value.put(QUERY_PARAMETER_PLACEHOLDER, -1);
+                value.put(WILDCARD_HINT, hint);
+                value.put(VALUE, requireValue(literal(expression), expression));
+            }
+            if (boundEscape != null) {
+                value.put(ESCAPE_HINT, bindings.placeholder(boundEscape, null, null));
             }
             Map<String, Object> options = new LinkedHashMap<>();
             options.put(VALUE, value);

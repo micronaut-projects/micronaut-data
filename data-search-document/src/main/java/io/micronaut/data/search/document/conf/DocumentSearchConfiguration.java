@@ -48,6 +48,7 @@ public class DocumentSearchConfiguration {
     private boolean createIndexes = true;
     private SchemaGenerate schemaGenerate = SchemaGenerate.CREATE;
     private int maxResults = DEFAULT_MAX_RESULTS;
+    private boolean uniqueResultOnFindOne;
 
     /**
      * @return A prefix added to every index name, for per-environment naming
@@ -126,6 +127,22 @@ public class DocumentSearchConfiguration {
             throw new IllegalArgumentException("micronaut.data.search.max-results must be positive, got " + maxResults);
         }
         this.maxResults = maxResults;
+    }
+
+    /**
+     * @return Whether a query for one entity fails with a {@code NonUniqueResultException} when it
+     * matches more than one document, as Jakarta Data requires; by default it returns the first hit
+     */
+    public boolean isUniqueResultOnFindOne() {
+        return uniqueResultOnFindOne;
+    }
+
+    /**
+     * @param uniqueResultOnFindOne Whether a query for one entity fails when it matches more than one
+     *                              document, which fetches a second hit to find out
+     */
+    public void setUniqueResultOnFindOne(boolean uniqueResultOnFindOne) {
+        this.uniqueResultOnFindOne = uniqueResultOnFindOne;
     }
 
     /**

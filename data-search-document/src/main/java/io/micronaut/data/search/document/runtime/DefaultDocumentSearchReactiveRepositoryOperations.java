@@ -19,6 +19,7 @@ import io.micronaut.context.annotation.EachBean;
 import io.micronaut.context.annotation.Parameter;
 import io.micronaut.core.annotation.Internal;
 import io.micronaut.data.exceptions.DataAccessException;
+import io.micronaut.data.exceptions.NonUniqueResultException;
 import io.micronaut.data.model.Page;
 import io.micronaut.data.model.runtime.AttributeConverterRegistry;
 import io.micronaut.data.model.runtime.DeleteBatchOperation;
@@ -127,9 +128,18 @@ public final class DefaultDocumentSearchReactiveRepositoryOperations extends Abs
             }
             // a single result still honours a Sort parameter, which decides which hit comes first
             applyPageable(body, preparedQuery, entity);
-            body.put("size", 1);
+            boolean unique = configuration.isUniqueResultOnFindOne();
+            if (unique) {
+                // a second hit means the query is not unique, unless the query itself asks for one hit, as findFirst does
+                body.putIfAbsent("size", 2);
+            } else {
+                body.put("size", 1);
+            }
             return search(body, entity).flatMap(hits -> {
                 List<R> results = toEntities(hits, entity, preparedQuery);
+                if (unique && results.size() > 1) {
+                    return Mono.error(new NonUniqueResultException("Multiple results found for query: " + preparedQuery.getQuery()));
+                }
                 return results.isEmpty() ? Mono.empty() : Mono.just(results.get(0));
             });
         });

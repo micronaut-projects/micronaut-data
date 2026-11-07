@@ -85,5 +85,7 @@ Elasticsearch and OpenSearch run reactive and async repositories on their async 
 - A comparison between two properties, such as `WHERE numBitsRequired = floorOfSquareRoot`, and a case-insensitive range run as Painless `script` queries, which evaluate every candidate document.
 - A query without a `Pageable` or limit fetches and deserializes at most `micronaut.data.search.max-results` hits, 10,000 by default as the stores' default `index.max_result_window`; lower it to bound the memory one query can use, and page through larger results.
 - Aggregations are not exposed.
+- A query for one entity returns the first hit when several match; set `micronaut.data.search.unique-result-on-find-one` to `true` to get the `NonUniqueResultException` Jakarta Data requires, at the cost of fetching a second hit.
+- Documents hold the entity's properties under their property names, the names the index mapping and the queries use, so a boolean `isActive` property is stored as `isActive` even though a JSON mapper would call it `active`. Embedded objects are written the same way.
 
-The Elasticsearch and OpenSearch modules run the Jakarta Data TCK, apart from the tests that need the features above, stateful repositories or CDI events.
+The Elasticsearch and OpenSearch modules run the Jakarta Data TCK with `unique-result-on-find-one` enabled, apart from the tests that need the features above, stateful repositories or CDI events.

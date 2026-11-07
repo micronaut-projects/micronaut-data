@@ -20,7 +20,9 @@ public final class OpenSearchConfigurer implements ApplicationContextConfigurer 
         builder.properties(Map.of(
             "micronaut.opensearch.httpclient5.http-hosts", OPENSEARCH.getHttpHostAddress(),
             // each deployment starts from empty indexes
-            "micronaut.data.search.schema-generate", "CREATE_DROP"
+            "micronaut.data.search.schema-generate", "CREATE_DROP",
+            // Jakarta Data expects NonUniqueResultException from a single-result query that matches several entities
+            "micronaut.data.search.unique-result-on-find-one", "true"
         ));
     }
 }

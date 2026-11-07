@@ -17,8 +17,12 @@ package io.micronaut.data.search.document.runtime;
 
 import io.micronaut.aop.MethodInvocationContext;
 import io.micronaut.core.annotation.Internal;
+import io.micronaut.core.beans.BeanIntrospection;
 import io.micronaut.core.beans.BeanProperty;
+import io.micronaut.core.reflect.ReflectionUtils;
 import io.micronaut.core.type.Argument;
+import io.micronaut.data.model.Embedded;
+import io.micronaut.data.model.runtime.RuntimeAssociation;
 import io.micronaut.data.annotation.search.Searchable;
 import io.micronaut.data.event.EntityEventContext;
 import io.micronaut.data.annotation.TypeRole;
@@ -35,6 +39,9 @@ import io.micronaut.data.model.runtime.RuntimeEntityRegistry;
 import io.micronaut.data.model.runtime.RuntimePersistentEntity;
 import io.micronaut.data.model.runtime.RuntimePersistentProperty;
 import io.micronaut.data.model.runtime.StoredQuery;
+import io.micronaut.data.model.vector.DoubleVector;
+import io.micronaut.data.model.vector.FloatVector;
+import io.micronaut.data.model.vector.Vector;
 import io.micronaut.data.model.vector.search.Score;
 import io.micronaut.data.model.vector.search.SearchResult;
 import io.micronaut.data.model.vector.search.SearchResults;
@@ -53,6 +60,7 @@ import org.jspecify.annotations.Nullable;
 
 import java.io.IOException;
 import java.util.ArrayList;
+import java.util.Collection;
 import java.util.LinkedHashMap;
 import java.util.List;
 import java.util.Map;
@@ -72,7 +80,6 @@ abstract class AbstractDocumentSearchRepositoryOperations extends AbstractReposi
     private static final String ORDER = "order";
     private static final String ASC = "asc";
     private static final String DESC = "desc";
-    private static final Argument<Map<String, Object>> DOCUMENT = Argument.mapOf(String.class, Object.class);
 
     protected final JsonMapper jsonMapper;
     protected final DocumentSearchConfiguration configuration;
@@ -309,20 +316,109 @@ abstract class AbstractDocumentSearchRepositoryOperations extends AbstractReposi
         return (R) value;
     }
 
+    /**
+     * The document of an entity: its persistent properties under their property names, which are the
+     * names the index mapping and the queries use, each value in its JSON form. A property named
+     * {@code isOdd} with an {@code isOdd()} getter is therefore stored as {@code isOdd}, not as the
+     * {@code odd} a JSON mapper derives from the getter. Null values are left out and embedded
+     * objects are written the same way.
+     *
+     * @param value The entity
+     * @param entity The persistent entity
+     * @param <T> The entity type
+     * @return The document
+     */
     protected final <T> Map<String, Object> toDocument(T value, RuntimePersistentEntity<T> entity) {
         try {
-            return Objects.requireNonNull(jsonMapper.readValue(jsonMapper.writeValueAsBytes(value), DOCUMENT));
+            return writeDocument(value, entity);
         } catch (IOException e) {
             throw new DataAccessException("Cannot serialize entity " + entity.getName() + ": " + e.getMessage(), e);
         }
     }
 
+    private <T> Map<String, Object> writeDocument(T value, RuntimePersistentEntity<T> entity) throws IOException {
+        Map<String, Object> document = new LinkedHashMap<>();
+        for (RuntimePersistentProperty<T> property : documentProperties(entity)) {
+            Object propertyValue = property.getProperty().get(value);
+            if (propertyValue == null) {
+                continue;
+            }
+            if (property instanceof Embedded) {
+                RuntimePersistentEntity<Object> embedded = (RuntimePersistentEntity<Object>) ((RuntimeAssociation<T>) property).getAssociatedEntity();
+                document.put(property.getName(), writeDocument(propertyValue, embedded));
+            } else if (propertyValue instanceof String || propertyValue instanceof Number || propertyValue instanceof Boolean) {
+                document.put(property.getName(), propertyValue);
+            } else if (propertyValue instanceof Vector vector) {
+                // a vector is a plain JSON array of numbers, whatever its runtime type
+                document.put(property.getName(), SearchJson.arrayToList(vector.toDoubleArray()));
+            } else {
+                document.put(property.getName(), jsonMapper.readValue(jsonMapper.writeValueAsBytes(propertyValue), Argument.OBJECT_ARGUMENT));
+            }
+        }
+        return document;
+    }
+
     private <T> T fromDocument(Map<String, Object> source, RuntimePersistentEntity<T> entity) {
         try {
-            return Objects.requireNonNull(jsonMapper.readValue(jsonMapper.writeValueAsBytes(source), Argument.of(entity.getIntrospection().getBeanType())));
-        } catch (IOException e) {
+            return readDocument(source, entity);
+        } catch (IOException | RuntimeException e) {
             throw new DataAccessException("Cannot deserialize entity " + entity.getName() + ": " + e.getMessage(), e);
         }
+    }
+
+    private <T> T readDocument(Map<String, Object> source, RuntimePersistentEntity<T> entity) throws IOException {
+        BeanIntrospection.Builder<T> builder = entity.getIntrospection().builder();
+        for (RuntimePersistentProperty<T> property : documentProperties(entity)) {
+            Object raw = source.get(property.getName());
+            if (raw == null) {
+                continue;
+            }
+            Object converted;
+            if (property instanceof Embedded && raw instanceof Map<?, ?> nested) {
+                RuntimePersistentEntity<Object> embedded = (RuntimePersistentEntity<Object>) ((RuntimeAssociation<T>) property).getAssociatedEntity();
+                converted = readDocument((Map<String, Object>) nested, embedded);
+            } else if (ReflectionUtils.getWrapperType(property.getType()).isInstance(raw) && !(raw instanceof Map) && !(raw instanceof Iterable)) {
+                converted = raw;
+            } else if (Vector.class.isAssignableFrom(property.getType()) && raw instanceof Collection<?> numbers) {
+                converted = vectorOf((Collection<? extends Number>) numbers, property.getType());
+            } else {
+                converted = jsonMapper.readValue(jsonMapper.writeValueAsBytes(raw), property.getArgument());
+            }
+            builder.with(property.getName(), converted);
+        }
+        return builder.build();
+    }
+
+    /** A stored JSON array of numbers as the vector type of the property. */
+    private static Vector vectorOf(Collection<? extends Number> numbers, Class<?> type) {
+        Vector vector = Vector.of(numbers);
+        if (type.isInstance(vector)) {
+            return vector;
+        }
+        if (type == FloatVector.class) {
+            return Vector.of(vector.toFloatArray());
+        }
+        if (type == DoubleVector.class) {
+            return Vector.of(vector.toDoubleArray());
+        }
+        return vector;
+    }
+
+    /**
+     * The properties a document holds: the identity, the version and every other persistent property.
+     */
+    private static <T> Collection<RuntimePersistentProperty<T>> documentProperties(RuntimePersistentEntity<T> entity) {
+        Map<String, RuntimePersistentProperty<T>> properties = new LinkedHashMap<>();
+        if (entity.hasIdentity()) {
+            properties.put(entity.getIdentity().getName(), entity.getIdentity());
+        }
+        if (entity.hasVersion()) {
+            properties.put(entity.getVersion().getName(), entity.getVersion());
+        }
+        for (RuntimePersistentProperty<T> property : entity.getPersistentProperties()) {
+            properties.putIfAbsent(property.getName(), property);
+        }
+        return properties.values();
     }
 
     protected final <T> RuntimePersistentProperty<T> requireIdentity(RuntimePersistentEntity<T> entity) {

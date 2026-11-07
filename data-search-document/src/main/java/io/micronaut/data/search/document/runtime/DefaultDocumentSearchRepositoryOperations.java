@@ -22,6 +22,7 @@ import io.micronaut.context.annotation.Parameter;
 import io.micronaut.core.annotation.Internal;
 import io.micronaut.core.type.Argument;
 import io.micronaut.data.exceptions.DataAccessException;
+import io.micronaut.data.exceptions.NonUniqueResultException;
 import io.micronaut.data.model.Page;
 import io.micronaut.data.model.runtime.AttributeConverterRegistry;
 import io.micronaut.data.model.runtime.DeleteBatchOperation;
@@ -192,7 +193,9 @@ public final class DefaultDocumentSearchRepositoryOperations extends AbstractDoc
         DocumentStoredQuery<T, R> storedQuery = storedQuery(preparedQuery);
         if (storedQuery.isCount()) {
             long count = transport.count(indexName(storedQuery.getPersistentEntity()), queryOnly(body(preparedQuery, storedQuery)));
-            return conversionService.convertRequired(count, preparedQuery.getResultArgument());
+            // the result type is the count's own type; the result argument is the method's return type, a Page for
+            // the count query of a paged criteria method
+            return conversionService.convertRequired(count, preparedQuery.getResultType());
         }
         Map<String, Object> body = body(preparedQuery, storedQuery);
         RuntimePersistentEntity<T> entity = storedQuery.getPersistentEntity();
@@ -204,8 +207,17 @@ public final class DefaultDocumentSearchRepositoryOperations extends AbstractDoc
         }
         // a single result still honours a Sort parameter, which decides which hit comes first
         applyPageable(body, preparedQuery, entity);
-        body.put("size", 1);
+        if (!configuration.isUniqueResultOnFindOne()) {
+            body.put("size", 1);
+            List<R> results = search(body, entity, preparedQuery);
+            return results.isEmpty() ? null : results.get(0);
+        }
+        // a second hit means the query is not unique, unless the query itself asks for one hit, as findFirst does
+        body.putIfAbsent("size", 2);
         List<R> results = search(body, entity, preparedQuery);
+        if (results.size() > 1) {
+            throw new NonUniqueResultException("Multiple results found for query: " + preparedQuery.getQuery());
+        }
         return results.isEmpty() ? null : results.get(0);
     }
 

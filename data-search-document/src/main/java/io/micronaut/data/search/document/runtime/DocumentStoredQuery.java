@@ -165,7 +165,19 @@ public final class DocumentStoredQuery<E, R> extends DefaultBindableParametersSt
         if (DocumentSearchQueryBuilder.COSINE_SIMILARITY_HINT.equals(hint)) {
             return value instanceof Number distance ? 1d - distance.doubleValue() : value;
         }
-        return hint == null ? value : wildcard(value, hint.toString());
+        if (hint == null) {
+            return value;
+        }
+        String kind = hint.toString();
+        if (placeholder.get(DocumentSearchQueryBuilder.ESCAPE_HINT) instanceof Map<?, ?> escapePlaceholder
+            && escapePlaceholder.get(DocumentSearchQueryBuilder.QUERY_PARAMETER_PLACEHOLDER) instanceof Number escapeIndex) {
+            // the escape character of a LIKE bound at runtime travels as a parameter of its own
+            Object escape = values.get(escapeIndex.intValue());
+            if (escape != null && !escape.toString().isEmpty()) {
+                kind = "like:" + escape.toString().charAt(0) + (kind.contains("_ignore_case") ? "_ignore_case" : "");
+            }
+        }
+        return wildcard(value, kind);
     }
 
     /**
