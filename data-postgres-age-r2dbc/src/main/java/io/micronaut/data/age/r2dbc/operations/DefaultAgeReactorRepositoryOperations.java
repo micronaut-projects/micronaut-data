@@ -32,6 +32,7 @@ import io.micronaut.data.graph.runtime.age.AgeGraphTenantResolver;
 import io.micronaut.data.graph.runtime.age.AgeParameters;
 import io.micronaut.data.graph.runtime.age.Agtype;
 import io.micronaut.data.graph.runtime.operations.AbstractReactiveGraphRepositoryOperations;
+import io.micronaut.data.graph.runtime.operations.GraphWriteTransaction;
 import io.micronaut.data.r2dbc.transaction.R2dbcReactorTransactionOperations;
 import io.micronaut.json.JsonMapper;
 import io.r2dbc.postgresql.codec.PostgresqlObjectId;
@@ -41,7 +42,6 @@ import io.r2dbc.spi.Parameters;
 import io.r2dbc.spi.R2dbcException;
 import io.r2dbc.spi.Statement;
 import io.r2dbc.spi.Wrapped;
-import io.micronaut.transaction.TransactionDefinition;
 import org.jspecify.annotations.Nullable;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -185,7 +185,7 @@ final class DefaultAgeReactorRepositoryOperations extends AbstractReactiveGraphR
         // Joins the transaction of the Reactor context, or begins one so that the statements of the write commit or roll back together
         return Mono.deferContextual(context -> {
             String graph = currentGraph(context);
-            return transactionOperations.withTransactionMono(TransactionDefinition.DEFAULT,
+            return transactionOperations.withTransactionMono(GraphWriteTransaction.of(annotationMetadata),
                 status -> prepare(status.getConnection(), graph).then(Mono.defer(() -> work.apply(new Session(status.getConnection(), graph)))));
         });
     }
@@ -194,7 +194,7 @@ final class DefaultAgeReactorRepositoryOperations extends AbstractReactiveGraphR
     protected <R> Flux<R> withTransactionFlux(AnnotationMetadata annotationMetadata, Function<ReactiveGraphSession, Flux<R>> work) {
         return Flux.deferContextual(context -> {
             String graph = currentGraph(context);
-            return transactionOperations.withTransactionFlux(TransactionDefinition.DEFAULT,
+            return transactionOperations.withTransactionFlux(GraphWriteTransaction.of(annotationMetadata),
                 status -> prepare(status.getConnection(), graph).thenMany(Flux.defer(() -> work.apply(new Session(status.getConnection(), graph)))));
         });
     }

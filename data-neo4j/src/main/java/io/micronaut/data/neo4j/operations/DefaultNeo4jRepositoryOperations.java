@@ -30,6 +30,7 @@ import io.micronaut.data.graph.runtime.GraphSession;
 import io.micronaut.data.graph.runtime.GraphValueEncoderRegistrar;
 import io.micronaut.data.graph.runtime.serde.GraphSerde;
 import io.micronaut.data.graph.runtime.operations.AbstractGraphRepositoryOperations;
+import io.micronaut.data.graph.runtime.operations.GraphWriteTransaction;
 import io.micronaut.data.model.runtime.AttributeConverterRegistry;
 import io.micronaut.data.model.runtime.RuntimeEntityRegistry;
 import io.micronaut.data.neo4j.session.Neo4jDriverRegistration;
@@ -128,7 +129,7 @@ final class DefaultNeo4jRepositoryOperations extends AbstractGraphRepositoryOper
     @Override
     protected <R> R writeInTransaction(AnnotationMetadata annotationMetadata, Function<GraphSession, R> work) {
         // Joins the current transaction, or begins one so that the statements of the write commit or roll back together
-        return transactionOperations.executeWrite(status -> work.apply(session(status.getConnection())));
+        return transactionOperations.execute(GraphWriteTransaction.of(annotationMetadata), status -> work.apply(session(status.getConnection())));
     }
 
     private <R> R run(AnnotationMetadata annotationMetadata, Function<GraphSession, R> work) {

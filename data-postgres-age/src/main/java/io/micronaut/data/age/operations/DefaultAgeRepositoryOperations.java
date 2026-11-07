@@ -40,6 +40,7 @@ import io.micronaut.data.graph.runtime.age.AgeGraphTenantResolver;
 import io.micronaut.data.graph.runtime.age.AgeParameters;
 import io.micronaut.data.graph.runtime.age.Agtype;
 import io.micronaut.data.graph.runtime.operations.AbstractGraphRepositoryOperations;
+import io.micronaut.data.graph.runtime.operations.GraphWriteTransaction;
 import io.micronaut.data.model.runtime.AttributeConverterRegistry;
 import io.micronaut.data.model.runtime.RuntimeEntityRegistry;
 import io.micronaut.data.runtime.convert.DataConversionService;
@@ -265,7 +266,7 @@ final class DefaultAgeRepositoryOperations extends AbstractGraphRepositoryOperat
     protected <R> R writeInTransaction(AnnotationMetadata annotationMetadata, Function<GraphSession, R> work) {
         // Joins the current transaction, or begins one so that the statements of the write commit or roll back together
         String graph = currentGraph();
-        return transactionOperations.executeWrite(status -> work.apply(session(status.getConnection(), graph)));
+        return transactionOperations.execute(GraphWriteTransaction.of(annotationMetadata), status -> work.apply(session(status.getConnection(), graph)));
     }
 
     private <R> R commitOrRollback(Connection connection, String graph, Function<GraphSession, R> work) throws SQLException {
