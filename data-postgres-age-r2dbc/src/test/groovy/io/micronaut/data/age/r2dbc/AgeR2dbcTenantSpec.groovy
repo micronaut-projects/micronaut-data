@@ -1,6 +1,8 @@
 package io.micronaut.data.age.r2dbc
 
 import io.micronaut.context.annotation.Property
+import io.micronaut.core.async.propagation.ReactorPropagation
+import io.micronaut.core.propagation.PropagatedContext
 import io.micronaut.data.graph.tck.entities.Movie
 import io.micronaut.test.extensions.spock.annotation.MicronautTest
 import io.r2dbc.spi.ConnectionFactory
@@ -9,6 +11,8 @@ import reactor.core.publisher.Flux
 import reactor.core.publisher.Mono
 import spock.lang.Specification
 
+import java.time.Duration
+
 /**
  * A graph per tenant on R2DBC: the tenant is resolved when an operation is subscribed to, and names the graph.
  */
@@ -16,6 +20,9 @@ import spock.lang.Specification
 @Property(name = "micronaut.data.multi-tenancy.mode", value = "SCHEMA")
 @Property(name = "micronaut.data.age.tenant-graph-prefix", value = "reactive_")
 @Property(name = "micronaut.data.age.tenant-graphs.globex", value = "reactive_globex_graph")
+@Property(name = "micronaut.data.age.tenant-graphs.legacy", value = "reactive_tck")
+@Property(name = "micronaut.data.age.tenant-graphs.pub", value = "public")
+@Property(name = "micronaut.data.age.create-tenant-graphs", value = "true")
 class AgeR2dbcTenantSpec extends Specification {
 
     @Inject
@@ -82,6 +89,54 @@ class AgeR2dbcTenantSpec extends Specification {
         def e = thrown(IllegalArgumentException)
         e.message.contains("graph name")
         graphs().contains("reactive_tck")
+    }
+
+    void "a tenant whose graph is the configured graph or a reserved schema is rejected before any statement runs"() {
+        given:
+        StaticTenantResolver.tenant = tenant
+
+        when:
+        movieRepository.count().block()
+
+        then:
+        def e = thrown(IllegalArgumentException)
+        e.message.contains("graph name [" + graph + "]")
+
+        where:
+        tenant   | graph
+        "legacy" | "reactive_tck"
+        "pub"    | "public"
+    }
+
+    void "the tenant is read from the Reactor context when the operation is subscribed to from an asynchronous callback"() {
+        given:
+        StaticTenantResolver.tenant = "acme"
+        movieRepository.save(new Movie("Speed", "Get ready for rush hour", 1994)).block()
+        StaticTenantResolver.tenant = null
+        def request = PropagatedContext.empty().plus(new StaticTenantResolver.Element("acme"))
+
+        when: "the callback runs on another thread, with the request in the Reactor context only"
+        boolean exists = Mono.delay(Duration.ofMillis(10))
+            .flatMap(tick -> movieRepository.existsById("Speed"))
+            .contextWrite(context -> ReactorPropagation.addPropagatedContext(context, request))
+            .block()
+        List<Movie> movies = Mono.delay(Duration.ofMillis(10))
+            .flatMapMany(tick -> movieRepository.findAll())
+            .contextWrite(context -> ReactorPropagation.addPropagatedContext(context, request))
+            .collectList()
+            .block()
+
+        then:
+        exists
+        movies*.title == ["Speed"]
+
+        when: "there is no request in the Reactor context"
+        boolean noRequest = Mono.delay(Duration.ofMillis(10))
+            .flatMap(tick -> movieRepository.existsById("Speed"))
+            .block()
+
+        then:
+        !noRequest
     }
 
     private Set<String> graphs() {
