@@ -2,7 +2,7 @@ Nodes in a graph rarely share a fixed schema. A ann:data.graph.annotation.Dynami
 
 snippet::example.Pet[project-base="doc-examples/neo4j-example", source="main", tags="pet", languages="java,kotlin,groovy,python"]
 
-<1> api:data.graph.model.DynamicAttributeHolder[] adds map-like access to the schemaless properties.
+<1> In Java, Kotlin and Groovy, api:data.graph.model.DynamicAttributeHolder[] adds map-like access to the schemaless properties. Python uses the dictionary directly.
 <2> The map receives the properties the class does not declare when a node is read, and its entries are written when the entity is saved.
 <3> The holder reads and writes through this map.
 
@@ -35,7 +35,7 @@ Values must be types the database stores: strings, numbers, booleans, temporal v
 
 == Dynamic labels
 
-A collection of strings annotated with ann:data.graph.annotation.Labels[] holds the labels of a node beyond those its entity declares. Saving adds them to the node and reading collects them. Dynamic labels are supported by Neo4j.
+A collection of strings annotated with ann:data.graph.annotation.Labels[] holds the labels of a node beyond those its entity declares. Saving adds them to the node and reading collects them. Saving only adds: a label taken out of the collection stays on the node and comes back on the next read, so remove it with an explicit query. Dynamic labels are supported by Neo4j.
 
 snippet::example.Person[project-base="doc-examples/neo4j-example", source="main", tags="labels", languages="java,kotlin,groovy,python"]
 

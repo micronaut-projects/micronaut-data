@@ -10,5 +10,5 @@ from micronaut.data.graph.annotation import DynamicAttributes, Node
 @dataclass
 class Pet:
     name: Annotated[str, Id]
-    attributes: Annotated[dict[str, object], DynamicAttributes] = field(default_factory=dict)  # <1>
+    attributes: Annotated[dict[str, object], DynamicAttributes] = field(default_factory=dict)  # <2>
 # end::pet[]
